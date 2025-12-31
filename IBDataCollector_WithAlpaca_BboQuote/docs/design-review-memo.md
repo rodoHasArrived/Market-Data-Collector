@@ -1,10 +1,10 @@
-# Design Review Memo (Institutional Sign‑Off)
+# Design Review Memo (Institutional Sign-Off)
 
 ## Document Control
 - **System:** IB Data Collector (Microstructure Recorder)
 - **Scope:** Architecture, controls, operational posture, and readiness for controlled production use
 - **Audience:** Engineering leadership, risk/compliance stakeholders, and institutional reviewers
-- **Version:** 1.0
+- **Version:** 1.1
 
 ---
 
@@ -20,7 +20,7 @@ The system is suitable for controlled production deployment provided the operati
 
 ### Objectives
 - Capture trades and L2 depth with integrity checks and stable schemas.
-- Ensure clear separation between vendor integration (IB) and business logic (domain).
+- Ensure clear separation between vendor integration (IB/Alpaca) and business logic (domain).
 - Provide operational visibility (status + UI) and safe runtime configuration updates.
 - Persist data in an audit-friendly format (JSONL with stable event types).
 
@@ -34,27 +34,27 @@ The system is suitable for controlled production deployment provided the operati
 ## 3. Architectural Summary
 
 ### Layering
-- **Infrastructure:** IB connectivity, callback handling, contract creation. Contains all IB-specific code.
-- **Domain:** Order book state, trade analytics, integrity events. Pure logic, testable without IB.
-- **Application:** Orchestration, config hot-reload, subscription diffing, monitoring.
-- **Pipeline/Storage:** Per-symbol routing and buffered persistence.
+- **Infrastructure:** IB/Alpaca connectivity, callback handling, contract creation. Contains all provider-specific code via `IIBMarketDataClient` implementations (`IBMarketDataClient`, `AlpacaMarketDataClient`, `NoOpIBClient`).
+- **Domain:** Order book state (`MarketDepthCollector`), trade analytics (`TradeDataCollector`), BBO caching (`QuoteCollector`), integrity events. Pure logic, testable without IB.
+- **Application:** Orchestration (`Program.cs`), config hot-reload (`ConfigWatcher`), status monitoring (`StatusWriter`, `Metrics`).
+- **Pipeline/Storage:** Bounded channel routing (`EventPipeline`) and buffered persistence (`JsonlStorageSink`, `JsonlStoragePolicy`).
 
 ### Key Control: Unified Event Stream
-All outputs normalize to `MarketEvent(Type, Symbol, Timestamp, Payload, SequenceNumber, Source)` with typed payload records. This provides a stable contract for storage, monitoring, and future replay/backtesting, and ensures BBO quote updates and trade events carry comparable sequencing metadata across IB and Alpaca feeds.
+All outputs normalize to `MarketEvent(Type, Symbol, Timestamp, Payload)` with typed payload records derived from `MarketEventPayload`. This provides a stable contract for storage, monitoring, and future replay/backtesting, and ensures BBO quote updates and trade events carry comparable sequencing metadata across IB and Alpaca feeds.
 
 ---
 
 ## 4. Operational Safety and Controls
 
 ### 4.1 Integrity Controls
-- **Depth:** `MarketDepthCollector` emits `DepthIntegrityEvent` on invalid operations/gaps and freezes the symbol stream until reset/resubscribe.
-- **Quotes/BBO:** `QuoteStateStore` tracks sequence numbers and emits `QuoteIntegrityEvent` on regressions or stream resets, enabling operators to reconcile overlapping IB/Alpaca feeds.
-- **Trades:** Tick-by-tick subscriptions are managed by `SubscriptionManager`. Future enhancement: sequence validation for trades if IB provides stable sequencing.
+- **Trades:** `TradeDataCollector` validates sequence continuity per symbol/stream. Emits `IntegrityEvent.OutOfOrder` (trade rejected) or `IntegrityEvent.SequenceGap` (trade accepted, stats marked stale) when anomalies occur.
+- **Depth:** `MarketDepthCollector` emits `DepthIntegrityEvent` on invalid operations/gaps and freezes the symbol stream until `ResetSymbolStream()` is called.
+- **Quotes/BBO:** `QuoteCollector` maintains per-symbol BBO state with monotonically increasing sequence numbers. The `IQuoteStateStore` interface allows `TradeDataCollector` to infer aggressor side.
 
 ### 4.2 Backpressure and Bounded Queues
-The event bus uses bounded channels by design. Under pressure:
+The `EventPipeline` uses `System.Threading.Channels` with bounded capacity (default 50,000) and `DropOldest` policy. Under pressure:
 - events may be dropped to protect process stability
-- drops are counted via `Metrics` and visible via status (quote/trade/depth paths share the same discipline)
+- drops are counted via `Metrics.Dropped` and visible via status
 
 This is an explicit tradeoff: stability and bounded memory over unbounded buffering.
 
@@ -62,7 +62,7 @@ This is an explicit tradeoff: stability and bounded memory over unbounded buffer
 Configuration changes are applied via:
 - atomic file replace from UI
 - debounced, retried parsing by `ConfigWatcher`
-- diff application by `SubscriptionManager`
+- diff application via `SubscriptionManager`
 
 This reduces restart risk and prevents partial-write corruption.
 
@@ -71,14 +71,14 @@ This reduces restart risk and prevents partial-write corruption.
 ## 5. Data Governance
 
 ### Storage
-- Append-only JSONL files partitioned by event type / symbol / date.
-- Optional compression.
-- Status snapshots written separately under `data/_status/status.json`.
+- Append-only JSONL files partitioned by `<Symbol>.<EventType>.jsonl` (e.g., `AAPL.Trade.jsonl`, `SPY.BboQuote.jsonl`).
+- Optional gzip compression via `Compress` config option.
+- Status snapshots written separately under `data/_status/status.json` by `StatusWriter`.
 
 ### Schema Management
-- `MarketEventType` is the canonical type registry.
+- `MarketEventType` is the canonical type registry: `Trade`, `L2Snapshot`, `BboQuote`, `OrderFlow`, `Integrity`, `DepthIntegrity`.
 - Payloads are typed records intended to be backward-compatible.
-- Quote events include stream identifiers and sequence numbers to support reconciliation and replay.
+- Quote and trade events include `SequenceNumber`, `StreamId`, and `Venue` fields to support reconciliation and replay.
 
 Recommended: version payload records if breaking changes become necessary.
 
@@ -92,6 +92,7 @@ Recommended: version payload records if breaking changes become necessary.
   - restrict network binding
   - add CSRF protections
 - IB credentials/session: controlled externally (TWS/Gateway). No secrets stored in repo.
+- Alpaca credentials: stored in `appsettings.json` under `Alpaca.KeyId` and `Alpaca.SecretKey`. Protect this file appropriately or migrate to environment variables / secret vault.
 
 ---
 
@@ -104,9 +105,10 @@ Recommended deployment topology:
 - Paper trading first, then limited production scope
 
 Operational prerequisites:
-- IB market data entitlements (especially depth)
+- IB market data entitlements (especially depth) or Alpaca API credentials
 - Stable time sync (NTP)
 - Log retention and disk monitoring
+- Preflight checks (disk space, directory permissions, IB/Alpaca reachability)
 
 ---
 
@@ -114,10 +116,11 @@ Operational prerequisites:
 
 | Risk | Description | Mitigation |
 |------|-------------|------------|
-| Data gaps | IB feed interruptions or missed updates | Integrity events + resubscribe procedures |
-| Event drops | Bounded queues may drop under load | Metrics + tuning + capacity planning |
+| Data gaps | IB/Alpaca feed interruptions or missed updates | Integrity events + resubscribe procedures |
+| Event drops | Bounded queues may drop under load | `Metrics.Dropped` + tuning + capacity planning |
+| Trade sequence anomalies | Gaps or out-of-order sequences | `IntegrityEvent` emission; out-of-order trades rejected |
 | Preferred contract ambiguity | IB preferred shares can resolve incorrectly | Require `LocalSymbol`/`ConId` in config |
-| Feed divergence | IB and Alpaca quotes may disagree | Preserve `Source`/`StreamId`; monitor `QuoteIntegrityEvent` and pick a primary source |
+| Feed divergence | IB and Alpaca quotes may disagree | Preserve `StreamId`/`Venue`; pick a primary source |
 | UI exposure | UI has no auth by default | Keep local-only or add auth if deployed |
 
 ---
@@ -128,8 +131,10 @@ Operational prerequisites:
 2. Add replay tool to validate stored events.
 3. Add unit/integration test suite automation in CI.
 4. Add authentication for UI if network-exposed.
-5. Add “auto-resubscribe on integrity” policy with rate limits.
+5. Add "auto-resubscribe on integrity" policy with rate limits.
 6. Add feed-divergence alarms when IB and Alpaca BBO deviate beyond configured tolerances.
+7. Wire Alpaca quote messages to `QuoteCollector` for full BBO support.
+8. Migrate Alpaca credentials from `appsettings.json` to environment variables or secret vault.
 
 ---
 
@@ -140,4 +145,3 @@ Given the current scope and implemented controls, the system is recommended for 
 - entitlement validation,
 - disk and monitoring setup,
 - completion of the next hardening items prior to broader deployment.
-
