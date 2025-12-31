@@ -94,7 +94,7 @@ public sealed class ConfigWatcher : IDisposable
             {
                 if (!File.Exists(path)) return new AppConfig();
                 var json = File.ReadAllText(path);
-                var cfg = JsonSerializer.Deserialize<AppConfig>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                var cfg = JsonSerializer.Deserialize<AppConfig>(json, AppConfigJsonOptions.Read);
                 return cfg ?? new AppConfig();
             }
             catch

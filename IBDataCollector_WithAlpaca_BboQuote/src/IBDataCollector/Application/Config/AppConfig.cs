@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace IBDataCollector.Application.Config;
 
 /// <summary>
@@ -7,15 +9,15 @@ namespace IBDataCollector.Application.Config;
 /// <param name="Compress">Whether JSONL sinks should gzip.</param>
 /// <param name="DataSource">
 /// Market data provider selector:
-/// - "IB" (default) uses Interactive Brokers via IIBMarketDataClient/IBMarketDataClient.
-/// - "Alpaca" uses Alpaca market data via WebSocket (trades; quotes optional in future).
+/// - <see cref="DataSourceKind.IB"/> (default) uses Interactive Brokers via IIBMarketDataClient/IBMarketDataClient.
+/// - <see cref="DataSourceKind.Alpaca"/> uses Alpaca market data via WebSocket (trades; quotes optional in future).
 /// </param>
-/// <param name="Alpaca">Alpaca provider options (required if DataSource == "Alpaca").</param>
+/// <param name="Alpaca">Alpaca provider options (required if DataSource == DataSourceKind.Alpaca).</param>
 /// <param name="Symbols">Symbol subscriptions.</param>
 public sealed record AppConfig(
     string DataRoot = "data",
     bool Compress = false,
-    string DataSource = "IB",
+    [property: JsonConverter(typeof(DataSourceKindConverter))] DataSourceKind DataSource = DataSourceKind.IB,
     AlpacaOptions? Alpaca = null,
     SymbolConfig[]? Symbols = null
 );
