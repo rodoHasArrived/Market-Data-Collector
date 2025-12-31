@@ -3,7 +3,39 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+
+    <!-- Assembly Information -->
+    <AssemblyName>MarketDataCollector.Ui</AssemblyName>
+    <Version>1.0.0</Version>
+    <Authors>MarketDataCollector Team</Authors>
+    <Description>Web dashboard for MarketDataCollector monitoring and configuration</Description>
+
+    <!-- Single-file publishing settings -->
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+
+    <!-- Trimming for smaller executable -->
+    <PublishTrimmed>true</PublishTrimmed>
+    <TrimMode>partial</TrimMode>
+
+    <!-- Ready-to-run for faster startup -->
+    <PublishReadyToRun>true</PublishReadyToRun>
+
+    <!-- Invariant globalization to reduce size -->
+    <InvariantGlobalization>false</InvariantGlobalization>
   </PropertyGroup>
+
+  <!-- Platform-specific runtime identifiers -->
+  <PropertyGroup Condition="'$(RuntimeIdentifier)' == ''">
+    <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;osx-arm64</RuntimeIdentifiers>
+  </PropertyGroup>
+
+  <!-- Trimmer root assemblies to preserve reflection-based serialization -->
+  <ItemGroup>
+    <TrimmerRootAssembly Include="System.Text.Json" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\MarketDataCollector\MarketDataCollector.csproj" />
