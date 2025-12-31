@@ -53,3 +53,15 @@ Infrastructure (IB)
 5. Events routed via `IMarketEventBus`
 6. Stored as JSONL
 7. Status written for UI
+
+### Event Pipeline Details
+
+* **Market event bus** – a per-symbol fan-out with back-pressure awareness to avoid blocking unrelated symbols when one stream misbehaves.
+* **Storage policy** – `JsonlStoragePolicy` groups files by `<Symbol>.<MarketEventType>.jsonl` (for example, `SPY.LOBSnapshot.jsonl`) and rotates when file size thresholds are hit.
+* **Metadata** – status writers expose lightweight health snapshots for the ASP.NET UI and the startup scripts to poll.
+
+### Resilience and integrity
+
+* **Depth gaps** – `MarketDepthCollector` freezes a symbol and emits a `DepthIntegrityEvent` if the sequence of updates is inconsistent; operators can call `ResetSymbolStream` via the UI or restart the subscription to resume.
+* **Config hot reload** – `ConfigWatcher` listens for changes to `appsettings.json` and resubscribes symbols without tearing down the process.
+* **Pluggable data source** – the `IIBMarketDataClient` abstraction allows switching between live IB API and Alpaca WebSocket clients without altering domain logic.
