@@ -26,6 +26,7 @@ These diagrams describe the system using the C4 model:
 > Notes:
 > - Mermaid diagrams render on GitHub and in many markdown viewers.
 > - For DocFX, Mermaid rendering depends on theme/extension. If Mermaid isn’t rendered, treat these as source diagrams and export to SVG/PNG later.
+> - Diagrams include the optional Alpaca WebSocket feed and the QuoteStateStore that emits BBO events used for aggressor inference.
 
 ---
 
@@ -34,6 +35,7 @@ These diagrams describe the system using the C4 model:
 ```mermaid
 flowchart LR
     IB[Interactive Brokers\nTWS/Gateway]:::ext
+    ALP[Alpaca\nWebSocket]:::ext
     OPR[Operator]:::person
     UI[IBDataCollector.Ui\nDashboard]:::container
     COL[IB Data Collector\nService]:::system
@@ -43,6 +45,7 @@ flowchart LR
     UI <--> DISK
     UI --> COL
     IB --> COL
+    ALP --> COL
     COL --> DISK
 
 classDef person fill:#fff,stroke:#333,stroke-width:1px;
@@ -63,10 +66,11 @@ flowchart TB
         DOM[Domain Layer\nCollectors + Models]:::container
         PIPE[Event Pipeline\nIMarketEventBus/Routed Fanout]:::container
         STOR[Storage\nJsonlStorageSink/Policy]:::container
-        INFRA[Infrastructure (IB)\nConnectionManager/Router/ContractFactory]:::container
+        INFRA[Infrastructure (IB/Alpaca)\nConnectionManager/Router/ContractFactory]:::container
     end
 
     IB[Interactive Brokers\nTWS/Gateway]:::ext
+    ALP[Alpaca\nWebSocket]:::ext
     DISK[(Filesystem\n./data)]:::store
     UI[ASP.NET UI\nIBDataCollector.Ui]:::container
     OPR[Operator]:::person
@@ -75,6 +79,7 @@ flowchart TB
     UI <--> DISK
 
     IB --> INFRA
+    ALP --> INFRA
     INFRA --> DOM
     DOM --> PIPE
     PIPE --> STOR
@@ -97,16 +102,17 @@ classDef store fill:#fff5f5,stroke:#c53030,stroke-width:1px;
 
 ```mermaid
 flowchart LR
-    subgraph INF[Infrastructure.IB]
+    subgraph INF[Infrastructure]
         CONN[EnhancedIBConnectionManager\n(EWrapper)]:::component
         ROUTE[IBCallbackRouter]:::component
         FACT[ContractFactory]:::component
-        CLIENT[IIBMarketDataClient\nIBMarketDataClient/NoOp]:::component
+        CLIENT[IIBMarketDataClient\nIB/Alpaca/NoOp]:::component
     end
 
     subgraph DOM[Domain]
         TD[TradeDataCollector]:::component
         MD[MarketDepthCollector]:::component
+        QSS[QuoteStateStore\n(BBO cache/emitter)]:::component
         MODELS[Models\nTrade/LOBSnapshot/Integrity]:::component
     end
 
@@ -124,12 +130,17 @@ flowchart LR
     end
 
     IB[IB TWS/Gateway]:::ext
+    ALP[Alpaca WebSocket]:::ext
 
     IB --> CONN --> ROUTE
+    ALP --> CLIENT
     ROUTE --> TD
     ROUTE --> MD
+    ROUTE --> QSS
     TD --> BUS
     MD --> BUS
+    QSS --> BUS
+    QSS --> TD
     BUS --> SINK --> FS
     POL --> SINK
 

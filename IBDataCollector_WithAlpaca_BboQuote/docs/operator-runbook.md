@@ -168,3 +168,12 @@ To enable quote ingestion in Alpaca mode, set:
 ```
 
 This will emit `MarketEventType.BboQuote` events with `BboQuotePayload` and improve `Trade` + `OrderFlow` aggressor classification.
+
+To confirm quotes are flowing:
+
+```bash
+ls data/AAPL.BboQuote.jsonl
+tail -n 5 data/AAPL.BboQuote.jsonl
+```
+
+Each record includes `SequenceNumber`, `Source`, and `StreamId` fields so you can reconcile IB vs. Alpaca feeds.
