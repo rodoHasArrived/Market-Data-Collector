@@ -1,3 +1,17 @@
+// =============================================================================
+// DEPRECATED: This file contains a legacy implementation that is no longer used.
+// =============================================================================
+// TODO: Consider deleting this file entirely as it is unused in the current codebase
+//
+// Issues with this implementation:
+// 1. Uses old namespace 'IbDataCollector.Domain' (lowercase 'b') vs new 'IBDataCollector.Domain'
+// 2. Uses old enum names (MktDepthSide, MktDepthOperation) vs new (OrderBookSide, DepthOperation)
+// 3. Uses value-type based implementation that differs from the active MarketDepthCollector
+// 4. Not referenced anywhere in the codebase
+//
+// The active implementation is in: IBDataCollector.Domain.Collectors.MarketDepthCollector
+// =============================================================================
+
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;

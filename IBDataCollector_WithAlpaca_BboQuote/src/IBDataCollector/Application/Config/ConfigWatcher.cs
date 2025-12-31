@@ -97,8 +97,11 @@ public sealed class ConfigWatcher : IDisposable
                 var cfg = JsonSerializer.Deserialize<AppConfig>(json, AppConfigJsonOptions.Read);
                 return cfg ?? new AppConfig();
             }
-            catch
+            catch (Exception ex)
             {
+                // TODO: Log the specific exception for debugging config load failures
+                // Consider logging: ex.GetType().Name, ex.Message, and attempt number
+                _ = ex; // Suppress unused variable warning until logging is added
                 Thread.Sleep(delayMs);
             }
         }

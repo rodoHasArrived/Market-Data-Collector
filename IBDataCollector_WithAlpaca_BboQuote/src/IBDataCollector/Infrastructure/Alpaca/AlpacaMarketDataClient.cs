@@ -9,13 +9,18 @@ using IBDataCollector.Infrastructure.IB;
 
 namespace IBDataCollector.Infrastructure.Alpaca;
 
+// TODO: Implement connection retry with exponential backoff for production resilience
+// TODO: Add automatic reconnection when WebSocket connection is lost
+// TODO: Add heartbeat/keep-alive mechanism to detect stale connections
+// TODO: Consider moving API credentials to environment variables or secure vault instead of config file
+
 /// <summary>
 /// Alpaca Market Data client (WebSocket) that plugs into the existing IIBMarketDataClient abstraction.
-/// 
+///
 /// Current support:
 /// - Trades: YES (streams "t" messages and forwards to TradeDataCollector)
 /// - Depth (L2): NO (Alpaca stock stream provides quotes/BBO, not full L2 updates; method returns -1)
-/// 
+///
 /// Notes:
 /// - Alpaca typically limits to 1 active stream connection per user per endpoint.
 /// - Authentication is performed by sending an "auth" message immediately after connect.
@@ -33,6 +38,12 @@ public sealed class AlpacaMarketDataClient : IIBMarketDataClient
     private readonly object _gate = new();
     private readonly HashSet<string> _tradeSymbols = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<string> _quoteSymbols = new(StringComparer.OrdinalIgnoreCase);
+
+    // Cached serializer options to avoid allocations in hot path
+    private static readonly JsonSerializerOptions s_serializerOptions = new()
+    {
+        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+    };
 
     private int _nextSubId = 100_000; // keep away from IB ids
     private readonly Dictionary<int, (string Symbol, string Kind)> _subs = new();
@@ -202,12 +213,14 @@ public sealed class AlpacaMarketDataClient : IIBMarketDataClient
             if (_opt.SubscribeQuotes && quotes.Length > 0)
                 msg["quotes"] = quotes;
 
-            var json = JsonSerializer.Serialize(msg, new JsonSerializerOptions { DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull });
+            var json = JsonSerializer.Serialize(msg, s_serializerOptions);
             await SendTextAsync(json, CancellationToken.None).ConfigureAwait(false);
         }
-        catch
+        catch (Exception ex)
         {
-            // swallow - caller is fire-and-forget; the receive loop will surface auth/conn errors via logs later
+            // TODO: Add proper logging - caller is fire-and-forget but errors should still be observable
+            // Consider publishing connection status events for monitoring
+            _ = ex; // Suppress unused variable warning until logging is added
         }
     }
 
@@ -256,9 +269,10 @@ public sealed class AlpacaMarketDataClient : IIBMarketDataClient
                     HandleMessage(doc.RootElement);
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                // ignore parse errors
+                // TODO: Log JSON parse errors - silent failures can hide protocol issues
+                _ = ex; // Suppress unused variable warning until logging is added
             }
         }
     }
@@ -297,7 +311,21 @@ public sealed class AlpacaMarketDataClient : IIBMarketDataClient
             _tradeCollector.OnTrade(update);
         }
 
-        // Quotes ("T":"q") are available but not wired into L2 yet.
-        // Future: publish BBO events and/or build a QuoteCollector that emits L2SnapshotPayload.
+        // TODO: Wire Alpaca quotes ("T":"q") into the L2 collector
+        // Alpaca quotes contain bid/ask price and size which can be converted to BboQuotePayload
+        // Steps to implement:
+        // 1. Parse quote messages (T="q") with fields: S=symbol, bp=bidPrice, bs=bidSize, ap=askPrice, as=askSize, t=timestamp
+        // 2. Create MarketQuoteUpdate from the parsed data
+        // 3. Forward to _quoteCollector.OnQuote(update) to publish BBO events
+        // 4. Consider creating L2SnapshotPayload from aggregated quotes if full depth is needed
+        if (t == "q")
+        {
+            // Quote parsing is available but not yet wired to collectors
+            // Uncomment and complete implementation when ready:
+            // var sym = el.TryGetProperty("S", out var sProp) ? sProp.GetString() : null;
+            // var bidPrice = el.TryGetProperty("bp", out var bp) ? (decimal)bp.GetDouble() : 0m;
+            // var askPrice = el.TryGetProperty("ap", out var ap) ? (decimal)ap.GetDouble() : 0m;
+            // ... wire to _quoteCollector
+        }
     }
 }

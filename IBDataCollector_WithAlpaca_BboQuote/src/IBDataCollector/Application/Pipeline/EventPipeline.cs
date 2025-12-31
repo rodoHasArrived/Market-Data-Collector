@@ -47,6 +47,7 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable
         catch (OperationCanceledException) { }
         finally
         {
+            // TODO: Add logging for flush failures - silent catch can hide data loss issues
             try { await _sink.FlushAsync(CancellationToken.None).ConfigureAwait(false); } catch { }
         }
     }
