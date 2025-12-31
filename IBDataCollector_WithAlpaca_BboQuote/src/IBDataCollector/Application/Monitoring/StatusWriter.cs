@@ -57,6 +57,7 @@ public sealed class StatusWriter : IAsyncDisposable
         _cts.Cancel();
         if (_loop is not null)
         {
+            // TODO: Log monitoring loop disposal errors instead of swallowing silently
             try { await _loop.ConfigureAwait(false); } catch { }
         }
         _cts.Dispose();

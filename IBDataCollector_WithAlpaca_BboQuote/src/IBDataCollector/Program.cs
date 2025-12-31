@@ -66,10 +66,13 @@ internal static class Program
         foreach (var s in symbols)
         {
             if (s.SubscribeDepth)
+            {
                 depthCollector.RegisterSubscription(s.Symbol);
-
-            if (s.SubscribeDepth)
                 dataClient.SubscribeMarketDepth(s);
+            }
+
+            if (s.SubscribeTrades)
+                dataClient.SubscribeTrades(s);
         }
 
         // --- Simulated feed smoke test (depth + trade) ---
@@ -119,8 +122,11 @@ internal static class Program
             var cfg = JsonSerializer.Deserialize<AppConfig>(json, AppConfigJsonOptions.Read);
             return cfg ?? new AppConfig();
         }
-        catch
+        catch (Exception ex)
         {
+            // TODO: Add proper logging framework (e.g., Serilog) to log configuration errors
+            // Bare catch swallows JSON parsing, file access, and permission errors silently
+            Console.Error.WriteLine($"[Warning] Failed to load config: {ex.Message}");
             return new AppConfig();
         }
     }
