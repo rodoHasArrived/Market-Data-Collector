@@ -1,9 +1,12 @@
 #if IBAPI
 using System.Collections.Concurrent;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using IBApi;
 using MarketDataCollector.Application.Config;
+using MarketDataCollector.Infrastructure.Performance;
 
 namespace MarketDataCollector.Infrastructure.Providers.InteractiveBrokers;
 
@@ -15,8 +18,9 @@ public sealed partial class EnhancedIBConnectionManager : EWrapper, IDisposable
     private readonly EClientSocket _clientSocket;
     private EReader? _reader;
 
-    private readonly CancellationTokenSource _cts = new();
+    private CancellationTokenSource _cts = new();
     private Task? _readerLoop;
+    private Task? _reconnectTask;
 
     private int _nextDepthTickerId = 10_000;
     private readonly ConcurrentDictionary<int, string> _depthTickerMap = new();
@@ -24,7 +28,30 @@ public sealed partial class EnhancedIBConnectionManager : EWrapper, IDisposable
     private int _nextTradeTickerId = 20_000;
     private readonly ConcurrentDictionary<int, string> _tradeTickerMap = new();
 
-    public EnhancedIBConnectionManager(IBCallbackRouter router, string host = "127.0.0.1", int port = 7497, int clientId = 1)
+    // Performance monitoring
+    private readonly ConnectionWarmUp _warmUp;
+    private readonly ExponentialBackoffRetry _reconnectBackoff;
+    private HeartbeatMonitor? _heartbeatMonitor;
+
+    // Connection state
+    private volatile bool _isReconnecting;
+    private volatile bool _disposed;
+    private long _lastMessageTimestamp;
+    private long _connectionEstablishedTimestamp;
+    private long _totalMessagesReceived;
+    private long _reconnectAttempts;
+
+    // Latency tracking
+    private long _currentTimeRequestTimestamp;
+    private volatile double _lastRoundTripLatencyUs;
+
+    public EnhancedIBConnectionManager(
+        IBCallbackRouter router,
+        string host = "127.0.0.1",
+        int port = 7497,
+        int clientId = 1,
+        bool enableAutoReconnect = true,
+        bool enableHeartbeat = true)
     {
         _router = router ?? throw new ArgumentNullException(nameof(router));
         _signal = new EReaderMonitorSignal();
@@ -33,56 +60,280 @@ public sealed partial class EnhancedIBConnectionManager : EWrapper, IDisposable
         Host = host;
         Port = port;
         ClientId = clientId;
+        EnableAutoReconnect = enableAutoReconnect;
+        EnableHeartbeat = enableHeartbeat;
+
+        // Initialize performance utilities
+        _warmUp = new ConnectionWarmUp(
+            warmUpInterval: TimeSpan.FromMinutes(5),
+            warmUpIterations: 5);
+
+        _reconnectBackoff = new ExponentialBackoffRetry(
+            initialDelay: TimeSpan.FromSeconds(1),
+            maxDelay: TimeSpan.FromMinutes(2),
+            maxRetries: -1, // Unlimited retries
+            multiplier: 2.0,
+            jitterFactor: 0.1);
     }
 
     public string Host { get; }
     public int Port { get; }
     public int ClientId { get; }
+    public bool EnableAutoReconnect { get; set; }
+    public bool EnableHeartbeat { get; set; }
 
     public bool IsConnected => _clientSocket.IsConnected();
+    public bool IsReconnecting => _isReconnecting;
+    public long TotalMessagesReceived => Interlocked.Read(ref _totalMessagesReceived);
+    public long ReconnectAttempts => Interlocked.Read(ref _reconnectAttempts);
+    public double LastRoundTripLatencyUs => _lastRoundTripLatencyUs;
+    public WarmUpStatistics? LastWarmUpStats => _warmUp.LastWarmUpStats;
 
-    public Task ConnectAsync()
+    public TimeSpan ConnectionUptime
     {
-        if (IsConnected) return Task.CompletedTask;
+        get
+        {
+            var ts = Interlocked.Read(ref _connectionEstablishedTimestamp);
+            if (ts == 0 || !IsConnected) return TimeSpan.Zero;
+            return TimeSpan.FromTicks((long)((Stopwatch.GetTimestamp() - ts) *
+                (TimeSpan.TicksPerSecond / (double)Stopwatch.Frequency)));
+        }
+    }
 
+    /// <summary>
+    /// Event raised when connection is lost.
+    /// </summary>
+    public event EventHandler? ConnectionLost;
+
+    /// <summary>
+    /// Event raised when connection is restored after reconnection.
+    /// </summary>
+    public event EventHandler? ConnectionRestored;
+
+    /// <summary>
+    /// Event raised on latency measurement from heartbeat/time request.
+    /// </summary>
+    public event EventHandler<double>? LatencyMeasured;
+
+    public async Task ConnectAsync(CancellationToken ct = default)
+    {
+        if (IsConnected) return;
+        if (_disposed) throw new ObjectDisposedException(nameof(EnhancedIBConnectionManager));
+
+        await ConnectInternalAsync(ct).ConfigureAwait(false);
+    }
+
+    private async Task ConnectInternalAsync(CancellationToken ct)
+    {
         _clientSocket.eConnect(Host, Port, ClientId);
+
+        // Wait briefly for connection establishment
+        await Task.Delay(100, ct).ConfigureAwait(false);
+
+        if (!IsConnected)
+        {
+            throw new InvalidOperationException($"Failed to connect to IB Gateway at {Host}:{Port}");
+        }
 
         _reader = new EReader(_clientSocket, _signal);
         _reader.Start();
 
-        _readerLoop = Task.Run(() => ReaderLoop(_cts.Token), _cts.Token);
+        // Start reader loop with high priority
+        _cts = new CancellationTokenSource();
+        _readerLoop = Task.Factory.StartNew(
+            () => ReaderLoop(_cts.Token),
+            _cts.Token,
+            TaskCreationOptions.LongRunning,
+            TaskScheduler.Default);
 
+        Interlocked.Exchange(ref _connectionEstablishedTimestamp, Stopwatch.GetTimestamp());
+        _reconnectBackoff.Reset();
+
+        // Start heartbeat monitor if enabled
+        if (EnableHeartbeat)
+        {
+            StartHeartbeatMonitor();
+        }
+    }
+
+    /// <summary>
+    /// Performs connection warm-up by sending lightweight requests to prime the connection.
+    /// Call this before market open to minimize initial latency variance.
+    /// </summary>
+    public async Task<WarmUpStatistics> WarmUpConnectionAsync(CancellationToken ct = default)
+    {
+        if (!IsConnected)
+            throw new InvalidOperationException("Connection must be established before warm-up");
+
+        return await _warmUp.ExecuteWarmUpAsync(async token =>
+        {
+            // Request current time as a lightweight operation to warm up the connection
+            await RequestCurrentTimeAsync(token).ConfigureAwait(false);
+        }, ct).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Requests the current server time and measures round-trip latency.
+    /// </summary>
+    public Task RequestCurrentTimeAsync(CancellationToken ct = default)
+    {
+        if (!IsConnected) return Task.CompletedTask;
+
+        Interlocked.Exchange(ref _currentTimeRequestTimestamp, Stopwatch.GetTimestamp());
+        _clientSocket.reqCurrentTime();
         return Task.CompletedTask;
+    }
+
+    private void StartHeartbeatMonitor()
+    {
+        _heartbeatMonitor?.Dispose();
+        _heartbeatMonitor = new HeartbeatMonitor(
+            heartbeatFunc: async ct =>
+            {
+                if (!IsConnected) return false;
+                await RequestCurrentTimeAsync(ct).ConfigureAwait(false);
+                return true;
+            },
+            interval: TimeSpan.FromSeconds(30),
+            timeout: TimeSpan.FromSeconds(10));
+
+        _heartbeatMonitor.ConnectionUnhealthy += OnHeartbeatUnhealthy;
+        _heartbeatMonitor.Start();
+    }
+
+    private void OnHeartbeatUnhealthy(object? sender, EventArgs e)
+    {
+        if (EnableAutoReconnect && !_isReconnecting)
+        {
+            _ = TriggerReconnectAsync();
+        }
     }
 
     public async Task DisconnectAsync()
     {
         try
         {
+            _heartbeatMonitor?.Dispose();
+            _heartbeatMonitor = null;
+
             _cts.Cancel();
-            if (_readerLoop is not null) await _readerLoop.ConfigureAwait(false);
+            if (_readerLoop is not null)
+            {
+                try
+                {
+                    await _readerLoop.ConfigureAwait(false);
+                }
+                catch (OperationCanceledException) { }
+            }
         }
         catch { /* ignore */ }
 
         if (IsConnected)
             _clientSocket.eDisconnect();
+
+        Interlocked.Exchange(ref _connectionEstablishedTimestamp, 0);
     }
 
     public void Dispose()
     {
+        if (_disposed) return;
+        _disposed = true;
+
+        _heartbeatMonitor?.Dispose();
         _cts.Cancel();
+
         if (IsConnected)
             _clientSocket.eDisconnect();
+
         _cts.Dispose();
     }
 
     private void ReaderLoop(CancellationToken ct)
     {
+        // Set thread priority for reduced latency
+        ThreadingUtilities.SetHighPriority();
+
         while (!ct.IsCancellationRequested && IsConnected)
         {
-            _signal.waitForSignal();
-            _reader?.processMsgs();
+            try
+            {
+                _signal.waitForSignal();
+                if (ct.IsCancellationRequested) break;
+
+                _reader?.processMsgs();
+                Interlocked.Exchange(ref _lastMessageTimestamp, Stopwatch.GetTimestamp());
+            }
+            catch (Exception) when (!ct.IsCancellationRequested)
+            {
+                // Connection may have been lost
+                if (EnableAutoReconnect && !_isReconnecting)
+                {
+                    _ = TriggerReconnectAsync();
+                }
+                break;
+            }
         }
+    }
+
+    private async Task TriggerReconnectAsync()
+    {
+        if (_isReconnecting || _disposed) return;
+        _isReconnecting = true;
+
+        ConnectionLost?.Invoke(this, EventArgs.Empty);
+
+        try
+        {
+            // Stop existing reader
+            _cts.Cancel();
+            _heartbeatMonitor?.Dispose();
+            _heartbeatMonitor = null;
+
+            if (_readerLoop is not null)
+            {
+                try { await _readerLoop.ConfigureAwait(false); }
+                catch { }
+            }
+
+            if (IsConnected)
+                _clientSocket.eDisconnect();
+
+            // Attempt reconnection with exponential backoff
+            while (!_disposed && _reconnectBackoff.CanRetry)
+            {
+                Interlocked.Increment(ref _reconnectAttempts);
+
+                await _reconnectBackoff.WaitAsync().ConfigureAwait(false);
+
+                try
+                {
+                    _cts = new CancellationTokenSource();
+                    await ConnectInternalAsync(_cts.Token).ConfigureAwait(false);
+
+                    if (IsConnected)
+                    {
+                        _reconnectBackoff.Reset();
+                        ConnectionRestored?.Invoke(this, EventArgs.Empty);
+                        break;
+                    }
+                }
+                catch
+                {
+                    // Continue retry loop
+                }
+            }
+        }
+        finally
+        {
+            _isReconnecting = false;
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void RecordMessageReceived()
+    {
+        Interlocked.Increment(ref _totalMessagesReceived);
+        Interlocked.Exchange(ref _lastMessageTimestamp, Stopwatch.GetTimestamp());
     }
 
     // -----------------------
@@ -147,19 +398,24 @@ public sealed partial class EnhancedIBConnectionManager : EWrapper, IDisposable
     // -----------------------
     // EWrapper depth callbacks
     // -----------------------
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void updateMktDepth(int tickerId, int position, int operation, int side, double price, decimal size)
     {
+        RecordMessageReceived();
         _router.UpdateMktDepth(tickerId, position, operation, side, price, (double)size);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void updateMktDepthL2(int tickerId, int position, string marketMaker, int operation, int side, double price, decimal size, bool isSmartDepth)
     {
+        RecordMessageReceived();
         _router.UpdateMktDepthL2(tickerId, position, marketMaker, operation, side, price, (double)size, isSmartDepth);
     }
 
-
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void tickByTickAllLast(int reqId, int tickType, long time, double price, decimal size, TickAttribLast tickAttribLast, string exchange, string specialConditions)
     {
+        RecordMessageReceived();
         _router.OnTickByTickAllLast(reqId, tickType, time, price, (double)size, exchange, specialConditions);
     }
 
@@ -181,7 +437,19 @@ public sealed partial class EnhancedIBConnectionManager : EWrapper, IDisposable
     public void tickSnapshotEnd(int tickerId) { }
     public void nextValidId(int orderId) { }
     public void managedAccounts(string accountsList) { }
-    public void currentTime(long time) { }
+    public void currentTime(long time)
+    {
+        RecordMessageReceived();
+
+        // Measure round-trip latency from the time request
+        var requestTs = Interlocked.Read(ref _currentTimeRequestTimestamp);
+        if (requestTs > 0)
+        {
+            var latencyUs = HighResolutionTimestamp.GetElapsedMicroseconds(requestTs);
+            _lastRoundTripLatencyUs = latencyUs;
+            LatencyMeasured?.Invoke(this, latencyUs);
+        }
+    }
     public void accountSummary(int reqId, string account, string tag, string value, string currency) { }
     public void accountSummaryEnd(int reqId) { }
     public void accountUpdateMulti(int reqId, string account, string modelCode, string key, string value, string currency) { }
