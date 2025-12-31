@@ -1,0 +1,46 @@
+
+    digraph G {
+      rankdir=TB;
+      graph [fontname="Helvetica", fontsize=10, bgcolor="white"];
+      node  [fontname="Helvetica", fontsize=10, shape=box, style="rounded,filled", color="#2b6cb0", fillcolor="#e8f4ff"];
+      edge  [fontname="Helvetica", fontsize=10, color="#4a5568"];
+
+      Operator [shape=oval, style="filled", fillcolor="#ffffff", color="#333333", label="Operator"];
+      UI [label="ASP.NET UI
+IBDataCollector.Ui", fillcolor="#e8f4ff", color="#2b6cb0"];
+      DISK [shape=cylinder, style="filled", fillcolor="#fff5f5", color="#c53030", label="Filesystem
+./data"];
+      IB [fillcolor="#f8f8f8", color="#333333", label="Interactive Brokers
+TWS/Gateway"];
+
+      subgraph cluster_proc {
+        label="IB Data Collector (Process)";
+        color="#2c7a7b";
+        style="rounded";
+
+        APP [label="Application Layer
+Program/ConfigWatcher/SubscriptionManager"];
+        DOM [label="Domain Layer
+Collectors + Models", fillcolor="#f7fafc", color="#4a5568"];
+        PIPE [label="Event Pipeline
+IMarketEventBus/Routed Fanout", fillcolor="#f7fafc", color="#4a5568"];
+        STOR [label="Storage
+JsonlStorageSink/Policy", fillcolor="#f7fafc", color="#4a5568"];
+        INFRA [label="Infrastructure (IB)
+Connection/Router/ContractFactory", fillcolor="#f7fafc", color="#4a5568"];
+
+        APP -> INFRA;
+        APP -> DOM;
+        APP -> PIPE;
+        APP -> STOR;
+
+        INFRA -> DOM;
+        DOM -> PIPE;
+        PIPE -> STOR;
+      }
+
+      Operator -> UI;
+      UI -> DISK [dir=both];
+      IB -> INFRA;
+      STOR -> DISK;
+    }

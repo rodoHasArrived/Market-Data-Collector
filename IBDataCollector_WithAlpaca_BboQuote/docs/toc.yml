@@ -1,0 +1,12 @@
+- name: Overview
+  href: architecture.md
+- name: Domain Model
+  href: domains.md
+- name: C4 Diagrams
+  href: c4-diagrams.md
+- name: Operator Runbook
+  href: operator-runbook.md
+- name: Design Review Memo
+  href: design-review-memo.md
+- name: Why This Architecture
+  href: why-this-architecture.md

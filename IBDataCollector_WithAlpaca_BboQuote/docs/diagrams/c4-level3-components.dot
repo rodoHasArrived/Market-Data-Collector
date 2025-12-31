@@ -1,0 +1,66 @@
+
+    digraph G {
+      rankdir=LR;
+      graph [fontname="Helvetica", fontsize=10, bgcolor="white"];
+      node  [fontname="Helvetica", fontsize=10, shape=box, style="rounded,filled", fillcolor="#f7fafc", color="#4a5568"];
+      edge  [fontname="Helvetica", fontsize=10, color="#4a5568"];
+
+      IB [shape=box, style="rounded,filled", fillcolor="#f8f8f8", color="#333333", label="IB TWS/Gateway"];
+      FS [shape=cylinder, style="filled", fillcolor="#fff5f5", color="#c53030", label="Filesystem"];
+
+      subgraph cluster_infra {
+        label="Infrastructure.IB";
+        color="#2b6cb0";
+        style="rounded";
+        CONN [label="EnhancedIBConnectionManager
+(EWrapper)"];
+        ROUTE [label="IBCallbackRouter"];
+        FACT [label="ContractFactory"];
+        CLIENT [label="IIBMarketDataClient
+IBMarketDataClient/NoOp"];
+      }
+
+      subgraph cluster_dom {
+        label="Domain";
+        color="#2c7a7b";
+        style="rounded";
+        TD [label="TradeDataCollector"];
+        MD [label="MarketDepthCollector"];
+        MODELS [label="Models
+Trade/LOBSnapshot/Integrity"];
+      }
+
+      subgraph cluster_app {
+        label="Application";
+        color="#805ad5";
+        style="rounded";
+        CW [label="ConfigWatcher"];
+        SM [label="SubscriptionManager"];
+        MET [label="Metrics/StatusWriter"];
+      }
+
+      subgraph cluster_pipe {
+        label="Pipeline/Storage";
+        color="#c05621";
+        style="rounded";
+        BUS [label="IMarketEventBus
+Per-symbol channels"];
+        SINK [label="JsonlStorageSink"];
+        POL [label="JsonlStoragePolicy"];
+      }
+
+      IB -> CONN -> ROUTE;
+      ROUTE -> TD;
+      ROUTE -> MD;
+      TD -> BUS;
+      MD -> BUS;
+      BUS -> SINK -> FS;
+      POL -> SINK;
+
+      CW -> SM;
+      SM -> CLIENT;
+      CLIENT -> FACT;
+      CLIENT -> CONN;
+
+      MET -> FS;
+    }

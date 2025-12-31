@@ -1,0 +1,33 @@
+[Unit]
+Description=IB Data Collector (Microstructure Recorder)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/ibdatacollector
+# Preflight: ensure data dir writable + IB reachable if USE_IBAPI=true
+ExecStartPre=/bin/bash -lc 'mkdir -p /opt/ibdatacollector/data /opt/ibdatacollector/logs /opt/ibdatacollector/run'
+ExecStartPre=/bin/bash -lc 'test -w /opt/ibdatacollector/data'
+ExecStartPre=/bin/bash -lc 'if [ "$USE_IBAPI" = "true" ]; then for p in ${IB_PORT:-7497 4002 7496 4001}; do if timeout 1 bash -c ">/dev/tcp/${IB_HOST}/${p}" 2>/dev/null; then export IB_PORT=$p; echo "IB_PORT=$p"; exit 0; fi; done; echo "IB not reachable"; exit 1; else exit 0; fi'
+# Environment overrides (optional):
+Environment=DOTNET_ENVIRONMENT=Production
+Environment=USE_IBAPI=false
+Environment=IB_HOST=127.0.0.1
+Environment=IB_PORT=7497
+Environment=IB_CLIENT_ID=17
+
+# Run collector (hot reload + status)
+ExecStart=/usr/bin/dotnet run --project /opt/ibdatacollector/src/IBDataCollector/IBDataCollector.csproj --configuration Release -- --watch-config --serve-status
+
+# Graceful stop
+KillSignal=SIGTERM
+TimeoutStopSec=15
+Restart=on-failure
+RestartSec=5
+
+# Logs to journalctl by default
+SyslogIdentifier=ibdatacollector
+
+[Install]
+WantedBy=multi-user.target
