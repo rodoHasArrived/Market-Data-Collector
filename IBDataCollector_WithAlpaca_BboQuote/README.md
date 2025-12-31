@@ -1,117 +1,38 @@
-## MarketDepthCollector (L2 Microstructure)
+# IB Data Collector (IB + Alpaca BBO)
 
-This project now includes a `MarketDepthCollector` in `src/IBDataCollector/Domain/Collectors` that:
-- consumes `MarketDepthUpdate` deltas (insert/update/delete) for Bid/Ask at book levels
-- maintains a per-symbol L2 order book
-- emits `MarketEventType.L2Snapshot` with `LOBSnapshot` payloads
-- emits `MarketEventType.Integrity` with `DepthIntegrityEvent` payloads on gaps/out-of-order/invalid ops
-- stops processing for a symbol once stale until `ResetSymbolStream(symbol)` is called
+A cross-platform collector that ingests Interactive Brokers (IB) market data (trades + L2 depth) and optionally Alpaca trades/quotes, normalizes them into domain events, and persists them as JSONL for downstream research.
 
-### Running a local smoke test (no IB required)
+## Quick start
+
+Run a local smoke test (no IB/Alpaca connectivity required):
 
 ```bash
 dotnet run --project src/IBDataCollector/IBDataCollector.csproj
 ```
 
-This will simulate a few depth updates and write JSONL output under `./data/`.
-
-### Running built-in self tests (no external test framework)
+To exercise built-in self tests:
 
 ```bash
 dotnet run --project src/IBDataCollector/IBDataCollector.csproj -- --selftest
 ```
 
-### Notes on IB market depth
+See `docs/operator-runbook.md` for production startup scripts, including the systemd unit and PowerShell helpers.
 
-To receive L2, IB requires the correct market data subscriptions for the venues involved.
-When you connect the official IB API:
-- call `reqMktDepth` / `cancelMktDepth` per symbol with your desired depth levels
-- map `tickerId -> symbol` (see `Infrastructure/IB/IBCallbackRouter.cs`)
-- route `updateMktDepth` / `updateMktDepthL2` callbacks into `MarketDepthCollector.OnDepth(...)`
+## Configuration highlights
 
-### Building with the official IB API
+* `appsettings.json` drives symbol subscriptions (trades/depth), IB client settings, and Alpaca keys.
+* Hot reload is enabled by default: edits to `appsettings.json` apply without restarting when `--watch-config` is set.
+* Set `DataSource` to `Alpaca` to disable IB connectivity checks and use Alpaca WebSocket data instead.
 
-To compile the real IB connection manager:
-- add a reference to IBApi (dll/package)
-- define the compilation constant `IBAPI`
+## Outputs
 
-Example:
-```bash
-dotnet build -p:DefineConstants=IBAPI
-```
+Events are written under `./data/` as newline-delimited JSON. The default `JsonlStoragePolicy` rotates files by symbol and event type to make downstream consumption simpler (e.g., `AAPL.Trade.jsonl`). Integrity events are stored alongside trade/depth streams so data quality issues are easy to correlate.
 
+## Architecture and design docs
 
-## ContractFactory + preferred shares
+Detailed diagrams and domain notes live in `./docs`:
 
-`Infrastructure/IB/ContractFactory.cs` builds IB contracts from `SymbolConfig`.
-
-For preferred shares, set `LocalSymbol` whenever possible (this avoids IB ambiguity).
-
-Example config entry:
-```json
-{
-  "Symbol": "PCG-PA",
-  "SubscribeTrades": true,
-  "SubscribeDepth": true,
-  "DepthLevels": 10,
-  "SecurityType": "STK",
-  "Exchange": "SMART",
-  "Currency": "USD",
-  "PrimaryExchange": "NYSE",
-  "LocalSymbol": "PCG PRA"
-}
-```
-
-### Building with IBApi
-Reference IBApi and define `IBAPI`:
-```bash
-dotnet build -p:DefineConstants=IBAPI
-```
-
-
-## IIBMarketDataClient abstraction
-
-Program now uses `IIBMarketDataClient` so the same config-driven subscription logic runs in all builds:
-- In normal builds (no IBApi), `NoOpIBClient` is used (no connection).
-- In IB builds (`IBAPI` constant + IBApi reference), `IBMarketDataClient` wraps `EnhancedIBConnectionManager` + `IBCallbackRouter`.
-
-This removes the need to manually uncomment any code in Program.
-
-
-## Hot-reloaded trade subscriptions
-
-`SubscriptionManager` now applies `SubscribeTrades` via `IIBMarketDataClient.SubscribeTrades(SymbolConfig)`.
-In IB builds (`IBAPI` defined), this uses `reqTickByTickData(..., "AllLast")` and routes `tickByTickAllLast` into `TradeDataCollector`.
-In non-IB builds, it is a no-op.
-
-
-## Documentation
-
-See `/docs`:
-
-* `architecture.md` – system design and data flow
-* `domains.md` – domain model and invariants
-* `operator-runbook.md` – production operations
-
-
-### Documentation Site (DocFX)
-
-Build:
-```bash
-docfx docs/docfx/docfx.json
-```
-
-Key docs:
-- `docs/c4-diagrams.md`
-- `docs/design-review-memo.md`
-- `docs/why-this-architecture.md`
-
-
-## Startup
-
-Use the canonical startup scripts in repo root:
-- Linux/macOS: `START_COLLECTOR.exp`
-- Windows: `START_COLLECTOR.ps1`
-- systemd unit: `deploy/systemd/ibdatacollector.service`
-
-See `docs/operator-runbook.md` for details.
+* `architecture.md` – layered architecture and event flow
+* `c4-diagrams.md` – rendered system, container, and component diagrams
+* `domains.md` – event contracts and invariants
+* `operator-runbook.md` – operational guidance and startup scripts
