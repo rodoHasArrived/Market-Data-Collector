@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using IBDataCollector.Domain.Events;
 using IBDataCollector.Domain.Models;
 
@@ -27,6 +28,19 @@ public sealed class QuoteCollector : IQuoteStateStore
         if (update is null) throw new ArgumentNullException(nameof(update));
         if (string.IsNullOrWhiteSpace(update.Symbol)) return;
 
+        var payload = Upsert(update);
+        _publisher.TryPublish(MarketEvent.BboQuote(payload.Timestamp, payload.Symbol, payload));
+    }
+
+    public bool TryGet(string symbol, out BboQuotePayload quote)
+        => _latest.TryGetValue(symbol, out quote);
+
+    public BboQuotePayload Upsert(MarketQuoteUpdate update)
+    {
+        if (update is null) throw new ArgumentNullException(nameof(update));
+        if (string.IsNullOrWhiteSpace(update.Symbol))
+            throw new ArgumentException("Symbol is required", nameof(update));
+
         var symbol = update.Symbol;
 
         // We keep our own monotonically increasing per-symbol sequence for quotes.
@@ -35,9 +49,17 @@ public sealed class QuoteCollector : IQuoteStateStore
         var payload = BboQuotePayload.FromUpdate(update, nextSeq);
         _latest[symbol] = payload;
 
-        _publisher.TryPublish(MarketEvent.BboQuote(payload.Timestamp, payload.Symbol, payload));
+        return payload;
     }
 
-    public bool TryGet(string symbol, out BboQuotePayload quote)
-        => _latest.TryGetValue(symbol, out quote);
+    public bool TryRemove(string symbol, out BboQuotePayload removed)
+    {
+        var removedLatest = _latest.TryRemove(symbol, out removed);
+        _seq.TryRemove(symbol, out _);
+
+        return removedLatest;
+    }
+
+    public IReadOnlyDictionary<string, BboQuotePayload> Snapshot()
+        => new Dictionary<string, BboQuotePayload>(_latest, StringComparer.OrdinalIgnoreCase);
 }
