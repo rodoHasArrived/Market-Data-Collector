@@ -53,7 +53,7 @@ internal static class Program
         var depthCollector = new MarketDepthCollector(publisher, requireExplicitSubscription: true);
 
         // Market data client (provider selected by config)
-        await using IIBMarketDataClient dataClient = cfg.DataSource.Equals("Alpaca", StringComparison.OrdinalIgnoreCase)
+        await using IIBMarketDataClient dataClient = cfg.DataSource == DataSourceKind.Alpaca
             ? new AlpacaMarketDataClient(tradeCollector, quoteCollector, cfg.Alpaca ?? throw new InvalidOperationException("Alpaca options required when DataSource=Alpaca"))
             : new IBMarketDataClient(publisher, tradeCollector, depthCollector);
 
@@ -72,9 +72,7 @@ internal static class Program
                 dataClient.SubscribeMarketDepth(s);
         }
 
-                if (!watchConfig)
-        {
-            // --- Simulated feed smoke test (depth + trade) ---
+        // --- Simulated feed smoke test (depth + trade) ---
 
         // Leave this as a sanity check in non-IB builds. In IBAPI builds, live data should flow too.
         var now = DateTimeOffset.UtcNow;
@@ -118,10 +116,7 @@ internal static class Program
                 return new AppConfig();
 
             var json = File.ReadAllText(path);
-            var cfg = JsonSerializer.Deserialize<AppConfig>(json, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
+            var cfg = JsonSerializer.Deserialize<AppConfig>(json, AppConfigJsonOptions.Read);
             return cfg ?? new AppConfig();
         }
         catch

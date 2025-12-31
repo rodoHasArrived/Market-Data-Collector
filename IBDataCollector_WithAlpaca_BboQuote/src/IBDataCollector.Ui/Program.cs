@@ -15,12 +15,12 @@ app.MapGet("/", (ConfigStore store) =>
 
 app.MapGet("/api/config", (ConfigStore store) =>
 {
-    var cfg = store.Load();
-    return Results.Json(new
-    {
-        dataRoot = cfg.DataRoot,
-        compress = cfg.Compress,
-        symbols = cfg.Symbols ?? Array.Empty<SymbolConfig>()
+        var cfg = store.Load();
+        return Results.Json(new
+        {
+            dataRoot = cfg.DataRoot,
+            compress = cfg.Compress,
+            symbols = cfg.Symbols ?? Array.Empty<SymbolConfig>()
     }, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
 });
 
@@ -232,7 +232,7 @@ public sealed class ConfigStore
         {
             if (!File.Exists(ConfigPath)) return new AppConfig();
             var json = File.ReadAllText(ConfigPath);
-            return JsonSerializer.Deserialize<AppConfig>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new AppConfig();
+            return JsonSerializer.Deserialize<AppConfig>(json, AppConfigJsonOptions.Read) ?? new AppConfig();
         }
         catch
         {
@@ -242,7 +242,7 @@ public sealed class ConfigStore
 
     public async Task SaveAsync(AppConfig cfg)
     {
-        var json = JsonSerializer.Serialize(cfg, new JsonSerializerOptions { WriteIndented = true });
+        var json = JsonSerializer.Serialize(cfg, AppConfigJsonOptions.Write);
         Directory.CreateDirectory(Path.GetDirectoryName(ConfigPath)!);
         await File.WriteAllTextAsync(ConfigPath, json);
     }
