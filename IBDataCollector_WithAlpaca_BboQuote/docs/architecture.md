@@ -60,6 +60,12 @@ Infrastructure (IB)
 * **Storage policy** – `JsonlStoragePolicy` groups files by `<Symbol>.<MarketEventType>.jsonl` (for example, `SPY.LOBSnapshot.jsonl`) and rotates when file size thresholds are hit.
 * **Metadata** – status writers expose lightweight health snapshots for the ASP.NET UI and the startup scripts to poll.
 
+### Quote/BBO Path
+
+* `QuoteStateStore` tracks the latest BBO per symbol and emits `BboQuote` events with bid/ask, spread, and mid-price when possible.
+* Alpaca WebSocket feeds can supply BBO updates even when IB is disabled; sequence numbers and stream IDs are preserved to help reconcile overlapping feeds.
+* `TradeDataCollector` uses the most recent BBO to infer aggressor side for trades and to compute buy/sell splits in order-flow statistics.
+
 ### Resilience and integrity
 
 * **Depth gaps** – `MarketDepthCollector` freezes a symbol and emits a `DepthIntegrityEvent` if the sequence of updates is inconsistent; operators can call `ResetSymbolStream` via the UI or restart the subscription to resume.

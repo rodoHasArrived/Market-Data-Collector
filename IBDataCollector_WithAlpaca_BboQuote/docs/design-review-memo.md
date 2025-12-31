@@ -10,7 +10,7 @@
 
 ## 1. Executive Summary
 
-The IB Data Collector is an event-driven, layered system designed to capture and store high-fidelity market microstructure data (tick-by-tick trades and L2 depth) from Interactive Brokers. The architecture emphasizes determinism, auditability, controlled change, and operational safety. It can run in both **live** (IB-connected) and **offline** (no IB dependency) modes with identical orchestration logic.
+The IB Data Collector is an event-driven, layered system designed to capture and store high-fidelity market microstructure data (tick-by-tick trades, BBO quotes, and L2 depth) from Interactive Brokers or Alpaca. The architecture emphasizes determinism, auditability, controlled change, and operational safety. It can run in both **live** (IB-connected) and **offline** (no IB dependency) modes with identical orchestration logic and optional Alpaca-only quote/trade ingestion.
 
 The system is suitable for controlled production deployment provided the operational controls in this memo are followed, and the remaining production hardening items are tracked and implemented.
 
@@ -40,7 +40,7 @@ The system is suitable for controlled production deployment provided the operati
 - **Pipeline/Storage:** Per-symbol routing and buffered persistence.
 
 ### Key Control: Unified Event Stream
-All outputs normalize to `MarketEvent(Type, Symbol, Timestamp, Payload)` with typed payload records. This provides a stable contract for storage, monitoring, and future replay/backtesting.
+All outputs normalize to `MarketEvent(Type, Symbol, Timestamp, Payload, SequenceNumber, Source)` with typed payload records. This provides a stable contract for storage, monitoring, and future replay/backtesting, and ensures BBO quote updates and trade events carry comparable sequencing metadata across IB and Alpaca feeds.
 
 ---
 
@@ -48,12 +48,13 @@ All outputs normalize to `MarketEvent(Type, Symbol, Timestamp, Payload)` with ty
 
 ### 4.1 Integrity Controls
 - **Depth:** `MarketDepthCollector` emits `DepthIntegrityEvent` on invalid operations/gaps and freezes the symbol stream until reset/resubscribe.
+- **Quotes/BBO:** `QuoteStateStore` tracks sequence numbers and emits `QuoteIntegrityEvent` on regressions or stream resets, enabling operators to reconcile overlapping IB/Alpaca feeds.
 - **Trades:** Tick-by-tick subscriptions are managed by `SubscriptionManager`. Future enhancement: sequence validation for trades if IB provides stable sequencing.
 
 ### 4.2 Backpressure and Bounded Queues
 The event bus uses bounded channels by design. Under pressure:
 - events may be dropped to protect process stability
-- drops are counted via `Metrics` and visible via status
+- drops are counted via `Metrics` and visible via status (quote/trade/depth paths share the same discipline)
 
 This is an explicit tradeoff: stability and bounded memory over unbounded buffering.
 
@@ -77,6 +78,7 @@ This reduces restart risk and prevents partial-write corruption.
 ### Schema Management
 - `MarketEventType` is the canonical type registry.
 - Payloads are typed records intended to be backward-compatible.
+- Quote events include stream identifiers and sequence numbers to support reconciliation and replay.
 
 Recommended: version payload records if breaking changes become necessary.
 
@@ -115,18 +117,19 @@ Operational prerequisites:
 | Data gaps | IB feed interruptions or missed updates | Integrity events + resubscribe procedures |
 | Event drops | Bounded queues may drop under load | Metrics + tuning + capacity planning |
 | Preferred contract ambiguity | IB preferred shares can resolve incorrectly | Require `LocalSymbol`/`ConId` in config |
+| Feed divergence | IB and Alpaca quotes may disagree | Preserve `Source`/`StreamId`; monitor `QuoteIntegrityEvent` and pick a primary source |
 | UI exposure | UI has no auth by default | Keep local-only or add auth if deployed |
 
 ---
 
 ## 9. Recommended Next Hardening Items
 
-1. Add QuoteStateStore for aggressor classification and better order-flow stats.
-2. Add structured logging sinks and log rotation.
-3. Add replay tool to validate stored events.
-4. Add unit/integration test suite automation in CI.
-5. Add authentication for UI if network-exposed.
-6. Add “auto-resubscribe on integrity” policy with rate limits.
+1. Add structured logging sinks and log rotation.
+2. Add replay tool to validate stored events.
+3. Add unit/integration test suite automation in CI.
+4. Add authentication for UI if network-exposed.
+5. Add “auto-resubscribe on integrity” policy with rate limits.
+6. Add feed-divergence alarms when IB and Alpaca BBO deviate beyond configured tolerances.
 
 ---
 

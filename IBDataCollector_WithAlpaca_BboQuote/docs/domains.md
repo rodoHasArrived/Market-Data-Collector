@@ -64,3 +64,22 @@ Provides operators with enough context to respond quickly:
 * The offending operation and level (insert/update/delete)
 * Expected vs. observed sequence
 * Suggested action (usually resubscribe the symbol or clear the book)
+
+## QuoteStateStore / BBO
+
+* Tracks the latest best-bid/offer snapshot per symbol.
+* Emits:
+  - BboQuote
+  - QuoteIntegrityEvent (if sequencing regresses or a stream resets)
+
+### BboQuote payload
+
+* Bid/ask price and size with sequence numbers and stream identifiers.
+* Derived mid-price and spread fields are populated only when both sides are positive and consistent.
+* Optional venue and stream IDs help downstream consumers reconcile overlapping feeds.
+
+### Consumers
+
+* `TradeDataCollector` uses the current BBO when classifying trade aggressor side.
+* `OrderFlowStatistics` includes buy/sell splits when BBO context is available.
+* Operators can snapshot current quotes through the API/UI without replaying stored events.
