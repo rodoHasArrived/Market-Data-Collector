@@ -1,9 +1,10 @@
 # Why This Architecture (Non‑Engineer Explainer)
 
 ## What this program does
-It records detailed market activity from Interactive Brokers:
+It records detailed market activity from Interactive Brokers or Alpaca:
 - **Trades:** every print (tick-by-tick)
 - **Depth:** the live order book (Level 2)
+- **Quotes:** best bid/offer (BBO) when using Alpaca
 
 It stores that data in a format that can be audited, replayed, and analyzed.
 
@@ -47,9 +48,24 @@ We treat all recorded activity as a stream of standardized events and store them
 
 ---
 
-## What’s next for production maturity
-- richer trade classification (buy vs sell)
-- stronger monitoring/alerting
-- automated recovery policies (resubscribe)
-- CI test automation and release workflow
+## What's next for production maturity
+
+### Recently Completed
+- ✅ Fixed subscription bug (trade subscriptions now work correctly)
+- ✅ Improved performance (cached serializer options)
+- ✅ Added TODO comments throughout codebase for tracking improvements
+
+### In Progress / Planned
+- 🔧 **Logging framework** – add Serilog for proper error visibility
+- 🔧 **Secure credentials** – move API keys to environment variables or vault
+- 🔧 **Connection resilience** – add retry logic with exponential backoff
+- 🔧 **Data validation** – add guards for Price > 0, Size >= 0
+- 🔧 **Alpaca quote wiring** – connect BBO data to L2 collector
+- ⏳ Richer trade classification (buy vs sell)
+- ⏳ Stronger monitoring/alerting
+- ⏳ Automated recovery policies (resubscribe)
+- ⏳ CI test automation and release workflow
+
+### Legacy Code Cleanup
+- The file `LightweightMarketDepthCollector.cs` is deprecated and should be deleted
 

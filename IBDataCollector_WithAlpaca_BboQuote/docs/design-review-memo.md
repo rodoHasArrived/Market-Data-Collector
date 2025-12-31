@@ -116,17 +116,42 @@ Operational prerequisites:
 | Event drops | Bounded queues may drop under load | Metrics + tuning + capacity planning |
 | Preferred contract ambiguity | IB preferred shares can resolve incorrectly | Require `LocalSymbol`/`ConId` in config |
 | UI exposure | UI has no auth by default | Keep local-only or add auth if deployed |
+| Credential exposure | Alpaca API keys stored in plaintext config | Use env vars or secure vault (see TODOs) |
+| Silent error swallowing | Bare catch blocks hide failures | Implement structured logging (Serilog) |
+| Connection fragility | No retry logic; single-attempt connections | Implement exponential backoff retry |
+| Data validation gaps | No price/size validation in domain models | Add validation guards to reject invalid data |
+| Dead code confusion | Deprecated `LightweightMarketDepthCollector.cs` | Delete or clearly mark as obsolete |
+
+---
+
+## 8.1 Recently Fixed Issues
+
+| Issue | Description | Status |
+|-------|-------------|--------|
+| Subscription bug | `SubscribeDepth` was checked twice instead of `SubscribeTrades` in Program.cs | **Fixed** |
+| Performance allocation | `JsonSerializerOptions` created on every subscription message | **Fixed** (cached) |
 
 ---
 
 ## 9. Recommended Next Hardening Items
 
-1. Add QuoteStateStore for aggressor classification and better order-flow stats.
-2. Add structured logging sinks and log rotation.
-3. Add replay tool to validate stored events.
-4. Add unit/integration test suite automation in CI.
-5. Add authentication for UI if network-exposed.
-6. Add “auto-resubscribe on integrity” policy with rate limits.
+### Priority 1 (Critical)
+1. **Add structured logging framework** (Serilog recommended) - bare catch blocks currently hide errors
+2. **Move credentials to secure storage** - use environment variables or vault service for Alpaca keys
+3. **Implement connection retry logic** - add exponential backoff for IB and Alpaca connections
+
+### Priority 2 (High)
+4. Add input validation for Price (> 0) and Size (>= 0) in domain models
+5. Wire Alpaca quotes to L2 collector for full BBO support
+6. Add QuoteStateStore for aggressor classification and better order-flow stats
+7. Delete deprecated `LightweightMarketDepthCollector.cs`
+
+### Priority 3 (Medium)
+8. Add replay tool to validate stored events
+9. Add unit/integration test suite automation in CI
+10. Add authentication for UI if network-exposed
+11. Add "auto-resubscribe on integrity" policy with rate limits
+12. Standardize on `decimal` type for all financial data (currently mixed with `double`)
 
 ---
 

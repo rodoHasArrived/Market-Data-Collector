@@ -168,3 +168,53 @@ To enable quote ingestion in Alpaca mode, set:
 ```
 
 This will emit `MarketEventType.BboQuote` events with `BboQuotePayload` and improve `Trade` + `OrderFlow` aggressor classification.
+
+---
+
+## Known Issues and Limitations
+
+### Critical Issues (Recently Fixed)
+- **Subscription Bug (Fixed):** Trade subscriptions were not being registered due to a logic error where `SubscribeDepth` was checked twice instead of `SubscribeTrades` in Program.cs.
+
+### Current Limitations
+
+| Issue | Impact | Workaround |
+|-------|--------|------------|
+| No logging framework | Errors may be silently swallowed | Check console output; monitor status.json |
+| No connection retry | Single connection attempt; fails immediately on error | Restart manually if connection drops |
+| Alpaca quotes not wired to L2 | BBO data from Alpaca not fully utilized | Enable `SubscribeQuotes` for basic BBO events |
+| No price/size validation | Potentially invalid data may be persisted | Validate data in downstream processing |
+
+### Security Warnings
+
+⚠️ **Credential Storage:** Alpaca API credentials are stored in plaintext in `appsettings.json`. For production use:
+1. Use environment variables instead of config files
+2. Consider Azure Key Vault, AWS Secrets Manager, or HashiCorp Vault
+3. Use .NET User Secrets for local development
+4. Never commit credentials to version control
+
+### Deprecated Code
+
+The file `Domain/LightweightMarketDepthCollector.cs` is deprecated and unused. It uses an old namespace and enum naming convention. Consider deleting this file to reduce confusion.
+
+---
+
+## Troubleshooting
+
+### Common Issues
+
+**Problem:** Trades not being recorded
+- **Cause:** Prior to the recent fix, `SubscribeTrades` was not being evaluated correctly
+- **Solution:** Ensure you have the latest code with the subscription bug fix
+
+**Problem:** Connection drops without retry
+- **Cause:** No exponential backoff retry logic implemented
+- **Solution:** Restart the collector manually; consider implementing retry logic
+
+**Problem:** Config errors not visible
+- **Cause:** Bare catch blocks in config loading code
+- **Solution:** Check console stderr for warning messages; consider adding structured logging
+
+**Problem:** Alpaca WebSocket disconnects silently
+- **Cause:** No automatic reconnection or heartbeat mechanism
+- **Solution:** Monitor status.json for stale timestamps; restart if needed
