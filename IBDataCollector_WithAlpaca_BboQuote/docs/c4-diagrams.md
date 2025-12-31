@@ -4,16 +4,16 @@
 
 These are pre-rendered exports for environments that don't support Mermaid rendering.
 
-- Level 1: System Context  
-  - SVG: `docs/diagrams/c4-level1-context.svg`  
+- Level 1: System Context
+  - SVG: `docs/diagrams/c4-level1-context.svg`
   - PNG: `docs/diagrams/c4-level1-context.png`
 
-- Level 2: Containers  
-  - SVG: `docs/diagrams/c4-level2-containers.svg`  
+- Level 2: Containers
+  - SVG: `docs/diagrams/c4-level2-containers.svg`
   - PNG: `docs/diagrams/c4-level2-containers.png`
 
-- Level 3: Components  
-  - SVG: `docs/diagrams/c4-level3-components.svg`  
+- Level 3: Components
+  - SVG: `docs/diagrams/c4-level3-components.svg`
   - PNG: `docs/diagrams/c4-level3-components.png`
 
 ---
@@ -25,8 +25,8 @@ These diagrams describe the system using the C4 model:
 
 > Notes:
 > - Mermaid diagrams render on GitHub and in many markdown viewers.
-> - For DocFX, Mermaid rendering depends on theme/extension. If Mermaid isn’t rendered, treat these as source diagrams and export to SVG/PNG later.
-> - Diagrams include the optional Alpaca WebSocket feed and the QuoteStateStore that emits BBO events used for aggressor inference.
+> - For DocFX, Mermaid rendering depends on theme/extension. If Mermaid isn't rendered, treat these as source diagrams and export to SVG/PNG later.
+> - Diagrams include the optional Alpaca WebSocket feed and the `QuoteCollector` that emits BBO events used for aggressor inference.
 
 ---
 
@@ -62,9 +62,9 @@ classDef store fill:#fff5f5,stroke:#c53030,stroke-width:1px;
 ```mermaid
 flowchart TB
     subgraph C[IB Data Collector (Process)]
-        APP[Application Layer\nProgram/ConfigWatcher/SubscriptionManager]:::container
+        APP[Application Layer\nProgram/ConfigWatcher/StatusWriter]:::container
         DOM[Domain Layer\nCollectors + Models]:::container
-        PIPE[Event Pipeline\nIMarketEventBus/Routed Fanout]:::container
+        PIPE[Event Pipeline\nEventPipeline/Bounded Channel]:::container
         STOR[Storage\nJsonlStorageSink/Policy]:::container
         INFRA[Infrastructure (IB/Alpaca)\nConnectionManager/Router/ContractFactory]:::container
     end
@@ -106,24 +106,24 @@ flowchart LR
         CONN[EnhancedIBConnectionManager\n(EWrapper)]:::component
         ROUTE[IBCallbackRouter]:::component
         FACT[ContractFactory]:::component
-        CLIENT[IIBMarketDataClient\nIB/Alpaca/NoOp]:::component
+        CLIENT[IIBMarketDataClient\nIBMarketDataClient/AlpacaMarketDataClient/NoOp]:::component
     end
 
     subgraph DOM[Domain]
         TD[TradeDataCollector]:::component
         MD[MarketDepthCollector]:::component
-        QSS[QuoteStateStore\n(BBO cache/emitter)]:::component
-        MODELS[Models\nTrade/LOBSnapshot/Integrity]:::component
+        QC[QuoteCollector\n(BBO cache/emitter)]:::component
+        MODELS[Models\nTrade/LOBSnapshot/BboQuotePayload/Integrity]:::component
     end
 
     subgraph APP[Application]
         CW[ConfigWatcher]:::component
-        SM[SubscriptionManager]:::component
-        MET[Metrics/StatusWriter]:::component
+        SW[StatusWriter]:::component
+        MET[Metrics]:::component
     end
 
     subgraph PIPE[Pipeline/Storage]
-        BUS[IMarketEventBus\nPer-symbol channels]:::component
+        EP[EventPipeline\nBounded Channel]:::component
         SINK[JsonlStorageSink]:::component
         POL[JsonlStoragePolicy]:::component
         FS[(Filesystem)]:::store
@@ -136,20 +136,22 @@ flowchart LR
     ALP --> CLIENT
     ROUTE --> TD
     ROUTE --> MD
-    ROUTE --> QSS
-    TD --> BUS
-    MD --> BUS
-    QSS --> BUS
-    QSS --> TD
-    BUS --> SINK --> FS
+    ROUTE --> QC
+    CLIENT --> TD
+    CLIENT --> QC
+    TD --> EP
+    MD --> EP
+    QC --> EP
+    QC --> TD
+    EP --> SINK --> FS
     POL --> SINK
 
-    CW --> SM
-    SM --> CLIENT
+    CW --> APP
+    SW --> FS
+    MET --> APP
+
     CLIENT --> FACT
     CLIENT --> CONN
-
-    MET --> FS
 
 classDef ext fill:#f8f8f8,stroke:#333,stroke-dasharray: 4 2;
 classDef component fill:#f7fafc,stroke:#4a5568,stroke-width:1px;

@@ -6,18 +6,16 @@
       edge  [fontname="Helvetica", fontsize=10, color="#4a5568"];
 
       Operator [shape=oval, style="filled", fillcolor="#ffffff", color="#333333", label="Operator"];
-      IB      [shape=box, style="rounded,filled", fillcolor="#f8f8f8", color="#333333", label="Interactive Brokers
-TWS/Gateway"];
-      UI      [shape=box, style="rounded,filled", fillcolor="#e8f4ff", color="#2b6cb0", label="IBDataCollector.Ui
-Dashboard"];
-      COL     [shape=box, style="rounded,filled", fillcolor="#e6fffa", color="#2c7a7b", label="IB Data Collector
-Service"];
-      DISK    [shape=cylinder, style="filled", fillcolor="#fff5f5", color="#c53030", label="Local Storage
-JSONL / Gzip"];
+      IB      [shape=box, style="rounded,filled", fillcolor="#f8f8f8", color="#333333", label="Interactive Brokers\nTWS/Gateway"];
+      ALP     [shape=box, style="rounded,filled", fillcolor="#f8f8f8", color="#333333", label="Alpaca\nWebSocket"];
+      UI      [shape=box, style="rounded,filled", fillcolor="#e8f4ff", color="#2b6cb0", label="IBDataCollector.Ui\nDashboard"];
+      COL     [shape=box, style="rounded,filled", fillcolor="#e6fffa", color="#2c7a7b", label="IB Data Collector\nService"];
+      DISK    [shape=cylinder, style="filled", fillcolor="#fff5f5", color="#c53030", label="Local Storage\nJSONL / Gzip"];
 
       Operator -> UI;
       UI -> COL;
       IB -> COL;
+      ALP -> COL;
       COL -> DISK;
       UI -> DISK [dir=both];
     }

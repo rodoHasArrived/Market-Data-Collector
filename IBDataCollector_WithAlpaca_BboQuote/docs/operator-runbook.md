@@ -7,11 +7,23 @@
 dotnet run --project src/IBDataCollector/IBDataCollector.csproj
 ```
 
+This runs a smoke test with simulated data. Output is written to `./data/`.
+
+### Self-Test Mode
+```bash
+dotnet run --project src/IBDataCollector/IBDataCollector.csproj -- --selftest
+```
+
+Runs built-in self-tests (e.g., `DepthBufferSelfTests`) and exits.
+
 ### Production (IB Live)
 ```bash
 dotnet build -p:DefineConstants=IBAPI
 dotnet run --project src/IBDataCollector/IBDataCollector.csproj -- --watch-config --serve-status
 ```
+
+- `--serve-status`: Writes periodic health snapshots to `data/_status/status.json`
+- `--watch-config`: Enables hot reload of `appsettings.json` (handled by `ConfigWatcher`)
 
 ### UI
 ```bash
@@ -24,22 +36,51 @@ dotnet run --project src/IBDataCollector.Ui/IBDataCollector.Ui.csproj
 
 * Edit `appsettings.json`
 * Or use UI
-* Changes applied without restart
+* Changes applied without restart (when `--watch-config` is enabled)
 
 Supported:
 * Add/remove symbols
-* Toggle trades/depth
+* Toggle trades/depth subscriptions
 * Change depth levels
+* Switch between IB and Alpaca data sources
 
 ---
 
 ## Integrity Events
 
+### Trade Integrity
+`TradeDataCollector` validates sequence numbers for each symbol/stream:
+- **OutOfOrder**: Trade rejected if sequence <= previous
+- **SequenceGap**: Trade accepted but stats marked stale if sequence skips
+
+### Depth Integrity
+`MarketDepthCollector` validates order book operations:
+- **Gap**: Insert position out of range
+- **OutOfOrder**: Update position doesn't exist
+- **InvalidPosition**: Delete position doesn't exist
+- **Stale**: Stream frozen from previous error
+
 If integrity events spike:
-1. Check IB connectivity
+1. Check IB/Alpaca connectivity
 2. Verify market data entitlements
-3. Resubscribe affected symbol
-4. Inspect JSONL output
+3. Call `ResetSymbolStream(symbol)` or resubscribe affected symbol
+4. Inspect JSONL output in `data/`
+
+---
+
+## Monitoring
+
+### Metrics
+Access counters via `Metrics` static class:
+- `Metrics.Published`: Total events written to pipeline
+- `Metrics.Dropped`: Events dropped due to backpressure
+- `Metrics.Integrity`: Integrity events emitted
+
+### Status Endpoint
+When `--serve-status` is enabled, health snapshots are written to:
+```
+data/_status/status.json
+```
 
 ---
 
@@ -47,9 +88,9 @@ If integrity events spike:
 
 Use Ctrl+C:
 * Subscriptions cancelled
-* Files flushed
-* Clean disconnect
-
+* `EventPipeline` drained and flushed
+* Files flushed via `JsonlStorageSink`
+* Clean disconnect from IB/Alpaca
 
 ---
 
@@ -99,7 +140,6 @@ sudo systemctl enable --now ibdatacollector
 sudo journalctl -u ibdatacollector -f
 ```
 
-
 ---
 
 ## Preflight Checklist (built-in)
@@ -116,7 +156,6 @@ Startup scripts run a preflight step before building/starting:
   - uses the first reachable port unless `IB_PORT` is explicitly set
 
 If preflight fails, the startup script aborts with errors.
-
 
 ---
 
@@ -135,7 +174,7 @@ In `appsettings.json`:
     "SecretKey": "YOUR_SECRET_KEY",
     "Feed": "iex",
     "UseSandbox": false,
-    "SubscribeQuotes": false
+    "SubscribeQuotes": true
   },
   "Symbols": [
     { "Symbol": "AAPL", "SubscribeTrades": true, "SubscribeDepth": false }
@@ -145,15 +184,16 @@ In `appsettings.json`:
 
 Notes:
 - Alpaca real-time stock data is provided via WebSocket streams with message authentication and subscribe actions. (See Alpaca docs.)
-- This integration currently supports **trade prints**. Full Level-2 depth is not supported for stocks via Alpaca; you can optionally subscribe to quotes for future BBO support.
+- This integration supports **trade prints** (`T:"t"` messages).
+- Quote support (`T:"q"` messages) requires `SubscribeQuotes: true` and is wired to `QuoteCollector`.
+- Full Level-2 depth is not supported for stocks via Alpaca.
 
 ### Startup scripts
 If you set `DataSource` to `Alpaca`, set `USE_IBAPI=false` in the startup scripts (or omit it). IB connectivity checks are skipped when IB is disabled.
 
-
 ---
 
-## Alpaca quote context for aggressor inference
+## Alpaca Quote Context for Aggressor Inference
 
 When `DataSource` is `Alpaca`, the system can ingest **quote (BBO)** updates and use them to infer trade aggressor side:
 
@@ -176,4 +216,26 @@ ls data/AAPL.BboQuote.jsonl
 tail -n 5 data/AAPL.BboQuote.jsonl
 ```
 
-Each record includes `SequenceNumber`, `Source`, and `StreamId` fields so you can reconcile IB vs. Alpaca feeds.
+Each record includes `SequenceNumber`, `StreamId`, and `Venue` fields so you can reconcile IB vs. Alpaca feeds.
+
+---
+
+## Preferred Stock Configuration
+
+For IB preferred shares (e.g., PCG-PA, PCG-PB), use explicit `LocalSymbol` to avoid ambiguity:
+
+```json
+{
+  "Symbol": "PCG-PA",
+  "SubscribeTrades": true,
+  "SubscribeDepth": true,
+  "DepthLevels": 10,
+  "SecurityType": "STK",
+  "Exchange": "SMART",
+  "Currency": "USD",
+  "PrimaryExchange": "NYSE",
+  "LocalSymbol": "PCG PRA"
+}
+```
+
+This ensures `ContractFactory` resolves to the correct IB contract.
