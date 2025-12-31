@@ -22,6 +22,7 @@ app.MapGet("/api/config", (ConfigStore store) =>
         compress = cfg.Compress,
         dataSource = cfg.DataSource.ToString(),
         alpaca = cfg.Alpaca,
+        storage = cfg.Storage,
         symbols = cfg.Symbols ?? Array.Empty<SymbolConfig>()
     }, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
 });
@@ -43,6 +44,25 @@ app.MapPost("/api/config/alpaca", async (ConfigStore store, AlpacaOptions alpaca
 {
     var cfg = store.Load();
     var next = cfg with { Alpaca = alpaca };
+    await store.SaveAsync(next);
+    return Results.Ok();
+});
+
+app.MapPost("/api/config/storage", async (ConfigStore store, StorageSettingsRequest req) =>
+{
+    var cfg = store.Load();
+    var storage = new StorageConfig(
+        NamingConvention: req.NamingConvention ?? "BySymbol",
+        DatePartition: req.DatePartition ?? "Daily",
+        IncludeProvider: req.IncludeProvider,
+        FilePrefix: string.IsNullOrWhiteSpace(req.FilePrefix) ? null : req.FilePrefix
+    );
+    var next = cfg with
+    {
+        DataRoot = string.IsNullOrWhiteSpace(req.DataRoot) ? "data" : req.DataRoot,
+        Compress = req.Compress,
+        Storage = storage
+    };
     await store.SaveAsync(next);
     return Results.Ok();
 });
@@ -84,6 +104,7 @@ app.MapGet("/api/status", (ConfigStore store) =>
 app.Run();
 
 public record DataSourceRequest(string DataSource);
+public record StorageSettingsRequest(string? DataRoot, bool Compress, string? NamingConvention, string? DatePartition, bool IncludeProvider, string? FilePrefix);
 
 public static class HtmlTemplates
 {
@@ -186,6 +207,64 @@ public static class HtmlTemplates
   </div>
 
   <div class=""row"">
+    <!-- Storage Settings Panel -->
+    <div class=""card"" style=""flex:1; min-width: 400px;"">
+      <h3>Storage Settings</h3>
+      <div class=""form-row"">
+        <div class=""form-group"" style=""flex: 2"">
+          <label>Data Root Path</label>
+          <input id=""dataRoot"" type=""text"" placeholder=""data"" />
+        </div>
+        <div class=""form-group"" style=""flex: 1"">
+          <label>Compression</label>
+          <select id=""compress"">
+            <option value=""false"">Disabled</option>
+            <option value=""true"">Enabled (gzip)</option>
+          </select>
+        </div>
+      </div>
+      <div class=""form-row"">
+        <div class=""form-group"">
+          <label>Naming Convention</label>
+          <select id=""namingConvention"">
+            <option value=""Flat"">Flat ({'{'}root{'}'}/{'{'}symbol{'}'}_{'{'}type{'}'}_{'{'}date{'}'}.jsonl)</option>
+            <option value=""BySymbol"" selected>By Symbol ({'{'}root{'}'}/{'{'}symbol{'}'}/{'{'}type{'}'}/{'{'}date{'}'}.jsonl)</option>
+            <option value=""ByDate"">By Date ({'{'}root{'}'}/{'{'}date{'}'}/{'{'}symbol{'}'}/{'{'}type{'}'}.jsonl)</option>
+            <option value=""ByType"">By Type ({'{'}root{'}'}/{'{'}type{'}'}/{'{'}symbol{'}'}/{'{'}date{'}'}.jsonl)</option>
+          </select>
+        </div>
+        <div class=""form-group"">
+          <label>Date Partitioning</label>
+          <select id=""datePartition"">
+            <option value=""None"">None (single file)</option>
+            <option value=""Daily"" selected>Daily (yyyy-MM-dd)</option>
+            <option value=""Hourly"">Hourly (yyyy-MM-dd_HH)</option>
+            <option value=""Monthly"">Monthly (yyyy-MM)</option>
+          </select>
+        </div>
+      </div>
+      <div class=""form-row"">
+        <div class=""form-group"">
+          <label>File Prefix (optional)</label>
+          <input id=""filePrefix"" type=""text"" placeholder=""e.g., market_"" />
+        </div>
+        <div class=""form-group"">
+          <label>Include Provider in Path</label>
+          <select id=""includeProvider"">
+            <option value=""false"" selected>No</option>
+            <option value=""true"">Yes</option>
+          </select>
+        </div>
+      </div>
+      <div id=""storagePreview"" class=""muted"" style=""margin: 12px 0; padding: 8px; background: #f8f9fa; border-radius: 4px;"">
+        Example path: <code id=""previewPath"">data/AAPL/Trade/2024-01-15.jsonl</code>
+      </div>
+      <button class=""btn-primary"" onclick=""saveStorageSettings()"">Save Storage Settings</button>
+      <div id=""storageMsg"" class=""muted"" style=""margin-top: 8px;""></div>
+    </div>
+  </div>
+
+  <div class=""row"">
     <!-- Symbols Panel -->
     <div class=""card"" style=""flex:1"">
       <h3>Subscribed Symbols</h3>
@@ -278,6 +357,17 @@ async function loadConfig() {{
     document.getElementById('alpacaSubscribeQuotes').checked = cfg.alpaca.subscribeQuotes || false;
   }}
 
+  // Load storage settings
+  document.getElementById('dataRoot').value = cfg.dataRoot || 'data';
+  document.getElementById('compress').value = cfg.compress ? 'true' : 'false';
+  if (cfg.storage) {{
+    document.getElementById('namingConvention').value = cfg.storage.namingConvention || 'BySymbol';
+    document.getElementById('datePartition').value = cfg.storage.datePartition || 'Daily';
+    document.getElementById('includeProvider').value = cfg.storage.includeProvider ? 'true' : 'false';
+    document.getElementById('filePrefix').value = cfg.storage.filePrefix || '';
+  }}
+  updateStoragePreview();
+
   // Update symbols table
   const tbody = document.querySelector('#symbolsTable tbody');
   tbody.innerHTML = '';
@@ -348,6 +438,60 @@ async function saveAlpacaSettings() {{
   const msgDiv = document.getElementById('alpacaMsg');
   msgDiv.textContent = r.ok ? 'Alpaca settings saved. Restart collector to apply.' : 'Error saving settings.';
 }}
+
+async function saveStorageSettings() {{
+  const payload = {{
+    dataRoot: document.getElementById('dataRoot').value,
+    compress: document.getElementById('compress').value === 'true',
+    namingConvention: document.getElementById('namingConvention').value,
+    datePartition: document.getElementById('datePartition').value,
+    includeProvider: document.getElementById('includeProvider').value === 'true',
+    filePrefix: document.getElementById('filePrefix').value
+  }};
+
+  const r = await fetch('/api/config/storage', {{
+    method: 'POST',
+    headers: {{'Content-Type': 'application/json'}},
+    body: JSON.stringify(payload)
+  }});
+
+  const msgDiv = document.getElementById('storageMsg');
+  msgDiv.textContent = r.ok ? 'Storage settings saved. Restart collector to apply.' : 'Error saving settings.';
+}}
+
+function updateStoragePreview() {{
+  const root = document.getElementById('dataRoot').value || 'data';
+  const compress = document.getElementById('compress').value === 'true';
+  const naming = document.getElementById('namingConvention').value;
+  const partition = document.getElementById('datePartition').value;
+  const prefix = document.getElementById('filePrefix').value;
+  const ext = compress ? '.jsonl.gz' : '.jsonl';
+  const pfx = prefix ? prefix + '_' : '';
+
+  let dateStr = '';
+  if (partition === 'Daily') dateStr = '2024-01-15';
+  else if (partition === 'Hourly') dateStr = '2024-01-15_14';
+  else if (partition === 'Monthly') dateStr = '2024-01';
+
+  let path = '';
+  if (naming === 'Flat') {{
+    path = dateStr ? `${{root}}/${{pfx}}AAPL_Trade_${{dateStr}}${{ext}}` : `${{root}}/${{pfx}}AAPL_Trade${{ext}}`;
+  }} else if (naming === 'BySymbol') {{
+    path = dateStr ? `${{root}}/AAPL/Trade/${{pfx}}${{dateStr}}${{ext}}` : `${{root}}/AAPL/Trade/${{pfx}}data${{ext}}`;
+  }} else if (naming === 'ByDate') {{
+    path = dateStr ? `${{root}}/${{dateStr}}/AAPL/${{pfx}}Trade${{ext}}` : `${{root}}/AAPL/${{pfx}}Trade${{ext}}`;
+  }} else if (naming === 'ByType') {{
+    path = dateStr ? `${{root}}/Trade/AAPL/${{pfx}}${{dateStr}}${{ext}}` : `${{root}}/Trade/AAPL/${{pfx}}data${{ext}}`;
+  }}
+
+  document.getElementById('previewPath').textContent = path;
+}}
+
+// Add event listeners for live preview updates
+['dataRoot', 'compress', 'namingConvention', 'datePartition', 'filePrefix'].forEach(id => {{
+  document.getElementById(id).addEventListener('change', updateStoragePreview);
+  document.getElementById(id).addEventListener('input', updateStoragePreview);
+}});
 
 async function loadStatus() {{
   const box = document.getElementById('statusBox');

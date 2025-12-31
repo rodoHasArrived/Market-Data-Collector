@@ -35,15 +35,27 @@ internal static class Program
         if (args.Any(a => a.Equals("--serve-status", StringComparison.OrdinalIgnoreCase)))
             statusWriter.Start(TimeSpan.FromSeconds(1));
 
-        var storageOpt = new StorageOptions
-        {
-            RootPath = cfg.DataRoot,
-            Compress = cfg.Compress
-        };
+        // Build storage options from config
+        var storageOpt = cfg.Storage?.ToStorageOptions(cfg.DataRoot, cfg.Compress)
+            ?? new StorageOptions
+            {
+                RootPath = cfg.DataRoot,
+                Compress = cfg.Compress,
+                NamingConvention = FileNamingConvention.BySymbol,
+                DatePartition = DatePartition.Daily
+            };
 
-        var policy = new JsonlStoragePolicy(storageOpt.RootPath, storageOpt.Compress);
+        var policy = new JsonlStoragePolicy(storageOpt);
         await using var sink = new JsonlStorageSink(storageOpt, policy);
         await using var pipeline = new EventPipeline(sink, capacity: 50_000);
+
+        // Log storage configuration
+        Console.WriteLine($"Storage path: {storageOpt.RootPath}");
+        Console.WriteLine($"Naming convention: {storageOpt.NamingConvention}");
+        Console.WriteLine($"Date partitioning: {storageOpt.DatePartition}");
+        Console.WriteLine($"Compression: {(storageOpt.Compress ? "enabled" : "disabled")}");
+        Console.WriteLine($"Example path: {policy.GetPathPreview()}");
+        Console.WriteLine();
 
         // Publisher adapter
         IMarketEventPublisher publisher = new PipelinePublisher(pipeline);
@@ -125,8 +137,6 @@ internal static class Program
         }
         catch (Exception ex)
         {
-            // TODO: Add proper logging framework (e.g., Serilog) to log configuration errors
-            // Bare catch swallows JSON parsing, file access, and permission errors silently
             Console.Error.WriteLine($"[Warning] Failed to load config: {ex.Message}");
             return new AppConfig();
         }
