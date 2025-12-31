@@ -1,0 +1,24 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MarketDataCollector", "src\MarketDataCollector\MarketDataCollector.csproj", "{A1111111-B222-C333-D444-E55555555555}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MarketDataCollector.Ui", "src\MarketDataCollector.Ui\MarketDataCollector.Ui.csproj", "{7756DAD5-0AAF-45D9-A300-F28239C23078}"
+EndProject
+Global
+    GlobalSection(SolutionConfigurationPlatforms) = preSolution
+        Debug|Any CPU = Debug|Any CPU
+        Release|Any CPU = Release|Any CPU
+        {7756DAD5-0AAF-45D9-A300-F28239C23078}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+        {7756DAD5-0AAF-45D9-A300-F28239C23078}.Debug|Any CPU.Build.0 = Debug|Any CPU
+        {7756DAD5-0AAF-45D9-A300-F28239C23078}.Release|Any CPU.ActiveCfg = Release|Any CPU
+        {7756DAD5-0AAF-45D9-A300-F28239C23078}.Release|Any CPU.Build.0 = Release|Any CPU
+    EndGlobalSection
+    GlobalSection(ProjectConfigurationPlatforms) = postSolution
+        {A1111111-B222-C333-D444-E55555555555}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+        {A1111111-B222-C333-D444-E55555555555}.Debug|Any CPU.Build.0 = Debug|Any CPU
+        {A1111111-B222-C333-D444-E55555555555}.Release|Any CPU.ActiveCfg = Release|Any CPU
+        {A1111111-B222-C333-D444-E55555555555}.Release|Any CPU.Build.0 = Release|Any CPU
+    EndGlobalSection
+EndGlobal
