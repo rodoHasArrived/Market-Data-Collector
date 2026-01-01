@@ -325,6 +325,37 @@ The collector uses Serilog for structured logging. You can customize log levels 
 }
 ```
 
+## Historical Backfill
+
+Backfill options seed historical daily bars before live capture begins. They can be defined in `appsettings.json` and overridden via command-line arguments.
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `Enabled` | boolean | `false` | Run a backfill before the live session starts |
+| `Provider` | string | `"stooq"` | Registered historical data provider name |
+| `Symbols` | array | `[]` | Symbols to backfill (falls back to live symbol list when empty) |
+| `From` | string (yyyy-MM-dd) | `null` | Inclusive start date |
+| `To` | string (yyyy-MM-dd) | `null` | Inclusive end date |
+
+### Example
+
+```json
+"Backfill": {
+  "Enabled": true,
+  "Provider": "stooq",
+  "Symbols": ["SPY", "QQQ"],
+  "From": "2024-01-01",
+  "To": "2024-01-05"
+}
+```
+
+Command-line overrides available at runtime:
+
+- `--backfill` forces a backfill run even if disabled in config
+- `--backfill-provider <name>` chooses a provider
+- `--backfill-symbols <CSV>` overrides symbols
+- `--backfill-from <yyyy-MM-dd>` / `--backfill-to <yyyy-MM-dd>` override date bounds
+
 ## Validation
 
 Configuration is validated on startup. Invalid configurations will:
@@ -341,4 +372,4 @@ Common validation errors:
 
 ## Hot Reload
 
-Configuration hot reload is planned but not yet fully implemented. Currently, changes to `appsettings.json` require a restart.
+Pass `--watch-config` to enable hot reload. The collector automatically reloads `appsettings.json` when it changes and applies symbol or provider updates without a restart.
