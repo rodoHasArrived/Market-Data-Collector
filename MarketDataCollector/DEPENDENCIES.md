@@ -201,6 +201,97 @@ public class AlpacaOptionsValidator : AbstractValidator<AlpacaOptions>
 
 **Note**: Code uses `#if IBAPI` conditional compilation so the project builds without it.
 
+### MassTransit
+
+| Package | Version | Purpose |
+|---------|---------|---------|
+| MassTransit | 8.2.5 | Distributed application framework for messaging |
+| MassTransit.RabbitMQ | 8.2.5 | RabbitMQ transport for MassTransit |
+| MassTransit.Azure.ServiceBus.Core | 8.2.5 | Azure Service Bus transport |
+| Microsoft.Extensions.Hosting | 8.0.0 | Hosting abstractions for background services |
+
+**Why**: MassTransit provides enterprise-grade message bus capabilities for:
+- Publishing market events to external consumers
+- Distributed system integration
+- Reliable message delivery with retry policies
+- Support for multiple transport backends (RabbitMQ, Azure Service Bus, etc.)
+
+**Usage**:
+```csharp
+// Configure MassTransit in DI container
+services.AddMassTransit(x =>
+{
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        cfg.Host("localhost", "/", h =>
+        {
+            h.Username("guest");
+            h.Password("guest");
+        });
+    });
+});
+```
+
+### QuantConnect Lean Engine
+
+| Package | Version | Purpose |
+|---------|---------|---------|
+| QuantConnect.Lean | 2.5.17315 | Main Lean algorithmic trading engine |
+| QuantConnect.Lean.Engine | 2.5.17269 | Core engine and datafeed implementation |
+| QuantConnect.Common | 2.5.17315 | Common utilities and interfaces |
+| QuantConnect.Indicators | 2.5.17212 | Technical indicators library |
+
+**Why**: Integration with QuantConnect's Lean Engine enables:
+- **Algorithmic Trading**: Use collected market data for live trading and backtesting
+- **Custom Data Types**: Expose MarketDataCollector events as Lean BaseData types
+- **Backtesting**: Test strategies on high-fidelity tick data
+- **Indicators**: Access 200+ technical indicators for analysis
+- **Research**: Jupyter notebook integration for data exploration
+
+**Key Integration Components**:
+
+1. **Custom BaseData Types**:
+   - `MarketDataCollectorTradeData` - Tick-by-tick trade events
+   - `MarketDataCollectorQuoteData` - BBO quote events
+
+2. **Custom Data Provider**:
+   - `MarketDataCollectorDataProvider` - Reads JSONL files for Lean
+
+3. **Sample Algorithms**:
+   - Spread arbitrage strategies
+   - Order flow imbalance detection
+   - Microstructure-aware trading
+
+**Usage Example**:
+```csharp
+using QuantConnect.Algorithm;
+using MarketDataCollector.Integrations.Lean;
+
+public class MyAlgorithm : QCAlgorithm
+{
+    public override void Initialize()
+    {
+        SetStartDate(2024, 1, 1);
+        SetCash(100000);
+
+        // Subscribe to MarketDataCollector data
+        AddData<MarketDataCollectorTradeData>("SPY", Resolution.Tick);
+        AddData<MarketDataCollectorQuoteData>("SPY", Resolution.Tick);
+    }
+
+    public override void OnData(Slice data)
+    {
+        if (data.ContainsKey("SPY") && data["SPY"] is MarketDataCollectorTradeData trade)
+        {
+            Debug($"Trade: {trade.TradePrice:F2} x {trade.TradeSize}");
+            Debug($"Aggressor: {trade.AggressorSide}");
+        }
+    }
+}
+```
+
+**Documentation**: See `src/MarketDataCollector/Integrations/Lean/README.md` for comprehensive integration guide.
+
 ---
 
 ## MarketDataCollector.Ui (Web Dashboard)

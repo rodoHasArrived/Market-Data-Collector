@@ -93,6 +93,17 @@ Comprehensive documentation is available in the `MarketDataCollector/docs/` dire
 - **Alpaca** - Real-time trades and quotes via WebSocket
 - **Polygon** - Stub implementation for future expansion
 
+## Lean Engine Integration
+
+Market Data Collector now integrates with **QuantConnect's Lean Engine**, enabling sophisticated algorithmic trading strategies:
+
+- **Custom Data Types**: Trade and quote data exposed as Lean `BaseData` types
+- **Backtesting Support**: Use collected tick data for algorithm backtesting
+- **Data Provider**: Custom `IDataProvider` implementation for JSONL files
+- **Sample Algorithms**: Ready-to-use examples for microstructure-aware trading
+
+See [`MarketDataCollector/src/MarketDataCollector/Integrations/Lean/README.md`](MarketDataCollector/src/MarketDataCollector/Integrations/Lean/README.md) for integration details and examples.
+
 ## Output Data
 
 Market data is stored as newline-delimited JSON (JSONL) files with:

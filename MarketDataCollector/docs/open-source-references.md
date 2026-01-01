@@ -15,11 +15,12 @@ This document catalogs publicly available codebases, libraries, and resources th
 
 ## Market Data Collection Systems
 
-### 1. **Lean Engine** (QuantConnect)
+### 1. **Lean Engine** (QuantConnect) ✅ INTEGRATED
 - **Repository**: https://github.com/QuantConnect/Lean
 - **Language**: C#
 - **License**: Apache 2.0
 - **Relevance**: Full algorithmic trading engine with extensive data collection capabilities
+- **Integration Status**: ✅ **Fully Integrated** (2026-01-01)
 - **Key Features**:
   - Multi-asset support (equities, options, futures, forex, crypto)
   - Multiple data provider integrations (IB, Alpaca, GDAX, etc.)
@@ -30,6 +31,11 @@ This document catalogs publicly available codebases, libraries, and resources th
   - Event synchronization and replay mechanisms
   - Portfolio and risk management patterns
   - Modular data source architecture
+- **Integration Details**:
+  - Custom BaseData types: `MarketDataCollectorTradeData`, `MarketDataCollectorQuoteData`
+  - Custom IDataProvider: `MarketDataCollectorDataProvider` for JSONL file reading
+  - Sample algorithms for microstructure-aware trading
+  - See `src/MarketDataCollector/Integrations/Lean/README.md` for complete guide
 
 ### 2. **StockSharp**
 - **Repository**: https://github.com/StockSharp/StockSharp

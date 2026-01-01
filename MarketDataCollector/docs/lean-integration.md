@@ -1,0 +1,443 @@
+# Lean Engine Integration Guide
+
+This guide provides comprehensive instructions for integrating MarketDataCollector with QuantConnect's Lean algorithmic trading engine.
+
+## Table of Contents
+
+1. [Overview](#overview)
+2. [Architecture](#architecture)
+3. [Installation](#installation)
+4. [Quick Start](#quick-start)
+5. [Custom Data Types](#custom-data-types)
+6. [Data Provider](#data-provider)
+7. [Algorithm Examples](#algorithm-examples)
+8. [Configuration](#configuration)
+9. [Performance Optimization](#performance-optimization)
+10. [Troubleshooting](#troubleshooting)
+
+## Overview
+
+The Lean Engine integration enables you to:
+
+- **Backtest algorithms** using MarketDataCollector's high-fidelity tick data
+- **Access microstructure data** including order flow, aggressor side, and exchange routing
+- **Leverage Lean's ecosystem** of 200+ technical indicators and risk management tools
+- **Build production strategies** on institutional-grade market data
+
+### Why This Integration?
+
+Traditional market data feeds provide only basic OHLCV bars or quotes. MarketDataCollector captures:
+- Every tick-by-tick trade with sequence numbers and conditions
+- Best bid/offer updates with exchange routing information
+- Order book snapshots and depth updates
+- Integrity events for data quality monitoring
+
+This granular data enables sophisticated strategies that exploit market microstructure inefficiencies.
+
+## Architecture
+
+### Integration Components
+
+```
+MarketDataCollector
+├── Data Collection (IB, Alpaca, Polygon)
+│   └── JSONL Storage (./data/)
+│
+└── Lean Integration
+    ├── Custom BaseData Types
+    │   ├── MarketDataCollectorTradeData
+    │   └── MarketDataCollectorQuoteData
+    │
+    ├── Data Provider
+    │   └── MarketDataCollectorDataProvider (IDataProvider)
+    │
+    └── Sample Algorithms
+        ├── SampleLeanAlgorithm
+        ├── SpreadArbitrageAlgorithm
+        └── OrderFlowAlgorithm
+
+Lean Engine
+├── Algorithm Framework
+├── Backtesting Engine
+├── Indicators Library
+└── Data Feed System
+    └── Consumes MarketDataCollector data via custom types
+```
+
+### Data Flow
+
+1. **Collection**: MarketDataCollector captures market data from providers
+2. **Storage**: Events stored as JSONL files in `./data/`
+3. **Lean Reads**: Custom BaseData types read JSONL files via `GetSource()` and `Reader()`
+4. **Algorithm Consumes**: Lean algorithms receive data via `OnData(Slice)`
+
+## Installation
+
+### Prerequisites
+
+- .NET 8.0 SDK or later
+- MarketDataCollector (this project)
+- QuantConnect Lean (optional for standalone testing)
+
+### Step 1: Add NuGet Packages
+
+The required packages are already included in `MarketDataCollector.csproj`:
+
+```xml
+<PackageReference Include="QuantConnect.Lean" Version="2.5.17315" />
+<PackageReference Include="QuantConnect.Lean.Engine" Version="2.5.17269" />
+<PackageReference Include="QuantConnect.Common" Version="2.5.17315" />
+<PackageReference Include="QuantConnect.Indicators" Version="2.5.17212" />
+```
+
+### Step 2: Restore Packages
+
+```bash
+cd MarketDataCollector
+dotnet restore
+```
+
+### Step 3: Verify Installation
+
+```bash
+dotnet build
+```
+
+## Quick Start
+
+### 1. Collect Market Data
+
+Run MarketDataCollector to gather data:
+
+```bash
+dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj
+```
+
+Data will be stored in `./data/` as:
+```
+data/
+└── SPY/
+    ├── trade/
+    │   ├── 2024-01-01.jsonl
+    │   └── 2024-01-02.jsonl
+    └── bboquote/
+        ├── 2024-01-01.jsonl
+        └── 2024-01-02.jsonl
+```
+
+### 2. Create a Simple Algorithm
+
+Create `MyFirstAlgorithm.cs`:
+
+```csharp
+using QuantConnect;
+using QuantConnect.Algorithm;
+using QuantConnect.Data;
+using MarketDataCollector.Integrations.Lean;
+
+namespace MyAlgorithms
+{
+    public class MyFirstAlgorithm : QCAlgorithm
+    {
+        public override void Initialize()
+        {
+            SetStartDate(2024, 1, 1);
+            SetEndDate(2024, 1, 5);
+            SetCash(100000);
+
+            // Subscribe to MarketDataCollector data
+            AddData<MarketDataCollectorTradeData>("SPY", Resolution.Tick);
+
+            Log("Algorithm initialized with MarketDataCollector data");
+        }
+
+        public override void OnData(Slice data)
+        {
+            if (data.ContainsKey("SPY") && data["SPY"] is MarketDataCollectorTradeData trade)
+            {
+                Log($"Trade: {trade.TradePrice:F2} x {trade.TradeSize} - {trade.AggressorSide}");
+            }
+        }
+    }
+}
+```
+
+### 3. Configure Data Path
+
+The custom data types automatically look for data in Lean's data folder. You can:
+
+**Option A: Use custom data provider**
+
+```csharp
+var dataProvider = new MarketDataCollectorDataProvider("./data");
+```
+
+**Option B: Symlink data directory**
+
+```bash
+# Linux/Mac
+ln -s /path/to/MarketDataCollector/data /path/to/Lean/Data/marketdatacollector
+
+# Windows (as Administrator)
+mklink /D C:\Lean\Data\marketdatacollector C:\MarketDataCollector\data
+```
+
+## Custom Data Types
+
+### MarketDataCollectorTradeData
+
+Represents individual trade executions with full microstructure detail.
+
+#### Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `Symbol` | `Symbol` | Security symbol |
+| `Time` | `DateTime` | Trade timestamp (UTC) |
+| `Value` | `decimal` | Trade price (used by Lean as primary value) |
+| `TradePrice` | `decimal` | Execution price |
+| `TradeSize` | `decimal` | Number of shares |
+| `Exchange` | `string` | Exchange code (e.g., "NSDQ", "NYSE") |
+| `Conditions` | `List<string>` | Trade condition codes |
+| `SequenceNumber` | `long` | Sequential ordering number |
+| `AggressorSide` | `string` | "Buy", "Sell", or "Unknown" |
+
+#### Usage Example
+
+```csharp
+public override void OnData(Slice data)
+{
+    if (data.ContainsKey("SPY") && data["SPY"] is MarketDataCollectorTradeData trade)
+    {
+        // Filter out odd lot trades
+        if (trade.Conditions.Contains("ODD_LOT"))
+            return;
+
+        // Detect aggressive buying
+        if (trade.AggressorSide == "Buy" && trade.TradeSize > 10000)
+        {
+            Debug($"Large buy order: {trade.TradeSize} shares @ {trade.TradePrice:F2}");
+            SetHoldings("SPY", 0.5);
+        }
+    }
+}
+```
+
+### MarketDataCollectorQuoteData
+
+Represents best bid/offer updates with spread and imbalance metrics.
+
+#### Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `Symbol` | `Symbol` | Security symbol |
+| `Time` | `DateTime` | Quote timestamp (UTC) |
+| `Value` | `decimal` | Mid price (used by Lean as primary value) |
+| `BidPrice` | `decimal` | Best bid price |
+| `BidSize` | `decimal` | Best bid size |
+| `AskPrice` | `decimal` | Best ask price |
+| `AskSize` | `decimal` | Best ask size |
+| `MidPrice` | `decimal` | (BidPrice + AskPrice) / 2 |
+| `Spread` | `decimal` | AskPrice - BidPrice |
+| `SequenceNumber` | `long` | Sequential ordering number |
+| `BidExchange` | `string` | Exchange with best bid |
+| `AskExchange` | `string` | Exchange with best ask |
+
+#### Usage Example
+
+```csharp
+public override void OnData(Slice data)
+{
+    if (data.ContainsKey("SPY") && data["SPY"] is MarketDataCollectorQuoteData quote)
+    {
+        // Calculate spread in basis points
+        var spreadBps = (quote.Spread / quote.MidPrice) * 10000;
+
+        // Calculate quote imbalance
+        var totalSize = quote.BidSize + quote.AskSize;
+        if (totalSize > 0)
+        {
+            var imbalance = (quote.BidSize - quote.AskSize) / totalSize;
+
+            if (imbalance > 0.5m)
+                Debug($"Strong bid pressure: {imbalance:P2}");
+        }
+
+        // Monitor spread widening
+        if (spreadBps > 10)
+            Debug($"Wide spread: {spreadBps:F2} bps");
+    }
+}
+```
+
+## Data Provider
+
+The `MarketDataCollectorDataProvider` implements Lean's `IDataProvider` interface to read JSONL files.
+
+### Features
+
+- Automatic `.jsonl.gz` decompression
+- Path mapping from Lean's data folder to MarketDataCollector's data directory
+- Efficient stream-based file reading
+
+### Usage
+
+```csharp
+// In Lean configuration or algorithm
+var dataProvider = new MarketDataCollectorDataProvider("./data");
+
+// The data provider automatically handles:
+// - Path construction: data/SPY/trade/2024-01-01.jsonl
+// - Gzip decompression: data/SPY/trade/2024-01-01.jsonl.gz
+// - Error handling and logging
+```
+
+## Algorithm Examples
+
+See the `src/MarketDataCollector/Integrations/Lean/` directory for complete examples:
+
+- **SampleLeanAlgorithm**: Basic usage of trade and quote data
+- **SpreadArbitrageAlgorithm**: Mean reversion on spread widening
+- **OrderFlowAlgorithm**: Order flow imbalance strategies
+
+## Configuration
+
+### Lean Configuration File
+
+Add MarketDataCollector data types to your Lean `config.json`:
+
+```json
+{
+  "data-folder": "./data",
+  "data-provider": "MarketDataCollector.Integrations.Lean.MarketDataCollectorDataProvider"
+}
+```
+
+### Data File Organization
+
+Ensure MarketDataCollector uses a consistent file organization:
+
+```json
+{
+  "Storage": {
+    "NamingConvention": "BySymbol",
+    "DatePartition": "Daily"
+  }
+}
+```
+
+This produces the expected path structure: `{Symbol}/{Type}/{Date}.jsonl`
+
+## Performance Optimization
+
+### Data Volume Considerations
+
+Tick data is large:
+- **SPY**: ~200,000 trades/day = ~30 MB/day (compressed)
+- **Backtesting**: Reading millions of events can be slow
+
+### Optimization Strategies
+
+#### 1. Use Compressed Data
+
+```bash
+# Enable compression in appsettings.json
+{
+  "Storage": {
+    "CompressOutput": true
+  }
+}
+```
+
+Compression provides 5-10x size reduction with minimal read overhead.
+
+#### 2. Limit Data Scope
+
+```csharp
+public override void Initialize()
+{
+    // Only subscribe to data you need
+    AddData<MarketDataCollectorTradeData>("SPY", Resolution.Tick);
+    // Don't subscribe to quotes if not needed
+}
+```
+
+#### 3. Use Aggregated Resolutions
+
+```csharp
+// Use minute bars instead of ticks for slower strategies
+AddData<MarketDataCollectorTradeData>("SPY", Resolution.Minute);
+```
+
+#### 4. Implement Data Filtering
+
+```csharp
+public override void OnData(Slice data)
+{
+    if (data.ContainsKey("SPY") && data["SPY"] is MarketDataCollectorTradeData trade)
+    {
+        // Skip small trades
+        if (trade.TradeSize < 100)
+            return;
+
+        // Process only large trades
+        ProcessTrade(trade);
+    }
+}
+```
+
+## Troubleshooting
+
+### Problem: "File not found" errors
+
+**Cause**: Data files don't exist for the requested date range
+
+**Solution**:
+1. Check data directory: `ls data/SPY/trade/`
+2. Verify date range in algorithm matches available data
+3. Collect data for required dates
+
+### Problem: No data being received in OnData()
+
+**Cause**: Incorrect file path or parsing errors
+
+**Solution**:
+1. Enable Lean logging: Set log level to DEBUG
+2. Verify JSONL format: `head -1 data/SPY/trade/2024-01-01.jsonl | jq .`
+3. Check for JSON parsing errors in logs
+
+### Problem: Slow backtest performance
+
+**Cause**: Too much tick data
+
+**Solution**:
+1. Use compressed files (`.jsonl.gz`)
+2. Reduce date range for testing
+3. Use higher resolution (Minute vs Tick)
+4. Filter events in OnData()
+
+### Problem: Out of memory errors
+
+**Cause**: Large rolling windows or data structures
+
+**Solution**:
+```csharp
+// Bad: Unbounded list
+private List<Trade> _allTrades = new();
+
+// Good: Bounded rolling window
+private RollingWindow<MarketDataCollectorTradeData> _trades = new(1000);
+```
+
+## Next Steps
+
+- Review the sample algorithms in `src/MarketDataCollector/Integrations/Lean/`
+- Explore Lean's documentation: https://www.quantconnect.com/docs/
+- Join the QuantConnect community forum
+- Contribute improvements to the integration
+
+---
+
+**Last Updated**: 2026-01-01
+**Version**: 1.0.0

@@ -149,6 +149,39 @@ The replayer supports:
 - Chronological playback across multiple files
 - All event types (trades, depth, quotes, integrity events)
 
+## Lean Engine Integration
+
+Market Data Collector integrates with **QuantConnect's Lean Engine** to enable algorithmic trading and backtesting:
+
+### Key Features
+- **Custom BaseData Types**: `MarketDataCollectorTradeData` and `MarketDataCollectorQuoteData` for Lean algorithms
+- **Data Provider**: `MarketDataCollectorDataProvider` implements Lean's `IDataProvider` interface
+- **Tick-Level Backtesting**: Use collected market microstructure data for strategy development
+- **Sample Algorithms**: Pre-built examples for spread analysis, order flow, and microstructure strategies
+
+### Quick Start with Lean
+
+```csharp
+using QuantConnect.Algorithm;
+using MarketDataCollector.Integrations.Lean;
+
+public class MyAlgorithm : QCAlgorithm
+{
+    public override void Initialize()
+    {
+        AddData<MarketDataCollectorTradeData>("SPY", Resolution.Tick);
+        AddData<MarketDataCollectorQuoteData>("SPY", Resolution.Tick);
+    }
+
+    public override void OnData(Slice data)
+    {
+        // Access high-fidelity market data
+    }
+}
+```
+
+See [`src/MarketDataCollector/Integrations/Lean/README.md`](src/MarketDataCollector/Integrations/Lean/README.md) for comprehensive integration guide.
+
 ## Architecture and design docs
 
 Detailed diagrams and domain notes live in `./docs`:
@@ -160,6 +193,7 @@ Detailed diagrams and domain notes live in `./docs`:
 * `why-this-architecture.md` – non-technical overview of design decisions
 * `interactive-brokers-setup.md` – IB API installation and configuration
 * `open-source-references.md` – catalog of related projects and resources
+* `lean-integration.md` – QuantConnect Lean Engine integration guide
 
 ## Known Limitations and Roadmap
 
