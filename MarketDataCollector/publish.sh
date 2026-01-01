@@ -18,7 +18,7 @@ CONFIGURATION="${CONFIGURATION:-Release}"
 OUTPUT_DIR="${OUTPUT_DIR:-./dist}"
 
 # Supported platforms
-PLATFORMS=("win-x64" "linux-x64" "osx-x64" "osx-arm64")
+PLATFORMS=("win-x64" "win-arm64" "linux-x64" "linux-arm64" "osx-x64" "osx-arm64")
 
 # Projects
 COLLECTOR_PROJECT="src/MarketDataCollector/MarketDataCollector.csproj"
@@ -53,11 +53,13 @@ show_help() {
     echo "Usage: $0 [platform] [project]"
     echo ""
     echo "Platforms:"
-    echo "  all        Build for all platforms (default)"
-    echo "  win-x64    Windows x64"
-    echo "  linux-x64  Linux x64"
-    echo "  osx-x64    macOS x64 (Intel)"
-    echo "  osx-arm64  macOS ARM64 (Apple Silicon)"
+    echo "  all         Build for all platforms (default)"
+    echo "  win-x64     Windows x64"
+    echo "  win-arm64   Windows ARM64"
+    echo "  linux-x64   Linux x64"
+    echo "  linux-arm64 Linux ARM64"
+    echo "  osx-x64     macOS x64 (Intel)"
+    echo "  osx-arm64   macOS ARM64 (Apple Silicon)"
     echo ""
     echo "Projects:"
     echo "  all        Build both projects (default)"
@@ -95,7 +97,8 @@ publish_project() {
         -p:PublishSingleFile=true \
         -p:PublishTrimmed=true \
         -p:EnableCompressionInSingleFile=true \
-        -p:IncludeNativeLibrariesForSelfExtract=true
+        -p:IncludeNativeLibrariesForSelfExtract=true \
+        -p:IncludeAllContentForSelfExtract=true
 
     # Copy configuration file
     if [ -f "appsettings.json" ]; then

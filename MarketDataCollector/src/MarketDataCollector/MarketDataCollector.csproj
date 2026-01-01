@@ -12,12 +12,22 @@
     <Version>1.0.0</Version>
     <Authors>MarketDataCollector Team</Authors>
     <Description>Cross-platform market data collection system for real-time data ingestion</Description>
+    <Product>Market Data Collector</Product>
+    <Copyright>Copyright © 2024 MarketDataCollector Team</Copyright>
 
-    <!-- Single-file publishing settings -->
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <!-- SINGLE-EXE DESKTOP DEPLOYMENT CONFIGURATION                                  -->
+    <!-- This configuration ensures the app runs as a single portable executable      -->
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+
+    <!-- Single-file publishing - bundles everything into one EXE -->
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>true</SelfContained>
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+
+    <!-- Include ALL content in single file - no extraction needed -->
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
 
     <!-- Trimming for smaller executable -->
     <PublishTrimmed>true</PublishTrimmed>
@@ -26,13 +36,29 @@
     <!-- Ready-to-run for faster startup -->
     <PublishReadyToRun>true</PublishReadyToRun>
 
-    <!-- Invariant globalization to reduce size -->
+    <!-- Globalization settings -->
     <InvariantGlobalization>false</InvariantGlobalization>
+
+    <!-- Windows Desktop Integration -->
+    <ApplicationIcon Condition="Exists('app.ico')">app.ico</ApplicationIcon>
+    <ApplicationManifest Condition="Exists('app.manifest')">app.manifest</ApplicationManifest>
+
+    <!-- Deterministic builds for reproducibility -->
+    <Deterministic>true</Deterministic>
+
+    <!-- Optimize for size -->
+    <DebugType>embedded</DebugType>
+    <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
 
   <!-- Platform-specific runtime identifiers -->
   <PropertyGroup Condition="'$(RuntimeIdentifier)' == ''">
-    <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;osx-arm64</RuntimeIdentifiers>
+    <RuntimeIdentifiers>win-x64;win-arm64;linux-x64;linux-arm64;osx-x64;osx-arm64</RuntimeIdentifiers>
+  </PropertyGroup>
+
+  <!-- Windows-specific settings for desktop experience -->
+  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Windows')) Or '$(RuntimeIdentifier.StartsWith(`win`))' == 'true'">
+    <UseWindowsForms>false</UseWindowsForms>
   </PropertyGroup>
 
   <!-- Trimmer root assemblies to preserve reflection-based serialization -->
