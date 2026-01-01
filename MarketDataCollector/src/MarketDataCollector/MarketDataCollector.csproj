@@ -113,5 +113,13 @@
 
     <!-- HTTP Client for REST APIs (Polygon, etc.) -->
     <PackageReference Include="System.Net.Http.Json" Version="8.0.0" />
+
+    <!-- MassTransit - Distributed Application Framework -->
+    <PackageReference Include="MassTransit" Version="8.2.5" />
+    <PackageReference Include="MassTransit.RabbitMQ" Version="8.2.5" />
+    <PackageReference Include="MassTransit.Azure.ServiceBus.Core" Version="8.2.5" />
+
+    <!-- Hosting support for MassTransit -->
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
   </ItemGroup>
 </Project>

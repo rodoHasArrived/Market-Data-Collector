@@ -16,6 +16,7 @@ namespace MarketDataCollector.Application.Config;
 /// <param name="Alpaca">Alpaca provider options (required if DataSource == DataSourceKind.Alpaca).</param>
 /// <param name="Storage">Storage configuration options (naming convention, partitioning, etc.).</param>
 /// <param name="Symbols">Symbol subscriptions.</param>
+/// <param name="MassTransit">MassTransit distributed messaging configuration.</param>
 /// <param name="Backfill">Optional historical backfill defaults.</param>
 public sealed record AppConfig(
     string DataRoot = "data",
@@ -24,6 +25,7 @@ public sealed record AppConfig(
     AlpacaOptions? Alpaca = null,
     StorageConfig? Storage = null,
     SymbolConfig[]? Symbols = null,
+    MassTransitConfig? MassTransit = null,
     BackfillConfig? Backfill = null
 );
 

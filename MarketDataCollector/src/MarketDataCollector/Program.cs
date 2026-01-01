@@ -1,4 +1,5 @@
 using System.Text.Json;
+using MassTransit;
 using MarketDataCollector.Application.Backfill;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Logging;
@@ -14,10 +15,14 @@ using MarketDataCollector.Infrastructure.Providers.InteractiveBrokers;
 using MarketDataCollector.Infrastructure.Providers.Alpaca;
 using MarketDataCollector.Infrastructure.Providers.Polygon;
 using MarketDataCollector.Infrastructure.Providers.Backfill;
+using MarketDataCollector.Messaging.Configuration;
+using MarketDataCollector.Messaging.Publishers;
 using MarketDataCollector.Storage;
 using MarketDataCollector.Storage.Policies;
 using MarketDataCollector.Storage.Sinks;
 using MarketDataCollector.Storage.Replay;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Serilog;
 
 namespace MarketDataCollector;
@@ -96,8 +101,41 @@ internal static class Program
         log.Information("Compression: {CompressionEnabled}", storageOpt.Compress ? "enabled" : "disabled");
         log.Debug("Example path: {ExamplePath}", policy.GetPathPreview());
 
-        // Publisher adapter
-        IMarketEventPublisher publisher = new PipelinePublisher(pipeline);
+        // Build service provider for MassTransit (if enabled)
+        ServiceProvider? serviceProvider = null;
+        IHost? massTransitHost = null;
+        IMarketEventPublisher publisher;
+
+        var mtConfig = cfg.MassTransit ?? new MassTransitConfig();
+        var pipelinePublisher = new PipelinePublisher(pipeline);
+
+        if (mtConfig.Enabled)
+        {
+            log.Information("Initializing MassTransit with {Transport} transport...", mtConfig.Transport);
+
+            var services = new ServiceCollection();
+            services.AddMassTransitMessaging(mtConfig);
+
+            serviceProvider = services.BuildServiceProvider();
+
+            // Start the MassTransit bus
+            var busControl = serviceProvider.GetRequiredService<IBusControl>();
+            await busControl.StartAsync();
+            log.Information("MassTransit bus started successfully");
+
+            // Get the publish endpoint
+            var publishEndpoint = serviceProvider.GetRequiredService<IPublishEndpoint>();
+            var massTransitPublisher = new MassTransitPublisher(publishEndpoint, enableMetrics: false);
+
+            // Create composite publisher: events go to both local storage AND MassTransit
+            publisher = new CompositePublisher(pipelinePublisher, massTransitPublisher);
+            log.Information("Composite publisher configured: events will be published to local storage AND MassTransit");
+        }
+        else
+        {
+            log.Debug("MassTransit messaging is disabled");
+            publisher = pipelinePublisher;
+        }
 
         var backfillRequested = args.Any(a => a.Equals("--backfill", StringComparison.OrdinalIgnoreCase))
             || (cfg.Backfill?.Enabled == true);
@@ -214,6 +252,17 @@ internal static class Program
 
         log.Information("Disconnecting from data provider...");
         await dataClient.DisconnectAsync();
+
+        // Stop MassTransit if it was started
+        if (serviceProvider is not null)
+        {
+            log.Information("Stopping MassTransit bus...");
+            var busControl = serviceProvider.GetRequiredService<IBusControl>();
+            await busControl.StopAsync();
+            await serviceProvider.DisposeAsync();
+            log.Information("MassTransit bus stopped");
+        }
+
         log.Information("Shutdown complete");
 
         if (statusHttp is not null)
