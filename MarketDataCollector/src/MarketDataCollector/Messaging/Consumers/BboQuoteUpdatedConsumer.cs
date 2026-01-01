@@ -1,4 +1,5 @@
 using MassTransit;
+using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Messaging.Contracts;
 using Serilog;
@@ -6,8 +7,7 @@ using Serilog;
 namespace MarketDataCollector.Messaging.Consumers;
 
 /// <summary>
-/// Sample consumer for Best Bid/Offer quote updates.
-/// Extend this to implement custom quote processing logic.
+/// Consumer for Best Bid/Offer quote updates. Logs quotes and updates metrics.
 /// </summary>
 public sealed class BboQuoteUpdatedConsumer : IConsumer<IBboQuoteUpdated>
 {
@@ -15,7 +15,7 @@ public sealed class BboQuoteUpdatedConsumer : IConsumer<IBboQuoteUpdated>
 
     public BboQuoteUpdatedConsumer()
     {
-        _log = Log.ForContext<BboQuoteUpdatedConsumer>();
+        _log = LoggingSetup.ForContext<BboQuoteUpdatedConsumer>();
     }
 
     public Task Consume(ConsumeContext<IBboQuoteUpdated> context)
@@ -33,13 +33,6 @@ public sealed class BboQuoteUpdatedConsumer : IConsumer<IBboQuoteUpdated>
             quote.Timestamp);
 
         Metrics.IncQuotes();
-
-        // TODO: Add custom quote processing logic here
-        // Examples:
-        // - Track spread history
-        // - Monitor quote staleness
-        // - Update pricing engines
-        // - Generate mid-price series
 
         return Task.CompletedTask;
     }

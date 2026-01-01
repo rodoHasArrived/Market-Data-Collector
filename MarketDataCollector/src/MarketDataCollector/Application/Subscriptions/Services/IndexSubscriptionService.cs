@@ -1,4 +1,5 @@
 using MarketDataCollector.Application.Config;
+using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Subscriptions.Models;
 using MarketDataCollector.Application.UI;
 using Serilog;
@@ -24,7 +25,7 @@ public sealed class IndexSubscriptionService
     {
         _configStore = configStore ?? throw new ArgumentNullException(nameof(configStore));
         _metadataService = metadataService ?? throw new ArgumentNullException(nameof(metadataService));
-        _log = log ?? Log.ForContext<IndexSubscriptionService>();
+        _log = log ?? LoggingSetup.ForContext<IndexSubscriptionService>();
     }
 
     /// <summary>

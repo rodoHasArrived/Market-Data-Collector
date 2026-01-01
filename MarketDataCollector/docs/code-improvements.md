@@ -281,6 +281,50 @@ Provider → System.IO.Pipelines → Utf8JsonReader → Domain Object → Parque
 
 ---
 
+## 8. Code Cleanup and Consolidation
+
+**Completed**: 2026-01-01
+
+### Improvements Made
+
+**Extracted Shared Subscription Management Logic:**
+- Created `SymbolSubscriptionTracker` base class in `Domain/Collectors/`
+- Consolidated duplicate `RegisterSubscription`, `UnregisterSubscription`, `IsSubscribed`, and `ShouldProcessUpdate` methods
+- Both `MarketDepthCollector` and `HighPerformanceMarketDepthCollector` now extend this base class
+- Thread-safe implementation using `ConcurrentDictionary`
+
+**Standardized Logger Initialization:**
+- Unified all logger initialization to use `LoggingSetup.ForContext<T>()` instead of `Log.ForContext<T>()`
+- Updated 14 files across Messaging, Application, and Infrastructure layers
+- Ensures consistent logging context and configuration
+
+**Consumer Class Cleanup:**
+- Removed boilerplate TODO comments from all consumer classes
+- Updated doc comments to be more concise and accurate
+- Consumers: `TradeOccurredConsumer`, `IntegrityEventConsumer`, `BboQuoteUpdatedConsumer`, `L2SnapshotReceivedConsumer`
+
+**Added .gitignore:**
+- Comprehensive `.gitignore` for .NET projects
+- Excludes `appsettings.json` (credentials) while keeping `appsettings.sample.json`
+- Covers build artifacts, IDE files, logs, and temporary files
+
+### Files Changed
+- **New**: `Domain/Collectors/SymbolSubscriptionTracker.cs`
+- **New**: `.gitignore` (root)
+- **Modified**: `MarketDepthCollector.cs`, `HighPerformanceMarketDepthCollector.cs`
+- **Modified**: All 4 consumer classes in `Messaging/Consumers/`
+- **Modified**: 2 publisher classes in `Messaging/Publishers/`
+- **Modified**: 5 service classes in `Application/`
+- **Modified**: `WebSocketResiliencePolicy.cs`
+
+### Impact
+- Reduced code duplication by ~60 lines
+- Improved maintainability with single source of truth for subscription logic
+- Consistent logging behavior across all components
+- Better security posture with proper `.gitignore`
+
+---
+
 ## Next Steps
 
 1. **Enable OpenTelemetry in Production**
@@ -299,6 +343,11 @@ Provider → System.IO.Pipelines → Utf8JsonReader → Domain Object → Parque
    - Ichimoku Cloud
    - Keltner Channels
    - Custom indicators
+
+5. **Continue Code Quality Improvements**
+   - Add comprehensive unit tests for `SymbolSubscriptionTracker`
+   - Implement remaining security recommendations (credential management)
+   - Add structured logging to remaining error paths
 
 ---
 

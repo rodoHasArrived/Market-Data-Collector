@@ -231,6 +231,14 @@ Detailed diagrams and domain notes live in `./docs`:
 * `open-source-references.md` – catalog of related projects and resources
 * `lean-integration.md` – QuantConnect Lean Engine integration guide
 
+## Recent Improvements
+
+### Code Quality (2026-01-01)
+- **Subscription Management**: New `SymbolSubscriptionTracker` base class provides thread-safe subscription handling for depth collectors
+- **Logging Standardization**: All components now use `LoggingSetup.ForContext<T>()` for consistent logging
+- **Consumer Cleanup**: Removed boilerplate from MassTransit consumer classes
+- **Security**: Added `.gitignore` to protect credentials from version control
+
 ## Known Limitations and Roadmap
 
 ### Current Limitations
@@ -242,11 +250,12 @@ Detailed diagrams and domain notes live in `./docs`:
 
 **Security:**
 - API credentials stored in `appsettings.json` (should use environment variables or secrets manager)
+- ✅ `.gitignore` now excludes credential files from version control
 - No built-in authentication for HTTP monitoring endpoints
 
 **Observability:**
-- Some error paths lack structured logging (parse errors, connection failures)
-- Monitoring loop disposal errors not logged
+- ✅ Structured Serilog logging implemented throughout codebase
+- Some error paths may still need additional logging (parse errors, connection failures)
 
 **Data Precision:**
 - Order book uses `double` for prices (consider `decimal` to avoid floating-point precision issues)

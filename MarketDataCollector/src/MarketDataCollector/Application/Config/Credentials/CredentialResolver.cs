@@ -1,4 +1,5 @@
 using MarketDataCollector.Application.Config;
+using MarketDataCollector.Application.Logging;
 using Serilog;
 
 namespace MarketDataCollector.Application.Config.Credentials;
@@ -11,7 +12,7 @@ public sealed class CredentialResolver
     public CredentialResolver(IEnumerable<IAlpacaCredentialSource>? alpacaSources = null, ILogger? log = null)
     {
         _alpacaSources = (alpacaSources ?? Array.Empty<IAlpacaCredentialSource>()).ToArray();
-        _log = log ?? Serilog.Log.ForContext<CredentialResolver>();
+        _log = log ?? LoggingSetup.ForContext<CredentialResolver>();
     }
 
     public AlpacaOptions ResolveAlpaca(AppConfig cfg)

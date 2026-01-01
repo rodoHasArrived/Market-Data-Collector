@@ -1,4 +1,5 @@
 using MassTransit;
+using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Messaging.Contracts;
 using Serilog;
@@ -6,8 +7,7 @@ using Serilog;
 namespace MarketDataCollector.Messaging.Consumers;
 
 /// <summary>
-/// Sample consumer for Level 2 order book snapshots.
-/// Extend this to implement custom depth processing logic.
+/// Consumer for Level 2 order book snapshots. Logs snapshots and updates metrics.
 /// </summary>
 public sealed class L2SnapshotReceivedConsumer : IConsumer<IL2SnapshotReceived>
 {
@@ -15,7 +15,7 @@ public sealed class L2SnapshotReceivedConsumer : IConsumer<IL2SnapshotReceived>
 
     public L2SnapshotReceivedConsumer()
     {
-        _log = Log.ForContext<L2SnapshotReceivedConsumer>();
+        _log = LoggingSetup.ForContext<L2SnapshotReceivedConsumer>();
     }
 
     public Task Consume(ConsumeContext<IL2SnapshotReceived> context)
@@ -35,13 +35,6 @@ public sealed class L2SnapshotReceivedConsumer : IConsumer<IL2SnapshotReceived>
             snapshot.Timestamp);
 
         Metrics.IncDepthUpdates();
-
-        // TODO: Add custom order book processing logic here
-        // Examples:
-        // - Calculate market microstructure metrics
-        // - Update visualization displays
-        // - Detect large order imbalances
-        // - Compute VWAP bands
 
         return Task.CompletedTask;
     }
