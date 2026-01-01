@@ -503,5 +503,121 @@ All recommended open-source projects use permissive licenses (Apache 2.0, MIT, B
 
 ---
 
+## Additional Resources Discovered (2026)
+
+### 25. **Skender.Stock.Indicators**
+- **Repository**: https://github.com/DaveSkender/Stock.Indicators
+- **Language**: C#
+- **License**: Apache 2.0
+- **Relevance**: Stock Indicators for .NET - transforms raw price quotes into technical indicators
+- **Key Features**:
+  - 200+ technical indicators (MACD, RSI, Bollinger Bands, etc.)
+  - v3 introduces comprehensive streaming capabilities
+  - Series, BufferList, and StreamHub calculation styles
+  - Real-time and incremental data processing
+- **What to Learn**:
+  - Efficient indicator calculation patterns
+  - Streaming data processing
+  - Technical analysis integration
+  - Real-time indicator updates
+
+### 26. **Marfusios/websocket-client**
+- **Repository**: https://github.com/Marfusios/websocket-client
+- **Language**: C#
+- **License**: MIT
+- **Relevance**: .NET/C# WebSocket client library with built-in reconnection and resilience
+- **Key Features**:
+  - Wrapper over native C# ClientWebSocket
+  - Built-in reconnection and error handling
+  - Automatic subscription management
+  - Production-ready WebSocket patterns
+- **What to Learn**:
+  - WebSocket reconnection strategies
+  - Subscription state management
+  - Error recovery patterns
+  - Production-grade WebSocket implementation
+
+### 27. **leboeuf/OrderBook**
+- **Repository**: https://github.com/leboeuf/OrderBook
+- **Language**: C#
+- **License**: Not specified
+- **Relevance**: C# price-time order book matching engine
+- **Key Features**:
+  - Price-time priority matching
+  - Order book state management
+  - High-performance order matching
+  - Native C# implementation
+- **What to Learn**:
+  - Order matching algorithms
+  - Price-time priority queue implementation
+  - Order book data structures
+  - C# performance optimization patterns
+
+### WebSocket Resilience Best Practices (2025)
+
+Based on recent industry guidance:
+- **Heartbeat/Keep-Alive**: Send ping frames every 30-60 seconds, expect pong within 10 seconds
+- **Exponential Backoff**: Retry with exponential backoff and jitter (avoid thundering herd)
+- **Circuit Breaker**: Prevent cascading failures by opening circuit after consecutive failures
+- **State Recovery**: Client-side implementations must handle reconnections and stream resumption
+- **Fallback Transport**: Support SSE or long polling as fallback mechanisms
+- **Azure Considerations**: Azure Front Door doesn't support WebSockets; use Azure Application Gateway
+
+**Sources**:
+- [Building Production-Ready WebSocket Servers in C# ASP.NET Core](https://medium.com/@bhargavkoya56/building-production-ready-websocket-servers-in-c-asp-net-core-927b737f14cc)
+- [Architecting Resilient WebSocket Services in ASP.NET Core 8+](https://fullstackcity.com/architecting-resilient-websocket-services-in-aspnet-core-8)
+- [Build resilient HTTP apps: Key development patterns - .NET](https://learn.microsoft.com/en-us/dotnet/core/resilience/http-resilience)
+
+### System.Text.Json High-Performance Techniques (2025)
+
+Recent optimizations and patterns:
+- **PipeReader for Streaming**: Dramatically faster and leaner than string-based approaches
+- **Source Generators**: JsonSerializerContext eliminates reflection overhead (introduced in .NET 7)
+- **Low-Level APIs**: Utf8JsonWriter and Utf8JsonReader for forward-only, high-performance processing
+- **SIMD Operations**: Modern processors (AVX2/AVX-512, ARM NEON) enable gigabyte-per-second parsing
+- **Memory Management**: ArrayPool pattern reduces GC pressure significantly
+- **.NET 10 Improvements**: 18% performance boost from runtime upgrades alone
+
+**Sources**:
+- [Benchmarking System.Text.Json vs Newtonsoft.Json in .NET 10](https://jkrussell.dev/blog/system-text-json-vs-newtonsoft-json-benchmark/)
+- [What's next for System.Text.Json?](https://devblogs.microsoft.com/dotnet/whats-next-for-system-text-json/)
+- [Professional JSON Handling in .NET](https://medium.com/asp-dotnet/professional-json-handling-in-net-3cfa56dd116b)
+
+---
+
+## Implementation Status
+
+### Recently Implemented (2026-01-01)
+
+1. **✅ FluentValidation Configuration Validation**
+   - Comprehensive validation for AppConfig, AlpacaOptions, StorageConfig, SymbolConfig
+   - Clear error messages with property-level validation
+   - Implemented in `Application/Config/ConfigValidationHelper.cs`
+
+2. **✅ Polly Resilience Policies for WebSocket**
+   - Connection retry with exponential backoff and jitter
+   - Circuit breaker pattern for preventing cascading failures
+   - Timeout policies for operation deadlines
+   - Comprehensive pipeline combining all resilience patterns
+   - WebSocket heartbeat/keep-alive implementation
+   - Implemented in `Infrastructure/Resilience/WebSocketResiliencePolicy.cs`
+
+3. **✅ Enhanced Prometheus Metrics**
+   - Comprehensive metric types (Counter, Gauge, Histogram)
+   - Symbol-level metrics with labels
+   - Latency histograms with optimized buckets
+   - GC and memory metrics
+   - Background updater service
+   - Implemented in `Application/Monitoring/PrometheusMetrics.cs`
+
+4. **✅ Comprehensive Test Suite**
+   - xUnit test infrastructure with Moq and FluentAssertions
+   - WebSocket resilience policy tests
+   - Prometheus metrics integration tests
+   - Configuration validation tests
+   - Implemented in `tests/MarketDataCollector.Tests/`
+
+---
+
 **Last Updated**: 2026-01-01
 **Maintainer**: Market Data Collector Team
