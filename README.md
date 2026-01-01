@@ -2,20 +2,44 @@
 
 A high-performance, cross-platform market data collection system for real-time and historical market microstructure data.
 
+[![.NET](https://img.shields.io/badge/.NET-8.0-blue)](https://dotnet.microsoft.com/)
+[![C#](https://img.shields.io/badge/C%23-11-blue)](https://docs.microsoft.com/en-us/dotnet/csharp/)
+[![License](https://img.shields.io/badge/license-See%20LICENSE-green)](LICENSE)
+
+**Status**: Active Development | **Version**: 0.9.0 (Pre-Release)
+
 ## Overview
 
 Market Data Collector is a modular, event-driven system that captures, validates, and persists high-fidelity market data from multiple providers including Interactive Brokers, Alpaca, and Polygon. The system is designed for researchers, quantitative analysts, and traders who need reliable tick-by-tick market data for backtesting, research, and live trading applications.
 
 ## Key Features
 
+### Data Collection
 - **Multi-Provider Support**: Connect to Interactive Brokers, Alpaca, or Polygon data feeds
 - **Provider-Agnostic Architecture**: Seamlessly switch between data sources without code changes
-- **High-Performance Event Pipeline**: Bounded channel architecture with configurable backpressure handling
-- **Flexible Storage Options**: Multiple file naming conventions, date partitioning, and retention policies
-- **Real-Time Monitoring**: Built-in HTTP server with Prometheus metrics and live dashboard
-- **Data Replay**: Replay historical data from stored JSONL files for backtesting
-- **Integrity Validation**: Built-in sequence validation and order book integrity checking
+- **Tick-by-Tick Trades**: Capture every trade with sequence validation and aggressor inference
+- **Level 2 Order Book**: Maintain full market depth with integrity checking
+- **BBO Quotes**: Best bid/offer snapshots with spread and mid-price calculation
+- **Order Flow Statistics**: Real-time VWAP, buy/sell volume, and imbalance metrics
+
+### Performance and Reliability
+- **High-Performance Event Pipeline**: Bounded channel architecture (default 50,000 events) with configurable backpressure
+- **Integrity Validation**: Built-in sequence validation and order book integrity checking with detailed event emission
 - **Hot Configuration Reload**: Update subscriptions without restarting the collector
+- **Graceful Shutdown**: Ensures all events are flushed before termination
+
+### Storage and Data Management
+- **Flexible Storage Options**: Multiple file naming conventions (BySymbol, ByDate, ByType, Flat)
+- **Date Partitioning**: Daily, hourly, monthly, or no partitioning strategies
+- **Retention Policies**: Automatic cleanup based on time (RetentionDays) or capacity (MaxTotalMegabytes)
+- **Compression Support**: Optional gzip compression for JSONL files
+- **Data Replay**: Replay historical data from stored JSONL files for backtesting and analysis
+
+### Monitoring and Observability
+- **Real-Time Monitoring**: Built-in HTTP server with Prometheus metrics and live dashboard
+- **Comprehensive Metrics**: Track events published, dropped, integrity violations, and throughput rates
+- **JSON Status Endpoint**: Machine-readable status for integration with monitoring tools
+- **HTML Dashboard**: Auto-refreshing browser-based dashboard with integrity event tracking
 
 ## Quick Start
 
@@ -71,6 +95,56 @@ Monitor event throughput, drop rates, integrity events, and pipeline statistics 
 ## License
 
 See LICENSE file for details.
+
+## Roadmap and Future Enhancements
+
+### Near-Term Improvements
+
+**Resilience and Reliability:**
+- Connection retry with exponential backoff for all providers (Polly integration)
+- Automatic WebSocket reconnection on connection loss
+- Heartbeat/keep-alive mechanism to detect stale connections
+- Circuit breakers to prevent cascading failures
+
+**Security:**
+- Move API credentials from config files to environment variables or secure vault
+- Support for Azure Key Vault, AWS Secrets Manager, HashiCorp Vault
+
+**Observability:**
+- Replace manual logging with structured Serilog throughout codebase
+- Comprehensive error logging for connection failures and parse errors
+- Distributed tracing with OpenTelemetry
+
+**Data Quality:**
+- Use decimal instead of double for price fields to avoid floating-point precision issues
+- Cross-validation of bid/ask price ordering in order books
+- Enhanced Alpaca quote integration (wire "T":"q" messages to QuoteCollector)
+
+### Long-Term Enhancements
+
+**Testing:**
+- Comprehensive unit test suite with xUnit
+- Integration tests for all provider implementations
+- Mock data generation with Bogus
+- Benchmark suite with BenchmarkDotNet
+
+**Performance:**
+- Adopt System.IO.Pipelines for zero-copy WebSocket message parsing
+- Memory allocation optimization in hot paths
+- Enhanced backpressure handling
+
+**Storage:**
+- Alternative storage backends (QuestDB, InfluxDB, TimescaleDB)
+- Apache Parquet for archival storage (10-20x better compression)
+- Data validation and schema evolution support
+
+**Advanced Features:**
+- Automated recovery policies (auto-resubscribe on integrity events)
+- Multi-provider reconciliation and feed divergence alarms
+- Order book analytics (microprice, liquidity imbalance)
+- Custom alert rules and webhook notifications
+
+See [DEPENDENCIES.md](MarketDataCollector/DEPENDENCIES.md) for detailed implementation recommendations.
 
 ## Contributing
 

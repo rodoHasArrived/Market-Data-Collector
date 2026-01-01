@@ -1,5 +1,7 @@
 # Market Data Collector
 
+**Version**: 0.9.0 (Pre-Release) | **Last Updated**: 2026-01-01
+
 A cross-platform, provider-agnostic market data collector that ingests real-time market data from multiple sources (Interactive Brokers, Alpaca, Polygon, and more), normalizes them into domain events, and persists them as JSONL for downstream research. The collector emits best bid/offer (BBO) snapshots to support trade aggressor inference and quote-aware analytics regardless of data provider.
 
 ## Supported Data Providers
@@ -120,3 +122,38 @@ Detailed diagrams and domain notes live in `./docs`:
 * `c4-diagrams.md` – rendered system, container, and component diagrams
 * `domains.md` – event contracts and invariants
 * `operator-runbook.md` – operational guidance and startup scripts
+* `why-this-architecture.md` – non-technical overview of design decisions
+* `interactive-brokers-setup.md` – IB API installation and configuration
+* `open-source-references.md` – catalog of related projects and resources
+
+## Known Limitations and Roadmap
+
+### Current Limitations
+
+**Provider Integration:**
+- Alpaca quote messages ("T":"q") not yet wired to QuoteCollector (trade-only currently)
+- IB connection does not auto-retry on failure (manual restart required)
+- No heartbeat/keep-alive for WebSocket connections
+
+**Security:**
+- API credentials stored in `appsettings.json` (should use environment variables or secrets manager)
+- No built-in authentication for HTTP monitoring endpoints
+
+**Observability:**
+- Some error paths lack structured logging (parse errors, connection failures)
+- Monitoring loop disposal errors not logged
+
+**Data Precision:**
+- Order book uses `double` for prices (consider `decimal` to avoid floating-point precision issues)
+
+### Planned Enhancements
+
+See the project [DEPENDENCIES.md](DEPENDENCIES.md) for detailed recommendations on:
+- **Serilog** integration for structured logging
+- **Polly** for retry policies and circuit breakers
+- **FluentValidation** for configuration validation
+- **prometheus-net** for enhanced metrics
+- **xUnit/Moq** for comprehensive testing
+- **Parquet.Net** for columnar storage
+
+The main project README includes a detailed roadmap for near-term and long-term improvements.
