@@ -1,15 +1,25 @@
 using System.Text.Json;
+using MarketDataCollector.Application.Backfill;
 using MarketDataCollector.Application.Config;
+using MarketDataCollector.Application.Logging;
+using MarketDataCollector.Application.Monitoring;
+using MarketDataCollector.Application.Pipeline;
+using MarketDataCollector.Infrastructure.Providers.Backfill;
+using MarketDataCollector.Storage;
+using MarketDataCollector.Storage.Policies;
+using MarketDataCollector.Storage.Sinks;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSingleton<ConfigStore>();
+builder.Services.AddSingleton<BackfillCoordinator>();
 
 var app = builder.Build();
 
 app.MapGet("/", (ConfigStore store) =>
 {
-    var html = HtmlTemplates.Index(store.ConfigPath, store.StatusPath);
+    var html = HtmlTemplates.Index(store.ConfigPath, store.GetStatusPath(), store.GetBackfillStatusPath());
     return Results.Content(html, "text/html");
 });
 
@@ -23,7 +33,8 @@ app.MapGet("/api/config", (ConfigStore store) =>
         dataSource = cfg.DataSource.ToString(),
         alpaca = cfg.Alpaca,
         storage = cfg.Storage,
-        symbols = cfg.Symbols ?? Array.Empty<SymbolConfig>()
+        symbols = cfg.Symbols ?? Array.Empty<SymbolConfig>(),
+        backfill = cfg.Backfill
     }, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
 });
 
@@ -101,6 +112,42 @@ app.MapGet("/api/status", (ConfigStore store) =>
     return status is null ? Results.NotFound() : Results.Content(status, "application/json");
 });
 
+app.MapGet("/api/backfill/providers", (BackfillCoordinator backfill) =>
+{
+    var providers = backfill.DescribeProviders();
+    return Results.Json(providers, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+});
+
+app.MapGet("/api/backfill/status", (BackfillCoordinator backfill) =>
+{
+    var status = backfill.TryReadLast();
+    return status is null
+        ? Results.NotFound()
+        : Results.Json(status, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase, WriteIndented = true });
+});
+
+app.MapPost("/api/backfill/run", async (BackfillCoordinator backfill, BackfillRequestDto req) =>
+{
+    if (req.Symbols is null || req.Symbols.Length == 0)
+        return Results.BadRequest("At least one symbol is required.");
+
+    try
+    {
+        var request = new BackfillRequest(
+            string.IsNullOrWhiteSpace(req.Provider) ? "stooq" : req.Provider!,
+            req.Symbols,
+            req.From,
+            req.To);
+
+        var result = await backfill.RunAsync(request);
+        return Results.Json(result, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase, WriteIndented = true });
+    }
+    catch (InvalidOperationException ex)
+    {
+        return Results.BadRequest(ex.Message);
+    }
+});
+
 app.Run();
 
 public record DataSourceRequest(string DataSource);
@@ -108,7 +155,7 @@ public record StorageSettingsRequest(string? DataRoot, bool Compress, string? Na
 
 public static class HtmlTemplates
 {
-    public static string Index(string configPath, string statusPath) => $@"
+    public static string Index(string configPath, string statusPath, string backfillPath) => $@"
 <!doctype html>
 <html>
 <head>
@@ -148,7 +195,7 @@ public static class HtmlTemplates
 </head>
 <body>
   <h2>Market Data Collector Dashboard</h2>
-  <div class=""muted"" style=""margin-bottom: 16px;"">Config: <code>{Escape(configPath)}</code> &bull; Status: <code>{Escape(statusPath)}</code></div>
+  <div class=""muted"" style=""margin-bottom: 16px;"">Config: <code>{Escape(configPath)}</code> &bull; Status: <code>{Escape(statusPath)}</code> &bull; Backfill: <code>{Escape(backfillPath)}</code></div>
 
   <div class=""row"">
     <!-- Status Panel -->
@@ -265,6 +312,35 @@ public static class HtmlTemplates
   </div>
 
   <div class=""row"">
+    <div class=""card"" style=""flex:1; min-width: 400px;"">
+      <h3>Historical Backfill</h3>
+      <div id=""backfillHelp"" class=""muted"" style=""margin-bottom: 8px;"">Download free end-of-day bars to backfill gaps.</div>
+      <div class=""form-row"">
+        <div class=""form-group"">
+          <label>Provider</label>
+          <select id=""backfillProvider""></select>
+        </div>
+        <div class=""form-group"">
+          <label>Symbols (comma separated)</label>
+          <input id=""backfillSymbols"" placeholder=""AAPL,MSFT"" />
+        </div>
+      </div>
+      <div class=""form-row"">
+        <div class=""form-group"">
+          <label>From (UTC)</label>
+          <input id=""backfillFrom"" type=""date"" />
+        </div>
+        <div class=""form-group"">
+          <label>To (UTC)</label>
+          <input id=""backfillTo"" type=""date"" />
+        </div>
+      </div>
+      <button class=""btn-primary"" onclick=""runBackfill()"">Start Backfill</button>
+      <div id=""backfillStatus"" class=""muted"" style=""margin-top: 8px;"">No backfill started yet.</div>
+    </div>
+  </div>
+
+  <div class=""row"">
     <!-- Symbols Panel -->
     <div class=""card"" style=""flex:1"">
       <h3>Subscribed Symbols</h3>
@@ -338,6 +414,33 @@ public static class HtmlTemplates
 
 <script>
 let currentDataSource = 'IB';
+let backfillProviders = [];
+
+async function loadBackfillProviders(selectedProvider) {
+  try {
+    const r = await fetch('/api/backfill/providers');
+    if (!r.ok) return;
+    backfillProviders = await r.json();
+    const select = document.getElementById('backfillProvider');
+    if (!select) return;
+    select.innerHTML = '';
+    for (const p of backfillProviders) {
+      const opt = document.createElement('option');
+      opt.value = p.name;
+      opt.textContent = p.displayName || p.name;
+      select.appendChild(opt);
+    }
+    if (selectedProvider) {
+      select.value = selectedProvider;
+    }
+    const help = document.getElementById('backfillHelp');
+    if (help && backfillProviders.length) {
+      help.textContent = backfillProviders.map(p => `${p.displayName || p.name}: ${p.description || ''}`).join(' • ');
+    }
+  } catch (e) {
+    console.warn('Unable to load backfill providers', e);
+  }
+}
 
 async function loadConfig() {{
   const r = await fetch('/api/config');
@@ -367,6 +470,14 @@ async function loadConfig() {{
     document.getElementById('filePrefix').value = cfg.storage.filePrefix || '';
   }}
   updateStoragePreview();
+
+  await loadBackfillProviders(cfg.backfill ? cfg.backfill.provider : null);
+  if (cfg.backfill) {{
+    if (cfg.backfill.symbols) document.getElementById('backfillSymbols').value = cfg.backfill.symbols.join(',');
+    if (cfg.backfill.from) document.getElementById('backfillFrom').value = cfg.backfill.from;
+    if (cfg.backfill.to) document.getElementById('backfillTo').value = cfg.backfill.to;
+    if (cfg.backfill.provider) document.getElementById('backfillProvider').value = cfg.backfill.provider;
+  }}
 
   // Update symbols table
   const tbody = document.querySelector('#symbolsTable tbody');
@@ -509,11 +620,71 @@ async function loadStatus() {{
       <div style=""margin-top: 8px;"">
         Published: <b>${{(s.metrics && s.metrics.published) || 0}}</b> &bull;
         Dropped: <b>${{(s.metrics && s.metrics.dropped) || 0}}</b> &bull;
-        Integrity: <b>${{(s.metrics && s.metrics.integrity) || 0}}</b>
+        Integrity: <b>${{(s.metrics && s.metrics.integrity) || 0}}</b> &bull;
+        Historical bars: <b>${{(s.metrics && s.metrics.historicalBars) || 0}}</b>
       </div>`;
   }} catch (e) {{
     box.innerHTML = '<span class=""bad"">No status</span>';
   }}
+}}
+
+async function loadBackfillStatus() {{
+  const box = document.getElementById('backfillStatus');
+  try {{
+    const r = await fetch('/api/backfill/status');
+    if (!r.ok) {{
+      box.textContent = 'No backfill runs yet.';
+      return;
+    }}
+    const status = await r.json();
+    box.innerHTML = formatBackfillStatus(status);
+  }} catch (e) {{
+    box.textContent = 'Unable to load backfill status.';
+  }}
+}}
+
+function formatBackfillStatus(status) {{
+  if (!status) return 'No backfill runs yet.';
+  const started = status.startedUtc ? new Date(status.startedUtc).toLocaleString() : 'n/a';
+  const completed = status.completedUtc ? new Date(status.completedUtc).toLocaleString() : 'n/a';
+  const badge = status.success ? '<span class=""good"">Success</span>' : '<span class=""bad"">Failed</span>';
+  const symbols = (status.symbols || []).join(', ');
+  const error = status.error ? `<div class=""bad"">${{status.error}}</div>` : '';
+  return `${{badge}} • Provider <b>${{status.provider}}</b> • Bars <b>${{status.barsWritten || 0}}</b><br/>Symbols: ${{symbols || 'n/a'}}<br/>Started: ${{started}}<br/>Completed: ${{completed}}${{error}}`;
+}}
+
+async function runBackfill() {{
+  const statusBox = document.getElementById('backfillStatus');
+  const provider = document.getElementById('backfillProvider').value || 'stooq';
+  const symbols = (document.getElementById('backfillSymbols').value || '')
+    .split(',')
+    .map(s => s.trim())
+    .filter(s => s);
+  const from = document.getElementById('backfillFrom').value || null;
+  const to = document.getElementById('backfillTo').value || null;
+
+  if (!symbols.length) {{
+    statusBox.textContent = 'Please enter at least one symbol to backfill.';
+    return;
+  }}
+
+  statusBox.textContent = 'Starting backfill...';
+  const payload = {{ provider, symbols, from, to }};
+  const r = await fetch('/api/backfill/run', {{
+    method: 'POST',
+    headers: {{ 'Content-Type': 'application/json' }},
+    body: JSON.stringify(payload)
+  }});
+
+  if (!r.ok) {{
+    const msg = await r.text();
+    statusBox.innerHTML = `<span class=""bad"">${{msg || 'Backfill failed'}}</span>`;
+    return;
+  }}
+
+  const result = await r.json();
+  statusBox.innerHTML = formatBackfillStatus(result);
+  await loadBackfillStatus();
 }}
 
 async function addSymbol() {{
@@ -567,7 +738,9 @@ async function deleteSymbol(symbol) {{
 // Initial load
 loadConfig();
 loadStatus();
+loadBackfillStatus();
 setInterval(loadStatus, 2000);
+setInterval(loadBackfillStatus, 5000);
 </script>
 </body>
 </html>";
@@ -578,13 +751,11 @@ setInterval(loadStatus, 2000);
 public sealed class ConfigStore
 {
     public string ConfigPath { get; }
-    public string StatusPath { get; }
 
     public ConfigStore()
     {
         // Config lives at solution root by convention.
         ConfigPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "appsettings.json"));
-        StatusPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "data", "_status", "status.json"));
     }
 
     public AppConfig Load()
@@ -612,11 +783,113 @@ public sealed class ConfigStore
     {
         try
         {
-            return File.Exists(StatusPath) ? File.ReadAllText(StatusPath) : null;
+            var statusPath = GetStatusPath();
+            return File.Exists(statusPath) ? File.ReadAllText(statusPath) : null;
         }
         catch
         {
             return null;
         }
     }
+
+    public string GetStatusPath(AppConfig? cfg = null)
+    {
+        cfg ??= Load();
+        var root = GetDataRoot(cfg);
+        return Path.Combine(root, "_status", "status.json");
+    }
+
+    public string GetBackfillStatusPath(AppConfig? cfg = null)
+    {
+        cfg ??= Load();
+        var root = GetDataRoot(cfg);
+        return Path.Combine(root, "_status", "backfill.json");
+    }
+
+    public BackfillResult? TryLoadBackfillStatus()
+    {
+        var cfg = Load();
+        var store = new BackfillStatusStore(GetDataRoot(cfg));
+        return store.TryRead();
+    }
+
+    public string GetDataRoot(AppConfig? cfg = null)
+    {
+        cfg ??= Load();
+        var root = string.IsNullOrWhiteSpace(cfg.DataRoot) ? "data" : cfg.DataRoot;
+        var baseDir = Path.GetDirectoryName(ConfigPath)!;
+        return Path.GetFullPath(Path.Combine(baseDir, root));
+    }
 }
+
+public sealed class BackfillCoordinator
+{
+    private readonly ConfigStore _store;
+    private readonly ILogger _log = LoggingSetup.ForContext<BackfillCoordinator>();
+    private readonly SemaphoreSlim _gate = new(1, 1);
+    private BackfillResult? _lastRun;
+
+    public BackfillCoordinator(ConfigStore store)
+    {
+        _store = store;
+        _lastRun = store.TryLoadBackfillStatus();
+    }
+
+    public IEnumerable<object> DescribeProviders()
+    {
+        var service = CreateService();
+        return service.Providers
+            .Select(p => new { p.Name, p.DisplayName, p.Description });
+    }
+
+    public BackfillResult? TryReadLast() => _lastRun ?? _store.TryLoadBackfillStatus();
+
+    public async Task<BackfillResult> RunAsync(BackfillRequest request, CancellationToken ct = default)
+    {
+        if (!await _gate.WaitAsync(TimeSpan.Zero, ct).ConfigureAwait(false))
+            throw new InvalidOperationException("A backfill is already running. Please try again after it completes.");
+
+        try
+        {
+            var cfg = _store.Load();
+            var storageOpt = cfg.Storage?.ToStorageOptions(cfg.DataRoot, cfg.Compress)
+                ?? new StorageOptions
+                {
+                    RootPath = cfg.DataRoot,
+                    Compress = cfg.Compress,
+                    NamingConvention = FileNamingConvention.BySymbol,
+                    DatePartition = DatePartition.Daily
+                };
+
+            var policy = new JsonlStoragePolicy(storageOpt);
+            await using var sink = new JsonlStorageSink(storageOpt, policy);
+            await using var pipeline = new EventPipeline(sink, capacity: 20_000, enablePeriodicFlush: false);
+
+            // Keep pipeline counters scoped per run
+            Metrics.Reset();
+
+            var service = CreateService();
+            var result = await service.RunAsync(request, pipeline, ct).ConfigureAwait(false);
+
+            var statusStore = new BackfillStatusStore(_store.GetDataRoot(cfg));
+            await statusStore.WriteAsync(result).ConfigureAwait(false);
+            _lastRun = result;
+            return result;
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    private HistoricalBackfillService CreateService()
+    {
+        var providers = new IHistoricalDataProvider[]
+        {
+            new StooqHistoricalDataProvider()
+        };
+        return new HistoricalBackfillService(providers, _log);
+    }
+}
+
+public record BackfillRequestDto(string? Provider, string[] Symbols, DateOnly? From, DateOnly? To);

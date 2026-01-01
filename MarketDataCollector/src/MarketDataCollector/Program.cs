@@ -1,5 +1,6 @@
 using System.Text.Json;
 using MassTransit;
+using MarketDataCollector.Application.Backfill;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Monitoring;
@@ -13,6 +14,7 @@ using MarketDataCollector.Infrastructure;
 using MarketDataCollector.Infrastructure.Providers.InteractiveBrokers;
 using MarketDataCollector.Infrastructure.Providers.Alpaca;
 using MarketDataCollector.Infrastructure.Providers.Polygon;
+using MarketDataCollector.Infrastructure.Providers.Backfill;
 using MarketDataCollector.Messaging.Configuration;
 using MarketDataCollector.Messaging.Publishers;
 using MarketDataCollector.Storage;
@@ -135,6 +137,31 @@ internal static class Program
             publisher = pipelinePublisher;
         }
 
+        var backfillRequested = args.Any(a => a.Equals("--backfill", StringComparison.OrdinalIgnoreCase))
+            || (cfg.Backfill?.Enabled == true);
+        if (backfillRequested)
+        {
+            var backfillRequest = BuildBackfillRequest(cfg, args);
+            var backfillProviders = new IHistoricalDataProvider[]
+            {
+                new StooqHistoricalDataProvider(log: LoggingSetup.ForContext<StooqHistoricalDataProvider>())
+            };
+
+            var backfill = new HistoricalBackfillService(backfillProviders, log);
+            var result = await backfill.RunAsync(backfillRequest, pipeline);
+            var statusStore = BackfillStatusStore.FromConfig(cfg);
+            await statusStore.WriteAsync(result);
+            await pipeline.FlushAsync();
+            await statusWriter.WriteOnceAsync();
+
+            if (statusHttp is not null)
+                await statusHttp.DisposeAsync();
+
+            if (!result.Success)
+                Environment.ExitCode = 1;
+            return;
+        }
+
         // Collectors
         var quoteCollector = new QuoteCollector(publisher);
         var tradeCollector = new TradeDataCollector(publisher, quoteCollector);
@@ -251,6 +278,23 @@ internal static class Program
         }
         return null;
     }
+
+    private static BackfillRequest BuildBackfillRequest(AppConfig cfg, string[] args)
+    {
+        var baseRequest = BackfillRequest.FromConfig(cfg);
+        var provider = GetArgValue(args, "--backfill-provider") ?? baseRequest.Provider;
+        var symbolsArg = GetArgValue(args, "--backfill-symbols");
+        var symbols = !string.IsNullOrWhiteSpace(symbolsArg)
+            ? symbolsArg.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            : baseRequest.Symbols;
+        var from = ParseDate(GetArgValue(args, "--backfill-from")) ?? baseRequest.From;
+        var to = ParseDate(GetArgValue(args, "--backfill-to")) ?? baseRequest.To;
+
+        return new BackfillRequest(provider, symbols.ToArray(), from, to);
+    }
+
+    private static DateOnly? ParseDate(string? value)
+        => DateOnly.TryParse(value, out var date) ? date : null;
 
     private static AppConfig LoadConfig(string path)
     {

@@ -39,7 +39,13 @@ public sealed class StatusWriter : IAsyncDisposable
         var payload = new
         {
             timestampUtc = DateTimeOffset.UtcNow.ToString("O"),
-            metrics = new { published = Metrics.Published, dropped = Metrics.Dropped, integrity = Metrics.Integrity },
+            metrics = new
+            {
+                published = Metrics.Published,
+                dropped = Metrics.Dropped,
+                integrity = Metrics.Integrity,
+                historicalBars = Metrics.HistoricalBars
+            },
             symbols = cfg.Symbols ?? Array.Empty<SymbolConfig>()
         };
 

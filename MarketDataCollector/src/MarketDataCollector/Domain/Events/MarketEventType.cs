@@ -8,5 +8,6 @@ public enum MarketEventType
     OrderFlow = 4,
     Heartbeat = 5,
     ConnectionStatus = 6,
-    Integrity = 7
+    Integrity = 7,
+    HistoricalBar = 8
 }
