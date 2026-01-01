@@ -1,8 +1,16 @@
 # Market Data Collector
 
-**Version**: 0.9.0 (Pre-Release) | **Last Updated**: 2026-01-01
+**Version**: 1.0.0 (Production Ready) | **Last Updated**: 2026-01-01
 
-A cross-platform, provider-agnostic market data collector that ingests real-time market data from multiple sources (Interactive Brokers, Alpaca, Polygon, and more), normalizes them into domain events, and persists them as JSONL for downstream research. The collector emits best bid/offer (BBO) snapshots to support trade aggressor inference and quote-aware analytics regardless of data provider.
+A cross-platform, production-ready market data collector with an intuitive web dashboard. Ingests real-time market data from multiple sources (Interactive Brokers, Alpaca, Polygon), normalizes them into domain events, and persists them as JSONL for downstream research. Features comprehensive error handling, single-executable deployment, and built-in help system.
+
+## ✨ New in v1.0
+
+- **🎨 Modern Web Dashboard** - Full-featured UI for configuration and monitoring
+- **📦 Single Executable** - Deploy as one file, no dependencies
+- **🛡️ Enhanced Error Handling** - Comprehensive error detection and user-friendly messages
+- **📚 Complete Documentation** - Built-in help system with detailed HELP.md guide
+- **🎯 Production Ready** - Robust deployment with systemd support
 
 ## Supported Data Providers
 
@@ -13,26 +21,54 @@ A cross-platform, provider-agnostic market data collector that ingests real-time
 
 ## Quick start
 
-Run a local smoke test (no provider connectivity required):
+### **🚀 Easiest Way: Web Dashboard** (New!)
 
+Start the intuitive web dashboard for easy configuration and monitoring:
+
+```bash
+./MarketDataCollector --ui
+```
+
+Then open your browser to `http://localhost:8080` for a full-featured dashboard with:
+- 📊 Real-time system status and metrics
+- ⚙️ Point-and-click configuration
+- 📈 Symbol management
+- 📅 Historical backfill interface
+- 💡 Built-in help and tooltips
+- 🎨 Modern, responsive UI
+
+### Command Line Modes
+
+**Run local smoke test** (no provider connectivity required):
 ```bash
 dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj
 ```
 
-To exercise built-in self tests:
-
+**Production mode** with status endpoint and hot-reload:
 ```bash
-dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --selftest
+./MarketDataCollector --serve-status --watch-config
+```
+
+**Self-tests:**
+```bash
+./MarketDataCollector --selftest
+```
+
+**Historical backfill:**
+```bash
+./MarketDataCollector --backfill \
+  --backfill-provider stooq \
+  --backfill-symbols SPY,QQQ \
+  --backfill-from 2024-01-01 \
+  --backfill-to 2024-01-05
+```
+
+**Get help:**
+```bash
+./MarketDataCollector --help
 ```
 
 See `docs/operator-runbook.md` for production startup scripts, including the systemd unit and PowerShell helpers.
-
-To trigger a historical backfill before the live feed starts, either enable `"Backfill": { "Enabled": true }` in `appsettings.json` or pass command-line flags:
-
-```bash
-dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- \
-  --backfill --backfill-provider stooq --backfill-symbols SPY,QQQ --backfill-from 2024-01-01 --backfill-to 2024-01-05
-```
 
 ## Configuration highlights
 

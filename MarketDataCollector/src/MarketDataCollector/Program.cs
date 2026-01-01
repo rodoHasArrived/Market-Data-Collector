@@ -2,11 +2,13 @@ using System.Text.Json;
 using MassTransit;
 using MarketDataCollector.Application.Backfill;
 using MarketDataCollector.Application.Config;
+using MarketDataCollector.Application.Exceptions;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Application.Subscriptions;
 using MarketDataCollector.Application.Pipeline;
 using MarketDataCollector.Application.Testing;
+using MarketDataCollector.Application.UI;
 using MarketDataCollector.Domain.Collectors;
 using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Domain.Models;
@@ -54,6 +56,41 @@ internal static class Program
 
     private static async Task RunAsync(string[] args, AppConfig cfg, string cfgPath, ILogger log)
     {
+        // Help Mode - Display usage information
+        if (args.Any(a => a.Equals("--help", StringComparison.OrdinalIgnoreCase) || a.Equals("-h", StringComparison.OrdinalIgnoreCase)))
+        {
+            ShowHelp();
+            return;
+        }
+
+        // UI Mode - Start web dashboard
+        if (args.Any(a => a.Equals("--ui", StringComparison.OrdinalIgnoreCase)))
+        {
+            var uiPort = int.TryParse(GetArgValue(args, "--http-port"), out var parsedUiPort) ? parsedUiPort : 8080;
+            log.Information("Starting web dashboard on port {Port}...", uiPort);
+
+            await using var uiServer = new UiServer(cfgPath, uiPort);
+            await uiServer.StartAsync();
+
+            log.Information("Web dashboard started at http://localhost:{Port}", uiPort);
+            Console.WriteLine($"Web dashboard running at http://localhost:{uiPort}");
+            Console.WriteLine("Press Ctrl+C to stop...");
+
+            var done = new TaskCompletionSource();
+            Console.CancelKeyPress += (_, e) =>
+            {
+                e.Cancel = true;
+                log.Information("Shutdown requested");
+                done.TrySetResult();
+            };
+            await done.Task;
+
+            log.Information("Stopping web dashboard...");
+            await uiServer.StopAsync();
+            log.Information("Web dashboard stopped");
+            return;
+        }
+
         if (args.Any(a => a.Equals("--selftest", StringComparison.OrdinalIgnoreCase)))
         {
             log.Information("Running self-tests...");
@@ -269,6 +306,81 @@ internal static class Program
             await statusHttp.DisposeAsync();
     }
 
+    private static void ShowHelp()
+    {
+        Console.WriteLine(@"
+╔══════════════════════════════════════════════════════════════════════╗
+║                    Market Data Collector v1.0                        ║
+║          Real-time and historical market data collection             ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+USAGE:
+    MarketDataCollector [OPTIONS]
+
+MODES:
+    --ui                    Start web dashboard (http://localhost:8080)
+    --serve-status          Enable status monitoring endpoint
+    --backfill              Run historical data backfill
+    --replay <path>         Replay events from JSONL file
+    --selftest              Run system self-tests
+    --help, -h              Show this help message
+
+OPTIONS:
+    --http-port <port>      HTTP server port (default: 8080)
+    --status-port <port>    Status endpoint port
+    --watch-config          Enable hot-reload of configuration
+
+BACKFILL OPTIONS:
+    --backfill-provider <name>      Provider to use (default: stooq)
+    --backfill-symbols <list>       Comma-separated symbols (e.g., AAPL,MSFT)
+    --backfill-from <date>          Start date (YYYY-MM-DD)
+    --backfill-to <date>            End date (YYYY-MM-DD)
+
+EXAMPLES:
+    # Start web dashboard on default port
+    MarketDataCollector --ui
+
+    # Start web dashboard on custom port
+    MarketDataCollector --ui --http-port 9000
+
+    # Production mode with status endpoint and hot-reload
+    MarketDataCollector --serve-status --watch-config
+
+    # Run historical backfill
+    MarketDataCollector --backfill --backfill-symbols AAPL,MSFT,GOOGL \\
+        --backfill-from 2024-01-01 --backfill-to 2024-12-31
+
+    # Run self-tests
+    MarketDataCollector --selftest
+
+CONFIGURATION:
+    Configuration is loaded from appsettings.json in the current directory.
+    Copy appsettings.sample.json to appsettings.json to get started.
+
+DATA PROVIDERS:
+    - Interactive Brokers (IB): Level 2 market depth + trades
+    - Alpaca: Real-time trades and quotes via WebSocket
+    - Polygon: Real-time and historical data (coming soon)
+
+DOCUMENTATION:
+    For detailed documentation, see:
+    - HELP.md                    - Complete user guide
+    - README.md                  - Project overview
+    - docs/CONFIGURATION.md      - Configuration reference
+    - docs/GETTING_STARTED.md    - Setup guide
+    - docs/TROUBLESHOOTING.md    - Common issues
+
+SUPPORT:
+    Report issues: https://github.com/rodoHasArrived/Test/issues
+    Documentation: ./HELP.md
+
+╔══════════════════════════════════════════════════════════════════════╗
+║  Quick Start: ./MarketDataCollector --ui                             ║
+║  Then open http://localhost:8080 in your browser                     ║
+╚══════════════════════════════════════════════════════════════════════╝
+");
+    }
+
     private static string? GetArgValue(string[] args, string key)
     {
         for (var i = 0; i < args.Length - 1; i++)
@@ -319,12 +431,26 @@ internal static class Program
             Console.Error.WriteLine("    1. Validate JSON syntax at jsonlint.com");
             Console.Error.WriteLine("    2. Check for trailing commas or missing quotes");
             Console.Error.WriteLine("    3. Compare against appsettings.sample.json");
+            Console.Error.WriteLine("    4. Run: dotnet user-secrets init (for sensitive data)");
             return new AppConfig();
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            throw new ConfigurationException(
+                $"Access denied reading configuration file: {path}. Check file permissions.",
+                path, null);
+        }
+        catch (IOException ex)
+        {
+            throw new ConfigurationException(
+                $"I/O error reading configuration file: {path}. {ex.Message}",
+                path, null);
         }
         catch (Exception ex)
         {
             Console.Error.WriteLine($"[Error] Failed to load configuration: {ex.Message}");
             Console.Error.WriteLine("Using default configuration.");
+            Console.Error.WriteLine("For detailed help, see HELP.md or run with --help");
             return new AppConfig();
         }
     }
