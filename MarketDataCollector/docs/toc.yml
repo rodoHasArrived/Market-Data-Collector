@@ -10,3 +10,5 @@
   href: design-review-memo.md
 - name: Why This Architecture
   href: why-this-architecture.md
+- name: Data Uniformity and Usability Plan
+  href: data-uniformity.md
