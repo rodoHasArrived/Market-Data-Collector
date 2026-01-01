@@ -10,9 +10,11 @@ using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Infrastructure;
 using MarketDataCollector.Infrastructure.Providers.InteractiveBrokers;
 using MarketDataCollector.Infrastructure.Providers.Alpaca;
+using MarketDataCollector.Infrastructure.Providers.Polygon;
 using MarketDataCollector.Storage;
 using MarketDataCollector.Storage.Policies;
 using MarketDataCollector.Storage.Sinks;
+using MarketDataCollector.Storage.Replay;
 
 namespace MarketDataCollector;
 
@@ -27,6 +29,9 @@ internal static class Program
             return;
         }
 
+        var replayPath = GetArgValue(args, "--replay");
+        var statusPort = int.TryParse(GetArgValue(args, "--status-port"), out var parsedPort) ? parsedPort : 8080;
+
         var cfgPath = "appsettings.json";
         var cfg = LoadConfig(cfgPath);
 
@@ -34,6 +39,7 @@ internal static class Program
         await using var statusWriter = new StatusWriter(statusPath, () => LoadConfig(cfgPath));
         if (args.Any(a => a.Equals("--serve-status", StringComparison.OrdinalIgnoreCase)))
             statusWriter.Start(TimeSpan.FromSeconds(1));
+        StatusHttpServer? statusHttp = null;
 
         // Build storage options from config
         var storageOpt = cfg.Storage?.ToStorageOptions(cfg.DataRoot, cfg.Compress)
@@ -65,10 +71,34 @@ internal static class Program
         var tradeCollector = new TradeDataCollector(publisher, quoteCollector);
         var depthCollector = new MarketDepthCollector(publisher, requireExplicitSubscription: true);
 
+        if (args.Any(a => a.Equals("--serve-status", StringComparison.OrdinalIgnoreCase)))
+        {
+            statusHttp = new StatusHttpServer(statusPort, Metrics.GetSnapshot, pipeline.GetStatistics, () => depthCollector.GetRecentIntegrityEvents());
+            statusHttp.Start();
+            Console.WriteLine($"Status/metrics dashboard running at http://localhost:{statusPort}/");
+        }
+
+        if (!string.IsNullOrWhiteSpace(replayPath))
+        {
+            Console.WriteLine($"Replaying events from {replayPath}...");
+            var replayer = new JsonlReplayer(replayPath);
+            await foreach (var evt in replayer.ReadEventsAsync())
+                await pipeline.PublishAsync(evt);
+
+            await pipeline.FlushAsync();
+            await statusWriter.WriteOnceAsync();
+            if (statusHttp is not null)
+                await statusHttp.DisposeAsync();
+            return;
+        }
+
         // Market data client (provider selected by config)
-        await using IMarketDataClient dataClient = cfg.DataSource == DataSourceKind.Alpaca
-            ? new AlpacaMarketDataClient(tradeCollector, quoteCollector, cfg.Alpaca ?? throw new InvalidOperationException("Alpaca options required when DataSource=Alpaca"))
-            : new IBMarketDataClient(publisher, tradeCollector, depthCollector);
+        await using IMarketDataClient dataClient = cfg.DataSource switch
+        {
+            DataSourceKind.Alpaca => new AlpacaMarketDataClient(tradeCollector, quoteCollector, cfg.Alpaca ?? throw new InvalidOperationException("Alpaca options required when DataSource=Alpaca")),
+            DataSourceKind.Polygon => new PolygonMarketDataClient(publisher, tradeCollector, quoteCollector),
+            _ => new IBMarketDataClient(publisher, tradeCollector, depthCollector)
+        };
 
         await dataClient.ConnectAsync();
 
@@ -122,6 +152,19 @@ internal static class Program
         }
 
         await dataClient.DisconnectAsync();
+
+        if (statusHttp is not null)
+            await statusHttp.DisposeAsync();
+    }
+
+    private static string? GetArgValue(string[] args, string key)
+    {
+        for (var i = 0; i < args.Length - 1; i++)
+        {
+            if (args[i].Equals(key, StringComparison.OrdinalIgnoreCase))
+                return args[i + 1];
+        }
+        return null;
     }
 
     private static AppConfig LoadConfig(string path)

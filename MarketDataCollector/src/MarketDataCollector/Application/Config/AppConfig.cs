@@ -47,7 +47,18 @@ public sealed record StorageConfig(
     /// <summary>
     /// Optional file name prefix.
     /// </summary>
-    string? FilePrefix = null
+    string? FilePrefix = null,
+
+    /// <summary>
+    /// Optional retention window (days). Files older than this are deleted during writes.
+    /// </summary>
+    int? RetentionDays = null,
+
+    /// <summary>
+    /// Optional cap on total bytes (across all files). Oldest files are removed first when exceeded.
+    /// Value is expressed in megabytes for readability.
+    /// </summary>
+    long? MaxTotalMegabytes = null
 )
 {
     /// <summary>
@@ -62,7 +73,9 @@ public sealed record StorageConfig(
             NamingConvention = ParseNamingConvention(NamingConvention),
             DatePartition = ParseDatePartition(DatePartition),
             IncludeProvider = IncludeProvider,
-            FilePrefix = FilePrefix
+            FilePrefix = FilePrefix,
+            RetentionDays = RetentionDays,
+            MaxTotalBytes = MaxTotalMegabytes is null ? null : MaxTotalMegabytes * 1024L * 1024L
         };
     }
 

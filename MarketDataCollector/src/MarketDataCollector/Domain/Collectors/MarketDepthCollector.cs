@@ -1,6 +1,8 @@
 using System.Collections.Concurrent;
 using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Domain.Models;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace MarketDataCollector.Domain.Collectors;
 
@@ -14,6 +16,11 @@ public sealed class MarketDepthCollector
 
     private readonly ConcurrentDictionary<string, bool> _subscriptions = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<string, SymbolOrderBookBuffer> _books = new(StringComparer.OrdinalIgnoreCase);
+    private readonly ConcurrentQueue<DepthIntegrityEvent> _recentIntegrity = new();
+    private readonly ConcurrentDictionary<string, IntegrityWindow> _integrityWindows = new(StringComparer.OrdinalIgnoreCase);
+
+    private const int AutoResetThreshold = 3;
+    private static readonly TimeSpan AutoResetWindow = TimeSpan.FromSeconds(15);
 
     public MarketDepthCollector(IMarketEventPublisher publisher, bool requireExplicitSubscription = true)
     {
@@ -47,6 +54,12 @@ public sealed class MarketDepthCollector
     {
         if (string.IsNullOrWhiteSpace(symbol)) return false;
         return _books.TryGetValue(symbol.Trim(), out var buf) && buf.IsStale;
+    }
+
+    public IReadOnlyList<DepthIntegrityEvent> GetRecentIntegrityEvents(int max = 20)
+    {
+        var snapshot = _recentIntegrity.ToArray();
+        return snapshot.Reverse().Take(max).ToArray();
     }
 
     /// <summary>
@@ -84,7 +97,13 @@ public sealed class MarketDepthCollector
                 Venue: update.Venue
             );
 
+            TrackIntegrity(evt);
             _publisher.TryPublish(MarketEvent.DepthIntegrity(update.Timestamp, symbol, evt));
+
+            if (ShouldAutoReset(symbol, evt.Timestamp))
+            {
+                ResetSymbolStream(symbol);
+            }
             return;
         }
 
@@ -94,9 +113,65 @@ public sealed class MarketDepthCollector
         _publisher.TryPublish(MarketEvent.L2Snapshot(snapshot.Timestamp, symbol, snapshot));
     }
 
+    private void TrackIntegrity(DepthIntegrityEvent evt)
+    {
+        _recentIntegrity.Enqueue(evt);
+        while (_recentIntegrity.Count > 100)
+            _recentIntegrity.TryDequeue(out _);
+
+        var window = _integrityWindows.GetOrAdd(evt.Symbol, _ => new IntegrityWindow(AutoResetWindow, AutoResetThreshold));
+        window.Add(evt.Timestamp);
+    }
+
+    private bool ShouldAutoReset(string symbol, DateTimeOffset timestamp)
+    {
+        if (!_integrityWindows.TryGetValue(symbol, out var window))
+            return false;
+
+        return window.ShouldReset(timestamp);
+    }
+
     // =========================
     // Internal per-symbol buffer
     // =========================
+    private sealed class IntegrityWindow
+    {
+        private readonly TimeSpan _window;
+        private readonly int _threshold;
+        private readonly Queue<DateTimeOffset> _events = new();
+        private readonly object _sync = new();
+
+        public IntegrityWindow(TimeSpan window, int threshold)
+        {
+            _window = window;
+            _threshold = threshold;
+        }
+
+        public void Add(DateTimeOffset timestamp)
+        {
+            lock (_sync)
+            {
+                _events.Enqueue(timestamp);
+                Trim(timestamp);
+            }
+        }
+
+        public bool ShouldReset(DateTimeOffset now)
+        {
+            lock (_sync)
+            {
+                Trim(now);
+                return _events.Count >= _threshold;
+            }
+        }
+
+        private void Trim(DateTimeOffset now)
+        {
+            while (_events.Count > 0 && now - _events.Peek() > _window)
+                _events.Dequeue();
+        }
+    }
+
     internal sealed class SymbolOrderBookBuffer
     {
         private readonly object _sync = new();

@@ -35,6 +35,16 @@ public sealed class StorageOptions
     /// Custom file name prefix (optional).
     /// </summary>
     public string? FilePrefix { get; init; }
+
+    /// <summary>
+    /// Optional retention window (in days). Older files are deleted eagerly when new data arrives.
+    /// </summary>
+    public int? RetentionDays { get; init; }
+
+    /// <summary>
+    /// Optional maximum on-disk footprint in bytes. When exceeded, the oldest files are deleted first.
+    /// </summary>
+    public long? MaxTotalBytes { get; init; }
 }
 
 /// <summary>
