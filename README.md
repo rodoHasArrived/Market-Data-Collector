@@ -6,49 +6,47 @@ A high-performance, cross-platform market data collection system for real-time a
 [![C#](https://img.shields.io/badge/C%23-11-blue)](https://docs.microsoft.com/en-us/dotnet/csharp/)
 [![License](https://img.shields.io/badge/license-See%20LICENSE-green)](LICENSE)
 
-**Status**: Active Development | **Version**: 0.9.0 (Pre-Release)
+**Status**: Production Ready | **Version**: 1.0.0
 
 ## Overview
 
-Market Data Collector is a modular, event-driven system that captures, validates, and persists high-fidelity market data from multiple providers including Interactive Brokers, Alpaca, and Polygon. The system is designed for researchers, quantitative analysts, and traders who need reliable tick-by-tick market data for backtesting, research, and live trading applications.
+Market Data Collector is a modular, event-driven system that captures, validates, and persists high-fidelity market data from multiple providers including Interactive Brokers, Alpaca, and Polygon. It ships with a modern web dashboard, structured logging, and a single self-contained executable for streamlined production deployments.
 
 ## Key Features
 
 ### Data Collection
-- **Multi-Provider Support**: Connect to Interactive Brokers, Alpaca, or Polygon data feeds
-- **Provider-Agnostic Architecture**: Seamlessly switch between data sources without code changes
-- **Tick-by-Tick Trades**: Capture every trade with sequence validation and aggressor inference
-- **Level 2 Order Book**: Maintain full market depth with integrity checking
-- **BBO Quotes**: Best bid/offer snapshots with spread and mid-price calculation
-- **Order Flow Statistics**: Real-time VWAP, buy/sell volume, and imbalance metrics
+- **Multi-provider ingest**: Interactive Brokers (L2 depth, tick-by-tick trades/quotes), Alpaca (real-time trades/quotes), Polygon (stub ready for expansion)
+- **Provider-agnostic architecture**: Swap feeds without code changes and preserve stream IDs for reconciliation
+- **Microstructure detail**: Tick-by-tick trades, Level 2 order book, BBO quotes, and order-flow statistics
 
 ### Performance and Reliability
-- **High-Performance Event Pipeline**: Bounded channel architecture (default 50,000 events) with configurable backpressure
-- **Integrity Validation**: Built-in sequence validation and order book integrity checking with detailed event emission
-- **Hot Configuration Reload**: Update subscriptions without restarting the collector
-- **Graceful Shutdown**: Ensures all events are flushed before termination
+- **High-performance pipeline**: Bounded channel architecture (default 50,000 events) with configurable backpressure
+- **Integrity validation**: Sequence checks and order book integrity enforcement with dedicated event emission
+- **Hot configuration reload**: Apply subscription changes without restarting the collector
+- **Graceful shutdown**: Flushes all events and metrics before exit
 
 ### Storage and Data Management
-- **Flexible Storage Options**: Multiple file naming conventions (BySymbol, ByDate, ByType, Flat)
-- **Date Partitioning**: Daily, hourly, monthly, or no partitioning strategies
-- **Retention Policies**: Automatic cleanup based on time (RetentionDays) or capacity (MaxTotalMegabytes)
-- **Compression Support**: Optional gzip compression for JSONL files
-- **Data Replay**: Replay historical data from stored JSONL files for backtesting and analysis
+- **Flexible JSONL storage**: Naming conventions (BySymbol, ByDate, ByType, Flat) with optional gzip compression
+- **Partitioning and retention**: Daily/hourly/monthly/none plus retention by age or total capacity
+- **Data replay**: Stream historical JSONL files for backtesting and research
 
 ### Monitoring and Observability
-- **Real-Time Monitoring**: Built-in HTTP server with Prometheus metrics and live dashboard
-- **Comprehensive Metrics**: Track events published, dropped, integrity violations, and throughput rates
-- **JSON Status Endpoint**: Machine-readable status for integration with monitoring tools
-- **HTML Dashboard**: Auto-refreshing browser-based dashboard with integrity event tracking
+- **Web dashboard**: Modern HTML dashboard for live monitoring, integrity event tracking, and backfill controls
+- **Metrics and status**: Prometheus metrics at `/metrics`, JSON status at `/status`, HTML dashboard at `/`
+- **Logging**: Structured logging via Serilog with ready-to-use sinks
 
 ## Quick Start
 
 ```bash
-# Clone the repository
-cd MarketDataCollector
+# Clone the repository and enter the solution root
+git clone https://github.com/rodoHasArrived/Test.git
+cd Test/MarketDataCollector
 
 # Copy the sample settings and edit as needed
 cp appsettings.sample.json appsettings.json
+
+# Easiest: launch the web dashboard (serves HTML + Prometheus + JSON status)
+dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --ui --watch-config --http-port 8080
 
 # Run smoke test (no provider connectivity required)
 dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj
@@ -56,36 +54,26 @@ dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj
 # Run self-tests
 dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --selftest
 
-# Start with monitoring, config hot reload, and the HTML dashboard
-dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --watch-config --http-port 8080
-```
-
-Access the monitoring dashboard at `http://localhost:8080` and JSON status at `http://localhost:8080/status`.
-
-To backfill historical bars from configured providers (e.g., Stooq) before live capture begins:
-
-```bash
-dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --backfill
-```
-
-Override provider or date ranges at launch time with:
-
-```bash
+# Historical backfill with overrides
 dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- \
-  --backfill --backfill-provider stooq --backfill-symbols SPY,AAPL --backfill-from 2024-01-01 --backfill-to 2024-01-05
+  --backfill --backfill-provider stooq --backfill-symbols SPY,AAPL \
+  --backfill-from 2024-01-01 --backfill-to 2024-01-05
 ```
+
+Access the monitoring dashboard at `http://localhost:8080`, JSON status at `http://localhost:8080/status`, and Prometheus metrics at `http://localhost:8080/metrics`.
 
 ## Documentation
 
 Comprehensive documentation is available in the `MarketDataCollector/docs/` directory:
 
-- **[MarketDataCollector/README.md](MarketDataCollector/README.md)** - Quick start guide and configuration overview
+- **[MarketDataCollector/README.md](MarketDataCollector/README.md)** - Product overview, CLI/UI usage, and configuration highlights
+- **[docs/GETTING_STARTED.md](MarketDataCollector/docs/GETTING_STARTED.md)** - End-to-end setup for local development
+- **[docs/CONFIGURATION.md](MarketDataCollector/docs/CONFIGURATION.md)** - Detailed explanation of every setting including backfill
 - **[docs/architecture.md](MarketDataCollector/docs/architecture.md)** - System architecture and design
 - **[docs/operator-runbook.md](MarketDataCollector/docs/operator-runbook.md)** - Operations guide and production deployment
 - **[docs/domains.md](MarketDataCollector/docs/domains.md)** - Event contracts and domain models
 - **[docs/c4-diagrams.md](MarketDataCollector/docs/c4-diagrams.md)** - System diagrams
-- **[docs/GETTING_STARTED.md](MarketDataCollector/docs/GETTING_STARTED.md)** - End-to-end setup for local development
-- **[docs/CONFIGURATION.md](MarketDataCollector/docs/CONFIGURATION.md)** - Detailed explanation of every setting including backfill
+- **[docs/lean-integration.md](MarketDataCollector/docs/lean-integration.md)** - QuantConnect Lean integration guide and examples
 
 ## Supported Data Sources
 
