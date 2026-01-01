@@ -17,6 +17,7 @@ public static class Metrics
     private static long _trades;
     private static long _depthUpdates;
     private static long _quotes;
+    private static long _historicalBars;
 
     // Latency tracking (in ticks for high precision)
     private static long _totalProcessingTicks;
@@ -51,6 +52,7 @@ public static class Metrics
     public static long Trades => Interlocked.Read(ref _trades);
     public static long DepthUpdates => Interlocked.Read(ref _depthUpdates);
     public static long Quotes => Interlocked.Read(ref _quotes);
+    public static long HistoricalBars => Interlocked.Read(ref _historicalBars);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void IncPublished() => Interlocked.Increment(ref _published);
@@ -69,6 +71,9 @@ public static class Metrics
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void IncQuotes() => Interlocked.Increment(ref _quotes);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void IncHistoricalBars() => Interlocked.Increment(ref _historicalBars);
 
     #endregion
 
@@ -194,6 +199,19 @@ public static class Metrics
     }
 
     /// <summary>
+    /// Gets the historical bars per second rate (useful during backfills).
+    /// </summary>
+    public static double HistoricalBarsPerSecond
+    {
+        get
+        {
+            var elapsed = GetElapsedSeconds();
+            if (elapsed <= 0) return 0;
+            return HistoricalBars / elapsed;
+        }
+    }
+
+    /// <summary>
     /// Gets the drop rate as a percentage.
     /// </summary>
     public static double DropRate
@@ -266,6 +284,7 @@ public static class Metrics
         Interlocked.Exchange(ref _trades, 0);
         Interlocked.Exchange(ref _depthUpdates, 0);
         Interlocked.Exchange(ref _quotes, 0);
+        Interlocked.Exchange(ref _historicalBars, 0);
         Interlocked.Exchange(ref _totalProcessingTicks, 0);
         Interlocked.Exchange(ref _minLatencyTicks, long.MaxValue);
         Interlocked.Exchange(ref _maxLatencyTicks, 0);
@@ -288,9 +307,11 @@ public static class Metrics
             Trades: Trades,
             DepthUpdates: DepthUpdates,
             Quotes: Quotes,
+            HistoricalBars: HistoricalBars,
             EventsPerSecond: EventsPerSecond,
             TradesPerSecond: TradesPerSecond,
             DepthUpdatesPerSecond: DepthUpdatesPerSecond,
+            HistoricalBarsPerSecond: HistoricalBarsPerSecond,
             DropRate: DropRate,
             AverageLatencyUs: AverageLatencyUs,
             MinLatencyUs: MinLatencyUs,
@@ -321,9 +342,11 @@ public readonly record struct MetricsSnapshot(
     long Trades,
     long DepthUpdates,
     long Quotes,
+    long HistoricalBars,
     double EventsPerSecond,
     double TradesPerSecond,
     double DepthUpdatesPerSecond,
+    double HistoricalBarsPerSecond,
     double DropRate,
     double AverageLatencyUs,
     double MinLatencyUs,

@@ -40,6 +40,10 @@ public static class PrometheusMetrics
         "mdc_quote_events_total",
         "Total number of quote events processed");
 
+    private static readonly Counter HistoricalBarEvents = Prometheus.Metrics.CreateCounter(
+        "mdc_historical_bar_events_total",
+        "Total number of historical bar events processed");
+
     // Gauges for current state
     private static readonly Gauge EventsPerSecond = Prometheus.Metrics.CreateGauge(
         "mdc_events_per_second",
@@ -52,6 +56,10 @@ public static class PrometheusMetrics
     private static readonly Gauge DepthUpdatesPerSecond = Prometheus.Metrics.CreateGauge(
         "mdc_depth_updates_per_second",
         "Current rate of depth updates processed per second");
+
+    private static readonly Gauge HistoricalBarsPerSecond = Prometheus.Metrics.CreateGauge(
+        "mdc_historical_bars_per_second",
+        "Current rate of historical bars processed per second");
 
     private static readonly Gauge DropRatePercent = Prometheus.Metrics.CreateGauge(
         "mdc_drop_rate_percent",
@@ -141,11 +149,13 @@ public static class PrometheusMetrics
         TradeEvents.IncTo(snapshot.Trades);
         DepthUpdateEvents.IncTo(snapshot.DepthUpdates);
         QuoteEvents.IncTo(snapshot.Quotes);
+        HistoricalBarEvents.IncTo(snapshot.HistoricalBars);
 
         // Update rate gauges
         EventsPerSecond.Set(snapshot.EventsPerSecond);
         TradesPerSecond.Set(snapshot.TradesPerSecond);
         DepthUpdatesPerSecond.Set(snapshot.DepthUpdatesPerSecond);
+        HistoricalBarsPerSecond.Set(snapshot.HistoricalBarsPerSecond);
         DropRatePercent.Set(snapshot.DropRate);
 
         // Update latency gauges

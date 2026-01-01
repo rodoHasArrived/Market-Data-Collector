@@ -274,12 +274,18 @@ public sealed class StatusHttpServer : IAsyncDisposable
         sb.AppendLine("# HELP mdc_quotes Quotes processed");
         sb.AppendLine("# TYPE mdc_quotes counter");
         sb.AppendLine($"mdc_quotes {m.Quotes}");
+        sb.AppendLine("# HELP mdc_historical_bars Historical bar events processed");
+        sb.AppendLine("# TYPE mdc_historical_bars counter");
+        sb.AppendLine($"mdc_historical_bars {m.HistoricalBars}");
         sb.AppendLine("# HELP mdc_events_per_second Current event rate");
         sb.AppendLine("# TYPE mdc_events_per_second gauge");
         sb.AppendLine($"mdc_events_per_second {m.EventsPerSecond:F4}");
         sb.AppendLine("# HELP mdc_drop_rate Drop rate percent");
         sb.AppendLine("# TYPE mdc_drop_rate gauge");
         sb.AppendLine($"mdc_drop_rate {m.DropRate:F4}");
+        sb.AppendLine("# HELP mdc_historical_bars_per_second Historical bar rate");
+        sb.AppendLine("# TYPE mdc_historical_bars_per_second gauge");
+        sb.AppendLine($"mdc_historical_bars_per_second {m.HistoricalBarsPerSecond:F4}");
 
         var bytes = Encoding.UTF8.GetBytes(sb.ToString());
         return resp.OutputStream.WriteAsync(bytes, 0, bytes.Length);
