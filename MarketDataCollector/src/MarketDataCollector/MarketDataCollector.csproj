@@ -130,5 +130,31 @@
     <PackageReference Include="QuantConnect.Lean.Engine" Version="2.5.17269" />
     <PackageReference Include="QuantConnect.Common" Version="2.5.17315" />
     <PackageReference Include="QuantConnect.Indicators" Version="2.5.17212" />
+
+    <!-- Technical Indicators (Skender.Stock.Indicators) -->
+    <!-- 200+ technical indicators with streaming support -->
+    <PackageReference Include="Skender.Stock.Indicators" Version="3.0.0" />
+
+    <!-- OpenTelemetry for Distributed Tracing -->
+    <!-- Trace events from provider → collector → storage -->
+    <PackageReference Include="OpenTelemetry" Version="1.10.0" />
+    <PackageReference Include="OpenTelemetry.Api" Version="1.10.0" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.10.0" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.10.1" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.10.0" />
+    <PackageReference Include="OpenTelemetry.Exporter.Console" Version="1.10.0" />
+    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.10.0" />
+    <PackageReference Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" Version="1.10.0-rc.1" />
+
+    <!-- Apache Parquet for Archival Storage -->
+    <!-- Columnar storage with 10-20x better compression -->
+    <PackageReference Include="Parquet.Net" Version="5.0.2" />
+
+    <!-- BenchmarkDotNet for Performance Profiling -->
+    <!-- Micro-benchmarking and memory allocation analysis -->
+    <PackageReference Include="BenchmarkDotNet" Version="0.14.0" />
+
+    <!-- High-Performance WebSocket Client (Marfusios pattern) -->
+    <PackageReference Include="Websocket.Client" Version="5.1.2" />
   </ItemGroup>
 </Project>
