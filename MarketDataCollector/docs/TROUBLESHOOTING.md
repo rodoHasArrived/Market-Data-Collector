@@ -1,31 +1,80 @@
 # Troubleshooting Guide
 
-This guide helps you diagnose and resolve common issues with MarketDataCollector.
+This guide helps you diagnose and resolve common issues with Market Data Collector.
 
-## Quick Diagnostics
+## 🎯 Quick Diagnostics
 
-### Health Check
+### NEW: Web Dashboard (Easiest Way!)
+
+The fastest way to troubleshoot is through the web dashboard:
+
+```bash
+./MarketDataCollector --ui
+```
+
+Then open `http://localhost:8080` to see:
+- **Real-time connection status** - See if you're connected
+- **Live metrics** - Published, dropped, and integrity events
+- **Error notifications** - Toast messages for all errors
+- **Configuration validation** - Immediate feedback on settings
+
+**All errors are now displayed with user-friendly messages and troubleshooting tips!**
+
+### Command Line Diagnostics
+
+#### Health Check
 
 Access the health endpoint to get a quick status:
 
 ```bash
-curl http://localhost:8080/health
+curl http://localhost:8080/api/status
 ```
 
-### Log Files
+#### Log Files
 
 Check the log files for detailed error information:
 
 ```bash
-tail -f data/_logs/mdc-*.log
+tail -f data/_logs/collector-*.log
 ```
 
-### Metrics
+#### Metrics
 
 View real-time metrics:
 
 ```bash
 curl http://localhost:8080/metrics
+```
+
+## 🆕 New Error Handling Features (v1.0)
+
+Market Data Collector v1.0 includes comprehensive error handling with detailed, actionable error messages:
+
+### Exception Types
+
+All errors now fall into specific categories with detailed context:
+
+- **ConfigurationException** - Issues with appsettings.json or configuration
+- **ConnectionException** - Problems connecting to data providers
+- **StorageException** - File system or storage issues
+- **DataProviderException** - Provider-specific errors
+
+### Enhanced Error Messages
+
+Errors now include:
+- **What went wrong** - Clear description
+- **Why it happened** - Root cause
+- **How to fix it** - Step-by-step solutions
+- **Context** - File paths, field names, etc.
+
+**Example:**
+```
+[Error] Configuration file not found: appsettings.json
+
+  Troubleshooting:
+    1. Copy appsettings.sample.json to appsettings.json
+    2. Edit with your settings
+    3. Or use the web dashboard: ./MarketDataCollector --ui
 ```
 
 ## Configuration Issues
