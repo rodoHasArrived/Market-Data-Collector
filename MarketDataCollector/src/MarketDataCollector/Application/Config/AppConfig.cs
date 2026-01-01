@@ -16,13 +16,15 @@ namespace MarketDataCollector.Application.Config;
 /// <param name="Alpaca">Alpaca provider options (required if DataSource == DataSourceKind.Alpaca).</param>
 /// <param name="Storage">Storage configuration options (naming convention, partitioning, etc.).</param>
 /// <param name="Symbols">Symbol subscriptions.</param>
+/// <param name="MassTransit">MassTransit distributed messaging configuration.</param>
 public sealed record AppConfig(
     string DataRoot = "data",
     bool Compress = false,
     [property: JsonConverter(typeof(DataSourceKindConverter))] DataSourceKind DataSource = DataSourceKind.IB,
     AlpacaOptions? Alpaca = null,
     StorageConfig? Storage = null,
-    SymbolConfig[]? Symbols = null
+    SymbolConfig[]? Symbols = null,
+    MassTransitConfig? MassTransit = null
 );
 
 /// <summary>
