@@ -1,5 +1,6 @@
 using System.Text.Json;
 using MarketDataCollector.Application.Config;
+using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Application.Subscriptions;
 using MarketDataCollector.Application.Pipeline;
@@ -15,6 +16,7 @@ using MarketDataCollector.Storage;
 using MarketDataCollector.Storage.Policies;
 using MarketDataCollector.Storage.Sinks;
 using MarketDataCollector.Storage.Replay;
+using Serilog;
 
 namespace MarketDataCollector;
 
@@ -22,18 +24,48 @@ internal static class Program
 {
     public static async Task Main(string[] args)
     {
+        // Initialize logging early
+        var cfgPath = "appsettings.json";
+        var cfg = LoadConfig(cfgPath);
+        LoggingSetup.Initialize(dataRoot: cfg.DataRoot);
+        var log = LoggingSetup.ForContext("Program");
+
+        try
+        {
+            await RunAsync(args, cfg, cfgPath, log);
+        }
+        catch (Exception ex)
+        {
+            log.Fatal(ex, "MarketDataCollector terminated unexpectedly");
+            throw;
+        }
+        finally
+        {
+            LoggingSetup.CloseAndFlush();
+        }
+    }
+
+    private static async Task RunAsync(string[] args, AppConfig cfg, string cfgPath, ILogger log)
+    {
         if (args.Any(a => a.Equals("--selftest", StringComparison.OrdinalIgnoreCase)))
         {
+            log.Information("Running self-tests...");
             DepthBufferSelfTests.Run();
+            log.Information("Self-tests passed");
             Console.WriteLine("Self-tests passed.");
+            return;
+        }
+
+        // Validate configuration
+        if (!ConfigValidationHelper.ValidateAndLog(cfg))
+        {
+            log.Error("Exiting due to configuration errors");
+            Environment.Exit(1);
             return;
         }
 
         var replayPath = GetArgValue(args, "--replay");
         var statusPort = int.TryParse(GetArgValue(args, "--status-port"), out var parsedPort) ? parsedPort : 8080;
-
-        var cfgPath = "appsettings.json";
-        var cfg = LoadConfig(cfgPath);
 
         var statusPath = Path.Combine(cfg.DataRoot, "_status", "status.json");
         await using var statusWriter = new StatusWriter(statusPath, () => LoadConfig(cfgPath));
@@ -56,12 +88,11 @@ internal static class Program
         await using var pipeline = new EventPipeline(sink, capacity: 50_000);
 
         // Log storage configuration
-        Console.WriteLine($"Storage path: {storageOpt.RootPath}");
-        Console.WriteLine($"Naming convention: {storageOpt.NamingConvention}");
-        Console.WriteLine($"Date partitioning: {storageOpt.DatePartition}");
-        Console.WriteLine($"Compression: {(storageOpt.Compress ? "enabled" : "disabled")}");
-        Console.WriteLine($"Example path: {policy.GetPathPreview()}");
-        Console.WriteLine();
+        log.Information("Storage path: {RootPath}", storageOpt.RootPath);
+        log.Information("Naming convention: {NamingConvention}", storageOpt.NamingConvention);
+        log.Information("Date partitioning: {DatePartition}", storageOpt.DatePartition);
+        log.Information("Compression: {CompressionEnabled}", storageOpt.Compress ? "enabled" : "disabled");
+        log.Debug("Example path: {ExamplePath}", policy.GetPathPreview());
 
         // Publisher adapter
         IMarketEventPublisher publisher = new PipelinePublisher(pipeline);
@@ -75,12 +106,12 @@ internal static class Program
         {
             statusHttp = new StatusHttpServer(statusPort, Metrics.GetSnapshot, pipeline.GetStatistics, () => depthCollector.GetRecentIntegrityEvents());
             statusHttp.Start();
-            Console.WriteLine($"Status/metrics dashboard running at http://localhost:{statusPort}/");
+            log.Information("Status/metrics dashboard running at http://localhost:{Port}/", statusPort);
         }
 
         if (!string.IsNullOrWhiteSpace(replayPath))
         {
-            Console.WriteLine($"Replaying events from {replayPath}...");
+            log.Information("Replaying events from {ReplayPath}...", replayPath);
             var replayer = new JsonlReplayer(replayPath);
             await foreach (var evt in replayer.ReadEventsAsync())
                 await pipeline.PublishAsync(evt);
@@ -136,22 +167,27 @@ internal static class Program
 
         await Task.Delay(200);
 
-        Console.WriteLine($"Wrote MarketEvents to ./{storageOpt.RootPath}/");
-        Console.WriteLine($"Metrics: published={Metrics.Published}, integrity={Metrics.Integrity}, dropped={Metrics.Dropped}");
+        log.Information("Wrote MarketEvents to {StoragePath}", storageOpt.RootPath);
+        log.Information("Metrics: published={Published}, integrity={Integrity}, dropped={Dropped}",
+            Metrics.Published, Metrics.Integrity, Metrics.Dropped);
 
         if (args.Any(a => a.Equals("--serve-status", StringComparison.OrdinalIgnoreCase)))
         {
-            Console.WriteLine("Status serving enabled (writing data/_status/status.json). Press Ctrl+C to stop.");
+            log.Information("Status serving enabled (writing data/_status/status.json). Press Ctrl+C to stop.");
+            Console.WriteLine("Press Ctrl+C to stop...");
             var done = new TaskCompletionSource();
             Console.CancelKeyPress += (_, e) =>
             {
                 e.Cancel = true;
+                log.Information("Shutdown requested, stopping gracefully...");
                 done.TrySetResult();
             };
             await done.Task;
         }
 
+        log.Information("Disconnecting from data provider...");
         await dataClient.DisconnectAsync();
+        log.Information("Shutdown complete");
 
         if (statusHttp is not null)
             await statusHttp.DisposeAsync();
@@ -172,15 +208,30 @@ internal static class Program
         try
         {
             if (!File.Exists(path))
+            {
+                Console.Error.WriteLine($"[Warning] Configuration file not found: {path}");
+                Console.Error.WriteLine("Using default configuration. Copy appsettings.sample.json to appsettings.json to customize.");
                 return new AppConfig();
+            }
 
             var json = File.ReadAllText(path);
             var cfg = JsonSerializer.Deserialize<AppConfig>(json, AppConfigJsonOptions.Read);
             return cfg ?? new AppConfig();
         }
+        catch (JsonException ex)
+        {
+            Console.Error.WriteLine($"[Error] Invalid JSON in configuration file: {path}");
+            Console.Error.WriteLine($"  Error: {ex.Message}");
+            Console.Error.WriteLine("  Troubleshooting:");
+            Console.Error.WriteLine("    1. Validate JSON syntax at jsonlint.com");
+            Console.Error.WriteLine("    2. Check for trailing commas or missing quotes");
+            Console.Error.WriteLine("    3. Compare against appsettings.sample.json");
+            return new AppConfig();
+        }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"[Warning] Failed to load config: {ex.Message}");
+            Console.Error.WriteLine($"[Error] Failed to load configuration: {ex.Message}");
+            Console.Error.WriteLine("Using default configuration.");
             return new AppConfig();
         }
     }
