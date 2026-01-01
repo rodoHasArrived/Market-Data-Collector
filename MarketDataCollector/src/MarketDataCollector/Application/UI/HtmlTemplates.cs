@@ -1,0 +1,1326 @@
+namespace MarketDataCollector.Application.UI;
+
+public static class HtmlTemplates
+{
+    public static string Index(string configPath, string statusPath, string backfillPath) => $@"
+<!doctype html>
+<html lang=""en"">
+<head>
+  <meta charset=""utf-8"" />
+  <meta name=""viewport"" content=""width=device-width,initial-scale=1"" />
+  <title>Market Data Collector</title>
+  <style>
+    * {{ box-sizing: border-box; }}
+
+    body {{
+      font-family: -apple-system, BlinkMacSystemFont, ""Segoe UI"", Roboto, ""Helvetica Neue"", Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }}
+
+    .header {{
+      background: white;
+      padding: 16px 24px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }}
+
+    .header h1 {{
+      margin: 0;
+      font-size: 24px;
+      color: #333;
+    }}
+
+    .header-actions {{
+      display: flex;
+      gap: 12px;
+    }}
+
+    .btn-help {{
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }}
+
+    .btn-help:hover {{
+      background: #5a67d8;
+    }}
+
+    .container {{
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px;
+    }}
+
+    .row {{
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+      margin-bottom: 24px;
+    }}
+
+    .card {{
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }}
+
+    .card h2 {{
+      margin: 0 0 16px 0;
+      color: #333;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }}
+
+    .card h3 {{
+      margin: 0 0 12px 0;
+      color: #555;
+      font-size: 16px;
+    }}
+
+    table {{
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 12px;
+    }}
+
+    th, td {{
+      border-bottom: 1px solid #eee;
+      padding: 12px 8px;
+      text-align: left;
+      font-size: 14px;
+    }}
+
+    th {{
+      font-weight: 600;
+      background: #f8f9fa;
+      color: #555;
+    }}
+
+    .form-group {{
+      margin-bottom: 16px;
+    }}
+
+    .form-group label {{
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+      font-weight: 500;
+      color: #555;
+      font-size: 14px;
+    }}
+
+    .tooltip {{
+      position: relative;
+      display: inline-block;
+      cursor: help;
+      color: #667eea;
+      font-size: 14px;
+    }}
+
+    .tooltip:hover::after {{
+      content: attr(data-tip);
+      position: absolute;
+      left: 100%;
+      top: 50%;
+      transform: translateY(-50%);
+      margin-left: 8px;
+      background: #333;
+      color: white;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      white-space: nowrap;
+      z-index: 1000;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }}
+
+    input, select, textarea {{
+      padding: 10px 12px;
+      font-size: 14px;
+      width: 100%;
+      border: 2px solid #e2e8f0;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }}
+
+    input:focus, select:focus, textarea:focus {{
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }}
+
+    button {{
+      padding: 10px 20px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      border-radius: 6px;
+      border: none;
+      transition: all 0.2s;
+    }}
+
+    .btn-primary {{
+      background: #667eea;
+      color: white;
+    }}
+
+    .btn-primary:hover {{
+      background: #5a67d8;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }}
+
+    .btn-danger {{
+      background: #f56565;
+      color: white;
+      padding: 6px 12px;
+      font-size: 12px;
+    }}
+
+    .btn-danger:hover {{
+      background: #e53e3e;
+    }}
+
+    .btn-secondary {{
+      background: #e2e8f0;
+      color: #4a5568;
+    }}
+
+    .btn-secondary:hover {{
+      background: #cbd5e0;
+    }}
+
+    .status-badge {{
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }}
+
+    .status-connected {{
+      background: #c6f6d5;
+      color: #22543d;
+    }}
+
+    .status-disconnected {{
+      background: #fed7d7;
+      color: #742a2a;
+    }}
+
+    .status-dot {{
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+    }}
+
+    .tag {{
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+    }}
+
+    .tag-ib {{
+      background: #bee3f8;
+      color: #2c5282;
+    }}
+
+    .tag-alpaca {{
+      background: #feebc8;
+      color: #7c2d12;
+    }}
+
+    .hidden {{ display: none !important; }}
+
+    .form-row {{
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }}
+
+    .metric-grid {{
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }}
+
+    .metric {{
+      text-align: center;
+      padding: 12px;
+      background: #f7fafc;
+      border-radius: 8px;
+    }}
+
+    .metric-value {{
+      font-size: 24px;
+      font-weight: 700;
+      color: #667eea;
+    }}
+
+    .metric-label {{
+      font-size: 12px;
+      color: #718096;
+      margin-top: 4px;
+    }}
+
+    .toast-container {{
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 10000;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }}
+
+    .toast {{
+      background: white;
+      padding: 16px 20px;
+      border-radius: 8px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      min-width: 300px;
+      max-width: 400px;
+      display: flex;
+      align-items: start;
+      gap: 12px;
+      animation: slideIn 0.3s ease;
+    }}
+
+    @keyframes slideIn {{
+      from {{ transform: translateX(400px); opacity: 0; }}
+      to {{ transform: translateX(0); opacity: 1; }}
+    }}
+
+    .toast-success {{
+      border-left: 4px solid #48bb78;
+    }}
+
+    .toast-error {{
+      border-left: 4px solid #f56565;
+    }}
+
+    .toast-info {{
+      border-left: 4px solid #4299e1;
+    }}
+
+    .toast-icon {{
+      font-size: 20px;
+      flex-shrink: 0;
+    }}
+
+    .toast-content {{
+      flex: 1;
+    }}
+
+    .toast-title {{
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: #2d3748;
+    }}
+
+    .toast-message {{
+      font-size: 14px;
+      color: #4a5568;
+    }}
+
+    .modal {{
+      display: none;
+      position: fixed;
+      z-index: 9999;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      animation: fadeIn 0.2s;
+    }}
+
+    @keyframes fadeIn {{
+      from {{ opacity: 0; }}
+      to {{ opacity: 1; }}
+    }}
+
+    .modal-content {{
+      background: white;
+      margin: 80px auto;
+      padding: 32px;
+      border-radius: 12px;
+      max-width: 800px;
+      max-height: 80vh;
+      overflow-y: auto;
+      animation: slideDown 0.3s;
+    }}
+
+    @keyframes slideDown {{
+      from {{ transform: translateY(-50px); opacity: 0; }}
+      to {{ transform: translateY(0); opacity: 1; }}
+    }}
+
+    .modal-header {{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }}
+
+    .modal-header h2 {{
+      margin: 0;
+      color: #2d3748;
+    }}
+
+    .close {{
+      font-size: 28px;
+      font-weight: bold;
+      color: #a0aec0;
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 0;
+      width: 32px;
+      height: 32px;
+    }}
+
+    .close:hover {{
+      color: #2d3748;
+    }}
+
+    .help-section {{
+      margin-bottom: 24px;
+    }}
+
+    .help-section h3 {{
+      color: #2d3748;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }}
+
+    .help-section p {{
+      color: #4a5568;
+      line-height: 1.6;
+      margin: 8px 0;
+    }}
+
+    .help-section code {{
+      background: #f7fafc;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 13px;
+      color: #e53e3e;
+    }}
+
+    .help-section ul {{
+      margin: 8px 0;
+      padding-left: 24px;
+    }}
+
+    .help-section li {{
+      color: #4a5568;
+      margin: 4px 0;
+    }}
+
+    .loading {{
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #f3f3f3;
+      border-top: 2px solid #667eea;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }}
+
+    @keyframes spin {{
+      0% {{ transform: rotate(0deg); }}
+      100% {{ transform: rotate(360deg); }}
+    }}
+
+    .preview-box {{
+      background: #f7fafc;
+      padding: 16px;
+      border-radius: 8px;
+      border: 2px dashed #cbd5e0;
+      margin: 12px 0;
+    }}
+
+    .preview-box code {{
+      color: #667eea;
+      font-weight: 600;
+    }}
+
+    @media (max-width: 768px) {{
+      .container {{
+        padding: 16px;
+      }}
+
+      .header {{
+        padding: 12px 16px;
+      }}
+
+      .header h1 {{
+        font-size: 18px;
+      }}
+
+      .form-row {{
+        grid-template-columns: 1fr;
+      }}
+
+      .metric-grid {{
+        grid-template-columns: repeat(2, 1fr);
+      }}
+
+      .modal-content {{
+        margin: 20px;
+        padding: 20px;
+        max-height: calc(100vh - 40px);
+      }}
+
+      .toast {{
+        min-width: 250px;
+        max-width: calc(100vw - 40px);
+      }}
+    }}
+  </style>
+</head>
+<body>
+  <div class=""header"">
+    <h1>📊 Market Data Collector</h1>
+    <div class=""header-actions"">
+      <button class=""btn-help"" onclick=""openHelp()"">
+        <span>❓</span> Help
+      </button>
+    </div>
+  </div>
+
+  <div class=""container"">
+    <div class=""row"">
+      <!-- Status Panel -->
+      <div class=""card"">
+        <h2>📡 System Status</h2>
+        <div id=""statusBox"">
+          <div class=""status-badge status-disconnected"">
+            <span class=""status-dot""></span>
+            Loading...
+          </div>
+        </div>
+        <div class=""metric-grid"" id=""metricsGrid"">
+          <div class=""metric"">
+            <div class=""metric-value"" id=""metricPublished"">0</div>
+            <div class=""metric-label"">Published</div>
+          </div>
+          <div class=""metric"">
+            <div class=""metric-value"" id=""metricDropped"">0</div>
+            <div class=""metric-label"">Dropped</div>
+          </div>
+          <div class=""metric"">
+            <div class=""metric-value"" id=""metricIntegrity"">0</div>
+            <div class=""metric-label"">Integrity</div>
+          </div>
+          <div class=""metric"">
+            <div class=""metric-value"" id=""metricBars"">0</div>
+            <div class=""metric-label"">Historical Bars</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Data Provider Panel -->
+      <div class=""card"">
+        <h2>🔌 Data Provider</h2>
+        <div class=""form-group"">
+          <label>
+            Active Provider
+            <span class=""tooltip"" data-tip=""Select your market data provider (IB or Alpaca)"">ℹ️</span>
+          </label>
+          <select id=""dataSource"" onchange=""updateDataSource()"">
+            <option value=""IB"">Interactive Brokers (IB)</option>
+            <option value=""Alpaca"">Alpaca</option>
+          </select>
+        </div>
+        <div id=""providerStatus"" style=""margin-top: 12px;""></div>
+
+        <!-- Alpaca Settings -->
+        <div id=""alpacaSettings"" class=""hidden"" style=""margin-top: 20px; padding-top: 20px; border-top: 2px solid #f0f0f0;"">
+          <h3>Alpaca Configuration</h3>
+          <div class=""form-group"">
+            <label>
+              API Key ID
+              <span class=""tooltip"" data-tip=""Your Alpaca API Key ID from dashboard"">ℹ️</span>
+            </label>
+            <input id=""alpacaKeyId"" type=""text"" placeholder=""PK..."" />
+          </div>
+          <div class=""form-group"">
+            <label>
+              Secret Key
+              <span class=""tooltip"" data-tip=""Your Alpaca Secret Key (kept secure)"">ℹ️</span>
+            </label>
+            <input id=""alpacaSecretKey"" type=""password"" placeholder=""••••••"" />
+          </div>
+          <div class=""form-row"">
+            <div class=""form-group"">
+              <label>
+                Feed Type
+                <span class=""tooltip"" data-tip=""IEX (free), SIP (paid subscription required)"">ℹ️</span>
+              </label>
+              <select id=""alpacaFeed"">
+                <option value=""iex"">IEX (Free)</option>
+                <option value=""sip"">SIP (Paid)</option>
+                <option value=""delayed_sip"">Delayed SIP</option>
+              </select>
+            </div>
+            <div class=""form-group"">
+              <label>Environment</label>
+              <select id=""alpacaSandbox"">
+                <option value=""false"">Production</option>
+                <option value=""true"">Sandbox (Paper Trading)</option>
+              </select>
+            </div>
+          </div>
+          <div class=""form-group"">
+            <label style=""display: flex; align-items: center; gap: 8px;"">
+              <input type=""checkbox"" id=""alpacaSubscribeQuotes"" />
+              Subscribe to Quotes (BBO)
+            </label>
+          </div>
+          <button class=""btn-primary"" onclick=""saveAlpacaSettings()"">
+            💾 Save Alpaca Settings
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Storage Settings -->
+    <div class=""card"">
+      <h2>💾 Storage Settings</h2>
+      <div class=""form-row"">
+        <div class=""form-group"" style=""grid-column: span 2;"">
+          <label>
+            Data Root Path
+            <span class=""tooltip"" data-tip=""Directory where market data will be stored"">ℹ️</span>
+          </label>
+          <input id=""dataRoot"" type=""text"" placeholder=""data"" />
+        </div>
+        <div class=""form-group"">
+          <label>
+            Compression
+            <span class=""tooltip"" data-tip=""Enable gzip compression to save disk space"">ℹ️</span>
+          </label>
+          <select id=""compress"">
+            <option value=""false"">Disabled</option>
+            <option value=""true"">Enabled (gzip)</option>
+          </select>
+        </div>
+      </div>
+      <div class=""form-row"">
+        <div class=""form-group"">
+          <label>
+            Naming Convention
+            <span class=""tooltip"" data-tip=""How files are organized in directories"">ℹ️</span>
+          </label>
+          <select id=""namingConvention"">
+            <option value=""Flat"">Flat</option>
+            <option value=""BySymbol"" selected>By Symbol</option>
+            <option value=""ByDate"">By Date</option>
+            <option value=""ByType"">By Type</option>
+          </select>
+        </div>
+        <div class=""form-group"">
+          <label>
+            Date Partitioning
+            <span class=""tooltip"" data-tip=""How data is split across time periods"">ℹ️</span>
+          </label>
+          <select id=""datePartition"">
+            <option value=""None"">None</option>
+            <option value=""Daily"" selected>Daily</option>
+            <option value=""Hourly"">Hourly</option>
+            <option value=""Monthly"">Monthly</option>
+          </select>
+        </div>
+      </div>
+      <div class=""form-row"">
+        <div class=""form-group"">
+          <label>File Prefix (optional)</label>
+          <input id=""filePrefix"" type=""text"" placeholder=""e.g., market_"" />
+        </div>
+        <div class=""form-group"">
+          <label>Include Provider in Path</label>
+          <select id=""includeProvider"">
+            <option value=""false"" selected>No</option>
+            <option value=""true"">Yes</option>
+          </select>
+        </div>
+      </div>
+      <div class=""preview-box"">
+        <div style=""font-size: 12px; color: #718096; margin-bottom: 4px;"">Example file path:</div>
+        <code id=""previewPath"">data/AAPL/Trade/2024-01-15.jsonl</code>
+      </div>
+      <button class=""btn-primary"" onclick=""saveStorageSettings()"">
+        💾 Save Storage Settings
+      </button>
+    </div>
+
+    <!-- Historical Backfill -->
+    <div class=""card"">
+      <h2>📅 Historical Backfill</h2>
+      <p style=""color: #718096; font-size: 14px; margin: 0 0 16px 0;"">
+        Download free end-of-day historical data to backfill gaps in your dataset.
+      </p>
+      <div class=""form-row"">
+        <div class=""form-group"">
+          <label>
+            Provider
+            <span class=""tooltip"" data-tip=""Data source for historical data"">ℹ️</span>
+          </label>
+          <select id=""backfillProvider"">
+            <option value=""stooq"">Stooq (Free EOD Data)</option>
+          </select>
+        </div>
+        <div class=""form-group"">
+          <label>
+            Symbols
+            <span class=""tooltip"" data-tip=""Comma-separated list (e.g., AAPL,MSFT,TSLA)"">ℹ️</span>
+          </label>
+          <input id=""backfillSymbols"" placeholder=""AAPL,MSFT"" />
+        </div>
+      </div>
+      <div class=""form-row"">
+        <div class=""form-group"">
+          <label>From Date (UTC)</label>
+          <input id=""backfillFrom"" type=""date"" />
+        </div>
+        <div class=""form-group"">
+          <label>To Date (UTC)</label>
+          <input id=""backfillTo"" type=""date"" />
+        </div>
+      </div>
+      <button class=""btn-primary"" onclick=""runBackfill()"">
+        ▶️ Start Backfill
+      </button>
+      <div id=""backfillStatus"" style=""margin-top: 16px; padding: 12px; background: #f7fafc; border-radius: 6px; font-size: 14px;"">
+        No backfill runs yet.
+      </div>
+    </div>
+
+    <!-- Symbols Panel -->
+    <div class=""card"">
+      <h2>📈 Subscribed Symbols</h2>
+      <div style=""overflow-x: auto;"">
+        <table id=""symbolsTable"">
+          <thead>
+            <tr>
+              <th>Symbol</th>
+              <th>Trades</th>
+              <th>Depth</th>
+              <th>Levels</th>
+              <th>LocalSymbol <span class=""tag tag-ib"">IB</span></th>
+              <th>Exchange <span class=""tag tag-ib"">IB</span></th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <h3 style=""margin-top: 24px;"">➕ Add Symbol</h3>
+      <div class=""form-row"">
+        <div class=""form-group"">
+          <label>Symbol *</label>
+          <input id=""sym"" placeholder=""AAPL"" />
+        </div>
+        <div class=""form-group"">
+          <label>Subscribe Trades</label>
+          <select id=""trades"">
+            <option value=""true"" selected>Yes</option>
+            <option value=""false"">No</option>
+          </select>
+        </div>
+        <div class=""form-group"">
+          <label>Subscribe Depth</label>
+          <select id=""depth"">
+            <option value=""true"">Yes</option>
+            <option value=""false"" selected>No</option>
+          </select>
+        </div>
+        <div class=""form-group"">
+          <label>Depth Levels</label>
+          <input id=""levels"" value=""10"" type=""number"" />
+        </div>
+      </div>
+
+      <!-- IB-specific fields -->
+      <div id=""ibFields"">
+        <h3>Interactive Brokers Options <span class=""tag tag-ib"">IB Only</span></h3>
+        <div class=""form-row"">
+          <div class=""form-group"">
+            <label>
+              LocalSymbol
+              <span class=""tooltip"" data-tip=""IB local symbol (e.g., for preferred stocks)"">ℹ️</span>
+            </label>
+            <input id=""localsym"" placeholder=""PCG PRA"" />
+          </div>
+          <div class=""form-group"">
+            <label>Exchange</label>
+            <input id=""exch"" value=""SMART"" />
+          </div>
+          <div class=""form-group"">
+            <label>Primary Exchange</label>
+            <input id=""pexch"" placeholder=""NYSE"" />
+          </div>
+        </div>
+      </div>
+
+      <div style=""margin-top: 16px;"">
+        <button class=""btn-primary"" onclick=""addSymbol()"">
+          ➕ Add Symbol
+        </button>
+      </div>
+    </div>
+
+    <div style=""text-align: center; padding: 24px; color: #a0aec0; font-size: 12px;"">
+      <p>Market Data Collector Dashboard</p>
+      <p style=""margin: 8px 0;"">Config: <code style=""background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 3px;"">{Escape(configPath)}</code></p>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class=""toast-container"" id=""toastContainer""></div>
+
+  <!-- Help Modal -->
+  <div id=""helpModal"" class=""modal"">
+    <div class=""modal-content"">
+      <div class=""modal-header"">
+        <h2>📚 Help & Documentation</h2>
+        <button class=""close"" onclick=""closeHelp()"">&times;</button>
+      </div>
+
+      <div class=""help-section"">
+        <h3>🚀 Quick Start</h3>
+        <p>The Market Data Collector captures real-time and historical market data from multiple providers.</p>
+        <ol>
+          <li>Select your data provider (Interactive Brokers or Alpaca)</li>
+          <li>Configure provider credentials if using Alpaca</li>
+          <li>Configure storage settings for where data will be saved</li>
+          <li>Add symbols you want to track</li>
+          <li>Start the collector service</li>
+        </ol>
+      </div>
+
+      <div class=""help-section"">
+        <h3>🔌 Data Providers</h3>
+        <p><strong>Interactive Brokers (IB):</strong> Provides Level 2 market depth and tick-by-tick trade data. Requires TWS or IB Gateway running.</p>
+        <p><strong>Alpaca:</strong> Provides real-time trade and quote data via WebSocket. Free tier available with IEX feed.</p>
+      </div>
+
+      <div class=""help-section"">
+        <h3>💾 Storage Options</h3>
+        <p><strong>Naming Conventions:</strong></p>
+        <ul>
+          <li><strong>Flat:</strong> All files in one directory</li>
+          <li><strong>By Symbol:</strong> Organized by symbol, then data type (recommended)</li>
+          <li><strong>By Date:</strong> Organized by date, then symbol</li>
+          <li><strong>By Type:</strong> Organized by data type, then symbol</li>
+        </ul>
+        <p><strong>Date Partitioning:</strong></p>
+        <ul>
+          <li><strong>None:</strong> Single file per symbol/type combination</li>
+          <li><strong>Daily:</strong> New file each day (recommended)</li>
+          <li><strong>Hourly:</strong> New file each hour (for high-frequency data)</li>
+          <li><strong>Monthly:</strong> New file each month (for archival)</li>
+        </ul>
+      </div>
+
+      <div class=""help-section"">
+        <h3>📅 Historical Backfill</h3>
+        <p>Use backfill to download historical end-of-day bar data for the symbols you're tracking. This is useful for:</p>
+        <ul>
+          <li>Filling gaps in your dataset</li>
+          <li>Getting historical context before starting real-time collection</li>
+          <li>Backtesting with consistent data formats</li>
+        </ul>
+      </div>
+
+      <div class=""help-section"">
+        <h3>📊 Symbol Configuration</h3>
+        <p><strong>Trades:</strong> Subscribe to trade/tick data (price, volume, aggressor side)</p>
+        <p><strong>Depth:</strong> Subscribe to Level 2 order book updates (requires IB)</p>
+        <p><strong>Depth Levels:</strong> How many price levels to track (typically 5-20)</p>
+      </div>
+
+      <div class=""help-section"">
+        <h3>🔧 Command Line Options</h3>
+        <p>Start the collector with various modes:</p>
+        <ul>
+          <li><code>--ui</code> - Start web dashboard (this interface)</li>
+          <li><code>--serve-status</code> - Enable status endpoint</li>
+          <li><code>--watch-config</code> - Hot-reload configuration changes</li>
+          <li><code>--backfill</code> - Run historical backfill</li>
+          <li><code>--selftest</code> - Run system self-tests</li>
+        </ul>
+      </div>
+
+      <div class=""help-section"">
+        <h3>❓ Troubleshooting</h3>
+        <p>If you're experiencing issues:</p>
+        <ul>
+          <li>Check that your data provider is running and accessible</li>
+          <li>Verify credentials are correct (especially for Alpaca)</li>
+          <li>Ensure data directory has write permissions</li>
+          <li>Check logs in the data directory for detailed error messages</li>
+          <li>For IB: Ensure TWS/Gateway is running and API connections are enabled</li>
+        </ul>
+      </div>
+
+      <div class=""help-section"">
+        <h3>📖 More Information</h3>
+        <p>For detailed documentation, see the following files in your installation directory:</p>
+        <ul>
+          <li><code>HELP.md</code> - Complete user guide</li>
+          <li><code>README.md</code> - Project overview</li>
+          <li><code>docs/CONFIGURATION.md</code> - Full configuration reference</li>
+          <li><code>docs/GETTING_STARTED.md</code> - Setup guide</li>
+          <li><code>docs/TROUBLESHOOTING.md</code> - Common issues and solutions</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentDataSource = 'IB';
+    let backfillProviders = [];
+
+    // Toast Notification System
+    function showToast(type, title, message) {{
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${{type}}`;
+
+      const icons = {{
+        success: '✅',
+        error: '❌',
+        info: 'ℹ️'
+      }};
+
+      toast.innerHTML = `
+        <div class=""toast-icon"">${{icons[type] || 'ℹ️'}}</div>
+        <div class=""toast-content"">
+          <div class=""toast-title"">${{title}}</div>
+          <div class=""toast-message"">${{message}}</div>
+        </div>
+      `;
+
+      container.appendChild(toast);
+
+      setTimeout(() => {{
+        toast.style.animation = 'slideIn 0.3s ease reverse';
+        setTimeout(() => toast.remove(), 300);
+      }}, 5000);
+    }}
+
+    // Help Modal
+    function openHelp() {{
+      document.getElementById('helpModal').style.display = 'block';
+    }}
+
+    function closeHelp() {{
+      document.getElementById('helpModal').style.display = 'none';
+    }}
+
+    window.onclick = function(event) {{
+      const modal = document.getElementById('helpModal');
+      if (event.target === modal) {{
+        closeHelp();
+      }}
+    }};
+
+    // API Functions with Error Handling
+    async function apiCall(url, options = {{}}) {{
+      try {{
+        const response = await fetch(url, options);
+        if (!response.ok) {{
+          const text = await response.text();
+          throw new Error(text || `HTTP ${{response.status}}`);
+        }}
+        return response;
+      }} catch (error) {{
+        console.error('API Error:', error);
+        throw error;
+      }}
+    }}
+
+    async function loadBackfillProviders(selectedProvider) {{
+      try {{
+        const r = await apiCall('/api/backfill/providers');
+        backfillProviders = await r.json();
+        const select = document.getElementById('backfillProvider');
+        if (!select) return;
+        select.innerHTML = '';
+        for (const p of backfillProviders) {{
+          const opt = document.createElement('option');
+          opt.value = p.name;
+          opt.textContent = p.displayName || p.name;
+          select.appendChild(opt);
+        }}
+        if (selectedProvider) {{
+          select.value = selectedProvider;
+        }}
+      }} catch (e) {{
+        console.warn('Unable to load backfill providers', e);
+      }}
+    }}
+
+    async function loadConfig() {{
+      try {{
+        const r = await apiCall('/api/config');
+        const cfg = await r.json();
+
+        currentDataSource = cfg.dataSource || 'IB';
+        document.getElementById('dataSource').value = currentDataSource;
+        updateProviderUI();
+
+        if (cfg.alpaca) {{
+          document.getElementById('alpacaKeyId').value = cfg.alpaca.keyId || '';
+          document.getElementById('alpacaSecretKey').value = cfg.alpaca.secretKey || '';
+          document.getElementById('alpacaFeed').value = cfg.alpaca.feed || 'iex';
+          document.getElementById('alpacaSandbox').value = cfg.alpaca.useSandbox ? 'true' : 'false';
+          document.getElementById('alpacaSubscribeQuotes').checked = cfg.alpaca.subscribeQuotes || false;
+        }}
+
+        document.getElementById('dataRoot').value = cfg.dataRoot || 'data';
+        document.getElementById('compress').value = cfg.compress ? 'true' : 'false';
+        if (cfg.storage) {{
+          document.getElementById('namingConvention').value = cfg.storage.namingConvention || 'BySymbol';
+          document.getElementById('datePartition').value = cfg.storage.datePartition || 'Daily';
+          document.getElementById('includeProvider').value = cfg.storage.includeProvider ? 'true' : 'false';
+          document.getElementById('filePrefix').value = cfg.storage.filePrefix || '';
+        }}
+        updateStoragePreview();
+
+        await loadBackfillProviders(cfg.backfill ? cfg.backfill.provider : null);
+        if (cfg.backfill) {{
+          if (cfg.backfill.symbols) document.getElementById('backfillSymbols').value = cfg.backfill.symbols.join(',');
+          if (cfg.backfill.from) document.getElementById('backfillFrom').value = cfg.backfill.from;
+          if (cfg.backfill.to) document.getElementById('backfillTo').value = cfg.backfill.to;
+          if (cfg.backfill.provider) document.getElementById('backfillProvider').value = cfg.backfill.provider;
+        }}
+
+        const tbody = document.querySelector('#symbolsTable tbody');
+        tbody.innerHTML = '';
+        for (const s of (cfg.symbols || [])) {{
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td><strong>${{s.symbol}}</strong></td>
+            <td>${{s.subscribeTrades ? '<span style=""color: #48bb78;"">✓ Yes</span>' : '✗ No'}}</td>
+            <td>${{s.subscribeDepth ? '<span style=""color: #48bb78;"">✓ Yes</span>' : '✗ No'}}</td>
+            <td>${{s.depthLevels || 10}}</td>
+            <td>${{s.localSymbol || '-'}}</td>
+            <td>${{s.exchange || '-'}}</td>
+            <td><button class=""btn-danger"" onclick=""deleteSymbol('${{s.symbol}}')"">🗑️ Delete</button></td>
+          `;
+          tbody.appendChild(tr);
+        }}
+
+        showToast('success', 'Configuration Loaded', 'Settings loaded successfully');
+      }} catch (error) {{
+        showToast('error', 'Load Failed', 'Could not load configuration: ' + error.message);
+      }}
+    }}
+
+    function updateProviderUI() {{
+      const isAlpaca = currentDataSource === 'Alpaca';
+      document.getElementById('alpacaSettings').classList.toggle('hidden', !isAlpaca);
+      document.getElementById('ibFields').classList.toggle('hidden', isAlpaca);
+
+      const statusDiv = document.getElementById('providerStatus');
+      if (isAlpaca) {{
+        statusDiv.innerHTML = '<span class=""tag tag-alpaca"">Alpaca</span> WebSocket streaming for trades and quotes';
+      }} else {{
+        statusDiv.innerHTML = '<span class=""tag tag-ib"">Interactive Brokers</span> TWS/Gateway connection for L2 depth and trades';
+      }}
+    }}
+
+    async function updateDataSource() {{
+      try {{
+        const ds = document.getElementById('dataSource').value;
+        currentDataSource = ds;
+        updateProviderUI();
+
+        await apiCall('/api/config/datasource', {{
+          method: 'POST',
+          headers: {{'Content-Type': 'application/json'}},
+          body: JSON.stringify({{ dataSource: ds }})
+        }});
+
+        showToast('success', 'Provider Updated', 'Data source changed. Restart collector to apply.');
+      }} catch (error) {{
+        showToast('error', 'Update Failed', error.message);
+      }}
+    }}
+
+    async function saveAlpacaSettings() {{
+      try {{
+        const payload = {{
+          keyId: document.getElementById('alpacaKeyId').value,
+          secretKey: document.getElementById('alpacaSecretKey').value,
+          feed: document.getElementById('alpacaFeed').value,
+          useSandbox: document.getElementById('alpacaSandbox').value === 'true',
+          subscribeQuotes: document.getElementById('alpacaSubscribeQuotes').checked
+        }};
+
+        await apiCall('/api/config/alpaca', {{
+          method: 'POST',
+          headers: {{'Content-Type': 'application/json'}},
+          body: JSON.stringify(payload)
+        }});
+
+        showToast('success', 'Settings Saved', 'Alpaca settings saved. Restart collector to apply.');
+      }} catch (error) {{
+        showToast('error', 'Save Failed', error.message);
+      }}
+    }}
+
+    async function saveStorageSettings() {{
+      try {{
+        const payload = {{
+          dataRoot: document.getElementById('dataRoot').value,
+          compress: document.getElementById('compress').value === 'true',
+          namingConvention: document.getElementById('namingConvention').value,
+          datePartition: document.getElementById('datePartition').value,
+          includeProvider: document.getElementById('includeProvider').value === 'true',
+          filePrefix: document.getElementById('filePrefix').value
+        }};
+
+        await apiCall('/api/config/storage', {{
+          method: 'POST',
+          headers: {{'Content-Type': 'application/json'}},
+          body: JSON.stringify(payload)
+        }});
+
+        showToast('success', 'Settings Saved', 'Storage settings saved. Restart collector to apply.');
+      }} catch (error) {{
+        showToast('error', 'Save Failed', error.message);
+      }}
+    }}
+
+    function updateStoragePreview() {{
+      const root = document.getElementById('dataRoot').value || 'data';
+      const compress = document.getElementById('compress').value === 'true';
+      const naming = document.getElementById('namingConvention').value;
+      const partition = document.getElementById('datePartition').value;
+      const prefix = document.getElementById('filePrefix').value;
+      const ext = compress ? '.jsonl.gz' : '.jsonl';
+      const pfx = prefix ? prefix + '_' : '';
+
+      let dateStr = '';
+      if (partition === 'Daily') dateStr = '2024-01-15';
+      else if (partition === 'Hourly') dateStr = '2024-01-15_14';
+      else if (partition === 'Monthly') dateStr = '2024-01';
+
+      let path = '';
+      if (naming === 'Flat') {{
+        path = dateStr ? `${{root}}/${{pfx}}AAPL_Trade_${{dateStr}}${{ext}}` : `${{root}}/${{pfx}}AAPL_Trade${{ext}}`;
+      }} else if (naming === 'BySymbol') {{
+        path = dateStr ? `${{root}}/AAPL/Trade/${{pfx}}${{dateStr}}${{ext}}` : `${{root}}/AAPL/Trade/${{pfx}}data${{ext}}`;
+      }} else if (naming === 'ByDate') {{
+        path = dateStr ? `${{root}}/${{dateStr}}/AAPL/${{pfx}}Trade${{ext}}` : `${{root}}/AAPL/${{pfx}}Trade${{ext}}`;
+      }} else if (naming === 'ByType') {{
+        path = dateStr ? `${{root}}/Trade/AAPL/${{pfx}}${{dateStr}}${{ext}}` : `${{root}}/Trade/AAPL/${{pfx}}data${{ext}}`;
+      }}
+
+      document.getElementById('previewPath').textContent = path;
+    }}
+
+    ['dataRoot', 'compress', 'namingConvention', 'datePartition', 'filePrefix'].forEach(id => {{
+      document.getElementById(id).addEventListener('change', updateStoragePreview);
+      document.getElementById(id).addEventListener('input', updateStoragePreview);
+    }});
+
+    async function loadStatus() {{
+      const box = document.getElementById('statusBox');
+      try {{
+        const r = await apiCall('/api/status');
+        const s = await r.json();
+        const isConnected = s.isConnected !== false;
+
+        box.innerHTML = `
+          <div class=""status-badge ${{isConnected ? 'status-connected' : 'status-disconnected'}}"">
+            <span class=""status-dot""></span>
+            ${{isConnected ? 'Connected' : 'Disconnected'}}
+          </div>
+          <div style=""margin-top: 8px; font-size: 12px; color: #718096;"">
+            Last update: ${{s.timestampUtc || 'n/a'}}
+          </div>
+        `;
+
+        document.getElementById('metricPublished').textContent = (s.metrics && s.metrics.published) || 0;
+        document.getElementById('metricDropped').textContent = (s.metrics && s.metrics.dropped) || 0;
+        document.getElementById('metricIntegrity').textContent = (s.metrics && s.metrics.integrity) || 0;
+        document.getElementById('metricBars').textContent = (s.metrics && s.metrics.historicalBars) || 0;
+      }} catch (e) {{
+        box.innerHTML = `
+          <div class=""status-badge status-disconnected"">
+            <span class=""status-dot""></span>
+            No Status
+          </div>
+          <div style=""margin-top: 8px; font-size: 12px; color: #718096;"">
+            Start collector with --serve-status
+          </div>
+        `;
+      }}
+    }}
+
+    async function loadBackfillStatus() {{
+      const box = document.getElementById('backfillStatus');
+      try {{
+        const r = await apiCall('/api/backfill/status');
+        const status = await r.json();
+        box.innerHTML = formatBackfillStatus(status);
+      }} catch (e) {{
+        box.textContent = 'No backfill runs yet.';
+      }}
+    }}
+
+    function formatBackfillStatus(status) {{
+      if (!status) return 'No backfill runs yet.';
+      const started = status.startedUtc ? new Date(status.startedUtc).toLocaleString() : 'n/a';
+      const completed = status.completedUtc ? new Date(status.completedUtc).toLocaleString() : 'n/a';
+      const badge = status.success
+        ? '<span style=""color: #48bb78; font-weight: 600;"">✅ Success</span>'
+        : '<span style=""color: #f56565; font-weight: 600;"">❌ Failed</span>';
+      const symbols = (status.symbols || []).join(', ');
+      const error = status.error ? `<div style=""color: #f56565; margin-top: 8px;"">${{status.error}}</div>` : '';
+      return `
+        <div><strong>${{badge}}</strong></div>
+        <div style=""margin-top: 8px;"">
+          <strong>Provider:</strong> ${{status.provider}}<br/>
+          <strong>Bars Written:</strong> ${{status.barsWritten || 0}}<br/>
+          <strong>Symbols:</strong> ${{symbols || 'n/a'}}<br/>
+          <strong>Started:</strong> ${{started}}<br/>
+          <strong>Completed:</strong> ${{completed}}
+        </div>
+        ${{error}}
+      `;
+    }}
+
+    async function runBackfill() {{
+      try {{
+        const provider = document.getElementById('backfillProvider').value || 'stooq';
+        const symbols = (document.getElementById('backfillSymbols').value || '')
+          .split(',')
+          .map(s => s.trim())
+          .filter(s => s);
+        const from = document.getElementById('backfillFrom').value || null;
+        const to = document.getElementById('backfillTo').value || null;
+
+        if (!symbols.length) {{
+          showToast('error', 'Validation Error', 'Please enter at least one symbol');
+          return;
+        }}
+
+        showToast('info', 'Backfill Started', 'Historical data download in progress...');
+
+        const payload = {{ provider, symbols, from, to }};
+        const r = await apiCall('/api/backfill/run', {{
+          method: 'POST',
+          headers: {{ 'Content-Type': 'application/json' }},
+          body: JSON.stringify(payload)
+        }});
+
+        const result = await r.json();
+        document.getElementById('backfillStatus').innerHTML = formatBackfillStatus(result);
+
+        if (result.success) {{
+          showToast('success', 'Backfill Complete', `Downloaded ${{result.barsWritten}} bars`);
+        }} else {{
+          showToast('error', 'Backfill Failed', result.error || 'Unknown error');
+        }}
+      }} catch (error) {{
+        showToast('error', 'Backfill Failed', error.message);
+        document.getElementById('backfillStatus').innerHTML = `<span style=""color: #f56565;"">${{error.message}}</span>`;
+      }}
+    }}
+
+    async function addSymbol() {{
+      try {{
+        const symbol = document.getElementById('sym').value.trim();
+        if (!symbol) {{
+          showToast('error', 'Validation Error', 'Symbol is required');
+          return;
+        }}
+
+        const payload = {{
+          symbol: symbol,
+          subscribeTrades: document.getElementById('trades').value === 'true',
+          subscribeDepth: document.getElementById('depth').value === 'true',
+          depthLevels: parseInt(document.getElementById('levels').value || '10', 10),
+          securityType: 'STK',
+          exchange: document.getElementById('exch').value || 'SMART',
+          currency: 'USD',
+          primaryExchange: document.getElementById('pexch').value || null,
+          localSymbol: document.getElementById('localsym').value || null
+        }};
+
+        await apiCall('/api/config/symbols', {{
+          method: 'POST',
+          headers: {{'Content-Type': 'application/json'}},
+          body: JSON.stringify(payload)
+        }});
+
+        showToast('success', 'Symbol Added', `${{symbol}} added successfully`);
+
+        document.getElementById('sym').value = '';
+        document.getElementById('localsym').value = '';
+        document.getElementById('pexch').value = '';
+        await loadConfig();
+      }} catch (error) {{
+        showToast('error', 'Add Failed', error.message);
+      }}
+    }}
+
+    async function deleteSymbol(symbol) {{
+      if (!confirm(`Delete symbol ${{symbol}}?`)) return;
+
+      try {{
+        await apiCall(`/api/config/symbols/${{encodeURIComponent(symbol)}}`, {{
+          method: 'DELETE'
+        }});
+
+        showToast('success', 'Symbol Deleted', `${{symbol}} removed successfully`);
+        await loadConfig();
+      }} catch (error) {{
+        showToast('error', 'Delete Failed', error.message);
+      }}
+    }}
+
+    // Initial load
+    loadConfig();
+    loadStatus();
+    loadBackfillStatus();
+    setInterval(loadStatus, 2000);
+    setInterval(loadBackfillStatus, 5000);
+  </script>
+</body>
+</html>";
+
+    private static string Escape(string s) => s.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;").Replace("\"", "&quot;");
+}
