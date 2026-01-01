@@ -221,7 +221,7 @@ public sealed class UiServer : IAsyncDisposable
                     return Results.BadRequest("At least one symbol is required.");
 
                 var request = new BackfillRequest(
-                    string.IsNullOrWhiteSpace(req.Provider) ? "stooq" : req.Provider!,
+                    string.IsNullOrWhiteSpace(req.Provider) ? "composite" : req.Provider!,
                     req.Symbols,
                     req.From,
                     req.To);
@@ -236,6 +236,38 @@ public sealed class UiServer : IAsyncDisposable
             catch (Exception ex)
             {
                 return Results.Problem($"Backfill failed: {ex.Message}");
+            }
+        });
+
+        _app.MapGet("/api/backfill/health", async (BackfillCoordinator backfill) =>
+        {
+            try
+            {
+                var health = await backfill.CheckProviderHealthAsync();
+                return Results.Json(health, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Health check failed: {ex.Message}");
+            }
+        });
+
+        _app.MapGet("/api/backfill/resolve/{symbol}", async (BackfillCoordinator backfill, string symbol) =>
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(symbol))
+                    return Results.BadRequest("Symbol is required.");
+
+                var resolution = await backfill.ResolveSymbolAsync(symbol);
+                if (resolution is null)
+                    return Results.NotFound($"Symbol '{symbol}' not found.");
+
+                return Results.Json(resolution, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Symbol resolution failed: {ex.Message}");
             }
         });
 

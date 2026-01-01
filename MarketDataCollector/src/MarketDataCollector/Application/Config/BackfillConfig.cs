@@ -4,14 +4,84 @@ namespace MarketDataCollector.Application.Config;
 /// Configuration for historical backfill operations.
 /// </summary>
 /// <param name="Enabled">When true, the collector will run a backfill instead of live collection.</param>
-/// <param name="Provider">Historical data provider to use (e.g. "stooq").</param>
+/// <param name="Provider">Primary historical data provider (e.g. "stooq", "yahoo", "nasdaq", "composite").</param>
 /// <param name="Symbols">Symbols to backfill; defaults to configured live symbols.</param>
 /// <param name="From">Optional inclusive start date (UTC).</param>
 /// <param name="To">Optional inclusive end date (UTC).</param>
+/// <param name="EnableFallback">When true and using composite provider, automatically try alternative providers on failure.</param>
+/// <param name="PreferAdjustedPrices">Prefer providers that return adjusted prices (for splits/dividends).</param>
+/// <param name="EnableSymbolResolution">Use OpenFIGI to normalize symbols across providers.</param>
+/// <param name="ProviderPriority">Custom provider priority order for fallback (overrides defaults).</param>
+/// <param name="Providers">Configuration for individual data providers.</param>
 public sealed record BackfillConfig(
     bool Enabled = false,
-    string Provider = "stooq",
+    string Provider = "composite",
     string[]? Symbols = null,
     DateOnly? From = null,
-    DateOnly? To = null
+    DateOnly? To = null,
+    bool EnableFallback = true,
+    bool PreferAdjustedPrices = true,
+    bool EnableSymbolResolution = true,
+    string[]? ProviderPriority = null,
+    BackfillProvidersConfig? Providers = null
+);
+
+/// <summary>
+/// Configuration for individual backfill data providers.
+/// </summary>
+public sealed record BackfillProvidersConfig(
+    YahooFinanceConfig? Yahoo = null,
+    NasdaqDataLinkConfig? Nasdaq = null,
+    StooqConfig? Stooq = null,
+    OpenFigiConfig? OpenFigi = null
+);
+
+/// <summary>
+/// Yahoo Finance provider configuration.
+/// </summary>
+/// <param name="Enabled">Enable this provider.</param>
+/// <param name="Priority">Priority in fallback chain (lower = tried first).</param>
+/// <param name="RateLimitPerHour">Maximum requests per hour.</param>
+public sealed record YahooFinanceConfig(
+    bool Enabled = true,
+    int Priority = 10,
+    int RateLimitPerHour = 2000
+);
+
+/// <summary>
+/// Nasdaq Data Link (Quandl) provider configuration.
+/// </summary>
+/// <param name="Enabled">Enable this provider.</param>
+/// <param name="ApiKey">API key for higher rate limits (optional).</param>
+/// <param name="Database">Database to query (e.g., "WIKI", "EOD").</param>
+/// <param name="Priority">Priority in fallback chain (lower = tried first).</param>
+public sealed record NasdaqDataLinkConfig(
+    bool Enabled = true,
+    string? ApiKey = null,
+    string Database = "WIKI",
+    int Priority = 30
+);
+
+/// <summary>
+/// Stooq provider configuration.
+/// </summary>
+/// <param name="Enabled">Enable this provider.</param>
+/// <param name="Priority">Priority in fallback chain (lower = tried first).</param>
+/// <param name="DefaultMarket">Default market suffix (e.g., "us" for US equities).</param>
+public sealed record StooqConfig(
+    bool Enabled = true,
+    int Priority = 20,
+    string DefaultMarket = "us"
+);
+
+/// <summary>
+/// OpenFIGI symbol resolver configuration.
+/// </summary>
+/// <param name="Enabled">Enable symbol resolution via OpenFIGI.</param>
+/// <param name="ApiKey">Optional API key for higher rate limits.</param>
+/// <param name="CacheResults">Cache resolution results in memory.</param>
+public sealed record OpenFigiConfig(
+    bool Enabled = true,
+    string? ApiKey = null,
+    bool CacheResults = true
 );

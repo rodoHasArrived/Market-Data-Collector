@@ -18,6 +18,7 @@ using MarketDataCollector.Infrastructure.Providers.InteractiveBrokers;
 using MarketDataCollector.Infrastructure.Providers.Alpaca;
 using MarketDataCollector.Infrastructure.Providers.Polygon;
 using MarketDataCollector.Infrastructure.Providers.Backfill;
+using SymbolResolution = MarketDataCollector.Infrastructure.Providers.Backfill.SymbolResolution;
 using MarketDataCollector.Messaging.Configuration;
 using MarketDataCollector.Messaging.Publishers;
 using MarketDataCollector.Storage;
@@ -181,12 +182,33 @@ internal static class Program
         if (backfillRequested)
         {
             var backfillRequest = BuildBackfillRequest(cfg, args);
-            var backfillProviders = new IHistoricalDataProvider[]
-            {
-                new StooqHistoricalDataProvider(log: LoggingSetup.ForContext<StooqHistoricalDataProvider>())
-            };
 
-            var backfill = new HistoricalBackfillService(backfillProviders, log);
+            // Create providers based on configuration
+            var backfillProviders = CreateBackfillProviders(cfg, log);
+
+            // Wrap in composite provider if fallback enabled
+            IHistoricalDataProvider[] providersArray;
+            if (cfg.Backfill?.EnableFallback ?? true)
+            {
+                var symbolResolver = (cfg.Backfill?.EnableSymbolResolution ?? true)
+                    ? new SymbolResolution.OpenFigiSymbolResolver(cfg.Backfill?.Providers?.OpenFigi?.ApiKey, log: log)
+                    : null;
+
+                var composite = new CompositeHistoricalDataProvider(
+                    backfillProviders,
+                    symbolResolver,
+                    enableCrossValidation: false,
+                    log: log
+                );
+
+                providersArray = new IHistoricalDataProvider[] { composite };
+            }
+            else
+            {
+                providersArray = backfillProviders.ToArray();
+            }
+
+            var backfill = new HistoricalBackfillService(providersArray, log);
             var result = await backfill.RunAsync(backfillRequest, pipeline);
             var statusStore = BackfillStatusStore.FromConfig(cfg);
             await statusStore.WriteAsync(result);
@@ -507,5 +529,45 @@ SUPPORT:
 
         var fallback = new[] { new SymbolConfig("SPY", SubscribeTrades: true, SubscribeDepth: true, DepthLevels: 10) };
         return cfg with { Symbols = fallback };
+    }
+
+    /// <summary>
+    /// Creates backfill providers based on configuration.
+    /// </summary>
+    private static List<IHistoricalDataProvider> CreateBackfillProviders(AppConfig cfg, ILogger log)
+    {
+        var backfillCfg = cfg.Backfill;
+        var providersCfg = backfillCfg?.Providers;
+        var providers = new List<IHistoricalDataProvider>();
+
+        // Yahoo Finance (highest priority - broadest free coverage)
+        var yahooCfg = providersCfg?.Yahoo;
+        if (yahooCfg?.Enabled ?? true)
+        {
+            providers.Add(new YahooFinanceHistoricalDataProvider(log: log));
+        }
+
+        // Stooq (reliable free EOD data)
+        var stooqCfg = providersCfg?.Stooq;
+        if (stooqCfg?.Enabled ?? true)
+        {
+            providers.Add(new StooqHistoricalDataProvider(log: log));
+        }
+
+        // Nasdaq Data Link (Quandl - may require API key for better limits)
+        var nasdaqCfg = providersCfg?.Nasdaq;
+        if (nasdaqCfg?.Enabled ?? true)
+        {
+            providers.Add(new NasdaqDataLinkHistoricalDataProvider(
+                apiKey: nasdaqCfg?.ApiKey,
+                database: nasdaqCfg?.Database ?? "WIKI",
+                log: log
+            ));
+        }
+
+        // Sort by priority (lower = tried first)
+        return providers
+            .OrderBy(p => p is IHistoricalDataProviderV2 v2 ? v2.Priority : 100)
+            .ToList();
     }
 }

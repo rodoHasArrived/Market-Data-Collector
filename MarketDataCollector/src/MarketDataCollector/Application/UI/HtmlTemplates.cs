@@ -684,16 +684,30 @@ public static class HtmlTemplates
     <div class=""card"">
       <h2>📅 Historical Backfill</h2>
       <p style=""color: #718096; font-size: 14px; margin: 0 0 16px 0;"">
-        Download free end-of-day historical data to backfill gaps in your dataset.
+        Download free end-of-day historical data from multiple providers with automatic failover.
       </p>
+
+      <!-- Provider Health Status -->
+      <div id=""providerHealthPanel"" style=""margin-bottom: 20px; padding: 16px; background: #f7fafc; border-radius: 8px;"">
+        <h3 style=""margin: 0 0 12px 0; font-size: 14px; color: #4a5568;"">📊 Provider Status</h3>
+        <div id=""providerHealthGrid"" style=""display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;"">
+          <div class=""provider-health-item"" style=""padding: 10px; background: white; border-radius: 6px; border-left: 3px solid #a0aec0;"">
+            <span style=""font-weight: 600;"">Loading...</span>
+          </div>
+        </div>
+      </div>
+
       <div class=""form-row"">
         <div class=""form-group"">
           <label>
             Provider
-            <span class=""tooltip"" data-tip=""Data source for historical data"">ℹ️</span>
+            <span class=""tooltip"" data-tip=""Select data source. 'Multi-Source' automatically tries multiple providers."">ℹ️</span>
           </label>
           <select id=""backfillProvider"">
-            <option value=""stooq"">Stooq (Free EOD Data)</option>
+            <option value=""composite"">Multi-Source (Auto-Failover)</option>
+            <option value=""yahoo"">Yahoo Finance (Free)</option>
+            <option value=""stooq"">Stooq (Free EOD)</option>
+            <option value=""nasdaq"">Nasdaq Data Link (Quandl)</option>
           </select>
         </div>
         <div class=""form-group"">
@@ -701,7 +715,7 @@ public static class HtmlTemplates
             Symbols
             <span class=""tooltip"" data-tip=""Comma-separated list (e.g., AAPL,MSFT,TSLA)"">ℹ️</span>
           </label>
-          <input id=""backfillSymbols"" placeholder=""AAPL,MSFT"" />
+          <input id=""backfillSymbols"" placeholder=""AAPL,MSFT,TSLA"" />
         </div>
       </div>
       <div class=""form-row"">
@@ -714,11 +728,82 @@ public static class HtmlTemplates
           <input id=""backfillTo"" type=""date"" />
         </div>
       </div>
-      <button class=""btn-primary"" onclick=""runBackfill()"">
-        ▶️ Start Backfill
-      </button>
+
+      <!-- Advanced Options -->
+      <details style=""margin: 16px 0;"">
+        <summary style=""cursor: pointer; font-weight: 500; color: #4a5568;"">⚙️ Advanced Options</summary>
+        <div style=""padding: 16px; margin-top: 8px; background: #f7fafc; border-radius: 6px;"">
+          <div class=""form-row"">
+            <div class=""form-group"">
+              <label style=""display: flex; align-items: center; gap: 8px;"">
+                <input type=""checkbox"" id=""backfillEnableSymbolResolution"" checked />
+                Enable Symbol Resolution (OpenFIGI)
+              </label>
+              <small style=""color: #718096;"">Automatically normalize symbols across providers</small>
+            </div>
+            <div class=""form-group"">
+              <label style=""display: flex; align-items: center; gap: 8px;"">
+                <input type=""checkbox"" id=""backfillPreferAdjusted"" checked />
+                Prefer Adjusted Prices
+              </label>
+              <small style=""color: #718096;"">Use split/dividend adjusted prices when available</small>
+            </div>
+          </div>
+          <div class=""form-row"">
+            <div class=""form-group"">
+              <label>Nasdaq Data Link API Key (optional)</label>
+              <input id=""nasdaqApiKey"" type=""password"" placeholder=""Your Quandl/Nasdaq API key"" />
+            </div>
+            <div class=""form-group"">
+              <label>OpenFIGI API Key (optional)</label>
+              <input id=""openFigiApiKey"" type=""password"" placeholder=""Higher rate limits"" />
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <div style=""display: flex; gap: 12px; flex-wrap: wrap;"">
+        <button class=""btn-primary"" onclick=""runBackfill()"" id=""btnStartBackfill"">
+          ▶️ Start Backfill
+        </button>
+        <button class=""btn-secondary"" onclick=""checkProviderHealth()"">
+          🔄 Check Provider Health
+        </button>
+        <button class=""btn-secondary"" onclick=""resolveSymbol()"">
+          🔍 Resolve Symbol
+        </button>
+      </div>
+
+      <!-- Progress Bar -->
+      <div id=""backfillProgress"" class=""hidden"" style=""margin-top: 16px;"">
+        <div style=""display: flex; justify-content: space-between; margin-bottom: 4px;"">
+          <span id=""progressLabel"">Processing...</span>
+          <span id=""progressPercent"">0%</span>
+        </div>
+        <div style=""height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden;"">
+          <div id=""progressBar"" style=""height: 100%; width: 0%; background: linear-gradient(90deg, #667eea, #764ba2); transition: width 0.3s;""></div>
+        </div>
+      </div>
+
+      <!-- Status Display -->
       <div id=""backfillStatus"" style=""margin-top: 16px; padding: 12px; background: #f7fafc; border-radius: 6px; font-size: 14px;"">
-        No backfill runs yet.
+        No backfill runs yet. Select a provider and symbols to get started.
+      </div>
+    </div>
+
+    <!-- Symbol Resolution Modal -->
+    <div id=""symbolResolveModal"" class=""modal"">
+      <div class=""modal-content"" style=""max-width: 600px;"">
+        <div class=""modal-header"">
+          <h2>🔍 Symbol Resolution</h2>
+          <button class=""close"" onclick=""closeSymbolResolveModal()"">&times;</button>
+        </div>
+        <div class=""form-group"">
+          <label>Enter Symbol to Resolve</label>
+          <input id=""symbolToResolve"" placeholder=""AAPL"" />
+        </div>
+        <button class=""btn-primary"" onclick=""doResolveSymbol()"">Resolve</button>
+        <div id=""symbolResolutionResult"" style=""margin-top: 16px;""></div>
       </div>
     </div>
 
@@ -1229,44 +1314,6 @@ public static class HtmlTemplates
       `;
     }}
 
-    async function runBackfill() {{
-      try {{
-        const provider = document.getElementById('backfillProvider').value || 'stooq';
-        const symbols = (document.getElementById('backfillSymbols').value || '')
-          .split(',')
-          .map(s => s.trim())
-          .filter(s => s);
-        const from = document.getElementById('backfillFrom').value || null;
-        const to = document.getElementById('backfillTo').value || null;
-
-        if (!symbols.length) {{
-          showToast('error', 'Validation Error', 'Please enter at least one symbol');
-          return;
-        }}
-
-        showToast('info', 'Backfill Started', 'Historical data download in progress...');
-
-        const payload = {{ provider, symbols, from, to }};
-        const r = await apiCall('/api/backfill/run', {{
-          method: 'POST',
-          headers: {{ 'Content-Type': 'application/json' }},
-          body: JSON.stringify(payload)
-        }});
-
-        const result = await r.json();
-        document.getElementById('backfillStatus').innerHTML = formatBackfillStatus(result);
-
-        if (result.success) {{
-          showToast('success', 'Backfill Complete', `Downloaded ${{result.barsWritten}} bars`);
-        }} else {{
-          showToast('error', 'Backfill Failed', result.error || 'Unknown error');
-        }}
-      }} catch (error) {{
-        showToast('error', 'Backfill Failed', error.message);
-        document.getElementById('backfillStatus').innerHTML = `<span style=""color: #f56565;"">${{error.message}}</span>`;
-      }}
-    }}
-
     function editSymbol(symbol) {
       const match = (cachedSymbols || []).find(s => (s.symbol || '').toLowerCase() === symbol.toLowerCase());
       if (!match) {
@@ -1337,10 +1384,195 @@ public static class HtmlTemplates
       }}
     }}
 
+    // Provider health check
+    async function checkProviderHealth() {{
+      const grid = document.getElementById('providerHealthGrid');
+      grid.innerHTML = '<div style=""text-align: center; padding: 20px;""><div class=""loading""></div> Checking providers...</div>';
+
+      try {{
+        const r = await apiCall('/api/backfill/health');
+        const health = await r.json();
+        renderProviderHealth(health);
+        showToast('success', 'Health Check', 'Provider health check complete');
+      }} catch (error) {{
+        grid.innerHTML = '<div style=""color: #f56565;"">Failed to check provider health</div>';
+        showToast('error', 'Health Check Failed', error.message);
+      }}
+    }}
+
+    function renderProviderHealth(health) {{
+      const grid = document.getElementById('providerHealthGrid');
+      if (!health || Object.keys(health).length === 0) {{
+        grid.innerHTML = '<div>No providers available</div>';
+        return;
+      }}
+
+      grid.innerHTML = Object.entries(health).map(([name, status]) => {{
+        const isAvailable = status.isAvailable;
+        const color = isAvailable ? '#48bb78' : '#f56565';
+        const icon = isAvailable ? '✓' : '✗';
+        const responseTime = status.responseTime ? `${{Math.round(status.responseTime * 1000)}}ms` : '';
+
+        return `
+          <div style=""padding: 10px; background: white; border-radius: 6px; border-left: 3px solid ${{color}};"">
+            <div style=""display: flex; align-items: center; gap: 6px;"">
+              <span style=""color: ${{color}}; font-weight: bold;"">${{icon}}</span>
+              <span style=""font-weight: 600; text-transform: capitalize;"">${{name}}</span>
+            </div>
+            <div style=""font-size: 11px; color: #718096; margin-top: 4px;"">
+              ${{status.message || (isAvailable ? 'Available' : 'Unavailable')}}
+              ${{responseTime ? ` (${{responseTime}})` : ''}}
+            </div>
+          </div>
+        `;
+      }}).join('');
+    }}
+
+    // Symbol resolution
+    function resolveSymbol() {{
+      document.getElementById('symbolResolveModal').style.display = 'block';
+      document.getElementById('symbolToResolve').value = '';
+      document.getElementById('symbolResolutionResult').innerHTML = '';
+    }}
+
+    function closeSymbolResolveModal() {{
+      document.getElementById('symbolResolveModal').style.display = 'none';
+    }}
+
+    async function doResolveSymbol() {{
+      const symbol = document.getElementById('symbolToResolve').value.trim();
+      if (!symbol) {{
+        showToast('error', 'Error', 'Please enter a symbol');
+        return;
+      }}
+
+      const resultDiv = document.getElementById('symbolResolutionResult');
+      resultDiv.innerHTML = '<div class=""loading""></div> Resolving...';
+
+      try {{
+        const r = await apiCall(`/api/backfill/resolve/${{encodeURIComponent(symbol)}}`);
+        const resolution = await r.json();
+
+        if (!resolution) {{
+          resultDiv.innerHTML = '<div style=""color: #f56565;"">Symbol not found</div>';
+          return;
+        }}
+
+        resultDiv.innerHTML = `
+          <div style=""background: #f7fafc; padding: 16px; border-radius: 8px;"">
+            <h4 style=""margin: 0 0 12px 0;"">Resolution for ${{symbol}}</h4>
+            <table style=""width: 100%; font-size: 14px;"">
+              <tr><td style=""padding: 4px 8px; font-weight: 500;"">Ticker</td><td>${{resolution.ticker || 'N/A'}}</td></tr>
+              <tr><td style=""padding: 4px 8px; font-weight: 500;"">Name</td><td>${{resolution.name || 'N/A'}}</td></tr>
+              <tr><td style=""padding: 4px 8px; font-weight: 500;"">FIGI</td><td style=""font-family: monospace;"">${{resolution.figi || 'N/A'}}</td></tr>
+              <tr><td style=""padding: 4px 8px; font-weight: 500;"">Exchange</td><td>${{resolution.exchange || 'N/A'}}</td></tr>
+              <tr><td style=""padding: 4px 8px; font-weight: 500;"">Security Type</td><td>${{resolution.securityType || 'N/A'}}</td></tr>
+            </table>
+            ${{resolution.providerSymbols ? `
+              <h4 style=""margin: 16px 0 8px 0;"">Provider Mappings</h4>
+              <table style=""width: 100%; font-size: 13px;"">
+                ${{Object.entries(resolution.providerSymbols).map(([provider, sym]) => `
+                  <tr><td style=""padding: 4px 8px; font-weight: 500; text-transform: capitalize;"">${{provider}}</td><td style=""font-family: monospace;"">${{sym}}</td></tr>
+                `).join('')}}
+              </table>
+            ` : ''}}
+          </div>
+        `;
+      }} catch (error) {{
+        resultDiv.innerHTML = `<div style=""color: #f56565;"">Error: ${{error.message}}</div>`;
+      }}
+    }}
+
+    // Enhanced backfill with progress
+    async function runBackfill() {{
+      try {{
+        const provider = document.getElementById('backfillProvider').value || 'composite';
+        const symbols = (document.getElementById('backfillSymbols').value || '')
+          .split(',')
+          .map(s => s.trim())
+          .filter(s => s);
+        const from = document.getElementById('backfillFrom').value || null;
+        const to = document.getElementById('backfillTo').value || null;
+        const enableSymbolResolution = document.getElementById('backfillEnableSymbolResolution')?.checked ?? true;
+        const preferAdjusted = document.getElementById('backfillPreferAdjusted')?.checked ?? true;
+
+        if (!symbols.length) {{
+          showToast('error', 'Validation Error', 'Please enter at least one symbol');
+          return;
+        }}
+
+        // Show progress
+        document.getElementById('backfillProgress').classList.remove('hidden');
+        document.getElementById('progressBar').style.width = '0%';
+        document.getElementById('progressPercent').textContent = '0%';
+        document.getElementById('progressLabel').textContent = 'Starting backfill...';
+        document.getElementById('btnStartBackfill').disabled = true;
+
+        showToast('info', 'Backfill Started', `Downloading data for ${{symbols.length}} symbol(s)...`);
+
+        const payload = {{
+          provider,
+          symbols,
+          from,
+          to,
+          enableSymbolResolution,
+          preferAdjusted
+        }};
+
+        const r = await apiCall('/api/backfill/run', {{
+          method: 'POST',
+          headers: {{ 'Content-Type': 'application/json' }},
+          body: JSON.stringify(payload)
+        }});
+
+        const result = await r.json();
+
+        // Complete progress
+        document.getElementById('progressBar').style.width = '100%';
+        document.getElementById('progressPercent').textContent = '100%';
+        document.getElementById('progressLabel').textContent = 'Complete';
+
+        document.getElementById('backfillStatus').innerHTML = formatBackfillStatus(result);
+
+        if (result.success) {{
+          showToast('success', 'Backfill Complete', `Downloaded ${{result.barsWritten}} bars from ${{result.provider}}`);
+        }} else {{
+          showToast('error', 'Backfill Failed', result.error || 'Unknown error');
+        }}
+      }} catch (error) {{
+        showToast('error', 'Backfill Failed', error.message);
+        document.getElementById('backfillStatus').innerHTML = `<span style=""color: #f56565;"">${{error.message}}</span>`;
+      }} finally {{
+        document.getElementById('btnStartBackfill').disabled = false;
+        setTimeout(() => {{
+          document.getElementById('backfillProgress').classList.add('hidden');
+        }}, 3000);
+      }}
+    }}
+
+    // Load provider health on page load
+    async function loadProviderHealth() {{
+      try {{
+        const r = await apiCall('/api/backfill/providers');
+        const providers = await r.json();
+        const grid = document.getElementById('providerHealthGrid');
+
+        grid.innerHTML = providers.map(p => `
+          <div style=""padding: 10px; background: white; border-radius: 6px; border-left: 3px solid #a0aec0;"">
+            <div style=""font-weight: 600;"">${{p.displayName || p.name}}</div>
+            <div style=""font-size: 11px; color: #718096; margin-top: 4px;"">${{p.description || ''}}</div>
+          </div>
+        `).join('');
+      }} catch (e) {{
+        console.log('Could not load providers:', e);
+      }}
+    }}
+
     // Initial load
     loadConfig();
     loadStatus();
     loadBackfillStatus();
+    loadProviderHealth();
     setInterval(loadStatus, 2000);
     setInterval(loadBackfillStatus, 5000);
   </script>
