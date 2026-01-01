@@ -6,19 +6,43 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MarketDataCollector", "src\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MarketDataCollector.Ui", "src\MarketDataCollector.Ui\MarketDataCollector.Ui.csproj", "{7756DAD5-0AAF-45D9-A300-F28239C23078}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MarketDataCollector.Tests", "tests\MarketDataCollector.Tests\MarketDataCollector.Tests.csproj", "{B3333333-C444-D555-E666-F77777777777}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MarketDataCollector.Benchmarks", "benchmarks\MarketDataCollector.Benchmarks\MarketDataCollector.Benchmarks.csproj", "{C4444444-D555-E666-F777-888888888888}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{E1111111-F222-0333-1444-255555555555}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{E2222222-F333-0444-1555-266666666666}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "benchmarks", "benchmarks", "{E3333333-F444-0555-1666-277777777777}"
+EndProject
 Global
     GlobalSection(SolutionConfigurationPlatforms) = preSolution
         Debug|Any CPU = Debug|Any CPU
         Release|Any CPU = Release|Any CPU
-        {7756DAD5-0AAF-45D9-A300-F28239C23078}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-        {7756DAD5-0AAF-45D9-A300-F28239C23078}.Debug|Any CPU.Build.0 = Debug|Any CPU
-        {7756DAD5-0AAF-45D9-A300-F28239C23078}.Release|Any CPU.ActiveCfg = Release|Any CPU
-        {7756DAD5-0AAF-45D9-A300-F28239C23078}.Release|Any CPU.Build.0 = Release|Any CPU
     EndGlobalSection
     GlobalSection(ProjectConfigurationPlatforms) = postSolution
         {A1111111-B222-C333-D444-E55555555555}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
         {A1111111-B222-C333-D444-E55555555555}.Debug|Any CPU.Build.0 = Debug|Any CPU
         {A1111111-B222-C333-D444-E55555555555}.Release|Any CPU.ActiveCfg = Release|Any CPU
         {A1111111-B222-C333-D444-E55555555555}.Release|Any CPU.Build.0 = Release|Any CPU
+        {7756DAD5-0AAF-45D9-A300-F28239C23078}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+        {7756DAD5-0AAF-45D9-A300-F28239C23078}.Debug|Any CPU.Build.0 = Debug|Any CPU
+        {7756DAD5-0AAF-45D9-A300-F28239C23078}.Release|Any CPU.ActiveCfg = Release|Any CPU
+        {7756DAD5-0AAF-45D9-A300-F28239C23078}.Release|Any CPU.Build.0 = Release|Any CPU
+        {B3333333-C444-D555-E666-F77777777777}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+        {B3333333-C444-D555-E666-F77777777777}.Debug|Any CPU.Build.0 = Debug|Any CPU
+        {B3333333-C444-D555-E666-F77777777777}.Release|Any CPU.ActiveCfg = Release|Any CPU
+        {B3333333-C444-D555-E666-F77777777777}.Release|Any CPU.Build.0 = Release|Any CPU
+        {C4444444-D555-E666-F777-888888888888}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+        {C4444444-D555-E666-F777-888888888888}.Debug|Any CPU.Build.0 = Debug|Any CPU
+        {C4444444-D555-E666-F777-888888888888}.Release|Any CPU.ActiveCfg = Release|Any CPU
+        {C4444444-D555-E666-F777-888888888888}.Release|Any CPU.Build.0 = Release|Any CPU
+    EndGlobalSection
+    GlobalSection(NestedProjects) = preSolution
+        {A1111111-B222-C333-D444-E55555555555} = {E1111111-F222-0333-1444-255555555555}
+        {7756DAD5-0AAF-45D9-A300-F28239C23078} = {E1111111-F222-0333-1444-255555555555}
+        {B3333333-C444-D555-E666-F77777777777} = {E2222222-F333-0444-1555-266666666666}
+        {C4444444-D555-E666-F777-888888888888} = {E3333333-F444-0555-1666-277777777777}
     EndGlobalSection
 EndGlobal
