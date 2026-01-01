@@ -32,6 +32,7 @@ Market Data Collector is a modular, event-driven system that captures, validates
 
 ### Monitoring and Observability
 - **Web dashboard**: Modern HTML dashboard for live monitoring, integrity event tracking, and backfill controls
+- **Standalone UI**: React-based dashboard for separate deployment (see `ui/` directory)
 - **Metrics and status**: Prometheus metrics at `/metrics`, JSON status at `/status`, HTML dashboard at `/`
 - **Logging**: Structured logging via Serilog with ready-to-use sinks
 
@@ -91,6 +92,25 @@ Market Data Collector now integrates with **QuantConnect's Lean Engine**, enabli
 - **Sample Algorithms**: Ready-to-use examples for microstructure-aware trading
 
 See [`MarketDataCollector/src/MarketDataCollector/Integrations/Lean/README.md`](MarketDataCollector/src/MarketDataCollector/Integrations/Lean/README.md) for integration details and examples.
+
+## Standalone UI
+
+A modern React-based dashboard is available in the `ui/` directory for separate deployment:
+
+```bash
+cd ui
+npm install
+npm run dev
+```
+
+The standalone UI connects to the backend API and provides:
+- Real-time system status and metrics
+- Configuration management (data source, storage, credentials)
+- Symbol subscription management
+- Historical backfill controls
+- Built-in help and documentation
+
+See [`ui/README.md`](ui/README.md) for complete setup and customization options.
 
 ## Output Data
 

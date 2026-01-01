@@ -16,7 +16,7 @@ public sealed class UiServer : IAsyncDisposable
     private readonly WebApplication _app;
     private readonly string _configPath;
 
-    public UiServer(string configPath, int port = 8080)
+    public UiServer(string configPath, int port = 8080, bool enableCors = true)
     {
         _configPath = configPath;
 
@@ -38,7 +38,40 @@ public sealed class UiServer : IAsyncDisposable
         builder.Services.AddSingleton<MetadataEnrichmentService>();
         builder.Services.AddSingleton<IndexSubscriptionService>();
 
+        // CORS configuration for standalone UI
+        if (enableCors)
+        {
+            builder.Services.AddCors(options =>
+            {
+                options.AddDefaultPolicy(policy =>
+                {
+                    policy.AllowAnyOrigin()
+                          .AllowAnyMethod()
+                          .AllowAnyHeader();
+                });
+
+                // Named policy for more restrictive production use
+                options.AddPolicy("StandaloneUI", policy =>
+                {
+                    policy.WithOrigins(
+                            "http://localhost:3000",
+                            "http://localhost:5173",
+                            "http://127.0.0.1:3000",
+                            "http://127.0.0.1:5173")
+                          .AllowAnyMethod()
+                          .AllowAnyHeader()
+                          .AllowCredentials();
+                });
+            });
+        }
+
         _app = builder.Build();
+
+        // Enable CORS middleware
+        if (enableCors)
+        {
+            _app.UseCors();
+        }
 
         ConfigureRoutes();
     }
