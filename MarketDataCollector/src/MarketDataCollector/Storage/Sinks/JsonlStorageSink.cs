@@ -1,8 +1,11 @@
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.IO.Compression;
 using System.Text;
 using System.Text.Json;
+using System.Linq;
 using MarketDataCollector.Domain.Events;
+using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Storage.Interfaces;
 
 namespace MarketDataCollector.Storage.Sinks;
@@ -14,6 +17,7 @@ public sealed class JsonlStorageSink : IStorageSink
 {
     private readonly StorageOptions _options;
     private readonly IStoragePolicy _policy;
+    private readonly RetentionManager? _retention;
 
     private readonly ConcurrentDictionary<string, WriterState> _writers = new(StringComparer.OrdinalIgnoreCase);
     private static readonly JsonSerializerOptions JsonOpts = new(JsonSerializerDefaults.Web);
@@ -22,10 +26,17 @@ public sealed class JsonlStorageSink : IStorageSink
     {
         _options = options ?? throw new ArgumentNullException(nameof(options));
         _policy = policy ?? throw new ArgumentNullException(nameof(policy));
+        _retention = options.RetentionDays is null && options.MaxTotalBytes is null
+            ? null
+            : new RetentionManager(options.RootPath, options.RetentionDays, options.MaxTotalBytes);
     }
 
     public async ValueTask AppendAsync(MarketEvent evt, CancellationToken ct = default)
     {
+        EventSchemaValidator.Validate(evt);
+
+        _retention?.MaybeCleanup();
+
         var path = _policy.GetPath(evt);
         var writer = _writers.GetOrAdd(path, p => WriterState.Create(p, _options.Compress));
 
@@ -113,6 +124,82 @@ public sealed class JsonlStorageSink : IStorageSink
                 _gate.Release();
                 _gate.Dispose();
             }
+        }
+    }
+
+    private sealed class RetentionManager
+    {
+        private readonly string _root;
+        private readonly int? _retentionDays;
+        private readonly long? _maxBytes;
+        private readonly object _sync = new();
+        private DateTime _lastSweep = DateTime.MinValue;
+        private static readonly string[] _extensions = new[] { ".jsonl", ".jsonl.gz", ".jsonl.gzip" };
+
+        public RetentionManager(string root, int? retentionDays, long? maxBytes)
+        {
+            _root = root;
+            _retentionDays = retentionDays;
+            _maxBytes = maxBytes;
+        }
+
+        public void MaybeCleanup()
+        {
+            if (_retentionDays is null && _maxBytes is null)
+                return;
+
+            lock (_sync)
+            {
+                if ((DateTime.UtcNow - _lastSweep) < TimeSpan.FromSeconds(15))
+                    return;
+
+                _lastSweep = DateTime.UtcNow;
+            }
+
+            try
+            {
+                var files = Directory.Exists(_root)
+                    ? Directory.EnumerateFiles(_root, "*", SearchOption.AllDirectories)
+                        .Where(f => _extensions.Any(ext => f.EndsWith(ext, StringComparison.OrdinalIgnoreCase)))
+                        .Select(path => new FileInfo(path))
+                        .ToList()
+                    : new List<FileInfo>();
+
+                if (_retentionDays is not null)
+                {
+                    var cutoff = DateTime.UtcNow.AddDays(-_retentionDays.Value);
+                    foreach (var f in files.Where(f => f.LastWriteTimeUtc < cutoff))
+                    {
+                        TryDelete(f);
+                    }
+                }
+
+                if (_maxBytes is not null)
+                {
+                    var ordered = files
+                        .OrderBy(f => f.LastWriteTimeUtc)
+                        .ToList();
+                    long total = ordered.Sum(f => f.Exists ? f.Length : 0);
+
+                    var idx = 0;
+                    while (total > _maxBytes && idx < ordered.Count)
+                    {
+                        var target = ordered[idx++];
+                        total -= target.Length;
+                        TryDelete(target);
+                    }
+                }
+            }
+            catch
+            {
+                // Soft-fail; retention is best-effort and should not block writes.
+            }
+        }
+
+        private static void TryDelete(FileInfo file)
+        {
+            try { file.Delete(); }
+            catch { }
         }
     }
 }

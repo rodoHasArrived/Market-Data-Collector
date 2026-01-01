@@ -6,5 +6,6 @@ namespace MarketDataCollector.Application.Config;
 public enum DataSourceKind
 {
     IB = 0,
-    Alpaca = 1
+    Alpaca = 1,
+    Polygon = 2
 }

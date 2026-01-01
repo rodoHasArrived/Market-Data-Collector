@@ -8,7 +8,8 @@ public sealed record MarketEvent(
     MarketEventType Type,
     MarketEventPayload? Payload,
     long Sequence = 0,
-    string Source = "IB"
+    string Source = "IB",
+    int SchemaVersion = 1
 )
 {
     public static MarketEvent Trade(DateTimeOffset ts, string symbol, Trade trade, long seq = 0, string source = "IB")
