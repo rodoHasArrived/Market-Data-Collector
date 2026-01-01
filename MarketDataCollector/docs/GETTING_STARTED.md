@@ -39,7 +39,28 @@ dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj
 
 This will run a simulated data test and write sample events to the `./data/` directory.
 
-### 4. Run Self-Tests
+### 4. Monitor the Dashboard
+
+Start the collector with the built-in HTTP dashboard and config hot reload:
+
+```bash
+dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --watch-config --http-port 8080
+```
+
+Open `http://localhost:8080` for the live dashboard, `/metrics` for Prometheus, and `/status` for JSON status output.
+
+### 5. Run a Historical Backfill (Optional)
+
+Prime the data directory with historical bars before live capture begins:
+
+```bash
+dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --backfill \
+  --backfill-provider stooq --backfill-symbols SPY,QQQ --backfill-from 2024-01-01 --backfill-to 2024-01-05
+```
+
+You can also enable `Backfill.Enabled` in `appsettings.json` to run the default backfill automatically at startup. The dashboard exposes `/api/backfill/*` endpoints and a status panel to view results and rerun jobs.
+
+### 6. Run Self-Tests
 
 Verify the internal components are working correctly:
 

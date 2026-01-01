@@ -27,6 +27,13 @@ dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --sel
 
 See `docs/operator-runbook.md` for production startup scripts, including the systemd unit and PowerShell helpers.
 
+To trigger a historical backfill before the live feed starts, either enable `"Backfill": { "Enabled": true }` in `appsettings.json` or pass command-line flags:
+
+```bash
+dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- \
+  --backfill --backfill-provider stooq --backfill-symbols SPY,QQQ --backfill-from 2024-01-01 --backfill-to 2024-01-05
+```
+
 ## Configuration highlights
 
 * `appsettings.json` drives symbol subscriptions (trades/depth), provider settings, and API credentials.
@@ -82,6 +89,7 @@ dotnet run -- --http-port 8080
 - **`/`** - Live HTML dashboard with auto-refreshing metrics and integrity events
 - **`/metrics`** - Prometheus-compatible metrics endpoint
 - **`/status`** - JSON status with metrics, pipeline statistics, and integrity events
+- **`/api/backfill/*`** - REST endpoints surfaced by the dashboard to list providers, run backfill, and read the latest backfill status
 
 ### Metrics Exposed
 
@@ -95,6 +103,33 @@ dotnet run -- --http-port 8080
 - `mdc_drop_rate` - Drop rate percentage
 
 Integrate with Prometheus, Grafana, or simply monitor the dashboard in your browser.
+
+## Historical Backfill
+
+The collector can prime disk with historical daily bars before live capture begins. The feature ships with a Stooq provider and can be extended with additional implementations under `Infrastructure/Providers/Backfill`.
+
+### Configuration
+
+`appsettings.json` accepts a `Backfill` section to seed defaults:
+
+```json
+"Backfill": {
+  "Enabled": false,
+  "Provider": "stooq",
+  "Symbols": ["SPY", "QQQ"],
+  "From": "2024-01-01",
+  "To": "2024-01-05"
+}
+```
+
+Command-line arguments override the config file when present:
+
+- `--backfill` enables a run at startup (even if config is disabled)
+- `--backfill-provider <name>` selects a specific provider
+- `--backfill-symbols <CSV>` overrides the symbol list
+- `--backfill-from <yyyy-MM-dd>` / `--backfill-to <yyyy-MM-dd>` bound the date range
+
+Results are written alongside the live data under `DataRoot` and surfaced through `/api/backfill/status` and the dashboard.
 
 ## Data Replay
 

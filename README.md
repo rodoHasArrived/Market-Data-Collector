@@ -47,17 +47,33 @@ Market Data Collector is a modular, event-driven system that captures, validates
 # Clone the repository
 cd MarketDataCollector
 
+# Copy the sample settings and edit as needed
+cp appsettings.sample.json appsettings.json
+
 # Run smoke test (no provider connectivity required)
 dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj
 
 # Run self-tests
 dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --selftest
 
-# Start with monitoring and config hot reload
+# Start with monitoring, config hot reload, and the HTML dashboard
 dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --watch-config --http-port 8080
 ```
 
-Access the monitoring dashboard at `http://localhost:8080`
+Access the monitoring dashboard at `http://localhost:8080` and JSON status at `http://localhost:8080/status`.
+
+To backfill historical bars from configured providers (e.g., Stooq) before live capture begins:
+
+```bash
+dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --backfill
+```
+
+Override provider or date ranges at launch time with:
+
+```bash
+dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- \
+  --backfill --backfill-provider stooq --backfill-symbols SPY,AAPL --backfill-from 2024-01-01 --backfill-to 2024-01-05
+```
 
 ## Documentation
 
@@ -68,6 +84,8 @@ Comprehensive documentation is available in the `MarketDataCollector/docs/` dire
 - **[docs/operator-runbook.md](MarketDataCollector/docs/operator-runbook.md)** - Operations guide and production deployment
 - **[docs/domains.md](MarketDataCollector/docs/domains.md)** - Event contracts and domain models
 - **[docs/c4-diagrams.md](MarketDataCollector/docs/c4-diagrams.md)** - System diagrams
+- **[docs/GETTING_STARTED.md](MarketDataCollector/docs/GETTING_STARTED.md)** - End-to-end setup for local development
+- **[docs/CONFIGURATION.md](MarketDataCollector/docs/CONFIGURATION.md)** - Detailed explanation of every setting including backfill
 
 ## Supported Data Sources
 
@@ -83,14 +101,15 @@ Market data is stored as newline-delimited JSON (JSONL) files with:
 - Automatic retention management
 - Data integrity events alongside market data
 
-## Monitoring
+## Monitoring and Backfill Control
 
 The built-in HTTP server provides:
 - **Prometheus metrics** at `/metrics`
 - **JSON status** at `/status`
 - **Live HTML dashboard** at `/`
+- **Backfill status and controls** at `/api/backfill/*`
 
-Monitor event throughput, drop rates, integrity events, and pipeline statistics in real-time.
+Monitor event throughput, drop rates, integrity events, and pipeline statistics in real-time. Initiate or review historical backfill jobs directly from the dashboard without restarting the collector.
 
 ## License
 
