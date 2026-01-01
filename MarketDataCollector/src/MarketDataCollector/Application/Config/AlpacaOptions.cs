@@ -17,5 +17,36 @@ public sealed record AlpacaOptions(
     string SecretKey,
     string Feed = "iex",            // v2/{feed}: iex, sip, delayed_sip
     bool UseSandbox = false,        // stream.data.sandbox.alpaca.markets
-    bool SubscribeQuotes = false    // if true, subscribes to quotes too (currently not wired to L2 collector)
-);
+    bool SubscribeQuotes = false    // if true, subscribes to quotes too
+)
+{
+    // Resilience Configuration - Connection Retry
+    /// <summary>Maximum number of connection retry attempts (-1 for unlimited).</summary>
+    public int MaxConnectionRetries { get; init; } = 5;
+
+    /// <summary>Initial delay in seconds for exponential backoff.</summary>
+    public double InitialRetryDelaySeconds { get; init; } = 1.0;
+
+    /// <summary>Maximum delay in seconds between retries.</summary>
+    public double MaxRetryDelaySeconds { get; init; } = 120.0;
+
+    /// <summary>Timeout in seconds for individual connection attempts.</summary>
+    public double ConnectionTimeoutSeconds { get; init; } = 30.0;
+
+    // Resilience Configuration - Heartbeat/Keep-Alive
+    /// <summary>Enable heartbeat monitoring to detect stale connections.</summary>
+    public bool EnableHeartbeat { get; init; } = true;
+
+    /// <summary>Interval in seconds between heartbeat checks.</summary>
+    public double HeartbeatIntervalSeconds { get; init; } = 30.0;
+
+    /// <summary>Timeout in seconds for heartbeat responses.</summary>
+    public double HeartbeatTimeoutSeconds { get; init; } = 10.0;
+
+    /// <summary>Number of consecutive failures before triggering reconnection.</summary>
+    public int ConsecutiveFailuresBeforeReconnect { get; init; } = 3;
+
+    // Resilience Configuration - Auto-Reconnect
+    /// <summary>Enable automatic reconnection on connection loss.</summary>
+    public bool EnableAutoReconnect { get; init; } = true;
+}

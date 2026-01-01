@@ -5,6 +5,7 @@ using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Domain.Collectors;
 using MarketDataCollector.Domain.Models;
+using MarketDataCollector.Infrastructure.Resilience;
 using Serilog;
 
 namespace MarketDataCollector.Infrastructure.Providers.Alpaca;
@@ -12,9 +13,15 @@ namespace MarketDataCollector.Infrastructure.Providers.Alpaca;
 /// <summary>
 /// Alpaca Market Data client (WebSocket) that implements the IMarketDataClient abstraction.
 ///
-/// Current support:
+/// Features:
+/// - Resilient WebSocket connection with automatic retry and reconnection
+/// - Heartbeat monitoring to detect stale connections
+/// - Circuit breaker protection against cascading failures
+/// - Thread-safe subscription management
+///
+/// Current data support:
 /// - Trades: YES (streams "t" messages and forwards to TradeDataCollector)
-/// - Depth (L2): NO (Alpaca stock stream provides quotes/BBO, not full L2 updates; method returns -1)
+/// - Depth (L2): Partial (Alpaca provides quotes/BBO, not full L2 updates)
 ///
 /// Notes:
 /// - Alpaca typically limits to 1 active stream connection per user per endpoint.
@@ -27,13 +34,14 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
     private readonly QuoteCollector _quoteCollector;
     private readonly AlpacaOptions _opt;
 
-    private ClientWebSocket? _ws;
-    private Task? _recvLoop;
+    private ResilientWebSocketClient? _client;
     private CancellationTokenSource? _cts;
 
     private readonly object _gate = new();
     private readonly HashSet<string> _tradeSymbols = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<string> _quoteSymbols = new(StringComparer.OrdinalIgnoreCase);
+    private bool _isAuthenticated;
+    private bool _subscriptionsPending;
 
     // Cached serializer options to avoid allocations in hot path
     private static readonly JsonSerializerOptions s_serializerOptions = new()
@@ -57,20 +65,44 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
 
     public async Task ConnectAsync(CancellationToken ct = default)
     {
-        if (_ws != null) return;
+        if (_client != null) return;
 
         _cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-        _ws = new ClientWebSocket();
 
         var host = _opt.UseSandbox ? "stream.data.sandbox.alpaca.markets" : "stream.data.alpaca.markets";
         var uri = new Uri($"wss://{host}/v2/{_opt.Feed}");
 
         _log.Information("Connecting to Alpaca WebSocket at {Uri} (Sandbox: {UseSandbox})", uri, _opt.UseSandbox);
 
+        // Configure resilient connection options
+        var options = new ResilientWebSocketOptions
+        {
+            MaxConnectionRetries = _opt.MaxConnectionRetries,
+            InitialRetryDelay = TimeSpan.FromSeconds(_opt.InitialRetryDelaySeconds),
+            MaxRetryDelay = TimeSpan.FromSeconds(_opt.MaxRetryDelaySeconds),
+            ConnectionTimeout = TimeSpan.FromSeconds(_opt.ConnectionTimeoutSeconds),
+            HeartbeatInterval = TimeSpan.FromSeconds(_opt.HeartbeatIntervalSeconds),
+            HeartbeatTimeout = TimeSpan.FromSeconds(_opt.HeartbeatTimeoutSeconds),
+            EnableAutoReconnect = _opt.EnableAutoReconnect,
+            EnableHeartbeat = _opt.EnableHeartbeat,
+            ConsecutiveFailuresBeforeReconnect = _opt.ConsecutiveFailuresBeforeReconnect
+        };
+
+        _client = new ResilientWebSocketClient(
+            uri,
+            options,
+            onConnected: OnConnectedAsync,
+            onMessage: OnMessageAsync);
+
+        // Subscribe to connection events
+        _client.StateChanged += OnConnectionStateChanged;
+        _client.ConnectionLost += OnConnectionLost;
+        _client.ConnectionRestored += OnConnectionRestored;
+
         try
         {
-            await _ws.ConnectAsync(uri, ct).ConfigureAwait(false);
-            _log.Information("Successfully connected to Alpaca WebSocket");
+            await _client.ConnectAsync(_cts.Token).ConfigureAwait(false);
+            _log.Information("Successfully connected to Alpaca WebSocket with resilience enabled");
         }
         catch (Exception ex)
         {
@@ -79,23 +111,89 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
                 "3) Ensure your API keys are valid and not expired.", uri);
             throw;
         }
+    }
+
+    private async Task OnConnectedAsync(ClientWebSocket ws, CancellationToken ct)
+    {
+        _isAuthenticated = false;
 
         // Authenticate via message (must be within ~10 seconds of connection)
         var authMsg = JsonSerializer.Serialize(new { action = "auth", key = _opt.KeyId, secret = _opt.SecretKey });
-        await SendTextAsync(authMsg, ct).ConfigureAwait(false);
+        var bytes = Encoding.UTF8.GetBytes(authMsg);
+        await ws.SendAsync(bytes, WebSocketMessageType.Text, endOfMessage: true, ct).ConfigureAwait(false);
         _log.Debug("Authentication message sent to Alpaca");
 
-        _recvLoop = Task.Run(() => ReceiveLoopAsync(_cts.Token), _cts.Token);
+        // Mark subscriptions as pending - they'll be sent after auth confirmation
+        lock (_gate)
+        {
+            if (_tradeSymbols.Count > 0 || _quoteSymbols.Count > 0)
+            {
+                _subscriptionsPending = true;
+            }
+        }
+    }
+
+    private async Task OnMessageAsync(ReadOnlyMemory<byte> data, CancellationToken ct)
+    {
+        var json = Encoding.UTF8.GetString(data.Span);
+        if (string.IsNullOrWhiteSpace(json)) return;
+
+        try
+        {
+            using var doc = JsonDocument.Parse(json);
+            if (doc.RootElement.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var el in doc.RootElement.EnumerateArray())
+                    await HandleMessageAsync(el).ConfigureAwait(false);
+            }
+            else if (doc.RootElement.ValueKind == JsonValueKind.Object)
+            {
+                await HandleMessageAsync(doc.RootElement).ConfigureAwait(false);
+            }
+        }
+        catch (JsonException ex)
+        {
+            _log.Warning(ex, "Failed to parse Alpaca WebSocket message. Raw JSON: {RawJson}. " +
+                "This may indicate a protocol change or malformed message.",
+                json.Length > 500 ? json[..500] + "..." : json);
+        }
+        catch (Exception ex)
+        {
+            _log.Error(ex, "Unexpected error processing Alpaca WebSocket message");
+        }
+    }
+
+    private void OnConnectionStateChanged(object? sender, ConnectionStateChangedEventArgs e)
+    {
+        _log.Information("Alpaca connection state changed: {OldState} -> {NewState} (Attempt: {Attempt})",
+            e.OldState, e.NewState, e.ReconnectAttempt);
+
+        if (e.Exception != null)
+        {
+            _log.Warning(e.Exception, "Connection state change due to error");
+        }
+    }
+
+    private void OnConnectionLost(object? sender, Exception? ex)
+    {
+        _log.Warning(ex, "Alpaca WebSocket connection lost. Auto-reconnect will attempt recovery.");
+        _isAuthenticated = false;
+    }
+
+    private void OnConnectionRestored(object? sender, EventArgs e)
+    {
+        _log.Information("Alpaca WebSocket connection restored");
+        // Note: OnConnectedAsync will handle re-authentication and subscriptions
     }
 
     public async Task DisconnectAsync(CancellationToken ct = default)
     {
         _log.Information("Disconnecting from Alpaca WebSocket");
 
-        var ws = _ws;
+        var client = _client;
         var cts = _cts;
 
-        _ws = null;
+        _client = null;
         _cts = null;
 
         if (cts != null)
@@ -104,26 +202,27 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
             try { cts.Dispose(); } catch { }
         }
 
-        if (ws != null)
+        if (client != null)
         {
+            client.StateChanged -= OnConnectionStateChanged;
+            client.ConnectionLost -= OnConnectionLost;
+            client.ConnectionRestored -= OnConnectionRestored;
+
             try
             {
-                if (ws.State is WebSocketState.Open or WebSocketState.CloseReceived)
-                    await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "shutdown", ct).ConfigureAwait(false);
+                await client.DisconnectAsync(ct).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
-                _log.Warning(ex, "Error during WebSocket close, connection may have been lost");
+                _log.Warning(ex, "Error during WebSocket disconnect");
             }
-            try { ws.Dispose(); } catch { }
+            finally
+            {
+                await client.DisposeAsync().ConfigureAwait(false);
+            }
         }
 
-        if (_recvLoop != null)
-        {
-            try { await _recvLoop.ConfigureAwait(false); } catch { }
-        }
-        _recvLoop = null;
-
+        _isAuthenticated = false;
         _log.Information("Disconnected from Alpaca WebSocket");
     }
 
@@ -164,8 +263,7 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
 
     public int SubscribeMarketDepth(SymbolConfig cfg)
     {
-        // Not supported for stocks: Alpaca provides quotes, not full L2 depth updates.
-        // If you later add QuoteCollector -> L2Snapshot mapping, wire it here.
+        // Alpaca provides quotes, not full L2 depth updates.
         if (_opt.SubscribeQuotes)
         {
             var symbol = cfg.Symbol.Trim();
@@ -210,8 +308,8 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
     {
         try
         {
-            var ws = _ws;
-            if (ws == null || ws.State != WebSocketState.Open) return;
+            var client = _client;
+            if (client == null || !client.IsConnected || !_isAuthenticated) return;
 
             string[] trades;
             string[] quotes;
@@ -219,6 +317,7 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
             {
                 trades = _tradeSymbols.ToArray();
                 quotes = _quoteSymbols.ToArray();
+                _subscriptionsPending = false;
             }
 
             var msg = new Dictionary<string, object?>
@@ -231,7 +330,10 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
                 msg["quotes"] = quotes;
 
             var json = JsonSerializer.Serialize(msg, s_serializerOptions);
-            await SendTextAsync(json, CancellationToken.None).ConfigureAwait(false);
+            await client.SendTextAsync(json, CancellationToken.None).ConfigureAwait(false);
+
+            _log.Debug("Sent subscription update: {TradeCount} trades, {QuoteCount} quotes",
+                trades.Length, quotes.Length);
         }
         catch (Exception ex)
         {
@@ -240,113 +342,123 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
         }
     }
 
-    private async Task SendTextAsync(string text, CancellationToken ct)
+    private async Task HandleMessageAsync(JsonElement el)
     {
-        var ws = _ws ?? throw new InvalidOperationException("Not connected.");
-        var bytes = Encoding.UTF8.GetBytes(text);
-        await ws.SendAsync(bytes, WebSocketMessageType.Text, endOfMessage: true, ct).ConfigureAwait(false);
-    }
-
-    private async Task ReceiveLoopAsync(CancellationToken ct)
-    {
-        if (_ws == null) return;
-
-        var ws = _ws;
-        var buf = new byte[64 * 1024];
-        var sb = new StringBuilder(128 * 1024);
-
-        while (!ct.IsCancellationRequested && ws.State == WebSocketState.Open)
-        {
-            sb.Clear();
-
-            WebSocketReceiveResult? res;
-            do
-            {
-                res = await ws.ReceiveAsync(buf, ct).ConfigureAwait(false);
-                if (res.MessageType == WebSocketMessageType.Close) return;
-                sb.Append(Encoding.UTF8.GetString(buf, 0, res.Count));
-            }
-            while (!res.EndOfMessage);
-
-            var json = sb.ToString();
-            if (string.IsNullOrWhiteSpace(json)) continue;
-
-            // Alpaca sends arrays of objects: [{"T":"success",...}, {"T":"t",...}]
-            try
-            {
-                using var doc = JsonDocument.Parse(json);
-                if (doc.RootElement.ValueKind == JsonValueKind.Array)
-                {
-                    foreach (var el in doc.RootElement.EnumerateArray())
-                        HandleMessage(el);
-                }
-                else if (doc.RootElement.ValueKind == JsonValueKind.Object)
-                {
-                    HandleMessage(doc.RootElement);
-                }
-            }
-            catch (JsonException ex)
-            {
-                _log.Warning(ex, "Failed to parse Alpaca WebSocket message. Raw JSON: {RawJson}. " +
-                    "This may indicate a protocol change or malformed message.",
-                    json.Length > 500 ? json[..500] + "..." : json);
-            }
-            catch (Exception ex)
-            {
-                _log.Error(ex, "Unexpected error processing Alpaca WebSocket message");
-            }
-        }
-    }
-
-    private void HandleMessage(JsonElement el)
-    {
-        // Trades: "T":"t" (per Alpaca docs)
         if (!el.TryGetProperty("T", out var tProp)) return;
         var t = tProp.GetString();
-        if (t == "t")
+
+        // Handle authentication responses
+        if (t == "success")
         {
-            var sym = el.TryGetProperty("S", out var sProp) ? sProp.GetString() : null;
-            if (string.IsNullOrWhiteSpace(sym)) return;
+            var msg = el.TryGetProperty("msg", out var msgProp) ? msgProp.GetString() : null;
+            if (msg == "authenticated")
+            {
+                _log.Information("Alpaca authentication successful");
+                _isAuthenticated = true;
 
-            var price = el.TryGetProperty("p", out var pProp) ? (decimal)pProp.GetDouble() : 0m;
-            var size = el.TryGetProperty("s", out var szProp) ? szProp.GetInt32() : 0;
-            var ts = el.TryGetProperty("t", out var tsProp) ? tsProp.GetString() : null;
-            var venue = el.TryGetProperty("x", out var xProp) ? xProp.GetString() : null;
-            var tradeId = el.TryGetProperty("i", out var iProp) ? iProp.GetInt64() : 0;
-
-            DateTimeOffset dto;
-            if (!DateTimeOffset.TryParse(ts, out dto))
-                dto = DateTimeOffset.UtcNow;
-
-            var update = new MarketTradeUpdate(
-                Timestamp: dto,
-                Symbol: sym!,
-                Price: price,
-                Size: size,
-                Aggressor: AggressorSide.Unknown,
-                SequenceNumber: tradeId <= 0 ? null : tradeId,
-                StreamId: "ALPACA",
-                Venue: venue ?? "ALPACA"
-            );
-
-            _tradeCollector.OnTrade(update);
+                // Send any pending subscriptions
+                if (_subscriptionsPending)
+                {
+                    await TrySendSubscribeAsync().ConfigureAwait(false);
+                }
+            }
+            else if (msg == "connected")
+            {
+                _log.Debug("Alpaca WebSocket connected confirmation received");
+            }
         }
-
-        // TODO: Wire Alpaca quotes ("T":"q") into the L2 collector
-        // Alpaca quotes contain bid/ask price and size which can be converted to BboQuotePayload
-        // Steps to implement:
-        // 1. Parse quote messages (T="q") with fields: S=symbol, bp=bidPrice, bs=bidSize, ap=askPrice, as=askSize, t=timestamp
-        // 2. Create MarketQuoteUpdate from the parsed data
-        // 3. Forward to _quoteCollector.OnQuote(update) to publish BBO events
-        // 4. Consider creating L2SnapshotPayload from aggregated quotes if full depth is needed
-        if (t == "q")
+        else if (t == "error")
         {
-            // Quote parsing is available but not yet wired to collectors
-            // Uncomment and complete implementation when ready:
-            // var sym = el.TryGetProperty("S", out var sProp) ? sProp.GetString() : null;
-            // var bidPrice = el.TryGetProperty("bp", out var bp) ? (decimal)bp.GetDouble() : 0m;
-            // var askPrice = el.TryGetProperty("ap", out var ap) ? (decimal)ap.GetDouble() : 0m;
-            // ... wire to _quoteCollector
+            var code = el.TryGetProperty("code", out var codeProp) ? codeProp.GetInt32() : 0;
+            var msg = el.TryGetProperty("msg", out var msgProp) ? msgProp.GetString() : "Unknown error";
+            _log.Error("Alpaca error received: [{Code}] {Message}", code, msg);
+
+            if (code == 401 || code == 402 || code == 403)
+            {
+                _log.Error("Authentication error. Check your API keys and permissions.");
+                _isAuthenticated = false;
+            }
         }
+        else if (t == "subscription")
+        {
+            // Subscription confirmation
+            var trades = el.TryGetProperty("trades", out var tradesProp) && tradesProp.ValueKind == JsonValueKind.Array
+                ? tradesProp.EnumerateArray().Select(x => x.GetString()).Where(x => x != null).ToArray()
+                : Array.Empty<string?>();
+            var quotes = el.TryGetProperty("quotes", out var quotesProp) && quotesProp.ValueKind == JsonValueKind.Array
+                ? quotesProp.EnumerateArray().Select(x => x.GetString()).Where(x => x != null).ToArray()
+                : Array.Empty<string?>();
+
+            _log.Information("Alpaca subscription confirmed: {TradeCount} trades, {QuoteCount} quotes",
+                trades.Length, quotes.Length);
+        }
+        else if (t == "t")
+        {
+            // Trade message
+            HandleTradeMessage(el);
+        }
+        else if (t == "q")
+        {
+            // Quote message - now fully wired to QuoteCollector
+            HandleQuoteMessage(el);
+        }
+    }
+
+    private void HandleTradeMessage(JsonElement el)
+    {
+        var sym = el.TryGetProperty("S", out var sProp) ? sProp.GetString() : null;
+        if (string.IsNullOrWhiteSpace(sym)) return;
+
+        var price = el.TryGetProperty("p", out var pProp) ? (decimal)pProp.GetDouble() : 0m;
+        var size = el.TryGetProperty("s", out var szProp) ? szProp.GetInt32() : 0;
+        var ts = el.TryGetProperty("t", out var tsProp) ? tsProp.GetString() : null;
+        var venue = el.TryGetProperty("x", out var xProp) ? xProp.GetString() : null;
+        var tradeId = el.TryGetProperty("i", out var iProp) ? iProp.GetInt64() : 0;
+
+        DateTimeOffset dto;
+        if (!DateTimeOffset.TryParse(ts, out dto))
+            dto = DateTimeOffset.UtcNow;
+
+        var update = new MarketTradeUpdate(
+            Timestamp: dto,
+            Symbol: sym!,
+            Price: price,
+            Size: size,
+            Aggressor: AggressorSide.Unknown,
+            SequenceNumber: tradeId <= 0 ? null : tradeId,
+            StreamId: "ALPACA",
+            Venue: venue ?? "ALPACA"
+        );
+
+        _tradeCollector.OnTrade(update);
+    }
+
+    private void HandleQuoteMessage(JsonElement el)
+    {
+        var sym = el.TryGetProperty("S", out var sProp) ? sProp.GetString() : null;
+        if (string.IsNullOrWhiteSpace(sym)) return;
+
+        var bidPrice = el.TryGetProperty("bp", out var bpProp) ? (decimal)bpProp.GetDouble() : 0m;
+        var bidSize = el.TryGetProperty("bs", out var bsProp) ? bsProp.GetInt32() : 0;
+        var askPrice = el.TryGetProperty("ap", out var apProp) ? (decimal)apProp.GetDouble() : 0m;
+        var askSize = el.TryGetProperty("as", out var asProp) ? asProp.GetInt32() : 0;
+        var ts = el.TryGetProperty("t", out var tsProp) ? tsProp.GetString() : null;
+
+        DateTimeOffset dto;
+        if (!DateTimeOffset.TryParse(ts, out dto))
+            dto = DateTimeOffset.UtcNow;
+
+        var update = new MarketQuoteUpdate(
+            Timestamp: dto,
+            Symbol: sym!,
+            BidPrice: bidPrice,
+            BidSize: bidSize,
+            AskPrice: askPrice,
+            AskSize: askSize,
+            StreamId: "ALPACA",
+            Venue: "ALPACA"
+        );
+
+        _quoteCollector.OnQuote(update);
     }
 }

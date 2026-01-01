@@ -233,6 +233,13 @@ Detailed diagrams and domain notes live in `./docs`:
 
 ## Recent Improvements
 
+### Resilience and Reliability (2026-01-01)
+- **Connection Retry**: Exponential backoff with jitter for all WebSocket connections
+- **Auto-Reconnection**: Automatic reconnection on connection loss with configurable retry limits
+- **Heartbeat Monitoring**: Detection of stale connections and proactive reconnection
+- **Circuit Breaker**: Protection against cascading failures using Polly
+- **Alpaca Quotes**: Full integration of Alpaca quote messages ("T":"q") with QuoteCollector
+
 ### Code Quality (2026-01-01)
 - **Subscription Management**: New `SymbolSubscriptionTracker` base class provides thread-safe subscription handling for depth collectors
 - **Logging Standardization**: All components now use `LoggingSetup.ForContext<T>()` for consistent logging
@@ -244,9 +251,10 @@ Detailed diagrams and domain notes live in `./docs`:
 ### Current Limitations
 
 **Provider Integration:**
-- Alpaca quote messages ("T":"q") not yet wired to QuoteCollector (trade-only currently)
-- IB connection does not auto-retry on failure (manual restart required)
-- No heartbeat/keep-alive for WebSocket connections
+- ✅ Alpaca quote messages now fully integrated
+- ✅ Alpaca connection auto-retries with exponential backoff
+- ✅ Heartbeat/keep-alive for Alpaca WebSocket connections
+- IB connection improvements pending (uses existing TWS/Gateway retry)
 
 **Security:**
 - API credentials stored in `appsettings.json` (should use environment variables or secrets manager)
@@ -255,7 +263,8 @@ Detailed diagrams and domain notes live in `./docs`:
 
 **Observability:**
 - ✅ Structured Serilog logging implemented throughout codebase
-- Some error paths may still need additional logging (parse errors, connection failures)
+- ✅ Connection state changes logged with detailed context
+- Some error paths may still need additional logging
 
 **Data Precision:**
 - Order book uses `double` for prices (consider `decimal` to avoid floating-point precision issues)
@@ -263,8 +272,6 @@ Detailed diagrams and domain notes live in `./docs`:
 ### Planned Enhancements
 
 See the project [DEPENDENCIES.md](DEPENDENCIES.md) for detailed recommendations on:
-- **Serilog** integration for structured logging
-- **Polly** for retry policies and circuit breakers
 - **FluentValidation** for configuration validation
 - **prometheus-net** for enhanced metrics
 - **xUnit/Moq** for comprehensive testing

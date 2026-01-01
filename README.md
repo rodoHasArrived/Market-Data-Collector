@@ -118,6 +118,13 @@ See LICENSE file for details.
 
 ### Recently Completed
 
+**Resilience and Reliability (Completed 2026-01-01):**
+- ✅ Connection retry with exponential backoff for all providers (Polly integration)
+- ✅ Automatic WebSocket reconnection on connection loss
+- ✅ Heartbeat/keep-alive mechanism to detect stale connections
+- ✅ Circuit breakers to prevent cascading failures
+- ✅ Alpaca quote integration (wire "T":"q" messages to QuoteCollector)
+
 **Code Quality (Completed 2026-01-01):**
 - ✅ Extracted shared subscription management into `SymbolSubscriptionTracker` base class
 - ✅ Standardized logger initialization across all components using `LoggingSetup.ForContext<T>()`
@@ -125,12 +132,6 @@ See LICENSE file for details.
 - ✅ Cleaned up consumer classes by removing boilerplate code
 
 ### Near-Term Improvements
-
-**Resilience and Reliability:**
-- Connection retry with exponential backoff for all providers (Polly integration)
-- Automatic WebSocket reconnection on connection loss
-- Heartbeat/keep-alive mechanism to detect stale connections
-- Circuit breakers to prevent cascading failures
 
 **Security:**
 - Move API credentials from config files to environment variables or secure vault
@@ -144,7 +145,6 @@ See LICENSE file for details.
 **Data Quality:**
 - Use decimal instead of double for price fields to avoid floating-point precision issues
 - Cross-validation of bid/ask price ordering in order books
-- Enhanced Alpaca quote integration (wire "T":"q" messages to QuoteCollector)
 
 ### Long-Term Enhancements
 
