@@ -37,6 +37,18 @@
     <TrimmerRootAssembly Include="System.Text.Json" />
   </ItemGroup>
 
+  <!-- Web UI Dependencies -->
+  <ItemGroup>
+    <!-- ASP.NET Core -->
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.0" />
+
+    <!-- Logging -->
+    <PackageReference Include="Serilog.AspNetCore" Version="8.0.3" />
+
+    <!-- Monitoring -->
+    <PackageReference Include="prometheus-net.AspNetCore" Version="8.2.1" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\MarketDataCollector\MarketDataCollector.csproj" />
   </ItemGroup>
