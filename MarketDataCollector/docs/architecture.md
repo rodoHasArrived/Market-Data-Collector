@@ -41,8 +41,10 @@ Infrastructure (Providers: IB / Alpaca / ...)
 
 ### Domain
 * Pure business logic – deterministic and testable
+* `SymbolSubscriptionTracker` – base class providing thread-safe subscription management (registration, unregistration, auto-subscription)
 * `TradeDataCollector` – tick-by-tick trades with sequence validation and order-flow statistics
-* `MarketDepthCollector` – L2 order book maintenance with integrity checking
+* `MarketDepthCollector` – L2 order book maintenance with integrity checking (extends `SymbolSubscriptionTracker`)
+* `HighPerformanceMarketDepthCollector` – lock-free order book with immutable snapshots (extends `SymbolSubscriptionTracker`)
 * `QuoteCollector` – BBO state cache and `BboQuote` event emission
 * Domain models: `Trade`, `LOBSnapshot`, `BboQuotePayload`, `OrderFlowStatistics`, integrity events
 

@@ -83,12 +83,15 @@ Emitted when trade sequence validation fails:
 * **SequenceGap** – received sequence > expected next (trade is accepted but stats marked stale)
 
 ## MarketDepthCollector
+* Extends `SymbolSubscriptionTracker` for thread-safe subscription management
 * Maintains L2 order books per symbol via `OnDepth(MarketDepthUpdate)`
 * Applies incremental updates (insert/update/delete)
 * Freezes symbol stream on integrity violations
 * Emits:
   - `LOBSnapshot`
   - `DepthIntegrityEvent`
+
+**Note**: `HighPerformanceMarketDepthCollector` provides a lock-free alternative with immutable snapshots for high-frequency scenarios. Both collectors extend `SymbolSubscriptionTracker`.
 
 ### Integrity Guarantees
 If an invalid update is detected:

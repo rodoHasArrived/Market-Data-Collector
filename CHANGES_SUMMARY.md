@@ -1,6 +1,67 @@
-# Changes Summary: Dependencies and Open Source Research
+# Changes Summary
 
-## Overview
+This document summarizes major changes and improvements to the Market Data Collector project.
+
+---
+
+## Latest: Code Cleanup and Consolidation (2026-01-01)
+
+### Overview
+
+This update consolidates duplicate code, standardizes logging patterns, and improves project security configuration.
+
+### Changes Made
+
+#### 1. Extracted Shared Subscription Management Logic
+Created `SymbolSubscriptionTracker` base class to eliminate code duplication:
+- **File**: `Domain/Collectors/SymbolSubscriptionTracker.cs`
+- Provides thread-safe subscription management using `ConcurrentDictionary`
+- Methods: `RegisterSubscription`, `UnregisterSubscription`, `IsSubscribed`, `ShouldProcessUpdate`
+- Extended by `MarketDepthCollector` and `HighPerformanceMarketDepthCollector`
+
+#### 2. Standardized Logger Initialization
+Updated 14 files to use consistent `LoggingSetup.ForContext<T>()` pattern:
+- `Messaging/Consumers/` (4 files)
+- `Messaging/Publishers/` (2 files)
+- `Application/Subscriptions/` (4 files)
+- `Infrastructure/Resilience/WebSocketResiliencePolicy.cs`
+- `Application/Config/Credentials/CredentialResolver.cs`
+
+#### 3. Consumer Class Cleanup
+Cleaned up all MassTransit consumer classes:
+- Removed boilerplate TODO comments
+- Updated documentation comments
+- Files: `TradeOccurredConsumer`, `IntegrityEventConsumer`, `BboQuoteUpdatedConsumer`, `L2SnapshotReceivedConsumer`
+
+#### 4. Added .gitignore
+Created comprehensive `.gitignore` for .NET projects:
+- Excludes `appsettings.json` (credentials) while keeping `appsettings.sample.json`
+- Covers build artifacts, IDE files, logs, credentials, and temporary files
+
+### Impact
+- **Code reduction**: ~60 lines of duplicate code removed
+- **Maintainability**: Single source of truth for subscription logic
+- **Consistency**: Uniform logging behavior across all components
+- **Security**: Proper credential exclusion from version control
+
+### Files Changed
+```
+.gitignore (new)
+MarketDataCollector/src/MarketDataCollector/Domain/Collectors/SymbolSubscriptionTracker.cs (new)
+MarketDataCollector/src/MarketDataCollector/Domain/Collectors/MarketDepthCollector.cs
+MarketDataCollector/src/MarketDataCollector/Domain/Collectors/HighPerformanceMarketDepthCollector.cs
+MarketDataCollector/src/MarketDataCollector/Messaging/Consumers/*.cs (4 files)
+MarketDataCollector/src/MarketDataCollector/Messaging/Publishers/*.cs (2 files)
+MarketDataCollector/src/MarketDataCollector/Application/Subscriptions/*.cs (4 files)
+MarketDataCollector/src/MarketDataCollector/Infrastructure/Resilience/WebSocketResiliencePolicy.cs
+MarketDataCollector/src/MarketDataCollector/Application/Config/Credentials/CredentialResolver.cs
+```
+
+---
+
+## Previous: Dependencies and Open Source Research
+
+### Overview
 
 This update adds essential NuGet dependencies to the Market Data Collector project and provides comprehensive documentation on open-source codebases that can help improve the project.
 
