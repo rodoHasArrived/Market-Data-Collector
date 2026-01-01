@@ -1,6 +1,5 @@
 namespace MarketDataCollector.Domain.Models;
 
-// TODO: Add validation for Price (must be > 0) and Size (must be >= 0)
 // TODO: Consider using decimal instead of double for Price to avoid floating-point precision issues
 // TODO: Validate that bid prices are < ask prices when both sides are present in order book
 
@@ -12,4 +11,20 @@ public sealed record OrderBookLevel(
     int Level,
     double Price,
     double Size,
-    string? MarketMaker = null);
+    string? MarketMaker = null)
+{
+    /// <summary>
+    /// Validates order book level data at construction time to prevent corrupt datasets.
+    /// </summary>
+    public OrderBookLevel
+    {
+        if (Price <= 0)
+            throw new ArgumentOutOfRangeException(nameof(Price), Price, "Price must be greater than 0");
+
+        if (Size < 0)
+            throw new ArgumentOutOfRangeException(nameof(Size), Size, "Size must be greater than or equal to 0");
+
+        if (Level < 0)
+            throw new ArgumentOutOfRangeException(nameof(Level), Level, "Level must be greater than or equal to 0");
+    }
+}
