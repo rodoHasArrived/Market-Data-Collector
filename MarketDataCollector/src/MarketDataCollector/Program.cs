@@ -7,6 +7,7 @@ using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Application.Subscriptions;
 using MarketDataCollector.Application.Pipeline;
+using MarketDataCollector.Application.Config.Credentials;
 using MarketDataCollector.Application.Testing;
 using MarketDataCollector.Application.UI;
 using MarketDataCollector.Domain.Collectors;
@@ -116,6 +117,7 @@ internal static class Program
         if (args.Any(a => a.Equals("--serve-status", StringComparison.OrdinalIgnoreCase)))
             statusWriter.Start(TimeSpan.FromSeconds(1));
         StatusHttpServer? statusHttp = null;
+        ConfigWatcher? watcher = null;
 
         // Build storage options from config
         var storageOpt = cfg.Storage?.ToStorageOptions(cfg.DataRoot, cfg.Compress)
@@ -226,29 +228,54 @@ internal static class Program
         }
 
         // Market data client (provider selected by config)
+        var credentialResolver = new CredentialResolver(
+            new IAlpacaCredentialSource[]
+            {
+                new EnvironmentAlpacaCredentialSource(),
+                new FileAlpacaCredentialSource(),
+                new ConfigAlpacaCredentialSource()
+            },
+            LoggingSetup.ForContext<CredentialResolver>());
+
         await using IMarketDataClient dataClient = cfg.DataSource switch
         {
-            DataSourceKind.Alpaca => new AlpacaMarketDataClient(tradeCollector, quoteCollector, cfg.Alpaca ?? throw new InvalidOperationException("Alpaca options required when DataSource=Alpaca")),
+            DataSourceKind.Alpaca => new AlpacaMarketDataClient(tradeCollector, quoteCollector, credentialResolver.ResolveAlpaca(cfg)),
             DataSourceKind.Polygon => new PolygonMarketDataClient(publisher, tradeCollector, quoteCollector),
             _ => new IBMarketDataClient(publisher, tradeCollector, depthCollector)
         };
 
         await dataClient.ConnectAsync();
 
-        var symbols = cfg.Symbols?.Length > 0
-            ? cfg.Symbols
-            : new[] { new SymbolConfig("SPY", SubscribeTrades: true, SubscribeDepth: true, DepthLevels: 10) };
+        var subscriptionManager = new SubscriptionManager(
+            depthCollector,
+            tradeCollector,
+            dataClient,
+            LoggingSetup.ForContext<SubscriptionManager>());
 
-        foreach (var s in symbols)
+        var runtimeCfg = EnsureDefaultSymbols(cfg);
+        subscriptionManager.Apply(runtimeCfg);
+        var symbols = runtimeCfg.Symbols ?? Array.Empty<SymbolConfig>();
+
+        if (args.Any(a => a.Equals("--watch-config", StringComparison.OrdinalIgnoreCase)))
         {
-            if (s.SubscribeDepth)
+            watcher = new ConfigWatcher(cfgPath);
+            watcher.ConfigChanged += newCfg =>
             {
-                depthCollector.RegisterSubscription(s.Symbol);
-                dataClient.SubscribeMarketDepth(s);
-            }
-
-            if (s.SubscribeTrades)
-                dataClient.SubscribeTrades(s);
+                try
+                {
+                    var nextCfg = EnsureDefaultSymbols(newCfg);
+                    subscriptionManager.Apply(nextCfg);
+                    _ = statusWriter.WriteOnceAsync();
+                    log.Information("Applied hot-reloaded configuration: {Count} symbols", nextCfg.Symbols?.Length ?? 0);
+                }
+                catch (Exception ex)
+                {
+                    log.Error(ex, "Failed to apply hot-reloaded configuration");
+                }
+            };
+            watcher.Error += ex => log.Error(ex, "Configuration watcher error");
+            watcher.Start();
+            log.Information("Watching {ConfigPath} for subscription changes", cfgPath);
         }
 
         // --- Simulated feed smoke test (depth + trade) ---
@@ -304,6 +331,8 @@ internal static class Program
 
         if (statusHttp is not null)
             await statusHttp.DisposeAsync();
+
+        watcher?.Dispose();
     }
 
     private static void ShowHelp()
@@ -470,5 +499,13 @@ SUPPORT:
             if (evt.Type == MarketEventType.Integrity) Metrics.IncIntegrity();
             return ok;
         }
+    }
+
+    private static AppConfig EnsureDefaultSymbols(AppConfig cfg)
+    {
+        if (cfg.Symbols is { Length: > 0 }) return cfg;
+
+        var fallback = new[] { new SymbolConfig("SPY", SubscribeTrades: true, SubscribeDepth: true, DepthLevels: 10) };
+        return cfg with { Symbols = fallback };
     }
 }
