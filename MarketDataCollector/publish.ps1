@@ -7,7 +7,7 @@
 
 [CmdletBinding()]
 param(
-    [ValidateSet("all", "win-x64", "linux-x64", "osx-x64", "osx-arm64")]
+    [ValidateSet("all", "win-x64", "win-arm64", "linux-x64", "linux-arm64", "osx-x64", "osx-arm64")]
     [string]$Platform = "all",
 
     [ValidateSet("all", "collector", "ui")]
@@ -30,7 +30,7 @@ $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $ScriptDir
 
 # Configuration
-$AllPlatforms = @("win-x64", "linux-x64", "osx-x64", "osx-arm64")
+$AllPlatforms = @("win-x64", "win-arm64", "linux-x64", "linux-arm64", "osx-x64", "osx-arm64")
 $CollectorProject = "src/MarketDataCollector/MarketDataCollector.csproj"
 $UiProject = "src/MarketDataCollector.Ui/MarketDataCollector.Ui.csproj"
 
@@ -66,11 +66,13 @@ Usage: .\publish.ps1 [-Platform <platform>] [-Project <project>]
 
 Parameters:
   -Platform     Target platform (default: all)
-                  all        Build for all platforms
-                  win-x64    Windows x64
-                  linux-x64  Linux x64
-                  osx-x64    macOS x64 (Intel)
-                  osx-arm64  macOS ARM64 (Apple Silicon)
+                  all         Build for all platforms
+                  win-x64     Windows x64
+                  win-arm64   Windows ARM64
+                  linux-x64   Linux x64
+                  linux-arm64 Linux ARM64
+                  osx-x64     macOS x64 (Intel)
+                  osx-arm64   macOS ARM64 (Apple Silicon)
 
   -Project      Target project (default: all)
                   all        Build both projects
@@ -111,7 +113,8 @@ function Publish-Project {
         -p:PublishSingleFile=true `
         -p:PublishTrimmed=true `
         -p:EnableCompressionInSingleFile=true `
-        -p:IncludeNativeLibrariesForSelfExtract=true
+        -p:IncludeNativeLibrariesForSelfExtract=true `
+        -p:IncludeAllContentForSelfExtract=true
 
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to publish $ProjectName for $RuntimeId"
