@@ -2,15 +2,12 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 using MarketDataCollector.Application.Config;
+using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Domain.Collectors;
 using MarketDataCollector.Domain.Models;
+using Serilog;
 
 namespace MarketDataCollector.Infrastructure.Providers.Alpaca;
-
-// TODO: Implement connection retry with exponential backoff for production resilience
-// TODO: Add automatic reconnection when WebSocket connection is lost
-// TODO: Add heartbeat/keep-alive mechanism to detect stale connections
-// TODO: Consider moving API credentials to environment variables or secure vault instead of config file
 
 /// <summary>
 /// Alpaca Market Data client (WebSocket) that implements the IMarketDataClient abstraction.
@@ -25,6 +22,7 @@ namespace MarketDataCollector.Infrastructure.Providers.Alpaca;
 /// </summary>
 public sealed class AlpacaMarketDataClient : IMarketDataClient
 {
+    private readonly ILogger _log = LoggingSetup.ForContext<AlpacaMarketDataClient>();
     private readonly TradeDataCollector _tradeCollector;
     private readonly QuoteCollector _quoteCollector;
     private readonly AlpacaOptions _opt;
@@ -67,17 +65,33 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
         var host = _opt.UseSandbox ? "stream.data.sandbox.alpaca.markets" : "stream.data.alpaca.markets";
         var uri = new Uri($"wss://{host}/v2/{_opt.Feed}");
 
-        await _ws.ConnectAsync(uri, ct).ConfigureAwait(false);
+        _log.Information("Connecting to Alpaca WebSocket at {Uri} (Sandbox: {UseSandbox})", uri, _opt.UseSandbox);
+
+        try
+        {
+            await _ws.ConnectAsync(uri, ct).ConfigureAwait(false);
+            _log.Information("Successfully connected to Alpaca WebSocket");
+        }
+        catch (Exception ex)
+        {
+            _log.Error(ex, "Failed to connect to Alpaca WebSocket at {Uri}. " +
+                "Troubleshooting: 1) Check your internet connection. 2) Verify Alpaca service status at status.alpaca.markets. " +
+                "3) Ensure your API keys are valid and not expired.", uri);
+            throw;
+        }
 
         // Authenticate via message (must be within ~10 seconds of connection)
         var authMsg = JsonSerializer.Serialize(new { action = "auth", key = _opt.KeyId, secret = _opt.SecretKey });
         await SendTextAsync(authMsg, ct).ConfigureAwait(false);
+        _log.Debug("Authentication message sent to Alpaca");
 
         _recvLoop = Task.Run(() => ReceiveLoopAsync(_cts.Token), _cts.Token);
     }
 
     public async Task DisconnectAsync(CancellationToken ct = default)
     {
+        _log.Information("Disconnecting from Alpaca WebSocket");
+
         var ws = _ws;
         var cts = _cts;
 
@@ -97,7 +111,10 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
                 if (ws.State is WebSocketState.Open or WebSocketState.CloseReceived)
                     await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "shutdown", ct).ConfigureAwait(false);
             }
-            catch { }
+            catch (Exception ex)
+            {
+                _log.Warning(ex, "Error during WebSocket close, connection may have been lost");
+            }
             try { ws.Dispose(); } catch { }
         }
 
@@ -106,6 +123,8 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
             try { await _recvLoop.ConfigureAwait(false); } catch { }
         }
         _recvLoop = null;
+
+        _log.Information("Disconnected from Alpaca WebSocket");
     }
 
     public int SubscribeTrades(SymbolConfig cfg)
@@ -216,9 +235,8 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
         }
         catch (Exception ex)
         {
-            // TODO: Add proper logging - caller is fire-and-forget but errors should still be observable
-            // Consider publishing connection status events for monitoring
-            _ = ex; // Suppress unused variable warning until logging is added
+            _log.Error(ex, "Failed to send subscription update to Alpaca WebSocket. " +
+                "This may indicate a connection issue. Check network connectivity and Alpaca service status.");
         }
     }
 
@@ -267,10 +285,15 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
                     HandleMessage(doc.RootElement);
                 }
             }
+            catch (JsonException ex)
+            {
+                _log.Warning(ex, "Failed to parse Alpaca WebSocket message. Raw JSON: {RawJson}. " +
+                    "This may indicate a protocol change or malformed message.",
+                    json.Length > 500 ? json[..500] + "..." : json);
+            }
             catch (Exception ex)
             {
-                // TODO: Log JSON parse errors - silent failures can hide protocol issues
-                _ = ex; // Suppress unused variable warning until logging is added
+                _log.Error(ex, "Unexpected error processing Alpaca WebSocket message");
             }
         }
     }
