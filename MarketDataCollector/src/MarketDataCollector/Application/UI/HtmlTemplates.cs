@@ -741,6 +741,10 @@ public static class HtmlTemplates
           <tbody></tbody>
         </table>
       </div>
+      <p style=""margin-top: 12px; color: #4a5568; font-size: 13px;"">
+        Tweak trades/depth routing per symbol and save — when the collector runs with <code>--watch-config</code> it will
+        resubscribe live without restarting.
+      </p>
 
       <h3 style=""margin-top: 24px;"">➕ Add Symbol</h3>
       <div class=""form-row"">
@@ -907,6 +911,7 @@ public static class HtmlTemplates
 
   <script>
     let currentDataSource = 'IB';
+    let cachedSymbols = [];
     let backfillProviders = [];
 
     // Toast Notification System
@@ -994,6 +999,8 @@ public static class HtmlTemplates
         const r = await apiCall('/api/config');
         const cfg = await r.json();
 
+        cachedSymbols = cfg.symbols || [];
+
         currentDataSource = cfg.dataSource || 'IB';
         document.getElementById('dataSource').value = currentDataSource;
         updateProviderUI();
@@ -1035,7 +1042,7 @@ public static class HtmlTemplates
             <td>${{s.depthLevels || 10}}</td>
             <td>${{s.localSymbol || '-'}}</td>
             <td>${{s.exchange || '-'}}</td>
-            <td><button class=""btn-danger"" onclick=""deleteSymbol('${{s.symbol}}')"">🗑️ Delete</button></td>
+            <td><div style=""display:flex;gap:8px;flex-wrap:wrap;""><button class=""btn-secondary"" onclick=""editSymbol('${{s.symbol}}')"">✏️ Edit</button><button class=""btn-danger"" onclick=""deleteSymbol('${{s.symbol}}')"">🗑️ Delete</button></div></td>
           `;
           tbody.appendChild(tr);
         }}
@@ -1259,6 +1266,24 @@ public static class HtmlTemplates
         document.getElementById('backfillStatus').innerHTML = `<span style=""color: #f56565;"">${{error.message}}</span>`;
       }}
     }}
+
+    function editSymbol(symbol) {
+      const match = (cachedSymbols || []).find(s => (s.symbol || '').toLowerCase() === symbol.toLowerCase());
+      if (!match) {
+        showToast('error', 'Not Found', `Cannot find ${symbol} in current configuration`);
+        return;
+      }
+
+      document.getElementById('sym').value = match.symbol || '';
+      document.getElementById('trades').value = match.subscribeTrades ? 'true' : 'false';
+      document.getElementById('depth').value = match.subscribeDepth ? 'true' : 'false';
+      document.getElementById('levels').value = match.depthLevels || 10;
+      document.getElementById('localsym').value = match.localSymbol || '';
+      document.getElementById('exch').value = match.exchange || 'SMART';
+      document.getElementById('pexch').value = match.primaryExchange || '';
+
+      showToast('info', 'Editing symbol', `Loaded ${symbol} into the form. Update fields and click Add Symbol to save.`);
+    }
 
     async function addSymbol() {{
       try {{
