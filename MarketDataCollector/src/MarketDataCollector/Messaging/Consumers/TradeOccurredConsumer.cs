@@ -1,4 +1,5 @@
 using MassTransit;
+using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Messaging.Contracts;
 using Serilog;
@@ -6,8 +7,7 @@ using Serilog;
 namespace MarketDataCollector.Messaging.Consumers;
 
 /// <summary>
-/// Sample consumer for trade events.
-/// Extend this to implement custom trade processing logic.
+/// Consumer for trade events. Logs trades and updates metrics.
 /// </summary>
 public sealed class TradeOccurredConsumer : IConsumer<ITradeOccurred>
 {
@@ -15,7 +15,7 @@ public sealed class TradeOccurredConsumer : IConsumer<ITradeOccurred>
 
     public TradeOccurredConsumer()
     {
-        _log = Log.ForContext<TradeOccurredConsumer>();
+        _log = LoggingSetup.ForContext<TradeOccurredConsumer>();
     }
 
     public Task Consume(ConsumeContext<ITradeOccurred> context)
@@ -31,13 +31,6 @@ public sealed class TradeOccurredConsumer : IConsumer<ITradeOccurred>
             trade.Timestamp);
 
         Metrics.IncTrades();
-
-        // TODO: Add custom trade processing logic here
-        // Examples:
-        // - Update real-time price displays
-        // - Calculate running VWAP
-        // - Trigger trading signals
-        // - Forward to external systems
 
         return Task.CompletedTask;
     }

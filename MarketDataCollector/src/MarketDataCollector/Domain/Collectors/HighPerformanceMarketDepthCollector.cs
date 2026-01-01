@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Domain.Models;
@@ -17,13 +16,10 @@ namespace MarketDataCollector.Domain.Collectors;
 /// - Inlined hot-path methods for reduced function call overhead
 /// - Branch-prediction-friendly dispatch via delegate table
 /// </remarks>
-public sealed class HighPerformanceMarketDepthCollector
+public sealed class HighPerformanceMarketDepthCollector : SymbolSubscriptionTracker
 {
     private readonly IMarketEventPublisher _publisher;
-    private readonly bool _requireExplicitSubscription;
     private readonly LockFreeOrderBookCollection _books = new();
-
-    private readonly ConcurrentDictionary<string, bool> _subscriptions = new(StringComparer.OrdinalIgnoreCase);
 
     // Branch-prediction-friendly dispatch table for operations
     private static readonly Action<LockFreeOrderBook, MarketDepthUpdate, HighPerformanceMarketDepthCollector>[] OperationHandlers =
@@ -34,28 +30,12 @@ public sealed class HighPerformanceMarketDepthCollector
     };
 
     public HighPerformanceMarketDepthCollector(IMarketEventPublisher publisher, bool requireExplicitSubscription = true)
+        : base(requireExplicitSubscription)
     {
         _publisher = publisher ?? throw new ArgumentNullException(nameof(publisher));
-        _requireExplicitSubscription = requireExplicitSubscription;
     }
 
-    #region Subscription Management
-
-    public void RegisterSubscription(string symbol)
-    {
-        if (string.IsNullOrWhiteSpace(symbol)) throw new ArgumentException("Symbol required.", nameof(symbol));
-        _subscriptions[symbol.Trim()] = true;
-    }
-
-    public void UnregisterSubscription(string symbol)
-    {
-        if (string.IsNullOrWhiteSpace(symbol)) return;
-        _subscriptions.TryRemove(symbol.Trim(), out _);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool IsSubscribed(string symbol)
-        => !string.IsNullOrWhiteSpace(symbol) && _subscriptions.TryGetValue(symbol.Trim(), out var v) && v;
+    #region Stream Management
 
     public void ResetSymbolStream(string symbol)
     {
@@ -105,11 +85,8 @@ public sealed class HighPerformanceMarketDepthCollector
 
         var symbol = update.Symbol.Trim();
 
-        if (_requireExplicitSubscription && !IsSubscribed(symbol))
+        if (!ShouldProcessUpdate(symbol))
             return;
-
-        if (!_requireExplicitSubscription)
-            _subscriptions.TryAdd(symbol, true);
 
         var book = _books.GetOrCreate(symbol);
 

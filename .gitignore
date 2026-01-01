@@ -1,0 +1,82 @@
+# .NET build output
+bin/
+obj/
+out/
+
+# NuGet packages
+*.nupkg
+packages/
+!.nuget/packages
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio
+.vs/
+*.sln.DotSettings.user
+
+# JetBrains Rider
+.idea/
+*.sln.iml
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Bb]uild/
+bld/
+
+# Roslyn cache
+*.ide/
+
+# Test results
+[Tt]est[Rr]esult*/
+*.trx
+*.coverage
+*.coveragexml
+
+# NCrunch
+_NCrunch_*
+*.ncrunch*
+nCrunchTemp_*
+
+# Benchmark results (keep samples, ignore actual run results)
+BenchmarkDotNet.Artifacts/
+
+# Credentials and secrets
+appsettings.json
+appsettings.*.json
+!appsettings.sample.json
+credentials.json
+*.pfx
+*.key
+*.pem
+*.env
+.env.*
+
+# Data directories
+data/
+logs/
+_logs/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*~
+
+# Publish output
+publish/

@@ -1,3 +1,4 @@
+using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Domain.Events;
 using Serilog;
 
@@ -20,7 +21,7 @@ public sealed class CompositePublisher : IMarketEventPublisher
     public CompositePublisher(IReadOnlyList<IMarketEventPublisher> publishers)
     {
         _publishers = publishers ?? throw new ArgumentNullException(nameof(publishers));
-        _log = Log.ForContext<CompositePublisher>();
+        _log = LoggingSetup.ForContext<CompositePublisher>();
         _log.Debug("CompositePublisher initialized with {Count} downstream publishers", publishers.Count);
     }
 

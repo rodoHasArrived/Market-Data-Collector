@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
 using MarketDataCollector.Application.Config;
+using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Subscriptions.Models;
 using MarketDataCollector.Application.UI;
 using Serilog;
@@ -27,7 +28,7 @@ public sealed class SchedulingService : IAsyncDisposable
         _schedulesPath = schedulesPath ?? Path.Combine(
             Path.GetDirectoryName(configStore.ConfigPath) ?? ".",
             "schedules.json");
-        _log = log ?? Log.ForContext<SchedulingService>();
+        _log = log ?? LoggingSetup.ForContext<SchedulingService>();
 
         // Check every minute
         _timer = new Timer(CheckSchedules, null, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));

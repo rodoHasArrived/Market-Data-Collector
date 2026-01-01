@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
+using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Subscriptions.Models;
 using Serilog;
 
@@ -26,7 +27,7 @@ public sealed class MetadataEnrichmentService
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "MarketDataCollector",
             "metadata_cache.json");
-        _log = log ?? Log.ForContext<MetadataEnrichmentService>();
+        _log = log ?? LoggingSetup.ForContext<MetadataEnrichmentService>();
     }
 
     /// <summary>

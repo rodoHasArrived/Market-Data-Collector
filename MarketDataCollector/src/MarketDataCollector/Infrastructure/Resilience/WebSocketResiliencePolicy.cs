@@ -1,3 +1,4 @@
+using MarketDataCollector.Application.Logging;
 using Polly;
 using Polly.Retry;
 using Serilog;
@@ -26,7 +27,7 @@ public static class WebSocketResiliencePolicy
         TimeSpan? baseDelay = null,
         TimeSpan? maxDelay = null)
     {
-        var logger = Log.ForContext("SourceContext", "WebSocketResilience");
+        var logger = LoggingSetup.ForContext("WebSocketResilience");
         baseDelay ??= TimeSpan.FromSeconds(2);
         maxDelay ??= TimeSpan.FromSeconds(30);
 
@@ -65,7 +66,7 @@ public static class WebSocketResiliencePolicy
         TimeSpan? baseDelay = null,
         TimeSpan? maxDelay = null)
     {
-        var logger = Log.ForContext("SourceContext", "WebSocketResilience");
+        var logger = LoggingSetup.ForContext("WebSocketResilience");
         baseDelay ??= TimeSpan.FromSeconds(2);
         maxDelay ??= TimeSpan.FromSeconds(30);
 
@@ -104,7 +105,7 @@ public static class WebSocketResiliencePolicy
         int failureThreshold = 5,
         TimeSpan? breakDuration = null)
     {
-        var logger = Log.ForContext("SourceContext", "WebSocketCircuitBreaker");
+        var logger = LoggingSetup.ForContext("WebSocketCircuitBreaker");
         breakDuration ??= TimeSpan.FromSeconds(30);
 
         return new ResiliencePipelineBuilder()
@@ -146,7 +147,7 @@ public static class WebSocketResiliencePolicy
     /// </summary>
     public static ResiliencePipeline CreateTimeoutPipeline(TimeSpan? timeout = null)
     {
-        var logger = Log.ForContext("SourceContext", "WebSocketTimeout");
+        var logger = LoggingSetup.ForContext("WebSocketTimeout");
         timeout ??= TimeSpan.FromSeconds(30);
 
         return new ResiliencePipelineBuilder()
@@ -179,7 +180,7 @@ public static class WebSocketResiliencePolicy
         circuitBreakerDuration ??= TimeSpan.FromSeconds(30);
         operationTimeout ??= TimeSpan.FromSeconds(30);
 
-        var logger = Log.ForContext("SourceContext", "WebSocketResilience");
+        var logger = LoggingSetup.ForContext("WebSocketResilience");
 
         return new ResiliencePipelineBuilder()
             // Outermost: Timeout (applies to entire operation including retries)
@@ -245,7 +246,7 @@ public class WebSocketHeartbeat : IAsyncDisposable
         _ws = ws ?? throw new ArgumentNullException(nameof(ws));
         _pingInterval = pingInterval ?? TimeSpan.FromSeconds(30);
         _pongTimeout = pongTimeout ?? TimeSpan.FromSeconds(10);
-        _log = Log.ForContext<WebSocketHeartbeat>();
+        _log = LoggingSetup.ForContext<WebSocketHeartbeat>();
 
         _heartbeatTask = Task.Run(HeartbeatLoopAsync);
     }

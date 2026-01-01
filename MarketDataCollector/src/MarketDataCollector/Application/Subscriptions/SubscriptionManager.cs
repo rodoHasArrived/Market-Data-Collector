@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using MarketDataCollector.Application.Config;
+using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Domain.Collectors;
 using MarketDataCollector.Infrastructure;
 using Serilog;
@@ -38,7 +39,7 @@ public sealed class SubscriptionManager
         _depthCollector = depthCollector ?? throw new ArgumentNullException(nameof(depthCollector));
         _tradeCollector = tradeCollector ?? throw new ArgumentNullException(nameof(tradeCollector));
         _ib = ibClient ?? throw new ArgumentNullException(nameof(ibClient));
-        _log = log ?? Serilog.Log.ForContext<SubscriptionManager>();
+        _log = log ?? LoggingSetup.ForContext<SubscriptionManager>();
     }
 
     public IReadOnlyDictionary<string, int> DepthSubscriptions => _depthSubs;

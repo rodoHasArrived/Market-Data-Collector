@@ -1,20 +1,16 @@
 using System.Collections.Concurrent;
 using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Domain.Models;
-using System.Linq;
-using System.Collections.Generic;
 
 namespace MarketDataCollector.Domain.Collectors;
 
 /// <summary>
 /// Maintains per-symbol Level-2 order books from depth deltas and emits L2 snapshots + depth integrity events.
 /// </summary>
-public sealed class MarketDepthCollector
+public sealed class MarketDepthCollector : SymbolSubscriptionTracker
 {
     private readonly IMarketEventPublisher _publisher;
-    private readonly bool _requireExplicitSubscription;
 
-    private readonly ConcurrentDictionary<string, bool> _subscriptions = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<string, SymbolOrderBookBuffer> _books = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentQueue<DepthIntegrityEvent> _recentIntegrity = new();
     private readonly ConcurrentDictionary<string, IntegrityWindow> _integrityWindows = new(StringComparer.OrdinalIgnoreCase);
@@ -23,25 +19,10 @@ public sealed class MarketDepthCollector
     private static readonly TimeSpan AutoResetWindow = TimeSpan.FromSeconds(15);
 
     public MarketDepthCollector(IMarketEventPublisher publisher, bool requireExplicitSubscription = true)
+        : base(requireExplicitSubscription)
     {
         _publisher = publisher ?? throw new ArgumentNullException(nameof(publisher));
-        _requireExplicitSubscription = requireExplicitSubscription;
     }
-
-    public void RegisterSubscription(string symbol)
-    {
-        if (string.IsNullOrWhiteSpace(symbol)) throw new ArgumentException("Symbol required.", nameof(symbol));
-        _subscriptions[symbol.Trim()] = true;
-    }
-
-    public void UnregisterSubscription(string symbol)
-    {
-        if (string.IsNullOrWhiteSpace(symbol)) return;
-        _subscriptions.TryRemove(symbol.Trim(), out _);
-    }
-
-    public bool IsSubscribed(string symbol)
-        => !string.IsNullOrWhiteSpace(symbol) && _subscriptions.TryGetValue(symbol.Trim(), out var v) && v;
 
     public void ResetSymbolStream(string symbol)
     {
@@ -72,11 +53,8 @@ public sealed class MarketDepthCollector
 
         var symbol = update.Symbol.Trim();
 
-        if (_requireExplicitSubscription && !IsSubscribed(symbol))
+        if (!ShouldProcessUpdate(symbol))
             return;
-
-        if (!_requireExplicitSubscription)
-            _subscriptions.TryAdd(symbol, true);
 
         var book = _books.GetOrAdd(symbol, _ => new SymbolOrderBookBuffer());
 

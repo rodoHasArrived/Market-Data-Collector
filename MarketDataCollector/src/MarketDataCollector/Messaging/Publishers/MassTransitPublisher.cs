@@ -1,4 +1,5 @@
 using MassTransit;
+using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Domain.Models;
@@ -20,7 +21,7 @@ public sealed class MassTransitPublisher : IMarketEventPublisher
     public MassTransitPublisher(IPublishEndpoint publishEndpoint, bool enableMetrics = true)
     {
         _publishEndpoint = publishEndpoint ?? throw new ArgumentNullException(nameof(publishEndpoint));
-        _log = Log.ForContext<MassTransitPublisher>();
+        _log = LoggingSetup.ForContext<MassTransitPublisher>();
         _enableMetrics = enableMetrics;
     }
 
