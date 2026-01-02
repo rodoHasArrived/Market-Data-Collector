@@ -1,3 +1,4 @@
+using MarketDataCollector.Application.Subscriptions.Models;
 using Prometheus;
 
 namespace MarketDataCollector.Application.Monitoring;
@@ -108,6 +109,55 @@ public static class PrometheusMetrics
         "mdc_heap_size_megabytes",
         "Current GC heap size in megabytes");
 
+    // Resubscription / Reconnection metrics
+    private static readonly Counter ResubscribeAttempts = Prometheus.Metrics.CreateCounter(
+        "mdc_resubscribe_attempts_total",
+        "Total number of auto-resubscription attempts triggered by integrity events");
+
+    private static readonly Counter ResubscribeSuccesses = Prometheus.Metrics.CreateCounter(
+        "mdc_resubscribe_successes_total",
+        "Total number of successful auto-resubscription attempts");
+
+    private static readonly Counter ResubscribeFailures = Prometheus.Metrics.CreateCounter(
+        "mdc_resubscribe_failures_total",
+        "Total number of failed auto-resubscription attempts");
+
+    private static readonly Counter RateLimitedSkips = Prometheus.Metrics.CreateCounter(
+        "mdc_resubscribe_rate_limited_total",
+        "Total number of resubscription attempts skipped due to rate limiting or circuit breaker");
+
+    private static readonly Counter CircuitBreakerOpens = Prometheus.Metrics.CreateCounter(
+        "mdc_circuit_breaker_opens_total",
+        "Total number of times the circuit breaker has opened");
+
+    private static readonly Counter CircuitBreakerCloses = Prometheus.Metrics.CreateCounter(
+        "mdc_circuit_breaker_closes_total",
+        "Total number of times the circuit breaker has closed");
+
+    private static readonly Counter CircuitBreakerHalfOpens = Prometheus.Metrics.CreateCounter(
+        "mdc_circuit_breaker_half_opens_total",
+        "Total number of times the circuit breaker has transitioned to half-open");
+
+    private static readonly Gauge CircuitBreakerState = Prometheus.Metrics.CreateGauge(
+        "mdc_circuit_breaker_state",
+        "Current circuit breaker state (0=Closed, 1=Open, 2=HalfOpen)");
+
+    private static readonly Gauge SymbolsInCooldown = Prometheus.Metrics.CreateGauge(
+        "mdc_symbols_in_cooldown",
+        "Number of symbols currently in resubscription cooldown");
+
+    private static readonly Gauge SymbolsCircuitOpen = Prometheus.Metrics.CreateGauge(
+        "mdc_symbols_circuit_open",
+        "Number of symbols with open per-symbol circuit breakers");
+
+    private static readonly Gauge ResubscribeSuccessRate = Prometheus.Metrics.CreateGauge(
+        "mdc_resubscribe_success_rate_percent",
+        "Resubscription success rate as a percentage (0-100)");
+
+    private static readonly Gauge AverageResubscribeTimeMs = Prometheus.Metrics.CreateGauge(
+        "mdc_resubscribe_avg_time_milliseconds",
+        "Average time taken for successful resubscriptions in milliseconds");
+
     // Symbol-level metrics (with labels)
     private static readonly Counter TradesBySymbol = Prometheus.Metrics.CreateCounter(
         "mdc_trades_by_symbol_total",
@@ -140,7 +190,9 @@ public static class PrometheusMetrics
     /// </summary>
     public static void UpdateFromSnapshot()
     {
-        var snapshot = Metrics.GetSnapshot();
+        var combined = Metrics.GetCombinedSnapshot();
+        var snapshot = combined.Core;
+        var resubSnapshot = combined.Resubscription;
 
         // Update counters (Prometheus counters only increase, so we set to current value)
         PublishedEvents.IncTo(snapshot.Published);
@@ -171,6 +223,20 @@ public static class PrometheusMetrics
         // Update memory gauges
         MemoryUsageMb.Set(snapshot.MemoryUsageMb);
         HeapSizeMb.Set(snapshot.HeapSizeMb);
+
+        // Update resubscription / reconnection metrics
+        ResubscribeAttempts.IncTo(resubSnapshot.ResubscribeAttempts);
+        ResubscribeSuccesses.IncTo(resubSnapshot.ResubscribeSuccesses);
+        ResubscribeFailures.IncTo(resubSnapshot.ResubscribeFailures);
+        RateLimitedSkips.IncTo(resubSnapshot.RateLimitedSkips);
+        CircuitBreakerOpens.IncTo(resubSnapshot.CircuitBreakerOpens);
+        CircuitBreakerCloses.IncTo(resubSnapshot.CircuitBreakerCloses);
+        CircuitBreakerHalfOpens.IncTo(resubSnapshot.CircuitBreakerHalfOpens);
+        CircuitBreakerState.Set((int)resubSnapshot.CurrentCircuitState);
+        SymbolsInCooldown.Set(resubSnapshot.SymbolsInCooldown);
+        SymbolsCircuitOpen.Set(resubSnapshot.SymbolsCircuitOpen);
+        ResubscribeSuccessRate.Set(resubSnapshot.SuccessRate);
+        AverageResubscribeTimeMs.Set(resubSnapshot.AverageResubscribeTimeMs);
     }
 
     /// <summary>
