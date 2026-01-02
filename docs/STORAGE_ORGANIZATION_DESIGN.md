@@ -18,7 +18,8 @@ This document outlines storage organization improvements for the Market Data Col
 10. [Data Robustness & Quality Scoring](#data-robustness--quality-scoring)
 11. [Search & Discovery Infrastructure](#search--discovery-infrastructure)
 12. [Actionable Metadata & Insights](#actionable-metadata--insights)
-13. [Implementation Roadmap](#implementation-roadmap)
+13. [Operational Scheduling & Off-Hours Maintenance](#operational-scheduling--off-hours-maintenance)
+14. [Implementation Roadmap](#implementation-roadmap)
 
 ---
 
@@ -45,6 +46,7 @@ The system currently supports:
 | **Data Robustness** | Basic validation | Quality scoring, best-of-breed selection |
 | **Search** | File system only | Multi-level indexes, faceted search |
 | **Metadata** | Minimal | Rich metadata, insights, lineage tracking |
+| **Scheduling** | Manual timing | Trading-hours-aware off-hours automation |
 
 ---
 
@@ -1867,6 +1869,535 @@ enum ActionType
 
 ---
 
+## Operational Scheduling & Off-Hours Maintenance
+
+### 1. Trading Hours Awareness
+
+**Define operational windows based on market schedules:**
+
+```csharp
+record OperationalSchedule(
+    string Name,
+    TradingSession[] TradingSessions,
+    MaintenanceWindow[] MaintenanceWindows,
+    TimeZoneInfo PrimaryTimeZone,
+    string[] Holidays                    // ISO dates or calendar reference
+);
+
+record TradingSession(
+    string Name,                         // "US_Equities", "Crypto_24x7", "Futures"
+    DayOfWeek[] ActiveDays,
+    TimeOnly PreMarketStart,             // 04:00 ET
+    TimeOnly RegularStart,               // 09:30 ET
+    TimeOnly RegularEnd,                 // 16:00 ET
+    TimeOnly AfterHoursEnd,              // 20:00 ET
+    TimeZoneInfo TimeZone,
+    bool IncludesPreMarket,
+    bool IncludesAfterHours
+);
+
+record MaintenanceWindow(
+    string Name,
+    TimeOnly Start,
+    TimeOnly End,
+    DayOfWeek[] Days,
+    MaintenanceType[] AllowedOperations,
+    int MaxConcurrentJobs,
+    ResourceLimits Limits
+);
+
+enum MaintenanceType
+{
+    HealthCheck,
+    IntegrityValidation,
+    Backfill,
+    Compaction,
+    TierMigration,
+    IndexRebuild,
+    Archival,
+    Backup,
+    Reconciliation,
+    QualityScoring
+}
+```
+
+### 2. Maintenance Window Configuration
+
+```json
+{
+  "OperationalSchedule": {
+    "name": "US_Equities_Schedule",
+    "timezone": "America/New_York",
+    "trading_sessions": [
+      {
+        "name": "US_Equities",
+        "active_days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+        "pre_market_start": "04:00",
+        "regular_start": "09:30",
+        "regular_end": "16:00",
+        "after_hours_end": "20:00",
+        "includes_pre_market": true,
+        "includes_after_hours": true
+      }
+    ],
+    "real_time_collection": {
+      "active_window": {
+        "start": "03:30",
+        "end": "20:30",
+        "days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+      },
+      "buffer_minutes": 30
+    },
+    "maintenance_windows": [
+      {
+        "name": "overnight_maintenance",
+        "start": "21:00",
+        "end": "03:00",
+        "days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+        "allowed_operations": ["*"],
+        "max_concurrent_jobs": 8,
+        "resource_limits": {
+          "max_cpu_pct": 80,
+          "max_memory_pct": 70,
+          "max_disk_io_mbps": 500
+        }
+      },
+      {
+        "name": "weekend_maintenance",
+        "start": "00:00",
+        "end": "23:59",
+        "days": ["Saturday", "Sunday"],
+        "allowed_operations": ["*"],
+        "max_concurrent_jobs": 16,
+        "resource_limits": {
+          "max_cpu_pct": 100,
+          "max_memory_pct": 90,
+          "max_disk_io_mbps": 1000
+        }
+      },
+      {
+        "name": "intraday_light",
+        "start": "12:00",
+        "end": "13:00",
+        "days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+        "allowed_operations": ["HealthCheck", "QualityScoring"],
+        "max_concurrent_jobs": 2,
+        "resource_limits": {
+          "max_cpu_pct": 20,
+          "max_memory_pct": 10,
+          "max_disk_io_mbps": 50
+        }
+      }
+    ],
+    "holidays": [
+      "2024-01-01",
+      "2024-01-15",
+      "2024-02-19",
+      "2024-03-29",
+      "2024-05-27",
+      "2024-06-19",
+      "2024-07-04",
+      "2024-09-02",
+      "2024-11-28",
+      "2024-12-25"
+    ],
+    "holiday_calendar": "NYSE"
+  }
+}
+```
+
+### 3. Scheduler Service
+
+```csharp
+interface IMaintenanceScheduler
+{
+    // Check if operation can run now
+    Task<ScheduleDecision> CanRunNowAsync(
+        MaintenanceType operation,
+        ResourceRequirements requirements,
+        CancellationToken ct
+    );
+
+    // Find next available window for operation
+    Task<ScheduleSlot?> FindNextWindowAsync(
+        MaintenanceType operation,
+        TimeSpan estimatedDuration,
+        ResourceRequirements requirements,
+        CancellationToken ct
+    );
+
+    // Schedule operation for next available window
+    Task<ScheduledJob> ScheduleAsync(
+        MaintenanceJob job,
+        ScheduleOptions options,
+        CancellationToken ct
+    );
+
+    // Get current operational state
+    Task<OperationalState> GetStateAsync(CancellationToken ct);
+}
+
+record ScheduleDecision(
+    bool Allowed,
+    string Reason,
+    MaintenanceWindow? CurrentWindow,
+    TimeSpan? WaitTime,
+    ResourceLimits? ApplicableLimits
+);
+
+record ScheduleSlot(
+    DateTimeOffset Start,
+    DateTimeOffset End,
+    MaintenanceWindow Window,
+    ResourceLimits Limits,
+    int AvailableConcurrencySlots
+);
+
+record OperationalState(
+    bool IsRealTimeCollectionActive,
+    TradingSession? CurrentSession,
+    MaintenanceWindow? CurrentMaintenanceWindow,
+    int RunningMaintenanceJobs,
+    ScheduledJob[] PendingJobs,
+    DateTimeOffset NextMaintenanceWindowStart
+);
+```
+
+### 4. Job Priority & Queuing
+
+```csharp
+enum JobPriority
+{
+    Critical,        // Run ASAP, even during light maintenance windows
+    High,            // Schedule for next overnight window
+    Normal,          // Schedule for next available window
+    Low,             // Weekend only, background tasks
+    Deferred         // Run only when system is idle
+}
+
+record MaintenanceJob(
+    string Id,
+    MaintenanceType Type,
+    JobPriority Priority,
+    string Description,
+    ResourceRequirements Requirements,
+    TimeSpan EstimatedDuration,
+    string[] TargetPaths,
+    Dictionary<string, object> Parameters,
+    bool Interruptible,              // Can pause if trading resumes
+    int MaxRetries,
+    Action<JobProgress>? OnProgress
+);
+
+record ResourceRequirements(
+    int CpuCores,
+    long MemoryBytes,
+    long DiskIoMbps,
+    long NetworkIoMbps,
+    bool RequiresExclusiveLock,      // No other jobs on same paths
+    string[]? ExclusivePaths
+);
+```
+
+### 5. Task Scheduling Matrix
+
+| Operation | Priority | Typical Duration | Preferred Window | Interruptible |
+|-----------|----------|------------------|------------------|---------------|
+| Health Check | Normal | 5-30 min | Overnight/Intraday | Yes |
+| Integrity Validation | Normal | 1-4 hours | Overnight | Yes |
+| Historical Backfill | High | 2-8 hours | Weekend | Yes |
+| File Compaction | Normal | 30-120 min | Overnight | Yes |
+| Tier Migration | Normal | 1-6 hours | Weekend | Yes |
+| Index Rebuild | High | 30-90 min | Overnight | No |
+| Parquet Conversion | Normal | 2-6 hours | Weekend | Yes |
+| Cross-Source Reconciliation | Normal | 1-3 hours | Weekend | Yes |
+| Quality Scoring | Low | 15-60 min | Overnight/Intraday | Yes |
+| Backup | Critical | 30-120 min | Overnight | No |
+| Archival | Low | 1-4 hours | Weekend | Yes |
+| Capacity Cleanup | Normal | 15-60 min | Overnight | Yes |
+
+### 6. Real-Time Collection Coordination
+
+```csharp
+interface ICollectionCoordinator
+{
+    // Check if real-time collection is active
+    Task<bool> IsCollectionActiveAsync(CancellationToken ct);
+
+    // Get estimated time until collection stops
+    Task<TimeSpan?> GetTimeUntilCollectionEndsAsync(CancellationToken ct);
+
+    // Request graceful pause for maintenance (with timeout)
+    Task<PauseResult> RequestPauseAsync(
+        TimeSpan duration,
+        string reason,
+        CancellationToken ct
+    );
+
+    // Resume collection after maintenance
+    Task ResumeAsync(CancellationToken ct);
+
+    // Subscribe to collection state changes
+    IAsyncEnumerable<CollectionState> WatchStateAsync(CancellationToken ct);
+}
+
+record CollectionState(
+    bool IsActive,
+    DateTimeOffset? StartedAt,
+    DateTimeOffset? ExpectedEnd,
+    string[] ActiveSymbols,
+    long EventsCollectedToday,
+    bool IsPausedForMaintenance,
+    string? PauseReason
+);
+
+record PauseResult(
+    bool Success,
+    string? FailureReason,
+    DateTimeOffset? ResumeAt,
+    int EventsBuffered              // Events queued during pause
+);
+```
+
+### 7. Scheduled Task Configuration
+
+```json
+{
+  "ScheduledMaintenance": {
+    "tasks": [
+      {
+        "name": "nightly_health_check",
+        "type": "HealthCheck",
+        "schedule": "0 21 * * 1-5",
+        "priority": "Normal",
+        "window_required": "overnight_maintenance",
+        "config": {
+          "validate_checksums": true,
+          "check_sequences": true,
+          "parallel_checks": 4
+        },
+        "enabled": true
+      },
+      {
+        "name": "nightly_quality_scoring",
+        "type": "QualityScoring",
+        "schedule": "0 22 * * 1-5",
+        "priority": "Normal",
+        "window_required": "overnight_maintenance",
+        "config": {
+          "score_all_symbols": true,
+          "generate_report": true
+        },
+        "enabled": true
+      },
+      {
+        "name": "weekly_backfill",
+        "type": "Backfill",
+        "schedule": "0 2 * * 6",
+        "priority": "High",
+        "window_required": "weekend_maintenance",
+        "config": {
+          "lookback_days": 7,
+          "fill_gaps_only": true,
+          "sources": ["stooq", "yahoo"]
+        },
+        "enabled": true
+      },
+      {
+        "name": "weekly_compaction",
+        "type": "Compaction",
+        "schedule": "0 4 * * 0",
+        "priority": "Normal",
+        "window_required": "weekend_maintenance",
+        "config": {
+          "min_file_size_bytes": 1048576,
+          "target_tier": "warm",
+          "compress": true
+        },
+        "enabled": true
+      },
+      {
+        "name": "weekly_tier_migration",
+        "type": "TierMigration",
+        "schedule": "0 6 * * 0",
+        "priority": "Normal",
+        "window_required": "weekend_maintenance",
+        "config": {
+          "migrate_hot_to_warm_after_days": 7,
+          "migrate_warm_to_cold_after_days": 90,
+          "convert_to_parquet": true
+        },
+        "enabled": true
+      },
+      {
+        "name": "monthly_reconciliation",
+        "type": "Reconciliation",
+        "schedule": "0 8 1 * *",
+        "priority": "Normal",
+        "window_required": "weekend_maintenance",
+        "config": {
+          "compare_sources": ["alpaca", "ib"],
+          "generate_discrepancy_report": true
+        },
+        "enabled": true
+      },
+      {
+        "name": "monthly_archival",
+        "type": "Archival",
+        "schedule": "0 10 1 * *",
+        "priority": "Low",
+        "window_required": "weekend_maintenance",
+        "config": {
+          "archive_older_than_days": 365,
+          "min_quality_score": 0.95,
+          "target": "glacier"
+        },
+        "enabled": true
+      }
+    ],
+    "conflict_resolution": {
+      "strategy": "priority_then_fifo",
+      "max_queue_size": 100,
+      "max_wait_hours": 168
+    },
+    "notifications": {
+      "on_job_start": false,
+      "on_job_complete": true,
+      "on_job_failure": true,
+      "on_window_missed": true,
+      "channels": ["slack", "email"]
+    }
+  }
+}
+```
+
+### 8. Adaptive Scheduling
+
+```csharp
+interface IAdaptiveScheduler
+{
+    // Analyze historical job performance
+    Task<JobAnalytics> AnalyzeJobHistoryAsync(
+        MaintenanceType type,
+        TimeSpan window,
+        CancellationToken ct
+    );
+
+    // Predict duration based on data volume
+    Task<TimeSpan> PredictDurationAsync(
+        MaintenanceJob job,
+        CancellationToken ct
+    );
+
+    // Optimize schedule based on patterns
+    Task<OptimizedSchedule> OptimizeScheduleAsync(
+        ScheduledJob[] jobs,
+        CancellationToken ct
+    );
+}
+
+record JobAnalytics(
+    MaintenanceType Type,
+    int ExecutionCount,
+    TimeSpan AverageDuration,
+    TimeSpan MinDuration,
+    TimeSpan MaxDuration,
+    double SuccessRate,
+    Dictionary<DayOfWeek, TimeSpan> DurationByDay,
+    double[] DurationTrend               // Is it getting slower/faster?
+);
+
+record OptimizedSchedule(
+    ScheduleSlot[] RecommendedSlots,
+    string[] Optimizations,              // "Moved X to earlier slot", etc.
+    double EstimatedEfficiencyGain,
+    ConflictResolution[] ResolvedConflicts
+);
+```
+
+### 9. Monitoring & Alerting
+
+```json
+{
+  "ScheduleMonitoring": {
+    "alerts": [
+      {
+        "name": "maintenance_window_missed",
+        "condition": "job.wait_time > 24h",
+        "severity": "warning",
+        "action": "notify"
+      },
+      {
+        "name": "job_running_into_trading",
+        "condition": "job.end_time > trading_start - 30m",
+        "severity": "critical",
+        "action": "interrupt_and_notify"
+      },
+      {
+        "name": "backfill_incomplete",
+        "condition": "backfill.gaps_remaining > 0 AND no_window_available_48h",
+        "severity": "warning",
+        "action": "escalate"
+      },
+      {
+        "name": "resource_contention",
+        "condition": "queued_jobs > 10 AND avg_wait > 4h",
+        "severity": "info",
+        "action": "recommend_window_expansion"
+      }
+    ],
+    "dashboard": {
+      "widgets": [
+        {"type": "calendar", "view": "maintenance_schedule"},
+        {"type": "timeline", "view": "job_execution_history"},
+        {"type": "queue", "view": "pending_jobs"},
+        {"type": "gauge", "metric": "window_utilization_pct"}
+      ]
+    }
+  }
+}
+```
+
+### 10. Emergency Override
+
+```csharp
+record EmergencyOverride(
+    bool Enabled,
+    string Reason,
+    MaintenanceType[] AllowedOperations,
+    TimeSpan MaxDuration,
+    string AuthorizedBy,
+    DateTimeOffset ExpiresAt,
+    bool PauseRealTimeCollection,
+    NotificationSettings Notifications
+);
+
+interface IEmergencyScheduler
+{
+    // Force run maintenance during trading hours (requires approval)
+    Task<EmergencyResult> ForceRunAsync(
+        MaintenanceJob job,
+        EmergencyOverride @override,
+        CancellationToken ct
+    );
+
+    // Extend current maintenance window
+    Task<ExtensionResult> ExtendWindowAsync(
+        TimeSpan additionalTime,
+        string reason,
+        CancellationToken ct
+    );
+}
+```
+
+**Emergency scenarios:**
+- Critical data corruption requiring immediate repair
+- Storage capacity emergency (quota exceeded)
+- Compliance deadline requiring urgent archival
+- Security incident requiring data validation
+
+---
+
 ## Implementation Roadmap
 
 ### Phase 1: Foundation & Core Infrastructure
@@ -1918,13 +2449,21 @@ enum ActionType
 - [ ] Implement metadata-driven automation rules
 - [ ] Build actionable dashboards
 
-### Phase 8: Self-Healing & Advanced Features
+### Phase 8: Operational Scheduling
+- [ ] Implement trading hours awareness service
+- [ ] Build maintenance window configuration
+- [ ] Create maintenance scheduler with job queuing
+- [ ] Implement real-time collection coordinator
+- [ ] Add job priority and resource management
+- [ ] Build adaptive scheduling with duration prediction
+
+### Phase 9: Self-Healing & Advanced Features
 - [ ] Implement self-healing repair capabilities
 - [ ] Add orphan detection and cleanup
 - [ ] Build cross-source reconciliation
 - [ ] Create capacity forecasting
 - [ ] Add adaptive partitioning
-- [ ] Implement trading calendar integration
+- [ ] Implement emergency override system
 
 ---
 
@@ -2017,6 +2556,7 @@ This design provides a comprehensive framework for storage organization that:
 8. **Guarantees** data robustness through quality scoring and best-of-breed selection
 9. **Discovers** data efficiently with multi-level indexes and faceted search
 10. **Provides** actionable insights through rich metadata and automated recommendations
+11. **Schedules** maintenance intelligently during off-hours to avoid impacting real-time collection
 
 ### Key Capabilities Matrix
 
@@ -2029,5 +2569,6 @@ This design provides a comprehensive framework for storage organization that:
 | **Metadata & Lineage** | Full lifecycle tracking | Audit trail, reproducibility |
 | **Automated Insights** | Proactive recommendations | Prevent issues before they occur |
 | **Usage Analytics** | Access pattern tracking | Optimize for actual workloads |
+| **Off-Hours Scheduling** | Trading-hours-aware maintenance | Zero impact on live data collection |
 
-The modular design allows incremental adoption—start with basic naming conventions and progressively add policies, tiering, quality management, and advanced search as needs grow.
+The modular design allows incremental adoption—start with basic naming conventions and progressively add policies, tiering, quality management, scheduling, and advanced search as needs grow.
