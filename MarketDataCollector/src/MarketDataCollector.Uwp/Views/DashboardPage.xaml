@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="MarketDataCollector.Uwp.Views.DashboardPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:MarketDataCollector.Uwp.Views"
+    xmlns:converters="using:MarketDataCollector.Uwp.Converters"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <Page.Resources>
+        <converters:BoolToConnectionStatusConverter x:Key="BoolToConnectionStatus" />
+    </Page.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="24">
+        <StackPanel Spacing="24">
+            <!-- Header -->
+            <StackPanel Orientation="Horizontal" Spacing="12">
+                <FontIcon Glyph="&#xE80F;" FontSize="28" Foreground="{ThemeResource SystemAccentColor}" />
+                <TextBlock Text="Dashboard" Style="{StaticResource TitleTextBlockStyle}" VerticalAlignment="Center" />
+            </StackPanel>
+
+            <!-- Status Cards -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Published -->
+                <Border Grid.Column="0" Style="{StaticResource CardStyle}" Margin="0,0,8,0">
+                    <StackPanel HorizontalAlignment="Center" Spacing="8">
+                        <TextBlock Text="{x:Bind ViewModel.PublishedCount, Mode=OneWay}"
+                                   Style="{StaticResource HeaderTextBlockStyle}"
+                                   Foreground="{ThemeResource SystemAccentColor}"
+                                   HorizontalAlignment="Center" />
+                        <TextBlock Text="Published Events" HorizontalAlignment="Center"
+                                   Style="{StaticResource CaptionTextBlockStyle}" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Dropped -->
+                <Border Grid.Column="1" Style="{StaticResource CardStyle}" Margin="8,0">
+                    <StackPanel HorizontalAlignment="Center" Spacing="8">
+                        <TextBlock Text="{x:Bind ViewModel.DroppedCount, Mode=OneWay}"
+                                   Style="{StaticResource HeaderTextBlockStyle}"
+                                   Foreground="#F56565"
+                                   HorizontalAlignment="Center" />
+                        <TextBlock Text="Dropped Events" HorizontalAlignment="Center"
+                                   Style="{StaticResource CaptionTextBlockStyle}" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Integrity -->
+                <Border Grid.Column="2" Style="{StaticResource CardStyle}" Margin="8,0">
+                    <StackPanel HorizontalAlignment="Center" Spacing="8">
+                        <TextBlock Text="{x:Bind ViewModel.IntegrityCount, Mode=OneWay}"
+                                   Style="{StaticResource HeaderTextBlockStyle}"
+                                   Foreground="#ED8936"
+                                   HorizontalAlignment="Center" />
+                        <TextBlock Text="Integrity Events" HorizontalAlignment="Center"
+                                   Style="{StaticResource CaptionTextBlockStyle}" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Historical Bars -->
+                <Border Grid.Column="3" Style="{StaticResource CardStyle}" Margin="8,0,0,0">
+                    <StackPanel HorizontalAlignment="Center" Spacing="8">
+                        <TextBlock Text="{x:Bind ViewModel.HistoricalBarsCount, Mode=OneWay}"
+                                   Style="{StaticResource HeaderTextBlockStyle}"
+                                   Foreground="#48BB78"
+                                   HorizontalAlignment="Center" />
+                        <TextBlock Text="Historical Bars" HorizontalAlignment="Center"
+                                   Style="{StaticResource CaptionTextBlockStyle}" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- Connection Status -->
+            <Border Style="{StaticResource CardStyle}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12">
+                        <Ellipse Width="16" Height="16"
+                                 Fill="{x:Bind ViewModel.IsConnected, Mode=OneWay, Converter={StaticResource BoolToConnectionStatus}}" />
+                        <StackPanel>
+                            <TextBlock Text="{x:Bind ViewModel.ConnectionStatusText, Mode=OneWay}"
+                                       Style="{StaticResource SubtitleTextBlockStyle}" />
+                            <TextBlock Text="{x:Bind ViewModel.LastUpdateText, Mode=OneWay}"
+                                       Style="{StaticResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource SystemBaseMediumColor}" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
+                        <Button Content="Refresh" Command="{x:Bind ViewModel.RefreshStatusCommand}" />
+                        <ProgressRing IsActive="{x:Bind ViewModel.IsLoading, Mode=OneWay}"
+                                      Width="20" Height="20" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Active Provider -->
+            <Border Style="{StaticResource CardStyle}">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="Active Data Provider" Style="{StaticResource SubtitleTextBlockStyle}" />
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <Border Background="{ThemeResource SystemAccentColorLight2}" CornerRadius="4" Padding="12,6">
+                            <TextBlock Text="{x:Bind ViewModel.SelectedDataSource, Mode=OneWay}"
+                                       FontWeight="SemiBold" />
+                        </Border>
+                        <TextBlock Text="{x:Bind ViewModel.ProviderDescription, Mode=OneWay}"
+                                   VerticalAlignment="Center"
+                                   Foreground="{ThemeResource SystemBaseMediumColor}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Subscribed Symbols Summary -->
+            <Border Style="{StaticResource CardStyle}">
+                <StackPanel Spacing="12">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="Subscribed Symbols" Style="{StaticResource SubtitleTextBlockStyle}" />
+                        <Border Background="{ThemeResource SystemFillColorNeutralBackgroundBrush}"
+                                CornerRadius="12" Padding="8,4">
+                            <TextBlock Text="{x:Bind ViewModel.SymbolCount, Mode=OneWay}"
+                                       Style="{StaticResource CaptionTextBlockStyle}" />
+                        </Border>
+                    </StackPanel>
+
+                    <ListView ItemsSource="{x:Bind ViewModel.Symbols, Mode=OneWay}"
+                              SelectionMode="None"
+                              MaxHeight="200">
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Padding="8,4" ColumnSpacing="24">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="80" />
+                                        <ColumnDefinition Width="60" />
+                                        <ColumnDefinition Width="60" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Grid.Column="0" Text="{Binding Symbol}" FontWeight="SemiBold" />
+                                    <TextBlock Grid.Column="1" Text="{Binding TradesText}"
+                                               Foreground="{ThemeResource SystemBaseMediumColor}" />
+                                    <TextBlock Grid.Column="2" Text="{Binding DepthText}"
+                                               Foreground="{ThemeResource SystemBaseMediumColor}" />
+                                    <TextBlock Grid.Column="3" Text="{Binding Exchange}"
+                                               Foreground="{ThemeResource SystemBaseMediumLowColor}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Card Style - Used for content containers -->
+    <Style x:Key="CardStyle" TargetType="Border">
+        <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Padding" Value="20" />
+    </Style>
+
+    <!-- Accent Button Style -->
+    <Style x:Key="AccentButtonStyle" TargetType="Button" BasedOn="{StaticResource AccentButtonStyle}">
+        <Setter Property="Padding" Value="16,8" />
+    </Style>
+
+    <!-- Status Indicator Styles -->
+    <Style x:Key="StatusConnectedStyle" TargetType="Ellipse">
+        <Setter Property="Width" Value="12" />
+        <Setter Property="Height" Value="12" />
+        <Setter Property="Fill" Value="#48BB78" />
+    </Style>
+
+    <Style x:Key="StatusDisconnectedStyle" TargetType="Ellipse">
+        <Setter Property="Width" Value="12" />
+        <Setter Property="Height" Value="12" />
+        <Setter Property="Fill" Value="#F56565" />
+    </Style>
+
+    <!-- Metric Card Style -->
+    <Style x:Key="MetricCardStyle" TargetType="Border">
+        <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorSecondaryBrush}" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Padding" Value="16" />
+    </Style>
+
+    <!-- Tag Styles -->
+    <Style x:Key="TagStyle" TargetType="Border">
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="Padding" Value="8,4" />
+    </Style>
+
+    <Style x:Key="TagIBStyle" TargetType="Border" BasedOn="{StaticResource TagStyle}">
+        <Setter Property="Background" Value="#BEE3F8" />
+    </Style>
+
+    <Style x:Key="TagAlpacaStyle" TargetType="Border" BasedOn="{StaticResource TagStyle}">
+        <Setter Property="Background" Value="#FEEBC8" />
+    </Style>
+
+    <!-- Form Field Styles -->
+    <Style x:Key="FormTextBoxStyle" TargetType="TextBox">
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+    </Style>
+
+    <Style x:Key="FormComboBoxStyle" TargetType="ComboBox">
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+    </Style>
+
+    <!-- Code/Mono Text Style -->
+    <Style x:Key="MonoTextStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="Consolas, Courier New, monospace" />
+        <Setter Property="IsTextSelectionEnabled" Value="True" />
+    </Style>
+
+    <!-- Section Header Style -->
+    <Style x:Key="SectionHeaderStyle" TargetType="TextBlock" BasedOn="{StaticResource SubtitleTextBlockStyle}">
+        <Setter Property="Margin" Value="0,0,0,12" />
+    </Style>
+
+    <!-- InfoBadge-like Style for counts -->
+    <Style x:Key="CountBadgeStyle" TargetType="Border">
+        <Setter Property="Background" Value="{ThemeResource SystemFillColorNeutralBackgroundBrush}" />
+        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="Padding" Value="8,4" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <!-- Custom Colors -->
+    <SolidColorBrush x:Key="SuccessColorBrush" Color="#48BB78" />
+    <SolidColorBrush x:Key="WarningColorBrush" Color="#ED8936" />
+    <SolidColorBrush x:Key="ErrorColorBrush" Color="#F56565" />
+    <SolidColorBrush x:Key="InfoColorBrush" Color="#4299E1" />
+
+    <!-- Navigation View Customization -->
+    <Thickness x:Key="NavigationViewContentMargin">0,0,0,0</Thickness>
+    <Thickness x:Key="NavigationViewHeaderMargin">0,0,0,0</Thickness>
+
+</ResourceDictionary>
