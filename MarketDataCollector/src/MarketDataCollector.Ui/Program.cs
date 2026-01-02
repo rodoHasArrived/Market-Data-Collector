@@ -106,6 +106,124 @@ app.MapDelete("/api/config/symbols/{symbol}", async (ConfigStore store, string s
     return Results.Ok();
 });
 
+// Data Sources API endpoints
+app.MapGet("/api/config/datasources", (ConfigStore store) =>
+{
+    var cfg = store.Load();
+    return Results.Json(new
+    {
+        sources = cfg.DataSources?.Sources ?? Array.Empty<DataSourceConfig>(),
+        defaultRealTimeSourceId = cfg.DataSources?.DefaultRealTimeSourceId,
+        defaultHistoricalSourceId = cfg.DataSources?.DefaultHistoricalSourceId,
+        enableFailover = cfg.DataSources?.EnableFailover ?? true,
+        failoverTimeoutSeconds = cfg.DataSources?.FailoverTimeoutSeconds ?? 30
+    }, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+});
+
+app.MapPost("/api/config/datasources", async (ConfigStore store, DataSourceConfigRequest req) =>
+{
+    if (string.IsNullOrWhiteSpace(req.Name))
+        return Results.BadRequest("Name is required.");
+
+    var cfg = store.Load();
+    var dataSources = cfg.DataSources ?? new DataSourcesConfig();
+    var sources = (dataSources.Sources ?? Array.Empty<DataSourceConfig>()).ToList();
+
+    var id = string.IsNullOrWhiteSpace(req.Id) ? Guid.NewGuid().ToString("N") : req.Id;
+    var source = new DataSourceConfig(
+        Id: id,
+        Name: req.Name,
+        Provider: Enum.TryParse<DataSourceKind>(req.Provider, ignoreCase: true, out var p) ? p : DataSourceKind.IB,
+        Enabled: req.Enabled,
+        Type: Enum.TryParse<DataSourceType>(req.Type, ignoreCase: true, out var t) ? t : DataSourceType.RealTime,
+        Priority: req.Priority,
+        Alpaca: req.Alpaca,
+        Polygon: req.Polygon,
+        IB: req.IB,
+        Symbols: req.Symbols,
+        Description: req.Description,
+        Tags: req.Tags
+    );
+
+    var idx = sources.FindIndex(s => string.Equals(s.Id, id, StringComparison.OrdinalIgnoreCase));
+    if (idx >= 0) sources[idx] = source;
+    else sources.Add(source);
+
+    var next = cfg with { DataSources = dataSources with { Sources = sources.ToArray() } };
+    await store.SaveAsync(next);
+
+    return Results.Ok(new { id });
+});
+
+app.MapDelete("/api/config/datasources/{id}", async (ConfigStore store, string id) =>
+{
+    var cfg = store.Load();
+    var dataSources = cfg.DataSources ?? new DataSourcesConfig();
+    var sources = (dataSources.Sources ?? Array.Empty<DataSourceConfig>()).ToList();
+
+    sources.RemoveAll(s => string.Equals(s.Id, id, StringComparison.OrdinalIgnoreCase));
+
+    var next = cfg with { DataSources = dataSources with { Sources = sources.ToArray() } };
+    await store.SaveAsync(next);
+
+    return Results.Ok();
+});
+
+app.MapPost("/api/config/datasources/{id}/toggle", async (ConfigStore store, string id, ToggleRequest req) =>
+{
+    var cfg = store.Load();
+    var dataSources = cfg.DataSources ?? new DataSourcesConfig();
+    var sources = (dataSources.Sources ?? Array.Empty<DataSourceConfig>()).ToList();
+
+    var source = sources.FirstOrDefault(s => string.Equals(s.Id, id, StringComparison.OrdinalIgnoreCase));
+    if (source == null)
+        return Results.NotFound();
+
+    var idx = sources.IndexOf(source);
+    sources[idx] = source with { Enabled = req.Enabled };
+
+    var next = cfg with { DataSources = dataSources with { Sources = sources.ToArray() } };
+    await store.SaveAsync(next);
+
+    return Results.Ok();
+});
+
+app.MapPost("/api/config/datasources/defaults", async (ConfigStore store, DefaultSourcesRequest req) =>
+{
+    var cfg = store.Load();
+    var dataSources = cfg.DataSources ?? new DataSourcesConfig();
+
+    var next = cfg with
+    {
+        DataSources = dataSources with
+        {
+            DefaultRealTimeSourceId = req.DefaultRealTimeSourceId,
+            DefaultHistoricalSourceId = req.DefaultHistoricalSourceId
+        }
+    };
+    await store.SaveAsync(next);
+
+    return Results.Ok();
+});
+
+app.MapPost("/api/config/datasources/failover", async (ConfigStore store, FailoverSettingsRequest req) =>
+{
+    var cfg = store.Load();
+    var dataSources = cfg.DataSources ?? new DataSourcesConfig();
+
+    var next = cfg with
+    {
+        DataSources = dataSources with
+        {
+            EnableFailover = req.EnableFailover,
+            FailoverTimeoutSeconds = req.FailoverTimeoutSeconds
+        }
+    };
+    await store.SaveAsync(next);
+
+    return Results.Ok();
+});
+
 app.MapGet("/api/status", (ConfigStore store) =>
 {
     var status = store.TryLoadStatusJson();
@@ -152,6 +270,25 @@ app.Run();
 
 public record DataSourceRequest(string DataSource);
 public record StorageSettingsRequest(string? DataRoot, bool Compress, string? NamingConvention, string? DatePartition, bool IncludeProvider, string? FilePrefix);
+
+// Data Sources API DTOs
+public record DataSourceConfigRequest(
+    string? Id,
+    string Name,
+    string Provider = "IB",
+    bool Enabled = true,
+    string Type = "RealTime",
+    int Priority = 100,
+    AlpacaOptions? Alpaca = null,
+    PolygonOptions? Polygon = null,
+    IBOptions? IB = null,
+    string[]? Symbols = null,
+    string? Description = null,
+    string[]? Tags = null);
+
+public record ToggleRequest(bool Enabled);
+public record DefaultSourcesRequest(string? DefaultRealTimeSourceId, string? DefaultHistoricalSourceId);
+public record FailoverSettingsRequest(bool EnableFailover, int FailoverTimeoutSeconds);
 
 public static class HtmlTemplates
 {
@@ -312,6 +449,132 @@ public static class HtmlTemplates
   </div>
 
   <div class=""row"">
+    <!-- Data Sources Panel -->
+    <div class=""card"" style=""flex:1; min-width: 600px;"">
+      <h3>Data Sources</h3>
+      <p class=""muted"">Configure multiple data sources for real-time and historical data collection.</p>
+
+      <div class=""form-row"" style=""margin-bottom: 16px;"">
+        <div class=""form-group"" style=""flex: 1"">
+          <label><input type=""checkbox"" id=""enableFailover"" checked /> Enable Automatic Failover</label>
+        </div>
+        <div class=""form-group"" style=""flex: 1"">
+          <label>Failover Timeout (seconds)</label>
+          <input id=""failoverTimeout"" type=""number"" value=""30"" min=""5"" max=""300"" />
+        </div>
+        <div class=""form-group"" style=""flex: 1"">
+          <button class=""btn-primary"" onclick=""saveFailoverSettings()"">Save Failover Settings</button>
+        </div>
+      </div>
+
+      <table id=""dataSourcesTable"">
+        <thead>
+          <tr>
+            <th>Enabled</th>
+            <th>Name</th>
+            <th>Provider</th>
+            <th>Type</th>
+            <th>Priority</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+
+      <h4 style=""margin-top: 24px"">Add/Edit Data Source</h4>
+      <input type=""hidden"" id=""dsId"" />
+      <div class=""form-row"">
+        <div class=""form-group"">
+          <label>Name *</label>
+          <input id=""dsName"" placeholder=""My Data Source"" />
+        </div>
+        <div class=""form-group"">
+          <label>Provider *</label>
+          <select id=""dsProvider"" onchange=""updateDsProviderUI()"">
+            <option value=""IB"">Interactive Brokers (IB)</option>
+            <option value=""Alpaca"">Alpaca</option>
+            <option value=""Polygon"">Polygon.io</option>
+          </select>
+        </div>
+        <div class=""form-group"">
+          <label>Type *</label>
+          <select id=""dsType"">
+            <option value=""RealTime"">Real-Time</option>
+            <option value=""Historical"">Historical</option>
+            <option value=""Both"">Both</option>
+          </select>
+        </div>
+        <div class=""form-group"">
+          <label>Priority</label>
+          <input id=""dsPriority"" type=""number"" value=""100"" min=""1"" max=""1000"" />
+        </div>
+      </div>
+      <div class=""form-row"">
+        <div class=""form-group"" style=""flex: 2"">
+          <label>Description</label>
+          <input id=""dsDescription"" placeholder=""Optional description"" />
+        </div>
+        <div class=""form-group"" style=""flex: 1"">
+          <label>Symbols (comma separated)</label>
+          <input id=""dsSymbols"" placeholder=""AAPL, MSFT"" />
+        </div>
+      </div>
+
+      <div id=""dsIbSettings"" class=""provider-section"">
+        <p class=""muted"">IB Settings</p>
+        <div class=""form-row"">
+          <div class=""form-group""><label>Host</label><input id=""dsIbHost"" value=""127.0.0.1"" /></div>
+          <div class=""form-group""><label>Port</label><input id=""dsIbPort"" type=""number"" value=""7496"" /></div>
+          <div class=""form-group""><label>Client ID</label><input id=""dsIbClientId"" type=""number"" value=""0"" /></div>
+        </div>
+        <div class=""form-group"">
+          <label><input type=""checkbox"" id=""dsIbPaper"" /> Paper Trading</label>
+          <label style=""margin-left: 16px;""><input type=""checkbox"" id=""dsIbDepth"" checked /> Subscribe Depth</label>
+          <label style=""margin-left: 16px;""><input type=""checkbox"" id=""dsIbTick"" checked /> Tick-by-Tick</label>
+        </div>
+      </div>
+
+      <div id=""dsAlpacaSettings"" class=""provider-section hidden"">
+        <p class=""muted"">Alpaca Settings</p>
+        <div class=""form-row"">
+          <div class=""form-group"">
+            <label>Feed</label>
+            <select id=""dsAlpacaFeed""><option value=""iex"">IEX (free)</option><option value=""sip"">SIP (paid)</option><option value=""delayed_sip"">Delayed SIP</option></select>
+          </div>
+          <div class=""form-group"">
+            <label>Environment</label>
+            <select id=""dsAlpacaSandbox""><option value=""false"">Production</option><option value=""true"">Sandbox</option></select>
+          </div>
+        </div>
+        <div class=""form-group""><label><input type=""checkbox"" id=""dsAlpacaQuotes"" /> Subscribe to Quotes</label></div>
+      </div>
+
+      <div id=""dsPolygonSettings"" class=""provider-section hidden"">
+        <p class=""muted"">Polygon.io Settings</p>
+        <div class=""form-row"">
+          <div class=""form-group""><label>API Key</label><input id=""dsPolygonKey"" type=""password"" /></div>
+          <div class=""form-group"">
+            <label>Feed</label>
+            <select id=""dsPolygonFeed""><option value=""stocks"">Stocks</option><option value=""options"">Options</option><option value=""forex"">Forex</option><option value=""crypto"">Crypto</option></select>
+          </div>
+        </div>
+        <div class=""form-group"">
+          <label><input type=""checkbox"" id=""dsPolygonDelayed"" /> Use Delayed Data</label>
+          <label style=""margin-left: 16px;""><input type=""checkbox"" id=""dsPolygonTrades"" checked /> Trades</label>
+          <label style=""margin-left: 16px;""><input type=""checkbox"" id=""dsPolygonQuotes"" /> Quotes</label>
+          <label style=""margin-left: 16px;""><input type=""checkbox"" id=""dsPolygonAggs"" /> Aggregates</label>
+        </div>
+      </div>
+
+      <div style=""margin-top: 16px;"">
+        <button class=""btn-primary"" onclick=""saveDataSource()"">Save Data Source</button>
+        <button onclick=""clearDsForm()"" style=""margin-left: 8px;"">Clear</button>
+      </div>
+      <div id=""dsMsg"" class=""muted"" style=""margin-top: 8px;""></div>
+    </div>
+  </div>
+
+  <div class=""row"">
     <div class=""card"" style=""flex:1; min-width: 400px;"">
       <h3>Historical Backfill</h3>
       <div id=""backfillHelp"" class=""muted"" style=""margin-bottom: 8px;"">Download free end-of-day bars to backfill gaps.</div>
@@ -415,6 +678,230 @@ public static class HtmlTemplates
 <script>
 let currentDataSource = 'IB';
 let backfillProviders = [];
+let dataSources = [];
+
+// Data Sources Management
+async function loadDataSources() {{
+  try {{
+    const r = await fetch('/api/config/datasources');
+    if (!r.ok) return;
+    const data = await r.json();
+
+    document.getElementById('enableFailover').checked = data.enableFailover !== false;
+    document.getElementById('failoverTimeout').value = data.failoverTimeoutSeconds || 30;
+
+    dataSources = data.sources || [];
+    renderDataSourcesTable();
+  }} catch (e) {{
+    console.warn('Unable to load data sources', e);
+  }}
+}}
+
+function renderDataSourcesTable() {{
+  const tbody = document.querySelector('#dataSourcesTable tbody');
+  tbody.innerHTML = '';
+
+  if (dataSources.length === 0) {{
+    tbody.innerHTML = '<tr><td colspan=""6"" class=""muted"" style=""text-align: center;"">No data sources configured</td></tr>';
+    return;
+  }}
+
+  for (const ds of dataSources) {{
+    const tr = document.createElement('tr');
+    const tagClass = ds.provider === 'IB' ? 'tag-ib' : (ds.provider === 'Alpaca' ? 'tag-alpaca' : '');
+    tr.innerHTML = `
+      <td><input type=""checkbox"" ${{ds.enabled ? 'checked' : ''}} onchange=""toggleDataSource('${{ds.id}}', this.checked)"" /></td>
+      <td><b>${{ds.name}}</b></td>
+      <td><span class=""tag ${{tagClass}}"">${{ds.provider}}</span></td>
+      <td>${{ds.type}}</td>
+      <td>${{ds.priority}}</td>
+      <td>
+        <button onclick=""editDataSource('${{ds.id}}')"" style=""margin-right: 4px;"">Edit</button>
+        <button class=""btn-danger"" onclick=""deleteDataSource('${{ds.id}}')"">Delete</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  }}
+}}
+
+function updateDsProviderUI() {{
+  const provider = document.getElementById('dsProvider').value;
+  document.getElementById('dsIbSettings').classList.toggle('hidden', provider !== 'IB');
+  document.getElementById('dsAlpacaSettings').classList.toggle('hidden', provider !== 'Alpaca');
+  document.getElementById('dsPolygonSettings').classList.toggle('hidden', provider !== 'Polygon');
+}}
+
+function clearDsForm() {{
+  document.getElementById('dsId').value = '';
+  document.getElementById('dsName').value = '';
+  document.getElementById('dsProvider').value = 'IB';
+  document.getElementById('dsType').value = 'RealTime';
+  document.getElementById('dsPriority').value = '100';
+  document.getElementById('dsDescription').value = '';
+  document.getElementById('dsSymbols').value = '';
+
+  // IB defaults
+  document.getElementById('dsIbHost').value = '127.0.0.1';
+  document.getElementById('dsIbPort').value = '7496';
+  document.getElementById('dsIbClientId').value = '0';
+  document.getElementById('dsIbPaper').checked = false;
+  document.getElementById('dsIbDepth').checked = true;
+  document.getElementById('dsIbTick').checked = true;
+
+  // Alpaca defaults
+  document.getElementById('dsAlpacaFeed').value = 'iex';
+  document.getElementById('dsAlpacaSandbox').value = 'false';
+  document.getElementById('dsAlpacaQuotes').checked = false;
+
+  // Polygon defaults
+  document.getElementById('dsPolygonKey').value = '';
+  document.getElementById('dsPolygonFeed').value = 'stocks';
+  document.getElementById('dsPolygonDelayed').checked = false;
+  document.getElementById('dsPolygonTrades').checked = true;
+  document.getElementById('dsPolygonQuotes').checked = false;
+  document.getElementById('dsPolygonAggs').checked = false;
+
+  updateDsProviderUI();
+}}
+
+function editDataSource(id) {{
+  const ds = dataSources.find(s => s.id === id);
+  if (!ds) return;
+
+  document.getElementById('dsId').value = ds.id;
+  document.getElementById('dsName').value = ds.name;
+  document.getElementById('dsProvider').value = ds.provider;
+  document.getElementById('dsType').value = ds.type;
+  document.getElementById('dsPriority').value = ds.priority;
+  document.getElementById('dsDescription').value = ds.description || '';
+  document.getElementById('dsSymbols').value = (ds.symbols || []).join(', ');
+
+  if (ds.ib) {{
+    document.getElementById('dsIbHost').value = ds.ib.host || '127.0.0.1';
+    document.getElementById('dsIbPort').value = ds.ib.port || 7496;
+    document.getElementById('dsIbClientId').value = ds.ib.clientId || 0;
+    document.getElementById('dsIbPaper').checked = ds.ib.usePaperTrading || false;
+    document.getElementById('dsIbDepth').checked = ds.ib.subscribeDepth !== false;
+    document.getElementById('dsIbTick').checked = ds.ib.tickByTick !== false;
+  }}
+
+  if (ds.alpaca) {{
+    document.getElementById('dsAlpacaFeed').value = ds.alpaca.feed || 'iex';
+    document.getElementById('dsAlpacaSandbox').value = ds.alpaca.useSandbox ? 'true' : 'false';
+    document.getElementById('dsAlpacaQuotes').checked = ds.alpaca.subscribeQuotes || false;
+  }}
+
+  if (ds.polygon) {{
+    document.getElementById('dsPolygonKey').value = ds.polygon.apiKey || '';
+    document.getElementById('dsPolygonFeed').value = ds.polygon.feed || 'stocks';
+    document.getElementById('dsPolygonDelayed').checked = ds.polygon.useDelayed || false;
+    document.getElementById('dsPolygonTrades').checked = ds.polygon.subscribeTrades !== false;
+    document.getElementById('dsPolygonQuotes').checked = ds.polygon.subscribeQuotes || false;
+    document.getElementById('dsPolygonAggs').checked = ds.polygon.subscribeAggregates || false;
+  }}
+
+  updateDsProviderUI();
+}}
+
+async function saveDataSource() {{
+  const name = document.getElementById('dsName').value.trim();
+  if (!name) {{
+    document.getElementById('dsMsg').textContent = 'Name is required.';
+    return;
+  }}
+
+  const provider = document.getElementById('dsProvider').value;
+  const symbols = document.getElementById('dsSymbols').value
+    .split(',')
+    .map(s => s.trim().toUpperCase())
+    .filter(s => s);
+
+  const payload = {{
+    id: document.getElementById('dsId').value || null,
+    name: name,
+    provider: provider,
+    type: document.getElementById('dsType').value,
+    priority: parseInt(document.getElementById('dsPriority').value) || 100,
+    description: document.getElementById('dsDescription').value || null,
+    symbols: symbols.length ? symbols : null,
+    enabled: true
+  }};
+
+  if (provider === 'IB') {{
+    payload.ib = {{
+      host: document.getElementById('dsIbHost').value || '127.0.0.1',
+      port: parseInt(document.getElementById('dsIbPort').value) || 7496,
+      clientId: parseInt(document.getElementById('dsIbClientId').value) || 0,
+      usePaperTrading: document.getElementById('dsIbPaper').checked,
+      subscribeDepth: document.getElementById('dsIbDepth').checked,
+      tickByTick: document.getElementById('dsIbTick').checked
+    }};
+  }} else if (provider === 'Alpaca') {{
+    payload.alpaca = {{
+      feed: document.getElementById('dsAlpacaFeed').value,
+      useSandbox: document.getElementById('dsAlpacaSandbox').value === 'true',
+      subscribeQuotes: document.getElementById('dsAlpacaQuotes').checked
+    }};
+  }} else if (provider === 'Polygon') {{
+    payload.polygon = {{
+      apiKey: document.getElementById('dsPolygonKey').value || null,
+      feed: document.getElementById('dsPolygonFeed').value,
+      useDelayed: document.getElementById('dsPolygonDelayed').checked,
+      subscribeTrades: document.getElementById('dsPolygonTrades').checked,
+      subscribeQuotes: document.getElementById('dsPolygonQuotes').checked,
+      subscribeAggregates: document.getElementById('dsPolygonAggs').checked
+    }};
+  }}
+
+  const r = await fetch('/api/config/datasources', {{
+    method: 'POST',
+    headers: {{ 'Content-Type': 'application/json' }},
+    body: JSON.stringify(payload)
+  }});
+
+  const msg = document.getElementById('dsMsg');
+  if (r.ok) {{
+    msg.textContent = 'Data source saved successfully.';
+    clearDsForm();
+    await loadDataSources();
+  }} else {{
+    msg.textContent = 'Error saving data source.';
+  }}
+}}
+
+async function deleteDataSource(id) {{
+  if (!confirm('Delete this data source?')) return;
+
+  const r = await fetch(`/api/config/datasources/${{encodeURIComponent(id)}}`, {{
+    method: 'DELETE'
+  }});
+
+  if (r.ok) {{
+    await loadDataSources();
+  }}
+}}
+
+async function toggleDataSource(id, enabled) {{
+  await fetch(`/api/config/datasources/${{encodeURIComponent(id)}}/toggle`, {{
+    method: 'POST',
+    headers: {{ 'Content-Type': 'application/json' }},
+    body: JSON.stringify({{ enabled }})
+  }});
+}}
+
+async function saveFailoverSettings() {{
+  const r = await fetch('/api/config/datasources/failover', {{
+    method: 'POST',
+    headers: {{ 'Content-Type': 'application/json' }},
+    body: JSON.stringify({{
+      enableFailover: document.getElementById('enableFailover').checked,
+      failoverTimeoutSeconds: parseInt(document.getElementById('failoverTimeout').value) || 30
+    }})
+  }});
+
+  const msg = document.getElementById('dsMsg');
+  msg.textContent = r.ok ? 'Failover settings saved.' : 'Error saving failover settings.';
+}}
 
 async function loadBackfillProviders(selectedProvider) {
   try {
@@ -739,6 +1226,7 @@ async function deleteSymbol(symbol) {{
 loadConfig();
 loadStatus();
 loadBackfillStatus();
+loadDataSources();
 setInterval(loadStatus, 2000);
 setInterval(loadBackfillStatus, 5000);
 </script>

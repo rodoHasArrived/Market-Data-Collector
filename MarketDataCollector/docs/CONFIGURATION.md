@@ -373,3 +373,159 @@ Common validation errors:
 ## Hot Reload
 
 Pass `--watch-config` to enable hot reload. The collector automatically reloads `appsettings.json` when it changes and applies symbol or provider updates without a restart.
+
+## Multiple Data Sources
+
+The `DataSources` section allows you to configure multiple data sources for both real-time streaming and historical data collection. This is useful for:
+
+- Combining real-time data from one provider with historical data from another
+- Setting up failover between providers
+- Running multiple provider connections simultaneously
+- Organizing data collection by data type or use case
+
+**Section**: `DataSources`
+
+### DataSources Configuration
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `Sources` | array | `[]` | Array of data source configurations |
+| `DefaultRealTimeSourceId` | string | `null` | ID of the default source for real-time data |
+| `DefaultHistoricalSourceId` | string | `null` | ID of the default source for historical data |
+| `EnableFailover` | boolean | `true` | Automatically switch to next source on failure |
+| `FailoverTimeoutSeconds` | integer | `30` | Timeout before triggering failover |
+
+### Data Source Entry
+
+Each entry in the `Sources` array represents a configured data source:
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `Id` | string | Yes | - | Unique identifier for the data source |
+| `Name` | string | Yes | - | Display name |
+| `Provider` | string | No | `"IB"` | Provider type: `"IB"`, `"Alpaca"`, `"Polygon"` |
+| `Enabled` | boolean | No | `true` | Whether this source is active |
+| `Type` | string | No | `"RealTime"` | Data type: `"RealTime"`, `"Historical"`, `"Both"` |
+| `Priority` | integer | No | `100` | Priority for failover (lower = higher priority) |
+| `Description` | string | No | `null` | Optional description |
+| `Symbols` | array | No | `null` | Symbol list (uses global if not specified) |
+| `Tags` | array | No | `null` | Tags for categorization |
+| `Alpaca` | object | No | `null` | Alpaca-specific settings |
+| `Polygon` | object | No | `null` | Polygon-specific settings |
+| `IB` | object | No | `null` | Interactive Brokers-specific settings |
+
+### IB Options (per data source)
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `Host` | string | `"127.0.0.1"` | TWS/Gateway host address |
+| `Port` | integer | `7496` | Port (7496 live, 7497 paper) |
+| `ClientId` | integer | `0` | Client ID for connection |
+| `UsePaperTrading` | boolean | `false` | Use paper trading account |
+| `SubscribeDepth` | boolean | `true` | Subscribe to L2 market depth |
+| `DepthLevels` | integer | `10` | Number of depth levels |
+| `TickByTick` | boolean | `true` | Request tick-by-tick data |
+
+### Polygon Options (per data source)
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `ApiKey` | string | `null` | Polygon API key |
+| `UseDelayed` | boolean | `false` | Use 15-minute delayed data |
+| `Feed` | string | `"stocks"` | Feed type: `"stocks"`, `"options"`, `"forex"`, `"crypto"` |
+| `SubscribeTrades` | boolean | `true` | Subscribe to trades |
+| `SubscribeQuotes` | boolean | `false` | Subscribe to quotes |
+| `SubscribeAggregates` | boolean | `false` | Subscribe to per-minute aggregates |
+
+### Example: Multiple Data Sources
+
+```json
+{
+  "DataSources": {
+    "EnableFailover": true,
+    "FailoverTimeoutSeconds": 30,
+    "DefaultRealTimeSourceId": "alpaca-primary",
+    "DefaultHistoricalSourceId": "polygon-historical",
+    "Sources": [
+      {
+        "Id": "alpaca-primary",
+        "Name": "Alpaca Real-Time",
+        "Provider": "Alpaca",
+        "Type": "RealTime",
+        "Priority": 1,
+        "Enabled": true,
+        "Description": "Primary real-time feed from Alpaca",
+        "Alpaca": {
+          "Feed": "sip",
+          "UseSandbox": false,
+          "SubscribeQuotes": true
+        }
+      },
+      {
+        "Id": "ib-backup",
+        "Name": "IB Backup",
+        "Provider": "IB",
+        "Type": "RealTime",
+        "Priority": 2,
+        "Enabled": true,
+        "Description": "Backup real-time feed via Interactive Brokers",
+        "IB": {
+          "Host": "127.0.0.1",
+          "Port": 7496,
+          "ClientId": 1,
+          "SubscribeDepth": true,
+          "DepthLevels": 10
+        }
+      },
+      {
+        "Id": "polygon-historical",
+        "Name": "Polygon Historical",
+        "Provider": "Polygon",
+        "Type": "Historical",
+        "Priority": 1,
+        "Enabled": true,
+        "Description": "Historical data from Polygon.io",
+        "Polygon": {
+          "ApiKey": "YOUR_POLYGON_API_KEY",
+          "Feed": "stocks",
+          "UseDelayed": false
+        }
+      }
+    ]
+  }
+}
+```
+
+### Using the Desktop App
+
+The Windows desktop application provides a visual interface for managing data sources:
+
+1. Navigate to **Data Sources** in the left navigation menu
+2. Configure failover settings at the top of the page
+3. View and manage existing data sources in the list
+4. Click **Add Data Source** to create a new configuration
+5. Fill in the required fields and provider-specific settings
+6. Click **Save Data Source** to persist changes
+
+### Using the Web Dashboard
+
+The web dashboard also provides data source management:
+
+1. Access the dashboard at the configured URL (default: http://localhost:8080)
+2. Scroll to the **Data Sources** section
+3. Use the form to add or edit data sources
+4. Toggle individual sources on/off using the checkbox in the list
+5. Configure failover settings using the controls at the top
+
+### API Endpoints
+
+The following API endpoints are available for programmatic configuration:
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/config/datasources` | Get all data sources and settings |
+| `POST` | `/api/config/datasources` | Add or update a data source |
+| `DELETE` | `/api/config/datasources/{id}` | Delete a data source |
+| `POST` | `/api/config/datasources/{id}/toggle` | Enable/disable a data source |
+| `POST` | `/api/config/datasources/defaults` | Set default source IDs |
+| `POST` | `/api/config/datasources/failover` | Update failover settings |

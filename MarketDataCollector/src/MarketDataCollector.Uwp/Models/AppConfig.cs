@@ -27,6 +27,123 @@ public class AppConfig
 
     [JsonPropertyName("backfill")]
     public BackfillConfig? Backfill { get; set; }
+
+    [JsonPropertyName("dataSources")]
+    public DataSourcesConfig? DataSources { get; set; }
+}
+
+/// <summary>
+/// Collection of data source configurations.
+/// </summary>
+public class DataSourcesConfig
+{
+    [JsonPropertyName("sources")]
+    public DataSourceConfig[]? Sources { get; set; }
+
+    [JsonPropertyName("defaultRealTimeSourceId")]
+    public string? DefaultRealTimeSourceId { get; set; }
+
+    [JsonPropertyName("defaultHistoricalSourceId")]
+    public string? DefaultHistoricalSourceId { get; set; }
+
+    [JsonPropertyName("enableFailover")]
+    public bool EnableFailover { get; set; } = true;
+
+    [JsonPropertyName("failoverTimeoutSeconds")]
+    public int FailoverTimeoutSeconds { get; set; } = 30;
+}
+
+/// <summary>
+/// Configuration for an individual data source.
+/// </summary>
+public class DataSourceConfig
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+
+    [JsonPropertyName("provider")]
+    public string Provider { get; set; } = "IB";
+
+    [JsonPropertyName("enabled")]
+    public bool Enabled { get; set; } = true;
+
+    [JsonPropertyName("type")]
+    public string Type { get; set; } = "RealTime";
+
+    [JsonPropertyName("priority")]
+    public int Priority { get; set; } = 100;
+
+    [JsonPropertyName("alpaca")]
+    public AlpacaOptions? Alpaca { get; set; }
+
+    [JsonPropertyName("polygon")]
+    public PolygonOptions? Polygon { get; set; }
+
+    [JsonPropertyName("ib")]
+    public IBOptions? IB { get; set; }
+
+    [JsonPropertyName("symbols")]
+    public string[]? Symbols { get; set; }
+
+    [JsonPropertyName("description")]
+    public string? Description { get; set; }
+
+    [JsonPropertyName("tags")]
+    public string[]? Tags { get; set; }
+}
+
+/// <summary>
+/// Polygon.io API configuration options.
+/// </summary>
+public class PolygonOptions
+{
+    [JsonPropertyName("apiKey")]
+    public string? ApiKey { get; set; }
+
+    [JsonPropertyName("useDelayed")]
+    public bool UseDelayed { get; set; }
+
+    [JsonPropertyName("feed")]
+    public string Feed { get; set; } = "stocks";
+
+    [JsonPropertyName("subscribeTrades")]
+    public bool SubscribeTrades { get; set; } = true;
+
+    [JsonPropertyName("subscribeQuotes")]
+    public bool SubscribeQuotes { get; set; }
+
+    [JsonPropertyName("subscribeAggregates")]
+    public bool SubscribeAggregates { get; set; }
+}
+
+/// <summary>
+/// Interactive Brokers connection options.
+/// </summary>
+public class IBOptions
+{
+    [JsonPropertyName("host")]
+    public string Host { get; set; } = "127.0.0.1";
+
+    [JsonPropertyName("port")]
+    public int Port { get; set; } = 7496;
+
+    [JsonPropertyName("clientId")]
+    public int ClientId { get; set; }
+
+    [JsonPropertyName("usePaperTrading")]
+    public bool UsePaperTrading { get; set; }
+
+    [JsonPropertyName("subscribeDepth")]
+    public bool SubscribeDepth { get; set; } = true;
+
+    [JsonPropertyName("depthLevels")]
+    public int DepthLevels { get; set; } = 10;
+
+    [JsonPropertyName("tickByTick")]
+    public bool TickByTick { get; set; } = true;
 }
 
 /// <summary>

@@ -118,4 +118,122 @@ public class ConfigService
         config.Symbols = symbols.ToArray();
         await SaveConfigAsync(config);
     }
+
+    /// <summary>
+    /// Gets all configured data sources.
+    /// </summary>
+    public async Task<DataSourceConfig[]> GetDataSourcesAsync()
+    {
+        var config = await LoadConfigAsync() ?? new AppConfig();
+        return config.DataSources?.Sources ?? Array.Empty<DataSourceConfig>();
+    }
+
+    /// <summary>
+    /// Gets the data sources configuration.
+    /// </summary>
+    public async Task<DataSourcesConfig> GetDataSourcesConfigAsync()
+    {
+        var config = await LoadConfigAsync() ?? new AppConfig();
+        return config.DataSources ?? new DataSourcesConfig();
+    }
+
+    /// <summary>
+    /// Adds or updates a data source configuration.
+    /// </summary>
+    public async Task AddOrUpdateDataSourceAsync(DataSourceConfig dataSource)
+    {
+        var config = await LoadConfigAsync() ?? new AppConfig();
+        var dataSources = config.DataSources ?? new DataSourcesConfig();
+        var sources = dataSources.Sources?.ToList() ?? new List<DataSourceConfig>();
+
+        var existingIndex = sources.FindIndex(s =>
+            string.Equals(s.Id, dataSource.Id, StringComparison.OrdinalIgnoreCase));
+
+        if (existingIndex >= 0)
+        {
+            sources[existingIndex] = dataSource;
+        }
+        else
+        {
+            sources.Add(dataSource);
+        }
+
+        dataSources.Sources = sources.ToArray();
+        config.DataSources = dataSources;
+        await SaveConfigAsync(config);
+    }
+
+    /// <summary>
+    /// Deletes a data source by ID.
+    /// </summary>
+    public async Task DeleteDataSourceAsync(string id)
+    {
+        var config = await LoadConfigAsync() ?? new AppConfig();
+        var dataSources = config.DataSources ?? new DataSourcesConfig();
+        var sources = dataSources.Sources?.ToList() ?? new List<DataSourceConfig>();
+
+        sources.RemoveAll(s =>
+            string.Equals(s.Id, id, StringComparison.OrdinalIgnoreCase));
+
+        dataSources.Sources = sources.ToArray();
+        config.DataSources = dataSources;
+        await SaveConfigAsync(config);
+    }
+
+    /// <summary>
+    /// Sets the default data source for real-time or historical data.
+    /// </summary>
+    public async Task SetDefaultDataSourceAsync(string id, bool isHistorical)
+    {
+        var config = await LoadConfigAsync() ?? new AppConfig();
+        var dataSources = config.DataSources ?? new DataSourcesConfig();
+
+        if (isHistorical)
+        {
+            dataSources.DefaultHistoricalSourceId = id;
+        }
+        else
+        {
+            dataSources.DefaultRealTimeSourceId = id;
+        }
+
+        config.DataSources = dataSources;
+        await SaveConfigAsync(config);
+    }
+
+    /// <summary>
+    /// Toggles a data source's enabled state.
+    /// </summary>
+    public async Task ToggleDataSourceAsync(string id, bool enabled)
+    {
+        var config = await LoadConfigAsync() ?? new AppConfig();
+        var dataSources = config.DataSources ?? new DataSourcesConfig();
+        var sources = dataSources.Sources?.ToList() ?? new List<DataSourceConfig>();
+
+        var source = sources.FirstOrDefault(s =>
+            string.Equals(s.Id, id, StringComparison.OrdinalIgnoreCase));
+
+        if (source != null)
+        {
+            source.Enabled = enabled;
+            dataSources.Sources = sources.ToArray();
+            config.DataSources = dataSources;
+            await SaveConfigAsync(config);
+        }
+    }
+
+    /// <summary>
+    /// Updates failover settings for data sources.
+    /// </summary>
+    public async Task UpdateFailoverSettingsAsync(bool enableFailover, int failoverTimeoutSeconds)
+    {
+        var config = await LoadConfigAsync() ?? new AppConfig();
+        var dataSources = config.DataSources ?? new DataSourcesConfig();
+
+        dataSources.EnableFailover = enableFailover;
+        dataSources.FailoverTimeoutSeconds = failoverTimeoutSeconds;
+
+        config.DataSources = dataSources;
+        await SaveConfigAsync(config);
+    }
 }
