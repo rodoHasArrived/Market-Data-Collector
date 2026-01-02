@@ -1,4 +1,6 @@
 using System.Text.Json;
+using MarketDataCollector.Application.Logging;
+using Serilog;
 
 namespace MarketDataCollector.Application.Config;
 
@@ -7,6 +9,8 @@ namespace MarketDataCollector.Application.Config;
 /// </summary>
 public sealed class ConfigWatcher : IDisposable
 {
+    private static readonly ILogger Log = LoggingSetup.ForContext<ConfigWatcher>();
+
     private readonly string _path;
     private readonly FileSystemWatcher _fsw;
     private readonly Timer _debounce;
@@ -99,9 +103,12 @@ public sealed class ConfigWatcher : IDisposable
             }
             catch (Exception ex)
             {
-                // TODO: Log the specific exception for debugging config load failures
-                // Consider logging: ex.GetType().Name, ex.Message, and attempt number
-                _ = ex; // Suppress unused variable warning until logging is added
+                Log.Debug(
+                    ex,
+                    "Config load attempt {Attempt}/{MaxAttempts} failed: {ErrorType}",
+                    i + 1,
+                    attempts,
+                    ex.GetType().Name);
                 Thread.Sleep(delayMs);
             }
         }
