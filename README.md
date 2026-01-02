@@ -4,9 +4,72 @@ A high-performance, cross-platform market data collection system for real-time a
 
 [![.NET](https://img.shields.io/badge/.NET-8.0-blue)](https://dotnet.microsoft.com/)
 [![C#](https://img.shields.io/badge/C%23-11-blue)](https://docs.microsoft.com/en-us/dotnet/csharp/)
+[![Docker](https://img.shields.io/badge/Docker-Ready-blue)](https://www.docker.com/)
 [![License](https://img.shields.io/badge/license-See%20LICENSE-green)](LICENSE)
 
 **Status**: Production Ready | **Version**: 1.1.0 | **Last Updated**: 2026-01-02
+
+---
+
+## Installation
+
+### Option 1: Docker (Recommended)
+
+```bash
+cd MarketDataCollector
+
+# Quick install with interactive script
+./install.sh --docker
+
+# Or manually with Docker Compose
+cp appsettings.sample.json appsettings.json
+docker compose up -d
+```
+
+Access the dashboard at **http://localhost:8080**
+
+### Option 2: Native .NET
+
+```bash
+cd MarketDataCollector
+
+# Quick install with interactive script
+./install.sh --native
+
+# Or manually
+cp appsettings.sample.json appsettings.json
+dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --ui
+```
+
+### Option 3: Using Make
+
+```bash
+cd MarketDataCollector
+
+# Show all available commands
+make help
+
+# Docker installation
+make docker
+
+# Native installation
+make run-ui
+```
+
+### Windows Installation
+
+```powershell
+cd MarketDataCollector
+
+# Interactive installation
+.\install.ps1
+
+# Or specify mode directly
+.\install.ps1 -Mode Docker
+.\install.ps1 -Mode Native
+```
+
+---
 
 ## Overview
 
@@ -117,9 +180,54 @@ The built-in HTTP server provides:
 - **Prometheus metrics** at `/metrics`
 - **JSON status** at `/status`
 - **Live HTML dashboard** at `/`
+- **Health checks** at `/health`, `/ready`, `/live` (Kubernetes-compatible)
 - **Backfill status and controls** at `/api/backfill/*`
 
 Monitor event throughput, drop rates, integrity events, and pipeline statistics in real-time. Initiate or review historical backfill jobs directly from the dashboard without restarting the collector.
+
+## Production Deployment
+
+### Docker Deployment
+
+```bash
+# Production deployment with Docker Compose
+docker compose up -d
+
+# With monitoring stack (Prometheus + Grafana)
+docker compose --profile monitoring up -d
+
+# View logs
+docker compose logs -f marketdatacollector
+
+# Health check
+curl http://localhost:8080/health
+```
+
+### Kubernetes Deployment
+
+The application supports Kubernetes-style health probes:
+- **Liveness**: `/live` or `/livez`
+- **Readiness**: `/ready` or `/readyz`
+- **Health**: `/health` or `/healthz` (detailed JSON response)
+
+### Systemd Service (Linux)
+
+```bash
+# Copy service file
+sudo cp deploy/systemd/marketdatacollector.service /etc/systemd/system/
+
+# Enable and start
+sudo systemctl enable marketdatacollector
+sudo systemctl start marketdatacollector
+```
+
+### Environment Variables
+
+API credentials can be set via environment variables:
+```bash
+export ALPACA__KEYID=your-key-id
+export ALPACA__SECRETKEY=your-secret-key
+```
 
 ## License
 
