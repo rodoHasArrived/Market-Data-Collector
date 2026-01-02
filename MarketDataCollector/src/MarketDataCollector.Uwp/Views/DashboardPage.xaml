@@ -16,13 +16,45 @@
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="24">
         <StackPanel Spacing="24">
-            <!-- Header -->
-            <StackPanel Orientation="Horizontal" Spacing="12">
-                <FontIcon Glyph="&#xE80F;" FontSize="28" Foreground="{ThemeResource SystemAccentColor}" />
-                <TextBlock Text="Dashboard" Style="{StaticResource TitleTextBlockStyle}" VerticalAlignment="Center" />
-            </StackPanel>
+            <!-- Header with Quick Actions -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
 
-            <!-- Status Cards -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12">
+                    <FontIcon Glyph="&#xE80F;" FontSize="28" Foreground="{ThemeResource SystemAccentColor}" />
+                    <TextBlock Text="Dashboard" Style="{StaticResource TitleTextBlockStyle}" VerticalAlignment="Center" />
+                    <Border x:Name="CollectorStatusBadge" Background="#48BB78" CornerRadius="4" Padding="8,4" VerticalAlignment="Center">
+                        <TextBlock x:Name="CollectorStatusText" Text="Running" FontSize="12" Foreground="White" />
+                    </Border>
+                </StackPanel>
+
+                <!-- Quick Actions -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                    <Button x:Name="StartCollectorButton" Click="StartCollector_Click">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <FontIcon Glyph="&#xE768;" FontSize="14" />
+                            <TextBlock Text="Start" />
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="StopCollectorButton" Click="StopCollector_Click">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <FontIcon Glyph="&#xE71A;" FontSize="14" />
+                            <TextBlock Text="Stop" />
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{x:Bind ViewModel.RefreshStatusCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <FontIcon Glyph="&#xE72C;" FontSize="14" />
+                            <TextBlock Text="Refresh" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
+
+            <!-- Status Cards with Sparklines -->
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -33,52 +65,259 @@
 
                 <!-- Published -->
                 <Border Grid.Column="0" Style="{StaticResource CardStyle}" Margin="0,0,8,0">
-                    <StackPanel HorizontalAlignment="Center" Spacing="8">
-                        <TextBlock Text="{x:Bind ViewModel.PublishedCount, Mode=OneWay}"
-                                   Style="{StaticResource HeaderTextBlockStyle}"
-                                   Foreground="{ThemeResource SystemAccentColor}"
-                                   HorizontalAlignment="Center" />
-                        <TextBlock Text="Published Events" HorizontalAlignment="Center"
-                                   Style="{StaticResource CaptionTextBlockStyle}" />
+                    <StackPanel Spacing="8">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="{x:Bind ViewModel.PublishedCount, Mode=OneWay}"
+                                       Style="{StaticResource HeaderTextBlockStyle}"
+                                       Foreground="{ThemeResource SystemAccentColor}" />
+                            <TextBlock x:Name="PublishedRateText" Text="+1,234/s"
+                                       VerticalAlignment="Bottom" Margin="0,0,0,4"
+                                       Style="{StaticResource CaptionTextBlockStyle}"
+                                       Foreground="#48BB78" />
+                        </StackPanel>
+                        <TextBlock Text="Published Events" Style="{StaticResource CaptionTextBlockStyle}" />
+                        <!-- Sparkline -->
+                        <Canvas x:Name="PublishedSparkline" Height="30" Background="Transparent">
+                            <Polyline x:Name="PublishedSparklinePath" Stroke="{ThemeResource SystemAccentColor}"
+                                      StrokeThickness="2" />
+                        </Canvas>
+                        <TextBlock x:Name="PublishedTrendText" Text="1m: +5.2% | 5m: +12.3%"
+                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                   Foreground="{ThemeResource SystemBaseMediumColor}" />
                     </StackPanel>
                 </Border>
 
                 <!-- Dropped -->
                 <Border Grid.Column="1" Style="{StaticResource CardStyle}" Margin="8,0">
-                    <StackPanel HorizontalAlignment="Center" Spacing="8">
-                        <TextBlock Text="{x:Bind ViewModel.DroppedCount, Mode=OneWay}"
-                                   Style="{StaticResource HeaderTextBlockStyle}"
-                                   Foreground="#F56565"
-                                   HorizontalAlignment="Center" />
-                        <TextBlock Text="Dropped Events" HorizontalAlignment="Center"
-                                   Style="{StaticResource CaptionTextBlockStyle}" />
+                    <StackPanel Spacing="8">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="{x:Bind ViewModel.DroppedCount, Mode=OneWay}"
+                                       Style="{StaticResource HeaderTextBlockStyle}"
+                                       Foreground="#F56565" />
+                            <TextBlock x:Name="DroppedRateText" Text="0.01%"
+                                       VerticalAlignment="Bottom" Margin="0,0,0,4"
+                                       Style="{StaticResource CaptionTextBlockStyle}"
+                                       Foreground="#F56565" />
+                        </StackPanel>
+                        <TextBlock Text="Dropped Events" Style="{StaticResource CaptionTextBlockStyle}" />
+                        <!-- Sparkline -->
+                        <Canvas x:Name="DroppedSparkline" Height="30" Background="Transparent">
+                            <Polyline x:Name="DroppedSparklinePath" Stroke="#F56565" StrokeThickness="2" />
+                        </Canvas>
+                        <TextBlock x:Name="DroppedTrendText" Text="Drop Rate: 0.01%"
+                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                   Foreground="{ThemeResource SystemBaseMediumColor}" />
                     </StackPanel>
                 </Border>
 
                 <!-- Integrity -->
                 <Border Grid.Column="2" Style="{StaticResource CardStyle}" Margin="8,0">
-                    <StackPanel HorizontalAlignment="Center" Spacing="8">
-                        <TextBlock Text="{x:Bind ViewModel.IntegrityCount, Mode=OneWay}"
-                                   Style="{StaticResource HeaderTextBlockStyle}"
-                                   Foreground="#ED8936"
-                                   HorizontalAlignment="Center" />
-                        <TextBlock Text="Integrity Events" HorizontalAlignment="Center"
-                                   Style="{StaticResource CaptionTextBlockStyle}" />
+                    <StackPanel Spacing="8">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="{x:Bind ViewModel.IntegrityCount, Mode=OneWay}"
+                                       Style="{StaticResource HeaderTextBlockStyle}"
+                                       Foreground="#ED8936" />
+                            <TextBlock x:Name="IntegrityRateText" Text="2 gaps"
+                                       VerticalAlignment="Bottom" Margin="0,0,0,4"
+                                       Style="{StaticResource CaptionTextBlockStyle}"
+                                       Foreground="#ED8936" />
+                        </StackPanel>
+                        <TextBlock Text="Integrity Events" Style="{StaticResource CaptionTextBlockStyle}" />
+                        <!-- Sparkline -->
+                        <Canvas x:Name="IntegritySparkline" Height="30" Background="Transparent">
+                            <Polyline x:Name="IntegritySparklinePath" Stroke="#ED8936" StrokeThickness="2" />
+                        </Canvas>
+                        <TextBlock x:Name="IntegrityTrendText" Text="Sequence gaps: 2"
+                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                   Foreground="{ThemeResource SystemBaseMediumColor}" />
                     </StackPanel>
                 </Border>
 
                 <!-- Historical Bars -->
                 <Border Grid.Column="3" Style="{StaticResource CardStyle}" Margin="8,0,0,0">
-                    <StackPanel HorizontalAlignment="Center" Spacing="8">
-                        <TextBlock Text="{x:Bind ViewModel.HistoricalBarsCount, Mode=OneWay}"
-                                   Style="{StaticResource HeaderTextBlockStyle}"
-                                   Foreground="#48BB78"
-                                   HorizontalAlignment="Center" />
-                        <TextBlock Text="Historical Bars" HorizontalAlignment="Center"
-                                   Style="{StaticResource CaptionTextBlockStyle}" />
+                    <StackPanel Spacing="8">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="{x:Bind ViewModel.HistoricalBarsCount, Mode=OneWay}"
+                                       Style="{StaticResource HeaderTextBlockStyle}"
+                                       Foreground="#48BB78" />
+                        </StackPanel>
+                        <TextBlock Text="Historical Bars" Style="{StaticResource CaptionTextBlockStyle}" />
+                        <!-- Sparkline -->
+                        <Canvas x:Name="HistoricalSparkline" Height="30" Background="Transparent">
+                            <Polyline x:Name="HistoricalSparklinePath" Stroke="#48BB78" StrokeThickness="2" />
+                        </Canvas>
+                        <TextBlock x:Name="HistoricalTrendText" Text="Last backfill: 2h ago"
+                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                   Foreground="{ThemeResource SystemBaseMediumColor}" />
                     </StackPanel>
                 </Border>
             </Grid>
+
+            <!-- Throughput Graph -->
+            <Border Style="{StaticResource CardStyle}">
+                <StackPanel Spacing="12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                            <FontIcon Glyph="&#xE9D9;" Foreground="{ThemeResource SystemAccentColor}" />
+                            <TextBlock Text="Event Throughput" Style="{StaticResource SubtitleTextBlockStyle}" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                            <ComboBox x:Name="ThroughputTimeRange" SelectedIndex="1" MinWidth="100">
+                                <ComboBoxItem Content="1 min" Tag="1" />
+                                <ComboBoxItem Content="5 min" Tag="5" />
+                                <ComboBoxItem Content="15 min" Tag="15" />
+                                <ComboBoxItem Content="1 hour" Tag="60" />
+                            </ComboBox>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Throughput Chart Area -->
+                    <Border Background="{ThemeResource SystemFillColorNeutralBackgroundBrush}"
+                            CornerRadius="4" Padding="12">
+                        <Grid Height="150">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <!-- Y-axis labels -->
+                            <StackPanel Grid.Row="0" VerticalAlignment="Stretch" Width="50" HorizontalAlignment="Left">
+                                <TextBlock Text="2000/s" Style="{StaticResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource SystemBaseMediumColor}" />
+                                <TextBlock Text="1500/s" Style="{StaticResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource SystemBaseMediumColor}" Margin="0,30,0,0" />
+                                <TextBlock Text="1000/s" Style="{StaticResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource SystemBaseMediumColor}" Margin="0,30,0,0" />
+                                <TextBlock Text="500/s" Style="{StaticResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource SystemBaseMediumColor}" Margin="0,30,0,0" />
+                            </StackPanel>
+
+                            <!-- Chart -->
+                            <Canvas x:Name="ThroughputChart" Grid.Row="0" Margin="55,0,0,0">
+                                <Polyline x:Name="ThroughputChartPath" Stroke="{ThemeResource SystemAccentColor}"
+                                          StrokeThickness="2" />
+                                <Polygon x:Name="ThroughputChartFill" Fill="{ThemeResource SystemAccentColor}"
+                                         Opacity="0.2" />
+                            </Canvas>
+
+                            <!-- X-axis labels -->
+                            <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="55,8,0,0"
+                                        HorizontalAlignment="Stretch">
+                                <TextBlock Text="-5m" Style="{StaticResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource SystemBaseMediumColor}" />
+                                <TextBlock Text="-4m" Style="{StaticResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource SystemBaseMediumColor}" Margin="60,0,0,0" />
+                                <TextBlock Text="-3m" Style="{StaticResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource SystemBaseMediumColor}" Margin="60,0,0,0" />
+                                <TextBlock Text="-2m" Style="{StaticResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource SystemBaseMediumColor}" Margin="60,0,0,0" />
+                                <TextBlock Text="-1m" Style="{StaticResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource SystemBaseMediumColor}" Margin="60,0,0,0" />
+                                <TextBlock Text="Now" Style="{StaticResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource SystemBaseMediumColor}" Margin="60,0,0,0" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Throughput Stats -->
+                    <Grid ColumnSpacing="24">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Current" Style="{StaticResource CaptionTextBlockStyle}" />
+                            <TextBlock x:Name="CurrentThroughputText" Text="1,234/s"
+                                       Style="{StaticResource BodyTextBlockStyle}" FontWeight="SemiBold" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="Average" Style="{StaticResource CaptionTextBlockStyle}" />
+                            <TextBlock x:Name="AvgThroughputText" Text="1,156/s"
+                                       Style="{StaticResource BodyTextBlockStyle}" FontWeight="SemiBold" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Peak" Style="{StaticResource CaptionTextBlockStyle}" />
+                            <TextBlock x:Name="PeakThroughputText" Text="2,045/s"
+                                       Style="{StaticResource BodyTextBlockStyle}" FontWeight="SemiBold" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="3">
+                            <TextBlock Text="Data Health" Style="{StaticResource CaptionTextBlockStyle}" />
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <TextBlock x:Name="DataHealthText" Text="99.9%"
+                                           Style="{StaticResource BodyTextBlockStyle}" FontWeight="SemiBold"
+                                           Foreground="#48BB78" />
+                                <FontIcon x:Name="DataHealthIcon" Glyph="&#xE73E;" FontSize="14" Foreground="#48BB78" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Quick Actions Panel -->
+            <Border Style="{StaticResource CardStyle}">
+                <StackPanel Spacing="16">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE768;" Foreground="{ThemeResource SystemAccentColor}" />
+                        <TextBlock Text="Quick Actions" Style="{StaticResource SubtitleTextBlockStyle}" />
+                    </StackPanel>
+
+                    <Grid ColumnSpacing="16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Quick Add Symbol -->
+                        <StackPanel Grid.Column="0" Spacing="8">
+                            <TextBlock Text="Quick Add Symbol" Style="{StaticResource CaptionTextBlockStyle}" />
+                            <Grid ColumnSpacing="8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <AutoSuggestBox x:Name="QuickAddSymbolBox"
+                                                Grid.Column="0"
+                                                PlaceholderText="Enter symbol (e.g., AAPL)"
+                                                QueryIcon="Find"
+                                                TextChanged="QuickAddSymbol_TextChanged"
+                                                QuerySubmitted="QuickAddSymbol_QuerySubmitted" />
+                                <CheckBox x:Name="QuickAddTradesCheck" Grid.Column="1" Content="Trades" IsChecked="True" />
+                                <CheckBox x:Name="QuickAddDepthCheck" Grid.Column="2" Content="Depth" />
+                                <Button Grid.Column="3" Content="Add" Style="{StaticResource AccentButtonStyle}"
+                                        Click="QuickAddSymbol_Click" />
+                            </Grid>
+                        </StackPanel>
+
+                        <!-- Quick Action Buttons -->
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Bottom">
+                            <Button Click="ViewLogs_Click">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon Glyph="&#xE756;" FontSize="14" />
+                                    <TextBlock Text="View Logs" />
+                                </StackPanel>
+                            </Button>
+                            <Button Click="RunBackfill_Click">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon Glyph="&#xE787;" FontSize="14" />
+                                    <TextBlock Text="Backfill" />
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </Border>
 
             <!-- Connection Status -->
             <Border Style="{StaticResource CardStyle}">
@@ -101,8 +340,15 @@
                         </StackPanel>
                     </StackPanel>
 
-                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
-                        <Button Content="Refresh" Command="{x:Bind ViewModel.RefreshStatusCommand}" />
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="16">
+                        <StackPanel>
+                            <TextBlock Text="Uptime" Style="{StaticResource CaptionTextBlockStyle}" />
+                            <TextBlock x:Name="UptimeText" Text="2h 34m" FontWeight="SemiBold" />
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Text="Latency" Style="{StaticResource CaptionTextBlockStyle}" />
+                            <TextBlock x:Name="LatencyText" Text="12ms" FontWeight="SemiBold" Foreground="#48BB78" />
+                        </StackPanel>
                         <ProgressRing IsActive="{x:Bind ViewModel.IsLoading, Mode=OneWay}"
                                       Width="20" Height="20" />
                     </StackPanel>
@@ -125,44 +371,101 @@
                 </StackPanel>
             </Border>
 
-            <!-- Subscribed Symbols Summary -->
+            <!-- Enhanced Symbol Performance Summary -->
             <Border Style="{StaticResource CardStyle}">
                 <StackPanel Spacing="12">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <TextBlock Text="Subscribed Symbols" Style="{StaticResource SubtitleTextBlockStyle}" />
-                        <Border Background="{ThemeResource SystemFillColorNeutralBackgroundBrush}"
-                                CornerRadius="12" Padding="8,4">
-                            <TextBlock Text="{x:Bind ViewModel.SymbolCount, Mode=OneWay}"
-                                       Style="{StaticResource CaptionTextBlockStyle}" />
-                        </Border>
-                    </StackPanel>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
 
-                    <ListView ItemsSource="{x:Bind ViewModel.Symbols, Mode=OneWay}"
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="Symbol Performance" Style="{StaticResource SubtitleTextBlockStyle}" />
+                            <Border Background="{ThemeResource SystemFillColorNeutralBackgroundBrush}"
+                                    CornerRadius="12" Padding="8,4">
+                                <TextBlock Text="{x:Bind ViewModel.SymbolCount, Mode=OneWay}"
+                                           Style="{StaticResource CaptionTextBlockStyle}" />
+                            </Border>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                            <ComboBox x:Name="SymbolSortCombo" SelectedIndex="0" MinWidth="120">
+                                <ComboBoxItem Content="By Rate" />
+                                <ComboBoxItem Content="By Name" />
+                                <ComboBoxItem Content="By Status" />
+                            </ComboBox>
+                        </StackPanel>
+                    </Grid>
+
+                    <ListView x:Name="SymbolPerformanceList"
+                              ItemsSource="{x:Bind ViewModel.Symbols, Mode=OneWay}"
                               SelectionMode="None"
-                              MaxHeight="200">
-                        <ListView.ItemTemplate>
+                              MaxHeight="300">
+                        <ListView.HeaderTemplate>
                             <DataTemplate>
-                                <Grid Padding="8,4" ColumnSpacing="24">
+                                <Grid Padding="8,4" Background="{ThemeResource SystemFillColorNeutralBackgroundBrush}">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="80" />
-                                        <ColumnDefinition Width="60" />
-                                        <ColumnDefinition Width="60" />
+                                        <ColumnDefinition Width="80" />
+                                        <ColumnDefinition Width="80" />
+                                        <ColumnDefinition Width="100" />
+                                        <ColumnDefinition Width="100" />
+                                        <ColumnDefinition Width="80" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Grid.Column="0" Text="Symbol" FontWeight="SemiBold" />
+                                    <TextBlock Grid.Column="1" Text="Status" FontWeight="SemiBold" />
+                                    <TextBlock Grid.Column="2" Text="Rate" FontWeight="SemiBold" />
+                                    <TextBlock Grid.Column="3" Text="Events" FontWeight="SemiBold" />
+                                    <TextBlock Grid.Column="4" Text="Last Event" FontWeight="SemiBold" />
+                                    <TextBlock Grid.Column="5" Text="Health" FontWeight="SemiBold" />
+                                    <TextBlock Grid.Column="6" Text="Trend" FontWeight="SemiBold" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.HeaderTemplate>
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Padding="8,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="80" />
+                                        <ColumnDefinition Width="80" />
+                                        <ColumnDefinition Width="80" />
+                                        <ColumnDefinition Width="100" />
+                                        <ColumnDefinition Width="100" />
+                                        <ColumnDefinition Width="80" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
 
                                     <TextBlock Grid.Column="0" Text="{Binding Symbol}" FontWeight="SemiBold" />
-                                    <TextBlock Grid.Column="1" Text="{Binding TradesText}"
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                                        <Ellipse Width="8" Height="8" Fill="{Binding StatusColor}" />
+                                        <TextBlock Text="{Binding StatusText}" />
+                                    </StackPanel>
+                                    <TextBlock Grid.Column="2" Text="{Binding EventRate}"
+                                               Foreground="{ThemeResource SystemAccentColor}" />
+                                    <TextBlock Grid.Column="3" Text="{Binding TotalEvents}" />
+                                    <TextBlock Grid.Column="4" Text="{Binding LastEventTime}"
                                                Foreground="{ThemeResource SystemBaseMediumColor}" />
-                                    <TextBlock Grid.Column="2" Text="{Binding DepthText}"
-                                               Foreground="{ThemeResource SystemBaseMediumColor}" />
-                                    <TextBlock Grid.Column="3" Text="{Binding Exchange}"
-                                               Foreground="{ThemeResource SystemBaseMediumLowColor}" />
+                                    <StackPanel Grid.Column="5" Orientation="Horizontal" Spacing="4">
+                                        <TextBlock Text="{Binding HealthScore}" Foreground="{Binding HealthColor}" />
+                                        <FontIcon Glyph="{Binding HealthIcon}" FontSize="12"
+                                                  Foreground="{Binding HealthColor}" />
+                                    </StackPanel>
+                                    <!-- Mini sparkline for trend -->
+                                    <Canvas Grid.Column="6" Height="20" Width="60">
+                                        <Polyline Points="{Binding TrendPoints}" Stroke="{Binding TrendColor}"
+                                                  StrokeThickness="1.5" />
+                                    </Canvas>
                                 </Grid>
                             </DataTemplate>
                         </ListView.ItemTemplate>
                     </ListView>
                 </StackPanel>
             </Border>
+
+            <InfoBar x:Name="DashboardInfoBar" IsOpen="False" IsClosable="True" />
         </StackPanel>
     </ScrollViewer>
 </Page>

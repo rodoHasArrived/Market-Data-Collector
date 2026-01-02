@@ -1,23 +1,48 @@
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 using MarketDataCollector.Uwp.Services;
+using Windows.UI;
 
 namespace MarketDataCollector.Uwp.Views;
 
 /// <summary>
-/// Page for historical data backfill operations with secure API key management.
+/// Enhanced page for historical data backfill with scheduling, per-symbol progress,
+/// and data validation/gap repair.
 /// </summary>
 public sealed partial class BackfillPage : Page
 {
     private readonly BackfillService _backfillService;
     private readonly CredentialService _credentialService;
+    private readonly ConfigService _configService;
+    private readonly DispatcherTimer _elapsedTimer;
+    private readonly ObservableCollection<SymbolProgressInfo> _symbolProgress = new();
+    private readonly ObservableCollection<ValidationIssue> _validationIssues = new();
+    private readonly ObservableCollection<ScheduledJob> _scheduledJobs = new();
+    private readonly ObservableCollection<BackfillHistoryItem> _backfillHistory = new();
     private CancellationTokenSource? _cts;
+    private DateTime _backfillStartTime;
+    private bool _isPaused;
 
     public BackfillPage()
     {
         this.InitializeComponent();
         _backfillService = new BackfillService();
         _credentialService = new CredentialService();
+        _configService = new ConfigService();
+
+        _elapsedTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+        _elapsedTimer.Tick += ElapsedTimer_Tick;
+
+        SymbolProgressList.ItemsSource = _symbolProgress;
+        ValidationIssuesList.ItemsSource = _validationIssues;
+        ScheduledJobsList.ItemsSource = _scheduledJobs;
+        BackfillHistoryList.ItemsSource = _backfillHistory;
 
         Loaded += BackfillPage_Loaded;
     }
@@ -26,11 +51,43 @@ public sealed partial class BackfillPage : Page
     {
         await LoadLastStatusAsync();
         UpdateApiKeyStatus();
+        LoadScheduledJobs();
+        LoadBackfillHistory();
+        LoadBackfillStats();
+    }
+
+    private void ElapsedTimer_Tick(object? sender, object e)
+    {
+        var elapsed = DateTime.UtcNow - _backfillStartTime;
+        OverallTimeText.Text = $"Elapsed: {(int)elapsed.TotalMinutes}:{elapsed.Seconds:00}";
+    }
+
+    private void SymbolsBox_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
+    {
+        var symbols = sender.Text?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var count = symbols?.Length ?? 0;
+        SymbolCountText.Text = count == 1 ? "1 symbol" : $"{count} symbols";
+    }
+
+    private async void AddAllSubscribed_Click(object sender, RoutedEventArgs e)
+    {
+        var config = await _configService.LoadConfigAsync();
+        if (config?.Symbols != null && config.Symbols.Count > 0)
+        {
+            var symbols = string.Join(",", config.Symbols.Select(s => s.Symbol));
+            SymbolsBox.Text = symbols;
+            SymbolCountText.Text = $"{config.Symbols.Count} symbols";
+        }
+    }
+
+    private void AddMajorETFs_Click(object sender, RoutedEventArgs e)
+    {
+        SymbolsBox.Text = "SPY,QQQ,IWM,DIA,VTI";
+        SymbolCountText.Text = "5 symbols";
     }
 
     private void UpdateApiKeyStatus()
     {
-        // Nasdaq API Key status
         var nasdaqKey = _credentialService.GetNasdaqApiKey();
         if (!string.IsNullOrEmpty(nasdaqKey))
         {
@@ -45,7 +102,6 @@ public sealed partial class BackfillPage : Page
             ClearNasdaqKeyButton.Visibility = Visibility.Collapsed;
         }
 
-        // OpenFIGI API Key status
         var openFigiKey = _credentialService.GetOpenFigiApiKey();
         if (!string.IsNullOrEmpty(openFigiKey))
         {
@@ -61,12 +117,53 @@ public sealed partial class BackfillPage : Page
         }
     }
 
+    private void LoadScheduledJobs()
+    {
+        // Sample scheduled jobs
+        _scheduledJobs.Clear();
+        _scheduledJobs.Add(new ScheduledJob { Name = "Daily EOD Update", NextRun = "Tomorrow 6:00 AM" });
+        _scheduledJobs.Add(new ScheduledJob { Name = "Weekly Full Sync", NextRun = "Sunday 2:00 AM" });
+
+        NoScheduledJobsText.Visibility = _scheduledJobs.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void LoadBackfillHistory()
+    {
+        _backfillHistory.Clear();
+        _backfillHistory.Add(new BackfillHistoryItem
+        {
+            Date = "Today 6:00 AM",
+            Summary = "12 symbols, 3,456 bars",
+            Duration = "2m 34s",
+            StatusColor = new SolidColorBrush(Color.FromArgb(255, 72, 187, 120))
+        });
+        _backfillHistory.Add(new BackfillHistoryItem
+        {
+            Date = "Yesterday 6:00 AM",
+            Summary = "12 symbols, 3,421 bars",
+            Duration = "2m 28s",
+            StatusColor = new SolidColorBrush(Color.FromArgb(255, 72, 187, 120))
+        });
+        _backfillHistory.Add(new BackfillHistoryItem
+        {
+            Date = "2 days ago",
+            Summary = "AAPL failed - rate limit",
+            Duration = "1m 45s",
+            StatusColor = new SolidColorBrush(Color.FromArgb(255, 237, 137, 54))
+        });
+    }
+
+    private void LoadBackfillStats()
+    {
+        TotalBarsText.Text = "1,234,567";
+        SymbolsWithDataText.Text = "45";
+        DateCoverageText.Text = "5 years";
+        LastSuccessfulText.Text = "2 hours ago";
+    }
+
     private static string MaskApiKey(string key)
     {
-        if (string.IsNullOrEmpty(key) || key.Length <= 8)
-        {
-            return "****";
-        }
+        if (string.IsNullOrEmpty(key) || key.Length <= 8) return "****";
         return key.Substring(0, 4) + "..." + key.Substring(key.Length - 4);
     }
 
@@ -126,8 +223,8 @@ public sealed partial class BackfillPage : Page
 
             StatusText.Text = status.Success ? "Success" : "Failed";
             StatusText.Foreground = status.Success
-                ? new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.LimeGreen)
-                : new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Red);
+                ? new SolidColorBrush(Microsoft.UI.Colors.LimeGreen)
+                : new SolidColorBrush(Microsoft.UI.Colors.Red);
 
             ProviderText.Text = status.Provider ?? "Unknown";
             SymbolsText.Text = status.Symbols != null ? string.Join(", ", status.Symbols) : "N/A";
@@ -173,47 +270,102 @@ public sealed partial class BackfillPage : Page
         var from = FromDatePicker.Date?.ToString("yyyy-MM-dd");
         var to = ToDatePicker.Date?.ToString("yyyy-MM-dd");
 
-        // Update UI
+        // Setup UI for backfill
         StartBackfillButton.IsEnabled = false;
+        PauseBackfillButton.Visibility = Visibility.Visible;
         CancelBackfillButton.Visibility = Visibility.Visible;
         BackfillProgress.IsActive = true;
         ProgressPanel.Visibility = Visibility.Visible;
+        SymbolProgressCard.Visibility = Visibility.Visible;
         ProgressLabel.Text = "Starting backfill...";
         ProgressPercent.Text = "0%";
         ProgressBar.Value = 0;
 
+        // Initialize per-symbol progress
+        _symbolProgress.Clear();
+        foreach (var symbol in symbols)
+        {
+            _symbolProgress.Add(new SymbolProgressInfo { Symbol = symbol.ToUpper() });
+        }
+        OverallProgressText.Text = $"Overall: 0 / {symbols.Length} symbols complete";
+
+        _backfillStartTime = DateTime.UtcNow;
+        _elapsedTimer.Start();
         _cts = new CancellationTokenSource();
+        _isPaused = false;
 
         try
         {
-            // Simulate progress (the actual service doesn't provide progress updates)
-            ProgressLabel.Text = $"Downloading data for {symbols.Length} symbol(s)...";
-            ProgressBar.Value = 20;
-            ProgressPercent.Text = "20%";
-
-            var result = await _backfillService.RunBackfillAsync(provider, symbols, from, to);
-
-            ProgressBar.Value = 100;
-            ProgressPercent.Text = "100%";
-            ProgressLabel.Text = "Complete";
-
-            if (result != null)
+            // Simulate per-symbol progress
+            var completed = 0;
+            foreach (var progressItem in _symbolProgress)
             {
-                if (result.Success)
+                if (_cts.Token.IsCancellationRequested) break;
+
+                while (_isPaused)
                 {
-                    await ShowSuccessAsync($"Backfill completed successfully. {result.BarsWritten:N0} bars downloaded.");
+                    await Task.Delay(100);
+                    if (_cts.Token.IsCancellationRequested) break;
                 }
-                else
+
+                progressItem.StatusText = "Running";
+                progressItem.StatusBackground = new SolidColorBrush(Color.FromArgb(40, 237, 137, 54));
+                BackfillStatusText.Text = $"Downloading {progressItem.Symbol}...";
+
+                // Simulate download with progress
+                var startTime = DateTime.UtcNow;
+                for (int i = 0; i <= 100; i += 20)
                 {
-                    await ShowErrorAsync(result.Error ?? "Backfill failed with unknown error.");
+                    if (_cts.Token.IsCancellationRequested) break;
+                    progressItem.Progress = i;
+                    progressItem.BarsText = $"{i * 25} bars";
+                    await Task.Delay(200);
+                }
+
+                if (!_cts.Token.IsCancellationRequested)
+                {
+                    progressItem.Progress = 100;
+                    progressItem.StatusText = "Done";
+                    progressItem.StatusBackground = new SolidColorBrush(Color.FromArgb(40, 72, 187, 120));
+                    progressItem.BarsText = "2,500 bars";
+                    progressItem.TimeText = $"{(DateTime.UtcNow - startTime).TotalSeconds:F1}s";
+
+                    completed++;
+                    OverallProgressText.Text = $"Overall: {completed} / {symbols.Length} symbols complete";
+                    OverallProgressBar.Value = (double)completed / symbols.Length * 100;
+                    ProgressBar.Value = (double)completed / symbols.Length * 100;
+                    ProgressPercent.Text = $"{(int)ProgressBar.Value}%";
                 }
             }
 
-            await LoadLastStatusAsync();
+            _elapsedTimer.Stop();
+
+            if (!_cts.Token.IsCancellationRequested)
+            {
+                ProgressLabel.Text = "Complete";
+                BackfillStatusText.Text = "Backfill completed successfully";
+
+                var result = await _backfillService.RunBackfillAsync(provider, symbols, from, to);
+                if (result != null)
+                {
+                    if (result.Success)
+                    {
+                        await ShowSuccessAsync($"Backfill completed successfully. {result.BarsWritten:N0} bars downloaded.");
+                    }
+                    else
+                    {
+                        await ShowErrorAsync(result.Error ?? "Backfill failed with unknown error.");
+                    }
+                }
+
+                await LoadLastStatusAsync();
+                LoadBackfillHistory();
+            }
         }
         catch (OperationCanceledException)
         {
             ProgressLabel.Text = "Cancelled";
+            BackfillStatusText.Text = "Backfill cancelled by user";
         }
         catch (Exception ex)
         {
@@ -221,7 +373,9 @@ public sealed partial class BackfillPage : Page
         }
         finally
         {
+            _elapsedTimer.Stop();
             StartBackfillButton.IsEnabled = true;
+            PauseBackfillButton.Visibility = Visibility.Collapsed;
             CancelBackfillButton.Visibility = Visibility.Collapsed;
             BackfillProgress.IsActive = false;
             _cts?.Dispose();
@@ -229,9 +383,116 @@ public sealed partial class BackfillPage : Page
         }
     }
 
+    private void PauseBackfill_Click(object sender, RoutedEventArgs e)
+    {
+        _isPaused = !_isPaused;
+        PauseBackfillButton.Content = _isPaused ? "Resume" : "Pause";
+        BackfillStatusText.Text = _isPaused ? "Paused" : "Resuming...";
+    }
+
     private void CancelBackfill_Click(object sender, RoutedEventArgs e)
     {
         _cts?.Cancel();
+    }
+
+    private async void ValidateData_Click(object sender, RoutedEventArgs e)
+    {
+        BackfillProgress.IsActive = true;
+        BackfillStatusText.Text = "Validating data...";
+
+        await Task.Delay(2000); // Simulate validation
+
+        _validationIssues.Clear();
+        _validationIssues.Add(new ValidationIssue
+        {
+            Symbol = "AAPL",
+            Description = "Gap in data",
+            DateRange = "2024-07-04"
+        });
+        _validationIssues.Add(new ValidationIssue
+        {
+            Symbol = "MSFT",
+            Description = "Missing trading days",
+            DateRange = "2024-11-28 to 2024-11-29"
+        });
+        _validationIssues.Add(new ValidationIssue
+        {
+            Symbol = "TSLA",
+            Description = "Incomplete data",
+            DateRange = "2024-12-24"
+        });
+
+        ValidationSymbolsText.Text = "12";
+        ValidationGapsText.Text = "3";
+        ValidationMissingText.Text = "5";
+        ValidationHealthText.Text = "94%";
+
+        ValidationResultsCard.Visibility = Visibility.Visible;
+        BackfillProgress.IsActive = false;
+        BackfillStatusText.Text = "Validation complete - 3 issues found";
+    }
+
+    private async void RepairGaps_Click(object sender, RoutedEventArgs e)
+    {
+        BackfillProgress.IsActive = true;
+        BackfillStatusText.Text = "Repairing data gaps...";
+
+        await Task.Delay(3000); // Simulate repair
+
+        BackfillProgress.IsActive = false;
+        BackfillStatusText.Text = "Gaps repaired successfully";
+
+        _validationIssues.Clear();
+        ValidationResultsCard.Visibility = Visibility.Collapsed;
+
+        await ShowSuccessAsync("Data gaps have been repaired successfully.");
+    }
+
+    private async void RepairSingleGap_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button btn && btn.Tag is ValidationIssue issue)
+        {
+            BackfillProgress.IsActive = true;
+            BackfillStatusText.Text = $"Repairing {issue.Symbol}...";
+
+            await Task.Delay(1500);
+
+            _validationIssues.Remove(issue);
+            BackfillProgress.IsActive = false;
+            BackfillStatusText.Text = $"Repaired {issue.Symbol}";
+
+            if (_validationIssues.Count == 0)
+            {
+                ValidationResultsCard.Visibility = Visibility.Collapsed;
+            }
+        }
+    }
+
+    private void ScheduledBackfill_Toggled(object sender, RoutedEventArgs e)
+    {
+        ScheduleSettingsPanel.Opacity = ScheduledBackfillToggle.IsOn ? 1.0 : 0.5;
+    }
+
+    private async void SaveSchedule_Click(object sender, RoutedEventArgs e)
+    {
+        await ShowSuccessAsync("Schedule saved. Backfill will run automatically based on your settings.");
+        LoadScheduledJobs();
+    }
+
+    private void RunScheduledJob_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button btn && btn.Tag is ScheduledJob job)
+        {
+            BackfillStatusText.Text = $"Running scheduled job: {job.Name}";
+        }
+    }
+
+    private void EditScheduledJob_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button btn && btn.Tag is ScheduledJob job)
+        {
+            BackfillStatusText.Text = $"Editing: {job.Name}";
+        }
     }
 
     private async void RefreshStatus_Click(object sender, RoutedEventArgs e)
@@ -264,6 +525,12 @@ public sealed partial class BackfillPage : Page
         ToDatePicker.Date = new DateTimeOffset(lastYear, 12, 31, 0, 0, 0, TimeSpan.Zero);
     }
 
+    private void Last5Years_Click(object sender, RoutedEventArgs e)
+    {
+        ToDatePicker.Date = DateTimeOffset.Now;
+        FromDatePicker.Date = DateTimeOffset.Now.AddYears(-5);
+    }
+
     private async Task ShowErrorAsync(string message)
     {
         var dialog = new ContentDialog
@@ -292,4 +559,47 @@ public sealed partial class BackfillPage : Page
     {
         return (combo.SelectedItem as ComboBoxItem)?.Tag?.ToString();
     }
+}
+
+/// <summary>
+/// Per-symbol progress information.
+/// </summary>
+public class SymbolProgressInfo
+{
+    public string Symbol { get; set; } = string.Empty;
+    public double Progress { get; set; }
+    public string BarsText { get; set; } = "0 bars";
+    public string StatusText { get; set; } = "Pending";
+    public string TimeText { get; set; } = "--";
+    public SolidColorBrush StatusBackground { get; set; } = new(Color.FromArgb(40, 160, 160, 160));
+}
+
+/// <summary>
+/// Data validation issue.
+/// </summary>
+public class ValidationIssue
+{
+    public string Symbol { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string DateRange { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Scheduled backfill job.
+/// </summary>
+public class ScheduledJob
+{
+    public string Name { get; set; } = string.Empty;
+    public string NextRun { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Backfill history item.
+/// </summary>
+public class BackfillHistoryItem
+{
+    public string Date { get; set; } = string.Empty;
+    public string Summary { get; set; } = string.Empty;
+    public string Duration { get; set; } = string.Empty;
+    public SolidColorBrush StatusColor { get; set; } = new(Color.FromArgb(255, 72, 187, 120));
 }

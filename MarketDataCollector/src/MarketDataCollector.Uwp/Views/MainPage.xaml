@@ -55,6 +55,29 @@
                     <FontIcon Glyph="&#xE787;" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
+
+            <NavigationViewItemSeparator />
+
+            <NavigationViewItem Content="Service Manager" Tag="ServiceManager">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE912;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem Content="Data Export" Tag="DataExport">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xEDE1;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem Content="Trading Hours" Tag="TradingHours">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE823;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem Content="Help" Tag="Help">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE897;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
         </NavigationView.MenuItems>
 
         <Frame x:Name="ContentFrame" Padding="24">
