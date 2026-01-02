@@ -643,6 +643,10 @@ public static class HtmlTemplates
             <option value=""BySymbol"" selected>By Symbol</option>
             <option value=""ByDate"">By Date</option>
             <option value=""ByType"">By Type</option>
+            <option value=""BySource"">By Source (alpaca/ib/...)</option>
+            <option value=""ByAssetClass"">By Asset Class (equity/options/...)</option>
+            <option value=""Hierarchical"">Hierarchical (source/asset/symbol/type)</option>
+            <option value=""Canonical"">Canonical (year/month/day/source/symbol)</option>
           </select>
         </div>
         <div class=""form-group"">
@@ -1237,6 +1241,14 @@ public static class HtmlTemplates
         path = dateStr ? `${{root}}/${{dateStr}}/AAPL/${{pfx}}Trade${{ext}}` : `${{root}}/AAPL/${{pfx}}Trade${{ext}}`;
       }} else if (naming === 'ByType') {{
         path = dateStr ? `${{root}}/Trade/AAPL/${{pfx}}${{dateStr}}${{ext}}` : `${{root}}/Trade/AAPL/${{pfx}}data${{ext}}`;
+      }} else if (naming === 'BySource') {{
+        path = dateStr ? `${{root}}/alpaca/AAPL/Trade/${{pfx}}${{dateStr}}${{ext}}` : `${{root}}/alpaca/AAPL/Trade/${{pfx}}data${{ext}}`;
+      }} else if (naming === 'ByAssetClass') {{
+        path = dateStr ? `${{root}}/equity/AAPL/Trade/${{pfx}}${{dateStr}}${{ext}}` : `${{root}}/equity/AAPL/Trade/${{pfx}}data${{ext}}`;
+      }} else if (naming === 'Hierarchical') {{
+        path = dateStr ? `${{root}}/alpaca/equity/AAPL/Trade/${{pfx}}${{dateStr}}${{ext}}` : `${{root}}/alpaca/equity/AAPL/Trade/${{pfx}}data${{ext}}`;
+      }} else if (naming === 'Canonical') {{
+        path = `${{root}}/2024/01/15/alpaca/AAPL/${{pfx}}Trade${{ext}}`;
       }}
 
       document.getElementById('previewPath').textContent = path;
