@@ -559,3 +559,9 @@ GET https://finnhub.io/api/v1/stock/candle?symbol={symbol}&resolution=D&from={un
 ```
 GET https://api.stlouisfed.org/fred/series/observations?series_id={id}&api_key={key}&file_type=json
 ```
+
+---
+
+**Version:** 1.1.0
+**Last Updated:** 2026-01-02
+**See Also:** [DEPENDENCIES.md](../MarketDataCollector/DEPENDENCIES.md) | [CONFIGURATION.md](../MarketDataCollector/docs/CONFIGURATION.md)

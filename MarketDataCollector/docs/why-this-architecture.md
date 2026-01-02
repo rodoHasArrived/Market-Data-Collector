@@ -74,3 +74,9 @@ We treat all recorded activity as a stream of standardized `MarketEvent` objects
 - CI test automation and release workflow
 - Authentication for UI if network-exposed
 - Feed-divergence alarms for provider reconciliation
+
+---
+
+**Version:** 1.1.0
+**Last Updated:** 2026-01-02
+**See Also:** [architecture.md](architecture.md) | [domains.md](domains.md) | [c4-diagrams.md](c4-diagrams.md)

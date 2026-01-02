@@ -454,3 +454,9 @@ For IB preferred shares (e.g., PCG-PA, PCG-PB), use explicit `LocalSymbol` to av
 ```
 
 This ensures `ContractFactory` resolves to the correct IB contract.
+
+---
+
+**Version:** 1.1.0
+**Last Updated:** 2026-01-02
+**See Also:** [CONFIGURATION.md](CONFIGURATION.md) | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | [architecture.md](architecture.md)

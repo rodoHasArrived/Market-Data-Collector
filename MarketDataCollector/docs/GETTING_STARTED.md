@@ -227,3 +227,9 @@ Set your Alpaca credentials in `appsettings.json` or via environment variables.
 4. Check firewall settings
 
 For more issues, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
+
+---
+
+**Version:** 1.1.0
+**Last Updated:** 2026-01-02
+**See Also:** [HELP.md](../HELP.md) | [CONFIGURATION.md](CONFIGURATION.md) | [architecture.md](architecture.md)

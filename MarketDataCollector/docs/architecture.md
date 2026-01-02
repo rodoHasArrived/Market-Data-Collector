@@ -183,3 +183,9 @@ await foreach (var evt in replayer.ReadEventsAsync(cancellationToken))
     }
 }
 ```
+
+---
+
+**Version:** 1.1.0
+**Last Updated:** 2026-01-02
+**See Also:** [c4-diagrams.md](c4-diagrams.md) | [domains.md](domains.md) | [why-this-architecture.md](why-this-architecture.md)
