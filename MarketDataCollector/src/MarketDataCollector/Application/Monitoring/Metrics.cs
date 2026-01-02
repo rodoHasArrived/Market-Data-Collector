@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using MarketDataCollector.Application.Subscriptions.Models;
 
 namespace MarketDataCollector.Application.Monitoring;
 
@@ -329,6 +330,17 @@ public static class Metrics
         );
     }
 
+    /// <summary>
+    /// Gets a combined snapshot of all metrics including resubscription metrics.
+    /// </summary>
+    public static CombinedMetricsSnapshot GetCombinedSnapshot()
+    {
+        return new CombinedMetricsSnapshot(
+            Core: GetSnapshot(),
+            Resubscription: ResubscriptionMetrics.GetSnapshot()
+        );
+    }
+
     #endregion
 }
 
@@ -361,4 +373,12 @@ public readonly record struct MetricsSnapshot(
     double MemoryUsageMb,
     double HeapSizeMb,
     DateTimeOffset Timestamp
+);
+
+/// <summary>
+/// Combined snapshot including core metrics and resubscription metrics.
+/// </summary>
+public readonly record struct CombinedMetricsSnapshot(
+    MetricsSnapshot Core,
+    ResubscriptionMetricsSnapshot Resubscription
 );
