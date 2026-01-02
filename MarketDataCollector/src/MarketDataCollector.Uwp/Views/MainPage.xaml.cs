@@ -56,6 +56,18 @@ public sealed partial class MainPage : Page
                 case "Backfill":
                     ContentFrame.Navigate(typeof(BackfillPage));
                     break;
+                case "ServiceManager":
+                    ContentFrame.Navigate(typeof(ServiceManagerPage));
+                    break;
+                case "DataExport":
+                    ContentFrame.Navigate(typeof(DataExportPage));
+                    break;
+                case "TradingHours":
+                    ContentFrame.Navigate(typeof(TradingHoursPage));
+                    break;
+                case "Help":
+                    ContentFrame.Navigate(typeof(HelpPage));
+                    break;
             }
         }
     }
