@@ -305,6 +305,16 @@ new ToastContentBuilder()
 - Automatic cleanup scheduler
 - Retention policy templates
 - Pre-deletion preview and confirmation
+- Retention guardrails that block overly aggressive settings (e.g., minimum 7 days for tick data)
+- Legal hold toggle to freeze deletes for incident investigations or audits
+- Hash-based verification before deletion to ensure archived copies are intact
+- Per-provider retention dry run that shows which files would be removed, grouped by symbol and date
+- Post-cleanup audit report with file counts, sizes, and any skipped items for compliance evidence
+
+**File Retention Assurance (New)**:
+- Combine guardrails, legal holds, and dry-run previews into a unified retention safety center
+- Schedule periodic checksum audits to confirm archives remain readable and uncorrupted
+- Generate retention attestation reports for compliance stakeholders with export to PDF/CSV
 
 ### 24. Storage Path Validation
 **Current State**: Path configuration without validation.
@@ -315,6 +325,9 @@ new ToastContentBuilder()
 - SSD vs HDD detection with recommendations
 - Minimum free space alerts
 - Automatic path migration tool
+- Safe-move workflow that validates source and destination parity (counts + checksums) before switching paths
+- Background retention watchdog that alerts if expected files disappear or shrink unexpectedly
+- Disk health signals (SMART status, reallocated sectors) surfaced in storage settings
 
 ### 25. Performance Monitoring
 **Current State**: Basic latency display.
@@ -598,6 +611,78 @@ new ToastContentBuilder()
 
 ---
 
+## Operational Workflow Enhancements
+
+### 50. Notification Center & Incident Timeline
+**Current State**: Toasts surface critical events but historical context is limited to logs.
+
+**Refinement**:
+- Persistent notification center panel with filter by severity and source (provider, storage, backfill)
+- Incident timeline that stitches related events (disconnect → retry → failover → recovery) into one thread
+- Quick actions on each incident (retry, open logs, mute, create support bundle)
+- Snooze rules for noisy alerts and auto-expiry after acknowledgement
+
+**Implementation Notes**:
+- Backed by a lightweight local queue (e.g., SQLite) with retention controls
+- Reuse existing Serilog event IDs to map incidents to logs and telemetry
+- Provide deep links into the relevant page (provider details, symbol, backfill job)
+
+### 51. Workspace Templates & Session Restore
+**Current State**: Users rebuild layouts and filters when switching tasks or restarting the app.
+
+**Refinement**:
+- Saveable workspace templates (e.g., Monitoring, Backfill Ops, Storage Admin) capturing open pages, filters, and widget layout
+- Session auto-restore on startup with last active workspace and scroll positions
+- Multi-monitor workspace presets with remembered window bounds and snapped panels
+- Workspace switching shortcuts with transition hints
+
+**Implementation Notes**:
+- Persist workspace definitions in app data with versioning for forward compatibility
+- Provide export/import of templates for team sharing
+- Guard restores with capability checks (e.g., hide provider widgets if provider disabled)
+
+### 52. Offline Cache Mode for Air-Gapped Environments
+**Current State**: UI assumes continuous connectivity to the collector service.
+
+**Refinement**:
+- Read-only offline mode that loads last-known metrics, storage summaries, and configuration snapshots
+- Background cache refresher that opportunistically syncs when connectivity returns
+- Visual connectivity banner with "retry now" and cache age indicators
+- Explicit offline export of configuration and symbol lists for change review in disconnected networks
+
+**Implementation Notes**:
+- Use local storage for cached API responses with staleness metadata
+- Gracefully degrade charts (sparkline placeholders, cached ranges) while offline
+- Provide an "offline diff" that queues edits for approval once reconnected
+
+### 53. Guided Setup & Preflight Sanity Checks
+**Current State**: New users rely on documentation to configure providers and storage correctly.
+
+**Refinement**:
+- Step-by-step guided setup wizard covering provider credentials, storage paths, and retention defaults
+- Preflight validation that runs connectivity tests, disk-space checks, and sample subscription validation before enabling services
+- Contextual tips drawn from recent incidents ("last run failed due to rate limits—consider smaller batch size")
+- Summary screen with exportable setup report for compliance evidence
+
+**Implementation Notes**:
+- Reuse existing connection test hooks and storage validators to avoid duplicate logic
+- Store completed steps to allow resuming the wizard mid-way
+- Offer presets for common setups (IB-only, Alpaca + S3 archive, local-only sandbox)
+
+### 54. Support Bundle Composer
+**Current State**: Support bundles must be assembled manually from logs and configuration files.
+
+**Refinement**:
+- Guided wizard to select time range, providers, symbols, and data types to include
+- Automatic redaction of secrets plus user-visible preview of what will be packaged
+- Include environment summary (app version, OS build, hardware footprint) and recent incident timeline
+- One-click upload to a configurable secure endpoint or save-to-disk option
+
+**Implementation Notes**:
+- Leverage existing logging paths and diagnostics tooling to gather artifacts
+- Generate bundles asynchronously with progress feedback and size estimates
+- Provide checksum and signature for integrity verification when sharing externally
+
 ## Implementation Priority Matrix
 
 | Priority | Refinement | Effort | Impact |
@@ -608,9 +693,14 @@ new ToastContentBuilder()
 | P1 | Symbol Groups & Portfolios | Medium | High |
 | P1 | Backfill Progress Visualization | Low | Medium |
 | P1 | Storage Analytics Dashboard | Medium | Medium |
+| P1 | File Retention Assurance | Medium | High |
 | P1 | Keyboard Shortcuts | Low | Medium |
+| P1 | Notification Center & Incident Timeline | Medium | High |
+| P1 | Workspace Templates & Session Restore | Low | Medium |
 | P2 | Provider Health Score Breakdown | Medium | Medium |
 | P2 | PowerShell Integration | High | Medium |
+| P2 | Offline Cache Mode | Medium | Medium |
+| P2 | Guided Setup & Preflight Checks | Low | Medium |
 | P2 | Advanced Charting | High | Medium |
 | P3 | REST API | High | Low |
 | P3 | Localization | High | Low |
@@ -638,5 +728,5 @@ new ToastContentBuilder()
 
 ---
 
-*Document Version: 1.0*
-*Last Updated: January 2, 2026*
+*Document Version: 1.2*
+*Last Updated: January 4, 2026*
