@@ -132,18 +132,23 @@ public sealed partial class SettingsPage : Page
     private void NotificationsEnabled_Toggled(object sender, RoutedEventArgs e)
     {
         NotificationSettingsPanel.Opacity = NotificationsEnabledToggle.IsOn ? 1.0 : 0.5;
+
+        // Update notification service settings
+        var settings = NotificationService.Instance.GetSettings();
+        settings.Enabled = NotificationsEnabledToggle.IsOn;
+        settings.NotifyConnectionStatus = NotifyConnectionCheck.IsChecked == true;
+        settings.NotifyErrors = NotifyErrorCheck.IsChecked == true;
+        settings.NotifyBackfillComplete = NotifyBackfillCheck.IsChecked == true;
+        settings.NotifyDataGaps = NotifyDataGapsCheck.IsChecked == true;
+        settings.NotifyStorageWarnings = NotifyStorageCheck.IsChecked == true;
+        NotificationService.Instance.UpdateSettings(settings);
     }
 
-    private void SendTestNotification_Click(object sender, RoutedEventArgs e)
+    private async void SendTestNotification_Click(object sender, RoutedEventArgs e)
     {
         try
         {
-            var builder = new AppNotificationBuilder()
-                .AddText("Market Data Collector")
-                .AddText("This is a test notification. Notifications are working correctly!");
-
-            var notification = builder.BuildNotification();
-            AppNotificationManager.Default.Show(notification);
+            await NotificationService.Instance.SendTestNotificationAsync();
 
             ConfigInfoBar.Severity = InfoBarSeverity.Success;
             ConfigInfoBar.Title = "Notification Sent";
@@ -347,17 +352,14 @@ public sealed partial class SettingsPage : Page
         if (ThemeCombo.SelectedItem is ComboBoxItem item)
         {
             var theme = item.Tag?.ToString();
-            var requestedTheme = theme switch
+            var appTheme = theme switch
             {
-                "Light" => ElementTheme.Light,
-                "Dark" => ElementTheme.Dark,
-                _ => ElementTheme.Default
+                "Light" => AppTheme.Light,
+                "Dark" => AppTheme.Dark,
+                _ => AppTheme.System
             };
 
-            if (App.MainWindow?.Content is FrameworkElement rootElement)
-            {
-                rootElement.RequestedTheme = requestedTheme;
-            }
+            ThemeService.Instance.SetTheme(appTheme);
         }
     }
 

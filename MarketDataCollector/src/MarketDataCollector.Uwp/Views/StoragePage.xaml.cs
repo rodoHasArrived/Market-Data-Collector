@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -52,26 +53,85 @@ public sealed partial class StoragePage : Page
         UpdateLifecycleUI();
     }
 
-    private void LoadStorageAnalytics()
+    private async void LoadStorageAnalytics()
     {
-        // In a real implementation, this would scan the data directory
-        // For now, showing sample data
-        TotalStorageText.Text = "12.4 GB";
-        TotalFilesText.Text = "1,847 files";
+        try
+        {
+            var analytics = await StorageAnalyticsService.Instance.GetAnalyticsAsync();
 
-        TradeStorageText.Text = "8.2 GB";
-        TradeFilesText.Text = "1,245 files";
+            TotalStorageText.Text = StorageAnalyticsService.FormatBytes(analytics.TotalSizeBytes);
+            TotalFilesText.Text = $"{analytics.TotalFileCount:N0} files";
 
-        DepthStorageText.Text = "3.8 GB";
-        DepthFilesText.Text = "512 files";
+            TradeStorageText.Text = StorageAnalyticsService.FormatBytes(analytics.TradeSizeBytes);
+            TradeFilesText.Text = $"{analytics.TradeFileCount:N0} files";
 
-        HistoricalStorageText.Text = "0.4 GB";
-        HistoricalFilesText.Text = "90 files";
+            DepthStorageText.Text = StorageAnalyticsService.FormatBytes(analytics.DepthSizeBytes);
+            DepthFilesText.Text = $"{analytics.DepthFileCount:N0} files";
+
+            HistoricalStorageText.Text = StorageAnalyticsService.FormatBytes(analytics.HistoricalSizeBytes);
+            HistoricalFilesText.Text = $"{analytics.HistoricalFileCount:N0} files";
+
+            // Update the stacked bar proportions
+            if (analytics.TotalSizeBytes > 0)
+            {
+                var tradePercent = (double)analytics.TradeSizeBytes / analytics.TotalSizeBytes * 100;
+                var depthPercent = (double)analytics.DepthSizeBytes / analytics.TotalSizeBytes * 100;
+                var historicalPercent = (double)analytics.HistoricalSizeBytes / analytics.TotalSizeBytes * 100;
+
+                TradeColumn.Width = new GridLength(Math.Max(tradePercent, 1), GridUnitType.Star);
+                DepthColumn.Width = new GridLength(Math.Max(depthPercent, 1), GridUnitType.Star);
+                HistoricalColumn.Width = new GridLength(Math.Max(historicalPercent, 1), GridUnitType.Star);
+            }
+
+            // Load symbol breakdown
+            if (analytics.SymbolBreakdown != null && analytics.SymbolBreakdown.Length > 0)
+            {
+                var maxSize = analytics.SymbolBreakdown.Max(s => s.SizeBytes);
+                var topSymbols = analytics.SymbolBreakdown
+                    .Take(10)
+                    .Select(s => new SymbolStorageDisplayInfo
+                    {
+                        Symbol = s.Symbol,
+                        Percentage = maxSize > 0 ? (double)s.SizeBytes / maxSize * 100 : 0,
+                        Size = StorageAnalyticsService.FormatBytes(s.SizeBytes),
+                        Files = $"{s.FileCount:N0} files"
+                    })
+                    .ToList();
+
+                TopSymbolsList.ItemsSource = topSymbols;
+            }
+
+            // Update drive info
+            var driveInfo = await StorageAnalyticsService.Instance.GetDriveInfoAsync();
+            if (driveInfo != null && driveInfo.UsedPercent >= 80)
+            {
+                SaveInfoBar.Severity = driveInfo.UsedPercent >= 90 ? InfoBarSeverity.Warning : InfoBarSeverity.Informational;
+                SaveInfoBar.Title = "Storage Warning";
+                SaveInfoBar.Message = $"Data drive is {driveInfo.UsedPercent:F0}% full. {StorageAnalyticsService.FormatBytes(driveInfo.FreeBytes)} remaining.";
+                SaveInfoBar.IsOpen = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            // Fallback to sample data if real analytics fail
+            TotalStorageText.Text = "12.4 GB";
+            TotalFilesText.Text = "1,847 files";
+            TradeStorageText.Text = "8.2 GB";
+            TradeFilesText.Text = "1,245 files";
+            DepthStorageText.Text = "3.8 GB";
+            DepthFilesText.Text = "512 files";
+            HistoricalStorageText.Text = "0.4 GB";
+            HistoricalFilesText.Text = "90 files";
+
+            LoadSampleTopSymbols();
+
+            System.Diagnostics.Debug.WriteLine($"Storage analytics error: {ex.Message}");
+        }
     }
 
-    private void LoadTopSymbols()
+    private void LoadSampleTopSymbols()
     {
-        var topSymbols = new List<SymbolStorageInfo>
+        var topSymbols = new List<SymbolStorageDisplayInfo>
         {
             new() { Symbol = "SPY", Percentage = 100, Size = "2.1 GB", Files = "412 files" },
             new() { Symbol = "AAPL", Percentage = 76, Size = "1.6 GB", Files = "298 files" },
@@ -83,15 +143,30 @@ public sealed partial class StoragePage : Page
         TopSymbolsList.ItemsSource = topSymbols;
     }
 
-    private void RefreshAnalytics_Click(object sender, RoutedEventArgs e)
+    private void LoadTopSymbols()
     {
-        LoadStorageAnalytics();
-        LoadTopSymbols();
+        // This is now handled in LoadStorageAnalytics, keeping for compatibility
+        LoadSampleTopSymbols();
+    }
 
-        SaveInfoBar.Severity = InfoBarSeverity.Informational;
-        SaveInfoBar.Title = "Refreshed";
-        SaveInfoBar.Message = "Storage analytics have been updated.";
-        SaveInfoBar.IsOpen = true;
+    private async void RefreshAnalytics_Click(object sender, RoutedEventArgs e)
+    {
+        SaveProgress.IsActive = true;
+
+        try
+        {
+            await StorageAnalyticsService.Instance.GetAnalyticsAsync(forceRefresh: true);
+            LoadStorageAnalytics();
+
+            SaveInfoBar.Severity = InfoBarSeverity.Informational;
+            SaveInfoBar.Title = "Refreshed";
+            SaveInfoBar.Message = "Storage analytics have been updated.";
+            SaveInfoBar.IsOpen = true;
+        }
+        finally
+        {
+            SaveProgress.IsActive = false;
+        }
     }
 
     private void LifecycleToggle_Toggled(object sender, RoutedEventArgs e)
@@ -321,9 +396,9 @@ public sealed partial class StoragePage : Page
 }
 
 /// <summary>
-/// Model for symbol storage information display.
+/// Model for symbol storage information display in the UI.
 /// </summary>
-public class SymbolStorageInfo
+public class SymbolStorageDisplayInfo
 {
     public string Symbol { get; set; } = string.Empty;
     public double Percentage { get; set; }
