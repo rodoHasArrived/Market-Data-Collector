@@ -18,6 +18,10 @@ namespace MarketDataCollector.Application.Config;
 /// <param name="Symbols">Symbol subscriptions.</param>
 /// <param name="MassTransit">MassTransit distributed messaging configuration.</param>
 /// <param name="Backfill">Optional historical backfill defaults.</param>
+/// <param name="Tiering">Tiered storage configuration.</param>
+/// <param name="Quotas">Storage quota configuration.</param>
+/// <param name="Maintenance">Maintenance and operational scheduling.</param>
+/// <param name="Sources">Data source registry configuration.</param>
 public sealed record AppConfig(
     string DataRoot = "data",
     bool Compress = false,
@@ -26,7 +30,11 @@ public sealed record AppConfig(
     StorageConfig? Storage = null,
     SymbolConfig[]? Symbols = null,
     MassTransitConfig? MassTransit = null,
-    BackfillConfig? Backfill = null
+    BackfillConfig? Backfill = null,
+    TieringConfig? Tiering = null,
+    QuotaConfig? Quotas = null,
+    MaintenanceConfig? Maintenance = null,
+    SourceRegistryConfig? Sources = null
 );
 
 /// <summary>
@@ -93,6 +101,10 @@ public sealed record StorageConfig(
             "bysymbol" => FileNamingConvention.BySymbol,
             "bydate" => FileNamingConvention.ByDate,
             "bytype" => FileNamingConvention.ByType,
+            "bysource" => FileNamingConvention.BySource,
+            "byassetclass" => FileNamingConvention.ByAssetClass,
+            "hierarchical" => FileNamingConvention.Hierarchical,
+            "canonical" => FileNamingConvention.Canonical,
             _ => FileNamingConvention.BySymbol
         };
     }
@@ -111,3 +123,141 @@ public sealed record StorageConfig(
         };
     }
 }
+
+/// <summary>
+/// Tiered storage configuration.
+/// </summary>
+public sealed record TieringConfig(
+    bool Enabled = false,
+    TierDefinition[]? Tiers = null,
+    string? MigrationSchedule = null,
+    int ParallelMigrations = 4
+);
+
+/// <summary>
+/// Definition of a storage tier.
+/// </summary>
+public sealed record TierDefinition(
+    string Name,
+    string Path,
+    int? MaxAgeDays = null,
+    long? MaxSizeGb = null,
+    string Format = "jsonl",
+    string? Compression = null,
+    string? StorageClass = null
+);
+
+/// <summary>
+/// Storage quota configuration.
+/// </summary>
+public sealed record QuotaConfig(
+    GlobalQuotaConfig? Global = null,
+    Dictionary<string, PerSourceQuotaConfig>? PerSource = null,
+    Dictionary<string, PerSymbolQuotaConfig>? PerSymbol = null,
+    DynamicQuotaSettings? Dynamic = null
+);
+
+/// <summary>
+/// Global quota limits.
+/// </summary>
+public sealed record GlobalQuotaConfig(
+    long MaxBytes = 107_374_182_400L, // 100GB default
+    long? MaxFiles = null,
+    long? MaxEventsPerDay = null,
+    string Enforcement = "SoftLimit"
+);
+
+/// <summary>
+/// Per-source quota configuration.
+/// </summary>
+public sealed record PerSourceQuotaConfig(
+    long MaxBytes,
+    long? MaxFiles = null,
+    string Enforcement = "SoftLimit"
+);
+
+/// <summary>
+/// Per-symbol quota configuration.
+/// </summary>
+public sealed record PerSymbolQuotaConfig(
+    long MaxBytes,
+    long? MaxFiles = null,
+    string Enforcement = "SoftLimit"
+);
+
+/// <summary>
+/// Dynamic quota rebalancing settings.
+/// </summary>
+public sealed record DynamicQuotaSettings(
+    bool Enabled = false,
+    int EvaluationPeriodMinutes = 60,
+    double MinReservePct = 10,
+    double OverprovisionFactor = 1.1,
+    bool StealFromInactive = false
+);
+
+/// <summary>
+/// Maintenance and operational scheduling configuration.
+/// </summary>
+public sealed record MaintenanceConfig(
+    bool Enabled = true,
+    string Timezone = "America/New_York",
+    TradingSessionConfig[]? TradingSessions = null,
+    MaintenanceWindowConfig[]? Windows = null,
+    string[]? Holidays = null
+);
+
+/// <summary>
+/// Trading session definition.
+/// </summary>
+public sealed record TradingSessionConfig(
+    string Name,
+    string[] ActiveDays,
+    string PreMarketStart = "04:00",
+    string RegularStart = "09:30",
+    string RegularEnd = "16:00",
+    string AfterHoursEnd = "20:00",
+    bool IncludesPreMarket = true,
+    bool IncludesAfterHours = true
+);
+
+/// <summary>
+/// Maintenance window definition.
+/// </summary>
+public sealed record MaintenanceWindowConfig(
+    string Name,
+    string Start,
+    string End,
+    string[] Days,
+    string[]? AllowedOperations = null,
+    int MaxConcurrentJobs = 4,
+    int MaxCpuPct = 80,
+    int MaxMemoryPct = 70,
+    int MaxDiskIoMbps = 500
+);
+
+/// <summary>
+/// Source registry configuration.
+/// </summary>
+public sealed record SourceRegistryConfig(
+    string? PersistencePath = null,
+    SourceDefinition[]? Sources = null,
+    string[]? PriorityOrder = null,
+    string DefaultConflictStrategy = "HighestPriority"
+);
+
+/// <summary>
+/// Data source definition.
+/// </summary>
+public sealed record SourceDefinition(
+    string Id,
+    string Name,
+    string Type = "Live",
+    int Priority = 1,
+    string[]? AssetClasses = null,
+    string[]? DataTypes = null,
+    double? LatencyMs = null,
+    double? Reliability = null,
+    decimal? CostPerEvent = null,
+    bool Enabled = true
+);
