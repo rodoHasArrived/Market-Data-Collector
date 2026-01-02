@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading.Channels;
 using MarketDataCollector.Application.Monitoring;
+using MarketDataCollector.Application.Services;
 using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Infrastructure.Performance;
 using MarketDataCollector.Storage.Interfaces;
@@ -12,7 +13,7 @@ namespace MarketDataCollector.Application.Pipeline;
 /// High-throughput, backpressured pipeline that decouples producers from storage sinks.
 /// Includes periodic flushing, capacity monitoring, and performance metrics.
 /// </summary>
-public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable
+public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFlushable
 {
     private readonly Channel<MarketEvent> _channel;
     private readonly IStorageSink _sink;

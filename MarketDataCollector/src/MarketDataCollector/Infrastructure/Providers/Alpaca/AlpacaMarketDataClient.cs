@@ -332,21 +332,36 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
             _tradeCollector.OnTrade(update);
         }
 
-        // TODO: Wire Alpaca quotes ("T":"q") into the L2 collector
-        // Alpaca quotes contain bid/ask price and size which can be converted to BboQuotePayload
-        // Steps to implement:
-        // 1. Parse quote messages (T="q") with fields: S=symbol, bp=bidPrice, bs=bidSize, ap=askPrice, as=askSize, t=timestamp
-        // 2. Create MarketQuoteUpdate from the parsed data
-        // 3. Forward to _quoteCollector.OnQuote(update) to publish BBO events
-        // 4. Consider creating L2SnapshotPayload from aggregated quotes if full depth is needed
+        // Handle Alpaca quotes ("T":"q") - BBO updates
+        // Alpaca quote fields: S=symbol, bp=bidPrice, bs=bidSize, ap=askPrice, as=askSize, t=timestamp
         if (t == "q")
         {
-            // Quote parsing is available but not yet wired to collectors
-            // Uncomment and complete implementation when ready:
-            // var sym = el.TryGetProperty("S", out var sProp) ? sProp.GetString() : null;
-            // var bidPrice = el.TryGetProperty("bp", out var bp) ? (decimal)bp.GetDouble() : 0m;
-            // var askPrice = el.TryGetProperty("ap", out var ap) ? (decimal)ap.GetDouble() : 0m;
-            // ... wire to _quoteCollector
+            var sym = el.TryGetProperty("S", out var sProp) ? sProp.GetString() : null;
+            if (string.IsNullOrWhiteSpace(sym)) return;
+
+            var bidPrice = el.TryGetProperty("bp", out var bpProp) ? (decimal)bpProp.GetDouble() : 0m;
+            var bidSize = el.TryGetProperty("bs", out var bsProp) ? bsProp.GetInt64() : 0L;
+            var askPrice = el.TryGetProperty("ap", out var apProp) ? (decimal)apProp.GetDouble() : 0m;
+            var askSize = el.TryGetProperty("as", out var asProp) ? asProp.GetInt64() : 0L;
+            var ts = el.TryGetProperty("t", out var tsProp) ? tsProp.GetString() : null;
+
+            DateTimeOffset dto;
+            if (!DateTimeOffset.TryParse(ts, out dto))
+                dto = DateTimeOffset.UtcNow;
+
+            var quoteUpdate = new MarketQuoteUpdate(
+                Timestamp: dto,
+                Symbol: sym!,
+                BidPrice: bidPrice,
+                BidSize: bidSize,
+                AskPrice: askPrice,
+                AskSize: askSize,
+                SequenceNumber: null,
+                StreamId: "ALPACA",
+                Venue: "ALPACA"
+            );
+
+            _quoteCollector.OnQuote(quoteUpdate);
         }
     }
 }

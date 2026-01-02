@@ -5,6 +5,7 @@ namespace DataIngestion.OrderBookService.Services;
 
 /// <summary>
 /// Background service for periodic order book snapshots.
+/// Implements graceful shutdown to prevent data loss.
 /// </summary>
 public sealed class OrderBookSnapshotService : BackgroundService
 {
@@ -13,6 +14,7 @@ public sealed class OrderBookSnapshotService : BackgroundService
     private readonly OrderBookServiceConfig _config;
     private readonly OrderBookMetrics _metrics;
     private readonly ILogger _log = Log.ForContext<OrderBookSnapshotService>();
+    private readonly TimeSpan _shutdownTimeout = TimeSpan.FromSeconds(30);
 
     public OrderBookSnapshotService(
         IOrderBookManager manager,
@@ -34,7 +36,7 @@ public sealed class OrderBookSnapshotService : BackgroundService
             return;
         }
 
-        _log.Information("Order book snapshot service started with {Interval}ms interval",
+        _log.Information("Order book snapshot service starting with {Interval}ms interval",
             _config.Snapshot.IntervalMs);
 
         var interval = TimeSpan.FromMilliseconds(_config.Snapshot.IntervalMs);
@@ -76,8 +78,40 @@ public sealed class OrderBookSnapshotService : BackgroundService
                 _log.Error(ex, "Error during order book snapshot");
             }
         }
+    }
 
-        await _storage.FlushAsync();
-        _log.Information("Order book snapshot service stopped");
+    public override async Task StopAsync(CancellationToken cancellationToken)
+    {
+        _log.Information("Order book snapshot service stopping - flushing remaining data...");
+
+        using var timeoutCts = new CancellationTokenSource(_shutdownTimeout);
+        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
+            cancellationToken, timeoutCts.Token);
+
+        try
+        {
+            // Final snapshot of any changed books
+            var booksToSnapshot = _manager.GetChangedBooks().ToList();
+            if (booksToSnapshot.Count > 0)
+            {
+                await _storage.WriteBatchAsync(booksToSnapshot).WaitAsync(linkedCts.Token);
+                _log.Debug("Final snapshot of {Count} order books", booksToSnapshot.Count);
+            }
+
+            // Flush storage
+            await _storage.FlushAsync().WaitAsync(linkedCts.Token);
+            _log.Information("Order book snapshot service stopped - all data flushed successfully");
+        }
+        catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested)
+        {
+            _log.Warning("Shutdown timeout ({Timeout}s) reached - some order book data may be lost",
+                _shutdownTimeout.TotalSeconds);
+        }
+        catch (Exception ex)
+        {
+            _log.Error(ex, "Error during graceful shutdown");
+        }
+
+        await base.StopAsync(cancellationToken);
     }
 }

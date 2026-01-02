@@ -8,6 +8,10 @@ using Serilog;
 
 namespace DataIngestion.HistoricalService.Services;
 
+/// <summary>
+/// Background service that processes historical data backfill jobs.
+/// Implements graceful shutdown to properly cancel in-flight jobs.
+/// </summary>
 public sealed class BackfillWorkerService : BackgroundService
 {
     private readonly IBackfillJobManager _jobManager;
@@ -17,6 +21,7 @@ public sealed class BackfillWorkerService : BackgroundService
     private readonly HistoricalMetrics _metrics;
     private readonly ILogger _log = Log.ForContext<BackfillWorkerService>();
     private readonly Channel<BackfillRequest> _requestChannel;
+    private readonly TimeSpan _shutdownTimeout = TimeSpan.FromSeconds(30);
 
     public BackfillWorkerService(
         IBackfillJobManager jobManager,
@@ -40,7 +45,7 @@ public sealed class BackfillWorkerService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _log.Information("Backfill worker started with max {Max} concurrent jobs",
+        _log.Information("Backfill worker starting with max {Max} concurrent jobs",
             _config.Backfill.MaxConcurrentJobs);
 
         var workers = Enumerable.Range(0, _config.Backfill.MaxConcurrentJobs)
@@ -48,6 +53,45 @@ public sealed class BackfillWorkerService : BackgroundService
             .ToList();
 
         await Task.WhenAll(workers);
+    }
+
+    public override async Task StopAsync(CancellationToken cancellationToken)
+    {
+        _log.Information("Backfill worker service stopping - cancelling in-flight jobs...");
+
+        // Complete the request channel so no new requests are accepted
+        _requestChannel.Writer.TryComplete();
+
+        using var timeoutCts = new CancellationTokenSource(_shutdownTimeout);
+        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
+            cancellationToken, timeoutCts.Token);
+
+        try
+        {
+            // Mark active jobs as cancelled
+            var activeJobs = _jobManager.GetActiveJobs()
+                .Where(j => j.Status == "Running" || j.Status == "Queued")
+                .ToList();
+
+            foreach (var job in activeJobs)
+            {
+                _jobManager.CompleteJob(job.JobId, false, "Service shutdown");
+                _log.Debug("Cancelled job {JobId} due to shutdown", job.JobId);
+            }
+
+            if (activeJobs.Count > 0)
+            {
+                _log.Information("Cancelled {Count} active backfill jobs due to shutdown", activeJobs.Count);
+            }
+
+            _log.Information("Backfill worker service stopped gracefully");
+        }
+        catch (Exception ex)
+        {
+            _log.Error(ex, "Error during backfill worker shutdown");
+        }
+
+        await base.StopAsync(cancellationToken);
     }
 
     private async Task ProcessJobsAsync(CancellationToken ct)
