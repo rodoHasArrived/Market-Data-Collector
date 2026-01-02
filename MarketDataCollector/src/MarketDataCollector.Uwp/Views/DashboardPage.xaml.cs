@@ -24,8 +24,19 @@ public sealed partial class DashboardPage : Page
     private readonly List<double> _integrityHistory = new();
     private readonly List<double> _throughputHistory = new();
     private readonly Random _random = new();
+    private readonly DispatcherTimer _uptimeTimer;
     private bool _isCollectorRunning = true;
+    private bool _isCollectorPaused = false;
     private DateTime _startTime;
+    private DateTime _collectorStartTime;
+
+    // Stream status tracking
+    private int _tradesStreamCount = 5;
+    private int _depthStreamCount = 3;
+    private int _quotesStreamCount = 0;
+    private bool _tradesStreamActive = true;
+    private bool _depthStreamActive = true;
+    private bool _quotesStreamActive = false;
 
     public DashboardPage()
     {
@@ -33,12 +44,16 @@ public sealed partial class DashboardPage : Page
         ViewModel = new MainViewModel();
         DataContext = ViewModel;
         _startTime = DateTime.UtcNow;
+        _collectorStartTime = DateTime.UtcNow;
 
         _refreshTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
         _refreshTimer.Tick += RefreshTimer_Tick;
 
         _sparklineTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
         _sparklineTimer.Tick += SparklineTimer_Tick;
+
+        _uptimeTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+        _uptimeTimer.Tick += UptimeTimer_Tick;
 
         Loaded += DashboardPage_Loaded;
         Unloaded += DashboardPage_Unloaded;
@@ -50,7 +65,11 @@ public sealed partial class DashboardPage : Page
         InitializeSparklineData();
         _refreshTimer.Start();
         _sparklineTimer.Start();
+        _uptimeTimer.Start();
         UpdateCollectorStatus();
+        UpdateQuickActionsCollectorStatus();
+        UpdateStreamStatusBadges();
+        UpdateCollectorUptime();
         UpdateSparklines();
         UpdateThroughputChart();
     }
@@ -59,6 +78,7 @@ public sealed partial class DashboardPage : Page
     {
         _refreshTimer.Stop();
         _sparklineTimer.Stop();
+        _uptimeTimer.Stop();
     }
 
     private void RefreshTimer_Tick(object? sender, object e)
@@ -72,6 +92,11 @@ public sealed partial class DashboardPage : Page
     {
         AddSparklineData();
         UpdateSparklines();
+    }
+
+    private void UptimeTimer_Tick(object? sender, object e)
+    {
+        UpdateCollectorUptime();
     }
 
     private void InitializeSparklineData()
@@ -191,8 +216,16 @@ public sealed partial class DashboardPage : Page
     {
         if (_isCollectorRunning)
         {
-            CollectorStatusBadge.Background = new SolidColorBrush(Color.FromArgb(255, 72, 187, 120));
-            CollectorStatusText.Text = "Running";
+            if (_isCollectorPaused)
+            {
+                CollectorStatusBadge.Background = new SolidColorBrush(Color.FromArgb(255, 237, 137, 54));
+                CollectorStatusText.Text = "Paused";
+            }
+            else
+            {
+                CollectorStatusBadge.Background = new SolidColorBrush(Color.FromArgb(255, 72, 187, 120));
+                CollectorStatusText.Text = "Running";
+            }
             StartCollectorButton.IsEnabled = false;
             StopCollectorButton.IsEnabled = true;
         }
@@ -205,11 +238,161 @@ public sealed partial class DashboardPage : Page
         }
     }
 
+    private void UpdateQuickActionsCollectorStatus()
+    {
+        if (_isCollectorRunning)
+        {
+            QuickStartCollectorButton.IsEnabled = false;
+            QuickStopCollectorButton.IsEnabled = true;
+            QuickPauseCollectorButton.IsEnabled = true;
+
+            if (_isCollectorPaused)
+            {
+                PauseButtonIcon.Glyph = "\uE768"; // Play icon
+                PauseButtonText.Text = "Resume Collection";
+            }
+            else
+            {
+                PauseButtonIcon.Glyph = "\uE769"; // Pause icon
+                PauseButtonText.Text = "Pause Collection";
+            }
+        }
+        else
+        {
+            QuickStartCollectorButton.IsEnabled = true;
+            QuickStopCollectorButton.IsEnabled = false;
+            QuickPauseCollectorButton.IsEnabled = false;
+            PauseButtonIcon.Glyph = "\uE769"; // Pause icon
+            PauseButtonText.Text = "Pause Collection";
+        }
+    }
+
+    private void UpdateStreamStatusBadges()
+    {
+        // Update Trades stream badge
+        TradesStreamBadge.Background = new SolidColorBrush(
+            _tradesStreamActive && _isCollectorRunning && !_isCollectorPaused
+                ? Color.FromArgb(255, 72, 187, 120)  // Green - active
+                : _tradesStreamActive && _isCollectorPaused
+                    ? Color.FromArgb(255, 237, 137, 54)  // Orange - paused
+                    : Color.FromArgb(255, 160, 174, 192)); // Gray - inactive
+        TradesStreamCount.Text = $"({_tradesStreamCount})";
+
+        // Update Depth stream badge
+        DepthStreamBadge.Background = new SolidColorBrush(
+            _depthStreamActive && _isCollectorRunning && !_isCollectorPaused
+                ? Color.FromArgb(255, 72, 187, 120)
+                : _depthStreamActive && _isCollectorPaused
+                    ? Color.FromArgb(255, 237, 137, 54)
+                    : Color.FromArgb(255, 160, 174, 192));
+        DepthStreamCount.Text = $"({_depthStreamCount})";
+
+        // Update Quotes stream badge
+        QuotesStreamBadge.Background = new SolidColorBrush(
+            _quotesStreamActive && _isCollectorRunning && !_isCollectorPaused
+                ? Color.FromArgb(255, 72, 187, 120)
+                : _quotesStreamActive && _isCollectorPaused
+                    ? Color.FromArgb(255, 237, 137, 54)
+                    : Color.FromArgb(255, 160, 174, 192));
+        QuotesStreamCount.Text = $"({_quotesStreamCount})";
+    }
+
+    private void UpdateCollectorUptime()
+    {
+        if (_isCollectorRunning)
+        {
+            var uptime = DateTime.UtcNow - _collectorStartTime;
+            if (uptime.TotalHours >= 1)
+            {
+                CollectorUptimeText.Text = $"{(int)uptime.TotalHours}h {uptime.Minutes}m {uptime.Seconds}s";
+            }
+            else if (uptime.TotalMinutes >= 1)
+            {
+                CollectorUptimeText.Text = $"{uptime.Minutes}m {uptime.Seconds}s";
+            }
+            else
+            {
+                CollectorUptimeText.Text = $"{uptime.Seconds}s";
+            }
+        }
+        else
+        {
+            CollectorUptimeText.Text = "Stopped";
+        }
+    }
+
+    private async void QuickStartCollector_Click(object sender, RoutedEventArgs e)
+    {
+        _isCollectorRunning = true;
+        _isCollectorPaused = false;
+        _collectorStartTime = DateTime.UtcNow;
+        _startTime = DateTime.UtcNow;
+        UpdateCollectorStatus();
+        UpdateQuickActionsCollectorStatus();
+        UpdateStreamStatusBadges();
+
+        DashboardInfoBar.Severity = InfoBarSeverity.Success;
+        DashboardInfoBar.Title = "Collector Started";
+        DashboardInfoBar.Message = "Market data collection has been started.";
+        DashboardInfoBar.IsOpen = true;
+
+        await Task.Delay(3000);
+        DashboardInfoBar.IsOpen = false;
+    }
+
+    private async void QuickStopCollector_Click(object sender, RoutedEventArgs e)
+    {
+        _isCollectorRunning = false;
+        _isCollectorPaused = false;
+        UpdateCollectorStatus();
+        UpdateQuickActionsCollectorStatus();
+        UpdateStreamStatusBadges();
+
+        DashboardInfoBar.Severity = InfoBarSeverity.Warning;
+        DashboardInfoBar.Title = "Collector Stopped";
+        DashboardInfoBar.Message = "Market data collection has been stopped.";
+        DashboardInfoBar.IsOpen = true;
+
+        await Task.Delay(3000);
+        DashboardInfoBar.IsOpen = false;
+    }
+
+    private async void QuickPauseCollector_Click(object sender, RoutedEventArgs e)
+    {
+        if (!_isCollectorRunning) return;
+
+        _isCollectorPaused = !_isCollectorPaused;
+        UpdateCollectorStatus();
+        UpdateQuickActionsCollectorStatus();
+        UpdateStreamStatusBadges();
+
+        if (_isCollectorPaused)
+        {
+            DashboardInfoBar.Severity = InfoBarSeverity.Informational;
+            DashboardInfoBar.Title = "Collection Paused";
+            DashboardInfoBar.Message = "Market data collection has been paused. Click Resume to continue.";
+        }
+        else
+        {
+            DashboardInfoBar.Severity = InfoBarSeverity.Success;
+            DashboardInfoBar.Title = "Collection Resumed";
+            DashboardInfoBar.Message = "Market data collection has been resumed.";
+        }
+        DashboardInfoBar.IsOpen = true;
+
+        await Task.Delay(3000);
+        DashboardInfoBar.IsOpen = false;
+    }
+
     private async void StartCollector_Click(object sender, RoutedEventArgs e)
     {
         _isCollectorRunning = true;
+        _isCollectorPaused = false;
+        _collectorStartTime = DateTime.UtcNow;
         _startTime = DateTime.UtcNow;
         UpdateCollectorStatus();
+        UpdateQuickActionsCollectorStatus();
+        UpdateStreamStatusBadges();
 
         DashboardInfoBar.Severity = InfoBarSeverity.Success;
         DashboardInfoBar.Title = "Collector Started";
@@ -223,7 +406,10 @@ public sealed partial class DashboardPage : Page
     private async void StopCollector_Click(object sender, RoutedEventArgs e)
     {
         _isCollectorRunning = false;
+        _isCollectorPaused = false;
         UpdateCollectorStatus();
+        UpdateQuickActionsCollectorStatus();
+        UpdateStreamStatusBadges();
 
         DashboardInfoBar.Severity = InfoBarSeverity.Warning;
         DashboardInfoBar.Title = "Collector Stopped";
@@ -281,10 +467,36 @@ public sealed partial class DashboardPage : Page
 
         var trades = QuickAddTradesCheck.IsChecked == true;
         var depth = QuickAddDepthCheck.IsChecked == true;
+        var quotes = QuickAddQuotesCheck.IsChecked == true;
+
+        // Update stream counts based on subscriptions
+        if (trades)
+        {
+            _tradesStreamCount++;
+            _tradesStreamActive = true;
+        }
+        if (depth)
+        {
+            _depthStreamCount++;
+            _depthStreamActive = true;
+        }
+        if (quotes)
+        {
+            _quotesStreamCount++;
+            _quotesStreamActive = true;
+        }
+        UpdateStreamStatusBadges();
+
+        // Build subscription details string
+        var subscriptions = new List<string>();
+        if (trades) subscriptions.Add("Trades");
+        if (depth) subscriptions.Add("Depth");
+        if (quotes) subscriptions.Add("Quotes");
+        var subscriptionText = subscriptions.Count > 0 ? string.Join(", ", subscriptions) : "None";
 
         DashboardInfoBar.Severity = InfoBarSeverity.Success;
         DashboardInfoBar.Title = "Symbol Added";
-        DashboardInfoBar.Message = $"Added {symbol} subscription (Trades: {trades}, Depth: {depth})";
+        DashboardInfoBar.Message = $"Added {symbol} subscription ({subscriptionText})";
         DashboardInfoBar.IsOpen = true;
 
         QuickAddSymbolBox.Text = string.Empty;

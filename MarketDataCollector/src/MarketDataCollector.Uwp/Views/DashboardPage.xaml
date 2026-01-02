@@ -265,57 +265,123 @@
             <!-- Quick Actions Panel -->
             <Border Style="{StaticResource CardStyle}">
                 <StackPanel Spacing="16">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <FontIcon Glyph="&#xE768;" Foreground="{ThemeResource SystemAccentColor}" />
-                        <TextBlock Text="Quick Actions" Style="{StaticResource SubtitleTextBlockStyle}" />
-                    </StackPanel>
-
-                    <Grid ColumnSpacing="16">
+                    <!-- Header with Stream Status Badges and Uptime -->
+                    <Grid>
                         <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
 
-                        <!-- Quick Add Symbol -->
-                        <StackPanel Grid.Column="0" Spacing="8">
-                            <TextBlock Text="Quick Add Symbol" Style="{StaticResource CaptionTextBlockStyle}" />
-                            <Grid ColumnSpacing="8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-
-                                <AutoSuggestBox x:Name="QuickAddSymbolBox"
-                                                Grid.Column="0"
-                                                PlaceholderText="Enter symbol (e.g., AAPL)"
-                                                QueryIcon="Find"
-                                                TextChanged="QuickAddSymbol_TextChanged"
-                                                QuerySubmitted="QuickAddSymbol_QuerySubmitted" />
-                                <CheckBox x:Name="QuickAddTradesCheck" Grid.Column="1" Content="Trades" IsChecked="True" />
-                                <CheckBox x:Name="QuickAddDepthCheck" Grid.Column="2" Content="Depth" />
-                                <Button Grid.Column="3" Content="Add" Style="{StaticResource AccentButtonStyle}"
-                                        Click="QuickAddSymbol_Click" />
-                            </Grid>
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                            <FontIcon Glyph="&#xE768;" Foreground="{ThemeResource SystemAccentColor}" />
+                            <TextBlock Text="Quick Actions" Style="{StaticResource SubtitleTextBlockStyle}" />
                         </StackPanel>
 
-                        <!-- Quick Action Buttons -->
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Bottom">
-                            <Button Click="ViewLogs_Click">
+                        <!-- Active Stream Status Badges -->
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12" Margin="24,0,0,0" VerticalAlignment="Center">
+                            <Border x:Name="TradesStreamBadge" Background="#48BB78" CornerRadius="4" Padding="8,4">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <FontIcon Glyph="&#xE756;" FontSize="14" />
-                                    <TextBlock Text="View Logs" />
+                                    <FontIcon Glyph="&#xE8AB;" FontSize="12" Foreground="White" />
+                                    <TextBlock x:Name="TradesStreamText" Text="Trades" FontSize="12" Foreground="White" FontWeight="SemiBold" />
+                                    <TextBlock x:Name="TradesStreamCount" Text="(5)" FontSize="11" Foreground="White" Opacity="0.9" />
                                 </StackPanel>
-                            </Button>
-                            <Button Click="RunBackfill_Click">
+                            </Border>
+                            <Border x:Name="DepthStreamBadge" Background="#48BB78" CornerRadius="4" Padding="8,4">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <FontIcon Glyph="&#xE787;" FontSize="14" />
-                                    <TextBlock Text="Backfill" />
+                                    <FontIcon Glyph="&#xE8A1;" FontSize="12" Foreground="White" />
+                                    <TextBlock x:Name="DepthStreamText" Text="Depth" FontSize="12" Foreground="White" FontWeight="SemiBold" />
+                                    <TextBlock x:Name="DepthStreamCount" Text="(3)" FontSize="11" Foreground="White" Opacity="0.9" />
                                 </StackPanel>
-                            </Button>
+                            </Border>
+                            <Border x:Name="QuotesStreamBadge" Background="#A0AEC0" CornerRadius="4" Padding="8,4">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon Glyph="&#xE8D4;" FontSize="12" Foreground="White" />
+                                    <TextBlock x:Name="QuotesStreamText" Text="Quotes" FontSize="12" Foreground="White" FontWeight="SemiBold" />
+                                    <TextBlock x:Name="QuotesStreamCount" Text="(0)" FontSize="11" Foreground="White" Opacity="0.9" />
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+
+                        <!-- Collector Uptime Timer -->
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                            <FontIcon Glyph="&#xE916;" FontSize="14" Foreground="{ThemeResource SystemBaseMediumColor}" />
+                            <StackPanel>
+                                <TextBlock Text="Collector Uptime" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource SystemBaseMediumColor}" />
+                                <TextBlock x:Name="CollectorUptimeText" Text="0h 0m 0s" FontWeight="SemiBold" FontSize="14" />
+                            </StackPanel>
                         </StackPanel>
                     </Grid>
+
+                    <!-- Collector Control Buttons -->
+                    <Border Background="{ThemeResource SystemFillColorNeutralBackgroundBrush}" CornerRadius="4" Padding="12">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                                <Button x:Name="QuickStartCollectorButton" Style="{StaticResource AccentButtonStyle}" Click="QuickStartCollector_Click">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <FontIcon Glyph="&#xE768;" FontSize="14" />
+                                        <TextBlock Text="Start Collector" />
+                                    </StackPanel>
+                                </Button>
+                                <Button x:Name="QuickStopCollectorButton" Click="QuickStopCollector_Click">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <FontIcon Glyph="&#xE71A;" FontSize="14" />
+                                        <TextBlock Text="Stop Collector" />
+                                    </StackPanel>
+                                </Button>
+                                <Button x:Name="QuickPauseCollectorButton" Click="QuickPauseCollector_Click">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <FontIcon x:Name="PauseButtonIcon" Glyph="&#xE769;" FontSize="14" />
+                                        <TextBlock x:Name="PauseButtonText" Text="Pause Collection" />
+                                    </StackPanel>
+                                </Button>
+                                <Rectangle Width="1" Fill="{ThemeResource SystemBaseMediumColor}" Margin="8,4" />
+                                <Button Click="ViewLogs_Click">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <FontIcon Glyph="&#xE756;" FontSize="14" />
+                                        <TextBlock Text="View Logs" />
+                                    </StackPanel>
+                                </Button>
+                                <Button Click="RunBackfill_Click">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <FontIcon Glyph="&#xE787;" FontSize="14" />
+                                        <TextBlock Text="Backfill" />
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Quick Add Symbol -->
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Quick Add Symbol" Style="{StaticResource CaptionTextBlockStyle}" />
+                        <Grid ColumnSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <AutoSuggestBox x:Name="QuickAddSymbolBox"
+                                            Grid.Column="0"
+                                            PlaceholderText="Enter symbol (e.g., AAPL)"
+                                            QueryIcon="Find"
+                                            TextChanged="QuickAddSymbol_TextChanged"
+                                            QuerySubmitted="QuickAddSymbol_QuerySubmitted" />
+                            <CheckBox x:Name="QuickAddTradesCheck" Grid.Column="1" Content="Trades" IsChecked="True" />
+                            <CheckBox x:Name="QuickAddDepthCheck" Grid.Column="2" Content="Depth" />
+                            <CheckBox x:Name="QuickAddQuotesCheck" Grid.Column="3" Content="Quotes" />
+                            <Button Grid.Column="4" Content="Add" Style="{StaticResource AccentButtonStyle}"
+                                    Click="QuickAddSymbol_Click" />
+                        </Grid>
+                    </StackPanel>
                 </StackPanel>
             </Border>
 
