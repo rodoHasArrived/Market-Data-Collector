@@ -4,7 +4,8 @@ using Serilog;
 namespace DataIngestion.TradeService.Services;
 
 /// <summary>
-/// Background service to periodically flush trade storage.
+/// Background service that periodically flushes trade data to storage.
+/// Implements graceful shutdown to prevent data loss.
 /// </summary>
 public sealed class TradeFlushService : BackgroundService
 {
@@ -12,6 +13,7 @@ public sealed class TradeFlushService : BackgroundService
     private readonly ITradeProcessor _processor;
     private readonly TradeServiceConfig _config;
     private readonly ILogger _log = Log.ForContext<TradeFlushService>();
+    private readonly TimeSpan _shutdownTimeout = TimeSpan.FromSeconds(30);
 
     public TradeFlushService(
         ITradeStorage storage,
@@ -25,12 +27,13 @@ public sealed class TradeFlushService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _log.Information("Trade flush service started");
+        _log.Information("Trade flush service starting...");
 
         // Start the processor
         await _processor.StartAsync(stoppingToken);
 
         var flushInterval = TimeSpan.FromMilliseconds(_config.Processing.FlushIntervalMs);
+        _log.Information("Trade flush service started with {Interval}ms flush interval", _config.Processing.FlushIntervalMs);
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -61,11 +64,36 @@ public sealed class TradeFlushService : BackgroundService
                 _log.Error(ex, "Error during trade flush");
             }
         }
+    }
 
-        // Final cleanup
-        await _processor.StopAsync();
-        await _storage.FlushAsync();
+    public override async Task StopAsync(CancellationToken cancellationToken)
+    {
+        _log.Information("Trade flush service stopping - flushing remaining buffers...");
 
-        _log.Information("Trade flush service stopped");
+        using var timeoutCts = new CancellationTokenSource(_shutdownTimeout);
+        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
+            cancellationToken, timeoutCts.Token);
+
+        try
+        {
+            // Stop the processor first (which drains its channel)
+            await _processor.StopAsync().WaitAsync(linkedCts.Token);
+            _log.Debug("Processor stopped successfully");
+
+            // Final storage flush to ensure all data is persisted
+            await _storage.FlushAsync().WaitAsync(linkedCts.Token);
+            _log.Information("Trade flush service stopped - all buffers flushed successfully");
+        }
+        catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested)
+        {
+            _log.Warning("Shutdown timeout ({Timeout}s) reached - some trade data may be lost",
+                _shutdownTimeout.TotalSeconds);
+        }
+        catch (Exception ex)
+        {
+            _log.Error(ex, "Error during graceful shutdown");
+        }
+
+        await base.StopAsync(cancellationToken);
     }
 }
