@@ -6,6 +6,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MarketDataCollector", "src\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MarketDataCollector.Ui", "src\MarketDataCollector.Ui\MarketDataCollector.Ui.csproj", "{7756DAD5-0AAF-45D9-A300-F28239C23078}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MarketDataCollector.Uwp", "src\MarketDataCollector.Uwp\MarketDataCollector.Uwp.csproj", "{D8888888-E999-F000-A111-B22222222222}"
+EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MarketDataCollector.Tests", "tests\MarketDataCollector.Tests\MarketDataCollector.Tests.csproj", "{B3333333-C444-D555-E666-F77777777777}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MarketDataCollector.Benchmarks", "benchmarks\MarketDataCollector.Benchmarks\MarketDataCollector.Benchmarks.csproj", "{C4444444-D555-E666-F777-888888888888}"
@@ -38,10 +40,15 @@ Global
         {C4444444-D555-E666-F777-888888888888}.Debug|Any CPU.Build.0 = Debug|Any CPU
         {C4444444-D555-E666-F777-888888888888}.Release|Any CPU.ActiveCfg = Release|Any CPU
         {C4444444-D555-E666-F777-888888888888}.Release|Any CPU.Build.0 = Release|Any CPU
+        {D8888888-E999-F000-A111-B22222222222}.Debug|Any CPU.ActiveCfg = Debug|x64
+        {D8888888-E999-F000-A111-B22222222222}.Debug|Any CPU.Build.0 = Debug|x64
+        {D8888888-E999-F000-A111-B22222222222}.Release|Any CPU.ActiveCfg = Release|x64
+        {D8888888-E999-F000-A111-B22222222222}.Release|Any CPU.Build.0 = Release|x64
     EndGlobalSection
     GlobalSection(NestedProjects) = preSolution
         {A1111111-B222-C333-D444-E55555555555} = {E1111111-F222-0333-1444-255555555555}
         {7756DAD5-0AAF-45D9-A300-F28239C23078} = {E1111111-F222-0333-1444-255555555555}
+        {D8888888-E999-F000-A111-B22222222222} = {E1111111-F222-0333-1444-255555555555}
         {B3333333-C444-D555-E666-F77777777777} = {E2222222-F333-0444-1555-266666666666}
         {C4444444-D555-E666-F777-888888888888} = {E3333333-F444-0555-1666-277777777777}
     EndGlobalSection

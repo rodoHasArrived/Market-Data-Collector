@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="MarketDataCollector.Uwp.Views.SymbolsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:MarketDataCollector.Uwp.Views"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <Grid Padding="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="12" Margin="0,0,0,24">
+            <FontIcon Glyph="&#xE9D9;" FontSize="28" Foreground="{ThemeResource SystemAccentColor}" />
+            <TextBlock Text="Symbol Subscriptions" Style="{StaticResource TitleTextBlockStyle}" VerticalAlignment="Center" />
+        </StackPanel>
+
+        <!-- Main Content -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="350" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Symbols List -->
+            <Border Grid.Column="0" Style="{StaticResource CardStyle}" Margin="0,0,12,0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="12" Margin="0,0,0,16">
+                        <TextBlock Text="Subscribed Symbols" Style="{StaticResource SubtitleTextBlockStyle}" />
+                        <Border Background="{ThemeResource SystemFillColorNeutralBackgroundBrush}"
+                                CornerRadius="12" Padding="8,4">
+                            <TextBlock x:Name="SymbolCountText" Text="0 symbols"
+                                       Style="{StaticResource CaptionTextBlockStyle}" />
+                        </Border>
+                    </StackPanel>
+
+                    <ListView x:Name="SymbolsListView"
+                              Grid.Row="1"
+                              SelectionMode="Single"
+                              SelectionChanged="SymbolsListView_SelectionChanged">
+                        <ListView.HeaderTemplate>
+                            <DataTemplate>
+                                <Grid Padding="8,4" Background="{ThemeResource SystemFillColorNeutralBackgroundBrush}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="80" />
+                                        <ColumnDefinition Width="60" />
+                                        <ColumnDefinition Width="60" />
+                                        <ColumnDefinition Width="50" />
+                                        <ColumnDefinition Width="80" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Grid.Column="0" Text="Symbol" FontWeight="SemiBold" />
+                                    <TextBlock Grid.Column="1" Text="Trades" FontWeight="SemiBold" />
+                                    <TextBlock Grid.Column="2" Text="Depth" FontWeight="SemiBold" />
+                                    <TextBlock Grid.Column="3" Text="Levels" FontWeight="SemiBold" />
+                                    <TextBlock Grid.Column="4" Text="Exchange" FontWeight="SemiBold" />
+                                    <TextBlock Grid.Column="5" Text="Local Symbol" FontWeight="SemiBold" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.HeaderTemplate>
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Padding="8,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="80" />
+                                        <ColumnDefinition Width="60" />
+                                        <ColumnDefinition Width="60" />
+                                        <ColumnDefinition Width="50" />
+                                        <ColumnDefinition Width="80" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Grid.Column="0" Text="{Binding Symbol}" FontWeight="SemiBold" />
+                                    <TextBlock Grid.Column="1" Text="{Binding TradesText}"
+                                               Foreground="{ThemeResource SystemBaseMediumColor}" />
+                                    <TextBlock Grid.Column="2" Text="{Binding DepthText}"
+                                               Foreground="{ThemeResource SystemBaseMediumColor}" />
+                                    <TextBlock Grid.Column="3" Text="{Binding DepthLevels}"
+                                               Foreground="{ThemeResource SystemBaseMediumColor}" />
+                                    <TextBlock Grid.Column="4" Text="{Binding Exchange}"
+                                               Foreground="{ThemeResource SystemBaseMediumColor}" />
+                                    <TextBlock Grid.Column="5" Text="{Binding LocalSymbol}"
+                                               Foreground="{ThemeResource SystemBaseMediumLowColor}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                </Grid>
+            </Border>
+
+            <!-- Add/Edit Symbol Panel -->
+            <Border Grid.Column="1" Style="{StaticResource CardStyle}" Margin="12,0,0,0">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Spacing="16">
+                        <TextBlock x:Name="FormTitle" Text="Add Symbol" Style="{StaticResource SubtitleTextBlockStyle}" />
+
+                        <TextBox x:Name="SymbolBox"
+                                 Header="Symbol *"
+                                 PlaceholderText="AAPL" />
+
+                        <ToggleSwitch x:Name="SubscribeTradesToggle"
+                                      Header="Subscribe to Trades"
+                                      OffContent="No"
+                                      OnContent="Yes"
+                                      IsOn="True" />
+
+                        <ToggleSwitch x:Name="SubscribeDepthToggle"
+                                      Header="Subscribe to Depth"
+                                      OffContent="No"
+                                      OnContent="Yes"
+                                      IsOn="False" />
+
+                        <NumberBox x:Name="DepthLevelsBox"
+                                   Header="Depth Levels"
+                                   Value="10"
+                                   Minimum="1"
+                                   Maximum="50"
+                                   SpinButtonPlacementMode="Inline" />
+
+                        <TextBlock Text="IB-Specific Options"
+                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                   Foreground="{ThemeResource SystemAccentColor}"
+                                   Margin="0,8,0,0" />
+
+                        <TextBox x:Name="ExchangeBox"
+                                 Header="Exchange"
+                                 PlaceholderText="SMART"
+                                 Text="SMART" />
+
+                        <TextBox x:Name="PrimaryExchangeBox"
+                                 Header="Primary Exchange"
+                                 PlaceholderText="NYSE" />
+
+                        <TextBox x:Name="LocalSymbolBox"
+                                 Header="Local Symbol"
+                                 PlaceholderText="For preferred stocks: PCG PRA" />
+
+                        <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
+                            <Button x:Name="SaveSymbolButton"
+                                    Content="Add Symbol"
+                                    Style="{StaticResource AccentButtonStyle}"
+                                    Click="SaveSymbol_Click" />
+                            <Button x:Name="DeleteSymbolButton"
+                                    Content="Delete"
+                                    Visibility="Collapsed"
+                                    Click="DeleteSymbol_Click" />
+                            <Button x:Name="ClearButton"
+                                    Content="Clear"
+                                    Click="ClearForm_Click" />
+                            <ProgressRing x:Name="SaveProgress" IsActive="False" Width="20" Height="20" />
+                        </StackPanel>
+
+                        <InfoBar x:Name="FormInfoBar" IsOpen="False" IsClosable="True" />
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+
+        <!-- Bottom Actions -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="12" Margin="0,24,0,0">
+            <Button Content="Refresh List" Click="RefreshList_Click" />
+            <ProgressRing x:Name="RefreshProgress" IsActive="False" Width="20" Height="20" />
+        </StackPanel>
+    </Grid>
+</Page>

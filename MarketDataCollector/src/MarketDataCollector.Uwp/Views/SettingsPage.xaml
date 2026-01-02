@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="MarketDataCollector.Uwp.Views.SettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:MarketDataCollector.Uwp.Views"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="24">
+        <StackPanel Spacing="24" MaxWidth="800">
+            <!-- Header -->
+            <StackPanel Orientation="Horizontal" Spacing="12">
+                <FontIcon Glyph="&#xE713;" FontSize="28" Foreground="{ThemeResource SystemAccentColor}" />
+                <TextBlock Text="Settings" Style="{StaticResource TitleTextBlockStyle}" VerticalAlignment="Center" />
+            </StackPanel>
+
+            <!-- Appearance -->
+            <Border Style="{StaticResource CardStyle}">
+                <StackPanel Spacing="16">
+                    <TextBlock Text="Appearance" Style="{StaticResource SubtitleTextBlockStyle}" />
+
+                    <ComboBox x:Name="ThemeCombo"
+                              Header="App Theme"
+                              HorizontalAlignment="Stretch"
+                              SelectionChanged="ThemeCombo_SelectionChanged">
+                        <ComboBoxItem Content="Use system setting" Tag="Default" IsSelected="True" />
+                        <ComboBoxItem Content="Light" Tag="Light" />
+                        <ComboBoxItem Content="Dark" Tag="Dark" />
+                    </ComboBox>
+                </StackPanel>
+            </Border>
+
+            <!-- API Connection -->
+            <Border Style="{StaticResource CardStyle}">
+                <StackPanel Spacing="16">
+                    <TextBlock Text="API Connection" Style="{StaticResource SubtitleTextBlockStyle}" />
+
+                    <TextBox x:Name="ApiBaseUrlBox"
+                             Header="Collector API Base URL"
+                             PlaceholderText="http://localhost:8080"
+                             Text="http://localhost:8080" />
+
+                    <NumberBox x:Name="StatusRefreshIntervalBox"
+                               Header="Status Refresh Interval (seconds)"
+                               Value="2"
+                               Minimum="1"
+                               Maximum="60"
+                               SpinButtonPlacementMode="Inline" />
+
+                    <Button Content="Test Connection" Click="TestConnection_Click" />
+                </StackPanel>
+            </Border>
+
+            <!-- Stored Credentials -->
+            <Border Style="{StaticResource CardStyle}">
+                <StackPanel Spacing="16">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE72E;" FontSize="20" Foreground="{ThemeResource SystemAccentColor}" />
+                        <TextBlock Text="Stored Credentials" Style="{StaticResource SubtitleTextBlockStyle}" />
+                    </StackPanel>
+
+                    <InfoBar IsOpen="True" IsClosable="False" Severity="Informational"
+                             Title="Windows Credential Manager"
+                             Message="All API keys and credentials are securely stored in Windows Credential Manager, not in config files." />
+
+                    <TextBlock Text="Stored credentials for this application:"
+                               Style="{StaticResource CaptionTextBlockStyle}"
+                               Foreground="{ThemeResource SystemBaseMediumColor}" />
+
+                    <ListView x:Name="StoredCredentialsList"
+                              SelectionMode="None"
+                              MaxHeight="200">
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Padding="8,4" ColumnSpacing="16">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Grid.Column="0" Text="{Binding}" VerticalAlignment="Center" />
+                                    <Button Grid.Column="1" Content="Remove" Tag="{Binding}"
+                                            Click="RemoveCredential_Click" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+
+                    <TextBlock x:Name="NoCredentialsText"
+                               Text="No credentials stored."
+                               Visibility="Collapsed"
+                               Foreground="{ThemeResource SystemBaseMediumColor}" />
+
+                    <Button Content="Clear All Credentials"
+                            Click="ClearAllCredentials_Click" />
+                </StackPanel>
+            </Border>
+
+            <!-- Configuration File -->
+            <Border Style="{StaticResource CardStyle}">
+                <StackPanel Spacing="16">
+                    <TextBlock Text="Configuration" Style="{StaticResource SubtitleTextBlockStyle}" />
+
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Configuration File Path" Style="{StaticResource CaptionTextBlockStyle}" />
+                        <TextBlock x:Name="ConfigPathText"
+                                   FontFamily="Consolas"
+                                   IsTextSelectionEnabled="True"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Content="Open in Explorer" Click="OpenConfigFolder_Click" />
+                        <Button Content="Reload Configuration" Click="ReloadConfig_Click" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- About -->
+            <Border Style="{StaticResource CardStyle}">
+                <StackPanel Spacing="16">
+                    <TextBlock Text="About" Style="{StaticResource SubtitleTextBlockStyle}" />
+
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Market Data Collector" FontWeight="SemiBold" FontSize="16" />
+                        <TextBlock Text="Version 1.0.0" Foreground="{ThemeResource SystemBaseMediumColor}" />
+                        <TextBlock Text="A high-performance market data collection system for real-time and historical market data."
+                                   TextWrapping="Wrap"
+                                   Foreground="{ThemeResource SystemBaseMediumColor}" />
+                    </StackPanel>
+
+                    <StackPanel Spacing="8">
+                        <HyperlinkButton Content="Documentation" NavigateUri="https://github.com/example/market-data-collector" />
+                        <HyperlinkButton Content="Report an Issue" NavigateUri="https://github.com/example/market-data-collector/issues" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Help -->
+            <Border Style="{StaticResource CardStyle}">
+                <StackPanel Spacing="16">
+                    <TextBlock Text="Help" Style="{StaticResource SubtitleTextBlockStyle}" />
+
+                    <Expander Header="Quick Start Guide" IsExpanded="False" HorizontalAlignment="Stretch">
+                        <StackPanel Spacing="8" Padding="0,8,0,0">
+                            <TextBlock TextWrapping="Wrap">
+                                <Run FontWeight="SemiBold">1. Select Data Provider:</Run>
+                                <LineBreak />
+                                <Run>Choose between Interactive Brokers (IB) or Alpaca as your data source.</Run>
+                            </TextBlock>
+                            <TextBlock TextWrapping="Wrap">
+                                <Run FontWeight="SemiBold">2. Configure Storage:</Run>
+                                <LineBreak />
+                                <Run>Set up where and how market data will be stored.</Run>
+                            </TextBlock>
+                            <TextBlock TextWrapping="Wrap">
+                                <Run FontWeight="SemiBold">3. Add Symbols:</Run>
+                                <LineBreak />
+                                <Run>Subscribe to the symbols you want to track.</Run>
+                            </TextBlock>
+                            <TextBlock TextWrapping="Wrap">
+                                <Run FontWeight="SemiBold">4. Start Collector:</Run>
+                                <LineBreak />
+                                <Run>Run the collector service to begin capturing data.</Run>
+                            </TextBlock>
+                        </StackPanel>
+                    </Expander>
+
+                    <Expander Header="Data Providers" IsExpanded="False" HorizontalAlignment="Stretch">
+                        <StackPanel Spacing="8" Padding="0,8,0,0">
+                            <TextBlock TextWrapping="Wrap">
+                                <Run FontWeight="SemiBold">Interactive Brokers (IB):</Run>
+                                <LineBreak />
+                                <Run>Provides Level 2 market depth and tick-by-tick trade data. Requires TWS or IB Gateway running.</Run>
+                            </TextBlock>
+                            <TextBlock TextWrapping="Wrap">
+                                <Run FontWeight="SemiBold">Alpaca:</Run>
+                                <LineBreak />
+                                <Run>Provides real-time trade and quote data via WebSocket. Free tier available with IEX feed.</Run>
+                            </TextBlock>
+                        </StackPanel>
+                    </Expander>
+
+                    <Expander Header="Command Line Options" IsExpanded="False" HorizontalAlignment="Stretch">
+                        <StackPanel Spacing="4" Padding="0,8,0,0">
+                            <TextBlock FontFamily="Consolas" Text="--ui                Start web dashboard" />
+                            <TextBlock FontFamily="Consolas" Text="--serve-status      Enable status endpoint" />
+                            <TextBlock FontFamily="Consolas" Text="--watch-config      Hot-reload configuration" />
+                            <TextBlock FontFamily="Consolas" Text="--backfill          Run historical backfill" />
+                            <TextBlock FontFamily="Consolas" Text="--selftest          Run system self-tests" />
+                        </StackPanel>
+                    </Expander>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

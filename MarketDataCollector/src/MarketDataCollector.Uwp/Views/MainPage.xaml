@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="MarketDataCollector.Uwp.Views.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:MarketDataCollector.Uwp.Views"
+    xmlns:vm="using:MarketDataCollector.Uwp.ViewModels"
+    xmlns:converters="using:MarketDataCollector.Uwp.Converters"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <Page.Resources>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibility" />
+        <converters:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibility" />
+        <converters:BoolToConnectionStatusConverter x:Key="BoolToConnectionStatus" />
+    </Page.Resources>
+
+    <NavigationView
+        x:Name="NavView"
+        IsBackButtonVisible="Collapsed"
+        IsSettingsVisible="True"
+        PaneDisplayMode="Left"
+        SelectionChanged="NavView_SelectionChanged">
+
+        <NavigationView.MenuItems>
+            <NavigationViewItem Content="Dashboard" Tag="Dashboard" IsSelected="True">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE80F;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem Content="Data Provider" Tag="Provider">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE703;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem Content="Storage" Tag="Storage">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE8B7;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem Content="Symbols" Tag="Symbols">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE9D9;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem Content="Backfill" Tag="Backfill">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE787;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+        </NavigationView.MenuItems>
+
+        <Frame x:Name="ContentFrame" Padding="24">
+            <!-- Default content - Dashboard -->
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel Spacing="24" Padding="0,0,24,24">
+                    <!-- Header -->
+                    <TextBlock Text="Market Data Collector" Style="{StaticResource TitleTextBlockStyle}" />
+
+                    <!-- Status Cards Row -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- System Status Card -->
+                        <Border Grid.Column="0" Style="{StaticResource CardStyle}" Margin="0,0,12,0">
+                            <StackPanel Spacing="16">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <FontIcon Glyph="&#xE704;" Foreground="{ThemeResource SystemAccentColor}" />
+                                    <TextBlock Text="System Status" Style="{StaticResource SubtitleTextBlockStyle}" />
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Ellipse Width="12" Height="12"
+                                             Fill="{x:Bind ViewModel.IsConnected, Mode=OneWay, Converter={StaticResource BoolToConnectionStatus}}" />
+                                    <TextBlock Text="{x:Bind ViewModel.ConnectionStatusText, Mode=OneWay}" />
+                                </StackPanel>
+
+                                <TextBlock Text="{x:Bind ViewModel.LastUpdateText, Mode=OneWay}"
+                                           Style="{StaticResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource SystemBaseMediumColor}" />
+
+                                <!-- Metrics Grid -->
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+
+                                    <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,8">
+                                        <TextBlock Text="{x:Bind ViewModel.PublishedCount, Mode=OneWay}"
+                                                   Style="{StaticResource SubheaderTextBlockStyle}"
+                                                   Foreground="{ThemeResource SystemAccentColor}" />
+                                        <TextBlock Text="Published" Style="{StaticResource CaptionTextBlockStyle}" />
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,8">
+                                        <TextBlock Text="{x:Bind ViewModel.DroppedCount, Mode=OneWay}"
+                                                   Style="{StaticResource SubheaderTextBlockStyle}"
+                                                   Foreground="#F56565" />
+                                        <TextBlock Text="Dropped" Style="{StaticResource CaptionTextBlockStyle}" />
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,8">
+                                        <TextBlock Text="{x:Bind ViewModel.IntegrityCount, Mode=OneWay}"
+                                                   Style="{StaticResource SubheaderTextBlockStyle}"
+                                                   Foreground="#ED8936" />
+                                        <TextBlock Text="Integrity" Style="{StaticResource CaptionTextBlockStyle}" />
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,8">
+                                        <TextBlock Text="{x:Bind ViewModel.HistoricalBarsCount, Mode=OneWay}"
+                                                   Style="{StaticResource SubheaderTextBlockStyle}"
+                                                   Foreground="#48BB78" />
+                                        <TextBlock Text="Historical Bars" Style="{StaticResource CaptionTextBlockStyle}" />
+                                    </StackPanel>
+                                </Grid>
+
+                                <Button Content="Refresh Status" Command="{x:Bind ViewModel.RefreshStatusCommand}"
+                                        Style="{StaticResource AccentButtonStyle}" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Data Provider Card -->
+                        <Border Grid.Column="1" Style="{StaticResource CardStyle}" Margin="12,0,0,0">
+                            <StackPanel Spacing="16">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <FontIcon Glyph="&#xE703;" Foreground="{ThemeResource SystemAccentColor}" />
+                                    <TextBlock Text="Data Provider" Style="{StaticResource SubtitleTextBlockStyle}" />
+                                </StackPanel>
+
+                                <ComboBox x:Name="DataSourceCombo"
+                                          Header="Active Provider"
+                                          ItemsSource="{x:Bind ViewModel.DataSources}"
+                                          SelectedItem="{x:Bind ViewModel.SelectedDataSource, Mode=TwoWay}"
+                                          HorizontalAlignment="Stretch" />
+
+                                <Border Background="{ThemeResource SystemFillColorSolidNeutralBackgroundBrush}"
+                                        CornerRadius="4" Padding="12">
+                                    <TextBlock Text="{x:Bind ViewModel.ProviderDescription, Mode=OneWay}"
+                                               TextWrapping="Wrap"
+                                               Style="{StaticResource CaptionTextBlockStyle}" />
+                                </Border>
+
+                                <Button Content="Save Provider" Command="{x:Bind ViewModel.SaveDataSourceCommand}"
+                                        Style="{StaticResource AccentButtonStyle}" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <!-- Quick Actions -->
+                    <Border Style="{StaticResource CardStyle}">
+                        <StackPanel Spacing="16">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <FontIcon Glyph="&#xE768;" Foreground="{ThemeResource SystemAccentColor}" />
+                                <TextBlock Text="Quick Actions" Style="{StaticResource SubtitleTextBlockStyle}" />
+                            </StackPanel>
+
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <Button Content="Start Collector" Style="{StaticResource AccentButtonStyle}">
+                                    <Button.KeyboardAccelerators>
+                                        <KeyboardAccelerator Modifiers="Control" Key="S" />
+                                    </Button.KeyboardAccelerators>
+                                </Button>
+                                <Button Content="Stop Collector" />
+                                <Button Content="Run Backfill" Command="{x:Bind ViewModel.NavigateToBackfillCommand}" />
+                                <Button Content="View Logs" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Subscribed Symbols -->
+                    <Border Style="{StaticResource CardStyle}">
+                        <StackPanel Spacing="16">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <FontIcon Glyph="&#xE9D9;" Foreground="{ThemeResource SystemAccentColor}" />
+                                <TextBlock Text="Subscribed Symbols" Style="{StaticResource SubtitleTextBlockStyle}" />
+                                <TextBlock Text="{x:Bind ViewModel.SymbolCount, Mode=OneWay}"
+                                           Foreground="{ThemeResource SystemBaseMediumColor}"
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
+
+                            <ListView ItemsSource="{x:Bind ViewModel.Symbols, Mode=OneWay}"
+                                      SelectionMode="None"
+                                      MaxHeight="300">
+                                <ListView.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Padding="8" ColumnSpacing="16">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="100" />
+                                                <ColumnDefinition Width="80" />
+                                                <ColumnDefinition Width="80" />
+                                                <ColumnDefinition Width="60" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <TextBlock Grid.Column="0" Text="{Binding Symbol}" FontWeight="SemiBold" />
+                                            <TextBlock Grid.Column="1" Text="{Binding TradesText}" />
+                                            <TextBlock Grid.Column="2" Text="{Binding DepthText}" />
+                                            <TextBlock Grid.Column="3" Text="{Binding DepthLevels}" />
+                                            <TextBlock Grid.Column="4" Text="{Binding Exchange}"
+                                                       Foreground="{ThemeResource SystemBaseMediumColor}" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListView.ItemTemplate>
+                            </ListView>
+
+                            <Button Content="Manage Symbols" Command="{x:Bind ViewModel.NavigateToSymbolsCommand}" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Configuration Path -->
+                    <Border Style="{StaticResource CardStyle}" Background="{ThemeResource SystemFillColorSolidNeutralBackgroundBrush}">
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="Configuration" Style="{StaticResource CaptionTextBlockStyle}" />
+                            <TextBlock Text="{x:Bind ViewModel.ConfigPath, Mode=OneWay}"
+                                       FontFamily="Consolas"
+                                       IsTextSelectionEnabled="True" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+        </Frame>
+    </NavigationView>
+</Page>
