@@ -4,7 +4,87 @@ This document summarizes major changes and improvements to the Market Data Colle
 
 ---
 
-## Latest: Code Cleanup and Consolidation (2026-01-01)
+## Latest: UWP Desktop Application and Secure Credentials (2026-01-02)
+
+### Overview
+
+This update adds a native Windows desktop application using UWP/XAML with WinUI 3 styling, along with secure credential management via Windows CredentialPicker.
+
+### Changes Made
+
+#### 1. UWP/XAML Desktop Application
+Created a full-featured native Windows application:
+- **Location**: `src/MarketDataCollector.Uwp/`
+- Modern WinUI 3 styling with responsive layout
+- Tabbed navigation interface
+
+**Pages Implemented:**
+- **DashboardPage**: Real-time system status and metrics display
+- **ProviderPage**: Data provider selection and configuration
+- **StoragePage**: Storage settings with path preview
+- **SymbolsPage**: Symbol subscription management
+- **BackfillPage**: Historical data backfill interface
+- **SettingsPage**: General application settings
+
+**Key Components:**
+- `MainWindow.xaml`: Application shell with navigation
+- `MainViewModel.cs`: MVVM view model for state management
+- `AppStyles.xaml`: Consistent styling and theming
+
+#### 2. Secure Credential Management
+Implemented Windows CredentialPicker for API credentials:
+- **File**: `Services/CredentialService.cs`
+- Credentials stored in Windows Credential Manager
+- Never written to plain text files
+- Integrated with Windows security infrastructure
+
+**Supported Providers:**
+- Interactive Brokers (User ID)
+- Alpaca (API Key ID + Secret Key)
+- Polygon (API Key)
+
+#### 3. Supporting Services
+- **ConfigService.cs**: Configuration loading and saving
+- **StatusService.cs**: Real-time status polling from collector
+- **BoolConverters.cs**: XAML binding converters
+
+### Impact
+- **User Experience**: Native Windows application for users who prefer desktop apps
+- **Security**: API credentials protected by Windows security instead of plain text files
+- **Accessibility**: Full keyboard navigation and screen reader support
+
+### Files Added
+```
+MarketDataCollector/src/MarketDataCollector.Uwp/
+├── App.xaml / App.xaml.cs
+├── MainWindow.xaml / MainWindow.xaml.cs
+├── MarketDataCollector.Uwp.csproj
+├── app.manifest
+├── Converters/
+│   └── BoolConverters.cs
+├── Models/
+│   └── AppConfig.cs
+├── Services/
+│   ├── ConfigService.cs
+│   ├── CredentialService.cs
+│   └── StatusService.cs
+├── Styles/
+│   └── AppStyles.xaml
+├── ViewModels/
+│   └── MainViewModel.cs
+└── Views/
+    ├── BackfillPage.xaml / BackfillPage.xaml.cs
+    ├── DashboardPage.xaml / DashboardPage.xaml.cs
+    ├── MainPage.xaml / MainPage.xaml.cs
+    ├── ProviderPage.xaml / ProviderPage.xaml.cs
+    ├── SettingsPage.xaml / SettingsPage.xaml.cs
+    ├── StoragePage.xaml / StoragePage.xaml.cs
+    └── SymbolsPage.xaml / SymbolsPage.xaml.cs
+```
+
+---
+
+## Previous: Code Cleanup and Consolidation (2026-01-01)
 
 ### Overview
 

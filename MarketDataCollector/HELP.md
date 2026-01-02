@@ -13,6 +13,7 @@ Welcome to the Market Data Collector! This comprehensive guide will help you get
 - [Symbol Management](#symbol-management)
 - [Historical Backfill](#historical-backfill)
 - [Web Dashboard](#web-dashboard)
+- [Windows Desktop App](#windows-desktop-app)
 - [Command Line Usage](#command-line-usage)
 - [Troubleshooting](#troubleshooting)
 - [FAQ](#faq)
@@ -28,12 +29,16 @@ Market Data Collector is a high-performance system for capturing real-time and h
 - **Historical Backfill**: Download historical data to fill gaps
 - **Flexible Storage**: Multiple file organization strategies
 - **Web Dashboard**: Easy-to-use interface for configuration and monitoring
+- **Windows Desktop App**: Native UWP/XAML application with secure credential management
 - **High Performance**: Event-driven architecture with backpressure handling
 - **Production Ready**: Comprehensive error handling, logging, and monitoring
+- **Secure Credentials**: Windows CredentialPicker integration for API keys
 
 ## Quick Start
 
-### 1. Start the Web Dashboard
+### 1. Start the Application
+
+**Option A: Web Dashboard (Cross-platform)**
 
 The easiest way to get started is with the web dashboard:
 
@@ -42,6 +47,14 @@ The easiest way to get started is with the web dashboard:
 ```
 
 Then open your browser to `http://localhost:8080`
+
+**Option B: Windows Desktop App**
+
+For secure credential management on Windows:
+
+```bash
+dotnet run --project src/MarketDataCollector.Uwp/MarketDataCollector.Uwp.csproj
+```
 
 ### 2. Configure Your Data Provider
 
@@ -419,6 +432,99 @@ The dashboard shows toast notifications for:
 - ❌ Errors and failures
 - ℹ️ Informational messages
 
+## Windows Desktop App
+
+The UWP/XAML desktop application provides a native Windows experience for configuring and monitoring Market Data Collector.
+
+### Starting the Desktop App
+
+```bash
+dotnet run --project src/MarketDataCollector.Uwp/MarketDataCollector.Uwp.csproj
+```
+
+### Desktop App Features
+
+The application includes dedicated pages for all collector functions:
+
+1. **Dashboard Page**
+   - Real-time system status
+   - Live metrics and statistics
+   - Connection state indicator
+   - Event throughput monitoring
+
+2. **Provider Page**
+   - Select data provider (IB, Alpaca, Polygon)
+   - Configure provider-specific settings
+   - Test connection status
+
+3. **Storage Page**
+   - Configure data directory
+   - Select naming convention
+   - Set date partitioning options
+   - Enable/disable compression
+   - Preview file path structure
+
+4. **Symbols Page**
+   - Add and remove symbols
+   - Configure subscription options
+   - Set security type and exchange
+   - Manage depth levels
+
+5. **Backfill Page**
+   - Select backfill provider
+   - Enter symbols to backfill
+   - Configure date range
+   - Start and monitor backfill progress
+
+6. **Settings Page**
+   - General application settings
+   - Logging configuration
+   - Advanced options
+
+### Secure Credential Management
+
+The desktop app uses Windows CredentialPicker for secure API key management:
+
+**How it works:**
+1. Navigate to the Provider page
+2. Click "Set Credentials" for your chosen provider
+3. Windows CredentialPicker dialog appears
+4. Enter your API credentials securely
+5. Credentials are stored in Windows Credential Manager
+
+**Benefits:**
+- Credentials never stored in plain text files
+- Protected by Windows security
+- Integrated with Windows Hello (biometric auth)
+- Separate from application data
+
+**Supported Credentials:**
+- Interactive Brokers: User ID (no password required for API)
+- Alpaca: API Key ID and Secret Key
+- Polygon: API Key
+
+### Desktop App vs Web Dashboard
+
+| Feature | Desktop App | Web Dashboard |
+|---------|-------------|---------------|
+| Platform | Windows only | Any browser |
+| Credential Storage | Windows Credential Manager | appsettings.json |
+| UI Framework | UWP/XAML + WinUI 3 | HTML/CSS/JavaScript |
+| Offline Use | Yes | Requires collector running |
+| Native Integration | Full Windows features | Browser sandboxed |
+
+**When to use Desktop App:**
+- Windows-only deployment
+- Secure credential management is critical
+- Native Windows experience preferred
+- Integration with Windows ecosystem
+
+**When to use Web Dashboard:**
+- Cross-platform access
+- Remote monitoring
+- Quick configuration changes
+- Existing browser workflow
+
 ## Command Line Usage
 
 ### Basic Modes
@@ -734,11 +840,12 @@ CMD ["./MarketDataCollector", "--serve-status", "--watch-config"]
 ### Documentation
 
 - **README.md**: Project overview and quick start
-- **HELP.md**: This comprehensive user guide
+- **HELP.md**: This comprehensive user guide (includes Windows Desktop App section)
 - **docs/CONFIGURATION.md**: Detailed configuration reference
 - **docs/GETTING_STARTED.md**: Step-by-step setup guide
 - **docs/TROUBLESHOOTING.md**: Common issues and solutions
 - **docs/architecture.md**: System design and architecture
+- **docs/lean-integration.md**: QuantConnect Lean Engine integration
 
 ### Getting Help
 
@@ -763,6 +870,6 @@ We welcome contributions! If you've found a bug or have a feature request, pleas
 
 ---
 
-**Version:** 1.0
-**Last Updated:** 2024
+**Version:** 1.1
+**Last Updated:** 2026-01-02
 **License:** See LICENSE file
