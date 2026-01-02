@@ -1,0 +1,158 @@
+# =============================================================================
+# Market Data Collector - Docker Compose Configuration
+# =============================================================================
+#
+# Quick Start:
+#   1. Copy appsettings.sample.json to appsettings.json and configure
+#   2. Run: docker compose up -d
+#   3. Access dashboard at http://localhost:8080
+#
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # Market Data Collector - Main Application
+  # ---------------------------------------------------------------------------
+  marketdatacollector:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: marketdatacollector:latest
+    container_name: mdc
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      # Persist market data
+      - ./data:/app/data
+      # Configuration (read-only for security)
+      - ./appsettings.json:/app/appsettings.json:ro
+      # Logs directory
+      - ./logs:/app/logs
+    environment:
+      - TZ=UTC
+      - DOTNET_RUNNING_IN_CONTAINER=true
+      # Alpaca credentials (set these or use appsettings.json)
+      # - ALPACA__KEYID=your-key-id
+      # - ALPACA__SECRETKEY=your-secret-key
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - mdc-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ---------------------------------------------------------------------------
+  # Prometheus - Metrics Collection (Optional)
+  # ---------------------------------------------------------------------------
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: mdc-prometheus
+    profiles:
+      - monitoring
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./deploy/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--storage.tsdb.retention.time=15d'
+    networks:
+      - mdc-network
+    depends_on:
+      - marketdatacollector
+
+  # ---------------------------------------------------------------------------
+  # Grafana - Metrics Visualization (Optional)
+  # ---------------------------------------------------------------------------
+  grafana:
+    image: grafana/grafana:latest
+    container_name: mdc-grafana
+    profiles:
+      - monitoring
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./deploy/grafana/provisioning:/etc/grafana/provisioning:ro
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    networks:
+      - mdc-network
+    depends_on:
+      - prometheus
+
+  # ---------------------------------------------------------------------------
+  # RabbitMQ - Message Bus (Optional, for MassTransit)
+  # ---------------------------------------------------------------------------
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: mdc-rabbitmq
+    profiles:
+      - messaging
+    restart: unless-stopped
+    ports:
+      - "5672:5672"   # AMQP
+      - "15672:15672" # Management UI
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=mdc
+      - RABBITMQ_DEFAULT_PASS=mdc-secret
+    networks:
+      - mdc-network
+
+networks:
+  mdc-network:
+    driver: bridge
+
+volumes:
+  prometheus-data:
+  grafana-data:
+  rabbitmq-data:
+
+# =============================================================================
+# Usage:
+# =============================================================================
+#
+# Start main application only:
+#   docker compose up -d
+#
+# Start with monitoring stack:
+#   docker compose --profile monitoring up -d
+#
+# Start with message bus:
+#   docker compose --profile messaging up -d
+#
+# Start everything:
+#   docker compose --profile monitoring --profile messaging up -d
+#
+# View logs:
+#   docker compose logs -f marketdatacollector
+#
+# Stop all services:
+#   docker compose down
+#
+# Stop and remove volumes:
+#   docker compose down -v
+#
+# Rebuild after code changes:
+#   docker compose build --no-cache
+#   docker compose up -d
+#
+# =============================================================================

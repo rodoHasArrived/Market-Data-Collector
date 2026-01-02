@@ -18,6 +18,7 @@ public sealed class UiServer : IAsyncDisposable
 {
     private readonly WebApplication _app;
     private readonly string _configPath;
+    private readonly DateTimeOffset _startTime = DateTimeOffset.UtcNow;
 
     public UiServer(string configPath, int port = 8080)
     {
@@ -58,6 +59,31 @@ public sealed class UiServer : IAsyncDisposable
 
     private void ConfigureRoutes()
     {
+        // ==================== HEALTH CHECK ENDPOINTS ====================
+        // These endpoints support container orchestration (Docker, Kubernetes)
+
+        _app.MapGet("/health", () =>
+        {
+            var uptime = DateTimeOffset.UtcNow - _startTime;
+            return Results.Json(new
+            {
+                status = "healthy",
+                timestamp = DateTimeOffset.UtcNow,
+                uptime = uptime.ToString(),
+                version = "1.1.0"
+            });
+        });
+
+        _app.MapGet("/healthz", () => Results.Ok("healthy"));
+
+        _app.MapGet("/ready", () => Results.Ok("ready"));
+
+        _app.MapGet("/readyz", () => Results.Ok("ready"));
+
+        _app.MapGet("/live", () => Results.Ok("alive"));
+
+        _app.MapGet("/livez", () => Results.Ok("alive"));
+
         _app.MapGet("/", (ConfigStore store) =>
         {
             var html = HtmlTemplates.Index(
