@@ -22,6 +22,7 @@ namespace MarketDataCollector.Application.Config;
 /// <param name="Quotas">Storage quota configuration.</param>
 /// <param name="Maintenance">Maintenance and operational scheduling.</param>
 /// <param name="Sources">Data source registry configuration.</param>
+/// <param name="DataSources">Multiple data source configurations for real-time and historical data.</param>
 public sealed record AppConfig(
     string DataRoot = "data",
     bool Compress = false,
@@ -34,7 +35,8 @@ public sealed record AppConfig(
     TieringConfig? Tiering = null,
     QuotaConfig? Quotas = null,
     MaintenanceConfig? Maintenance = null,
-    SourceRegistryConfig? Sources = null
+    SourceRegistryConfig? Sources = null,
+    DataSourcesConfig? DataSources = null
 );
 
 /// <summary>

@@ -44,6 +44,9 @@ public sealed partial class MainPage : Page
                 case "Provider":
                     ContentFrame.Navigate(typeof(ProviderPage));
                     break;
+                case "DataSources":
+                    ContentFrame.Navigate(typeof(DataSourcesPage));
+                    break;
                 case "Storage":
                     ContentFrame.Navigate(typeof(StoragePage));
                     break;

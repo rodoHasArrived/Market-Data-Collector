@@ -35,6 +35,11 @@
                     <FontIcon Glyph="&#xE703;" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
+            <NavigationViewItem Content="Data Sources" Tag="DataSources">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE943;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
             <NavigationViewItem Content="Storage" Tag="Storage">
                 <NavigationViewItem.Icon>
                     <FontIcon Glyph="&#xE8B7;" />
