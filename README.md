@@ -6,11 +6,11 @@ A high-performance, cross-platform market data collection system for real-time a
 [![C#](https://img.shields.io/badge/C%23-11-blue)](https://docs.microsoft.com/en-us/dotnet/csharp/)
 [![License](https://img.shields.io/badge/license-See%20LICENSE-green)](LICENSE)
 
-**Status**: Production Ready | **Version**: 1.0.0
+**Status**: Production Ready | **Version**: 1.1.0 | **Last Updated**: 2026-01-02
 
 ## Overview
 
-Market Data Collector is a modular, event-driven system that captures, validates, and persists high-fidelity market data from multiple providers including Interactive Brokers, Alpaca, and Polygon. It ships with a modern web dashboard, structured logging, and a single self-contained executable for streamlined production deployments.
+Market Data Collector is a modular, event-driven system that captures, validates, and persists high-fidelity market data from multiple providers including Interactive Brokers, Alpaca, and Polygon. It ships with a modern web dashboard, a native Windows desktop application (UWP/XAML), structured logging, and a single self-contained executable for streamlined production deployments.
 
 ## Key Features
 
@@ -32,8 +32,14 @@ Market Data Collector is a modular, event-driven system that captures, validates
 
 ### Monitoring and Observability
 - **Web dashboard**: Modern HTML dashboard for live monitoring, integrity event tracking, and backfill controls
+- **Native Windows app**: UWP/XAML desktop application with full configuration and monitoring capabilities
 - **Metrics and status**: Prometheus metrics at `/metrics`, JSON status at `/status`, HTML dashboard at `/`
 - **Logging**: Structured logging via Serilog with ready-to-use sinks
+
+### Security
+- **Secure credential management**: Windows CredentialPicker integration for API keys and secrets
+- **Credential protection**: `.gitignore` excludes sensitive configuration files from version control
+- **Environment variable support**: API credentials via environment variables for production deployments
 
 ## Quick Start
 
@@ -45,8 +51,11 @@ cd Test/MarketDataCollector
 # Copy the sample settings and edit as needed
 cp appsettings.sample.json appsettings.json
 
-# Easiest: launch the web dashboard (serves HTML + Prometheus + JSON status)
+# Option 1: Launch the web dashboard (serves HTML + Prometheus + JSON status)
 dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --ui --watch-config --http-port 8080
+
+# Option 2: Launch the UWP desktop application (Windows only)
+dotnet run --project src/MarketDataCollector.Uwp/MarketDataCollector.Uwp.csproj
 
 # Run smoke test (no provider connectivity required)
 dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj
@@ -118,6 +127,12 @@ See LICENSE file for details.
 
 ### Recently Completed
 
+**UWP Desktop Application (Completed 2026-01-02):**
+- ✅ Native Windows desktop app using UWP/XAML with WinUI 3 styling
+- ✅ Full-featured dashboard with real-time status monitoring
+- ✅ Integrated configuration pages for providers, storage, symbols, and backfill
+- ✅ Secure credential management using Windows CredentialPicker
+
 **Code Quality (Completed 2026-01-01):**
 - ✅ Extracted shared subscription management into `SymbolSubscriptionTracker` base class
 - ✅ Standardized logger initialization across all components using `LoggingSetup.ForContext<T>()`
@@ -133,6 +148,7 @@ See LICENSE file for details.
 - Circuit breakers to prevent cascading failures
 
 **Security:**
+- ✅ Windows CredentialPicker for secure API credential management (UWP app)
 - Move API credentials from config files to environment variables or secure vault
 - Support for Azure Key Vault, AWS Secrets Manager, HashiCorp Vault
 

@@ -1,10 +1,16 @@
 # Market Data Collector
 
-**Version**: 1.0.0 (Production Ready) | **Last Updated**: 2026-01-01
+**Version**: 1.1.0 (Production Ready) | **Last Updated**: 2026-01-02
 
 A cross-platform, production-ready market data collector with an intuitive web dashboard. Ingests real-time market data from multiple sources (Interactive Brokers, Alpaca, Polygon), normalizes them into domain events, and persists them as JSONL for downstream research. Features comprehensive error handling, single-executable deployment, and built-in help system.
 
-## ✨ New in v1.0
+## ✨ New in v1.1
+
+- **🖥️ Native Windows Desktop App** - UWP/XAML application with modern WinUI 3 styling
+- **🔐 Secure Credential Management** - Windows CredentialPicker integration for API keys
+- **🎨 Enhanced Dashboard Pages** - Provider, storage, symbols, and backfill configuration
+
+## ✨ v1.0 Features
 
 - **🎨 Modern Web Dashboard** - Full-featured UI for configuration and monitoring
 - **📦 Single Executable** - Deploy as one file, no dependencies
@@ -21,7 +27,7 @@ A cross-platform, production-ready market data collector with an intuitive web d
 
 ## Quick start
 
-### **🚀 Easiest Way: Web Dashboard** (New!)
+### **🚀 Easiest Way: Web Dashboard**
 
 Start the intuitive web dashboard for easy configuration and monitoring:
 
@@ -36,6 +42,20 @@ Then open your browser to `http://localhost:8080` for a full-featured dashboard 
 - 📅 Historical backfill interface
 - 💡 Built-in help and tooltips
 - 🎨 Modern, responsive UI
+
+### **🖥️ Windows Desktop App** (New!)
+
+Launch the native UWP desktop application on Windows:
+
+```bash
+dotnet run --project src/MarketDataCollector.Uwp/MarketDataCollector.Uwp.csproj
+```
+
+Features:
+- 🔐 Secure credential management via Windows CredentialPicker
+- 📊 Native Windows UI with WinUI 3 styling
+- ⚡ Direct integration with Windows security features
+- 🎨 Tabbed interface for all configuration options
 
 ### Command Line Modes
 
@@ -233,6 +253,12 @@ Detailed diagrams and domain notes live in `./docs`:
 
 ## Recent Improvements
 
+### UWP Desktop Application (2026-01-02)
+- **Native Windows App**: Full-featured UWP/XAML desktop application with WinUI 3 styling
+- **Secure Credentials**: Windows CredentialPicker integration for API key management
+- **Configuration Pages**: Dashboard, Provider, Storage, Symbols, and Backfill pages
+- **Real-time Monitoring**: Live status updates and metrics display
+
 ### Code Quality (2026-01-01)
 - **Subscription Management**: New `SymbolSubscriptionTracker` base class provides thread-safe subscription handling for depth collectors
 - **Logging Standardization**: All components now use `LoggingSetup.ForContext<T>()` for consistent logging
@@ -249,8 +275,9 @@ Detailed diagrams and domain notes live in `./docs`:
 - No heartbeat/keep-alive for WebSocket connections
 
 **Security:**
-- API credentials stored in `appsettings.json` (should use environment variables or secrets manager)
+- ✅ Secure credential management via Windows CredentialPicker (UWP app)
 - ✅ `.gitignore` now excludes credential files from version control
+- API credentials in `appsettings.json` for CLI mode (consider environment variables or secrets manager)
 - No built-in authentication for HTTP monitoring endpoints
 
 **Observability:**
