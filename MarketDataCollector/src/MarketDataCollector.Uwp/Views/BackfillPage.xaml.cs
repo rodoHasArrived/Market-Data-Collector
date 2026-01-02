@@ -5,17 +5,19 @@ using MarketDataCollector.Uwp.Services;
 namespace MarketDataCollector.Uwp.Views;
 
 /// <summary>
-/// Page for historical data backfill operations.
+/// Page for historical data backfill operations with secure API key management.
 /// </summary>
 public sealed partial class BackfillPage : Page
 {
     private readonly BackfillService _backfillService;
+    private readonly CredentialService _credentialService;
     private CancellationTokenSource? _cts;
 
     public BackfillPage()
     {
         this.InitializeComponent();
         _backfillService = new BackfillService();
+        _credentialService = new CredentialService();
 
         Loaded += BackfillPage_Loaded;
     }
@@ -23,6 +25,95 @@ public sealed partial class BackfillPage : Page
     private async void BackfillPage_Loaded(object sender, RoutedEventArgs e)
     {
         await LoadLastStatusAsync();
+        UpdateApiKeyStatus();
+    }
+
+    private void UpdateApiKeyStatus()
+    {
+        // Nasdaq API Key status
+        var nasdaqKey = _credentialService.GetNasdaqApiKey();
+        if (!string.IsNullOrEmpty(nasdaqKey))
+        {
+            NasdaqKeyStatusText.Text = $"Stored: {MaskApiKey(nasdaqKey)}";
+            SetNasdaqKeyButton.Content = "Update";
+            ClearNasdaqKeyButton.Visibility = Visibility.Visible;
+        }
+        else
+        {
+            NasdaqKeyStatusText.Text = "No API key stored";
+            SetNasdaqKeyButton.Content = "Set Key";
+            ClearNasdaqKeyButton.Visibility = Visibility.Collapsed;
+        }
+
+        // OpenFIGI API Key status
+        var openFigiKey = _credentialService.GetOpenFigiApiKey();
+        if (!string.IsNullOrEmpty(openFigiKey))
+        {
+            OpenFigiKeyStatusText.Text = $"Stored: {MaskApiKey(openFigiKey)}";
+            SetOpenFigiKeyButton.Content = "Update";
+            ClearOpenFigiKeyButton.Visibility = Visibility.Visible;
+        }
+        else
+        {
+            OpenFigiKeyStatusText.Text = "No API key stored (optional)";
+            SetOpenFigiKeyButton.Content = "Set Key";
+            ClearOpenFigiKeyButton.Visibility = Visibility.Collapsed;
+        }
+    }
+
+    private static string MaskApiKey(string key)
+    {
+        if (string.IsNullOrEmpty(key) || key.Length <= 8)
+        {
+            return "****";
+        }
+        return key.Substring(0, 4) + "..." + key.Substring(key.Length - 4);
+    }
+
+    private async void SetNasdaqApiKey_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var apiKey = await _credentialService.PromptForNasdaqApiKeyAsync();
+            if (!string.IsNullOrEmpty(apiKey))
+            {
+                UpdateApiKeyStatus();
+                await ShowSuccessAsync("Nasdaq Data Link API key has been securely stored.");
+            }
+        }
+        catch (Exception ex)
+        {
+            await ShowErrorAsync($"Failed to save API key: {ex.Message}");
+        }
+    }
+
+    private void ClearNasdaqApiKey_Click(object sender, RoutedEventArgs e)
+    {
+        _credentialService.RemoveCredential(CredentialService.NasdaqApiKeyResource);
+        UpdateApiKeyStatus();
+    }
+
+    private async void SetOpenFigiApiKey_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var apiKey = await _credentialService.PromptForOpenFigiApiKeyAsync();
+            if (!string.IsNullOrEmpty(apiKey))
+            {
+                UpdateApiKeyStatus();
+                await ShowSuccessAsync("OpenFIGI API key has been securely stored.");
+            }
+        }
+        catch (Exception ex)
+        {
+            await ShowErrorAsync($"Failed to save API key: {ex.Message}");
+        }
+    }
+
+    private void ClearOpenFigiApiKey_Click(object sender, RoutedEventArgs e)
+    {
+        _credentialService.RemoveCredential(CredentialService.OpenFigiApiKeyResource);
+        UpdateApiKeyStatus();
     }
 
     private async Task LoadLastStatusAsync()

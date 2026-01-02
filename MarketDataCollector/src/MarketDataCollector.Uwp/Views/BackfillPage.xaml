@@ -104,13 +104,72 @@
                                    Foreground="{ThemeResource SystemBaseMediumColor}"
                                    Margin="28,0,0,0" />
 
-                        <PasswordBox x:Name="NasdaqApiKeyBox"
-                                     Header="Nasdaq Data Link API Key (optional)"
-                                     PlaceholderText="Your Quandl/Nasdaq API key" />
+                        <!-- Secure API Key Management -->
+                        <TextBlock Text="API Keys (Securely Stored)"
+                                   Style="{StaticResource SubtitleTextBlockStyle}"
+                                   Margin="0,8,0,0" />
 
-                        <PasswordBox x:Name="OpenFigiApiKeyBox"
-                                     Header="OpenFIGI API Key (optional)"
-                                     PlaceholderText="Higher rate limits" />
+                        <InfoBar IsOpen="True" IsClosable="False" Severity="Informational"
+                                 Title="Secure Storage"
+                                 Message="API keys are stored in Windows Credential Manager, not in config files." />
+
+                        <!-- Nasdaq API Key -->
+                        <Border Background="{ThemeResource SystemFillColorNeutralBackgroundBrush}"
+                                CornerRadius="8" Padding="16">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0" Spacing="4">
+                                    <TextBlock Text="Nasdaq Data Link (Quandl)" FontWeight="SemiBold" />
+                                    <TextBlock x:Name="NasdaqKeyStatusText"
+                                               Text="No API key stored"
+                                               Style="{StaticResource CaptionTextBlockStyle}"
+                                               Foreground="{ThemeResource SystemBaseMediumColor}" />
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                                    <Button x:Name="SetNasdaqKeyButton"
+                                            Content="Set Key"
+                                            Click="SetNasdaqApiKey_Click" />
+                                    <Button x:Name="ClearNasdaqKeyButton"
+                                            Content="Clear"
+                                            Visibility="Collapsed"
+                                            Click="ClearNasdaqApiKey_Click" />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- OpenFIGI API Key -->
+                        <Border Background="{ThemeResource SystemFillColorNeutralBackgroundBrush}"
+                                CornerRadius="8" Padding="16">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0" Spacing="4">
+                                    <TextBlock Text="OpenFIGI (Symbol Resolution)" FontWeight="SemiBold" />
+                                    <TextBlock x:Name="OpenFigiKeyStatusText"
+                                               Text="No API key stored (optional)"
+                                               Style="{StaticResource CaptionTextBlockStyle}"
+                                               Foreground="{ThemeResource SystemBaseMediumColor}" />
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                                    <Button x:Name="SetOpenFigiKeyButton"
+                                            Content="Set Key"
+                                            Click="SetOpenFigiApiKey_Click" />
+                                    <Button x:Name="ClearOpenFigiKeyButton"
+                                            Content="Clear"
+                                            Visibility="Collapsed"
+                                            Click="ClearOpenFigiApiKey_Click" />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
                     </StackPanel>
                 </Border>
             </Expander>

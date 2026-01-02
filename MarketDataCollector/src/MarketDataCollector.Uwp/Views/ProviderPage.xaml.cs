@@ -6,23 +6,26 @@ using MarketDataCollector.Uwp.Services;
 namespace MarketDataCollector.Uwp.Views;
 
 /// <summary>
-/// Page for configuring data providers.
+/// Page for configuring data providers with secure credential management.
 /// </summary>
 public sealed partial class ProviderPage : Page
 {
     private readonly ConfigService _configService;
+    private readonly CredentialService _credentialService;
     private string _selectedProvider = "IB";
 
     public ProviderPage()
     {
         this.InitializeComponent();
         _configService = new ConfigService();
+        _credentialService = new CredentialService();
 
         Loaded += ProviderPage_Loaded;
     }
 
     private async void ProviderPage_Loaded(object sender, RoutedEventArgs e)
     {
+        // Load config for non-credential settings
         var config = await _configService.LoadConfigAsync();
         if (config != null)
         {
@@ -39,16 +42,46 @@ public sealed partial class ProviderPage : Page
 
             if (config.Alpaca != null)
             {
-                AlpacaKeyIdBox.Text = config.Alpaca.KeyId ?? string.Empty;
-                AlpacaSecretKeyBox.Password = config.Alpaca.SecretKey ?? string.Empty;
                 AlpacaSubscribeQuotesCheck.IsChecked = config.Alpaca.SubscribeQuotes;
-
                 SelectComboItemByTag(AlpacaFeedCombo, config.Alpaca.Feed ?? "iex");
                 SelectComboItemByTag(AlpacaEnvironmentCombo, config.Alpaca.UseSandbox ? "true" : "false");
             }
 
             UpdateProviderUI();
         }
+
+        // Update credential status
+        UpdateCredentialStatus();
+    }
+
+    private void UpdateCredentialStatus()
+    {
+        if (_credentialService.HasAlpacaCredentials())
+        {
+            var credentials = _credentialService.GetAlpacaCredentials();
+            if (credentials.HasValue)
+            {
+                var maskedKey = MaskCredential(credentials.Value.KeyId);
+                CredentialStatusText.Text = $"Stored: {maskedKey}";
+                SetCredentialsButton.Content = "Update Credentials";
+                ClearCredentialsButton.Visibility = Visibility.Visible;
+            }
+        }
+        else
+        {
+            CredentialStatusText.Text = "No credentials stored";
+            SetCredentialsButton.Content = "Set Credentials";
+            ClearCredentialsButton.Visibility = Visibility.Collapsed;
+        }
+    }
+
+    private static string MaskCredential(string credential)
+    {
+        if (string.IsNullOrEmpty(credential) || credential.Length <= 8)
+        {
+            return "****";
+        }
+        return credential.Substring(0, 4) + "..." + credential.Substring(credential.Length - 4);
     }
 
     private void ProviderRadios_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -69,6 +102,41 @@ public sealed partial class ProviderPage : Page
     {
         IbSettings.Visibility = _selectedProvider == "IB" ? Visibility.Visible : Visibility.Collapsed;
         AlpacaSettings.Visibility = _selectedProvider == "Alpaca" ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private async void SetAlpacaCredentials_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var result = await _credentialService.PromptForAlpacaCredentialsAsync();
+            if (result.HasValue)
+            {
+                UpdateCredentialStatus();
+
+                SaveInfoBar.Severity = InfoBarSeverity.Success;
+                SaveInfoBar.Title = "Credentials Saved";
+                SaveInfoBar.Message = "Alpaca API credentials have been securely stored in Windows Credential Manager.";
+                SaveInfoBar.IsOpen = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            SaveInfoBar.Severity = InfoBarSeverity.Error;
+            SaveInfoBar.Title = "Error";
+            SaveInfoBar.Message = $"Failed to save credentials: {ex.Message}";
+            SaveInfoBar.IsOpen = true;
+        }
+    }
+
+    private void ClearAlpacaCredentials_Click(object sender, RoutedEventArgs e)
+    {
+        _credentialService.RemoveAlpacaCredentials();
+        UpdateCredentialStatus();
+
+        SaveInfoBar.Severity = InfoBarSeverity.Informational;
+        SaveInfoBar.Title = "Credentials Removed";
+        SaveInfoBar.Message = "Alpaca API credentials have been removed from Windows Credential Manager.";
+        SaveInfoBar.IsOpen = true;
     }
 
     private async void SaveProvider_Click(object sender, RoutedEventArgs e)
@@ -101,10 +169,12 @@ public sealed partial class ProviderPage : Page
         AlpacaSaveProgress.IsActive = true;
         try
         {
+            // Save non-credential settings only (credentials are in Credential Manager)
             var options = new AlpacaOptions
             {
-                KeyId = AlpacaKeyIdBox.Text,
-                SecretKey = AlpacaSecretKeyBox.Password,
+                // Don't store credentials in config - they're in Credential Manager
+                KeyId = null,
+                SecretKey = null,
                 Feed = GetComboSelectedTag(AlpacaFeedCombo) ?? "iex",
                 UseSandbox = GetComboSelectedTag(AlpacaEnvironmentCombo) == "true",
                 SubscribeQuotes = AlpacaSubscribeQuotesCheck.IsChecked ?? false

@@ -54,6 +54,51 @@
                 </StackPanel>
             </Border>
 
+            <!-- Stored Credentials -->
+            <Border Style="{StaticResource CardStyle}">
+                <StackPanel Spacing="16">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE72E;" FontSize="20" Foreground="{ThemeResource SystemAccentColor}" />
+                        <TextBlock Text="Stored Credentials" Style="{StaticResource SubtitleTextBlockStyle}" />
+                    </StackPanel>
+
+                    <InfoBar IsOpen="True" IsClosable="False" Severity="Informational"
+                             Title="Windows Credential Manager"
+                             Message="All API keys and credentials are securely stored in Windows Credential Manager, not in config files." />
+
+                    <TextBlock Text="Stored credentials for this application:"
+                               Style="{StaticResource CaptionTextBlockStyle}"
+                               Foreground="{ThemeResource SystemBaseMediumColor}" />
+
+                    <ListView x:Name="StoredCredentialsList"
+                              SelectionMode="None"
+                              MaxHeight="200">
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Padding="8,4" ColumnSpacing="16">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Grid.Column="0" Text="{Binding}" VerticalAlignment="Center" />
+                                    <Button Grid.Column="1" Content="Remove" Tag="{Binding}"
+                                            Click="RemoveCredential_Click" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+
+                    <TextBlock x:Name="NoCredentialsText"
+                               Text="No credentials stored."
+                               Visibility="Collapsed"
+                               Foreground="{ThemeResource SystemBaseMediumColor}" />
+
+                    <Button Content="Clear All Credentials"
+                            Click="ClearAllCredentials_Click" />
+                </StackPanel>
+            </Border>
+
             <!-- Configuration File -->
             <Border Style="{StaticResource CardStyle}">
                 <StackPanel Spacing="16">
