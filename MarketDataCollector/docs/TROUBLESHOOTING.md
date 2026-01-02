@@ -405,3 +405,9 @@ If you're still experiencing issues:
 2. **Review documentation** - [architecture.md](architecture.md), [operator-runbook.md](operator-runbook.md)
 3. **Run self-tests** - `dotnet run -- --selftest`
 4. **File an issue** - Include logs, configuration (without secrets), and steps to reproduce
+
+---
+
+**Version:** 1.1.0
+**Last Updated:** 2026-01-02
+**See Also:** [GETTING_STARTED.md](GETTING_STARTED.md) | [CONFIGURATION.md](CONFIGURATION.md) | [operator-runbook.md](operator-runbook.md)

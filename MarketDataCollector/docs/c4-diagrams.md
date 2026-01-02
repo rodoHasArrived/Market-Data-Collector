@@ -157,3 +157,9 @@ classDef ext fill:#f8f8f8,stroke:#333,stroke-dasharray: 4 2;
 classDef component fill:#f7fafc,stroke:#4a5568,stroke-width:1px;
 classDef store fill:#fff5f5,stroke:#c53030,stroke-width:1px;
 ```
+
+---
+
+**Version:** 1.1.0
+**Last Updated:** 2026-01-02
+**See Also:** [architecture.md](architecture.md) | [domains.md](domains.md) | [why-this-architecture.md](why-this-architecture.md)

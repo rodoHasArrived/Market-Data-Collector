@@ -529,3 +529,9 @@ The following API endpoints are available for programmatic configuration:
 | `POST` | `/api/config/datasources/{id}/toggle` | Enable/disable a data source |
 | `POST` | `/api/config/datasources/defaults` | Set default source IDs |
 | `POST` | `/api/config/datasources/failover` | Update failover settings |
+
+---
+
+**Version:** 1.1.0
+**Last Updated:** 2026-01-02
+**See Also:** [GETTING_STARTED.md](GETTING_STARTED.md) | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | [operator-runbook.md](operator-runbook.md)

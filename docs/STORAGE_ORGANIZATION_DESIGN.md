@@ -2572,3 +2572,9 @@ This design provides a comprehensive framework for storage organization that:
 | **Off-Hours Scheduling** | Trading-hours-aware maintenance | Zero impact on live data collection |
 
 The modular design allows incremental adoption—start with basic naming conventions and progressively add policies, tiering, quality management, scheduling, and advanced search as needs grow.
+
+---
+
+**Version:** 1.1.0
+**Last Updated:** 2026-01-02
+**See Also:** [MarketDataCollector README](../MarketDataCollector/README.md) | [architecture.md](../MarketDataCollector/docs/architecture.md) | [CONFIGURATION.md](../MarketDataCollector/docs/CONFIGURATION.md)

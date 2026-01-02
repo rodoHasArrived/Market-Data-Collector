@@ -194,3 +194,9 @@ interface IQuoteStateStore
 * `TradeDataCollector` uses the current BBO when classifying trade aggressor side.
 * `OrderFlowStatistics` includes buy/sell splits when BBO context is available.
 * Operators can snapshot current quotes through the API/UI without replaying stored events.
+
+---
+
+**Version:** 1.1.0
+**Last Updated:** 2026-01-02
+**See Also:** [architecture.md](architecture.md) | [c4-diagrams.md](c4-diagrams.md) | [why-this-architecture.md](why-this-architecture.md)
