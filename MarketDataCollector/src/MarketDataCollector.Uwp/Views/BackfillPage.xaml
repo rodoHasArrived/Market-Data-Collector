@@ -9,251 +9,563 @@
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="24">
-        <StackPanel Spacing="24" MaxWidth="900">
-            <!-- Header -->
-            <StackPanel Orientation="Horizontal" Spacing="12">
-                <FontIcon Glyph="&#xE787;" FontSize="28" Foreground="{ThemeResource SystemAccentColor}" />
-                <TextBlock Text="Historical Data Backfill" Style="{StaticResource TitleTextBlockStyle}" VerticalAlignment="Center" />
-            </StackPanel>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="380" />
+        </Grid.ColumnDefinitions>
 
-            <TextBlock Text="Download free end-of-day historical data from multiple providers with automatic failover."
-                       Style="{StaticResource BodyTextBlockStyle}"
-                       Foreground="{ThemeResource SystemBaseMediumColor}" />
+        <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" Padding="24,24,12,24">
+            <StackPanel Spacing="24" MaxWidth="900">
+                <!-- Header -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
 
-            <!-- Provider Selection -->
-            <Border Style="{StaticResource CardStyle}">
-                <StackPanel Spacing="16">
-                    <TextBlock Text="Data Provider" Style="{StaticResource SubtitleTextBlockStyle}" />
-
-                    <Grid ColumnSpacing="16" RowSpacing="16">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-
-                        <ComboBox x:Name="ProviderCombo"
-                                  Grid.Column="0"
-                                  Header="Provider"
-                                  HorizontalAlignment="Stretch"
-                                  SelectedIndex="0">
-                            <ComboBoxItem Content="Multi-Source (Auto-Failover)" Tag="composite" />
-                            <ComboBoxItem Content="Yahoo Finance (Free)" Tag="yahoo" />
-                            <ComboBoxItem Content="Stooq (Free EOD)" Tag="stooq" />
-                            <ComboBoxItem Content="Nasdaq Data Link (Quandl)" Tag="nasdaq" />
-                        </ComboBox>
-
-                        <TextBox x:Name="SymbolsBox"
-                                 Grid.Column="1"
-                                 Header="Symbols (comma-separated)"
-                                 PlaceholderText="AAPL,MSFT,TSLA" />
-                    </Grid>
-                </StackPanel>
-            </Border>
-
-            <!-- Date Range -->
-            <Border Style="{StaticResource CardStyle}">
-                <StackPanel Spacing="16">
-                    <TextBlock Text="Date Range" Style="{StaticResource SubtitleTextBlockStyle}" />
-
-                    <Grid ColumnSpacing="16">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-
-                        <CalendarDatePicker x:Name="FromDatePicker"
-                                            Grid.Column="0"
-                                            Header="From Date (UTC)"
-                                            HorizontalAlignment="Stretch"
-                                            PlaceholderText="Select start date" />
-
-                        <CalendarDatePicker x:Name="ToDatePicker"
-                                            Grid.Column="1"
-                                            Header="To Date (UTC)"
-                                            HorizontalAlignment="Stretch"
-                                            PlaceholderText="Select end date" />
-                    </Grid>
-
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <Button Content="Last 30 Days" Click="Last30Days_Click" />
-                        <Button Content="Last 90 Days" Click="Last90Days_Click" />
-                        <Button Content="Year to Date" Click="YearToDate_Click" />
-                        <Button Content="Last Year" Click="LastYear_Click" />
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <FontIcon Glyph="&#xE787;" FontSize="28" Foreground="{ThemeResource SystemAccentColor}" />
+                        <TextBlock Text="Historical Data Backfill" Style="{StaticResource TitleTextBlockStyle}" VerticalAlignment="Center" />
                     </StackPanel>
-                </StackPanel>
-            </Border>
 
-            <!-- Advanced Options -->
-            <Expander Header="Advanced Options" IsExpanded="False" HorizontalAlignment="Stretch">
-                <Border Style="{StaticResource CardStyle}" Margin="0,8,0,0">
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                        <Button Click="ValidateData_Click">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <FontIcon Glyph="&#xE73E;" FontSize="14" />
+                                <TextBlock Text="Validate Data" />
+                            </StackPanel>
+                        </Button>
+                        <Button Click="RepairGaps_Click">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <FontIcon Glyph="&#xE90F;" FontSize="14" />
+                                <TextBlock Text="Repair Gaps" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+
+                <TextBlock Text="Download free end-of-day historical data from multiple providers with automatic failover."
+                           Style="{StaticResource BodyTextBlockStyle}"
+                           Foreground="{ThemeResource SystemBaseMediumColor}" />
+
+                <!-- Provider Selection -->
+                <Border Style="{StaticResource CardStyle}">
                     <StackPanel Spacing="16">
-                        <CheckBox x:Name="EnableSymbolResolutionCheck"
-                                  Content="Enable Symbol Resolution (OpenFIGI)"
-                                  IsChecked="True" />
-                        <TextBlock Text="Automatically normalize symbols across providers"
-                                   Style="{StaticResource CaptionTextBlockStyle}"
-                                   Foreground="{ThemeResource SystemBaseMediumColor}"
-                                   Margin="28,0,0,0" />
+                        <TextBlock Text="Data Provider" Style="{StaticResource SubtitleTextBlockStyle}" />
 
-                        <CheckBox x:Name="PreferAdjustedCheck"
-                                  Content="Prefer Adjusted Prices"
-                                  IsChecked="True" />
-                        <TextBlock Text="Use split/dividend adjusted prices when available"
-                                   Style="{StaticResource CaptionTextBlockStyle}"
-                                   Foreground="{ThemeResource SystemBaseMediumColor}"
-                                   Margin="28,0,0,0" />
+                        <Grid ColumnSpacing="16" RowSpacing="16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
 
-                        <!-- Secure API Key Management -->
-                        <TextBlock Text="API Keys (Securely Stored)"
-                                   Style="{StaticResource SubtitleTextBlockStyle}"
-                                   Margin="0,8,0,0" />
+                            <ComboBox x:Name="ProviderCombo"
+                                      Grid.Column="0"
+                                      Header="Provider"
+                                      HorizontalAlignment="Stretch"
+                                      SelectedIndex="0">
+                                <ComboBoxItem Content="Multi-Source (Auto-Failover)" Tag="composite" />
+                                <ComboBoxItem Content="Yahoo Finance (Free)" Tag="yahoo" />
+                                <ComboBoxItem Content="Stooq (Free EOD)" Tag="stooq" />
+                                <ComboBoxItem Content="Nasdaq Data Link (Quandl)" Tag="nasdaq" />
+                            </ComboBox>
 
-                        <InfoBar IsOpen="True" IsClosable="False" Severity="Informational"
-                                 Title="Secure Storage"
-                                 Message="API keys are stored in Windows Credential Manager, not in config files." />
+                            <AutoSuggestBox x:Name="SymbolsBox"
+                                            Grid.Column="1"
+                                            Header="Symbols (comma-separated)"
+                                            PlaceholderText="AAPL,MSFT,TSLA"
+                                            TextChanged="SymbolsBox_TextChanged" />
+                        </Grid>
 
-                        <!-- Nasdaq API Key -->
-                        <Border Background="{ThemeResource SystemFillColorNeutralBackgroundBrush}"
-                                CornerRadius="8" Padding="16">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-
-                                <StackPanel Grid.Column="0" Spacing="4">
-                                    <TextBlock Text="Nasdaq Data Link (Quandl)" FontWeight="SemiBold" />
-                                    <TextBlock x:Name="NasdaqKeyStatusText"
-                                               Text="No API key stored"
-                                               Style="{StaticResource CaptionTextBlockStyle}"
-                                               Foreground="{ThemeResource SystemBaseMediumColor}" />
-                                </StackPanel>
-
-                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
-                                    <Button x:Name="SetNasdaqKeyButton"
-                                            Content="Set Key"
-                                            Click="SetNasdaqApiKey_Click" />
-                                    <Button x:Name="ClearNasdaqKeyButton"
-                                            Content="Clear"
-                                            Visibility="Collapsed"
-                                            Click="ClearNasdaqApiKey_Click" />
-                                </StackPanel>
-                            </Grid>
-                        </Border>
-
-                        <!-- OpenFIGI API Key -->
-                        <Border Background="{ThemeResource SystemFillColorNeutralBackgroundBrush}"
-                                CornerRadius="8" Padding="16">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-
-                                <StackPanel Grid.Column="0" Spacing="4">
-                                    <TextBlock Text="OpenFIGI (Symbol Resolution)" FontWeight="SemiBold" />
-                                    <TextBlock x:Name="OpenFigiKeyStatusText"
-                                               Text="No API key stored (optional)"
-                                               Style="{StaticResource CaptionTextBlockStyle}"
-                                               Foreground="{ThemeResource SystemBaseMediumColor}" />
-                                </StackPanel>
-
-                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
-                                    <Button x:Name="SetOpenFigiKeyButton"
-                                            Content="Set Key"
-                                            Click="SetOpenFigiApiKey_Click" />
-                                    <Button x:Name="ClearOpenFigiKeyButton"
-                                            Content="Clear"
-                                            Visibility="Collapsed"
-                                            Click="ClearOpenFigiApiKey_Click" />
-                                </StackPanel>
-                            </Grid>
-                        </Border>
+                        <!-- Quick symbol add from subscriptions -->
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Button Content="Add All Subscribed" Click="AddAllSubscribed_Click" />
+                            <Button Content="Add SPY,QQQ,IWM" Click="AddMajorETFs_Click" />
+                            <TextBlock x:Name="SymbolCountText" Text="0 symbols"
+                                       Style="{StaticResource CaptionTextBlockStyle}"
+                                       VerticalAlignment="Center"
+                                       Foreground="{ThemeResource SystemBaseMediumColor}" />
+                        </StackPanel>
                     </StackPanel>
                 </Border>
-            </Expander>
 
-            <!-- Run Backfill -->
-            <Border Style="{StaticResource CardStyle}">
-                <StackPanel Spacing="16">
-                    <StackPanel Orientation="Horizontal" Spacing="12">
-                        <Button x:Name="StartBackfillButton"
-                                Content="Start Backfill"
-                                Style="{StaticResource AccentButtonStyle}"
-                                Click="StartBackfill_Click" />
-                        <Button x:Name="CancelBackfillButton"
-                                Content="Cancel"
-                                Visibility="Collapsed"
-                                Click="CancelBackfill_Click" />
-                        <ProgressRing x:Name="BackfillProgress" IsActive="False" Width="24" Height="24" />
+                <!-- Date Range -->
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel Spacing="16">
+                        <TextBlock Text="Date Range" Style="{StaticResource SubtitleTextBlockStyle}" />
+
+                        <Grid ColumnSpacing="16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <CalendarDatePicker x:Name="FromDatePicker"
+                                                Grid.Column="0"
+                                                Header="From Date (UTC)"
+                                                HorizontalAlignment="Stretch"
+                                                PlaceholderText="Select start date" />
+
+                            <CalendarDatePicker x:Name="ToDatePicker"
+                                                Grid.Column="1"
+                                                Header="To Date (UTC)"
+                                                HorizontalAlignment="Stretch"
+                                                PlaceholderText="Select end date" />
+                        </Grid>
+
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Button Content="Last 30 Days" Click="Last30Days_Click" />
+                            <Button Content="Last 90 Days" Click="Last90Days_Click" />
+                            <Button Content="Year to Date" Click="YearToDate_Click" />
+                            <Button Content="Last Year" Click="LastYear_Click" />
+                            <Button Content="Last 5 Years" Click="Last5Years_Click" />
+                        </StackPanel>
                     </StackPanel>
+                </Border>
 
-                    <!-- Progress Bar -->
-                    <StackPanel x:Name="ProgressPanel" Visibility="Collapsed" Spacing="8">
+                <!-- Per-Symbol Progress -->
+                <Border x:Name="SymbolProgressCard" Style="{StaticResource CardStyle}" Visibility="Collapsed">
+                    <StackPanel Spacing="16">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon Glyph="&#xE896;" Foreground="{ThemeResource SystemAccentColor}" />
+                            <TextBlock Text="Per-Symbol Progress" Style="{StaticResource SubtitleTextBlockStyle}" />
+                        </StackPanel>
+
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock x:Name="ProgressLabel" Grid.Column="0" Text="Processing..." />
-                            <TextBlock x:Name="ProgressPercent" Grid.Column="1" Text="0%" />
+                            <TextBlock x:Name="OverallProgressText" Text="Overall: 0 / 0 symbols complete" />
+                            <TextBlock x:Name="OverallTimeText" Grid.Column="1" Text="Elapsed: 0:00"
+                                       Foreground="{ThemeResource SystemBaseMediumColor}" />
                         </Grid>
-                        <ProgressBar x:Name="ProgressBar" Minimum="0" Maximum="100" Value="0" />
+
+                        <ProgressBar x:Name="OverallProgressBar" Minimum="0" Maximum="100" Value="0" Height="8" />
+
+                        <ListView x:Name="SymbolProgressList" SelectionMode="None" MaxHeight="300">
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Padding="8,4" ColumnSpacing="12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="70" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="80" />
+                                            <ColumnDefinition Width="60" />
+                                            <ColumnDefinition Width="70" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="{Binding Symbol}" FontWeight="SemiBold"
+                                                   VerticalAlignment="Center" />
+                                        <ProgressBar Grid.Column="1" Value="{Binding Progress}" Maximum="100"
+                                                     Height="8" VerticalAlignment="Center" />
+                                        <TextBlock Grid.Column="2" Text="{Binding BarsText}" HorizontalAlignment="Right"
+                                                   VerticalAlignment="Center" />
+                                        <Border Grid.Column="3" Background="{Binding StatusBackground}"
+                                                CornerRadius="4" Padding="6,2" VerticalAlignment="Center"
+                                                HorizontalAlignment="Center">
+                                            <TextBlock Text="{Binding StatusText}" FontSize="11" />
+                                        </Border>
+                                        <TextBlock Grid.Column="4" Text="{Binding TimeText}" HorizontalAlignment="Right"
+                                                   VerticalAlignment="Center"
+                                                   Foreground="{ThemeResource SystemBaseMediumColor}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
                     </StackPanel>
-                </StackPanel>
-            </Border>
+                </Border>
 
-            <!-- Last Run Status -->
-            <Border Style="{StaticResource CardStyle}">
-                <StackPanel Spacing="16">
-                    <TextBlock Text="Last Backfill Status" Style="{StaticResource SubtitleTextBlockStyle}" />
+                <!-- Run Backfill -->
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel Spacing="16">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <Button x:Name="StartBackfillButton"
+                                    Content="Start Backfill"
+                                    Style="{StaticResource AccentButtonStyle}"
+                                    Click="StartBackfill_Click">
+                                <Button.KeyboardAccelerators>
+                                    <KeyboardAccelerator Modifiers="Control" Key="R" />
+                                </Button.KeyboardAccelerators>
+                            </Button>
+                            <Button x:Name="PauseBackfillButton"
+                                    Content="Pause"
+                                    Visibility="Collapsed"
+                                    Click="PauseBackfill_Click" />
+                            <Button x:Name="CancelBackfillButton"
+                                    Content="Cancel"
+                                    Visibility="Collapsed"
+                                    Click="CancelBackfill_Click" />
+                            <ProgressRing x:Name="BackfillProgress" IsActive="False" Width="24" Height="24" />
+                            <TextBlock x:Name="BackfillStatusText" VerticalAlignment="Center"
+                                       Style="{StaticResource CaptionTextBlockStyle}" />
+                        </StackPanel>
 
-                    <Grid x:Name="StatusGrid" Visibility="Collapsed">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="120" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
+                        <!-- Progress Bar -->
+                        <StackPanel x:Name="ProgressPanel" Visibility="Collapsed" Spacing="8">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock x:Name="ProgressLabel" Grid.Column="0" Text="Processing..." />
+                                <TextBlock x:Name="ProgressPercent" Grid.Column="1" Text="0%" />
+                            </Grid>
+                            <ProgressBar x:Name="ProgressBar" Minimum="0" Maximum="100" Value="0" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
 
-                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Status:" FontWeight="SemiBold" />
-                        <TextBlock x:Name="StatusText" Grid.Row="0" Grid.Column="1" />
+                <!-- Data Validation Results -->
+                <Border x:Name="ValidationResultsCard" Style="{StaticResource CardStyle}" Visibility="Collapsed">
+                    <StackPanel Spacing="16">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon Glyph="&#xE73E;" Foreground="{ThemeResource SystemAccentColor}" />
+                            <TextBlock Text="Data Validation Results" Style="{StaticResource SubtitleTextBlockStyle}" />
+                        </StackPanel>
 
-                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Provider:" FontWeight="SemiBold" />
-                        <TextBlock x:Name="ProviderText" Grid.Row="1" Grid.Column="1" />
+                        <Grid ColumnSpacing="24">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
 
-                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Symbols:" FontWeight="SemiBold" />
-                        <TextBlock x:Name="SymbolsText" Grid.Row="2" Grid.Column="1" TextWrapping="Wrap" />
+                            <StackPanel Grid.Column="0">
+                                <TextBlock x:Name="ValidationSymbolsText" Text="12" Style="{StaticResource SubheaderTextBlockStyle}"
+                                           Foreground="{ThemeResource SystemAccentColor}" />
+                                <TextBlock Text="Symbols Checked" Style="{StaticResource CaptionTextBlockStyle}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1">
+                                <TextBlock x:Name="ValidationGapsText" Text="3" Style="{StaticResource SubheaderTextBlockStyle}"
+                                           Foreground="#ED8936" />
+                                <TextBlock Text="Gaps Found" Style="{StaticResource CaptionTextBlockStyle}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock x:Name="ValidationMissingText" Text="156" Style="{StaticResource SubheaderTextBlockStyle}"
+                                           Foreground="#F56565" />
+                                <TextBlock Text="Missing Days" Style="{StaticResource CaptionTextBlockStyle}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="3">
+                                <TextBlock x:Name="ValidationHealthText" Text="94%" Style="{StaticResource SubheaderTextBlockStyle}"
+                                           Foreground="#48BB78" />
+                                <TextBlock Text="Data Health" Style="{StaticResource CaptionTextBlockStyle}" />
+                            </StackPanel>
+                        </Grid>
 
-                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Bars Written:" FontWeight="SemiBold" />
-                        <TextBlock x:Name="BarsWrittenText" Grid.Row="3" Grid.Column="1" />
+                        <ListView x:Name="ValidationIssuesList" SelectionMode="None" MaxHeight="200">
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Padding="8,4" ColumnSpacing="12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="70" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="80" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="{Binding Symbol}" FontWeight="SemiBold" />
+                                        <TextBlock Grid.Column="1" Text="{Binding Description}"
+                                                   Foreground="{ThemeResource SystemBaseMediumColor}" />
+                                        <TextBlock Grid.Column="2" Text="{Binding DateRange}"
+                                                   Foreground="{ThemeResource SystemBaseMediumColor}" />
+                                        <Button Grid.Column="3" Content="Repair" FontSize="11" Padding="8,4"
+                                                Click="RepairSingleGap_Click" Tag="{Binding}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </StackPanel>
+                </Border>
 
-                        <TextBlock Grid.Row="4" Grid.Column="0" Text="Started:" FontWeight="SemiBold" />
-                        <TextBlock x:Name="StartedText" Grid.Row="4" Grid.Column="1" />
+                <!-- Last Run Status -->
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel Spacing="16">
+                        <TextBlock Text="Last Backfill Status" Style="{StaticResource SubtitleTextBlockStyle}" />
 
-                        <TextBlock Grid.Row="5" Grid.Column="0" Text="Completed:" FontWeight="SemiBold" />
-                        <TextBlock x:Name="CompletedText" Grid.Row="5" Grid.Column="1" />
-                    </Grid>
+                        <Grid x:Name="StatusGrid" Visibility="Collapsed">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="120" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
 
-                    <TextBlock x:Name="NoStatusText"
-                               Text="No backfill runs yet. Select a provider and symbols to get started."
-                               Foreground="{ThemeResource SystemBaseMediumColor}" />
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Status:" FontWeight="SemiBold" />
+                            <TextBlock x:Name="StatusText" Grid.Row="0" Grid.Column="1" />
 
-                    <TextBlock x:Name="ErrorText"
-                               Visibility="Collapsed"
-                               Foreground="#F56565"
-                               TextWrapping="Wrap" />
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Provider:" FontWeight="SemiBold" />
+                            <TextBlock x:Name="ProviderText" Grid.Row="1" Grid.Column="1" />
 
-                    <Button Content="Refresh Status" Click="RefreshStatus_Click" />
-                </StackPanel>
-            </Border>
-        </StackPanel>
-    </ScrollViewer>
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Symbols:" FontWeight="SemiBold" />
+                            <TextBlock x:Name="SymbolsText" Grid.Row="2" Grid.Column="1" TextWrapping="Wrap" />
+
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Bars Written:" FontWeight="SemiBold" />
+                            <TextBlock x:Name="BarsWrittenText" Grid.Row="3" Grid.Column="1" />
+
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Started:" FontWeight="SemiBold" />
+                            <TextBlock x:Name="StartedText" Grid.Row="4" Grid.Column="1" />
+
+                            <TextBlock Grid.Row="5" Grid.Column="0" Text="Completed:" FontWeight="SemiBold" />
+                            <TextBlock x:Name="CompletedText" Grid.Row="5" Grid.Column="1" />
+                        </Grid>
+
+                        <TextBlock x:Name="NoStatusText"
+                                   Text="No backfill runs yet. Select a provider and symbols to get started."
+                                   Foreground="{ThemeResource SystemBaseMediumColor}" />
+
+                        <TextBlock x:Name="ErrorText"
+                                   Visibility="Collapsed"
+                                   Foreground="#F56565"
+                                   TextWrapping="Wrap" />
+
+                        <Button Content="Refresh Status" Click="RefreshStatus_Click" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Advanced Options -->
+                <Expander Header="Advanced Options" IsExpanded="False" HorizontalAlignment="Stretch"
+                          HorizontalContentAlignment="Stretch">
+                    <Border Style="{StaticResource CardStyle}" Margin="0,8,0,0">
+                        <StackPanel Spacing="16">
+                            <CheckBox x:Name="EnableSymbolResolutionCheck"
+                                      Content="Enable Symbol Resolution (OpenFIGI)"
+                                      IsChecked="True" />
+                            <TextBlock Text="Automatically normalize symbols across providers"
+                                       Style="{StaticResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource SystemBaseMediumColor}"
+                                       Margin="28,0,0,0" />
+
+                            <CheckBox x:Name="PreferAdjustedCheck"
+                                      Content="Prefer Adjusted Prices"
+                                      IsChecked="True" />
+                            <TextBlock Text="Use split/dividend adjusted prices when available"
+                                       Style="{StaticResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource SystemBaseMediumColor}"
+                                       Margin="28,0,0,0" />
+
+                            <!-- Secure API Key Management -->
+                            <TextBlock Text="API Keys (Securely Stored)"
+                                       Style="{StaticResource SubtitleTextBlockStyle}"
+                                       Margin="0,8,0,0" />
+
+                            <InfoBar IsOpen="True" IsClosable="False" Severity="Informational"
+                                     Title="Secure Storage"
+                                     Message="API keys are stored in Windows Credential Manager, not in config files." />
+
+                            <!-- Nasdaq API Key -->
+                            <Border Background="{ThemeResource SystemFillColorNeutralBackgroundBrush}"
+                                    CornerRadius="8" Padding="16">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0" Spacing="4">
+                                        <TextBlock Text="Nasdaq Data Link (Quandl)" FontWeight="SemiBold" />
+                                        <TextBlock x:Name="NasdaqKeyStatusText"
+                                                   Text="No API key stored"
+                                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                                   Foreground="{ThemeResource SystemBaseMediumColor}" />
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                                        <Button x:Name="SetNasdaqKeyButton"
+                                                Content="Set Key"
+                                                Click="SetNasdaqApiKey_Click" />
+                                        <Button x:Name="ClearNasdaqKeyButton"
+                                                Content="Clear"
+                                                Visibility="Collapsed"
+                                                Click="ClearNasdaqApiKey_Click" />
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+
+                            <!-- OpenFIGI API Key -->
+                            <Border Background="{ThemeResource SystemFillColorNeutralBackgroundBrush}"
+                                    CornerRadius="8" Padding="16">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0" Spacing="4">
+                                        <TextBlock Text="OpenFIGI (Symbol Resolution)" FontWeight="SemiBold" />
+                                        <TextBlock x:Name="OpenFigiKeyStatusText"
+                                                   Text="No API key stored (optional)"
+                                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                                   Foreground="{ThemeResource SystemBaseMediumColor}" />
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                                        <Button x:Name="SetOpenFigiKeyButton"
+                                                Content="Set Key"
+                                                Click="SetOpenFigiApiKey_Click" />
+                                        <Button x:Name="ClearOpenFigiKeyButton"
+                                                Content="Clear"
+                                                Visibility="Collapsed"
+                                                Click="ClearOpenFigiApiKey_Click" />
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+                </Expander>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Right Panel - Scheduled Jobs -->
+        <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" Padding="12,24,24,24">
+            <StackPanel Spacing="16">
+                <!-- Scheduled Backfill Jobs -->
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel Spacing="16">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon Glyph="&#xE823;" Foreground="{ThemeResource SystemAccentColor}" FontSize="16" />
+                            <TextBlock Text="Scheduled Jobs" Style="{StaticResource SubtitleTextBlockStyle}" />
+                        </StackPanel>
+
+                        <ToggleSwitch x:Name="ScheduledBackfillToggle"
+                                      Header="Enable Scheduled Backfill"
+                                      OffContent="Disabled"
+                                      OnContent="Enabled"
+                                      Toggled="ScheduledBackfill_Toggled" />
+
+                        <StackPanel x:Name="ScheduleSettingsPanel" Spacing="12" Opacity="0.5">
+                            <ComboBox x:Name="ScheduleFrequencyCombo" Header="Frequency" HorizontalAlignment="Stretch">
+                                <ComboBoxItem Content="Daily" Tag="Daily" IsSelected="True" />
+                                <ComboBoxItem Content="Weekly (Sunday)" Tag="Weekly" />
+                                <ComboBoxItem Content="Monthly (1st)" Tag="Monthly" />
+                            </ComboBox>
+
+                            <TimePicker x:Name="ScheduleTimePicker" Header="Run Time (Local)" ClockIdentifier="24HourClock" />
+
+                            <CheckBox x:Name="ScheduleAllSymbolsCheck" Content="Include all subscribed symbols"
+                                      IsChecked="True" />
+
+                            <TextBox x:Name="ScheduleSymbolsBox" Header="Or specify symbols"
+                                     PlaceholderText="AAPL,MSFT,TSLA"
+                                     IsEnabled="False" />
+
+                            <CheckBox x:Name="ScheduleNotifyCheck" Content="Notify on completion" IsChecked="True" />
+                        </StackPanel>
+
+                        <Button x:Name="SaveScheduleButton" Content="Save Schedule" Click="SaveSchedule_Click"
+                                Style="{StaticResource AccentButtonStyle}" HorizontalAlignment="Stretch" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Scheduled Jobs List -->
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="Upcoming Runs" Style="{StaticResource BodyStrongTextBlockStyle}" />
+
+                        <ListView x:Name="ScheduledJobsList" SelectionMode="None" MaxHeight="200">
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Padding="4" ColumnSpacing="8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                                            <TextBlock Text="{Binding NextRun}" Style="{StaticResource CaptionTextBlockStyle}"
+                                                       Foreground="{ThemeResource SystemBaseMediumColor}" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                                            <Button Content="Run Now" FontSize="11" Padding="8,4"
+                                                    Click="RunScheduledJob_Click" Tag="{Binding}" />
+                                            <Button Content="Edit" FontSize="11" Padding="8,4"
+                                                    Click="EditScheduledJob_Click" Tag="{Binding}" />
+                                        </StackPanel>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+
+                        <TextBlock x:Name="NoScheduledJobsText" Text="No scheduled jobs configured"
+                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                   Foreground="{ThemeResource SystemBaseMediumColor}" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Recent Backfill History -->
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="Recent History" Style="{StaticResource BodyStrongTextBlockStyle}" />
+
+                        <ListView x:Name="BackfillHistoryList" SelectionMode="None" MaxHeight="250">
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Padding="4" ColumnSpacing="8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <Ellipse Width="8" Height="8" Fill="{Binding StatusColor}"
+                                                         VerticalAlignment="Center" />
+                                                <TextBlock Text="{Binding Date}" FontWeight="SemiBold" />
+                                            </StackPanel>
+                                            <TextBlock Text="{Binding Summary}" Style="{StaticResource CaptionTextBlockStyle}"
+                                                       Foreground="{ThemeResource SystemBaseMediumColor}" />
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="1" Text="{Binding Duration}"
+                                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                                   VerticalAlignment="Center" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </StackPanel>
+                </Border>
+
+                <!-- Quick Stats -->
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="Backfill Stats" Style="{StaticResource BodyStrongTextBlockStyle}" />
+
+                        <Grid RowSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Total Bars Downloaded" />
+                            <TextBlock x:Name="TotalBarsText" Grid.Row="0" Grid.Column="1" Text="1,234,567"
+                                       FontWeight="SemiBold" />
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Symbols with Data" />
+                            <TextBlock x:Name="SymbolsWithDataText" Grid.Row="1" Grid.Column="1" Text="45"
+                                       FontWeight="SemiBold" />
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Date Range Coverage" />
+                            <TextBlock x:Name="DateCoverageText" Grid.Row="2" Grid.Column="1" Text="5 years"
+                                       FontWeight="SemiBold" />
+
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Last Successful Run" />
+                            <TextBlock x:Name="LastSuccessfulText" Grid.Row="3" Grid.Column="1" Text="2 hours ago"
+                                       FontWeight="SemiBold" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
 </Page>
