@@ -156,5 +156,8 @@
 
     <!-- High-Performance WebSocket Client (Marfusios pattern) -->
     <PackageReference Include="Websocket.Client" Version="5.1.2" />
+
+    <!-- Reactive Extensions for Observable patterns -->
+    <PackageReference Include="System.Reactive" Version="6.0.1" />
   </ItemGroup>
 </Project>
