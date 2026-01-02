@@ -14,7 +14,11 @@ This document outlines storage organization improvements for the Market Data Col
 6. [Perpetual Data Management](#perpetual-data-management)
 7. [Multi-Source Data Organization](#multi-source-data-organization)
 8. [Tiered Storage Architecture](#tiered-storage-architecture)
-9. [Implementation Roadmap](#implementation-roadmap)
+9. [File Maintenance & Health Monitoring](#file-maintenance--health-monitoring)
+10. [Data Robustness & Quality Scoring](#data-robustness--quality-scoring)
+11. [Search & Discovery Infrastructure](#search--discovery-infrastructure)
+12. [Actionable Metadata & Insights](#actionable-metadata--insights)
+13. [Implementation Roadmap](#implementation-roadmap)
 
 ---
 
@@ -37,6 +41,10 @@ The system currently supports:
 | Capacity | Global limit | Per-source/symbol quotas |
 | Perpetual Data | Not supported | Archive tier with cold storage |
 | Multi-Source | Implicit via filename | Explicit source registries |
+| **File Maintenance** | Manual | Automated health checks, self-healing |
+| **Data Robustness** | Basic validation | Quality scoring, best-of-breed selection |
+| **Search** | File system only | Multi-level indexes, faceted search |
+| **Metadata** | Minimal | Rich metadata, insights, lineage tracking |
 
 ---
 
@@ -845,37 +853,1078 @@ record StorageQuery(
 
 ---
 
+## File Maintenance & Health Monitoring
+
+### 1. Automated File Health Service
+
+**Continuous monitoring and self-healing for storage integrity:**
+
+```csharp
+interface IFileMaintenanceService
+{
+    Task<HealthReport> RunHealthCheckAsync(HealthCheckOptions options, CancellationToken ct);
+    Task<RepairResult> RepairAsync(RepairOptions options, CancellationToken ct);
+    Task<DefragResult> DefragmentAsync(DefragOptions options, CancellationToken ct);
+    Task<OrphanReport> FindOrphansAsync(CancellationToken ct);
+}
+
+record HealthCheckOptions(
+    bool ValidateChecksums,          // Verify file integrity
+    bool CheckSequenceContinuity,    // Detect gaps in sequences
+    bool ValidateSchemas,            // Ensure JSON/Parquet valid
+    bool CheckFilePermissions,       // Verify read/write access
+    bool IdentifyCorruption,         // Detect partial writes
+    string[] Paths,                  // Specific paths or "*" for all
+    int ParallelChecks               // Concurrent validation threads
+);
+```
+
+### 2. File Health Report Structure
+
+```json
+{
+  "report_id": "uuid-v4",
+  "generated_at": "2024-01-15T12:00:00Z",
+  "scan_duration_ms": 45000,
+  "summary": {
+    "total_files": 15000,
+    "total_bytes": 107374182400,
+    "healthy_files": 14950,
+    "warning_files": 35,
+    "corrupted_files": 15,
+    "orphaned_files": 12
+  },
+  "issues": [
+    {
+      "severity": "critical",
+      "type": "checksum_mismatch",
+      "path": "live/alpaca/AAPL/Trade/2024-01-10.jsonl.gz",
+      "expected_checksum": "sha256:abc123...",
+      "actual_checksum": "sha256:def456...",
+      "recommended_action": "restore_from_backup",
+      "auto_repairable": true
+    },
+    {
+      "severity": "warning",
+      "type": "sequence_gap",
+      "path": "live/ib/SPY/Trade/2024-01-12.jsonl",
+      "details": {
+        "gap_start": 1000500,
+        "gap_end": 1000750,
+        "missing_events": 250
+      },
+      "recommended_action": "backfill_from_source",
+      "auto_repairable": false
+    },
+    {
+      "severity": "info",
+      "type": "orphaned_file",
+      "path": "live/alpaca/DELETED_SYMBOL/Trade/2024-01-05.jsonl",
+      "reason": "symbol_not_in_registry",
+      "recommended_action": "archive_or_delete"
+    }
+  ],
+  "statistics": {
+    "avg_file_size_bytes": 7158278,
+    "oldest_file": "2023-01-01",
+    "newest_file": "2024-01-15",
+    "compression_ratio": 8.5,
+    "fragmentation_pct": 12.3
+  }
+}
+```
+
+### 3. Self-Healing Capabilities
+
+```csharp
+record RepairOptions(
+    RepairStrategy Strategy,
+    bool DryRun,                     // Preview changes only
+    bool BackupBeforeRepair,         // Create backup first
+    string BackupPath,
+    RepairScope Scope
+);
+
+enum RepairStrategy
+{
+    RestoreFromBackup,       // Use backup copy
+    BackfillFromSource,      // Re-fetch from data provider
+    TruncateCorrupted,       // Remove corrupted tail
+    RebuildIndex,            // Regenerate metadata index
+    MergeFragments,          // Combine small files
+    RecompressOptimal        // Apply better compression
+}
+
+enum RepairScope
+{
+    SingleFile,
+    Directory,
+    Symbol,
+    DateRange,
+    EventType,
+    All
+}
+```
+
+### 4. Scheduled Maintenance Tasks
+
+```json
+{
+  "Maintenance": {
+    "enabled": true,
+    "schedule": {
+      "health_check": "0 3 * * *",
+      "defragmentation": "0 4 * * 0",
+      "orphan_cleanup": "0 5 1 * *",
+      "index_rebuild": "0 2 * * 0",
+      "backup_verification": "0 6 * * 0"
+    },
+    "auto_repair": {
+      "enabled": true,
+      "max_auto_repairs_per_run": 100,
+      "require_backup": true,
+      "notify_on_repair": ["admin@example.com"]
+    },
+    "thresholds": {
+      "fragmentation_trigger_pct": 20,
+      "min_file_size_for_merge_bytes": 1048576,
+      "max_file_age_for_hot_tier_days": 7
+    }
+  }
+}
+```
+
+### 5. File Compaction & Defragmentation
+
+**Merge small files and optimize storage layout:**
+
+```csharp
+record DefragOptions(
+    long MinFileSizeBytes,           // Files smaller than this get merged
+    int MaxFilesPerMerge,            // Batch size for merging
+    bool PreserveOriginals,          // Keep originals until verified
+    CompressionLevel TargetCompression,
+    TimeSpan MaxFileAge              // Only defrag files older than
+);
+
+interface IFileCompactor
+{
+    // Merge multiple small files into optimized larger files
+    Task<CompactionResult> CompactAsync(
+        string[] sourcePaths,
+        string targetPath,
+        CompactionOptions options,
+        CancellationToken ct
+    );
+
+    // Split oversized files into manageable chunks
+    Task<SplitResult> SplitAsync(
+        string sourcePath,
+        long maxChunkBytes,
+        CancellationToken ct
+    );
+}
+
+record CompactionResult(
+    int FilesProcessed,
+    int FilesCreated,
+    long BytesBefore,
+    long BytesAfter,
+    double CompressionImprovement,
+    TimeSpan Duration
+);
+```
+
+### 6. Orphan Detection & Cleanup
+
+```csharp
+record OrphanDetectionConfig(
+    bool CheckSymbolRegistry,        // Files for unknown symbols
+    bool CheckSourceRegistry,        // Files from unknown sources
+    bool CheckDateRanges,            // Files outside expected dates
+    bool CheckManifestConsistency,   // Files not in manifest
+    OrphanAction DefaultAction
+);
+
+enum OrphanAction
+{
+    Report,              // Just log, take no action
+    Quarantine,          // Move to _quarantine folder
+    Archive,             // Move to archive tier
+    Delete               // Remove permanently
+}
+```
+
+---
+
+## Data Robustness & Quality Scoring
+
+### 1. Data Quality Dimensions
+
+**Evaluate data across multiple quality dimensions:**
+
+```csharp
+record DataQualityScore(
+    string Path,
+    DateTimeOffset EvaluatedAt,
+    double OverallScore,             // 0.0 - 1.0
+    QualityDimension[] Dimensions
+);
+
+record QualityDimension(
+    string Name,
+    double Score,                    // 0.0 - 1.0
+    double Weight,                   // Importance factor
+    string[] Issues                  // Specific problems found
+);
+```
+
+**Quality Dimensions:**
+
+| Dimension | Description | Scoring Criteria |
+|-----------|-------------|------------------|
+| Completeness | No missing data | % of expected events present |
+| Accuracy | Data matches source | Cross-source validation |
+| Timeliness | Data is current | Lag from event to storage |
+| Consistency | No conflicts | Schema compliance, no duplicates |
+| Integrity | Data uncorrupted | Checksum validation |
+| Continuity | No sequence gaps | Sequence number analysis |
+
+### 2. Quality Scoring Engine
+
+```csharp
+interface IDataQualityService
+{
+    Task<DataQualityScore> ScoreAsync(string path, CancellationToken ct);
+    Task<QualityReport> GenerateReportAsync(QualityReportOptions options, CancellationToken ct);
+    Task<DataQualityScore[]> GetHistoricalScoresAsync(string path, TimeSpan window, CancellationToken ct);
+}
+
+record QualityReportOptions(
+    string[] Paths,
+    DateTimeOffset? From,
+    DateTimeOffset? To,
+    double MinScoreThreshold,        // Only include if score < threshold
+    bool IncludeRecommendations,
+    bool CompareAcrossSources
+);
+```
+
+### 3. Quality Score Calculation
+
+```csharp
+// Completeness Score
+completeness = actual_events / expected_events;
+
+// Expected events derived from:
+// - Historical average for symbol/date
+// - Trading hours × average events/minute
+// - Cross-source comparison
+
+// Accuracy Score (when multiple sources available)
+accuracy = matching_events / total_comparable_events;
+
+// Timeliness Score
+timeliness = 1.0 - (avg_latency_ms / max_acceptable_latency_ms);
+
+// Consistency Score
+consistency = valid_schema_events / total_events
+            × unique_events / total_events  // penalize duplicates
+            × events_in_sequence / total_events;
+
+// Integrity Score
+integrity = verified_checksums / total_files
+          × uncorrupted_files / total_files;
+
+// Continuity Score
+continuity = 1.0 - (gap_count × gap_penalty);
+```
+
+### 4. Best-of-Breed Data Selection
+
+**When multiple sources exist, select the most robust data:**
+
+```csharp
+interface IBestOfBreedSelector
+{
+    Task<SourceRanking[]> RankSourcesAsync(
+        string symbol,
+        DateTimeOffset date,
+        MarketEventType type,
+        CancellationToken ct
+    );
+
+    Task<ConsolidatedDataset> CreateGoldenRecordAsync(
+        string symbol,
+        DateTimeOffset date,
+        ConsolidationOptions options,
+        CancellationToken ct
+    );
+}
+
+record SourceRanking(
+    string Source,
+    double QualityScore,
+    long EventCount,
+    int GapCount,
+    double Latency,
+    bool IsRecommended
+);
+
+record ConsolidationOptions(
+    SourceSelectionStrategy Strategy,
+    bool FillGapsFromAlternates,     // Use secondary sources for missing data
+    bool ValidateCrossSource,        // Cross-check prices/volumes
+    decimal PriceTolerancePct,       // Max price diff before flagging
+    long VolumeTolerancePct          // Max volume diff before flagging
+);
+
+enum SourceSelectionStrategy
+{
+    HighestQualityScore,     // Best overall quality
+    MostComplete,            // Highest event count
+    LowestLatency,           // Fastest data
+    MostConsistent,          // Fewest anomalies
+    Merge                    // Combine best of each
+}
+```
+
+### 5. Quality-Aware Storage Decisions
+
+```json
+{
+  "QualityPolicies": {
+    "minimum_score_for_archive": 0.95,
+    "minimum_score_for_research": 0.90,
+    "quarantine_below_score": 0.70,
+    "auto_backfill_below_score": 0.85,
+    "prefer_source_above_score": 0.98,
+    "consolidation": {
+      "enabled": true,
+      "schedule": "0 6 * * *",
+      "target_directory": "consolidated",
+      "strategy": "Merge",
+      "min_sources_for_consolidation": 2
+    }
+  }
+}
+```
+
+### 6. Quality Trend Monitoring
+
+```csharp
+interface IQualityTrendMonitor
+{
+    Task<QualityTrend> GetTrendAsync(
+        string symbol,
+        TimeSpan window,
+        CancellationToken ct
+    );
+
+    Task<Alert[]> GetQualityAlertsAsync(CancellationToken ct);
+}
+
+record QualityTrend(
+    string Symbol,
+    double CurrentScore,
+    double PreviousScore,
+    double TrendDirection,           // -1.0 to 1.0
+    string[] DegradingDimensions,
+    string[] ImprovingDimensions,
+    DateTimeOffset[] ScoreHistory,
+    double[] ScoreValues
+);
+```
+
+**Quality Dashboard Metrics:**
+
+```json
+{
+  "quality_dashboard": {
+    "overall_score": 0.94,
+    "by_source": {
+      "alpaca": 0.96,
+      "ib": 0.93,
+      "polygon": 0.91
+    },
+    "by_event_type": {
+      "Trade": 0.97,
+      "L2Snapshot": 0.92,
+      "BboQuote": 0.95
+    },
+    "by_symbol": {
+      "SPY": 0.98,
+      "AAPL": 0.96,
+      "TSLA": 0.89
+    },
+    "alerts": [
+      {
+        "symbol": "TSLA",
+        "issue": "quality_degradation",
+        "current_score": 0.89,
+        "previous_score": 0.95,
+        "recommendation": "investigate_source_ib"
+      }
+    ]
+  }
+}
+```
+
+---
+
+## Search & Discovery Infrastructure
+
+### 1. Multi-Level Index Architecture
+
+**Hierarchical indexing for fast discovery:**
+
+```
+_index/
+├── global/
+│   ├── symbols.idx              # All symbols with metadata
+│   ├── date_range.idx           # Date coverage per symbol
+│   ├── sources.idx              # Source availability matrix
+│   └── statistics.idx           # Aggregated stats
+├── by_symbol/
+│   └── {symbol}/
+│       ├── files.idx            # All files for symbol
+│       ├── sequences.idx        # Sequence ranges per file
+│       └── quality.idx          # Quality scores history
+├── by_date/
+│   └── {yyyy-mm-dd}/
+│       ├── symbols.idx          # Symbols with data on date
+│       └── summary.idx          # Daily statistics
+└── full_text/
+    └── events.idx               # Full-text search index
+```
+
+### 2. Index Schema
+
+```csharp
+record GlobalSymbolIndex(
+    Dictionary<string, SymbolIndexEntry> Symbols,
+    DateTimeOffset LastUpdated,
+    int Version
+);
+
+record SymbolIndexEntry(
+    string Symbol,
+    string CanonicalName,
+    string[] Aliases,
+    string AssetClass,
+    string Exchange,
+    DateTimeOffset FirstDataDate,
+    DateTimeOffset LastDataDate,
+    long TotalEvents,
+    long TotalBytes,
+    string[] AvailableSources,
+    MarketEventType[] AvailableTypes,
+    double QualityScore,
+    Dictionary<string, SourceCoverage> SourceCoverage
+);
+
+record SourceCoverage(
+    string Source,
+    DateTimeOffset FirstDate,
+    DateTimeOffset LastDate,
+    long EventCount,
+    double CoveragePct              // % of trading days with data
+);
+```
+
+### 3. Search Query API
+
+```csharp
+interface IStorageSearchService
+{
+    // Find files matching criteria
+    Task<SearchResult<FileInfo>> SearchFilesAsync(
+        FileSearchQuery query,
+        CancellationToken ct
+    );
+
+    // Find events within files
+    Task<SearchResult<MarketEvent>> SearchEventsAsync(
+        EventSearchQuery query,
+        CancellationToken ct
+    );
+
+    // Discover available data
+    Task<DataCatalog> DiscoverAsync(
+        DiscoveryQuery query,
+        CancellationToken ct
+    );
+}
+
+record FileSearchQuery(
+    string[]? Symbols,
+    MarketEventType[]? Types,
+    string[]? Sources,
+    DateTimeOffset? From,
+    DateTimeOffset? To,
+    long? MinSize,
+    long? MaxSize,
+    double? MinQualityScore,
+    string? PathPattern,             // Glob pattern
+    SortField SortBy,
+    bool Descending,
+    int Skip,
+    int Take
+);
+
+record EventSearchQuery(
+    string Symbol,
+    MarketEventType Type,
+    DateTimeOffset From,
+    DateTimeOffset To,
+    decimal? MinPrice,
+    decimal? MaxPrice,
+    long? MinVolume,
+    AggressorSide? Side,
+    long? SequenceFrom,
+    long? SequenceTo,
+    int Limit
+);
+```
+
+### 4. Faceted Search Support
+
+```json
+{
+  "search": {
+    "query": "AAPL",
+    "filters": {
+      "date_range": ["2024-01-01", "2024-01-31"],
+      "event_types": ["Trade", "BboQuote"],
+      "sources": ["alpaca"]
+    }
+  },
+  "results": {
+    "total_matches": 1250000,
+    "files": 31,
+    "facets": {
+      "by_date": {
+        "2024-01-02": 45000,
+        "2024-01-03": 42000,
+        "...": "..."
+      },
+      "by_event_type": {
+        "Trade": 800000,
+        "BboQuote": 450000
+      },
+      "by_source": {
+        "alpaca": 1250000
+      },
+      "by_hour": {
+        "09": 150000,
+        "10": 180000,
+        "...": "..."
+      }
+    }
+  }
+}
+```
+
+### 5. Natural Language Query Support
+
+**Parse human-readable queries into structured searches:**
+
+```csharp
+interface INaturalLanguageQueryParser
+{
+    StorageQuery Parse(string naturalQuery);
+}
+
+// Example queries:
+// "AAPL trades from last week"
+//   → Symbol: AAPL, Type: Trade, From: -7d
+//
+// "all L2 snapshots for SPY on January 15th"
+//   → Symbol: SPY, Type: L2Snapshot, Date: 2024-01-15
+//
+// "high volume trades over 1M shares"
+//   → Type: Trade, MinVolume: 1000000
+//
+// "data gaps in TSLA for December"
+//   → Symbol: TSLA, Month: 2024-12, Query: gaps
+```
+
+### 6. Real-Time Index Updates
+
+```csharp
+interface IIndexMaintainer
+{
+    // Called after each file write
+    Task UpdateIndexAsync(
+        string filePath,
+        IndexUpdateType updateType,
+        CancellationToken ct
+    );
+
+    // Rebuild indexes from scratch
+    Task RebuildIndexAsync(
+        string[] paths,
+        RebuildOptions options,
+        CancellationToken ct
+    );
+}
+
+enum IndexUpdateType
+{
+    FileCreated,
+    FileAppended,
+    FileDeleted,
+    FileMoved,
+    MetadataChanged
+}
+```
+
+### 7. Search Performance Optimization
+
+```json
+{
+  "SearchOptimization": {
+    "index_in_memory": true,
+    "max_index_memory_mb": 512,
+    "cache_recent_queries": true,
+    "query_cache_size": 1000,
+    "query_cache_ttl_seconds": 300,
+    "parallel_search_threads": 4,
+    "bloom_filters": {
+      "enabled": true,
+      "false_positive_rate": 0.01
+    },
+    "partitioned_indexes": {
+      "by_date": true,
+      "by_symbol": true
+    }
+  }
+}
+```
+
+---
+
+## Actionable Metadata & Insights
+
+### 1. Rich Metadata Schema
+
+**Comprehensive metadata for every data file:**
+
+```csharp
+record FileMetadata(
+    // Identity
+    string FilePath,
+    string FileId,                   // UUID
+    string Checksum,
+
+    // Content Description
+    string Symbol,
+    MarketEventType EventType,
+    string Source,
+    DateTimeOffset Date,
+
+    // Statistics
+    long EventCount,
+    long SizeBytes,
+    long SizeCompressed,
+    double CompressionRatio,
+
+    // Temporal Coverage
+    DateTimeOffset FirstEventTime,
+    DateTimeOffset LastEventTime,
+    TimeSpan Duration,
+    double EventsPerSecond,
+
+    // Sequence Info
+    long FirstSequence,
+    long LastSequence,
+    int SequenceGaps,
+    long[] GapRanges,
+
+    // Quality Metrics
+    double QualityScore,
+    int WarningCount,
+    int ErrorCount,
+    string[] ValidationIssues,
+
+    // Price Statistics (for Trade events)
+    decimal? PriceMin,
+    decimal? PriceMax,
+    decimal? PriceOpen,
+    decimal? PriceClose,
+    decimal? VWAP,
+
+    // Volume Statistics
+    long? TotalVolume,
+    long? BuyVolume,
+    long? SellVolume,
+    double? BuySellRatio,
+
+    // Lifecycle
+    DateTimeOffset CreatedAt,
+    DateTimeOffset? ModifiedAt,
+    DateTimeOffset? ArchivedAt,
+    string CurrentTier,
+    string[] TierHistory,
+
+    // Lineage
+    string? ParentFileId,            // If derived/compacted
+    string[] ChildFileIds,
+    string? SourceProvider,
+    string? BackfillProvider
+);
+```
+
+### 2. Automated Insights Generation
+
+```csharp
+interface IInsightGenerator
+{
+    Task<Insight[]> GenerateInsightsAsync(
+        InsightScope scope,
+        CancellationToken ct
+    );
+}
+
+record Insight(
+    InsightType Type,
+    InsightSeverity Severity,
+    string Title,
+    string Description,
+    string[] AffectedPaths,
+    string[] RecommendedActions,
+    Dictionary<string, object> Context,
+    DateTimeOffset GeneratedAt
+);
+
+enum InsightType
+{
+    // Storage Insights
+    StorageGrowthAnomaly,
+    UnusualCompressionRatio,
+    HighFragmentation,
+    QuotaNearLimit,
+
+    // Data Quality Insights
+    QualityDegradation,
+    SourceReliabilityIssue,
+    SequenceGapPattern,
+    DataLatencyIncrease,
+
+    // Optimization Insights
+    CompressionOpportunity,
+    ArchivalCandidate,
+    ConsolidationOpportunity,
+    UnusedDataPattern,
+
+    // Anomaly Detection
+    VolumeSpike,
+    PriceAnomaly,
+    MissingExpectedData,
+    DuplicateDataDetected
+}
+```
+
+### 3. Insight Examples
+
+```json
+{
+  "insights": [
+    {
+      "type": "CompressionOpportunity",
+      "severity": "info",
+      "title": "Compression savings available",
+      "description": "150 files in warm tier using gzip could save 40% space with zstd",
+      "affected_paths": ["warm/alpaca/equity/**/*.jsonl.gz"],
+      "recommended_actions": [
+        "Run: migrate-compression --from gzip --to zstd --tier warm"
+      ],
+      "context": {
+        "current_size_gb": 50,
+        "projected_size_gb": 30,
+        "savings_gb": 20
+      }
+    },
+    {
+      "type": "QualityDegradation",
+      "severity": "warning",
+      "title": "TSLA data quality declining",
+      "description": "Quality score dropped from 0.95 to 0.87 over past 7 days",
+      "affected_paths": ["live/ib/equity/TSLA/**"],
+      "recommended_actions": [
+        "Check IB connection for TSLA subscription",
+        "Compare with Alpaca data for gaps",
+        "Consider switching primary source"
+      ],
+      "context": {
+        "score_history": [0.95, 0.93, 0.91, 0.89, 0.88, 0.87, 0.87],
+        "main_issues": ["sequence_gaps", "increased_latency"]
+      }
+    },
+    {
+      "type": "ArchivalCandidate",
+      "severity": "info",
+      "title": "30 days of data ready for archival",
+      "description": "Cold tier data from November 2023 meets archival criteria",
+      "affected_paths": ["cold/*/2023/11/**"],
+      "recommended_actions": [
+        "Review archival policy",
+        "Run: archive --month 2023-11 --verify"
+      ],
+      "context": {
+        "file_count": 2500,
+        "total_size_gb": 150,
+        "avg_quality_score": 0.97
+      }
+    }
+  ]
+}
+```
+
+### 4. Usage Analytics
+
+**Track how data is accessed and used:**
+
+```csharp
+record UsageMetrics(
+    string Path,
+    int ReadCount,
+    int QueryCount,
+    DateTimeOffset LastAccessed,
+    DateTimeOffset[] AccessHistory,
+    string[] AccessPatterns,         // "bulk_read", "random_access", "streaming"
+    Dictionary<string, int> AccessByUser,
+    double HotDataScore              // How frequently accessed (0-1)
+);
+
+interface IUsageAnalytics
+{
+    Task RecordAccessAsync(string path, AccessType type, CancellationToken ct);
+    Task<UsageReport> GetUsageReportAsync(TimeSpan window, CancellationToken ct);
+    Task<string[]> GetColdDataAsync(TimeSpan threshold, CancellationToken ct);
+    Task<string[]> GetHotDataAsync(int topN, CancellationToken ct);
+}
+```
+
+### 5. Data Lineage Tracking
+
+```csharp
+record DataLineage(
+    string FileId,
+    LineageNode[] Ancestors,
+    LineageNode[] Descendants,
+    TransformationStep[] Transformations
+);
+
+record LineageNode(
+    string FileId,
+    string Path,
+    string Type,                     // "raw", "processed", "consolidated", "archived"
+    DateTimeOffset CreatedAt
+);
+
+record TransformationStep(
+    string Operation,                // "compress", "convert", "merge", "filter"
+    DateTimeOffset PerformedAt,
+    string[] InputFiles,
+    string[] OutputFiles,
+    Dictionary<string, string> Parameters
+);
+```
+
+**Lineage visualization:**
+```
+raw/alpaca/AAPL/Trade/2024-01-15.jsonl
+    │
+    ├─[compress]─→ warm/alpaca/AAPL/Trade/2024-01-15.jsonl.gz
+    │                  │
+    │                  └─[convert]─→ cold/parquet/AAPL/Trade/2024-01.parquet
+    │                                    │
+    └─[merge]────────────────────────────┴─→ consolidated/AAPL/Trade/2024-01.parquet
+                                                  │
+                                                  └─[archive]─→ archive/2024/Q1/AAPL_Trade.parquet.zst
+```
+
+### 6. Actionable Dashboards
+
+```json
+{
+  "Dashboard": {
+    "sections": [
+      {
+        "name": "Storage Overview",
+        "widgets": [
+          {"type": "gauge", "metric": "total_usage_pct", "thresholds": [70, 90]},
+          {"type": "trend", "metric": "daily_growth_gb", "window": "30d"},
+          {"type": "breakdown", "metric": "usage_by_tier"}
+        ]
+      },
+      {
+        "name": "Data Quality",
+        "widgets": [
+          {"type": "score", "metric": "overall_quality", "target": 0.95},
+          {"type": "heatmap", "metric": "quality_by_symbol_date"},
+          {"type": "list", "metric": "quality_alerts", "limit": 10}
+        ]
+      },
+      {
+        "name": "Insights & Actions",
+        "widgets": [
+          {"type": "feed", "source": "insights", "filter": "actionable"},
+          {"type": "checklist", "source": "pending_maintenance"},
+          {"type": "timeline", "source": "scheduled_tasks"}
+        ]
+      },
+      {
+        "name": "Search & Discovery",
+        "widgets": [
+          {"type": "search_bar", "scope": "global"},
+          {"type": "facets", "dimensions": ["symbol", "type", "source", "date"]},
+          {"type": "recent_searches", "limit": 5}
+        ]
+      }
+    ]
+  }
+}
+```
+
+### 7. Metadata-Driven Automation
+
+```csharp
+record AutomationRule(
+    string Name,
+    MetadataCondition[] Conditions,
+    AutomationAction[] Actions,
+    bool Enabled,
+    string Schedule                  // Cron expression or "realtime"
+);
+
+record MetadataCondition(
+    string Field,                    // e.g., "QualityScore", "SizeBytes", "Age"
+    ConditionOperator Operator,      // Lt, Gt, Eq, Contains, etc.
+    object Value
+);
+
+record AutomationAction(
+    ActionType Type,
+    Dictionary<string, string> Parameters
+);
+
+enum ActionType
+{
+    Notify,
+    MoveToTier,
+    Compress,
+    Archive,
+    Delete,
+    Backfill,
+    RunRepair,
+    GenerateReport
+}
+```
+
+**Example automation rules:**
+
+```json
+{
+  "AutomationRules": [
+    {
+      "name": "auto_archive_old_high_quality",
+      "conditions": [
+        {"field": "Age", "operator": "Gt", "value": "365d"},
+        {"field": "QualityScore", "operator": "Gte", "value": 0.95},
+        {"field": "CurrentTier", "operator": "Eq", "value": "cold"}
+      ],
+      "actions": [
+        {"type": "Archive", "parameters": {"target": "glacier", "verify": "true"}}
+      ],
+      "schedule": "0 3 1 * *"
+    },
+    {
+      "name": "alert_quality_drop",
+      "conditions": [
+        {"field": "QualityScore", "operator": "Lt", "value": 0.85}
+      ],
+      "actions": [
+        {"type": "Notify", "parameters": {"channel": "slack", "severity": "warning"}}
+      ],
+      "schedule": "realtime"
+    },
+    {
+      "name": "auto_backfill_gaps",
+      "conditions": [
+        {"field": "SequenceGaps", "operator": "Gt", "value": 0},
+        {"field": "Age", "operator": "Lt", "value": "7d"}
+      ],
+      "actions": [
+        {"type": "Backfill", "parameters": {"source": "alternate", "max_gaps": "10"}}
+      ],
+      "schedule": "0 */4 * * *"
+    }
+  ]
+}
+```
+
+---
+
 ## Implementation Roadmap
 
-### Phase 1: Foundation (Weeks 1-2)
+### Phase 1: Foundation & Core Infrastructure
 - [ ] Implement source registry configuration
 - [ ] Add hierarchical naming convention option
 - [ ] Create file manifest generation
 - [ ] Implement per-source quota tracking
+- [ ] Build basic file health check service
 
-### Phase 2: Policies (Weeks 3-4)
+### Phase 2: Storage Policies & Lifecycle
 - [ ] Define policy configuration schema
 - [ ] Implement policy evaluation engine
 - [ ] Add compression policy matrix
 - [ ] Create backup policy executor
+- [ ] Implement scheduled maintenance tasks
 
-### Phase 3: Tiering (Weeks 5-6)
+### Phase 3: Tiered Storage
 - [ ] Define tier configuration schema
 - [ ] Implement tier migration service
 - [ ] Add Parquet conversion pipeline
 - [ ] Create unified query interface
+- [ ] Build file compaction service
 
-### Phase 4: Perpetual Storage (Weeks 7-8)
+### Phase 4: Perpetual Storage & Compliance
 - [ ] Implement archive tier with WORM support
 - [ ] Add data catalog service
 - [ ] Create compliance reporting
 - [ ] Implement immutability guarantees
+- [ ] Build data lineage tracking
 
-### Phase 5: Advanced Features (Weeks 9-10)
-- [ ] Add capacity forecasting
-- [ ] Implement cross-source reconciliation
-- [ ] Create trading calendar integration
+### Phase 5: Data Quality & Robustness
+- [ ] Implement quality scoring engine
+- [ ] Add quality dimension evaluators (completeness, accuracy, etc.)
+- [ ] Build best-of-breed data selector
+- [ ] Create quality trend monitoring
+- [ ] Implement auto-backfill for gaps
+
+### Phase 6: Search & Discovery
+- [ ] Build multi-level index architecture
+- [ ] Implement file and event search APIs
+- [ ] Add faceted search support
+- [ ] Create natural language query parser
+- [ ] Build real-time index maintenance
+
+### Phase 7: Metadata & Insights
+- [ ] Implement rich file metadata schema
+- [ ] Build automated insight generator
+- [ ] Create usage analytics tracking
+- [ ] Implement metadata-driven automation rules
+- [ ] Build actionable dashboards
+
+### Phase 8: Self-Healing & Advanced Features
+- [ ] Implement self-healing repair capabilities
+- [ ] Add orphan detection and cleanup
+- [ ] Build cross-source reconciliation
+- [ ] Create capacity forecasting
 - [ ] Add adaptive partitioning
+- [ ] Implement trading calendar integration
 
 ---
 
@@ -964,5 +2013,21 @@ This design provides a comprehensive framework for storage organization that:
 4. **Supports** perpetual data retention for regulatory compliance
 5. **Enables** flexible querying across multiple sources and time ranges
 6. **Manages** capacity proactively through quotas and forecasting
+7. **Maintains** file health with automated checks, self-healing, and defragmentation
+8. **Guarantees** data robustness through quality scoring and best-of-breed selection
+9. **Discovers** data efficiently with multi-level indexes and faceted search
+10. **Provides** actionable insights through rich metadata and automated recommendations
 
-The modular design allows incremental adoption—start with basic naming conventions and add policies, tiering, and archival as needs grow.
+### Key Capabilities Matrix
+
+| Capability | Description | Business Value |
+|------------|-------------|----------------|
+| **File Maintenance** | Health checks, self-healing, compaction | Reduced manual ops, fewer outages |
+| **Quality Scoring** | 6-dimension quality evaluation | Trust in data, better decisions |
+| **Best-of-Breed** | Auto-select highest quality source | Always use best available data |
+| **Search Infrastructure** | Indexes, faceted search, NL queries | Find any data in seconds |
+| **Metadata & Lineage** | Full lifecycle tracking | Audit trail, reproducibility |
+| **Automated Insights** | Proactive recommendations | Prevent issues before they occur |
+| **Usage Analytics** | Access pattern tracking | Optimize for actual workloads |
+
+The modular design allows incremental adoption—start with basic naming conventions and progressively add policies, tiering, quality management, and advanced search as needs grow.
