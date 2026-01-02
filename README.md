@@ -76,6 +76,7 @@ Access the monitoring dashboard at `http://localhost:8080`, JSON status at `http
 Comprehensive documentation is available in the `MarketDataCollector/docs/` directory:
 
 - **[MarketDataCollector/README.md](MarketDataCollector/README.md)** - Product overview, CLI/UI usage, and configuration highlights
+- **[MarketDataCollector/HELP.md](MarketDataCollector/HELP.md)** - Comprehensive user guide with troubleshooting and FAQ
 - **[docs/GETTING_STARTED.md](MarketDataCollector/docs/GETTING_STARTED.md)** - End-to-end setup for local development
 - **[docs/CONFIGURATION.md](MarketDataCollector/docs/CONFIGURATION.md)** - Detailed explanation of every setting including backfill
 - **[docs/architecture.md](MarketDataCollector/docs/architecture.md)** - System architecture and design
@@ -83,6 +84,7 @@ Comprehensive documentation is available in the `MarketDataCollector/docs/` dire
 - **[docs/domains.md](MarketDataCollector/docs/domains.md)** - Event contracts and domain models
 - **[docs/c4-diagrams.md](MarketDataCollector/docs/c4-diagrams.md)** - System diagrams
 - **[docs/lean-integration.md](MarketDataCollector/docs/lean-integration.md)** - QuantConnect Lean integration guide and examples
+- **[docs/STORAGE_ORGANIZATION_DESIGN.md](docs/STORAGE_ORGANIZATION_DESIGN.md)** - Advanced storage organization and data management strategies
 
 ## Supported Data Sources
 
@@ -126,6 +128,15 @@ See LICENSE file for details.
 ## Roadmap and Future Enhancements
 
 ### Recently Completed
+
+**Storage Organization Design (Completed 2026-01-02):**
+- ✅ Comprehensive storage organization design document with best practices
+- ✅ Hierarchical taxonomy structure for data organization
+- ✅ Tiered storage architecture (hot/warm/cold)
+- ✅ File maintenance and health monitoring strategies
+- ✅ Data quality scoring and best-of-breed selection
+- ✅ Search and discovery infrastructure design
+- ✅ Operational scheduling for off-hours maintenance
 
 **UWP Desktop Application (Completed 2026-01-02):**
 - ✅ Native Windows desktop app using UWP/XAML with WinUI 3 styling

@@ -250,8 +250,18 @@ Detailed diagrams and domain notes live in `./docs`:
 * `interactive-brokers-setup.md` – IB API installation and configuration
 * `open-source-references.md` – catalog of related projects and resources
 * `lean-integration.md` – QuantConnect Lean Engine integration guide
+* `../docs/STORAGE_ORGANIZATION_DESIGN.md` – comprehensive storage organization improvements and best practices
 
 ## Recent Improvements
+
+### Storage Organization Design (2026-01-02)
+- **Comprehensive Design Document**: Best practices for organizing and managing market data at scale
+- **Hierarchical Taxonomy**: Enhanced directory structures with metadata catalogs
+- **Tiered Storage**: Hot/warm/cold tier architecture for cost-effective data management
+- **File Maintenance**: Automated health checks, self-healing, and integrity validation
+- **Data Quality**: Quality scoring system with best-of-breed source selection
+- **Search Infrastructure**: Multi-level indexes with faceted search capabilities
+- **Off-Hours Scheduling**: Trading-hours-aware maintenance automation
 
 ### UWP Desktop Application (2026-01-02)
 - **Native Windows App**: Full-featured UWP/XAML desktop application with WinUI 3 styling

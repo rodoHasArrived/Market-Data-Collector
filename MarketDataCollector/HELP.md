@@ -846,6 +846,7 @@ CMD ["./MarketDataCollector", "--serve-status", "--watch-config"]
 - **docs/TROUBLESHOOTING.md**: Common issues and solutions
 - **docs/architecture.md**: System design and architecture
 - **docs/lean-integration.md**: QuantConnect Lean Engine integration
+- **../docs/STORAGE_ORGANIZATION_DESIGN.md**: Advanced storage organization strategies
 
 ### Getting Help
 

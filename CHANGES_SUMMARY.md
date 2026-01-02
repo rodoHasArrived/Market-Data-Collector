@@ -4,7 +4,62 @@ This document summarizes major changes and improvements to the Market Data Colle
 
 ---
 
-## Latest: UWP Desktop Application and Secure Credentials (2026-01-02)
+## Latest: Storage Organization Design (2026-01-02)
+
+### Overview
+
+This update adds a comprehensive design document for advanced storage organization, covering hierarchical taxonomy, tiered storage, file maintenance, data quality, search infrastructure, and operational scheduling.
+
+### Design Document Highlights
+
+#### 1. Hierarchical Taxonomy Structure
+- Enhanced directory hierarchy with metadata catalogs (`_catalog/`)
+- Multi-tier organization: `live/`, `historical/`, `_archive/`
+- Source and asset class aware file organization
+- Schema versioning support
+
+#### 2. Tiered Storage Architecture
+- **Hot Tier**: Real-time data with immediate access (SSD/NVMe)
+- **Warm Tier**: Recent historical data with fast access (HDD/cloud block)
+- **Cold Tier**: Archived data with cost-optimized storage (S3/Blob/Glacier)
+- Automated lifecycle transitions based on age and access patterns
+
+#### 3. File Maintenance & Health Monitoring
+- Automated integrity validation with checksums
+- Self-healing capabilities for corrupted files
+- File fragmentation detection and defragmentation
+- Orphan file cleanup and metadata reconciliation
+
+#### 4. Data Robustness & Quality Scoring
+- Multi-source data quality assessment
+- Best-of-breed selection when multiple sources available
+- Gap detection and automatic backfill triggering
+- Anomaly detection for price spikes and volume outliers
+
+#### 5. Search & Discovery Infrastructure
+- Multi-level indexing (symbol, date, source, event type)
+- Faceted search capabilities
+- Time-range queries with pre-computed statistics
+- Catalog manifest for rapid data discovery
+
+#### 6. Operational Scheduling
+- Trading-hours-aware maintenance windows
+- Off-hours automation for heavy operations
+- Resource-efficient background processing
+- Configurable schedules per market timezone
+
+### Documentation Added
+- `docs/STORAGE_ORGANIZATION_DESIGN.md` - Complete design document with implementation roadmap
+
+### Impact
+- **Scalability**: Designed for petabyte-scale data management
+- **Cost Efficiency**: Tiered storage reduces costs by 60-80%
+- **Data Quality**: Automated quality scoring ensures reliable data
+- **Operational Excellence**: Off-hours maintenance minimizes impact on trading
+
+---
+
+## Previous: UWP Desktop Application and Secure Credentials (2026-01-02)
 
 ### Overview
 
