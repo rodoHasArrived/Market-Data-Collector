@@ -72,7 +72,9 @@ public class BoolToConnectionStatusConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, string language)
     {
-        throw new NotImplementedException();
+        // One-way converter: ConvertBack is not used for status display bindings.
+        // Return false as a safe default if ever called unexpectedly.
+        return false;
     }
 }
 

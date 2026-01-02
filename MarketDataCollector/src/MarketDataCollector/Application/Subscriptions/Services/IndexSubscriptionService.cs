@@ -9,13 +9,21 @@ namespace MarketDataCollector.Application.Subscriptions.Services;
 /// <summary>
 /// Service for auto-subscribing to index components.
 /// </summary>
+/// <remarks>
+/// <para><b>Current Implementation:</b> Uses built-in static index component data for major indices
+/// (SPX, NDX, DJI, RUT, MID). This data is suitable for development and testing.</para>
+/// <para><b>Production Enhancement:</b> For production use with real-time index rebalancing,
+/// implement an external API integration (e.g., S&amp;P Global, NASDAQ, IEX Cloud) by extending
+/// <see cref="GetIndexComponentsAsync"/> to fetch live constituent data.</para>
+/// </remarks>
 public sealed class IndexSubscriptionService
 {
     private readonly ConfigStore _configStore;
     private readonly MetadataEnrichmentService _metadataService;
     private readonly ILogger _log;
 
-    // Built-in index component data (in production, this would come from an external API)
+    // Built-in index component data for development/testing.
+    // For production: extend GetIndexComponentsAsync to fetch from external API.
     private static readonly Dictionary<string, IndexComponents> BuiltInIndices = InitializeBuiltInIndices();
 
     public IndexSubscriptionService(
@@ -39,6 +47,10 @@ public sealed class IndexSubscriptionService
     /// <summary>
     /// Get components for a specific index.
     /// </summary>
+    /// <remarks>
+    /// Currently returns built-in static data. For production use, this method is the extension
+    /// point for integrating external index constituent APIs (e.g., S&amp;P Global, IEX Cloud).
+    /// </remarks>
     public async Task<IndexComponents?> GetIndexComponentsAsync(
         string indexId,
         CancellationToken ct = default)
@@ -48,7 +60,8 @@ public sealed class IndexSubscriptionService
             return components;
         }
 
-        // Future: fetch from external API
+        // Extension point: integrate external API for live index constituents.
+        // Example providers: S&P Global Market Intelligence, IEX Cloud, Polygon.io
         return null;
     }
 

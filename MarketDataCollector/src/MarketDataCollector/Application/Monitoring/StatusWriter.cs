@@ -1,5 +1,6 @@
 using System.Text.Json;
 using MarketDataCollector.Application.Config;
+using MarketDataCollector.Application.Logging;
 
 namespace MarketDataCollector.Application.Monitoring;
 
@@ -11,6 +12,7 @@ public sealed class StatusWriter : IAsyncDisposable
     private readonly string _path;
     private readonly Func<AppConfig> _configProvider;
     private readonly CancellationTokenSource _cts = new();
+    private readonly Serilog.ILogger _log = LoggingSetup.ForContext<StatusWriter>();
     private Task? _loop;
 
     public StatusWriter(string path, Func<AppConfig> configProvider)
@@ -63,8 +65,14 @@ public sealed class StatusWriter : IAsyncDisposable
         _cts.Cancel();
         if (_loop is not null)
         {
-            // TODO: Log monitoring loop disposal errors instead of swallowing silently
-            try { await _loop.ConfigureAwait(false); } catch { }
+            try
+            {
+                await _loop.ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _log.Warning(ex, "Error during StatusWriter monitoring loop disposal");
+            }
         }
         _cts.Dispose();
     }
