@@ -5,6 +5,8 @@ using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Domain.Collectors;
 using MarketDataCollector.Domain.Models;
+using MarketDataCollector.Infrastructure.Resilience;
+using Polly;
 using Serilog;
 
 namespace MarketDataCollector.Infrastructure.Providers.Alpaca;
@@ -30,10 +32,14 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
     private ClientWebSocket? _ws;
     private Task? _recvLoop;
     private CancellationTokenSource? _cts;
+    private WebSocketHeartbeat? _heartbeat;
 
     private readonly object _gate = new();
     private readonly HashSet<string> _tradeSymbols = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<string> _quoteSymbols = new(StringComparer.OrdinalIgnoreCase);
+
+    // Resilience pipeline for connection retry with exponential backoff
+    private readonly ResiliencePipeline _connectionPipeline;
 
     // Cached serializer options to avoid allocations in hot path
     private static readonly JsonSerializerOptions s_serializerOptions = new()
@@ -44,6 +50,10 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
     private int _nextSubId = 100_000; // keep away from IB ids
     private readonly Dictionary<int, (string Symbol, string Kind)> _subs = new();
 
+    // Reconnection state
+    private volatile bool _isReconnecting;
+    private readonly SemaphoreSlim _reconnectGate = new(1, 1);
+
     public AlpacaMarketDataClient(TradeDataCollector tradeCollector, QuoteCollector quoteCollector, AlpacaOptions opt)
     {
         _tradeCollector = tradeCollector;
@@ -51,6 +61,15 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
         _opt = opt ?? throw new ArgumentNullException(nameof(opt));
         if (string.IsNullOrWhiteSpace(_opt.KeyId) || string.IsNullOrWhiteSpace(_opt.SecretKey))
             throw new ArgumentException("Alpaca KeyId/SecretKey required.");
+
+        // Initialize resilience pipeline with exponential backoff
+        // Default: 5 retries with 2s base delay, max 30s between retries
+        _connectionPipeline = WebSocketResiliencePolicy.CreateComprehensivePipeline(
+            maxRetries: 5,
+            retryBaseDelay: TimeSpan.FromSeconds(2),
+            circuitBreakerFailureThreshold: 5,
+            circuitBreakerDuration: TimeSpan.FromSeconds(30),
+            operationTimeout: TimeSpan.FromSeconds(30));
     }
 
     public bool IsEnabled => true;
@@ -59,33 +78,127 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
     {
         if (_ws != null) return;
 
-        _cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-        _ws = new ClientWebSocket();
-
         var host = _opt.UseSandbox ? "stream.data.sandbox.alpaca.markets" : "stream.data.alpaca.markets";
         var uri = new Uri($"wss://{host}/v2/{_opt.Feed}");
 
-        _log.Information("Connecting to Alpaca WebSocket at {Uri} (Sandbox: {UseSandbox})", uri, _opt.UseSandbox);
+        _log.Information("Connecting to Alpaca WebSocket at {Uri} (Sandbox: {UseSandbox}) with retry policy", uri, _opt.UseSandbox);
+
+        await _connectionPipeline.ExecuteAsync(async token =>
+        {
+            _cts = CancellationTokenSource.CreateLinkedTokenSource(token);
+            _ws = new ClientWebSocket();
+
+            try
+            {
+                await _ws.ConnectAsync(uri, token).ConfigureAwait(false);
+                _log.Information("Successfully connected to Alpaca WebSocket");
+
+                // Authenticate via message (must be within ~10 seconds of connection)
+                var authMsg = JsonSerializer.Serialize(new { action = "auth", key = _opt.KeyId, secret = _opt.SecretKey });
+                await SendTextAsync(authMsg, token).ConfigureAwait(false);
+                _log.Debug("Authentication message sent to Alpaca");
+            }
+            catch (Exception ex)
+            {
+                _log.Warning(ex, "Connection attempt to Alpaca WebSocket failed at {Uri}. Will retry per policy.", uri);
+                // Clean up failed connection attempt
+                try { _ws?.Dispose(); } catch { }
+                _ws = null;
+                _cts?.Dispose();
+                _cts = null;
+                throw;
+            }
+        }, ct).ConfigureAwait(false);
+
+        // Start heartbeat monitoring for stale connection detection
+        if (_ws != null)
+        {
+            _heartbeat = new WebSocketHeartbeat(_ws, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(10));
+            _heartbeat.ConnectionLost += OnConnectionLostAsync;
+        }
+
+        _recvLoop = Task.Run(() => ReceiveLoopAsync(_cts!.Token), _cts!.Token);
+    }
+
+    /// <summary>
+    /// Handles automatic reconnection when connection is lost.
+    /// Uses rate limiting to prevent reconnection storms.
+    /// </summary>
+    private async Task OnConnectionLostAsync()
+    {
+        if (_isReconnecting) return;
+
+        if (!await _reconnectGate.WaitAsync(0))
+        {
+            _log.Debug("Reconnection already in progress, skipping duplicate attempt");
+            return;
+        }
 
         try
         {
-            await _ws.ConnectAsync(uri, ct).ConfigureAwait(false);
-            _log.Information("Successfully connected to Alpaca WebSocket");
+            _isReconnecting = true;
+            _log.Warning("WebSocket connection lost, initiating automatic reconnection");
+
+            // Clean up existing connection
+            await CleanupConnectionAsync();
+
+            // Attempt to reconnect using the resilience pipeline
+            await ConnectAsync(CancellationToken.None);
+
+            // Resubscribe to all active subscriptions
+            if (_ws?.State == WebSocketState.Open)
+            {
+                await TrySendSubscribeAsync();
+                _log.Information("Successfully reconnected and resubscribed to Alpaca WebSocket");
+            }
         }
         catch (Exception ex)
         {
-            _log.Error(ex, "Failed to connect to Alpaca WebSocket at {Uri}. " +
-                "Troubleshooting: 1) Check your internet connection. 2) Verify Alpaca service status at status.alpaca.markets. " +
-                "3) Ensure your API keys are valid and not expired.", uri);
-            throw;
+            _log.Error(ex, "Failed to reconnect to Alpaca WebSocket after connection loss. " +
+                "Manual intervention may be required.");
+        }
+        finally
+        {
+            _isReconnecting = false;
+            _reconnectGate.Release();
+        }
+    }
+
+    /// <summary>
+    /// Cleans up the current connection without triggering reconnection.
+    /// </summary>
+    private async Task CleanupConnectionAsync()
+    {
+        var ws = _ws;
+        var cts = _cts;
+        var heartbeat = _heartbeat;
+
+        _ws = null;
+        _cts = null;
+        _heartbeat = null;
+
+        if (heartbeat != null)
+        {
+            heartbeat.ConnectionLost -= OnConnectionLostAsync;
+            await heartbeat.DisposeAsync();
         }
 
-        // Authenticate via message (must be within ~10 seconds of connection)
-        var authMsg = JsonSerializer.Serialize(new { action = "auth", key = _opt.KeyId, secret = _opt.SecretKey });
-        await SendTextAsync(authMsg, ct).ConfigureAwait(false);
-        _log.Debug("Authentication message sent to Alpaca");
+        if (cts != null)
+        {
+            try { cts.Cancel(); } catch { }
+            try { cts.Dispose(); } catch { }
+        }
 
-        _recvLoop = Task.Run(() => ReceiveLoopAsync(_cts.Token), _cts.Token);
+        if (ws != null)
+        {
+            try { ws.Dispose(); } catch { }
+        }
+
+        if (_recvLoop != null)
+        {
+            try { await _recvLoop.ConfigureAwait(false); } catch { }
+            _recvLoop = null;
+        }
     }
 
     public async Task DisconnectAsync(CancellationToken ct = default)
@@ -94,9 +207,18 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
 
         var ws = _ws;
         var cts = _cts;
+        var heartbeat = _heartbeat;
 
         _ws = null;
         _cts = null;
+        _heartbeat = null;
+
+        // Dispose heartbeat first to prevent reconnection attempts
+        if (heartbeat != null)
+        {
+            heartbeat.ConnectionLost -= OnConnectionLostAsync;
+            await heartbeat.DisposeAsync();
+        }
 
         if (cts != null)
         {
@@ -204,6 +326,7 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
     public async ValueTask DisposeAsync()
     {
         await DisconnectAsync().ConfigureAwait(false);
+        _reconnectGate.Dispose();
     }
 
     private async Task TrySendSubscribeAsync()

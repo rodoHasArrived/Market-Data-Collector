@@ -23,6 +23,7 @@ using MarketDataCollector.Messaging.Configuration;
 using MarketDataCollector.Messaging.Publishers;
 using MarketDataCollector.Storage;
 using MarketDataCollector.Storage.Policies;
+using MarketDataCollector.Storage.Services;
 using MarketDataCollector.Storage.Sinks;
 using MarketDataCollector.Storage.Replay;
 using Microsoft.Extensions.DependencyInjection;
@@ -109,6 +110,27 @@ internal static class Program
             Environment.Exit(1);
             return;
         }
+
+        // Ensure data directory exists with proper permissions
+        var permissionsService = new FilePermissionsService(new FilePermissionsOptions
+        {
+            DirectoryMode = "755",
+            FileMode = "644",
+            ValidateOnStartup = true
+        });
+
+        var permissionsResult = permissionsService.EnsureDirectoryPermissions(cfg.DataRoot);
+        if (!permissionsResult.Success)
+        {
+            log.Error("Failed to configure data directory permissions: {Message}. " +
+                "Troubleshooting: 1) Check that the application has write access to the parent directory. " +
+                "2) On Linux/macOS, ensure the user has appropriate permissions. " +
+                "3) On Windows, run as administrator if needed.",
+                permissionsResult.Message);
+            Environment.Exit(1);
+            return;
+        }
+        log.Information("Data directory permissions configured: {Message}", permissionsResult.Message);
 
         var replayPath = GetArgValue(args, "--replay");
         var statusPort = int.TryParse(GetArgValue(args, "--status-port"), out var parsedPort) ? parsedPort : 8080;

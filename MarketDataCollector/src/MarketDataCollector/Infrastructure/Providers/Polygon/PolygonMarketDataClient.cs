@@ -1,37 +1,78 @@
 using MarketDataCollector.Application.Config;
+using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Domain.Collectors;
 using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Infrastructure.Providers;
+using MarketDataCollector.Infrastructure.Resilience;
+using Polly;
+using Serilog;
 
 namespace MarketDataCollector.Infrastructure.Providers.Polygon;
 
 /// <summary>
 /// Minimal stub for a Polygon market data adapter. This validates the provider abstraction and can be
 /// evolved to a full WebSocket client later. For now it exercises the pipelines with a synthetic heartbeat.
+///
+/// Connection Resilience (when fully implemented):
+/// - Uses Polly-based WebSocketResiliencePolicy for connection retry with exponential backoff
+/// - Implements circuit breaker pattern to prevent cascading failures
+/// - Automatic reconnection on connection loss with jitter
+/// - Configurable retry attempts (default: 5) with 2s base delay, max 30s between retries
 /// </summary>
 public sealed class PolygonMarketDataClient : IMarketDataClient
 {
+    private readonly ILogger _log = LoggingSetup.ForContext<PolygonMarketDataClient>();
     private readonly IMarketEventPublisher _publisher;
     private readonly TradeDataCollector _tradeCollector;
     private readonly QuoteCollector _quoteCollector;
+
+    // Resilience pipeline for connection retry with exponential backoff
+    // Pre-configured for when full WebSocket implementation is added
+    private readonly ResiliencePipeline _connectionPipeline;
 
     public PolygonMarketDataClient(IMarketEventPublisher publisher, TradeDataCollector tradeCollector, QuoteCollector quoteCollector)
     {
         _publisher = publisher;
         _tradeCollector = tradeCollector;
         _quoteCollector = quoteCollector;
+
+        // Initialize resilience pipeline with exponential backoff
+        // Ready to use when full WebSocket implementation is added
+        _connectionPipeline = WebSocketResiliencePolicy.CreateComprehensivePipeline(
+            maxRetries: 5,
+            retryBaseDelay: TimeSpan.FromSeconds(2),
+            circuitBreakerFailureThreshold: 5,
+            circuitBreakerDuration: TimeSpan.FromSeconds(30),
+            operationTimeout: TimeSpan.FromSeconds(30));
     }
 
     public bool IsEnabled => true;
 
+    /// <summary>
+    /// Connects to Polygon WebSocket stream.
+    /// Currently a stub - will use _connectionPipeline for retry logic when fully implemented.
+    /// </summary>
     public Task ConnectAsync(CancellationToken ct = default)
     {
+        _log.Information("Polygon client connect called (stub mode - no real connection)");
+
         // Emit a synthetic heartbeat so downstream consumers can verify connectivity without real credentials.
         _publisher.TryPublish(MarketEvent.Heartbeat(DateTimeOffset.UtcNow, source: "PolygonStub"));
+
+        // When implementing full WebSocket connection, use:
+        // await _connectionPipeline.ExecuteAsync(async token =>
+        // {
+        //     // WebSocket connection logic here
+        // }, ct).ConfigureAwait(false);
+
         return Task.CompletedTask;
     }
 
-    public Task DisconnectAsync(CancellationToken ct = default) => Task.CompletedTask;
+    public Task DisconnectAsync(CancellationToken ct = default)
+    {
+        _log.Information("Polygon client disconnect called (stub mode)");
+        return Task.CompletedTask;
+    }
 
     public int SubscribeMarketDepth(SymbolConfig cfg) => -1; // Depth not wired yet
 

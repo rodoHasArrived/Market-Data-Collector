@@ -2,15 +2,6 @@ using System.Collections.Concurrent;
 
 namespace MarketDataCollector.Infrastructure.Providers.InteractiveBrokers;
 
-// TODO: Implement connection retry logic with exponential backoff
-// Currently ConnectAsync() makes a single attempt and fails immediately on error
-// Recommended implementation:
-// 1. Add retry count parameter (default: 5)
-// 2. Use exponential backoff: 1s, 2s, 4s, 8s, 16s
-// 3. Log each retry attempt
-// 4. Consider implementing a heartbeat/keep-alive mechanism
-// 5. Add automatic reconnection on connection loss
-
 /// <summary>
 /// IB connection manager that owns the socket/EReader loop and forwards raw callbacks into <see cref="IBCallbackRouter"/>.
 ///
@@ -18,6 +9,13 @@ namespace MarketDataCollector.Infrastructure.Providers.InteractiveBrokers;
 /// - When compiled WITHOUT the official IB API reference, it exposes a small stub implementation.
 /// - When compiled WITH the IB API (define the compilation constant IBAPI and reference IBApi),
 ///   it provides a full EWrapper implementation with depth routing.
+///
+/// Connection Resilience (IBAPI build):
+/// - Uses ExponentialBackoffRetry for connection retry with configurable delays (1s initial, 2min max)
+/// - Implements HeartbeatMonitor for connection health detection
+/// - Automatic reconnection on connection loss with jitter to prevent thundering herd
+/// - Unlimited retry attempts by default (configurable via maxRetries parameter)
+/// - See EnhancedIBConnectionManager.IBApi.cs and Infrastructure/Performance/ConnectionWarmUp.cs for implementation
 /// </summary>
 public sealed partial class EnhancedIBConnectionManager
 {
@@ -31,7 +29,10 @@ public sealed partial class EnhancedIBConnectionManager
 
     public bool IsConnected => false;
 
-    public Task ConnectAsync() => throw new NotSupportedException("Build with IBAPI defined and reference the official IBApi package/dll.");
+    public Task ConnectAsync() => throw new NotSupportedException(
+        "Build with IBAPI defined and reference the official IBApi package/dll. " +
+        "The IBAPI build includes exponential backoff retry, heartbeat monitoring, and automatic reconnection.");
+
     public Task DisconnectAsync() => Task.CompletedTask;
 
     public int SubscribeMarketDepth(string symbol, int depthLevels = 10) => throw new NotSupportedException("Build with IBAPI defined.");
@@ -44,6 +45,7 @@ public sealed partial class EnhancedIBConnectionManager
 
     public void UnsubscribeTrades(int tickerId)
         => throw new NotSupportedException("Build with IBAPI defined.");
+
     public void UnsubscribeMarketDepth(int tickerId) => throw new NotSupportedException("Build with IBAPI defined.");
 #endif
 }
