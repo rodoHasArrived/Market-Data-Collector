@@ -9,9 +9,11 @@ Welcome to the Market Data Collector! This comprehensive guide will help you get
 - [Installation](#installation)
 - [Configuration](#configuration)
 - [Data Providers](#data-providers)
+- [Multi-Provider Support](#multi-provider-support)
 - [Storage Settings](#storage-settings)
 - [Symbol Management](#symbol-management)
 - [Historical Backfill](#historical-backfill)
+- [Offline Storage & Archival](#offline-storage--archival)
 - [Web Dashboard](#web-dashboard)
 - [Windows Desktop App](#windows-desktop-app)
 - [Command Line Usage](#command-line-usage)
@@ -25,9 +27,13 @@ Market Data Collector is a high-performance system for capturing real-time and h
 ### Key Features
 
 - **Multi-Provider Support**: Interactive Brokers, Alpaca, and Polygon
+- **Simultaneous Connections**: Connect to multiple providers at once for comparison and failover
 - **Real-Time Data Collection**: Tick-by-tick trades, Level 2 order books, and quotes
 - **Historical Backfill**: Download historical data to fill gaps
 - **Flexible Storage**: Multiple file organization strategies
+- **Offline Storage & Archival**: Portable packages, data completeness calendar, archive browser
+- **Batch Export Scheduler**: Automate recurring exports with format conversion
+- **Automatic Failover**: Configure failover rules between providers
 - **Web Dashboard**: Easy-to-use interface for configuration and monitoring
 - **Windows Desktop App**: Native UWP/XAML application with secure credential management
 - **High Performance**: Event-driven architecture with backpressure handling
@@ -225,6 +231,113 @@ When running with `--watch-config`, the application will automatically reload co
 
 **Note:** Polygon support is in development. IB and Alpaca are recommended for production use.
 
+## Multi-Provider Support
+
+Market Data Collector v1.2 introduces the ability to connect to multiple data providers simultaneously for enhanced data quality and reliability.
+
+### Simultaneous Connections
+
+Connect to multiple providers at the same time to:
+- Compare data quality across sources
+- Implement automatic failover
+- Collect from multiple sources for reconciliation
+
+**Via Web Dashboard:**
+1. Navigate to "Multi-Provider Connections" section
+2. Click "Add Provider Connection"
+3. Configure provider ID, type, and credentials
+4. Repeat for additional providers
+
+**Configuration Example:**
+```json
+{
+  "DataSources": {
+    "Sources": [
+      {
+        "Id": "ib_primary",
+        "Name": "Interactive Brokers Primary",
+        "Provider": "IB",
+        "Priority": 1,
+        "Enabled": true
+      },
+      {
+        "Id": "alpaca_backup",
+        "Name": "Alpaca Backup",
+        "Provider": "Alpaca",
+        "Priority": 2,
+        "Enabled": true,
+        "Alpaca": {
+          "KeyId": "YOUR_KEY",
+          "SecretKey": "YOUR_SECRET"
+        }
+      }
+    ],
+    "EnableFailover": true,
+    "FailoverTimeoutSeconds": 30
+  }
+}
+```
+
+### Provider Comparison
+
+Compare data quality metrics side-by-side across all connected providers:
+
+| Metric | Description |
+|--------|-------------|
+| Data Quality Score | Overall score (0-100%) based on connection stability, latency, and drop rate |
+| Trades Received | Total trade events received |
+| Depth Updates | Total order book updates |
+| Average Latency | Mean message processing latency |
+| Messages Dropped | Events dropped due to backpressure |
+| Connection Success Rate | Percentage of successful connection attempts |
+
+Access via the "Provider Comparison" section in the web dashboard or `/api/multiprovider/comparison` endpoint.
+
+### Automatic Failover
+
+Configure automatic failover rules to maintain data collection when providers fail:
+
+**Failover Rule Configuration:**
+```json
+{
+  "FailoverRules": [
+    {
+      "Id": "primary_failover",
+      "PrimaryProviderId": "ib_primary",
+      "BackupProviderIds": ["alpaca_backup", "polygon_tertiary"],
+      "FailoverThreshold": 3,
+      "RecoveryThreshold": 5,
+      "DataQualityThreshold": 70,
+      "MaxLatencyMs": 1000
+    }
+  ]
+}
+```
+
+**Failover Triggers:**
+- **Consecutive Failures**: Failover after N consecutive connection/data failures
+- **Data Quality**: Failover when quality score drops below threshold
+- **Latency**: Failover when latency exceeds maximum acceptable value
+
+**Auto-Recovery**: When the primary provider recovers, subscriptions automatically migrate back.
+
+### Provider Symbol Mapping
+
+Different providers may use different symbols for the same security. Configure mappings to normalize symbols:
+
+**Via Web Dashboard:**
+1. Navigate to "Provider Symbol Mapping" section
+2. Add canonical symbol and provider-specific variants
+3. Optionally include FIGI, ISIN, or CUSIP identifiers
+
+**Example Mappings:**
+| Canonical | IB | Alpaca | Polygon | FIGI |
+|-----------|-----|--------|---------|------|
+| BRK.B | BRK B | BRK.B | BRK.B | BBG000DWG505 |
+| PCG.PRA | PCG PRA | PCG-A | PCG/A | BBG00123ABC |
+
+**Import/Export:** Use CSV for bulk symbol mapping management.
+
 ## Storage Settings
 
 ### Naming Conventions
@@ -380,6 +493,129 @@ Historical bars are converted to the same JSONL format as real-time data for con
 ```json
 {"timestamp":"2024-01-15T21:00:00Z","symbol":"AAPL","type":"HistoricalBar","open":150.0,"high":152.5,"low":149.5,"close":151.75,"volume":50000000}
 ```
+
+## Offline Storage & Archival
+
+Market Data Collector v1.2 includes comprehensive tools for managing archived data offline.
+
+### Portable Data Packager
+
+Create self-contained archive packages for data portability and backup:
+
+**Features:**
+- Package data by symbol, date range, or event type
+- Include manifests and schemas for self-documentation
+- SHA256 checksums for integrity verification
+- Optional encryption for sensitive data
+- Multiple formats: ZIP, TAR.GZ, 7Z
+
+**Via Web Dashboard:**
+1. Navigate to "Archive Browser" section
+2. Select files/folders to package
+3. Choose package format and options
+4. Click "Create Package"
+
+**Package Structure:**
+```
+MarketData_2026-01.zip
+├── manifest.json         # Package metadata
+├── README.md             # Usage documentation
+├── schemas/              # JSON schemas for event types
+│   ├── Trade_schema.json
+│   └── Quote_schema.json
+├── data/                 # Market data files
+│   ├── AAPL/
+│   └── MSFT/
+├── verification/
+│   └── checksums.sha256  # File integrity checksums
+```
+
+### Data Completeness Calendar
+
+Visualize data coverage and identify gaps across your archive:
+
+**Features:**
+- Calendar heatmap showing completeness by date
+- Per-symbol completeness tracking
+- Gap detection with trading calendar awareness
+- One-click backfill for missing dates
+- Completeness scoring (0-100%)
+
+**Completeness Status Colors:**
+- 🟢 **Green (>99%)**: Complete data
+- 🟡 **Yellow (95-99%)**: Minor gaps
+- 🟠 **Orange (80-95%)**: Significant gaps
+- 🔴 **Red (<80%)**: Major issues
+- ⚫ **Gray**: Non-trading day (weekend/holiday)
+
+**Via UWP Desktop App:**
+1. Navigate to "Data Completeness" page
+2. Select date range and symbols
+3. View calendar heatmap
+4. Click any day for drill-down details
+5. Use "Backfill Gaps" to queue missing data
+
+### Archive Browser
+
+Browse and inspect archived data files:
+
+**Navigation:**
+- Tree view: Year → Month → Day → Symbol → Event Type
+- File metadata: size, checksum, event count, timestamps
+- Quick preview: first/last 100 events without full load
+
+**File Operations:**
+- **Preview**: View sample events
+- **Verify**: Check file integrity
+- **Compare**: Detect duplicates or changes
+- **Export**: Copy files to another location
+- **Search**: Find events by timestamp or content
+
+**Via UWP Desktop App:**
+1. Navigate to "Archive Browser" page
+2. Browse the hierarchical tree
+3. Right-click files for context menu
+4. Use search bar for filtering
+
+### Batch Export Scheduler
+
+Automate recurring data exports:
+
+**Job Configuration:**
+```json
+{
+  "Name": "Daily Python Export",
+  "SourcePath": "/data",
+  "DestinationPath": "/exports/{year}/{month}/",
+  "Symbols": ["AAPL", "MSFT", "GOOGL"],
+  "EventTypes": ["Trade", "BboQuote"],
+  "DateRange": "yesterday",
+  "Format": "parquet",
+  "Schedule": {
+    "Frequency": "Daily",
+    "TimeOfDay": "06:00"
+  },
+  "IncrementalMode": true
+}
+```
+
+**Export Formats:**
+- **Raw**: Original JSONL files (optionally decompressed)
+- **CSV**: Comma-separated values for Excel/spreadsheets
+- **Parquet**: Columnar format for Python/pandas
+- **JSON Lines**: Decompressed JSONL
+
+**Schedule Frequencies:**
+- Hourly
+- Daily (with specific time)
+- Weekly (with day of week)
+- Monthly (with day of month)
+
+**Via Web Dashboard:**
+1. Navigate to "Batch Export" section
+2. Create new export job
+3. Configure schedule and format
+4. Monitor job status and history
 
 ## Web Dashboard
 
@@ -871,6 +1107,6 @@ We welcome contributions! If you've found a bug or have a feature request, pleas
 
 ---
 
-**Version:** 1.1
-**Last Updated:** 2026-01-02
+**Version:** 1.2
+**Last Updated:** 2026-01-03
 **License:** See LICENSE file

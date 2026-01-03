@@ -1,10 +1,21 @@
 # Market Data Collector
 
-**Version**: 1.1.0 (Production Ready) | **Last Updated**: 2026-01-02
+**Version**: 1.2.0 (Production Ready) | **Last Updated**: 2026-01-03
 
 A cross-platform, production-ready market data collector with an intuitive web dashboard. Ingests real-time market data from multiple sources (Interactive Brokers, Alpaca, Polygon), normalizes them into domain events, and persists them as JSONL for downstream research. Features comprehensive error handling, single-executable deployment, and built-in help system.
 
-## ✨ New in v1.1
+## ✨ New in v1.2
+
+- **🔗 Multi-Provider Connections** - Connect to multiple data providers simultaneously
+- **📊 Provider Comparison View** - Side-by-side data quality metrics across providers
+- **🔄 Automatic Failover** - Configure automatic failover rules between providers
+- **🗺️ Symbol Mapping** - Provider-specific symbol mapping interface
+- **📦 Portable Data Packager** - Create self-contained, portable archive packages
+- **📅 Data Completeness Calendar** - Visual calendar showing data coverage and gaps
+- **🔍 Archive Browser** - In-app file browser for navigating archived data
+- **📤 Batch Export Scheduler** - Schedule and automate recurring export jobs
+
+## ✨ v1.1 Features
 
 - **🖥️ Native Windows Desktop App** - UWP/XAML application with modern WinUI 3 styling
 - **🔐 Secure Credential Management** - Windows CredentialPicker integration for API keys
@@ -262,6 +273,18 @@ Detailed diagrams and domain notes live in `./docs`:
 - **Data Quality**: Quality scoring system with best-of-breed source selection
 - **Search Infrastructure**: Multi-level indexes with faceted search capabilities
 - **Off-Hours Scheduling**: Trading-hours-aware maintenance automation
+
+### Multi-Provider Support (2026-01-03)
+- **Simultaneous Connections**: Connect to IB, Alpaca, and Polygon providers simultaneously
+- **Provider Comparison**: Side-by-side data quality metrics (latency, drops, throughput)
+- **Automatic Failover**: Configure failover rules with health monitoring and auto-recovery
+- **Symbol Mapping**: Provider-specific symbol mapping with FIGI/ISIN/CUSIP support
+
+### Offline Storage & Archival (2026-01-03)
+- **Portable Data Packager**: Create self-contained archive packages (ZIP, TAR.GZ) with manifests
+- **Data Completeness Calendar**: Visual calendar heatmap showing data coverage by symbol/date
+- **Archive Browser**: Tree-view navigation with file metadata, preview, and verification
+- **Batch Export Scheduler**: Schedule recurring exports with format conversion (CSV, Parquet)
 
 ### UWP Desktop Application (2026-01-02)
 - **Native Windows App**: Full-featured UWP/XAML desktop application with WinUI 3 styling
