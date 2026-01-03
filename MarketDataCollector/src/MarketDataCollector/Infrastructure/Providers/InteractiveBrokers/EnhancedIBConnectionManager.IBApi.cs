@@ -28,6 +28,13 @@ public sealed partial class EnhancedIBConnectionManager : EWrapper, IDisposable
     private int _nextTradeTickerId = 20_000;
     private readonly ConcurrentDictionary<int, string> _tradeTickerMap = new();
 
+    private int _nextQuoteTickerId = 30_000;
+    private readonly ConcurrentDictionary<int, string> _quoteTickerMap = new();
+
+    private int _nextHistoricalReqId = 40_000;
+    private readonly ConcurrentDictionary<int, TaskCompletionSource<List<IBApi.Bar>>> _historicalDataRequests = new();
+    private readonly ConcurrentDictionary<int, List<IBApi.Bar>> _historicalDataBuffers = new();
+
     // Performance monitoring
     private readonly ConnectionWarmUp _warmUp;
     private readonly ExponentialBackoffRetry _reconnectBackoff;
@@ -396,6 +403,134 @@ public sealed partial class EnhancedIBConnectionManager : EWrapper, IDisposable
     }
 
     // -----------------------
+    // Level 1 quote subscriptions (reqMktData)
+    // -----------------------
+
+    /// <summary>
+    /// Subscribe to Level 1 streaming market data for a symbol using reqMktData.
+    /// Uses free Cboe One + IEX data for US equities.
+    /// </summary>
+    /// <param name="cfg">Symbol configuration.</param>
+    /// <param name="genericTickList">Comma-separated generic tick types (e.g., "233,236" for RT Volume + Shortable).</param>
+    /// <param name="snapshot">True for one-time snapshot (uses monthly quota).</param>
+    /// <param name="regulatorySnapshot">True for regulatory snapshot ($0.01/request).</param>
+    /// <returns>The subscription request ID.</returns>
+    public int SubscribeQuotes(SymbolConfig cfg, string? genericTickList = null, bool snapshot = false, bool regulatorySnapshot = false)
+    {
+        if (cfg is null) throw new ArgumentNullException(nameof(cfg));
+        var contract = ContractFactory.Create(cfg);
+
+        var id = Interlocked.Increment(ref _nextQuoteTickerId);
+        _quoteTickerMap[id] = cfg.Symbol;
+        _router.RegisterQuoteTicker(id, cfg.Symbol);
+
+        // Default to RT Volume and Shortable ticks for equities
+        var ticks = genericTickList ?? IBGenericTickTypes.DefaultEquityGenericTicks;
+
+        _clientSocket.reqMktData(id, contract, ticks, snapshot, regulatorySnapshot, null);
+        return id;
+    }
+
+    /// <summary>
+    /// Unsubscribe from Level 1 market data.
+    /// </summary>
+    public void UnsubscribeQuotes(int tickerId)
+    {
+        _clientSocket.cancelMktData(tickerId);
+        _quoteTickerMap.TryRemove(tickerId, out _);
+    }
+
+    // -----------------------
+    // Historical data requests
+    // -----------------------
+
+    /// <summary>
+    /// Request historical bars for a symbol.
+    /// Requires active Level 1 streaming subscription for US equities.
+    /// </summary>
+    /// <param name="cfg">Symbol configuration.</param>
+    /// <param name="endDateTime">End date/time (empty string = now).</param>
+    /// <param name="durationStr">Duration (e.g., "1 D", "1 W", "1 M").</param>
+    /// <param name="barSizeSetting">Bar size (e.g., "1 min", "1 hour", "1 day").</param>
+    /// <param name="whatToShow">Data type (TRADES, MIDPOINT, BID, ASK, etc.).</param>
+    /// <param name="useRTH">True = Regular Trading Hours only.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>List of historical bars.</returns>
+    public async Task<List<IBApi.Bar>> RequestHistoricalDataAsync(
+        SymbolConfig cfg,
+        string endDateTime,
+        string durationStr,
+        string barSizeSetting,
+        string whatToShow,
+        bool useRTH = true,
+        CancellationToken ct = default)
+    {
+        if (cfg is null) throw new ArgumentNullException(nameof(cfg));
+        if (!IsConnected) throw new InvalidOperationException("Not connected to IB Gateway/TWS");
+
+        var contract = ContractFactory.Create(cfg);
+        var id = Interlocked.Increment(ref _nextHistoricalReqId);
+
+        var tcs = new TaskCompletionSource<List<IBApi.Bar>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        _historicalDataRequests[id] = tcs;
+        _historicalDataBuffers[id] = new List<IBApi.Bar>();
+
+        // Register cancellation
+        await using var registration = ct.Register(() =>
+        {
+            if (_historicalDataRequests.TryRemove(id, out var t))
+            {
+                _historicalDataBuffers.TryRemove(id, out _);
+                t.TrySetCanceled(ct);
+                _clientSocket.cancelHistoricalData(id);
+            }
+        });
+
+        try
+        {
+            _clientSocket.reqHistoricalData(
+                id,
+                contract,
+                endDateTime,
+                durationStr,
+                barSizeSetting,
+                whatToShow,
+                useRTH ? 1 : 0,
+                1, // formatDate: 1 = string format
+                false, // keepUpToDate
+                null); // chartOptions
+
+            return await tcs.Task.ConfigureAwait(false);
+        }
+        catch
+        {
+            _historicalDataRequests.TryRemove(id, out _);
+            _historicalDataBuffers.TryRemove(id, out _);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Request historical bars with default settings for daily OHLCV data.
+    /// </summary>
+    public Task<List<IBApi.Bar>> RequestDailyBarsAsync(
+        SymbolConfig cfg,
+        int daysBack = 30,
+        bool useRTH = true,
+        CancellationToken ct = default)
+    {
+        var endDateTime = DateTime.Now.ToString("yyyyMMdd-HH:mm:ss");
+        return RequestHistoricalDataAsync(
+            cfg,
+            endDateTime,
+            $"{daysBack} D",
+            IBBarSizes.Day1,
+            IBWhatToShow.Trades,
+            useRTH,
+            ct);
+    }
+
+    // -----------------------
     // EWrapper depth callbacks
     // -----------------------
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -420,21 +555,112 @@ public sealed partial class EnhancedIBConnectionManager : EWrapper, IDisposable
     }
 
     // -----------------------
-    // EWrapper required members (minimal passthrough stubs)
-    // Expand as needed.
+    // EWrapper error handling
     // -----------------------
-    public void error(Exception e) { }
-    public void error(string str) { }
-    public void error(int id, int errorCode, string errorMsg, string advancedOrderRejectJson) { }
-    public void connectionClosed() { }
 
-    // Many EWrapper methods exist; leave as no-ops until you wire the rest of your callbacks.
-    public void tickPrice(int tickerId, int field, double price, TickAttrib attribs) { }
-    public void tickSize(int tickerId, int field, decimal size) { }
-    public void tickString(int tickerId, int field, string value) { }
-    public void tickGeneric(int tickerId, int field, double value) { }
+    /// <summary>
+    /// Event raised when an IB API error occurs.
+    /// </summary>
+    public event EventHandler<IBApiError>? ErrorOccurred;
+
+    /// <summary>
+    /// Event raised when a pacing violation is detected.
+    /// </summary>
+    public event EventHandler<int>? PacingViolation;
+
+    public void error(Exception e)
+    {
+        ErrorOccurred?.Invoke(this, new IBApiError(-1, -1, e.Message, null));
+    }
+
+    public void error(string str)
+    {
+        ErrorOccurred?.Invoke(this, new IBApiError(-1, -1, str, null));
+    }
+
+    public void error(int id, int errorCode, string errorMsg, string advancedOrderRejectJson)
+    {
+        RecordMessageReceived();
+
+        // Handle pacing violations
+        if (errorCode == IBApiLimits.ErrorPacingViolation ||
+            errorMsg.Contains("pacing", StringComparison.OrdinalIgnoreCase))
+        {
+            PacingViolation?.Invoke(this, id);
+        }
+
+        // Handle historical data errors - complete the request with error
+        if (_historicalDataRequests.TryRemove(id, out var tcs))
+        {
+            _historicalDataBuffers.TryRemove(id, out _);
+
+            // For pacing violations, throw specific exception
+            if (errorCode == IBApiLimits.ErrorPacingViolation ||
+                errorCode == IBApiLimits.ErrorHistoricalDataService)
+            {
+                tcs.TrySetException(new IBPacingViolationException(errorCode, errorMsg));
+            }
+            else if (errorCode == IBApiLimits.ErrorMarketDataNotSubscribed ||
+                     errorCode == IBApiLimits.ErrorDelayedDataNotSubscribed)
+            {
+                tcs.TrySetException(new IBMarketDataNotSubscribedException(errorCode, errorMsg));
+            }
+            else if (errorCode == IBApiLimits.ErrorNoSecurityDefinition)
+            {
+                tcs.TrySetException(new IBSecurityNotFoundException(errorCode, errorMsg));
+            }
+            else
+            {
+                tcs.TrySetException(new IBApiException(errorCode, errorMsg));
+            }
+        }
+
+        ErrorOccurred?.Invoke(this, new IBApiError(id, errorCode, errorMsg, advancedOrderRejectJson));
+    }
+
+    public void connectionClosed()
+    {
+        ConnectionLost?.Invoke(this, EventArgs.Empty);
+    }
+
+    // -----------------------
+    // EWrapper Level 1 tick callbacks
+    // -----------------------
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void tickPrice(int tickerId, int field, double price, TickAttrib attribs)
+    {
+        RecordMessageReceived();
+        _router.OnTickPrice(tickerId, field, price, attribs.CanAutoExecute, attribs.PastLimit);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void tickSize(int tickerId, int field, decimal size)
+    {
+        RecordMessageReceived();
+        _router.OnTickSize(tickerId, field, (long)size);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void tickString(int tickerId, int field, string value)
+    {
+        RecordMessageReceived();
+        _router.OnTickString(tickerId, field, value);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void tickGeneric(int tickerId, int field, double value)
+    {
+        RecordMessageReceived();
+        _router.OnTickGeneric(tickerId, field, value);
+    }
+
     public void tickEFP(int tickerId, int tickType, double basisPoints, string formattedBasisPoints, double impliedFuture, int holdDays, string futureLastTradeDate, double dividendImpact, double dividendsToLastTradeDate) { }
-    public void tickSnapshotEnd(int tickerId) { }
+
+    public void tickSnapshotEnd(int tickerId)
+    {
+        RecordMessageReceived();
+        _router.OnTickSnapshotEnd(tickerId);
+    }
     public void nextValidId(int orderId) { }
     public void managedAccounts(string accountsList) { }
     public void currentTime(long time)
@@ -465,8 +691,47 @@ public sealed partial class EnhancedIBConnectionManager : EWrapper, IDisposable
     public void historicalNews(int requestId, string time, string providerCode, string articleId, string headline) { }
     public void historicalNewsEnd(int requestId, bool hasMore) { }
     public void headTimestamp(int reqId, string headTimestamp) { }
-    public void histoicalData(int reqId, Bar bar) { }
-    public void historicalDataEnd(int reqId, string start, string end) { }
+
+    // -----------------------
+    // EWrapper Historical Data callbacks
+    // -----------------------
+    public void historicalData(int reqId, Bar bar)
+    {
+        RecordMessageReceived();
+        if (_historicalDataBuffers.TryGetValue(reqId, out var buffer))
+        {
+            buffer.Add(bar);
+        }
+    }
+
+    // Note: The IB API has a typo in the method name (histoicalData vs historicalData)
+    // Some versions use one or the other
+    public void histoicalData(int reqId, Bar bar)
+    {
+        historicalData(reqId, bar);
+    }
+
+    public void historicalDataEnd(int reqId, string start, string end)
+    {
+        RecordMessageReceived();
+        if (_historicalDataRequests.TryRemove(reqId, out var tcs))
+        {
+            if (_historicalDataBuffers.TryRemove(reqId, out var buffer))
+            {
+                tcs.TrySetResult(buffer);
+            }
+            else
+            {
+                tcs.TrySetResult(new List<Bar>());
+            }
+        }
+    }
+
+    public void historicalDataUpdate(int reqId, Bar bar)
+    {
+        RecordMessageReceived();
+        // For keepUpToDate=True subscriptions - route to callback if needed
+    }
 
     // NOTE: The full EWrapper interface is extensive. Add methods as you need them for trades/ticks/orders.
 }
