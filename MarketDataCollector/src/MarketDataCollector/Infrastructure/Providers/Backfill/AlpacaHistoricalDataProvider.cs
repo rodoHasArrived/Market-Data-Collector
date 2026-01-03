@@ -12,7 +12,7 @@ namespace MarketDataCollector.Infrastructure.Providers.Backfill;
 /// Provides daily and intraday OHLCV bars with split/dividend adjustments.
 /// Coverage: US equities, ETFs.
 /// </summary>
-public sealed class AlpacaHistoricalDataProvider : IHistoricalDataProviderV2, IDisposable
+public sealed class AlpacaHistoricalDataProvider : IHistoricalDataProviderV2, IRateLimitAwareProvider, IDisposable
 {
     private const string BaseUrl = "https://data.alpaca.markets/v2/stocks";
     private const string EnvKeyId = "ALPACA_KEY_ID";
@@ -26,6 +26,10 @@ public sealed class AlpacaHistoricalDataProvider : IHistoricalDataProviderV2, ID
     private readonly string _feed;
     private readonly string _adjustment;
     private readonly int _priority;
+    private int _requestCount;
+    private DateTimeOffset _windowStart;
+    private DateTimeOffset? _rateLimitResetsAt;
+    private bool _isRateLimited;
     private bool _disposed;
 
     public string Name => "alpaca";
@@ -42,6 +46,11 @@ public sealed class AlpacaHistoricalDataProvider : IHistoricalDataProviderV2, ID
     public bool SupportsDividends => true;
     public bool SupportsSplits => true;
     public IReadOnlyList<string> SupportedMarkets => new[] { "US" };
+
+    /// <summary>
+    /// Event raised when the provider hits a rate limit (HTTP 429).
+    /// </summary>
+    public event Action<RateLimitInfo>? OnRateLimitHit;
 
     /// <summary>
     /// Creates a new Alpaca historical data provider.
@@ -76,6 +85,32 @@ public sealed class AlpacaHistoricalDataProvider : IHistoricalDataProviderV2, ID
         ConfigureHttpClient();
 
         _rateLimiter = new RateLimiter(MaxRequestsPerWindow, RateLimitWindow, RateLimitDelay, _log);
+        _windowStart = DateTimeOffset.UtcNow;
+    }
+
+    /// <summary>
+    /// Get current rate limit usage information.
+    /// </summary>
+    public RateLimitInfo GetRateLimitInfo()
+    {
+        // Reset window if expired
+        if (DateTimeOffset.UtcNow - _windowStart > RateLimitWindow)
+        {
+            _requestCount = 0;
+            _windowStart = DateTimeOffset.UtcNow;
+            _isRateLimited = false;
+            _rateLimitResetsAt = null;
+        }
+
+        return new RateLimitInfo(
+            Name,
+            _requestCount,
+            MaxRequestsPerWindow,
+            RateLimitWindow,
+            _rateLimitResetsAt,
+            _isRateLimited,
+            _rateLimitResetsAt.HasValue ? _rateLimitResetsAt.Value - DateTimeOffset.UtcNow : null
+        );
     }
 
     private void ConfigureHttpClient()
@@ -152,6 +187,9 @@ public sealed class AlpacaHistoricalDataProvider : IHistoricalDataProviderV2, ID
         {
             await _rateLimiter.WaitForSlotAsync(ct).ConfigureAwait(false);
 
+            // Track request count for rate limit reporting
+            Interlocked.Increment(ref _requestCount);
+
             var url = BuildUrl(normalizedSymbol, from, to, nextPageToken);
             _log.Information("Requesting Alpaca history for {Symbol} ({Url})", symbol, url);
 
@@ -172,8 +210,17 @@ public sealed class AlpacaHistoricalDataProvider : IHistoricalDataProviderV2, ID
 
                     if (statusCode == 429)
                     {
-                        _log.Warning("Alpaca API returned 429 for {Symbol}: Rate limit exceeded. Will retry after delay.", symbol);
-                        throw new InvalidOperationException($"Alpaca API returned 429: Rate limit exceeded for symbol {symbol}");
+                        // Extract Retry-After header if present
+                        var retryAfter = ExtractRetryAfterFromResponse(response);
+                        _isRateLimited = true;
+                        _rateLimitResetsAt = DateTimeOffset.UtcNow + (retryAfter ?? RateLimitWindow);
+
+                        var rateLimitInfo = GetRateLimitInfo();
+                        OnRateLimitHit?.Invoke(rateLimitInfo);
+
+                        _log.Warning("Alpaca API returned 429 for {Symbol}: Rate limit exceeded. Resets at {ResetsAt}",
+                            symbol, _rateLimitResetsAt);
+                        throw new InvalidOperationException($"Alpaca API returned 429: Rate limit exceeded for symbol {symbol}. Retry-After: {retryAfter?.TotalSeconds ?? 60}s");
                     }
 
                     if (statusCode == 404)
@@ -270,6 +317,34 @@ public sealed class AlpacaHistoricalDataProvider : IHistoricalDataProviderV2, ID
     {
         // Alpaca uses standard ticker symbols in uppercase
         return symbol.ToUpperInvariant().Trim();
+    }
+
+    private static TimeSpan? ExtractRetryAfterFromResponse(HttpResponseMessage response)
+    {
+        // Try to get Retry-After header
+        if (response.Headers.TryGetValues("Retry-After", out var values))
+        {
+            var retryAfterValue = values.FirstOrDefault();
+            if (!string.IsNullOrEmpty(retryAfterValue))
+            {
+                // Try parsing as seconds
+                if (int.TryParse(retryAfterValue, out var seconds))
+                {
+                    return TimeSpan.FromSeconds(seconds);
+                }
+
+                // Try parsing as HTTP date
+                if (DateTimeOffset.TryParse(retryAfterValue, out var retryDate))
+                {
+                    var delay = retryDate - DateTimeOffset.UtcNow;
+                    if (delay > TimeSpan.Zero)
+                        return delay;
+                }
+            }
+        }
+
+        // Default to 60 seconds if no Retry-After header
+        return TimeSpan.FromSeconds(60);
     }
 
     public void Dispose()

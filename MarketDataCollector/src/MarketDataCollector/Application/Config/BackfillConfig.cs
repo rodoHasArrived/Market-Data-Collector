@@ -12,6 +12,8 @@ namespace MarketDataCollector.Application.Config;
 /// <param name="PreferAdjustedPrices">Prefer providers that return adjusted prices (for splits/dividends).</param>
 /// <param name="EnableSymbolResolution">Use OpenFIGI to normalize symbols across providers.</param>
 /// <param name="ProviderPriority">Custom provider priority order for fallback (overrides defaults).</param>
+/// <param name="EnableRateLimitRotation">Automatically rotate to next provider when approaching rate limits.</param>
+/// <param name="RateLimitRotationThreshold">Usage threshold (0.0-1.0) at which to start rotating providers.</param>
 /// <param name="Providers">Configuration for individual data providers.</param>
 public sealed record BackfillConfig(
     bool Enabled = false,
@@ -23,6 +25,8 @@ public sealed record BackfillConfig(
     bool PreferAdjustedPrices = true,
     bool EnableSymbolResolution = true,
     string[]? ProviderPriority = null,
+    bool EnableRateLimitRotation = true,
+    double RateLimitRotationThreshold = 0.8,
     BackfillProvidersConfig? Providers = null
 );
 
