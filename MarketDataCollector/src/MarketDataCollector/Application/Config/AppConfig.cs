@@ -14,6 +14,7 @@ namespace MarketDataCollector.Application.Config;
 /// - <see cref="DataSourceKind.Alpaca"/> uses Alpaca market data via WebSocket (trades; quotes optional in future).
 /// </param>
 /// <param name="Alpaca">Alpaca provider options (required if DataSource == DataSourceKind.Alpaca).</param>
+/// <param name="StockSharp">StockSharp connector configuration (required if DataSource == DataSourceKind.StockSharp).</param>
 /// <param name="Storage">Storage configuration options (naming convention, partitioning, etc.).</param>
 /// <param name="Symbols">Symbol subscriptions.</param>
 /// <param name="MassTransit">MassTransit distributed messaging configuration.</param>
@@ -28,6 +29,7 @@ public sealed record AppConfig(
     bool Compress = false,
     [property: JsonConverter(typeof(DataSourceKindConverter))] DataSourceKind DataSource = DataSourceKind.IB,
     AlpacaOptions? Alpaca = null,
+    StockSharpConfig? StockSharp = null,
     StorageConfig? Storage = null,
     SymbolConfig[]? Symbols = null,
     MassTransitConfig? MassTransit = null,
