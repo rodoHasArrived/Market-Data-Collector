@@ -658,3 +658,598 @@ public class KeyboardShortcut
     [JsonPropertyName("description")]
     public string? Description { get; set; }
 }
+
+// ============================================================================
+// Collection Session Management Models (#65/27) - P0 Critical
+// ============================================================================
+
+/// <summary>
+/// Represents a discrete data collection session with comprehensive tracking.
+/// </summary>
+public class CollectionSession
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = Guid.NewGuid().ToString();
+
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+
+    [JsonPropertyName("description")]
+    public string? Description { get; set; }
+
+    [JsonPropertyName("status")]
+    public string Status { get; set; } = "Pending"; // Pending, Active, Paused, Completed, Failed
+
+    [JsonPropertyName("startedAt")]
+    public DateTime? StartedAt { get; set; }
+
+    [JsonPropertyName("endedAt")]
+    public DateTime? EndedAt { get; set; }
+
+    [JsonPropertyName("symbols")]
+    public string[] Symbols { get; set; } = Array.Empty<string>();
+
+    [JsonPropertyName("eventTypes")]
+    public string[] EventTypes { get; set; } = Array.Empty<string>(); // Trade, Quote, Depth, Bar
+
+    [JsonPropertyName("provider")]
+    public string? Provider { get; set; }
+
+    [JsonPropertyName("tags")]
+    public string[]? Tags { get; set; }
+
+    [JsonPropertyName("notes")]
+    public string? Notes { get; set; }
+
+    [JsonPropertyName("statistics")]
+    public CollectionSessionStatistics? Statistics { get; set; }
+
+    [JsonPropertyName("qualityScore")]
+    public double QualityScore { get; set; }
+
+    [JsonPropertyName("manifestPath")]
+    public string? ManifestPath { get; set; }
+
+    [JsonPropertyName("createdAt")]
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    [JsonPropertyName("updatedAt")]
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+}
+
+/// <summary>
+/// Statistics for a collection session.
+/// </summary>
+public class CollectionSessionStatistics
+{
+    [JsonPropertyName("totalEvents")]
+    public long TotalEvents { get; set; }
+
+    [JsonPropertyName("tradeEvents")]
+    public long TradeEvents { get; set; }
+
+    [JsonPropertyName("quoteEvents")]
+    public long QuoteEvents { get; set; }
+
+    [JsonPropertyName("depthEvents")]
+    public long DepthEvents { get; set; }
+
+    [JsonPropertyName("barEvents")]
+    public long BarEvents { get; set; }
+
+    [JsonPropertyName("totalBytes")]
+    public long TotalBytes { get; set; }
+
+    [JsonPropertyName("compressedBytes")]
+    public long CompressedBytes { get; set; }
+
+    [JsonPropertyName("fileCount")]
+    public int FileCount { get; set; }
+
+    [JsonPropertyName("gapsDetected")]
+    public int GapsDetected { get; set; }
+
+    [JsonPropertyName("gapsFilled")]
+    public int GapsFilled { get; set; }
+
+    [JsonPropertyName("sequenceErrors")]
+    public int SequenceErrors { get; set; }
+
+    [JsonPropertyName("eventsPerSecond")]
+    public double EventsPerSecond { get; set; }
+
+    [JsonPropertyName("compressionRatio")]
+    public double CompressionRatio { get; set; }
+}
+
+/// <summary>
+/// Configuration for collection sessions.
+/// </summary>
+public class CollectionSessionsConfig
+{
+    [JsonPropertyName("sessions")]
+    public CollectionSession[]? Sessions { get; set; }
+
+    [JsonPropertyName("activeSessionId")]
+    public string? ActiveSessionId { get; set; }
+
+    [JsonPropertyName("autoCreateDailySessions")]
+    public bool AutoCreateDailySessions { get; set; } = true;
+
+    [JsonPropertyName("sessionNamingPattern")]
+    public string SessionNamingPattern { get; set; } = "{date}-{mode}"; // {date}, {mode}, {symbols}
+
+    [JsonPropertyName("generateManifestOnComplete")]
+    public bool GenerateManifestOnComplete { get; set; } = true;
+
+    [JsonPropertyName("retainSessionHistory")]
+    public int RetainSessionHistory { get; set; } = 365; // Days to keep session history
+}
+
+// ============================================================================
+// Offline Data Catalog & Manifest System Models (#56) - P0 Critical
+// ============================================================================
+
+/// <summary>
+/// Comprehensive manifest for a collection session or archive package.
+/// </summary>
+public class DataManifest
+{
+    [JsonPropertyName("manifestVersion")]
+    public string ManifestVersion { get; set; } = "1.0";
+
+    [JsonPropertyName("generatedAt")]
+    public DateTime GeneratedAt { get; set; } = DateTime.UtcNow;
+
+    [JsonPropertyName("sessionId")]
+    public string? SessionId { get; set; }
+
+    [JsonPropertyName("sessionName")]
+    public string? SessionName { get; set; }
+
+    [JsonPropertyName("dateRange")]
+    public DateRangeInfo? DateRange { get; set; }
+
+    [JsonPropertyName("symbols")]
+    public string[] Symbols { get; set; } = Array.Empty<string>();
+
+    [JsonPropertyName("totalFiles")]
+    public int TotalFiles { get; set; }
+
+    [JsonPropertyName("totalEvents")]
+    public long TotalEvents { get; set; }
+
+    [JsonPropertyName("totalBytesRaw")]
+    public long TotalBytesRaw { get; set; }
+
+    [JsonPropertyName("totalBytesCompressed")]
+    public long TotalBytesCompressed { get; set; }
+
+    [JsonPropertyName("files")]
+    public ManifestFileEntry[] Files { get; set; } = Array.Empty<ManifestFileEntry>();
+
+    [JsonPropertyName("schemas")]
+    public Dictionary<string, string>? Schemas { get; set; } // EventType -> SchemaVersion
+
+    [JsonPropertyName("qualityMetrics")]
+    public DataQualityMetrics? QualityMetrics { get; set; }
+
+    [JsonPropertyName("verificationStatus")]
+    public string VerificationStatus { get; set; } = "Pending"; // Pending, Verified, Failed
+
+    [JsonPropertyName("lastVerifiedAt")]
+    public DateTime? LastVerifiedAt { get; set; }
+}
+
+/// <summary>
+/// Date range information.
+/// </summary>
+public class DateRangeInfo
+{
+    [JsonPropertyName("start")]
+    public DateTime Start { get; set; }
+
+    [JsonPropertyName("end")]
+    public DateTime End { get; set; }
+
+    [JsonPropertyName("tradingDays")]
+    public int TradingDays { get; set; }
+}
+
+/// <summary>
+/// Individual file entry in a manifest.
+/// </summary>
+public class ManifestFileEntry
+{
+    [JsonPropertyName("path")]
+    public string Path { get; set; } = string.Empty;
+
+    [JsonPropertyName("relativePath")]
+    public string RelativePath { get; set; } = string.Empty;
+
+    [JsonPropertyName("symbol")]
+    public string? Symbol { get; set; }
+
+    [JsonPropertyName("eventType")]
+    public string? EventType { get; set; }
+
+    [JsonPropertyName("date")]
+    public DateTime? Date { get; set; }
+
+    [JsonPropertyName("checksumSha256")]
+    public string ChecksumSha256 { get; set; } = string.Empty;
+
+    [JsonPropertyName("sizeBytes")]
+    public long SizeBytes { get; set; }
+
+    [JsonPropertyName("compressedSizeBytes")]
+    public long? CompressedSizeBytes { get; set; }
+
+    [JsonPropertyName("eventCount")]
+    public long EventCount { get; set; }
+
+    [JsonPropertyName("firstTimestamp")]
+    public DateTime? FirstTimestamp { get; set; }
+
+    [JsonPropertyName("lastTimestamp")]
+    public DateTime? LastTimestamp { get; set; }
+
+    [JsonPropertyName("schemaVersion")]
+    public string? SchemaVersion { get; set; }
+
+    [JsonPropertyName("isCompressed")]
+    public bool IsCompressed { get; set; }
+
+    [JsonPropertyName("compressionType")]
+    public string? CompressionType { get; set; } // gzip, zstd, lz4
+
+    [JsonPropertyName("verificationStatus")]
+    public string VerificationStatus { get; set; } = "Pending"; // Pending, Verified, Failed
+
+    [JsonPropertyName("lastVerifiedAt")]
+    public DateTime? LastVerifiedAt { get; set; }
+}
+
+/// <summary>
+/// Data quality metrics for manifests and sessions.
+/// </summary>
+public class DataQualityMetrics
+{
+    [JsonPropertyName("completenessScore")]
+    public double CompletenessScore { get; set; }
+
+    [JsonPropertyName("integrityScore")]
+    public double IntegrityScore { get; set; }
+
+    [JsonPropertyName("overallScore")]
+    public double OverallScore { get; set; }
+
+    [JsonPropertyName("gapsDetected")]
+    public int GapsDetected { get; set; }
+
+    [JsonPropertyName("sequenceErrors")]
+    public int SequenceErrors { get; set; }
+
+    [JsonPropertyName("duplicatesFound")]
+    public int DuplicatesFound { get; set; }
+
+    [JsonPropertyName("expectedEvents")]
+    public long ExpectedEvents { get; set; }
+
+    [JsonPropertyName("actualEvents")]
+    public long ActualEvents { get; set; }
+
+    [JsonPropertyName("missingTradingDays")]
+    public string[]? MissingTradingDays { get; set; }
+
+    [JsonPropertyName("outliersDetected")]
+    public int OutliersDetected { get; set; }
+}
+
+// ============================================================================
+// Schema & Data Dictionary Models (#37/72) - P0 High
+// ============================================================================
+
+/// <summary>
+/// Schema definition for a data event type.
+/// </summary>
+public class EventSchema
+{
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+
+    [JsonPropertyName("version")]
+    public string Version { get; set; } = "1.0.0";
+
+    [JsonPropertyName("description")]
+    public string? Description { get; set; }
+
+    [JsonPropertyName("introducedAt")]
+    public DateTime IntroducedAt { get; set; } = DateTime.UtcNow;
+
+    [JsonPropertyName("deprecatedAt")]
+    public DateTime? DeprecatedAt { get; set; }
+
+    [JsonPropertyName("fields")]
+    public SchemaField[] Fields { get; set; } = Array.Empty<SchemaField>();
+
+    [JsonPropertyName("primaryKey")]
+    public string[]? PrimaryKey { get; set; }
+
+    [JsonPropertyName("indexes")]
+    public string[][]? Indexes { get; set; }
+
+    [JsonPropertyName("migrationFromVersion")]
+    public string? MigrationFromVersion { get; set; }
+
+    [JsonPropertyName("sampleRecord")]
+    public Dictionary<string, object>? SampleRecord { get; set; }
+}
+
+/// <summary>
+/// Schema field definition.
+/// </summary>
+public class SchemaField
+{
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+
+    [JsonPropertyName("type")]
+    public string Type { get; set; } = "string"; // string, int64, decimal, datetime, bool, enum
+
+    [JsonPropertyName("description")]
+    public string? Description { get; set; }
+
+    [JsonPropertyName("nullable")]
+    public bool Nullable { get; set; }
+
+    [JsonPropertyName("defaultValue")]
+    public object? DefaultValue { get; set; }
+
+    [JsonPropertyName("validRange")]
+    public FieldValidRange? ValidRange { get; set; }
+
+    [JsonPropertyName("enumValues")]
+    public string[]? EnumValues { get; set; }
+
+    [JsonPropertyName("format")]
+    public string? Format { get; set; } // ISO8601, decimal(18,8), etc.
+
+    [JsonPropertyName("example")]
+    public object? Example { get; set; }
+
+    [JsonPropertyName("exchangeSpecific")]
+    public bool ExchangeSpecific { get; set; }
+
+    [JsonPropertyName("notes")]
+    public string? Notes { get; set; }
+}
+
+/// <summary>
+/// Valid range for a field.
+/// </summary>
+public class FieldValidRange
+{
+    [JsonPropertyName("min")]
+    public object? Min { get; set; }
+
+    [JsonPropertyName("max")]
+    public object? Max { get; set; }
+
+    [JsonPropertyName("pattern")]
+    public string? Pattern { get; set; } // Regex pattern for strings
+}
+
+/// <summary>
+/// Data dictionary containing all schemas.
+/// </summary>
+public class DataDictionary
+{
+    [JsonPropertyName("version")]
+    public string Version { get; set; } = "1.0";
+
+    [JsonPropertyName("generatedAt")]
+    public DateTime GeneratedAt { get; set; } = DateTime.UtcNow;
+
+    [JsonPropertyName("schemas")]
+    public Dictionary<string, EventSchema> Schemas { get; set; } = new();
+
+    [JsonPropertyName("exchangeCodes")]
+    public Dictionary<string, string>? ExchangeCodes { get; set; }
+
+    [JsonPropertyName("tradeConditions")]
+    public Dictionary<string, string>? TradeConditions { get; set; }
+
+    [JsonPropertyName("quoteConditions")]
+    public Dictionary<string, string>? QuoteConditions { get; set; }
+}
+
+// ============================================================================
+// Archive Health & Verification Models (#26/57) - P0 Critical
+// ============================================================================
+
+/// <summary>
+/// Archive health status and metrics.
+/// </summary>
+public class ArchiveHealthStatus
+{
+    [JsonPropertyName("overallHealthScore")]
+    public double OverallHealthScore { get; set; }
+
+    [JsonPropertyName("status")]
+    public string Status { get; set; } = "Unknown"; // Healthy, Warning, Critical, Unknown
+
+    [JsonPropertyName("lastFullVerificationAt")]
+    public DateTime? LastFullVerificationAt { get; set; }
+
+    [JsonPropertyName("lastVerificationDurationMinutes")]
+    public int? LastVerificationDurationMinutes { get; set; }
+
+    [JsonPropertyName("totalFiles")]
+    public int TotalFiles { get; set; }
+
+    [JsonPropertyName("verifiedFiles")]
+    public int VerifiedFiles { get; set; }
+
+    [JsonPropertyName("pendingFiles")]
+    public int PendingFiles { get; set; }
+
+    [JsonPropertyName("failedFiles")]
+    public int FailedFiles { get; set; }
+
+    [JsonPropertyName("totalSizeBytes")]
+    public long TotalSizeBytes { get; set; }
+
+    [JsonPropertyName("verifiedSizeBytes")]
+    public long VerifiedSizeBytes { get; set; }
+
+    [JsonPropertyName("issues")]
+    public ArchiveIssue[]? Issues { get; set; }
+
+    [JsonPropertyName("recommendations")]
+    public string[]? Recommendations { get; set; }
+
+    [JsonPropertyName("lastUpdated")]
+    public DateTime LastUpdated { get; set; } = DateTime.UtcNow;
+
+    [JsonPropertyName("storageHealthInfo")]
+    public StorageHealthInfo? StorageHealthInfo { get; set; }
+}
+
+/// <summary>
+/// An issue detected in the archive.
+/// </summary>
+public class ArchiveIssue
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = Guid.NewGuid().ToString();
+
+    [JsonPropertyName("severity")]
+    public string Severity { get; set; } = "Warning"; // Info, Warning, Critical
+
+    [JsonPropertyName("category")]
+    public string Category { get; set; } = string.Empty; // Integrity, Completeness, Storage, Performance
+
+    [JsonPropertyName("message")]
+    public string Message { get; set; } = string.Empty;
+
+    [JsonPropertyName("affectedFiles")]
+    public string[]? AffectedFiles { get; set; }
+
+    [JsonPropertyName("affectedSymbols")]
+    public string[]? AffectedSymbols { get; set; }
+
+    [JsonPropertyName("suggestedAction")]
+    public string? SuggestedAction { get; set; }
+
+    [JsonPropertyName("detectedAt")]
+    public DateTime DetectedAt { get; set; } = DateTime.UtcNow;
+
+    [JsonPropertyName("resolvedAt")]
+    public DateTime? ResolvedAt { get; set; }
+
+    [JsonPropertyName("isAutoFixable")]
+    public bool IsAutoFixable { get; set; }
+}
+
+/// <summary>
+/// Storage media health information.
+/// </summary>
+public class StorageHealthInfo
+{
+    [JsonPropertyName("driveType")]
+    public string DriveType { get; set; } = "Unknown"; // SSD, HDD, Network, Unknown
+
+    [JsonPropertyName("healthStatus")]
+    public string HealthStatus { get; set; } = "Unknown"; // Good, Warning, Critical, Unknown
+
+    [JsonPropertyName("totalCapacity")]
+    public long TotalCapacity { get; set; }
+
+    [JsonPropertyName("freeSpace")]
+    public long FreeSpace { get; set; }
+
+    [JsonPropertyName("usedPercent")]
+    public double UsedPercent { get; set; }
+
+    [JsonPropertyName("averageWriteLatencyMs")]
+    public double? AverageWriteLatencyMs { get; set; }
+
+    [JsonPropertyName("readSpeedMbps")]
+    public double? ReadSpeedMbps { get; set; }
+
+    [JsonPropertyName("writeSpeedMbps")]
+    public double? WriteSpeedMbps { get; set; }
+
+    [JsonPropertyName("daysUntilFull")]
+    public int? DaysUntilFull { get; set; }
+}
+
+/// <summary>
+/// Verification job status.
+/// </summary>
+public class VerificationJob
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = Guid.NewGuid().ToString();
+
+    [JsonPropertyName("type")]
+    public string Type { get; set; } = "Full"; // Full, Incremental, Selective
+
+    [JsonPropertyName("status")]
+    public string Status { get; set; } = "Pending"; // Pending, Running, Completed, Failed, Cancelled
+
+    [JsonPropertyName("startedAt")]
+    public DateTime? StartedAt { get; set; }
+
+    [JsonPropertyName("completedAt")]
+    public DateTime? CompletedAt { get; set; }
+
+    [JsonPropertyName("totalFiles")]
+    public int TotalFiles { get; set; }
+
+    [JsonPropertyName("processedFiles")]
+    public int ProcessedFiles { get; set; }
+
+    [JsonPropertyName("failedFiles")]
+    public int FailedFiles { get; set; }
+
+    [JsonPropertyName("progressPercent")]
+    public double ProgressPercent { get; set; }
+
+    [JsonPropertyName("estimatedTimeRemainingSeconds")]
+    public int? EstimatedTimeRemainingSeconds { get; set; }
+
+    [JsonPropertyName("filesPerSecond")]
+    public double FilesPerSecond { get; set; }
+
+    [JsonPropertyName("errors")]
+    public string[]? Errors { get; set; }
+}
+
+/// <summary>
+/// Scheduled verification configuration.
+/// </summary>
+public class VerificationScheduleConfig
+{
+    [JsonPropertyName("enabled")]
+    public bool Enabled { get; set; } = true;
+
+    [JsonPropertyName("dailyVerificationTime")]
+    public string DailyVerificationTime { get; set; } = "03:00";
+
+    [JsonPropertyName("dailyVerificationScope")]
+    public string DailyVerificationScope { get; set; } = "Last7Days"; // Last7Days, Last30Days, All
+
+    [JsonPropertyName("weeklyFullVerificationDay")]
+    public int WeeklyFullVerificationDay { get; set; } = 0; // 0 = Sunday
+
+    [JsonPropertyName("monthlyFullVerificationDay")]
+    public int MonthlyFullVerificationDay { get; set; } = 1;
+
+    [JsonPropertyName("pauseDuringMarketHours")]
+    public bool PauseDuringMarketHours { get; set; } = true;
+
+    [JsonPropertyName("maxConcurrentVerifications")]
+    public int MaxConcurrentVerifications { get; set; } = 4;
+}

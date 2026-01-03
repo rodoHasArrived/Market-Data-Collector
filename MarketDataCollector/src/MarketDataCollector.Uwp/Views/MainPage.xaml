@@ -58,6 +58,20 @@
 
             <NavigationViewItemSeparator />
 
+            <NavigationViewItemHeader Content="Archive &amp; Sessions" />
+            <NavigationViewItem Content="Collection Sessions" Tag="CollectionSessions">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE8F1;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem Content="Archive Health" Tag="ArchiveHealth">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE9F5;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+
+            <NavigationViewItemSeparator />
+
             <NavigationViewItem Content="Service Manager" Tag="ServiceManager">
                 <NavigationViewItem.Icon>
                     <FontIcon Glyph="&#xE912;" />

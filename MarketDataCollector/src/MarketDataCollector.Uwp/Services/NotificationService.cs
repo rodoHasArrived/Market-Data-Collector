@@ -229,6 +229,18 @@ public class NotificationService
             "test");
     }
 
+    /// <summary>
+    /// Shows a generic notification with specified type.
+    /// </summary>
+    public async Task NotifyAsync(string title, string message, NotificationType type = NotificationType.Info, string? actionUrl = null)
+    {
+        if (!_settings.Enabled) return;
+        if (IsQuietHours()) return;
+
+        var tag = type.ToString().ToLower();
+        await ShowNotificationAsync(title, message, type, tag, actionUrl);
+    }
+
     private async Task ShowNotificationAsync(
         string title,
         string message,
