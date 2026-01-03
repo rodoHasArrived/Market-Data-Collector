@@ -2,6 +2,28 @@
 
 This document outlines storage organization improvements for the Market Data Collector, covering naming conventions, date partitioning, policies, capacity limits, and perpetual data management strategies.
 
+> ## Primary Mission: Data Collection & Archival
+>
+> The Market Data Collector is designed as a **collection and archival system**. Its primary purpose is:
+>
+> 1. **Reliable Data Collection**: Capture market data from multiple sources with minimal gaps
+> 2. **Long-Term Archival**: Store data securely with integrity verification for years or indefinitely
+> 3. **Export for External Analysis**: Provide clean, well-organized data for analysis in external tools
+>
+> **Analysis is performed externally** using specialized tools such as Python, R, QuantConnect Lean, databases, or custom applications. This focus shapes all storage design decisions—prioritizing archival durability, data integrity, and export flexibility over real-time analytics capabilities.
+>
+> ### Design Principles
+>
+> | Principle | Description |
+> |-----------|-------------|
+> | **Archival First** | Optimize for long-term storage, verification, and retrieval |
+> | **Collection Integrity** | Ensure gap-free, fault-tolerant data capture |
+> | **Export Excellence** | Make data extraction seamless for external tools |
+> | **Future Flexibility** | Maintain compatibility for cloud/hybrid storage when needed |
+> | **Self-Describing Data** | Include manifests, schemas, and metadata with all stored data |
+>
+> While the system maintains flexibility for future integration with cloud storage, real-time streaming, and online databases, the current priority is building a robust, self-contained offline archive that serves as the authoritative source for all collected market data.
+
 ---
 
 ## Table of Contents
@@ -19,7 +41,9 @@ This document outlines storage organization improvements for the Market Data Col
 11. [Search & Discovery Infrastructure](#search--discovery-infrastructure)
 12. [Actionable Metadata & Insights](#actionable-metadata--insights)
 13. [Operational Scheduling & Off-Hours Maintenance](#operational-scheduling--off-hours-maintenance)
-14. [Implementation Roadmap](#implementation-roadmap)
+14. [External Analysis Export Architecture](#external-analysis-export-architecture)
+15. [Collection Session Management](#collection-session-management)
+16. [Implementation Roadmap](#implementation-roadmap)
 
 ---
 
@@ -2398,6 +2422,463 @@ interface IEmergencyScheduler
 
 ---
 
+## External Analysis Export Architecture
+
+> **Purpose**: Design data export pipelines optimized for external analysis tools. The collector's role is to provide clean, well-organized data that external tools can consume efficiently.
+
+### 1. Export Pipeline Design
+
+**Layered export architecture:**
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    External Analysis Tools                       │
+│  (Python, R, QuantConnect Lean, Databases, Custom Apps)         │
+└─────────────────────────────────────────────────────────────────┘
+                              ▲
+                              │
+┌─────────────────────────────────────────────────────────────────┐
+│                     Export Layer                                 │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐             │
+│  │  Format     │  │  Transform  │  │  Package    │             │
+│  │  Converters │  │  Pipeline   │  │  Builder    │             │
+│  └─────────────┘  └─────────────┘  └─────────────┘             │
+└─────────────────────────────────────────────────────────────────┘
+                              ▲
+                              │
+┌─────────────────────────────────────────────────────────────────┐
+│                     Storage Layer                                │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐             │
+│  │  Hot Tier   │  │  Warm Tier  │  │  Cold/      │             │
+│  │  (JSONL)    │  │  (JSONL.gz) │  │  Archive    │             │
+│  └─────────────┘  └─────────────┘  └─────────────┘             │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### 2. Export Format Specifications
+
+```csharp
+interface IExportFormatProvider
+{
+    Task<ExportResult> ExportAsync(
+        ExportRequest request,
+        CancellationToken ct
+    );
+
+    ExportCapabilities GetCapabilities();
+}
+
+record ExportRequest(
+    string[] Symbols,
+    MarketEventType[] Types,
+    DateTimeOffset From,
+    DateTimeOffset To,
+    ExportFormat Format,
+    ExportOptions Options,
+    string DestinationPath
+);
+
+enum ExportFormat
+{
+    // Raw formats
+    JsonLines,           // Original JSONL
+    JsonLinesCompressed, // JSONL.gz
+
+    // Columnar formats (analysis-optimized)
+    Parquet,            // Apache Parquet
+    ParquetPartitioned, // Partitioned Parquet (by date/symbol)
+    Arrow,              // Apache Arrow IPC
+
+    // Interchange formats
+    Csv,                // Comma-separated values
+    CsvCompressed,      // CSV.gz
+
+    // Tool-specific formats
+    LeanZip,            // QuantConnect Lean format
+    FeatherV2,          // Arrow Feather v2
+
+    // Database formats
+    SqlInsert,          // SQL INSERT statements
+    PostgresCopy,       // PostgreSQL COPY format
+    ParquetDelta        // Delta Lake format
+}
+```
+
+### 3. Analysis-Ready Export Profiles
+
+```json
+{
+  "ExportProfiles": {
+    "PythonPandas": {
+      "format": "parquet",
+      "options": {
+        "engine": "pyarrow",
+        "compression": "snappy",
+        "timestamp_as": "datetime64[ns]",
+        "include_index": false,
+        "partition_by": ["date"],
+        "row_group_size": 100000
+      },
+      "post_export": {
+        "generate_loader_script": true,
+        "generate_requirements": true,
+        "include_sample_notebook": true
+      }
+    },
+    "QuantConnectLean": {
+      "format": "lean_zip",
+      "options": {
+        "resolution": "tick",
+        "market": "usa",
+        "security_type": "equity",
+        "data_type": ["trade", "quote"],
+        "include_auxiliary": true
+      }
+    },
+    "TimescaleDB": {
+      "format": "postgres_copy",
+      "options": {
+        "include_ddl": true,
+        "include_hypertable": true,
+        "chunk_interval": "1 day",
+        "compression_policy": true,
+        "include_indexes": true
+      }
+    },
+    "Research": {
+      "format": "parquet_partitioned",
+      "options": {
+        "partition_by": ["symbol", "date"],
+        "include_statistics": true,
+        "include_metadata": true,
+        "generate_catalog": true
+      }
+    }
+  }
+}
+```
+
+### 4. Data Transformation Pipeline
+
+```csharp
+interface IExportTransformPipeline
+{
+    // Register transformation steps
+    IExportTransformPipeline AddStep(ITransformStep step);
+
+    // Execute pipeline
+    Task<TransformResult> ExecuteAsync(
+        IAsyncEnumerable<MarketEvent> source,
+        CancellationToken ct
+    );
+}
+
+// Available transformations
+interface ITransformStep
+{
+    Task<IAsyncEnumerable<object>> TransformAsync(
+        IAsyncEnumerable<object> input,
+        CancellationToken ct
+    );
+}
+
+// Built-in transformations
+class TimeAlignmentStep : ITransformStep { }       // Align to regular intervals
+class OhlcvAggregationStep : ITransformStep { }    // Create OHLCV bars
+class FeatureEngineeringStep : ITransformStep { }  // Compute derived features
+class QualityFilterStep : ITransformStep { }       // Filter by quality score
+class DeduplicationStep : ITransformStep { }       // Remove duplicates
+class NormalizationStep : ITransformStep { }       // Normalize/scale values
+```
+
+### 5. Export Metadata & Documentation
+
+**Auto-generated export documentation:**
+
+```json
+{
+  "export_metadata": {
+    "export_id": "uuid-v4",
+    "created_at": "2026-01-03T06:00:00Z",
+    "source_archive_version": "v2026.01.03",
+
+    "data_coverage": {
+      "symbols": ["AAPL", "MSFT", "SPY"],
+      "date_range": {"start": "2025-01-01", "end": "2025-12-31"},
+      "event_types": ["Trade", "BboQuote"],
+      "total_events": 150000000,
+      "total_bytes": 12884901888
+    },
+
+    "quality_summary": {
+      "overall_score": 0.987,
+      "completeness": 0.995,
+      "gaps_filled": 12,
+      "outliers_present": 45
+    },
+
+    "format_details": {
+      "format": "parquet",
+      "compression": "snappy",
+      "partitioning": ["date", "symbol"],
+      "schema_version": "2.0"
+    },
+
+    "checksums": {
+      "manifest": "sha256:abc123...",
+      "files": [
+        {"path": "AAPL/2025-01.parquet", "sha256": "def456..."}
+      ]
+    },
+
+    "loader_code": {
+      "python": "import pandas as pd\ndf = pd.read_parquet('data/')",
+      "r": "library(arrow)\ndf <- read_parquet('data/')"
+    }
+  }
+}
+```
+
+### 6. Batch Export Scheduling
+
+```csharp
+record ExportSchedule(
+    string Name,
+    string CronExpression,          // e.g., "0 6 * * *" for daily at 6 AM
+    ExportRequest Template,
+    DateRangeType DateRange,        // LastDay, LastWeek, LastMonth, Custom
+    bool Incremental,               // Only export new/changed data
+    string[] Destinations,          // Multiple output locations
+    NotificationConfig Notifications
+);
+
+interface IExportScheduler
+{
+    Task<ScheduledExport> ScheduleAsync(ExportSchedule schedule, CancellationToken ct);
+    Task<ExportJobResult> RunNowAsync(string scheduleId, CancellationToken ct);
+    Task<ExportHistory[]> GetHistoryAsync(string scheduleId, int limit, CancellationToken ct);
+}
+```
+
+### 7. Export Verification
+
+```csharp
+interface IExportVerifier
+{
+    // Verify export completeness
+    Task<VerificationResult> VerifyCompletenessAsync(
+        string exportPath,
+        ExportRequest originalRequest,
+        CancellationToken ct
+    );
+
+    // Verify checksums
+    Task<ChecksumResult> VerifyChecksumsAsync(
+        string exportPath,
+        CancellationToken ct
+    );
+
+    // Compare with source
+    Task<ComparisonResult> CompareWithSourceAsync(
+        string exportPath,
+        DateTimeOffset from,
+        DateTimeOffset to,
+        CancellationToken ct
+    );
+}
+
+record VerificationResult(
+    bool IsValid,
+    long ExpectedEvents,
+    long ActualEvents,
+    string[] MissingSymbols,
+    DateTimeOffset[] MissingDates,
+    string[] Issues
+);
+```
+
+---
+
+## Collection Session Management
+
+> **Purpose**: Organize data collection into discrete, trackable sessions for better organization, verification, and export.
+
+### 1. Session Definition
+
+```csharp
+record CollectionSession(
+    string SessionId,               // Unique identifier
+    string Name,                    // Human-readable name
+    SessionType Type,               // Daily, Weekly, Custom, Continuous
+    DateTimeOffset StartTime,
+    DateTimeOffset? EndTime,
+    SessionState State,             // Active, Completed, Failed
+    string[] Symbols,
+    SessionConfiguration Config,
+    SessionStatistics Stats,
+    string[] Tags                   // For organization: ["Q1-2026", "Earnings"]
+);
+
+enum SessionType
+{
+    Daily,          // One trading day
+    Weekly,         // Trading week (Mon-Fri)
+    Monthly,        // Calendar month
+    Custom,         // User-defined range
+    Continuous      // Ongoing until stopped
+}
+
+enum SessionState
+{
+    Scheduled,      // Waiting to start
+    Active,         // Currently collecting
+    Paused,         // Temporarily stopped
+    Completed,      // Successfully finished
+    Failed,         // Ended with errors
+    Cancelled       // Manually stopped
+}
+```
+
+### 2. Session Statistics
+
+```csharp
+record SessionStatistics(
+    long TotalEvents,
+    long TotalBytes,
+    long TotalBytesCompressed,
+    double CompressionRatio,
+
+    Dictionary<string, long> EventsBySymbol,
+    Dictionary<MarketEventType, long> EventsByType,
+    Dictionary<string, long> EventsBySource,
+
+    int GapsDetected,
+    int GapsFilled,
+    int SequenceErrors,
+    double QualityScore,
+
+    TimeSpan Duration,
+    double EventsPerSecond,
+    double BytesPerSecond
+);
+```
+
+### 3. Session Report Generation
+
+```json
+{
+  "session_report": {
+    "session_id": "2026-01-03-regular",
+    "name": "Regular Trading Session - 2026-01-03",
+    "type": "Daily",
+
+    "timing": {
+      "started": "2026-01-03T09:30:00-05:00",
+      "ended": "2026-01-03T16:00:00-05:00",
+      "duration": "6h 30m 00s"
+    },
+
+    "coverage": {
+      "symbols": 50,
+      "trading_days": 1,
+      "market_hours": "09:30-16:00 ET"
+    },
+
+    "volume": {
+      "total_events": 12500000,
+      "trades": 8000000,
+      "quotes": 4000000,
+      "l2_snapshots": 500000,
+      "raw_bytes": "2.5 GB",
+      "compressed_bytes": "320 MB",
+      "compression_ratio": "7.8x"
+    },
+
+    "quality": {
+      "overall_score": 0.998,
+      "gaps_detected": 0,
+      "gaps_auto_filled": 0,
+      "sequence_errors": 0,
+      "symbols_complete": 50,
+      "symbols_with_issues": 0
+    },
+
+    "files": {
+      "count": 150,
+      "all_verified": true,
+      "manifest_path": "sessions/2026-01-03/manifest.json"
+    },
+
+    "notes": "Clean session, no issues detected"
+  }
+}
+```
+
+### 4. Session-Based Operations
+
+```csharp
+interface ISessionManager
+{
+    // Session lifecycle
+    Task<CollectionSession> CreateSessionAsync(SessionConfiguration config, CancellationToken ct);
+    Task<CollectionSession> StartSessionAsync(string sessionId, CancellationToken ct);
+    Task<CollectionSession> EndSessionAsync(string sessionId, CancellationToken ct);
+    Task<CollectionSession> PauseSessionAsync(string sessionId, CancellationToken ct);
+    Task<CollectionSession> ResumeSessionAsync(string sessionId, CancellationToken ct);
+
+    // Session queries
+    Task<CollectionSession> GetSessionAsync(string sessionId, CancellationToken ct);
+    Task<CollectionSession[]> ListSessionsAsync(SessionQuery query, CancellationToken ct);
+
+    // Session operations
+    Task<SessionReport> GenerateReportAsync(string sessionId, CancellationToken ct);
+    Task<ExportResult> ExportSessionAsync(string sessionId, ExportOptions options, CancellationToken ct);
+    Task<VerificationResult> VerifySessionAsync(string sessionId, CancellationToken ct);
+
+    // Bulk operations
+    Task<SessionComparison> CompareSessionsAsync(string[] sessionIds, CancellationToken ct);
+    Task<MergeResult> MergeSessionsAsync(string[] sessionIds, string newSessionName, CancellationToken ct);
+}
+```
+
+### 5. Session Storage Organization
+
+```
+sessions/
+├── 2026-01-03-regular/
+│   ├── manifest.json           # Session metadata and file list
+│   ├── report.json             # Session summary report
+│   ├── quality.json            # Quality metrics
+│   ├── data/
+│   │   ├── AAPL/
+│   │   │   ├── Trade.jsonl.gz
+│   │   │   └── BboQuote.jsonl.gz
+│   │   ├── MSFT/
+│   │   └── SPY/
+│   └── checksums.sha256        # Verification checksums
+├── 2026-01-02-regular/
+└── index.json                  # Session index for quick lookup
+```
+
+### 6. Session Tags & Organization
+
+```csharp
+record SessionTagging(
+    string[] Tags,               // ["Q1-2026", "Pre-Earnings", "High-Volume"]
+    string[] Categories,         // ["Regular", "Extended", "Special"]
+    Dictionary<string, string> CustomMetadata
+);
+
+interface ISessionOrganizer
+{
+    Task TagSessionAsync(string sessionId, string[] tags, CancellationToken ct);
+    Task<CollectionSession[]> FindByTagsAsync(string[] tags, CancellationToken ct);
+    Task<SessionGroup[]> GroupByTagAsync(string tag, CancellationToken ct);
+}
+```
+
+---
+
 ## Implementation Roadmap
 
 ### Phase 1: Foundation & Core Infrastructure
@@ -2544,7 +3025,16 @@ interface IEmergencyScheduler
 
 ## Summary
 
-This design provides a comprehensive framework for storage organization that:
+This design provides a comprehensive framework for storage organization that supports **data collection and archival as the primary mission**, with analysis performed externally.
+
+### Core Archival Capabilities
+
+1. **Collection Excellence**: Reliable, gap-free data capture from multiple sources
+2. **Archival Integrity**: Long-term storage with verification, checksums, and format preservation
+3. **Export Flexibility**: Easy extraction in formats suitable for external analysis tools
+4. **Storage Efficiency**: Optimal compression, tiering, and organization for archival workloads
+
+### Full Feature Set
 
 1. **Scales** from development to enterprise compliance requirements
 2. **Optimizes** storage costs through intelligent tiering and compression
@@ -2557,11 +3047,16 @@ This design provides a comprehensive framework for storage organization that:
 9. **Discovers** data efficiently with multi-level indexes and faceted search
 10. **Provides** actionable insights through rich metadata and automated recommendations
 11. **Schedules** maintenance intelligently during off-hours to avoid impacting real-time collection
+12. **Exports** data efficiently with tool-specific profiles for Python, R, QuantConnect, and databases
+13. **Organizes** collection into discrete sessions for better tracking and verification
 
 ### Key Capabilities Matrix
 
 | Capability | Description | Business Value |
 |------------|-------------|----------------|
+| **Archival Pipeline** | Write-ahead logging, crash-safe persistence | Zero data loss on failures |
+| **Session Management** | Discrete collection sessions with reports | Organized, verifiable archives |
+| **Export Architecture** | Tool-specific export profiles | Seamless external analysis |
 | **File Maintenance** | Health checks, self-healing, compaction | Reduced manual ops, fewer outages |
 | **Quality Scoring** | 6-dimension quality evaluation | Trust in data, better decisions |
 | **Best-of-Breed** | Auto-select highest quality source | Always use best available data |
@@ -2571,10 +3066,20 @@ This design provides a comprehensive framework for storage organization that:
 | **Usage Analytics** | Access pattern tracking | Optimize for actual workloads |
 | **Off-Hours Scheduling** | Trading-hours-aware maintenance | Zero impact on live data collection |
 
+### Architecture Philosophy
+
 The modular design allows incremental adoption—start with basic naming conventions and progressively add policies, tiering, quality management, scheduling, and advanced search as needs grow.
+
+**Archival-First Approach**: While the system maintains flexibility for future integration with cloud storage, real-time streaming, and online databases, the current priority is building a robust, self-contained offline archive. This focus ensures:
+
+- Data is always safely persisted before any other processing
+- Archives are self-describing with embedded manifests and schemas
+- Export to external analysis tools is optimized and well-documented
+- All existing cloud/online storage features remain available for future use
 
 ---
 
-**Version:** 1.1.0
-**Last Updated:** 2026-01-02
-**See Also:** [MarketDataCollector README](../MarketDataCollector/README.md) | [architecture.md](../MarketDataCollector/docs/architecture.md) | [CONFIGURATION.md](../MarketDataCollector/docs/CONFIGURATION.md)
+**Version:** 2.0.0
+**Last Updated:** 2026-01-03
+**Focus:** Data Collection, Archival & External Analysis Export
+**See Also:** [MarketDataCollector README](../MarketDataCollector/README.md) | [architecture.md](../MarketDataCollector/docs/architecture.md) | [CONFIGURATION.md](../MarketDataCollector/docs/CONFIGURATION.md) | [FEATURE_REFINEMENTS.md](../MarketDataCollector/src/MarketDataCollector.Uwp/FEATURE_REFINEMENTS.md)

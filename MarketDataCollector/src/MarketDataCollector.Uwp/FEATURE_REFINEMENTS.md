@@ -2,20 +2,33 @@
 
 This document outlines proposed feature refinements to enhance the Market Data Collector UWP Desktop Application. Refinements are organized by priority and category.
 
+> **Primary Focus: Data Collection & Archival**
+>
+> The Market Data Collector is designed primarily for **offline data storage, collection, and archival**. Analysis of collected data is intended to be performed externally using specialized tools (Python, R, QuantConnect Lean, etc.). This focus shapes our feature priorities:
+>
+> - **Collection Excellence**: Reliable, gap-free data capture from multiple sources
+> - **Archival Integrity**: Long-term storage with verification, checksums, and format preservation
+> - **Export Flexibility**: Easy extraction in formats suitable for external analysis tools
+> - **Storage Efficiency**: Optimal compression, tiering, and organization for archival workloads
+>
+> While the system maintains flexibility for future integration with cloud storage, real-time streaming, and online analysis platforms, the current priority is building a robust, self-contained offline data archive.
+
 ---
 
 ## Table of Contents
 
 1. [High Priority Refinements](#high-priority-refinements)
-2. [Dashboard Enhancements](#dashboard-enhancements)
-3. [Provider Management Improvements](#provider-management-improvements)
-4. [Symbol Management Refinements](#symbol-management-refinements)
-5. [Backfill & Historical Data](#backfill--historical-data)
-6. [Storage & Performance](#storage--performance)
-7. [UI/UX Improvements](#uiux-improvements)
-8. [Security Enhancements](#security-enhancements)
-9. [Integration & Automation](#integration--automation)
-10. [Accessibility & Localization](#accessibility--localization)
+2. [Offline Storage & Archival Excellence](#offline-storage--archival-excellence)
+3. [Dashboard Enhancements](#dashboard-enhancements)
+4. [Provider Management Improvements](#provider-management-improvements)
+5. [Symbol Management Refinements](#symbol-management-refinements)
+6. [Backfill & Historical Data](#backfill--historical-data)
+7. [Storage & Performance](#storage--performance)
+8. [UI/UX Improvements](#uiux-improvements)
+9. [Security Enhancements](#security-enhancements)
+10. [Integration & Automation](#integration--automation)
+11. [Accessibility & Localization](#accessibility--localization)
+12. [External Analysis Preparation](#external-analysis-preparation)
 
 ---
 
@@ -56,6 +69,400 @@ new ToastContentBuilder()
 - Exponential backoff strategy (2s, 4s, 8s, 16s, max 5 minutes)
 - Visual indicator showing reconnection attempts
 - Option to pause auto-reconnection for maintenance
+
+---
+
+## Offline Storage & Archival Excellence
+
+> **Core Philosophy**: Build a reliable, self-contained data archive that serves as the authoritative source for all collected market data. External tools perform analysis; this system ensures data is collected, preserved, and accessible.
+
+### 55. Archival-First Storage Pipeline
+**Current State**: Storage focuses on real-time collection with basic retention.
+
+**Refinement**:
+- Implement write-ahead logging (WAL) for crash-safe data persistence
+- Add transactional file writes with atomic commit/rollback
+- Create immediate on-disk persistence with configurable sync intervals
+- Implement file-level checksums computed during write for instant verification
+- Add pre-flight storage validation before starting collection sessions
+
+**Implementation Notes**:
+```csharp
+record ArchivalWriteConfig(
+    bool EnableWriteAheadLog,
+    TimeSpan SyncInterval,           // How often to fsync (default: 5s)
+    bool ComputeChecksumOnWrite,
+    bool ValidateAfterWrite,
+    int WriteBufferSizeKb            // Buffer before flush (default: 64KB)
+);
+```
+
+### 56. Offline Data Catalog & Manifest System
+**Current State**: Files organized by convention but no unified catalog.
+
+**Refinement**:
+- Generate comprehensive manifest files for each collection session
+- Include file paths, checksums, event counts, date ranges, and quality scores
+- Support manifest verification for archive integrity audits
+- Enable manifest-based data discovery without scanning all files
+- Create human-readable summary reports alongside machine-readable JSON manifests
+
+**Manifest Structure**:
+```json
+{
+  "manifest_version": "1.0",
+  "collection_session": "2026-01-03T09:30:00Z",
+  "total_files": 150,
+  "total_events": 5000000,
+  "total_bytes_raw": 2147483648,
+  "total_bytes_compressed": 268435456,
+  "symbols": ["AAPL", "MSFT", "SPY"],
+  "date_range": { "start": "2026-01-03", "end": "2026-01-03" },
+  "files": [
+    {
+      "path": "AAPL/Trade/2026-01-03.jsonl.gz",
+      "checksum_sha256": "abc123...",
+      "event_count": 50000,
+      "first_timestamp": "2026-01-03T09:30:00.001Z",
+      "last_timestamp": "2026-01-03T16:00:00.999Z"
+    }
+  ]
+}
+```
+
+### 57. Archive Verification & Integrity Dashboard
+**Current State**: No dedicated archive verification UI.
+
+**Refinement**:
+- Create dedicated "Archive Health" dashboard page
+- Show verification status for all archived data (verified, pending, failed)
+- Display checksum validation results with last-verified timestamps
+- Enable on-demand full archive verification with progress tracking
+- Alert on any integrity issues with one-click repair options
+- Generate archive integrity reports for compliance documentation
+
+**UI Components**:
+- Archive health score gauge (0-100%)
+- Files verified vs. pending vs. failed breakdown
+- Last full verification date and duration
+- Scheduled verification configuration
+- Verification log with issue details
+
+### 58. Long-Term Format Preservation
+**Current State**: JSONL and Parquet formats supported.
+
+**Refinement**:
+- Add format migration tools for future-proofing (JSONL v1 → v2, etc.)
+- Implement schema versioning with backward compatibility
+- Create format conversion pipelines (JSONL → Parquet → Arrow)
+- Document data schemas alongside archived files
+- Include self-describing metadata in all archive files
+- Support format validation against published schemas
+
+**Schema Registry**:
+```json
+{
+  "schemas": {
+    "Trade_v1": {
+      "version": "1.0.0",
+      "introduced": "2025-01-01",
+      "deprecated": null,
+      "fields": ["Timestamp", "Symbol", "Price", "Size", "Side", "Exchange"]
+    },
+    "Trade_v2": {
+      "version": "2.0.0",
+      "introduced": "2026-01-01",
+      "deprecated": null,
+      "fields": ["Timestamp", "Symbol", "Price", "Size", "Side", "Exchange", "TradeId", "Conditions"],
+      "migration_from_v1": "automatic"
+    }
+  }
+}
+```
+
+### 59. Portable Archive Packages
+**Current State**: Data stored in directory hierarchies.
+
+**Refinement**:
+- Create self-contained archive packages for data portability
+- Include manifest, schemas, and all related files in single archive
+- Support multiple package formats (ZIP, TAR.GZ, 7Z)
+- Add package verification tool for integrity checking after transfer
+- Include embedded viewer/documentation for package contents
+- Enable selective packaging (by symbol, date range, event type)
+
+**Package Structure**:
+```
+MarketData_2026-01.tar.gz
+├── manifest.json
+├── schemas/
+│   ├── Trade_v2.json
+│   └── Quote_v1.json
+├── data/
+│   ├── AAPL/
+│   ├── MSFT/
+│   └── SPY/
+├── checksums.sha256
+└── README.txt
+```
+
+### 60. Offline-First Collection Mode
+**Current State**: Assumes online connectivity for provider APIs.
+
+**Refinement**:
+- Implement robust offline queueing for delayed writes
+- Add local event buffering with configurable capacity
+- Create seamless resume after connectivity restoration
+- Implement local time synchronization verification
+- Add clock drift detection and correction logging
+- Support fully disconnected operation with manual data import
+
+**Offline Queue Configuration**:
+```json
+{
+  "OfflineMode": {
+    "max_buffer_size_mb": 1024,
+    "flush_on_reconnect": true,
+    "preserve_order": true,
+    "timestamp_tolerance_ms": 100,
+    "clock_sync_check_interval_min": 15
+  }
+}
+```
+
+### 61. Archive Browsing & Inspection Tools
+**Current State**: File-system based navigation only.
+
+**Refinement**:
+- Create in-app archive browser with tree navigation
+- Support quick preview of file contents without full load
+- Enable file metadata inspection (checksums, event counts, date ranges)
+- Add search within archived files by timestamp or sequence
+- Implement file comparison tool for detecting duplicates or changes
+- Support direct file export from archive browser
+
+**Browser Features**:
+- Tree view: Year → Month → Day → Symbol → Type
+- File preview with first/last 100 events
+- Metadata panel with statistics
+- Right-click context menu for export, verify, repair
+- Search bar with date range picker
+
+### 62. Data Completeness Dashboard
+**Current State**: Basic gap detection in quality reports.
+
+**Refinement**:
+- Create dedicated completeness monitoring page
+- Visual calendar heatmap showing data coverage by date/symbol
+- Expected vs. actual data volume comparisons
+- Trading calendar integration for accurate gap identification
+- Completeness score by symbol, date, event type
+- One-click backfill for identified gaps
+
+**Completeness Metrics**:
+- Trading days with data: 252/252 (100%)
+- Expected events vs. received events ratio
+- Pre-market/regular/after-hours coverage breakdown
+- Gap summary with duration and estimated missing events
+
+### 63. Archive Storage Optimization Advisor
+**Current State**: Basic compression and tiering configuration.
+
+**Refinement**:
+- Analyze current archive for optimization opportunities
+- Recommend compression changes based on data characteristics
+- Identify duplicate or redundant files
+- Suggest tiering adjustments based on access patterns
+- Calculate storage savings from recommended actions
+- Provide one-click optimization execution
+
+**Advisor Output**:
+```
+Storage Optimization Report - 2026-01-03
+─────────────────────────────────────────
+Current Usage: 150 GB
+Recommended Actions:
+  1. Compress 45 warm-tier files with zstd → Save 12 GB
+  2. Remove 3 duplicate files → Save 0.5 GB
+  3. Merge 120 small files (< 1MB) → Improve access performance
+  4. Move 30 files to cold tier → Reduce SSD usage by 8 GB
+
+Projected Usage After Optimization: 129.5 GB
+Estimated Time to Complete: 45 minutes
+```
+
+### 64. Scheduled Archive Maintenance
+**Current State**: Manual maintenance tasks.
+
+**Refinement**:
+- Create maintenance scheduler with calendar integration
+- Configure recurring tasks: verification, optimization, cleanup
+- Set maintenance windows to avoid collection conflicts
+- Generate maintenance reports with actions taken
+- Support maintenance dry-run mode for preview
+- Alert on maintenance failures or blocked tasks
+
+**Maintenance Schedule Example**:
+```json
+{
+  "MaintenanceTasks": [
+    {
+      "name": "Daily Verification",
+      "schedule": "0 3 * * *",
+      "action": "verify_recent",
+      "scope": "last_7_days"
+    },
+    {
+      "name": "Weekly Optimization",
+      "schedule": "0 4 * * 0",
+      "action": "optimize_storage",
+      "scope": "warm_tier"
+    },
+    {
+      "name": "Monthly Full Audit",
+      "schedule": "0 2 1 * *",
+      "action": "full_archive_verification",
+      "scope": "all"
+    }
+  ]
+}
+```
+
+### 65. Collection Session Management
+**Current State**: Continuous collection without session boundaries.
+
+**Refinement**:
+- Implement explicit collection sessions with start/end timestamps
+- Create session summary reports upon completion
+- Track per-session statistics (events, bytes, symbols, gaps)
+- Enable session-based data export and verification
+- Support session tagging for organization (e.g., "Q1-2026", "Earnings-Week")
+- Allow session replay configuration for testing
+
+**Session Summary**:
+```
+Collection Session: 2026-01-03-regular-hours
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Started: 2026-01-03 09:30:00 ET
+Ended: 2026-01-03 16:00:00 ET
+Duration: 6h 30m 00s
+
+Symbols Collected: 50
+Total Events: 12,500,000
+  - Trades: 8,000,000
+  - Quotes: 4,000,000
+  - L2 Snapshots: 500,000
+
+Data Volume: 2.5 GB (compressed: 320 MB)
+Compression Ratio: 7.8x
+
+Data Quality:
+  - Gaps Detected: 0
+  - Sequence Errors: 0
+  - Quality Score: 99.8%
+
+Session Files: 150
+Verification: ✓ All checksums valid
+```
+
+### 66. Archival-Optimized Compression Profiles
+**Current State**: Single compression setting for all data.
+
+**Refinement**:
+- Create compression profiles optimized for archival use cases
+- Implement symbol-specific compression (high-volume symbols get faster codec)
+- Add event-type-specific compression (trades vs. L2 data)
+- Support progressive compression (faster during collection, deeper for archive)
+- Include decompression speed benchmarks for export planning
+- Enable compression profile A/B testing with size comparisons
+
+**Compression Profiles**:
+```json
+{
+  "CompressionProfiles": {
+    "RealTimeCollection": {
+      "codec": "lz4",
+      "level": 1,
+      "priority": "speed"
+    },
+    "WarmArchive": {
+      "codec": "zstd",
+      "level": 6,
+      "priority": "balanced"
+    },
+    "ColdArchive": {
+      "codec": "zstd",
+      "level": 19,
+      "priority": "size"
+    },
+    "HighVolumeSymbols": {
+      "codec": "zstd",
+      "level": 3,
+      "priority": "speed",
+      "applies_to": ["SPY", "QQQ", "AAPL"]
+    }
+  }
+}
+```
+
+### 67. Offline Storage Health Monitoring
+**Current State**: Basic disk space warnings.
+
+**Refinement**:
+- Implement comprehensive storage health dashboard
+- Monitor disk health indicators (SMART status, reallocated sectors)
+- Track write performance over time for degradation detection
+- Alert on storage media issues before data loss
+- Support RAID status monitoring for redundant setups
+- Include NAS/network storage latency monitoring
+
+**Health Metrics**:
+- Disk health score (SMART-based)
+- Average write latency (ms)
+- Failed write attempts (should be 0)
+- Storage throughput trend
+- Free space projection (days until full)
+- Last backup verification status
+
+### 68. Data Deduplication System
+**Current State**: No deduplication.
+
+**Refinement**:
+- Implement content-based deduplication for multi-source data
+- Detect and merge duplicate events from different providers
+- Create deduplication reports showing space savings
+- Support configurable deduplication strategies (first-wins, best-quality)
+- Maintain provenance tracking for deduplicated records
+- Enable deduplication dry-run for impact assessment
+
+### 69. Archive Export Presets
+**Current State**: Manual export configuration each time.
+
+**Refinement**:
+- Create saveable export presets for common workflows
+- Support format-specific presets (CSV for Excel, Parquet for Python, etc.)
+- Include destination path templates with date/symbol variables
+- Enable preset scheduling for automated exports
+- Share presets across users via import/export
+- Include post-export hooks (run script, send notification)
+
+**Export Preset Example**:
+```json
+{
+  "name": "Daily Python Analysis Export",
+  "format": "parquet",
+  "compression": "snappy",
+  "destination": "D:/Analysis/{year}/{month}/",
+  "filename_pattern": "{symbol}_{date}.parquet",
+  "filters": {
+    "event_types": ["Trade", "BboQuote"],
+    "symbols": "all",
+    "date_range": "yesterday"
+  },
+  "post_export_hook": "python analyze.py --date {date}",
+  "schedule": "0 6 * * *"
+}
+```
 
 ---
 
@@ -683,7 +1090,351 @@ new ToastContentBuilder()
 - Generate bundles asynchronously with progress feedback and size estimates
 - Provide checksum and signature for integrity verification when sharing externally
 
+## External Analysis Preparation
+
+> **Design Principle**: The collector's role is to provide clean, well-organized data that external tools can consume efficiently. These features focus on making data analysis-ready without building analysis capabilities into the collector itself.
+
+### 70. Analysis-Ready Export Formats
+**Current State**: JSONL and Parquet exports available.
+
+**Refinement**:
+- Add pre-configured export profiles for common analysis tools:
+  - **Python/Pandas**: Parquet with appropriate dtypes, datetime handling
+  - **R**: CSV with proper NA handling, date formats
+  - **QuantConnect Lean**: Native Lean data format with zip packaging
+  - **Excel**: XLSX with multiple sheets by symbol/date
+  - **Database Import**: SQL INSERT statements, PostgreSQL COPY format
+- Include data dictionary documentation with each export
+- Generate sample code snippets for loading exported data
+
+**Export Profiles**:
+```json
+{
+  "ExportProfiles": {
+    "PythonPandas": {
+      "format": "parquet",
+      "engine": "pyarrow",
+      "timestamp_format": "datetime64[ns]",
+      "include_loader_script": true
+    },
+    "QuantConnectLean": {
+      "format": "lean_zip",
+      "resolution": "tick",
+      "market": "usa",
+      "security_type": "equity"
+    },
+    "PostgreSQL": {
+      "format": "csv",
+      "delimiter": ",",
+      "include_headers": true,
+      "include_ddl": true,
+      "copy_command": true
+    }
+  }
+}
+```
+
+### 71. Data Sampling & Subset Creation
+**Current State**: Full data export only.
+
+**Refinement**:
+- Create representative data samples for development/testing
+- Support stratified sampling (preserve distribution of symbols, times)
+- Enable time-based downsampling (e.g., every 10th second)
+- Create small test datasets for algorithm development
+- Generate sample statistics alongside sampled data
+- Support reproducible sampling with seed configuration
+
+**Sampling Options**:
+- Random sample: N events or N% of total
+- Time-based: Every N seconds, first N minutes of each hour
+- Symbol-stratified: Equal representation across symbols
+- Event-type-stratified: Maintain trade/quote ratio
+- Volatility-based: Oversample high-activity periods
+
+### 72. Data Dictionary & Schema Documentation
+**Current State**: Schema defined in code but not exported with data.
+
+**Refinement**:
+- Auto-generate data dictionaries for all event types
+- Include field descriptions, data types, valid ranges
+- Document exchange-specific codes and conditions
+- Create versioned schema documentation
+- Export schema alongside data in multiple formats (JSON Schema, Avro, Protobuf)
+- Include example records for each event type
+
+**Data Dictionary Example**:
+```markdown
+# Trade Event Schema v2.0
+
+| Field | Type | Description | Example |
+|-------|------|-------------|---------|
+| Timestamp | datetime64[ns] | Event timestamp in UTC | 2026-01-03T14:30:00.123456789Z |
+| Symbol | string | Ticker symbol | AAPL |
+| Price | decimal(18,8) | Trade price | 185.2500 |
+| Size | int64 | Trade size in shares | 100 |
+| Side | enum | Aggressor side (Buy/Sell/Unknown) | Buy |
+| Exchange | string | Exchange code | XNAS |
+| TradeId | string | Unique trade identifier | T123456789 |
+| Conditions | string[] | Trade condition codes | ["@", "F"] |
+```
+
+### 73. Time Series Alignment Tools
+**Current State**: Raw event data with irregular timestamps.
+
+**Refinement**:
+- Provide tools to align data to regular intervals (1s, 1m, 5m, etc.)
+- Generate OHLCV bars from tick data during export
+- Support multiple aggregation methods (last, mean, VWAP)
+- Handle gaps with configurable fill strategies (ffill, null, interpolate)
+- Create aligned multi-symbol datasets for correlation analysis
+- Export alignment metadata (original event counts, gap locations)
+
+**Alignment Configuration**:
+```json
+{
+  "TimeSeriesAlignment": {
+    "interval": "1min",
+    "aggregation": {
+      "price": "ohlc",
+      "volume": "sum",
+      "trade_count": "count"
+    },
+    "gap_handling": {
+      "strategy": "forward_fill",
+      "max_gap_intervals": 5,
+      "mark_filled": true
+    },
+    "timezone": "America/New_York",
+    "market_hours_only": true
+  }
+}
+```
+
+### 74. Feature Engineering Presets
+**Current State**: Raw data only, no derived features.
+
+**Refinement**:
+- Generate common derived features during export:
+  - Returns (log, simple, at various horizons)
+  - Rolling statistics (mean, std, min, max)
+  - Technical indicators (SMA, EMA, RSI, MACD)
+  - Microstructure features (spread, imbalance, VWAP)
+- Allow custom feature definitions via configuration
+- Include feature documentation and formulas
+- Support feature normalization and scaling
+
+**Feature Presets**:
+```json
+{
+  "FeaturePresets": {
+    "BasicReturns": {
+      "features": ["log_return_1m", "log_return_5m", "log_return_1h"],
+      "include_raw": true
+    },
+    "TechnicalIndicators": {
+      "features": ["sma_20", "ema_12", "ema_26", "macd", "rsi_14"],
+      "lookback_periods": [5, 10, 20, 50]
+    },
+    "Microstructure": {
+      "features": ["bid_ask_spread", "order_imbalance", "trade_intensity", "kyle_lambda"],
+      "requires": ["BboQuote", "Trade"]
+    }
+  }
+}
+```
+
+### 75. External Analysis Workspace Setup
+**Current State**: No guidance for external tool integration.
+
+**Refinement**:
+- Generate project templates for analysis environments:
+  - Python: requirements.txt, data loader module, Jupyter notebooks
+  - R: R project with data import scripts
+  - QuantConnect: Lean project structure with data links
+- Create environment setup documentation
+- Provide sample analysis scripts demonstrating data access
+- Include common analysis patterns and best practices
+- Support workspace generation for selected date ranges/symbols
+
+**Generated Python Workspace**:
+```
+analysis_workspace/
+├── requirements.txt
+├── config.yaml
+├── data/
+│   └── -> symlink to exported data
+├── notebooks/
+│   ├── 01_data_exploration.ipynb
+│   ├── 02_quality_check.ipynb
+│   └── 03_basic_analysis.ipynb
+├── src/
+│   ├── __init__.py
+│   ├── data_loader.py
+│   └── utils.py
+└── README.md
+```
+
+### 76. Analysis-Ready Data Quality Report
+**Current State**: Quality reports focused on collection metrics.
+
+**Refinement**:
+- Generate analysis-focused quality reports with each export:
+  - Missing data summary with timestamps
+  - Outlier detection results
+  - Data distribution statistics
+  - Stationarity test results
+  - Autocorrelation analysis
+- Include warnings about data issues relevant to analysis
+- Provide recommendations for handling detected issues
+- Generate machine-readable quality metadata
+
+**Quality Report for Analysis**:
+```
+Data Quality Report for External Analysis
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Export: AAPL_2026-01.parquet
+
+Data Completeness:
+  Trading Days: 21/21 (100%)
+  Expected Bars (1min): 8190
+  Actual Bars: 8185 (99.94%)
+  Missing: 5 bars (see gaps.csv)
+
+Distribution Statistics:
+  Price Range: $180.25 - $195.80
+  Daily Volume Range: 45M - 120M
+  Mean Daily Trades: 850,000
+
+Potential Issues:
+  ⚠ 3 price outliers detected (>4σ) - see outliers.csv
+  ⚠ Volume spike on 2026-01-15 (earnings) - 3x normal
+  ✓ No structural breaks detected
+  ✓ Stationarity: Returns are stationary (ADF p<0.01)
+
+Recommendations:
+  - Consider winsorizing outliers for ML training
+  - Earnings date (01-15) may require special handling
+  - Data suitable for: backtesting, ML training, research
+```
+
+### 77. Batch Export Automation
+**Current State**: Single export operations.
+
+**Refinement**:
+- Create batch export jobs for multiple symbols/date ranges
+- Support incremental exports (only new/changed data)
+- Enable parallel export processing for large datasets
+- Generate export completion reports with statistics
+- Implement export queuing with priority
+- Support export to multiple destinations simultaneously
+
+**Batch Export Configuration**:
+```json
+{
+  "BatchExport": {
+    "name": "Monthly Research Export",
+    "schedule": "0 6 1 * *",
+    "jobs": [
+      {
+        "symbols": ["AAPL", "MSFT", "GOOGL", "AMZN", "META"],
+        "date_range": "last_month",
+        "format": "parquet",
+        "destination": "/research/monthly/"
+      },
+      {
+        "symbols": "sp500",
+        "date_range": "last_month",
+        "format": "lean_zip",
+        "destination": "/lean/data/"
+      }
+    ],
+    "parallel_jobs": 4,
+    "notify_on_complete": true
+  }
+}
+```
+
+### 78. Data Versioning for Analysis
+**Current State**: No versioning of exported datasets.
+
+**Refinement**:
+- Version exported datasets for reproducibility
+- Track export configuration and parameters
+- Generate dataset fingerprints for verification
+- Support dataset comparison across versions
+- Maintain export history with metadata
+- Enable rollback to previous export versions
+
+**Version Manifest**:
+```json
+{
+  "dataset_id": "AAPL_2026-01_v3",
+  "created_at": "2026-02-01T06:00:00Z",
+  "source_data_version": "archive_2026-01-31",
+  "export_config_hash": "sha256:abc123...",
+  "record_count": 8500000,
+  "file_checksum": "sha256:def456...",
+  "changes_from_v2": [
+    "Added TradeConditions field",
+    "Fixed timezone handling for pre-market"
+  ]
+}
+```
+
+### 79. Analysis Integration Documentation
+**Current State**: Limited integration guidance.
+
+**Refinement**:
+- Comprehensive documentation for common analysis workflows:
+  - Backtesting setup with popular frameworks
+  - Machine learning pipeline integration
+  - Real-time replay for strategy testing
+  - Database import procedures
+- Troubleshooting guides for common issues
+- Performance optimization tips for large datasets
+- Sample code repository with analysis examples
+
+---
+
 ## Implementation Priority Matrix
+
+### Core Offline Storage & Archival (Primary Focus)
+
+| Priority | Refinement | Effort | Impact | Category |
+|----------|-----------|--------|--------|----------|
+| P0 | Archival-First Storage Pipeline (#55) | Medium | Critical | Offline Storage |
+| P0 | Offline Data Catalog & Manifest System (#56) | Medium | Critical | Offline Storage |
+| P0 | Archive Verification & Integrity Dashboard (#57) | Medium | High | Offline Storage |
+| P0 | Collection Session Management (#65) | Low | High | Offline Storage |
+| P1 | Data Completeness Dashboard (#62) | Medium | High | Offline Storage |
+| P1 | Archive Browsing & Inspection Tools (#61) | Medium | High | Offline Storage |
+| P1 | Portable Archive Packages (#59) | Medium | High | Offline Storage |
+| P1 | Long-Term Format Preservation (#58) | Medium | High | Offline Storage |
+| P1 | Archival-Optimized Compression Profiles (#66) | Low | Medium | Offline Storage |
+| P2 | Scheduled Archive Maintenance (#64) | Medium | Medium | Offline Storage |
+| P2 | Archive Storage Optimization Advisor (#63) | Medium | Medium | Offline Storage |
+| P2 | Offline Storage Health Monitoring (#67) | Medium | Medium | Offline Storage |
+| P2 | Offline-First Collection Mode (#60) | High | Medium | Offline Storage |
+| P3 | Data Deduplication System (#68) | High | Low | Offline Storage |
+| P3 | Archive Export Presets (#69) | Low | Low | Offline Storage |
+
+### External Analysis Preparation
+
+| Priority | Refinement | Effort | Impact | Category |
+|----------|-----------|--------|--------|----------|
+| P0 | Analysis-Ready Export Formats (#70) | Medium | Critical | External Analysis |
+| P0 | Data Dictionary & Schema Documentation (#72) | Low | High | External Analysis |
+| P1 | Batch Export Automation (#77) | Medium | High | External Analysis |
+| P1 | Analysis-Ready Data Quality Report (#76) | Medium | High | External Analysis |
+| P1 | Data Versioning for Analysis (#78) | Medium | High | External Analysis |
+| P2 | Time Series Alignment Tools (#73) | Medium | Medium | External Analysis |
+| P2 | Data Sampling & Subset Creation (#71) | Low | Medium | External Analysis |
+| P2 | External Analysis Workspace Setup (#75) | Medium | Medium | External Analysis |
+| P2 | Feature Engineering Presets (#74) | High | Medium | External Analysis |
+| P3 | Analysis Integration Documentation (#79) | Low | Low | External Analysis |
+
+### Existing Features (Maintained for Future Flexibility)
 
 | Priority | Refinement | Effort | Impact |
 |----------|-----------|--------|--------|
@@ -705,6 +1456,8 @@ new ToastContentBuilder()
 | P3 | REST API | High | Low |
 | P3 | Localization | High | Low |
 | P3 | Multi-User Support | High | Low |
+
+> **Note**: Cloud storage integration features (Azure Blob, AWS S3, GCS) are already implemented and maintained for future use when online/hybrid storage workflows are needed. The current focus is on perfecting the offline archival experience.
 
 ---
 
@@ -728,5 +1481,6 @@ new ToastContentBuilder()
 
 ---
 
-*Document Version: 1.2*
-*Last Updated: January 4, 2026*
+*Document Version: 2.0*
+*Last Updated: January 3, 2026*
+*Focus: Offline Data Storage, Collection & Archival Excellence*
