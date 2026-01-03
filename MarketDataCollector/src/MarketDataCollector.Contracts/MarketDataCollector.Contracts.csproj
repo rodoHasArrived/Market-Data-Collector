@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>MarketDataCollector.Contracts</AssemblyName>
+    <RootNamespace>MarketDataCollector.Contracts</RootNamespace>
+    <Version>1.0.0</Version>
+    <Description>Shared contracts, DTOs, and configuration models for Market Data Collector</Description>
+    <Authors>MarketDataCollector Team</Authors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Text.Json" Version="8.0.5" />
+  </ItemGroup>
+</Project>
