@@ -204,6 +204,116 @@ This document outlines feature refinements for existing functionality and propos
 - Add budget alerts and thresholds
 - Suggest cost optimization strategies
 
+#### 7. Offline Data Access & Caching
+**Current State:** Data only accessible when application is running with active storage connection.
+
+**Proposed Refinements:**
+- Implement local SQLite/LiteDB cache for frequently accessed data
+- Add configurable cache size limits with LRU eviction
+- Enable offline browsing of cached historical data
+- Show cache hit/miss statistics and efficiency metrics
+- Pre-fetch data for specified symbols during off-peak hours
+- Add "pin" functionality to keep specific data always available offline
+
+#### 8. Portable Data Packages
+**Current State:** Data tied to installation location.
+
+**Proposed Refinements:**
+- Create self-contained data packages for symbol/date ranges
+- Generate encrypted portable archives with password protection
+- Include metadata manifest for package contents
+- Support USB drive export for air-gapped environments
+- Add package verification and integrity checking
+- Enable cross-machine data transfer via portable packages
+
+#### 9. Local Database Engine Options
+**Current State:** JSONL file-based storage only.
+
+**Proposed Refinements:**
+- Add embedded SQLite database option for structured queries
+- Implement DuckDB integration for analytics workloads
+- Support InfluxDB/TimescaleDB local instances
+- Enable hybrid storage (files + database indexes)
+- Add migration tools between storage backends
+- Show performance comparison between storage engines
+
+#### 10. Offline Mode Operation
+**Current State:** Requires network for cloud sync and provider connections.
+
+**Proposed Refinements:**
+- Add dedicated "Offline Mode" toggle in UI
+- Queue cloud sync operations for when connectivity returns
+- Show offline status indicator with pending sync count
+- Enable full data analysis capabilities without network
+- Implement conflict resolution for offline changes
+- Add offline session recording for later sync
+
+#### 11. Data Snapshot & Versioning
+**Current State:** No point-in-time snapshots or versioning.
+
+**Proposed Refinements:**
+- Create named snapshots of data at specific points in time
+- Implement copy-on-write for storage efficiency
+- Add snapshot comparison and diff visualization
+- Enable rollback to previous snapshots
+- Support branching for experimental data modifications
+- Generate snapshot manifests with content hashes
+
+#### 12. External Drive Management
+**Current State:** Single storage location configuration.
+
+**Proposed Refinements:**
+- Add support for multiple storage drives/volumes
+- Implement automatic drive detection and hot-swap
+- Show drive health monitoring (SMART data)
+- Add per-drive storage policies and allocation rules
+- Enable drive mirroring for redundancy
+- Support NAS/network share as storage target
+
+#### 13. Data Compaction & Optimization
+**Current State:** Files grow without optimization.
+
+**Proposed Refinements:**
+- Add scheduled compaction jobs for storage optimization
+- Implement segment merging for fragmented data
+- Remove duplicate entries with deduplication
+- Add vacuum operation for reclaiming space
+- Show fragmentation metrics and recommendations
+- Enable background optimization without interrupting collection
+
+#### 14. Backup & Disaster Recovery
+**Current State:** Manual backup only.
+
+**Proposed Refinements:**
+- Add automated backup scheduling (daily/weekly/monthly)
+- Implement incremental backup for efficiency
+- Support multiple backup destinations (local, network, cloud)
+- Add backup verification and test restore
+- Generate backup reports with content inventory
+- Implement point-in-time recovery capabilities
+
+#### 15. Storage Encryption at Rest
+**Current State:** Data stored in plain format.
+
+**Proposed Refinements:**
+- Add AES-256 encryption for stored data files
+- Implement key management with Windows DPAPI integration
+- Support hardware security modules (HSM) for enterprise
+- Enable per-symbol or per-type encryption policies
+- Add secure key backup and recovery options
+- Show encryption status and audit logging
+
+#### 16. Cold Storage Archive Management
+**Current State:** Basic cold tier configuration.
+
+**Proposed Refinements:**
+- Add tape/LTO archive integration for long-term storage
+- Implement Glacier-style retrieval with lead times
+- Create archive catalogs with searchable metadata
+- Support optical media (Blu-ray M-DISC) for permanent archives
+- Add archive verification and media health monitoring
+- Generate compliance-ready archive documentation
+
 ---
 
 ### Symbols Page Enhancements
@@ -987,6 +1097,20 @@ This document outlines feature refinements for existing functionality and propos
 | Custom Session Definitions | Trading Hours | 1 week | Medium |
 | Diagnostic Report Generation | Help | 3-5 days | High |
 
+### Offline Data Storage Priority
+| Feature | Effort | Impact | Priority |
+|---------|--------|--------|----------|
+| Offline Data Access & Caching | 1 week | High | P1 |
+| Backup & Disaster Recovery | 1-2 weeks | High | P1 |
+| Storage Encryption at Rest | 1 week | High | P1 |
+| Offline Mode Operation | 1 week | High | P2 |
+| Local Database Engine Options | 2 weeks | High | P2 |
+| Data Compaction & Optimization | 1 week | Medium | P2 |
+| External Drive Management | 1-2 weeks | Medium | P2 |
+| Data Snapshot & Versioning | 2 weeks | Medium | P3 |
+| Portable Data Packages | 1-2 weeks | Medium | P3 |
+| Cold Storage Archive Management | 2-3 weeks | Low | P4 |
+
 ### Lower Priority (Future Consideration)
 | Feature | Effort | Impact |
 |---------|--------|--------|
@@ -1033,8 +1157,9 @@ This document outlines feature refinements for existing functionality and propos
 
 ---
 
-*Document Version: 3.0*
-*Last Updated: 2026-01-02*
+*Document Version: 4.0*
+*Last Updated: 2026-01-03*
 *Changes:*
 - *v2.0: Marked implemented features as complete, added 10 new feature ideas for 2026*
 - *v3.0: Added 24 new feature refinements across 10 page categories, expanded Priority Matrix*
+- *v4.0: Added 10 offline data storage refinements with dedicated priority section*
