@@ -15,4 +15,7 @@ namespace MarketDataCollector.Domain.Events;
 [JsonDerivedType(typeof(L2SnapshotPayload), "l2payload")]
 [JsonDerivedType(typeof(BboQuotePayload), "bbo")]
 [JsonDerivedType(typeof(HistoricalBar), "historical_bar")]
+[JsonDerivedType(typeof(HistoricalQuote), "historical_quote")]
+[JsonDerivedType(typeof(HistoricalTrade), "historical_trade")]
+[JsonDerivedType(typeof(HistoricalAuction), "historical_auction")]
 public abstract record MarketEventPayload : IMarketEventPayload;

@@ -9,10 +9,11 @@ namespace MarketDataCollector.Infrastructure.Providers.Backfill;
 
 /// <summary>
 /// Historical data provider using Alpaca Markets Data API v2.
-/// Provides daily and intraday OHLCV bars with split/dividend adjustments.
+/// Provides daily and intraday OHLCV bars with split/dividend adjustments,
+/// as well as tick-level quotes (NBBO), trades, and auction data.
 /// Coverage: US equities, ETFs.
 /// </summary>
-public sealed class AlpacaHistoricalDataProvider : IHistoricalDataProviderV2, IRateLimitAwareProvider, IDisposable
+public sealed class AlpacaHistoricalDataProvider : IHistoricalDataProviderExtended, IRateLimitAwareProvider, IDisposable
 {
     private const string BaseUrl = "https://data.alpaca.markets/v2/stocks";
     private const string EnvKeyId = "ALPACA_KEY_ID";
@@ -46,6 +47,11 @@ public sealed class AlpacaHistoricalDataProvider : IHistoricalDataProviderV2, IR
     public bool SupportsDividends => true;
     public bool SupportsSplits => true;
     public IReadOnlyList<string> SupportedMarkets => new[] { "US" };
+
+    // Extended capabilities for tick data
+    public bool SupportsQuotes => true;
+    public bool SupportsTrades => true;
+    public bool SupportsAuctions => true;
 
     /// <summary>
     /// Event raised when the provider hits a rate limit (HTTP 429).
@@ -298,6 +304,426 @@ public sealed class AlpacaHistoricalDataProvider : IHistoricalDataProviderV2, IR
         return allBars.OrderBy(b => b.SessionDate).ToList();
     }
 
+    #region Historical Quotes (NBBO)
+
+    /// <summary>
+    /// Fetch historical NBBO quotes for a single symbol.
+    /// </summary>
+    public async Task<HistoricalQuotesResult> GetHistoricalQuotesAsync(
+        string symbol,
+        DateTimeOffset start,
+        DateTimeOffset end,
+        int? limit = null,
+        CancellationToken ct = default)
+    {
+        return await GetHistoricalQuotesAsync(new[] { symbol }, start, end, limit, ct).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Fetch historical NBBO quotes for multiple symbols.
+    /// </summary>
+    public async Task<HistoricalQuotesResult> GetHistoricalQuotesAsync(
+        IEnumerable<string> symbols,
+        DateTimeOffset start,
+        DateTimeOffset end,
+        int? limit = null,
+        CancellationToken ct = default)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        ValidateCredentials();
+
+        var symbolList = symbols.Select(NormalizeSymbol).ToList();
+        if (symbolList.Count == 0)
+            throw new ArgumentException("At least one symbol is required", nameof(symbols));
+
+        var allQuotes = new List<HistoricalQuote>();
+        string? nextPageToken = null;
+        long sequenceNumber = 0;
+
+        do
+        {
+            await _rateLimiter.WaitForSlotAsync(ct).ConfigureAwait(false);
+            Interlocked.Increment(ref _requestCount);
+
+            var url = BuildQuotesUrl(symbolList, start, end, limit, nextPageToken);
+            _log.Information("Requesting Alpaca quotes for {Symbols} ({Url})", string.Join(",", symbolList), url);
+
+            try
+            {
+                using var response = await _http.GetAsync(url, ct).ConfigureAwait(false);
+                HandleHttpErrors(response, symbolList.First(), "quotes");
+
+                var json = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+                var data = JsonSerializer.Deserialize<AlpacaQuotesResponse>(json);
+
+                if (data?.Quotes is null || data.Quotes.Count == 0)
+                    break;
+
+                foreach (var kvp in data.Quotes)
+                {
+                    var symbol = kvp.Key;
+                    foreach (var quote in kvp.Value)
+                    {
+                        if (quote.Timestamp is null) continue;
+
+                        allQuotes.Add(new HistoricalQuote(
+                            Symbol: symbol.ToUpperInvariant(),
+                            Timestamp: quote.Timestamp.Value,
+                            AskExchange: quote.AskExchange ?? "",
+                            AskPrice: quote.AskPrice,
+                            AskSize: quote.AskSize,
+                            BidExchange: quote.BidExchange ?? "",
+                            BidPrice: quote.BidPrice,
+                            BidSize: quote.BidSize,
+                            Conditions: quote.Conditions,
+                            Tape: quote.Tape,
+                            Source: Name,
+                            SequenceNumber: sequenceNumber++
+                        ));
+                    }
+                }
+
+                nextPageToken = data.NextPageToken;
+            }
+            catch (JsonException ex)
+            {
+                _log.Error(ex, "Failed to parse Alpaca quotes response for {Symbols}", string.Join(",", symbolList));
+                throw new InvalidOperationException($"Failed to parse Alpaca quotes data", ex);
+            }
+
+        } while (!string.IsNullOrEmpty(nextPageToken));
+
+        _log.Information("Fetched {Count} quotes for {Symbols} from Alpaca", allQuotes.Count, string.Join(",", symbolList));
+        return new HistoricalQuotesResult(allQuotes.OrderBy(q => q.Timestamp).ToList(), null, allQuotes.Count);
+    }
+
+    private string BuildQuotesUrl(IReadOnlyList<string> symbols, DateTimeOffset start, DateTimeOffset end, int? limit, string? pageToken)
+    {
+        var symbolsParam = string.Join(",", symbols);
+        var startStr = start.ToString("yyyy-MM-ddTHH:mm:ssZ");
+        var endStr = end.ToString("yyyy-MM-ddTHH:mm:ssZ");
+
+        string url;
+        if (symbols.Count == 1)
+        {
+            url = $"{BaseUrl}/{symbols[0]}/quotes?start={startStr}&end={endStr}&feed={_feed}";
+        }
+        else
+        {
+            url = $"{BaseUrl}/quotes?symbols={Uri.EscapeDataString(symbolsParam)}&start={startStr}&end={endStr}&feed={_feed}";
+        }
+
+        if (limit.HasValue)
+            url += $"&limit={limit.Value}";
+
+        if (!string.IsNullOrEmpty(pageToken))
+            url += $"&page_token={Uri.EscapeDataString(pageToken)}";
+
+        return url;
+    }
+
+    #endregion
+
+    #region Historical Trades
+
+    /// <summary>
+    /// Fetch historical trades for a single symbol.
+    /// </summary>
+    public async Task<HistoricalTradesResult> GetHistoricalTradesAsync(
+        string symbol,
+        DateTimeOffset start,
+        DateTimeOffset end,
+        int? limit = null,
+        CancellationToken ct = default)
+    {
+        return await GetHistoricalTradesAsync(new[] { symbol }, start, end, limit, ct).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Fetch historical trades for multiple symbols.
+    /// </summary>
+    public async Task<HistoricalTradesResult> GetHistoricalTradesAsync(
+        IEnumerable<string> symbols,
+        DateTimeOffset start,
+        DateTimeOffset end,
+        int? limit = null,
+        CancellationToken ct = default)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        ValidateCredentials();
+
+        var symbolList = symbols.Select(NormalizeSymbol).ToList();
+        if (symbolList.Count == 0)
+            throw new ArgumentException("At least one symbol is required", nameof(symbols));
+
+        var allTrades = new List<HistoricalTrade>();
+        string? nextPageToken = null;
+        long sequenceNumber = 0;
+
+        do
+        {
+            await _rateLimiter.WaitForSlotAsync(ct).ConfigureAwait(false);
+            Interlocked.Increment(ref _requestCount);
+
+            var url = BuildTradesUrl(symbolList, start, end, limit, nextPageToken);
+            _log.Information("Requesting Alpaca trades for {Symbols} ({Url})", string.Join(",", symbolList), url);
+
+            try
+            {
+                using var response = await _http.GetAsync(url, ct).ConfigureAwait(false);
+                HandleHttpErrors(response, symbolList.First(), "trades");
+
+                var json = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+                var data = JsonSerializer.Deserialize<AlpacaTradesResponse>(json);
+
+                if (data?.Trades is null || data.Trades.Count == 0)
+                    break;
+
+                foreach (var kvp in data.Trades)
+                {
+                    var symbol = kvp.Key;
+                    foreach (var trade in kvp.Value)
+                    {
+                        if (trade.Timestamp is null) continue;
+
+                        allTrades.Add(new HistoricalTrade(
+                            Symbol: symbol.ToUpperInvariant(),
+                            Timestamp: trade.Timestamp.Value,
+                            Exchange: trade.Exchange ?? "",
+                            Price: trade.Price,
+                            Size: trade.Size,
+                            TradeId: trade.TradeId ?? sequenceNumber.ToString(),
+                            Conditions: trade.Conditions,
+                            Tape: trade.Tape,
+                            Source: Name,
+                            SequenceNumber: sequenceNumber++
+                        ));
+                    }
+                }
+
+                nextPageToken = data.NextPageToken;
+            }
+            catch (JsonException ex)
+            {
+                _log.Error(ex, "Failed to parse Alpaca trades response for {Symbols}", string.Join(",", symbolList));
+                throw new InvalidOperationException($"Failed to parse Alpaca trades data", ex);
+            }
+
+        } while (!string.IsNullOrEmpty(nextPageToken));
+
+        _log.Information("Fetched {Count} trades for {Symbols} from Alpaca", allTrades.Count, string.Join(",", symbolList));
+        return new HistoricalTradesResult(allTrades.OrderBy(t => t.Timestamp).ToList(), null, allTrades.Count);
+    }
+
+    private string BuildTradesUrl(IReadOnlyList<string> symbols, DateTimeOffset start, DateTimeOffset end, int? limit, string? pageToken)
+    {
+        var symbolsParam = string.Join(",", symbols);
+        var startStr = start.ToString("yyyy-MM-ddTHH:mm:ssZ");
+        var endStr = end.ToString("yyyy-MM-ddTHH:mm:ssZ");
+
+        string url;
+        if (symbols.Count == 1)
+        {
+            url = $"{BaseUrl}/{symbols[0]}/trades?start={startStr}&end={endStr}&feed={_feed}";
+        }
+        else
+        {
+            url = $"{BaseUrl}/trades?symbols={Uri.EscapeDataString(symbolsParam)}&start={startStr}&end={endStr}&feed={_feed}";
+        }
+
+        if (limit.HasValue)
+            url += $"&limit={limit.Value}";
+
+        if (!string.IsNullOrEmpty(pageToken))
+            url += $"&page_token={Uri.EscapeDataString(pageToken)}";
+
+        return url;
+    }
+
+    #endregion
+
+    #region Historical Auctions
+
+    /// <summary>
+    /// Fetch historical auction data for a single symbol.
+    /// </summary>
+    public async Task<HistoricalAuctionsResult> GetHistoricalAuctionsAsync(
+        string symbol,
+        DateOnly start,
+        DateOnly end,
+        CancellationToken ct = default)
+    {
+        return await GetHistoricalAuctionsAsync(new[] { symbol }, start, end, ct).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Fetch historical auction data for multiple symbols.
+    /// </summary>
+    public async Task<HistoricalAuctionsResult> GetHistoricalAuctionsAsync(
+        IEnumerable<string> symbols,
+        DateOnly start,
+        DateOnly end,
+        CancellationToken ct = default)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        ValidateCredentials();
+
+        var symbolList = symbols.Select(NormalizeSymbol).ToList();
+        if (symbolList.Count == 0)
+            throw new ArgumentException("At least one symbol is required", nameof(symbols));
+
+        var allAuctions = new List<HistoricalAuction>();
+        string? nextPageToken = null;
+
+        do
+        {
+            await _rateLimiter.WaitForSlotAsync(ct).ConfigureAwait(false);
+            Interlocked.Increment(ref _requestCount);
+
+            var url = BuildAuctionsUrl(symbolList, start, end, nextPageToken);
+            _log.Information("Requesting Alpaca auctions for {Symbols} ({Url})", string.Join(",", symbolList), url);
+
+            try
+            {
+                using var response = await _http.GetAsync(url, ct).ConfigureAwait(false);
+                HandleHttpErrors(response, symbolList.First(), "auctions");
+
+                var json = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+                var data = JsonSerializer.Deserialize<AlpacaAuctionsResponse>(json);
+
+                if (data?.Auctions is null || data.Auctions.Count == 0)
+                    break;
+
+                foreach (var kvp in data.Auctions)
+                {
+                    var symbol = kvp.Key;
+                    foreach (var auctionDay in kvp.Value)
+                    {
+                        if (auctionDay.Date is null) continue;
+
+                        var sessionDate = DateOnly.FromDateTime(auctionDay.Date.Value.UtcDateTime);
+
+                        // Skip if outside requested range
+                        if (sessionDate < start || sessionDate > end) continue;
+
+                        var openingAuctions = (auctionDay.OpeningAuctions ?? Array.Empty<AlpacaAuctionPrice>())
+                            .Where(a => a.Timestamp.HasValue && a.Price > 0)
+                            .Select(a => new AuctionPrice(
+                                Timestamp: a.Timestamp!.Value,
+                                Price: a.Price,
+                                Size: a.Size,
+                                Exchange: a.Exchange,
+                                Condition: a.Condition
+                            ))
+                            .ToList();
+
+                        var closingAuctions = (auctionDay.ClosingAuctions ?? Array.Empty<AlpacaAuctionPrice>())
+                            .Where(a => a.Timestamp.HasValue && a.Price > 0)
+                            .Select(a => new AuctionPrice(
+                                Timestamp: a.Timestamp!.Value,
+                                Price: a.Price,
+                                Size: a.Size,
+                                Exchange: a.Exchange,
+                                Condition: a.Condition
+                            ))
+                            .ToList();
+
+                        allAuctions.Add(new HistoricalAuction(
+                            Symbol: symbol.ToUpperInvariant(),
+                            SessionDate: sessionDate,
+                            OpeningAuctions: openingAuctions,
+                            ClosingAuctions: closingAuctions,
+                            Source: Name,
+                            SequenceNumber: sessionDate.DayNumber
+                        ));
+                    }
+                }
+
+                nextPageToken = data.NextPageToken;
+            }
+            catch (JsonException ex)
+            {
+                _log.Error(ex, "Failed to parse Alpaca auctions response for {Symbols}", string.Join(",", symbolList));
+                throw new InvalidOperationException($"Failed to parse Alpaca auctions data", ex);
+            }
+
+        } while (!string.IsNullOrEmpty(nextPageToken));
+
+        _log.Information("Fetched {Count} auction days for {Symbols} from Alpaca", allAuctions.Count, string.Join(",", symbolList));
+        return new HistoricalAuctionsResult(allAuctions.OrderBy(a => a.SessionDate).ToList(), null, allAuctions.Count);
+    }
+
+    private string BuildAuctionsUrl(IReadOnlyList<string> symbols, DateOnly start, DateOnly end, string? pageToken)
+    {
+        var symbolsParam = string.Join(",", symbols);
+        var startStr = start.ToString("yyyy-MM-dd");
+        var endStr = end.AddDays(1).ToString("yyyy-MM-dd");
+
+        string url;
+        if (symbols.Count == 1)
+        {
+            url = $"{BaseUrl}/{symbols[0]}/auctions?start={startStr}&end={endStr}&feed={_feed}";
+        }
+        else
+        {
+            url = $"{BaseUrl}/auctions?symbols={Uri.EscapeDataString(symbolsParam)}&start={startStr}&end={endStr}&feed={_feed}";
+        }
+
+        if (!string.IsNullOrEmpty(pageToken))
+            url += $"&page_token={Uri.EscapeDataString(pageToken)}";
+
+        return url;
+    }
+
+    #endregion
+
+    #region Helper Methods
+
+    private void ValidateCredentials()
+    {
+        if (string.IsNullOrEmpty(_keyId) || string.IsNullOrEmpty(_secretKey))
+            throw new InvalidOperationException("Alpaca API credentials are required. Set ALPACA_KEY_ID and ALPACA_SECRET_KEY environment variables or provide them in configuration.");
+    }
+
+    private void HandleHttpErrors(HttpResponseMessage response, string symbol, string dataType)
+    {
+        if (response.IsSuccessStatusCode) return;
+
+        var statusCode = (int)response.StatusCode;
+
+        if (statusCode == 403)
+        {
+            _log.Error("Alpaca API returned 403 for {Symbol} {DataType}: Authentication failed. Verify API keys.", symbol, dataType);
+            throw new InvalidOperationException($"Alpaca API returned 403: Authentication failed for symbol {symbol}");
+        }
+
+        if (statusCode == 429)
+        {
+            var retryAfter = ExtractRetryAfterFromResponse(response);
+            _isRateLimited = true;
+            _rateLimitResetsAt = DateTimeOffset.UtcNow + (retryAfter ?? RateLimitWindow);
+
+            var rateLimitInfo = GetRateLimitInfo();
+            OnRateLimitHit?.Invoke(rateLimitInfo);
+
+            _log.Warning("Alpaca API returned 429 for {Symbol} {DataType}: Rate limit exceeded. Resets at {ResetsAt}",
+                symbol, dataType, _rateLimitResetsAt);
+            throw new InvalidOperationException($"Alpaca API returned 429: Rate limit exceeded for symbol {symbol}. Retry-After: {retryAfter?.TotalSeconds ?? 60}s");
+        }
+
+        if (statusCode == 404)
+        {
+            _log.Warning("Alpaca API returned 404 for {Symbol} {DataType}: Symbol not found", symbol, dataType);
+            return; // Allow empty results for not found
+        }
+
+        _log.Warning("Alpaca API returned {Status} for {Symbol} {DataType}",
+            response.StatusCode, symbol, dataType);
+        throw new InvalidOperationException($"Alpaca API returned {statusCode} for symbol {symbol}");
+    }
+
+    #endregion
+
     private string BuildUrl(string symbol, DateOnly? from, DateOnly? to, string? pageToken)
     {
         var startDate = from?.ToString("yyyy-MM-dd") ?? "2000-01-01";
@@ -394,6 +820,120 @@ public sealed class AlpacaHistoricalDataProvider : IHistoricalDataProviderV2, IR
 
         [JsonPropertyName("vw")]
         public decimal VolumeWeightedAvgPrice { get; set; }
+    }
+
+    // Historical Quotes Response Models
+    private sealed class AlpacaQuotesResponse
+    {
+        [JsonPropertyName("quotes")]
+        public Dictionary<string, List<AlpacaQuote>>? Quotes { get; set; }
+
+        [JsonPropertyName("next_page_token")]
+        public string? NextPageToken { get; set; }
+    }
+
+    private sealed class AlpacaQuote
+    {
+        [JsonPropertyName("t")]
+        public DateTimeOffset? Timestamp { get; set; }
+
+        [JsonPropertyName("ax")]
+        public string? AskExchange { get; set; }
+
+        [JsonPropertyName("ap")]
+        public decimal AskPrice { get; set; }
+
+        [JsonPropertyName("as")]
+        public long AskSize { get; set; }
+
+        [JsonPropertyName("bx")]
+        public string? BidExchange { get; set; }
+
+        [JsonPropertyName("bp")]
+        public decimal BidPrice { get; set; }
+
+        [JsonPropertyName("bs")]
+        public long BidSize { get; set; }
+
+        [JsonPropertyName("c")]
+        public List<string>? Conditions { get; set; }
+
+        [JsonPropertyName("z")]
+        public string? Tape { get; set; }
+    }
+
+    // Historical Trades Response Models
+    private sealed class AlpacaTradesResponse
+    {
+        [JsonPropertyName("trades")]
+        public Dictionary<string, List<AlpacaTrade>>? Trades { get; set; }
+
+        [JsonPropertyName("next_page_token")]
+        public string? NextPageToken { get; set; }
+    }
+
+    private sealed class AlpacaTrade
+    {
+        [JsonPropertyName("t")]
+        public DateTimeOffset? Timestamp { get; set; }
+
+        [JsonPropertyName("x")]
+        public string? Exchange { get; set; }
+
+        [JsonPropertyName("p")]
+        public decimal Price { get; set; }
+
+        [JsonPropertyName("s")]
+        public long Size { get; set; }
+
+        [JsonPropertyName("c")]
+        public List<string>? Conditions { get; set; }
+
+        [JsonPropertyName("i")]
+        public string? TradeId { get; set; }
+
+        [JsonPropertyName("z")]
+        public string? Tape { get; set; }
+    }
+
+    // Historical Auctions Response Models
+    private sealed class AlpacaAuctionsResponse
+    {
+        [JsonPropertyName("auctions")]
+        public Dictionary<string, List<AlpacaAuctionDay>>? Auctions { get; set; }
+
+        [JsonPropertyName("next_page_token")]
+        public string? NextPageToken { get; set; }
+    }
+
+    private sealed class AlpacaAuctionDay
+    {
+        [JsonPropertyName("d")]
+        public DateTimeOffset? Date { get; set; }
+
+        [JsonPropertyName("o")]
+        public AlpacaAuctionPrice[]? OpeningAuctions { get; set; }
+
+        [JsonPropertyName("c")]
+        public AlpacaAuctionPrice[]? ClosingAuctions { get; set; }
+    }
+
+    private sealed class AlpacaAuctionPrice
+    {
+        [JsonPropertyName("t")]
+        public DateTimeOffset? Timestamp { get; set; }
+
+        [JsonPropertyName("p")]
+        public decimal Price { get; set; }
+
+        [JsonPropertyName("s")]
+        public long Size { get; set; }
+
+        [JsonPropertyName("x")]
+        public string? Exchange { get; set; }
+
+        [JsonPropertyName("c")]
+        public string? Condition { get; set; }
     }
 
     #endregion
