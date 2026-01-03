@@ -7,6 +7,16 @@ This document outlines feature refinements for existing functionality and propos
 ## Table of Contents
 
 1. [Feature Refinements](#feature-refinements)
+   - [Dashboard Page Enhancements](#dashboard-page-enhancements)
+   - [Provider Page Enhancements](#provider-page-enhancements)
+   - [Storage Page Enhancements](#storage-page-enhancements)
+   - [Symbols Page Enhancements](#symbols-page-enhancements)
+   - [Backfill Page Enhancements](#backfill-page-enhancements)
+   - [Settings Page Enhancements](#settings-page-enhancements)
+   - [Service Manager Page Enhancements](#service-manager-page-enhancements)
+   - [Data Export Page Enhancements](#data-export-page-enhancements)
+   - [Trading Hours Page Enhancements](#trading-hours-page-enhancements)
+   - [Help Page Enhancements](#help-page-enhancements)
 2. [New Feature Ideas](#new-feature-ideas)
 3. [Additional New Feature Ideas (2026)](#additional-new-feature-ideas-2026)
 4. [Priority Matrix](#priority-matrix)
@@ -50,6 +60,28 @@ This document outlines feature refinements for existing functionality and propos
 - ✅ Sortable columns in performance table
 - ✅ Health score with trend sparklines per symbol
 
+#### 4. Dashboard Layout Customization
+**Current State:** Fixed dashboard layout with preset widget positions.
+
+**Proposed Refinements:**
+- Add resizable widget panels with drag handles
+- Implement snap-to-grid layout system
+- Add widget minimize/maximize controls
+- Create dashboard layout presets (Compact, Standard, Extended)
+- Enable per-widget refresh rate configuration
+- Add fullscreen mode for individual widgets
+
+#### 5. Real-Time Alerts Banner
+**Current State:** Alerts only shown via toast notifications.
+
+**Proposed Refinements:**
+- Add persistent alert banner at top of dashboard
+- Show scrolling ticker for multiple active alerts
+- Color-code by severity (info, warning, critical)
+- One-click dismiss or snooze functionality
+- Quick jump to affected symbol/page
+- Alert acknowledgment workflow
+
 ---
 
 ### Provider Page Enhancements
@@ -82,6 +114,28 @@ This document outlines feature refinements for existing functionality and propos
 - Show credential expiration warnings (for time-limited tokens)
 - Display last successful authentication timestamp
 - Add credential auto-refresh for OAuth-based providers
+
+#### 4. Provider Rate Limit Monitoring
+**Current State:** No visibility into API rate limits.
+
+**Proposed Refinements:**
+- Display current rate limit usage vs. quota
+- Show rate limit reset countdown timer
+- Add visual warning when approaching limits
+- Implement automatic request throttling
+- Log rate limit violations with timestamps
+- Suggest subscription tier upgrades when consistently hitting limits
+
+#### 5. Provider-Specific Diagnostics Panel
+**Current State:** Generic connection status for all providers.
+
+**Proposed Refinements:**
+- IB: Show TWS version, API client ID, market data permissions, account type
+- Alpaca: Display subscription tier, paper/live mode, available data types
+- Show provider API version compatibility
+- Display supported symbol types per provider
+- Add provider-specific troubleshooting guides
+- Show historical uptime statistics per provider
 
 ---
 
@@ -117,6 +171,39 @@ This document outlines feature refinements for existing functionality and propos
 - ✅ Sync modes: Manual, Scheduled, Real-time
 - ✅ Connection status and sync statistics display
 
+#### 4. Storage Performance Optimization
+**Current State:** Default write settings without optimization.
+
+**Proposed Refinements:**
+- Add write buffer size configuration with performance impact preview
+- Implement file compression level selector (speed vs. size tradeoff)
+- Show real-time write throughput metrics (MB/s, events/s)
+- Add disk I/O queue depth monitoring
+- Implement intelligent file rotation based on size and time
+- Add SSD vs. HDD optimization presets
+
+#### 5. Data Integrity Verification
+**Current State:** No automated integrity checking.
+
+**Proposed Refinements:**
+- Add scheduled integrity scan with progress indicator
+- Implement checksum verification for stored files
+- Show file corruption detection alerts
+- Add one-click repair for corrupted segments
+- Generate integrity reports with export option
+- Compare checksums against provider-supplied values
+
+#### 6. Storage Cost Calculator
+**Current State:** No cost visibility for cloud storage.
+
+**Proposed Refinements:**
+- Display estimated monthly cloud storage costs
+- Show cost breakdown by symbol and data type
+- Project future costs based on growth rate
+- Compare costs across cloud providers
+- Add budget alerts and thresholds
+- Suggest cost optimization strategies
+
 ---
 
 ### Symbols Page Enhancements
@@ -146,6 +233,28 @@ This document outlines feature refinements for existing functionality and propos
 - Create subscription presets (e.g., "Scalping" = Trades+L2@20 levels, "Swing" = Trades only)
 - Add symbol-type defaults (Stocks, ETFs, Futures have different optimal settings)
 - Implement exchange-specific default configurations
+
+#### 4. Symbol Health Dashboard
+**Current State:** Basic status indicators per symbol.
+
+**Proposed Refinements:**
+- Add comprehensive health score (0-100) per symbol
+- Show data freshness indicator with stale warnings
+- Display message rate anomaly detection
+- Track and display symbol-specific error rates
+- Add symbol comparison view for health metrics
+- Generate weekly health reports per symbol
+
+#### 5. Smart Symbol Grouping
+**Current State:** Flat list of symbols.
+
+**Proposed Refinements:**
+- Auto-group by sector, exchange, or asset class
+- Create custom tag-based grouping
+- Add collapsible group headers with aggregate stats
+- Enable bulk operations per group
+- Show group-level health and activity summaries
+- Import groups from external sources (portfolio files, index constituents)
 
 ---
 
@@ -178,6 +287,28 @@ This document outlines feature refinements for existing functionality and propos
 - Show data coverage calendar visualization
 - Add duplicate detection and cleanup
 
+#### 4. Intelligent Backfill Prioritization
+**Current State:** Manual priority assignment.
+
+**Proposed Refinements:**
+- Auto-prioritize based on data gap severity
+- Consider symbol importance/activity level in priority
+- Implement dependency-aware scheduling (fill oldest gaps first)
+- Add "smart queue" that optimizes for API rate limits
+- Show estimated completion time based on queue
+- Allow drag-and-drop priority reordering
+
+#### 5. Backfill Cost Estimation
+**Current State:** No visibility into backfill costs.
+
+**Proposed Refinements:**
+- Display estimated API call count before starting
+- Show cost estimate for paid data feeds
+- Track actual vs. estimated costs per job
+- Add budget caps with automatic pause
+- Generate cost reports by symbol and date range
+- Suggest cost-efficient backfill strategies
+
 ---
 
 ### Settings Page Enhancements
@@ -202,6 +333,187 @@ This document outlines feature refinements for existing functionality and propos
 - ✅ Selective export (symbols, storage settings, provider config, scheduled jobs, UI preferences)
 - ✅ Reset to Defaults with confirmation dialog
 - ✅ Visual configuration backup management in Settings UI
+
+#### 3. Advanced Logging Configuration
+**Current State:** Basic debug logging toggle.
+
+**Proposed Refinements:**
+- Add granular log level per component (UI, API, Storage, etc.)
+- Implement log file rotation with size/age limits
+- Add log viewer with filtering and search
+- Enable remote log shipping (Seq, Elasticsearch, Splunk)
+- Show log statistics (errors/warnings per hour)
+- Add performance logging with timing metrics
+
+#### 4. Keyboard Shortcut Customization
+**Current State:** Fixed keyboard shortcuts.
+
+**Proposed Refinements:**
+- Allow custom shortcut key binding
+- Add shortcut conflict detection
+- Import/export shortcut profiles
+- Show shortcut hints in context menus
+- Add shortcut discovery mode (hold modifier to show hints)
+- Support multi-key sequences (vim-style chords)
+
+#### 5. Privacy & Telemetry Controls
+**Current State:** No user telemetry options.
+
+**Proposed Refinements:**
+- Add opt-in/opt-out for anonymous usage analytics
+- Show what data is collected with full transparency
+- Implement local-only mode (no network calls except data)
+- Add data deletion request option
+- Show privacy dashboard with data access log
+- Comply with GDPR/CCPA requirements
+
+---
+
+### Service Manager Page Enhancements
+
+#### 1. Advanced Process Control
+**Current State:** Basic start/stop controls.
+
+**Proposed Refinements:**
+- Add process priority adjustment (Normal, High, Realtime)
+- Implement CPU affinity configuration for multi-core optimization
+- Show detailed process tree visualization
+- Add memory limit enforcement
+- Implement graceful shutdown with timeout configuration
+- Add pre/post start/stop script hooks
+
+#### 2. Log Analysis Tools
+**Current State:** Basic log viewing.
+
+**Proposed Refinements:**
+- Add log pattern recognition and highlighting
+- Implement error clustering and grouping
+- Show log timeline with event density visualization
+- Add log comparison between time periods
+- Implement log anomaly detection
+- Generate log summary reports
+
+#### 3. Service Health Predictions
+**Current State:** Real-time status only.
+
+**Proposed Refinements:**
+- Add predictive failure detection based on patterns
+- Show resource usage trend analysis
+- Implement proactive restart recommendations
+- Display uptime predictions based on historical data
+- Add maintenance window scheduling
+- Show service degradation early warnings
+
+---
+
+### Data Export Page Enhancements
+
+#### 1. Export Template Library
+**Current State:** Manual export configuration each time.
+
+**Proposed Refinements:**
+- Save and reuse export configurations as templates
+- Add pre-built templates for common use cases
+- Share templates with team members
+- Version control for template changes
+- Add template validation before export
+- Import templates from community
+
+#### 2. Export Scheduling & Automation
+**Current State:** Manual export triggering.
+
+**Proposed Refinements:**
+- Add cron-style scheduling for recurring exports
+- Implement conditional exports (trigger on data threshold)
+- Add email/webhook notification on export completion
+- Show export job history with download links
+- Implement export chaining (output of one feeds another)
+- Add retry logic for failed exports
+
+#### 3. Export Format Extensions
+**Current State:** Limited export formats.
+
+**Proposed Refinements:**
+- Add Apache Parquet export with schema customization
+- Implement Delta Lake format for versioned exports
+- Add direct database insert (PostgreSQL, ClickHouse, TimescaleDB)
+- Support streaming export via Kafka/Pulsar
+- Add API endpoint generation for exported data
+- Implement incremental/differential exports
+
+---
+
+### Trading Hours Page Enhancements
+
+#### 1. Global Exchange Calendar
+**Current State:** Basic trading hours configuration.
+
+**Proposed Refinements:**
+- Add comprehensive exchange holiday calendar
+- Show early close days and special sessions
+- Implement automatic calendar updates from data source
+- Display time until next market open/close
+- Add multi-timezone clock display
+- Show trading session overlaps visually
+
+#### 2. Custom Session Definitions
+**Current State:** Standard market hours only.
+
+**Proposed Refinements:**
+- Define custom trading windows per symbol
+- Add pre-market and after-hours session configs
+- Implement session-specific data collection rules
+- Create collection profiles per session type
+- Add overnight session handling
+- Support 24-hour markets (crypto, forex)
+
+#### 3. Event-Based Collection Triggers
+**Current State:** Time-based collection only.
+
+**Proposed Refinements:**
+- Add event-driven collection start/stop (earnings, Fed announcements)
+- Implement economic calendar integration
+- Create custom event triggers
+- Add collection intensity modulation by event
+- Show upcoming events affecting collection
+- Log collection changes triggered by events
+
+---
+
+### Help Page Enhancements
+
+#### 1. Interactive Documentation
+**Current State:** Static help links.
+
+**Proposed Refinements:**
+- Add searchable in-app documentation
+- Implement context-sensitive help (F1 on any control)
+- Show animated feature demos
+- Add troubleshooting wizard with guided steps
+- Implement FAQ with smart suggestions
+- Add community Q&A integration
+
+#### 2. Onboarding Experience
+**Current State:** No guided onboarding.
+
+**Proposed Refinements:**
+- Add first-run setup wizard
+- Implement feature spotlight tours
+- Show progress tracker for setup completion
+- Add "What's New" for version updates
+- Implement achievement/gamification for learning
+- Create quick-start templates per use case
+
+#### 3. Diagnostic Report Generation
+**Current State:** No automated diagnostics.
+
+**Proposed Refinements:**
+- Add one-click diagnostic report generation
+- Include system info, logs, and configuration (sanitized)
+- Implement automatic issue detection with suggestions
+- Add secure report sharing for support
+- Show health check summary with recommendations
+- Compare against known good configurations
 
 ---
 
@@ -630,6 +942,9 @@ This document outlines feature refinements for existing functionality and propos
 | Symbol search autocomplete | 2-3 days | High |
 | Credential testing with feedback | 1 day | Medium |
 | Quick Add Symbol inline input | 1 day | Medium |
+| Real-Time Alerts Banner | 1-2 days | High |
+| Provider Rate Limit Monitoring | 1-2 days | Medium |
+| Keyboard Shortcut Customization | 2 days | Medium |
 
 ### High Impact, Medium Effort (Strategic)
 | Feature | Effort | Impact |
@@ -639,6 +954,11 @@ This document outlines feature refinements for existing functionality and propos
 | Scheduled Backfill Jobs | 3-5 days | Medium |
 | Multi-Provider Support | 1-2 weeks | Medium |
 | Interactive Onboarding Tutorial | 1 week | Medium |
+| Dashboard Layout Customization | 1 week | High |
+| Storage Performance Optimization | 3-5 days | Medium |
+| Export Template Library | 3-5 days | Medium |
+| Global Exchange Calendar | 1 week | Medium |
+| Symbol Health Dashboard | 1 week | High |
 
 ### High Impact, High Effort (Major Features)
 | Feature | Effort | Impact |
@@ -648,6 +968,24 @@ This document outlines feature refinements for existing functionality and propos
 | Dashboard Customization & Widgets (full) | 2-3 weeks | Medium |
 | ML Data Preparation Tools | 2-3 weeks | Medium |
 | Alert & Monitoring Center | 2 weeks | High |
+| Log Analysis Tools | 2 weeks | Medium |
+| Export Scheduling & Automation | 2 weeks | High |
+| Event-Based Collection Triggers | 2 weeks | Medium |
+
+### Feature Refinements Priority (2026 Additions)
+| Feature | Category | Effort | Impact |
+|---------|----------|--------|--------|
+| Data Integrity Verification | Storage | 1 week | High |
+| Storage Cost Calculator | Storage | 3-5 days | Medium |
+| Intelligent Backfill Prioritization | Backfill | 1 week | High |
+| Backfill Cost Estimation | Backfill | 3-5 days | Medium |
+| Smart Symbol Grouping | Symbols | 1 week | Medium |
+| Provider-Specific Diagnostics | Provider | 1 week | Medium |
+| Advanced Logging Configuration | Settings | 3-5 days | Medium |
+| Service Health Predictions | Service Mgr | 2 weeks | Medium |
+| Export Format Extensions | Export | 2 weeks | High |
+| Custom Session Definitions | Trading Hours | 1 week | Medium |
+| Diagnostic Report Generation | Help | 3-5 days | High |
 
 ### Lower Priority (Future Consideration)
 | Feature | Effort | Impact |
@@ -655,6 +993,7 @@ This document outlines feature refinements for existing functionality and propos
 | Mobile Companion App | 4-6 weeks | Medium |
 | Compliance & Audit Features | 2-3 weeks | Low |
 | Multi-Provider Comparison | 2 weeks | Low |
+| Privacy & Telemetry Controls | 1 week | Low |
 
 ### New Ideas Priority (2026 Additions)
 | Feature | Effort | Impact | Priority |
@@ -694,6 +1033,8 @@ This document outlines feature refinements for existing functionality and propos
 
 ---
 
-*Document Version: 2.0*
+*Document Version: 3.0*
 *Last Updated: 2026-01-02*
-*Changes: Marked implemented features as complete, added 10 new feature ideas for 2026*
+*Changes:*
+- *v2.0: Marked implemented features as complete, added 10 new feature ideas for 2026*
+- *v3.0: Added 24 new feature refinements across 10 page categories, expanded Priority Matrix*
