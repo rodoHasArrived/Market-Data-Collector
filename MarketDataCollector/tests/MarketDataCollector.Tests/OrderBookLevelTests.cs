@@ -13,16 +13,16 @@ public class OrderBookLevelTests
         var level = new OrderBookLevel(
             Side: OrderBookSide.Bid,
             Level: 0,
-            Price: 450.50,
-            Size: 100,
+            Price: 450.50m,
+            Size: 100m,
             MarketMaker: "MM1"
         );
 
         // Assert
         level.Side.Should().Be(OrderBookSide.Bid);
         level.Level.Should().Be(0);
-        level.Price.Should().Be(450.50);
-        level.Size.Should().Be(100);
+        level.Price.Should().Be(450.50m);
+        level.Size.Should().Be(100m);
         level.MarketMaker.Should().Be("MM1");
     }
 
@@ -49,8 +49,8 @@ public class OrderBookLevelTests
         var act = () => new OrderBookLevel(
             Side: OrderBookSide.Bid,
             Level: 0,
-            Price: -10.50,
-            Size: 100
+            Price: -10.50m,
+            Size: 100m
         );
 
         // Assert
@@ -65,8 +65,8 @@ public class OrderBookLevelTests
         var act = () => new OrderBookLevel(
             Side: OrderBookSide.Bid,
             Level: 0,
-            Price: 100,
-            Size: -1
+            Price: 100m,
+            Size: -1m
         );
 
         // Assert
@@ -81,12 +81,12 @@ public class OrderBookLevelTests
         var level = new OrderBookLevel(
             Side: OrderBookSide.Ask,
             Level: 0,
-            Price: 100,
-            Size: 0
+            Price: 100m,
+            Size: 0m
         );
 
         // Assert
-        level.Size.Should().Be(0);
+        level.Size.Should().Be(0m);
     }
 
     [Fact]
@@ -96,8 +96,8 @@ public class OrderBookLevelTests
         var act = () => new OrderBookLevel(
             Side: OrderBookSide.Bid,
             Level: -1,
-            Price: 100,
-            Size: 50
+            Price: 100m,
+            Size: 50m
         );
 
         // Assert
@@ -112,8 +112,8 @@ public class OrderBookLevelTests
         var level = new OrderBookLevel(
             Side: OrderBookSide.Bid,
             Level: 0,
-            Price: 100,
-            Size: 50
+            Price: 100m,
+            Size: 50m
         );
 
         // Assert
@@ -127,8 +127,8 @@ public class OrderBookLevelTests
         var level = new OrderBookLevel(
             Side: OrderBookSide.Bid,
             Level: 0,
-            Price: 100,
-            Size: 50,
+            Price: 100m,
+            Size: 50m,
             MarketMaker: null
         );
 
@@ -145,8 +145,8 @@ public class OrderBookLevelTests
         var level = new OrderBookLevel(
             Side: side,
             Level: 0,
-            Price: 100,
-            Size: 50
+            Price: 100m,
+            Size: 50m
         );
 
         // Assert
@@ -157,8 +157,8 @@ public class OrderBookLevelTests
     public void Equality_TwoLevelsWithSameValues_AreEqual()
     {
         // Arrange
-        var level1 = new OrderBookLevel(OrderBookSide.Bid, 0, 100.50, 200, "MM1");
-        var level2 = new OrderBookLevel(OrderBookSide.Bid, 0, 100.50, 200, "MM1");
+        var level1 = new OrderBookLevel(OrderBookSide.Bid, 0, 100.50m, 200m, "MM1");
+        var level2 = new OrderBookLevel(OrderBookSide.Bid, 0, 100.50m, 200m, "MM1");
 
         // Assert (records have value equality)
         level1.Should().Be(level2);
@@ -168,8 +168,8 @@ public class OrderBookLevelTests
     public void Equality_TwoLevelsWithDifferentPrices_AreNotEqual()
     {
         // Arrange
-        var level1 = new OrderBookLevel(OrderBookSide.Bid, 0, 100.50, 200);
-        var level2 = new OrderBookLevel(OrderBookSide.Bid, 0, 100.51, 200);
+        var level1 = new OrderBookLevel(OrderBookSide.Bid, 0, 100.50m, 200m);
+        var level2 = new OrderBookLevel(OrderBookSide.Bid, 0, 100.51m, 200m);
 
         // Assert
         level1.Should().NotBe(level2);
@@ -179,14 +179,14 @@ public class OrderBookLevelTests
     public void With_CreatesNewLevelWithModifiedValue()
     {
         // Arrange
-        var original = new OrderBookLevel(OrderBookSide.Bid, 0, 100, 200);
+        var original = new OrderBookLevel(OrderBookSide.Bid, 0, 100m, 200m);
 
         // Act (records support 'with' expressions)
-        var modified = original with { Size = 300 };
+        var modified = original with { Size = 300m };
 
         // Assert
-        original.Size.Should().Be(200);
-        modified.Size.Should().Be(300);
-        modified.Price.Should().Be(100);
+        original.Size.Should().Be(200m);
+        modified.Size.Should().Be(300m);
+        modified.Price.Should().Be(100m);
     }
 }

@@ -10,8 +10,8 @@ namespace MarketDataCollector.Domain.Models;
 /// <list type="bullet">
 /// <item>
 /// <description>
-/// <b>Price type (double vs decimal):</b> Uses double for performance in high-frequency scenarios.
-/// For sub-cent precision requirements (e.g., forex), consider migrating to decimal.
+/// <b>Price type:</b> Uses decimal for financial precision. This ensures accurate representation
+/// of prices without floating-point rounding errors, which is critical for financial calculations.
 /// </description>
 /// </item>
 /// <item>
@@ -26,8 +26,8 @@ namespace MarketDataCollector.Domain.Models;
 public sealed record OrderBookLevel(
     OrderBookSide Side,
     int Level,
-    double Price,
-    double Size,
+    decimal Price,
+    decimal Size,
     string? MarketMaker = null)
 {
     /// <summary>

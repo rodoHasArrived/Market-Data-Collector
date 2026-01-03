@@ -242,12 +242,12 @@ public sealed class MarketDepthCollector : SymbolSubscriptionTracker
                 var bidsCopy = _bids.ToArray();
                 var asksCopy = _asks.ToArray();
 
-                double? mid = null;
+                decimal? mid = null;
                 if (bidsCopy.Length > 0 && asksCopy.Length > 0)
-                    mid = (bidsCopy[0].Price + asksCopy[0].Price) / 2.0;
+                    mid = (bidsCopy[0].Price + asksCopy[0].Price) / 2m;
 
                 // Simple top-of-book imbalance using best level sizes
-                double? imb = null;
+                decimal? imb = null;
                 if (bidsCopy.Length > 0 && asksCopy.Length > 0)
                 {
                     var b = bidsCopy[0].Size;

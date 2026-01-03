@@ -65,6 +65,11 @@ public sealed class StatusHttpServer : IAsyncDisposable
         try
         {
             var path = ctx.Request.Url?.AbsolutePath?.Trim('/')?.ToLowerInvariant() ?? string.Empty;
+
+            // Support both /api/* and /* routes for UWP desktop app compatibility
+            if (path.StartsWith("api/"))
+                path = path.Substring(4);
+
             switch (path)
             {
                 case "health":
@@ -84,6 +89,12 @@ public sealed class StatusHttpServer : IAsyncDisposable
                     break;
                 case "status":
                     await WriteStatusAsync(ctx.Response);
+                    break;
+                case "backfill/providers":
+                    await WriteBackfillProvidersAsync(ctx.Response);
+                    break;
+                case "backfill/status":
+                    await WriteBackfillStatusAsync(ctx.Response);
                     break;
                 default:
                     await WriteDashboardAsync(ctx.Response);
@@ -294,15 +305,80 @@ public sealed class StatusHttpServer : IAsyncDisposable
     private Task WriteStatusAsync(HttpListenerResponse resp)
     {
         resp.ContentType = "application/json";
+        var metrics = _metricsProvider();
+        var pipeline = _pipelineProvider();
+
+        // Include isConnected for UWP desktop app compatibility
         var payload = new
         {
+            isConnected = true, // Service is running and accepting requests
             timestampUtc = DateTimeOffset.UtcNow,
-            metrics = _metricsProvider(),
-            pipeline = _pipelineProvider(),
+            metrics = new
+            {
+                published = metrics.Published,
+                dropped = metrics.Dropped,
+                integrity = metrics.Integrity,
+                historicalBars = metrics.HistoricalBars,
+                eventsPerSecond = metrics.EventsPerSecond,
+                dropRate = metrics.DropRate
+            },
+            pipeline = pipeline,
             integrity = _integrityProvider()
         };
 
         var json = JsonSerializer.Serialize(payload, new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = true
+        });
+
+        var bytes = Encoding.UTF8.GetBytes(json);
+        return resp.OutputStream.WriteAsync(bytes, 0, bytes.Length);
+    }
+
+    /// <summary>
+    /// Returns list of available backfill providers for UWP app.
+    /// </summary>
+    private Task WriteBackfillProvidersAsync(HttpListenerResponse resp)
+    {
+        resp.ContentType = "application/json";
+        var providers = new[]
+        {
+            new { name = "alpaca", displayName = "Alpaca Markets", description = "Real-time and historical data with adjustments" },
+            new { name = "yahoo", displayName = "Yahoo Finance", description = "Free historical data for most US equities" },
+            new { name = "stooq", displayName = "Stooq", description = "Free EOD data for global markets" },
+            new { name = "nasdaq", displayName = "Nasdaq Data Link", description = "Historical data (API key may be required)" }
+        };
+
+        var json = JsonSerializer.Serialize(providers, new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = true
+        });
+
+        var bytes = Encoding.UTF8.GetBytes(json);
+        return resp.OutputStream.WriteAsync(bytes, 0, bytes.Length);
+    }
+
+    /// <summary>
+    /// Returns current backfill status for UWP app.
+    /// </summary>
+    private Task WriteBackfillStatusAsync(HttpListenerResponse resp)
+    {
+        resp.ContentType = "application/json";
+        // Return empty status when no backfill is running
+        var status = new
+        {
+            success = true,
+            provider = (string?)null,
+            symbols = Array.Empty<string>(),
+            barsWritten = 0,
+            startedUtc = (DateTime?)null,
+            completedUtc = (DateTime?)null,
+            error = (string?)null
+        };
+
+        var json = JsonSerializer.Serialize(status, new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             WriteIndented = true

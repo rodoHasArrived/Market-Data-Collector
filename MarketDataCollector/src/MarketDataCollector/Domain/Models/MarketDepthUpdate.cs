@@ -4,6 +4,7 @@ namespace MarketDataCollector.Domain.Models;
 /// Normalized L2 depth delta update (adapter input into MarketDepthCollector).
 /// Operation values align with IB: 0=Insert, 1=Update, 2=Delete.
 /// Side values align with our OrderBookSide.
+/// Uses decimal for financial precision.
 /// </summary>
 public sealed record MarketDepthUpdate(
     DateTimeOffset Timestamp,
@@ -11,8 +12,8 @@ public sealed record MarketDepthUpdate(
     int Position,
     DepthOperation Operation,
     OrderBookSide Side,
-    double Price,
-    double Size,
+    decimal Price,
+    decimal Size,
     string? MarketMaker = null,
     long SequenceNumber = 0,
     string? StreamId = null,

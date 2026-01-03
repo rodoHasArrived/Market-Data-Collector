@@ -5,6 +5,7 @@ namespace MarketDataCollector.Uwp.Services;
 
 /// <summary>
 /// Service for retrieving system status from the collector.
+/// Supports both /api/* and /* endpoint patterns for compatibility.
 /// </summary>
 public class StatusService
 {
@@ -22,6 +23,7 @@ public class StatusService
         {
             Timeout = TimeSpan.FromSeconds(5)
         };
+        // Use /api/status endpoint (core now supports both /api/* and /* patterns)
         _statusUrl = $"{baseUrl}/api/status";
     }
 
