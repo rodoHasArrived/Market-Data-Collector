@@ -10,9 +10,14 @@ Welcome to the Market Data Collector! This comprehensive guide will help you get
 - [Configuration](#configuration)
 - [Data Providers](#data-providers)
 - [Multi-Provider Support](#multi-provider-support)
+  - [Circuit Breaker Pattern](#circuit-breaker-pattern-v13)
+  - [Concurrent Provider Executor](#concurrent-provider-executor-v13)
 - [Storage Settings](#storage-settings)
 - [Symbol Management](#symbol-management)
 - [Historical Backfill](#historical-backfill)
+  - [Priority Backfill Queue](#priority-backfill-queue-v13)
+  - [Data Gap Detection & Repair](#data-gap-detection--repair-v13)
+  - [Data Quality Monitoring](#data-quality-monitoring-v13)
 - [Offline Storage & Archival](#offline-storage--archival)
 - [Web Dashboard](#web-dashboard)
 - [Windows Desktop App](#windows-desktop-app)
@@ -321,6 +326,50 @@ Configure automatic failover rules to maintain data collection when providers fa
 
 **Auto-Recovery**: When the primary provider recovers, subscriptions automatically migrate back.
 
+### Circuit Breaker Pattern (v1.3)
+
+The circuit breaker pattern prevents cascading failures by temporarily disabling unhealthy providers:
+
+**States:**
+- **Closed**: Normal operation, requests flow through
+- **Open**: Provider failed, requests immediately rejected (fast-fail)
+- **Half-Open**: Testing recovery with single request
+
+**Configuration:**
+```json
+{
+  "CircuitBreaker": {
+    "FailureThreshold": 5,
+    "OpenDuration": "00:01:00",
+    "SuccessThreshold": 1,
+    "SlidingWindow": "00:05:00"
+  }
+}
+```
+
+The circuit opens after 5 consecutive failures, waits 1 minute, then allows a test request.
+
+### Concurrent Provider Executor (v1.3)
+
+Execute operations across multiple providers in parallel:
+
+**Strategies:**
+- `All`: Return all results from all providers
+- `FirstSuccess`: Stop on first successful result
+- `HighestPriority`: Return result from highest priority provider
+- `Merge`: Combine results from all providers
+
+**Configuration:**
+```json
+{
+  "ConcurrentExecution": {
+    "MaxConcurrency": 4,
+    "PerProviderTimeout": "00:00:30",
+    "ContinueOnError": true
+  }
+}
+```
+
 ### Provider Symbol Mapping
 
 Different providers may use different symbols for the same security. Configure mappings to normalize symbols:
@@ -493,6 +542,64 @@ Historical bars are converted to the same JSONL format as real-time data for con
 ```json
 {"timestamp":"2024-01-15T21:00:00Z","symbol":"AAPL","type":"HistoricalBar","open":150.0,"high":152.5,"low":149.5,"close":151.75,"volume":50000000}
 ```
+
+### Priority Backfill Queue (v1.3)
+
+Sophisticated job scheduling with priority levels and dependencies:
+
+**Priority Levels:**
+| Priority | Value | Use Case |
+|----------|-------|----------|
+| Critical | 0 | System-critical gaps |
+| High | 10 | User-requested immediate |
+| Normal | 50 | Standard backfill |
+| Low | 100 | Background fill |
+| Deferred | 200 | Fill when idle |
+
+**Features:**
+- Dependency chains between jobs
+- Automatic retry with exponential backoff
+- Pause/resume individual jobs
+- Concurrent execution with limits
+
+### Data Gap Detection & Repair (v1.3)
+
+Automatically detect and repair gaps in historical data:
+
+**Gap Detection:**
+- Compares stored data against trading calendar
+- Identifies missing dates and partial data
+- Calculates coverage percentage
+
+**Gap Repair:**
+- Fetches missing data from alternate providers
+- Configurable provider priority
+- Continues on individual failures
+- Rate-limit aware with request delays
+
+**Gap Types:**
+| Type | Severity | Description |
+|------|----------|-------------|
+| Missing | Critical | No data for date |
+| Partial | Warning | Incomplete data |
+| Holiday | Info | Expected market closure |
+
+### Data Quality Monitoring (v1.3)
+
+Multi-dimensional quality scoring for all stored data:
+
+**Quality Dimensions:**
+| Dimension | Weight | Checks |
+|-----------|--------|--------|
+| Completeness | 30% | Gap coverage |
+| Accuracy | 25% | Price ranges, OHLC validity |
+| Timeliness | 20% | Data freshness |
+| Consistency | 15% | Duplicate detection |
+| Validity | 10% | Format, constraints |
+
+**Quality Grades:** A+ (95%+) to F (<50%)
+
+**Alerts:** Automatic alerts when quality drops below threshold (default: 80%)
 
 ## Offline Storage & Archival
 

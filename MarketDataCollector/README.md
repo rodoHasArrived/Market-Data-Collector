@@ -1,10 +1,20 @@
 # Market Data Collector
 
-**Version**: 1.2.0 (Production Ready) | **Last Updated**: 2026-01-03
+**Version**: 1.3.0 (Production Ready) | **Last Updated**: 2026-01-03
 
 A cross-platform, production-ready market data collector with an intuitive web dashboard. Ingests real-time market data from multiple sources (Interactive Brokers, Alpaca, Polygon), normalizes them into domain events, and persists them as JSONL for downstream research. Features comprehensive error handling, single-executable deployment, and built-in help system.
 
-## ✨ New in v1.2
+## ✨ New in v1.3
+
+- **🔌 Unified Provider Abstraction** - Provider-agnostic interface with capability discovery flags
+- **📋 Provider Registry** - Attribute-based automatic provider discovery and registration
+- **⚡ Concurrent Provider Executor** - Parallel operations across multiple providers with configurable strategies
+- **🔄 Circuit Breaker Pattern** - Intelligent failover with automatic recovery and health monitoring
+- **📊 Priority Backfill Queue** - Sophisticated job scheduling with dependencies and priority levels
+- **🔧 Data Gap Repair** - Automatic detection and repair of missing historical data
+- **📈 Data Quality Monitor** - Multi-dimensional quality scoring (completeness, accuracy, timeliness)
+
+## ✨ v1.2 Features
 
 - **🔗 Multi-Provider Connections** - Connect to multiple data providers simultaneously
 - **📊 Provider Comparison View** - Side-by-side data quality metrics across providers
@@ -261,9 +271,19 @@ Detailed diagrams and domain notes live in `./docs`:
 * `interactive-brokers-setup.md` – IB API installation and configuration
 * `open-source-references.md` – catalog of related projects and resources
 * `lean-integration.md` – QuantConnect Lean Engine integration guide
-* `../docs/STORAGE_ORGANIZATION_DESIGN.md` – comprehensive storage organization improvements and best practices
+* `STORAGE_ORGANIZATION_DESIGN.md` – comprehensive storage organization improvements and best practices
+* `PROVIDER_MANAGEMENT_ARCHITECTURE.md` – provider abstraction, circuit breakers, and quality monitoring
 
 ## Recent Improvements
+
+### Provider Management & Data Quality System (2026-01-03)
+- **Unified Provider Abstraction**: Provider-agnostic interfaces with declarative capability discovery (`ProviderCapabilities` flags)
+- **Provider Registry**: Attribute-based automatic provider discovery via `[DataProvider]` attribute
+- **Circuit Breaker Pattern**: Intelligent failover with Open/Closed/HalfOpen states and automatic recovery
+- **Concurrent Provider Executor**: Parallel operations across providers with configurable strategies (FirstSuccess, All, Merge)
+- **Priority Backfill Queue**: Sophisticated job scheduling with Critical/High/Normal/Low/Deferred priority levels
+- **Data Gap Repair**: Automatic detection and repair of missing data using alternate providers
+- **Data Quality Monitor**: Multi-dimensional quality scoring (Completeness 30%, Accuracy 25%, Timeliness 20%, Consistency 15%, Validity 10%)
 
 ### Storage Organization Design (2026-01-02)
 - **Comprehensive Design Document**: Best practices for organizing and managing market data at scale
@@ -304,8 +324,8 @@ Detailed diagrams and domain notes live in `./docs`:
 
 **Provider Integration:**
 - Alpaca quote messages ("T":"q") not yet wired to QuoteCollector (trade-only currently)
-- IB connection does not auto-retry on failure (manual restart required)
-- No heartbeat/keep-alive for WebSocket connections
+- ✅ IB connection now supports auto-retry via Circuit Breaker pattern
+- ✅ Provider failover with automatic recovery implemented
 
 **Security:**
 - ✅ Secure credential management via Windows CredentialPicker (UWP app)
