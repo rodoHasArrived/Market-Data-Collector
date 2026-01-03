@@ -1,8 +1,8 @@
 # Market Data Collector - Language Implementation Strategy
 
-**Document Version:** 1.0.0
+**Document Version:** 1.1.0
 **Last Updated:** 2026-01-03
-**Status:** Proposed
+**Status:** Partially Implemented (F# Complete, C++ Pending)
 
 ---
 
@@ -417,17 +417,19 @@ let vwap (trades: TradeEvent seq) : decimal option =
 
 The following table outlines the recommended migration order based on effort vs. impact analysis:
 
-| Phase | Component | Language | Effort | Impact | Dependencies |
-|-------|-----------|----------|--------|--------|--------------|
-| 1 | Domain Models | F# | Low | High | None |
-| 2 | Validation Logic | F# | Medium | High | Phase 1 |
-| 3 | JSON Parser (simdjson) | C++ | Low | High | None |
-| 4 | Lock-Free Ring Buffer | C++ | Medium | Medium | None |
-| 5 | Order Book Calculations | F# | Medium | Medium | Phase 1 |
-| 6 | Order Book Engine | C++ | Medium | High | Phase 4 |
-| 7 | Compression Engine | C++ | High | Medium | None |
+| Phase | Component | Language | Effort | Impact | Dependencies | Status |
+|-------|-----------|----------|--------|--------|--------------|--------|
+| 1 | Domain Models | F# | Low | High | None | **COMPLETE** |
+| 2 | Validation Logic | F# | Medium | High | Phase 1 | **COMPLETE** |
+| 3 | JSON Parser (simdjson) | C++ | Low | High | None | Pending |
+| 4 | Lock-Free Ring Buffer | C++ | Medium | Medium | None | Pending |
+| 5 | Order Book Calculations | F# | Medium | Medium | Phase 1 | **COMPLETE** |
+| 6 | Order Book Engine | C++ | Medium | High | Phase 4 | Pending |
+| 7 | Compression Engine | C++ | High | Medium | None | Pending |
 
-### Phase 1: F# Domain Models (Weeks 1-2)
+### Phase 1: F# Domain Models - **COMPLETE**
+
+**Status:** Implemented 2026-01-03
 
 **Scope:**
 - Create `MarketDataCollector.FSharp` project
@@ -436,11 +438,17 @@ The following table outlines the recommended migration order based on effort vs.
 - C# interop through `[<CompiledName>]` attributes
 
 **Deliverables:**
-- `Domain/MarketEvents.fs` - Event type definitions
-- `Domain/Integrity.fs` - Integrity event types
-- `Domain/Sides.fs` - Buy/Sell/Aggressor enums
+- `Domain/MarketEvents.fs` - Event type definitions with discriminated unions
+- `Domain/Integrity.fs` - Integrity event types with smart constructors
+- `Domain/Sides.fs` - Side and AggressorSide types with C# interop
 
-### Phase 2: F# Validation (Weeks 3-4)
+**Additional Features Implemented:**
+- `Pipeline/Transforms.fs` - Declarative stream processing for market events
+- `Interop.fs` - C# wrapper classes and extension methods
+
+### Phase 2: F# Validation - **COMPLETE**
+
+**Status:** Implemented 2026-01-03
 
 **Scope:**
 - Implement Railway-Oriented validation
@@ -448,9 +456,10 @@ The following table outlines the recommended migration order based on effort vs.
 - Create validation pipeline composition
 
 **Deliverables:**
-- `Validation/TradeValidator.fs`
-- `Validation/QuoteValidator.fs`
-- `Validation/ValidationPipeline.fs`
+- `Validation/ValidationTypes.fs` - Core validation types and operators
+- `Validation/TradeValidator.fs` - Trade validation with configurable rules
+- `Validation/QuoteValidator.fs` - Quote validation with spread checks
+- `Validation/ValidationPipeline.fs` - Composable validation pipelines
 
 ### Phase 3: C++ JSON Parser (Weeks 5-6)
 
@@ -476,7 +485,9 @@ The following table outlines the recommended migration order based on effort vs.
 - Performance benchmarks
 - C# wrapper with IAsyncEnumerable support
 
-### Phase 5: F# Order Book Calculations (Weeks 9-10)
+### Phase 5: F# Order Book Calculations - **COMPLETE**
+
+**Status:** Implemented 2026-01-03
 
 **Scope:**
 - Pure functional calculation library
@@ -484,9 +495,15 @@ The following table outlines the recommended migration order based on effort vs.
 - Aggressor inference logic
 
 **Deliverables:**
-- `Calculations/Spread.fs`
-- `Calculations/Imbalance.fs`
-- `Calculations/Aggregations.fs`
+- `Calculations/Spread.fs` - Spread calculations (absolute, bps, relative, effective)
+- `Calculations/Imbalance.fs` - Order book imbalance and microprice
+- `Calculations/Aggregations.fs` - VWAP, TWAP, volume breakdown, OHLCV bars
+
+**Additional Features Implemented:**
+- Trade arrival rate calculations
+- Volume-weighted and price-weighted imbalance
+- Rolling VWAP and imbalance averages
+- Comprehensive statistics aggregation
 
 ### Phase 6: C++ Order Book Engine (Weeks 11-14)
 
