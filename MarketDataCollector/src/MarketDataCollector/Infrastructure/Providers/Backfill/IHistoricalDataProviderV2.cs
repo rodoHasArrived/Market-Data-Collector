@@ -70,6 +70,40 @@ public interface IHistoricalDataProviderV2 : IHistoricalDataProvider
 }
 
 /// <summary>
+/// Optional interface for providers that can report their rate limit status.
+/// </summary>
+public interface IRateLimitAwareProvider
+{
+    /// <summary>
+    /// Get current rate limit usage information.
+    /// </summary>
+    RateLimitInfo GetRateLimitInfo();
+
+    /// <summary>
+    /// Event raised when the provider hits a rate limit.
+    /// </summary>
+    event Action<RateLimitInfo>? OnRateLimitHit;
+}
+
+/// <summary>
+/// Information about a provider's current rate limit status.
+/// </summary>
+public sealed record RateLimitInfo(
+    string ProviderName,
+    int RequestsMade,
+    int MaxRequests,
+    TimeSpan Window,
+    DateTimeOffset? ResetsAt = null,
+    bool IsLimited = false,
+    TimeSpan? RetryAfter = null
+)
+{
+    public int RemainingRequests => Math.Max(0, MaxRequests - RequestsMade);
+    public double UsageRatio => MaxRequests > 0 ? (double)RequestsMade / MaxRequests : 0;
+    public TimeSpan? TimeUntilReset => ResetsAt.HasValue ? ResetsAt.Value - DateTimeOffset.UtcNow : null;
+}
+
+/// <summary>
 /// Extended historical bar with adjustment factors and corporate action data.
 /// </summary>
 public sealed record AdjustedHistoricalBar(

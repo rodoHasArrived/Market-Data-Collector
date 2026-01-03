@@ -562,7 +562,29 @@ SUPPORT:
         var providersCfg = backfillCfg?.Providers;
         var providers = new List<IHistoricalDataProvider>();
 
-        // Yahoo Finance (highest priority - broadest free coverage)
+        // Alpaca Markets (highest priority when configured - reliable API with adjustments)
+        var alpacaCfg = providersCfg?.Alpaca;
+        if (alpacaCfg?.Enabled ?? true)
+        {
+            // Only add if credentials are available (env vars or config)
+            var keyId = alpacaCfg?.KeyId ?? Environment.GetEnvironmentVariable("ALPACA_KEY_ID");
+            var secretKey = alpacaCfg?.SecretKey ?? Environment.GetEnvironmentVariable("ALPACA_SECRET_KEY");
+
+            if (!string.IsNullOrEmpty(keyId) && !string.IsNullOrEmpty(secretKey))
+            {
+                providers.Add(new AlpacaHistoricalDataProvider(
+                    keyId: alpacaCfg?.KeyId,
+                    secretKey: alpacaCfg?.SecretKey,
+                    feed: alpacaCfg?.Feed ?? "iex",
+                    adjustment: alpacaCfg?.Adjustment ?? "all",
+                    priority: alpacaCfg?.Priority ?? 5,
+                    rateLimitPerMinute: alpacaCfg?.RateLimitPerMinute ?? 200,
+                    log: log
+                ));
+            }
+        }
+
+        // Yahoo Finance (broadest free coverage)
         var yahooCfg = providersCfg?.Yahoo;
         if (yahooCfg?.Enabled ?? true)
         {
