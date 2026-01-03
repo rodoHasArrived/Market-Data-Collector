@@ -4,10 +4,11 @@ A high-performance, cross-platform market data collection system for real-time a
 
 [![.NET](https://img.shields.io/badge/.NET-8.0-blue)](https://dotnet.microsoft.com/)
 [![C#](https://img.shields.io/badge/C%23-11-blue)](https://docs.microsoft.com/en-us/dotnet/csharp/)
+[![F#](https://img.shields.io/badge/F%23-8.0-blue)](https://fsharp.org/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue)](https://www.docker.com/)
 [![License](https://img.shields.io/badge/license-See%20LICENSE-green)](LICENSE)
 
-**Status**: Production Ready | **Version**: 1.1.0 | **Last Updated**: 2026-01-02
+**Status**: Production Ready | **Version**: 1.4.0 | **Last Updated**: 2026-01-03
 
 ---
 
@@ -236,6 +237,14 @@ See LICENSE file for details.
 ## Roadmap and Future Enhancements
 
 ### Recently Completed
+
+**F# Domain Library (Completed 2026-01-03):**
+- ✅ Type-safe domain models using discriminated unions with exhaustive pattern matching
+- ✅ Railway-Oriented validation with error accumulation (no more exceptions)
+- ✅ Pure functional calculations (spread, imbalance, VWAP, TWAP, microprice)
+- ✅ Pipeline transforms for declarative stream processing
+- ✅ C# interop layer with wrapper classes and extension methods
+- ✅ Comprehensive test suite with 50+ unit tests
 
 **Storage Organization Design (Completed 2026-01-02):**
 - ✅ Comprehensive storage organization design document with best practices

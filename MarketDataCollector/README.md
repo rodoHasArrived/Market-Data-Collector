@@ -1,10 +1,18 @@
 # Market Data Collector
 
-**Version**: 1.3.0 (Production Ready) | **Last Updated**: 2026-01-03
+**Version**: 1.4.0 (Production Ready) | **Last Updated**: 2026-01-03
 
 A cross-platform, production-ready market data collector with an intuitive web dashboard. Ingests real-time market data from multiple sources (Interactive Brokers, Alpaca, Polygon), normalizes them into domain events, and persists them as JSONL for downstream research. Features comprehensive error handling, single-executable deployment, and built-in help system.
 
-## ✨ New in v1.3
+## ✨ New in v1.4
+
+- **🔷 F# Domain Library** - Type-safe domain models using discriminated unions and exhaustive pattern matching
+- **✅ Railway-Oriented Validation** - Composable validation with error accumulation (no more exceptions!)
+- **📊 Pure Functional Calculations** - Spread, imbalance, VWAP, TWAP, and order book analytics
+- **🔄 Pipeline Transforms** - Declarative stream processing for filtering, enriching, and aggregating events
+- **🔗 C# Interop** - Seamless integration with existing C# codebase via wrapper classes
+
+## ✨ v1.3 Features
 
 - **🔌 Unified Provider Abstraction** - Provider-agnostic interface with capability discovery flags
 - **📋 Provider Registry** - Attribute-based automatic provider discovery and registration
@@ -273,8 +281,63 @@ Detailed diagrams and domain notes live in `./docs`:
 * `lean-integration.md` – QuantConnect Lean Engine integration guide
 * `STORAGE_ORGANIZATION_DESIGN.md` – comprehensive storage organization improvements and best practices
 * `PROVIDER_MANAGEMENT_ARCHITECTURE.md` – provider abstraction, circuit breakers, and quality monitoring
+* `FSHARP_INTEGRATION.md` – F# domain library integration guide and examples
+
+## F# Domain Library
+
+The `MarketDataCollector.FSharp` project provides type-safe domain models, validation, and calculations using F#:
+
+### Quick Start with F#
+
+```fsharp
+open MarketDataCollector.FSharp.Domain.MarketEvents
+open MarketDataCollector.FSharp.Validation.TradeValidator
+open MarketDataCollector.FSharp.Calculations.Spread
+
+// Create and validate a trade
+let trade = MarketEvent.createTrade "AAPL" 150.00m 100L AggressorSide.Buyer 1L DateTimeOffset.UtcNow
+
+// Validate with Railway-Oriented Programming
+match validateTradeDefault trade with
+| Ok validTrade -> printfn "Valid trade: %A" validTrade
+| Error errors -> errors |> List.iter (fun e -> printfn "Error: %s" e.Description)
+
+// Calculate spread from a quote
+let spreadBps = spreadBpsFromQuote quote  // Returns Some 9.99m or None
+```
+
+### Using F# from C#
+
+```csharp
+using MarketDataCollector.FSharp.Interop;
+
+// Use C#-friendly wrapper classes
+var validator = new TradeValidator();
+var result = validator.Validate(trade);
+
+if (result.IsSuccess)
+    Console.WriteLine($"Valid: {result.Value.Symbol}");
+else
+    foreach (var error in result.Errors)
+        Console.WriteLine($"Error: {error}");
+
+// Use calculation helpers
+var spread = SpreadCalculator.Calculate(bidPrice, askPrice);
+var imbalance = ImbalanceCalculator.FromQuote(quote);
+var vwap = AggregationFunctions.Vwap(trades);
+```
+
+See [`docs/FSHARP_INTEGRATION.md`](docs/FSHARP_INTEGRATION.md) for comprehensive documentation.
 
 ## Recent Improvements
+
+### F# Domain Library (2026-01-03)
+- **Type-Safe Domain Models**: Discriminated unions for market events with exhaustive pattern matching
+- **Railway-Oriented Validation**: Composable validation with error accumulation using Result types
+- **Pure Functional Calculations**: Spread, imbalance, VWAP, TWAP, microprice, and order flow metrics
+- **Pipeline Transforms**: Declarative stream processing with filtering, enrichment, and aggregation
+- **C# Interop**: Extension methods, wrapper classes, and nullable-friendly APIs for C# consumers
+- **Comprehensive Tests**: 50+ unit tests covering domain, validation, calculations, and pipeline logic
 
 ### Provider Management & Data Quality System (2026-01-03)
 - **Unified Provider Abstraction**: Provider-agnostic interfaces with declarative capability discovery (`ProviderCapabilities` flags)
