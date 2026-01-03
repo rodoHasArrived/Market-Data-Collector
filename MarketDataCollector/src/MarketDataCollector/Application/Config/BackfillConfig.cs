@@ -30,6 +30,7 @@ public sealed record BackfillConfig(
 /// Configuration for individual backfill data providers.
 /// </summary>
 public sealed record BackfillProvidersConfig(
+    AlpacaBackfillConfig? Alpaca = null,
     YahooFinanceConfig? Yahoo = null,
     NasdaqDataLinkConfig? Nasdaq = null,
     StooqConfig? Stooq = null,
@@ -84,4 +85,24 @@ public sealed record OpenFigiConfig(
     bool Enabled = true,
     string? ApiKey = null,
     bool CacheResults = true
+);
+
+/// <summary>
+/// Alpaca Markets historical data provider configuration.
+/// </summary>
+/// <param name="Enabled">Enable this provider.</param>
+/// <param name="KeyId">API Key ID (falls back to ALPACA_KEY_ID env var).</param>
+/// <param name="SecretKey">API Secret Key (falls back to ALPACA_SECRET_KEY env var).</param>
+/// <param name="Feed">Data feed: "iex" (free), "sip" (paid), or "delayed_sip" (free, 15-min delay).</param>
+/// <param name="Adjustment">Price adjustment: "raw", "split", "dividend", or "all".</param>
+/// <param name="Priority">Priority in fallback chain (lower = tried first).</param>
+/// <param name="RateLimitPerMinute">Maximum requests per minute.</param>
+public sealed record AlpacaBackfillConfig(
+    bool Enabled = true,
+    string? KeyId = null,
+    string? SecretKey = null,
+    string Feed = "iex",
+    string Adjustment = "all",
+    int Priority = 5,
+    int RateLimitPerMinute = 200
 );
