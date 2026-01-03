@@ -68,15 +68,21 @@ We treat all recorded activity as a stream of standardized `MarketEvent` objects
 - Status monitoring via `StatusWriter`
 
 ### Coming next for production maturity
-- Wire Alpaca quote messages fully to `QuoteCollector`
-- Structured logging with rotation
-- Automated recovery policies (auto-resubscribe on integrity)
 - CI test automation and release workflow
 - Authentication for UI if network-exposed
 - Feed-divergence alarms for provider reconciliation
 
+### Recently Completed
+
+- **Historical Data Backfill** – Multi-provider backfill with Alpaca, Yahoo Finance, Stooq, Nasdaq Data Link, and composite failover
+- **MassTransit Integration** – Distributed messaging with RabbitMQ and Azure Service Bus
+- **Microservices Architecture** – Six specialized services for high-throughput deployments
+- **QuantConnect Lean Integration** – Custom data types and IDataProvider for backtesting
+- **UWP Desktop Application** – Native Windows app with 8 feature-rich pages
+- **Tiered Storage** – Hot/warm/cold storage management with automatic migration
+
 ---
 
-**Version:** 1.1.0
-**Last Updated:** 2026-01-02
-**See Also:** [architecture.md](architecture.md) | [domains.md](domains.md) | [c4-diagrams.md](c4-diagrams.md)
+**Version:** 1.2.0
+**Last Updated:** 2026-01-03
+**See Also:** [architecture.md](architecture.md) | [domains.md](domains.md) | [c4-diagrams.md](c4-diagrams.md) | [lean-integration.md](lean-integration.md)

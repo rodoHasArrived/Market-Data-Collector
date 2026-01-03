@@ -10,33 +10,95 @@ The system is designed around strict separation of concerns and is safe to opera
 with or without live provider connections. It supports dual-source operation for reconciliation
 and provider failover.
 
+The architecture supports multiple deployment modes:
+- **Standalone Console Application** – Single-process data collection with local storage
+- **Distributed Microservices** – Horizontally scalable architecture with message bus coordination
+- **UWP Desktop Application** – Native Windows app for configuration and monitoring
+- **Web Dashboard** – Browser-based monitoring and management interface
+
 ---
 
 ## Layered Architecture
 
 ```
-UI (ASP.NET)
-   ↓ JSON / FS
-Application (Program, ConfigWatcher, StatusWriter)
-   ↓ MarketEvents
-Domain (TradeDataCollector, MarketDepthCollector, QuoteCollector)
-   ↓ publish()
-Event Pipeline (bounded Channel<MarketEvent>)
-   ↓ append()
-Storage (JsonlStorageSink + JsonlStoragePolicy)
-   ↑
-Infrastructure (Providers: IB / Alpaca / ...)
+┌──────────────────────────────────────────────────────────────────────────┐
+│                           Presentation Layer                              │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────────────┐  │
+│  │  Web Dashboard  │  │  UWP Desktop    │  │  Microservices (6)      │  │
+│  │  (ASP.NET)      │  │  (WinUI 3)      │  │  Gateway/Ingestion/etc  │  │
+│  └────────┬────────┘  └────────┬────────┘  └────────────┬────────────┘  │
+└───────────┼────────────────────┼────────────────────────┼───────────────┘
+            │ JSON/FS            │ Config/Status          │ REST/MassTransit
+┌───────────┼────────────────────┼────────────────────────┼───────────────┐
+│           ▼                    ▼                        ▼               │
+│                       Application Layer                                  │
+│  ┌─────────────────────────────────────────────────────────────────┐   │
+│  │  Program.cs | ConfigWatcher | StatusWriter | StatusHttpServer   │   │
+│  │  BackfillService | Metrics | EventSchemaValidator               │   │
+│  └─────────────────────────────────┬───────────────────────────────┘   │
+└────────────────────────────────────┼────────────────────────────────────┘
+                                     │ MarketEvents
+┌────────────────────────────────────┼────────────────────────────────────┐
+│                          Domain Layer                                    │
+│  ┌─────────────────────────────────┴───────────────────────────────┐   │
+│  │  TradeDataCollector | MarketDepthCollector | QuoteCollector     │   │
+│  │  HighPerformanceMarketDepthCollector | SymbolSubscriptionTracker│   │
+│  │  Domain Models: Trade, LOBSnapshot, BboQuote, OrderFlow, etc.   │   │
+│  └─────────────────────────────────┬───────────────────────────────┘   │
+└────────────────────────────────────┼────────────────────────────────────┘
+                                     │ publish()
+┌────────────────────────────────────┼────────────────────────────────────┐
+│                       Event Pipeline Layer                               │
+│  ┌─────────────────────────────────┴───────────────────────────────┐   │
+│  │  EventPipeline (bounded Channel<MarketEvent>, 50K capacity)     │   │
+│  │  CompositePublisher → Local Storage + MassTransit Bus           │   │
+│  └──────────────┬────────────────────────────────┬─────────────────┘   │
+└─────────────────┼────────────────────────────────┼──────────────────────┘
+                  │ append()                        │ publish()
+┌─────────────────┼────────────────────────────────┼──────────────────────┐
+│           Storage Layer                    Messaging Layer               │
+│  ┌─────────────┴────────────┐     ┌─────────────┴────────────────┐     │
+│  │ JsonlStorageSink         │     │ MassTransit (InMemory/       │     │
+│  │ ParquetStorageSink       │     │ RabbitMQ/Azure Service Bus)  │     │
+│  │ TieredStorageManager     │     │ Trade/Quote/Depth Consumers  │     │
+│  │ DataRetentionPolicy      │     └──────────────────────────────┘     │
+│  └──────────────────────────┘                                           │
+└─────────────────────────────────────────────────────────────────────────┘
+                  ↑
+┌─────────────────┼───────────────────────────────────────────────────────┐
+│                 │              Infrastructure Layer                      │
+│  ┌──────────────┴───────────────────────────────────────────────────┐  │
+│  │ Streaming Providers                  Historical Data Providers    │  │
+│  │ ├─ IBMarketDataClient               ├─ AlpacaHistoricalProvider  │  │
+│  │ ├─ AlpacaMarketDataClient           ├─ YahooFinanceProvider      │  │
+│  │ └─ PolygonMarketDataClient (stub)   ├─ StooqProvider             │  │
+│  │                                      ├─ NasdaqDataLinkProvider   │  │
+│  │ Connection Management                └─ CompositeProvider        │  │
+│  │ ├─ EnhancedIBConnectionManager       (automatic failover)        │  │
+│  │ ├─ IBCallbackRouter                                               │  │
+│  │ └─ WebSocketResiliencePolicy                                      │  │
+│  └──────────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Infrastructure
 * Owns all provider-specific code
-* Provider implementations in `Infrastructure/Providers/`:
-  - `InteractiveBrokers/IBMarketDataClient` – IB TWS/Gateway connectivity
-  - `Alpaca/AlpacaMarketDataClient` – Alpaca WebSocket client
+* **Streaming Provider implementations** in `Infrastructure/Providers/`:
+  - `InteractiveBrokers/IBMarketDataClient` – IB TWS/Gateway connectivity with free equity data support
+  - `Alpaca/AlpacaMarketDataClient` – Alpaca WebSocket client with IEX/SIP feeds
   - `Polygon/PolygonMarketDataClient` – Polygon adapter (stub implementation)
-* All providers implement `IMarketDataClient` interface
+* **Historical Data Providers** for backfill operations:
+  - `AlpacaHistoricalDataProvider` – Historical OHLCV bars, trades, quotes, and auctions
+  - `YahooFinanceHistoricalDataProvider` – Free EOD data for 50K+ global securities
+  - `StooqHistoricalDataProvider` – US equities EOD data
+  - `NasdaqDataLinkHistoricalDataProvider` – Alternative datasets via Quandl API
+  - `CompositeHistoricalDataProvider` – Automatic failover with rate-limit rotation
+  - `OpenFIGI Symbol Resolver` – Cross-provider symbol normalization
+* All streaming providers implement `IMarketDataClient` interface
+* All historical providers implement `IHistoricalDataProvider` interface
 * `IBCallbackRouter` normalizes IB callbacks into domain updates
 * `ContractFactory` resolves symbol configurations to IB contracts
+* `WebSocketResiliencePolicy` provides automatic reconnection with exponential backoff
 * No domain logic – replaceable / mockable
 
 ### Domain
@@ -59,9 +121,22 @@ Infrastructure (Providers: IB / Alpaca / ...)
 ### Storage
 * `EventPipeline` – bounded `Channel<MarketEvent>` with configurable capacity and drop policy
 * `JsonlStorageSink` – writes events to append-only JSONL files with retention enforcement
+* `ParquetStorageSink` – columnar storage format for efficient analytics (experimental)
 * `JsonlStoragePolicy` – flexible file organization with multiple naming conventions and date partitioning
 * `JsonlReplayer` – replays captured JSONL events for backtesting (supports gzip compression)
+* `TieredStorageManager` – hot/warm/cold storage tier management with automatic migration
+* `DataRetentionPolicy` – time-based and capacity-based retention enforcement
 * `StorageOptions` – configurable naming conventions, partitioning strategies, retention policies, and capacity limits
+
+### Messaging (MassTransit)
+* Optional distributed messaging layer for microservices and event streaming
+* `CompositePublisher` – publishes events to both local storage and message bus
+* Supports multiple transports:
+  - `InMemory` – for testing and single-process deployments
+  - `RabbitMQ` – for distributed deployments
+  - `AzureServiceBus` – for cloud deployments
+* Message consumers for Trade, Quote, L2Snapshot, and Integrity events
+* Configurable retry policies with exponential backoff
 
 ---
 
@@ -186,6 +261,98 @@ await foreach (var evt in replayer.ReadEventsAsync(cancellationToken))
 
 ---
 
-**Version:** 1.1.0
-**Last Updated:** 2026-01-02
-**See Also:** [c4-diagrams.md](c4-diagrams.md) | [domains.md](domains.md) | [why-this-architecture.md](why-this-architecture.md)
+---
+
+## Microservices Architecture
+
+For high-throughput deployments, the system can be deployed as a set of microservices:
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                            API Gateway (Port 5000)                       │
+│  ├── Request routing and rate limiting                                  │
+│  ├── Provider connection management                                     │
+│  └── Subscription management                                            │
+└───────────────────────────────────┬─────────────────────────────────────┘
+                                    │
+        ┌───────────────────────────┼───────────────────────────┐
+        │                           │                           │
+┌───────▼───────┐         ┌─────────▼─────────┐       ┌─────────▼─────────┐
+│ Trade Service │         │ OrderBook Service │       │ Quote Service     │
+│ (Port 5001)   │         │ (Port 5002)       │       │ (Port 5003)       │
+│ ├─ High-      │         │ ├─ Snapshot/delta │       │ ├─ Spread calc    │
+│ │  throughput │         │ │  processing     │       │ ├─ Crossed/locked │
+│ ├─ Sequence   │         │ ├─ Integrity      │       │ │  detection      │
+│ │  validation │         │ │  checking       │       │ └─ Quote state    │
+│ └─ Order flow │         │ └─ Book freeze    │       │    tracking       │
+└───────────────┘         └───────────────────┘       └───────────────────┘
+        │                           │                           │
+        └───────────────────────────┼───────────────────────────┘
+                                    │
+        ┌───────────────────────────┼───────────────────────────┐
+        │                           │                           │
+┌───────▼───────────┐     ┌─────────▼─────────┐     ┌───────────▼───────┐
+│ Historical Service│     │ Validation Service│     │     Storage       │
+│ (Port 5004)       │     │ (Port 5005)       │     │   (JSONL/DB)      │
+│ ├─ Backfill jobs  │     │ ├─ Quality rules  │     │                   │
+│ ├─ Progress       │     │ ├─ Metrics agg    │     │                   │
+│ │  tracking       │     │ └─ Alert gen      │     │                   │
+│ └─ Multi-source   │     │                   │     │                   │
+└───────────────────┘     └───────────────────┘     └───────────────────┘
+```
+
+### Microservices Components
+
+| Service | Port | Purpose |
+|---------|------|---------|
+| **Gateway** | 5000 | API entry point, routing, rate limiting, provider management |
+| **TradeIngestion** | 5001 | High-throughput trade processing, sequence validation, deduplication |
+| **OrderBookIngestion** | 5002 | L2 order book state, snapshot/delta processing, integrity checking |
+| **QuoteIngestion** | 5003 | BBO/NBBO quotes, spread calculation, crossed market detection |
+| **HistoricalDataIngestion** | 5004 | Backfill job management, progress tracking, multi-source support |
+| **DataValidation** | 5005 | Quality rules, metrics aggregation, alerting |
+
+See [Microservices README](../src/Microservices/README.md) for deployment instructions.
+
+---
+
+## Historical Data Backfill
+
+The system supports historical data backfill from multiple providers with automatic failover:
+
+### Provider Priority
+
+| Priority | Provider | Data Type | Notes |
+|----------|----------|-----------|-------|
+| 5 | **Alpaca** | OHLCV bars, trades, quotes | IEX/SIP feeds with adjustments |
+| 10 | **Yahoo Finance** | OHLCV bars | 50K+ global securities, free |
+| 20 | **Stooq** | EOD bars | US equities |
+| 30 | **Nasdaq Data Link** | Various | Alternative datasets |
+
+### Backfill Features
+
+* **Composite Provider** – Automatic failover when primary provider fails or hits rate limits
+* **Rate-Limit Rotation** – Switches providers when approaching API limits
+* **Gap Detection** – `DataGapAnalyzer` identifies missing data periods
+* **Fill-Only Mode** – Skip dates with existing data
+* **Job Persistence** – Resume interrupted backfills after restart
+* **Progress Tracking** – Real-time progress and ETA via API/dashboard
+
+---
+
+## QuantConnect Lean Integration
+
+The system integrates with QuantConnect's Lean algorithmic trading engine for backtesting:
+
+* **Custom Data Types** – `MarketDataCollectorTradeData`, `MarketDataCollectorQuoteData`
+* **Data Provider** – `MarketDataCollectorDataProvider` implements Lean's `IDataProvider`
+* **Sample Algorithms** – Spread arbitrage, order flow strategies
+* **JSONL Reader** – Automatic decompression and parsing of collected data
+
+See [lean-integration.md](lean-integration.md) for detailed integration guide.
+
+---
+
+**Version:** 1.2.0
+**Last Updated:** 2026-01-03
+**See Also:** [c4-diagrams.md](c4-diagrams.md) | [domains.md](domains.md) | [why-this-architecture.md](why-this-architecture.md) | [Microservices README](../src/Microservices/README.md)

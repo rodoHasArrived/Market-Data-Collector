@@ -329,6 +329,8 @@ The collector uses Serilog for structured logging. You can customize log levels 
 
 Backfill options seed historical daily bars before live capture begins. They can be defined in `appsettings.json` and overridden via command-line arguments.
 
+### Basic Settings
+
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
 | `Enabled` | boolean | `false` | Run a backfill before the live session starts |
@@ -337,24 +339,108 @@ Backfill options seed historical daily bars before live capture begins. They can
 | `From` | string (yyyy-MM-dd) | `null` | Inclusive start date |
 | `To` | string (yyyy-MM-dd) | `null` | Inclusive end date |
 
+### Advanced Settings
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `EnableFallback` | boolean | `true` | Auto-failover to alternate providers |
+| `EnableSymbolResolution` | boolean | `false` | Use OpenFIGI for symbol normalization |
+| `RateLimitRotation` | boolean | `true` | Switch providers when approaching limits |
+| `SkipExistingData` | boolean | `true` | Skip dates with existing data (gap-fill mode) |
+| `RetryCount` | integer | `3` | Number of retries per request |
+| `BatchSize` | integer | `100` | Symbols per batch |
+
+### Available Providers
+
+| Provider | ID | Description | Free | Notes |
+|----------|-----|-------------|------|-------|
+| Alpaca | `alpaca` | Historical bars, trades, quotes, auctions | Yes (IEX) | Requires API keys |
+| Yahoo Finance | `yahoo` | EOD OHLCV bars | Yes | 50K+ global securities |
+| Stooq | `stooq` | EOD bars | Yes | US equities |
+| Nasdaq Data Link | `nasdaq` | Alternative datasets | Yes (limited) | Requires API key |
+| Composite | `composite` | Automatic failover | - | Uses all above with priority |
+
+### Alpaca-Specific Settings
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `Feed` | string | `"iex"` | Data feed: `"iex"` (free), `"sip"` (paid), `"delayed_sip"` |
+| `Adjustment` | string | `"raw"` | Price adjustment: `"raw"`, `"split"`, `"dividend"`, `"all"` |
+
 ### Example
 
 ```json
 "Backfill": {
   "Enabled": true,
-  "Provider": "stooq",
-  "Symbols": ["SPY", "QQQ"],
+  "Provider": "composite",
+  "EnableFallback": true,
+  "RateLimitRotation": true,
+  "SkipExistingData": true,
+  "Symbols": ["SPY", "QQQ", "AAPL"],
   "From": "2024-01-01",
-  "To": "2024-01-05"
+  "To": "2024-12-31",
+  "Alpaca": {
+    "Feed": "iex",
+    "Adjustment": "split"
+  }
 }
 ```
 
-Command-line overrides available at runtime:
+### Command-Line Overrides
 
 - `--backfill` forces a backfill run even if disabled in config
 - `--backfill-provider <name>` chooses a provider
 - `--backfill-symbols <CSV>` overrides symbols
 - `--backfill-from <yyyy-MM-dd>` / `--backfill-to <yyyy-MM-dd>` override date bounds
+
+## MassTransit (Distributed Messaging)
+
+Optional distributed messaging for microservices deployments using MassTransit.
+
+**Section**: `MassTransit`
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `Enabled` | boolean | `false` | Enable message publishing |
+| `Transport` | string | `"InMemory"` | Transport: `"InMemory"`, `"RabbitMQ"`, `"AzureServiceBus"` |
+
+### RabbitMQ Settings
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `Host` | string | `"localhost"` | RabbitMQ host |
+| `Port` | integer | `5672` | RabbitMQ port |
+| `Username` | string | `"guest"` | Username |
+| `Password` | string | `"guest"` | Password |
+| `VirtualHost` | string | `"/"` | Virtual host |
+
+### Azure Service Bus Settings
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `ConnectionString` | string | - | Azure Service Bus connection string |
+
+### Example
+
+```json
+"MassTransit": {
+  "Enabled": true,
+  "Transport": "RabbitMQ",
+  "RabbitMQ": {
+    "Host": "rabbitmq.example.com",
+    "Port": 5672,
+    "Username": "ingestion",
+    "Password": "secret",
+    "VirtualHost": "/market-data"
+  }
+}
+```
+
+### Environment Variables
+
+- `*__MassTransit__Enabled` - Enable/disable messaging
+- `*__MassTransit__Transport` - Transport type
+- `*__MassTransit__RabbitMQ__Host` - RabbitMQ host
 
 ## Validation
 
@@ -532,6 +618,6 @@ The following API endpoints are available for programmatic configuration:
 
 ---
 
-**Version:** 1.1.0
-**Last Updated:** 2026-01-02
+**Version:** 1.2.0
+**Last Updated:** 2026-01-03
 **See Also:** [GETTING_STARTED.md](GETTING_STARTED.md) | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | [operator-runbook.md](operator-runbook.md)

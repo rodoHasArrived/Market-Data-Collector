@@ -14,12 +14,14 @@ record MarketEvent(
 ```
 
 Each payload is a strongly-typed record derived from `MarketEventPayload`; the `Type` field disambiguates serialization. Supported event types include:
-- `Trade` – tick-by-tick trade prints
+- `Trade` – tick-by-tick trade prints with sequence validation
 - `L2Snapshot` – full order book state after each depth update
-- `BboQuote` – best bid/offer snapshots
-- `OrderFlow` – rolling order-flow statistics
-- `Integrity` – trade sequence anomalies
+- `BboQuote` – best bid/offer snapshots with spread and mid-price
+- `OrderFlow` – rolling order-flow statistics (VWAP, imbalance)
+- `Integrity` – trade sequence anomalies (gaps, out-of-order)
 - `DepthIntegrity` – order book integrity failures
+- `HistoricalBar` – OHLCV bars from historical backfill providers
+- `Heartbeat` – connection health and keep-alive signals
 
 ## TradeDataCollector
 * Ingests tick-by-tick trades via `OnTrade(MarketTradeUpdate)`
@@ -195,8 +197,62 @@ interface IQuoteStateStore
 * `OrderFlowStatistics` includes buy/sell splits when BBO context is available.
 * Operators can snapshot current quotes through the API/UI without replaying stored events.
 
+## HistoricalBar
+
+Historical OHLCV bars from backfill providers (Alpaca, Yahoo, Stooq, etc.).
+
+### HistoricalBar payload
+
+```csharp
+record HistoricalBar(
+    DateTimeOffset Timestamp,
+    string Symbol,
+    decimal Open,
+    decimal High,
+    decimal Low,
+    decimal Close,
+    long Volume,
+    decimal? VWAP,
+    long? TradeCount,
+    string BarSize,
+    string Provider,
+    string? Adjustment
+);
+```
+
+* **Open/High/Low/Close** – OHLCV price data
+* **Volume** – Total shares traded in the bar
+* **VWAP** – Volume-weighted average price (when available)
+* **TradeCount** – Number of trades in the bar (when available)
+* **BarSize** – Resolution: `1min`, `5min`, `1hour`, `1day`, etc.
+* **Provider** – Source provider (alpaca, yahoo, stooq, nasdaq)
+* **Adjustment** – Price adjustment applied: `raw`, `split`, `dividend`, `all`
+
+## Heartbeat
+
+Connection health and keep-alive signals emitted periodically.
+
+### Heartbeat payload
+
+```csharp
+record Heartbeat(
+    DateTimeOffset Timestamp,
+    string Provider,
+    string Status,
+    long UptimeSeconds,
+    int ActiveSubscriptions,
+    long EventsProcessed
+);
+```
+
+* **Provider** – Data provider name (IB, Alpaca, etc.)
+* **Status** – Connection status: `Connected`, `Disconnected`, `Reconnecting`
+* **UptimeSeconds** – Time since connection established
+* **ActiveSubscriptions** – Number of active symbol subscriptions
+* **EventsProcessed** – Total events since startup
+
 ---
 
-**Version:** 1.1.0
-**Last Updated:** 2026-01-02
+**Version:** 1.2.0
+**Last Updated:** 2026-01-03
 **See Also:** [architecture.md](architecture.md) | [c4-diagrams.md](c4-diagrams.md) | [why-this-architecture.md](why-this-architecture.md)

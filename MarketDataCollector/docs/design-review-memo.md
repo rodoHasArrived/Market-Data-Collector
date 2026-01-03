@@ -4,7 +4,8 @@
 - **System:** Market Data Collector (Microstructure Recorder)
 - **Scope:** Architecture, controls, operational posture, and readiness for controlled production use
 - **Audience:** Engineering leadership, risk/compliance stakeholders, and institutional reviewers
-- **Version:** 2.0
+- **Version:** 2.1
+- **Last Updated:** 2026-01-03
 
 ---
 
@@ -127,14 +128,21 @@ Operational prerequisites:
 
 ## 9. Recommended Next Hardening Items
 
-1. Add structured logging sinks and log rotation.
-2. Add replay tool to validate stored events.
-3. Add unit/integration test suite automation in CI.
-4. Add authentication for UI if network-exposed.
-5. Add "auto-resubscribe on integrity" policy with rate limits.
-6. Add feed-divergence alarms when provider quotes deviate beyond configured tolerances.
-7. Wire Alpaca quote messages to `QuoteCollector` for full BBO support.
-8. Migrate provider credentials from `appsettings.json` to environment variables or secret vault.
+1. Add unit/integration test suite automation in CI.
+2. Add authentication for UI if network-exposed.
+3. Add feed-divergence alarms when provider quotes deviate beyond configured tolerances.
+4. Migrate provider credentials from `appsettings.json` to environment variables or secret vault.
+
+### Recently Completed
+
+- ✅ Historical data backfill with multi-provider failover (Alpaca, Yahoo, Stooq, Nasdaq Data Link)
+- ✅ MassTransit integration for distributed messaging (RabbitMQ, Azure Service Bus)
+- ✅ Microservices architecture with six specialized services
+- ✅ QuantConnect Lean integration for backtesting
+- ✅ UWP desktop application with comprehensive UI
+- ✅ Tiered storage management (hot/warm/cold)
+- ✅ Parquet storage format (experimental)
+- ✅ Alpaca quote messages wired to `QuoteCollector`
 
 ---
 
