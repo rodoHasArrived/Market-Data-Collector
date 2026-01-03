@@ -8,12 +8,16 @@ namespace MarketDataCollector.Application.Config;
 /// <param name="Symbols">Symbols to backfill; defaults to configured live symbols.</param>
 /// <param name="From">Optional inclusive start date (UTC).</param>
 /// <param name="To">Optional inclusive end date (UTC).</param>
+/// <param name="Granularity">Data granularity: "daily", "hourly", "minute1", "minute5", etc.</param>
 /// <param name="EnableFallback">When true and using composite provider, automatically try alternative providers on failure.</param>
 /// <param name="PreferAdjustedPrices">Prefer providers that return adjusted prices (for splits/dividends).</param>
 /// <param name="EnableSymbolResolution">Use OpenFIGI to normalize symbols across providers.</param>
 /// <param name="ProviderPriority">Custom provider priority order for fallback (overrides defaults).</param>
 /// <param name="EnableRateLimitRotation">Automatically rotate to next provider when approaching rate limits.</param>
 /// <param name="RateLimitRotationThreshold">Usage threshold (0.0-1.0) at which to start rotating providers.</param>
+/// <param name="SkipExistingData">Check existing archives and skip dates that already have data.</param>
+/// <param name="FillGapsOnly">Only fill detected gaps in existing data (vs. full backfill).</param>
+/// <param name="Jobs">Job management configuration.</param>
 /// <param name="Providers">Configuration for individual data providers.</param>
 public sealed record BackfillConfig(
     bool Enabled = false,
@@ -21,13 +25,43 @@ public sealed record BackfillConfig(
     string[]? Symbols = null,
     DateOnly? From = null,
     DateOnly? To = null,
+    string Granularity = "daily",
     bool EnableFallback = true,
     bool PreferAdjustedPrices = true,
     bool EnableSymbolResolution = true,
     string[]? ProviderPriority = null,
     bool EnableRateLimitRotation = true,
     double RateLimitRotationThreshold = 0.8,
+    bool SkipExistingData = true,
+    bool FillGapsOnly = true,
+    BackfillJobsConfig? Jobs = null,
     BackfillProvidersConfig? Providers = null
+);
+
+/// <summary>
+/// Configuration for backfill job management.
+/// </summary>
+/// <param name="PersistJobs">Persist job state to disk for resume after restart.</param>
+/// <param name="JobsDirectory">Directory for job state files (relative to DataRoot).</param>
+/// <param name="MaxConcurrentRequests">Maximum concurrent requests across all providers.</param>
+/// <param name="MaxConcurrentPerProvider">Maximum concurrent requests per provider.</param>
+/// <param name="MaxRetries">Maximum retries for failed requests.</param>
+/// <param name="RetryDelaySeconds">Delay between retries in seconds.</param>
+/// <param name="BatchSizeDays">Maximum days per request batch.</param>
+/// <param name="AutoPauseOnRateLimit">Automatically pause job when all providers are rate-limited.</param>
+/// <param name="AutoResumeAfterRateLimit">Automatically resume after rate limit window expires.</param>
+/// <param name="MaxRateLimitWaitMinutes">Maximum minutes to wait for rate limit before pausing.</param>
+public sealed record BackfillJobsConfig(
+    bool PersistJobs = true,
+    string JobsDirectory = "_backfill_jobs",
+    int MaxConcurrentRequests = 3,
+    int MaxConcurrentPerProvider = 2,
+    int MaxRetries = 3,
+    int RetryDelaySeconds = 5,
+    int BatchSizeDays = 365,
+    bool AutoPauseOnRateLimit = true,
+    bool AutoResumeAfterRateLimit = true,
+    int MaxRateLimitWaitMinutes = 5
 );
 
 /// <summary>
