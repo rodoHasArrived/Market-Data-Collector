@@ -2,8 +2,8 @@
 
 This document outlines the current state of the Market Data Collector codebase, identifying areas that are production-ready, items requiring attention before production deployment, and extension points for future development.
 
-**Last Updated:** 2026-01-02
-**Version:** 1.1.0
+**Last Updated:** 2026-01-03
+**Version:** 1.2.0
 
 ---
 
@@ -29,13 +29,20 @@ The Market Data Collector is a mature, well-architected system with comprehensiv
 | Area | Status | Notes |
 |------|--------|-------|
 | Core Event Pipeline | ✅ Production Ready | High-performance, channel-based processing |
-| Storage System | ✅ Production Ready | JSONL/Parquet with retention policies |
-| Alpaca Provider | ✅ Production Ready | Full WebSocket integration |
+| Storage System | ✅ Production Ready | JSONL/Parquet with tiered retention policies |
+| Alpaca Provider (Streaming) | ✅ Production Ready | Full WebSocket integration |
+| Alpaca Provider (Historical) | ✅ Production Ready | OHLCV bars, trades, quotes, auctions |
+| Yahoo Finance (Historical) | ✅ Production Ready | 50K+ global securities |
+| Stooq (Historical) | ✅ Production Ready | US equities EOD |
+| Nasdaq Data Link (Historical) | ✅ Production Ready | Alternative datasets |
+| Composite Provider | ✅ Production Ready | Automatic failover with rate-limit rotation |
 | Interactive Brokers | ⚠️ Requires Build Flag | Needs IBAPI compilation constant |
 | Polygon Provider | ❌ Stub Only | Synthetic heartbeat only |
 | Monitoring | ✅ Production Ready | HTTP server, Prometheus metrics |
-| UWP Desktop App | ✅ Production Ready | Full feature set |
-| Microservices | ✅ Production Ready | Docker-based deployment |
+| MassTransit Messaging | ✅ Production Ready | RabbitMQ, Azure Service Bus support |
+| UWP Desktop App | ✅ Production Ready | Full feature set with 8 pages |
+| Microservices | ✅ Production Ready | 6 services, Docker Compose orchestration |
+| QuantConnect Lean | ✅ Production Ready | Custom data types and IDataProvider |
 
 ---
 
@@ -72,6 +79,38 @@ The Market Data Collector is a mature, well-architected system with comprehensiv
   - Full WebSocket integration
   - Trade and quote streaming
   - Message authentication
+
+### Historical Data Providers
+
+- **Alpaca Historical** (`Infrastructure/HistoricalData/AlpacaHistoricalDataProvider.cs`)
+  - OHLCV bars, trades, quotes, auctions
+  - IEX/SIP feed support with price adjustments
+
+- **Yahoo Finance** (`Infrastructure/HistoricalData/YahooFinanceHistoricalDataProvider.cs`)
+  - 50K+ global securities
+  - Free EOD data
+
+- **Stooq** (`Infrastructure/HistoricalData/StooqHistoricalDataProvider.cs`)
+  - US equities EOD data
+  - Free access
+
+- **Nasdaq Data Link** (`Infrastructure/HistoricalData/NasdaqDataLinkHistoricalDataProvider.cs`)
+  - Alternative datasets via Quandl API
+
+- **Composite Provider** (`Infrastructure/HistoricalData/CompositeHistoricalDataProvider.cs`)
+  - Automatic failover across providers
+  - Rate-limit rotation
+  - Priority-based provider selection
+
+### QuantConnect Lean Integration
+
+- **Custom Data Types** (`Integrations/Lean/`)
+  - `MarketDataCollectorTradeData` and `MarketDataCollectorQuoteData`
+  - Native JSONL file parsing with decompression
+
+- **Data Provider** (`Integrations/Lean/MarketDataCollectorDataProvider.cs`)
+  - Implements Lean's `IDataProvider` interface
+  - Sample algorithms for spread arbitrage and order flow
 
 ### Desktop Application
 

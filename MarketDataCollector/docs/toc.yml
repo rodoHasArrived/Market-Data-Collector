@@ -1,14 +1,32 @@
 - name: Overview
   href: architecture.md
+- name: Getting Started
+  href: GETTING_STARTED.md
+- name: Configuration
+  href: CONFIGURATION.md
 - name: Domain Model
   href: domains.md
 - name: C4 Diagrams
   href: c4-diagrams.md
 - name: Operator Runbook
   href: operator-runbook.md
+- name: Troubleshooting
+  href: TROUBLESHOOTING.md
+- name: Production Readiness
+  href: PRODUCTION_READINESS.md
 - name: Design Review Memo
   href: design-review-memo.md
 - name: Why This Architecture
   href: why-this-architecture.md
 - name: Data Uniformity and Usability Plan
   href: data-uniformity.md
+- name: Lean Integration
+  href: lean-integration.md
+- name: Interactive Brokers Setup
+  href: interactive-brokers-setup.md
+- name: IB Free Equity Reference
+  href: interactive-brokers-free-equity-reference.md
+- name: Storage Organization Design
+  href: STORAGE_ORGANIZATION_DESIGN.md
+- name: UWP Feature Ideas
+  href: UWP_FEATURE_IDEAS.md

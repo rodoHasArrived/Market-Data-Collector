@@ -35,18 +35,26 @@ These diagrams describe the system using the C4 model:
 ```mermaid
 flowchart LR
     IB[Interactive Brokers\nTWS/Gateway]:::ext
-    ALP[Alpaca\nWebSocket]:::ext
+    ALP[Alpaca\nWebSocket + REST]:::ext
+    HIST[Historical Providers\nYahoo/Stooq/Nasdaq]:::ext
     OPR[Operator]:::person
-    UI[MarketDataCollector.Ui\nDashboard]:::container
+    UI[Web Dashboard\nASP.NET]:::container
+    UWP[Desktop App\nWinUI 3/UWP]:::container
     COL[Market Data Collector\nService]:::system
-    DISK[(Local Storage\nJSONL / Gzip)]:::store
+    DISK[(Local Storage\nJSONL / Parquet)]:::store
+    MQ[Message Bus\nRabbitMQ / Azure SB]:::ext
 
     OPR --> UI
+    OPR --> UWP
     UI <--> DISK
+    UWP <--> DISK
     UI --> COL
+    UWP --> COL
     IB --> COL
     ALP --> COL
+    HIST --> COL
     COL --> DISK
+    COL --> MQ
 
 classDef person fill:#fff,stroke:#333,stroke-width:1px;
 classDef ext fill:#f8f8f8,stroke:#333,stroke-dasharray: 4 2;
@@ -62,28 +70,37 @@ classDef store fill:#fff5f5,stroke:#c53030,stroke-width:1px;
 ```mermaid
 flowchart TB
     subgraph C[Market Data Collector (Process)]
-        APP[Application Layer\nProgram/ConfigWatcher/StatusWriter]:::container
+        APP[Application Layer\nProgram/ConfigWatcher/StatusWriter/BackfillService]:::container
         DOM[Domain Layer\nCollectors + Models]:::container
         PIPE[Event Pipeline\nEventPipeline/Bounded Channel]:::container
-        STOR[Storage\nJsonlStorageSink/Policy]:::container
-        INFRA[Infrastructure\nProviders: IB/Alpaca]:::container
+        MSG[Messaging\nMassTransit/CompositePublisher]:::container
+        STOR[Storage\nJsonl/Parquet Sinks]:::container
+        INFRA[Infrastructure\nStreaming + Historical Providers]:::container
     end
 
     IB[Interactive Brokers\nTWS/Gateway]:::ext
-    ALP[Alpaca\nWebSocket]:::ext
+    ALP[Alpaca\nWebSocket + REST]:::ext
+    HIST[Historical APIs\nYahoo/Stooq/Nasdaq]:::ext
     DISK[(Filesystem\n./data)]:::store
-    UI[ASP.NET UI\nMarketDataCollector.Ui]:::container
+    MQ[(Message Bus\nRabbitMQ)]:::store
+    UI[Web Dashboard\nMarketDataCollector.Ui]:::container
+    UWP[Desktop App\nMarketDataCollector.Uwp]:::container
     OPR[Operator]:::person
 
     OPR --> UI
+    OPR --> UWP
     UI <--> DISK
+    UWP <--> DISK
 
     IB --> INFRA
     ALP --> INFRA
+    HIST --> INFRA
     INFRA --> DOM
     DOM --> PIPE
     PIPE --> STOR
+    PIPE --> MSG
     STOR --> DISK
+    MSG --> MQ
 
     APP --> INFRA
     APP --> DOM
@@ -160,6 +177,60 @@ classDef store fill:#fff5f5,stroke:#c53030,stroke-width:1px;
 
 ---
 
-**Version:** 1.1.0
-**Last Updated:** 2026-01-02
-**See Also:** [architecture.md](architecture.md) | [domains.md](domains.md) | [why-this-architecture.md](why-this-architecture.md)
+## Level 4 — Microservices Architecture (Optional Deployment)
+
+For high-throughput scenarios, the system can be deployed as microservices:
+
+```mermaid
+flowchart TB
+    subgraph GATEWAY[API Gateway :5000]
+        GW[Request Routing\nRate Limiting\nProvider Management]:::service
+    end
+
+    subgraph SERVICES[Ingestion Services]
+        TRADE[Trade Service\n:5001]:::service
+        BOOK[OrderBook Service\n:5002]:::service
+        QUOTE[Quote Service\n:5003]:::service
+        HIST[Historical Service\n:5004]:::service
+        VAL[Validation Service\n:5005]:::service
+    end
+
+    IB[IB/Alpaca\nData Sources]:::ext
+    MQ[(RabbitMQ\nMessage Bus)]:::store
+    DISK[(Storage\nJSONL/DB)]:::store
+
+    IB --> GATEWAY
+    GATEWAY --> MQ
+    MQ --> TRADE
+    MQ --> BOOK
+    MQ --> QUOTE
+    MQ --> VAL
+    HIST --> DISK
+    TRADE --> DISK
+    BOOK --> DISK
+    QUOTE --> DISK
+    VAL --> DISK
+
+classDef ext fill:#f8f8f8,stroke:#333,stroke-dasharray: 4 2;
+classDef service fill:#e8f4ff,stroke:#2b6cb0,stroke-width:1px;
+classDef store fill:#fff5f5,stroke:#c53030,stroke-width:1px;
+```
+
+### Microservices Summary
+
+| Service | Port | Purpose |
+|---------|------|---------|
+| Gateway | 5000 | Entry point, routing, rate limiting |
+| Trade | 5001 | Tick-by-tick trade processing |
+| OrderBook | 5002 | L2 order book maintenance |
+| Quote | 5003 | BBO/NBBO quote processing |
+| Historical | 5004 | Historical data backfill |
+| Validation | 5005 | Data quality and alerting |
+
+See [Microservices README](../src/Microservices/README.md) for deployment details.
+
+---
+
+**Version:** 1.2.0
+**Last Updated:** 2026-01-03
+**See Also:** [architecture.md](architecture.md) | [domains.md](domains.md) | [why-this-architecture.md](why-this-architecture.md) | [Microservices README](../src/Microservices/README.md)

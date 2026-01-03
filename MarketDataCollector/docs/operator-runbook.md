@@ -435,6 +435,136 @@ var trades = replayer.ReadEventsAsync(ct)
 
 ---
 
+## Historical Data Backfill
+
+### Running a Backfill
+
+**Via Command Line:**
+```bash
+# Basic backfill with Alpaca
+dotnet run -- --backfill --backfill-provider alpaca --backfill-symbols SPY,QQQ \
+  --backfill-from 2024-01-01 --backfill-to 2024-12-31
+
+# Composite provider with automatic failover
+dotnet run -- --backfill --backfill-provider composite --backfill-symbols SPY
+```
+
+**Via Configuration:**
+```json
+{
+  "Backfill": {
+    "Enabled": true,
+    "Provider": "composite",
+    "EnableFallback": true,
+    "RateLimitRotation": true,
+    "SkipExistingData": true,
+    "Symbols": ["SPY", "QQQ", "AAPL"],
+    "From": "2024-01-01",
+    "To": "2024-12-31"
+  }
+}
+```
+
+### Available Historical Providers
+
+| Provider | ID | Priority | Free | Notes |
+|----------|-----|----------|------|-------|
+| Alpaca | `alpaca` | 5 | Yes (IEX) | Requires API keys, includes trades/quotes |
+| Yahoo Finance | `yahoo` | 10 | Yes | 50K+ global securities, EOD only |
+| Stooq | `stooq` | 20 | Yes | US equities, EOD only |
+| Nasdaq Data Link | `nasdaq` | 30 | Limited | Requires API key |
+| Composite | `composite` | - | - | Automatic failover across all above |
+
+### Monitoring Backfill Jobs
+
+**Dashboard Endpoints:**
+- `GET /api/backfill/status` - Current job status
+- `GET /api/backfill/jobs` - List all jobs
+- `POST /api/backfill/jobs` - Start new job
+- `DELETE /api/backfill/jobs/{id}` - Cancel job
+
+**Backfill Logs:**
+```bash
+tail -f data/_logs/backfill-*.log
+```
+
+### Gap Detection and Fill
+
+Run gap analysis:
+```bash
+dotnet run -- --analyze-gaps --symbols SPY,QQQ --from 2024-01-01 --to 2024-12-31
+```
+
+Fill detected gaps only:
+```bash
+dotnet run -- --backfill --fill-gaps-only --symbols SPY,QQQ
+```
+
+---
+
+## UWP Desktop Application
+
+### Starting the Desktop App
+
+```bash
+dotnet run --project src/MarketDataCollector.Uwp/MarketDataCollector.Uwp.csproj
+```
+
+### Desktop App Pages
+
+| Page | Purpose |
+|------|---------|
+| **Dashboard** | Real-time metrics, sparklines, data health gauge |
+| **Provider** | Configure IB/Alpaca, connection health monitoring |
+| **Storage** | Disk usage analytics, tiered storage (hot/warm/cold) |
+| **Symbols** | Add/edit symbols, subscription management |
+| **Backfill** | Schedule and monitor historical data jobs |
+| **Settings** | Theme, notifications, keyboard shortcuts |
+| **Trading Hours** | Market hours, session schedules |
+| **Data Export** | Export to JSONL, Parquet, CSV |
+
+### Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl+N` | Add new symbol |
+| `Ctrl+S` | Save configuration |
+| `Ctrl+R` | Refresh data |
+| `Ctrl+B` | Start backfill |
+| `F5` | Refresh dashboard |
+| `Ctrl+,` | Open settings |
+
+---
+
+## Microservices Deployment
+
+For high-throughput deployments, run as microservices:
+
+```bash
+cd src/Microservices
+
+# Start all services with Docker Compose
+docker compose -f docker-compose.microservices.yml up -d
+
+# With monitoring (Prometheus + Grafana)
+docker compose -f docker-compose.microservices.yml --profile monitoring up -d
+```
+
+### Service Ports
+
+| Service | Port | Purpose |
+|---------|------|---------|
+| Gateway | 5000 | API entry point |
+| Trade | 5001 | Trade processing |
+| OrderBook | 5002 | L2 order book |
+| Quote | 5003 | BBO/NBBO quotes |
+| Historical | 5004 | Backfill management |
+| Validation | 5005 | Data quality |
+
+See [Microservices README](../src/Microservices/README.md) for detailed instructions.
+
+---
+
 ## Preferred Stock Configuration (IB-specific)
 
 For IB preferred shares (e.g., PCG-PA, PCG-PB), use explicit `LocalSymbol` to avoid ambiguity:
@@ -457,6 +587,6 @@ This ensures `ContractFactory` resolves to the correct IB contract.
 
 ---
 
-**Version:** 1.1.0
-**Last Updated:** 2026-01-02
-**See Also:** [CONFIGURATION.md](CONFIGURATION.md) | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | [architecture.md](architecture.md)
+**Version:** 1.2.0
+**Last Updated:** 2026-01-03
+**See Also:** [CONFIGURATION.md](CONFIGURATION.md) | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | [architecture.md](architecture.md) | [lean-integration.md](lean-integration.md)

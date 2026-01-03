@@ -171,6 +171,49 @@ Then open http://localhost:8080 in your browser to see:
 | `/live` | Liveness probe (200 if alive) |
 | `/metrics` | Prometheus-compatible metrics |
 | `/status` | Full JSON status snapshot |
+| `/api/backfill/*` | Backfill job management endpoints |
+
+## UWP Desktop Application
+
+For Windows users, a native desktop application provides a graphical interface for configuration and monitoring:
+
+```bash
+# Run the UWP app
+dotnet run --project src/MarketDataCollector.Uwp/MarketDataCollector.Uwp.csproj
+```
+
+### Desktop App Features
+
+- **Dashboard** - Real-time metrics with sparkline charts and data health gauges
+- **Provider Management** - Configure IB, Alpaca, and other data sources with connection health monitoring
+- **Storage Analytics** - Disk usage visualization with tiered storage (hot/warm/cold) configuration
+- **Symbol Management** - Add, edit, and bulk import symbols with subscription templates
+- **Backfill Control** - Schedule and monitor historical data backfill jobs
+- **Trading Hours** - Configure market hours and session schedules
+- **Data Export** - Export collected data in multiple formats (JSONL, Parquet, CSV)
+- **Settings** - Theme customization, notifications, and keyboard shortcuts
+
+## CLI Modes
+
+The collector supports multiple operation modes via command-line arguments:
+
+| Mode | Command | Description |
+|------|---------|-------------|
+| **Default** | `dotnet run` | Run smoke test with simulated data |
+| **Self-Test** | `--selftest` | Run internal self-tests and exit |
+| **Live Capture** | `--serve-status` | Connect to provider and capture data |
+| **Web Dashboard** | `--ui [--http-port N]` | Start web-based dashboard UI |
+| **HTTP Monitoring** | `--http-port N` | Start HTTP monitoring server |
+| **Backfill** | `--backfill [options]` | Run historical data backfill |
+| **Replay** | `--replay <path>` | Replay JSONL events for analysis |
+| **Watch Config** | `--watch-config` | Enable hot-reload of configuration |
+
+### Combined Mode Example
+
+```bash
+# Production mode with all features
+dotnet run -- --serve-status --http-port 8080 --watch-config
+```
 
 ## Output Data
 
@@ -191,11 +234,14 @@ data/
 
 ### Event Types
 
-- **Trade**: Tick-by-tick trade executions
-- **Depth**: Level 2 market depth updates
-- **Quote**: Best bid/offer (BBO) updates
-- **OrderFlow**: Aggregated order flow statistics
-- **Integrity**: Data quality alerts
+- **Trade**: Tick-by-tick trade executions with sequence validation
+- **L2Snapshot**: Level 2 market depth snapshots
+- **BboQuote**: Best bid/offer (BBO) updates with spread and mid-price
+- **OrderFlow**: Aggregated order flow statistics (VWAP, imbalance)
+- **Integrity**: Trade sequence anomalies (gaps, out-of-order)
+- **DepthIntegrity**: Order book integrity failures
+- **HistoricalBar**: OHLCV bars from historical backfill
+- **Heartbeat**: Connection health signals
 
 ## Replay Historical Data
 
@@ -230,6 +276,6 @@ For more issues, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
 
 ---
 
-**Version:** 1.1.0
-**Last Updated:** 2026-01-02
-**See Also:** [HELP.md](../HELP.md) | [CONFIGURATION.md](CONFIGURATION.md) | [architecture.md](architecture.md)
+**Version:** 1.2.0
+**Last Updated:** 2026-01-03
+**See Also:** [HELP.md](../HELP.md) | [CONFIGURATION.md](CONFIGURATION.md) | [architecture.md](architecture.md) | [lean-integration.md](lean-integration.md)

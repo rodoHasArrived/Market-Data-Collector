@@ -397,6 +397,116 @@ chmod -R 755 data/
 }
 ```
 
+## Historical Backfill Issues
+
+### "Backfill provider not found"
+
+**Symptom**: Unknown provider error when starting backfill
+
+**Solution**:
+1. Use a valid provider ID: `alpaca`, `yahoo`, `stooq`, `nasdaq`, `composite`
+2. Check provider configuration:
+   ```json
+   {
+     "Backfill": {
+       "Provider": "composite"
+     }
+   }
+   ```
+
+### "Rate limit exceeded"
+
+**Symptom**: Backfill fails with rate limit errors
+
+**Solutions**:
+1. Enable rate limit rotation:
+   ```json
+   {
+     "Backfill": {
+       "RateLimitRotation": true,
+       "EnableFallback": true
+     }
+   }
+   ```
+2. Use composite provider for automatic failover
+3. Reduce batch size or add delay between requests
+
+### "No data returned for symbol"
+
+**Symptom**: Backfill completes but no data files created
+
+**Possible causes**:
+1. Symbol not supported by provider
+2. Date range outside provider's data availability
+3. Symbol delisted or changed
+
+**Solution**: Try a different provider or check symbol validity
+
+## Microservices Issues
+
+### "Cannot connect to RabbitMQ"
+
+**Symptom**: MassTransit fails to connect to message broker
+
+**Solutions**:
+1. Verify RabbitMQ is running:
+   ```bash
+   docker ps | grep rabbitmq
+   ```
+2. Check connection settings:
+   ```json
+   {
+     "MassTransit": {
+       "Transport": "RabbitMQ",
+       "RabbitMQ": {
+         "Host": "localhost",
+         "Port": 5672
+       }
+     }
+   }
+   ```
+3. Use InMemory transport for single-process testing:
+   ```json
+   {
+     "MassTransit": {
+       "Transport": "InMemory"
+     }
+   }
+   ```
+
+### "Service health check failing"
+
+**Symptom**: Microservice shows unhealthy status
+
+**Troubleshooting**:
+```bash
+# Check individual service health
+curl http://localhost:5001/health
+
+# View service logs
+docker compose logs trade-ingestion
+```
+
+## UWP Desktop App Issues
+
+### "Cannot find collector service"
+
+**Symptom**: Desktop app can't connect to collector
+
+**Solution**: Ensure the main collector is running with HTTP server:
+```bash
+dotnet run -- --http-port 8080
+```
+
+### "Configuration changes not saving"
+
+**Symptom**: Settings don't persist after closing app
+
+**Solution**:
+1. Run app with administrator privileges
+2. Check app's local data folder permissions
+3. Verify `appsettings.json` is not read-only
+
 ## Getting Help
 
 If you're still experiencing issues:
@@ -404,10 +514,11 @@ If you're still experiencing issues:
 1. **Check the logs** - Most errors include detailed context
 2. **Review documentation** - [architecture.md](architecture.md), [operator-runbook.md](operator-runbook.md)
 3. **Run self-tests** - `dotnet run -- --selftest`
-4. **File an issue** - Include logs, configuration (without secrets), and steps to reproduce
+4. **Check backfill status** - `GET /api/backfill/status`
+5. **File an issue** - Include logs, configuration (without secrets), and steps to reproduce
 
 ---
 
-**Version:** 1.1.0
-**Last Updated:** 2026-01-02
-**See Also:** [GETTING_STARTED.md](GETTING_STARTED.md) | [CONFIGURATION.md](CONFIGURATION.md) | [operator-runbook.md](operator-runbook.md)
+**Version:** 1.2.0
+**Last Updated:** 2026-01-03
+**See Also:** [GETTING_STARTED.md](GETTING_STARTED.md) | [CONFIGURATION.md](CONFIGURATION.md) | [operator-runbook.md](operator-runbook.md) | [lean-integration.md](lean-integration.md)
