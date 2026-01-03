@@ -811,6 +811,245 @@ public static class HtmlTemplates
       </div>
     </div>
 
+    <!-- Multi-Provider Configuration -->
+    <div class=""card"">
+      <h2>🔗 Multi-Provider Connections</h2>
+      <p style=""color: #718096; font-size: 14px; margin: 0 0 16px 0;"">
+        Connect to multiple data providers simultaneously for data comparison and failover.
+      </p>
+
+      <!-- Active Connections -->
+      <div id=""activeConnectionsPanel"" style=""margin-bottom: 20px;"">
+        <h3 style=""margin: 0 0 12px 0; font-size: 14px; color: #4a5568;"">Active Connections</h3>
+        <div id=""activeConnectionsGrid"" style=""display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;"">
+          <div style=""padding: 16px; background: #f7fafc; border-radius: 8px; text-align: center; color: #718096;"">
+            No providers connected
+          </div>
+        </div>
+      </div>
+
+      <!-- Add Provider -->
+      <details style=""margin: 16px 0;"">
+        <summary style=""cursor: pointer; font-weight: 500; color: #4a5568;"">➕ Add Provider Connection</summary>
+        <div style=""padding: 16px; margin-top: 8px; background: #f7fafc; border-radius: 6px;"">
+          <div class=""form-row"">
+            <div class=""form-group"">
+              <label>Provider ID</label>
+              <input id=""newProviderId"" placeholder=""alpaca_primary"" />
+            </div>
+            <div class=""form-group"">
+              <label>Provider Type</label>
+              <select id=""newProviderType"">
+                <option value=""Alpaca"">Alpaca</option>
+                <option value=""IB"">Interactive Brokers</option>
+                <option value=""Polygon"">Polygon</option>
+              </select>
+            </div>
+            <div class=""form-group"">
+              <label>Priority</label>
+              <input id=""newProviderPriority"" type=""number"" value=""1"" min=""1"" max=""10"" />
+            </div>
+          </div>
+          <div id=""newProviderAlpacaFields"">
+            <div class=""form-row"">
+              <div class=""form-group"">
+                <label>API Key ID</label>
+                <input id=""newProviderAlpacaKey"" type=""text"" placeholder=""PK..."" />
+              </div>
+              <div class=""form-group"">
+                <label>Secret Key</label>
+                <input id=""newProviderAlpacaSecret"" type=""password"" placeholder=""••••••"" />
+              </div>
+            </div>
+          </div>
+          <button class=""btn-primary"" onclick=""addProviderConnection()"">
+            ➕ Connect Provider
+          </button>
+        </div>
+      </details>
+    </div>
+
+    <!-- Provider Comparison View -->
+    <div class=""card"">
+      <h2>📊 Provider Comparison</h2>
+      <p style=""color: #718096; font-size: 14px; margin: 0 0 16px 0;"">
+        Compare data quality metrics side-by-side across connected providers.
+      </p>
+
+      <div id=""comparisonPanel"" style=""overflow-x: auto;"">
+        <table id=""comparisonTable"" style=""width: 100%; min-width: 600px;"">
+          <thead>
+            <tr>
+              <th>Metric</th>
+              <th id=""comparisonHeaders"">No providers connected</th>
+            </tr>
+          </thead>
+          <tbody id=""comparisonBody"">
+            <tr>
+              <td colspan=""2"" style=""text-align: center; color: #718096; padding: 24px;"">
+                Connect providers to see comparison metrics
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div style=""margin-top: 16px; display: flex; gap: 12px;"">
+        <button class=""btn-secondary"" onclick=""refreshComparison()"">
+          🔄 Refresh Metrics
+        </button>
+        <button class=""btn-secondary"" onclick=""exportComparison()"">
+          📥 Export Report
+        </button>
+      </div>
+    </div>
+
+    <!-- Automatic Failover Configuration -->
+    <div class=""card"">
+      <h2>🔄 Automatic Failover</h2>
+      <p style=""color: #718096; font-size: 14px; margin: 0 0 16px 0;"">
+        Configure automatic failover rules between providers.
+      </p>
+
+      <div id=""failoverRulesPanel"">
+        <h3 style=""margin: 0 0 12px 0; font-size: 14px; color: #4a5568;"">Active Failover Rules</h3>
+        <div id=""failoverRulesList"" style=""margin-bottom: 16px;"">
+          <div style=""padding: 16px; background: #f7fafc; border-radius: 8px; text-align: center; color: #718096;"">
+            No failover rules configured
+          </div>
+        </div>
+      </div>
+
+      <details style=""margin: 16px 0;"">
+        <summary style=""cursor: pointer; font-weight: 500; color: #4a5568;"">➕ Add Failover Rule</summary>
+        <div style=""padding: 16px; margin-top: 8px; background: #f7fafc; border-radius: 6px;"">
+          <div class=""form-row"">
+            <div class=""form-group"">
+              <label>Rule ID</label>
+              <input id=""failoverRuleId"" placeholder=""primary_failover"" />
+            </div>
+            <div class=""form-group"">
+              <label>Primary Provider</label>
+              <select id=""failoverPrimaryProvider"">
+                <option value="""">Select primary...</option>
+              </select>
+            </div>
+          </div>
+          <div class=""form-row"">
+            <div class=""form-group"">
+              <label>Backup Providers (comma-separated)</label>
+              <input id=""failoverBackupProviders"" placeholder=""backup1, backup2"" />
+            </div>
+            <div class=""form-group"">
+              <label>Failure Threshold</label>
+              <input id=""failoverThreshold"" type=""number"" value=""3"" min=""1"" max=""10"" />
+              <small style=""color: #718096;"">Consecutive failures before failover</small>
+            </div>
+          </div>
+          <div class=""form-row"">
+            <div class=""form-group"">
+              <label>Data Quality Threshold</label>
+              <input id=""failoverQualityThreshold"" type=""number"" value=""70"" min=""0"" max=""100"" />
+              <small style=""color: #718096;"">Minimum quality score (0-100, 0=disabled)</small>
+            </div>
+            <div class=""form-group"">
+              <label>Max Latency (ms)</label>
+              <input id=""failoverMaxLatency"" type=""number"" value=""0"" min=""0"" />
+              <small style=""color: #718096;"">Maximum acceptable latency (0=disabled)</small>
+            </div>
+          </div>
+          <div class=""form-group"">
+            <label style=""display: flex; align-items: center; gap: 8px;"">
+              <input type=""checkbox"" id=""failoverAutoRecover"" checked />
+              Auto-recover when primary becomes healthy
+            </label>
+          </div>
+          <button class=""btn-primary"" onclick=""addFailoverRule()"">
+            ➕ Add Rule
+          </button>
+        </div>
+      </details>
+    </div>
+
+    <!-- Symbol Mapping Interface -->
+    <div class=""card"">
+      <h2>🗺️ Provider Symbol Mapping</h2>
+      <p style=""color: #718096; font-size: 14px; margin: 0 0 16px 0;"">
+        Configure how symbols are mapped across different providers.
+      </p>
+
+      <div style=""overflow-x: auto;"">
+        <table id=""symbolMappingTable"">
+          <thead>
+            <tr>
+              <th>Canonical Symbol</th>
+              <th>IB Symbol</th>
+              <th>Alpaca Symbol</th>
+              <th>Polygon Symbol</th>
+              <th>FIGI</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id=""symbolMappingBody"">
+            <tr>
+              <td colspan=""6"" style=""text-align: center; color: #718096; padding: 16px;"">
+                No symbol mappings configured
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <details style=""margin: 16px 0;"">
+        <summary style=""cursor: pointer; font-weight: 500; color: #4a5568;"">➕ Add Symbol Mapping</summary>
+        <div style=""padding: 16px; margin-top: 8px; background: #f7fafc; border-radius: 6px;"">
+          <div class=""form-row"">
+            <div class=""form-group"">
+              <label>Canonical Symbol *</label>
+              <input id=""mappingCanonical"" placeholder=""AAPL"" />
+            </div>
+            <div class=""form-group"">
+              <label>IB Symbol</label>
+              <input id=""mappingIB"" placeholder=""AAPL"" />
+            </div>
+            <div class=""form-group"">
+              <label>Alpaca Symbol</label>
+              <input id=""mappingAlpaca"" placeholder=""AAPL"" />
+            </div>
+          </div>
+          <div class=""form-row"">
+            <div class=""form-group"">
+              <label>Polygon Symbol</label>
+              <input id=""mappingPolygon"" placeholder=""AAPL"" />
+            </div>
+            <div class=""form-group"">
+              <label>FIGI (optional)</label>
+              <input id=""mappingFigi"" placeholder=""BBG000B9XRY4"" />
+            </div>
+            <div class=""form-group"">
+              <label>Name (optional)</label>
+              <input id=""mappingName"" placeholder=""Apple Inc."" />
+            </div>
+          </div>
+          <button class=""btn-primary"" onclick=""addSymbolMapping()"">
+            ➕ Add Mapping
+          </button>
+        </div>
+      </details>
+
+      <div style=""margin-top: 16px; display: flex; gap: 12px; flex-wrap: wrap;"">
+        <button class=""btn-secondary"" onclick=""importSymbolMappings()"">
+          📤 Import CSV
+        </button>
+        <button class=""btn-secondary"" onclick=""exportSymbolMappings()"">
+          📥 Export CSV
+        </button>
+        <button class=""btn-secondary"" onclick=""autoDetectMappings()"">
+          🔍 Auto-Detect Mappings
+        </button>
+      </div>
+    </div>
+
     <!-- Symbols Panel -->
     <div class=""card"">
       <h2>📈 Subscribed Symbols</h2>
@@ -1580,13 +1819,480 @@ public static class HtmlTemplates
       }}
     }}
 
+    // ==========================================
+    // Multi-Provider Connection Functions
+    // ==========================================
+
+    let connectedProviders = [];
+    let failoverRules = [];
+    let symbolMappings = [];
+
+    async function loadMultiProviderStatus() {{
+      try {{
+        const r = await apiCall('/api/multiprovider/status');
+        const status = await r.json();
+        connectedProviders = status.providers || [];
+        renderActiveConnections(connectedProviders);
+        updateProviderSelects();
+      }} catch (e) {{
+        console.log('Multi-provider status not available:', e);
+      }}
+    }}
+
+    function renderActiveConnections(providers) {{
+      const grid = document.getElementById('activeConnectionsGrid');
+      if (!providers || providers.length === 0) {{
+        grid.innerHTML = '<div style=""padding: 16px; background: #f7fafc; border-radius: 8px; text-align: center; color: #718096;"">No providers connected</div>';
+        return;
+      }}
+
+      grid.innerHTML = providers.map(p => {{
+        const statusColor = p.isConnected ? '#48bb78' : '#f56565';
+        const statusText = p.isConnected ? 'Connected' : 'Disconnected';
+        return `
+          <div style=""padding: 16px; background: white; border-radius: 8px; border-left: 4px solid ${{statusColor}}; box-shadow: 0 1px 3px rgba(0,0,0,0.1);"">
+            <div style=""display: flex; justify-content: space-between; align-items: center;"">
+              <strong>${{p.providerId}}</strong>
+              <span class=""tag tag-${{p.providerType.toLowerCase()}}"" style=""font-size: 10px;"">${{p.providerType}}</span>
+            </div>
+            <div style=""font-size: 12px; color: ${{statusColor}}; margin-top: 4px;"">${{statusText}}</div>
+            <div style=""font-size: 11px; color: #718096; margin-top: 4px;"">
+              Subscriptions: ${{p.activeSubscriptions || 0}}
+            </div>
+            <div style=""margin-top: 8px;"">
+              <button class=""btn-danger"" style=""font-size: 11px; padding: 4px 8px;"" onclick=""disconnectProvider('${{p.providerId}}')"">
+                Disconnect
+              </button>
+            </div>
+          </div>
+        `;
+      }}).join('');
+    }}
+
+    async function addProviderConnection() {{
+      try {{
+        const providerId = document.getElementById('newProviderId').value.trim();
+        const providerType = document.getElementById('newProviderType').value;
+        const priority = parseInt(document.getElementById('newProviderPriority').value || '1');
+
+        if (!providerId) {{
+          showToast('error', 'Validation Error', 'Provider ID is required');
+          return;
+        }}
+
+        const payload = {{
+          id: providerId,
+          name: providerId,
+          provider: providerType,
+          priority: priority,
+          enabled: true
+        }};
+
+        if (providerType === 'Alpaca') {{
+          payload.alpaca = {{
+            keyId: document.getElementById('newProviderAlpacaKey').value,
+            secretKey: document.getElementById('newProviderAlpacaSecret').value,
+            feed: 'iex',
+            useSandbox: false
+          }};
+        }}
+
+        await apiCall('/api/multiprovider/connect', {{
+          method: 'POST',
+          headers: {{ 'Content-Type': 'application/json' }},
+          body: JSON.stringify(payload)
+        }});
+
+        showToast('success', 'Provider Connected', `Successfully connected to ${{providerId}}`);
+        await loadMultiProviderStatus();
+
+        // Clear form
+        document.getElementById('newProviderId').value = '';
+        document.getElementById('newProviderAlpacaKey').value = '';
+        document.getElementById('newProviderAlpacaSecret').value = '';
+      }} catch (error) {{
+        showToast('error', 'Connection Failed', error.message);
+      }}
+    }}
+
+    async function disconnectProvider(providerId) {{
+      if (!confirm(`Disconnect provider ${{providerId}}?`)) return;
+
+      try {{
+        await apiCall(`/api/multiprovider/disconnect/${{encodeURIComponent(providerId)}}`, {{
+          method: 'POST'
+        }});
+        showToast('success', 'Provider Disconnected', `Disconnected from ${{providerId}}`);
+        await loadMultiProviderStatus();
+      }} catch (error) {{
+        showToast('error', 'Disconnect Failed', error.message);
+      }}
+    }}
+
+    // ==========================================
+    // Provider Comparison Functions
+    // ==========================================
+
+    async function refreshComparison() {{
+      try {{
+        const r = await apiCall('/api/multiprovider/comparison');
+        const comparison = await r.json();
+        renderComparison(comparison);
+        showToast('success', 'Metrics Refreshed', 'Provider comparison updated');
+      }} catch (error) {{
+        showToast('error', 'Refresh Failed', error.message);
+      }}
+    }}
+
+    function renderComparison(comparison) {{
+      const headerRow = document.getElementById('comparisonHeaders').parentElement;
+      const tbody = document.getElementById('comparisonBody');
+
+      if (!comparison.providers || comparison.providers.length === 0) {{
+        headerRow.innerHTML = '<th>Metric</th><th>No providers connected</th>';
+        tbody.innerHTML = '<tr><td colspan=""2"" style=""text-align: center; color: #718096; padding: 24px;"">Connect providers to see comparison metrics</td></tr>';
+        return;
+      }}
+
+      // Build header row
+      headerRow.innerHTML = '<th>Metric</th>' + comparison.providers.map(p =>
+        `<th style=""text-align: center;"">${{p.providerId}}<br/><small style=""font-weight: normal; color: #718096;"">${{p.providerType}}</small></th>`
+      ).join('');
+
+      // Metrics to compare
+      const metrics = [
+        {{ key: 'dataQualityScore', label: 'Data Quality Score', format: v => `<span style=""color: ${{v >= 80 ? '#48bb78' : v >= 60 ? '#ecc94b' : '#f56565'}}; font-weight: 600;"">${{v.toFixed(1)}}%</span>` }},
+        {{ key: 'tradesReceived', label: 'Trades Received', format: v => v.toLocaleString() }},
+        {{ key: 'depthUpdatesReceived', label: 'Depth Updates', format: v => v.toLocaleString() }},
+        {{ key: 'quotesReceived', label: 'Quotes Received', format: v => v.toLocaleString() }},
+        {{ key: 'averageLatencyMs', label: 'Avg Latency', format: v => `${{v.toFixed(2)}}ms` }},
+        {{ key: 'minLatencyMs', label: 'Min Latency', format: v => `${{v.toFixed(2)}}ms` }},
+        {{ key: 'maxLatencyMs', label: 'Max Latency', format: v => `${{v.toFixed(2)}}ms` }},
+        {{ key: 'connectionSuccessRate', label: 'Connection Success', format: v => `${{v.toFixed(1)}}%` }},
+        {{ key: 'messagesDropped', label: 'Messages Dropped', format: v => `<span style=""color: ${{v > 0 ? '#f56565' : '#48bb78'}}"">${{v.toLocaleString()}}</span>` }},
+        {{ key: 'activeSubscriptions', label: 'Active Subscriptions', format: v => v.toString() }}
+      ];
+
+      tbody.innerHTML = metrics.map(m => {{
+        const cells = comparison.providers.map(p => {{
+          const value = p[m.key] ?? 0;
+          return `<td style=""text-align: center;"">${{m.format(value)}}</td>`;
+        }}).join('');
+        return `<tr><td><strong>${{m.label}}</strong></td>${{cells}}</tr>`;
+      }}).join('');
+    }}
+
+    async function exportComparison() {{
+      try {{
+        const r = await apiCall('/api/multiprovider/comparison');
+        const comparison = await r.json();
+
+        const headers = ['Metric', ...comparison.providers.map(p => p.providerId)];
+        const rows = [
+          ['Data Quality Score', ...comparison.providers.map(p => p.dataQualityScore?.toFixed(1) || '0')],
+          ['Trades Received', ...comparison.providers.map(p => p.tradesReceived || 0)],
+          ['Depth Updates', ...comparison.providers.map(p => p.depthUpdatesReceived || 0)],
+          ['Avg Latency (ms)', ...comparison.providers.map(p => p.averageLatencyMs?.toFixed(2) || '0')],
+          ['Messages Dropped', ...comparison.providers.map(p => p.messagesDropped || 0)]
+        ];
+
+        const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+        const blob = new Blob([csv], {{ type: 'text/csv' }});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `provider-comparison-${{new Date().toISOString().split('T')[0]}}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+
+        showToast('success', 'Export Complete', 'Comparison report exported');
+      }} catch (error) {{
+        showToast('error', 'Export Failed', error.message);
+      }}
+    }}
+
+    // ==========================================
+    // Failover Rule Functions
+    // ==========================================
+
+    function updateProviderSelects() {{
+      const primarySelect = document.getElementById('failoverPrimaryProvider');
+      primarySelect.innerHTML = '<option value="""">Select primary...</option>' +
+        connectedProviders.map(p => `<option value=""${{p.providerId}}"">${{p.providerId}}</option>`).join('');
+    }}
+
+    async function loadFailoverRules() {{
+      try {{
+        const r = await apiCall('/api/multiprovider/failover/rules');
+        failoverRules = await r.json();
+        renderFailoverRules(failoverRules);
+      }} catch (e) {{
+        console.log('Failover rules not available:', e);
+      }}
+    }}
+
+    function renderFailoverRules(rules) {{
+      const container = document.getElementById('failoverRulesList');
+      if (!rules || rules.length === 0) {{
+        container.innerHTML = '<div style=""padding: 16px; background: #f7fafc; border-radius: 8px; text-align: center; color: #718096;"">No failover rules configured</div>';
+        return;
+      }}
+
+      container.innerHTML = rules.map(rule => {{
+        const statusColor = rule.isInFailoverState ? '#ecc94b' : '#48bb78';
+        const statusText = rule.isInFailoverState ? 'In Failover' : 'Normal';
+        return `
+          <div style=""padding: 16px; background: white; border-radius: 8px; border-left: 4px solid ${{statusColor}}; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);"">
+            <div style=""display: flex; justify-content: space-between; align-items: center;"">
+              <strong>${{rule.id}}</strong>
+              <span style=""color: ${{statusColor}}; font-size: 12px; font-weight: 600;"">${{statusText}}</span>
+            </div>
+            <div style=""font-size: 13px; color: #4a5568; margin-top: 8px;"">
+              <div>Primary: <strong>${{rule.primaryProviderId}}</strong></div>
+              <div>Backups: ${{rule.backupProviderIds.join(', ') || 'None'}}</div>
+              <div style=""margin-top: 4px; color: #718096; font-size: 12px;"">
+                Threshold: ${{rule.failoverThreshold}} failures | Recovery: ${{rule.recoveryThreshold}} successes
+              </div>
+            </div>
+            <div style=""margin-top: 8px; display: flex; gap: 8px;"">
+              <button class=""btn-secondary"" style=""font-size: 11px; padding: 4px 8px;"" onclick=""testFailover('${{rule.id}}')"">
+                Test Failover
+              </button>
+              <button class=""btn-danger"" style=""font-size: 11px; padding: 4px 8px;"" onclick=""removeFailoverRule('${{rule.id}}')"">
+                Remove
+              </button>
+            </div>
+          </div>
+        `;
+      }}).join('');
+    }}
+
+    async function addFailoverRule() {{
+      try {{
+        const ruleId = document.getElementById('failoverRuleId').value.trim();
+        const primaryProvider = document.getElementById('failoverPrimaryProvider').value;
+        const backupProviders = document.getElementById('failoverBackupProviders').value.split(',').map(s => s.trim()).filter(s => s);
+        const threshold = parseInt(document.getElementById('failoverThreshold').value || '3');
+        const qualityThreshold = parseInt(document.getElementById('failoverQualityThreshold').value || '0');
+        const maxLatency = parseInt(document.getElementById('failoverMaxLatency').value || '0');
+        const autoRecover = document.getElementById('failoverAutoRecover').checked;
+
+        if (!ruleId || !primaryProvider) {{
+          showToast('error', 'Validation Error', 'Rule ID and Primary Provider are required');
+          return;
+        }}
+
+        const payload = {{
+          id: ruleId,
+          primaryProviderId: primaryProvider,
+          backupProviderIds: backupProviders,
+          failoverThreshold: threshold,
+          recoveryThreshold: 5,
+          dataQualityThreshold: qualityThreshold,
+          maxLatencyMs: maxLatency,
+          autoRecover: autoRecover
+        }};
+
+        await apiCall('/api/multiprovider/failover/rules', {{
+          method: 'POST',
+          headers: {{ 'Content-Type': 'application/json' }},
+          body: JSON.stringify(payload)
+        }});
+
+        showToast('success', 'Rule Added', `Failover rule ${{ruleId}} created`);
+        await loadFailoverRules();
+
+        // Clear form
+        document.getElementById('failoverRuleId').value = '';
+        document.getElementById('failoverBackupProviders').value = '';
+      }} catch (error) {{
+        showToast('error', 'Add Rule Failed', error.message);
+      }}
+    }}
+
+    async function removeFailoverRule(ruleId) {{
+      if (!confirm(`Remove failover rule ${{ruleId}}?`)) return;
+
+      try {{
+        await apiCall(`/api/multiprovider/failover/rules/${{encodeURIComponent(ruleId)}}`, {{
+          method: 'DELETE'
+        }});
+        showToast('success', 'Rule Removed', `Failover rule ${{ruleId}} removed`);
+        await loadFailoverRules();
+      }} catch (error) {{
+        showToast('error', 'Remove Failed', error.message);
+      }}
+    }}
+
+    async function testFailover(ruleId) {{
+      try {{
+        await apiCall(`/api/multiprovider/failover/test/${{encodeURIComponent(ruleId)}}`, {{
+          method: 'POST'
+        }});
+        showToast('info', 'Failover Test', `Testing failover for rule ${{ruleId}}`);
+        await loadFailoverRules();
+      }} catch (error) {{
+        showToast('error', 'Test Failed', error.message);
+      }}
+    }}
+
+    // ==========================================
+    // Symbol Mapping Functions
+    // ==========================================
+
+    async function loadSymbolMappings() {{
+      try {{
+        const r = await apiCall('/api/multiprovider/symbolmappings');
+        symbolMappings = await r.json();
+        renderSymbolMappings(symbolMappings);
+      }} catch (e) {{
+        console.log('Symbol mappings not available:', e);
+      }}
+    }}
+
+    function renderSymbolMappings(mappings) {{
+      const tbody = document.getElementById('symbolMappingBody');
+      if (!mappings || mappings.length === 0) {{
+        tbody.innerHTML = '<tr><td colspan=""6"" style=""text-align: center; color: #718096; padding: 16px;"">No symbol mappings configured</td></tr>';
+        return;
+      }}
+
+      tbody.innerHTML = mappings.map(m => `
+        <tr>
+          <td><strong>${{m.canonicalSymbol}}</strong></td>
+          <td>${{m.ibSymbol || '-'}}</td>
+          <td>${{m.alpacaSymbol || '-'}}</td>
+          <td>${{m.polygonSymbol || '-'}}</td>
+          <td style=""font-family: monospace; font-size: 11px;"">${{m.figi || '-'}}</td>
+          <td>
+            <button class=""btn-danger"" style=""font-size: 11px; padding: 4px 8px;"" onclick=""removeSymbolMapping('${{m.canonicalSymbol}}')"">
+              Remove
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }}
+
+    async function addSymbolMapping() {{
+      try {{
+        const canonical = document.getElementById('mappingCanonical').value.trim().toUpperCase();
+        if (!canonical) {{
+          showToast('error', 'Validation Error', 'Canonical symbol is required');
+          return;
+        }}
+
+        const payload = {{
+          canonicalSymbol: canonical,
+          ibSymbol: document.getElementById('mappingIB').value.trim() || null,
+          alpacaSymbol: document.getElementById('mappingAlpaca').value.trim() || null,
+          polygonSymbol: document.getElementById('mappingPolygon').value.trim() || null,
+          figi: document.getElementById('mappingFigi').value.trim() || null,
+          name: document.getElementById('mappingName').value.trim() || null
+        }};
+
+        await apiCall('/api/multiprovider/symbolmappings', {{
+          method: 'POST',
+          headers: {{ 'Content-Type': 'application/json' }},
+          body: JSON.stringify(payload)
+        }});
+
+        showToast('success', 'Mapping Added', `Symbol mapping for ${{canonical}} created`);
+        await loadSymbolMappings();
+
+        // Clear form
+        ['mappingCanonical', 'mappingIB', 'mappingAlpaca', 'mappingPolygon', 'mappingFigi', 'mappingName'].forEach(id => {{
+          document.getElementById(id).value = '';
+        }});
+      }} catch (error) {{
+        showToast('error', 'Add Mapping Failed', error.message);
+      }}
+    }}
+
+    async function removeSymbolMapping(symbol) {{
+      if (!confirm(`Remove symbol mapping for ${{symbol}}?`)) return;
+
+      try {{
+        await apiCall(`/api/multiprovider/symbolmappings/${{encodeURIComponent(symbol)}}`, {{
+          method: 'DELETE'
+        }});
+        showToast('success', 'Mapping Removed', `Symbol mapping for ${{symbol}} removed`);
+        await loadSymbolMappings();
+      }} catch (error) {{
+        showToast('error', 'Remove Failed', error.message);
+      }}
+    }}
+
+    async function importSymbolMappings() {{
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.csv';
+      input.onchange = async (e) => {{
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {{
+          await apiCall('/api/multiprovider/symbolmappings/import', {{
+            method: 'POST',
+            body: formData
+          }});
+          showToast('success', 'Import Complete', 'Symbol mappings imported');
+          await loadSymbolMappings();
+        }} catch (error) {{
+          showToast('error', 'Import Failed', error.message);
+        }}
+      }};
+      input.click();
+    }}
+
+    async function exportSymbolMappings() {{
+      try {{
+        const r = await apiCall('/api/multiprovider/symbolmappings/export');
+        const blob = await r.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `symbol-mappings-${{new Date().toISOString().split('T')[0]}}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast('success', 'Export Complete', 'Symbol mappings exported');
+      }} catch (error) {{
+        showToast('error', 'Export Failed', error.message);
+      }}
+    }}
+
+    async function autoDetectMappings() {{
+      try {{
+        showToast('info', 'Auto-Detection', 'Detecting symbol mappings from subscribed symbols...');
+        await apiCall('/api/multiprovider/symbolmappings/autodetect', {{
+          method: 'POST'
+        }});
+        showToast('success', 'Detection Complete', 'Symbol mappings auto-detected');
+        await loadSymbolMappings();
+      }} catch (error) {{
+        showToast('error', 'Detection Failed', error.message);
+      }}
+    }}
+
+    // Show/hide provider-specific fields
+    document.getElementById('newProviderType').addEventListener('change', function() {{
+      const alpacaFields = document.getElementById('newProviderAlpacaFields');
+      alpacaFields.style.display = this.value === 'Alpaca' ? 'block' : 'none';
+    }});
+
     // Initial load
     loadConfig();
     loadStatus();
     loadBackfillStatus();
     loadProviderHealth();
+    loadMultiProviderStatus();
+    loadFailoverRules();
+    loadSymbolMappings();
     setInterval(loadStatus, 2000);
     setInterval(loadBackfillStatus, 5000);
+    setInterval(loadMultiProviderStatus, 5000);
   </script>
 </body>
 </html>";

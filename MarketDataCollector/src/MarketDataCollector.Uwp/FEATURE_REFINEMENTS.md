@@ -1407,9 +1407,9 @@ Recommendations:
 | P0 | Offline Data Catalog & Manifest System (#56) | Medium | Critical | Offline Storage | **IMPLEMENTED** (2026-01-03) |
 | P0 | Archive Verification & Integrity Dashboard (#57) | Medium | High | Offline Storage | **IMPLEMENTED** (2026-01-03) |
 | P0 | Collection Session Management (#65) | Low | High | Offline Storage | **IMPLEMENTED** (2026-01-03) |
-| P1 | Data Completeness Dashboard (#62) | Medium | High | Offline Storage | |
-| P1 | Archive Browsing & Inspection Tools (#61) | Medium | High | Offline Storage |
-| P1 | Portable Archive Packages (#59) | Medium | High | Offline Storage |
+| P1 | Data Completeness Dashboard (#62) | Medium | High | Offline Storage | **IMPLEMENTED** (2026-01-03) |
+| P1 | Archive Browsing & Inspection Tools (#61) | Medium | High | Offline Storage | **IMPLEMENTED** (2026-01-03) |
+| P1 | Portable Archive Packages (#59) | Medium | High | Offline Storage | **IMPLEMENTED** (2026-01-03) |
 | P1 | Long-Term Format Preservation (#58) | Medium | High | Offline Storage |
 | P1 | Archival-Optimized Compression Profiles (#66) | Low | Medium | Offline Storage |
 | P2 | Scheduled Archive Maintenance (#64) | Medium | Medium | Offline Storage |
@@ -1425,7 +1425,7 @@ Recommendations:
 |----------|-----------|--------|--------|----------|--------|
 | P0 | Analysis-Ready Export Formats (#70) | Medium | Critical | External Analysis | |
 | P0 | Data Dictionary & Schema Documentation (#72) | Low | High | External Analysis | **IMPLEMENTED** (2026-01-03) |
-| P1 | Batch Export Automation (#77) | Medium | High | External Analysis | |
+| P1 | Batch Export Automation (#77) | Medium | High | External Analysis | **IMPLEMENTED** (2026-01-03) |
 | P1 | Analysis-Ready Data Quality Report (#76) | Medium | High | External Analysis |
 | P1 | Data Versioning for Analysis (#78) | Medium | High | External Analysis |
 | P2 | Time Series Alignment Tools (#73) | Medium | Medium | External Analysis |
