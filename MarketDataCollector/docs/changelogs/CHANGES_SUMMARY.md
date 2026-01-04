@@ -2,11 +2,119 @@
 
 This document summarizes major changes and improvements to the Market Data Collector project.
 
-**Current Version:** 1.4.0 | **Last Updated:** 2026-01-04
+**Current Version:** 1.5.0 | **Last Updated:** 2026-01-04
 
 ---
 
-## Latest: F# Domain Library v1.4.0 (2026-01-03)
+## Latest: Archival & Export Excellence v1.5.0 (2026-01-04)
+
+### Overview
+
+This major update introduces enterprise-grade archival storage, analysis-ready export formats, and comprehensive data quality reporting. These features complete the "offline data storage, collection & archival excellence" vision outlined in the project roadmap.
+
+### Key Features
+
+#### 1. Archival-First Storage Pipeline (#55)
+- **Write-Ahead Logging (WAL)**: Crash-safe persistence with transaction semantics
+- **Per-Record Checksums**: SHA256 checksums computed during write for instant verification
+- **Configurable Sync Modes**: NoSync (fastest), BatchedSync (balanced), EveryWrite (most durable)
+- **Automatic Recovery**: Replay uncommitted records after crash
+- **WAL Rotation**: Configurable size and age-based rotation with optional archival
+
+**Files Added:**
+- `Storage/Archival/WriteAheadLog.cs`
+- `Storage/Archival/ArchivalStorageService.cs`
+
+#### 2. Archival-Optimized Compression Profiles (#66)
+- **Tiered Compression**: Different profiles for hot/warm/cold storage
+- **Pre-built Profiles**:
+  - Real-Time Collection: LZ4 Level 1 (~500 MB/s, 2.5x ratio)
+  - Warm Archive: ZSTD Level 6 (~150 MB/s, 5x ratio)
+  - Cold Archive: ZSTD Level 19 (~20 MB/s, 10x ratio)
+  - High-Volume Symbols: ZSTD Level 3 for SPY, QQQ, etc.
+  - Portable Export: Standard Gzip for compatibility
+- **Symbol Overrides**: Per-symbol compression configuration
+- **Benchmarking**: Compare profiles on sample data
+
+**Files Added:**
+- `Storage/Archival/CompressionProfileManager.cs`
+
+#### 3. Long-Term Format Preservation (#58)
+- **Schema Versioning**: Semantic versioning for all event types (Trade v1.0.0, v2.0.0)
+- **Automatic Migration**: Migrate data between schema versions
+- **Migration Operations**: Field renames, additions, removals, transformations
+- **Schema Validation**: Validate data against schema definitions
+- **JSON Schema Export**: Export schemas for external tool integration
+- **Schema Registry**: Track all schema versions with metadata
+
+**Built-in Schemas:**
+- Trade v1.0.0 → v2.0.0 (added TradeId, Conditions)
+- Quote v1.0.0
+
+**Files Added:**
+- `Storage/Archival/SchemaVersionManager.cs`
+
+#### 4. Analysis-Ready Export Formats (#70)
+- **Pre-built Export Profiles**:
+  - Python/Pandas: Parquet with datetime64[ns], snappy compression
+  - R Statistics: CSV with proper NA handling, ISO dates
+  - QuantConnect Lean: Native Lean data format with zip packaging
+  - Microsoft Excel: XLSX with multiple sheets
+  - PostgreSQL: CSV with DDL scripts and COPY commands
+- **Auto-Generated Data Dictionaries**: Markdown documentation for all fields
+- **Auto-Generated Loader Scripts**: Python, R, and Bash scripts for loading data
+- **Configurable Export Options**: Field inclusion/exclusion, file splitting
+
+**Files Added:**
+- `Storage/Export/ExportProfile.cs`
+- `Storage/Export/AnalysisExportService.cs`
+- `Storage/Export/ExportRequest.cs`
+- `Storage/Export/ExportResult.cs`
+
+#### 5. Analysis-Ready Data Quality Report (#76)
+- **Quality Metrics**:
+  - Completeness scoring (% of expected trading time)
+  - Outlier detection (>4σ from mean)
+  - Gap detection (weekend, overnight, unexpected)
+  - Descriptive statistics (mean, median, percentiles)
+- **Quality Grading**: A+ to F based on weighted score
+- **Use Case Recommendations**: Suitability for backtesting, ML training, research
+- **Multiple Output Formats**: Markdown, JSON, CSV
+- **Detailed Issue Tracking**: Severity levels with resolution suggestions
+
+**Generated Files:**
+- `quality_report.md` - Human-readable summary
+- `quality_report.json` - Machine-readable data
+- `outliers.csv` - Detected price outliers
+- `gaps.csv` - Data gap inventory
+- `quality_issues.csv` - Issue tracker
+
+**Files Added:**
+- `Storage/Export/AnalysisQualityReport.cs`
+
+### Documentation Updates
+
+- **FEATURE_REFINEMENTS.md**: Updated implementation status for 14 items
+- **code-improvements.md**: Added sections 9-13 documenting new features
+- **README.md**: Updated to v1.5 with new feature highlights
+- **HELP.md**: Added comprehensive user documentation for new features
+- **CHANGES_SUMMARY.md**: This changelog entry
+
+### Impact
+
+- **Data Safety**: WAL ensures no data loss during crashes or power failures
+- **Storage Efficiency**: Tiered compression reduces storage costs by 60-80%
+- **Long-Term Compatibility**: Schema versioning ensures data remains accessible
+- **Analysis Ready**: Pre-built exports eliminate data preparation overhead
+- **Quality Assurance**: Automated reports catch data issues before analysis
+
+### Migration Notes
+
+All features are additive and backward compatible. Existing data and configurations continue to work unchanged.
+
+---
+
+## Previous: F# Domain Library v1.4.0 (2026-01-03)
 
 ### Overview
 

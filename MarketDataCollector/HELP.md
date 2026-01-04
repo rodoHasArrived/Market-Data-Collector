@@ -1178,6 +1178,136 @@ CMD ["./MarketDataCollector", "--serve-status", "--watch-config"]
 4. New symbols will be subscribed
 5. Removed symbols will be unsubscribed
 
+## Archival-First Storage (v1.5)
+
+Market Data Collector v1.5 introduces an archival-first storage pipeline designed for crash-safe, long-term data preservation.
+
+### Write-Ahead Logging (WAL)
+
+All market events are written to a Write-Ahead Log before being committed to primary storage:
+
+**Features:**
+- Crash-safe persistence with transaction semantics
+- Per-record SHA256 checksums for integrity verification
+- Configurable sync modes for durability vs. performance tradeoff
+- Automatic recovery of uncommitted records after crash
+
+**Configuration:**
+```json
+{
+  "Archival": {
+    "EnableWal": true,
+    "SyncMode": "BatchedSync",
+    "SyncBatchSize": 1000,
+    "MaxFlushDelay": "00:00:05"
+  }
+}
+```
+
+**Sync Modes:**
+- **NoSync**: Fastest, relies on OS buffering
+- **BatchedSync**: Balanced performance and durability (default)
+- **EveryWrite**: Maximum durability, slowest
+
+### Compression Profiles
+
+Optimize storage based on access patterns with tier-specific compression:
+
+**Pre-built Profiles:**
+| Profile | Codec | Level | Speed | Ratio | Use Case |
+|---------|-------|-------|-------|-------|----------|
+| Real-Time Collection | LZ4 | 1 | ~500 MB/s | 2.5x | Live data capture |
+| Warm Archive | ZSTD | 6 | ~150 MB/s | 5x | Frequently accessed data |
+| Cold Archive | ZSTD | 19 | ~20 MB/s | 10x | Long-term storage |
+| High-Volume Symbols | ZSTD | 3 | ~300 MB/s | 3.5x | SPY, QQQ, AAPL, etc. |
+| Portable Export | Gzip | 6 | ~100 MB/s | 6x | Maximum compatibility |
+
+### Schema Versioning
+
+Ensure long-term data compatibility with schema versioning:
+
+**Features:**
+- Semantic versioning for all event types (e.g., Trade v1.0.0, v2.0.0)
+- Automatic migration between schema versions
+- JSON Schema export for external tool integration
+- Schema registry with version history
+
+**Built-in Schemas:**
+- Trade v1.0.0: Basic trade event
+- Trade v2.0.0: Extended with TradeId and Conditions
+- Quote v1.0.0: Best bid/offer quote
+
+## Analysis-Ready Exports (v1.5)
+
+Export collected data in formats optimized for external analysis tools.
+
+### Export Profiles
+
+**Python/Pandas:**
+- Format: Parquet with datetime64[ns]
+- Compression: Snappy
+- Includes: `load_data.py` loader script
+
+**R Statistics:**
+- Format: CSV with proper NA handling
+- Timestamps: ISO 8601
+- Includes: `load_data.R` loader script
+
+**QuantConnect Lean:**
+- Format: Native Lean data format
+- Structure: `/equity/usa/tick/{symbol}/{date}_{type}.zip`
+- Resolution: Tick-level data
+
+**PostgreSQL/TimescaleDB:**
+- Format: CSV with COPY command
+- Includes: `create_tables.sql` DDL script
+- Includes: `load_data.sh` loader script
+
+**Microsoft Excel:**
+- Format: XLSX with multiple sheets
+- Max records: 1,000,000 per file
+
+### Data Quality Reports
+
+Generate analysis-focused quality reports with each export:
+
+**Generated Reports:**
+- `quality_report.md` - Human-readable summary
+- `quality_report.json` - Machine-readable data
+- `outliers.csv` - Detected price outliers (>4σ)
+- `gaps.csv` - Data gap inventory
+- `quality_issues.csv` - Issue tracker
+
+**Quality Metrics:**
+- Completeness scoring (% of expected trading time)
+- Outlier detection with Z-scores
+- Gap classification (weekend, overnight, unexpected)
+- Descriptive statistics (mean, median, percentiles)
+- Quality grading (A+ to F)
+
+**Recommendations:**
+- Suitability assessment for backtesting, ML training, research
+- Preprocessing suggestions for detected issues
+
+### Running an Export
+
+**Via Web Dashboard:**
+1. Navigate to "Data Export" section
+2. Select export profile (Python, R, Lean, etc.)
+3. Choose symbols and date range
+4. Click "Export"
+5. Download data package with quality report
+
+**Via Command Line:**
+```bash
+./MarketDataCollector --export \
+  --profile python-pandas \
+  --symbols AAPL,MSFT \
+  --from 2026-01-01 \
+  --to 2026-01-31 \
+  --output ./exports
+```
+
 ## Support and Resources
 
 ### Documentation
@@ -1189,6 +1319,7 @@ CMD ["./MarketDataCollector", "--serve-status", "--watch-config"]
 - **docs/TROUBLESHOOTING.md**: Common issues and solutions
 - **docs/architecture.md**: System design and architecture
 - **docs/lean-integration.md**: QuantConnect Lean Engine integration
+- **docs/code-improvements.md**: Implementation details for all features
 - **../docs/STORAGE_ORGANIZATION_DESIGN.md**: Advanced storage organization strategies
 
 ### Getting Help
@@ -1214,6 +1345,6 @@ We welcome contributions! If you've found a bug or have a feature request, pleas
 
 ---
 
-**Version:** 1.4.0
+**Version:** 1.5.0
 **Last Updated:** 2026-01-04
 **License:** See LICENSE file
