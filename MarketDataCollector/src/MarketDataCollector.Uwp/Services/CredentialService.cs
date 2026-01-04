@@ -1,26 +1,61 @@
+using System.Diagnostics;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text;
+using System.Text.Json;
 using Windows.Security.Credentials;
 using Windows.Security.Credentials.UI;
+using Windows.Storage;
+using MarketDataCollector.Uwp.Models;
 
 namespace MarketDataCollector.Uwp.Services;
 
 /// <summary>
 /// Service for secure credential management using Windows Credential Manager
-/// and CredentialPicker UI.
+/// and CredentialPicker UI. Enhanced with OAuth support, expiration tracking,
+/// and credential testing capabilities.
 /// </summary>
 public class CredentialService
 {
     private const string ResourcePrefix = "MarketDataCollector";
+    private const string MetadataFileName = "credential_metadata.json";
 
     // Credential resource names
     public const string AlpacaCredentialResource = $"{ResourcePrefix}.Alpaca";
     public const string NasdaqApiKeyResource = $"{ResourcePrefix}.NasdaqDataLink";
     public const string OpenFigiApiKeyResource = $"{ResourcePrefix}.OpenFigi";
+    public const string OAuthTokenResource = $"{ResourcePrefix}.OAuth";
+
+    // Alpaca API endpoints for testing
+    private const string AlpacaPaperBaseUrl = "https://paper-api.alpaca.markets";
+    private const string AlpacaLiveBaseUrl = "https://api.alpaca.markets";
 
     private readonly PasswordVault _vault;
+    private readonly HttpClient _httpClient;
+    private Dictionary<string, CredentialMetadata> _metadataCache;
+    private readonly string _metadataPath;
+
+    /// <summary>
+    /// Event raised when credential metadata is updated.
+    /// </summary>
+    public event EventHandler<CredentialMetadataEventArgs>? MetadataUpdated;
+
+    /// <summary>
+    /// Event raised when a credential is about to expire.
+    /// </summary>
+    public event EventHandler<CredentialExpirationEventArgs>? CredentialExpiring;
 
     public CredentialService()
     {
         _vault = new PasswordVault();
+        _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
+        _metadataCache = new Dictionary<string, CredentialMetadata>();
+        _metadataPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "MarketDataCollector",
+            MetadataFileName);
+
+        LoadMetadataAsync().ConfigureAwait(false);
     }
 
     /// <summary>
@@ -373,4 +408,597 @@ public class CredentialService
     }
 
     #endregion
+
+    #region Metadata Management
+
+    /// <summary>
+    /// Loads credential metadata from persistent storage.
+    /// </summary>
+    private async Task LoadMetadataAsync()
+    {
+        try
+        {
+            var directory = Path.GetDirectoryName(_metadataPath);
+            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            if (File.Exists(_metadataPath))
+            {
+                var json = await File.ReadAllTextAsync(_metadataPath);
+                var metadata = JsonSerializer.Deserialize<Dictionary<string, CredentialMetadata>>(json);
+                if (metadata != null)
+                {
+                    _metadataCache = metadata;
+                }
+            }
+        }
+        catch (Exception)
+        {
+            _metadataCache = new Dictionary<string, CredentialMetadata>();
+        }
+    }
+
+    /// <summary>
+    /// Saves credential metadata to persistent storage.
+    /// </summary>
+    private async Task SaveMetadataAsync()
+    {
+        try
+        {
+            var directory = Path.GetDirectoryName(_metadataPath);
+            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            var json = JsonSerializer.Serialize(_metadataCache, new JsonSerializerOptions
+            {
+                WriteIndented = true
+            });
+            await File.WriteAllTextAsync(_metadataPath, json);
+        }
+        catch (Exception)
+        {
+            // Ignore save errors
+        }
+    }
+
+    /// <summary>
+    /// Gets metadata for a specific credential.
+    /// </summary>
+    public CredentialMetadata? GetMetadata(string resource)
+    {
+        return _metadataCache.TryGetValue(resource, out var metadata) ? metadata : null;
+    }
+
+    /// <summary>
+    /// Updates metadata for a specific credential.
+    /// </summary>
+    public async Task UpdateMetadataAsync(string resource, Action<CredentialMetadata> update)
+    {
+        if (!_metadataCache.TryGetValue(resource, out var metadata))
+        {
+            metadata = new CredentialMetadata { Resource = resource };
+            _metadataCache[resource] = metadata;
+        }
+
+        update(metadata);
+        await SaveMetadataAsync();
+
+        MetadataUpdated?.Invoke(this, new CredentialMetadataEventArgs(resource, metadata));
+
+        // Check for expiration warnings
+        if (metadata.ExpiresAt.HasValue)
+        {
+            var remaining = metadata.ExpiresAt.Value - DateTime.UtcNow;
+            if (remaining.TotalDays <= 7 && remaining.TotalSeconds > 0)
+            {
+                CredentialExpiring?.Invoke(this, new CredentialExpirationEventArgs(resource, metadata.ExpiresAt.Value));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Records a successful authentication for a credential.
+    /// </summary>
+    public async Task RecordAuthenticationAsync(string resource)
+    {
+        await UpdateMetadataAsync(resource, m =>
+        {
+            m.LastAuthenticatedAt = DateTime.UtcNow;
+            m.TestStatus = CredentialTestStatus.Success;
+        });
+    }
+
+    /// <summary>
+    /// Gets extended credential info with metadata for all stored credentials.
+    /// </summary>
+    public List<Models.CredentialInfo> GetAllCredentialsWithMetadata()
+    {
+        var credentials = new List<Models.CredentialInfo>();
+        var resources = GetAllStoredResources();
+
+        foreach (var resource in resources)
+        {
+            var metadata = GetMetadata(resource);
+            var (name, credType) = GetCredentialDisplayInfo(resource);
+
+            credentials.Add(new Models.CredentialInfo
+            {
+                Name = name,
+                Resource = resource,
+                Status = GetCredentialStatusDisplay(resource, metadata),
+                CredentialType = credType,
+                ExpiresAt = metadata?.ExpiresAt,
+                LastAuthenticatedAt = metadata?.LastAuthenticatedAt,
+                LastTestedAt = metadata?.LastTestedAt,
+                TestStatus = metadata?.TestStatus ?? CredentialTestStatus.Unknown,
+                CanAutoRefresh = metadata?.AutoRefreshEnabled ?? false,
+                RefreshToken = metadata?.RefreshToken
+            });
+        }
+
+        return credentials;
+    }
+
+    private (string Name, CredentialType Type) GetCredentialDisplayInfo(string resource)
+    {
+        return resource switch
+        {
+            var r when r.Contains("Alpaca") => ("Alpaca API Credentials", CredentialType.ApiKeyWithSecret),
+            var r when r.Contains("NasdaqDataLink") => ("Nasdaq Data Link API Key", CredentialType.ApiKey),
+            var r when r.Contains("OpenFigi") => ("OpenFIGI API Key", CredentialType.ApiKey),
+            var r when r.Contains("OAuth") => ("OAuth Token", CredentialType.OAuth2Token),
+            _ => (resource.Replace(ResourcePrefix + ".", ""), CredentialType.ApiKey)
+        };
+    }
+
+    private string GetCredentialStatusDisplay(string resource, CredentialMetadata? metadata)
+    {
+        if (metadata == null)
+            return "Active";
+
+        if (metadata.ExpiresAt.HasValue)
+        {
+            if (metadata.ExpiresAt.Value <= DateTime.UtcNow)
+                return "Expired";
+            if (metadata.ExpiresAt.Value <= DateTime.UtcNow.AddDays(1))
+                return "Expires soon";
+        }
+
+        if (metadata.LastAuthenticatedAt.HasValue)
+        {
+            var elapsed = DateTime.UtcNow - metadata.LastAuthenticatedAt.Value;
+            if (elapsed.TotalHours < 1)
+                return "Active - Just used";
+            if (elapsed.TotalHours < 24)
+                return $"Active - Used {(int)elapsed.TotalHours}h ago";
+            return $"Active - Used {(int)elapsed.TotalDays}d ago";
+        }
+
+        return "Active";
+    }
+
+    /// <summary>
+    /// Gets credentials that are expiring within the specified number of days.
+    /// </summary>
+    public List<Models.CredentialInfo> GetExpiringCredentials(int withinDays = 7)
+    {
+        return GetAllCredentialsWithMetadata()
+            .Where(c => c.IsExpiringSoon || c.IsExpired)
+            .ToList();
+    }
+
+    #endregion
+
+    #region Credential Testing
+
+    /// <summary>
+    /// Tests Alpaca credentials by making an authenticated API call.
+    /// </summary>
+    public async Task<CredentialTestResult> TestAlpacaCredentialsAsync(bool useSandbox = false)
+    {
+        var credentials = GetAlpacaCredentials();
+        if (credentials == null)
+        {
+            return CredentialTestResult.CreateFailure("No Alpaca credentials stored");
+        }
+
+        return await TestAlpacaCredentialsAsync(credentials.Value.KeyId, credentials.Value.SecretKey, useSandbox);
+    }
+
+    /// <summary>
+    /// Tests specific Alpaca credentials by making an authenticated API call.
+    /// </summary>
+    public async Task<CredentialTestResult> TestAlpacaCredentialsAsync(string keyId, string secretKey, bool useSandbox = false)
+    {
+        var sw = Stopwatch.StartNew();
+
+        try
+        {
+            var baseUrl = useSandbox ? AlpacaPaperBaseUrl : AlpacaLiveBaseUrl;
+            using var request = new HttpRequestMessage(HttpMethod.Get, $"{baseUrl}/v2/account");
+            request.Headers.Add("APCA-API-KEY-ID", keyId);
+            request.Headers.Add("APCA-API-SECRET-KEY", secretKey);
+
+            var response = await _httpClient.SendAsync(request);
+            sw.Stop();
+
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                var account = JsonSerializer.Deserialize<JsonElement>(content);
+
+                await UpdateMetadataAsync(AlpacaCredentialResource, m =>
+                {
+                    m.LastTestedAt = DateTime.UtcNow;
+                    m.LastAuthenticatedAt = DateTime.UtcNow;
+                    m.TestStatus = CredentialTestStatus.Success;
+                    m.CredentialType = CredentialType.ApiKeyWithSecret;
+                });
+
+                var accountStatus = account.TryGetProperty("status", out var status) ? status.GetString() : "Unknown";
+                return new CredentialTestResult
+                {
+                    Success = true,
+                    Message = $"Authentication successful. Account status: {accountStatus}",
+                    ResponseTimeMs = sw.ElapsedMilliseconds,
+                    TestedAt = DateTime.UtcNow,
+                    ServerInfo = useSandbox ? "Alpaca Paper Trading" : "Alpaca Live Trading"
+                };
+            }
+
+            var errorMessage = response.StatusCode switch
+            {
+                System.Net.HttpStatusCode.Unauthorized => "Invalid API key or secret",
+                System.Net.HttpStatusCode.Forbidden => "API key does not have required permissions",
+                _ => $"API returned {(int)response.StatusCode}: {response.ReasonPhrase}"
+            };
+
+            await UpdateMetadataAsync(AlpacaCredentialResource, m =>
+            {
+                m.LastTestedAt = DateTime.UtcNow;
+                m.TestStatus = CredentialTestStatus.Failed;
+            });
+
+            return CredentialTestResult.CreateFailure(errorMessage);
+        }
+        catch (TaskCanceledException)
+        {
+            return CredentialTestResult.CreateFailure("Connection timed out");
+        }
+        catch (HttpRequestException ex)
+        {
+            return CredentialTestResult.CreateFailure($"Connection failed: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            return CredentialTestResult.CreateFailure($"Error: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Tests Nasdaq Data Link API key.
+    /// </summary>
+    public async Task<CredentialTestResult> TestNasdaqApiKeyAsync()
+    {
+        var apiKey = GetNasdaqApiKey();
+        if (string.IsNullOrEmpty(apiKey))
+        {
+            return CredentialTestResult.CreateFailure("No Nasdaq Data Link API key stored");
+        }
+
+        var sw = Stopwatch.StartNew();
+
+        try
+        {
+            // Test with a simple dataset query
+            var testUrl = $"https://data.nasdaq.com/api/v3/datasets.json?api_key={apiKey}&per_page=1";
+            var response = await _httpClient.GetAsync(testUrl);
+            sw.Stop();
+
+            if (response.IsSuccessStatusCode)
+            {
+                await UpdateMetadataAsync(NasdaqApiKeyResource, m =>
+                {
+                    m.LastTestedAt = DateTime.UtcNow;
+                    m.LastAuthenticatedAt = DateTime.UtcNow;
+                    m.TestStatus = CredentialTestStatus.Success;
+                    m.CredentialType = CredentialType.ApiKey;
+                });
+
+                return new CredentialTestResult
+                {
+                    Success = true,
+                    Message = "API key validated successfully",
+                    ResponseTimeMs = sw.ElapsedMilliseconds,
+                    TestedAt = DateTime.UtcNow,
+                    ServerInfo = "Nasdaq Data Link"
+                };
+            }
+
+            var errorMessage = response.StatusCode switch
+            {
+                System.Net.HttpStatusCode.Unauthorized => "Invalid API key",
+                System.Net.HttpStatusCode.Forbidden => "API key does not have required permissions",
+                (System.Net.HttpStatusCode)429 => "Rate limit exceeded",
+                _ => $"API returned {(int)response.StatusCode}"
+            };
+
+            await UpdateMetadataAsync(NasdaqApiKeyResource, m =>
+            {
+                m.LastTestedAt = DateTime.UtcNow;
+                m.TestStatus = CredentialTestStatus.Failed;
+            });
+
+            return CredentialTestResult.CreateFailure(errorMessage);
+        }
+        catch (Exception ex)
+        {
+            return CredentialTestResult.CreateFailure($"Error: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Tests OpenFIGI API key.
+    /// </summary>
+    public async Task<CredentialTestResult> TestOpenFigiApiKeyAsync()
+    {
+        var apiKey = GetOpenFigiApiKey();
+        if (string.IsNullOrEmpty(apiKey))
+        {
+            return CredentialTestResult.CreateFailure("No OpenFIGI API key stored");
+        }
+
+        var sw = Stopwatch.StartNew();
+
+        try
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Post, "https://api.openfigi.com/v3/mapping");
+            request.Headers.Add("X-OPENFIGI-APIKEY", apiKey);
+            request.Content = new StringContent(
+                "[{\"idType\":\"TICKER\",\"idValue\":\"AAPL\"}]",
+                Encoding.UTF8,
+                "application/json");
+
+            var response = await _httpClient.SendAsync(request);
+            sw.Stop();
+
+            if (response.IsSuccessStatusCode)
+            {
+                await UpdateMetadataAsync(OpenFigiApiKeyResource, m =>
+                {
+                    m.LastTestedAt = DateTime.UtcNow;
+                    m.LastAuthenticatedAt = DateTime.UtcNow;
+                    m.TestStatus = CredentialTestStatus.Success;
+                    m.CredentialType = CredentialType.ApiKey;
+                });
+
+                return new CredentialTestResult
+                {
+                    Success = true,
+                    Message = "API key validated successfully",
+                    ResponseTimeMs = sw.ElapsedMilliseconds,
+                    TestedAt = DateTime.UtcNow,
+                    ServerInfo = "OpenFIGI API v3"
+                };
+            }
+
+            await UpdateMetadataAsync(OpenFigiApiKeyResource, m =>
+            {
+                m.LastTestedAt = DateTime.UtcNow;
+                m.TestStatus = CredentialTestStatus.Failed;
+            });
+
+            return CredentialTestResult.CreateFailure($"API returned {(int)response.StatusCode}");
+        }
+        catch (Exception ex)
+        {
+            return CredentialTestResult.CreateFailure($"Error: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Tests a credential by its resource name.
+    /// </summary>
+    public async Task<CredentialTestResult> TestCredentialAsync(string resource)
+    {
+        return resource switch
+        {
+            var r when r.Contains("Alpaca") => await TestAlpacaCredentialsAsync(),
+            var r when r.Contains("NasdaqDataLink") => await TestNasdaqApiKeyAsync(),
+            var r when r.Contains("OpenFigi") => await TestOpenFigiApiKeyAsync(),
+            _ => CredentialTestResult.CreateFailure($"No test available for {resource}")
+        };
+    }
+
+    /// <summary>
+    /// Tests all stored credentials and returns results.
+    /// </summary>
+    public async Task<Dictionary<string, CredentialTestResult>> TestAllCredentialsAsync()
+    {
+        var results = new Dictionary<string, CredentialTestResult>();
+        var resources = GetAllStoredResources();
+
+        foreach (var resource in resources)
+        {
+            results[resource] = await TestCredentialAsync(resource);
+        }
+
+        return results;
+    }
+
+    #endregion
+
+    #region OAuth Token Management
+
+    /// <summary>
+    /// Saves an OAuth token with metadata for expiration tracking.
+    /// </summary>
+    public async Task SaveOAuthTokenAsync(
+        string providerId,
+        string accessToken,
+        string? refreshToken,
+        DateTime expiresAt,
+        string? tokenEndpoint = null,
+        string? clientId = null)
+    {
+        var resource = $"{OAuthTokenResource}.{providerId}";
+        SaveCredential(resource, "oauth", accessToken);
+
+        await UpdateMetadataAsync(resource, m =>
+        {
+            m.CredentialType = CredentialType.OAuth2Token;
+            m.ExpiresAt = expiresAt;
+            m.RefreshToken = refreshToken;
+            m.TokenEndpoint = tokenEndpoint;
+            m.ClientId = clientId;
+            m.AutoRefreshEnabled = !string.IsNullOrEmpty(refreshToken);
+            m.CreatedAt = DateTime.UtcNow;
+        });
+    }
+
+    /// <summary>
+    /// Gets an OAuth access token for a provider.
+    /// </summary>
+    public string? GetOAuthToken(string providerId)
+    {
+        var resource = $"{OAuthTokenResource}.{providerId}";
+        var credential = GetCredential(resource);
+        return credential?.Password;
+    }
+
+    /// <summary>
+    /// Refreshes an OAuth token using the stored refresh token.
+    /// </summary>
+    public async Task<bool> RefreshOAuthTokenAsync(string providerId)
+    {
+        var resource = $"{OAuthTokenResource}.{providerId}";
+        var metadata = GetMetadata(resource);
+
+        if (metadata == null || string.IsNullOrEmpty(metadata.RefreshToken) ||
+            string.IsNullOrEmpty(metadata.TokenEndpoint))
+        {
+            return false;
+        }
+
+        try
+        {
+            await UpdateMetadataAsync(resource, m => m.LastRefreshAttemptAt = DateTime.UtcNow);
+
+            var content = new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["grant_type"] = "refresh_token",
+                ["refresh_token"] = metadata.RefreshToken,
+                ["client_id"] = metadata.ClientId ?? ""
+            });
+
+            var response = await _httpClient.PostAsync(metadata.TokenEndpoint, content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var json = await response.Content.ReadAsStringAsync();
+                var tokenResponse = JsonSerializer.Deserialize<OAuthTokenResponse>(json);
+
+                if (tokenResponse != null)
+                {
+                    await SaveOAuthTokenAsync(
+                        providerId,
+                        tokenResponse.AccessToken,
+                        tokenResponse.RefreshToken ?? metadata.RefreshToken,
+                        tokenResponse.GetExpirationTime(),
+                        metadata.TokenEndpoint,
+                        metadata.ClientId);
+
+                    await UpdateMetadataAsync(resource, m =>
+                    {
+                        m.RefreshFailureCount = 0;
+                        m.LastAuthenticatedAt = DateTime.UtcNow;
+                    });
+
+                    return true;
+                }
+            }
+
+            await UpdateMetadataAsync(resource, m => m.RefreshFailureCount++);
+            return false;
+        }
+        catch (Exception)
+        {
+            await UpdateMetadataAsync(resource, m => m.RefreshFailureCount++);
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Checks if an OAuth token needs refresh and refreshes if necessary.
+    /// </summary>
+    public async Task<bool> EnsureTokenValidAsync(string providerId, int refreshThresholdMinutes = 5)
+    {
+        var resource = $"{OAuthTokenResource}.{providerId}";
+        var metadata = GetMetadata(resource);
+
+        if (metadata == null)
+            return false;
+
+        if (!metadata.ExpiresAt.HasValue)
+            return true; // No expiration, assume valid
+
+        var remaining = metadata.ExpiresAt.Value - DateTime.UtcNow;
+        if (remaining.TotalMinutes > refreshThresholdMinutes)
+            return true; // Token still valid
+
+        if (remaining.TotalSeconds <= 0)
+        {
+            // Token expired, try to refresh
+            if (metadata.AutoRefreshEnabled)
+            {
+                return await RefreshOAuthTokenAsync(providerId);
+            }
+            return false;
+        }
+
+        // Token expiring soon, proactively refresh if enabled
+        if (metadata.AutoRefreshEnabled)
+        {
+            return await RefreshOAuthTokenAsync(providerId);
+        }
+
+        return true; // Still valid but will expire soon
+    }
+
+    #endregion
+}
+
+/// <summary>
+/// Event args for credential metadata updates.
+/// </summary>
+public class CredentialMetadataEventArgs : EventArgs
+{
+    public string Resource { get; }
+    public CredentialMetadata Metadata { get; }
+
+    public CredentialMetadataEventArgs(string resource, CredentialMetadata metadata)
+    {
+        Resource = resource;
+        Metadata = metadata;
+    }
+}
+
+/// <summary>
+/// Event args for credential expiration warnings.
+/// </summary>
+public class CredentialExpirationEventArgs : EventArgs
+{
+    public string Resource { get; }
+    public DateTime ExpiresAt { get; }
+    public TimeSpan TimeRemaining => ExpiresAt - DateTime.UtcNow;
+
+    public CredentialExpirationEventArgs(string resource, DateTime expiresAt)
+    {
+        Resource = resource;
+        ExpiresAt = expiresAt;
+    }
 }
