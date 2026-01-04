@@ -23,6 +23,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\MarketDataCollector.Contracts\MarketDataCollector.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Include="Assets\**\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
