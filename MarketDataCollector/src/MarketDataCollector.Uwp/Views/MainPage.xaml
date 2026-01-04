@@ -40,6 +40,11 @@
                     <FontIcon Glyph="&#xE943;" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
+            <NavigationViewItem Content="Plugins" Tag="Plugins">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xEA86;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
             <NavigationViewItem Content="Storage" Tag="Storage">
                 <NavigationViewItem.Icon>
                     <FontIcon Glyph="&#xE8B7;" />
