@@ -488,4 +488,4 @@ The system includes several high-performance features:
 
 **Version:** 1.5.0
 **Last Updated:** 2026-01-04
-**See Also:** [c4-diagrams.md](c4-diagrams.md) | [domains.md](domains.md) | [why-this-architecture.md](why-this-architecture.md) | [Microservices README](../src/Microservices/README.md) | [PROVIDER_MANAGEMENT_ARCHITECTURE.md](PROVIDER_MANAGEMENT_ARCHITECTURE.md) | [FSHARP_INTEGRATION.md](FSHARP_INTEGRATION.md)
+**See Also:** [c4-diagrams.md](c4-diagrams.md) | [domains.md](domains.md) | [why-this-architecture.md](why-this-architecture.md) | [Microservices README](../../src/Microservices/README.md) | [provider-management.md](provider-management.md) | [F# Integration](../integrations/fsharp-integration.md)

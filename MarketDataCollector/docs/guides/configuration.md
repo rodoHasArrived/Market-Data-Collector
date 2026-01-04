@@ -618,6 +618,6 @@ The following API endpoints are available for programmatic configuration:
 
 ---
 
-**Version:** 1.4.0
+**Version:** 1.5.0
 **Last Updated:** 2026-01-04
 **See Also:** [Getting Started](getting-started.md) | [Troubleshooting](troubleshooting.md) | [Operator Runbook](operator-runbook.md)
