@@ -27,7 +27,7 @@ Copy the sample configuration file:
 cp appsettings.sample.json appsettings.json
 ```
 
-Edit `appsettings.json` with your settings. See [CONFIGURATION.md](CONFIGURATION.md) for detailed options.
+Edit `appsettings.json` with your settings. See [Configuration Guide](configuration.md) for detailed options.
 
 ### 3. Run a Smoke Test
 
@@ -253,10 +253,10 @@ dotnet run -- --replay ./data
 
 ## Next Steps
 
-- Read [CONFIGURATION.md](CONFIGURATION.md) for all configuration options
-- Check [TROUBLESHOOTING.md](TROUBLESHOOTING.md) if you encounter issues
-- Review [architecture.md](architecture.md) for system design details
-- See [operator-runbook.md](operator-runbook.md) for production deployment
+- Read [Configuration Guide](configuration.md) for all configuration options
+- Check [Troubleshooting](troubleshooting.md) if you encounter issues
+- Review [Architecture](../architecture/overview.md) for system design details
+- See [Operator Runbook](operator-runbook.md) for production deployment
 
 ## Common Issues
 
@@ -272,10 +272,10 @@ Set your Alpaca credentials in `appsettings.json` or via environment variables.
 3. Verify the port number matches
 4. Check firewall settings
 
-For more issues, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
+For more issues, see [Troubleshooting](troubleshooting.md).
 
 ---
 
 **Version:** 1.4.0
 **Last Updated:** 2026-01-04
-**See Also:** [HELP.md](../HELP.md) | [CONFIGURATION.md](CONFIGURATION.md) | [architecture.md](architecture.md) | [lean-integration.md](lean-integration.md)
+**See Also:** [HELP.md](../../HELP.md) | [Configuration](configuration.md) | [Architecture](../architecture/overview.md) | [Lean Integration](../integrations/lean-integration.md)

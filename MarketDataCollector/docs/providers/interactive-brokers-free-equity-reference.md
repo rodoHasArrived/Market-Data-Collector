@@ -405,4 +405,4 @@ def error(self, reqId, errorCode, errorString, advancedOrderRejectJson): pass
 **Version:** 1.0.0
 **Last Updated:** 2026-01-03
 **TWS API Version:** 10.19+
-**See Also:** [interactive-brokers-setup.md](interactive-brokers-setup.md) | [CONFIGURATION.md](CONFIGURATION.md) | [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
+**See Also:** [IB Setup](interactive-brokers-setup.md) | [Configuration](../guides/configuration.md) | [Troubleshooting](../guides/troubleshooting.md)

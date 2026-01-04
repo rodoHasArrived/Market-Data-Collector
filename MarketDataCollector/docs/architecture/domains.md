@@ -255,4 +255,4 @@ record Heartbeat(
 
 **Version:** 1.4.0
 **Last Updated:** 2026-01-04
-**See Also:** [architecture.md](architecture.md) | [c4-diagrams.md](c4-diagrams.md) | [why-this-architecture.md](why-this-architecture.md)
+**See Also:** [Architecture Overview](overview.md) | [C4 Diagrams](c4-diagrams.md) | [Why This Architecture](why-this-architecture.md)

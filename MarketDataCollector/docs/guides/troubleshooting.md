@@ -512,7 +512,7 @@ dotnet run -- --http-port 8080
 If you're still experiencing issues:
 
 1. **Check the logs** - Most errors include detailed context
-2. **Review documentation** - [architecture.md](architecture.md), [operator-runbook.md](operator-runbook.md)
+2. **Review documentation** - [Architecture](../architecture/overview.md), [Operator Runbook](operator-runbook.md)
 3. **Run self-tests** - `dotnet run -- --selftest`
 4. **Check backfill status** - `GET /api/backfill/status`
 5. **File an issue** - Include logs, configuration (without secrets), and steps to reproduce
@@ -521,4 +521,4 @@ If you're still experiencing issues:
 
 **Version:** 1.4.0
 **Last Updated:** 2026-01-04
-**See Also:** [GETTING_STARTED.md](GETTING_STARTED.md) | [CONFIGURATION.md](CONFIGURATION.md) | [operator-runbook.md](operator-runbook.md) | [lean-integration.md](lean-integration.md)
+**See Also:** [Getting Started](getting-started.md) | [Configuration](configuration.md) | [Operator Runbook](operator-runbook.md) | [Lean Integration](../integrations/lean-integration.md)
