@@ -111,13 +111,15 @@ Multiple storage strategies:
 
 ## Known Issues
 
-### Issue 1: UWP API Endpoint Mismatch (MEDIUM PRIORITY)
+### ~~Issue 1: UWP API Endpoint Mismatch~~ (RESOLVED)
 
-**Location:** `src/MarketDataCollector.Uwp/Services/StatusService.cs:25`
+**Status:** ✅ Fixed in v1.5.0
 
-**Problem:** The UWP application expects API endpoints at `/api/status`, but the core `StatusHttpServer` uses `/status` without the `/api/` prefix.
+**Resolution:** The `StatusHttpServer.cs` now supports both `/api/*` and `/*` routes. The code strips the `/api/` prefix when present, allowing the UWP app to use `/api/status` while maintaining backward compatibility with `/status`.
 
-**Fix Required:** Update `StatusHttpServer.cs` to support `/api/*` routes, OR update `StatusService.cs` to use `/status` endpoint.
+**Files Updated:**
+- `src/MarketDataCollector/Application/Monitoring/StatusHttpServer.cs` - Added `/api/*` route prefix handling
+- `src/MarketDataCollector.Uwp/Services/StatusService.cs` - Uses `/api/status` endpoint
 
 ### Issue 2: UWP Project Missing Core Library Reference (LOW PRIORITY)
 
@@ -211,9 +213,14 @@ When `IBAPI` is NOT defined:
 
 ### Legacy Status File (`--serve-status`)
 
-**Status:** Deprecated, use HTTP server instead
+**Status:** ⚠️ Deprecated as of v1.5.0
 
-**Recommendation:** Use `--http-port 8080` instead of `--serve-status`
+**Reason:** The file-based status approach has been superseded by the HTTP monitoring server which provides real-time access to status, metrics, and health endpoints.
+
+**Migration:** Replace `--serve-status` with `--http-port 8080` and access:
+- `/status` for JSON status
+- `/metrics` for Prometheus metrics
+- `/health` for health checks
 
 ---
 

@@ -8,7 +8,7 @@ A high-performance, cross-platform market data collection system for real-time a
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue)](https://www.docker.com/)
 [![License](https://img.shields.io/badge/license-See%20LICENSE-green)](LICENSE)
 
-**Status**: Production Ready | **Version**: 1.4.0 | **Last Updated**: 2026-01-04
+**Status**: Production Ready | **Version**: 1.5.0 | **Last Updated**: 2026-01-04
 
 ---
 
@@ -141,14 +141,14 @@ Comprehensive documentation is available in the `MarketDataCollector/docs/` dire
 
 - **[MarketDataCollector/README.md](MarketDataCollector/README.md)** - Product overview, CLI/UI usage, and configuration highlights
 - **[MarketDataCollector/HELP.md](MarketDataCollector/HELP.md)** - Comprehensive user guide with troubleshooting and FAQ
-- **[docs/GETTING_STARTED.md](MarketDataCollector/docs/GETTING_STARTED.md)** - End-to-end setup for local development
-- **[docs/CONFIGURATION.md](MarketDataCollector/docs/CONFIGURATION.md)** - Detailed explanation of every setting including backfill
-- **[docs/architecture.md](MarketDataCollector/docs/architecture.md)** - System architecture and design
-- **[docs/operator-runbook.md](MarketDataCollector/docs/operator-runbook.md)** - Operations guide and production deployment
-- **[docs/domains.md](MarketDataCollector/docs/domains.md)** - Event contracts and domain models
-- **[docs/c4-diagrams.md](MarketDataCollector/docs/c4-diagrams.md)** - System diagrams
-- **[docs/lean-integration.md](MarketDataCollector/docs/lean-integration.md)** - QuantConnect Lean integration guide and examples
-- **[docs/STORAGE_ORGANIZATION_DESIGN.md](MarketDataCollector/docs/STORAGE_ORGANIZATION_DESIGN.md)** - Advanced storage organization and data management strategies
+- **[docs/guides/getting-started.md](MarketDataCollector/docs/guides/getting-started.md)** - End-to-end setup for local development
+- **[docs/guides/configuration.md](MarketDataCollector/docs/guides/configuration.md)** - Detailed explanation of every setting including backfill
+- **[docs/architecture/overview.md](MarketDataCollector/docs/architecture/overview.md)** - System architecture and design
+- **[docs/guides/operator-runbook.md](MarketDataCollector/docs/guides/operator-runbook.md)** - Operations guide and production deployment
+- **[docs/architecture/domains.md](MarketDataCollector/docs/architecture/domains.md)** - Event contracts and domain models
+- **[docs/architecture/c4-diagrams.md](MarketDataCollector/docs/architecture/c4-diagrams.md)** - System diagrams
+- **[docs/integrations/lean-integration.md](MarketDataCollector/docs/integrations/lean-integration.md)** - QuantConnect Lean integration guide and examples
+- **[docs/architecture/storage-design.md](MarketDataCollector/docs/architecture/storage-design.md)** - Advanced storage organization and data management strategies
 
 ## Supported Data Sources
 

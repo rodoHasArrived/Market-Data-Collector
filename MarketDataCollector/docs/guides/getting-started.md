@@ -102,7 +102,7 @@ dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --sel
 
 4. **Run with IB**
    ```bash
-   dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --serve-status
+   dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --http-port 8080
    ```
 
 See [interactive-brokers-setup.md](interactive-brokers-setup.md) for detailed IB configuration.
@@ -143,15 +143,15 @@ See [interactive-brokers-setup.md](interactive-brokers-setup.md) for detailed IB
 
 3. **Run with Alpaca**
    ```bash
-   dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --serve-status
+   dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --http-port 8080
    ```
 
 ## Monitoring Dashboard
 
-Start the collector with the status dashboard:
+Start the collector with the HTTP monitoring server:
 
 ```bash
-dotnet run -- --serve-status --status-port 8080
+dotnet run -- --http-port 8080
 ```
 
 Then open http://localhost:8080 in your browser to see:
@@ -201,7 +201,7 @@ The collector supports multiple operation modes via command-line arguments:
 |------|---------|-------------|
 | **Default** | `dotnet run` | Run smoke test with simulated data |
 | **Self-Test** | `--selftest` | Run internal self-tests and exit |
-| **Live Capture** | `--serve-status` | Connect to provider and capture data |
+| **Live Capture** | `--http-port N` | Connect to provider and capture data with HTTP monitoring |
 | **Web Dashboard** | `--ui [--http-port N]` | Start web-based dashboard UI |
 | **HTTP Monitoring** | `--http-port N` | Start HTTP monitoring server |
 | **Backfill** | `--backfill [options]` | Run historical data backfill |
@@ -212,7 +212,7 @@ The collector supports multiple operation modes via command-line arguments:
 
 ```bash
 # Production mode with all features
-dotnet run -- --serve-status --http-port 8080 --watch-config
+dotnet run -- --http-port 8080 --watch-config
 ```
 
 ## Output Data
@@ -276,6 +276,6 @@ For more issues, see [Troubleshooting](troubleshooting.md).
 
 ---
 
-**Version:** 1.4.0
+**Version:** 1.5.0
 **Last Updated:** 2026-01-04
 **See Also:** [HELP.md](../../HELP.md) | [Configuration](configuration.md) | [Architecture](../architecture/overview.md) | [Lean Integration](../integrations/lean-integration.md)

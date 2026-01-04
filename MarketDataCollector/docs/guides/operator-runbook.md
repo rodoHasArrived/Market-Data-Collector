@@ -23,8 +23,9 @@ dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --wat
 ```
 
 - `--watch-config`: Enables hot reload of `appsettings.json` (handled by `ConfigWatcher`)
-- `--http-port 8080`: Starts HTTP monitoring server on port 8080 (optional, omit to disable)
-- `--serve-status`: Writes periodic health snapshots to `data/_status/status.json` (legacy option, use HTTP server instead)
+- `--http-port 8080`: Starts HTTP monitoring server on port 8080 (recommended for production monitoring)
+
+> **Note:** The `--serve-status` option is deprecated. Use `--http-port` instead for HTTP-based monitoring.
 
 ### UI
 ```bash
@@ -126,14 +127,11 @@ Access counters via `Metrics` static class in code:
 - `Metrics.Dropped`: Events dropped due to backpressure
 - `Metrics.Integrity`: Integrity events emitted
 
-### Legacy Status File
+### Legacy Status File (Deprecated)
 
-When `--serve-status` is enabled, periodic health snapshots are written to:
-```
-data/_status/status.json
-```
+> **Deprecated:** The `--serve-status` option is deprecated as of v1.5.0. Use `--http-port` instead.
 
-Note: The HTTP monitoring server is preferred over file-based status for production deployments.
+When the legacy `--serve-status` option was used, periodic health snapshots were written to `data/_status/status.json`. This approach has been superseded by the HTTP monitoring server which provides real-time access to the same information via `/status`, `/metrics`, and `/health` endpoints.
 
 ---
 
@@ -587,6 +585,6 @@ This ensures `ContractFactory` resolves to the correct IB contract.
 
 ---
 
-**Version:** 1.4.0
+**Version:** 1.5.0
 **Last Updated:** 2026-01-04
 **See Also:** [Configuration](configuration.md) | [Troubleshooting](troubleshooting.md) | [Architecture](../architecture/overview.md) | [Lean Integration](../integrations/lean-integration.md)
