@@ -1,0 +1,328 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="MarketDataCollector.Uwp.Views.PluginsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:MarketDataCollector.Uwp.Views"
+    xmlns:models="using:MarketDataCollector.Uwp.Models"
+    xmlns:vm="using:MarketDataCollector.Uwp.ViewModels"
+    xmlns:converters="using:MarketDataCollector.Uwp.Converters"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <Page.Resources>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibility" />
+        <converters:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibility" />
+    </Page.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="24">
+        <StackPanel Spacing="24" MaxWidth="1000">
+            <!-- Header -->
+            <StackPanel Orientation="Horizontal" Spacing="12">
+                <FontIcon Glyph="&#xEA86;" FontSize="28" Foreground="{ThemeResource SystemAccentColor}" />
+                <TextBlock Text="Data Source Plugins" Style="{StaticResource TitleTextBlockStyle}" VerticalAlignment="Center" />
+            </StackPanel>
+
+            <TextBlock Text="Install, configure, and manage custom data source plugins to extend functionality."
+                       Style="{StaticResource BodyTextBlockStyle}"
+                       Foreground="{ThemeResource SystemBaseMediumColor}" />
+
+            <!-- Plugin System Status Card -->
+            <Border Style="{StaticResource CardStyle}">
+                <StackPanel Spacing="16">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon Glyph="&#xE946;" Foreground="{ThemeResource SystemAccentColor}" />
+                            <TextBlock Text="Plugin System Status" Style="{StaticResource SubtitleTextBlockStyle}" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                            <Button Content="Refresh" Click="RefreshPlugins_Click">
+                                <Button.KeyboardAccelerators>
+                                    <KeyboardAccelerator Modifiers="Control" Key="R" />
+                                </Button.KeyboardAccelerators>
+                            </Button>
+                            <Button Content="Scan Directory"
+                                    Style="{StaticResource AccentButtonStyle}"
+                                    Click="ScanDirectory_Click" />
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Status Metrics -->
+                    <Grid ColumnSpacing="24">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" Spacing="4">
+                            <TextBlock x:Name="TotalPluginsText" Text="0"
+                                       Style="{StaticResource SubheaderTextBlockStyle}"
+                                       Foreground="{ThemeResource SystemAccentColor}" />
+                            <TextBlock Text="Total Plugins" Style="{StaticResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource SystemBaseMediumColor}" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" Spacing="4">
+                            <TextBlock x:Name="ActivePluginsText" Text="0"
+                                       Style="{StaticResource SubheaderTextBlockStyle}"
+                                       Foreground="#48BB78" />
+                            <TextBlock Text="Active" Style="{StaticResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource SystemBaseMediumColor}" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2" Spacing="4">
+                            <TextBlock x:Name="ErrorPluginsText" Text="0"
+                                       Style="{StaticResource SubheaderTextBlockStyle}"
+                                       Foreground="#F56565" />
+                            <TextBlock Text="Errors" Style="{StaticResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource SystemBaseMediumColor}" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="3" Spacing="4">
+                            <TextBlock x:Name="HostVersionText" Text="1.0.0"
+                                       Style="{StaticResource SubheaderTextBlockStyle}" />
+                            <TextBlock Text="Host Version" Style="{StaticResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource SystemBaseMediumColor}" />
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Plugin Directory -->
+                    <Grid ColumnSpacing="16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Plugin Directory" Style="{StaticResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource SystemBaseMediumColor}" />
+                            <TextBlock x:Name="PluginDirectoryText" Text="plugins"
+                                       FontFamily="Consolas" IsTextSelectionEnabled="True" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12" VerticalAlignment="Bottom">
+                            <CheckBox x:Name="DirectoryWatchingCheck" Content="Watch Directory" IsChecked="True" />
+                            <CheckBox x:Name="HotReloadCheck" Content="Hot Reload" IsChecked="True" />
+                            <CheckBox x:Name="AutoLoadCheck" Content="Auto-Load New" IsChecked="True" />
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Install Plugin Card -->
+            <Border Style="{StaticResource CardStyle}">
+                <StackPanel Spacing="16">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE896;" Foreground="{ThemeResource SystemAccentColor}" />
+                        <TextBlock Text="Install Plugin" Style="{StaticResource SubtitleTextBlockStyle}" />
+                    </StackPanel>
+
+                    <InfoBar IsOpen="True" IsClosable="False" Severity="Informational"
+                             Title="Installing Plugins"
+                             Message="Browse for a .dll plugin file or drop it into the plugins directory. Compatible plugins will be detected automatically." />
+
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <Button x:Name="BrowsePluginButton"
+                                Content="Browse for Plugin..."
+                                Style="{StaticResource AccentButtonStyle}"
+                                Click="BrowsePlugin_Click" />
+                        <Button x:Name="OpenPluginFolderButton"
+                                Content="Open Plugins Folder"
+                                Click="OpenPluginFolder_Click" />
+                        <ProgressRing x:Name="InstallProgress" IsActive="False" Width="20" Height="20" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Installed Plugins List -->
+            <Border Style="{StaticResource CardStyle}">
+                <StackPanel Spacing="16">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE8F1;" Foreground="{ThemeResource SystemAccentColor}" />
+                        <TextBlock Text="Installed Plugins" Style="{StaticResource SubtitleTextBlockStyle}" />
+                        <TextBlock x:Name="PluginCountText" Text="(0)"
+                                   Foreground="{ThemeResource SystemBaseMediumColor}"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
+
+                    <ListView x:Name="PluginsList"
+                              SelectionMode="Single"
+                              SelectionChanged="PluginsList_SelectionChanged"
+                              MaxHeight="500">
+                        <ListView.ItemTemplate>
+                            <DataTemplate x:DataType="models:PluginDisplayInfo">
+                                <Grid Padding="12" ColumnSpacing="12"
+                                      Background="{ThemeResource SystemFillColorNeutralBackgroundBrush}"
+                                      CornerRadius="8" Margin="0,4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Enable Toggle -->
+                                    <ToggleSwitch Grid.Column="0"
+                                                  IsOn="{x:Bind IsEnabled, Mode=TwoWay}"
+                                                  OnContent=""
+                                                  OffContent=""
+                                                  MinWidth="50"
+                                                  Toggled="PluginToggle_Toggled" />
+
+                                    <!-- Plugin Info -->
+                                    <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <TextBlock Text="{x:Bind Name}" FontWeight="SemiBold" FontSize="14" />
+                                            <Border Background="{ThemeResource SystemAccentColorLight2}"
+                                                    CornerRadius="4" Padding="6,2">
+                                                <TextBlock Text="{x:Bind Version}" FontSize="11" />
+                                            </Border>
+                                            <Border CornerRadius="4" Padding="6,2"
+                                                    Background="{ThemeResource SystemFillColorNeutralBrush}">
+                                                <TextBlock Text="{x:Bind Status}" FontSize="11" />
+                                            </Border>
+                                            <Border CornerRadius="4" Padding="6,2"
+                                                    Background="{ThemeResource SystemFillColorNeutralBrush}">
+                                                <TextBlock Text="{x:Bind DataSourceType}" FontSize="11"
+                                                           Foreground="{ThemeResource SystemBaseMediumColor}" />
+                                            </Border>
+                                        </StackPanel>
+                                        <TextBlock Text="{x:Bind Description}"
+                                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                                   Foreground="{ThemeResource SystemBaseMediumColor}"
+                                                   TextTrimming="CharacterEllipsis" />
+                                        <StackPanel Orientation="Horizontal" Spacing="16">
+                                            <TextBlock Style="{StaticResource CaptionTextBlockStyle}"
+                                                       Foreground="{ThemeResource SystemBaseMediumColor}">
+                                                <Run Text="Author: " />
+                                                <Run Text="{x:Bind Author}" />
+                                            </TextBlock>
+                                            <TextBlock Style="{StaticResource CaptionTextBlockStyle}"
+                                                       Foreground="{ThemeResource SystemBaseMediumColor}">
+                                                <Run Text="Priority: " />
+                                                <Run Text="{x:Bind Priority}" />
+                                            </TextBlock>
+                                            <TextBlock Style="{StaticResource CaptionTextBlockStyle}"
+                                                       Foreground="{ThemeResource SystemBaseMediumColor}">
+                                                <Run Text="Permissions: " />
+                                                <Run Text="{x:Bind PermissionsText}" />
+                                            </TextBlock>
+                                        </StackPanel>
+                                    </StackPanel>
+
+                                    <!-- Actions -->
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                        <Button Content="Reload"
+                                                Tag="{x:Bind PluginId}"
+                                                Click="ReloadPlugin_Click"
+                                                ToolTipService.ToolTip="Hot-reload this plugin" />
+                                        <Button Content="Configure"
+                                                Tag="{x:Bind PluginId}"
+                                                Click="ConfigurePlugin_Click"
+                                                ToolTipService.ToolTip="Open plugin configuration" />
+                                    </StackPanel>
+
+                                    <!-- Unload Button -->
+                                    <Button Grid.Column="3"
+                                            Content="Unload"
+                                            Tag="{x:Bind PluginId}"
+                                            Click="UnloadPlugin_Click"
+                                            VerticalAlignment="Center"
+                                            ToolTipService.ToolTip="Remove this plugin" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+
+                    <TextBlock x:Name="NoPluginsText"
+                               Text="No plugins installed. Click 'Browse for Plugin...' or scan the plugins directory."
+                               Style="{StaticResource BodyTextBlockStyle}"
+                               Foreground="{ThemeResource SystemBaseMediumColor}"
+                               Visibility="Collapsed"
+                               HorizontalAlignment="Center"
+                               Margin="0,24" />
+                </StackPanel>
+            </Border>
+
+            <!-- Plugin Details Panel (shows when a plugin is selected) -->
+            <Border x:Name="PluginDetailsPanel" Style="{StaticResource CardStyle}" Visibility="Collapsed">
+                <StackPanel Spacing="16">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE946;" Foreground="{ThemeResource SystemAccentColor}" />
+                        <TextBlock x:Name="DetailsPluginName" Text="Plugin Details"
+                                   Style="{StaticResource SubtitleTextBlockStyle}" />
+                    </StackPanel>
+
+                    <Grid ColumnSpacing="24" RowSpacing="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Grid.Row="0" Grid.Column="0" Spacing="4">
+                            <TextBlock Text="Plugin ID" Style="{StaticResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource SystemBaseMediumColor}" />
+                            <TextBlock x:Name="DetailsPluginId" Text="-" FontFamily="Consolas" IsTextSelectionEnabled="True" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="0" Grid.Column="1" Spacing="4">
+                            <TextBlock Text="Version" Style="{StaticResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource SystemBaseMediumColor}" />
+                            <TextBlock x:Name="DetailsVersion" Text="-" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="1" Grid.Column="0" Spacing="4">
+                            <TextBlock Text="Data Source Type" Style="{StaticResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource SystemBaseMediumColor}" />
+                            <TextBlock x:Name="DetailsDataSourceType" Text="-" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="1" Grid.Column="1" Spacing="4">
+                            <TextBlock Text="Category" Style="{StaticResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource SystemBaseMediumColor}" />
+                            <TextBlock x:Name="DetailsCategory" Text="-" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Spacing="4">
+                            <TextBlock Text="Assembly Path" Style="{StaticResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource SystemBaseMediumColor}" />
+                            <TextBlock x:Name="DetailsAssemblyPath" Text="-" FontFamily="Consolas"
+                                       IsTextSelectionEnabled="True" TextWrapping="Wrap" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Spacing="4">
+                            <TextBlock Text="Required Permissions" Style="{StaticResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource SystemBaseMediumColor}" />
+                            <TextBlock x:Name="DetailsPermissions" Text="-" />
+                        </StackPanel>
+                    </Grid>
+
+                    <Button Content="Close Details" Click="CloseDetails_Click" />
+                </StackPanel>
+            </Border>
+
+            <!-- Status InfoBar -->
+            <InfoBar x:Name="StatusInfoBar" IsOpen="False" IsClosable="True" />
+
+            <!-- Loading Overlay -->
+            <ProgressRing x:Name="PageLoadingProgress" IsActive="False" Width="40" Height="40"
+                          HorizontalAlignment="Center" />
+        </StackPanel>
+    </ScrollViewer>
+</Page>
