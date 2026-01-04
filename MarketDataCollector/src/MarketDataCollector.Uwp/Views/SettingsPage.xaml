@@ -200,30 +200,93 @@
                                  Title="Windows Credential Manager"
                                  Message="All API keys and credentials are securely stored in Windows Credential Manager, not in config files." />
 
+                        <!-- Expiration Warning Banner -->
+                        <InfoBar x:Name="CredentialExpirationWarning"
+                                 IsOpen="False"
+                                 IsClosable="True"
+                                 Severity="Warning"
+                                 Title="Credentials Expiring Soon"
+                                 Message="One or more credentials will expire soon. Test and refresh them to avoid service interruption." />
+
                         <TextBlock Text="Stored credentials for this application:"
                                    Style="{StaticResource CaptionTextBlockStyle}"
                                    Foreground="{ThemeResource SystemBaseMediumColor}" />
 
                         <ListView x:Name="StoredCredentialsList"
                                   SelectionMode="None"
-                                  MaxHeight="200">
+                                  MaxHeight="300">
                             <ListView.ItemTemplate>
                                 <DataTemplate>
-                                    <Grid Padding="8,4" ColumnSpacing="16">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
+                                    <Border Background="{ThemeResource SystemFillColorNeutralBackgroundBrush}"
+                                            CornerRadius="8" Padding="12" Margin="0,4">
+                                        <Grid ColumnSpacing="12">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
 
-                                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
-                                            <TextBlock Text="{Binding Status}"
-                                                       Style="{StaticResource CaptionTextBlockStyle}"
-                                                       Foreground="{ThemeResource SystemBaseMediumColor}" />
-                                        </StackPanel>
-                                        <Button Grid.Column="1" Content="Remove" Tag="{Binding Name}"
-                                                Click="RemoveCredential_Click" />
-                                    </Grid>
+                                            <!-- Status Indicator -->
+                                            <Ellipse Grid.Column="0" Width="12" Height="12"
+                                                     VerticalAlignment="Center"
+                                                     Fill="{Binding TestStatusColor}" />
+
+                                            <!-- Credential Info -->
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                                                    <Border Background="{Binding TypeBadgeColor}"
+                                                            CornerRadius="4" Padding="6,2"
+                                                            Visibility="{Binding TypeBadgeVisibility}">
+                                                        <TextBlock Text="{Binding TypeBadge}"
+                                                                   FontSize="10"
+                                                                   Foreground="White" />
+                                                    </Border>
+                                                </StackPanel>
+                                                <TextBlock Text="{Binding Status}"
+                                                           Style="{StaticResource CaptionTextBlockStyle}"
+                                                           Foreground="{ThemeResource SystemBaseMediumColor}" />
+                                                <StackPanel Orientation="Horizontal" Spacing="12"
+                                                            Visibility="{Binding HasMetadata}">
+                                                    <StackPanel Orientation="Horizontal" Spacing="4"
+                                                                Visibility="{Binding HasExpiration}">
+                                                        <FontIcon Glyph="&#xE823;" FontSize="12"
+                                                                  Foreground="{Binding ExpirationColor}" />
+                                                        <TextBlock Text="{Binding ExpirationDisplay}"
+                                                                   FontSize="11"
+                                                                   Foreground="{Binding ExpirationColor}" />
+                                                    </StackPanel>
+                                                    <StackPanel Orientation="Horizontal" Spacing="4"
+                                                                Visibility="{Binding HasLastAuth}">
+                                                        <FontIcon Glyph="&#xE8FB;" FontSize="12"
+                                                                  Foreground="{ThemeResource SystemBaseMediumColor}" />
+                                                        <TextBlock Text="{Binding LastAuthDisplay}"
+                                                                   FontSize="11"
+                                                                   Foreground="{ThemeResource SystemBaseMediumColor}" />
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </StackPanel>
+
+                                            <!-- Actions -->
+                                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8"
+                                                        VerticalAlignment="Center">
+                                                <Button Content="Test" Tag="{Binding Resource}"
+                                                        Click="TestCredential_Click"
+                                                        ToolTipService.ToolTip="Test this credential" />
+                                                <Button Visibility="{Binding RefreshButtonVisibility}"
+                                                        Tag="{Binding Resource}"
+                                                        Click="RefreshCredential_Click"
+                                                        ToolTipService.ToolTip="Refresh OAuth token">
+                                                    <FontIcon Glyph="&#xE72C;" FontSize="14" />
+                                                </Button>
+                                                <Button Tag="{Binding Name}"
+                                                        Click="RemoveCredential_Click"
+                                                        ToolTipService.ToolTip="Remove this credential">
+                                                    <FontIcon Glyph="&#xE74D;" FontSize="14" />
+                                                </Button>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
                                 </DataTemplate>
                             </ListView.ItemTemplate>
                         </ListView>
@@ -233,8 +296,52 @@
                                    Visibility="Collapsed"
                                    Foreground="{ThemeResource SystemBaseMediumColor}" />
 
-                        <Button Content="Clear All Credentials"
-                                Click="ClearAllCredentials_Click" />
+                        <!-- Credential Testing Status -->
+                        <Border x:Name="TestingStatusPanel" Visibility="Collapsed"
+                                Background="{ThemeResource SystemFillColorNeutralBackgroundBrush}"
+                                CornerRadius="8" Padding="12">
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <ProgressRing x:Name="TestingProgress" IsActive="True" Width="20" Height="20" />
+                                <TextBlock x:Name="TestingStatusText" Text="Testing credentials..."
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Test Result Display -->
+                        <InfoBar x:Name="TestResultInfoBar"
+                                 IsOpen="False"
+                                 IsClosable="True" />
+
+                        <!-- Action Buttons -->
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Button Click="TestAllCredentials_Click">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <FontIcon Glyph="&#xE9D5;" FontSize="16" />
+                                    <TextBlock Text="Test All Credentials" />
+                                </StackPanel>
+                            </Button>
+                            <Button Content="Clear All Credentials"
+                                    Click="ClearAllCredentials_Click" />
+                        </StackPanel>
+
+                        <!-- OAuth Auto-Refresh Settings -->
+                        <Border Background="{ThemeResource SystemFillColorNeutralBackgroundBrush}"
+                                CornerRadius="8" Padding="12" Margin="0,8,0,0">
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="OAuth Token Management"
+                                           Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                <ToggleSwitch x:Name="AutoRefreshToggle"
+                                              Header="Auto-refresh OAuth tokens"
+                                              OffContent="Manual refresh required"
+                                              OnContent="Tokens refreshed automatically"
+                                              IsOn="True"
+                                              Toggled="AutoRefreshToggle_Toggled" />
+                                <TextBlock Text="When enabled, OAuth tokens will be automatically refreshed before they expire."
+                                           Style="{StaticResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource SystemBaseMediumColor}"
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
                 </Border>
 
@@ -399,6 +506,7 @@
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
 
                             <TextBlock Grid.Row="0" Grid.Column="0" Text="Config Status" />
@@ -413,15 +521,35 @@
                                 <TextBlock x:Name="CredentialsStatusText" Text="3 stored" FontWeight="SemiBold" />
                             </StackPanel>
 
-                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Collector" />
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Last Auth" />
                             <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                                <Ellipse x:Name="LastAuthStatusDot" Width="8" Height="8" Fill="#48BB78" />
+                                <TextBlock x:Name="LastAuthText" Text="Never" FontWeight="SemiBold" />
+                            </StackPanel>
+
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Collector" />
+                            <StackPanel Grid.Row="3" Grid.Column="1" Orientation="Horizontal" Spacing="4">
                                 <Ellipse x:Name="CollectorStatusDot" Width="8" Height="8" Fill="#48BB78" />
                                 <TextBlock x:Name="CollectorStatusText" Text="Running" FontWeight="SemiBold" />
                             </StackPanel>
 
-                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Last Sync" />
-                            <TextBlock x:Name="LastSyncText" Grid.Row="3" Grid.Column="1" Text="2 min ago" FontWeight="SemiBold" />
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Last Sync" />
+                            <TextBlock x:Name="LastSyncText" Grid.Row="4" Grid.Column="1" Text="2 min ago" FontWeight="SemiBold" />
                         </Grid>
+
+                        <!-- Expiring Credentials Warning -->
+                        <Border x:Name="ExpiringCredentialsPanel" Visibility="Collapsed"
+                                Background="#FFF3CD" CornerRadius="4" Padding="8" Margin="0,4,0,0">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <FontIcon Glyph="&#xE7BA;" FontSize="14" Foreground="#856404" />
+                                    <TextBlock x:Name="ExpiringCredentialsText"
+                                               Text="1 credential expiring soon"
+                                               FontSize="12" FontWeight="SemiBold"
+                                               Foreground="#856404" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
                 </Border>
 

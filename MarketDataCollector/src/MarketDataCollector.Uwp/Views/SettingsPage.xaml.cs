@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
+using MarketDataCollector.Uwp.Models;
 using MarketDataCollector.Uwp.Services;
 using Windows.Storage.Pickers;
 using Windows.UI;
@@ -17,24 +19,45 @@ using Microsoft.Windows.AppNotifications.Builder;
 namespace MarketDataCollector.Uwp.Views;
 
 /// <summary>
-/// Enhanced settings page with notifications, config export/import, and system status.
+/// Enhanced settings page with notifications, config export/import, system status,
+/// and comprehensive credential management with testing and expiration tracking.
 /// </summary>
 public sealed partial class SettingsPage : Page
 {
     private readonly ConfigService _configService;
     private readonly CredentialService _credentialService;
-    private readonly ObservableCollection<CredentialInfo> _storedCredentials = new();
+    private readonly OAuthRefreshService _oauthRefreshService;
+    private readonly ObservableCollection<CredentialDisplayInfo> _storedCredentials = new();
     private readonly ObservableCollection<ActivityItem> _recentActivity = new();
+
+    // Colors for status indicators
+    private static readonly SolidColorBrush GreenBrush = new(Color.FromArgb(255, 72, 187, 120));
+    private static readonly SolidColorBrush YellowBrush = new(Color.FromArgb(255, 237, 137, 54));
+    private static readonly SolidColorBrush RedBrush = new(Color.FromArgb(255, 245, 101, 101));
+    private static readonly SolidColorBrush GrayBrush = new(Color.FromArgb(255, 160, 160, 160));
+    private static readonly SolidColorBrush BlueBrush = new(Color.FromArgb(255, 102, 126, 234));
 
     public SettingsPage()
     {
         this.InitializeComponent();
         _configService = new ConfigService();
         _credentialService = new CredentialService();
+        _oauthRefreshService = OAuthRefreshService.Instance;
+
         StoredCredentialsList.ItemsSource = _storedCredentials;
         RecentActivityList.ItemsSource = _recentActivity;
 
+        // Subscribe to credential service events
+        _credentialService.MetadataUpdated += OnCredentialMetadataUpdated;
+        _credentialService.CredentialExpiring += OnCredentialExpiring;
+
+        // Subscribe to OAuth refresh events
+        _oauthRefreshService.TokenRefreshed += OnTokenRefreshed;
+        _oauthRefreshService.TokenRefreshFailed += OnTokenRefreshFailed;
+        _oauthRefreshService.TokenExpirationWarning += OnTokenExpirationWarning;
+
         Loaded += SettingsPage_Loaded;
+        Unloaded += SettingsPage_Unloaded;
     }
 
     private void SettingsPage_Loaded(object sender, RoutedEventArgs e)
@@ -43,23 +66,33 @@ public sealed partial class SettingsPage : Page
         RefreshStoredCredentials();
         LoadRecentActivity();
         UpdateSystemStatus();
+        CheckExpiringCredentials();
+
+        // Start OAuth auto-refresh service if enabled
+        if (AutoRefreshToggle.IsOn)
+        {
+            _oauthRefreshService.Start();
+        }
+    }
+
+    private void SettingsPage_Unloaded(object sender, RoutedEventArgs e)
+    {
+        // Unsubscribe from events
+        _credentialService.MetadataUpdated -= OnCredentialMetadataUpdated;
+        _credentialService.CredentialExpiring -= OnCredentialExpiring;
+        _oauthRefreshService.TokenRefreshed -= OnTokenRefreshed;
+        _oauthRefreshService.TokenRefreshFailed -= OnTokenRefreshFailed;
+        _oauthRefreshService.TokenExpirationWarning -= OnTokenExpirationWarning;
     }
 
     private void RefreshStoredCredentials()
     {
         _storedCredentials.Clear();
 
-        var resources = _credentialService.GetAllStoredResources();
-        foreach (var resource in resources)
+        var credentials = _credentialService.GetAllCredentialsWithMetadata();
+        foreach (var cred in credentials)
         {
-            var (name, status) = resource switch
-            {
-                var r when r.Contains("Alpaca") => ("Alpaca API Credentials", "Active - Last used 2h ago"),
-                var r when r.Contains("NasdaqDataLink") => ("Nasdaq Data Link API Key", "Active"),
-                var r when r.Contains("OpenFigi") => ("OpenFIGI API Key", "Active"),
-                _ => (resource, "Active")
-            };
-            _storedCredentials.Add(new CredentialInfo { Name = name, Status = status });
+            _storedCredentials.Add(new CredentialDisplayInfo(cred));
         }
 
         if (_storedCredentials.Count == 0)
@@ -76,6 +109,69 @@ public sealed partial class SettingsPage : Page
         CredentialsStatusText.Text = _storedCredentials.Count > 0
             ? $"{_storedCredentials.Count} stored"
             : "None";
+
+        UpdateLastAuthDisplay();
+    }
+
+    private void UpdateLastAuthDisplay()
+    {
+        var credentials = _credentialService.GetAllCredentialsWithMetadata();
+        var lastAuth = credentials
+            .Where(c => c.LastAuthenticatedAt.HasValue)
+            .OrderByDescending(c => c.LastAuthenticatedAt)
+            .FirstOrDefault();
+
+        if (lastAuth?.LastAuthenticatedAt != null)
+        {
+            var elapsed = DateTime.UtcNow - lastAuth.LastAuthenticatedAt.Value;
+            if (elapsed.TotalMinutes < 1)
+            {
+                LastAuthText.Text = "Just now";
+                LastAuthStatusDot.Fill = GreenBrush;
+            }
+            else if (elapsed.TotalHours < 1)
+            {
+                LastAuthText.Text = $"{(int)elapsed.TotalMinutes}m ago";
+                LastAuthStatusDot.Fill = GreenBrush;
+            }
+            else if (elapsed.TotalDays < 1)
+            {
+                LastAuthText.Text = $"{(int)elapsed.TotalHours}h ago";
+                LastAuthStatusDot.Fill = GreenBrush;
+            }
+            else
+            {
+                LastAuthText.Text = $"{(int)elapsed.TotalDays}d ago";
+                LastAuthStatusDot.Fill = elapsed.TotalDays > 7 ? YellowBrush : GreenBrush;
+            }
+        }
+        else
+        {
+            LastAuthText.Text = "Never";
+            LastAuthStatusDot.Fill = GrayBrush;
+        }
+    }
+
+    private void CheckExpiringCredentials()
+    {
+        var expiring = _credentialService.GetExpiringCredentials();
+        if (expiring.Count > 0)
+        {
+            CredentialExpirationWarning.IsOpen = true;
+            CredentialExpirationWarning.Message = expiring.Count == 1
+                ? $"{expiring[0].Name} will expire soon. Test and refresh to avoid service interruption."
+                : $"{expiring.Count} credentials will expire soon. Test and refresh them to avoid service interruption.";
+
+            ExpiringCredentialsPanel.Visibility = Visibility.Visible;
+            ExpiringCredentialsText.Text = expiring.Count == 1
+                ? "1 credential expiring"
+                : $"{expiring.Count} credentials expiring";
+        }
+        else
+        {
+            CredentialExpirationWarning.IsOpen = false;
+            ExpiringCredentialsPanel.Visibility = Visibility.Collapsed;
+        }
     }
 
     private void LoadRecentActivity()
@@ -486,15 +582,314 @@ public sealed partial class SettingsPage : Page
         };
         await dialog.ShowAsync();
     }
+
+    #region Credential Testing
+
+    private async void TestCredential_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button button && button.Tag is string resource)
+        {
+            await TestSingleCredentialAsync(resource);
+        }
+    }
+
+    private async void TestAllCredentials_Click(object sender, RoutedEventArgs e)
+    {
+        TestingStatusPanel.Visibility = Visibility.Visible;
+        TestingStatusText.Text = "Testing all credentials...";
+        TestResultInfoBar.IsOpen = false;
+
+        var results = await _credentialService.TestAllCredentialsAsync();
+        TestingStatusPanel.Visibility = Visibility.Collapsed;
+
+        var successCount = results.Count(r => r.Value.Success);
+        var failCount = results.Count - successCount;
+
+        if (failCount == 0)
+        {
+            TestResultInfoBar.Severity = InfoBarSeverity.Success;
+            TestResultInfoBar.Title = "All Credentials Valid";
+            TestResultInfoBar.Message = $"Successfully tested {successCount} credential(s). All authentications passed.";
+        }
+        else if (successCount == 0)
+        {
+            TestResultInfoBar.Severity = InfoBarSeverity.Error;
+            TestResultInfoBar.Title = "All Credentials Failed";
+            TestResultInfoBar.Message = $"All {failCount} credential test(s) failed. Check your API keys and network connection.";
+        }
+        else
+        {
+            TestResultInfoBar.Severity = InfoBarSeverity.Warning;
+            TestResultInfoBar.Title = "Some Credentials Failed";
+            TestResultInfoBar.Message = $"{successCount} passed, {failCount} failed. Review individual results.";
+        }
+
+        TestResultInfoBar.IsOpen = true;
+        RefreshStoredCredentials();
+        UpdateSystemStatus();
+
+        // Add to activity log
+        _recentActivity.Insert(0, new ActivityItem
+        {
+            Icon = failCount == 0 ? "\uE73E" : "\uE7BA",
+            IconColor = failCount == 0 ? GreenBrush : YellowBrush,
+            Message = $"Tested {results.Count} credentials",
+            Time = "Just now"
+        });
+    }
+
+    private async Task TestSingleCredentialAsync(string resource)
+    {
+        TestingStatusPanel.Visibility = Visibility.Visible;
+        TestingStatusText.Text = $"Testing {GetFriendlyName(resource)}...";
+
+        var result = await _credentialService.TestCredentialAsync(resource);
+        TestingStatusPanel.Visibility = Visibility.Collapsed;
+
+        if (result.Success)
+        {
+            TestResultInfoBar.Severity = InfoBarSeverity.Success;
+            TestResultInfoBar.Title = "Credential Valid";
+            TestResultInfoBar.Message = $"{result.Message} (Response: {result.ResponseTimeMs}ms)";
+        }
+        else
+        {
+            TestResultInfoBar.Severity = InfoBarSeverity.Error;
+            TestResultInfoBar.Title = "Credential Test Failed";
+            TestResultInfoBar.Message = result.Message;
+        }
+
+        TestResultInfoBar.IsOpen = true;
+        RefreshStoredCredentials();
+        UpdateLastAuthDisplay();
+    }
+
+    private string GetFriendlyName(string resource)
+    {
+        return resource switch
+        {
+            var r when r.Contains("Alpaca") => "Alpaca API",
+            var r when r.Contains("NasdaqDataLink") => "Nasdaq Data Link",
+            var r when r.Contains("OpenFigi") => "OpenFIGI",
+            _ => resource
+        };
+    }
+
+    #endregion
+
+    #region OAuth Token Management
+
+    private async void RefreshCredential_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button button && button.Tag is string resource)
+        {
+            var providerId = resource.Replace($"{CredentialService.OAuthTokenResource}.", "");
+            TestingStatusPanel.Visibility = Visibility.Visible;
+            TestingStatusText.Text = $"Refreshing OAuth token...";
+
+            var success = await _oauthRefreshService.RefreshTokenAsync(providerId);
+            TestingStatusPanel.Visibility = Visibility.Collapsed;
+
+            if (success)
+            {
+                TestResultInfoBar.Severity = InfoBarSeverity.Success;
+                TestResultInfoBar.Title = "Token Refreshed";
+                TestResultInfoBar.Message = "OAuth token has been successfully refreshed.";
+            }
+            else
+            {
+                TestResultInfoBar.Severity = InfoBarSeverity.Error;
+                TestResultInfoBar.Title = "Refresh Failed";
+                TestResultInfoBar.Message = "Failed to refresh OAuth token. Try re-authenticating.";
+            }
+
+            TestResultInfoBar.IsOpen = true;
+            RefreshStoredCredentials();
+        }
+    }
+
+    private void AutoRefreshToggle_Toggled(object sender, RoutedEventArgs e)
+    {
+        if (AutoRefreshToggle.IsOn)
+        {
+            _oauthRefreshService.Start();
+        }
+        else
+        {
+            _oauthRefreshService.Stop();
+        }
+    }
+
+    #endregion
+
+    #region Event Handlers for Credential Services
+
+    private void OnCredentialMetadataUpdated(object? sender, CredentialMetadataEventArgs e)
+    {
+        DispatcherQueue.TryEnqueue(() =>
+        {
+            RefreshStoredCredentials();
+            CheckExpiringCredentials();
+        });
+    }
+
+    private void OnCredentialExpiring(object? sender, CredentialExpirationEventArgs e)
+    {
+        DispatcherQueue.TryEnqueue(() =>
+        {
+            var friendlyName = GetFriendlyName(e.Resource);
+
+            // Show warning notification
+            CredentialExpirationWarning.IsOpen = true;
+            CredentialExpirationWarning.Message = $"{friendlyName} will expire in {FormatTimeRemaining(e.TimeRemaining)}.";
+
+            // Add to activity log
+            _recentActivity.Insert(0, new ActivityItem
+            {
+                Icon = "\uE7BA",
+                IconColor = YellowBrush,
+                Message = $"{friendlyName} expiring soon",
+                Time = "Just now"
+            });
+        });
+    }
+
+    private void OnTokenRefreshed(object? sender, TokenRefreshEventArgs e)
+    {
+        DispatcherQueue.TryEnqueue(() =>
+        {
+            RefreshStoredCredentials();
+
+            _recentActivity.Insert(0, new ActivityItem
+            {
+                Icon = "\uE72C",
+                IconColor = GreenBrush,
+                Message = $"OAuth token refreshed ({e.ProviderId})",
+                Time = "Just now"
+            });
+        });
+    }
+
+    private void OnTokenRefreshFailed(object? sender, TokenRefreshFailedEventArgs e)
+    {
+        DispatcherQueue.TryEnqueue(() =>
+        {
+            TestResultInfoBar.Severity = InfoBarSeverity.Error;
+            TestResultInfoBar.Title = "Auto-Refresh Failed";
+            TestResultInfoBar.Message = $"Failed to refresh {e.ProviderId} token: {e.ErrorMessage}";
+            TestResultInfoBar.IsOpen = true;
+
+            _recentActivity.Insert(0, new ActivityItem
+            {
+                Icon = "\uE783",
+                IconColor = RedBrush,
+                Message = $"Token refresh failed ({e.ProviderId})",
+                Time = "Just now"
+            });
+        });
+    }
+
+    private void OnTokenExpirationWarning(object? sender, TokenExpirationWarningEventArgs e)
+    {
+        DispatcherQueue.TryEnqueue(() =>
+        {
+            if (!e.CanAutoRefresh)
+            {
+                CredentialExpirationWarning.IsOpen = true;
+                CredentialExpirationWarning.Message = $"OAuth token for {e.ProviderId} expires in {FormatTimeRemaining(e.TimeRemaining)}. Manual refresh required.";
+            }
+        });
+    }
+
+    private static string FormatTimeRemaining(TimeSpan remaining)
+    {
+        if (remaining.TotalDays >= 1)
+            return $"{(int)remaining.TotalDays} days";
+        if (remaining.TotalHours >= 1)
+            return $"{(int)remaining.TotalHours} hours";
+        if (remaining.TotalMinutes >= 1)
+            return $"{(int)remaining.TotalMinutes} minutes";
+        return "less than a minute";
+    }
+
+    #endregion
 }
 
 /// <summary>
-/// Credential display information.
+/// Display wrapper for credential information with UI-specific properties.
 /// </summary>
-public class CredentialInfo
+public class CredentialDisplayInfo
 {
-    public string Name { get; set; } = string.Empty;
-    public string Status { get; set; } = string.Empty;
+    private static readonly SolidColorBrush GreenBrush = new(Color.FromArgb(255, 72, 187, 120));
+    private static readonly SolidColorBrush YellowBrush = new(Color.FromArgb(255, 237, 137, 54));
+    private static readonly SolidColorBrush RedBrush = new(Color.FromArgb(255, 245, 101, 101));
+    private static readonly SolidColorBrush GrayBrush = new(Color.FromArgb(255, 160, 160, 160));
+    private static readonly SolidColorBrush BlueBrush = new(Color.FromArgb(255, 102, 126, 234));
+    private static readonly SolidColorBrush PurpleBrush = new(Color.FromArgb(255, 128, 90, 213));
+
+    private readonly Models.CredentialInfo _credential;
+
+    public CredentialDisplayInfo(Models.CredentialInfo credential)
+    {
+        _credential = credential;
+    }
+
+    public string Name => _credential.Name;
+    public string Resource => _credential.Resource;
+    public string Status => _credential.Status;
+    public string ExpirationDisplay => _credential.ExpirationDisplay;
+    public string LastAuthDisplay => _credential.LastAuthDisplay;
+
+    public SolidColorBrush TestStatusColor => _credential.TestStatus switch
+    {
+        CredentialTestStatus.Success => GreenBrush,
+        CredentialTestStatus.Failed => RedBrush,
+        CredentialTestStatus.Expired => RedBrush,
+        CredentialTestStatus.Testing => BlueBrush,
+        _ => GrayBrush
+    };
+
+    public SolidColorBrush ExpirationColor
+    {
+        get
+        {
+            if (_credential.IsExpired) return RedBrush;
+            if (_credential.IsExpiringSoon) return YellowBrush;
+            return GrayBrush;
+        }
+    }
+
+    public string TypeBadge => _credential.CredentialType switch
+    {
+        CredentialType.OAuth2Token => "OAuth",
+        CredentialType.ApiKeyWithSecret => "API Key",
+        CredentialType.BearerToken => "Bearer",
+        _ => "Key"
+    };
+
+    public SolidColorBrush TypeBadgeColor => _credential.CredentialType switch
+    {
+        CredentialType.OAuth2Token => PurpleBrush,
+        CredentialType.ApiKeyWithSecret => BlueBrush,
+        _ => GrayBrush
+    };
+
+    public Visibility TypeBadgeVisibility =>
+        _credential.CredentialType == CredentialType.OAuth2Token ? Visibility.Visible : Visibility.Collapsed;
+
+    public Visibility HasMetadata =>
+        _credential.ExpiresAt.HasValue || _credential.LastAuthenticatedAt.HasValue
+            ? Visibility.Visible : Visibility.Collapsed;
+
+    public Visibility HasExpiration =>
+        _credential.ExpiresAt.HasValue ? Visibility.Visible : Visibility.Collapsed;
+
+    public Visibility HasLastAuth =>
+        _credential.LastAuthenticatedAt.HasValue ? Visibility.Visible : Visibility.Collapsed;
+
+    public Visibility RefreshButtonVisibility =>
+        _credential.CredentialType == CredentialType.OAuth2Token && _credential.CanAutoRefresh
+            ? Visibility.Visible : Visibility.Collapsed;
 }
 
 /// <summary>
