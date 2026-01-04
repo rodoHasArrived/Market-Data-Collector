@@ -54,7 +54,7 @@
                 </StackPanel>
             </Grid>
 
-            <!-- Status Cards with Sparklines -->
+            <!-- Console-Inspired Metrics Grid -->
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -63,93 +63,127 @@
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 
-                <!-- Published -->
-                <Border Grid.Column="0" Style="{StaticResource CardStyle}" Margin="0,0,8,0">
-                    <StackPanel Spacing="8">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <TextBlock Text="{x:Bind ViewModel.PublishedCount, Mode=OneWay}"
-                                       Style="{StaticResource HeaderTextBlockStyle}"
-                                       Foreground="{ThemeResource SystemAccentColor}" />
+                <!-- Published - Success Card -->
+                <Border Grid.Column="0" Style="{StaticResource MetricCardSuccessStyle}" Margin="0,0,8,0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <!-- Trend Badge -->
+                        <Border Grid.Row="0" HorizontalAlignment="Right"
+                                Background="#1A3fb950" CornerRadius="4" Padding="8,4" Margin="0,0,0,8">
                             <TextBlock x:Name="PublishedRateText" Text="+1,234/s"
-                                       VerticalAlignment="Bottom" Margin="0,0,0,4"
-                                       Style="{StaticResource CaptionTextBlockStyle}"
-                                       Foreground="#48BB78" />
-                        </StackPanel>
-                        <TextBlock Text="Published Events" Style="{StaticResource CaptionTextBlockStyle}" />
+                                       FontSize="11" FontWeight="SemiBold"
+                                       Foreground="{StaticResource SuccessColorBrush}" />
+                        </Border>
+
+                        <TextBlock Grid.Row="1" Text="{x:Bind ViewModel.PublishedCount, Mode=OneWay}"
+                                   Style="{StaticResource MetricValueStyle}"
+                                   Foreground="{StaticResource SuccessColorBrush}" />
+                        <TextBlock Grid.Row="2" Text="PUBLISHED EVENTS"
+                                   Style="{StaticResource MetricLabelStyle}" Margin="0,8,0,12" />
+
                         <!-- Sparkline -->
-                        <Canvas x:Name="PublishedSparkline" Height="30" Background="Transparent">
-                            <Polyline x:Name="PublishedSparklinePath" Stroke="{ThemeResource SystemAccentColor}"
+                        <Canvas x:Name="PublishedSparkline" Grid.Row="3" Height="30" Background="Transparent">
+                            <Polyline x:Name="PublishedSparklinePath"
+                                      Stroke="{StaticResource SuccessColorBrush}"
                                       StrokeThickness="2" />
                         </Canvas>
-                        <TextBlock x:Name="PublishedTrendText" Text="1m: +5.2% | 5m: +12.3%"
-                                   Style="{StaticResource CaptionTextBlockStyle}"
-                                   Foreground="{ThemeResource SystemBaseMediumColor}" />
-                    </StackPanel>
+                    </Grid>
                 </Border>
 
-                <!-- Dropped -->
-                <Border Grid.Column="1" Style="{StaticResource CardStyle}" Margin="8,0">
-                    <StackPanel Spacing="8">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <TextBlock Text="{x:Bind ViewModel.DroppedCount, Mode=OneWay}"
-                                       Style="{StaticResource HeaderTextBlockStyle}"
-                                       Foreground="#F56565" />
+                <!-- Dropped - Danger Card -->
+                <Border Grid.Column="1" Style="{StaticResource MetricCardDangerStyle}" Margin="8,0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <Border Grid.Row="0" HorizontalAlignment="Right"
+                                Background="#1Af85149" CornerRadius="4" Padding="8,4" Margin="0,0,0,8">
                             <TextBlock x:Name="DroppedRateText" Text="0.01%"
-                                       VerticalAlignment="Bottom" Margin="0,0,0,4"
-                                       Style="{StaticResource CaptionTextBlockStyle}"
-                                       Foreground="#F56565" />
-                        </StackPanel>
-                        <TextBlock Text="Dropped Events" Style="{StaticResource CaptionTextBlockStyle}" />
-                        <!-- Sparkline -->
-                        <Canvas x:Name="DroppedSparkline" Height="30" Background="Transparent">
-                            <Polyline x:Name="DroppedSparklinePath" Stroke="#F56565" StrokeThickness="2" />
+                                       FontSize="11" FontWeight="SemiBold"
+                                       Foreground="{StaticResource ErrorColorBrush}" />
+                        </Border>
+
+                        <TextBlock Grid.Row="1" Text="{x:Bind ViewModel.DroppedCount, Mode=OneWay}"
+                                   Style="{StaticResource MetricValueStyle}"
+                                   Foreground="{StaticResource ErrorColorBrush}" />
+                        <TextBlock Grid.Row="2" Text="DROPPED EVENTS"
+                                   Style="{StaticResource MetricLabelStyle}" Margin="0,8,0,12" />
+
+                        <Canvas x:Name="DroppedSparkline" Grid.Row="3" Height="30" Background="Transparent">
+                            <Polyline x:Name="DroppedSparklinePath"
+                                      Stroke="{StaticResource ErrorColorBrush}" StrokeThickness="2" />
                         </Canvas>
-                        <TextBlock x:Name="DroppedTrendText" Text="Drop Rate: 0.01%"
-                                   Style="{StaticResource CaptionTextBlockStyle}"
-                                   Foreground="{ThemeResource SystemBaseMediumColor}" />
-                    </StackPanel>
+                    </Grid>
                 </Border>
 
-                <!-- Integrity -->
-                <Border Grid.Column="2" Style="{StaticResource CardStyle}" Margin="8,0">
-                    <StackPanel Spacing="8">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <TextBlock Text="{x:Bind ViewModel.IntegrityCount, Mode=OneWay}"
-                                       Style="{StaticResource HeaderTextBlockStyle}"
-                                       Foreground="#ED8936" />
+                <!-- Integrity - Warning Card -->
+                <Border Grid.Column="2" Style="{StaticResource MetricCardWarningStyle}" Margin="8,0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <Border Grid.Row="0" HorizontalAlignment="Right"
+                                Background="#1Ad29922" CornerRadius="4" Padding="8,4" Margin="0,0,0,8">
                             <TextBlock x:Name="IntegrityRateText" Text="2 gaps"
-                                       VerticalAlignment="Bottom" Margin="0,0,0,4"
-                                       Style="{StaticResource CaptionTextBlockStyle}"
-                                       Foreground="#ED8936" />
-                        </StackPanel>
-                        <TextBlock Text="Integrity Events" Style="{StaticResource CaptionTextBlockStyle}" />
-                        <!-- Sparkline -->
-                        <Canvas x:Name="IntegritySparkline" Height="30" Background="Transparent">
-                            <Polyline x:Name="IntegritySparklinePath" Stroke="#ED8936" StrokeThickness="2" />
+                                       FontSize="11" FontWeight="SemiBold"
+                                       Foreground="{StaticResource WarningColorBrush}" />
+                        </Border>
+
+                        <TextBlock Grid.Row="1" Text="{x:Bind ViewModel.IntegrityCount, Mode=OneWay}"
+                                   Style="{StaticResource MetricValueStyle}"
+                                   Foreground="{StaticResource WarningColorBrush}" />
+                        <TextBlock Grid.Row="2" Text="INTEGRITY EVENTS"
+                                   Style="{StaticResource MetricLabelStyle}" Margin="0,8,0,12" />
+
+                        <Canvas x:Name="IntegritySparkline" Grid.Row="3" Height="30" Background="Transparent">
+                            <Polyline x:Name="IntegritySparklinePath"
+                                      Stroke="{StaticResource WarningColorBrush}" StrokeThickness="2" />
                         </Canvas>
-                        <TextBlock x:Name="IntegrityTrendText" Text="Sequence gaps: 2"
-                                   Style="{StaticResource CaptionTextBlockStyle}"
-                                   Foreground="{ThemeResource SystemBaseMediumColor}" />
-                    </StackPanel>
+                    </Grid>
                 </Border>
 
-                <!-- Historical Bars -->
-                <Border Grid.Column="3" Style="{StaticResource CardStyle}" Margin="8,0,0,0">
-                    <StackPanel Spacing="8">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <TextBlock Text="{x:Bind ViewModel.HistoricalBarsCount, Mode=OneWay}"
-                                       Style="{StaticResource HeaderTextBlockStyle}"
-                                       Foreground="#48BB78" />
-                        </StackPanel>
-                        <TextBlock Text="Historical Bars" Style="{StaticResource CaptionTextBlockStyle}" />
-                        <!-- Sparkline -->
-                        <Canvas x:Name="HistoricalSparkline" Height="30" Background="Transparent">
-                            <Polyline x:Name="HistoricalSparklinePath" Stroke="#48BB78" StrokeThickness="2" />
+                <!-- Historical Bars - Info Card -->
+                <Border Grid.Column="3" Style="{StaticResource MetricCardInfoStyle}" Margin="8,0,0,0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <Border Grid.Row="0" HorizontalAlignment="Right"
+                                Background="#1A58a6ff" CornerRadius="4" Padding="8,4" Margin="0,0,0,8">
+                            <TextBlock x:Name="HistoricalTrendText" Text="Last: 2h ago"
+                                       FontSize="11" FontWeight="SemiBold"
+                                       Foreground="{StaticResource InfoColorBrush}" />
+                        </Border>
+
+                        <TextBlock Grid.Row="1" Text="{x:Bind ViewModel.HistoricalBarsCount, Mode=OneWay}"
+                                   Style="{StaticResource MetricValueStyle}"
+                                   Foreground="{StaticResource InfoColorBrush}" />
+                        <TextBlock Grid.Row="2" Text="HISTORICAL BARS"
+                                   Style="{StaticResource MetricLabelStyle}" Margin="0,8,0,12" />
+
+                        <Canvas x:Name="HistoricalSparkline" Grid.Row="3" Height="30" Background="Transparent">
+                            <Polyline x:Name="HistoricalSparklinePath"
+                                      Stroke="{StaticResource InfoColorBrush}" StrokeThickness="2" />
                         </Canvas>
-                        <TextBlock x:Name="HistoricalTrendText" Text="Last backfill: 2h ago"
-                                   Style="{StaticResource CaptionTextBlockStyle}"
-                                   Foreground="{ThemeResource SystemBaseMediumColor}" />
-                    </StackPanel>
+                    </Grid>
                 </Border>
             </Grid>
 
