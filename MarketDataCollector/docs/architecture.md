@@ -4,11 +4,18 @@
 
 The Market Data Collector is a modular, event-driven system for capturing, validating,
 and persisting high-fidelity market microstructure data from multiple data providers
-including Interactive Brokers (IB) and Alpaca WebSocket feeds.
+including Interactive Brokers (IB), Alpaca, NYSE Direct, and extensible provider plugins.
 
 The system is designed around strict separation of concerns and is safe to operate
-with or without live provider connections. It supports dual-source operation for reconciliation
-and provider failover.
+with or without live provider connections. It supports multi-source operation for reconciliation,
+provider failover, and data quality monitoring.
+
+### Core Principles
+
+- **Provider-Agnostic Design** – Unified abstraction layer supporting any data source
+- **Archival-First Storage** – Write-ahead logging (WAL) ensures crash-safe persistence
+- **Type-Safe Domain Models** – F# discriminated unions with exhaustive pattern matching
+- **Quality-Driven Operations** – Multi-dimensional data quality scoring and gap repair
 
 The architecture supports multiple deployment modes:
 - **Standalone Console Application** – Single-process data collection with local storage
@@ -83,9 +90,16 @@ The architecture supports multiple deployment modes:
 
 ### Infrastructure
 * Owns all provider-specific code
+* **Unified Data Source Abstraction** in `Infrastructure/DataSources/`:
+  - `IDataSource` – Base interface for all data sources
+  - `IRealtimeDataSource` – Real-time streaming extension (trades, quotes, depth)
+  - `IHistoricalDataSource` – Historical data retrieval (bars, dividends, splits)
+  - `DataSourceCapabilities` – Declarative capability flags for feature discovery
+  - `DataSourceRegistry` – Attribute-based automatic discovery via `[DataSource]`
 * **Streaming Provider implementations** in `Infrastructure/Providers/`:
   - `InteractiveBrokers/IBMarketDataClient` – IB TWS/Gateway connectivity with free equity data support
   - `Alpaca/AlpacaMarketDataClient` – Alpaca WebSocket client with IEX/SIP feeds
+  - `NYSE/NYSEDataSource` – NYSE Direct connection for real-time and historical US equity data
   - `Polygon/PolygonMarketDataClient` – Polygon adapter (stub implementation)
 * **Historical Data Providers** for backfill operations:
   - `AlpacaHistoricalDataProvider` – Historical OHLCV bars, trades, quotes, and auctions
@@ -94,11 +108,15 @@ The architecture supports multiple deployment modes:
   - `NasdaqDataLinkHistoricalDataProvider` – Alternative datasets via Quandl API
   - `CompositeHistoricalDataProvider` – Automatic failover with rate-limit rotation
   - `OpenFIGI Symbol Resolver` – Cross-provider symbol normalization
+* **Resilience Layer**:
+  - `CircuitBreaker` – Open/Closed/HalfOpen states with automatic recovery
+  - `ConcurrentProviderExecutor` – Parallel operations with configurable strategies
+  - `RateLimiter` – Per-provider rate limit tracking and throttling
+  - `WebSocketResiliencePolicy` – Automatic reconnection with exponential backoff
 * All streaming providers implement `IMarketDataClient` interface
 * All historical providers implement `IHistoricalDataProvider` interface
 * `IBCallbackRouter` normalizes IB callbacks into domain updates
 * `ContractFactory` resolves symbol configurations to IB contracts
-* `WebSocketResiliencePolicy` provides automatic reconnection with exponential backoff
 * No domain logic – replaceable / mockable
 
 ### Domain
@@ -110,6 +128,21 @@ The architecture supports multiple deployment modes:
 * `QuoteCollector` – BBO state cache and `BboQuote` event emission
 * Domain models: `Trade`, `LOBSnapshot`, `BboQuotePayload`, `OrderFlowStatistics`, integrity events
 
+### F# Domain Library (`MarketDataCollector.FSharp`)
+* **Type-Safe Domain Models** – Discriminated unions with exhaustive pattern matching
+  - `MarketEvent` – Trade, Quote, Bar, Depth, Integrity variants
+  - `ValidationError` – Rich error types with context
+* **Railway-Oriented Validation** – Composable validation with error accumulation
+  - `TradeValidator` – Price, size, timestamp, symbol validation
+  - `QuoteValidator` – Bid/ask spread, price consistency
+* **Pure Functional Calculations**:
+  - `SpreadCalculations` – Absolute, percentage, basis points
+  - `ImbalanceCalculations` – Order book imbalance metrics
+  - `Aggregations` – VWAP, TWAP, microprice, order flow
+* **Pipeline Transforms** – Declarative stream processing
+  - Filtering, enrichment, aggregation operations
+* **C# Interop** – Wrapper classes with nullable-friendly APIs
+
 ### Application
 * `Program.cs` – composition root and startup
 * `ConfigWatcher` – hot reload of `appsettings.json`
@@ -120,12 +153,24 @@ The architecture supports multiple deployment modes:
 
 ### Storage
 * `EventPipeline` – bounded `Channel<MarketEvent>` with configurable capacity and drop policy
-* `JsonlStorageSink` – writes events to append-only JSONL files with retention enforcement
-* `ParquetStorageSink` – columnar storage format for efficient analytics (experimental)
-* `JsonlStoragePolicy` – flexible file organization with multiple naming conventions and date partitioning
-* `JsonlReplayer` – replays captured JSONL events for backtesting (supports gzip compression)
-* `TieredStorageManager` – hot/warm/cold storage tier management with automatic migration
-* `DataRetentionPolicy` – time-based and capacity-based retention enforcement
+* **Archival-First Storage Pipeline**:
+  - `ArchivalStorageService` – Write-Ahead Logging (WAL) for crash-safe persistence
+  - `WriteAheadLog` – Append-only log with checksums and transaction semantics
+  - `AtomicFileWriter` – Safe file operations with temp-file rename pattern
+* **Storage Sinks**:
+  - `JsonlStorageSink` – writes events to append-only JSONL files with retention enforcement
+  - `ParquetStorageSink` – columnar storage format for efficient analytics
+* **Compression & Archival**:
+  - `CompressionProfileManager` – Storage tier-optimized compression (LZ4, ZSTD, Gzip)
+  - `SchemaVersionManager` – Schema versioning with migration support and JSON Schema export
+* **Export System**:
+  - `AnalysisExportService` – Pre-built profiles for Python, R, Lean, Excel, PostgreSQL
+  - `AnalysisQualityReportGenerator` – Quality metrics with outlier detection and gap analysis
+* **File Organization**:
+  - `JsonlStoragePolicy` – flexible file organization with multiple naming conventions and date partitioning
+  - `JsonlReplayer` – replays captured JSONL events for backtesting (supports gzip compression)
+  - `TieredStorageManager` – hot/warm/cold storage tier management with automatic migration
+  - `DataRetentionPolicy` – time-based and capacity-based retention enforcement
 * `StorageOptions` – configurable naming conventions, partitioning strategies, retention policies, and capacity limits
 
 ### Messaging (MassTransit)
@@ -324,6 +369,7 @@ The system supports historical data backfill from multiple providers with automa
 
 | Priority | Provider | Data Type | Notes |
 |----------|----------|-----------|-------|
+| 5 | **NYSE Direct** | OHLCV bars, dividends, splits | Exchange-direct with adjustments |
 | 5 | **Alpaca** | OHLCV bars, trades, quotes | IEX/SIP feeds with adjustments |
 | 10 | **Yahoo Finance** | OHLCV bars | 50K+ global securities, free |
 | 20 | **Stooq** | EOD bars | US equities |
@@ -331,9 +377,20 @@ The system supports historical data backfill from multiple providers with automa
 
 ### Backfill Features
 
+* **Priority Backfill Queue** – Sophisticated job scheduling with priority levels:
+  - Critical (0), High (10), Normal (50), Low (100), Deferred (200)
+  - Dependency chains for ordered execution
+  - Batch enqueue with automatic prioritization
 * **Composite Provider** – Automatic failover when primary provider fails or hits rate limits
 * **Rate-Limit Rotation** – Switches providers when approaching API limits
-* **Gap Detection** – `DataGapAnalyzer` identifies missing data periods
+* **Gap Detection & Repair** – `DataGapRepairService` with automatic repair:
+  - `DataGapAnalyzer` identifies missing data periods
+  - Multi-provider gap repair with fallback
+  - Gap types: Missing, Partial, Holiday, Suspicious
+* **Data Quality Monitoring** – Multi-dimensional quality scoring:
+  - Completeness (30%), Accuracy (25%), Timeliness (20%)
+  - Consistency (15%), Validity (10%)
+  - Quality grade: A+ to F with alerts
 * **Fill-Only Mode** – Skip dates with existing data
 * **Job Persistence** – Resume interrupted backfills after restart
 * **Progress Tracking** – Real-time progress and ETA via API/dashboard
@@ -353,6 +410,82 @@ See [lean-integration.md](lean-integration.md) for detailed integration guide.
 
 ---
 
-**Version:** 1.4.0
+---
+
+## Archival Storage Pipeline
+
+The system implements an archival-first storage strategy for crash-safe persistence:
+
+### Write-Ahead Logging (WAL)
+
+```
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│   Ingest    │────►│     WAL     │────►│   Buffer    │────►│   Storage   │
+│   Events    │     │  (Durable)  │     │  (Memory)   │     │  (JSONL/    │
+│             │     │             │     │             │     │   Parquet)  │
+└─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘
+                           │                                       │
+                           │         ┌─────────────────────────────┘
+                           ▼         ▼
+                    ┌─────────────────────┐
+                    │   Commit Point      │
+                    │   (Acknowledge)     │
+                    └─────────────────────┘
+```
+
+* **Crash Recovery** – Uncommitted records recovered on restart
+* **Configurable Sync** – NoSync, BatchedSync, or EveryWrite modes
+* **Per-Record Checksums** – SHA256 integrity validation
+* **Automatic Truncation** – Old WAL segments cleaned after commit
+
+### Compression Profiles
+
+| Profile | Codec | Level | Throughput | Ratio | Use Case |
+|---------|-------|-------|------------|-------|----------|
+| Real-Time | LZ4 | 1 | ~500 MB/s | 2.5x | Hot data collection |
+| Warm Archive | ZSTD | 6 | ~150 MB/s | 5x | Recent archives |
+| Cold Archive | ZSTD | 19 | ~20 MB/s | 10x | Long-term storage |
+| High-Volume | ZSTD | 3 | ~300 MB/s | 4x | SPY, QQQ, etc. |
+| Portable | Gzip | 6 | ~80 MB/s | 3x | External sharing |
+
+### Schema Versioning
+
+* Semantic versioning for all event types (e.g., Trade v1.0.0, v2.0.0)
+* Automatic migration between schema versions
+* JSON Schema export for external tool compatibility
+* Schema registry with version history
+
+---
+
+## Credential Management
+
+The system supports multiple credential sources with priority resolution:
+
+1. **Environment Variables** – `NYSE_API_KEY`, `ALPACA_API_KEY`, etc.
+2. **Windows Credential Store** – Via UWP CredentialPicker
+3. **Configuration File** – `appsettings.json` (development only)
+4. **Azure Key Vault** – For cloud deployments (planned)
+
+### Credential Testing & Expiration
+
+* **Validation on Startup** – Credentials tested before data collection begins
+* **Expiration Tracking** – Alerts for expiring API keys
+* **Rotation Support** – Hot-swap credentials without restart
+
+---
+
+## Performance Optimizations
+
+The system includes several high-performance features:
+
+* **System.IO.Pipelines** – Zero-copy WebSocket processing with `Utf8JsonReader`
+* **Source-Generated JSON** – 2-3x faster serialization via `MarketDataJsonContext`
+* **Lock-Free Order Book** – `LockFreeOrderBook` for high-frequency updates
+* **Object Pooling** – Reusable buffers to reduce GC pressure
+* **Parallel Provider Execution** – Concurrent backfill across multiple providers
+
+---
+
+**Version:** 1.5.0
 **Last Updated:** 2026-01-04
-**See Also:** [c4-diagrams.md](c4-diagrams.md) | [domains.md](domains.md) | [why-this-architecture.md](why-this-architecture.md) | [Microservices README](../src/Microservices/README.md)
+**See Also:** [c4-diagrams.md](c4-diagrams.md) | [domains.md](domains.md) | [why-this-architecture.md](why-this-architecture.md) | [Microservices README](../src/Microservices/README.md) | [PROVIDER_MANAGEMENT_ARCHITECTURE.md](PROVIDER_MANAGEMENT_ARCHITECTURE.md) | [FSHARP_INTEGRATION.md](FSHARP_INTEGRATION.md)
