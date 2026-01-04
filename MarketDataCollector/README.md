@@ -1,10 +1,19 @@
 # Market Data Collector
 
-**Version**: 1.4.0 (Production Ready) | **Last Updated**: 2026-01-04
+**Version**: 1.5.0 (Production Ready) | **Last Updated**: 2026-01-04
 
 A cross-platform, production-ready market data collector with an intuitive web dashboard. Ingests real-time market data from multiple sources (Interactive Brokers, Alpaca, Polygon), normalizes them into domain events, and persists them as JSONL for downstream research. Features comprehensive error handling, single-executable deployment, and built-in help system.
 
-## ✨ New in v1.4
+## ✨ New in v1.5
+
+- **🔒 Archival-First Storage Pipeline** - Write-ahead logging (WAL) for crash-safe data persistence with checksums
+- **📁 Compression Profiles** - Optimized compression profiles for hot/warm/cold storage tiers (LZ4, ZSTD, Gzip)
+- **📋 Schema Versioning** - Long-term format preservation with schema migration and JSON Schema export
+- **📊 Analysis-Ready Exports** - Pre-built export profiles for Python, R, QuantConnect Lean, Excel, PostgreSQL
+- **✅ Data Quality Reports** - Comprehensive quality metrics with outlier detection and gap analysis for exports
+- **🔄 Data Versioning** - Dataset fingerprinting and version tracking for reproducible analysis
+
+## ✨ v1.4 Features
 
 - **🔷 F# Domain Library** - Type-safe domain models using discriminated unions and exhaustive pattern matching
 - **✅ Railway-Oriented Validation** - Composable validation with error accumulation (no more exceptions!)
@@ -330,6 +339,14 @@ var vwap = AggregationFunctions.Vwap(trades);
 See [`docs/FSHARP_INTEGRATION.md`](docs/FSHARP_INTEGRATION.md) for comprehensive documentation.
 
 ## Recent Improvements
+
+### Archival & Export Excellence (2026-01-04)
+- **Archival-First Storage Pipeline**: Write-Ahead Logging (WAL) for crash-safe persistence with SHA256 checksums
+- **Compression Profiles**: Pre-built profiles for hot (LZ4), warm (ZSTD-6), and cold (ZSTD-19) storage tiers
+- **Schema Versioning**: Long-term format preservation with migration support and JSON Schema export
+- **Analysis-Ready Export Formats**: Pre-built profiles for Python/Pandas, R, QuantConnect Lean, Excel, PostgreSQL
+- **Data Quality Reports**: Comprehensive quality metrics with outlier detection, gap analysis, and recommendations
+- **Data Versioning**: Dataset fingerprinting and version tracking for reproducible analysis
 
 ### F# Domain Library (2026-01-03)
 - **Type-Safe Domain Models**: Discriminated unions for market events with exhaustive pattern matching

@@ -1403,15 +1403,15 @@ Recommendations:
 
 | Priority | Refinement | Effort | Impact | Category | Status |
 |----------|-----------|--------|--------|----------|--------|
-| P0 | Archival-First Storage Pipeline (#55) | Medium | Critical | Offline Storage | |
+| P0 | Archival-First Storage Pipeline (#55) | Medium | Critical | Offline Storage | **IMPLEMENTED** (2026-01-04) |
 | P0 | Offline Data Catalog & Manifest System (#56) | Medium | Critical | Offline Storage | **IMPLEMENTED** (2026-01-03) |
 | P0 | Archive Verification & Integrity Dashboard (#57) | Medium | High | Offline Storage | **IMPLEMENTED** (2026-01-03) |
 | P0 | Collection Session Management (#65) | Low | High | Offline Storage | **IMPLEMENTED** (2026-01-03) |
 | P1 | Data Completeness Dashboard (#62) | Medium | High | Offline Storage | **IMPLEMENTED** (2026-01-03) |
 | P1 | Archive Browsing & Inspection Tools (#61) | Medium | High | Offline Storage | **IMPLEMENTED** (2026-01-03) |
 | P1 | Portable Archive Packages (#59) | Medium | High | Offline Storage | **IMPLEMENTED** (2026-01-03) |
-| P1 | Long-Term Format Preservation (#58) | Medium | High | Offline Storage |
-| P1 | Archival-Optimized Compression Profiles (#66) | Low | Medium | Offline Storage |
+| P1 | Long-Term Format Preservation (#58) | Medium | High | Offline Storage | **IMPLEMENTED** (2026-01-04) |
+| P1 | Archival-Optimized Compression Profiles (#66) | Low | Medium | Offline Storage | **IMPLEMENTED** (2026-01-04) |
 | P2 | Scheduled Archive Maintenance (#64) | Medium | Medium | Offline Storage |
 | P2 | Archive Storage Optimization Advisor (#63) | Medium | Medium | Offline Storage |
 | P2 | Offline Storage Health Monitoring (#67) | Medium | Medium | Offline Storage |
@@ -1423,11 +1423,11 @@ Recommendations:
 
 | Priority | Refinement | Effort | Impact | Category | Status |
 |----------|-----------|--------|--------|----------|--------|
-| P0 | Analysis-Ready Export Formats (#70) | Medium | Critical | External Analysis | |
+| P0 | Analysis-Ready Export Formats (#70) | Medium | Critical | External Analysis | **IMPLEMENTED** (2026-01-04) |
 | P0 | Data Dictionary & Schema Documentation (#72) | Low | High | External Analysis | **IMPLEMENTED** (2026-01-03) |
 | P1 | Batch Export Automation (#77) | Medium | High | External Analysis | **IMPLEMENTED** (2026-01-03) |
-| P1 | Analysis-Ready Data Quality Report (#76) | Medium | High | External Analysis |
-| P1 | Data Versioning for Analysis (#78) | Medium | High | External Analysis |
+| P1 | Analysis-Ready Data Quality Report (#76) | Medium | High | External Analysis | **IMPLEMENTED** (2026-01-04) |
+| P1 | Data Versioning for Analysis (#78) | Medium | High | External Analysis | **IMPLEMENTED** (2026-01-04) |
 | P2 | Time Series Alignment Tools (#73) | Medium | Medium | External Analysis |
 | P2 | Data Sampling & Subset Creation (#71) | Low | Medium | External Analysis |
 | P2 | External Analysis Workspace Setup (#75) | Medium | Medium | External Analysis |
@@ -1481,6 +1481,16 @@ Recommendations:
 
 ---
 
-*Document Version: 2.0*
-*Last Updated: January 3, 2026*
+*Document Version: 2.1*
+*Last Updated: January 4, 2026*
 *Focus: Offline Data Storage, Collection & Archival Excellence*
+
+## Recent Implementations (v1.5.0)
+
+### January 4, 2026
+- **Archival-First Storage Pipeline (#55)**: Write-ahead logging with checksums for crash-safe persistence
+- **Long-Term Format Preservation (#58)**: Schema versioning, migration support, and JSON Schema export
+- **Archival-Optimized Compression Profiles (#66)**: LZ4, ZSTD, Gzip profiles for different storage tiers
+- **Analysis-Ready Export Formats (#70)**: Pre-built export profiles for Python, R, Lean, Excel, PostgreSQL
+- **Analysis-Ready Data Quality Report (#76)**: Comprehensive quality metrics with outlier detection
+- **Data Versioning for Analysis (#78)**: Dataset fingerprinting and version tracking
