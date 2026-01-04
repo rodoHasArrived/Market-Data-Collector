@@ -625,7 +625,7 @@ Recent optimizations and patterns:
 
 ---
 
-**Version:** 1.1.0
-**Last Updated:** 2026-01-02
+**Version:** 1.4.0
+**Last Updated:** 2026-01-04
 **Maintainer:** Market Data Collector Team
 **See Also:** [DEPENDENCIES.md](../DEPENDENCIES.md) | [architecture.md](architecture.md)

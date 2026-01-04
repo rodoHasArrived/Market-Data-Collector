@@ -512,6 +512,6 @@ The integration enables traders and researchers to leverage both the data collec
 ---
 
 **Integration Date**: 2026-01-01
-**Version**: 1.0.0
+**Version**: 1.4.0
 **Status**: ✅ Production Ready
 **License**: Apache 2.0

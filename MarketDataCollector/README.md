@@ -1,6 +1,6 @@
 # Market Data Collector
 
-**Version**: 1.4.0 (Production Ready) | **Last Updated**: 2026-01-03
+**Version**: 1.4.0 (Production Ready) | **Last Updated**: 2026-01-04
 
 A cross-platform, production-ready market data collector with an intuitive web dashboard. Ingests real-time market data from multiple sources (Interactive Brokers, Alpaca, Polygon), normalizes them into domain events, and persists them as JSONL for downstream research. Features comprehensive error handling, single-executable deployment, and built-in help system.
 

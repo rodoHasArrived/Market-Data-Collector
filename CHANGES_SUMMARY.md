@@ -2,9 +2,92 @@
 
 This document summarizes major changes and improvements to the Market Data Collector project.
 
+**Current Version:** 1.4.0 | **Last Updated:** 2026-01-04
+
 ---
 
-## Latest: Storage Organization Design (2026-01-02)
+## Latest: F# Domain Library v1.4.0 (2026-01-03)
+
+### Overview
+
+This major update introduces a comprehensive F# domain library providing type-safe domain models, Railway-Oriented validation, pure functional calculations, and pipeline transforms. This release establishes the foundation for eliminating entire categories of bugs through compiler-enforced type safety.
+
+### Key Features
+
+#### 1. Type-Safe Domain Models
+- **Discriminated Unions**: All market events (Trade, Quote, Depth, OrderBook, Bar, Integrity, Heartbeat) modeled as discriminated unions
+- **Exhaustive Pattern Matching**: Compiler enforces handling of all cases - no missing case bugs
+- **Smart Constructors**: Factory methods ensure well-formed events with proper validation
+- **Immutability by Default**: All types immutable, enabling thread-safe sharing
+
+#### 2. Railway-Oriented Validation
+- **Error Accumulation**: Collect all validation errors instead of failing on first error
+- **Result Types**: Explicit success/failure paths without exceptions
+- **Composable Validators**: Combine validators using applicative operators (`<!>`, `<*>`)
+- **Configurable Rules**: Validation thresholds (max price, max quantity, max symbol length) are configurable
+
+#### 3. Pure Functional Calculations
+- **Spread Calculations**: Absolute spread, spread in bps, relative spread, effective spread
+- **Imbalance Metrics**: Order book imbalance, microprice, volume-weighted imbalance
+- **Aggregations**: VWAP, TWAP, volume breakdown by aggressor, OHLCV bar creation
+- **Order Flow**: Trade arrival rate, order flow imbalance, rolling averages
+
+#### 4. Pipeline Transforms
+- **Filtering**: By symbol, symbol set, time range, event type
+- **Transformation**: Aggressor inference, quote enrichment, deduplication
+- **Aggregation**: Partition by type, group by symbol, buffering by count/time
+- **Composition**: Pipeline builder pattern for declarative stream processing
+
+#### 5. C# Interoperability
+- **Wrapper Classes**: C#-friendly APIs for validation, calculations, and event creation
+- **Nullable Conversions**: F# `Option<T>` exposed as `Nullable<T>` for C# consumers
+- **Extension Methods**: Convenient extensions for working with F# types from C#
+- **CompiledName Attributes**: C#-friendly naming for F# functions
+
+### Project Structure
+
+```
+src/MarketDataCollector.FSharp/
+├── Domain/
+│   ├── Sides.fs          # Side and AggressorSide types
+│   ├── Integrity.fs      # Integrity event types
+│   └── MarketEvents.fs   # Market event discriminated unions
+├── Validation/
+│   ├── ValidationTypes.fs    # Core validation types and operators
+│   ├── TradeValidator.fs     # Trade validation logic
+│   ├── QuoteValidator.fs     # Quote validation logic
+│   └── ValidationPipeline.fs # Pipeline composition
+├── Calculations/
+│   ├── Spread.fs         # Bid-ask spread calculations
+│   ├── Imbalance.fs      # Order book imbalance metrics
+│   └── Aggregations.fs   # VWAP, TWAP, volume analysis
+├── Pipeline/
+│   └── Transforms.fs     # Stream transformation functions
+└── Interop.fs            # C# interoperability helpers
+```
+
+### Test Coverage
+
+- **50+ Unit Tests**: Comprehensive coverage of domain, validation, calculations, and pipeline logic
+- **Property-Based Testing Ready**: Types designed for FsCheck integration
+- **Edge Case Handling**: Tests for boundary conditions, empty inputs, and error paths
+
+### Documentation
+
+- **FSHARP_INTEGRATION.md**: Complete integration guide with examples
+- **LANGUAGE_STRATEGY.md**: Updated to reflect F# implementation status
+- **Inline Documentation**: XML doc comments for all public APIs
+
+### Impact
+
+- **Type Safety**: Eliminates null reference exceptions and missing case handling
+- **Error Handling**: Railway-Oriented Programming provides clean error accumulation
+- **Performance**: Immutable types enable safe concurrent processing
+- **Maintainability**: Compiler catches errors at build time instead of runtime
+
+---
+
+## Previous: Storage Organization Design (2026-01-02)
 
 ### Overview
 
