@@ -28,6 +28,93 @@ public sealed record UnifiedDataSourcesConfig
     /// Symbol mapping configuration.
     /// </summary>
     public SymbolMappingConfig SymbolMapping { get; init; } = new();
+
+    /// <summary>
+    /// Plugin system configuration.
+    /// </summary>
+    public PluginSystemConfig Plugins { get; init; } = new();
+}
+
+/// <summary>
+/// Configuration for the plugin system.
+/// </summary>
+public sealed record PluginSystemConfig
+{
+    /// <summary>
+    /// Whether the plugin system is enabled.
+    /// </summary>
+    public bool Enabled { get; init; } = true;
+
+    /// <summary>
+    /// Primary directory for plugins.
+    /// </summary>
+    public string PluginDirectory { get; init; } = "plugins";
+
+    /// <summary>
+    /// Additional directories to scan for plugins.
+    /// </summary>
+    public string[] AdditionalDirectories { get; init; } = [];
+
+    /// <summary>
+    /// Whether to enable hot reload when plugin files change.
+    /// </summary>
+    public bool EnableHotReload { get; init; } = true;
+
+    /// <summary>
+    /// Whether to watch directories for new plugins.
+    /// </summary>
+    public bool EnableDirectoryWatching { get; init; } = true;
+
+    /// <summary>
+    /// Whether to automatically load new plugins added to directories.
+    /// </summary>
+    public bool AutoLoadNewPlugins { get; init; } = true;
+
+    /// <summary>
+    /// Hot reload debounce time in milliseconds.
+    /// </summary>
+    public int HotReloadDebounceMs { get; init; } = 2000;
+
+    /// <summary>
+    /// Default permissions granted to plugins.
+    /// </summary>
+    public string[] DefaultPermissions { get; init; } = ["Network", "Environment"];
+
+    /// <summary>
+    /// Whether plugins must explicitly request permissions.
+    /// </summary>
+    public bool RequireExplicitPermissions { get; init; } = false;
+
+    /// <summary>
+    /// Additional assemblies to share with plugins.
+    /// </summary>
+    public string[] SharedAssemblies { get; init; } = [];
+
+    /// <summary>
+    /// Plugin-specific configurations keyed by plugin ID.
+    /// </summary>
+    public Dictionary<string, PluginInstanceConfig> PluginConfigs { get; init; } = new();
+}
+
+/// <summary>
+/// Configuration for an individual plugin instance.
+/// </summary>
+public sealed record PluginInstanceConfig
+{
+    /// <summary>
+    /// Whether this plugin is enabled.
+    /// </summary>
+    public bool Enabled { get; init; } = true;
+
+    /// <summary>
+    /// Priority override for this plugin.
+    /// </summary>
+    public int? Priority { get; init; }
+
+    /// <summary>
+    /// Plugin-specific settings.
+    /// </summary>
+    public Dictionary<string, object?> Settings { get; init; } = new();
 }
 
 /// <summary>
