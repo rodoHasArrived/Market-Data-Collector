@@ -72,7 +72,11 @@ public sealed record BackfillProvidersConfig(
     YahooFinanceConfig? Yahoo = null,
     NasdaqDataLinkConfig? Nasdaq = null,
     StooqConfig? Stooq = null,
-    OpenFigiConfig? OpenFigi = null
+    OpenFigiConfig? OpenFigi = null,
+    TiingoConfig? Tiingo = null,
+    PolygonConfig? Polygon = null,
+    AlphaVantageConfig? AlphaVantage = null,
+    FinnhubConfig? Finnhub = null
 );
 
 /// <summary>
@@ -143,4 +147,70 @@ public sealed record AlpacaBackfillConfig(
     string Adjustment = "all",
     int Priority = 5,
     int RateLimitPerMinute = 200
+);
+
+/// <summary>
+/// Tiingo provider configuration.
+/// Best for: High-quality dividend-adjusted OHLCV with corporate actions.
+/// Free tier: 1,000 requests/day, 50 requests/hour.
+/// </summary>
+/// <param name="Enabled">Enable this provider.</param>
+/// <param name="ApiToken">API token (falls back to TIINGO_API_TOKEN env var).</param>
+/// <param name="Priority">Priority in fallback chain (lower = tried first).</param>
+/// <param name="RateLimitPerHour">Maximum requests per hour.</param>
+public sealed record TiingoConfig(
+    bool Enabled = true,
+    string? ApiToken = null,
+    int Priority = 15,
+    int RateLimitPerHour = 50
+);
+
+/// <summary>
+/// Polygon.io provider configuration.
+/// High-quality OHLCV aggregates with reference data.
+/// Free tier: 5 API calls/minute, 2 years history.
+/// </summary>
+/// <param name="Enabled">Enable this provider.</param>
+/// <param name="ApiKey">API key (falls back to POLYGON_API_KEY env var).</param>
+/// <param name="Priority">Priority in fallback chain (lower = tried first).</param>
+/// <param name="RateLimitPerMinute">Maximum requests per minute.</param>
+public sealed record PolygonConfig(
+    bool Enabled = true,
+    string? ApiKey = null,
+    int Priority = 12,
+    int RateLimitPerMinute = 5
+);
+
+/// <summary>
+/// Alpha Vantage provider configuration.
+/// Unique capability: Intraday historical data (1, 5, 15, 30, 60 min intervals).
+/// Free tier: 25 requests/day (severely limited), 5 calls/minute.
+/// </summary>
+/// <param name="Enabled">Enable this provider.</param>
+/// <param name="ApiKey">API key (falls back to ALPHA_VANTAGE_API_KEY env var).</param>
+/// <param name="Priority">Priority in fallback chain (lower = tried first).</param>
+/// <param name="RateLimitPerMinute">Maximum requests per minute.</param>
+/// <param name="RateLimitPerDay">Maximum requests per day (free tier is very limited).</param>
+public sealed record AlphaVantageConfig(
+    bool Enabled = true,
+    string? ApiKey = null,
+    int Priority = 25,
+    int RateLimitPerMinute = 5,
+    int RateLimitPerDay = 25
+);
+
+/// <summary>
+/// Finnhub provider configuration.
+/// Generous free tier with company fundamentals, earnings, and news.
+/// Free tier: 60 API calls/minute.
+/// </summary>
+/// <param name="Enabled">Enable this provider.</param>
+/// <param name="ApiKey">API key (falls back to FINNHUB_API_KEY env var).</param>
+/// <param name="Priority">Priority in fallback chain (lower = tried first).</param>
+/// <param name="RateLimitPerMinute">Maximum requests per minute.</param>
+public sealed record FinnhubConfig(
+    bool Enabled = true,
+    string? ApiKey = null,
+    int Priority = 18,
+    int RateLimitPerMinute = 60
 );

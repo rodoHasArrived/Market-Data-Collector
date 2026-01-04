@@ -591,11 +591,67 @@ SUPPORT:
             providers.Add(new YahooFinanceHistoricalDataProvider(log: log));
         }
 
-        // Stooq (reliable free EOD data)
+        // Polygon.io (high-quality data, 2-year free tier)
+        var polygonCfg = providersCfg?.Polygon;
+        if (polygonCfg?.Enabled ?? true)
+        {
+            var polygonApiKey = polygonCfg?.ApiKey ?? Environment.GetEnvironmentVariable("POLYGON_API_KEY");
+            if (!string.IsNullOrEmpty(polygonApiKey))
+            {
+                providers.Add(new PolygonHistoricalDataProvider(
+                    apiKey: polygonApiKey,
+                    log: log
+                ));
+            }
+        }
+
+        // Tiingo (best for dividend-adjusted data)
+        var tiingoCfg = providersCfg?.Tiingo;
+        if (tiingoCfg?.Enabled ?? true)
+        {
+            var tiingoToken = tiingoCfg?.ApiToken ?? Environment.GetEnvironmentVariable("TIINGO_API_TOKEN");
+            if (!string.IsNullOrEmpty(tiingoToken))
+            {
+                providers.Add(new TiingoHistoricalDataProvider(
+                    apiToken: tiingoToken,
+                    log: log
+                ));
+            }
+        }
+
+        // Finnhub (generous 60 calls/min free tier)
+        var finnhubCfg = providersCfg?.Finnhub;
+        if (finnhubCfg?.Enabled ?? true)
+        {
+            var finnhubApiKey = finnhubCfg?.ApiKey ?? Environment.GetEnvironmentVariable("FINNHUB_API_KEY");
+            if (!string.IsNullOrEmpty(finnhubApiKey))
+            {
+                providers.Add(new FinnhubHistoricalDataProvider(
+                    apiKey: finnhubApiKey,
+                    log: log
+                ));
+            }
+        }
+
+        // Stooq (reliable free EOD data - no API key required)
         var stooqCfg = providersCfg?.Stooq;
         if (stooqCfg?.Enabled ?? true)
         {
             providers.Add(new StooqHistoricalDataProvider(log: log));
+        }
+
+        // Alpha Vantage (unique intraday historical data - limited free tier)
+        var alphaVantageCfg = providersCfg?.AlphaVantage;
+        if (alphaVantageCfg?.Enabled ?? false) // Disabled by default due to very limited free tier
+        {
+            var alphaVantageApiKey = alphaVantageCfg?.ApiKey ?? Environment.GetEnvironmentVariable("ALPHA_VANTAGE_API_KEY");
+            if (!string.IsNullOrEmpty(alphaVantageApiKey))
+            {
+                providers.Add(new AlphaVantageHistoricalDataProvider(
+                    apiKey: alphaVantageApiKey,
+                    log: log
+                ));
+            }
         }
 
         // Nasdaq Data Link (Quandl - may require API key for better limits)
