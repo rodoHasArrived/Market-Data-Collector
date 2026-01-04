@@ -519,6 +519,6 @@ If you're still experiencing issues:
 
 ---
 
-**Version:** 1.2.0
-**Last Updated:** 2026-01-03
+**Version:** 1.4.0
+**Last Updated:** 2026-01-04
 **See Also:** [GETTING_STARTED.md](GETTING_STARTED.md) | [CONFIGURATION.md](CONFIGURATION.md) | [operator-runbook.md](operator-runbook.md) | [lean-integration.md](lean-integration.md)

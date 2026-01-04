@@ -53,6 +53,6 @@ docfx docs/docfx/docfx.json
 
 ---
 
-**Version:** 1.2.0
-**Last Updated:** 2026-01-03
+**Version:** 1.4.0
+**Last Updated:** 2026-01-04
 **See Also:** [architecture.md](../architecture.md) | [domains.md](../domains.md) | [lean-integration.md](../lean-integration.md)

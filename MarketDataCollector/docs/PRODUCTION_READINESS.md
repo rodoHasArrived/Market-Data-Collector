@@ -2,8 +2,8 @@
 
 This document outlines the current state of the Market Data Collector codebase, identifying areas that are production-ready, items requiring attention before production deployment, and extension points for future development.
 
-**Last Updated:** 2026-01-03
-**Version:** 1.2.0
+**Last Updated:** 2026-01-04
+**Version:** 1.4.0
 
 ---
 

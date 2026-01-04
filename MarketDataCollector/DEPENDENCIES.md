@@ -476,8 +476,8 @@ NuGet packages are restored automatically during build. For CI/CD:
 
 ---
 
-**Version:** 1.1.0
-**Last Updated:** 2026-01-02
+**Version:** 1.4.0
+**Last Updated:** 2026-01-04
 **NuGet Package Count:** 26 (main project) + 3 (UI project)
 **Total Download Size:** ~15 MB
 **See Also:** [README.md](README.md) | [docs/architecture.md](docs/architecture.md)

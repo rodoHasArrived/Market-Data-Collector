@@ -1214,6 +1214,6 @@ We welcome contributions! If you've found a bug or have a feature request, pleas
 
 ---
 
-**Version:** 1.2
-**Last Updated:** 2026-01-03
+**Version:** 1.4.0
+**Last Updated:** 2026-01-04
 **License:** See LICENSE file
