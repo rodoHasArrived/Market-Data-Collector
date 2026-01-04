@@ -148,7 +148,7 @@ Comprehensive documentation is available in the `MarketDataCollector/docs/` dire
 - **[docs/domains.md](MarketDataCollector/docs/domains.md)** - Event contracts and domain models
 - **[docs/c4-diagrams.md](MarketDataCollector/docs/c4-diagrams.md)** - System diagrams
 - **[docs/lean-integration.md](MarketDataCollector/docs/lean-integration.md)** - QuantConnect Lean integration guide and examples
-- **[docs/STORAGE_ORGANIZATION_DESIGN.md](docs/STORAGE_ORGANIZATION_DESIGN.md)** - Advanced storage organization and data management strategies
+- **[docs/STORAGE_ORGANIZATION_DESIGN.md](MarketDataCollector/docs/STORAGE_ORGANIZATION_DESIGN.md)** - Advanced storage organization and data management strategies
 
 ## Supported Data Sources
 
