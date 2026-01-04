@@ -1,4 +1,5 @@
 using MarketDataCollector.Application.Config;
+using MarketDataCollector.Infrastructure.Providers.NYSE;
 
 namespace MarketDataCollector.Infrastructure.DataSources;
 
@@ -217,6 +218,11 @@ public sealed record SourceConfig
     /// Interactive Brokers-specific options.
     /// </summary>
     public IBOptions? IB { get; init; }
+
+    /// <summary>
+    /// NYSE Direct Connection-specific options.
+    /// </summary>
+    public NYSEOptions? NYSE { get; init; }
 }
 
 /// <summary>
