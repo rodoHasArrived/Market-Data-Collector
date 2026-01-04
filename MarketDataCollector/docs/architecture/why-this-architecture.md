@@ -85,4 +85,4 @@ We treat all recorded activity as a stream of standardized `MarketEvent` objects
 
 **Version:** 1.4.0
 **Last Updated:** 2026-01-04
-**See Also:** [architecture.md](architecture.md) | [domains.md](domains.md) | [c4-diagrams.md](c4-diagrams.md) | [lean-integration.md](lean-integration.md)
+**See Also:** [Architecture Overview](overview.md) | [Domains](domains.md) | [C4 Diagrams](c4-diagrams.md) | [Lean Integration](../integrations/lean-integration.md)

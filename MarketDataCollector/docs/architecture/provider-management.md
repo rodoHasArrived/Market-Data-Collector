@@ -535,7 +535,7 @@ See the XML documentation in each source file for detailed API documentation.
 
 ## Related Documentation
 
-- [Architecture Overview](architecture.md)
-- [Configuration Guide](CONFIGURATION.md)
-- [Storage Organization](STORAGE_ORGANIZATION_DESIGN.md)
-- [Operator Runbook](operator-runbook.md)
+- [Architecture Overview](overview.md)
+- [Configuration Guide](../guides/configuration.md)
+- [Storage Organization](storage-design.md)
+- [Operator Runbook](../guides/operator-runbook.md)
