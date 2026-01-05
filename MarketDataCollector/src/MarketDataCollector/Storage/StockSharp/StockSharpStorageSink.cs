@@ -36,8 +36,9 @@ public sealed class StockSharpStorageSink : IStorageSink
     private readonly StorageRegistry _storageRegistry;
     private readonly IExchangeInfoProvider _exchangeInfoProvider;
     private readonly StorageFormats _format;
-    private readonly Dictionary<string, Security> _securities = new();
-    private readonly object _gate = new();
+    // Use ConcurrentDictionary for lock-free thread-safe access (improved Hydra pattern)
+    // This eliminates lock contention during high-frequency security lookups
+    private readonly ConcurrentDictionary<string, Security> _securities = new();
 
     // Batch writing support (Hydra-inspired pattern)
     private readonly ConcurrentQueue<(SecurityId SecId, ExecutionMessage Msg)> _tradeBatch = new();
@@ -263,6 +264,7 @@ public sealed class StockSharpStorageSink : IStorageSink
 
     /// <summary>
     /// Flush all batched messages to storage (Hydra pattern).
+    /// Uses parallel flush for all data types to maximize throughput.
     /// </summary>
     private async Task FlushBatchesAsync(CancellationToken ct = default)
     {
@@ -272,17 +274,19 @@ public sealed class StockSharpStorageSink : IStorageSink
 
         try
         {
-            // Flush trades
-            flushedCount += await FlushTradeBatchAsync(ct).ConfigureAwait(false);
+            // Flush all batches in parallel for better I/O throughput
+            // Why parallel is better: Each storage type writes to separate files,
+            // so we can utilize multiple I/O streams simultaneously
+            var tasks = new[]
+            {
+                FlushBatchAsync(_tradeBatch, GetTickStorage, ct),
+                FlushBatchAsync(_depthBatch, GetQuoteStorage, ct),
+                FlushBatchAsync(_level1Batch, GetLevel1Storage, ct),
+                FlushBatchAsync(_candleBatch, GetCandleStorage, ct)
+            };
 
-            // Flush depth
-            flushedCount += await FlushDepthBatchAsync(ct).ConfigureAwait(false);
-
-            // Flush Level1
-            flushedCount += await FlushLevel1BatchAsync(ct).ConfigureAwait(false);
-
-            // Flush candles
-            flushedCount += await FlushCandleBatchAsync(ct).ConfigureAwait(false);
+            var results = await Task.WhenAll(tasks).ConfigureAwait(false);
+            flushedCount = results.Sum();
 
             if (flushedCount > 0)
             {
@@ -298,166 +302,101 @@ public sealed class StockSharpStorageSink : IStorageSink
     }
 
     /// <summary>
-    /// Flush trade batch to storage.
+    /// Generic batch flush method that handles any message type.
+    ///
+    /// Why this is better than the previous implementation:
+    /// 1. DRY: Single implementation for all message types eliminates 80+ lines of duplicated code
+    /// 2. Maintainability: Bug fixes and improvements apply to all message types automatically
+    /// 3. Consistency: Ensures all flush operations behave identically
+    /// 4. Extensibility: Adding new message types requires only a new storage getter delegate
+    /// 5. Testability: Generic method can be tested once with different message types
     /// </summary>
-    private async Task<int> FlushTradeBatchAsync(CancellationToken ct)
+    /// <typeparam name="TMessage">The StockSharp message type (ExecutionMessage, QuoteChangeMessage, etc.)</typeparam>
+    /// <param name="batch">The concurrent queue containing batched messages.</param>
+    /// <param name="getStorage">Factory function to get the appropriate storage for a SecurityId.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>Number of messages flushed.</returns>
+    private async Task<int> FlushBatchAsync<TMessage>(
+        ConcurrentQueue<(SecurityId SecId, TMessage Msg)> batch,
+        Func<SecurityId, IMarketDataStorage<TMessage>> getStorage,
+        CancellationToken ct) where TMessage : Message
     {
-        var messages = new Dictionary<SecurityId, List<ExecutionMessage>>();
+        // Drain queue and group by security for batch saving
+        // Using Dictionary with TryGetValue pattern for efficient grouping
+        var messagesBySecurityId = new Dictionary<SecurityId, List<TMessage>>();
 
-        while (_tradeBatch.TryDequeue(out var item))
+        while (batch.TryDequeue(out var item))
         {
-            if (!messages.TryGetValue(item.SecId, out var list))
+            if (!messagesBySecurityId.TryGetValue(item.SecId, out var list))
             {
-                list = new List<ExecutionMessage>();
-                messages[item.SecId] = list;
+                list = new List<TMessage>();
+                messagesBySecurityId[item.SecId] = list;
             }
             list.Add(item.Msg);
         }
 
-        if (messages.Count == 0) return 0;
+        if (messagesBySecurityId.Count == 0)
+            return 0;
 
+        // Perform I/O on background thread to avoid blocking
         int count = 0;
         await Task.Run(() =>
         {
-            foreach (var (secId, msgs) in messages)
+            foreach (var (securityId, messages) in messagesBySecurityId)
             {
                 ct.ThrowIfCancellationRequested();
-                var storage = _storageRegistry.GetTickMessageStorage(secId, _format);
-                storage.Save(msgs);
-                count += msgs.Count;
+                var storage = getStorage(securityId);
+                storage.Save(messages);
+                count += messages.Count;
             }
         }, ct).ConfigureAwait(false);
 
         return count;
     }
 
-    /// <summary>
-    /// Flush depth batch to storage.
-    /// </summary>
-    private async Task<int> FlushDepthBatchAsync(CancellationToken ct)
-    {
-        var messages = new Dictionary<SecurityId, List<QuoteChangeMessage>>();
+    // Storage getter delegates - cleaner separation of storage access logic
+    private IMarketDataStorage<ExecutionMessage> GetTickStorage(SecurityId secId) =>
+        _storageRegistry.GetTickMessageStorage(secId, _format);
 
-        while (_depthBatch.TryDequeue(out var item))
-        {
-            if (!messages.TryGetValue(item.SecId, out var list))
-            {
-                list = new List<QuoteChangeMessage>();
-                messages[item.SecId] = list;
-            }
-            list.Add(item.Msg);
-        }
+    private IMarketDataStorage<QuoteChangeMessage> GetQuoteStorage(SecurityId secId) =>
+        _storageRegistry.GetQuoteMessageStorage(secId, _format);
 
-        if (messages.Count == 0) return 0;
+    private IMarketDataStorage<Level1ChangeMessage> GetLevel1Storage(SecurityId secId) =>
+        _storageRegistry.GetLevel1MessageStorage(secId, _format);
 
-        int count = 0;
-        await Task.Run(() =>
-        {
-            foreach (var (secId, msgs) in messages)
-            {
-                ct.ThrowIfCancellationRequested();
-                var storage = _storageRegistry.GetQuoteMessageStorage(secId, _format);
-                storage.Save(msgs);
-                count += msgs.Count;
-            }
-        }, ct).ConfigureAwait(false);
-
-        return count;
-    }
-
-    /// <summary>
-    /// Flush Level1 batch to storage.
-    /// </summary>
-    private async Task<int> FlushLevel1BatchAsync(CancellationToken ct)
-    {
-        var messages = new Dictionary<SecurityId, List<Level1ChangeMessage>>();
-
-        while (_level1Batch.TryDequeue(out var item))
-        {
-            if (!messages.TryGetValue(item.SecId, out var list))
-            {
-                list = new List<Level1ChangeMessage>();
-                messages[item.SecId] = list;
-            }
-            list.Add(item.Msg);
-        }
-
-        if (messages.Count == 0) return 0;
-
-        int count = 0;
-        await Task.Run(() =>
-        {
-            foreach (var (secId, msgs) in messages)
-            {
-                ct.ThrowIfCancellationRequested();
-                var storage = _storageRegistry.GetLevel1MessageStorage(secId, _format);
-                storage.Save(msgs);
-                count += msgs.Count;
-            }
-        }, ct).ConfigureAwait(false);
-
-        return count;
-    }
-
-    /// <summary>
-    /// Flush candle batch to storage.
-    /// </summary>
-    private async Task<int> FlushCandleBatchAsync(CancellationToken ct)
-    {
-        var messages = new Dictionary<SecurityId, List<TimeFrameCandleMessage>>();
-
-        while (_candleBatch.TryDequeue(out var item))
-        {
-            if (!messages.TryGetValue(item.SecId, out var list))
-            {
-                list = new List<TimeFrameCandleMessage>();
-                messages[item.SecId] = list;
-            }
-            list.Add(item.Msg);
-        }
-
-        if (messages.Count == 0) return 0;
-
-        int count = 0;
-        await Task.Run(() =>
-        {
-            foreach (var (secId, msgs) in messages)
-            {
-                ct.ThrowIfCancellationRequested();
-                var storage = _storageRegistry.GetCandleMessageStorage(
-                    secId,
-                    typeof(TimeFrameCandleMessage),
-                    TimeSpan.FromDays(1),
-                    _format);
-                storage.Save(msgs);
-                count += msgs.Count;
-            }
-        }, ct).ConfigureAwait(false);
-
-        return count;
-    }
+    private IMarketDataStorage<TimeFrameCandleMessage> GetCandleStorage(SecurityId secId) =>
+        _storageRegistry.GetCandleMessageStorage(secId, typeof(TimeFrameCandleMessage), TimeSpan.FromDays(1), _format);
 
     #endregion
 
     /// <summary>
     /// Get or create a StockSharp Security for a symbol.
+    /// Uses ConcurrentDictionary.GetOrAdd for lock-free, thread-safe access.
+    ///
+    /// Why this is better than the previous lock-based approach:
+    /// 1. Lock-free: No lock contention under high-frequency concurrent access
+    /// 2. Atomic: GetOrAdd is an atomic operation ensuring single creation per key
+    /// 3. Performance: ConcurrentDictionary uses fine-grained locking internally,
+    ///    allowing multiple threads to read/write different buckets simultaneously
+    /// 4. Simpler: Cleaner code without explicit lock management
     /// </summary>
     private Security GetOrCreateSecurity(string symbol)
     {
-        lock (_gate)
+        return _securities.GetOrAdd(symbol, CreateSecurity);
+    }
+
+    /// <summary>
+    /// Factory method for creating Security objects.
+    /// Separated for clarity and potential future customization (e.g., per-exchange boards).
+    /// </summary>
+    private static Security CreateSecurity(string symbol)
+    {
+        return new Security
         {
-            if (!_securities.TryGetValue(symbol, out var security))
-            {
-                security = new Security
-                {
-                    Id = symbol,
-                    Code = symbol,
-                    Board = ExchangeBoard.Nyse // Default, could be configurable
-                };
-                _securities[symbol] = security;
-            }
-            return security;
-        }
+            Id = symbol,
+            Code = symbol,
+            Board = ExchangeBoard.Nyse // Default, could be enhanced to detect exchange from symbol
+        };
     }
 #endif
 
@@ -491,10 +430,8 @@ public sealed class StockSharpStorageSink : IStorageSink
         await FlushAsync().ConfigureAwait(false);
 
 #if STOCKSHARP
-        lock (_gate)
-        {
-            _securities.Clear();
-        }
+        // ConcurrentDictionary.Clear() is thread-safe, no lock needed
+        _securities.Clear();
 #endif
 
         _log.Information("StockSharp storage disposed. Total events written: {Count}, buffered: {Buffered}",
