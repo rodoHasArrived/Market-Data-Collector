@@ -23,7 +23,7 @@
 
 param(
     [Parameter(Position = 0)]
-    [ValidateSet("Docker", "Native", "Check", "Uninstall", "Help")]
+    [ValidateSet("Docker", "Native", "Desktop", "Check", "Uninstall", "Help")]
     [string]$Mode = ""
 )
 
@@ -60,7 +60,8 @@ function Show-Help {
     Write-Host ""
     Write-Host "Modes:"
     Write-Host "  Docker     Install using Docker (recommended for production)"
-    Write-Host "  Native     Install using native .NET SDK"
+    Write-Host "  Native     Install using native .NET SDK (CLI)"
+    Write-Host "  Desktop    Build and install Windows Desktop App (WinUI 3)"
     Write-Host "  Check      Check prerequisites only"
     Write-Host "  Uninstall  Remove Docker containers and images"
     Write-Host "  Help       Show this help message"
@@ -297,6 +298,78 @@ function Install-Native {
     }
 }
 
+function Install-Desktop {
+    Write-Info "Installing Windows Desktop Application..."
+
+    if (-not (Test-Command "dotnet")) {
+        Write-Error ".NET SDK is required for Desktop installation"
+        Show-Prerequisites-Suggestions
+        return
+    }
+
+    Push-Location $ScriptDir
+
+    try {
+        $desktopProjectPath = Join-Path $ScriptDir "src\MarketDataCollector.Uwp\MarketDataCollector.Uwp.csproj"
+        $outputPath = Join-Path $ScriptDir "dist\win-x64\desktop"
+
+        # Restore and build
+        Write-Info "Restoring dependencies..."
+        dotnet restore $desktopProjectPath
+
+        Write-Info "Building Windows Desktop App..."
+        dotnet publish $desktopProjectPath `
+            -c Release `
+            -r win-x64 `
+            -o $outputPath `
+            --self-contained true `
+            -p:WindowsPackageType=None `
+            -p:PublishReadyToRun=true
+
+        if ($LASTEXITCODE -ne 0) {
+            Write-Error "Build failed"
+            return
+        }
+
+        Write-Success "Build completed successfully"
+
+        # Setup config
+        if (-not (Setup-Config)) { return }
+
+        # Copy config to output
+        $configFile = Join-Path $ScriptDir "appsettings.json"
+        $sampleConfigFile = Join-Path $ScriptDir "appsettings.sample.json"
+
+        if (Test-Path $configFile) {
+            Copy-Item $configFile -Destination $outputPath
+        }
+        if (Test-Path $sampleConfigFile) {
+            Copy-Item $sampleConfigFile -Destination $outputPath
+        }
+
+        # Create data directory
+        $dataDir = Join-Path $outputPath "data"
+        if (-not (Test-Path $dataDir)) {
+            New-Item -ItemType Directory -Path $dataDir | Out-Null
+        }
+
+        Write-Host ""
+        Write-Host "======================================================================" -ForegroundColor Green
+        Write-Host "           Windows Desktop App Installation Complete!                 " -ForegroundColor Green
+        Write-Host "======================================================================" -ForegroundColor Green
+        Write-Host "  Location:  $outputPath" -ForegroundColor White
+        Write-Host "" -ForegroundColor White
+        Write-Host "  To run the app:" -ForegroundColor White
+        Write-Host "    $outputPath\MarketDataCollector.Desktop.exe" -ForegroundColor Gray
+        Write-Host "" -ForegroundColor White
+        Write-Host "  Or create a shortcut to the executable on your desktop." -ForegroundColor White
+        Write-Host "======================================================================" -ForegroundColor Green
+    }
+    finally {
+        Pop-Location
+    }
+}
+
 function Uninstall-Docker {
     Write-Info "Uninstalling Docker containers and images..."
 
@@ -327,21 +400,23 @@ function Show-InteractiveMenu {
 
     Write-Host "Choose installation method:" -ForegroundColor Yellow
     Write-Host "  1) Docker (recommended for production)"
-    Write-Host "  2) Native .NET SDK"
-    Write-Host "  3) Check prerequisites only"
-    Write-Host "  4) Exit"
+    Write-Host "  2) Native .NET SDK (CLI application)"
+    Write-Host "  3) Windows Desktop App (WinUI 3 - recommended for Windows)"
+    Write-Host "  4) Check prerequisites only"
+    Write-Host "  5) Exit"
     Write-Host ""
 
-    $choice = Read-Host "Enter choice [1-4]"
+    $choice = Read-Host "Enter choice [1-5]"
 
     switch ($choice) {
         "1" { Install-Docker }
         "2" { Install-Native }
-        "3" {
+        "3" { Install-Desktop }
+        "4" {
             Test-Prerequisites | Out-Null
             Show-Prerequisites-Suggestions
         }
-        "4" {
+        "5" {
             Write-Host "Exiting..."
             exit 0
         }
@@ -363,6 +438,11 @@ switch ($Mode) {
         Show-Header
         Test-Prerequisites | Out-Null
         Install-Native
+    }
+    "Desktop" {
+        Show-Header
+        Test-Prerequisites | Out-Null
+        Install-Desktop
     }
     "Check" {
         Show-Header

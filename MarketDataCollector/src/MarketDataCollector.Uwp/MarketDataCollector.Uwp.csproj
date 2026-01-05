@@ -12,6 +12,24 @@
     <WindowsPackageType>None</WindowsPackageType>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+
+    <!-- Assembly Information -->
+    <AssemblyName>MarketDataCollector.Desktop</AssemblyName>
+    <Version>1.0.0</Version>
+    <Authors>MarketDataCollector Team</Authors>
+    <Description>Windows Desktop Application for Market Data Collector</Description>
+    <Product>Market Data Collector Desktop</Product>
+    <Copyright>Copyright 2024-2026 MarketDataCollector Team</Copyright>
+
+    <!-- Windows Desktop Deployment Settings -->
+    <PublishReadyToRun>true</PublishReadyToRun>
+    <SelfContained>true</SelfContained>
+    <DebugType>embedded</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+    <Deterministic>true</Deterministic>
+
+    <!-- Globalization settings -->
+    <InvariantGlobalization>false</InvariantGlobalization>
   </PropertyGroup>
 
   <ItemGroup>
@@ -32,7 +50,19 @@
     </Content>
   </ItemGroup>
 
+  <!-- Copy sample configuration to output -->
+  <ItemGroup>
+    <None Include="..\..\appsettings.sample.json" Condition="Exists('..\..\appsettings.sample.json')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
   <ItemGroup>
     <Manifest Include="$(ApplicationManifest)" />
+  </ItemGroup>
+
+  <!-- Trimmer root assemblies for JSON serialization -->
+  <ItemGroup>
+    <TrimmerRootAssembly Include="System.Text.Json" />
   </ItemGroup>
 </Project>
