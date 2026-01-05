@@ -9,14 +9,21 @@ namespace MarketDataCollector.Uwp;
 public partial class App : Application
 {
     private Window? _window;
+    private static bool _isFirstRun;
 
     public App()
     {
         this.InitializeComponent();
+
+        // Handle unhandled exceptions gracefully
+        this.UnhandledException += OnUnhandledException;
     }
 
-    protected override void OnLaunched(LaunchActivatedEventArgs args)
+    protected override async void OnLaunched(LaunchActivatedEventArgs args)
     {
+        // Run first-time setup before showing window
+        await InitializeFirstRunAsync();
+
         _window = new MainWindow();
         MainWindow = _window;
 
@@ -30,9 +37,57 @@ public partial class App : Application
     }
 
     /// <summary>
+    /// Performs first-run initialization including config setup.
+    /// </summary>
+    private static async Task InitializeFirstRunAsync()
+    {
+        try
+        {
+            var firstRunService = new FirstRunService();
+            _isFirstRun = await firstRunService.IsFirstRunAsync();
+
+            if (_isFirstRun)
+            {
+                await firstRunService.InitializeAsync();
+            }
+        }
+        catch
+        {
+            // Continue even if first-run setup fails - app should still work
+        }
+    }
+
+    /// <summary>
+    /// Handles unhandled exceptions to prevent crashes.
+    /// </summary>
+    private void OnUnhandledException(object sender, Microsoft.UI.Xaml.UnhandledExceptionEventArgs e)
+    {
+        // Log the exception but don't crash
+        System.Diagnostics.Debug.WriteLine($"Unhandled exception: {e.Exception}");
+        e.Handled = true;
+
+        // Notify user of the error
+        try
+        {
+            _ = NotificationService.Instance.NotifyErrorAsync(
+                "Application Error",
+                e.Exception.Message);
+        }
+        catch
+        {
+            // Ignore notification failures
+        }
+    }
+
+    /// <summary>
     /// Gets the main application window.
     /// </summary>
     public static Window? MainWindow { get; private set; }
+
+    /// <summary>
+    /// Gets whether this is the first run of the application.
+    /// </summary>
+    public static bool IsFirstRun => _isFirstRun;
 
     /// <summary>
     /// Gets the notification service instance.

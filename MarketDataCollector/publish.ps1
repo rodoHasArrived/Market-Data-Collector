@@ -10,7 +10,7 @@ param(
     [ValidateSet("all", "win-x64", "win-arm64", "linux-x64", "linux-arm64", "osx-x64", "osx-arm64")]
     [string]$Platform = "all",
 
-    [ValidateSet("all", "collector", "ui")]
+    [ValidateSet("all", "collector", "ui", "desktop")]
     [string]$Project = "all",
 
     [string]$Version = "1.0.0",
@@ -31,8 +31,10 @@ Set-Location $ScriptDir
 
 # Configuration
 $AllPlatforms = @("win-x64", "win-arm64", "linux-x64", "linux-arm64", "osx-x64", "osx-arm64")
+$WindowsPlatforms = @("win-x64", "win-arm64")
 $CollectorProject = "src/MarketDataCollector/MarketDataCollector.csproj"
 $UiProject = "src/MarketDataCollector.Ui/MarketDataCollector.Ui.csproj"
+$DesktopProject = "src/MarketDataCollector.Uwp/MarketDataCollector.Uwp.csproj"
 
 function Write-Info {
     param([string]$Message)
@@ -75,9 +77,10 @@ Parameters:
                   osx-arm64   macOS ARM64 (Apple Silicon)
 
   -Project      Target project (default: all)
-                  all        Build both projects
-                  collector  Build only MarketDataCollector
-                  ui         Build only MarketDataCollector.Ui
+                  all        Build all projects
+                  collector  Build only MarketDataCollector (CLI)
+                  ui         Build only MarketDataCollector.Ui (Web Dashboard)
+                  desktop    Build only MarketDataCollector.Uwp (Windows Desktop App)
 
   -Version      Version number (default: 1.0.0)
   -Configuration Build configuration (default: Release)
@@ -127,6 +130,46 @@ function Publish-Project {
     }
 
     Write-Success "Published $ProjectName for $RuntimeId -> $outputPath"
+}
+
+function Publish-DesktopApp {
+    param([string]$RuntimeId)
+
+    $outputPath = Join-Path $OutputDir $RuntimeId "desktop"
+
+    Write-Info "Publishing Windows Desktop App for $RuntimeId..."
+
+    # Windows Desktop App uses WinUI 3, which requires special publish settings
+    dotnet publish $DesktopProject `
+        -c $Configuration `
+        -r $RuntimeId `
+        -o $outputPath `
+        -p:Version=$Version `
+        -p:Platform=x64 `
+        --self-contained true `
+        -p:WindowsPackageType=None `
+        -p:PublishReadyToRun=true
+
+    if ($LASTEXITCODE -ne 0) {
+        throw "Failed to publish Windows Desktop App for $RuntimeId"
+    }
+
+    # Copy configuration files
+    $configFile = Join-Path $ScriptDir "appsettings.json"
+    $sampleConfigFile = Join-Path $ScriptDir "appsettings.sample.json"
+
+    if (Test-Path $configFile) {
+        Copy-Item $configFile -Destination $outputPath
+    }
+    if (Test-Path $sampleConfigFile) {
+        Copy-Item $sampleConfigFile -Destination $outputPath
+    }
+
+    # Create data directory for first run
+    $dataDir = Join-Path $outputPath "data"
+    New-Item -ItemType Directory -Path $dataDir -Force | Out-Null
+
+    Write-Success "Published Windows Desktop App for $RuntimeId -> $outputPath"
 }
 
 function New-Package {
@@ -180,6 +223,12 @@ foreach ($rid in $TargetPlatforms) {
 
     if ($Project -eq "all" -or $Project -eq "ui") {
         Publish-Project -ProjectPath $UiProject -RuntimeId $rid -ProjectName "MarketDataCollector.Ui" -OutputSubDir "ui"
+    }
+
+    # Build Windows Desktop App only for Windows platforms
+    if (($Project -eq "all" -or $Project -eq "desktop") -and ($rid -in $WindowsPlatforms)) {
+        Write-Info "Publishing Windows Desktop App for $rid..."
+        Publish-DesktopApp -RuntimeId $rid
     }
 
     # Create package
