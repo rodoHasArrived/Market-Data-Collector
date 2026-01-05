@@ -29,13 +29,13 @@ jobs:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
     - name: Restore dependencies
-      run: dotnet restore ${{ env.PROJECT_PATH }}
+      run: dotnet restore ${{ env.PROJECT_PATH }} /p:EnableWindowsTargeting=true
 
     - name: Build
-      run: dotnet build ${{ env.PROJECT_PATH }} -c Release --no-restore
+      run: dotnet build ${{ env.PROJECT_PATH }} -c Release --no-restore /p:EnableWindowsTargeting=true
 
     - name: Test
-      run: dotnet test ${{ env.PROJECT_PATH }} -c Release --no-build --verbosity normal
+      run: dotnet test ${{ env.PROJECT_PATH }} -c Release --no-build --verbosity normal /p:EnableWindowsTargeting=true
 
   publish:
     name: Publish ${{ matrix.rid }}
