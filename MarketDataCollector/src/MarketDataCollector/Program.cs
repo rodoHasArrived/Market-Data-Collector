@@ -66,6 +66,16 @@ internal static class Program
             return;
         }
 
+        // Validate Config Mode - Check configuration without starting
+        if (args.Any(a => a.Equals("--validate-config", StringComparison.OrdinalIgnoreCase)))
+        {
+            var configPathArg = GetArgValue(args, "--config") ?? cfgPath;
+            var validator = new ConfigValidatorCli(log);
+            var exitCode = validator.Validate(configPathArg);
+            Environment.Exit(exitCode);
+            return;
+        }
+
         // UI Mode - Start web dashboard
         if (args.Any(a => a.Equals("--ui", StringComparison.OrdinalIgnoreCase)))
         {
@@ -396,9 +406,11 @@ MODES:
     --backfill              Run historical data backfill
     --replay <path>         Replay events from JSONL file
     --selftest              Run system self-tests
+    --validate-config       Validate configuration without starting
     --help, -h              Show this help message
 
 OPTIONS:
+    --config <path>         Path to configuration file (default: appsettings.json)
     --http-port <port>      HTTP server port (default: 8080)
     --status-port <port>    Status endpoint port
     --watch-config          Enable hot-reload of configuration
@@ -425,6 +437,12 @@ EXAMPLES:
 
     # Run self-tests
     MarketDataCollector --selftest
+
+    # Validate configuration without starting
+    MarketDataCollector --validate-config
+
+    # Validate a specific configuration file
+    MarketDataCollector --validate-config --config /path/to/config.json
 
 CONFIGURATION:
     Configuration is loaded from appsettings.json in the current directory.
