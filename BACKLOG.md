@@ -1,6 +1,6 @@
 # Market Data Collector - Backlog
 
-**Version:** 1.5.0
+**Version:** 1.6.0
 **Last Updated:** 2026-01-07
 **Status:** Production Ready
 
@@ -14,16 +14,16 @@ This document provides a quick overview of implemented features and the developm
 |----------|-------------|---------|
 | Core Features | 25+ | - |
 | Technical Debt | 2 | 6 |
-| Quick Wins | 0 | 125 |
+| Quick Wins | 11 | 114 |
 | Provider Integration | 4 | 20 |
-| Monitoring & Alerting | 5 | 24 |
-| Data Quality | 3 | 21 |
+| Monitoring & Alerting | 10 | 19 |
+| Data Quality | 6 | 18 |
 | Storage & Archival | 8 | 10 |
 | Cloud Integration (AWS/Azure/GCP) | 0 | 80+ |
 
 ---
 
-## What's Implemented (v1.5.0)
+## What's Implemented (v1.6.0)
 
 ### Core Data Collection
 - [x] Multi-provider streaming (Alpaca, Interactive Brokers)
@@ -52,6 +52,16 @@ This document provides a quick overview of implemented features and the developm
 - [x] Data quality scoring (multi-dimensional)
 - [x] OpenTelemetry distributed tracing
 - [x] Structured logging (Serilog)
+- [x] **NEW:** Stale data detection with alerts
+- [x] **NEW:** Connection health heartbeat monitoring
+- [x] **NEW:** Disk space warnings
+- [x] **NEW:** Memory usage warnings
+- [x] **NEW:** Daily summary webhooks (Slack/Discord/Teams)
+
+### Data Quality (NEW in v1.6.0)
+- [x] **NEW:** Crossed market detector (bid > ask)
+- [x] **NEW:** Timestamp monotonicity checker
+- [x] **NEW:** Trading calendar integration (US markets)
 
 ### User Interfaces
 - [x] Web Dashboard (HTML/JS, auto-refresh)
@@ -66,6 +76,9 @@ This document provides a quick overview of implemented features and the developm
 - [x] QuantConnect Lean integration
 - [x] F# domain library (type-safe, railway-oriented)
 - [x] 50+ unit tests
+- [x] **NEW:** Config validator CLI (`--validate-config`)
+- [x] **NEW:** Pre-flight checks on startup
+- [x] **NEW:** Graceful shutdown with event flush
 
 ---
 
@@ -79,36 +92,35 @@ This document provides a quick overview of implemented features and the developm
 | TD-5 | Create shared contracts library (UWP/Core) | Pending |
 | TD-7 | Standardize error handling patterns | Pending |
 
-### Quick Wins - Do First (P0)
+### Quick Wins - Sprint 1 (Completed ✅)
 
-| ID | Feature | Effort | Impact |
+| ID | Feature | Effort | Status |
 |----|---------|--------|--------|
-| QW-1 | Stale Data Detector | 1 day | Critical |
-| QW-3 | Connection Health Heartbeat | 1 day | Critical |
-| MON-16 | Disk Space Warning | 0.5 day | High |
-| MON-17 | Memory Usage Warning | 0.5 day | High |
-| QW-2 | Config Validator CLI | 1 day | High |
-| QW-4 | Trading Calendar Integration | 1 day | High |
-| QW-5 | Daily Summary Webhook | 1 day | High |
-| QW-22 | Pre-flight Checks on Startup | 1 day | High |
-| DQ-12 | Crossed Market Detector | 0.5 day | High |
+| QW-1 | Stale Data Detector | 1 day | ✅ Implemented |
+| QW-3 | Connection Health Heartbeat | 1 day | ✅ Implemented |
+| MON-16 | Disk Space Warning | 0.5 day | ✅ Implemented |
+| MON-17 | Memory Usage Warning | 0.5 day | ✅ Implemented |
+| QW-2 | Config Validator CLI | 1 day | ✅ Implemented |
+| QW-4 | Trading Calendar Integration | 1 day | ✅ Implemented |
+| QW-5 | Daily Summary Webhook | 1 day | ✅ Implemented |
+| QW-22 | Pre-flight Checks on Startup | 1 day | ✅ Implemented |
+| DQ-12 | Crossed Market Detector | 0.5 day | ✅ Implemented |
+| QW-30 | Pending Event Flush on Shutdown | 1 day | ✅ Implemented |
+| DQ-15 | Timestamp Monotonicity Check | 0.5 day | ✅ Implemented |
 
-### Data Quality (P1)
+### Data Quality (P1) - Next Sprint
 
 | ID | Feature | Effort |
 |----|---------|--------|
 | DQ-2 | Duplicate Event Detector | 1 day |
-| DQ-15 | Timestamp Monotonicity Check | 0.5 day |
 | DQ-20 | Bad Tick Filter | 1 day |
 | QW-6 | Price Spike Alert | 1 day |
 | QW-7 | Spread Monitor | 1 day |
 
-### Monitoring & Alerting (P1)
+### Monitoring & Alerting (P1) - Next Sprint
 
 | ID | Feature | Effort |
 |----|---------|--------|
-| MON-1 | Stale Data Detector | 1 day |
-| MON-5 | Daily Summary Email/Webhook | 1 day |
 | MON-6 | Connection Status Webhook | 1 day |
 | MON-13 | Volume Spike Alert | 1 day |
 | MON-18 | Backpressure Alert | 1 day |
@@ -130,26 +142,31 @@ This document provides a quick overview of implemented features and the developm
 
 ## Recommended Sprint Plan
 
-### Sprint 1: Critical Foundation (Week 1-2)
-1. QW-1: Stale Data Detector
-2. QW-3: Connection Health Heartbeat
-3. MON-16/17: Disk/Memory Warnings
-4. QW-4: Trading Calendar
-5. QW-22: Pre-flight Checks
+### Sprint 1: Critical Foundation ✅ COMPLETE
+1. ✅ QW-1: Stale Data Detector
+2. ✅ QW-3: Connection Health Heartbeat
+3. ✅ MON-16/17: Disk/Memory Warnings
+4. ✅ QW-4: Trading Calendar
+5. ✅ QW-22: Pre-flight Checks
+6. ✅ QW-2: Config Validator CLI
+7. ✅ QW-5: Daily Summary Webhook
+8. ✅ DQ-12: Crossed Market Detector
+9. ✅ DQ-15: Timestamp Monotonicity
+10. ✅ QW-30: Graceful Shutdown with Event Flush
 
-### Sprint 2: Data Quality (Week 3-4)
-1. DQ-12: Crossed Market Detector
-2. DQ-15: Timestamp Monotonicity
-3. QW-6: Price Spike Alert
-4. QW-8: Duplicate Event Detector
+### Sprint 2: Data Quality & Alerts (Next)
+1. QW-6: Price Spike Alert
+2. QW-7: Spread Monitor
+3. DQ-2: Duplicate Event Detector
+4. DQ-20: Bad Tick Filter
 5. QW-32: Detailed Health Check Endpoint
 
-### Sprint 3: Developer Experience (Week 5-6)
-1. QW-2: Config Validator CLI
-2. QW-16: Diagnostic Bundle Generator
-3. TD-1: Replace double with decimal
-4. QW-15: Query Endpoint for Historical Data
-5. DEV-9: API Explorer / Swagger UI
+### Sprint 3: Developer Experience
+1. QW-16: Diagnostic Bundle Generator
+2. TD-1: Replace double with decimal
+3. QW-15: Query Endpoint for Historical Data
+4. DEV-9: API Explorer / Swagger UI
+5. QW-17: Sample Data Generator
 
 ---
 
