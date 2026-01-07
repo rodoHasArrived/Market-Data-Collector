@@ -216,7 +216,7 @@ public sealed class OrderBookMatchingEngine
             {
                 case DepthOperation.Insert:
                 case DepthOperation.Update:
-                    side.SetLevel(update.Price, update.Size);
+                    side.SetLevel(update.Price, (int)update.Size);
                     break;
 
                 case DepthOperation.Delete:

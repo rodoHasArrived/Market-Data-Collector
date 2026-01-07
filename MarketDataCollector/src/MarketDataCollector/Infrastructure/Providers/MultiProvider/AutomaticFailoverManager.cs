@@ -463,7 +463,7 @@ public sealed class FailoverRule
         Id = "";
         PrimaryProviderId = "";
         BackupProviderIds = Array.Empty<string>();
-        CurrentActiveProviderId = PrimaryProviderId;
+        CurrentActiveProviderId = "";
     }
 
     internal void SetFailoverState(bool inFailover, string? activeProvider)

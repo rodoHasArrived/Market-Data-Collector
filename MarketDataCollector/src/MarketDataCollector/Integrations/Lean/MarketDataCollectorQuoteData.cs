@@ -51,7 +51,7 @@ public class MarketDataCollectorQuoteData : BaseData
 
         // For backtesting, construct the path to the JSONL file
         // Assuming data is organized as: {DataRoot}/{Symbol}/bboquote/{date}.jsonl
-        var dataRoot = Globals.DataFolder;
+        var dataRoot = Environment.GetEnvironmentVariable("MDC_DATA_ROOT") ?? "./data";
         var symbol = config.Symbol.Value.ToUpperInvariant();
         var dateStr = date.ToString("yyyy-MM-dd");
         var filePath = Path.Combine(dataRoot, "marketdatacollector", symbol, "bboquote", $"{dateStr}.jsonl");
@@ -73,11 +73,7 @@ public class MarketDataCollectorQuoteData : BaseData
                 return null!;
 
             // Extract BBO quote payload
-            var quotePayload = marketEvent.Payload as JsonElement?;
-            if (quotePayload == null)
-                return null!;
-
-            var quote = JsonSerializer.Deserialize<BboQuotePayload>(quotePayload.Value.GetRawText());
+            var quote = marketEvent.Payload as BboQuotePayload;
             if (quote == null)
                 return null!;
 

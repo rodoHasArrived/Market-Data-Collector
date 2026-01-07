@@ -176,7 +176,6 @@ internal static class Program
 
         // Build service provider for MassTransit (if enabled)
         ServiceProvider? serviceProvider = null;
-        IHost? massTransitHost = null;
         IMarketEventPublisher publisher;
 
         var mtConfig = cfg.MassTransit ?? new MassTransitConfig();
@@ -526,7 +525,7 @@ SUPPORT:
             Console.Error.WriteLine("    4. Run: dotnet user-secrets init (for sensitive data)");
             return new AppConfig();
         }
-        catch (UnauthorizedAccessException ex)
+        catch (UnauthorizedAccessException)
         {
             throw new Application.Exceptions.ConfigurationException(
                 $"Access denied reading configuration file: {path}. Check file permissions.",

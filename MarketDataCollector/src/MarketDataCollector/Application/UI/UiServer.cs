@@ -7,6 +7,7 @@ using MarketDataCollector.Storage;
 using MarketDataCollector.Storage.Interfaces;
 using MarketDataCollector.Storage.Services;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -29,7 +30,7 @@ public sealed class UiServer : IAsyncDisposable
         // Minimize logging from ASP.NET Core
         builder.Logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Warning);
 
-        builder.Urls.Add($"http://localhost:{port}");
+        builder.WebHost.UseUrls($"http://localhost:{port}");
 
         var store = new ConfigStore(configPath);
         builder.Services.AddSingleton(store);

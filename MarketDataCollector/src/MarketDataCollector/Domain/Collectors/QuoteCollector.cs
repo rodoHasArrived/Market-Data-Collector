@@ -32,7 +32,7 @@ public sealed class QuoteCollector : IQuoteStateStore
         _publisher.TryPublish(MarketEvent.BboQuote(payload.Timestamp, payload.Symbol, payload));
     }
 
-    public bool TryGet(string symbol, out BboQuotePayload quote)
+    public bool TryGet(string symbol, out BboQuotePayload? quote)
         => _latest.TryGetValue(symbol, out quote);
 
     public BboQuotePayload Upsert(MarketQuoteUpdate update)
@@ -52,7 +52,7 @@ public sealed class QuoteCollector : IQuoteStateStore
         return payload;
     }
 
-    public bool TryRemove(string symbol, out BboQuotePayload removed)
+    public bool TryRemove(string symbol, out BboQuotePayload? removed)
     {
         var removedLatest = _latest.TryRemove(symbol, out removed);
         _seq.TryRemove(symbol, out _);

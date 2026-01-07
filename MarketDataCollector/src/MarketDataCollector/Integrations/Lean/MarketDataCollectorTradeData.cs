@@ -43,7 +43,7 @@ public class MarketDataCollectorTradeData : BaseData
 
         // For backtesting, construct the path to the JSONL file in the MarketDataCollector data directory
         // Assuming data is organized as: {DataRoot}/{Symbol}/trade/{date}.jsonl
-        var dataRoot = Globals.DataFolder; // Lean's data folder
+        var dataRoot = Environment.GetEnvironmentVariable("MDC_DATA_ROOT") ?? "./data";
         var symbol = config.Symbol.Value.ToUpperInvariant();
         var dateStr = date.ToString("yyyy-MM-dd");
         var filePath = Path.Combine(dataRoot, "marketdatacollector", symbol, "trade", $"{dateStr}.jsonl");
@@ -65,11 +65,7 @@ public class MarketDataCollectorTradeData : BaseData
                 return null!;
 
             // Extract trade payload
-            var tradePayload = marketEvent.Payload as JsonElement?;
-            if (tradePayload == null)
-                return null!;
-
-            var trade = JsonSerializer.Deserialize<Trade>(tradePayload.Value.GetRawText());
+            var trade = marketEvent.Payload as Trade;
             if (trade == null)
                 return null!;
 
