@@ -1565,12 +1565,12 @@ public static class HtmlTemplates
       `;
     }}
 
-    function editSymbol(symbol) {
+    function editSymbol(symbol) {{
       const match = (cachedSymbols || []).find(s => (s.symbol || '').toLowerCase() === symbol.toLowerCase());
-      if (!match) {
+      if (!match) {{
         showToast('error', 'Not Found', `Cannot find ${{symbol}} in current configuration`);
         return;
-      }
+      }}
 
       document.getElementById('sym').value = match.symbol || '';
       document.getElementById('trades').value = match.subscribeTrades ? 'true' : 'false';
@@ -1581,7 +1581,7 @@ public static class HtmlTemplates
       document.getElementById('pexch').value = match.primaryExchange || '';
 
       showToast('info', 'Editing symbol', `Loaded ${{symbol}} into the form. Update fields and click Add Symbol to save.`);
-    }
+    }}
 
     async function addSymbol() {{
       try {{
