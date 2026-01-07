@@ -10,7 +10,7 @@ namespace DataIngestion.QuoteService.Consumers;
 public sealed class QuoteConsumer : IConsumer<IRouteIngestionData>
 {
     private readonly IQuoteProcessor _processor;
-    private readonly ILogger _log = Log.ForContext<QuoteConsumer>();
+    private readonly Serilog.ILogger _log = Log.ForContext<QuoteConsumer>();
 
     public QuoteConsumer(IQuoteProcessor processor) => _processor = processor;
 
