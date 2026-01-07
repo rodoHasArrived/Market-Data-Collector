@@ -409,7 +409,7 @@ async function refresh(){
  tbody.innerHTML='';
  (status.integrity||[]).forEach(ev=>{
   const row=document.createElement('tr');
-  row.innerHTML=`<td>${ev.timestamp}</td><td>${ev.symbol}</td><td>${ev.kind}</td><td>${ev.description||''}</td>`;
+  row.innerHTML=`<td>${{ev.timestamp}}</td><td>${{ev.symbol}}</td><td>${{ev.kind}}</td><td>${{ev.description||''}}</td>`;
   tbody.appendChild(row);
  });
 }

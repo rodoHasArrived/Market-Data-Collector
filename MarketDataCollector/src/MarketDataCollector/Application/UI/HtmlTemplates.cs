@@ -1568,7 +1568,7 @@ public static class HtmlTemplates
     function editSymbol(symbol) {
       const match = (cachedSymbols || []).find(s => (s.symbol || '').toLowerCase() === symbol.toLowerCase());
       if (!match) {
-        showToast('error', 'Not Found', `Cannot find ${symbol} in current configuration`);
+        showToast('error', 'Not Found', `Cannot find ${{symbol}} in current configuration`);
         return;
       }
 
@@ -1580,7 +1580,7 @@ public static class HtmlTemplates
       document.getElementById('exch').value = match.exchange || 'SMART';
       document.getElementById('pexch').value = match.primaryExchange || '';
 
-      showToast('info', 'Editing symbol', `Loaded ${symbol} into the form. Update fields and click Add Symbol to save.`);
+      showToast('info', 'Editing symbol', `Loaded ${{symbol}} into the form. Update fields and click Add Symbol to save.`);
     }
 
     async function addSymbol() {{
