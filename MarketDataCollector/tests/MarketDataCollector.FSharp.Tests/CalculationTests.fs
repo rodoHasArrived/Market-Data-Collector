@@ -7,7 +7,8 @@ open FsUnit.Xunit
 open MarketDataCollector.FSharp.Domain.MarketEvents
 open MarketDataCollector.FSharp.Domain.Sides
 open MarketDataCollector.FSharp.Calculations.Spread
-open MarketDataCollector.FSharp.Calculations.Imbalance
+// Don't open Imbalance to avoid calculate function name conflict
+// open MarketDataCollector.FSharp.Calculations.Imbalance
 open MarketDataCollector.FSharp.Calculations.Aggregations
 
 let createTestQuote bidPrice bidSize askPrice askSize : QuoteEvent = {
@@ -128,23 +129,23 @@ let ``Imbalance.fromQuote calculates from quote`` () =
 
 [<Fact>]
 let ``getImbalanceDirection returns Buy for positive imbalance`` () =
-    let direction = getImbalanceDirection 0.5m
+    let direction = MarketDataCollector.FSharp.Calculations.Imbalance.getImbalanceDirection 0.5m
     direction |> should equal (Some Side.Buy)
 
 [<Fact>]
 let ``getImbalanceDirection returns Sell for negative imbalance`` () =
-    let direction = getImbalanceDirection -0.5m
+    let direction = MarketDataCollector.FSharp.Calculations.Imbalance.getImbalanceDirection -0.5m
     direction |> should equal (Some Side.Sell)
 
 [<Fact>]
 let ``getImbalanceDirection returns None for balanced`` () =
-    let direction = getImbalanceDirection 0.05m
+    let direction = MarketDataCollector.FSharp.Calculations.Imbalance.getImbalanceDirection 0.05m
     direction |> should equal None
 
 [<Fact>]
 let ``isSignificantImbalance checks threshold`` () =
-    isSignificantImbalance 0.3m 0.5m |> should equal true
-    isSignificantImbalance 0.3m 0.2m |> should equal false
+    MarketDataCollector.FSharp.Calculations.Imbalance.isSignificantImbalance 0.3m 0.5m |> should equal true
+    MarketDataCollector.FSharp.Calculations.Imbalance.isSignificantImbalance 0.3m 0.2m |> should equal false
 
 // Aggregation Tests
 
