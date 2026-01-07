@@ -2019,7 +2019,7 @@ async function loadBackfillProviders(selectedProvider) {
     }
     const help = document.getElementById('backfillHelp');
     if (help && backfillProviders.length) {
-      help.textContent = backfillProviders.map(p => `${p.displayName || p.name}: ${p.description || ''}`).join(' • ');
+      help.textContent = backfillProviders.map(p => `${{p.displayName || p.name}}: ${{p.description || ''}}`).join(' • ');
     }
   } catch (e) {
     console.warn('Unable to load backfill providers', e);
