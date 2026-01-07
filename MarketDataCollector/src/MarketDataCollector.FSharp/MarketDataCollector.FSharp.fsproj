@@ -38,6 +38,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="FSharp.Core" Version="8.0.400" />
+    <!-- FSharp.Core is provided by the SDK, no explicit reference needed -->
   </ItemGroup>
 </Project>
