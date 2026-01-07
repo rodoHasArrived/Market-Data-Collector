@@ -35,9 +35,7 @@ jobs:
       run: dotnet build ${{ env.PROJECT_PATH }} -c Release --no-restore /p:EnableWindowsTargeting=true
 
     - name: Test
-      run: |
-        dotnet test ${{ env.PROJECT_PATH }}/tests/MarketDataCollector.Tests/MarketDataCollector.Tests.csproj -c Release --no-build --verbosity normal /p:EnableWindowsTargeting=true --logger "console;verbosity=detailed"
-        dotnet test ${{ env.PROJECT_PATH }}/tests/MarketDataCollector.FSharp.Tests/MarketDataCollector.FSharp.Tests.fsproj -c Release --no-build --verbosity normal /p:EnableWindowsTargeting=true --logger "console;verbosity=detailed"
+      run: dotnet test ${{ env.PROJECT_PATH }} -c Release --no-build --verbosity normal /p:EnableWindowsTargeting=true --logger "console;verbosity=detailed"
 
   publish:
     name: Publish ${{ matrix.rid }}
