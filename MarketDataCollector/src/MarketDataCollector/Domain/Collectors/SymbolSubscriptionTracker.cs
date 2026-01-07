@@ -11,7 +11,7 @@ public abstract class SymbolSubscriptionTracker
     private readonly ConcurrentDictionary<string, bool> _subscriptions = new(StringComparer.OrdinalIgnoreCase);
     private readonly bool _requireExplicitSubscription;
 
-    protected SubscriptionManager(bool requireExplicitSubscription = true)
+    protected SymbolSubscriptionTracker(bool requireExplicitSubscription = true)
     {
         _requireExplicitSubscription = requireExplicitSubscription;
     }

@@ -60,12 +60,12 @@ public sealed class OrderBookManager : IOrderBookManager
 
             foreach (var bid in snapshot.Bids.Take(_config.OrderBook.MaxDepthLevels))
             {
-                book.Bids[bid.Price] = new OrderBookLevel(bid.Price, bid.Size, bid.MarketMaker);
+                book.Bids[bid.Price] = new ManagedOrderBookLevel(bid.Price, bid.Size, bid.MarketMaker);
             }
 
             foreach (var ask in snapshot.Asks.Take(_config.OrderBook.MaxDepthLevels))
             {
-                book.Asks[ask.Price] = new OrderBookLevel(ask.Price, ask.Size, ask.MarketMaker);
+                book.Asks[ask.Price] = new ManagedOrderBookLevel(ask.Price, ask.Size, ask.MarketMaker);
             }
 
             book.LastSequence = snapshot.Sequence;
@@ -134,7 +134,7 @@ public sealed class OrderBookManager : IOrderBookManager
                 case OrderBookUpdateType.Update:
                     if (update.Price.HasValue && update.Size.HasValue)
                     {
-                        levels[update.Price.Value] = new OrderBookLevel(
+                        levels[update.Price.Value] = new ManagedOrderBookLevel(
                             update.Price.Value,
                             update.Size.Value,
                             update.MarketMaker);

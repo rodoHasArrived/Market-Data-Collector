@@ -397,12 +397,12 @@ public sealed record FallbackOptions(
     bool Enabled = true,
     FallbackStrategy Strategy = FallbackStrategy.Priority,
     int MaxFailoverAttempts = 3,
-    TimeSpan? CooldownDuration = null,
+    TimeSpan? CooldownDurationValue = null,
     bool CooldownOnError = true,
     bool CooldownOnEmptyResult = false
 )
 {
-    public TimeSpan CooldownDuration { get; } = CooldownDuration ?? TimeSpan.FromMinutes(1);
+    public TimeSpan CooldownDuration { get; } = CooldownDurationValue ?? TimeSpan.FromMinutes(1);
 }
 
 /// <summary>

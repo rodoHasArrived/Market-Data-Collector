@@ -71,7 +71,7 @@ public class FallbackOrchestratorTests
             new List<HistoricalBar> { CreateBar("SPY", new DateOnly(2024, 1, 1), 100, 105, 99, 104, 1000000) });
 
         var manager = CreateMockManager(source1);
-        var options = new FallbackOptions(CooldownDuration: TimeSpan.FromMinutes(5));
+        var options = new FallbackOptions(CooldownDurationValue: TimeSpan.FromMinutes(5));
         var orchestrator = new FallbackDataSourceOrchestrator(manager, options);
 
         // Simulate putting source in cooldown (by making it fail first)
@@ -100,7 +100,7 @@ public class FallbackOrchestratorTests
         var options = new FallbackOptions(
             Strategy: FallbackStrategy.Priority,
             MaxFailoverAttempts: 3,
-            CooldownDuration: TimeSpan.FromSeconds(60)
+            CooldownDurationValue: TimeSpan.FromSeconds(60)
         );
         var orchestrator = new FallbackDataSourceOrchestrator(manager, options);
 

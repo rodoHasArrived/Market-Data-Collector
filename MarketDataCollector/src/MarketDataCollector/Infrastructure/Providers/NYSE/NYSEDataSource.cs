@@ -12,6 +12,7 @@ using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Infrastructure.DataSources;
 using MarketDataCollector.Infrastructure.Providers.Backfill;
 using Serilog;
+using DataSourceType = MarketDataCollector.Infrastructure.DataSources.DataSourceType;
 
 namespace MarketDataCollector.Infrastructure.Providers.NYSE;
 

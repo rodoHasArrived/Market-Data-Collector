@@ -19,6 +19,7 @@ using MarketDataCollector.Infrastructure.Providers.Alpaca;
 using MarketDataCollector.Infrastructure.Providers.Polygon;
 using MarketDataCollector.Infrastructure.Providers.Backfill;
 using SymbolResolution = MarketDataCollector.Infrastructure.Providers.Backfill.SymbolResolution;
+using BackfillRequest = MarketDataCollector.Application.Backfill.BackfillRequest;
 using MarketDataCollector.Messaging.Configuration;
 using MarketDataCollector.Messaging.Publishers;
 using MarketDataCollector.Storage;
@@ -552,7 +553,7 @@ SUPPORT:
 
         public PipelinePublisher(EventPipeline pipeline) => _pipeline = pipeline;
 
-        public bool TryPublish(MarketEvent evt)
+        public bool TryPublish(in MarketEvent evt)
         {
             var ok = _pipeline.TryPublish(evt);
             if (ok) Metrics.IncPublished();

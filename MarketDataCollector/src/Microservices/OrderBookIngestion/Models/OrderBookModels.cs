@@ -4,6 +4,11 @@ using DataIngestion.Contracts.Messages;
 namespace DataIngestion.OrderBookService.Models;
 
 /// <summary>
+/// Managed order book level for internal processing.
+/// </summary>
+public record ManagedOrderBookLevel(decimal Price, long Size, string? MarketMaker = null);
+
+/// <summary>
 /// Managed order book with thread-safe state.
 /// </summary>
 public sealed class ManagedOrderBook
@@ -11,8 +16,8 @@ public sealed class ManagedOrderBook
     public string Symbol { get; }
     public object SyncLock { get; } = new();
 
-    public ConcurrentDictionary<decimal, OrderBookLevel> Bids { get; } = new();
-    public ConcurrentDictionary<decimal, OrderBookLevel> Asks { get; } = new();
+    public ConcurrentDictionary<decimal, ManagedOrderBookLevel> Bids { get; } = new();
+    public ConcurrentDictionary<decimal, ManagedOrderBookLevel> Asks { get; } = new();
 
     public long LastSequence { get; set; }
     public DateTimeOffset LastUpdateTime { get; set; }
@@ -31,11 +36,6 @@ public sealed class ManagedOrderBook
         Symbol = symbol;
     }
 }
-
-/// <summary>
-/// Single order book level.
-/// </summary>
-public record OrderBookLevel(decimal Price, long Size, string? MarketMaker = null);
 
 /// <summary>
 /// Order book snapshot for processing.
