@@ -23,17 +23,23 @@ namespace MarketDataCollector.Domain.Models;
 /// </item>
 /// </list>
 /// </remarks>
-public sealed record OrderBookLevel(
-    OrderBookSide Side,
-    int Level,
-    decimal Price,
-    decimal Size,
-    string? MarketMaker = null)
+public sealed record OrderBookLevel
 {
+    public OrderBookSide Side { get; }
+    public int Level { get; }
+    public decimal Price { get; }
+    public decimal Size { get; }
+    public string? MarketMaker { get; }
+
     /// <summary>
     /// Validates order book level data at construction time to prevent corrupt datasets.
     /// </summary>
-    public OrderBookLevel
+    public OrderBookLevel(
+        OrderBookSide Side,
+        int Level,
+        decimal Price,
+        decimal Size,
+        string? MarketMaker = null)
     {
         if (Price <= 0)
             throw new ArgumentOutOfRangeException(nameof(Price), Price, "Price must be greater than 0");
@@ -43,5 +49,11 @@ public sealed record OrderBookLevel(
 
         if (Level < 0)
             throw new ArgumentOutOfRangeException(nameof(Level), Level, "Level must be greater than or equal to 0");
+
+        this.Side = Side;
+        this.Level = Level;
+        this.Price = Price;
+        this.Size = Size;
+        this.MarketMaker = MarketMaker;
     }
 }

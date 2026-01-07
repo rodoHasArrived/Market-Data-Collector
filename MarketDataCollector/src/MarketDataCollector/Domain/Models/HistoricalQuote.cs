@@ -6,22 +6,34 @@ namespace MarketDataCollector.Domain.Models;
 /// Historical NBBO (National Best Bid and Offer) quote data from Alpaca Markets API.
 /// Represents the best bid and ask prices available across all exchanges at a point in time.
 /// </summary>
-public sealed record HistoricalQuote(
-    string Symbol,
-    DateTimeOffset Timestamp,
-    string AskExchange,
-    decimal AskPrice,
-    long AskSize,
-    string BidExchange,
-    decimal BidPrice,
-    long BidSize,
-    IReadOnlyList<string>? Conditions = null,
-    string? Tape = null,
-    string Source = "alpaca",
-    long SequenceNumber = 0
-) : MarketEventPayload
+public sealed record HistoricalQuote : MarketEventPayload
 {
-    public HistoricalQuote
+    public string Symbol { get; }
+    public DateTimeOffset Timestamp { get; }
+    public string AskExchange { get; }
+    public decimal AskPrice { get; }
+    public long AskSize { get; }
+    public string BidExchange { get; }
+    public decimal BidPrice { get; }
+    public long BidSize { get; }
+    public IReadOnlyList<string>? Conditions { get; }
+    public string? Tape { get; }
+    public string Source { get; }
+    public long SequenceNumber { get; }
+
+    public HistoricalQuote(
+        string Symbol,
+        DateTimeOffset Timestamp,
+        string AskExchange,
+        decimal AskPrice,
+        long AskSize,
+        string BidExchange,
+        decimal BidPrice,
+        long BidSize,
+        IReadOnlyList<string>? Conditions = null,
+        string? Tape = null,
+        string Source = "alpaca",
+        long SequenceNumber = 0)
     {
         if (string.IsNullOrWhiteSpace(Symbol))
             throw new ArgumentException("Symbol is required", nameof(Symbol));
@@ -37,6 +49,19 @@ public sealed record HistoricalQuote(
 
         if (BidSize < 0)
             throw new ArgumentOutOfRangeException(nameof(BidSize), "Bid size cannot be negative.");
+
+        this.Symbol = Symbol;
+        this.Timestamp = Timestamp;
+        this.AskExchange = AskExchange;
+        this.AskPrice = AskPrice;
+        this.AskSize = AskSize;
+        this.BidExchange = BidExchange;
+        this.BidPrice = BidPrice;
+        this.BidSize = BidSize;
+        this.Conditions = Conditions;
+        this.Tape = Tape;
+        this.Source = Source;
+        this.SequenceNumber = SequenceNumber;
     }
 
     /// <summary>
