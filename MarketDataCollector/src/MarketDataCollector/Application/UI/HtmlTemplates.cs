@@ -1263,9 +1263,9 @@ public static class HtmlTemplates
 
       container.appendChild(toast);
 
-      setTimeout(() => {{
+      setTimeout(function() {{
         toast.style.animation = 'slideIn 0.3s ease reverse';
-        setTimeout(() => toast.remove(), 300);
+        setTimeout(function() {{ toast.remove(); }}, 300);
       }}, 5000);
     }}
 
@@ -1491,7 +1491,7 @@ public static class HtmlTemplates
       document.getElementById('previewPath').textContent = path;
     }}
 
-    ['dataRoot', 'compress', 'namingConvention', 'datePartition', 'filePrefix'].forEach(id => {{
+    ['dataRoot', 'compress', 'namingConvention', 'datePartition', 'filePrefix'].forEach(function(id) {{
       document.getElementById(id).addEventListener('change', updateStoragePreview);
       document.getElementById(id).addEventListener('input', updateStoragePreview);
     }});
@@ -1560,7 +1560,7 @@ public static class HtmlTemplates
     }}
 
     function editSymbol(symbol) {
-      const match = (cachedSymbols || []).find(s => (s.symbol || '').toLowerCase() === symbol.toLowerCase());
+      const match = (cachedSymbols || []).find(function(s) {{ return (s.symbol || '').toLowerCase() === symbol.toLowerCase(); }});
       if (!match) {
         showToast('error', 'Not Found', 'Cannot find ' + symbol + ' in current configuration');
         return;
@@ -1652,7 +1652,7 @@ public static class HtmlTemplates
         return;
       }}
 
-      grid.innerHTML = Object.entries(health).map(([name, status]) => {{
+      grid.innerHTML = Object.entries(health).map(function([name, status]) {{
         const isAvailable = status.isAvailable;
         const color = isAvailable ? '#48bb78' : '#f56565';
         const icon = isAvailable ? '✓' : '✗';
@@ -1734,8 +1734,8 @@ public static class HtmlTemplates
         const provider = document.getElementById('backfillProvider').value || 'composite';
         const symbols = (document.getElementById('backfillSymbols').value || '')
           .split(',')
-          .map(s => s.trim())
-          .filter(s => s);
+          .map(function(s) {{ return s.trim(); }})
+          .filter(function(s) {{ return s; }});
         const from = document.getElementById('backfillFrom').value || null;
         const to = document.getElementById('backfillTo').value || null;
         const enableSymbolResolution = document.getElementById('backfillEnableSymbolResolution')?.checked ?? true;
@@ -1789,7 +1789,7 @@ public static class HtmlTemplates
         document.getElementById('backfillStatus').innerHTML = '<span style=""color: #f56565;"">' + error.message + '</span>';
       }} finally {{
         document.getElementById('btnStartBackfill').disabled = false;
-        setTimeout(() => {{
+        setTimeout(function() {{
           document.getElementById('backfillProgress').classList.add('hidden');
         }}, 3000);
       }}
@@ -1953,20 +1953,20 @@ public static class HtmlTemplates
 
       // Metrics to compare
       const metrics = [
-        {{ key: 'dataQualityScore', label: 'Data Quality Score', format: v => '<span style=""color: ' + (v >= 80 ? '#48bb78' : v >= 60 ? '#ecc94b' : '#f56565') + '; font-weight: 600;"">' + v.toFixed(1) + '%</span>' }},
-        {{ key: 'tradesReceived', label: 'Trades Received', format: v => v.toLocaleString() }},
-        {{ key: 'depthUpdatesReceived', label: 'Depth Updates', format: v => v.toLocaleString() }},
-        {{ key: 'quotesReceived', label: 'Quotes Received', format: v => v.toLocaleString() }},
-        {{ key: 'averageLatencyMs', label: 'Avg Latency', format: v => v.toFixed(2) + 'ms' }},
-        {{ key: 'minLatencyMs', label: 'Min Latency', format: v => v.toFixed(2) + 'ms' }},
-        {{ key: 'maxLatencyMs', label: 'Max Latency', format: v => v.toFixed(2) + 'ms' }},
-        {{ key: 'connectionSuccessRate', label: 'Connection Success', format: v => v.toFixed(1) + '%' }},
-        {{ key: 'messagesDropped', label: 'Messages Dropped', format: v => '<span style=""color: ' + (v > 0 ? '#f56565' : '#48bb78') + '"">' + v.toLocaleString() + '</span>' }},
-        {{ key: 'activeSubscriptions', label: 'Active Subscriptions', format: v => v.toString() }}
+        {{ key: 'dataQualityScore', label: 'Data Quality Score', format: function(v) {{ return '<span style=""color: ' + (v >= 80 ? '#48bb78' : v >= 60 ? '#ecc94b' : '#f56565') + '; font-weight: 600;"">' + v.toFixed(1) + '%</span>'; }} }},
+        {{ key: 'tradesReceived', label: 'Trades Received', format: function(v) {{ return v.toLocaleString(); }} }},
+        {{ key: 'depthUpdatesReceived', label: 'Depth Updates', format: function(v) {{ return v.toLocaleString(); }} }},
+        {{ key: 'quotesReceived', label: 'Quotes Received', format: function(v) {{ return v.toLocaleString(); }} }},
+        {{ key: 'averageLatencyMs', label: 'Avg Latency', format: function(v) {{ return v.toFixed(2) + 'ms'; }} }},
+        {{ key: 'minLatencyMs', label: 'Min Latency', format: function(v) {{ return v.toFixed(2) + 'ms'; }} }},
+        {{ key: 'maxLatencyMs', label: 'Max Latency', format: function(v) {{ return v.toFixed(2) + 'ms'; }} }},
+        {{ key: 'connectionSuccessRate', label: 'Connection Success', format: function(v) {{ return v.toFixed(1) + '%'; }} }},
+        {{ key: 'messagesDropped', label: 'Messages Dropped', format: function(v) {{ return '<span style=""color: ' + (v > 0 ? '#f56565' : '#48bb78') + '"">' + v.toLocaleString() + '</span>'; }} }},
+        {{ key: 'activeSubscriptions', label: 'Active Subscriptions', format: function(v) {{ return v.toString(); }} }}
       ];
 
-      tbody.innerHTML = metrics.map(m => {{
-        const cells = comparison.providers.map(p => {{
+      tbody.innerHTML = metrics.map(function(m) {{
+        const cells = comparison.providers.map(function(p) {{
           const value = p[m.key] ?? 0;
           return '<td style=""text-align: center;"">' + m.format(value) + '</td>';
         }}).join('');
@@ -1979,16 +1979,16 @@ public static class HtmlTemplates
         const r = await apiCall('/api/multiprovider/comparison');
         const comparison = await r.json();
 
-        const headers = ['Metric', ...comparison.providers.map(p => p.providerId)];
+        const headers = ['Metric', ...comparison.providers.map(function(p) {{ return p.providerId; }})];
         const rows = [
-          ['Data Quality Score', ...comparison.providers.map(p => p.dataQualityScore?.toFixed(1) || '0')],
-          ['Trades Received', ...comparison.providers.map(p => p.tradesReceived || 0)],
-          ['Depth Updates', ...comparison.providers.map(p => p.depthUpdatesReceived || 0)],
-          ['Avg Latency (ms)', ...comparison.providers.map(p => p.averageLatencyMs?.toFixed(2) || '0')],
-          ['Messages Dropped', ...comparison.providers.map(p => p.messagesDropped || 0)]
+          ['Data Quality Score', ...comparison.providers.map(function(p) {{ return p.dataQualityScore?.toFixed(1) || '0'; }})],
+          ['Trades Received', ...comparison.providers.map(function(p) {{ return p.tradesReceived || 0; }})],
+          ['Depth Updates', ...comparison.providers.map(function(p) {{ return p.depthUpdatesReceived || 0; }})],
+          ['Avg Latency (ms)', ...comparison.providers.map(function(p) {{ return p.averageLatencyMs?.toFixed(2) || '0'; }})],
+          ['Messages Dropped', ...comparison.providers.map(function(p) {{ return p.messagesDropped || 0; }})]
         ];
 
-        const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+        const csv = [headers.join(','), ...rows.map(function(r) {{ return r.join(','); }})].join('\n');
         const blob = new Blob([csv], {{ type: 'text/csv' }});
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -2010,7 +2010,7 @@ public static class HtmlTemplates
     function updateProviderSelects() {{
       const primarySelect = document.getElementById('failoverPrimaryProvider');
       primarySelect.innerHTML = '<option value="""">Select primary...</option>' +
-        connectedProviders.map(p => '<option value=""' + p.providerId + '"">' + p.providerId + '</option>').join('');
+        connectedProviders.map(function(p) {{ return '<option value=""' + p.providerId + '"">' + p.providerId + '</option>'; }}).join('');
     }}
 
     async function loadFailoverRules() {{
@@ -2061,7 +2061,7 @@ public static class HtmlTemplates
       try {{
         const ruleId = document.getElementById('failoverRuleId').value.trim();
         const primaryProvider = document.getElementById('failoverPrimaryProvider').value;
-        const backupProviders = document.getElementById('failoverBackupProviders').value.split(',').map(s => s.trim()).filter(s => s);
+        const backupProviders = document.getElementById('failoverBackupProviders').value.split(',').map(function(s) {{ return s.trim(); }}).filter(function(s) {{ return s; }});
         const threshold = parseInt(document.getElementById('failoverThreshold').value || '3');
         const qualityThreshold = parseInt(document.getElementById('failoverQualityThreshold').value || '0');
         const maxLatency = parseInt(document.getElementById('failoverMaxLatency').value || '0');
@@ -2190,7 +2190,7 @@ public static class HtmlTemplates
         await loadSymbolMappings();
 
         // Clear form
-        ['mappingCanonical', 'mappingIB', 'mappingAlpaca', 'mappingPolygon', 'mappingFigi', 'mappingName'].forEach(id => {{
+        ['mappingCanonical', 'mappingIB', 'mappingAlpaca', 'mappingPolygon', 'mappingFigi', 'mappingName'].forEach(function(id) {{
           document.getElementById(id).value = '';
         }});
       }} catch (error) {{
@@ -2216,7 +2216,7 @@ public static class HtmlTemplates
       const input = document.createElement('input');
       input.type = 'file';
       input.accept = '.csv';
-      input.onchange = async (e) => {{
+      input.onchange = async function(e) {{
         const file = e.target.files[0];
         if (!file) return;
 

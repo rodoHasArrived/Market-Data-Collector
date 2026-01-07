@@ -20,40 +20,37 @@ public sealed record HistoricalAuction(
     {
         if (string.IsNullOrWhiteSpace(Symbol))
             throw new ArgumentException("Symbol is required", nameof(Symbol));
-
-        OpeningAuctions ??= Array.Empty<AuctionPrice>();
-        ClosingAuctions ??= Array.Empty<AuctionPrice>();
     }
 
     /// <summary>
     /// Gets the primary opening auction price (first valid opening auction).
     /// </summary>
-    public decimal? PrimaryOpenPrice => OpeningAuctions.FirstOrDefault()?.Price;
+    public decimal? PrimaryOpenPrice => OpeningAuctions?.FirstOrDefault()?.Price;
 
     /// <summary>
     /// Gets the primary opening auction volume.
     /// </summary>
-    public long? PrimaryOpenVolume => OpeningAuctions.FirstOrDefault()?.Size;
+    public long? PrimaryOpenVolume => OpeningAuctions?.FirstOrDefault()?.Size;
 
     /// <summary>
     /// Gets the primary closing auction price (first valid closing auction).
     /// </summary>
-    public decimal? PrimaryClosePrice => ClosingAuctions.FirstOrDefault()?.Price;
+    public decimal? PrimaryClosePrice => ClosingAuctions?.FirstOrDefault()?.Price;
 
     /// <summary>
     /// Gets the primary closing auction volume.
     /// </summary>
-    public long? PrimaryCloseVolume => ClosingAuctions.FirstOrDefault()?.Size;
+    public long? PrimaryCloseVolume => ClosingAuctions?.FirstOrDefault()?.Size;
 
     /// <summary>
     /// Total volume from all opening auctions.
     /// </summary>
-    public long TotalOpeningVolume => OpeningAuctions.Sum(a => a.Size);
+    public long TotalOpeningVolume => OpeningAuctions?.Sum(a => a.Size) ?? 0;
 
     /// <summary>
     /// Total volume from all closing auctions.
     /// </summary>
-    public long TotalClosingVolume => ClosingAuctions.Sum(a => a.Size);
+    public long TotalClosingVolume => ClosingAuctions?.Sum(a => a.Size) ?? 0;
 }
 
 /// <summary>
