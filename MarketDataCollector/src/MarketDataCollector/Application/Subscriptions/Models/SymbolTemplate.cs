@@ -44,7 +44,7 @@ public enum TemplateCategory
     /// <summary>Industry sector (e.g., Technology, Healthcare).</summary>
     Sector,
 
-    /// <summary>Market index components (e.g., S&P 500, NASDAQ 100).</summary>
+    /// <summary>Market index components (e.g., S&amp;P 500, NASDAQ 100).</summary>
     Index,
 
     /// <summary>Market capitalization groups (e.g., Large Cap, Small Cap).</summary>
