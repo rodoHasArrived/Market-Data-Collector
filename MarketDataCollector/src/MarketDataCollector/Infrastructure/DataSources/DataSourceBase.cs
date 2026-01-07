@@ -546,11 +546,11 @@ public sealed record RetryPolicyOptions(
 public sealed record RateLimitOptions(
     int MaxConcurrentRequests = 5,
     int MaxRequestsPerWindow = 100,
-    TimeSpan? RateLimitWindow = null,
+    TimeSpan? RateLimitWindowValue = null,
     int MinDelayBetweenRequestsMs = 0
 )
 {
-    public TimeSpan RateLimitWindow { get; } = RateLimitWindow ?? TimeSpan.FromMinutes(1);
+    public TimeSpan RateLimitWindow { get; } = RateLimitWindowValue ?? TimeSpan.FromMinutes(1);
 }
 
 /// <summary>

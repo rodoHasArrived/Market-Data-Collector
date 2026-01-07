@@ -5,6 +5,7 @@ using System.Text.Json;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Pipeline;
 using MarketDataCollector.Domain.Collectors;
+using MarketDataCollector.Domain.Models;
 using Serilog;
 
 namespace MarketDataCollector.Application.Monitoring;

@@ -15,7 +15,7 @@ namespace MarketDataCollector.Infrastructure.DataSources;
 /// </code>
 /// </example>
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
-public sealed class DataSourceAttribute : Attribute
+public class DataSourceAttribute : Attribute
 {
     /// <summary>
     /// Unique identifier for this data source (e.g., "alpaca", "yahoo", "ib").

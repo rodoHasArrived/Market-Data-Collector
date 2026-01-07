@@ -5,6 +5,7 @@ using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Application.Pipeline;
 using MarketDataCollector.Infrastructure.Providers.Backfill;
 using MarketDataCollector.Infrastructure.Providers.Backfill.SymbolResolution;
+using BackfillRequest = MarketDataCollector.Application.Backfill.BackfillRequest;
 using MarketDataCollector.Storage;
 using MarketDataCollector.Storage.Policies;
 using MarketDataCollector.Storage.Sinks;

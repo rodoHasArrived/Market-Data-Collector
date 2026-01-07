@@ -29,7 +29,7 @@ public sealed class MassTransitPublisher : IMarketEventPublisher
     /// Non-blocking publish that fires and forgets to maintain hot-path performance.
     /// Returns true if the message was queued for publishing.
     /// </summary>
-    public bool TryPublish(MarketEvent evt)
+    public bool TryPublish(in MarketEvent evt)
     {
         try
         {

@@ -6,5 +6,5 @@ namespace MarketDataCollector.Domain.Events;
 /// </summary>
 public interface IMarketEventPublisher
 {
-    bool TryPublish(MarketEvent evt);
+    bool TryPublish(in MarketEvent evt);
 }

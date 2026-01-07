@@ -210,10 +210,10 @@ public class FilePermissionsServiceTests : IDisposable
     }
 
     [Fact]
-    public void FilePermissionsResult_Success_ShouldHaveCorrectProperties()
+    public void FilePermissionsResult_CreateSuccess_ShouldHaveCorrectProperties()
     {
         // Act
-        var result = FilePermissionsResult.Success("Test message");
+        var result = FilePermissionsResult.CreateSuccess("Test message");
 
         // Assert
         result.Success.Should().BeTrue();

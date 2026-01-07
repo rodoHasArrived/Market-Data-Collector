@@ -28,7 +28,7 @@ public sealed class CompositePublisher : IMarketEventPublisher
     /// <summary>
     /// Publishes to all downstream publishers. Returns true if at least one succeeds.
     /// </summary>
-    public bool TryPublish(MarketEvent evt)
+    public bool TryPublish(in MarketEvent evt)
     {
         var anySuccess = false;
         var failCount = 0;
