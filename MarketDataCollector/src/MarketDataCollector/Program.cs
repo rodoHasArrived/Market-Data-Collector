@@ -35,11 +35,16 @@ namespace MarketDataCollector;
 
 internal static class Program
 {
+    private const string DefaultConfigFileName = "appsettings.json";
+    private const string ConfigPathEnvVar = "MDC_CONFIG_PATH";
+    private const string EnvironmentEnvVar = "MDC_ENVIRONMENT";
+    private const string DotnetEnvironmentEnvVar = "DOTNET_ENVIRONMENT";
+
     public static async Task Main(string[] args)
     {
         // Initialize logging early
-        var cfgPath = "appsettings.json";
-        var cfg = LoadConfig(cfgPath);
+        var cfgPath = ResolveConfigPath(args);
+        var cfg = LoadConfigWithEnvironmentOverlay(cfgPath);
         LoggingSetup.Initialize(dataRoot: cfg.DataRoot);
         var log = LoggingSetup.ForContext("Program");
 
@@ -147,7 +152,7 @@ internal static class Program
         var statusPort = int.TryParse(GetArgValue(args, "--status-port"), out var parsedPort) ? parsedPort : 8080;
 
         var statusPath = Path.Combine(cfg.DataRoot, "_status", "status.json");
-        await using var statusWriter = new StatusWriter(statusPath, () => LoadConfig(cfgPath));
+        await using var statusWriter = new StatusWriter(statusPath, () => LoadConfigWithEnvironmentOverlay(cfgPath));
         if (args.Any(a => a.Equals("--serve-status", StringComparison.OrdinalIgnoreCase)))
             statusWriter.Start(TimeSpan.FromSeconds(1));
         StatusHttpServer? statusHttp = null;
@@ -415,6 +420,12 @@ OPTIONS:
     --status-port <port>    Status endpoint port
     --watch-config          Enable hot-reload of configuration
 
+ENVIRONMENT VARIABLES:
+    MDC_CONFIG_PATH         Alternative to --config argument for specifying config path
+    MDC_ENVIRONMENT         Environment name (e.g., Development, Production)
+                            Loads appsettings.{Environment}.json as overlay
+    DOTNET_ENVIRONMENT      Standard .NET environment variable (fallback for MDC_ENVIRONMENT)
+
 BACKFILL OPTIONS:
     --backfill-provider <name>      Provider to use (default: stooq)
     --backfill-symbols <list>       Comma-separated symbols (e.g., AAPL,MSFT)
@@ -445,8 +456,19 @@ EXAMPLES:
     MarketDataCollector --validate-config --config /path/to/config.json
 
 CONFIGURATION:
-    Configuration is loaded from appsettings.json in the current directory.
-    Copy appsettings.sample.json to appsettings.json to get started.
+    Configuration is loaded from appsettings.json by default, but can be customized:
+
+    Priority for config file path:
+      1. --config argument (highest priority)
+      2. MDC_CONFIG_PATH environment variable
+      3. appsettings.json (default)
+
+    Environment-specific overlays:
+      Set MDC_ENVIRONMENT=Production to automatically load appsettings.Production.json
+      as an overlay on top of the base configuration.
+
+    To get started:
+      Copy appsettings.sample.json to appsettings.json and customize.
 
 DATA PROVIDERS:
     - Interactive Brokers (IB): Level 2 market depth + trades
@@ -544,6 +566,105 @@ SUPPORT:
             Console.Error.WriteLine("For detailed help, see HELP.md or run with --help");
             return new AppConfig();
         }
+    }
+
+    /// <summary>
+    /// Resolves the configuration file path from command line arguments, environment variables, or defaults.
+    /// Priority: --config argument > MDC_CONFIG_PATH env var > appsettings.json
+    /// </summary>
+    private static string ResolveConfigPath(string[] args)
+    {
+        // 1. Check command line argument (highest priority)
+        var argValue = GetArgValue(args, "--config");
+        if (!string.IsNullOrWhiteSpace(argValue))
+            return argValue;
+
+        // 2. Check environment variable
+        var envValue = Environment.GetEnvironmentVariable(ConfigPathEnvVar);
+        if (!string.IsNullOrWhiteSpace(envValue))
+            return envValue;
+
+        // 3. Default to appsettings.json
+        return DefaultConfigFileName;
+    }
+
+    /// <summary>
+    /// Gets the current environment name from MDC_ENVIRONMENT or DOTNET_ENVIRONMENT.
+    /// Returns null if no environment is specified.
+    /// </summary>
+    private static string? GetEnvironmentName()
+    {
+        var env = Environment.GetEnvironmentVariable(EnvironmentEnvVar);
+        if (!string.IsNullOrWhiteSpace(env))
+            return env;
+
+        return Environment.GetEnvironmentVariable(DotnetEnvironmentEnvVar);
+    }
+
+    /// <summary>
+    /// Loads the base configuration and overlays environment-specific settings if available.
+    /// For example, if MDC_ENVIRONMENT=Production, it will load appsettings.json first,
+    /// then merge settings from appsettings.Production.json if it exists.
+    /// </summary>
+    private static AppConfig LoadConfigWithEnvironmentOverlay(string basePath)
+    {
+        // Load base configuration
+        var baseConfig = LoadConfig(basePath);
+
+        // Check for environment-specific overlay
+        var envName = GetEnvironmentName();
+        if (string.IsNullOrWhiteSpace(envName))
+            return baseConfig;
+
+        // Build environment-specific path (e.g., appsettings.Production.json)
+        var directory = Path.GetDirectoryName(basePath) ?? ".";
+        var fileName = Path.GetFileNameWithoutExtension(basePath);
+        var extension = Path.GetExtension(basePath);
+        var envPath = Path.Combine(directory, $"{fileName}.{envName}{extension}");
+
+        // If environment-specific file doesn't exist, return base config
+        if (!File.Exists(envPath))
+            return baseConfig;
+
+        // Load and merge environment-specific config
+        try
+        {
+            Console.WriteLine($"[Info] Loading environment-specific configuration: {envPath}");
+            var envJson = File.ReadAllText(envPath);
+            var envConfig = JsonSerializer.Deserialize<AppConfig>(envJson, AppConfigJsonOptions.Read);
+
+            if (envConfig == null)
+                return baseConfig;
+
+            // Merge configurations: environment-specific values override base values
+            return MergeConfigs(baseConfig, envConfig);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"[Warning] Failed to load environment config {envPath}: {ex.Message}");
+            return baseConfig;
+        }
+    }
+
+    /// <summary>
+    /// Merges two configurations, with overlay values taking precedence over base values.
+    /// Only non-default values from the overlay are applied.
+    /// </summary>
+    private static AppConfig MergeConfigs(AppConfig baseConfig, AppConfig overlay)
+    {
+        return baseConfig with
+        {
+            DataSource = overlay.DataSource != default ? overlay.DataSource : baseConfig.DataSource,
+            DataRoot = !string.IsNullOrWhiteSpace(overlay.DataRoot) ? overlay.DataRoot : baseConfig.DataRoot,
+            Compress = overlay.Compress || baseConfig.Compress,
+            Symbols = overlay.Symbols?.Length > 0 ? overlay.Symbols : baseConfig.Symbols,
+            Alpaca = overlay.Alpaca ?? baseConfig.Alpaca,
+            IB = overlay.IB ?? baseConfig.IB,
+            Polygon = overlay.Polygon ?? baseConfig.Polygon,
+            Storage = overlay.Storage ?? baseConfig.Storage,
+            Backfill = overlay.Backfill ?? baseConfig.Backfill,
+            MassTransit = overlay.MassTransit ?? baseConfig.MassTransit
+        };
     }
 
     private sealed class PipelinePublisher : IMarketEventPublisher
