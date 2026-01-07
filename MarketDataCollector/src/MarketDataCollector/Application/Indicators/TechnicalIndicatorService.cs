@@ -108,7 +108,7 @@ public sealed class TechnicalIndicatorService : IDisposable
                         results.Add(new IndicatorDataPoint(
                             quotes[i].Date,
                             $"SMA_{period}",
-                            (decimal)sma[i].Sma.Value));
+                            (decimal)sma[i].Sma.GetValueOrDefault()));
                     }
                 }
             }
@@ -127,7 +127,7 @@ public sealed class TechnicalIndicatorService : IDisposable
                         results.Add(new IndicatorDataPoint(
                             quotes[i].Date,
                             $"EMA_{period}",
-                            (decimal)ema[i].Ema.Value));
+                            (decimal)ema[i].Ema.GetValueOrDefault()));
                     }
                 }
             }
@@ -144,7 +144,7 @@ public sealed class TechnicalIndicatorService : IDisposable
                     results.Add(new IndicatorDataPoint(
                         quotes[i].Date,
                         $"RSI_{_config.RsiPeriod}",
-                        (decimal)rsi[i].Rsi.Value));
+                        (decimal)rsi[i].Rsi.GetValueOrDefault()));
                 }
             }
         }
@@ -157,11 +157,11 @@ public sealed class TechnicalIndicatorService : IDisposable
             {
                 if (macd[i].Macd.HasValue)
                 {
-                    results.Add(new IndicatorDataPoint(quotes[i].Date, "MACD", (decimal)macd[i].Macd.Value));
+                    results.Add(new IndicatorDataPoint(quotes[i].Date, "MACD", (decimal)macd[i].Macd.GetValueOrDefault()));
                     if (macd[i].Signal.HasValue)
-                        results.Add(new IndicatorDataPoint(quotes[i].Date, "MACD_Signal", (decimal)macd[i].Signal.Value));
+                        results.Add(new IndicatorDataPoint(quotes[i].Date, "MACD_Signal", (decimal)macd[i].Signal.GetValueOrDefault()));
                     if (macd[i].Histogram.HasValue)
-                        results.Add(new IndicatorDataPoint(quotes[i].Date, "MACD_Histogram", (decimal)macd[i].Histogram.Value));
+                        results.Add(new IndicatorDataPoint(quotes[i].Date, "MACD_Histogram", (decimal)macd[i].Histogram.GetValueOrDefault()));
                 }
             }
         }
@@ -174,11 +174,11 @@ public sealed class TechnicalIndicatorService : IDisposable
             {
                 if (bb[i].UpperBand.HasValue)
                 {
-                    results.Add(new IndicatorDataPoint(quotes[i].Date, "BB_Upper", (decimal)bb[i].UpperBand.Value));
-                    results.Add(new IndicatorDataPoint(quotes[i].Date, "BB_Middle", (decimal)bb[i].Sma!.Value));
-                    results.Add(new IndicatorDataPoint(quotes[i].Date, "BB_Lower", (decimal)bb[i].LowerBand!.Value));
+                    results.Add(new IndicatorDataPoint(quotes[i].Date, "BB_Upper", (decimal)bb[i].UpperBand.GetValueOrDefault()));
+                    results.Add(new IndicatorDataPoint(quotes[i].Date, "BB_Middle", (decimal)bb[i].Sma.GetValueOrDefault()));
+                    results.Add(new IndicatorDataPoint(quotes[i].Date, "BB_Lower", (decimal)bb[i].LowerBand.GetValueOrDefault()));
                     if (bb[i].Width.HasValue)
-                        results.Add(new IndicatorDataPoint(quotes[i].Date, "BB_Width", (decimal)bb[i].Width.Value));
+                        results.Add(new IndicatorDataPoint(quotes[i].Date, "BB_Width", (decimal)bb[i].Width.GetValueOrDefault()));
                 }
             }
         }

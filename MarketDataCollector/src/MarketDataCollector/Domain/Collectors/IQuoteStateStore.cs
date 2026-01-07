@@ -10,7 +10,7 @@ namespace MarketDataCollector.Domain.Collectors;
 public interface IQuoteStateStore
 {
     /// <summary>Try get the latest BBO for a symbol.</summary>
-    bool TryGet(string symbol, out BboQuotePayload quote);
+    bool TryGet(string symbol, out BboQuotePayload? quote);
 
     /// <summary>
     /// Upsert a BBO update and return the resulting payload that callers can reuse for publishing/logging.
@@ -23,7 +23,7 @@ public interface IQuoteStateStore
     /// <summary>
     /// Remove cached state for a symbol. Returns <c>true</c> if the symbol existed.
     /// </summary>
-    bool TryRemove(string symbol, out BboQuotePayload removed);
+    bool TryRemove(string symbol, out BboQuotePayload? removed);
 
     /// <summary>
     /// Snapshot the current cache for inspection/monitoring without exposing internal mutability.

@@ -249,9 +249,9 @@ public sealed class MaintenanceScheduler : IMaintenanceScheduler, IAsyncDisposab
             status = status with
             {
                 CompletedAt = DateTimeOffset.UtcNow,
-                Status = result.success ? JobStatus.Completed : JobStatus.Failed,
+                Status = result.Item1 ? JobStatus.Completed : JobStatus.Failed,
                 Progress = 100,
-                Message = result.message
+                Message = result.Item2
             };
         }
         catch (Exception ex)
