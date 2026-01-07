@@ -6,9 +6,12 @@ open Xunit
 open FsUnit.Xunit
 open MarketDataCollector.FSharp.Domain.MarketEvents
 open MarketDataCollector.FSharp.Domain.Sides
-open MarketDataCollector.FSharp.Calculations.Spread
-open MarketDataCollector.FSharp.Calculations.Imbalance
 open MarketDataCollector.FSharp.Calculations.Aggregations
+
+// Module aliases to avoid ambiguous reference errors between Spread and Imbalance
+// (both have fromQuote, fromOrderBook, calculateStatistics with same signatures)
+module SpreadCalc = MarketDataCollector.FSharp.Calculations.Spread
+module ImbalanceCalc = MarketDataCollector.FSharp.Calculations.Imbalance
 
 let createTestQuote bidPrice bidSize askPrice askSize : QuoteEvent = {
     Symbol = "TEST"
@@ -38,23 +41,23 @@ let createTestTrade price quantity side seqNum : TradeEvent = {
 
 [<Fact>]
 let ``calculate returns correct spread`` () =
-    let spread = calculate 100.00m 100.10m
+    let spread = SpreadCalc.calculate 100.00m 100.10m
     spread |> should equal (Some 0.10m)
 
 [<Fact>]
 let ``calculate returns None for invalid prices`` () =
-    calculate 0m 100.00m |> should equal None
-    calculate 100.00m 0m |> should equal None
-    calculate 100.10m 100.00m |> should equal None // crossed
+    SpreadCalc.calculate 0m 100.00m |> should equal None
+    SpreadCalc.calculate 100.00m 0m |> should equal None
+    SpreadCalc.calculate 100.10m 100.00m |> should equal None // crossed
 
 [<Fact>]
 let ``midPrice calculates correct value`` () =
-    let mid = midPrice 100.00m 100.10m
+    let mid = SpreadCalc.midPrice 100.00m 100.10m
     mid |> should equal (Some 100.05m)
 
 [<Fact>]
 let ``spreadBps calculates correct basis points`` () =
-    let bps = spreadBps 100.00m 100.10m
+    let bps = SpreadCalc.spreadBps 100.00m 100.10m
     match bps with
     | Some value ->
         // 0.10 / 100.05 * 10000 ≈ 9.995
@@ -65,22 +68,22 @@ let ``spreadBps calculates correct basis points`` () =
 [<Fact>]
 let ``fromQuote calculates spread from quote`` () =
     let quote = createTestQuote 99.90m 1000L 100.10m 500L
-    let spread = fromQuote quote
+    let spread = SpreadCalc.fromQuote quote
     spread |> should equal (Some 0.20m)
 
 [<Fact>]
 let ``effectiveSpread calculates correct value`` () =
     // Trade at mid should have 0 effective spread
-    let effSpread = effectiveSpread 100.05m 100.00m 100.10m
+    let effSpread = SpreadCalc.effectiveSpread 100.05m 100.00m 100.10m
     effSpread |> should equal (Some 0.00m)
 
     // Trade at ask should have effective spread = quoted spread
-    let effSpread2 = effectiveSpread 100.10m 100.00m 100.10m
+    let effSpread2 = SpreadCalc.effectiveSpread 100.10m 100.00m 100.10m
     effSpread2 |> should equal (Some 0.10m)
 
 [<Fact>]
 let ``relativeSpread calculates percentage`` () =
-    let relSpread = relativeSpread 100.00m 100.10m
+    let relSpread = SpreadCalc.relativeSpread 100.00m 100.10m
     match relSpread with
     | Some value ->
         // 0.10 / 100.05 * 100 ≈ 0.0999%
@@ -93,32 +96,32 @@ let ``relativeSpread calculates percentage`` () =
 [<Fact>]
 let ``Imbalance.calculate returns correct value`` () =
     // Equal sizes = 0 imbalance
-    let balanced = calculate 1000L 1000L
+    let balanced = ImbalanceCalc.calculate 1000L 1000L
     balanced |> should equal (Some 0m)
 
     // All bid = +1 imbalance
-    let allBid = calculate 1000L 0L
+    let allBid = ImbalanceCalc.calculate 1000L 0L
     allBid |> should equal (Some 1m)
 
     // All ask = -1 imbalance
-    let allAsk = calculate 0L 1000L
+    let allAsk = ImbalanceCalc.calculate 0L 1000L
     allAsk |> should equal (Some -1m)
 
 [<Fact>]
 let ``Imbalance.calculate with unequal sizes`` () =
     // 75% bid, 25% ask => (75-25)/(75+25) = 0.5
-    let result = calculate 750L 250L
+    let result = ImbalanceCalc.calculate 750L 250L
     result |> should equal (Some 0.5m)
 
 [<Fact>]
 let ``Imbalance.calculate returns None for zero total`` () =
-    let result = calculate 0L 0L
+    let result = ImbalanceCalc.calculate 0L 0L
     result |> should equal None
 
 [<Fact>]
 let ``Imbalance.fromQuote calculates from quote`` () =
     let quote = createTestQuote 100.00m 1000L 100.10m 500L
-    let imbalance = fromQuote quote
+    let imbalance = ImbalanceCalc.fromQuote quote
     // (1000 - 500) / (1000 + 500) = 500/1500 ≈ 0.333
     match imbalance with
     | Some value ->
@@ -128,23 +131,23 @@ let ``Imbalance.fromQuote calculates from quote`` () =
 
 [<Fact>]
 let ``getImbalanceDirection returns Buy for positive imbalance`` () =
-    let direction = getImbalanceDirection 0.5m
+    let direction = ImbalanceCalc.getImbalanceDirection 0.5m
     direction |> should equal (Some Side.Buy)
 
 [<Fact>]
 let ``getImbalanceDirection returns Sell for negative imbalance`` () =
-    let direction = getImbalanceDirection -0.5m
+    let direction = ImbalanceCalc.getImbalanceDirection -0.5m
     direction |> should equal (Some Side.Sell)
 
 [<Fact>]
 let ``getImbalanceDirection returns None for balanced`` () =
-    let direction = getImbalanceDirection 0.05m
+    let direction = ImbalanceCalc.getImbalanceDirection 0.05m
     direction |> should equal None
 
 [<Fact>]
 let ``isSignificantImbalance checks threshold`` () =
-    isSignificantImbalance 0.3m 0.5m |> should equal true
-    isSignificantImbalance 0.3m 0.2m |> should equal false
+    ImbalanceCalc.isSignificantImbalance 0.3m 0.5m |> should equal true
+    ImbalanceCalc.isSignificantImbalance 0.3m 0.2m |> should equal false
 
 // Aggregation Tests
 
