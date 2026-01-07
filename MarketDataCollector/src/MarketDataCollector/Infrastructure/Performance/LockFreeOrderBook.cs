@@ -228,15 +228,15 @@ public sealed class LockFreeOrderBook
             var bestBid = bids[0];
             var bestAsk = asks[0];
 
-            midPrice = (bestBid.Price + bestAsk.Price) / 2.0;
-            spread = bestAsk.Price - bestBid.Price;
+            midPrice = (double)(bestBid.Price + bestAsk.Price) / 2.0;
+            spread = (double)(bestAsk.Price - bestBid.Price);
 
             // Micro-price: Volume-weighted midpoint
             var totalSize = bestBid.Size + bestAsk.Size;
             if (totalSize > 0)
             {
-                microPrice = (bestBid.Price * bestAsk.Size + bestAsk.Price * bestBid.Size) / totalSize;
-                imbalance = (bestBid.Size - bestAsk.Size) / totalSize;
+                microPrice = (double)(bestBid.Price * bestAsk.Size + bestAsk.Price * bestBid.Size) / (double)totalSize;
+                imbalance = (double)(bestBid.Size - bestAsk.Size) / (double)totalSize;
             }
         }
 

@@ -619,7 +619,7 @@ public sealed class DailySummary
 
     // Memory
     public double MemoryUsageMb { get; init; }
-    public GcStats GcCollections { get; init; }
+    public GcStats GcCollections { get; init; } = new();
 }
 
 /// <summary>

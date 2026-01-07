@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Threading.Channels;
 using System.Threading;
@@ -140,8 +141,9 @@ public sealed record ConcurrentExecutionResult<TResult>
     public IEnumerable<Exception> Errors =>
         Results.Where(r => r.Exception != null).Select(r => r.Exception!);
 
-    public TResult? FirstSuccessValue =>
-        Results.FirstOrDefault(r => r.IsSuccess)?.Value;
+    [return: MaybeNull]
+    public TResult FirstSuccessValue =>
+        Results.FirstOrDefault(r => r.IsSuccess) is { } result ? result.Value! : default!;
 
     public static ConcurrentExecutionResult<TResult> NoProviders() =>
         new() { Results = Array.Empty<ProviderOperationResult<TResult>>() };
