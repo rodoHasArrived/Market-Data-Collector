@@ -19,6 +19,7 @@
 
     <!-- JSON serialization benchmarks -->
     <PackageReference Include="System.Text.Json" Version="8.0.5" />
+    <!-- Note: 8.0.5 is the latest 8.x version, compatible with net8.0 -->
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
 
     <!-- Reference main project -->
