@@ -287,7 +287,7 @@ public static class MarketDataTracing
         if (activity == null) return;
 
         activity.SetStatus(ActivityStatusCode.Error, ex.Message);
-        activity.RecordException(ex);
+        activity.AddException(ex);
     }
 
     /// <summary>

@@ -55,7 +55,7 @@ public class MarketDataCollectorDataProvider : IDataProvider
             }
 
             // Try alternative path construction
-            var relativePath = key.Replace(Globals.DataFolder, "").TrimStart(Path.DirectorySeparatorChar);
+            var relativePath = key.Replace(_dataRoot, "").TrimStart(Path.DirectorySeparatorChar);
             var alternativePath = Path.Combine(_dataRoot, relativePath);
 
             if (File.Exists(alternativePath))
@@ -82,7 +82,7 @@ public class MarketDataCollectorDataProvider : IDataProvider
         }
         finally
         {
-            NewDataRequest?.Invoke(this, new DataProviderNewDataRequestEventArgs(key, succeeded));
+            NewDataRequest?.Invoke(this, new DataProviderNewDataRequestEventArgs(key, succeeded, succeeded ? string.Empty : "File not found"));
         }
     }
 

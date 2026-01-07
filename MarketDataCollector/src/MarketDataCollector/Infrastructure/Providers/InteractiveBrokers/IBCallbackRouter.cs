@@ -273,8 +273,7 @@ public sealed class IBCallbackRouter
             AskSize: state.AskSize ?? 0,
             SequenceNumber: 0,
             StreamId: "IB-L1",
-            BidExchange: null,
-            AskExchange: null
+            Venue: null
         );
 
         _quoteCollector.OnQuote(quote);
