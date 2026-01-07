@@ -93,32 +93,32 @@ let ``relativeSpread calculates percentage`` () =
 [<Fact>]
 let ``Imbalance.calculate returns correct value`` () =
     // Equal sizes = 0 imbalance
-    let balanced = Imbalance.calculate 1000L 1000L
+    let balanced = calculate 1000L 1000L
     balanced |> should equal (Some 0m)
 
     // All bid = +1 imbalance
-    let allBid = Imbalance.calculate 1000L 0L
+    let allBid = calculate 1000L 0L
     allBid |> should equal (Some 1m)
 
     // All ask = -1 imbalance
-    let allAsk = Imbalance.calculate 0L 1000L
+    let allAsk = calculate 0L 1000L
     allAsk |> should equal (Some -1m)
 
 [<Fact>]
 let ``Imbalance.calculate with unequal sizes`` () =
     // 75% bid, 25% ask => (75-25)/(75+25) = 0.5
-    let result = Imbalance.calculate 750L 250L
+    let result = calculate 750L 250L
     result |> should equal (Some 0.5m)
 
 [<Fact>]
 let ``Imbalance.calculate returns None for zero total`` () =
-    let result = Imbalance.calculate 0L 0L
+    let result = calculate 0L 0L
     result |> should equal None
 
 [<Fact>]
 let ``Imbalance.fromQuote calculates from quote`` () =
     let quote = createTestQuote 100.00m 1000L 100.10m 500L
-    let imbalance = Imbalance.fromQuote quote
+    let imbalance = fromQuote quote
     // (1000 - 500) / (1000 + 500) = 500/1500 ≈ 0.333
     match imbalance with
     | Some value ->
