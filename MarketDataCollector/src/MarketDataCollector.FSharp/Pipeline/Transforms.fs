@@ -8,7 +8,10 @@ open MarketDataCollector.FSharp.Domain.Sides
 open MarketDataCollector.FSharp.Domain.Integrity
 open MarketDataCollector.FSharp.Validation.ValidationTypes
 open MarketDataCollector.FSharp.Validation.ValidationPipeline
-open MarketDataCollector.FSharp.Calculations
+
+// Module aliases to avoid shadowing with record field names
+module SpreadCalc = MarketDataCollector.FSharp.Calculations.Spread
+module ImbalanceCalc = MarketDataCollector.FSharp.Calculations.Imbalance
 
 /// Filter events by symbol.
 [<CompiledName("FilterBySymbol")>]
@@ -102,10 +105,10 @@ let enrichQuotes (quotes: QuoteEvent seq) : EnrichedQuote seq =
     quotes
     |> Seq.map (fun q ->
         { Quote = q
-          Spread = Spread.fromQuote q
-          SpreadBps = Spread.spreadBpsFromQuote q
-          MidPrice = Spread.midPriceFromQuote q
-          Imbalance = Imbalance.fromQuote q })
+          Spread = SpreadCalc.fromQuote q
+          SpreadBps = SpreadCalc.spreadBpsFromQuote q
+          MidPrice = SpreadCalc.midPriceFromQuote q
+          Imbalance = ImbalanceCalc.fromQuote q })
 
 /// Validate and filter events.
 [<CompiledName("ValidateAndFilter")>]
