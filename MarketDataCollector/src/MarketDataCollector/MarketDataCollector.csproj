@@ -127,9 +127,9 @@
 
     <!-- QuantConnect Lean Engine Integration -->
     <PackageReference Include="QuantConnect.Lean" Version="2.5.17315" />
-    <PackageReference Include="QuantConnect.Lean.Engine" Version="2.5.17269" />
+    <PackageReference Include="QuantConnect.Lean.Engine" Version="2.5.17315" />
     <PackageReference Include="QuantConnect.Common" Version="2.5.17315" />
-    <PackageReference Include="QuantConnect.Indicators" Version="2.5.17212" />
+    <PackageReference Include="QuantConnect.Indicators" Version="2.5.17315" />
 
     <!-- Technical Indicators (Skender.Stock.Indicators) -->
     <!-- 200+ technical indicators with streaming support -->
