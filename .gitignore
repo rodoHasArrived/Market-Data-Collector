@@ -62,6 +62,7 @@ credentials.json
 data/
 logs/
 _logs/
+diagnostic-logs/
 
 # OS generated files
 .DS_Store

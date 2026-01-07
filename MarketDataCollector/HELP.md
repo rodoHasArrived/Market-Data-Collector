@@ -1005,6 +1005,68 @@ chmod 755 ./data
 3. Confirm symbols are correctly configured
 4. Check logs for errors
 
+#### 7. "dotnet restore or build failures"
+
+**Causes:**
+- Missing or incompatible dependencies
+- NuGet package resolution issues
+- Platform-specific targeting issues (e.g., Windows-specific packages on Linux)
+- Network issues with NuGet servers
+
+**Solution:**
+
+To diagnose build or restore issues, use the `-v diag` flag to get detailed diagnostic logging:
+
+```bash
+# Restore with diagnostic logging (solution-level)
+dotnet restore MarketDataCollector /p:EnableWindowsTargeting=true -v diag
+
+# Build with diagnostic logging (solution-level)
+dotnet build MarketDataCollector -c Release -v diag
+
+# For specific projects (example with full path)
+dotnet restore MarketDataCollector/src/MarketDataCollector/MarketDataCollector.csproj -v diag
+```
+
+**Verbosity Levels:**
+- `-v q` or `--verbosity quiet` - Minimal output
+- `-v m` or `--verbosity minimal` - Basic information
+- `-v n` or `--verbosity normal` - Standard output (default)
+- `-v d` or `--verbosity detailed` - Detailed information
+- `-v diag` or `--verbosity diagnostic` - Extensive diagnostic logging
+
+**Common Issues Revealed by Diagnostic Logs:**
+
+1. **NETSDK1100 Error (Windows-specific TFMs on non-Windows)**
+   ```bash
+   # Solution: Use EnableWindowsTargeting property
+   dotnet restore MarketDataCollector /p:EnableWindowsTargeting=true
+   ```
+
+2. **NuGet Package Not Found**
+   - Check your NuGet sources: `dotnet nuget list source`
+   - Clear NuGet cache: `dotnet nuget locals all --clear`
+   - Retry restore: `dotnet restore --force`
+
+3. **Version Conflicts**
+   - Check for conflicting package versions in diagnostic output
+   - Update packages: `dotnet list package --outdated`
+   - Clean and rebuild: `dotnet clean && dotnet restore`
+
+4. **Network/Proxy Issues**
+   - Configure NuGet proxy if behind corporate firewall
+   - Use offline feed if needed
+
+**Saving Diagnostic Logs:**
+```bash
+# Save diagnostic output to a file for analysis
+dotnet restore MarketDataCollector /p:EnableWindowsTargeting=true -v diag > restore-diag.log 2>&1
+
+# Then search for specific errors
+grep -i "error" restore-diag.log
+grep -i "warning" restore-diag.log
+```
+
 ### Logging
 
 Logs are stored in the data directory under `_logs/`:
