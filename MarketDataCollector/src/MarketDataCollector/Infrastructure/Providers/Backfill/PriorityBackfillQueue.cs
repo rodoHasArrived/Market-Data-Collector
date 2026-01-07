@@ -82,7 +82,7 @@ public sealed record BatchEnqueueOptions
 /// <summary>
 /// Statistics about the backfill queue.
 /// </summary>
-public sealed record QueueStatistics(
+public sealed record BackfillQueueStatistics(
     int TotalJobs,
     int PendingJobs,
     int RunningJobs,
@@ -426,14 +426,14 @@ public sealed class PriorityBackfillQueue : IDisposable
     /// <summary>
     /// Get queue statistics.
     /// </summary>
-    public QueueStatistics GetStatistics()
+    public BackfillQueueStatistics GetStatistics()
     {
         var jobs = _allJobs.Values.ToList();
         var byPriority = jobs
             .GroupBy(j => (BackfillPriority)j.Options.Priority)
             .ToDictionary(g => g.Key, g => g.Count());
 
-        return new QueueStatistics(
+        return new BackfillQueueStatistics(
             TotalJobs: jobs.Count,
             PendingJobs: jobs.Count(j => j.Status == BackfillJobStatus.Pending),
             RunningJobs: jobs.Count(j => j.Status == BackfillJobStatus.Running),
