@@ -1018,13 +1018,13 @@ chmod 755 ./data
 To diagnose build or restore issues, use the `-v diag` flag to get detailed diagnostic logging:
 
 ```bash
-# Restore with diagnostic logging
+# Restore with diagnostic logging (solution-level)
 dotnet restore MarketDataCollector /p:EnableWindowsTargeting=true -v diag
 
-# Build with diagnostic logging
+# Build with diagnostic logging (solution-level)
 dotnet build MarketDataCollector -c Release -v diag
 
-# For specific projects
+# For specific projects (example with full path)
 dotnet restore MarketDataCollector/src/MarketDataCollector/MarketDataCollector.csproj -v diag
 ```
 
