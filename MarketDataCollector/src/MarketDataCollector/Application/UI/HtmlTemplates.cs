@@ -1246,7 +1246,7 @@ public static class HtmlTemplates
     function showToast(type, title, message) {{
       const container = document.getElementById('toastContainer');
       const toast = document.createElement('div');
-      toast.className = `toast toast-$${{type}}`;
+      toast.className = `toast toast-${{type}}`;
 
       const icons = {{
         success: '✅',
@@ -1255,10 +1255,10 @@ public static class HtmlTemplates
       }};
 
       toast.innerHTML = `
-        <div class=""toast-icon"">$${{icons[type] || 'ℹ️'}}</div>
+        <div class=""toast-icon"">${{icons[type] || 'ℹ️'}}</div>
         <div class=""toast-content"">
-          <div class=""toast-title"">$${{title}}</div>
-          <div class=""toast-message"">$${{message}}</div>
+          <div class=""toast-title"">${{title}}</div>
+          <div class=""toast-message"">${{message}}</div>
         </div>
       `;
 
@@ -1292,7 +1292,7 @@ public static class HtmlTemplates
         const response = await fetch(url, options);
         if (!response.ok) {{
           const text = await response.text();
-          throw new Error(text || `HTTP $${{response.status}}`);
+          throw new Error(text || `HTTP ${{response.status}}`);
         }}
         return response;
       }} catch (error) {{
@@ -1364,13 +1364,13 @@ public static class HtmlTemplates
         for (const s of (cfg.symbols || [])) {{
           const tr = document.createElement('tr');
           tr.innerHTML = `
-            <td><strong>$${{s.symbol}}</strong></td>
-            <td>$${{s.subscribeTrades ? '<span style=""color: #48bb78;"">✓ Yes</span>' : '✗ No'}}</td>
-            <td>$${{s.subscribeDepth ? '<span style=""color: #48bb78;"">✓ Yes</span>' : '✗ No'}}</td>
-            <td>$${{s.depthLevels || 10}}</td>
-            <td>$${{s.localSymbol || '-'}}</td>
-            <td>$${{s.exchange || '-'}}</td>
-            <td><div style=""display:flex;gap:8px;flex-wrap:wrap;""><button class=""btn-secondary"" onclick=""editSymbol('$${{s.symbol}}')"">✏️ Edit</button><button class=""btn-danger"" onclick=""deleteSymbol('$${{s.symbol}}')"">🗑️ Delete</button></div></td>
+            <td><strong>${{s.symbol}}</strong></td>
+            <td>${{s.subscribeTrades ? '<span style=""color: #48bb78;"">✓ Yes</span>' : '✗ No'}}</td>
+            <td>${{s.subscribeDepth ? '<span style=""color: #48bb78;"">✓ Yes</span>' : '✗ No'}}</td>
+            <td>${{s.depthLevels || 10}}</td>
+            <td>${{s.localSymbol || '-'}}</td>
+            <td>${{s.exchange || '-'}}</td>
+            <td><div style=""display:flex;gap:8px;flex-wrap:wrap;""><button class=""btn-secondary"" onclick=""editSymbol('${{s.symbol}}')"">✏️ Edit</button><button class=""btn-danger"" onclick=""deleteSymbol('${{s.symbol}}')"">🗑️ Delete</button></div></td>
           `;
           tbody.appendChild(tr);
         }}
@@ -1473,21 +1473,21 @@ public static class HtmlTemplates
 
       let path = '';
       if (naming === 'Flat') {{
-        path = dateStr ? `$$${{root}}/$${{pfx}}AAPL_Trade_$${{dateStr}}$${{ext}}` : `$$${{root}}/$${{pfx}}AAPL_Trade$${{ext}}`;
+        path = dateStr ? `${{root}}/${{pfx}}AAPL_Trade_${{dateStr}}${{ext}}` : `${{root}}/${{pfx}}AAPL_Trade${{ext}}`;
       }} else if (naming === 'BySymbol') {{
-        path = dateStr ? `$$${{root}}/AAPL/Trade/$${{pfx}}$${{dateStr}}$${{ext}}` : `$$${{root}}/AAPL/Trade/$${{pfx}}data$${{ext}}`;
+        path = dateStr ? `${{root}}/AAPL/Trade/${{pfx}}${{dateStr}}${{ext}}` : `${{root}}/AAPL/Trade/${{pfx}}data${{ext}}`;
       }} else if (naming === 'ByDate') {{
-        path = dateStr ? `$$${{root}}/$${{dateStr}}/AAPL/$${{pfx}}Trade$${{ext}}` : `$$${{root}}/AAPL/$${{pfx}}Trade$${{ext}}`;
+        path = dateStr ? `${{root}}/${{dateStr}}/AAPL/${{pfx}}Trade${{ext}}` : `${{root}}/AAPL/${{pfx}}Trade${{ext}}`;
       }} else if (naming === 'ByType') {{
-        path = dateStr ? `$$${{root}}/Trade/AAPL/$${{pfx}}$${{dateStr}}$${{ext}}` : `$$${{root}}/Trade/AAPL/$${{pfx}}data$${{ext}}`;
+        path = dateStr ? `${{root}}/Trade/AAPL/${{pfx}}${{dateStr}}${{ext}}` : `${{root}}/Trade/AAPL/${{pfx}}data${{ext}}`;
       }} else if (naming === 'BySource') {{
-        path = dateStr ? `$$${{root}}/alpaca/AAPL/Trade/$${{pfx}}$${{dateStr}}$${{ext}}` : `$$${{root}}/alpaca/AAPL/Trade/$${{pfx}}data$${{ext}}`;
+        path = dateStr ? `${{root}}/alpaca/AAPL/Trade/${{pfx}}${{dateStr}}${{ext}}` : `${{root}}/alpaca/AAPL/Trade/${{pfx}}data${{ext}}`;
       }} else if (naming === 'ByAssetClass') {{
-        path = dateStr ? `$$${{root}}/equity/AAPL/Trade/$${{pfx}}$${{dateStr}}$${{ext}}` : `$$${{root}}/equity/AAPL/Trade/$${{pfx}}data$${{ext}}`;
+        path = dateStr ? `${{root}}/equity/AAPL/Trade/${{pfx}}${{dateStr}}${{ext}}` : `${{root}}/equity/AAPL/Trade/${{pfx}}data${{ext}}`;
       }} else if (naming === 'Hierarchical') {{
-        path = dateStr ? `$$${{root}}/alpaca/equity/AAPL/Trade/$${{pfx}}$${{dateStr}}$${{ext}}` : `$$${{root}}/alpaca/equity/AAPL/Trade/$${{pfx}}data$${{ext}}`;
+        path = dateStr ? `${{root}}/alpaca/equity/AAPL/Trade/${{pfx}}${{dateStr}}${{ext}}` : `${{root}}/alpaca/equity/AAPL/Trade/${{pfx}}data${{ext}}`;
       }} else if (naming === 'Canonical') {{
-        path = `$$${{root}}/2024/01/15/alpaca/AAPL/$${{pfx}}Trade$${{ext}}`;
+        path = `${{root}}/2024/01/15/alpaca/AAPL/${{pfx}}Trade${{ext}}`;
       }}
 
       document.getElementById('previewPath').textContent = path;
@@ -1506,12 +1506,12 @@ public static class HtmlTemplates
         const isConnected = s.isConnected !== false;
 
         box.innerHTML = `
-          <div class=""status-badge $${{isConnected ? 'status-connected' : 'status-disconnected'}}"">
+          <div class=""status-badge ${{isConnected ? 'status-connected' : 'status-disconnected'}}"">
             <span class=""status-dot""></span>
-            $${{isConnected ? 'Connected' : 'Disconnected'}}
+            ${{isConnected ? 'Connected' : 'Disconnected'}}
           </div>
           <div style=""margin-top: 8px; font-size: 12px; color: #718096;"">
-            Last update: $${{s.timestampUtc || 'n/a'}}
+            Last update: ${{s.timestampUtc || 'n/a'}}
           </div>
         `;
 
@@ -1551,17 +1551,17 @@ public static class HtmlTemplates
         ? '<span style=""color: #48bb78; font-weight: 600;"">✅ Success</span>'
         : '<span style=""color: #f56565; font-weight: 600;"">❌ Failed</span>';
       const symbols = (status.symbols || []).join(', ');
-      const error = status.error ? `<div style=""color: #f56565; margin-top: 8px;"">$${{status.error}}</div>` : '';
+      const error = status.error ? `<div style=""color: #f56565; margin-top: 8px;"">${{status.error}}</div>` : '';
       return `
-        <div><strong>$${{badge}}</strong></div>
+        <div><strong>${{badge}}</strong></div>
         <div style=""margin-top: 8px;"">
-          <strong>Provider:</strong> $${{status.provider}}<br/>
-          <strong>Bars Written:</strong> $${{status.barsWritten || 0}}<br/>
-          <strong>Symbols:</strong> $${{symbols || 'n/a'}}<br/>
-          <strong>Started:</strong> $${{started}}<br/>
-          <strong>Completed:</strong> $${{completed}}
+          <strong>Provider:</strong> ${{status.provider}}<br/>
+          <strong>Bars Written:</strong> ${{status.barsWritten || 0}}<br/>
+          <strong>Symbols:</strong> ${{symbols || 'n/a'}}<br/>
+          <strong>Started:</strong> ${{started}}<br/>
+          <strong>Completed:</strong> ${{completed}}
         </div>
-        $${{error}}
+        ${{error}}
       `;
     }}
 
@@ -1609,7 +1609,7 @@ public static class HtmlTemplates
           body: JSON.stringify(payload)
         }});
 
-        showToast('success', 'Symbol Added', `$$${{symbol}} added successfully`);
+        showToast('success', 'Symbol Added', `$${{symbol}} added successfully`);
 
         document.getElementById('sym').value = '';
         document.getElementById('localsym').value = '';
@@ -1621,14 +1621,14 @@ public static class HtmlTemplates
     }}
 
     async function deleteSymbol(symbol) {{
-      if (!confirm(`Delete symbol $${{symbol}}?`)) return;
+      if (!confirm(`Delete symbol ${{symbol}}?`)) return;
 
       try {{
-        await apiCall(`/api/config/symbols/$${{encodeURIComponent(symbol)}}`, {{
+        await apiCall(`/api/config/symbols/${{encodeURIComponent(symbol)}}`, {{
           method: 'DELETE'
         }});
 
-        showToast('success', 'Symbol Deleted', `$$${{symbol}} removed successfully`);
+        showToast('success', 'Symbol Deleted', `$${{symbol}} removed successfully`);
         await loadConfig();
       }} catch (error) {{
         showToast('error', 'Delete Failed', error.message);
@@ -1662,17 +1662,17 @@ public static class HtmlTemplates
         const isAvailable = status.isAvailable;
         const color = isAvailable ? '#48bb78' : '#f56565';
         const icon = isAvailable ? '✓' : '✗';
-        const responseTime = status.responseTime ? `$$${{Math.round(status.responseTime * 1000)}}ms` : '';
+        const responseTime = status.responseTime ? `${{Math.round(status.responseTime * 1000)}}ms` : '';
 
         return `
-          <div style=""padding: 10px; background: white; border-radius: 6px; border-left: 3px solid $${{color}};"">
+          <div style=""padding: 10px; background: white; border-radius: 6px; border-left: 3px solid ${{color}};"">
             <div style=""display: flex; align-items: center; gap: 6px;"">
-              <span style=""color: $${{color}}; font-weight: bold;"">$${{icon}}</span>
-              <span style=""font-weight: 600; text-transform: capitalize;"">$${{name}}</span>
+              <span style=""color: ${{color}}; font-weight: bold;"">${{icon}}</span>
+              <span style=""font-weight: 600; text-transform: capitalize;"">${{name}}</span>
             </div>
             <div style=""font-size: 11px; color: #718096; margin-top: 4px;"">
-              $${{status.message || (isAvailable ? 'Available' : 'Unavailable')}}
-              $${{responseTime ? ` ($${{responseTime}})` : ''}}
+              ${{status.message || (isAvailable ? 'Available' : 'Unavailable')}}
+              ${{responseTime ? ` (${{responseTime}})` : ''}}
             </div>
           </div>
         `;
@@ -1701,7 +1701,7 @@ public static class HtmlTemplates
       resultDiv.innerHTML = '<div class=""loading""></div> Resolving...';
 
       try {{
-        const r = await apiCall(`/api/backfill/resolve/$${{encodeURIComponent(symbol)}}`);
+        const r = await apiCall(`/api/backfill/resolve/${{encodeURIComponent(symbol)}}`);
         const resolution = await r.json();
 
         if (!resolution) {{
@@ -1711,26 +1711,26 @@ public static class HtmlTemplates
 
         resultDiv.innerHTML = `
           <div style=""background: #f7fafc; padding: 16px; border-radius: 8px;"">
-            <h4 style=""margin: 0 0 12px 0;"">Resolution for $${{symbol}}</h4>
+            <h4 style=""margin: 0 0 12px 0;"">Resolution for ${{symbol}}</h4>
             <table style=""width: 100%; font-size: 14px;"">
-              <tr><td style=""padding: 4px 8px; font-weight: 500;"">Ticker</td><td>$${{resolution.ticker || 'N/A'}}</td></tr>
-              <tr><td style=""padding: 4px 8px; font-weight: 500;"">Name</td><td>$${{resolution.name || 'N/A'}}</td></tr>
-              <tr><td style=""padding: 4px 8px; font-weight: 500;"">FIGI</td><td style=""font-family: monospace;"">$${{resolution.figi || 'N/A'}}</td></tr>
-              <tr><td style=""padding: 4px 8px; font-weight: 500;"">Exchange</td><td>$${{resolution.exchange || 'N/A'}}</td></tr>
-              <tr><td style=""padding: 4px 8px; font-weight: 500;"">Security Type</td><td>$${{resolution.securityType || 'N/A'}}</td></tr>
+              <tr><td style=""padding: 4px 8px; font-weight: 500;"">Ticker</td><td>${{resolution.ticker || 'N/A'}}</td></tr>
+              <tr><td style=""padding: 4px 8px; font-weight: 500;"">Name</td><td>${{resolution.name || 'N/A'}}</td></tr>
+              <tr><td style=""padding: 4px 8px; font-weight: 500;"">FIGI</td><td style=""font-family: monospace;"">${{resolution.figi || 'N/A'}}</td></tr>
+              <tr><td style=""padding: 4px 8px; font-weight: 500;"">Exchange</td><td>${{resolution.exchange || 'N/A'}}</td></tr>
+              <tr><td style=""padding: 4px 8px; font-weight: 500;"">Security Type</td><td>${{resolution.securityType || 'N/A'}}</td></tr>
             </table>
-            $${{resolution.providerSymbols ? `
+            ${{resolution.providerSymbols ? `
               <h4 style=""margin: 16px 0 8px 0;"">Provider Mappings</h4>
               <table style=""width: 100%; font-size: 13px;"">
-                $${{Object.entries(resolution.providerSymbols).map(([provider, sym]) => `
-                  <tr><td style=""padding: 4px 8px; font-weight: 500; text-transform: capitalize;"">$${{provider}}</td><td style=""font-family: monospace;"">$${{sym}}</td></tr>
+                ${{Object.entries(resolution.providerSymbols).map(([provider, sym]) => `
+                  <tr><td style=""padding: 4px 8px; font-weight: 500; text-transform: capitalize;"">${{provider}}</td><td style=""font-family: monospace;"">${{sym}}</td></tr>
                 `).join('')}}
               </table>
             ` : ''}}
           </div>
         `;
       }} catch (error) {{
-        resultDiv.innerHTML = `<div style=""color: #f56565;"">Error: $${{error.message}}</div>`;
+        resultDiv.innerHTML = `<div style=""color: #f56565;"">Error: ${{error.message}}</div>`;
       }}
     }}
 
@@ -1759,7 +1759,7 @@ public static class HtmlTemplates
         document.getElementById('progressLabel').textContent = 'Starting backfill...';
         document.getElementById('btnStartBackfill').disabled = true;
 
-        showToast('info', 'Backfill Started', `Downloading data for $${{symbols.length}} symbol(s)...`);
+        showToast('info', 'Backfill Started', `Downloading data for ${{symbols.length}} symbol(s)...`);
 
         const payload = {{
           provider,
@@ -1786,13 +1786,13 @@ public static class HtmlTemplates
         document.getElementById('backfillStatus').innerHTML = formatBackfillStatus(result);
 
         if (result.success) {{
-          showToast('success', 'Backfill Complete', `Downloaded $${{result.barsWritten}} bars from $${{result.provider}}`);
+          showToast('success', 'Backfill Complete', `Downloaded ${{result.barsWritten}} bars from ${{result.provider}}`);
         }} else {{
           showToast('error', 'Backfill Failed', result.error || 'Unknown error');
         }}
       }} catch (error) {{
         showToast('error', 'Backfill Failed', error.message);
-        document.getElementById('backfillStatus').innerHTML = `<span style=""color: #f56565;"">$${{error.message}}</span>`;
+        document.getElementById('backfillStatus').innerHTML = `<span style=""color: #f56565;"">${{error.message}}</span>`;
       }} finally {{
         document.getElementById('btnStartBackfill').disabled = false;
         setTimeout(() => {{
@@ -1810,8 +1810,8 @@ public static class HtmlTemplates
 
         grid.innerHTML = providers.map(p => `
           <div style=""padding: 10px; background: white; border-radius: 6px; border-left: 3px solid #a0aec0;"">
-            <div style=""font-weight: 600;"">$${{p.displayName || p.name}}</div>
-            <div style=""font-size: 11px; color: #718096; margin-top: 4px;"">$${{p.description || ''}}</div>
+            <div style=""font-weight: 600;"">${{p.displayName || p.name}}</div>
+            <div style=""font-size: 11px; color: #718096; margin-top: 4px;"">${{p.description || ''}}</div>
           </div>
         `).join('');
       }} catch (e) {{
@@ -1850,17 +1850,17 @@ public static class HtmlTemplates
         const statusColor = p.isConnected ? '#48bb78' : '#f56565';
         const statusText = p.isConnected ? 'Connected' : 'Disconnected';
         return `
-          <div style=""padding: 16px; background: white; border-radius: 8px; border-left: 4px solid $${{statusColor}}; box-shadow: 0 1px 3px rgba(0,0,0,0.1);"">
+          <div style=""padding: 16px; background: white; border-radius: 8px; border-left: 4px solid ${{statusColor}}; box-shadow: 0 1px 3px rgba(0,0,0,0.1);"">
             <div style=""display: flex; justify-content: space-between; align-items: center;"">
-              <strong>$${{p.providerId}}</strong>
-              <span class=""tag tag-$${{p.providerType.toLowerCase()}}"" style=""font-size: 10px;"">$${{p.providerType}}</span>
+              <strong>${{p.providerId}}</strong>
+              <span class=""tag tag-${{p.providerType.toLowerCase()}}"" style=""font-size: 10px;"">${{p.providerType}}</span>
             </div>
-            <div style=""font-size: 12px; color: $${{statusColor}}; margin-top: 4px;"">$${{statusText}}</div>
+            <div style=""font-size: 12px; color: ${{statusColor}}; margin-top: 4px;"">${{statusText}}</div>
             <div style=""font-size: 11px; color: #718096; margin-top: 4px;"">
-              Subscriptions: $${{p.activeSubscriptions || 0}}
+              Subscriptions: ${{p.activeSubscriptions || 0}}
             </div>
             <div style=""margin-top: 8px;"">
-              <button class=""btn-danger"" style=""font-size: 11px; padding: 4px 8px;"" onclick=""disconnectProvider('$${{p.providerId}}')"">
+              <button class=""btn-danger"" style=""font-size: 11px; padding: 4px 8px;"" onclick=""disconnectProvider('${{p.providerId}}')"">
                 Disconnect
               </button>
             </div>
@@ -1903,7 +1903,7 @@ public static class HtmlTemplates
           body: JSON.stringify(payload)
         }});
 
-        showToast('success', 'Provider Connected', `Successfully connected to $${{providerId}}`);
+        showToast('success', 'Provider Connected', `Successfully connected to ${{providerId}}`);
         await loadMultiProviderStatus();
 
         // Clear form
@@ -1916,13 +1916,13 @@ public static class HtmlTemplates
     }}
 
     async function disconnectProvider(providerId) {{
-      if (!confirm(`Disconnect provider $${{providerId}}?`)) return;
+      if (!confirm(`Disconnect provider ${{providerId}}?`)) return;
 
       try {{
-        await apiCall(`/api/multiprovider/disconnect/$${{encodeURIComponent(providerId)}}`, {{
+        await apiCall(`/api/multiprovider/disconnect/${{encodeURIComponent(providerId)}}`, {{
           method: 'POST'
         }});
-        showToast('success', 'Provider Disconnected', `Disconnected from $${{providerId}}`);
+        showToast('success', 'Provider Disconnected', `Disconnected from ${{providerId}}`);
         await loadMultiProviderStatus();
       }} catch (error) {{
         showToast('error', 'Disconnect Failed', error.message);
@@ -1956,29 +1956,29 @@ public static class HtmlTemplates
 
       // Build header row
       headerRow.innerHTML = '<th>Metric</th>' + comparison.providers.map(p =>
-        `<th style=""text-align: center;"">$${{p.providerId}}<br/><small style=""font-weight: normal; color: #718096;"">$${{p.providerType}}</small></th>`
+        `<th style=""text-align: center;"">${{p.providerId}}<br/><small style=""font-weight: normal; color: #718096;"">${{p.providerType}}</small></th>`
       ).join('');
 
       // Metrics to compare
       const metrics = [
-        {{ key: 'dataQualityScore', label: 'Data Quality Score', format: v => `<span style=""color: $${{v >= 80 ? '#48bb78' : v >= 60 ? '#ecc94b' : '#f56565'}}; font-weight: 600;"">$${{v.toFixed(1)}}%</span>` }},
+        {{ key: 'dataQualityScore', label: 'Data Quality Score', format: v => `<span style=""color: ${{v >= 80 ? '#48bb78' : v >= 60 ? '#ecc94b' : '#f56565'}}; font-weight: 600;"">${{v.toFixed(1)}}%</span>` }},
         {{ key: 'tradesReceived', label: 'Trades Received', format: v => v.toLocaleString() }},
         {{ key: 'depthUpdatesReceived', label: 'Depth Updates', format: v => v.toLocaleString() }},
         {{ key: 'quotesReceived', label: 'Quotes Received', format: v => v.toLocaleString() }},
-        {{ key: 'averageLatencyMs', label: 'Avg Latency', format: v => `$$${{v.toFixed(2)}}ms` }},
-        {{ key: 'minLatencyMs', label: 'Min Latency', format: v => `$$${{v.toFixed(2)}}ms` }},
-        {{ key: 'maxLatencyMs', label: 'Max Latency', format: v => `$$${{v.toFixed(2)}}ms` }},
-        {{ key: 'connectionSuccessRate', label: 'Connection Success', format: v => `$$${{v.toFixed(1)}}%` }},
-        {{ key: 'messagesDropped', label: 'Messages Dropped', format: v => `<span style=""color: $${{v > 0 ? '#f56565' : '#48bb78'}}"">$${{v.toLocaleString()}}</span>` }},
+        {{ key: 'averageLatencyMs', label: 'Avg Latency', format: v => `${{v.toFixed(2)}}ms` }},
+        {{ key: 'minLatencyMs', label: 'Min Latency', format: v => `${{v.toFixed(2)}}ms` }},
+        {{ key: 'maxLatencyMs', label: 'Max Latency', format: v => `${{v.toFixed(2)}}ms` }},
+        {{ key: 'connectionSuccessRate', label: 'Connection Success', format: v => `${{v.toFixed(1)}}%` }},
+        {{ key: 'messagesDropped', label: 'Messages Dropped', format: v => `<span style=""color: ${{v > 0 ? '#f56565' : '#48bb78'}}"">${{v.toLocaleString()}}</span>` }},
         {{ key: 'activeSubscriptions', label: 'Active Subscriptions', format: v => v.toString() }}
       ];
 
       tbody.innerHTML = metrics.map(m => {{
         const cells = comparison.providers.map(p => {{
           const value = p[m.key] ?? 0;
-          return `<td style=""text-align: center;"">$${{m.format(value)}}</td>`;
+          return `<td style=""text-align: center;"">${{m.format(value)}}</td>`;
         }}).join('');
-        return `<tr><td><strong>$${{m.label}}</strong></td>$${{cells}}</tr>`;
+        return `<tr><td><strong>${{m.label}}</strong></td>${{cells}}</tr>`;
       }}).join('');
     }}
 
@@ -2001,7 +2001,7 @@ public static class HtmlTemplates
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `provider-comparison-$${{new Date().toISOString().split('T')[0]}}.csv`;
+        a.download = `provider-comparison-${{new Date().toISOString().split('T')[0]}}.csv`;
         a.click();
         URL.revokeObjectURL(url);
 
@@ -2018,7 +2018,7 @@ public static class HtmlTemplates
     function updateProviderSelects() {{
       const primarySelect = document.getElementById('failoverPrimaryProvider');
       primarySelect.innerHTML = '<option value="""">Select primary...</option>' +
-        connectedProviders.map(p => `<option value=""$${{p.providerId}}"">$${{p.providerId}}</option>`).join('');
+        connectedProviders.map(p => `<option value=""${{p.providerId}}"">${{p.providerId}}</option>`).join('');
     }}
 
     async function loadFailoverRules() {{
@@ -2042,23 +2042,23 @@ public static class HtmlTemplates
         const statusColor = rule.isInFailoverState ? '#ecc94b' : '#48bb78';
         const statusText = rule.isInFailoverState ? 'In Failover' : 'Normal';
         return `
-          <div style=""padding: 16px; background: white; border-radius: 8px; border-left: 4px solid $${{statusColor}}; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);"">
+          <div style=""padding: 16px; background: white; border-radius: 8px; border-left: 4px solid ${{statusColor}}; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);"">
             <div style=""display: flex; justify-content: space-between; align-items: center;"">
-              <strong>$${{rule.id}}</strong>
-              <span style=""color: $${{statusColor}}; font-size: 12px; font-weight: 600;"">$${{statusText}}</span>
+              <strong>${{rule.id}}</strong>
+              <span style=""color: ${{statusColor}}; font-size: 12px; font-weight: 600;"">${{statusText}}</span>
             </div>
             <div style=""font-size: 13px; color: #4a5568; margin-top: 8px;"">
-              <div>Primary: <strong>$${{rule.primaryProviderId}}</strong></div>
-              <div>Backups: $${{rule.backupProviderIds.join(', ') || 'None'}}</div>
+              <div>Primary: <strong>${{rule.primaryProviderId}}</strong></div>
+              <div>Backups: ${{rule.backupProviderIds.join(', ') || 'None'}}</div>
               <div style=""margin-top: 4px; color: #718096; font-size: 12px;"">
-                Threshold: $${{rule.failoverThreshold}} failures | Recovery: $${{rule.recoveryThreshold}} successes
+                Threshold: ${{rule.failoverThreshold}} failures | Recovery: ${{rule.recoveryThreshold}} successes
               </div>
             </div>
             <div style=""margin-top: 8px; display: flex; gap: 8px;"">
-              <button class=""btn-secondary"" style=""font-size: 11px; padding: 4px 8px;"" onclick=""testFailover('$${{rule.id}}')"">
+              <button class=""btn-secondary"" style=""font-size: 11px; padding: 4px 8px;"" onclick=""testFailover('${{rule.id}}')"">
                 Test Failover
               </button>
-              <button class=""btn-danger"" style=""font-size: 11px; padding: 4px 8px;"" onclick=""removeFailoverRule('$${{rule.id}}')"">
+              <button class=""btn-danger"" style=""font-size: 11px; padding: 4px 8px;"" onclick=""removeFailoverRule('${{rule.id}}')"">
                 Remove
               </button>
             </div>
@@ -2099,7 +2099,7 @@ public static class HtmlTemplates
           body: JSON.stringify(payload)
         }});
 
-        showToast('success', 'Rule Added', `Failover rule $${{ruleId}} created`);
+        showToast('success', 'Rule Added', `Failover rule ${{ruleId}} created`);
         await loadFailoverRules();
 
         // Clear form
@@ -2111,13 +2111,13 @@ public static class HtmlTemplates
     }}
 
     async function removeFailoverRule(ruleId) {{
-      if (!confirm(`Remove failover rule $${{ruleId}}?`)) return;
+      if (!confirm(`Remove failover rule ${{ruleId}}?`)) return;
 
       try {{
-        await apiCall(`/api/multiprovider/failover/rules/$${{encodeURIComponent(ruleId)}}`, {{
+        await apiCall(`/api/multiprovider/failover/rules/${{encodeURIComponent(ruleId)}}`, {{
           method: 'DELETE'
         }});
-        showToast('success', 'Rule Removed', `Failover rule $${{ruleId}} removed`);
+        showToast('success', 'Rule Removed', `Failover rule ${{ruleId}} removed`);
         await loadFailoverRules();
       }} catch (error) {{
         showToast('error', 'Remove Failed', error.message);
@@ -2126,10 +2126,10 @@ public static class HtmlTemplates
 
     async function testFailover(ruleId) {{
       try {{
-        await apiCall(`/api/multiprovider/failover/test/$${{encodeURIComponent(ruleId)}}`, {{
+        await apiCall(`/api/multiprovider/failover/test/${{encodeURIComponent(ruleId)}}`, {{
           method: 'POST'
         }});
-        showToast('info', 'Failover Test', `Testing failover for rule $${{ruleId}}`);
+        showToast('info', 'Failover Test', `Testing failover for rule ${{ruleId}}`);
         await loadFailoverRules();
       }} catch (error) {{
         showToast('error', 'Test Failed', error.message);
@@ -2159,13 +2159,13 @@ public static class HtmlTemplates
 
       tbody.innerHTML = mappings.map(m => `
         <tr>
-          <td><strong>$${{m.canonicalSymbol}}</strong></td>
-          <td>$${{m.ibSymbol || '-'}}</td>
-          <td>$${{m.alpacaSymbol || '-'}}</td>
-          <td>$${{m.polygonSymbol || '-'}}</td>
-          <td style=""font-family: monospace; font-size: 11px;"">$${{m.figi || '-'}}</td>
+          <td><strong>${{m.canonicalSymbol}}</strong></td>
+          <td>${{m.ibSymbol || '-'}}</td>
+          <td>${{m.alpacaSymbol || '-'}}</td>
+          <td>${{m.polygonSymbol || '-'}}</td>
+          <td style=""font-family: monospace; font-size: 11px;"">${{m.figi || '-'}}</td>
           <td>
-            <button class=""btn-danger"" style=""font-size: 11px; padding: 4px 8px;"" onclick=""removeSymbolMapping('$${{m.canonicalSymbol}}')"">
+            <button class=""btn-danger"" style=""font-size: 11px; padding: 4px 8px;"" onclick=""removeSymbolMapping('${{m.canonicalSymbol}}')"">
               Remove
             </button>
           </td>
@@ -2196,7 +2196,7 @@ public static class HtmlTemplates
           body: JSON.stringify(payload)
         }});
 
-        showToast('success', 'Mapping Added', `Symbol mapping for $${{canonical}} created`);
+        showToast('success', 'Mapping Added', `Symbol mapping for ${{canonical}} created`);
         await loadSymbolMappings();
 
         // Clear form
@@ -2209,13 +2209,13 @@ public static class HtmlTemplates
     }}
 
     async function removeSymbolMapping(symbol) {{
-      if (!confirm(`Remove symbol mapping for $${{symbol}}?`)) return;
+      if (!confirm(`Remove symbol mapping for ${{symbol}}?`)) return;
 
       try {{
-        await apiCall(`/api/multiprovider/symbolmappings/$${{encodeURIComponent(symbol)}}`, {{
+        await apiCall(`/api/multiprovider/symbolmappings/${{encodeURIComponent(symbol)}}`, {{
           method: 'DELETE'
         }});
-        showToast('success', 'Mapping Removed', `Symbol mapping for $${{symbol}} removed`);
+        showToast('success', 'Mapping Removed', `Symbol mapping for ${{symbol}} removed`);
         await loadSymbolMappings();
       }} catch (error) {{
         showToast('error', 'Remove Failed', error.message);
@@ -2254,7 +2254,7 @@ public static class HtmlTemplates
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `symbol-mappings-$${{new Date().toISOString().split('T')[0]}}.csv`;
+        a.download = `symbol-mappings-${{new Date().toISOString().split('T')[0]}}.csv`;
         a.click();
         URL.revokeObjectURL(url);
         showToast('success', 'Export Complete', 'Symbol mappings exported');
