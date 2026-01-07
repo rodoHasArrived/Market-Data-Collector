@@ -94,7 +94,10 @@ diagnose_restore() {
     fi
     
     # Check for warnings in the log
-    local warning_count=$(grep -c "warning" "$log_file" || true)
+    local warning_count=0
+    if [ -f "$log_file" ]; then
+        warning_count=$(grep -ci "warning" "$log_file" || echo "0")
+    fi
     if [ "$warning_count" -gt 0 ]; then
         print_warning "Found $warning_count warning(s) in restore output"
         print_info "To view warnings: grep -i warning $log_file"
@@ -125,7 +128,10 @@ diagnose_build() {
     fi
     
     # Check for warnings in the log
-    local warning_count=$(grep -c "warning" "$log_file" || true)
+    local warning_count=0
+    if [ -f "$log_file" ]; then
+        warning_count=$(grep -ci "warning" "$log_file" || echo "0")
+    fi
     if [ "$warning_count" -gt 0 ]; then
         print_warning "Found $warning_count warning(s) in build output"
         print_info "To view warnings: grep -i warning $log_file"
@@ -197,7 +203,8 @@ main() {
         all|"")
             check_nuget_sources
             diagnose_restore
-            if [ $? -eq 0 ]; then
+            local restore_result=$?
+            if [ $restore_result -eq 0 ]; then
                 diagnose_build
             else
                 print_error "Skipping build due to restore failure"

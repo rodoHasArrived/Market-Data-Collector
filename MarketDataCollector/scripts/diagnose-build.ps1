@@ -114,10 +114,13 @@ function Diagnose-Restore {
         }
         
         # Check for warnings in the log
-        $warningCount = (Select-String -Path $logFile -Pattern "warning" -AllMatches).Count
+        $warningCount = 0
+        if (Test-Path $logFile) {
+            $warningCount = (Select-String -Path $logFile -Pattern "warning" -AllMatches -CaseSensitive:$false).Count
+        }
         if ($warningCount -gt 0) {
             Print-Warning "Found $warningCount warning(s) in restore output"
-            Print-Info "To view warnings: Select-String -Path $logFile -Pattern warning"
+            Print-Info "To view warnings: Select-String -Path $logFile -Pattern warning -CaseSensitive:`$false"
         }
         
         Print-Success "Diagnostic log saved to: $logFile"
@@ -154,10 +157,13 @@ function Diagnose-Build {
         }
         
         # Check for warnings in the log
-        $warningCount = (Select-String -Path $logFile -Pattern "warning" -AllMatches).Count
+        $warningCount = 0
+        if (Test-Path $logFile) {
+            $warningCount = (Select-String -Path $logFile -Pattern "warning" -AllMatches -CaseSensitive:$false).Count
+        }
         if ($warningCount -gt 0) {
             Print-Warning "Found $warningCount warning(s) in build output"
-            Print-Info "To view warnings: Select-String -Path $logFile -Pattern warning"
+            Print-Info "To view warnings: Select-String -Path $logFile -Pattern warning -CaseSensitive:`$false"
         }
         
         Print-Success "Diagnostic log saved to: $logFile"
