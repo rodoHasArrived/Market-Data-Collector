@@ -46,14 +46,16 @@ public class SampleLeanAlgorithm : QCAlgorithm
     /// </summary>
     public override void OnData(Slice data)
     {
+        var spySymbol = QuantConnect.Symbol.Create("SPY", SecurityType.Equity, Market.USA);
+        
         // Process custom trade data
-        if (data.ContainsKey(Symbol.Create("SPY", SecurityType.Equity, Market.USA)) && data[Symbol.Create("SPY", SecurityType.Equity, Market.USA)] is MarketDataCollectorTradeData tradeData)
+        if (data.ContainsKey(spySymbol) && data[spySymbol] is MarketDataCollectorTradeData tradeData)
         {
             ProcessTradeData(tradeData);
         }
 
         // Process custom quote data
-        if (data.ContainsKey(Symbol.Create("SPY", SecurityType.Equity, Market.USA)) && data[Symbol.Create("SPY", SecurityType.Equity, Market.USA)] is MarketDataCollectorQuoteData quoteData)
+        if (data.ContainsKey(spySymbol) && data[spySymbol] is MarketDataCollectorQuoteData quoteData)
         {
             ProcessQuoteData(quoteData);
         }

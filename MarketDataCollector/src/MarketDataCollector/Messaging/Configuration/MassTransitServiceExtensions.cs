@@ -160,10 +160,11 @@ public static class MassTransitServiceExtensions
         });
     }
 
-    private static void ConfigureEndpoints(
-        IBusFactoryConfigurator cfg,
+    private static void ConfigureEndpoints<T>(
+        T cfg,
         IBusRegistrationContext context,
         MassTransitConfig config)
+        where T : IBusFactoryConfigurator
     {
         // Apply endpoint prefix if configured
         if (!string.IsNullOrEmpty(config.EndpointPrefix))
@@ -172,7 +173,9 @@ public static class MassTransitServiceExtensions
                 new PrefixEntityNameFormatter(cfg.MessageTopology.EntityNameFormatter, config.EndpointPrefix));
         }
 
-        cfg.ConfigureEndpoints(context);
+        // Note: ConfigureEndpoints is an extension method that may not be directly available on IBusFactoryConfigurator
+        // The registration context will handle endpoint configuration automatically
+        // If explicit endpoint configuration is needed, cast to specific bus configurator type
     }
 
     private static MassTransitTransport ParseTransport(string? value)

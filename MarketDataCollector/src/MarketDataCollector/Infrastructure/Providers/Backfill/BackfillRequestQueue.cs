@@ -95,7 +95,9 @@ public sealed class BackfillRequestQueue : IDisposable
                 if (job.SymbolProgress.TryGetValue(symbol, out var progress))
                 {
                     progress.TotalRequests = ranges.Count;
-                    progress.DatesToFill = gaps.GapDates;
+                    // Note: DatesToFill is init-only, need to update the list directly
+                    progress.DatesToFill.Clear();
+                    progress.DatesToFill.AddRange(gaps.GapDates);
                 }
                 else
                 {
@@ -103,7 +105,7 @@ public sealed class BackfillRequestQueue : IDisposable
                     {
                         Symbol = symbol,
                         TotalRequests = ranges.Count,
-                        DatesToFill = gaps.GapDates
+                        DatesToFill = new List<DateOnly>(gaps.GapDates)
                     };
                 }
             }

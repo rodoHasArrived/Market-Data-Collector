@@ -448,7 +448,7 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
                 Price: price,
                 Size: size,
                 Aggressor: AggressorSide.Unknown,
-                SequenceNumber: tradeId <= 0 ? null : tradeId,
+                SequenceNumber: tradeId <= 0 ? 0L : tradeId,
                 StreamId: "ALPACA",
                 Venue: venue ?? "ALPACA"
             );

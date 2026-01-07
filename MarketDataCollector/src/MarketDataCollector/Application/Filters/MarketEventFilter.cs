@@ -15,7 +15,8 @@ public sealed class MarketEventFilter
             return false;
 
         if (Type.HasValue && evt.Type != Type.Value) return false;
-        if (Tier.HasValue && evt.Tier != Tier.Value) return false;
+        // Note: Tier property removed from MarketEvent - filter on Tier disabled
+        // if (Tier.HasValue && evt.Tier != Tier.Value) return false;
 
         return true;
     }

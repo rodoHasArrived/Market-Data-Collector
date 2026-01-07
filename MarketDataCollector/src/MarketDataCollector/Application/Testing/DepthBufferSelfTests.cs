@@ -28,7 +28,7 @@ public static class DepthBufferSelfTests
         // update bid0
         var r3 = buf.Apply(new MarketDepthUpdate(ts, sym, 0, DepthOperation.Update, OrderBookSide.Bid, 100, 20), out var snap3);
         if (r3 != DepthIntegrityKind.Unknown || snap3 is null) throw new Exception("Update bid failed.");
-        if (Math.Abs(snap3.Bids[0].Size - 20) > 1e-9) throw new Exception("Update size incorrect.");
+        if (Math.Abs(snap3.Bids[0].Size - 20) > 1e-9m) throw new Exception("Update size incorrect.");
 
         // delete ask0
         var r4 = buf.Apply(new MarketDepthUpdate(ts, sym, 0, DepthOperation.Delete, OrderBookSide.Ask, 0, 0), out var snap4);

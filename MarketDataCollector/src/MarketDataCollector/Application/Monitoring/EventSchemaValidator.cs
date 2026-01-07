@@ -25,7 +25,8 @@ public static class EventSchemaValidator
         if (string.IsNullOrWhiteSpace(evt.Symbol))
             throw new InvalidOperationException("Event symbol is required.");
 
-        if (evt.Type == MarketEventType.Unknown)
+        // Note: MarketEventType.Unknown removed from enum, checking for valid type using default value
+        if (!Enum.IsDefined(typeof(MarketEventType), evt.Type))
             throw new InvalidOperationException("Event type must be specified.");
 
         if (evt.SchemaVersion != CurrentSchemaVersion)

@@ -414,7 +414,7 @@ public sealed class DataSourcePluginLoader : IDataSourcePluginLoader, IDisposabl
         try
         {
             // Create a temporary context for inspection
-            using var inspectionContext = new PluginLoadContext(assemblyPath, isCollectible: true);
+            var inspectionContext = new PluginLoadContext(assemblyPath, isCollectible: true);
 
             // Load the assembly for inspection
             var assembly = inspectionContext.LoadFromAssemblyPath(assemblyPath);

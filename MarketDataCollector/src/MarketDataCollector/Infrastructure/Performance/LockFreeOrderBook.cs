@@ -218,17 +218,17 @@ public sealed class LockFreeOrderBook
         DateTimeOffset timestamp,
         long sequenceNumber)
     {
-        double? midPrice = null;
-        double? microPrice = null;
-        double? imbalance = null;
-        double? spread = null;
+        decimal? midPrice = null;
+        decimal? microPrice = null;
+        decimal? imbalance = null;
+        decimal? spread = null;
 
         if (bids.Length > 0 && asks.Length > 0)
         {
             var bestBid = bids[0];
             var bestAsk = asks[0];
 
-            midPrice = (bestBid.Price + bestAsk.Price) / 2.0;
+            midPrice = (bestBid.Price + bestAsk.Price) / 2.0m;
             spread = bestAsk.Price - bestBid.Price;
 
             // Micro-price: Volume-weighted midpoint
@@ -247,10 +247,10 @@ public sealed class LockFreeOrderBook
             SequenceNumber: sequenceNumber != 0 ? sequenceNumber : Interlocked.Read(ref _sequenceCounter) + 1,
             Timestamp: timestamp,
             IsStale: false,
-            MidPrice: midPrice,
-            MicroPrice: microPrice,
-            Imbalance: imbalance,
-            Spread: spread
+            MidPrice: (double?)midPrice,
+            MicroPrice: (double?)microPrice,
+            Imbalance: (double?)imbalance,
+            Spread: (double?)spread
         );
     }
 }
@@ -283,9 +283,9 @@ public sealed record OrderBookSnapshot(
             Symbol: Symbol,
             Bids: Bids,
             Asks: Asks,
-            MidPrice: MidPrice,
-            MicroPrice: MicroPrice,
-            Imbalance: Imbalance,
+            MidPrice: (decimal?)MidPrice,
+            MicroPrice: (decimal?)MicroPrice,
+            Imbalance: (decimal?)Imbalance,
             MarketState: IsStale ? MarketState.Unknown : MarketState.Normal,
             SequenceNumber: SequenceNumber,
             StreamId: streamId,
@@ -348,7 +348,7 @@ public sealed class LockFreeOrderBookCollection
     /// <summary>
     /// Gets a snapshot of all symbols currently tracked.
     /// </summary>
-    public IReadOnlyCollection<string> GetSymbols() => _books.Keys;
+    public IReadOnlyCollection<string> GetSymbols() => _books.Keys.ToList();
 
     /// <summary>
     /// Removes an order book for the specified symbol.

@@ -47,7 +47,7 @@ public sealed class ObjectPool<T> where T : class
     {
         if (item is null) return;
 
-        var count = Interlocked.Read(ref _currentCount);
+        var count = Interlocked.CompareExchange(ref _currentCount, 0, 0);
         if (count >= _maxCapacity)
         {
             // Pool is full, let GC collect the object
@@ -62,7 +62,7 @@ public sealed class ObjectPool<T> where T : class
     /// <summary>
     /// Gets the current number of items in the pool.
     /// </summary>
-    public int Count => Interlocked.Read(ref _currentCount);
+    public int Count => Interlocked.CompareExchange(ref _currentCount, 0, 0);
 }
 
 /// <summary>

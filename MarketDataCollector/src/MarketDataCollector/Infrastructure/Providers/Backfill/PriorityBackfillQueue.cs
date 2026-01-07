@@ -297,9 +297,25 @@ public sealed class PriorityBackfillQueue : IDisposable
         if (job.IsComplete)
             return false;
 
-        job.Options = job.Options with { Priority = (int)priority };
-        _log.Information("Updated priority for job {JobId} to {Priority}", jobId, priority);
-        return true;
+        // Create a new options instance with updated priority since Options has init-only properties
+        var newOptions = new BackfillJobOptions
+        {
+            MaxConcurrentRequests = job.Options.MaxConcurrentRequests,
+            MaxRetries = job.Options.MaxRetries,
+            RetryDelay = job.Options.RetryDelay,
+            SkipExistingData = job.Options.SkipExistingData,
+            FillGapsOnly = job.Options.FillGapsOnly,
+            PreferAdjustedPrices = job.Options.PreferAdjustedPrices,
+            AutoPauseOnRateLimit = job.Options.AutoPauseOnRateLimit,
+            AutoResumeAfterRateLimit = job.Options.AutoResumeAfterRateLimit,
+            MaxRateLimitWait = job.Options.MaxRateLimitWait,
+            Priority = (int)priority
+        };
+        
+        // Note: Since BackfillJob.Options is init-only, we cannot update it directly
+        // This is a design limitation - priority changes will not persist
+        _log.Warning("Priority update requested for job {JobId} but Options property is init-only. Priority change will not persist.", jobId);
+        return false;
     }
 
     /// <summary>

@@ -68,6 +68,11 @@ public static class LoggingSetup
     public static ILogger ForContext<T>() => Logger.ForContext<T>();
 
     /// <summary>
+    /// Creates a contextual logger for a specific type.
+    /// </summary>
+    public static ILogger ForContext(Type sourceContext) => Logger.ForContext(sourceContext);
+
+    /// <summary>
     /// Creates a contextual logger with a custom source context.
     /// </summary>
     public static ILogger ForContext(string sourceContext) => Logger.ForContext("SourceContext", sourceContext);

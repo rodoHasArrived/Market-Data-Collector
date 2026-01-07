@@ -504,7 +504,7 @@ public sealed class ConnectionHealthMonitor : IDisposable
 
             var maxLatencyMs = (double)Interlocked.Read(ref _maxLatencyTicks) / Stopwatch.Frequency * 1000;
 
-            var recentCount = Interlocked.Read(ref _recentLatencyCount);
+            var recentCount = Interlocked.CompareExchange(ref _recentLatencyCount, 0, 0);
             var recentAvgMs = recentCount > 0
                 ? (double)Interlocked.Read(ref _recentLatencyTicks) / recentCount / Stopwatch.Frequency * 1000
                 : avgLatencyMs;
