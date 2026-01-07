@@ -29,7 +29,7 @@ public sealed class QualityMetricsAggregator : IQualityMetricsAggregator
     private readonly ConcurrentDictionary<string, SymbolQualityState> _symbolStates = new();
     private readonly ValidationServiceConfig _config;
     private readonly IPublishEndpoint _publishEndpoint;
-    private readonly ILogger _log = Log.ForContext<QualityMetricsAggregator>();
+    private readonly Serilog.ILogger _log = Log.ForContext<QualityMetricsAggregator>();
     private readonly ConcurrentDictionary<string, DateTimeOffset> _lastAlerts = new();
 
     public QualityMetricsAggregator(ValidationServiceConfig config, IPublishEndpoint publishEndpoint)

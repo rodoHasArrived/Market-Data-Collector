@@ -13,7 +13,7 @@ namespace DataIngestion.TradeService.Consumers;
 public sealed class TradesBatchConsumer : IConsumer<IIngestTradesBatch>
 {
     private readonly ITradeProcessor _processor;
-    private readonly ILogger _log = Log.ForContext<TradesBatchConsumer>();
+    private readonly Serilog.ILogger _log = Log.ForContext<TradesBatchConsumer>();
 
     public TradesBatchConsumer(ITradeProcessor processor)
     {

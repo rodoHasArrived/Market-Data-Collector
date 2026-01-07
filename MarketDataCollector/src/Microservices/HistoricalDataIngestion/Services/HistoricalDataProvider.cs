@@ -22,7 +22,7 @@ public record HistoricalRecord(
 public sealed class CompositeHistoricalDataProvider : IHistoricalDataProvider
 {
     private readonly HistoricalServiceConfig _config;
-    private readonly ILogger _log = Log.ForContext<CompositeHistoricalDataProvider>();
+    private readonly Serilog.ILogger _log = Log.ForContext<CompositeHistoricalDataProvider>();
 
     public CompositeHistoricalDataProvider(HistoricalServiceConfig config)
     {

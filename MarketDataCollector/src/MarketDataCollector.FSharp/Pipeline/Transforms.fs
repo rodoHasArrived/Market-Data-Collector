@@ -82,7 +82,7 @@ let enrichWithAggressor (events: MarketEvent seq) : MarketEvent seq =
         | MarketEvent.Trade t ->
             match lastQuote with
             | Some q when t.Symbol = q.Symbol ->
-                let inferredSide = Sides.inferAggressor t.Price (Some q.BidPrice) (Some q.AskPrice)
+                let inferredSide = inferAggressor t.Price (Some q.BidPrice) (Some q.AskPrice)
                 MarketEvent.Trade { t with Side = inferredSide }
             | _ -> event
         | _ -> event)

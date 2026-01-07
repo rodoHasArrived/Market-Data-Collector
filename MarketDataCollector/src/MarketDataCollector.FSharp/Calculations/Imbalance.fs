@@ -38,8 +38,8 @@ let fromOrderBook (book: OrderBookSnapshot) : decimal option =
 /// Weights deeper levels less than top-of-book.
 [<CompiledName("FromOrderBookWeighted")>]
 let fromOrderBookWeighted (levels: int) (decayFactor: decimal) (book: OrderBookSnapshot) : decimal option =
-    let weightedSum (levels: BookLevel list) =
-        levels
+    let weightedSum (bookLevels: BookLevel list) =
+        bookLevels
         |> List.truncate levels
         |> List.mapi (fun i level ->
             let weight = pown decayFactor i

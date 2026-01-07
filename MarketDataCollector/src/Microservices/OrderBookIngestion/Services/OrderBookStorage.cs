@@ -21,7 +21,7 @@ public interface IOrderBookStorage
 public sealed class JsonlOrderBookStorage : IOrderBookStorage, IAsyncDisposable
 {
     private readonly OrderBookServiceConfig _config;
-    private readonly ILogger _log = Log.ForContext<JsonlOrderBookStorage>();
+    private readonly Serilog.ILogger _log = Log.ForContext<JsonlOrderBookStorage>();
     private readonly Dictionary<string, StreamWriter> _writers = new();
     private readonly SemaphoreSlim _writeLock = new(1, 1);
     private readonly JsonSerializerOptions _jsonOptions;

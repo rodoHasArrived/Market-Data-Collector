@@ -21,7 +21,7 @@ public sealed class QuoteProcessor : IQuoteProcessor, IAsyncDisposable
     private readonly IQuoteStorage _storage;
     private readonly QuoteMetrics _metrics;
     private readonly QuoteServiceConfig _config;
-    private readonly ILogger _log = Log.ForContext<QuoteProcessor>();
+    private readonly Serilog.ILogger _log = Log.ForContext<QuoteProcessor>();
     private readonly ConcurrentDictionary<string, ProcessedQuote> _latestQuotes = new();
     private readonly List<Task> _processorTasks = [];
     private CancellationTokenSource? _cts;

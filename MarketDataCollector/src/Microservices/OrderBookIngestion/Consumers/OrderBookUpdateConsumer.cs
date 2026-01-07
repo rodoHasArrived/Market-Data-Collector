@@ -10,7 +10,7 @@ namespace DataIngestion.OrderBookService.Consumers;
 public sealed class OrderBookUpdateConsumer : IConsumer<IRouteIngestionData>
 {
     private readonly IOrderBookManager _manager;
-    private readonly ILogger _log = Log.ForContext<OrderBookUpdateConsumer>();
+    private readonly Serilog.ILogger _log = Log.ForContext<OrderBookUpdateConsumer>();
 
     public OrderBookUpdateConsumer(IOrderBookManager manager)
     {

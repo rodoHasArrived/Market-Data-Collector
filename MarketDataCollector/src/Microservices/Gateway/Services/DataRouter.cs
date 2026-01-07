@@ -16,7 +16,7 @@ public sealed class DataRouter : IDataRouter
     private readonly IPublishEndpoint _publishEndpoint;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly GatewayConfig _config;
-    private readonly ILogger _log = Log.ForContext<DataRouter>();
+    private readonly Serilog.ILogger _log = Log.ForContext<DataRouter>();
     private readonly MetricsCollector _metrics;
 
     private readonly ConcurrentDictionary<string, long> _routedByService = new();

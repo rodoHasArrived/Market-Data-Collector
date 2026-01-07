@@ -13,7 +13,7 @@ public sealed class OrderBookSnapshotService : BackgroundService
     private readonly IOrderBookStorage _storage;
     private readonly OrderBookServiceConfig _config;
     private readonly OrderBookMetrics _metrics;
-    private readonly ILogger _log = Log.ForContext<OrderBookSnapshotService>();
+    private readonly Serilog.ILogger _log = Log.ForContext<OrderBookSnapshotService>();
     private readonly TimeSpan _shutdownTimeout = TimeSpan.FromSeconds(30);
 
     public OrderBookSnapshotService(

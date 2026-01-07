@@ -28,7 +28,7 @@ public interface ITradeStorage
 public sealed class JsonlTradeStorage : ITradeStorage, IAsyncDisposable
 {
     private readonly TradeServiceConfig _config;
-    private readonly ILogger _log = Log.ForContext<JsonlTradeStorage>();
+    private readonly Serilog.ILogger _log = Log.ForContext<JsonlTradeStorage>();
     private readonly ConcurrentDictionary<string, StreamWriter> _writers = new();
     private readonly JsonSerializerOptions _jsonOptions;
     private readonly SemaphoreSlim _writeLock = new(1, 1);

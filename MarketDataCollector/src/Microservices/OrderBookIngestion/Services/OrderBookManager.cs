@@ -40,7 +40,7 @@ public sealed class OrderBookManager : IOrderBookManager
 {
     private readonly OrderBookServiceConfig _config;
     private readonly OrderBookMetrics _metrics;
-    private readonly ILogger _log = Log.ForContext<OrderBookManager>();
+    private readonly Serilog.ILogger _log = Log.ForContext<OrderBookManager>();
     private readonly ConcurrentDictionary<string, ManagedOrderBook> _books = new();
 
     public OrderBookManager(OrderBookServiceConfig config, OrderBookMetrics metrics)
