@@ -1,5 +1,22 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
+    <!-- Detect Windows platform -->
+    <IsWindows Condition="'$(OS)' == 'Windows_NT' OR $([MSBuild]::IsOSPlatform('Windows'))">true</IsWindows>
+  </PropertyGroup>
+
+  <!-- Non-Windows: Create a minimal stub that compiles but produces nothing -->
+  <PropertyGroup Condition="'$(IsWindows)' != 'true'">
+    <TargetFramework>net8.0</TargetFramework>
+    <OutputType>Library</OutputType>
+    <RootNamespace>MarketDataCollector.Uwp</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Exclude all source files on non-Windows -->
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <!-- Windows: Full WinUI application -->
+  <PropertyGroup Condition="'$(IsWindows)' == 'true'">
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
     <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
@@ -32,7 +49,8 @@
     <InvariantGlobalization>false</InvariantGlobalization>
   </PropertyGroup>
 
-  <ItemGroup>
+  <!-- Windows-only package references -->
+  <ItemGroup Condition="'$(IsWindows)' == 'true'">
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
     <PackageReference Include="CommunityToolkit.WinUI.Controls.Primitives" Version="8.0.240109" />
     <PackageReference Include="CommunityToolkit.WinUI.Controls.Sizers" Version="8.0.240109" />
@@ -41,29 +59,30 @@
     <PackageReference Include="System.Text.Json" Version="8.0.5" />
   </ItemGroup>
 
-  <ItemGroup>
+  <!-- Project references only on Windows where the app actually builds -->
+  <ItemGroup Condition="'$(IsWindows)' == 'true'">
     <ProjectReference Include="..\MarketDataCollector.Contracts\MarketDataCollector.Contracts.csproj" />
   </ItemGroup>
 
-  <ItemGroup Condition="Exists('Assets')">
+  <ItemGroup Condition="'$(IsWindows)' == 'true' AND Exists('Assets')">
     <Content Include="Assets\**\*" Exclude="Assets\**\*.placeholder">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
 
   <!-- Copy sample configuration to output -->
-  <ItemGroup>
+  <ItemGroup Condition="'$(IsWindows)' == 'true'">
     <None Include="..\..\appsettings.sample.json" Condition="Exists('..\..\appsettings.sample.json')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 
-  <ItemGroup>
+  <ItemGroup Condition="'$(IsWindows)' == 'true'">
     <Manifest Include="$(ApplicationManifest)" />
   </ItemGroup>
 
   <!-- Trimmer root assemblies for JSON serialization -->
-  <ItemGroup>
+  <ItemGroup Condition="'$(IsWindows)' == 'true'">
     <TrimmerRootAssembly Include="System.Text.Json" />
   </ItemGroup>
 </Project>
