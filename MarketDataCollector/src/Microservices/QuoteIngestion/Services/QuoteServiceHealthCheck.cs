@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using System.Threading;
 
 namespace DataIngestion.QuoteService.Services;
 

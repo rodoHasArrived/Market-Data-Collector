@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Hosting;
+using System.Threading;
 using Serilog;
 
 namespace MarketDataCollector.Application.Services;

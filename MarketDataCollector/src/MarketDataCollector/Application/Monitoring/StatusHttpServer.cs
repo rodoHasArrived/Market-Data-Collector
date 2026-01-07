@@ -2,6 +2,7 @@ using System.Net;
 using System.Collections.Generic;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Pipeline;
 using MarketDataCollector.Domain.Collectors;

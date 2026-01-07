@@ -1,4 +1,5 @@
 using DataIngestion.TradeService.Configuration;
+using System.Threading;
 using Serilog;
 
 namespace DataIngestion.TradeService.Services;

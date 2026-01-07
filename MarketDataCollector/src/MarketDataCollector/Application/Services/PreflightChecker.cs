@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
+using System.Threading;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Storage.Services;
 using Serilog;

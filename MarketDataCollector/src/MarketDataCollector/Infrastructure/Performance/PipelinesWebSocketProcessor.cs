@@ -3,6 +3,7 @@ using System.IO.Pipelines;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
 using MarketDataCollector.Application.Logging;
 using Serilog;
 

@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Text.Json;
+using System.Threading;
 using DataIngestion.Contracts.Messages;
 using DataIngestion.Gateway.Configuration;
 using MassTransit;

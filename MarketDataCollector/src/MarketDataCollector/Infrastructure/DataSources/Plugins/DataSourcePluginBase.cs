@@ -1,4 +1,5 @@
 using MarketDataCollector.Application.Logging;
+using System.Threading;
 using Serilog;
 
 namespace MarketDataCollector.Infrastructure.DataSources.Plugins;

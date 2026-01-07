@@ -1,4 +1,5 @@
 using MarketDataCollector.Application.Subscriptions.Models;
+using System.Threading;
 using Prometheus;
 
 namespace MarketDataCollector.Application.Monitoring;

@@ -1,4 +1,5 @@
 using MarketDataCollector.Application.Backfill;
+using System.Threading;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Monitoring;

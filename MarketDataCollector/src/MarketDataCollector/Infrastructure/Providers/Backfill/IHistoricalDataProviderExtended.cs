@@ -1,4 +1,5 @@
 using MarketDataCollector.Domain.Models;
+using System.Threading;
 
 namespace MarketDataCollector.Infrastructure.Providers.Backfill;
 

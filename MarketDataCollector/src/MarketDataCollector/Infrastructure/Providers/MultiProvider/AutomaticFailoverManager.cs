@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Threading;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Logging;
 using Serilog;

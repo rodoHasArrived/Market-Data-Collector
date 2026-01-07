@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading;
 using MarketDataCollector.Application.Logging;
 using Serilog;
 

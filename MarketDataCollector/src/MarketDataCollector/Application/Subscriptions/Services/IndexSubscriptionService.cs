@@ -1,4 +1,5 @@
 using MarketDataCollector.Application.Config;
+using System.Threading;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Subscriptions.Models;
 using MarketDataCollector.Application.UI;

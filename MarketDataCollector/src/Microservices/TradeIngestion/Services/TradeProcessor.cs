@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Threading.Channels;
+using System.Threading;
 using DataIngestion.TradeService.Configuration;
 using DataIngestion.TradeService.Models;
 using Serilog;

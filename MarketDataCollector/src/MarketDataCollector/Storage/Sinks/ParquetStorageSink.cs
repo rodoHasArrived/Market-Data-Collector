@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Threading;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Domain.Events;

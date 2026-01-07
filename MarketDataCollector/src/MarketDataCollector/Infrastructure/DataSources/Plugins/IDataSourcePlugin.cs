@@ -1,3 +1,5 @@
+using System.Threading;
+
 namespace MarketDataCollector.Infrastructure.DataSources.Plugins;
 
 /// <summary>

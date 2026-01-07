@@ -1,5 +1,6 @@
 #if STOCKSHARP
 using StockSharp.Algo;
+using System.Threading;
 using StockSharp.BusinessEntities;
 using StockSharp.Messages;
 #endif

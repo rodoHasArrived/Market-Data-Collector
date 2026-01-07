@@ -1,4 +1,5 @@
 using MarketDataCollector.Application.Filters;
+using System.Threading;
 using MarketDataCollector.Domain.Events;
 
 namespace MarketDataCollector.Application.EventBus;

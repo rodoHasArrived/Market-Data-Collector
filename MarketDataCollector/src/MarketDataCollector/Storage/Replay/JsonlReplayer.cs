@@ -1,6 +1,7 @@
 using System.IO.Compression;
 using System.Text.Json;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using MarketDataCollector.Domain.Events;
 
 namespace MarketDataCollector.Storage.Replay;

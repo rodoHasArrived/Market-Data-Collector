@@ -1,4 +1,5 @@
 using System.Timers;
+using System.Threading;
 using MarketDataCollector.Uwp.Models;
 
 namespace MarketDataCollector.Uwp.Services;

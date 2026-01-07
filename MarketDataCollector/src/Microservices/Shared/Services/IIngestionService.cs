@@ -1,3 +1,5 @@
+using System.Threading;
+
 namespace DataIngestion.Contracts.Services;
 
 /// <summary>

@@ -1,4 +1,5 @@
 using DataIngestion.OrderBookService.Configuration;
+using System.Threading;
 using Serilog;
 
 namespace DataIngestion.OrderBookService.Services;
