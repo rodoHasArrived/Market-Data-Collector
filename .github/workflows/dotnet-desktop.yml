@@ -42,7 +42,6 @@ jobs:
 
   publish:
     name: Publish ${{ matrix.rid }}
-    needs: build
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
