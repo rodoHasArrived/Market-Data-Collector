@@ -15,10 +15,13 @@ public static class ConfigValidationHelper
         var result = validator.Validate(config);
 
         if (result.IsValid)
+        {
+            Log.Information("Configuration validation passed");
             return true;
+        }
 
         var log = Log.ForContext("SourceContext", "ConfigValidation");
-        log.Error("Configuration validation failed:");
+        log.Error("Configuration validation failed with {ErrorCount} error(s):", result.Errors.Count);
 
         foreach (var error in result.Errors)
         {
@@ -27,6 +30,18 @@ public static class ConfigValidationHelper
 
         log.Error("Please review your appsettings.json and correct the errors above.");
         return false;
+    }
+
+    /// <summary>
+    /// Validates and throws if configuration is invalid.
+    /// </summary>
+    public static void ValidateOrThrow(AppConfig config)
+    {
+        if (!ValidateAndLog(config))
+        {
+            throw new InvalidOperationException(
+                "Configuration validation failed. Check the logs for details and review appsettings.json.");
+        }
     }
 }
 
