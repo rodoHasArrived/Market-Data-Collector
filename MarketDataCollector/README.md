@@ -398,6 +398,59 @@ See [`docs/FSHARP_INTEGRATION.md`](docs/FSHARP_INTEGRATION.md) for comprehensive
 - **Consumer Cleanup**: Removed boilerplate from MassTransit consumer classes
 - **Security**: Added `.gitignore` to protect credentials from version control
 
+## Troubleshooting
+
+### Build and Restore Issues
+
+If you encounter issues with `dotnet restore` or `dotnet build`, use the diagnostic scripts to gather detailed information:
+
+**Linux/macOS:**
+```bash
+./scripts/diagnose-build.sh         # Run full diagnostics
+./scripts/diagnose-build.sh restore # Diagnose restore only
+./scripts/diagnose-build.sh build   # Diagnose build only
+./scripts/diagnose-build.sh clean   # Clean and diagnose
+```
+
+**Windows:**
+```powershell
+.\scripts\diagnose-build.ps1              # Run full diagnostics
+.\scripts\diagnose-build.ps1 -Action restore  # Diagnose restore only
+.\scripts\diagnose-build.ps1 -Action build    # Diagnose build only
+.\scripts\diagnose-build.ps1 -Action clean    # Clean and diagnose
+```
+
+**Manual Diagnostic Commands:**
+```bash
+# Restore with diagnostic logging
+dotnet restore MarketDataCollector /p:EnableWindowsTargeting=true -v diag
+
+# Build with diagnostic logging
+dotnet build MarketDataCollector -c Release -v diag
+
+# Save output to file for analysis
+dotnet restore MarketDataCollector /p:EnableWindowsTargeting=true -v diag > restore-diag.log 2>&1
+```
+
+The diagnostic scripts will:
+- Check .NET SDK version and installed SDKs
+- Verify NuGet sources configuration
+- Run restore/build with diagnostic logging
+- Save detailed logs to `diagnostic-logs/` directory
+- Report warnings and errors found
+- Provide commands for log analysis
+
+### Common Issues
+
+For detailed troubleshooting of common issues, see [HELP.md](HELP.md#troubleshooting), including:
+- Configuration file issues
+- Provider connection problems
+- Authentication failures
+- File permission errors
+- High CPU usage
+- Data file creation issues
+- Build and restore failures
+
 ## Known Limitations and Roadmap
 
 ### Current Limitations
