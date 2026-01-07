@@ -1,6 +1,7 @@
 using System.Text.Json;
 using DataIngestion.Contracts.Messages;
 using DataIngestion.OrderBookService.Models;
+using OrderBookLevel = DataIngestion.OrderBookService.Models.OrderBookLevel;
 using DataIngestion.OrderBookService.Services;
 using MassTransit;
 using Serilog;

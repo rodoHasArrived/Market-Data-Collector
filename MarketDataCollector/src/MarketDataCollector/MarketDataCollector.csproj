@@ -69,6 +69,8 @@
   <!-- Exclude Lean integrations for now due to dependency issues -->
   <ItemGroup>
     <Compile Remove="Integrations\**\*.cs" />
+    <!-- Temporarily exclude ParquetStorageSink due to Parquet.Net API changes -->
+    <Compile Remove="Storage\Sinks\ParquetStorageSink.cs" />
   </ItemGroup>
 
   <!-- Core Dependencies -->

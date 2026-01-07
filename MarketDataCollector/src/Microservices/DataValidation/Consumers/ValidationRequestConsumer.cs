@@ -1,6 +1,7 @@
 using System.Text.Json;
 using DataIngestion.Contracts.Messages;
 using DataIngestion.ValidationService.Services;
+using ValidationResult = DataIngestion.ValidationService.Services.ValidationResult;
 using MassTransit;
 using Serilog;
 
@@ -22,7 +23,7 @@ public sealed class ValidationRequestConsumer : IConsumer<IValidateIngestionData
     {
         var msg = context.Message;
 
-        DataIngestion.ValidationService.Services.ValidationResult result = msg.ValidationType switch
+        ValidationResult result = msg.ValidationType switch
         {
             DataValidationType.Trade => ValidateTrade(msg),
             DataValidationType.Quote => ValidateQuote(msg),

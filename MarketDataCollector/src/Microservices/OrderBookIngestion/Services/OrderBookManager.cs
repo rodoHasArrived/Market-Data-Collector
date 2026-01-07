@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using DataIngestion.Contracts.Messages;
 using DataIngestion.OrderBookService.Configuration;
 using DataIngestion.OrderBookService.Models;
+using OrderBookLevel = DataIngestion.OrderBookService.Models.OrderBookLevel;
 using Serilog;
 
 namespace DataIngestion.OrderBookService.Services;

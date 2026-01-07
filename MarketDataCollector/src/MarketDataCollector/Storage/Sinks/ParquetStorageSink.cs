@@ -8,7 +8,6 @@ using Parquet;
 using Parquet.Data;
 using Parquet.Schema;
 using Serilog;
-using Table = Parquet.Data.Table;
 
 namespace MarketDataCollector.Storage.Sinks;
 
