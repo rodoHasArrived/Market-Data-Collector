@@ -345,7 +345,7 @@ public sealed class FallbackDataSourceOrchestrator : IFallbackDataSourceOrchestr
 
     private void SetCooldown(string sourceId)
     {
-        var cooldownUntil = DateTimeOffset.UtcNow.Add(_options.CooldownDuration);
+        var cooldownUntil = DateTimeOffset.UtcNow.Add(_options.EffectiveCooldownDuration);
         _sourceCooldowns[sourceId] = cooldownUntil;
         _log.Debug("Set cooldown for {Source} until {Until}", sourceId, cooldownUntil);
     }
@@ -402,7 +402,7 @@ public sealed record FallbackOptions(
     bool CooldownOnEmptyResult = false
 )
 {
-    public TimeSpan CooldownDuration { get; } = CooldownDuration ?? TimeSpan.FromMinutes(1);
+    public TimeSpan EffectiveCooldownDuration { get; } = CooldownDuration ?? TimeSpan.FromMinutes(1);
 }
 
 /// <summary>

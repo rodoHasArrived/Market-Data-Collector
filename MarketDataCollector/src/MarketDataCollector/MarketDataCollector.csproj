@@ -66,6 +66,11 @@
     <TrimmerRootAssembly Include="System.Text.Json" />
   </ItemGroup>
 
+  <!-- Exclude Lean integrations for now due to dependency issues -->
+  <ItemGroup>
+    <Compile Remove="Integrations\**\*.cs" />
+  </ItemGroup>
+
   <!-- Core Dependencies -->
   <ItemGroup>
     <!-- Configuration Management -->

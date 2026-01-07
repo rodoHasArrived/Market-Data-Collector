@@ -19,6 +19,7 @@ using MarketDataCollector.Infrastructure.Providers.Alpaca;
 using MarketDataCollector.Infrastructure.Providers.Polygon;
 using MarketDataCollector.Infrastructure.Providers.Backfill;
 using SymbolResolution = MarketDataCollector.Infrastructure.Providers.Backfill.SymbolResolution;
+using AppBackfillRequest = MarketDataCollector.Application.Backfill.BackfillRequest;
 using MarketDataCollector.Messaging.Configuration;
 using MarketDataCollector.Messaging.Publishers;
 using MarketDataCollector.Storage;
@@ -482,9 +483,9 @@ SUPPORT:
         return null;
     }
 
-    private static BackfillRequest BuildBackfillRequest(AppConfig cfg, string[] args)
+    private static AppBackfillRequest BuildBackfillRequest(AppConfig cfg, string[] args)
     {
-        var baseRequest = BackfillRequest.FromConfig(cfg);
+        var baseRequest = AppBackfillRequest.FromConfig(cfg);
         var provider = GetArgValue(args, "--backfill-provider") ?? baseRequest.Provider;
         var symbolsArg = GetArgValue(args, "--backfill-symbols");
         var symbols = !string.IsNullOrWhiteSpace(symbolsArg)
@@ -493,7 +494,7 @@ SUPPORT:
         var from = ParseDate(GetArgValue(args, "--backfill-from")) ?? baseRequest.From;
         var to = ParseDate(GetArgValue(args, "--backfill-to")) ?? baseRequest.To;
 
-        return new BackfillRequest(provider, symbols.ToArray(), from, to);
+        return new AppBackfillRequest(provider, symbols.ToArray(), from, to);
     }
 
     private static DateOnly? ParseDate(string? value)

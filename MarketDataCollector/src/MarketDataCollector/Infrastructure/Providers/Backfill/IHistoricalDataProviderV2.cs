@@ -1,3 +1,4 @@
+using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Domain.Models;
 
 namespace MarketDataCollector.Infrastructure.Providers.Backfill;

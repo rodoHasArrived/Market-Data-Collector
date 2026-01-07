@@ -62,7 +62,7 @@ public sealed class FilePermissionsService
             else
             {
                 _log.Warning("Unknown operating system. Skipping permission configuration for {DirectoryPath}", fullPath);
-                return FilePermissionsResult.Success("Unknown OS - permissions not configured");
+                return FilePermissionsResult.CreateSuccess("Unknown OS - permissions not configured");
             }
         }
         catch (UnauthorizedAccessException ex)
@@ -129,7 +129,7 @@ public sealed class FilePermissionsService
                     dirs.Length + 1, files.Length, directoryPath);
             }
 
-            return FilePermissionsResult.Success($"Unix permissions set: directory={dirMode}, files={fileMode}");
+            return FilePermissionsResult.CreateSuccess($"Unix permissions set: directory={dirMode}, files={fileMode}");
         }
         catch (Exception ex)
         {
@@ -167,7 +167,7 @@ public sealed class FilePermissionsService
                 return FilePermissionsResult.Failure($"chmod failed: {stderr}");
             }
 
-            return FilePermissionsResult.Success("chmod successful");
+            return FilePermissionsResult.CreateSuccess("chmod successful");
         }
         catch (Exception ex)
         {
@@ -193,7 +193,7 @@ public sealed class FilePermissionsService
                 {
                     return testResult;
                 }
-                return FilePermissionsResult.Success("Windows permissions verified (inherited from parent)");
+                return FilePermissionsResult.CreateSuccess("Windows permissions verified (inherited from parent)");
             }
 
             // Restrictive mode: limit access to current user and administrators
@@ -235,7 +235,7 @@ public sealed class FilePermissionsService
             _log.Information("Configured restrictive Windows ACLs for {DirectoryPath}: " +
                 "Access limited to current user, administrators, and SYSTEM", directoryPath);
 
-            return FilePermissionsResult.Success("Windows ACLs configured successfully");
+            return FilePermissionsResult.CreateSuccess("Windows ACLs configured successfully");
         }
         catch (PlatformNotSupportedException)
         {
@@ -263,7 +263,7 @@ public sealed class FilePermissionsService
             File.WriteAllText(testFile, "test");
             File.Delete(testFile);
 
-            return FilePermissionsResult.Success("Write access verified");
+            return FilePermissionsResult.CreateSuccess("Write access verified");
         }
         catch (UnauthorizedAccessException ex)
         {
@@ -417,7 +417,7 @@ public sealed record FilePermissionsResult
         Message = message
     };
 
-    public static FilePermissionsResult Success(string message) => new()
+    public static FilePermissionsResult CreateSuccess(string message) => new()
     {
         Success = true,
         Message = message

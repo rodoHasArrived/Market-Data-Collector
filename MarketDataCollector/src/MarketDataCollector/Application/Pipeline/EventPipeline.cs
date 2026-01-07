@@ -150,6 +150,11 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
     }
 
     /// <summary>
+    /// Implements IMarketEventPublisher.TryPublish (non-ref overload).
+    /// </summary>
+    public bool TryPublish(MarketEvent evt) => TryPublish(in evt);
+
+    /// <summary>
     /// Publishes an event to the pipeline, waiting if necessary.
     /// </summary>
     public async ValueTask PublishAsync(MarketEvent evt, CancellationToken ct = default)

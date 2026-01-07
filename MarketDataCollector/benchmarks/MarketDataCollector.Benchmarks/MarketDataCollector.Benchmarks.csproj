@@ -6,6 +6,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 
+    <!-- Make self-contained to match main project -->
+    <SelfContained>true</SelfContained>
+
     <!-- Optimize for benchmarking -->
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>

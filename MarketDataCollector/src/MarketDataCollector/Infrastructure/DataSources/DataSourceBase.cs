@@ -299,7 +299,7 @@ public abstract class DataSourceBase : IDataSource
 
         if (_currentRequests >= Options.RateLimits.MaxRequestsPerWindow)
         {
-            var windowEnd = _windowStart.Add(Options.RateLimits.RateLimitWindow);
+            var windowEnd = _windowStart.Add(Options.RateLimits.EffectiveRateLimitWindow);
             var waitTime = windowEnd - DateTimeOffset.UtcNow;
 
             if (waitTime > TimeSpan.Zero)
@@ -324,7 +324,7 @@ public abstract class DataSourceBase : IDataSource
     private void CleanupRequestWindow()
     {
         var now = DateTimeOffset.UtcNow;
-        if (now - _windowStart >= Options.RateLimits.RateLimitWindow)
+        if (now - _windowStart >= Options.RateLimits.EffectiveRateLimitWindow)
         {
             _windowStart = now;
             _currentRequests = 0;
@@ -335,7 +335,7 @@ public abstract class DataSourceBase : IDataSource
     {
         CleanupRequestWindow();
         var remaining = Options.RateLimits.MaxRequestsPerWindow - _currentRequests;
-        var windowEnd = _windowStart.Add(Options.RateLimits.RateLimitWindow);
+        var windowEnd = _windowStart.Add(Options.RateLimits.EffectiveRateLimitWindow);
         var resetIn = windowEnd - DateTimeOffset.UtcNow;
 
         return RateLimitState.Limited(
@@ -550,7 +550,7 @@ public sealed record RateLimitOptions(
     int MinDelayBetweenRequestsMs = 0
 )
 {
-    public TimeSpan RateLimitWindow { get; } = RateLimitWindow ?? TimeSpan.FromMinutes(1);
+    public TimeSpan EffectiveRateLimitWindow { get; } = RateLimitWindow ?? TimeSpan.FromMinutes(1);
 }
 
 /// <summary>

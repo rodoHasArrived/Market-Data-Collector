@@ -5,6 +5,7 @@ using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Application.Pipeline;
 using MarketDataCollector.Infrastructure.Providers.Backfill;
 using MarketDataCollector.Infrastructure.Providers.Backfill.SymbolResolution;
+using AppBackfillRequest = MarketDataCollector.Application.Backfill.BackfillRequest;
 using MarketDataCollector.Storage;
 using MarketDataCollector.Storage.Policies;
 using MarketDataCollector.Storage.Sinks;
@@ -113,7 +114,7 @@ public sealed class BackfillCoordinator : IDisposable
         return await _symbolResolver.ResolveAsync(symbol, ct: ct).ConfigureAwait(false);
     }
 
-    public async Task<BackfillResult> RunAsync(BackfillRequest request, CancellationToken ct = default)
+    public async Task<BackfillResult> RunAsync(AppBackfillRequest request, CancellationToken ct = default)
     {
         if (!await _gate.WaitAsync(TimeSpan.Zero, ct).ConfigureAwait(false))
             throw new InvalidOperationException("A backfill is already running. Please try again after it completes.");

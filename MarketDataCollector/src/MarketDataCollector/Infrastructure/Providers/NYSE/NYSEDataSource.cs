@@ -10,6 +10,7 @@ using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Infrastructure.DataSources;
+using DataSourceType = MarketDataCollector.Infrastructure.DataSources.DataSourceType;
 using MarketDataCollector.Infrastructure.Providers.Backfill;
 using Serilog;
 
