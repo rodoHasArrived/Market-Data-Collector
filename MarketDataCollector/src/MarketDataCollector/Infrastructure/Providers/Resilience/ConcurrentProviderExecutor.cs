@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading.Channels;
+using System.Threading;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Infrastructure.Providers.Abstractions;
 using Serilog;

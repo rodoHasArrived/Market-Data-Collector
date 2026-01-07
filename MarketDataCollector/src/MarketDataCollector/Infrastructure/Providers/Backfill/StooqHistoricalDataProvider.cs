@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Linq;
+using System.Threading;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Domain.Models;
 using Serilog;

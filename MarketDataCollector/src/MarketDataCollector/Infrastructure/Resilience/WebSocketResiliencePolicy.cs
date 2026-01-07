@@ -3,6 +3,7 @@ using Polly;
 using Polly.Retry;
 using Serilog;
 using System.Net.WebSockets;
+using System.Threading;
 
 namespace MarketDataCollector.Infrastructure.Resilience;
 

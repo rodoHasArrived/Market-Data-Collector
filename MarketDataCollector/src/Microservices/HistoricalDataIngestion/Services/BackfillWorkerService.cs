@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Threading.Channels;
+using System.Threading;
 using DataIngestion.Contracts.Messages;
 using DataIngestion.Contracts.Services;
 using DataIngestion.HistoricalService.Configuration;

@@ -1,4 +1,5 @@
 using MarketDataCollector.Application.Logging;
+using System.Threading;
 using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Storage.Sinks;
 using Serilog;

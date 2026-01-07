@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Threading;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Pipeline;
 using Serilog;

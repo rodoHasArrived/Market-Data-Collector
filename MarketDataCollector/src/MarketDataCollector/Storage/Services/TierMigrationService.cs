@@ -1,4 +1,5 @@
 using System.IO.Compression;
+using System.Threading;
 using MarketDataCollector.Storage.Interfaces;
 
 namespace MarketDataCollector.Storage.Services;

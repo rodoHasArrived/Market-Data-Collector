@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text;
+using System.Threading;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Subscriptions.Models;
 using MarketDataCollector.Application.UI;

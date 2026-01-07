@@ -5,6 +5,7 @@ using StockSharp.Messages;
 #endif
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Domain.Models;
 using Serilog;

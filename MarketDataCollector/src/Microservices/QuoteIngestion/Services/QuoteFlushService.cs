@@ -1,4 +1,5 @@
 using DataIngestion.QuoteService.Configuration;
+using System.Threading;
 using Serilog;
 
 namespace DataIngestion.QuoteService.Services;

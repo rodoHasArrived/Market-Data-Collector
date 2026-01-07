@@ -1,4 +1,5 @@
 using MarketDataCollector.Application.Logging;
+using System.Threading;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;

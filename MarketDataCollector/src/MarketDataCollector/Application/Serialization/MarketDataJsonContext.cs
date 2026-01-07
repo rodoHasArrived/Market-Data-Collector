@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Domain.Models;

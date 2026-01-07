@@ -1,4 +1,5 @@
 using MarketDataCollector.Application.Config;
+using System.Threading;
 
 namespace MarketDataCollector.Infrastructure;
 

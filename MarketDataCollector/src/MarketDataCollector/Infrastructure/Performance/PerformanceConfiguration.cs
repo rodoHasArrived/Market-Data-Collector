@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Runtime;
 using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace MarketDataCollector.Infrastructure.Performance;
 

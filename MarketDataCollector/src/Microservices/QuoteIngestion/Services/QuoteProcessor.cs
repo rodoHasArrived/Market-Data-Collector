@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Threading.Channels;
+using System.Threading;
 using DataIngestion.QuoteService.Configuration;
 using DataIngestion.QuoteService.Models;
 using Serilog;

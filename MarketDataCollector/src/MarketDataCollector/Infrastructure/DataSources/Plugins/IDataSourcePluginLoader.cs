@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Threading;
 
 namespace MarketDataCollector.Infrastructure.DataSources.Plugins;
 

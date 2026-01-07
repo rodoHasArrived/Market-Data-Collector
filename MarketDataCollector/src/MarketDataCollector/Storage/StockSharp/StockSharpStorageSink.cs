@@ -4,6 +4,7 @@ using StockSharp.BusinessEntities;
 using StockSharp.Messages;
 #endif
 using System.Collections.Concurrent;
+using System.Threading;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Services;
 using MarketDataCollector.Domain.Events;

@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.IO.Compression;
 using System.Text.Json;
+using System.Threading;
 using DataIngestion.TradeService.Configuration;
 using DataIngestion.TradeService.Models;
 using Serilog;

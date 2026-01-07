@@ -1,6 +1,7 @@
 #if IBAPI
 using System.Collections.Concurrent;
 using System.Globalization;
+using System.Threading;
 using IBApi;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Logging;
