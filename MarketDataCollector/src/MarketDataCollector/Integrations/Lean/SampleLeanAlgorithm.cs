@@ -47,13 +47,13 @@ public class SampleLeanAlgorithm : QCAlgorithm
     public override void OnData(Slice data)
     {
         // Process custom trade data
-        if (data.ContainsKey(Symbol.Create("SPY", SecurityType.Equity, Market.USA)) && data[Symbol.Create("SPY", SecurityType.Equity, Market.USA)] is MarketDataCollectorTradeData tradeData)
+        if (data.ContainsKey(_symbol) && data[_symbol] is MarketDataCollectorTradeData tradeData)
         {
             ProcessTradeData(tradeData);
         }
 
         // Process custom quote data
-        if (data.ContainsKey(Symbol.Create("SPY", SecurityType.Equity, Market.USA)) && data[Symbol.Create("SPY", SecurityType.Equity, Market.USA)] is MarketDataCollectorQuoteData quoteData)
+        if (data.ContainsKey(_symbol) && data[_symbol] is MarketDataCollectorQuoteData quoteData)
         {
             ProcessQuoteData(quoteData);
         }

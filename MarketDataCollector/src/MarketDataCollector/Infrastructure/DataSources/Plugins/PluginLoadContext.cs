@@ -8,7 +8,7 @@ namespace MarketDataCollector.Infrastructure.DataSources.Plugins;
 /// Each plugin gets its own load context to enable hot-reload
 /// and prevent dependency conflicts.
 /// </summary>
-public sealed class PluginLoadContext : AssemblyLoadContext
+public sealed class PluginLoadContext : AssemblyLoadContext, IDisposable
 {
     private readonly AssemblyDependencyResolver _resolver;
     private readonly HashSet<string> _sharedAssemblies;
@@ -124,6 +124,17 @@ public sealed class PluginLoadContext : AssemblyLoadContext
     /// Gets the list of shared assembly names.
     /// </summary>
     public IReadOnlySet<string> SharedAssemblies => _sharedAssemblies;
+
+    /// <summary>
+    /// Disposes the load context by unloading it.
+    /// </summary>
+    public void Dispose()
+    {
+        if (IsCollectible)
+        {
+            Unload();
+        }
+    }
 }
 
 /// <summary>

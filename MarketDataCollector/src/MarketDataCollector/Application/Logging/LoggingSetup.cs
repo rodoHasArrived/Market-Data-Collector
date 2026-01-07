@@ -73,6 +73,11 @@ public static class LoggingSetup
     public static ILogger ForContext(string sourceContext) => Logger.ForContext("SourceContext", sourceContext);
 
     /// <summary>
+    /// Creates a contextual logger for a specific type.
+    /// </summary>
+    public static ILogger ForContext(Type sourceType) => Logger.ForContext(sourceType);
+
+    /// <summary>
     /// Flushes any buffered log entries and closes the logger.
     /// Call this during application shutdown.
     /// </summary>

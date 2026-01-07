@@ -9,7 +9,8 @@ public sealed record MarketEvent(
     MarketEventPayload? Payload,
     long Sequence = 0,
     string Source = "IB",
-    int SchemaVersion = 1
+    int SchemaVersion = 1,
+    MarketEventTier Tier = MarketEventTier.Raw
 )
 {
     public static MarketEvent Trade(DateTimeOffset ts, string symbol, Trade trade, long seq = 0, string source = "IB")

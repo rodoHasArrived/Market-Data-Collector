@@ -404,7 +404,7 @@ public sealed class ConnectionHealthMonitor : IDisposable
         private long _minLatencyTicks = long.MaxValue;
         private long _maxLatencyTicks;
         private long _recentLatencyTicks;
-        private int _recentLatencyCount;
+        private long _recentLatencyCount;
 
         public bool IsConnected => _isConnected;
         public DateTimeOffset LastActivityTime => _lastDataReceivedTime > _lastHeartbeatTime ? _lastDataReceivedTime : _lastHeartbeatTime;
