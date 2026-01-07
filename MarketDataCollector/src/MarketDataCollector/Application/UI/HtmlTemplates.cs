@@ -1609,7 +1609,7 @@ public static class HtmlTemplates
           body: JSON.stringify(payload)
         }});
 
-        showToast('success', 'Symbol Added', `$${{symbol}} added successfully`);
+        showToast('success', 'Symbol Added', `${{symbol}} added successfully`);
 
         document.getElementById('sym').value = '';
         document.getElementById('localsym').value = '';
@@ -1628,7 +1628,7 @@ public static class HtmlTemplates
           method: 'DELETE'
         }});
 
-        showToast('success', 'Symbol Deleted', `$${{symbol}} removed successfully`);
+        showToast('success', 'Symbol Deleted', `${{symbol}} removed successfully`);
         await loadConfig();
       }} catch (error) {{
         showToast('error', 'Delete Failed', error.message);
