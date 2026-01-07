@@ -38,7 +38,7 @@ public sealed class TradeProcessor : ITradeProcessor, IAsyncDisposable
     private readonly ITradeValidator _validator;
     private readonly TradeMetrics _metrics;
     private readonly TradeServiceConfig _config;
-    private readonly ILogger _log = Log.ForContext<TradeProcessor>();
+    private readonly Serilog.ILogger _log = Log.ForContext<TradeProcessor>();
 
     private readonly ConcurrentDictionary<string, SymbolState> _symbolStates = new();
     private readonly ConcurrentDictionary<string, byte> _recentTradeIds = new();

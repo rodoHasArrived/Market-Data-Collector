@@ -9,7 +9,7 @@ namespace DataIngestion.HistoricalService.Consumers;
 public sealed class BackfillRequestConsumer : IConsumer<IRequestHistoricalBackfill>
 {
     private readonly IBackfillJobManager _jobManager;
-    private readonly ILogger _log = Log.ForContext<BackfillRequestConsumer>();
+    private readonly Serilog.ILogger _log = Log.ForContext<BackfillRequestConsumer>();
 
     public BackfillRequestConsumer(IBackfillJobManager jobManager)
     {

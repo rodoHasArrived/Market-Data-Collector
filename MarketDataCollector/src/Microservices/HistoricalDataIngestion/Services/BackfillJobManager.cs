@@ -19,7 +19,7 @@ public interface IBackfillJobManager
 public sealed class BackfillJobManager : IBackfillJobManager
 {
     private readonly ConcurrentDictionary<Guid, BackfillJob> _jobs = new();
-    private readonly ILogger _log = Log.ForContext<BackfillJobManager>();
+    private readonly Serilog.ILogger _log = Log.ForContext<BackfillJobManager>();
 
     public BackfillJobStatus CreateJob(BackfillRequest request)
     {

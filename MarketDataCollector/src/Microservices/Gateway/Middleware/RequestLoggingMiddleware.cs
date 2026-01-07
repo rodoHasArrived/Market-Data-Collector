@@ -10,7 +10,7 @@ namespace DataIngestion.Gateway.Middleware;
 public class RequestLoggingMiddleware
 {
     private readonly RequestDelegate _next;
-    private readonly ILogger _log = Log.ForContext<RequestLoggingMiddleware>();
+    private readonly Serilog.ILogger _log = Log.ForContext<RequestLoggingMiddleware>();
 
     public RequestLoggingMiddleware(RequestDelegate next)
     {
