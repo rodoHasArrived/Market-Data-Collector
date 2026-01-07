@@ -1,6 +1,9 @@
 using MarketDataCollector.Application.Logging;
 using System.Threading;
+using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Domain.Models;
+using MarketDataCollector.Storage;
+using MarketDataCollector.Storage.Policies;
 using MarketDataCollector.Storage.Sinks;
 using Serilog;
 
@@ -408,15 +411,17 @@ public sealed class DataGapRepairService
     private async Task StoreBarsAsync(IReadOnlyList<HistoricalBar> bars, CancellationToken ct)
     {
         // Store bars using JSONL format
-        var storagePolicy = new JsonlStoragePolicy(_dataRoot);
+        var storageOptions = new StorageOptions { RootPath = _dataRoot };
+        var storagePolicy = new JsonlStoragePolicy(storageOptions);
 
         foreach (var bar in bars)
         {
-            var filePath = storagePolicy.GetFilePath(new Domain.Events.MarketEvent
-            {
-                EventType = Domain.Events.MarketEventType.Bar,
-                Timestamp = new DateTimeOffset(bar.SessionDate.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero)
-            }, bar.Symbol);
+            var evt = MarketEvent.HistoricalBar(
+                new DateTimeOffset(bar.SessionDate.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero),
+                bar.Symbol,
+                bar,
+                source: "repair");
+            var filePath = storagePolicy.GetPath(evt);
 
             // Ensure directory exists
             var directory = Path.GetDirectoryName(filePath);

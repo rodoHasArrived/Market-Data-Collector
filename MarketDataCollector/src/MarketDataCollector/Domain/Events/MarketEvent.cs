@@ -34,7 +34,7 @@ public sealed record MarketEvent(
         => new(ts, symbol, MarketEventType.Integrity, integrity, seq == 0 ? integrity.SequenceNumber : seq, source);
 
     public static MarketEvent Heartbeat(DateTimeOffset ts, string source = "IB")
-        => new(ts, "SYSTEM", MarketEventType.Heartbeat, payload: null, Sequence: 0, Source: source);
+        => new(ts, "SYSTEM", MarketEventType.Heartbeat, Payload: null, Sequence: 0, Source: source);
 
     public static MarketEvent HistoricalBar(DateTimeOffset ts, string symbol, HistoricalBar bar, long seq = 0, string source = "stooq")
         => new(ts, symbol, MarketEventType.HistoricalBar, bar, seq == 0 ? bar.SequenceNumber : seq, source);

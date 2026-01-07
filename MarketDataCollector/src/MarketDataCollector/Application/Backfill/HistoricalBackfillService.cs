@@ -23,7 +23,7 @@ public sealed class HistoricalBackfillService
         _log = logger ?? LoggingSetup.ForContext<HistoricalBackfillService>();
     }
 
-    public IReadOnlyCollection<IHistoricalDataProvider> Providers => _providers.Values;
+    public IReadOnlyCollection<IHistoricalDataProvider> Providers => _providers.Values.ToList();
 
     public async Task<BackfillResult> RunAsync(BackfillRequest request, EventPipeline pipeline, CancellationToken ct = default)
     {

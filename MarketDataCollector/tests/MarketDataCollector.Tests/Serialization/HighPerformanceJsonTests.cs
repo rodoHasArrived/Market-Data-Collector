@@ -18,10 +18,13 @@ public class HighPerformanceJsonTests
     public void Serialize_MarketEvent_ShouldProduceValidJson()
     {
         // Arrange
+        var ts = DateTimeOffset.Parse("2024-01-15T14:30:00Z");
         var evt = MarketEvent.Trade(
-            DateTimeOffset.Parse("2024-01-15T14:30:00Z"),
+            ts,
             "SPY",
             new Trade(
+                Timestamp: ts,
+                Symbol: "SPY",
                 Price: 450.25m,
                 Size: 100,
                 Aggressor: AggressorSide.Buy,
@@ -43,10 +46,11 @@ public class HighPerformanceJsonTests
     public void SerializeToUtf8Bytes_ShouldBeEquivalentToStringSerialize()
     {
         // Arrange
+        var ts = DateTimeOffset.UtcNow;
         var evt = MarketEvent.Trade(
-            DateTimeOffset.UtcNow,
+            ts,
             "SPY",
-            new Trade(450.25m, 100, AggressorSide.Buy, 12345, "TEST", "NYSE"));
+            new Trade(ts, "SPY", 450.25m, 100, AggressorSide.Buy, 12345, "TEST", "NYSE"));
 
         // Act
         var jsonString = HighPerformanceJson.Serialize(evt);
@@ -61,10 +65,11 @@ public class HighPerformanceJsonTests
     public void Deserialize_ValidJson_ShouldProduceMarketEvent()
     {
         // Arrange
+        var ts = DateTimeOffset.Parse("2024-01-15T14:30:00Z");
         var originalEvent = MarketEvent.Trade(
-            DateTimeOffset.Parse("2024-01-15T14:30:00Z"),
+            ts,
             "SPY",
-            new Trade(450.25m, 100, AggressorSide.Buy, 12345, "ALPACA", "NYSE"));
+            new Trade(ts, "SPY", 450.25m, 100, AggressorSide.Buy, 12345, "ALPACA", "NYSE"));
 
         var json = HighPerformanceJson.Serialize(originalEvent);
 
@@ -81,10 +86,11 @@ public class HighPerformanceJsonTests
     public void DeserializeFromUtf8Bytes_ShouldWorkCorrectly()
     {
         // Arrange
+        var ts = DateTimeOffset.UtcNow;
         var originalEvent = MarketEvent.Trade(
-            DateTimeOffset.UtcNow,
+            ts,
             "QQQ",
-            new Trade(350.50m, 200, AggressorSide.Sell, 67890, "TEST", "NASDAQ"));
+            new Trade(ts, "QQQ", 350.50m, 200, AggressorSide.Sell, 67890, "TEST", "NASDAQ"));
 
         var jsonBytes = HighPerformanceJson.SerializeToUtf8Bytes(originalEvent);
 
@@ -144,10 +150,11 @@ public class HighPerformanceJsonTests
     public void MarketDataJsonContext_HighPerformanceOptions_ShouldNotIndent()
     {
         // Arrange
+        var ts = DateTimeOffset.UtcNow;
         var evt = MarketEvent.Trade(
-            DateTimeOffset.UtcNow,
+            ts,
             "SPY",
-            new Trade(450.25m, 100, AggressorSide.Buy, 12345, "TEST", "NYSE"));
+            new Trade(ts, "SPY", 450.25m, 100, AggressorSide.Buy, 12345, "TEST", "NYSE"));
 
         // Act
         var json = JsonSerializer.Serialize(evt, MarketDataJsonContext.HighPerformanceOptions);
@@ -161,10 +168,11 @@ public class HighPerformanceJsonTests
     public void MarketDataJsonContext_PrettyPrintOptions_ShouldIndent()
     {
         // Arrange
+        var ts = DateTimeOffset.UtcNow;
         var evt = MarketEvent.Trade(
-            DateTimeOffset.UtcNow,
+            ts,
             "SPY",
-            new Trade(450.25m, 100, AggressorSide.Buy, 12345, "TEST", "NYSE"));
+            new Trade(ts, "SPY", 450.25m, 100, AggressorSide.Buy, 12345, "TEST", "NYSE"));
 
         // Act
         var json = JsonSerializer.Serialize(evt, MarketDataJsonContext.PrettyPrintOptions);

@@ -32,7 +32,7 @@ public static class LoggingSetup
             .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
             .MinimumLevel.Override("System", LogEventLevel.Warning)
             .Enrich.FromLogContext()
-            .Enrich.WithThreadId()
+            .Enrich.WithProperty("ThreadId", Environment.CurrentManagedThreadId)
             .Enrich.WithProperty("Application", "MarketDataCollector")
             .WriteTo.Console(
                 outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}",

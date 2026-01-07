@@ -79,11 +79,11 @@ public class MarketDataCollectorTradeData : BaseData
                 Time = marketEvent.Timestamp.UtcDateTime,
                 Value = trade.Price,
                 TradePrice = trade.Price,
-                TradeSize = trade.Size,
-                Exchange = trade.Exchange ?? string.Empty,
-                Conditions = trade.Conditions?.ToList() ?? new List<string>(),
+                TradeSize = (decimal)trade.Size,
+                Exchange = trade.Venue ?? string.Empty,
+                Conditions = new List<string>(),
                 SequenceNumber = trade.SequenceNumber,
-                AggressorSide = trade.AggressorSide?.ToString() ?? "Unknown"
+                AggressorSide = trade.Aggressor.ToString()
             };
         }
         catch (Exception)

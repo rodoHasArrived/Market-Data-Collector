@@ -29,7 +29,7 @@ public sealed class UiServer : IAsyncDisposable
         // Minimize logging from ASP.NET Core
         builder.Logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Warning);
 
-        builder.WebHost.UseUrls($"http://localhost:{port}");
+        builder.Urls.Add($"http://localhost:{port}");
 
         var store = new ConfigStore(configPath);
         builder.Services.AddSingleton(store);
