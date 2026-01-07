@@ -3,6 +3,7 @@ using DataIngestion.Contracts.Messages;
 using DataIngestion.ValidationService.Services;
 using MassTransit;
 using Serilog;
+using ValidationResult = DataIngestion.ValidationService.Services.ValidationResult;
 
 namespace DataIngestion.ValidationService.Consumers;
 
@@ -22,7 +23,7 @@ public sealed class ValidationRequestConsumer : IConsumer<IValidateIngestionData
     {
         var msg = context.Message;
 
-        DataIngestion.ValidationService.Services.ValidationResult result = msg.ValidationType switch
+        ValidationResult result = msg.ValidationType switch
         {
             DataValidationType.Trade => ValidateTrade(msg),
             DataValidationType.Quote => ValidateQuote(msg),
@@ -51,7 +52,7 @@ public sealed class ValidationRequestConsumer : IConsumer<IValidateIngestionData
         });
     }
 
-    private DataIngestion.ValidationService.Services.ValidationResult ValidateTrade(IValidateIngestionData msg)
+    private ValidationResult ValidateTrade(IValidateIngestionData msg)
     {
         try
         {
@@ -68,7 +69,7 @@ public sealed class ValidationRequestConsumer : IConsumer<IValidateIngestionData
         }
     }
 
-    private DataIngestion.ValidationService.Services.ValidationResult ValidateQuote(IValidateIngestionData msg)
+    private ValidationResult ValidateQuote(IValidateIngestionData msg)
     {
         try
         {
@@ -84,7 +85,7 @@ public sealed class ValidationRequestConsumer : IConsumer<IValidateIngestionData
         }
     }
 
-    private DataIngestion.ValidationService.Services.ValidationResult ValidateOrderBook(IValidateIngestionData msg)
+    private ValidationResult ValidateOrderBook(IValidateIngestionData msg)
     {
         // Simplified order book validation
         return new ValidationResult(true, new List<ValidationIssue>());

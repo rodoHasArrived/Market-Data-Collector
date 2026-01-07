@@ -18,23 +18,27 @@
     <!-- ═══════════════════════════════════════════════════════════════════════════ -->
     <!-- SINGLE-EXE DESKTOP DEPLOYMENT CONFIGURATION                                  -->
     <!-- This configuration ensures the app runs as a single portable executable      -->
+    <!-- Note: SelfContained is only enabled during publish to allow project refs     -->
     <!-- ═══════════════════════════════════════════════════════════════════════════ -->
 
     <!-- Single-file publishing - bundles everything into one EXE -->
     <PublishSingleFile>true</PublishSingleFile>
-    <SelfContained>true</SelfContained>
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
 
     <!-- Include ALL content in single file - no extraction needed -->
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
 
-    <!-- Trimming for smaller executable -->
+    <!-- Trimming for smaller executable (only during publish) -->
     <PublishTrimmed>true</PublishTrimmed>
     <TrimMode>partial</TrimMode>
 
     <!-- Ready-to-run for faster startup -->
     <PublishReadyToRun>true</PublishReadyToRun>
+
+    <!-- SelfContained only during publish to avoid NETSDK1151 when referenced by other projects -->
+    <SelfContained Condition="'$(PublishProtocol)' != ''">true</SelfContained>
+    <SelfContained Condition="'$(PublishProtocol)' == ''">false</SelfContained>
 
     <!-- Globalization settings -->
     <InvariantGlobalization>false</InvariantGlobalization>
