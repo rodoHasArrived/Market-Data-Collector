@@ -1,7 +1,7 @@
 # F# Domain Library Integration Guide
 
-**Document Version:** 1.4.0
-**Last Updated:** 2026-01-04
+**Document Version:** 1.5.0
+**Last Updated:** 2026-01-07
 **Status:** Implemented
 
 ---
@@ -318,6 +318,14 @@ let result =
 ---
 
 ## C# Interoperability
+
+### Architecture Notes
+
+The `Interop.fs` module provides C#-friendly wrappers and extension methods for F# types. Key design decisions:
+
+1. **Option Conversion Helpers**: F# extension methods (marked with `[<Extension>]`) are for C# consumption only. For F# internal use, private helper functions (`toNullable`, `toNullableRef`) convert F# `Option<T>` types to C# `Nullable<T>` or null.
+
+2. **Module Aliases**: To avoid naming conflicts between record field names and module names (e.g., a field named `Spread` and the `Spread` calculation module), the codebase uses module aliases like `SpreadCalc` and `ImbalanceCalc` in pipeline transformations.
 
 ### Using F# Types from C#
 

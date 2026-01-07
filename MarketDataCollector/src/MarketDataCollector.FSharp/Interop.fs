@@ -8,7 +8,25 @@ open MarketDataCollector.FSharp.Domain.MarketEvents
 open MarketDataCollector.FSharp.Domain.Sides
 open MarketDataCollector.FSharp.Domain.Integrity
 open MarketDataCollector.FSharp.Validation.ValidationTypes
-open MarketDataCollector.FSharp.Calculations
+module Spread = MarketDataCollector.FSharp.Calculations.Spread
+module Imbalance = MarketDataCollector.FSharp.Calculations.Imbalance
+module Aggregations = MarketDataCollector.FSharp.Calculations.Aggregations
+
+/// Private helper functions for option conversion (for F# internal use).
+/// These are needed because [<Extension>] methods only work for C# consumers.
+[<AutoOpen>]
+module private OptionHelpers =
+    /// Convert Option<T> to Nullable<T> for value types.
+    let inline toNullable (opt: 'T option) : Nullable<'T> =
+        match opt with
+        | Some v -> Nullable v
+        | None -> Nullable()
+
+    /// Convert Option<T> to T or null/default for reference types.
+    let inline toNullableRef (opt: 'T option) : 'T =
+        match opt with
+        | Some v -> v
+        | None -> Unchecked.defaultof<'T>
 
 /// Extension methods for Option types to work with C# nullable types.
 [<Extension>]
@@ -17,16 +35,12 @@ type OptionExtensions =
     /// Convert Option<T> to Nullable<T> for value types.
     [<Extension>]
     static member ToNullable(opt: 'T option) : Nullable<'T> =
-        match opt with
-        | Some v -> Nullable v
-        | None -> Nullable()
+        toNullable opt
 
     /// Convert Option<T> to T or null for reference types.
     [<Extension>]
     static member ToNullableRef(opt: 'T option) : 'T =
-        match opt with
-        | Some v -> v
-        | None -> Unchecked.defaultof<'T>
+        toNullableRef opt
 
     /// Convert Option<T> to T or a default value.
     [<Extension>]
@@ -48,9 +62,9 @@ type TradeEventWrapper(trade: TradeEvent) =
     member _.Side = trade.Side.ToInt()
     member _.SequenceNumber = trade.SequenceNumber
     member _.Timestamp = trade.Timestamp
-    member _.ExchangeTimestamp = trade.ExchangeTimestamp.ToNullable()
-    member _.StreamId = trade.StreamId.ToNullableRef()
-    member _.Venue = trade.Venue.ToNullableRef()
+    member _.ExchangeTimestamp = toNullable trade.ExchangeTimestamp
+    member _.StreamId = toNullableRef trade.StreamId
+    member _.Venue = toNullableRef trade.Venue
 
     member _.ToFSharpEvent() = trade
 
@@ -80,7 +94,7 @@ type QuoteEventWrapper(quote: QuoteEvent) =
     member _.AskSize = quote.AskSize
     member _.SequenceNumber = quote.SequenceNumber
     member _.Timestamp = quote.Timestamp
-    member _.ExchangeTimestamp = quote.ExchangeTimestamp.ToNullable()
+    member _.ExchangeTimestamp = toNullable quote.ExchangeTimestamp
 
     member _.ToFSharpEvent() = quote
 
@@ -128,42 +142,42 @@ type ValidationResultWrapper<'T>(result: ValidationResult<'T>) =
 type SpreadCalculator private () =
 
     static member Calculate(bidPrice: decimal, askPrice: decimal) : Nullable<decimal> =
-        (Spread.calculate bidPrice askPrice).ToNullable()
+        toNullable (Spread.calculate bidPrice askPrice)
 
     static member MidPrice(bidPrice: decimal, askPrice: decimal) : Nullable<decimal> =
-        (Spread.midPrice bidPrice askPrice).ToNullable()
+        toNullable (Spread.midPrice bidPrice askPrice)
 
     static member SpreadBps(bidPrice: decimal, askPrice: decimal) : Nullable<decimal> =
-        (Spread.spreadBps bidPrice askPrice).ToNullable()
+        toNullable (Spread.spreadBps bidPrice askPrice)
 
     static member FromQuote(quote: QuoteEvent) : Nullable<decimal> =
-        (Spread.fromQuote quote).ToNullable()
+        toNullable (Spread.fromQuote quote)
 
     static member MidPriceFromQuote(quote: QuoteEvent) : Nullable<decimal> =
-        (Spread.midPriceFromQuote quote).ToNullable()
+        toNullable (Spread.midPriceFromQuote quote)
 
 /// C#-friendly imbalance calculator.
 [<Sealed>]
 type ImbalanceCalculator private () =
 
     static member Calculate(bidQuantity: int64, askQuantity: int64) : Nullable<decimal> =
-        (Imbalance.calculate bidQuantity askQuantity).ToNullable()
+        toNullable (Imbalance.calculate bidQuantity askQuantity)
 
     static member FromQuote(quote: QuoteEvent) : Nullable<decimal> =
-        (Imbalance.fromQuote quote).ToNullable()
+        toNullable (Imbalance.fromQuote quote)
 
     static member Microprice(book: OrderBookSnapshot) : Nullable<decimal> =
-        (Imbalance.microprice book).ToNullable()
+        toNullable (Imbalance.microprice book)
 
 /// C#-friendly aggregation functions.
 [<Sealed>]
 type AggregationFunctions private () =
 
     static member Vwap(trades: TradeEvent seq) : Nullable<decimal> =
-        (Aggregations.vwap trades).ToNullable()
+        toNullable (Aggregations.vwap trades)
 
     static member Twap(trades: TradeEvent seq) : Nullable<decimal> =
-        (Aggregations.twap trades).ToNullable()
+        toNullable (Aggregations.twap trades)
 
     static member TotalVolume(trades: TradeEvent seq) : int64 =
         Aggregations.totalVolume trades
