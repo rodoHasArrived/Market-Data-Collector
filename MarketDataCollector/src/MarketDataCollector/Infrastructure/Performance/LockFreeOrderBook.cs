@@ -283,9 +283,9 @@ public sealed record OrderBookSnapshot(
             Symbol: Symbol,
             Bids: Bids,
             Asks: Asks,
-            MidPrice: MidPrice,
-            MicroPrice: MicroPrice,
-            Imbalance: Imbalance,
+            MidPrice: (decimal?)MidPrice,
+            MicroPrice: (decimal?)MicroPrice,
+            Imbalance: (decimal?)Imbalance,
             MarketState: IsStale ? MarketState.Unknown : MarketState.Normal,
             SequenceNumber: SequenceNumber,
             StreamId: streamId,
@@ -348,7 +348,7 @@ public sealed class LockFreeOrderBookCollection
     /// <summary>
     /// Gets a snapshot of all symbols currently tracked.
     /// </summary>
-    public IReadOnlyCollection<string> GetSymbols() => _books.Keys;
+    public IReadOnlyCollection<string> GetSymbols() => _books.Keys.ToList();
 
     /// <summary>
     /// Removes an order book for the specified symbol.

@@ -140,8 +140,8 @@ public sealed record ConcurrentExecutionResult<TResult>
     public IEnumerable<Exception> Errors =>
         Results.Where(r => r.Exception != null).Select(r => r.Exception!);
 
-    public TResult FirstSuccessValue =>
-        Results.FirstOrDefault(r => r.IsSuccess)?.Value!;
+    public TResult? FirstSuccessValue =>
+        Results.FirstOrDefault(r => r.IsSuccess)?.Value;
 
     public static ConcurrentExecutionResult<TResult> NoProviders() =>
         new() { Results = Array.Empty<ProviderOperationResult<TResult>>() };

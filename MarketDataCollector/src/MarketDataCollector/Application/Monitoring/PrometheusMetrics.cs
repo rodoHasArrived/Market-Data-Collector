@@ -74,7 +74,7 @@ public static class PrometheusMetrics
         new HistogramConfiguration
         {
             // Buckets optimized for microsecond-level latency (1µs to 10ms)
-            Buckets = new[] { 1, 5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000 }
+            Buckets = new double[] { 1, 5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000 }
         });
 
     private static readonly Gauge AverageLatencyUs = Prometheus.Metrics.CreateGauge(
@@ -182,7 +182,7 @@ public static class PrometheusMetrics
         new HistogramConfiguration
         {
             LabelNames = new[] { "symbol" },
-            Buckets = new[] { 1, 10, 50, 100, 500, 1000, 5000, 10000, 50000 }
+            Buckets = new double[] { 1, 10, 50, 100, 500, 1000, 5000, 10000, 50000 }
         });
 
     /// <summary>

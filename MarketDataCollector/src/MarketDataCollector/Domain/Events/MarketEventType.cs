@@ -2,6 +2,7 @@ namespace MarketDataCollector.Domain.Events;
 
 public enum MarketEventType
 {
+    Unknown = 0,
     L2Snapshot = 1,
     BboQuote = 2,
     Trade = 3,

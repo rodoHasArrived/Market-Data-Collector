@@ -92,7 +92,7 @@ public sealed class BackfillJob
     /// <summary>
     /// Job configuration options.
     /// </summary>
-    public BackfillJobOptions Options { get; init; } = new();
+    public BackfillJobOptions Options { get; set; } = new();
 
     /// <summary>
     /// Statistics for the job.
@@ -163,7 +163,7 @@ public sealed class SymbolBackfillProgress
     /// <summary>
     /// Dates that need to be backfilled (gaps detected).
     /// </summary>
-    public List<DateOnly> DatesToFill { get; init; } = new();
+    public List<DateOnly> DatesToFill { get; set; } = new();
 
     /// <summary>
     /// Dates that have been successfully filled.
@@ -226,7 +226,7 @@ public sealed class SymbolBackfillProgress
 /// <summary>
 /// Configuration options for a backfill job.
 /// </summary>
-public sealed class BackfillJobOptions
+public sealed record BackfillJobOptions
 {
     /// <summary>
     /// Maximum concurrent requests across all providers.

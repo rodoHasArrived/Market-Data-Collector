@@ -82,7 +82,7 @@ public sealed class TechnicalIndicatorService : IDisposable
     {
         var quotes = bars.Select(b => new Quote
         {
-            Date = b.Timestamp.DateTime,
+            Date = b.ToTimestampUtc().DateTime,
             Open = b.Open,
             High = b.High,
             Low = b.Low,

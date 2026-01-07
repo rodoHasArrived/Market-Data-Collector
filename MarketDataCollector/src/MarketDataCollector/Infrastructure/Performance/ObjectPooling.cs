@@ -16,7 +16,7 @@ public sealed class ObjectPool<T> where T : class
     private readonly Func<T> _factory;
     private readonly Action<T>? _reset;
     private readonly int _maxCapacity;
-    private int _currentCount;
+    private long _currentCount;
 
     public ObjectPool(Func<T> factory, Action<T>? reset = null, int maxCapacity = 256)
     {
@@ -62,7 +62,7 @@ public sealed class ObjectPool<T> where T : class
     /// <summary>
     /// Gets the current number of items in the pool.
     /// </summary>
-    public int Count => Interlocked.Read(ref _currentCount);
+    public int Count => (int)Interlocked.Read(ref _currentCount);
 }
 
 /// <summary>
