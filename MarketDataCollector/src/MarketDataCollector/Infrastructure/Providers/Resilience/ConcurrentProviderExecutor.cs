@@ -141,7 +141,7 @@ public sealed record ConcurrentExecutionResult<TResult>
     public IEnumerable<Exception> Errors =>
         Results.Where(r => r.Exception != null).Select(r => r.Exception!);
 
-    [return: MaybeNull]
+    [MaybeNull]
     public TResult FirstSuccessValue =>
         Results.FirstOrDefault(r => r.IsSuccess) is { } result ? result.Value! : default!;
 

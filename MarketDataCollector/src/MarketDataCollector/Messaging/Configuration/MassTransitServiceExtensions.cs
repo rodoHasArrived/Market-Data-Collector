@@ -172,7 +172,7 @@ public static class MassTransitServiceExtensions
                 new PrefixEntityNameFormatter(cfg.MessageTopology.EntityNameFormatter, config.EndpointPrefix));
         }
 
-        context.ConfigureEndpoints(cfg);
+        cfg.ConfigureEndpoints(context);
     }
 
     private static MassTransitTransport ParseTransport(string? value)
