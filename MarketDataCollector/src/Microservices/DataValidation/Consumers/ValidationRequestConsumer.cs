@@ -27,7 +27,7 @@ public sealed class ValidationRequestConsumer : IConsumer<IValidateIngestionData
             DataValidationType.Trade => ValidateTrade(msg),
             DataValidationType.Quote => ValidateQuote(msg),
             DataValidationType.OrderBook => ValidateOrderBook(msg),
-            _ => new ValidationResult(true, new List<ValidationIssue>())
+            _ => new DataIngestion.ValidationService.Services.ValidationResult(true, new List<ValidationIssue>())
         };
 
         _aggregator.RecordValidation(msg.Symbol, msg.ValidationType.ToString(), result.IsValid, result.Issues);
@@ -56,7 +56,7 @@ public sealed class ValidationRequestConsumer : IConsumer<IValidateIngestionData
         try
         {
             var data = JsonSerializer.Deserialize<TradeData>(JsonSerializer.Serialize(msg.Data));
-            if (data == null) return new ValidationResult(false, [new("PARSE_ERROR", "Failed to parse trade data", ValidationSeverity.Error)]);
+            if (data == null) return new DataIngestion.ValidationService.Services.ValidationResult(false, [new("PARSE_ERROR", "Failed to parse trade data", ValidationSeverity.Error)]);
 
             return _validator.ValidateTrade(new TradeValidationData(
                 msg.Symbol, data.Timestamp, data.Price, data.Size, data.AggressorSide, null));
@@ -64,7 +64,7 @@ public sealed class ValidationRequestConsumer : IConsumer<IValidateIngestionData
         catch (Exception ex)
         {
             _log.Error(ex, "Error validating trade for {Symbol}", msg.Symbol);
-            return new ValidationResult(false, [new("VALIDATION_ERROR", ex.Message, ValidationSeverity.Error)]);
+            return new DataIngestion.ValidationService.Services.ValidationResult(false, [new("VALIDATION_ERROR", ex.Message, ValidationSeverity.Error)]);
         }
     }
 
@@ -73,21 +73,21 @@ public sealed class ValidationRequestConsumer : IConsumer<IValidateIngestionData
         try
         {
             var data = JsonSerializer.Deserialize<QuoteData>(JsonSerializer.Serialize(msg.Data));
-            if (data == null) return new ValidationResult(false, [new("PARSE_ERROR", "Failed to parse quote data", ValidationSeverity.Error)]);
+            if (data == null) return new DataIngestion.ValidationService.Services.ValidationResult(false, [new("PARSE_ERROR", "Failed to parse quote data", ValidationSeverity.Error)]);
 
             return _validator.ValidateQuote(new QuoteValidationData(
                 msg.Symbol, data.Timestamp, data.BidPrice, data.BidSize, data.AskPrice, data.AskSize));
         }
         catch (Exception ex)
         {
-            return new ValidationResult(false, [new("VALIDATION_ERROR", ex.Message, ValidationSeverity.Error)]);
+            return new DataIngestion.ValidationService.Services.ValidationResult(false, [new("VALIDATION_ERROR", ex.Message, ValidationSeverity.Error)]);
         }
     }
 
     private DataIngestion.ValidationService.Services.ValidationResult ValidateOrderBook(IValidateIngestionData msg)
     {
         // Simplified order book validation
-        return new ValidationResult(true, new List<ValidationIssue>());
+        return new DataIngestion.ValidationService.Services.ValidationResult(true, new List<ValidationIssue>());
     }
 
     private record TradeData(DateTimeOffset Timestamp, decimal Price, long Size, string? AggressorSide);

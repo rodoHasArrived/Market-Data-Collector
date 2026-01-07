@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Domain.Models;
+using MarketDataCollector.Infrastructure.DataSources;
 using Serilog;
 
 namespace MarketDataCollector.Infrastructure.Providers.Backfill;

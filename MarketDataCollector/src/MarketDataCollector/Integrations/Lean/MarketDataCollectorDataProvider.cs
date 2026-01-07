@@ -1,4 +1,3 @@
-using QuantConnect.Lean.Engine.DataFeeds;
 using QuantConnect.Logging;
 using QuantConnect.Util;
 using System.IO.Compression;
@@ -6,10 +5,10 @@ using System.IO.Compression;
 namespace MarketDataCollector.Integrations.Lean;
 
 /// <summary>
-/// Custom IDataProvider implementation that reads market data from MarketDataCollector's JSONL files.
+/// Custom ILeanDataProvider implementation that reads market data from MarketDataCollector's JSONL files.
 /// Supports both compressed (.jsonl.gz) and uncompressed (.jsonl) files.
 /// </summary>
-public class MarketDataCollectorDataProvider : IDataProvider
+public class MarketDataCollectorDataProvider : ILeanDataProvider
 {
     private readonly string _dataRoot;
 

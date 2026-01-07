@@ -122,7 +122,9 @@ public sealed class InMemoryMarketEventBus : IMarketEventBus
             _ct = ct;
         }
 
-        public async IAsyncEnumerable<MarketEvent> Stream([EnumeratorCancellation] CancellationToken enumerationCt = default)
+        public IAsyncEnumerable<MarketEvent> Stream => StreamEvents();
+
+        private async IAsyncEnumerable<MarketEvent> StreamEvents([EnumeratorCancellation] CancellationToken enumerationCt = default)
         {
             using var linked = CancellationTokenSource.CreateLinkedTokenSource(_ct, enumerationCt);
             var ct = linked.Token;

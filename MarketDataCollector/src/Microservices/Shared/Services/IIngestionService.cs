@@ -195,6 +195,7 @@ public record BackfillJobStatus(
     string Status,
     DateTimeOffset StartDate,
     DateTimeOffset EndDate,
+    string DataType = "Trades",
     long? RecordsProcessed = null,
     long? TotalRecords = null,
     double? ProgressPercent = null,

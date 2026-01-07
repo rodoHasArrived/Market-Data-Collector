@@ -18,19 +18,22 @@
     <!-- ═══════════════════════════════════════════════════════════════════════════ -->
     <!-- SINGLE-EXE DESKTOP DEPLOYMENT CONFIGURATION                                  -->
     <!-- This configuration ensures the app runs as a single portable executable      -->
+    <!-- Note: SelfContained is only enabled during publish to allow project refs     -->
     <!-- ═══════════════════════════════════════════════════════════════════════════ -->
 
     <!-- Single-file publishing - bundles everything into one EXE -->
     <PublishSingleFile>true</PublishSingleFile>
-    <SelfContained>true</SelfContained>
+    <!-- SelfContained only enabled when publishing to avoid NETSDK1151 with project references -->
+    <SelfContained Condition="'$(IsPublishing)' == 'true' Or '$(PublishDir)' != ''">true</SelfContained>
+    <SelfContained Condition="'$(IsPublishing)' != 'true' And '$(PublishDir)' == ''">false</SelfContained>
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
 
     <!-- Include ALL content in single file - no extraction needed -->
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
 
-    <!-- Trimming for smaller executable -->
-    <PublishTrimmed>true</PublishTrimmed>
+    <!-- Trimming for smaller executable (only during publish) -->
+    <PublishTrimmed Condition="'$(IsPublishing)' == 'true' Or '$(PublishDir)' != ''">true</PublishTrimmed>
     <TrimMode>partial</TrimMode>
 
     <!-- Ready-to-run for faster startup -->

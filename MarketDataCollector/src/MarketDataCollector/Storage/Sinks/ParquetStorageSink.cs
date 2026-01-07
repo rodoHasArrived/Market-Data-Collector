@@ -334,8 +334,8 @@ public sealed class ParquetStorageSink : IStorageSink
             }
         }
 
-        var table = new Table(
-            BarSchema,
+        var columns = new[]
+        {
             new DataColumn(BarSchema.DataFields[0], timestamps.ToArray()),
             new DataColumn(BarSchema.DataFields[1], symbols.ToArray()),
             new DataColumn(BarSchema.DataFields[2], opens.ToArray()),
@@ -345,9 +345,9 @@ public sealed class ParquetStorageSink : IStorageSink
             new DataColumn(BarSchema.DataFields[6], volumes.ToArray()),
             new DataColumn(BarSchema.DataFields[7], sequences.ToArray()),
             new DataColumn(BarSchema.DataFields[8], sources.ToArray())
-        );
+        };
 
-        await WriteTableAsync(path, table, ct);
+        await WriteColumnsAsync(path, BarSchema, columns, ct);
     }
 
     private async Task WriteGenericEventsAsync(string path, List<MarketEvent> events, CancellationToken ct)
@@ -369,20 +369,20 @@ public sealed class ParquetStorageSink : IStorageSink
         var sequences = events.Select(e => e.Sequence).ToArray();
         var sources = events.Select(e => e.Source).ToArray();
 
-        var table = new Table(
-            genericSchema,
+        var columns = new[]
+        {
             new DataColumn(genericSchema.DataFields[0], timestamps),
             new DataColumn(genericSchema.DataFields[1], symbols),
             new DataColumn(genericSchema.DataFields[2], types),
             new DataColumn(genericSchema.DataFields[3], payloads),
             new DataColumn(genericSchema.DataFields[4], sequences),
             new DataColumn(genericSchema.DataFields[5], sources)
-        );
+        };
 
-        await WriteTableAsync(path, table, ct);
+        await WriteColumnsAsync(path, genericSchema, columns, ct);
     }
 
-    private async Task WriteTableAsync(string path, Table table, CancellationToken ct)
+    private async Task WriteColumnsAsync(string path, ParquetSchema schema, DataColumn[] columns, CancellationToken ct)
     {
         var fileExists = File.Exists(path);
 
@@ -394,7 +394,13 @@ public sealed class ParquetStorageSink : IStorageSink
             bufferSize: 65536,
             useAsync: true);
 
-        await ParquetWriter.WriteAsync(table, stream, _parquetOptions.CompressionMethod);
+        using var writer = await ParquetWriter.CreateAsync(schema, stream);
+        writer.CompressionMethod = _parquetOptions.CompressionMethod;
+        using var rowGroup = writer.CreateRowGroup();
+        foreach (var column in columns)
+        {
+            await rowGroup.WriteColumnAsync(column, ct);
+        }
     }
 
     private string GetBufferKey(MarketEvent evt)
