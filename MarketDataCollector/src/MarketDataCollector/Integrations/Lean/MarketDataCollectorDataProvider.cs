@@ -15,6 +15,11 @@ public class MarketDataCollectorDataProvider : IDataProvider
     private readonly string _dataRoot;
 
     /// <summary>
+    /// Event raised each time data fetch is finished (successfully or not).
+    /// </summary>
+    public event EventHandler<DataProviderNewDataRequestEventArgs>? NewDataRequest;
+
+    /// <summary>
     /// Creates a new instance of the MarketDataCollector data provider.
     /// </summary>
     /// <param name="dataRoot">Root directory where MarketDataCollector stores JSONL files (defaults to ./data)</param>
@@ -31,11 +36,13 @@ public class MarketDataCollectorDataProvider : IDataProvider
     /// <returns>Stream containing the file data, or null if not found</returns>
     public Stream Fetch(string key)
     {
+        var succeeded = false;
         try
         {
             // Check if the file exists directly
             if (File.Exists(key))
             {
+                succeeded = true;
                 return OpenFile(key);
             }
 
@@ -43,6 +50,7 @@ public class MarketDataCollectorDataProvider : IDataProvider
             var gzPath = key + ".gz";
             if (File.Exists(gzPath))
             {
+                succeeded = true;
                 return OpenFile(gzPath);
             }
 
@@ -52,6 +60,7 @@ public class MarketDataCollectorDataProvider : IDataProvider
 
             if (File.Exists(alternativePath))
             {
+                succeeded = true;
                 return OpenFile(alternativePath);
             }
 
@@ -59,6 +68,7 @@ public class MarketDataCollectorDataProvider : IDataProvider
             var alternativeGzPath = alternativePath + ".gz";
             if (File.Exists(alternativeGzPath))
             {
+                succeeded = true;
                 return OpenFile(alternativeGzPath);
             }
 
@@ -69,6 +79,10 @@ public class MarketDataCollectorDataProvider : IDataProvider
         {
             Log.Error(ex, $"MarketDataCollectorDataProvider: Error fetching {key}");
             return Stream.Null;
+        }
+        finally
+        {
+            NewDataRequest?.Invoke(this, new DataProviderNewDataRequestEventArgs(key, succeeded));
         }
     }
 

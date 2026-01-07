@@ -19,8 +19,11 @@
 
     <!-- Single-file publishing - bundles everything into one EXE -->
     <PublishSingleFile>true</PublishSingleFile>
-    <SelfContained>true</SelfContained>
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+
+    <!-- SelfContained only during publish to avoid NETSDK1150 when referencing other projects -->
+    <SelfContained Condition="'$(PublishProtocol)' != ''">true</SelfContained>
+    <SelfContained Condition="'$(PublishProtocol)' == ''">false</SelfContained>
 
     <!-- Include ALL content in single file - no extraction needed -->
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
