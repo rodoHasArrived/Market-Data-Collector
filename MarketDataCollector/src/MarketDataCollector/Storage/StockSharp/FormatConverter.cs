@@ -2,6 +2,7 @@ using MarketDataCollector.Application.Logging;
 using System.Threading;
 using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Domain.Models;
+using MarketDataCollector.Storage.Policies;
 using MarketDataCollector.Storage.Replay;
 using MarketDataCollector.Storage.Sinks;
 using Serilog;

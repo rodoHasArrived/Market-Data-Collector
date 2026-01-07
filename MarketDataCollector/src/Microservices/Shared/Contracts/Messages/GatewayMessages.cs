@@ -11,6 +11,7 @@ public interface IRouteIngestionData : IIngestionMessage
     string ContentType { get; }
     string Provider { get; }
     IReadOnlyDictionary<string, string> Headers { get; }
+    long Sequence { get; }
 }
 
 /// <summary>

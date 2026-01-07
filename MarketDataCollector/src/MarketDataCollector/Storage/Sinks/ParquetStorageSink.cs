@@ -33,7 +33,7 @@ public sealed class ParquetStorageSink : IStorageSink
         new DataField<DateTimeOffset>("Timestamp"),
         new DataField<string>("Symbol"),
         new DataField<decimal>("Price"),
-        new DataField<int>("Size"),
+        new DataField<long>("Size"),
         new DataField<string>("AggressorSide"),
         new DataField<long>("SequenceNumber"),
         new DataField<string>("Venue"),
@@ -45,9 +45,9 @@ public sealed class ParquetStorageSink : IStorageSink
         new DataField<DateTimeOffset>("Timestamp"),
         new DataField<string>("Symbol"),
         new DataField<decimal>("BidPrice"),
-        new DataField<int>("BidSize"),
+        new DataField<long>("BidSize"),
         new DataField<decimal>("AskPrice"),
-        new DataField<int>("AskSize"),
+        new DataField<long>("AskSize"),
         new DataField<decimal>("Spread"),
         new DataField<long>("SequenceNumber"),
         new DataField<string>("Source")
@@ -61,7 +61,7 @@ public sealed class ParquetStorageSink : IStorageSink
         new DataField<int>("AskLevels"),
         new DataField<decimal>("BestBid"),
         new DataField<decimal>("BestAsk"),
-        new DataField<decimal>("Spread"),
+        new DataField<decimal?>("Spread"),
         new DataField<long>("SequenceNumber"),
         new DataField<string>("Source"),
         new DataField<string>("BidsJson"),
@@ -177,7 +177,7 @@ public sealed class ParquetStorageSink : IStorageSink
         var timestamps = new List<DateTimeOffset>();
         var symbols = new List<string>();
         var prices = new List<decimal>();
-        var sizes = new List<int>();
+        var sizes = new List<long>();
         var aggressors = new List<string>();
         var sequences = new List<long>();
         var venues = new List<string>();
@@ -198,19 +198,17 @@ public sealed class ParquetStorageSink : IStorageSink
             }
         }
 
-        var table = new Table(
-            TradeSchema,
-            new DataColumn(TradeSchema.DataFields[0], timestamps.ToArray()),
-            new DataColumn(TradeSchema.DataFields[1], symbols.ToArray()),
-            new DataColumn(TradeSchema.DataFields[2], prices.ToArray()),
-            new DataColumn(TradeSchema.DataFields[3], sizes.ToArray()),
-            new DataColumn(TradeSchema.DataFields[4], aggressors.ToArray()),
-            new DataColumn(TradeSchema.DataFields[5], sequences.ToArray()),
-            new DataColumn(TradeSchema.DataFields[6], venues.ToArray()),
-            new DataColumn(TradeSchema.DataFields[7], sources.ToArray())
-        );
+        using var groupWriter = await ParquetWriter.CreateAsync(TradeSchema, File.Create(path));
+        using var rowGroupWriter = groupWriter.CreateRowGroup();
 
-        await WriteTableAsync(path, table, ct);
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(TradeSchema.DataFields[0], timestamps.ToArray()));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(TradeSchema.DataFields[1], symbols.ToArray()));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(TradeSchema.DataFields[2], prices.ToArray()));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(TradeSchema.DataFields[3], sizes.ToArray()));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(TradeSchema.DataFields[4], aggressors.ToArray()));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(TradeSchema.DataFields[5], sequences.ToArray()));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(TradeSchema.DataFields[6], venues.ToArray()));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(TradeSchema.DataFields[7], sources.ToArray()));
     }
 
     private async Task WriteQuotesAsync(string path, List<MarketEvent> events, CancellationToken ct)
@@ -218,9 +216,9 @@ public sealed class ParquetStorageSink : IStorageSink
         var timestamps = new List<DateTimeOffset>();
         var symbols = new List<string>();
         var bidPrices = new List<decimal>();
-        var bidSizes = new List<int>();
+        var bidSizes = new List<long>();
         var askPrices = new List<decimal>();
-        var askSizes = new List<int>();
+        var askSizes = new List<long>();
         var spreads = new List<decimal>();
         var sequences = new List<long>();
         var sources = new List<string>();
@@ -235,26 +233,24 @@ public sealed class ParquetStorageSink : IStorageSink
                 bidSizes.Add(quote.BidSize);
                 askPrices.Add(quote.AskPrice);
                 askSizes.Add(quote.AskSize);
-                spreads.Add(quote.Spread);
+                spreads.Add(quote.Spread ?? 0m);
                 sequences.Add(quote.SequenceNumber);
                 sources.Add(evt.Source);
             }
         }
 
-        var table = new Table(
-            QuoteSchema,
-            new DataColumn(QuoteSchema.DataFields[0], timestamps.ToArray()),
-            new DataColumn(QuoteSchema.DataFields[1], symbols.ToArray()),
-            new DataColumn(QuoteSchema.DataFields[2], bidPrices.ToArray()),
-            new DataColumn(QuoteSchema.DataFields[3], bidSizes.ToArray()),
-            new DataColumn(QuoteSchema.DataFields[4], askPrices.ToArray()),
-            new DataColumn(QuoteSchema.DataFields[5], askSizes.ToArray()),
-            new DataColumn(QuoteSchema.DataFields[6], spreads.ToArray()),
-            new DataColumn(QuoteSchema.DataFields[7], sequences.ToArray()),
-            new DataColumn(QuoteSchema.DataFields[8], sources.ToArray())
-        );
+        using var groupWriter = await ParquetWriter.CreateAsync(QuoteSchema, File.Create(path));
+        using var rowGroupWriter = groupWriter.CreateRowGroup();
 
-        await WriteTableAsync(path, table, ct);
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(QuoteSchema.DataFields[0], timestamps.ToArray()));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(QuoteSchema.DataFields[1], symbols.ToArray()));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(QuoteSchema.DataFields[2], bidPrices.ToArray()));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(QuoteSchema.DataFields[3], bidSizes.ToArray()));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(QuoteSchema.DataFields[4], askPrices.ToArray()));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(QuoteSchema.DataFields[5], askSizes.ToArray()));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(QuoteSchema.DataFields[6], spreads.ToArray()));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(QuoteSchema.DataFields[7], sequences.ToArray()));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(QuoteSchema.DataFields[8], sources.ToArray()));
     }
 
     private async Task WriteL2SnapshotsAsync(string path, List<MarketEvent> events, CancellationToken ct)
@@ -265,7 +261,7 @@ public sealed class ParquetStorageSink : IStorageSink
         var askLevelsCounts = new List<int>();
         var bestBids = new List<decimal>();
         var bestAsks = new List<decimal>();
-        var spreads = new List<decimal>();
+        var spreads = new List<decimal?>();
         var sequences = new List<long>();
         var sources = new List<string>();
         var bidsJson = new List<string>();
@@ -273,38 +269,52 @@ public sealed class ParquetStorageSink : IStorageSink
 
         foreach (var evt in events)
         {
-            if (evt.Payload is L2SnapshotPayload snap)
+            LOBSnapshot? snap = null;
+            long seqNum = 0;
+
+            if (evt.Payload is L2SnapshotPayload l2Payload)
+            {
+                snap = l2Payload.Snapshot;
+                seqNum = l2Payload.SequenceNumber;
+            }
+            else if (evt.Payload is LOBSnapshot lobSnap)
+            {
+                snap = lobSnap;
+                seqNum = lobSnap.SequenceNumber;
+            }
+
+            if (snap != null)
             {
                 timestamps.Add(evt.Timestamp);
                 symbols.Add(evt.Symbol);
                 bidLevelsCounts.Add(snap.Bids?.Count ?? 0);
                 askLevelsCounts.Add(snap.Asks?.Count ?? 0);
-                bestBids.Add(snap.Bids?.FirstOrDefault()?.Price ?? 0);
-                bestAsks.Add(snap.Asks?.FirstOrDefault()?.Price ?? 0);
-                spreads.Add(snap.Spread);
-                sequences.Add(snap.SequenceNumber);
+                var bestBid = snap.Bids?.FirstOrDefault()?.Price ?? 0;
+                var bestAsk = snap.Asks?.FirstOrDefault()?.Price ?? 0;
+                bestBids.Add(bestBid);
+                bestAsks.Add(bestAsk);
+                spreads.Add(bestBid > 0 && bestAsk > 0 ? bestAsk - bestBid : null);
+                sequences.Add(seqNum);
                 sources.Add(evt.Source);
-                bidsJson.Add(System.Text.Json.JsonSerializer.Serialize(snap.Bids ?? new List<OrderBookLevel>()));
-                asksJson.Add(System.Text.Json.JsonSerializer.Serialize(snap.Asks ?? new List<OrderBookLevel>()));
+                bidsJson.Add(System.Text.Json.JsonSerializer.Serialize(snap.Bids ?? (IReadOnlyList<OrderBookLevel>)Array.Empty<OrderBookLevel>()));
+                asksJson.Add(System.Text.Json.JsonSerializer.Serialize(snap.Asks ?? (IReadOnlyList<OrderBookLevel>)Array.Empty<OrderBookLevel>()));
             }
         }
 
-        var table = new Table(
-            L2Schema,
-            new DataColumn(L2Schema.DataFields[0], timestamps.ToArray()),
-            new DataColumn(L2Schema.DataFields[1], symbols.ToArray()),
-            new DataColumn(L2Schema.DataFields[2], bidLevelsCounts.ToArray()),
-            new DataColumn(L2Schema.DataFields[3], askLevelsCounts.ToArray()),
-            new DataColumn(L2Schema.DataFields[4], bestBids.ToArray()),
-            new DataColumn(L2Schema.DataFields[5], bestAsks.ToArray()),
-            new DataColumn(L2Schema.DataFields[6], spreads.ToArray()),
-            new DataColumn(L2Schema.DataFields[7], sequences.ToArray()),
-            new DataColumn(L2Schema.DataFields[8], sources.ToArray()),
-            new DataColumn(L2Schema.DataFields[9], bidsJson.ToArray()),
-            new DataColumn(L2Schema.DataFields[10], asksJson.ToArray())
-        );
+        using var groupWriter = await ParquetWriter.CreateAsync(L2Schema, File.Create(path));
+        using var rowGroupWriter = groupWriter.CreateRowGroup();
 
-        await WriteTableAsync(path, table, ct);
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(L2Schema.DataFields[0], timestamps.ToArray()));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(L2Schema.DataFields[1], symbols.ToArray()));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(L2Schema.DataFields[2], bidLevelsCounts.ToArray()));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(L2Schema.DataFields[3], askLevelsCounts.ToArray()));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(L2Schema.DataFields[4], bestBids.ToArray()));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(L2Schema.DataFields[5], bestAsks.ToArray()));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(L2Schema.DataFields[6], spreads.ToArray()));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(L2Schema.DataFields[7], sequences.ToArray()));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(L2Schema.DataFields[8], sources.ToArray()));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(L2Schema.DataFields[9], bidsJson.ToArray()));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(L2Schema.DataFields[10], asksJson.ToArray()));
     }
 
     private async Task WriteBarsAsync(string path, List<MarketEvent> events, CancellationToken ct)
@@ -335,20 +345,18 @@ public sealed class ParquetStorageSink : IStorageSink
             }
         }
 
-        var table = new Table(
-            BarSchema,
-            new DataColumn(BarSchema.DataFields[0], timestamps.ToArray()),
-            new DataColumn(BarSchema.DataFields[1], symbols.ToArray()),
-            new DataColumn(BarSchema.DataFields[2], opens.ToArray()),
-            new DataColumn(BarSchema.DataFields[3], highs.ToArray()),
-            new DataColumn(BarSchema.DataFields[4], lows.ToArray()),
-            new DataColumn(BarSchema.DataFields[5], closes.ToArray()),
-            new DataColumn(BarSchema.DataFields[6], volumes.ToArray()),
-            new DataColumn(BarSchema.DataFields[7], sequences.ToArray()),
-            new DataColumn(BarSchema.DataFields[8], sources.ToArray())
-        );
+        using var groupWriter = await ParquetWriter.CreateAsync(BarSchema, File.Create(path));
+        using var rowGroupWriter = groupWriter.CreateRowGroup();
 
-        await WriteTableAsync(path, table, ct);
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(BarSchema.DataFields[0], timestamps.ToArray()));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(BarSchema.DataFields[1], symbols.ToArray()));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(BarSchema.DataFields[2], opens.ToArray()));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(BarSchema.DataFields[3], highs.ToArray()));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(BarSchema.DataFields[4], lows.ToArray()));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(BarSchema.DataFields[5], closes.ToArray()));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(BarSchema.DataFields[6], volumes.ToArray()));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(BarSchema.DataFields[7], sequences.ToArray()));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(BarSchema.DataFields[8], sources.ToArray()));
     }
 
     private async Task WriteGenericEventsAsync(string path, List<MarketEvent> events, CancellationToken ct)
@@ -370,32 +378,15 @@ public sealed class ParquetStorageSink : IStorageSink
         var sequences = events.Select(e => e.Sequence).ToArray();
         var sources = events.Select(e => e.Source).ToArray();
 
-        var table = new Table(
-            genericSchema,
-            new DataColumn(genericSchema.DataFields[0], timestamps),
-            new DataColumn(genericSchema.DataFields[1], symbols),
-            new DataColumn(genericSchema.DataFields[2], types),
-            new DataColumn(genericSchema.DataFields[3], payloads),
-            new DataColumn(genericSchema.DataFields[4], sequences),
-            new DataColumn(genericSchema.DataFields[5], sources)
-        );
+        using var groupWriter = await ParquetWriter.CreateAsync(genericSchema, File.Create(path));
+        using var rowGroupWriter = groupWriter.CreateRowGroup();
 
-        await WriteTableAsync(path, table, ct);
-    }
-
-    private async Task WriteTableAsync(string path, Table table, CancellationToken ct)
-    {
-        var fileExists = File.Exists(path);
-
-        await using var stream = new FileStream(
-            path,
-            fileExists ? FileMode.Append : FileMode.Create,
-            FileAccess.Write,
-            FileShare.Read,
-            bufferSize: 65536,
-            useAsync: true);
-
-        await ParquetWriter.WriteAsync(table, stream, _parquetOptions.CompressionMethod);
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(genericSchema.DataFields[0], timestamps));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(genericSchema.DataFields[1], symbols));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(genericSchema.DataFields[2], types));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(genericSchema.DataFields[3], payloads));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(genericSchema.DataFields[4], sequences));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(genericSchema.DataFields[5], sources));
     }
 
     private string GetBufferKey(MarketEvent evt)
@@ -413,7 +404,7 @@ public sealed class ParquetStorageSink : IStorageSink
         {
             FileNamingConvention.BySymbol => Path.Combine(_options.RootPath, evt.Symbol, fileName),
             FileNamingConvention.ByDate => Path.Combine(_options.RootPath, $"{date:yyyy}", $"{date:MM}", $"{date:dd}", fileName),
-            FileNamingConvention.ByEventType => Path.Combine(_options.RootPath, typeName, fileName),
+            FileNamingConvention.ByType => Path.Combine(_options.RootPath, typeName, fileName),
             _ => Path.Combine(_options.RootPath, fileName)
         };
     }

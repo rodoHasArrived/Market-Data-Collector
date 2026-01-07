@@ -25,11 +25,11 @@ namespace MarketDataCollector.Domain.Models;
 /// </remarks>
 public sealed record OrderBookLevel
 {
-    public OrderBookSide Side { get; }
-    public int Level { get; }
-    public decimal Price { get; }
-    public decimal Size { get; }
-    public string? MarketMaker { get; }
+    public OrderBookSide Side { get; init; }
+    public int Level { get; init; }
+    public decimal Price { get; init; }
+    public decimal Size { get; init; }
+    public string? MarketMaker { get; init; }
 
     /// <summary>
     /// Validates order book level data at construction time to prevent corrupt datasets.

@@ -182,4 +182,5 @@ public class RoutedIngestionMessage : IRouteIngestionData
     public string Provider => Source;
     public IReadOnlyDictionary<string, string> Headers { get; init; } = new Dictionary<string, string>();
     public DateTimeOffset RoutedAt { get; init; }
+    public long Sequence { get; init; }
 }

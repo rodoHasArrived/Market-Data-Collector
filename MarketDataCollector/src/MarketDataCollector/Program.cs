@@ -339,15 +339,15 @@ internal static class Program
         var now = DateTimeOffset.UtcNow;
         var sym = symbols[0].Symbol;
 
-        depthCollector.OnDepth(new MarketDepthUpdate(now, sym, 0, DepthOperation.Insert, OrderBookSide.Bid, 500.24, 300, "MM1"));
-        depthCollector.OnDepth(new MarketDepthUpdate(now, sym, 0, DepthOperation.Insert, OrderBookSide.Ask, 500.26, 250, "MM2"));
-        depthCollector.OnDepth(new MarketDepthUpdate(now, sym, 0, DepthOperation.Update, OrderBookSide.Bid, 500.24, 350, "MM1"));
-        depthCollector.OnDepth(new MarketDepthUpdate(now, sym, 3, DepthOperation.Update, OrderBookSide.Ask, 500.30, 100, "MMX")); // induce integrity
+        depthCollector.OnDepth(new MarketDepthUpdate(now, sym, 0, DepthOperation.Insert, OrderBookSide.Bid, 500.24m, 300m, "MM1"));
+        depthCollector.OnDepth(new MarketDepthUpdate(now, sym, 0, DepthOperation.Insert, OrderBookSide.Ask, 500.26m, 250m, "MM2"));
+        depthCollector.OnDepth(new MarketDepthUpdate(now, sym, 0, DepthOperation.Update, OrderBookSide.Bid, 500.24m, 350m, "MM1"));
+        depthCollector.OnDepth(new MarketDepthUpdate(now, sym, 3, DepthOperation.Update, OrderBookSide.Ask, 500.30m, 100m, "MMX")); // induce integrity
         depthCollector.ResetSymbolStream(sym);
-        depthCollector.OnDepth(new MarketDepthUpdate(now, sym, 0, DepthOperation.Insert, OrderBookSide.Bid, 500.20, 100, "MM3"));
-        depthCollector.OnDepth(new MarketDepthUpdate(now, sym, 0, DepthOperation.Insert, OrderBookSide.Ask, 500.22, 90, "MM4"));
+        depthCollector.OnDepth(new MarketDepthUpdate(now, sym, 0, DepthOperation.Insert, OrderBookSide.Bid, 500.20m, 100m, "MM3"));
+        depthCollector.OnDepth(new MarketDepthUpdate(now, sym, 0, DepthOperation.Insert, OrderBookSide.Ask, 500.22m, 90m, "MM4"));
 
-        tradeCollector.OnTrade(new MarketTradeUpdate(now, sym, 500.21m, 100, AggressorSide.Buy, SequenceNumber: 1, StreamId: "SIM", Venue: "TEST"));
+        tradeCollector.OnTrade(new MarketTradeUpdate(now, sym, 500.21m, 100, Domain.Models.AggressorSide.Buy, SequenceNumber: 1, StreamId: "SIM", Venue: "TEST"));
 
         await Task.Delay(200);
 
@@ -528,13 +528,13 @@ SUPPORT:
         }
         catch (UnauthorizedAccessException ex)
         {
-            throw new ConfigurationException(
+            throw new Application.Exceptions.ConfigurationException(
                 $"Access denied reading configuration file: {path}. Check file permissions.",
                 path, null);
         }
         catch (IOException ex)
         {
-            throw new ConfigurationException(
+            throw new Application.Exceptions.ConfigurationException(
                 $"I/O error reading configuration file: {path}. {ex.Message}",
                 path, null);
         }

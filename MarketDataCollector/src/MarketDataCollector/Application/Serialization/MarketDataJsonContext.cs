@@ -269,6 +269,8 @@ public static class JsonBenchmarkUtilities
             DateTimeOffset.UtcNow,
             "SPY",
             new Trade(
+                Timestamp: DateTimeOffset.UtcNow,
+                Symbol: "SPY",
                 Price: 450.25m,
                 Size: 100,
                 Aggressor: AggressorSide.Buy,
@@ -285,10 +287,13 @@ public static class JsonBenchmarkUtilities
     {
         for (var i = 0; i < count; i++)
         {
+            var symbol = $"SYM{i % 100}";
             yield return MarketEvent.Trade(
                 DateTimeOffset.UtcNow,
-                $"SYM{i % 100}",
+                symbol,
                 new Trade(
+                    Timestamp: DateTimeOffset.UtcNow,
+                    Symbol: symbol,
                     Price: 100m + (i % 100) * 0.01m,
                     Size: 100 + i % 1000,
                     Aggressor: i % 2 == 0 ? AggressorSide.Buy : AggressorSide.Sell,

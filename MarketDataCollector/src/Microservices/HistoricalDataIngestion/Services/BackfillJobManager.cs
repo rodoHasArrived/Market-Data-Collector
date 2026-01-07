@@ -97,7 +97,7 @@ public sealed class BackfillJobManager : IBackfillJobManager
 
     private static BackfillJobStatus ToStatus(BackfillJob job) => new(
         job.JobId, job.Symbol, job.Status, job.StartDate, job.EndDate,
-        job.RecordsProcessed, job.TotalRecords, job.ProgressPercent,
+        job.DataType, job.RecordsProcessed, job.TotalRecords, job.ProgressPercent,
         job.StartedAt, job.CompletedAt, job.ErrorMessage);
 
     internal class BackfillJob

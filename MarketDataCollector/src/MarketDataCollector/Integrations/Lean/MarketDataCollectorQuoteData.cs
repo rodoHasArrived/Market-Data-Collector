@@ -85,16 +85,16 @@ public class MarketDataCollectorQuoteData : BaseData
             {
                 Symbol = Symbol.Create(marketEvent.Symbol, SecurityType.Equity, Market.USA),
                 Time = marketEvent.Timestamp.UtcDateTime,
-                Value = quote.MidPrice,  // Use mid price as the primary value
+                Value = quote.MidPrice.GetValueOrDefault(),  // Use mid price as the primary value
                 BidPrice = quote.BidPrice,
-                BidSize = quote.BidSize,
+                BidSize = (decimal)quote.BidSize,
                 AskPrice = quote.AskPrice,
-                AskSize = quote.AskSize,
-                MidPrice = quote.MidPrice,
-                Spread = quote.Spread,
+                AskSize = (decimal)quote.AskSize,
+                MidPrice = quote.MidPrice.GetValueOrDefault(),
+                Spread = quote.Spread.GetValueOrDefault(),
                 SequenceNumber = quote.SequenceNumber,
-                BidExchange = quote.BidExchange ?? string.Empty,
-                AskExchange = quote.AskExchange ?? string.Empty
+                BidExchange = quote.Venue ?? string.Empty,
+                AskExchange = quote.Venue ?? string.Empty
             };
         }
         catch (Exception)

@@ -26,17 +26,23 @@ public class EventPipelineBenchmarks
     public void Setup()
     {
         _events = Enumerable.Range(0, EventCount)
-            .Select(i => MarketEvent.Trade(
-                DateTimeOffset.UtcNow,
-                $"SYM{i % 100}",
-                new Trade(
-                    Price: 100m + i * 0.01m,
-                    Size: 100 + i,
-                    Aggressor: i % 2 == 0 ? AggressorSide.Buy : AggressorSide.Sell,
-                    SequenceNumber: i,
-                    StreamId: "BENCH",
-                    Venue: "TEST"
-                )))
+            .Select(i =>
+            {
+                var symbol = $"SYM{i % 100}";
+                return MarketEvent.Trade(
+                    DateTimeOffset.UtcNow,
+                    symbol,
+                    new Trade(
+                        Timestamp: DateTimeOffset.UtcNow,
+                        Symbol: symbol,
+                        Price: 100m + i * 0.01m,
+                        Size: 100 + i,
+                        Aggressor: i % 2 == 0 ? AggressorSide.Buy : AggressorSide.Sell,
+                        SequenceNumber: i,
+                        StreamId: "BENCH",
+                        Venue: "TEST"
+                    ));
+            })
             .ToArray();
     }
 
@@ -160,6 +166,8 @@ public class PublishLatencyBenchmarks
             DateTimeOffset.UtcNow,
             "SPY",
             new Trade(
+                Timestamp: DateTimeOffset.UtcNow,
+                Symbol: "SPY",
                 Price: 450.25m,
                 Size: 100,
                 Aggressor: AggressorSide.Buy,

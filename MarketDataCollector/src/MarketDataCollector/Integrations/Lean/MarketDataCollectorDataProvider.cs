@@ -1,3 +1,4 @@
+using QuantConnect;
 using QuantConnect.Lean.Engine.DataFeeds;
 using QuantConnect.Logging;
 using QuantConnect.Util;
