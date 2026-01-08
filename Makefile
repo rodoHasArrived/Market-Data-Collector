@@ -15,7 +15,9 @@
 
 .PHONY: help install docker docker-build docker-up docker-down docker-logs \
         run run-ui run-backfill test build publish clean check-deps \
-        setup-config lint benchmark docs verify-adrs verify-contracts gen-context
+        setup-config lint benchmark docs verify-adrs verify-contracts gen-context \
+        doctor doctor-quick doctor-fix diagnose diagnose-build diagnose-restore diagnose-clean \
+        collect-debug collect-debug-minimal build-profile build-binlog validate-data analyze-errors
 
 # Default target
 .DEFAULT_GOAL := help
@@ -59,6 +61,9 @@ help: ## Show this help message
 	@echo ""
 	@echo "$(BLUE)Publishing:$(NC)"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'publish' | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-18s$(NC) %s\n", $$1, $$2}'
+	@echo ""
+	@echo "$(BLUE)Diagnostics:$(NC)"
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'doctor|diagnose|collect-debug|build-profile|build-binlog|validate-data|analyze-errors' | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-18s$(NC) %s\n", $$1, $$2}'
 	@echo ""
 
 # =============================================================================
@@ -243,3 +248,78 @@ gen-interfaces: ## Extract interface documentation from code
 		--src src/MarketDataCollector \
 		--output docs/generated/interfaces.md
 	@echo "$(GREEN)Generated docs/generated/interfaces.md$(NC)"
+
+# =============================================================================
+# Diagnostics
+# =============================================================================
+
+doctor: ## Run environment health check
+	@./scripts/diagnostics/doctor.sh
+
+doctor-quick: ## Run quick environment check
+	@./scripts/diagnostics/doctor.sh --quick
+
+doctor-fix: ## Run environment check and auto-fix issues
+	@./scripts/diagnostics/doctor.sh --fix
+
+diagnose: ## Run build diagnostics (alias)
+	@./scripts/diagnostics/diagnose-build.sh all
+
+diagnose-build: ## Run full build diagnostics
+	@./scripts/diagnostics/diagnose-build.sh all
+
+diagnose-restore: ## Diagnose NuGet restore issues
+	@./scripts/diagnostics/diagnose-build.sh restore
+
+diagnose-clean: ## Clean and run diagnostics
+	@./scripts/diagnostics/diagnose-build.sh clean
+
+collect-debug: ## Collect debug bundle for issue reporting
+	@./scripts/diagnostics/collect-debug.sh
+
+collect-debug-minimal: ## Collect minimal debug bundle (no config/logs)
+	@./scripts/diagnostics/collect-debug.sh --no-logs --no-config
+
+build-profile: ## Build with timing information
+	@echo "$(BLUE)Building with timing profile...$(NC)"
+	@echo ""
+	@START_TIME=$$(date +%s); \
+	echo "$(YELLOW)Phase 1: Restore$(NC)"; \
+	RESTORE_START=$$(date +%s); \
+	dotnet restore $(PROJECT) -v q 2>/dev/null; \
+	RESTORE_END=$$(date +%s); \
+	RESTORE_TIME=$$((RESTORE_END - RESTORE_START)); \
+	echo "  Completed in $${RESTORE_TIME}s"; \
+	echo ""; \
+	echo "$(YELLOW)Phase 2: Build$(NC)"; \
+	BUILD_START=$$(date +%s); \
+	dotnet build $(PROJECT) --no-restore -c Release -v q 2>/dev/null; \
+	BUILD_END=$$(date +%s); \
+	BUILD_TIME=$$((BUILD_END - BUILD_START)); \
+	echo "  Completed in $${BUILD_TIME}s"; \
+	echo ""; \
+	END_TIME=$$(date +%s); \
+	TOTAL_TIME=$$((END_TIME - START_TIME)); \
+	echo "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"; \
+	echo "$(GREEN)Build Performance Report$(NC)"; \
+	echo "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"; \
+	printf "  restore     %3ds\n" $$RESTORE_TIME; \
+	printf "  build       %3ds\n" $$BUILD_TIME; \
+	echo "  ─────────────────────────────────────────"; \
+	printf "  $(GREEN)total       %3ds$(NC)\n" $$TOTAL_TIME
+
+build-binlog: ## Build with MSBuild binary log for detailed analysis
+	@echo "$(BLUE)Building with binary log...$(NC)"
+	@dotnet build $(PROJECT) -c Release /bl:msbuild.binlog
+	@echo ""
+	@echo "$(GREEN)Binary log created: msbuild.binlog$(NC)"
+	@echo "To analyze, install MSBuild Structured Log Viewer:"
+	@echo "  dotnet tool install -g MSBuild.StructuredLogger"
+	@echo "  structuredlogviewer msbuild.binlog"
+
+validate-data: ## Validate JSONL data integrity
+	@./scripts/diagnostics/validate-data.sh data/
+
+analyze-errors: ## Analyze build output for known error patterns
+	@echo "$(BLUE)Building and analyzing for known errors...$(NC)"
+	@dotnet build $(PROJECT) 2>&1 | ./scripts/diagnostics/analyze-errors.sh
