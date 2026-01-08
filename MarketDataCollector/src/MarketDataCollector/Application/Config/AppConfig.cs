@@ -29,6 +29,8 @@ public sealed record AppConfig(
     bool Compress = false,
     [property: JsonConverter(typeof(DataSourceKindConverter))] DataSourceKind DataSource = DataSourceKind.IB,
     AlpacaOptions? Alpaca = null,
+    IBOptions? IB = null,
+    PolygonOptions? Polygon = null,
     StockSharpConfig? StockSharp = null,
     StorageConfig? Storage = null,
     SymbolConfig[]? Symbols = null,
