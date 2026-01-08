@@ -1,30 +1,37 @@
-# Performance Benchmark Workflow
-# Runs benchmarks and tracks performance over time
-
-name: Benchmarks
+name: Benchmark Performance
 
 on:
   push:
-    branches: [main]
+    branches: [ "main" ]
     paths:
       - 'src/**'
       - 'benchmarks/**'
-      - '**/*.csproj'
+      - '.github/workflows/benchmark.yml'
   pull_request:
-    branches: [main]
+    branches: [ "main" ]
     paths:
       - 'src/**'
       - 'benchmarks/**'
-      - '**/*.csproj'
-  schedule:
-    # Run weekly on Monday at 3 AM UTC
-    - cron: '0 3 * * 1'
   workflow_dispatch:
     inputs:
-      baseline_ref:
-        description: 'Git ref to compare against (branch/tag/commit)'
+      filter:
+        description: 'Benchmark filter pattern (e.g., *Parser*, *Collector*)'
         required: false
-        default: 'main'
+        default: '*'
+      compare_baseline:
+        description: 'Compare with baseline'
+        required: false
+        default: 'true'
+        type: boolean
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   DOTNET_VERSION: '9.0.x'
@@ -35,6 +42,7 @@ jobs:
   benchmark:
     name: Run Benchmarks
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -86,6 +94,40 @@ jobs:
               echo "No benchmark report found" >> $GITHUB_STEP_SUMMARY
             fi
           fi
+          cache: true
+
+      - name: Restore dependencies
+        run: dotnet restore benchmarks/MarketDataCollector.Benchmarks/MarketDataCollector.Benchmarks.csproj /p:EnableWindowsTargeting=true
+
+      - name: Build benchmarks
+        run: |
+          dotnet build benchmarks/MarketDataCollector.Benchmarks/MarketDataCollector.Benchmarks.csproj \
+            -c Release \
+            --no-restore \
+            /p:EnableWindowsTargeting=true
+
+      - name: Download baseline results
+        if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.event.inputs.compare_baseline == 'true')
+        uses: dawidd6/action-download-artifact@v3
+        with:
+          name: benchmark-baseline
+          workflow: benchmark.yml
+          branch: main
+          path: ./baseline
+        continue-on-error: true
+
+      - name: Run benchmarks
+        run: |
+          filter="${{ github.event.inputs.filter || '*' }}"
+          dotnet run --project benchmarks/MarketDataCollector.Benchmarks/MarketDataCollector.Benchmarks.csproj \
+            -c Release \
+            --no-build \
+            -- \
+            --filter "$filter" \
+            --exporters json html markdown github \
+            --memory \
+            --disasm \
+            --artifacts ./BenchmarkDotNet.Artifacts
 
       - name: Upload benchmark results
         uses: actions/upload-artifact@v4
@@ -173,6 +215,98 @@ jobs:
             }
 
             // Find existing comment to update
+          name: benchmark-results
+          path: BenchmarkDotNet.Artifacts/
+          retention-days: 30
+
+      - name: Save baseline (main branch only)
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-baseline
+          path: BenchmarkDotNet.Artifacts/results/
+          retention-days: 90
+
+      - name: Compare with baseline
+        if: github.event_name == 'pull_request'
+        id: compare
+        run: |
+          echo "## Benchmark Comparison" >> comparison.md
+          echo "" >> comparison.md
+
+          if [ -d "./baseline" ] && [ "$(ls -A ./baseline 2>/dev/null)" ]; then
+            echo "Comparing with baseline from main branch..." >> comparison.md
+            echo "" >> comparison.md
+
+            # Find JSON result files
+            current_results=$(find ./BenchmarkDotNet.Artifacts/results -name "*.json" 2>/dev/null | head -1)
+            baseline_results=$(find ./baseline -name "*.json" 2>/dev/null | head -1)
+
+            if [ -n "$current_results" ] && [ -n "$baseline_results" ]; then
+              echo "📊 Performance comparison available in artifacts" >> comparison.md
+
+              # Extract and compare key metrics (simplified comparison)
+              echo "" >> comparison.md
+              echo "### Current Run Summary" >> comparison.md
+              echo '```' >> comparison.md
+              if [ -f "./BenchmarkDotNet.Artifacts/results/MarketDataCollector.Benchmarks-report-github.md" ]; then
+                cat "./BenchmarkDotNet.Artifacts/results/MarketDataCollector.Benchmarks-report-github.md" | head -50 >> comparison.md
+              else
+                echo "Detailed results in artifacts" >> comparison.md
+              fi
+              echo '```' >> comparison.md
+            else
+              echo "⚠️ Could not find result files for comparison" >> comparison.md
+            fi
+          else
+            echo "ℹ️ No baseline available for comparison (first run or baseline expired)" >> comparison.md
+          fi
+
+          echo "" >> comparison.md
+          echo "📁 **Artifacts:** Full benchmark results, memory analysis, and disassembly available in workflow artifacts" >> comparison.md
+
+          echo "comparison_available=true" >> $GITHUB_OUTPUT
+        continue-on-error: true
+
+      - name: Comment PR with benchmark results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+
+            let comment = '## 📊 Benchmark Results\n\n';
+
+            // Read comparison file if available
+            try {
+              const comparison = fs.readFileSync('comparison.md', 'utf8');
+              comment += comparison + '\n\n';
+            } catch (e) {
+              comment += 'Benchmark suite completed successfully.\n\n';
+            }
+
+            // Try to read the GitHub markdown report
+            try {
+              const reportPath = './BenchmarkDotNet.Artifacts/results/MarketDataCollector.Benchmarks-report-github.md';
+              if (fs.existsSync(reportPath)) {
+                const report = fs.readFileSync(reportPath, 'utf8');
+                comment += '### Results\n\n';
+                comment += report.substring(0, 3000); // Limit size
+                if (report.length > 3000) {
+                  comment += '\n\n... (truncated, see artifacts for full report)';
+                }
+              }
+            } catch (e) {
+              // Ignore
+            }
+
+            comment += '\n\n---\n';
+            comment += '**Artifact name:** `benchmark-results`\n';
+            comment += '**Memory profiling:** Enabled\n';
+            comment += '**Disassembly:** Available in artifacts\n';
+
+            // Find existing comment
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -181,6 +315,8 @@ jobs:
 
             const botComment = comments.find(c =>
               c.user.type === 'Bot' && c.body.includes('📊 Benchmark Results')
+            const botComment = comments.find(comment =>
+              comment.user.type === 'Bot' && comment.body.includes('Benchmark Results')
             );
 
             if (botComment) {
@@ -203,6 +339,22 @@ jobs:
     name: Memory Profiling
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+                body: comment
+              });
+            } else {
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: comment
+              });
+            }
+
+  memory-profiling:
+    name: Memory Profiling
+    runs-on: ubuntu-latest
+    needs: benchmark
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -246,6 +398,47 @@ jobs:
             for file in memory-results/results/*.json; do
               if [ -f "$file" ]; then
                 echo "Memory benchmark results available in artifacts" >> $GITHUB_STEP_SUMMARY
+          cache: true
+
+      - name: Restore dependencies
+        run: dotnet restore benchmarks/MarketDataCollector.Benchmarks/MarketDataCollector.Benchmarks.csproj /p:EnableWindowsTargeting=true
+
+      - name: Build benchmarks
+        run: |
+          dotnet build benchmarks/MarketDataCollector.Benchmarks/MarketDataCollector.Benchmarks.csproj \
+            -c Release \
+            --no-restore \
+            /p:EnableWindowsTargeting=true
+
+      - name: Run memory-focused benchmarks
+        run: |
+          dotnet run --project benchmarks/MarketDataCollector.Benchmarks/MarketDataCollector.Benchmarks.csproj \
+            -c Release \
+            --no-build \
+            -- \
+            --filter '*' \
+            --memory \
+            --allCategories \
+            --exporters json \
+            --artifacts ./MemoryProfile
+        continue-on-error: true
+
+      - name: Analyze memory results
+        run: |
+          echo "## Memory Profile Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Date:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Find and display memory-related metrics from results
+          if [ -d "./MemoryProfile/results" ]; then
+            echo "### Memory Allocation Summary" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+
+            # Extract key metrics from JSON if available
+            for jsonfile in ./MemoryProfile/results/*.json; do
+              if [ -f "$jsonfile" ]; then
+                echo "📊 Memory profiling results available in artifacts" >> $GITHUB_STEP_SUMMARY
                 break
               fi
             done
@@ -260,3 +453,41 @@ jobs:
           name: memory-profile-${{ github.sha }}
           path: memory-results/
           retention-days: 30
+            echo "⚠️ No memory profiling results found" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload memory profile
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: memory-profile
+          path: ./MemoryProfile/
+          retention-days: 14
+
+  benchmark-summary:
+    name: Benchmark Summary
+    runs-on: ubuntu-latest
+    needs: [benchmark, memory-profiling]
+    if: always()
+
+    steps:
+      - name: Generate benchmark summary
+        run: |
+          echo "# Benchmark Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Run Date:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "## Job Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Benchmarks | ${{ needs.benchmark.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Memory Profiling | ${{ needs.memory-profiling.result == 'success' && '✅ Passed' || '⚠️ Check logs' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "## Artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **benchmark-results**: Full benchmark results with HTML, JSON, and Markdown reports" >> $GITHUB_STEP_SUMMARY
+          echo "- **benchmark-baseline**: Baseline for comparison (main branch only)" >> $GITHUB_STEP_SUMMARY
+          echo "- **memory-profile**: Detailed memory allocation analysis" >> $GITHUB_STEP_SUMMARY

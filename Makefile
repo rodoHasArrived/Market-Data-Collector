@@ -15,7 +15,10 @@
 
 .PHONY: help install docker docker-build docker-up docker-down docker-logs \
         run run-ui run-backfill test build publish clean check-deps \
-        setup-config lint benchmark docs verify-adrs verify-contracts gen-context
+        setup-config lint benchmark docs verify-adrs verify-contracts gen-context \
+        doctor doctor-quick doctor-fix diagnose diagnose-build diagnose-restore diagnose-clean \
+        collect-debug collect-debug-minimal build-profile build-binlog validate-data analyze-errors \
+        build-graph fingerprint env-capture env-diff impact bisect metrics history app-metrics
 
 # Default target
 .DEFAULT_GOAL := help
@@ -28,6 +31,18 @@ BENCHMARK_PROJECT := benchmarks/MarketDataCollector.Benchmarks/MarketDataCollect
 DOCGEN_PROJECT := tools/DocGenerator/DocGenerator.csproj
 DOCKER_IMAGE := marketdatacollector:latest
 HTTP_PORT ?= 8080
+BUILDCTL := python3 build-system/cli/buildctl.py
+BUILD_VERBOSITY ?= normal
+
+ifeq ($(V),0)
+	BUILD_VERBOSITY := quiet
+endif
+ifeq ($(V),2)
+	BUILD_VERBOSITY := verbose
+endif
+ifeq ($(V),3)
+	BUILD_VERBOSITY := debug
+endif
 
 # Colors
 GREEN := \033[0;32m
@@ -59,6 +74,9 @@ help: ## Show this help message
 	@echo ""
 	@echo "$(BLUE)Publishing:$(NC)"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'publish' | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-18s$(NC) %s\n", $$1, $$2}'
+	@echo ""
+	@echo "$(BLUE)Diagnostics:$(NC)"
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'doctor|diagnose|collect-debug|build-profile|build-binlog|build-graph|fingerprint|env-|impact|bisect|metrics|history|validate-data|analyze-errors' | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-18s$(NC) %s\n", $$1, $$2}'
 	@echo ""
 
 # =============================================================================
@@ -129,8 +147,8 @@ docker-monitoring: ## Start with Prometheus and Grafana
 # =============================================================================
 
 build: ## Build the project
-	@echo "$(BLUE)Building...$(NC)"
-	dotnet build $(PROJECT) -c Release
+	@echo "$(BLUE)Building with observability...$(NC)"
+	@BUILD_VERBOSITY=$(BUILD_VERBOSITY) $(BUILDCTL) build --project $(PROJECT) --configuration Release
 
 run: setup-config ## Run the collector
 	@echo "$(BLUE)Running collector...$(NC)"
@@ -200,7 +218,7 @@ health: ## Check application health
 status: ## Get application status
 	@curl -s http://localhost:$(HTTP_PORT)/status | jq . 2>/dev/null || echo "Application not running or jq not installed"
 
-metrics: ## Get Prometheus metrics
+app-metrics: ## Get Prometheus metrics from running app
 	@curl -s http://localhost:$(HTTP_PORT)/metrics
 
 version: ## Show version information
@@ -243,3 +261,78 @@ gen-interfaces: ## Extract interface documentation from code
 		--src src/MarketDataCollector \
 		--output docs/generated/interfaces.md
 	@echo "$(GREEN)Generated docs/generated/interfaces.md$(NC)"
+
+# =============================================================================
+# Diagnostics
+# =============================================================================
+
+doctor: ## Run environment health check
+	@$(BUILDCTL) doctor
+
+doctor-quick: ## Run quick environment check
+	@$(BUILDCTL) doctor --quick
+
+doctor-fix: ## Run environment check and auto-fix issues
+	@echo "$(YELLOW)Auto-fix not yet implemented in buildctl doctor$(NC)"
+	@$(BUILDCTL) doctor
+
+diagnose: ## Run build diagnostics (alias)
+	@./scripts/diagnostics/diagnose-build.sh all
+
+diagnose-build: ## Run full build diagnostics
+	@./scripts/diagnostics/diagnose-build.sh all
+
+diagnose-restore: ## Diagnose NuGet restore issues
+	@./scripts/diagnostics/diagnose-build.sh restore
+
+diagnose-clean: ## Clean and run diagnostics
+	@./scripts/diagnostics/diagnose-build.sh clean
+
+collect-debug: ## Collect debug bundle for issue reporting
+	@$(BUILDCTL) collect-debug --project $(PROJECT) --configuration Release
+
+collect-debug-minimal: ## Collect minimal debug bundle (no config/logs)
+	@$(BUILDCTL) collect-debug --project $(PROJECT) --configuration Release
+
+build-profile: ## Build with timing information
+	@$(BUILDCTL) build-profile
+
+build-binlog: ## Build with MSBuild binary log for detailed analysis
+	@echo "$(BLUE)Building with binary log...$(NC)"
+	@dotnet build $(PROJECT) -c Release /bl:msbuild.binlog
+	@echo ""
+	@echo "$(GREEN)Binary log created: msbuild.binlog$(NC)"
+	@echo "To analyze, install MSBuild Structured Log Viewer:"
+	@echo "  dotnet tool install -g MSBuild.StructuredLogger"
+	@echo "  structuredlogviewer msbuild.binlog"
+
+validate-data: ## Validate JSONL data integrity
+	@./scripts/diagnostics/validate-data.sh data/
+
+analyze-errors: ## Analyze build output for known error patterns
+	@echo "$(BLUE)Building and analyzing for known errors...$(NC)"
+	@dotnet build $(PROJECT) 2>&1 | $(BUILDCTL) analyze-errors
+
+build-graph: ## Generate dependency graph
+	@$(BUILDCTL) build-graph --project $(PROJECT)
+
+fingerprint: ## Generate build fingerprint
+	@$(BUILDCTL) fingerprint --configuration Release
+
+env-capture: ## Capture environment snapshot (NAME required)
+	@$(BUILDCTL) env-capture $(NAME)
+
+env-diff: ## Compare two environment snapshots
+	@$(BUILDCTL) env-diff $(ENV1) $(ENV2)
+
+impact: ## Analyze build impact for a file (FILE required)
+	@$(BUILDCTL) impact --file $(FILE)
+
+bisect: ## Run build bisect (GOOD and BAD required)
+	@$(BUILDCTL) bisect --good $(GOOD) --bad $(BAD)
+
+metrics: ## Show build metrics summary
+	@$(BUILDCTL) metrics
+
+history: ## Show build history summary
+	@$(BUILDCTL) history

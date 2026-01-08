@@ -1,0 +1,312 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "version": "1.0.0",
+  "description": "Known build errors and their solutions for Market Data Collector",
+  "lastUpdated": "2026-01-08",
+  "patterns": [
+    {
+      "id": "NETSDK1100",
+      "regex": "NETSDK1100.*Windows.*targeted",
+      "title": "Windows targeting not enabled on non-Windows platform",
+      "category": "sdk",
+      "severity": "error",
+      "description": "The project targets Windows but is being built on a non-Windows platform without the EnableWindowsTargeting flag.",
+      "solution": "Ensure EnableWindowsTargeting is set in Directory.Build.props",
+      "commands": [
+        "dotnet restore /p:EnableWindowsTargeting=true",
+        "dotnet build /p:EnableWindowsTargeting=true"
+      ],
+      "docs": "docs/troubleshooting.md#windows-targeting",
+      "autofix": {
+        "type": "property",
+        "file": "Directory.Build.props",
+        "property": "EnableWindowsTargeting",
+        "value": "true"
+      }
+    },
+    {
+      "id": "NETSDK1004",
+      "regex": "NETSDK1004.*Assets file.*not found",
+      "title": "NuGet packages not restored",
+      "category": "restore",
+      "severity": "error",
+      "description": "The project's NuGet packages have not been restored. The project.assets.json file is missing.",
+      "solution": "Run 'dotnet restore' to restore NuGet packages",
+      "commands": [
+        "dotnet restore"
+      ],
+      "docs": "docs/guides/getting-started.md#restore-packages",
+      "autofix": {
+        "type": "command",
+        "command": "dotnet restore"
+      }
+    },
+    {
+      "id": "NU1605",
+      "regex": "NU1605.*downgrade.*System\\.Text\\.Json",
+      "title": "System.Text.Json version conflict",
+      "category": "dependency",
+      "severity": "warning",
+      "description": "A package is requesting a downgrade of System.Text.Json, which can cause runtime issues.",
+      "solution": "Add explicit package reference to pin System.Text.Json version",
+      "commands": [
+        "dotnet add package System.Text.Json --version 9.0.0"
+      ],
+      "docs": "docs/troubleshooting.md#json-conflict"
+    },
+    {
+      "id": "NU1608",
+      "regex": "NU1608.*version.*higher than",
+      "title": "Package version higher than dependency constraint",
+      "category": "dependency",
+      "severity": "warning",
+      "description": "A transitive dependency resolved to a higher version than expected.",
+      "solution": "Usually safe to ignore, but check for breaking changes in the higher version"
+    },
+    {
+      "id": "CS0234",
+      "regex": "CS0234.*type or namespace.*does not exist",
+      "title": "Missing type or namespace",
+      "category": "compile",
+      "severity": "error",
+      "description": "A referenced type or namespace could not be found. This usually indicates a missing package reference or using directive.",
+      "solution": "Check if the required NuGet package is installed and the using directive is present"
+    },
+    {
+      "id": "CS0103",
+      "regex": "CS0103.*name.*does not exist",
+      "title": "Undefined identifier",
+      "category": "compile",
+      "severity": "error",
+      "description": "A variable, method, or type name is used but not defined in the current scope.",
+      "solution": "Ensure the identifier is defined or the correct using directive is present"
+    },
+    {
+      "id": "FS0001",
+      "regex": "FS0001.*type.*does not match",
+      "title": "F# type mismatch",
+      "category": "compile",
+      "severity": "error",
+      "description": "F# detected a type mismatch in an expression.",
+      "solution": "Check the expected and actual types, add explicit type annotations if needed"
+    },
+    {
+      "id": "MSB4018",
+      "regex": "MSB4018.*task.*failed unexpectedly",
+      "title": "MSBuild task crashed",
+      "category": "build",
+      "severity": "error",
+      "description": "An MSBuild task threw an unhandled exception during execution.",
+      "solution": "Check the inner exception details. This often indicates a corrupted cache or incompatible tooling.",
+      "commands": [
+        "dotnet clean",
+        "dotnet nuget locals all --clear",
+        "dotnet restore"
+      ]
+    },
+    {
+      "id": "MSB3644",
+      "regex": "MSB3644.*reference assemblies.*not found",
+      "title": "Missing reference assemblies",
+      "category": "sdk",
+      "severity": "error",
+      "description": "The .NET SDK cannot find reference assemblies for the target framework.",
+      "solution": "Install the correct .NET SDK version or targeting pack",
+      "commands": [
+        "dotnet --list-sdks"
+      ]
+    },
+    {
+      "id": "DOCKER_BUILD_FAIL",
+      "regex": "failed to solve.*docker",
+      "title": "Docker build failed",
+      "category": "docker",
+      "severity": "error",
+      "description": "The Docker build process failed.",
+      "solution": "Check Docker daemon is running and you have sufficient disk space",
+      "commands": [
+        "docker system prune -f",
+        "docker builder prune -f"
+      ]
+    },
+    {
+      "id": "DOCKER_DAEMON",
+      "regex": "Cannot connect to the Docker daemon",
+      "title": "Docker daemon not running",
+      "category": "docker",
+      "severity": "error",
+      "description": "The Docker daemon is not running or not accessible.",
+      "solution": "Start the Docker daemon",
+      "commands": [
+        "sudo systemctl start docker",
+        "# On macOS: Open Docker Desktop"
+      ]
+    },
+    {
+      "id": "HTTP_CONNECTION",
+      "regex": "Unable to load the service index for source",
+      "title": "NuGet source unreachable",
+      "category": "network",
+      "severity": "error",
+      "description": "Cannot connect to a NuGet package source.",
+      "solution": "Check network connectivity and proxy settings",
+      "commands": [
+        "dotnet nuget list source",
+        "curl -I https://api.nuget.org/v3/index.json"
+      ]
+    },
+    {
+      "id": "PORT_IN_USE",
+      "regex": "address already in use|EADDRINUSE|port.*already.*bound",
+      "title": "Port already in use",
+      "category": "runtime",
+      "severity": "error",
+      "description": "The application cannot bind to the specified port because another process is using it.",
+      "solution": "Find and stop the process using the port, or use a different port",
+      "commands": [
+        "lsof -i :8080",
+        "netstat -tulpn | grep 8080"
+      ]
+    },
+    {
+      "id": "OBJ_STALE",
+      "regex": "obj.*stale|incremental.*failed|rebuild.*required",
+      "title": "Stale build artifacts",
+      "category": "build",
+      "severity": "warning",
+      "description": "The obj folder contains stale artifacts that may cause build issues.",
+      "solution": "Clean the solution and rebuild",
+      "commands": [
+        "dotnet clean",
+        "rm -rf **/obj **/bin",
+        "dotnet build"
+      ],
+      "autofix": {
+        "type": "command",
+        "command": "dotnet clean && dotnet build"
+      }
+    },
+    {
+      "id": "SDK_NOT_FOUND",
+      "regex": "SDK.*not found|dotnet.*command not found",
+      "title": ".NET SDK not installed",
+      "category": "sdk",
+      "severity": "error",
+      "description": "The .NET SDK is not installed or not in the PATH.",
+      "solution": "Install .NET SDK from https://dot.net/download",
+      "docs": "docs/guides/getting-started.md#prerequisites"
+    },
+    {
+      "id": "WORKLOAD_MISSING",
+      "regex": "workload.*not installed|NETSDK1147",
+      "title": "Missing .NET workload",
+      "category": "sdk",
+      "severity": "error",
+      "description": "A required .NET workload is not installed.",
+      "solution": "Install the required workload",
+      "commands": [
+        "dotnet workload list",
+        "dotnet workload install <workload-name>"
+      ]
+    },
+    {
+      "id": "SSL_CERT",
+      "regex": "SSL certificate problem|CERTIFICATE_VERIFY_FAILED",
+      "title": "SSL certificate verification failed",
+      "category": "network",
+      "severity": "error",
+      "description": "SSL/TLS certificate verification failed, often due to corporate proxies or outdated CA certificates.",
+      "solution": "Update CA certificates or configure proxy settings"
+    },
+    {
+      "id": "OUT_OF_MEMORY",
+      "regex": "OutOfMemoryException|out of memory|insufficient memory",
+      "title": "Out of memory",
+      "category": "resource",
+      "severity": "error",
+      "description": "The build process ran out of memory.",
+      "solution": "Close other applications, increase available memory, or build in smaller batches",
+      "commands": [
+        "dotnet build --no-incremental /p:BuildInParallel=false"
+      ]
+    },
+    {
+      "id": "DISK_FULL",
+      "regex": "No space left on device|disk.*full|ENOSPC",
+      "title": "Disk full",
+      "category": "resource",
+      "severity": "error",
+      "description": "The disk is full and the build cannot continue.",
+      "solution": "Free up disk space by removing unused files, Docker images, or NuGet cache",
+      "commands": [
+        "dotnet nuget locals all --clear",
+        "docker system prune -af",
+        "rm -rf ~/.nuget/packages/*"
+      ]
+    },
+    {
+      "id": "PERMISSION_DENIED",
+      "regex": "Permission denied|Access.*denied|EACCES",
+      "title": "Permission denied",
+      "category": "filesystem",
+      "severity": "error",
+      "description": "The build process does not have permission to access a file or directory.",
+      "solution": "Check file permissions and ownership",
+      "commands": [
+        "ls -la",
+        "chmod -R u+rw ."
+      ]
+    },
+    {
+      "id": "LOCK_FILE",
+      "regex": "Unable to obtain lock|file.*locked|LockFileContention",
+      "title": "File locked by another process",
+      "category": "filesystem",
+      "severity": "error",
+      "description": "A file is locked by another process, preventing the build from accessing it.",
+      "solution": "Close IDEs, other build processes, or antivirus software temporarily"
+    }
+  ],
+  "categories": {
+    "sdk": {
+      "name": "SDK Issues",
+      "description": "Issues related to .NET SDK installation or configuration"
+    },
+    "restore": {
+      "name": "Package Restore",
+      "description": "Issues with NuGet package restoration"
+    },
+    "dependency": {
+      "name": "Dependency Conflicts",
+      "description": "Version conflicts between NuGet packages"
+    },
+    "compile": {
+      "name": "Compilation Errors",
+      "description": "C# or F# compilation errors"
+    },
+    "build": {
+      "name": "Build System",
+      "description": "MSBuild or dotnet build issues"
+    },
+    "docker": {
+      "name": "Docker",
+      "description": "Docker and container-related issues"
+    },
+    "network": {
+      "name": "Network",
+      "description": "Network connectivity issues"
+    },
+    "runtime": {
+      "name": "Runtime",
+      "description": "Issues that occur when running the application"
+    },
+    "resource": {
+      "name": "System Resources",
+      "description": "Memory, CPU, or disk resource issues"
+    },
+    "filesystem": {
+      "name": "File System",
+      "description": "File permission or locking issues"
+    }
+  }
+}
