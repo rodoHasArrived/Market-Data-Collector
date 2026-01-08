@@ -159,7 +159,6 @@ public sealed class OrderBookMatchingEngine
     /// Returns null if the order cannot be modified (not found or not in Open status).
     /// </summary>
     // TODO: Consider Result<T> pattern instead of null for better error handling
-    // TODO: Add test cases for edge conditions that trigger null
     public OrderResult? ModifyOrder(long orderId, decimal newPrice, int newQuantity)
     {
         lock (_matchLock)

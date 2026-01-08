@@ -392,4 +392,97 @@ public class OrderBookMatchingEngineTests
         executedTrade.Should().NotBeNull();
         executedTrade!.Quantity.Should().Be(50);
     }
+
+    [Fact]
+    public void ModifyOrder_NonExistentOrder_ShouldReturnNull()
+    {
+        // Arrange
+        var engine = new OrderBookMatchingEngine("SPY");
+
+        // Act
+        var result = engine.ModifyOrder(99999, 450.00m, 100);
+
+        // Assert
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public void ModifyOrder_CancelledOrder_ShouldReturnNull()
+    {
+        // Arrange
+        var engine = new OrderBookMatchingEngine("SPY");
+        var originalOrder = engine.SubmitOrder(new OrderRequest
+        {
+            Side = OrderBookSide.Bid,
+            Price = 450.00m,
+            Quantity = 100,
+            Type = OrderType.Limit
+        });
+        engine.CancelOrder(originalOrder.Order.OrderId);
+
+        // Act
+        var result = engine.ModifyOrder(originalOrder.Order.OrderId, 451.00m, 150);
+
+        // Assert
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public void ModifyOrder_FilledOrder_ShouldReturnNull()
+    {
+        // Arrange
+        var engine = new OrderBookMatchingEngine("SPY");
+
+        // Submit a limit ask
+        var askResult = engine.SubmitOrder(new OrderRequest
+        {
+            Side = OrderBookSide.Ask,
+            Price = 450.00m,
+            Quantity = 100,
+            Type = OrderType.Limit
+        });
+
+        // Fill it completely with a market order
+        engine.SubmitOrder(new OrderRequest
+        {
+            Side = OrderBookSide.Bid,
+            Price = 0,
+            Quantity = 100,
+            Type = OrderType.Market
+        });
+
+        // Verify the ask is filled
+        var order = engine.GetOrder(askResult.Order.OrderId);
+        order!.Status.Should().Be(OrderStatus.Filled);
+
+        // Act
+        var result = engine.ModifyOrder(askResult.Order.OrderId, 451.00m, 150);
+
+        // Assert
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public void ModifyOrder_OpenOrder_ShouldSucceed()
+    {
+        // Arrange
+        var engine = new OrderBookMatchingEngine("SPY");
+        var originalOrder = engine.SubmitOrder(new OrderRequest
+        {
+            Side = OrderBookSide.Bid,
+            Price = 450.00m,
+            Quantity = 100,
+            Type = OrderType.Limit
+        });
+
+        // Act
+        var result = engine.ModifyOrder(originalOrder.Order.OrderId, 451.00m, 150);
+
+        // Assert
+        result.Should().NotBeNull();
+        result!.Order.Price.Should().Be(451.00m);
+        result.Order.Quantity.Should().Be(150);
+        result.Order.Status.Should().Be(OrderStatus.Open);
+        engine.BestBid.Should().Be(451.00m);
+    }
 }

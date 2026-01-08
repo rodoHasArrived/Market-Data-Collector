@@ -3,6 +3,7 @@ using QuantConnect.Data;
 using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Domain.Events;
 using System.Text.Json;
+using Serilog;
 
 namespace MarketDataCollector.Integrations.Lean;
 
@@ -12,6 +13,8 @@ namespace MarketDataCollector.Integrations.Lean;
 /// </summary>
 public class MarketDataCollectorTradeData : BaseData
 {
+    private static readonly ILogger _log = Log.ForContext<MarketDataCollectorTradeData>();
+
     /// <summary>Trade price</summary>
     public decimal TradePrice { get; set; }
 
@@ -82,13 +85,26 @@ public class MarketDataCollectorTradeData : BaseData
                 AggressorSide = trade.Aggressor.ToString()
             };
         }
-        catch (Exception)
+        catch (JsonException ex)
         {
-            // TODO: Log parsing errors with error details (line, symbol, timestamp)
-            // TODO: Add telemetry for deserialization failures
+            var linePreview = line.Length > 100 ? line[..100] + "..." : line;
+            _log.Warning(ex,
+                "Failed to parse trade data JSON for {Symbol} on {Date}: {LinePreview}",
+                config.Symbol.Value,
+                date.ToString("yyyy-MM-dd"),
+                linePreview);
+            return null!;
+        }
+        catch (Exception ex)
+        {
+            var linePreview = line.Length > 100 ? line[..100] + "..." : line;
+            _log.Warning(ex,
+                "Unexpected error parsing trade data for {Symbol} on {Date}: {LinePreview}",
+                config.Symbol.Value,
+                date.ToString("yyyy-MM-dd"),
+                linePreview);
             // TODO: Implement fallback parsing logic for malformed records
             // TODO: Add unit test for various malformed JSONL formats
-            // Log parsing errors in production
             return null!;
         }
     }
