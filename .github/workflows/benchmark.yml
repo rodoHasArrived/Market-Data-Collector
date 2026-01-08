@@ -67,7 +67,7 @@ jobs:
 
       - name: Download baseline results
         if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.event.inputs.compare_baseline == 'true')
-        uses: dawidd6/action-download-artifact@v3
+        uses: dawidd6/action-download-artifact@v12
         with:
           name: benchmark-baseline
           workflow: benchmark.yml
