@@ -10,27 +10,6 @@
 **Size:** ~50+ project files across 16 projects
 **Architecture:** Event-driven, microservices-capable, layered architecture
 
-## ⚠️ CRITICAL: Known Build Issues (DO NOT ATTEMPT TO FIX)
-
-**The repository currently has intentional build errors in the microservices and F# projects.** These are known issues documented in the codebase:
-
-1. **ILogger Ambiguity Errors** (~2000+ errors): Microservices projects have ambiguous references between `Microsoft.Extensions.Logging.ILogger` and `Serilog.ILogger`. These occur in:
-   - `src/Microservices/Gateway/`
-   - `src/Microservices/QuoteIngestion/`
-   - `src/Microservices/HistoricalDataIngestion/`
-   - `src/Microservices/DataValidation/`
-   - `src/Microservices/TradeIngestion/`
-   - `src/Microservices/OrderBookIngestion/`
-
-2. **F# Type Errors**: `MarketDataCollector.FSharp` project has type errors in:
-   - `Calculations/Imbalance.fs` - Type mismatch with BookLevel
-   - `Pipeline/Transforms.fs` - Undefined 'Sides' module
-   - `Interop.fs` - Undefined 'Sides' module and indeterminate type lookup
-
-3. **ValidationResult Ambiguity**: DataValidation service has ambiguous `ValidationResult` references between custom types and MassTransit.
-
-**DO NOT attempt to fix these build errors unless explicitly asked to do so.** They are part of ongoing refactoring work.
-
 ## Build & Test Commands
 
 ### Prerequisites
@@ -48,10 +27,10 @@ cd MarketDataCollector
 # Restore dependencies (ALWAYS run first)
 dotnet restore /p:EnableWindowsTargeting=true
 
-# Build (expects errors - see Known Build Issues above)
+# Build
 dotnet build -c Release --no-restore /p:EnableWindowsTargeting=true
 
-# Run tests (only C# tests work, F# tests will fail due to F# build errors)
+# Run tests
 dotnet test tests/MarketDataCollector.Tests/MarketDataCollector.Tests.csproj -c Release --verbosity normal /p:EnableWindowsTargeting=true
 
 # Clean build artifacts
@@ -61,9 +40,9 @@ rm -rf bin/ obj/ publish/
 
 ### Test Framework
 - **Framework:** xUnit
-- **Test Projects:** 
-  - `tests/MarketDataCollector.Tests/` (C# - works)
-  - `tests/MarketDataCollector.FSharp.Tests/` (F# - has errors)
+- **Test Projects:**
+  - `tests/MarketDataCollector.Tests/` (C#)
+  - `tests/MarketDataCollector.FSharp.Tests/` (F#)
 - **Mocking:** Moq, NSubstitute, MassTransit.TestFramework
 - **Assertions:** FluentAssertions
 
@@ -111,8 +90,8 @@ MarketDataCollector/
 │   ├── MarketDataCollector.Ui/           # Web dashboard UI (C#)
 │   ├── MarketDataCollector.Uwp/          # Windows UWP desktop app
 │   ├── MarketDataCollector.Contracts/    # Shared contracts
-│   ├── MarketDataCollector.FSharp/       # F# domain library (HAS BUILD ERRORS)
-│   └── Microservices/                    # Microservices components (HAS BUILD ERRORS)
+│   ├── MarketDataCollector.FSharp/       # F# domain library
+│   └── Microservices/                    # Microservices components
 │       ├── Gateway/                      # API Gateway
 │       ├── TradeIngestion/               # Trade data service
 │       ├── QuoteIngestion/               # Quote data service
@@ -121,8 +100,8 @@ MarketDataCollector/
 │       ├── DataValidation/               # Validation service
 │       └── Shared/                       # Shared contracts
 ├── tests/
-│   ├── MarketDataCollector.Tests/        # C# unit tests (WORKING)
-│   └── MarketDataCollector.FSharp.Tests/ # F# unit tests (HAS ERRORS)
+│   ├── MarketDataCollector.Tests/        # C# unit tests
+│   └── MarketDataCollector.FSharp.Tests/ # F# unit tests
 ├── benchmarks/
 │   └── MarketDataCollector.Benchmarks/   # BenchmarkDotNet performance tests
 ├── docs/                                 # Comprehensive documentation
@@ -177,8 +156,6 @@ The CI pipeline runs on pushes to `main` and pull requests:
 3. **Release Job** (on git tags starting with 'v'):
    - Downloads all platform artifacts
    - Creates GitHub release with all platform builds
-
-**NOTE:** The CI build currently fails due to the known build errors. This is expected.
 
 ## Development Practices
 
@@ -267,7 +244,7 @@ When in doubt, refer to the extensive documentation in the `docs/` directory, pa
 → Add to appropriate layer in `src/MarketDataCollector/`, follow existing patterns
 
 **Fixing a bug?**
-→ Add test first in `tests/MarketDataCollector.Tests/`, then fix (except for known build errors)
+→ Add test first in `tests/MarketDataCollector.Tests/`, then fix
 
 **Working with providers?**
 → Look in `src/MarketDataCollector/Infrastructure/Providers/`
@@ -279,7 +256,7 @@ When in doubt, refer to the extensive documentation in the `docs/` directory, pa
 → `dotnet test tests/MarketDataCollector.Tests/` (C# tests only)
 
 **Need to build?**
-→ `dotnet restore /p:EnableWindowsTargeting=true` then `dotnet build -c Release /p:EnableWindowsTargeting=true` (expect errors)
+→ `dotnet restore /p:EnableWindowsTargeting=true` then `dotnet build -c Release /p:EnableWindowsTargeting=true`
 
 **Starting the app?**
 → `dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --ui` for web dashboard
