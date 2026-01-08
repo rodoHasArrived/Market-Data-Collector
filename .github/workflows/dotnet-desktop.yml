@@ -10,7 +10,6 @@ on:
 
 env:
   DOTNET_VERSION: '9.0.x'
-  PROJECT_PATH: 'MarketDataCollector'
 
 jobs:
   build:
@@ -29,13 +28,13 @@ jobs:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
     - name: Restore dependencies
-      run: dotnet restore ${{ env.PROJECT_PATH }} /p:EnableWindowsTargeting=true
+      run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
 
     - name: Build
-      run: dotnet build ${{ env.PROJECT_PATH }} -c Release --no-restore /p:EnableWindowsTargeting=true
+      run: dotnet build MarketDataCollector.sln -c Release --no-restore /p:EnableWindowsTargeting=true
 
     - name: Test
-      run: dotnet test ${{ env.PROJECT_PATH }} -c Release --no-build --verbosity normal /p:EnableWindowsTargeting=true --logger "console;verbosity=detailed"
+      run: dotnet test MarketDataCollector.sln -c Release --no-build --verbosity normal /p:EnableWindowsTargeting=true --logger "console;verbosity=detailed"
 
   publish:
     name: Publish ${{ matrix.rid }}
@@ -72,7 +71,7 @@ jobs:
 
     - name: Publish Collector
       run: |
-        dotnet publish ${{ env.PROJECT_PATH }}/src/MarketDataCollector/MarketDataCollector.csproj \
+        dotnet publish src/MarketDataCollector/MarketDataCollector.csproj \
           -c Release \
           -r ${{ matrix.rid }} \
           -o ./publish/collector \
@@ -84,7 +83,7 @@ jobs:
 
     - name: Publish UI
       run: |
-        dotnet publish ${{ env.PROJECT_PATH }}/src/MarketDataCollector.Ui/MarketDataCollector.Ui.csproj \
+        dotnet publish src/MarketDataCollector.Ui/MarketDataCollector.Ui.csproj \
           -c Release \
           -r ${{ matrix.rid }} \
           -o ./publish/ui \
@@ -96,8 +95,8 @@ jobs:
 
     - name: Copy configuration
       run: |
-        cp ${{ env.PROJECT_PATH }}/appsettings.json ./publish/collector/ || true
-        cp ${{ env.PROJECT_PATH }}/appsettings.json ./publish/ui/ || true
+        cp config/appsettings.json ./publish/collector/ || true
+        cp config/appsettings.json ./publish/ui/ || true
 
     - name: Create archive (Unix)
       if: runner.os != 'Windows'
