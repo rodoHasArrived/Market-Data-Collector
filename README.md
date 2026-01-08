@@ -2,7 +2,7 @@
 
 A high-performance, cross-platform market data collection system for real-time and historical market microstructure data.
 
-[![.NET](https://img.shields.io/badge/.NET-8.0-blue)](https://dotnet.microsoft.com/)
+[![.NET](https://img.shields.io/badge/.NET-9.0-blue)](https://dotnet.microsoft.com/)
 [![C#](https://img.shields.io/badge/C%23-11-blue)](https://docs.microsoft.com/en-us/dotnet/csharp/)
 [![F#](https://img.shields.io/badge/F%23-8.0-blue)](https://fsharp.org/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue)](https://www.docker.com/)

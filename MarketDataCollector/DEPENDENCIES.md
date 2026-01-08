@@ -4,7 +4,7 @@ This document describes all the NuGet packages used in the Market Data Collector
 
 ## Core Framework
 
-- **.NET 8.0** - Target framework for all projects
+- **.NET 9.0** - Target framework for all projects
 - **C# 11** - Language version with modern features (nullable reference types, records, etc.)
 
 ---
@@ -15,11 +15,11 @@ This document describes all the NuGet packages used in the Market Data Collector
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| Microsoft.Extensions.Configuration | 8.0.0 | Core configuration abstractions |
-| Microsoft.Extensions.Configuration.Json | 8.0.0 | JSON configuration provider (appsettings.json) |
-| Microsoft.Extensions.Configuration.Binder | 8.0.2 | Bind configuration to strongly-typed objects |
-| Microsoft.Extensions.Configuration.EnvironmentVariables | 8.0.0 | Environment variable configuration provider |
-| Microsoft.Extensions.Configuration.CommandLine | 8.0.0 | Command-line argument configuration provider |
+| Microsoft.Extensions.Configuration | 9.0.0 | Core configuration abstractions |
+| Microsoft.Extensions.Configuration.Json | 9.0.0 | JSON configuration provider (appsettings.json) |
+| Microsoft.Extensions.Configuration.Binder | 9.0.0 | Bind configuration to strongly-typed objects |
+| Microsoft.Extensions.Configuration.EnvironmentVariables | 9.0.0 | Environment variable configuration provider |
+| Microsoft.Extensions.Configuration.CommandLine | 9.0.0 | Command-line argument configuration provider |
 
 **Why**: The application uses `appsettings.json` for configuration with support for environment variables and command-line overrides. This allows flexible configuration across development, staging, and production environments.
 
@@ -27,8 +27,8 @@ This document describes all the NuGet packages used in the Market Data Collector
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| Microsoft.Extensions.DependencyInjection | 8.0.0 | DI container implementation |
-| Microsoft.Extensions.DependencyInjection.Abstractions | 8.0.1 | DI abstractions |
+| Microsoft.Extensions.DependencyInjection | 9.0.0 | DI container implementation |
+| Microsoft.Extensions.DependencyInjection.Abstractions | 9.0.0 | DI abstractions |
 
 **Why**: Enables clean separation of concerns, testability, and modular architecture. Used in `Program.cs` to compose the application.
 
@@ -135,8 +135,8 @@ await retryPolicy.ExecuteAsync(async () =>
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| System.Threading.Channels | 8.0.0 | Bounded channels for event pipeline |
-| System.IO.Pipelines | 8.0.0 | High-performance I/O operations |
+| System.Threading.Channels | 9.0.0 | Bounded channels for event pipeline |
+| System.IO.Pipelines | 9.0.0 | High-performance I/O operations |
 
 **Why**:
 - **Channels**: Already used in `EventPipeline.cs` for bounded queues with backpressure. Explicit reference ensures latest version.
@@ -179,7 +179,7 @@ public class AlpacaOptionsValidator : AbstractValidator<AlpacaOptions>
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| System.Net.Http.Json | 8.0.0 | JSON extension methods for HttpClient |
+| System.Net.Http.Json | 9.0.0 | JSON extension methods for HttpClient |
 
 **Why**: Simplifies REST API calls for Polygon and other HTTP-based providers. Provides `GetFromJsonAsync<T>()` and `PostAsJsonAsync<T>()` extension methods.
 
@@ -208,7 +208,7 @@ public class AlpacaOptionsValidator : AbstractValidator<AlpacaOptions>
 | MassTransit | 8.2.5 | Distributed application framework for messaging |
 | MassTransit.RabbitMQ | 8.2.5 | RabbitMQ transport for MassTransit |
 | MassTransit.Azure.ServiceBus.Core | 8.2.5 | Azure Service Bus transport |
-| Microsoft.Extensions.Hosting | 8.0.0 | Hosting abstractions for background services |
+| Microsoft.Extensions.Hosting | 9.0.0 | Hosting abstractions for background services |
 
 **Why**: MassTransit provides enterprise-grade message bus capabilities for:
 - Publishing market events to external consumers
@@ -392,7 +392,7 @@ dotnet add reference ../src/MarketDataCollector/MarketDataCollector.csproj
 
 ### Version Policy
 
-- **Major versions**: Always use latest stable .NET 8.x packages
+- **Major versions**: Always use latest stable .NET 9.x packages
 - **Security updates**: Update immediately when CVEs are announced
 - **Breaking changes**: Pin versions and test thoroughly before upgrading
 
@@ -476,8 +476,8 @@ NuGet packages are restored automatically during build. For CI/CD:
 
 ---
 
-**Version:** 1.4.0
-**Last Updated:** 2026-01-04
+**Version:** 1.6.0
+**Last Updated:** 2026-01-08
 **NuGet Package Count:** 26 (main project) + 3 (UI project)
 **Total Download Size:** ~15 MB
 **See Also:** [README.md](README.md) | [docs/architecture.md](docs/architecture.md)

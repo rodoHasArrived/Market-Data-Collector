@@ -97,7 +97,7 @@ A production-ready microservices architecture for high-throughput market data in
 
 ### Prerequisites
 - Docker and Docker Compose
-- .NET 8.0 SDK (for local development)
+- .NET 9.0 SDK (for local development)
 
 ### Start All Services
 
@@ -285,7 +285,7 @@ src/Microservices/
 
 ## Technology Stack
 
-- **.NET 8.0** - Runtime and framework
+- **.NET 9.0** - Runtime and framework
 - **ASP.NET Core** - Web framework
 - **MassTransit** - Message bus abstraction
 - **RabbitMQ** - Message broker

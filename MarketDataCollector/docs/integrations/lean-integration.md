@@ -79,7 +79,7 @@ Lean Engine
 
 ### Prerequisites
 
-- .NET 8.0 SDK or later
+- .NET 9.0 SDK or later
 - MarketDataCollector (this project)
 - QuantConnect Lean (optional for standalone testing)
 
@@ -474,7 +474,7 @@ On typical hardware:
 ✅ **Compatibility**
 - Works with existing MarketDataCollector file organization
 - Compatible with Lean Engine 2.5.x
-- Supports .NET 8.0
+- Supports .NET 9.0
 - Apache 2.0 license compatible
 
 ---

@@ -635,8 +635,8 @@ CHANGES_SUMMARY.md (new)
 
 ## Package Versions
 
-All packages use the latest stable .NET 8.0 versions as of 2026-01-01:
-- Configuration: 8.0.0 - 8.0.2
+All packages use the latest stable .NET 9.0 versions as of 2026-01-01:
+- Configuration: 9.0.0
 - Logging: Serilog 4.1.0, sinks 6.0.0+
 - Metrics: prometheus-net 8.2.1
 - Resilience: Polly 8.4.2
