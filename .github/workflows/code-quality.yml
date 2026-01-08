@@ -7,6 +7,13 @@ on:
     branches: [ "main" ]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   lint-and-format:
     name: Lint and Format Check
@@ -20,6 +27,10 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '9.0.x'
+        cache: true
+        cache-dependency-path: |
+          **/packages.lock.json
+          **/*.csproj
 
     - name: Restore dependencies
       run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
