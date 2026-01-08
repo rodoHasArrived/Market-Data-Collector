@@ -24,27 +24,27 @@ jobs:
         language: [ 'csharp' ]
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Initialize CodeQL
-      uses: github/codeql-action/init@v3
-      with:
-        languages: ${{ matrix.language }}
-        queries: security-and-quality
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-and-quality
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: '9.0.x'
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
 
-    - name: Restore dependencies
-      run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
+      - name: Restore dependencies
+        run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
 
-    - name: Build
-      run: dotnet build MarketDataCollector.sln -c Release --no-restore /p:EnableWindowsTargeting=true
+      - name: Build
+        run: dotnet build MarketDataCollector.sln -c Release --no-restore /p:EnableWindowsTargeting=true
 
-    - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v3
-      with:
-        category: "/language:${{matrix.language}}"
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{matrix.language}}"

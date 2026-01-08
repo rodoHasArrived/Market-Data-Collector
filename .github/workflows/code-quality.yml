@@ -20,57 +20,57 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: '9.0.x'
-        cache: true
-        cache-dependency-path: |
-          **/packages.lock.json
-          **/*.csproj
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+          cache: true
+          cache-dependency-path: |
+            **/packages.lock.json
+            **/*.csproj
 
-    - name: Restore dependencies
-      run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
+      - name: Restore dependencies
+        run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
 
-    - name: Check code formatting
-      run: dotnet format MarketDataCollector.sln --verify-no-changes --verbosity diagnostic
+      - name: Check code formatting
+        run: dotnet format MarketDataCollector.sln --verify-no-changes --verbosity diagnostic
 
-    - name: Run code analysis
-      run: dotnet build MarketDataCollector.sln -c Release /p:EnableWindowsTargeting=true /p:TreatWarningsAsErrors=false /p:AnalysisLevel=latest
+      - name: Run code analysis
+        run: dotnet build MarketDataCollector.sln -c Release /p:EnableWindowsTargeting=true /p:TreatWarningsAsErrors=false /p:AnalysisLevel=latest
 
   markdown-lint:
     name: Markdown Lint
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Lint Markdown files
-      uses: DavidAnson/markdownlint-cli2-action@v16
-      with:
-        globs: |
-          **/*.md
-          !**/node_modules/**
-          !**/bin/**
-          !**/obj/**
+      - name: Lint Markdown files
+        uses: DavidAnson/markdownlint-cli2-action@v16
+        with:
+          globs: |
+            **/*.md
+            !**/node_modules/**
+            !**/bin/**
+            !**/obj/**
 
   link-checker:
     name: Check Documentation Links
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Check links in Markdown files
-      uses: gaurav-nelson/github-action-markdown-link-check@v1
-      with:
-        use-quiet-mode: 'yes'
-        use-verbose-mode: 'no'
-        config-file: '.github/markdown-link-check-config.json'
-        folder-path: 'docs/'
-        max-depth: 5
+      - name: Check links in Markdown files
+        uses: gaurav-nelson/github-action-markdown-link-check@v1
+        with:
+          use-quiet-mode: 'yes'
+          use-verbose-mode: 'no'
+          config-file: '.github/markdown-link-check-config.json'
+          folder-path: 'docs/'
+          max-depth: 5
