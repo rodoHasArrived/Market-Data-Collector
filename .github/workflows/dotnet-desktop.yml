@@ -11,6 +11,9 @@ on:
 env:
   DOTNET_VERSION: '9.0.x'
 
+permissions:
+  contents: read
+
 jobs:
   build:
     name: Build and Test
@@ -121,6 +124,8 @@ jobs:
     needs: publish
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
 
     steps:
     - name: Download all artifacts
