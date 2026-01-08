@@ -82,13 +82,23 @@ public class MarketDataCollectorTradeData : BaseData
                 AggressorSide = trade.Aggressor.ToString()
             };
         }
-        catch (Exception)
+        catch (JsonException)
         {
-            // TODO: Log parsing errors with error details (line, symbol, timestamp)
-            // TODO: Add telemetry for deserialization failures
-            // TODO: Implement fallback parsing logic for malformed records
-            // TODO: Add unit test for various malformed JSONL formats
-            // Log parsing errors in production
+            // JSON parsing failed - malformed JSONL line
+            // Returning null signals Lean to skip this line and continue
+            System.Diagnostics.Trace.WriteLine($"[MarketDataCollectorTradeData] JSON parse error for line: {line?[..Math.Min(100, line?.Length ?? 0)]}...");
+            return null!;
+        }
+        catch (InvalidOperationException)
+        {
+            // Payload cast failed - unexpected event type in file
+            System.Diagnostics.Trace.WriteLine($"[MarketDataCollectorTradeData] Invalid payload type for line: {line?[..Math.Min(100, line?.Length ?? 0)]}...");
+            return null!;
+        }
+        catch (InvalidCastException)
+        {
+            // Explicit cast to Trade failed
+            System.Diagnostics.Trace.WriteLine($"[MarketDataCollectorTradeData] Cast to Trade failed for line: {line?[..Math.Min(100, line?.Length ?? 0)]}...");
             return null!;
         }
     }

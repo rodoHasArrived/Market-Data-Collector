@@ -93,13 +93,23 @@ public class MarketDataCollectorQuoteData : BaseData
                 AskExchange = quote.Venue ?? string.Empty
             };
         }
-        catch (Exception)
+        catch (JsonException)
         {
-            // TODO: Replace bare exception catch with specific exception types (JsonException, InvalidOperationException)
-            // TODO: Implement proper logging for parsing errors with error details (line, symbol, timestamp)
-            // TODO: Add metrics/counters for parse failures
-            // TODO: Consider RetryPolicy for transient failures
-            // Log parsing errors in production
+            // JSON parsing failed - malformed JSONL line
+            // Returning null signals Lean to skip this line and continue
+            System.Diagnostics.Trace.WriteLine($"[MarketDataCollectorQuoteData] JSON parse error for line: {line?[..Math.Min(100, line?.Length ?? 0)]}...");
+            return null!;
+        }
+        catch (InvalidOperationException)
+        {
+            // Payload cast failed - unexpected event type in file
+            System.Diagnostics.Trace.WriteLine($"[MarketDataCollectorQuoteData] Invalid payload type for line: {line?[..Math.Min(100, line?.Length ?? 0)]}...");
+            return null!;
+        }
+        catch (InvalidCastException)
+        {
+            // Explicit cast to BboQuotePayload failed
+            System.Diagnostics.Trace.WriteLine($"[MarketDataCollectorQuoteData] Cast to BboQuotePayload failed for line: {line?[..Math.Min(100, line?.Length ?? 0)]}...");
             return null!;
         }
     }
