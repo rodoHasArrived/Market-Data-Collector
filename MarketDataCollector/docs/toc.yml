@@ -1,3 +1,11 @@
+- name: FAQ
+  href: FAQ.md
+- name: Getting Started
+  href: GETTING_STARTED.md
+- name: Configuration
+  href: CONFIGURATION.md
+- name: Troubleshooting
+  href: TROUBLESHOOTING.md
 - name: Overview
   href: architecture.md
 - name: Domain Model
@@ -12,3 +20,9 @@
   href: why-this-architecture.md
 - name: Data Uniformity and Usability Plan
   href: data-uniformity.md
+- name: Interactive Brokers Setup
+  href: interactive-brokers-setup.md
+- name: Open Source References
+  href: open-source-references.md
+- name: Dependencies
+  href: ../DEPENDENCIES.md

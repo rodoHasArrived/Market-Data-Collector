@@ -186,6 +186,7 @@ dotnet run -- --replay ./data
 
 ## Next Steps
 
+- Read [FAQ.md](FAQ.md) for answers to "What is...?" and "Where can I find...?" questions
 - Read [CONFIGURATION.md](CONFIGURATION.md) for all configuration options
 - Check [TROUBLESHOOTING.md](TROUBLESHOOTING.md) if you encounter issues
 - Review [architecture.md](architecture.md) for system design details
