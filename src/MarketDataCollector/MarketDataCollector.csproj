@@ -156,7 +156,7 @@
 
     <!-- BenchmarkDotNet for Performance Profiling -->
     <!-- Micro-benchmarking and memory allocation analysis -->
-    <PackageReference Include="BenchmarkDotNet" Version="0.14.0" />
+    <PackageReference Include="BenchmarkDotNet" Version="0.15.8" />
 
     <!-- High-Performance WebSocket Client (Marfusios pattern) -->
     <PackageReference Include="Websocket.Client" Version="5.1.2" />
