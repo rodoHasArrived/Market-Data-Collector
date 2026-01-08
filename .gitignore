@@ -82,3 +82,6 @@ Thumbs.db
 
 # Publish output
 publish/
+
+# Node.js (for diagram generation scripts)
+node_modules/
