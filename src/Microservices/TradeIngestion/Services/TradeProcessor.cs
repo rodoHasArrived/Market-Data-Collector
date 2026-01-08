@@ -258,7 +258,11 @@ public sealed class TradeProcessor : ITradeProcessor, IAsyncDisposable
 
                 if (_config.Validation.RejectInvalid)
                 {
-                    // TODO: Consider structured logging with validation failure reason
+                    _log.Warning(
+                        "Trade rejected for {Symbol} (TradeId={TradeId}): {ValidationErrors}",
+                        trade.Symbol,
+                        trade.TradeId ?? "N/A",
+                        string.Join("; ", validationResult.Errors));
                     // TODO: Add data loss detection and alerting
                     return null;
                 }
