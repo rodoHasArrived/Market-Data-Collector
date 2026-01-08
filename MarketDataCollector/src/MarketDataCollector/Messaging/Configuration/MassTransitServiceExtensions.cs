@@ -68,7 +68,7 @@ public static class MassTransitServiceExtensions
 
         busConfig.UsingInMemory((context, cfg) =>
         {
-            ConfigureEndpoints(cfg, context, config);
+            ApplyEndpointConfiguration(cfg, context, config);
         });
     }
 
@@ -113,7 +113,7 @@ public static class MassTransitServiceExtensions
             });
 
             ConfigureRetry(cfg, config.Retry);
-            ConfigureEndpoints(cfg, context, config);
+            ApplyEndpointConfiguration(cfg, context, config);
         });
     }
 
@@ -142,7 +142,7 @@ public static class MassTransitServiceExtensions
             }
 
             ConfigureRetry(cfg, config.Retry);
-            ConfigureEndpoints(cfg, context, config);
+            ApplyEndpointConfiguration(cfg, context, config);
         });
     }
 
@@ -160,7 +160,7 @@ public static class MassTransitServiceExtensions
         });
     }
 
-    private static void ConfigureEndpoints(
+    private static void ApplyEndpointConfiguration(
         IBusFactoryConfigurator cfg,
         IBusRegistrationContext context,
         MassTransitConfig config)
@@ -172,7 +172,27 @@ public static class MassTransitServiceExtensions
                 new PrefixEntityNameFormatter(cfg.MessageTopology.EntityNameFormatter, config.EndpointPrefix));
         }
 
-        cfg.ConfigureEndpoints(context);
+        // Manually configure each registered consumer endpoint
+        // This is a workaround for MassTransit API compatibility issues
+        cfg.ReceiveEndpoint(KebabCaseEndpointNameFormatter.Instance.Consumer<TradeOccurredConsumer>(), e =>
+        {
+            e.ConfigureConsumer<TradeOccurredConsumer>(context);
+        });
+        
+        cfg.ReceiveEndpoint(KebabCaseEndpointNameFormatter.Instance.Consumer<L2SnapshotReceivedConsumer>(), e =>
+        {
+            e.ConfigureConsumer<L2SnapshotReceivedConsumer>(context);
+        });
+        
+        cfg.ReceiveEndpoint(KebabCaseEndpointNameFormatter.Instance.Consumer<BboQuoteUpdatedConsumer>(), e =>
+        {
+            e.ConfigureConsumer<BboQuoteUpdatedConsumer>(context);
+        });
+        
+        cfg.ReceiveEndpoint(KebabCaseEndpointNameFormatter.Instance.Consumer<IntegrityEventConsumer>(), e =>
+        {
+            e.ConfigureConsumer<IntegrityEventConsumer>(context);
+        });
     }
 
     private static MassTransitTransport ParseTransport(string? value)
