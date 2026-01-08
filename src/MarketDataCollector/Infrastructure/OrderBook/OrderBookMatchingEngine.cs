@@ -156,17 +156,38 @@ public sealed class OrderBookMatchingEngine
 
     /// <summary>
     /// Modify an existing order (cancel and replace).
+    /// Returns null if the order cannot be modified (not found or not in Open status).
     /// </summary>
-    // TODO: Document null return conditions (order not found or already closed)
     // TODO: Consider Result<T> pattern instead of null for better error handling
-    // TODO: Add logging for null cases to aid debugging
     // TODO: Add test cases for edge conditions that trigger null
     public OrderResult? ModifyOrder(long orderId, decimal newPrice, int newQuantity)
     {
         lock (_matchLock)
         {
-            if (!CancelOrder(orderId))
+            // Check if order exists before attempting cancellation
+            if (!_orders.TryGetValue(orderId, out var existingOrder))
+            {
+                _log.Warning("Order modification failed: order {OrderId} not found for {Symbol}", orderId, _symbol);
                 return null;
+            }
+
+            // Check if order is in a modifiable state
+            if (existingOrder.Status != OrderStatus.Open)
+            {
+                _log.Warning(
+                    "Order modification failed: order {OrderId} has status {Status}, expected {ExpectedStatus} for {Symbol}",
+                    orderId, existingOrder.Status, OrderStatus.Open, _symbol);
+                return null;
+            }
+
+            if (!CancelOrder(orderId))
+            {
+                // This shouldn't happen given the checks above, but log it for safety
+                _log.Warning(
+                    "Order modification failed: unexpected cancellation failure for order {OrderId} on {Symbol}",
+                    orderId, _symbol);
+                return null;
+            }
 
             var oldOrder = _orders[orderId];
             return SubmitOrder(new OrderRequest
