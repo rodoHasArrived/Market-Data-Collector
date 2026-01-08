@@ -121,9 +121,9 @@
     <PackageReference Include="System.Net.Http.Json" Version="9.0.0" />
 
     <!-- MassTransit - Distributed Application Framework -->
-    <PackageReference Include="MassTransit" Version="8.2.5" />
+    <PackageReference Include="MassTransit" Version="9.0.0" />
     <PackageReference Include="MassTransit.RabbitMQ" Version="8.2.5" />
-    <PackageReference Include="MassTransit.Azure.ServiceBus.Core" Version="8.2.5" />
+    <PackageReference Include="MassTransit.Azure.ServiceBus.Core" Version="9.0.0" />
 
     <!-- Hosting support for MassTransit -->
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.11" />
