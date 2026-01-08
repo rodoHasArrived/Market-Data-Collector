@@ -211,8 +211,8 @@ Retention policies automatically delete old data files based on age (`RetentionD
 
 #### Where can I find API documentation?
 
-- **API Docs Index**: [docs/api/index.md](api/index.md)
-- **DocFx**: [docs/docfx/](docfx/)
+- **API Docs Index**: [api/index.md](api/index.md)
+- **DocFx**: [docfx/](docfx/)
 
 ### Code
 
