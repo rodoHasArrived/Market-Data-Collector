@@ -27,18 +27,31 @@ docfx docs/docfx/docfx.json
 - `StatusHttpServer` - HTTP monitoring server with Prometheus metrics
 - `BackfillService` - Historical data backfill job management
 
+### Storage & Archival Layer (v1.5.0)
+- `WriteAheadLog` - Crash-safe persistence with transaction semantics
+- `ArchivalStorageService` - WAL-backed archival storage with checksums
+- `CompressionProfileManager` - Tiered compression profiles (LZ4/ZSTD/Gzip)
+- `SchemaVersionManager` - Schema versioning and automatic migration
+- `AnalysisExportService` - Analysis-ready export with tool-specific profiles
+- `AnalysisQualityReport` - Pre-export data quality assessment and reporting
+
 ### Infrastructure Layer
 
 #### Streaming Providers
 - `IBMarketDataClient` - Interactive Brokers provider (requires IBAPI build flag)
 - `AlpacaMarketDataClient` - Alpaca WebSocket provider
 - `PolygonMarketDataClient` - Polygon provider (stub)
+- `StockSharpMarketDataClient` - StockSharp connector (90+ sources)
 
 #### Historical Data Providers
 - `AlpacaHistoricalDataProvider` - Alpaca REST API for OHLCV bars
 - `YahooFinanceHistoricalDataProvider` - Yahoo Finance EOD data
 - `StooqHistoricalDataProvider` - Stooq EOD data
 - `NasdaqDataLinkHistoricalDataProvider` - Nasdaq Data Link (Quandl)
+- `AlphaVantageHistoricalDataProvider` - Alpha Vantage intraday data
+- `FinnhubHistoricalDataProvider` - Finnhub financial data
+- `TiingoHistoricalDataProvider` - Tiingo premium data
+- `PolygonHistoricalDataProvider` - Polygon aggregated data
 - `CompositeHistoricalDataProvider` - Automatic failover across providers
 
 ### Messaging Layer
@@ -51,8 +64,14 @@ docfx docs/docfx/docfx.json
 - `MarketDataCollectorQuoteData` - Custom Lean BaseData for quotes
 - `MarketDataCollectorDataProvider` - Lean IDataProvider implementation
 
+### F# Domain Library
+- `MarketEvents` - Type-safe discriminated unions for all event types
+- `ValidationPipeline` - Railway-oriented validation with error accumulation
+- `Spread/Imbalance/Aggregations` - Pure functional calculation modules
+- `Transforms` - Pipeline transformation functions for stream processing
+
 ---
 
-**Version:** 1.4.0
-**Last Updated:** 2026-01-04
-**See Also:** [architecture.md](../architecture.md) | [domains.md](../domains.md) | [lean-integration.md](../lean-integration.md)
+**Version:** 1.5.0
+**Last Updated:** 2026-01-08
+**See Also:** [Architecture Overview](../architecture/overview.md) | [Domain Model](../architecture/domains.md) | [Lean Integration](../integrations/lean-integration.md)

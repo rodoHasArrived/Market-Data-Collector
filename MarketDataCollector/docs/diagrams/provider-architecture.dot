@@ -1,0 +1,135 @@
+// Provider Architecture Diagram
+// Market Data Collector v1.5.0
+// Last Updated: 2026-01-08
+
+digraph ProviderArchitecture {
+  rankdir=TB;
+  graph [fontname="Helvetica", fontsize=12, bgcolor="white", compound=true];
+  node  [fontname="Helvetica", fontsize=10, shape=box, style="rounded,filled"];
+  edge  [fontname="Helvetica", fontsize=9, color="#4a5568"];
+
+  // Title
+  labelloc="t";
+  label="Market Data Collector - Provider Architecture";
+
+  // Interfaces
+  subgraph cluster_interfaces {
+    label="Provider Abstractions";
+    color="#805ad5";
+    style="rounded";
+
+    I_MARKET [shape=ellipse, fillcolor="#ede9fe", label="IMarketDataClient\n[Interface]"];
+    I_HISTORICAL [shape=ellipse, fillcolor="#ede9fe", label="IHistoricalDataProvider\n[Interface]"];
+    I_STREAMING [shape=ellipse, fillcolor="#ede9fe", label="IStreamingDataProvider\n[Interface]"];
+  }
+
+  // Streaming Providers
+  subgraph cluster_streaming {
+    label="Streaming Providers (Real-time)";
+    color="#2b6cb0";
+    style="rounded";
+
+    IB_CLIENT [fillcolor="#dbeafe",
+               label="IBMarketDataClient\n[⚠️ Requires IBAPI]\n\nTrades, Quotes, L2 Depth\nMarket Scanner"];
+    ALP_CLIENT [fillcolor="#dbeafe",
+                label="AlpacaMarketDataClient\n[✅ Production]\n\nTrades, Quotes\nWebSocket streaming"];
+    POL_CLIENT [fillcolor="#fee2e2",
+                label="PolygonMarketDataClient\n[❌ Stub]\n\nSynthetic heartbeat only"];
+    SS_CLIENT [fillcolor="#dbeafe",
+               label="StockSharpConnector\n[✅ Production]\n\nMulti-exchange adapter"];
+    NYSE_CLIENT [fillcolor="#dbeafe",
+                 label="NYSEMarketDataClient\n[✅ Production]\n\nNYSE-specific feeds"];
+  }
+
+  // Historical Providers
+  subgraph cluster_historical {
+    label="Historical Providers (Backfill)";
+    color="#2c7a7b";
+    style="rounded";
+
+    subgraph cluster_hist_impl {
+      label="Implemented (9 providers)";
+      style="dashed";
+
+      ALPACA_HIST [fillcolor="#d1fae5", label="Alpaca\nOHLCV, Trades, Auctions"];
+      YAHOO_HIST [fillcolor="#d1fae5", label="Yahoo Finance\n50K+ global securities"];
+      STOOQ_HIST [fillcolor="#d1fae5", label="Stooq\nGlobal equities, EOD"];
+      NASDAQ_HIST [fillcolor="#d1fae5", label="Nasdaq Data Link\nAlternative data"];
+      TIINGO_HIST [fillcolor="#d1fae5", label="Tiingo\nDividend-adjusted"];
+      FINNHUB_HIST [fillcolor="#d1fae5", label="Finnhub\nFundamentals"];
+      AV_HIST [fillcolor="#d1fae5", label="Alpha Vantage\nIntraday data"];
+      POLYGON_HIST [fillcolor="#d1fae5", label="Polygon\nHistorical bars"];
+    }
+
+    COMPOSITE [fillcolor="#fef3c7",
+               label="CompositeHistoricalDataProvider\n[Orchestrator]\n\n• Automatic failover\n• Rate-limit rotation\n• Priority selection\n• Health checking"];
+  }
+
+  // Connection Management
+  subgraph cluster_resilience {
+    label="Resilience & Connection";
+    color="#c53030";
+    style="rounded";
+
+    CONN_MGR [fillcolor="#fee2e2", label="EnhancedIBConnectionManager\nReconnect + Heartbeat"];
+    WS_POLICY [fillcolor="#fee2e2", label="WebSocketResiliencePolicy\nPolly Retry + Circuit Breaker"];
+    FAILOVER [fillcolor="#fee2e2", label="AutomaticFailoverManager\nMulti-provider failover"];
+    MULTI_CONN [fillcolor="#fee2e2", label="MultiProviderConnectionManager\nConcurrent connections"];
+  }
+
+  // Symbol Resolution
+  subgraph cluster_symbols {
+    label="Symbol Resolution";
+    color="#38a169";
+    style="rounded";
+
+    FIGI [fillcolor="#c6f6d5", label="OpenFIGI Resolver\nGlobal symbol mapping"];
+    MAPPER [fillcolor="#c6f6d5", label="SymbolMapper\nProvider-specific formats"];
+  }
+
+  // Relationships
+  I_MARKET -> IB_CLIENT [style=dashed];
+  I_MARKET -> ALP_CLIENT [style=dashed];
+  I_MARKET -> POL_CLIENT [style=dashed];
+  I_MARKET -> SS_CLIENT [style=dashed];
+  I_MARKET -> NYSE_CLIENT [style=dashed];
+
+  I_HISTORICAL -> ALPACA_HIST [style=dashed];
+  I_HISTORICAL -> YAHOO_HIST [style=dashed];
+  I_HISTORICAL -> STOOQ_HIST [style=dashed];
+  I_HISTORICAL -> NASDAQ_HIST [style=dashed];
+  I_HISTORICAL -> TIINGO_HIST [style=dashed];
+  I_HISTORICAL -> FINNHUB_HIST [style=dashed];
+  I_HISTORICAL -> AV_HIST [style=dashed];
+  I_HISTORICAL -> POLYGON_HIST [style=dashed];
+
+  COMPOSITE -> ALPACA_HIST;
+  COMPOSITE -> YAHOO_HIST;
+  COMPOSITE -> STOOQ_HIST;
+  COMPOSITE -> NASDAQ_HIST;
+  COMPOSITE -> TIINGO_HIST;
+  COMPOSITE -> FINNHUB_HIST;
+  COMPOSITE -> AV_HIST;
+  COMPOSITE -> POLYGON_HIST;
+
+  IB_CLIENT -> CONN_MGR;
+  ALP_CLIENT -> WS_POLICY;
+
+  FAILOVER -> COMPOSITE;
+  MULTI_CONN -> IB_CLIENT;
+  MULTI_CONN -> ALP_CLIENT;
+
+  FIGI -> MAPPER;
+  MAPPER -> COMPOSITE;
+
+  // Legend
+  subgraph cluster_legend {
+    label="Status Legend";
+    color="#666666";
+    style="rounded";
+
+    L1 [shape=box, fillcolor="#d1fae5", label="✅ Production Ready"];
+    L2 [shape=box, fillcolor="#fef3c7", label="⚠️ Requires Config"];
+    L3 [shape=box, fillcolor="#fee2e2", label="❌ Stub/Planned"];
+  }
+}

@@ -1,6 +1,6 @@
 # Historical Data Sources Reference
 
-**Last Updated:** 2026-01-04
+**Last Updated:** 2026-01-08
 **Version:** 1.5.0
 
 This document catalogs available free and freemium data sources for historical equity backfilling, with implementation status for each.
@@ -15,10 +15,13 @@ This document catalogs available free and freemium data sources for historical e
 | Yahoo Finance | ✅ Implemented | 50K+ global | Unlimited |
 | Stooq | ✅ Implemented | US equities | Unlimited |
 | Nasdaq Data Link | ✅ Implemented | Alternative data | Limited |
+| Tiingo | ✅ Implemented | 65K+ securities | 1K/day |
+| Finnhub | ✅ Implemented | 60K+ global | 60 calls/min |
+| Alpha Vantage | ✅ Implemented | US equities | 25/day |
+| Polygon (Historical) | ✅ Implemented | US equities | 5 calls/min |
 | Composite Provider | ✅ Implemented | Multi-source | N/A |
 | Interactive Brokers | ⚠️ Requires IBAPI | US equities | With account |
-| Polygon | ❌ Stub only | US equities | 5 calls/min |
-| Tiingo | 📋 Planned | 65K+ securities | 1K/day |
+| Polygon (Streaming) | ❌ Stub only | US equities | 5 calls/min |
 
 ---
 
@@ -151,11 +154,12 @@ dotnet build -p:DefineConstants=IBAPI
 
 ---
 
-## Planned Providers
+## Additional Implemented Providers
 
-### Tiingo
+### 6. Tiingo
 
-**Status:** 📋 Planned
+**File:** `Infrastructure/Providers/Backfill/TiingoHistoricalDataProvider.cs`
+**Status:** ✅ Production Ready
 
 | Attribute | Details |
 |-----------|---------|
@@ -173,9 +177,10 @@ https://api.tiingo.com/tiingo/daily/{symbol}/prices?startDate={from}&endDate={to
 
 ---
 
-### Finnhub
+### 7. Finnhub
 
-**Status:** 📋 Planned
+**File:** `Infrastructure/Providers/Backfill/FinnhubHistoricalDataProvider.cs`
+**Status:** ✅ Production Ready
 
 | Attribute | Details |
 |-----------|---------|
@@ -187,9 +192,10 @@ https://api.tiingo.com/tiingo/daily/{symbol}/prices?startDate={from}&endDate={to
 
 ---
 
-### Alpha Vantage
+### 8. Alpha Vantage
 
-**Status:** 📋 Planned (limited usefulness)
+**File:** `Infrastructure/Providers/Backfill/AlphaVantageHistoricalDataProvider.cs`
+**Status:** ✅ Production Ready
 
 | Attribute | Details |
 |-----------|---------|
@@ -198,6 +204,22 @@ https://api.tiingo.com/tiingo/daily/{symbol}/prices?startDate={from}&endDate={to
 | **Free Tier** | 25 requests/day (severely limited) |
 
 **Note:** Useful for intraday historical data, but free tier too limited for bulk backfill.
+
+---
+
+### 9. Polygon (Historical)
+
+**File:** `Infrastructure/Providers/Backfill/PolygonHistoricalDataProvider.cs`
+**Status:** ✅ Production Ready
+
+| Attribute | Details |
+|-----------|---------|
+| **Coverage** | US equities, options, forex, crypto |
+| **Data Types** | Daily/Minute OHLCV, trades, quotes |
+| **Free Tier** | 5 API calls/minute |
+| **Historical Depth** | 2+ years for most equities |
+
+**Note:** Streaming provider is still stub-only; historical data provider is fully functional.
 
 ---
 
@@ -237,6 +259,9 @@ https://api.tiingo.com/tiingo/daily/{symbol}/prices?startDate={from}&endDate={to
 | Yahoo Finance | Yes | Yes (adj close) | Dividends, Splits |
 | Alpaca | Yes | Yes | Dividends, Splits |
 | Tiingo | Yes | Yes (all OHLCV) | Full |
+| Finnhub | Yes | Yes | Dividends, Splits |
+| Alpha Vantage | Yes | Yes (adj close) | Dividends, Splits |
+| Polygon | Yes | Yes | Dividends, Splits |
 | Interactive Brokers | Yes | Yes | Full |
 
 ---
@@ -252,7 +277,8 @@ For bulk backfilling with multiple free-tier APIs:
 | Alpaca | Unlimited | None |
 | Tiingo | 50/hour | 72 seconds |
 | Finnhub | 60/min | 1 second |
-| Alpha Vantage | 5/min | 12 seconds |
+| Alpha Vantage | 25/day | 12 seconds |
+| Polygon | 5/min | 12 seconds |
 
 ---
 

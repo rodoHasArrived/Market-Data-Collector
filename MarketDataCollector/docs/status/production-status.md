@@ -23,12 +23,16 @@ The Market Data Collector is a mature, well-architected system with comprehensiv
 | Yahoo Finance (Historical) | ✅ Production Ready | 50K+ global securities |
 | Stooq (Historical) | ✅ Production Ready | US equities EOD |
 | Nasdaq Data Link (Historical) | ✅ Production Ready | Alternative datasets |
+| Tiingo (Historical) | ✅ Production Ready | 65K+ dividend-adjusted securities |
+| Finnhub (Historical) | ✅ Production Ready | Global securities with fundamentals |
+| Alpha Vantage (Historical) | ✅ Production Ready | Intraday historical data |
+| Polygon (Historical) | ✅ Production Ready | US equities historical data |
 | Composite Provider | ✅ Production Ready | Automatic failover with rate-limit rotation |
 | Interactive Brokers | ⚠️ Requires Build Flag | Needs IBAPI compilation constant |
 | Polygon Provider | ❌ Stub Only | Synthetic heartbeat only |
 | Monitoring | ✅ Production Ready | HTTP server, Prometheus metrics |
 | MassTransit Messaging | ✅ Production Ready | RabbitMQ, Azure Service Bus support |
-| UWP Desktop App | ✅ Production Ready | Full feature set with 8 pages |
+| UWP Desktop App | ✅ Production Ready | Full feature set with 15 pages |
 | Microservices | ✅ Production Ready | 6 services, Docker Compose orchestration |
 | QuantConnect Lean | ✅ Production Ready | Custom data types and IDataProvider |
 
@@ -274,7 +278,7 @@ When `IBAPI` is NOT defined:
 | Replace `double` with `decimal` for prices | High | Medium | High |
 | Add authentication to HTTP endpoints | High | Low | High |
 | Complete Alpaca quote message handling | Medium | Low | Medium |
-| Fix UWP/Core API endpoint mismatch | Medium | Low | Medium |
+| ~~Fix UWP/Core API endpoint mismatch~~ | ~~Medium~~ | ~~Low~~ | ~~Fixed in v1.5.0~~ |
 | Create shared contracts library | Medium | Medium | Medium |
 | Add missing integration tests | Low | High | Medium |
 
@@ -282,7 +286,7 @@ When `IBAPI` is NOT defined:
 
 ## Test Coverage
 
-### Existing Tests (40 test files):
+### Existing Tests (33 test files):
 
 **C# Tests (28 files):**
 
@@ -303,7 +307,7 @@ When `IBAPI` is NOT defined:
 | Integration | ✅ UwpCoreIntegrationTests, AlpacaQuoteRoutingTests |
 | StockSharp | ✅ StockSharpConfigTests, StockSharpConnectorFactoryTests |
 
-**F# Tests (12 files):**
+**F# Tests (5 files):**
 
 | Category | Coverage |
 |----------|----------|
@@ -311,6 +315,7 @@ When `IBAPI` is NOT defined:
 | Validation | ✅ ValidationTests.fs |
 | Calculations | ✅ CalculationTests.fs |
 | Pipeline | ✅ PipelineTests.fs |
+| Entry Point | ✅ Program.fs |
 
 ### Missing Test Coverage:
 - UWP Services (StatusService, ConfigService)

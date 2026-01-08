@@ -1,21 +1,85 @@
+// C4 Level 1: System Context Diagram
+// Market Data Collector v1.5.0
+// Last Updated: 2026-01-08
 
-    digraph G {
-      rankdir=LR;
-      graph [fontname="Helvetica", fontsize=10, bgcolor="white"];
-      node  [fontname="Helvetica", fontsize=10, shape=box, style="rounded,filled", color="#2b6cb0", fillcolor="#e8f4ff"];
-      edge  [fontname="Helvetica", fontsize=10, color="#4a5568"];
+digraph C4_Context {
+  rankdir=TB;
+  graph [fontname="Helvetica", fontsize=12, bgcolor="white", splines=ortho];
+  node  [fontname="Helvetica", fontsize=11, shape=box, style="rounded,filled"];
+  edge  [fontname="Helvetica", fontsize=9, color="#4a5568"];
 
-      Operator [shape=oval, style="filled", fillcolor="#ffffff", color="#333333", label="Operator"];
-      IB      [shape=box, style="rounded,filled", fillcolor="#f8f8f8", color="#333333", label="Interactive Brokers\nTWS/Gateway"];
-      ALP     [shape=box, style="rounded,filled", fillcolor="#f8f8f8", color="#333333", label="Alpaca\nWebSocket"];
-      UI      [shape=box, style="rounded,filled", fillcolor="#e8f4ff", color="#2b6cb0", label="IBDataCollector.Ui\nDashboard"];
-      COL     [shape=box, style="rounded,filled", fillcolor="#e6fffa", color="#2c7a7b", label="IB Data Collector\nService"];
-      DISK    [shape=cylinder, style="filled", fillcolor="#fff5f5", color="#c53030", label="Local Storage\nJSONL / Gzip"];
+  // Title
+  labelloc="t";
+  label="Market Data Collector - System Context (C4 Level 1)";
 
-      Operator -> UI;
-      UI -> COL;
-      IB -> COL;
-      ALP -> COL;
-      COL -> DISK;
-      UI -> DISK [dir=both];
-    }
+  // Actors
+  subgraph cluster_actors {
+    label="Users";
+    style=invis;
+
+    Operator [shape=oval, style="filled", fillcolor="#08427b", fontcolor="white",
+              label="Operator\n[Person]\n\nConfigures and monitors\ndata collection"];
+    Quant [shape=oval, style="filled", fillcolor="#08427b", fontcolor="white",
+           label="Quant/Analyst\n[Person]\n\nAnalyzes collected\nmarket data"];
+  }
+
+  // Main System
+  MDC [shape=box, style="rounded,filled", fillcolor="#438dd5", fontcolor="white",
+       label="Market Data Collector\n[Software System]\n\nCollects, stores, and exports\nreal-time and historical market data\nfrom multiple providers"];
+
+  // External Systems - Data Providers
+  subgraph cluster_providers {
+    label="Market Data Providers";
+    color="#999999";
+    style="dashed";
+
+    IB [shape=box, style="rounded,filled", fillcolor="#999999", fontcolor="white",
+        label="Interactive Brokers\n[External System]\n\nTWS/Gateway API"];
+    ALP [shape=box, style="rounded,filled", fillcolor="#999999", fontcolor="white",
+         label="Alpaca\n[External System]\n\nWebSocket + REST API"];
+    POL [shape=box, style="rounded,filled", fillcolor="#999999", fontcolor="white",
+         label="Polygon.io\n[External System]\n\nHistorical data API"];
+    YF [shape=box, style="rounded,filled", fillcolor="#999999", fontcolor="white",
+        label="Yahoo Finance\n[External System]\n\nHistorical OHLCV"];
+    TI [shape=box, style="rounded,filled", fillcolor="#999999", fontcolor="white",
+        label="Tiingo/Finnhub\n[External System]\n\nHistorical + fundamentals"];
+  }
+
+  // External Systems - Downstream
+  subgraph cluster_downstream {
+    label="Analysis & Trading";
+    color="#999999";
+    style="dashed";
+
+    LEAN [shape=box, style="rounded,filled", fillcolor="#999999", fontcolor="white",
+          label="QuantConnect Lean\n[External System]\n\nAlgorithmic trading engine"];
+    PYTHON [shape=box, style="rounded,filled", fillcolor="#999999", fontcolor="white",
+            label="Python/Pandas\n[External System]\n\nData analysis tools"];
+    PGSQL [shape=box, style="rounded,filled", fillcolor="#999999", fontcolor="white",
+           label="PostgreSQL/TimescaleDB\n[External System]\n\nAnalytics database"];
+  }
+
+  // Monitoring
+  PROM [shape=box, style="rounded,filled", fillcolor="#999999", fontcolor="white",
+        label="Prometheus/Grafana\n[External System]\n\nMetrics & monitoring"];
+
+  // Storage
+  DISK [shape=cylinder, style="filled", fillcolor="#999999", fontcolor="white",
+        label="Local/Cloud Storage\n[External System]\n\nJSONL, Parquet files"];
+
+  // Relationships
+  Operator -> MDC [label="Configures via\nUWP app or CLI"];
+  Quant -> MDC [label="Exports data\nfor analysis"];
+
+  IB -> MDC [label="Streams real-time\ntrades, quotes, depth"];
+  ALP -> MDC [label="Streams real-time\nmarket data"];
+  POL -> MDC [label="Historical bars\nand trades"];
+  YF -> MDC [label="Historical OHLCV"];
+  TI -> MDC [label="Historical data\n+ fundamentals"];
+
+  MDC -> DISK [label="Persists market\nevents"];
+  MDC -> LEAN [label="Exports Lean\nformat data"];
+  MDC -> PYTHON [label="Exports Parquet\nfor analysis"];
+  MDC -> PGSQL [label="Exports CSV\nwith DDL"];
+  MDC -> PROM [label="Exposes metrics\n/metrics endpoint"];
+}

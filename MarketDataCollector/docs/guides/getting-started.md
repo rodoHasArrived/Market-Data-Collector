@@ -277,5 +277,5 @@ For more issues, see [Troubleshooting](troubleshooting.md).
 ---
 
 **Version:** 1.5.0
-**Last Updated:** 2026-01-04
+**Last Updated:** 2026-01-08
 **See Also:** [HELP.md](../../HELP.md) | [Configuration](configuration.md) | [Architecture](../architecture/overview.md) | [Lean Integration](../integrations/lean-integration.md)

@@ -1,6 +1,11 @@
 - name: Documentation Home
   href: README.md
 
+- name: API Reference
+  items:
+    - name: API Overview
+      href: api/index.md
+
 - name: User Guides
   items:
     - name: Getting Started
@@ -31,14 +36,25 @@
     - name: Why This Architecture
       href: architecture/why-this-architecture.md
 
+- name: Diagrams
+  items:
+    - name: Diagrams Overview
+      href: diagrams/README.md
+
 - name: Data Providers
   items:
     - name: Data Sources
       href: providers/data-sources.md
+    - name: Provider Comparison
+      href: providers/provider-comparison.md
+    - name: Alpaca Setup
+      href: providers/alpaca-setup.md
     - name: Interactive Brokers Setup
       href: providers/interactive-brokers-setup.md
     - name: IB Free Equity Reference
       href: providers/interactive-brokers-free-equity-reference.md
+    - name: Backfill Guide
+      href: providers/backfill-guide.md
 
 - name: Integrations
   items:
@@ -53,6 +69,8 @@
   items:
     - name: Production Status
       href: status/production-status.md
+    - name: Feature Backlog
+      href: status/FEATURE_BACKLOG.md
     - name: Improvements
       href: status/improvements.md
     - name: UWP Feature Ideas
@@ -66,3 +84,8 @@
       href: reference/data-uniformity.md
     - name: Design Review Memo
       href: reference/design-review-memo.md
+
+- name: Changelogs
+  items:
+    - name: Changes Summary
+      href: changelogs/CHANGES_SUMMARY.md
