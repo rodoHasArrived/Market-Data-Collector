@@ -1,6 +1,6 @@
 # Market Data Collector - Production Status
 
-**Last Updated:** 2026-01-04
+**Last Updated:** 2026-01-08
 **Version:** 1.5.0
 **Status:** Ready for Production (with caveats)
 
@@ -50,7 +50,7 @@ The provider system is well-designed with:
 The `EventPipeline` class is production-grade:
 - System.Threading.Channels for high-throughput
 - Bounded capacity with configurable backpressure (DropOldest)
-- 100,000 event capacity
+- 100,000 event capacity (configurable)
 - Nanosecond precision timing
 - Thread-safe statistics
 
@@ -282,17 +282,35 @@ When `IBAPI` is NOT defined:
 
 ## Test Coverage
 
-### Existing Tests (21 test files):
+### Existing Tests (40 test files):
+
+**C# Tests (28 files):**
 
 | Category | Coverage |
 |----------|----------|
-| Domain Models | ✅ TradeModelTests, BboQuotePayloadTests |
+| Domain Models | ✅ TradeModelTests, BboQuotePayloadTests, OrderBookLevelTests |
 | Collectors | ✅ TradeDataCollectorTests, QuoteCollectorTests |
-| Config | ✅ ConfigValidatorTests |
+| Config | ✅ ConfigValidatorTests, MassTransitConfigTests |
 | Messaging | ✅ MassTransitPublisherTests, CompositePublisherTests |
-| Resilience | ✅ WebSocketResiliencePolicyTests, ConnectionRetryTests |
-| Storage | ✅ FilePermissionsServiceTests |
+| Resilience | ✅ WebSocketResiliencePolicyTests, ConnectionRetryIntegrationTests |
+| Storage | ✅ FilePermissionsServiceTests, StockSharpStorageTests, FormatConverterTests |
 | Serialization | ✅ HighPerformanceJsonTests |
+| Order Book | ✅ OrderBookMatchingEngineTests |
+| Indicators | ✅ TechnicalIndicatorServiceTests |
+| Data Sources | ✅ DataSourceManagerTests, FallbackOrchestratorTests, SymbolMapperTests |
+| Plugins | ✅ PluginArchitectureTests, PluginManagerTests |
+| Monitoring | ✅ PrometheusMetricsTests, GracefulShutdownTests |
+| Integration | ✅ UwpCoreIntegrationTests, AlpacaQuoteRoutingTests |
+| StockSharp | ✅ StockSharpConfigTests, StockSharpConnectorFactoryTests |
+
+**F# Tests (12 files):**
+
+| Category | Coverage |
+|----------|----------|
+| Domain | ✅ DomainTests.fs |
+| Validation | ✅ ValidationTests.fs |
+| Calculations | ✅ CalculationTests.fs |
+| Pipeline | ✅ PipelineTests.fs |
 
 ### Missing Test Coverage:
 - UWP Services (StatusService, ConfigService)
@@ -311,4 +329,4 @@ When `IBAPI` is NOT defined:
 
 ---
 
-*Report generated 2026-01-04*
+*Report generated 2026-01-08*

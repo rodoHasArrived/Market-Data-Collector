@@ -1,7 +1,7 @@
 # Market Data Collector Documentation
 
 **Version:** 1.5.0
-**Last Updated:** 2026-01-04
+**Last Updated:** 2026-01-08
 
 Welcome to the Market Data Collector documentation. This guide will help you find the information you need.
 
@@ -81,6 +81,7 @@ Project status and future planning.
 |----------|-------------|
 | [production-status.md](status/production-status.md) | Production readiness assessment |
 | [improvements.md](status/improvements.md) | Implemented and planned improvements |
+| [FEATURE_BACKLOG.md](status/FEATURE_BACKLOG.md) | Feature backlog and roadmap |
 | [uwp-feature-ideas.md](status/uwp-feature-ideas.md) | Windows desktop app feature ideas |
 
 ---

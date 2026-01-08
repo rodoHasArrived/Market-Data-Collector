@@ -5,9 +5,9 @@ If your environment prefers Sandcastle Help File Builder (SHFB):
 ## Option A: Use SHFB GUI
 1. Install SHFB
 2. Create a new SHFB project pointing at:
-   - `src/IBDataCollector/IBDataCollector.csproj`
-   - `src/IBDataCollector.Ui/IBDataCollector.Ui.csproj` (optional)
-3. Ensure XML documentation output is enabled (already set in `IBDataCollector.csproj`)
+   - `src/MarketDataCollector/MarketDataCollector.csproj`
+   - `src/MarketDataCollector.Ui/MarketDataCollector.Ui.csproj` (optional)
+3. Ensure XML documentation output is enabled (already set in `MarketDataCollector.csproj`)
 4. Build to produce HTML help
 
 ## Option B: Use DocFX (recommended)

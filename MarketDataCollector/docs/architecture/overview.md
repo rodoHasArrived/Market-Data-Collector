@@ -57,7 +57,7 @@ The architecture supports multiple deployment modes:
 ┌────────────────────────────────────┼────────────────────────────────────┐
 │                       Event Pipeline Layer                               │
 │  ┌─────────────────────────────────┴───────────────────────────────┐   │
-│  │  EventPipeline (bounded Channel<MarketEvent>, 50K capacity)     │   │
+│  │  EventPipeline (bounded Channel<MarketEvent>, 100K capacity)    │   │
 │  │  CompositePublisher → Local Storage + MassTransit Bus           │   │
 │  └──────────────┬────────────────────────────────┬─────────────────┘   │
 └─────────────────┼────────────────────────────────┼──────────────────────┘
@@ -200,7 +200,7 @@ The architecture supports multiple deployment modes:
 
 ### Event Pipeline Details
 
-* **Bounded channel** – `EventPipeline` uses `System.Threading.Channels` with configurable capacity (default 50,000) and `DropOldest` backpressure policy.
+* **Bounded channel** – `EventPipeline` uses `System.Threading.Channels` with configurable capacity (default 100,000) and `DropOldest` backpressure policy.
 * **Storage policy** – `JsonlStoragePolicy` supports multiple file organization strategies:
   - **BySymbol**: `{root}/{symbol}/{type}/{date}.jsonl` (default)
   - **ByDate**: `{root}/{date}/{symbol}/{type}.jsonl`
@@ -487,5 +487,5 @@ The system includes several high-performance features:
 ---
 
 **Version:** 1.5.0
-**Last Updated:** 2026-01-04
+**Last Updated:** 2026-01-08
 **See Also:** [c4-diagrams.md](c4-diagrams.md) | [domains.md](domains.md) | [why-this-architecture.md](why-this-architecture.md) | [Microservices README](../../src/Microservices/README.md) | [provider-management.md](provider-management.md) | [F# Integration](../integrations/fsharp-integration.md)
