@@ -45,10 +45,16 @@
   items:
     - name: Data Sources
       href: providers/data-sources.md
+    - name: Provider Comparison
+      href: providers/provider-comparison.md
+    - name: Alpaca Setup
+      href: providers/alpaca-setup.md
     - name: Interactive Brokers Setup
       href: providers/interactive-brokers-setup.md
     - name: IB Free Equity Reference
       href: providers/interactive-brokers-free-equity-reference.md
+    - name: Backfill Guide
+      href: providers/backfill-guide.md
 
 - name: Integrations
   items:
