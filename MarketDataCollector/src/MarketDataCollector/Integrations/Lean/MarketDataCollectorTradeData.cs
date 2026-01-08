@@ -84,6 +84,10 @@ public class MarketDataCollectorTradeData : BaseData
         }
         catch (Exception)
         {
+            // TODO: Log parsing errors with error details (line, symbol, timestamp)
+            // TODO: Add telemetry for deserialization failures
+            // TODO: Implement fallback parsing logic for malformed records
+            // TODO: Add unit test for various malformed JSONL formats
             // Log parsing errors in production
             return null!;
         }

@@ -449,6 +449,12 @@ public sealed record CredentialConfig
     /// </summary>
     public string? VaultPath { get; init; }
 
+    // TODO: Add validation to ensure credentials are configured before data source starts
+    // TODO: Implement vault support (AWS Secrets Manager, Azure Key Vault)
+    // TODO: Add pre-flight check for missing credentials at startup
+    // TODO: Document credential resolution order (File > Vault > Environment > Config)
+    // TODO: Add metrics for credential resolution failures
+
     /// <summary>
     /// Resolves the API key from configured source.
     /// </summary>

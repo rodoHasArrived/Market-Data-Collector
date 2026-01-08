@@ -220,6 +220,10 @@ public sealed class TradeProcessor : ITradeProcessor, IAsyncDisposable
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
+            // TODO: Implement dead letter queue for failed trades
+            // TODO: Add retry logic with backoff for transient failures
+            // TODO: Add metrics for processor error rates
+            // TODO: Document failure modes and recovery procedures
             _log.Error(ex, "Processor {Id} error", processorId);
         }
 
@@ -233,6 +237,7 @@ public sealed class TradeProcessor : ITradeProcessor, IAsyncDisposable
         try
         {
             // Deduplication check
+            // TODO: Add metrics/counters for deduplication null return scenarios
             if (_config.Processing.EnableDeduplication && !string.IsNullOrEmpty(trade.TradeId))
             {
                 var key = $"{trade.Symbol}:{trade.TradeId}";
@@ -253,6 +258,8 @@ public sealed class TradeProcessor : ITradeProcessor, IAsyncDisposable
 
                 if (_config.Validation.RejectInvalid)
                 {
+                    // TODO: Consider structured logging with validation failure reason
+                    // TODO: Add data loss detection and alerting
                     return null;
                 }
 
@@ -271,6 +278,8 @@ public sealed class TradeProcessor : ITradeProcessor, IAsyncDisposable
         }
         catch (Exception ex)
         {
+            // TODO: Document which scenarios are expected vs errors
+            // TODO: Add integration test for processor error handling
             _log.Warning(ex, "Error processing trade for {Symbol}", trade.Symbol);
             return null;
         }

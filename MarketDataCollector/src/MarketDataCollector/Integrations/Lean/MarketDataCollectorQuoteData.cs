@@ -95,6 +95,10 @@ public class MarketDataCollectorQuoteData : BaseData
         }
         catch (Exception)
         {
+            // TODO: Replace bare exception catch with specific exception types (JsonException, InvalidOperationException)
+            // TODO: Implement proper logging for parsing errors with error details (line, symbol, timestamp)
+            // TODO: Add metrics/counters for parse failures
+            // TODO: Consider RetryPolicy for transient failures
             // Log parsing errors in production
             return null!;
         }
