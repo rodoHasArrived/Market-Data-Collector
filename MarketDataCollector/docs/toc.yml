@@ -5,6 +5,8 @@
   items:
     - name: Getting Started
       href: guides/getting-started.md
+    - name: Project Context
+      href: guides/project-context.md
     - name: Configuration
       href: guides/configuration.md
     - name: Provider Implementation

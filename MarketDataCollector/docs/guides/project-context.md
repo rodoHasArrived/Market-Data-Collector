@@ -1,0 +1,97 @@
+# MarketDataCollector Project Context
+
+## Overview
+
+MarketDataCollector is a high-performance financial market data collection system built on .NET 9.0. It captures real-time and historical market data from multiple providers with production-grade reliability.
+
+## Architecture Principles
+
+1. **Provider Independence**: All data providers implement `IMarketDataClient` interface, enabling seamless swapping and concurrent multi-provider operations
+1. **No Vendor Lock-in**: Provider-agnostic interfaces with intelligent failover strategies
+1. **Security First**: Environment variable-based credential management, no plain-text secrets
+1. **Observability**: Structured logging, Prometheus metrics, health check endpoints
+1. **Modularity**: Separate projects for core logic, domain models (F#), web UI, and tests
+
+## Technology Stack
+
+- **Runtime**: .NET 9.0
+- **Languages**: C# (infrastructure), F# (domain modeling), potential C++ (hot paths)
+- **Serialization**: System.Text.Json
+- **Metrics**: OpenTelemetry, Prometheus
+- **Containerization**: Docker, Docker Compose
+- **Data Providers**: Interactive Brokers TWS API, Alpaca Markets REST/WebSocket
+
+## Project Structure
+
+```
+MarketDataCollector/
+├── src/
+│   ├── MarketDataCollector/           # Main application, entry point
+│   ├── MarketDataCollector.Domain/    # F# domain models, validation
+│   └── MarketDataCollector.Ui/        # Web dashboard, WebSocket updates
+├── tests/                              # Unit and integration tests
+├── docs/                               # Documentation
+├── deploy/                             # Kubernetes, systemd configs
+└── data/                               # Runtime data storage
+```
+
+## Key Interfaces
+
+```csharp
+// Core abstraction for all market data providers
+public interface IMarketDataClient : IAsyncDisposable
+{
+    Task ConnectAsync(CancellationToken ct = default);
+    Task DisconnectAsync();
+    Task SubscribeAsync(SymbolSubscription subscription, CancellationToken ct = default);
+    Task UnsubscribeAsync(string symbol, CancellationToken ct = default);
+    IAsyncEnumerable<MarketDataEvent> GetEventsAsync(CancellationToken ct = default);
+    ConnectionState State { get; }
+    event EventHandler<ConnectionStateChangedEventArgs>? ConnectionStateChanged;
+}
+
+// Historical data provider abstraction
+public interface IHistoricalDataProvider
+{
+    Task<IReadOnlyList<OhlcBar>> GetHistoricalBarsAsync(
+        string symbol,
+        DateTime start,
+        DateTime end,
+        BarTimeframe timeframe,
+        CancellationToken ct = default);
+
+    IAsyncEnumerable<OhlcBar> StreamHistoricalBarsAsync(
+        string symbol,
+        DateTime start,
+        DateTime end,
+        BarTimeframe timeframe,
+        CancellationToken ct = default);
+}
+```
+
+## Coding Conventions
+
+- Use `CancellationToken` on all async methods
+- Prefer `IAsyncEnumerable<T>` for streaming data
+- Use structured logging with semantic parameters: `_logger.LogInformation("Received {Count} bars for {Symbol}", bars.Count, symbol)`
+- All public APIs must have XML documentation
+- Use `sealed` on classes not designed for inheritance
+- Prefer records for immutable data transfer objects
+
+## Error Handling
+
+- Never silently swallow exceptions
+- Use structured logging for all errors
+- Implement retry policies with exponential backoff for transient failures
+- Use `Result<T, TError>` pattern in F# domain code
+- Throw `ArgumentException` for invalid inputs, `InvalidOperationException` for state errors
+
+## Configuration
+
+Configuration uses the .NET Options pattern with environment variable overrides:
+
+```csharp
+// Environment variables use double underscore for nesting
+// ALPACA__KEYID maps to Alpaca:KeyId
+services.Configure<AlpacaOptions>(configuration.GetSection("Alpaca"));
+```
