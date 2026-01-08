@@ -146,6 +146,7 @@ Comprehensive documentation is available in the `docs/` directory:
 - **[docs/architecture/c4-diagrams.md](docs/architecture/c4-diagrams.md)** - System diagrams
 - **[docs/integrations/lean-integration.md](docs/integrations/lean-integration.md)** - QuantConnect Lean integration guide and examples
 - **[docs/architecture/storage-design.md](docs/architecture/storage-design.md)** - Advanced storage organization and data management strategies
+- **[docs/build-observability.md](docs/build-observability.md)** - Build observability toolkit and CLI reference
 
 ### AI Assistant Guides
 - **[CLAUDE.md](CLAUDE.md)** - Main AI assistant guide
