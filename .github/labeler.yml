@@ -1,0 +1,78 @@
+# Auto-labeler configuration for Pull Requests
+# This file defines patterns for automatically labeling PRs based on changed files
+
+# Documentation
+documentation:
+  - changed-files:
+    - any-glob-to-any-file: ['docs/**', '*.md', 'README*']
+
+# Source code categories
+'area: core':
+  - changed-files:
+    - any-glob-to-any-file: ['src/MarketDataCollector/**', '!src/MarketDataCollector/Infrastructure/**']
+
+'area: ui':
+  - changed-files:
+    - any-glob-to-any-file: ['src/MarketDataCollector.Ui/**', 'src/MarketDataCollector.Uwp/**']
+
+'area: providers':
+  - changed-files:
+    - any-glob-to-any-file: ['src/MarketDataCollector/Infrastructure/Providers/**']
+
+'area: storage':
+  - changed-files:
+    - any-glob-to-any-file: ['src/MarketDataCollector/Storage/**']
+
+'area: microservices':
+  - changed-files:
+    - any-glob-to-any-file: ['src/Microservices/**']
+
+'area: fsharp':
+  - changed-files:
+    - any-glob-to-any-file: ['**/*.fs', '**/*.fsproj', 'src/MarketDataCollector.FSharp/**']
+
+# Tests
+tests:
+  - changed-files:
+    - any-glob-to-any-file: ['tests/**', '**/*.Tests/**', '**/*Tests.cs', '**/*Tests.fs']
+
+# Benchmarks
+benchmarks:
+  - changed-files:
+    - any-glob-to-any-file: ['benchmarks/**']
+
+# Infrastructure
+infrastructure:
+  - changed-files:
+    - any-glob-to-any-file: 
+      - '.github/**'
+      - 'deploy/**'
+      - 'Dockerfile'
+      - 'docker-compose.yml'
+      - '.dockerignore'
+
+# Build and configuration
+'build/config':
+  - changed-files:
+    - any-glob-to-any-file:
+      - '*.sln'
+      - '*.csproj'
+      - '*.fsproj'
+      - 'Directory.Build.props'
+      - 'Makefile'
+      - 'config/**'
+      - 'appsettings*.json'
+
+# Scripts
+scripts:
+  - changed-files:
+    - any-glob-to-any-file: ['scripts/**', '*.sh', '*.ps1']
+
+# Security
+security:
+  - changed-files:
+    - any-glob-to-any-file: 
+      - '**/CredentialManager.cs'
+      - '**/SecurityContext.cs'
+      - '**/*Security*'
+      - '**/*Auth*'

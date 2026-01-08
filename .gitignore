@@ -81,3 +81,9 @@ Thumbs.db
 
 # Publish output
 publish/
+
+# Workflow artifacts
+msbuild.binlog
+vulnerable-packages.txt
+coverage/
+TestResults/
