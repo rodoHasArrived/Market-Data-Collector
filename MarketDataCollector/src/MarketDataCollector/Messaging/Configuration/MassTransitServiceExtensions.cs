@@ -160,6 +160,15 @@ public static class MassTransitServiceExtensions
         });
     }
 
+    /// <summary>
+    /// Applies endpoint configuration for all registered consumers.
+    /// Manually configures each consumer endpoint as a workaround for MassTransit API compatibility issues.
+    /// </summary>
+    /// <remarks>
+    /// In MassTransit 8.x, the ConfigureEndpoints extension method should be available, but due to
+    /// package resolution or assembly binding issues, it's not found by the compiler. This method
+    /// manually configures each consumer endpoint to achieve the same result.
+    /// </remarks>
     private static void ApplyEndpointConfiguration(
         IBusFactoryConfigurator cfg,
         IBusRegistrationContext context,
@@ -173,7 +182,7 @@ public static class MassTransitServiceExtensions
         }
 
         // Manually configure each registered consumer endpoint
-        // This is a workaround for MassTransit API compatibility issues
+        // This is functionally equivalent to cfg.ConfigureEndpoints(context)
         cfg.ReceiveEndpoint(KebabCaseEndpointNameFormatter.Instance.Consumer<TradeOccurredConsumer>(), e =>
         {
             e.ConfigureConsumer<TradeOccurredConsumer>(context);
