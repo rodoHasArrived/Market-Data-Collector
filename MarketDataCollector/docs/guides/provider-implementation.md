@@ -1,198 +1,109 @@
 # Data Provider Implementation Guide
 
-## Context
+## Overview
 
-When implementing or modifying market data providers in MarketDataCollector, follow these patterns for consistency and reliability.
+This guide covers patterns for implementing market data providers in MarketDataCollector. Follow these patterns for consistency and reliability.
 
-## Provider Implementation Checklist
+## Implementation Checklist
 
-1. Implement `IMarketDataClient` interface
-1. Support both real-time streaming and snapshot queries
-1. Handle reconnection with exponential backoff
-1. Emit connection state change events
-1. Support graceful shutdown via `CancellationToken`
-1. Log all significant events with structured logging
+Before writing code, ensure your provider will:
 
-## Interactive Brokers Provider Pattern
+- [ ] Implement `IMarketDataClient` interface fully
+- [ ] Use `Channel<T>` for thread-safe event buffering
+- [ ] Handle reconnection with exponential backoff
+- [ ] Emit `ConnectionStateChanged` events on all state transitions
+- [ ] Support graceful shutdown via `CancellationToken`
+- [ ] Log all connection events with structured logging
+
+## Required Class Structure
+
+Every provider must follow this structure:
 
 ```csharp
-public sealed class IBMarketDataClient : IMarketDataClient
+public sealed class {Provider}MarketDataClient : IMarketDataClient
 {
-    private readonly IBClientOptions _options;
-    private readonly ILogger<IBMarketDataClient> _logger;
-    private readonly EClientSocket _clientSocket;
-    private readonly Channel<MarketDataEvent> _eventChannel;
+    // 1. Dependencies via constructor injection
+    private readonly {Provider}Options _options;
+    private readonly ILogger<{Provider}MarketDataClient> _logger;
+
+    // 2. Event channel with bounded capacity
+    private readonly Channel<MarketDataEvent> _eventChannel =
+        Channel.CreateBounded<MarketDataEvent>(new BoundedChannelOptions(10_000)
+        {
+            FullMode = BoundedChannelFullMode.DropOldest
+        });
+
+    // 3. Connection state management
     private ConnectionState _state = ConnectionState.Disconnected;
+    public ConnectionState State => _state;
+    public event EventHandler<ConnectionStateChangedEventArgs>? ConnectionStateChanged;
 
-    public IBMarketDataClient(
-        IOptions<IBClientOptions> options,
-        ILogger<IBMarketDataClient> logger)
-    {
-        _options = options.Value;
-        _logger = logger;
-        _eventChannel = Channel.CreateBounded<MarketDataEvent>(
-            new BoundedChannelOptions(10_000)
-            {
-                FullMode = BoundedChannelFullMode.DropOldest,
-                SingleReader = false,
-                SingleWriter = false
-            });
-    }
-
-    public async Task ConnectAsync(CancellationToken ct = default)
-    {
-        UpdateState(ConnectionState.Connecting);
-
-        try
-        {
-            _clientSocket.eConnect(
-                _options.Host,
-                _options.Port,
-                _options.ClientId);
-
-            // Wait for connection confirmation
-            await WaitForConnectionAsync(ct);
-
-            UpdateState(ConnectionState.Connected);
-            _logger.LogInformation(
-                "Connected to IB Gateway at {Host}:{Port} with ClientId {ClientId}",
-                _options.Host, _options.Port, _options.ClientId);
-        }
-        catch (Exception ex)
-        {
-            UpdateState(ConnectionState.Error);
-            _logger.LogError(ex,
-                "Failed to connect to IB Gateway at {Host}:{Port}",
-                _options.Host, _options.Port);
-            throw;
-        }
-    }
-
-    public async IAsyncEnumerable<MarketDataEvent> GetEventsAsync(
-        [EnumeratorCancellation] CancellationToken ct = default)
-    {
-        await foreach (var evt in _eventChannel.Reader.ReadAllAsync(ct))
-        {
-            yield return evt;
-        }
-    }
-
+    // 4. Always update state through this method
     private void UpdateState(ConnectionState newState)
     {
         var oldState = _state;
         _state = newState;
-        ConnectionStateChanged?.Invoke(this,
-            new ConnectionStateChangedEventArgs(oldState, newState));
+        ConnectionStateChanged?.Invoke(this, new(oldState, newState));
     }
 }
 ```
 
-## Alpaca Provider Pattern
+## Connection Pattern
 
 ```csharp
-public sealed class AlpacaMarketDataClient : IMarketDataClient
+public async Task ConnectAsync(CancellationToken ct = default)
 {
-    private readonly AlpacaOptions _options;
-    private readonly ILogger<AlpacaMarketDataClient> _logger;
-    private readonly HttpClient _httpClient;
-    private IAlpacaDataStreamingClient? _streamingClient;
-    private readonly Channel<MarketDataEvent> _eventChannel;
-
-    public async Task ConnectAsync(CancellationToken ct = default)
+    UpdateState(ConnectionState.Connecting);
+    try
     {
-        UpdateState(ConnectionState.Connecting);
-
-        var environment = _options.UsePaper
-            ? Environments.Paper
-            : Environments.Live;
-
-        _streamingClient = environment
-            .GetAlpacaDataStreamingClient(
-                new SecretKey(_options.KeyId, _options.SecretKey));
-
-        var authStatus = await _streamingClient
-            .ConnectAndAuthenticateAsync(ct);
-
-        if (authStatus != AuthStatus.Authorized)
-        {
-            UpdateState(ConnectionState.Error);
-            throw new InvalidOperationException(
-                $"Alpaca authentication failed: {authStatus}");
-        }
-
+        // Provider-specific connection logic
+        await EstablishConnectionAsync(ct);
         UpdateState(ConnectionState.Connected);
-        _logger.LogInformation(
-            "Connected to Alpaca {Environment} streaming API",
-            _options.UsePaper ? "Paper" : "Live");
+        _logger.LogInformation("Connected to {Provider}", nameof(Provider));
     }
-
-    public async Task SubscribeAsync(
-        SymbolSubscription subscription,
-        CancellationToken ct = default)
+    catch (Exception ex)
     {
-        ArgumentNullException.ThrowIfNull(subscription);
-
-        if (_streamingClient is null)
-            throw new InvalidOperationException("Not connected");
-
-        if (subscription.SubscribeTrades)
-        {
-            var tradeSubscription = _streamingClient
-                .GetTradeSubscription(subscription.Symbol);
-            tradeSubscription.Received += OnTradeReceived;
-            await _streamingClient.SubscribeAsync(tradeSubscription, ct);
-        }
-
-        if (subscription.SubscribeQuotes)
-        {
-            var quoteSubscription = _streamingClient
-                .GetQuoteSubscription(subscription.Symbol);
-            quoteSubscription.Received += OnQuoteReceived;
-            await _streamingClient.SubscribeAsync(quoteSubscription, ct);
-        }
-
-        _logger.LogInformation(
-            "Subscribed to {Symbol} (Trades={Trades}, Quotes={Quotes})",
-            subscription.Symbol,
-            subscription.SubscribeTrades,
-            subscription.SubscribeQuotes);
+        UpdateState(ConnectionState.Error);
+        _logger.LogError(ex, "Failed to connect to {Provider}", nameof(Provider));
+        throw;
     }
+}
+```
+
+## Event Streaming Pattern
+
+```csharp
+public async IAsyncEnumerable<MarketDataEvent> GetEventsAsync(
+    [EnumeratorCancellation] CancellationToken ct = default)
+{
+    await foreach (var evt in _eventChannel.Reader.ReadAllAsync(ct))
+        yield return evt;
 }
 ```
 
 ## Reconnection Strategy
 
+Implement exponential backoff for resilient connections:
+
 ```csharp
-public sealed class ReconnectingClientWrapper : IMarketDataClient
+public async Task ConnectWithRetryAsync(CancellationToken ct)
 {
-    private readonly IMarketDataClient _innerClient;
-    private readonly ReconnectionOptions _options;
-    private readonly ILogger _logger;
+    var delay = TimeSpan.FromSeconds(1);
+    const int maxRetries = 5;
 
-    public async Task ConnectWithRetryAsync(CancellationToken ct)
+    for (int attempt = 1; attempt <= maxRetries && !ct.IsCancellationRequested; attempt++)
     {
-        var delay = _options.InitialDelay;
-        var attempt = 0;
-
-        while (!ct.IsCancellationRequested)
+        try
         {
-            try
-            {
-                await _innerClient.ConnectAsync(ct);
-                return; // Success
-            }
-            catch (Exception ex) when (attempt < _options.MaxRetries)
-            {
-                attempt++;
-                _logger.LogWarning(ex,
-                    "Connection attempt {Attempt} failed, retrying in {Delay}ms",
-                    attempt, delay.TotalMilliseconds);
-
-                await Task.Delay(delay, ct);
-                delay = TimeSpan.FromMilliseconds(
-                    Math.Min(delay.TotalMilliseconds * 2,
-                             _options.MaxDelay.TotalMilliseconds));
-            }
+            await ConnectAsync(ct);
+            return;
+        }
+        catch (Exception ex) when (attempt < maxRetries)
+        {
+            _logger.LogWarning(ex, "Attempt {Attempt}/{MaxRetries} failed, retry in {Delay}s",
+                attempt, maxRetries, delay.TotalSeconds);
+            await Task.Delay(delay, ct);
+            delay = TimeSpan.FromSeconds(Math.Min(delay.TotalSeconds * 2, 30));
         }
     }
 }
@@ -203,16 +114,13 @@ public sealed class ReconnectingClientWrapper : IMarketDataClient
 Always create mock implementations for unit testing:
 
 ```csharp
-public sealed class MockMarketDataClient : IMarketDataClient
+public sealed class Mock{Provider}Client : IMarketDataClient
 {
     private readonly Channel<MarketDataEvent> _channel;
     public ConnectionState State { get; private set; }
 
     public void SimulateTrade(string symbol, decimal price, decimal volume)
-    {
-        var trade = new TradeEvent(symbol, price, volume, DateTimeOffset.UtcNow);
-        _channel.Writer.TryWrite(trade);
-    }
+        => _channel.Writer.TryWrite(new TradeEvent(symbol, price, volume, DateTimeOffset.UtcNow));
 
     public void SimulateDisconnection()
     {
@@ -227,8 +135,20 @@ public sealed class MockMarketDataClient : IMarketDataClient
 
 ## Performance Considerations
 
-- Use `Channel<T>` for thread-safe event buffering
-- Consider `BoundedChannelFullMode.DropOldest` for high-frequency data
-- Pool `HttpClient` instances via `IHttpClientFactory`
-- Use `ValueTask` when operations often complete synchronously
-- Avoid allocations in hot paths - use `Span<T>` and `ArrayPool<T>`
+| Technique | When to Use |
+|-----------|-------------|
+| `Channel<T>` with bounded capacity | Thread-safe event buffering |
+| `BoundedChannelFullMode.DropOldest` | High-frequency data where latest matters |
+| `IHttpClientFactory` | Any HTTP-based provider |
+| `ValueTask` | Operations that often complete synchronously |
+| `Span<T>` and `ArrayPool<T>` | Hot paths with frequent allocations |
+
+## Common Mistakes to Avoid
+
+| Mistake | Consequence |
+|---------|-------------|
+| Forgetting to call `UpdateState()` on connection failure | Consumers don't know connection died |
+| Not using `CancellationToken` throughout async chain | Graceful shutdown fails |
+| Creating unbounded channels for high-frequency data | Memory exhaustion |
+| Swallowing exceptions in event handlers | Silent data loss |
+| Not disposing resources in `DisposeAsync()` | Resource leaks |

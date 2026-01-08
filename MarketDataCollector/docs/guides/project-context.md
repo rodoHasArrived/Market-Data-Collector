@@ -2,24 +2,36 @@
 
 ## Overview
 
-MarketDataCollector is a high-performance financial market data collection system built on .NET 9.0. It captures real-time and historical market data from multiple providers with production-grade reliability.
+MarketDataCollector is a high-performance market data collection system on .NET 9.0 that captures real-time and historical data from multiple providers with production-grade reliability.
+
+## Critical Rules
+
+When contributing to this project, always follow these rules:
+
+- **ALWAYS** use `CancellationToken` on async methods
+- **NEVER** store secrets in code or config files - use environment variables
+- **ALWAYS** use structured logging with semantic parameters
+- **PREFER** `IAsyncEnumerable<T>` for streaming data over collections
+- **ALWAYS** mark classes as `sealed` unless designed for inheritance
 
 ## Architecture Principles
 
 1. **Provider Independence**: All data providers implement `IMarketDataClient` interface, enabling seamless swapping and concurrent multi-provider operations
-1. **No Vendor Lock-in**: Provider-agnostic interfaces with intelligent failover strategies
-1. **Security First**: Environment variable-based credential management, no plain-text secrets
-1. **Observability**: Structured logging, Prometheus metrics, health check endpoints
-1. **Modularity**: Separate projects for core logic, domain models (F#), web UI, and tests
+2. **No Vendor Lock-in**: Provider-agnostic interfaces with intelligent failover strategies
+3. **Security First**: Environment variable-based credential management, no plain-text secrets
+4. **Observability**: Structured logging, Prometheus metrics, health check endpoints
+5. **Modularity**: Separate projects for core logic, domain models (F#), web UI, and tests
 
 ## Technology Stack
 
-- **Runtime**: .NET 9.0
-- **Languages**: C# (infrastructure), F# (domain modeling), potential C++ (hot paths)
-- **Serialization**: System.Text.Json
-- **Metrics**: OpenTelemetry, Prometheus
-- **Containerization**: Docker, Docker Compose
-- **Data Providers**: Interactive Brokers TWS API, Alpaca Markets REST/WebSocket
+| Component | Technology |
+|-----------|------------|
+| Runtime | .NET 9.0 |
+| Languages | C# (infrastructure), F# (domain modeling) |
+| Serialization | System.Text.Json |
+| Metrics | OpenTelemetry, Prometheus |
+| Containerization | Docker, Docker Compose |
+| Data Providers | Interactive Brokers TWS API, Alpaca Markets REST/WebSocket |
 
 ## Project Structure
 
@@ -37,8 +49,11 @@ MarketDataCollector/
 
 ## Key Interfaces
 
+### IMarketDataClient
+
+Core abstraction for all real-time market data providers:
+
 ```csharp
-// Core abstraction for all market data providers
 public interface IMarketDataClient : IAsyncDisposable
 {
     Task ConnectAsync(CancellationToken ct = default);
@@ -49,8 +64,13 @@ public interface IMarketDataClient : IAsyncDisposable
     ConnectionState State { get; }
     event EventHandler<ConnectionStateChangedEventArgs>? ConnectionStateChanged;
 }
+```
 
-// Historical data provider abstraction
+### IHistoricalDataProvider
+
+Historical data provider abstraction:
+
+```csharp
 public interface IHistoricalDataProvider
 {
     Task<IReadOnlyList<OhlcBar>> GetHistoricalBarsAsync(
@@ -71,22 +91,15 @@ public interface IHistoricalDataProvider
 
 ## Coding Conventions
 
-- Use `CancellationToken` on all async methods
-- Prefer `IAsyncEnumerable<T>` for streaming data
-- Use structured logging with semantic parameters: `_logger.LogInformation("Received {Count} bars for {Symbol}", bars.Count, symbol)`
-- All public APIs must have XML documentation
-- Use `sealed` on classes not designed for inheritance
-- Prefer records for immutable data transfer objects
+### Logging
 
-## Error Handling
+Use structured logging with semantic parameters:
 
-- Never silently swallow exceptions
-- Use structured logging for all errors
-- Implement retry policies with exponential backoff for transient failures
-- Use `Result<T, TError>` pattern in F# domain code
-- Throw `ArgumentException` for invalid inputs, `InvalidOperationException` for state errors
+```csharp
+_logger.LogInformation("Received {Count} bars for {Symbol}", bars.Count, symbol);
+```
 
-## Configuration
+### Configuration
 
 Configuration uses the .NET Options pattern with environment variable overrides:
 
@@ -95,3 +108,20 @@ Configuration uses the .NET Options pattern with environment variable overrides:
 // ALPACA__KEYID maps to Alpaca:KeyId
 services.Configure<AlpacaOptions>(configuration.GetSection("Alpaca"));
 ```
+
+### Error Handling
+
+- Log all errors with context
+- Use exponential backoff for retries
+- Throw `ArgumentException` for bad inputs, `InvalidOperationException` for state errors
+- Use `Result<T, TError>` in F# code
+
+## Anti-Patterns to Avoid
+
+| Anti-Pattern | Why It's Bad |
+|--------------|--------------|
+| Swallowing exceptions silently | Hides bugs, makes debugging impossible |
+| Hardcoding connection strings or credentials | Security risk, inflexible deployment |
+| Using `Task.Run` for I/O-bound operations | Wastes thread pool threads |
+| Blocking async code with `.Result` or `.Wait()` | Can cause deadlocks |
+| Creating new `HttpClient` instances | Socket exhaustion, DNS issues |
