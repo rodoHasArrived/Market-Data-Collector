@@ -5,7 +5,7 @@ This directory contains automated CI/CD workflows for the Market Data Collector 
 ## Overview of Workflows
 
 ### 1. Build and Release (`dotnet-desktop.yml`)
-**Triggers:** Push to `main`, Pull requests, Git tags starting with `v*`
+**Triggers:** Push to `main`, Pull requests, Git tags starting with `v*`, Manual dispatch
 
 The main build and release pipeline that:
 - Builds and tests the .NET solution

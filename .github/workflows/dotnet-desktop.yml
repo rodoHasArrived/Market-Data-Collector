@@ -7,6 +7,14 @@ on:
       - 'v*'
   pull_request:
     branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-release-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   DOTNET_VERSION: '9.0.x'
@@ -26,6 +34,7 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
+        cache: true
 
     - name: Restore dependencies
       run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
@@ -68,6 +77,7 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
+        cache: true
 
     - name: Publish Collector
       run: |
@@ -121,24 +131,27 @@ jobs:
     needs: publish
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
 
     steps:
     - name: Download all artifacts
       uses: actions/download-artifact@v4
       with:
         path: artifacts
+        merge-multiple: true
 
     - name: Display structure
-      run: ls -R artifacts
+      run: find artifacts -maxdepth 2 -type f
 
     - name: Create Release
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       with:
         files: |
-          artifacts/MarketDataCollector-linux-x64/*
-          artifacts/MarketDataCollector-win-x64/*
-          artifacts/MarketDataCollector-osx-x64/*
-          artifacts/MarketDataCollector-osx-arm64/*
+          artifacts/MarketDataCollector-linux-x64*
+          artifacts/MarketDataCollector-win-x64*
+          artifacts/MarketDataCollector-osx-x64*
+          artifacts/MarketDataCollector-osx-arm64*
         generate_release_notes: true
         draft: false
         prerelease: false
