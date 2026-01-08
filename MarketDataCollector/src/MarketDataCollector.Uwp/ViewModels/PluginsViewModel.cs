@@ -450,6 +450,63 @@ public partial class PluginsViewModel : ObservableObject, IDisposable
         }
     }
 
+    /// <summary>
+    /// Updates plugin configuration with new priority.
+    /// </summary>
+    [RelayCommand]
+    public async Task<bool> UpdatePluginConfigurationAsync(string pluginId, int? priority)
+    {
+        if (_pluginManager == null || string.IsNullOrEmpty(pluginId)) return false;
+
+        try
+        {
+            var plugin = _pluginManager.GetPlugin(pluginId);
+            if (plugin == null)
+            {
+                ShowStatus($"Plugin '{pluginId}' not found", "Error");
+                return false;
+            }
+
+            var config = new Infrastructure.DataSources.Plugins.PluginConfiguration
+            {
+                Enabled = plugin.IsEnabled,
+                Priority = priority
+            };
+
+            var result = await _pluginManager.UpdateConfigurationAsync(pluginId, config);
+            if (result.Success)
+            {
+                // Update local display info
+                var displayPlugin = Plugins.FirstOrDefault(p => p.PluginId == pluginId);
+                if (displayPlugin != null && priority.HasValue)
+                {
+                    displayPlugin.Priority = priority.Value;
+                }
+                ShowStatus($"Plugin '{pluginId}' configuration updated", "Success");
+                return true;
+            }
+            else
+            {
+                ShowStatus($"Failed to update configuration: {result.ErrorMessage}", "Error");
+                return false;
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowStatus($"Error updating configuration: {ex.Message}", "Error");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Gets the current priority for a plugin.
+    /// </summary>
+    public int GetPluginPriority(string pluginId)
+    {
+        var plugin = Plugins.FirstOrDefault(p => p.PluginId == pluginId);
+        return plugin?.Priority ?? 100;
+    }
+
     #endregion
 
     #region Helpers

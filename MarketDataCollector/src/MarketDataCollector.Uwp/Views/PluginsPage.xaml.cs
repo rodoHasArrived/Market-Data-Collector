@@ -238,18 +238,95 @@ public sealed partial class PluginsPage : Page
         }
     }
 
-    private void ConfigurePlugin_Click(object sender, RoutedEventArgs e)
+    private async void ConfigurePlugin_Click(object sender, RoutedEventArgs e)
     {
         if (sender is Button button && button.Tag is string pluginId)
         {
             var plugin = _plugins.FirstOrDefault(p => p.PluginId == pluginId);
-            if (plugin != null)
-            {
-                ShowPluginDetails(plugin);
-            }
+            if (plugin == null) return;
 
-            // TODO: Show configuration dialog/panel
-            ShowStatus("Plugin configuration coming soon", InfoBarSeverity.Informational);
+            // Create configuration dialog content
+            var priorityBox = new NumberBox
+            {
+                Header = "Priority",
+                Value = plugin.Priority,
+                Minimum = 1,
+                Maximum = 1000,
+                SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Inline,
+                SmallChange = 1,
+                LargeChange = 10,
+                PlaceholderText = "1-1000 (lower = higher priority)"
+            };
+
+            var enabledToggle = new ToggleSwitch
+            {
+                Header = "Enabled",
+                IsOn = plugin.IsEnabled,
+                OnContent = "Active",
+                OffContent = "Disabled"
+            };
+
+            var contentPanel = new StackPanel
+            {
+                Spacing = 16,
+                Children =
+                {
+                    new TextBlock
+                    {
+                        Text = $"Configure settings for {plugin.Name}",
+                        TextWrapping = TextWrapping.Wrap
+                    },
+                    enabledToggle,
+                    priorityBox,
+                    new InfoBar
+                    {
+                        IsOpen = true,
+                        IsClosable = false,
+                        Severity = InfoBarSeverity.Informational,
+                        Title = "Priority",
+                        Message = "Lower priority values are selected first when multiple data sources are available."
+                    }
+                }
+            };
+
+            var dialog = new ContentDialog
+            {
+                Title = $"Configure {plugin.Name}",
+                Content = contentPanel,
+                PrimaryButtonText = "Save",
+                CloseButtonText = "Cancel",
+                DefaultButton = ContentDialogButton.Primary,
+                XamlRoot = this.XamlRoot
+            };
+
+            var result = await dialog.ShowAsync();
+            if (result == ContentDialogResult.Primary)
+            {
+                var newPriority = (int)priorityBox.Value;
+                var newEnabled = enabledToggle.IsOn;
+
+                // Handle enabled state change
+                if (newEnabled != plugin.IsEnabled)
+                {
+                    if (newEnabled)
+                        await _viewModel.EnablePluginAsync(pluginId);
+                    else
+                        await _viewModel.DisablePluginAsync(pluginId);
+                }
+
+                // Handle priority change
+                if (newPriority != plugin.Priority)
+                {
+                    var success = await _viewModel.UpdatePluginConfigurationAsync(pluginId, newPriority);
+                    if (success)
+                    {
+                        plugin.Priority = newPriority;
+                    }
+                }
+
+                UpdateUI();
+                ShowStatus($"Configuration for '{plugin.Name}' updated", InfoBarSeverity.Success);
+            }
         }
     }
 
