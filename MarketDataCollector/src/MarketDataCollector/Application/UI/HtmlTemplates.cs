@@ -1941,7 +1941,12 @@ public static class HtmlTemplates
           body: JSON.stringify(payload)
         }});
 
-        showToast('success', 'Provider Connected', 'Successfully connected to ' + providerId);
+        const safeProviderId = providerId
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
+
+        showToast('success', 'Provider Connected', 'Successfully connected to ' + safeProviderId);
         await loadMultiProviderStatus();
 
         // Clear form
