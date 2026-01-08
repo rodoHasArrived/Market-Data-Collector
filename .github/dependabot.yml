@@ -28,7 +28,6 @@ updates:
     reviewers:
       - "rodoHasArrived"
     groups:
-      # Group Microsoft packages together
       microsoft-extensions:
         patterns:
           - "Microsoft.Extensions.*"
@@ -43,7 +42,6 @@ updates:
           - "minor"
           - "patch"
 
-      # Group testing packages
       testing:
         patterns:
           - "xunit*"
@@ -56,7 +54,6 @@ updates:
           - "minor"
           - "patch"
 
-      # Group serialization packages
       serialization:
         patterns:
           - "System.Text.Json*"
@@ -65,7 +62,6 @@ updates:
           - "minor"
           - "patch"
 
-      # Group logging packages
       logging:
         patterns:
           - "Serilog*"
@@ -74,7 +70,6 @@ updates:
           - "minor"
           - "patch"
 
-      # Group messaging packages
       messaging:
         patterns:
           - "MassTransit*"
@@ -83,7 +78,6 @@ updates:
           - "minor"
           - "patch"
 
-      # Group data providers
       data-providers:
         patterns:
           - "Alpaca.*"
@@ -92,7 +86,6 @@ updates:
           - "minor"
           - "patch"
 
-      # Group code analysis
       analyzers:
         patterns:
           - "Microsoft.CodeAnalysis*"
@@ -103,7 +96,6 @@ updates:
           - "patch"
 
     ignore:
-      # Ignore major version updates for critical packages (manual review required)
       - dependency-name: "MassTransit*"
         update-types: ["version-update:semver-major"]
       - dependency-name: "Microsoft.EntityFrameworkCore*"
@@ -126,7 +118,6 @@ updates:
     reviewers:
       - "rodoHasArrived"
     groups:
-      # Group all GitHub Actions updates
       github-actions:
         patterns:
           - "*"
@@ -151,7 +142,6 @@ updates:
     reviewers:
       - "rodoHasArrived"
     groups:
-      # Group .NET SDK and runtime images
       dotnet-images:
         patterns:
           - "mcr.microsoft.com/dotnet/*"
@@ -159,7 +149,7 @@ updates:
           - "minor"
           - "patch"
 
-  # Benchmark project (separate to avoid noise)
+  # Benchmark project
   - package-ecosystem: "nuget"
     directory: "/benchmarks/MarketDataCollector.Benchmarks"
     schedule:
@@ -185,7 +175,7 @@ updates:
           - "minor"
           - "patch"
 
-  # Tools (DocGenerator, etc.)
+  # Tools
   - package-ecosystem: "nuget"
     directory: "/tools/DocGenerator"
     schedule:

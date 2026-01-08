@@ -1,7 +1,38 @@
+# Documentation Validation Workflow
+# Validates documentation, generates project context, and verifies ADR links
+
 name: Documentation
 
 on:
   push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'src/**/*.cs'
+      - 'src/**/*.fs'
+      - 'tools/DocGenerator/**'
+      - 'CLAUDE.md'
+      - 'README.md'
+      - '.github/workflows/documentation.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'src/**/*.cs'
+      - 'src/**/*.fs'
+      - 'tools/DocGenerator/**'
+      - 'CLAUDE.md'
+      - 'README.md'
+  schedule:
+    # Run weekly on Sunday at midnight to catch stale links
+    - cron: '0 0 * * 0'
+  workflow_dispatch:
+    inputs:
+      regenerate:
+        description: 'Force regenerate all documentation'
+        required: false
+        default: 'false'
+        type: boolean
     branches: [ "main" ]
     paths:
       - 'docs/**'
@@ -32,6 +63,9 @@ env:
   DOTNET_CLI_TELEMETRY_OPTOUT: true
 
 jobs:
+  validate-markdown:
+    name: Validate Markdown
+    runs-on: ubuntu-latest
   markdown-lint:
     name: Markdown Lint
     runs-on: ubuntu-latest
@@ -40,6 +74,47 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install markdownlint
+        run: npm install -g markdownlint-cli
+
+      - name: Create markdownlint config
+        run: |
+          cat > .markdownlint.json << 'EOF'
+          {
+            "default": true,
+            "MD013": false,
+            "MD033": false,
+            "MD041": false,
+            "MD024": { "siblings_only": true },
+            "MD029": { "style": "ordered" }
+          }
+          EOF
+
+      - name: Lint markdown files
+        run: |
+          echo "## Markdown Validation" >> $GITHUB_STEP_SUMMARY
+
+          markdownlint 'docs/**/*.md' 'README.md' 'CLAUDE.md' 2>&1 | tee lint-output.txt || true
+
+          LINT_ERRORS=$(wc -l < lint-output.txt)
+          if [ "$LINT_ERRORS" -gt 0 ]; then
+            echo "::warning::Found markdown linting issues"
+            echo "### ⚠️ Linting Issues Found" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            head -50 lint-output.txt >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### ✅ All Markdown Files Valid" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  validate-links:
+    name: Validate Links
+    runs-on: ubuntu-latest
       - name: Lint Markdown files
         uses: DavidAnson/markdownlint-cli2-action@v16
         with:
@@ -57,6 +132,52 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install link checker
+        run: npm install -g markdown-link-check
+
+      - name: Create link check config
+        run: |
+          cat > .markdown-link-check.json << 'EOF'
+          {
+            "ignorePatterns": [
+              { "pattern": "^http://localhost" },
+              { "pattern": "^https://localhost" },
+              { "pattern": "^http://127.0.0.1" },
+              { "pattern": "your-" },
+              { "pattern": "example.com" }
+            ],
+            "timeout": "10s",
+            "retryOn429": true,
+            "retryCount": 3,
+            "aliveStatusCodes": [200, 203, 206]
+          }
+          EOF
+
+      - name: Check links in documentation
+        run: |
+          echo "## Link Validation" >> $GITHUB_STEP_SUMMARY
+
+          find docs -name '*.md' -print0 | xargs -0 -I {} markdown-link-check {} --config .markdown-link-check.json 2>&1 | tee link-check.txt || true
+
+          BROKEN_LINKS=$(grep -c "\[✖\]" link-check.txt || true)
+          if [ "$BROKEN_LINKS" -gt 0 ]; then
+            echo "::warning::Found $BROKEN_LINKS broken links"
+            echo "### ⚠️ Broken Links Found: $BROKEN_LINKS" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            grep -A1 "\[✖\]" link-check.txt | head -50 >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### ✅ All Links Valid" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  verify-adrs:
+    name: Verify ADR Implementation Links
+    runs-on: ubuntu-latest
       - name: Check links in documentation
         uses: gaurav-nelson/github-action-markdown-link-check@v1
         with:
@@ -86,6 +207,48 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore /p:EnableWindowsTargeting=true
+
+      - name: Build DocGenerator
+        run: dotnet build tools/DocGenerator -c Release --no-restore
+        continue-on-error: true
+
+      - name: Verify ADR implementation links
+        run: |
+          echo "## ADR Verification" >> $GITHUB_STEP_SUMMARY
+
+          if [ -f "tools/DocGenerator/bin/Release/net9.0/DocGenerator" ]; then
+            ./tools/DocGenerator/bin/Release/net9.0/DocGenerator verify-adrs --docs-path docs/architecture/decisions 2>&1 | tee adr-report.txt || true
+
+            if grep -q "INVALID" adr-report.txt; then
+              echo "::warning::Some ADR implementation links are invalid"
+              echo "### ⚠️ ADR Verification Issues" >> $GITHUB_STEP_SUMMARY
+              echo '```' >> $GITHUB_STEP_SUMMARY
+              cat adr-report.txt >> $GITHUB_STEP_SUMMARY
+              echo '```' >> $GITHUB_STEP_SUMMARY
+            else
+              echo "### ✅ All ADR Implementation Links Valid" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "::notice::DocGenerator not available, using fallback verification"
+            echo "### ℹ️ Basic ADR Check (DocGenerator not built)" >> $GITHUB_STEP_SUMMARY
+
+            # Fallback: Check ADR files exist and have proper format
+            ADR_COUNT=$(find docs/architecture/decisions -name "*.md" 2>/dev/null | wc -l)
+            echo "Found $ADR_COUNT ADR files" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  generate-context:
+    name: Generate Project Context
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.regenerate == 'true')
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
           cache: true
 
       - name: Restore DocGenerator
@@ -134,6 +297,13 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore /p:EnableWindowsTargeting=true
+
+      - name: Build DocGenerator
+        run: dotnet build tools/DocGenerator -c Release --no-restore
+        continue-on-error: true
           cache: true
 
       - name: Restore dependencies
@@ -155,6 +325,28 @@ jobs:
       - name: Generate project context
         run: |
           mkdir -p docs/generated
+
+          if [ -f "tools/DocGenerator/bin/Release/net9.0/DocGenerator" ]; then
+            ./tools/DocGenerator/bin/Release/net9.0/DocGenerator context --output docs/generated/project-context.md || true
+            ./tools/DocGenerator/bin/Release/net9.0/DocGenerator interfaces --output docs/generated/interfaces.md || true
+          fi
+
+          echo "## Documentation Generation" >> $GITHUB_STEP_SUMMARY
+          echo "Generated documentation files:" >> $GITHUB_STEP_SUMMARY
+          ls -la docs/generated/ 2>/dev/null >> $GITHUB_STEP_SUMMARY || echo "No generated files" >> $GITHUB_STEP_SUMMARY
+
+      - name: Check for documentation changes
+        id: doc-changes
+        run: |
+          git diff --name-only docs/generated/ > changed-docs.txt || true
+          if [ -s changed-docs.txt ]; then
+            echo "changes=true" >> $GITHUB_OUTPUT
+            echo "### 📝 Documentation Changes Detected" >> $GITHUB_STEP_SUMMARY
+            cat changed-docs.txt >> $GITHUB_STEP_SUMMARY
+          else
+            echo "changes=false" >> $GITHUB_OUTPUT
+            echo "### ✅ Documentation Up to Date" >> $GITHUB_STEP_SUMMARY
+          fi
           dotnet run --project tools/DocGenerator/DocGenerator.csproj --no-build -c Release -- context \
             --src src/MarketDataCollector \
             --output docs/generated/project-context.md \
@@ -169,6 +361,13 @@ jobs:
       - name: Upload generated documentation
         uses: actions/upload-artifact@v4
         with:
+          name: generated-docs
+          path: docs/generated/
+          retention-days: 7
+
+  check-diagrams:
+    name: Validate Architecture Diagrams
+    runs-on: ubuntu-latest
           name: generated-documentation
           path: docs/generated/
           retention-days: 7
@@ -195,6 +394,48 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Install Graphviz
+        run: sudo apt-get update && sudo apt-get install -y graphviz
+
+      - name: Validate DOT files
+        run: |
+          echo "## Architecture Diagrams" >> $GITHUB_STEP_SUMMARY
+
+          DOT_FILES=$(find docs -name "*.dot" 2>/dev/null || true)
+          if [ -n "$DOT_FILES" ]; then
+            echo "### Validating DOT diagrams" >> $GITHUB_STEP_SUMMARY
+
+            for file in $DOT_FILES; do
+              if dot -Tsvg "$file" -o /dev/null 2>&1; then
+                echo "✅ $file" >> $GITHUB_STEP_SUMMARY
+              else
+                echo "❌ $file - Invalid syntax" >> $GITHUB_STEP_SUMMARY
+                echo "::error file=$file::Invalid DOT syntax"
+              fi
+            done
+          else
+            echo "No DOT diagram files found" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Generate diagram previews
+        run: |
+          mkdir -p docs/generated/diagrams
+          for file in $(find docs -name "*.dot" 2>/dev/null); do
+            basename=$(basename "$file" .dot)
+            dot -Tpng "$file" -o "docs/generated/diagrams/${basename}.png" 2>/dev/null || true
+          done
+
+      - name: Upload diagram artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: architecture-diagrams
+          path: docs/generated/diagrams/
+          retention-days: 7
+
+  documentation-coverage:
+    name: Documentation Coverage Report
+    runs-on: ubuntu-latest
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -261,6 +502,49 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Generate documentation coverage report
+        run: |
+          echo "## Documentation Coverage Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Count documentation files
+          TOTAL_MD=$(find docs -name "*.md" | wc -l)
+          echo "### 📚 Documentation Statistics" >> $GITHUB_STEP_SUMMARY
+          echo "- **Total markdown files:** $TOTAL_MD" >> $GITHUB_STEP_SUMMARY
+
+          # Count by category
+          ARCH_DOCS=$(find docs/architecture -name "*.md" 2>/dev/null | wc -l || echo 0)
+          GUIDE_DOCS=$(find docs/guides -name "*.md" 2>/dev/null | wc -l || echo 0)
+          PROVIDER_DOCS=$(find docs/providers -name "*.md" 2>/dev/null | wc -l || echo 0)
+          API_DOCS=$(find docs/api -name "*.md" 2>/dev/null | wc -l || echo 0)
+          ADR_DOCS=$(find docs/architecture/decisions -name "*.md" 2>/dev/null | wc -l || echo 0)
+
+          echo "- Architecture docs: $ARCH_DOCS" >> $GITHUB_STEP_SUMMARY
+          echo "- Guides: $GUIDE_DOCS" >> $GITHUB_STEP_SUMMARY
+          echo "- Provider docs: $PROVIDER_DOCS" >> $GITHUB_STEP_SUMMARY
+          echo "- API docs: $API_DOCS" >> $GITHUB_STEP_SUMMARY
+          echo "- ADRs: $ADR_DOCS" >> $GITHUB_STEP_SUMMARY
+
+          # Count source files without corresponding docs
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📊 Source Coverage" >> $GITHUB_STEP_SUMMARY
+
+          CS_FILES=$(find src -name "*.cs" | wc -l)
+          FS_FILES=$(find src -name "*.fs" | wc -l)
+          echo "- C# source files: $CS_FILES" >> $GITHUB_STEP_SUMMARY
+          echo "- F# source files: $FS_FILES" >> $GITHUB_STEP_SUMMARY
+
+          # Check for README files in key directories
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📁 Project README Coverage" >> $GITHUB_STEP_SUMMARY
+
+          for dir in src/MarketDataCollector src/Microservices tests benchmarks; do
+            if [ -f "$dir/README.md" ]; then
+              echo "✅ $dir/README.md" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "❓ $dir/README.md (missing)" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
       - name: Generate documentation report
         run: |
           echo "# Documentation Quality Report" >> $GITHUB_STEP_SUMMARY
