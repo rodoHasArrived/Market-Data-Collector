@@ -157,6 +157,10 @@ public sealed class OrderBookMatchingEngine
     /// <summary>
     /// Modify an existing order (cancel and replace).
     /// </summary>
+    // TODO: Document null return conditions (order not found or already closed)
+    // TODO: Consider Result<T> pattern instead of null for better error handling
+    // TODO: Add logging for null cases to aid debugging
+    // TODO: Add test cases for edge conditions that trigger null
     public OrderResult? ModifyOrder(long orderId, decimal newPrice, int newQuantity)
     {
         lock (_matchLock)

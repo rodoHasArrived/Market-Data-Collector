@@ -20,6 +20,11 @@ namespace MarketDataCollector.Infrastructure.Providers.Polygon;
 /// - Automatic reconnection on connection loss with jitter
 /// - Configurable retry attempts (default: 5) with 2s base delay, max 30s between retries
 /// </summary>
+// TODO: Implement full Polygon WebSocket client with real data streaming
+// TODO: Replace synthetic heartbeat with actual Polygon API connection
+// TODO: Implement proper credential validation for Polygon API key
+// TODO: Handle Polygon message parsing and route to collectors
+// TODO: Use _connectionPipeline for resilience (retry/circuit breaker) in real WebSocket code
 public sealed class PolygonMarketDataClient : IMarketDataClient
 {
     private readonly ILogger _log = LoggingSetup.ForContext<PolygonMarketDataClient>();
@@ -75,10 +80,12 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
         return Task.CompletedTask;
     }
 
+    // TODO: Implement SubscribeMarketDepth when full implementation is added
     public int SubscribeMarketDepth(SymbolConfig cfg) => -1; // Depth not wired yet
 
     public void UnsubscribeMarketDepth(int subscriptionId) { }
 
+    // TODO: Implement SubscribeTrades to return real subscription IDs from Polygon API
     public int SubscribeTrades(SymbolConfig cfg)
     {
         // Emit a lightweight synthetic trade for testing cross-provider reconciliation.

@@ -95,6 +95,8 @@ public class CredentialService
         }
         catch (Exception)
         {
+            // TODO: Add structured logging for credential picker failures
+            // TODO: Distinguish between user cancellation vs system errors
             return null;
         }
     }
@@ -140,6 +142,8 @@ public class CredentialService
         }
         catch (Exception)
         {
+            // TODO: Add logging for API key prompt failures
+            // TODO: Document which exceptions are expected vs unexpected
             return null;
         }
     }
@@ -159,6 +163,8 @@ public class CredentialService
         }
         catch (Exception)
         {
+            // TODO: Add structured logging for credential save failures
+            // TODO: Consider throwing for critical credential operations
             // Ignore errors when saving
         }
     }
@@ -189,6 +195,8 @@ public class CredentialService
         }
         catch (Exception)
         {
+            // TODO: Distinguish between "credential not found" vs "access denied" exceptions
+            // TODO: Add telemetry counters for credential retrieval failures
             // Credential not found or access denied
         }
 
@@ -219,6 +227,7 @@ public class CredentialService
         }
         catch (Exception)
         {
+            // TODO: Add logging for credential removal failures
             // Credential not found or access denied
         }
     }
@@ -235,6 +244,7 @@ public class CredentialService
         }
         catch (Exception)
         {
+            // TODO: Add diagnostic logging for debugging credential issues
             return false;
         }
     }
@@ -261,6 +271,7 @@ public class CredentialService
         }
         catch (Exception)
         {
+            // TODO: Add telemetry for vault access failures
             // Access denied or empty vault
         }
 

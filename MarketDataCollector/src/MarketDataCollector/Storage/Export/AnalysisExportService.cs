@@ -98,6 +98,9 @@ public class AnalysisExportService
                     exportedFiles = await ExportToSqlAsync(sourceFiles, request, profile, ct);
                     break;
                 default:
+                    // TODO: Implement missing export format handlers
+                    // TODO: Add unit tests for each supported format
+                    // TODO: Add validation to prevent unsupported format selection in UI
                     throw new NotSupportedException($"Format {profile.Format} is not yet implemented");
             }
 
