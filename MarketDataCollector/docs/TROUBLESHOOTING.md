@@ -401,7 +401,8 @@ chmod -R 755 data/
 
 If you're still experiencing issues:
 
-1. **Check the logs** - Most errors include detailed context
-2. **Review documentation** - [architecture.md](architecture.md), [operator-runbook.md](operator-runbook.md)
-3. **Run self-tests** - `dotnet run -- --selftest`
-4. **File an issue** - Include logs, configuration (without secrets), and steps to reproduce
+1. **Check the FAQ** - [FAQ.md](FAQ.md) answers common "What is...?" and "Where can I find...?" questions
+2. **Check the logs** - Most errors include detailed context
+3. **Review documentation** - [architecture.md](architecture.md), [operator-runbook.md](operator-runbook.md)
+4. **Run self-tests** - `dotnet run -- --selftest`
+5. **File an issue** - Include logs, configuration (without secrets), and steps to reproduce

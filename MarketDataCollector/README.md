@@ -118,6 +118,10 @@ The replayer supports:
 
 Detailed diagrams and domain notes live in `./docs`:
 
+* `FAQ.md` – frequently asked questions (What is...? Where can I find...?)
+* `GETTING_STARTED.md` – quick start guide and initial setup
+* `CONFIGURATION.md` – configuration reference
+* `TROUBLESHOOTING.md` – troubleshooting guide and solutions
 * `architecture.md` – layered architecture and event flow
 * `c4-diagrams.md` – rendered system, container, and component diagrams
 * `domains.md` – event contracts and invariants

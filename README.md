@@ -63,6 +63,7 @@ Access the monitoring dashboard at `http://localhost:8080`
 
 Comprehensive documentation is available in the `MarketDataCollector/docs/` directory:
 
+- **[docs/FAQ.md](MarketDataCollector/docs/FAQ.md)** - Frequently asked questions (What is...? Where can I find...?)
 - **[MarketDataCollector/README.md](MarketDataCollector/README.md)** - Quick start guide and configuration overview
 - **[docs/architecture.md](MarketDataCollector/docs/architecture.md)** - System architecture and design
 - **[docs/operator-runbook.md](MarketDataCollector/docs/operator-runbook.md)** - Operations guide and production deployment
