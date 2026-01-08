@@ -14,11 +14,15 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0-alpine AS build
 
 WORKDIR /src
 
+# Note: Build context should be the repo root (docker build -f deploy/docker/Dockerfile .)
 # Copy solution and project files first for layer caching
-COPY MarketDataCollector.sln ./
+COPY MarketDataCollector.sln Directory.Build.props ./
 COPY src/MarketDataCollector/MarketDataCollector.csproj src/MarketDataCollector/
+COPY src/MarketDataCollector.Contracts/MarketDataCollector.Contracts.csproj src/MarketDataCollector.Contracts/
 COPY src/MarketDataCollector.Ui/MarketDataCollector.Ui.csproj src/MarketDataCollector.Ui/
+COPY src/MarketDataCollector.FSharp/MarketDataCollector.FSharp.fsproj src/MarketDataCollector.FSharp/
 COPY tests/MarketDataCollector.Tests/MarketDataCollector.Tests.csproj tests/MarketDataCollector.Tests/
+COPY tests/MarketDataCollector.FSharp.Tests/MarketDataCollector.FSharp.Tests.fsproj tests/MarketDataCollector.FSharp.Tests/
 COPY benchmarks/MarketDataCollector.Benchmarks/MarketDataCollector.Benchmarks.csproj benchmarks/MarketDataCollector.Benchmarks/
 
 # Restore dependencies
@@ -59,7 +63,7 @@ WORKDIR /app
 COPY --from=build /app/publish ./
 
 # Copy configuration template
-COPY appsettings.sample.json ./appsettings.sample.json
+COPY config/appsettings.sample.json ./appsettings.sample.json
 
 # Create data directory with proper permissions
 RUN mkdir -p /app/data /app/logs && \

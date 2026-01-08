@@ -21,10 +21,7 @@ Market Data Collector is a high-performance, cross-platform market data collecti
 ## Quick Commands
 
 ```bash
-# Navigate to solution directory
-cd MarketDataCollector
-
-# Build the project
+# Build the project (from repo root)
 dotnet build -c Release
 
 # Run tests
@@ -39,7 +36,7 @@ dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --ui 
 # Run benchmarks
 dotnet run --project benchmarks/MarketDataCollector.Benchmarks -c Release
 
-# Using Makefile (from MarketDataCollector directory)
+# Using Makefile (from repo root)
 make build       # Build the project
 make test        # Run tests
 make run-ui      # Run with web dashboard
@@ -53,40 +50,77 @@ make help        # Show all available commands
 
 ```
 Market-Data-Collector/
-├── MarketDataCollector/                  # Main solution directory
-│   ├── MarketDataCollector.sln          # Visual Studio solution
-│   ├── src/
-│   │   ├── MarketDataCollector/         # Core application (entry point)
-│   │   │   ├── Domain/                  # Business logic, collectors, models
-│   │   │   ├── Infrastructure/          # Provider implementations
-│   │   │   │   ├── DataSources/         # Data source abstractions
-│   │   │   │   └── Providers/           # IB, Alpaca, NYSE, etc.
-│   │   │   ├── Storage/                 # JSONL/Parquet sinks, archival
-│   │   │   ├── Messaging/               # MassTransit publishers/consumers
-│   │   │   └── Application/             # Startup, config, HTTP server
-│   │   ├── MarketDataCollector.FSharp/  # F# domain models, validation
-│   │   ├── MarketDataCollector.Contracts/ # Shared DTOs
-│   │   ├── MarketDataCollector.Ui/      # Web dashboard (ASP.NET Core)
-│   │   ├── MarketDataCollector.Uwp/     # Windows desktop app (UWP)
-│   │   └── Microservices/               # Decomposed ingestion services
-│   │       ├── Gateway/                 # API Gateway (port 5000)
-│   │       ├── TradeIngestion/          # Trade service (port 5001)
-│   │       ├── QuoteIngestion/          # Quote service (port 5002)
-│   │       ├── OrderBookIngestion/      # Order book service (port 5003)
-│   │       ├── HistoricalDataIngestion/ # Historical service (port 5004)
-│   │       ├── DataValidation/          # Validation service (port 5005)
-│   │       └── Shared/                  # Shared contracts
-│   ├── tests/
-│   │   ├── MarketDataCollector.Tests/   # C# unit tests (xUnit)
-│   │   └── MarketDataCollector.FSharp.Tests/ # F# tests
-│   ├── benchmarks/
-│   │   └── MarketDataCollector.Benchmarks/ # BenchmarkDotNet perf tests
-│   ├── docs/                            # Documentation
-│   ├── deploy/                          # Kubernetes, systemd configs
-│   └── scripts/                         # Build/diagnostic scripts
-├── .github/workflows/                   # CI/CD (GitHub Actions)
-├── Directory.Build.props                # Cross-platform build settings
-└── README.md                            # Project overview
+├── .github/                          # GitHub configuration
+│   ├── workflows/                    # CI/CD pipelines
+│   └── prompts/                      # AI assistant prompts
+│
+├── docs/                             # All documentation
+│   ├── architecture/                 # System architecture docs
+│   ├── guides/                       # How-to guides
+│   ├── providers/                    # Provider setup guides
+│   ├── integrations/                 # Integration guides
+│   ├── api/                          # API reference
+│   ├── status/                       # Roadmap, backlog
+│   ├── ai-assistants/                # Specialized AI guides
+│   │   ├── CLAUDE.fsharp.md          # F# domain guide
+│   │   ├── CLAUDE.microservices.md   # Microservices guide
+│   │   ├── CLAUDE.providers.md       # Data providers guide
+│   │   ├── CLAUDE.storage.md         # Storage architecture guide
+│   │   └── CLAUDE.testing.md         # Testing strategy guide
+│   ├── USAGE.md                      # Detailed usage guide
+│   ├── HELP.md                       # User guide with FAQ
+│   └── DEPENDENCIES.md               # Package documentation
+│
+├── scripts/                          # All scripts
+│   ├── install/                      # Installation scripts
+│   ├── publish/                      # Publishing scripts
+│   ├── run/                          # Runtime scripts
+│   └── diagnostics/                  # Diagnostic scripts
+│
+├── deploy/                           # Deployment configurations
+│   ├── docker/                       # Dockerfile, docker-compose
+│   ├── systemd/                      # Linux systemd service
+│   └── monitoring/                   # Prometheus, Grafana configs
+│
+├── config/                           # Configuration files
+│   ├── appsettings.json              # Runtime config
+│   └── appsettings.sample.json       # Configuration template
+│
+├── src/                              # Source code
+│   ├── MarketDataCollector/          # Core application (entry point)
+│   │   ├── Domain/                   # Business logic, collectors
+│   │   ├── Infrastructure/           # Provider implementations
+│   │   │   ├── DataSources/          # Data source abstractions
+│   │   │   └── Providers/            # IB, Alpaca, NYSE, etc.
+│   │   ├── Storage/                  # JSONL/Parquet sinks
+│   │   ├── Messaging/                # MassTransit publishers
+│   │   └── Application/              # Startup, config, HTTP
+│   ├── MarketDataCollector.FSharp/   # F# domain models
+│   ├── MarketDataCollector.Contracts/# Shared DTOs
+│   ├── MarketDataCollector.Ui/       # Web dashboard
+│   ├── MarketDataCollector.Uwp/      # Windows desktop app
+│   └── Microservices/                # Decomposed services
+│       ├── Gateway/                  # API Gateway (5000)
+│       ├── TradeIngestion/           # Trade service (5001)
+│       ├── QuoteIngestion/           # Quote service (5002)
+│       ├── OrderBookIngestion/       # Order book (5003)
+│       ├── HistoricalDataIngestion/  # Historical (5004)
+│       ├── DataValidation/           # Validation (5005)
+│       └── Shared/                   # Shared contracts
+│
+├── tests/                            # Test projects
+│   ├── MarketDataCollector.Tests/    # C# unit tests
+│   └── MarketDataCollector.FSharp.Tests/ # F# tests
+│
+├── benchmarks/                       # Performance benchmarks
+│   └── MarketDataCollector.Benchmarks/
+│
+├── MarketDataCollector.sln           # Solution file
+├── Directory.Build.props             # Build settings
+├── Makefile                          # Build automation
+├── CLAUDE.md                         # This file
+├── README.md                         # Project overview
+└── LICENSE                           # License
 ```
 
 ---
@@ -157,7 +191,7 @@ public interface IHistoricalDataProvider
 ### Running Tests
 ```bash
 # Run all tests
-dotnet test MarketDataCollector
+dotnet test
 
 # Run specific test project
 dotnet test tests/MarketDataCollector.Tests
@@ -189,9 +223,9 @@ export NYSE__APIKEY=your-api-key
 Note: Use double underscore (`__`) for nested configuration (maps to `Alpaca:KeyId`).
 
 ### appsettings.json
-Configuration file should be copied from `appsettings.sample.json`:
+Configuration file should be copied from template:
 ```bash
-cp appsettings.sample.json appsettings.json
+cp config/appsettings.sample.json config/appsettings.json
 ```
 
 Key sections:
@@ -249,12 +283,12 @@ _logger.LogInformation($"Received {bars.Count} bars for {symbol}");
 ### Key Classes
 | Class | Location | Purpose |
 |-------|----------|---------|
-| `TradeDataCollector` | `Domain/Collectors/` | Tick-by-tick trade processing |
-| `MarketDepthCollector` | `Domain/Collectors/` | L2 order book maintenance |
-| `QuoteCollector` | `Domain/Collectors/` | BBO state tracking |
-| `EventPipeline` | `Storage/` | Bounded channel event routing |
-| `JsonlStorageSink` | `Storage/Sinks/` | JSONL file persistence |
-| `AlpacaMarketDataClient` | `Infrastructure/Providers/` | Alpaca WebSocket client |
+| `TradeDataCollector` | `src/MarketDataCollector/Domain/Collectors/` | Tick-by-tick trade processing |
+| `MarketDepthCollector` | `src/MarketDataCollector/Domain/Collectors/` | L2 order book maintenance |
+| `QuoteCollector` | `src/MarketDataCollector/Domain/Collectors/` | BBO state tracking |
+| `EventPipeline` | `src/MarketDataCollector/Storage/` | Bounded channel event routing |
+| `JsonlStorageSink` | `src/MarketDataCollector/Storage/Sinks/` | JSONL file persistence |
+| `AlpacaMarketDataClient` | `src/MarketDataCollector/Infrastructure/Providers/` | Alpaca WebSocket client |
 
 ---
 
@@ -305,15 +339,15 @@ When running with `--ui` flag:
 ## Common Tasks
 
 ### Adding a New Data Provider
-1. Create client class in `Infrastructure/Providers/{ProviderName}/`
+1. Create client class in `src/MarketDataCollector/Infrastructure/Providers/{ProviderName}/`
 2. Implement `IMarketDataClient` interface
 3. Add `[DataSource("provider-name")]` attribute
 4. Register in DI container in `Program.cs`
-5. Add configuration section in `appsettings.sample.json`
+5. Add configuration section in `config/appsettings.sample.json`
 6. Add tests in `tests/MarketDataCollector.Tests/`
 
 ### Adding a New Historical Provider
-1. Create provider in `Infrastructure/Providers/Backfill/`
+1. Create provider in `src/MarketDataCollector/Infrastructure/Providers/Backfill/`
 2. Implement `IHistoricalDataProvider` interface
 3. Register in `CompositeHistoricalDataProvider`
 4. Add to provider priority list
@@ -363,7 +397,7 @@ Located at `.github/workflows/dotnet-desktop.yml`:
 
 ## Documentation
 
-Key documentation files in `MarketDataCollector/docs/`:
+Key documentation files in `docs/`:
 - `guides/getting-started.md` - Setup and first run
 - `guides/configuration.md` - All configuration options
 - `guides/operator-runbook.md` - Production operations
@@ -371,6 +405,7 @@ Key documentation files in `MarketDataCollector/docs/`:
 - `architecture/domains.md` - Event contracts
 - `providers/backfill-guide.md` - Historical data guide
 - `integrations/lean-integration.md` - QuantConnect Lean guide
+- `ai-assistants/CLAUDE.*.md` - Specialized AI assistant guides
 
 ---
 
@@ -379,10 +414,10 @@ Key documentation files in `MarketDataCollector/docs/`:
 ### Build Issues
 ```bash
 # Run diagnostic script
-./scripts/diagnose-build.sh
+./scripts/diagnostics/diagnose-build.sh
 
 # Manual restore with diagnostics
-dotnet restore MarketDataCollector /p:EnableWindowsTargeting=true -v diag
+dotnet restore /p:EnableWindowsTargeting=true -v diag
 ```
 
 ### Common Issues
@@ -396,9 +431,10 @@ dotnet restore MarketDataCollector /p:EnableWindowsTargeting=true -v diag
 ## Related Resources
 
 - [README.md](README.md) - Project overview
-- [MarketDataCollector/README.md](MarketDataCollector/README.md) - Detailed usage
-- [MarketDataCollector/HELP.md](MarketDataCollector/HELP.md) - User guide with FAQ
-- [MarketDataCollector/DEPENDENCIES.md](MarketDataCollector/DEPENDENCIES.md) - Package documentation
+- [docs/USAGE.md](docs/USAGE.md) - Detailed usage guide
+- [docs/HELP.md](docs/HELP.md) - User guide with FAQ
+- [docs/DEPENDENCIES.md](docs/DEPENDENCIES.md) - Package documentation
+- [docs/ai-assistants/](docs/ai-assistants/) - Specialized AI guides
 
 ---
 

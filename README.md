@@ -2,13 +2,13 @@
 
 A high-performance, cross-platform market data collection system for real-time and historical market microstructure data.
 
-[![.NET](https://img.shields.io/badge/.NET-8.0-blue)](https://dotnet.microsoft.com/)
+[![.NET](https://img.shields.io/badge/.NET-9.0-blue)](https://dotnet.microsoft.com/)
 [![C#](https://img.shields.io/badge/C%23-11-blue)](https://docs.microsoft.com/en-us/dotnet/csharp/)
 [![F#](https://img.shields.io/badge/F%23-8.0-blue)](https://fsharp.org/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue)](https://www.docker.com/)
 [![License](https://img.shields.io/badge/license-See%20LICENSE-green)](LICENSE)
 
-**Status**: Production Ready | **Version**: 1.5.0 | **Last Updated**: 2026-01-04
+**Status**: Production Ready | **Version**: 1.5.0 | **Last Updated**: 2026-01-08
 
 ---
 
@@ -17,14 +17,12 @@ A high-performance, cross-platform market data collection system for real-time a
 ### Option 1: Docker (Recommended)
 
 ```bash
-cd MarketDataCollector
-
 # Quick install with interactive script
-./install.sh --docker
+./scripts/install/install.sh --docker
 
 # Or manually with Docker Compose
-cp appsettings.sample.json appsettings.json
-docker compose up -d
+cp config/appsettings.sample.json config/appsettings.json
+make docker
 ```
 
 Access the dashboard at **http://localhost:8080**
@@ -32,42 +30,36 @@ Access the dashboard at **http://localhost:8080**
 ### Option 2: Native .NET
 
 ```bash
-cd MarketDataCollector
-
 # Quick install with interactive script
-./install.sh --native
+./scripts/install/install.sh --native
 
 # Or manually
-cp appsettings.sample.json appsettings.json
+cp config/appsettings.sample.json config/appsettings.json
 dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --ui
 ```
 
 ### Option 3: Using Make
 
 ```bash
-cd MarketDataCollector
-
 # Show all available commands
 make help
 
 # Docker installation
 make docker
 
-# Native installation
+# Native installation with web UI
 make run-ui
 ```
 
 ### Windows Installation
 
 ```powershell
-cd MarketDataCollector
-
 # Interactive installation
-.\install.ps1
+.\scripts\install\install.ps1
 
 # Or specify mode directly
-.\install.ps1 -Mode Docker
-.\install.ps1 -Mode Native
+.\scripts\install\install.ps1 -Mode Docker
+.\scripts\install\install.ps1 -Mode Native
 ```
 
 ---
@@ -108,12 +100,12 @@ Market Data Collector is a modular, event-driven system that captures, validates
 ## Quick Start
 
 ```bash
-# Clone the repository and enter the solution root
-git clone https://github.com/rodoHasArrived/Test.git
-cd Test/MarketDataCollector
+# Clone the repository
+git clone https://github.com/rodoHasArrived/Market-Data-Collector.git
+cd Market-Data-Collector
 
 # Copy the sample settings and edit as needed
-cp appsettings.sample.json appsettings.json
+cp config/appsettings.sample.json config/appsettings.json
 
 # Option 1: Launch the web dashboard (serves HTML + Prometheus + JSON status)
 dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --ui --watch-config --http-port 8080
@@ -137,18 +129,22 @@ Access the monitoring dashboard at `http://localhost:8080`, JSON status at `http
 
 ## Documentation
 
-Comprehensive documentation is available in the `MarketDataCollector/docs/` directory:
+Comprehensive documentation is available in the `docs/` directory:
 
-- **[MarketDataCollector/README.md](MarketDataCollector/README.md)** - Product overview, CLI/UI usage, and configuration highlights
-- **[MarketDataCollector/HELP.md](MarketDataCollector/HELP.md)** - Comprehensive user guide with troubleshooting and FAQ
-- **[docs/guides/getting-started.md](MarketDataCollector/docs/guides/getting-started.md)** - End-to-end setup for local development
-- **[docs/guides/configuration.md](MarketDataCollector/docs/guides/configuration.md)** - Detailed explanation of every setting including backfill
-- **[docs/architecture/overview.md](MarketDataCollector/docs/architecture/overview.md)** - System architecture and design
-- **[docs/guides/operator-runbook.md](MarketDataCollector/docs/guides/operator-runbook.md)** - Operations guide and production deployment
-- **[docs/architecture/domains.md](MarketDataCollector/docs/architecture/domains.md)** - Event contracts and domain models
-- **[docs/architecture/c4-diagrams.md](MarketDataCollector/docs/architecture/c4-diagrams.md)** - System diagrams
-- **[docs/integrations/lean-integration.md](MarketDataCollector/docs/integrations/lean-integration.md)** - QuantConnect Lean integration guide and examples
-- **[docs/architecture/storage-design.md](MarketDataCollector/docs/architecture/storage-design.md)** - Advanced storage organization and data management strategies
+- **[docs/USAGE.md](docs/USAGE.md)** - Product overview, CLI/UI usage, and configuration highlights
+- **[docs/HELP.md](docs/HELP.md)** - Comprehensive user guide with troubleshooting and FAQ
+- **[docs/guides/getting-started.md](docs/guides/getting-started.md)** - End-to-end setup for local development
+- **[docs/guides/configuration.md](docs/guides/configuration.md)** - Detailed explanation of every setting including backfill
+- **[docs/architecture/overview.md](docs/architecture/overview.md)** - System architecture and design
+- **[docs/guides/operator-runbook.md](docs/guides/operator-runbook.md)** - Operations guide and production deployment
+- **[docs/architecture/domains.md](docs/architecture/domains.md)** - Event contracts and domain models
+- **[docs/architecture/c4-diagrams.md](docs/architecture/c4-diagrams.md)** - System diagrams
+- **[docs/integrations/lean-integration.md](docs/integrations/lean-integration.md)** - QuantConnect Lean integration guide and examples
+- **[docs/architecture/storage-design.md](docs/architecture/storage-design.md)** - Advanced storage organization and data management strategies
+
+### AI Assistant Guides
+- **[CLAUDE.md](CLAUDE.md)** - Main AI assistant guide
+- **[docs/ai-assistants/](docs/ai-assistants/)** - Specialized guides for subsystems (F#, microservices, providers, storage, testing)
 
 ## Supported Data Sources
 
@@ -165,7 +161,7 @@ Market Data Collector now integrates with **QuantConnect's Lean Engine**, enabli
 - **Data Provider**: Custom `IDataProvider` implementation for JSONL files
 - **Sample Algorithms**: Ready-to-use examples for microstructure-aware trading
 
-See [`MarketDataCollector/src/MarketDataCollector/Integrations/Lean/README.md`](MarketDataCollector/src/MarketDataCollector/Integrations/Lean/README.md) for integration details and examples.
+See [`src/MarketDataCollector/Integrations/Lean/README.md`](src/MarketDataCollector/Integrations/Lean/README.md) for integration details and examples.
 
 ## Output Data
 
@@ -192,13 +188,13 @@ Monitor event throughput, drop rates, integrity events, and pipeline statistics 
 
 ```bash
 # Production deployment with Docker Compose
-docker compose up -d
+make docker
 
 # With monitoring stack (Prometheus + Grafana)
-docker compose --profile monitoring up -d
+make docker-monitoring
 
 # View logs
-docker compose logs -f marketdatacollector
+make docker-logs
 
 # Health check
 curl http://localhost:8080/health
@@ -230,92 +226,27 @@ export ALPACA__KEYID=your-key-id
 export ALPACA__SECRETKEY=your-secret-key
 ```
 
+## Repository Structure
+
+```
+Market-Data-Collector/
+├── .github/              # CI/CD workflows and AI prompts
+├── docs/                 # All documentation
+├── scripts/              # Install, publish, run, and diagnostic scripts
+├── deploy/               # Docker, systemd, and monitoring configs
+├── config/               # Configuration files (appsettings.json)
+├── src/                  # Source code
+├── tests/                # Unit tests
+├── benchmarks/           # Performance benchmarks
+├── MarketDataCollector.sln
+├── Makefile
+└── CLAUDE.md             # AI assistant guide
+```
+
 ## License
 
 See LICENSE file for details.
 
-## Roadmap and Future Enhancements
-
-### Recently Completed
-
-**F# Domain Library (Completed 2026-01-03):**
-- ✅ Type-safe domain models using discriminated unions with exhaustive pattern matching
-- ✅ Railway-Oriented validation with error accumulation (no more exceptions)
-- ✅ Pure functional calculations (spread, imbalance, VWAP, TWAP, microprice)
-- ✅ Pipeline transforms for declarative stream processing
-- ✅ C# interop layer with wrapper classes and extension methods
-- ✅ Comprehensive test suite with 50+ unit tests
-
-**Storage Organization Design (Completed 2026-01-02):**
-- ✅ Comprehensive storage organization design document with best practices
-- ✅ Hierarchical taxonomy structure for data organization
-- ✅ Tiered storage architecture (hot/warm/cold)
-- ✅ File maintenance and health monitoring strategies
-- ✅ Data quality scoring and best-of-breed selection
-- ✅ Search and discovery infrastructure design
-- ✅ Operational scheduling for off-hours maintenance
-
-**UWP Desktop Application (Completed 2026-01-02):**
-- ✅ Native Windows desktop app using UWP/XAML with WinUI 3 styling
-- ✅ Full-featured dashboard with real-time status monitoring
-- ✅ Integrated configuration pages for providers, storage, symbols, and backfill
-- ✅ Secure credential management using Windows CredentialPicker
-
-**Code Quality (Completed 2026-01-01):**
-- ✅ Extracted shared subscription management into `SymbolSubscriptionTracker` base class
-- ✅ Standardized logger initialization across all components using `LoggingSetup.ForContext<T>()`
-- ✅ Added comprehensive `.gitignore` for credential protection
-- ✅ Cleaned up consumer classes by removing boilerplate code
-
-### Near-Term Improvements
-
-**Resilience and Reliability:**
-- Connection retry with exponential backoff for all providers (Polly integration)
-- Automatic WebSocket reconnection on connection loss
-- Heartbeat/keep-alive mechanism to detect stale connections
-- Circuit breakers to prevent cascading failures
-
-**Security:**
-- ✅ Windows CredentialPicker for secure API credential management (UWP app)
-- Move API credentials from config files to environment variables or secure vault
-- Support for Azure Key Vault, AWS Secrets Manager, HashiCorp Vault
-
-**Observability:**
-- ✅ Structured Serilog logging implemented throughout codebase
-- Comprehensive error logging for connection failures and parse errors
-- Distributed tracing with OpenTelemetry
-
-**Data Quality:**
-- Use decimal instead of double for price fields to avoid floating-point precision issues
-- Cross-validation of bid/ask price ordering in order books
-- Enhanced Alpaca quote integration (wire "T":"q" messages to QuoteCollector)
-
-### Long-Term Enhancements
-
-**Testing:**
-- Comprehensive unit test suite with xUnit
-- Integration tests for all provider implementations
-- Mock data generation with Bogus
-- Benchmark suite with BenchmarkDotNet
-
-**Performance:**
-- Adopt System.IO.Pipelines for zero-copy WebSocket message parsing
-- Memory allocation optimization in hot paths
-- Enhanced backpressure handling
-
-**Storage:**
-- Alternative storage backends (QuestDB, InfluxDB, TimescaleDB)
-- Apache Parquet for archival storage (10-20x better compression)
-- Data validation and schema evolution support
-
-**Advanced Features:**
-- Automated recovery policies (auto-resubscribe on integrity events)
-- Multi-provider reconciliation and feed divergence alarms
-- Order book analytics (microprice, liquidity imbalance)
-- Custom alert rules and webhook notifications
-
-See [DEPENDENCIES.md](MarketDataCollector/DEPENDENCIES.md) for detailed implementation recommendations.
-
 ## Contributing
 
-Contributions are welcome! Please see the documentation for architecture details before submitting pull requests.
+Contributions are welcome! Please see the [CLAUDE.md](CLAUDE.md) for architecture details and coding guidelines before submitting pull requests.

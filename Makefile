@@ -62,26 +62,26 @@ help: ## Show this help message
 # =============================================================================
 
 install: ## Interactive installation (Docker or Native)
-	@./install.sh
+	@./scripts/install/install.sh
 
 install-docker: ## Docker-based installation
-	@./install.sh --docker
+	@./scripts/install/install.sh --docker
 
 install-native: ## Native .NET installation
-	@./install.sh --native
+	@./scripts/install/install.sh --native
 
 setup-config: ## Create appsettings.json from template
-	@if [ ! -f appsettings.json ]; then \
-		cp appsettings.sample.json appsettings.json; \
-		echo "$(GREEN)Created appsettings.json$(NC)"; \
+	@if [ ! -f config/appsettings.json ]; then \
+		cp config/appsettings.sample.json config/appsettings.json; \
+		echo "$(GREEN)Created config/appsettings.json$(NC)"; \
 		echo "$(YELLOW)Remember to edit with your API credentials$(NC)"; \
 	else \
-		echo "$(YELLOW)appsettings.json already exists$(NC)"; \
+		echo "$(YELLOW)config/appsettings.json already exists$(NC)"; \
 	fi
 	@mkdir -p data logs
 
 check-deps: ## Check prerequisites
-	@./install.sh --check
+	@./scripts/install/install.sh --check
 
 # =============================================================================
 # Docker
@@ -91,31 +91,31 @@ docker: docker-build docker-up ## Build and start Docker container
 
 docker-build: ## Build Docker image
 	@echo "$(BLUE)Building Docker image...$(NC)"
-	docker build -t $(DOCKER_IMAGE) .
+	docker build -f deploy/docker/Dockerfile -t $(DOCKER_IMAGE) .
 
 docker-up: setup-config ## Start Docker container
 	@echo "$(BLUE)Starting Docker container...$(NC)"
-	docker compose up -d
+	docker compose -f deploy/docker/docker-compose.yml up -d
 	@echo "$(GREEN)Container started!$(NC)"
 	@echo "  Dashboard: http://localhost:$(HTTP_PORT)"
 	@echo "  Health:    http://localhost:$(HTTP_PORT)/health"
 	@echo "  Metrics:   http://localhost:$(HTTP_PORT)/metrics"
 
 docker-down: ## Stop Docker container
-	docker compose down
+	docker compose -f deploy/docker/docker-compose.yml down
 
 docker-logs: ## View Docker logs
-	docker compose logs -f
+	docker compose -f deploy/docker/docker-compose.yml logs -f
 
 docker-restart: ## Restart Docker container
-	docker compose restart
+	docker compose -f deploy/docker/docker-compose.yml restart
 
 docker-clean: ## Remove Docker containers and images
-	docker compose down -v
+	docker compose -f deploy/docker/docker-compose.yml down -v
 	docker rmi $(DOCKER_IMAGE) 2>/dev/null || true
 
 docker-monitoring: ## Start with Prometheus and Grafana
-	docker compose --profile monitoring up -d
+	docker compose -f deploy/docker/docker-compose.yml --profile monitoring up -d
 	@echo "$(GREEN)Monitoring stack started!$(NC)"
 	@echo "  Prometheus: http://localhost:9090"
 	@echo "  Grafana:    http://localhost:3000 (admin/admin)"
@@ -175,16 +175,16 @@ clean: ## Clean build artifacts
 
 publish: ## Publish for all platforms
 	@echo "$(BLUE)Publishing for all platforms...$(NC)"
-	./publish.sh
+	./scripts/publish/publish.sh
 
 publish-linux: ## Publish for Linux x64
-	./publish.sh linux-x64
+	./scripts/publish/publish.sh linux-x64
 
 publish-windows: ## Publish for Windows x64
-	./publish.sh win-x64
+	./scripts/publish/publish.sh win-x64
 
 publish-macos: ## Publish for macOS x64
-	./publish.sh osx-x64
+	./scripts/publish/publish.sh osx-x64
 
 # =============================================================================
 # Utilities
