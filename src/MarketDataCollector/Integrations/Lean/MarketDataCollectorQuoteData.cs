@@ -3,6 +3,7 @@ using QuantConnect.Data;
 using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Domain.Events;
 using System.Text.Json;
+using Serilog;
 
 namespace MarketDataCollector.Integrations.Lean;
 
@@ -12,6 +13,8 @@ namespace MarketDataCollector.Integrations.Lean;
 /// </summary>
 public class MarketDataCollectorQuoteData : BaseData
 {
+    private static readonly ILogger _log = Log.ForContext<MarketDataCollectorQuoteData>();
+
     /// <summary>Best bid price</summary>
     public decimal BidPrice { get; set; }
 
@@ -93,13 +96,26 @@ public class MarketDataCollectorQuoteData : BaseData
                 AskExchange = quote.Venue ?? string.Empty
             };
         }
-        catch (Exception)
+        catch (JsonException ex)
         {
-            // TODO: Replace bare exception catch with specific exception types (JsonException, InvalidOperationException)
-            // TODO: Implement proper logging for parsing errors with error details (line, symbol, timestamp)
+            var linePreview = line.Length > 100 ? line[..100] + "..." : line;
+            _log.Warning(ex,
+                "Failed to parse quote data JSON for {Symbol} on {Date}: {LinePreview}",
+                config.Symbol.Value,
+                date.ToString("yyyy-MM-dd"),
+                linePreview);
+            return null!;
+        }
+        catch (Exception ex)
+        {
+            var linePreview = line.Length > 100 ? line[..100] + "..." : line;
+            _log.Warning(ex,
+                "Unexpected error parsing quote data for {Symbol} on {Date}: {LinePreview}",
+                config.Symbol.Value,
+                date.ToString("yyyy-MM-dd"),
+                linePreview);
             // TODO: Add metrics/counters for parse failures
             // TODO: Consider RetryPolicy for transient failures
-            // Log parsing errors in production
             return null!;
         }
     }
