@@ -1,0 +1,154 @@
+// Storage Architecture Diagram
+// Market Data Collector v1.5.0
+// Last Updated: 2026-01-08
+
+digraph StorageArchitecture {
+  rankdir=TB;
+  graph [fontname="Helvetica", fontsize=12, bgcolor="white", compound=true];
+  node  [fontname="Helvetica", fontsize=10, shape=box, style="rounded,filled"];
+  edge  [fontname="Helvetica", fontsize=9, color="#4a5568"];
+
+  // Title
+  labelloc="t";
+  label="Market Data Collector - Storage Architecture";
+
+  // Input
+  EVENTS [shape=oval, fillcolor="#ede9fe", label="Market Events\n(Trade, Quote, Depth,\nIntegrity, Heartbeat)"];
+
+  // Write Path
+  subgraph cluster_write {
+    label="Write Path (Durability)";
+    color="#c53030";
+    style="rounded";
+
+    WAL [shape=cylinder, fillcolor="#fee2e2",
+         label="Write-Ahead Log\n[Crash-safe]\n\n• Transaction semantics\n• Commit/Rollback\n• SHA256 checksums\n• Configurable sync modes"];
+
+    WAL_MODES [shape=note, fillcolor="#fff5f5",
+               label="Sync Modes:\n• NoSync (fastest)\n• BatchedSync (balanced)\n• EveryWrite (durable)"];
+  }
+
+  // Hot Storage
+  subgraph cluster_hot {
+    label="Hot Storage (Real-time)";
+    color="#f6ad55";
+    style="rounded";
+
+    JSONL [shape=cylinder, fillcolor="#fef3c7",
+           label="JSONL Files\n[Append-only]\n\n• Human-readable\n• Line-delimited JSON\n• Per-symbol files\n• Gzip optional"];
+
+    NAMING [shape=note, fillcolor="#fffaf0",
+            label="Naming Convention:\n{DataRoot}/{source}/{date}/\n  {symbol}_{type}.jsonl"];
+  }
+
+  // Compression
+  subgraph cluster_compress {
+    label="Compression Profiles";
+    color="#805ad5";
+    style="rounded";
+
+    COMPRESS [fillcolor="#ede9fe",
+              label="CompressionProfileManager\n[Tiered Compression]"];
+
+    LZ4 [shape=box, fillcolor="#e9d5ff",
+         label="LZ4 Level 1\n[Real-time]\n~500 MB/s, 2.5x"];
+    ZSTD_WARM [shape=box, fillcolor="#e9d5ff",
+               label="ZSTD Level 6\n[Warm Archive]\n~150 MB/s, 5x"];
+    ZSTD_COLD [shape=box, fillcolor="#e9d5ff",
+               label="ZSTD Level 19\n[Cold Archive]\n~20 MB/s, 10x"];
+    GZIP [shape=box, fillcolor="#e9d5ff",
+          label="Gzip\n[Portable]\nCompatibility"];
+
+    COMPRESS -> LZ4;
+    COMPRESS -> ZSTD_WARM;
+    COMPRESS -> ZSTD_COLD;
+    COMPRESS -> GZIP;
+  }
+
+  // Archive Storage
+  subgraph cluster_archive {
+    label="Archive Storage (Analytics)";
+    color="#2c7a7b";
+    style="rounded";
+
+    PARQUET [shape=cylinder, fillcolor="#d1fae5",
+             label="Parquet Files\n[Columnar]\n\n• 10-20x compression\n• Optimized for analytics\n• Type-specific schemas\n• Snappy/Gzip options"];
+
+    SCHEMAS [fillcolor="#c6f6d5",
+             label="SchemaVersionManager\n[Version Control]\n\n• Semantic versioning\n• Automatic migration\n• JSON Schema export"];
+  }
+
+  // Tiered Storage
+  subgraph cluster_tiers {
+    label="Tiered Storage";
+    color="#38a169";
+    style="rounded";
+
+    HOT_TIER [shape=folder, fillcolor="#c6f6d5",
+              label="Hot Tier\n[SSD/NVMe]\n0-7 days"];
+    WARM_TIER [shape=folder, fillcolor="#c6f6d5",
+               label="Warm Tier\n[HDD/Block]\n7-30 days"];
+    COLD_TIER [shape=folder, fillcolor="#c6f6d5",
+               label="Cold Tier\n[S3/Glacier]\n30+ days"];
+
+    MIGRATION [fillcolor="#9ae6b4",
+               label="TierMigrationService\nAutomatic lifecycle"];
+
+    MIGRATION -> HOT_TIER;
+    MIGRATION -> WARM_TIER;
+    MIGRATION -> COLD_TIER;
+  }
+
+  // Export
+  subgraph cluster_export {
+    label="Export Profiles";
+    color="#2b6cb0";
+    style="rounded";
+
+    EXPORT [fillcolor="#dbeafe",
+            label="AnalysisExportService\n[Multi-format]"];
+
+    PYTHON_EXP [shape=box, fillcolor="#bfdbfe",
+                label="Python/Pandas\nParquet + datetime64"];
+    R_EXP [shape=box, fillcolor="#bfdbfe",
+           label="R Statistics\nCSV + NA handling"];
+    LEAN_EXP [shape=box, fillcolor="#bfdbfe",
+              label="QuantConnect Lean\nNative format + ZIP"];
+    EXCEL_EXP [shape=box, fillcolor="#bfdbfe",
+               label="Microsoft Excel\nXLSX multi-sheet"];
+    PG_EXP [shape=box, fillcolor="#bfdbfe",
+            label="PostgreSQL\nCSV + DDL + COPY"];
+
+    EXPORT -> PYTHON_EXP;
+    EXPORT -> R_EXP;
+    EXPORT -> LEAN_EXP;
+    EXPORT -> EXCEL_EXP;
+    EXPORT -> PG_EXP;
+  }
+
+  // Quality
+  subgraph cluster_quality {
+    label="Data Quality";
+    color="#c53030";
+    style="dashed";
+
+    QUALITY [fillcolor="#fee2e2",
+             label="AnalysisQualityReport\n[Assessment]\n\n• Completeness scoring\n• Outlier detection (4σ)\n• Gap detection\n• A+ to F grading"];
+  }
+
+  // Data Flow
+  EVENTS -> WAL [label="1. Journal"];
+  WAL -> JSONL [label="2. Persist"];
+  JSONL -> COMPRESS [label="3. Compress"];
+  COMPRESS -> PARQUET [label="4. Archive"];
+  PARQUET -> SCHEMAS [label="version"];
+
+  JSONL -> HOT_TIER;
+  PARQUET -> WARM_TIER;
+  PARQUET -> COLD_TIER [style=dashed];
+
+  PARQUET -> EXPORT;
+  JSONL -> EXPORT;
+
+  EXPORT -> QUALITY [label="assess"];
+}

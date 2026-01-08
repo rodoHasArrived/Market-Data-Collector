@@ -1,0 +1,133 @@
+// Data Flow Diagram
+// Market Data Collector v1.5.0
+// Last Updated: 2026-01-08
+
+digraph DataFlow {
+  rankdir=LR;
+  graph [fontname="Helvetica", fontsize=12, bgcolor="white", splines=polyline];
+  node  [fontname="Helvetica", fontsize=10, shape=box, style="rounded,filled"];
+  edge  [fontname="Helvetica", fontsize=9];
+
+  // Title
+  labelloc="t";
+  label="Market Data Collector - Data Flow Diagram";
+
+  // Data Sources
+  subgraph cluster_sources {
+    label="Data Sources";
+    color="#999999";
+    style="dashed";
+
+    IB [fillcolor="#f8f8f8", label="IB TWS\nWebSocket"];
+    ALP [fillcolor="#f8f8f8", label="Alpaca\nWebSocket"];
+    YAHOO [fillcolor="#f8f8f8", label="Yahoo\nREST"];
+    TIINGO [fillcolor="#f8f8f8", label="Tiingo\nREST"];
+    OTHER [fillcolor="#f8f8f8", label="Other\nProviders"];
+  }
+
+  // Ingestion
+  subgraph cluster_ingest {
+    label="Ingestion Layer";
+    color="#2b6cb0";
+    style="rounded";
+
+    STREAM_INGEST [fillcolor="#dbeafe", label="Streaming\nIngestion\n(Real-time)"];
+    HIST_INGEST [fillcolor="#dbeafe", label="Historical\nBackfill\n(Batch)"];
+  }
+
+  // Processing
+  subgraph cluster_process {
+    label="Processing Layer";
+    color="#2c7a7b";
+    style="rounded";
+
+    COLLECTORS [fillcolor="#d1fae5", label="Domain Collectors\nTrade | Quote | Depth"];
+    VALIDATION [fillcolor="#d1fae5", label="F# Validation\nRailway-Oriented"];
+    INDICATORS [fillcolor="#d1fae5", label="Technical\nIndicators\n(200+)"];
+  }
+
+  // Pipeline
+  subgraph cluster_pipeline {
+    label="Event Pipeline";
+    color="#805ad5";
+    style="rounded";
+
+    CHANNEL [fillcolor="#ede9fe", label="Bounded Channel\n(100K capacity)"];
+    PUBLISHER [fillcolor="#ede9fe", label="Composite\nPublisher"];
+  }
+
+  // Storage
+  subgraph cluster_storage {
+    label="Storage Layer";
+    color="#c53030";
+    style="rounded";
+
+    WAL [fillcolor="#fee2e2", label="Write-Ahead Log\n(Durability)"];
+    JSONL [fillcolor="#fee2e2", label="JSONL Files\n(Hot)"];
+    PARQUET [fillcolor="#fee2e2", label="Parquet Files\n(Archive)"];
+  }
+
+  // Export
+  subgraph cluster_export {
+    label="Export & Analysis";
+    color="#38a169";
+    style="rounded";
+
+    EXPORT_SVC [fillcolor="#c6f6d5", label="Export Service"];
+    PYTHON_EXP [fillcolor="#c6f6d5", label="Python\nParquet"];
+    R_EXP [fillcolor="#c6f6d5", label="R\nCSV"];
+    LEAN_EXP [fillcolor="#c6f6d5", label="Lean\nFormat"];
+    PG_EXP [fillcolor="#c6f6d5", label="PostgreSQL\nCSV+DDL"];
+  }
+
+  // Messaging (Optional)
+  subgraph cluster_messaging {
+    label="Distributed Messaging";
+    color="#ff6b6b";
+    style="dashed";
+
+    RABBITMQ [fillcolor="#fecaca", label="RabbitMQ\nMassTransit"];
+    CONSUMERS [fillcolor="#fecaca", label="Microservice\nConsumers"];
+  }
+
+  // Data Flow Edges
+  IB -> STREAM_INGEST [color="#2b6cb0", label="trades,\nquotes,\ndepth"];
+  ALP -> STREAM_INGEST [color="#2b6cb0", label="trades,\nquotes"];
+  YAHOO -> HIST_INGEST [color="#2b6cb0", label="daily\nOHLCV"];
+  TIINGO -> HIST_INGEST [color="#2b6cb0", label="adjusted\nprices"];
+  OTHER -> HIST_INGEST [color="#2b6cb0"];
+
+  STREAM_INGEST -> COLLECTORS [color="#2c7a7b"];
+  HIST_INGEST -> COLLECTORS [color="#2c7a7b"];
+
+  COLLECTORS -> VALIDATION [color="#2c7a7b"];
+  VALIDATION -> INDICATORS [color="#2c7a7b", style=dashed];
+  VALIDATION -> CHANNEL [color="#805ad5"];
+
+  CHANNEL -> PUBLISHER [color="#805ad5"];
+
+  PUBLISHER -> WAL [color="#c53030", label="journal"];
+  WAL -> JSONL [color="#c53030"];
+  JSONL -> PARQUET [color="#c53030", label="compress\n& archive"];
+
+  PUBLISHER -> RABBITMQ [color="#ff6b6b", style=dashed, label="distribute"];
+  RABBITMQ -> CONSUMERS [color="#ff6b6b", style=dashed];
+
+  PARQUET -> EXPORT_SVC [color="#38a169"];
+  JSONL -> EXPORT_SVC [color="#38a169"];
+
+  EXPORT_SVC -> PYTHON_EXP [color="#38a169"];
+  EXPORT_SVC -> R_EXP [color="#38a169"];
+  EXPORT_SVC -> LEAN_EXP [color="#38a169"];
+  EXPORT_SVC -> PG_EXP [color="#38a169"];
+
+  // Legend
+  subgraph cluster_legend {
+    label="Legend";
+    style="rounded";
+    color="#666666";
+
+    LEG1 [shape=plaintext, label="→ Real-time data flow"];
+    LEG2 [shape=plaintext, label="⇢ Optional/Async flow"];
+  }
+}

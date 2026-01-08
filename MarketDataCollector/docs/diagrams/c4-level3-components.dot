@@ -1,69 +1,176 @@
+// C4 Level 3: Component Diagram
+// Market Data Collector v1.5.0
+// Last Updated: 2026-01-08
 
-    digraph G {
-      rankdir=LR;
-      graph [fontname="Helvetica", fontsize=10, bgcolor="white"];
-      node  [fontname="Helvetica", fontsize=10, shape=box, style="rounded,filled", fillcolor="#f7fafc", color="#4a5568"];
-      edge  [fontname="Helvetica", fontsize=10, color="#4a5568"];
+digraph C4_Components {
+  rankdir=TB;
+  graph [fontname="Helvetica", fontsize=11, bgcolor="white", compound=true, nodesep=0.5];
+  node  [fontname="Helvetica", fontsize=9, shape=box, style="rounded,filled"];
+  edge  [fontname="Helvetica", fontsize=8, color="#4a5568"];
 
-      IB [shape=box, style="rounded,filled", fillcolor="#f8f8f8", color="#333333", label="IB TWS/Gateway"];
-      ALP [shape=box, style="rounded,filled", fillcolor="#f8f8f8", color="#333333", label="Alpaca WebSocket"];
-      FS [shape=cylinder, style="filled", fillcolor="#fff5f5", color="#c53030", label="Filesystem"];
+  // Title
+  labelloc="t";
+  label="Market Data Collector - Component Diagram (C4 Level 3)";
 
-      subgraph cluster_infra {
-        label="Infrastructure";
-        color="#2b6cb0";
-        style="rounded";
-        CONN [label="EnhancedIBConnectionManager\n(EWrapper)"];
-        ROUTE [label="IBCallbackRouter"];
-        FACT [label="ContractFactory"];
-        CLIENT [label="IIBMarketDataClient\nIBMarketDataClient/AlpacaMarketDataClient/NoOp"];
-      }
+  // External Systems
+  IB [shape=box, style="rounded,filled", fillcolor="#999999", fontcolor="white",
+      label="Interactive Brokers"];
+  ALP [shape=box, style="rounded,filled", fillcolor="#999999", fontcolor="white",
+       label="Alpaca"];
+  HIST_API [shape=box, style="rounded,filled", fillcolor="#999999", fontcolor="white",
+            label="Historical APIs\n(9 providers)"];
+  FS [shape=cylinder, style="filled", fillcolor="#999999", fontcolor="white",
+      label="File System"];
 
-      subgraph cluster_dom {
-        label="Domain";
-        color="#2c7a7b";
-        style="rounded";
-        TD [label="TradeDataCollector"];
-        MD [label="MarketDepthCollector"];
-        QC [label="QuoteCollector\n(BBO cache/emitter)"];
-        MODELS [label="Models\nTrade/LOBSnapshot/BboQuotePayload/Integrity"];
-      }
+  // Core Collector Container
+  subgraph cluster_core {
+    label="Market Data Collector Core";
+    color="#438dd5";
+    style="rounded";
+    bgcolor="#f0f8ff";
 
-      subgraph cluster_app {
-        label="Application";
-        color="#805ad5";
-        style="rounded";
-        CW [label="ConfigWatcher"];
-        SW [label="StatusWriter"];
-        MET [label="Metrics"];
-      }
+    // Infrastructure Layer - Providers
+    subgraph cluster_infra {
+      label="Infrastructure Layer";
+      color="#2b6cb0";
+      style="rounded";
 
-      subgraph cluster_pipe {
-        label="Pipeline/Storage";
-        color="#c05621";
-        style="rounded";
-        EP [label="EventPipeline\nBounded Channel"];
-        SINK [label="JsonlStorageSink"];
-        POL [label="JsonlStoragePolicy"];
-      }
+      // Streaming Providers
+      IB_CLIENT [label="IBMarketDataClient\n[Component]", fillcolor="#dbeafe"];
+      ALP_CLIENT [label="AlpacaMarketDataClient\n[Component]", fillcolor="#dbeafe"];
+      POL_CLIENT [label="PolygonMarketDataClient\n[Component]", fillcolor="#dbeafe"];
+      SS_CLIENT [label="StockSharpConnector\n[Component]", fillcolor="#dbeafe"];
 
-      IB -> CONN -> ROUTE;
-      ALP -> CLIENT;
-      ROUTE -> TD;
-      ROUTE -> MD;
-      ROUTE -> QC;
-      CLIENT -> TD;
-      CLIENT -> QC;
-      TD -> EP;
-      MD -> EP;
-      QC -> EP;
-      QC -> TD [style=dashed, label="IQuoteStateStore"];
-      EP -> SINK -> FS;
-      POL -> SINK;
+      // Historical Providers
+      HIST_COMPOSITE [label="CompositeHistoricalDataProvider\n[Component]\nFailover + rate-limit rotation", fillcolor="#dbeafe"];
 
-      CW -> CLIENT [style=dashed];
-      SW -> FS;
+      // Connection Management
+      CONN_MGR [label="EnhancedIBConnectionManager\n[Component]\nReconnect + heartbeat", fillcolor="#dbeafe"];
+      WS_RESILIENCE [label="WebSocketResiliencePolicy\n[Component]\nPolly retry + circuit breaker", fillcolor="#dbeafe"];
 
-      CLIENT -> FACT;
-      CLIENT -> CONN;
+      // Performance
+      PIPELINES [label="PipelinesWebSocketProcessor\n[Component]\nZero-copy parsing", fillcolor="#dbeafe"];
+      ORDERBOOK [label="LockFreeOrderBook\n[Component]\nHigh-perf order book", fillcolor="#dbeafe"];
     }
+
+    // Domain Layer
+    subgraph cluster_domain {
+      label="Domain Layer";
+      color="#2c7a7b";
+      style="rounded";
+
+      // Collectors
+      TRADE_COLL [label="TradeDataCollector\n[Component]", fillcolor="#d1fae5"];
+      QUOTE_COLL [label="QuoteCollector\n[Component]\nBBO cache + emitter", fillcolor="#d1fae5"];
+      DEPTH_COLL [label="MarketDepthCollector\n[Component]\nL2 order book", fillcolor="#d1fae5"];
+
+      // Models
+      MODELS [label="Domain Models\n[Component]\nTrade, Quote, LOB,\nIntegrity, Heartbeat", fillcolor="#d1fae5"];
+    }
+
+    // Application Layer
+    subgraph cluster_app {
+      label="Application Layer";
+      color="#805ad5";
+      style="rounded";
+
+      // Pipeline
+      PIPELINE [label="EventPipeline\n[Component]\nBounded Channel 100K", fillcolor="#ede9fe"];
+
+      // Technical Indicators
+      INDICATORS [label="TechnicalIndicatorService\n[Component]\n200+ indicators", fillcolor="#ede9fe"];
+
+      // Tracing
+      OTEL [label="OpenTelemetrySetup\n[Component]\nDistributed tracing", fillcolor="#ede9fe"];
+
+      // Serialization
+      JSON_CTX [label="MarketDataJsonContext\n[Component]\nSource-gen JSON", fillcolor="#ede9fe"];
+
+      // Config & Monitoring
+      CONFIG [label="ConfigWatcher\n[Component]\nHot reload", fillcolor="#ede9fe"];
+      HTTP_SERVER [label="StatusHttpServer\n[Component]\n/status /metrics /health", fillcolor="#ede9fe"];
+
+      // Subscriptions
+      BACKFILL [label="HistoricalBackfillService\n[Component]\nPriority queue backfill", fillcolor="#ede9fe"];
+    }
+
+    // Storage Layer
+    subgraph cluster_storage {
+      label="Storage Layer";
+      color="#c53030";
+      style="rounded";
+
+      // Sinks
+      JSONL_SINK [label="JsonlStorageSink\n[Component]\nAppend-only", fillcolor="#fee2e2"];
+      PARQUET_SINK [label="ParquetStorageSink\n[Component]\nColumnar archive", fillcolor="#fee2e2"];
+
+      // Archival
+      WAL [label="WriteAheadLog\n[Component]\nCrash-safe journal", fillcolor="#fee2e2"];
+      COMPRESS [label="CompressionProfileManager\n[Component]\nLZ4/ZSTD/Gzip tiers", fillcolor="#fee2e2"];
+      SCHEMA [label="SchemaVersionManager\n[Component]\nVersion + migrate", fillcolor="#fee2e2"];
+
+      // Export
+      EXPORT [label="AnalysisExportService\n[Component]\nPython/R/Lean/Excel/PG", fillcolor="#fee2e2"];
+      QUALITY [label="AnalysisQualityReport\n[Component]\nGap + outlier detection", fillcolor="#fee2e2"];
+    }
+
+    // Messaging Layer
+    subgraph cluster_messaging {
+      label="Messaging Layer";
+      color="#ff6b6b";
+      style="rounded";
+
+      COMPOSITE_PUB [label="CompositePublisher\n[Component]", fillcolor="#fecaca"];
+      PIPELINE_PUB [label="PipelinePublisher\n[Component]", fillcolor="#fecaca"];
+      MT_PUB [label="MassTransitPublisher\n[Component]\nRabbitMQ/Azure SB", fillcolor="#fecaca"];
+    }
+  }
+
+  // Internal Relationships
+  IB -> CONN_MGR;
+  CONN_MGR -> IB_CLIENT;
+  ALP -> ALP_CLIENT;
+  ALP_CLIENT -> WS_RESILIENCE;
+  POL_CLIENT -> PIPELINES;
+  HIST_API -> HIST_COMPOSITE;
+
+  IB_CLIENT -> TRADE_COLL;
+  IB_CLIENT -> QUOTE_COLL;
+  IB_CLIENT -> DEPTH_COLL;
+  ALP_CLIENT -> TRADE_COLL;
+  ALP_CLIENT -> QUOTE_COLL;
+  SS_CLIENT -> TRADE_COLL;
+
+  TRADE_COLL -> MODELS;
+  QUOTE_COLL -> MODELS;
+  DEPTH_COLL -> MODELS;
+  DEPTH_COLL -> ORDERBOOK;
+
+  TRADE_COLL -> PIPELINE;
+  QUOTE_COLL -> PIPELINE;
+  DEPTH_COLL -> PIPELINE;
+
+  PIPELINE -> INDICATORS;
+  PIPELINE -> COMPOSITE_PUB;
+
+  COMPOSITE_PUB -> PIPELINE_PUB;
+  COMPOSITE_PUB -> MT_PUB;
+
+  PIPELINE_PUB -> WAL;
+  WAL -> JSONL_SINK;
+  JSONL_SINK -> COMPRESS;
+  COMPRESS -> PARQUET_SINK;
+
+  PARQUET_SINK -> FS;
+  JSONL_SINK -> FS;
+
+  SCHEMA -> EXPORT;
+  EXPORT -> QUALITY;
+
+  HIST_COMPOSITE -> BACKFILL;
+  BACKFILL -> PIPELINE;
+
+  CONFIG -> IB_CLIENT [style=dashed];
+  HTTP_SERVER -> PIPELINE [style=dashed, label="stats"];
+  OTEL -> PIPELINE [style=dashed, label="traces"];
+}

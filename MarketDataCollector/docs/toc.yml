@@ -36,6 +36,11 @@
     - name: Why This Architecture
       href: architecture/why-this-architecture.md
 
+- name: Diagrams
+  items:
+    - name: Diagrams Overview
+      href: diagrams/README.md
+
 - name: Data Providers
   items:
     - name: Data Sources

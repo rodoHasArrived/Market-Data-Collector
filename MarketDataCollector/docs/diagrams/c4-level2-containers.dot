@@ -1,40 +1,118 @@
+// C4 Level 2: Container Diagram
+// Market Data Collector v1.5.0
+// Last Updated: 2026-01-08
 
-    digraph G {
-      rankdir=TB;
-      graph [fontname="Helvetica", fontsize=10, bgcolor="white"];
-      node  [fontname="Helvetica", fontsize=10, shape=box, style="rounded,filled", color="#2b6cb0", fillcolor="#e8f4ff"];
-      edge  [fontname="Helvetica", fontsize=10, color="#4a5568"];
+digraph C4_Containers {
+  rankdir=TB;
+  graph [fontname="Helvetica", fontsize=12, bgcolor="white", compound=true];
+  node  [fontname="Helvetica", fontsize=10, shape=box, style="rounded,filled"];
+  edge  [fontname="Helvetica", fontsize=9, color="#4a5568"];
 
-      Operator [shape=oval, style="filled", fillcolor="#ffffff", color="#333333", label="Operator"];
-      UI [label="ASP.NET UI\nIBDataCollector.Ui", fillcolor="#e8f4ff", color="#2b6cb0"];
-      DISK [shape=cylinder, style="filled", fillcolor="#fff5f5", color="#c53030", label="Filesystem\n./data"];
-      IB [fillcolor="#f8f8f8", color="#333333", label="Interactive Brokers\nTWS/Gateway"];
-      ALP [fillcolor="#f8f8f8", color="#333333", label="Alpaca\nWebSocket"];
+  // Title
+  labelloc="t";
+  label="Market Data Collector - Container Diagram (C4 Level 2)";
 
-      subgraph cluster_proc {
-        label="IB Data Collector (Process)";
-        color="#2c7a7b";
-        style="rounded";
+  // External Actors
+  Operator [shape=oval, style="filled", fillcolor="#08427b", fontcolor="white",
+            label="Operator"];
 
-        APP [label="Application Layer\nProgram/ConfigWatcher/StatusWriter"];
-        DOM [label="Domain Layer\nCollectors + Models", fillcolor="#f7fafc", color="#4a5568"];
-        PIPE [label="Event Pipeline\nEventPipeline/Bounded Channel", fillcolor="#f7fafc", color="#4a5568"];
-        STOR [label="Storage\nJsonlStorageSink/Policy", fillcolor="#f7fafc", color="#4a5568"];
-        INFRA [label="Infrastructure (IB/Alpaca)\nConnection/Router/ContractFactory", fillcolor="#f7fafc", color="#4a5568"];
+  // External Systems
+  IB [shape=box, style="rounded,filled", fillcolor="#999999", fontcolor="white",
+      label="Interactive Brokers"];
+  ALP [shape=box, style="rounded,filled", fillcolor="#999999", fontcolor="white",
+       label="Alpaca"];
+  HIST_PROVIDERS [shape=box, style="rounded,filled", fillcolor="#999999", fontcolor="white",
+                  label="Historical Providers\n(Yahoo, Tiingo, Finnhub,\nPolygon, Alpha Vantage)"];
 
-        APP -> INFRA;
-        APP -> DOM;
-        APP -> PIPE;
-        APP -> STOR;
+  // System Boundary
+  subgraph cluster_mdc {
+    label="Market Data Collector System";
+    color="#438dd5";
+    style="rounded";
+    bgcolor="#f0f8ff";
 
-        INFRA -> DOM;
-        DOM -> PIPE;
-        PIPE -> STOR;
-      }
+    // UWP Desktop Application
+    UWP [shape=box, style="rounded,filled", fillcolor="#438dd5", fontcolor="white",
+         label="UWP Desktop App\n[Windows App]\n\n15 pages for configuration,\nmonitoring, backfill,\nand export"];
 
-      Operator -> UI;
-      UI -> DISK [dir=both];
-      IB -> INFRA;
-      ALP -> INFRA;
-      STOR -> DISK;
+    // Core Collector Service
+    CORE [shape=box, style="rounded,filled", fillcolor="#438dd5", fontcolor="white",
+          label="Market Data Collector\n[.NET 9 Console App]\n\nCore collection engine\nwith event pipeline"];
+
+    // F# Domain Library
+    FSHARP [shape=box, style="rounded,filled", fillcolor="#85c1e9", fontcolor="black",
+            label="F# Domain Library\n[.NET Library]\n\nType-safe domain models,\nvalidation, calculations"];
+
+    // Microservices (Optional)
+    subgraph cluster_microservices {
+      label="Microservices (Optional)";
+      color="#2c7a7b";
+      style="dashed";
+
+      GATEWAY [shape=box, style="rounded,filled", fillcolor="#2c7a7b", fontcolor="white",
+               label="API Gateway\n:5000"];
+      QUOTE_SVC [shape=box, style="rounded,filled", fillcolor="#2c7a7b", fontcolor="white",
+                 label="Quote Service\n:5001"];
+      TRADE_SVC [shape=box, style="rounded,filled", fillcolor="#2c7a7b", fontcolor="white",
+                 label="Trade Service\n:5002"];
+      ORDERBOOK_SVC [shape=box, style="rounded,filled", fillcolor="#2c7a7b", fontcolor="white",
+                     label="OrderBook Service\n:5003"];
+      HIST_SVC [shape=box, style="rounded,filled", fillcolor="#2c7a7b", fontcolor="white",
+                label="Historical Service\n:5004"];
+      VAL_SVC [shape=box, style="rounded,filled", fillcolor="#2c7a7b", fontcolor="white",
+               label="Validation Service\n:5005"];
     }
+
+    // Message Bus
+    RABBITMQ [shape=box, style="rounded,filled", fillcolor="#ff6b6b", fontcolor="white",
+              label="RabbitMQ\n[Message Broker]\n\nMassTransit messaging\nfor distributed events"];
+
+    // HTTP Monitoring Server
+    HTTP [shape=box, style="rounded,filled", fillcolor="#805ad5", fontcolor="white",
+          label="Status HTTP Server\n[HTTP API]\n\n/status, /metrics, /health"];
+  }
+
+  // Storage
+  subgraph cluster_storage {
+    label="Storage Layer";
+    color="#c53030";
+    style="dashed";
+
+    JSONL [shape=cylinder, style="filled", fillcolor="#fff5f5", color="#c53030",
+           label="JSONL Files\n[Hot Storage]\n\nReal-time append"];
+    PARQUET [shape=cylinder, style="filled", fillcolor="#fff5f5", color="#c53030",
+             label="Parquet Files\n[Archive Storage]\n\nColumnar, compressed"];
+    WAL [shape=cylinder, style="filled", fillcolor="#fff5f5", color="#c53030",
+         label="Write-Ahead Log\n[Durability]\n\nCrash-safe journaling"];
+  }
+
+  // Monitoring
+  PROM [shape=box, style="rounded,filled", fillcolor="#999999", fontcolor="white",
+        label="Prometheus"];
+
+  // Relationships
+  Operator -> UWP [label="Uses"];
+  UWP -> CORE [label="HTTP API"];
+  UWP -> HTTP [label="Status polling"];
+
+  IB -> CORE [label="WebSocket\nreal-time"];
+  ALP -> CORE [label="WebSocket\nreal-time"];
+  HIST_PROVIDERS -> CORE [label="REST API\nbackfill"];
+
+  CORE -> FSHARP [label="Uses domain\ntypes"];
+  CORE -> RABBITMQ [label="Publishes\nevents"];
+  CORE -> HTTP [label="Exposes"];
+
+  RABBITMQ -> GATEWAY [label="Routes"];
+  GATEWAY -> QUOTE_SVC;
+  GATEWAY -> TRADE_SVC;
+  GATEWAY -> ORDERBOOK_SVC;
+  GATEWAY -> HIST_SVC;
+  GATEWAY -> VAL_SVC;
+
+  CORE -> WAL [label="Journal"];
+  CORE -> JSONL [label="Append"];
+  CORE -> PARQUET [label="Archive"];
+
+  HTTP -> PROM [label="Scrapes\n/metrics"];
+}
