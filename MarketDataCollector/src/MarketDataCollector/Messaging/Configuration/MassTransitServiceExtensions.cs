@@ -68,7 +68,14 @@ public static class MassTransitServiceExtensions
 
         busConfig.UsingInMemory((context, cfg) =>
         {
-            ConfigureEndpoints(cfg, context, config);
+            // Apply endpoint prefix if configured
+            if (!string.IsNullOrEmpty(config.EndpointPrefix))
+            {
+                cfg.MessageTopology.SetEntityNameFormatter(
+                    new PrefixEntityNameFormatter(cfg.MessageTopology.EntityNameFormatter, config.EndpointPrefix));
+            }
+
+            cfg.ConfigureEndpoints(context);
         });
     }
 
@@ -112,8 +119,15 @@ public static class MassTransitServiceExtensions
                 }
             });
 
+            // Apply endpoint prefix if configured
+            if (!string.IsNullOrEmpty(config.EndpointPrefix))
+            {
+                cfg.MessageTopology.SetEntityNameFormatter(
+                    new PrefixEntityNameFormatter(cfg.MessageTopology.EntityNameFormatter, config.EndpointPrefix));
+            }
+
             ConfigureRetry(cfg, config.Retry);
-            ConfigureEndpoints(cfg, context, config);
+            cfg.ConfigureEndpoints(context);
         });
     }
 
@@ -141,8 +155,15 @@ public static class MassTransitServiceExtensions
                     "Azure Service Bus requires either a ConnectionString or Namespace with UseManagedIdentity=true");
             }
 
+            // Apply endpoint prefix if configured
+            if (!string.IsNullOrEmpty(config.EndpointPrefix))
+            {
+                cfg.MessageTopology.SetEntityNameFormatter(
+                    new PrefixEntityNameFormatter(cfg.MessageTopology.EntityNameFormatter, config.EndpointPrefix));
+            }
+
             ConfigureRetry(cfg, config.Retry);
-            ConfigureEndpoints(cfg, context, config);
+            cfg.ConfigureEndpoints(context);
         });
     }
 
@@ -158,21 +179,6 @@ public static class MassTransitServiceExtensions
                 TimeSpan.FromMilliseconds(retryConfig.MaxIntervalMs),
                 TimeSpan.FromMilliseconds(retryConfig.InitialIntervalMs));
         });
-    }
-
-    private static void ConfigureEndpoints(
-        IBusFactoryConfigurator cfg,
-        IBusRegistrationContext context,
-        MassTransitConfig config)
-    {
-        // Apply endpoint prefix if configured
-        if (!string.IsNullOrEmpty(config.EndpointPrefix))
-        {
-            cfg.MessageTopology.SetEntityNameFormatter(
-                new PrefixEntityNameFormatter(cfg.MessageTopology.EntityNameFormatter, config.EndpointPrefix));
-        }
-
-        cfg.ConfigureEndpoints(context);
     }
 
     private static MassTransitTransport ParseTransport(string? value)
