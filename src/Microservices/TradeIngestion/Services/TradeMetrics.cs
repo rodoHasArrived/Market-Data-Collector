@@ -13,6 +13,7 @@ public sealed class TradeMetrics
     private readonly Counter _tradesDropped;
     private readonly Counter _duplicatesDetected;
     private readonly Counter _validationErrors;
+    private readonly Counter _processorErrors;
     private readonly Gauge _queueDepth;
     private readonly Histogram _processingLatency;
 
@@ -60,6 +61,10 @@ public sealed class TradeMetrics
             "trade_service_validation_errors_total",
             "Total validation errors");
 
+        _processorErrors = Metrics.CreateCounter(
+            "trade_service_processor_errors_total",
+            "Total processor errors during trade processing");
+
         _queueDepth = Metrics.CreateGauge(
             "trade_service_queue_depth",
             "Current processing queue depth");
@@ -98,6 +103,12 @@ public sealed class TradeMetrics
     {
         Interlocked.Increment(ref _errorCount);
         _validationErrors.Inc();
+    }
+
+    public void RecordProcessorError()
+    {
+        Interlocked.Increment(ref _errorCount);
+        _processorErrors.Inc();
     }
 
     public void SetQueueDepth(int depth)

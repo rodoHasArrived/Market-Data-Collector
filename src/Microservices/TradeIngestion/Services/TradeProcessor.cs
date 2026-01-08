@@ -222,8 +222,8 @@ public sealed class TradeProcessor : ITradeProcessor, IAsyncDisposable
         {
             // TODO: Implement dead letter queue for failed trades
             // TODO: Add retry logic with backoff for transient failures
-            // TODO: Add metrics for processor error rates
             // TODO: Document failure modes and recovery procedures
+            _metrics.RecordProcessorError();
             _log.Error(ex, "Processor {Id} error", processorId);
         }
 
