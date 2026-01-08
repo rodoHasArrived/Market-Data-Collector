@@ -1362,14 +1362,60 @@ public static class HtmlTemplates
         tbody.innerHTML = '';
         for (const s of (cfg.symbols || [])) {{
           const tr = document.createElement('tr');
-          tr.innerHTML =
-            '<td><strong>' + s.symbol + '</strong></td>' +
-            '<td>' + (s.subscribeTrades ? '<span style=""color: #48bb78;"">✓ Yes</span>' : '✗ No') + '</td>' +
-            '<td>' + (s.subscribeDepth ? '<span style=""color: #48bb78;"">✓ Yes</span>' : '✗ No') + '</td>' +
-            '<td>' + (s.depthLevels || 10) + '</td>' +
-            '<td>' + (s.localSymbol || '-') + '</td>' +
-            '<td>' + (s.exchange || '-') + '</td>' +
-            '<td><div style=""display:flex;gap:8px;flex-wrap:wrap;""><button class=""btn-secondary"" onclick=""editSymbol(\'' + s.symbol + '\')"">✏️ Edit</button><button class=""btn-danger"" onclick=""deleteSymbol(\'' + s.symbol + '\')"">🗑️ Delete</button></div></td>';
+
+          // Symbol cell
+          const symbolTd = document.createElement('td');
+          const symbolStrong = document.createElement('strong');
+          symbolStrong.textContent = s.symbol || '';
+          symbolTd.appendChild(symbolStrong);
+          tr.appendChild(symbolTd);
+
+          // Subscribe trades cell
+          const tradesTd = document.createElement('td');
+          tradesTd.textContent = s.subscribeTrades ? '✓ Yes' : '✗ No';
+          tr.appendChild(tradesTd);
+
+          // Subscribe depth cell
+          const depthSubTd = document.createElement('td');
+          depthSubTd.textContent = s.subscribeDepth ? '✓ Yes' : '✗ No';
+          tr.appendChild(depthSubTd);
+
+          // Depth levels cell
+          const depthLevelsTd = document.createElement('td');
+          depthLevelsTd.textContent = (s.depthLevels || 10).toString();
+          tr.appendChild(depthLevelsTd);
+
+          // Local symbol cell
+          const localSymbolTd = document.createElement('td');
+          localSymbolTd.textContent = s.localSymbol || '-';
+          tr.appendChild(localSymbolTd);
+
+          // Exchange cell
+          const exchangeTd = document.createElement('td');
+          exchangeTd.textContent = s.exchange || '-';
+          tr.appendChild(exchangeTd);
+
+          // Actions cell
+          const actionsTd = document.createElement('td');
+          const actionsDiv = document.createElement('div');
+          actionsDiv.style.display = 'flex';
+          actionsDiv.style.gap = '8px';
+          actionsDiv.style.flexWrap = 'wrap';
+
+          const editButton = document.createElement('button');
+          editButton.className = 'btn-secondary';
+          editButton.textContent = '✏️ Edit';
+          editButton.addEventListener('click', () => editSymbol(s.symbol));
+
+          const deleteButton = document.createElement('button');
+          deleteButton.className = 'btn-danger';
+          deleteButton.textContent = '🗑️ Delete';
+          deleteButton.addEventListener('click', () => deleteSymbol(s.symbol));
+
+          actionsDiv.appendChild(editButton);
+          actionsDiv.appendChild(deleteButton);
+          actionsTd.appendChild(actionsDiv);
+          tr.appendChild(actionsTd);
           tbody.appendChild(tr);
         }}
 
