@@ -8,6 +8,11 @@ A high-performance, cross-platform market data collection system for real-time a
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue)](https://www.docker.com/)
 [![License](https://img.shields.io/badge/license-See%20LICENSE-green)](LICENSE)
 
+[![Build and Release](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/dotnet-desktop.yml/badge.svg)](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/dotnet-desktop.yml)
+[![CodeQL](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/codeql-analysis.yml)
+[![Docker Build](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/docker-build.yml/badge.svg)](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/docker-build.yml)
+[![Code Quality](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/code-quality.yml/badge.svg)](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/code-quality.yml)
+
 **Status**: Production Ready | **Version**: 1.5.0 | **Last Updated**: 2026-01-08
 
 ---
@@ -224,6 +229,36 @@ API credentials can be set via environment variables:
 ```bash
 export ALPACA__KEYID=your-key-id
 export ALPACA__SECRETKEY=your-secret-key
+```
+
+## CI/CD and Automation
+
+The repository includes comprehensive GitHub Actions workflows for automated testing, security, and deployment:
+
+- **🔨 Build & Release** - Automated builds and cross-platform releases
+- **🔒 CodeQL Analysis** - Security vulnerability scanning (weekly + on changes)
+- **📦 Docker Build** - Automated container image builds to GitHub Container Registry
+- **⚡ Performance Benchmarks** - Track performance metrics over time
+- **✨ Code Quality** - Linting, formatting, and link checking
+- **🏷️ Auto Labeling** - Intelligent PR and issue labeling
+- **🔍 Dependency Review** - Security checks for dependencies in PRs
+- **🗑️ Stale Management** - Automatic issue/PR lifecycle management
+
+See [`.github/workflows/README.md`](.github/workflows/README.md) for detailed documentation.
+
+### Docker Images
+
+Pre-built Docker images are available from GitHub Container Registry:
+
+```bash
+# Pull the latest image
+docker pull ghcr.io/rodohasarrived/market-data-collector:latest
+
+# Run the container
+docker run -d -p 8080:8080 \
+  -v $(pwd)/data:/app/data \
+  -v $(pwd)/appsettings.json:/app/appsettings.json:ro \
+  ghcr.io/rodohasarrived/market-data-collector:latest
 ```
 
 ## Repository Structure
