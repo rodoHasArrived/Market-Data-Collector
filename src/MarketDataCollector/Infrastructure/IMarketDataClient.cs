@@ -1,4 +1,5 @@
 using MarketDataCollector.Application.Config;
+using MarketDataCollector.Infrastructure.Contracts;
 using System.Threading;
 
 namespace MarketDataCollector.Infrastructure;
@@ -7,6 +8,12 @@ namespace MarketDataCollector.Infrastructure;
 /// Market data client abstraction for provider-agnostic market data ingestion.
 /// Implementations must be non-blocking on publish paths.
 /// </summary>
+/// <remarks>
+/// This interface is the core contract for ADR-001 (Provider Abstraction Pattern).
+/// All streaming data providers must implement this interface.
+/// </remarks>
+[ImplementsAdr("ADR-001", "Core streaming data provider contract")]
+[ImplementsAdr("ADR-004", "All async methods support CancellationToken")]
 public interface IMarketDataClient : IAsyncDisposable
 {
     bool IsEnabled { get; }

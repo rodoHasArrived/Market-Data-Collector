@@ -1,3 +1,5 @@
+using MarketDataCollector.Infrastructure.Contracts;
+
 namespace MarketDataCollector.Infrastructure.DataSources;
 
 /// <summary>
@@ -5,6 +7,10 @@ namespace MarketDataCollector.Infrastructure.DataSources;
 /// Classes decorated with this attribute will be automatically discovered and registered
 /// with the DI container when using AddDataSources().
 /// </summary>
+/// <remarks>
+/// This attribute is the foundation of ADR-005 (Attribute-Based Provider Discovery).
+/// It enables automatic provider registration and metadata capture at startup.
+/// </remarks>
 /// <example>
 /// <code>
 /// [DataSource("alpaca", "Alpaca Markets", DataSourceType.Hybrid, DataSourceCategory.Broker, Priority = 10)]
@@ -14,6 +20,7 @@ namespace MarketDataCollector.Infrastructure.DataSources;
 /// }
 /// </code>
 /// </example>
+[ImplementsAdr("ADR-005", "Core attribute for provider discovery")]
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
 public class DataSourceAttribute : Attribute
 {
