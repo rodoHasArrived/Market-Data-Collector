@@ -36,6 +36,21 @@
     - name: Why This Architecture
       href: architecture/why-this-architecture.md
 
+- name: Architecture Decision Records
+  items:
+    - name: ADR Index
+      href: adr/README.md
+    - name: ADR-001 Provider Abstraction
+      href: adr/001-provider-abstraction.md
+    - name: ADR-002 Tiered Storage
+      href: adr/002-tiered-storage-architecture.md
+    - name: ADR-003 Microservices
+      href: adr/003-microservices-decomposition.md
+    - name: ADR-004 Async Streaming
+      href: adr/004-async-streaming-patterns.md
+    - name: ADR-005 Attribute Discovery
+      href: adr/005-attribute-based-discovery.md
+
 - name: Diagrams
   items:
     - name: Diagrams Overview

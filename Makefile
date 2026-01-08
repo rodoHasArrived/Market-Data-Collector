@@ -15,7 +15,7 @@
 
 .PHONY: help install docker docker-build docker-up docker-down docker-logs \
         run run-ui run-backfill test build publish clean check-deps \
-        setup-config lint benchmark
+        setup-config lint benchmark docs verify-adrs verify-contracts gen-context
 
 # Default target
 .DEFAULT_GOAL := help
@@ -25,6 +25,7 @@ PROJECT := src/MarketDataCollector/MarketDataCollector.csproj
 UI_PROJECT := src/MarketDataCollector.Ui/MarketDataCollector.Ui.csproj
 TEST_PROJECT := tests/MarketDataCollector.Tests/MarketDataCollector.Tests.csproj
 BENCHMARK_PROJECT := benchmarks/MarketDataCollector.Benchmarks/MarketDataCollector.Benchmarks.csproj
+DOCGEN_PROJECT := tools/DocGenerator/DocGenerator.csproj
 DOCKER_IMAGE := marketdatacollector:latest
 HTTP_PORT ?= 8080
 
@@ -52,6 +53,9 @@ help: ## Show this help message
 	@echo ""
 	@echo "$(BLUE)Development:$(NC)"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'run|build|test|clean|bench|lint' | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-18s$(NC) %s\n", $$1, $$2}'
+	@echo ""
+	@echo "$(BLUE)Documentation:$(NC)"
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'docs|verify-adr|verify-contract|gen-context' | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-18s$(NC) %s\n", $$1, $$2}'
 	@echo ""
 	@echo "$(BLUE)Publishing:$(NC)"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'publish' | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-18s$(NC) %s\n", $$1, $$2}'
@@ -203,3 +207,39 @@ version: ## Show version information
 	@echo "Market Data Collector v1.1.0"
 	@dotnet --version 2>/dev/null && echo ".NET SDK: $$(dotnet --version)" || echo ".NET SDK: Not installed"
 	@docker --version 2>/dev/null || echo "Docker: Not installed"
+
+# =============================================================================
+# Documentation
+# =============================================================================
+
+docs: gen-context verify-adrs ## Generate all documentation from code
+	@echo "$(GREEN)Documentation generated and verified$(NC)"
+
+gen-context: ## Generate project-context.md from code annotations
+	@echo "$(BLUE)Generating project context from code...$(NC)"
+	@dotnet build $(DOCGEN_PROJECT) -c Release -v q
+	@dotnet run --project $(DOCGEN_PROJECT) --no-build -c Release -- context \
+		--src src/MarketDataCollector \
+		--output docs/generated/project-context.md \
+		--xml-docs src/MarketDataCollector/bin/Release/net9.0/MarketDataCollector.xml
+	@echo "$(GREEN)Generated docs/generated/project-context.md$(NC)"
+
+verify-adrs: ## Verify ADR implementation links are valid
+	@echo "$(BLUE)Verifying ADR implementation links...$(NC)"
+	@dotnet build $(DOCGEN_PROJECT) -c Release -v q
+	@dotnet run --project $(DOCGEN_PROJECT) --no-build -c Release -- verify-adrs \
+		--adr-dir docs/adr \
+		--src-dir .
+	@echo "$(GREEN)ADR verification complete$(NC)"
+
+verify-contracts: build ## Verify runtime contracts at startup
+	@echo "$(BLUE)Verifying contracts...$(NC)"
+	dotnet run --project $(PROJECT) --no-build -c Release -- --verify-contracts
+
+gen-interfaces: ## Extract interface documentation from code
+	@echo "$(BLUE)Extracting interface documentation...$(NC)"
+	@dotnet build $(DOCGEN_PROJECT) -c Release -v q
+	@dotnet run --project $(DOCGEN_PROJECT) --no-build -c Release -- interfaces \
+		--src src/MarketDataCollector \
+		--output docs/generated/interfaces.md
+	@echo "$(GREEN)Generated docs/generated/interfaces.md$(NC)"
