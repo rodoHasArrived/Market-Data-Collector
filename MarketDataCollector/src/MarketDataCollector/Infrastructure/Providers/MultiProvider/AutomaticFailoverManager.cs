@@ -296,11 +296,21 @@ public sealed class AutomaticFailoverManager : IAsyncDisposable
             // Mark rule as in failover state
             rule.SetFailoverState(true, toProvider);
 
-            // TODO: Actually transfer subscriptions
-            // This would involve:
-            // 1. Getting all active subscriptions from the failing provider
-            // 2. Subscribing them on the backup provider
-            // 3. Optionally unsubscribing from the failing provider
+            // Transfer subscriptions from failing provider to backup provider
+            // Don't unsubscribe from source in case it recovers and we need to failback
+            var transferResult = _connectionManager.TransferSubscriptions(
+                fromProviderId: fromProvider,
+                toProviderId: toProvider,
+                unsubscribeFromSource: false);
+
+            if (!transferResult.Success)
+            {
+                _log.Warning("Partial subscription transfer during failover: {Message}", transferResult.Message);
+            }
+
+            _log.Information(
+                "Subscription transfer during failover: {Transferred} transferred, {Failed} failed",
+                transferResult.TransferredCount, transferResult.FailedCount);
 
             var args = new FailoverEventArgs(
                 RuleId: rule.Id,
@@ -334,9 +344,27 @@ public sealed class AutomaticFailoverManager : IAsyncDisposable
             _log.Information("Primary provider recovered for rule {RuleId}. Initiating recovery.", rule.Id);
 
             var previousActiveProvider = rule.CurrentActiveProviderId;
-            rule.SetFailoverState(false, null);
 
-            // TODO: Actually transfer subscriptions back to primary
+            // Transfer subscriptions back to primary provider
+            // Unsubscribe from the backup since primary is now healthy
+            if (!string.IsNullOrEmpty(previousActiveProvider))
+            {
+                var transferResult = _connectionManager.TransferSubscriptions(
+                    fromProviderId: previousActiveProvider,
+                    toProviderId: rule.PrimaryProviderId,
+                    unsubscribeFromSource: true);
+
+                if (!transferResult.Success)
+                {
+                    _log.Warning("Partial subscription transfer during recovery: {Message}", transferResult.Message);
+                }
+
+                _log.Information(
+                    "Subscription transfer during recovery: {Transferred} transferred, {Failed} failed",
+                    transferResult.TransferredCount, transferResult.FailedCount);
+            }
+
+            rule.SetFailoverState(false, null);
 
             var args = new ProviderRecoveryEventArgs(
                 RuleId: rule.Id,
