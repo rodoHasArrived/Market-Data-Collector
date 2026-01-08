@@ -4,7 +4,7 @@ This guide walks you through setting up and running MarketDataCollector for the 
 
 ## Prerequisites
 
-- **.NET 8.0 SDK** or later
+- **.NET 9.0 SDK** or later
 - **One of the following data providers**:
   - Interactive Brokers TWS or IB Gateway (for IB data)
   - Alpaca account with API keys (for Alpaca data)
