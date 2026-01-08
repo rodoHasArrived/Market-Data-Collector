@@ -1,144 +1,280 @@
 // Microservices Architecture Diagram
 // Market Data Collector v1.5.0
 // Last Updated: 2026-01-08
+//
+// This diagram shows the optional distributed microservices deployment
+// for high-throughput scenarios with horizontal scaling.
+//
+// Generate: dot -Tpng microservices-architecture.dot -o microservices-architecture.png
+//           dot -Tsvg microservices-architecture.dot -o microservices-architecture.svg
 
 digraph MicroservicesArchitecture {
   rankdir=TB;
-  graph [fontname="Helvetica", fontsize=12, bgcolor="white", compound=true];
+  graph [fontname="Helvetica", fontsize=12, bgcolor="white", compound=true, pad=0.5];
   node  [fontname="Helvetica", fontsize=10, shape=box, style="rounded,filled"];
   edge  [fontname="Helvetica", fontsize=9, color="#4a5568"];
 
   // Title
   labelloc="t";
-  label="Market Data Collector - Microservices Architecture";
+  label="Market Data Collector - Microservices Architecture\nOptional Distributed Deployment | v1.5.0";
 
-  // External
-  CLIENTS [shape=oval, fillcolor="#08427b", fontcolor="white",
-           label="API Clients\nUWP App, External"];
+  // External Clients
+  subgraph cluster_clients {
+    label="Clients";
+    color="#08427b";
+    style="rounded";
+    bgcolor="#eef2ff";
 
-  // Core Collector
-  CORE [shape=box, fillcolor="#438dd5", fontcolor="white",
-        label="Market Data Collector Core\n[.NET 9 Console]\n\nProduces market events"];
+    UWP [shape=oval, fillcolor="#08427b", fontcolor="white",
+         label="UWP Desktop App\n[Windows]"];
+    WEB [shape=oval, fillcolor="#08427b", fontcolor="white",
+         label="Web Dashboard\n[Browser]"];
+    API_CLIENTS [shape=oval, fillcolor="#08427b", fontcolor="white",
+                 label="External API Clients\n[REST/gRPC]"];
+  }
+
+  // Data Sources
+  subgraph cluster_sources {
+    label="Data Sources";
+    color="#4a90d9";
+    style="dashed";
+    bgcolor="#f0f8ff";
+
+    IB [shape=box, fillcolor="#4a90d9", fontcolor="white",
+        label="Interactive Brokers"];
+    ALP [shape=box, fillcolor="#4a90d9", fontcolor="white",
+         label="Alpaca"];
+    HIST [shape=box, fillcolor="#38a169", fontcolor="white",
+          label="Historical APIs"];
+  }
+
+  // Core Collector (Event Producer)
+  CORE [shape=box, fillcolor="#438dd5", fontcolor="white", width=3,
+        label="Market Data Collector Core\n[.NET 9 Console App]\n\nEvent Producer\nStreaming + Historical Ingestion\nPublishes to Message Bus"];
 
   // Message Bus
   subgraph cluster_messaging {
-    label="Message Bus";
-    color="#ff6b6b";
+    label="Message Bus (MassTransit)";
+    color="#e53e3e";
     style="rounded";
     bgcolor="#fff5f5";
 
-    RABBITMQ [shape=box, fillcolor="#ff6b6b", fontcolor="white",
-              label="RabbitMQ\n[Message Broker]\n\nMassTransit"];
+    RABBITMQ [shape=box, fillcolor="#e53e3e", fontcolor="white", width=2.5,
+              label="RabbitMQ / Azure Service Bus\n[Message Broker]\n\nMassTransit abstraction\nAt-least-once delivery\nDead letter handling"];
 
-    EXCHANGES [shape=note, fillcolor="#fecaca",
-               label="Exchanges:\n• market-data-trades\n• market-data-quotes\n• market-data-depth\n• market-data-integrity"];
+    subgraph cluster_exchanges {
+      label="Exchanges";
+      style="dashed";
+      color="#991b1b";
+
+      EX_TRADE [shape=note, fillcolor="#fecaca",
+                label="market-data-trades\n[fanout]"];
+      EX_QUOTE [shape=note, fillcolor="#fecaca",
+                label="market-data-quotes\n[fanout]"];
+      EX_DEPTH [shape=note, fillcolor="#fecaca",
+                label="market-data-depth\n[fanout]"];
+      EX_INTEGRITY [shape=note, fillcolor="#fecaca",
+                    label="market-data-integrity\n[fanout]"];
+    }
   }
 
   // API Gateway
   subgraph cluster_gateway {
-    label="API Gateway (:5000)";
+    label="API Gateway";
     color="#805ad5";
     style="rounded";
+    bgcolor="#faf5ff";
 
-    GATEWAY [shape=box, fillcolor="#805ad5", fontcolor="white",
-             label="DataIngestion.Gateway\n[ASP.NET Core]\n\n• Request routing\n• Authentication\n• Rate limiting\n• Health aggregation"];
+    GATEWAY [shape=box, fillcolor="#805ad5", fontcolor="white", width=3,
+             label="DataIngestion.Gateway\n[ASP.NET Core | Port 5000]\n\nRequest routing & load balancing\nJWT authentication\nRate limiting (sliding window)\nHealth aggregation\nAPI versioning"];
+
+    GATEWAY_FEATURES [shape=note, fillcolor="#ede9fe",
+                      label="Features:\n• Swagger/OpenAPI docs\n• CORS configuration\n• Request/Response logging\n• Circuit breaker (Polly)"];
   }
 
   // Microservices
   subgraph cluster_services {
-    label="Domain Services";
+    label="Domain Microservices (6 Services)";
     color="#2c7a7b";
     style="rounded";
+    bgcolor="#e6fffa";
 
-    QUOTE_SVC [shape=box, fillcolor="#2c7a7b", fontcolor="white",
-               label="Quote Service\n(:5001)\n\n• BBO processing\n• Quote caching\n• Spread calculation"];
+    subgraph cluster_ingestion {
+      label="Ingestion Services";
+      style="dashed";
+      color="#047857";
 
-    TRADE_SVC [shape=box, fillcolor="#2c7a7b", fontcolor="white",
-               label="Trade Service\n(:5002)\n\n• Trade aggregation\n• VWAP calculation\n• Trade flow analysis"];
+      TRADE_SVC [shape=box, fillcolor="#319795", fontcolor="white",
+                 label="Trade Ingestion Service\n[.NET Worker | Port 5001]\n\nHigh-throughput processing\nSequence validation\nDeduplication\nVWAP calculation"];
 
-    ORDERBOOK_SVC [shape=box, fillcolor="#2c7a7b", fontcolor="white",
-                   label="OrderBook Service\n(:5003)\n\n• L2 depth processing\n• Book reconstruction\n• Imbalance metrics"];
+      ORDERBOOK_SVC [shape=box, fillcolor="#319795", fontcolor="white",
+                     label="OrderBook Ingestion Service\n[.NET Worker | Port 5002]\n\nL2 depth processing\nSnapshot/delta handling\nBook reconstruction\nImbalance metrics"];
 
-    HISTORICAL_SVC [shape=box, fillcolor="#2c7a7b", fontcolor="white",
-                    label="Historical Service\n(:5004)\n\n• Backfill coordination\n• Gap detection\n• Data replay"];
+      QUOTE_SVC [shape=box, fillcolor="#319795", fontcolor="white",
+                 label="Quote Ingestion Service\n[.NET Worker | Port 5003]\n\nBBO/NBBO processing\nSpread calculation\nCrossed market detection\nQuote state tracking"];
+    }
 
-    VALIDATION_SVC [shape=box, fillcolor="#2c7a7b", fontcolor="white",
-                    label="Validation Service\n(:5005)\n\n• Data quality checks\n• Anomaly detection\n• Integrity verification"];
+    subgraph cluster_support {
+      label="Support Services";
+      style="dashed";
+      color="#047857";
+
+      HISTORICAL_SVC [shape=box, fillcolor="#2c7a7b", fontcolor="white",
+                      label="Historical Data Service\n[.NET Worker | Port 5004]\n\nBackfill coordination\nGap detection & repair\nData replay\nProgress tracking"];
+
+      VALIDATION_SVC [shape=box, fillcolor="#2c7a7b", fontcolor="white",
+                      label="Data Validation Service\n[.NET Worker | Port 5005]\n\nQuality rule engine\nAnomaly detection (ML)\nIntegrity verification\nAlert generation"];
+    }
   }
 
-  // Shared Components
+  // Shared Libraries
   subgraph cluster_shared {
-    label="Shared Infrastructure";
+    label="Shared Libraries";
     color="#38a169";
-    style="dashed";
+    style="rounded";
+    bgcolor="#f0fff4";
 
-    CONTRACTS [shape=box, fillcolor="#c6f6d5",
-               label="DataIngestion.Contracts\n[Shared Library]\n\nDTO definitions\nEvent interfaces"];
+    CONTRACTS [shape=box, fillcolor="#9ae6b4",
+               label="DataIngestion.Contracts\n[.NET Library]\n\nDTO definitions\nEvent interfaces\nMassTransit contracts\nValidation attributes"];
 
-    CONFIG [shape=box, fillcolor="#c6f6d5",
-            label="Shared Configuration\nService discovery\nCircuit breakers"];
+    SHARED_INFRA [shape=box, fillcolor="#9ae6b4",
+                  label="DataIngestion.Shared\n[.NET Library]\n\nService discovery (Consul)\nCircuit breakers (Polly)\nLogging (Serilog)\nMetrics (App.Metrics)"];
   }
 
-  // Monitoring
-  subgraph cluster_monitoring {
-    label="Observability";
+  // Storage
+  subgraph cluster_storage {
+    label="Storage";
     color="#c53030";
-    style="dashed";
+    style="rounded";
+    bgcolor="#fff5f5";
 
-    PROMETHEUS [shape=box, fillcolor="#fee2e2",
-                label="Prometheus\n[Metrics]\n\nScrapes all services"];
-
-    JAEGER [shape=box, fillcolor="#fee2e2",
-            label="Jaeger/Tempo\n[Tracing]\n\nOpenTelemetry traces"];
-
-    GRAFANA [shape=box, fillcolor="#fee2e2",
-             label="Grafana\n[Dashboards]\n\nVisualization"];
+    JSONL [shape=cylinder, fillcolor="#fc8181", fontcolor="white",
+           label="JSONL Files\n[Hot Storage]"];
+    PARQUET [shape=cylinder, fillcolor="#feb2b2",
+             label="Parquet Files\n[Archive]"];
+    TIMESCALE [shape=cylinder, fillcolor="#fecaca",
+               label="TimescaleDB\n[Analytics]"];
   }
 
-  // Docker
-  subgraph cluster_docker {
-    label="Deployment";
+  // Observability Stack
+  subgraph cluster_observability {
+    label="Observability Stack";
+    color="#38a169";
+    style="rounded";
+    bgcolor="#f0fff4";
+
+    subgraph cluster_metrics {
+      label="Metrics";
+      style="dashed";
+
+      PROMETHEUS [shape=box, fillcolor="#68d391",
+                  label="Prometheus\n[Metrics Store]\n\nScrapes /metrics\n15s interval"];
+    }
+
+    subgraph cluster_tracing {
+      label="Distributed Tracing";
+      style="dashed";
+
+      JAEGER [shape=box, fillcolor="#68d391",
+              label="Jaeger / Tempo\n[Trace Store]\n\nOpenTelemetry\nW3C Trace Context"];
+    }
+
+    subgraph cluster_logging {
+      label="Centralized Logging";
+      style="dashed";
+
+      LOKI [shape=box, fillcolor="#68d391",
+            label="Loki\n[Log Aggregation]\n\nStructured logs\nLabel-based queries"];
+    }
+
+    GRAFANA [shape=box, fillcolor="#38a169", fontcolor="white", width=2,
+             label="Grafana\n[Visualization]\n\nDashboards, Alerts\nUnified observability"];
+  }
+
+  // Deployment
+  subgraph cluster_deployment {
+    label="Deployment Options";
     color="#2b6cb0";
     style="dashed";
+    bgcolor="#dbeafe";
 
-    DOCKER [shape=box, fillcolor="#dbeafe",
-            label="Docker Compose\n[Orchestration]\n\ndocker-compose.microservices.yml"];
+    DOCKER [shape=box, fillcolor="#bfdbfe",
+            label="Docker Compose\n[Development]\n\ndocker-compose.microservices.yml"];
+    K8S [shape=box, fillcolor="#bfdbfe",
+         label="Kubernetes\n[Production]\n\nHelm charts\nHPA autoscaling"];
   }
 
-  // Relationships
-  CORE -> RABBITMQ [label="Publish\nevents"];
-  RABBITMQ -> QUOTE_SVC [label="ConsumeQuotes"];
-  RABBITMQ -> TRADE_SVC [label="ConsumeTrades"];
-  RABBITMQ -> ORDERBOOK_SVC [label="ConsumeDepth"];
-  RABBITMQ -> VALIDATION_SVC [label="ConsumeAll"];
+  // Data Flow
+  IB -> CORE [color="#4a90d9", label="streaming"];
+  ALP -> CORE [color="#4a90d9", label="streaming"];
+  HIST -> CORE [color="#38a169", label="backfill"];
 
-  CLIENTS -> GATEWAY [label="HTTP/gRPC"];
-  GATEWAY -> QUOTE_SVC;
-  GATEWAY -> TRADE_SVC;
-  GATEWAY -> ORDERBOOK_SVC;
-  GATEWAY -> HISTORICAL_SVC;
-  GATEWAY -> VALIDATION_SVC;
+  CORE -> RABBITMQ [color="#e53e3e", penwidth=2, label="Publish events"];
+  RABBITMQ -> EX_TRADE;
+  RABBITMQ -> EX_QUOTE;
+  RABBITMQ -> EX_DEPTH;
+  RABBITMQ -> EX_INTEGRITY;
 
-  QUOTE_SVC -> CONTRACTS [style=dashed];
+  EX_TRADE -> TRADE_SVC [color="#e53e3e", label="consume"];
+  EX_QUOTE -> QUOTE_SVC [color="#e53e3e", label="consume"];
+  EX_DEPTH -> ORDERBOOK_SVC [color="#e53e3e", label="consume"];
+  EX_INTEGRITY -> VALIDATION_SVC [color="#e53e3e", label="consume"];
+
+  // Client to Gateway
+  UWP -> GATEWAY [label="HTTP"];
+  WEB -> GATEWAY [label="HTTP"];
+  API_CLIENTS -> GATEWAY [label="REST/gRPC"];
+
+  // Gateway to Services
+  GATEWAY -> TRADE_SVC [label="forward"];
+  GATEWAY -> QUOTE_SVC [label="forward"];
+  GATEWAY -> ORDERBOOK_SVC [label="forward"];
+  GATEWAY -> HISTORICAL_SVC [label="forward"];
+  GATEWAY -> VALIDATION_SVC [label="forward"];
+
+  // Services to Shared
   TRADE_SVC -> CONTRACTS [style=dashed];
+  QUOTE_SVC -> CONTRACTS [style=dashed];
   ORDERBOOK_SVC -> CONTRACTS [style=dashed];
   HISTORICAL_SVC -> CONTRACTS [style=dashed];
   VALIDATION_SVC -> CONTRACTS [style=dashed];
+  GATEWAY -> SHARED_INFRA [style=dashed];
 
+  // Services to Storage
+  TRADE_SVC -> JSONL [color="#c53030"];
+  QUOTE_SVC -> JSONL [color="#c53030"];
+  ORDERBOOK_SVC -> JSONL [color="#c53030"];
+  HISTORICAL_SVC -> PARQUET [color="#c53030"];
+  VALIDATION_SVC -> TIMESCALE [color="#c53030", style=dashed];
+
+  // Observability connections
   GATEWAY -> PROMETHEUS [style=dashed, label="/metrics"];
-  QUOTE_SVC -> PROMETHEUS [style=dashed];
   TRADE_SVC -> PROMETHEUS [style=dashed];
+  QUOTE_SVC -> PROMETHEUS [style=dashed];
+  ORDERBOOK_SVC -> PROMETHEUS [style=dashed];
 
   GATEWAY -> JAEGER [style=dashed, label="traces"];
+  TRADE_SVC -> JAEGER [style=dashed];
+
+  GATEWAY -> LOKI [style=dashed, label="logs"];
 
   PROMETHEUS -> GRAFANA;
   JAEGER -> GRAFANA;
+  LOKI -> GRAFANA;
 
-  DOCKER -> GATEWAY [style=dashed];
-  DOCKER -> QUOTE_SVC [style=dashed];
-  DOCKER -> TRADE_SVC [style=dashed];
-  DOCKER -> ORDERBOOK_SVC [style=dashed];
-  DOCKER -> HISTORICAL_SVC [style=dashed];
-  DOCKER -> VALIDATION_SVC [style=dashed];
-  DOCKER -> RABBITMQ [style=dashed];
+  // Deployment
+  DOCKER -> GATEWAY [style=dotted];
+  DOCKER -> RABBITMQ [style=dotted];
+  K8S -> GATEWAY [style=dotted];
+
+  // Legend
+  subgraph cluster_legend {
+    label="Port Summary";
+    style="rounded";
+    color="#666666";
+    bgcolor="#fafafa";
+
+    LEGEND [shape=plaintext,
+            label="5000 - API Gateway\n5001 - Trade Service\n5002 - OrderBook Service\n5003 - Quote Service\n5004 - Historical Service\n5005 - Validation Service"];
+  }
 }
