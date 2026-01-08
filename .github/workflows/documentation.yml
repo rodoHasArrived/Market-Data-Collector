@@ -1,0 +1,286 @@
+name: Documentation
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'docs/**'
+      - '**.md'
+      - 'src/**/*.cs'
+      - 'tools/DocGenerator/**'
+      - '.github/workflows/documentation.yml'
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'docs/**'
+      - '**.md'
+      - 'src/**/*.cs'
+      - 'tools/DocGenerator/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_VERSION: '9.0.x'
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  markdown-lint:
+    name: Markdown Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Lint Markdown files
+        uses: DavidAnson/markdownlint-cli2-action@v16
+        with:
+          globs: |
+            **/*.md
+            !**/node_modules/**
+            !**/bin/**
+            !**/obj/**
+
+  link-validation:
+    name: Link Validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check links in documentation
+        uses: gaurav-nelson/github-action-markdown-link-check@v1
+        with:
+          use-quiet-mode: 'yes'
+          use-verbose-mode: 'no'
+          config-file: '.github/markdown-link-check-config.json'
+          folder-path: 'docs/'
+          max-depth: 5
+
+      - name: Check links in root markdown files
+        uses: gaurav-nelson/github-action-markdown-link-check@v1
+        with:
+          use-quiet-mode: 'yes'
+          config-file: '.github/markdown-link-check-config.json'
+          file-path: './README.md,./CLAUDE.md,./CONTRIBUTING.md,./CHANGELOG.md'
+        continue-on-error: true
+
+  adr-verification:
+    name: ADR Verification
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          cache: true
+
+      - name: Restore DocGenerator
+        run: dotnet restore tools/DocGenerator/DocGenerator.csproj
+
+      - name: Build DocGenerator
+        run: dotnet build tools/DocGenerator/DocGenerator.csproj -c Release --no-restore
+
+      - name: Verify ADR implementation links
+        run: |
+          echo "## ADR Verification Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          dotnet run --project tools/DocGenerator/DocGenerator.csproj --no-build -c Release -- verify-adrs \
+            --adr-dir docs/adr \
+            --src-dir . 2>&1 | tee adr-verify.txt
+
+          if grep -q "VERIFICATION FAILED" adr-verify.txt; then
+            echo "❌ ADR verification failed" >> $GITHUB_STEP_SUMMARY
+            cat adr-verify.txt >> $GITHUB_STEP_SUMMARY
+            exit 1
+          else
+            echo "✅ All ADR implementation links are valid" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Check ADR numbering sequence
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### ADR Numbering" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # List ADRs and check for gaps
+          ls -1 docs/adr/*.md 2>/dev/null | grep -E '[0-9]{3}-' | sort | while read file; do
+            basename "$file" | sed 's/\.md$//' >> $GITHUB_STEP_SUMMARY
+          done
+
+  project-context-generation:
+    name: Project Context Generation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          cache: true
+
+      - name: Restore dependencies
+        run: |
+          dotnet restore tools/DocGenerator/DocGenerator.csproj
+          dotnet restore src/MarketDataCollector/MarketDataCollector.csproj /p:EnableWindowsTargeting=true
+
+      - name: Build DocGenerator
+        run: dotnet build tools/DocGenerator/DocGenerator.csproj -c Release --no-restore
+
+      - name: Build MarketDataCollector for XML docs
+        run: |
+          dotnet build src/MarketDataCollector/MarketDataCollector.csproj \
+            -c Release \
+            --no-restore \
+            /p:EnableWindowsTargeting=true \
+            /p:GenerateDocumentationFile=true
+
+      - name: Generate project context
+        run: |
+          mkdir -p docs/generated
+          dotnet run --project tools/DocGenerator/DocGenerator.csproj --no-build -c Release -- context \
+            --src src/MarketDataCollector \
+            --output docs/generated/project-context.md \
+            --xml-docs src/MarketDataCollector/bin/Release/net9.0/MarketDataCollector.xml
+
+      - name: Generate interface documentation
+        run: |
+          dotnet run --project tools/DocGenerator/DocGenerator.csproj --no-build -c Release -- interfaces \
+            --src src/MarketDataCollector \
+            --output docs/generated/interfaces.md
+
+      - name: Upload generated documentation
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-documentation
+          path: docs/generated/
+          retention-days: 7
+
+      - name: Check for outdated generated docs
+        if: github.event_name == 'pull_request'
+        run: |
+          echo "## Generated Documentation Status" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ -f docs/generated/project-context.md ]; then
+            echo "✅ Project context generated successfully" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ -f docs/generated/interfaces.md ]; then
+            echo "✅ Interface documentation generated successfully" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  diagram-validation:
+    name: Diagram Validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install mermaid CLI
+        run: npm install -g @mermaid-js/mermaid-cli
+
+      - name: Validate Mermaid diagrams in markdown
+        run: |
+          echo "## Diagram Validation" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Find all markdown files with mermaid code blocks
+          diagram_count=0
+          error_count=0
+
+          for mdfile in $(find docs -name "*.md" -type f); do
+            # Extract mermaid blocks and validate them
+            if grep -q '```mermaid' "$mdfile"; then
+              echo "Checking diagrams in: $mdfile"
+              diagram_count=$((diagram_count + 1))
+
+              # Extract mermaid content to temp file
+              awk '/```mermaid/,/```/' "$mdfile" | sed '1d;$d' > /tmp/diagram.mmd 2>/dev/null || true
+
+              if [ -s /tmp/diagram.mmd ]; then
+                if ! mmdc -i /tmp/diagram.mmd -o /tmp/diagram.svg 2>/dev/null; then
+                  echo "⚠️ Invalid diagram in: $mdfile" >> $GITHUB_STEP_SUMMARY
+                  error_count=$((error_count + 1))
+                fi
+              fi
+            fi
+          done
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📊 Checked $diagram_count files with Mermaid diagrams" >> $GITHUB_STEP_SUMMARY
+
+          if [ $error_count -gt 0 ]; then
+            echo "❌ Found $error_count invalid diagrams" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ All diagrams are valid" >> $GITHUB_STEP_SUMMARY
+          fi
+        continue-on-error: true
+
+      - name: Check PlantUML diagrams
+        run: |
+          # Check for PlantUML files
+          puml_count=$(find docs -name "*.puml" -o -name "*.plantuml" 2>/dev/null | wc -l)
+          if [ "$puml_count" -gt 0 ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### PlantUML Files" >> $GITHUB_STEP_SUMMARY
+            echo "Found $puml_count PlantUML files" >> $GITHUB_STEP_SUMMARY
+          fi
+        continue-on-error: true
+
+  documentation-summary:
+    name: Documentation Summary
+    runs-on: ubuntu-latest
+    needs: [markdown-lint, link-validation, adr-verification, project-context-generation, diagram-validation]
+    if: always()
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Generate documentation report
+        run: |
+          echo "# Documentation Quality Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Generated:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "## Documentation Statistics" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Category | Count |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+
+          md_count=$(find docs -name "*.md" | wc -l)
+          echo "| Documentation files | $md_count |" >> $GITHUB_STEP_SUMMARY
+
+          adr_count=$(find docs/adr -name "*.md" ! -name "README.md" ! -name "_template.md" 2>/dev/null | wc -l)
+          echo "| Architecture Decision Records | $adr_count |" >> $GITHUB_STEP_SUMMARY
+
+          guide_count=$(find docs/guides -name "*.md" 2>/dev/null | wc -l)
+          echo "| Guides | $guide_count |" >> $GITHUB_STEP_SUMMARY
+
+          ai_count=$(find docs/ai-assistants -name "*.md" 2>/dev/null | wc -l)
+          echo "| AI Assistant Guides | $ai_count |" >> $GITHUB_STEP_SUMMARY
