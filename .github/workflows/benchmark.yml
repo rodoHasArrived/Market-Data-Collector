@@ -1,0 +1,81 @@
+name: Benchmark Performance
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'src/**'
+      - 'benchmarks/**'
+      - '.github/workflows/benchmark.yml'
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'src/**'
+      - 'benchmarks/**'
+  workflow_dispatch:
+
+jobs:
+  benchmark:
+    name: Run Benchmarks
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore benchmarks/MarketDataCollector.Benchmarks/MarketDataCollector.Benchmarks.csproj /p:EnableWindowsTargeting=true
+
+    - name: Build benchmarks
+      run: dotnet build benchmarks/MarketDataCollector.Benchmarks/MarketDataCollector.Benchmarks.csproj -c Release --no-restore /p:EnableWindowsTargeting=true
+
+    - name: Run benchmarks
+      run: dotnet run --project benchmarks/MarketDataCollector.Benchmarks/MarketDataCollector.Benchmarks.csproj -c Release --no-build -- --filter '*' --exporters json
+
+    - name: Upload benchmark results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: benchmark-results
+        path: BenchmarkDotNet.Artifacts/results/
+        retention-days: 30
+
+    - name: Store benchmark result
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      uses: benchmark-action/github-action-benchmark@v1
+      with:
+        tool: 'benchmarkdotnet'
+        output-file-path: BenchmarkDotNet.Artifacts/results/combined-benchmark-results.json
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        auto-push: false
+        alert-threshold: '150%'
+        comment-on-alert: true
+        fail-on-alert: false
+        alert-comment-cc-users: '@rodoHasArrived'
+
+    - name: Comment PR with benchmark results
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const fs = require('fs');
+          const resultsPath = 'BenchmarkDotNet.Artifacts/results/';
+          
+          let comment = '## 📊 Benchmark Results\n\n';
+          comment += 'Benchmark suite completed successfully.\n\n';
+          comment += '📁 Results have been uploaded as artifacts.\n';
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });
