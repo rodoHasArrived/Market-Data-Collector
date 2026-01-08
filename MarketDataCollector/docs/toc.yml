@@ -7,6 +7,8 @@
       href: guides/getting-started.md
     - name: Configuration
       href: guides/configuration.md
+    - name: Provider Implementation
+      href: guides/provider-implementation.md
     - name: Troubleshooting
       href: guides/troubleshooting.md
     - name: Operator Runbook
