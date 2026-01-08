@@ -169,8 +169,8 @@ Retention policies automatically delete old data files based on age (`RetentionD
 
 #### Where can I find the quick start guide?
 
-- **Main README**: [/README.md](../../README.md)
-- **Getting Started**: [docs/GETTING_STARTED.md](GETTING_STARTED.md)
+- **Main README**: [README.md (root)](../../README.md)
+- **Getting Started**: [GETTING_STARTED.md](GETTING_STARTED.md)
 
 #### Where can I find configuration documentation?
 
