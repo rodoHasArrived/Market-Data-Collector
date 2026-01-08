@@ -63,6 +63,7 @@ data/
 logs/
 _logs/
 diagnostic-logs/
+.build-system/
 
 # OS generated files
 .DS_Store
