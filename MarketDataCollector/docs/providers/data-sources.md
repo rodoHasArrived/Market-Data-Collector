@@ -1,6 +1,6 @@
 # Historical Data Sources Reference
 
-**Last Updated:** 2026-01-04
+**Last Updated:** 2026-01-08
 **Version:** 1.5.0
 
 This document catalogs available free and freemium data sources for historical equity backfilling, with implementation status for each.

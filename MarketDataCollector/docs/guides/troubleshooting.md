@@ -520,5 +520,5 @@ If you're still experiencing issues:
 ---
 
 **Version:** 1.5.0
-**Last Updated:** 2026-01-04
+**Last Updated:** 2026-01-08
 **See Also:** [Getting Started](getting-started.md) | [Configuration](configuration.md) | [Operator Runbook](operator-runbook.md) | [Lean Integration](../integrations/lean-integration.md)

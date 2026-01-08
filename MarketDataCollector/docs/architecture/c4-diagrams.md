@@ -231,6 +231,6 @@ See [Microservices README](../src/Microservices/README.md) for deployment detail
 
 ---
 
-**Version:** 1.4.0
-**Last Updated:** 2026-01-04
+**Version:** 1.5.0
+**Last Updated:** 2026-01-08
 **See Also:** [Architecture Overview](overview.md) | [Domains](domains.md) | [Why This Architecture](why-this-architecture.md) | [Microservices README](../../src/Microservices/README.md)

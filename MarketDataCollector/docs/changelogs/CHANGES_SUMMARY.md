@@ -2,7 +2,7 @@
 
 This document summarizes major changes and improvements to the Market Data Collector project.
 
-**Current Version:** 1.5.0 | **Last Updated:** 2026-01-04
+**Current Version:** 1.5.0 | **Last Updated:** 2026-01-08
 
 ---
 

@@ -1,6 +1,11 @@
 - name: Documentation Home
   href: README.md
 
+- name: API Reference
+  items:
+    - name: API Overview
+      href: api/index.md
+
 - name: User Guides
   items:
     - name: Getting Started
@@ -53,6 +58,8 @@
   items:
     - name: Production Status
       href: status/production-status.md
+    - name: Feature Backlog
+      href: status/FEATURE_BACKLOG.md
     - name: Improvements
       href: status/improvements.md
     - name: UWP Feature Ideas
@@ -66,3 +73,8 @@
       href: reference/data-uniformity.md
     - name: Design Review Memo
       href: reference/design-review-memo.md
+
+- name: Changelogs
+  items:
+    - name: Changes Summary
+      href: changelogs/CHANGES_SUMMARY.md

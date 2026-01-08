@@ -326,8 +326,8 @@ If IB API setup is too complex, consider:
 
 ---
 
-**Version:** 1.4.0
-**Last Updated:** 2026-01-04
+**Version:** 1.5.0
+**Last Updated:** 2026-01-08
 **TWS API Version:** 10.19+
-**Tested With:** .NET 8.0
+**Tested With:** .NET 9.0
 **See Also:** [Getting Started](../guides/getting-started.md) | [Configuration](../guides/configuration.md) | [Operator Runbook](../guides/operator-runbook.md)
