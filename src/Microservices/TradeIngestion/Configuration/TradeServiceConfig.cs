@@ -21,6 +21,9 @@ public class TradeServiceConfig : MicroserviceConfig
 
     /// <summary>Aggregation settings for order flow statistics.</summary>
     public AggregationConfig Aggregation { get; set; } = new();
+
+    /// <summary>Dead letter queue configuration for failed trades.</summary>
+    public DeadLetterConfig DeadLetter { get; set; } = new();
 }
 
 /// <summary>
@@ -99,4 +102,37 @@ public class AggregationConfig
 
     /// <summary>Bar size in seconds.</summary>
     public int BarSizeSeconds { get; set; } = 60;
+}
+
+/// <summary>
+/// Dead letter queue configuration for failed trades.
+/// </summary>
+public class DeadLetterConfig
+{
+    /// <summary>Enable dead letter queue.</summary>
+    public bool Enabled { get; set; } = true;
+
+    /// <summary>Maximum size of in-memory dead letter queue.</summary>
+    public int MaxQueueSize { get; set; } = 10000;
+
+    /// <summary>Directory for persisting dead letter queue to disk.</summary>
+    public string PersistenceDirectory { get; set; } = "data/dead_letter";
+
+    /// <summary>Enable persistence of dead letters to disk.</summary>
+    public bool EnablePersistence { get; set; } = true;
+
+    /// <summary>Maximum retry attempts before moving to dead letter.</summary>
+    public int MaxRetryAttempts { get; set; } = 3;
+
+    /// <summary>Base delay for exponential backoff in milliseconds.</summary>
+    public int RetryBaseDelayMs { get; set; } = 100;
+
+    /// <summary>Maximum delay for exponential backoff in milliseconds.</summary>
+    public int RetryMaxDelayMs { get; set; } = 5000;
+
+    /// <summary>Enable automatic retry of dead lettered trades.</summary>
+    public bool EnableAutoRetry { get; set; } = false;
+
+    /// <summary>Interval in seconds for auto-retry attempts.</summary>
+    public int AutoRetryIntervalSeconds { get; set; } = 300;
 }
