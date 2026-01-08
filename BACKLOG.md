@@ -1,10 +1,10 @@
 # Market Data Collector - Backlog
 
-**Version:** 1.6.0
-**Last Updated:** 2026-01-07
+**Version:** 1.6.1
+**Last Updated:** 2026-01-08
 **Status:** Production Ready
 
-This document provides a quick overview of implemented features and the development backlog. For the full 280+ item feature list, see [docs/status/FEATURE_BACKLOG.md](MarketDataCollector/docs/status/FEATURE_BACKLOG.md).
+This document provides a quick overview of implemented features and the development backlog. For the full 280+ item feature list, see [docs/status/FEATURE_BACKLOG.md](docs/status/FEATURE_BACKLOG.md).
 
 ---
 
@@ -14,10 +14,10 @@ This document provides a quick overview of implemented features and the developm
 |----------|-------------|---------|
 | Core Features | 25+ | - |
 | Technical Debt | 2 | 6 |
-| Quick Wins | 11 | 114 |
+| Quick Wins | 14 | 111 |
 | Provider Integration | 4 | 20 |
 | Monitoring & Alerting | 10 | 19 |
-| Data Quality | 6 | 18 |
+| Data Quality | 9 | 15 |
 | Storage & Archival | 8 | 10 |
 | Cloud Integration (AWS/Azure/GCP) | 0 | 80+ |
 
@@ -62,6 +62,9 @@ This document provides a quick overview of implemented features and the developm
 - [x] **NEW:** Crossed market detector (bid > ask)
 - [x] **NEW:** Timestamp monotonicity checker
 - [x] **NEW:** Trading calendar integration (US markets)
+- [x] **NEW:** Price spike detector (configurable threshold/window)
+- [x] **NEW:** Bad tick filter (outlier detection, invalid price filtering)
+- [x] **NEW:** Duplicate event detector (exact and near duplicates)
 
 ### User Interfaces
 - [x] Web Dashboard (HTML/JS, auto-refresh)
@@ -108,14 +111,14 @@ This document provides a quick overview of implemented features and the developm
 | QW-30 | Pending Event Flush on Shutdown | 1 day | ✅ Implemented |
 | DQ-15 | Timestamp Monotonicity Check | 0.5 day | ✅ Implemented |
 
-### Data Quality (P1) - Next Sprint
+### Data Quality (P1) - Sprint 2 ✅ IN PROGRESS
 
-| ID | Feature | Effort |
-|----|---------|--------|
-| DQ-2 | Duplicate Event Detector | 1 day |
-| DQ-20 | Bad Tick Filter | 1 day |
-| QW-6 | Price Spike Alert | 1 day |
-| QW-7 | Spread Monitor | 1 day |
+| ID | Feature | Effort | Status |
+|----|---------|--------|--------|
+| DQ-2 | Duplicate Event Detector | 1 day | ✅ Implemented |
+| DQ-20 | Bad Tick Filter | 1 day | ✅ Implemented |
+| QW-6 | Price Spike Alert | 1 day | ✅ Implemented |
+| QW-7 | Spread Monitor | 1 day | Pending |
 
 ### Monitoring & Alerting (P1) - Next Sprint
 
@@ -154,11 +157,11 @@ This document provides a quick overview of implemented features and the developm
 9. ✅ DQ-15: Timestamp Monotonicity
 10. ✅ QW-30: Graceful Shutdown with Event Flush
 
-### Sprint 2: Data Quality & Alerts (Next)
-1. QW-6: Price Spike Alert
+### Sprint 2: Data Quality & Alerts ✅ IN PROGRESS
+1. ✅ QW-6: Price Spike Alert
 2. QW-7: Spread Monitor
-3. DQ-2: Duplicate Event Detector
-4. DQ-20: Bad Tick Filter
+3. ✅ DQ-2: Duplicate Event Detector
+4. ✅ DQ-20: Bad Tick Filter
 5. QW-32: Detailed Health Check Endpoint
 
 ### Sprint 3: Developer Experience
@@ -218,7 +221,7 @@ This document provides a quick overview of implemented features and the developm
 
 ## How to Contribute
 
-1. Check the [detailed backlog](MarketDataCollector/docs/status/FEATURE_BACKLOG.md) for full specifications
+1. Check the [detailed backlog](docs/status/FEATURE_BACKLOG.md) for full specifications
 2. Pick items tagged with your priority level
 3. Follow existing code patterns and architecture
 4. Add tests for new functionality
@@ -235,11 +238,11 @@ This document provides a quick overview of implemented features and the developm
 
 ## Related Documentation
 
-- [Production Status](MarketDataCollector/docs/status/production-status.md) - Deployment readiness
-- [Improvements](MarketDataCollector/docs/status/improvements.md) - Recent changes and roadmap
-- [Architecture Overview](MarketDataCollector/docs/architecture/overview.md) - System design
-- [Getting Started](MarketDataCollector/docs/guides/getting-started.md) - Setup guide
-- [Configuration](MarketDataCollector/docs/guides/configuration.md) - Config reference
+- [Production Status](docs/status/production-status.md) - Deployment readiness
+- [Improvements](docs/status/improvements.md) - Recent changes and roadmap
+- [Architecture Overview](docs/architecture/overview.md) - System design
+- [Getting Started](docs/guides/getting-started.md) - Setup guide
+- [Configuration](docs/guides/configuration.md) - Config reference
 
 ---
 

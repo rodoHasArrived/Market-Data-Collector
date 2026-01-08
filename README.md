@@ -137,18 +137,18 @@ Access the monitoring dashboard at `http://localhost:8080`, JSON status at `http
 
 ## Documentation
 
-Comprehensive documentation is available in the `MarketDataCollector/docs/` directory:
+Comprehensive documentation is available in the `docs/` directory:
 
-- **[MarketDataCollector/README.md](MarketDataCollector/README.md)** - Product overview, CLI/UI usage, and configuration highlights
-- **[MarketDataCollector/HELP.md](MarketDataCollector/HELP.md)** - Comprehensive user guide with troubleshooting and FAQ
-- **[docs/guides/getting-started.md](MarketDataCollector/docs/guides/getting-started.md)** - End-to-end setup for local development
-- **[docs/guides/configuration.md](MarketDataCollector/docs/guides/configuration.md)** - Detailed explanation of every setting including backfill
-- **[docs/architecture/overview.md](MarketDataCollector/docs/architecture/overview.md)** - System architecture and design
-- **[docs/guides/operator-runbook.md](MarketDataCollector/docs/guides/operator-runbook.md)** - Operations guide and production deployment
-- **[docs/architecture/domains.md](MarketDataCollector/docs/architecture/domains.md)** - Event contracts and domain models
-- **[docs/architecture/c4-diagrams.md](MarketDataCollector/docs/architecture/c4-diagrams.md)** - System diagrams
-- **[docs/integrations/lean-integration.md](MarketDataCollector/docs/integrations/lean-integration.md)** - QuantConnect Lean integration guide and examples
-- **[docs/architecture/storage-design.md](MarketDataCollector/docs/architecture/storage-design.md)** - Advanced storage organization and data management strategies
+- **[HELP.md](HELP.md)** - Comprehensive user guide with troubleshooting and FAQ
+- **[DEPENDENCIES.md](DEPENDENCIES.md)** - Dependencies and implementation recommendations
+- **[docs/guides/getting-started.md](docs/guides/getting-started.md)** - End-to-end setup for local development
+- **[docs/guides/configuration.md](docs/guides/configuration.md)** - Detailed explanation of every setting including backfill
+- **[docs/architecture/overview.md](docs/architecture/overview.md)** - System architecture and design
+- **[docs/guides/operator-runbook.md](docs/guides/operator-runbook.md)** - Operations guide and production deployment
+- **[docs/architecture/domains.md](docs/architecture/domains.md)** - Event contracts and domain models
+- **[docs/architecture/c4-diagrams.md](docs/architecture/c4-diagrams.md)** - System diagrams
+- **[docs/integrations/lean-integration.md](docs/integrations/lean-integration.md)** - QuantConnect Lean integration guide and examples
+- **[docs/architecture/storage-design.md](docs/architecture/storage-design.md)** - Advanced storage organization and data management strategies
 
 ## Supported Data Sources
 
@@ -165,7 +165,7 @@ Market Data Collector now integrates with **QuantConnect's Lean Engine**, enabli
 - **Data Provider**: Custom `IDataProvider` implementation for JSONL files
 - **Sample Algorithms**: Ready-to-use examples for microstructure-aware trading
 
-See [`MarketDataCollector/src/MarketDataCollector/Integrations/Lean/README.md`](MarketDataCollector/src/MarketDataCollector/Integrations/Lean/README.md) for integration details and examples.
+See [`src/MarketDataCollector/Integrations/Lean/README.md`](src/MarketDataCollector/Integrations/Lean/README.md) for integration details and examples.
 
 ## Output Data
 
@@ -314,7 +314,7 @@ See LICENSE file for details.
 - Order book analytics (microprice, liquidity imbalance)
 - Custom alert rules and webhook notifications
 
-See [DEPENDENCIES.md](MarketDataCollector/DEPENDENCIES.md) for detailed implementation recommendations.
+See [DEPENDENCIES.md](DEPENDENCIES.md) for detailed implementation recommendations.
 
 ## Contributing
 
