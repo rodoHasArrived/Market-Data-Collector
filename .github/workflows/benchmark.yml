@@ -14,6 +14,11 @@ on:
       - 'benchmarks/**'
   workflow_dispatch:
 
+# Cancel in-progress runs for the same workflow and branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   benchmark:
     name: Run Benchmarks
@@ -30,6 +35,14 @@ jobs:
       with:
         dotnet-version: '9.0.x'
 
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/*.fsproj') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+
     - name: Restore dependencies
       run: dotnet restore benchmarks/MarketDataCollector.Benchmarks/MarketDataCollector.Benchmarks.csproj /p:EnableWindowsTargeting=true
 
@@ -37,7 +50,7 @@ jobs:
       run: dotnet build benchmarks/MarketDataCollector.Benchmarks/MarketDataCollector.Benchmarks.csproj -c Release --no-restore /p:EnableWindowsTargeting=true
 
     - name: Run benchmarks
-      run: dotnet run --project benchmarks/MarketDataCollector.Benchmarks/MarketDataCollector.Benchmarks.csproj -c Release --no-build -- --filter '*' --exporters json --exporters html
+      run: dotnet run --project benchmarks/MarketDataCollector.Benchmarks/MarketDataCollector.Benchmarks.csproj -c Release --no-build -- --filter '*' --exporters json --exporters html --exporters markdown
 
     - name: Upload benchmark results
       uses: actions/upload-artifact@v4
@@ -47,6 +60,18 @@ jobs:
         path: BenchmarkDotNet.Artifacts/
         retention-days: 30
 
+    - name: Store benchmark results
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      uses: benchmark-action/github-action-benchmark@v1
+      with:
+        tool: 'benchmarkdotnet'
+        output-file-path: BenchmarkDotNet.Artifacts/results/combined-benchmarks.json
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        auto-push: true
+        alert-threshold: '150%'
+        comment-on-alert: true
+        fail-on-alert: false
+
     - name: Comment PR with benchmark results
       if: github.event_name == 'pull_request'
       uses: actions/github-script@v7
@@ -54,12 +79,24 @@ jobs:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
           const fs = require('fs');
-          
+          const path = require('path');
+
           let comment = '## 📊 Benchmark Results\n\n';
-          comment += 'Benchmark suite completed successfully.\n\n';
-          comment += '📁 Results have been uploaded as artifacts and can be downloaded from the Actions tab.\n';
+
+          // Try to read markdown summary if available
+          const markdownPath = 'BenchmarkDotNet.Artifacts/results/MarketDataCollector.Benchmarks-report-github.md';
+          if (fs.existsSync(markdownPath)) {
+            const markdownContent = fs.readFileSync(markdownPath, 'utf8');
+            comment += markdownContent + '\n\n';
+          } else {
+            comment += 'Benchmark suite completed successfully.\n\n';
+          }
+
+          comment += '📁 Full results have been uploaded as artifacts and can be downloaded from the Actions tab.\n';
           comment += '\n**Artifact name:** `benchmark-results`\n';
-          
+          comment += '\n---\n';
+          comment += '*Performance benchmarks are run on every PR to ensure no regressions.*\n';
+
           github.rest.issues.createComment({
             issue_number: context.issue.number,
             owner: context.repo.owner,

@@ -8,6 +8,11 @@ on:
   pull_request:
     branches: [ "main" ]
 
+# Cancel in-progress runs for the same workflow and branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   DOTNET_VERSION: '9.0.x'
 
@@ -27,14 +32,50 @@ jobs:
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/*.fsproj') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+
     - name: Restore dependencies
       run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
 
     - name: Build
       run: dotnet build MarketDataCollector.sln -c Release --no-restore /p:EnableWindowsTargeting=true
 
-    - name: Test
-      run: dotnet test MarketDataCollector.sln -c Release --no-build --verbosity normal /p:EnableWindowsTargeting=true --logger "console;verbosity=detailed"
+    - name: Test with Code Coverage
+      run: |
+        dotnet test MarketDataCollector.sln \
+          -c Release \
+          --no-build \
+          --verbosity normal \
+          /p:EnableWindowsTargeting=true \
+          --logger "console;verbosity=detailed" \
+          --collect:"XPlat Code Coverage" \
+          --results-directory ./coverage
+
+    - name: Upload Coverage to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        files: ./coverage/**/coverage.cobertura.xml
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+    - name: Upload Test Results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results
+        path: |
+          ./coverage/**/*.xml
+          ./coverage/**/*.json
+        retention-days: 30
 
   publish:
     name: Publish ${{ matrix.rid }}
@@ -68,6 +109,14 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/*.fsproj') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
 
     - name: Publish Collector
       run: |

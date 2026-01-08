@@ -8,11 +8,18 @@ This directory contains automated CI/CD workflows for the Market Data Collector 
 **Triggers:** Push to `main`, Pull requests, Git tags starting with `v*`
 
 The main build and release pipeline that:
-- Builds and tests the .NET solution
+- Builds and tests the .NET solution with code coverage
+- Uploads coverage reports to Codecov
 - Publishes cross-platform binaries (Linux, Windows, macOS x64/ARM64)
 - Creates GitHub releases with downloadable artifacts
 
-**Status:** ✅ Existing (Production)
+**Recent Improvements:**
+- ✅ NuGet package caching for faster builds
+- ✅ Code coverage collection and reporting
+- ✅ Concurrency control to cancel redundant runs
+- ✅ Test results uploaded as artifacts
+
+**Status:** ✅ Production (Recently Enhanced)
 
 ### 2. CodeQL Security Analysis (`codeql-analysis.yml`)
 **Triggers:** Push to `main`, Pull requests, Weekly schedule (Mondays at 6:00 UTC)
@@ -29,7 +36,11 @@ Automated security vulnerability scanning using GitHub's CodeQL:
 - Integration with GitHub Security Advisory Database
 - Automatic PR comments for new vulnerabilities
 
-**Status:** 🆕 New
+**Recent Improvements:**
+- ✅ NuGet package caching for faster analysis
+- ✅ Smart concurrency control (preserves scheduled runs)
+
+**Status:** ✅ Production (Recently Enhanced)
 
 ### 3. Dependency Review (`dependency-review.yml`)
 **Triggers:** Pull requests to `main`
@@ -47,6 +58,7 @@ Reviews dependency changes in pull requests:
 
 Automated Docker image builds and publishing:
 - Builds optimized Docker images using multi-stage builds
+- Multi-architecture support (AMD64, ARM64)
 - Pushes to GitHub Container Registry (ghcr.io)
 - Creates multiple tags (latest, branch, version, SHA)
 - Uses layer caching for faster builds
@@ -60,7 +72,12 @@ Automated Docker image builds and publishing:
 
 **Registry:** `ghcr.io/rodoHasArrived/market-data-collector`
 
-**Status:** 🆕 New
+**Recent Improvements:**
+- ✅ Multi-architecture support (linux/amd64, linux/arm64)
+- ✅ Concurrency control to cancel redundant builds
+- ✅ Optimized build process
+
+**Status:** ✅ Production (Recently Enhanced)
 
 ### 5. Benchmark Performance (`benchmark.yml`)
 **Triggers:** Push to `main`, Pull requests (when benchmarks or source code changes), Manual dispatch
@@ -69,8 +86,9 @@ Runs performance benchmarks using BenchmarkDotNet:
 - Executes all benchmark suites
 - Tracks performance trends over time
 - Uploads results as artifacts (30-day retention)
-- Comments on PRs with benchmark results
+- Comments on PRs with benchmark results and markdown summaries
 - Alerts on performance regressions (>150% threshold)
+- Historical performance tracking on main branch
 
 **Benchmarks Include:**
 - Event pipeline throughput
@@ -78,7 +96,14 @@ Runs performance benchmarks using BenchmarkDotNet:
 - JSON serialization performance
 - Technical indicators calculation
 
-**Status:** 🆕 New
+**Recent Improvements:**
+- ✅ NuGet package caching for faster builds
+- ✅ Concurrency control
+- ✅ Enhanced PR comments with markdown results
+- ✅ Performance trend tracking with benchmark-action
+- ✅ Automatic alerts on regressions
+
+**Status:** ✅ Production (Recently Enhanced)
 
 ### 6. Code Quality (`code-quality.yml`)
 **Triggers:** Push to `main`, Pull requests, Manual dispatch
@@ -100,7 +125,11 @@ Multi-stage code quality checks:
 - Prevents broken documentation links
 - Configurable timeout and retry logic
 
-**Status:** 🆕 New
+**Recent Improvements:**
+- ✅ NuGet package caching for faster builds
+- ✅ Concurrency control
+
+**Status:** ✅ Production (Recently Enhanced)
 
 ### 7. Stale Issue Management (`stale.yml`)
 **Triggers:** Daily at midnight UTC, Manual dispatch
@@ -184,8 +213,8 @@ act pull_request -W .github/workflows/code-quality.yml
 ### Workflow Secrets
 
 Required secrets (configured in repository settings):
-- `GITHUB_TOKEN` - Automatically provided by GitHub Actions
-- No additional secrets required for current workflows
+- `GITHUB_TOKEN` - Automatically provided by GitHub Actions (required for all workflows)
+- `CODECOV_TOKEN` - Code coverage reporting (optional but recommended for Build workflow)
 
 ### Monitoring Workflows
 
@@ -259,15 +288,22 @@ Keep actions up to date by reviewing Dependabot PRs or manually updating:
 
 ## Summary
 
-| Workflow | Purpose | Frequency | Status |
-|----------|---------|-----------|--------|
-| Build and Release | Build, test, and release | On push/PR/tags | ✅ Existing |
-| CodeQL Analysis | Security scanning | On push/PR + Weekly | 🆕 New |
-| Dependency Review | Dependency security | On PR | 🆕 New |
-| Docker Build | Container images | On push/PR/tags | 🆕 New |
-| Benchmark | Performance testing | On code changes | 🆕 New |
-| Code Quality | Linting and formatting | On push/PR | 🆕 New |
-| Stale Management | Issue/PR lifecycle | Daily | 🆕 New |
-| Label Management | Auto-labeling | On issue/PR activity | 🆕 New |
+| Workflow | Purpose | Frequency | Enhancements | Status |
+|----------|---------|-----------|--------------|--------|
+| Build and Release | Build, test, and release | On push/PR/tags | Caching, Coverage, Concurrency | ✅ Enhanced |
+| CodeQL Analysis | Security scanning | On push/PR + Weekly | Caching, Smart Concurrency | ✅ Enhanced |
+| Dependency Review | Dependency security | On PR | - | ✅ Existing |
+| Docker Build | Container images | On push/PR/tags | Multi-arch, Concurrency | ✅ Enhanced |
+| Benchmark | Performance testing | On code changes | Caching, Tracking, Concurrency | ✅ Enhanced |
+| Code Quality | Linting and formatting | On push/PR | Caching, Concurrency | ✅ Enhanced |
+| Stale Management | Issue/PR lifecycle | Daily | - | ✅ Existing |
+| Label Management | Auto-labeling | On issue/PR activity | - | ✅ Existing |
 
-**Total:** 8 workflows (1 existing + 7 new)
+**Total:** 8 workflows
+**Enhanced:** 5 workflows with performance and feature improvements
+**Key Improvements:**
+- ⚡ NuGet package caching across all .NET workflows
+- 🚫 Concurrency control to cancel redundant runs
+- 📊 Code coverage collection and reporting
+- 🏗️ Multi-architecture Docker builds (AMD64 + ARM64)
+- 📈 Performance benchmark tracking and regression detection
