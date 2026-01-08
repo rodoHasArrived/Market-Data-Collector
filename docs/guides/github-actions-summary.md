@@ -42,7 +42,13 @@ This document provides a quick reference for all GitHub Actions workflows in the
 - **Runs:** Daily
 - **Benefits:** Keeps issue tracker clean and organized
 
-### 7. Label Management
+### 7. Build Observability
+- **File:** `.github/workflows/build-observability.yml`
+- **Purpose:** Capture build observability artifacts in CI
+- **Runs:** On push, PRs, and manual dispatch
+- **Benefits:** Debuggable builds with metrics, graphs, and fingerprints
+
+### 8. Label Management
 - **File:** `.github/workflows/label-management.yml`
 - **Purpose:** Auto-label issues and PRs
 - **Runs:** When issues/PRs are created or updated
@@ -88,6 +94,7 @@ These workflows provide:
 - ✅ Consistent Docker images
 - ✅ Performance regression detection
 - ✅ Code quality enforcement
+- ✅ Build observability artifacts in CI
 - ✅ Better issue/PR organization
 - ✅ Reduced manual maintenance
 
@@ -112,6 +119,6 @@ These workflows provide:
 ---
 
 **Created:** 2026-01-08  
-**Total Workflows:** 8 (1 existing + 7 new)  
+**Total Workflows:** 9 (1 existing + 8 new)  
 **Total Configuration Files:** 2  
 **Documentation Files:** 2

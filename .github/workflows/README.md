@@ -119,7 +119,18 @@ Automated issue and PR lifecycle management:
 
 **Status:** 🆕 New
 
-### 8. Label Management (`label-management.yml`)
+### 8. Build Observability (`build-observability.yml`)
+**Triggers:** Push to `main`, Pull requests, Manual dispatch
+
+Captures build observability artifacts during CI runs:
+- Runs the build doctor and observability-enabled build
+- Generates dependency graphs, fingerprints, and metrics
+- Collects a minimal debug bundle
+- Uploads `.build-system/` artifacts for troubleshooting
+
+**Status:** 🆕 New
+
+### 9. Label Management (`label-management.yml`)
 **Triggers:** Issues opened/edited, Pull requests opened/edited/synchronized, Manual dispatch
 
 Automated labeling for better issue/PR organization:
@@ -268,6 +279,7 @@ Keep actions up to date by reviewing Dependabot PRs or manually updating:
 | Benchmark | Performance testing | On code changes | 🆕 New |
 | Code Quality | Linting and formatting | On push/PR | 🆕 New |
 | Stale Management | Issue/PR lifecycle | Daily | 🆕 New |
+| Build Observability | Build observability artifacts | On push/PR | 🆕 New |
 | Label Management | Auto-labeling | On issue/PR activity | 🆕 New |
 
-**Total:** 8 workflows (1 existing + 7 new)
+**Total:** 9 workflows (1 existing + 8 new)

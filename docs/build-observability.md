@@ -21,6 +21,25 @@ make fingerprint
 make collect-debug
 ```
 
+## CI Workflow
+
+Use the GitHub Actions workflow to run the same observability toolkit in CI and upload artifacts for debugging:
+
+```bash
+.github/workflows/build-observability.yml
+```
+
+The workflow executes:
+
+- `make doctor`
+- `make build`
+- `make build-graph`
+- `make fingerprint`
+- `make metrics`
+- `make collect-debug-minimal`
+
+Artifacts are uploaded from `.build-system/` for each run.
+
 ## Output Artifacts
 
 Artifacts are written to `.build-system/`:
