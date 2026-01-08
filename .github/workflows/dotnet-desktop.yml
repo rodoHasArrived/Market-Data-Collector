@@ -19,6 +19,9 @@ concurrency:
 env:
   DOTNET_VERSION: '9.0.x'
 
+permissions:
+  contents: read
+
 jobs:
   build:
     name: Build and Test
