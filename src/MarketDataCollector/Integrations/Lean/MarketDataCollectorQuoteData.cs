@@ -4,6 +4,7 @@ using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Domain.Events;
 using System.Text.Json;
 using Serilog;
+using Prometheus;
 
 namespace MarketDataCollector.Integrations.Lean;
 
@@ -14,6 +15,16 @@ namespace MarketDataCollector.Integrations.Lean;
 public class MarketDataCollectorQuoteData : BaseData
 {
     private static readonly ILogger _log = Log.ForContext<MarketDataCollectorQuoteData>();
+
+    /// <summary>Counter for JSON parse failures during quote data reading</summary>
+    private static readonly Counter JsonParseFailures = Metrics.CreateCounter(
+        "mdc_lean_quote_json_parse_failures_total",
+        "Total number of JSON parse failures when reading quote data in Lean integration");
+
+    /// <summary>Counter for unexpected parse errors during quote data reading</summary>
+    private static readonly Counter UnexpectedParseErrors = Metrics.CreateCounter(
+        "mdc_lean_quote_unexpected_parse_errors_total",
+        "Total number of unexpected errors when parsing quote data in Lean integration");
 
     /// <summary>Best bid price</summary>
     public decimal BidPrice { get; set; }
@@ -98,6 +109,7 @@ public class MarketDataCollectorQuoteData : BaseData
         }
         catch (JsonException ex)
         {
+            JsonParseFailures.Inc();
             var linePreview = line.Length > 100 ? line[..100] + "..." : line;
             _log.Warning(ex,
                 "Failed to parse quote data JSON for {Symbol} on {Date}: {LinePreview}",
@@ -108,14 +120,13 @@ public class MarketDataCollectorQuoteData : BaseData
         }
         catch (Exception ex)
         {
+            UnexpectedParseErrors.Inc();
             var linePreview = line.Length > 100 ? line[..100] + "..." : line;
             _log.Warning(ex,
                 "Unexpected error parsing quote data for {Symbol} on {Date}: {LinePreview}",
                 config.Symbol.Value,
                 date.ToString("yyyy-MM-dd"),
                 linePreview);
-            // TODO: Add metrics/counters for parse failures
-            // TODO: Consider RetryPolicy for transient failures
             return null!;
         }
     }
