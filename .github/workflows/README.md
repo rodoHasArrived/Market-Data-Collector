@@ -5,7 +5,7 @@ This directory contains automated CI/CD workflows for the Market Data Collector 
 ## Overview of Workflows
 
 ### 1. Build and Release (`dotnet-desktop.yml`)
-**Triggers:** Push to `main`, Pull requests, Git tags starting with `v*`
+**Triggers:** Push to `main`, Pull requests, Git tags starting with `v*`, Manual dispatch
 
 The main build and release pipeline that:
 - Builds and tests the .NET solution with code coverage
@@ -148,7 +148,18 @@ Automated issue and PR lifecycle management:
 
 **Status:** 🆕 New
 
-### 8. Label Management (`label-management.yml`)
+### 8. Build Observability (`build-observability.yml`)
+**Triggers:** Push to `main`, Pull requests, Manual dispatch
+
+Captures build observability artifacts during CI runs:
+- Runs the build doctor and observability-enabled build
+- Generates dependency graphs, fingerprints, and metrics
+- Collects a minimal debug bundle
+- Uploads `.build-system/` artifacts for troubleshooting
+
+**Status:** 🆕 New
+
+### 9. Label Management (`label-management.yml`)
 **Triggers:** Issues opened/edited, Pull requests opened/edited/synchronized, Manual dispatch
 
 Automated labeling for better issue/PR organization:
@@ -307,3 +318,16 @@ Keep actions up to date by reviewing Dependabot PRs or manually updating:
 - 📊 Code coverage collection and reporting
 - 🏗️ Multi-architecture Docker builds (AMD64 + ARM64)
 - 📈 Performance benchmark tracking and regression detection
+| Workflow | Purpose | Frequency | Status |
+|----------|---------|-----------|--------|
+| Build and Release | Build, test, and release | On push/PR/tags | ✅ Existing |
+| CodeQL Analysis | Security scanning | On push/PR + Weekly | 🆕 New |
+| Dependency Review | Dependency security | On PR | 🆕 New |
+| Docker Build | Container images | On push/PR/tags | 🆕 New |
+| Benchmark | Performance testing | On code changes | 🆕 New |
+| Code Quality | Linting and formatting | On push/PR | 🆕 New |
+| Stale Management | Issue/PR lifecycle | Daily | 🆕 New |
+| Build Observability | Build observability artifacts | On push/PR | 🆕 New |
+| Label Management | Auto-labeling | On issue/PR activity | 🆕 New |
+
+**Total:** 9 workflows (1 existing + 8 new)

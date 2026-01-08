@@ -7,6 +7,14 @@ on:
       - 'v*'
   pull_request:
     branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-release-${{ github.ref }}
+  cancel-in-progress: true
 
 # Cancel in-progress runs for the same workflow and branch
 concurrency:
@@ -22,15 +30,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: ${{ env.DOTNET_VERSION }}
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          cache: true
 
     - name: Cache NuGet packages
       uses: actions/cache@v4
@@ -42,9 +51,11 @@ jobs:
 
     - name: Restore dependencies
       run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
+      - name: Restore dependencies
+        run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
 
-    - name: Build
-      run: dotnet build MarketDataCollector.sln -c Release --no-restore /p:EnableWindowsTargeting=true
+      - name: Build
+        run: dotnet build MarketDataCollector.sln -c Release --no-restore /p:EnableWindowsTargeting=true
 
     - name: Test with Code Coverage
       run: |
@@ -76,6 +87,8 @@ jobs:
           ./coverage/**/*.xml
           ./coverage/**/*.json
         retention-days: 30
+      - name: Test
+        run: dotnet test MarketDataCollector.sln -c Release --no-build --verbosity normal /p:EnableWindowsTargeting=true --logger "console;verbosity=detailed"
 
   publish:
     name: Publish ${{ matrix.rid }}
@@ -164,32 +177,90 @@ jobs:
         name: MarketDataCollector-${{ matrix.rid }}
         path: MarketDataCollector-${{ matrix.rid }}${{ matrix.asset_extension }}
         retention-days: 30
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          cache: true
+
+      - name: Publish Collector
+        run: |
+          dotnet publish src/MarketDataCollector/MarketDataCollector.csproj \
+            -c Release \
+            -r ${{ matrix.rid }} \
+            -o ./publish/collector \
+            --self-contained true \
+            -p:PublishSingleFile=true \
+            -p:PublishTrimmed=true \
+            -p:EnableCompressionInSingleFile=true \
+            -p:IncludeNativeLibrariesForSelfExtract=true
+
+      - name: Publish UI
+        run: |
+          dotnet publish src/MarketDataCollector.Ui/MarketDataCollector.Ui.csproj \
+            -c Release \
+            -r ${{ matrix.rid }} \
+            -o ./publish/ui \
+            --self-contained true \
+            -p:PublishSingleFile=true \
+            -p:PublishTrimmed=true \
+            -p:EnableCompressionInSingleFile=true \
+            -p:IncludeNativeLibrariesForSelfExtract=true
+
+      - name: Copy configuration
+        run: |
+          cp config/appsettings.json ./publish/collector/ || true
+          cp config/appsettings.json ./publish/ui/ || true
+
+      - name: Create archive (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          cd publish
+          tar -czvf ../MarketDataCollector-${{ matrix.rid }}${{ matrix.asset_extension }} .
+
+      - name: Create archive (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          Compress-Archive -Path publish/* -DestinationPath MarketDataCollector-${{ matrix.rid }}${{ matrix.asset_extension }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MarketDataCollector-${{ matrix.rid }}
+          path: MarketDataCollector-${{ matrix.rid }}${{ matrix.asset_extension }}
+          retention-days: 30
 
   release:
     name: Create Release
     needs: publish
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
 
     steps:
-    - name: Download all artifacts
-      uses: actions/download-artifact@v4
-      with:
-        path: artifacts
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
 
-    - name: Display structure
-      run: ls -R artifacts
+      - name: Display structure
+        run: find artifacts -maxdepth 2 -type f
 
-    - name: Create Release
-      uses: softprops/action-gh-release@v1
-      with:
-        files: |
-          artifacts/MarketDataCollector-linux-x64/*
-          artifacts/MarketDataCollector-win-x64/*
-          artifacts/MarketDataCollector-osx-x64/*
-          artifacts/MarketDataCollector-osx-arm64/*
-        generate_release_notes: true
-        draft: false
-        prerelease: false
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/MarketDataCollector-linux-x64*
+            artifacts/MarketDataCollector-win-x64*
+            artifacts/MarketDataCollector-osx-x64*
+            artifacts/MarketDataCollector-osx-arm64*
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

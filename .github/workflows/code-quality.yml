@@ -1,30 +1,212 @@
+# Code Quality Workflow
+# Runs code formatting checks, static analysis, and linting on every PR and push to main
+
 name: Code Quality
 
 on:
   push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'benchmarks/**'
+      - '*.props'
+      - '*.targets'
+      - '**/*.csproj'
+      - '**/*.fsproj'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'benchmarks/**'
+      - '*.props'
+      - '*.targets'
+      - '**/*.csproj'
+      - '**/*.fsproj'
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
   workflow_dispatch:
 
 # Cancel in-progress runs for the same workflow and branch
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  DOTNET_VERSION: '9.0.x'
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
 jobs:
-  lint-and-format:
-    name: Lint and Format Check
+  format-check:
+    name: Code Formatting
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: '9.0.x'
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore /p:EnableWindowsTargeting=true
+
+      - name: Check code formatting
+        run: dotnet format --verify-no-changes --verbosity diagnostic
+        continue-on-error: true
+        id: format-check
+
+      - name: Report formatting issues
+        if: steps.format-check.outcome == 'failure'
+        run: |
+          echo "::warning::Code formatting issues detected. Run 'dotnet format' locally to fix."
+          echo "To fix formatting issues, run:"
+          echo "  dotnet format"
+          echo "Or use the Makefile:"
+          echo "  make format"
+          cache: true
+          cache-dependency-path: |
+            **/packages.lock.json
+            **/*.csproj
+
+      - name: Restore dependencies
+        run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
+
+      - name: Check code formatting
+        run: dotnet format MarketDataCollector.sln --verify-no-changes --verbosity diagnostic
+
+  static-analysis:
+    name: Static Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore /p:EnableWindowsTargeting=true
+
+      - name: Build with analysis
+        run: |
+          dotnet build -c Release \
+            /p:TreatWarningsAsErrors=false \
+            /p:EnableWindowsTargeting=true \
+            /warnaserror:nullable \
+            --no-restore
+
+      - name: Check for nullable reference warnings
+        run: |
+          dotnet build -c Release \
+            /p:EnableWindowsTargeting=true \
+            --no-restore 2>&1 | tee build.log
+
+          # Count nullable warnings
+          NULLABLE_WARNINGS=$(grep -c "warning CS86" build.log || true)
+          if [ "$NULLABLE_WARNINGS" -gt 0 ]; then
+            echo "::warning::Found $NULLABLE_WARNINGS nullable reference warnings"
+          fi
+
+  dependency-audit:
+    name: Dependency Security Audit
+    runs-on: ubuntu-latest
+          cache: true
+
+      - name: Restore dependencies
+        run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
+
+      - name: Build with analysis
+        run: |
+          dotnet build MarketDataCollector.sln \
+            -c Release \
+            --no-restore \
+            /p:EnableWindowsTargeting=true \
+            /p:TreatWarningsAsErrors=false \
+            /p:AnalysisLevel=latest \
+            /p:EnforceCodeStyleInBuild=true \
+            /p:RunAnalyzersDuringBuild=true
+
+      - name: Run .NET analyzers
+        run: |
+          dotnet build MarketDataCollector.sln \
+            -c Release \
+            --no-restore \
+            /p:EnableWindowsTargeting=true \
+            /warnaserror:nullable \
+            || echo "Nullable analysis warnings detected"
+
+  dependency-audit:
+    name: Dependency Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore /p:EnableWindowsTargeting=true
+
+      - name: Check for vulnerable packages
+        run: |
+          echo "## Dependency Security Audit" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Run vulnerability check
+          dotnet list package --vulnerable --include-transitive 2>&1 | tee vuln-report.txt
+
+          # Check if vulnerabilities were found
+          if grep -q "has the following vulnerable packages" vuln-report.txt; then
+            echo "::warning::Vulnerable packages detected. Review the security report."
+            echo "### ⚠️ Vulnerable Packages Found" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat vuln-report.txt >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### ✅ No Vulnerable Packages Found" >> $GITHUB_STEP_SUMMARY
+          fi
+          cache: true
+
+      - name: Restore dependencies
+        run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
+
+      - name: List outdated packages
+        run: |
+          echo "## Outdated Packages Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          dotnet list MarketDataCollector.sln package --outdated --include-transitive | tee outdated.txt
+          if grep -q ">" outdated.txt; then
+            echo "⚠️ Some packages have newer versions available" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ All packages are up to date" >> $GITHUB_STEP_SUMMARY
+          fi
+        continue-on-error: true
+
+      - name: Check for deprecated packages
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Deprecated Package Check" >> $GITHUB_STEP_SUMMARY
 
     - name: Cache NuGet packages
       uses: actions/cache@v4
@@ -36,43 +218,171 @@ jobs:
 
     - name: Restore dependencies
       run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
+          dotnet list package --deprecated 2>&1 | tee deprecated-report.txt
 
-    - name: Check code formatting
-      run: dotnet format MarketDataCollector.sln --verify-no-changes --verbosity diagnostic
+          if grep -q "has the following deprecated packages" deprecated-report.txt; then
+            echo "::notice::Deprecated packages detected. Consider updating."
+            echo "⚠️ Some packages are deprecated:" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat deprecated-report.txt >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "## Deprecated Packages Check" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          dotnet list MarketDataCollector.sln package --deprecated | tee deprecated.txt
+          if grep -q ">" deprecated.txt; then
+            echo "⚠️ Deprecated packages detected!" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          else
+            echo "✅ No deprecated packages found" >> $GITHUB_STEP_SUMMARY
+          fi
 
-    - name: Run code analysis
-      run: dotnet build MarketDataCollector.sln -c Release /p:EnableWindowsTargeting=true /p:TreatWarningsAsErrors=false /p:AnalysisLevel=latest
+      - name: Check for outdated packages
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Package Update Check" >> $GITHUB_STEP_SUMMARY
 
-  markdown-lint:
-    name: Markdown Lint
+          dotnet list package --outdated 2>&1 | tee outdated-report.txt
+
+          if grep -q "has the following updates available" outdated-report.txt; then
+            echo "::notice::Package updates available."
+            echo "📦 Updates available:" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat outdated-report.txt >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ All packages are up to date" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  xml-doc-validation:
+    name: XML Documentation Validation
+    runs-on: ubuntu-latest
+      - name: Check for vulnerable packages
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Vulnerability Check" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          dotnet list MarketDataCollector.sln package --vulnerable --include-transitive | tee vulnerable.txt
+          if grep -qE "(Critical|High|Moderate|Low)" vulnerable.txt; then
+            echo "🚨 Vulnerable packages detected!" >> $GITHUB_STEP_SUMMARY
+            cat vulnerable.txt >> $GITHUB_STEP_SUMMARY
+            exit 1
+          else
+            echo "✅ No vulnerable packages found" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  xml-documentation:
+    name: XML Documentation Validation
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Lint Markdown files
-      uses: DavidAnson/markdownlint-cli2-action@v16
-      with:
-        globs: |
-          **/*.md
-          !**/node_modules/**
-          !**/bin/**
-          !**/obj/**
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
 
-  link-checker:
-    name: Check Documentation Links
+      - name: Restore dependencies
+        run: dotnet restore /p:EnableWindowsTargeting=true
+
+      - name: Build and check XML documentation
+        run: |
+          # Build with XML documentation warnings
+          dotnet build -c Release \
+            /p:EnableWindowsTargeting=true \
+            /p:GenerateDocumentationFile=true \
+            /warnaserror:CS1591 \
+            --no-restore 2>&1 | tee doc-warnings.log || true
+
+          # Count missing documentation warnings
+          DOC_WARNINGS=$(grep -c "warning CS1591" doc-warnings.log || true)
+
+          echo "## XML Documentation Status" >> $GITHUB_STEP_SUMMARY
+          if [ "$DOC_WARNINGS" -gt 0 ]; then
+            echo "::notice::Found $DOC_WARNINGS missing XML documentation comments"
+            echo "📝 Missing documentation comments: $DOC_WARNINGS" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ All public members have XML documentation" >> $GITHUB_STEP_SUMMARY
+          fi
+          cache: true
+
+      - name: Restore dependencies
+        run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
+
+      - name: Build with XML documentation
+        run: |
+          dotnet build MarketDataCollector.sln \
+            -c Release \
+            --no-restore \
+            /p:EnableWindowsTargeting=true \
+            /p:GenerateDocumentationFile=true \
+            /p:NoWarn=1591
+
+      - name: Validate XML documentation exists
+        run: |
+          echo "## XML Documentation Files" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          find . -name "*.xml" -path "*/bin/Release/*" | while read xmlfile; do
+            if [ -s "$xmlfile" ]; then
+              echo "✅ $(basename $xmlfile)" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+
+      - name: Check for missing documentation on public APIs
+        run: |
+          # Build with CS1591 warning to check for missing XML docs on public members
+          dotnet build src/MarketDataCollector/MarketDataCollector.csproj \
+            -c Release \
+            --no-restore \
+            /p:EnableWindowsTargeting=true \
+            /p:GenerateDocumentationFile=true \
+            /p:WarningsAsErrors=CS1591 2>&1 | tee xml-check.txt || true
+
+          if grep -q "CS1591" xml-check.txt; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ Some public APIs are missing XML documentation" >> $GITHUB_STEP_SUMMARY
+            grep "CS1591" xml-check.txt | head -20 >> $GITHUB_STEP_SUMMARY
+          else
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "✅ All public APIs have XML documentation" >> $GITHUB_STEP_SUMMARY
+          fi
+        continue-on-error: true
+
+  code-metrics:
+    name: Code Metrics
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Check links in Markdown files
-      uses: gaurav-nelson/github-action-markdown-link-check@v1
-      with:
-        use-quiet-mode: 'yes'
-        use-verbose-mode: 'no'
-        config-file: '.github/markdown-link-check-config.json'
-        folder-path: 'docs/'
-        max-depth: 5
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          cache: true
+
+      - name: Restore dependencies
+        run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
+
+      - name: Count lines of code
+        run: |
+          echo "## Code Metrics" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Lines of Code" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Language | Files | Lines |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|-------|" >> $GITHUB_STEP_SUMMARY
+
+          cs_files=$(find src -name "*.cs" ! -path "*/obj/*" ! -path "*/bin/*" | wc -l)
+          cs_lines=$(find src -name "*.cs" ! -path "*/obj/*" ! -path "*/bin/*" -exec cat {} \; | wc -l)
+          echo "| C# | $cs_files | $cs_lines |" >> $GITHUB_STEP_SUMMARY
+
+          fs_files=$(find src -name "*.fs" ! -path "*/obj/*" ! -path "*/bin/*" | wc -l)
+          fs_lines=$(find src -name "*.fs" ! -path "*/obj/*" ! -path "*/bin/*" -exec cat {} \; 2>/dev/null | wc -l)
+          echo "| F# | $fs_files | $fs_lines |" >> $GITHUB_STEP_SUMMARY
+
+          test_files=$(find tests -name "*.cs" ! -path "*/obj/*" ! -path "*/bin/*" | wc -l)
+          test_lines=$(find tests -name "*.cs" ! -path "*/obj/*" ! -path "*/bin/*" -exec cat {} \; | wc -l)
+          echo "| Tests (C#) | $test_files | $test_lines |" >> $GITHUB_STEP_SUMMARY

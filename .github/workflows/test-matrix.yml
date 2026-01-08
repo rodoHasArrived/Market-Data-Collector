@@ -1,0 +1,324 @@
+# Multi-Platform Test Matrix Workflow
+# Runs tests across multiple operating systems and generates coverage reports
+
+name: Test Matrix
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - '*.sln'
+      - '**/*.csproj'
+      - '**/*.fsproj'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - '*.sln'
+    branches: [ "main" ]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - '**/*.csproj'
+      - '**/*.fsproj'
+      - 'Directory.Build.props'
+      - '.github/workflows/test-matrix.yml'
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - '**/*.csproj'
+      - '**/*.fsproj'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_VERSION: '9.0.x'
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  test:
+    name: Test (${{ matrix.os }})
+  test-matrix:
+    name: Test (${{ matrix.os }}, .NET ${{ matrix.dotnet }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        dotnet: ['9.0.x']
+        include:
+          - os: ubuntu-latest
+            os_name: Linux
+            coverage: true
+          - os: windows-latest
+            os_name: Windows
+            coverage: false
+          - os: macos-latest
+            os_name: macOS
+            coverage: false
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ matrix.dotnet }}
+          cache: true
+
+      - name: Restore dependencies
+        run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
+
+      - name: Build
+        run: |
+          dotnet build MarketDataCollector.sln \
+            -c Release \
+            --no-restore \
+            /p:EnableWindowsTargeting=true
+
+      - name: Run C# unit tests
+        run: |
+          dotnet test tests/MarketDataCollector.Tests/MarketDataCollector.Tests.csproj \
+            -c Release \
+            --no-build \
+            --verbosity normal \
+            --logger "trx;LogFileName=test-results-csharp-${{ matrix.os_name }}.trx" \
+            --results-directory ./TestResults \
+            ${{ matrix.coverage && '--collect:"XPlat Code Coverage" --settings tests/coverlet.runsettings' || '' }}
+
+      - name: Run F# unit tests
+        run: |
+          dotnet test tests/MarketDataCollector.FSharp.Tests/MarketDataCollector.FSharp.Tests.fsproj \
+            -c Release \
+            --no-build \
+            --verbosity normal \
+            --logger "trx;LogFileName=test-results-fsharp-${{ matrix.os_name }}.trx" \
+            --results-directory ./TestResults \
+            /p:EnableWindowsTargeting=true
+        continue-on-error: true
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-${{ matrix.os_name }}
+          path: ./TestResults/
+          retention-days: 7
+
+      - name: Publish test results
+        uses: dorny/test-reporter@v1
+        if: always() && github.event_name != 'pull_request'
+        with:
+          name: Test Results (${{ matrix.os_name }})
+          path: ./TestResults/*.trx
+          reporter: dotnet-trx
+          fail-on-error: false
+
+      - name: Upload coverage to Codecov
+        if: matrix.coverage && success()
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./TestResults/**/coverage.cobertura.xml
+          flags: unittests,${{ matrix.os_name }}
+          name: codecov-${{ matrix.os_name }}
+          fail_ci_if_error: false
+          verbose: true
+
+  coverage-report:
+    name: Coverage Report
+    runs-on: ubuntu-latest
+    needs: test-matrix
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          cache: true
+
+      - name: Restore dependencies
+        run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
+
+      - name: Build
+        run: |
+          dotnet build MarketDataCollector.sln \
+            -c Release \
+            --no-restore \
+            /p:EnableWindowsTargeting=true
+
+      - name: Run tests with coverage
+        run: |
+          dotnet test tests/MarketDataCollector.Tests/MarketDataCollector.Tests.csproj \
+            -c Release \
+            --no-build \
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./TestResults \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura
+
+      - name: Install ReportGenerator
+        run: dotnet tool install --global dotnet-reportgenerator-globaltool
+
+      - name: Generate coverage report
+        run: |
+          reportgenerator \
+            -reports:"./TestResults/**/coverage.cobertura.xml" \
+            -targetdir:"./CoverageReport" \
+            -reporttypes:"Html;Badges;MarkdownSummaryGithub"
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: ./CoverageReport/
+          retention-days: 14
+
+      - name: Add coverage summary to workflow
+        run: |
+          cat ./CoverageReport/SummaryGithub.md >> $GITHUB_STEP_SUMMARY
+
+      - name: Comment coverage on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            let summary = '';
+            try {
+              summary = fs.readFileSync('./CoverageReport/SummaryGithub.md', 'utf8');
+            } catch (e) {
+              summary = '⚠️ Coverage report not available';
+            }
+
+            const body = `## 📊 Code Coverage Report\n\n${summary}\n\n📁 Full report available in workflow artifacts`;
+
+            // Find existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(comment =>
+              comment.user.type === 'Bot' && comment.body.includes('Code Coverage Report')
+            );
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: body
+              });
+            }
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: test-matrix
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          cache: true
+
+      - name: Restore dependencies
+        run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
+
+      - name: Build
+        run: |
+          dotnet build MarketDataCollector.sln \
+            -c Release \
+            --no-restore \
+            /p:EnableWindowsTargeting=true
+
+      - name: Run integration tests
+        run: |
+          dotnet test tests/MarketDataCollector.Tests/MarketDataCollector.Tests.csproj \
+            -c Release \
+            --no-build \
+            --filter "Category=Integration" \
+            --verbosity normal \
+            --logger "trx;LogFileName=integration-results.trx" \
+            --results-directory ./TestResults
+        continue-on-error: true
+
+      - name: Upload integration test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: integration-test-results
+          path: '**/integration-test-results.trx'
+          retention-days: 7
+          path: ./TestResults/
+          retention-days: 7
+
+  test-summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: [test-matrix, coverage-report, integration-tests]
+    if: always()
+
+    steps:
+      - name: Download all test results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: test-results-*
+          path: ./all-results
+          merge-multiple: true
+        continue-on-error: true
+
+      - name: Generate test summary
+        run: |
+          echo "# Test Matrix Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Run Date:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "## Platform Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Platform | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Linux | ${{ contains(needs.test-matrix.result, 'success') && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Windows | ${{ contains(needs.test-matrix.result, 'success') && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| macOS | ${{ contains(needs.test-matrix.result, 'success') && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "## Job Status" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Result |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Test Matrix | ${{ needs.test-matrix.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Coverage Report | ${{ needs.coverage-report.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Integration Tests | ${{ needs.integration-tests.result }} |" >> $GITHUB_STEP_SUMMARY
