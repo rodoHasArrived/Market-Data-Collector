@@ -174,7 +174,7 @@ public sealed class MultiProviderConnectionManager : IAsyncDisposable
                     var tradeSubId = connection.Client.SubscribeTrades(symbol);
                     if (tradeSubId >= 0)
                     {
-                        connection.AddSubscription(symbol.Symbol, tradeSubId, "trades");
+                        connection.AddSubscription(symbol.Symbol, tradeSubId, "trades", symbol);
                         results[$"{id}:trades"] = tradeSubId;
                         UpdateMetrics(id, m => m.IncrementActiveSubscriptions());
                     }
@@ -185,7 +185,7 @@ public sealed class MultiProviderConnectionManager : IAsyncDisposable
                     var depthSubId = connection.Client.SubscribeMarketDepth(symbol);
                     if (depthSubId >= 0)
                     {
-                        connection.AddSubscription(symbol.Symbol, depthSubId, "depth");
+                        connection.AddSubscription(symbol.Symbol, depthSubId, "depth", symbol);
                         results[$"{id}:depth"] = depthSubId;
                         UpdateMetrics(id, m => m.IncrementActiveSubscriptions());
                     }
@@ -229,6 +229,122 @@ public sealed class MultiProviderConnectionManager : IAsyncDisposable
                 _log.Error(ex, "Failed to unsubscribe {Symbol} from provider {ProviderId}", symbol, id);
             }
         }
+    }
+
+    /// <summary>
+    /// Transfers all subscriptions from one provider to another.
+    /// Used during failover and recovery operations.
+    /// </summary>
+    /// <param name="fromProviderId">Source provider ID</param>
+    /// <param name="toProviderId">Target provider ID</param>
+    /// <param name="unsubscribeFromSource">Whether to unsubscribe from the source provider</param>
+    /// <returns>Transfer result containing success status and counts</returns>
+    public SubscriptionTransferResult TransferSubscriptions(
+        string fromProviderId,
+        string toProviderId,
+        bool unsubscribeFromSource = false)
+    {
+        if (!_connections.TryGetValue(fromProviderId, out var sourceConnection))
+        {
+            _log.Warning("Cannot transfer subscriptions: source provider {ProviderId} not found", fromProviderId);
+            return new SubscriptionTransferResult(false, 0, 0, "Source provider not found");
+        }
+
+        if (!_connections.TryGetValue(toProviderId, out var targetConnection))
+        {
+            _log.Warning("Cannot transfer subscriptions: target provider {ProviderId} not found", toProviderId);
+            return new SubscriptionTransferResult(false, 0, 0, "Target provider not found");
+        }
+
+        var subscriptions = sourceConnection.GetAllSubscriptions().ToList();
+        var transferred = 0;
+        var failed = 0;
+
+        // Group subscriptions by symbol config to avoid duplicate subscriptions
+        var symbolGroups = subscriptions
+            .GroupBy(s => (s.Config.Symbol, s.Config))
+            .ToList();
+
+        foreach (var group in symbolGroups)
+        {
+            var config = group.Key.Config;
+            var hasTradesSub = group.Any(s => s.Kind == "trades");
+            var hasDepthSub = group.Any(s => s.Kind == "depth");
+
+            try
+            {
+                // Subscribe on target provider
+                if (hasTradesSub && config.SubscribeTrades)
+                {
+                    var tradeSubId = targetConnection.Client.SubscribeTrades(config);
+                    if (tradeSubId >= 0)
+                    {
+                        targetConnection.AddSubscription(config.Symbol, tradeSubId, "trades", config);
+                        UpdateMetrics(toProviderId, m => m.IncrementActiveSubscriptions());
+                        transferred++;
+                    }
+                    else
+                    {
+                        failed++;
+                    }
+                }
+
+                if (hasDepthSub && config.SubscribeDepth)
+                {
+                    var depthSubId = targetConnection.Client.SubscribeMarketDepth(config);
+                    if (depthSubId >= 0)
+                    {
+                        targetConnection.AddSubscription(config.Symbol, depthSubId, "depth", config);
+                        UpdateMetrics(toProviderId, m => m.IncrementActiveSubscriptions());
+                        transferred++;
+                    }
+                    else
+                    {
+                        failed++;
+                    }
+                }
+
+                // Optionally unsubscribe from source
+                if (unsubscribeFromSource)
+                {
+                    foreach (var sub in group)
+                    {
+                        try
+                        {
+                            if (sub.Kind == "trades")
+                                sourceConnection.Client.UnsubscribeTrades(sub.SubscriptionId);
+                            else if (sub.Kind == "depth")
+                                sourceConnection.Client.UnsubscribeMarketDepth(sub.SubscriptionId);
+
+                            sourceConnection.RemoveSubscription(sub.SubscriptionId);
+                            UpdateMetrics(fromProviderId, m => m.DecrementActiveSubscriptions());
+                        }
+                        catch (Exception ex)
+                        {
+                            _log.Warning(ex, "Failed to unsubscribe {Symbol} ({Kind}) from source provider {ProviderId}",
+                                sub.Symbol, sub.Kind, fromProviderId);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _log.Error(ex, "Failed to transfer subscription for {Symbol} from {From} to {To}",
+                    config.Symbol, fromProviderId, toProviderId);
+                failed++;
+            }
+        }
+
+        _log.Information("Subscription transfer complete: {Transferred} transferred, {Failed} failed ({From} -> {To})",
+            transferred, failed, fromProviderId, toProviderId);
+
+        return new SubscriptionTransferResult(
+            Success: failed == 0,
+            TransferredCount: transferred,
+            FailedCount: failed,
+            Message: failed == 0
+                ? "All subscriptions transferred successfully"
+                : $"{failed} subscription(s) failed to transfer");
     }
 
     /// <summary>
@@ -349,9 +465,9 @@ public sealed class ProviderConnection
         _lastHeartbeat = DateTimeOffset.UtcNow;
     }
 
-    public void AddSubscription(string symbol, int subscriptionId, string kind)
+    public void AddSubscription(string symbol, int subscriptionId, string kind, SymbolConfig config)
     {
-        _subscriptions.TryAdd(subscriptionId, new SymbolSubscription(symbol, subscriptionId, kind));
+        _subscriptions.TryAdd(subscriptionId, new SymbolSubscription(symbol, subscriptionId, kind, config));
     }
 
     public void RemoveSubscription(int subscriptionId)
@@ -364,12 +480,20 @@ public sealed class ProviderConnection
         return _subscriptions.Values.Where(s =>
             s.Symbol.Equals(symbol, StringComparison.OrdinalIgnoreCase));
     }
+
+    /// <summary>
+    /// Gets all active subscriptions for this connection.
+    /// </summary>
+    public IEnumerable<SymbolSubscription> GetAllSubscriptions()
+    {
+        return _subscriptions.Values.ToList();
+    }
 }
 
 /// <summary>
 /// Represents a symbol subscription on a provider.
 /// </summary>
-public readonly record struct SymbolSubscription(string Symbol, int SubscriptionId, string Kind);
+public readonly record struct SymbolSubscription(string Symbol, int SubscriptionId, string Kind, SymbolConfig Config);
 
 /// <summary>
 /// Connection status for a provider.
@@ -531,4 +655,14 @@ public readonly record struct ProviderComparisonResult(
     IReadOnlyList<ProviderMetricsSnapshot> Providers,
     int TotalProviders,
     int HealthyProviders
+);
+
+/// <summary>
+/// Result of a subscription transfer operation.
+/// </summary>
+public readonly record struct SubscriptionTransferResult(
+    bool Success,
+    int TransferredCount,
+    int FailedCount,
+    string Message
 );
