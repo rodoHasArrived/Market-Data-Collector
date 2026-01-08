@@ -41,7 +41,7 @@
     <PackageReference Include="AspNetCore.HealthChecks.Rabbitmq" Version="8.0.2" />
 
     <!-- Resilience -->
-    <PackageReference Include="Polly" Version="8.4.2" />
+    <PackageReference Include="Polly" Version="8.6.5" />
 
     <!-- Validation -->
     <PackageReference Include="FluentValidation.AspNetCore" Version="11.3.0" />
