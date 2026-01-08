@@ -4,6 +4,7 @@ using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Domain.Events;
 using System.Text.Json;
 using Serilog;
+using Prometheus;
 
 namespace MarketDataCollector.Integrations.Lean;
 
@@ -14,6 +15,16 @@ namespace MarketDataCollector.Integrations.Lean;
 public class MarketDataCollectorTradeData : BaseData
 {
     private static readonly ILogger _log = Log.ForContext<MarketDataCollectorTradeData>();
+
+    /// <summary>Counter for JSON parse failures during trade data reading</summary>
+    private static readonly Counter JsonParseFailures = Metrics.CreateCounter(
+        "mdc_lean_trade_json_parse_failures_total",
+        "Total number of JSON parse failures when reading trade data in Lean integration");
+
+    /// <summary>Counter for unexpected parse errors during trade data reading</summary>
+    private static readonly Counter UnexpectedParseErrors = Metrics.CreateCounter(
+        "mdc_lean_trade_unexpected_parse_errors_total",
+        "Total number of unexpected errors when parsing trade data in Lean integration");
 
     /// <summary>Trade price</summary>
     public decimal TradePrice { get; set; }
@@ -87,6 +98,7 @@ public class MarketDataCollectorTradeData : BaseData
         }
         catch (JsonException ex)
         {
+            JsonParseFailures.Inc();
             var linePreview = line.Length > 100 ? line[..100] + "..." : line;
             _log.Warning(ex,
                 "Failed to parse trade data JSON for {Symbol} on {Date}: {LinePreview}",
@@ -97,14 +109,13 @@ public class MarketDataCollectorTradeData : BaseData
         }
         catch (Exception ex)
         {
+            UnexpectedParseErrors.Inc();
             var linePreview = line.Length > 100 ? line[..100] + "..." : line;
             _log.Warning(ex,
                 "Unexpected error parsing trade data for {Symbol} on {Date}: {LinePreview}",
                 config.Symbol.Value,
                 date.ToString("yyyy-MM-dd"),
                 linePreview);
-            // TODO: Implement fallback parsing logic for malformed records
-            // TODO: Add unit test for various malformed JSONL formats
             return null!;
         }
     }
