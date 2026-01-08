@@ -37,28 +37,15 @@ jobs:
       run: dotnet build benchmarks/MarketDataCollector.Benchmarks/MarketDataCollector.Benchmarks.csproj -c Release --no-restore /p:EnableWindowsTargeting=true
 
     - name: Run benchmarks
-      run: dotnet run --project benchmarks/MarketDataCollector.Benchmarks/MarketDataCollector.Benchmarks.csproj -c Release --no-build -- --filter '*' --exporters json
+      run: dotnet run --project benchmarks/MarketDataCollector.Benchmarks/MarketDataCollector.Benchmarks.csproj -c Release --no-build -- --filter '*' --exporters json --exporters html
 
     - name: Upload benchmark results
       uses: actions/upload-artifact@v4
       if: always()
       with:
         name: benchmark-results
-        path: BenchmarkDotNet.Artifacts/results/
+        path: BenchmarkDotNet.Artifacts/
         retention-days: 30
-
-    - name: Store benchmark result
-      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-      uses: benchmark-action/github-action-benchmark@v1
-      with:
-        tool: 'benchmarkdotnet'
-        output-file-path: BenchmarkDotNet.Artifacts/results/combined-benchmark-results.json
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        auto-push: false
-        alert-threshold: '150%'
-        comment-on-alert: true
-        fail-on-alert: false
-        alert-comment-cc-users: '@rodoHasArrived'
 
     - name: Comment PR with benchmark results
       if: github.event_name == 'pull_request'
@@ -67,11 +54,11 @@ jobs:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
           const fs = require('fs');
-          const resultsPath = 'BenchmarkDotNet.Artifacts/results/';
           
           let comment = '## 📊 Benchmark Results\n\n';
           comment += 'Benchmark suite completed successfully.\n\n';
-          comment += '📁 Results have been uploaded as artifacts.\n';
+          comment += '📁 Results have been uploaded as artifacts and can be downloaded from the Actions tab.\n';
+          comment += '\n**Artifact name:** `benchmark-results`\n';
           
           github.rest.issues.createComment({
             issue_number: context.issue.number,
