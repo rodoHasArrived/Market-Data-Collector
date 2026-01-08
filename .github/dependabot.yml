@@ -1,0 +1,90 @@
+# Dependabot Configuration
+# Automatically creates PRs for dependency updates
+
+version: 2
+
+registries:
+  nuget-org:
+    type: nuget-feed
+    url: https://api.nuget.org/v3/index.json
+
+updates:
+  # NuGet dependencies
+  - package-ecosystem: "nuget"
+    directory: "/"
+    registries:
+      - nuget-org
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "rodoHasArrived"
+    labels:
+      - "dependencies"
+      - "nuget"
+    commit-message:
+      prefix: "deps(nuget)"
+    groups:
+      # Group Microsoft packages together
+      microsoft:
+        patterns:
+          - "Microsoft.*"
+          - "System.*"
+        update-types:
+          - "minor"
+          - "patch"
+      # Group test packages
+      testing:
+        patterns:
+          - "xunit*"
+          - "FluentAssertions"
+          - "Moq"
+          - "NSubstitute"
+          - "coverlet*"
+        update-types:
+          - "minor"
+          - "patch"
+      # Group MassTransit packages
+      masstransit:
+        patterns:
+          - "MassTransit*"
+        update-types:
+          - "minor"
+          - "patch"
+    ignore:
+      # Ignore major version updates for stability
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "ci(actions)"
+
+  # Docker base images
+  - package-ecosystem: "docker"
+    directory: "/deploy/docker"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "docker"
+    commit-message:
+      prefix: "deps(docker)"

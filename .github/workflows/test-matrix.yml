@@ -1,0 +1,250 @@
+# Multi-Platform Test Matrix Workflow
+# Runs tests across multiple operating systems and generates coverage reports
+
+name: Test Matrix
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - '*.sln'
+      - '**/*.csproj'
+      - '**/*.fsproj'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - '*.sln'
+      - '**/*.csproj'
+      - '**/*.fsproj'
+  workflow_dispatch:
+
+env:
+  DOTNET_VERSION: '9.0.x'
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  test:
+    name: Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            name: Linux
+            coverage: true
+          - os: windows-latest
+            name: Windows
+            coverage: false
+          - os: macos-latest
+            name: macOS
+            coverage: false
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore /p:EnableWindowsTargeting=true
+
+      - name: Build
+        run: dotnet build -c Release /p:EnableWindowsTargeting=true --no-restore
+
+      - name: Run C# tests
+        run: |
+          dotnet test tests/MarketDataCollector.Tests \
+            --configuration Release \
+            --no-build \
+            --verbosity normal \
+            --logger "trx;LogFileName=csharp-test-results.trx" \
+            ${{ matrix.coverage && '--collect:"XPlat Code Coverage" --results-directory ./coverage' || '' }}
+
+      - name: Run F# tests
+        run: |
+          dotnet test tests/MarketDataCollector.FSharp.Tests \
+            --configuration Release \
+            --no-build \
+            --verbosity normal \
+            --logger "trx;LogFileName=fsharp-test-results.trx"
+        continue-on-error: true
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-${{ matrix.name }}
+          path: |
+            **/TestResults/*.trx
+            **/test-results*.trx
+          retention-days: 7
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: matrix.coverage && success()
+        with:
+          name: coverage-report
+          path: coverage/**/coverage.cobertura.xml
+          retention-days: 7
+
+  coverage-report:
+    name: Coverage Report
+    runs-on: ubuntu-latest
+    needs: test
+    if: success()
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download coverage artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Install ReportGenerator
+        run: dotnet tool install --global dotnet-reportgenerator-globaltool
+
+      - name: Generate coverage report
+        run: |
+          reportgenerator \
+            -reports:"coverage/**/coverage.cobertura.xml" \
+            -targetdir:"coveragereport" \
+            -reporttypes:"Html;Badges;MarkdownSummary;Cobertura" \
+            -title:"Market Data Collector Coverage"
+
+      - name: Generate coverage summary
+        run: |
+          echo "## Code Coverage Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ -f coveragereport/Summary.md ]; then
+            cat coveragereport/Summary.md >> $GITHUB_STEP_SUMMARY
+          else
+            echo "Coverage report not generated" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload HTML coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-html-report
+          path: coveragereport/
+          retention-days: 30
+
+      - name: Check coverage threshold
+        run: |
+          # Extract line coverage percentage
+          COVERAGE=$(grep -oP 'linecoverage="\K[^"]+' coveragereport/Cobertura.xml 2>/dev/null | head -1 || echo "0")
+          COVERAGE_PCT=$(echo "$COVERAGE * 100" | bc -l 2>/dev/null | cut -d. -f1 || echo "0")
+
+          echo "Line coverage: ${COVERAGE_PCT}%"
+
+          # Warn if coverage is below 50%
+          if [ "$COVERAGE_PCT" -lt 50 ]; then
+            echo "::warning::Code coverage is below 50% (${COVERAGE_PCT}%)"
+          fi
+
+  test-report:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: test
+    if: always()
+    steps:
+      - name: Download all test results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: test-results-*
+          merge-multiple: true
+          path: test-results
+
+      - name: Generate test summary
+        run: |
+          echo "## Test Results Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Platform | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
+
+          # Parse test results from each platform
+          for platform in Linux Windows macOS; do
+            STATUS="${{ needs.test.result }}"
+            if [ "$STATUS" == "success" ]; then
+              echo "| $platform | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "| $platform | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Count total tests
+          TOTAL_TESTS=0
+          PASSED_TESTS=0
+          FAILED_TESTS=0
+
+          for trx in $(find test-results -name "*.trx" 2>/dev/null); do
+            TESTS=$(grep -oP 'total="\K[^"]+' "$trx" | head -1 || echo "0")
+            PASSED=$(grep -oP 'passed="\K[^"]+' "$trx" | head -1 || echo "0")
+            FAILED=$(grep -oP 'failed="\K[^"]+' "$trx" | head -1 || echo "0")
+
+            TOTAL_TESTS=$((TOTAL_TESTS + TESTS))
+            PASSED_TESTS=$((PASSED_TESTS + PASSED))
+            FAILED_TESTS=$((FAILED_TESTS + FAILED))
+          done
+
+          echo "### Test Statistics" >> $GITHUB_STEP_SUMMARY
+          echo "- **Total Tests:** $TOTAL_TESTS" >> $GITHUB_STEP_SUMMARY
+          echo "- **Passed:** $PASSED_TESTS" >> $GITHUB_STEP_SUMMARY
+          echo "- **Failed:** $FAILED_TESTS" >> $GITHUB_STEP_SUMMARY
+
+  integration-test:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore /p:EnableWindowsTargeting=true
+
+      - name: Build
+        run: dotnet build -c Release /p:EnableWindowsTargeting=true --no-restore
+
+      - name: Run integration tests
+        run: |
+          dotnet test tests/MarketDataCollector.Tests \
+            --configuration Release \
+            --no-build \
+            --filter "Category=Integration" \
+            --verbosity normal \
+            --logger "trx;LogFileName=integration-test-results.trx"
+        continue-on-error: true
+
+      - name: Upload integration test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: integration-test-results
+          path: '**/integration-test-results.trx'
+          retention-days: 7

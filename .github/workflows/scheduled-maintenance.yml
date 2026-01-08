@@ -1,0 +1,271 @@
+# Scheduled Maintenance Workflow
+# Runs periodic maintenance tasks including full test suite, dependency checks, and health reports
+
+name: Scheduled Maintenance
+
+on:
+  schedule:
+    # Run every Sunday at 1 AM UTC
+    - cron: '0 1 * * 0'
+  workflow_dispatch:
+    inputs:
+      full_scan:
+        description: 'Run full comprehensive scan'
+        required: false
+        default: 'true'
+        type: boolean
+
+env:
+  DOTNET_VERSION: '9.0.x'
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  full-test-suite:
+    name: Full Test Suite
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore /p:EnableWindowsTargeting=true
+
+      - name: Build
+        run: dotnet build -c Release /p:EnableWindowsTargeting=true --no-restore
+
+      - name: Run all tests with coverage
+        run: |
+          dotnet test \
+            --configuration Release \
+            --no-build \
+            --verbosity normal \
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./coverage \
+            --logger "trx;LogFileName=full-test-results.trx"
+
+      - name: Generate test report
+        run: |
+          echo "## Weekly Full Test Suite" >> $GITHUB_STEP_SUMMARY
+          echo "**Date:** $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Parse TRX file for results
+          if [ -f "full-test-results.trx" ]; then
+            TOTAL=$(grep -oP 'total="\K[^"]+' full-test-results.trx | head -1 || echo "0")
+            PASSED=$(grep -oP 'passed="\K[^"]+' full-test-results.trx | head -1 || echo "0")
+            FAILED=$(grep -oP 'failed="\K[^"]+' full-test-results.trx | head -1 || echo "0")
+
+            echo "### Test Results" >> $GITHUB_STEP_SUMMARY
+            echo "- Total: $TOTAL" >> $GITHUB_STEP_SUMMARY
+            echo "- Passed: $PASSED ✅" >> $GITHUB_STEP_SUMMARY
+            echo "- Failed: $FAILED ❌" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: weekly-test-results
+          path: |
+            **/TestResults/
+            coverage/
+          retention-days: 30
+
+  dependency-health:
+    name: Dependency Health Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore /p:EnableWindowsTargeting=true
+
+      - name: Check for vulnerabilities
+        run: |
+          echo "## Dependency Health Report" >> $GITHUB_STEP_SUMMARY
+          echo "**Date:** $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### Vulnerability Scan" >> $GITHUB_STEP_SUMMARY
+          dotnet list package --vulnerable --include-transitive 2>&1 | tee vuln.txt
+
+          if grep -q "has the following vulnerable packages" vuln.txt; then
+            echo "⚠️ **Vulnerable packages found!**" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat vuln.txt >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ No vulnerabilities found" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Check for outdated packages
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Outdated Packages" >> $GITHUB_STEP_SUMMARY
+          dotnet list package --outdated 2>&1 | tee outdated.txt
+
+          OUTDATED_COUNT=$(grep -c ">" outdated.txt || echo "0")
+          if [ "$OUTDATED_COUNT" -gt 0 ]; then
+            echo "📦 **$OUTDATED_COUNT packages have updates available**" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat outdated.txt >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ All packages up to date" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Check for deprecated packages
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Deprecated Packages" >> $GITHUB_STEP_SUMMARY
+          dotnet list package --deprecated 2>&1 | tee deprecated.txt
+
+          if grep -q "has the following deprecated packages" deprecated.txt; then
+            echo "⚠️ **Deprecated packages found**" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat deprecated.txt >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ No deprecated packages" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  codebase-metrics:
+    name: Codebase Metrics
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate codebase metrics
+        run: |
+          echo "## Codebase Metrics" >> $GITHUB_STEP_SUMMARY
+          echo "**Date:** $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Line counts
+          echo "### Source Code Statistics" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          CS_LINES=$(find src -name "*.cs" -exec cat {} \; | wc -l)
+          FS_LINES=$(find src -name "*.fs" -exec cat {} \; | wc -l)
+          CS_FILES=$(find src -name "*.cs" | wc -l)
+          FS_FILES=$(find src -name "*.fs" | wc -l)
+          TEST_FILES=$(find tests -name "*.cs" | wc -l)
+          TEST_LINES=$(find tests -name "*.cs" -exec cat {} \; | wc -l)
+
+          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| C# Source Files | $CS_FILES |" >> $GITHUB_STEP_SUMMARY
+          echo "| C# Lines of Code | $CS_LINES |" >> $GITHUB_STEP_SUMMARY
+          echo "| F# Source Files | $FS_FILES |" >> $GITHUB_STEP_SUMMARY
+          echo "| F# Lines of Code | $FS_LINES |" >> $GITHUB_STEP_SUMMARY
+          echo "| Test Files | $TEST_FILES |" >> $GITHUB_STEP_SUMMARY
+          echo "| Test Lines of Code | $TEST_LINES |" >> $GITHUB_STEP_SUMMARY
+
+          # Documentation stats
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Documentation Statistics" >> $GITHUB_STEP_SUMMARY
+          DOC_FILES=$(find docs -name "*.md" | wc -l)
+          DOC_WORDS=$(find docs -name "*.md" -exec cat {} \; | wc -w)
+          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Documentation Files | $DOC_FILES |" >> $GITHUB_STEP_SUMMARY
+          echo "| Total Words | $DOC_WORDS |" >> $GITHUB_STEP_SUMMARY
+
+      - name: Check git statistics
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Repository Statistics" >> $GITHUB_STEP_SUMMARY
+
+          TOTAL_COMMITS=$(git rev-list --count HEAD)
+          CONTRIBUTORS=$(git shortlog -sn --all | wc -l)
+          BRANCHES=$(git branch -r | wc -l)
+
+          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Total Commits | $TOTAL_COMMITS |" >> $GITHUB_STEP_SUMMARY
+          echo "| Contributors | $CONTRIBUTORS |" >> $GITHUB_STEP_SUMMARY
+          echo "| Remote Branches | $BRANCHES |" >> $GITHUB_STEP_SUMMARY
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Recent Activity (Last 30 Days)" >> $GITHUB_STEP_SUMMARY
+          RECENT_COMMITS=$(git rev-list --count --since="30 days ago" HEAD)
+          echo "- Commits in last 30 days: $RECENT_COMMITS" >> $GITHUB_STEP_SUMMARY
+
+  docker-build-check:
+    name: Docker Build Verification
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        run: |
+          docker build \
+            -t market-data-collector:weekly-check \
+            -f deploy/docker/Dockerfile \
+            .
+
+      - name: Check image size
+        run: |
+          echo "## Docker Image Health" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          SIZE=$(docker images market-data-collector:weekly-check --format "{{.Size}}")
+          echo "### Image Size: $SIZE" >> $GITHUB_STEP_SUMMARY
+
+          # Run quick health check
+          docker run --rm market-data-collector:weekly-check --version || echo "Version check skipped"
+
+      - name: Clean up
+        run: docker rmi market-data-collector:weekly-check || true
+
+  generate-weekly-report:
+    name: Generate Weekly Report
+    runs-on: ubuntu-latest
+    needs: [full-test-suite, dependency-health, codebase-metrics, docker-build-check]
+    if: always()
+    steps:
+      - name: Generate consolidated report
+        run: |
+          echo "# 📊 Weekly Maintenance Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Generated:** $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "## Job Summary" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Full Test Suite | ${{ needs.full-test-suite.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Dependency Health | ${{ needs.dependency-health.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Codebase Metrics | ${{ needs.codebase-metrics.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Docker Build | ${{ needs.docker-build-check.result }} |" >> $GITHUB_STEP_SUMMARY
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Determine overall health
+          if [ "${{ needs.full-test-suite.result }}" == "success" ] && \
+             [ "${{ needs.dependency-health.result }}" == "success" ] && \
+             [ "${{ needs.docker-build-check.result }}" == "success" ]; then
+            echo "## ✅ Overall Status: Healthy" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "## ⚠️ Overall Status: Attention Required" >> $GITHUB_STEP_SUMMARY
+            echo "Review individual job results for details." >> $GITHUB_STEP_SUMMARY
+          fi
