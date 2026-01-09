@@ -13,7 +13,7 @@ A high-performance, cross-platform market data collection system for real-time a
 [![Docker Build](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/docker-build.yml/badge.svg)](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/docker-build.yml)
 [![Code Quality](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/code-quality.yml/badge.svg)](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/code-quality.yml)
 
-**Status**: Production Ready | **Version**: 1.5.0 | **Last Updated**: 2026-01-08
+**Status**: Production Ready | **Version**: 1.5.0 | **Last Updated**: 2026-01-09
 
 ---
 
@@ -71,12 +71,13 @@ make run-ui
 
 ## Overview
 
-Market Data Collector is a modular, event-driven system that captures, validates, and persists high-fidelity market data from multiple providers including Interactive Brokers, Alpaca, and Polygon. It ships with a modern web dashboard, a native Windows desktop application (UWP/XAML), structured logging, and a single self-contained executable for streamlined production deployments.
+Market Data Collector is a modular, event-driven system that captures, validates, and persists high-fidelity market data from multiple providers including Interactive Brokers, Alpaca, NYSE, Polygon, and StockSharp. It features a microservices architecture with MassTransit messaging, a modern web dashboard, a native Windows desktop application (UWP/XAML), structured logging, and supports deployment as a single self-contained executable or distributed microservices for enterprise scale.
 
 ## Key Features
 
 ### Data Collection
-- **Multi-provider ingest**: Interactive Brokers (L2 depth, tick-by-tick trades/quotes), Alpaca (real-time trades/quotes), Polygon (stub ready for expansion)
+- **Multi-provider ingest**: Interactive Brokers (L2 depth, tick-by-tick), Alpaca (WebSocket streaming), NYSE (direct feed), Polygon (aggregates), StockSharp (multi-exchange)
+- **Historical backfill**: 9+ providers (Yahoo Finance, Stooq, Tiingo, Alpha Vantage, Finnhub, Nasdaq Data Link) with automatic failover
 - **Provider-agnostic architecture**: Swap feeds without code changes and preserve stream IDs for reconciliation
 - **Microstructure detail**: Tick-by-tick trades, Level 2 order book, BBO quotes, and order-flow statistics
 
@@ -101,6 +102,11 @@ Market Data Collector is a modular, event-driven system that captures, validates
 - **Secure credential management**: Windows CredentialPicker integration for API keys and secrets
 - **Credential protection**: `.gitignore` excludes sensitive configuration files from version control
 - **Environment variable support**: API credentials via environment variables for production deployments
+
+### Architecture
+- **Microservices ready**: Decomposed services (Gateway, TradeIngestion, QuoteIngestion, OrderBookIngestion, HistoricalData, Validation)
+- **MassTransit messaging**: Reliable inter-service communication with RabbitMQ/Azure Service Bus
+- **ADR compliance**: Architecture Decision Records for consistent design patterns
 
 ## Quick Start
 
@@ -154,9 +160,26 @@ Comprehensive documentation is available in the `docs/` directory:
 
 ## Supported Data Sources
 
-- **Interactive Brokers** - L2 market depth, tick-by-tick trades, quotes
+### Real-Time Streaming Providers
+- **Interactive Brokers** - L2 market depth, tick-by-tick trades, quotes via IB Gateway
 - **Alpaca** - Real-time trades and quotes via WebSocket
-- **Polygon** - Stub implementation for future expansion
+- **NYSE** - Direct NYSE market data feed
+- **Polygon** - Real-time trades, quotes, and aggregates
+- **StockSharp** - Multi-exchange connectors
+
+### Historical Backfill Providers
+| Provider | Free Tier | Data Types | Rate Limits |
+|----------|-----------|------------|-------------|
+| Alpaca | Yes (with account) | Bars, trades, quotes | 200/min |
+| Polygon | Limited | Bars, trades, quotes, aggregates | Varies |
+| Tiingo | Yes | Daily bars | 500/hour |
+| Yahoo Finance | Yes | Daily bars | Unofficial |
+| Stooq | Yes | Daily bars | Low |
+| Finnhub | Yes | Daily bars | 60/min |
+| Alpha Vantage | Yes | Daily bars | 5/min |
+| Nasdaq Data Link | Limited | Various | Varies |
+
+Configure fallback chains in `appsettings.json` under `Backfill.ProviderPriority` for automatic failover between providers
 
 ## Lean Engine Integration
 
@@ -266,13 +289,21 @@ docker run -d -p 8080:8080 \
 
 ```
 Market-Data-Collector/
-├── .github/              # CI/CD workflows and AI prompts
-├── docs/                 # All documentation
+├── .github/              # CI/CD workflows (13+), AI prompts, Dependabot
+├── docs/                 # Documentation, ADRs, AI assistant guides
 ├── scripts/              # Install, publish, run, and diagnostic scripts
 ├── deploy/               # Docker, systemd, and monitoring configs
 ├── config/               # Configuration files (appsettings.json)
-├── src/                  # Source code
-├── tests/                # Unit tests
+├── build-system/         # Python build tooling and diagnostics
+├── tools/                # Development tools (DocGenerator)
+├── src/
+│   ├── MarketDataCollector/        # Core application
+│   ├── MarketDataCollector.FSharp/ # F# domain models
+│   ├── MarketDataCollector.Contracts/ # Shared DTOs
+│   ├── MarketDataCollector.Ui/     # Web dashboard
+│   ├── MarketDataCollector.Uwp/    # Windows desktop app
+│   └── Microservices/              # Decomposed services
+├── tests/                # C# and F# test projects
 ├── benchmarks/           # Performance benchmarks
 ├── MarketDataCollector.sln
 ├── Makefile
