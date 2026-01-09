@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using Windows.Security.Credentials;
@@ -19,6 +20,7 @@ public class CredentialService
 {
     private const string ResourcePrefix = "MarketDataCollector";
     private const string MetadataFileName = "credential_metadata.json";
+    private const string LogPrefix = "[CredentialService]";
 
     // Credential resource names
     public const string AlpacaCredentialResource = $"{ResourcePrefix}.Alpaca";
@@ -44,6 +46,11 @@ public class CredentialService
     /// Event raised when a credential is about to expire.
     /// </summary>
     public event EventHandler<CredentialExpirationEventArgs>? CredentialExpiring;
+
+    /// <summary>
+    /// Event raised when a credential operation fails.
+    /// </summary>
+    public event EventHandler<CredentialErrorEventArgs>? CredentialError;
 
     public CredentialService()
     {
@@ -93,10 +100,17 @@ public class CredentialService
 
             return null;
         }
-        catch (Exception)
+        catch (OperationCanceledException)
         {
-            // TODO: Add structured logging for credential picker failures
-            // TODO: Distinguish between user cancellation vs system errors
+            // User cancelled the credential picker dialog
+            LogDebug("Credential picker cancelled by user for {TargetName}", targetName);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            // System error during credential picker
+            LogError(ex, CredentialOperation.PromptCredentials, targetName,
+                "Credential picker failed for {TargetName}");
             return null;
         }
     }
@@ -140,10 +154,18 @@ public class CredentialService
 
             return null;
         }
-        catch (Exception)
+        catch (OperationCanceledException)
         {
-            // TODO: Add logging for API key prompt failures
-            // TODO: Document which exceptions are expected vs unexpected
+            // User cancelled the API key prompt dialog
+            LogDebug("API key prompt cancelled by user for {TargetName}", targetName);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            // Expected exceptions: COM exceptions from CredentialPicker, ArgumentException for invalid options
+            // Unexpected: Any other exception indicates a system-level issue
+            LogError(ex, CredentialOperation.PromptApiKey, targetName,
+                "API key prompt failed for {TargetName}");
             return null;
         }
     }
@@ -161,11 +183,12 @@ public class CredentialService
             var credential = new PasswordCredential(resource, username, password);
             _vault.Add(credential);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // TODO: Add structured logging for credential save failures
-            // TODO: Consider throwing for critical credential operations
-            // Ignore errors when saving
+            // Log the failure but don't throw - saving credentials is not critical to app operation
+            // However, for production scenarios, consider whether credential save failures should be more visible
+            LogError(ex, CredentialOperation.Save, resource,
+                "Failed to save credential for {Resource}. User may need to re-enter credentials on next use.");
         }
     }
 
@@ -193,11 +216,23 @@ public class CredentialService
                 return (credential.UserName, credential.Password);
             }
         }
-        catch (Exception)
+        catch (Exception ex) when (ex.HResult == unchecked((int)0x80070490)) // Element not found
         {
-            // TODO: Distinguish between "credential not found" vs "access denied" exceptions
-            // TODO: Add telemetry counters for credential retrieval failures
-            // Credential not found or access denied
+            // Credential not found - this is expected for first-time access
+            LogDebug("Credential not found for {Resource} (first-time access)", resource);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            // Access denied - credential exists but user doesn't have permission
+            LogWarning(ex, CredentialOperation.Retrieve, resource,
+                "Access denied when retrieving credential for {Resource}");
+        }
+        catch (Exception ex)
+        {
+            // Unexpected error - log with telemetry for investigation
+            LogError(ex, CredentialOperation.Retrieve, resource,
+                "Unexpected error retrieving credential for {Resource}. HResult: {HResult}",
+                ex.HResult.ToString("X8"));
         }
 
         return null;
@@ -225,10 +260,22 @@ public class CredentialService
                 _vault.Remove(credential);
             }
         }
-        catch (Exception)
+        catch (Exception ex) when (ex.HResult == unchecked((int)0x80070490)) // Element not found
         {
-            // TODO: Add logging for credential removal failures
-            // Credential not found or access denied
+            // Credential not found - nothing to remove, this is fine
+            LogDebug("Credential not found during removal for {Resource}", resource);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            // Access denied - credential exists but we can't remove it
+            LogWarning(ex, CredentialOperation.Remove, resource,
+                "Access denied when removing credential for {Resource}");
+        }
+        catch (Exception ex)
+        {
+            // Unexpected error during removal
+            LogError(ex, CredentialOperation.Remove, resource,
+                "Failed to remove credential for {Resource}");
         }
     }
 
@@ -242,9 +289,11 @@ public class CredentialService
             var credentials = _vault.FindAllByResource(resource);
             return credentials.Count > 0;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // TODO: Add diagnostic logging for debugging credential issues
+            // Log for diagnostic purposes - helps debug credential issues
+            LogDebug("HasCredential check failed for {Resource}: {ExceptionType} - {Message}",
+                resource, ex.GetType().Name, ex.Message);
             return false;
         }
     }
@@ -269,10 +318,23 @@ public class CredentialService
                 }
             }
         }
-        catch (Exception)
+        catch (Exception ex) when (ex.HResult == unchecked((int)0x80070490)) // Element not found
         {
-            // TODO: Add telemetry for vault access failures
-            // Access denied or empty vault
+            // Empty vault - no credentials stored yet
+            LogDebug("No credentials found in vault (empty vault)");
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            // Access denied to vault
+            LogWarning(ex, CredentialOperation.ListAll, null,
+                "Access denied when listing all credentials from vault");
+        }
+        catch (Exception ex)
+        {
+            // Unexpected vault access failure - track for telemetry
+            LogError(ex, CredentialOperation.ListAll, null,
+                "Failed to list credentials from vault. HResult: {HResult}",
+                ex.HResult.ToString("X8"));
         }
 
         return resources;
@@ -981,6 +1043,86 @@ public class CredentialService
     }
 
     #endregion
+
+    #region Logging Helpers
+
+    /// <summary>
+    /// Logs a debug message with structured parameters.
+    /// </summary>
+    private void LogDebug(string messageTemplate, params object[] args)
+    {
+        var message = FormatMessage(messageTemplate, args);
+        Debug.WriteLine($"{LogPrefix} [DEBUG] {message}");
+    }
+
+    /// <summary>
+    /// Logs a warning with exception details.
+    /// </summary>
+    private void LogWarning(Exception ex, CredentialOperation operation, string? resource, string messageTemplate, params object[] args)
+    {
+        var message = FormatMessage(messageTemplate, args);
+        Debug.WriteLine($"{LogPrefix} [WARN] {message} | Operation: {operation} | Resource: {resource ?? "N/A"} | Exception: {ex.GetType().Name}");
+
+        RaiseCredentialError(operation, resource, message, ex, CredentialErrorSeverity.Warning);
+    }
+
+    /// <summary>
+    /// Logs an error with exception details and raises the CredentialError event.
+    /// </summary>
+    private void LogError(Exception ex, CredentialOperation operation, string? resource, string messageTemplate, params object[] args)
+    {
+        var message = FormatMessage(messageTemplate, args);
+        Debug.WriteLine($"{LogPrefix} [ERROR] {message} | Operation: {operation} | Resource: {resource ?? "N/A"} | Exception: {ex.GetType().Name} - {ex.Message}");
+
+        RaiseCredentialError(operation, resource, message, ex, CredentialErrorSeverity.Error);
+    }
+
+    /// <summary>
+    /// Formats a message template with arguments, similar to structured logging.
+    /// </summary>
+    private static string FormatMessage(string template, object[] args)
+    {
+        if (args.Length == 0) return template;
+
+        try
+        {
+            // Simple placeholder replacement for {Name} style templates
+            var result = template;
+            var index = 0;
+            while (result.Contains('{') && index < args.Length)
+            {
+                var start = result.IndexOf('{');
+                var end = result.IndexOf('}', start);
+                if (end > start)
+                {
+                    result = result[..start] + (args[index]?.ToString() ?? "null") + result[(end + 1)..];
+                    index++;
+                }
+                else break;
+            }
+            return result;
+        }
+        catch
+        {
+            return template;
+        }
+    }
+
+    /// <summary>
+    /// Raises the CredentialError event with the specified details.
+    /// </summary>
+    private void RaiseCredentialError(CredentialOperation operation, string? resource, string message, Exception? exception, CredentialErrorSeverity severity)
+    {
+        CredentialError?.Invoke(this, new CredentialErrorEventArgs(
+            operation,
+            resource,
+            message,
+            exception,
+            severity,
+            DateTime.UtcNow));
+    }
+
+    #endregion
 }
 
 /// <summary>
@@ -1012,4 +1154,104 @@ public class CredentialExpirationEventArgs : EventArgs
         Resource = resource;
         ExpiresAt = expiresAt;
     }
+}
+
+/// <summary>
+/// Event args for credential operation errors.
+/// </summary>
+public class CredentialErrorEventArgs : EventArgs
+{
+    /// <summary>
+    /// The operation that failed.
+    /// </summary>
+    public CredentialOperation Operation { get; }
+
+    /// <summary>
+    /// The resource (credential name) involved, if applicable.
+    /// </summary>
+    public string? Resource { get; }
+
+    /// <summary>
+    /// Human-readable error message.
+    /// </summary>
+    public string Message { get; }
+
+    /// <summary>
+    /// The exception that caused the error, if any.
+    /// </summary>
+    public Exception? Exception { get; }
+
+    /// <summary>
+    /// Severity level of the error.
+    /// </summary>
+    public CredentialErrorSeverity Severity { get; }
+
+    /// <summary>
+    /// When the error occurred.
+    /// </summary>
+    public DateTime Timestamp { get; }
+
+    public CredentialErrorEventArgs(
+        CredentialOperation operation,
+        string? resource,
+        string message,
+        Exception? exception,
+        CredentialErrorSeverity severity,
+        DateTime timestamp)
+    {
+        Operation = operation;
+        Resource = resource;
+        Message = message;
+        Exception = exception;
+        Severity = severity;
+        Timestamp = timestamp;
+    }
+}
+
+/// <summary>
+/// Types of credential operations that can fail.
+/// </summary>
+public enum CredentialOperation
+{
+    /// <summary>Prompting user for credentials.</summary>
+    PromptCredentials,
+
+    /// <summary>Prompting user for API key.</summary>
+    PromptApiKey,
+
+    /// <summary>Saving credential to vault.</summary>
+    Save,
+
+    /// <summary>Retrieving credential from vault.</summary>
+    Retrieve,
+
+    /// <summary>Removing credential from vault.</summary>
+    Remove,
+
+    /// <summary>Listing all credentials.</summary>
+    ListAll,
+
+    /// <summary>Testing credential validity.</summary>
+    Test,
+
+    /// <summary>Refreshing OAuth token.</summary>
+    Refresh
+}
+
+/// <summary>
+/// Severity levels for credential errors.
+/// </summary>
+public enum CredentialErrorSeverity
+{
+    /// <summary>Informational - operation failed but not critical.</summary>
+    Info,
+
+    /// <summary>Warning - operation failed, may require user attention.</summary>
+    Warning,
+
+    /// <summary>Error - operation failed, likely requires user action.</summary>
+    Error,
+
+    /// <summary>Critical - security-related failure, immediate attention required.</summary>
+    Critical
 }
