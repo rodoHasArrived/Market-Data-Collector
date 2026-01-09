@@ -154,7 +154,7 @@
 
     <!-- Apache Parquet for Archival Storage -->
     <!-- Columnar storage with 10-20x better compression -->
-    <PackageReference Include="Parquet.Net" Version="5.0.2" />
+    <PackageReference Include="Parquet.Net" Version="5.4.0" />
 
     <!-- BenchmarkDotNet for Performance Profiling -->
     <!-- Micro-benchmarking and memory allocation analysis -->
