@@ -17,6 +17,56 @@ public class RateLimiterTests : IDisposable
         _rateLimiter?.Dispose();
     }
 
+    #region Constructor Validation Tests
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    [InlineData(-100)]
+    public void Constructor_WithInvalidMaxRequests_ThrowsArgumentOutOfRangeException(int maxRequests)
+    {
+        // Act & Assert
+        var ex = Assert.Throws<ArgumentOutOfRangeException>(
+            () => new RateLimiter(maxRequests, TimeSpan.FromSeconds(60)));
+
+        ex.ParamName.Should().Be("maxRequestsPerWindow");
+    }
+
+    [Fact]
+    public void Constructor_WithZeroWindow_ThrowsArgumentOutOfRangeException()
+    {
+        // Act & Assert
+        var ex = Assert.Throws<ArgumentOutOfRangeException>(
+            () => new RateLimiter(10, TimeSpan.Zero));
+
+        ex.ParamName.Should().Be("window");
+    }
+
+    [Fact]
+    public void Constructor_WithNegativeWindow_ThrowsArgumentOutOfRangeException()
+    {
+        // Act & Assert
+        var ex = Assert.Throws<ArgumentOutOfRangeException>(
+            () => new RateLimiter(10, TimeSpan.FromSeconds(-1)));
+
+        ex.ParamName.Should().Be("window");
+    }
+
+    [Fact]
+    public void Constructor_WithValidParameters_CreatesInstance()
+    {
+        // Act
+        _rateLimiter = new RateLimiter(maxRequestsPerWindow: 1, window: TimeSpan.FromMilliseconds(1));
+
+        // Assert
+        _rateLimiter.Should().NotBeNull();
+        var (requestsInWindow, maxRequests, _) = _rateLimiter.GetStatus();
+        requestsInWindow.Should().Be(0);
+        maxRequests.Should().Be(1);
+    }
+
+    #endregion
+
     #region Basic Rate Limiting Tests
 
     [Fact]
