@@ -21,13 +21,17 @@ namespace MarketDataCollector.Application.UI;
 
 public sealed class UiServer : IAsyncDisposable
 {
+    private static readonly JsonSerializerOptions s_jsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        WriteIndented = true
+    };
+
     private readonly WebApplication _app;
-    private readonly string _configPath;
     private readonly DateTimeOffset _startTime = DateTimeOffset.UtcNow;
 
     public UiServer(string configPath, int port = 8080)
     {
-        _configPath = configPath;
 
         var builder = WebApplication.CreateBuilder();
 
@@ -92,8 +96,8 @@ public sealed class UiServer : IAsyncDisposable
         builder.Services.AddSingleton(new OAuthTokenRefreshService(config.DataRoot));
         // Scheduled backfill services
         var executionHistory = new BackfillExecutionHistory();
-        var scheduleManagerLogger = LoggerFactory.Create(b => b.AddConsole().SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Warning))
-            .CreateLogger<BackfillScheduleManager>();
+        using var loggerFactory = LoggerFactory.Create(b => b.AddConsole().SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Warning));
+        var scheduleManagerLogger = loggerFactory.CreateLogger<BackfillScheduleManager>();
         var scheduleManager = new BackfillScheduleManager(scheduleManagerLogger, config.DataRoot, executionHistory);
         builder.Services.AddSingleton(scheduleManager);
         builder.Services.AddSingleton(executionHistory);
@@ -116,7 +120,7 @@ public sealed class UiServer : IAsyncDisposable
                 status = "healthy",
                 timestamp = DateTimeOffset.UtcNow,
                 uptime = uptime.ToString(),
-                version = "1.1.0"
+                version = "1.5.0"
             });
         });
 
@@ -151,7 +155,7 @@ public sealed class UiServer : IAsyncDisposable
                 storage = cfg.Storage,
                 symbols = cfg.Symbols ?? Array.Empty<SymbolConfig>(),
                 backfill = cfg.Backfill
-            }, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+            }, s_jsonOptions);
         });
 
         _app.MapPost("/api/config/datasource", async (ConfigStore store, DataSourceRequest req) =>
@@ -275,7 +279,7 @@ public sealed class UiServer : IAsyncDisposable
             try
             {
                 var providers = backfill.DescribeProviders();
-                return Results.Json(providers, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+                return Results.Json(providers, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -290,7 +294,7 @@ public sealed class UiServer : IAsyncDisposable
                 var status = backfill.TryReadLast();
                 return status is null
                     ? Results.NotFound()
-                    : Results.Json(status, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase, WriteIndented = true });
+                    : Results.Json(status, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -298,7 +302,7 @@ public sealed class UiServer : IAsyncDisposable
             }
         });
 
-        _app.MapPost("/api/backfill/run", async (BackfillCoordinator backfill, BackfillRequestDto req) =>
+        _app.MapPost("/api/backfill/run", async (BackfillCoordinator backfill, BackfillRequestDto req, CancellationToken ct) =>
         {
             try
             {
@@ -311,8 +315,8 @@ public sealed class UiServer : IAsyncDisposable
                     req.From,
                     req.To);
 
-                var result = await backfill.RunAsync(request);
-                return Results.Json(result, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase, WriteIndented = true });
+                var result = await backfill.RunAsync(request, ct);
+                return Results.Json(result, s_jsonOptions);
             }
             catch (InvalidOperationException ex)
             {
@@ -324,12 +328,12 @@ public sealed class UiServer : IAsyncDisposable
             }
         });
 
-        _app.MapGet("/api/backfill/health", async (BackfillCoordinator backfill) =>
+        _app.MapGet("/api/backfill/health", async (BackfillCoordinator backfill, CancellationToken ct) =>
         {
             try
             {
-                var health = await backfill.CheckProviderHealthAsync();
-                return Results.Json(health, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+                var health = await backfill.CheckProviderHealthAsync(ct);
+                return Results.Json(health, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -337,18 +341,18 @@ public sealed class UiServer : IAsyncDisposable
             }
         });
 
-        _app.MapGet("/api/backfill/resolve/{symbol}", async (BackfillCoordinator backfill, string symbol) =>
+        _app.MapGet("/api/backfill/resolve/{symbol}", async (BackfillCoordinator backfill, string symbol, CancellationToken ct) =>
         {
             try
             {
                 if (string.IsNullOrWhiteSpace(symbol))
                     return Results.BadRequest("Symbol is required.");
 
-                var resolution = await backfill.ResolveSymbolAsync(symbol);
+                var resolution = await backfill.ResolveSymbolAsync(symbol, ct);
                 if (resolution is null)
                     return Results.NotFound($"Symbol '{symbol}' not found.");
 
-                return Results.Json(resolution, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+                return Results.Json(resolution, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -368,20 +372,14 @@ public sealed class UiServer : IAsyncDisposable
 
     private void ConfigureStorageOrganizationRoutes()
     {
-        var jsonOptions = new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            WriteIndented = true
-        };
-
         // ==================== DATA CATALOG & SEARCH ====================
 
-        _app.MapGet("/api/storage/catalog", async (IStorageSearchService search) =>
+        _app.MapGet("/api/storage/catalog", async (IStorageSearchService search, CancellationToken ct) =>
         {
             try
             {
-                var catalog = await search.DiscoverAsync(new DiscoveryQuery());
-                return Results.Json(catalog, jsonOptions);
+                var catalog = await search.DiscoverAsync(new DiscoveryQuery(), ct);
+                return Results.Json(catalog, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -389,7 +387,7 @@ public sealed class UiServer : IAsyncDisposable
             }
         });
 
-        _app.MapPost("/api/storage/search/files", async (IStorageSearchService search, FileSearchRequest req) =>
+        _app.MapPost("/api/storage/search/files", async (IStorageSearchService search, FileSearchRequest req, CancellationToken ct) =>
         {
             try
             {
@@ -406,8 +404,8 @@ public sealed class UiServer : IAsyncDisposable
                     Skip: req.Skip,
                     Take: req.Take
                 );
-                var results = await search.SearchFilesAsync(query);
-                return Results.Json(results, jsonOptions);
+                var results = await search.SearchFilesAsync(query, ct);
+                return Results.Json(results, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -428,7 +426,7 @@ public sealed class UiServer : IAsyncDisposable
                     MaxResults: req.MaxResults
                 );
                 var results = await search.SearchWithFacetsAsync(query);
-                return Results.Json(results, jsonOptions);
+                return Results.Json(results, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -444,7 +442,7 @@ public sealed class UiServer : IAsyncDisposable
                     return Results.BadRequest("Query is required");
 
                 var query = search.ParseNaturalLanguageQuery(req.Query);
-                return Results.Json(query, jsonOptions);
+                return Results.Json(query, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -480,7 +478,7 @@ public sealed class UiServer : IAsyncDisposable
                     ParallelChecks: req.ParallelChecks
                 );
                 var report = await maintenance.RunHealthCheckAsync(options);
-                return Results.Json(report, jsonOptions);
+                return Results.Json(report, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -493,7 +491,7 @@ public sealed class UiServer : IAsyncDisposable
             try
             {
                 var report = await maintenance.FindOrphansAsync();
-                return Results.Json(report, jsonOptions);
+                return Results.Json(report, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -513,7 +511,7 @@ public sealed class UiServer : IAsyncDisposable
                     BackupPath: req.BackupPath
                 );
                 var result = await maintenance.RepairAsync(options);
-                return Results.Json(result, jsonOptions);
+                return Results.Json(result, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -531,7 +529,7 @@ public sealed class UiServer : IAsyncDisposable
                     PreserveOriginals: req.PreserveOriginals
                 );
                 var result = await maintenance.DefragmentAsync(options);
-                return Results.Json(result, jsonOptions);
+                return Results.Json(result, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -546,7 +544,7 @@ public sealed class UiServer : IAsyncDisposable
             try
             {
                 var score = await quality.ScoreAsync(path);
-                return Results.Json(score, jsonOptions);
+                return Results.Json(score, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -566,7 +564,7 @@ public sealed class UiServer : IAsyncDisposable
                     IncludeRecommendations: req.IncludeRecommendations
                 );
                 var report = await quality.GenerateReportAsync(options);
-                return Results.Json(report, jsonOptions);
+                return Results.Json(report, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -579,7 +577,7 @@ public sealed class UiServer : IAsyncDisposable
             try
             {
                 var alerts = await quality.GetQualityAlertsAsync();
-                return Results.Json(alerts, jsonOptions);
+                return Results.Json(alerts, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -595,7 +593,7 @@ public sealed class UiServer : IAsyncDisposable
                     symbol,
                     date ?? DateTimeOffset.UtcNow.Date,
                     Domain.Events.MarketEventType.Trade);
-                return Results.Json(rankings, jsonOptions);
+                return Results.Json(rankings, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -609,7 +607,7 @@ public sealed class UiServer : IAsyncDisposable
             {
                 var window = TimeSpan.FromDays(days ?? 30);
                 var trend = await quality.GetTrendAsync(symbol, window);
-                return Results.Json(trend, jsonOptions);
+                return Results.Json(trend, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -624,7 +622,7 @@ public sealed class UiServer : IAsyncDisposable
             try
             {
                 var stats = await tiers.GetTierStatisticsAsync();
-                return Results.Json(stats, jsonOptions);
+                return Results.Json(stats, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -637,7 +635,7 @@ public sealed class UiServer : IAsyncDisposable
             try
             {
                 var plan = await tiers.PlanMigrationAsync(TimeSpan.FromDays(horizonDays ?? 7));
-                return Results.Json(plan, jsonOptions);
+                return Results.Json(plan, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -659,7 +657,7 @@ public sealed class UiServer : IAsyncDisposable
                     ParallelFiles: req.ParallelFiles
                 );
                 var result = await tiers.MigrateAsync(req.SourcePath, tier, options);
-                return Results.Json(result, jsonOptions);
+                return Results.Json(result, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -672,7 +670,7 @@ public sealed class UiServer : IAsyncDisposable
             try
             {
                 var tier = tiers.DetermineTargetTier(path);
-                return Results.Json(new { path, targetTier = tier.ToString() }, jsonOptions);
+                return Results.Json(new { path, targetTier = tier.ToString() }, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -687,7 +685,7 @@ public sealed class UiServer : IAsyncDisposable
             try
             {
                 var sources = registry.GetAllSources();
-                return Results.Json(sources, jsonOptions);
+                return Results.Json(sources, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -702,7 +700,7 @@ public sealed class UiServer : IAsyncDisposable
                 var source = registry.GetSourceInfo(sourceId);
                 return source is null
                     ? Results.NotFound($"Source '{sourceId}' not found")
-                    : Results.Json(source, jsonOptions);
+                    : Results.Json(source, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -728,7 +726,7 @@ public sealed class UiServer : IAsyncDisposable
             try
             {
                 var order = registry.GetSourcePriorityOrder();
-                return Results.Json(order, jsonOptions);
+                return Results.Json(order, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -743,7 +741,7 @@ public sealed class UiServer : IAsyncDisposable
                 var info = registry.GetSymbolInfo(symbol);
                 return info is null
                     ? Results.NotFound($"Symbol '{symbol}' not found in registry")
-                    : Results.Json(info, jsonOptions);
+                    : Results.Json(info, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -769,7 +767,7 @@ public sealed class UiServer : IAsyncDisposable
             try
             {
                 var canonical = registry.ResolveSymbolAlias(alias);
-                return Results.Json(new { alias, canonical }, jsonOptions);
+                return Results.Json(new { alias, canonical }, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -806,7 +804,7 @@ public sealed class UiServer : IAsyncDisposable
                     eventTypes = catalog.EventTypes,
                     tiers = tierStats.TierInfo,
                     qualityAlerts = alerts.Length
-                }, jsonOptions);
+                }, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -817,12 +815,6 @@ public sealed class UiServer : IAsyncDisposable
 
     private void ConfigureSymbolManagementRoutes()
     {
-        var jsonOptions = new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            WriteIndented = true
-        };
-
         // ==================== CSV BULK IMPORT/EXPORT ====================
 
         _app.MapPost("/api/symbols/bulk-import", async (
@@ -846,7 +838,7 @@ public sealed class UiServer : IAsyncDisposable
                 );
 
                 var result = await importExport.ImportFromCsvAsync(csvContent, options);
-                return Results.Json(result, jsonOptions);
+                return Results.Json(result, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -897,7 +889,7 @@ public sealed class UiServer : IAsyncDisposable
             try
             {
                 var all = await templates.GetAllTemplatesAsync();
-                return Results.Json(all, jsonOptions);
+                return Results.Json(all, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -912,7 +904,7 @@ public sealed class UiServer : IAsyncDisposable
                 var template = await templates.GetTemplateAsync(templateId);
                 return template is null
                     ? Results.NotFound($"Template '{templateId}' not found")
-                    : Results.Json(template, jsonOptions);
+                    : Results.Json(template, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -925,7 +917,7 @@ public sealed class UiServer : IAsyncDisposable
             try
             {
                 var result = await templates.ApplyTemplateAsync(request);
-                return Results.Json(result, jsonOptions);
+                return Results.Json(result, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -950,7 +942,7 @@ public sealed class UiServer : IAsyncDisposable
                     dto.Symbols,
                     dto.Defaults);
 
-                return Results.Json(template, jsonOptions);
+                return Results.Json(template, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -966,7 +958,7 @@ public sealed class UiServer : IAsyncDisposable
                     return Results.BadRequest("Template name is required.");
 
                 var template = await templates.CreateFromCurrentAsync(dto.Name, dto.Description ?? "");
-                return Results.Json(template, jsonOptions);
+                return Results.Json(template, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -996,7 +988,7 @@ public sealed class UiServer : IAsyncDisposable
             try
             {
                 var schedules = scheduling.GetAllSchedules();
-                return Results.Json(schedules, jsonOptions);
+                return Results.Json(schedules, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -1011,7 +1003,7 @@ public sealed class UiServer : IAsyncDisposable
                 var schedule = scheduling.GetSchedule(scheduleId);
                 return schedule is null
                     ? Results.NotFound($"Schedule '{scheduleId}' not found")
-                    : Results.Json(schedule, jsonOptions);
+                    : Results.Json(schedule, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -1026,7 +1018,7 @@ public sealed class UiServer : IAsyncDisposable
                 var status = scheduling.GetExecutionStatus(scheduleId);
                 return status is null
                     ? Results.NotFound($"No execution status for schedule '{scheduleId}'")
-                    : Results.Json(status, jsonOptions);
+                    : Results.Json(status, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -1045,7 +1037,7 @@ public sealed class UiServer : IAsyncDisposable
                     return Results.BadRequest("At least one symbol is required.");
 
                 var schedule = await scheduling.CreateScheduleAsync(request);
-                return Results.Json(schedule, jsonOptions);
+                return Results.Json(schedule, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -1063,7 +1055,7 @@ public sealed class UiServer : IAsyncDisposable
                 var schedule = await scheduling.UpdateScheduleAsync(scheduleId, request);
                 return schedule is null
                     ? Results.NotFound($"Schedule '{scheduleId}' not found")
-                    : Results.Json(schedule, jsonOptions);
+                    : Results.Json(schedule, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -1108,7 +1100,7 @@ public sealed class UiServer : IAsyncDisposable
             try
             {
                 var status = await scheduling.ExecuteNowAsync(scheduleId);
-                return Results.Json(status, jsonOptions);
+                return Results.Json(status, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -1138,7 +1130,7 @@ public sealed class UiServer : IAsyncDisposable
                 var meta = await metadata.GetMetadataAsync(symbol);
                 return meta is null
                     ? Results.NotFound($"No metadata found for symbol '{symbol}'")
-                    : Results.Json(meta, jsonOptions);
+                    : Results.Json(meta, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -1153,7 +1145,7 @@ public sealed class UiServer : IAsyncDisposable
             try
             {
                 var result = await metadata.GetMetadataBatchAsync(symbols);
-                return Results.Json(result, jsonOptions);
+                return Results.Json(result, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -1168,7 +1160,7 @@ public sealed class UiServer : IAsyncDisposable
             try
             {
                 var result = await metadata.FilterSymbolsAsync(filter);
-                return Results.Json(result, jsonOptions);
+                return Results.Json(result, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -1181,7 +1173,7 @@ public sealed class UiServer : IAsyncDisposable
             try
             {
                 var sectors = await metadata.GetAvailableSectorsAsync();
-                return Results.Json(sectors, jsonOptions);
+                return Results.Json(sectors, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -1197,7 +1189,7 @@ public sealed class UiServer : IAsyncDisposable
             {
                 var sector = request.Query["sector"].FirstOrDefault();
                 var industries = await metadata.GetAvailableIndustriesAsync(sector);
-                return Results.Json(industries, jsonOptions);
+                return Results.Json(industries, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -1248,7 +1240,7 @@ public sealed class UiServer : IAsyncDisposable
                 );
 
                 var result = await searchService.SearchAsync(searchRequest, ct);
-                return Results.Json(result, jsonOptions);
+                return Results.Json(result, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -1264,7 +1256,7 @@ public sealed class UiServer : IAsyncDisposable
             try
             {
                 var result = await searchService.SearchAsync(request, ct);
-                return Results.Json(result, jsonOptions);
+                return Results.Json(result, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -1279,7 +1271,7 @@ public sealed class UiServer : IAsyncDisposable
             try
             {
                 var providers = await searchService.GetProvidersAsync(ct);
-                return Results.Json(providers, jsonOptions);
+                return Results.Json(providers, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -1301,7 +1293,7 @@ public sealed class UiServer : IAsyncDisposable
                 if (details is null)
                     return Results.NotFound($"Symbol '{symbol}' not found");
 
-                return Results.Json(details, jsonOptions);
+                return Results.Json(details, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -1320,7 +1312,7 @@ public sealed class UiServer : IAsyncDisposable
                 if (!figiMappings.TryGetValue(symbol.ToUpperInvariant(), out var mappings) || mappings.Count == 0)
                     return Results.NotFound($"No FIGI mappings found for '{symbol}'");
 
-                return Results.Json(new { symbol = symbol.ToUpperInvariant(), mappings }, jsonOptions);
+                return Results.Json(new { symbol = symbol.ToUpperInvariant(), mappings }, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -1339,7 +1331,7 @@ public sealed class UiServer : IAsyncDisposable
                     return Results.BadRequest("At least one symbol is required");
 
                 var figiMappings = await searchService.LookupFigiAsync(request.Symbols, ct);
-                return Results.Json(figiMappings, jsonOptions);
+                return Results.Json(figiMappings, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -1362,7 +1354,7 @@ public sealed class UiServer : IAsyncDisposable
                     return Results.BadRequest("Query parameter 'q' is required");
 
                 var results = await searchService.SearchFigiAsync(query, Math.Clamp(limit, 1, 100), ct);
-                return Results.Json(new { query, count = results.Count, results }, jsonOptions);
+                return Results.Json(new { query, count = results.Count, results }, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -1390,7 +1382,7 @@ public sealed class UiServer : IAsyncDisposable
             try
             {
                 var indices = indexService.GetAvailableIndices();
-                return Results.Json(indices, jsonOptions);
+                return Results.Json(indices, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -1407,7 +1399,7 @@ public sealed class UiServer : IAsyncDisposable
                 var components = await indexService.GetIndexComponentsAsync(indexId);
                 return components is null
                     ? Results.NotFound($"Index '{indexId}' not found")
-                    : Results.Json(components, jsonOptions);
+                    : Results.Json(components, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -1422,7 +1414,7 @@ public sealed class UiServer : IAsyncDisposable
             try
             {
                 var status = await indexService.GetSubscriptionStatusAsync(indexId);
-                return Results.Json(status, jsonOptions);
+                return Results.Json(status, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -1446,7 +1438,7 @@ public sealed class UiServer : IAsyncDisposable
                 );
 
                 var result = await indexService.SubscribeToIndexAsync(request);
-                return Results.Json(result, jsonOptions);
+                return Results.Json(result, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -1461,7 +1453,7 @@ public sealed class UiServer : IAsyncDisposable
             try
             {
                 var result = await indexService.UnsubscribeFromIndexAsync(indexId);
-                return Results.Json(result, jsonOptions);
+                return Results.Json(result, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -1472,12 +1464,6 @@ public sealed class UiServer : IAsyncDisposable
 
     private void ConfigureNewFeatureRoutes()
     {
-        var jsonOptions = new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            WriteIndented = true
-        };
-
         // ==================== QW-15: HISTORICAL DATA QUERY ====================
 
         _app.MapGet("/api/historical/symbols", (HistoricalDataQueryService query) =>
@@ -1485,7 +1471,7 @@ public sealed class UiServer : IAsyncDisposable
             try
             {
                 var symbols = query.GetAvailableSymbols();
-                return Results.Json(symbols, jsonOptions);
+                return Results.Json(symbols, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -1498,7 +1484,7 @@ public sealed class UiServer : IAsyncDisposable
             try
             {
                 var range = query.GetDateRange(symbol);
-                return Results.Json(range, jsonOptions);
+                return Results.Json(range, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -1523,7 +1509,7 @@ public sealed class UiServer : IAsyncDisposable
                 );
 
                 var result = await query.QueryAsync(queryParams);
-                return Results.Json(result, jsonOptions);
+                return Results.Json(result, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -1548,7 +1534,7 @@ public sealed class UiServer : IAsyncDisposable
                 );
 
                 var result = await diag.GenerateAsync(options);
-                return Results.Json(result, jsonOptions);
+                return Results.Json(result, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -1601,7 +1587,7 @@ public sealed class UiServer : IAsyncDisposable
                     result.BarCount,
                     // Don't include raw events in response (too large)
                     sampleEvents = result.Events?.Take(5)
-                }, jsonOptions);
+                }, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -1614,7 +1600,7 @@ public sealed class UiServer : IAsyncDisposable
             try
             {
                 var preview = gen.GeneratePreview(new SampleDataOptions(MaxEvents: 20));
-                return Results.Json(preview, jsonOptions);
+                return Results.Json(preview, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -1629,7 +1615,7 @@ public sealed class UiServer : IAsyncDisposable
             try
             {
                 var result = errors.GetLastErrors(count ?? 10, type, context);
-                return Results.Json(result, jsonOptions);
+                return Results.Json(result, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -1643,7 +1629,7 @@ public sealed class UiServer : IAsyncDisposable
             {
                 var window = hours.HasValue ? TimeSpan.FromHours(hours.Value) : TimeSpan.FromHours(24);
                 var stats = errors.GetStatistics(window);
-                return Results.Json(stats, jsonOptions);
+                return Results.Json(stats, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -1656,7 +1642,7 @@ public sealed class UiServer : IAsyncDisposable
             try
             {
                 var result = await errors.ParseErrorsFromLogsAsync(count ?? 100, days ?? 1);
-                return Results.Json(result, jsonOptions);
+                return Results.Json(result, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -1677,7 +1663,7 @@ public sealed class UiServer : IAsyncDisposable
                     t.Description,
                     t.Category,
                     t.EnvironmentVariables
-                }), jsonOptions);
+                }), s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -1693,7 +1679,7 @@ public sealed class UiServer : IAsyncDisposable
                 if (template == null)
                     return Results.NotFound($"Template '{name}' not found");
 
-                return Results.Json(template, jsonOptions);
+                return Results.Json(template, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -1709,7 +1695,7 @@ public sealed class UiServer : IAsyncDisposable
                     return Results.BadRequest("JSON configuration is required");
 
                 var result = gen.ValidateTemplate(req.Json);
-                return Results.Json(result, jsonOptions);
+                return Results.Json(result, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -1724,7 +1710,7 @@ public sealed class UiServer : IAsyncDisposable
             try
             {
                 var variables = envOverride.GetRecognizedVariables();
-                return Results.Json(variables, jsonOptions);
+                return Results.Json(variables, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -1762,7 +1748,7 @@ public sealed class UiServer : IAsyncDisposable
                 );
 
                 var result = await dryRun.ValidateAsync(config, options);
-                return Results.Json(result, jsonOptions);
+                return Results.Json(result, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -1894,7 +1880,7 @@ public sealed class UiServer : IAsyncDisposable
                 );
 
                 var result = await importExport.ImportFromTextAsync(content, options);
-                return Results.Json(result, jsonOptions);
+                return Results.Json(result, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -2043,7 +2029,7 @@ public sealed class UiServer : IAsyncDisposable
                 );
 
                 var result = await importExport.ImportAutoDetectAsync(content, options);
-                return Results.Json(result, jsonOptions);
+                return Results.Json(result, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -2058,7 +2044,7 @@ public sealed class UiServer : IAsyncDisposable
             try
             {
                 var all = await watchlists.GetAllWatchlistsAsync();
-                return Results.Json(all, jsonOptions);
+                return Results.Json(all, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -2071,7 +2057,7 @@ public sealed class UiServer : IAsyncDisposable
             try
             {
                 var summaries = await watchlists.GetWatchlistSummariesAsync();
-                return Results.Json(summaries, jsonOptions);
+                return Results.Json(summaries, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -2086,7 +2072,7 @@ public sealed class UiServer : IAsyncDisposable
                 var watchlist = await watchlists.GetWatchlistAsync(watchlistId);
                 return watchlist is null
                     ? Results.NotFound($"Watchlist '{watchlistId}' not found")
-                    : Results.Json(watchlist, jsonOptions);
+                    : Results.Json(watchlist, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -2102,7 +2088,7 @@ public sealed class UiServer : IAsyncDisposable
                     return Results.BadRequest("Watchlist name is required.");
 
                 var watchlist = await watchlists.CreateWatchlistAsync(request);
-                return Results.Json(watchlist, jsonOptions);
+                return Results.Json(watchlist, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -2120,7 +2106,7 @@ public sealed class UiServer : IAsyncDisposable
                 var updated = await watchlists.UpdateWatchlistAsync(watchlistId, request);
                 return updated is null
                     ? Results.NotFound($"Watchlist '{watchlistId}' not found")
-                    : Results.Json(updated, jsonOptions);
+                    : Results.Json(updated, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -2153,7 +2139,7 @@ public sealed class UiServer : IAsyncDisposable
                     Symbols: request.Symbols,
                     SubscribeImmediately: request.SubscribeImmediately
                 ));
-                return Results.Json(result, jsonOptions);
+                return Results.Json(result, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -2173,7 +2159,7 @@ public sealed class UiServer : IAsyncDisposable
                     Symbols: request.Symbols,
                     UnsubscribeIfOrphaned: request.UnsubscribeIfOrphaned
                 ));
-                return Results.Json(result, jsonOptions);
+                return Results.Json(result, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -2194,7 +2180,7 @@ public sealed class UiServer : IAsyncDisposable
                     SubscribeDepth: request?.SubscribeDepth,
                     DepthLevels: request?.DepthLevels
                 ));
-                return Results.Json(result, jsonOptions);
+                return Results.Json(result, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -2209,7 +2195,7 @@ public sealed class UiServer : IAsyncDisposable
             try
             {
                 var result = await watchlists.UnsubscribeWatchlistAsync(watchlistId);
-                return Results.Json(result, jsonOptions);
+                return Results.Json(result, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -2309,7 +2295,7 @@ public sealed class UiServer : IAsyncDisposable
                 var watchlist = await watchlists.ImportWatchlistAsync(json);
                 return watchlist is null
                     ? Results.BadRequest("Invalid watchlist JSON")
-                    : Results.Json(watchlist, jsonOptions);
+                    : Results.Json(watchlist, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -2337,7 +2323,7 @@ public sealed class UiServer : IAsyncDisposable
             try
             {
                 var brokers = portfolio.GetAvailableBrokers();
-                return Results.Json(brokers, jsonOptions);
+                return Results.Json(brokers, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -2352,7 +2338,7 @@ public sealed class UiServer : IAsyncDisposable
                 var summary = await portfolio.GetPortfolioSummaryAsync(broker);
                 return summary is null
                     ? Results.NotFound($"Broker '{broker}' not configured or not available")
-                    : Results.Json(summary, jsonOptions);
+                    : Results.Json(summary, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -2381,7 +2367,7 @@ public sealed class UiServer : IAsyncDisposable
                 );
 
                 var result = await portfolio.ImportFromBrokerAsync(new PortfolioImportRequest(broker, importOptions));
-                return Results.Json(result, jsonOptions);
+                return Results.Json(result, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -2413,7 +2399,7 @@ public sealed class UiServer : IAsyncDisposable
                 );
 
                 var result = await portfolio.ImportManualAsync(entries, importOptions);
-                return Results.Json(result, jsonOptions);
+                return Results.Json(result, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -2431,7 +2417,7 @@ public sealed class UiServer : IAsyncDisposable
                     return Results.BadRequest("At least one symbol is required.");
 
                 var result = await batch.AddSymbolsAsync(request);
-                return Results.Json(result, jsonOptions);
+                return Results.Json(result, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -2447,7 +2433,7 @@ public sealed class UiServer : IAsyncDisposable
                     return Results.BadRequest("At least one symbol is required.");
 
                 var result = await batch.DeleteSymbolsAsync(request);
-                return Results.Json(result, jsonOptions);
+                return Results.Json(result, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -2463,7 +2449,7 @@ public sealed class UiServer : IAsyncDisposable
                     return Results.BadRequest("At least one symbol is required.");
 
                 var result = await batch.ToggleSubscriptionsAsync(request);
-                return Results.Json(result, jsonOptions);
+                return Results.Json(result, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -2479,7 +2465,7 @@ public sealed class UiServer : IAsyncDisposable
                     return Results.BadRequest("At least one symbol is required.");
 
                 var result = await batch.UpdateSymbolsAsync(request);
-                return Results.Json(result, jsonOptions);
+                return Results.Json(result, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -2495,7 +2481,7 @@ public sealed class UiServer : IAsyncDisposable
                     return Results.BadRequest("At least one symbol is required.");
 
                 var result = await batch.EnableTradesAsync(symbols);
-                return Results.Json(result, jsonOptions);
+                return Results.Json(result, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -2511,7 +2497,7 @@ public sealed class UiServer : IAsyncDisposable
                     return Results.BadRequest("At least one symbol is required.");
 
                 var result = await batch.DisableTradesAsync(symbols);
-                return Results.Json(result, jsonOptions);
+                return Results.Json(result, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -2527,7 +2513,7 @@ public sealed class UiServer : IAsyncDisposable
                     return Results.BadRequest("At least one symbol is required.");
 
                 var result = await batch.EnableDepthAsync(symbols);
-                return Results.Json(result, jsonOptions);
+                return Results.Json(result, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -2543,7 +2529,7 @@ public sealed class UiServer : IAsyncDisposable
                     return Results.BadRequest("At least one symbol is required.");
 
                 var result = await batch.DisableDepthAsync(symbols);
-                return Results.Json(result, jsonOptions);
+                return Results.Json(result, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -2564,7 +2550,7 @@ public sealed class UiServer : IAsyncDisposable
                     return Results.BadRequest("At least one target symbol is required.");
 
                 var result = await batch.CopySettingsAsync(request);
-                return Results.Json(result, jsonOptions);
+                return Results.Json(result, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -2585,7 +2571,7 @@ public sealed class UiServer : IAsyncDisposable
                     return Results.BadRequest("Target watchlist ID is required.");
 
                 var result = await batch.MoveToWatchlistAsync(request);
-                return Results.Json(result, jsonOptions);
+                return Results.Json(result, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -2598,7 +2584,7 @@ public sealed class UiServer : IAsyncDisposable
             try
             {
                 var symbols = await batch.GetFilteredSymbolsAsync(filter);
-                return Results.Json(symbols, jsonOptions);
+                return Results.Json(symbols, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -2616,7 +2602,7 @@ public sealed class UiServer : IAsyncDisposable
                     return Results.BadRequest("Operation is required.");
 
                 var result = await batch.PerformFilteredOperationAsync(request);
-                return Results.Json(result, jsonOptions);
+                return Results.Json(result, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -2625,14 +2611,14 @@ public sealed class UiServer : IAsyncDisposable
         });
     }
 
-    public async Task StartAsync()
+    public async Task StartAsync(CancellationToken ct = default)
     {
-        await _app.StartAsync();
+        await _app.StartAsync(ct);
     }
 
-    public async Task StopAsync()
+    public async Task StopAsync(CancellationToken ct = default)
     {
-        await _app.StopAsync();
+        await _app.StopAsync(ct);
     }
 
     public async ValueTask DisposeAsync()
