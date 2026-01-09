@@ -24,18 +24,37 @@
         PaneDisplayMode="Left"
         SelectionChanged="NavView_SelectionChanged">
 
+        <!-- Search Box in Header -->
+        <NavigationView.AutoSuggestBox>
+            <AutoSuggestBox x:Name="SearchBox"
+                            PlaceholderText="Search symbols, pages, actions..."
+                            QueryIcon="Find"
+                            TextChanged="SearchBox_TextChanged"
+                            QuerySubmitted="SearchBox_QuerySubmitted"
+                            SuggestionChosen="SearchBox_SuggestionChosen" />
+        </NavigationView.AutoSuggestBox>
+
         <NavigationView.MenuItems>
             <NavigationViewItem Content="Dashboard" Tag="Dashboard" IsSelected="True">
                 <NavigationViewItem.Icon>
                     <FontIcon Glyph="&#xE80F;" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
+            <NavigationViewItem Content="Watchlist" Tag="Watchlist">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE728;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+
+            <NavigationViewItemSeparator />
+
+            <NavigationViewItemHeader Content="Data Sources" />
             <NavigationViewItem Content="Data Provider" Tag="Provider">
                 <NavigationViewItem.Icon>
                     <FontIcon Glyph="&#xE703;" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
-            <NavigationViewItem Content="Data Sources" Tag="DataSources">
+            <NavigationViewItem Content="Multi-Source Config" Tag="DataSources">
                 <NavigationViewItem.Icon>
                     <FontIcon Glyph="&#xE943;" />
                 </NavigationViewItem.Icon>
@@ -45,14 +64,18 @@
                     <FontIcon Glyph="&#xEA86;" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
-            <NavigationViewItem Content="Storage" Tag="Storage">
-                <NavigationViewItem.Icon>
-                    <FontIcon Glyph="&#xE8B7;" />
-                </NavigationViewItem.Icon>
-            </NavigationViewItem>
+
+            <NavigationViewItemSeparator />
+
+            <NavigationViewItemHeader Content="Data Management" />
             <NavigationViewItem Content="Symbols" Tag="Symbols">
                 <NavigationViewItem.Icon>
                     <FontIcon Glyph="&#xE9D9;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem Content="Storage" Tag="Storage">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE8B7;" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
             <NavigationViewItem Content="Backfill" Tag="Backfill">
