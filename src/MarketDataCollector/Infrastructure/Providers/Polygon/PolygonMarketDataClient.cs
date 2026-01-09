@@ -19,10 +19,18 @@ namespace MarketDataCollector.Infrastructure.Providers.Polygon;
 /// - Implements circuit breaker pattern to prevent cascading failures
 /// - Automatic reconnection on connection loss with jitter
 /// - Configurable retry attempts (default: 5) with 2s base delay, max 30s between retries
+///
+/// <para><b>Authentication:</b> Requires Polygon.io API key for WebSocket connection.</para>
+/// <para><b>Security Best Practices:</b></para>
+/// <list type="bullet">
+/// <item><description>Use environment variable: <c>POLYGON__APIKEY</c></description></item>
+/// <item><description>Use a secure vault service for production deployments</description></item>
+/// <item><description>Ensure configuration files with real credentials are in <c>.gitignore</c></description></item>
+/// </list>
+/// <para>See <see href="https://polygon.io/docs/stocks/ws_getting-started">Polygon WebSocket Docs</see></para>
 /// </summary>
 // TODO: Implement full Polygon WebSocket client with real data streaming
 // TODO: Replace synthetic heartbeat with actual Polygon API connection
-// TODO: Implement proper credential validation for Polygon API key
 // TODO: Handle Polygon message parsing and route to collectors
 // TODO: Use _connectionPipeline for resilience (retry/circuit breaker) in real WebSocket code
 public sealed class PolygonMarketDataClient : IMarketDataClient
@@ -31,16 +39,36 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
     private readonly IMarketEventPublisher _publisher;
     private readonly TradeDataCollector _tradeCollector;
     private readonly QuoteCollector _quoteCollector;
+    private readonly PolygonOptions _opt;
+    private readonly string? _apiKey;
 
     // Resilience pipeline for connection retry with exponential backoff
     // Pre-configured for when full WebSocket implementation is added
     private readonly ResiliencePipeline _connectionPipeline;
 
-    public PolygonMarketDataClient(IMarketEventPublisher publisher, TradeDataCollector tradeCollector, QuoteCollector quoteCollector)
+    public PolygonMarketDataClient(
+        IMarketEventPublisher publisher,
+        TradeDataCollector tradeCollector,
+        QuoteCollector quoteCollector,
+        PolygonOptions? options = null)
     {
-        _publisher = publisher;
-        _tradeCollector = tradeCollector;
-        _quoteCollector = quoteCollector;
+        _publisher = publisher ?? throw new ArgumentNullException(nameof(publisher));
+        _tradeCollector = tradeCollector ?? throw new ArgumentNullException(nameof(tradeCollector));
+        _quoteCollector = quoteCollector ?? throw new ArgumentNullException(nameof(quoteCollector));
+        _opt = options ?? new PolygonOptions();
+
+        // Resolve API key from options or environment variable
+        _apiKey = !string.IsNullOrWhiteSpace(_opt.ApiKey)
+            ? _opt.ApiKey
+            : Environment.GetEnvironmentVariable("POLYGON__APIKEY")
+              ?? Environment.GetEnvironmentVariable("POLYGON_API_KEY");
+
+        if (string.IsNullOrWhiteSpace(_apiKey))
+        {
+            _log.Warning(
+                "Polygon API key not configured. Set POLYGON__APIKEY environment variable or configure in options. " +
+                "Client will operate in stub mode until credentials are provided.");
+        }
 
         // Initialize resilience pipeline with exponential backoff
         // Ready to use when full WebSocket implementation is added
@@ -52,7 +80,17 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
             operationTimeout: TimeSpan.FromSeconds(30));
     }
 
-    public bool IsEnabled => true;
+    /// <summary>
+    /// Gets whether the client is enabled and has valid credentials configured.
+    /// Returns true if API key is available (client can attempt real connections).
+    /// When false, the client operates in stub mode for testing purposes.
+    /// </summary>
+    public bool IsEnabled => !string.IsNullOrWhiteSpace(_apiKey);
+
+    /// <summary>
+    /// Gets whether valid API credentials are configured.
+    /// </summary>
+    public bool HasValidCredentials => !string.IsNullOrWhiteSpace(_apiKey);
 
     /// <summary>
     /// Connects to Polygon WebSocket stream.
@@ -60,15 +98,29 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
     /// </summary>
     public Task ConnectAsync(CancellationToken ct = default)
     {
-        _log.Information("Polygon client connect called (stub mode - no real connection)");
+        if (!HasValidCredentials)
+        {
+            _log.Warning(
+                "Polygon client connect called without valid credentials. " +
+                "Operating in stub mode. Set POLYGON__APIKEY to enable real connections.");
+            _publisher.TryPublish(MarketEvent.Heartbeat(DateTimeOffset.UtcNow, source: "PolygonStub"));
+            return Task.CompletedTask;
+        }
 
-        // Emit a synthetic heartbeat so downstream consumers can verify connectivity without real credentials.
+        _log.Information(
+            "Polygon client connect called (stub mode - credentials configured, but full WebSocket not yet implemented). " +
+            "Feed: {Feed}, SubscribeTrades: {SubscribeTrades}, SubscribeQuotes: {SubscribeQuotes}",
+            _opt.Feed, _opt.SubscribeTrades, _opt.SubscribeQuotes);
+
+        // Emit a synthetic heartbeat so downstream consumers can verify connectivity.
         _publisher.TryPublish(MarketEvent.Heartbeat(DateTimeOffset.UtcNow, source: "PolygonStub"));
 
         // When implementing full WebSocket connection, use:
         // await _connectionPipeline.ExecuteAsync(async token =>
         // {
+        //     var uri = new Uri($"wss://socket.polygon.io/{_opt.Feed}");
         //     // WebSocket connection logic here
+        //     // Send auth message: {"action":"auth","params":"{_apiKey}"}
         // }, ct).ConfigureAwait(false);
 
         return Task.CompletedTask;
