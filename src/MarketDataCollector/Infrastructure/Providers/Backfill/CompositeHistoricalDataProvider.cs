@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Threading;
+using MarketDataCollector.Application.Exceptions;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Infrastructure.Providers.Backfill.SymbolResolution;
@@ -257,9 +258,19 @@ public sealed class CompositeHistoricalDataProvider : IHistoricalDataProviderV2,
 
     /// <summary>
     /// Check if an exception indicates a rate limit error (HTTP 429).
+    /// Supports both the strongly-typed RateLimitException and legacy string-based detection.
     /// </summary>
     private static bool IsRateLimitException(Exception ex)
     {
+        // Check for strongly-typed RateLimitException first
+        if (ex is RateLimitException)
+            return true;
+
+        // Check inner exceptions
+        if (ex.InnerException is RateLimitException)
+            return true;
+
+        // Fall back to string-based detection for backwards compatibility
         return ex.Message.Contains("429") ||
                ex.Message.Contains("rate limit", StringComparison.OrdinalIgnoreCase) ||
                ex.Message.Contains("too many requests", StringComparison.OrdinalIgnoreCase);
@@ -267,9 +278,19 @@ public sealed class CompositeHistoricalDataProvider : IHistoricalDataProviderV2,
 
     /// <summary>
     /// Extract Retry-After duration from an exception if available.
+    /// Supports both RateLimitException with structured data and legacy string parsing.
     /// </summary>
     private static TimeSpan? ExtractRetryAfter(Exception ex)
     {
+        // Check for strongly-typed RateLimitException first
+        if (ex is RateLimitException rle && rle.RetryAfter.HasValue)
+            return rle.RetryAfter;
+
+        // Check inner exception
+        if (ex.InnerException is RateLimitException innerRle && innerRle.RetryAfter.HasValue)
+            return innerRle.RetryAfter;
+
+        // Fall back to string-based parsing for backwards compatibility
         // Try to parse Retry-After from exception message
         // Format: "Retry-After: 60" or similar
         var message = ex.Message;
