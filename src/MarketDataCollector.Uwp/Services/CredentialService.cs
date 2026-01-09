@@ -93,10 +93,16 @@ public class CredentialService
 
             return null;
         }
-        catch (Exception)
+        catch (OperationCanceledException)
         {
-            // TODO: Add structured logging for credential picker failures
-            // TODO: Distinguish between user cancellation vs system errors
+            // User cancelled the credential picker dialog
+            Debug.WriteLine($"[CredentialService] Credential picker cancelled by user for target: {targetName}");
+            return null;
+        }
+        catch (Exception ex)
+        {
+            // System error during credential picker operation
+            Debug.WriteLine($"[CredentialService] Credential picker failed for target '{targetName}': {ex.GetType().Name} - {ex.Message}");
             return null;
         }
     }
@@ -140,10 +146,16 @@ public class CredentialService
 
             return null;
         }
-        catch (Exception)
+        catch (OperationCanceledException)
         {
-            // TODO: Add logging for API key prompt failures
-            // TODO: Document which exceptions are expected vs unexpected
+            // User cancelled the API key prompt dialog (expected)
+            Debug.WriteLine($"[CredentialService] API key prompt cancelled by user for target: {targetName}");
+            return null;
+        }
+        catch (Exception ex)
+        {
+            // Unexpected error during API key prompt (e.g., COM exception, UI thread issues)
+            Debug.WriteLine($"[CredentialService] API key prompt failed for target '{targetName}': {ex.GetType().Name} - {ex.Message}");
             return null;
         }
     }
@@ -161,11 +173,11 @@ public class CredentialService
             var credential = new PasswordCredential(resource, username, password);
             _vault.Add(credential);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // TODO: Add structured logging for credential save failures
-            // TODO: Consider throwing for critical credential operations
-            // Ignore errors when saving
+            // Log credential save failures. Not throwing as credential save may not be critical
+            // for all workflows. Callers can verify save success by checking HasCredential().
+            Debug.WriteLine($"[CredentialService] Failed to save credential for resource '{resource}': {ex.GetType().Name} - {ex.Message}");
         }
     }
 
@@ -193,11 +205,19 @@ public class CredentialService
                 return (credential.UserName, credential.Password);
             }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // TODO: Distinguish between "credential not found" vs "access denied" exceptions
-            // TODO: Add telemetry counters for credential retrieval failures
-            // Credential not found or access denied
+            // Log and distinguish between different failure scenarios:
+            // - ElementNotFoundException: Credential not found in vault (normal case)
+            // - UnauthorizedAccessException: Access denied to vault
+            // - Other exceptions: System-level vault issues
+            var failureType = ex.GetType().Name switch
+            {
+                "ElementNotFoundException" => "not found",
+                "UnauthorizedAccessException" => "access denied",
+                _ => $"error - {ex.GetType().Name}"
+            };
+            Debug.WriteLine($"[CredentialService] Credential retrieval for resource '{resource}': {failureType}");
         }
 
         return null;
@@ -225,10 +245,9 @@ public class CredentialService
                 _vault.Remove(credential);
             }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // TODO: Add logging for credential removal failures
-            // Credential not found or access denied
+            Debug.WriteLine($"[CredentialService] Failed to remove credential for resource '{resource}': {ex.GetType().Name} - {ex.Message}");
         }
     }
 
@@ -242,9 +261,9 @@ public class CredentialService
             var credentials = _vault.FindAllByResource(resource);
             return credentials.Count > 0;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // TODO: Add diagnostic logging for debugging credential issues
+            Debug.WriteLine($"[CredentialService] Error checking credential existence for resource '{resource}': {ex.GetType().Name} - {ex.Message}");
             return false;
         }
     }
@@ -269,10 +288,9 @@ public class CredentialService
                 }
             }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // TODO: Add telemetry for vault access failures
-            // Access denied or empty vault
+            Debug.WriteLine($"[CredentialService] Failed to enumerate vault credentials: {ex.GetType().Name} - {ex.Message}");
         }
 
         return resources;
