@@ -82,6 +82,30 @@ internal static class Program
             return;
         }
 
+        // Dry Run Mode - Validate everything without starting (QW-93)
+        if (args.Any(a => a.Equals("--dry-run", StringComparison.OrdinalIgnoreCase)))
+        {
+            log.Information("Running in dry-run mode...");
+            Application.Services.DryRunService.EnableDryRunMode();
+
+            var dryRunService = new Application.Services.DryRunService();
+            var options = new Application.Services.DryRunOptions(
+                ValidateConfiguration: true,
+                ValidateFileSystem: true,
+                ValidateConnectivity: !args.Any(a => a.Equals("--offline", StringComparison.OrdinalIgnoreCase)),
+                ValidateProviders: true,
+                ValidateSymbols: true,
+                ValidateResources: true
+            );
+
+            var result = await dryRunService.ValidateAsync(cfg, options);
+            var report = dryRunService.GenerateReport(result);
+            Console.WriteLine(report);
+
+            Environment.Exit(result.OverallSuccess ? 0 : 1);
+            return;
+        }
+
         // UI Mode - Start web dashboard
         if (args.Any(a => a.Equals("--ui", StringComparison.OrdinalIgnoreCase)))
         {
@@ -412,6 +436,7 @@ MODES:
     --replay <path>         Replay events from JSONL file
     --selftest              Run system self-tests
     --validate-config       Validate configuration without starting
+    --dry-run               Comprehensive validation without starting (QW-93)
     --help, -h              Show this help message
 
 OPTIONS:

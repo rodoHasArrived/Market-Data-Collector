@@ -41,6 +41,7 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
     private readonly QuoteCollector _quoteCollector;
     private readonly PolygonOptions _opt;
     private readonly string? _apiKey;
+    private readonly bool _hasValidCredentials;
 
     // Resilience pipeline for connection retry with exponential backoff
     // Pre-configured for when full WebSocket implementation is added
@@ -50,25 +51,15 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
         IMarketEventPublisher publisher,
         TradeDataCollector tradeCollector,
         QuoteCollector quoteCollector,
-        PolygonOptions? options = null)
+        PolygonOptions? opt = null)
     {
         _publisher = publisher ?? throw new ArgumentNullException(nameof(publisher));
         _tradeCollector = tradeCollector ?? throw new ArgumentNullException(nameof(tradeCollector));
         _quoteCollector = quoteCollector ?? throw new ArgumentNullException(nameof(quoteCollector));
-        _opt = options ?? new PolygonOptions();
+        _opt = opt ?? new PolygonOptions();
 
-        // Resolve API key from options or environment variable
-        _apiKey = !string.IsNullOrWhiteSpace(_opt.ApiKey)
-            ? _opt.ApiKey
-            : Environment.GetEnvironmentVariable("POLYGON__APIKEY")
-              ?? Environment.GetEnvironmentVariable("POLYGON_API_KEY");
-
-        if (string.IsNullOrWhiteSpace(_apiKey))
-        {
-            _log.Warning(
-                "Polygon API key not configured. Set POLYGON__APIKEY environment variable or configure in options. " +
-                "Client will operate in stub mode until credentials are provided.");
-        }
+        // Validate Polygon API key credentials
+        _hasValidCredentials = ValidateCredentials(_opt);
 
         // Initialize resilience pipeline with exponential backoff
         // Ready to use when full WebSocket implementation is added
@@ -81,16 +72,48 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
     }
 
     /// <summary>
-    /// Gets whether the client is enabled and has valid credentials configured.
-    /// Returns true if API key is available (client can attempt real connections).
-    /// When false, the client operates in stub mode for testing purposes.
+    /// Validates the Polygon API key configuration.
     /// </summary>
-    public bool IsEnabled => !string.IsNullOrWhiteSpace(_apiKey);
+    /// <param name="options">The Polygon options to validate.</param>
+    /// <returns>True if credentials are valid, false otherwise.</returns>
+    private bool ValidateCredentials(PolygonOptions options)
+    {
+        // Check environment variable first (preferred for security)
+        var envApiKey = Environment.GetEnvironmentVariable("POLYGON_API_KEY")
+                     ?? Environment.GetEnvironmentVariable("POLYGON__APIKEY");
+
+        var apiKey = !string.IsNullOrWhiteSpace(envApiKey) ? envApiKey : options.ApiKey;
+
+        if (string.IsNullOrWhiteSpace(apiKey))
+        {
+            _log.Warning("Polygon API key is not configured. Set POLYGON_API_KEY environment variable " +
+                "or configure Polygon.ApiKey in appsettings.json. Client will run in stub mode.");
+            return false;
+        }
+
+        // Basic format validation for Polygon API keys (typically alphanumeric, 32+ chars)
+        if (apiKey.Length < 20)
+        {
+            _log.Warning("Polygon API key appears to be invalid (too short). " +
+                "Please verify your API key at https://polygon.io/dashboard/api-keys");
+            return false;
+        }
+
+        _log.Information("Polygon API key configured successfully (key length: {KeyLength})", apiKey.Length);
+        return true;
+    }
 
     /// <summary>
-    /// Gets whether valid API credentials are configured.
+    /// Gets the configured API key, preferring environment variables over config.
     /// </summary>
-    public bool HasValidCredentials => !string.IsNullOrWhiteSpace(_apiKey);
+    private string? GetApiKey()
+    {
+        var envApiKey = Environment.GetEnvironmentVariable("POLYGON_API_KEY")
+                     ?? Environment.GetEnvironmentVariable("POLYGON__APIKEY");
+        return !string.IsNullOrWhiteSpace(envApiKey) ? envApiKey : _opt.ApiKey;
+    }
+
+    public bool IsEnabled => _hasValidCredentials;
 
     /// <summary>
     /// Connects to Polygon WebSocket stream.
@@ -98,21 +121,17 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
     /// </summary>
     public Task ConnectAsync(CancellationToken ct = default)
     {
-        if (!HasValidCredentials)
+        if (!_hasValidCredentials)
         {
-            _log.Warning(
-                "Polygon client connect called without valid credentials. " +
-                "Operating in stub mode. Set POLYGON__APIKEY to enable real connections.");
-            _publisher.TryPublish(MarketEvent.Heartbeat(DateTimeOffset.UtcNow, source: "PolygonStub"));
-            return Task.CompletedTask;
+            _log.Warning("Polygon client connect called without valid API key - running in stub mode. " +
+                "Configure POLYGON_API_KEY environment variable for real data streaming.");
+        }
+        else
+        {
+            _log.Information("Polygon client connect called (stub mode - credentials configured, awaiting full implementation)");
         }
 
-        _log.Information(
-            "Polygon client connect called (stub mode - credentials configured, but full WebSocket not yet implemented). " +
-            "Feed: {Feed}, SubscribeTrades: {SubscribeTrades}, SubscribeQuotes: {SubscribeQuotes}",
-            _opt.Feed, _opt.SubscribeTrades, _opt.SubscribeQuotes);
-
-        // Emit a synthetic heartbeat so downstream consumers can verify connectivity.
+        // Emit a synthetic heartbeat so downstream consumers can verify connectivity without real credentials.
         _publisher.TryPublish(MarketEvent.Heartbeat(DateTimeOffset.UtcNow, source: "PolygonStub"));
 
         // When implementing full WebSocket connection, use:
@@ -120,7 +139,8 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
         // {
         //     var uri = new Uri($"wss://socket.polygon.io/{_opt.Feed}");
         //     // WebSocket connection logic here
-        //     // Send auth message: {"action":"auth","params":"{_apiKey}"}
+        //     // var apiKey = GetApiKey();
+        //     // Connect to wss://socket.polygon.io/stocks with API key authentication
         // }, ct).ConfigureAwait(false);
 
         return Task.CompletedTask;

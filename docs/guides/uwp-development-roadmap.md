@@ -1,6 +1,20 @@
-# UWP Desktop App Feature Refinements & New Feature Ideas
+# UWP Desktop App Development Roadmap
 
-This document outlines feature refinements for existing functionality and proposes new features for the Market Data Collector UWP Desktop Application.
+**Last Updated:** 2026-01-09
+**Version:** 1.5.0
+
+This document outlines feature refinements and development roadmap for the Market Data Collector UWP Desktop Application.
+
+## Recent Updates (January 2026)
+
+### Newly Completed Features
+- **Symbols Page**: Bulk symbol management (CSV import/export), symbol search with autocomplete, subscription templates, watchlist functionality
+- **Backfill Page**: Scheduled backfill with cron-like interface, per-symbol progress visualization, data validation and repair
+- **Provider Page**: Multi-provider support with Primary/Failover/Comparison roles, credential testing with visual feedback, latency history charts
+- **Data Sources Page**: Comprehensive multi-data source management with failover settings, default source configuration, and provider-specific settings
+- **Trading Hours Page**: Full exchange calendar with holidays, pre/post market sessions, timezone conversion, session overlap visualization, DST handling
+- **Data Export Page**: Complete export suite with scheduled exports, email delivery, database export (6 databases), webhook integration, QuantConnect Lean export
+- **Plugins Page**: Full data source plugin system with hot reload, directory watching, plugin configuration and management
 
 > **Primary Mission: Data Collection & Archival**
 >
@@ -10,20 +24,20 @@ This document outlines feature refinements for existing functionality and propos
 > - **Robust Archival**: Long-term storage with integrity verification
 > - **Export Excellence**: Easy extraction in formats for external analysis
 > - **Future Flexibility**: Architecture supports cloud/hybrid when needed
->
-> See [FEATURE_REFINEMENTS.md](../src/MarketDataCollector.Uwp/FEATURE_REFINEMENTS.md) for detailed implementation specifications.
 
 ---
 
 ## Table of Contents
 
-1. [Feature Refinements](#feature-refinements)
-2. [New Feature Ideas](#new-feature-ideas)
-3. [Offline Storage & Archival Ideas (2026)](#offline-storage--archival-ideas-2026)
-4. [External Analysis Support (2026)](#external-analysis-support-2026)
-5. [Additional New Feature Ideas (2026)](#additional-new-feature-ideas-2026)
-6. [Priority Matrix](#priority-matrix)
-7. [Implementation Notes](#implementation-notes)
+1. [Recent Updates (January 2026)](#recent-updates-january-2026)
+2. [Feature Refinements](#feature-refinements)
+3. [New Feature Ideas](#new-feature-ideas)
+4. [Offline Storage & Archival Ideas (2026)](#offline-storage--archival-ideas-2026)
+5. [External Analysis Support (2026)](#external-analysis-support-2026)
+6. [Additional New Feature Ideas (2026)](#additional-new-feature-ideas-2026)
+7. [New Feature Ideas (January 2026)](#new-feature-ideas-january-2026)
+8. [Priority Matrix](#priority-matrix)
+9. [Implementation Notes](#implementation-notes)
 
 ---
 
@@ -78,23 +92,37 @@ This document outlines feature refinements for existing functionality and propos
 - ✅ Uptime calculation and total reconnection counter
 - ✅ Health check timer with periodic verification
 
-#### 2. Multi-Provider Support
-**Current State:** Single provider selection (IB or Alpaca).
+#### 2. Multi-Provider Support ✅ COMPLETE
+**Current State:** Full multi-provider support implemented.
 
-**Proposed Refinements:**
-- Enable simultaneous multi-provider connections
-- Add provider comparison view showing data quality metrics side-by-side
-- Implement automatic failover configuration between providers
-- Add provider-specific symbol mapping interface
+**Implemented:**
+- ✅ Single/Multi provider toggle in Provider Page
+- ✅ Simultaneous multi-provider connections
+- ✅ Provider roles configuration (Primary, Failover, Comparison)
+- ✅ Automatic failover configuration between providers
+- ✅ Per-provider enable/disable toggles
+- ✅ DataSourcesPage for comprehensive multi-source management
+- ✅ Failover timeout configuration (5-300 seconds)
+- ✅ Default real-time and historical source selection
 
-#### 3. Credential Testing
-**Current State:** Credentials stored but no validation.
+**Remaining:**
+- Provider comparison view showing data quality metrics side-by-side
+- Provider-specific symbol mapping interface
 
-**Proposed Refinements:**
-- Add "Test Credentials" button with visual feedback
-- Show credential expiration warnings (for time-limited tokens)
-- Display last successful authentication timestamp
-- Add credential auto-refresh for OAuth-based providers
+#### 3. Credential Testing ✅ COMPLETE
+**Current State:** Full credential testing implemented.
+
+**Implemented:**
+- ✅ "Test Credentials" button with visual feedback
+- ✅ Credential status display (configured/not configured)
+- ✅ Test connection button for IB
+- ✅ Clear credentials functionality
+- ✅ ProgressRing during credential testing
+- ✅ InfoBar for test results display
+
+**Remaining:**
+- Credential expiration warnings (for time-limited tokens)
+- Credential auto-refresh for OAuth-based providers
 
 ---
 
@@ -134,62 +162,87 @@ This document outlines feature refinements for existing functionality and propos
 
 ### Symbols Page Enhancements
 
-#### 1. Bulk Symbol Management
+#### 1. Bulk Symbol Management ✅ COMPLETE
 **Current State:** Single symbol add/edit workflow.
 
-**Proposed Refinements:**
-- Add CSV/text file import for bulk symbol additions
-- Implement symbol group/watchlist functionality
-- Add "Import from Portfolio" integration (broker positions)
-- Enable batch operations (delete multiple, toggle subscriptions)
+**Implemented:**
+- ✅ CSV/text file import for bulk symbol additions
+- ✅ CSV export functionality
+- ✅ Symbol group/watchlist functionality with save/load/manage
+- ✅ Batch operations (delete multiple, enable/disable trades/depth)
+- ✅ Select all checkbox with bulk action buttons
 
-#### 2. Symbol Discovery & Search
+**Remaining:**
+- "Import from Portfolio" integration (broker positions) - future consideration
+
+#### 2. Symbol Discovery & Search ✅ COMPLETE
 **Current State:** Manual symbol entry.
 
-**Proposed Refinements:**
-- Add symbol search with autocomplete from provider APIs
-- Show symbol details popup (company name, exchange, type, average volume)
-- Integrate OpenFIGI symbol lookup
-- Add "Popular Symbols" and "Recently Added" quick picks
+**Implemented:**
+- ✅ Symbol search with AutoSuggestBox autocomplete
+- ✅ OpenFIGI symbol lookup integration
+- ✅ Exchange filter dropdown (All, SMART, NYSE, NASDAQ, ARCA)
+- ✅ Subscription type filter (All, Trades Only, Depth Only, Both)
+- ✅ Popular symbol templates as quick picks
 
-#### 3. Subscription Templates
+**Remaining:**
+- Symbol details popup (company name, exchange, type, average volume) - future enhancement
+
+#### 3. Subscription Templates ✅ COMPLETE
 **Current State:** Individual symbol configuration.
 
-**Proposed Refinements:**
-- Create subscription presets (e.g., "Scalping" = Trades+L2@20 levels, "Swing" = Trades only)
-- Add symbol-type defaults (Stocks, ETFs, Futures have different optimal settings)
-- Implement exchange-specific default configurations
+**Implemented:**
+- ✅ Pre-built templates: FAANG, Magnificent 7, Major ETFs, Semiconductors, Financials
+- ✅ One-click template addition with symbol counts
+- ✅ Visual template cards with symbol previews
+
+**Remaining:**
+- Custom subscription presets (e.g., "Scalping" = Trades+L2@20 levels)
+- Symbol-type defaults (Stocks, ETFs, Futures)
+- Exchange-specific default configurations
 
 ---
 
 ### Backfill Page Enhancements
 
-#### 1. Scheduled Backfill Jobs
+#### 1. Scheduled Backfill Jobs ✅ COMPLETE
 **Current State:** Manual, on-demand backfill.
 
-**Proposed Refinements:**
-- Add scheduled backfill with cron-like interface
-- Implement daily/weekly automatic gap-fill
-- Add job queue with priority settings
-- Show historical job execution log
+**Implemented:**
+- ✅ Scheduled backfill with cron-like interface (Daily/Weekly/Monthly)
+- ✅ Configurable run time with TimePicker
+- ✅ Option to include all subscribed symbols or specify custom list
+- ✅ Notification on completion toggle
+- ✅ Upcoming scheduled jobs list with Run Now/Edit buttons
+- ✅ Recent backfill history with status indicators
+- ✅ Quick stats panel (total bars, symbols with data, date coverage)
 
-#### 2. Backfill Progress Visualization
+#### 2. Backfill Progress Visualization ✅ COMPLETE
 **Current State:** Basic progress bar.
 
-**Proposed Refinements:**
-- Add per-symbol progress breakdown
-- Show download speed and ETA
-- Display data quality metrics during backfill (gaps, duplicates detected)
-- Add pause/resume capability for long-running jobs
+**Implemented:**
+- ✅ Per-symbol progress breakdown with individual progress bars
+- ✅ Overall progress bar with symbol count and elapsed time
+- ✅ Status indicators per symbol (color-coded badges)
+- ✅ Bars downloaded count per symbol
+- ✅ Pause/resume capability for long-running jobs
+- ✅ Cancel button for aborting backfill
 
-#### 3. Data Validation & Repair
+**Remaining:**
+- Download speed and ETA estimation - future enhancement
+
+#### 3. Data Validation & Repair ✅ COMPLETE
 **Current State:** No post-backfill validation.
 
-**Proposed Refinements:**
-- Add automatic data integrity check after backfill
-- Implement gap detection with one-click fill
-- Show data coverage calendar visualization
-- Add duplicate detection and cleanup
+**Implemented:**
+- ✅ Validate Data button with data integrity check
+- ✅ Validation results card showing symbols checked, gaps found, missing days, data health %
+- ✅ Gap detection with individual repair buttons per gap
+- ✅ Repair Gaps button for bulk gap filling
+- ✅ Validation issues list with symbol, description, date range, and repair action
+
+**Remaining:**
+- Data coverage calendar visualization - future enhancement
 
 ---
 
@@ -320,17 +373,32 @@ This document outlines feature refinements for existing functionality and propos
 **Description:** Tools for exporting data and integrating with external systems.
 
 **Implemented:**
-- ✅ DataExportPage.xaml with full export UI
-- ✅ Multiple export format support
-- ✅ Date range and symbol selection
-- ✅ Export configuration and management
+- ✅ DataExportPage.xaml with comprehensive export UI
+- ✅ Multiple export format support (CSV, Parquet, JSON Lines, HDF5, Feather)
+- ✅ Multiple compression options (None, Gzip, LZ4, Zstd)
+- ✅ Date range and symbol selection with quick date buttons (Today, Week, Month)
+- ✅ Data type selection (Trades, Order Book Depth, BBO Quotes, Historical Bars)
+- ✅ Export progress visualization with per-symbol breakdown
+- ✅ Scheduled exports with frequency options (Hourly, Daily, Weekly, Monthly)
+- ✅ Email delivery configuration with recipients, subject template, and attachment option
+- ✅ Direct database export with support for:
+  - PostgreSQL, TimescaleDB, ClickHouse, QuestDB, InfluxDB, SQLite
+  - Connection configuration (Host, Port, Database, Credentials)
+  - Test Connection functionality
+- ✅ Webhook integration for real-time event streaming
+  - Configurable webhook URL
+  - Payload format options (JSON, MessagePack, Protobuf)
+  - Batching options (Real-time, Micro-batch, Batch, Bulk)
+  - Event type filtering (Trades, Quotes, Depth Updates, Integrity Alerts)
+  - Test Webhook functionality
+- ✅ QuantConnect Lean data format export
+  - Lean data folder configuration with Browse button
+  - Resolution selection (Tick, Second, Minute, Hour, Daily)
+  - Verify Lean Data functionality
+- ✅ Export history tracking with timestamps, format, symbol count, size, destination
 
 **Remaining for Future:**
-- Scheduled exports with email delivery
-- Direct database export (PostgreSQL, TimescaleDB)
 - REST API configuration for external consumers
-- Webhook configuration for real-time event streaming
-- QuantConnect Lean data format export
 
 ---
 
@@ -339,16 +407,22 @@ This document outlines feature refinements for existing functionality and propos
 **Description:** Configure and visualize trading sessions for different exchanges.
 
 **Implemented:**
-- ✅ TradingHoursPage.xaml with trading hours configuration UI
+- ✅ TradingHoursPage.xaml with comprehensive trading hours configuration UI
 - ✅ Market hours scheduling integration with collector service
 - ✅ 24/7 vs market hours only collection mode
-
-**Remaining for Future:**
-- Exchange calendar with holidays
-- Pre/post market session configuration
-- Timezone conversion tools
-- Session overlap visualization (for global markets)
-- Automatic DST adjustments
+- ✅ Exchange calendar with holidays (NYSE, NASDAQ, CME, LSE, TSE, Custom)
+- ✅ Holiday management with Add/Import functionality
+- ✅ Pre/post market session configuration with individual enable toggles
+- ✅ TimePickers for Pre-Market, Regular Hours, and Post-Market sessions
+- ✅ Timezone conversion tools (America/New_York, America/Chicago, Europe/London, Asia/Tokyo, Asia/Hong_Kong, UTC)
+- ✅ Session overlap visualization with global market hours timeline (UTC)
+- ✅ Visual representation of Tokyo, London, and New York sessions
+- ✅ Current time indicator on timeline
+- ✅ Automatic DST adjustments with toggle
+- ✅ DST transition warnings with upcoming change notifications
+- ✅ Trading days configuration (Mon-Sun checkboxes)
+- ✅ Real-time local time, UTC time, and exchange status display
+- ✅ Next market event countdown (e.g., "Closes in 1h 30m")
 
 ---
 
@@ -372,7 +446,33 @@ This document outlines feature refinements for existing functionality and propos
 
 ---
 
-### 10. Mobile Companion App Integration
+### 10. Data Source Plugin System ✅ COMPLETE (NEW)
+
+**Description:** Extensible plugin architecture for adding custom data source providers.
+
+**Implemented:**
+- ✅ PluginsPage.xaml with comprehensive plugin management UI
+- ✅ Plugin system status dashboard (Total, Active, Error counts)
+- ✅ Plugin directory configuration with watch capability
+- ✅ Hot reload support for plugins
+- ✅ Auto-load new plugins toggle
+- ✅ Browse and install plugin files (.dll)
+- ✅ Open plugins folder functionality
+- ✅ Installed plugins list with:
+  - Enable/disable toggle per plugin
+  - Plugin name, version, status, data source type
+  - Plugin description and author
+  - Priority and permissions display
+  - Reload, Configure, and Unload actions
+- ✅ Plugin details panel with:
+  - Plugin ID, Version, Data Source Type, Category
+  - Assembly path display
+  - Required permissions listing
+- ✅ Keyboard accelerators (Ctrl+R for refresh, etc.)
+
+---
+
+### 11. Mobile Companion App Integration
 
 **Description:** Companion mobile app support for remote monitoring.
 
@@ -385,7 +485,7 @@ This document outlines feature refinements for existing functionality and propos
 
 ---
 
-### 11. Machine Learning Data Preparation
+### 12. Machine Learning Data Preparation
 
 **Description:** Tools for preparing collected data for ML model training.
 
@@ -400,7 +500,7 @@ This document outlines feature refinements for existing functionality and propos
 
 ---
 
-### 12. Multi-Asset Class Support
+### 13. Multi-Asset Class Support
 
 **Description:** Expand beyond equities to support additional asset classes.
 
@@ -414,7 +514,7 @@ This document outlines feature refinements for existing functionality and propos
 
 ---
 
-### 13. Compliance & Audit Features
+### 14. Compliance & Audit Features
 
 **Description:** Features for regulatory compliance and data governance.
 
@@ -428,7 +528,7 @@ This document outlines feature refinements for existing functionality and propos
 
 ---
 
-### 14. Performance Benchmarking Page
+### 15. Performance Benchmarking Page
 
 **Description:** Compare system performance against benchmarks and historical baselines.
 
@@ -442,7 +542,7 @@ This document outlines feature refinements for existing functionality and propos
 
 ---
 
-### 15. Help & Onboarding Improvements 🔄 PARTIAL
+### 16. Help & Onboarding Improvements 🔄 PARTIAL
 
 **Description:** Enhanced user guidance and documentation within the app.
 
@@ -971,34 +1071,161 @@ MarketData_2026-Q1.tar.gz
 
 ---
 
+## New Feature Ideas (January 2026)
+
+### 44. Data Completeness Heatmap Calendar
+
+**Description:** Visual calendar showing data collection completeness across all symbols and time periods.
+
+**Features:**
+- Month/Year view with color-coded completeness indicators
+- Drill-down from year → month → day → symbol
+- Per-symbol coverage matrix (symbols × dates)
+- Gap highlighting with one-click backfill triggers
+- Expected vs. actual event count comparison
+- Trading day vs. holiday distinction
+- Export completeness reports for compliance
+
+**UI Components:**
+- Calendar grid with heatmap coloring (green=complete, yellow=partial, red=gaps)
+- Symbol filter and date range selector
+- Coverage percentage summary stats
+- Quick actions for filling detected gaps
+
+---
+
+### 45. Real-Time Data Feed Monitor
+
+**Description:** Live visualization of incoming data streams with health metrics.
+
+**Features:**
+- Real-time event stream waterfall/ticker display
+- Per-provider throughput gauges
+- Latency histogram with percentile markers
+- Sequence gap detection with alerts
+- Message rate comparison across providers
+- Bandwidth utilization monitoring
+- Connection health timeline
+- Auto-pause during market close
+
+---
+
+### 46. Symbol Universe Browser
+
+**Description:** Comprehensive symbol discovery and universe management tool.
+
+**Features:**
+- Search across multiple providers (OpenFIGI, SEC EDGAR, exchange listings)
+- Filter by sector, industry, market cap, average volume
+- Symbol cross-reference mapping (CUSIP, ISIN, FIGI)
+- Corporate actions tracker (splits, dividends, name changes)
+- IPO calendar integration
+- Delisted symbols archive
+- Custom universe creation with criteria
+- Universe comparison and overlap analysis
+
+---
+
+### 47. Backtest Data Validator
+
+**Description:** Validate collected data quality for backtesting use cases.
+
+**Features:**
+- Split/dividend adjustment verification
+- Corporate action alignment check
+- Price continuity validation (gap detection)
+- Volume anomaly detection
+- Timestamp alignment across symbols
+- Look-ahead bias detection tools
+- Survivorship bias warnings
+- Data quality certification reports
+
+---
+
+### 48. Intelligent Data Recommendations
+
+**Description:** AI-powered suggestions for data collection optimization.
+
+**Features:**
+- Suggested symbols based on portfolio correlation analysis
+- Optimal collection schedule recommendations
+- Storage optimization suggestions
+- Provider cost/quality trade-off analysis
+- Gap filling priority recommendations
+- Collection frequency optimization
+- Anomaly pattern learning and prediction
+- Resource utilization recommendations
+
+---
+
+### 49. Remote Collection Node Manager
+
+**Description:** Manage distributed data collection nodes for redundancy and coverage.
+
+**Features:**
+- Register and monitor remote collection nodes
+- Node health and status dashboard
+- Data synchronization between nodes
+- Automatic failover to backup nodes
+- Geographic distribution visualization
+- Node resource monitoring (CPU, memory, disk)
+- Centralized configuration deployment
+- Node-to-node data reconciliation
+
+---
+
+### 50. Data Monetization Dashboard
+
+**Description:** Tools for preparing and packaging data for sharing or monetization.
+
+**Features:**
+- Data product catalog management
+- Access control and licensing configuration
+- Usage analytics and metering
+- Data sampling and preview generation
+- Terms of service management
+- API key management for data consumers
+- Revenue tracking and reporting
+- Data quality SLA monitoring
+
+---
+
 ## Priority Matrix
 
 ### ✅ Completed Quick Wins
-| Feature | Status |
-|---------|--------|
-| Real-time sparkline charts on Dashboard | ✅ Complete |
-| Connection health latency display | ✅ Complete |
-| Toast notifications for alerts | ✅ Complete |
-| Configuration export/import | ✅ Complete |
-| Storage Analytics Dashboard | ✅ Complete |
-| Collector Service Manager | ✅ Complete |
-| Cloud Storage Integration | ✅ Complete |
+| Feature | Status | Completed |
+|---------|--------|-----------|
+| Real-time sparkline charts on Dashboard | ✅ Complete | 2025 |
+| Connection health latency display | ✅ Complete | 2025 |
+| Toast notifications for alerts | ✅ Complete | 2025 |
+| Configuration export/import | ✅ Complete | 2025 |
+| Storage Analytics Dashboard | ✅ Complete | 2025 |
+| Collector Service Manager | ✅ Complete | 2025 |
+| Cloud Storage Integration | ✅ Complete | 2025 |
+| Bulk symbol import (CSV) | ✅ Complete | 2026-01 |
+| Symbol search autocomplete | ✅ Complete | 2026-01 |
+| Scheduled Backfill Jobs | ✅ Complete | 2026-01 |
+| Backfill Progress Visualization | ✅ Complete | 2026-01 |
+| Data Validation & Repair | ✅ Complete | 2026-01 |
+| Subscription Templates | ✅ Complete | 2026-01 |
+| Symbol Watchlists | ✅ Complete | 2026-01 |
+| Credential testing with feedback | ✅ Complete | 2026-01 |
+| Multi-Provider Support | ✅ Complete | 2026-01 |
+| Trading Hours Manager (full) | ✅ Complete | 2026-01 |
+| Data Export & Integration (full) | ✅ Complete | 2026-01 |
+| Data Source Plugin System | ✅ Complete | 2026-01 |
 
 ### High Impact, Low Effort (Remaining Quick Wins)
 | Feature | Effort | Impact |
 |---------|--------|--------|
-| Bulk symbol import (CSV) | 1-2 days | High |
-| Symbol search autocomplete | 2-3 days | High |
-| Credential testing with feedback | 1 day | Medium |
-| Quick Add Symbol inline input | 1 day | Medium |
+| Quick Add Symbol inline input (UWP) | 1 day | Medium |
+| Provider comparison data quality view | 2 days | Medium |
 
 ### High Impact, Medium Effort (Strategic)
 | Feature | Effort | Impact |
 |---------|--------|--------|
 | Live Order Book Visualization | 1-2 weeks | High |
 | Data Quality Analytics Page | 1-2 weeks | High |
-| Scheduled Backfill Jobs | 3-5 days | Medium |
-| Multi-Provider Support | 1-2 weeks | Medium |
 | Interactive Onboarding Tutorial | 1 week | Medium |
 
 ### High Impact, High Effort (Major Features)
@@ -1035,27 +1262,34 @@ MarketData_2026-Q1.tar.gz
 |---------|--------|--------|----------|--------|
 | Analysis Export Wizard (#35) | 2 weeks | Critical | P0 | |
 | Schema & Data Dictionary Generator (#37) | 1 week | High | P0 | **IMPLEMENTED** (2026-01-03) |
-| Data Quality Pre-Export Report (#36) | 2 weeks | High | P1 |
-| Time Series Aggregation Tools (#38) | 2 weeks | High | P1 |
-| Batch Export Scheduler (#40) | 2 weeks | High | P1 |
-| Feature Engineering Export (#39) | 3 weeks | Medium | P2 |
-| External Tool Workspace Generator (#41) | 2 weeks | Medium | P2 |
-| Dataset Fingerprinting & Versioning (#42) | 2 weeks | Medium | P2 |
-| Analysis Integration Hub (#43) | 3 weeks | Low | P3 |
+| Data Quality Pre-Export Report (#36) | 2 weeks | High | P1 | |
+| Time Series Aggregation Tools (#38) | 2 weeks | High | P1 | |
+| Batch Export Scheduler (#40) | 2 weeks | High | P1 | **PARTIAL** (Scheduled exports in DataExportPage) |
+| Feature Engineering Export (#39) | 3 weeks | Medium | P2 | |
+| External Tool Workspace Generator (#41) | 2 weeks | Medium | P2 | |
+| Dataset Fingerprinting & Versioning (#42) | 2 weeks | Medium | P2 | |
+| Analysis Integration Hub (#43) | 3 weeks | Low | P3 | |
 
 ### Additional New Ideas (2026)
 | Feature | Effort | Impact | Priority |
 |---------|--------|--------|----------|
-| Real-Time Anomaly Detection Engine | 3-4 weeks | High | P1 |
-| Event-Driven Automation Framework | 2-3 weeks | High | P1 |
-| Data Federation & Multi-Source Reconciliation | 3-4 weeks | High | P1 |
-| Historical Data Comparison Tool | 2 weeks | Medium | P2 |
-| Embedded Scripting Environment | 4 weeks | High | P2 |
-| Market Microstructure Analytics | 3 weeks | Medium | P2 |
-| Smart Symbol Recommendations | 2 weeks | Medium | P3 |
-| Network Diagnostics & Optimization | 2 weeks | Medium | P3 |
-| Data Lineage & Provenance Tracking | 3 weeks | Medium | P3 |
-| Collaborative Workspaces | 4-6 weeks | Medium | P4 |
+| Real-Time Anomaly Detection Engine (#16) | 3-4 weeks | High | P1 |
+| Event-Driven Automation Framework (#19) | 2-3 weeks | High | P1 |
+| Data Federation & Multi-Source Reconciliation (#18) | 3-4 weeks | High | P1 |
+| Data Completeness Heatmap Calendar (#44) | 2 weeks | High | P1 |
+| Real-Time Data Feed Monitor (#45) | 2 weeks | High | P1 |
+| Symbol Universe Browser (#46) | 2-3 weeks | High | P1 |
+| Backtest Data Validator (#47) | 2 weeks | High | P1 |
+| Historical Data Comparison Tool (#20) | 2 weeks | Medium | P2 |
+| Embedded Scripting Environment (#23) | 4 weeks | High | P2 |
+| Market Microstructure Analytics (#17) | 3 weeks | Medium | P2 |
+| Intelligent Data Recommendations (#48) | 3 weeks | Medium | P2 |
+| Remote Collection Node Manager (#49) | 4 weeks | Medium | P2 |
+| Smart Symbol Recommendations (#21) | 2 weeks | Medium | P3 |
+| Network Diagnostics & Optimization (#24) | 2 weeks | Medium | P3 |
+| Data Lineage & Provenance Tracking (#22) | 3 weeks | Medium | P3 |
+| Collaborative Workspaces (#25) | 4-6 weeks | Medium | P4 |
+| Data Monetization Dashboard (#50) | 4 weeks | Low | P4 |
 
 > **Note on Priorities**: Offline storage and external analysis features are prioritized above other enhancements as they directly support the primary mission of data collection and archival. Cloud/online features remain implemented for future flexibility but are not the current focus.
 
@@ -1083,7 +1317,13 @@ MarketData_2026-Q1.tar.gz
 
 ---
 
-*Document Version: 3.0*
-*Last Updated: 2026-01-08*
-*Focus: Offline Data Storage, Collection & Archival Excellence*
-*Changes: Added 18 new offline storage and external analysis features (2026), reorganized priorities around archival-first mission*
+## Related Documentation
+
+- [Project Roadmap](../status/ROADMAP.md) - Overall feature backlog
+- [Production Status](../status/production-status.md) - Deployment readiness
+- [Architecture Overview](../architecture/overview.md) - System design
+- [Getting Started](getting-started.md) - Setup guide
+
+---
+
+*Last Updated: 2026-01-09*

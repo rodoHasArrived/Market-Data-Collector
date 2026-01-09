@@ -45,6 +45,8 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
         bool enablePeriodicFlush = true)
     {
         _sink = sink ?? throw new ArgumentNullException(nameof(sink));
+        if (capacity <= 0)
+            throw new ArgumentOutOfRangeException(nameof(capacity), capacity, "Capacity must be a positive value.");
         _capacity = capacity;
         _flushInterval = flushInterval ?? TimeSpan.FromSeconds(5);
         _batchSize = Math.Max(1, batchSize);
@@ -223,6 +225,7 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
             {
                 await _sink.FlushAsync(CancellationToken.None).ConfigureAwait(false);
             }
+            // TODO: Implement proper logging for flush failures - data loss risk requires alerting
             catch
             {
                 // Log in production - flush failure could mean data loss
@@ -247,6 +250,7 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
                 {
                     break;
                 }
+                // TODO: Implement logging for periodic flush failures - may indicate storage issues
                 catch
                 {
                     // Log in production - flush failure needs attention
@@ -264,6 +268,7 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
         _cts.Cancel();
         _channel.Writer.TryComplete();
 
+        // TODO: Log consumer task completion errors during disposal for debugging
         try
         {
             await _consumer.ConfigureAwait(false);
@@ -272,6 +277,7 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
 
         if (_flusher is not null)
         {
+            // TODO: Log flusher task completion errors during disposal
             try
             {
                 await _flusher.ConfigureAwait(false);
