@@ -59,6 +59,9 @@ public sealed partial class MainPage : Page
                 case "Backfill":
                     ContentFrame.Navigate(typeof(BackfillPage));
                     break;
+                case "DataBrowser":
+                    ContentFrame.Navigate(typeof(DataBrowserPage));
+                    break;
                 case "CollectionSessions":
                     ContentFrame.Navigate(typeof(CollectionSessionPage));
                     break;
