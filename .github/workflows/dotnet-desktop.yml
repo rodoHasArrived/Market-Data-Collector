@@ -55,6 +55,8 @@ jobs:
   publish:
     name: Publish ${{ matrix.rid }}
     needs: build
+    # Skip publish on PRs to reduce billing - only run on pushes to main and tags
+    if: github.event_name != 'pull_request'
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
