@@ -368,6 +368,10 @@ public sealed class UiServer : IAsyncDisposable
         // Configure scheduled backfill endpoints
         _app.MapScheduledBackfillEndpoints();
         ConfigureBulkSymbolManagementRoutes();
+
+        // Configure packaging endpoints
+        var config = _app.Services.GetRequiredService<ConfigStore>().Load();
+        _app.MapPackagingEndpoints(config.DataRoot);
     }
 
     private void ConfigureStorageOrganizationRoutes()

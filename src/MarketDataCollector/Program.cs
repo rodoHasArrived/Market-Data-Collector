@@ -23,6 +23,7 @@ using BackfillRequest = MarketDataCollector.Application.Backfill.BackfillRequest
 using MarketDataCollector.Messaging.Configuration;
 using MarketDataCollector.Messaging.Publishers;
 using MarketDataCollector.Storage;
+using MarketDataCollector.Storage.Packaging;
 using MarketDataCollector.Storage.Policies;
 using MarketDataCollector.Storage.Services;
 using MarketDataCollector.Storage.Sinks;
@@ -140,6 +141,58 @@ internal static class Program
             DepthBufferSelfTests.Run();
             log.Information("Self-tests passed");
             Console.WriteLine("Self-tests passed.");
+            return;
+        }
+
+        // Package Mode - Create a portable data package
+        if (args.Any(a => a.Equals("--package", StringComparison.OrdinalIgnoreCase)))
+        {
+            await RunPackageCommandAsync(cfg, args, log);
+            return;
+        }
+
+        // Import Package Mode - Import a package into storage
+        if (args.Any(a => a.Equals("--import-package", StringComparison.OrdinalIgnoreCase)))
+        {
+            var packagePath = GetArgValue(args, "--import-package");
+            if (string.IsNullOrWhiteSpace(packagePath))
+            {
+                Console.Error.WriteLine("Error: --import-package requires a path to the package file");
+                Environment.Exit(1);
+                return;
+            }
+
+            await RunImportPackageCommandAsync(cfg, packagePath, args, log);
+            return;
+        }
+
+        // List Package Contents Mode
+        if (args.Any(a => a.Equals("--list-package", StringComparison.OrdinalIgnoreCase)))
+        {
+            var packagePath = GetArgValue(args, "--list-package");
+            if (string.IsNullOrWhiteSpace(packagePath))
+            {
+                Console.Error.WriteLine("Error: --list-package requires a path to the package file");
+                Environment.Exit(1);
+                return;
+            }
+
+            await RunListPackageCommandAsync(packagePath, log);
+            return;
+        }
+
+        // Validate Package Mode
+        if (args.Any(a => a.Equals("--validate-package", StringComparison.OrdinalIgnoreCase)))
+        {
+            var packagePath = GetArgValue(args, "--validate-package");
+            if (string.IsNullOrWhiteSpace(packagePath))
+            {
+                Console.Error.WriteLine("Error: --validate-package requires a path to the package file");
+                Environment.Exit(1);
+                return;
+            }
+
+            await RunValidatePackageCommandAsync(packagePath, log);
             return;
         }
 
@@ -434,6 +487,10 @@ MODES:
     --serve-status          Enable status monitoring endpoint
     --backfill              Run historical data backfill
     --replay <path>         Replay events from JSONL file
+    --package               Create a portable data package
+    --import-package <path> Import a package into storage
+    --list-package <path>   List contents of a package
+    --validate-package <path> Validate a package
     --selftest              Run system self-tests
     --validate-config       Validate configuration without starting
     --dry-run               Comprehensive validation without starting (QW-93)
@@ -457,6 +514,26 @@ BACKFILL OPTIONS:
     --backfill-from <date>          Start date (YYYY-MM-DD)
     --backfill-to <date>            End date (YYYY-MM-DD)
 
+PACKAGING OPTIONS:
+    --package-name <name>           Package name (default: market-data-YYYYMMDD)
+    --package-description <text>    Package description
+    --package-output <path>         Output directory (default: packages)
+    --package-symbols <list>        Comma-separated symbols to include
+    --package-events <list>         Event types (Trade,BboQuote,L2Snapshot)
+    --package-from <date>           Start date (YYYY-MM-DD)
+    --package-to <date>             End date (YYYY-MM-DD)
+    --package-format <fmt>          Format: zip, tar.gz (default: zip)
+    --package-compression <level>   Compression: none, fast, balanced, max
+    --no-quality-report             Exclude quality report from package
+    --no-data-dictionary            Exclude data dictionary
+    --no-loader-scripts             Exclude loader scripts
+    --skip-checksums                Skip checksum verification
+
+IMPORT OPTIONS:
+    --import-destination <path>     Destination directory (default: data root)
+    --skip-validation               Skip checksum validation during import
+    --merge                         Merge with existing data (don't overwrite)
+
 EXAMPLES:
     # Start web dashboard on default port
     MarketDataCollector --ui
@@ -479,6 +556,22 @@ EXAMPLES:
 
     # Validate a specific configuration file
     MarketDataCollector --validate-config --config /path/to/config.json
+
+    # Create a portable data package
+    MarketDataCollector --package --package-name my-data \\
+        --package-symbols AAPL,MSFT --package-from 2024-01-01
+
+    # Create package with maximum compression
+    MarketDataCollector --package --package-compression max
+
+    # Import a package
+    MarketDataCollector --import-package ./packages/my-data.zip
+
+    # List package contents
+    MarketDataCollector --list-package ./packages/my-data.zip
+
+    # Validate a package
+    MarketDataCollector --validate-package ./packages/my-data.zip
 
 CONFIGURATION:
     Configuration is loaded from appsettings.json by default, but can be customized:
@@ -715,6 +808,350 @@ SUPPORT:
 
         var fallback = new[] { new SymbolConfig("SPY", SubscribeTrades: true, SubscribeDepth: true, DepthLevels: 10) };
         return cfg with { Symbols = fallback };
+    }
+
+    /// <summary>
+    /// Run the package creation command.
+    /// </summary>
+    private static async Task RunPackageCommandAsync(AppConfig cfg, string[] args, ILogger log)
+    {
+        log.Information("Creating portable data package...");
+
+        var options = new PackageOptions
+        {
+            Name = GetArgValue(args, "--package-name") ?? $"market-data-{DateTime.UtcNow:yyyyMMdd}",
+            Description = GetArgValue(args, "--package-description"),
+            OutputDirectory = GetArgValue(args, "--package-output") ?? "packages",
+            IncludeQualityReport = !args.Any(a => a.Equals("--no-quality-report", StringComparison.OrdinalIgnoreCase)),
+            IncludeDataDictionary = !args.Any(a => a.Equals("--no-data-dictionary", StringComparison.OrdinalIgnoreCase)),
+            IncludeLoaderScripts = !args.Any(a => a.Equals("--no-loader-scripts", StringComparison.OrdinalIgnoreCase)),
+            VerifyChecksums = !args.Any(a => a.Equals("--skip-checksums", StringComparison.OrdinalIgnoreCase))
+        };
+
+        // Parse symbols
+        var symbolsArg = GetArgValue(args, "--package-symbols");
+        if (!string.IsNullOrWhiteSpace(symbolsArg))
+        {
+            options.Symbols = symbolsArg.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        }
+
+        // Parse event types
+        var eventTypesArg = GetArgValue(args, "--package-events");
+        if (!string.IsNullOrWhiteSpace(eventTypesArg))
+        {
+            options.EventTypes = eventTypesArg.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        }
+
+        // Parse date range
+        var fromArg = GetArgValue(args, "--package-from");
+        if (DateTime.TryParse(fromArg, out var from))
+        {
+            options.StartDate = from;
+        }
+
+        var toArg = GetArgValue(args, "--package-to");
+        if (DateTime.TryParse(toArg, out var to))
+        {
+            options.EndDate = to;
+        }
+
+        // Parse format
+        var formatArg = GetArgValue(args, "--package-format");
+        if (!string.IsNullOrWhiteSpace(formatArg))
+        {
+            options.Format = formatArg.ToLowerInvariant() switch
+            {
+                "zip" => PackageFormat.Zip,
+                "tar.gz" or "targz" or "tgz" => PackageFormat.TarGz,
+                "7z" or "7zip" => PackageFormat.SevenZip,
+                _ => PackageFormat.Zip
+            };
+        }
+
+        // Parse compression level
+        var compressionArg = GetArgValue(args, "--package-compression");
+        if (!string.IsNullOrWhiteSpace(compressionArg))
+        {
+            options.CompressionLevel = compressionArg.ToLowerInvariant() switch
+            {
+                "none" => PackageCompressionLevel.None,
+                "fast" => PackageCompressionLevel.Fast,
+                "balanced" => PackageCompressionLevel.Balanced,
+                "maximum" or "max" => PackageCompressionLevel.Maximum,
+                _ => PackageCompressionLevel.Balanced
+            };
+        }
+
+        var packager = new PortableDataPackager(cfg.DataRoot);
+
+        // Subscribe to progress events
+        packager.ProgressChanged += (_, progress) =>
+        {
+            var percent = progress.TotalFiles > 0
+                ? (double)progress.FilesProcessed / progress.TotalFiles * 100
+                : 0;
+            Console.Write($"\r[{progress.Stage}] {progress.FilesProcessed}/{progress.TotalFiles} files ({percent:F1}%)    ");
+        };
+
+        var result = await packager.CreatePackageAsync(options);
+
+        Console.WriteLine(); // New line after progress
+
+        if (result.Success)
+        {
+            Console.WriteLine();
+            Console.WriteLine("╔══════════════════════════════════════════════════════════════════════╗");
+            Console.WriteLine("║                    Package Created Successfully                       ║");
+            Console.WriteLine("╚══════════════════════════════════════════════════════════════════════╝");
+            Console.WriteLine();
+            Console.WriteLine($"  Package: {result.PackagePath}");
+            Console.WriteLine($"  Size: {result.PackageSizeBytes:N0} bytes");
+            Console.WriteLine($"  Compression: {result.CompressionRatio:F2}x");
+            Console.WriteLine($"  Files: {result.FilesIncluded:N0}");
+            Console.WriteLine($"  Events: {result.TotalEvents:N0}");
+            Console.WriteLine($"  Symbols: {string.Join(", ", result.Symbols)}");
+            Console.WriteLine($"  Event Types: {string.Join(", ", result.EventTypes)}");
+            if (result.DateRange != null)
+            {
+                Console.WriteLine($"  Date Range: {result.DateRange.Start:yyyy-MM-dd} to {result.DateRange.End:yyyy-MM-dd}");
+            }
+            Console.WriteLine($"  Checksum: {result.PackageChecksum}");
+            Console.WriteLine();
+
+            if (result.Warnings.Length > 0)
+            {
+                Console.WriteLine("Warnings:");
+                foreach (var warning in result.Warnings)
+                {
+                    Console.WriteLine($"  - {warning}");
+                }
+            }
+
+            log.Information("Package created: {PackagePath} ({SizeBytes:N0} bytes, {CompressionRatio:F2}x compression)",
+                result.PackagePath, result.PackageSizeBytes, result.CompressionRatio);
+        }
+        else
+        {
+            Console.Error.WriteLine($"Error: {result.Error}");
+            log.Error("Package creation failed: {Error}", result.Error);
+            Environment.Exit(1);
+        }
+    }
+
+    /// <summary>
+    /// Run the package import command.
+    /// </summary>
+    private static async Task RunImportPackageCommandAsync(AppConfig cfg, string packagePath, string[] args, ILogger log)
+    {
+        log.Information("Importing package: {PackagePath}", packagePath);
+
+        var destinationDir = GetArgValue(args, "--import-destination") ?? cfg.DataRoot;
+        var validateChecksums = !args.Any(a => a.Equals("--skip-validation", StringComparison.OrdinalIgnoreCase));
+        var mergeWithExisting = args.Any(a => a.Equals("--merge", StringComparison.OrdinalIgnoreCase));
+
+        var packager = new PortableDataPackager(cfg.DataRoot);
+
+        // Subscribe to progress events
+        packager.ProgressChanged += (_, progress) =>
+        {
+            var percent = progress.TotalFiles > 0
+                ? (double)progress.FilesProcessed / progress.TotalFiles * 100
+                : 0;
+            Console.Write($"\r[{progress.Stage}] {progress.FilesProcessed}/{progress.TotalFiles} files ({percent:F1}%)    ");
+        };
+
+        var result = await packager.ImportPackageAsync(packagePath, destinationDir, validateChecksums, mergeWithExisting);
+
+        Console.WriteLine(); // New line after progress
+
+        if (result.Success)
+        {
+            Console.WriteLine();
+            Console.WriteLine("╔══════════════════════════════════════════════════════════════════════╗");
+            Console.WriteLine("║                    Package Imported Successfully                      ║");
+            Console.WriteLine("╚══════════════════════════════════════════════════════════════════════╝");
+            Console.WriteLine();
+            Console.WriteLine($"  Source: {result.SourcePath}");
+            Console.WriteLine($"  Destination: {result.DestinationPath}");
+            Console.WriteLine($"  Files Extracted: {result.FilesExtracted:N0}");
+            Console.WriteLine($"  Bytes Extracted: {result.BytesExtracted:N0}");
+            Console.WriteLine($"  Files Validated: {result.FilesValidated:N0}");
+            Console.WriteLine($"  Symbols: {string.Join(", ", result.Symbols)}");
+            Console.WriteLine($"  Event Types: {string.Join(", ", result.EventTypes)}");
+            Console.WriteLine($"  Duration: {result.DurationSeconds:F2} seconds");
+            Console.WriteLine();
+
+            if (result.Warnings.Length > 0)
+            {
+                Console.WriteLine("Warnings:");
+                foreach (var warning in result.Warnings)
+                {
+                    Console.WriteLine($"  - {warning}");
+                }
+            }
+
+            log.Information("Package imported: {FilesExtracted} files, {BytesExtracted:N0} bytes",
+                result.FilesExtracted, result.BytesExtracted);
+        }
+        else
+        {
+            Console.Error.WriteLine($"Error: {result.Error}");
+
+            if (result.ValidationErrors?.Length > 0)
+            {
+                Console.Error.WriteLine("\nValidation Errors:");
+                foreach (var error in result.ValidationErrors)
+                {
+                    Console.Error.WriteLine($"  - {error.FilePath}: {error.Message}");
+                }
+            }
+
+            log.Error("Package import failed: {Error}", result.Error);
+            Environment.Exit(1);
+        }
+    }
+
+    /// <summary>
+    /// Run the list package contents command.
+    /// </summary>
+    private static async Task RunListPackageCommandAsync(string packagePath, ILogger log)
+    {
+        log.Information("Listing package contents: {PackagePath}", packagePath);
+
+        var packager = new PortableDataPackager(".");
+
+        try
+        {
+            var contents = await packager.ListPackageContentsAsync(packagePath);
+
+            Console.WriteLine();
+            Console.WriteLine("╔══════════════════════════════════════════════════════════════════════╗");
+            Console.WriteLine("║                         Package Contents                              ║");
+            Console.WriteLine("╚══════════════════════════════════════════════════════════════════════╝");
+            Console.WriteLine();
+            Console.WriteLine($"  Name: {contents.Name}");
+            Console.WriteLine($"  Package ID: {contents.PackageId}");
+            if (!string.IsNullOrEmpty(contents.Description))
+            {
+                Console.WriteLine($"  Description: {contents.Description}");
+            }
+            Console.WriteLine($"  Created: {contents.CreatedAt:yyyy-MM-dd HH:mm:ss} UTC");
+            Console.WriteLine();
+            Console.WriteLine("  Summary:");
+            Console.WriteLine($"    Total Files: {contents.TotalFiles:N0}");
+            Console.WriteLine($"    Total Events: {contents.TotalEvents:N0}");
+            Console.WriteLine($"    Package Size: {contents.PackageSizeBytes:N0} bytes");
+            Console.WriteLine($"    Uncompressed Size: {contents.UncompressedSizeBytes:N0} bytes");
+            Console.WriteLine();
+            Console.WriteLine($"  Symbols: {string.Join(", ", contents.Symbols)}");
+            Console.WriteLine($"  Event Types: {string.Join(", ", contents.EventTypes)}");
+            if (contents.DateRange != null)
+            {
+                Console.WriteLine($"  Date Range: {contents.DateRange.Start:yyyy-MM-dd} to {contents.DateRange.End:yyyy-MM-dd}");
+                Console.WriteLine($"  Trading Days: {contents.DateRange.TradingDays}");
+            }
+            Console.WriteLine();
+
+            if (contents.Quality != null)
+            {
+                Console.WriteLine("  Quality Metrics:");
+                Console.WriteLine($"    Overall Score: {contents.Quality.OverallScore:F2}");
+                Console.WriteLine($"    Completeness: {contents.Quality.CompletenessScore:F2}");
+                Console.WriteLine($"    Integrity: {contents.Quality.IntegrityScore:F2}");
+                Console.WriteLine($"    Grade: {contents.Quality.Grade}");
+                Console.WriteLine();
+            }
+
+            Console.WriteLine("  Files:");
+            foreach (var file in contents.Files.Take(20)) // Show first 20 files
+            {
+                var size = file.SizeBytes > 1024 * 1024
+                    ? $"{file.SizeBytes / (1024.0 * 1024.0):F1} MB"
+                    : $"{file.SizeBytes / 1024.0:F1} KB";
+                Console.WriteLine($"    {file.Path} ({size}, {file.EventCount:N0} events)");
+            }
+
+            if (contents.Files.Length > 20)
+            {
+                Console.WriteLine($"    ... and {contents.Files.Length - 20} more files");
+            }
+            Console.WriteLine();
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error reading package: {ex.Message}");
+            log.Error(ex, "Failed to list package contents");
+            Environment.Exit(1);
+        }
+    }
+
+    /// <summary>
+    /// Run the validate package command.
+    /// </summary>
+    private static async Task RunValidatePackageCommandAsync(string packagePath, ILogger log)
+    {
+        log.Information("Validating package: {PackagePath}", packagePath);
+
+        var packager = new PortableDataPackager(".");
+        var result = await packager.ValidatePackageAsync(packagePath);
+
+        Console.WriteLine();
+        if (result.IsValid)
+        {
+            Console.WriteLine("╔══════════════════════════════════════════════════════════════════════╗");
+            Console.WriteLine("║                      Package Validation: PASSED                       ║");
+            Console.WriteLine("╚══════════════════════════════════════════════════════════════════════╝");
+            Console.WriteLine();
+            Console.WriteLine($"  Package: {packagePath}");
+            if (result.Manifest != null)
+            {
+                Console.WriteLine($"  Name: {result.Manifest.Name}");
+                Console.WriteLine($"  Package ID: {result.Manifest.PackageId}");
+                Console.WriteLine($"  Files: {result.Manifest.TotalFiles:N0}");
+                Console.WriteLine($"  Events: {result.Manifest.TotalEvents:N0}");
+            }
+            Console.WriteLine();
+            log.Information("Package validation passed: {PackagePath}", packagePath);
+        }
+        else
+        {
+            Console.WriteLine("╔══════════════════════════════════════════════════════════════════════╗");
+            Console.WriteLine("║                      Package Validation: FAILED                       ║");
+            Console.WriteLine("╚══════════════════════════════════════════════════════════════════════╝");
+            Console.WriteLine();
+            Console.WriteLine($"  Package: {packagePath}");
+
+            if (!string.IsNullOrEmpty(result.Error))
+            {
+                Console.WriteLine($"  Error: {result.Error}");
+            }
+
+            if (result.Issues?.Length > 0)
+            {
+                Console.WriteLine("\n  Issues:");
+                foreach (var issue in result.Issues)
+                {
+                    Console.WriteLine($"    - {issue}");
+                }
+            }
+
+            if (result.MissingFiles?.Length > 0)
+            {
+                Console.WriteLine("\n  Missing Files:");
+                foreach (var file in result.MissingFiles.Take(10))
+                {
+                    Console.WriteLine($"    - {file}");
+                }
+                if (result.MissingFiles.Length > 10)
+                {
+                    Console.WriteLine($"    ... and {result.MissingFiles.Length - 10} more");
+                }
+            }
+
+            Console.WriteLine();
+            log.Warning("Package validation failed: {PackagePath}", packagePath);
+            Environment.Exit(1);
+        }
     }
 
     /// <summary>
