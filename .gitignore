@@ -85,3 +85,12 @@ publish/
 
 # Node.js (for diagram generation scripts)
 node_modules/
+
+# Python (for build-system scripts)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
