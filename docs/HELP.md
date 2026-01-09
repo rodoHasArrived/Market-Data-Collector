@@ -8,42 +8,72 @@ Welcome to the Market Data Collector! This comprehensive guide will help you get
 - [Quick Start](#quick-start)
 - [Installation](#installation)
 - [Configuration](#configuration)
+  - [Configuration File](#configuration-file-location)
+  - [Environment Variables](#environment-variables)
+  - [Hot Reload](#hot-reload)
 - [Data Providers](#data-providers)
+  - [Interactive Brokers](#interactive-brokers-ib)
+  - [Alpaca](#alpaca)
+  - [Polygon](#polygon)
+  - [NYSE](#nyse)
+  - [StockSharp](#stocksharp)
 - [Multi-Provider Support](#multi-provider-support)
+  - [Simultaneous Connections](#simultaneous-connections)
   - [Circuit Breaker Pattern](#circuit-breaker-pattern-v13)
   - [Concurrent Provider Executor](#concurrent-provider-executor-v13)
-- [Storage Settings](#storage-settings)
-- [Symbol Management](#symbol-management)
 - [Historical Backfill](#historical-backfill)
+  - [Backfill Providers](#backfill-providers)
   - [Priority Backfill Queue](#priority-backfill-queue-v13)
   - [Data Gap Detection & Repair](#data-gap-detection--repair-v13)
   - [Data Quality Monitoring](#data-quality-monitoring-v13)
+- [Storage Settings](#storage-settings)
+  - [Naming Conventions](#naming-conventions)
+  - [Date Partitioning](#date-partitioning)
+  - [Compression](#compression)
+- [Symbol Management](#symbol-management)
+- [Archival-First Storage](#archival-first-storage-v15)
+- [Analysis-Ready Exports](#analysis-ready-exports-v15)
+- [QuantConnect Lean Integration](#quantconnect-lean-integration)
+- [Microservices Architecture](#microservices-architecture)
 - [Offline Storage & Archival](#offline-storage--archival)
 - [Web Dashboard](#web-dashboard)
 - [Windows Desktop App](#windows-desktop-app)
 - [Command Line Usage](#command-line-usage)
+- [Makefile Commands](#makefile-commands)
+- [Health Endpoints & Monitoring](#health-endpoints--monitoring)
+- [Security Best Practices](#security-best-practices)
 - [Troubleshooting](#troubleshooting)
 - [FAQ](#faq)
+- [Support and Resources](#support-and-resources)
+
+---
 
 ## Overview
 
-Market Data Collector is a high-performance system for capturing real-time and historical market data. It supports multiple data providers and offers flexible storage options for researchers, traders, and quantitative analysts.
+Market Data Collector is a high-performance, cross-platform market data collection system built on **.NET 9.0** using **C# 11** and **F# 8.0**. It captures real-time and historical market microstructure data from multiple providers and persists it for downstream research, backtesting, and algorithmic trading.
+
+**Version:** 1.5.0 | **Status:** Production Ready
 
 ### Key Features
 
-- **Multi-Provider Support**: Interactive Brokers, Alpaca, and Polygon
+- **Multi-Provider Support**: Interactive Brokers, Alpaca, NYSE, Polygon, and StockSharp
 - **Simultaneous Connections**: Connect to multiple providers at once for comparison and failover
 - **Real-Time Data Collection**: Tick-by-tick trades, Level 2 order books, and quotes
-- **Historical Backfill**: Download historical data to fill gaps
-- **Flexible Storage**: Multiple file organization strategies
+- **Historical Backfill**: Download historical data from 9+ providers with automatic gap repair
+- **Archival-First Storage**: Write-Ahead Logging (WAL) for crash-safe persistence
+- **Flexible Storage**: Multiple file organization strategies with tiered compression
+- **Analysis-Ready Exports**: Export to Python/Pandas, R, QuantConnect Lean, PostgreSQL
 - **Offline Storage & Archival**: Portable packages, data completeness calendar, archive browser
 - **Batch Export Scheduler**: Automate recurring exports with format conversion
-- **Automatic Failover**: Configure failover rules between providers
+- **Automatic Failover**: Configure failover rules between providers with circuit breaker pattern
 - **Web Dashboard**: Easy-to-use interface for configuration and monitoring
 - **Windows Desktop App**: Native UWP/XAML application with secure credential management
+- **Microservices Architecture**: Scalable decomposition with MassTransit messaging
 - **High Performance**: Event-driven architecture with backpressure handling
-- **Production Ready**: Comprehensive error handling, logging, and monitoring
+- **Production Ready**: Comprehensive error handling, logging, and Prometheus metrics
 - **Secure Credentials**: Windows CredentialPicker integration for API keys
+
+---
 
 ## Quick Start
 
@@ -54,7 +84,14 @@ Market Data Collector is a high-performance system for capturing real-time and h
 The easiest way to get started is with the web dashboard:
 
 ```bash
+# Using the compiled executable
 ./MarketDataCollector --ui
+
+# Or using dotnet run
+dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --ui --http-port 8080
+
+# Or using Make
+make run-ui
 ```
 
 Then open your browser to `http://localhost:8080`
@@ -69,9 +106,12 @@ dotnet run --project src/MarketDataCollector.Uwp/MarketDataCollector.Uwp.csproj
 
 ### 2. Configure Your Data Provider
 
-Choose between:
+Choose your preferred real-time data provider:
 - **Interactive Brokers**: Best for Level 2 market depth data
 - **Alpaca**: Best for real-time US equities with free tier available
+- **Polygon**: Comprehensive market data with tick-level granularity
+- **NYSE**: Direct exchange feeds for NYSE-listed securities
+- **StockSharp**: Multi-exchange connectivity with unified API
 
 ### 3. Add Symbols to Track
 
@@ -89,12 +129,14 @@ Run the collector in production mode:
 ./MarketDataCollector --serve-status --watch-config
 ```
 
+---
+
 ## Installation
 
 ### Prerequisites
 
 - **Operating System**: Windows, Linux, or macOS
-- **.NET Runtime**: Included in the single executable (self-contained)
+- **.NET Runtime**: .NET 9.0 (included in self-contained builds)
 - **Disk Space**: Depends on the number of symbols and data retention
 - **Network**: Internet connection for data providers
 
@@ -112,16 +154,38 @@ Run the collector in production mode:
 
 3. Create configuration file:
    ```bash
-   cp appsettings.sample.json appsettings.json
+   cp config/appsettings.sample.json config/appsettings.json
    ```
 
-4. Edit `appsettings.json` with your settings
+4. Edit `config/appsettings.json` with your settings
+
+### Building from Source
+
+```bash
+# Clone the repository
+git clone https://github.com/your-org/Market-Data-Collector.git
+cd Market-Data-Collector
+
+# Build in Release mode
+dotnet build -c Release
+
+# Or using Make
+make build
+
+# Run tests
+make test
+```
+
+---
 
 ## Configuration
 
 ### Configuration File Location
 
-The application looks for `appsettings.json` in the same directory as the executable.
+The application looks for `appsettings.json` in these locations (in order):
+1. `./config/appsettings.json` (recommended)
+2. `./appsettings.json`
+3. Same directory as the executable
 
 ### Basic Configuration
 
@@ -150,15 +214,49 @@ The application looks for `appsettings.json` in the same directory as the execut
 |--------|------|---------|-------------|
 | `DataRoot` | string | "data" | Directory where market data will be stored |
 | `Compress` | boolean | false | Enable gzip compression for storage files |
-| `DataSource` | string | "IB" | Data provider: "IB", "Alpaca", or "Polygon" |
+| `DataSource` | string | "IB" | Data provider: "IB", "Alpaca", "Polygon", "NYSE", or "StockSharp" |
 | `Symbols` | array | [] | List of symbols to collect data for |
+
+### Environment Variables
+
+API credentials should be set via environment variables for security. Use double underscore (`__`) for nested configuration sections.
+
+```bash
+# Interactive Brokers
+export IB_HOST=127.0.0.1
+export IB_PORT=7497
+export IB_CLIENT_ID=17
+
+# Alpaca
+export ALPACA__KEYID=your-key-id
+export ALPACA__SECRETKEY=your-secret-key
+
+# Polygon
+export POLYGON__APIKEY=your-api-key
+
+# NYSE
+export NYSE__APIKEY=your-api-key
+
+# Tiingo (for historical backfill)
+export TIINGO__TOKEN=your-token
+
+# Alpha Vantage
+export ALPHAVANTAGE__APIKEY=your-api-key
+
+# Finnhub
+export FINNHUB__APIKEY=your-api-key
+```
+
+**Note:** Environment variables override values in `appsettings.json`.
 
 ### Hot Reload
 
 When running with `--watch-config`, the application will automatically reload configuration changes without restarting. This allows you to:
 - Add or remove symbols
 - Change storage settings
-- Update provider credentials
+- Update provider credentials (when using file-based config)
+
+---
 
 ## Data Providers
 
@@ -184,7 +282,7 @@ When running with `--watch-config`, the application will automatically reload co
    }
    ```
 
-4. Set environment variables (optional):
+4. Set environment variables:
    ```bash
    export IB_HOST=127.0.0.1
    export IB_PORT=7497
@@ -192,10 +290,12 @@ When running with `--watch-config`, the application will automatically reload co
    ```
 
 **Supported Data Types:**
-- ✅ Tick-by-tick trades
-- ✅ Level 2 market depth (order book)
-- ✅ Best bid/offer quotes
-- ✅ Market microstructure data
+- Tick-by-tick trades
+- Level 2 market depth (order book)
+- Best bid/offer quotes
+- Market microstructure data
+
+See [docs/providers/interactive-brokers-setup.md](providers/interactive-brokers-setup.md) for detailed setup instructions.
 
 ### Alpaca
 
@@ -222,23 +322,114 @@ When running with `--watch-config`, the application will automatically reload co
 }
 ```
 
+**Or via environment variables (recommended):**
+```bash
+export ALPACA__KEYID=your-key-id
+export ALPACA__SECRETKEY=your-secret-key
+```
+
 **Feed Options:**
 - `iex`: Free IEX feed (delayed)
 - `sip`: Paid SIP feed (real-time)
 - `delayed_sip`: Delayed SIP feed
 
 **Supported Data Types:**
-- ✅ Real-time trades
-- ✅ Real-time quotes
-- ✅ Bar/candlestick data
+- Real-time trades
+- Real-time quotes
+- Bar/candlestick data
+
+See [docs/providers/alpaca-setup.md](providers/alpaca-setup.md) for detailed setup instructions.
 
 ### Polygon
 
-**Note:** Polygon support is in development. IB and Alpaca are recommended for production use.
+**Requirements:**
+- Polygon.io account
+- API key from Polygon dashboard
+
+**Setup:**
+
+```json
+{
+  "DataSource": "Polygon",
+  "Polygon": {
+    "ApiKey": "YOUR_API_KEY",
+    "WebSocketUrl": "wss://socket.polygon.io/stocks"
+  }
+}
+```
+
+**Or via environment variables:**
+```bash
+export POLYGON__APIKEY=your-api-key
+```
+
+**Supported Data Types:**
+- Real-time trades
+- Real-time quotes
+- Aggregates (bars)
+- Options data (with appropriate subscription)
+
+### NYSE
+
+**Requirements:**
+- NYSE market data subscription
+- API credentials from NYSE
+
+**Setup:**
+
+```json
+{
+  "DataSource": "NYSE",
+  "NYSE": {
+    "ApiKey": "YOUR_API_KEY",
+    "Endpoint": "wss://feeds.nyse.com"
+  }
+}
+```
+
+**Or via environment variables:**
+```bash
+export NYSE__APIKEY=your-api-key
+```
+
+**Supported Data Types:**
+- Direct exchange trades
+- Order book snapshots
+- Market depth
+
+### StockSharp
+
+**Requirements:**
+- StockSharp connectors installed
+- Broker/exchange credentials
+
+**Setup:**
+
+```json
+{
+  "DataSource": "StockSharp",
+  "StockSharp": {
+    "Connector": "IQFeed",
+    "ConnectionSettings": {
+      "Server": "127.0.0.1",
+      "Port": 9100
+    }
+  }
+}
+```
+
+**Supported Connectors:**
+- IQFeed
+- LMAX
+- Oanda
+- FXCM
+- And many more (see StockSharp documentation)
+
+---
 
 ## Multi-Provider Support
 
-Market Data Collector v1.2 introduces the ability to connect to multiple data providers simultaneously for enhanced data quality and reliability.
+Market Data Collector v1.2+ supports connecting to multiple data providers simultaneously for enhanced data quality and reliability.
 
 ### Simultaneous Connections
 
@@ -387,6 +578,130 @@ Different providers may use different symbols for the same security. Configure m
 
 **Import/Export:** Use CSV for bulk symbol mapping management.
 
+---
+
+## Historical Backfill
+
+Download historical data to fill gaps or get initial dataset.
+
+### Using the Web Dashboard
+
+1. Navigate to "Historical Backfill" section
+2. Select provider from dropdown
+3. Enter comma-separated symbols: `AAPL,MSFT,TSLA`
+4. Select date range
+5. Click "Start Backfill"
+
+### Using Command Line
+
+```bash
+./MarketDataCollector --backfill \
+  --backfill-provider stooq \
+  --backfill-symbols AAPL,MSFT \
+  --backfill-from 2024-01-01 \
+  --backfill-to 2024-12-31
+```
+
+### Using Makefile
+
+```bash
+make run-backfill SYMBOLS=SPY,AAPL PROVIDER=tiingo FROM=2024-01-01 TO=2024-12-31
+```
+
+### Backfill Providers
+
+Available historical data providers (in priority order):
+
+| Provider | Free Tier | Data Types | Rate Limits | Notes |
+|----------|-----------|------------|-------------|-------|
+| **Alpaca** | Yes (with account) | Bars, trades, quotes | 200/min | Best for recent data |
+| **Polygon** | Limited | Bars, trades, quotes, aggregates | Varies | Comprehensive coverage |
+| **Tiingo** | Yes | Daily bars | 500/hour | Good for daily OHLCV |
+| **Yahoo Finance** | Yes | Daily bars | Unofficial | Unofficial API |
+| **Stooq** | Yes | Daily bars | Low | US equities, indices, ETFs |
+| **Finnhub** | Yes | Daily bars | 60/min | Wide coverage |
+| **Alpha Vantage** | Yes | Daily bars | 5/min | Slow but reliable |
+| **Nasdaq Data Link** | Limited | Various | Varies | Premium data available |
+
+**Configure fallback chain:**
+```json
+{
+  "Backfill": {
+    "ProviderPriority": ["alpaca", "tiingo", "stooq", "yahoo"]
+  }
+}
+```
+
+### Backfill Data Format
+
+Historical bars are converted to the same JSONL format as real-time data for consistency:
+
+```json
+{"timestamp":"2024-01-15T21:00:00Z","symbol":"AAPL","type":"HistoricalBar","open":150.0,"high":152.5,"low":149.5,"close":151.75,"volume":50000000}
+```
+
+### Priority Backfill Queue (v1.3)
+
+Sophisticated job scheduling with priority levels and dependencies:
+
+**Priority Levels:**
+| Priority | Value | Use Case |
+|----------|-------|----------|
+| Critical | 0 | System-critical gaps |
+| High | 10 | User-requested immediate |
+| Normal | 50 | Standard backfill |
+| Low | 100 | Background fill |
+| Deferred | 200 | Fill when idle |
+
+**Features:**
+- Dependency chains between jobs
+- Automatic retry with exponential backoff
+- Pause/resume individual jobs
+- Concurrent execution with limits
+
+### Data Gap Detection & Repair (v1.3)
+
+Automatically detect and repair gaps in historical data:
+
+**Gap Detection:**
+- Compares stored data against trading calendar
+- Identifies missing dates and partial data
+- Calculates coverage percentage
+
+**Gap Repair:**
+- Fetches missing data from alternate providers
+- Configurable provider priority
+- Continues on individual failures
+- Rate-limit aware with request delays
+
+**Gap Types:**
+| Type | Severity | Description |
+|------|----------|-------------|
+| Missing | Critical | No data for date |
+| Partial | Warning | Incomplete data |
+| Holiday | Info | Expected market closure |
+
+### Data Quality Monitoring (v1.3)
+
+Multi-dimensional quality scoring for all stored data:
+
+**Quality Dimensions:**
+| Dimension | Weight | Checks |
+|-----------|--------|--------|
+| Completeness | 30% | Gap coverage |
+| Accuracy | 25% | Price ranges, OHLCV validity |
+| Timeliness | 20% | Data freshness |
+| Consistency | 15% | Duplicate detection |
+| Validity | 10% | Format, constraints |
+
+**Quality Grades:** A+ (95%+) to F (<50%)
+
+**Alerts:** Automatic alerts when quality drops below threshold (default: 80%)
+
+See [docs/providers/backfill-guide.md](providers/backfill-guide.md) for detailed backfill documentation.
+
+---
+
 ## Storage Settings
 
 ### Naming Conventions
@@ -457,6 +772,10 @@ All data is stored in **JSON Lines (JSONL)** format:
 {"timestamp":"2024-01-15T14:30:00.123Z","symbol":"AAPL","type":"Trade","price":150.25,"size":100,"aggressorSide":"Buy"}
 ```
 
+See [docs/architecture/storage-design.md](architecture/storage-design.md) for detailed storage architecture.
+
+---
+
 ## Symbol Management
 
 ### Adding Symbols
@@ -505,101 +824,235 @@ Click the "Delete" button next to the symbol
 #### Via Configuration File:
 Remove the symbol object from the `Symbols` array
 
-## Historical Backfill
+---
 
-Download historical data to fill gaps or get initial dataset.
+## Archival-First Storage (v1.5)
 
-### Using the Web Dashboard
+Market Data Collector v1.5 introduces an archival-first storage pipeline designed for crash-safe, long-term data preservation.
 
-1. Navigate to "Historical Backfill" section
-2. Select provider (currently: Stooq)
-3. Enter comma-separated symbols: `AAPL,MSFT,TSLA`
-4. Select date range
-5. Click "Start Backfill"
+### Write-Ahead Logging (WAL)
 
-### Using Command Line
-
-```bash
-./MarketDataCollector --backfill \
-  --backfill-provider stooq \
-  --backfill-symbols AAPL,MSFT \
-  --backfill-from 2024-01-01 \
-  --backfill-to 2024-12-31
-```
-
-### Backfill Providers
-
-#### Stooq
-- **Type:** Free end-of-day data
-- **Coverage:** US equities, indices, ETFs
-- **Resolution:** Daily bars
-- **Delay:** End of day
-
-### Backfill Data Format
-
-Historical bars are converted to the same JSONL format as real-time data for consistency:
-
-```json
-{"timestamp":"2024-01-15T21:00:00Z","symbol":"AAPL","type":"HistoricalBar","open":150.0,"high":152.5,"low":149.5,"close":151.75,"volume":50000000}
-```
-
-### Priority Backfill Queue (v1.3)
-
-Sophisticated job scheduling with priority levels and dependencies:
-
-**Priority Levels:**
-| Priority | Value | Use Case |
-|----------|-------|----------|
-| Critical | 0 | System-critical gaps |
-| High | 10 | User-requested immediate |
-| Normal | 50 | Standard backfill |
-| Low | 100 | Background fill |
-| Deferred | 200 | Fill when idle |
+All market events are written to a Write-Ahead Log before being committed to primary storage:
 
 **Features:**
-- Dependency chains between jobs
-- Automatic retry with exponential backoff
-- Pause/resume individual jobs
-- Concurrent execution with limits
+- Crash-safe persistence with transaction semantics
+- Per-record SHA256 checksums for integrity verification
+- Configurable sync modes for durability vs. performance tradeoff
+- Automatic recovery of uncommitted records after crash
 
-### Data Gap Detection & Repair (v1.3)
+**Configuration:**
+```json
+{
+  "Archival": {
+    "EnableWal": true,
+    "SyncMode": "BatchedSync",
+    "SyncBatchSize": 1000,
+    "MaxFlushDelay": "00:00:05"
+  }
+}
+```
 
-Automatically detect and repair gaps in historical data:
+**Sync Modes:**
+- **NoSync**: Fastest, relies on OS buffering
+- **BatchedSync**: Balanced performance and durability (default)
+- **EveryWrite**: Maximum durability, slowest
 
-**Gap Detection:**
-- Compares stored data against trading calendar
-- Identifies missing dates and partial data
-- Calculates coverage percentage
+### Compression Profiles
 
-**Gap Repair:**
-- Fetches missing data from alternate providers
-- Configurable provider priority
-- Continues on individual failures
-- Rate-limit aware with request delays
+Optimize storage based on access patterns with tier-specific compression:
 
-**Gap Types:**
-| Type | Severity | Description |
-|------|----------|-------------|
-| Missing | Critical | No data for date |
-| Partial | Warning | Incomplete data |
-| Holiday | Info | Expected market closure |
+**Pre-built Profiles:**
+| Profile | Codec | Level | Speed | Ratio | Use Case |
+|---------|-------|-------|-------|-------|----------|
+| Real-Time Collection | LZ4 | 1 | ~500 MB/s | 2.5x | Live data capture |
+| Warm Archive | ZSTD | 6 | ~150 MB/s | 5x | Frequently accessed data |
+| Cold Archive | ZSTD | 19 | ~20 MB/s | 10x | Long-term storage |
+| High-Volume Symbols | ZSTD | 3 | ~300 MB/s | 3.5x | SPY, QQQ, AAPL, etc. |
+| Portable Export | Gzip | 6 | ~100 MB/s | 6x | Maximum compatibility |
 
-### Data Quality Monitoring (v1.3)
+### Schema Versioning
 
-Multi-dimensional quality scoring for all stored data:
+Ensure long-term data compatibility with schema versioning:
 
-**Quality Dimensions:**
-| Dimension | Weight | Checks |
-|-----------|--------|--------|
-| Completeness | 30% | Gap coverage |
-| Accuracy | 25% | Price ranges, OHLC validity |
-| Timeliness | 20% | Data freshness |
-| Consistency | 15% | Duplicate detection |
-| Validity | 10% | Format, constraints |
+**Features:**
+- Semantic versioning for all event types (e.g., Trade v1.0.0, v2.0.0)
+- Automatic migration between schema versions
+- JSON Schema export for external tool integration
+- Schema registry with version history
 
-**Quality Grades:** A+ (95%+) to F (<50%)
+**Built-in Schemas:**
+- Trade v1.0.0: Basic trade event
+- Trade v2.0.0: Extended with TradeId and Conditions
+- Quote v1.0.0: Best bid/offer quote
 
-**Alerts:** Automatic alerts when quality drops below threshold (default: 80%)
+---
+
+## Analysis-Ready Exports (v1.5)
+
+Export collected data in formats optimized for external analysis tools.
+
+### Export Profiles
+
+**Python/Pandas:**
+- Format: Parquet with datetime64[ns]
+- Compression: Snappy
+- Includes: `load_data.py` loader script
+
+**R Statistics:**
+- Format: CSV with proper NA handling
+- Timestamps: ISO 8601
+- Includes: `load_data.R` loader script
+
+**QuantConnect Lean:**
+- Format: Native Lean data format
+- Structure: `/equity/usa/tick/{symbol}/{date}_{type}.zip`
+- Resolution: Tick-level data
+
+**PostgreSQL/TimescaleDB:**
+- Format: CSV with COPY command
+- Includes: `create_tables.sql` DDL script
+- Includes: `load_data.sh` loader script
+
+**Microsoft Excel:**
+- Format: XLSX with multiple sheets
+- Max records: 1,000,000 per file
+
+### Data Quality Reports
+
+Generate analysis-focused quality reports with each export:
+
+**Generated Reports:**
+- `quality_report.md` - Human-readable summary
+- `quality_report.json` - Machine-readable data
+- `outliers.csv` - Detected price outliers (>4σ)
+- `gaps.csv` - Data gap inventory
+- `quality_issues.csv` - Issue tracker
+
+**Quality Metrics:**
+- Completeness scoring (% of expected trading time)
+- Outlier detection with Z-scores
+- Gap classification (weekend, overnight, unexpected)
+- Descriptive statistics (mean, median, percentiles)
+- Quality grading (A+ to F)
+
+**Recommendations:**
+- Suitability assessment for backtesting, ML training, research
+- Preprocessing suggestions for detected issues
+
+### Running an Export
+
+**Via Web Dashboard:**
+1. Navigate to "Data Export" section
+2. Select export profile (Python, R, Lean, etc.)
+3. Choose symbols and date range
+4. Click "Export"
+5. Download data package with quality report
+
+**Via Command Line:**
+```bash
+./MarketDataCollector --export \
+  --profile python-pandas \
+  --symbols AAPL,MSFT \
+  --from 2026-01-01 \
+  --to 2026-01-31 \
+  --output ./exports
+```
+
+---
+
+## QuantConnect Lean Integration
+
+Market Data Collector integrates with the QuantConnect Lean Engine for backtesting and algorithmic trading.
+
+### Setup
+
+1. Install QuantConnect Lean Engine
+2. Configure Lean data path:
+
+```json
+{
+  "Lean": {
+    "DataPath": "/path/to/Lean/Data",
+    "Resolution": "Tick",
+    "Format": "Native"
+  }
+}
+```
+
+### Export to Lean Format
+
+```bash
+./MarketDataCollector --export \
+  --profile quantconnect-lean \
+  --symbols SPY,AAPL \
+  --from 2024-01-01 \
+  --to 2024-12-31 \
+  --output /path/to/Lean/Data
+```
+
+### Data Structure
+
+Lean expects data in this structure:
+```
+Data/
+├── equity/
+│   └── usa/
+│       ├── tick/
+│       │   └── spy/
+│       │       ├── 20240115_trade.zip
+│       │       └── 20240115_quote.zip
+│       └── daily/
+│           └── spy.zip
+```
+
+See [docs/integrations/lean-integration.md](integrations/lean-integration.md) for detailed Lean integration documentation.
+
+---
+
+## Microservices Architecture
+
+For large-scale deployments, Market Data Collector can run as a distributed microservices architecture.
+
+### Services
+
+| Service | Port | Description |
+|---------|------|-------------|
+| Gateway | 5000 | API Gateway and load balancer |
+| TradeIngestion | 5001 | Trade data processing |
+| QuoteIngestion | 5002 | Quote data processing |
+| OrderBookIngestion | 5003 | Order book management |
+| HistoricalDataIngestion | 5004 | Historical data backfill |
+| DataValidation | 5005 | Data quality and validation |
+
+### Running Microservices
+
+```bash
+# Using Docker Compose
+cd src/Microservices
+docker-compose -f docker-compose.microservices.yml up
+
+# Or run individual services
+dotnet run --project src/Microservices/TradeIngestion
+```
+
+### Messaging
+
+Services communicate via MassTransit with RabbitMQ:
+
+```json
+{
+  "MassTransit": {
+    "Host": "localhost",
+    "VirtualHost": "/",
+    "Username": "guest",
+    "Password": "guest"
+  }
+}
+```
+
+See [docs/ai-assistants/CLAUDE.microservices.md](ai-assistants/CLAUDE.microservices.md) for detailed microservices documentation.
+
+---
 
 ## Offline Storage & Archival
 
@@ -649,11 +1102,11 @@ Visualize data coverage and identify gaps across your archive:
 - Completeness scoring (0-100%)
 
 **Completeness Status Colors:**
-- 🟢 **Green (>99%)**: Complete data
-- 🟡 **Yellow (95-99%)**: Minor gaps
-- 🟠 **Orange (80-95%)**: Significant gaps
-- 🔴 **Red (<80%)**: Major issues
-- ⚫ **Gray**: Non-trading day (weekend/holiday)
+- **Green (>99%)**: Complete data
+- **Yellow (95-99%)**: Minor gaps
+- **Orange (80-95%)**: Significant gaps
+- **Red (<80%)**: Major issues
+- **Gray**: Non-trading day (weekend/holiday)
 
 **Via UWP Desktop App:**
 1. Navigate to "Data Completeness" page
@@ -724,6 +1177,8 @@ Automate recurring data exports:
 3. Configure schedule and format
 4. Monitor job status and history
 
+---
+
 ## Web Dashboard
 
 ### Starting the Dashboard
@@ -771,9 +1226,11 @@ Access at: `http://localhost:8080`
 ### Dashboard Notifications
 
 The dashboard shows toast notifications for:
-- ✅ Successful operations
-- ❌ Errors and failures
-- ℹ️ Informational messages
+- Successful operations
+- Errors and failures
+- Informational messages
+
+---
 
 ## Windows Desktop App
 
@@ -868,6 +1325,8 @@ The desktop app uses Windows CredentialPicker for secure API key management:
 - Quick configuration changes
 - Existing browser workflow
 
+---
+
 ## Command Line Usage
 
 ### Basic Modes
@@ -905,12 +1364,15 @@ The desktop app uses Windows CredentialPicker for secure API key management:
 | `--backfill` | Run historical data backfill |
 | `--replay <path>` | Replay events from JSONL file |
 | `--selftest` | Run system self-tests |
+| `--export` | Export data to analysis format |
 | `--http-port <port>` | Set HTTP server port (default: 8080) |
 | `--status-port <port>` | Set status endpoint port |
 | `--backfill-provider <name>` | Backfill provider to use |
 | `--backfill-symbols <list>` | Comma-separated symbols to backfill |
 | `--backfill-from <date>` | Backfill start date (YYYY-MM-DD) |
 | `--backfill-to <date>` | Backfill end date (YYYY-MM-DD) |
+| `--profile <name>` | Export profile (python-pandas, r-stats, quantconnect-lean) |
+| `--output <path>` | Export output directory |
 
 ### Examples
 
@@ -932,6 +1394,197 @@ The desktop app uses Windows CredentialPicker for secure API key management:
 ./MarketDataCollector --serve-status --watch-config --http-port 9090
 ```
 
+**Export to Python/Pandas format:**
+```bash
+./MarketDataCollector --export \
+  --profile python-pandas \
+  --symbols SPY,AAPL \
+  --output ./exports
+```
+
+---
+
+## Makefile Commands
+
+The project includes a Makefile for common tasks:
+
+### Build & Test
+
+```bash
+make build        # Build the project in Release mode
+make test         # Run all tests
+make test-fsharp  # Run F# tests only
+make clean        # Clean build artifacts
+```
+
+### Run Application
+
+```bash
+make run          # Run with default settings
+make run-ui       # Run with web dashboard
+make run-backfill # Run historical backfill
+```
+
+### Docker
+
+```bash
+make docker       # Build and run Docker container
+make docker-build # Build Docker image only
+make docker-push  # Push to container registry
+```
+
+### Documentation
+
+```bash
+make docs         # Generate documentation
+make verify-adrs  # Verify ADR compliance
+```
+
+### Diagnostics
+
+```bash
+make doctor       # Run full diagnostic check
+make diagnose     # Build diagnostics
+make metrics      # Show build metrics
+make help         # Show all available commands
+```
+
+---
+
+## Health Endpoints & Monitoring
+
+### Health Endpoints
+
+When running with `--serve-status`, the following endpoints are available:
+
+| Endpoint | Description |
+|----------|-------------|
+| `/` | HTML dashboard (auto-refreshing) |
+| `/status` | JSON status with metrics |
+| `/metrics` | Prometheus metrics |
+| `/health` | Health check (returns 200 if healthy) |
+| `/ready` | Readiness probe (Kubernetes) |
+| `/live` | Liveness probe (Kubernetes) |
+
+### Status Endpoint
+
+```bash
+curl http://localhost:8080/status | jq .
+```
+
+**Response:**
+```json
+{
+  "timestampUtc": "2024-01-15T14:30:00Z",
+  "isConnected": true,
+  "provider": "Alpaca",
+  "uptime": "02:15:30",
+  "metrics": {
+    "published": 150000,
+    "dropped": 0,
+    "integrity": 5,
+    "historicalBars": 1000
+  }
+}
+```
+
+### Prometheus Metrics
+
+```bash
+curl http://localhost:8080/metrics
+```
+
+**Available Metrics:**
+- `marketdata_trades_total` - Total trades processed
+- `marketdata_quotes_total` - Total quotes processed
+- `marketdata_depth_updates_total` - Total order book updates
+- `marketdata_latency_seconds` - Processing latency histogram
+- `marketdata_connection_status` - Connection state (0/1)
+- `marketdata_backpressure_events_total` - Backpressure events
+
+### Prometheus/Grafana Integration
+
+Deploy the provided monitoring stack:
+
+```bash
+cd deploy/monitoring
+docker-compose up -d
+```
+
+Access Grafana at `http://localhost:3000` (default: admin/admin)
+
+---
+
+## Security Best Practices
+
+### Credential Management
+
+1. **Never store credentials in code or config files**
+   - Use environment variables for API keys
+   - Use Windows Credential Manager for desktop app
+   - Use secrets management (Vault, AWS Secrets Manager) in production
+
+2. **Environment Variable Setup**
+   ```bash
+   # Create a .env file (add to .gitignore!)
+   echo "ALPACA__KEYID=your-key" >> .env
+   echo "ALPACA__SECRETKEY=your-secret" >> .env
+
+   # Load in shell
+   export $(cat .env | xargs)
+   ```
+
+3. **Docker Secrets**
+   ```yaml
+   services:
+     collector:
+       environment:
+         - ALPACA__KEYID_FILE=/run/secrets/alpaca_key
+       secrets:
+         - alpaca_key
+   ```
+
+### Network Security
+
+1. **Use TLS for remote connections**
+   ```json
+   {
+     "Https": {
+       "Enabled": true,
+       "CertPath": "/path/to/cert.pem",
+       "KeyPath": "/path/to/key.pem"
+     }
+   }
+   ```
+
+2. **Firewall configuration**
+   - Only expose required ports (8080 for dashboard)
+   - Use private networks for provider connections
+
+3. **API rate limiting**
+   - Configure rate limits to avoid provider bans
+   - Use built-in rate limit tracking
+
+### Data Security
+
+1. **Encrypt archived data**
+   ```json
+   {
+     "Archival": {
+       "Encryption": {
+         "Enabled": true,
+         "Algorithm": "AES-256-GCM"
+       }
+     }
+   }
+   ```
+
+2. **Backup verification**
+   - Regularly verify backup integrity
+   - Test restore procedures
+
+---
+
 ## Troubleshooting
 
 ### Common Issues
@@ -942,8 +1595,8 @@ The desktop app uses Windows CredentialPicker for secure API key management:
 
 **Solution:**
 ```bash
-cp appsettings.sample.json appsettings.json
-# Edit appsettings.json with your settings
+cp config/appsettings.sample.json config/appsettings.json
+# Edit config/appsettings.json with your settings
 ```
 
 #### 2. "Connection failed to Interactive Brokers"
@@ -969,6 +1622,7 @@ cp appsettings.sample.json appsettings.json
 1. Verify credentials in Alpaca dashboard
 2. Check `UseSandbox` setting matches your credentials
 3. Ensure KeyId and SecretKey are correct
+4. Verify environment variables are set: `echo $ALPACA__KEYID`
 
 #### 4. "Permission denied writing to data directory"
 
@@ -978,7 +1632,9 @@ cp appsettings.sample.json appsettings.json
 ```bash
 # Linux/macOS
 chmod 755 ./data
+
 # Or specify a different directory you have access to
+mkdir -p ~/market-data && chmod 755 ~/market-data
 ```
 
 #### 5. "High CPU usage"
@@ -986,11 +1642,13 @@ chmod 755 ./data
 **Causes:**
 - Too many symbols with high-frequency updates
 - Insufficient system resources
+- Market depth subscriptions on many symbols
 
 **Solution:**
 1. Reduce number of subscribed symbols
 2. Disable market depth for some symbols (depth is more resource-intensive)
 3. Increase system resources
+4. Check `EventPipeline` channel capacity in logs
 
 #### 6. "Data files not being created"
 
@@ -1003,7 +1661,7 @@ chmod 755 ./data
 1. Check system status in dashboard
 2. Verify provider connection is established
 3. Confirm symbols are correctly configured
-4. Check logs for errors
+4. Check logs for errors: `tail -f data/_logs/*.log`
 
 #### 7. "dotnet restore or build failures"
 
@@ -1015,17 +1673,17 @@ chmod 755 ./data
 
 **Solution:**
 
-To diagnose build or restore issues, use the `-v diag` flag to get detailed diagnostic logging:
+Use diagnostic logging to identify the issue:
 
 ```bash
 # Restore with diagnostic logging (solution-level)
-dotnet restore MarketDataCollector /p:EnableWindowsTargeting=true -v diag
+dotnet restore /p:EnableWindowsTargeting=true -v diag
 
-# Build with diagnostic logging (solution-level)
-dotnet build MarketDataCollector -c Release -v diag
+# Build with diagnostic logging
+dotnet build -c Release -v diag
 
-# For specific projects (example with full path)
-dotnet restore MarketDataCollector/src/MarketDataCollector/MarketDataCollector.csproj -v diag
+# Or use Makefile diagnostics
+make doctor
 ```
 
 **Verbosity Levels:**
@@ -1040,18 +1698,21 @@ dotnet restore MarketDataCollector/src/MarketDataCollector/MarketDataCollector.c
 1. **NETSDK1100 Error (Windows-specific TFMs on non-Windows)**
    ```bash
    # Solution: Use EnableWindowsTargeting property
-   dotnet restore MarketDataCollector /p:EnableWindowsTargeting=true
+   dotnet restore /p:EnableWindowsTargeting=true
    ```
 
 2. **NuGet Package Not Found**
-   - Check your NuGet sources: `dotnet nuget list source`
-   - Clear NuGet cache: `dotnet nuget locals all --clear`
-   - Retry restore: `dotnet restore --force`
+   ```bash
+   dotnet nuget list source
+   dotnet nuget locals all --clear
+   dotnet restore --force
+   ```
 
 3. **Version Conflicts**
-   - Check for conflicting package versions in diagnostic output
-   - Update packages: `dotnet list package --outdated`
-   - Clean and rebuild: `dotnet clean && dotnet restore`
+   ```bash
+   dotnet list package --outdated
+   dotnet clean && dotnet restore
+   ```
 
 4. **Network/Proxy Issues**
    - Configure NuGet proxy if behind corporate firewall
@@ -1060,12 +1721,42 @@ dotnet restore MarketDataCollector/src/MarketDataCollector/MarketDataCollector.c
 **Saving Diagnostic Logs:**
 ```bash
 # Save diagnostic output to a file for analysis
-dotnet restore MarketDataCollector /p:EnableWindowsTargeting=true -v diag > restore-diag.log 2>&1
+dotnet restore /p:EnableWindowsTargeting=true -v diag > restore-diag.log 2>&1
 
 # Then search for specific errors
 grep -i "error" restore-diag.log
 grep -i "warning" restore-diag.log
 ```
+
+#### 8. "Provider rate limit exceeded"
+
+**Cause:** Too many API requests to provider
+
+**Solution:**
+1. Check `ProviderRateLimitTracker` logs
+2. Reduce number of symbols or request frequency
+3. Use provider with higher limits
+4. Configure request delays in backfill settings
+
+#### 9. "Memory usage keeps growing"
+
+**Causes:**
+- Unbounded channel capacity
+- Memory leaks in provider client
+- Too many concurrent subscriptions
+
+**Solution:**
+1. Configure bounded channels:
+   ```json
+   {
+     "EventPipeline": {
+       "ChannelCapacity": 10000,
+       "BoundedChannelFullMode": "DropOldest"
+     }
+   }
+   ```
+2. Enable garbage collection logging
+3. Reduce concurrent subscriptions
 
 ### Logging
 
@@ -1091,43 +1782,30 @@ tail -f data/_logs/collector-$(date +%Y-%m-%d).log
 
 # Search for errors
 grep ERROR data/_logs/*.log
+
+# Count errors by type
+grep ERROR data/_logs/*.log | cut -d: -f4 | sort | uniq -c
 ```
 
-### Status Endpoint
-
-When running with `--serve-status`, check system status:
-
-```bash
-curl http://localhost:8080/status | jq .
-```
-
-**Response:**
+**Configure Log Level:**
 ```json
 {
-  "timestampUtc": "2024-01-15T14:30:00Z",
-  "isConnected": true,
-  "metrics": {
-    "published": 150000,
-    "dropped": 0,
-    "integrity": 5,
-    "historicalBars": 1000
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "MarketDataCollector": "Debug"
+    }
   }
 }
 ```
 
-### Prometheus Metrics
-
-Metrics available at `/metrics` endpoint:
-
-```bash
-curl http://localhost:8080/metrics
-```
-
-Integrate with Prometheus/Grafana for monitoring.
+---
 
 ## FAQ
 
-### Q: How much disk space do I need?
+### General
+
+#### Q: How much disk space do I need?
 
 **A:** It depends on:
 - Number of symbols
@@ -1138,23 +1816,23 @@ Integrate with Prometheus/Grafana for monitoring.
 **Estimates** (per symbol, per day, with compression):
 - Trades only: 10-50 MB
 - Trades + Depth: 100-500 MB
-- Very active stocks: 1+ GB
+- Very active stocks (SPY, QQQ): 1+ GB
 
-### Q: Can I run multiple instances?
+#### Q: Can I run multiple instances?
 
 **A:** Yes, but:
 - Each instance needs its own configuration file
 - Each instance needs a unique data directory OR different symbols
 - For IB: Each instance needs a unique Client ID
 
-### Q: Is data collection real-time?
+#### Q: Is data collection real-time?
 
 **A:** Yes! Data is captured as it arrives from providers:
 - **IB**: True tick-by-tick real-time (with market data subscription)
 - **Alpaca**: Real-time WebSocket streaming
 - **Latency**: Typically <100ms from exchange to disk
 
-### Q: Can I use the collected data with other tools?
+#### Q: Can I use the collected data with other tools?
 
 **A:** Absolutely! Data is in JSONL format, easily loaded by:
 - **Python pandas**: `pd.read_json(path, lines=True)`
@@ -1162,14 +1840,24 @@ Integrate with Prometheus/Grafana for monitoring.
 - **Command line tools**: `jq`, `grep`, etc.
 - **Custom tools**: Any JSON parser
 
-### Q: Do I need an IB subscription for market data?
+### Data Providers
+
+#### Q: Do I need an IB subscription for market data?
 
 **A:** Depends:
 - **Real-time data**: Requires IB market data subscription
 - **Delayed data**: Available without subscription (15-20 min delay)
 - **Paper trading account**: Can access delayed data
 
-### Q: Can I collect options, futures, or forex data?
+#### Q: Which provider is best for beginners?
+
+**A:** Alpaca is recommended for beginners because:
+- Free tier available
+- Simple API key authentication
+- Good documentation
+- Real-time US equities data
+
+#### Q: Can I collect options, futures, or forex data?
 
 **A:** Yes! Set the `SecurityType` in symbol configuration:
 - `STK`: Stocks
@@ -1188,7 +1876,9 @@ Integrate with Prometheus/Grafana for monitoring.
 }
 ```
 
-### Q: How do I backup my data?
+### Storage & Backup
+
+#### Q: How do I backup my data?
 
 **A:** Simply copy the data directory:
 
@@ -1205,21 +1895,39 @@ Consider:
 - Regular automated backups
 - Version control for configuration files
 
-### Q: Can I run this in Docker?
+#### Q: What's the best storage format for analysis?
+
+**A:** Depends on your use case:
+- **Python/pandas**: Parquet (fastest for large datasets)
+- **R**: CSV or Parquet
+- **QuantConnect**: Native Lean format
+- **Excel**: XLSX (limited to 1M rows)
+
+### Operations
+
+#### Q: Can I run this in Docker?
 
 **A:** Yes! Example Dockerfile:
 
 ```dockerfile
-FROM mcr.microsoft.com/dotnet/runtime:8.0
+FROM mcr.microsoft.com/dotnet/runtime:9.0
 COPY MarketDataCollector /app/MarketDataCollector
-COPY appsettings.json /app/appsettings.json
+COPY config/appsettings.json /app/appsettings.json
 WORKDIR /app
 RUN chmod +x MarketDataCollector
 EXPOSE 8080
+ENV ALPACA__KEYID=""
+ENV ALPACA__SECRETKEY=""
 CMD ["./MarketDataCollector", "--serve-status", "--watch-config"]
 ```
 
-### Q: How do I stop the collector gracefully?
+Or use the provided docker-compose:
+```bash
+cd deploy/docker
+docker-compose up -d
+```
+
+#### Q: How do I stop the collector gracefully?
 
 **A:** Press `Ctrl+C` or send SIGTERM:
 
@@ -1231,7 +1939,7 @@ CMD ["./MarketDataCollector", "--serve-status", "--watch-config"]
 # 4. Exit with status 0
 ```
 
-### Q: Can I change symbols without restarting?
+#### Q: Can I change symbols without restarting?
 
 **A:** Yes! If running with `--watch-config`:
 1. Edit `appsettings.json`
@@ -1240,156 +1948,50 @@ CMD ["./MarketDataCollector", "--serve-status", "--watch-config"]
 4. New symbols will be subscribed
 5. Removed symbols will be unsubscribed
 
-## Archival-First Storage (v1.5)
+#### Q: How do I monitor the collector in production?
 
-Market Data Collector v1.5 introduces an archival-first storage pipeline designed for crash-safe, long-term data preservation.
+**A:** Several options:
+1. **Prometheus/Grafana**: Use `/metrics` endpoint
+2. **Health checks**: Use `/health`, `/ready`, `/live` endpoints
+3. **Status API**: Use `/status` for JSON metrics
+4. **Logs**: Monitor `data/_logs/` directory
+5. **Systemd**: Use the provided service file in `deploy/systemd/`
 
-### Write-Ahead Logging (WAL)
-
-All market events are written to a Write-Ahead Log before being committed to primary storage:
-
-**Features:**
-- Crash-safe persistence with transaction semantics
-- Per-record SHA256 checksums for integrity verification
-- Configurable sync modes for durability vs. performance tradeoff
-- Automatic recovery of uncommitted records after crash
-
-**Configuration:**
-```json
-{
-  "Archival": {
-    "EnableWal": true,
-    "SyncMode": "BatchedSync",
-    "SyncBatchSize": 1000,
-    "MaxFlushDelay": "00:00:05"
-  }
-}
-```
-
-**Sync Modes:**
-- **NoSync**: Fastest, relies on OS buffering
-- **BatchedSync**: Balanced performance and durability (default)
-- **EveryWrite**: Maximum durability, slowest
-
-### Compression Profiles
-
-Optimize storage based on access patterns with tier-specific compression:
-
-**Pre-built Profiles:**
-| Profile | Codec | Level | Speed | Ratio | Use Case |
-|---------|-------|-------|-------|-------|----------|
-| Real-Time Collection | LZ4 | 1 | ~500 MB/s | 2.5x | Live data capture |
-| Warm Archive | ZSTD | 6 | ~150 MB/s | 5x | Frequently accessed data |
-| Cold Archive | ZSTD | 19 | ~20 MB/s | 10x | Long-term storage |
-| High-Volume Symbols | ZSTD | 3 | ~300 MB/s | 3.5x | SPY, QQQ, AAPL, etc. |
-| Portable Export | Gzip | 6 | ~100 MB/s | 6x | Maximum compatibility |
-
-### Schema Versioning
-
-Ensure long-term data compatibility with schema versioning:
-
-**Features:**
-- Semantic versioning for all event types (e.g., Trade v1.0.0, v2.0.0)
-- Automatic migration between schema versions
-- JSON Schema export for external tool integration
-- Schema registry with version history
-
-**Built-in Schemas:**
-- Trade v1.0.0: Basic trade event
-- Trade v2.0.0: Extended with TradeId and Conditions
-- Quote v1.0.0: Best bid/offer quote
-
-## Analysis-Ready Exports (v1.5)
-
-Export collected data in formats optimized for external analysis tools.
-
-### Export Profiles
-
-**Python/Pandas:**
-- Format: Parquet with datetime64[ns]
-- Compression: Snappy
-- Includes: `load_data.py` loader script
-
-**R Statistics:**
-- Format: CSV with proper NA handling
-- Timestamps: ISO 8601
-- Includes: `load_data.R` loader script
-
-**QuantConnect Lean:**
-- Format: Native Lean data format
-- Structure: `/equity/usa/tick/{symbol}/{date}_{type}.zip`
-- Resolution: Tick-level data
-
-**PostgreSQL/TimescaleDB:**
-- Format: CSV with COPY command
-- Includes: `create_tables.sql` DDL script
-- Includes: `load_data.sh` loader script
-
-**Microsoft Excel:**
-- Format: XLSX with multiple sheets
-- Max records: 1,000,000 per file
-
-### Data Quality Reports
-
-Generate analysis-focused quality reports with each export:
-
-**Generated Reports:**
-- `quality_report.md` - Human-readable summary
-- `quality_report.json` - Machine-readable data
-- `outliers.csv` - Detected price outliers (>4σ)
-- `gaps.csv` - Data gap inventory
-- `quality_issues.csv` - Issue tracker
-
-**Quality Metrics:**
-- Completeness scoring (% of expected trading time)
-- Outlier detection with Z-scores
-- Gap classification (weekend, overnight, unexpected)
-- Descriptive statistics (mean, median, percentiles)
-- Quality grading (A+ to F)
-
-**Recommendations:**
-- Suitability assessment for backtesting, ML training, research
-- Preprocessing suggestions for detected issues
-
-### Running an Export
-
-**Via Web Dashboard:**
-1. Navigate to "Data Export" section
-2. Select export profile (Python, R, Lean, etc.)
-3. Choose symbols and date range
-4. Click "Export"
-5. Download data package with quality report
-
-**Via Command Line:**
-```bash
-./MarketDataCollector --export \
-  --profile python-pandas \
-  --symbols AAPL,MSFT \
-  --from 2026-01-01 \
-  --to 2026-01-31 \
-  --output ./exports
-```
+---
 
 ## Support and Resources
 
 ### Documentation
 
-- **README.md**: Project overview and quick start
-- **HELP.md**: This comprehensive user guide (includes Windows Desktop App section)
-- **docs/CONFIGURATION.md**: Detailed configuration reference
-- **docs/GETTING_STARTED.md**: Step-by-step setup guide
-- **docs/TROUBLESHOOTING.md**: Common issues and solutions
-- **docs/architecture.md**: System design and architecture
-- **docs/lean-integration.md**: QuantConnect Lean Engine integration
-- **docs/code-improvements.md**: Implementation details for all features
-- **../docs/STORAGE_ORGANIZATION_DESIGN.md**: Advanced storage organization strategies
+| Document | Description |
+|----------|-------------|
+| [README.md](../README.md) | Project overview and quick start |
+| [HELP.md](HELP.md) | This comprehensive user guide |
+| [USAGE.md](USAGE.md) | Detailed usage guide |
+| [guides/getting-started.md](guides/getting-started.md) | Step-by-step setup guide |
+| [guides/configuration.md](guides/configuration.md) | Configuration reference |
+| [guides/troubleshooting.md](guides/troubleshooting.md) | Troubleshooting guide |
+| [guides/operator-runbook.md](guides/operator-runbook.md) | Production operations |
+| [architecture/overview.md](architecture/overview.md) | System architecture |
+| [architecture/storage-design.md](architecture/storage-design.md) | Storage design details |
+| [providers/backfill-guide.md](providers/backfill-guide.md) | Historical data guide |
+| [integrations/lean-integration.md](integrations/lean-integration.md) | QuantConnect Lean guide |
+| [adr/](adr/) | Architecture Decision Records |
+
+### Provider-Specific Guides
+
+| Guide | Provider |
+|-------|----------|
+| [providers/interactive-brokers-setup.md](providers/interactive-brokers-setup.md) | Interactive Brokers |
+| [providers/alpaca-setup.md](providers/alpaca-setup.md) | Alpaca |
+| [providers/provider-comparison.md](providers/provider-comparison.md) | Provider comparison |
 
 ### Getting Help
 
 1. **Check the logs**: Most issues are logged with detailed error messages
-2. **Review documentation**: Comprehensive docs cover most scenarios
-3. **GitHub Issues**: Report bugs or request features
-4. **Community**: Share knowledge with other users
+2. **Run diagnostics**: `make doctor` for comprehensive system check
+3. **Review documentation**: Comprehensive docs cover most scenarios
+4. **GitHub Issues**: Report bugs or request features at https://github.com/your-org/Market-Data-Collector/issues
 
 ### Best Practices
 
@@ -1400,13 +2002,22 @@ Generate analysis-focused quality reports with each export:
 5. **Update Regularly**: Keep software up to date for bug fixes and features
 6. **Review Logs**: Periodically check logs for warnings or errors
 7. **Validate Data**: Spot-check collected data for accuracy
+8. **Use Environment Variables**: Never commit credentials to version control
+9. **Enable Compression**: Reduces storage costs significantly
+10. **Set Up Monitoring**: Use Prometheus/Grafana for production deployments
 
 ### Contributing
 
 We welcome contributions! If you've found a bug or have a feature request, please open an issue on GitHub.
 
+Before contributing code:
+1. Read [CLAUDE.md](../CLAUDE.md) for coding guidelines
+2. Review [docs/adr/](adr/) for architectural decisions
+3. Run tests: `make test`
+4. Ensure code follows the style guide
+
 ---
 
 **Version:** 1.5.0
-**Last Updated:** 2026-01-04
+**Last Updated:** 2026-01-09
 **License:** See LICENSE file
