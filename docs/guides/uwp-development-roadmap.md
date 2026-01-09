@@ -1,6 +1,9 @@
-# UWP Desktop App Feature Refinements & New Feature Ideas
+# UWP Desktop App Development Roadmap
 
-This document outlines feature refinements for existing functionality and proposes new features for the Market Data Collector UWP Desktop Application.
+**Last Updated:** 2026-01-09
+**Version:** 1.5.0
+
+This document outlines feature refinements and development roadmap for the Market Data Collector UWP Desktop Application.
 
 > **Primary Mission: Data Collection & Archival**
 >
@@ -10,8 +13,6 @@ This document outlines feature refinements for existing functionality and propos
 > - **Robust Archival**: Long-term storage with integrity verification
 > - **Export Excellence**: Easy extraction in formats for external analysis
 > - **Future Flexibility**: Architecture supports cloud/hybrid when needed
->
-> See [FEATURE_REFINEMENTS.md](../src/MarketDataCollector.Uwp/FEATURE_REFINEMENTS.md) for detailed implementation specifications.
 
 ---
 
@@ -1083,7 +1084,13 @@ MarketData_2026-Q1.tar.gz
 
 ---
 
-*Document Version: 3.0*
-*Last Updated: 2026-01-08*
-*Focus: Offline Data Storage, Collection & Archival Excellence*
-*Changes: Added 18 new offline storage and external analysis features (2026), reorganized priorities around archival-first mission*
+## Related Documentation
+
+- [Project Roadmap](../status/ROADMAP.md) - Overall feature backlog
+- [Production Status](../status/production-status.md) - Deployment readiness
+- [Architecture Overview](../architecture/overview.md) - System design
+- [Getting Started](getting-started.md) - Setup guide
+
+---
+
+*Last Updated: 2026-01-09*
