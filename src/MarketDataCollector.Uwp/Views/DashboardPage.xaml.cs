@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Threading;
 using Microsoft.UI;
@@ -7,6 +8,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using MarketDataCollector.Uwp.ViewModels;
+using MarketDataCollector.Uwp.Services;
 using Windows.UI;
 
 namespace MarketDataCollector.Uwp.Views;
@@ -26,6 +28,8 @@ public sealed partial class DashboardPage : Page
     private readonly List<double> _throughputHistory = new();
     private readonly Random _random = new();
     private readonly DispatcherTimer _uptimeTimer;
+    private readonly ActivityFeedService _activityFeedService;
+    private readonly ObservableCollection<ActivityDisplayItem> _activityItems;
     private bool _isCollectorRunning = true;
     private bool _isCollectorPaused = false;
     private DateTime _startTime;
@@ -47,6 +51,10 @@ public sealed partial class DashboardPage : Page
         _startTime = DateTime.UtcNow;
         _collectorStartTime = DateTime.UtcNow;
 
+        _activityFeedService = ActivityFeedService.Instance;
+        _activityItems = new ObservableCollection<ActivityDisplayItem>();
+        ActivityFeedList.ItemsSource = _activityItems;
+
         _refreshTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
         _refreshTimer.Tick += RefreshTimer_Tick;
 
@@ -56,6 +64,8 @@ public sealed partial class DashboardPage : Page
         _uptimeTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _uptimeTimer.Tick += UptimeTimer_Tick;
 
+        _activityFeedService.ActivityAdded += ActivityFeedService_ActivityAdded;
+
         Loaded += DashboardPage_Loaded;
         Unloaded += DashboardPage_Unloaded;
     }
@@ -64,6 +74,7 @@ public sealed partial class DashboardPage : Page
     {
         await ViewModel.LoadAsync();
         InitializeSparklineData();
+        LoadActivityFeed();
         _refreshTimer.Start();
         _sparklineTimer.Start();
         _uptimeTimer.Start();
@@ -73,6 +84,7 @@ public sealed partial class DashboardPage : Page
         UpdateCollectorUptime();
         UpdateSparklines();
         UpdateThroughputChart();
+        UpdateQuickStats();
     }
 
     private void DashboardPage_Unloaded(object sender, RoutedEventArgs e)
@@ -523,4 +535,149 @@ public sealed partial class DashboardPage : Page
             this.Frame.Navigate(typeof(BackfillPage));
         }
     }
+
+    private void LoadActivityFeed()
+    {
+        _activityItems.Clear();
+
+        // Load recent activities from the service
+        var activities = _activityFeedService.Activities.Take(5);
+
+        foreach (var activity in activities)
+        {
+            _activityItems.Add(CreateActivityDisplayItem(activity));
+        }
+
+        // If no activities, add some sample data for demo
+        if (_activityItems.Count == 0)
+        {
+            AddSampleActivities();
+        }
+
+        NoActivityText.Visibility = _activityItems.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void AddSampleActivities()
+    {
+        var sampleActivities = new[]
+        {
+            new ActivityDisplayItem
+            {
+                Title = "Collector Started",
+                Description = "Data collection has been started for all providers",
+                Icon = "\uE768",
+                IconBackground = new SolidColorBrush(Color.FromArgb(255, 72, 187, 120)),
+                RelativeTime = "Just now"
+            },
+            new ActivityDisplayItem
+            {
+                Title = "Symbol Added",
+                Description = "NVDA has been added to your watchlist",
+                Icon = "\uE710",
+                IconBackground = new SolidColorBrush(Color.FromArgb(255, 88, 166, 255)),
+                RelativeTime = "2m ago"
+            },
+            new ActivityDisplayItem
+            {
+                Title = "Backfill Completed",
+                Description = "Downloaded 12,450 bars for SPY from Alpaca",
+                Icon = "\uE73E",
+                IconBackground = new SolidColorBrush(Color.FromArgb(255, 72, 187, 120)),
+                RelativeTime = "15m ago"
+            },
+            new ActivityDisplayItem
+            {
+                Title = "Provider Connected",
+                Description = "Interactive Brokers connection established",
+                Icon = "\uE703",
+                IconBackground = new SolidColorBrush(Color.FromArgb(255, 88, 166, 255)),
+                RelativeTime = "1h ago"
+            }
+        };
+
+        foreach (var item in sampleActivities)
+        {
+            _activityItems.Add(item);
+        }
+    }
+
+    private static ActivityDisplayItem CreateActivityDisplayItem(ActivityItem activity)
+    {
+        var iconBackground = activity.ColorCategory switch
+        {
+            "Success" => new SolidColorBrush(Color.FromArgb(255, 72, 187, 120)),
+            "Error" => new SolidColorBrush(Color.FromArgb(255, 248, 81, 73)),
+            "Warning" => new SolidColorBrush(Color.FromArgb(255, 210, 153, 34)),
+            _ => new SolidColorBrush(Color.FromArgb(255, 88, 166, 255))
+        };
+
+        return new ActivityDisplayItem
+        {
+            Title = activity.Title,
+            Description = activity.Description ?? string.Empty,
+            Icon = activity.Icon,
+            IconBackground = iconBackground,
+            RelativeTime = activity.RelativeTime
+        };
+    }
+
+    private void ActivityFeedService_ActivityAdded(object? sender, ActivityItem e)
+    {
+        DispatcherQueue.TryEnqueue(() =>
+        {
+            _activityItems.Insert(0, CreateActivityDisplayItem(e));
+            while (_activityItems.Count > 5)
+            {
+                _activityItems.RemoveAt(_activityItems.Count - 1);
+            }
+            NoActivityText.Visibility = Visibility.Collapsed;
+        });
+    }
+
+    private void ViewAllActivity_Click(object sender, RoutedEventArgs e)
+    {
+        // Navigate to a full activity log page or show a flyout
+        // For now, navigate to service manager which has logs
+        if (this.Frame != null)
+        {
+            this.Frame.Navigate(typeof(ServiceManagerPage));
+        }
+    }
+
+    private void UpdateQuickStats()
+    {
+        // Update quick stats - in real app these would come from services
+        var eventsToday = ViewModel.PublishedCount;
+        if (eventsToday >= 1000000)
+        {
+            TotalEventsToday.Text = $"{eventsToday / 1000000.0:N1}M";
+        }
+        else if (eventsToday >= 1000)
+        {
+            TotalEventsToday.Text = $"{eventsToday / 1000.0:N1}K";
+        }
+        else
+        {
+            TotalEventsToday.Text = eventsToday.ToString("N0");
+        }
+
+        ActiveSymbolsCount.Text = ViewModel.Symbols?.Count.ToString() ?? "0";
+
+        // Simulated values for demo
+        StorageUsedText.Text = "2.4 GB";
+        DataQualityText.Text = "99.8%";
+        AvgLatencyText.Text = "12ms";
+    }
+}
+
+/// <summary>
+/// Display model for activity items in the dashboard feed.
+/// </summary>
+public class ActivityDisplayItem
+{
+    public string Title { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string Icon { get; set; } = "\uE946";
+    public SolidColorBrush IconBackground { get; set; } = new(Microsoft.UI.Colors.Gray);
+    public string RelativeTime { get; set; } = string.Empty;
 }
