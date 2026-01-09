@@ -1,6 +1,8 @@
 using System.Text.Json;
 using MarketDataCollector.Application.Backfill;
 using MarketDataCollector.Application.Config;
+using MarketDataCollector.Application.Monitoring;
+using MarketDataCollector.Application.Services;
 using MarketDataCollector.Application.Subscriptions.Models;
 using MarketDataCollector.Application.Subscriptions.Services;
 using MarketDataCollector.Storage;
@@ -52,6 +54,16 @@ public sealed class UiServer : IAsyncDisposable
         builder.Services.AddSingleton<IDataQualityService, DataQualityService>();
         builder.Services.AddSingleton<IStorageSearchService, StorageSearchService>();
         builder.Services.AddSingleton<ITierMigrationService, TierMigrationService>();
+
+        // New services for QW features
+        builder.Services.AddSingleton(new HistoricalDataQueryService(config.DataRoot));
+        builder.Services.AddSingleton(new DiagnosticBundleService(config.DataRoot, null, () => store.Load()));
+        builder.Services.AddSingleton<SampleDataGenerator>();
+        builder.Services.AddSingleton(new ErrorTracker(config.DataRoot));
+        builder.Services.AddSingleton<ConfigTemplateGenerator>();
+        builder.Services.AddSingleton<ConfigEnvironmentOverride>();
+        builder.Services.AddSingleton<DryRunService>();
+        builder.Services.AddSingleton<ApiDocumentationService>();
 
         _app = builder.Build();
 
@@ -313,6 +325,7 @@ public sealed class UiServer : IAsyncDisposable
 
         ConfigureSymbolManagementRoutes();
         ConfigureStorageOrganizationRoutes();
+        ConfigureNewFeatureRoutes();
     }
 
     private void ConfigureStorageOrganizationRoutes()
@@ -1256,6 +1269,381 @@ public sealed class UiServer : IAsyncDisposable
         });
     }
 
+    private void ConfigureNewFeatureRoutes()
+    {
+        var jsonOptions = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = true
+        };
+
+        // ==================== QW-15: HISTORICAL DATA QUERY ====================
+
+        _app.MapGet("/api/historical/symbols", (HistoricalDataQueryService query) =>
+        {
+            try
+            {
+                var symbols = query.GetAvailableSymbols();
+                return Results.Json(symbols, jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to get symbols: {ex.Message}");
+            }
+        });
+
+        _app.MapGet("/api/historical/symbols/{symbol}/range", (HistoricalDataQueryService query, string symbol) =>
+        {
+            try
+            {
+                var range = query.GetDateRange(symbol);
+                return Results.Json(range, jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to get date range: {ex.Message}");
+            }
+        });
+
+        _app.MapPost("/api/historical/query", async (HistoricalDataQueryService query, HistoricalQueryRequest req) =>
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(req.Symbol))
+                    return Results.BadRequest("Symbol is required");
+
+                var queryParams = new HistoricalDataQuery(
+                    Symbol: req.Symbol,
+                    From: req.From,
+                    To: req.To,
+                    DataType: req.DataType,
+                    Skip: req.Skip,
+                    Limit: req.Limit
+                );
+
+                var result = await query.QueryAsync(queryParams);
+                return Results.Json(result, jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Query failed: {ex.Message}");
+            }
+        });
+
+        // ==================== QW-16: DIAGNOSTIC BUNDLE ====================
+
+        _app.MapPost("/api/diagnostics/bundle", async (DiagnosticBundleService diag, DiagnosticBundleRequest? req) =>
+        {
+            try
+            {
+                var options = new DiagnosticBundleOptions(
+                    IncludeSystemInfo: req?.IncludeSystemInfo ?? true,
+                    IncludeConfiguration: req?.IncludeConfiguration ?? true,
+                    IncludeMetrics: req?.IncludeMetrics ?? true,
+                    IncludeLogs: req?.IncludeLogs ?? true,
+                    IncludeStorageInfo: req?.IncludeStorageInfo ?? true,
+                    IncludeEnvironmentVariables: req?.IncludeEnvironmentVariables ?? true,
+                    LogDays: req?.LogDays ?? 3
+                );
+
+                var result = await diag.GenerateAsync(options);
+                return Results.Json(result, jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Bundle generation failed: {ex.Message}");
+            }
+        });
+
+        _app.MapGet("/api/diagnostics/bundle/{bundleId}/download", (DiagnosticBundleService diag, string bundleId) =>
+        {
+            try
+            {
+                var zipPath = Path.Combine(Path.GetTempPath(), $"{bundleId}.zip");
+                if (!File.Exists(zipPath))
+                    return Results.NotFound("Bundle not found or expired");
+
+                var bytes = diag.ReadBundle(zipPath);
+                return Results.File(bytes, "application/zip", $"{bundleId}.zip");
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Download failed: {ex.Message}");
+            }
+        });
+
+        // ==================== QW-17: SAMPLE DATA GENERATOR ====================
+
+        _app.MapPost("/api/tools/sample-data", (SampleDataGenerator gen, SampleDataRequest? req) =>
+        {
+            try
+            {
+                var options = new SampleDataOptions(
+                    Symbols: req?.Symbols,
+                    DurationMinutes: req?.DurationMinutes ?? 60,
+                    MaxEvents: req?.MaxEvents ?? 10000,
+                    IncludeTrades: req?.IncludeTrades ?? true,
+                    IncludeQuotes: req?.IncludeQuotes ?? true,
+                    IncludeDepth: req?.IncludeDepth ?? true,
+                    IncludeBars: req?.IncludeBars ?? true
+                );
+
+                var result = gen.Generate(options);
+                return Results.Json(new
+                {
+                    result.Success,
+                    result.Message,
+                    result.TotalEvents,
+                    result.TradeCount,
+                    result.QuoteCount,
+                    result.DepthUpdateCount,
+                    result.BarCount,
+                    // Don't include raw events in response (too large)
+                    sampleEvents = result.Events?.Take(5)
+                }, jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Sample data generation failed: {ex.Message}");
+            }
+        });
+
+        _app.MapGet("/api/tools/sample-data/preview", (SampleDataGenerator gen) =>
+        {
+            try
+            {
+                var preview = gen.GeneratePreview(new SampleDataOptions(MaxEvents: 20));
+                return Results.Json(preview, jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Preview failed: {ex.Message}");
+            }
+        });
+
+        // ==================== QW-58: LAST N ERRORS ====================
+
+        _app.MapGet("/api/diagnostics/errors", (ErrorTracker errors, int? count, string? type, string? context) =>
+        {
+            try
+            {
+                var result = errors.GetLastErrors(count ?? 10, type, context);
+                return Results.Json(result, jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to get errors: {ex.Message}");
+            }
+        });
+
+        _app.MapGet("/api/diagnostics/errors/stats", (ErrorTracker errors, int? hours) =>
+        {
+            try
+            {
+                var window = hours.HasValue ? TimeSpan.FromHours(hours.Value) : TimeSpan.FromHours(24);
+                var stats = errors.GetStatistics(window);
+                return Results.Json(stats, jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to get error stats: {ex.Message}");
+            }
+        });
+
+        _app.MapGet("/api/diagnostics/errors/logs", async (ErrorTracker errors, int? count, int? days) =>
+        {
+            try
+            {
+                var result = await errors.ParseErrorsFromLogsAsync(count ?? 100, days ?? 1);
+                return Results.Json(result, jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to parse log errors: {ex.Message}");
+            }
+        });
+
+        // ==================== QW-76: CONFIG TEMPLATE GENERATOR ====================
+
+        _app.MapGet("/api/tools/config-templates", (ConfigTemplateGenerator gen) =>
+        {
+            try
+            {
+                var templates = gen.GetAllTemplates();
+                return Results.Json(templates.Select(t => new
+                {
+                    t.Name,
+                    t.Description,
+                    t.Category,
+                    t.EnvironmentVariables
+                }), jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to get templates: {ex.Message}");
+            }
+        });
+
+        _app.MapGet("/api/tools/config-templates/{name}", (ConfigTemplateGenerator gen, string name) =>
+        {
+            try
+            {
+                var template = gen.GetTemplate(name);
+                if (template == null)
+                    return Results.NotFound($"Template '{name}' not found");
+
+                return Results.Json(template, jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to get template: {ex.Message}");
+            }
+        });
+
+        _app.MapPost("/api/tools/config-templates/validate", (ConfigTemplateGenerator gen, ConfigValidateRequest req) =>
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(req.Json))
+                    return Results.BadRequest("JSON configuration is required");
+
+                var result = gen.ValidateTemplate(req.Json);
+                return Results.Json(result, jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Validation failed: {ex.Message}");
+            }
+        });
+
+        // ==================== QW-25: CONFIG ENVIRONMENT OVERRIDE ====================
+
+        _app.MapGet("/api/config/env-overrides", (ConfigEnvironmentOverride envOverride) =>
+        {
+            try
+            {
+                var variables = envOverride.GetRecognizedVariables();
+                return Results.Json(variables, jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to get environment overrides: {ex.Message}");
+            }
+        });
+
+        _app.MapGet("/api/config/env-overrides/docs", (ConfigEnvironmentOverride envOverride) =>
+        {
+            try
+            {
+                var docs = envOverride.GetDocumentation();
+                return Results.Text(docs, "text/markdown");
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to get documentation: {ex.Message}");
+            }
+        });
+
+        // ==================== QW-93: DRY RUN MODE ====================
+
+        _app.MapPost("/api/tools/dry-run", async (DryRunService dryRun, ConfigStore store, DryRunRequest? req) =>
+        {
+            try
+            {
+                var config = store.Load();
+                var options = new DryRunOptions(
+                    ValidateConfiguration: req?.ValidateConfiguration ?? true,
+                    ValidateFileSystem: req?.ValidateFileSystem ?? true,
+                    ValidateConnectivity: req?.ValidateConnectivity ?? true,
+                    ValidateProviders: req?.ValidateProviders ?? true,
+                    ValidateSymbols: req?.ValidateSymbols ?? true,
+                    ValidateResources: req?.ValidateResources ?? true
+                );
+
+                var result = await dryRun.ValidateAsync(config, options);
+                return Results.Json(result, jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Dry run failed: {ex.Message}");
+            }
+        });
+
+        _app.MapPost("/api/tools/dry-run/report", async (DryRunService dryRun, ConfigStore store) =>
+        {
+            try
+            {
+                var config = store.Load();
+                var result = await dryRun.ValidateAsync(config, new DryRunOptions());
+                var report = dryRun.GenerateReport(result);
+                return Results.Text(report, "text/plain");
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Report generation failed: {ex.Message}");
+            }
+        });
+
+        // ==================== DEV-9 & QW-121: API DOCUMENTATION ====================
+
+        _app.MapGet("/api/openapi.json", (ApiDocumentationService apiDocs) =>
+        {
+            try
+            {
+                var spec = apiDocs.GenerateOpenApiSpec();
+                return Results.Json(spec, new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                    WriteIndented = true,
+                    DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+                });
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to generate OpenAPI spec: {ex.Message}");
+            }
+        });
+
+        _app.MapGet("/api/docs", (ApiDocumentationService apiDocs) =>
+        {
+            try
+            {
+                var html = apiDocs.GenerateSwaggerHtml();
+                return Results.Content(html, "text/html");
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to generate docs: {ex.Message}");
+            }
+        });
+
+        _app.MapGet("/api/docs/markdown", (ApiDocumentationService apiDocs) =>
+        {
+            try
+            {
+                var markdown = apiDocs.GenerateMarkdownDocs();
+                return Results.Text(markdown, "text/markdown");
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to generate markdown: {ex.Message}");
+            }
+        });
+
+        _app.MapGet("/swagger", (ApiDocumentationService apiDocs) =>
+        {
+            try
+            {
+                var html = apiDocs.GenerateSwaggerHtml();
+                return Results.Content(html, "text/html");
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to generate Swagger UI: {ex.Message}");
+            }
+        });
+    }
+
     public async Task StartAsync()
     {
         await _app.StartAsync();
@@ -1271,6 +1659,48 @@ public sealed class UiServer : IAsyncDisposable
         await _app.DisposeAsync();
     }
 }
+
+// ==================== NEW FEATURE DTOs ====================
+
+public record HistoricalQueryRequest(
+    string Symbol,
+    DateOnly? From = null,
+    DateOnly? To = null,
+    string? DataType = null,
+    int? Skip = null,
+    int? Limit = null
+);
+
+public record DiagnosticBundleRequest(
+    bool IncludeSystemInfo = true,
+    bool IncludeConfiguration = true,
+    bool IncludeMetrics = true,
+    bool IncludeLogs = true,
+    bool IncludeStorageInfo = true,
+    bool IncludeEnvironmentVariables = true,
+    int LogDays = 3
+);
+
+public record SampleDataRequest(
+    string[]? Symbols = null,
+    int DurationMinutes = 60,
+    int MaxEvents = 10000,
+    bool IncludeTrades = true,
+    bool IncludeQuotes = true,
+    bool IncludeDepth = true,
+    bool IncludeBars = true
+);
+
+public record ConfigValidateRequest(string Json);
+
+public record DryRunRequest(
+    bool ValidateConfiguration = true,
+    bool ValidateFileSystem = true,
+    bool ValidateConnectivity = true,
+    bool ValidateProviders = true,
+    bool ValidateSymbols = true,
+    bool ValidateResources = true
+);
 
 public record DataSourceRequest(string DataSource);
 public record StorageSettingsRequest(string? DataRoot, bool Compress, string? NamingConvention, string? DatePartition, bool IncludeProvider, string? FilePrefix);
