@@ -29,8 +29,9 @@ jobs:
           dotnet-version: '9.0.x'
           cache: true
           cache-dependency-path: |
-            **/packages.lock.json
             **/*.csproj
+            **/*.fsproj
+            Directory.Build.props
 
       - name: Run environment doctor
         run: make doctor
