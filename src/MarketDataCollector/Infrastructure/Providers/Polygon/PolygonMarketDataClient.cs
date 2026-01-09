@@ -19,6 +19,15 @@ namespace MarketDataCollector.Infrastructure.Providers.Polygon;
 /// - Implements circuit breaker pattern to prevent cascading failures
 /// - Automatic reconnection on connection loss with jitter
 /// - Configurable retry attempts (default: 5) with 2s base delay, max 30s between retries
+///
+/// <para><b>Authentication:</b> Requires Polygon.io API key for WebSocket connection.</para>
+/// <para><b>Security Best Practices:</b></para>
+/// <list type="bullet">
+/// <item><description>Use environment variable: <c>POLYGON__APIKEY</c></description></item>
+/// <item><description>Use a secure vault service for production deployments</description></item>
+/// <item><description>Ensure configuration files with real credentials are in <c>.gitignore</c></description></item>
+/// </list>
+/// <para>See <see href="https://polygon.io/docs/stocks/ws_getting-started">Polygon WebSocket Docs</see></para>
 /// </summary>
 // TODO: Implement full Polygon WebSocket client with real data streaming
 // TODO: Replace synthetic heartbeat with actual Polygon API connection
@@ -31,6 +40,7 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
     private readonly TradeDataCollector _tradeCollector;
     private readonly QuoteCollector _quoteCollector;
     private readonly PolygonOptions _opt;
+    private readonly string? _apiKey;
     private readonly bool _hasValidCredentials;
 
     // Resilience pipeline for connection retry with exponential backoff
@@ -127,6 +137,7 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
         // When implementing full WebSocket connection, use:
         // await _connectionPipeline.ExecuteAsync(async token =>
         // {
+        //     var uri = new Uri($"wss://socket.polygon.io/{_opt.Feed}");
         //     // WebSocket connection logic here
         //     // var apiKey = GetApiKey();
         //     // Connect to wss://socket.polygon.io/stocks with API key authentication
