@@ -166,4 +166,9 @@
     <!-- Reactive Extensions for Observable patterns -->
     <PackageReference Include="System.Reactive" Version="6.1.0" />
   </ItemGroup>
+
+  <!-- Project References -->
+  <ItemGroup>
+    <ProjectReference Include="..\MarketDataCollector.Contracts\MarketDataCollector.Contracts.csproj" />
+  </ItemGroup>
 </Project>
