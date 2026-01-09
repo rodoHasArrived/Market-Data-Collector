@@ -129,30 +129,30 @@ public sealed class IBCallbackRouter
         switch (field)
         {
             case IBTickTypes.BidPrice:
-                state.BidPrice = price;
+                state.BidPrice = (decimal)price;
                 state.BidTimestamp = now;
                 TryEmitQuote(tickerId, symbol, state);
                 break;
             case IBTickTypes.AskPrice:
-                state.AskPrice = price;
+                state.AskPrice = (decimal)price;
                 state.AskTimestamp = now;
                 TryEmitQuote(tickerId, symbol, state);
                 break;
             case IBTickTypes.LastPrice:
-                state.LastPrice = price;
+                state.LastPrice = (decimal)price;
                 state.LastTimestamp = now;
                 break;
             case IBTickTypes.High:
-                state.HighPrice = price;
+                state.HighPrice = (decimal)price;
                 break;
             case IBTickTypes.Low:
-                state.LowPrice = price;
+                state.LowPrice = (decimal)price;
                 break;
             case IBTickTypes.ClosePrice:
-                state.ClosePrice = price;
+                state.ClosePrice = (decimal)price;
                 break;
             case IBTickTypes.Open:
-                state.OpenPrice = price;
+                state.OpenPrice = (decimal)price;
                 break;
         }
     }
@@ -267,9 +267,9 @@ public sealed class IBCallbackRouter
         var quote = new MarketQuoteUpdate(
             Timestamp: state.BidTimestamp ?? state.AskTimestamp ?? DateTimeOffset.UtcNow,
             Symbol: symbol,
-            BidPrice: (decimal)(state.BidPrice ?? 0),
+            BidPrice: state.BidPrice ?? 0,
             BidSize: state.BidSize ?? 0,
-            AskPrice: (decimal)(state.AskPrice ?? 0),
+            AskPrice: state.AskPrice ?? 0,
             AskSize: state.AskSize ?? 0,
             SequenceNumber: 0,
             StreamId: "IB-L1",
@@ -316,22 +316,22 @@ public sealed class IBCallbackRouter
     /// </summary>
     private sealed class QuoteState
     {
-        public double? BidPrice { get; set; }
+        public decimal? BidPrice { get; set; }
         public long? BidSize { get; set; }
         public DateTimeOffset? BidTimestamp { get; set; }
 
-        public double? AskPrice { get; set; }
+        public decimal? AskPrice { get; set; }
         public long? AskSize { get; set; }
         public DateTimeOffset? AskTimestamp { get; set; }
 
-        public double? LastPrice { get; set; }
+        public decimal? LastPrice { get; set; }
         public long? LastSize { get; set; }
         public DateTimeOffset? LastTimestamp { get; set; }
 
-        public double? HighPrice { get; set; }
-        public double? LowPrice { get; set; }
-        public double? OpenPrice { get; set; }
-        public double? ClosePrice { get; set; }
+        public decimal? HighPrice { get; set; }
+        public decimal? LowPrice { get; set; }
+        public decimal? OpenPrice { get; set; }
+        public decimal? ClosePrice { get; set; }
         public long? Volume { get; set; }
 
         public bool IsHalted { get; set; }
