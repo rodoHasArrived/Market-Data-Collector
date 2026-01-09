@@ -51,6 +51,7 @@ public sealed record BackfillConfig(
 /// <param name="AutoPauseOnRateLimit">Automatically pause job when all providers are rate-limited.</param>
 /// <param name="AutoResumeAfterRateLimit">Automatically resume after rate limit window expires.</param>
 /// <param name="MaxRateLimitWaitMinutes">Maximum minutes to wait for rate limit before pausing.</param>
+/// <param name="Scheduling">Scheduled backfill configuration.</param>
 public sealed record BackfillJobsConfig(
     bool PersistJobs = true,
     string JobsDirectory = "_backfill_jobs",
@@ -61,7 +62,48 @@ public sealed record BackfillJobsConfig(
     int BatchSizeDays = 365,
     bool AutoPauseOnRateLimit = true,
     bool AutoResumeAfterRateLimit = true,
-    int MaxRateLimitWaitMinutes = 5
+    int MaxRateLimitWaitMinutes = 5,
+    ScheduledBackfillConfig? Scheduling = null
+);
+
+/// <summary>
+/// Configuration for scheduled backfill operations.
+/// </summary>
+/// <param name="Enabled">Enable scheduled backfill service.</param>
+/// <param name="ScheduleCheckIntervalSeconds">How often to check for due schedules (seconds).</param>
+/// <param name="MaxExecutionDurationHours">Maximum duration for a single execution (hours).</param>
+/// <param name="CatchUpMissedSchedules">Catch up missed schedules on startup.</param>
+/// <param name="CatchUpWindowHours">How far back to look for missed schedules (hours).</param>
+/// <param name="MaxConcurrentExecutions">Maximum concurrent scheduled executions.</param>
+/// <param name="PauseDuringMarketHours">Pause executions during market hours.</param>
+/// <param name="DefaultSchedules">Default schedules to create on first startup.</param>
+public sealed record ScheduledBackfillConfig(
+    bool Enabled = false,
+    int ScheduleCheckIntervalSeconds = 60,
+    int MaxExecutionDurationHours = 6,
+    bool CatchUpMissedSchedules = true,
+    int CatchUpWindowHours = 24,
+    int MaxConcurrentExecutions = 1,
+    bool PauseDuringMarketHours = false,
+    DefaultScheduleConfig[]? DefaultSchedules = null
+);
+
+/// <summary>
+/// Configuration for a default schedule to create on startup.
+/// </summary>
+/// <param name="Name">Schedule name.</param>
+/// <param name="Preset">Preset to use: "daily", "weekly", "eod", "monthly".</param>
+/// <param name="CronExpression">Custom cron expression (overrides preset).</param>
+/// <param name="Symbols">Symbols to backfill (empty = use default symbols).</param>
+/// <param name="LookbackDays">Number of days to look back for gaps.</param>
+/// <param name="Enabled">Whether the schedule is enabled.</param>
+public sealed record DefaultScheduleConfig(
+    string Name,
+    string? Preset = null,
+    string? CronExpression = null,
+    string[]? Symbols = null,
+    int LookbackDays = 30,
+    bool Enabled = true
 );
 
 /// <summary>

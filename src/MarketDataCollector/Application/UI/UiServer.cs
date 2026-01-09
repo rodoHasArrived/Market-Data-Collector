@@ -86,6 +86,14 @@ public sealed class UiServer : IAsyncDisposable
         builder.Services.AddSingleton<DryRunService>();
         builder.Services.AddSingleton<ApiDocumentationService>();
 
+        // Scheduled backfill services
+        var executionHistory = new BackfillExecutionHistory();
+        var scheduleManagerLogger = LoggerFactory.Create(b => b.AddConsole().SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Warning))
+            .CreateLogger<BackfillScheduleManager>();
+        var scheduleManager = new BackfillScheduleManager(scheduleManagerLogger, config.DataRoot, executionHistory);
+        builder.Services.AddSingleton(scheduleManager);
+        builder.Services.AddSingleton(executionHistory);
+
         _app = builder.Build();
 
         ConfigureRoutes();
@@ -347,6 +355,9 @@ public sealed class UiServer : IAsyncDisposable
         ConfigureSymbolManagementRoutes();
         ConfigureStorageOrganizationRoutes();
         ConfigureNewFeatureRoutes();
+
+        // Configure scheduled backfill endpoints
+        _app.MapScheduledBackfillEndpoints();
         ConfigureBulkSymbolManagementRoutes();
     }
 
