@@ -1,6 +1,7 @@
 using System.Text.Json;
 using MarketDataCollector.Application.Backfill;
 using MarketDataCollector.Application.Config;
+using MarketDataCollector.Application.Config.Credentials;
 using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Application.Services;
 using MarketDataCollector.Application.Subscriptions.Models;
@@ -90,6 +91,9 @@ public sealed class UiServer : IAsyncDisposable
         builder.Services.AddSingleton<DryRunService>();
         builder.Services.AddSingleton<ApiDocumentationService>();
 
+        // Credential management services
+        builder.Services.AddSingleton(new CredentialTestingService(config.DataRoot));
+        builder.Services.AddSingleton(new OAuthTokenRefreshService(config.DataRoot));
         // Scheduled backfill services
         var executionHistory = new BackfillExecutionHistory();
         using var loggerFactory = LoggerFactory.Create(b => b.AddConsole().SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Warning));
@@ -359,6 +363,7 @@ public sealed class UiServer : IAsyncDisposable
         ConfigureSymbolManagementRoutes();
         ConfigureStorageOrganizationRoutes();
         ConfigureNewFeatureRoutes();
+        ConfigureCredentialManagementRoutes();
 
         // Configure scheduled backfill endpoints
         _app.MapScheduledBackfillEndpoints();
@@ -1826,8 +1831,33 @@ public sealed class UiServer : IAsyncDisposable
         });
     }
 
+    private void ConfigureCredentialManagementRoutes()
     private void ConfigureBulkSymbolManagementRoutes()
     {
+        var jsonOptions = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = true
+        };
+
+        // ==================== CREDENTIAL TESTING ====================
+
+        // Test credentials for a specific provider
+        _app.MapPost("/api/credentials/test", async (
+            CredentialTestingService credentialService,
+            CredentialTestRequest req) =>
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(req.Provider))
+                    return Results.BadRequest("Provider name is required");
+
+                var result = await credentialService.TestCredentialAsync(
+                    req.Provider,
+                    req.ApiKey,
+                    req.ApiSecret,
+                    req.CredentialSource);
+
         // ==================== TEXT/CSV IMPORT ====================
 
         _app.MapPost("/api/symbols/import/text", async (
@@ -1854,6 +1884,128 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
+                return Results.Problem($"Credential test failed: {ex.Message}");
+            }
+        });
+
+        // Test all configured credentials
+        _app.MapPost("/api/credentials/test-all", async (
+            CredentialTestingService credentialService,
+            ConfigStore store) =>
+        {
+            try
+            {
+                var config = store.Load();
+                var summary = await credentialService.TestAllCredentialsAsync(config);
+                return Results.Json(summary, jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Credential test failed: {ex.Message}");
+            }
+        });
+
+        // Get all credential statuses (cached)
+        _app.MapGet("/api/credentials/status", (CredentialTestingService credentialService) =>
+        {
+            try
+            {
+                var statuses = credentialService.GetAllCachedStatuses();
+
+                var response = statuses.Select(kvp => new
+                {
+                    provider = kvp.Key,
+                    lastSuccessfulAuth = kvp.Value.LastSuccessfulAuth,
+                    lastTestResult = kvp.Value.LastTestResult.ToString(),
+                    lastTestedAt = kvp.Value.LastTestedAt,
+                    consecutiveFailures = kvp.Value.ConsecutiveFailures,
+                    expiresAt = kvp.Value.ExpiresAt,
+                    isExpiringSoon = kvp.Value.ExpiresAt.HasValue &&
+                        (kvp.Value.ExpiresAt.Value - DateTimeOffset.UtcNow).TotalDays <= 7,
+                    daysUntilExpiration = kvp.Value.ExpiresAt.HasValue
+                        ? (kvp.Value.ExpiresAt.Value - DateTimeOffset.UtcNow).TotalDays
+                        : (double?)null
+                }).ToList();
+
+                return Results.Json(response, jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to get credential status: {ex.Message}");
+            }
+        });
+
+        // Get credential status for a specific provider
+        _app.MapGet("/api/credentials/status/{provider}", (
+            CredentialTestingService credentialService,
+            string provider) =>
+        {
+            try
+            {
+                var status = credentialService.GetCachedStatus(provider);
+                if (status == null)
+                    return Results.NotFound($"No status found for provider: {provider}");
+
+                var response = new
+                {
+                    provider = status.ProviderName,
+                    lastSuccessfulAuth = status.LastSuccessfulAuth,
+                    lastTestResult = status.LastTestResult.ToString(),
+                    lastTestedAt = status.LastTestedAt,
+                    consecutiveFailures = status.ConsecutiveFailures,
+                    expiresAt = status.ExpiresAt,
+                    isExpiringSoon = status.ExpiresAt.HasValue &&
+                        (status.ExpiresAt.Value - DateTimeOffset.UtcNow).TotalDays <= 7,
+                    daysUntilExpiration = status.ExpiresAt.HasValue
+                        ? (status.ExpiresAt.Value - DateTimeOffset.UtcNow).TotalDays
+                        : (double?)null
+                };
+
+                return Results.Json(response, jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to get credential status: {ex.Message}");
+            }
+        });
+
+        // ==================== OAUTH TOKEN MANAGEMENT ====================
+
+        // Get all OAuth token statuses
+        _app.MapGet("/api/credentials/oauth/tokens", (OAuthTokenRefreshService oauthService) =>
+        {
+            try
+            {
+                var tokens = oauthService.GetAllTokens();
+
+                var response = tokens.Select(kvp => new
+                {
+                    provider = kvp.Key,
+                    status = kvp.Value.Status.ToString(),
+                    expiresAt = kvp.Value.Token.ExpiresAt,
+                    isExpired = kvp.Value.Token.IsExpired,
+                    isExpiringSoon = kvp.Value.Token.IsExpiringSoon,
+                    canRefresh = kvp.Value.Token.CanRefresh,
+                    lifetimeRemainingPercent = kvp.Value.Token.LifetimeRemainingPercent,
+                    timeUntilExpiration = kvp.Value.Token.TimeUntilExpiration.ToString()
+                }).ToList();
+
+                return Results.Json(response, jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to get OAuth tokens: {ex.Message}");
+            }
+        });
+
+        // Manually refresh OAuth token for a provider
+        _app.MapPost("/api/credentials/oauth/refresh/{provider}", async (
+            OAuthTokenRefreshService oauthService,
+            string provider) =>
+        {
+            try
+            {
+                var result = await oauthService.RefreshTokenAsync(provider);
                 return Results.Problem($"Text import failed: {ex.Message}");
             }
         });
@@ -2047,6 +2199,73 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
+                return Results.Problem($"Token refresh failed: {ex.Message}");
+            }
+        });
+
+        // Store OAuth token for a provider
+        _app.MapPost("/api/credentials/oauth/store", async (
+            OAuthTokenRefreshService oauthService,
+            OAuthTokenStoreRequest req) =>
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(req.Provider))
+                    return Results.BadRequest("Provider name is required");
+
+                if (string.IsNullOrWhiteSpace(req.AccessToken))
+                    return Results.BadRequest("Access token is required");
+
+                var token = new OAuthToken(
+                    AccessToken: req.AccessToken,
+                    TokenType: req.TokenType ?? "Bearer",
+                    ExpiresAt: req.ExpiresAt ?? DateTimeOffset.UtcNow.AddHours(1),
+                    RefreshToken: req.RefreshToken,
+                    RefreshTokenExpiresAt: req.RefreshTokenExpiresAt,
+                    Scope: req.Scope,
+                    IssuedAt: DateTimeOffset.UtcNow
+                );
+
+                await oauthService.StoreTokenAsync(req.Provider, token);
+                return Results.Ok(new { message = "Token stored successfully" });
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to store token: {ex.Message}");
+            }
+        });
+
+        // Remove OAuth token for a provider
+        _app.MapDelete("/api/credentials/oauth/{provider}", async (
+            OAuthTokenRefreshService oauthService,
+            string provider) =>
+        {
+            try
+            {
+                await oauthService.RemoveTokenAsync(provider);
+                return Results.Ok(new { message = $"Token removed for {provider}" });
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to remove token: {ex.Message}");
+            }
+        });
+
+        // ==================== CREDENTIAL MANAGEMENT UI ====================
+
+        // Get credentials dashboard HTML
+        _app.MapGet("/credentials", (ConfigStore store, CredentialTestingService credentialService) =>
+        {
+            try
+            {
+                var config = store.Load();
+                var statuses = credentialService.GetAllCachedStatuses();
+                var html = HtmlTemplates.CredentialsDashboard(config, statuses);
+                return Results.Content(html, "text/html");
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to render credentials dashboard: {ex.Message}");
                 return Results.Problem($"Failed to unsubscribe watchlist: {ex.Message}");
             }
         });
@@ -2538,6 +2757,22 @@ public record TierMigrationRequest(
     int ParallelFiles = 4
 );
 
+// Credential management DTOs
+public record CredentialTestRequest(
+    string Provider,
+    string? ApiKey = null,
+    string? ApiSecret = null,
+    string? CredentialSource = null
+);
+
+public record OAuthTokenStoreRequest(
+    string Provider,
+    string AccessToken,
+    string? TokenType = null,
+    DateTimeOffset? ExpiresAt = null,
+    string? RefreshToken = null,
+    DateTimeOffset? RefreshTokenExpiresAt = null,
+    string? Scope = null
 // ==================== BULK SYMBOL MANAGEMENT DTOs ====================
 
 public record WatchlistSymbolsRequest(
