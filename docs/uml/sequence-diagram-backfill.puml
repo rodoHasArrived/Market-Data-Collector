@@ -1,0 +1,153 @@
+@startuml Sequence Diagram - Historical Backfill Flow
+!theme plain
+skinparam sequenceMessageAlign center
+
+title Market Data Collector - Historical Backfill Sequence
+
+' ==================== PARTICIPANTS ====================
+participant "User/CLI" as User
+participant "Program.cs" as Program
+participant "HistoricalBackfillService" as BackfillSvc
+participant "CompositeHistoricalDataProvider" as Composite
+participant "StooqProvider\n(Primary)" as Stooq
+participant "YahooFinanceProvider\n(Fallback)" as Yahoo
+participant "OpenFIGI API" as OpenFigi
+participant "EventPipeline" as Pipeline
+participant "JsonlStorageSink" as Storage
+
+' ==================== INITIALIZATION ====================
+== Initialization ==
+
+User -> Program: dotnet run --backfill \\\n  --backfill-provider stooq \\\n  --backfill-symbols SPY,AAPL \\\n  --backfill-from 2024-01-01 \\\n  --backfill-to 2024-12-31
+activate Program
+
+Program -> Program: ParseBackfillRequest()
+note right
+  BackfillRequest {
+    Symbols: ["SPY", "AAPL"],
+    From: 2024-01-01,
+    To: 2024-12-31,
+    Provider: "stooq",
+    Timeframe: Daily
+  }
+end note
+
+Program -> Composite: new CompositeHistoricalDataProvider(\n  providers, config)
+activate Composite
+
+Composite -> Stooq: new StooqHistoricalDataProvider()
+activate Stooq
+Composite -> Yahoo: new YahooFinanceHistoricalDataProvider()
+activate Yahoo
+
+Program -> BackfillSvc: new HistoricalBackfillService(\n  composite, pipeline)
+activate BackfillSvc
+
+' ==================== BACKFILL EXECUTION ====================
+== Backfill Execution ==
+
+Program -> BackfillSvc: RunAsync(request)
+
+loop For Each Symbol (SPY, AAPL)
+
+    BackfillSvc -> BackfillSvc: ProcessSymbol("SPY")
+
+    ' --- Symbol Resolution (Optional) ---
+    opt Symbol Resolution Enabled
+        BackfillSvc -> Composite: ResolveSymbol("SPY")
+        Composite -> OpenFigi: POST /v3/mapping
+        note right: Resolve ticker to\nFIGI identifier
+        OpenFigi --> Composite: {figi: "BBG000BDTBL9"}
+        Composite --> BackfillSvc: ResolvedSymbol
+    end
+
+    ' --- Fetch Historical Bars ---
+    BackfillSvc -> Composite: GetHistoricalBarsAsync(\n  "SPY", 2024-01-01, 2024-12-31, Daily)
+
+    Composite -> Composite: SelectProvider("stooq")
+    Composite -> Stooq: GetHistoricalBarsAsync(...)
+
+    Stooq -> Stooq: RateLimiter.WaitAsync()
+    note right: Respect provider\nrate limits
+
+    Stooq -> Stooq: HTTP GET\nhttps://stooq.com/q/d/l/?s=spy.us&d1=20240101&d2=20241231
+
+    alt Success
+        Stooq -> Stooq: ParseCsvResponse()
+        Stooq --> Composite: IReadOnlyList<OhlcBar>\n[252 bars]
+    else Provider Error (Timeout, 5xx, etc.)
+        Stooq --> Composite: Exception
+
+        ' --- Fallback Logic ---
+        Composite -> Composite: TryFallback()
+        note right: Automatic failover\nto next provider
+
+        Composite -> Yahoo: GetHistoricalBarsAsync(...)
+        Yahoo -> Yahoo: HTTP GET\nhttps://query1.finance.yahoo.com/v8/finance/chart/SPY
+        Yahoo --> Composite: IReadOnlyList<OhlcBar>\n[252 bars]
+    end
+
+    Composite --> BackfillSvc: bars[252]
+
+    ' --- Publish to Pipeline ---
+    loop For Each Bar
+        BackfillSvc -> BackfillSvc: CreateMarketEvent(bar)
+        note right
+          MarketEvent {
+            Type: HistoricalBar,
+            Symbol: "SPY",
+            Timestamp: bar.Date,
+            Payload: {O, H, L, C, V}
+          }
+        end note
+
+        BackfillSvc -> Pipeline: TryPublish(event)
+        Pipeline --> BackfillSvc: true
+    end
+
+    BackfillSvc -> BackfillSvc: IncrementProgress(252)
+
+end
+
+' ==================== STORAGE ====================
+== Pipeline Consumer (Background) ==
+
+Pipeline -> Pipeline: ConsumeAsync()
+loop Process Historical Events
+    Pipeline -> Storage: AppendAsync(event)
+    Storage -> Storage: path = data/historical/stooq/2024/SPY_bars.jsonl
+    Storage -> Storage: WriteLineAsync(json)
+    Storage --> Pipeline: OK
+end
+
+' ==================== COMPLETION ====================
+== Completion ==
+
+BackfillSvc -> Pipeline: FlushAsync()
+Pipeline -> Storage: FlushAsync()
+Storage --> Pipeline: OK
+Pipeline --> BackfillSvc: OK
+
+BackfillSvc -> BackfillSvc: BuildResult()
+note right
+  BackfillResult {
+    Success: true,
+    SymbolsProcessed: 2,
+    BarsWritten: 504,
+    Duration: 12.5s,
+    Errors: []
+  }
+end note
+
+BackfillSvc --> Program: BackfillResult
+
+Program -> Program: WriteStatusFile(result)
+Program --> User: "Backfill complete:\n  2 symbols, 504 bars\n  Duration: 12.5s"
+
+deactivate BackfillSvc
+deactivate Composite
+deactivate Stooq
+deactivate Yahoo
+deactivate Program
+
+@enduml
