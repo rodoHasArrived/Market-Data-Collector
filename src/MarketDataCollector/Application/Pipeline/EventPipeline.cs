@@ -36,7 +36,6 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
     private readonly int _batchSize;
     private readonly bool _enablePeriodicFlush;
 
-    // TODO: Add validation for capacity parameter (should be positive) to prevent invalid configurations
     public EventPipeline(
         IStorageSink sink,
         int capacity = 100_000,
@@ -46,6 +45,8 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
         bool enablePeriodicFlush = true)
     {
         _sink = sink ?? throw new ArgumentNullException(nameof(sink));
+        if (capacity <= 0)
+            throw new ArgumentOutOfRangeException(nameof(capacity), capacity, "Capacity must be a positive value.");
         _capacity = capacity;
         _flushInterval = flushInterval ?? TimeSpan.FromSeconds(5);
         _batchSize = Math.Max(1, batchSize);
