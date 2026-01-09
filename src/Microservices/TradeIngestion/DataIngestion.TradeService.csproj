@@ -33,6 +33,6 @@
     <PackageReference Include="System.Threading.Channels" Version="9.0.0" />
 
     <!-- Validation -->
-    <PackageReference Include="FluentValidation" Version="11.10.0" />
+    <PackageReference Include="FluentValidation" Version="12.1.1" />
   </ItemGroup>
 </Project>
