@@ -5,6 +5,7 @@ using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Application.Services;
 using MarketDataCollector.Application.Subscriptions.Models;
 using MarketDataCollector.Application.Subscriptions.Services;
+using MarketDataCollector.Infrastructure.Providers.SymbolSearch;
 using MarketDataCollector.Storage;
 using MarketDataCollector.Storage.Interfaces;
 using MarketDataCollector.Storage.Services;
@@ -44,6 +45,23 @@ public sealed class UiServer : IAsyncDisposable
         builder.Services.AddSingleton<SchedulingService>();
         builder.Services.AddSingleton<MetadataEnrichmentService>();
         builder.Services.AddSingleton<IndexSubscriptionService>();
+
+        // Symbol search and autocomplete services
+        builder.Services.AddSingleton<OpenFigiClient>();
+        builder.Services.AddSingleton<SymbolSearchService>(sp =>
+        {
+            var metadataService = sp.GetRequiredService<MetadataEnrichmentService>();
+            var figiClient = sp.GetRequiredService<OpenFigiClient>();
+            return new SymbolSearchService(
+                new ISymbolSearchProvider[]
+                {
+                    new AlpacaSymbolSearchProvider(),
+                    new FinnhubSymbolSearchProvider(),
+                    new PolygonSymbolSearchProvider()
+                },
+                figiClient,
+                metadataService);
+        });
 
         // Storage organization services
         var config = store.Load();
@@ -1182,6 +1200,169 @@ public sealed class UiServer : IAsyncDisposable
             }
         });
 
+        // ==================== SYMBOL SEARCH & AUTOCOMPLETE ====================
+
+        _app.MapGet("/api/symbols/search", async (
+            SymbolSearchService searchService,
+            HttpRequest request,
+            CancellationToken ct) =>
+        {
+            try
+            {
+                var query = request.Query["q"].FirstOrDefault() ?? request.Query["query"].FirstOrDefault() ?? "";
+                var limitStr = request.Query["limit"].FirstOrDefault();
+                var limit = int.TryParse(limitStr, out var l) ? l : 10;
+                var assetType = request.Query["assetType"].FirstOrDefault();
+                var exchange = request.Query["exchange"].FirstOrDefault();
+                var provider = request.Query["provider"].FirstOrDefault();
+                var includeFigiStr = request.Query["includeFigi"].FirstOrDefault();
+                var includeFigi = !string.Equals(includeFigiStr, "false", StringComparison.OrdinalIgnoreCase);
+
+                var searchRequest = new SymbolSearchRequest(
+                    Query: query,
+                    Limit: Math.Clamp(limit, 1, 50),
+                    AssetType: assetType,
+                    Exchange: exchange,
+                    Provider: provider,
+                    IncludeFigi: includeFigi
+                );
+
+                var result = await searchService.SearchAsync(searchRequest, ct);
+                return Results.Json(result, jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Symbol search failed: {ex.Message}");
+            }
+        });
+
+        _app.MapPost("/api/symbols/search", async (
+            SymbolSearchService searchService,
+            SymbolSearchRequest request,
+            CancellationToken ct) =>
+        {
+            try
+            {
+                var result = await searchService.SearchAsync(request, ct);
+                return Results.Json(result, jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Symbol search failed: {ex.Message}");
+            }
+        });
+
+        _app.MapGet("/api/symbols/search/providers", async (
+            SymbolSearchService searchService,
+            CancellationToken ct) =>
+        {
+            try
+            {
+                var providers = await searchService.GetProvidersAsync(ct);
+                return Results.Json(providers, jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to get providers: {ex.Message}");
+            }
+        });
+
+        _app.MapGet("/api/symbols/details/{symbol}", async (
+            SymbolSearchService searchService,
+            string symbol,
+            HttpRequest request,
+            CancellationToken ct) =>
+        {
+            try
+            {
+                var provider = request.Query["provider"].FirstOrDefault();
+                var details = await searchService.GetDetailsAsync(symbol, provider, ct);
+
+                if (details is null)
+                    return Results.NotFound($"Symbol '{symbol}' not found");
+
+                return Results.Json(details, jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to get symbol details: {ex.Message}");
+            }
+        });
+
+        _app.MapGet("/api/symbols/figi/{symbol}", async (
+            SymbolSearchService searchService,
+            string symbol,
+            CancellationToken ct) =>
+        {
+            try
+            {
+                var figiMappings = await searchService.LookupFigiAsync(new[] { symbol }, ct);
+                if (!figiMappings.TryGetValue(symbol.ToUpperInvariant(), out var mappings) || mappings.Count == 0)
+                    return Results.NotFound($"No FIGI mappings found for '{symbol}'");
+
+                return Results.Json(new { symbol = symbol.ToUpperInvariant(), mappings }, jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"FIGI lookup failed: {ex.Message}");
+            }
+        });
+
+        _app.MapPost("/api/symbols/figi/bulk", async (
+            SymbolSearchService searchService,
+            FigiBulkLookupRequest request,
+            CancellationToken ct) =>
+        {
+            try
+            {
+                if (request.Symbols is null || request.Symbols.Length == 0)
+                    return Results.BadRequest("At least one symbol is required");
+
+                var figiMappings = await searchService.LookupFigiAsync(request.Symbols, ct);
+                return Results.Json(figiMappings, jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Bulk FIGI lookup failed: {ex.Message}");
+            }
+        });
+
+        _app.MapGet("/api/symbols/figi/search", async (
+            SymbolSearchService searchService,
+            HttpRequest request,
+            CancellationToken ct) =>
+        {
+            try
+            {
+                var query = request.Query["q"].FirstOrDefault() ?? request.Query["query"].FirstOrDefault() ?? "";
+                var limitStr = request.Query["limit"].FirstOrDefault();
+                var limit = int.TryParse(limitStr, out var l) ? l : 20;
+
+                if (string.IsNullOrWhiteSpace(query))
+                    return Results.BadRequest("Query parameter 'q' is required");
+
+                var results = await searchService.SearchFigiAsync(query, Math.Clamp(limit, 1, 100), ct);
+                return Results.Json(new { query, count = results.Count, results }, jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"FIGI search failed: {ex.Message}");
+            }
+        });
+
+        _app.MapDelete("/api/symbols/search/cache", (SymbolSearchService searchService) =>
+        {
+            try
+            {
+                searchService.ClearCache();
+                return Results.Ok(new { message = "Symbol search cache cleared" });
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to clear cache: {ex.Message}");
+            }
+        });
+
         // ==================== INDEX SUBSCRIPTIONS ====================
 
         _app.MapGet("/api/symbols/indices", (IndexSubscriptionService indexService) =>
@@ -1705,6 +1886,9 @@ public record DryRunRequest(
 public record DataSourceRequest(string DataSource);
 public record StorageSettingsRequest(string? DataRoot, bool Compress, string? NamingConvention, string? DatePartition, bool IncludeProvider, string? FilePrefix);
 public record BackfillRequestDto(string? Provider, string[] Symbols, DateOnly? From, DateOnly? To);
+
+// Symbol search DTOs
+public record FigiBulkLookupRequest(string[] Symbols);
 
 // Symbol management DTOs
 public record CreateTemplateDto(
