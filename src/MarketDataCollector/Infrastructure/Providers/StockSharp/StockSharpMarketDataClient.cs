@@ -309,6 +309,7 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
                 await Task.Delay(delay, ct).ConfigureAwait(false);
 
                 // Disconnect existing connector
+                // TODO: Log connector disconnect errors during reconnection for debugging
                 if (_connector != null)
                 {
                     try { _connector.Disconnect(); }
@@ -543,6 +544,7 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
 
         // Cancel reconnection if in progress
         _reconnectCts?.Cancel();
+        // TODO: Log reconnection task completion errors during disposal
         if (_reconnectTask != null)
         {
             try { await _reconnectTask.ConfigureAwait(false); }
@@ -558,6 +560,7 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
 
         // Stop message processor
         _processorCts?.Cancel();
+        // TODO: Log message processor task completion errors during disposal
         if (_messageProcessorTask != null)
         {
             try { await _messageProcessorTask.ConfigureAwait(false); }

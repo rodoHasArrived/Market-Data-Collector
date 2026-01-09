@@ -19,6 +19,8 @@ public sealed class RateLimiter : IDisposable
     private DateTimeOffset _lastRequest = DateTimeOffset.MinValue;
     private bool _disposed;
 
+    // TODO: Add parameter validation - maxRequestsPerWindow should be > 0, window should be positive
+    // TODO: Validate that window is not zero to prevent division/logic errors
     public RateLimiter(int maxRequestsPerWindow, TimeSpan window, TimeSpan? minDelayBetweenRequests = null, ILogger? log = null)
     {
         _maxRequests = maxRequestsPerWindow;

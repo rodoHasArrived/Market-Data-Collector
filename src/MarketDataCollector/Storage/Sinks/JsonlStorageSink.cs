@@ -23,6 +23,7 @@ public sealed class JsonlStorageSink : IStorageSink
     private readonly ConcurrentDictionary<string, WriterState> _writers = new(StringComparer.OrdinalIgnoreCase);
     private static readonly JsonSerializerOptions JsonOpts = new(JsonSerializerDefaults.Web);
 
+    // TODO: Validate options.RootPath is not null/empty and directory permissions are appropriate
     public JsonlStorageSink(StorageOptions options, IStoragePolicy policy)
     {
         _options = options ?? throw new ArgumentNullException(nameof(options));
@@ -133,6 +134,7 @@ public sealed class JsonlStorageSink : IStorageSink
         private readonly string _root;
         private readonly int? _retentionDays;
         private readonly long? _maxBytes;
+        // TODO: Consider using ReaderWriterLockSlim for better concurrency - reads are more frequent
         private readonly object _sync = new();
         private DateTime _lastSweep = DateTime.MinValue;
         private static readonly string[] _extensions = new[] { ".jsonl", ".jsonl.gz", ".jsonl.gzip" };
@@ -191,6 +193,7 @@ public sealed class JsonlStorageSink : IStorageSink
                     }
                 }
             }
+            // TODO: Add structured logging for retention cleanup failures to monitor storage health
             catch
             {
                 // Soft-fail; retention is best-effort and should not block writes.
@@ -199,6 +202,7 @@ public sealed class JsonlStorageSink : IStorageSink
 
         private static void TryDelete(FileInfo file)
         {
+            // TODO: Log file deletion failures for debugging retention issues
             try { file.Delete(); }
             catch { }
         }

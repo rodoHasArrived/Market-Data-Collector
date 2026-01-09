@@ -84,6 +84,7 @@ public sealed class DataQualityService : IDataQualityService
                             scores.Add(score);
                         }
                     }
+                    // TODO: Log file scoring failures to identify problematic files and improve quality analysis
                     catch { }
                 }
             }
@@ -97,6 +98,7 @@ public sealed class DataQualityService : IDataQualityService
                         scores.Add(score);
                     }
                 }
+                // TODO: Log individual file scoring errors for debugging quality report generation
                 catch { }
             }
         }
@@ -167,6 +169,7 @@ public sealed class DataQualityService : IDataQualityService
                         score = await ScoreAsync(path, ct);
                         break;
                     }
+                    // TODO: Log source ranking score failures to diagnose provider data issues
                     catch { }
                 }
             }
@@ -376,12 +379,14 @@ public sealed class DataQualityService : IDataQualityService
                             duplicates++;
                     }
                 }
+                // TODO: Consider logging schema violation details for data quality debugging
                 catch
                 {
                     schemaViolations++;
                 }
             }
         }
+        // TODO: Log the actual exception to understand why consistency check failed
         catch
         {
             return (0.5, new[] { "Could not read file for consistency check" });
@@ -425,6 +430,7 @@ public sealed class DataQualityService : IDataQualityService
                 return (0.0, issues.ToArray());
             }
         }
+        // TODO: Log the actual exception for diagnosing file integrity issues
         catch
         {
             issues.Add("File unreadable");
@@ -459,9 +465,11 @@ public sealed class DataQualityService : IDataQualityService
                         lastSeq = seq;
                     }
                 }
+                // TODO: Log JSON parsing errors for continuity analysis debugging
                 catch { }
             }
         }
+        // TODO: Log the actual exception for diagnosing continuity check failures
         catch
         {
             return (0.5, new[] { "Could not read file for continuity check" });
@@ -487,6 +495,7 @@ public sealed class DataQualityService : IDataQualityService
                 count++;
             }
         }
+        // TODO: Log event counting failures to diagnose file read issues
         catch { }
         return count;
     }
