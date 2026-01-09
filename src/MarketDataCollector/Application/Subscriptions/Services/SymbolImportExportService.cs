@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Subscriptions.Models;
@@ -8,15 +9,163 @@ using MarketDataCollector.Application.UI;
 namespace MarketDataCollector.Application.Subscriptions.Services;
 
 /// <summary>
-/// Service for bulk import and export of symbol subscriptions via CSV.
+/// Service for bulk import and export of symbol subscriptions via CSV, text files, and other formats.
 /// </summary>
 public sealed class SymbolImportExportService
 {
     private readonly ConfigStore _configStore;
 
+    // Common comment prefixes to strip
+    private static readonly char[] CommentChars = { '#', ';', '/' };
+
     public SymbolImportExportService(ConfigStore configStore)
     {
         _configStore = configStore ?? throw new ArgumentNullException(nameof(configStore));
+    }
+
+    /// <summary>
+    /// Import symbols from plain text content (one symbol per line).
+    /// Supports comments (#, ;, //) and inline comments.
+    /// </summary>
+    public async Task<BulkImportResult> ImportFromTextAsync(
+        string textContent,
+        BulkImportOptions? options = null,
+        CancellationToken ct = default)
+    {
+        options ??= new BulkImportOptions(HasHeader: false);
+        var stopwatch = Stopwatch.StartNew();
+
+        var errors = new List<ImportError>();
+        var imported = new List<string>();
+        var skipped = 0;
+
+        var lines = textContent.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+        if (lines.Length == 0)
+        {
+            return new BulkImportResult(0, 0, 0, Array.Empty<ImportError>(), Array.Empty<string>(), 0);
+        }
+
+        var cfg = _configStore.Load();
+        var existingSymbols = (cfg.Symbols ?? Array.Empty<SymbolConfig>())
+            .ToDictionary(s => s.Symbol, s => s, StringComparer.OrdinalIgnoreCase);
+
+        var symbolsToAdd = new List<SymbolConfig>();
+        var defaults = options.Defaults ?? new ImportDefaults();
+
+        for (var i = 0; i < lines.Length; i++)
+        {
+            var lineNumber = i + 1;
+            var line = lines[i].Trim();
+
+            // Skip empty lines and full-line comments
+            if (string.IsNullOrWhiteSpace(line)) continue;
+            if (line.StartsWith('#') || line.StartsWith(';') || line.StartsWith("//")) continue;
+
+            // Strip inline comments
+            var commentIndex = line.IndexOf('#');
+            if (commentIndex > 0) line = line[..commentIndex].Trim();
+            commentIndex = line.IndexOf(';');
+            if (commentIndex > 0) line = line[..commentIndex].Trim();
+            commentIndex = line.IndexOf("//");
+            if (commentIndex > 0) line = line[..commentIndex].Trim();
+
+            // Handle comma-separated or whitespace-separated symbols on same line
+            var symbols = Regex.Split(line, @"[\s,]+")
+                .Where(s => !string.IsNullOrWhiteSpace(s))
+                .Select(s => s.Trim().ToUpperInvariant())
+                .ToArray();
+
+            foreach (var symbol in symbols)
+            {
+                if (string.IsNullOrWhiteSpace(symbol)) continue;
+
+                if (options.ValidateSymbols && !IsValidSymbol(symbol))
+                {
+                    errors.Add(new ImportError(lineNumber, symbol, "Invalid symbol format"));
+                    continue;
+                }
+
+                if (existingSymbols.ContainsKey(symbol))
+                {
+                    if (options.SkipExisting && !options.UpdateExisting)
+                    {
+                        skipped++;
+                        continue;
+                    }
+                    if (options.UpdateExisting)
+                    {
+                        var symbolConfig = new SymbolConfig(
+                            Symbol: symbol,
+                            SubscribeTrades: defaults.SubscribeTrades,
+                            SubscribeDepth: defaults.SubscribeDepth,
+                            DepthLevels: defaults.DepthLevels,
+                            SecurityType: defaults.SecurityType,
+                            Exchange: defaults.Exchange,
+                            Currency: defaults.Currency
+                        );
+                        existingSymbols[symbol] = symbolConfig;
+                        imported.Add(symbol);
+                    }
+                }
+                else
+                {
+                    var symbolConfig = new SymbolConfig(
+                        Symbol: symbol,
+                        SubscribeTrades: defaults.SubscribeTrades,
+                        SubscribeDepth: defaults.SubscribeDepth,
+                        DepthLevels: defaults.DepthLevels,
+                        SecurityType: defaults.SecurityType,
+                        Exchange: defaults.Exchange,
+                        Currency: defaults.Currency
+                    );
+                    symbolsToAdd.Add(symbolConfig);
+                    existingSymbols[symbol] = symbolConfig; // Prevent duplicates in same file
+                    imported.Add(symbol);
+                }
+            }
+        }
+
+        // Save changes
+        if (symbolsToAdd.Count > 0 || options.UpdateExisting)
+        {
+            var allSymbols = existingSymbols.Values.ToList();
+            var next = cfg with { Symbols = allSymbols.ToArray() };
+            await _configStore.SaveAsync(next);
+        }
+
+        stopwatch.Stop();
+
+        return new BulkImportResult(
+            SuccessCount: imported.Count,
+            FailureCount: errors.Count,
+            SkippedCount: skipped,
+            Errors: errors.ToArray(),
+            ImportedSymbols: imported.ToArray(),
+            ProcessingTimeMs: stopwatch.ElapsedMilliseconds
+        );
+    }
+
+    /// <summary>
+    /// Detect import format and route to appropriate handler.
+    /// </summary>
+    public async Task<BulkImportResult> ImportAutoDetectAsync(
+        string content,
+        BulkImportOptions? options = null,
+        CancellationToken ct = default)
+    {
+        // Detect CSV by checking for commas in first non-empty, non-comment line
+        var firstDataLine = content.Split('\n')
+            .Select(l => l.Trim())
+            .FirstOrDefault(l => !string.IsNullOrEmpty(l) && !l.StartsWith('#') && !l.StartsWith(';'));
+
+        if (firstDataLine != null && firstDataLine.Contains(',') && firstDataLine.Contains("Symbol"))
+        {
+            // Likely CSV with header
+            return await ImportFromCsvAsync(content, options, ct);
+        }
+
+        // Default to plain text import
+        return await ImportFromTextAsync(content, options ?? new BulkImportOptions(HasHeader: false), ct);
     }
 
     /// <summary>

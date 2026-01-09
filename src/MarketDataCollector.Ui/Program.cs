@@ -926,6 +926,90 @@ public static class HtmlTemplates
       color: var(--text-primary);
     }}
 
+    /* Quick Add Inline Input */
+    .quick-add-container {{
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      padding: 12px 16px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-default);
+      border-radius: 10px;
+    }}
+
+    .quick-add-container:focus-within {{
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
+    }}
+
+    .quick-add-icon {{
+      color: var(--accent-green);
+      font-size: 16px;
+      flex-shrink: 0;
+    }}
+
+    .quick-add-input {{
+      flex: 1;
+      background: transparent;
+      border: none;
+      padding: 8px 0;
+      font-size: 14px;
+      font-family: var(--font-mono);
+      color: var(--text-primary);
+      text-transform: uppercase;
+    }}
+
+    .quick-add-input:focus {{
+      outline: none;
+      box-shadow: none;
+    }}
+
+    .quick-add-input::placeholder {{
+      color: var(--text-muted);
+      text-transform: none;
+    }}
+
+    .quick-add-btn {{
+      background: linear-gradient(135deg, var(--accent-green-dim), var(--accent-green));
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+    }}
+
+    .quick-add-btn:hover {{
+      box-shadow: var(--glow-green);
+      transform: translateY(-1px);
+    }}
+
+    .quick-add-btn:disabled {{
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }}
+
+    .quick-add-hint {{
+      color: var(--text-muted);
+      font-size: 12px;
+      flex-shrink: 0;
+    }}
+
+    .quick-add-hint kbd {{
+      background: var(--bg-primary);
+      border: 1px solid var(--border-default);
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 11px;
+      font-family: var(--font-mono);
+    }}
+
     /* Tags and badges */
     .tag {{
       display: inline-flex;
@@ -1581,6 +1665,25 @@ public static class HtmlTemplates
     <!-- Symbols Panel -->
     <div class=""card"" style=""flex:1; min-width: 700px;"">
       <h3>Subscribed Symbols</h3>
+
+      <!-- Quick Add Symbol Inline Input -->
+      <div class=""quick-add-container"">
+        <span class=""quick-add-icon"">&#x2795;</span>
+        <input
+          type=""text""
+          id=""quickAddSymbol""
+          class=""quick-add-input""
+          placeholder=""Type symbol and press Enter (e.g., AAPL, MSFT, SPY)""
+          onkeydown=""if(event.key === 'Enter') quickAddSymbol()""
+          autocomplete=""off""
+          spellcheck=""false""
+        />
+        <button class=""quick-add-btn"" onclick=""quickAddSymbol()"" id=""quickAddBtn"">
+          Add
+        </button>
+        <span class=""quick-add-hint""><kbd>Enter</kbd> to add</span>
+      </div>
+
       <table id=""symbolsTable"">
         <thead>
           <tr>
@@ -2360,6 +2463,74 @@ async function runBackfill() {{
   }} finally {{
     btn.disabled = false;
     btn.innerHTML = '<span>&#x23F3;</span> Start Backfill';
+  }}
+}}
+
+// Quick Add Symbol - simplified inline input with sensible defaults
+async function quickAddSymbol() {{
+  const input = document.getElementById('quickAddSymbol');
+  const btn = document.getElementById('quickAddBtn');
+  const symbol = input.value.trim().toUpperCase();
+
+  if (!symbol) {{
+    showToast('Please enter a symbol', 'warning');
+    input.focus();
+    return;
+  }}
+
+  // Validate symbol format (1-10 alphanumeric characters)
+  if (!/^[A-Z0-9]{{1,10}}$/.test(symbol)) {{
+    showToast('Invalid symbol format', 'warning');
+    input.focus();
+    input.select();
+    return;
+  }}
+
+  // Disable input and button while processing
+  input.disabled = true;
+  btn.disabled = true;
+  btn.textContent = '...';
+
+  try {{
+    const payload = {{
+      symbol: symbol,
+      subscribeTrades: true,    // Default: enable trades
+      subscribeDepth: false,    // Default: disable depth
+      depthLevels: 10,
+      securityType: 'STK',
+      exchange: 'SMART',
+      currency: 'USD',
+      primaryExchange: null,
+      localSymbol: null
+    }};
+
+    const r = await fetch('/api/config/symbols', {{
+      method: 'POST',
+      headers: {{'Content-Type': 'application/json'}},
+      body: JSON.stringify(payload)
+    }});
+
+    if (r.ok) {{
+      showToast(`${{symbol}} added`, 'success');
+      addLog(`Quick add: ${{symbol}}`, 'success');
+      input.value = '';
+      await loadConfig();
+    }} else {{
+      const errorText = await r.text();
+      if (errorText.includes('already exists') || r.status === 409) {{
+        showToast(`${{symbol}} already exists`, 'warning');
+      }} else {{
+        showToast(`Failed to add ${{symbol}}`, 'error');
+      }}
+    }}
+  }} catch (err) {{
+    showToast('Network error', 'error');
+    console.error('Quick add error:', err);
+  }} finally {{
+    input.disabled = false;
+    btn.disabled = false;
+    btn.textContent = 'Add';
+    input.focus();
   }}
 }}
 
