@@ -324,6 +324,34 @@ public class EventPipelineTests : IAsyncLifetime
 
     #endregion
 
+    #region Constructor Validation Tests
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    [InlineData(-100)]
+    public void Constructor_WithInvalidCapacity_ThrowsArgumentOutOfRangeException(int invalidCapacity)
+    {
+        // Arrange
+        using var sink = new MockStorageSink();
+
+        // Act & Assert
+        var exception = Assert.Throws<ArgumentOutOfRangeException>(
+            () => new EventPipeline(sink, capacity: invalidCapacity));
+
+        exception.ParamName.Should().Be("capacity");
+        exception.ActualValue.Should().Be(invalidCapacity);
+    }
+
+    [Fact]
+    public void Constructor_WithNullSink_ThrowsArgumentNullException()
+    {
+        // Act & Assert
+        Assert.Throws<ArgumentNullException>(() => new EventPipeline(null!));
+    }
+
+    #endregion
+
     #region Lifecycle Tests
 
     [Fact]
