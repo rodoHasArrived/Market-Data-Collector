@@ -5,6 +5,7 @@ using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Application.Services;
 using MarketDataCollector.Application.Subscriptions.Models;
 using MarketDataCollector.Application.Subscriptions.Services;
+using MarketDataCollector.Infrastructure.Providers.Backfill.Scheduling;
 using MarketDataCollector.Storage;
 using MarketDataCollector.Storage.Interfaces;
 using MarketDataCollector.Storage.Services;
@@ -64,6 +65,14 @@ public sealed class UiServer : IAsyncDisposable
         builder.Services.AddSingleton<ConfigEnvironmentOverride>();
         builder.Services.AddSingleton<DryRunService>();
         builder.Services.AddSingleton<ApiDocumentationService>();
+
+        // Scheduled backfill services
+        var executionHistory = new BackfillExecutionHistory();
+        var scheduleManagerLogger = LoggerFactory.Create(b => b.AddConsole().SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Warning))
+            .CreateLogger<BackfillScheduleManager>();
+        var scheduleManager = new BackfillScheduleManager(scheduleManagerLogger, config.DataRoot, executionHistory);
+        builder.Services.AddSingleton(scheduleManager);
+        builder.Services.AddSingleton(executionHistory);
 
         _app = builder.Build();
 
@@ -326,6 +335,9 @@ public sealed class UiServer : IAsyncDisposable
         ConfigureSymbolManagementRoutes();
         ConfigureStorageOrganizationRoutes();
         ConfigureNewFeatureRoutes();
+
+        // Configure scheduled backfill endpoints
+        _app.MapScheduledBackfillEndpoints();
     }
 
     private void ConfigureStorageOrganizationRoutes()
