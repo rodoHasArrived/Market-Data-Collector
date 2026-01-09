@@ -162,7 +162,7 @@ public sealed class YahooFinanceHistoricalDataProvider : IHistoricalDataProvider
                 var dateKey = timestamps[i].ToString();
                 if (events?.Dividends?.TryGetValue(dateKey, out var dividend) == true)
                 {
-                    dividendAmount = (decimal?)dividend.Amount;
+                    dividendAmount = dividend.Amount;
                 }
 
                 bars.Add(new AdjustedHistoricalBar(
@@ -202,11 +202,11 @@ public sealed class YahooFinanceHistoricalDataProvider : IHistoricalDataProvider
         return symbol.ToUpperInvariant();
     }
 
-    private static decimal? GetDecimalValue(double?[]? array, int index)
+    private static decimal? GetDecimalValue(decimal?[]? array, int index)
     {
         if (array is null || index >= array.Length || array[index] is null)
             return null;
-        return (decimal)array[index]!.Value;
+        return array[index]!.Value;
     }
 
     private static long? GetLongValue(long?[]? array, int index)
@@ -271,7 +271,7 @@ public sealed class YahooFinanceHistoricalDataProvider : IHistoricalDataProvider
         public string? InstrumentType { get; set; }
 
         [JsonPropertyName("regularMarketPrice")]
-        public double? RegularMarketPrice { get; set; }
+        public decimal? RegularMarketPrice { get; set; }
     }
 
     private sealed class YahooEvents
@@ -286,7 +286,7 @@ public sealed class YahooFinanceHistoricalDataProvider : IHistoricalDataProvider
     private sealed class YahooDividend
     {
         [JsonPropertyName("amount")]
-        public double? Amount { get; set; }
+        public decimal? Amount { get; set; }
 
         [JsonPropertyName("date")]
         public long? Date { get; set; }
@@ -295,10 +295,10 @@ public sealed class YahooFinanceHistoricalDataProvider : IHistoricalDataProvider
     private sealed class YahooSplit
     {
         [JsonPropertyName("numerator")]
-        public double? Numerator { get; set; }
+        public decimal? Numerator { get; set; }
 
         [JsonPropertyName("denominator")]
-        public double? Denominator { get; set; }
+        public decimal? Denominator { get; set; }
 
         [JsonPropertyName("splitRatio")]
         public string? SplitRatio { get; set; }
@@ -316,16 +316,16 @@ public sealed class YahooFinanceHistoricalDataProvider : IHistoricalDataProvider
     private sealed class YahooQuote
     {
         [JsonPropertyName("open")]
-        public double?[]? Open { get; set; }
+        public decimal?[]? Open { get; set; }
 
         [JsonPropertyName("high")]
-        public double?[]? High { get; set; }
+        public decimal?[]? High { get; set; }
 
         [JsonPropertyName("low")]
-        public double?[]? Low { get; set; }
+        public decimal?[]? Low { get; set; }
 
         [JsonPropertyName("close")]
-        public double?[]? Close { get; set; }
+        public decimal?[]? Close { get; set; }
 
         [JsonPropertyName("volume")]
         public long?[]? Volume { get; set; }
@@ -334,7 +334,7 @@ public sealed class YahooFinanceHistoricalDataProvider : IHistoricalDataProvider
     private sealed class YahooAdjClose
     {
         [JsonPropertyName("adjclose")]
-        public double?[]? AdjClose { get; set; }
+        public decimal?[]? AdjClose { get; set; }
     }
 
     #endregion
