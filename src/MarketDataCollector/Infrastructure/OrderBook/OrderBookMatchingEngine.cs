@@ -156,10 +156,9 @@ public sealed class OrderBookMatchingEngine
 
     /// <summary>
     /// Modify an existing order (cancel and replace).
-    /// Returns null if the order cannot be modified (not found or not in Open status).
+    /// Returns a Result with either the new OrderResult on success, or an error on failure.
     /// </summary>
-    // TODO: Consider Result<T> pattern instead of null for better error handling
-    public OrderResult? ModifyOrder(long orderId, decimal newPrice, int newQuantity)
+    public ModifyOrderResult ModifyOrder(long orderId, decimal newPrice, int newQuantity)
     {
         lock (_matchLock)
         {
@@ -167,7 +166,9 @@ public sealed class OrderBookMatchingEngine
             if (!_orders.TryGetValue(orderId, out var existingOrder))
             {
                 _log.Warning("Order modification failed: order {OrderId} not found for {Symbol}", orderId, _symbol);
-                return null;
+                return ModifyOrderResult.Failure(
+                    ModifyOrderError.OrderNotFound,
+                    $"Order {orderId} not found for {_symbol}");
             }
 
             // Check if order is in a modifiable state
@@ -176,7 +177,9 @@ public sealed class OrderBookMatchingEngine
                 _log.Warning(
                     "Order modification failed: order {OrderId} has status {Status}, expected {ExpectedStatus} for {Symbol}",
                     orderId, existingOrder.Status, OrderStatus.Open, _symbol);
-                return null;
+                return ModifyOrderResult.Failure(
+                    ModifyOrderError.InvalidOrderStatus,
+                    $"Order {orderId} has status {existingOrder.Status}, expected {OrderStatus.Open}");
             }
 
             if (!CancelOrder(orderId))
@@ -185,11 +188,13 @@ public sealed class OrderBookMatchingEngine
                 _log.Warning(
                     "Order modification failed: unexpected cancellation failure for order {OrderId} on {Symbol}",
                     orderId, _symbol);
-                return null;
+                return ModifyOrderResult.Failure(
+                    ModifyOrderError.CancellationFailed,
+                    $"Unexpected cancellation failure for order {orderId} on {_symbol}");
             }
 
             var oldOrder = _orders[orderId];
-            return SubmitOrder(new OrderRequest
+            var newOrderResult = SubmitOrder(new OrderRequest
             {
                 Side = oldOrder.Side,
                 Price = newPrice,
@@ -197,6 +202,8 @@ public sealed class OrderBookMatchingEngine
                 Type = oldOrder.Type,
                 TimeInForce = oldOrder.TimeInForce
             });
+
+            return ModifyOrderResult.Success(newOrderResult);
         }
     }
 
@@ -554,4 +561,65 @@ public sealed class OrderBookChangedEventArgs : EventArgs
         Symbol = symbol;
         Snapshot = snapshot;
     }
+}
+
+/// <summary>
+/// Represents the result of an order modification attempt.
+/// Uses the Result pattern for explicit error handling instead of null returns.
+/// </summary>
+public sealed class ModifyOrderResult
+{
+    public bool IsSuccess { get; }
+    public OrderResult? Value { get; }
+    public ModifyOrderError? Error { get; }
+    public string? ErrorMessage { get; }
+
+    private ModifyOrderResult(bool isSuccess, OrderResult? value, ModifyOrderError? error, string? errorMessage)
+    {
+        IsSuccess = isSuccess;
+        Value = value;
+        Error = error;
+        ErrorMessage = errorMessage;
+    }
+
+    public static ModifyOrderResult Success(OrderResult value) =>
+        new(true, value, null, null);
+
+    public static ModifyOrderResult Failure(ModifyOrderError error, string message) =>
+        new(false, null, error, message);
+
+    /// <summary>
+    /// Pattern match on the result to handle success and failure cases.
+    /// </summary>
+    public T Match<T>(Func<OrderResult, T> onSuccess, Func<ModifyOrderError, string, T> onFailure) =>
+        IsSuccess ? onSuccess(Value!) : onFailure(Error!.Value, ErrorMessage!);
+
+    /// <summary>
+    /// Execute an action if the result is successful.
+    /// </summary>
+    public void IfSuccess(Action<OrderResult> action)
+    {
+        if (IsSuccess) action(Value!);
+    }
+
+    /// <summary>
+    /// Execute an action if the result is a failure.
+    /// </summary>
+    public void IfFailure(Action<ModifyOrderError, string> action)
+    {
+        if (!IsSuccess) action(Error!.Value, ErrorMessage!);
+    }
+}
+
+/// <summary>
+/// Specific error types for order modification failures.
+/// </summary>
+public enum ModifyOrderError
+{
+    /// <summary>The specified order ID was not found.</summary>
+    OrderNotFound,
+    /// <summary>The order is not in a modifiable state (not Open).</summary>
+    InvalidOrderStatus,
+    /// <summary>The cancellation step of modify failed unexpectedly.</summary>
+    CancellationFailed
 }
