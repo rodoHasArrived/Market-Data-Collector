@@ -4,17 +4,18 @@ This document provides essential context for AI assistants (Claude, Copilot, etc
 
 ## Project Overview
 
-Market Data Collector is a high-performance, cross-platform market data collection system built on **.NET 9.0** using **C# 11** and **F# 8.0**. It captures real-time and historical market microstructure data from multiple providers and persists it for downstream research, backtesting, and algorithmic trading.
+Market Data Collector is a high-performance, cross-platform market data collection system built on **.NET 9.0** using **C# 13** and **F# 9.0**. It captures real-time and historical market microstructure data from multiple providers and persists it for downstream research, backtesting, and algorithmic trading.
 
 **Version:** 1.5.0 | **Status:** Production Ready
 
 ### Key Capabilities
 - Real-time streaming from Interactive Brokers, Alpaca, NYSE, Polygon, StockSharp
 - Historical backfill from 9+ providers (Yahoo Finance, Stooq, Tiingo, Alpha Vantage, Finnhub, Nasdaq Data Link, etc.)
-- Archival-first storage with Write-Ahead Logging (WAL)
+- Archival-first storage with Parquet columnar format for analytics
 - Microservices architecture with MassTransit messaging
 - Web dashboard and native UWP Windows desktop application
 - QuantConnect Lean Engine integration for backtesting
+- OpenTelemetry distributed tracing across the data pipeline
 
 ---
 
@@ -154,7 +155,9 @@ Market-Data-Collector/
 │   │   │   ├── Export/               # Data export
 │   │   │   ├── Replay/               # Data replay
 │   │   │   ├── Policies/             # Retention policies
-│   │   │   └── Services/             # Storage services
+│   │   │   ├── Services/             # Storage services
+│   │   │   ├── Interfaces/           # Storage abstractions
+│   │   │   └── StockSharp/           # StockSharp storage integration
 │   │   ├── Messaging/                # MassTransit publishers
 │   │   ├── Application/              # Startup, config, HTTP
 │   │   ├── Integrations/             # External integrations
@@ -218,6 +221,25 @@ When contributing to this project, **always follow these rules**:
 
 ---
 
+## Key Technologies & Dependencies
+
+| Category | Technology | Purpose |
+|----------|------------|---------|
+| **Runtime** | .NET 9.0 | Cross-platform runtime |
+| **Logging** | Serilog | Structured logging with multiple sinks |
+| **Metrics** | prometheus-net | Prometheus metrics endpoint |
+| **Tracing** | OpenTelemetry | Distributed tracing across pipeline |
+| **Resilience** | Polly | Retry, circuit breaker, bulkhead |
+| **Messaging** | MassTransit | Service bus abstraction (RabbitMQ, Azure) |
+| **WebSocket** | Websocket.Client | High-performance WebSocket client |
+| **Reactive** | System.Reactive | Observable patterns for streaming |
+| **Storage** | Parquet.Net | Columnar storage for archives |
+| **Validation** | FluentValidation | Input validation |
+| **Quant** | QuantConnect.Lean | Algorithmic trading integration |
+| **Indicators** | Skender.Stock.Indicators | 200+ technical indicators |
+
+---
+
 ## Key Interfaces
 
 ### IMarketDataClient (Streaming)
@@ -276,6 +298,31 @@ Use `[ImplementsAdr("ADR-XXX", "reason")]` attribute when implementing ADR contr
 
 ---
 
+## F# Integration
+
+The project includes F# modules for domain modeling located in `src/MarketDataCollector.FSharp/`:
+
+### Key F# Patterns
+- **Discriminated Unions** for event types
+- **Result<T, TError>** for error handling
+- **Active Patterns** for parsing
+- **Computation Expressions** for async workflows
+
+### F# Conventions
+```fsharp
+// Use Result type instead of exceptions
+let processBar (bar: HistoricalBar) : Result<ProcessedBar, DomainError> =
+    if bar.Volume < 0L then Error (InvalidVolume bar.Symbol)
+    else Ok { bar with Validated = true }
+
+// Use option for nullable values
+let tryGetPrice (symbol: string) : Async<decimal option> = ...
+```
+
+See `docs/ai-assistants/CLAUDE.fsharp.md` for detailed F# domain guide.
+
+---
+
 ## Testing
 
 ### Test Framework Stack
@@ -312,14 +359,23 @@ dotnet test tests/MarketDataCollector.FSharp.Tests
 ### Environment Variables
 API credentials should be set via environment variables:
 ```bash
+# .NET Configuration Binding Format (double underscore for nesting)
 export ALPACA__KEYID=your-key-id
 export ALPACA__SECRETKEY=your-secret-key
 export NYSE__APIKEY=your-api-key
 export POLYGON__APIKEY=your-api-key
 export TIINGO__TOKEN=your-token
+
+# Alternative format (also supported)
+export ALPACA_KEY_ID=your-key-id
+export ALPACA_SECRET_KEY=your-secret-key
+export POLYGON_API_KEY=your-api-key
+export TIINGO_API_TOKEN=your-token
+export FINNHUB_API_KEY=your-api-key
+export ALPHA_VANTAGE_API_KEY=your-api-key
 ```
 
-Note: Use double underscore (`__`) for nested configuration (maps to `Alpaca:KeyId`).
+Note: Use double underscore (`__`) for nested .NET configuration binding (maps to `Alpaca:KeyId`). The single underscore format is also supported for common providers.
 
 ### appsettings.json
 Configuration file should be copied from template:
@@ -433,6 +489,32 @@ When running with `--ui` flag:
 - `/metrics` - Prometheus metrics
 - `/health`, `/ready`, `/live` - Kubernetes health probes
 - `/api/backfill/*` - Backfill management API
+
+---
+
+## Microservices Architecture
+
+The system supports decomposition into independent microservices located in `src/Microservices/`:
+
+| Service | Port | Purpose |
+|---------|------|---------|
+| Gateway | 5000 | API Gateway, routing, authentication |
+| TradeIngestion | 5001 | Trade tick processing |
+| QuoteIngestion | 5002 | Quote/BBO processing |
+| OrderBookIngestion | 5003 | L2 order book processing |
+| HistoricalDataIngestion | 5004 | Historical backfill orchestration |
+| DataValidation | 5005 | Data integrity validation |
+
+### Running Microservices
+```bash
+# Run all services with Docker Compose
+docker-compose -f src/Microservices/docker-compose.microservices.yml up
+
+# Run individual service
+dotnet run --project src/Microservices/TradeIngestion/DataIngestion.TradeService.csproj
+```
+
+See `docs/ai-assistants/CLAUDE.microservices.md` for detailed microservices architecture guide.
 
 ---
 
@@ -561,12 +643,19 @@ Key documentation files:
 - `docs/guides/getting-started.md` - Setup and first run
 - `docs/guides/configuration.md` - All configuration options
 - `docs/guides/operator-runbook.md` - Production operations
+- `docs/guides/troubleshooting.md` - Common issues and solutions
+- `docs/guides/provider-implementation.md` - Guide for adding new providers
 - `docs/architecture/overview.md` - System architecture
 - `docs/architecture/domains.md` - Event contracts
 - `docs/providers/backfill-guide.md` - Historical data guide
 - `docs/integrations/lean-integration.md` - QuantConnect Lean guide
 - `docs/adr/` - Architecture Decision Records
-- `docs/ai-assistants/CLAUDE.*.md` - Specialized AI assistant guides
+- `docs/ai-assistants/CLAUDE.*.md` - Specialized AI assistant guides:
+  - `CLAUDE.fsharp.md` - F# domain modeling guide
+  - `CLAUDE.microservices.md` - Microservices architecture guide
+  - `CLAUDE.providers.md` - Data providers implementation guide
+  - `CLAUDE.storage.md` - Storage architecture guide
+  - `CLAUDE.testing.md` - Testing strategy guide
 
 ---
 
