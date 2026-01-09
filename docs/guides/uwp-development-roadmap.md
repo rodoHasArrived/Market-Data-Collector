@@ -10,6 +10,11 @@ This document outlines feature refinements and development roadmap for the Marke
 ### Newly Completed Features
 - **Symbols Page**: Bulk symbol management (CSV import/export), symbol search with autocomplete, subscription templates, watchlist functionality
 - **Backfill Page**: Scheduled backfill with cron-like interface, per-symbol progress visualization, data validation and repair
+- **Provider Page**: Multi-provider support with Primary/Failover/Comparison roles, credential testing with visual feedback, latency history charts
+- **Data Sources Page**: Comprehensive multi-data source management with failover settings, default source configuration, and provider-specific settings
+- **Trading Hours Page**: Full exchange calendar with holidays, pre/post market sessions, timezone conversion, session overlap visualization, DST handling
+- **Data Export Page**: Complete export suite with scheduled exports, email delivery, database export (6 databases), webhook integration, QuantConnect Lean export
+- **Plugins Page**: Full data source plugin system with hot reload, directory watching, plugin configuration and management
 
 > **Primary Mission: Data Collection & Archival**
 >
@@ -30,8 +35,9 @@ This document outlines feature refinements and development roadmap for the Marke
 4. [Offline Storage & Archival Ideas (2026)](#offline-storage--archival-ideas-2026)
 5. [External Analysis Support (2026)](#external-analysis-support-2026)
 6. [Additional New Feature Ideas (2026)](#additional-new-feature-ideas-2026)
-7. [Priority Matrix](#priority-matrix)
-8. [Implementation Notes](#implementation-notes)
+7. [New Feature Ideas (January 2026)](#new-feature-ideas-january-2026)
+8. [Priority Matrix](#priority-matrix)
+9. [Implementation Notes](#implementation-notes)
 
 ---
 
@@ -86,23 +92,37 @@ This document outlines feature refinements and development roadmap for the Marke
 - ✅ Uptime calculation and total reconnection counter
 - ✅ Health check timer with periodic verification
 
-#### 2. Multi-Provider Support
-**Current State:** Single provider selection (IB or Alpaca).
+#### 2. Multi-Provider Support ✅ COMPLETE
+**Current State:** Full multi-provider support implemented.
 
-**Proposed Refinements:**
-- Enable simultaneous multi-provider connections
-- Add provider comparison view showing data quality metrics side-by-side
-- Implement automatic failover configuration between providers
-- Add provider-specific symbol mapping interface
+**Implemented:**
+- ✅ Single/Multi provider toggle in Provider Page
+- ✅ Simultaneous multi-provider connections
+- ✅ Provider roles configuration (Primary, Failover, Comparison)
+- ✅ Automatic failover configuration between providers
+- ✅ Per-provider enable/disable toggles
+- ✅ DataSourcesPage for comprehensive multi-source management
+- ✅ Failover timeout configuration (5-300 seconds)
+- ✅ Default real-time and historical source selection
 
-#### 3. Credential Testing
-**Current State:** Credentials stored but no validation.
+**Remaining:**
+- Provider comparison view showing data quality metrics side-by-side
+- Provider-specific symbol mapping interface
 
-**Proposed Refinements:**
-- Add "Test Credentials" button with visual feedback
-- Show credential expiration warnings (for time-limited tokens)
-- Display last successful authentication timestamp
-- Add credential auto-refresh for OAuth-based providers
+#### 3. Credential Testing ✅ COMPLETE
+**Current State:** Full credential testing implemented.
+
+**Implemented:**
+- ✅ "Test Credentials" button with visual feedback
+- ✅ Credential status display (configured/not configured)
+- ✅ Test connection button for IB
+- ✅ Clear credentials functionality
+- ✅ ProgressRing during credential testing
+- ✅ InfoBar for test results display
+
+**Remaining:**
+- Credential expiration warnings (for time-limited tokens)
+- Credential auto-refresh for OAuth-based providers
 
 ---
 
@@ -353,17 +373,32 @@ This document outlines feature refinements and development roadmap for the Marke
 **Description:** Tools for exporting data and integrating with external systems.
 
 **Implemented:**
-- ✅ DataExportPage.xaml with full export UI
-- ✅ Multiple export format support
-- ✅ Date range and symbol selection
-- ✅ Export configuration and management
+- ✅ DataExportPage.xaml with comprehensive export UI
+- ✅ Multiple export format support (CSV, Parquet, JSON Lines, HDF5, Feather)
+- ✅ Multiple compression options (None, Gzip, LZ4, Zstd)
+- ✅ Date range and symbol selection with quick date buttons (Today, Week, Month)
+- ✅ Data type selection (Trades, Order Book Depth, BBO Quotes, Historical Bars)
+- ✅ Export progress visualization with per-symbol breakdown
+- ✅ Scheduled exports with frequency options (Hourly, Daily, Weekly, Monthly)
+- ✅ Email delivery configuration with recipients, subject template, and attachment option
+- ✅ Direct database export with support for:
+  - PostgreSQL, TimescaleDB, ClickHouse, QuestDB, InfluxDB, SQLite
+  - Connection configuration (Host, Port, Database, Credentials)
+  - Test Connection functionality
+- ✅ Webhook integration for real-time event streaming
+  - Configurable webhook URL
+  - Payload format options (JSON, MessagePack, Protobuf)
+  - Batching options (Real-time, Micro-batch, Batch, Bulk)
+  - Event type filtering (Trades, Quotes, Depth Updates, Integrity Alerts)
+  - Test Webhook functionality
+- ✅ QuantConnect Lean data format export
+  - Lean data folder configuration with Browse button
+  - Resolution selection (Tick, Second, Minute, Hour, Daily)
+  - Verify Lean Data functionality
+- ✅ Export history tracking with timestamps, format, symbol count, size, destination
 
 **Remaining for Future:**
-- Scheduled exports with email delivery
-- Direct database export (PostgreSQL, TimescaleDB)
 - REST API configuration for external consumers
-- Webhook configuration for real-time event streaming
-- QuantConnect Lean data format export
 
 ---
 
@@ -372,16 +407,22 @@ This document outlines feature refinements and development roadmap for the Marke
 **Description:** Configure and visualize trading sessions for different exchanges.
 
 **Implemented:**
-- ✅ TradingHoursPage.xaml with trading hours configuration UI
+- ✅ TradingHoursPage.xaml with comprehensive trading hours configuration UI
 - ✅ Market hours scheduling integration with collector service
 - ✅ 24/7 vs market hours only collection mode
-
-**Remaining for Future:**
-- Exchange calendar with holidays
-- Pre/post market session configuration
-- Timezone conversion tools
-- Session overlap visualization (for global markets)
-- Automatic DST adjustments
+- ✅ Exchange calendar with holidays (NYSE, NASDAQ, CME, LSE, TSE, Custom)
+- ✅ Holiday management with Add/Import functionality
+- ✅ Pre/post market session configuration with individual enable toggles
+- ✅ TimePickers for Pre-Market, Regular Hours, and Post-Market sessions
+- ✅ Timezone conversion tools (America/New_York, America/Chicago, Europe/London, Asia/Tokyo, Asia/Hong_Kong, UTC)
+- ✅ Session overlap visualization with global market hours timeline (UTC)
+- ✅ Visual representation of Tokyo, London, and New York sessions
+- ✅ Current time indicator on timeline
+- ✅ Automatic DST adjustments with toggle
+- ✅ DST transition warnings with upcoming change notifications
+- ✅ Trading days configuration (Mon-Sun checkboxes)
+- ✅ Real-time local time, UTC time, and exchange status display
+- ✅ Next market event countdown (e.g., "Closes in 1h 30m")
 
 ---
 
@@ -405,7 +446,33 @@ This document outlines feature refinements and development roadmap for the Marke
 
 ---
 
-### 10. Mobile Companion App Integration
+### 10. Data Source Plugin System ✅ COMPLETE (NEW)
+
+**Description:** Extensible plugin architecture for adding custom data source providers.
+
+**Implemented:**
+- ✅ PluginsPage.xaml with comprehensive plugin management UI
+- ✅ Plugin system status dashboard (Total, Active, Error counts)
+- ✅ Plugin directory configuration with watch capability
+- ✅ Hot reload support for plugins
+- ✅ Auto-load new plugins toggle
+- ✅ Browse and install plugin files (.dll)
+- ✅ Open plugins folder functionality
+- ✅ Installed plugins list with:
+  - Enable/disable toggle per plugin
+  - Plugin name, version, status, data source type
+  - Plugin description and author
+  - Priority and permissions display
+  - Reload, Configure, and Unload actions
+- ✅ Plugin details panel with:
+  - Plugin ID, Version, Data Source Type, Category
+  - Assembly path display
+  - Required permissions listing
+- ✅ Keyboard accelerators (Ctrl+R for refresh, etc.)
+
+---
+
+### 11. Mobile Companion App Integration
 
 **Description:** Companion mobile app support for remote monitoring.
 
@@ -418,7 +485,7 @@ This document outlines feature refinements and development roadmap for the Marke
 
 ---
 
-### 11. Machine Learning Data Preparation
+### 12. Machine Learning Data Preparation
 
 **Description:** Tools for preparing collected data for ML model training.
 
@@ -433,7 +500,7 @@ This document outlines feature refinements and development roadmap for the Marke
 
 ---
 
-### 12. Multi-Asset Class Support
+### 13. Multi-Asset Class Support
 
 **Description:** Expand beyond equities to support additional asset classes.
 
@@ -447,7 +514,7 @@ This document outlines feature refinements and development roadmap for the Marke
 
 ---
 
-### 13. Compliance & Audit Features
+### 14. Compliance & Audit Features
 
 **Description:** Features for regulatory compliance and data governance.
 
@@ -461,7 +528,7 @@ This document outlines feature refinements and development roadmap for the Marke
 
 ---
 
-### 14. Performance Benchmarking Page
+### 15. Performance Benchmarking Page
 
 **Description:** Compare system performance against benchmarks and historical baselines.
 
@@ -475,7 +542,7 @@ This document outlines feature refinements and development roadmap for the Marke
 
 ---
 
-### 15. Help & Onboarding Improvements 🔄 PARTIAL
+### 16. Help & Onboarding Improvements 🔄 PARTIAL
 
 **Description:** Enhanced user guidance and documentation within the app.
 
@@ -1004,6 +1071,125 @@ MarketData_2026-Q1.tar.gz
 
 ---
 
+## New Feature Ideas (January 2026)
+
+### 44. Data Completeness Heatmap Calendar
+
+**Description:** Visual calendar showing data collection completeness across all symbols and time periods.
+
+**Features:**
+- Month/Year view with color-coded completeness indicators
+- Drill-down from year → month → day → symbol
+- Per-symbol coverage matrix (symbols × dates)
+- Gap highlighting with one-click backfill triggers
+- Expected vs. actual event count comparison
+- Trading day vs. holiday distinction
+- Export completeness reports for compliance
+
+**UI Components:**
+- Calendar grid with heatmap coloring (green=complete, yellow=partial, red=gaps)
+- Symbol filter and date range selector
+- Coverage percentage summary stats
+- Quick actions for filling detected gaps
+
+---
+
+### 45. Real-Time Data Feed Monitor
+
+**Description:** Live visualization of incoming data streams with health metrics.
+
+**Features:**
+- Real-time event stream waterfall/ticker display
+- Per-provider throughput gauges
+- Latency histogram with percentile markers
+- Sequence gap detection with alerts
+- Message rate comparison across providers
+- Bandwidth utilization monitoring
+- Connection health timeline
+- Auto-pause during market close
+
+---
+
+### 46. Symbol Universe Browser
+
+**Description:** Comprehensive symbol discovery and universe management tool.
+
+**Features:**
+- Search across multiple providers (OpenFIGI, SEC EDGAR, exchange listings)
+- Filter by sector, industry, market cap, average volume
+- Symbol cross-reference mapping (CUSIP, ISIN, FIGI)
+- Corporate actions tracker (splits, dividends, name changes)
+- IPO calendar integration
+- Delisted symbols archive
+- Custom universe creation with criteria
+- Universe comparison and overlap analysis
+
+---
+
+### 47. Backtest Data Validator
+
+**Description:** Validate collected data quality for backtesting use cases.
+
+**Features:**
+- Split/dividend adjustment verification
+- Corporate action alignment check
+- Price continuity validation (gap detection)
+- Volume anomaly detection
+- Timestamp alignment across symbols
+- Look-ahead bias detection tools
+- Survivorship bias warnings
+- Data quality certification reports
+
+---
+
+### 48. Intelligent Data Recommendations
+
+**Description:** AI-powered suggestions for data collection optimization.
+
+**Features:**
+- Suggested symbols based on portfolio correlation analysis
+- Optimal collection schedule recommendations
+- Storage optimization suggestions
+- Provider cost/quality trade-off analysis
+- Gap filling priority recommendations
+- Collection frequency optimization
+- Anomaly pattern learning and prediction
+- Resource utilization recommendations
+
+---
+
+### 49. Remote Collection Node Manager
+
+**Description:** Manage distributed data collection nodes for redundancy and coverage.
+
+**Features:**
+- Register and monitor remote collection nodes
+- Node health and status dashboard
+- Data synchronization between nodes
+- Automatic failover to backup nodes
+- Geographic distribution visualization
+- Node resource monitoring (CPU, memory, disk)
+- Centralized configuration deployment
+- Node-to-node data reconciliation
+
+---
+
+### 50. Data Monetization Dashboard
+
+**Description:** Tools for preparing and packaging data for sharing or monetization.
+
+**Features:**
+- Data product catalog management
+- Access control and licensing configuration
+- Usage analytics and metering
+- Data sampling and preview generation
+- Terms of service management
+- API key management for data consumers
+- Revenue tracking and reporting
+- Data quality SLA monitoring
+
+---
+
 ## Priority Matrix
 
 ### ✅ Completed Quick Wins
@@ -1023,19 +1209,23 @@ MarketData_2026-Q1.tar.gz
 | Data Validation & Repair | ✅ Complete | 2026-01 |
 | Subscription Templates | ✅ Complete | 2026-01 |
 | Symbol Watchlists | ✅ Complete | 2026-01 |
+| Credential testing with feedback | ✅ Complete | 2026-01 |
+| Multi-Provider Support | ✅ Complete | 2026-01 |
+| Trading Hours Manager (full) | ✅ Complete | 2026-01 |
+| Data Export & Integration (full) | ✅ Complete | 2026-01 |
+| Data Source Plugin System | ✅ Complete | 2026-01 |
 
 ### High Impact, Low Effort (Remaining Quick Wins)
 | Feature | Effort | Impact |
 |---------|--------|--------|
-| Credential testing with feedback | 1 day | Medium |
 | Quick Add Symbol inline input (UWP) | 1 day | Medium |
+| Provider comparison data quality view | 2 days | Medium |
 
 ### High Impact, Medium Effort (Strategic)
 | Feature | Effort | Impact |
 |---------|--------|--------|
 | Live Order Book Visualization | 1-2 weeks | High |
 | Data Quality Analytics Page | 1-2 weeks | High |
-| Multi-Provider Support | 1-2 weeks | Medium |
 | Interactive Onboarding Tutorial | 1 week | Medium |
 
 ### High Impact, High Effort (Major Features)
@@ -1072,27 +1262,34 @@ MarketData_2026-Q1.tar.gz
 |---------|--------|--------|----------|--------|
 | Analysis Export Wizard (#35) | 2 weeks | Critical | P0 | |
 | Schema & Data Dictionary Generator (#37) | 1 week | High | P0 | **IMPLEMENTED** (2026-01-03) |
-| Data Quality Pre-Export Report (#36) | 2 weeks | High | P1 |
-| Time Series Aggregation Tools (#38) | 2 weeks | High | P1 |
-| Batch Export Scheduler (#40) | 2 weeks | High | P1 |
-| Feature Engineering Export (#39) | 3 weeks | Medium | P2 |
-| External Tool Workspace Generator (#41) | 2 weeks | Medium | P2 |
-| Dataset Fingerprinting & Versioning (#42) | 2 weeks | Medium | P2 |
-| Analysis Integration Hub (#43) | 3 weeks | Low | P3 |
+| Data Quality Pre-Export Report (#36) | 2 weeks | High | P1 | |
+| Time Series Aggregation Tools (#38) | 2 weeks | High | P1 | |
+| Batch Export Scheduler (#40) | 2 weeks | High | P1 | **PARTIAL** (Scheduled exports in DataExportPage) |
+| Feature Engineering Export (#39) | 3 weeks | Medium | P2 | |
+| External Tool Workspace Generator (#41) | 2 weeks | Medium | P2 | |
+| Dataset Fingerprinting & Versioning (#42) | 2 weeks | Medium | P2 | |
+| Analysis Integration Hub (#43) | 3 weeks | Low | P3 | |
 
 ### Additional New Ideas (2026)
 | Feature | Effort | Impact | Priority |
 |---------|--------|--------|----------|
-| Real-Time Anomaly Detection Engine | 3-4 weeks | High | P1 |
-| Event-Driven Automation Framework | 2-3 weeks | High | P1 |
-| Data Federation & Multi-Source Reconciliation | 3-4 weeks | High | P1 |
-| Historical Data Comparison Tool | 2 weeks | Medium | P2 |
-| Embedded Scripting Environment | 4 weeks | High | P2 |
-| Market Microstructure Analytics | 3 weeks | Medium | P2 |
-| Smart Symbol Recommendations | 2 weeks | Medium | P3 |
-| Network Diagnostics & Optimization | 2 weeks | Medium | P3 |
-| Data Lineage & Provenance Tracking | 3 weeks | Medium | P3 |
-| Collaborative Workspaces | 4-6 weeks | Medium | P4 |
+| Real-Time Anomaly Detection Engine (#16) | 3-4 weeks | High | P1 |
+| Event-Driven Automation Framework (#19) | 2-3 weeks | High | P1 |
+| Data Federation & Multi-Source Reconciliation (#18) | 3-4 weeks | High | P1 |
+| Data Completeness Heatmap Calendar (#44) | 2 weeks | High | P1 |
+| Real-Time Data Feed Monitor (#45) | 2 weeks | High | P1 |
+| Symbol Universe Browser (#46) | 2-3 weeks | High | P1 |
+| Backtest Data Validator (#47) | 2 weeks | High | P1 |
+| Historical Data Comparison Tool (#20) | 2 weeks | Medium | P2 |
+| Embedded Scripting Environment (#23) | 4 weeks | High | P2 |
+| Market Microstructure Analytics (#17) | 3 weeks | Medium | P2 |
+| Intelligent Data Recommendations (#48) | 3 weeks | Medium | P2 |
+| Remote Collection Node Manager (#49) | 4 weeks | Medium | P2 |
+| Smart Symbol Recommendations (#21) | 2 weeks | Medium | P3 |
+| Network Diagnostics & Optimization (#24) | 2 weeks | Medium | P3 |
+| Data Lineage & Provenance Tracking (#22) | 3 weeks | Medium | P3 |
+| Collaborative Workspaces (#25) | 4-6 weeks | Medium | P4 |
+| Data Monetization Dashboard (#50) | 4 weeks | Low | P4 |
 
 > **Note on Priorities**: Offline storage and external analysis features are prioritized above other enhancements as they directly support the primary mission of data collection and archival. Cloud/online features remain implemented for future flexibility but are not the current focus.
 
