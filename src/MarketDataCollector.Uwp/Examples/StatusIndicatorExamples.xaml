@@ -1,0 +1,571 @@
+<!--
+    StatusIndicatorExamples.xaml
+
+    This file demonstrates various status indicators, health badges, and connection state displays.
+    These patterns are essential for real-time monitoring dashboards.
+
+    Note: This is a reference file. Copy patterns to your actual pages.
+-->
+
+<Page
+    x:Class="MarketDataCollector.Uwp.Examples.StatusIndicatorExamples"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Background="{StaticResource ConsoleBackgroundDarkBrush}">
+
+    <Page.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="ms-appx:///Styles/AppStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- Pulsing Animation for Live Indicator -->
+            <Storyboard x:Key="PulseAnimation" RepeatBehavior="Forever">
+                <DoubleAnimation Storyboard.TargetName="PulseEllipse"
+                                 Storyboard.TargetProperty="Opacity"
+                                 From="1.0" To="0.3" Duration="0:0:1"
+                                 AutoReverse="True"/>
+            </Storyboard>
+        </ResourceDictionary>
+    </Page.Resources>
+
+    <ScrollViewer>
+        <StackPanel Padding="32" Spacing="32">
+
+            <!-- ═══════════════════════════════════════════════════════════════════
+                 SECTION: CONNECTION STATUS INDICATORS
+                 ═══════════════════════════════════════════════════════════════════ -->
+            <StackPanel Spacing="16">
+                <TextBlock Text="Connection Status Indicators" Style="{StaticResource SectionHeaderStyle}"/>
+
+                <!-- Provider Status Cards -->
+                <StackPanel Orientation="Horizontal" Spacing="16">
+                    <!-- Connected Provider -->
+                    <Border Style="{StaticResource CardStyle}" Width="280" Padding="16">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Provider Icon -->
+                            <Border Background="#f85149" CornerRadius="6" Width="40" Height="40" VerticalAlignment="Center">
+                                <TextBlock Text="IB" FontWeight="Bold" FontSize="16" Foreground="#ffffff"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+
+                            <!-- Provider Info -->
+                            <StackPanel Grid.Column="1" Margin="12,0" VerticalAlignment="Center">
+                                <TextBlock Text="Interactive Brokers" FontWeight="SemiBold" Foreground="#e6edf3"/>
+                                <TextBlock Text="Gateway 10.19.1" FontSize="12" Foreground="#8b949e"/>
+                            </StackPanel>
+
+                            <!-- Status Indicator -->
+                            <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <Ellipse Width="10" Height="10" Fill="#3fb950"/>
+                                    <TextBlock Text="Connected" FontSize="12" Foreground="#3fb950"/>
+                                </StackPanel>
+                                <TextBlock Text="Latency: 12ms" FontSize="10" Foreground="#6e7681" HorizontalAlignment="Right"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Connecting Provider -->
+                    <Border Style="{StaticResource CardStyle}" Width="280" Padding="16">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Border Background="#a371f7" CornerRadius="6" Width="40" Height="40" VerticalAlignment="Center">
+                                <TextBlock Text="A" FontWeight="Bold" FontSize="16" Foreground="#ffffff"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+
+                            <StackPanel Grid.Column="1" Margin="12,0" VerticalAlignment="Center">
+                                <TextBlock Text="Alpaca Markets" FontWeight="SemiBold" Foreground="#e6edf3"/>
+                                <TextBlock Text="WebSocket API" FontSize="12" Foreground="#8b949e"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <ProgressRing Width="12" Height="12" IsActive="True"/>
+                                    <TextBlock Text="Connecting..." FontSize="12" Foreground="#d29922"/>
+                                </StackPanel>
+                                <TextBlock Text="Attempt 2/5" FontSize="10" Foreground="#6e7681" HorizontalAlignment="Right"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Disconnected Provider -->
+                    <Border Style="{StaticResource CardStyle}" Width="280" Padding="16" Opacity="0.7">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Border Background="#58a6ff" CornerRadius="6" Width="40" Height="40" VerticalAlignment="Center">
+                                <TextBlock Text="P" FontWeight="Bold" FontSize="16" Foreground="#ffffff"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+
+                            <StackPanel Grid.Column="1" Margin="12,0" VerticalAlignment="Center">
+                                <TextBlock Text="Polygon.io" FontWeight="SemiBold" Foreground="#e6edf3"/>
+                                <TextBlock Text="REST API" FontSize="12" Foreground="#8b949e"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <Ellipse Width="10" Height="10" Fill="#f85149" Stroke="#f85149" StrokeThickness="1"/>
+                                    <TextBlock Text="Disconnected" FontSize="12" Foreground="#f85149"/>
+                                </StackPanel>
+                                <TextBlock Text="Error: Auth failed" FontSize="10" Foreground="#6e7681" HorizontalAlignment="Right"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- ═══════════════════════════════════════════════════════════════════
+                 SECTION: LIVE STREAMING INDICATORS
+                 ═══════════════════════════════════════════════════════════════════ -->
+            <StackPanel Spacing="16">
+                <TextBlock Text="Live Streaming Indicators" Style="{StaticResource SectionHeaderStyle}"/>
+
+                <StackPanel Orientation="Horizontal" Spacing="16">
+                    <!-- Live Badge with Pulse -->
+                    <Border Style="{StaticResource LiveBadgeStyle}" Padding="12,6">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Grid>
+                                <Ellipse x:Name="PulseEllipse" Width="10" Height="10" Fill="#3fb950"/>
+                                <Ellipse Width="10" Height="10" Fill="#3fb950" Opacity="0.5">
+                                    <Ellipse.RenderTransform>
+                                        <ScaleTransform ScaleX="1.5" ScaleY="1.5" CenterX="5" CenterY="5"/>
+                                    </Ellipse.RenderTransform>
+                                </Ellipse>
+                            </Grid>
+                            <TextBlock Text="LIVE" FontSize="12" FontWeight="Bold" Foreground="#3fb950"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Streaming Badge -->
+                    <Border Style="{StaticResource StreamBadgeActiveStyle}" Padding="12,6">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon Glyph="&#xE93E;" FontSize="14" Foreground="#3fb950"/>
+                            <TextBlock Text="STREAMING" FontSize="12" FontWeight="SemiBold" Foreground="#3fb950"/>
+                            <TextBlock Text="42 symbols" FontSize="12" Foreground="#8b949e"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Paused Badge -->
+                    <Border Background="#2d2a1f" CornerRadius="4" Padding="12,6">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon Glyph="&#xE769;" FontSize="14" Foreground="#d29922"/>
+                            <TextBlock Text="PAUSED" FontSize="12" FontWeight="SemiBold" Foreground="#d29922"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Recording Badge -->
+                    <Border Background="#2d1f1f" CornerRadius="4" Padding="12,6">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Ellipse Width="10" Height="10" Fill="#f85149"/>
+                            <TextBlock Text="RECORDING" FontSize="12" FontWeight="SemiBold" Foreground="#f85149"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- ═══════════════════════════════════════════════════════════════════
+                 SECTION: HEALTH STATUS PANELS
+                 ═══════════════════════════════════════════════════════════════════ -->
+            <StackPanel Spacing="16">
+                <TextBlock Text="Health Status Panels" Style="{StaticResource SectionHeaderStyle}"/>
+
+                <!-- System Health Overview -->
+                <Border Style="{StaticResource CardStyle}" Padding="24" MaxWidth="700">
+                    <StackPanel Spacing="16">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="System Health" FontWeight="SemiBold" FontSize="16" Foreground="#e6edf3"/>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                                <Border Background="#1a3fb950" CornerRadius="12" Padding="12,4">
+                                    <TextBlock Text="All Systems Operational" FontSize="12" Foreground="#3fb950"/>
+                                </Border>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Health Items -->
+                        <StackPanel Spacing="8">
+                            <!-- Healthy Service -->
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="24"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="100"/>
+                                    <ColumnDefinition Width="80"/>
+                                </Grid.ColumnDefinitions>
+
+                                <FontIcon Glyph="&#xE73E;" FontSize="16" Foreground="#3fb950"/>
+                                <TextBlock Grid.Column="1" Text="Data Collection Service" Foreground="#e6edf3"/>
+                                <TextBlock Grid.Column="2" Text="Healthy" Foreground="#3fb950" HorizontalAlignment="Right"/>
+                                <TextBlock Grid.Column="3" Text="99.99%" Foreground="#8b949e" HorizontalAlignment="Right"/>
+                            </Grid>
+
+                            <Border Height="1" Background="#21262d"/>
+
+                            <!-- Healthy Service -->
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="24"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="100"/>
+                                    <ColumnDefinition Width="80"/>
+                                </Grid.ColumnDefinitions>
+
+                                <FontIcon Glyph="&#xE73E;" FontSize="16" Foreground="#3fb950"/>
+                                <TextBlock Grid.Column="1" Text="Storage Pipeline" Foreground="#e6edf3"/>
+                                <TextBlock Grid.Column="2" Text="Healthy" Foreground="#3fb950" HorizontalAlignment="Right"/>
+                                <TextBlock Grid.Column="3" Text="99.95%" Foreground="#8b949e" HorizontalAlignment="Right"/>
+                            </Grid>
+
+                            <Border Height="1" Background="#21262d"/>
+
+                            <!-- Warning Service -->
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="24"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="100"/>
+                                    <ColumnDefinition Width="80"/>
+                                </Grid.ColumnDefinitions>
+
+                                <FontIcon Glyph="&#xE7BA;" FontSize="16" Foreground="#d29922"/>
+                                <TextBlock Grid.Column="1" Text="Archive Verification" Foreground="#e6edf3"/>
+                                <TextBlock Grid.Column="2" Text="Degraded" Foreground="#d29922" HorizontalAlignment="Right"/>
+                                <TextBlock Grid.Column="3" Text="97.50%" Foreground="#8b949e" HorizontalAlignment="Right"/>
+                            </Grid>
+
+                            <Border Height="1" Background="#21262d"/>
+
+                            <!-- Healthy Service -->
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="24"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="100"/>
+                                    <ColumnDefinition Width="80"/>
+                                </Grid.ColumnDefinitions>
+
+                                <FontIcon Glyph="&#xE73E;" FontSize="16" Foreground="#3fb950"/>
+                                <TextBlock Grid.Column="1" Text="Backfill Service" Foreground="#e6edf3"/>
+                                <TextBlock Grid.Column="2" Text="Healthy" Foreground="#3fb950" HorizontalAlignment="Right"/>
+                                <TextBlock Grid.Column="3" Text="100%" Foreground="#8b949e" HorizontalAlignment="Right"/>
+                            </Grid>
+                        </StackPanel>
+
+                        <TextBlock Text="Last checked: 10 seconds ago" FontSize="11" Foreground="#6e7681"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <!-- ═══════════════════════════════════════════════════════════════════
+                 SECTION: SUBSCRIPTION STATUS GRID
+                 ═══════════════════════════════════════════════════════════════════ -->
+            <StackPanel Spacing="16">
+                <TextBlock Text="Subscription Status Grid" Style="{StaticResource SectionHeaderStyle}"/>
+
+                <Border Style="{StaticResource CardStyle}" Padding="16" MaxWidth="800">
+                    <StackPanel Spacing="12">
+                        <!-- Header -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="100"/>
+                                <ColumnDefinition Width="80"/>
+                                <ColumnDefinition Width="80"/>
+                                <ColumnDefinition Width="80"/>
+                                <ColumnDefinition Width="100"/>
+                                <ColumnDefinition Width="120"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Text="Symbol" FontWeight="SemiBold" FontSize="12" Foreground="#8b949e"/>
+                            <TextBlock Grid.Column="1" Text="Trades" FontWeight="SemiBold" FontSize="12" Foreground="#8b949e" HorizontalAlignment="Center"/>
+                            <TextBlock Grid.Column="2" Text="Quotes" FontWeight="SemiBold" FontSize="12" Foreground="#8b949e" HorizontalAlignment="Center"/>
+                            <TextBlock Grid.Column="3" Text="LOB" FontWeight="SemiBold" FontSize="12" Foreground="#8b949e" HorizontalAlignment="Center"/>
+                            <TextBlock Grid.Column="4" Text="Last Update" FontWeight="SemiBold" FontSize="12" Foreground="#8b949e" HorizontalAlignment="Right"/>
+                            <TextBlock Grid.Column="5" Text="Events/min" FontWeight="SemiBold" FontSize="12" Foreground="#8b949e" HorizontalAlignment="Right"/>
+                            <TextBlock Grid.Column="6" Text="Status" FontWeight="SemiBold" FontSize="12" Foreground="#8b949e" HorizontalAlignment="Right"/>
+                        </Grid>
+
+                        <Border Height="1" Background="#30363d"/>
+
+                        <!-- Row: AAPL - All Active -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="100"/>
+                                <ColumnDefinition Width="80"/>
+                                <ColumnDefinition Width="80"/>
+                                <ColumnDefinition Width="80"/>
+                                <ColumnDefinition Width="100"/>
+                                <ColumnDefinition Width="120"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Text="AAPL" FontWeight="SemiBold" Foreground="#e6edf3"/>
+                            <FontIcon Grid.Column="1" Glyph="&#xE73E;" FontSize="14" Foreground="#3fb950" HorizontalAlignment="Center"/>
+                            <FontIcon Grid.Column="2" Glyph="&#xE73E;" FontSize="14" Foreground="#3fb950" HorizontalAlignment="Center"/>
+                            <FontIcon Grid.Column="3" Glyph="&#xE73E;" FontSize="14" Foreground="#3fb950" HorizontalAlignment="Center"/>
+                            <TextBlock Grid.Column="4" Text="&lt;1s ago" FontSize="12" Foreground="#8b949e" HorizontalAlignment="Right"/>
+                            <TextBlock Grid.Column="5" Text="1,234" FontSize="12" Foreground="#3fb950" FontFamily="Cascadia Code" HorizontalAlignment="Right"/>
+                            <Border Grid.Column="6" Style="{StaticResource LiveBadgeStyle}" Padding="6,2" HorizontalAlignment="Right">
+                                <TextBlock Text="● LIVE" FontSize="10" FontWeight="SemiBold" Foreground="#3fb950"/>
+                            </Border>
+                        </Grid>
+
+                        <Border Height="1" Background="#21262d"/>
+
+                        <!-- Row: SPY - Partial -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="100"/>
+                                <ColumnDefinition Width="80"/>
+                                <ColumnDefinition Width="80"/>
+                                <ColumnDefinition Width="80"/>
+                                <ColumnDefinition Width="100"/>
+                                <ColumnDefinition Width="120"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Text="SPY" FontWeight="SemiBold" Foreground="#e6edf3"/>
+                            <FontIcon Grid.Column="1" Glyph="&#xE73E;" FontSize="14" Foreground="#3fb950" HorizontalAlignment="Center"/>
+                            <FontIcon Grid.Column="2" Glyph="&#xE73E;" FontSize="14" Foreground="#3fb950" HorizontalAlignment="Center"/>
+                            <FontIcon Grid.Column="3" Glyph="&#xE711;" FontSize="14" Foreground="#6e7681" HorizontalAlignment="Center"/>
+                            <TextBlock Grid.Column="4" Text="2s ago" FontSize="12" Foreground="#8b949e" HorizontalAlignment="Right"/>
+                            <TextBlock Grid.Column="5" Text="987" FontSize="12" Foreground="#3fb950" FontFamily="Cascadia Code" HorizontalAlignment="Right"/>
+                            <Border Grid.Column="6" Style="{StaticResource LiveBadgeStyle}" Padding="6,2" HorizontalAlignment="Right">
+                                <TextBlock Text="● LIVE" FontSize="10" FontWeight="SemiBold" Foreground="#3fb950"/>
+                            </Border>
+                        </Grid>
+
+                        <Border Height="1" Background="#21262d"/>
+
+                        <!-- Row: TSLA - Warning -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="100"/>
+                                <ColumnDefinition Width="80"/>
+                                <ColumnDefinition Width="80"/>
+                                <ColumnDefinition Width="80"/>
+                                <ColumnDefinition Width="100"/>
+                                <ColumnDefinition Width="120"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Text="TSLA" FontWeight="SemiBold" Foreground="#e6edf3"/>
+                            <FontIcon Grid.Column="1" Glyph="&#xE73E;" FontSize="14" Foreground="#3fb950" HorizontalAlignment="Center"/>
+                            <FontIcon Grid.Column="2" Glyph="&#xE7BA;" FontSize="14" Foreground="#d29922" HorizontalAlignment="Center"/>
+                            <FontIcon Grid.Column="3" Glyph="&#xE711;" FontSize="14" Foreground="#6e7681" HorizontalAlignment="Center"/>
+                            <TextBlock Grid.Column="4" Text="15s ago" FontSize="12" Foreground="#d29922" HorizontalAlignment="Right"/>
+                            <TextBlock Grid.Column="5" Text="456" FontSize="12" Foreground="#d29922" FontFamily="Cascadia Code" HorizontalAlignment="Right"/>
+                            <Border Grid.Column="6" Background="#2d2a1f" CornerRadius="4" Padding="6,2" HorizontalAlignment="Right">
+                                <TextBlock Text="⚠ DELAYED" FontSize="10" FontWeight="SemiBold" Foreground="#d29922"/>
+                            </Border>
+                        </Grid>
+
+                        <Border Height="1" Background="#21262d"/>
+
+                        <!-- Row: NVDA - Error -->
+                        <Grid Opacity="0.7">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="100"/>
+                                <ColumnDefinition Width="80"/>
+                                <ColumnDefinition Width="80"/>
+                                <ColumnDefinition Width="80"/>
+                                <ColumnDefinition Width="100"/>
+                                <ColumnDefinition Width="120"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Text="NVDA" FontWeight="SemiBold" Foreground="#e6edf3"/>
+                            <FontIcon Grid.Column="1" Glyph="&#xE711;" FontSize="14" Foreground="#f85149" HorizontalAlignment="Center"/>
+                            <FontIcon Grid.Column="2" Glyph="&#xE711;" FontSize="14" Foreground="#f85149" HorizontalAlignment="Center"/>
+                            <FontIcon Grid.Column="3" Glyph="&#xE711;" FontSize="14" Foreground="#6e7681" HorizontalAlignment="Center"/>
+                            <TextBlock Grid.Column="4" Text="5m ago" FontSize="12" Foreground="#f85149" HorizontalAlignment="Right"/>
+                            <TextBlock Grid.Column="5" Text="0" FontSize="12" Foreground="#f85149" FontFamily="Cascadia Code" HorizontalAlignment="Right"/>
+                            <Border Grid.Column="6" Background="#2d1f1f" CornerRadius="4" Padding="6,2" HorizontalAlignment="Right">
+                                <TextBlock Text="✕ ERROR" FontSize="10" FontWeight="SemiBold" Foreground="#f85149"/>
+                            </Border>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <!-- ═══════════════════════════════════════════════════════════════════
+                 SECTION: DATA QUALITY INDICATORS
+                 ═══════════════════════════════════════════════════════════════════ -->
+            <StackPanel Spacing="16">
+                <TextBlock Text="Data Quality Indicators" Style="{StaticResource SectionHeaderStyle}"/>
+
+                <StackPanel Orientation="Horizontal" Spacing="16">
+                    <!-- Completeness Score -->
+                    <Border Style="{StaticResource MetricCardSuccessStyle}" Width="200" Padding="16">
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="Data Completeness" FontSize="12" Foreground="#8b949e"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="98.5%" Style="{StaticResource MetricValueStyle}" FontSize="28"/>
+                                <FontIcon Grid.Column="1" Glyph="&#xE73E;" FontSize="24" Foreground="#3fb950" VerticalAlignment="Center"/>
+                            </Grid>
+                            <ProgressBar Value="98.5" Maximum="100" Height="6"/>
+                            <TextBlock Text="Missing: 1.5% (gap detection)" FontSize="10" Foreground="#6e7681"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Integrity Score -->
+                    <Border Style="{StaticResource MetricCardWarningStyle}" Width="200" Padding="16">
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="Data Integrity" FontSize="12" Foreground="#8b949e"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="94.2%" Style="{StaticResource MetricValueStyle}" FontSize="28"/>
+                                <FontIcon Grid.Column="1" Glyph="&#xE7BA;" FontSize="24" Foreground="#d29922" VerticalAlignment="Center"/>
+                            </Grid>
+                            <ProgressBar Value="94.2" Maximum="100" Height="6"/>
+                            <TextBlock Text="Issues: 23 sequence errors" FontSize="10" Foreground="#6e7681"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Latency Score -->
+                    <Border Style="{StaticResource MetricCardStyle}" Width="200" Padding="16">
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="Avg Latency" FontSize="12" Foreground="#8b949e"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <TextBlock Text="12" Style="{StaticResource MetricValueStyle}" FontSize="28"/>
+                                    <TextBlock Text="ms" FontSize="14" Foreground="#8b949e" VerticalAlignment="Bottom" Margin="0,0,0,4"/>
+                                </StackPanel>
+                                <FontIcon Grid.Column="1" Glyph="&#xE916;" FontSize="24" Foreground="#58a6ff" VerticalAlignment="Center"/>
+                            </Grid>
+                            <ProgressBar Value="12" Maximum="100" Height="6"/>
+                            <TextBlock Text="P99: 45ms | P95: 28ms" FontSize="10" Foreground="#6e7681"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- ═══════════════════════════════════════════════════════════════════
+                 SECTION: TIMELINE/ACTIVITY FEED
+                 ═══════════════════════════════════════════════════════════════════ -->
+            <StackPanel Spacing="16">
+                <TextBlock Text="Activity Timeline" Style="{StaticResource SectionHeaderStyle}"/>
+
+                <Border Style="{StaticResource CardStyle}" Padding="16" MaxWidth="500">
+                    <StackPanel Spacing="0">
+                        <!-- Timeline Item: Success -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="60"/>
+                                <ColumnDefinition Width="24"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Text="10:42:15" FontSize="11" Foreground="#6e7681" FontFamily="Cascadia Code"/>
+
+                            <StackPanel Grid.Column="1" HorizontalAlignment="Center">
+                                <Ellipse Width="12" Height="12" Fill="#3fb950"/>
+                                <Border Width="2" Height="40" Background="#21262d" Margin="0,-1,0,0"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2" Margin="8,0,0,0">
+                                <TextBlock Text="Connected to Alpaca" Foreground="#e6edf3"/>
+                                <TextBlock Text="WebSocket connection established" FontSize="11" Foreground="#8b949e"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Timeline Item: Info -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="60"/>
+                                <ColumnDefinition Width="24"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Text="10:42:16" FontSize="11" Foreground="#6e7681" FontFamily="Cascadia Code"/>
+
+                            <StackPanel Grid.Column="1" HorizontalAlignment="Center">
+                                <Ellipse Width="12" Height="12" Fill="#58a6ff"/>
+                                <Border Width="2" Height="40" Background="#21262d" Margin="0,-1,0,0"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2" Margin="8,0,0,0">
+                                <TextBlock Text="Subscribed to 42 symbols" Foreground="#e6edf3"/>
+                                <TextBlock Text="Trades, Quotes, LOB subscriptions active" FontSize="11" Foreground="#8b949e"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Timeline Item: Warning -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="60"/>
+                                <ColumnDefinition Width="24"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Text="10:45:32" FontSize="11" Foreground="#6e7681" FontFamily="Cascadia Code"/>
+
+                            <StackPanel Grid.Column="1" HorizontalAlignment="Center">
+                                <Ellipse Width="12" Height="12" Fill="#d29922"/>
+                                <Border Width="2" Height="40" Background="#21262d" Margin="0,-1,0,0"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2" Margin="8,0,0,0">
+                                <TextBlock Text="Rate limit warning" Foreground="#e6edf3"/>
+                                <TextBlock Text="80% of quota used (160/200 req/min)" FontSize="11" Foreground="#8b949e"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Timeline Item: Error -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="60"/>
+                                <ColumnDefinition Width="24"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Text="10:48:05" FontSize="11" Foreground="#6e7681" FontFamily="Cascadia Code"/>
+
+                            <StackPanel Grid.Column="1" HorizontalAlignment="Center">
+                                <Ellipse Width="12" Height="12" Fill="#f85149"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2" Margin="8,0,0,0">
+                                <TextBlock Text="Sequence gap detected" Foreground="#e6edf3"/>
+                                <TextBlock Text="AAPL trades: expected seq 12345, got 12348" FontSize="11" Foreground="#8b949e"/>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+        </StackPanel>
+    </ScrollViewer>
+</Page>
