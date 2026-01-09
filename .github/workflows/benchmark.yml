@@ -48,6 +48,7 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
           cache: true
+          cache-dependency-path: '**/*.csproj'
 
       - name: Restore dependencies
         run: dotnet restore benchmarks/MarketDataCollector.Benchmarks/MarketDataCollector.Benchmarks.csproj /p:EnableWindowsTargeting=true
