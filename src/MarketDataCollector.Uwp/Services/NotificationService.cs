@@ -218,6 +218,178 @@ public class NotificationService
     }
 
     /// <summary>
+    /// Shows an integrity alert notification.
+    /// </summary>
+    public async Task NotifyIntegrityAlertAsync(string symbol, string severity, string description, int eventCount = 1)
+    {
+        if (!_settings.Enabled || !_settings.NotifyIntegrityAlerts) return;
+        if (IsQuietHours()) return;
+
+        var type = severity.ToUpperInvariant() switch
+        {
+            "CRITICAL" or "ERROR" => NotificationType.Error,
+            "WARNING" => NotificationType.Warning,
+            _ => NotificationType.Info
+        };
+
+        var title = severity.ToUpperInvariant() switch
+        {
+            "CRITICAL" => "Critical Data Integrity Issue",
+            "ERROR" => "Data Integrity Error",
+            "WARNING" => "Data Integrity Warning",
+            _ => "Data Integrity Notice"
+        };
+
+        var message = eventCount > 1
+            ? $"{symbol}: {description} ({eventCount} events)"
+            : $"{symbol}: {description}";
+
+        await ShowNotificationAsync(title, message, type, "integrity");
+    }
+
+    /// <summary>
+    /// Shows an archive verification notification.
+    /// </summary>
+    public async Task NotifyArchiveVerificationAsync(bool success, int verifiedFiles, int failedFiles, TimeSpan duration)
+    {
+        if (!_settings.Enabled || !_settings.NotifyArchiveHealth) return;
+        if (IsQuietHours()) return;
+
+        var title = success ? "Archive Verification Complete" : "Archive Verification Failed";
+        var message = success
+            ? $"Verified {verifiedFiles:N0} files in {FormatDuration(duration)}"
+            : $"Verification found {failedFiles:N0} issues in {verifiedFiles + failedFiles:N0} files";
+
+        await ShowNotificationAsync(
+            title,
+            message,
+            success ? NotificationType.Success : NotificationType.Error,
+            "archive");
+    }
+
+    /// <summary>
+    /// Shows an archive health notification.
+    /// </summary>
+    public async Task NotifyArchiveHealthAsync(double healthScore, int issueCount, string? criticalIssue = null)
+    {
+        if (!_settings.Enabled || !_settings.NotifyArchiveHealth) return;
+        if (IsQuietHours()) return;
+
+        string title;
+        NotificationType type;
+
+        if (healthScore >= 95)
+        {
+            title = "Archive Health: Excellent";
+            type = NotificationType.Success;
+        }
+        else if (healthScore >= 80)
+        {
+            title = "Archive Health: Good";
+            type = NotificationType.Info;
+        }
+        else if (healthScore >= 60)
+        {
+            title = "Archive Health: Warning";
+            type = NotificationType.Warning;
+        }
+        else
+        {
+            title = "Archive Health: Critical";
+            type = NotificationType.Error;
+        }
+
+        var message = criticalIssue != null
+            ? $"Health score: {healthScore:F0}%. Critical: {criticalIssue}"
+            : issueCount > 0
+                ? $"Health score: {healthScore:F0}%. {issueCount} issue(s) detected."
+                : $"Health score: {healthScore:F0}%. All systems healthy.";
+
+        await ShowNotificationAsync(title, message, type, "archivehealth");
+    }
+
+    /// <summary>
+    /// Shows a session status notification.
+    /// </summary>
+    public async Task NotifySessionStatusAsync(string sessionName, string status, double? qualityScore = null)
+    {
+        if (!_settings.Enabled || !_settings.NotifySessionEvents) return;
+        if (IsQuietHours()) return;
+
+        var (title, type) = status.ToUpperInvariant() switch
+        {
+            "STARTED" => ("Collection Session Started", NotificationType.Info),
+            "PAUSED" => ("Collection Session Paused", NotificationType.Warning),
+            "RESUMED" => ("Collection Session Resumed", NotificationType.Info),
+            "COMPLETED" => ("Collection Session Completed", NotificationType.Success),
+            "FAILED" => ("Collection Session Failed", NotificationType.Error),
+            _ => ($"Session Status: {status}", NotificationType.Info)
+        };
+
+        var message = qualityScore.HasValue
+            ? $"{sessionName} - Quality score: {qualityScore:F0}%"
+            : sessionName;
+
+        await ShowNotificationAsync(title, message, type, "session");
+    }
+
+    /// <summary>
+    /// Shows a manifest generation notification.
+    /// </summary>
+    public async Task NotifyManifestGeneratedAsync(string sessionName, int fileCount, long totalEvents)
+    {
+        if (!_settings.Enabled || !_settings.NotifyArchiveHealth) return;
+        if (IsQuietHours()) return;
+
+        await ShowNotificationAsync(
+            "Manifest Generated",
+            $"{sessionName}: {fileCount:N0} files, {totalEvents:N0} events cataloged",
+            NotificationType.Success,
+            "manifest");
+    }
+
+    /// <summary>
+    /// Shows a reconnection status notification.
+    /// </summary>
+    public async Task NotifyReconnectionStatusAsync(string providerName, bool success, int attempts, TimeSpan downtime)
+    {
+        if (!_settings.Enabled || !_settings.NotifyConnectionStatus) return;
+        if (IsQuietHours()) return;
+
+        var title = success ? "Connection Restored" : "Reconnection Failed";
+        var message = success
+            ? $"{providerName} reconnected after {attempts} attempt(s). Downtime: {FormatDuration(downtime)}"
+            : $"{providerName} reconnection failed after {attempts} attempts";
+
+        await ShowNotificationAsync(
+            title,
+            message,
+            success ? NotificationType.Success : NotificationType.Error,
+            "reconnect");
+    }
+
+    /// <summary>
+    /// Shows a maintenance notification.
+    /// </summary>
+    public async Task NotifyMaintenanceAsync(string taskName, string status, string? details = null)
+    {
+        if (!_settings.Enabled || !_settings.NotifyArchiveHealth) return;
+        if (IsQuietHours()) return;
+
+        var (title, type) = status.ToUpperInvariant() switch
+        {
+            "STARTED" => ($"Maintenance: {taskName}", NotificationType.Info),
+            "COMPLETED" => ($"Maintenance Complete: {taskName}", NotificationType.Success),
+            "FAILED" => ($"Maintenance Failed: {taskName}", NotificationType.Error),
+            _ => ($"Maintenance: {taskName}", NotificationType.Info)
+        };
+
+        var message = details ?? $"Status: {status}";
+
+        await ShowNotificationAsync(title, message, type, "maintenance");
+    }
+
+    /// <summary>
     /// Shows a test notification.
     /// </summary>
     public async Task SendTestNotificationAsync()
@@ -375,10 +547,23 @@ public class NotificationSettings
     public bool NotifyBackfillComplete { get; set; } = true;
     public bool NotifyDataGaps { get; set; } = true;
     public bool NotifyStorageWarnings { get; set; } = true;
+    public bool NotifyIntegrityAlerts { get; set; } = true;
+    public bool NotifyArchiveHealth { get; set; } = true;
+    public bool NotifySessionEvents { get; set; } = true;
     public string SoundType { get; set; } = "Default"; // Default, Subtle, None
     public bool QuietHoursEnabled { get; set; }
     public TimeSpan QuietHoursStart { get; set; } = new TimeSpan(22, 0, 0);
     public TimeSpan QuietHoursEnd { get; set; } = new TimeSpan(7, 0, 0);
+
+    /// <summary>
+    /// Minimum severity level for integrity alerts (Info, Warning, Error, Critical).
+    /// </summary>
+    public string IntegrityAlertMinSeverity { get; set; } = "Warning";
+
+    /// <summary>
+    /// Threshold for archive health alerts (0-100).
+    /// </summary>
+    public double ArchiveHealthAlertThreshold { get; set; } = 80.0;
 }
 
 /// <summary>
