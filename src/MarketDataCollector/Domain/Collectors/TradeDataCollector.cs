@@ -28,6 +28,7 @@ public sealed class TradeDataCollector
     /// Performs sequence continuity checks, emits Integrity events on anomalies,
     /// emits Trade + OrderFlow events on accepted updates.
     /// </summary>
+    // TODO: Add symbol format validation (max length, allowed characters) to catch invalid data early
     public void OnTrade(MarketTradeUpdate update)
     {
         if (update is null) throw new ArgumentNullException(nameof(update));
@@ -42,6 +43,7 @@ public sealed class TradeDataCollector
         //  - If we detect out-of-order or gap, emit IntegrityEvent.
         //  - For gaps, we still accept the trade (configurable), but flag IsStale in stats.
         //  - For out-of-order or duplicates, we reject the trade (do not advance stats).
+        // TODO: Add bounds validation for SequenceNumber to detect invalid/corrupted data
         var seq = update.SequenceNumber;
 
         if (state.LastSequenceNumber.HasValue)

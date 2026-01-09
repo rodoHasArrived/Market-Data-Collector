@@ -47,6 +47,7 @@ public sealed class BackfillWorkerService : IDisposable
         string dataRoot,
         ILogger? log = null)
     {
+        // TODO: Add validation for MaxConcurrentRequests bounds in config (should be positive and reasonable)
         _jobManager = jobManager;
         _requestQueue = requestQueue;
         _provider = provider;
@@ -100,6 +101,7 @@ public sealed class BackfillWorkerService : IDisposable
     /// <summary>
     /// Main worker loop that processes requests from the queue.
     /// </summary>
+    // TODO: Move SemaphoreSlim to class field - creating in loop causes resource leak on each restart
     private async Task RunWorkerLoopAsync(CancellationToken ct)
     {
         var semaphore = new SemaphoreSlim(_config.MaxConcurrentRequests);

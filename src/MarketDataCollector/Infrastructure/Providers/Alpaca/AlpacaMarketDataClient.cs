@@ -103,6 +103,7 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
             {
                 _log.Warning(ex, "Connection attempt to Alpaca WebSocket failed at {Uri}. Will retry per policy.", uri);
                 // Clean up failed connection attempt
+                // TODO: Add logging for disposal failures to help diagnose connection cleanup issues
                 try { _ws?.Dispose(); } catch { }
                 _ws = null;
                 _cts?.Dispose();
@@ -184,17 +185,20 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
             await heartbeat.DisposeAsync();
         }
 
+        // TODO: Log exceptions from CancellationTokenSource operations for debugging connection cleanup
         if (cts != null)
         {
             try { cts.Cancel(); } catch { }
             try { cts.Dispose(); } catch { }
         }
 
+        // TODO: Log WebSocket disposal errors to track resource cleanup issues
         if (ws != null)
         {
             try { ws.Dispose(); } catch { }
         }
 
+        // TODO: Log receive loop completion errors to diagnose data streaming issues
         if (_recvLoop != null)
         {
             try { await _recvLoop.ConfigureAwait(false); } catch { }
@@ -221,6 +225,7 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
             await heartbeat.DisposeAsync();
         }
 
+        // TODO: Log CancellationTokenSource operation failures during disconnect for better debugging
         if (cts != null)
         {
             try { cts.Cancel(); } catch { }
@@ -238,9 +243,11 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
             {
                 _log.Warning(ex, "Error during WebSocket close, connection may have been lost");
             }
+            // TODO: Log WebSocket disposal failures during disconnect
             try { ws.Dispose(); } catch { }
         }
 
+        // TODO: Log receive loop task completion errors during disconnect
         if (_recvLoop != null)
         {
             try { await _recvLoop.ConfigureAwait(false); } catch { }
