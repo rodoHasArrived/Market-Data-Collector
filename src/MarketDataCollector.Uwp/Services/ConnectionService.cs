@@ -214,7 +214,7 @@ public class ConnectionService
         try
         {
             var health = await _apiClient.CheckHealthAsync();
-            _lastLatencyMs = health.LatencyMs;
+            RaiseLatencyUpdated(health.LatencyMs);
 
             if (health.IsReachable && health.IsConnected)
             {
@@ -383,13 +383,36 @@ public class ConnectionService
                 NewState = newState,
                 Provider = _currentProvider
             });
+
+            // Also raise the ViewModel-compatible event
+            ConnectionStateChanged?.Invoke(this, new ConnectionStateEventArgs
+            {
+                State = newState,
+                Provider = _currentProvider
+            });
         }
+    }
+
+    private void RaiseLatencyUpdated(double latencyMs)
+    {
+        _lastLatencyMs = latencyMs;
+        LatencyUpdated?.Invoke(this, (int)latencyMs);
     }
 
     /// <summary>
     /// Event raised when connection state changes.
     /// </summary>
     public event EventHandler<ConnectionStateChangedEventArgs>? StateChanged;
+
+    /// <summary>
+    /// Event raised when connection state changes (alias for StateChanged for ViewModel compatibility).
+    /// </summary>
+    public event EventHandler<ConnectionStateEventArgs>? ConnectionStateChanged;
+
+    /// <summary>
+    /// Event raised when latency measurement is updated.
+    /// </summary>
+    public event EventHandler<int>? LatencyUpdated;
 
     /// <summary>
     /// Event raised when a reconnection attempt is starting.
@@ -410,6 +433,15 @@ public class ConnectionService
     /// Event raised when connection health is updated.
     /// </summary>
     public event EventHandler<ConnectionHealthEventArgs>? ConnectionHealthUpdated;
+}
+
+/// <summary>
+/// Connection state event args for ViewModel binding.
+/// </summary>
+public class ConnectionStateEventArgs : EventArgs
+{
+    public ConnectionState State { get; set; }
+    public string Provider { get; set; } = string.Empty;
 }
 
 /// <summary>

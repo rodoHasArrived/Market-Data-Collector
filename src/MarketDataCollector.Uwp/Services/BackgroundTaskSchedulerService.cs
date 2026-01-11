@@ -607,10 +607,334 @@ public sealed class BackgroundTaskSchedulerService
                 await ExecuteExportTaskAsync(task, log, cancellationToken);
                 break;
 
+            case ScheduledTaskType.SyncToRemote:
+                await ExecuteSyncToRemoteTaskAsync(task, log, cancellationToken);
+                break;
+
+            case ScheduledTaskType.Custom:
+                await ExecuteCustomTaskAsync(task, log, cancellationToken);
+                break;
+
             default:
-                log.Output = $"Task type {task.TaskType} execution not implemented";
+                log.Output = $"Unknown task type: {task.TaskType}";
                 System.Diagnostics.Debug.WriteLine(log.Output);
                 break;
+        }
+    }
+
+    private async Task ExecuteSyncToRemoteTaskAsync(ScheduledTask task, TaskExecutionLog log, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrEmpty(task.Payload)) return;
+
+        var payload = JsonSerializer.Deserialize<SyncToRemotePayload>(task.Payload, JsonOptions);
+        if (payload == null) return;
+
+        // Write to WAL before execution
+        var walEntry = await _persistenceService.WriteWalEntryAsync("SyncToRemote", payload);
+
+        try
+        {
+            var portablePackagerService = PortablePackagerService.Instance;
+            var dataRoot = Path.Combine(AppContext.BaseDirectory, "data");
+            var sourcePath = Path.Combine(dataRoot, payload.SourceDirectory ?? "live");
+
+            // Collect files to sync
+            var files = new List<string>();
+            if (Directory.Exists(sourcePath))
+            {
+                var searchPattern = payload.FilePattern ?? "*.jsonl*";
+                files.AddRange(Directory.GetFiles(sourcePath, searchPattern, SearchOption.AllDirectories));
+
+                // Filter by date if specified
+                if (payload.SyncSince.HasValue)
+                {
+                    files = files.Where(f => File.GetLastWriteTimeUtc(f) > payload.SyncSince.Value).ToList();
+                }
+            }
+
+            var syncedCount = 0;
+            var syncedBytes = 0L;
+
+            switch (payload.RemoteType?.ToLowerInvariant())
+            {
+                case "s3":
+                    // For S3, we create a portable package and prepare it for upload
+                    // The actual upload would require AWS SDK integration
+                    if (files.Count > 0)
+                    {
+                        var packagePath = Path.Combine(dataRoot, "_sync", $"sync_{DateTime.UtcNow:yyyyMMdd_HHmmss}.zip");
+                        Directory.CreateDirectory(Path.GetDirectoryName(packagePath)!);
+
+                        await portablePackagerService.CreatePackageAsync(
+                            sourcePath,
+                            packagePath,
+                            PortablePackageFormat.Zip,
+                            cancellationToken);
+
+                        if (File.Exists(packagePath))
+                        {
+                            syncedCount = files.Count;
+                            syncedBytes = new FileInfo(packagePath).Length;
+                            log.Output = $"Created sync package: {packagePath} ({FormatBytes(syncedBytes)}) with {syncedCount} files. Ready for S3 upload to {payload.RemotePath}";
+                        }
+                    }
+                    break;
+
+                case "azure":
+                    // Azure Blob Storage sync - create package for upload
+                    if (files.Count > 0)
+                    {
+                        var packagePath = Path.Combine(dataRoot, "_sync", $"sync_{DateTime.UtcNow:yyyyMMdd_HHmmss}.zip");
+                        Directory.CreateDirectory(Path.GetDirectoryName(packagePath)!);
+
+                        await portablePackagerService.CreatePackageAsync(
+                            sourcePath,
+                            packagePath,
+                            PortablePackageFormat.Zip,
+                            cancellationToken);
+
+                        if (File.Exists(packagePath))
+                        {
+                            syncedCount = files.Count;
+                            syncedBytes = new FileInfo(packagePath).Length;
+                            log.Output = $"Created sync package: {packagePath} ({FormatBytes(syncedBytes)}) with {syncedCount} files. Ready for Azure upload to {payload.RemotePath}";
+                        }
+                    }
+                    break;
+
+                case "network":
+                case "smb":
+                    // Network share sync - direct copy
+                    if (!string.IsNullOrEmpty(payload.RemotePath) && files.Count > 0)
+                    {
+                        Directory.CreateDirectory(payload.RemotePath);
+
+                        foreach (var file in files)
+                        {
+                            cancellationToken.ThrowIfCancellationRequested();
+
+                            var relativePath = Path.GetRelativePath(sourcePath, file);
+                            var destPath = Path.Combine(payload.RemotePath, relativePath);
+                            Directory.CreateDirectory(Path.GetDirectoryName(destPath)!);
+
+                            File.Copy(file, destPath, true);
+                            syncedCount++;
+                            syncedBytes += new FileInfo(file).Length;
+                        }
+
+                        log.Output = $"Synced {syncedCount} files ({FormatBytes(syncedBytes)}) to {payload.RemotePath}";
+                    }
+                    break;
+
+                default:
+                    log.Output = $"Unknown remote type: {payload.RemoteType}. Supported types: s3, azure, network, smb";
+                    break;
+            }
+
+            log.ItemsProcessed = syncedCount;
+            log.BytesProcessed = syncedBytes;
+
+            await _persistenceService.CompleteWalEntryAsync(walEntry.Id);
+        }
+        catch (Exception ex)
+        {
+            await _persistenceService.FailWalEntryAsync(walEntry.Id, ex.Message);
+            throw;
+        }
+    }
+
+    private async Task ExecuteCustomTaskAsync(ScheduledTask task, TaskExecutionLog log, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrEmpty(task.Payload)) return;
+
+        var payload = JsonSerializer.Deserialize<CustomTaskPayload>(task.Payload, JsonOptions);
+        if (payload == null) return;
+
+        // Write to WAL before execution
+        var walEntry = await _persistenceService.WriteWalEntryAsync("CustomTask", payload);
+
+        try
+        {
+            switch (payload.ActionType?.ToLowerInvariant())
+            {
+                case "http":
+                case "webhook":
+                    // Execute HTTP request
+                    if (!string.IsNullOrEmpty(payload.Url))
+                    {
+                        using var httpClient = new System.Net.Http.HttpClient();
+                        httpClient.Timeout = TimeSpan.FromMinutes(5);
+
+                        // Add custom headers if specified
+                        if (payload.Headers != null)
+                        {
+                            foreach (var header in payload.Headers)
+                            {
+                                httpClient.DefaultRequestHeaders.TryAddWithoutValidation(header.Key, header.Value);
+                            }
+                        }
+
+                        System.Net.Http.HttpResponseMessage response;
+                        var method = payload.HttpMethod?.ToUpperInvariant() ?? "GET";
+
+                        if (method == "POST" && !string.IsNullOrEmpty(payload.RequestBody))
+                        {
+                            var content = new System.Net.Http.StringContent(
+                                payload.RequestBody,
+                                System.Text.Encoding.UTF8,
+                                payload.ContentType ?? "application/json");
+                            response = await httpClient.PostAsync(payload.Url, content, cancellationToken);
+                        }
+                        else if (method == "PUT" && !string.IsNullOrEmpty(payload.RequestBody))
+                        {
+                            var content = new System.Net.Http.StringContent(
+                                payload.RequestBody,
+                                System.Text.Encoding.UTF8,
+                                payload.ContentType ?? "application/json");
+                            response = await httpClient.PutAsync(payload.Url, content, cancellationToken);
+                        }
+                        else
+                        {
+                            response = await httpClient.GetAsync(payload.Url, cancellationToken);
+                        }
+
+                        var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+                        log.Output = $"HTTP {method} to {payload.Url}: {(int)response.StatusCode} {response.ReasonPhrase}";
+
+                        if (!response.IsSuccessStatusCode && payload.FailOnHttpError)
+                        {
+                            throw new InvalidOperationException($"HTTP request failed: {response.StatusCode} - {responseBody}");
+                        }
+                    }
+                    break;
+
+                case "script":
+                    // Execute PowerShell script (Windows only)
+                    if (!string.IsNullOrEmpty(payload.ScriptPath) && File.Exists(payload.ScriptPath))
+                    {
+                        var startInfo = new System.Diagnostics.ProcessStartInfo
+                        {
+                            FileName = "powershell.exe",
+                            Arguments = $"-ExecutionPolicy Bypass -File \"{payload.ScriptPath}\" {payload.ScriptArguments}",
+                            UseShellExecute = false,
+                            RedirectStandardOutput = true,
+                            RedirectStandardError = true,
+                            CreateNoWindow = true
+                        };
+
+                        using var process = new System.Diagnostics.Process { StartInfo = startInfo };
+                        process.Start();
+
+                        var output = await process.StandardOutput.ReadToEndAsync(cancellationToken);
+                        var error = await process.StandardError.ReadToEndAsync(cancellationToken);
+
+                        await process.WaitForExitAsync(cancellationToken);
+
+                        log.Output = $"Script exit code: {process.ExitCode}\nOutput: {output}";
+
+                        if (process.ExitCode != 0 && payload.FailOnNonZeroExit)
+                        {
+                            throw new InvalidOperationException($"Script failed with exit code {process.ExitCode}: {error}");
+                        }
+                    }
+                    else if (!string.IsNullOrEmpty(payload.ScriptContent))
+                    {
+                        // Execute inline script
+                        var tempScript = Path.Combine(Path.GetTempPath(), $"custom_task_{Guid.NewGuid()}.ps1");
+                        await File.WriteAllTextAsync(tempScript, payload.ScriptContent, cancellationToken);
+
+                        try
+                        {
+                            var startInfo = new System.Diagnostics.ProcessStartInfo
+                            {
+                                FileName = "powershell.exe",
+                                Arguments = $"-ExecutionPolicy Bypass -File \"{tempScript}\" {payload.ScriptArguments}",
+                                UseShellExecute = false,
+                                RedirectStandardOutput = true,
+                                RedirectStandardError = true,
+                                CreateNoWindow = true
+                            };
+
+                            using var process = new System.Diagnostics.Process { StartInfo = startInfo };
+                            process.Start();
+
+                            var output = await process.StandardOutput.ReadToEndAsync(cancellationToken);
+                            var error = await process.StandardError.ReadToEndAsync(cancellationToken);
+
+                            await process.WaitForExitAsync(cancellationToken);
+
+                            log.Output = $"Script exit code: {process.ExitCode}\nOutput: {output}";
+
+                            if (process.ExitCode != 0 && payload.FailOnNonZeroExit)
+                            {
+                                throw new InvalidOperationException($"Script failed with exit code {process.ExitCode}: {error}");
+                            }
+                        }
+                        finally
+                        {
+                            File.Delete(tempScript);
+                        }
+                    }
+                    break;
+
+                case "command":
+                    // Execute shell command
+                    if (!string.IsNullOrEmpty(payload.Command))
+                    {
+                        var startInfo = new System.Diagnostics.ProcessStartInfo
+                        {
+                            FileName = "cmd.exe",
+                            Arguments = $"/c {payload.Command}",
+                            UseShellExecute = false,
+                            RedirectStandardOutput = true,
+                            RedirectStandardError = true,
+                            CreateNoWindow = true,
+                            WorkingDirectory = payload.WorkingDirectory ?? AppContext.BaseDirectory
+                        };
+
+                        using var process = new System.Diagnostics.Process { StartInfo = startInfo };
+                        process.Start();
+
+                        var output = await process.StandardOutput.ReadToEndAsync(cancellationToken);
+                        var error = await process.StandardError.ReadToEndAsync(cancellationToken);
+
+                        await process.WaitForExitAsync(cancellationToken);
+
+                        log.Output = $"Command exit code: {process.ExitCode}\nOutput: {output}";
+
+                        if (process.ExitCode != 0 && payload.FailOnNonZeroExit)
+                        {
+                            throw new InvalidOperationException($"Command failed with exit code {process.ExitCode}: {error}");
+                        }
+                    }
+                    break;
+
+                case "notification":
+                    // Send notification
+                    await _notificationService.NotifyAsync(
+                        payload.NotificationTitle ?? "Custom Task",
+                        payload.NotificationMessage ?? "Custom task executed",
+                        payload.NotificationSeverity switch
+                        {
+                            "error" => NotificationType.Error,
+                            "warning" => NotificationType.Warning,
+                            "success" => NotificationType.Success,
+                            _ => NotificationType.Info
+                        });
+                    log.Output = $"Notification sent: {payload.NotificationTitle}";
+                    break;
+
+                default:
+                    log.Output = $"Unknown custom action type: {payload.ActionType}. Supported types: http, webhook, script, command, notification";
+                    break;
+            }
+
+            await _persistenceService.CompleteWalEntryAsync(walEntry.Id);
+        }
+        catch (Exception ex)
+        {
+            await _persistenceService.FailWalEntryAsync(walEntry.Id, ex.Message);
+            throw;
         }
     }
 
@@ -748,9 +1072,141 @@ public sealed class BackgroundTaskSchedulerService
         var payload = JsonSerializer.Deserialize<ExportTaskPayload>(task.Payload, JsonOptions);
         if (payload == null) return;
 
-        // Export implementation would go here
-        log.Output = $"Export task completed for format: {payload.ExportFormat}";
-        await Task.CompletedTask;
+        // Write to WAL before execution
+        var walEntry = await _persistenceService.WriteWalEntryAsync("StartExport", payload);
+
+        try
+        {
+            var exportService = new BatchExportSchedulerService();
+            await exportService.StartAsync();
+
+            try
+            {
+                // Determine date range
+                ExportDateRange? dateRange = null;
+                if (payload.DateRange != null)
+                {
+                    dateRange = new ExportDateRange
+                    {
+                        StartDate = payload.DateRange.From.HasValue
+                            ? DateOnly.FromDateTime(payload.DateRange.From.Value)
+                            : null,
+                        EndDate = payload.DateRange.To.HasValue
+                            ? DateOnly.FromDateTime(payload.DateRange.To.Value)
+                            : null
+                    };
+                }
+
+                // Determine export format
+                var format = payload.ExportFormat?.ToLowerInvariant() switch
+                {
+                    "csv" => ExportFormat.Csv,
+                    "parquet" => ExportFormat.Parquet,
+                    "jsonlines" or "jsonl" => ExportFormat.JsonLines,
+                    _ => ExportFormat.Raw
+                };
+
+                // Determine source and destination paths
+                var dataRoot = Path.Combine(AppContext.BaseDirectory, "data");
+                var sourcePath = Path.Combine(dataRoot, "live");
+                var destinationPath = payload.OutputPath ?? Path.Combine(dataRoot, "_exports", "{year}", "{month}", "{day}");
+
+                // Create export job request
+                var request = new ExportJobRequest
+                {
+                    Name = task.Name,
+                    SourcePath = sourcePath,
+                    DestinationPath = destinationPath,
+                    Symbols = payload.Symbols,
+                    DateRange = dateRange,
+                    Format = format,
+                    IncrementalMode = false,
+                    Priority = ExportPriority.Normal
+                };
+
+                // Create and execute the export job
+                var job = exportService.CreateJob(request);
+                var completionSource = new TaskCompletionSource<ExportJobRun>();
+
+                void OnJobCompleted(object? sender, ExportJobEventArgs e)
+                {
+                    if (e.Job.Id == job.Id && e.Run != null)
+                    {
+                        completionSource.TrySetResult(e.Run);
+                    }
+                }
+
+                void OnJobFailed(object? sender, ExportJobEventArgs e)
+                {
+                    if (e.Job.Id == job.Id && e.Run != null)
+                    {
+                        completionSource.TrySetResult(e.Run);
+                    }
+                }
+
+                exportService.JobCompleted += OnJobCompleted;
+                exportService.JobFailed += OnJobFailed;
+
+                try
+                {
+                    // Wait for job completion with cancellation support
+                    using var registration = cancellationToken.Register(() =>
+                    {
+                        exportService.CancelJob(job.Id);
+                        completionSource.TrySetCanceled();
+                    });
+
+                    var run = await completionSource.Task;
+
+                    log.ItemsProcessed = run.FilesExported;
+                    log.BytesProcessed = run.BytesExported;
+
+                    if (run.Success)
+                    {
+                        log.Output = $"Export completed: {run.FilesExported} files ({FormatBytes(run.BytesExported)}) exported to {run.DestinationPath}";
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException(run.ErrorMessage ?? "Export failed");
+                    }
+                }
+                finally
+                {
+                    exportService.JobCompleted -= OnJobCompleted;
+                    exportService.JobFailed -= OnJobFailed;
+                }
+            }
+            finally
+            {
+                await exportService.StopAsync();
+                await exportService.DisposeAsync();
+            }
+
+            await _persistenceService.CompleteWalEntryAsync(walEntry.Id);
+        }
+        catch (OperationCanceledException)
+        {
+            await _persistenceService.FailWalEntryAsync(walEntry.Id, "Export task cancelled");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            await _persistenceService.FailWalEntryAsync(walEntry.Id, ex.Message);
+            throw;
+        }
+    }
+
+    private static string FormatBytes(long bytes)
+    {
+        string[] suffixes = { "B", "KB", "MB", "GB", "TB" };
+        int order = 0;
+        double size = bytes;
+        while (size >= 1024 && order < suffixes.Length - 1)
+        {
+            order++;
+            size /= 1024;
+        }
+        return $"{size:0.##} {suffixes[order]}";
     }
 
     private async Task ProcessMissedTasksAsync(CancellationToken cancellationToken)
