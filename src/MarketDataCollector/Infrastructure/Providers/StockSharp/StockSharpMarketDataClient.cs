@@ -309,11 +309,13 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
                 await Task.Delay(delay, ct).ConfigureAwait(false);
 
                 // Disconnect existing connector
-                // TODO: Log connector disconnect errors during reconnection for debugging
                 if (_connector != null)
                 {
                     try { _connector.Disconnect(); }
-                    catch { }
+                    catch (Exception disconnectEx)
+                    {
+                        _log.Debug(disconnectEx, "Error disconnecting StockSharp connector during reconnection");
+                    }
                     _connector.Dispose();
                     _connector = null;
                 }
@@ -544,11 +546,17 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
 
         // Cancel reconnection if in progress
         _reconnectCts?.Cancel();
-        // TODO: Log reconnection task completion errors during disposal
         if (_reconnectTask != null)
         {
             try { await _reconnectTask.ConfigureAwait(false); }
-            catch { }
+            catch (Exception reconnectEx) when (reconnectEx is not OperationCanceledException)
+            {
+                _log.Debug(reconnectEx, "Error completing reconnection task during disposal");
+            }
+            catch (OperationCanceledException)
+            {
+                // Expected when cancellation is requested during disposal
+            }
         }
 
         // Stop heartbeat monitoring
@@ -560,11 +568,17 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
 
         // Stop message processor
         _processorCts?.Cancel();
-        // TODO: Log message processor task completion errors during disposal
         if (_messageProcessorTask != null)
         {
             try { await _messageProcessorTask.ConfigureAwait(false); }
-            catch { }
+            catch (Exception processorEx) when (processorEx is not OperationCanceledException)
+            {
+                _log.Debug(processorEx, "Error completing message processor task during disposal");
+            }
+            catch (OperationCanceledException)
+            {
+                // Expected when cancellation is requested during disposal
+            }
         }
         _messageChannel.Writer.Complete();
 
