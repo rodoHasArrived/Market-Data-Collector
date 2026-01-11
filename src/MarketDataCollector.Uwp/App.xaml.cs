@@ -17,6 +17,9 @@ public partial class App : Application
 
         // Handle unhandled exceptions gracefully
         this.UnhandledException += OnUnhandledException;
+
+        // Handle app exit for clean shutdown
+        this.Exit += OnAppExit;
     }
 
     protected override async void OnLaunched(LaunchActivatedEventArgs args)
@@ -33,7 +36,74 @@ public partial class App : Application
         // Start connection monitoring
         ConnectionService.Instance.StartMonitoring();
 
+        // Initialize offline tracking persistence (handles recovery from crashes/restarts)
+        await InitializeOfflineTrackingAsync();
+
+        // Start background task scheduler
+        await InitializeBackgroundServicesAsync();
+
         _window.Activate();
+    }
+
+    /// <summary>
+    /// Initializes offline tracking persistence and performs recovery if needed.
+    /// </summary>
+    private static async Task InitializeOfflineTrackingAsync()
+    {
+        try
+        {
+            await OfflineTrackingPersistenceService.Instance.InitializeAsync();
+            System.Diagnostics.Debug.WriteLine("Offline tracking persistence initialized");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to initialize offline tracking: {ex.Message}");
+            // Continue - app should still work without persistence
+        }
+    }
+
+    /// <summary>
+    /// Initializes background services for scheduled tasks and offline queue processing.
+    /// </summary>
+    private static async Task InitializeBackgroundServicesAsync()
+    {
+        try
+        {
+            // Initialize pending operations queue
+            await PendingOperationsQueueService.Instance.InitializeAsync();
+            System.Diagnostics.Debug.WriteLine("Pending operations queue initialized");
+
+            // Start background task scheduler
+            await BackgroundTaskSchedulerService.Instance.StartAsync();
+            System.Diagnostics.Debug.WriteLine("Background task scheduler started");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to initialize background services: {ex.Message}");
+            // Continue - app should still work without background services
+        }
+    }
+
+    /// <summary>
+    /// Handles app exit for clean shutdown of background services.
+    /// </summary>
+    private async void OnAppExit(object sender, EventArgs e)
+    {
+        try
+        {
+            System.Diagnostics.Debug.WriteLine("App exiting, shutting down services...");
+
+            // Shutdown services in order
+            await BackgroundTaskSchedulerService.Instance.StopAsync();
+            await PendingOperationsQueueService.Instance.ShutdownAsync();
+            await OfflineTrackingPersistenceService.Instance.ShutdownAsync();
+
+            System.Diagnostics.Debug.WriteLine("Services shut down cleanly");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error during app exit: {ex.Message}");
+        }
     }
 
     /// <summary>
@@ -103,4 +173,19 @@ public partial class App : Application
     /// Gets the theme service instance.
     /// </summary>
     public static ThemeService Theme => ThemeService.Instance;
+
+    /// <summary>
+    /// Gets the offline tracking persistence service instance.
+    /// </summary>
+    public static OfflineTrackingPersistenceService OfflineTracking => OfflineTrackingPersistenceService.Instance;
+
+    /// <summary>
+    /// Gets the background task scheduler service instance.
+    /// </summary>
+    public static BackgroundTaskSchedulerService Scheduler => BackgroundTaskSchedulerService.Instance;
+
+    /// <summary>
+    /// Gets the pending operations queue service instance.
+    /// </summary>
+    public static PendingOperationsQueueService OperationsQueue => PendingOperationsQueueService.Instance;
 }
