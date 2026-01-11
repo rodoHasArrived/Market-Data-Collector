@@ -17,6 +17,11 @@ public sealed class TradeDataCollector
     private readonly ConcurrentDictionary<string, SymbolTradeState> _stateBySymbol =
         new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>
+    /// Maximum allowed length for a symbol. Covers most instrument types including options and futures.
+    /// </summary>
+    private const int MaxSymbolLength = 50;
+
     public TradeDataCollector(IMarketEventPublisher publisher, IQuoteStateStore? quotes = null)
     {
         _publisher = publisher ?? throw new ArgumentNullException(nameof(publisher));
@@ -24,17 +29,77 @@ public sealed class TradeDataCollector
     }
 
     /// <summary>
+    /// Validates a symbol format. Valid symbols contain only alphanumeric characters,
+    /// dots, hyphens, underscores, colons, or slashes.
+    /// </summary>
+    /// <param name="symbol">The symbol to validate.</param>
+    /// <param name="reason">When validation fails, contains the reason.</param>
+    /// <returns>True if valid, false otherwise.</returns>
+    private static bool IsValidSymbolFormat(string symbol, out string reason)
+    {
+        reason = string.Empty;
+
+        if (symbol.Length > MaxSymbolLength)
+        {
+            reason = $"exceeds maximum length of {MaxSymbolLength} characters";
+            return false;
+        }
+
+        foreach (char c in symbol)
+        {
+            if (!char.IsLetterOrDigit(c) && c != '.' && c != '-' && c != '_' && c != ':' && c != '/')
+            {
+                reason = $"contains invalid character '{c}'";
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>
     /// Entry point from router/adapter layer.
     /// Performs sequence continuity checks, emits Integrity events on anomalies,
     /// emits Trade + OrderFlow events on accepted updates.
     /// </summary>
-    // TODO: Add symbol format validation (max length, allowed characters) to catch invalid data early
     public void OnTrade(MarketTradeUpdate update)
     {
         if (update is null) throw new ArgumentNullException(nameof(update));
         if (string.IsNullOrWhiteSpace(update.Symbol)) return;
 
         var symbol = update.Symbol;
+
+        // -------- Symbol format validation --------
+        if (!IsValidSymbolFormat(symbol, out var symbolValidationReason))
+        {
+            var integrity = IntegrityEvent.InvalidSymbol(
+                update.Timestamp,
+                symbol,
+                symbolValidationReason,
+                update.SequenceNumber,
+                update.StreamId,
+                update.Venue);
+
+            _publisher.TryPublish(MarketEvent.Integrity(update.Timestamp, symbol, integrity));
+            return;
+        }
+
+        // -------- SequenceNumber bounds validation --------
+        var seq = update.SequenceNumber;
+        if (seq < 0)
+        {
+            var integrity = IntegrityEvent.InvalidSequenceNumber(
+                update.Timestamp,
+                symbol,
+                seq,
+                "sequence number must be non-negative",
+                update.StreamId,
+                update.Venue);
+
+            _publisher.TryPublish(MarketEvent.Integrity(update.Timestamp, symbol, integrity));
+            return;
+        }
+
         var state = _stateBySymbol.GetOrAdd(symbol, _ => new SymbolTradeState());
 
         // -------- Integrity / continuity --------
@@ -43,8 +108,6 @@ public sealed class TradeDataCollector
         //  - If we detect out-of-order or gap, emit IntegrityEvent.
         //  - For gaps, we still accept the trade (configurable), but flag IsStale in stats.
         //  - For out-of-order or duplicates, we reject the trade (do not advance stats).
-        // TODO: Add bounds validation for SequenceNumber to detect invalid/corrupted data
-        var seq = update.SequenceNumber;
 
         if (state.LastSequenceNumber.HasValue)
         {
