@@ -236,4 +236,59 @@ public class ConfigService
         config.DataSources = dataSources;
         await SaveConfigAsync(config);
     }
+
+    /// <summary>
+    /// Gets the app settings including service URL configuration.
+    /// </summary>
+    public async Task<AppSettings> GetAppSettingsAsync()
+    {
+        var config = await LoadConfigAsync() ?? new AppConfig();
+        return config.Settings ?? new AppSettings();
+    }
+
+    /// <summary>
+    /// Saves app settings including service URL configuration.
+    /// </summary>
+    public async Task SaveAppSettingsAsync(AppSettings settings)
+    {
+        var config = await LoadConfigAsync() ?? new AppConfig();
+        config.Settings = settings;
+        await SaveConfigAsync(config);
+
+        // Configure the API client with new settings
+        ApiClientService.Instance.Configure(settings);
+    }
+
+    /// <summary>
+    /// Updates the service URL configuration.
+    /// </summary>
+    public async Task UpdateServiceUrlAsync(string serviceUrl, int timeoutSeconds = 30, int backfillTimeoutMinutes = 60)
+    {
+        var config = await LoadConfigAsync() ?? new AppConfig();
+        var settings = config.Settings ?? new AppSettings();
+
+        settings.ServiceUrl = serviceUrl;
+        settings.ServiceTimeoutSeconds = timeoutSeconds;
+        settings.BackfillTimeoutMinutes = backfillTimeoutMinutes;
+
+        config.Settings = settings;
+        await SaveConfigAsync(config);
+
+        // Configure the API client with new settings
+        ApiClientService.Instance.Configure(settings);
+    }
+
+    /// <summary>
+    /// Loads configuration and initializes services with configured URLs.
+    /// Should be called during app startup.
+    /// </summary>
+    public async Task InitializeAsync()
+    {
+        var config = await LoadConfigAsync();
+        if (config?.Settings != null)
+        {
+            // Configure the API client with loaded settings
+            ApiClientService.Instance.Configure(config.Settings);
+        }
+    }
 }
