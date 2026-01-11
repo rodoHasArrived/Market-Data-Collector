@@ -6,13 +6,14 @@ namespace MarketDataCollector.Uwp.Services;
 
 /// <summary>
 /// Service for managing provider connections with auto-reconnection support.
+/// Uses the centralized ApiClientService for configurable service URL.
 /// </summary>
 public class ConnectionService
 {
     private static ConnectionService? _instance;
     private static readonly object _lock = new();
 
-    private readonly StatusService _statusService;
+    private readonly ApiClientService _apiClient;
     private readonly NotificationService _notificationService;
 
     private ConnectionState _currentState = ConnectionState.Disconnected;
@@ -44,9 +45,14 @@ public class ConnectionService
 
     private ConnectionService()
     {
-        _statusService = new StatusService();
+        _apiClient = ApiClientService.Instance;
         _notificationService = NotificationService.Instance;
     }
+
+    /// <summary>
+    /// Gets the current service URL being used for connections.
+    /// </summary>
+    public string ServiceUrl => _apiClient.BaseUrl;
 
     /// <summary>
     /// Gets the current connection state.
@@ -76,11 +82,27 @@ public class ConnectionService
     public int TotalReconnects => _totalReconnects;
 
     /// <summary>
-    /// Updates connection settings.
+    /// Updates connection settings and reconfigures the API client if URL changed.
     /// </summary>
     public void UpdateSettings(ConnectionSettings settings)
     {
         _settings = settings;
+
+        // Update API client with new URL if specified
+        if (!string.IsNullOrWhiteSpace(settings.ServiceUrl))
+        {
+            _apiClient.Configure(settings.ServiceUrl, settings.ServiceTimeoutSeconds);
+        }
+    }
+
+    /// <summary>
+    /// Configures the service URL directly.
+    /// </summary>
+    public void ConfigureServiceUrl(string serviceUrl, int timeoutSeconds = 30)
+    {
+        _settings.ServiceUrl = serviceUrl;
+        _settings.ServiceTimeoutSeconds = timeoutSeconds;
+        _apiClient.Configure(serviceUrl, timeoutSeconds);
     }
 
     /// <summary>
@@ -121,21 +143,29 @@ public class ConnectionService
 
         try
         {
-            // Attempt to get status (which validates connection)
-            var status = await _statusService.GetStatusAsync();
+            // Attempt to check service health (which validates connection)
+            var health = await _apiClient.CheckHealthAsync();
 
-            if (status?.IsConnected == true)
+            if (health.IsReachable && health.IsConnected)
             {
                 _connectedSince = DateTime.UtcNow;
                 _reconnectAttempts = 0;
+                _lastLatencyMs = health.LatencyMs;
                 UpdateState(ConnectionState.Connected);
 
                 await _notificationService.NotifyConnectionStatusAsync(true, provider);
                 return true;
             }
+            else if (health.IsReachable)
+            {
+                // Service is reachable but provider not connected
+                UpdateState(ConnectionState.Disconnected);
+                return false;
+            }
             else
             {
-                UpdateState(ConnectionState.Disconnected);
+                UpdateState(ConnectionState.Error);
+                await _notificationService.NotifyErrorAsync("Connection Failed", health.ErrorMessage ?? "Service unreachable");
                 return false;
             }
         }
@@ -183,11 +213,10 @@ public class ConnectionService
 
         try
         {
-            var startTime = DateTime.UtcNow;
-            var status = await _statusService.GetStatusAsync();
-            _lastLatencyMs = (DateTime.UtcNow - startTime).TotalMilliseconds;
+            var health = await _apiClient.CheckHealthAsync();
+            _lastLatencyMs = health.LatencyMs;
 
-            if (status?.IsConnected == true)
+            if (health.IsReachable && health.IsConnected)
             {
                 if (_currentState != ConnectionState.Connected)
                 {
@@ -293,19 +322,21 @@ public class ConnectionService
             // Attempt reconnection
             try
             {
-                var status = await _statusService.GetStatusAsync();
+                var health = await _apiClient.CheckHealthAsync();
 
-                if (status?.IsConnected == true)
+                if (health.IsReachable && health.IsConnected)
                 {
                     _totalReconnects++;
                     _connectedSince = DateTime.UtcNow;
+                    _lastLatencyMs = health.LatencyMs;
+                    var attempts = _reconnectAttempts;
                     _reconnectAttempts = 0;
                     UpdateState(ConnectionState.Connected);
 
                     await _notificationService.NotifyConnectionStatusAsync(
                         true,
                         _currentProvider,
-                        $"Reconnected after {_reconnectAttempts} attempts");
+                        $"Reconnected after {attempts} attempts");
 
                     ReconnectSucceeded?.Invoke(this, EventArgs.Empty);
                     return;
@@ -403,6 +434,8 @@ public class ConnectionSettings
     public int InitialReconnectDelayMs { get; set; } = 2000; // 2 seconds
     public int MaxReconnectDelayMs { get; set; } = 300000; // 5 minutes
     public int HealthCheckIntervalSeconds { get; set; } = 5;
+    public string ServiceUrl { get; set; } = "http://localhost:8080";
+    public int ServiceTimeoutSeconds { get; set; } = 30;
 }
 
 /// <summary>
