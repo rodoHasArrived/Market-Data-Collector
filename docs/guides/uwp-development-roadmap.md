@@ -1,13 +1,48 @@
 # UWP Desktop App Development Roadmap
 
-**Last Updated:** 2026-01-09
-**Version:** 1.5.0
+**Last Updated:** 2026-01-11
+**Version:** 1.5.1
 
 This document outlines feature refinements and development roadmap for the Market Data Collector UWP Desktop Application.
 
 ## Recent Updates (January 2026)
 
-### Newly Completed Features
+### Newly Completed Features (January 11, 2026)
+
+#### App Icons & Visual Branding
+- **Professional App Icons**: Generated 39 UWP app icons from custom SVG source
+  - Square logos (44x44, 150x150) with scale variants (100%, 125%, 150%, 200%, 400%)
+  - Target-size variants (16x16, 24x24, 32x32, 48x48, 256x256) for taskbar/system tray
+  - Splash screens (620x300 to 1240x600 with scale variants)
+  - Wide and large tiles for Windows Start menu
+  - StoreLogo variants for Windows Store distribution
+- **Design**: Blue gradient background with green chart line and "MDC" watermark
+
+#### Desktop App CI/CD Pipeline
+- **GitHub Actions Workflow**: Full build pipeline for Windows desktop application
+  - Asset generation job (Node.js-based icon generation from SVG)
+  - Multi-platform build (x64 and ARM64 architectures)
+  - Self-contained publishing with .NET 9.0 runtime
+  - Performance optimization (PublishReadyToRun enabled)
+  - MSIX packaging for Windows Store (triggered on tags/manual dispatch)
+  - Integration testing with smoke tests
+  - Release automation with artifact uploads to GitHub Releases
+- **New Makefile Targets**: `make icons`, `make desktop`, `make desktop-publish`
+
+#### Background Task Scheduler Service
+- **Scheduled Task Execution**: Full background task system supporting:
+  - Export tasks with cron-like scheduling
+  - Sync-to-remote tasks (S3/Azure/network storage)
+  - Custom tasks (webhooks, scripts, commands, notifications)
+  - Verification tasks with scheduling
+- **Features**: Concurrent job management, job persistence, recovery across app restarts
+
+#### Enhanced ViewModels (MVVM Architecture)
+- **DashboardViewModel**: Real-time service updates, connection state tracking
+- **BackfillViewModel**: Progress tracking, cancellation support, scheduler integration
+- **DataExportViewModel**: Export service integration, format selection, destination management
+
+### Previously Completed Features (January 2026)
 - **Symbols Page**: Bulk symbol management (CSV import/export), symbol search with autocomplete, subscription templates, watchlist functionality
 - **Backfill Page**: Scheduled backfill with cron-like interface, per-symbol progress visualization, data validation and repair
 - **Provider Page**: Multi-provider support with Primary/Failover/Comparison roles, credential testing with visual feedback, latency history charts
@@ -36,8 +71,9 @@ This document outlines feature refinements and development roadmap for the Marke
 5. [External Analysis Support (2026)](#external-analysis-support-2026)
 6. [Additional New Feature Ideas (2026)](#additional-new-feature-ideas-2026)
 7. [New Feature Ideas (January 2026)](#new-feature-ideas-january-2026)
-8. [Priority Matrix](#priority-matrix)
-9. [Implementation Notes](#implementation-notes)
+8. [Infrastructure & DevOps Features (2026)](#infrastructure--devops-features-2026)
+9. [Priority Matrix](#priority-matrix)
+10. [Implementation Notes](#implementation-notes)
 
 ---
 
@@ -1190,6 +1226,233 @@ MarketData_2026-Q1.tar.gz
 
 ---
 
+## Infrastructure & DevOps Features (2026)
+
+> **Focus Area**: These features enhance development workflow, deployment automation, and operational excellence.
+
+### 51. Guided Setup & Preflight Checks
+
+**Description:** Step-by-step wizard for new users with connectivity validation.
+
+**Features:**
+- First-run setup wizard with provider selection
+- Connectivity tests before enabling services
+- Credential validation with clear error messages
+- Presets for common configurations (Day Trader, Researcher, Data Archivist)
+- Contextual tips based on detected environment
+- Skip option for experienced users
+- Configuration export at end of setup
+
+**UI Components:**
+- Multi-step wizard with progress indicator
+- Provider test cards with status badges
+- Configuration summary before completion
+
+---
+
+### 52. Support Bundle Composer
+
+**Description:** Automated diagnostic bundle generation for troubleshooting.
+
+**Features:**
+- One-click bundle generation
+- Automatic secret redaction with preview
+- Include logs, configuration, environment info
+- System health snapshot
+- Recent error summary
+- Optional screenshot capture
+- Secure upload to support endpoint
+- Bundle history with notes
+
+**Bundle Contents:**
+```
+support-bundle-2026-01-11.zip
+├── logs/
+│   ├── app.log (last 7 days)
+│   └── errors.log
+├── config/
+│   └── settings.json (redacted)
+├── diagnostics/
+│   ├── system-info.json
+│   ├── health-check.json
+│   └── recent-errors.json
+└── manifest.json
+```
+
+---
+
+### 53. Advanced Charting System
+
+**Description:** Interactive charting with technical indicators for data visualization.
+
+**Features:**
+- Candlestick/OHLC bar charts
+- Line and area charts for time series
+- Technical indicator overlays (SMA, EMA, VWAP, RSI, MACD, Bollinger Bands)
+- Volume profile sidebar
+- Multi-symbol overlay comparison
+- Zoom and pan with touch support
+- Chart annotations and drawing tools
+- Export to PNG/SVG
+- Chart templates and presets
+
+**Technical Considerations:**
+- Use Win2D or SkiaSharp for high-performance rendering
+- Implement data virtualization for large datasets
+- Support both light and dark themes
+
+---
+
+### 54. Provider Health Score Dashboard
+
+**Description:** Detailed breakdown of provider health with component-wise metrics.
+
+**Features:**
+- Health score components: Stability, Latency, Completeness, Accuracy
+- Per-component trend visualization
+- Threshold configuration for failover triggers
+- Health history timeline
+- Automatic provider ranking
+- Health alerts with configurable sensitivity
+- Provider comparison matrix
+- SLA compliance tracking
+
+**Health Score Components:**
+| Component | Weight | Metrics |
+|-----------|--------|---------|
+| Stability | 30% | Uptime, reconnection frequency |
+| Latency | 25% | P50, P95, P99 response times |
+| Completeness | 25% | Gap rate, message delivery |
+| Accuracy | 20% | Data validation pass rate |
+
+---
+
+### 55. PowerShell Integration Module
+
+**Description:** PowerShell module for automation and scripting.
+
+**Features:**
+- Cmdlets for common operations:
+  - `Get-MDCStatus`, `Start-MDCCollector`, `Stop-MDCCollector`
+  - `Get-MDCSymbols`, `Add-MDCSymbol`, `Remove-MDCSymbol`
+  - `Start-MDCBackfill`, `Get-MDCBackfillProgress`
+  - `Export-MDCData`, `Get-MDCExportHistory`
+- Pipeline support for bulk operations
+- Tab completion for parameters
+- Integration with Windows Task Scheduler
+- Module documentation with examples
+
+**Example Usage:**
+```powershell
+# Get current status
+Get-MDCStatus | Format-Table
+
+# Bulk add symbols
+Import-Csv symbols.csv | Add-MDCSymbol
+
+# Schedule daily backfill
+Start-MDCBackfill -Symbols SPY,QQQ -Days 30 -Schedule "0 6 * * *"
+```
+
+---
+
+### 56. REST API for Remote Management
+
+**Description:** HTTP API for remote monitoring and control.
+
+**Features:**
+- RESTful endpoints for all major operations
+- OpenAPI/Swagger documentation
+- JWT authentication with API keys
+- Rate limiting and throttling
+- WebSocket endpoint for real-time updates
+- Prometheus metrics endpoint
+- Health check endpoints for load balancers
+- CORS configuration for web clients
+
+**Endpoints:**
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/status` | Current collector status |
+| GET | `/api/symbols` | List subscribed symbols |
+| POST | `/api/symbols` | Add symbol |
+| POST | `/api/collector/start` | Start collector |
+| POST | `/api/collector/stop` | Stop collector |
+| GET | `/api/backfill/status` | Backfill progress |
+| WS | `/api/events` | Real-time event stream |
+
+---
+
+### 57. Time Series Alignment & Aggregation Tools
+
+**Description:** Pre-aggregate tick data into bars and aligned time series.
+
+**Features:**
+- Generate OHLCV bars at configurable intervals (1s, 1m, 5m, 15m, 1h, 1d)
+- Multiple aggregation methods (last, mean, VWAP, TWAP)
+- Gap handling strategies (forward fill, null, interpolate, skip)
+- Market hours filtering with timezone support
+- Pre/regular/after-hours session separation
+- Cross-symbol time alignment
+- Volume profile generation
+- Export aggregated data alongside raw ticks
+
+**Configuration Options:**
+```json
+{
+  "interval": "5m",
+  "aggregation": "VWAP",
+  "gapHandling": "forwardFill",
+  "marketHoursOnly": true,
+  "timezone": "America/New_York"
+}
+```
+
+---
+
+### 58. Offline Mode & Cache Management
+
+**Description:** Full offline functionality with intelligent caching.
+
+**Features:**
+- Read-only offline mode for disconnected environments
+- Automatic cache of recent data and configuration
+- Background cache refresh when online
+- Connectivity banner with retry controls
+- Offline edit queue with sync on reconnect
+- Cache size management and cleanup
+- Selective sync for large datasets
+- Conflict resolution for offline edits
+
+---
+
+### 59. External Alert Integrations
+
+**Description:** Send alerts to external services and communication platforms.
+
+**Features:**
+- Email alerts via SMTP configuration
+- Slack webhook integration
+- Microsoft Teams connector
+- Discord webhooks
+- PagerDuty for critical alerts
+- Custom webhook support (any HTTP endpoint)
+- Alert templates with variable substitution
+- Alert batching to prevent spam
+- Delivery status tracking
+
+**Alert Configuration:**
+```json
+{
+  "type": "slack",
+  "webhook": "https://hooks.slack.com/...",
+  "events": ["connectionLost", "dataGap", "backfillComplete"],
+  "template": ":warning: *{event}* - {message}"
+}
+```
+
+---
+
 ## Priority Matrix
 
 ### ✅ Completed Quick Wins
@@ -1214,6 +1477,10 @@ MarketData_2026-Q1.tar.gz
 | Trading Hours Manager (full) | ✅ Complete | 2026-01 |
 | Data Export & Integration (full) | ✅ Complete | 2026-01 |
 | Data Source Plugin System | ✅ Complete | 2026-01 |
+| **App Icons & Visual Branding** | ✅ Complete | 2026-01-11 |
+| **Desktop App CI/CD Pipeline** | ✅ Complete | 2026-01-11 |
+| **Background Task Scheduler Service** | ✅ Complete | 2026-01-11 |
+| **Enhanced MVVM ViewModels** | ✅ Complete | 2026-01-11 |
 
 ### High Impact, Low Effort (Remaining Quick Wins)
 | Feature | Effort | Impact |
@@ -1291,7 +1558,20 @@ MarketData_2026-Q1.tar.gz
 | Collaborative Workspaces (#25) | 4-6 weeks | Medium | P4 |
 | Data Monetization Dashboard (#50) | 4 weeks | Low | P4 |
 
-> **Note on Priorities**: Offline storage and external analysis features are prioritized above other enhancements as they directly support the primary mission of data collection and archival. Cloud/online features remain implemented for future flexibility but are not the current focus.
+### Infrastructure & DevOps (2026) - NEW
+| Feature | Effort | Impact | Priority | Status |
+|---------|--------|--------|----------|--------|
+| Guided Setup & Preflight Checks (#51) | 1-2 weeks | High | P0 | |
+| Support Bundle Composer (#52) | 1 week | Medium | P1 | |
+| Advanced Charting System (#53) | 3-4 weeks | High | P1 | |
+| Provider Health Score Dashboard (#54) | 2 weeks | High | P1 | |
+| PowerShell Integration Module (#55) | 3-4 weeks | Medium | P2 | |
+| REST API for Remote Management (#56) | 3-4 weeks | Medium | P2 | |
+| Time Series Alignment & Aggregation (#57) | 2 weeks | High | P1 | |
+| Offline Mode & Cache Management (#58) | 2-3 weeks | Medium | P2 | |
+| External Alert Integrations (#59) | 2 weeks | High | P1 | |
+
+> **Note on Priorities**: Offline storage and external analysis features are prioritized above other enhancements as they directly support the primary mission of data collection and archival. Infrastructure & DevOps features support operational excellence and automation. Cloud/online features remain implemented for future flexibility but are not the current focus.
 
 ---
 
@@ -1326,4 +1606,4 @@ MarketData_2026-Q1.tar.gz
 
 ---
 
-*Last Updated: 2026-01-09*
+*Last Updated: 2026-01-11*
