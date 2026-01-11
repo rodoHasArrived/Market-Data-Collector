@@ -208,6 +208,9 @@ public sealed partial class MainPage : Page
             case "Symbols":
                 ContentFrame.Navigate(typeof(SymbolsPage));
                 break;
+            case "SymbolMapping":
+                ContentFrame.Navigate(typeof(SymbolMappingPage));
+                break;
             case "Backfill":
                 ContentFrame.Navigate(typeof(BackfillPage));
                 break;
