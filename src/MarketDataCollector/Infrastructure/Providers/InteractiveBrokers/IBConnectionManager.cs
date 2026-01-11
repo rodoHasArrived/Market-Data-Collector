@@ -4,6 +4,8 @@ namespace MarketDataCollector.Infrastructure.Providers.InteractiveBrokers;
 /// Minimal connection manager placeholder (buildable without IBApi reference).
 /// Use <see cref="EnhancedIBConnectionManager"/> when compiling with the official IB API.
 /// </summary>
+// TODO: Implement full IB connection management with TWS/Gateway API integration
+// This stub allows the project to compile without the IB API reference
 public sealed class IBConnectionManager
 {
     public bool IsConnected { get; private set; }

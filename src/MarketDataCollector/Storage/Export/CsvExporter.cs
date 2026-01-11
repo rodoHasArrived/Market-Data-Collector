@@ -413,6 +413,7 @@ public sealed class CrystallizedCsvExporter
     /// Exports all bar data for a symbol to a single CSV file.
     /// Useful for Excel users who want one file per symbol.
     /// </summary>
+    // TODO: Implement actual crystallized storage reading - currently a placeholder
     public async Task ExportSymbolBarsAsync(
         string provider,
         string symbol,
@@ -431,6 +432,7 @@ public sealed class CrystallizedCsvExporter
     /// Creates a combined export of multiple symbols into a single CSV.
     /// Each row includes the symbol column.
     /// </summary>
+    // TODO: Implement multi-symbol export from crystallized storage - currently a placeholder
     public async Task ExportMultipleSymbolsAsync(
         string provider,
         IEnumerable<string> symbols,

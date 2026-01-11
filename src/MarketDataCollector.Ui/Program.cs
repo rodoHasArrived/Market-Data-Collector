@@ -272,6 +272,8 @@ app.MapPost("/api/backfill/run", async (BackfillCoordinator backfill, BackfillRe
 // ============================================================
 
 // Provider Comparison View
+// TODO: Implement real provider comparison using MultiProviderService
+// Currently returns empty mock data - should aggregate live metrics from all providers
 app.MapGet("/api/providers/comparison", (ConfigStore store) =>
 {
     // Return mock comparison data for now - real implementation would use MultiProviderService

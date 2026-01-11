@@ -473,6 +473,8 @@ public sealed class ManifestService
         return result;
     }
 
+    // TODO: Implement actual directory scanning to compute real file counts, byte sizes,
+    // date ranges, and row counts. Current implementation returns placeholder metadata.
     private Task<CategoryMetadata?> ScanCategoryAsync(
         string provider,
         string symbol,
