@@ -63,6 +63,33 @@ public sealed class ActivityFeedService
     }
 
     /// <summary>
+    /// Adds an activity item directly (for ViewModel convenience).
+    /// </summary>
+    public void AddActivity(ActivityItem activity)
+    {
+        activity.Id ??= Guid.NewGuid().ToString();
+        if (activity.Timestamp == default)
+        {
+            activity.Timestamp = DateTime.UtcNow;
+        }
+
+        // Add to beginning of collection
+        _activities.Insert(0, activity);
+
+        // Trim to max size
+        while (_activities.Count > MaxActivities)
+        {
+            _activities.RemoveAt(_activities.Count - 1);
+        }
+
+        // Raise event
+        ActivityAdded?.Invoke(this, activity);
+
+        // Persist to disk asynchronously
+        _ = SaveActivitiesAsync();
+    }
+
+    /// <summary>
     /// Logs a new activity event.
     /// </summary>
     public async Task LogActivityAsync(

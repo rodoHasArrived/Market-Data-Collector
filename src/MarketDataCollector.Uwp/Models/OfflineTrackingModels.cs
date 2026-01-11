@@ -594,6 +594,109 @@ public class ExportTaskPayload
 }
 
 /// <summary>
+/// Date range information for scheduled tasks.
+/// </summary>
+public class DateRangeInfo
+{
+    [JsonPropertyName("from")]
+    public DateTime? From { get; set; }
+
+    [JsonPropertyName("to")]
+    public DateTime? To { get; set; }
+}
+
+/// <summary>
+/// Sync to remote storage task payload.
+/// </summary>
+public class SyncToRemotePayload
+{
+    [JsonPropertyName("remoteType")]
+    public string? RemoteType { get; set; } // s3, azure, network, smb
+
+    [JsonPropertyName("remotePath")]
+    public string? RemotePath { get; set; } // Bucket/container path or network share path
+
+    [JsonPropertyName("sourceDirectory")]
+    public string? SourceDirectory { get; set; } // Relative to data root (e.g., "live", "historical")
+
+    [JsonPropertyName("filePattern")]
+    public string? FilePattern { get; set; } // e.g., "*.jsonl*"
+
+    [JsonPropertyName("syncSince")]
+    public DateTime? SyncSince { get; set; } // Only sync files modified after this time
+
+    [JsonPropertyName("credentials")]
+    public string? Credentials { get; set; } // Reference to stored credentials
+
+    [JsonPropertyName("region")]
+    public string? Region { get; set; } // AWS region or Azure region
+
+    [JsonPropertyName("compress")]
+    public bool Compress { get; set; } = true;
+
+    [JsonPropertyName("deleteAfterSync")]
+    public bool DeleteAfterSync { get; set; } = false;
+}
+
+/// <summary>
+/// Custom task payload for user-defined operations.
+/// </summary>
+public class CustomTaskPayload
+{
+    [JsonPropertyName("actionType")]
+    public string? ActionType { get; set; } // http, webhook, script, command, notification
+
+    // HTTP/Webhook properties
+    [JsonPropertyName("url")]
+    public string? Url { get; set; }
+
+    [JsonPropertyName("httpMethod")]
+    public string? HttpMethod { get; set; } // GET, POST, PUT, DELETE
+
+    [JsonPropertyName("headers")]
+    public Dictionary<string, string>? Headers { get; set; }
+
+    [JsonPropertyName("requestBody")]
+    public string? RequestBody { get; set; }
+
+    [JsonPropertyName("contentType")]
+    public string? ContentType { get; set; }
+
+    [JsonPropertyName("failOnHttpError")]
+    public bool FailOnHttpError { get; set; } = true;
+
+    // Script properties
+    [JsonPropertyName("scriptPath")]
+    public string? ScriptPath { get; set; }
+
+    [JsonPropertyName("scriptContent")]
+    public string? ScriptContent { get; set; } // Inline script content
+
+    [JsonPropertyName("scriptArguments")]
+    public string? ScriptArguments { get; set; }
+
+    [JsonPropertyName("failOnNonZeroExit")]
+    public bool FailOnNonZeroExit { get; set; } = true;
+
+    // Command properties
+    [JsonPropertyName("command")]
+    public string? Command { get; set; }
+
+    [JsonPropertyName("workingDirectory")]
+    public string? WorkingDirectory { get; set; }
+
+    // Notification properties
+    [JsonPropertyName("notificationTitle")]
+    public string? NotificationTitle { get; set; }
+
+    [JsonPropertyName("notificationMessage")]
+    public string? NotificationMessage { get; set; }
+
+    [JsonPropertyName("notificationSeverity")]
+    public string? NotificationSeverity { get; set; } // info, success, warning, error
+}
+
+/// <summary>
 /// Represents a recovery attempt after system restart.
 /// </summary>
 public class RecoveryAttempt
