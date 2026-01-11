@@ -348,6 +348,9 @@ public class AnalysisExportService
         return exportedFiles;
     }
 
+    // TODO: Implement proper Parquet export using Parquet.Net or Apache Arrow
+    // Currently writes JSON as a placeholder - Parquet format provides better compression
+    // and columnar storage for analytics workloads
     private async Task WriteParquetPlaceholderAsync(
         string path,
         List<Dictionary<string, object?>> records,

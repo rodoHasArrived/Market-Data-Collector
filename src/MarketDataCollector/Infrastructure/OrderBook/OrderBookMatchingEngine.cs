@@ -94,7 +94,8 @@ public sealed class OrderBookMatchingEngine
                             // IOC/FOK orders are cancelled if not fully filled
                             if (request.TimeInForce == TimeInForce.FOK && trades.Count > 0)
                             {
-                                // FOK requires full fill - cancel all trades (not implemented - would need rollback)
+                                // TODO: Implement FOK rollback - currently partial fills are not reverted
+                                // FOK requires full fill - should roll back partial executions and restore order book state
                             }
                             order.Status = OrderStatus.Cancelled;
                         }
