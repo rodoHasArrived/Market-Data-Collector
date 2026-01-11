@@ -102,6 +102,23 @@ public sealed class UiServer : IAsyncDisposable
         builder.Services.AddSingleton(scheduleManager);
         builder.Services.AddSingleton(executionHistory);
 
+        // Archive maintenance services
+        var maintenanceHistory = new Storage.Maintenance.MaintenanceExecutionHistory(config.DataRoot);
+        var maintenanceScheduleManagerLogger = loggerFactory.CreateLogger<Storage.Maintenance.ArchiveMaintenanceScheduleManager>();
+        var maintenanceScheduleManager = new Storage.Maintenance.ArchiveMaintenanceScheduleManager(
+            maintenanceScheduleManagerLogger, config.DataRoot, maintenanceHistory);
+        builder.Services.AddSingleton(maintenanceScheduleManager);
+        builder.Services.AddSingleton(maintenanceHistory);
+        builder.Services.AddSingleton<Storage.Maintenance.ScheduledArchiveMaintenanceService>(sp =>
+        {
+            var serviceLogger = sp.GetRequiredService<ILoggerFactory>().CreateLogger<Storage.Maintenance.ScheduledArchiveMaintenanceService>();
+            var schedMgr = sp.GetRequiredService<Storage.Maintenance.ArchiveMaintenanceScheduleManager>();
+            var fileMaint = sp.GetRequiredService<IFileMaintenanceService>();
+            var tierMigration = sp.GetRequiredService<ITierMigrationService>();
+            var storageOpts = sp.GetRequiredService<StorageOptions>();
+            return new Storage.Maintenance.ScheduledArchiveMaintenanceService(serviceLogger, schedMgr, fileMaint, tierMigration, storageOpts);
+        });
+
         _app = builder.Build();
 
         ConfigureRoutes();
@@ -372,6 +389,9 @@ public sealed class UiServer : IAsyncDisposable
         // Configure packaging endpoints
         var config = _app.Services.GetRequiredService<ConfigStore>().Load();
         _app.MapPackagingEndpoints(config.DataRoot);
+
+        // Configure archive maintenance endpoints
+        _app.MapArchiveMaintenanceEndpoints();
     }
 
     private void ConfigureStorageOrganizationRoutes()
