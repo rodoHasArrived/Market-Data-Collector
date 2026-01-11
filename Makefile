@@ -18,7 +18,8 @@
         setup-config lint benchmark docs verify-adrs verify-contracts gen-context \
         doctor doctor-quick doctor-fix diagnose diagnose-build diagnose-restore diagnose-clean \
         collect-debug collect-debug-minimal build-profile build-binlog validate-data analyze-errors \
-        build-graph fingerprint env-capture env-diff impact bisect metrics history app-metrics
+        build-graph fingerprint env-capture env-diff impact bisect metrics history app-metrics \
+        icons desktop desktop-publish
 
 # Default target
 .DEFAULT_GOAL := help
@@ -26,6 +27,7 @@
 # Project settings
 PROJECT := src/MarketDataCollector/MarketDataCollector.csproj
 UI_PROJECT := src/MarketDataCollector.Ui/MarketDataCollector.Ui.csproj
+DESKTOP_PROJECT := src/MarketDataCollector.Uwp/MarketDataCollector.Uwp.csproj
 TEST_PROJECT := tests/MarketDataCollector.Tests/MarketDataCollector.Tests.csproj
 BENCHMARK_PROJECT := benchmarks/MarketDataCollector.Benchmarks/MarketDataCollector.Benchmarks.csproj
 DOCGEN_PROJECT := tools/DocGenerator/DocGenerator.csproj
@@ -74,6 +76,9 @@ help: ## Show this help message
 	@echo ""
 	@echo "$(BLUE)Publishing:$(NC)"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'publish' | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-18s$(NC) %s\n", $$1, $$2}'
+	@echo ""
+	@echo "$(BLUE)Desktop App:$(NC)"
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'icons|desktop' | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-18s$(NC) %s\n", $$1, $$2}'
 	@echo ""
 	@echo "$(BLUE)Diagnostics:$(NC)"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'doctor|diagnose|collect-debug|build-profile|build-binlog|build-graph|fingerprint|env-|impact|bisect|metrics|history|validate-data|analyze-errors' | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-18s$(NC) %s\n", $$1, $$2}'
@@ -336,3 +341,33 @@ metrics: ## Show build metrics summary
 
 history: ## Show build history summary
 	@$(BUILDCTL) history
+
+# =============================================================================
+# Desktop App
+# =============================================================================
+
+icons: ## Generate desktop app icons from SVG
+	@echo "$(BLUE)Generating desktop app icons...$(NC)"
+	@npm ci --silent
+	@node scripts/generate-icons.mjs
+	@echo "$(GREEN)Icons generated in src/MarketDataCollector.Uwp/Assets/$(NC)"
+
+desktop: icons ## Build desktop app (Windows only)
+	@echo "$(BLUE)Building desktop app...$(NC)"
+ifeq ($(OS),Windows_NT)
+	dotnet build $(DESKTOP_PROJECT) -c Release -r win-x64
+else
+	@echo "$(YELLOW)Desktop app build requires Windows. Use GitHub Actions for CI builds.$(NC)"
+	@echo "The desktop app can be built on Windows with:"
+	@echo "  dotnet build $(DESKTOP_PROJECT) -c Release -r win-x64"
+endif
+
+desktop-publish: icons ## Publish desktop app (Windows only)
+	@echo "$(BLUE)Publishing desktop app...$(NC)"
+ifeq ($(OS),Windows_NT)
+	dotnet publish $(DESKTOP_PROJECT) -c Release -r win-x64 -o publish/desktop --self-contained true
+	@echo "$(GREEN)Published to publish/desktop/$(NC)"
+else
+	@echo "$(YELLOW)Desktop app publish requires Windows.$(NC)"
+	@echo "Use GitHub Actions workflow 'Desktop App Build' for CI builds."
+endif
