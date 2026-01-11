@@ -21,6 +21,7 @@ public sealed class BackfillWorkerService : IDisposable
     private readonly string _dataRoot;
     private readonly ILogger _log;
     private readonly CancellationTokenSource _cts = new();
+    private readonly SemaphoreSlim _concurrencySemaphore;
     private Task? _workerTask;
     private Task? _completionTask;
     private bool _disposed;
@@ -65,6 +66,7 @@ public sealed class BackfillWorkerService : IDisposable
         _config = config;
         _dataRoot = dataRoot;
         _log = log ?? LoggingSetup.ForContext<BackfillWorkerService>();
+        _concurrencySemaphore = new SemaphoreSlim(config.MaxConcurrentRequests);
     }
 
     /// <summary>
@@ -111,24 +113,21 @@ public sealed class BackfillWorkerService : IDisposable
     /// <summary>
     /// Main worker loop that processes requests from the queue.
     /// </summary>
-    // TODO: Move SemaphoreSlim to class field - creating in loop causes resource leak on each restart
     private async Task RunWorkerLoopAsync(CancellationToken ct)
     {
-        var semaphore = new SemaphoreSlim(_config.MaxConcurrentRequests);
-
         while (!ct.IsCancellationRequested)
         {
             try
             {
                 // Wait for a slot
-                await semaphore.WaitAsync(ct).ConfigureAwait(false);
+                await _concurrencySemaphore.WaitAsync(ct).ConfigureAwait(false);
 
                 // Try to get a request
                 var request = await _requestQueue.TryDequeueAsync(ct).ConfigureAwait(false);
 
                 if (request == null)
                 {
-                    semaphore.Release();
+                    _concurrencySemaphore.Release();
 
                     // No requests available, check if all providers are rate-limited
                     if (CheckAllProvidersRateLimited())
@@ -144,7 +143,7 @@ public sealed class BackfillWorkerService : IDisposable
                 }
 
                 // Process request in background
-                _ = ProcessRequestAsync(request, semaphore, ct);
+                _ = ProcessRequestAsync(request, ct);
             }
             catch (OperationCanceledException)
             {
@@ -161,7 +160,7 @@ public sealed class BackfillWorkerService : IDisposable
     /// <summary>
     /// Process a single backfill request.
     /// </summary>
-    private async Task ProcessRequestAsync(BackfillRequest request, SemaphoreSlim semaphore, CancellationToken ct)
+    private async Task ProcessRequestAsync(BackfillRequest request, CancellationToken ct)
     {
         try
         {
@@ -197,7 +196,7 @@ public sealed class BackfillWorkerService : IDisposable
         }
         finally
         {
-            semaphore.Release();
+            _concurrencySemaphore.Release();
         }
     }
 
@@ -366,6 +365,7 @@ public sealed class BackfillWorkerService : IDisposable
 
         _cts.Cancel();
         _cts.Dispose();
+        _concurrencySemaphore.Dispose();
     }
 }
 
