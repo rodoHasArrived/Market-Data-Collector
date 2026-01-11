@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Threading;
 using Microsoft.UI;
@@ -29,9 +30,12 @@ public sealed partial class DashboardPage : Page
     private readonly Random _random = new();
     private readonly DispatcherTimer _uptimeTimer;
     private readonly ActivityFeedService _activityFeedService;
+    private readonly IntegrityEventsService _integrityEventsService;
     private readonly ObservableCollection<ActivityDisplayItem> _activityItems;
+    private readonly ObservableCollection<IntegrityEventDisplayItem> _integrityItems;
     private bool _isCollectorRunning = true;
     private bool _isCollectorPaused = false;
+    private bool _isIntegrityPanelExpanded = false;
     private DateTime _startTime;
     private DateTime _collectorStartTime;
 
@@ -52,8 +56,11 @@ public sealed partial class DashboardPage : Page
         _collectorStartTime = DateTime.UtcNow;
 
         _activityFeedService = ActivityFeedService.Instance;
+        _integrityEventsService = IntegrityEventsService.Instance;
         _activityItems = new ObservableCollection<ActivityDisplayItem>();
+        _integrityItems = new ObservableCollection<IntegrityEventDisplayItem>();
         ActivityFeedList.ItemsSource = _activityItems;
+        IntegrityEventsList.ItemsSource = _integrityItems;
 
         _refreshTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
         _refreshTimer.Tick += RefreshTimer_Tick;
@@ -65,6 +72,8 @@ public sealed partial class DashboardPage : Page
         _uptimeTimer.Tick += UptimeTimer_Tick;
 
         _activityFeedService.ActivityAdded += ActivityFeedService_ActivityAdded;
+        _integrityEventsService.EventRecorded += IntegrityEventsService_EventRecorded;
+        _integrityEventsService.EventsCleared += IntegrityEventsService_EventsCleared;
 
         Loaded += DashboardPage_Loaded;
         Unloaded += DashboardPage_Unloaded;
@@ -75,6 +84,7 @@ public sealed partial class DashboardPage : Page
         await ViewModel.LoadAsync();
         InitializeSparklineData();
         LoadActivityFeed();
+        LoadIntegrityEvents();
         _refreshTimer.Start();
         _sparklineTimer.Start();
         _uptimeTimer.Start();
@@ -85,6 +95,7 @@ public sealed partial class DashboardPage : Page
         UpdateSparklines();
         UpdateThroughputChart();
         UpdateQuickStats();
+        UpdateIntegritySummary();
     }
 
     private void DashboardPage_Unloaded(object sender, RoutedEventArgs e)
@@ -668,6 +679,279 @@ public sealed partial class DashboardPage : Page
         DataQualityText.Text = "99.8%";
         AvgLatencyText.Text = "12ms";
     }
+
+    #region Integrity Events
+
+    private void LoadIntegrityEvents()
+    {
+        _integrityItems.Clear();
+
+        var events = _integrityEventsService.GetRecentEvents(10);
+
+        foreach (var evt in events)
+        {
+            _integrityItems.Add(CreateIntegrityDisplayItem(evt));
+        }
+
+        // If no events, add sample data for demo
+        if (_integrityItems.Count == 0)
+        {
+            AddSampleIntegrityEvents();
+        }
+
+        UpdateIntegrityListVisibility();
+    }
+
+    private void AddSampleIntegrityEvents()
+    {
+        // Add some sample integrity events for demonstration
+        var sampleEvents = new[]
+        {
+            new IntegrityEventDisplayItem
+            {
+                Id = Guid.NewGuid().ToString(),
+                Symbol = "SPY",
+                EventTypeName = "Sequence Gap",
+                Description = "Sequence gap detected: expected 12345, got 12350 (5 missing)",
+                Severity = IntegritySeverity.Warning,
+                SeverityColor = Color.FromArgb(255, 210, 153, 34),
+                RelativeTime = "5m ago",
+                IsNotAcknowledged = Visibility.Visible
+            },
+            new IntegrityEventDisplayItem
+            {
+                Id = Guid.NewGuid().ToString(),
+                Symbol = "AAPL",
+                EventTypeName = "Stale Data",
+                Description = "No data received for 2m 30s",
+                Severity = IntegritySeverity.Warning,
+                SeverityColor = Color.FromArgb(255, 210, 153, 34),
+                RelativeTime = "15m ago",
+                IsNotAcknowledged = Visibility.Visible
+            },
+            new IntegrityEventDisplayItem
+            {
+                Id = Guid.NewGuid().ToString(),
+                Symbol = "QQQ",
+                EventTypeName = "Provider Switch",
+                Description = "Provider switched from Alpaca to Polygon: connection lost",
+                Severity = IntegritySeverity.Info,
+                SeverityColor = Color.FromArgb(255, 88, 166, 255),
+                RelativeTime = "1h ago",
+                IsNotAcknowledged = Visibility.Collapsed
+            }
+        };
+
+        foreach (var item in sampleEvents)
+        {
+            _integrityItems.Add(item);
+        }
+    }
+
+    private static IntegrityEventDisplayItem CreateIntegrityDisplayItem(IntegrityEvent evt)
+    {
+        var severityColor = evt.Severity switch
+        {
+            IntegritySeverity.Critical => Color.FromArgb(255, 248, 81, 73),
+            IntegritySeverity.Warning => Color.FromArgb(255, 210, 153, 34),
+            _ => Color.FromArgb(255, 88, 166, 255)
+        };
+
+        var eventTypeName = evt.EventType switch
+        {
+            IntegrityEventType.SequenceGap => "Sequence Gap",
+            IntegrityEventType.OutOfOrder => "Out of Order",
+            IntegrityEventType.StaleData => "Stale Data",
+            IntegrityEventType.ValidationFailure => "Validation",
+            IntegrityEventType.Duplicate => "Duplicate",
+            IntegrityEventType.ProviderSwitch => "Provider Switch",
+            _ => "Other"
+        };
+
+        return new IntegrityEventDisplayItem
+        {
+            Id = evt.Id,
+            Symbol = evt.Symbol,
+            EventTypeName = eventTypeName,
+            Description = evt.Description,
+            Severity = evt.Severity,
+            SeverityColor = severityColor,
+            RelativeTime = evt.RelativeTime,
+            IsNotAcknowledged = evt.IsAcknowledged ? Visibility.Collapsed : Visibility.Visible
+        };
+    }
+
+    private void UpdateIntegritySummary()
+    {
+        var summary = _integrityEventsService.GetSummary();
+
+        IntegrityTotalEventsText.Text = summary.TotalEvents.ToString();
+        IntegrityLast24hText.Text = summary.EventsLast24Hours.ToString();
+        IntegrityUnacknowledgedText.Text = summary.UnacknowledgedCount.ToString();
+        IntegrityMostAffectedText.Text = summary.MostAffectedSymbol;
+
+        // Update badge visibility
+        if (summary.CriticalCount > 0)
+        {
+            CriticalAlertsBadge.Visibility = Visibility.Visible;
+            CriticalAlertsCount.Text = summary.CriticalCount.ToString();
+        }
+        else
+        {
+            CriticalAlertsBadge.Visibility = Visibility.Collapsed;
+        }
+
+        if (summary.WarningCount > 0)
+        {
+            WarningAlertsBadge.Visibility = Visibility.Visible;
+            WarningAlertsCount.Text = summary.WarningCount.ToString();
+        }
+        else
+        {
+            WarningAlertsBadge.Visibility = Visibility.Collapsed;
+        }
+    }
+
+    private void UpdateIntegrityListVisibility()
+    {
+        NoIntegrityEventsText.Visibility = _integrityItems.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void IntegrityEventsService_EventRecorded(object? sender, IntegrityEvent e)
+    {
+        DispatcherQueue.TryEnqueue(() =>
+        {
+            _integrityItems.Insert(0, CreateIntegrityDisplayItem(e));
+            while (_integrityItems.Count > 10)
+            {
+                _integrityItems.RemoveAt(_integrityItems.Count - 1);
+            }
+            UpdateIntegritySummary();
+            UpdateIntegrityListVisibility();
+        });
+    }
+
+    private void IntegrityEventsService_EventsCleared(object? sender, EventArgs e)
+    {
+        DispatcherQueue.TryEnqueue(() =>
+        {
+            _integrityItems.Clear();
+            UpdateIntegritySummary();
+            UpdateIntegrityListVisibility();
+        });
+    }
+
+    private void ExpandIntegrityPanel_Click(object sender, RoutedEventArgs e)
+    {
+        _isIntegrityPanelExpanded = !_isIntegrityPanelExpanded;
+
+        if (_isIntegrityPanelExpanded)
+        {
+            IntegrityDetailsPanel.Visibility = Visibility.Visible;
+            ExpandIntegrityIcon.Glyph = "\uE70E"; // Chevron up
+            ExpandIntegrityText.Text = "Hide Details";
+        }
+        else
+        {
+            IntegrityDetailsPanel.Visibility = Visibility.Collapsed;
+            ExpandIntegrityIcon.Glyph = "\uE70D"; // Chevron down
+            ExpandIntegrityText.Text = "Show Details";
+        }
+    }
+
+    private async void ClearIntegrityAlerts_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new ContentDialog
+        {
+            Title = "Clear Integrity Alerts",
+            Content = "Are you sure you want to clear all integrity alerts?",
+            PrimaryButtonText = "Clear All",
+            CloseButtonText = "Cancel",
+            DefaultButton = ContentDialogButton.Close,
+            XamlRoot = this.XamlRoot
+        };
+
+        var result = await dialog.ShowAsync();
+        if (result == ContentDialogResult.Primary)
+        {
+            _integrityEventsService.ClearEvents();
+
+            DashboardInfoBar.Severity = InfoBarSeverity.Success;
+            DashboardInfoBar.Title = "Alerts Cleared";
+            DashboardInfoBar.Message = "All integrity alerts have been cleared.";
+            DashboardInfoBar.IsOpen = true;
+
+            await Task.Delay(3000);
+            DashboardInfoBar.IsOpen = false;
+        }
+    }
+
+    private void AcknowledgeIntegrityEvent_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button button && button.Tag is string eventId)
+        {
+            _integrityEventsService.AcknowledgeEvent(eventId);
+
+            // Update the display item
+            var item = _integrityItems.FirstOrDefault(i => i.Id == eventId);
+            if (item != null)
+            {
+                item.IsNotAcknowledged = Visibility.Collapsed;
+            }
+
+            UpdateIntegritySummary();
+        }
+    }
+
+    private void ViewAllIntegrityEvents_Click(object sender, RoutedEventArgs e)
+    {
+        // Navigate to Archive Health page which shows all integrity events
+        if (this.Frame != null)
+        {
+            this.Frame.Navigate(typeof(ArchiveHealthPage));
+        }
+    }
+
+    private async void ExportIntegrityReport_Click(object sender, RoutedEventArgs e)
+    {
+        // Export integrity report
+        var events = _integrityEventsService.GetAllEvents();
+        var summary = _integrityEventsService.GetSummary();
+
+        // Build report content
+        var report = $"Data Integrity Report\n" +
+                     $"Generated: {DateTime.Now:yyyy-MM-dd HH:mm:ss}\n" +
+                     $"{'='.PadLeft(50, '=')}\n\n" +
+                     $"Summary:\n" +
+                     $"  Total Events: {summary.TotalEvents}\n" +
+                     $"  Critical: {summary.CriticalCount}\n" +
+                     $"  Warning: {summary.WarningCount}\n" +
+                     $"  Info: {summary.InfoCount}\n" +
+                     $"  Last 24 Hours: {summary.EventsLast24Hours}\n" +
+                     $"  Unacknowledged: {summary.UnacknowledgedCount}\n" +
+                     $"  Most Affected Symbol: {summary.MostAffectedSymbol}\n\n" +
+                     $"Recent Events:\n";
+
+        foreach (var evt in events.Take(20))
+        {
+            report += $"  [{evt.Timestamp:yyyy-MM-dd HH:mm:ss}] {evt.Symbol} - {evt.Description}\n";
+        }
+
+        // Copy to clipboard for now (in real app, save to file)
+        var dataPackage = new Windows.ApplicationModel.DataTransfer.DataPackage();
+        dataPackage.SetText(report);
+        Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(dataPackage);
+
+        DashboardInfoBar.Severity = InfoBarSeverity.Success;
+        DashboardInfoBar.Title = "Report Exported";
+        DashboardInfoBar.Message = "Integrity report has been copied to clipboard.";
+        DashboardInfoBar.IsOpen = true;
+
+        await Task.Delay(3000);
+        DashboardInfoBar.IsOpen = false;
+    }
+
+    #endregion
 }
 
 /// <summary>
@@ -680,4 +964,19 @@ public class ActivityDisplayItem
     public string Icon { get; set; } = "\uE946";
     public SolidColorBrush IconBackground { get; set; } = new(Microsoft.UI.Colors.Gray);
     public string RelativeTime { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Display model for integrity events in the dashboard.
+/// </summary>
+public class IntegrityEventDisplayItem
+{
+    public string Id { get; set; } = string.Empty;
+    public string Symbol { get; set; } = string.Empty;
+    public string EventTypeName { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public IntegritySeverity Severity { get; set; }
+    public Color SeverityColor { get; set; }
+    public string RelativeTime { get; set; } = string.Empty;
+    public Visibility IsNotAcknowledged { get; set; } = Visibility.Visible;
 }

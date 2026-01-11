@@ -1,5 +1,10 @@
+using System;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 using MarketDataCollector.Uwp.ViewModels;
 using MarketDataCollector.Uwp.Services;
 
@@ -13,6 +18,10 @@ public sealed partial class MainPage : Page
     public MainViewModel ViewModel { get; }
     private readonly SearchService _searchService;
     private readonly FirstRunService _firstRunService;
+    private readonly NotificationService _notificationService;
+    private readonly ConnectionService _connectionService;
+    private readonly DispatcherTimer _notificationDismissTimer;
+    private string? _currentNotificationAction;
 
     public MainPage()
     {
@@ -21,8 +30,19 @@ public sealed partial class MainPage : Page
         DataContext = ViewModel;
         _searchService = SearchService.Instance;
         _firstRunService = new FirstRunService();
+        _notificationService = NotificationService.Instance;
+        _connectionService = ConnectionService.Instance;
+
+        // Setup notification dismiss timer
+        _notificationDismissTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(8) };
+        _notificationDismissTimer.Tick += NotificationDismissTimer_Tick;
+
+        // Subscribe to notification events
+        _notificationService.NotificationReceived += NotificationService_NotificationReceived;
+        _connectionService.StateChanged += ConnectionService_StateChanged;
 
         Loaded += MainPage_Loaded;
+        Unloaded += MainPage_Unloaded;
     }
 
     private async void MainPage_Loaded(object sender, RoutedEventArgs e)
@@ -36,7 +56,117 @@ public sealed partial class MainPage : Page
         }
 
         await ViewModel.LoadAsync();
+
+        // Start connection monitoring
+        _connectionService.StartMonitoring();
     }
+
+    private void MainPage_Unloaded(object sender, RoutedEventArgs e)
+    {
+        _notificationService.NotificationReceived -= NotificationService_NotificationReceived;
+        _connectionService.StateChanged -= ConnectionService_StateChanged;
+        _notificationDismissTimer.Stop();
+    }
+
+    #region In-App Notification Banner
+
+    private void NotificationService_NotificationReceived(object? sender, NotificationEventArgs e)
+    {
+        DispatcherQueue.TryEnqueue(() =>
+        {
+            ShowInAppNotification(e.Title, e.Message, e.Type, GetNotificationAction(e.Tag));
+        });
+    }
+
+    private void ConnectionService_StateChanged(object? sender, ConnectionStateChangedEventArgs e)
+    {
+        DispatcherQueue.TryEnqueue(() =>
+        {
+            if (e.NewState == ConnectionState.Error || e.NewState == ConnectionState.Disconnected)
+            {
+                if (e.OldState == ConnectionState.Connected)
+                {
+                    ShowInAppNotification(
+                        "Connection Lost",
+                        $"Lost connection to {e.Provider}. Attempting to reconnect...",
+                        NotificationType.Error,
+                        "action:logs");
+                }
+            }
+            else if (e.NewState == ConnectionState.Connected && e.OldState != ConnectionState.Connected)
+            {
+                ShowInAppNotification(
+                    "Connected",
+                    $"Successfully connected to {e.Provider}",
+                    NotificationType.Success);
+            }
+        });
+    }
+
+    private void ShowInAppNotification(string title, string message, NotificationType type, string? action = null)
+    {
+        NotificationTitle.Text = title;
+        NotificationMessage.Text = message;
+        _currentNotificationAction = action;
+
+        // Set background color and icon based on type
+        (NotificationBanner.Background, NotificationIcon.Glyph) = type switch
+        {
+            NotificationType.Success => (new SolidColorBrush(Windows.UI.Color.FromArgb(255, 72, 187, 120)), "\uE73E"),
+            NotificationType.Warning => (new SolidColorBrush(Windows.UI.Color.FromArgb(255, 237, 137, 54)), "\uE7BA"),
+            NotificationType.Error => (new SolidColorBrush(Windows.UI.Color.FromArgb(255, 245, 101, 101)), "\uEA39"),
+            _ => (new SolidColorBrush(Windows.UI.Color.FromArgb(255, 88, 166, 255)), "\uE946")
+        };
+
+        // Show action button if there's an action
+        NotificationActionButton.Visibility = !string.IsNullOrEmpty(action)
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+
+        NotificationBanner.Visibility = Visibility.Visible;
+
+        // Start auto-dismiss timer
+        _notificationDismissTimer.Stop();
+        _notificationDismissTimer.Start();
+    }
+
+    private void DismissNotification_Click(object sender, RoutedEventArgs e)
+    {
+        _notificationDismissTimer.Stop();
+        NotificationBanner.Visibility = Visibility.Collapsed;
+    }
+
+    private void NotificationDismissTimer_Tick(object? sender, object e)
+    {
+        _notificationDismissTimer.Stop();
+        NotificationBanner.Visibility = Visibility.Collapsed;
+    }
+
+    private void NotificationAction_Click(object sender, RoutedEventArgs e)
+    {
+        if (!string.IsNullOrEmpty(_currentNotificationAction))
+        {
+            HandleSearchNavigation(_currentNotificationAction);
+        }
+        DismissNotification_Click(sender, e);
+    }
+
+    private static string? GetNotificationAction(string tag)
+    {
+        return tag switch
+        {
+            "connection" => "page:Provider",
+            "reconnect" => "page:Provider",
+            "error" => "action:logs",
+            "backfill" => "page:Backfill",
+            "datagap" => "page:ArchiveHealth",
+            "storage" => "page:Storage",
+            "schedule" => "page:ServiceManager",
+            _ => null
+        };
+    }
+
+    #endregion
 
     private void NavView_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
     {

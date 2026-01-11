@@ -17,12 +17,57 @@
         <converters:BoolToConnectionStatusConverter x:Key="BoolToConnectionStatus" />
     </Page.Resources>
 
-    <NavigationView
-        x:Name="NavView"
-        IsBackButtonVisible="Collapsed"
-        IsSettingsVisible="True"
-        PaneDisplayMode="Left"
-        SelectionChanged="NavView_SelectionChanged">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- In-App Notification Banner -->
+        <Border x:Name="NotificationBanner" Grid.Row="0" Visibility="Collapsed"
+                Padding="16,12" CornerRadius="0,0,8,8"
+                Background="{ThemeResource SystemFillColorCriticalBackgroundBrush}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <FontIcon x:Name="NotificationIcon" Grid.Column="0" Glyph="&#xE946;"
+                          FontSize="20" Margin="0,0,12,0" Foreground="White"
+                          VerticalAlignment="Center" />
+
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <TextBlock x:Name="NotificationTitle" Text="Notification"
+                               FontWeight="SemiBold" Foreground="White" />
+                    <TextBlock x:Name="NotificationMessage" Text="Message here"
+                               FontSize="13" Foreground="White" Opacity="0.9"
+                               TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+
+                <Button x:Name="NotificationActionButton" Grid.Column="2"
+                        Content="View" Click="NotificationAction_Click"
+                        Margin="12,0" Visibility="Collapsed"
+                        Background="Transparent" Foreground="White"
+                        BorderBrush="White" BorderThickness="1" />
+
+                <Button x:Name="NotificationDismissButton" Grid.Column="3"
+                        Click="DismissNotification_Click"
+                        Background="Transparent" BorderThickness="0" Padding="8">
+                    <FontIcon Glyph="&#xE711;" FontSize="14" Foreground="White" />
+                </Button>
+            </Grid>
+        </Border>
+
+        <NavigationView
+            x:Name="NavView"
+            Grid.Row="1"
+            IsBackButtonVisible="Collapsed"
+            IsSettingsVisible="True"
+            PaneDisplayMode="Left"
+            SelectionChanged="NavView_SelectionChanged">
 
         <!-- Search Box in Header -->
         <NavigationView.AutoSuggestBox>
@@ -300,4 +345,5 @@
             </ScrollViewer>
         </Frame>
     </NavigationView>
+    </Grid>
 </Page>
