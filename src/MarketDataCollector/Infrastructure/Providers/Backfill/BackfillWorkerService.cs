@@ -38,6 +38,9 @@ public sealed class BackfillWorkerService : IDisposable
 
     public bool IsRunning => _isRunning;
 
+    private const int MinConcurrentRequests = 1;
+    private const int MaxConcurrentRequests = 100;
+
     public BackfillWorkerService(
         BackfillJobManager jobManager,
         BackfillRequestQueue requestQueue,
@@ -47,7 +50,14 @@ public sealed class BackfillWorkerService : IDisposable
         string dataRoot,
         ILogger? log = null)
     {
-        // TODO: Add validation for MaxConcurrentRequests bounds in config (should be positive and reasonable)
+        if (config.MaxConcurrentRequests < MinConcurrentRequests || config.MaxConcurrentRequests > MaxConcurrentRequests)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(config),
+                config.MaxConcurrentRequests,
+                $"MaxConcurrentRequests must be between {MinConcurrentRequests} and {MaxConcurrentRequests}");
+        }
+
         _jobManager = jobManager;
         _requestQueue = requestQueue;
         _provider = provider;
