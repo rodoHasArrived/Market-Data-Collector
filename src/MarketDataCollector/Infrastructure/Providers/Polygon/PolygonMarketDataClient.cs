@@ -20,7 +20,7 @@ namespace MarketDataCollector.Infrastructure.Providers.Polygon;
 /// Supports:
 /// - Trades: YES (streams "T" messages and forwards to TradeDataCollector)
 /// - Quotes: YES (streams "Q" messages and forwards to QuoteCollector)
-/// - Aggregates: Planned for future implementation
+/// - Aggregates: YES (streams "A" per-second and "AM" per-minute OHLCV bars)
 ///
 /// Connection Resilience:
 /// - Uses Polly-based WebSocketResiliencePolicy for connection retry with exponential backoff
@@ -59,6 +59,7 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
     private readonly object _gate = new();
     private readonly HashSet<string> _tradeSymbols = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<string> _quoteSymbols = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<string> _aggregateSymbols = new(StringComparer.OrdinalIgnoreCase);
     private int _nextSubId = 200_000; // keep away from IB (0-99999) and Alpaca (100000-199999) ids
     private readonly Dictionary<int, (string Symbol, string Kind)> _subs = new();
 
@@ -477,6 +478,59 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
     }
 
     /// <summary>
+    /// Subscribes to aggregate bars (per-second and per-minute OHLCV) for a symbol.
+    /// </summary>
+    /// <param name="cfg">Symbol configuration.</param>
+    /// <returns>Subscription ID, or -1 if aggregates are disabled or symbol is invalid.</returns>
+    public int SubscribeAggregates(SymbolConfig cfg)
+    {
+        if (cfg is null) throw new ArgumentNullException(nameof(cfg));
+        var symbol = cfg.Symbol.Trim();
+        if (symbol.Length == 0) return -1;
+
+        // Only subscribe if aggregates are enabled in options
+        if (!_opt.SubscribeAggregates)
+        {
+            _log.Debug("Aggregate subscription for {Symbol} skipped - SubscribeAggregates is disabled", symbol);
+            return -1;
+        }
+
+        var id = Interlocked.Increment(ref _nextSubId);
+        lock (_gate)
+        {
+            _aggregateSymbols.Add(symbol);
+            _subs[id] = (symbol, "aggregates");
+        }
+
+        _ = TrySendSubscribeAsync();
+        _log.Information("Subscribed to aggregates for {Symbol} with ID {SubscriptionId}", symbol, id);
+        return id;
+    }
+
+    /// <summary>
+    /// Unsubscribes from aggregate bars for a subscription.
+    /// </summary>
+    /// <param name="subscriptionId">The subscription ID to unsubscribe.</param>
+    public void UnsubscribeAggregates(int subscriptionId)
+    {
+        (string Symbol, string Kind) sub;
+        lock (_gate)
+        {
+            if (!_subs.TryGetValue(subscriptionId, out sub)) return;
+            _subs.Remove(subscriptionId);
+            if (sub.Kind == "aggregates")
+            {
+                // Remove symbol only if no remaining aggregate subs for this symbol
+                if (!_subs.Values.Any(v => v.Kind == "aggregates" && v.Symbol.Equals(sub.Symbol, StringComparison.OrdinalIgnoreCase)))
+                    _aggregateSymbols.Remove(sub.Symbol);
+            }
+        }
+
+        _ = TrySendSubscribeAsync();
+        _log.Debug("Unsubscribed from aggregates for {Symbol} (subscription ID {SubscriptionId})", sub.Symbol, subscriptionId);
+    }
+
+    /// <summary>
     /// Sends subscription message to Polygon for current symbol sets.
     /// </summary>
     private async Task TrySendSubscribeAsync()
@@ -488,13 +542,15 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
 
             string[] trades;
             string[] quotes;
+            string[] aggregates;
             lock (_gate)
             {
                 trades = _tradeSymbols.ToArray();
                 quotes = _quoteSymbols.ToArray();
+                aggregates = _aggregateSymbols.ToArray();
             }
 
-            // Polygon uses T.SYMBOL for trades and Q.SYMBOL for quotes
+            // Polygon uses T.SYMBOL for trades, Q.SYMBOL for quotes, A.SYMBOL/AM.SYMBOL for aggregates
             var subscriptions = new List<string>();
 
             foreach (var symbol in trades)
@@ -504,6 +560,16 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
             {
                 foreach (var symbol in quotes)
                     subscriptions.Add($"Q.{symbol}");
+            }
+
+            // Subscribe to both per-second (A) and per-minute (AM) aggregates
+            if (_opt.SubscribeAggregates)
+            {
+                foreach (var symbol in aggregates)
+                {
+                    subscriptions.Add($"A.{symbol}");  // Per-second aggregates
+                    subscriptions.Add($"AM.{symbol}"); // Per-minute aggregates
+                }
             }
 
             if (subscriptions.Count == 0) return;
@@ -624,9 +690,10 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
                 HandleStatusMessage(el);
                 break;
             case "A":
+                HandleAggregateMessage(el, AggregateTimeframe.Second);
+                break;
             case "AM":
-                // Aggregates - could be implemented in the future
-                _log.Debug("Received aggregate message (not currently processed)");
+                HandleAggregateMessage(el, AggregateTimeframe.Minute);
                 break;
             default:
                 _log.Debug("Unknown Polygon event type: {EventType}", ev);
@@ -712,6 +779,87 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
         );
 
         _quoteCollector.OnQuote(quoteUpdate);
+    }
+
+    /// <summary>
+    /// Handles aggregate bar messages from Polygon.
+    /// Polygon aggregate format:
+    /// - "A" (per-second): {"ev":"A","sym":"SPY","v":1000,"av":5000000,"op":450.10,"vw":450.15,"o":450.12,"c":450.18,"h":450.20,"l":450.08,"a":450.15,"z":100,"s":1699999999000,"e":1699999999999}
+    /// - "AM" (per-minute): Same format
+    /// </summary>
+    /// <param name="el">The JSON element containing the aggregate data.</param>
+    /// <param name="timeframe">The timeframe of this aggregate (Second or Minute).</param>
+    private void HandleAggregateMessage(JsonElement el, AggregateTimeframe timeframe)
+    {
+        if (!_opt.SubscribeAggregates)
+        {
+            // Aggregates not enabled in options, skip processing
+            return;
+        }
+
+        var sym = el.TryGetProperty("sym", out var symProp) ? symProp.GetString() : null;
+        if (string.IsNullOrWhiteSpace(sym)) return;
+
+        // OHLC values
+        var open = el.TryGetProperty("o", out var oProp) ? (decimal)oProp.GetDouble() : 0m;
+        var high = el.TryGetProperty("h", out var hProp) ? (decimal)hProp.GetDouble() : 0m;
+        var low = el.TryGetProperty("l", out var lProp) ? (decimal)lProp.GetDouble() : 0m;
+        var close = el.TryGetProperty("c", out var cProp) ? (decimal)cProp.GetDouble() : 0m;
+
+        // Volume and VWAP
+        var volume = el.TryGetProperty("v", out var vProp) ? vProp.GetInt64() : 0L;
+        var vwap = el.TryGetProperty("vw", out var vwProp) ? (decimal)vwProp.GetDouble() : 0m;
+
+        // Trade count (Polygon uses "z" for average trade size, we'll approximate trade count)
+        var tradeCount = el.TryGetProperty("n", out var nProp) ? nProp.GetInt32() : 0;
+
+        // Timestamps: "s" = start timestamp, "e" = end timestamp (Unix milliseconds)
+        var startTs = el.TryGetProperty("s", out var sProp) ? sProp.GetInt64() : 0L;
+        var endTs = el.TryGetProperty("e", out var eProp) ? eProp.GetInt64() : 0L;
+
+        // Validate OHLC values
+        if (open <= 0 || high <= 0 || low <= 0 || close <= 0)
+        {
+            _log.Debug("Skipping aggregate for {Symbol} with invalid OHLC values", sym);
+            return;
+        }
+
+        // Convert timestamps
+        var startTime = startTs > 0
+            ? DateTimeOffset.FromUnixTimeMilliseconds(startTs)
+            : DateTimeOffset.UtcNow;
+
+        var endTime = endTs > 0
+            ? DateTimeOffset.FromUnixTimeMilliseconds(endTs)
+            : startTime.AddSeconds(timeframe == AggregateTimeframe.Second ? 1 : 60);
+
+        try
+        {
+            var aggregateBar = new AggregateBar(
+                Symbol: sym!,
+                StartTime: startTime,
+                EndTime: endTime,
+                Open: open,
+                High: high,
+                Low: low,
+                Close: close,
+                Volume: volume,
+                Vwap: vwap,
+                TradeCount: tradeCount,
+                Timeframe: timeframe,
+                Source: "Polygon",
+                SequenceNumber: startTs // Use start timestamp as sequence number
+            );
+
+            _publisher.TryPublish(MarketEvent.AggregateBar(endTime, sym!, aggregateBar, source: "Polygon"));
+
+            _log.Debug("Published {Timeframe} aggregate for {Symbol}: O={Open} H={High} L={Low} C={Close} V={Volume}",
+                timeframe, sym, open, high, low, close, volume);
+        }
+        catch (ArgumentException ex)
+        {
+            _log.Warning(ex, "Failed to create aggregate bar for {Symbol} due to validation error", sym);
+        }
     }
 
     /// <summary>

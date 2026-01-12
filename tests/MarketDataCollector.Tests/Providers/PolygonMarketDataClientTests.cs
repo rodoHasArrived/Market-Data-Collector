@@ -584,4 +584,140 @@ public class PolygonMarketDataClientTests : IDisposable
     }
 
     #endregion
+
+    #region Aggregate Subscription Tests
+
+    [Fact]
+    public void SubscribeAggregates_WithNullConfig_ThrowsArgumentNullException()
+    {
+        // Arrange
+        var options = new PolygonOptions(
+            ApiKey: "a_valid_api_key_that_is_long_enough",
+            SubscribeAggregates: true);
+        var client = new PolygonMarketDataClient(
+            _mockPublisher.Object,
+            _mockTradeCollector.Object,
+            _mockQuoteCollector.Object,
+            options);
+
+        // Act
+        var act = () => client.SubscribeAggregates(null!);
+
+        // Assert
+        act.Should().Throw<ArgumentNullException>()
+            .Which.ParamName.Should().Be("cfg");
+    }
+
+    [Fact]
+    public void SubscribeAggregates_WithEmptySymbol_ReturnsNegativeOne()
+    {
+        // Arrange
+        var options = new PolygonOptions(
+            ApiKey: "a_valid_api_key_that_is_long_enough",
+            SubscribeAggregates: true);
+        var client = new PolygonMarketDataClient(
+            _mockPublisher.Object,
+            _mockTradeCollector.Object,
+            _mockQuoteCollector.Object,
+            options);
+        var config = new SymbolConfig("   ");
+
+        // Act
+        var subscriptionId = client.SubscribeAggregates(config);
+
+        // Assert
+        subscriptionId.Should().Be(-1);
+    }
+
+    [Fact]
+    public void SubscribeAggregates_WhenAggregatesDisabled_ReturnsNegativeOne()
+    {
+        // Arrange
+        var options = new PolygonOptions(
+            ApiKey: "a_valid_api_key_that_is_long_enough",
+            SubscribeAggregates: false); // Aggregates disabled
+        var client = new PolygonMarketDataClient(
+            _mockPublisher.Object,
+            _mockTradeCollector.Object,
+            _mockQuoteCollector.Object,
+            options);
+        var config = new SymbolConfig("SPY");
+
+        // Act
+        var subscriptionId = client.SubscribeAggregates(config);
+
+        // Assert
+        subscriptionId.Should().Be(-1);
+    }
+
+    [Fact]
+    public void SubscribeAggregates_WhenAggregatesEnabled_ReturnsPositiveId()
+    {
+        // Arrange
+        var options = new PolygonOptions(
+            ApiKey: "a_valid_api_key_that_is_long_enough",
+            SubscribeAggregates: true);
+        var client = new PolygonMarketDataClient(
+            _mockPublisher.Object,
+            _mockTradeCollector.Object,
+            _mockQuoteCollector.Object,
+            options);
+        var config = new SymbolConfig("SPY");
+
+        // Act
+        var subscriptionId = client.SubscribeAggregates(config);
+
+        // Assert
+        subscriptionId.Should().BeGreaterThan(0);
+    }
+
+    [Fact]
+    public void UnsubscribeAggregates_DoesNotThrow()
+    {
+        // Arrange
+        var options = new PolygonOptions(
+            ApiKey: "a_valid_api_key_that_is_long_enough",
+            SubscribeAggregates: true);
+        var client = new PolygonMarketDataClient(
+            _mockPublisher.Object,
+            _mockTradeCollector.Object,
+            _mockQuoteCollector.Object,
+            options);
+
+        // Act & Assert - should not throw
+        var act = () => client.UnsubscribeAggregates(1);
+        act.Should().NotThrow();
+    }
+
+    [Fact]
+    public void UnsubscribeAggregates_WithValidSubscription_DoesNotThrow()
+    {
+        // Arrange
+        var options = new PolygonOptions(
+            ApiKey: "a_valid_api_key_that_is_long_enough",
+            SubscribeAggregates: true);
+        var client = new PolygonMarketDataClient(
+            _mockPublisher.Object,
+            _mockTradeCollector.Object,
+            _mockQuoteCollector.Object,
+            options);
+        var config = new SymbolConfig("SPY");
+        var subscriptionId = client.SubscribeAggregates(config);
+
+        // Act & Assert - should not throw
+        var act = () => client.UnsubscribeAggregates(subscriptionId);
+        act.Should().NotThrow();
+    }
+
+    [Fact]
+    public void PolygonOptions_WithAggregatesEnabled_SetsCorrectValue()
+    {
+        // Arrange & Act
+        var options = new PolygonOptions(SubscribeAggregates: true);
+
+        // Assert
+        options.SubscribeAggregates.Should().BeTrue();
+    }
+
+    #endregion
 }

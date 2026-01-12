@@ -10,5 +10,9 @@ public enum MarketEventType
     Heartbeat = 5,
     ConnectionStatus = 6,
     Integrity = 7,
-    HistoricalBar = 8
+    HistoricalBar = 8,
+    HistoricalQuote = 9,
+    HistoricalTrade = 10,
+    HistoricalAuction = 11,
+    AggregateBar = 12
 }
