@@ -272,47 +272,45 @@ app.MapPost("/api/backfill/run", async (BackfillCoordinator backfill, BackfillRe
 // ============================================================
 
 // Provider Comparison View
-// TODO: Implement real provider comparison using MultiProviderService
-// Currently returns empty mock data - should aggregate live metrics from all providers
+// Uses provider metrics from status file written by MultiProviderService
 app.MapGet("/api/providers/comparison", (ConfigStore store) =>
 {
-    // Return mock comparison data for now - real implementation would use MultiProviderService
-    var comparison = new ProviderComparisonResponse(
-        Timestamp: DateTimeOffset.UtcNow,
-        Providers: Array.Empty<ProviderMetricsResponse>(),
-        TotalProviders: 0,
-        HealthyProviders: 0
-    );
-    return Results.Json(comparison, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
-});
+    // Read provider metrics from status file (written by main application's ProviderMetricsStatusWriter)
+    var metricsStatus = store.TryLoadProviderMetrics();
 
-app.MapGet("/api/providers/status", (ConfigStore store) =>
-{
-    // Return provider connection status
+    if (metricsStatus is not null)
+    {
+        var providers = metricsStatus.Providers.Select(p => new ProviderMetricsResponse(
+            ProviderId: p.ProviderId,
+            ProviderType: p.ProviderType,
+            TradesReceived: p.TradesReceived,
+            DepthUpdatesReceived: p.DepthUpdatesReceived,
+            QuotesReceived: p.QuotesReceived,
+            ConnectionAttempts: p.ConnectionAttempts,
+            ConnectionFailures: p.ConnectionFailures,
+            MessagesDropped: p.MessagesDropped,
+            ActiveSubscriptions: p.ActiveSubscriptions,
+            AverageLatencyMs: p.AverageLatencyMs,
+            MinLatencyMs: p.MinLatencyMs,
+            MaxLatencyMs: p.MaxLatencyMs,
+            DataQualityScore: p.DataQualityScore,
+            ConnectionSuccessRate: p.ConnectionSuccessRate,
+            Timestamp: p.Timestamp
+        )).ToArray();
+
+        var comparison = new ProviderComparisonResponse(
+            Timestamp: metricsStatus.Timestamp,
+            Providers: providers,
+            TotalProviders: metricsStatus.TotalProviders,
+            HealthyProviders: metricsStatus.HealthyProviders
+        );
+        return Results.Json(comparison, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+    }
+
+    // Fallback to configuration-based data if no metrics file exists
     var cfg = store.Load();
     var sources = cfg.DataSources?.Sources ?? Array.Empty<DataSourceConfig>();
-
-    var status = sources.Select(s => new ProviderStatusResponse(
-        ProviderId: s.Id,
-        Name: s.Name,
-        ProviderType: s.Provider.ToString(),
-        IsConnected: s.Enabled, // Simplified - real impl checks actual connection
-        IsEnabled: s.Enabled,
-        Priority: s.Priority,
-        ActiveSubscriptions: 0,
-        LastHeartbeat: DateTimeOffset.UtcNow
-    )).ToArray();
-
-    return Results.Json(status, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
-});
-
-app.MapGet("/api/providers/metrics", (ConfigStore store) =>
-{
-    // Return detailed metrics for all providers
-    var cfg = store.Load();
-    var sources = cfg.DataSources?.Sources ?? Array.Empty<DataSourceConfig>();
-
-    var metrics = sources.Select(s => new ProviderMetricsResponse(
+    var fallbackProviders = sources.Select(s => new ProviderMetricsResponse(
         ProviderId: s.Id,
         ProviderType: s.Provider.ToString(),
         TradesReceived: 0,
@@ -330,11 +328,125 @@ app.MapGet("/api/providers/metrics", (ConfigStore store) =>
         Timestamp: DateTimeOffset.UtcNow
     )).ToArray();
 
-    return Results.Json(metrics, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+    var fallbackComparison = new ProviderComparisonResponse(
+        Timestamp: DateTimeOffset.UtcNow,
+        Providers: fallbackProviders,
+        TotalProviders: sources.Length,
+        HealthyProviders: sources.Count(s => s.Enabled)
+    );
+    return Results.Json(fallbackComparison, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+});
+
+app.MapGet("/api/providers/status", (ConfigStore store) =>
+{
+    // Return provider connection status using real metrics when available
+    var cfg = store.Load();
+    var sources = cfg.DataSources?.Sources ?? Array.Empty<DataSourceConfig>();
+    var metricsStatus = store.TryLoadProviderMetrics();
+
+    var status = sources.Select(s =>
+    {
+        // Try to find real metrics for this provider
+        var realMetrics = metricsStatus?.Providers.FirstOrDefault(p =>
+            string.Equals(p.ProviderId, s.Id, StringComparison.OrdinalIgnoreCase));
+
+        return new ProviderStatusResponse(
+            ProviderId: s.Id,
+            Name: s.Name,
+            ProviderType: s.Provider.ToString(),
+            IsConnected: realMetrics?.IsConnected ?? s.Enabled,
+            IsEnabled: s.Enabled,
+            Priority: s.Priority,
+            ActiveSubscriptions: (int)(realMetrics?.ActiveSubscriptions ?? 0),
+            LastHeartbeat: realMetrics?.Timestamp ?? DateTimeOffset.UtcNow
+        );
+    }).ToArray();
+
+    return Results.Json(status, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+});
+
+app.MapGet("/api/providers/metrics", (ConfigStore store) =>
+{
+    // Return detailed metrics for all providers from status file
+    var metricsStatus = store.TryLoadProviderMetrics();
+
+    if (metricsStatus is not null)
+    {
+        var metrics = metricsStatus.Providers.Select(p => new ProviderMetricsResponse(
+            ProviderId: p.ProviderId,
+            ProviderType: p.ProviderType,
+            TradesReceived: p.TradesReceived,
+            DepthUpdatesReceived: p.DepthUpdatesReceived,
+            QuotesReceived: p.QuotesReceived,
+            ConnectionAttempts: p.ConnectionAttempts,
+            ConnectionFailures: p.ConnectionFailures,
+            MessagesDropped: p.MessagesDropped,
+            ActiveSubscriptions: p.ActiveSubscriptions,
+            AverageLatencyMs: p.AverageLatencyMs,
+            MinLatencyMs: p.MinLatencyMs,
+            MaxLatencyMs: p.MaxLatencyMs,
+            DataQualityScore: p.DataQualityScore,
+            ConnectionSuccessRate: p.ConnectionSuccessRate,
+            Timestamp: p.Timestamp
+        )).ToArray();
+        return Results.Json(metrics, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+    }
+
+    // Fallback to configuration-based placeholder data
+    var cfg = store.Load();
+    var sources = cfg.DataSources?.Sources ?? Array.Empty<DataSourceConfig>();
+
+    var fallbackMetrics = sources.Select(s => new ProviderMetricsResponse(
+        ProviderId: s.Id,
+        ProviderType: s.Provider.ToString(),
+        TradesReceived: 0,
+        DepthUpdatesReceived: 0,
+        QuotesReceived: 0,
+        ConnectionAttempts: 0,
+        ConnectionFailures: 0,
+        MessagesDropped: 0,
+        ActiveSubscriptions: 0,
+        AverageLatencyMs: 0,
+        MinLatencyMs: 0,
+        MaxLatencyMs: 0,
+        DataQualityScore: 100,
+        ConnectionSuccessRate: 100,
+        Timestamp: DateTimeOffset.UtcNow
+    )).ToArray();
+
+    return Results.Json(fallbackMetrics, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
 });
 
 app.MapGet("/api/providers/{providerId}/metrics", (ConfigStore store, string providerId) =>
 {
+    // Try to get real metrics from status file first
+    var metricsStatus = store.TryLoadProviderMetrics();
+    var providerMetrics = metricsStatus?.Providers.FirstOrDefault(p =>
+        string.Equals(p.ProviderId, providerId, StringComparison.OrdinalIgnoreCase));
+
+    if (providerMetrics is not null)
+    {
+        var metrics = new ProviderMetricsResponse(
+            ProviderId: providerMetrics.ProviderId,
+            ProviderType: providerMetrics.ProviderType,
+            TradesReceived: providerMetrics.TradesReceived,
+            DepthUpdatesReceived: providerMetrics.DepthUpdatesReceived,
+            QuotesReceived: providerMetrics.QuotesReceived,
+            ConnectionAttempts: providerMetrics.ConnectionAttempts,
+            ConnectionFailures: providerMetrics.ConnectionFailures,
+            MessagesDropped: providerMetrics.MessagesDropped,
+            ActiveSubscriptions: providerMetrics.ActiveSubscriptions,
+            AverageLatencyMs: providerMetrics.AverageLatencyMs,
+            MinLatencyMs: providerMetrics.MinLatencyMs,
+            MaxLatencyMs: providerMetrics.MaxLatencyMs,
+            DataQualityScore: providerMetrics.DataQualityScore,
+            ConnectionSuccessRate: providerMetrics.ConnectionSuccessRate,
+            Timestamp: providerMetrics.Timestamp
+        );
+        return Results.Json(metrics, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+    }
+
+    // Fallback to configuration-based placeholder data
     var cfg = store.Load();
     var source = cfg.DataSources?.Sources?.FirstOrDefault(s =>
         string.Equals(s.Id, providerId, StringComparison.OrdinalIgnoreCase));
@@ -342,7 +454,7 @@ app.MapGet("/api/providers/{providerId}/metrics", (ConfigStore store, string pro
     if (source == null)
         return Results.NotFound();
 
-    var metrics = new ProviderMetricsResponse(
+    var fallbackMetrics = new ProviderMetricsResponse(
         ProviderId: source.Id,
         ProviderType: source.Provider.ToString(),
         TradesReceived: 0,
@@ -360,7 +472,7 @@ app.MapGet("/api/providers/{providerId}/metrics", (ConfigStore store, string pro
         Timestamp: DateTimeOffset.UtcNow
     );
 
-    return Results.Json(metrics, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+    return Results.Json(fallbackMetrics, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
 });
 
 // ============================================================
