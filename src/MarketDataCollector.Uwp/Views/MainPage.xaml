@@ -118,6 +118,11 @@
                     <FontIcon Glyph="&#xE9D9;" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
+            <NavigationViewItem Content="Symbol Mapping" Tag="SymbolMapping">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE8AB;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
             <NavigationViewItem Content="Storage" Tag="Storage">
                 <NavigationViewItem.Icon>
                     <FontIcon Glyph="&#xE8B7;" />
