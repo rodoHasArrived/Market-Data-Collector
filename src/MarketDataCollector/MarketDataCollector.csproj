@@ -73,15 +73,15 @@
   <!-- Core Dependencies -->
   <ItemGroup>
     <!-- Configuration Management -->
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.11" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.11" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.11" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="9.0.11" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="9.0.11" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="9.0.0" />
 
     <!-- Dependency Injection -->
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.11" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.11" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.0" />
 
     <!-- Logging -->
   <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
@@ -103,7 +103,7 @@
     <PackageReference Include="System.Net.WebSockets.Client" Version="4.3.2" />
 
     <!-- Performance -->
-  <PackageReference Include="System.Text.Json" Version="9.0.11" />
+  <PackageReference Include="System.Text.Json" Version="9.0.0" />
     <PackageReference Include="System.Threading.Channels" Version="9.0.0" />
     <PackageReference Include="System.IO.Pipelines" Version="9.0.0" />
 
@@ -126,7 +126,7 @@
     <PackageReference Include="MassTransit.Azure.ServiceBus.Core" Version="8.2.5" />
 
     <!-- Hosting support for MassTransit -->
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.11" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.0" />
 
     <!-- ASP.NET Core - Web Dashboard Support -->
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
