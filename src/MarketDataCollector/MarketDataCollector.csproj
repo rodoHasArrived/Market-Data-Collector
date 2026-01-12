@@ -73,9 +73,9 @@
   <!-- Core Dependencies -->
   <ItemGroup>
     <!-- Configuration Management -->
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.11" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.11" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.11" />
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="9.0.11" />
     <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="9.0.11" />
 
