@@ -7,6 +7,7 @@ using MarketDataCollector.Application.Services;
 using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Infrastructure.Performance;
 using MarketDataCollector.Storage.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace MarketDataCollector.Application.Pipeline;
 
@@ -18,6 +19,7 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
 {
     private readonly Channel<MarketEvent> _channel;
     private readonly IStorageSink _sink;
+    private readonly ILogger<EventPipeline>? _logger;
     private readonly CancellationTokenSource _cts = new();
     private readonly Task _consumer;
     private readonly Task? _flusher;
@@ -36,15 +38,27 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
     private readonly int _batchSize;
     private readonly bool _enablePeriodicFlush;
 
+    /// <summary>
+    /// Creates a new EventPipeline with configurable capacity and flush behavior.
+    /// </summary>
+    /// <param name="sink">The storage sink for persisting events.</param>
+    /// <param name="capacity">Maximum number of events the queue can hold. Default is 100,000.</param>
+    /// <param name="fullMode">Behavior when the queue is full. Default is DropOldest.</param>
+    /// <param name="flushInterval">Interval between periodic flushes. Default is 5 seconds.</param>
+    /// <param name="batchSize">Number of events to batch before writing. Default is 100.</param>
+    /// <param name="enablePeriodicFlush">Whether to enable periodic flushing. Default is true.</param>
+    /// <param name="logger">Optional logger for error reporting. When provided, enables logging for flush failures and disposal errors.</param>
     public EventPipeline(
         IStorageSink sink,
         int capacity = 100_000,
         BoundedChannelFullMode fullMode = BoundedChannelFullMode.DropOldest,
         TimeSpan? flushInterval = null,
         int batchSize = 100,
-        bool enablePeriodicFlush = true)
+        bool enablePeriodicFlush = true,
+        ILogger<EventPipeline>? logger = null)
     {
         _sink = sink ?? throw new ArgumentNullException(nameof(sink));
+        _logger = logger;
         if (capacity <= 0)
             throw new ArgumentOutOfRangeException(nameof(capacity), capacity, "Capacity must be a positive value.");
         _capacity = capacity;
@@ -225,10 +239,9 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
             {
                 await _sink.FlushAsync(CancellationToken.None).ConfigureAwait(false);
             }
-            // TODO: Implement proper logging for flush failures - data loss risk requires alerting
-            catch
+            catch (Exception ex)
             {
-                // Log in production - flush failure could mean data loss
+                _logger?.LogError(ex, "Final flush failed during pipeline shutdown. Consumed {ConsumedCount} events before failure - potential data loss", _consumedCount);
             }
         }
     }
@@ -250,10 +263,9 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
                 {
                     break;
                 }
-                // TODO: Implement logging for periodic flush failures - may indicate storage issues
-                catch
+                catch (Exception ex)
                 {
-                    // Log in production - flush failure needs attention
+                    _logger?.LogWarning(ex, "Periodic flush failed. Queue size: {QueueSize}, consumed: {ConsumedCount}. May indicate storage issues", CurrentQueueSize, _consumedCount);
                 }
             }
         }
@@ -268,21 +280,25 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
         _cts.Cancel();
         _channel.Writer.TryComplete();
 
-        // TODO: Log consumer task completion errors during disposal for debugging
         try
         {
             await _consumer.ConfigureAwait(false);
         }
-        catch { }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger?.LogError(ex, "Consumer task failed during disposal. Published: {PublishedCount}, consumed: {ConsumedCount}", _publishedCount, _consumedCount);
+        }
 
         if (_flusher is not null)
         {
-            // TODO: Log flusher task completion errors during disposal
             try
             {
                 await _flusher.ConfigureAwait(false);
             }
-            catch { }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                _logger?.LogError(ex, "Flusher task failed during disposal. Last flush was {TimeSinceLastFlush} ago", TimeSinceLastFlush);
+            }
         }
 
         _cts.Dispose();
