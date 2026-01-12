@@ -30,7 +30,7 @@ public sealed class CompositeHistoricalDataProvider : IHistoricalDataProviderV2,
     /// <summary>
     /// Event raised when progress is updated during backfill.
     /// </summary>
-    public event Action<BackfillProgress>? OnProgressUpdate;
+    public event Action<ProviderBackfillProgress>? OnProgressUpdate;
 
     public string Name => "composite";
     public string DisplayName => "Multi-Source (Auto-Failover)";
