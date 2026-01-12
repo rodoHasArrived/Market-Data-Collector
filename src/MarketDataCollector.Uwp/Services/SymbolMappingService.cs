@@ -8,7 +8,7 @@ namespace MarketDataCollector.Uwp.Services;
 /// Service for managing provider-specific symbol mappings.
 /// Handles symbol translation between canonical format and provider-specific formats.
 /// </summary>
-public class SymbolMappingService
+public sealed class SymbolMappingService
 {
     private static readonly Lazy<SymbolMappingService> _instance = new(() => new SymbolMappingService());
     public static SymbolMappingService Instance => _instance.Value;

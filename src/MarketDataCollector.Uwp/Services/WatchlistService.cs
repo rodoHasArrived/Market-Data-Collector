@@ -7,7 +7,7 @@ namespace MarketDataCollector.Uwp.Services;
 /// Service for managing user's watchlist of favorite symbols.
 /// Provides quick access to frequently monitored securities with real-time status.
 /// </summary>
-public class WatchlistService
+public sealed class WatchlistService
 {
     private const string WatchlistFileName = "watchlist.json";
     private static readonly JsonSerializerOptions JsonOptions = new()

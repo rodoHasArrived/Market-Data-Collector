@@ -6,7 +6,7 @@ namespace MarketDataCollector.Uwp.Services;
 /// <summary>
 /// Service for managing application configuration.
 /// </summary>
-public class ConfigService
+public sealed class ConfigService
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
     {

@@ -8,10 +8,11 @@ namespace MarketDataCollector.Uwp.Services;
 /// Service for managing provider connections with auto-reconnection support.
 /// Uses the centralized ApiClientService for configurable service URL.
 /// </summary>
-public class ConnectionService
+public sealed class ConnectionService : IDisposable
 {
     private static ConnectionService? _instance;
     private static readonly object _lock = new();
+    private static readonly Random SharedRandom = Random.Shared;
 
     private readonly ApiClientService _apiClient;
     private readonly NotificationService _notificationService;
@@ -27,6 +28,7 @@ public class ConnectionService
     private DateTime? _lastDisconnect;
     private int _totalReconnects;
     private double _lastLatencyMs;
+    private bool _disposed;
 
     public static ConnectionService Instance
     {
@@ -131,6 +133,18 @@ public class ConnectionService
         _healthCheckTimer?.Dispose();
         _healthCheckTimer = null;
         CancelReconnection();
+    }
+
+    /// <summary>
+    /// Disposes the service and releases all resources.
+    /// </summary>
+    public void Dispose()
+    {
+        if (_disposed) return;
+
+        StopMonitoring();
+        _reconnectCts?.Dispose();
+        _disposed = true;
     }
 
     /// <summary>
@@ -293,8 +307,8 @@ public class ConnectionService
                 baseDelayMs * Math.Pow(2, _reconnectAttempts - 1),
                 maxDelayMs);
 
-            // Add jitter (up to 10% of delay)
-            var jitter = new Random().NextDouble() * 0.1 * delayMs;
+            // Add jitter (up to 10% of delay) using shared random to avoid allocation
+            var jitter = SharedRandom.NextDouble() * 0.1 * delayMs;
             delayMs += jitter;
 
             await _notificationService.NotifyReconnectionAttemptAsync(
