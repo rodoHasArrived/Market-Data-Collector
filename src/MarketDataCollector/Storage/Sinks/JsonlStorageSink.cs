@@ -266,6 +266,9 @@ public sealed class JsonlStorageSink : IStorageSink
 
         _writers.Clear();
         _buffers.Clear();
+
+        // Dispose retention manager
+        _retention?.Dispose();
     }
 
     /// <summary>
@@ -401,16 +404,17 @@ public sealed class JsonlStorageSink : IStorageSink
         }
     }
 
-    private sealed class RetentionManager
+    private sealed class RetentionManager : IDisposable
     {
         private readonly string _root;
         private readonly int? _retentionDays;
         private readonly long? _maxBytes;
         private readonly ILogger _logger;
-        // TODO: Consider using ReaderWriterLockSlim for better concurrency - reads are more frequent
-        private readonly object _sync = new();
+        // Using ReaderWriterLockSlim for better concurrency - reads (timestamp checks) are more frequent than writes
+        private readonly ReaderWriterLockSlim _lock = new(LockRecursionPolicy.NoRecursion);
         private DateTime _lastSweep = DateTime.MinValue;
         private static readonly string[] _extensions = new[] { ".jsonl", ".jsonl.gz", ".jsonl.gzip" };
+        private bool _disposed;
 
         public RetentionManager(string root, int? retentionDays, long? maxBytes, ILogger logger)
         {
@@ -425,12 +429,34 @@ public sealed class JsonlStorageSink : IStorageSink
             if (_retentionDays is null && _maxBytes is null)
                 return;
 
-            lock (_sync)
+            if (_disposed)
+                return;
+
+            // Fast path: check if cleanup is needed using read lock (allows concurrent reads)
+            _lock.EnterReadLock();
+            try
             {
+                if ((DateTime.UtcNow - _lastSweep) < TimeSpan.FromSeconds(15))
+                    return;
+            }
+            finally
+            {
+                _lock.ExitReadLock();
+            }
+
+            // Slow path: need to update timestamp, acquire write lock
+            _lock.EnterWriteLock();
+            try
+            {
+                // Double-check after acquiring write lock (another thread may have updated)
                 if ((DateTime.UtcNow - _lastSweep) < TimeSpan.FromSeconds(15))
                     return;
 
                 _lastSweep = DateTime.UtcNow;
+            }
+            finally
+            {
+                _lock.ExitWriteLock();
             }
 
             try
@@ -493,6 +519,15 @@ public sealed class JsonlStorageSink : IStorageSink
                     file.FullName,
                     file.Exists ? file.Length : 0);
             }
+        }
+
+        public void Dispose()
+        {
+            if (_disposed)
+                return;
+
+            _disposed = true;
+            _lock.Dispose();
         }
     }
 }
