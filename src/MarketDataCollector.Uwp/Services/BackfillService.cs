@@ -10,7 +10,7 @@ namespace MarketDataCollector.Uwp.Services;
 /// Service for managing backfill operations with progress tracking.
 /// Uses real API integration with the core Market Data Collector service.
 /// </summary>
-public class BackfillService
+public sealed class BackfillService
 {
     private static BackfillService? _instance;
     private static readonly object _lock = new();

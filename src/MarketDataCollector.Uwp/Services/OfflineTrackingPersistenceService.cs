@@ -13,7 +13,7 @@ namespace MarketDataCollector.Uwp.Services;
 /// Service for managing offline tracking persistence with Write-Ahead Logging (WAL).
 /// Ensures symbol tracking survives logout, app restart, and system restart.
 /// </summary>
-public class OfflineTrackingPersistenceService
+public sealed class OfflineTrackingPersistenceService
 {
     private static OfflineTrackingPersistenceService? _instance;
     private static readonly object _lock = new();

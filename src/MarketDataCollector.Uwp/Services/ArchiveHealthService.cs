@@ -14,7 +14,7 @@ namespace MarketDataCollector.Uwp.Services;
 /// Service for monitoring archive health and verification (#26/57 - P0 Critical).
 /// Provides comprehensive archive integrity monitoring and verification.
 /// </summary>
-public class ArchiveHealthService
+public sealed class ArchiveHealthService
 {
     private static ArchiveHealthService? _instance;
     private static readonly object _lock = new();

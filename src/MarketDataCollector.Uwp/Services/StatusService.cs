@@ -12,7 +12,7 @@ namespace MarketDataCollector.Uwp.Services;
 /// Service for retrieving system status from the collector.
 /// Uses the centralized ApiClientService for configurable URL support.
 /// </summary>
-public class StatusService
+public sealed class StatusService
 {
     private readonly ApiClientService _apiClient;
 
@@ -55,7 +55,7 @@ public class StatusService
 /// Service for managing backfill operations via the core API.
 /// Replaces simulation with real API integration.
 /// </summary>
-public class BackfillApiService
+public sealed class BackfillApiService
 {
     private readonly ApiClientService _apiClient;
 
