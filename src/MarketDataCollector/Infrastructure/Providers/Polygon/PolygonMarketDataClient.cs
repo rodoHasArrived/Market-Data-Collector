@@ -28,11 +28,20 @@ namespace MarketDataCollector.Infrastructure.Providers.Polygon;
 /// <item><description>Ensure configuration files with real credentials are in <c>.gitignore</c></description></item>
 /// </list>
 /// <para>See <see href="https://polygon.io/docs/stocks/ws_getting-started">Polygon WebSocket Docs</see></para>
+///
+/// <para><b>Current Status:</b></para>
+/// <list type="bullet">
+/// <item><description>Subscription tracking: IMPLEMENTED - generates unique IDs and tracks subscribed symbols</description></item>
+/// <item><description>WebSocket connection: STUB - uses synthetic heartbeat, awaiting full implementation</description></item>
+/// </list>
 /// </summary>
 // TODO: Implement full Polygon WebSocket client with real data streaming
 // TODO: Replace synthetic heartbeat with actual Polygon API connection
 // TODO: Handle Polygon message parsing and route to collectors
 // TODO: Use _connectionPipeline for resilience (retry/circuit breaker) in real WebSocket code
+// NOTE: Subscription tracking is now implemented - SubscribeTrades and SubscribeMarketDepth
+//       generate unique IDs and track symbols. When WebSocket is implemented, use
+//       _tradeSymbols and _quoteSymbols to send subscription messages to Polygon.
 public sealed class PolygonMarketDataClient : IMarketDataClient
 {
     private readonly ILogger _log = LoggingSetup.ForContext<PolygonMarketDataClient>();
@@ -46,6 +55,13 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
     // Resilience pipeline for connection retry with exponential backoff
     // Pre-configured for when full WebSocket implementation is added
     private readonly ResiliencePipeline _connectionPipeline;
+
+    // Subscription tracking - ready for full WebSocket implementation
+    private readonly object _gate = new();
+    private readonly HashSet<string> _tradeSymbols = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<string> _quoteSymbols = new(StringComparer.OrdinalIgnoreCase);
+    private int _nextSubId = 200_000; // keep away from IB (0-99999) and Alpaca (100000-199999) ids
+    private readonly Dictionary<int, (string Symbol, string Kind)> _subs = new();
 
     public PolygonMarketDataClient(
         IMarketEventPublisher publisher,
@@ -152,20 +168,112 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
         return Task.CompletedTask;
     }
 
-    // TODO: Implement SubscribeMarketDepth when full implementation is added
-    public int SubscribeMarketDepth(SymbolConfig cfg) => -1; // Depth not wired yet
-
-    public void UnsubscribeMarketDepth(int subscriptionId) { }
-
-    // TODO: Implement SubscribeTrades to return real subscription IDs from Polygon API
-    public int SubscribeTrades(SymbolConfig cfg)
+    /// <summary>
+    /// Subscribes to market depth (quotes) for a symbol.
+    /// Polygon provides L2 quotes that map to BBO updates via QuoteCollector.
+    /// </summary>
+    /// <param name="cfg">Symbol configuration.</param>
+    /// <returns>Subscription ID, or -1 if quotes are disabled or symbol is invalid.</returns>
+    public int SubscribeMarketDepth(SymbolConfig cfg)
     {
-        // Emit a lightweight synthetic trade for testing cross-provider reconciliation.
-        _tradeCollector.OnTrade(new Domain.Models.MarketTradeUpdate(DateTimeOffset.UtcNow, cfg.Symbol, 0m, 0, Domain.Models.AggressorSide.Unknown, 0, "POLY", "STUB"));
-        return -1;
+        if (cfg is null) throw new ArgumentNullException(nameof(cfg));
+        var symbol = cfg.Symbol.Trim();
+        if (symbol.Length == 0) return -1;
+
+        // Only subscribe if quotes are enabled in options
+        if (!_opt.SubscribeQuotes)
+        {
+            _log.Debug("Quote subscription for {Symbol} skipped - SubscribeQuotes is disabled", symbol);
+            return -1;
+        }
+
+        var id = Interlocked.Increment(ref _nextSubId);
+        lock (_gate)
+        {
+            _quoteSymbols.Add(symbol);
+            _subs[id] = (symbol, "quotes");
+        }
+
+        _log.Information("Subscribed to quotes for {Symbol} with ID {SubscriptionId} (stub mode - awaiting WebSocket implementation)", symbol, id);
+        return id;
     }
 
-    public void UnsubscribeTrades(int subscriptionId) { }
+    /// <summary>
+    /// Unsubscribes from market depth (quotes) for a subscription.
+    /// </summary>
+    /// <param name="subscriptionId">The subscription ID to unsubscribe.</param>
+    public void UnsubscribeMarketDepth(int subscriptionId)
+    {
+        (string Symbol, string Kind) sub;
+        lock (_gate)
+        {
+            if (!_subs.TryGetValue(subscriptionId, out sub)) return;
+            _subs.Remove(subscriptionId);
+            if (sub.Kind == "quotes")
+            {
+                // Remove symbol only if no remaining quote subs for this symbol
+                if (!_subs.Values.Any(v => v.Kind == "quotes" && v.Symbol.Equals(sub.Symbol, StringComparison.OrdinalIgnoreCase)))
+                    _quoteSymbols.Remove(sub.Symbol);
+            }
+        }
+
+        _log.Debug("Unsubscribed from quotes for {Symbol} (subscription ID {SubscriptionId})", sub.Symbol, subscriptionId);
+    }
+
+    /// <summary>
+    /// Subscribes to trades for a symbol.
+    /// </summary>
+    /// <param name="cfg">Symbol configuration.</param>
+    /// <returns>Subscription ID, or -1 if trades are disabled or symbol is invalid.</returns>
+    public int SubscribeTrades(SymbolConfig cfg)
+    {
+        if (cfg is null) throw new ArgumentNullException(nameof(cfg));
+        var symbol = cfg.Symbol.Trim();
+        if (symbol.Length == 0) return -1;
+
+        // Only subscribe if trades are enabled in options
+        if (!_opt.SubscribeTrades)
+        {
+            _log.Debug("Trade subscription for {Symbol} skipped - SubscribeTrades is disabled", symbol);
+            return -1;
+        }
+
+        var id = Interlocked.Increment(ref _nextSubId);
+        lock (_gate)
+        {
+            _tradeSymbols.Add(symbol);
+            _subs[id] = (symbol, "trades");
+        }
+
+        // Emit a lightweight synthetic trade for testing cross-provider reconciliation
+        _tradeCollector.OnTrade(new Domain.Models.MarketTradeUpdate(
+            DateTimeOffset.UtcNow, symbol, 0m, 0, Domain.Models.AggressorSide.Unknown, 0, "POLY", "STUB"));
+
+        _log.Information("Subscribed to trades for {Symbol} with ID {SubscriptionId} (stub mode - awaiting WebSocket implementation)", symbol, id);
+        return id;
+    }
+
+    /// <summary>
+    /// Unsubscribes from trades for a subscription.
+    /// </summary>
+    /// <param name="subscriptionId">The subscription ID to unsubscribe.</param>
+    public void UnsubscribeTrades(int subscriptionId)
+    {
+        (string Symbol, string Kind) sub;
+        lock (_gate)
+        {
+            if (!_subs.TryGetValue(subscriptionId, out sub)) return;
+            _subs.Remove(subscriptionId);
+            if (sub.Kind == "trades")
+            {
+                // Remove symbol only if no remaining trade subs for this symbol
+                if (!_subs.Values.Any(v => v.Kind == "trades" && v.Symbol.Equals(sub.Symbol, StringComparison.OrdinalIgnoreCase)))
+                    _tradeSymbols.Remove(sub.Symbol);
+            }
+        }
+
+        _log.Debug("Unsubscribed from trades for {Symbol} (subscription ID {SubscriptionId})", sub.Symbol, subscriptionId);
+    }
 
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 }
