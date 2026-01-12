@@ -94,8 +94,10 @@ public sealed class OrderBookMatchingEngine
                             // IOC/FOK orders are cancelled if not fully filled
                             if (request.TimeInForce == TimeInForce.FOK && trades.Count > 0)
                             {
-                                // TODO: Implement FOK rollback - currently partial fills are not reverted
-                                // FOK requires full fill - should roll back partial executions and restore order book state
+                                // FOK requires full fill - roll back partial executions and restore order book state
+                                RollbackTrades(trades, order);
+                                trades.Clear();
+                                order.RemainingQuantity = order.Quantity;
                             }
                             order.Status = OrderStatus.Cancelled;
                         }
@@ -348,6 +350,45 @@ public sealed class OrderBookMatchingEngine
     {
         var side = order.Side == OrderBookSide.Bid ? _bids : _asks;
         side.AddOrder(order.Price, order.OrderId, order.RemainingQuantity);
+    }
+
+    /// <summary>
+    /// Rolls back trades for a FOK order that couldn't be fully filled.
+    /// Restores resting order quantities and status, and re-adds them to the order book.
+    /// </summary>
+    private void RollbackTrades(List<TradeExecution> trades, Order aggressorOrder)
+    {
+        var opposingSide = aggressorOrder.Side == OrderBookSide.Bid ? _asks : _bids;
+
+        foreach (var trade in trades)
+        {
+            if (_orders.TryGetValue(trade.PassiveOrderId, out var restingOrder))
+            {
+                // Restore the quantity that was taken from this resting order
+                restingOrder.RemainingQuantity += trade.Quantity;
+
+                // If the resting order was marked as filled, it needs to be reopened
+                if (restingOrder.Status == OrderStatus.Filled)
+                {
+                    restingOrder.Status = OrderStatus.Open;
+                    // Re-add to the order book since it was removed when filled
+                    opposingSide.AddOrder(restingOrder.Price, restingOrder.OrderId, restingOrder.RemainingQuantity);
+                }
+                else
+                {
+                    // Update the quantity in the order book
+                    opposingSide.UpdateOrderQuantity(restingOrder.Price, restingOrder.OrderId, restingOrder.RemainingQuantity);
+                }
+
+                _log.Debug(
+                    "FOK rollback: restored {Quantity} to order {OrderId} at {Price} for {Symbol}",
+                    trade.Quantity, trade.PassiveOrderId, trade.Price, _symbol);
+            }
+        }
+
+        _log.Information(
+            "FOK order {OrderId} rolled back {TradeCount} trades for {Symbol} - order could not be fully filled",
+            aggressorOrder.OrderId, trades.Count, _symbol);
     }
 }
 
