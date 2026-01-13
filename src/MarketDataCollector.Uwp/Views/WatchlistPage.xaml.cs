@@ -12,6 +12,13 @@ namespace MarketDataCollector.Uwp.Views;
 /// </summary>
 public sealed partial class WatchlistPage : Page
 {
+    // Static cached brushes to avoid repeated allocations
+    private static readonly SolidColorBrush LimeGreenBrush = new(Microsoft.UI.Colors.LimeGreen);
+    private static readonly SolidColorBrush GrayBrush = new(Microsoft.UI.Colors.Gray);
+    private static readonly SolidColorBrush GoldBrush = new(Microsoft.UI.Colors.Gold);
+    private static readonly SolidColorBrush OrangeBrush = new(Microsoft.UI.Colors.Orange);
+    private static readonly SolidColorBrush RedBrush = new(Microsoft.UI.Colors.Red);
+
     private readonly WatchlistService _watchlistService;
     private readonly ObservableCollection<WatchlistDisplayItem> _favorites;
     private readonly ObservableCollection<WatchlistDisplayItem> _allSymbols;
@@ -49,6 +56,8 @@ public sealed partial class WatchlistPage : Page
     private void WatchlistPage_Unloaded(object sender, RoutedEventArgs e)
     {
         _refreshTimer.Stop();
+        // Unsubscribe from service events to prevent memory leaks
+        _watchlistService.WatchlistChanged -= WatchlistService_WatchlistChanged;
     }
 
     private void RefreshTimer_Tick(object? sender, object e)
@@ -87,7 +96,7 @@ public sealed partial class WatchlistPage : Page
         EmptyState.Visibility = _allSymbols.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
     }
 
-    private static WatchlistDisplayItem CreateDisplayItem(WatchlistItem item)
+    private WatchlistDisplayItem CreateDisplayItem(WatchlistItem item)
     {
         var isStreaming = item.Status?.IsStreaming ?? false;
         var eventRate = item.Status?.EventRate ?? 0;
@@ -99,23 +108,15 @@ public sealed partial class WatchlistPage : Page
             Notes = item.Notes ?? string.Empty,
             IsFavorite = item.IsFavorite,
             FavoriteIcon = item.IsFavorite ? "\uE735" : "\uE734",
-            FavoriteColor = item.IsFavorite
-                ? new SolidColorBrush(Microsoft.UI.Colors.Gold)
-                : new SolidColorBrush(Microsoft.UI.Colors.Gray),
+            FavoriteColor = item.IsFavorite ? GoldBrush : GrayBrush,
             IsStreaming = isStreaming,
             StatusText = isStreaming ? "Streaming" : "Idle",
-            StatusColor = isStreaming
-                ? new SolidColorBrush(Microsoft.UI.Colors.LimeGreen)
-                : new SolidColorBrush(Microsoft.UI.Colors.Gray),
+            StatusColor = isStreaming ? LimeGreenBrush : GrayBrush,
             EventRateText = $"{eventRate:N1}",
             EventCount = item.Status?.EventCount ?? 0,
             HealthScore = healthScore,
             HealthText = $"{healthScore:N0}%",
-            HealthColor = healthScore >= 95
-                ? new SolidColorBrush(Microsoft.UI.Colors.LimeGreen)
-                : healthScore >= 80
-                    ? new SolidColorBrush(Microsoft.UI.Colors.Orange)
-                    : new SolidColorBrush(Microsoft.UI.Colors.Red),
+            HealthColor = healthScore >= 95 ? LimeGreenBrush : healthScore >= 80 ? OrangeBrush : RedBrush,
             HealthIcon = healthScore >= 95 ? "\uE73E" : healthScore >= 80 ? "\uE7BA" : "\uE783",
             LastEventText = item.Status?.LastEventTime?.ToString("HH:mm:ss") ?? "No data",
             AddedAt = item.AddedAt
@@ -133,9 +134,8 @@ public sealed partial class WatchlistPage : Page
                 var isStreaming = random.Next(100) < 70; // 70% chance of streaming
                 item.IsStreaming = isStreaming;
                 item.StatusText = isStreaming ? "Streaming" : "Idle";
-                item.StatusColor = isStreaming
-                    ? new SolidColorBrush(Microsoft.UI.Colors.LimeGreen)
-                    : new SolidColorBrush(Microsoft.UI.Colors.Gray);
+                // Use cached brushes to avoid allocations on every tick
+                item.StatusColor = isStreaming ? LimeGreenBrush : GrayBrush;
 
                 if (isStreaming)
                 {
