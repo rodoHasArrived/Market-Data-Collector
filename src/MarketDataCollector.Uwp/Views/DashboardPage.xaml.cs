@@ -67,6 +67,9 @@ public sealed partial class DashboardPage : Page
     private DateTime _startTime;
     private DateTime _collectorStartTime;
 
+    // Cancellation token source for async operations (e.g., InfoBar auto-dismiss)
+    private CancellationTokenSource? _infoDismissCts;
+
     // Stream status tracking
     private int _tradesStreamCount = 5;
     private int _depthStreamCount = 3;
@@ -124,7 +127,44 @@ public sealed partial class DashboardPage : Page
 
     private void DashboardPage_Unloaded(object sender, RoutedEventArgs e)
     {
+        // Stop timer first
         _unifiedTimer.Stop();
+
+        // Cancel any pending InfoBar dismiss operations
+        _infoDismissCts?.Cancel();
+        _infoDismissCts?.Dispose();
+        _infoDismissCts = null;
+
+        // Unsubscribe from service events to prevent memory leaks
+        _activityFeedService.ActivityAdded -= ActivityFeedService_ActivityAdded;
+        _integrityEventsService.EventRecorded -= IntegrityEventsService_EventRecorded;
+        _integrityEventsService.EventsCleared -= IntegrityEventsService_EventsCleared;
+    }
+
+    /// <summary>
+    /// Shows the InfoBar with auto-dismiss after a delay, with cancellation support.
+    /// </summary>
+    private async Task ShowInfoBarAsync(InfoBarSeverity severity, string title, string message, int delayMs = 3000)
+    {
+        // Cancel any previous pending dismiss
+        _infoDismissCts?.Cancel();
+        _infoDismissCts?.Dispose();
+        _infoDismissCts = new CancellationTokenSource();
+
+        DashboardInfoBar.Severity = severity;
+        DashboardInfoBar.Title = title;
+        DashboardInfoBar.Message = message;
+        DashboardInfoBar.IsOpen = true;
+
+        try
+        {
+            await Task.Delay(delayMs, _infoDismissCts.Token);
+            DashboardInfoBar.IsOpen = false;
+        }
+        catch (OperationCanceledException)
+        {
+            // Dismiss was cancelled (page unloaded or new message shown) - this is expected
+        }
     }
 
     /// <summary>
@@ -414,13 +454,7 @@ public sealed partial class DashboardPage : Page
         UpdateQuickActionsCollectorStatus();
         UpdateStreamStatusBadges();
 
-        DashboardInfoBar.Severity = InfoBarSeverity.Success;
-        DashboardInfoBar.Title = "Collector Started";
-        DashboardInfoBar.Message = "Market data collection has been started.";
-        DashboardInfoBar.IsOpen = true;
-
-        await Task.Delay(3000);
-        DashboardInfoBar.IsOpen = false;
+        await ShowInfoBarAsync(InfoBarSeverity.Success, "Collector Started", "Market data collection has been started.");
     }
 
     private async void QuickStopCollector_Click(object sender, RoutedEventArgs e)
@@ -431,13 +465,7 @@ public sealed partial class DashboardPage : Page
         UpdateQuickActionsCollectorStatus();
         UpdateStreamStatusBadges();
 
-        DashboardInfoBar.Severity = InfoBarSeverity.Warning;
-        DashboardInfoBar.Title = "Collector Stopped";
-        DashboardInfoBar.Message = "Market data collection has been stopped.";
-        DashboardInfoBar.IsOpen = true;
-
-        await Task.Delay(3000);
-        DashboardInfoBar.IsOpen = false;
+        await ShowInfoBarAsync(InfoBarSeverity.Warning, "Collector Stopped", "Market data collection has been stopped.");
     }
 
     private async void QuickPauseCollector_Click(object sender, RoutedEventArgs e)
@@ -451,20 +479,12 @@ public sealed partial class DashboardPage : Page
 
         if (_isCollectorPaused)
         {
-            DashboardInfoBar.Severity = InfoBarSeverity.Informational;
-            DashboardInfoBar.Title = "Collection Paused";
-            DashboardInfoBar.Message = "Market data collection has been paused. Click Resume to continue.";
+            await ShowInfoBarAsync(InfoBarSeverity.Informational, "Collection Paused", "Market data collection has been paused. Click Resume to continue.");
         }
         else
         {
-            DashboardInfoBar.Severity = InfoBarSeverity.Success;
-            DashboardInfoBar.Title = "Collection Resumed";
-            DashboardInfoBar.Message = "Market data collection has been resumed.";
+            await ShowInfoBarAsync(InfoBarSeverity.Success, "Collection Resumed", "Market data collection has been resumed.");
         }
-        DashboardInfoBar.IsOpen = true;
-
-        await Task.Delay(3000);
-        DashboardInfoBar.IsOpen = false;
     }
 
     private async void StartCollector_Click(object sender, RoutedEventArgs e)
@@ -477,13 +497,7 @@ public sealed partial class DashboardPage : Page
         UpdateQuickActionsCollectorStatus();
         UpdateStreamStatusBadges();
 
-        DashboardInfoBar.Severity = InfoBarSeverity.Success;
-        DashboardInfoBar.Title = "Collector Started";
-        DashboardInfoBar.Message = "Market data collection has been started.";
-        DashboardInfoBar.IsOpen = true;
-
-        await Task.Delay(3000);
-        DashboardInfoBar.IsOpen = false;
+        await ShowInfoBarAsync(InfoBarSeverity.Success, "Collector Started", "Market data collection has been started.");
     }
 
     private async void StopCollector_Click(object sender, RoutedEventArgs e)
@@ -494,13 +508,7 @@ public sealed partial class DashboardPage : Page
         UpdateQuickActionsCollectorStatus();
         UpdateStreamStatusBadges();
 
-        DashboardInfoBar.Severity = InfoBarSeverity.Warning;
-        DashboardInfoBar.Title = "Collector Stopped";
-        DashboardInfoBar.Message = "Market data collection has been stopped.";
-        DashboardInfoBar.IsOpen = true;
-
-        await Task.Delay(3000);
-        DashboardInfoBar.IsOpen = false;
+        await ShowInfoBarAsync(InfoBarSeverity.Warning, "Collector Stopped", "Market data collection has been stopped.");
     }
 
     private void QuickAddSymbol_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
@@ -541,10 +549,7 @@ public sealed partial class DashboardPage : Page
 
         if (string.IsNullOrWhiteSpace(symbol))
         {
-            DashboardInfoBar.Severity = InfoBarSeverity.Warning;
-            DashboardInfoBar.Title = "Invalid Symbol";
-            DashboardInfoBar.Message = "Please enter a valid symbol.";
-            DashboardInfoBar.IsOpen = true;
+            await ShowInfoBarAsync(InfoBarSeverity.Warning, "Invalid Symbol", "Please enter a valid symbol.");
             return;
         }
 
@@ -577,15 +582,9 @@ public sealed partial class DashboardPage : Page
         if (quotes) subscriptions.Add("Quotes");
         var subscriptionText = subscriptions.Count > 0 ? string.Join(", ", subscriptions) : "None";
 
-        DashboardInfoBar.Severity = InfoBarSeverity.Success;
-        DashboardInfoBar.Title = "Symbol Added";
-        DashboardInfoBar.Message = $"Added {symbol} subscription ({subscriptionText})";
-        DashboardInfoBar.IsOpen = true;
-
         QuickAddSymbolBox.Text = string.Empty;
 
-        await Task.Delay(3000);
-        DashboardInfoBar.IsOpen = false;
+        await ShowInfoBarAsync(InfoBarSeverity.Success, "Symbol Added", $"Added {symbol} subscription ({subscriptionText})");
     }
 
     private void ViewLogs_Click(object sender, RoutedEventArgs e)
@@ -936,14 +935,7 @@ public sealed partial class DashboardPage : Page
         if (result == ContentDialogResult.Primary)
         {
             _integrityEventsService.ClearEvents();
-
-            DashboardInfoBar.Severity = InfoBarSeverity.Success;
-            DashboardInfoBar.Title = "Alerts Cleared";
-            DashboardInfoBar.Message = "All integrity alerts have been cleared.";
-            DashboardInfoBar.IsOpen = true;
-
-            await Task.Delay(3000);
-            DashboardInfoBar.IsOpen = false;
+            await ShowInfoBarAsync(InfoBarSeverity.Success, "Alerts Cleared", "All integrity alerts have been cleared.");
         }
     }
 
@@ -1003,13 +995,7 @@ public sealed partial class DashboardPage : Page
         dataPackage.SetText(report);
         Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(dataPackage);
 
-        DashboardInfoBar.Severity = InfoBarSeverity.Success;
-        DashboardInfoBar.Title = "Report Exported";
-        DashboardInfoBar.Message = "Integrity report has been copied to clipboard.";
-        DashboardInfoBar.IsOpen = true;
-
-        await Task.Delay(3000);
-        DashboardInfoBar.IsOpen = false;
+        await ShowInfoBarAsync(InfoBarSeverity.Success, "Report Exported", "Integrity report has been copied to clipboard.");
     }
 
     #endregion

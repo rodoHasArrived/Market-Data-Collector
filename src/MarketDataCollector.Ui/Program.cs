@@ -11,6 +11,10 @@ using MarketDataCollector.Storage.Policies;
 using MarketDataCollector.Storage.Sinks;
 using Serilog;
 
+// Cached JSON serializer options to avoid repeated allocations (performance optimization)
+var jsonOptions = jsonOptions;
+var jsonOptionsIndented = jsonOptionsIndented;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSingleton<ConfigStore>();
@@ -36,7 +40,7 @@ app.MapGet("/api/config", (ConfigStore store) =>
         storage = cfg.Storage,
         symbols = cfg.Symbols ?? Array.Empty<SymbolConfig>(),
         backfill = cfg.Backfill
-    }, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+    }, jsonOptions);
 });
 
 app.MapPost("/api/config/datasource", async (ConfigStore store, DataSourceRequest req) =>
@@ -118,7 +122,7 @@ app.MapGet("/api/config/datasources", (ConfigStore store) =>
         defaultHistoricalSourceId = cfg.DataSources?.DefaultHistoricalSourceId,
         enableFailover = cfg.DataSources?.EnableFailover ?? true,
         failoverTimeoutSeconds = cfg.DataSources?.FailoverTimeoutSeconds ?? 30
-    }, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+    }, jsonOptions);
 });
 
 app.MapPost("/api/config/datasources", async (ConfigStore store, DataSourceConfigRequest req) =>
@@ -234,7 +238,7 @@ app.MapGet("/api/status", (ConfigStore store) =>
 app.MapGet("/api/backfill/providers", (BackfillCoordinator backfill) =>
 {
     var providers = backfill.DescribeProviders();
-    return Results.Json(providers, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+    return Results.Json(providers, jsonOptions);
 });
 
 app.MapGet("/api/backfill/status", (BackfillCoordinator backfill) =>
@@ -242,7 +246,7 @@ app.MapGet("/api/backfill/status", (BackfillCoordinator backfill) =>
     var status = backfill.TryReadLast();
     return status is null
         ? Results.NotFound()
-        : Results.Json(status, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase, WriteIndented = true });
+        : Results.Json(status, jsonOptionsIndented);
 });
 
 app.MapPost("/api/backfill/run", async (BackfillCoordinator backfill, BackfillRequestDto req) =>
@@ -259,7 +263,7 @@ app.MapPost("/api/backfill/run", async (BackfillCoordinator backfill, BackfillRe
             req.To);
 
         var result = await backfill.RunAsync(request);
-        return Results.Json(result, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase, WriteIndented = true });
+        return Results.Json(result, jsonOptionsIndented);
     }
     catch (InvalidOperationException ex)
     {
@@ -304,7 +308,7 @@ app.MapGet("/api/providers/comparison", (ConfigStore store) =>
             TotalProviders: metricsStatus.TotalProviders,
             HealthyProviders: metricsStatus.HealthyProviders
         );
-        return Results.Json(comparison, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+        return Results.Json(comparison, jsonOptions);
     }
 
     // Fallback to configuration-based data if no metrics file exists
@@ -334,7 +338,7 @@ app.MapGet("/api/providers/comparison", (ConfigStore store) =>
         TotalProviders: sources.Length,
         HealthyProviders: sources.Count(s => s.Enabled)
     );
-    return Results.Json(fallbackComparison, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+    return Results.Json(fallbackComparison, jsonOptions);
 });
 
 app.MapGet("/api/providers/status", (ConfigStore store) =>
@@ -362,7 +366,7 @@ app.MapGet("/api/providers/status", (ConfigStore store) =>
         );
     }).ToArray();
 
-    return Results.Json(status, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+    return Results.Json(status, jsonOptions);
 });
 
 app.MapGet("/api/providers/metrics", (ConfigStore store) =>
@@ -389,7 +393,7 @@ app.MapGet("/api/providers/metrics", (ConfigStore store) =>
             ConnectionSuccessRate: p.ConnectionSuccessRate,
             Timestamp: p.Timestamp
         )).ToArray();
-        return Results.Json(metrics, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+        return Results.Json(metrics, jsonOptions);
     }
 
     // Fallback to configuration-based placeholder data
@@ -414,7 +418,7 @@ app.MapGet("/api/providers/metrics", (ConfigStore store) =>
         Timestamp: DateTimeOffset.UtcNow
     )).ToArray();
 
-    return Results.Json(fallbackMetrics, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+    return Results.Json(fallbackMetrics, jsonOptions);
 });
 
 app.MapGet("/api/providers/{providerId}/metrics", (ConfigStore store, string providerId) =>
@@ -443,7 +447,7 @@ app.MapGet("/api/providers/{providerId}/metrics", (ConfigStore store, string pro
             ConnectionSuccessRate: providerMetrics.ConnectionSuccessRate,
             Timestamp: providerMetrics.Timestamp
         );
-        return Results.Json(metrics, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+        return Results.Json(metrics, jsonOptions);
     }
 
     // Fallback to configuration-based placeholder data
@@ -472,7 +476,7 @@ app.MapGet("/api/providers/{providerId}/metrics", (ConfigStore store, string pro
         Timestamp: DateTimeOffset.UtcNow
     );
 
-    return Results.Json(fallbackMetrics, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+    return Results.Json(fallbackMetrics, jsonOptions);
 });
 
 // ============================================================
@@ -503,7 +507,7 @@ app.MapGet("/api/failover/config", (ConfigStore store) =>
             )).ToArray()
     );
 
-    return Results.Json(response, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+    return Results.Json(response, jsonOptions);
 });
 
 app.MapPost("/api/failover/config", async (ConfigStore store, FailoverConfigRequest req) =>
@@ -543,7 +547,7 @@ app.MapGet("/api/failover/rules", (ConfigStore store) =>
         CurrentActiveProviderId: r.PrimaryProviderId
     )).ToArray();
 
-    return Results.Json(response, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+    return Results.Json(response, jsonOptions);
 });
 
 app.MapPost("/api/failover/rules", async (ConfigStore store, FailoverRuleRequest req) =>
@@ -615,7 +619,7 @@ app.MapGet("/api/failover/health", (ConfigStore store) =>
         RecentIssues: Array.Empty<HealthIssueResponse>()
     )).ToArray();
 
-    return Results.Json(health, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+    return Results.Json(health, jsonOptions);
 });
 
 // ============================================================
@@ -637,7 +641,7 @@ app.MapGet("/api/symbols/mappings", (ConfigStore store) =>
         Figi: m.Figi
     )).ToArray();
 
-    return Results.Json(response, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+    return Results.Json(response, jsonOptions);
 });
 
 app.MapPost("/api/symbols/mappings", async (ConfigStore store, SymbolMappingRequest req) =>
@@ -720,7 +724,7 @@ app.MapGet("/api/symbols/mappings/{symbol}", (ConfigStore store, string symbol) 
         Figi: mapping.Figi
     );
 
-    return Results.Json(response, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+    return Results.Json(response, jsonOptions);
 });
 
 app.MapPost("/api/symbols/mappings/import", async (ConfigStore store, HttpRequest request) =>

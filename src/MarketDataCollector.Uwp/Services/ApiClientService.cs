@@ -18,6 +18,7 @@ public sealed class ApiClientService : IDisposable
     private static readonly object _lock = new();
 
     private HttpClient _httpClient;
+    private HttpClient? _backfillHttpClient;
     private string _baseUrl;
     private int _timeoutSeconds;
     private int _backfillTimeoutMinutes;
@@ -129,8 +130,32 @@ public sealed class ApiClientService : IDisposable
     }
 
     /// <summary>
+    /// Gets a shared HTTP client configured for long-running backfill operations.
+    /// The client is lazily created and reused to avoid socket exhaustion.
+    /// </summary>
+    public HttpClient GetBackfillClient()
+    {
+        if (_backfillHttpClient == null)
+        {
+            lock (_lock)
+            {
+                _backfillHttpClient ??= new HttpClient
+                {
+                    Timeout = TimeSpan.FromMinutes(_backfillTimeoutMinutes)
+                };
+            }
+        }
+        return _backfillHttpClient;
+    }
+
+    /// <summary>
     /// Creates an HTTP client configured for long-running backfill operations.
     /// </summary>
+    /// <remarks>
+    /// Prefer using <see cref="GetBackfillClient"/> instead to reuse the shared client.
+    /// Only use this method when you need a client with a custom timeout that will be properly disposed.
+    /// </remarks>
+    [Obsolete("Prefer GetBackfillClient() to avoid socket exhaustion. Only use when custom timeout is required.")]
     public HttpClient CreateBackfillClient()
     {
         return new HttpClient
@@ -365,6 +390,7 @@ public sealed class ApiClientService : IDisposable
         if (!_disposed)
         {
             _httpClient.Dispose();
+            _backfillHttpClient?.Dispose();
             _disposed = true;
         }
     }
