@@ -442,6 +442,27 @@ chmod -R 755 data/
 
 **Solution**: Try a different provider or check symbol validity
 
+## Build and IDE Issues
+
+### "The SDK 'Microsoft.NET.Sdk.Web' specified could not be found"
+
+**Symptom**: `dotnet restore`/`dotnet build` or OmniSharp fails when loading microservice projects.
+
+**Common causes**:
+1. The .NET SDK version pinned in `global.json` is not installed.
+2. The .NET SDK isn't installed at all (only the runtime is available).
+
+**Solutions**:
+1. Verify installed SDKs:
+   ```bash
+   dotnet --list-sdks
+   ```
+2. Install the SDK version in `global.json` (currently .NET 9.0), or update `global.json` to a version you already have installed.
+3. Re-run `dotnet restore` after installation:
+   ```bash
+   dotnet restore
+   ```
+
 ## Microservices Issues
 
 ### "Cannot connect to RabbitMQ"
