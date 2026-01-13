@@ -2465,6 +2465,106 @@ function formatNumber(num) {{
   return num.toString();
 }}
 
+// Performance: Request deduplication to prevent concurrent fetches
+const pendingRequests = new Map();
+async function dedupedFetch(url, options = {{}}) {{
+  const key = url + JSON.stringify(options);
+  if (pendingRequests.has(key)) {{
+    return pendingRequests.get(key);
+  }}
+  const promise = fetch(url, options).finally(() => pendingRequests.delete(key));
+  pendingRequests.set(key, promise);
+  return promise;
+}}
+
+// Performance: Incremental table updates to minimize DOM thrashing
+const tableDataCache = new Map();
+
+function updateTableIncrementally(tableId, data, getRowKey, createRowHtml) {{
+  const tbody = document.querySelector(`#${{tableId}} tbody`);
+  if (!tbody) return;
+
+  const cacheKey = tableId;
+  const prevData = tableDataCache.get(cacheKey) || [];
+  const prevDataMap = new Map(prevData.map(item => [getRowKey(item), item]));
+  const newDataMap = new Map(data.map(item => [getRowKey(item), item]));
+
+  // Check if data actually changed
+  if (prevData.length === data.length) {{
+    let hasChanges = false;
+    for (const item of data) {{
+      const key = getRowKey(item);
+      const prev = prevDataMap.get(key);
+      if (!prev || JSON.stringify(prev) !== JSON.stringify(item)) {{
+        hasChanges = true;
+        break;
+      }}
+    }}
+    if (!hasChanges) return; // No changes, skip update
+  }}
+
+  // Handle empty state
+  if (data.length === 0) {{
+    if (prevData.length !== 0 || !tbody.children.length) {{
+      tbody.innerHTML = createRowHtml(null); // null signals empty state
+    }}
+    tableDataCache.set(cacheKey, []);
+    return;
+  }}
+
+  // Build new rows efficiently
+  const existingRows = new Map();
+  for (const row of tbody.querySelectorAll('tr[data-row-key]')) {{
+    existingRows.set(row.dataset.rowKey, row);
+  }}
+
+  const fragment = document.createDocumentFragment();
+  let needsRebuild = existingRows.size === 0 || Math.abs(existingRows.size - data.length) > data.length / 2;
+
+  if (needsRebuild) {{
+    // Full rebuild if major changes (more efficient for large diffs)
+    tbody.innerHTML = '';
+    for (const item of data) {{
+      const tr = document.createElement('tr');
+      tr.dataset.rowKey = getRowKey(item);
+      tr.innerHTML = createRowHtml(item);
+      fragment.appendChild(tr);
+    }}
+    tbody.appendChild(fragment);
+  }} else {{
+    // Incremental update for minor changes
+    for (const item of data) {{
+      const key = getRowKey(item);
+      const existingRow = existingRows.get(key);
+      const prev = prevDataMap.get(key);
+
+      if (existingRow && prev && JSON.stringify(prev) === JSON.stringify(item)) {{
+        // Row unchanged, keep it
+        existingRows.delete(key);
+      }} else if (existingRow) {{
+        // Row changed, update in place
+        existingRow.innerHTML = createRowHtml(item);
+        existingRows.delete(key);
+      }} else {{
+        // New row, need to insert
+        const tr = document.createElement('tr');
+        tr.dataset.rowKey = key;
+        tr.innerHTML = createRowHtml(item);
+        tbody.appendChild(tr);
+      }}
+    }}
+
+    // Remove rows that no longer exist
+    for (const [key, row] of existingRows) {{
+      if (!newDataMap.has(key)) {{
+        row.remove();
+      }}
+    }}
+  }}
+
+  tableDataCache.set(cacheKey, structuredClone(data));
+}}
+
 function getCurrentTime() {{
   return new Date().toLocaleTimeString('en-US', {{ hour12: false }});
 }}
@@ -2577,36 +2677,34 @@ async function loadDataSources() {{
 }}
 
 function renderDataSourcesTable() {{
-  const tbody = document.querySelector('#dataSourcesTable tbody');
-  tbody.innerHTML = '';
-
-  if (dataSources.length === 0) {{
-    tbody.innerHTML = '<tr><td colspan=""6"" class=""muted"" style=""text-align: center; padding: 24px;"">No data sources configured. Add one below.</td></tr>';
-    return;
-  }}
-
-  for (const ds of dataSources) {{
-    const tr = document.createElement('tr');
-    const tagClass = ds.provider === 'IB' ? 'tag-ib' : (ds.provider === 'Alpaca' ? 'tag-alpaca' : 'tag-polygon');
-    const statusColor = ds.enabled ? 'var(--accent-green)' : 'var(--text-muted)';
-    tr.innerHTML = `
-      <td>
-        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-          <input type="checkbox" ${{ds.enabled ? 'checked' : ''}} onchange="toggleDataSource('${{ds.id}}', this.checked)" />
-          <span style="width: 8px; height: 8px; border-radius: 50%; background: ${{statusColor}};"></span>
-        </label>
-      </td>
-      <td><span style="font-weight: 600; font-family: var(--font-mono);">${{ds.name}}</span></td>
-      <td><span class="tag ${{tagClass}}">${{ds.provider}}</span></td>
-      <td style="color: var(--text-secondary);">${{ds.type}}</td>
-      <td style="font-family: var(--font-mono);">${{ds.priority}}</td>
-      <td>
-        <button class="btn-secondary" onclick="editDataSource('${{ds.id}}')" style="padding: 6px 12px; font-size: 12px; margin-right: 4px;">Edit</button>
-        <button class="btn-danger" onclick="deleteDataSource('${{ds.id}}')">Delete</button>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  }}
+  updateTableIncrementally(
+    'dataSourcesTable',
+    dataSources,
+    ds => ds.id,
+    ds => {{
+      if (ds === null) {{
+        return '<td colspan="6" class="muted" style="text-align: center; padding: 24px;">No data sources configured. Add one below.</td>';
+      }}
+      const tagClass = ds.provider === 'IB' ? 'tag-ib' : (ds.provider === 'Alpaca' ? 'tag-alpaca' : 'tag-polygon');
+      const statusColor = ds.enabled ? 'var(--accent-green)' : 'var(--text-muted)';
+      return `
+        <td>
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+            <input type="checkbox" ${{ds.enabled ? 'checked' : ''}} onchange="toggleDataSource('${{ds.id}}', this.checked)" />
+            <span style="width: 8px; height: 8px; border-radius: 50%; background: ${{statusColor}};"></span>
+          </label>
+        </td>
+        <td><span style="font-weight: 600; font-family: var(--font-mono);">${{ds.name}}</span></td>
+        <td><span class="tag ${{tagClass}}">${{ds.provider}}</span></td>
+        <td style="color: var(--text-secondary);">${{ds.type}}</td>
+        <td style="font-family: var(--font-mono);">${{ds.priority}}</td>
+        <td>
+          <button class="btn-secondary" onclick="editDataSource('${{ds.id}}')" style="padding: 6px 12px; font-size: 12px; margin-right: 4px;">Edit</button>
+          <button class="btn-danger" onclick="deleteDataSource('${{ds.id}}')">Delete</button>
+        </td>
+      `;
+    }}
+  );
 }}
 
 function updateDsProviderUI() {{
@@ -2851,19 +2949,19 @@ async function loadConfig() {{
     if (cfg.backfill.provider) document.getElementById('backfillProvider').value = cfg.backfill.provider;
   }}
 
-  // Update symbols table
+  // Update symbols table with incremental DOM updates
   const symbols = cfg.symbols || [];
   document.getElementById('symCount').textContent = symbols.length;
 
-  const tbody = document.querySelector('#symbolsTable tbody');
-  tbody.innerHTML = '';
-
-  if (symbols.length === 0) {{
-    tbody.innerHTML = '<tr><td colspan="7" class="muted" style="text-align: center; padding: 24px;">No symbols configured. Add one below.</td></tr>';
-  }} else {{
-    for (const s of symbols) {{
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
+  updateTableIncrementally(
+    'symbolsTable',
+    symbols,
+    s => s.symbol,
+    s => {{
+      if (s === null) {{
+        return '<td colspan="7" class="muted" style="text-align: center; padding: 24px;">No symbols configured. Add one below.</td>';
+      }}
+      return `
         <td><span style="font-weight: 600; font-family: var(--font-mono); color: var(--accent-cyan);">${{s.symbol}}</span></td>
         <td>${{s.subscribeTrades ? '<span class="good">ON</span>' : '<span class="muted">OFF</span>'}}</td>
         <td>${{s.subscribeDepth ? '<span class="good">ON</span>' : '<span class="muted">OFF</span>'}}</td>
@@ -2872,9 +2970,8 @@ async function loadConfig() {{
         <td style="color: var(--text-secondary);">${{s.exchange || '-'}}</td>
         <td><button class="btn-danger" onclick="deleteSymbol('${{s.symbol}}')">Delete</button></td>
       `;
-      tbody.appendChild(tr);
     }}
-  }}
+  );
 
   addLog('Configuration loaded successfully', 'success');
 }}
@@ -2988,7 +3085,7 @@ function updateStoragePreview() {{
 
 async function loadStatus() {{
   try {{
-    const r = await fetch('/api/status');
+    const r = await dedupedFetch('/api/status');
     const topDot = document.getElementById('topStatusDot');
     const topText = document.getElementById('topStatusText');
     const liveIndicator = document.getElementById('liveIndicator');
@@ -3049,7 +3146,7 @@ async function loadStatus() {{
 async function loadBackfillStatus() {{
   const box = document.getElementById('backfillStatus');
   try {{
-    const r = await fetch('/api/backfill/status');
+    const r = await dedupedFetch('/api/backfill/status');
     if (!r.ok) {{
       box.innerHTML = `<div class="terminal-line"><span class="terminal-prompt">$</span><span class="terminal-msg">Ready to start backfill operation...</span></div>`;
       return;
