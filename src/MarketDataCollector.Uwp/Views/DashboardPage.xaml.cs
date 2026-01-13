@@ -11,6 +11,7 @@ using Microsoft.UI.Xaml.Media;
 using MarketDataCollector.Uwp.ViewModels;
 using MarketDataCollector.Uwp.Services;
 using Windows.UI;
+using Windows.Foundation;
 
 namespace MarketDataCollector.Uwp.Views;
 
@@ -19,16 +20,43 @@ namespace MarketDataCollector.Uwp.Views;
 /// </summary>
 public sealed partial class DashboardPage : Page
 {
+    #region Cached Brushes (Performance Optimization)
+
+    // Static cached brushes to avoid repeated allocations
+    private static readonly SolidColorBrush s_successBrush = new(Color.FromArgb(255, 72, 187, 120));
+    private static readonly SolidColorBrush s_warningBrush = new(Color.FromArgb(255, 237, 137, 54));
+    private static readonly SolidColorBrush s_dangerBrush = new(Color.FromArgb(255, 245, 101, 101));
+    private static readonly SolidColorBrush s_infoBrush = new(Color.FromArgb(255, 88, 166, 255));
+    private static readonly SolidColorBrush s_inactiveBrush = new(Color.FromArgb(255, 160, 174, 192));
+    private static readonly SolidColorBrush s_criticalBrush = new(Color.FromArgb(255, 248, 81, 73));
+    private static readonly SolidColorBrush s_warningEventBrush = new(Color.FromArgb(255, 210, 153, 34));
+
+    #endregion
+
     public MainViewModel ViewModel { get; }
 
-    private readonly DispatcherTimer _refreshTimer;
-    private readonly DispatcherTimer _sparklineTimer;
-    private readonly List<double> _publishedHistory = new();
-    private readonly List<double> _droppedHistory = new();
-    private readonly List<double> _integrityHistory = new();
-    private readonly List<double> _throughputHistory = new();
+    // Consolidated single timer for all updates (performance optimization)
+    private readonly DispatcherTimer _unifiedTimer;
+    private int _timerTickCount = 0;
+
+    // Use fixed-size arrays with circular buffer pattern for O(1) operations
+    private const int SparklineCapacity = 20;
+    private const int ThroughputCapacity = 30;
+    private readonly double[] _publishedHistory = new double[SparklineCapacity];
+    private readonly double[] _droppedHistory = new double[SparklineCapacity];
+    private readonly double[] _integrityHistory = new double[SparklineCapacity];
+    private readonly double[] _throughputHistory = new double[ThroughputCapacity];
+    private int _sparklineIndex = 0;
+    private int _sparklineCount = 0;
+    private int _throughputIndex = 0;
+    private int _throughputCount = 0;
+
+    // Reusable PointCollection instances to avoid allocations
+    private readonly PointCollection _publishedPoints = new();
+    private readonly PointCollection _droppedPoints = new();
+    private readonly PointCollection _integrityPoints = new();
+
     private readonly Random _random = new();
-    private readonly DispatcherTimer _uptimeTimer;
     private readonly ActivityFeedService _activityFeedService;
     private readonly IntegrityEventsService _integrityEventsService;
     private readonly ObservableCollection<ActivityDisplayItem> _activityItems;
@@ -62,14 +90,12 @@ public sealed partial class DashboardPage : Page
         ActivityFeedList.ItemsSource = _activityItems;
         IntegrityEventsList.ItemsSource = _integrityItems;
 
-        _refreshTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
-        _refreshTimer.Tick += RefreshTimer_Tick;
-
-        _sparklineTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
-        _sparklineTimer.Tick += SparklineTimer_Tick;
-
-        _uptimeTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
-        _uptimeTimer.Tick += UptimeTimer_Tick;
+        // Single unified timer at 500ms interval (replaces 3 separate timers)
+        // - Sparkline updates: every tick (500ms)
+        // - Uptime updates: every 2 ticks (1s)
+        // - Refresh updates: every 4 ticks (2s)
+        _unifiedTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
+        _unifiedTimer.Tick += UnifiedTimer_Tick;
 
         _activityFeedService.ActivityAdded += ActivityFeedService_ActivityAdded;
         _integrityEventsService.EventRecorded += IntegrityEventsService_EventRecorded;
@@ -85,9 +111,7 @@ public sealed partial class DashboardPage : Page
         InitializeSparklineData();
         LoadActivityFeed();
         LoadIntegrityEvents();
-        _refreshTimer.Start();
-        _sparklineTimer.Start();
-        _uptimeTimer.Start();
+        _unifiedTimer.Start();
         UpdateCollectorStatus();
         UpdateQuickActionsCollectorStatus();
         UpdateStreamStatusBadges();
@@ -100,89 +124,125 @@ public sealed partial class DashboardPage : Page
 
     private void DashboardPage_Unloaded(object sender, RoutedEventArgs e)
     {
-        _refreshTimer.Stop();
-        _sparklineTimer.Stop();
-        _uptimeTimer.Stop();
+        _unifiedTimer.Stop();
     }
 
-    private void RefreshTimer_Tick(object? sender, object e)
+    /// <summary>
+    /// Unified timer tick handler that replaces 3 separate timers.
+    /// Runs at 500ms and dispatches work based on tick count.
+    /// </summary>
+    private void UnifiedTimer_Tick(object? sender, object e)
     {
-        UpdateUptime();
-        UpdateLatency();
-        UpdateThroughputStats();
-    }
+        _timerTickCount++;
 
-    private void SparklineTimer_Tick(object? sender, object e)
-    {
+        // Sparkline updates: every tick (500ms) - highest frequency
         AddSparklineData();
         UpdateSparklines();
-    }
 
-    private void UptimeTimer_Tick(object? sender, object e)
-    {
-        UpdateCollectorUptime();
+        // Uptime updates: every 2 ticks (1s)
+        if (_timerTickCount % 2 == 0)
+        {
+            UpdateCollectorUptime();
+        }
+
+        // Refresh updates: every 4 ticks (2s) - lowest frequency
+        if (_timerTickCount % 4 == 0)
+        {
+            UpdateUptime();
+            UpdateLatency();
+            UpdateThroughputStats();
+        }
     }
 
     private void InitializeSparklineData()
     {
-        // Initialize with sample data
-        for (int i = 0; i < 20; i++)
+        // Initialize circular buffers with sample data
+        for (int i = 0; i < SparklineCapacity; i++)
         {
-            _publishedHistory.Add(800 + _random.Next(0, 400));
-            _droppedHistory.Add(_random.Next(0, 5));
-            _integrityHistory.Add(_random.Next(0, 3));
-            _throughputHistory.Add(1000 + _random.Next(-200, 400));
+            _publishedHistory[i] = 800 + _random.Next(0, 400);
+            _droppedHistory[i] = _random.Next(0, 5);
+            _integrityHistory[i] = _random.Next(0, 3);
         }
+        _sparklineIndex = 0;
+        _sparklineCount = SparklineCapacity;
+
+        for (int i = 0; i < ThroughputCapacity; i++)
+        {
+            _throughputHistory[i] = 1000 + _random.Next(-200, 400);
+        }
+        _throughputIndex = 0;
+        _throughputCount = ThroughputCapacity;
     }
 
     private void AddSparklineData()
     {
-        // Add new data points
-        _publishedHistory.Add(800 + _random.Next(0, 400));
-        _droppedHistory.Add(_random.Next(0, 5));
-        _integrityHistory.Add(_random.Next(0, 3));
-        _throughputHistory.Add(1000 + _random.Next(-200, 400));
+        // Add new data points using circular buffer pattern (O(1) instead of O(n))
+        _publishedHistory[_sparklineIndex] = 800 + _random.Next(0, 400);
+        _droppedHistory[_sparklineIndex] = _random.Next(0, 5);
+        _integrityHistory[_sparklineIndex] = _random.Next(0, 3);
 
-        // Keep last 20 points
-        if (_publishedHistory.Count > 20) _publishedHistory.RemoveAt(0);
-        if (_droppedHistory.Count > 20) _droppedHistory.RemoveAt(0);
-        if (_integrityHistory.Count > 20) _integrityHistory.RemoveAt(0);
-        if (_throughputHistory.Count > 30) _throughputHistory.RemoveAt(0);
+        _sparklineIndex = (_sparklineIndex + 1) % SparklineCapacity;
+        if (_sparklineCount < SparklineCapacity) _sparklineCount++;
+
+        _throughputHistory[_throughputIndex] = 1000 + _random.Next(-200, 400);
+        _throughputIndex = (_throughputIndex + 1) % ThroughputCapacity;
+        if (_throughputCount < ThroughputCapacity) _throughputCount++;
     }
 
     private void UpdateSparklines()
     {
-        UpdateSparkline(PublishedSparklinePath, _publishedHistory, PublishedSparkline.ActualWidth, 30);
-        UpdateSparkline(DroppedSparklinePath, _droppedHistory, DroppedSparkline.ActualWidth, 30);
-        UpdateSparkline(IntegritySparklinePath, _integrityHistory, IntegritySparkline.ActualWidth, 30);
+        // Use reusable PointCollections to avoid allocations
+        UpdateSparklineCircular(PublishedSparklinePath, _publishedHistory, _sparklineIndex, _sparklineCount,
+            PublishedSparkline.ActualWidth, 30, _publishedPoints);
+        UpdateSparklineCircular(DroppedSparklinePath, _droppedHistory, _sparklineIndex, _sparklineCount,
+            DroppedSparkline.ActualWidth, 30, _droppedPoints);
+        UpdateSparklineCircular(IntegritySparklinePath, _integrityHistory, _sparklineIndex, _sparklineCount,
+            IntegritySparkline.ActualWidth, 30, _integrityPoints);
 
-        // Update rate text
-        if (_publishedHistory.Count > 0)
+        // Update rate text - get most recent value from circular buffer
+        if (_sparklineCount > 0)
         {
-            var rate = (int)_publishedHistory[^1];
+            var lastIndex = (_sparklineIndex - 1 + SparklineCapacity) % SparklineCapacity;
+            var rate = (int)_publishedHistory[lastIndex];
             PublishedRateText.Text = $"+{rate:N0}/s";
         }
     }
 
-    private void UpdateSparkline(Microsoft.UI.Xaml.Shapes.Polyline polyline, List<double> data, double width, double height)
+    /// <summary>
+    /// Updates sparkline using circular buffer data and reusable PointCollection.
+    /// </summary>
+    private static void UpdateSparklineCircular(
+        Microsoft.UI.Xaml.Shapes.Polyline polyline,
+        double[] data,
+        int currentIndex,
+        int count,
+        double width,
+        double height,
+        PointCollection points)
     {
-        if (data.Count < 2 || width <= 0) return;
+        if (count < 2 || width <= 0) return;
 
-        var points = new PointCollection();
+        // Clear and reuse the PointCollection instead of creating new
+        points.Clear();
+
         var max = 1.0;
         var min = 0.0;
 
-        foreach (var val in data)
+        // Find max value in circular buffer
+        for (int i = 0; i < count; i++)
         {
-            if (val > max) max = val;
+            var idx = (currentIndex - count + i + data.Length) % data.Length;
+            if (data[idx] > max) max = data[idx];
         }
 
-        var step = width / (data.Count - 1);
+        var step = width / (count - 1);
 
-        for (int i = 0; i < data.Count; i++)
+        // Build points in order from oldest to newest
+        for (int i = 0; i < count; i++)
         {
+            var idx = (currentIndex - count + i + data.Length) % data.Length;
             var x = i * step;
-            var y = height - ((data[i] - min) / (max - min) * height);
+            var y = height - ((data[idx] - min) / (max - min) * height);
             points.Add(new Windows.Foundation.Point(x, Math.Max(2, Math.Min(height - 2, y))));
         }
 
@@ -198,18 +258,22 @@ public sealed partial class DashboardPage : Page
 
     private void UpdateThroughputStats()
     {
-        if (_throughputHistory.Count > 0)
+        if (_throughputCount > 0)
         {
-            var current = (int)_throughputHistory[^1];
+            // Get most recent value from circular buffer
+            var lastIndex = (_throughputIndex - 1 + ThroughputCapacity) % ThroughputCapacity;
+            var current = (int)_throughputHistory[lastIndex];
             var avg = 0.0;
             var peak = 0.0;
 
-            foreach (var val in _throughputHistory)
+            // Calculate from circular buffer
+            for (int i = 0; i < _throughputCount; i++)
             {
-                avg += val;
-                if (val > peak) peak = val;
+                var idx = (_throughputIndex - _throughputCount + i + ThroughputCapacity) % ThroughputCapacity;
+                avg += _throughputHistory[idx];
+                if (_throughputHistory[idx] > peak) peak = _throughputHistory[idx];
             }
-            avg /= _throughputHistory.Count;
+            avg /= _throughputCount;
 
             CurrentThroughputText.Text = $"{current:N0}/s";
             AvgThroughputText.Text = $"{(int)avg:N0}/s";
@@ -229,11 +293,9 @@ public sealed partial class DashboardPage : Page
     {
         var latency = 8 + _random.Next(0, 10);
         LatencyText.Text = $"{latency}ms";
-        LatencyText.Foreground = latency < 20
-            ? new SolidColorBrush(Color.FromArgb(255, 72, 187, 120))
-            : latency < 50
-                ? new SolidColorBrush(Color.FromArgb(255, 237, 137, 54))
-                : new SolidColorBrush(Color.FromArgb(255, 245, 101, 101));
+        // Use cached brushes instead of creating new instances
+        LatencyText.Foreground = latency < 20 ? s_successBrush
+            : latency < 50 ? s_warningBrush : s_dangerBrush;
     }
 
     private void UpdateCollectorStatus()
@@ -242,12 +304,12 @@ public sealed partial class DashboardPage : Page
         {
             if (_isCollectorPaused)
             {
-                CollectorStatusBadge.Background = new SolidColorBrush(Color.FromArgb(255, 237, 137, 54));
+                CollectorStatusBadge.Background = s_warningBrush;
                 CollectorStatusText.Text = "Paused";
             }
             else
             {
-                CollectorStatusBadge.Background = new SolidColorBrush(Color.FromArgb(255, 72, 187, 120));
+                CollectorStatusBadge.Background = s_successBrush;
                 CollectorStatusText.Text = "Running";
             }
             StartCollectorButton.IsEnabled = false;
@@ -255,7 +317,7 @@ public sealed partial class DashboardPage : Page
         }
         else
         {
-            CollectorStatusBadge.Background = new SolidColorBrush(Color.FromArgb(255, 245, 101, 101));
+            CollectorStatusBadge.Background = s_dangerBrush;
             CollectorStatusText.Text = "Stopped";
             StartCollectorButton.IsEnabled = true;
             StopCollectorButton.IsEnabled = false;
@@ -293,32 +355,29 @@ public sealed partial class DashboardPage : Page
 
     private void UpdateStreamStatusBadges()
     {
-        // Update Trades stream badge
-        TradesStreamBadge.Background = new SolidColorBrush(
-            _tradesStreamActive && _isCollectorRunning && !_isCollectorPaused
-                ? Color.FromArgb(255, 72, 187, 120)  // Green - active
-                : _tradesStreamActive && _isCollectorPaused
-                    ? Color.FromArgb(255, 237, 137, 54)  // Orange - paused
-                    : Color.FromArgb(255, 160, 174, 192)); // Gray - inactive
+        // Update Trades stream badge using cached brushes
+        TradesStreamBadge.Background = GetStreamStatusBrush(_tradesStreamActive);
         TradesStreamCount.Text = $"({_tradesStreamCount})";
 
         // Update Depth stream badge
-        DepthStreamBadge.Background = new SolidColorBrush(
-            _depthStreamActive && _isCollectorRunning && !_isCollectorPaused
-                ? Color.FromArgb(255, 72, 187, 120)
-                : _depthStreamActive && _isCollectorPaused
-                    ? Color.FromArgb(255, 237, 137, 54)
-                    : Color.FromArgb(255, 160, 174, 192));
+        DepthStreamBadge.Background = GetStreamStatusBrush(_depthStreamActive);
         DepthStreamCount.Text = $"({_depthStreamCount})";
 
         // Update Quotes stream badge
-        QuotesStreamBadge.Background = new SolidColorBrush(
-            _quotesStreamActive && _isCollectorRunning && !_isCollectorPaused
-                ? Color.FromArgb(255, 72, 187, 120)
-                : _quotesStreamActive && _isCollectorPaused
-                    ? Color.FromArgb(255, 237, 137, 54)
-                    : Color.FromArgb(255, 160, 174, 192));
+        QuotesStreamBadge.Background = GetStreamStatusBrush(_quotesStreamActive);
         QuotesStreamCount.Text = $"({_quotesStreamCount})";
+    }
+
+    /// <summary>
+    /// Gets the appropriate cached brush for stream status.
+    /// </summary>
+    private SolidColorBrush GetStreamStatusBrush(bool isStreamActive)
+    {
+        if (isStreamActive && _isCollectorRunning && !_isCollectorPaused)
+            return s_successBrush;
+        if (isStreamActive && _isCollectorPaused)
+            return s_warningBrush;
+        return s_inactiveBrush;
     }
 
     private void UpdateCollectorUptime()
@@ -570,6 +629,7 @@ public sealed partial class DashboardPage : Page
 
     private void AddSampleActivities()
     {
+        // Use cached brushes for sample activities
         var sampleActivities = new[]
         {
             new ActivityDisplayItem
@@ -577,7 +637,7 @@ public sealed partial class DashboardPage : Page
                 Title = "Collector Started",
                 Description = "Data collection has been started for all providers",
                 Icon = "\uE768",
-                IconBackground = new SolidColorBrush(Color.FromArgb(255, 72, 187, 120)),
+                IconBackground = s_successBrush,
                 RelativeTime = "Just now"
             },
             new ActivityDisplayItem
@@ -585,7 +645,7 @@ public sealed partial class DashboardPage : Page
                 Title = "Symbol Added",
                 Description = "NVDA has been added to your watchlist",
                 Icon = "\uE710",
-                IconBackground = new SolidColorBrush(Color.FromArgb(255, 88, 166, 255)),
+                IconBackground = s_infoBrush,
                 RelativeTime = "2m ago"
             },
             new ActivityDisplayItem
@@ -593,7 +653,7 @@ public sealed partial class DashboardPage : Page
                 Title = "Backfill Completed",
                 Description = "Downloaded 12,450 bars for SPY from Alpaca",
                 Icon = "\uE73E",
-                IconBackground = new SolidColorBrush(Color.FromArgb(255, 72, 187, 120)),
+                IconBackground = s_successBrush,
                 RelativeTime = "15m ago"
             },
             new ActivityDisplayItem
@@ -601,7 +661,7 @@ public sealed partial class DashboardPage : Page
                 Title = "Provider Connected",
                 Description = "Interactive Brokers connection established",
                 Icon = "\uE703",
-                IconBackground = new SolidColorBrush(Color.FromArgb(255, 88, 166, 255)),
+                IconBackground = s_infoBrush,
                 RelativeTime = "1h ago"
             }
         };
@@ -614,12 +674,13 @@ public sealed partial class DashboardPage : Page
 
     private static ActivityDisplayItem CreateActivityDisplayItem(ActivityItem activity)
     {
+        // Use cached brushes based on color category
         var iconBackground = activity.ColorCategory switch
         {
-            "Success" => new SolidColorBrush(Color.FromArgb(255, 72, 187, 120)),
-            "Error" => new SolidColorBrush(Color.FromArgb(255, 248, 81, 73)),
-            "Warning" => new SolidColorBrush(Color.FromArgb(255, 210, 153, 34)),
-            _ => new SolidColorBrush(Color.FromArgb(255, 88, 166, 255))
+            "Success" => s_successBrush,
+            "Error" => s_criticalBrush,
+            "Warning" => s_warningEventBrush,
+            _ => s_infoBrush
         };
 
         return new ActivityDisplayItem

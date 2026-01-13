@@ -537,7 +537,14 @@
                     <ListView x:Name="SymbolPerformanceList"
                               ItemsSource="{x:Bind ViewModel.Symbols, Mode=OneWay}"
                               SelectionMode="None"
-                              MaxHeight="300">
+                              MaxHeight="300"
+                              AutomationProperties.Name="Symbol performance list">
+                        <!-- Enable virtualization for better performance -->
+                        <ListView.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <ItemsStackPanel Orientation="Vertical" />
+                            </ItemsPanelTemplate>
+                        </ListView.ItemsPanel>
                         <ListView.HeaderTemplate>
                             <DataTemplate>
                                 <Grid Padding="8,4" Background="{ThemeResource SystemFillColorNeutralBackgroundBrush}">
@@ -630,7 +637,14 @@
                             </Button>
                         </Grid>
 
-                        <ListView x:Name="ActivityFeedList" MaxHeight="250" SelectionMode="None">
+                        <ListView x:Name="ActivityFeedList" MaxHeight="250" SelectionMode="None"
+                                  AutomationProperties.Name="Recent activity list">
+                            <!-- Enable virtualization for better performance -->
+                            <ListView.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <ItemsStackPanel Orientation="Vertical" />
+                                </ItemsPanelTemplate>
+                            </ListView.ItemsPanel>
                             <ListView.ItemTemplate>
                                 <DataTemplate>
                                     <Grid Padding="8,10" ColumnSpacing="12">
@@ -944,7 +958,14 @@
 
                         <TextBlock Text="Recent Integrity Events" Style="{StaticResource BodyStrongTextBlockStyle}" />
 
-                        <ListView x:Name="IntegrityEventsList" MaxHeight="300" SelectionMode="None">
+                        <ListView x:Name="IntegrityEventsList" MaxHeight="300" SelectionMode="None"
+                                  AutomationProperties.Name="Integrity events list">
+                            <!-- Enable virtualization for better performance -->
+                            <ListView.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <ItemsStackPanel Orientation="Vertical" />
+                                </ItemsPanelTemplate>
+                            </ListView.ItemsPanel>
                             <ListView.ItemTemplate>
                                 <DataTemplate>
                                     <Grid Padding="8,10" ColumnSpacing="12">
