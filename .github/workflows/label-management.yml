@@ -5,7 +5,17 @@ on:
     types: [opened, edited, reopened]
   pull_request:
     types: [opened, edited, reopened, synchronize]
+  push:
+    branches: [main, master]
+    paths:
+      - '.github/labels.yml'
   workflow_dispatch:
+    inputs:
+      sync_labels:
+        description: 'Sync labels from labels.yml'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   issues: write
@@ -110,3 +120,22 @@ jobs:
               issue_number: context.issue.number,
               labels: [sizeLabel]
             });
+
+  sync-labels:
+    name: Sync Repository Labels
+    runs-on: ubuntu-latest
+    if: |
+      (github.event_name == 'push' && contains(github.event.commits.*.modified, '.github/labels.yml')) ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.sync_labels == 'true')
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Sync labels
+        uses: EndBug/label-sync@v2
+        with:
+          config-file: .github/labels.yml
+          delete-other-labels: false
+          dry-run: false
+          token: ${{ secrets.GITHUB_TOKEN }}
