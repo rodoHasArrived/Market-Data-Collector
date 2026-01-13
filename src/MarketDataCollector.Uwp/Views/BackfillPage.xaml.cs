@@ -46,6 +46,17 @@ public sealed partial class BackfillPage : Page
         BackfillHistoryList.ItemsSource = _backfillHistory;
 
         Loaded += BackfillPage_Loaded;
+        Unloaded += BackfillPage_Unloaded;
+    }
+
+    private void BackfillPage_Unloaded(object sender, RoutedEventArgs e)
+    {
+        // Stop timer to prevent memory leaks when navigating away
+        _elapsedTimer.Stop();
+        _elapsedTimer.Tick -= ElapsedTimer_Tick;
+
+        // Cancel any running backfill operation
+        _cts?.Cancel();
     }
 
     private async void BackfillPage_Loaded(object sender, RoutedEventArgs e)

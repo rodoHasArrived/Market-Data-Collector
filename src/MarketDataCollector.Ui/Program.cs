@@ -3276,8 +3276,32 @@ loadConfig();
 loadStatus();
 loadBackfillStatus();
 loadDataSources();
-setInterval(loadStatus, 2000);
-setInterval(loadBackfillStatus, 5000);
+
+// Store interval IDs for cleanup
+const intervals = {{
+  status: setInterval(loadStatus, 2000),
+  backfill: setInterval(loadBackfillStatus, 5000)
+}};
+
+// Cleanup intervals when page is hidden to prevent memory leaks
+document.addEventListener('visibilitychange', () => {{
+  if (document.hidden) {{
+    clearInterval(intervals.status);
+    clearInterval(intervals.backfill);
+  }} else {{
+    // Resume polling when page becomes visible
+    loadStatus();
+    loadBackfillStatus();
+    intervals.status = setInterval(loadStatus, 2000);
+    intervals.backfill = setInterval(loadBackfillStatus, 5000);
+  }}
+}});
+
+// Cleanup on page unload
+window.addEventListener('pagehide', () => {{
+  clearInterval(intervals.status);
+  clearInterval(intervals.backfill);
+}});
 </script>
 </body>
 </html>";
@@ -4389,8 +4413,22 @@ loadProviderData();
 loadFailoverConfig();
 loadMappings();
 
-// Refresh every 5 seconds
-setInterval(loadProviderData, 5000);
+// Store interval ID for cleanup
+let providerInterval = setInterval(loadProviderData, 5000);
+
+// Cleanup interval when page is hidden to prevent memory leaks
+document.addEventListener('visibilitychange', () => {{
+  if (document.hidden) {{
+    clearInterval(providerInterval);
+  }} else {{
+    loadProviderData();
+    providerInterval = setInterval(loadProviderData, 5000);
+  }}
+}});
+
+window.addEventListener('pagehide', () => {{
+  clearInterval(providerInterval);
+}});
 </script>
 </body>
 </html>";

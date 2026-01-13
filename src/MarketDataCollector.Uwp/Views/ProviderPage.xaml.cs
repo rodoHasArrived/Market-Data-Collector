@@ -17,6 +17,11 @@ namespace MarketDataCollector.Uwp.Views;
 /// </summary>
 public sealed partial class ProviderPage : Page
 {
+    // Static cached brushes for latency indicators to avoid allocations on every tick
+    private static readonly SolidColorBrush LatencyGoodBrush = new(Color.FromArgb(255, 72, 187, 120));
+    private static readonly SolidColorBrush LatencyMediumBrush = new(Color.FromArgb(255, 237, 137, 54));
+    private static readonly SolidColorBrush LatencyPoorBrush = new(Color.FromArgb(255, 245, 101, 101));
+
     private readonly ConfigService _configService;
     private readonly CredentialService _credentialService;
     private readonly DispatcherTimer _healthTimer;
@@ -100,12 +105,10 @@ public sealed partial class ProviderPage : Page
         LatencyDisplayText.Text = $"{latency}ms";
         CurrentLatencyText.Text = $"{latency}ms";
 
-        var color = latency < 20
-            ? Color.FromArgb(255, 72, 187, 120)
-            : latency < 50
-                ? Color.FromArgb(255, 237, 137, 54)
-                : Color.FromArgb(255, 245, 101, 101);
-        LatencyDisplayText.Foreground = new SolidColorBrush(color);
+        // Use cached brushes to avoid allocations on every tick
+        LatencyDisplayText.Foreground = latency < 20 ? LatencyGoodBrush
+            : latency < 50 ? LatencyMediumBrush
+            : LatencyPoorBrush;
 
         // Calculate stats
         double sum = 0, max = 0;

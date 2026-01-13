@@ -19,6 +19,19 @@ using Microsoft.Windows.AppNotifications.Builder;
 namespace MarketDataCollector.Uwp.Views;
 
 /// <summary>
+/// Shared cached brushes for settings UI to avoid repeated allocations.
+/// </summary>
+internal static class SettingsBrushes
+{
+    public static readonly SolidColorBrush Green = new(Color.FromArgb(255, 72, 187, 120));
+    public static readonly SolidColorBrush Yellow = new(Color.FromArgb(255, 237, 137, 54));
+    public static readonly SolidColorBrush Red = new(Color.FromArgb(255, 245, 101, 101));
+    public static readonly SolidColorBrush Gray = new(Color.FromArgb(255, 160, 160, 160));
+    public static readonly SolidColorBrush Blue = new(Color.FromArgb(255, 102, 126, 234));
+    public static readonly SolidColorBrush Purple = new(Color.FromArgb(255, 128, 90, 213));
+}
+
+/// <summary>
 /// Enhanced settings page with notifications, config export/import, system status,
 /// and comprehensive credential management with testing and expiration tracking.
 /// </summary>
@@ -29,13 +42,6 @@ public sealed partial class SettingsPage : Page
     private readonly OAuthRefreshService _oauthRefreshService;
     private readonly ObservableCollection<CredentialDisplayInfo> _storedCredentials = new();
     private readonly ObservableCollection<ActivityItem> _recentActivity = new();
-
-    // Colors for status indicators
-    private static readonly SolidColorBrush GreenBrush = new(Color.FromArgb(255, 72, 187, 120));
-    private static readonly SolidColorBrush YellowBrush = new(Color.FromArgb(255, 237, 137, 54));
-    private static readonly SolidColorBrush RedBrush = new(Color.FromArgb(255, 245, 101, 101));
-    private static readonly SolidColorBrush GrayBrush = new(Color.FromArgb(255, 160, 160, 160));
-    private static readonly SolidColorBrush BlueBrush = new(Color.FromArgb(255, 102, 126, 234));
 
     public SettingsPage()
     {
@@ -817,16 +823,10 @@ public sealed partial class SettingsPage : Page
 
 /// <summary>
 /// Display wrapper for credential information with UI-specific properties.
+/// Uses shared SettingsBrushes to avoid duplicate brush allocations.
 /// </summary>
 public class CredentialDisplayInfo
 {
-    private static readonly SolidColorBrush GreenBrush = new(Color.FromArgb(255, 72, 187, 120));
-    private static readonly SolidColorBrush YellowBrush = new(Color.FromArgb(255, 237, 137, 54));
-    private static readonly SolidColorBrush RedBrush = new(Color.FromArgb(255, 245, 101, 101));
-    private static readonly SolidColorBrush GrayBrush = new(Color.FromArgb(255, 160, 160, 160));
-    private static readonly SolidColorBrush BlueBrush = new(Color.FromArgb(255, 102, 126, 234));
-    private static readonly SolidColorBrush PurpleBrush = new(Color.FromArgb(255, 128, 90, 213));
-
     private readonly Models.CredentialInfo _credential;
 
     public CredentialDisplayInfo(Models.CredentialInfo credential)
@@ -842,20 +842,20 @@ public class CredentialDisplayInfo
 
     public SolidColorBrush TestStatusColor => _credential.TestStatus switch
     {
-        CredentialTestStatus.Success => GreenBrush,
-        CredentialTestStatus.Failed => RedBrush,
-        CredentialTestStatus.Expired => RedBrush,
-        CredentialTestStatus.Testing => BlueBrush,
-        _ => GrayBrush
+        CredentialTestStatus.Success => SettingsBrushes.Green,
+        CredentialTestStatus.Failed => SettingsBrushes.Red,
+        CredentialTestStatus.Expired => SettingsBrushes.Red,
+        CredentialTestStatus.Testing => SettingsBrushes.Blue,
+        _ => SettingsBrushes.Gray
     };
 
     public SolidColorBrush ExpirationColor
     {
         get
         {
-            if (_credential.IsExpired) return RedBrush;
-            if (_credential.IsExpiringSoon) return YellowBrush;
-            return GrayBrush;
+            if (_credential.IsExpired) return SettingsBrushes.Red;
+            if (_credential.IsExpiringSoon) return SettingsBrushes.Yellow;
+            return SettingsBrushes.Gray;
         }
     }
 
@@ -869,9 +869,9 @@ public class CredentialDisplayInfo
 
     public SolidColorBrush TypeBadgeColor => _credential.CredentialType switch
     {
-        CredentialType.OAuth2Token => PurpleBrush,
-        CredentialType.ApiKeyWithSecret => BlueBrush,
-        _ => GrayBrush
+        CredentialType.OAuth2Token => SettingsBrushes.Purple,
+        CredentialType.ApiKeyWithSecret => SettingsBrushes.Blue,
+        _ => SettingsBrushes.Gray
     };
 
     public Visibility TypeBadgeVisibility =>
