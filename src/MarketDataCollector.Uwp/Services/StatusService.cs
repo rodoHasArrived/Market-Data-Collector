@@ -105,8 +105,8 @@ public sealed class BackfillApiService
             To = to
         };
 
-        // Use a longer timeout client for backfill operations
-        using var backfillClient = _apiClient.CreateBackfillClient();
+        // Use the shared backfill client with longer timeout
+        var backfillClient = _apiClient.GetBackfillClient();
         var response = await _apiClient.PostWithResponseAsync<BackfillResult>(
             "/api/backfill/run",
             request,
@@ -157,8 +157,14 @@ public sealed class BackfillApiService
             Priority = priority
         };
 
-        using var backfillClient = _apiClient.CreateBackfillClient();
-        return await _apiClient.PostAsync<BackfillExecutionResponse>("/api/backfill/gap-fill", request, ct);
+        // Use the shared backfill client with longer timeout
+        var backfillClient = _apiClient.GetBackfillClient();
+        var response = await _apiClient.PostWithResponseAsync<BackfillExecutionResponse>(
+            "/api/backfill/gap-fill",
+            request,
+            ct,
+            backfillClient);
+        return response.Data;
     }
 
     /// <summary>
