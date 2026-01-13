@@ -576,4 +576,252 @@
     <x:Double x:Key="LargeSpacing">16</x:Double>
     <x:Double x:Key="XLargeSpacing">24</x:Double>
 
+    <!-- ========================================== -->
+    <!-- INTERACTIVE CARD STYLES -->
+    <!-- ========================================== -->
+
+    <!-- Clickable Card Style (for navigation items) -->
+    <Style x:Key="ClickableCardStyle" TargetType="Border" BasedOn="{StaticResource CardStyle}">
+        <Setter Property="BorderBrush" Value="{StaticResource ConsoleBorderBrush}" />
+    </Style>
+
+    <!-- Elevated Card Style (with subtle shadow effect) -->
+    <Style x:Key="ElevatedCardStyle" TargetType="Border" BasedOn="{StaticResource CardStyle}">
+        <Setter Property="Background" Value="{StaticResource ConsoleBackgroundLightBrush}" />
+        <Setter Property="BorderThickness" Value="0" />
+    </Style>
+
+    <!-- Outlined Card Style (transparent background, visible border) -->
+    <Style x:Key="OutlinedCardStyle" TargetType="Border">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="{StaticResource ConsoleBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="Padding" Value="20" />
+    </Style>
+
+    <!-- ========================================== -->
+    <!-- ENHANCED BADGE STYLES -->
+    <!-- ========================================== -->
+
+    <!-- Success Badge -->
+    <Style x:Key="SuccessBadgeStyle" TargetType="Border">
+        <Setter Property="Background" Value="#1A3fb950" />
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="Padding" Value="8,4" />
+    </Style>
+
+    <!-- Warning Badge -->
+    <Style x:Key="WarningBadgeStyle" TargetType="Border">
+        <Setter Property="Background" Value="#1Ad29922" />
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="Padding" Value="8,4" />
+    </Style>
+
+    <!-- Error Badge -->
+    <Style x:Key="ErrorBadgeStyle" TargetType="Border">
+        <Setter Property="Background" Value="#1Af85149" />
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="Padding" Value="8,4" />
+    </Style>
+
+    <!-- Info Badge -->
+    <Style x:Key="InfoBadgeStyle" TargetType="Border">
+        <Setter Property="Background" Value="#1A58a6ff" />
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="Padding" Value="8,4" />
+    </Style>
+
+    <!-- Neutral Badge -->
+    <Style x:Key="NeutralBadgeStyle" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource ConsoleBackgroundLightBrush}" />
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="Padding" Value="8,4" />
+    </Style>
+
+    <!-- ========================================== -->
+    <!-- TOOLTIP STYLES -->
+    <!-- ========================================== -->
+
+    <!-- Dark Tooltip Style -->
+    <Style x:Key="DarkTooltipStyle" TargetType="ToolTip">
+        <Setter Property="Background" Value="{StaticResource ConsoleBackgroundDarkBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource ConsoleTextPrimaryBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource ConsoleBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="8,6" />
+    </Style>
+
+    <!-- ========================================== -->
+    <!-- LOADING INDICATOR STYLES -->
+    <!-- ========================================== -->
+
+    <!-- Loading Overlay Style -->
+    <Style x:Key="LoadingOverlayStyle" TargetType="Grid">
+        <Setter Property="Background" Value="#80000000" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="VerticalAlignment" Value="Stretch" />
+    </Style>
+
+    <!-- Loading Text Style -->
+    <Style x:Key="LoadingTextStyle" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{StaticResource ConsoleTextSecondaryBrush}" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="Margin" Value="0,12,0,0" />
+    </Style>
+
+    <!-- ========================================== -->
+    <!-- SKELETON LOADING STYLES -->
+    <!-- ========================================== -->
+
+    <!-- Skeleton Base -->
+    <SolidColorBrush x:Key="SkeletonBackgroundBrush" Color="#21262d" />
+    <SolidColorBrush x:Key="SkeletonHighlightBrush" Color="#30363d" />
+
+    <!-- Skeleton Text Block -->
+    <Style x:Key="SkeletonTextStyle" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource SkeletonBackgroundBrush}" />
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="Height" Value="16" />
+    </Style>
+
+    <!-- Skeleton Card -->
+    <Style x:Key="SkeletonCardStyle" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource SkeletonBackgroundBrush}" />
+        <Setter Property="CornerRadius" Value="12" />
+    </Style>
+
+    <!-- ========================================== -->
+    <!-- EMPTY STATE STYLES -->
+    <!-- ========================================== -->
+
+    <!-- Empty State Container -->
+    <Style x:Key="EmptyStateContainerStyle" TargetType="StackPanel">
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Spacing" Value="16" />
+        <Setter Property="Padding" Value="40" />
+    </Style>
+
+    <!-- Empty State Icon -->
+    <Style x:Key="EmptyStateIconStyle" TargetType="FontIcon">
+        <Setter Property="FontSize" Value="48" />
+        <Setter Property="Foreground" Value="{StaticResource ConsoleTextMutedBrush}" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+    </Style>
+
+    <!-- Empty State Title -->
+    <Style x:Key="EmptyStateTitleStyle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="18" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{StaticResource ConsoleTextSecondaryBrush}" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+    </Style>
+
+    <!-- Empty State Description -->
+    <Style x:Key="EmptyStateDescriptionStyle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="Foreground" Value="{StaticResource ConsoleTextMutedBrush}" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="TextAlignment" Value="Center" />
+        <Setter Property="MaxWidth" Value="400" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+    </Style>
+
+    <!-- ========================================== -->
+    <!-- STAT/METRIC DISPLAY STYLES -->
+    <!-- ========================================== -->
+
+    <!-- Stat Container -->
+    <Style x:Key="StatContainerStyle" TargetType="StackPanel">
+        <Setter Property="Spacing" Value="4" />
+    </Style>
+
+    <!-- Stat Value (compact) -->
+    <Style x:Key="StatValueCompactStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="Cascadia Code, JetBrains Mono, Consolas, monospace" />
+        <Setter Property="FontSize" Value="18" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Foreground" Value="{StaticResource ConsoleTextPrimaryBrush}" />
+    </Style>
+
+    <!-- Stat Label (compact) -->
+    <Style x:Key="StatLabelCompactStyle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="Foreground" Value="{StaticResource ConsoleTextMutedBrush}" />
+        <Setter Property="CharacterSpacing" Value="30" />
+    </Style>
+
+    <!-- ========================================== -->
+    <!-- INLINE CODE STYLES -->
+    <!-- ========================================== -->
+
+    <!-- Inline Code Badge -->
+    <Style x:Key="InlineCodeStyle" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource ConsoleBackgroundLightBrush}" />
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="Padding" Value="6,2" />
+    </Style>
+
+    <!-- Inline Code Text -->
+    <Style x:Key="InlineCodeTextStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="Cascadia Code, JetBrains Mono, Consolas, monospace" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Foreground" Value="{StaticResource AccentCyanBrush}" />
+    </Style>
+
+    <!-- ========================================== -->
+    <!-- KEYBOARD SHORTCUT STYLES -->
+    <!-- ========================================== -->
+
+    <!-- Keyboard Key Badge -->
+    <Style x:Key="KeyboardKeyStyle" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource ConsoleBackgroundLightBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource ConsoleBorderHoverBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="Padding" Value="6,3" />
+        <Setter Property="MinWidth" Value="24" />
+    </Style>
+
+    <!-- Keyboard Key Text -->
+    <Style x:Key="KeyboardKeyTextStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="Cascadia Code, Consolas, monospace" />
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{StaticResource ConsoleTextSecondaryBrush}" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+    </Style>
+
+    <!-- ========================================== -->
+    <!-- PROGRESS INDICATOR STYLES -->
+    <!-- ========================================== -->
+
+    <!-- Progress Ring Container -->
+    <Style x:Key="ProgressRingContainerStyle" TargetType="Grid">
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <!-- Progress Bar Accent Colors -->
+    <SolidColorBrush x:Key="ProgressSuccessBrush" Color="{StaticResource ConsoleAccentGreen}" />
+    <SolidColorBrush x:Key="ProgressWarningBrush" Color="{StaticResource ConsoleAccentOrange}" />
+    <SolidColorBrush x:Key="ProgressErrorBrush" Color="{StaticResource ConsoleAccentRed}" />
+    <SolidColorBrush x:Key="ProgressInfoBrush" Color="{StaticResource ConsoleAccentBlue}" />
+
+    <!-- ========================================== -->
+    <!-- RESPONSIVE LAYOUT CONSTANTS -->
+    <!-- ========================================== -->
+
+    <x:Double x:Key="CompactBreakpoint">640</x:Double>
+    <x:Double x:Key="MediumBreakpoint">1007</x:Double>
+    <x:Double x:Key="WideBreakpoint">1366</x:Double>
+
+    <x:Double x:Key="SidebarWidthCompact">48</x:Double>
+    <x:Double x:Key="SidebarWidthExpanded">280</x:Double>
+
+    <x:Double x:Key="ContentMaxWidth">1400</x:Double>
+    <x:Double x:Key="FormMaxWidth">600</x:Double>
+
 </ResourceDictionary>
