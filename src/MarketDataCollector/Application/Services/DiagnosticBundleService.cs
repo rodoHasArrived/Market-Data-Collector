@@ -19,12 +19,6 @@ public sealed class DiagnosticBundleService
     private readonly Func<MetricsSnapshot>? _metricsProvider;
     private readonly Func<AppConfig>? _configProvider;
 
-    private static readonly string[] SensitiveKeys = new[]
-    {
-        "password", "secret", "key", "token", "apikey", "api_key",
-        "connectionstring", "credential", "auth"
-    };
-
     public DiagnosticBundleService(
         string dataRoot,
         Func<MetricsSnapshot>? metricsProvider = null,
@@ -336,10 +330,10 @@ public sealed class DiagnosticBundleService
 
             if (relevantPrefixes.Any(p => key.StartsWith(p, StringComparison.OrdinalIgnoreCase)))
             {
-                // Sanitize sensitive values
-                if (IsSensitiveKey(key))
+                // Sanitize sensitive values using centralized masker (QW-78)
+                if (SensitiveValueMasker.IsSensitiveKey(key))
                 {
-                    value = "[REDACTED]";
+                    value = SensitiveValueMasker.RedactedText;
                 }
                 else if (key.Equals("PATH", StringComparison.OrdinalIgnoreCase))
                 {
@@ -391,6 +385,10 @@ public sealed class DiagnosticBundleService
         return $"{bytes / 1024.0 / 1024.0 / 1024.0:F2} GB";
     }
 
+    /// <summary>
+    /// Sanitizes configuration by masking sensitive credential fields.
+    /// Uses <see cref="SensitiveValueMasker"/> constants (QW-78).
+    /// </summary>
     private static object SanitizeConfig(AppConfig config)
     {
         return new
@@ -400,8 +398,8 @@ public sealed class DiagnosticBundleService
             dataSource = config.DataSource.ToString(),
             alpaca = config.Alpaca != null ? new
             {
-                keyId = "[REDACTED]",
-                secretKey = "[REDACTED]",
+                keyId = SensitiveValueMasker.RedactedText,
+                secretKey = SensitiveValueMasker.RedactedText,
                 feed = config.Alpaca.Feed,
                 useSandbox = config.Alpaca.UseSandbox
             } : null,
@@ -412,31 +410,13 @@ public sealed class DiagnosticBundleService
         };
     }
 
+    /// <summary>
+    /// Sanitizes log content by masking sensitive values.
+    /// Delegates to <see cref="SensitiveValueMasker"/> (QW-78).
+    /// </summary>
     private static string SanitizeLogContent(string content)
     {
-        // Remove potential sensitive data patterns
-        var patterns = new[]
-        {
-            (@"(password|secret|key|token|apikey)[\s:=]+[^\s\]]+", "$1=[REDACTED]"),
-            (@"Bearer\s+[A-Za-z0-9\-_]+", "Bearer [REDACTED]"),
-            (@"Basic\s+[A-Za-z0-9+/=]+", "Basic [REDACTED]")
-        };
-
-        var result = content;
-        foreach (var (pattern, replacement) in patterns)
-        {
-            result = System.Text.RegularExpressions.Regex.Replace(
-                result, pattern, replacement,
-                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-        }
-
-        return result;
-    }
-
-    private static bool IsSensitiveKey(string key)
-    {
-        return SensitiveKeys.Any(s =>
-            key.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0);
+        return SensitiveValueMasker.SanitizeContent(content);
     }
 }
 
