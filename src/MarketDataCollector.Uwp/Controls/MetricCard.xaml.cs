@@ -15,6 +15,32 @@ namespace MarketDataCollector.Uwp.Controls;
 /// </summary>
 public sealed partial class MetricCard : UserControl
 {
+    #region Cached Brushes (Performance Optimization)
+
+    // Static cached brushes to avoid repeated allocations
+    private static readonly SolidColorBrush s_successBrush = new(Color.FromArgb(255, 63, 185, 80));
+    private static readonly SolidColorBrush s_dangerBrush = new(Color.FromArgb(255, 248, 81, 73));
+    private static readonly SolidColorBrush s_warningBrush = new(Color.FromArgb(255, 210, 153, 34));
+    private static readonly SolidColorBrush s_infoBrush = new(Color.FromArgb(255, 88, 166, 255));
+    private static readonly SolidColorBrush s_defaultBrush = new(Color.FromArgb(255, 230, 237, 243));
+
+    // Semi-transparent brushes for trend badge backgrounds
+    private static readonly SolidColorBrush s_successBgBrush = new(Color.FromArgb(26, 63, 185, 80));
+    private static readonly SolidColorBrush s_dangerBgBrush = new(Color.FromArgb(26, 248, 81, 73));
+    private static readonly SolidColorBrush s_warningBgBrush = new(Color.FromArgb(26, 210, 153, 34));
+    private static readonly SolidColorBrush s_infoBgBrush = new(Color.FromArgb(26, 88, 166, 255));
+    private static readonly SolidColorBrush s_defaultBgBrush = new(Color.FromArgb(26, 230, 237, 243));
+
+    #endregion
+
+    // Reusable PointCollection for sparkline updates
+    private readonly PointCollection _sparklinePoints = new();
+
+    // Fixed-size circular buffer for sparkline data
+    private const int SparklineCapacity = 20;
+    private readonly double[] _sparklineBuffer = new double[SparklineCapacity];
+    private int _sparklineIndex = 0;
+    private int _sparklineCount = 0;
     #region Dependency Properties
 
     public static readonly DependencyProperty ValueProperty =
@@ -161,16 +187,15 @@ public sealed partial class MetricCard : UserControl
 
     private void ApplyVariantStyle()
     {
-        var (accentColor, trendBackground) = Variant switch
+        // Use cached brushes based on variant - no allocations
+        var (accentBrush, trendBgBrush) = Variant switch
         {
-            MetricCardVariant.Success => (Color.FromArgb(255, 63, 185, 80), Color.FromArgb(26, 63, 185, 80)),
-            MetricCardVariant.Danger => (Color.FromArgb(255, 248, 81, 73), Color.FromArgb(26, 248, 81, 73)),
-            MetricCardVariant.Warning => (Color.FromArgb(255, 210, 153, 34), Color.FromArgb(26, 210, 153, 34)),
-            MetricCardVariant.Info => (Color.FromArgb(255, 88, 166, 255), Color.FromArgb(26, 88, 166, 255)),
-            _ => (Color.FromArgb(255, 230, 237, 243), Color.FromArgb(26, 230, 237, 243))
+            MetricCardVariant.Success => (s_successBrush, s_successBgBrush),
+            MetricCardVariant.Danger => (s_dangerBrush, s_dangerBgBrush),
+            MetricCardVariant.Warning => (s_warningBrush, s_warningBgBrush),
+            MetricCardVariant.Info => (s_infoBrush, s_infoBgBrush),
+            _ => (s_defaultBrush, s_defaultBgBrush)
         };
-
-        var accentBrush = new SolidColorBrush(accentColor);
 
         // Apply bottom border accent
         CardBorder.BorderBrush = accentBrush;
@@ -179,7 +204,7 @@ public sealed partial class MetricCard : UserControl
         ValueText.Foreground = accentBrush;
 
         // Apply trend badge styling
-        TrendBadge.Background = new SolidColorBrush(trendBackground);
+        TrendBadge.Background = trendBgBrush;
         TrendText.Foreground = accentBrush;
 
         // Apply sparkline color
@@ -188,13 +213,14 @@ public sealed partial class MetricCard : UserControl
 
     private SolidColorBrush GetAccentBrush()
     {
+        // Return cached brushes - no allocations
         return Variant switch
         {
-            MetricCardVariant.Success => new SolidColorBrush(Color.FromArgb(255, 63, 185, 80)),
-            MetricCardVariant.Danger => new SolidColorBrush(Color.FromArgb(255, 248, 81, 73)),
-            MetricCardVariant.Warning => new SolidColorBrush(Color.FromArgb(255, 210, 153, 34)),
-            MetricCardVariant.Info => new SolidColorBrush(Color.FromArgb(255, 88, 166, 255)),
-            _ => new SolidColorBrush(Color.FromArgb(255, 230, 237, 243))
+            MetricCardVariant.Success => s_successBrush,
+            MetricCardVariant.Danger => s_dangerBrush,
+            MetricCardVariant.Warning => s_warningBrush,
+            MetricCardVariant.Info => s_infoBrush,
+            _ => s_defaultBrush
         };
     }
 
@@ -231,38 +257,55 @@ public sealed partial class MetricCard : UserControl
         var availableHeight = canvasHeight - (padding * 2);
         var stepX = availableWidth / (data.Count - 1);
 
-        var points = new PointCollection();
+        // Clear and reuse PointCollection instead of allocating new one
+        _sparklinePoints.Clear();
 
         for (var i = 0; i < data.Count; i++)
         {
             var x = padding + (i * stepX);
             var normalizedY = (data[i] - minValue) / range;
             var y = canvasHeight - padding - (normalizedY * availableHeight);
-            points.Add(new Point(x, y));
+            _sparklinePoints.Add(new Point(x, y));
         }
 
-        SparklinePath.Points = points;
+        SparklinePath.Points = _sparklinePoints;
     }
 
     /// <summary>
-    /// Updates the sparkline with new data points. Call this to animate new data.
+    /// Updates the sparkline with new data points using O(1) circular buffer.
+    /// Call this to animate new data without allocations.
     /// </summary>
     public void AddSparklinePoint(double value)
     {
+        // Use internal circular buffer for O(1) operations
+        _sparklineBuffer[_sparklineIndex] = value;
+        _sparklineIndex = (_sparklineIndex + 1) % SparklineCapacity;
+        if (_sparklineCount < SparklineCapacity) _sparklineCount++;
+
+        // Also update the SparklineData property if it exists (for binding compatibility)
         if (SparklineData == null)
         {
             SparklineData = new List<double>();
         }
 
-        var data = new List<double>(SparklineData) { value };
-
-        // Keep only the last 20 points for performance
-        while (data.Count > 20)
+        // Only rebuild the list when necessary (for external consumers)
+        // This is still needed for data binding but avoids the RemoveAt(0) O(n) operation
+        if (_sparklineCount == SparklineCapacity)
         {
-            data.RemoveAt(0);
+            // Efficient rebuild: copy from circular buffer in order
+            var newData = new List<double>(_sparklineCount);
+            for (int i = 0; i < _sparklineCount; i++)
+            {
+                var idx = (_sparklineIndex - _sparklineCount + i + SparklineCapacity) % SparklineCapacity;
+                newData.Add(_sparklineBuffer[idx]);
+            }
+            SparklineData = newData;
         }
-
-        SparklineData = data;
+        else
+        {
+            // Still filling up the buffer
+            ((List<double>)SparklineData).Add(value);
+        }
     }
 }
 
