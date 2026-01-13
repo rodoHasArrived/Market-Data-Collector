@@ -80,12 +80,17 @@
         </NavigationView.AutoSuggestBox>
 
         <NavigationView.MenuItems>
-            <NavigationViewItem Content="Dashboard" Tag="Dashboard" IsSelected="True">
+            <!-- Primary Navigation -->
+            <NavigationViewItem Content="Dashboard" Tag="Dashboard" IsSelected="True"
+                                AutomationProperties.Name="Dashboard - View system overview and metrics"
+                                ToolTipService.ToolTip="System overview and real-time metrics">
                 <NavigationViewItem.Icon>
                     <FontIcon Glyph="&#xE80F;" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
-            <NavigationViewItem Content="Watchlist" Tag="Watchlist">
+            <NavigationViewItem Content="Watchlist" Tag="Watchlist"
+                                AutomationProperties.Name="Watchlist - View favorite symbols"
+                                ToolTipService.ToolTip="Quick access to your favorite symbols">
                 <NavigationViewItem.Icon>
                     <FontIcon Glyph="&#xE728;" />
                 </NavigationViewItem.Icon>
@@ -93,18 +98,25 @@
 
             <NavigationViewItemSeparator />
 
-            <NavigationViewItemHeader Content="Data Sources" />
-            <NavigationViewItem Content="Data Provider" Tag="Provider">
+            <!-- Data Sources Section -->
+            <NavigationViewItemHeader Content="DATA SOURCES" />
+            <NavigationViewItem Content="Provider" Tag="Provider"
+                                AutomationProperties.Name="Data Provider - Configure active data provider"
+                                ToolTipService.ToolTip="Configure active data provider">
                 <NavigationViewItem.Icon>
                     <FontIcon Glyph="&#xE703;" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
-            <NavigationViewItem Content="Multi-Source Config" Tag="DataSources">
+            <NavigationViewItem Content="Multi-Source" Tag="DataSources"
+                                AutomationProperties.Name="Multi-Source Config - Configure multiple data sources"
+                                ToolTipService.ToolTip="Configure multiple data sources and failover">
                 <NavigationViewItem.Icon>
                     <FontIcon Glyph="&#xE943;" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
-            <NavigationViewItem Content="Plugins" Tag="Plugins">
+            <NavigationViewItem Content="Plugins" Tag="Plugins"
+                                AutomationProperties.Name="Plugins - Manage extensions and plugins"
+                                ToolTipService.ToolTip="Manage extensions and plugins">
                 <NavigationViewItem.Icon>
                     <FontIcon Glyph="&#xEA86;" />
                 </NavigationViewItem.Icon>
@@ -112,23 +124,32 @@
 
             <NavigationViewItemSeparator />
 
-            <NavigationViewItemHeader Content="Data Management" />
-            <NavigationViewItem Content="Symbols" Tag="Symbols">
+            <!-- Data Management Section -->
+            <NavigationViewItemHeader Content="DATA" />
+            <NavigationViewItem Content="Symbols" Tag="Symbols"
+                                AutomationProperties.Name="Symbols - Manage symbol subscriptions"
+                                ToolTipService.ToolTip="Manage symbol subscriptions">
                 <NavigationViewItem.Icon>
                     <FontIcon Glyph="&#xE9D9;" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
-            <NavigationViewItem Content="Symbol Mapping" Tag="SymbolMapping">
+            <NavigationViewItem Content="Mapping" Tag="SymbolMapping"
+                                AutomationProperties.Name="Symbol Mapping - Cross-reference provider symbols"
+                                ToolTipService.ToolTip="Cross-reference symbols across providers">
                 <NavigationViewItem.Icon>
                     <FontIcon Glyph="&#xE8AB;" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
-            <NavigationViewItem Content="Storage" Tag="Storage">
+            <NavigationViewItem Content="Storage" Tag="Storage"
+                                AutomationProperties.Name="Storage - View storage usage and settings"
+                                ToolTipService.ToolTip="View storage usage and data lifecycle">
                 <NavigationViewItem.Icon>
                     <FontIcon Glyph="&#xE8B7;" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
-            <NavigationViewItem Content="Backfill" Tag="Backfill">
+            <NavigationViewItem Content="Backfill" Tag="Backfill"
+                                AutomationProperties.Name="Backfill - Download historical data"
+                                ToolTipService.ToolTip="Download historical market data">
                 <NavigationViewItem.Icon>
                     <FontIcon Glyph="&#xE787;" />
                 </NavigationViewItem.Icon>
@@ -136,36 +157,51 @@
 
             <NavigationViewItemSeparator />
 
-            <NavigationViewItemHeader Content="Archive &amp; Sessions" />
-            <NavigationViewItem Content="Collection Sessions" Tag="CollectionSessions">
+            <!-- Monitoring Section -->
+            <NavigationViewItemHeader Content="MONITORING" />
+            <NavigationViewItem Content="Sessions" Tag="CollectionSessions"
+                                AutomationProperties.Name="Collection Sessions - View session history"
+                                ToolTipService.ToolTip="View collection session history and uptime">
                 <NavigationViewItem.Icon>
                     <FontIcon Glyph="&#xE8F1;" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
-            <NavigationViewItem Content="Archive Health" Tag="ArchiveHealth">
+            <NavigationViewItem Content="Archive Health" Tag="ArchiveHealth"
+                                AutomationProperties.Name="Archive Health - Monitor data integrity"
+                                ToolTipService.ToolTip="Monitor archive integrity and data quality">
                 <NavigationViewItem.Icon>
                     <FontIcon Glyph="&#xE9F5;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem Content="Service Manager" Tag="ServiceManager"
+                                AutomationProperties.Name="Service Manager - Control collector services"
+                                ToolTipService.ToolTip="Start, stop, and monitor collector services">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE912;" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
 
             <NavigationViewItemSeparator />
 
-            <NavigationViewItem Content="Service Manager" Tag="ServiceManager">
-                <NavigationViewItem.Icon>
-                    <FontIcon Glyph="&#xE912;" />
-                </NavigationViewItem.Icon>
-            </NavigationViewItem>
-            <NavigationViewItem Content="Data Export" Tag="DataExport">
+            <!-- Tools Section -->
+            <NavigationViewItemHeader Content="TOOLS" />
+            <NavigationViewItem Content="Export" Tag="DataExport"
+                                AutomationProperties.Name="Data Export - Export collected data"
+                                ToolTipService.ToolTip="Export data to various formats">
                 <NavigationViewItem.Icon>
                     <FontIcon Glyph="&#xEDE1;" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
-            <NavigationViewItem Content="Trading Hours" Tag="TradingHours">
+            <NavigationViewItem Content="Trading Hours" Tag="TradingHours"
+                                AutomationProperties.Name="Trading Hours - Configure market hours"
+                                ToolTipService.ToolTip="Configure market hours and holidays">
                 <NavigationViewItem.Icon>
                     <FontIcon Glyph="&#xE823;" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
-            <NavigationViewItem Content="Help" Tag="Help">
+            <NavigationViewItem Content="Help" Tag="Help"
+                                AutomationProperties.Name="Help - Documentation and support"
+                                ToolTipService.ToolTip="Documentation, guides, and support">
                 <NavigationViewItem.Icon>
                     <FontIcon Glyph="&#xE897;" />
                 </NavigationViewItem.Icon>
