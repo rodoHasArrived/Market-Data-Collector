@@ -127,8 +127,9 @@ public sealed partial class DashboardPage : Page
 
     private void DashboardPage_Unloaded(object sender, RoutedEventArgs e)
     {
-        // Stop timer first
+        // Stop and dispose timer to prevent resource leaks
         _unifiedTimer.Stop();
+        _unifiedTimer.Tick -= UnifiedTimer_Tick;
 
         // Cancel any pending InfoBar dismiss operations
         _infoDismissCts?.Cancel();
@@ -446,69 +447,104 @@ public sealed partial class DashboardPage : Page
 
     private async void QuickStartCollector_Click(object sender, RoutedEventArgs e)
     {
-        _isCollectorRunning = true;
-        _isCollectorPaused = false;
-        _collectorStartTime = DateTime.UtcNow;
-        _startTime = DateTime.UtcNow;
-        UpdateCollectorStatus();
-        UpdateQuickActionsCollectorStatus();
-        UpdateStreamStatusBadges();
+        try
+        {
+            _isCollectorRunning = true;
+            _isCollectorPaused = false;
+            _collectorStartTime = DateTime.UtcNow;
+            _startTime = DateTime.UtcNow;
+            UpdateCollectorStatus();
+            UpdateQuickActionsCollectorStatus();
+            UpdateStreamStatusBadges();
 
-        await ShowInfoBarAsync(InfoBarSeverity.Success, "Collector Started", "Market data collection has been started.");
+            await ShowInfoBarAsync(InfoBarSeverity.Success, "Collector Started", "Market data collection has been started.");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error starting collector: {ex.Message}");
+        }
     }
 
     private async void QuickStopCollector_Click(object sender, RoutedEventArgs e)
     {
-        _isCollectorRunning = false;
-        _isCollectorPaused = false;
-        UpdateCollectorStatus();
-        UpdateQuickActionsCollectorStatus();
-        UpdateStreamStatusBadges();
+        try
+        {
+            _isCollectorRunning = false;
+            _isCollectorPaused = false;
+            UpdateCollectorStatus();
+            UpdateQuickActionsCollectorStatus();
+            UpdateStreamStatusBadges();
 
-        await ShowInfoBarAsync(InfoBarSeverity.Warning, "Collector Stopped", "Market data collection has been stopped.");
+            await ShowInfoBarAsync(InfoBarSeverity.Warning, "Collector Stopped", "Market data collection has been stopped.");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error stopping collector: {ex.Message}");
+        }
     }
 
     private async void QuickPauseCollector_Click(object sender, RoutedEventArgs e)
     {
-        if (!_isCollectorRunning) return;
-
-        _isCollectorPaused = !_isCollectorPaused;
-        UpdateCollectorStatus();
-        UpdateQuickActionsCollectorStatus();
-        UpdateStreamStatusBadges();
-
-        if (_isCollectorPaused)
+        try
         {
-            await ShowInfoBarAsync(InfoBarSeverity.Informational, "Collection Paused", "Market data collection has been paused. Click Resume to continue.");
+            if (!_isCollectorRunning) return;
+
+            _isCollectorPaused = !_isCollectorPaused;
+            UpdateCollectorStatus();
+            UpdateQuickActionsCollectorStatus();
+            UpdateStreamStatusBadges();
+
+            if (_isCollectorPaused)
+            {
+                await ShowInfoBarAsync(InfoBarSeverity.Informational, "Collection Paused", "Market data collection has been paused. Click Resume to continue.");
+            }
+            else
+            {
+                await ShowInfoBarAsync(InfoBarSeverity.Success, "Collection Resumed", "Market data collection has been resumed.");
+            }
         }
-        else
+        catch (Exception ex)
         {
-            await ShowInfoBarAsync(InfoBarSeverity.Success, "Collection Resumed", "Market data collection has been resumed.");
+            System.Diagnostics.Debug.WriteLine($"Error pausing collector: {ex.Message}");
         }
     }
 
     private async void StartCollector_Click(object sender, RoutedEventArgs e)
     {
-        _isCollectorRunning = true;
-        _isCollectorPaused = false;
-        _collectorStartTime = DateTime.UtcNow;
-        _startTime = DateTime.UtcNow;
-        UpdateCollectorStatus();
-        UpdateQuickActionsCollectorStatus();
-        UpdateStreamStatusBadges();
+        try
+        {
+            _isCollectorRunning = true;
+            _isCollectorPaused = false;
+            _collectorStartTime = DateTime.UtcNow;
+            _startTime = DateTime.UtcNow;
+            UpdateCollectorStatus();
+            UpdateQuickActionsCollectorStatus();
+            UpdateStreamStatusBadges();
 
-        await ShowInfoBarAsync(InfoBarSeverity.Success, "Collector Started", "Market data collection has been started.");
+            await ShowInfoBarAsync(InfoBarSeverity.Success, "Collector Started", "Market data collection has been started.");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error starting collector: {ex.Message}");
+        }
     }
 
     private async void StopCollector_Click(object sender, RoutedEventArgs e)
     {
-        _isCollectorRunning = false;
-        _isCollectorPaused = false;
-        UpdateCollectorStatus();
-        UpdateQuickActionsCollectorStatus();
-        UpdateStreamStatusBadges();
+        try
+        {
+            _isCollectorRunning = false;
+            _isCollectorPaused = false;
+            UpdateCollectorStatus();
+            UpdateQuickActionsCollectorStatus();
+            UpdateStreamStatusBadges();
 
-        await ShowInfoBarAsync(InfoBarSeverity.Warning, "Collector Stopped", "Market data collection has been stopped.");
+            await ShowInfoBarAsync(InfoBarSeverity.Warning, "Collector Stopped", "Market data collection has been stopped.");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error stopping collector: {ex.Message}");
+        }
     }
 
     private void QuickAddSymbol_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
