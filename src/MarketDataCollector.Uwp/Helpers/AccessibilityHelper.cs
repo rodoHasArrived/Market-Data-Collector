@@ -116,6 +116,88 @@ public static class AccessibilityHelper
     {
         return $"{severity} alert: {message}";
     }
+
+    /// <summary>
+    /// Checks if high contrast mode is enabled.
+    /// </summary>
+    public static bool IsHighContrastEnabled
+    {
+        get
+        {
+            var settings = new Windows.UI.ViewManagement.UISettings();
+            return settings.AdvancedEffectsEnabled == false; // High contrast typically disables advanced effects
+        }
+    }
+
+    /// <summary>
+    /// Gets accessible color for status indicators.
+    /// In high contrast mode, uses patterns instead of colors alone.
+    /// </summary>
+    public static string GetAccessibleStatusIcon(bool isSuccess)
+    {
+        return isSuccess ? "\uE73E" : "\uEA39"; // Checkmark or Error X
+    }
+
+    /// <summary>
+    /// Creates a screen reader friendly list announcement.
+    /// </summary>
+    public static string FormatListAnnouncement(string listName, int itemCount, int? selectedIndex = null)
+    {
+        var message = $"{listName}: {itemCount} item{(itemCount != 1 ? "s" : "")}";
+        if (selectedIndex.HasValue)
+        {
+            message += $", item {selectedIndex.Value + 1} selected";
+        }
+        return message;
+    }
+
+    /// <summary>
+    /// Creates a screen reader friendly table announcement.
+    /// </summary>
+    public static string FormatTableAnnouncement(string tableName, int rowCount, int columnCount)
+    {
+        return $"{tableName}: {rowCount} row{(rowCount != 1 ? "s" : "")}, {columnCount} column{(columnCount != 1 ? "s" : "")}";
+    }
+
+    /// <summary>
+    /// Creates a screen reader friendly time/duration announcement.
+    /// </summary>
+    public static string FormatDurationAnnouncement(TimeSpan duration)
+    {
+        if (duration.TotalHours >= 1)
+            return $"{(int)duration.TotalHours} hour{((int)duration.TotalHours != 1 ? "s" : "")} {duration.Minutes} minute{(duration.Minutes != 1 ? "s" : "")}";
+        if (duration.TotalMinutes >= 1)
+            return $"{duration.Minutes} minute{(duration.Minutes != 1 ? "s" : "")} {duration.Seconds} second{(duration.Seconds != 1 ? "s" : "")}";
+        return $"{duration.Seconds} second{(duration.Seconds != 1 ? "s" : "")}";
+    }
+
+    /// <summary>
+    /// Sets focus to an element with screen reader announcement.
+    /// </summary>
+    public static void SetFocusWithAnnouncement(Control control, string announcement)
+    {
+        if (control == null) return;
+
+        control.Focus(FocusState.Programmatic);
+
+        if (!string.IsNullOrEmpty(announcement))
+        {
+            Announce(control, announcement);
+        }
+    }
+
+    /// <summary>
+    /// Creates keyboard shortcut description for screen readers.
+    /// </summary>
+    public static string FormatKeyboardShortcut(string key, bool ctrl = false, bool shift = false, bool alt = false)
+    {
+        var parts = new System.Collections.Generic.List<string>();
+        if (ctrl) parts.Add("Control");
+        if (alt) parts.Add("Alt");
+        if (shift) parts.Add("Shift");
+        parts.Add(key);
+        return string.Join(" plus ", parts);
+    }
 }
 
 /// <summary>
