@@ -1,6 +1,6 @@
 // C4 Level 2: Container Diagram
 // Market Data Collector v1.5.0
-// Last Updated: 2026-01-08
+// Last Updated: 2026-01-14
 //
 // This diagram shows the major deployable units within the system.
 // It answers: "What are the major technology choices?"
@@ -62,7 +62,27 @@ digraph C4_Containers {
               label="Web Dashboard\n[ASP.NET / HTML]\n\nBrowser-based monitoring\nReal-time status updates\n/status endpoint"];
 
       CLI [shape=box, style="rounded,filled", fillcolor="#805ad5", fontcolor="white",
-           label="CLI Interface\n[.NET Console]\n\nCommand-line operation\n--backfill, --ui flags"];
+           label="CLI Interface\n[.NET Console]\n\nCommand-line operation\n11+ flags: --wizard, --auto-config\n--backfill, --ui, --dry-run"];
+    }
+
+    // Onboarding & Diagnostics Layer
+    subgraph cluster_onboarding {
+      label="Onboarding & Diagnostics Layer";
+      color="#ed8936";
+      style="rounded";
+      bgcolor="#fffaf0";
+
+      WIZARD [shape=box, style="rounded,filled", fillcolor="#ed8936", fontcolor="white",
+              label="Configuration Wizard\n[Interactive Setup]\n\n8-step guided setup\nProvider detection\nTemplate generation"];
+
+      AUTO_CONFIG [shape=box, style="rounded,filled", fillcolor="#fbd38d",
+                   label="Auto-Configuration\n[Service]\n\nEnv var detection\nUse case presets\nSelf-healing config"];
+
+      DIAGNOSTICS [shape=box, style="rounded,filled", fillcolor="#fbd38d",
+                   label="Diagnostic Services\n[8 Services]\n\nConnectivity testing\nCredential validation\nFirst-run detection"];
+
+      ERROR_FMT [shape=box, style="rounded,filled", fillcolor="#fbd38d",
+                 label="Error Formatter\n[UX Service]\n\n24 error codes\nFriendly messages\nTroubleshooting tips"];
     }
 
     // Core Collector Service
@@ -165,6 +185,15 @@ digraph C4_Containers {
   WEB_UI -> HTTP [label="Status polling"];
   CLI -> CORE [label="In-process"];
 
+  // Relationships - CLI to Onboarding
+  CLI -> WIZARD [label="--wizard", style=dashed, color="#ed8936"];
+  CLI -> AUTO_CONFIG [label="--auto-config", style=dashed, color="#ed8936"];
+  CLI -> DIAGNOSTICS [label="--test-connectivity\n--validate-credentials", style=dashed, color="#ed8936"];
+  WIZARD -> AUTO_CONFIG [style=dashed];
+  AUTO_CONFIG -> CORE [label="Generates config", style=dashed, color="#ed8936"];
+  DIAGNOSTICS -> CORE [label="Pre-flight checks", style=dashed, color="#ed8936"];
+  ERROR_FMT -> CLI [label="Formats errors", style=dashed, color="#ed8936"];
+
   // Relationships - External to Core
   IB -> CORE [label="WebSocket\nL1/L2 streaming", color="#2b6cb0"];
   ALP -> CORE [label="WebSocket\nreal-time", color="#2b6cb0"];
@@ -208,8 +237,9 @@ digraph C4_Containers {
     L1 [shape=oval, style="filled", fillcolor="#08427b", fontcolor="white", label="Person"];
     L2 [shape=box, style="rounded,filled", fillcolor="#438dd5", fontcolor="white", label="Core Container"];
     L3 [shape=box, style="rounded,filled", fillcolor="#805ad5", fontcolor="white", label="UI Container"];
-    L4 [shape=box, style="rounded,filled", fillcolor="#2c7a7b", fontcolor="white", label="Microservice"];
-    L5 [shape=cylinder, style="filled", fillcolor="#fc8181", fontcolor="white", label="Storage"];
-    L6 [shape=box, style="rounded,filled", fillcolor="#38a169", fontcolor="white", label="Monitoring"];
+    L4 [shape=box, style="rounded,filled", fillcolor="#ed8936", fontcolor="white", label="Onboarding/UX"];
+    L5 [shape=box, style="rounded,filled", fillcolor="#2c7a7b", fontcolor="white", label="Microservice"];
+    L6 [shape=cylinder, style="filled", fillcolor="#fc8181", fontcolor="white", label="Storage"];
+    L7 [shape=box, style="rounded,filled", fillcolor="#38a169", fontcolor="white", label="Monitoring"];
   }
 }

@@ -1,6 +1,6 @@
 // Deployment Options Diagram
 // Market Data Collector v1.5.0
-// Last Updated: 2026-01-08
+// Last Updated: 2026-01-14
 //
 // This diagram shows the different deployment options available,
 // from standalone console to distributed Kubernetes clusters.
@@ -227,9 +227,46 @@ digraph DeploymentOptions {
                    label="Files:\n\ndeploy/systemd/mdc.service\nscripts/install/install-service.sh"];
   }
 
+  // Pre-Deployment Setup (NEW)
+  subgraph cluster_presetup {
+    label="Pre-Deployment: First-Time Setup";
+    color="#ed8936";
+    style="rounded";
+    bgcolor="#fffaf0";
+
+    PRESETUP [fillcolor="#fbd38d",
+              label="First-Time Setup\n\nRun before any deployment\nOne-time configuration"];
+
+    subgraph cluster_setup_options {
+      label="Setup Options";
+      style="dashed";
+      color="#c05621";
+
+      SETUP_WIZARD [shape=box, fillcolor="#feebc8",
+                    label="Interactive Wizard\n\ndotnet run -- --wizard\n\n8-step guided setup\nBest for new users"];
+
+      SETUP_AUTO [shape=box, fillcolor="#feebc8",
+                  label="Auto-Configure\n\ndotnet run -- --auto-config\n\nFrom env variables\nBest for CI/CD"];
+
+      SETUP_VALIDATE [shape=box, fillcolor="#feebc8",
+                      label="Validate Setup\n\ndotnet run -- --dry-run\n\nTest without starting\nVerify configuration"];
+    }
+
+    SETUP_OUTPUT [shape=note, fillcolor="#fed7aa",
+                  label="Output:\n\nappsettings.json\nProvider credentials validated\nConnectivity tested"];
+  }
+
   // Decision Flow
   DECISION [shape=diamond, fillcolor="#fef3c7",
             label="Choose Based On:\n\nScale? Complexity?\nTeam expertise?\nInfrastructure?"];
+
+  // Pre-setup flow
+  PRESETUP -> SETUP_WIZARD [style=dashed];
+  PRESETUP -> SETUP_AUTO [style=dashed];
+  SETUP_WIZARD -> SETUP_OUTPUT [color="#ed8936"];
+  SETUP_AUTO -> SETUP_OUTPUT [color="#ed8936"];
+  SETUP_OUTPUT -> SETUP_VALIDATE [style=dashed];
+  SETUP_OUTPUT -> DECISION [color="#ed8936", label="Then choose\ndeployment"];
 
   DECISION -> STANDALONE [label="Simple, single user", color="#38a169"];
   DECISION -> DOCKER [label="Team dev, CI/CD", color="#2b6cb0"];

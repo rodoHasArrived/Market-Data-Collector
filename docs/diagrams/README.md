@@ -1,6 +1,6 @@
 # Architecture Diagrams
 
-**Last Updated:** 2026-01-08
+**Last Updated:** 2026-01-14
 **Version:** 1.5.0
 
 This folder contains architecture diagrams for the Market Data Collector system in Graphviz DOT format.
@@ -21,6 +21,8 @@ This folder contains architecture diagrams for the Market Data Collector system 
 | **Event Pipeline Sequence** | Detailed event processing sequence | `event-pipeline-sequence.dot` |
 | **Resilience Patterns** | Circuit breakers, retry, failover patterns | `resilience-patterns.dot` |
 | **Deployment Options** | Standalone to Kubernetes deployment paths | `deployment-options.dot` |
+| **Onboarding Flow** (NEW) | User journey from first-run to operation | `onboarding-flow.dot` |
+| **CLI Commands** (NEW) | All CLI flags and commands reference | `cli-commands.dot` |
 
 ---
 
@@ -38,7 +40,8 @@ Shows the Market Data Collector in context with:
 ### C4 Level 2: Container Diagram
 
 Shows the major deployable units:
-- **Presentation Layer**: UWP Desktop App, Web Dashboard, CLI Interface
+- **Presentation Layer**: UWP Desktop App, Web Dashboard, CLI Interface (11+ flags)
+- **Onboarding & Diagnostics Layer** (NEW): Configuration Wizard, Auto-Configuration, Diagnostic Services, Error Formatter
 - **Core Collector Service** (.NET 9 Console with 100K bounded channel)
 - **F# Domain Library** (Type-safe validation, discriminated unions)
 - **Contracts Library** (Shared DTOs, MassTransit contracts)
@@ -52,13 +55,14 @@ Shows the major deployable units:
 Detailed view of the core collector internals:
 - **Infrastructure Layer**: Streaming clients (IB, Alpaca, NYSE, StockSharp), Historical providers (9), Connection/Resilience management, Performance optimizations (Pipelines, LockFreeOrderBook)
 - **Domain Layer**: Collectors (Trade, Quote, Depth, HighPerformance), Domain models, F# validation pipeline
-- **Application Layer**: EventPipeline (100K bounded channel), Technical indicators (200+), Config/Monitoring, Backfill service
+- **Application Layer**: EventPipeline (100K bounded channel), Technical indicators (200+), Config/Monitoring, Backfill service, **Onboarding & Diagnostics** (8 new services: AutoConfiguration, Wizard, FirstRunDetector, ConnectivityTest, CredentialValidation, ErrorFormatter, ProgressDisplay, StartupSummary)
 - **Storage Layer**: Write path (WAL, JSONL, Parquet), Compression profiles, Export service, Quality reporting
 - **Messaging Layer**: Composite/Pipeline/MassTransit publishers
 
 ### Data Flow Diagram
 
 Shows data moving through the system:
+0. **First-Time Setup** (NEW): First-run detection → Wizard/Auto-config → Generate appsettings.json
 1. **Streaming Sources**: IB, Alpaca, NYSE, StockSharp → Real-time ingestion
 2. **Historical Sources**: Yahoo, Tiingo, Finnhub, Polygon → Batch backfill
 3. **Processing**: Domain collectors → F# validation → Technical indicators
@@ -129,7 +133,7 @@ Shows fault tolerance mechanisms:
 - **Connection Management**: State machine, heartbeat monitoring, auto-reconnect
 - **Graceful Degradation**: Full → Partial → Minimal service levels
 
-### Deployment Options (NEW)
+### Deployment Options
 
 Shows deployment paths from simple to enterprise:
 1. **Standalone Console** - Single .NET app, local storage, simplest setup
@@ -138,6 +142,37 @@ Shows deployment paths from simple to enterprise:
 4. **Kubernetes** - Cloud-native, HPA auto-scaling, self-healing
 5. **Cloud Managed** - Azure AKS/Service Bus, AWS EKS/MQ/S3
 6. **System Service** - systemd (Linux), Windows Service for bare metal
+7. **Pre-Deployment Setup** (NEW) - First-time configuration via wizard or auto-config
+
+### Onboarding Flow (NEW)
+
+Shows the user journey from first-run to operational:
+1. **First-Run Detection** - Automatic detection of new installations
+2. **Setup Options**:
+   - `--wizard` - Interactive 8-step configuration wizard
+   - `--auto-config` - Quick auto-configuration from environment variables
+   - `--generate-config <type>` - Template generation (minimal, full, alpaca, etc.)
+   - `--detect-providers` - Scan and display available providers
+3. **Configuration Wizard Steps**:
+   - Detect providers → Select use case → Configure data source
+   - Configure symbols → Configure storage → Configure backfill
+   - Review settings → Save configuration
+4. **Validation & Diagnostics**:
+   - `--validate-credentials` - Test API keys
+   - `--test-connectivity` - Network diagnostics
+   - `--quick-check` - Fast health check
+   - `--dry-run` - Full test without data collection
+5. **Error Handling** - FriendlyErrorFormatter with 24 error codes (MDC-XXX-NNN)
+
+### CLI Commands Reference (NEW)
+
+Comprehensive reference for all CLI flags:
+- **Setup Commands**: --wizard, --auto-config, --generate-config, --detect-providers
+- **Diagnostic Commands**: --validate-credentials, --test-connectivity, --quick-check, --validate-config, --dry-run
+- **Operation Commands**: --ui, --http-port, --backfill, --backfill-provider, --backfill-symbols, --backfill-from, --backfill-to
+- **Documentation Commands**: --show-config, --error-codes, --help, --version
+- **Common Workflows**: New installation, CI/CD setup, troubleshooting, backfill operations
+- **Exit Codes**: 0 (success), 1 (general error), 2 (config error), 3 (connection error), 4 (auth error), 5 (validation failed)
 
 ---
 
@@ -179,6 +214,8 @@ dot -Tpng microservices-architecture.dot -o microservices-architecture.png
 dot -Tpng event-pipeline-sequence.dot -o event-pipeline-sequence.png
 dot -Tpng resilience-patterns.dot -o resilience-patterns.png
 dot -Tpng deployment-options.dot -o deployment-options.png
+dot -Tpng onboarding-flow.dot -o onboarding-flow.png
+dot -Tpng cli-commands.dot -o cli-commands.png
 ```
 
 ### Generate SVG Images
@@ -230,6 +267,11 @@ The diagrams use a consistent color palette based on Tailwind CSS colors:
 | Orange | `#ed8936` | HTTP/Monitoring servers |
 | Gray | `#718096` | External/Shared systems |
 | Light Gray | `#e2e8f0` | System services |
+| **Onboarding/UX** | | |
+| Orange | `#ed8936` | Onboarding services |
+| Light Orange | `#fbd38d` | Setup/Config components |
+| Pale Orange | `#feebc8` | Wizard steps |
+| Cream | `#fffaf0` | Onboarding background |
 | **Export/Quality** | | |
 | Export Blue | `#2b6cb0` | Export layer |
 | Quality Green | `#9ae6b4` | Quality/Observability |
