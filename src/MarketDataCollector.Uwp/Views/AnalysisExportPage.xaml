@@ -1,0 +1,304 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="MarketDataCollector.Uwp.Views.AnalysisExportPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="380" />
+        </Grid.ColumnDefinitions>
+
+        <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" Padding="24">
+            <StackPanel Spacing="24" MaxWidth="900">
+                <!-- Header -->
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <FontIcon Glyph="&#xE9F9;" FontSize="28" Foreground="{ThemeResource SystemAccentColor}" />
+                    <TextBlock Text="Analysis Export" Style="{StaticResource TitleTextBlockStyle}" VerticalAlignment="Center" />
+                </StackPanel>
+
+                <TextBlock Text="Export data for research, machine learning, and advanced analysis."
+                           Style="{StaticResource BodyTextBlockStyle}"
+                           Foreground="{ThemeResource SystemBaseMediumColor}" />
+
+                <!-- Data Selection -->
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel Spacing="16">
+                        <TextBlock Text="Data Selection" Style="{StaticResource SubtitleTextBlockStyle}" />
+
+                        <AutoSuggestBox x:Name="SymbolsBox"
+                                        Header="Symbols (comma-separated, empty for all)"
+                                        PlaceholderText="AAPL,MSFT,TSLA" />
+
+                        <Grid ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <CalendarDatePicker x:Name="FromDatePicker" Header="From Date" HorizontalAlignment="Stretch" />
+                            <CalendarDatePicker x:Name="ToDatePicker" Header="To Date" HorizontalAlignment="Stretch" />
+                        </Grid>
+
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Button Content="Last 30 Days" Tag="30" Click="SetDateRange_Click" />
+                            <Button Content="Last 90 Days" Tag="90" Click="SetDateRange_Click" />
+                            <Button Content="Year to Date" Tag="ytd" Click="SetDateRange_Click" />
+                            <Button Content="All Data" Tag="all" Click="SetDateRange_Click" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Export Format -->
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel Spacing="16">
+                        <TextBlock Text="Export Format" Style="{StaticResource SubtitleTextBlockStyle}" />
+
+                        <Grid ColumnSpacing="24">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0" Spacing="12">
+                                <ComboBox x:Name="FormatCombo" Header="Output Format" SelectedIndex="1" HorizontalAlignment="Stretch">
+                                    <ComboBoxItem Content="CSV" Tag="CSV" />
+                                    <ComboBoxItem Content="Parquet (Recommended)" Tag="Parquet" />
+                                    <ComboBoxItem Content="JSON Lines" Tag="JSONL" />
+                                    <ComboBoxItem Content="Excel" Tag="Excel" />
+                                    <ComboBoxItem Content="HDF5" Tag="HDF5" />
+                                    <ComboBoxItem Content="Feather" Tag="Feather" />
+                                </ComboBox>
+
+                                <ComboBox x:Name="AggregationCombo" Header="Aggregation" SelectedIndex="0" HorizontalAlignment="Stretch">
+                                    <ComboBoxItem Content="No Aggregation (Tick)" Tag="Tick" />
+                                    <ComboBoxItem Content="1 Minute" Tag="Minute" />
+                                    <ComboBoxItem Content="5 Minutes" Tag="FiveMinute" />
+                                    <ComboBoxItem Content="15 Minutes" Tag="FifteenMinute" />
+                                    <ComboBoxItem Content="1 Hour" Tag="Hour" />
+                                    <ComboBoxItem Content="Daily" Tag="Daily" />
+                                </ComboBox>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1" Spacing="12">
+                                <ComboBox x:Name="CompressionCombo" Header="Compression" SelectedIndex="0" HorizontalAlignment="Stretch">
+                                    <ComboBoxItem Content="None" Tag="None" />
+                                    <ComboBoxItem Content="Gzip" Tag="Gzip" />
+                                    <ComboBoxItem Content="LZ4" Tag="LZ4" />
+                                    <ComboBoxItem Content="ZSTD" Tag="ZSTD" />
+                                </ComboBox>
+
+                                <ComboBox x:Name="TimezoneCombo" Header="Timezone" SelectedIndex="0" HorizontalAlignment="Stretch">
+                                    <ComboBoxItem Content="UTC" Tag="UTC" />
+                                    <ComboBoxItem Content="US/Eastern" Tag="America/New_York" />
+                                    <ComboBoxItem Content="US/Pacific" Tag="America/Los_Angeles" />
+                                    <ComboBoxItem Content="Europe/London" Tag="Europe/London" />
+                                </ComboBox>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Field Selection -->
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel Spacing="16">
+                        <TextBlock Text="Field Selection" Style="{StaticResource SubtitleTextBlockStyle}" />
+
+                        <TextBlock Text="Select which fields to include in the export:"
+                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                   Foreground="{ThemeResource SystemBaseMediumColor}" />
+
+                        <Grid ColumnSpacing="24">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0" Spacing="8">
+                                <TextBlock Text="Core Fields" FontWeight="SemiBold" />
+                                <CheckBox x:Name="IncludeTimestampCheck" Content="Timestamp" IsChecked="True" />
+                                <CheckBox x:Name="IncludeSymbolCheck" Content="Symbol" IsChecked="True" />
+                                <CheckBox x:Name="IncludePriceCheck" Content="Price" IsChecked="True" />
+                                <CheckBox x:Name="IncludeVolumeCheck" Content="Volume" IsChecked="True" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1" Spacing="8">
+                                <TextBlock Text="Market Data" FontWeight="SemiBold" />
+                                <CheckBox x:Name="IncludeBidAskCheck" Content="Bid/Ask" IsChecked="True" />
+                                <CheckBox x:Name="IncludeSpreadCheck" Content="Spread" />
+                                <CheckBox x:Name="IncludeSideCheck" Content="Trade Side" />
+                                <CheckBox x:Name="IncludeExchangeCheck" Content="Exchange" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2" Spacing="8">
+                                <TextBlock Text="Advanced" FontWeight="SemiBold" />
+                                <CheckBox x:Name="IncludeSequenceCheck" Content="Sequence Number" />
+                                <CheckBox x:Name="IncludeConditionsCheck" Content="Trade Conditions" />
+                                <CheckBox x:Name="IncludeOrderFlowCheck" Content="Order Flow Stats" />
+                                <CheckBox x:Name="IncludeMetadataCheck" Content="Metadata" IsChecked="True" />
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Output Options -->
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel Spacing="16">
+                        <TextBlock Text="Output Options" Style="{StaticResource SubtitleTextBlockStyle}" />
+
+                        <Grid ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBox x:Name="OutputPathBox" Header="Output Path"
+                                     PlaceholderText="Select output folder..." IsReadOnly="True" />
+                            <Button Grid.Column="1" Content="Browse..." VerticalAlignment="Bottom"
+                                    Click="BrowseOutput_Click" />
+                        </Grid>
+
+                        <TextBox x:Name="FileNameBox" Header="File Name (optional)"
+                                 PlaceholderText="Auto-generated based on selection" />
+
+                        <CheckBox x:Name="SplitBySymbolCheck" Content="Split output by symbol (creates one file per symbol)" />
+
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <Button x:Name="ExportButton"
+                                    Content="Export Data"
+                                    Style="{StaticResource AccentButtonStyle}"
+                                    Click="Export_Click" />
+                            <ProgressRing x:Name="ExportProgress" IsActive="False" Width="24" Height="24" />
+                            <TextBlock x:Name="ExportStatusText" VerticalAlignment="Center"
+                                       Style="{StaticResource CaptionTextBlockStyle}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Export Results -->
+                <Border x:Name="ExportResultsCard" Style="{StaticResource CardStyle}" Visibility="Collapsed">
+                    <StackPanel Spacing="16">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon x:Name="ExportResultIcon" Glyph="&#xE73E;" Foreground="#48BB78" />
+                            <TextBlock Text="Export Complete" Style="{StaticResource SubtitleTextBlockStyle}" />
+                        </StackPanel>
+
+                        <Grid ColumnSpacing="24">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                <TextBlock x:Name="RowsExportedText" Text="0"
+                                           Style="{StaticResource SubheaderTextBlockStyle}"
+                                           Foreground="{ThemeResource SystemAccentColor}" />
+                                <TextBlock Text="Rows Exported" Style="{StaticResource CaptionTextBlockStyle}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1">
+                                <TextBlock x:Name="FilesCreatedText" Text="0"
+                                           Style="{StaticResource SubheaderTextBlockStyle}"
+                                           Foreground="{ThemeResource SystemAccentColor}" />
+                                <TextBlock Text="Files Created" Style="{StaticResource CaptionTextBlockStyle}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock x:Name="ExportSizeText" Text="0 MB"
+                                           Style="{StaticResource SubheaderTextBlockStyle}"
+                                           Foreground="{ThemeResource SystemAccentColor}" />
+                                <TextBlock Text="Total Size" Style="{StaticResource CaptionTextBlockStyle}" />
+                            </StackPanel>
+                        </Grid>
+
+                        <Button Content="Open Output Folder" Click="OpenOutput_Click" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Right Panel -->
+        <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" Padding="12,24,24,24">
+            <StackPanel Spacing="16">
+                <!-- Export Templates -->
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="Export Templates" Style="{StaticResource BodyStrongTextBlockStyle}" />
+
+                        <TextBlock Text="Pre-configured exports for common use cases:"
+                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                   Foreground="{ThemeResource SystemBaseMediumColor}"
+                                   TextWrapping="Wrap" />
+
+                        <ListView x:Name="TemplatesList" SelectionMode="None">
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Padding="4" ColumnSpacing="8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
+
+                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding Name}" FontWeight="SemiBold" />
+                                        <Button Grid.Row="0" Grid.Column="1" Content="Use" FontSize="11" Padding="8,4"
+                                                Click="UseTemplate_Click" Tag="{Binding}" />
+
+                                        <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                                                   Text="{Binding Description}"
+                                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                                   Foreground="{ThemeResource SystemBaseMediumColor}"
+                                                   TextWrapping="Wrap" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </StackPanel>
+                </Border>
+
+                <!-- Special Exports -->
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="Special Exports" Style="{StaticResource BodyStrongTextBlockStyle}" />
+
+                        <Button Content="Quality Analysis Report" HorizontalAlignment="Stretch"
+                                Click="ExportQualityReport_Click" />
+                        <Button Content="Order Flow Statistics" HorizontalAlignment="Stretch"
+                                Click="ExportOrderFlow_Click" />
+                        <Button Content="Integrity Events" HorizontalAlignment="Stretch"
+                                Click="ExportIntegrityEvents_Click" />
+                        <Button Content="Research Package" HorizontalAlignment="Stretch"
+                                Click="CreateResearchPackage_Click" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Format Info -->
+                <Border Style="{StaticResource CardStyle}"
+                        Background="{ThemeResource SystemFillColorNeutralBackgroundBrush}">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Format Recommendations" Style="{StaticResource BodyStrongTextBlockStyle}" />
+
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Parquet: Best for large datasets, columnar storage"
+                                       Style="{StaticResource CaptionTextBlockStyle}" />
+                            <TextBlock Text="CSV: Universal compatibility, human-readable"
+                                       Style="{StaticResource CaptionTextBlockStyle}" />
+                            <TextBlock Text="HDF5: Hierarchical data, great for ML pipelines"
+                                       Style="{StaticResource CaptionTextBlockStyle}" />
+                            <TextBlock Text="Feather: Fast I/O, good for Python/R"
+                                       Style="{StaticResource CaptionTextBlockStyle}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Page>
