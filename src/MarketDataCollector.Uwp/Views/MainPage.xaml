@@ -126,11 +126,18 @@
 
             <!-- Data Management Section -->
             <NavigationViewItemHeader Content="DATA" />
+            <NavigationViewItem Content="Live Data" Tag="LiveData"
+                                AutomationProperties.Name="Live Data - Real-time market data viewer"
+                                ToolTipService.ToolTip="View real-time trades, quotes, and order book">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE9D9;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
             <NavigationViewItem Content="Symbols" Tag="Symbols"
                                 AutomationProperties.Name="Symbols - Manage symbol subscriptions"
                                 ToolTipService.ToolTip="Manage symbol subscriptions">
                 <NavigationViewItem.Icon>
-                    <FontIcon Glyph="&#xE9D9;" />
+                    <FontIcon Glyph="&#xE8D4;" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
             <NavigationViewItem Content="Mapping" Tag="SymbolMapping"
@@ -154,11 +161,25 @@
                     <FontIcon Glyph="&#xE787;" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
+            <NavigationViewItem Content="Schedules" Tag="Schedules"
+                                AutomationProperties.Name="Schedules - Manage scheduled tasks"
+                                ToolTipService.ToolTip="Manage backfill and maintenance schedules">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE823;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
 
             <NavigationViewItemSeparator />
 
             <!-- Monitoring Section -->
             <NavigationViewItemHeader Content="MONITORING" />
+            <NavigationViewItem Content="Data Quality" Tag="DataQuality"
+                                AutomationProperties.Name="Data Quality - Monitor data quality scores"
+                                ToolTipService.ToolTip="Monitor quality scores, alerts, and trends">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE9F5;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
             <NavigationViewItem Content="Sessions" Tag="CollectionSessions"
                                 AutomationProperties.Name="Collection Sessions - View session history"
                                 ToolTipService.ToolTip="View collection session history and uptime">
@@ -170,7 +191,7 @@
                                 AutomationProperties.Name="Archive Health - Monitor data integrity"
                                 ToolTipService.ToolTip="Monitor archive integrity and data quality">
                 <NavigationViewItem.Icon>
-                    <FontIcon Glyph="&#xE9F5;" />
+                    <FontIcon Glyph="&#xE7BA;" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
             <NavigationViewItem Content="Service Manager" Tag="ServiceManager"
@@ -178,6 +199,13 @@
                                 ToolTipService.ToolTip="Start, stop, and monitor collector services">
                 <NavigationViewItem.Icon>
                     <FontIcon Glyph="&#xE912;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem Content="System Health" Tag="SystemHealth"
+                                AutomationProperties.Name="System Health - Connection diagnostics"
+                                ToolTipService.ToolTip="View connection health and diagnostics">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE770;" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
 

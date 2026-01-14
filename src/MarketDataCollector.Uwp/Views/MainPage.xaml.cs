@@ -214,6 +214,9 @@ public sealed partial class MainPage : Page
             case "Backfill":
                 ContentFrame.Navigate(typeof(BackfillPage));
                 break;
+            case "Schedules":
+                ContentFrame.Navigate(typeof(ScheduleManagerPage));
+                break;
             case "CollectionSessions":
                 ContentFrame.Navigate(typeof(CollectionSessionPage));
                 break;
@@ -234,6 +237,15 @@ public sealed partial class MainPage : Page
                 break;
             case "Welcome":
                 ContentFrame.Navigate(typeof(WelcomePage));
+                break;
+            case "DataQuality":
+                ContentFrame.Navigate(typeof(DataQualityPage));
+                break;
+            case "LiveData":
+                ContentFrame.Navigate(typeof(LiveDataViewerPage));
+                break;
+            case "SystemHealth":
+                ContentFrame.Navigate(typeof(SystemHealthPage));
                 break;
         }
     }
