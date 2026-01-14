@@ -15,7 +15,8 @@
     </Page.Resources>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="24"
-                  AutomationProperties.Name="Dashboard content">
+                  AutomationProperties.Name="Dashboard content - Real-time market data monitoring"
+                  AutomationProperties.HelpText="Press F5 to refresh, Ctrl+S to start collector">
         <StackPanel Spacing="24">
             <!-- Header with Quick Actions -->
             <Grid>

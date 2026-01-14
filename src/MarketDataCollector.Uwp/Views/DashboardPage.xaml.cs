@@ -143,9 +143,11 @@ public sealed partial class DashboardPage : Page
     }
 
     /// <summary>
-    /// Shows the InfoBar with auto-dismiss after a delay, with cancellation support.
+    /// Shows the InfoBar with auto-dismiss after a delay based on severity.
+    /// Errors stay visible longer (10s) to ensure users notice them.
+    /// Success messages dismiss quickly (3s).
     /// </summary>
-    private async Task ShowInfoBarAsync(InfoBarSeverity severity, string title, string message, int delayMs = 3000)
+    private async Task ShowInfoBarAsync(InfoBarSeverity severity, string title, string message, int? customDelayMs = null)
     {
         // Cancel any previous pending dismiss
         _infoDismissCts?.Cancel();
@@ -157,15 +159,54 @@ public sealed partial class DashboardPage : Page
         DashboardInfoBar.Message = message;
         DashboardInfoBar.IsOpen = true;
 
-        try
+        // Use severity-appropriate durations:
+        // - Success: 3 seconds (quick confirmation)
+        // - Info: 4 seconds
+        // - Warning: 6 seconds (user should notice)
+        // - Error: 10 seconds (requires attention)
+        var delayMs = customDelayMs ?? InfoBarService.GetDurationForSeverity(severity);
+
+        if (delayMs > 0)
         {
-            await Task.Delay(delayMs, _infoDismissCts.Token);
-            DashboardInfoBar.IsOpen = false;
+            try
+            {
+                await Task.Delay(delayMs, _infoDismissCts.Token);
+                DashboardInfoBar.IsOpen = false;
+            }
+            catch (OperationCanceledException)
+            {
+                // Dismiss was cancelled (page unloaded or new message shown) - this is expected
+            }
         }
-        catch (OperationCanceledException)
+        // If delayMs is 0, keep the InfoBar open until manually closed
+    }
+
+    /// <summary>
+    /// Shows an error InfoBar with context and remedy information.
+    /// Error messages stay visible for 10 seconds.
+    /// </summary>
+    private async Task ShowErrorAsync(string title, string message, string? context = null, string? remedy = null)
+    {
+        var fullMessage = message;
+        if (!string.IsNullOrEmpty(context))
         {
-            // Dismiss was cancelled (page unloaded or new message shown) - this is expected
+            fullMessage += $"\n\nDetails: {context}";
         }
+        if (!string.IsNullOrEmpty(remedy))
+        {
+            fullMessage += $"\n\nSuggestion: {remedy}";
+        }
+
+        await ShowInfoBarAsync(InfoBarSeverity.Error, title, fullMessage);
+    }
+
+    /// <summary>
+    /// Shows an error InfoBar from an exception with user-friendly details.
+    /// </summary>
+    private async Task ShowExceptionErrorAsync(Exception ex, string operation)
+    {
+        var errorDetails = InfoBarService.CreateErrorDetails(ex, operation);
+        await ShowInfoBarAsync(errorDetails.Severity, errorDetails.Title, errorDetails.GetFormattedMessage());
     }
 
     /// <summary>

@@ -64,18 +64,28 @@
                                       Grid.Column="0"
                                       Header="Provider"
                                       HorizontalAlignment="Stretch"
-                                      SelectedIndex="0">
+                                      SelectedIndex="0"
+                                      AutomationProperties.Name="Data provider selection"
+                                      AutomationProperties.HelpText="Choose the data source for historical data">
                                 <ComboBoxItem Content="Multi-Source (Auto-Failover)" Tag="composite" />
                                 <ComboBoxItem Content="Yahoo Finance (Free)" Tag="yahoo" />
                                 <ComboBoxItem Content="Stooq (Free EOD)" Tag="stooq" />
                                 <ComboBoxItem Content="Nasdaq Data Link (Quandl)" Tag="nasdaq" />
                             </ComboBox>
 
-                            <AutoSuggestBox x:Name="SymbolsBox"
-                                            Grid.Column="1"
-                                            Header="Symbols (comma-separated)"
-                                            PlaceholderText="AAPL,MSFT,TSLA"
-                                            TextChanged="SymbolsBox_TextChanged" />
+                            <StackPanel Grid.Column="1" Spacing="4">
+                                <AutoSuggestBox x:Name="SymbolsBox"
+                                                Header="Symbols (comma-separated)"
+                                                PlaceholderText="AAPL,MSFT,TSLA"
+                                                TextChanged="SymbolsBox_TextChanged"
+                                                AutomationProperties.Name="Symbol entry"
+                                                AutomationProperties.HelpText="Enter stock symbols separated by commas" />
+                                <TextBlock x:Name="SymbolsValidationError"
+                                           FontSize="12"
+                                           Foreground="#F56565"
+                                           Visibility="Collapsed"
+                                           AutomationProperties.LiveSetting="Assertive" />
+                            </StackPanel>
                         </Grid>
 
                         <!-- Quick symbol add from subscriptions -->
@@ -101,17 +111,33 @@
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
 
-                            <CalendarDatePicker x:Name="FromDatePicker"
-                                                Grid.Column="0"
-                                                Header="From Date (UTC)"
-                                                HorizontalAlignment="Stretch"
-                                                PlaceholderText="Select start date" />
+                            <StackPanel Grid.Column="0" Spacing="4">
+                                <CalendarDatePicker x:Name="FromDatePicker"
+                                                    Header="From Date (UTC)"
+                                                    HorizontalAlignment="Stretch"
+                                                    PlaceholderText="Select start date"
+                                                    AutomationProperties.Name="Start date"
+                                                    AutomationProperties.HelpText="Select the earliest date for historical data" />
+                                <TextBlock x:Name="FromDateValidationError"
+                                           FontSize="12"
+                                           Foreground="#F56565"
+                                           Visibility="Collapsed"
+                                           AutomationProperties.LiveSetting="Assertive" />
+                            </StackPanel>
 
-                            <CalendarDatePicker x:Name="ToDatePicker"
-                                                Grid.Column="1"
-                                                Header="To Date (UTC)"
-                                                HorizontalAlignment="Stretch"
-                                                PlaceholderText="Select end date" />
+                            <StackPanel Grid.Column="1" Spacing="4">
+                                <CalendarDatePicker x:Name="ToDatePicker"
+                                                    Header="To Date (UTC)"
+                                                    HorizontalAlignment="Stretch"
+                                                    PlaceholderText="Select end date"
+                                                    AutomationProperties.Name="End date"
+                                                    AutomationProperties.HelpText="Select the latest date for historical data" />
+                                <TextBlock x:Name="ToDateValidationError"
+                                           FontSize="12"
+                                           Foreground="#F56565"
+                                           Visibility="Collapsed"
+                                           AutomationProperties.LiveSetting="Assertive" />
+                            </StackPanel>
                         </Grid>
 
                         <StackPanel Orientation="Horizontal" Spacing="8">

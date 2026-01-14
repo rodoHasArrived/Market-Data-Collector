@@ -111,6 +111,29 @@ public static class DashboardTemplate
     </div>
   </div>
 
+  <!-- Toast Container for Notifications -->
+  <div id="toastContainer" class="toast-container" role="alert" aria-live="polite"></div>
+
+  <!-- Keyboard Shortcuts Help Modal -->
+  <div id="shortcutsModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="shortcutsTitle">
+    <div class="modal-content" style="max-width: 400px;">
+      <div style="padding: 16px; border-bottom: 1px solid var(--border-color);">
+        <h3 id="shortcutsTitle" style="margin: 0;">Keyboard Shortcuts</h3>
+      </div>
+      <div class="shortcuts-help">
+        <span class="shortcut-key">Ctrl+K</span><span>Open command palette</span>
+        <span class="shortcut-key">Ctrl+S</span><span>Start collector</span>
+        <span class="shortcut-key">Ctrl+Shift+S</span><span>Stop collector</span>
+        <span class="shortcut-key">F5</span><span>Refresh data</span>
+        <span class="shortcut-key">?</span><span>Show this help</span>
+        <span class="shortcut-key">Esc</span><span>Close dialogs</span>
+      </div>
+      <div style="padding: 16px; text-align: right;">
+        <button class="btn" onclick="closeShortcutsHelp()">Close</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     // Configuration paths
     const CONFIG = {
@@ -119,38 +142,294 @@ public static class DashboardTemplate
       backfillPath: '{{Escape(backfillPath)}}'
     };
 
-    // API client
-    async function api(endpoint, options = {}) {
-      const response = await fetch(endpoint, {
-        headers: { 'Content-Type': 'application/json', ...options.headers },
-        ...options
-      });
-      if (!response.ok) {
-        const error = await response.text();
-        throw new Error(error || response.statusText);
-      }
-      return response.json().catch(() => null);
-    }
+    // Toast notification system
+    const Toast = {
+      container: null,
+      init() {
+        this.container = document.getElementById('toastContainer');
+      },
+      show(type, title, message, duration = 5000) {
+        const icons = {
+          success: '&#x2713;',
+          error: '&#x2717;',
+          warning: '&#x26A0;',
+          info: '&#x2139;'
+        };
 
-    // Load initial data
-    async function loadDashboard() {
-      try {
-        const status = await api('/api/status');
-        if (status) {
-          document.getElementById('publishedCount').textContent = formatNumber(status.metrics?.published || 0);
-          document.getElementById('droppedCount').textContent = formatNumber(status.metrics?.dropped || 0);
-          document.getElementById('integrityCount').textContent = formatNumber(status.metrics?.integrity || 0);
-          document.getElementById('historicalCount').textContent = formatNumber(status.metrics?.historicalBars || 0);
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.setAttribute('role', 'alert');
+        toast.innerHTML = `
+          <span class="toast-icon">${icons[type] || icons.info}</span>
+          <div class="toast-content">
+            <div class="toast-title">${this.escapeHtml(title)}</div>
+            <div class="toast-message">${this.escapeHtml(message)}</div>
+          </div>
+          <button class="toast-close" onclick="Toast.dismiss(this.parentElement)" aria-label="Dismiss">&#x2715;</button>
+        `;
 
-          const statusDot = document.querySelector('#connectionStatus .status-dot');
-          const statusText = document.querySelector('#connectionStatus span:last-child');
-          if (status.isConnected) {
-            statusDot.className = 'status-dot connected';
-            statusText.textContent = 'Connected';
+        this.container.appendChild(toast);
+
+        // Error messages stay longer
+        const displayDuration = type === 'error' ? Math.max(duration, 8000) : duration;
+
+        if (displayDuration > 0) {
+          setTimeout(() => this.dismiss(toast), displayDuration);
+        }
+
+        return toast;
+      },
+      dismiss(toast) {
+        if (!toast || !toast.parentElement) return;
+        toast.classList.add('removing');
+        setTimeout(() => toast.remove(), 300);
+      },
+      escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+      },
+      success(title, message) { return this.show('success', title, message); },
+      error(title, message) { return this.show('error', title, message, 10000); },
+      warning(title, message) { return this.show('warning', title, message, 7000); },
+      info(title, message) { return this.show('info', title, message); }
+    };
+
+    // Enhanced API client with retry logic and better error handling
+    const Api = {
+      retryCount: 3,
+      retryDelay: 1000,
+
+      async request(endpoint, options = {}) {
+        let lastError;
+
+        for (let attempt = 1; attempt <= this.retryCount; attempt++) {
+          try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), options.timeout || 10000);
+
+            const response = await fetch(endpoint, {
+              headers: { 'Content-Type': 'application/json', ...options.headers },
+              signal: controller.signal,
+              ...options
+            });
+
+            clearTimeout(timeoutId);
+
+            if (!response.ok) {
+              const errorText = await response.text();
+              const error = new Error(errorText || response.statusText);
+              error.status = response.status;
+              error.statusText = response.statusText;
+              throw error;
+            }
+
+            const data = await response.json().catch(() => null);
+            return { success: true, data };
+          } catch (error) {
+            lastError = error;
+
+            // Don't retry on certain errors
+            if (error.status && error.status >= 400 && error.status < 500) {
+              break;
+            }
+
+            // Don't retry on abort
+            if (error.name === 'AbortError') {
+              lastError = new Error('Request timed out. Please check your connection.');
+              break;
+            }
+
+            // Wait before retry (exponential backoff)
+            if (attempt < this.retryCount) {
+              await new Promise(r => setTimeout(r, this.retryDelay * attempt));
+            }
           }
         }
-      } catch (e) {
-        console.error('Failed to load dashboard:', e);
+
+        return {
+          success: false,
+          error: lastError,
+          message: this.getUserFriendlyError(lastError)
+        };
+      },
+
+      getUserFriendlyError(error) {
+        if (!navigator.onLine) {
+          return 'You appear to be offline. Please check your internet connection.';
+        }
+        if (error.name === 'AbortError' || error.message?.includes('timeout')) {
+          return 'The request took too long. The server might be busy.';
+        }
+        if (error.status === 401) {
+          return 'Authentication required. Please check your credentials.';
+        }
+        if (error.status === 403) {
+          return 'Access denied. You may not have permission for this action.';
+        }
+        if (error.status === 404) {
+          return 'The requested resource was not found.';
+        }
+        if (error.status === 429) {
+          return 'Too many requests. Please wait a moment and try again.';
+        }
+        if (error.status >= 500) {
+          return 'Server error. Please try again later or contact support.';
+        }
+        return error.message || 'An unexpected error occurred.';
+      },
+
+      async get(endpoint, options = {}) {
+        return this.request(endpoint, { method: 'GET', ...options });
+      },
+
+      async post(endpoint, data, options = {}) {
+        return this.request(endpoint, {
+          method: 'POST',
+          body: JSON.stringify(data),
+          ...options
+        });
+      }
+    };
+
+    // Form validation
+    const Validator = {
+      rules: {
+        required: (value) => value?.trim() ? null : 'This field is required',
+        symbol: (value) => /^[A-Z0-9.]+$/i.test(value?.trim()) ? null : 'Invalid symbol format',
+        dateRange: (from, to) => {
+          if (!from || !to) return 'Both dates are required';
+          if (new Date(from) > new Date(to)) return 'Start date must be before end date';
+          return null;
+        }
+      },
+
+      validateField(input, rules = []) {
+        const value = input.value;
+        const errorContainer = input.parentElement?.querySelector('.form-error') ||
+                              this.createErrorElement(input);
+
+        for (const rule of rules) {
+          const error = typeof rule === 'function' ? rule(value) : this.rules[rule]?.(value);
+          if (error) {
+            input.classList.add('error');
+            input.classList.remove('success');
+            input.setAttribute('aria-invalid', 'true');
+            errorContainer.textContent = error;
+            errorContainer.style.display = 'flex';
+            return false;
+          }
+        }
+
+        input.classList.remove('error');
+        input.classList.add('success');
+        input.setAttribute('aria-invalid', 'false');
+        errorContainer.style.display = 'none';
+        return true;
+      },
+
+      createErrorElement(input) {
+        const error = document.createElement('div');
+        error.className = 'form-error';
+        error.setAttribute('role', 'alert');
+        error.style.display = 'none';
+        input.parentElement?.appendChild(error);
+        return error;
+      }
+    };
+
+    // Loading state manager
+    const Loading = {
+      show(element, message = 'Loading...') {
+        if (!element) return;
+        element.classList.add('loading');
+        element.setAttribute('aria-busy', 'true');
+
+        // Add spinner if not exists
+        if (!element.querySelector('.spinner-overlay')) {
+          const overlay = document.createElement('div');
+          overlay.className = 'spinner-overlay';
+          overlay.innerHTML = `<div class="spinner"></div><span class="sr-only">${message}</span>`;
+          overlay.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(13,17,23,0.7);border-radius:inherit;';
+          element.style.position = 'relative';
+          element.appendChild(overlay);
+        }
+      },
+
+      hide(element) {
+        if (!element) return;
+        element.classList.remove('loading');
+        element.setAttribute('aria-busy', 'false');
+        element.querySelector('.spinner-overlay')?.remove();
+      }
+    };
+
+    // Dashboard state
+    let dashboardState = {
+      isConnected: false,
+      lastUpdate: null,
+      metrics: {
+        published: 0,
+        dropped: 0,
+        integrity: 0,
+        historicalBars: 0
+      }
+    };
+
+    // Load dashboard data with proper error handling
+    async function loadDashboard() {
+      const metricsGrid = document.querySelector('.metrics-grid');
+
+      const result = await Api.get('/api/status');
+
+      if (result.success && result.data) {
+        const status = result.data;
+        dashboardState = {
+          isConnected: status.isConnected,
+          lastUpdate: new Date(),
+          metrics: status.metrics || dashboardState.metrics
+        };
+
+        // Update metrics with animation
+        updateMetricWithAnimation('publishedCount', dashboardState.metrics.published || 0);
+        updateMetricWithAnimation('droppedCount', dashboardState.metrics.dropped || 0);
+        updateMetricWithAnimation('integrityCount', dashboardState.metrics.integrity || 0);
+        updateMetricWithAnimation('historicalCount', dashboardState.metrics.historicalBars || 0);
+
+        // Update connection status
+        updateConnectionStatus(status.isConnected);
+      } else {
+        // Show error only on first failure or after being connected
+        if (dashboardState.isConnected || !dashboardState.lastUpdate) {
+          updateConnectionStatus(false);
+          Toast.warning('Connection Issue', result.message || 'Unable to fetch status');
+        }
+      }
+    }
+
+    function updateMetricWithAnimation(elementId, value) {
+      const element = document.getElementById(elementId);
+      if (!element) return;
+
+      const formattedValue = formatNumber(value);
+      if (element.textContent !== formattedValue) {
+        element.style.transform = 'scale(1.1)';
+        element.textContent = formattedValue;
+        setTimeout(() => element.style.transform = '', 200);
+      }
+    }
+
+    function updateConnectionStatus(isConnected) {
+      const statusDot = document.querySelector('#connectionStatus .status-dot');
+      const statusText = document.querySelector('#connectionStatus span:last-child');
+
+      if (statusDot && statusText) {
+        statusDot.className = `status-dot ${isConnected ? 'connected' : 'disconnected'}`;
+        statusText.textContent = isConnected ? 'Connected' : 'Disconnected';
+
+        // Update ARIA
+        const indicator = document.querySelector('#connectionStatus');
+        indicator?.setAttribute('aria-label', `Connection status: ${isConnected ? 'Connected' : 'Disconnected'}`);
       }
     }
 
@@ -158,28 +437,121 @@ public static class DashboardTemplate
       if (n >= 1e9) return (n / 1e9).toFixed(1) + 'B';
       if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
       if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
-      return n.toString();
+      return n.toLocaleString();
     }
 
     function openCommandPalette() {
-      document.getElementById('commandPalette').classList.remove('hidden');
+      const modal = document.getElementById('commandPalette');
+      modal.classList.remove('hidden');
+      modal.setAttribute('aria-hidden', 'false');
       document.getElementById('commandSearch').focus();
+
+      // Trap focus in modal
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeCommandPalette() {
+      const modal = document.getElementById('commandPalette');
+      modal.classList.add('hidden');
+      modal.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
+
+    function openShortcutsHelp() {
+      const modal = document.getElementById('shortcutsModal');
+      modal.classList.remove('hidden');
+      modal.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeShortcutsHelp() {
+      const modal = document.getElementById('shortcutsModal');
+      modal.classList.add('hidden');
+      modal.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
     }
 
     // Keyboard shortcuts
     document.addEventListener('keydown', (e) => {
+      // Command palette
       if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
         e.preventDefault();
         openCommandPalette();
       }
+
+      // Refresh
+      if (e.key === 'F5') {
+        e.preventDefault();
+        loadDashboard();
+        Toast.info('Refreshing', 'Dashboard data is being refreshed...');
+      }
+
+      // Help
+      if (e.key === '?' && !e.ctrlKey && !e.metaKey) {
+        const activeElement = document.activeElement;
+        if (activeElement?.tagName !== 'INPUT' && activeElement?.tagName !== 'TEXTAREA') {
+          e.preventDefault();
+          openShortcutsHelp();
+        }
+      }
+
+      // Escape - close modals
       if (e.key === 'Escape') {
-        document.getElementById('commandPalette').classList.add('hidden');
+        closeCommandPalette();
+        closeShortcutsHelp();
       }
     });
 
+    // Close modal when clicking outside
+    document.getElementById('commandPalette')?.addEventListener('click', (e) => {
+      if (e.target.id === 'commandPalette') {
+        closeCommandPalette();
+      }
+    });
+
+    document.getElementById('shortcutsModal')?.addEventListener('click', (e) => {
+      if (e.target.id === 'shortcutsModal') {
+        closeShortcutsHelp();
+      }
+    });
+
+    // Navigation active state
+    function updateActiveNav() {
+      const hash = window.location.hash || '#dashboard';
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.toggle('active', item.getAttribute('href') === hash);
+        item.setAttribute('aria-current', item.getAttribute('href') === hash ? 'page' : 'false');
+      });
+    }
+
+    window.addEventListener('hashchange', updateActiveNav);
+
     // Initialize
-    loadDashboard();
-    setInterval(loadDashboard, 5000);
+    document.addEventListener('DOMContentLoaded', () => {
+      Toast.init();
+      updateActiveNav();
+      loadDashboard();
+
+      // Auto-refresh every 5 seconds
+      setInterval(loadDashboard, 5000);
+
+      // Show welcome toast on first load
+      if (!sessionStorage.getItem('welcomed')) {
+        sessionStorage.setItem('welcomed', 'true');
+        Toast.info('Welcome', 'Press ? for keyboard shortcuts');
+      }
+    });
+
+    // Online/offline handling
+    window.addEventListener('online', () => {
+      Toast.success('Back Online', 'Connection restored. Refreshing data...');
+      loadDashboard();
+    });
+
+    window.addEventListener('offline', () => {
+      Toast.warning('Offline', 'You appear to be offline. Data may be stale.');
+      updateConnectionStatus(false);
+    });
   </script>
 </body>
 </html>
