@@ -9,6 +9,7 @@ using MarketDataCollector.Application.Subscriptions;
 using MarketDataCollector.Application.Pipeline;
 using MarketDataCollector.Application.Config.Credentials;
 using MarketDataCollector.Application.Services;
+using MarketDataCollector.Application.Subscriptions.Services;
 using MarketDataCollector.Application.Testing;
 using MarketDataCollector.Application.UI;
 using MarketDataCollector.Domain.Collectors;
@@ -227,6 +228,151 @@ internal static class Program
         {
             var summary = new StartupSummary();
             summary.Display(cfg, cfgPath, args);
+            return;
+        }
+
+        // Symbol Management Commands
+        var symbolManagementService = new SymbolManagementService(
+            new ConfigStore(cfgPath),
+            cfg.DataRoot,
+            log
+        );
+
+        // List all symbols (monitored + archived)
+        if (args.Any(a => a.Equals("--symbols", StringComparison.OrdinalIgnoreCase)))
+        {
+            await symbolManagementService.DisplayAllSymbolsAsync();
+            return;
+        }
+
+        // List monitored symbols only
+        if (args.Any(a => a.Equals("--symbols-monitored", StringComparison.OrdinalIgnoreCase)))
+        {
+            var result = symbolManagementService.GetMonitoredSymbols();
+            symbolManagementService.DisplayMonitoredSymbols(result);
+            return;
+        }
+
+        // List archived symbols only
+        if (args.Any(a => a.Equals("--symbols-archived", StringComparison.OrdinalIgnoreCase)))
+        {
+            var result = await symbolManagementService.GetArchivedSymbolsAsync();
+            symbolManagementService.DisplayArchivedSymbols(result);
+            return;
+        }
+
+        // Add symbols
+        if (args.Any(a => a.Equals("--symbols-add", StringComparison.OrdinalIgnoreCase)))
+        {
+            var symbolsArg = GetArgValue(args, "--symbols-add");
+            if (string.IsNullOrWhiteSpace(symbolsArg))
+            {
+                Console.Error.WriteLine("Error: --symbols-add requires a comma-separated list of symbols");
+                Console.Error.WriteLine("Example: --symbols-add AAPL,MSFT,GOOGL");
+                Environment.Exit(1);
+                return;
+            }
+
+            var symbols = symbolsArg.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            var options = new SymbolAddOptions(
+                SubscribeTrades: !args.Any(a => a.Equals("--no-trades", StringComparison.OrdinalIgnoreCase)),
+                SubscribeDepth: !args.Any(a => a.Equals("--no-depth", StringComparison.OrdinalIgnoreCase)),
+                DepthLevels: int.TryParse(GetArgValue(args, "--depth-levels"), out var levels) ? levels : 10,
+                UpdateExisting: args.Any(a => a.Equals("--update", StringComparison.OrdinalIgnoreCase))
+            );
+
+            var result = await symbolManagementService.AddSymbolsAsync(symbols, options);
+            Console.WriteLine();
+            Console.WriteLine(result.Success ? "Symbol Addition Result" : "Symbol Addition Failed");
+            Console.WriteLine(new string('=', 50));
+            Console.WriteLine($"  {result.Message}");
+            if (result.AffectedSymbols.Length > 0)
+            {
+                Console.WriteLine($"  Symbols: {string.Join(", ", result.AffectedSymbols)}");
+            }
+            Console.WriteLine();
+
+            Environment.Exit(result.Success ? 0 : 1);
+            return;
+        }
+
+        // Remove symbols
+        if (args.Any(a => a.Equals("--symbols-remove", StringComparison.OrdinalIgnoreCase)))
+        {
+            var symbolsArg = GetArgValue(args, "--symbols-remove");
+            if (string.IsNullOrWhiteSpace(symbolsArg))
+            {
+                Console.Error.WriteLine("Error: --symbols-remove requires a comma-separated list of symbols");
+                Console.Error.WriteLine("Example: --symbols-remove AAPL,MSFT");
+                Environment.Exit(1);
+                return;
+            }
+
+            var symbols = symbolsArg.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            var result = await symbolManagementService.RemoveSymbolsAsync(symbols);
+
+            Console.WriteLine();
+            Console.WriteLine(result.Success ? "Symbol Removal Result" : "Symbol Removal Failed");
+            Console.WriteLine(new string('=', 50));
+            Console.WriteLine($"  {result.Message}");
+            if (result.AffectedSymbols.Length > 0)
+            {
+                Console.WriteLine($"  Removed: {string.Join(", ", result.AffectedSymbols)}");
+            }
+            Console.WriteLine();
+
+            Environment.Exit(result.Success ? 0 : 1);
+            return;
+        }
+
+        // Check status of a specific symbol
+        if (args.Any(a => a.Equals("--symbol-status", StringComparison.OrdinalIgnoreCase)))
+        {
+            var symbolArg = GetArgValue(args, "--symbol-status");
+            if (string.IsNullOrWhiteSpace(symbolArg))
+            {
+                Console.Error.WriteLine("Error: --symbol-status requires a symbol");
+                Console.Error.WriteLine("Example: --symbol-status AAPL");
+                Environment.Exit(1);
+                return;
+            }
+
+            var status = await symbolManagementService.GetSymbolStatusAsync(symbolArg);
+
+            Console.WriteLine();
+            Console.WriteLine($"Symbol Status: {status.Symbol}");
+            Console.WriteLine(new string('=', 50));
+            Console.WriteLine($"  Monitored: {(status.IsMonitored ? "Yes" : "No")}");
+            Console.WriteLine($"  Has Archived Data: {(status.HasArchivedData ? "Yes" : "No")}");
+
+            if (status.MonitoredConfig != null)
+            {
+                Console.WriteLine();
+                Console.WriteLine("  Monitoring Configuration:");
+                Console.WriteLine($"    Subscribe Trades: {status.MonitoredConfig.SubscribeTrades}");
+                Console.WriteLine($"    Subscribe Depth: {status.MonitoredConfig.SubscribeDepth}");
+                Console.WriteLine($"    Depth Levels: {status.MonitoredConfig.DepthLevels}");
+                Console.WriteLine($"    Security Type: {status.MonitoredConfig.SecurityType}");
+                Console.WriteLine($"    Exchange: {status.MonitoredConfig.Exchange}");
+            }
+
+            if (status.ArchivedInfo != null)
+            {
+                Console.WriteLine();
+                Console.WriteLine("  Archived Data:");
+                Console.WriteLine($"    Files: {status.ArchivedInfo.FileCount}");
+                Console.WriteLine($"    Size: {FormatBytes(status.ArchivedInfo.TotalSizeBytes)}");
+                if (status.ArchivedInfo.OldestData.HasValue && status.ArchivedInfo.NewestData.HasValue)
+                {
+                    Console.WriteLine($"    Date Range: {status.ArchivedInfo.OldestData:yyyy-MM-dd} to {status.ArchivedInfo.NewestData:yyyy-MM-dd}");
+                }
+                if (status.ArchivedInfo.DataTypes.Length > 0)
+                {
+                    Console.WriteLine($"    Data Types: {string.Join(", ", status.ArchivedInfo.DataTypes)}");
+                }
+            }
+
+            Console.WriteLine();
             return;
         }
 
@@ -666,6 +812,20 @@ DIAGNOSTICS & TROUBLESHOOTING:
     --show-config           Display current configuration summary
     --error-codes           Show error code reference guide
 
+SYMBOL MANAGEMENT:
+    --symbols               Show all symbols (monitored + archived)
+    --symbols-monitored     List symbols currently configured for monitoring
+    --symbols-archived      List symbols with archived data files
+    --symbols-add <list>    Add symbols to configuration (comma-separated)
+    --symbols-remove <list> Remove symbols from configuration
+    --symbol-status <sym>   Show detailed status for a specific symbol
+
+SYMBOL OPTIONS (use with --symbols-add):
+    --no-trades             Don't subscribe to trade data
+    --no-depth              Don't subscribe to depth/L2 data
+    --depth-levels <n>      Number of depth levels (default: 10)
+    --update                Update existing symbols instead of skipping
+
 OPTIONS:
     --config <path>         Path to configuration file (default: appsettings.json)
     --http-port <port>      HTTP server port (default: 8080)
@@ -774,6 +934,27 @@ EXAMPLES:
 
     # View all error codes and their meanings
     MarketDataCollector --error-codes
+
+    # Show all symbols (both monitored and archived)
+    MarketDataCollector --symbols
+
+    # Show only symbols currently being monitored
+    MarketDataCollector --symbols-monitored
+
+    # Show symbols that have archived data
+    MarketDataCollector --symbols-archived
+
+    # Add new symbols for monitoring
+    MarketDataCollector --symbols-add AAPL,MSFT,GOOGL
+
+    # Add symbols with custom options
+    MarketDataCollector --symbols-add SPY,QQQ --no-depth --depth-levels 5
+
+    # Remove symbols from monitoring
+    MarketDataCollector --symbols-remove AAPL,MSFT
+
+    # Check status of a specific symbol
+    MarketDataCollector --symbol-status AAPL
 
 CONFIGURATION:
     Configuration is loaded from appsettings.json by default, but can be customized:
@@ -1474,5 +1655,21 @@ SUPPORT:
         return providers
             .OrderBy(p => p is IHistoricalDataProviderV2 v2 ? v2.Priority : 100)
             .ToList();
+    }
+
+    /// <summary>
+    /// Format bytes as human-readable string.
+    /// </summary>
+    private static string FormatBytes(long bytes)
+    {
+        string[] sizes = { "B", "KB", "MB", "GB", "TB" };
+        var order = 0;
+        double size = bytes;
+        while (size >= 1024 && order < sizes.Length - 1)
+        {
+            order++;
+            size /= 1024;
+        }
+        return $"{size:0.##} {sizes[order]}";
     }
 }
