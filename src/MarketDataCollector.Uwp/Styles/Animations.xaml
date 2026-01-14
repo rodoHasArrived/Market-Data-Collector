@@ -347,4 +347,211 @@
             Duration="{StaticResource QuickDuration}" />
     </Storyboard>
 
+    <!-- ========================================== -->
+    <!-- FLICK GESTURE ANIMATIONS -->
+    <!-- ========================================== -->
+
+    <!-- Right Flick Reveal Animation (for triggering dropdown menus) -->
+    <Storyboard x:Key="RightFlickRevealStoryboard">
+        <DoubleAnimationUsingKeyFrames
+            Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)">
+            <EasingDoubleKeyFrame KeyTime="0:0:0" Value="0" />
+            <EasingDoubleKeyFrame KeyTime="0:0:0.15" Value="30">
+                <EasingDoubleKeyFrame.EasingFunction>
+                    <CubicBezierEasingFunction ControlPoint1="0.4,0" ControlPoint2="0.2,1" />
+                </EasingDoubleKeyFrame.EasingFunction>
+            </EasingDoubleKeyFrame>
+            <EasingDoubleKeyFrame KeyTime="0:0:0.3" Value="0">
+                <EasingDoubleKeyFrame.EasingFunction>
+                    <CubicBezierEasingFunction ControlPoint1="0.4,0" ControlPoint2="0.2,1" />
+                </EasingDoubleKeyFrame.EasingFunction>
+            </EasingDoubleKeyFrame>
+        </DoubleAnimationUsingKeyFrames>
+    </Storyboard>
+
+    <!-- Left Flick Dismiss Animation -->
+    <Storyboard x:Key="LeftFlickDismissStoryboard">
+        <DoubleAnimationUsingKeyFrames
+            Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)">
+            <EasingDoubleKeyFrame KeyTime="0:0:0" Value="0" />
+            <EasingDoubleKeyFrame KeyTime="0:0:0.15" Value="-30">
+                <EasingDoubleKeyFrame.EasingFunction>
+                    <CubicBezierEasingFunction ControlPoint1="0.4,0" ControlPoint2="0.2,1" />
+                </EasingDoubleKeyFrame.EasingFunction>
+            </EasingDoubleKeyFrame>
+            <EasingDoubleKeyFrame KeyTime="0:0:0.3" Value="0">
+                <EasingDoubleKeyFrame.EasingFunction>
+                    <CubicBezierEasingFunction ControlPoint1="0.4,0" ControlPoint2="0.2,1" />
+                </EasingDoubleKeyFrame.EasingFunction>
+            </EasingDoubleKeyFrame>
+        </DoubleAnimationUsingKeyFrames>
+    </Storyboard>
+
+    <!-- ========================================== -->
+    <!-- DROPDOWN MENU ANIMATIONS -->
+    <!-- ========================================== -->
+
+    <!-- Dropdown Menu Open Animation -->
+    <Storyboard x:Key="DropdownMenuOpenStoryboard">
+        <DoubleAnimation
+            Storyboard.TargetProperty="(UIElement.RenderTransform).(CompositeTransform.ScaleY)"
+            From="0" To="1"
+            Duration="0:0:0.2">
+            <DoubleAnimation.EasingFunction>
+                <CubicBezierEasingFunction ControlPoint1="0,0" ControlPoint2="0.2,1" />
+            </DoubleAnimation.EasingFunction>
+        </DoubleAnimation>
+        <DoubleAnimation
+            Storyboard.TargetProperty="(UIElement.RenderTransform).(CompositeTransform.ScaleX)"
+            From="0.95" To="1"
+            Duration="0:0:0.2">
+            <DoubleAnimation.EasingFunction>
+                <CubicBezierEasingFunction ControlPoint1="0,0" ControlPoint2="0.2,1" />
+            </DoubleAnimation.EasingFunction>
+        </DoubleAnimation>
+        <DoubleAnimation
+            Storyboard.TargetProperty="Opacity"
+            From="0" To="1"
+            Duration="0:0:0.15" />
+    </Storyboard>
+
+    <!-- Dropdown Menu Close Animation -->
+    <Storyboard x:Key="DropdownMenuCloseStoryboard">
+        <DoubleAnimation
+            Storyboard.TargetProperty="(UIElement.RenderTransform).(CompositeTransform.ScaleY)"
+            From="1" To="0"
+            Duration="0:0:0.15">
+            <DoubleAnimation.EasingFunction>
+                <CubicBezierEasingFunction ControlPoint1="0.4,0" ControlPoint2="1,1" />
+            </DoubleAnimation.EasingFunction>
+        </DoubleAnimation>
+        <DoubleAnimation
+            Storyboard.TargetProperty="Opacity"
+            From="1" To="0"
+            Duration="0:0:0.1" />
+    </Storyboard>
+
+    <!-- Dropdown Menu Item Hover Animation -->
+    <Storyboard x:Key="DropdownItemHoverStoryboard">
+        <DoubleAnimation
+            Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
+            To="4"
+            Duration="0:0:0.1">
+            <DoubleAnimation.EasingFunction>
+                <CubicBezierEasingFunction ControlPoint1="0.4,0" ControlPoint2="0.6,1" />
+            </DoubleAnimation.EasingFunction>
+        </DoubleAnimation>
+    </Storyboard>
+
+    <!-- Dropdown Menu Item Unhover Animation -->
+    <Storyboard x:Key="DropdownItemUnhoverStoryboard">
+        <DoubleAnimation
+            Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
+            To="0"
+            Duration="0:0:0.1">
+            <DoubleAnimation.EasingFunction>
+                <CubicBezierEasingFunction ControlPoint1="0.4,0" ControlPoint2="0.6,1" />
+            </DoubleAnimation.EasingFunction>
+        </DoubleAnimation>
+    </Storyboard>
+
+    <!-- ========================================== -->
+    <!-- EDGE SWIPE MENU ANIMATIONS -->
+    <!-- ========================================== -->
+
+    <!-- Edge Menu Slide In -->
+    <Storyboard x:Key="EdgeMenuSlideInStoryboard">
+        <DoubleAnimation
+            Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
+            From="-320" To="0"
+            Duration="0:0:0.3">
+            <DoubleAnimation.EasingFunction>
+                <CubicBezierEasingFunction ControlPoint1="0,0" ControlPoint2="0.2,1" />
+            </DoubleAnimation.EasingFunction>
+        </DoubleAnimation>
+        <DoubleAnimation
+            Storyboard.TargetProperty="Opacity"
+            From="0" To="1"
+            Duration="0:0:0.2" />
+    </Storyboard>
+
+    <!-- Edge Menu Slide Out -->
+    <Storyboard x:Key="EdgeMenuSlideOutStoryboard">
+        <DoubleAnimation
+            Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
+            From="0" To="-320"
+            Duration="0:0:0.25">
+            <DoubleAnimation.EasingFunction>
+                <CubicBezierEasingFunction ControlPoint1="0.4,0" ControlPoint2="1,1" />
+            </DoubleAnimation.EasingFunction>
+        </DoubleAnimation>
+        <DoubleAnimation
+            Storyboard.TargetProperty="Opacity"
+            From="1" To="0"
+            Duration="0:0:0.2" />
+    </Storyboard>
+
+    <!-- Menu Overlay Fade In -->
+    <Storyboard x:Key="MenuOverlayFadeInStoryboard">
+        <DoubleAnimation
+            Storyboard.TargetProperty="Opacity"
+            From="0" To="0.5"
+            Duration="0:0:0.25">
+            <DoubleAnimation.EasingFunction>
+                <CubicBezierEasingFunction ControlPoint1="0,0" ControlPoint2="0.2,1" />
+            </DoubleAnimation.EasingFunction>
+        </DoubleAnimation>
+    </Storyboard>
+
+    <!-- Menu Overlay Fade Out -->
+    <Storyboard x:Key="MenuOverlayFadeOutStoryboard">
+        <DoubleAnimation
+            Storyboard.TargetProperty="Opacity"
+            From="0.5" To="0"
+            Duration="0:0:0.2">
+            <DoubleAnimation.EasingFunction>
+                <CubicBezierEasingFunction ControlPoint1="0.4,0" ControlPoint2="1,1" />
+            </DoubleAnimation.EasingFunction>
+        </DoubleAnimation>
+    </Storyboard>
+
+    <!-- ========================================== -->
+    <!-- CASCADING MENU ITEM ANIMATIONS -->
+    <!-- ========================================== -->
+
+    <!-- Stagger delay durations for cascading effects -->
+    <Duration x:Key="StaggerDelay1">0:0:0.03</Duration>
+    <Duration x:Key="StaggerDelay2">0:0:0.06</Duration>
+    <Duration x:Key="StaggerDelay3">0:0:0.09</Duration>
+    <Duration x:Key="StaggerDelay4">0:0:0.12</Duration>
+    <Duration x:Key="StaggerDelay5">0:0:0.15</Duration>
+
+    <!-- Menu Item Cascade In -->
+    <Storyboard x:Key="MenuItemCascadeInStoryboard">
+        <DoubleAnimation
+            Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
+            From="-20" To="0"
+            Duration="0:0:0.2">
+            <DoubleAnimation.EasingFunction>
+                <CubicBezierEasingFunction ControlPoint1="0,0" ControlPoint2="0.2,1" />
+            </DoubleAnimation.EasingFunction>
+        </DoubleAnimation>
+        <DoubleAnimation
+            Storyboard.TargetProperty="Opacity"
+            From="0" To="1"
+            Duration="0:0:0.15" />
+    </Storyboard>
+
+    <!-- Navigation Arrow Bounce -->
+    <Storyboard x:Key="NavigationArrowBounceStoryboard">
+        <DoubleAnimationUsingKeyFrames
+            Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)">
+            <EasingDoubleKeyFrame KeyTime="0:0:0" Value="0" />
+            <EasingDoubleKeyFrame KeyTime="0:0:0.1" Value="5" />
+            <EasingDoubleKeyFrame KeyTime="0:0:0.2" Value="0" />
+            <EasingDoubleKeyFrame KeyTime="0:0:0.3" Value="5" />
+            <EasingDoubleKeyFrame KeyTime="0:0:0.4" Value="0" />
+        </DoubleAnimationUsingKeyFrames>
+    </Storyboard>
+
 </ResourceDictionary>

@@ -7,6 +7,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using MarketDataCollector.Uwp.ViewModels;
 using MarketDataCollector.Uwp.Services;
+using MarketDataCollector.Uwp.Controls;
 
 namespace MarketDataCollector.Uwp.Views;
 
@@ -20,8 +21,10 @@ public sealed partial class MainPage : Page
     private readonly FirstRunService _firstRunService;
     private readonly NotificationService _notificationService;
     private readonly ConnectionService _connectionService;
+    private readonly GestureService _gestureService;
     private readonly DispatcherTimer _notificationDismissTimer;
     private string? _currentNotificationAction;
+    private bool _hasShownFlickHint;
 
     public MainPage()
     {
@@ -32,6 +35,7 @@ public sealed partial class MainPage : Page
         _firstRunService = new FirstRunService();
         _notificationService = NotificationService.Instance;
         _connectionService = ConnectionService.Instance;
+        _gestureService = GestureService.Instance;
 
         // Setup notification dismiss timer
         _notificationDismissTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(8) };
@@ -59,6 +63,248 @@ public sealed partial class MainPage : Page
 
         // Start connection monitoring
         _connectionService.StartMonitoring();
+
+        // Initialize gesture service for right-flick navigation
+        InitializeGestureNavigation();
+
+        // Show flick gesture hint on first launch (if not shown before)
+        await ShowFlickHintIfNeededAsync();
+    }
+
+    private void InitializeGestureNavigation()
+    {
+        // Register the content frame for gesture detection
+        QuickNavigationMenu.RegisterGestureElement(ContentFrame);
+
+        // Also register the main container for edge swipes
+        QuickNavigationMenu.RegisterGestureElement(RootContainer);
+
+        // Populate the quick navigation menu
+        PopulateQuickNavigationMenu();
+    }
+
+    private void PopulateQuickNavigationMenu()
+    {
+        QuickNavigationMenu.ClearItems();
+
+        // Primary Navigation
+        QuickNavigationMenu.AddHeader("NAVIGATE");
+        QuickNavigationMenu.AddItem(new DropdownMenuItemData
+        {
+            Icon = "\uE80F",
+            Text = "Dashboard",
+            Description = "System overview and metrics",
+            Shortcut = "Ctrl+D",
+            Tag = "Dashboard"
+        });
+        QuickNavigationMenu.AddItem(new DropdownMenuItemData
+        {
+            Icon = "\uE728",
+            Text = "Watchlist",
+            Description = "Favorite symbols",
+            Tag = "Watchlist"
+        });
+
+        QuickNavigationMenu.AddSeparator();
+
+        // Data Sources
+        QuickNavigationMenu.AddHeader("DATA SOURCES");
+        QuickNavigationMenu.AddItem(new DropdownMenuItemData
+        {
+            Icon = "\uE703",
+            Text = "Provider",
+            Description = "Configure data provider",
+            Tag = "Provider"
+        });
+        QuickNavigationMenu.AddItem(new DropdownMenuItemData
+        {
+            Icon = "\uE943",
+            Text = "Multi-Source",
+            Description = "Multiple data sources",
+            Tag = "DataSources"
+        });
+        QuickNavigationMenu.AddItem(new DropdownMenuItemData
+        {
+            Icon = "\uEA86",
+            Text = "Plugins",
+            Description = "Extensions and plugins",
+            Tag = "Plugins"
+        });
+
+        QuickNavigationMenu.AddSeparator();
+
+        // Data Management
+        QuickNavigationMenu.AddHeader("DATA");
+        QuickNavigationMenu.AddItem(new DropdownMenuItemData
+        {
+            Icon = "\uE9D9",
+            Text = "Live Data",
+            Description = "Real-time market data",
+            Tag = "LiveData"
+        });
+        QuickNavigationMenu.AddItem(new DropdownMenuItemData
+        {
+            Icon = "\uE8D4",
+            Text = "Symbols",
+            Description = "Manage subscriptions",
+            Shortcut = "Ctrl+Y",
+            Tag = "Symbols"
+        });
+        QuickNavigationMenu.AddItem(new DropdownMenuItemData
+        {
+            Icon = "\uE8AB",
+            Text = "Mapping",
+            Description = "Symbol mapping",
+            Tag = "SymbolMapping"
+        });
+        QuickNavigationMenu.AddItem(new DropdownMenuItemData
+        {
+            Icon = "\uE8B7",
+            Text = "Storage",
+            Description = "Storage usage",
+            Tag = "Storage"
+        });
+        QuickNavigationMenu.AddItem(new DropdownMenuItemData
+        {
+            Icon = "\uE787",
+            Text = "Backfill",
+            Description = "Historical data",
+            Shortcut = "Ctrl+B",
+            Tag = "Backfill"
+        });
+
+        QuickNavigationMenu.AddSeparator();
+
+        // Monitoring
+        QuickNavigationMenu.AddHeader("MONITORING");
+        QuickNavigationMenu.AddItem(new DropdownMenuItemData
+        {
+            Icon = "\uE9F5",
+            Text = "Data Quality",
+            Description = "Quality scores and alerts",
+            Tag = "DataQuality"
+        });
+        QuickNavigationMenu.AddItem(new DropdownMenuItemData
+        {
+            Icon = "\uE7BA",
+            Text = "Archive Health",
+            Description = "Data integrity",
+            Tag = "ArchiveHealth"
+        });
+        QuickNavigationMenu.AddItem(new DropdownMenuItemData
+        {
+            Icon = "\uE912",
+            Text = "Service Manager",
+            Description = "Collector services",
+            Tag = "ServiceManager"
+        });
+        QuickNavigationMenu.AddItem(new DropdownMenuItemData
+        {
+            Icon = "\uE770",
+            Text = "System Health",
+            Description = "Connection diagnostics",
+            Tag = "SystemHealth"
+        });
+
+        QuickNavigationMenu.AddSeparator();
+
+        // Tools
+        QuickNavigationMenu.AddHeader("TOOLS");
+        QuickNavigationMenu.AddItem(new DropdownMenuItemData
+        {
+            Icon = "\uEDE1",
+            Text = "Export",
+            Description = "Export data",
+            Tag = "DataExport"
+        });
+        QuickNavigationMenu.AddItem(new DropdownMenuItemData
+        {
+            Icon = "\uE115",
+            Text = "Settings",
+            Description = "Application settings",
+            Shortcut = "Ctrl+0",
+            Tag = "Settings"
+        });
+        QuickNavigationMenu.AddItem(new DropdownMenuItemData
+        {
+            Icon = "\uE897",
+            Text = "Help",
+            Description = "Documentation",
+            Shortcut = "F1",
+            Tag = "Help"
+        });
+    }
+
+    private async Task ShowFlickHintIfNeededAsync()
+    {
+        if (_hasShownFlickHint)
+            return;
+
+        // Check if we should show the hint (first few launches)
+        var launchCount = await GetLaunchCountAsync();
+        if (launchCount <= 3)
+        {
+            FlickGestureHint.Visibility = Visibility.Visible;
+
+            // Auto-hide after 8 seconds
+            var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(8) };
+            timer.Tick += (s, e) =>
+            {
+                timer.Stop();
+                FlickGestureHint.Visibility = Visibility.Collapsed;
+            };
+            timer.Start();
+        }
+
+        _hasShownFlickHint = true;
+    }
+
+    private static async Task<int> GetLaunchCountAsync()
+    {
+        try
+        {
+            var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
+            var count = localSettings.Values["LaunchCount"] as int? ?? 0;
+            localSettings.Values["LaunchCount"] = count + 1;
+            return count;
+        }
+        catch
+        {
+            return 10; // Skip hint on error
+        }
+    }
+
+    private void DismissHint_Click(object sender, RoutedEventArgs e)
+    {
+        FlickGestureHint.Visibility = Visibility.Collapsed;
+    }
+
+    private void QuickNavigationMenu_ItemClicked(object sender, DropdownMenuItemClickedEventArgs e)
+    {
+        // Navigate to the selected page
+        if (e.Tag == "Settings")
+        {
+            ContentFrame.Navigate(typeof(SettingsPage));
+        }
+        else
+        {
+            NavigateToPage(e.Tag);
+        }
+
+        // Update the navigation view selection
+        UpdateNavigationViewSelection(e.Tag);
+    }
+
+    private void UpdateNavigationViewSelection(string tag)
+    {
+        foreach (var item in NavView.MenuItems.OfType<NavigationViewItem>())
+        {
+            if (item.Tag?.ToString() == tag)
+            {
+                NavView.SelectedItem = item;
+                break;
+            }
+        }
     }
 
     private void MainPage_Unloaded(object sender, RoutedEventArgs e)

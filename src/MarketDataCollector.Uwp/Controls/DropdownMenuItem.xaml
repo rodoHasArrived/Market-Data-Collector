@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="MarketDataCollector.Uwp.Controls.DropdownMenuItem"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:MarketDataCollector.Uwp.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    x:Name="RootControl"
+    PointerEntered="RootControl_PointerEntered"
+    PointerExited="RootControl_PointerExited"
+    PointerPressed="RootControl_PointerPressed"
+    PointerReleased="RootControl_PointerReleased"
+    Tapped="RootControl_Tapped">
+
+    <UserControl.Resources>
+        <!-- Menu item colors -->
+        <SolidColorBrush x:Key="ItemHoverBrush" Color="#1858a6ff" />
+        <SolidColorBrush x:Key="ItemPressedBrush" Color="#2858a6ff" />
+        <SolidColorBrush x:Key="SeparatorBrush" Color="#20808080" />
+        <SolidColorBrush x:Key="HeaderTextBrush" Color="#808080" />
+        <SolidColorBrush x:Key="AccentBrush" Color="#3fb950" />
+        <SolidColorBrush x:Key="ShortcutBrush" Color="#6e7681" />
+    </UserControl.Resources>
+
+    <Grid x:Name="RootGrid">
+        <!-- Separator -->
+        <Border x:Name="SeparatorBorder"
+                Visibility="Collapsed"
+                Height="1"
+                Background="{StaticResource SeparatorBrush}"
+                Margin="12,6" />
+
+        <!-- Section Header -->
+        <Border x:Name="HeaderBorder"
+                Visibility="Collapsed"
+                Padding="12,10,12,6">
+            <TextBlock x:Name="HeaderTextBlock"
+                       Text="{x:Bind Text, Mode=OneWay}"
+                       FontSize="11"
+                       FontWeight="SemiBold"
+                       CharacterSpacing="50"
+                       Foreground="{StaticResource HeaderTextBrush}"
+                       TextTransform="Uppercase" />
+        </Border>
+
+        <!-- Regular Menu Item -->
+        <Border x:Name="ItemBorder"
+                Visibility="Collapsed"
+                Background="Transparent"
+                CornerRadius="4"
+                Padding="8,10"
+                Margin="4,2">
+            <Border.RenderTransform>
+                <TranslateTransform x:Name="ItemTranslateTransform" />
+            </Border.RenderTransform>
+
+            <Grid ColumnSpacing="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Icon -->
+                <FontIcon x:Name="ItemIcon"
+                          Grid.Column="0"
+                          Glyph="{x:Bind Icon, Mode=OneWay}"
+                          FontSize="16"
+                          Foreground="{StaticResource AccentBrush}"
+                          VerticalAlignment="Center"
+                          Visibility="{x:Bind IconVisibility, Mode=OneWay}" />
+
+                <!-- Text Content -->
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                    <TextBlock x:Name="ItemText"
+                               Text="{x:Bind Text, Mode=OneWay}"
+                               FontSize="13"
+                               Foreground="{StaticResource ConsoleTextPrimaryBrush}"
+                               TextTrimming="CharacterEllipsis" />
+
+                    <TextBlock x:Name="ItemDescription"
+                               Text="{x:Bind Description, Mode=OneWay}"
+                               FontSize="11"
+                               Foreground="{StaticResource ConsoleTextMutedBrush}"
+                               TextTrimming="CharacterEllipsis"
+                               Visibility="{x:Bind DescriptionVisibility, Mode=OneWay}" />
+                </StackPanel>
+
+                <!-- Keyboard Shortcut -->
+                <Border x:Name="ShortcutBorder"
+                        Grid.Column="2"
+                        Background="{StaticResource ConsoleBackgroundDarkBrush}"
+                        CornerRadius="4"
+                        Padding="6,3"
+                        VerticalAlignment="Center"
+                        Visibility="{x:Bind ShortcutVisibility, Mode=OneWay}">
+                    <TextBlock x:Name="ShortcutText"
+                               Text="{x:Bind Shortcut, Mode=OneWay}"
+                               FontSize="11"
+                               FontFamily="Cascadia Code, Consolas, monospace"
+                               Foreground="{StaticResource ShortcutBrush}" />
+                </Border>
+
+                <!-- Submenu Arrow -->
+                <FontIcon x:Name="SubmenuArrow"
+                          Grid.Column="3"
+                          Glyph="&#xE76C;"
+                          FontSize="12"
+                          Foreground="{StaticResource ConsoleTextMutedBrush}"
+                          VerticalAlignment="Center"
+                          Visibility="{x:Bind SubmenuVisibility, Mode=OneWay}">
+                    <FontIcon.RenderTransform>
+                        <TranslateTransform x:Name="ArrowTranslateTransform" />
+                    </FontIcon.RenderTransform>
+                </FontIcon>
+            </Grid>
+        </Border>
+
+        <!-- Disabled Overlay -->
+        <Border x:Name="DisabledOverlay"
+                Visibility="Collapsed"
+                Background="#80000000"
+                CornerRadius="4"
+                IsHitTestVisible="False" />
+    </Grid>
+</UserControl>

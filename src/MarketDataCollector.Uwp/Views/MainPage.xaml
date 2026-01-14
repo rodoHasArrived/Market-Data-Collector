@@ -6,6 +6,7 @@
     xmlns:local="using:MarketDataCollector.Uwp.Views"
     xmlns:vm="using:MarketDataCollector.Uwp.ViewModels"
     xmlns:converters="using:MarketDataCollector.Uwp.Converters"
+    xmlns:controls="using:MarketDataCollector.Uwp.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
@@ -17,13 +18,15 @@
         <converters:BoolToConnectionStatusConverter x:Key="BoolToConnectionStatus" />
     </Page.Resources>
 
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
+    <Grid x:Name="RootContainer">
+        <!-- Main Content Grid -->
+        <Grid x:Name="MainContentGrid">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
 
-        <!-- In-App Notification Banner -->
+            <!-- In-App Notification Banner -->
         <Border x:Name="NotificationBanner" Grid.Row="0" Visibility="Collapsed"
                 Padding="16,12" CornerRadius="0,0,8,8"
                 Background="{ThemeResource SystemFillColorCriticalBackgroundBrush}">
@@ -414,5 +417,48 @@
             </ScrollViewer>
         </Frame>
     </NavigationView>
+        </Grid>
+
+        <!-- Right-Flick Dropdown Navigation Menu Overlay -->
+        <controls:DropdownNavigationMenu
+            x:Name="QuickNavigationMenu"
+            Header="Quick Navigation"
+            HeaderIcon="&#xE700;"
+            Footer="Swipe right to open • Esc to close"
+            ItemClicked="QuickNavigationMenu_ItemClicked" />
+
+        <!-- Flick Gesture Hint (shown on first launch) -->
+        <Border x:Name="FlickGestureHint"
+                Visibility="Collapsed"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                Background="#CC0d1117"
+                BorderBrush="#3fb950"
+                BorderThickness="0,0,2,0"
+                CornerRadius="0,8,8,0"
+                Padding="16,12"
+                Margin="0,0,0,0">
+            <StackPanel Orientation="Horizontal" Spacing="12">
+                <FontIcon Glyph="&#xE76C;" Foreground="#3fb950" FontSize="20" />
+                <StackPanel Spacing="4">
+                    <TextBlock Text="Swipe Right for Quick Menu"
+                               FontWeight="SemiBold"
+                               Foreground="White"
+                               FontSize="13" />
+                    <TextBlock Text="Flick from left edge to open navigation"
+                               Foreground="#8b949e"
+                               FontSize="11" />
+                </StackPanel>
+                <Button x:Name="DismissHintButton"
+                        Click="DismissHint_Click"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Padding="8"
+                        VerticalAlignment="Top"
+                        Margin="-8,-4,0,0">
+                    <FontIcon Glyph="&#xE711;" FontSize="12" Foreground="#8b949e" />
+                </Button>
+            </StackPanel>
+        </Border>
     </Grid>
 </Page>

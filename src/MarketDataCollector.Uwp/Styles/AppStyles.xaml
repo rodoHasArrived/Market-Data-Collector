@@ -824,4 +824,129 @@
     <x:Double x:Key="ContentMaxWidth">1400</x:Double>
     <x:Double x:Key="FormMaxWidth">600</x:Double>
 
+    <!-- ========================================== -->
+    <!-- DROPDOWN NAVIGATION MENU STYLES -->
+    <!-- ========================================== -->
+
+    <!-- Dropdown Menu Container Style -->
+    <Style x:Key="DropdownMenuContainerStyle" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource ConsoleBackgroundMediumBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource ConsoleBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Padding" Value="4" />
+        <Setter Property="MinWidth" Value="220" />
+        <Setter Property="MaxWidth" Value="320" />
+    </Style>
+
+    <!-- Dropdown Menu Item Style -->
+    <Style x:Key="DropdownMenuItemStyle" TargetType="Border">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="Padding" Value="8,10" />
+        <Setter Property="Margin" Value="4,2" />
+    </Style>
+
+    <!-- Dropdown Menu Item Hover Brush -->
+    <SolidColorBrush x:Key="DropdownItemHoverBrush" Color="#1858a6ff" />
+    <SolidColorBrush x:Key="DropdownItemPressedBrush" Color="#2858a6ff" />
+    <SolidColorBrush x:Key="DropdownItemActiveBrush" Color="#203fb950" />
+
+    <!-- Dropdown Menu Separator Style -->
+    <Style x:Key="DropdownMenuSeparatorStyle" TargetType="Border">
+        <Setter Property="Height" Value="1" />
+        <Setter Property="Background" Value="#20808080" />
+        <Setter Property="Margin" Value="12,6" />
+    </Style>
+
+    <!-- Dropdown Menu Header Style -->
+    <Style x:Key="DropdownMenuHeaderStyle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="CharacterSpacing" Value="50" />
+        <Setter Property="Foreground" Value="{StaticResource ConsoleTextMutedBrush}" />
+        <Setter Property="Margin" Value="12,10,12,6" />
+    </Style>
+
+    <!-- Dropdown Menu Item Text Style -->
+    <Style x:Key="DropdownMenuItemTextStyle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Foreground" Value="{StaticResource ConsoleTextPrimaryBrush}" />
+        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+    </Style>
+
+    <!-- Dropdown Menu Item Description Style -->
+    <Style x:Key="DropdownMenuItemDescriptionStyle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="Foreground" Value="{StaticResource ConsoleTextMutedBrush}" />
+        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+    </Style>
+
+    <!-- Dropdown Menu Shortcut Badge Style -->
+    <Style x:Key="DropdownMenuShortcutStyle" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource ConsoleBackgroundDarkBrush}" />
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="Padding" Value="6,3" />
+    </Style>
+
+    <!-- Dropdown Menu Shortcut Text Style -->
+    <Style x:Key="DropdownMenuShortcutTextStyle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="FontFamily" Value="Cascadia Code, Consolas, monospace" />
+        <Setter Property="Foreground" Value="#6e7681" />
+    </Style>
+
+    <!-- Dropdown Menu Icon Style -->
+    <Style x:Key="DropdownMenuIconStyle" TargetType="FontIcon">
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="Foreground" Value="{StaticResource ConsoleAccentGreenBrush}" />
+    </Style>
+
+    <!-- Dropdown Menu Backdrop Style -->
+    <Style x:Key="DropdownBackdropStyle" TargetType="Border">
+        <Setter Property="Background" Value="#000000" />
+        <Setter Property="Opacity" Value="0.4" />
+    </Style>
+
+    <!-- Flick Gesture Indicator Style -->
+    <Style x:Key="FlickIndicatorStyle" TargetType="Border">
+        <Setter Property="HorizontalAlignment" Value="Left" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Background" Value="{StaticResource ConsoleAccentGreenBrush}" />
+        <Setter Property="CornerRadius" Value="0,4,4,0" />
+        <Setter Property="Padding" Value="8,16" />
+    </Style>
+
+    <!-- Flick Gesture Hint Style -->
+    <Style x:Key="FlickHintContainerStyle" TargetType="Border">
+        <Setter Property="HorizontalAlignment" Value="Left" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Background" Value="#CC0d1117" />
+        <Setter Property="BorderBrush" Value="{StaticResource ConsoleAccentGreenBrush}" />
+        <Setter Property="BorderThickness" Value="0,0,2,0" />
+        <Setter Property="CornerRadius" Value="0,8,8,0" />
+        <Setter Property="Padding" Value="16,12" />
+    </Style>
+
+    <!-- ========================================== -->
+    <!-- CONTEXT MENU STYLES -->
+    <!-- ========================================== -->
+
+    <!-- Context Menu Style (for right-click menus) -->
+    <Style x:Key="ContextMenuStyle" TargetType="MenuFlyoutPresenter">
+        <Setter Property="Background" Value="{StaticResource ConsoleBackgroundMediumBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource ConsoleBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Padding" Value="4" />
+        <Setter Property="MinWidth" Value="180" />
+    </Style>
+
+    <!-- Context Menu Item Style -->
+    <Style x:Key="ContextMenuItemStyle" TargetType="MenuFlyoutItem">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Padding" Value="12,8" />
+        <Setter Property="FontSize" Value="13" />
+    </Style>
+
 </ResourceDictionary>
