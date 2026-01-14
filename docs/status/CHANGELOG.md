@@ -31,6 +31,40 @@ This document tracks implemented improvements and version history for the Market
 - `ProgressDisplayService` - Display progress of operations
 - `StartupSummary` - Show startup configuration summary
 
+#### Symbol Management CLI (2026-01-14)
+- **CLI Commands**: Full symbol management from command line
+  - `symbols list` - List all subscribed symbols
+  - `symbols add <symbol>` - Add new symbol
+  - `symbols remove <symbol>` - Remove symbol
+  - `symbols import <file>` - Bulk import from CSV
+  - `symbols export <file>` - Export to CSV
+
+#### UWP Desktop App Enhancements (2026-01-14)
+- **Admin & Maintenance Page**: Comprehensive administrative interface
+  - Quick system check with health status indicators
+  - Maintenance scheduling with cron expressions
+  - Storage tier usage visualization (Hot/Warm/Cold)
+  - Retention policy management per tier
+  - Maintenance history with status tracking
+
+- **Advanced Analytics Page**: Deep data quality analysis
+  - Quality summary cards with letter grade system (A+, A, B, C, D, F)
+  - Per-symbol quality reports with drill-down capability
+  - Gap analysis with date range selection and symbol filtering
+  - Cross-provider comparison tools
+  - Latency histogram visualization with percentiles
+  - AI-powered recommendations for data quality improvement
+
+**New UWP Services:**
+- `SymbolManagementService` - Full symbol CRUD operations
+- `AdminMaintenanceService` - Archive scheduling, tier migration, retention policies
+- `AdvancedAnalyticsService` - Gap analysis, cross-provider comparison, quality reports
+- `ProviderManagementService` - Failover configuration, rate limit tracking
+
+#### Documentation & Diagrams (2026-01-14)
+- **PlantUML PNG Generation**: Automated PNG image generation from PlantUML diagrams
+- **Updated Architecture Diagrams**: All diagrams refreshed to reflect current application state
+
 #### Technical Indicators (Skender.Stock.Indicators)
 - 200+ technical indicators available via `TechnicalIndicatorService`
 - Real-time streaming indicator calculation
