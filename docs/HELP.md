@@ -6,6 +6,11 @@ Welcome to the Market Data Collector! This comprehensive guide will help you get
 
 - [Overview](#overview)
 - [Quick Start](#quick-start)
+- [Auto-Configuration](#auto-configuration)
+  - [Configuration Wizard](#configuration-wizard)
+  - [Quick Auto-Configuration](#quick-auto-configuration)
+  - [Provider Detection](#provider-detection)
+  - [Credential Validation](#credential-validation)
 - [Installation](#installation)
 - [Configuration](#configuration)
   - [Configuration File](#configuration-file-location)
@@ -128,6 +133,104 @@ Run the collector in production mode:
 ```bash
 ./MarketDataCollector --serve-status --watch-config
 ```
+
+---
+
+## Auto-Configuration
+
+Market Data Collector v1.5 includes user-friendly auto-configuration features to help new users get started quickly.
+
+### Configuration Wizard
+
+The interactive configuration wizard is the recommended way for new users to set up the application:
+
+```bash
+./MarketDataCollector --wizard
+```
+
+The wizard guides you through a step-by-step process:
+
+1. **Provider Detection** - Automatically detects available providers from environment variables
+2. **Use Case Selection** - Choose your primary use case (research, trading, backtesting)
+3. **Data Source Configuration** - Select and configure your data provider
+4. **Symbol Setup** - Add symbols you want to track
+5. **Storage Configuration** - Choose storage format and location
+6. **Backfill Setup** - Configure historical data backfill preferences
+7. **Review & Confirm** - Review your configuration before saving
+
+The wizard generates a complete `appsettings.json` file ready for use.
+
+### Quick Auto-Configuration
+
+If you prefer a non-interactive setup and have environment variables configured:
+
+```bash
+./MarketDataCollector --auto-config
+```
+
+Auto-configuration:
+- Detects available providers from environment variables
+- Selects the highest-priority provider with valid credentials
+- Generates a sensible default configuration
+- Creates `config/appsettings.json` automatically
+
+**Supported Environment Variables:**
+```bash
+# Alpaca
+export ALPACA_KEY_ID=your-key-id
+export ALPACA_SECRET_KEY=your-secret-key
+
+# Polygon
+export POLYGON_API_KEY=your-api-key
+
+# Tiingo
+export TIINGO_API_TOKEN=your-token
+
+# Finnhub
+export FINNHUB_API_KEY=your-api-key
+
+# Alpha Vantage
+export ALPHA_VANTAGE_API_KEY=your-api-key
+```
+
+### Provider Detection
+
+Check which providers are available and their status:
+
+```bash
+./MarketDataCollector --detect-providers
+```
+
+This shows:
+- Available providers and their display names
+- Whether credentials are configured
+- Missing credential information
+- Provider capabilities (RealTime, Historical, L2Depth, etc.)
+- Suggested priority order
+
+### Credential Validation
+
+Validate your API credentials without starting the collector:
+
+```bash
+./MarketDataCollector --validate-credentials
+```
+
+This:
+- Tests connectivity to each configured provider
+- Validates API key format and authentication
+- Reports any credential issues with helpful error messages
+- Suggests fixes for common problems
+
+### Generate Configuration Template
+
+Create a configuration template to customize manually:
+
+```bash
+./MarketDataCollector --generate-config
+```
+
+This creates a `config/appsettings.json` template with all available options commented and documented.
 
 ---
 
@@ -1331,6 +1434,20 @@ The desktop app uses Windows CredentialPicker for secure API key management:
 
 ### Basic Modes
 
+#### First-Time Setup Mode (Recommended for New Users)
+```bash
+./MarketDataCollector --wizard
+```
+
+Interactive wizard that guides you through configuration step by step.
+
+#### Quick Auto-Configuration Mode
+```bash
+./MarketDataCollector --auto-config
+```
+
+Automatically configures the application based on environment variables.
+
 #### Production Mode (Recommended)
 ```bash
 ./MarketDataCollector --serve-status --watch-config
@@ -1358,12 +1475,19 @@ The desktop app uses Windows CredentialPicker for secure API key management:
 
 | Option | Description |
 |--------|-------------|
+| `--wizard` | Interactive configuration wizard (recommended for new users) |
+| `--auto-config` | Quick auto-configuration from environment variables |
+| `--detect-providers` | Show available providers and their status |
+| `--validate-credentials` | Validate configured API credentials |
+| `--generate-config` | Generate a configuration template |
 | `--ui` | Start web dashboard interface |
 | `--serve-status` | Enable HTTP status endpoint |
 | `--watch-config` | Enable hot-reload of configuration |
 | `--backfill` | Run historical data backfill |
 | `--replay <path>` | Replay events from JSONL file |
 | `--selftest` | Run system self-tests |
+| `--validate-config` | Validate configuration without starting |
+| `--dry-run` | Comprehensive validation without starting |
 | `--export` | Export data to analysis format |
 | `--http-port <port>` | Set HTTP server port (default: 8080) |
 | `--status-port <port>` | Set status endpoint port |
@@ -2019,5 +2143,5 @@ Before contributing code:
 ---
 
 **Version:** 1.5.0
-**Last Updated:** 2026-01-09
+**Last Updated:** 2026-01-14
 **License:** See LICENSE file

@@ -19,7 +19,36 @@ cd MarketDataCollector
 dotnet build
 ```
 
-### 2. Configure Your Settings
+### 2. Configure Your Settings (Choose One Method)
+
+**Option A: Interactive Configuration Wizard (Recommended for New Users)**
+
+The wizard guides you through setup step by step:
+
+```bash
+dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --wizard
+```
+
+The wizard will:
+- Detect available providers from environment variables
+- Guide you through provider selection
+- Help configure symbols and storage
+- Generate a complete `appsettings.json`
+
+**Option B: Quick Auto-Configuration**
+
+If you have environment variables set:
+
+```bash
+# Set your credentials
+export ALPACA_KEY_ID=your-key-id
+export ALPACA_SECRET_KEY=your-secret-key
+
+# Auto-configure from environment
+dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --auto-config
+```
+
+**Option C: Manual Configuration**
 
 Copy the sample configuration file:
 
@@ -199,6 +228,10 @@ The collector supports multiple operation modes via command-line arguments:
 
 | Mode | Command | Description |
 |------|---------|-------------|
+| **Config Wizard** | `--wizard` | Interactive configuration wizard (recommended for new users) |
+| **Auto-Config** | `--auto-config` | Quick auto-configuration from environment variables |
+| **Detect Providers** | `--detect-providers` | Show available providers and their status |
+| **Validate Credentials** | `--validate-credentials` | Validate configured API credentials |
 | **Default** | `dotnet run` | Run smoke test with simulated data |
 | **Self-Test** | `--selftest` | Run internal self-tests and exit |
 | **Live Capture** | `--http-port N` | Connect to provider and capture data with HTTP monitoring |
@@ -277,5 +310,5 @@ For more issues, see [Troubleshooting](troubleshooting.md).
 ---
 
 **Version:** 1.5.0
-**Last Updated:** 2026-01-08
+**Last Updated:** 2026-01-14
 **See Also:** [HELP.md](../../HELP.md) | [Configuration](configuration.md) | [Architecture](../architecture/overview.md) | [Lean Integration](../integrations/lean-integration.md)
