@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
+using MarketDataCollector.Uwp.Collections;
 using MarketDataCollector.Uwp.Models;
 using MarketDataCollector.Uwp.Services;
 using Windows.Storage.Pickers;
@@ -41,7 +42,7 @@ public sealed partial class SettingsPage : Page
     private readonly CredentialService _credentialService;
     private readonly OAuthRefreshService _oauthRefreshService;
     private readonly ObservableCollection<CredentialDisplayInfo> _storedCredentials = new();
-    private readonly ObservableCollection<ActivityItem> _recentActivity = new();
+    private readonly BoundedObservableCollection<ActivityItem> _recentActivity = new(20);
 
     public SettingsPage()
     {
@@ -634,8 +635,8 @@ public sealed partial class SettingsPage : Page
         RefreshStoredCredentials();
         UpdateSystemStatus();
 
-        // Add to activity log
-        _recentActivity.Insert(0, new ActivityItem
+        // Add to activity log using efficient Prepend
+        _recentActivity.Prepend(new ActivityItem
         {
             Icon = failCount == 0 ? "\uE73E" : "\uE7BA",
             IconColor = failCount == 0 ? GreenBrush : YellowBrush,
@@ -749,8 +750,8 @@ public sealed partial class SettingsPage : Page
             CredentialExpirationWarning.IsOpen = true;
             CredentialExpirationWarning.Message = $"{friendlyName} will expire in {FormatTimeRemaining(e.TimeRemaining)}.";
 
-            // Add to activity log
-            _recentActivity.Insert(0, new ActivityItem
+            // Add to activity log using efficient Prepend
+            _recentActivity.Prepend(new ActivityItem
             {
                 Icon = "\uE7BA",
                 IconColor = YellowBrush,
@@ -766,7 +767,8 @@ public sealed partial class SettingsPage : Page
         {
             RefreshStoredCredentials();
 
-            _recentActivity.Insert(0, new ActivityItem
+            // Add to activity log using efficient Prepend
+            _recentActivity.Prepend(new ActivityItem
             {
                 Icon = "\uE72C",
                 IconColor = GreenBrush,
@@ -785,7 +787,8 @@ public sealed partial class SettingsPage : Page
             TestResultInfoBar.Message = $"Failed to refresh {e.ProviderId} token: {e.ErrorMessage}";
             TestResultInfoBar.IsOpen = true;
 
-            _recentActivity.Insert(0, new ActivityItem
+            // Add to activity log using efficient Prepend
+            _recentActivity.Prepend(new ActivityItem
             {
                 Icon = "\uE783",
                 IconColor = RedBrush,

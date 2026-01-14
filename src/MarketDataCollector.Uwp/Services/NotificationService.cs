@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using MarketDataCollector.Uwp.Collections;
 using Microsoft.Windows.AppNotifications;
 using Microsoft.Windows.AppNotifications.Builder;
 
@@ -15,7 +16,7 @@ public sealed class NotificationService
     private static readonly object _lock = new();
 
     private NotificationSettings _settings = new();
-    private readonly List<NotificationHistoryItem> _history = new();
+    private readonly BoundedObservableCollection<NotificationHistoryItem> _history;
     private readonly object _historyLock = new();
     private const int MaxHistoryItems = 50;
 
@@ -36,6 +37,8 @@ public sealed class NotificationService
 
     private NotificationService()
     {
+        _history = new BoundedObservableCollection<NotificationHistoryItem>(MaxHistoryItems);
+
         try
         {
             AppNotificationManager.Default.NotificationInvoked += OnNotificationInvoked;
@@ -262,10 +265,10 @@ public sealed class NotificationService
         string tag,
         string? actionUrl = null)
     {
-        // Add to history with thread-safe access
+        // Add to history with thread-safe access using efficient Prepend
         lock (_historyLock)
         {
-            _history.Insert(0, new NotificationHistoryItem
+            _history.Prepend(new NotificationHistoryItem
             {
                 Title = title,
                 Message = message,
@@ -273,12 +276,7 @@ public sealed class NotificationService
                 Timestamp = DateTime.Now,
                 Tag = tag
             });
-
-            // Trim history
-            while (_history.Count > MaxHistoryItems)
-            {
-                _history.RemoveAt(_history.Count - 1);
-            }
+            // No manual trimming needed - BoundedObservableCollection handles capacity automatically
         }
 
         // Raise event for in-app notification handling

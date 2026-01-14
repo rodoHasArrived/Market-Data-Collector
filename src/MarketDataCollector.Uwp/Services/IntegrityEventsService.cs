@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using MarketDataCollector.Uwp.Collections;
 
 namespace MarketDataCollector.Uwp.Services;
 
@@ -14,7 +15,7 @@ public sealed class IntegrityEventsService
     private static IntegrityEventsService? _instance;
     private static readonly object _lock = new();
 
-    private readonly List<IntegrityEvent> _events = new();
+    private readonly BoundedObservableCollection<IntegrityEvent> _events;
     private readonly NotificationService _notificationService;
     private const int MaxEvents = 100;
     private const int MaxRecentEvents = 10;
@@ -37,6 +38,7 @@ public sealed class IntegrityEventsService
     private IntegrityEventsService()
     {
         _notificationService = NotificationService.Instance;
+        _events = new BoundedObservableCollection<IntegrityEvent>(MaxEvents);
     }
 
     /// <summary>
@@ -89,16 +91,12 @@ public sealed class IntegrityEventsService
 
     /// <summary>
     /// Records a new integrity event.
+    /// Uses efficient Prepend operation - O(1) with automatic capacity management.
     /// </summary>
     public async Task RecordEventAsync(IntegrityEvent integrityEvent)
     {
-        _events.Insert(0, integrityEvent);
-
-        // Trim to max events
-        while (_events.Count > MaxEvents)
-        {
-            _events.RemoveAt(_events.Count - 1);
-        }
+        // Prepend to collection - automatically handles capacity limit
+        _events.Prepend(integrityEvent);
 
         // Raise event
         EventRecorded?.Invoke(this, integrityEvent);
