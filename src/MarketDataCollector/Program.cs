@@ -189,6 +189,47 @@ internal static class Program
             return;
         }
 
+        // Quick Check Mode - Fast health diagnostics
+        if (args.Any(a => a.Equals("--quick-check", StringComparison.OrdinalIgnoreCase)))
+        {
+            log.Information("Running quick configuration check...");
+
+            var summary = new StartupSummary();
+            var result = summary.PerformQuickCheck(cfg);
+            summary.DisplayQuickCheck(result);
+
+            Environment.Exit(result.Success ? 0 : 1);
+            return;
+        }
+
+        // Test Connectivity Mode - Test provider connections
+        if (args.Any(a => a.Equals("--test-connectivity", StringComparison.OrdinalIgnoreCase)))
+        {
+            log.Information("Testing provider connectivity...");
+
+            await using var tester = new ConnectivityTestService();
+            var result = await tester.TestAllAsync(cfg);
+            tester.DisplaySummary(result);
+
+            Environment.Exit(result.AllReachable ? 0 : 1);
+            return;
+        }
+
+        // Show Error Codes Mode - Display error code reference
+        if (args.Any(a => a.Equals("--error-codes", StringComparison.OrdinalIgnoreCase)))
+        {
+            FriendlyErrorFormatter.DisplayErrorCodeReference();
+            return;
+        }
+
+        // Show Summary Mode - Display configuration summary
+        if (args.Any(a => a.Equals("--show-config", StringComparison.OrdinalIgnoreCase)))
+        {
+            var summary = new StartupSummary();
+            summary.Display(cfg, cfgPath, args);
+            return;
+        }
+
         // Validate Config Mode - Check configuration without starting
         if (args.Any(a => a.Equals("--validate-config", StringComparison.OrdinalIgnoreCase)))
         {
@@ -619,6 +660,12 @@ AUTO-CONFIGURATION (First-time setup):
     --validate-credentials  Validate configured API credentials
     --generate-config       Generate a configuration template
 
+DIAGNOSTICS & TROUBLESHOOTING:
+    --quick-check           Fast configuration health check
+    --test-connectivity     Test connectivity to all configured providers
+    --show-config           Display current configuration summary
+    --error-codes           Show error code reference guide
+
 OPTIONS:
     --config <path>         Path to configuration file (default: appsettings.json)
     --http-port <port>      HTTP server port (default: 8080)
@@ -716,6 +763,18 @@ EXAMPLES:
     # Generate a configuration template
     MarketDataCollector --generate-config --template alpaca --output config/appsettings.json
 
+    # Quick configuration health check
+    MarketDataCollector --quick-check
+
+    # Test connectivity to all providers
+    MarketDataCollector --test-connectivity
+
+    # Show current configuration summary
+    MarketDataCollector --show-config
+
+    # View all error codes and their meanings
+    MarketDataCollector --error-codes
+
 CONFIGURATION:
     Configuration is loaded from appsettings.json by default, but can be customized:
 
@@ -749,8 +808,9 @@ SUPPORT:
     Documentation: ./HELP.md
 
 ╔══════════════════════════════════════════════════════════════════════╗
-║  NEW USER?  Run: ./MarketDataCollector --wizard                      ║
-║  QUICK START: ./MarketDataCollector --ui                             ║
+║  NEW USER?     Run: ./MarketDataCollector --wizard                   ║
+║  QUICK CHECK:  Run: ./MarketDataCollector --quick-check              ║
+║  START UI:     Run: ./MarketDataCollector --ui                       ║
 ║  Then open http://localhost:8080 in your browser                     ║
 ╚══════════════════════════════════════════════════════════════════════╝
 ");
