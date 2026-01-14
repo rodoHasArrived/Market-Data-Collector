@@ -247,6 +247,30 @@ public sealed partial class MainPage : Page
             case "SystemHealth":
                 ContentFrame.Navigate(typeof(SystemHealthPage));
                 break;
+            case "PortfolioImport":
+                ContentFrame.Navigate(typeof(PortfolioImportPage));
+                break;
+            case "IndexSubscription":
+                ContentFrame.Navigate(typeof(IndexSubscriptionPage));
+                break;
+            case "Diagnostics":
+                ContentFrame.Navigate(typeof(DiagnosticsPage));
+                break;
+            case "EventReplay":
+                ContentFrame.Navigate(typeof(EventReplayPage));
+                break;
+            case "PackageManager":
+                ContentFrame.Navigate(typeof(PackageManagerPage));
+                break;
+            case "AnalysisExport":
+                ContentFrame.Navigate(typeof(AnalysisExportPage));
+                break;
+            case "LeanIntegration":
+                ContentFrame.Navigate(typeof(LeanIntegrationPage));
+                break;
+            case "MessagingHub":
+                ContentFrame.Navigate(typeof(MessagingHubPage));
+                break;
         }
     }
 

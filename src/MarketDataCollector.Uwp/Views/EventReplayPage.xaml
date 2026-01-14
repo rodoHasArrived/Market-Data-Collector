@@ -1,0 +1,374 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="MarketDataCollector.Uwp.Views.EventReplayPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="380" />
+        </Grid.ColumnDefinitions>
+
+        <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" Padding="24">
+            <StackPanel Spacing="24" MaxWidth="900">
+                <!-- Header -->
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <FontIcon Glyph="&#xE768;" FontSize="28" Foreground="{ThemeResource SystemAccentColor}" />
+                    <TextBlock Text="Event Replay" Style="{StaticResource TitleTextBlockStyle}" VerticalAlignment="Center" />
+                </StackPanel>
+
+                <TextBlock Text="Replay historical market data events from JSONL files with timing control."
+                           Style="{StaticResource BodyTextBlockStyle}"
+                           Foreground="{ThemeResource SystemBaseMediumColor}" />
+
+                <!-- Source Selection -->
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel Spacing="16">
+                        <TextBlock Text="Data Source" Style="{StaticResource SubtitleTextBlockStyle}" />
+
+                        <RadioButtons>
+                            <RadioButton x:Name="SelectFileRadio" Content="Select File" IsChecked="True" />
+                            <RadioButton x:Name="SelectDateRangeRadio" Content="Select by Date Range" />
+                        </RadioButtons>
+
+                        <!-- File Selection -->
+                        <StackPanel x:Name="FileSelectionPanel" Spacing="12">
+                            <Grid ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <TextBox x:Name="FilePathBox" PlaceholderText="Select a JSONL file..." IsReadOnly="True" />
+                                <Button Grid.Column="1" Content="Browse..." Click="BrowseFile_Click" />
+                            </Grid>
+
+                            <ComboBox x:Name="RecentFilesCombo" Header="Recent Files" HorizontalAlignment="Stretch"
+                                      SelectionChanged="RecentFiles_SelectionChanged" />
+                        </StackPanel>
+
+                        <!-- Date Range Selection -->
+                        <StackPanel x:Name="DateRangePanel" Spacing="12" Visibility="Collapsed">
+                            <AutoSuggestBox x:Name="SymbolBox" Header="Symbol" PlaceholderText="AAPL" />
+
+                            <Grid ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <CalendarDatePicker x:Name="FromDatePicker" Header="From Date" HorizontalAlignment="Stretch" />
+                                <CalendarDatePicker x:Name="ToDatePicker" Header="To Date" HorizontalAlignment="Stretch" />
+                            </Grid>
+
+                            <Button Content="Find Files" Click="FindFiles_Click" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Available Files -->
+                <Border x:Name="AvailableFilesCard" Style="{StaticResource CardStyle}" Visibility="Collapsed">
+                    <StackPanel Spacing="16">
+                        <TextBlock Text="Available Files" Style="{StaticResource SubtitleTextBlockStyle}" />
+
+                        <ListView x:Name="AvailableFilesList" SelectionMode="Single" MaxHeight="250"
+                                  SelectionChanged="AvailableFiles_SelectionChanged">
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Padding="8,4" ColumnSpacing="12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="80" />
+                                            <ColumnDefinition Width="80" />
+                                            <ColumnDefinition Width="100" />
+                                            <ColumnDefinition Width="80" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Grid.Column="0" Text="{Binding Symbol}" FontWeight="SemiBold" />
+                                        <TextBlock Grid.Column="1" Text="{Binding EventType}" />
+                                        <TextBlock Grid.Column="2" Text="{Binding DateText}" />
+                                        <TextBlock Grid.Column="3" Text="{Binding EventCountText}" HorizontalAlignment="Right" />
+                                        <TextBlock Grid.Column="4" Text="{Binding SizeText}" HorizontalAlignment="Right"
+                                                   Foreground="{ThemeResource SystemBaseMediumColor}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </StackPanel>
+                </Border>
+
+                <!-- Replay Options -->
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel Spacing="16">
+                        <TextBlock Text="Replay Options" Style="{StaticResource SubtitleTextBlockStyle}" />
+
+                        <Grid ColumnSpacing="24">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0" Spacing="12">
+                                <ComboBox x:Name="SpeedCombo" Header="Playback Speed" SelectedIndex="2" HorizontalAlignment="Stretch">
+                                    <ComboBoxItem Content="0.25x (Slow)" Tag="0.25" />
+                                    <ComboBoxItem Content="0.5x" Tag="0.5" />
+                                    <ComboBoxItem Content="1x (Real-time)" Tag="1" />
+                                    <ComboBoxItem Content="2x" Tag="2" />
+                                    <ComboBoxItem Content="5x" Tag="5" />
+                                    <ComboBoxItem Content="10x" Tag="10" />
+                                    <ComboBoxItem Content="Max Speed" Tag="0" />
+                                </ComboBox>
+
+                                <CheckBox x:Name="PreserveTimingCheck" Content="Preserve Original Timing" IsChecked="True" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1" Spacing="12">
+                                <ComboBox x:Name="EventTypeFilterCombo" Header="Event Type Filter" HorizontalAlignment="Stretch">
+                                    <ComboBoxItem Content="All Events" IsSelected="True" />
+                                    <ComboBoxItem Content="Trades Only" Tag="Trade" />
+                                    <ComboBoxItem Content="Quotes Only" Tag="Quote" />
+                                    <ComboBoxItem Content="L2 Snapshots Only" Tag="LOB" />
+                                </ComboBox>
+
+                                <CheckBox x:Name="PublishToEventBusCheck" Content="Publish to Event Bus" />
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Playback Controls -->
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel Spacing="16">
+                        <TextBlock Text="Playback Controls" Style="{StaticResource SubtitleTextBlockStyle}" />
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock x:Name="CurrentTimeText" Text="00:00:00" VerticalAlignment="Center" />
+                            <Slider x:Name="ProgressSlider" Grid.Column="1" Margin="16,0"
+                                    Minimum="0" Maximum="100" Value="0"
+                                    ValueChanged="ProgressSlider_ValueChanged" />
+                            <TextBlock x:Name="TotalTimeText" Grid.Column="2" Text="00:00:00" VerticalAlignment="Center" />
+                        </Grid>
+
+                        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                            <Button x:Name="RewindButton" Click="Rewind_Click" ToolTipService.ToolTip="Rewind 10s">
+                                <FontIcon Glyph="&#xEB9E;" FontSize="20" />
+                            </Button>
+                            <Button x:Name="PlayButton" Click="Play_Click" Width="60" Height="60"
+                                    Style="{StaticResource AccentButtonStyle}">
+                                <FontIcon x:Name="PlayIcon" Glyph="&#xE768;" FontSize="24" />
+                            </Button>
+                            <Button x:Name="StopButton" Click="Stop_Click" ToolTipService.ToolTip="Stop">
+                                <FontIcon Glyph="&#xE71A;" FontSize="20" />
+                            </Button>
+                            <Button x:Name="ForwardButton" Click="Forward_Click" ToolTipService.ToolTip="Forward 10s">
+                                <FontIcon Glyph="&#xEB9D;" FontSize="20" />
+                            </Button>
+                        </StackPanel>
+
+                        <!-- Status -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0" HorizontalAlignment="Center">
+                                <TextBlock x:Name="EventsReplayedText" Text="0"
+                                           Style="{StaticResource SubheaderTextBlockStyle}"
+                                           Foreground="{ThemeResource SystemAccentColor}"
+                                           HorizontalAlignment="Center" />
+                                <TextBlock Text="Events Replayed" Style="{StaticResource CaptionTextBlockStyle}"
+                                           HorizontalAlignment="Center" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1" HorizontalAlignment="Center">
+                                <TextBlock x:Name="EventsPerSecondText" Text="0"
+                                           Style="{StaticResource SubheaderTextBlockStyle}"
+                                           Foreground="{ThemeResource SystemAccentColor}"
+                                           HorizontalAlignment="Center" />
+                                <TextBlock Text="Events/sec" Style="{StaticResource CaptionTextBlockStyle}"
+                                           HorizontalAlignment="Center" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2" HorizontalAlignment="Center">
+                                <TextBlock x:Name="StatusText" Text="Ready"
+                                           Style="{StaticResource SubheaderTextBlockStyle}"
+                                           HorizontalAlignment="Center" />
+                                <TextBlock Text="Status" Style="{StaticResource CaptionTextBlockStyle}"
+                                           HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Event Preview -->
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel Spacing="16">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <FontIcon Glyph="&#xE8A5;" Foreground="{ThemeResource SystemAccentColor}" />
+                                <TextBlock Text="Event Preview" Style="{StaticResource SubtitleTextBlockStyle}" />
+                            </StackPanel>
+
+                            <ToggleSwitch x:Name="AutoScrollToggle" Grid.Column="1" Header="Auto-scroll"
+                                          IsOn="True" />
+                        </Grid>
+
+                        <ListView x:Name="EventPreviewList" SelectionMode="None" MaxHeight="300">
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Padding="4" ColumnSpacing="8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="120" />
+                                            <ColumnDefinition Width="60" />
+                                            <ColumnDefinition Width="60" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Grid.Column="0" Text="{Binding TimestampText}"
+                                                   FontFamily="Consolas" FontSize="11" />
+                                        <TextBlock Grid.Column="1" Text="{Binding EventType}"
+                                                   FontWeight="SemiBold" />
+                                        <TextBlock Grid.Column="2" Text="{Binding Symbol}" />
+                                        <TextBlock Grid.Column="3" Text="{Binding Summary}"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   Foreground="{ThemeResource SystemBaseMediumColor}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Right Panel -->
+        <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" Padding="12,24,24,24">
+            <StackPanel Spacing="16">
+                <!-- File Info -->
+                <Border x:Name="FileInfoCard" Style="{StaticResource CardStyle}" Visibility="Collapsed">
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="File Information" Style="{StaticResource BodyStrongTextBlockStyle}" />
+
+                        <Grid RowSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="100" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="File:" FontWeight="SemiBold" />
+                            <TextBlock x:Name="InfoFileName" Grid.Row="0" Grid.Column="1" TextTrimming="CharacterEllipsis" />
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Events:" FontWeight="SemiBold" />
+                            <TextBlock x:Name="InfoEventCount" Grid.Row="1" Grid.Column="1" />
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Duration:" FontWeight="SemiBold" />
+                            <TextBlock x:Name="InfoDuration" Grid.Row="2" Grid.Column="1" />
+
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="First Event:" FontWeight="SemiBold" />
+                            <TextBlock x:Name="InfoFirstEvent" Grid.Row="3" Grid.Column="1" />
+
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Last Event:" FontWeight="SemiBold" />
+                            <TextBlock x:Name="InfoLastEvent" Grid.Row="4" Grid.Column="1" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Event Type Breakdown -->
+                <Border x:Name="EventBreakdownCard" Style="{StaticResource CardStyle}" Visibility="Collapsed">
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="Event Type Breakdown" Style="{StaticResource BodyStrongTextBlockStyle}" />
+
+                        <ListView x:Name="EventBreakdownList" SelectionMode="None">
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Padding="4" ColumnSpacing="8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Grid.Column="0" Text="{Binding EventType}" />
+                                        <TextBlock Grid.Column="1" Text="{Binding CountText}" FontWeight="SemiBold" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </StackPanel>
+                </Border>
+
+                <!-- Keyboard Shortcuts -->
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="Keyboard Shortcuts" Style="{StaticResource BodyStrongTextBlockStyle}" />
+
+                        <Grid RowSpacing="4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="80" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Space" FontWeight="SemiBold" />
+                            <TextBlock Grid.Row="0" Grid.Column="1" Text="Play/Pause" />
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Left" FontWeight="SemiBold" />
+                            <TextBlock Grid.Row="1" Grid.Column="1" Text="Rewind 10s" />
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Right" FontWeight="SemiBold" />
+                            <TextBlock Grid.Row="2" Grid.Column="1" Text="Forward 10s" />
+
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Esc" FontWeight="SemiBold" />
+                            <TextBlock Grid.Row="3" Grid.Column="1" Text="Stop" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Tips -->
+                <Border Style="{StaticResource CardStyle}"
+                        Background="{ThemeResource SystemFillColorNeutralBackgroundBrush}">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Tips" Style="{StaticResource BodyStrongTextBlockStyle}" />
+
+                        <TextBlock Text="Use 'Max Speed' to quickly scan through large files."
+                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                   TextWrapping="Wrap" />
+
+                        <TextBlock Text="Enable 'Publish to Event Bus' to feed replayed data into your analysis pipeline."
+                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Page>

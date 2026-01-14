@@ -161,6 +161,20 @@
                     <FontIcon Glyph="&#xE787;" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
+            <NavigationViewItem Content="Portfolio Import" Tag="PortfolioImport"
+                                AutomationProperties.Name="Portfolio Import - Import symbols from files"
+                                ToolTipService.ToolTip="Import symbols from CSV, JSON, or index constituents">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE8B5;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem Content="Index Subscription" Tag="IndexSubscription"
+                                AutomationProperties.Name="Index Subscription - Subscribe to index constituents"
+                                ToolTipService.ToolTip="Subscribe to S&amp;P 500, Nasdaq 100, and sector ETFs">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE8EC;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
             <NavigationViewItem Content="Schedules" Tag="Schedules"
                                 AutomationProperties.Name="Schedules - Manage scheduled tasks"
                                 ToolTipService.ToolTip="Manage backfill and maintenance schedules">
@@ -208,6 +222,13 @@
                     <FontIcon Glyph="&#xE770;" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
+            <NavigationViewItem Content="Diagnostics" Tag="Diagnostics"
+                                AutomationProperties.Name="Diagnostics - Run diagnostic tests"
+                                ToolTipService.ToolTip="Dry-run, preflight checks, and diagnostic bundles">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE9D9;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
 
             <NavigationViewItemSeparator />
 
@@ -220,6 +241,27 @@
                     <FontIcon Glyph="&#xEDE1;" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
+            <NavigationViewItem Content="Analysis Export" Tag="AnalysisExport"
+                                AutomationProperties.Name="Analysis Export - Advanced data export"
+                                ToolTipService.ToolTip="Export for research, ML, and advanced analysis">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE9F9;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem Content="Event Replay" Tag="EventReplay"
+                                AutomationProperties.Name="Event Replay - Replay historical events"
+                                ToolTipService.ToolTip="Replay JSONL market data files">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE768;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem Content="Package Manager" Tag="PackageManager"
+                                AutomationProperties.Name="Package Manager - Manage data packages"
+                                ToolTipService.ToolTip="Create, import, and validate portable packages">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE7B8;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
             <NavigationViewItem Content="Trading Hours" Tag="TradingHours"
                                 AutomationProperties.Name="Trading Hours - Configure market hours"
                                 ToolTipService.ToolTip="Configure market hours and holidays">
@@ -227,6 +269,30 @@
                     <FontIcon Glyph="&#xE823;" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
+
+            <NavigationViewItemSeparator />
+
+            <!-- Integrations Section -->
+            <NavigationViewItemHeader Content="INTEGRATIONS" />
+            <NavigationViewItem Content="Lean Backtesting" Tag="LeanIntegration"
+                                AutomationProperties.Name="Lean Integration - QuantConnect Lean backtesting"
+                                ToolTipService.ToolTip="Configure and run QuantConnect Lean backtests">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE9F5;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem Content="Messaging Hub" Tag="MessagingHub"
+                                AutomationProperties.Name="Messaging Hub - MassTransit message bus"
+                                ToolTipService.ToolTip="View message bus status and consumers">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE715;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+
+            <NavigationViewItemSeparator />
+
+            <!-- Help Section -->
+            <NavigationViewItemHeader Content="SUPPORT" />
             <NavigationViewItem Content="Help" Tag="Help"
                                 AutomationProperties.Name="Help - Documentation and support"
                                 ToolTipService.ToolTip="Documentation, guides, and support">
