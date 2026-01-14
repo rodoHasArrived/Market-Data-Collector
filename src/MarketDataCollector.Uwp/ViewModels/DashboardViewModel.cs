@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using MarketDataCollector.Uwp.Collections;
 using MarketDataCollector.Uwp.Models;
 using MarketDataCollector.Uwp.Services;
 
@@ -118,7 +119,7 @@ public sealed partial class DashboardViewModel : ObservableObject, IDisposable
     private int _scheduledTasksCount;
 
     public ObservableCollection<SymbolViewModel> Symbols { get; } = new();
-    public ObservableCollection<ActivityItem> RecentActivities { get; } = new();
+    public BoundedObservableCollection<ActivityItem> RecentActivities { get; } = new(5);
     public ObservableCollection<RunningTaskInfo> RunningTasks { get; } = new();
 
     private DateTime _collectorStartTime;
@@ -427,12 +428,8 @@ public sealed partial class DashboardViewModel : ObservableObject, IDisposable
 
     private void OnActivityAdded(object? sender, ActivityItem e)
     {
-        // Insert at the beginning, keeping max 5 items
-        RecentActivities.Insert(0, e);
-        while (RecentActivities.Count > 5)
-        {
-            RecentActivities.RemoveAt(RecentActivities.Count - 1);
-        }
+        // Prepend to collection - automatically handles capacity limit
+        RecentActivities.Prepend(e);
     }
 
     private async void OnRefreshTimerElapsed(object? sender, System.Timers.ElapsedEventArgs e)
