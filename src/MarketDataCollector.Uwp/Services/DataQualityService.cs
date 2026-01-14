@@ -116,6 +116,65 @@ public sealed class DataQualityService
             new { path },
             ct);
     }
+
+    /// <summary>
+    /// Gets data gaps for a specific symbol.
+    /// </summary>
+    public async Task<List<Views.DataGapInfo>> GetDataGapsAsync(string symbol, CancellationToken ct = default)
+    {
+        var report = await GetSymbolQualityAsync(symbol, ct);
+        if (report?.Gaps == null) return new List<Views.DataGapInfo>();
+
+        var gaps = new List<Views.DataGapInfo>();
+        foreach (var gap in report.Gaps)
+        {
+            gaps.Add(new Views.DataGapInfo
+            {
+                StartDate = gap.Start,
+                EndDate = gap.End,
+                MissingBars = gap.MissingRecords
+            });
+        }
+        return gaps;
+    }
+
+    /// <summary>
+    /// Verifies data integrity for a specific symbol.
+    /// </summary>
+    public async Task<IntegrityVerificationResult> VerifySymbolIntegrityAsync(string symbol, CancellationToken ct = default)
+    {
+        var checkResult = await RunQualityCheckAsync(symbol, ct);
+
+        if (checkResult == null)
+        {
+            return new IntegrityVerificationResult
+            {
+                IsValid = false,
+                Issues = new List<string> { "Failed to run integrity check" }
+            };
+        }
+
+        return new IntegrityVerificationResult
+        {
+            IsValid = checkResult.Score >= 95.0 && checkResult.Issues.Count == 0,
+            Score = checkResult.Score,
+            Issues = checkResult.Issues,
+            Recommendations = checkResult.Recommendations,
+            CheckedAt = checkResult.CheckedAt
+        };
+    }
+}
+
+/// <summary>
+/// Result of an integrity verification check.
+/// </summary>
+public class IntegrityVerificationResult
+{
+    public bool IsValid { get; set; }
+    public double Score { get; set; }
+    public List<string> Issues { get; set; } = new();
+    public List<string> Recommendations { get; set; } = new();
+    public DateTime CheckedAt { get; set; }
 }
 
 // DTO classes for data quality API responses

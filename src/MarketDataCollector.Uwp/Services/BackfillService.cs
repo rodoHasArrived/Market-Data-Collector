@@ -463,6 +463,41 @@ public sealed class BackfillService
     }
 
     /// <summary>
+    /// Fills a specific data gap for a symbol.
+    /// </summary>
+    public async Task FillGapAsync(string symbol, DateTime startDate, DateTime endDate, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(symbol))
+            throw new ArgumentException("Symbol is required", nameof(symbol));
+
+        if (startDate > endDate)
+            throw new ArgumentException("Start date must be before end date");
+
+        await StartBackfillAsync(
+            new[] { symbol },
+            "composite", // Use composite provider to try multiple sources
+            startDate,
+            endDate);
+    }
+
+    /// <summary>
+    /// Fills multiple data gaps in batch.
+    /// </summary>
+    public async Task FillGapsBatchAsync(
+        IEnumerable<(string Symbol, DateTime Start, DateTime End)> gaps,
+        CancellationToken ct = default)
+    {
+        var gapsList = gaps.ToList();
+        if (gapsList.Count == 0) return;
+
+        foreach (var (symbol, start, end) in gapsList)
+        {
+            ct.ThrowIfCancellationRequested();
+            await FillGapAsync(symbol, start, end, ct);
+        }
+    }
+
+    /// <summary>
     /// Event raised when progress is updated.
     /// </summary>
     public event EventHandler<BackfillProgressEventArgs>? ProgressUpdated;

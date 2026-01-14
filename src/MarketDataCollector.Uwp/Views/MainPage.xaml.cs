@@ -271,6 +271,12 @@ public sealed partial class MainPage : Page
             case "MessagingHub":
                 ContentFrame.Navigate(typeof(MessagingHubPage));
                 break;
+            case "SymbolStorage":
+                ContentFrame.Navigate(typeof(SymbolStoragePage));
+                break;
+            case "KeyboardShortcuts":
+                ContentFrame.Navigate(typeof(KeyboardShortcutsPage));
+                break;
         }
     }
 
