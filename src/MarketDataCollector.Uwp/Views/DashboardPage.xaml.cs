@@ -510,17 +510,34 @@ public sealed partial class DashboardPage : Page
     {
         try
         {
+            // Show confirmation dialog before stopping
+            var dialog = new ContentDialog
+            {
+                Title = "Stop Data Collection?",
+                Content = "Are you sure you want to stop the market data collector? All active subscriptions will be disconnected and you may miss market data.",
+                PrimaryButtonText = "Stop Collector",
+                CloseButtonText = "Cancel",
+                DefaultButton = ContentDialogButton.Close,
+                XamlRoot = this.XamlRoot
+            };
+
+            var result = await dialog.ShowAsync();
+            if (result != ContentDialogResult.Primary)
+            {
+                return; // User cancelled
+            }
+
             _isCollectorRunning = false;
             _isCollectorPaused = false;
             UpdateCollectorStatus();
             UpdateQuickActionsCollectorStatus();
             UpdateStreamStatusBadges();
 
-            await ShowInfoBarAsync(InfoBarSeverity.Warning, "Collector Stopped", "Market data collection has been stopped.");
+            await ShowInfoBarAsync(InfoBarSeverity.Warning, "Collector Stopped", "Market data collection has been stopped. Click Start to resume.");
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error stopping collector: {ex.Message}");
+            await ShowExceptionErrorAsync(ex, "stopping collector");
         }
     }
 
@@ -574,17 +591,34 @@ public sealed partial class DashboardPage : Page
     {
         try
         {
+            // Show confirmation dialog before stopping
+            var dialog = new ContentDialog
+            {
+                Title = "Stop Data Collection?",
+                Content = "Are you sure you want to stop the market data collector? All active subscriptions will be disconnected and you may miss market data.",
+                PrimaryButtonText = "Stop Collector",
+                CloseButtonText = "Cancel",
+                DefaultButton = ContentDialogButton.Close,
+                XamlRoot = this.XamlRoot
+            };
+
+            var result = await dialog.ShowAsync();
+            if (result != ContentDialogResult.Primary)
+            {
+                return; // User cancelled
+            }
+
             _isCollectorRunning = false;
             _isCollectorPaused = false;
             UpdateCollectorStatus();
             UpdateQuickActionsCollectorStatus();
             UpdateStreamStatusBadges();
 
-            await ShowInfoBarAsync(InfoBarSeverity.Warning, "Collector Stopped", "Market data collection has been stopped.");
+            await ShowInfoBarAsync(InfoBarSeverity.Warning, "Collector Stopped", "Market data collection has been stopped. Click Start to resume.");
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error stopping collector: {ex.Message}");
+            await ShowExceptionErrorAsync(ex, "stopping collector");
         }
     }
 
@@ -622,17 +656,67 @@ public sealed partial class DashboardPage : Page
 
     private async void QuickAddSymbol_Click(object sender, RoutedEventArgs e)
     {
-        var symbol = QuickAddSymbolBox.Text?.ToUpper();
+        var symbol = QuickAddSymbolBox.Text?.ToUpper()?.Trim();
 
+        // Validate symbol format
         if (string.IsNullOrWhiteSpace(symbol))
         {
-            await ShowInfoBarAsync(InfoBarSeverity.Warning, "Invalid Symbol", "Please enter a valid symbol.");
+            await ShowInfoBarAsync(InfoBarSeverity.Warning, "Symbol Required", "Please enter a stock symbol (e.g., AAPL, MSFT).");
+            QuickAddSymbolBox.Focus(FocusState.Programmatic);
+            return;
+        }
+
+        // Validate symbol format (letters, numbers, dots for international symbols)
+        if (!System.Text.RegularExpressions.Regex.IsMatch(symbol, @"^[A-Z0-9.]{1,10}$"))
+        {
+            await ShowInfoBarAsync(InfoBarSeverity.Warning, "Invalid Symbol Format", "Symbol must contain only uppercase letters, numbers, or dots (max 10 characters).");
+            QuickAddSymbolBox.Focus(FocusState.Programmatic);
             return;
         }
 
         var trades = QuickAddTradesCheck.IsChecked == true;
         var depth = QuickAddDepthCheck.IsChecked == true;
         var quotes = QuickAddQuotesCheck.IsChecked == true;
+
+        // Validate at least one stream is selected
+        if (!trades && !depth && !quotes)
+        {
+            await ShowInfoBarAsync(InfoBarSeverity.Warning, "Select Data Streams", "Please select at least one data stream (Trades, Depth, or Quotes).");
+            return;
+        }
+
+        // Check if collector is running
+        if (!_isCollectorRunning)
+        {
+            // Ask user if they want to start the collector
+            var dialog = new ContentDialog
+            {
+                Title = "Collector Not Running",
+                Content = $"The data collector is not running. Would you like to add {symbol} and start the collector?",
+                PrimaryButtonText = "Add & Start",
+                SecondaryButtonText = "Add Only",
+                CloseButtonText = "Cancel",
+                DefaultButton = ContentDialogButton.Primary,
+                XamlRoot = this.XamlRoot
+            };
+
+            var result = await dialog.ShowAsync();
+            if (result == ContentDialogResult.None)
+            {
+                return; // User cancelled
+            }
+
+            if (result == ContentDialogResult.Primary)
+            {
+                // Start the collector
+                _isCollectorRunning = true;
+                _isCollectorPaused = false;
+                _collectorStartTime = DateTime.UtcNow;
+                _startTime = DateTime.UtcNow;
+                UpdateCollectorStatus();
+                UpdateQuickActionsCollectorStatus();
+            }
+        }
 
         // Update stream counts based on subscriptions
         if (trades)
@@ -657,11 +741,16 @@ public sealed partial class DashboardPage : Page
         if (trades) subscriptions.Add("Trades");
         if (depth) subscriptions.Add("Depth");
         if (quotes) subscriptions.Add("Quotes");
-        var subscriptionText = subscriptions.Count > 0 ? string.Join(", ", subscriptions) : "None";
+        var subscriptionText = string.Join(", ", subscriptions);
 
         QuickAddSymbolBox.Text = string.Empty;
 
-        await ShowInfoBarAsync(InfoBarSeverity.Success, "Symbol Added", $"Added {symbol} subscription ({subscriptionText})");
+        // Reset checkboxes to default state
+        QuickAddTradesCheck.IsChecked = true;
+        QuickAddDepthCheck.IsChecked = false;
+        QuickAddQuotesCheck.IsChecked = false;
+
+        await ShowInfoBarAsync(InfoBarSeverity.Success, "Symbol Added", $"Added {symbol} with {subscriptionText} data streams.");
     }
 
     private void ViewLogs_Click(object sender, RoutedEventArgs e)
