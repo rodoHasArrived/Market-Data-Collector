@@ -1,7 +1,7 @@
 # Market Data Collector Documentation
 
 **Version:** 1.5.0
-**Last Updated:** 2026-01-08
+**Last Updated:** 2026-01-14
 
 Welcome to the Market Data Collector documentation. This guide will help you find the information you need.
 

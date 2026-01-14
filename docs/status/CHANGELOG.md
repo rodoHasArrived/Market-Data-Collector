@@ -1,6 +1,6 @@
 # Market Data Collector - Changelog
 
-**Last Updated:** 2026-01-09
+**Last Updated:** 2026-01-14
 **Current Version:** 1.5.0
 
 This document tracks implemented improvements and version history for the Market Data Collector system.
@@ -10,6 +10,26 @@ This document tracks implemented improvements and version history for the Market
 ## Version 1.5.0 (Current)
 
 ### New Features
+
+#### Auto-Configuration & Onboarding (2026-01-14)
+- **Configuration Wizard**: Interactive step-by-step setup wizard (`--wizard`)
+- **Auto-Configuration**: Automatic provider detection from environment variables (`--auto-config`)
+- **Provider Detection**: Discover available providers and their status (`--detect-providers`)
+- **Credential Validation**: Validate API credentials before running (`--validate-credentials`)
+- **First-Run Detection**: Automatic detection and guidance for new users
+- **Friendly Error Messages**: User-friendly error formatting with actionable suggestions
+- **Progress Display**: Visual progress indicators for long-running operations
+- **Startup Summary**: Configuration summary display at application startup
+
+**New Services:**
+- `AutoConfigurationService` - Auto-detect providers from environment
+- `ConfigurationWizard` - Interactive setup wizard
+- `ConnectivityTestService` - Test provider connectivity
+- `CredentialValidationService` - Validate API credentials
+- `FirstRunDetector` - Detect first-run conditions
+- `FriendlyErrorFormatter` - User-friendly error messages
+- `ProgressDisplayService` - Display progress of operations
+- `StartupSummary` - Show startup configuration summary
 
 #### Technical Indicators (Skender.Stock.Indicators)
 - 200+ technical indicators available via `TechnicalIndicatorService`

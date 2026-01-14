@@ -155,6 +155,79 @@ Automated labeling for better issue/PR organization:
 
 **Status:** 🆕 New
 
+### 10. Desktop App Build (`desktop-app.yml`)
+**Triggers:** Push to `main`, Pull requests
+
+Builds and tests the UWP desktop application:
+- Builds Windows desktop app
+- Runs desktop-specific tests
+- Creates installer packages
+- Uploads build artifacts
+
+**Status:** 🆕 New
+
+### 11. Documentation Auto-Update (`docs-auto-update.yml`)
+**Triggers:** Push to `main` (when provider or interface files change)
+
+Automatically updates documentation when code changes:
+- Monitors provider implementations
+- Updates API documentation
+- Regenerates interface documentation
+- Creates PRs with documentation updates
+
+**Status:** 🆕 New
+
+### 12. Documentation Structure Sync (`docs-structure-sync.yml`)
+**Triggers:** Push to `main`
+
+Keeps documentation structure in sync with codebase:
+- Monitors directory structure changes
+- Updates repository structure in docs
+- Validates documentation links
+- Ensures consistency between code and docs
+
+**Status:** 🆕 New
+
+### 13. Test Matrix (`test-matrix.yml`)
+**Triggers:** Push to `main`, Pull requests
+
+Cross-platform testing across multiple environments:
+- Tests on Windows, Linux, macOS
+- Tests multiple .NET versions
+- Validates cross-platform compatibility
+
+**Status:** 🆕 New
+
+### 14. Documentation Generation (`documentation.yml`)
+**Triggers:** Push to `main`, Manual dispatch
+
+Generates and deploys API documentation:
+- Generates DocFX documentation
+- Deploys to GitHub Pages
+- Updates API reference
+
+**Status:** 🆕 New
+
+### 15. Security Scanning (`security.yml`)
+**Triggers:** Push to `main`, Weekly schedule
+
+Security vulnerability scanning:
+- Dependency vulnerability scanning
+- Secret scanning
+- License compliance checks
+
+**Status:** 🆕 New
+
+### 16. Scheduled Maintenance (`scheduled-maintenance.yml`)
+**Triggers:** Cron schedule
+
+Automated maintenance tasks:
+- Cleanup of old artifacts
+- Cache management
+- Repository maintenance
+
+**Status:** 🆕 New
+
 ## Configuration Files
 
 ### `.github/labeler.yml`
@@ -281,5 +354,12 @@ Keep actions up to date by reviewing Dependabot PRs or manually updating:
 | Stale Management | Issue/PR lifecycle | Daily | 🆕 New |
 | Build Observability | Build observability artifacts | On push/PR | 🆕 New |
 | Label Management | Auto-labeling | On issue/PR activity | 🆕 New |
+| Desktop App | Desktop app build/test | On push/PR | 🆕 New |
+| Docs Auto-Update | Auto-update docs on changes | On push | 🆕 New |
+| Docs Structure Sync | Sync doc structure with code | On push | 🆕 New |
+| Test Matrix | Cross-platform testing | On push/PR | 🆕 New |
+| Documentation | Generate and deploy docs | On push/manual | 🆕 New |
+| Security | Security scanning | On push/schedule | 🆕 New |
+| Scheduled Maintenance | Cleanup and maintenance | Cron | 🆕 New |
 
-**Total:** 9 workflows (1 existing + 8 new)
+**Total:** 16 workflows (1 existing + 15 new)
