@@ -8,6 +8,7 @@ using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Application.Subscriptions;
 using MarketDataCollector.Application.Pipeline;
 using MarketDataCollector.Application.Config.Credentials;
+using MarketDataCollector.Application.Services;
 using MarketDataCollector.Application.Testing;
 using MarketDataCollector.Application.UI;
 using MarketDataCollector.Domain.Collectors;
@@ -70,6 +71,162 @@ internal static class Program
         if (args.Any(a => a.Equals("--help", StringComparison.OrdinalIgnoreCase) || a.Equals("-h", StringComparison.OrdinalIgnoreCase)))
         {
             ShowHelp();
+            return;
+        }
+
+        // Wizard Mode - Interactive configuration wizard
+        if (args.Any(a => a.Equals("--wizard", StringComparison.OrdinalIgnoreCase)))
+        {
+            log.Information("Starting configuration wizard...");
+            var wizard = new ConfigurationWizard();
+            using var cts = new CancellationTokenSource();
+            Console.CancelKeyPress += (_, e) => { e.Cancel = true; cts.Cancel(); };
+
+            var result = await wizard.RunAsync(cts.Token);
+            Environment.Exit(result.Success ? 0 : 1);
+            return;
+        }
+
+        // Auto-Config Mode - Automatic configuration based on environment
+        if (args.Any(a => a.Equals("--auto-config", StringComparison.OrdinalIgnoreCase)))
+        {
+            log.Information("Running auto-configuration...");
+            var wizard = new ConfigurationWizard();
+            var result = wizard.RunQuickSetup();
+            Environment.Exit(result.Success ? 0 : 1);
+            return;
+        }
+
+        // Detect Providers Mode - Show available providers
+        if (args.Any(a => a.Equals("--detect-providers", StringComparison.OrdinalIgnoreCase)))
+        {
+            var autoConfig = new AutoConfigurationService();
+            var providers = autoConfig.DetectAvailableProviders();
+
+            Console.WriteLine();
+            Console.WriteLine("Detected Data Providers:");
+            Console.WriteLine("-".PadRight(60, '-'));
+
+            foreach (var provider in providers)
+            {
+                var status = provider.HasCredentials ? "[OK]" : "[--]";
+                Console.WriteLine($"  {status} {provider.DisplayName,-25} Priority: {provider.SuggestedPriority}");
+                Console.WriteLine($"        Capabilities: {string.Join(", ", provider.Capabilities)}");
+
+                if (!provider.HasCredentials && provider.MissingCredentials.Length > 0)
+                {
+                    Console.WriteLine($"        Missing: {string.Join(", ", provider.MissingCredentials)}");
+                }
+            }
+
+            var configured = providers.Count(p => p.HasCredentials);
+            Console.WriteLine();
+            Console.WriteLine($"  {configured}/{providers.Count} providers configured");
+
+            if (configured == 0)
+            {
+                Console.WriteLine();
+                Console.WriteLine("  To configure providers, set environment variables:");
+                Console.WriteLine("    export ALPACA_KEY_ID=your-key-id");
+                Console.WriteLine("    export ALPACA_SECRET_KEY=your-secret-key");
+                Console.WriteLine();
+                Console.WriteLine("  Or run the configuration wizard:");
+                Console.WriteLine("    MarketDataCollector --wizard");
+            }
+            Console.WriteLine();
+            return;
+        }
+
+        // Validate Credentials Mode - Test API credentials
+        if (args.Any(a => a.Equals("--validate-credentials", StringComparison.OrdinalIgnoreCase)))
+        {
+            log.Information("Validating API credentials...");
+
+            await using var validator = new CredentialValidationService();
+            var validationResult = await validator.ValidateAllAsync(cfg);
+            validator.PrintSummary(validationResult);
+
+            Environment.Exit(validationResult.AllValid ? 0 : 1);
+            return;
+        }
+
+        // Generate Config Mode - Generate configuration template
+        if (args.Any(a => a.Equals("--generate-config", StringComparison.OrdinalIgnoreCase)))
+        {
+            var templateName = GetArgValue(args, "--template") ?? "minimal";
+            var outputPath = GetArgValue(args, "--output") ?? "config/appsettings.generated.json";
+
+            var generator = new ConfigTemplateGenerator();
+            var template = generator.GetTemplate(templateName);
+
+            if (template == null)
+            {
+                Console.Error.WriteLine($"Unknown template: {templateName}");
+                Console.Error.WriteLine("Available templates: minimal, full, alpaca, backfill, production, docker");
+                Environment.Exit(1);
+                return;
+            }
+
+            // Ensure directory exists
+            var dir = Path.GetDirectoryName(outputPath);
+            if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+            {
+                Directory.CreateDirectory(dir);
+            }
+
+            File.WriteAllText(outputPath, template.Json);
+            Console.WriteLine($"Generated {template.Name} configuration template: {outputPath}");
+
+            if (template.EnvironmentVariables?.Count > 0)
+            {
+                Console.WriteLine();
+                Console.WriteLine("Required environment variables:");
+                foreach (var (key, desc) in template.EnvironmentVariables)
+                {
+                    Console.WriteLine($"  {key}: {desc}");
+                }
+            }
+            return;
+        }
+
+        // Quick Check Mode - Fast health diagnostics
+        if (args.Any(a => a.Equals("--quick-check", StringComparison.OrdinalIgnoreCase)))
+        {
+            log.Information("Running quick configuration check...");
+
+            var summary = new StartupSummary();
+            var result = summary.PerformQuickCheck(cfg);
+            summary.DisplayQuickCheck(result);
+
+            Environment.Exit(result.Success ? 0 : 1);
+            return;
+        }
+
+        // Test Connectivity Mode - Test provider connections
+        if (args.Any(a => a.Equals("--test-connectivity", StringComparison.OrdinalIgnoreCase)))
+        {
+            log.Information("Testing provider connectivity...");
+
+            await using var tester = new ConnectivityTestService();
+            var result = await tester.TestAllAsync(cfg);
+            tester.DisplaySummary(result);
+
+            Environment.Exit(result.AllReachable ? 0 : 1);
+            return;
+        }
+
+        // Show Error Codes Mode - Display error code reference
+        if (args.Any(a => a.Equals("--error-codes", StringComparison.OrdinalIgnoreCase)))
+        {
+            FriendlyErrorFormatter.DisplayErrorCodeReference();
+            return;
+        }
+
+        // Show Summary Mode - Display configuration summary
+        if (args.Any(a => a.Equals("--show-config", StringComparison.OrdinalIgnoreCase)))
+        {
+            var summary = new StartupSummary();
+            summary.Display(cfg, cfgPath, args);
             return;
         }
 
@@ -496,6 +653,19 @@ MODES:
     --dry-run               Comprehensive validation without starting (QW-93)
     --help, -h              Show this help message
 
+AUTO-CONFIGURATION (First-time setup):
+    --wizard                Interactive configuration wizard (recommended for new users)
+    --auto-config           Quick auto-configuration based on environment variables
+    --detect-providers      Show available data providers and their status
+    --validate-credentials  Validate configured API credentials
+    --generate-config       Generate a configuration template
+
+DIAGNOSTICS & TROUBLESHOOTING:
+    --quick-check           Fast configuration health check
+    --test-connectivity     Test connectivity to all configured providers
+    --show-config           Display current configuration summary
+    --error-codes           Show error code reference guide
+
 OPTIONS:
     --config <path>         Path to configuration file (default: appsettings.json)
     --http-port <port>      HTTP server port (default: 8080)
@@ -533,6 +703,11 @@ IMPORT OPTIONS:
     --import-destination <path>     Destination directory (default: data root)
     --skip-validation               Skip checksum validation during import
     --merge                         Merge with existing data (don't overwrite)
+
+AUTO-CONFIGURATION OPTIONS:
+    --template <name>       Template for --generate-config: minimal, full, alpaca,
+                            backfill, production, docker (default: minimal)
+    --output <path>         Output path for generated config (default: config/appsettings.generated.json)
 
 EXAMPLES:
     # Start web dashboard on default port
@@ -573,6 +748,33 @@ EXAMPLES:
     # Validate a package
     MarketDataCollector --validate-package ./packages/my-data.zip
 
+    # Run interactive configuration wizard (recommended for new users)
+    MarketDataCollector --wizard
+
+    # Quick auto-configuration based on environment variables
+    MarketDataCollector --auto-config
+
+    # Detect available data providers
+    MarketDataCollector --detect-providers
+
+    # Validate configured API credentials
+    MarketDataCollector --validate-credentials
+
+    # Generate a configuration template
+    MarketDataCollector --generate-config --template alpaca --output config/appsettings.json
+
+    # Quick configuration health check
+    MarketDataCollector --quick-check
+
+    # Test connectivity to all providers
+    MarketDataCollector --test-connectivity
+
+    # Show current configuration summary
+    MarketDataCollector --show-config
+
+    # View all error codes and their meanings
+    MarketDataCollector --error-codes
+
 CONFIGURATION:
     Configuration is loaded from appsettings.json by default, but can be customized:
 
@@ -606,7 +808,9 @@ SUPPORT:
     Documentation: ./HELP.md
 
 ╔══════════════════════════════════════════════════════════════════════╗
-║  Quick Start: ./MarketDataCollector --ui                             ║
+║  NEW USER?     Run: ./MarketDataCollector --wizard                   ║
+║  QUICK CHECK:  Run: ./MarketDataCollector --quick-check              ║
+║  START UI:     Run: ./MarketDataCollector --ui                       ║
 ║  Then open http://localhost:8080 in your browser                     ║
 ╚══════════════════════════════════════════════════════════════════════╝
 ");
