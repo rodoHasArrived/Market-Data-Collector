@@ -90,7 +90,8 @@
                   BorderBrush="{StaticResource ConsoleBorderBrush}"
                   BorderThickness="1,0,1,1"
                   CornerRadius="0,0,8,8"
-                  SelectionChanged="DataListView_SelectionChanged">
+                  SelectionChanged="DataListView_SelectionChanged"
+                  RightTapped="DataListView_RightTapped">
             <ListView.ItemContainerStyle>
                 <Style TargetType="ListViewItem">
                     <Setter Property="HorizontalContentAlignment" Value="Stretch" />

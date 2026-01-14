@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
 using MarketDataCollector.Uwp.Services;
 
@@ -15,6 +16,7 @@ namespace MarketDataCollector.Uwp.Views;
 public sealed partial class ScheduleManagerPage : Page
 {
     private readonly ScheduleManagerService _scheduleService;
+    private readonly ContextMenuService _contextMenuService;
     private List<BackfillSchedule> _backfillSchedules = new();
     private List<MaintenanceSchedule> _maintenanceSchedules = new();
     private List<ScheduleExecutionLog> _executionHistory = new();
@@ -23,6 +25,7 @@ public sealed partial class ScheduleManagerPage : Page
     {
         InitializeComponent();
         _scheduleService = ScheduleManagerService.Instance;
+        _contextMenuService = ContextMenuService.Instance;
     }
 
     protected override async void OnNavigatedTo(NavigationEventArgs e)
@@ -588,4 +591,218 @@ public sealed partial class ScheduleManagerPage : Page
         PageInfoBar.Severity = InfoBarSeverity.Error;
         PageInfoBar.IsOpen = true;
     }
+
+    #region Context Menus
+
+    private void BackfillScheduleItem_RightTapped(object sender, RightTappedRoutedEventArgs e)
+    {
+        BackfillSchedule? schedule = null;
+
+        // Try to get schedule from the element's Tag or DataContext
+        if (sender is FrameworkElement element)
+        {
+            if (element.Tag is string tagId)
+            {
+                schedule = _backfillSchedules.FirstOrDefault(s => s.Id == tagId);
+            }
+            else if (element.DataContext is BackfillSchedule bs)
+            {
+                schedule = bs;
+            }
+        }
+
+        if (schedule == null) return;
+
+        var menu = _contextMenuService.CreateScheduleContextMenu(
+            schedule.Id,
+            schedule.Name,
+            schedule.IsEnabled,
+            onRunNow: async (id) =>
+            {
+                var result = await _scheduleService.RunBackfillScheduleNowAsync(id);
+                if (result?.Success == true)
+                {
+                    ShowSuccess("Backfill started");
+                }
+                else
+                {
+                    ShowError("Failed to start backfill");
+                }
+            },
+            onEdit: async (id) =>
+            {
+                await Task.CompletedTask;
+                // Trigger the edit dialog
+                EditBackfillSchedule_Click(new Button { Tag = id }, new RoutedEventArgs());
+            },
+            onToggleEnabled: async (id, enabled) =>
+            {
+                await _scheduleService.SetBackfillScheduleEnabledAsync(id, enabled);
+                await LoadBackfillSchedulesAsync();
+                ShowSuccess($"Schedule {(enabled ? "enabled" : "disabled")}");
+            },
+            onViewHistory: async (id) =>
+            {
+                var history = await _scheduleService.GetBackfillExecutionHistoryAsync(id);
+                if (history != null)
+                {
+                    _executionHistory = history;
+                    ExecutionHistoryList.ItemsSource = history;
+                }
+            },
+            onClone: async (id) =>
+            {
+                var sourceSchedule = _backfillSchedules.FirstOrDefault(s => s.Id == id);
+                if (sourceSchedule != null)
+                {
+                    var cloneRequest = new CreateBackfillScheduleRequest
+                    {
+                        Name = $"{sourceSchedule.Name} (Copy)",
+                        Description = sourceSchedule.Description,
+                        CronExpression = sourceSchedule.CronExpression,
+                        Symbols = sourceSchedule.Symbols.ToList(),
+                        Provider = sourceSchedule.Provider,
+                        Granularity = sourceSchedule.Granularity,
+                        LookbackDays = sourceSchedule.LookbackDays,
+                        Priority = sourceSchedule.Priority
+                    };
+                    await _scheduleService.CreateBackfillScheduleAsync(cloneRequest);
+                    await LoadBackfillSchedulesAsync();
+                    ShowSuccess("Schedule cloned");
+                }
+            },
+            onDelete: async (id) =>
+            {
+                var dialog = new ContentDialog
+                {
+                    Title = "Delete Schedule",
+                    Content = "Are you sure you want to delete this schedule? This action cannot be undone.",
+                    PrimaryButtonText = "Delete",
+                    CloseButtonText = "Cancel",
+                    XamlRoot = XamlRoot
+                };
+
+                if (await dialog.ShowAsync() == ContentDialogResult.Primary)
+                {
+                    await _scheduleService.DeleteBackfillScheduleAsync(id);
+                    await LoadBackfillSchedulesAsync();
+                    ShowSuccess("Schedule deleted");
+                }
+            });
+
+        // Show the menu at the pointer position
+        if (sender is UIElement uiElement)
+        {
+            menu.ShowAt(uiElement, e.GetPosition(uiElement));
+        }
+
+        e.Handled = true;
+    }
+
+    private void MaintenanceScheduleItem_RightTapped(object sender, RightTappedRoutedEventArgs e)
+    {
+        MaintenanceSchedule? schedule = null;
+
+        // Try to get schedule from the element's Tag or DataContext
+        if (sender is FrameworkElement element)
+        {
+            if (element.Tag is string tagId)
+            {
+                schedule = _maintenanceSchedules.FirstOrDefault(s => s.Id == tagId);
+            }
+            else if (element.DataContext is MaintenanceSchedule ms)
+            {
+                schedule = ms;
+            }
+        }
+
+        if (schedule == null) return;
+
+        var menu = _contextMenuService.CreateScheduleContextMenu(
+            schedule.Id,
+            schedule.Name,
+            schedule.IsEnabled,
+            onRunNow: async (id) =>
+            {
+                var result = await _scheduleService.RunMaintenanceScheduleNowAsync(id);
+                if (result?.Success == true)
+                {
+                    ShowSuccess("Maintenance task started");
+                }
+                else
+                {
+                    ShowError("Failed to start maintenance task");
+                }
+            },
+            onEdit: async (id) =>
+            {
+                await Task.CompletedTask;
+                // Trigger the edit dialog
+                EditMaintenanceSchedule_Click(new Button { Tag = id }, new RoutedEventArgs());
+            },
+            onToggleEnabled: async (id, enabled) =>
+            {
+                await _scheduleService.SetMaintenanceScheduleEnabledAsync(id, enabled);
+                await LoadMaintenanceSchedulesAsync();
+                ShowSuccess($"Schedule {(enabled ? "enabled" : "disabled")}");
+            },
+            onViewHistory: async (id) =>
+            {
+                var history = await _scheduleService.GetMaintenanceExecutionHistoryAsync(id);
+                if (history != null)
+                {
+                    _executionHistory = history;
+                    ExecutionHistoryList.ItemsSource = history;
+                }
+            },
+            onClone: async (id) =>
+            {
+                var sourceSchedule = _maintenanceSchedules.FirstOrDefault(s => s.Id == id);
+                if (sourceSchedule != null)
+                {
+                    var cloneRequest = new CreateMaintenanceScheduleRequest
+                    {
+                        Name = $"{sourceSchedule.Name} (Copy)",
+                        Description = sourceSchedule.Description,
+                        MaintenanceType = sourceSchedule.MaintenanceType,
+                        CronExpression = sourceSchedule.CronExpression,
+                        TargetPath = sourceSchedule.TargetPath,
+                        MaxDurationMinutes = sourceSchedule.MaxDurationMinutes,
+                        MaxRetries = sourceSchedule.MaxRetries,
+                        Priority = sourceSchedule.Priority
+                    };
+                    await _scheduleService.CreateMaintenanceScheduleAsync(cloneRequest);
+                    await LoadMaintenanceSchedulesAsync();
+                    ShowSuccess("Schedule cloned");
+                }
+            },
+            onDelete: async (id) =>
+            {
+                var dialog = new ContentDialog
+                {
+                    Title = "Delete Schedule",
+                    Content = "Are you sure you want to delete this schedule? This action cannot be undone.",
+                    PrimaryButtonText = "Delete",
+                    CloseButtonText = "Cancel",
+                    XamlRoot = XamlRoot
+                };
+
+                if (await dialog.ShowAsync() == ContentDialogResult.Primary)
+                {
+                    await _scheduleService.DeleteMaintenanceScheduleAsync(id);
+                    await LoadMaintenanceSchedulesAsync();
+                    ShowSuccess("Schedule deleted");
+                }
+            });
+
+        // Show the menu at the pointer position
+        if (sender is UIElement uiElement)
+        {
+            menu.ShowAt(uiElement, e.GetPosition(uiElement));
+        }
+
+        e.Handled = true;
+    }
+
+    #endregion
 }
