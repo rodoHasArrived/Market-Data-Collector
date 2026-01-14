@@ -277,6 +277,12 @@ public sealed partial class MainPage : Page
             case "KeyboardShortcuts":
                 ContentFrame.Navigate(typeof(KeyboardShortcutsPage));
                 break;
+            case "AdminMaintenance":
+                ContentFrame.Navigate(typeof(AdminMaintenancePage));
+                break;
+            case "AdvancedAnalytics":
+                ContentFrame.Navigate(typeof(AdvancedAnalyticsPage));
+                break;
         }
     }
 
