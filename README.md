@@ -54,6 +54,12 @@ make docker
 
 # Native installation with web UI
 make run-ui
+
+# Run tests
+make test
+
+# Run diagnostics (troubleshooting)
+make doctor
 ```
 
 ### Windows Installation
@@ -308,6 +314,49 @@ The repository includes 16 comprehensive GitHub Actions workflows for automated 
 - **🔄 Documentation Sync** - Keep documentation structure in sync with codebase
 
 See [`.github/workflows/README.md`](.github/workflows/README.md) for detailed documentation.
+
+## Troubleshooting
+
+### Quick Diagnostics
+
+```bash
+# Run full environment health check
+make doctor
+
+# Quick environment check
+make doctor-quick
+
+# Run build diagnostics
+make diagnose
+
+# Show build metrics
+make metrics
+```
+
+### Common Issues
+
+| Issue | Solution |
+|-------|----------|
+| Build fails with NETSDK1100 | Ensure `EnableWindowsTargeting=true` is set in `Directory.Build.props` |
+| Provider connection errors | Run `make doctor` and verify API credentials with `--validate-credentials` |
+| Missing configuration | Run `make setup-config` to create `appsettings.json` from template |
+| High memory usage | Check channel capacity settings in `EventPipeline` configuration |
+| Rate limit errors | Review `ProviderRateLimitTracker` logs and adjust request intervals |
+
+### Debug Information
+
+```bash
+# Collect debug bundle for issue reporting
+make collect-debug
+
+# Build with binary log for detailed analysis
+make build-binlog
+
+# Validate JSONL data integrity
+make validate-data
+```
+
+For more troubleshooting details, see [docs/HELP.md](docs/HELP.md).
 
 ### Docker Images
 
