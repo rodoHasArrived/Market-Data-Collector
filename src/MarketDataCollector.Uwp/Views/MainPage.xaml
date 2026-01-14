@@ -229,6 +229,13 @@
                     <FontIcon Glyph="&#xE9D9;" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
+            <NavigationViewItem Content="Admin" Tag="AdminMaintenance"
+                                AutomationProperties.Name="Admin - Maintenance and retention"
+                                ToolTipService.ToolTip="Archive scheduling, tier migration, retention policies">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE912;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
 
             <NavigationViewItemSeparator />
 
@@ -246,6 +253,13 @@
                                 ToolTipService.ToolTip="Export for research, ML, and advanced analysis">
                 <NavigationViewItem.Icon>
                     <FontIcon Glyph="&#xE9F9;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem Content="Analytics" Tag="AdvancedAnalytics"
+                                AutomationProperties.Name="Advanced Analytics - Gap analysis and quality reports"
+                                ToolTipService.ToolTip="Gap analysis, cross-provider comparison, latency metrics">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE9F5;" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
             <NavigationViewItem Content="Event Replay" Tag="EventReplay"

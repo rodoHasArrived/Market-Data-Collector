@@ -270,6 +270,191 @@ public sealed class DiagnosticsService
             Error = response.ErrorMessage ?? "Failed to test provider"
         };
     }
+
+    /// <summary>
+    /// Runs a quick health check (equivalent to --quick-check CLI command).
+    /// </summary>
+    public async Task<QuickCheckResult> RunQuickCheckAsync(CancellationToken ct = default)
+    {
+        var response = await _apiClient.GetWithResponseAsync<QuickCheckResponse>(
+            "/api/diagnostics/quick-check",
+            ct);
+
+        if (response.Success && response.Data != null)
+        {
+            return new QuickCheckResult
+            {
+                Success = true,
+                Overall = response.Data.Overall,
+                Checks = response.Data.Checks?.ToList() ?? new List<QuickCheckItem>()
+            };
+        }
+
+        return new QuickCheckResult
+        {
+            Success = false,
+            Error = response.ErrorMessage ?? "Quick check failed"
+        };
+    }
+
+    /// <summary>
+    /// Gets current configuration in human-readable format (equivalent to --show-config CLI command).
+    /// </summary>
+    public async Task<ShowConfigResult> ShowConfigAsync(CancellationToken ct = default)
+    {
+        var response = await _apiClient.GetWithResponseAsync<ShowConfigResponse>(
+            "/api/diagnostics/show-config",
+            ct);
+
+        if (response.Success && response.Data != null)
+        {
+            return new ShowConfigResult
+            {
+                Success = true,
+                Sections = response.Data.Sections?.ToList() ?? new List<ConfigSection>()
+            };
+        }
+
+        return new ShowConfigResult
+        {
+            Success = false,
+            Error = response.ErrorMessage ?? "Failed to get configuration"
+        };
+    }
+
+    /// <summary>
+    /// Gets list of available error codes and their descriptions (equivalent to --error-codes CLI command).
+    /// </summary>
+    public async Task<ErrorCodesResult> GetErrorCodesAsync(CancellationToken ct = default)
+    {
+        var response = await _apiClient.GetWithResponseAsync<ErrorCodesResponse>(
+            "/api/diagnostics/error-codes",
+            ct);
+
+        if (response.Success && response.Data != null)
+        {
+            return new ErrorCodesResult
+            {
+                Success = true,
+                ErrorCodes = response.Data.ErrorCodes?.ToList() ?? new List<ErrorCodeInfo>()
+            };
+        }
+
+        return new ErrorCodesResult
+        {
+            Success = false,
+            Error = response.ErrorMessage ?? "Failed to get error codes"
+        };
+    }
+
+    /// <summary>
+    /// Runs system self-tests (equivalent to --selftest CLI command).
+    /// </summary>
+    public async Task<SelfTestResult> RunSelfTestAsync(SelfTestOptions? options = null, CancellationToken ct = default)
+    {
+        var response = await _apiClient.PostWithResponseAsync<SelfTestResponse>(
+            "/api/diagnostics/selftest",
+            options ?? new SelfTestOptions(),
+            ct);
+
+        if (response.Success && response.Data != null)
+        {
+            return new SelfTestResult
+            {
+                Success = response.Data.AllPassed,
+                Tests = response.Data.Tests?.ToList() ?? new List<SelfTestItem>(),
+                PassedCount = response.Data.PassedCount,
+                FailedCount = response.Data.FailedCount,
+                SkippedCount = response.Data.SkippedCount
+            };
+        }
+
+        return new SelfTestResult
+        {
+            Success = false,
+            Error = response.ErrorMessage ?? "Self-test failed"
+        };
+    }
+
+    /// <summary>
+    /// Validates all configured credentials.
+    /// </summary>
+    public async Task<CredentialValidationResult> ValidateCredentialsAsync(CancellationToken ct = default)
+    {
+        var response = await _apiClient.GetWithResponseAsync<CredentialValidationResponse>(
+            "/api/diagnostics/validate-credentials",
+            ct);
+
+        if (response.Success && response.Data != null)
+        {
+            return new CredentialValidationResult
+            {
+                Success = true,
+                Results = response.Data.Results?.ToList() ?? new List<ProviderCredentialStatus>()
+            };
+        }
+
+        return new CredentialValidationResult
+        {
+            Success = false,
+            Error = response.ErrorMessage
+        };
+    }
+
+    /// <summary>
+    /// Tests connectivity to all configured providers.
+    /// </summary>
+    public async Task<AllProvidersTestResult> TestAllProvidersAsync(CancellationToken ct = default)
+    {
+        var response = await _apiClient.PostWithResponseAsync<AllProvidersTestResponse>(
+            "/api/diagnostics/test-connectivity",
+            null,
+            ct);
+
+        if (response.Success && response.Data != null)
+        {
+            return new AllProvidersTestResult
+            {
+                Success = true,
+                AllConnected = response.Data.AllConnected,
+                Results = response.Data.Results?.ToList() ?? new List<ProviderConnectivityResult>()
+            };
+        }
+
+        return new AllProvidersTestResult
+        {
+            Success = false,
+            Error = response.ErrorMessage ?? "Connectivity test failed"
+        };
+    }
+
+    /// <summary>
+    /// Validates the full configuration file.
+    /// </summary>
+    public async Task<ConfigValidationResult> ValidateFullConfigAsync(CancellationToken ct = default)
+    {
+        var response = await _apiClient.PostWithResponseAsync<ConfigValidationResponse>(
+            "/api/diagnostics/validate-config",
+            null,
+            ct);
+
+        if (response.Success && response.Data != null)
+        {
+            return new ConfigValidationResult
+            {
+                Success = true,
+                IsValid = response.Data.IsValid,
+                Issues = response.Data.Issues?.ToList() ?? new List<ConfigIssue>(),
+                Warnings = response.Data.Warnings?.ToList() ?? new List<string>()
+            };
+        }
+
+        return new ConfigValidationResult
+        {
+            Success = false,
+            Error = response.ErrorMessage
+        };
+    }
 }
 
 #region Result Classes
@@ -417,6 +602,186 @@ public class DiagnosticBundleResponse
     public string? BundlePath { get; set; }
     public long FileSizeBytes { get; set; }
     public string[]? IncludedFiles { get; set; }
+}
+
+// Quick Check
+public class QuickCheckResult
+{
+    public bool Success { get; set; }
+    public string? Error { get; set; }
+    public string Overall { get; set; } = string.Empty;
+    public List<QuickCheckItem> Checks { get; set; } = new();
+}
+
+public class QuickCheckResponse
+{
+    public string Overall { get; set; } = string.Empty;
+    public List<QuickCheckItem>? Checks { get; set; }
+}
+
+public class QuickCheckItem
+{
+    public string Name { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
+    public string? Details { get; set; }
+}
+
+// Show Config
+public class ShowConfigResult
+{
+    public bool Success { get; set; }
+    public string? Error { get; set; }
+    public List<ConfigSection> Sections { get; set; } = new();
+}
+
+public class ShowConfigResponse
+{
+    public List<ConfigSection>? Sections { get; set; }
+}
+
+public class ConfigSection
+{
+    public string Name { get; set; } = string.Empty;
+    public List<ConfigItem> Items { get; set; } = new();
+}
+
+public class ConfigItem
+{
+    public string Key { get; set; } = string.Empty;
+    public string? Value { get; set; }
+    public string? Source { get; set; }
+    public bool IsSensitive { get; set; }
+}
+
+// Error Codes
+public class ErrorCodesResult
+{
+    public bool Success { get; set; }
+    public string? Error { get; set; }
+    public List<ErrorCodeInfo> ErrorCodes { get; set; } = new();
+}
+
+public class ErrorCodesResponse
+{
+    public List<ErrorCodeInfo>? ErrorCodes { get; set; }
+}
+
+public class ErrorCodeInfo
+{
+    public string Code { get; set; } = string.Empty;
+    public string Category { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string? Resolution { get; set; }
+    public string Severity { get; set; } = string.Empty;
+}
+
+// Self Test
+public class SelfTestOptions
+{
+    public bool TestStorage { get; set; } = true;
+    public bool TestProviders { get; set; } = true;
+    public bool TestConfiguration { get; set; } = true;
+    public bool TestNetwork { get; set; } = true;
+}
+
+public class SelfTestResult
+{
+    public bool Success { get; set; }
+    public string? Error { get; set; }
+    public List<SelfTestItem> Tests { get; set; } = new();
+    public int PassedCount { get; set; }
+    public int FailedCount { get; set; }
+    public int SkippedCount { get; set; }
+}
+
+public class SelfTestResponse
+{
+    public bool AllPassed { get; set; }
+    public List<SelfTestItem>? Tests { get; set; }
+    public int PassedCount { get; set; }
+    public int FailedCount { get; set; }
+    public int SkippedCount { get; set; }
+}
+
+public class SelfTestItem
+{
+    public string Name { get; set; } = string.Empty;
+    public string Category { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
+    public string? Message { get; set; }
+    public double DurationMs { get; set; }
+}
+
+// Credential Validation
+public class CredentialValidationResult
+{
+    public bool Success { get; set; }
+    public string? Error { get; set; }
+    public List<ProviderCredentialStatus> Results { get; set; } = new();
+}
+
+public class CredentialValidationResponse
+{
+    public List<ProviderCredentialStatus>? Results { get; set; }
+}
+
+public class ProviderCredentialStatus
+{
+    public string Provider { get; set; } = string.Empty;
+    public bool IsValid { get; set; }
+    public string Status { get; set; } = string.Empty;
+    public string? Error { get; set; }
+    public DateTime? ExpiresAt { get; set; }
+}
+
+// All Providers Test
+public class AllProvidersTestResult
+{
+    public bool Success { get; set; }
+    public string? Error { get; set; }
+    public bool AllConnected { get; set; }
+    public List<ProviderConnectivityResult> Results { get; set; } = new();
+}
+
+public class AllProvidersTestResponse
+{
+    public bool AllConnected { get; set; }
+    public List<ProviderConnectivityResult>? Results { get; set; }
+}
+
+public class ProviderConnectivityResult
+{
+    public string Provider { get; set; } = string.Empty;
+    public bool Connected { get; set; }
+    public double LatencyMs { get; set; }
+    public string? Error { get; set; }
+    public string? Version { get; set; }
+}
+
+// Config Validation
+public class ConfigValidationResult
+{
+    public bool Success { get; set; }
+    public string? Error { get; set; }
+    public bool IsValid { get; set; }
+    public List<ConfigIssue> Issues { get; set; } = new();
+    public List<string> Warnings { get; set; } = new();
+}
+
+public class ConfigValidationResponse
+{
+    public bool IsValid { get; set; }
+    public List<ConfigIssue>? Issues { get; set; }
+    public List<string>? Warnings { get; set; }
+}
+
+public class ConfigIssue
+{
+    public string Section { get; set; } = string.Empty;
+    public string Key { get; set; } = string.Empty;
+    public string Severity { get; set; } = string.Empty;
+    public string Message { get; set; } = string.Empty;
+    public string? Suggestion { get; set; }
 }
 
 #endregion
