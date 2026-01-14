@@ -12,15 +12,15 @@ This document provides the feature roadmap, backlog, and development priorities 
 
 | Category | Implemented | Pending | Total |
 |----------|-------------|---------|-------|
-| Core Features | 52+ | - | 52+ |
+| Core Features | 55+ | - | 55+ |
 | Technical Debt | 2 | 6 | 8 |
-| Quick Wins (≤2 days) | 20 | 105 | 125 |
+| Quick Wins (≤2 days) | 22 | 103 | 125 |
 | Provider Integration | 4 | 18 | 22 |
 | Monitoring & Alerting | 14 | 10 | 24 |
 | Data Quality | 10 | 13 | 23 |
 | Storage & Archival | 9 | 4 | 13 |
 | Cloud Integration | 0 | 100+ | 100+ |
-| **Total** | **111** | **256+** | **367+** |
+| **Total** | **116** | **254+** | **370+** |
 
 ---
 
@@ -76,7 +76,7 @@ This document provides the feature roadmap, backlog, and development priorities 
 
 ### User Interfaces
 - [x] Web Dashboard (HTML/JS, auto-refresh)
-- [x] UWP Desktop Application (Windows native, 15 pages)
+- [x] UWP Desktop Application (Windows native, 17+ pages including Admin/Maintenance and Advanced Analytics)
 - [x] Microservices architecture (6 services)
 - [x] CLI with hot-reload configuration
 
@@ -94,6 +94,8 @@ This document provides the feature roadmap, backlog, and development priorities 
 - [x] Config template generator (multiple deployment scenarios)
 - [x] Sample data generator (realistic test data)
 - [x] Technical indicator service (200+ indicators via Skender.Stock.Indicators)
+- [x] Symbol management CLI commands (list, add, remove, import, export)
+- [x] PlantUML diagram PNG generation
 
 ---
 

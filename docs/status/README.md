@@ -15,13 +15,14 @@ This folder contains project status, roadmap, and changelog documentation for th
 ### Current Status
 - **Version:** 1.5.0
 - **Status:** Production Ready
-- **Last Updated:** 2026-01-09
+- **Last Updated:** 2026-01-14
 
 ### Key Metrics
-- 45+ core features implemented
+- 116+ features implemented
 - 9 historical data providers (production ready)
 - 2 streaming providers (Alpaca, Interactive Brokers)
-- 360+ total backlog items
+- UWP Desktop App with 17+ pages and full CLI-equivalent services
+- 370+ total backlog items
 
 ### What's New in v1.5.0
 - Apache Parquet storage (10-20x compression)
@@ -30,6 +31,9 @@ This folder contains project status, roadmap, and changelog documentation for th
 - Write-Ahead Logging for crash-safe persistence
 - Daily summary webhooks
 - Data quality validation (crossed markets, timestamp monotonicity)
+- UWP Desktop App with Admin/Maintenance and Advanced Analytics pages
+- CLI symbol management commands
+- Auto-configuration and user-friendly onboarding
 
 ## Related Documentation
 
