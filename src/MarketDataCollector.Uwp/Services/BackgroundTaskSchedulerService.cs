@@ -446,7 +446,8 @@ public sealed class BackgroundTaskSchedulerService
             {
                 if (_runningTasks.Count >= _config.MaxConcurrentTasks) break;
 
-                _ = Task.Run(async () =>
+                // Fire task execution with proper exception tracking
+                var taskExecution = Task.Run(async () =>
                 {
                     try
                     {
@@ -462,13 +463,18 @@ public sealed class BackgroundTaskSchedulerService
                     }
                     catch (OperationCanceledException)
                     {
-                        // Shutdown requested
+                        // Shutdown requested - expected during graceful shutdown
                     }
                     catch (Exception ex)
                     {
                         System.Diagnostics.Debug.WriteLine($"Error executing task {task.Name}: {ex.Message}");
                     }
                 });
+
+                // Safety net for any unexpected errors that slip through
+                _ = taskExecution.ContinueWith(
+                    t => System.Diagnostics.Debug.WriteLine($"Unexpected task execution error: {t.Exception?.InnerException?.Message}"),
+                    TaskContinuationOptions.OnlyOnFaulted);
             }
         }
         catch (Exception ex)

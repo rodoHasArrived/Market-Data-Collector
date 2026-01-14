@@ -25,7 +25,16 @@ public sealed partial class ProviderPage : Page
     private readonly ConfigService _configService;
     private readonly CredentialService _credentialService;
     private readonly DispatcherTimer _healthTimer;
-    private readonly List<double> _latencyHistory = new();
+
+    // Circular buffer for latency history - O(1) operations instead of O(n) RemoveAt(0)
+    private const int LatencyHistorySize = 30;
+    private readonly double[] _latencyBuffer = new double[LatencyHistorySize];
+    private int _latencyBufferIndex;
+    private int _latencyBufferCount;
+
+    // Reusable sorted array for percentile calculations to avoid allocations
+    private readonly double[] _sortedLatencyBuffer = new double[LatencyHistorySize];
+
     private readonly Random _random = new();
     private string _selectedProvider = "IB";
     private DateTime _connectionStartTime;
@@ -90,17 +99,23 @@ public sealed partial class ProviderPage : Page
 
     private void InitializeLatencyHistory()
     {
-        for (int i = 0; i < 30; i++)
+        // Fill circular buffer with initial values
+        for (int i = 0; i < LatencyHistorySize; i++)
         {
-            _latencyHistory.Add(8 + _random.Next(0, 10));
+            _latencyBuffer[i] = 8 + _random.Next(0, 10);
         }
+        _latencyBufferCount = LatencyHistorySize;
+        _latencyBufferIndex = 0;
     }
 
     private void UpdateLatency()
     {
         var latency = 8 + _random.Next(0, 10);
-        _latencyHistory.Add(latency);
-        if (_latencyHistory.Count > 30) _latencyHistory.RemoveAt(0);
+
+        // O(1) circular buffer write - overwrites oldest entry
+        _latencyBuffer[_latencyBufferIndex] = latency;
+        _latencyBufferIndex = (_latencyBufferIndex + 1) % LatencyHistorySize;
+        if (_latencyBufferCount < LatencyHistorySize) _latencyBufferCount++;
 
         LatencyDisplayText.Text = $"{latency}ms";
         CurrentLatencyText.Text = $"{latency}ms";
@@ -110,15 +125,20 @@ public sealed partial class ProviderPage : Page
             : latency < 50 ? LatencyMediumBrush
             : LatencyPoorBrush;
 
-        // Calculate stats
-        double sum = 0, max = 0;
-        var sorted = new List<double>(_latencyHistory);
-        sorted.Sort();
+        // Calculate stats using reusable buffer to avoid allocations
+        double sum = 0;
+        for (int i = 0; i < _latencyBufferCount; i++)
+        {
+            sum += _latencyBuffer[i];
+            _sortedLatencyBuffer[i] = _latencyBuffer[i];
+        }
 
-        foreach (var val in _latencyHistory) sum += val;
-        var avg = sum / _latencyHistory.Count;
-        var p95 = sorted[(int)(sorted.Count * 0.95)];
-        var p99 = sorted[(int)(sorted.Count * 0.99)];
+        // Sort reusable buffer in-place
+        Array.Sort(_sortedLatencyBuffer, 0, _latencyBufferCount);
+
+        var avg = sum / _latencyBufferCount;
+        var p95 = _sortedLatencyBuffer[(int)(_latencyBufferCount * 0.95)];
+        var p99 = _sortedLatencyBuffer[(int)(_latencyBufferCount * 0.99)];
 
         AvgLatencyText.Text = $"{(int)avg}ms";
         LatencyStatsText.Text = $"Avg: {(int)avg}ms";
@@ -136,18 +156,21 @@ public sealed partial class ProviderPage : Page
 
     private void UpdateLatencySparkline()
     {
-        if (_latencyHistory.Count < 2 || LatencySparkline.ActualWidth <= 0) return;
+        if (_latencyBufferCount < 2 || LatencySparkline.ActualWidth <= 0) return;
 
         var points = new PointCollection();
         var max = 50.0;
         var height = 25.0;
         var width = LatencySparkline.ActualWidth;
-        var step = width / (_latencyHistory.Count - 1);
+        var step = width / (_latencyBufferCount - 1);
 
-        for (int i = 0; i < _latencyHistory.Count; i++)
+        // Read from circular buffer in correct chronological order
+        for (int i = 0; i < _latencyBufferCount; i++)
         {
+            // Calculate the index for chronological order (oldest to newest)
+            var bufferIdx = (_latencyBufferIndex - _latencyBufferCount + i + LatencyHistorySize) % LatencyHistorySize;
             var x = i * step;
-            var y = height - (_latencyHistory[i] / max * height);
+            var y = height - (_latencyBuffer[bufferIdx] / max * height);
             points.Add(new Windows.Foundation.Point(x, Math.Max(2, Math.Min(height - 2, y))));
         }
 

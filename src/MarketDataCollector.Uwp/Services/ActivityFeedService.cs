@@ -58,8 +58,10 @@ public sealed class ActivityFeedService
             WriteIndented = true
         };
 
-        // Load initial activities
-        _ = LoadActivitiesAsync();
+        // Load initial activities with proper exception handling
+        _ = LoadActivitiesAsync().ContinueWith(
+            t => System.Diagnostics.Debug.WriteLine($"Failed to load activities: {t.Exception?.InnerException?.Message}"),
+            TaskContinuationOptions.OnlyOnFaulted);
     }
 
     /// <summary>
@@ -85,8 +87,10 @@ public sealed class ActivityFeedService
         // Raise event
         ActivityAdded?.Invoke(this, activity);
 
-        // Persist to disk asynchronously
-        _ = SaveActivitiesAsync();
+        // Persist to disk asynchronously with proper exception handling
+        _ = SaveActivitiesAsync().ContinueWith(
+            t => System.Diagnostics.Debug.WriteLine($"Failed to save activities: {t.Exception?.InnerException?.Message}"),
+            TaskContinuationOptions.OnlyOnFaulted);
     }
 
     /// <summary>
