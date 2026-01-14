@@ -1,5 +1,6 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -20,6 +21,7 @@ public sealed partial class DataTable : UserControl
     public event EventHandler<IList<object>>? SelectionChanged;
     public event EventHandler? EmptyActionClicked;
     public event EventHandler<int>? PageChanged;
+    public event EventHandler<DataTableRightTappedEventArgs>? ItemRightTapped;
 
     #endregion
 
@@ -384,5 +386,74 @@ public sealed partial class DataTable : UserControl
         SearchBox.Text = string.Empty;
     }
 
+    /// <summary>
+    /// Shows a context menu at the pointer position.
+    /// </summary>
+    public void ShowContextMenu(MenuFlyout menu, RightTappedRoutedEventArgs e)
+    {
+        menu.ShowAt(DataListView, e.GetPosition(DataListView));
+    }
+
     #endregion
+
+    private void DataListView_RightTapped(object sender, RightTappedRoutedEventArgs e)
+    {
+        // Find the item that was right-tapped
+        object? item = null;
+        Windows.Foundation.Point position = e.GetPosition(DataListView);
+
+        if (e.OriginalSource is FrameworkElement element)
+        {
+            // Walk up the visual tree to find the ListViewItem
+            var current = element;
+            while (current != null && current != DataListView)
+            {
+                if (current.DataContext != null && current.DataContext != this.DataContext)
+                {
+                    item = current.DataContext;
+                    break;
+                }
+                current = current.Parent as FrameworkElement;
+            }
+        }
+
+        if (item != null)
+        {
+            ItemRightTapped?.Invoke(this, new DataTableRightTappedEventArgs
+            {
+                Item = item,
+                Position = position,
+                OriginalArgs = e
+            });
+
+            // Select the item when right-clicking
+            if (SelectionMode != ListViewSelectionMode.None)
+            {
+                DataListView.SelectedItem = item;
+            }
+        }
+
+        e.Handled = true;
+    }
+}
+
+/// <summary>
+/// Event args for DataTable right-tap events.
+/// </summary>
+public class DataTableRightTappedEventArgs : EventArgs
+{
+    /// <summary>
+    /// The item that was right-tapped.
+    /// </summary>
+    public object? Item { get; set; }
+
+    /// <summary>
+    /// The position of the pointer when right-tapped.
+    /// </summary>
+    public Windows.Foundation.Point Position { get; set; }
+
+    /// <summary>
+    /// The original right-tapped event args.
+    /// </summary>
+    public RightTappedRoutedEventArgs? OriginalArgs { get; set; }
 }

@@ -2,8 +2,10 @@ using System.Collections.ObjectModel;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using MarketDataCollector.Uwp.Services;
+using Windows.ApplicationModel.DataTransfer;
 
 namespace MarketDataCollector.Uwp.Views;
 
@@ -20,6 +22,7 @@ public sealed partial class WatchlistPage : Page
     private static readonly SolidColorBrush RedBrush = new(Microsoft.UI.Colors.Red);
 
     private readonly WatchlistService _watchlistService;
+    private readonly ContextMenuService _contextMenuService;
     private readonly ObservableCollection<WatchlistDisplayItem> _favorites;
     private readonly ObservableCollection<WatchlistDisplayItem> _allSymbols;
     private readonly DispatcherTimer _refreshTimer;
@@ -28,6 +31,7 @@ public sealed partial class WatchlistPage : Page
     {
         this.InitializeComponent();
         _watchlistService = WatchlistService.Instance;
+        _contextMenuService = ContextMenuService.Instance;
         _favorites = new ObservableCollection<WatchlistDisplayItem>();
         _allSymbols = new ObservableCollection<WatchlistDisplayItem>();
 
@@ -309,6 +313,125 @@ public sealed partial class WatchlistPage : Page
         };
         timer.Start();
     }
+
+    #region Context Menu
+
+    private void SymbolItem_RightTapped(object sender, RightTappedRoutedEventArgs e)
+    {
+        string? symbol = null;
+        bool isFavorite = false;
+
+        // Try to get symbol from the element's Tag or DataContext
+        if (sender is FrameworkElement element)
+        {
+            if (element.Tag is string tagSymbol)
+            {
+                symbol = tagSymbol;
+            }
+            else if (element.DataContext is WatchlistDisplayItem item)
+            {
+                symbol = item.Symbol;
+                isFavorite = item.IsFavorite;
+            }
+        }
+
+        if (string.IsNullOrEmpty(symbol)) return;
+
+        // Find the display item to get favorite status
+        var displayItem = _allSymbols.FirstOrDefault(s => s.Symbol == symbol);
+        if (displayItem != null)
+        {
+            isFavorite = displayItem.IsFavorite;
+        }
+
+        var menu = _contextMenuService.CreateSymbolContextMenu(
+            symbol,
+            isFavorite,
+            onToggleFavorite: async (s) =>
+            {
+                await _watchlistService.ToggleFavoriteAsync(s);
+                ShowInfoBar("Updated", $"{s} favorite status changed.", InfoBarSeverity.Success);
+            },
+            onViewDetails: async (s) =>
+            {
+                await Task.CompletedTask;
+                Frame.Navigate(typeof(SymbolStoragePage), s);
+            },
+            onViewLiveData: async (s) =>
+            {
+                await Task.CompletedTask;
+                Frame.Navigate(typeof(LiveDataViewerPage), s);
+            },
+            onRunBackfill: async (s) =>
+            {
+                await Task.CompletedTask;
+                Frame.Navigate(typeof(BackfillPage), s);
+            },
+            onCopySymbol: async (s) =>
+            {
+                await Task.CompletedTask;
+                var dataPackage = new DataPackage();
+                dataPackage.SetText(s);
+                Clipboard.SetContent(dataPackage);
+                ShowInfoBar("Copied", $"{s} copied to clipboard.", InfoBarSeverity.Success);
+            },
+            onRemove: async (s) =>
+            {
+                var removed = await _watchlistService.RemoveSymbolAsync(s);
+                if (removed)
+                {
+                    ShowInfoBar("Removed", $"{s} removed from watchlist.", InfoBarSeverity.Informational);
+                }
+            },
+            onAddNote: async (s) =>
+            {
+                await ShowAddNoteDialogAsync(s);
+            });
+
+        // Show the menu at the pointer position
+        if (sender is UIElement uiElement)
+        {
+            menu.ShowAt(uiElement, e.GetPosition(uiElement));
+        }
+
+        e.Handled = true;
+    }
+
+    private async Task ShowAddNoteDialogAsync(string symbol)
+    {
+        var noteBox = new TextBox
+        {
+            PlaceholderText = "Enter a note for this symbol...",
+            AcceptsReturn = true,
+            TextWrapping = TextWrapping.Wrap,
+            Height = 100
+        };
+
+        // Get existing note
+        var item = _allSymbols.FirstOrDefault(s => s.Symbol == symbol);
+        if (item != null)
+        {
+            noteBox.Text = item.Notes;
+        }
+
+        var dialog = new ContentDialog
+        {
+            Title = $"Note for {symbol}",
+            Content = noteBox,
+            PrimaryButtonText = "Save",
+            CloseButtonText = "Cancel",
+            XamlRoot = this.XamlRoot
+        };
+
+        var result = await dialog.ShowAsync();
+        if (result == ContentDialogResult.Primary)
+        {
+            await _watchlistService.UpdateNoteAsync(symbol, noteBox.Text);
+            ShowInfoBar("Saved", "Note saved successfully.", InfoBarSeverity.Success);
+        }
+    }
+
+    #endregion
 }
 
 /// <summary>

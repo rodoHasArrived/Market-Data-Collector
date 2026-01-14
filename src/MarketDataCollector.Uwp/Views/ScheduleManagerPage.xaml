@@ -133,10 +133,11 @@
                             </Grid>
 
                             <ListView x:Name="BackfillSchedulesList" Grid.Row="1" SelectionMode="Single"
-                                      SelectionChanged="BackfillSchedule_SelectionChanged">
+                                      SelectionChanged="BackfillSchedule_SelectionChanged"
+                                      RightTapped="BackfillScheduleItem_RightTapped">
                                 <ListView.ItemTemplate>
                                     <DataTemplate>
-                                        <Grid Padding="8">
+                                        <Grid Padding="8" RightTapped="BackfillScheduleItem_RightTapped" Tag="{Binding Id}">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="60" />
                                                 <ColumnDefinition Width="180" />
@@ -289,10 +290,11 @@
                             </Grid>
 
                             <ListView x:Name="MaintenanceSchedulesList" Grid.Row="1" SelectionMode="Single"
-                                      SelectionChanged="MaintenanceSchedule_SelectionChanged">
+                                      SelectionChanged="MaintenanceSchedule_SelectionChanged"
+                                      RightTapped="MaintenanceScheduleItem_RightTapped">
                                 <ListView.ItemTemplate>
                                     <DataTemplate>
-                                        <Grid Padding="8">
+                                        <Grid Padding="8" RightTapped="MaintenanceScheduleItem_RightTapped" Tag="{Binding Id}">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="60" />
                                                 <ColumnDefinition Width="180" />
