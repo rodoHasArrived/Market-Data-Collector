@@ -89,8 +89,8 @@ public sealed class OAuthRefreshService : IDisposable
         _refreshTimer.Start();
         _expirationCheckTimer.Start();
 
-        // Perform initial check
-        Task.Run(CheckAndRefreshTokensAsync);
+        // Perform initial check using fire-and-forget (avoids wasting thread pool for I/O)
+        _ = CheckAndRefreshTokensAsync();
     }
 
     /// <summary>
@@ -171,12 +171,27 @@ public sealed class OAuthRefreshService : IDisposable
 
     private async void OnRefreshTimerElapsed(object? sender, ElapsedEventArgs e)
     {
-        await CheckAndRefreshTokensAsync();
+        try
+        {
+            await CheckAndRefreshTokensAsync();
+        }
+        catch (Exception)
+        {
+            // Swallow exceptions in timer callbacks to prevent app crash
+            // Individual token refresh failures are already handled in CheckAndRefreshTokensAsync
+        }
     }
 
     private async void OnExpirationCheckElapsed(object? sender, ElapsedEventArgs e)
     {
-        await CheckExpiringTokensAsync();
+        try
+        {
+            await CheckExpiringTokensAsync();
+        }
+        catch (Exception)
+        {
+            // Swallow exceptions in timer callbacks to prevent app crash
+        }
     }
 
     private async Task CheckAndRefreshTokensAsync()

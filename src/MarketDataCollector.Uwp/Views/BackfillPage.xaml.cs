@@ -18,6 +18,13 @@ namespace MarketDataCollector.Uwp.Views;
 /// </summary>
 public sealed partial class BackfillPage : Page
 {
+    // Static cached brushes to avoid repeated allocations (performance optimization)
+    private static readonly SolidColorBrush s_successBrush = new(Color.FromArgb(255, 72, 187, 120));
+    private static readonly SolidColorBrush s_warningBrush = new(Color.FromArgb(255, 237, 137, 54));
+    private static readonly SolidColorBrush s_pendingBgBrush = new(Color.FromArgb(40, 160, 160, 160));
+    private static readonly SolidColorBrush s_runningBgBrush = new(Color.FromArgb(40, 237, 137, 54));
+    private static readonly SolidColorBrush s_completeBgBrush = new(Color.FromArgb(40, 72, 187, 120));
+
     private readonly BackfillService _backfillService;
     private readonly CredentialService _credentialService;
     private readonly ConfigService _configService;
@@ -147,21 +154,21 @@ public sealed partial class BackfillPage : Page
             Date = "Today 6:00 AM",
             Summary = "12 symbols, 3,456 bars",
             Duration = "2m 34s",
-            StatusColor = new SolidColorBrush(Color.FromArgb(255, 72, 187, 120))
+            StatusColor = s_successBrush
         });
         _backfillHistory.Add(new BackfillHistoryItem
         {
             Date = "Yesterday 6:00 AM",
             Summary = "12 symbols, 3,421 bars",
             Duration = "2m 28s",
-            StatusColor = new SolidColorBrush(Color.FromArgb(255, 72, 187, 120))
+            StatusColor = s_successBrush
         });
         _backfillHistory.Add(new BackfillHistoryItem
         {
             Date = "2 days ago",
             Summary = "AAPL failed - rate limit",
             Duration = "1m 45s",
-            StatusColor = new SolidColorBrush(Color.FromArgb(255, 237, 137, 54))
+            StatusColor = s_warningBrush
         });
     }
 
@@ -321,7 +328,7 @@ public sealed partial class BackfillPage : Page
                 }
 
                 progressItem.StatusText = "Running";
-                progressItem.StatusBackground = new SolidColorBrush(Color.FromArgb(40, 237, 137, 54));
+                progressItem.StatusBackground = s_runningBgBrush;
                 BackfillStatusText.Text = $"Downloading {progressItem.Symbol}...";
 
                 // Simulate download with progress
@@ -338,7 +345,7 @@ public sealed partial class BackfillPage : Page
                 {
                     progressItem.Progress = 100;
                     progressItem.StatusText = "Done";
-                    progressItem.StatusBackground = new SolidColorBrush(Color.FromArgb(40, 72, 187, 120));
+                    progressItem.StatusBackground = s_completeBgBrush;
                     progressItem.BarsText = "2,500 bars";
                     progressItem.TimeText = $"{(DateTime.UtcNow - startTime).TotalSeconds:F1}s";
 
@@ -578,12 +585,15 @@ public sealed partial class BackfillPage : Page
 /// </summary>
 public class SymbolProgressInfo
 {
+    // Static default brush to avoid repeated allocations
+    private static readonly SolidColorBrush s_defaultBgBrush = new(Color.FromArgb(40, 160, 160, 160));
+
     public string Symbol { get; set; } = string.Empty;
     public double Progress { get; set; }
     public string BarsText { get; set; } = "0 bars";
     public string StatusText { get; set; } = "Pending";
     public string TimeText { get; set; } = "--";
-    public SolidColorBrush StatusBackground { get; set; } = new(Color.FromArgb(40, 160, 160, 160));
+    public SolidColorBrush StatusBackground { get; set; } = s_defaultBgBrush;
 }
 
 /// <summary>
@@ -610,8 +620,11 @@ public class ScheduledJob
 /// </summary>
 public class BackfillHistoryItem
 {
+    // Static default brush to avoid repeated allocations
+    private static readonly SolidColorBrush s_defaultStatusBrush = new(Color.FromArgb(255, 72, 187, 120));
+
     public string Date { get; set; } = string.Empty;
     public string Summary { get; set; } = string.Empty;
     public string Duration { get; set; } = string.Empty;
-    public SolidColorBrush StatusColor { get; set; } = new(Color.FromArgb(255, 72, 187, 120));
+    public SolidColorBrush StatusColor { get; set; } = s_defaultStatusBrush;
 }

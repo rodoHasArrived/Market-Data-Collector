@@ -122,7 +122,12 @@ public sealed partial class DashboardViewModel : ObservableObject, IDisposable
     public ObservableCollection<RunningTaskInfo> RunningTasks { get; } = new();
 
     private DateTime _collectorStartTime;
-    private readonly List<double> _throughputHistory = new();
+
+    // Circular buffer for throughput history (O(1) operations instead of O(n) for List.RemoveAt(0))
+    private const int ThroughputHistorySize = 30;
+    private readonly double[] _throughputHistory = new double[ThroughputHistorySize];
+    private int _throughputHistoryIndex;
+    private int _throughputHistoryCount;
 
     public DashboardViewModel()
     {
@@ -205,15 +210,24 @@ public sealed partial class DashboardViewModel : ObservableObject, IDisposable
                 IntegrityCount = status.Metrics.Integrity;
                 HistoricalBarsCount = status.Metrics.HistoricalBars;
 
-                // Update throughput
-                _throughputHistory.Add(status.Metrics.Published);
-                if (_throughputHistory.Count > 30) _throughputHistory.RemoveAt(0);
+                // Update throughput using circular buffer (O(1) operations)
+                var prevIndex = (_throughputHistoryIndex - 1 + ThroughputHistorySize) % ThroughputHistorySize;
+                var prevValue = _throughputHistoryCount > 0 ? _throughputHistory[prevIndex] : 0;
 
-                if (_throughputHistory.Count > 1)
+                _throughputHistory[_throughputHistoryIndex] = status.Metrics.Published;
+                _throughputHistoryIndex = (_throughputHistoryIndex + 1) % ThroughputHistorySize;
+                if (_throughputHistoryCount < ThroughputHistorySize) _throughputHistoryCount++;
+
+                if (_throughputHistoryCount > 1)
                 {
-                    var recent = _throughputHistory.TakeLast(2).ToArray();
-                    CurrentThroughput = (recent[1] - recent[0]) / 2.0; // Per second
-                    AverageThroughput = _throughputHistory.Average();
+                    CurrentThroughput = (status.Metrics.Published - prevValue) / 2.0; // Per second
+
+                    // Calculate average from circular buffer
+                    double sum = 0;
+                    for (int i = 0; i < _throughputHistoryCount; i++)
+                        sum += _throughputHistory[i];
+                    AverageThroughput = sum / _throughputHistoryCount;
+
                     PeakThroughput = Math.Max(PeakThroughput, CurrentThroughput);
                 }
 

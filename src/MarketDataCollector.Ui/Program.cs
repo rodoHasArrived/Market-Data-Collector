@@ -12,8 +12,16 @@ using MarketDataCollector.Storage.Sinks;
 using Serilog;
 
 // Cached JSON serializer options to avoid repeated allocations (performance optimization)
-var jsonOptions = jsonOptions;
-var jsonOptionsIndented = jsonOptionsIndented;
+var jsonOptions = new JsonSerializerOptions
+{
+    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+    WriteIndented = false
+};
+var jsonOptionsIndented = new JsonSerializerOptions
+{
+    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+    WriteIndented = true
+};
 
 var builder = WebApplication.CreateBuilder(args);
 

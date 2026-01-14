@@ -14,6 +14,11 @@ namespace MarketDataCollector.Uwp.Views;
 /// </summary>
 public sealed partial class TradingHoursPage : Page
 {
+    // Static cached brushes to avoid repeated allocations (performance optimization)
+    private static readonly SolidColorBrush s_openBrush = new(Color.FromArgb(255, 72, 187, 120));
+    private static readonly SolidColorBrush s_closedBrush = new(Color.FromArgb(255, 245, 101, 101));
+    private static readonly SolidColorBrush s_warningBrush = new(Color.FromArgb(255, 237, 137, 54));
+
     private readonly DispatcherTimer _clockTimer;
     private readonly ObservableCollection<ExchangeSession> _exchangeSessions;
     private readonly ObservableCollection<HolidayEntry> _holidays;
@@ -49,7 +54,11 @@ public sealed partial class TradingHoursPage : Page
 
     private void TradingHoursPage_Unloaded(object sender, RoutedEventArgs e)
     {
+        // Properly clean up event handlers and timer to prevent memory leaks
         _clockTimer.Stop();
+        _clockTimer.Tick -= ClockTimer_Tick;
+        Loaded -= TradingHoursPage_Loaded;
+        Unloaded -= TradingHoursPage_Unloaded;
     }
 
     private void ClockTimer_Tick(object? sender, object e)
@@ -91,34 +100,34 @@ public sealed partial class TradingHoursPage : Page
         {
             status = "Closed";
             nextEvent = "Opens Monday 9:30 AM";
-            statusColor = new SolidColorBrush(Color.FromArgb(255, 245, 101, 101));
+            statusColor = s_closedBrush;
         }
         else if (currentTime >= marketOpen && currentTime < marketClose)
         {
             status = "Open";
             var timeUntilClose = marketClose - currentTime;
             nextEvent = $"Closes in {timeUntilClose.Hours}h {timeUntilClose.Minutes}m";
-            statusColor = new SolidColorBrush(Color.FromArgb(255, 72, 187, 120));
+            statusColor = s_openBrush;
         }
         else if (currentTime >= preMarketStart && currentTime < marketOpen)
         {
             status = "Pre-Market";
             var timeUntilOpen = marketOpen - currentTime;
             nextEvent = $"Opens in {timeUntilOpen.Hours}h {timeUntilOpen.Minutes}m";
-            statusColor = new SolidColorBrush(Color.FromArgb(255, 237, 137, 54));
+            statusColor = s_warningBrush;
         }
         else if (currentTime >= marketClose && currentTime < postMarketEnd)
         {
             status = "Post-Market";
             var timeUntilEnd = postMarketEnd - currentTime;
             nextEvent = $"Ends in {timeUntilEnd.Hours}h {timeUntilEnd.Minutes}m";
-            statusColor = new SolidColorBrush(Color.FromArgb(255, 237, 137, 54));
+            statusColor = s_warningBrush;
         }
         else
         {
             status = "Closed";
             nextEvent = "Pre-market opens 4:00 AM";
-            statusColor = new SolidColorBrush(Color.FromArgb(255, 245, 101, 101));
+            statusColor = s_closedBrush;
         }
 
         NyseStatusText.Text = status;
@@ -138,7 +147,7 @@ public sealed partial class TradingHoursPage : Page
         {
             Name = "NYSE",
             Status = "Open",
-            StatusColor = new SolidColorBrush(Color.FromArgb(255, 72, 187, 120)),
+            StatusColor = s_openBrush,
             PreMarket = "04:00-09:30",
             RegularHours = "09:30-16:00",
             PostMarket = "16:00-20:00",
@@ -150,7 +159,7 @@ public sealed partial class TradingHoursPage : Page
         {
             Name = "NASDAQ",
             Status = "Open",
-            StatusColor = new SolidColorBrush(Color.FromArgb(255, 72, 187, 120)),
+            StatusColor = s_openBrush,
             PreMarket = "04:00-09:30",
             RegularHours = "09:30-16:00",
             PostMarket = "16:00-20:00",
@@ -162,7 +171,7 @@ public sealed partial class TradingHoursPage : Page
         {
             Name = "CME",
             Status = "Open",
-            StatusColor = new SolidColorBrush(Color.FromArgb(255, 72, 187, 120)),
+            StatusColor = s_openBrush,
             PreMarket = "-",
             RegularHours = "17:00-16:00",
             PostMarket = "-",
@@ -174,7 +183,7 @@ public sealed partial class TradingHoursPage : Page
         {
             Name = "LSE",
             Status = "Closed",
-            StatusColor = new SolidColorBrush(Color.FromArgb(255, 245, 101, 101)),
+            StatusColor = s_closedBrush,
             PreMarket = "-",
             RegularHours = "08:00-16:30",
             PostMarket = "-",
@@ -186,7 +195,7 @@ public sealed partial class TradingHoursPage : Page
         {
             Name = "TSE",
             Status = "Closed",
-            StatusColor = new SolidColorBrush(Color.FromArgb(255, 245, 101, 101)),
+            StatusColor = s_closedBrush,
             PreMarket = "-",
             RegularHours = "09:00-15:00",
             PostMarket = "-",
@@ -205,7 +214,7 @@ public sealed partial class TradingHoursPage : Page
             Name = "New Year's Day",
             Exchange = "NYSE, NASDAQ",
             Type = "Closed",
-            TypeColor = new SolidColorBrush(Color.FromArgb(255, 245, 101, 101))
+            TypeColor = s_closedBrush
         });
 
         _holidays.Add(new HolidayEntry
@@ -214,7 +223,7 @@ public sealed partial class TradingHoursPage : Page
             Name = "Martin Luther King Jr. Day",
             Exchange = "NYSE, NASDAQ",
             Type = "Closed",
-            TypeColor = new SolidColorBrush(Color.FromArgb(255, 245, 101, 101))
+            TypeColor = s_closedBrush
         });
 
         _holidays.Add(new HolidayEntry
@@ -223,7 +232,7 @@ public sealed partial class TradingHoursPage : Page
             Name = "Presidents' Day",
             Exchange = "NYSE, NASDAQ",
             Type = "Closed",
-            TypeColor = new SolidColorBrush(Color.FromArgb(255, 245, 101, 101))
+            TypeColor = s_closedBrush
         });
 
         _holidays.Add(new HolidayEntry
@@ -232,7 +241,7 @@ public sealed partial class TradingHoursPage : Page
             Name = "Independence Day (Observed)",
             Exchange = "NYSE, NASDAQ",
             Type = "Early Close",
-            TypeColor = new SolidColorBrush(Color.FromArgb(255, 237, 137, 54))
+            TypeColor = s_warningBrush
         });
     }
 

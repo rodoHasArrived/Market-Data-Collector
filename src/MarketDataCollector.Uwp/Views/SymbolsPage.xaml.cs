@@ -760,20 +760,26 @@ public sealed partial class SymbolsPage : Page
 /// </summary>
 public class EnhancedSymbolViewModel : SymbolViewModel
 {
+    // Static cached brushes to avoid repeated allocations in property getters (performance optimization)
+    private static readonly SolidColorBrush s_activeBgBrush = new(Color.FromArgb(40, 72, 187, 120));
+    private static readonly SolidColorBrush s_inactiveBgBrush = new(Color.FromArgb(40, 160, 160, 160));
+    private static readonly SolidColorBrush s_enabledBrush = new(Color.FromArgb(255, 72, 187, 120));
+    private static readonly SolidColorBrush s_disabledBrush = new(Color.FromArgb(255, 160, 160, 160));
+
     public bool IsSelected { get; set; }
     public string StatusText => SubscribeTrades || SubscribeDepth ? "Active" : "Inactive";
 
     public SolidColorBrush StatusBackground => SubscribeTrades || SubscribeDepth
-        ? new SolidColorBrush(Color.FromArgb(40, 72, 187, 120))
-        : new SolidColorBrush(Color.FromArgb(40, 160, 160, 160));
+        ? s_activeBgBrush
+        : s_inactiveBgBrush;
 
     public SolidColorBrush TradesStatusColor => SubscribeTrades
-        ? new SolidColorBrush(Color.FromArgb(255, 72, 187, 120))
-        : new SolidColorBrush(Color.FromArgb(255, 160, 160, 160));
+        ? s_enabledBrush
+        : s_disabledBrush;
 
     public SolidColorBrush DepthStatusColor => SubscribeDepth
-        ? new SolidColorBrush(Color.FromArgb(255, 72, 187, 120))
-        : new SolidColorBrush(Color.FromArgb(255, 160, 160, 160));
+        ? s_enabledBrush
+        : s_disabledBrush;
 
     public EnhancedSymbolViewModel(SymbolConfig config) : base(config)
     {
