@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 using Windows.Security.Credentials;
@@ -10,6 +10,44 @@ using Windows.Storage;
 using MarketDataCollector.Uwp.Models;
 
 namespace MarketDataCollector.Uwp.Services;
+
+/// <summary>
+/// Exception types for credential operations.
+/// </summary>
+public enum CredentialErrorType
+{
+    /// <summary>User cancelled the credential dialog.</summary>
+    UserCancelled,
+    /// <summary>Credential was not found in the vault.</summary>
+    NotFound,
+    /// <summary>Access to the credential was denied.</summary>
+    AccessDenied,
+    /// <summary>The credential vault is unavailable.</summary>
+    VaultUnavailable,
+    /// <summary>An unknown error occurred.</summary>
+    Unknown
+}
+
+/// <summary>
+/// Event args for credential operation errors.
+/// </summary>
+public class CredentialErrorEventArgs : EventArgs
+{
+    public string Operation { get; }
+    public string Resource { get; }
+    public CredentialErrorType ErrorType { get; }
+    public string? Message { get; }
+    public Exception? Exception { get; }
+
+    public CredentialErrorEventArgs(string operation, string resource, CredentialErrorType errorType, string? message = null, Exception? exception = null)
+    {
+        Operation = operation;
+        Resource = resource;
+        ErrorType = errorType;
+        Message = message;
+        Exception = exception;
+    }
+}
 
 /// <summary>
 /// Service for secure credential management using Windows Credential Manager
@@ -55,6 +93,18 @@ public sealed class CredentialService : IDisposable
     /// </summary>
     public event EventHandler<CredentialErrorEventArgs>? CredentialError;
 
+    // Telemetry counters
+    private int _credentialRetrievalFailures;
+    private int _credentialSaveFailures;
+    private int _credentialRemovalFailures;
+    private int _vaultAccessFailures;
+
+    /// <summary>
+    /// Gets telemetry counters for diagnostic purposes.
+    /// </summary>
+    public (int RetrievalFailures, int SaveFailures, int RemovalFailures, int VaultAccessFailures) GetTelemetryCounters()
+        => (_credentialRetrievalFailures, _credentialSaveFailures, _credentialRemovalFailures, _vaultAccessFailures);
+
     public CredentialService()
     {
         _vault = new PasswordVault();
@@ -95,6 +145,71 @@ public sealed class CredentialService : IDisposable
     }
 
     /// <summary>
+    /// Classifies a credential operation exception into a specific error type.
+    /// </summary>
+    /// <remarks>
+    /// Expected exceptions:
+    /// - COMException with E_ELEMENT_NOT_FOUND (0x80070490): Credential not found
+    /// - COMException with E_ACCESSDENIED (0x80070005): Access denied to credential vault
+    /// - COMException with other HRESULT: System/vault errors
+    /// - OperationCanceledException: User cancelled the operation
+    /// </remarks>
+    private static CredentialErrorType ClassifyException(Exception ex)
+    {
+        // User cancellation
+        if (ex is OperationCanceledException or TaskCanceledException)
+            return CredentialErrorType.UserCancelled;
+
+        // COM exceptions from Windows Credential Manager
+        if (ex is COMException comEx)
+        {
+            // E_ELEMENT_NOT_FOUND (0x80070490) - Credential not found
+            if (comEx.HResult == unchecked((int)0x80070490))
+                return CredentialErrorType.NotFound;
+
+            // E_ACCESSDENIED (0x80070005) - Access denied
+            if (comEx.HResult == unchecked((int)0x80070005))
+                return CredentialErrorType.AccessDenied;
+
+            // E_FAIL or other COM errors typically indicate vault unavailability
+            return CredentialErrorType.VaultUnavailable;
+        }
+
+        // Invalid operation typically means vault is not available
+        if (ex is InvalidOperationException)
+            return CredentialErrorType.VaultUnavailable;
+
+        return CredentialErrorType.Unknown;
+    }
+
+    /// <summary>
+    /// Logs a credential operation for diagnostic purposes.
+    /// </summary>
+    private void LogCredentialOperation(string operation, string resource, bool success, CredentialErrorType? errorType = null, string? details = null)
+    {
+        var timestamp = DateTime.UtcNow.ToString("o");
+        if (success)
+        {
+            Debug.WriteLine($"[{timestamp}] CredentialService: {operation} succeeded for resource '{resource}'");
+        }
+        else
+        {
+            var errorInfo = errorType.HasValue ? $"ErrorType={errorType.Value}" : "ErrorType=Unknown";
+            var detailInfo = !string.IsNullOrEmpty(details) ? $", Details={details}" : "";
+            Debug.WriteLine($"[{timestamp}] CredentialService: {operation} FAILED for resource '{resource}' ({errorInfo}{detailInfo})");
+        }
+    }
+
+    /// <summary>
+    /// Raises a credential error event and logs it.
+    /// </summary>
+    private void RaiseCredentialError(string operation, string resource, CredentialErrorType errorType, string? message = null, Exception? ex = null)
+    {
+        LogCredentialOperation(operation, resource, false, errorType, message ?? ex?.Message);
+        CredentialError?.Invoke(this, new CredentialErrorEventArgs(operation, resource, errorType, message, ex));
+    }
+
+    /// <summary>
     /// Prompts the user for credentials using the Windows CredentialPicker UI.
     /// </summary>
     /// <param name="targetName">The target name for the credential (displayed to user)</param>
@@ -124,22 +239,26 @@ public sealed class CredentialService : IDisposable
 
             if (result.ErrorCode == 0 && !string.IsNullOrEmpty(result.CredentialUserName))
             {
+                LogCredentialOperation("PromptForCredentials", targetName, true);
                 return result;
             }
 
+            // User cancelled or empty credentials
+            var errorType = result.ErrorCode == 0 ? CredentialErrorType.UserCancelled : CredentialErrorType.Unknown;
+            RaiseCredentialError("PromptForCredentials", targetName, errorType, $"Dialog returned ErrorCode={result.ErrorCode}");
             return null;
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException ex)
         {
-            // User cancelled the credential picker dialog
-            LogDebug("Credential picker cancelled by user for {TargetName}", targetName);
+            // User explicitly cancelled the operation
+            RaiseCredentialError("PromptForCredentials", targetName, CredentialErrorType.UserCancelled, "User cancelled credential dialog", ex);
             return null;
         }
         catch (Exception ex)
         {
-            // System error during credential picker
-            LogError(ex, CredentialOperation.PromptCredentials, targetName,
-                "Credential picker failed for {TargetName}");
+            // System error - could be COM interop failure, dialog unavailable, etc.
+            var errorType = ClassifyException(ex);
+            RaiseCredentialError("PromptForCredentials", targetName, errorType, ex.Message, ex);
             return null;
         }
     }
@@ -173,28 +292,36 @@ public sealed class CredentialService : IDisposable
                     ? result.CredentialPassword
                     : result.CredentialUserName;
 
-                if (!string.IsNullOrEmpty(apiKey) && result.CredentialSaved)
+                if (!string.IsNullOrEmpty(apiKey))
                 {
-                    SaveApiKey(targetName, apiKey);
+                    if (result.CredentialSaved)
+                    {
+                        SaveApiKey(targetName, apiKey);
+                    }
+                    LogCredentialOperation("PromptForApiKey", targetName, true);
+                    return apiKey;
                 }
 
-                return apiKey;
+                RaiseCredentialError("PromptForApiKey", targetName, CredentialErrorType.UserCancelled, "Empty API key provided");
+                return null;
             }
 
+            RaiseCredentialError("PromptForApiKey", targetName, CredentialErrorType.Unknown, $"Dialog returned ErrorCode={result.ErrorCode}");
             return null;
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException ex)
         {
-            // User cancelled the API key prompt dialog
-            LogDebug("API key prompt cancelled by user for {TargetName}", targetName);
+            // User explicitly cancelled the operation
+            RaiseCredentialError("PromptForApiKey", targetName, CredentialErrorType.UserCancelled, "User cancelled API key dialog", ex);
             return null;
         }
         catch (Exception ex)
         {
-            // Expected exceptions: COM exceptions from CredentialPicker, ArgumentException for invalid options
-            // Unexpected: Any other exception indicates a system-level issue
-            LogError(ex, CredentialOperation.PromptApiKey, targetName,
-                "API key prompt failed for {TargetName}");
+            // Expected exceptions:
+            // - COMException: Windows Credential Manager interop failure
+            // - InvalidOperationException: Dialog could not be shown (e.g., no UI thread)
+            var errorType = ClassifyException(ex);
+            RaiseCredentialError("PromptForApiKey", targetName, errorType, ex.Message, ex);
             return null;
         }
     }
@@ -202,6 +329,10 @@ public sealed class CredentialService : IDisposable
     /// <summary>
     /// Saves username/password credentials to the Windows Credential Manager.
     /// </summary>
+    /// <remarks>
+    /// This operation may fail silently and return without throwing. Use the CredentialError event
+    /// to monitor for failures in critical scenarios.
+    /// </remarks>
     public void SaveCredential(string resource, string username, string password)
     {
         try
@@ -211,13 +342,19 @@ public sealed class CredentialService : IDisposable
 
             var credential = new PasswordCredential(resource, username, password);
             _vault.Add(credential);
+            LogCredentialOperation("SaveCredential", resource, true);
         }
         catch (Exception ex)
         {
-            // Log the failure but don't throw - saving credentials is not critical to app operation
-            // However, for production scenarios, consider whether credential save failures should be more visible
-            LogError(ex, CredentialOperation.Save, resource,
-                "Failed to save credential for {Resource}. User may need to re-enter credentials on next use.");
+            // Expected exceptions:
+            // - COMException with E_ACCESSDENIED: Cannot write to vault (permissions)
+            // - COMException with E_FAIL: Vault service unavailable
+            // - ArgumentException: Invalid resource name or empty credentials
+            Interlocked.Increment(ref _credentialSaveFailures);
+            var errorType = ClassifyException(ex);
+            RaiseCredentialError("SaveCredential", resource, errorType, ex.Message, ex);
+            // Note: We don't throw here to maintain backward compatibility.
+            // Callers should subscribe to CredentialError event for critical operations.
         }
     }
 
@@ -233,6 +370,10 @@ public sealed class CredentialService : IDisposable
     /// Retrieves credentials from the Windows Credential Manager.
     /// </summary>
     /// <returns>Tuple of (username, password) or null if not found</returns>
+    /// <remarks>
+    /// Returns null for both "not found" and "access denied" scenarios.
+    /// Subscribe to the CredentialError event to distinguish between these cases.
+    /// </remarks>
     public (string Username, string Password)? GetCredential(string resource)
     {
         try
@@ -242,29 +383,25 @@ public sealed class CredentialService : IDisposable
             {
                 var credential = credentials[0];
                 credential.RetrievePassword();
+                LogCredentialOperation("GetCredential", resource, true);
                 return (credential.UserName, credential.Password);
             }
-        }
-        catch (Exception ex) when (ex.HResult == unchecked((int)0x80070490)) // Element not found
-        {
-            // Credential not found - this is expected for first-time access
-            LogDebug("Credential not found for {Resource} (first-time access)", resource);
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            // Access denied - credential exists but user doesn't have permission
-            LogWarning(ex, CredentialOperation.Retrieve, resource,
-                "Access denied when retrieving credential for {Resource}");
+
+            // Credential not found (not an error, just doesn't exist)
+            Debug.WriteLine($"CredentialService: GetCredential - No credential found for resource '{resource}'");
+            return null;
         }
         catch (Exception ex)
         {
-            // Unexpected error - log with telemetry for investigation
-            LogError(ex, CredentialOperation.Retrieve, resource,
-                "Unexpected error retrieving credential for {Resource}. HResult: {HResult}",
-                ex.HResult.ToString("X8"));
+            // Expected exceptions:
+            // - COMException with E_ELEMENT_NOT_FOUND (0x80070490): Credential doesn't exist
+            // - COMException with E_ACCESSDENIED (0x80070005): Access denied to vault
+            // - COMException with other HRESULT: Vault service error
+            Interlocked.Increment(ref _credentialRetrievalFailures);
+            var errorType = ClassifyException(ex);
+            RaiseCredentialError("GetCredential", resource, errorType, ex.Message, ex);
+            return null;
         }
-
-        return null;
     }
 
     /// <summary>
@@ -279,50 +416,75 @@ public sealed class CredentialService : IDisposable
     /// <summary>
     /// Removes a credential from the Windows Credential Manager.
     /// </summary>
+    /// <remarks>
+    /// This operation is idempotent - removing a non-existent credential is not an error.
+    /// </remarks>
     public void RemoveCredential(string resource)
     {
         try
         {
             var credentials = _vault.FindAllByResource(resource);
+            var removedCount = 0;
             foreach (var credential in credentials)
             {
                 _vault.Remove(credential);
+                removedCount++;
             }
-        }
-        catch (Exception ex) when (ex.HResult == unchecked((int)0x80070490)) // Element not found
-        {
-            // Credential not found - nothing to remove, this is fine
-            LogDebug("Credential not found during removal for {Resource}", resource);
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            // Access denied - credential exists but we can't remove it
-            LogWarning(ex, CredentialOperation.Remove, resource,
-                "Access denied when removing credential for {Resource}");
+
+            if (removedCount > 0)
+            {
+                LogCredentialOperation("RemoveCredential", resource, true);
+            }
+            else
+            {
+                Debug.WriteLine($"CredentialService: RemoveCredential - No credential to remove for resource '{resource}'");
+            }
         }
         catch (Exception ex)
         {
-            // Unexpected error during removal
-            LogError(ex, CredentialOperation.Remove, resource,
-                "Failed to remove credential for {Resource}");
+            // Expected exceptions:
+            // - COMException with E_ELEMENT_NOT_FOUND: Already removed (race condition) - not a real error
+            // - COMException with E_ACCESSDENIED: Cannot modify vault
+            Interlocked.Increment(ref _credentialRemovalFailures);
+            var errorType = ClassifyException(ex);
+
+            // NotFound during removal is expected (idempotent operation)
+            if (errorType != CredentialErrorType.NotFound)
+            {
+                RaiseCredentialError("RemoveCredential", resource, errorType, ex.Message, ex);
+            }
+            else
+            {
+                Debug.WriteLine($"CredentialService: RemoveCredential - Credential already removed for resource '{resource}'");
+            }
         }
     }
 
     /// <summary>
     /// Checks if a credential exists in the Windows Credential Manager.
     /// </summary>
+    /// <remarks>
+    /// Returns false if the credential doesn't exist OR if the vault is inaccessible.
+    /// Subscribe to the CredentialError event to distinguish between these cases.
+    /// </remarks>
     public bool HasCredential(string resource)
     {
         try
         {
             var credentials = _vault.FindAllByResource(resource);
-            return credentials.Count > 0;
+            var exists = credentials.Count > 0;
+            Debug.WriteLine($"CredentialService: HasCredential - Resource '{resource}' exists: {exists}");
+            return exists;
         }
         catch (Exception ex)
         {
-            // Log for diagnostic purposes - helps debug credential issues
-            LogDebug("HasCredential check failed for {Resource}: {ExceptionType} - {Message}",
-                resource, ex.GetType().Name, ex.Message);
+            // Expected exceptions:
+            // - COMException with E_ACCESSDENIED: Cannot read vault
+            // - COMException with E_FAIL: Vault service unavailable
+            var errorType = ClassifyException(ex);
+            Debug.WriteLine($"CredentialService: HasCredential FAILED for resource '{resource}' - {errorType}: {ex.Message}");
+            // Note: We don't increment counters or raise events for HasCredential
+            // as it's often called in tight loops for UI updates
             return false;
         }
     }
@@ -330,6 +492,10 @@ public sealed class CredentialService : IDisposable
     /// <summary>
     /// Gets all stored credential resource names for this application.
     /// </summary>
+    /// <remarks>
+    /// Returns an empty list if the vault is inaccessible. Check the CredentialError event
+    /// or telemetry counters to detect vault access failures.
+    /// </remarks>
     public IReadOnlyList<string> GetAllStoredResources()
     {
         var resources = new List<string>();
@@ -346,24 +512,17 @@ public sealed class CredentialService : IDisposable
                     }
                 }
             }
-        }
-        catch (Exception ex) when (ex.HResult == unchecked((int)0x80070490)) // Element not found
-        {
-            // Empty vault - no credentials stored yet
-            LogDebug("No credentials found in vault (empty vault)");
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            // Access denied to vault
-            LogWarning(ex, CredentialOperation.ListAll, null,
-                "Access denied when listing all credentials from vault");
+            Debug.WriteLine($"CredentialService: GetAllStoredResources - Found {resources.Count} credentials");
         }
         catch (Exception ex)
         {
-            // Unexpected vault access failure - track for telemetry
-            LogError(ex, CredentialOperation.ListAll, null,
-                "Failed to list credentials from vault. HResult: {HResult}",
-                ex.HResult.ToString("X8"));
+            // Expected exceptions:
+            // - COMException with E_ACCESSDENIED: Cannot enumerate vault
+            // - COMException with E_FAIL: Vault service unavailable
+            // Note: Empty vault also throws E_ELEMENT_NOT_FOUND on some Windows versions
+            Interlocked.Increment(ref _vaultAccessFailures);
+            var errorType = ClassifyException(ex);
+            RaiseCredentialError("GetAllStoredResources", ResourcePrefix, errorType, ex.Message, ex);
         }
 
         return resources;

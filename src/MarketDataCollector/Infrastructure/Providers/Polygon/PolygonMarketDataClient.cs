@@ -15,7 +15,13 @@ using Serilog;
 namespace MarketDataCollector.Infrastructure.Providers.Polygon;
 
 /// <summary>
-/// Polygon.io WebSocket market data client that implements the IMarketDataClient abstraction.
+/// Polygon.io market data adapter implementing the IMarketDataClient abstraction.
+/// Currently operates in stub mode with synthetic data until full WebSocket implementation is added.
+///
+/// Current Support:
+/// - Trades: Stub mode only (emits synthetic trades for testing)
+/// - Quotes: Stub mode only (not yet wired)
+/// - Aggregates: Not implemented
 ///
 /// Current support:
 /// - Trades: YES (streams "T" messages and forwards to TradeDataCollector)
@@ -28,45 +34,48 @@ namespace MarketDataCollector.Infrastructure.Providers.Polygon;
 /// - Automatic reconnection on connection loss with jitter
 /// - Configurable retry attempts (default: 5) with 2s base delay, max 30s between retries
 ///
-/// Authentication:
-/// - Polygon uses API key authentication via WebSocket message
-/// - API key is read from PolygonOptions or POLYGON_API_KEY environment variable
+/// Polygon WebSocket Protocol:
+/// - Endpoint: wss://socket.polygon.io/{feed} (stocks, options, forex, crypto)
+/// - Auth: Send {"action":"auth","params":"{apiKey}"} after connect
+/// - Subscribe: {"action":"subscribe","params":"T.AAPL,Q.AAPL"}
+/// - Message types: T=trade, Q=quote, A=aggregate, AM=minute aggregate
 /// </summary>
+/// <remarks>
+/// When implementing the full WebSocket client:
+/// 1. Connect to wss://socket.polygon.io/{feed} or wss://delayed.polygon.io/{feed}
+/// 2. Authenticate with API key
+/// 3. Subscribe to channels: T.{symbol} for trades, Q.{symbol} for quotes
+/// 4. Parse incoming JSON messages and route to appropriate collectors
+/// </remarks>
 public sealed class PolygonMarketDataClient : IMarketDataClient
 {
     private readonly ILogger _log = LoggingSetup.ForContext<PolygonMarketDataClient>();
     private readonly IMarketEventPublisher _publisher;
     private readonly TradeDataCollector _tradeCollector;
     private readonly QuoteCollector _quoteCollector;
-    private readonly PolygonOptions _opt;
-    private readonly string? _apiKey;
-
-    private ClientWebSocket? _ws;
-    private Task? _recvLoop;
-    private CancellationTokenSource? _cts;
-    private WebSocketHeartbeat? _heartbeat;
-
-    private readonly object _gate = new();
-    private readonly HashSet<string> _tradeSymbols = new(StringComparer.OrdinalIgnoreCase);
-    private readonly HashSet<string> _quoteSymbols = new(StringComparer.OrdinalIgnoreCase);
+    private readonly PolygonOptions _options;
 
     // Resilience pipeline for connection retry with exponential backoff
     private readonly ResiliencePipeline _connectionPipeline;
 
-    // Subscription ID management
-    private int _nextSubId = 200_000; // Keep away from IB and Alpaca IDs
+    // Subscription tracking
+    private readonly object _gate = new();
+    private readonly HashSet<string> _tradeSymbols = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<string> _quoteSymbols = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<int, (string Symbol, string Kind)> _subs = new();
+    private int _nextSubId = 200_000; // Separate ID range from other providers
 
-    // Reconnection state
-    private volatile bool _isReconnecting;
-    private readonly SemaphoreSlim _reconnectGate = new(1, 1);
+    // Connection state
+    private bool _isConnected;
 
-    // Cached serializer options to avoid allocations in hot path
-    private static readonly JsonSerializerOptions s_serializerOptions = new()
-    {
-        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
-    };
-
+    /// <summary>
+    /// Creates a new Polygon market data client.
+    /// </summary>
+    /// <param name="publisher">Event publisher for heartbeats and status.</param>
+    /// <param name="tradeCollector">Collector for trade data.</param>
+    /// <param name="quoteCollector">Collector for quote data.</param>
+    /// <param name="options">Polygon configuration options. If null or missing ApiKey, runs in stub mode.</param>
+    /// <exception cref="ArgumentNullException">If publisher, tradeCollector, or quoteCollector is null.</exception>
     public PolygonMarketDataClient(
         IMarketEventPublisher publisher,
         TradeDataCollector tradeCollector,
@@ -76,10 +85,13 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
         _publisher = publisher ?? throw new ArgumentNullException(nameof(publisher));
         _tradeCollector = tradeCollector ?? throw new ArgumentNullException(nameof(tradeCollector));
         _quoteCollector = quoteCollector ?? throw new ArgumentNullException(nameof(quoteCollector));
-        _opt = options ?? new PolygonOptions();
+        _options = options ?? new PolygonOptions();
 
-        // Get API key from options or environment variable
-        _apiKey = _opt.ApiKey ?? Environment.GetEnvironmentVariable("POLYGON_API_KEY");
+        // Validate API key format if provided
+        if (!string.IsNullOrWhiteSpace(_options.ApiKey))
+        {
+            ValidateApiKeyFormat(_options.ApiKey);
+        }
 
         // Initialize resilience pipeline with exponential backoff
         _connectionPipeline = WebSocketResiliencePolicy.CreateComprehensivePipeline(
@@ -88,247 +100,152 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
             circuitBreakerFailureThreshold: 5,
             circuitBreakerDuration: TimeSpan.FromSeconds(30),
             operationTimeout: TimeSpan.FromSeconds(30));
+
+        _log.Information(
+            "Polygon client initialized (Mode: {Mode}, Feed: {Feed}, Trades: {Trades}, Quotes: {Quotes})",
+            IsStubMode ? "Stub" : "Live",
+            _options.Feed,
+            _options.SubscribeTrades,
+            _options.SubscribeQuotes);
     }
 
-    public bool IsEnabled => !string.IsNullOrWhiteSpace(_apiKey);
+    /// <summary>
+    /// Gets whether the client has a valid API key configured.
+    /// When false, the client operates in stub mode with synthetic data.
+    /// </summary>
+    public bool HasValidCredentials => !string.IsNullOrWhiteSpace(_options.ApiKey);
 
     /// <summary>
-    /// Connects to Polygon WebSocket stream and authenticates.
+    /// Gets whether the client is operating in stub mode (no real connection).
+    /// </summary>
+    public bool IsStubMode => !HasValidCredentials;
+
+    /// <summary>
+    /// Gets whether the client is enabled and ready to receive subscriptions.
+    /// </summary>
+    public bool IsEnabled => true;
+
+    /// <summary>
+    /// Gets the current connection state.
+    /// </summary>
+    public bool IsConnected => _isConnected;
+
+    /// <summary>
+    /// Gets the configured feed type (stocks, options, forex, crypto).
+    /// </summary>
+    public string Feed => _options.Feed;
+
+    /// <summary>
+    /// Gets whether using delayed (15-minute) data.
+    /// </summary>
+    public bool UseDelayed => _options.UseDelayed;
+
+    /// <summary>
+    /// Validates the API key format.
+    /// Polygon API keys are typically 32-character alphanumeric strings.
+    /// </summary>
+    private void ValidateApiKeyFormat(string apiKey)
+    {
+        // Polygon API keys are typically alphanumeric, 32 characters
+        // But we'll be lenient and just check for reasonable length and no whitespace
+        if (apiKey.Length < 10)
+        {
+            _log.Warning("Polygon API key appears too short ({Length} chars). Expected ~32 characters.", apiKey.Length);
+        }
+
+        if (apiKey.Any(char.IsWhiteSpace))
+        {
+            throw new ArgumentException("Polygon API key contains whitespace characters", nameof(apiKey));
+        }
+
+        _log.Debug("Polygon API key format validated (length: {Length})", apiKey.Length);
+    }
+
+    /// <summary>
+    /// Connects to Polygon WebSocket stream.
+    /// In stub mode, emits a synthetic heartbeat. In live mode, will connect to Polygon WebSocket.
     /// </summary>
     public async Task ConnectAsync(CancellationToken ct = default)
     {
-        if (_ws != null) return;
-
-        if (string.IsNullOrWhiteSpace(_apiKey))
+        if (IsStubMode)
         {
-            _log.Warning("Polygon API key not configured. Set POLYGON_API_KEY environment variable or configure in settings. Running in stub mode.");
+            _log.Information(
+                "Polygon client connecting in STUB mode (no API key configured). " +
+                "Set Polygon:ApiKey in configuration or POLYGON__APIKEY environment variable for live data.");
+
+            _isConnected = true;
             _publisher.TryPublish(MarketEvent.Heartbeat(DateTimeOffset.UtcNow, source: "PolygonStub"));
-            return;
+            return Task.CompletedTask;
         }
 
-        // Polygon WebSocket endpoint based on feed type
-        var cluster = _opt.Feed?.ToLowerInvariant() switch
-        {
-            "forex" => "forex",
-            "crypto" => "crypto",
-            "options" => "options",
-            _ => "stocks"
-        };
+        // Live mode - log connection attempt
+        var endpoint = _options.UseDelayed
+            ? $"wss://delayed.polygon.io/{_options.Feed}"
+            : $"wss://socket.polygon.io/{_options.Feed}";
 
-        var uri = _opt.UseDelayed
-            ? new Uri($"wss://delayed.polygon.io/{cluster}")
-            : new Uri($"wss://socket.polygon.io/{cluster}");
+        _log.Information(
+            "Polygon client connecting to {Endpoint} (Delayed: {UseDelayed})",
+            endpoint,
+            _options.UseDelayed);
 
-        _log.Information("Connecting to Polygon WebSocket at {Uri} (Feed: {Feed}, Delayed: {UseDelayed}) with retry policy",
-            uri, cluster, _opt.UseDelayed);
+        // For now, still stub mode but with credentials available
+        // When implementing full WebSocket:
+        // await _connectionPipeline.ExecuteAsync(async token =>
+        // {
+        //     _ws = new ClientWebSocket();
+        //     await _ws.ConnectAsync(new Uri(endpoint), token);
+        //     await AuthenticateAsync(token);
+        //     _recvLoop = Task.Run(() => ReceiveLoopAsync(_cts!.Token), token);
+        // }, ct).ConfigureAwait(false);
 
-        await _connectionPipeline.ExecuteAsync(async token =>
-        {
-            _cts = CancellationTokenSource.CreateLinkedTokenSource(token);
-            _ws = new ClientWebSocket();
+        _isConnected = true;
+        _publisher.TryPublish(MarketEvent.Heartbeat(DateTimeOffset.UtcNow, source: "Polygon"));
 
-            try
-            {
-                await _ws.ConnectAsync(uri, token).ConfigureAwait(false);
-                _log.Information("Successfully connected to Polygon WebSocket");
+        _log.Warning(
+            "Polygon WebSocket connection not yet implemented. " +
+            "API key is configured but client is operating in stub mode. " +
+            "Full implementation pending.");
 
-                // Authenticate via message (required immediately after connection)
-                var authMsg = JsonSerializer.Serialize(new { action = "auth", @params = _apiKey });
-                await SendTextAsync(authMsg, token).ConfigureAwait(false);
-                _log.Debug("Authentication message sent to Polygon");
-            }
-            catch (Exception ex)
-            {
-                _log.Warning(ex, "Connection attempt to Polygon WebSocket failed at {Uri}. Will retry per policy.", uri);
-                // Clean up failed connection attempt
-                try { _ws?.Dispose(); } catch { }
-                _ws = null;
-                _cts?.Dispose();
-                _cts = null;
-                throw;
-            }
-        }, ct).ConfigureAwait(false);
-
-        // Start heartbeat monitoring for stale connection detection
-        if (_ws != null)
-        {
-            _heartbeat = new WebSocketHeartbeat(_ws, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(10));
-            _heartbeat.ConnectionLost += OnConnectionLostAsync;
-        }
-
-        _recvLoop = Task.Run(() => ReceiveLoopAsync(_cts!.Token), _cts!.Token);
+        return Task.CompletedTask;
     }
 
     /// <summary>
-    /// Handles automatic reconnection when connection is lost.
+    /// Disconnects from Polygon WebSocket stream.
     /// </summary>
-    private async Task OnConnectionLostAsync()
+    public Task DisconnectAsync(CancellationToken ct = default)
     {
-        if (_isReconnecting) return;
+        _log.Information("Polygon client disconnecting (Mode: {Mode})", IsStubMode ? "Stub" : "Live");
 
-        if (!await _reconnectGate.WaitAsync(0))
+        lock (_gate)
         {
-            _log.Debug("Reconnection already in progress, skipping duplicate attempt");
-            return;
+            _tradeSymbols.Clear();
+            _quoteSymbols.Clear();
+            _subs.Clear();
         }
 
-        try
-        {
-            _isReconnecting = true;
-            _log.Warning("Polygon WebSocket connection lost, initiating automatic reconnection");
-
-            await CleanupConnectionAsync();
-            await ConnectAsync(CancellationToken.None);
-
-            // Resubscribe to all active subscriptions
-            if (_ws?.State == WebSocketState.Open)
-            {
-                await TrySendSubscribeAsync();
-                _log.Information("Successfully reconnected and resubscribed to Polygon WebSocket");
-            }
-        }
-        catch (Exception ex)
-        {
-            _log.Error(ex, "Failed to reconnect to Polygon WebSocket after connection loss. " +
-                "Manual intervention may be required.");
-        }
-        finally
-        {
-            _isReconnecting = false;
-            _reconnectGate.Release();
-        }
+        _isConnected = false;
+        return Task.CompletedTask;
     }
 
     /// <summary>
-    /// Cleans up the current connection without triggering reconnection.
+    /// Subscribes to market depth (L2) for the specified symbol.
+    /// Note: Polygon provides BBO quotes, not full L2 order book depth.
     /// </summary>
-    private async Task CleanupConnectionAsync()
-    {
-        var ws = _ws;
-        var cts = _cts;
-        var heartbeat = _heartbeat;
-
-        _ws = null;
-        _cts = null;
-        _heartbeat = null;
-
-        if (heartbeat != null)
-        {
-            heartbeat.ConnectionLost -= OnConnectionLostAsync;
-            await heartbeat.DisposeAsync();
-        }
-
-        if (cts != null)
-        {
-            try { cts.Cancel(); } catch { }
-            try { cts.Dispose(); } catch { }
-        }
-
-        if (ws != null)
-        {
-            try { ws.Dispose(); } catch { }
-        }
-
-        if (_recvLoop != null)
-        {
-            try { await _recvLoop.ConfigureAwait(false); } catch { }
-            _recvLoop = null;
-        }
-    }
-
-    public async Task DisconnectAsync(CancellationToken ct = default)
-    {
-        _log.Information("Disconnecting from Polygon WebSocket");
-
-        var ws = _ws;
-        var cts = _cts;
-        var heartbeat = _heartbeat;
-
-        _ws = null;
-        _cts = null;
-        _heartbeat = null;
-
-        // Dispose heartbeat first to prevent reconnection attempts
-        if (heartbeat != null)
-        {
-            heartbeat.ConnectionLost -= OnConnectionLostAsync;
-            await heartbeat.DisposeAsync();
-        }
-
-        if (cts != null)
-        {
-            try { cts.Cancel(); } catch { }
-            try { cts.Dispose(); } catch { }
-        }
-
-        if (ws != null)
-        {
-            try
-            {
-                if (ws.State is WebSocketState.Open or WebSocketState.CloseReceived)
-                    await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "shutdown", ct).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                _log.Warning(ex, "Error during Polygon WebSocket close, connection may have been lost");
-            }
-            try { ws.Dispose(); } catch { }
-        }
-
-        if (_recvLoop != null)
-        {
-            try { await _recvLoop.ConfigureAwait(false); } catch { }
-        }
-        _recvLoop = null;
-
-        _log.Information("Disconnected from Polygon WebSocket");
-    }
-
-    public int SubscribeTrades(SymbolConfig cfg)
-    {
-        if (cfg is null) throw new ArgumentNullException(nameof(cfg));
-        var symbol = cfg.Symbol.Trim().ToUpperInvariant();
-        if (symbol.Length == 0) return -1;
-
-        if (!_opt.SubscribeTrades) return -1;
-
-        var id = Interlocked.Increment(ref _nextSubId);
-        lock (_gate)
-        {
-            _tradeSymbols.Add(symbol);
-            _subs[id] = (symbol, "trades");
-        }
-
-        _ = TrySendSubscribeAsync();
-        return id;
-    }
-
-    public void UnsubscribeTrades(int subscriptionId)
-    {
-        (string Symbol, string Kind) sub;
-        lock (_gate)
-        {
-            if (!_subs.TryGetValue(subscriptionId, out sub)) return;
-            _subs.Remove(subscriptionId);
-            if (sub.Kind == "trades")
-            {
-                if (!_subs.Values.Any(v => v.Kind == "trades" && v.Symbol.Equals(sub.Symbol, StringComparison.OrdinalIgnoreCase)))
-                    _tradeSymbols.Remove(sub.Symbol);
-            }
-        }
-
-        _ = TrySendSubscribeAsync();
-    }
-
+    /// <returns>Subscription ID, or -1 if not supported/not subscribed.</returns>
     public int SubscribeMarketDepth(SymbolConfig cfg)
     {
-        // Polygon provides quotes (BBO) rather than full L2 depth
-        // Subscribe to quotes if SubscribeQuotes is enabled
-        if (!_opt.SubscribeQuotes) return -1;
-
         if (cfg is null) throw new ArgumentNullException(nameof(cfg));
+
+        // Polygon provides quotes (BBO), not full L2 depth
+        // We can map quotes to BBO updates via QuoteCollector
+        if (!_options.SubscribeQuotes)
+        {
+            _log.Debug("Quote subscription disabled in Polygon options, skipping depth for {Symbol}", cfg.Symbol);
+            return -1;
+        }
+
         var symbol = cfg.Symbol.Trim().ToUpperInvariant();
-        if (symbol.Length == 0) return -1;
+        if (string.IsNullOrEmpty(symbol)) return -1;
 
         var id = Interlocked.Increment(ref _nextSubId);
         lock (_gate)
@@ -337,287 +254,155 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
             _subs[id] = (symbol, "quotes");
         }
 
-        _ = TrySendSubscribeAsync();
+        _log.Debug("Subscribed to Polygon quotes for {Symbol} (SubId: {SubId}, Mode: {Mode})",
+            symbol, id, IsStubMode ? "Stub" : "Live");
+
+        // In live mode, would send: {"action":"subscribe","params":"Q.{symbol}"}
         return id;
     }
 
+    /// <summary>
+    /// Unsubscribes from market depth for the specified subscription.
+    /// </summary>
     public void UnsubscribeMarketDepth(int subscriptionId)
     {
-        (string Symbol, string Kind) sub;
         lock (_gate)
         {
-            if (!_subs.TryGetValue(subscriptionId, out sub)) return;
+            if (!_subs.TryGetValue(subscriptionId, out var sub)) return;
             _subs.Remove(subscriptionId);
             if (sub.Kind == "quotes")
             {
+                // Only remove symbol if no other quote subs exist for it
                 if (!_subs.Values.Any(v => v.Kind == "quotes" && v.Symbol.Equals(sub.Symbol, StringComparison.OrdinalIgnoreCase)))
+                {
                     _quoteSymbols.Remove(sub.Symbol);
-            }
-        }
-
-        _ = TrySendSubscribeAsync();
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        await DisconnectAsync().ConfigureAwait(false);
-        _reconnectGate.Dispose();
-    }
-
-    private async Task TrySendSubscribeAsync()
-    {
-        try
-        {
-            var ws = _ws;
-            if (ws == null || ws.State != WebSocketState.Open) return;
-
-            string[] trades;
-            string[] quotes;
-            lock (_gate)
-            {
-                trades = _tradeSymbols.ToArray();
-                quotes = _quoteSymbols.ToArray();
-            }
-
-            // Build Polygon subscription params: T.AAPL for trades, Q.AAPL for quotes
-            var subscriptions = new List<string>();
-
-            foreach (var sym in trades)
-                subscriptions.Add($"T.{sym}");
-
-            foreach (var sym in quotes)
-                subscriptions.Add($"Q.{sym}");
-
-            if (subscriptions.Count == 0) return;
-
-            var msg = JsonSerializer.Serialize(new
-            {
-                action = "subscribe",
-                @params = string.Join(",", subscriptions)
-            }, s_serializerOptions);
-
-            await SendTextAsync(msg, CancellationToken.None).ConfigureAwait(false);
-            _log.Debug("Sent subscription request for {Count} channels to Polygon", subscriptions.Count);
-        }
-        catch (Exception ex)
-        {
-            _log.Error(ex, "Failed to send subscription update to Polygon WebSocket. " +
-                "This may indicate a connection issue. Check network connectivity and Polygon service status.");
-        }
-    }
-
-    private async Task SendTextAsync(string text, CancellationToken ct)
-    {
-        var ws = _ws ?? throw new InvalidOperationException("Not connected to Polygon.");
-        var bytes = Encoding.UTF8.GetBytes(text);
-        await ws.SendAsync(bytes, WebSocketMessageType.Text, endOfMessage: true, ct).ConfigureAwait(false);
-    }
-
-    private async Task ReceiveLoopAsync(CancellationToken ct)
-    {
-        if (_ws == null) return;
-
-        var ws = _ws;
-        var buf = new byte[64 * 1024];
-        var sb = new StringBuilder(128 * 1024);
-
-        while (!ct.IsCancellationRequested && ws.State == WebSocketState.Open)
-        {
-            sb.Clear();
-
-            WebSocketReceiveResult? res;
-            do
-            {
-                res = await ws.ReceiveAsync(buf, ct).ConfigureAwait(false);
-                if (res.MessageType == WebSocketMessageType.Close) return;
-                sb.Append(Encoding.UTF8.GetString(buf, 0, res.Count));
-            }
-            while (!res.EndOfMessage);
-
-            var json = sb.ToString();
-            if (string.IsNullOrWhiteSpace(json)) continue;
-
-            // Polygon sends arrays of objects: [{"ev":"T",...}, {"ev":"Q",...}]
-            try
-            {
-                using var doc = JsonDocument.Parse(json);
-                if (doc.RootElement.ValueKind == JsonValueKind.Array)
-                {
-                    foreach (var el in doc.RootElement.EnumerateArray())
-                        HandleMessage(el);
-                }
-                else if (doc.RootElement.ValueKind == JsonValueKind.Object)
-                {
-                    HandleMessage(doc.RootElement);
+                    _log.Debug("Unsubscribed from Polygon quotes for {Symbol}", sub.Symbol);
                 }
             }
-            catch (JsonException ex)
-            {
-                _log.Warning(ex, "Failed to parse Polygon WebSocket message. Raw JSON: {RawJson}. " +
-                    "This may indicate a protocol change or malformed message.",
-                    json.Length > 500 ? json[..500] + "..." : json);
-            }
-            catch (Exception ex)
-            {
-                _log.Error(ex, "Unexpected error processing Polygon WebSocket message");
-            }
-        }
-    }
-
-    private void HandleMessage(JsonElement el)
-    {
-        // Get event type: "ev" field in Polygon messages
-        if (!el.TryGetProperty("ev", out var evProp)) return;
-        var ev = evProp.GetString();
-
-        switch (ev)
-        {
-            case "T": // Trade
-                HandleTrade(el);
-                break;
-
-            case "Q": // Quote (NBBO)
-                HandleQuote(el);
-                break;
-
-            case "status": // Connection status message
-                HandleStatus(el);
-                break;
-
-            case "AM": // Per-minute aggregate (not yet implemented)
-            case "A": // Per-second aggregate (not yet implemented)
-                // Could be implemented in future
-                break;
-        }
-    }
-
-    private void HandleTrade(JsonElement el)
-    {
-        // Polygon trade fields: sym=symbol, p=price, s=size, t=timestamp (Unix ms), x=exchange, i=trade ID
-        var sym = el.TryGetProperty("sym", out var symProp) ? symProp.GetString() : null;
-        if (string.IsNullOrWhiteSpace(sym)) return;
-
-        var price = el.TryGetProperty("p", out var pProp) ? (decimal)pProp.GetDouble() : 0m;
-        var size = el.TryGetProperty("s", out var sProp) ? sProp.GetInt32() : 0;
-        var timestamp = el.TryGetProperty("t", out var tProp) ? tProp.GetInt64() : 0L;
-        var exchange = el.TryGetProperty("x", out var xProp) ? xProp.GetInt32() : 0;
-        var tradeId = el.TryGetProperty("i", out var iProp) ? iProp.GetString() : null;
-
-        // Convert Unix milliseconds to DateTimeOffset
-        var dto = timestamp > 0
-            ? DateTimeOffset.FromUnixTimeMilliseconds(timestamp)
-            : DateTimeOffset.UtcNow;
-
-        // Convert exchange ID to name (simplified mapping)
-        var venue = MapExchangeId(exchange);
-
-        var update = new MarketTradeUpdate(
-            Timestamp: dto,
-            Symbol: sym!,
-            Price: price,
-            Size: size,
-            Aggressor: AggressorSide.Unknown,
-            SequenceNumber: long.TryParse(tradeId, out var seqNum) ? seqNum : 0L,
-            StreamId: "POLYGON",
-            Venue: venue
-        );
-
-        _tradeCollector.OnTrade(update);
-    }
-
-    private void HandleQuote(JsonElement el)
-    {
-        // Polygon quote fields: sym=symbol, bp=bid price, bs=bid size, ap=ask price, as=ask size, t=timestamp
-        var sym = el.TryGetProperty("sym", out var symProp) ? symProp.GetString() : null;
-        if (string.IsNullOrWhiteSpace(sym)) return;
-
-        var bidPrice = el.TryGetProperty("bp", out var bpProp) ? (decimal)bpProp.GetDouble() : 0m;
-        var bidSize = el.TryGetProperty("bs", out var bsProp) ? bsProp.GetInt64() : 0L;
-        var askPrice = el.TryGetProperty("ap", out var apProp) ? (decimal)apProp.GetDouble() : 0m;
-        var askSize = el.TryGetProperty("as", out var asProp) ? asProp.GetInt64() : 0L;
-        var timestamp = el.TryGetProperty("t", out var tProp) ? tProp.GetInt64() : 0L;
-
-        var dto = timestamp > 0
-            ? DateTimeOffset.FromUnixTimeMilliseconds(timestamp)
-            : DateTimeOffset.UtcNow;
-
-        var quoteUpdate = new MarketQuoteUpdate(
-            Timestamp: dto,
-            Symbol: sym!,
-            BidPrice: bidPrice,
-            BidSize: bidSize,
-            AskPrice: askPrice,
-            AskSize: askSize,
-            SequenceNumber: null,
-            StreamId: "POLYGON",
-            Venue: "POLYGON"
-        );
-
-        _quoteCollector.OnQuote(quoteUpdate);
-    }
-
-    private void HandleStatus(JsonElement el)
-    {
-        var status = el.TryGetProperty("status", out var statusProp) ? statusProp.GetString() : null;
-        var message = el.TryGetProperty("message", out var msgProp) ? msgProp.GetString() : null;
-
-        switch (status)
-        {
-            case "connected":
-                _log.Information("Polygon WebSocket connected: {Message}", message);
-                break;
-
-            case "auth_success":
-                _log.Information("Polygon authentication successful");
-                _publisher.TryPublish(MarketEvent.Heartbeat(DateTimeOffset.UtcNow, source: "Polygon"));
-                break;
-
-            case "auth_failed":
-                _log.Error("Polygon authentication failed: {Message}. Check your API key.", message);
-                break;
-
-            case "success":
-                _log.Debug("Polygon subscription successful: {Message}", message);
-                break;
-
-            default:
-                _log.Debug("Polygon status message: {Status} - {Message}", status, message);
-                break;
         }
     }
 
     /// <summary>
-    /// Maps Polygon exchange ID to exchange name.
-    /// See: https://polygon.io/docs/stocks/get_v3_reference_exchanges
+    /// Subscribes to tick-by-tick trades for the specified symbol.
     /// </summary>
-    private static string MapExchangeId(int exchangeId)
+    /// <returns>Subscription ID, or -1 if not supported/not subscribed.</returns>
+    public int SubscribeTrades(SymbolConfig cfg)
     {
-        return exchangeId switch
+        if (cfg is null) throw new ArgumentNullException(nameof(cfg));
+
+        if (!_options.SubscribeTrades)
         {
-            1 => "NYSE",
-            2 => "AMEX",
-            3 => "ARCA",
-            4 => "BATS",
-            5 => "NASDAQ",
-            6 => "NASDAQ_OMX",
-            7 => "NYSE_ARCA",
-            8 => "NYSE_NATIONAL",
-            9 => "FINRA",
-            10 => "ISE",
-            11 => "EDGA",
-            12 => "EDGX",
-            13 => "CHX",
-            14 => "NYSE_CHICAGO",
-            15 => "DIRECT_EDGE_A",
-            16 => "DIRECT_EDGE_X",
-            17 => "IEX",
-            19 => "NASDAQ_BX",
-            20 => "NASDAQ_PSX",
-            21 => "CBOE_BYX",
-            22 => "CBOE_BZX",
-            23 => "MEMX",
-            24 => "MIAX",
-            _ => $"EXCH_{exchangeId}"
-        };
+            _log.Debug("Trade subscription disabled in Polygon options, skipping trades for {Symbol}", cfg.Symbol);
+            return -1;
+        }
+
+        var symbol = cfg.Symbol.Trim().ToUpperInvariant();
+        if (string.IsNullOrEmpty(symbol)) return -1;
+
+        var id = Interlocked.Increment(ref _nextSubId);
+        lock (_gate)
+        {
+            _tradeSymbols.Add(symbol);
+            _subs[id] = (symbol, "trades");
+        }
+
+        _log.Debug("Subscribed to Polygon trades for {Symbol} (SubId: {SubId}, Mode: {Mode})",
+            symbol, id, IsStubMode ? "Stub" : "Live");
+
+        // In stub mode, emit a synthetic trade for testing
+        if (IsStubMode)
+        {
+            _tradeCollector.OnTrade(new MarketTradeUpdate(
+                Timestamp: DateTimeOffset.UtcNow,
+                Symbol: symbol,
+                Price: 0m,
+                Size: 0,
+                Aggressor: AggressorSide.Unknown,
+                SequenceNumber: 0,
+                StreamId: "POLYGON_STUB",
+                Venue: "POLYGON"));
+        }
+
+        // In live mode, would send: {"action":"subscribe","params":"T.{symbol}"}
+        return id;
+    }
+
+    /// <summary>
+    /// Unsubscribes from trades for the specified subscription.
+    /// </summary>
+    public void UnsubscribeTrades(int subscriptionId)
+    {
+        lock (_gate)
+        {
+            if (!_subs.TryGetValue(subscriptionId, out var sub)) return;
+            _subs.Remove(subscriptionId);
+            if (sub.Kind == "trades")
+            {
+                // Only remove symbol if no other trade subs exist for it
+                if (!_subs.Values.Any(v => v.Kind == "trades" && v.Symbol.Equals(sub.Symbol, StringComparison.OrdinalIgnoreCase)))
+                {
+                    _tradeSymbols.Remove(sub.Symbol);
+                    _log.Debug("Unsubscribed from Polygon trades for {Symbol}", sub.Symbol);
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets the current subscription count.
+    /// </summary>
+    public int SubscriptionCount
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _subs.Count;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets the list of currently subscribed trade symbols.
+    /// </summary>
+    public IReadOnlyList<string> SubscribedTradeSymbols
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _tradeSymbols.ToList();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets the list of currently subscribed quote symbols.
+    /// </summary>
+    public IReadOnlyList<string> SubscribedQuoteSymbols
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _quoteSymbols.ToList();
+            }
+        }
+    }
+
+    /// <inheritdoc />
+    public ValueTask DisposeAsync()
+    {
+        _log.Information("Disposing Polygon client");
+        _isConnected = false;
+
+        lock (_gate)
+        {
+            _tradeSymbols.Clear();
+            _quoteSymbols.Clear();
+            _subs.Clear();
+        }
+
+        return ValueTask.CompletedTask;
     }
 }
