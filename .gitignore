@@ -83,6 +83,11 @@ Thumbs.db
 # Publish output
 publish/
 
+# Workflow artifacts
+msbuild.binlog
+vulnerable-packages.txt
+coverage/
+TestResults/
 # Node.js (for diagram generation scripts)
 node_modules/
 
