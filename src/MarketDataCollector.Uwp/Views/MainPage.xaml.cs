@@ -283,6 +283,21 @@ public sealed partial class MainPage : Page
             case "AdvancedAnalytics":
                 ContentFrame.Navigate(typeof(AdvancedAnalyticsPage));
                 break;
+            case "OrderBook":
+                ContentFrame.Navigate(typeof(OrderBookPage));
+                break;
+            case "Charts":
+                ContentFrame.Navigate(typeof(ChartingPage));
+                break;
+            case "DataCalendar":
+                ContentFrame.Navigate(typeof(DataCalendarPage));
+                break;
+            case "SetupWizard":
+                ContentFrame.Navigate(typeof(SetupWizardPage));
+                break;
+            case "AnalysisExportWizard":
+                ContentFrame.Navigate(typeof(AnalysisExportWizardPage));
+                break;
         }
     }
 
