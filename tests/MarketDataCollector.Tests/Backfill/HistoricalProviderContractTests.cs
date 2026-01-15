@@ -180,6 +180,104 @@ public class HistoricalProviderContractTests
 
     #endregion
 
+    #region Preferred Stock Tests (PCG-A)
+
+    [Fact]
+    public async Task YahooFinance_ParsesPreferredStockPCGA_ReturnsCorrectBars()
+    {
+        // Arrange - PCG-A is Pacific Gas & Electric Preferred Stock Series A
+        var httpClient = CreateMockHttpClient(YahooFinanceResponses.ValidPcgAResponse);
+        using var provider = new YahooFinanceHistoricalDataProvider(httpClient);
+
+        // Act
+        var bars = await provider.GetDailyBarsAsync("PCG-A", null, null);
+
+        // Assert
+        bars.Should().NotBeEmpty();
+        bars.Should().HaveCount(5);
+        bars.Should().AllSatisfy(bar =>
+        {
+            bar.Symbol.Should().Be("PCG-A");
+            bar.Open.Should().BeGreaterThan(0);
+            bar.High.Should().BeGreaterThanOrEqualTo(bar.Low);
+            bar.Close.Should().BeGreaterThan(0);
+            bar.Volume.Should().BeGreaterThanOrEqualTo(0);
+            bar.Source.Should().Be("yahoo");
+        });
+    }
+
+    [Fact]
+    public async Task YahooFinance_PreferredStockPCGA_ParsesCorrectPriceValues()
+    {
+        // Arrange
+        var httpClient = CreateMockHttpClient(YahooFinanceResponses.ValidPcgAResponse);
+        using var provider = new YahooFinanceHistoricalDataProvider(httpClient);
+
+        // Act
+        var bars = await provider.GetDailyBarsAsync("PCG-A", null, null);
+        var firstBar = bars.First();
+
+        // Assert - Verify specific price values from the mock response
+        firstBar.SessionDate.Should().Be(new DateOnly(2024, 1, 2));
+        firstBar.Open.Should().Be(16.75m);
+        firstBar.High.Should().Be(16.95m);
+        firstBar.Low.Should().Be(16.60m);
+        firstBar.Close.Should().Be(16.85m);
+        firstBar.Volume.Should().Be(12500);
+    }
+
+    [Fact]
+    public async Task YahooFinance_PreferredStockPCGA_RespectsDateRange()
+    {
+        // Arrange
+        var httpClient = CreateMockHttpClient(YahooFinanceResponses.ValidPcgAResponse);
+        using var provider = new YahooFinanceHistoricalDataProvider(httpClient);
+        var from = new DateOnly(2024, 1, 3);
+        var to = new DateOnly(2024, 1, 5);
+
+        // Act
+        var bars = await provider.GetDailyBarsAsync("PCG-A", from, to);
+
+        // Assert
+        bars.Should().HaveCount(3);
+        bars.Should().AllSatisfy(bar =>
+        {
+            bar.SessionDate.Should().BeOnOrAfter(from);
+            bar.SessionDate.Should().BeOnOrBefore(to);
+        });
+    }
+
+    [Fact]
+    public async Task YahooFinance_PreferredStockPCGA_IncludesDividendData()
+    {
+        // Arrange - Preferred stocks typically have regular dividend payments
+        var httpClient = CreateMockHttpClient(YahooFinanceResponses.PcgAWithDividend);
+        using var provider = new YahooFinanceHistoricalDataProvider(httpClient);
+
+        // Act
+        var bars = await provider.GetAdjustedDailyBarsAsync("PCG-A", null, null);
+
+        // Assert
+        bars.Should().NotBeEmpty();
+        bars.Should().Contain(b => b.DividendAmount.HasValue && b.DividendAmount > 0);
+    }
+
+    [Fact]
+    public async Task YahooFinance_PreferredStockPCGA_BarsAreSortedByDate()
+    {
+        // Arrange
+        var httpClient = CreateMockHttpClient(YahooFinanceResponses.ValidPcgAResponse);
+        using var provider = new YahooFinanceHistoricalDataProvider(httpClient);
+
+        // Act
+        var bars = await provider.GetDailyBarsAsync("PCG-A", null, null);
+
+        // Assert
+        bars.Should().BeInAscendingOrder(b => b.SessionDate);
+    }
+
+    #endregion
+
     #region Stooq Contract Tests
 
     [Fact]
@@ -522,6 +620,77 @@ public static class YahooFinanceResponses
                     }],
                     "adjclose": [{
                         "adjclose": [185.5, null, 184.9]
+                    }]
+                }
+            }],
+            "error": null
+        }
+    }
+    """;
+
+    /// <summary>
+    /// Valid response for PCG-A (Pacific Gas & Electric Preferred Stock Series A).
+    /// Preferred stocks typically have lower volume and stable price ranges.
+    /// </summary>
+    public const string ValidPcgAResponse = """
+    {
+        "chart": {
+            "result": [{
+                "meta": {
+                    "currency": "USD",
+                    "symbol": "PCG-PA",
+                    "exchangeName": "NYQ",
+                    "instrumentType": "EQUITY",
+                    "regularMarketPrice": 17.10
+                },
+                "timestamp": [1704204600, 1704291000, 1704377400, 1704463800, 1704722400],
+                "indicators": {
+                    "quote": [{
+                        "open": [16.75, 16.85, 16.90, 17.00, 17.05],
+                        "high": [16.95, 17.00, 17.05, 17.15, 17.20],
+                        "low": [16.60, 16.75, 16.80, 16.90, 16.95],
+                        "close": [16.85, 16.92, 16.98, 17.08, 17.10],
+                        "volume": [12500, 15200, 8900, 11300, 9800]
+                    }],
+                    "adjclose": [{
+                        "adjclose": [16.85, 16.92, 16.98, 17.08, 17.10]
+                    }]
+                }
+            }],
+            "error": null
+        }
+    }
+    """;
+
+    /// <summary>
+    /// PCG-A response with dividend event (preferred stocks pay regular dividends).
+    /// </summary>
+    public const string PcgAWithDividend = """
+    {
+        "chart": {
+            "result": [{
+                "meta": {
+                    "currency": "USD",
+                    "symbol": "PCG-PA",
+                    "exchangeName": "NYQ",
+                    "instrumentType": "EQUITY"
+                },
+                "timestamp": [1704204600, 1704291000],
+                "events": {
+                    "dividends": {
+                        "1704204600": {"amount": 0.3125, "date": 1704204600}
+                    }
+                },
+                "indicators": {
+                    "quote": [{
+                        "open": [16.75, 16.50],
+                        "high": [16.95, 16.70],
+                        "low": [16.60, 16.40],
+                        "close": [16.85, 16.55],
+                        "volume": [25000, 18500]
+                    }],
+                    "adjclose": [{
+                        "adjclose": [16.5375, 16.55]
                     }]
                 }
             }],

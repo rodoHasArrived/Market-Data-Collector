@@ -13,7 +13,7 @@ namespace MarketDataCollector.Uwp.Services;
 /// Service for generating and managing data manifests (#56 - P0 Critical).
 /// Creates comprehensive manifest files for collection sessions and archive packages.
 /// </summary>
-public class ManifestService
+public sealed class ManifestService
 {
     private static ManifestService? _instance;
     private static readonly object _lock = new();

@@ -1,0 +1,497 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="MarketDataCollector.Uwp.Views.AnalysisExportWizardPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:MarketDataCollector.Uwp.Views"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Background="{ThemeResource SystemFillColorNeutralBackgroundBrush}" Padding="24,16">
+            <StackPanel Orientation="Horizontal" Spacing="16">
+                <Button Click="GoBack_Click" Style="{StaticResource IconButtonStyle}">
+                    <FontIcon Glyph="&#xE72B;" FontSize="16" />
+                </Button>
+                <StackPanel>
+                    <TextBlock Text="Analysis Export Wizard" Style="{StaticResource TitleTextBlockStyle}" />
+                    <TextBlock Text="Export data optimized for your analysis tools"
+                               Foreground="{ThemeResource SystemBaseMediumColor}" />
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- Progress Steps -->
+        <Border Grid.Row="1" Padding="24,16">
+            <StackPanel>
+                <ProgressBar x:Name="WizardProgress" Value="0" Maximum="100" Height="4" CornerRadius="2" />
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="40" Margin="0,12,0,0">
+                    <StackPanel x:Name="Step1Indicator" Orientation="Horizontal" Spacing="6">
+                        <Border Width="28" Height="28" CornerRadius="14" Background="{ThemeResource SystemAccentColor}">
+                            <TextBlock Text="1" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="SemiBold" FontSize="12" />
+                        </Border>
+                        <TextBlock Text="Profile" VerticalAlignment="Center" FontSize="13" />
+                    </StackPanel>
+                    <StackPanel x:Name="Step2Indicator" Orientation="Horizontal" Spacing="6" Opacity="0.5">
+                        <Border Width="28" Height="28" CornerRadius="14" Background="{ThemeResource SystemBaseMediumColor}">
+                            <TextBlock Text="2" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="SemiBold" FontSize="12" />
+                        </Border>
+                        <TextBlock Text="Data" VerticalAlignment="Center" FontSize="13" />
+                    </StackPanel>
+                    <StackPanel x:Name="Step3Indicator" Orientation="Horizontal" Spacing="6" Opacity="0.5">
+                        <Border Width="28" Height="28" CornerRadius="14" Background="{ThemeResource SystemBaseMediumColor}">
+                            <TextBlock Text="3" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="SemiBold" FontSize="12" />
+                        </Border>
+                        <TextBlock Text="Preview" VerticalAlignment="Center" FontSize="13" />
+                    </StackPanel>
+                    <StackPanel x:Name="Step4Indicator" Orientation="Horizontal" Spacing="6" Opacity="0.5">
+                        <Border Width="28" Height="28" CornerRadius="14" Background="{ThemeResource SystemBaseMediumColor}">
+                            <TextBlock Text="4" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="SemiBold" FontSize="12" />
+                        </Border>
+                        <TextBlock Text="Export" VerticalAlignment="Center" FontSize="13" />
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- Content -->
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+            <Grid Padding="24" MaxWidth="1000" HorizontalAlignment="Center">
+                <!-- Step 1: Choose Export Profile -->
+                <StackPanel x:Name="Step1Content" Spacing="20">
+                    <TextBlock Text="Choose Export Profile" Style="{StaticResource SubtitleTextBlockStyle}" />
+                    <TextBlock Text="Select the analysis tool you'll be using with this data"
+                               Foreground="{ThemeResource SystemBaseMediumColor}" />
+
+                    <StackPanel x:Name="ProfileCards" Spacing="12">
+                        <!-- Python/Pandas -->
+                        <Border x:Name="PythonPandasCard" Style="{StaticResource CardStyle}" Padding="16" PointerPressed="ProfileCard_PointerPressed" Tag="python-pandas">
+                            <Grid ColumnSpacing="16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Border Grid.Column="0" Width="48" Height="48" CornerRadius="8" Background="#1A3776AB">
+                                    <FontIcon Glyph="&#xE943;" FontSize="24" Foreground="#3776AB" />
+                                </Border>
+                                <StackPanel Grid.Column="1" Spacing="4">
+                                    <TextBlock Text="Python / Pandas" FontWeight="SemiBold" />
+                                    <TextBlock Text="Parquet files with appropriate dtypes for pandas DataFrame" TextWrapping="Wrap"
+                                               Foreground="{ThemeResource SystemBaseMediumColor}" FontSize="12" />
+                                    <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,4,0,0">
+                                        <Border Background="#1A3fb950" CornerRadius="4" Padding="6,2">
+                                            <TextBlock Text="Parquet" FontSize="10" Foreground="{StaticResource SuccessColorBrush}" />
+                                        </Border>
+                                        <Border Background="#1A58a6ff" CornerRadius="4" Padding="6,2">
+                                            <TextBlock Text="Loader Code" FontSize="10" Foreground="{StaticResource InfoColorBrush}" />
+                                        </Border>
+                                    </StackPanel>
+                                </StackPanel>
+                                <RadioButton x:Name="PythonPandasRadio" Grid.Column="2" GroupName="Profile" VerticalAlignment="Center" IsChecked="True" />
+                            </Grid>
+                        </Border>
+
+                        <!-- QuantConnect Lean -->
+                        <Border x:Name="LeanCard" Style="{StaticResource CardStyle}" Padding="16" PointerPressed="ProfileCard_PointerPressed" Tag="quantconnect-lean">
+                            <Grid ColumnSpacing="16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Border Grid.Column="0" Width="48" Height="48" CornerRadius="8" Background="#1AF5A623">
+                                    <FontIcon Glyph="&#xE9D9;" FontSize="24" Foreground="#F5A623" />
+                                </Border>
+                                <StackPanel Grid.Column="1" Spacing="4">
+                                    <TextBlock Text="QuantConnect Lean" FontWeight="SemiBold" />
+                                    <TextBlock Text="Native Lean data format for backtesting" TextWrapping="Wrap"
+                                               Foreground="{ThemeResource SystemBaseMediumColor}" FontSize="12" />
+                                    <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,4,0,0">
+                                        <Border Background="#1Ad29922" CornerRadius="4" Padding="6,2">
+                                            <TextBlock Text="Lean Format" FontSize="10" Foreground="{StaticResource WarningColorBrush}" />
+                                        </Border>
+                                        <Border Background="#1Aa371f7" CornerRadius="4" Padding="6,2">
+                                            <TextBlock Text="Multiple Resolutions" FontSize="10" Foreground="{StaticResource AccentPurpleBrush}" />
+                                        </Border>
+                                    </StackPanel>
+                                </StackPanel>
+                                <RadioButton x:Name="LeanRadio" Grid.Column="2" GroupName="Profile" VerticalAlignment="Center" />
+                            </Grid>
+                        </Border>
+
+                        <!-- R -->
+                        <Border x:Name="RCard" Style="{StaticResource CardStyle}" Padding="16" PointerPressed="ProfileCard_PointerPressed" Tag="r-dataframe">
+                            <Grid ColumnSpacing="16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Border Grid.Column="0" Width="48" Height="48" CornerRadius="8" Background="#1A276DC3">
+                                    <FontIcon Glyph="&#xE8A1;" FontSize="24" Foreground="#276DC3" />
+                                </Border>
+                                <StackPanel Grid.Column="1" Spacing="4">
+                                    <TextBlock Text="R / data.frame" FontWeight="SemiBold" />
+                                    <TextBlock Text="CSV with proper formatting for R analysis" TextWrapping="Wrap"
+                                               Foreground="{ThemeResource SystemBaseMediumColor}" FontSize="12" />
+                                    <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,4,0,0">
+                                        <Border Background="#1A58a6ff" CornerRadius="4" Padding="6,2">
+                                            <TextBlock Text="CSV" FontSize="10" Foreground="{StaticResource InfoColorBrush}" />
+                                        </Border>
+                                        <Border Background="#1A3fb950" CornerRadius="4" Padding="6,2">
+                                            <TextBlock Text="R Loader" FontSize="10" Foreground="{StaticResource SuccessColorBrush}" />
+                                        </Border>
+                                    </StackPanel>
+                                </StackPanel>
+                                <RadioButton x:Name="RRadio" Grid.Column="2" GroupName="Profile" VerticalAlignment="Center" />
+                            </Grid>
+                        </Border>
+
+                        <!-- PostgreSQL -->
+                        <Border x:Name="PostgresCard" Style="{StaticResource CardStyle}" Padding="16" PointerPressed="ProfileCard_PointerPressed" Tag="sql-postgres">
+                            <Grid ColumnSpacing="16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Border Grid.Column="0" Width="48" Height="48" CornerRadius="8" Background="#1A336791">
+                                    <FontIcon Glyph="&#xE8F1;" FontSize="24" Foreground="#336791" />
+                                </Border>
+                                <StackPanel Grid.Column="1" Spacing="4">
+                                    <TextBlock Text="PostgreSQL / TimescaleDB" FontWeight="SemiBold" />
+                                    <TextBlock Text="SQL COPY format optimized for time-series databases" TextWrapping="Wrap"
+                                               Foreground="{ThemeResource SystemBaseMediumColor}" FontSize="12" />
+                                    <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,4,0,0">
+                                        <Border Background="#1A336791" CornerRadius="4" Padding="6,2">
+                                            <TextBlock Text="SQL" FontSize="10" Foreground="#336791" />
+                                        </Border>
+                                        <Border Background="#1A3fb950" CornerRadius="4" Padding="6,2">
+                                            <TextBlock Text="Schema Included" FontSize="10" Foreground="{StaticResource SuccessColorBrush}" />
+                                        </Border>
+                                    </StackPanel>
+                                </StackPanel>
+                                <RadioButton x:Name="PostgresRadio" Grid.Column="2" GroupName="Profile" VerticalAlignment="Center" />
+                            </Grid>
+                        </Border>
+
+                        <!-- Excel -->
+                        <Border x:Name="ExcelCard" Style="{StaticResource CardStyle}" Padding="16" PointerPressed="ProfileCard_PointerPressed" Tag="excel">
+                            <Grid ColumnSpacing="16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Border Grid.Column="0" Width="48" Height="48" CornerRadius="8" Background="#1A217346">
+                                    <FontIcon Glyph="&#xE8D5;" FontSize="24" Foreground="#217346" />
+                                </Border>
+                                <StackPanel Grid.Column="1" Spacing="4">
+                                    <TextBlock Text="Microsoft Excel" FontWeight="SemiBold" />
+                                    <TextBlock Text="XLSX with multiple sheets and formatting" TextWrapping="Wrap"
+                                               Foreground="{ThemeResource SystemBaseMediumColor}" FontSize="12" />
+                                    <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,4,0,0">
+                                        <Border Background="#1A217346" CornerRadius="4" Padding="6,2">
+                                            <TextBlock Text="XLSX" FontSize="10" Foreground="#217346" />
+                                        </Border>
+                                        <Border Background="#1A58a6ff" CornerRadius="4" Padding="6,2">
+                                            <TextBlock Text="Pivot-Ready" FontSize="10" Foreground="{StaticResource InfoColorBrush}" />
+                                        </Border>
+                                    </StackPanel>
+                                </StackPanel>
+                                <RadioButton x:Name="ExcelRadio" Grid.Column="2" GroupName="Profile" VerticalAlignment="Center" />
+                            </Grid>
+                        </Border>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Step 2: Select Data -->
+                <StackPanel x:Name="Step2Content" Spacing="20" Visibility="Collapsed">
+                    <TextBlock Text="Select Data to Export" Style="{StaticResource SubtitleTextBlockStyle}" />
+
+                    <Grid ColumnSpacing="20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Symbols Selection -->
+                        <Border Grid.Column="0" Style="{StaticResource CardStyle}">
+                            <StackPanel Spacing="12">
+                                <TextBlock Text="Symbols" FontWeight="SemiBold" />
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Button Content="Select All" Click="SelectAllSymbols_Click" />
+                                    <Button Content="Clear" Click="ClearSymbols_Click" />
+                                </StackPanel>
+                                <ListView x:Name="SymbolsList" MaxHeight="300" SelectionMode="Multiple">
+                                    <ListView.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <TextBlock Text="{Binding Symbol}" FontWeight="SemiBold" Width="60" />
+                                                <TextBlock Text="{Binding Description}" Foreground="{ThemeResource SystemBaseMediumColor}" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ListView.ItemTemplate>
+                                </ListView>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Date Range and Data Types -->
+                        <StackPanel Grid.Column="1" Spacing="16">
+                            <Border Style="{StaticResource CardStyle}">
+                                <StackPanel Spacing="12">
+                                    <TextBlock Text="Date Range" FontWeight="SemiBold" />
+                                    <StackPanel Orientation="Horizontal" Spacing="12">
+                                        <CalendarDatePicker x:Name="FromDatePicker" Header="From" PlaceholderText="Start date" />
+                                        <CalendarDatePicker x:Name="ToDatePicker" Header="To" PlaceholderText="End date" />
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <Button Content="Last Week" Tag="7" Click="QuickDateRange_Click" />
+                                        <Button Content="Last Month" Tag="30" Click="QuickDateRange_Click" />
+                                        <Button Content="Last Year" Tag="365" Click="QuickDateRange_Click" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Style="{StaticResource CardStyle}">
+                                <StackPanel Spacing="12">
+                                    <TextBlock Text="Data Types" FontWeight="SemiBold" />
+                                    <StackPanel Spacing="8">
+                                        <CheckBox x:Name="TradesCheck" Content="Trades" IsChecked="True" />
+                                        <CheckBox x:Name="QuotesCheck" Content="Quotes" />
+                                        <CheckBox x:Name="BarsCheck" Content="Daily Bars" IsChecked="True" />
+                                        <CheckBox x:Name="DepthCheck" Content="Order Book Depth" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Style="{StaticResource CardStyle}">
+                                <StackPanel Spacing="12">
+                                    <TextBlock Text="Options" FontWeight="SemiBold" />
+                                    <CheckBox x:Name="IncludeQualityReportCheck" Content="Include quality report" IsChecked="True" />
+                                    <CheckBox x:Name="IncludeSchemaCheck" Content="Include schema documentation" IsChecked="True" />
+                                    <CheckBox x:Name="IncludeLoaderCodeCheck" Content="Generate loader code" IsChecked="True" />
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+
+                <!-- Step 3: Preview & Quality -->
+                <StackPanel x:Name="Step3Content" Spacing="20" Visibility="Collapsed">
+                    <TextBlock Text="Export Preview" Style="{StaticResource SubtitleTextBlockStyle}" />
+
+                    <Grid ColumnSpacing="20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="350" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Estimate -->
+                        <Border Grid.Column="0" Style="{StaticResource CardStyle}">
+                            <StackPanel Spacing="16">
+                                <TextBlock Text="Export Estimate" FontWeight="SemiBold" />
+
+                                <Grid RowSpacing="12" ColumnSpacing="16">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="150" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Estimated Size:" Foreground="{ThemeResource SystemBaseMediumColor}" />
+                                    <TextBlock x:Name="EstimatedSizeText" Grid.Row="0" Grid.Column="1" Text="--" FontWeight="SemiBold" />
+
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Record Count:" Foreground="{ThemeResource SystemBaseMediumColor}" />
+                                    <TextBlock x:Name="RecordCountText" Grid.Row="1" Grid.Column="1" Text="--" FontWeight="SemiBold" />
+
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Estimated Time:" Foreground="{ThemeResource SystemBaseMediumColor}" />
+                                    <TextBlock x:Name="EstimatedTimeText" Grid.Row="2" Grid.Column="1" Text="--" FontWeight="SemiBold" />
+
+                                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Data Completeness:" Foreground="{ThemeResource SystemBaseMediumColor}" />
+                                    <StackPanel Grid.Row="3" Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                                        <TextBlock x:Name="CompletenessText" Text="--" FontWeight="SemiBold" />
+                                        <ProgressBar x:Name="CompletenessBar" Value="0" Maximum="100" Width="100" Height="6" />
+                                    </StackPanel>
+                                </Grid>
+
+                                <!-- Warnings -->
+                                <StackPanel x:Name="WarningsPanel" Spacing="8" Visibility="Collapsed">
+                                    <TextBlock Text="Warnings" FontWeight="SemiBold" Foreground="{StaticResource WarningColorBrush}" />
+                                    <ListView x:Name="WarningsList" SelectionMode="None">
+                                        <ListView.ItemTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <FontIcon Glyph="&#xE7BA;" FontSize="12" Foreground="{StaticResource WarningColorBrush}" />
+                                                    <TextBlock Text="{Binding}" TextWrapping="Wrap" />
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ListView.ItemTemplate>
+                                    </ListView>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Quality Report -->
+                        <Border Grid.Column="1" Style="{StaticResource CardStyle}">
+                            <StackPanel Spacing="16">
+                                <TextBlock Text="Data Quality" FontWeight="SemiBold" />
+
+                                <Border Background="{ThemeResource SystemFillColorNeutralBackgroundBrush}" CornerRadius="8" Padding="16">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <TextBlock x:Name="QualityGradeText" Text="--" FontSize="48" FontWeight="Bold" HorizontalAlignment="Center"
+                                                   Foreground="{StaticResource SuccessColorBrush}" />
+                                        <TextBlock Text="Overall Quality Grade" FontSize="12" Foreground="{ThemeResource SystemBaseMediumColor}" HorizontalAlignment="Center" />
+                                    </StackPanel>
+                                </Border>
+
+                                <StackPanel Spacing="8">
+                                    <Grid ColumnSpacing="8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="Trading Days" />
+                                        <TextBlock x:Name="TradingDaysText" Grid.Column="1" Text="--" FontWeight="SemiBold" />
+                                    </Grid>
+                                    <Grid ColumnSpacing="8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="Days with Data" />
+                                        <TextBlock x:Name="DaysWithDataText" Grid.Column="1" Text="--" FontWeight="SemiBold" />
+                                    </Grid>
+                                    <Grid ColumnSpacing="8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="Gaps Found" />
+                                        <TextBlock x:Name="GapsFoundText" Grid.Column="1" Text="--" FontWeight="SemiBold" />
+                                    </Grid>
+                                </StackPanel>
+
+                                <TextBlock x:Name="SuitabilityText" TextWrapping="Wrap" FontSize="12"
+                                           Foreground="{ThemeResource SystemBaseMediumColor}" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <!-- Output Path -->
+                    <Border Style="{StaticResource CardStyle}">
+                        <StackPanel Spacing="12">
+                            <TextBlock Text="Output Location" FontWeight="SemiBold" />
+                            <Grid ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBox x:Name="OutputPathBox" Grid.Column="0" PlaceholderText="Select output folder" />
+                                <Button Grid.Column="1" Content="Browse..." Click="BrowseOutput_Click" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- Step 4: Export Progress -->
+                <StackPanel x:Name="Step4Content" Spacing="20" Visibility="Collapsed">
+                    <StackPanel HorizontalAlignment="Center" Spacing="16">
+                        <ProgressRing x:Name="ExportProgressRing" IsActive="True" Width="80" Height="80" />
+                        <TextBlock x:Name="ExportStatusText" Text="Preparing export..." Style="{StaticResource SubtitleTextBlockStyle}" HorizontalAlignment="Center" />
+                    </StackPanel>
+
+                    <Border Style="{StaticResource CardStyle}">
+                        <StackPanel Spacing="16">
+                            <TextBlock Text="Export Progress" FontWeight="SemiBold" />
+
+                            <StackPanel Spacing="8">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock x:Name="CurrentSymbolText" Grid.Column="0" Text="Processing..." />
+                                    <TextBlock x:Name="ProgressPercentText" Grid.Column="1" Text="0%" FontWeight="SemiBold" />
+                                </Grid>
+                                <ProgressBar x:Name="ExportProgressBar" Value="0" Maximum="100" Height="8" CornerRadius="4" />
+                            </StackPanel>
+
+                            <StackPanel x:Name="ExportResultPanel" Spacing="16" Visibility="Collapsed">
+                                <InfoBar x:Name="ExportResultInfoBar" IsOpen="True" IsClosable="False" />
+
+                                <TextBlock Text="Generated Files" FontWeight="SemiBold" />
+                                <ListView x:Name="GeneratedFilesList" MaxHeight="200" SelectionMode="None">
+                                    <ListView.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <FontIcon Glyph="&#xE8A5;" FontSize="14" Foreground="{StaticResource SuccessColorBrush}" />
+                                                <TextBlock Text="{Binding}" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ListView.ItemTemplate>
+                                </ListView>
+
+                                <StackPanel Orientation="Horizontal" Spacing="12">
+                                    <Button x:Name="OpenFolderButton" Click="OpenFolder_Click">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <FontIcon Glyph="&#xE838;" FontSize="14" />
+                                            <TextBlock Text="Open Folder" />
+                                        </StackPanel>
+                                    </Button>
+                                    <Button x:Name="ExportAnotherButton" Click="ExportAnother_Click">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <FontIcon Glyph="&#xE72C;" FontSize="14" />
+                                            <TextBlock Text="Export Another" />
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </ScrollViewer>
+
+        <!-- Navigation -->
+        <Border Grid.Row="3" Background="{ThemeResource SystemFillColorNeutralBackgroundBrush}" Padding="24,16">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <Button x:Name="BackButton" Grid.Column="0" Click="Back_Click" Visibility="Collapsed">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE72B;" FontSize="14" />
+                        <TextBlock Text="Back" />
+                    </StackPanel>
+                </Button>
+
+                <Button x:Name="NextButton" Grid.Column="2" Style="{StaticResource AccentButtonStyle}" Click="Next_Click">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock x:Name="NextButtonText" Text="Continue" />
+                        <FontIcon Glyph="&#xE72A;" FontSize="14" />
+                    </StackPanel>
+                </Button>
+            </Grid>
+        </Border>
+    </Grid>
+</Page>

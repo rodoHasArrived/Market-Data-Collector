@@ -9,7 +9,7 @@ namespace MarketDataCollector.Uwp.Services;
 /// <summary>
 /// Service for managing symbol groups and portfolios.
 /// </summary>
-public class SymbolGroupService
+public sealed class SymbolGroupService
 {
     private static SymbolGroupService? _instance;
     private static readonly object _lock = new();

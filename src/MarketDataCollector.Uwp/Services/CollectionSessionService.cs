@@ -12,7 +12,7 @@ namespace MarketDataCollector.Uwp.Services;
 /// Service for managing collection sessions (#65/27 - P0 Critical).
 /// Tracks discrete data collection sessions with comprehensive statistics.
 /// </summary>
-public class CollectionSessionService
+public sealed class CollectionSessionService
 {
     private static CollectionSessionService? _instance;
     private static readonly object _lock = new();

@@ -17,6 +17,9 @@ public partial class App : Application
 
         // Handle unhandled exceptions gracefully
         this.UnhandledException += OnUnhandledException;
+
+        // Handle app exit for clean shutdown
+        this.Exit += OnAppExit;
     }
 
     protected override async void OnLaunched(LaunchActivatedEventArgs args)
@@ -33,7 +36,132 @@ public partial class App : Application
         // Start connection monitoring
         ConnectionService.Instance.StartMonitoring();
 
+        // Initialize offline tracking persistence (handles recovery from crashes/restarts)
+        await InitializeOfflineTrackingAsync();
+
+        // Start background task scheduler
+        await InitializeBackgroundServicesAsync();
+
         _window.Activate();
+    }
+
+    /// <summary>
+    /// Initializes offline tracking persistence and performs recovery if needed.
+    /// </summary>
+    private static async Task InitializeOfflineTrackingAsync()
+    {
+        try
+        {
+            await OfflineTrackingPersistenceService.Instance.InitializeAsync();
+            System.Diagnostics.Debug.WriteLine("Offline tracking persistence initialized");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to initialize offline tracking: {ex.Message}");
+            // Continue - app should still work without persistence
+        }
+    }
+
+    /// <summary>
+    /// Initializes background services for scheduled tasks and offline queue processing.
+    /// </summary>
+    private static async Task InitializeBackgroundServicesAsync()
+    {
+        try
+        {
+            // Initialize pending operations queue
+            await PendingOperationsQueueService.Instance.InitializeAsync();
+            System.Diagnostics.Debug.WriteLine("Pending operations queue initialized");
+
+            // Start background task scheduler
+            await BackgroundTaskSchedulerService.Instance.StartAsync();
+            System.Diagnostics.Debug.WriteLine("Background task scheduler started");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to initialize background services: {ex.Message}");
+            // Continue - app should still work without background services
+        }
+    }
+
+    /// <summary>
+    /// Handles app exit for clean shutdown of background services with timeout.
+    /// </summary>
+    private async void OnAppExit(object sender, EventArgs e)
+    {
+        const int ShutdownTimeoutMs = 5000; // 5 second timeout for graceful shutdown
+
+        try
+        {
+            System.Diagnostics.Debug.WriteLine("App exiting, shutting down services...");
+
+            using var cts = new System.Threading.CancellationTokenSource(ShutdownTimeoutMs);
+
+            // Shutdown services in parallel with timeout for better performance
+            var shutdownTasks = new[]
+            {
+                ShutdownServiceAsync(() => BackgroundTaskSchedulerService.Instance.StopAsync(), "BackgroundTaskScheduler", cts.Token),
+                ShutdownServiceAsync(() => PendingOperationsQueueService.Instance.ShutdownAsync(), "PendingOperationsQueue", cts.Token),
+                ShutdownServiceAsync(() => OfflineTrackingPersistenceService.Instance.ShutdownAsync(), "OfflineTrackingPersistence", cts.Token),
+                ShutdownServiceAsync(() => ConnectionService.Instance.StopMonitoring(), "ConnectionService", cts.Token)
+            };
+
+            await Task.WhenAll(shutdownTasks);
+
+            System.Diagnostics.Debug.WriteLine("Services shut down cleanly");
+        }
+        catch (OperationCanceledException)
+        {
+            System.Diagnostics.Debug.WriteLine("App shutdown timed out - forcing exit");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error during app exit: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Helper method to shutdown a service with proper error handling.
+    /// </summary>
+    private static async Task ShutdownServiceAsync(Func<Task> shutdownAction, string serviceName, System.Threading.CancellationToken ct)
+    {
+        try
+        {
+            await shutdownAction().WaitAsync(ct);
+            System.Diagnostics.Debug.WriteLine($"{serviceName} shut down successfully");
+        }
+        catch (OperationCanceledException)
+        {
+            System.Diagnostics.Debug.WriteLine($"{serviceName} shutdown timed out");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"{serviceName} shutdown failed: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Helper method to shutdown a synchronous service.
+    /// </summary>
+    private static async Task ShutdownServiceAsync(Action shutdownAction, string serviceName, System.Threading.CancellationToken ct)
+    {
+        await Task.Run(() =>
+        {
+            try
+            {
+                ct.ThrowIfCancellationRequested();
+                shutdownAction();
+                System.Diagnostics.Debug.WriteLine($"{serviceName} shut down successfully");
+            }
+            catch (OperationCanceledException)
+            {
+                System.Diagnostics.Debug.WriteLine($"{serviceName} shutdown timed out");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"{serviceName} shutdown failed: {ex.Message}");
+            }
+        }, ct);
     }
 
     /// <summary>
@@ -103,4 +231,19 @@ public partial class App : Application
     /// Gets the theme service instance.
     /// </summary>
     public static ThemeService Theme => ThemeService.Instance;
+
+    /// <summary>
+    /// Gets the offline tracking persistence service instance.
+    /// </summary>
+    public static OfflineTrackingPersistenceService OfflineTracking => OfflineTrackingPersistenceService.Instance;
+
+    /// <summary>
+    /// Gets the background task scheduler service instance.
+    /// </summary>
+    public static BackgroundTaskSchedulerService Scheduler => BackgroundTaskSchedulerService.Instance;
+
+    /// <summary>
+    /// Gets the pending operations queue service instance.
+    /// </summary>
+    public static PendingOperationsQueueService OperationsQueue => PendingOperationsQueueService.Instance;
 }

@@ -154,21 +154,61 @@ public sealed record AdjustedHistoricalBar(
 /// <summary>
 /// Result of a provider health check.
 /// </summary>
-public sealed record ProviderHealthStatus(
-    string ProviderName,
-    bool IsAvailable,
-    string? Message = null,
-    DateTimeOffset CheckedAt = default,
-    TimeSpan? ResponseTime = null
-)
+public sealed record ProviderHealthStatus
 {
+    /// <summary>
+    /// Name of the provider that was checked.
+    /// </summary>
+    public string ProviderName { get; init; }
+
+    /// <summary>
+    /// Whether the provider is currently available.
+    /// </summary>
+    public bool IsAvailable { get; init; }
+
+    /// <summary>
+    /// Optional message describing the health status or error.
+    /// </summary>
+    public string? Message { get; init; }
+
+    /// <summary>
+    /// UTC timestamp when the health check was performed.
+    /// </summary>
+    public DateTimeOffset CheckedAt { get; init; }
+
+    /// <summary>
+    /// How long the health check took to complete.
+    /// </summary>
+    public TimeSpan? ResponseTime { get; init; }
+
+    /// <summary>
+    /// Creates a new ProviderHealthStatus.
+    /// </summary>
+    public ProviderHealthStatus(
+        string providerName,
+        bool isAvailable,
+        string? message = null,
+        DateTimeOffset? checkedAt = null,
+        TimeSpan? responseTime = null)
+    {
+        ProviderName = providerName ?? throw new ArgumentNullException(nameof(providerName));
+        IsAvailable = isAvailable;
+        Message = message;
+        CheckedAt = checkedAt ?? DateTimeOffset.UtcNow;
+        ResponseTime = responseTime;
+    }
+
+    /// <summary>
+    /// Creates an unavailable health status with default values.
+    /// </summary>
     public ProviderHealthStatus() : this("unknown", false) { }
 }
 
 /// <summary>
-/// Progress information for backfill operations.
+/// Progress information for provider-level backfill operations.
+/// Distinct from <see cref="MarketDataCollector.Contracts.Backfill.BackfillProgress"/> which tracks job-level progress.
 /// </summary>
-public sealed record BackfillProgress(
+public sealed record ProviderBackfillProgress(
     string Symbol,
     string Provider,
     int BarsDownloaded,
@@ -179,9 +219,15 @@ public sealed record BackfillProgress(
     string? Error = null
 )
 {
+    /// <summary>
+    /// Percentage completion based on symbol index.
+    /// </summary>
     public double PercentComplete => TotalSymbols > 0
         ? (CurrentSymbolIndex * 100.0) / TotalSymbols
         : 0;
 
+    /// <summary>
+    /// Time elapsed since operation started.
+    /// </summary>
     public TimeSpan Elapsed => DateTimeOffset.UtcNow - StartedAt;
 }

@@ -17,9 +17,18 @@ namespace MarketDataCollector.Uwp.Services;
 /// </summary>
 public sealed class PortablePackagerService
 {
-    private readonly ManifestService _manifestService;
-    private readonly ArchiveHealthService _archiveHealthService;
-    private readonly SchemaService _schemaService;
+    private static readonly Lazy<PortablePackagerService> _instance = new(() => new PortablePackagerService());
+    public static PortablePackagerService Instance => _instance.Value;
+
+    private readonly ManifestService? _manifestService;
+    private readonly ArchiveHealthService? _archiveHealthService;
+    private readonly SchemaService? _schemaService;
+    private readonly List<RecentPackageInfo> _recentPackages = new();
+
+    private PortablePackagerService()
+    {
+        // Default constructor for singleton
+    }
 
     public PortablePackagerService(
         ManifestService manifestService,
@@ -30,6 +39,180 @@ public sealed class PortablePackagerService
         _archiveHealthService = archiveHealthService;
         _schemaService = schemaService;
     }
+
+    /// <summary>
+    /// Gets recent packages that have been created or imported.
+    /// </summary>
+    public Task<List<RecentPackageInfo>> GetRecentPackagesAsync()
+    {
+        return Task.FromResult(_recentPackages.OrderByDescending(p => p.CreatedAt).ToList());
+    }
+
+    /// <summary>
+    /// Creates a package with the specified options.
+    /// </summary>
+    public async Task<PackageCreationResult> CreatePackageAsync(PackageCreationOptions options)
+    {
+        var request = new PackageRequest
+        {
+            PackageName = options.Name,
+            Description = options.Description,
+            SourcePath = GetDefaultDataPath(),
+            OutputPath = GetDefaultOutputPath(),
+            Symbols = options.Symbols?.ToArray(),
+            EventTypes = BuildEventTypes(options),
+            StartDate = options.FromDate,
+            EndDate = options.ToDate,
+            Format = PackageFormat.Zip,
+            CompressionLevel = options.Compression == "zstd" ? CompressionLevel.SmallestSize : CompressionLevel.Optimal
+        };
+
+        var result = await CreatePackageAsync(request, null, default);
+
+        if (result.Success && result.OutputPath != null)
+        {
+            _recentPackages.Add(new RecentPackageInfo
+            {
+                Name = options.Name,
+                Path = result.OutputPath,
+                SizeBytes = result.TotalBytes,
+                CreatedAt = DateTime.Now
+            });
+        }
+
+        return new PackageCreationResult
+        {
+            Success = result.Success,
+            PackagePath = result.OutputPath,
+            Error = result.ErrorMessage
+        };
+    }
+
+    /// <summary>
+    /// Imports a package from the specified path.
+    /// </summary>
+    public async Task<PackageImportResult> ImportPackageAsync(PackageImportOptions options)
+    {
+        if (options.ValidateFirst)
+        {
+            var validation = await ValidatePackageAsync(options.PackagePath);
+            if (!validation.IsValid)
+            {
+                return new PackageImportResult
+                {
+                    Success = false,
+                    Error = "Package validation failed: " + string.Join(", ", validation.Issues)
+                };
+            }
+        }
+
+        var destPath = GetDefaultDataPath();
+        try
+        {
+            await ExtractPackageAsync(options.PackagePath, destPath, null, null, default);
+
+            return new PackageImportResult
+            {
+                Success = true,
+                FilesImported = Directory.GetFiles(destPath, "*", SearchOption.AllDirectories).Length
+            };
+        }
+        catch (Exception ex)
+        {
+            return new PackageImportResult
+            {
+                Success = false,
+                Error = ex.Message
+            };
+        }
+    }
+
+    /// <summary>
+    /// Validates a package and returns detailed validation results.
+    /// </summary>
+    public async Task<PackageValidationResult> ValidatePackageAsync(string packagePath)
+    {
+        var result = await VerifyPackageAsync(packagePath, null, default);
+
+        var validFiles = result.FileCount - result.Issues.Count;
+        var corruptFiles = result.Issues.Count(i => i.Contains("Checksum mismatch"));
+        var missingFiles = result.Issues.Count(i => i.Contains("Missing"));
+
+        return new PackageValidationResult
+        {
+            IsValid = result.IsValid,
+            ValidFileCount = validFiles,
+            CorruptFileCount = corruptFiles,
+            MissingFileCount = missingFiles,
+            TotalSizeBytes = File.Exists(packagePath) ? new FileInfo(packagePath).Length : 0,
+            Issues = result.Issues.Select(i => new ValidationIssue
+            {
+                Message = i,
+                Severity = i.Contains("Missing") || i.Contains("mismatch") ? "Error" : "Warning"
+            }).ToList()
+        };
+    }
+
+    /// <summary>
+    /// Gets information about a package without extracting it.
+    /// </summary>
+    public async Task<PackageInfo?> GetPackageInfoAsync(string packagePath)
+    {
+        if (!File.Exists(packagePath)) return null;
+
+        var tempDir = Path.Combine(Path.GetTempPath(), $"mdc_info_{Guid.NewGuid():N}");
+        try
+        {
+            Directory.CreateDirectory(tempDir);
+            using var archive = ZipFile.OpenRead(packagePath);
+            var manifestEntry = archive.Entries.FirstOrDefault(e => e.Name == "manifest.json");
+
+            if (manifestEntry == null) return null;
+
+            manifestEntry.ExtractToFile(Path.Combine(tempDir, "manifest.json"));
+            var manifestJson = await File.ReadAllTextAsync(Path.Combine(tempDir, "manifest.json"));
+            var manifest = JsonSerializer.Deserialize<PackageManifest>(manifestJson);
+
+            if (manifest == null) return null;
+
+            return new PackageInfo
+            {
+                Name = manifest.PackageName ?? Path.GetFileNameWithoutExtension(packagePath),
+                CreatedAt = manifest.CreatedAt,
+                FromDate = manifest.DateRange?.Start,
+                ToDate = manifest.DateRange?.End,
+                SymbolCount = manifest.Symbols?.Length ?? 0,
+                FileCount = manifest.TotalFiles,
+                TotalSizeBytes = manifest.TotalBytesOriginal
+            };
+        }
+        catch
+        {
+            return null;
+        }
+        finally
+        {
+            try { if (Directory.Exists(tempDir)) Directory.Delete(tempDir, true); } catch { }
+        }
+    }
+
+    private static string[] BuildEventTypes(PackageCreationOptions options)
+    {
+        var types = new List<string>();
+        if (options.IncludeTrades) types.Add("Trade");
+        if (options.IncludeQuotes) types.Add("Quote");
+        if (options.IncludeBars) types.Add("Bar");
+        if (options.IncludeLOB) types.Add("LOB");
+        return types.ToArray();
+    }
+
+    private static string GetDefaultDataPath() =>
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "MarketDataCollector", "data");
+
+    private static string GetDefaultOutputPath() =>
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+            "MarketDataCollector", "packages");
 
     /// <summary>
     /// Creates a portable archive package from selected data.
@@ -629,6 +812,78 @@ public enum PackageFormat
     Zip,
     TarGz,
     SevenZip
+}
+
+public sealed class RecentPackageInfo
+{
+    public string Name { get; set; } = string.Empty;
+    public string Path { get; set; } = string.Empty;
+    public long SizeBytes { get; set; }
+    public DateTime CreatedAt { get; set; }
+}
+
+public sealed class PackageCreationOptions
+{
+    public string Name { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public DateOnly? FromDate { get; set; }
+    public DateOnly? ToDate { get; set; }
+    public List<string>? Symbols { get; set; }
+    public bool IncludeTrades { get; set; } = true;
+    public bool IncludeQuotes { get; set; } = true;
+    public bool IncludeBars { get; set; } = true;
+    public bool IncludeLOB { get; set; }
+    public bool IncludeMetadata { get; set; } = true;
+    public bool GenerateChecksums { get; set; } = true;
+    public string Compression { get; set; } = "zstd";
+}
+
+public sealed class PackageCreationResult
+{
+    public bool Success { get; set; }
+    public string? PackagePath { get; set; }
+    public string? Error { get; set; }
+}
+
+public sealed class PackageImportOptions
+{
+    public string PackagePath { get; set; } = string.Empty;
+    public bool ValidateFirst { get; set; } = true;
+    public bool OverwriteExisting { get; set; }
+}
+
+public sealed class PackageImportResult
+{
+    public bool Success { get; set; }
+    public int FilesImported { get; set; }
+    public string? Error { get; set; }
+}
+
+public sealed class PackageValidationResult
+{
+    public bool IsValid { get; set; }
+    public int ValidFileCount { get; set; }
+    public int CorruptFileCount { get; set; }
+    public int MissingFileCount { get; set; }
+    public long TotalSizeBytes { get; set; }
+    public List<ValidationIssue> Issues { get; set; } = new();
+}
+
+public sealed class ValidationIssue
+{
+    public string Message { get; set; } = string.Empty;
+    public string Severity { get; set; } = "Warning";
+}
+
+public sealed class PackageInfo
+{
+    public string Name { get; set; } = string.Empty;
+    public DateTime CreatedAt { get; set; }
+    public DateOnly? FromDate { get; set; }
+    public DateOnly? ToDate { get; set; }
+    public int SymbolCount { get; set; }
+    public int FileCount { get; set; }
+    public long TotalSizeBytes { get; set; }
 }
 
 #endregion

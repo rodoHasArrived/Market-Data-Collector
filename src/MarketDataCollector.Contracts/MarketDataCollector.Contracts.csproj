@@ -6,8 +6,10 @@
     <AssemblyName>MarketDataCollector.Contracts</AssemblyName>
     <RootNamespace>MarketDataCollector.Contracts</RootNamespace>
     <Version>1.0.0</Version>
-    <Description>Shared contracts, DTOs, and configuration models for Market Data Collector</Description>
+    <Description>Shared contracts, DTOs, domain models, and configuration for Market Data Collector. This library provides the canonical data structures used across UWP, Core, and Microservices applications.</Description>
     <Authors>MarketDataCollector Team</Authors>
+    <PackageTags>market-data;contracts;dto;domain-models</PackageTags>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>

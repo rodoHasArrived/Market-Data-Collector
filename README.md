@@ -8,7 +8,12 @@ A high-performance, cross-platform market data collection system for real-time a
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue)](https://www.docker.com/)
 [![License](https://img.shields.io/badge/license-See%20LICENSE-green)](LICENSE)
 
-**Status**: Production Ready | **Version**: 1.5.0 | **Last Updated**: 2026-01-08
+[![Build and Release](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/dotnet-desktop.yml/badge.svg)](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/dotnet-desktop.yml)
+[![CodeQL](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/codeql-analysis.yml)
+[![Docker Build](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/docker-build.yml/badge.svg)](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/docker-build.yml)
+[![Code Quality](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/code-quality.yml/badge.svg)](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/code-quality.yml)
+
+**Status**: Production Ready | **Version**: 1.5.0 | **Last Updated**: 2026-01-14
 
 ---
 
@@ -49,6 +54,12 @@ make docker
 
 # Native installation with web UI
 make run-ui
+
+# Run tests
+make test
+
+# Run diagnostics (troubleshooting)
+make doctor
 ```
 
 ### Windows Installation
@@ -66,12 +77,13 @@ make run-ui
 
 ## Overview
 
-Market Data Collector is a modular, event-driven system that captures, validates, and persists high-fidelity market data from multiple providers including Interactive Brokers, Alpaca, and Polygon. It ships with a modern web dashboard, a native Windows desktop application (UWP/XAML), structured logging, and a single self-contained executable for streamlined production deployments.
+Market Data Collector is a modular, event-driven system that captures, validates, and persists high-fidelity market data from multiple providers including Interactive Brokers, Alpaca, NYSE, Polygon, and StockSharp. It features a microservices architecture with MassTransit messaging, a modern web dashboard, a native Windows desktop application (UWP/XAML), structured logging, and supports deployment as a single self-contained executable or distributed microservices for enterprise scale.
 
 ## Key Features
 
 ### Data Collection
-- **Multi-provider ingest**: Interactive Brokers (L2 depth, tick-by-tick trades/quotes), Alpaca (real-time trades/quotes), Polygon (stub ready for expansion)
+- **Multi-provider ingest**: Interactive Brokers (L2 depth, tick-by-tick), Alpaca (WebSocket streaming), NYSE (direct feed), Polygon (aggregates), StockSharp (multi-exchange)
+- **Historical backfill**: 9+ providers (Yahoo Finance, Stooq, Tiingo, Alpha Vantage, Finnhub, Nasdaq Data Link) with automatic failover
 - **Provider-agnostic architecture**: Swap feeds without code changes and preserve stream IDs for reconciliation
 - **Microstructure detail**: Tick-by-tick trades, Level 2 order book, BBO quotes, and order-flow statistics
 
@@ -97,7 +109,48 @@ Market Data Collector is a modular, event-driven system that captures, validates
 - **Credential protection**: `.gitignore` excludes sensitive configuration files from version control
 - **Environment variable support**: API credentials via environment variables for production deployments
 
+### Architecture
+- **Microservices ready**: Decomposed services (Gateway, TradeIngestion, QuoteIngestion, OrderBookIngestion, HistoricalData, Validation)
+- **MassTransit messaging**: Reliable inter-service communication with RabbitMQ/Azure Service Bus
+- **ADR compliance**: Architecture Decision Records for consistent design patterns
+
 ## Quick Start
+
+### New User? Use the Configuration Wizard
+
+For first-time users, the interactive wizard guides you through setup:
+
+```bash
+# Clone the repository
+git clone https://github.com/rodoHasArrived/Market-Data-Collector.git
+cd Market-Data-Collector
+
+# Run the interactive configuration wizard (recommended for new users)
+dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --wizard
+```
+
+The wizard will:
+- Detect available data providers from your environment
+- Guide you through provider selection and configuration
+- Set up symbols, storage, and backfill options
+- Generate your `appsettings.json` automatically
+
+### Quick Auto-Configuration
+
+If you have environment variables set, use quick auto-configuration:
+
+```bash
+# Auto-detect providers from environment variables
+dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --auto-config
+
+# Check what providers are available
+dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --detect-providers
+
+# Validate your API credentials
+dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --validate-credentials
+```
+
+### Manual Setup
 
 ```bash
 # Clone the repository
@@ -141,6 +194,7 @@ Comprehensive documentation is available in the `docs/` directory:
 - **[docs/architecture/c4-diagrams.md](docs/architecture/c4-diagrams.md)** - System diagrams
 - **[docs/integrations/lean-integration.md](docs/integrations/lean-integration.md)** - QuantConnect Lean integration guide and examples
 - **[docs/architecture/storage-design.md](docs/architecture/storage-design.md)** - Advanced storage organization and data management strategies
+- **[docs/build-observability.md](docs/build-observability.md)** - Build observability toolkit and CLI reference
 
 ### AI Assistant Guides
 - **[CLAUDE.md](CLAUDE.md)** - Main AI assistant guide
@@ -148,9 +202,26 @@ Comprehensive documentation is available in the `docs/` directory:
 
 ## Supported Data Sources
 
-- **Interactive Brokers** - L2 market depth, tick-by-tick trades, quotes
+### Real-Time Streaming Providers
+- **Interactive Brokers** - L2 market depth, tick-by-tick trades, quotes via IB Gateway
 - **Alpaca** - Real-time trades and quotes via WebSocket
-- **Polygon** - Stub implementation for future expansion
+- **NYSE** - Direct NYSE market data feed
+- **Polygon** - Real-time trades, quotes, and aggregates
+- **StockSharp** - Multi-exchange connectors
+
+### Historical Backfill Providers
+| Provider | Free Tier | Data Types | Rate Limits |
+|----------|-----------|------------|-------------|
+| Alpaca | Yes (with account) | Bars, trades, quotes | 200/min |
+| Polygon | Limited | Bars, trades, quotes, aggregates | Varies |
+| Tiingo | Yes | Daily bars | 500/hour |
+| Yahoo Finance | Yes | Daily bars | Unofficial |
+| Stooq | Yes | Daily bars | Low |
+| Finnhub | Yes | Daily bars | 60/min |
+| Alpha Vantage | Yes | Daily bars | 5/min |
+| Nasdaq Data Link | Limited | Various | Varies |
+
+Configure fallback chains in `appsettings.json` under `Backfill.ProviderPriority` for automatic failover between providers
 
 ## Lean Engine Integration
 
@@ -226,17 +297,101 @@ export ALPACA__KEYID=your-key-id
 export ALPACA__SECRETKEY=your-secret-key
 ```
 
+## CI/CD and Automation
+
+The repository includes 16 comprehensive GitHub Actions workflows for automated testing, security, and deployment:
+
+- **🔨 Build & Release** - Automated builds and cross-platform releases
+- **🔒 CodeQL Analysis** - Security vulnerability scanning (weekly + on changes)
+- **📦 Docker Build** - Automated container image builds to GitHub Container Registry
+- **⚡ Performance Benchmarks** - Track performance metrics over time
+- **✨ Code Quality** - Linting, formatting, and link checking
+- **🏷️ Auto Labeling** - Intelligent PR and issue labeling
+- **🔍 Dependency Review** - Security checks for dependencies in PRs
+- **🗑️ Stale Management** - Automatic issue/PR lifecycle management
+- **📊 Build Observability** - Build metrics and diagnostic capture
+- **📖 Documentation Auto-Update** - Automatically update docs on provider changes
+- **🔄 Documentation Sync** - Keep documentation structure in sync with codebase
+
+See [`.github/workflows/README.md`](.github/workflows/README.md) for detailed documentation.
+
+## Troubleshooting
+
+### Quick Diagnostics
+
+```bash
+# Run full environment health check
+make doctor
+
+# Quick environment check
+make doctor-quick
+
+# Run build diagnostics
+make diagnose
+
+# Show build metrics
+make metrics
+```
+
+### Common Issues
+
+| Issue | Solution |
+|-------|----------|
+| Build fails with NETSDK1100 | Ensure `EnableWindowsTargeting=true` is set in `Directory.Build.props` |
+| Provider connection errors | Run `make doctor` and verify API credentials with `--validate-credentials` |
+| Missing configuration | Run `make setup-config` to create `appsettings.json` from template |
+| High memory usage | Check channel capacity settings in `EventPipeline` configuration |
+| Rate limit errors | Review `ProviderRateLimitTracker` logs and adjust request intervals |
+
+### Debug Information
+
+```bash
+# Collect debug bundle for issue reporting
+make collect-debug
+
+# Build with binary log for detailed analysis
+make build-binlog
+
+# Validate JSONL data integrity
+make validate-data
+```
+
+For more troubleshooting details, see [docs/HELP.md](docs/HELP.md).
+
+### Docker Images
+
+Pre-built Docker images are available from GitHub Container Registry:
+
+```bash
+# Pull the latest image
+docker pull ghcr.io/rodohasarrived/market-data-collector:latest
+
+# Run the container
+docker run -d -p 8080:8080 \
+  -v $(pwd)/data:/app/data \
+  -v $(pwd)/appsettings.json:/app/appsettings.json:ro \
+  ghcr.io/rodohasarrived/market-data-collector:latest
+```
+
 ## Repository Structure
 
 ```
 Market-Data-Collector/
-├── .github/              # CI/CD workflows and AI prompts
-├── docs/                 # All documentation
+├── .github/              # CI/CD workflows (16), AI prompts, Dependabot
+├── docs/                 # Documentation, ADRs, AI assistant guides
 ├── scripts/              # Install, publish, run, and diagnostic scripts
 ├── deploy/               # Docker, systemd, and monitoring configs
 ├── config/               # Configuration files (appsettings.json)
-├── src/                  # Source code
-├── tests/                # Unit tests
+├── build-system/         # Python build tooling and diagnostics
+├── tools/                # Development tools (DocGenerator)
+├── src/
+│   ├── MarketDataCollector/        # Core application
+│   ├── MarketDataCollector.FSharp/ # F# domain models
+│   ├── MarketDataCollector.Contracts/ # Shared DTOs
+│   ├── MarketDataCollector.Ui/     # Web dashboard
+│   ├── MarketDataCollector.Uwp/    # Windows desktop app
+│   └── Microservices/              # Decomposed services
+├── tests/                # C# and F# test projects
 ├── benchmarks/           # Performance benchmarks
 ├── MarketDataCollector.sln
 ├── Makefile

@@ -1,0 +1,180 @@
+# Documentation Validation Workflow
+# Validates documentation, generates project context, and verifies ADR links
+
+name: Documentation
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'docs/**'
+      - 'src/**/*.cs'
+      - 'src/**/*.fs'
+      - 'tools/DocGenerator/**'
+      - 'CLAUDE.md'
+      - 'README.md'
+      - '.github/workflows/documentation.yml'
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'docs/**'
+      - 'src/**/*.cs'
+      - 'src/**/*.fs'
+      - 'tools/DocGenerator/**'
+      - 'CLAUDE.md'
+      - 'README.md'
+  workflow_dispatch:
+    inputs:
+      regenerate:
+        description: 'Force regenerate all documentation'
+        required: false
+        default: 'false'
+        type: boolean
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_VERSION: '9.0.x'
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  markdown-lint:
+    name: Markdown Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Lint Markdown files
+        uses: DavidAnson/markdownlint-cli2-action@v16
+        with:
+          globs: |
+            **/*.md
+            !**/node_modules/**
+            !**/bin/**
+            !**/obj/**
+        continue-on-error: true
+
+  link-validation:
+    name: Link Validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check links in documentation
+        uses: gaurav-nelson/github-action-markdown-link-check@v1
+        with:
+          use-quiet-mode: 'yes'
+          use-verbose-mode: 'no'
+          folder-path: 'docs/'
+          max-depth: 5
+        continue-on-error: true
+
+  adr-verification:
+    name: ADR Verification
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/*.fsproj', 'Directory.Build.props') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore and build DocGenerator
+        run: |
+          if [ -d "tools/DocGenerator" ]; then
+            dotnet restore tools/DocGenerator/DocGenerator.csproj
+            dotnet build tools/DocGenerator/DocGenerator.csproj -c Release --no-restore
+          fi
+        continue-on-error: true
+
+      - name: Verify ADR implementation links
+        run: |
+          echo "## ADR Verification Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          ADR_COUNT=$(find docs -path "*/adr/*.md" -o -path "*/decisions/*.md" 2>/dev/null | wc -l)
+          echo "Found $ADR_COUNT ADR files" >> $GITHUB_STEP_SUMMARY
+
+  project-context-generation:
+    name: Project Context Generation
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.regenerate == 'true')
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/*.fsproj', 'Directory.Build.props') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore dependencies
+        run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
+
+      - name: Build with XML docs
+        run: |
+          dotnet build src/MarketDataCollector/MarketDataCollector.csproj \
+            -c Release \
+            --no-restore \
+            /p:EnableWindowsTargeting=true \
+            /p:GenerateDocumentationFile=true
+
+      - name: Generate documentation summary
+        run: |
+          echo "## Documentation Statistics" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          md_count=$(find docs -name "*.md" | wc -l)
+          echo "- **Documentation files:** $md_count" >> $GITHUB_STEP_SUMMARY
+
+  documentation-summary:
+    name: Documentation Summary
+    runs-on: ubuntu-latest
+    needs: [markdown-lint, link-validation, adr-verification]
+    if: always()
+
+    steps:
+      - name: Generate documentation report
+        run: |
+          echo "# Documentation Quality Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Generated:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "## Job Status" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Result |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Markdown Lint | ${{ needs.markdown-lint.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Link Validation | ${{ needs.link-validation.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| ADR Verification | ${{ needs.adr-verification.result }} |" >> $GITHUB_STEP_SUMMARY

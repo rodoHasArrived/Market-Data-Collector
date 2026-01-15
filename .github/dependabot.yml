@@ -1,6 +1,18 @@
 version: 2
 updates:
   # Enable version updates for NuGet packages
+# Dependabot Configuration
+# https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+
+registries:
+  nuget-org:
+    type: nuget-feed
+    url: https://api.nuget.org/v3/index.json
+
+updates:
+  # NuGet packages (main project)
   - package-ecosystem: "nuget"
     directory: "/"
     schedule:
@@ -23,11 +35,94 @@ updates:
       production-dependencies:
         patterns:
           - "*"
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 10
+    registries:
+      - nuget-org
+    commit-message:
+      prefix: "deps(nuget)"
+    labels:
+      - "dependencies"
+      - "nuget"
+    reviewers:
+      - "rodoHasArrived"
+    groups:
+      microsoft-extensions:
+        patterns:
+          - "Microsoft.Extensions.*"
         update-types:
           - "minor"
           - "patch"
 
   # Enable version updates for GitHub Actions
+      microsoft-aspnetcore:
+        patterns:
+          - "Microsoft.AspNetCore.*"
+        update-types:
+          - "minor"
+          - "patch"
+
+      testing:
+        patterns:
+          - "xunit*"
+          - "FluentAssertions*"
+          - "Moq*"
+          - "NSubstitute*"
+          - "coverlet*"
+          - "Microsoft.NET.Test.*"
+        update-types:
+          - "minor"
+          - "patch"
+
+      serialization:
+        patterns:
+          - "System.Text.Json*"
+          - "Newtonsoft.Json*"
+        update-types:
+          - "minor"
+          - "patch"
+
+      logging:
+        patterns:
+          - "Serilog*"
+          - "Microsoft.Extensions.Logging*"
+        update-types:
+          - "minor"
+          - "patch"
+
+      messaging:
+        patterns:
+          - "MassTransit*"
+          - "RabbitMQ.*"
+        update-types:
+          - "minor"
+          - "patch"
+
+      data-providers:
+        patterns:
+          - "Alpaca.*"
+          - "IBApi*"
+        update-types:
+          - "minor"
+          - "patch"
+
+      analyzers:
+        patterns:
+          - "Microsoft.CodeAnalysis*"
+          - "StyleCop.*"
+          - "Roslynator.*"
+        update-types:
+          - "minor"
+          - "patch"
+
+    ignore:
+      - dependency-name: "MassTransit*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "Microsoft.EntityFrameworkCore*"
+        update-types: ["version-update:semver-major"]
+
+  # GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
@@ -44,6 +139,25 @@ updates:
       include: "scope"
 
   # Enable version updates for Docker
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "ci(actions)"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    reviewers:
+      - "rodoHasArrived"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # Docker base images
   - package-ecosystem: "docker"
     directory: "/deploy/docker"
     schedule:
@@ -58,3 +172,65 @@ updates:
     commit-message:
       prefix: "chore"
       include: "scope"
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "deps(docker)"
+    labels:
+      - "dependencies"
+      - "docker"
+    reviewers:
+      - "rodoHasArrived"
+    groups:
+      dotnet-images:
+        patterns:
+          - "mcr.microsoft.com/dotnet/*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # Benchmark project
+  - package-ecosystem: "nuget"
+    directory: "/benchmarks/MarketDataCollector.Benchmarks"
+    schedule:
+      interval: "monthly"
+      day: "monday"
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 3
+    registries:
+      - nuget-org
+    commit-message:
+      prefix: "deps(benchmarks)"
+    labels:
+      - "dependencies"
+      - "benchmarks"
+    reviewers:
+      - "rodoHasArrived"
+    groups:
+      benchmarkdotnet:
+        patterns:
+          - "BenchmarkDotNet*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # Tools
+  - package-ecosystem: "nuget"
+    directory: "/tools/DocGenerator"
+    schedule:
+      interval: "monthly"
+      day: "monday"
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 2
+    registries:
+      - nuget-org
+    commit-message:
+      prefix: "deps(tools)"
+    labels:
+      - "dependencies"
+      - "tools"
+    reviewers:
+      - "rodoHasArrived"

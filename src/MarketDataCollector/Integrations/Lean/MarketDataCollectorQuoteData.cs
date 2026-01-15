@@ -3,6 +3,8 @@ using QuantConnect.Data;
 using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Domain.Events;
 using System.Text.Json;
+using Serilog;
+using Prometheus;
 
 namespace MarketDataCollector.Integrations.Lean;
 
@@ -12,6 +14,18 @@ namespace MarketDataCollector.Integrations.Lean;
 /// </summary>
 public class MarketDataCollectorQuoteData : BaseData
 {
+    private static readonly ILogger _log = Log.ForContext<MarketDataCollectorQuoteData>();
+
+    /// <summary>Counter for JSON parse failures during quote data reading</summary>
+    private static readonly Counter JsonParseFailures = Metrics.CreateCounter(
+        "mdc_lean_quote_json_parse_failures_total",
+        "Total number of JSON parse failures when reading quote data in Lean integration");
+
+    /// <summary>Counter for unexpected parse errors during quote data reading</summary>
+    private static readonly Counter UnexpectedParseErrors = Metrics.CreateCounter(
+        "mdc_lean_quote_unexpected_parse_errors_total",
+        "Total number of unexpected errors when parsing quote data in Lean integration");
+
     /// <summary>Best bid price</summary>
     public decimal BidPrice { get; set; }
 
@@ -93,13 +107,26 @@ public class MarketDataCollectorQuoteData : BaseData
                 AskExchange = quote.Venue ?? string.Empty
             };
         }
-        catch (Exception)
+        catch (JsonException ex)
         {
-            // TODO: Replace bare exception catch with specific exception types (JsonException, InvalidOperationException)
-            // TODO: Implement proper logging for parsing errors with error details (line, symbol, timestamp)
-            // TODO: Add metrics/counters for parse failures
-            // TODO: Consider RetryPolicy for transient failures
-            // Log parsing errors in production
+            JsonParseFailures.Inc();
+            var linePreview = line.Length > 100 ? line[..100] + "..." : line;
+            _log.Warning(ex,
+                "Failed to parse quote data JSON for {Symbol} on {Date}: {LinePreview}",
+                config.Symbol.Value,
+                date.ToString("yyyy-MM-dd"),
+                linePreview);
+            return null!;
+        }
+        catch (Exception ex)
+        {
+            UnexpectedParseErrors.Inc();
+            var linePreview = line.Length > 100 ? line[..100] + "..." : line;
+            _log.Warning(ex,
+                "Unexpected error parsing quote data for {Symbol} on {Date}: {LinePreview}",
+                config.Symbol.Value,
+                date.ToString("yyyy-MM-dd"),
+                linePreview);
             return null!;
         }
     }

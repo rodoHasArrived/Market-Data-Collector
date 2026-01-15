@@ -2297,5 +2297,542 @@ public static class HtmlTemplates
 </body>
 </html>";
 
+    public static string CredentialsDashboard(
+        MarketDataCollector.Application.Config.AppConfig config,
+        IReadOnlyDictionary<string, MarketDataCollector.Application.Config.Credentials.StoredCredentialStatus> statuses) => $@"
+<!doctype html>
+<html lang=""en"">
+<head>
+  <meta charset=""utf-8"" />
+  <meta name=""viewport"" content=""width=device-width,initial-scale=1"" />
+  <title>Credential Management - Market Data Collector</title>
+  <style>
+    * {{ box-sizing: border-box; }}
+    body {{
+      font-family: -apple-system, BlinkMacSystemFont, ""Segoe UI"", Roboto, ""Helvetica Neue"", Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }}
+    .header {{
+      background: white;
+      padding: 16px 24px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }}
+    .header h1 {{
+      margin: 0;
+      font-size: 24px;
+      color: #333;
+    }}
+    .header-nav {{
+      display: flex;
+      gap: 12px;
+    }}
+    .header-nav a {{
+      color: #667eea;
+      text-decoration: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      background: #f0f0f0;
+    }}
+    .header-nav a:hover {{
+      background: #e0e0e0;
+    }}
+    .container {{
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px;
+    }}
+    .card {{
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      margin-bottom: 24px;
+    }}
+    .card h2 {{
+      margin: 0 0 16px 0;
+      color: #333;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }}
+    .provider-grid {{
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }}
+    .provider-card {{
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 16px;
+      position: relative;
+    }}
+    .provider-card.status-valid {{
+      border-left: 4px solid #10b981;
+    }}
+    .provider-card.status-invalid {{
+      border-left: 4px solid #ef4444;
+    }}
+    .provider-card.status-expiring {{
+      border-left: 4px solid #f59e0b;
+    }}
+    .provider-card.status-unknown {{
+      border-left: 4px solid #6b7280;
+    }}
+    .provider-card.status-notconfigured {{
+      border-left: 4px solid #9ca3af;
+    }}
+    .provider-header {{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }}
+    .provider-name {{
+      font-weight: 600;
+      font-size: 16px;
+      color: #333;
+    }}
+    .status-badge {{
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+    }}
+    .status-badge.valid {{
+      background: #d1fae5;
+      color: #065f46;
+    }}
+    .status-badge.invalid {{
+      background: #fee2e2;
+      color: #991b1b;
+    }}
+    .status-badge.expiring {{
+      background: #fef3c7;
+      color: #92400e;
+    }}
+    .status-badge.unknown {{
+      background: #f3f4f6;
+      color: #4b5563;
+    }}
+    .status-badge.notconfigured {{
+      background: #e5e7eb;
+      color: #6b7280;
+    }}
+    .provider-info {{
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 4px;
+    }}
+    .provider-info strong {{
+      color: #333;
+    }}
+    .test-btn {{
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-top: 12px;
+      width: 100%;
+      transition: all 0.2s;
+    }}
+    .test-btn:hover {{
+      background: #5a67d8;
+    }}
+    .test-btn:disabled {{
+      background: #9ca3af;
+      cursor: not-allowed;
+    }}
+    .test-btn.testing {{
+      background: #f59e0b;
+    }}
+    .test-btn.success {{
+      background: #10b981;
+    }}
+    .test-btn.failed {{
+      background: #ef4444;
+    }}
+    .test-result {{
+      margin-top: 12px;
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      display: none;
+    }}
+    .test-result.show {{
+      display: block;
+    }}
+    .test-result.success {{
+      background: #d1fae5;
+      color: #065f46;
+    }}
+    .test-result.error {{
+      background: #fee2e2;
+      color: #991b1b;
+    }}
+    .expiration-warning {{
+      background: #fef3c7;
+      border: 1px solid #f59e0b;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }}
+    .expiration-warning svg {{
+      flex-shrink: 0;
+    }}
+    .test-all-btn {{
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }}
+    .test-all-btn:hover {{
+      background: #5a67d8;
+    }}
+    .loading-spinner {{
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #ffffff;
+      border-radius: 50%;
+      border-top-color: transparent;
+      animation: spin 1s linear infinite;
+    }}
+    @keyframes spin {{
+      to {{ transform: rotate(360deg); }}
+    }}
+    .timestamp {{
+      font-size: 12px;
+      color: #888;
+    }}
+    .response-time {{
+      color: #10b981;
+      font-weight: 500;
+    }}
+  </style>
+</head>
+<body>
+  <div class=""header"">
+    <h1>Credential Management</h1>
+    <div class=""header-nav"">
+      <a href=""/"">Dashboard</a>
+      <a href=""/api/docs"">API Docs</a>
+    </div>
+  </div>
+  <div class=""container"">
+    <div class=""card"">
+      <div style=""display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;"">
+        <h2>
+          <svg width=""24"" height=""24"" viewBox=""0 0 24 24"" fill=""none"" stroke=""currentColor"" stroke-width=""2"">
+            <rect x=""3"" y=""11"" width=""18"" height=""11"" rx=""2"" ry=""2""></rect>
+            <path d=""M7 11V7a5 5 0 0 1 10 0v4""></path>
+          </svg>
+          Provider Credentials
+        </h2>
+        <button class=""test-all-btn"" onclick=""testAllCredentials()"" id=""testAllBtn"">
+          <svg width=""16"" height=""16"" viewBox=""0 0 24 24"" fill=""none"" stroke=""currentColor"" stroke-width=""2"">
+            <polyline points=""20 6 9 17 4 12""></polyline>
+          </svg>
+          Test All Credentials
+        </button>
+      </div>
+      <div id=""warnings""></div>
+      <div class=""provider-grid"" id=""providerGrid"">
+        <div style=""text-align: center; padding: 40px; color: #666;"">Loading providers...</div>
+      </div>
+    </div>
+    <div class=""card"">
+      <h2>
+        <svg width=""24"" height=""24"" viewBox=""0 0 24 24"" fill=""none"" stroke=""currentColor"" stroke-width=""2"">
+          <circle cx=""12"" cy=""12"" r=""10""></circle>
+          <polyline points=""12 6 12 12 16 14""></polyline>
+        </svg>
+        Authentication History
+      </h2>
+      <div id=""authHistory"">
+        <div style=""text-align: center; padding: 20px; color: #666;"">Loading history...</div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const providers = [
+      {{ name: 'Alpaca', hasSecret: true, configured: {(config.Alpaca != null && !string.IsNullOrWhiteSpace(config.Alpaca.KeyId) ? "true" : "false")} }},
+      {{ name: 'Polygon', hasSecret: false, configured: {(config.Backfill?.Providers?.Polygon != null && !string.IsNullOrWhiteSpace(config.Backfill.Providers.Polygon.ApiKey) ? "true" : "false")} }},
+      {{ name: 'Tiingo', hasSecret: false, configured: {(config.Backfill?.Providers?.Tiingo != null && !string.IsNullOrWhiteSpace(config.Backfill.Providers.Tiingo.ApiToken) ? "true" : "false")} }},
+      {{ name: 'Finnhub', hasSecret: false, configured: {(config.Backfill?.Providers?.Finnhub != null && !string.IsNullOrWhiteSpace(config.Backfill.Providers.Finnhub.ApiKey) ? "true" : "false")} }},
+      {{ name: 'AlphaVantage', hasSecret: false, configured: {(config.Backfill?.Providers?.AlphaVantage != null && !string.IsNullOrWhiteSpace(config.Backfill.Providers.AlphaVantage.ApiKey) ? "true" : "false")} }},
+      {{ name: 'NasdaqDataLink', hasSecret: false, configured: {(config.Backfill?.Providers?.Nasdaq != null && !string.IsNullOrWhiteSpace(config.Backfill.Providers.Nasdaq.ApiKey) ? "true" : "false")} }}
+    ];
+
+    function formatDate(dateStr) {{
+      if (!dateStr) return 'Never';
+      const date = new Date(dateStr);
+      return date.toLocaleString();
+    }}
+
+    function formatDaysUntil(dateStr) {{
+      if (!dateStr) return null;
+      const date = new Date(dateStr);
+      const now = new Date();
+      const days = Math.ceil((date - now) / (1000 * 60 * 60 * 24));
+      if (days < 0) return 'Expired';
+      if (days === 0) return 'Today';
+      if (days === 1) return '1 day';
+      return days + ' days';
+    }}
+
+    function getStatusClass(status) {{
+      switch (status?.toLowerCase()) {{
+        case 'valid': return 'valid';
+        case 'invalid': return 'invalid';
+        case 'expiringsoon': return 'expiring';
+        case 'expired': return 'invalid';
+        case 'notconfigured': return 'notconfigured';
+        default: return 'unknown';
+      }}
+    }}
+
+    function renderProviders() {{
+      const grid = document.getElementById('providerGrid');
+      grid.innerHTML = providers.map(p => `
+        <div class=""provider-card status-${{p.status ? getStatusClass(p.status) : (p.configured ? 'unknown' : 'notconfigured')}}"" id=""provider-${{p.name}}"">
+          <div class=""provider-header"">
+            <span class=""provider-name"">${{p.name}}</span>
+            <span class=""status-badge ${{p.status ? getStatusClass(p.status) : (p.configured ? 'unknown' : 'notconfigured')}}"">
+              ${{p.status || (p.configured ? 'Not Tested' : 'Not Configured')}}
+            </span>
+          </div>
+          <div class=""provider-info"">
+            <strong>Configured:</strong> ${{p.configured ? 'Yes' : 'No'}}
+          </div>
+          ${{p.lastSuccessfulAuth ? `<div class=""provider-info""><strong>Last Success:</strong> ${{formatDate(p.lastSuccessfulAuth)}}</div>` : ''}}
+          ${{p.lastTestedAt ? `<div class=""provider-info""><strong>Last Tested:</strong> ${{formatDate(p.lastTestedAt)}}</div>` : ''}}
+          ${{p.responseTime ? `<div class=""provider-info""><strong>Response Time:</strong> <span class=""response-time"">${{p.responseTime}}ms</span></div>` : ''}}
+          ${{p.expiresAt ? `<div class=""provider-info""><strong>Expires:</strong> ${{formatDaysUntil(p.expiresAt)}}</div>` : ''}}
+          <button class=""test-btn"" onclick=""testCredential('${{p.name}}')"" id=""test-btn-${{p.name}}"" ${{!p.configured ? 'disabled' : ''}}>
+            Test Credentials
+          </button>
+          <div class=""test-result"" id=""result-${{p.name}}""></div>
+        </div>
+      `).join('');
+    }}
+
+    async function loadStatus() {{
+      try {{
+        const response = await fetch('/api/credentials/status');
+        const data = await response.json();
+
+        const warnings = [];
+        data.forEach(s => {{
+          const provider = providers.find(p => p.name.toLowerCase() === s.provider.toLowerCase());
+          if (provider) {{
+            provider.status = s.lastTestResult;
+            provider.lastSuccessfulAuth = s.lastSuccessfulAuth;
+            provider.lastTestedAt = s.lastTestedAt;
+            provider.expiresAt = s.expiresAt;
+
+            if (s.isExpiringSoon && s.daysUntilExpiration !== null) {{
+              warnings.push(`${{s.provider}} credentials expiring in ${{Math.ceil(s.daysUntilExpiration)}} days`);
+            }}
+          }}
+        }});
+
+        renderWarnings(warnings);
+        renderProviders();
+        renderHistory(data);
+      }} catch (e) {{
+        console.error('Failed to load status:', e);
+        renderProviders();
+      }}
+    }}
+
+    function renderWarnings(warnings) {{
+      const container = document.getElementById('warnings');
+      if (warnings.length === 0) {{
+        container.innerHTML = '';
+        return;
+      }}
+      container.innerHTML = warnings.map(w => `
+        <div class=""expiration-warning"">
+          <svg width=""20"" height=""20"" viewBox=""0 0 24 24"" fill=""none"" stroke=""#f59e0b"" stroke-width=""2"">
+            <path d=""M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z""></path>
+            <line x1=""12"" y1=""9"" x2=""12"" y2=""13""></line>
+            <line x1=""12"" y1=""17"" x2=""12.01"" y2=""17""></line>
+          </svg>
+          <span>${{w}}</span>
+        </div>
+      `).join('');
+    }}
+
+    function renderHistory(data) {{
+      const container = document.getElementById('authHistory');
+      const sorted = [...data].sort((a, b) => new Date(b.lastTestedAt) - new Date(a.lastTestedAt));
+
+      if (sorted.length === 0) {{
+        container.innerHTML = '<div style=""text-align: center; padding: 20px; color: #666;"">No authentication history yet. Test credentials to populate history.</div>';
+        return;
+      }}
+
+      container.innerHTML = `
+        <table style=""width: 100%; border-collapse: collapse;"">
+          <thead>
+            <tr style=""border-bottom: 2px solid #e0e0e0;"">
+              <th style=""text-align: left; padding: 10px;"">Provider</th>
+              <th style=""text-align: left; padding: 10px;"">Status</th>
+              <th style=""text-align: left; padding: 10px;"">Last Tested</th>
+              <th style=""text-align: left; padding: 10px;"">Last Success</th>
+              <th style=""text-align: left; padding: 10px;"">Failures</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${{sorted.map(s => `
+              <tr style=""border-bottom: 1px solid #e0e0e0;"">
+                <td style=""padding: 10px; font-weight: 500;"">${{s.provider}}</td>
+                <td style=""padding: 10px;"">
+                  <span class=""status-badge ${{getStatusClass(s.lastTestResult)}}"">${{s.lastTestResult}}</span>
+                </td>
+                <td style=""padding: 10px;"" class=""timestamp"">${{formatDate(s.lastTestedAt)}}</td>
+                <td style=""padding: 10px;"" class=""timestamp"">${{formatDate(s.lastSuccessfulAuth)}}</td>
+                <td style=""padding: 10px;"">${{s.consecutiveFailures || 0}}</td>
+              </tr>
+            `).join('')}}
+          </tbody>
+        </table>
+      `;
+    }}
+
+    async function testCredential(providerName) {{
+      const btn = document.getElementById(`test-btn-${{providerName}}`);
+      const result = document.getElementById(`result-${{providerName}}`);
+
+      btn.disabled = true;
+      btn.classList.add('testing');
+      btn.innerHTML = '<span class=""loading-spinner""></span> Testing...';
+      result.classList.remove('show', 'success', 'error');
+
+      try {{
+        const response = await fetch('/api/credentials/test', {{
+          method: 'POST',
+          headers: {{ 'Content-Type': 'application/json' }},
+          body: JSON.stringify({{ provider: providerName }})
+        }});
+        const data = await response.json();
+
+        if (data.isSuccess) {{
+          btn.classList.remove('testing');
+          btn.classList.add('success');
+          btn.innerHTML = 'Test Passed!';
+          result.classList.add('show', 'success');
+          result.innerHTML = `${{data.message}} (${{data.responseTimeMs}}ms)`;
+        }} else {{
+          btn.classList.remove('testing');
+          btn.classList.add('failed');
+          btn.innerHTML = 'Test Failed';
+          result.classList.add('show', 'error');
+          result.innerHTML = data.message;
+        }}
+
+        // Update provider status
+        const provider = providers.find(p => p.name === providerName);
+        if (provider) {{
+          provider.status = data.status;
+          provider.lastTestedAt = data.testedAt;
+          provider.lastSuccessfulAuth = data.lastSuccessfulAuth;
+          provider.responseTime = data.responseTimeMs;
+        }}
+
+        setTimeout(() => {{
+          btn.classList.remove('success', 'failed');
+          btn.innerHTML = 'Test Credentials';
+          btn.disabled = false;
+          loadStatus();
+        }}, 3000);
+
+      }} catch (e) {{
+        btn.classList.remove('testing');
+        btn.classList.add('failed');
+        btn.innerHTML = 'Test Failed';
+        result.classList.add('show', 'error');
+        result.innerHTML = 'Network error: ' + e.message;
+
+        setTimeout(() => {{
+          btn.classList.remove('failed');
+          btn.innerHTML = 'Test Credentials';
+          btn.disabled = false;
+        }}, 3000);
+      }}
+    }}
+
+    async function testAllCredentials() {{
+      const btn = document.getElementById('testAllBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class=""loading-spinner""></span> Testing All...';
+
+      try {{
+        const response = await fetch('/api/credentials/test-all', {{
+          method: 'POST',
+          headers: {{ 'Content-Type': 'application/json' }}
+        }});
+        const data = await response.json();
+
+        btn.innerHTML = data.allValid ? 'All Tests Passed!' : 'Some Tests Failed';
+        btn.style.background = data.allValid ? '#10b981' : '#ef4444';
+
+        // Reload status to update UI
+        await loadStatus();
+
+        setTimeout(() => {{
+          btn.innerHTML = `
+            <svg width=""16"" height=""16"" viewBox=""0 0 24 24"" fill=""none"" stroke=""currentColor"" stroke-width=""2"">
+              <polyline points=""20 6 9 17 4 12""></polyline>
+            </svg>
+            Test All Credentials
+          `;
+          btn.style.background = '';
+          btn.disabled = false;
+        }}, 3000);
+
+      }} catch (e) {{
+        btn.innerHTML = 'Test Failed';
+        btn.style.background = '#ef4444';
+
+        setTimeout(() => {{
+          btn.innerHTML = `
+            <svg width=""16"" height=""16"" viewBox=""0 0 24 24"" fill=""none"" stroke=""currentColor"" stroke-width=""2"">
+              <polyline points=""20 6 9 17 4 12""></polyline>
+            </svg>
+            Test All Credentials
+          `;
+          btn.style.background = '';
+          btn.disabled = false;
+        }}, 3000);
+      }}
+    }}
+
+    // Initial load
+    renderProviders();
+    loadStatus();
+  </script>
+</body>
+</html>";
+
     private static string Escape(string s) => s.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;").Replace("\"", "&quot;");
 }

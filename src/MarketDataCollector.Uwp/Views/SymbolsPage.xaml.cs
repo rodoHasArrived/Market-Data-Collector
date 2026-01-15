@@ -6,10 +6,12 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using MarketDataCollector.Uwp.Models;
 using MarketDataCollector.Uwp.Services;
 using MarketDataCollector.Uwp.ViewModels;
+using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage.Pickers;
 using Windows.UI;
 
@@ -22,6 +24,7 @@ namespace MarketDataCollector.Uwp.Views;
 public sealed partial class SymbolsPage : Page
 {
     private readonly ConfigService _configService;
+    private readonly ContextMenuService _contextMenuService;
     private readonly ObservableCollection<EnhancedSymbolViewModel> _symbols = new();
     private readonly ObservableCollection<EnhancedSymbolViewModel> _filteredSymbols = new();
     private readonly List<WatchlistInfo> _watchlists = new();
@@ -53,6 +56,7 @@ public sealed partial class SymbolsPage : Page
     {
         this.InitializeComponent();
         _configService = new ConfigService();
+        _contextMenuService = ContextMenuService.Instance;
         SymbolsListView.ItemsSource = _filteredSymbols;
 
         Loaded += SymbolsPage_Loaded;
@@ -638,6 +642,117 @@ public sealed partial class SymbolsPage : Page
     {
         return (combo.SelectedItem as ComboBoxItem)?.Tag?.ToString();
     }
+
+    #region Context Menu
+
+    private void SymbolItem_RightTapped(object sender, RightTappedRoutedEventArgs e)
+    {
+        EnhancedSymbolViewModel? symbolVm = null;
+
+        // Try to get symbol from the element's Tag or DataContext
+        if (sender is FrameworkElement element)
+        {
+            if (element.Tag is string tagSymbol)
+            {
+                symbolVm = _symbols.FirstOrDefault(s => s.Symbol == tagSymbol);
+            }
+            else if (element.DataContext is EnhancedSymbolViewModel vm)
+            {
+                symbolVm = vm;
+            }
+        }
+
+        if (symbolVm == null) return;
+
+        var symbol = symbolVm.Symbol;
+        var tradesEnabled = symbolVm.SubscribeTrades;
+        var depthEnabled = symbolVm.SubscribeDepth;
+
+        var menu = _contextMenuService.CreateSubscriptionContextMenu(
+            symbol,
+            tradesEnabled,
+            depthEnabled,
+            onEdit: async (s) =>
+            {
+                await Task.CompletedTask;
+                // Select the symbol in the list to trigger edit mode
+                SymbolsListView.SelectedItem = symbolVm;
+            },
+            onToggleTrades: async (s, enabled) =>
+            {
+                symbolVm.SubscribeTrades = enabled;
+                var config = symbolVm.ToSymbolConfig();
+                await _configService.AddOrUpdateSymbolAsync(config);
+                ApplyFilters();
+                ShowFormInfoBar("Updated", $"Trades {(enabled ? "enabled" : "disabled")} for {s}.", InfoBarSeverity.Success);
+            },
+            onToggleDepth: async (s, enabled) =>
+            {
+                symbolVm.SubscribeDepth = enabled;
+                var config = symbolVm.ToSymbolConfig();
+                await _configService.AddOrUpdateSymbolAsync(config);
+                ApplyFilters();
+                ShowFormInfoBar("Updated", $"Depth {(enabled ? "enabled" : "disabled")} for {s}.", InfoBarSeverity.Success);
+            },
+            onViewLiveData: async (s) =>
+            {
+                await Task.CompletedTask;
+                Frame.Navigate(typeof(LiveDataViewerPage), s);
+            },
+            onRunBackfill: async (s) =>
+            {
+                await Task.CompletedTask;
+                Frame.Navigate(typeof(BackfillPage), s);
+            },
+            onCopySymbol: async (s) =>
+            {
+                await Task.CompletedTask;
+                var dataPackage = new DataPackage();
+                dataPackage.SetText(s);
+                Clipboard.SetContent(dataPackage);
+                ShowFormInfoBar("Copied", $"{s} copied to clipboard.", InfoBarSeverity.Success);
+            },
+            onDelete: async (s) =>
+            {
+                var dialog = new ContentDialog
+                {
+                    Title = "Delete Symbol",
+                    Content = $"Are you sure you want to delete {s}?",
+                    PrimaryButtonText = "Delete",
+                    CloseButtonText = "Cancel",
+                    DefaultButton = ContentDialogButton.Close,
+                    XamlRoot = this.XamlRoot
+                };
+
+                var result = await dialog.ShowAsync();
+                if (result == ContentDialogResult.Primary)
+                {
+                    _symbols.Remove(symbolVm);
+                    await _configService.DeleteSymbolAsync(s);
+                    ApplyFilters();
+                    SymbolCountText.Text = $"{_symbols.Count} symbols";
+                    ShowFormInfoBar("Deleted", $"{s} has been removed.", InfoBarSeverity.Success);
+                }
+            });
+
+        // Show the menu at the pointer position
+        if (sender is UIElement uiElement)
+        {
+            menu.ShowAt(uiElement, e.GetPosition(uiElement));
+        }
+
+        e.Handled = true;
+    }
+
+    private void ShowFormInfoBar(string title, string message, InfoBarSeverity severity)
+    {
+        FormInfoBar.Title = title;
+        FormInfoBar.Message = message;
+        FormInfoBar.Severity = severity;
+        FormInfoBar.IsOpen = true;
+    }
+
+    #endregion
 }
 
 /// <summary>

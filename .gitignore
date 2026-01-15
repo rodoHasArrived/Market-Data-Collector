@@ -63,6 +63,7 @@ data/
 logs/
 _logs/
 diagnostic-logs/
+.build-system/
 
 # OS generated files
 .DS_Store
@@ -87,3 +88,14 @@ msbuild.binlog
 vulnerable-packages.txt
 coverage/
 TestResults/
+# Node.js (for diagram generation scripts)
+node_modules/
+
+# Python (for build-system scripts)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/

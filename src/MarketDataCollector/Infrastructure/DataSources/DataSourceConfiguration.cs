@@ -449,11 +449,11 @@ public sealed record CredentialConfig
     /// </summary>
     public string? VaultPath { get; init; }
 
-    // TODO: Add validation to ensure credentials are configured before data source starts
-    // TODO: Implement vault support (AWS Secrets Manager, Azure Key Vault)
-    // TODO: Add pre-flight check for missing credentials at startup
-    // TODO: Document credential resolution order (File > Vault > Environment > Config)
-    // TODO: Add metrics for credential resolution failures
+    // Credential Resolution Order: File > Vault > Environment > Config
+    // - File: Reads from CredentialsPath JSON file
+    // - Vault: Reserved for AWS Secrets Manager / Azure Key Vault integration
+    // - Environment: Uses environment variables (ApiKeyVar, KeyIdVar, SecretKeyVar)
+    // - Config: Direct values in configuration (not recommended for production)
 
     /// <summary>
     /// Resolves the API key from configured source.
@@ -484,6 +484,155 @@ public sealed record CredentialConfig
             return Environment.GetEnvironmentVariable(SecretKeyVar);
         return null;
     }
+
+    /// <summary>
+    /// Resolves the username from configured source.
+    /// </summary>
+    public string? ResolveUsername()
+    {
+        if (!string.IsNullOrWhiteSpace(UsernameVar))
+            return Environment.GetEnvironmentVariable(UsernameVar);
+        return null;
+    }
+
+    /// <summary>
+    /// Resolves the password from configured source.
+    /// </summary>
+    public string? ResolvePassword()
+    {
+        if (!string.IsNullOrWhiteSpace(PasswordVar))
+            return Environment.GetEnvironmentVariable(PasswordVar);
+        return null;
+    }
+
+    /// <summary>
+    /// Validates that required credentials are configured and resolvable.
+    /// Use this for pre-flight checks before starting a data source.
+    /// </summary>
+    /// <param name="requireApiKey">Whether an API key is required.</param>
+    /// <param name="requireKeyIdAndSecret">Whether key ID and secret are required.</param>
+    /// <param name="requireUsernameAndPassword">Whether username and password are required.</param>
+    /// <returns>Validation result with any errors found.</returns>
+    public CredentialValidationResult Validate(
+        bool requireApiKey = false,
+        bool requireKeyIdAndSecret = false,
+        bool requireUsernameAndPassword = false)
+    {
+        var errors = new List<string>();
+
+        if (requireApiKey)
+        {
+            if (string.IsNullOrWhiteSpace(ApiKeyVar))
+            {
+                errors.Add("ApiKeyVar is not configured");
+            }
+            else if (string.IsNullOrWhiteSpace(ResolveApiKey()))
+            {
+                errors.Add($"Environment variable '{ApiKeyVar}' is not set or empty");
+            }
+        }
+
+        if (requireKeyIdAndSecret)
+        {
+            if (string.IsNullOrWhiteSpace(KeyIdVar))
+            {
+                errors.Add("KeyIdVar is not configured");
+            }
+            else if (string.IsNullOrWhiteSpace(ResolveKeyId()))
+            {
+                errors.Add($"Environment variable '{KeyIdVar}' is not set or empty");
+            }
+
+            if (string.IsNullOrWhiteSpace(SecretKeyVar))
+            {
+                errors.Add("SecretKeyVar is not configured");
+            }
+            else if (string.IsNullOrWhiteSpace(ResolveSecretKey()))
+            {
+                errors.Add($"Environment variable '{SecretKeyVar}' is not set or empty");
+            }
+        }
+
+        if (requireUsernameAndPassword)
+        {
+            if (string.IsNullOrWhiteSpace(UsernameVar))
+            {
+                errors.Add("UsernameVar is not configured");
+            }
+            else if (string.IsNullOrWhiteSpace(ResolveUsername()))
+            {
+                errors.Add($"Environment variable '{UsernameVar}' is not set or empty");
+            }
+
+            if (string.IsNullOrWhiteSpace(PasswordVar))
+            {
+                errors.Add("PasswordVar is not configured");
+            }
+            else if (string.IsNullOrWhiteSpace(ResolvePassword()))
+            {
+                errors.Add($"Environment variable '{PasswordVar}' is not set or empty");
+            }
+        }
+
+        // Validate file source if specified
+        if (Source.Equals("File", StringComparison.OrdinalIgnoreCase))
+        {
+            if (string.IsNullOrWhiteSpace(CredentialsPath))
+            {
+                errors.Add("CredentialsPath is required when Source is 'File'");
+            }
+            else if (!File.Exists(CredentialsPath))
+            {
+                errors.Add($"Credentials file not found: {CredentialsPath}");
+            }
+        }
+
+        // Validate vault source if specified
+        if (Source.Equals("Vault", StringComparison.OrdinalIgnoreCase))
+        {
+            if (string.IsNullOrWhiteSpace(VaultPath))
+            {
+                errors.Add("VaultPath is required when Source is 'Vault'");
+            }
+            // Note: Vault support (AWS Secrets Manager, Azure Key Vault) requires additional implementation
+        }
+
+        return new CredentialValidationResult(errors.Count == 0, errors);
+    }
+
+    /// <summary>
+    /// Performs a pre-flight check ensuring all credentials can be resolved.
+    /// Throws InvalidOperationException if validation fails.
+    /// </summary>
+    /// <param name="sourceName">Name of the data source for error messages.</param>
+    /// <param name="requireApiKey">Whether an API key is required.</param>
+    /// <param name="requireKeyIdAndSecret">Whether key ID and secret are required.</param>
+    /// <param name="requireUsernameAndPassword">Whether username and password are required.</param>
+    /// <exception cref="InvalidOperationException">Thrown when validation fails.</exception>
+    public void EnsureValid(
+        string sourceName,
+        bool requireApiKey = false,
+        bool requireKeyIdAndSecret = false,
+        bool requireUsernameAndPassword = false)
+    {
+        var result = Validate(requireApiKey, requireKeyIdAndSecret, requireUsernameAndPassword);
+        if (!result.IsValid)
+        {
+            throw new InvalidOperationException(
+                $"Credential validation failed for '{sourceName}': {string.Join("; ", result.Errors)}");
+        }
+    }
+}
+
+/// <summary>
+/// Result of credential validation.
+/// </summary>
+public sealed record CredentialValidationResult(bool IsValid, IReadOnlyList<string> Errors)
+{
+    /// <summary>
+    /// Creates a successful validation result.
+    /// </summary>
+    public static CredentialValidationResult Success { get; } = new(true, Array.Empty<string>());
 }
 
 /// <summary>

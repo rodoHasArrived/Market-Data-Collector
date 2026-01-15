@@ -1,78 +1,67 @@
-# Auto-labeler configuration for Pull Requests
-# This file defines patterns for automatically labeling PRs based on changed files
+# Configuration for labeler - https://github.com/actions/labeler
 
-# Documentation
+# Documentation changes
 documentation:
   - changed-files:
-    - any-glob-to-any-file: ['docs/**', '*.md', 'README*']
+    - any-glob-to-any-file: 'docs/**/*'
+    - any-glob-to-any-file: '**/*.md'
 
-# Source code categories
-'area: core':
-  - changed-files:
-    - any-glob-to-any-file: ['src/MarketDataCollector/**', '!src/MarketDataCollector/Infrastructure/**']
-
-'area: ui':
-  - changed-files:
-    - any-glob-to-any-file: ['src/MarketDataCollector.Ui/**', 'src/MarketDataCollector.Uwp/**']
-
-'area: providers':
-  - changed-files:
-    - any-glob-to-any-file: ['src/MarketDataCollector/Infrastructure/Providers/**']
-
-'area: storage':
-  - changed-files:
-    - any-glob-to-any-file: ['src/MarketDataCollector/Storage/**']
-
-'area: microservices':
-  - changed-files:
-    - any-glob-to-any-file: ['src/Microservices/**']
-
-'area: fsharp':
-  - changed-files:
-    - any-glob-to-any-file: ['**/*.fs', '**/*.fsproj', 'src/MarketDataCollector.FSharp/**']
-
-# Tests
+# Test files
 tests:
   - changed-files:
-    - any-glob-to-any-file: ['tests/**', '**/*.Tests/**', '**/*Tests.cs', '**/*Tests.fs']
+    - any-glob-to-any-file: 'tests/**/*'
+    - any-glob-to-any-file: '**/*Tests.cs'
+    - any-glob-to-any-file: '**/*Tests.fs'
 
-# Benchmarks
-benchmarks:
+# CI/CD workflows
+ci/cd:
   - changed-files:
-    - any-glob-to-any-file: ['benchmarks/**']
+    - any-glob-to-any-file: '.github/workflows/**/*'
+    - any-glob-to-any-file: '.github/**/*.yml'
 
-# Infrastructure
-infrastructure:
+# Benchmark files
+performance:
   - changed-files:
-    - any-glob-to-any-file: 
-      - '.github/**'
-      - 'deploy/**'
-      - 'Dockerfile'
-      - 'docker-compose.yml'
-      - '.dockerignore'
+    - any-glob-to-any-file: 'benchmarks/**/*'
 
-# Build and configuration
-'build/config':
+# Docker related
+docker:
   - changed-files:
-    - any-glob-to-any-file:
-      - '*.sln'
-      - '*.csproj'
-      - '*.fsproj'
-      - 'Directory.Build.props'
-      - 'Makefile'
-      - 'config/**'
-      - 'appsettings*.json'
+    - any-glob-to-any-file: '**/Dockerfile*'
+    - any-glob-to-any-file: '**/docker-compose*.yml'
+    - any-glob-to-any-file: 'deploy/docker/**/*'
 
-# Scripts
-scripts:
+# Provider implementations
+provider:
   - changed-files:
-    - any-glob-to-any-file: ['scripts/**', '*.sh', '*.ps1']
+    - any-glob-to-any-file: '**/Providers/**/*'
+    - any-glob-to-any-file: '**/Infrastructure/Providers/**/*'
 
-# Security
-security:
+# Storage implementations
+storage:
   - changed-files:
-    - any-glob-to-any-file: 
-      - '**/CredentialManager.cs'
-      - '**/SecurityContext.cs'
-      - '**/*Security*'
-      - '**/*Auth*'
+    - any-glob-to-any-file: '**/Storage/**/*'
+
+# UI changes
+ui:
+  - changed-files:
+    - any-glob-to-any-file: 'src/MarketDataCollector.Ui/**/*'
+    - any-glob-to-any-file: 'src/MarketDataCollector.Uwp/**/*'
+
+# Configuration files
+configuration:
+  - changed-files:
+    - any-glob-to-any-file: 'config/**/*'
+    - any-glob-to-any-file: '**/appsettings*.json'
+
+# Microservices
+microservices:
+  - changed-files:
+    - any-glob-to-any-file: 'src/Microservices/**/*'
+
+# Dependencies
+dependencies:
+  - changed-files:
+    - any-glob-to-any-file: '**/*.csproj'
+    - any-glob-to-any-file: '**/*.fsproj'
+    - any-glob-to-any-file: 'Directory.Build.props'

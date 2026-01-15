@@ -165,10 +165,11 @@
                     <ListView x:Name="SymbolsListView"
                               Grid.Row="2"
                               SelectionMode="Single"
-                              SelectionChanged="SymbolsListView_SelectionChanged">
+                              SelectionChanged="SymbolsListView_SelectionChanged"
+                              RightTapped="SymbolItem_RightTapped">
                         <ListView.ItemTemplate>
                             <DataTemplate>
-                                <Grid Padding="8,8">
+                                <Grid Padding="8,8" RightTapped="SymbolItem_RightTapped" Tag="{Binding Symbol}">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="40" />
                                         <ColumnDefinition Width="80" />
