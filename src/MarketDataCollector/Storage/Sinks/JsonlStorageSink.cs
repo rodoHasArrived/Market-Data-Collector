@@ -415,7 +415,6 @@ public sealed class JsonlStorageSink : IStorageSink
         private DateTime _lastSweep = DateTime.MinValue;
         private bool _disposed;
         private static readonly string[] _extensions = new[] { ".jsonl", ".jsonl.gz", ".jsonl.gzip" };
-        private bool _disposed;
 
         public RetentionManager(string root, int? retentionDays, long? maxBytes, ILogger logger)
         {

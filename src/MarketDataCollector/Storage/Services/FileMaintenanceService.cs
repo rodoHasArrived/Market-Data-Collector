@@ -240,7 +240,8 @@ public sealed class FileMaintenanceService : IFileMaintenanceService
                     {
                         foreach (var file in filesToMerge)
                         {
-                            try { file.Delete(); } catch { }
+                            try { file.Delete(); }
+                            catch (IOException) { /* File may be in use */ }
                         }
                     }
                 }

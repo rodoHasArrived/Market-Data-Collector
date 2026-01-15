@@ -133,7 +133,7 @@ public sealed class DiagnosticBundleService
                 if (Directory.Exists(tempDir))
                     Directory.Delete(tempDir, recursive: true);
             }
-            catch { /* Best effort cleanup */ }
+            catch (IOException) { /* Best effort cleanup - directory may be in use */ }
         }
     }
 
@@ -315,7 +315,7 @@ public sealed class DiagnosticBundleService
                 info.AppendLine($"Free Space: {driveInfo.AvailableFreeSpace / 1024 / 1024 / 1024} GB");
                 info.AppendLine($"Free Percent: {(double)driveInfo.AvailableFreeSpace / driveInfo.TotalSize * 100:F1}%");
             }
-            catch { /* Disk info not available on all systems */ }
+            catch (IOException) { /* Disk info not available on all systems */ }
         }
 
         await File.WriteAllTextAsync(Path.Combine(tempDir, "storage-info.txt"), info.ToString(), ct);
@@ -354,9 +354,9 @@ public sealed class DiagnosticBundleService
         manifest.FilesCollected.Add("environment.txt");
     }
 
-    private static Task ListDirectoryAsync(string path, StringBuilder sb, string indent, int maxDepth)
+    private static async Task ListDirectoryAsync(string path, StringBuilder sb, string indent, int maxDepth)
     {
-        if (maxDepth <= 0) return Task.CompletedTask;
+        if (maxDepth <= 0) return;
 
         try
         {
@@ -365,10 +365,9 @@ public sealed class DiagnosticBundleService
                 var dirName = Path.GetFileName(dir);
                 if (dirName.StartsWith(".")) continue;
 
-                var dirInfo = new DirectoryInfo(dir);
                 sb.AppendLine($"{indent}[DIR] {dirName}/");
 
-                ListDirectoryAsync(dir, sb, indent + "  ", maxDepth - 1).Wait();
+                await ListDirectoryAsync(dir, sb, indent + "  ", maxDepth - 1);
             }
 
             foreach (var file in Directory.GetFiles(path))
@@ -378,9 +377,8 @@ public sealed class DiagnosticBundleService
                 sb.AppendLine($"{indent}{fileName} ({FormatSize(fileInfo.Length)})");
             }
         }
-        catch { /* Access denied or other error */ }
-
-        return Task.CompletedTask;
+        catch (UnauthorizedAccessException) { /* Access denied */ }
+        catch (IOException) { /* Directory access error */ }
     }
 
     private static string FormatSize(long bytes)

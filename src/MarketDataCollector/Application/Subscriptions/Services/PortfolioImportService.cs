@@ -221,8 +221,14 @@ public sealed class PortfolioImportService
         );
     }
 
-    // TODO: Implement full IB portfolio import using TWS API or IBAutomater
-    // Current implementation only supports Client Portal API which requires manual login
+    /// <summary>
+    /// Fetches portfolio data from Interactive Brokers using the Client Portal API.
+    /// </summary>
+    /// <remarks>
+    /// Current implementation uses the Client Portal API which requires IB Gateway or TWS
+    /// with Client Portal enabled. For fully automated integration, consider using IBAutomater
+    /// or the official TWS API with the EnhancedIBConnectionManager.
+    /// </remarks>
     private async Task<PortfolioSummary> FetchInteractiveBrokersPortfolioAsync(IBOptions ibConfig, CancellationToken ct)
     {
         // IB Client Portal API or TWS API integration

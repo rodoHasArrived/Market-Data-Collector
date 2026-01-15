@@ -30,6 +30,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
 
+
     <!-- Assembly Information -->
     <AssemblyName>MarketDataCollector.Desktop</AssemblyName>
     <Version>1.0.0</Version>
@@ -54,10 +55,9 @@
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
     <PackageReference Include="CommunityToolkit.WinUI.Controls.Primitives" Version="8.0.240109" />
     <PackageReference Include="CommunityToolkit.WinUI.Controls.Sizers" Version="8.0.240109" />
-    <!-- Windows App SDK 1.6+ required for .NET 9 support
-         Note: SDK 1.8.x has XamlCompiler crashes - staying on 1.6 until fixed
+    <!-- Windows App SDK 1.7.x for .NET 9 support
          See https://github.com/microsoft/WindowsAppSDK/releases for latest versions -->
-    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.6.250108002" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.7.250127001" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.1" />
     <PackageReference Include="System.Text.Json" Version="9.0.0" />
   </ItemGroup>

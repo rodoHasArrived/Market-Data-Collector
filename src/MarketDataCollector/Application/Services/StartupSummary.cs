@@ -204,7 +204,7 @@ public sealed class StartupSummary
                     suggestions.Add("Consider enabling compression or setting a storage limit");
                 }
             }
-            catch { /* Ignore disk check errors */ }
+            catch (IOException) { /* Ignore disk check errors - drive may be unavailable */ }
         }
 
         // Check symbols

@@ -62,11 +62,13 @@ public sealed class SubscriptionManager
                 {
                     if (_depthSubs.TryRemove(existing, out var depthId) && depthId > 0)
                     {
-                        try { _ib.UnsubscribeMarketDepth(depthId); } catch { /* ignore */ }
+                        try { _ib.UnsubscribeMarketDepth(depthId); }
+                        catch (Exception ex) { _log.Debug(ex, "Error unsubscribing market depth for {Symbol}", existing); }
                     }
                     if (_tradeSubs.TryRemove(existing, out var tradeId) && tradeId > 0)
                     {
-                        try { _ib.UnsubscribeTrades(tradeId); } catch { /* ignore */ }
+                        try { _ib.UnsubscribeTrades(tradeId); }
+                        catch (Exception ex) { _log.Debug(ex, "Error unsubscribing trades for {Symbol}", existing); }
                     }
                     _depthCollector.UnregisterSubscription(existing);
                     _log.Information("Unsubscribed {Symbol} (removed from configuration)", existing);
@@ -123,7 +125,8 @@ public sealed class SubscriptionManager
 
                     if (_depthSubs.TryRemove(symbol, out var subId) && subId > 0)
                     {
-                        try { _ib.UnsubscribeMarketDepth(subId); } catch { /* ignore */ }
+                        try { _ib.UnsubscribeMarketDepth(subId); }
+                        catch (Exception ex) { _log.Debug(ex, "Error unsubscribing market depth for {Symbol}", symbol); }
                     }
                 }
 
@@ -147,7 +150,8 @@ public sealed class SubscriptionManager
                 {
                     if (_tradeSubs.TryRemove(symbol, out var tradeId) && tradeId > 0)
                     {
-                        try { _ib.UnsubscribeTrades(tradeId); } catch { /* ignore */ }
+                        try { _ib.UnsubscribeTrades(tradeId); }
+                        catch (Exception ex) { _log.Debug(ex, "Error unsubscribing trades for {Symbol}", symbol); }
                     }
                 }
             }

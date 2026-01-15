@@ -474,7 +474,7 @@ public sealed class StorageSearchService : IStorageSearchService
                     eventCount++;
                 }
             }
-            catch { }
+            catch (IOException) { /* File may be inaccessible */ }
 
             return new FileMetadata(
                 FilePath: filePath,
@@ -539,7 +539,7 @@ public sealed class StorageSearchService : IStorageSearchService
             {
                 evt = JsonSerializer.Deserialize<MarketEvent>(line);
             }
-            catch { }
+            catch (JsonException) { /* Skip malformed lines */ }
 
             if (evt != null)
                 yield return evt;

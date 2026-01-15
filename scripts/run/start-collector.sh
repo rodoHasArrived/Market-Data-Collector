@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# START_COLLECTOR.exp
+# start-collector.sh
 # Market Data Collector – Canonical Startup Execution Plan (Linux/macOS)
 #
 # Features:
@@ -10,7 +10,7 @@
 #   - Handles Ctrl+C / SIGTERM gracefully (stops child processes)
 #
 # Usage:
-#   ./START_COLLECTOR.exp
+#   ./start-collector.sh
 #
 # Flags (env vars):
 #   USE_IBAPI=true|false
@@ -266,7 +266,7 @@ echo "-----------------------------------------------"
 echo "[INFO] Running."
 echo "[INFO] Status file: $DATA_DIR/_status/status.json"
 echo "[INFO] Logs: $LOG_DIR"
-echo "[INFO] Stop: Ctrl+C (graceful) or run STOP scripts."
+echo "[INFO] Stop: Ctrl+C (graceful) or run stop-collector.sh."
 echo "==============================================="
 
 # Wait for collector (primary)

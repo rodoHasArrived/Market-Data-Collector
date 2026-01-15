@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# STOP_COLLECTOR.exp - Stops Collector/UI using pid files in ./run/
+# stop-collector.sh - Stops Collector/UI using pid files in ./run/
 set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 RUN_DIR="$ROOT_DIR/run"

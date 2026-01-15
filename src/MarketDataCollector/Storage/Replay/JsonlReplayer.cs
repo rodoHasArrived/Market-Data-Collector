@@ -2,7 +2,9 @@ using System.IO.Compression;
 using System.Text.Json;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Domain.Events;
+using Serilog;
 
 namespace MarketDataCollector.Storage.Replay;
 
@@ -11,6 +13,7 @@ namespace MarketDataCollector.Storage.Replay;
 /// </summary>
 public sealed class JsonlReplayer
 {
+    private static readonly ILogger Log = LoggingSetup.ForContext<JsonlReplayer>();
     private readonly string _root;
 
     public JsonlReplayer(string root)
@@ -48,7 +51,7 @@ public sealed class JsonlReplayer
 
             MarketEvent? evt = null;
             try { evt = JsonSerializer.Deserialize<MarketEvent>(line, new JsonSerializerOptions(JsonSerializerDefaults.Web)); }
-            catch { }
+            catch (JsonException ex) { Log.Debug(ex, "Failed to parse JSONL line in {File}", file); }
 
             if (evt is not null)
                 yield return evt;

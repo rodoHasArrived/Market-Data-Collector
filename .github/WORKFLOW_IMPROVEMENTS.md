@@ -1,5 +1,8 @@
 # Workflow Improvements Summary
 
+> **Note:** For comprehensive workflow documentation, see [workflows/README.md](workflows/README.md).
+> This document serves as a historical summary of workflow additions.
+
 This document summarizes the GitHub workflow improvements added to the Market Data Collector repository.
 
 ## Overview
