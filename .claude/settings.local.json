@@ -50,7 +50,8 @@
       "Bash(XAML_COMPILER_DIAGNOSTIC_LEVEL=4 dotnet build:*)",
       "Bash(\"C:\\Users\\Andrew James Rowden\\.nuget\\packages\\microsoft.windowsappsdk\\1.6.250108002\\tools\\net472\\XamlCompiler.exe\")",
       "Bash(\"C:\\Users\\Andrew James Rowden\\.nuget\\packages\\microsoft.windowsappsdk\\1.6.250108002\\tools\\net472\\XamlCompiler.exe\" input.json output.json)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(MSBUILD_XamlCompilerDiagnosticLevel=4 \"C:\\Users\\Andrew James Rowden\\.nuget\\packages\\microsoft.windowsappsdk\\1.6.250108002\\tools\\net472\\XamlCompiler.exe\":*)"
     ]
   }
 }
