@@ -124,14 +124,14 @@ public class MassTransitPublisherTests : IAsyncLifetime
         // Arrange
         var bids = new List<OrderBookLevel>
         {
-            new(OrderBookSide.Bid, 0, 100.50, 500, "MM1"),
-            new(OrderBookSide.Bid, 1, 100.45, 300, "MM2")
+            new(OrderBookSide.Bid, 0, 100.50m, 500m, "MM1"),
+            new(OrderBookSide.Bid, 1, 100.45m, 300m, "MM2")
         };
 
         var asks = new List<OrderBookLevel>
         {
-            new(OrderBookSide.Ask, 0, 100.55, 400, "MM3"),
-            new(OrderBookSide.Ask, 1, 100.60, 200, "MM4")
+            new(OrderBookSide.Ask, 0, 100.55m, 400m, "MM3"),
+            new(OrderBookSide.Ask, 1, 100.60m, 200m, "MM4")
         };
 
         var snapshot = new LOBSnapshot(
@@ -139,9 +139,9 @@ public class MassTransitPublisherTests : IAsyncLifetime
             Symbol: "GOOG",
             Bids: bids,
             Asks: asks,
-            MidPrice: 100.525,
-            MicroPrice: 100.52,
-            Imbalance: 0.1,
+            MidPrice: 100.525m,
+            MicroPrice: 100.52m,
+            Imbalance: 0.1m,
             MarketState: MarketState.Normal,
             SequenceNumber: 200
         );

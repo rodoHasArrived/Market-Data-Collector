@@ -173,7 +173,7 @@ public class ConnectionRetryIntegrationTests
         // Act & Assert
         await Assert.ThrowsAsync<OperationCanceledException>(async () =>
         {
-            await pipeline.ExecuteAsync(async ct =>
+            await pipeline.ExecuteAsync<WebSocketReceiveResult>(async ct =>
             {
                 attemptCount++;
                 await Task.CompletedTask;

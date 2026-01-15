@@ -480,9 +480,10 @@ public class OrderBookMatchingEngineTests
 
         // Assert
         result.Should().NotBeNull();
-        result!.Order.Price.Should().Be(451.00m);
-        result.Order.Quantity.Should().Be(150);
-        result.Order.Status.Should().Be(OrderStatus.Open);
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.Order.Price.Should().Be(451.00m);
+        result.Value.Order.Quantity.Should().Be(150);
+        result.Value.Order.Status.Should().Be(OrderStatus.Open);
         engine.BestBid.Should().Be(451.00m);
     }
 }

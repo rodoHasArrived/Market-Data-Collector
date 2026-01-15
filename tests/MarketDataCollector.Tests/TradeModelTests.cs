@@ -175,8 +175,9 @@ public class TradeModelTests
     public void Trade_IsImmutable()
     {
         // Arrange
+        var timestamp = DateTimeOffset.UtcNow;
         var original = new Trade(
-            Timestamp: DateTimeOffset.UtcNow,
+            Timestamp: timestamp,
             Symbol: "AAPL",
             Price: 150.50m,
             Size: 100,
@@ -184,8 +185,15 @@ public class TradeModelTests
             SequenceNumber: 1
         );
 
-        // Act - use with expression to create modified copy
-        var modified = original with { Price = 151.00m };
+        // Act - create new trade with different price (records are immutable, properties are read-only)
+        var modified = new Trade(
+            Timestamp: original.Timestamp,
+            Symbol: original.Symbol,
+            Price: 151.00m,  // Different price
+            Size: original.Size,
+            Aggressor: original.Aggressor,
+            SequenceNumber: original.SequenceNumber
+        );
 
         // Assert - original should be unchanged
         original.Price.Should().Be(150.50m);

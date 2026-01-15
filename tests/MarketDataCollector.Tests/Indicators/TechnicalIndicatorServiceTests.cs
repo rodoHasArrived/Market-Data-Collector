@@ -222,7 +222,8 @@ public class TechnicalIndicatorServiceTests
             var close = basePrice + dayChange;
 
             yield return new HistoricalBar(
-                Timestamp: DateTimeOffset.UtcNow.AddDays(-count + i),
+                Symbol: "TEST",
+                SessionDate: DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-count + i)),
                 Open: basePrice,
                 High: high,
                 Low: low,

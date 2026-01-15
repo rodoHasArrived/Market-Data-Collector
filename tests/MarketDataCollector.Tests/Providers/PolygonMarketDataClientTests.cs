@@ -104,7 +104,7 @@ public class PolygonMarketDataClientTests : IDisposable
             _mockPublisher.Object,
             _mockTradeCollector.Object,
             _mockQuoteCollector.Object,
-            opt: null);
+            options: null);
 
         // Assert - client should be created successfully
         client.Should().NotBeNull();

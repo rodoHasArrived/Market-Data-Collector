@@ -95,10 +95,10 @@ public class PrometheusMetricsTests
 public class PrometheusMetricsUpdaterTests
 {
     [Fact]
-    public void Constructor_ShouldInitialize()
+    public async Task Constructor_ShouldInitialize()
     {
         // Arrange & Act
-        using var updater = new PrometheusMetricsUpdater(TimeSpan.FromSeconds(1));
+        await using var updater = new PrometheusMetricsUpdater(TimeSpan.FromSeconds(1));
 
         // Assert
         updater.Should().NotBeNull();
@@ -122,7 +122,7 @@ public class PrometheusMetricsUpdaterTests
     {
         // Arrange
         Metrics.Reset();
-        using var updater = new PrometheusMetricsUpdater(TimeSpan.FromMilliseconds(50));
+        await using var updater = new PrometheusMetricsUpdater(TimeSpan.FromMilliseconds(50));
 
         // Increment metrics
         for (int i = 0; i < 5; i++)

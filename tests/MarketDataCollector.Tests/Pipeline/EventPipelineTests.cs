@@ -179,11 +179,11 @@ public class EventPipelineTests : IAsyncLifetime
     }
 
     [Fact]
-    public void QueueUtilization_ReflectsQueueFill()
+    public async Task QueueUtilization_ReflectsQueueFill()
     {
         // Arrange - Create pipeline with small capacity
-        using var sink = new MockStorageSink { ProcessingDelay = TimeSpan.FromMilliseconds(1000) };
-        using var pipeline = new EventPipeline(sink, capacity: 100, enablePeriodicFlush: false);
+        await using var sink = new MockStorageSink { ProcessingDelay = TimeSpan.FromMilliseconds(1000) };
+        await using var pipeline = new EventPipeline(sink, capacity: 100, enablePeriodicFlush: false);
 
         // Act - Fill the queue
         for (int i = 0; i < 50; i++)
@@ -199,7 +199,7 @@ public class EventPipelineTests : IAsyncLifetime
     public async Task PeakQueueSize_TracksHighWaterMark()
     {
         // Arrange
-        using var sink = new MockStorageSink { ProcessingDelay = TimeSpan.FromMilliseconds(10) };
+        await using var sink = new MockStorageSink { ProcessingDelay = TimeSpan.FromMilliseconds(10) };
         await using var pipeline = new EventPipeline(sink, capacity: 1000, enablePeriodicFlush: false);
 
         // Act - Publish events faster than they can be consumed
@@ -223,7 +223,7 @@ public class EventPipelineTests : IAsyncLifetime
     public async Task TryPublish_WhenQueueFull_DropOldestMode_DropsEvents()
     {
         // Arrange - Small capacity with slow consumer
-        using var sink = new MockStorageSink { ProcessingDelay = TimeSpan.FromMilliseconds(100) };
+        await using var sink = new MockStorageSink { ProcessingDelay = TimeSpan.FromMilliseconds(100) };
         await using var pipeline = new EventPipeline(
             sink,
             capacity: 10,
@@ -247,7 +247,7 @@ public class EventPipelineTests : IAsyncLifetime
     public async Task TryPublish_WhenQueueFull_DropWriteMode_ReturnsFalse()
     {
         // Arrange - Small capacity with slow consumer
-        using var sink = new MockStorageSink { ProcessingDelay = TimeSpan.FromMilliseconds(1000) };
+        await using var sink = new MockStorageSink { ProcessingDelay = TimeSpan.FromMilliseconds(1000) };
         await using var pipeline = new EventPipeline(
             sink,
             capacity: 5,
@@ -306,7 +306,7 @@ public class EventPipelineTests : IAsyncLifetime
     public async Task PeriodicFlush_WhenEnabled_FlushesAutomatically()
     {
         // Arrange
-        using var sink = new MockStorageSink();
+        await using var sink = new MockStorageSink();
         await using var pipeline = new EventPipeline(
             sink,
             capacity: 1000,
@@ -330,10 +330,10 @@ public class EventPipelineTests : IAsyncLifetime
     [InlineData(0)]
     [InlineData(-1)]
     [InlineData(-100)]
-    public void Constructor_WithInvalidCapacity_ThrowsArgumentOutOfRangeException(int invalidCapacity)
+    public async Task Constructor_WithInvalidCapacity_ThrowsArgumentOutOfRangeException(int invalidCapacity)
     {
         // Arrange
-        using var sink = new MockStorageSink();
+        await using var sink = new MockStorageSink();
 
         // Act & Assert
         var exception = Assert.Throws<ArgumentOutOfRangeException>(
@@ -344,10 +344,11 @@ public class EventPipelineTests : IAsyncLifetime
     }
 
     [Fact]
-    public void Constructor_WithNullSink_ThrowsArgumentNullException()
+    public async Task Constructor_WithNullSink_ThrowsArgumentNullException()
     {
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() => new EventPipeline(null!));
+        await Task.CompletedTask;
     }
 
     #endregion
@@ -375,7 +376,7 @@ public class EventPipelineTests : IAsyncLifetime
     public async Task DisposeAsync_FlushesFinalEvents()
     {
         // Arrange
-        using var sink = new MockStorageSink();
+        await using var sink = new MockStorageSink();
         var pipeline = new EventPipeline(sink, capacity: 1000, enablePeriodicFlush: false);
 
         pipeline.TryPublish(CreateTradeEvent("SPY"));
@@ -392,7 +393,7 @@ public class EventPipelineTests : IAsyncLifetime
     public async Task DisposeAsync_ProcessesPendingEvents()
     {
         // Arrange
-        using var sink = new MockStorageSink();
+        await using var sink = new MockStorageSink();
         var pipeline = new EventPipeline(sink, capacity: 1000, enablePeriodicFlush: false);
 
         for (int i = 0; i < 10; i++)
@@ -415,7 +416,7 @@ public class EventPipelineTests : IAsyncLifetime
     public async Task PublishAsync_WithCancellation_ThrowsWhenCancelled()
     {
         // Arrange
-        using var sink = new MockStorageSink { ProcessingDelay = TimeSpan.FromMilliseconds(1000) };
+        await using var sink = new MockStorageSink { ProcessingDelay = TimeSpan.FromMilliseconds(1000) };
         await using var pipeline = new EventPipeline(sink, capacity: 1, enablePeriodicFlush: false);
 
         // Fill the queue
@@ -425,7 +426,7 @@ public class EventPipelineTests : IAsyncLifetime
 
         // Act & Assert
         await Assert.ThrowsAsync<OperationCanceledException>(
-            () => pipeline.PublishAsync(CreateTradeEvent("AAPL"), cts.Token));
+            async () => await pipeline.PublishAsync(CreateTradeEvent("AAPL"), cts.Token));
     }
 
     #endregion
@@ -436,7 +437,7 @@ public class EventPipelineTests : IAsyncLifetime
     public async Task Consumer_WhenSinkThrows_ContinuesProcessing()
     {
         // Arrange
-        using var sink = new MockStorageSink { ShouldThrowOnAppend = true, ThrowAfterCount = 5 };
+        await using var sink = new MockStorageSink { ShouldThrowOnAppend = true, ThrowAfterCount = 5 };
         await using var pipeline = new EventPipeline(sink, capacity: 1000, enablePeriodicFlush: false);
 
         // Act - Publish events, some will cause exceptions
@@ -461,7 +462,7 @@ public class EventPipelineTests : IAsyncLifetime
     {
         // Arrange
         const int eventCount = 10000;
-        using var sink = new MockStorageSink();
+        await using var sink = new MockStorageSink();
         await using var pipeline = new EventPipeline(sink, capacity: 100000, enablePeriodicFlush: false);
 
         var sw = System.Diagnostics.Stopwatch.StartNew();
@@ -513,10 +514,10 @@ public class EventPipelineTests : IAsyncLifetime
                 Timestamp: DateTimeOffset.UtcNow,
                 Symbol: symbol,
                 BidPrice: 100.00m,
-                BidSize: 100,
+                BidSize: 100L,
                 AskPrice: 100.10m,
-                AskSize: 200),
-            sequenceNumber: 1);
+                AskSize: 200L),
+            seq: 1);
 
         return MarketEvent.BboQuote(DateTimeOffset.UtcNow, symbol, quote);
     }

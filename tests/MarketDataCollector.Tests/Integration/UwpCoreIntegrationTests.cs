@@ -3,6 +3,8 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using FluentAssertions;
 using MarketDataCollector.Application.Monitoring;
+using MarketDataCollector.Application.Pipeline;
+using MarketDataCollector.Domain.Models;
 using Xunit;
 
 namespace MarketDataCollector.Tests.Integration;
@@ -18,19 +20,38 @@ public class UwpCoreIntegrationTests : IAsyncLifetime
     private const int TestPort = 18080;
     private static readonly string BaseUrl = $"http://localhost:{TestPort}";
 
-    public async Task InitializeAsync()
+    public Task InitializeAsync()
     {
         // Create metrics provider functions for the status server
-        var metricsProvider = () => new MetricsSnapshot(
+        Func<MetricsSnapshot> metricsProvider = () => new MetricsSnapshot(
             Published: 100,
             Dropped: 5,
             Integrity: 2,
+            Trades: 80,
+            DepthUpdates: 15,
+            Quotes: 5,
             HistoricalBars: 50,
             EventsPerSecond: 1000.0,
-            DropRate: 0.05
+            TradesPerSecond: 800.0,
+            DepthUpdatesPerSecond: 150.0,
+            HistoricalBarsPerSecond: 50.0,
+            DropRate: 0.05,
+            AverageLatencyUs: 100.0,
+            MinLatencyUs: 10.0,
+            MaxLatencyUs: 500.0,
+            LatencySampleCount: 1000,
+            Gc0Collections: 0,
+            Gc1Collections: 0,
+            Gc2Collections: 0,
+            Gc0Delta: 0,
+            Gc1Delta: 0,
+            Gc2Delta: 0,
+            MemoryUsageMb: 100.0,
+            HeapSizeMb: 50.0,
+            Timestamp: DateTimeOffset.UtcNow
         );
 
-        var pipelineProvider = () => new PipelineSnapshot(
+        Func<PipelineStatistics> pipelineProvider = () => new PipelineStatistics(
             PublishedCount: 100,
             DroppedCount: 5,
             ConsumedCount: 95,
@@ -38,14 +59,16 @@ public class UwpCoreIntegrationTests : IAsyncLifetime
             PeakQueueSize: 1000,
             QueueCapacity: 100000,
             QueueUtilization: 0.0001,
-            AverageProcessingTimeUs: 50.5
+            AverageProcessingTimeUs: 50.5,
+            TimeSinceLastFlush: TimeSpan.FromSeconds(1),
+            Timestamp: DateTimeOffset.UtcNow
         );
 
-        var integrityProvider = () => Array.Empty<object>();
+        Func<IReadOnlyList<DepthIntegrityEvent>> integrityProvider = () => Array.Empty<DepthIntegrityEvent>();
 
         // Start the status server
         _server = new StatusHttpServer(TestPort, metricsProvider, pipelineProvider, integrityProvider);
-        await _server.StartAsync(CancellationToken.None);
+        _server.Start();
 
         // Create HTTP client
         _httpClient = new HttpClient
@@ -54,8 +77,7 @@ public class UwpCoreIntegrationTests : IAsyncLifetime
             Timeout = TimeSpan.FromSeconds(5)
         };
 
-        // Wait for server to be ready
-        await Task.Delay(100);
+        return Task.CompletedTask;
     }
 
     public async Task DisposeAsync()
@@ -64,7 +86,7 @@ public class UwpCoreIntegrationTests : IAsyncLifetime
 
         if (_server != null)
         {
-            await _server.StopAsync();
+            await _server.DisposeAsync();
         }
     }
 
@@ -293,29 +315,3 @@ public class UwpCoreIntegrationTests : IAsyncLifetime
         responses.Should().AllSatisfy(r => r.StatusCode.Should().Be(HttpStatusCode.OK));
     }
 }
-
-/// <summary>
-/// Test helper record for metrics.
-/// </summary>
-public record MetricsSnapshot(
-    long Published,
-    long Dropped,
-    long Integrity,
-    long HistoricalBars,
-    double EventsPerSecond,
-    double DropRate
-);
-
-/// <summary>
-/// Test helper record for pipeline data.
-/// </summary>
-public record PipelineSnapshot(
-    long PublishedCount,
-    long DroppedCount,
-    long ConsumedCount,
-    int CurrentQueueSize,
-    long PeakQueueSize,
-    int QueueCapacity,
-    double QueueUtilization,
-    double AverageProcessingTimeUs
-);
