@@ -13,14 +13,14 @@ This document provides the feature roadmap, backlog, and development priorities 
 | Category | Implemented | Pending | Total |
 |----------|-------------|---------|-------|
 | Core Features | 55+ | - | 55+ |
-| Technical Debt | 2 | 6 | 8 |
-| Quick Wins (≤2 days) | 32 | 93 | 125 |
-| Provider Integration | 4 | 18 | 22 |
-| Monitoring & Alerting | 19 | 5 | 24 |
-| Data Quality | 16 | 7 | 23 |
+| Technical Debt | 5 | 3 | 8 |
+| Quick Wins (≤2 days) | 42 | 83 | 125 |
+| Provider Integration | 5 | 17 | 22 |
+| Monitoring & Alerting | 24 | 0 | 24 |
+| Data Quality | 21 | 2 | 23 |
 | Storage & Archival | 9 | 4 | 13 |
 | Cloud Integration | 0 | 100+ | 100+ |
-| **Total** | **137** | **233+** | **370+** |
+| **Total** | **161** | **209+** | **370+** |
 
 ---
 
@@ -118,7 +118,7 @@ Items that should be addressed before new feature development.
 
 | ID | Item | Priority | Effort | Status |
 |----|------|----------|--------|--------|
-| TD-1 | Replace `double` with `decimal` for prices | High | Medium | Pending |
+| TD-1 | Replace `double` with `decimal` for prices | High | Medium | **Done** |
 | TD-2 | Add authentication to HTTP endpoints | High | Low | **Done** |
 | TD-3 | Complete Alpaca quote message handling | Medium | Low | **Done** |
 | TD-4 | Fix UWP/Core API endpoint mismatch | Medium | Low | **Done** |
@@ -150,9 +150,9 @@ Items that should be addressed before new feature development.
 | QW-7 | Spread Monitor | 1 day | P1 | **Done** |
 | DQ-2 | Duplicate Event Detector | 1 day | P1 | **Done** |
 | DQ-20 | Bad Tick Filter | 1 day | P1 | **Done** |
-| QW-32 | Detailed Health Check Endpoint | 1 day | P1 | Pending |
-| MON-18 | Backpressure Alert | 1 day | P1 | Pending |
-| MON-6 | Connection Status Webhook | 1 day | P1 | Pending |
+| QW-32 | Detailed Health Check Endpoint | 1 day | P1 | **Done** |
+| MON-18 | Backpressure Alert | 1 day | P1 | **Done** |
+| MON-6 | Connection Status Webhook | 1 day | P1 | **Done** |
 
 ### Sprint 3: Developer Experience
 | ID | Feature | Effort | Priority | Status |
@@ -197,20 +197,20 @@ Items that should be addressed before new feature development.
 #### Health & Monitoring
 | ID | Feature | Effort | Impact | Status |
 |----|---------|--------|--------|--------|
-| QW-32 | Detailed Health Check Endpoint | 1 day | High | Pending |
-| QW-33 | Dependency Health Checks | 1 day | High | Pending |
+| QW-32 | Detailed Health Check Endpoint | 1 day | High | **Done** |
+| QW-33 | Dependency Health Checks | 1 day | High | **Done** |
 | QW-58 | Last N Errors Endpoint | 0.5 day | High | **Done** |
 | QW-82 | Events Per Second Gauge | 0.5 day | High | **Done** |
-| QW-87 | Latency Percentiles (P50/P95/P99) | 1 day | High | Pending |
+| QW-87 | Latency Percentiles (P50/P95/P99) | 1 day | High | **Done** |
 
 #### Data Validation
 | ID | Feature | Effort | Impact | Status |
 |----|---------|--------|--------|--------|
 | QW-107 | Negative Price Detector | 0.5 day | High | **Done** |
 | QW-109 | Future Timestamp Detector | 0.5 day | High | **Done** |
-| QW-112 | Sequence Gap Counter | 1 day | High | Pending |
+| QW-112 | Sequence Gap Counter | 1 day | High | **Done** |
 | DQ-13 | Tick Size Validator | 0.5 day | Medium | **Done** |
-| DQ-16 | Price Continuity Checker | 1 day | Medium | Pending |
+| DQ-16 | Price Continuity Checker | 1 day | Medium | **Done** |
 
 #### CLI & Configuration
 | ID | Feature | Effort | Impact | Status |
@@ -222,13 +222,13 @@ Items that should be addressed before new feature development.
 | QW-76 | Config Template Generator | 1 day | High | **Done** |
 
 ### Provider Integration
-| ID | Feature | Effort | Priority |
-|----|---------|--------|----------|
-| PROV-7 | Polygon.io WebSocket | 1 week | P2 |
-| PROV-20 | Coinbase/Kraken Crypto | 1 week | P2 |
-| PROV-22 | Provider Config Wizard | 2 days | P1 |
-| PROV-11 | Provider Latency Histogram | 1 day | P1 |
-| PROV-4 | Multi-Provider Failover | 3 days | P1 |
+| ID | Feature | Effort | Priority | Status |
+|----|---------|--------|----------|--------|
+| PROV-7 | Polygon.io WebSocket | 1 week | P2 | Pending |
+| PROV-20 | Coinbase/Kraken Crypto | 1 week | P2 | Pending |
+| PROV-22 | Provider Config Wizard | 2 days | P1 | Pending |
+| PROV-11 | Provider Latency Histogram | 1 day | P1 | **Done** |
+| PROV-4 | Multi-Provider Failover | 3 days | P1 | Pending |
 
 ### Storage & Archival
 | ID | Feature | Effort | Priority | Status |
