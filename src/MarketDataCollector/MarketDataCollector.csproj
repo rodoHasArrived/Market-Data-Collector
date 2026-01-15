@@ -97,7 +97,7 @@
 
     <!-- Resilience and Retry -->
     <PackageReference Include="Polly" Version="8.6.5" />
-    <PackageReference Include="Polly.Extensions" Version="8.4.2" />
+    <PackageReference Include="Polly.Extensions" Version="8.6.5" />
 
     <!-- WebSocket Client (explicit for clarity) -->
     <PackageReference Include="System.Net.WebSockets.Client" Version="4.3.2" />
