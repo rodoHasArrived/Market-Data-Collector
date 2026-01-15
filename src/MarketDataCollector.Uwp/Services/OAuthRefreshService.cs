@@ -8,7 +8,7 @@ namespace MarketDataCollector.Uwp.Services;
 /// Background service that automatically refreshes OAuth tokens before they expire.
 /// Monitors credential metadata and proactively refreshes tokens based on configured thresholds.
 /// </summary>
-public class OAuthRefreshService : IDisposable
+public sealed class OAuthRefreshService : IDisposable
 {
     private static OAuthRefreshService? _instance;
     private static readonly object _lock = new();

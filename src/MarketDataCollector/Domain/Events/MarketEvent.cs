@@ -39,4 +39,7 @@ public sealed record MarketEvent(
 
     public static MarketEvent HistoricalBar(DateTimeOffset ts, string symbol, HistoricalBar bar, long seq = 0, string source = "stooq")
         => new(ts, symbol, MarketEventType.HistoricalBar, bar, seq == 0 ? bar.SequenceNumber : seq, source);
+
+    public static MarketEvent AggregateBar(DateTimeOffset ts, string symbol, AggregateBar bar, long seq = 0, string source = "Polygon")
+        => new(ts, symbol, MarketEventType.AggregateBar, bar, seq == 0 ? bar.SequenceNumber : seq, source);
 }

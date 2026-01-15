@@ -1,6 +1,6 @@
 # Market Data Collector
 
-**Version**: 1.5.0 (Production Ready) | **Last Updated**: 2026-01-04
+**Version**: 1.5.0 (Production Ready) | **Last Updated**: 2026-01-14
 
 A cross-platform, production-ready market data collector with an intuitive web dashboard. Ingests real-time market data from multiple sources (Interactive Brokers, Alpaca, Polygon), normalizes them into domain events, and persists them as JSONL for downstream research. Features comprehensive error handling, single-executable deployment, and built-in help system.
 
@@ -12,6 +12,10 @@ A cross-platform, production-ready market data collector with an intuitive web d
 - **📊 Analysis-Ready Exports** - Pre-built export profiles for Python, R, QuantConnect Lean, Excel, PostgreSQL
 - **✅ Data Quality Reports** - Comprehensive quality metrics with outlier detection and gap analysis for exports
 - **🔄 Data Versioning** - Dataset fingerprinting and version tracking for reproducible analysis
+- **🧙 Configuration Wizard** - Interactive setup wizard for first-time users (`--wizard`)
+- **⚡ Auto-Configuration** - Automatic provider detection from environment variables (`--auto-config`)
+- **🔍 Provider Detection** - Discover available providers and their status (`--detect-providers`)
+- **✅ Credential Validation** - Validate API credentials before running (`--validate-credentials`)
 
 ## ✨ v1.4 Features
 
@@ -65,7 +69,37 @@ A cross-platform, production-ready market data collector with an intuitive web d
 
 ## Quick start
 
-### **🚀 Easiest Way: Web Dashboard**
+### **🧙 First-Time Setup: Configuration Wizard** (Recommended)
+
+New users should use the interactive configuration wizard:
+
+```bash
+./MarketDataCollector --wizard
+```
+
+The wizard guides you through:
+- Detecting available data providers
+- Selecting and configuring your data source
+- Setting up symbols to track
+- Configuring storage options
+- Generating your `appsettings.json`
+
+### **⚡ Quick Auto-Configuration**
+
+If you have environment variables set for your providers:
+
+```bash
+# Auto-detect and configure from environment
+./MarketDataCollector --auto-config
+
+# Check available providers
+./MarketDataCollector --detect-providers
+
+# Validate your credentials
+./MarketDataCollector --validate-credentials
+```
+
+### **🚀 Web Dashboard**
 
 Start the intuitive web dashboard for easy configuration and monitoring:
 
@@ -124,6 +158,24 @@ dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj
 **Get help:**
 ```bash
 ./MarketDataCollector --help
+```
+
+**Auto-Configuration Commands:**
+```bash
+# Interactive configuration wizard (recommended for new users)
+./MarketDataCollector --wizard
+
+# Quick auto-configuration from environment variables
+./MarketDataCollector --auto-config
+
+# Detect available providers and their status
+./MarketDataCollector --detect-providers
+
+# Validate configured API credentials
+./MarketDataCollector --validate-credentials
+
+# Generate a configuration template
+./MarketDataCollector --generate-config
 ```
 
 See `docs/operator-runbook.md` for production startup scripts, including the systemd unit and PowerShell helpers.

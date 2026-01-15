@@ -14,7 +14,9 @@
         <converters:BoolToConnectionStatusConverter x:Key="BoolToConnectionStatus" />
     </Page.Resources>
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="24">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="24"
+                  AutomationProperties.Name="Dashboard content - Real-time market data monitoring"
+                  AutomationProperties.HelpText="Press F5 to refresh, Ctrl+S to start collector">
         <StackPanel Spacing="24">
             <!-- Header with Quick Actions -->
             <Grid>
@@ -23,33 +25,68 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12">
-                    <FontIcon Glyph="&#xE80F;" FontSize="28" Foreground="{ThemeResource SystemAccentColor}" />
-                    <TextBlock Text="Dashboard" Style="{StaticResource TitleTextBlockStyle}" VerticalAlignment="Center" />
-                    <Border x:Name="CollectorStatusBadge" Background="#48BB78" CornerRadius="4" Padding="8,4" VerticalAlignment="Center">
-                        <TextBlock x:Name="CollectorStatusText" Text="Running" FontSize="12" Foreground="White" />
-                    </Border>
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="16">
+                    <StackPanel Spacing="2">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <TextBlock Text="Dashboard"
+                                       Style="{StaticResource PageTitleStyle}"
+                                       VerticalAlignment="Center"
+                                       AutomationProperties.HeadingLevel="Level1" />
+                            <Border x:Name="CollectorStatusBadge"
+                                    Background="{StaticResource SuccessColorBrush}"
+                                    CornerRadius="4"
+                                    Padding="10,4"
+                                    VerticalAlignment="Center"
+                                    AutomationProperties.Name="Collector status">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <Ellipse Width="6" Height="6" Fill="White" VerticalAlignment="Center" />
+                                    <TextBlock x:Name="CollectorStatusText"
+                                               Text="Running"
+                                               FontSize="12"
+                                               FontWeight="SemiBold"
+                                               Foreground="White" />
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                        <TextBlock Text="Real-time market data monitoring and collection status"
+                                   Style="{StaticResource CardDescriptionStyle}"
+                                   Margin="0" />
+                    </StackPanel>
                 </StackPanel>
 
                 <!-- Quick Actions -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
-                    <Button x:Name="StartCollectorButton" Click="StartCollector_Click">
+                    <Button x:Name="StartCollectorButton"
+                            Click="StartCollector_Click"
+                            Style="{StaticResource PrimaryButtonStyle}"
+                            AutomationProperties.Name="Start collector"
+                            ToolTipService.ToolTip="Start data collection (Ctrl+S)">
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <FontIcon Glyph="&#xE768;" FontSize="14" />
                             <TextBlock Text="Start" />
                         </StackPanel>
+                        <Button.KeyboardAccelerators>
+                            <KeyboardAccelerator Modifiers="Control" Key="S" />
+                        </Button.KeyboardAccelerators>
                     </Button>
-                    <Button x:Name="StopCollectorButton" Click="StopCollector_Click">
+                    <Button x:Name="StopCollectorButton"
+                            Click="StopCollector_Click"
+                            Style="{StaticResource GhostButtonStyle}"
+                            AutomationProperties.Name="Stop collector"
+                            ToolTipService.ToolTip="Stop data collection">
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <FontIcon Glyph="&#xE71A;" FontSize="14" />
                             <TextBlock Text="Stop" />
                         </StackPanel>
                     </Button>
-                    <Button Command="{x:Bind ViewModel.RefreshStatusCommand}">
-                        <StackPanel Orientation="Horizontal" Spacing="6">
-                            <FontIcon Glyph="&#xE72C;" FontSize="14" />
-                            <TextBlock Text="Refresh" />
-                        </StackPanel>
+                    <Button Command="{x:Bind ViewModel.RefreshStatusCommand}"
+                            Style="{StaticResource IconButtonStyle}"
+                            AutomationProperties.Name="Refresh status"
+                            ToolTipService.ToolTip="Refresh dashboard data (F5)">
+                        <FontIcon Glyph="&#xE72C;" FontSize="16" />
+                        <Button.KeyboardAccelerators>
+                            <KeyboardAccelerator Key="F5" />
+                        </Button.KeyboardAccelerators>
                     </Button>
                 </StackPanel>
             </Grid>
@@ -501,7 +538,14 @@
                     <ListView x:Name="SymbolPerformanceList"
                               ItemsSource="{x:Bind ViewModel.Symbols, Mode=OneWay}"
                               SelectionMode="None"
-                              MaxHeight="300">
+                              MaxHeight="300"
+                              AutomationProperties.Name="Symbol performance list">
+                        <!-- Enable virtualization for better performance -->
+                        <ListView.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <ItemsStackPanel Orientation="Vertical" />
+                            </ItemsPanelTemplate>
+                        </ListView.ItemsPanel>
                         <ListView.HeaderTemplate>
                             <DataTemplate>
                                 <Grid Padding="8,4" Background="{ThemeResource SystemFillColorNeutralBackgroundBrush}">
@@ -562,6 +606,432 @@
                             </DataTemplate>
                         </ListView.ItemTemplate>
                     </ListView>
+                </StackPanel>
+            </Border>
+
+            <!-- Two Column Layout: Activity Feed + Data Freshness -->
+            <Grid ColumnSpacing="24">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="350" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Activity Feed -->
+                <Border Grid.Column="0" Style="{StaticResource CardStyle}">
+                    <StackPanel Spacing="12">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                                <FontIcon Glyph="&#xE823;" FontSize="16" Foreground="{ThemeResource SystemAccentColor}" />
+                                <TextBlock Text="Recent Activity" Style="{StaticResource SubtitleTextBlockStyle}" />
+                            </StackPanel>
+
+                            <Button Grid.Column="1" Click="ViewAllActivity_Click" Padding="8,4">
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <TextBlock Text="View All" FontSize="12" />
+                                    <FontIcon Glyph="&#xE72A;" FontSize="10" />
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+
+                        <ListView x:Name="ActivityFeedList" MaxHeight="250" SelectionMode="None"
+                                  AutomationProperties.Name="Recent activity list">
+                            <!-- Enable virtualization for better performance -->
+                            <ListView.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <ItemsStackPanel Orientation="Vertical" />
+                                </ItemsPanelTemplate>
+                            </ListView.ItemsPanel>
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Padding="8,10" ColumnSpacing="12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <!-- Activity Icon -->
+                                        <Border Grid.Column="0" Width="36" Height="36" CornerRadius="18"
+                                                Background="{Binding IconBackground}">
+                                            <FontIcon Glyph="{Binding Icon}" FontSize="14" Foreground="White"
+                                                      HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Border>
+
+                                        <!-- Activity Details -->
+                                        <StackPanel Grid.Column="1" Spacing="2">
+                                            <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
+                                            <TextBlock Text="{Binding Description}" FontSize="12"
+                                                       Foreground="{ThemeResource SystemBaseMediumColor}"
+                                                       TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
+
+                                        <!-- Timestamp -->
+                                        <TextBlock Grid.Column="2" Text="{Binding RelativeTime}" FontSize="11"
+                                                   Foreground="{ThemeResource SystemBaseMediumColor}"
+                                                   VerticalAlignment="Top" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+
+                        <TextBlock x:Name="NoActivityText" Text="No recent activity"
+                                   Foreground="{ThemeResource SystemBaseMediumColor}"
+                                   FontStyle="Italic" HorizontalAlignment="Center" Visibility="Collapsed" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Data Freshness Panel -->
+                <Border Grid.Column="1" Style="{StaticResource CardStyle}">
+                    <StackPanel Spacing="16">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon Glyph="&#xE916;" FontSize="16" Foreground="{ThemeResource SystemAccentColor}" />
+                            <TextBlock Text="Data Freshness" Style="{StaticResource SubtitleTextBlockStyle}" />
+                        </StackPanel>
+
+                        <!-- Overall Freshness Score -->
+                        <Border Background="{ThemeResource SystemFillColorNeutralBackgroundBrush}"
+                                CornerRadius="8" Padding="16">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0" Margin="0,0,16,0">
+                                    <TextBlock x:Name="FreshnessScoreText" Text="98%"
+                                               FontSize="32" FontWeight="Bold"
+                                               Foreground="{StaticResource SuccessColorBrush}" />
+                                    <TextBlock Text="Overall Health" FontSize="12"
+                                               Foreground="{ThemeResource SystemBaseMediumColor}" />
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="1" Spacing="8">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <Ellipse Width="8" Height="8" Fill="{StaticResource SuccessColorBrush}" />
+                                        <TextBlock Text="All streams active" FontSize="12" />
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <Ellipse Width="8" Height="8" Fill="{StaticResource SuccessColorBrush}" />
+                                        <TextBlock Text="No data gaps detected" FontSize="12" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- Per-Symbol Freshness -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="Symbol Status" FontWeight="SemiBold" FontSize="13" />
+
+                            <StackPanel x:Name="SymbolFreshnessList" Spacing="8">
+                                <!-- Sample freshness indicators - populated dynamically -->
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="60" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="SPY" FontWeight="SemiBold" />
+                                    <ProgressBar Grid.Column="1" Value="100" Maximum="100" Height="6" Margin="8,0"
+                                                 Foreground="{StaticResource SuccessColorBrush}" />
+                                    <TextBlock Grid.Column="2" Text="Live" FontSize="11"
+                                               Foreground="{StaticResource SuccessColorBrush}" />
+                                </Grid>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="60" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="QQQ" FontWeight="SemiBold" />
+                                    <ProgressBar Grid.Column="1" Value="100" Maximum="100" Height="6" Margin="8,0"
+                                                 Foreground="{StaticResource SuccessColorBrush}" />
+                                    <TextBlock Grid.Column="2" Text="Live" FontSize="11"
+                                               Foreground="{StaticResource SuccessColorBrush}" />
+                                </Grid>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="60" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="AAPL" FontWeight="SemiBold" />
+                                    <ProgressBar Grid.Column="1" Value="85" Maximum="100" Height="6" Margin="8,0"
+                                                 Foreground="{StaticResource WarningColorBrush}" />
+                                    <TextBlock Grid.Column="2" Text="5s ago" FontSize="11"
+                                               Foreground="{StaticResource WarningColorBrush}" />
+                                </Grid>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- Last Update Time -->
+                        <Border Background="{ThemeResource SystemFillColorNeutralBackgroundBrush}"
+                                CornerRadius="4" Padding="12,8">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <FontIcon Glyph="&#xE787;" FontSize="12" Foreground="{ThemeResource SystemBaseMediumColor}" />
+                                <TextBlock x:Name="LastDataUpdateText" Text="Last update: Just now" FontSize="12"
+                                           Foreground="{ThemeResource SystemBaseMediumColor}" />
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- Quick Stats Summary -->
+            <Border Style="{StaticResource CardStyle}"
+                    AutomationProperties.Name="Quick statistics summary">
+                <Grid ColumnSpacing="24">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" HorizontalAlignment="Center" Spacing="4">
+                        <TextBlock x:Name="TotalEventsToday"
+                                   Text="1.2M"
+                                   Style="{StaticResource DataValueStyle}"
+                                   Foreground="{StaticResource InfoColorBrush}"
+                                   HorizontalAlignment="Center"
+                                   AutomationProperties.Name="Total events today: 1.2 million" />
+                        <TextBlock Text="EVENTS TODAY"
+                                   Style="{StaticResource DataLabelStyle}"
+                                   HorizontalAlignment="Center" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" HorizontalAlignment="Center" Spacing="4">
+                        <TextBlock x:Name="ActiveSymbolsCount"
+                                   Text="8"
+                                   Style="{StaticResource DataValueStyle}"
+                                   Foreground="{StaticResource SuccessColorBrush}"
+                                   HorizontalAlignment="Center"
+                                   AutomationProperties.Name="Active symbols: 8" />
+                        <TextBlock Text="ACTIVE SYMBOLS"
+                                   Style="{StaticResource DataLabelStyle}"
+                                   HorizontalAlignment="Center" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2" HorizontalAlignment="Center" Spacing="4">
+                        <TextBlock x:Name="StorageUsedText"
+                                   Text="2.4 GB"
+                                   Style="{StaticResource DataValueStyle}"
+                                   Foreground="{StaticResource AccentCyanBrush}"
+                                   HorizontalAlignment="Center"
+                                   AutomationProperties.Name="Storage used: 2.4 gigabytes" />
+                        <TextBlock Text="STORAGE USED"
+                                   Style="{StaticResource DataLabelStyle}"
+                                   HorizontalAlignment="Center" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="3" HorizontalAlignment="Center" Spacing="4">
+                        <TextBlock x:Name="DataQualityText"
+                                   Text="99.8%"
+                                   Style="{StaticResource DataValueStyle}"
+                                   Foreground="{StaticResource SuccessColorBrush}"
+                                   HorizontalAlignment="Center"
+                                   AutomationProperties.Name="Data quality: 99.8 percent" />
+                        <TextBlock Text="DATA QUALITY"
+                                   Style="{StaticResource DataLabelStyle}"
+                                   HorizontalAlignment="Center" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="4" HorizontalAlignment="Center" Spacing="4">
+                        <TextBlock x:Name="AvgLatencyText"
+                                   Text="12ms"
+                                   Style="{StaticResource DataValueStyle}"
+                                   Foreground="{StaticResource SuccessColorBrush}"
+                                   HorizontalAlignment="Center"
+                                   AutomationProperties.Name="Average latency: 12 milliseconds" />
+                        <TextBlock Text="AVG LATENCY"
+                                   Style="{StaticResource DataLabelStyle}"
+                                   HorizontalAlignment="Center" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Data Integrity Alerts Panel -->
+            <Border Style="{StaticResource CardStyle}">
+                <StackPanel Spacing="12">
+                    <!-- Header with expand/collapse -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12">
+                            <FontIcon Glyph="&#xE814;" FontSize="20" Foreground="{StaticResource WarningColorBrush}" />
+                            <TextBlock Text="Data Integrity Alerts" Style="{StaticResource SubtitleTextBlockStyle}" />
+
+                            <!-- Alert summary badges -->
+                            <Border x:Name="CriticalAlertsBadge" Background="#F85149" CornerRadius="10"
+                                    Padding="8,2" Margin="8,0,0,0" Visibility="Collapsed">
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <FontIcon Glyph="&#xE7BA;" FontSize="10" Foreground="White" />
+                                    <TextBlock x:Name="CriticalAlertsCount" Text="0" FontSize="11"
+                                               Foreground="White" FontWeight="SemiBold" />
+                                </StackPanel>
+                            </Border>
+                            <Border x:Name="WarningAlertsBadge" Background="#D29922" CornerRadius="10"
+                                    Padding="8,2" Visibility="Collapsed">
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <FontIcon Glyph="&#xE7BA;" FontSize="10" Foreground="White" />
+                                    <TextBlock x:Name="WarningAlertsCount" Text="0" FontSize="11"
+                                               Foreground="White" FontWeight="SemiBold" />
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                            <Button x:Name="ClearIntegrityAlertsButton" Click="ClearIntegrityAlerts_Click"
+                                    Padding="8,4" ToolTipService.ToolTip="Clear all alerts">
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <FontIcon Glyph="&#xE74D;" FontSize="12" />
+                                    <TextBlock Text="Clear" FontSize="12" />
+                                </StackPanel>
+                            </Button>
+                            <Button x:Name="ExpandIntegrityPanelButton" Click="ExpandIntegrityPanel_Click" Padding="8,4">
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <FontIcon x:Name="ExpandIntegrityIcon" Glyph="&#xE70D;" FontSize="12" />
+                                    <TextBlock x:Name="ExpandIntegrityText" Text="Show Details" FontSize="12" />
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Summary stats row -->
+                    <Grid x:Name="IntegritySummaryGrid">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Grid.Column="0" Background="{ThemeResource SystemFillColorNeutralBackgroundBrush}"
+                                CornerRadius="4" Padding="12,8" Margin="0,0,4,0">
+                            <StackPanel>
+                                <TextBlock x:Name="IntegrityTotalEventsText" Text="0" FontSize="20" FontWeight="Bold" />
+                                <TextBlock Text="Total Events" Style="{StaticResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource SystemBaseMediumColor}" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Column="1" Background="{ThemeResource SystemFillColorNeutralBackgroundBrush}"
+                                CornerRadius="4" Padding="12,8" Margin="4,0">
+                            <StackPanel>
+                                <TextBlock x:Name="IntegrityLast24hText" Text="0" FontSize="20" FontWeight="Bold"
+                                           Foreground="{StaticResource WarningColorBrush}" />
+                                <TextBlock Text="Last 24 Hours" Style="{StaticResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource SystemBaseMediumColor}" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Column="2" Background="{ThemeResource SystemFillColorNeutralBackgroundBrush}"
+                                CornerRadius="4" Padding="12,8" Margin="4,0">
+                            <StackPanel>
+                                <TextBlock x:Name="IntegrityUnacknowledgedText" Text="0" FontSize="20" FontWeight="Bold"
+                                           Foreground="{StaticResource ErrorColorBrush}" />
+                                <TextBlock Text="Unacknowledged" Style="{StaticResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource SystemBaseMediumColor}" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Column="3" Background="{ThemeResource SystemFillColorNeutralBackgroundBrush}"
+                                CornerRadius="4" Padding="12,8" Margin="4,0,0,0">
+                            <StackPanel>
+                                <TextBlock x:Name="IntegrityMostAffectedText" Text="N/A" FontSize="14" FontWeight="Bold" />
+                                <TextBlock Text="Most Affected" Style="{StaticResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource SystemBaseMediumColor}" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <!-- Expandable details panel -->
+                    <StackPanel x:Name="IntegrityDetailsPanel" Visibility="Collapsed" Spacing="8">
+                        <Rectangle Fill="{ThemeResource SystemBaseMediumLowColor}" Height="1" Margin="0,4" />
+
+                        <TextBlock Text="Recent Integrity Events" Style="{StaticResource BodyStrongTextBlockStyle}" />
+
+                        <ListView x:Name="IntegrityEventsList" MaxHeight="300" SelectionMode="None"
+                                  AutomationProperties.Name="Integrity events list">
+                            <!-- Enable virtualization for better performance -->
+                            <ListView.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <ItemsStackPanel Orientation="Vertical" />
+                                </ItemsPanelTemplate>
+                            </ListView.ItemsPanel>
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Padding="8,10" ColumnSpacing="12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="80" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <!-- Severity indicator -->
+                                        <Border Grid.Column="0" Width="4" CornerRadius="2">
+                                            <Border.Background>
+                                                <SolidColorBrush Color="{Binding SeverityColor}" />
+                                            </Border.Background>
+                                        </Border>
+
+                                        <!-- Symbol -->
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Symbol}" FontWeight="SemiBold" />
+                                            <TextBlock Text="{Binding EventTypeName}" FontSize="11"
+                                                       Foreground="{ThemeResource SystemBaseMediumColor}" />
+                                        </StackPanel>
+
+                                        <!-- Description -->
+                                        <TextBlock Grid.Column="2" Text="{Binding Description}"
+                                                   VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+
+                                        <!-- Timestamp -->
+                                        <TextBlock Grid.Column="3" Text="{Binding RelativeTime}" FontSize="11"
+                                                   Foreground="{ThemeResource SystemBaseMediumColor}"
+                                                   VerticalAlignment="Center" />
+
+                                        <!-- Acknowledge button -->
+                                        <Button Grid.Column="4" Click="AcknowledgeIntegrityEvent_Click"
+                                                Tag="{Binding Id}" Padding="6,4"
+                                                Visibility="{Binding IsNotAcknowledged}">
+                                            <FontIcon Glyph="&#xE73E;" FontSize="12" />
+                                        </Button>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+
+                        <TextBlock x:Name="NoIntegrityEventsText" Text="No integrity events recorded"
+                                   Foreground="{ThemeResource SystemBaseMediumColor}" FontStyle="Italic"
+                                   HorizontalAlignment="Center" Visibility="Collapsed" />
+
+                        <!-- Actions row -->
+                        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                            <Button Click="ViewAllIntegrityEvents_Click">
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <TextBlock Text="View All Events" FontSize="12" />
+                                    <FontIcon Glyph="&#xE72A;" FontSize="10" />
+                                </StackPanel>
+                            </Button>
+                            <Button Click="ExportIntegrityReport_Click">
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <FontIcon Glyph="&#xE78C;" FontSize="12" />
+                                    <TextBlock Text="Export Report" FontSize="12" />
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </StackPanel>
                 </StackPanel>
             </Border>
 

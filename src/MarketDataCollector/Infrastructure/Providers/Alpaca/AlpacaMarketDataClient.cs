@@ -103,7 +103,11 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
             {
                 _log.Warning(ex, "Connection attempt to Alpaca WebSocket failed at {Uri}. Will retry per policy.", uri);
                 // Clean up failed connection attempt
-                try { _ws?.Dispose(); } catch { }
+                try { _ws?.Dispose(); }
+                catch (Exception disposeEx)
+                {
+                    _log.Debug(disposeEx, "WebSocket disposal failed during connection cleanup");
+                }
                 _ws = null;
                 _cts?.Dispose();
                 _cts = null;
@@ -186,18 +190,34 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
 
         if (cts != null)
         {
-            try { cts.Cancel(); } catch { }
-            try { cts.Dispose(); } catch { }
+            try { cts.Cancel(); }
+            catch (Exception ex)
+            {
+                _log.Debug(ex, "CancellationTokenSource.Cancel failed during connection cleanup");
+            }
+            try { cts.Dispose(); }
+            catch (Exception ex)
+            {
+                _log.Debug(ex, "CancellationTokenSource.Dispose failed during connection cleanup");
+            }
         }
 
         if (ws != null)
         {
-            try { ws.Dispose(); } catch { }
+            try { ws.Dispose(); }
+            catch (Exception ex)
+            {
+                _log.Debug(ex, "WebSocket disposal failed during connection cleanup");
+            }
         }
 
         if (_recvLoop != null)
         {
-            try { await _recvLoop.ConfigureAwait(false); } catch { }
+            try { await _recvLoop.ConfigureAwait(false); }
+            catch (Exception ex)
+            {
+                _log.Debug(ex, "Receive loop task completion error during connection cleanup");
+            }
             _recvLoop = null;
         }
     }
@@ -223,8 +243,16 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
 
         if (cts != null)
         {
-            try { cts.Cancel(); } catch { }
-            try { cts.Dispose(); } catch { }
+            try { cts.Cancel(); }
+            catch (Exception ex)
+            {
+                _log.Debug(ex, "CancellationTokenSource.Cancel failed during disconnect");
+            }
+            try { cts.Dispose(); }
+            catch (Exception ex)
+            {
+                _log.Debug(ex, "CancellationTokenSource.Dispose failed during disconnect");
+            }
         }
 
         if (ws != null)
@@ -238,12 +266,20 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
             {
                 _log.Warning(ex, "Error during WebSocket close, connection may have been lost");
             }
-            try { ws.Dispose(); } catch { }
+            try { ws.Dispose(); }
+            catch (Exception ex)
+            {
+                _log.Debug(ex, "WebSocket disposal failed during disconnect");
+            }
         }
 
         if (_recvLoop != null)
         {
-            try { await _recvLoop.ConfigureAwait(false); } catch { }
+            try { await _recvLoop.ConfigureAwait(false); }
+            catch (Exception ex)
+            {
+                _log.Debug(ex, "Receive loop task completion error during disconnect");
+            }
         }
         _recvLoop = null;
 

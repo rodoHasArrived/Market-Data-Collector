@@ -15,7 +15,7 @@ namespace MarketDataCollector.Uwp.Services;
 /// and CredentialPicker UI. Enhanced with OAuth support, expiration tracking,
 /// and credential testing capabilities.
 /// </summary>
-public class CredentialService
+public sealed class CredentialService : IDisposable
 {
     private const string ResourcePrefix = "MarketDataCollector";
     private const string MetadataFileName = "credential_metadata.json";
@@ -34,6 +34,9 @@ public class CredentialService
     private readonly HttpClient _httpClient;
     private Dictionary<string, CredentialMetadata> _metadataCache;
     private readonly string _metadataPath;
+    private readonly object _metadataLock = new();
+    private bool _disposed;
+    private bool _metadataLoaded;
 
     /// <summary>
     /// Event raised when credential metadata is updated.
@@ -54,8 +57,34 @@ public class CredentialService
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "MarketDataCollector",
             MetadataFileName);
+    }
 
-        LoadMetadataAsync().ConfigureAwait(false);
+    /// <summary>
+    /// Initializes the credential service by loading metadata.
+    /// Call this after construction to ensure metadata is loaded.
+    /// </summary>
+    public async Task InitializeAsync()
+    {
+        if (_metadataLoaded) return;
+
+        await LoadMetadataAsync();
+        _metadataLoaded = true;
+    }
+
+    /// <summary>
+    /// Disposes the credential service and releases resources.
+    /// </summary>
+    public void Dispose()
+    {
+        if (_disposed) return;
+
+        _httpClient.Dispose();
+        _disposed = true;
+    }
+
+    private void ThrowIfDisposed()
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
     }
 
     /// <summary>
@@ -93,10 +122,16 @@ public class CredentialService
 
             return null;
         }
-        catch (Exception)
+        catch (OperationCanceledException)
         {
-            // TODO: Add structured logging for credential picker failures
-            // TODO: Distinguish between user cancellation vs system errors
+            // User cancelled the credential picker dialog
+            Debug.WriteLine($"[CredentialService] Credential picker cancelled by user for target: {targetName}");
+            return null;
+        }
+        catch (Exception ex)
+        {
+            // System error during credential picker operation
+            Debug.WriteLine($"[CredentialService] Credential picker failed for target '{targetName}': {ex.GetType().Name} - {ex.Message}");
             return null;
         }
     }
@@ -140,10 +175,16 @@ public class CredentialService
 
             return null;
         }
-        catch (Exception)
+        catch (OperationCanceledException)
         {
-            // TODO: Add logging for API key prompt failures
-            // TODO: Document which exceptions are expected vs unexpected
+            // User cancelled the API key prompt dialog (expected)
+            Debug.WriteLine($"[CredentialService] API key prompt cancelled by user for target: {targetName}");
+            return null;
+        }
+        catch (Exception ex)
+        {
+            // Unexpected error during API key prompt (e.g., COM exception, UI thread issues)
+            Debug.WriteLine($"[CredentialService] API key prompt failed for target '{targetName}': {ex.GetType().Name} - {ex.Message}");
             return null;
         }
     }
@@ -161,11 +202,11 @@ public class CredentialService
             var credential = new PasswordCredential(resource, username, password);
             _vault.Add(credential);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // TODO: Add structured logging for credential save failures
-            // TODO: Consider throwing for critical credential operations
-            // Ignore errors when saving
+            // Log credential save failures. Not throwing as credential save may not be critical
+            // for all workflows. Callers can verify save success by checking HasCredential().
+            Debug.WriteLine($"[CredentialService] Failed to save credential for resource '{resource}': {ex.GetType().Name} - {ex.Message}");
         }
     }
 
@@ -193,11 +234,19 @@ public class CredentialService
                 return (credential.UserName, credential.Password);
             }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // TODO: Distinguish between "credential not found" vs "access denied" exceptions
-            // TODO: Add telemetry counters for credential retrieval failures
-            // Credential not found or access denied
+            // Log and distinguish between different failure scenarios:
+            // - ElementNotFoundException: Credential not found in vault (normal case)
+            // - UnauthorizedAccessException: Access denied to vault
+            // - Other exceptions: System-level vault issues
+            var failureType = ex.GetType().Name switch
+            {
+                "ElementNotFoundException" => "not found",
+                "UnauthorizedAccessException" => "access denied",
+                _ => $"error - {ex.GetType().Name}"
+            };
+            Debug.WriteLine($"[CredentialService] Credential retrieval for resource '{resource}': {failureType}");
         }
 
         return null;
@@ -225,10 +274,9 @@ public class CredentialService
                 _vault.Remove(credential);
             }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // TODO: Add logging for credential removal failures
-            // Credential not found or access denied
+            Debug.WriteLine($"[CredentialService] Failed to remove credential for resource '{resource}': {ex.GetType().Name} - {ex.Message}");
         }
     }
 
@@ -242,9 +290,9 @@ public class CredentialService
             var credentials = _vault.FindAllByResource(resource);
             return credentials.Count > 0;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // TODO: Add diagnostic logging for debugging credential issues
+            Debug.WriteLine($"[CredentialService] Error checking credential existence for resource '{resource}': {ex.GetType().Name} - {ex.Message}");
             return false;
         }
     }
@@ -269,10 +317,9 @@ public class CredentialService
                 }
             }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // TODO: Add telemetry for vault access failures
-            // Access denied or empty vault
+            Debug.WriteLine($"[CredentialService] Failed to enumerate vault credentials: {ex.GetType().Name} - {ex.Message}");
         }
 
         return resources;
@@ -441,13 +488,20 @@ public class CredentialService
                 var metadata = JsonSerializer.Deserialize<Dictionary<string, CredentialMetadata>>(json);
                 if (metadata != null)
                 {
-                    _metadataCache = metadata;
+                    lock (_metadataLock)
+                    {
+                        _metadataCache = metadata;
+                    }
                 }
             }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            _metadataCache = new Dictionary<string, CredentialMetadata>();
+            Debug.WriteLine($"[CredentialService] Failed to load metadata: {ex.GetType().Name} - {ex.Message}");
+            lock (_metadataLock)
+            {
+                _metadataCache = new Dictionary<string, CredentialMetadata>();
+            }
         }
     }
 
@@ -464,15 +518,21 @@ public class CredentialService
                 Directory.CreateDirectory(directory);
             }
 
-            var json = JsonSerializer.Serialize(_metadataCache, new JsonSerializerOptions
+            Dictionary<string, CredentialMetadata> cacheSnapshot;
+            lock (_metadataLock)
+            {
+                cacheSnapshot = new Dictionary<string, CredentialMetadata>(_metadataCache);
+            }
+
+            var json = JsonSerializer.Serialize(cacheSnapshot, new JsonSerializerOptions
             {
                 WriteIndented = true
             });
             await File.WriteAllTextAsync(_metadataPath, json);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // Ignore save errors
+            Debug.WriteLine($"[CredentialService] Failed to save metadata: {ex.GetType().Name} - {ex.Message}");
         }
     }
 
@@ -481,7 +541,11 @@ public class CredentialService
     /// </summary>
     public CredentialMetadata? GetMetadata(string resource)
     {
-        return _metadataCache.TryGetValue(resource, out var metadata) ? metadata : null;
+        ThrowIfDisposed();
+        lock (_metadataLock)
+        {
+            return _metadataCache.TryGetValue(resource, out var metadata) ? metadata : null;
+        }
     }
 
     /// <summary>
@@ -489,13 +553,20 @@ public class CredentialService
     /// </summary>
     public async Task UpdateMetadataAsync(string resource, Action<CredentialMetadata> update)
     {
-        if (!_metadataCache.TryGetValue(resource, out var metadata))
+        ThrowIfDisposed();
+
+        CredentialMetadata metadata;
+        lock (_metadataLock)
         {
-            metadata = new CredentialMetadata { Resource = resource };
-            _metadataCache[resource] = metadata;
+            if (!_metadataCache.TryGetValue(resource, out metadata!))
+            {
+                metadata = new CredentialMetadata { Resource = resource };
+                _metadataCache[resource] = metadata;
+            }
+
+            update(metadata);
         }
 
-        update(metadata);
         await SaveMetadataAsync();
 
         MetadataUpdated?.Invoke(this, new CredentialMetadataEventArgs(resource, metadata));

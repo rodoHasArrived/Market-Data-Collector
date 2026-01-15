@@ -305,9 +305,9 @@ public class WebSocketHeartbeat : IAsyncDisposable
         {
             await _heartbeatTask;
         }
-        catch
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            // Ignore
+            _log.Warning(ex, "Error awaiting heartbeat task completion during disposal");
         }
         _cts.Dispose();
     }

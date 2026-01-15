@@ -43,4 +43,32 @@ public sealed record IntegrityEvent(
             SequenceNumber: received,
             StreamId: streamId,
             Venue: venue);
+
+    public static IntegrityEvent InvalidSymbol(
+        DateTimeOffset ts,
+        string symbol,
+        string reason,
+        long sequenceNumber,
+        string? streamId = null,
+        string? venue = null)
+        => new(ts, symbol, IntegritySeverity.Error,
+            $"Invalid symbol format: {reason}",
+            ErrorCode: 1003,
+            SequenceNumber: sequenceNumber,
+            StreamId: streamId,
+            Venue: venue);
+
+    public static IntegrityEvent InvalidSequenceNumber(
+        DateTimeOffset ts,
+        string symbol,
+        long sequenceNumber,
+        string reason,
+        string? streamId = null,
+        string? venue = null)
+        => new(ts, symbol, IntegritySeverity.Error,
+            $"Invalid sequence number {sequenceNumber}: {reason}",
+            ErrorCode: 1004,
+            SequenceNumber: sequenceNumber,
+            StreamId: streamId,
+            Venue: venue);
 }

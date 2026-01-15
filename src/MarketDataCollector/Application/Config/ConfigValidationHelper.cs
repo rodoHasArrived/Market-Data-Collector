@@ -97,8 +97,10 @@ public class AppConfigValidator : AbstractValidator<AppConfig>
             var invalidChars = Path.GetInvalidPathChars();
             return !path.Any(c => invalidChars.Contains(c));
         }
-        catch
+        catch (Exception ex)
         {
+            Log.ForContext("SourceContext", "ConfigValidation")
+               .Warning(ex, "Path validation failed for path '{Path}'", path);
             return false;
         }
     }

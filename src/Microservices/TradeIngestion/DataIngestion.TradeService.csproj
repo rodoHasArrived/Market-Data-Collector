@@ -15,8 +15,8 @@
 
   <ItemGroup>
     <!-- MassTransit -->
-    <PackageReference Include="MassTransit" Version="8.2.5" />
-    <PackageReference Include="MassTransit.RabbitMQ" Version="8.2.5" />
+    <PackageReference Include="MassTransit" Version="8.5.7" />
+    <PackageReference Include="MassTransit.RabbitMQ" Version="8.5.7" />
 
     <!-- Logging -->
     <PackageReference Include="Serilog.AspNetCore" Version="8.0.3" />
@@ -33,6 +33,6 @@
     <PackageReference Include="System.Threading.Channels" Version="9.0.0" />
 
     <!-- Validation -->
-    <PackageReference Include="FluentValidation" Version="11.10.0" />
+    <PackageReference Include="FluentValidation" Version="12.1.1" />
   </ItemGroup>
 </Project>

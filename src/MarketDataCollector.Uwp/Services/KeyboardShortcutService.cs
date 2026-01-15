@@ -10,7 +10,7 @@ namespace MarketDataCollector.Uwp.Services;
 /// <summary>
 /// Service for managing global keyboard shortcuts.
 /// </summary>
-public class KeyboardShortcutService
+public sealed class KeyboardShortcutService
 {
     private static KeyboardShortcutService? _instance;
     private static readonly object _lock = new();

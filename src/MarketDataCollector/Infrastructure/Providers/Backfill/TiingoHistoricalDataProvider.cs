@@ -152,7 +152,7 @@ public sealed class TiingoHistoricalDataProvider : IHistoricalDataProviderV2, ID
                 decimal? splitFactor = null;
                 if (price.AdjClose.HasValue && price.Close > 0)
                 {
-                    var factor = (decimal)price.AdjClose.Value / (decimal)price.Close;
+                    var factor = price.AdjClose.Value / price.Close;
                     if (Math.Abs(factor - 1m) > 0.0001m)
                     {
                         splitFactor = factor;
@@ -161,26 +161,26 @@ public sealed class TiingoHistoricalDataProvider : IHistoricalDataProviderV2, ID
 
                 // Tiingo provides divCash directly
                 decimal? dividendAmount = price.DivCash.HasValue && price.DivCash.Value > 0
-                    ? (decimal)price.DivCash.Value
+                    ? price.DivCash.Value
                     : null;
 
                 bars.Add(new AdjustedHistoricalBar(
                     Symbol: symbol.ToUpperInvariant(),
                     SessionDate: sessionDate,
-                    Open: (decimal)price.Open,
-                    High: (decimal)price.High,
-                    Low: (decimal)price.Low,
-                    Close: (decimal)price.Close,
+                    Open: price.Open,
+                    High: price.High,
+                    Low: price.Low,
+                    Close: price.Close,
                     Volume: (long)(price.Volume ?? 0),
                     Source: Name,
                     SequenceNumber: sessionDate.DayNumber,
-                    AdjustedOpen: price.AdjOpen.HasValue ? (decimal)price.AdjOpen.Value : null,
-                    AdjustedHigh: price.AdjHigh.HasValue ? (decimal)price.AdjHigh.Value : null,
-                    AdjustedLow: price.AdjLow.HasValue ? (decimal)price.AdjLow.Value : null,
-                    AdjustedClose: price.AdjClose.HasValue ? (decimal)price.AdjClose.Value : null,
+                    AdjustedOpen: price.AdjOpen,
+                    AdjustedHigh: price.AdjHigh,
+                    AdjustedLow: price.AdjLow,
+                    AdjustedClose: price.AdjClose,
                     AdjustedVolume: price.AdjVolume.HasValue ? (long)price.AdjVolume.Value : null,
-                    SplitFactor: price.SplitFactor.HasValue && price.SplitFactor.Value != 1.0
-                        ? (decimal)price.SplitFactor.Value
+                    SplitFactor: price.SplitFactor.HasValue && price.SplitFactor.Value != 1.0m
+                        ? price.SplitFactor.Value
                         : splitFactor,
                     DividendAmount: dividendAmount
                 ));
@@ -218,40 +218,40 @@ public sealed class TiingoHistoricalDataProvider : IHistoricalDataProviderV2, ID
         public string? Date { get; set; }
 
         [JsonPropertyName("open")]
-        public double Open { get; set; }
+        public decimal Open { get; set; }
 
         [JsonPropertyName("high")]
-        public double High { get; set; }
+        public decimal High { get; set; }
 
         [JsonPropertyName("low")]
-        public double Low { get; set; }
+        public decimal Low { get; set; }
 
         [JsonPropertyName("close")]
-        public double Close { get; set; }
+        public decimal Close { get; set; }
 
         [JsonPropertyName("volume")]
-        public double? Volume { get; set; }
+        public decimal? Volume { get; set; }
 
         [JsonPropertyName("adjOpen")]
-        public double? AdjOpen { get; set; }
+        public decimal? AdjOpen { get; set; }
 
         [JsonPropertyName("adjHigh")]
-        public double? AdjHigh { get; set; }
+        public decimal? AdjHigh { get; set; }
 
         [JsonPropertyName("adjLow")]
-        public double? AdjLow { get; set; }
+        public decimal? AdjLow { get; set; }
 
         [JsonPropertyName("adjClose")]
-        public double? AdjClose { get; set; }
+        public decimal? AdjClose { get; set; }
 
         [JsonPropertyName("adjVolume")]
-        public double? AdjVolume { get; set; }
+        public decimal? AdjVolume { get; set; }
 
         [JsonPropertyName("divCash")]
-        public double? DivCash { get; set; }
+        public decimal? DivCash { get; set; }
 
         [JsonPropertyName("splitFactor")]
-        public double? SplitFactor { get; set; }
+        public decimal? SplitFactor { get; set; }
     }
 
     #endregion

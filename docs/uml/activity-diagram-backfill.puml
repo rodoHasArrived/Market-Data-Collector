@@ -1,0 +1,123 @@
+@startuml Activity Diagram - Historical Backfill Process
+!theme plain
+
+title Market Data Collector - Historical Backfill Process Flow
+
+start
+
+:Parse Backfill Request;
+note right
+  --backfill-provider stooq
+  --backfill-symbols SPY,AAPL
+  --backfill-from 2024-01-01
+  --backfill-to 2024-12-31
+end note
+
+:Validate Request Parameters;
+
+if (Parameters Valid?) then (yes)
+else (no)
+    :Display Usage Help;
+    stop
+endif
+
+:Initialize Backfill Providers;
+
+if (Fallback Enabled?) then (yes)
+    :Create CompositeProvider;
+    note right
+      Priority order:
+      1. Stooq
+      2. Yahoo Finance
+      3. Tiingo
+      4. Alpha Vantage
+    end note
+else (no)
+    :Create Single Provider;
+endif
+
+:Initialize EventPipeline;
+:Initialize Storage;
+
+partition "Symbol Processing" {
+
+    while (More Symbols?) is (yes)
+        :Get Next Symbol;
+
+        if (Symbol Resolution Enabled?) then (yes)
+            :Call OpenFIGI API;
+
+            if (Resolution Success?) then (yes)
+                :Use Resolved Identifier;
+            else (no)
+                :Use Original Symbol;
+            endif
+        endif
+
+        partition "Fetch Historical Data" #LightBlue {
+            :Select Primary Provider;
+
+            repeat
+                :Check Rate Limit;
+
+                if (Rate Limited?) then (yes)
+                    :Wait for Quota Reset;
+                endif
+
+                :Request Historical Bars;
+
+                if (Success?) then (yes)
+                    break
+                else (no)
+                    :Log Provider Error;
+
+                    if (Fallback Available?) then (yes)
+                        :Switch to Next Provider;
+                    else (no)
+                        :Mark Symbol Failed;
+                        break
+                    endif
+                endif
+            repeat while (Retry)
+        }
+
+        if (Bars Retrieved?) then (yes)
+            partition "Process Bars" #LightGreen {
+                while (More Bars?) is (yes)
+                    :Create HistoricalBar Event;
+                    :Publish to Pipeline;
+                    :Increment Counter;
+                endwhile (no)
+            }
+
+            :Update Progress;
+            :Log Symbol Complete;
+        else (no)
+            :Log Symbol Skipped;
+        endif
+
+    endwhile (no)
+}
+
+:Flush Pipeline;
+:Build Backfill Result;
+
+if (All Symbols Succeeded?) then (yes)
+    :Write Success Status;
+else (no)
+    :Write Partial Status;
+    :List Failed Symbols;
+endif
+
+:Display Summary;
+note right
+  Backfill Complete:
+  - Symbols: 2
+  - Bars: 504
+  - Duration: 12.5s
+  - Failures: 0
+end note
+
+stop
+
+@enduml

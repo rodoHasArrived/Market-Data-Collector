@@ -73,15 +73,15 @@
   <!-- Core Dependencies -->
   <ItemGroup>
     <!-- Configuration Management -->
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.11" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.11" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.11" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="9.0.11" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="9.0.11" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="9.0.0" />
 
     <!-- Dependency Injection -->
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.11" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.11" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.0" />
 
     <!-- Logging -->
   <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
@@ -96,19 +96,19 @@
     <PackageReference Include="prometheus-net.AspNetCore" Version="8.2.1" />
 
     <!-- Resilience and Retry -->
-    <PackageReference Include="Polly" Version="8.4.2" />
+    <PackageReference Include="Polly" Version="8.6.5" />
     <PackageReference Include="Polly.Extensions" Version="8.4.2" />
 
     <!-- WebSocket Client (explicit for clarity) -->
     <PackageReference Include="System.Net.WebSockets.Client" Version="4.3.2" />
 
     <!-- Performance -->
-  <PackageReference Include="System.Text.Json" Version="9.0.11" />
+  <PackageReference Include="System.Text.Json" Version="9.0.0" />
     <PackageReference Include="System.Threading.Channels" Version="9.0.0" />
     <PackageReference Include="System.IO.Pipelines" Version="9.0.0" />
 
     <!-- Validation -->
-    <PackageReference Include="FluentValidation" Version="11.10.0" />
+    <PackageReference Include="FluentValidation" Version="12.1.1" />
 
     <!-- Compression -->
     <PackageReference Include="System.IO.Compression" Version="4.3.0" />
@@ -121,12 +121,12 @@
     <PackageReference Include="System.Net.Http.Json" Version="9.0.0" />
 
     <!-- MassTransit - Distributed Application Framework -->
-    <PackageReference Include="MassTransit" Version="8.2.5" />
-    <PackageReference Include="MassTransit.RabbitMQ" Version="8.2.5" />
-    <PackageReference Include="MassTransit.Azure.ServiceBus.Core" Version="8.2.5" />
+    <PackageReference Include="MassTransit" Version="9.0.0" />
+    <PackageReference Include="MassTransit.RabbitMQ" Version="9.0.0" />
+    <PackageReference Include="MassTransit.Azure.ServiceBus.Core" Version="9.0.0" />
 
     <!-- Hosting support for MassTransit -->
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.11" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.0" />
 
     <!-- ASP.NET Core - Web Dashboard Support -->
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
@@ -134,8 +134,8 @@
     <!-- QuantConnect Lean Engine Integration -->
     <PackageReference Include="QuantConnect.Lean" Version="2.5.17315" />
     <PackageReference Include="QuantConnect.Lean.Engine" Version="2.5.17315" />
-    <PackageReference Include="QuantConnect.Common" Version="2.5.17315" />
-    <PackageReference Include="QuantConnect.Indicators" Version="2.5.17315" />
+    <PackageReference Include="QuantConnect.Common" Version="2.5.17414" />
+    <PackageReference Include="QuantConnect.Indicators" Version="2.5.17414" />
 
     <!-- Technical Indicators (Skender.Stock.Indicators) -->
     <!-- 200+ technical indicators with streaming support -->
@@ -154,16 +154,21 @@
 
     <!-- Apache Parquet for Archival Storage -->
     <!-- Columnar storage with 10-20x better compression -->
-    <PackageReference Include="Parquet.Net" Version="5.0.2" />
+    <PackageReference Include="Parquet.Net" Version="5.4.0" />
 
     <!-- BenchmarkDotNet for Performance Profiling -->
     <!-- Micro-benchmarking and memory allocation analysis -->
-    <PackageReference Include="BenchmarkDotNet" Version="0.14.0" />
+    <PackageReference Include="BenchmarkDotNet" Version="0.15.8" />
 
     <!-- High-Performance WebSocket Client (Marfusios pattern) -->
     <PackageReference Include="Websocket.Client" Version="5.1.2" />
 
     <!-- Reactive Extensions for Observable patterns -->
-    <PackageReference Include="System.Reactive" Version="6.0.1" />
+    <PackageReference Include="System.Reactive" Version="6.1.0" />
+  </ItemGroup>
+
+  <!-- Project References -->
+  <ItemGroup>
+    <ProjectReference Include="..\MarketDataCollector.Contracts\MarketDataCollector.Contracts.csproj" />
   </ItemGroup>
 </Project>

@@ -38,9 +38,16 @@ public sealed partial class CollectionSessionPage : Page
 
     private async void Page_Loaded(object sender, RoutedEventArgs e)
     {
-        await LoadSessionsAsync();
-        await LoadSettingsAsync();
-        StartRefreshTimer();
+        try
+        {
+            await LoadSessionsAsync();
+            await LoadSettingsAsync();
+            StartRefreshTimer();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error loading collection session page: {ex.Message}");
+        }
     }
 
     private void Page_Unloaded(object sender, RoutedEventArgs e)
@@ -109,22 +116,36 @@ public sealed partial class CollectionSessionPage : Page
         {
             Interval = TimeSpan.FromSeconds(2)
         };
-        _refreshTimer.Tick += async (s, e) =>
+        _refreshTimer_Tick = async (s, e) =>
         {
-            if (_activeSession != null)
+            try
             {
-                _activeSession = await _sessionService.GetActiveSessionAsync();
-                UpdateActiveSessionCard();
+                if (_activeSession != null)
+                {
+                    _activeSession = await _sessionService.GetActiveSessionAsync();
+                    UpdateActiveSessionCard();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error refreshing session: {ex.Message}");
             }
         };
+        _refreshTimer.Tick += _refreshTimer_Tick;
         _refreshTimer.Start();
     }
 
     private void StopRefreshTimer()
     {
-        _refreshTimer?.Stop();
-        _refreshTimer = null;
+        if (_refreshTimer != null)
+        {
+            _refreshTimer.Stop();
+            _refreshTimer.Tick -= _refreshTimer_Tick;
+            _refreshTimer = null;
+        }
     }
+
+    private EventHandler<object>? _refreshTimer_Tick;
 
     private async void NewSession_Click(object sender, RoutedEventArgs e)
     {

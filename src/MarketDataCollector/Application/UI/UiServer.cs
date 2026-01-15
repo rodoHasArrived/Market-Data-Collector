@@ -1,8 +1,12 @@
 using System.Text.Json;
 using MarketDataCollector.Application.Backfill;
 using MarketDataCollector.Application.Config;
+using MarketDataCollector.Application.Config.Credentials;
+using MarketDataCollector.Application.Monitoring;
+using MarketDataCollector.Application.Services;
 using MarketDataCollector.Application.Subscriptions.Models;
 using MarketDataCollector.Application.Subscriptions.Services;
+using MarketDataCollector.Infrastructure.Providers.SymbolSearch;
 using MarketDataCollector.Storage;
 using MarketDataCollector.Storage.Interfaces;
 using MarketDataCollector.Storage.Services;
@@ -17,13 +21,17 @@ namespace MarketDataCollector.Application.UI;
 
 public sealed class UiServer : IAsyncDisposable
 {
+    private static readonly JsonSerializerOptions s_jsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        WriteIndented = true
+    };
+
     private readonly WebApplication _app;
-    private readonly string _configPath;
     private readonly DateTimeOffset _startTime = DateTimeOffset.UtcNow;
 
     public UiServer(string configPath, int port = 8080)
     {
-        _configPath = configPath;
 
         var builder = WebApplication.CreateBuilder();
 
@@ -42,6 +50,26 @@ public sealed class UiServer : IAsyncDisposable
         builder.Services.AddSingleton<SchedulingService>();
         builder.Services.AddSingleton<MetadataEnrichmentService>();
         builder.Services.AddSingleton<IndexSubscriptionService>();
+        builder.Services.AddSingleton<WatchlistService>();
+        builder.Services.AddSingleton<BatchOperationsService>();
+        builder.Services.AddSingleton<PortfolioImportService>();
+
+        // Symbol search and autocomplete services
+        builder.Services.AddSingleton<OpenFigiClient>();
+        builder.Services.AddSingleton<SymbolSearchService>(sp =>
+        {
+            var metadataService = sp.GetRequiredService<MetadataEnrichmentService>();
+            var figiClient = sp.GetRequiredService<OpenFigiClient>();
+            return new SymbolSearchService(
+                new ISymbolSearchProvider[]
+                {
+                    new AlpacaSymbolSearchProvider(),
+                    new FinnhubSymbolSearchProvider(),
+                    new PolygonSymbolSearchProvider()
+                },
+                figiClient,
+                metadataService);
+        });
 
         // Storage organization services
         var config = store.Load();
@@ -52,6 +80,44 @@ public sealed class UiServer : IAsyncDisposable
         builder.Services.AddSingleton<IDataQualityService, DataQualityService>();
         builder.Services.AddSingleton<IStorageSearchService, StorageSearchService>();
         builder.Services.AddSingleton<ITierMigrationService, TierMigrationService>();
+
+        // New services for QW features
+        builder.Services.AddSingleton(new HistoricalDataQueryService(config.DataRoot));
+        builder.Services.AddSingleton(new DiagnosticBundleService(config.DataRoot, null, () => store.Load()));
+        builder.Services.AddSingleton<SampleDataGenerator>();
+        builder.Services.AddSingleton(new ErrorTracker(config.DataRoot));
+        builder.Services.AddSingleton<ConfigTemplateGenerator>();
+        builder.Services.AddSingleton<ConfigEnvironmentOverride>();
+        builder.Services.AddSingleton<DryRunService>();
+        builder.Services.AddSingleton<ApiDocumentationService>();
+
+        // Credential management services
+        builder.Services.AddSingleton(new CredentialTestingService(config.DataRoot));
+        builder.Services.AddSingleton(new OAuthTokenRefreshService(config.DataRoot));
+        // Scheduled backfill services
+        var executionHistory = new BackfillExecutionHistory();
+        using var loggerFactory = LoggerFactory.Create(b => b.AddConsole().SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Warning));
+        var scheduleManagerLogger = loggerFactory.CreateLogger<BackfillScheduleManager>();
+        var scheduleManager = new BackfillScheduleManager(scheduleManagerLogger, config.DataRoot, executionHistory);
+        builder.Services.AddSingleton(scheduleManager);
+        builder.Services.AddSingleton(executionHistory);
+
+        // Archive maintenance services
+        var maintenanceHistory = new Storage.Maintenance.MaintenanceExecutionHistory(config.DataRoot);
+        var maintenanceScheduleManagerLogger = loggerFactory.CreateLogger<Storage.Maintenance.ArchiveMaintenanceScheduleManager>();
+        var maintenanceScheduleManager = new Storage.Maintenance.ArchiveMaintenanceScheduleManager(
+            maintenanceScheduleManagerLogger, config.DataRoot, maintenanceHistory);
+        builder.Services.AddSingleton(maintenanceScheduleManager);
+        builder.Services.AddSingleton(maintenanceHistory);
+        builder.Services.AddSingleton<Storage.Maintenance.ScheduledArchiveMaintenanceService>(sp =>
+        {
+            var serviceLogger = sp.GetRequiredService<ILoggerFactory>().CreateLogger<Storage.Maintenance.ScheduledArchiveMaintenanceService>();
+            var schedMgr = sp.GetRequiredService<Storage.Maintenance.ArchiveMaintenanceScheduleManager>();
+            var fileMaint = sp.GetRequiredService<IFileMaintenanceService>();
+            var tierMigration = sp.GetRequiredService<ITierMigrationService>();
+            var storageOpts = sp.GetRequiredService<StorageOptions>();
+            return new Storage.Maintenance.ScheduledArchiveMaintenanceService(serviceLogger, schedMgr, fileMaint, tierMigration, storageOpts);
+        });
 
         _app = builder.Build();
 
@@ -71,7 +137,7 @@ public sealed class UiServer : IAsyncDisposable
                 status = "healthy",
                 timestamp = DateTimeOffset.UtcNow,
                 uptime = uptime.ToString(),
-                version = "1.1.0"
+                version = "1.5.0"
             });
         });
 
@@ -106,7 +172,7 @@ public sealed class UiServer : IAsyncDisposable
                 storage = cfg.Storage,
                 symbols = cfg.Symbols ?? Array.Empty<SymbolConfig>(),
                 backfill = cfg.Backfill
-            }, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+            }, s_jsonOptions);
         });
 
         _app.MapPost("/api/config/datasource", async (ConfigStore store, DataSourceRequest req) =>
@@ -230,7 +296,7 @@ public sealed class UiServer : IAsyncDisposable
             try
             {
                 var providers = backfill.DescribeProviders();
-                return Results.Json(providers, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+                return Results.Json(providers, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -245,7 +311,7 @@ public sealed class UiServer : IAsyncDisposable
                 var status = backfill.TryReadLast();
                 return status is null
                     ? Results.NotFound()
-                    : Results.Json(status, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase, WriteIndented = true });
+                    : Results.Json(status, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -253,7 +319,7 @@ public sealed class UiServer : IAsyncDisposable
             }
         });
 
-        _app.MapPost("/api/backfill/run", async (BackfillCoordinator backfill, BackfillRequestDto req) =>
+        _app.MapPost("/api/backfill/run", async (BackfillCoordinator backfill, BackfillRequestDto req, CancellationToken ct) =>
         {
             try
             {
@@ -266,8 +332,8 @@ public sealed class UiServer : IAsyncDisposable
                     req.From,
                     req.To);
 
-                var result = await backfill.RunAsync(request);
-                return Results.Json(result, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase, WriteIndented = true });
+                var result = await backfill.RunAsync(request, ct);
+                return Results.Json(result, s_jsonOptions);
             }
             catch (InvalidOperationException ex)
             {
@@ -279,12 +345,12 @@ public sealed class UiServer : IAsyncDisposable
             }
         });
 
-        _app.MapGet("/api/backfill/health", async (BackfillCoordinator backfill) =>
+        _app.MapGet("/api/backfill/health", async (BackfillCoordinator backfill, CancellationToken ct) =>
         {
             try
             {
-                var health = await backfill.CheckProviderHealthAsync();
-                return Results.Json(health, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+                var health = await backfill.CheckProviderHealthAsync(ct);
+                return Results.Json(health, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -292,18 +358,18 @@ public sealed class UiServer : IAsyncDisposable
             }
         });
 
-        _app.MapGet("/api/backfill/resolve/{symbol}", async (BackfillCoordinator backfill, string symbol) =>
+        _app.MapGet("/api/backfill/resolve/{symbol}", async (BackfillCoordinator backfill, string symbol, CancellationToken ct) =>
         {
             try
             {
                 if (string.IsNullOrWhiteSpace(symbol))
                     return Results.BadRequest("Symbol is required.");
 
-                var resolution = await backfill.ResolveSymbolAsync(symbol);
+                var resolution = await backfill.ResolveSymbolAsync(symbol, ct);
                 if (resolution is null)
                     return Results.NotFound($"Symbol '{symbol}' not found.");
 
-                return Results.Json(resolution, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+                return Results.Json(resolution, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -313,24 +379,31 @@ public sealed class UiServer : IAsyncDisposable
 
         ConfigureSymbolManagementRoutes();
         ConfigureStorageOrganizationRoutes();
+        ConfigureNewFeatureRoutes();
+        ConfigureCredentialManagementRoutes();
+
+        // Configure scheduled backfill endpoints
+        _app.MapScheduledBackfillEndpoints();
+        ConfigureBulkSymbolManagementRoutes();
+
+        // Configure packaging endpoints
+        var config = _app.Services.GetRequiredService<ConfigStore>().Load();
+        _app.MapPackagingEndpoints(config.DataRoot);
+
+        // Configure archive maintenance endpoints
+        _app.MapArchiveMaintenanceEndpoints();
     }
 
     private void ConfigureStorageOrganizationRoutes()
     {
-        var jsonOptions = new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            WriteIndented = true
-        };
-
         // ==================== DATA CATALOG & SEARCH ====================
 
-        _app.MapGet("/api/storage/catalog", async (IStorageSearchService search) =>
+        _app.MapGet("/api/storage/catalog", async (IStorageSearchService search, CancellationToken ct) =>
         {
             try
             {
-                var catalog = await search.DiscoverAsync(new DiscoveryQuery());
-                return Results.Json(catalog, jsonOptions);
+                var catalog = await search.DiscoverAsync(new DiscoveryQuery(), ct);
+                return Results.Json(catalog, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -338,7 +411,7 @@ public sealed class UiServer : IAsyncDisposable
             }
         });
 
-        _app.MapPost("/api/storage/search/files", async (IStorageSearchService search, FileSearchRequest req) =>
+        _app.MapPost("/api/storage/search/files", async (IStorageSearchService search, FileSearchRequest req, CancellationToken ct) =>
         {
             try
             {
@@ -355,8 +428,8 @@ public sealed class UiServer : IAsyncDisposable
                     Skip: req.Skip,
                     Take: req.Take
                 );
-                var results = await search.SearchFilesAsync(query);
-                return Results.Json(results, jsonOptions);
+                var results = await search.SearchFilesAsync(query, ct);
+                return Results.Json(results, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -377,7 +450,7 @@ public sealed class UiServer : IAsyncDisposable
                     MaxResults: req.MaxResults
                 );
                 var results = await search.SearchWithFacetsAsync(query);
-                return Results.Json(results, jsonOptions);
+                return Results.Json(results, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -393,7 +466,7 @@ public sealed class UiServer : IAsyncDisposable
                     return Results.BadRequest("Query is required");
 
                 var query = search.ParseNaturalLanguageQuery(req.Query);
-                return Results.Json(query, jsonOptions);
+                return Results.Json(query, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -429,7 +502,7 @@ public sealed class UiServer : IAsyncDisposable
                     ParallelChecks: req.ParallelChecks
                 );
                 var report = await maintenance.RunHealthCheckAsync(options);
-                return Results.Json(report, jsonOptions);
+                return Results.Json(report, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -442,7 +515,7 @@ public sealed class UiServer : IAsyncDisposable
             try
             {
                 var report = await maintenance.FindOrphansAsync();
-                return Results.Json(report, jsonOptions);
+                return Results.Json(report, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -462,7 +535,7 @@ public sealed class UiServer : IAsyncDisposable
                     BackupPath: req.BackupPath
                 );
                 var result = await maintenance.RepairAsync(options);
-                return Results.Json(result, jsonOptions);
+                return Results.Json(result, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -480,7 +553,7 @@ public sealed class UiServer : IAsyncDisposable
                     PreserveOriginals: req.PreserveOriginals
                 );
                 var result = await maintenance.DefragmentAsync(options);
-                return Results.Json(result, jsonOptions);
+                return Results.Json(result, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -495,7 +568,7 @@ public sealed class UiServer : IAsyncDisposable
             try
             {
                 var score = await quality.ScoreAsync(path);
-                return Results.Json(score, jsonOptions);
+                return Results.Json(score, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -515,7 +588,7 @@ public sealed class UiServer : IAsyncDisposable
                     IncludeRecommendations: req.IncludeRecommendations
                 );
                 var report = await quality.GenerateReportAsync(options);
-                return Results.Json(report, jsonOptions);
+                return Results.Json(report, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -528,7 +601,7 @@ public sealed class UiServer : IAsyncDisposable
             try
             {
                 var alerts = await quality.GetQualityAlertsAsync();
-                return Results.Json(alerts, jsonOptions);
+                return Results.Json(alerts, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -544,7 +617,7 @@ public sealed class UiServer : IAsyncDisposable
                     symbol,
                     date ?? DateTimeOffset.UtcNow.Date,
                     Domain.Events.MarketEventType.Trade);
-                return Results.Json(rankings, jsonOptions);
+                return Results.Json(rankings, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -558,7 +631,7 @@ public sealed class UiServer : IAsyncDisposable
             {
                 var window = TimeSpan.FromDays(days ?? 30);
                 var trend = await quality.GetTrendAsync(symbol, window);
-                return Results.Json(trend, jsonOptions);
+                return Results.Json(trend, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -573,7 +646,7 @@ public sealed class UiServer : IAsyncDisposable
             try
             {
                 var stats = await tiers.GetTierStatisticsAsync();
-                return Results.Json(stats, jsonOptions);
+                return Results.Json(stats, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -586,7 +659,7 @@ public sealed class UiServer : IAsyncDisposable
             try
             {
                 var plan = await tiers.PlanMigrationAsync(TimeSpan.FromDays(horizonDays ?? 7));
-                return Results.Json(plan, jsonOptions);
+                return Results.Json(plan, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -608,7 +681,7 @@ public sealed class UiServer : IAsyncDisposable
                     ParallelFiles: req.ParallelFiles
                 );
                 var result = await tiers.MigrateAsync(req.SourcePath, tier, options);
-                return Results.Json(result, jsonOptions);
+                return Results.Json(result, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -621,7 +694,7 @@ public sealed class UiServer : IAsyncDisposable
             try
             {
                 var tier = tiers.DetermineTargetTier(path);
-                return Results.Json(new { path, targetTier = tier.ToString() }, jsonOptions);
+                return Results.Json(new { path, targetTier = tier.ToString() }, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -636,7 +709,7 @@ public sealed class UiServer : IAsyncDisposable
             try
             {
                 var sources = registry.GetAllSources();
-                return Results.Json(sources, jsonOptions);
+                return Results.Json(sources, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -651,7 +724,7 @@ public sealed class UiServer : IAsyncDisposable
                 var source = registry.GetSourceInfo(sourceId);
                 return source is null
                     ? Results.NotFound($"Source '{sourceId}' not found")
-                    : Results.Json(source, jsonOptions);
+                    : Results.Json(source, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -677,7 +750,7 @@ public sealed class UiServer : IAsyncDisposable
             try
             {
                 var order = registry.GetSourcePriorityOrder();
-                return Results.Json(order, jsonOptions);
+                return Results.Json(order, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -692,7 +765,7 @@ public sealed class UiServer : IAsyncDisposable
                 var info = registry.GetSymbolInfo(symbol);
                 return info is null
                     ? Results.NotFound($"Symbol '{symbol}' not found in registry")
-                    : Results.Json(info, jsonOptions);
+                    : Results.Json(info, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -718,7 +791,7 @@ public sealed class UiServer : IAsyncDisposable
             try
             {
                 var canonical = registry.ResolveSymbolAlias(alias);
-                return Results.Json(new { alias, canonical }, jsonOptions);
+                return Results.Json(new { alias, canonical }, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -755,7 +828,7 @@ public sealed class UiServer : IAsyncDisposable
                     eventTypes = catalog.EventTypes,
                     tiers = tierStats.TierInfo,
                     qualityAlerts = alerts.Length
-                }, jsonOptions);
+                }, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -766,12 +839,6 @@ public sealed class UiServer : IAsyncDisposable
 
     private void ConfigureSymbolManagementRoutes()
     {
-        var jsonOptions = new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            WriteIndented = true
-        };
-
         // ==================== CSV BULK IMPORT/EXPORT ====================
 
         _app.MapPost("/api/symbols/bulk-import", async (
@@ -795,7 +862,7 @@ public sealed class UiServer : IAsyncDisposable
                 );
 
                 var result = await importExport.ImportFromCsvAsync(csvContent, options);
-                return Results.Json(result, jsonOptions);
+                return Results.Json(result, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -846,7 +913,7 @@ public sealed class UiServer : IAsyncDisposable
             try
             {
                 var all = await templates.GetAllTemplatesAsync();
-                return Results.Json(all, jsonOptions);
+                return Results.Json(all, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -861,7 +928,7 @@ public sealed class UiServer : IAsyncDisposable
                 var template = await templates.GetTemplateAsync(templateId);
                 return template is null
                     ? Results.NotFound($"Template '{templateId}' not found")
-                    : Results.Json(template, jsonOptions);
+                    : Results.Json(template, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -874,7 +941,7 @@ public sealed class UiServer : IAsyncDisposable
             try
             {
                 var result = await templates.ApplyTemplateAsync(request);
-                return Results.Json(result, jsonOptions);
+                return Results.Json(result, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -899,7 +966,7 @@ public sealed class UiServer : IAsyncDisposable
                     dto.Symbols,
                     dto.Defaults);
 
-                return Results.Json(template, jsonOptions);
+                return Results.Json(template, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -915,7 +982,7 @@ public sealed class UiServer : IAsyncDisposable
                     return Results.BadRequest("Template name is required.");
 
                 var template = await templates.CreateFromCurrentAsync(dto.Name, dto.Description ?? "");
-                return Results.Json(template, jsonOptions);
+                return Results.Json(template, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -945,7 +1012,7 @@ public sealed class UiServer : IAsyncDisposable
             try
             {
                 var schedules = scheduling.GetAllSchedules();
-                return Results.Json(schedules, jsonOptions);
+                return Results.Json(schedules, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -960,7 +1027,7 @@ public sealed class UiServer : IAsyncDisposable
                 var schedule = scheduling.GetSchedule(scheduleId);
                 return schedule is null
                     ? Results.NotFound($"Schedule '{scheduleId}' not found")
-                    : Results.Json(schedule, jsonOptions);
+                    : Results.Json(schedule, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -975,7 +1042,7 @@ public sealed class UiServer : IAsyncDisposable
                 var status = scheduling.GetExecutionStatus(scheduleId);
                 return status is null
                     ? Results.NotFound($"No execution status for schedule '{scheduleId}'")
-                    : Results.Json(status, jsonOptions);
+                    : Results.Json(status, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -994,7 +1061,7 @@ public sealed class UiServer : IAsyncDisposable
                     return Results.BadRequest("At least one symbol is required.");
 
                 var schedule = await scheduling.CreateScheduleAsync(request);
-                return Results.Json(schedule, jsonOptions);
+                return Results.Json(schedule, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -1012,7 +1079,7 @@ public sealed class UiServer : IAsyncDisposable
                 var schedule = await scheduling.UpdateScheduleAsync(scheduleId, request);
                 return schedule is null
                     ? Results.NotFound($"Schedule '{scheduleId}' not found")
-                    : Results.Json(schedule, jsonOptions);
+                    : Results.Json(schedule, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -1057,7 +1124,7 @@ public sealed class UiServer : IAsyncDisposable
             try
             {
                 var status = await scheduling.ExecuteNowAsync(scheduleId);
-                return Results.Json(status, jsonOptions);
+                return Results.Json(status, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -1087,7 +1154,7 @@ public sealed class UiServer : IAsyncDisposable
                 var meta = await metadata.GetMetadataAsync(symbol);
                 return meta is null
                     ? Results.NotFound($"No metadata found for symbol '{symbol}'")
-                    : Results.Json(meta, jsonOptions);
+                    : Results.Json(meta, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -1102,7 +1169,7 @@ public sealed class UiServer : IAsyncDisposable
             try
             {
                 var result = await metadata.GetMetadataBatchAsync(symbols);
-                return Results.Json(result, jsonOptions);
+                return Results.Json(result, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -1117,7 +1184,7 @@ public sealed class UiServer : IAsyncDisposable
             try
             {
                 var result = await metadata.FilterSymbolsAsync(filter);
-                return Results.Json(result, jsonOptions);
+                return Results.Json(result, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -1130,7 +1197,7 @@ public sealed class UiServer : IAsyncDisposable
             try
             {
                 var sectors = await metadata.GetAvailableSectorsAsync();
-                return Results.Json(sectors, jsonOptions);
+                return Results.Json(sectors, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -1146,7 +1213,7 @@ public sealed class UiServer : IAsyncDisposable
             {
                 var sector = request.Query["sector"].FirstOrDefault();
                 var industries = await metadata.GetAvailableIndustriesAsync(sector);
-                return Results.Json(industries, jsonOptions);
+                return Results.Json(industries, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -1169,6 +1236,169 @@ public sealed class UiServer : IAsyncDisposable
             }
         });
 
+        // ==================== SYMBOL SEARCH & AUTOCOMPLETE ====================
+
+        _app.MapGet("/api/symbols/search", async (
+            SymbolSearchService searchService,
+            HttpRequest request,
+            CancellationToken ct) =>
+        {
+            try
+            {
+                var query = request.Query["q"].FirstOrDefault() ?? request.Query["query"].FirstOrDefault() ?? "";
+                var limitStr = request.Query["limit"].FirstOrDefault();
+                var limit = int.TryParse(limitStr, out var l) ? l : 10;
+                var assetType = request.Query["assetType"].FirstOrDefault();
+                var exchange = request.Query["exchange"].FirstOrDefault();
+                var provider = request.Query["provider"].FirstOrDefault();
+                var includeFigiStr = request.Query["includeFigi"].FirstOrDefault();
+                var includeFigi = !string.Equals(includeFigiStr, "false", StringComparison.OrdinalIgnoreCase);
+
+                var searchRequest = new SymbolSearchRequest(
+                    Query: query,
+                    Limit: Math.Clamp(limit, 1, 50),
+                    AssetType: assetType,
+                    Exchange: exchange,
+                    Provider: provider,
+                    IncludeFigi: includeFigi
+                );
+
+                var result = await searchService.SearchAsync(searchRequest, ct);
+                return Results.Json(result, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Symbol search failed: {ex.Message}");
+            }
+        });
+
+        _app.MapPost("/api/symbols/search", async (
+            SymbolSearchService searchService,
+            SymbolSearchRequest request,
+            CancellationToken ct) =>
+        {
+            try
+            {
+                var result = await searchService.SearchAsync(request, ct);
+                return Results.Json(result, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Symbol search failed: {ex.Message}");
+            }
+        });
+
+        _app.MapGet("/api/symbols/search/providers", async (
+            SymbolSearchService searchService,
+            CancellationToken ct) =>
+        {
+            try
+            {
+                var providers = await searchService.GetProvidersAsync(ct);
+                return Results.Json(providers, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to get providers: {ex.Message}");
+            }
+        });
+
+        _app.MapGet("/api/symbols/details/{symbol}", async (
+            SymbolSearchService searchService,
+            string symbol,
+            HttpRequest request,
+            CancellationToken ct) =>
+        {
+            try
+            {
+                var provider = request.Query["provider"].FirstOrDefault();
+                var details = await searchService.GetDetailsAsync(symbol, provider, ct);
+
+                if (details is null)
+                    return Results.NotFound($"Symbol '{symbol}' not found");
+
+                return Results.Json(details, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to get symbol details: {ex.Message}");
+            }
+        });
+
+        _app.MapGet("/api/symbols/figi/{symbol}", async (
+            SymbolSearchService searchService,
+            string symbol,
+            CancellationToken ct) =>
+        {
+            try
+            {
+                var figiMappings = await searchService.LookupFigiAsync(new[] { symbol }, ct);
+                if (!figiMappings.TryGetValue(symbol.ToUpperInvariant(), out var mappings) || mappings.Count == 0)
+                    return Results.NotFound($"No FIGI mappings found for '{symbol}'");
+
+                return Results.Json(new { symbol = symbol.ToUpperInvariant(), mappings }, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"FIGI lookup failed: {ex.Message}");
+            }
+        });
+
+        _app.MapPost("/api/symbols/figi/bulk", async (
+            SymbolSearchService searchService,
+            FigiBulkLookupRequest request,
+            CancellationToken ct) =>
+        {
+            try
+            {
+                if (request.Symbols is null || request.Symbols.Length == 0)
+                    return Results.BadRequest("At least one symbol is required");
+
+                var figiMappings = await searchService.LookupFigiAsync(request.Symbols, ct);
+                return Results.Json(figiMappings, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Bulk FIGI lookup failed: {ex.Message}");
+            }
+        });
+
+        _app.MapGet("/api/symbols/figi/search", async (
+            SymbolSearchService searchService,
+            HttpRequest request,
+            CancellationToken ct) =>
+        {
+            try
+            {
+                var query = request.Query["q"].FirstOrDefault() ?? request.Query["query"].FirstOrDefault() ?? "";
+                var limitStr = request.Query["limit"].FirstOrDefault();
+                var limit = int.TryParse(limitStr, out var l) ? l : 20;
+
+                if (string.IsNullOrWhiteSpace(query))
+                    return Results.BadRequest("Query parameter 'q' is required");
+
+                var results = await searchService.SearchFigiAsync(query, Math.Clamp(limit, 1, 100), ct);
+                return Results.Json(new { query, count = results.Count, results }, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"FIGI search failed: {ex.Message}");
+            }
+        });
+
+        _app.MapDelete("/api/symbols/search/cache", (SymbolSearchService searchService) =>
+        {
+            try
+            {
+                searchService.ClearCache();
+                return Results.Ok(new { message = "Symbol search cache cleared" });
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to clear cache: {ex.Message}");
+            }
+        });
+
         // ==================== INDEX SUBSCRIPTIONS ====================
 
         _app.MapGet("/api/symbols/indices", (IndexSubscriptionService indexService) =>
@@ -1176,7 +1406,7 @@ public sealed class UiServer : IAsyncDisposable
             try
             {
                 var indices = indexService.GetAvailableIndices();
-                return Results.Json(indices, jsonOptions);
+                return Results.Json(indices, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -1193,7 +1423,7 @@ public sealed class UiServer : IAsyncDisposable
                 var components = await indexService.GetIndexComponentsAsync(indexId);
                 return components is null
                     ? Results.NotFound($"Index '{indexId}' not found")
-                    : Results.Json(components, jsonOptions);
+                    : Results.Json(components, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -1208,7 +1438,7 @@ public sealed class UiServer : IAsyncDisposable
             try
             {
                 var status = await indexService.GetSubscriptionStatusAsync(indexId);
-                return Results.Json(status, jsonOptions);
+                return Results.Json(status, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -1232,7 +1462,7 @@ public sealed class UiServer : IAsyncDisposable
                 );
 
                 var result = await indexService.SubscribeToIndexAsync(request);
-                return Results.Json(result, jsonOptions);
+                return Results.Json(result, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -1247,7 +1477,7 @@ public sealed class UiServer : IAsyncDisposable
             try
             {
                 var result = await indexService.UnsubscribeFromIndexAsync(indexId);
-                return Results.Json(result, jsonOptions);
+                return Results.Json(result, s_jsonOptions);
             }
             catch (Exception ex)
             {
@@ -1256,14 +1486,1176 @@ public sealed class UiServer : IAsyncDisposable
         });
     }
 
-    public async Task StartAsync()
+    private void ConfigureNewFeatureRoutes()
     {
-        await _app.StartAsync();
+        // ==================== QW-15: HISTORICAL DATA QUERY ====================
+
+        _app.MapGet("/api/historical/symbols", (HistoricalDataQueryService query) =>
+        {
+            try
+            {
+                var symbols = query.GetAvailableSymbols();
+                return Results.Json(symbols, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to get symbols: {ex.Message}");
+            }
+        });
+
+        _app.MapGet("/api/historical/symbols/{symbol}/range", (HistoricalDataQueryService query, string symbol) =>
+        {
+            try
+            {
+                var range = query.GetDateRange(symbol);
+                return Results.Json(range, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to get date range: {ex.Message}");
+            }
+        });
+
+        _app.MapPost("/api/historical/query", async (HistoricalDataQueryService query, HistoricalQueryRequest req) =>
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(req.Symbol))
+                    return Results.BadRequest("Symbol is required");
+
+                var queryParams = new HistoricalDataQuery(
+                    Symbol: req.Symbol,
+                    From: req.From,
+                    To: req.To,
+                    DataType: req.DataType,
+                    Skip: req.Skip,
+                    Limit: req.Limit
+                );
+
+                var result = await query.QueryAsync(queryParams);
+                return Results.Json(result, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Query failed: {ex.Message}");
+            }
+        });
+
+        // ==================== QW-16: DIAGNOSTIC BUNDLE ====================
+
+        _app.MapPost("/api/diagnostics/bundle", async (DiagnosticBundleService diag, DiagnosticBundleRequest? req) =>
+        {
+            try
+            {
+                var options = new DiagnosticBundleOptions(
+                    IncludeSystemInfo: req?.IncludeSystemInfo ?? true,
+                    IncludeConfiguration: req?.IncludeConfiguration ?? true,
+                    IncludeMetrics: req?.IncludeMetrics ?? true,
+                    IncludeLogs: req?.IncludeLogs ?? true,
+                    IncludeStorageInfo: req?.IncludeStorageInfo ?? true,
+                    IncludeEnvironmentVariables: req?.IncludeEnvironmentVariables ?? true,
+                    LogDays: req?.LogDays ?? 3
+                );
+
+                var result = await diag.GenerateAsync(options);
+                return Results.Json(result, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Bundle generation failed: {ex.Message}");
+            }
+        });
+
+        _app.MapGet("/api/diagnostics/bundle/{bundleId}/download", (DiagnosticBundleService diag, string bundleId) =>
+        {
+            try
+            {
+                var zipPath = Path.Combine(Path.GetTempPath(), $"{bundleId}.zip");
+                if (!File.Exists(zipPath))
+                    return Results.NotFound("Bundle not found or expired");
+
+                var bytes = diag.ReadBundle(zipPath);
+                return Results.File(bytes, "application/zip", $"{bundleId}.zip");
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Download failed: {ex.Message}");
+            }
+        });
+
+        // ==================== QW-17: SAMPLE DATA GENERATOR ====================
+
+        _app.MapPost("/api/tools/sample-data", (SampleDataGenerator gen, SampleDataRequest? req) =>
+        {
+            try
+            {
+                var options = new SampleDataOptions(
+                    Symbols: req?.Symbols,
+                    DurationMinutes: req?.DurationMinutes ?? 60,
+                    MaxEvents: req?.MaxEvents ?? 10000,
+                    IncludeTrades: req?.IncludeTrades ?? true,
+                    IncludeQuotes: req?.IncludeQuotes ?? true,
+                    IncludeDepth: req?.IncludeDepth ?? true,
+                    IncludeBars: req?.IncludeBars ?? true
+                );
+
+                var result = gen.Generate(options);
+                return Results.Json(new
+                {
+                    result.Success,
+                    result.Message,
+                    result.TotalEvents,
+                    result.TradeCount,
+                    result.QuoteCount,
+                    result.DepthUpdateCount,
+                    result.BarCount,
+                    // Don't include raw events in response (too large)
+                    sampleEvents = result.Events?.Take(5)
+                }, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Sample data generation failed: {ex.Message}");
+            }
+        });
+
+        _app.MapGet("/api/tools/sample-data/preview", (SampleDataGenerator gen) =>
+        {
+            try
+            {
+                var preview = gen.GeneratePreview(new SampleDataOptions(MaxEvents: 20));
+                return Results.Json(preview, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Preview failed: {ex.Message}");
+            }
+        });
+
+        // ==================== QW-58: LAST N ERRORS ====================
+
+        _app.MapGet("/api/diagnostics/errors", (ErrorTracker errors, int? count, string? type, string? context) =>
+        {
+            try
+            {
+                var result = errors.GetLastErrors(count ?? 10, type, context);
+                return Results.Json(result, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to get errors: {ex.Message}");
+            }
+        });
+
+        _app.MapGet("/api/diagnostics/errors/stats", (ErrorTracker errors, int? hours) =>
+        {
+            try
+            {
+                var window = hours.HasValue ? TimeSpan.FromHours(hours.Value) : TimeSpan.FromHours(24);
+                var stats = errors.GetStatistics(window);
+                return Results.Json(stats, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to get error stats: {ex.Message}");
+            }
+        });
+
+        _app.MapGet("/api/diagnostics/errors/logs", async (ErrorTracker errors, int? count, int? days) =>
+        {
+            try
+            {
+                var result = await errors.ParseErrorsFromLogsAsync(count ?? 100, days ?? 1);
+                return Results.Json(result, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to parse log errors: {ex.Message}");
+            }
+        });
+
+        // ==================== QW-76: CONFIG TEMPLATE GENERATOR ====================
+
+        _app.MapGet("/api/tools/config-templates", (ConfigTemplateGenerator gen) =>
+        {
+            try
+            {
+                var templates = gen.GetAllTemplates();
+                return Results.Json(templates.Select(t => new
+                {
+                    t.Name,
+                    t.Description,
+                    t.Category,
+                    t.EnvironmentVariables
+                }), s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to get templates: {ex.Message}");
+            }
+        });
+
+        _app.MapGet("/api/tools/config-templates/{name}", (ConfigTemplateGenerator gen, string name) =>
+        {
+            try
+            {
+                var template = gen.GetTemplate(name);
+                if (template == null)
+                    return Results.NotFound($"Template '{name}' not found");
+
+                return Results.Json(template, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to get template: {ex.Message}");
+            }
+        });
+
+        _app.MapPost("/api/tools/config-templates/validate", (ConfigTemplateGenerator gen, ConfigValidateRequest req) =>
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(req.Json))
+                    return Results.BadRequest("JSON configuration is required");
+
+                var result = gen.ValidateTemplate(req.Json);
+                return Results.Json(result, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Validation failed: {ex.Message}");
+            }
+        });
+
+        // ==================== QW-25: CONFIG ENVIRONMENT OVERRIDE ====================
+
+        _app.MapGet("/api/config/env-overrides", (ConfigEnvironmentOverride envOverride) =>
+        {
+            try
+            {
+                var variables = envOverride.GetRecognizedVariables();
+                return Results.Json(variables, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to get environment overrides: {ex.Message}");
+            }
+        });
+
+        _app.MapGet("/api/config/env-overrides/docs", (ConfigEnvironmentOverride envOverride) =>
+        {
+            try
+            {
+                var docs = envOverride.GetDocumentation();
+                return Results.Text(docs, "text/markdown");
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to get documentation: {ex.Message}");
+            }
+        });
+
+        // ==================== QW-93: DRY RUN MODE ====================
+
+        _app.MapPost("/api/tools/dry-run", async (DryRunService dryRun, ConfigStore store, DryRunRequest? req) =>
+        {
+            try
+            {
+                var config = store.Load();
+                var options = new DryRunOptions(
+                    ValidateConfiguration: req?.ValidateConfiguration ?? true,
+                    ValidateFileSystem: req?.ValidateFileSystem ?? true,
+                    ValidateConnectivity: req?.ValidateConnectivity ?? true,
+                    ValidateProviders: req?.ValidateProviders ?? true,
+                    ValidateSymbols: req?.ValidateSymbols ?? true,
+                    ValidateResources: req?.ValidateResources ?? true
+                );
+
+                var result = await dryRun.ValidateAsync(config, options);
+                return Results.Json(result, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Dry run failed: {ex.Message}");
+            }
+        });
+
+        _app.MapPost("/api/tools/dry-run/report", async (DryRunService dryRun, ConfigStore store) =>
+        {
+            try
+            {
+                var config = store.Load();
+                var result = await dryRun.ValidateAsync(config, new DryRunOptions());
+                var report = dryRun.GenerateReport(result);
+                return Results.Text(report, "text/plain");
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Report generation failed: {ex.Message}");
+            }
+        });
+
+        // ==================== DEV-9 & QW-121: API DOCUMENTATION ====================
+
+        _app.MapGet("/api/openapi.json", (ApiDocumentationService apiDocs) =>
+        {
+            try
+            {
+                var spec = apiDocs.GenerateOpenApiSpec();
+                return Results.Json(spec, new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                    WriteIndented = true,
+                    DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+                });
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to generate OpenAPI spec: {ex.Message}");
+            }
+        });
+
+        _app.MapGet("/api/docs", (ApiDocumentationService apiDocs) =>
+        {
+            try
+            {
+                var html = apiDocs.GenerateSwaggerHtml();
+                return Results.Content(html, "text/html");
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to generate docs: {ex.Message}");
+            }
+        });
+
+        _app.MapGet("/api/docs/markdown", (ApiDocumentationService apiDocs) =>
+        {
+            try
+            {
+                var markdown = apiDocs.GenerateMarkdownDocs();
+                return Results.Text(markdown, "text/markdown");
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to generate markdown: {ex.Message}");
+            }
+        });
+
+        _app.MapGet("/swagger", (ApiDocumentationService apiDocs) =>
+        {
+            try
+            {
+                var html = apiDocs.GenerateSwaggerHtml();
+                return Results.Content(html, "text/html");
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to generate Swagger UI: {ex.Message}");
+            }
+        });
     }
 
-    public async Task StopAsync()
+    private void ConfigureCredentialManagementRoutes()
     {
-        await _app.StopAsync();
+        var jsonOptions = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = true
+        };
+
+        // ==================== CREDENTIAL TESTING ====================
+
+        // Test credentials for a specific provider
+        _app.MapPost("/api/credentials/test", async (
+            CredentialTestingService credentialService,
+            CredentialTestRequest req) =>
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(req.Provider))
+                    return Results.BadRequest("Provider name is required");
+
+                var result = await credentialService.TestCredentialAsync(
+                    req.Provider,
+                    req.ApiKey,
+                    req.ApiSecret,
+                    req.CredentialSource);
+
+                return Results.Json(result, jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Credential test failed: {ex.Message}");
+            }
+        });
+
+        // Test all configured credentials
+        _app.MapPost("/api/credentials/test-all", async (
+            CredentialTestingService credentialService,
+            ConfigStore store) =>
+        {
+            try
+            {
+                var config = store.Load();
+                var summary = await credentialService.TestAllCredentialsAsync(config);
+                return Results.Json(summary, jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Credential test failed: {ex.Message}");
+            }
+        });
+
+        // Get all credential statuses (cached)
+        _app.MapGet("/api/credentials/status", (CredentialTestingService credentialService) =>
+        {
+            try
+            {
+                var statuses = credentialService.GetAllCachedStatuses();
+
+                var response = statuses.Select(kvp => new
+                {
+                    provider = kvp.Key,
+                    lastSuccessfulAuth = kvp.Value.LastSuccessfulAuth,
+                    lastTestResult = kvp.Value.LastTestResult.ToString(),
+                    lastTestedAt = kvp.Value.LastTestedAt,
+                    consecutiveFailures = kvp.Value.ConsecutiveFailures,
+                    expiresAt = kvp.Value.ExpiresAt,
+                    isExpiringSoon = kvp.Value.ExpiresAt.HasValue &&
+                        (kvp.Value.ExpiresAt.Value - DateTimeOffset.UtcNow).TotalDays <= 7,
+                    daysUntilExpiration = kvp.Value.ExpiresAt.HasValue
+                        ? (kvp.Value.ExpiresAt.Value - DateTimeOffset.UtcNow).TotalDays
+                        : (double?)null
+                }).ToList();
+
+                return Results.Json(response, jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to get credential status: {ex.Message}");
+            }
+        });
+
+        // Get credential status for a specific provider
+        _app.MapGet("/api/credentials/status/{provider}", (
+            CredentialTestingService credentialService,
+            string provider) =>
+        {
+            try
+            {
+                var status = credentialService.GetCachedStatus(provider);
+                if (status == null)
+                    return Results.NotFound($"No status found for provider: {provider}");
+
+                var response = new
+                {
+                    provider = status.ProviderName,
+                    lastSuccessfulAuth = status.LastSuccessfulAuth,
+                    lastTestResult = status.LastTestResult.ToString(),
+                    lastTestedAt = status.LastTestedAt,
+                    consecutiveFailures = status.ConsecutiveFailures,
+                    expiresAt = status.ExpiresAt,
+                    isExpiringSoon = status.ExpiresAt.HasValue &&
+                        (status.ExpiresAt.Value - DateTimeOffset.UtcNow).TotalDays <= 7,
+                    daysUntilExpiration = status.ExpiresAt.HasValue
+                        ? (status.ExpiresAt.Value - DateTimeOffset.UtcNow).TotalDays
+                        : (double?)null
+                };
+
+                return Results.Json(response, jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to get credential status: {ex.Message}");
+            }
+        });
+
+        // ==================== OAUTH TOKEN MANAGEMENT ====================
+
+        // Get all OAuth token statuses
+        _app.MapGet("/api/credentials/oauth/tokens", (OAuthTokenRefreshService oauthService) =>
+        {
+            try
+            {
+                var tokens = oauthService.GetAllTokens();
+
+                var response = tokens.Select(kvp => new
+                {
+                    provider = kvp.Key,
+                    status = kvp.Value.Status.ToString(),
+                    expiresAt = kvp.Value.Token.ExpiresAt,
+                    isExpired = kvp.Value.Token.IsExpired,
+                    isExpiringSoon = kvp.Value.Token.IsExpiringSoon,
+                    canRefresh = kvp.Value.Token.CanRefresh,
+                    lifetimeRemainingPercent = kvp.Value.Token.LifetimeRemainingPercent,
+                    timeUntilExpiration = kvp.Value.Token.TimeUntilExpiration.ToString()
+                }).ToList();
+
+                return Results.Json(response, jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to get OAuth tokens: {ex.Message}");
+            }
+        });
+
+        // Manually refresh OAuth token for a provider
+        _app.MapPost("/api/credentials/oauth/refresh/{provider}", async (
+            OAuthTokenRefreshService oauthService,
+            string provider) =>
+        {
+            try
+            {
+                var result = await oauthService.RefreshTokenAsync(provider);
+                return Results.Json(result, jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Token refresh failed: {ex.Message}");
+            }
+        });
+
+        // Store OAuth token for a provider
+        _app.MapPost("/api/credentials/oauth/store", async (
+            OAuthTokenRefreshService oauthService,
+            OAuthTokenStoreRequest req) =>
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(req.Provider))
+                    return Results.BadRequest("Provider name is required");
+
+                if (string.IsNullOrWhiteSpace(req.AccessToken))
+                    return Results.BadRequest("Access token is required");
+
+                var token = new OAuthToken(
+                    AccessToken: req.AccessToken,
+                    TokenType: req.TokenType ?? "Bearer",
+                    ExpiresAt: req.ExpiresAt ?? DateTimeOffset.UtcNow.AddHours(1),
+                    RefreshToken: req.RefreshToken,
+                    RefreshTokenExpiresAt: req.RefreshTokenExpiresAt,
+                    Scope: req.Scope,
+                    IssuedAt: DateTimeOffset.UtcNow
+                );
+
+                await oauthService.StoreTokenAsync(req.Provider, token);
+                return Results.Ok(new { message = "Token stored successfully" });
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to store token: {ex.Message}");
+            }
+        });
+
+        // Remove OAuth token for a provider
+        _app.MapDelete("/api/credentials/oauth/{provider}", async (
+            OAuthTokenRefreshService oauthService,
+            string provider) =>
+        {
+            try
+            {
+                await oauthService.RemoveTokenAsync(provider);
+                return Results.Ok(new { message = $"Token removed for {provider}" });
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to remove token: {ex.Message}");
+            }
+        });
+
+        // ==================== CREDENTIAL MANAGEMENT UI ====================
+
+        // Get credentials dashboard HTML
+        _app.MapGet("/credentials", (ConfigStore store, CredentialTestingService credentialService) =>
+        {
+            try
+            {
+                var config = store.Load();
+                var statuses = credentialService.GetAllCachedStatuses();
+                var html = HtmlTemplates.CredentialsDashboard(config, statuses);
+                return Results.Content(html, "text/html");
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to render credentials dashboard: {ex.Message}");
+            }
+        });
+    }
+
+    private void ConfigureBulkSymbolManagementRoutes()
+    {
+        // ==================== TEXT/CSV IMPORT ====================
+
+        _app.MapPost("/api/symbols/import/text", async (
+            SymbolImportExportService importExport,
+            HttpRequest request) =>
+        {
+            try
+            {
+                using var reader = new StreamReader(request.Body);
+                var content = await reader.ReadToEndAsync();
+
+                if (string.IsNullOrWhiteSpace(content))
+                    return Results.BadRequest("Content is required.");
+
+                var options = new BulkImportOptions(
+                    SkipExisting: request.Query["skipExisting"] != "false",
+                    UpdateExisting: request.Query["updateExisting"] == "true",
+                    HasHeader: false,
+                    ValidateSymbols: request.Query["validate"] != "false"
+                );
+
+                var result = await importExport.ImportFromTextAsync(content, options);
+                return Results.Json(result, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Text import failed: {ex.Message}");
+            }
+        });
+
+        _app.MapPost("/api/symbols/import/auto", async (
+            SymbolImportExportService importExport,
+            HttpRequest request) =>
+        {
+            try
+            {
+                using var reader = new StreamReader(request.Body);
+                var content = await reader.ReadToEndAsync();
+
+                if (string.IsNullOrWhiteSpace(content))
+                    return Results.BadRequest("Content is required.");
+
+                var options = new BulkImportOptions(
+                    SkipExisting: request.Query["skipExisting"] != "false",
+                    UpdateExisting: request.Query["updateExisting"] == "true",
+                    ValidateSymbols: request.Query["validate"] != "false"
+                );
+
+                var result = await importExport.ImportAutoDetectAsync(content, options);
+                return Results.Json(result, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Import failed: {ex.Message}");
+            }
+        });
+
+        // ==================== WATCHLISTS ====================
+
+        _app.MapGet("/api/watchlists", async (WatchlistService watchlists) =>
+        {
+            try
+            {
+                var all = await watchlists.GetAllWatchlistsAsync();
+                return Results.Json(all, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to get watchlists: {ex.Message}");
+            }
+        });
+
+        _app.MapGet("/api/watchlists/summaries", async (WatchlistService watchlists) =>
+        {
+            try
+            {
+                var summaries = await watchlists.GetWatchlistSummariesAsync();
+                return Results.Json(summaries, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to get watchlist summaries: {ex.Message}");
+            }
+        });
+
+        _app.MapGet("/api/watchlists/{watchlistId}", async (WatchlistService watchlists, string watchlistId) =>
+        {
+            try
+            {
+                var watchlist = await watchlists.GetWatchlistAsync(watchlistId);
+                return watchlist is null
+                    ? Results.NotFound($"Watchlist '{watchlistId}' not found")
+                    : Results.Json(watchlist, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to get watchlist: {ex.Message}");
+            }
+        });
+
+        _app.MapPost("/api/watchlists", async (WatchlistService watchlists, CreateWatchlistRequest request) =>
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(request.Name))
+                    return Results.BadRequest("Watchlist name is required.");
+
+                var watchlist = await watchlists.CreateWatchlistAsync(request);
+                return Results.Json(watchlist, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to create watchlist: {ex.Message}");
+            }
+        });
+
+        _app.MapPut("/api/watchlists/{watchlistId}", async (
+            WatchlistService watchlists,
+            string watchlistId,
+            UpdateWatchlistRequest request) =>
+        {
+            try
+            {
+                var updated = await watchlists.UpdateWatchlistAsync(watchlistId, request);
+                return updated is null
+                    ? Results.NotFound($"Watchlist '{watchlistId}' not found")
+                    : Results.Json(updated, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to update watchlist: {ex.Message}");
+            }
+        });
+
+        _app.MapDelete("/api/watchlists/{watchlistId}", async (WatchlistService watchlists, string watchlistId) =>
+        {
+            try
+            {
+                var deleted = await watchlists.DeleteWatchlistAsync(watchlistId);
+                return deleted ? Results.Ok() : Results.NotFound($"Watchlist '{watchlistId}' not found");
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to delete watchlist: {ex.Message}");
+            }
+        });
+
+        _app.MapPost("/api/watchlists/{watchlistId}/symbols", async (
+            WatchlistService watchlists,
+            string watchlistId,
+            WatchlistSymbolsRequest request) =>
+        {
+            try
+            {
+                var result = await watchlists.AddSymbolsAsync(new AddSymbolsToWatchlistRequest(
+                    WatchlistId: watchlistId,
+                    Symbols: request.Symbols,
+                    SubscribeImmediately: request.SubscribeImmediately
+                ));
+                return Results.Json(result, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to add symbols: {ex.Message}");
+            }
+        });
+
+        _app.MapDelete("/api/watchlists/{watchlistId}/symbols", async (
+            WatchlistService watchlists,
+            string watchlistId,
+            WatchlistSymbolsRequest request) =>
+        {
+            try
+            {
+                var result = await watchlists.RemoveSymbolsAsync(new RemoveSymbolsFromWatchlistRequest(
+                    WatchlistId: watchlistId,
+                    Symbols: request.Symbols,
+                    UnsubscribeIfOrphaned: request.UnsubscribeIfOrphaned
+                ));
+                return Results.Json(result, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to remove symbols: {ex.Message}");
+            }
+        });
+
+        _app.MapPost("/api/watchlists/{watchlistId}/subscribe", async (
+            WatchlistService watchlists,
+            string watchlistId,
+            WatchlistSubscriptionRequest? request) =>
+        {
+            try
+            {
+                var result = await watchlists.SubscribeWatchlistAsync(new WatchlistSubscriptionRequest(
+                    WatchlistId: watchlistId,
+                    SubscribeTrades: request?.SubscribeTrades,
+                    SubscribeDepth: request?.SubscribeDepth,
+                    DepthLevels: request?.DepthLevels
+                ));
+                return Results.Json(result, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to subscribe watchlist: {ex.Message}");
+            }
+        });
+
+        _app.MapPost("/api/watchlists/{watchlistId}/unsubscribe", async (
+            WatchlistService watchlists,
+            string watchlistId) =>
+        {
+            try
+            {
+                var result = await watchlists.UnsubscribeWatchlistAsync(watchlistId);
+                return Results.Json(result, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to unsubscribe watchlist: {ex.Message}");
+            }
+        });
+
+        _app.MapGet("/api/watchlists/{watchlistId}/export", async (WatchlistService watchlists, string watchlistId) =>
+        {
+            try
+            {
+                var json = await watchlists.ExportWatchlistAsync(watchlistId);
+                return json is null
+                    ? Results.NotFound($"Watchlist '{watchlistId}' not found")
+                    : Results.Text(json, "application/json");
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to export watchlist: {ex.Message}");
+            }
+        });
+
+        _app.MapPost("/api/watchlists/import", async (WatchlistService watchlists, HttpRequest request) =>
+        {
+            try
+            {
+                using var reader = new StreamReader(request.Body);
+                var json = await reader.ReadToEndAsync();
+
+                var watchlist = await watchlists.ImportWatchlistAsync(json);
+                return watchlist is null
+                    ? Results.BadRequest("Invalid watchlist JSON")
+                    : Results.Json(watchlist, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to import watchlist: {ex.Message}");
+            }
+        });
+
+        _app.MapPost("/api/watchlists/reorder", async (WatchlistService watchlists, string[] watchlistIds) =>
+        {
+            try
+            {
+                await watchlists.ReorderWatchlistsAsync(watchlistIds);
+                return Results.Ok();
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to reorder watchlists: {ex.Message}");
+            }
+        });
+
+        // ==================== PORTFOLIO IMPORT ====================
+
+        _app.MapGet("/api/portfolio/brokers", (PortfolioImportService portfolio) =>
+        {
+            try
+            {
+                var brokers = portfolio.GetAvailableBrokers();
+                return Results.Json(brokers, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to get brokers: {ex.Message}");
+            }
+        });
+
+        _app.MapGet("/api/portfolio/{broker}/summary", async (PortfolioImportService portfolio, string broker) =>
+        {
+            try
+            {
+                var summary = await portfolio.GetPortfolioSummaryAsync(broker);
+                return summary is null
+                    ? Results.NotFound($"Broker '{broker}' not configured or not available")
+                    : Results.Json(summary, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to get portfolio summary: {ex.Message}");
+            }
+        });
+
+        _app.MapPost("/api/portfolio/{broker}/import", async (
+            PortfolioImportService portfolio,
+            string broker,
+            PortfolioImportOptionsDto? options) =>
+        {
+            try
+            {
+                var importOptions = new PortfolioImportOptions(
+                    MinPositionValue: options?.MinPositionValue,
+                    MinQuantity: options?.MinQuantity,
+                    AssetClasses: options?.AssetClasses,
+                    ExcludeSymbols: options?.ExcludeSymbols,
+                    LongOnly: options?.LongOnly ?? false,
+                    CreateWatchlist: options?.CreateWatchlist ?? false,
+                    WatchlistName: options?.WatchlistName,
+                    SubscribeTrades: options?.SubscribeTrades ?? true,
+                    SubscribeDepth: options?.SubscribeDepth ?? true,
+                    SkipExisting: options?.SkipExisting ?? true
+                );
+
+                var result = await portfolio.ImportFromBrokerAsync(new PortfolioImportRequest(broker, importOptions));
+                return Results.Json(result, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to import from portfolio: {ex.Message}");
+            }
+        });
+
+        _app.MapPost("/api/portfolio/manual/import", async (
+            PortfolioImportService portfolio,
+            ManualPortfolioImportRequest request) =>
+        {
+            try
+            {
+                if (request.Entries is null || request.Entries.Length == 0)
+                    return Results.BadRequest("At least one entry is required.");
+
+                var entries = request.Entries.Select(e => new ManualPortfolioEntry(
+                    Symbol: e.Symbol,
+                    Quantity: e.Quantity,
+                    AssetClass: e.AssetClass
+                )).ToArray();
+
+                var importOptions = new PortfolioImportOptions(
+                    CreateWatchlist: request.CreateWatchlist,
+                    WatchlistName: request.WatchlistName,
+                    SubscribeTrades: request.SubscribeTrades,
+                    SubscribeDepth: request.SubscribeDepth,
+                    SkipExisting: request.SkipExisting
+                );
+
+                var result = await portfolio.ImportManualAsync(entries, importOptions);
+                return Results.Json(result, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to import manual portfolio: {ex.Message}");
+            }
+        });
+
+        // ==================== BATCH OPERATIONS ====================
+
+        _app.MapPost("/api/symbols/batch/add", async (BatchOperationsService batch, BatchAddRequest request) =>
+        {
+            try
+            {
+                if (request.Symbols is null || request.Symbols.Length == 0)
+                    return Results.BadRequest("At least one symbol is required.");
+
+                var result = await batch.AddSymbolsAsync(request);
+                return Results.Json(result, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Batch add failed: {ex.Message}");
+            }
+        });
+
+        _app.MapPost("/api/symbols/batch/delete", async (BatchOperationsService batch, BatchDeleteRequest request) =>
+        {
+            try
+            {
+                if (request.Symbols is null || request.Symbols.Length == 0)
+                    return Results.BadRequest("At least one symbol is required.");
+
+                var result = await batch.DeleteSymbolsAsync(request);
+                return Results.Json(result, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Batch delete failed: {ex.Message}");
+            }
+        });
+
+        _app.MapPost("/api/symbols/batch/toggle", async (BatchOperationsService batch, BatchToggleRequest request) =>
+        {
+            try
+            {
+                if (request.Symbols is null || request.Symbols.Length == 0)
+                    return Results.BadRequest("At least one symbol is required.");
+
+                var result = await batch.ToggleSubscriptionsAsync(request);
+                return Results.Json(result, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Batch toggle failed: {ex.Message}");
+            }
+        });
+
+        _app.MapPost("/api/symbols/batch/update", async (BatchOperationsService batch, BatchUpdateRequest request) =>
+        {
+            try
+            {
+                if (request.Symbols is null || request.Symbols.Length == 0)
+                    return Results.BadRequest("At least one symbol is required.");
+
+                var result = await batch.UpdateSymbolsAsync(request);
+                return Results.Json(result, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Batch update failed: {ex.Message}");
+            }
+        });
+
+        _app.MapPost("/api/symbols/batch/enable-trades", async (BatchOperationsService batch, string[] symbols) =>
+        {
+            try
+            {
+                if (symbols is null || symbols.Length == 0)
+                    return Results.BadRequest("At least one symbol is required.");
+
+                var result = await batch.EnableTradesAsync(symbols);
+                return Results.Json(result, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Enable trades failed: {ex.Message}");
+            }
+        });
+
+        _app.MapPost("/api/symbols/batch/disable-trades", async (BatchOperationsService batch, string[] symbols) =>
+        {
+            try
+            {
+                if (symbols is null || symbols.Length == 0)
+                    return Results.BadRequest("At least one symbol is required.");
+
+                var result = await batch.DisableTradesAsync(symbols);
+                return Results.Json(result, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Disable trades failed: {ex.Message}");
+            }
+        });
+
+        _app.MapPost("/api/symbols/batch/enable-depth", async (BatchOperationsService batch, string[] symbols) =>
+        {
+            try
+            {
+                if (symbols is null || symbols.Length == 0)
+                    return Results.BadRequest("At least one symbol is required.");
+
+                var result = await batch.EnableDepthAsync(symbols);
+                return Results.Json(result, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Enable depth failed: {ex.Message}");
+            }
+        });
+
+        _app.MapPost("/api/symbols/batch/disable-depth", async (BatchOperationsService batch, string[] symbols) =>
+        {
+            try
+            {
+                if (symbols is null || symbols.Length == 0)
+                    return Results.BadRequest("At least one symbol is required.");
+
+                var result = await batch.DisableDepthAsync(symbols);
+                return Results.Json(result, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Disable depth failed: {ex.Message}");
+            }
+        });
+
+        _app.MapPost("/api/symbols/batch/copy-settings", async (
+            BatchOperationsService batch,
+            BatchCopySettingsRequest request) =>
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(request.SourceSymbol))
+                    return Results.BadRequest("Source symbol is required.");
+
+                if (request.TargetSymbols is null || request.TargetSymbols.Length == 0)
+                    return Results.BadRequest("At least one target symbol is required.");
+
+                var result = await batch.CopySettingsAsync(request);
+                return Results.Json(result, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Copy settings failed: {ex.Message}");
+            }
+        });
+
+        _app.MapPost("/api/symbols/batch/move-to-watchlist", async (
+            BatchOperationsService batch,
+            BatchMoveToWatchlistRequest request) =>
+        {
+            try
+            {
+                if (request.Symbols is null || request.Symbols.Length == 0)
+                    return Results.BadRequest("At least one symbol is required.");
+
+                if (string.IsNullOrWhiteSpace(request.TargetWatchlistId))
+                    return Results.BadRequest("Target watchlist ID is required.");
+
+                var result = await batch.MoveToWatchlistAsync(request);
+                return Results.Json(result, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Move to watchlist failed: {ex.Message}");
+            }
+        });
+
+        _app.MapPost("/api/symbols/batch/filter", async (BatchOperationsService batch, BatchFilter filter) =>
+        {
+            try
+            {
+                var symbols = await batch.GetFilteredSymbolsAsync(filter);
+                return Results.Json(symbols, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Filter failed: {ex.Message}");
+            }
+        });
+
+        _app.MapPost("/api/symbols/batch/filtered-operation", async (
+            BatchOperationsService batch,
+            BatchFilteredOperationRequest request) =>
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(request.Operation))
+                    return Results.BadRequest("Operation is required.");
+
+                var result = await batch.PerformFilteredOperationAsync(request);
+                return Results.Json(result, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Filtered operation failed: {ex.Message}");
+            }
+        });
+    }
+
+    public async Task StartAsync(CancellationToken ct = default)
+    {
+        await _app.StartAsync(ct);
+    }
+
+    public async Task StopAsync(CancellationToken ct = default)
+    {
+        await _app.StopAsync(ct);
     }
 
     public async ValueTask DisposeAsync()
@@ -1272,9 +2664,54 @@ public sealed class UiServer : IAsyncDisposable
     }
 }
 
+// ==================== NEW FEATURE DTOs ====================
+
+public record HistoricalQueryRequest(
+    string Symbol,
+    DateOnly? From = null,
+    DateOnly? To = null,
+    string? DataType = null,
+    int? Skip = null,
+    int? Limit = null
+);
+
+public record DiagnosticBundleRequest(
+    bool IncludeSystemInfo = true,
+    bool IncludeConfiguration = true,
+    bool IncludeMetrics = true,
+    bool IncludeLogs = true,
+    bool IncludeStorageInfo = true,
+    bool IncludeEnvironmentVariables = true,
+    int LogDays = 3
+);
+
+public record SampleDataRequest(
+    string[]? Symbols = null,
+    int DurationMinutes = 60,
+    int MaxEvents = 10000,
+    bool IncludeTrades = true,
+    bool IncludeQuotes = true,
+    bool IncludeDepth = true,
+    bool IncludeBars = true
+);
+
+public record ConfigValidateRequest(string Json);
+
+public record DryRunRequest(
+    bool ValidateConfiguration = true,
+    bool ValidateFileSystem = true,
+    bool ValidateConnectivity = true,
+    bool ValidateProviders = true,
+    bool ValidateSymbols = true,
+    bool ValidateResources = true
+);
+
 public record DataSourceRequest(string DataSource);
 public record StorageSettingsRequest(string? DataRoot, bool Compress, string? NamingConvention, string? DatePartition, bool IncludeProvider, string? FilePrefix);
 public record BackfillRequestDto(string? Provider, string[] Symbols, DateOnly? From, DateOnly? To);
+
+// Symbol search DTOs
+public record FigiBulkLookupRequest(string[] Symbols);
 
 // Symbol management DTOs
 public record CreateTemplateDto(
@@ -1355,4 +2792,58 @@ public record TierMigrationRequest(
     bool DeleteSource = false,
     bool VerifyChecksum = true,
     int ParallelFiles = 4
+);
+
+// Credential management DTOs
+public record CredentialTestRequest(
+    string Provider,
+    string? ApiKey = null,
+    string? ApiSecret = null,
+    string? CredentialSource = null
+);
+
+public record OAuthTokenStoreRequest(
+    string Provider,
+    string AccessToken,
+    string? TokenType = null,
+    DateTimeOffset? ExpiresAt = null,
+    string? RefreshToken = null,
+    DateTimeOffset? RefreshTokenExpiresAt = null,
+    string? Scope = null
+);
+
+// ==================== BULK SYMBOL MANAGEMENT DTOs ====================
+
+public record WatchlistSymbolsRequest(
+    string[] Symbols,
+    bool SubscribeImmediately = true,
+    bool UnsubscribeIfOrphaned = false
+);
+
+public record PortfolioImportOptionsDto(
+    decimal? MinPositionValue = null,
+    decimal? MinQuantity = null,
+    string[]? AssetClasses = null,
+    string[]? ExcludeSymbols = null,
+    bool LongOnly = false,
+    bool CreateWatchlist = false,
+    string? WatchlistName = null,
+    bool SubscribeTrades = true,
+    bool SubscribeDepth = true,
+    bool SkipExisting = true
+);
+
+public record ManualPortfolioEntryDto(
+    string Symbol,
+    decimal? Quantity = null,
+    string? AssetClass = null
+);
+
+public record ManualPortfolioImportRequest(
+    ManualPortfolioEntryDto[] Entries,
+    bool CreateWatchlist = false,
+    string? WatchlistName = null,
+    bool SubscribeTrades = true,
+    bool SubscribeDepth = true,
+    bool SkipExisting = true
 );
