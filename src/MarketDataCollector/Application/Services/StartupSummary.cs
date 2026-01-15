@@ -204,7 +204,10 @@ public sealed class StartupSummary
                     suggestions.Add("Consider enabling compression or setting a storage limit");
                 }
             }
-            catch { /* Ignore disk check errors */ }
+            catch (Exception ex)
+            {
+                _log.Debug(ex, "Could not check disk space for {DataRoot}", config.DataRoot);
+            }
         }
 
         // Check symbols

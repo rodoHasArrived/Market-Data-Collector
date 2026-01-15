@@ -659,8 +659,9 @@ public sealed class CrystallizedCsvExporter
 
             return new HistoricalBar(symbol, sessionDate, open, high, low, close, volume, source, sequence);
         }
-        catch
+        catch (Exception)
         {
+            // Malformed JSON record - skip
             return null;
         }
     }
@@ -719,8 +720,9 @@ public sealed class CrystallizedCsvExporter
 
             return new HistoricalBar(symbol.Length > 0 ? symbol : "UNKNOWN", sessionDate, open, high, low, close, volume, source);
         }
-        catch
+        catch (Exception)
         {
+            // Malformed CSV record - skip
             return null;
         }
     }

@@ -372,7 +372,7 @@ public sealed class MemoryMappedJsonlReader
                 {
                     results[i] = JsonSerializer.Deserialize<MarketEvent>(lines[i], JsonOpts);
                 }
-                catch
+                catch (JsonException)
                 {
                     results[i] = null;
                 }
@@ -397,7 +397,7 @@ public sealed class MemoryMappedJsonlReader
                 {
                     evt = JsonSerializer.Deserialize<MarketEvent>(line, JsonOpts);
                 }
-                catch
+                catch (JsonException)
                 {
                     // Skip invalid lines
                 }

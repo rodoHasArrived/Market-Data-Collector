@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # =============================================================================
-# START_COLLECTOR.exp
-# Market Data Collector – Canonical Startup Execution Plan (Linux/macOS)
+# start-collector.sh
+# Market Data Collector – Canonical Startup Script (Linux/macOS)
 #
 # Features:
 #   - Builds (optional) with or without IBAPI
@@ -10,7 +10,7 @@
 #   - Handles Ctrl+C / SIGTERM gracefully (stops child processes)
 #
 # Usage:
-#   ./START_COLLECTOR.exp
+#   ./start-collector.sh
 #
 # Flags (env vars):
 #   USE_IBAPI=true|false

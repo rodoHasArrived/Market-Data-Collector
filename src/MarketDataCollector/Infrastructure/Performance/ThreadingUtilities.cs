@@ -21,7 +21,7 @@ public static class ThreadingUtilities
         {
             Thread.CurrentThread.Priority = ThreadPriority.Highest;
         }
-        catch
+        catch (Exception)
         {
             // Ignore - thread pool threads may not allow priority changes
         }
@@ -37,9 +37,9 @@ public static class ThreadingUtilities
         {
             Thread.CurrentThread.Priority = ThreadPriority.AboveNormal;
         }
-        catch
+        catch (Exception)
         {
-            // Ignore
+            // Thread priority change may not be allowed
         }
     }
 
@@ -64,9 +64,9 @@ public static class ThreadingUtilities
                 return TrySetLinuxThreadAffinity(cpuIndex);
             }
         }
-        catch
+        catch (Exception)
         {
-            // Ignore - affinity setting may require elevated privileges
+            // Affinity setting may require elevated privileges
         }
 
         return false;
@@ -84,8 +84,9 @@ public static class ThreadingUtilities
             process.ProcessorAffinity = affinityMask;
             return true;
         }
-        catch
+        catch (Exception)
         {
+            // Process affinity change may require elevated privileges
             return false;
         }
     }
@@ -102,8 +103,9 @@ public static class ThreadingUtilities
             process.PriorityClass = ProcessPriorityClass.High;
             return true;
         }
-        catch
+        catch (Exception)
         {
+            // Priority change may require elevated privileges
             return false;
         }
     }
@@ -144,8 +146,9 @@ public static class ThreadingUtilities
         {
             return GC.TryStartNoGCRegion(totalBytes);
         }
-        catch
+        catch (Exception)
         {
+            // No-GC region not supported or already active
             return false;
         }
     }
@@ -159,9 +162,9 @@ public static class ThreadingUtilities
         {
             GC.EndNoGCRegion();
         }
-        catch
+        catch (InvalidOperationException)
         {
-            // Ignore - may not be in a no-GC region
+            // Not in a no-GC region - expected
         }
     }
 

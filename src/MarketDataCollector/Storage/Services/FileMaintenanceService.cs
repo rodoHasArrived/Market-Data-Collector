@@ -240,14 +240,15 @@ public sealed class FileMaintenanceService : IFileMaintenanceService
                     {
                         foreach (var file in filesToMerge)
                         {
-                            try { file.Delete(); } catch { }
+                            try { file.Delete(); }
+                            catch (IOException) { /* File may be locked - skip */ }
                         }
                     }
                 }
             }
-            catch
+            catch (Exception)
             {
-                // Skip this group on error
+                // Merge failed for this group - keep original files
                 bytesAfter += filesToMerge.Sum(f => f.Length);
             }
         }

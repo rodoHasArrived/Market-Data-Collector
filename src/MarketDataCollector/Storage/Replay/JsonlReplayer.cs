@@ -48,7 +48,7 @@ public sealed class JsonlReplayer
 
             MarketEvent? evt = null;
             try { evt = JsonSerializer.Deserialize<MarketEvent>(line, new JsonSerializerOptions(JsonSerializerDefaults.Web)); }
-            catch { }
+            catch (JsonException) { /* Skip malformed lines */ }
 
             if (evt is not null)
                 yield return evt;

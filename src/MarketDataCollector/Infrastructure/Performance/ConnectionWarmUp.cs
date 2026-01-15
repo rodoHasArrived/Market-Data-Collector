@@ -66,8 +66,9 @@ public sealed class ConnectionWarmUp
             {
                 throw;
             }
-            catch
+            catch (Exception)
             {
+                // Warm-up iteration failed
                 errors++;
             }
 
@@ -111,8 +112,9 @@ public sealed class ConnectionWarmUp
                 var latencyUs = HighResolutionTimestamp.GetElapsedMicroseconds(iterStart);
                 latencies.Add(latencyUs);
             }
-            catch
+            catch (Exception)
             {
+                // Warm-up iteration failed
                 errors++;
             }
 

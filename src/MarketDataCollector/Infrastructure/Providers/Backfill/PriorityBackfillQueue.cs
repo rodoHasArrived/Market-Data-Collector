@@ -412,7 +412,7 @@ public sealed class PriorityBackfillQueue : IDisposable
 
         await Task.Delay(delay.Value).ConfigureAwait(false);
 
-        _queueLock.Wait();
+        await _queueLock.WaitAsync().ConfigureAwait(false);
         try
         {
             job.Status = BackfillJobStatus.Pending;

@@ -502,7 +502,7 @@ Located at `.github/workflows/` (16 total):
 | `test-matrix.yml` | Push/PR | Cross-platform testing |
 | `dependency-review.yml` | PR | Dependency vulnerability check |
 | `scheduled-maintenance.yml` | Cron | Cleanup and maintenance |
-| `codeql-analysis.yml` | Push/PR + Weekly | CodeQL security analysis |
+| `codeql.yml` | Push/PR + Weekly | CodeQL security analysis |
 | `build-observability.yml` | Push/PR | Build metrics capture |
 | `label-management.yml` | Issue/PR activity | Auto-labeling |
 | `stale.yml` | Daily | Issue/PR lifecycle management |

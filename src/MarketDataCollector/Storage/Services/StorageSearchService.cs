@@ -474,7 +474,8 @@ public sealed class StorageSearchService : IStorageSearchService
                     eventCount++;
                 }
             }
-            catch { }
+            catch (IOException) { /* File may be locked */ }
+            catch (OperationCanceledException) { /* Expected on cancellation */ }
 
             return new FileMetadata(
                 FilePath: filePath,
@@ -489,8 +490,9 @@ public sealed class StorageSearchService : IStorageSearchService
                 ModifiedAt: fileInfo.LastWriteTimeUtc
             );
         }
-        catch
+        catch (Exception)
         {
+            // File parsing failed - skip this file
             return null;
         }
     }
@@ -539,7 +541,7 @@ public sealed class StorageSearchService : IStorageSearchService
             {
                 evt = JsonSerializer.Deserialize<MarketEvent>(line);
             }
-            catch { }
+            catch (JsonException) { /* Skip malformed lines */ }
 
             if (evt != null)
                 yield return evt;

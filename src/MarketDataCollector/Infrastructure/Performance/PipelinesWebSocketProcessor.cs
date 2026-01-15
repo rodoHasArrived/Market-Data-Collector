@@ -293,9 +293,9 @@ public sealed class PipelinesWebSocketProcessor : IAsyncDisposable
         {
             await _readTask.ConfigureAwait(false);
         }
-        catch
+        catch (OperationCanceledException)
         {
-            // Ignore disposal errors
+            // Expected on cancellation
         }
 
         _cts.Dispose();

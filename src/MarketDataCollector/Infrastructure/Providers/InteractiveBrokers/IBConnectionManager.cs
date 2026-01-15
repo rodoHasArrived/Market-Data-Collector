@@ -1,11 +1,19 @@
 namespace MarketDataCollector.Infrastructure.Providers.InteractiveBrokers;
 
 /// <summary>
-/// Minimal connection manager placeholder (buildable without IBApi reference).
-/// Use <see cref="EnhancedIBConnectionManager"/> when compiling with the official IB API.
+/// No-op connection manager for builds without Interactive Brokers API reference.
 /// </summary>
-// TODO: Implement full IB connection management with TWS/Gateway API integration
-// This stub allows the project to compile without the IB API reference
+/// <remarks>
+/// <para>
+/// This is a stub implementation that allows the project to compile without the IB API
+/// NuGet package. All connection methods are no-ops that immediately return success.
+/// </para>
+/// <para>
+/// For actual IB connectivity, compile with the IBAPI symbol defined and use
+/// <see cref="EnhancedIBConnectionManager"/> which implements the full EWrapper interface.
+/// </para>
+/// </remarks>
+/// <seealso cref="EnhancedIBConnectionManager"/>
 public sealed class IBConnectionManager
 {
     public bool IsConnected { get; private set; }

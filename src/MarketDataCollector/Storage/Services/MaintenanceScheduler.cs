@@ -295,9 +295,9 @@ public sealed class MaintenanceScheduler : IMaintenanceScheduler, IAsyncDisposab
             {
                 break;
             }
-            catch
+            catch (Exception ex)
             {
-                // Log and continue
+                System.Diagnostics.Debug.WriteLine($"MaintenanceScheduler: Error processing job queue: {ex.Message}");
             }
         }
     }

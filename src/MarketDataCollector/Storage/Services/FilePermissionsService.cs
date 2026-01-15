@@ -305,10 +305,15 @@ public sealed class FilePermissionsService
                 _ = Directory.GetFiles(directoryPath);
                 diagnostic.CanRead = true;
             }
-            catch
+            catch (UnauthorizedAccessException)
             {
                 diagnostic.CanRead = false;
                 diagnostic.Issues.Add("Cannot list directory contents (read access denied)");
+            }
+            catch (Exception)
+            {
+                diagnostic.CanRead = false;
+                diagnostic.Issues.Add("Cannot list directory contents (access error)");
             }
 
             // Test write access
@@ -363,8 +368,9 @@ public sealed class FilePermissionsService
 
             return process.ExitCode == 0 ? output : null;
         }
-        catch
+        catch (Exception)
         {
+            // stat command not available or failed - expected on some systems
             return null;
         }
     }

@@ -182,9 +182,9 @@ public sealed class SourceRegistry : ISourceRegistry
                 }
             }
         }
-        catch
+        catch (Exception)
         {
-            // If loading fails, use defaults
+            // If loading fails (corrupt file, schema change, etc.), use defaults
             InitializeDefaults();
         }
     }
@@ -212,9 +212,10 @@ public sealed class SourceRegistry : ISourceRegistry
                     var json = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
                     File.WriteAllText(_persistencePath, json);
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // Silently fail on save errors
+                    // Non-critical save failure - log to debug output
+                    System.Diagnostics.Debug.WriteLine($"SourceRegistry: Failed to save to {_persistencePath}: {ex.Message}");
                 }
             }
         });

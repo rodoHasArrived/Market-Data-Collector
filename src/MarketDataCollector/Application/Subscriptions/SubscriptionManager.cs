@@ -62,11 +62,13 @@ public sealed class SubscriptionManager
                 {
                     if (_depthSubs.TryRemove(existing, out var depthId) && depthId > 0)
                     {
-                        try { _ib.UnsubscribeMarketDepth(depthId); } catch { /* ignore */ }
+                        try { _ib.UnsubscribeMarketDepth(depthId); }
+                        catch (Exception ex) { _log.Debug(ex, "Expected exception unsubscribing market depth for {Symbol}", existing); }
                     }
                     if (_tradeSubs.TryRemove(existing, out var tradeId) && tradeId > 0)
                     {
-                        try { _ib.UnsubscribeTrades(tradeId); } catch { /* ignore */ }
+                        try { _ib.UnsubscribeTrades(tradeId); }
+                        catch (Exception ex) { _log.Debug(ex, "Expected exception unsubscribing trades for {Symbol}", existing); }
                     }
                     _depthCollector.UnregisterSubscription(existing);
                     _log.Information("Unsubscribed {Symbol} (removed from configuration)", existing);
@@ -110,9 +112,10 @@ public sealed class SubscriptionManager
                             var id = _ib.SubscribeMarketDepth(sc);
                             if (id > 0) _depthSubs[symbol] = id;
                         }
-                        catch
+                        catch (Exception ex)
                         {
                             // if IB isn't enabled, SubscribeMarketDepth returns -1 via NoOp
+                            _log.Debug(ex, "Expected exception subscribing market depth for {Symbol} (IB may not be enabled)", symbol);
                             _depthSubs[symbol] = -1;
                         }
                     }
@@ -123,7 +126,8 @@ public sealed class SubscriptionManager
 
                     if (_depthSubs.TryRemove(symbol, out var subId) && subId > 0)
                     {
-                        try { _ib.UnsubscribeMarketDepth(subId); } catch { /* ignore */ }
+                        try { _ib.UnsubscribeMarketDepth(subId); }
+                        catch (Exception ex) { _log.Debug(ex, "Expected exception unsubscribing market depth for {Symbol}", symbol); }
                     }
                 }
 
@@ -137,8 +141,9 @@ public sealed class SubscriptionManager
                             var id = _ib.SubscribeTrades(sc);
                             if (id > 0) _tradeSubs[symbol] = id;
                         }
-                        catch
+                        catch (Exception ex)
                         {
+                            _log.Debug(ex, "Expected exception subscribing trades for {Symbol} (IB may not be enabled)", symbol);
                             _tradeSubs[symbol] = -1;
                         }
                     }
@@ -147,7 +152,8 @@ public sealed class SubscriptionManager
                 {
                     if (_tradeSubs.TryRemove(symbol, out var tradeId) && tradeId > 0)
                     {
-                        try { _ib.UnsubscribeTrades(tradeId); } catch { /* ignore */ }
+                        try { _ib.UnsubscribeTrades(tradeId); }
+                        catch (Exception ex) { _log.Debug(ex, "Expected exception unsubscribing trades for {Symbol}", symbol); }
                     }
                 }
             }

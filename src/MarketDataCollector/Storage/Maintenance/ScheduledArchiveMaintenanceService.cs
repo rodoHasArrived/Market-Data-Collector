@@ -362,7 +362,10 @@ public sealed class ScheduledArchiveMaintenanceService : BackgroundService, IArc
                             deletedFiles++;
                         }
                     }
-                    catch { }
+                    catch (Exception ex)
+                    {
+                        _logger.LogDebug(ex, "Could not process orphaned file {TempFile}", tempFile);
+                    }
                 }
             }
         }

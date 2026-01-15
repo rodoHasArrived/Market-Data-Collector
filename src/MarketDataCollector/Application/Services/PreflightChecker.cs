@@ -253,7 +253,8 @@ public sealed class PreflightChecker
                 // Clean up test file if it exists
                 if (File.Exists(testFile))
                 {
-                    try { File.Delete(testFile); } catch { }
+                    try { File.Delete(testFile); }
+                    catch (Exception ex) { _log.Debug(ex, "Could not delete test file {TestFile}", testFile); }
                 }
             }
 

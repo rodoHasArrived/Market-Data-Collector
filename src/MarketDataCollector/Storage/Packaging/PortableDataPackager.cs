@@ -679,8 +679,9 @@ public sealed class PortableDataPackager
             var size = new FileInfo(path).Length;
             return size / 100; // Rough estimate: 100 bytes per record
         }
-        catch
+        catch (Exception)
         {
+            // File read error - return 0 as fallback
             return 0;
         }
     }

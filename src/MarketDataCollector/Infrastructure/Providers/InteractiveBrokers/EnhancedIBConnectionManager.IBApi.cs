@@ -233,7 +233,11 @@ public sealed partial class EnhancedIBConnectionManager : EWrapper, IDisposable
                 catch (OperationCanceledException) { }
             }
         }
-        catch { /* ignore */ }
+        catch (Exception ex)
+        {
+            // Expected during shutdown - logging omitted to avoid flooding logs
+            System.Diagnostics.Debug.WriteLine($"DisconnectAsync cleanup exception: {ex.Message}");
+        }
 
         if (IsConnected)
             _clientSocket.eDisconnect();
@@ -299,7 +303,7 @@ public sealed partial class EnhancedIBConnectionManager : EWrapper, IDisposable
             if (_readerLoop is not null)
             {
                 try { await _readerLoop.ConfigureAwait(false); }
-                catch { }
+                catch (OperationCanceledException) { /* Expected on cancellation */ }
             }
 
             if (IsConnected)
@@ -324,9 +328,10 @@ public sealed partial class EnhancedIBConnectionManager : EWrapper, IDisposable
                         break;
                     }
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // Continue retry loop
+                    // Connection failed, continue retry loop
+                    System.Diagnostics.Debug.WriteLine($"Reconnection attempt failed: {ex.Message}");
                 }
             }
         }

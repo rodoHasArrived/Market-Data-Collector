@@ -144,7 +144,10 @@ public sealed class BackpressureAlertService : IDisposable
                             Duration: duration,
                             TotalDropped: stats.Value.DroppedCount));
                     }
-                    catch { }
+                    catch (Exception ex)
+                    {
+                        _log.Debug(ex, "Error invoking OnBackpressureResolved event");
+                    }
 
                     if (_webhook != null && _config.SendWebhookOnResolved)
                     {
@@ -174,7 +177,10 @@ public sealed class BackpressureAlertService : IDisposable
                 {
                     OnBackpressureDetected?.Invoke(alert);
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    _log.Debug(ex, "Error invoking OnBackpressureDetected event");
+                }
 
                 if (_webhook != null && level >= BackpressureLevel.Warning)
                 {

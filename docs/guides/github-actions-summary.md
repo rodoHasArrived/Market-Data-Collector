@@ -1,5 +1,8 @@
 # GitHub Actions Workflows - Summary
 
+> **Note:** For the most up-to-date and comprehensive documentation of all GitHub Actions workflows,
+> see the [canonical README](../../.github/workflows/README.md) in the `.github/workflows/` directory.
+
 This document provides a quick reference for all GitHub Actions workflows in the Market Data Collector repository.
 
 ## New Workflows Added (2026-01-08)

@@ -263,7 +263,10 @@ public sealed class DetailedHealthCheck : IDisposable
                     OnDependencyUnhealthy?.Invoke(new DependencyUnhealthyEvent(
                         dep.Name, dep.Type, message, DateTimeOffset.UtcNow));
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    _log.Debug(ex, "Error invoking OnDependencyUnhealthy event for {DependencyName}", dep.Name);
+                }
             }
             else if (!wasHealthy && isHealthy)
             {
@@ -272,7 +275,10 @@ public sealed class DetailedHealthCheck : IDisposable
                     OnDependencyRecovered?.Invoke(new DependencyRecoveredEvent(
                         dep.Name, dep.Type, DateTimeOffset.UtcNow, dep.DowntimeDuration));
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    _log.Debug(ex, "Error invoking OnDependencyRecovered event for {DependencyName}", dep.Name);
+                }
             }
 
             var depStatus = isHealthy ? DetailedHealthStatus.Healthy :
@@ -351,7 +357,10 @@ public sealed class DetailedHealthCheck : IDisposable
                             OnDependencyUnhealthy?.Invoke(new DependencyUnhealthyEvent(
                                 dep.Name, dep.Type, "Background check failed", DateTimeOffset.UtcNow));
                         }
-                        catch { }
+                        catch (Exception ex)
+                        {
+                            _log.Debug(ex, "Error invoking OnDependencyUnhealthy event for {DependencyName}", dep.Name);
+                        }
                     }
                     else if (!wasHealthy && isHealthy)
                     {
@@ -361,7 +370,10 @@ public sealed class DetailedHealthCheck : IDisposable
                             OnDependencyRecovered?.Invoke(new DependencyRecoveredEvent(
                                 dep.Name, dep.Type, DateTimeOffset.UtcNow, dep.DowntimeDuration));
                         }
-                        catch { }
+                        catch (Exception ex)
+                        {
+                            _log.Debug(ex, "Error invoking OnDependencyRecovered event for {DependencyName}", dep.Name);
+                        }
                     }
                 }
                 catch (Exception ex)
