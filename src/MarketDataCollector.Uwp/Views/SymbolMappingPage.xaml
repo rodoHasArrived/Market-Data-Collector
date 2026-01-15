@@ -1,0 +1,379 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="MarketDataCollector.Uwp.Views.SymbolMappingPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:MarketDataCollector.Uwp.Views"
+    xmlns:converters="using:MarketDataCollector.Uwp.Converters"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <Page.Resources>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibility" />
+    </Page.Resources>
+
+    <Grid Padding="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Grid Grid.Row="0" Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Orientation="Horizontal" Spacing="12">
+                <FontIcon Glyph="&#xE8AB;" FontSize="28" Foreground="{ThemeResource SystemAccentColor}" />
+                <TextBlock Text="Symbol Mapping" Style="{StaticResource TitleTextBlockStyle}" VerticalAlignment="Center" />
+                <Border Background="{ThemeResource SystemFillColorNeutralBackgroundBrush}"
+                        CornerRadius="12" Padding="8,4" VerticalAlignment="Center">
+                    <TextBlock x:Name="MappingCountText" Text="0 mappings"
+                               Style="{StaticResource CaptionTextBlockStyle}" />
+                </Border>
+            </StackPanel>
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                <Button Click="ImportCsv_Click">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE8E5;" FontSize="14" />
+                        <TextBlock Text="Import CSV" />
+                    </StackPanel>
+                </Button>
+                <Button Click="ExportCsv_Click">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xEDE1;" FontSize="14" />
+                        <TextBlock Text="Export CSV" />
+                    </StackPanel>
+                </Button>
+                <Button Style="{StaticResource AccentButtonStyle}" Click="AddMapping_Click">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE710;" FontSize="14" />
+                        <TextBlock Text="Add Mapping" />
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <!-- Provider Legend & Test Panel -->
+        <Grid Grid.Row="1" Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="400" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Provider Legend -->
+            <Border Style="{StaticResource CardStyle}" Padding="16" Margin="0,0,8,0">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="Provider Transformations" Style="{StaticResource SubtitleTextBlockStyle}" />
+                    <ItemsControl x:Name="ProviderLegend">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" Spacing="16" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <Border Background="{ThemeResource SystemAccentColorLight2}"
+                                            CornerRadius="4" Padding="6,2">
+                                        <TextBlock Text="{Binding Id}" FontWeight="SemiBold" FontSize="12" />
+                                    </Border>
+                                    <TextBlock Text="{Binding TransformDescription}"
+                                               Style="{StaticResource CaptionTextBlockStyle}"
+                                               VerticalAlignment="Center"
+                                               Foreground="{ThemeResource SystemBaseMediumColor}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <!-- Test Symbol Panel -->
+            <Border Grid.Column="1" Style="{StaticResource CardStyle}" Padding="16" Margin="8,0,0,0">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="Test Symbol Mapping" Style="{StaticResource SubtitleTextBlockStyle}" />
+                    <Grid ColumnSpacing="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBox x:Name="TestSymbolBox" PlaceholderText="Enter symbol (e.g., BRK.B)"
+                                 KeyDown="TestSymbolBox_KeyDown" />
+                        <Button Grid.Column="1" Content="Test" Click="TestMapping_Click" />
+                    </Grid>
+                    <ScrollViewer MaxHeight="120" VerticalScrollBarVisibility="Auto">
+                        <ItemsControl x:Name="TestResultsList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Padding="4,2" ColumnSpacing="8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="80" />
+                                            <ColumnDefinition Width="16" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="{Binding Key}" FontWeight="SemiBold" FontSize="12" />
+                                        <TextBlock Grid.Column="1" Text="→" Foreground="{ThemeResource SystemBaseMediumColor}" />
+                                        <TextBlock Grid.Column="2" Text="{Binding Value}"
+                                                   FontFamily="Consolas" FontSize="12"
+                                                   Foreground="{ThemeResource SystemAccentColor}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- Main Content -->
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="400" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Mappings List -->
+            <Border Style="{StaticResource CardStyle}" Padding="0" Margin="0,0,8,0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <!-- Search Bar -->
+                    <Border Grid.Row="0" Padding="16" BorderBrush="{ThemeResource SystemBaseLowColor}"
+                            BorderThickness="0,0,0,1">
+                        <AutoSuggestBox x:Name="SearchBox" PlaceholderText="Search symbols..."
+                                        QueryIcon="Find" TextChanged="SearchBox_TextChanged" />
+                    </Border>
+
+                    <!-- Mappings ListView -->
+                    <ListView x:Name="MappingsListView" Grid.Row="1" SelectionMode="Single"
+                              SelectionChanged="MappingsListView_SelectionChanged"
+                              Padding="8">
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Padding="8" ColumnSpacing="12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="120" />
+                                        <ColumnDefinition Width="80" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Canonical Symbol -->
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding CanonicalSymbol}"
+                                                   FontWeight="SemiBold" FontSize="14" />
+                                        <TextBlock Text="{Binding DisplayName}"
+                                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                                   Foreground="{ThemeResource SystemBaseMediumColor}"
+                                                   TextTrimming="CharacterEllipsis" />
+                                    </StackPanel>
+
+                                    <!-- Security Type -->
+                                    <Border Grid.Column="1" Background="{ThemeResource SystemFillColorNeutralBackgroundBrush}"
+                                            CornerRadius="4" Padding="6,2" VerticalAlignment="Center"
+                                            HorizontalAlignment="Left">
+                                        <TextBlock Text="{Binding SecurityType}" FontSize="11" />
+                                    </Border>
+
+                                    <!-- Provider Count -->
+                                    <TextBlock Grid.Column="2" Text="{Binding ProviderCountText}"
+                                               Style="{StaticResource CaptionTextBlockStyle}"
+                                               VerticalAlignment="Center"
+                                               Foreground="{ThemeResource SystemBaseMediumColor}" />
+
+                                    <!-- Custom Badge -->
+                                    <Border Grid.Column="3" Background="#48BB78"
+                                            CornerRadius="4" Padding="6,2"
+                                            VerticalAlignment="Center"
+                                            Visibility="{Binding IsCustomMapping, Converter={StaticResource BoolToVisibility}}">
+                                        <TextBlock Text="Custom" FontSize="10" Foreground="White" />
+                                    </Border>
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+
+                    <!-- Empty State -->
+                    <StackPanel x:Name="EmptyState" Grid.Row="1" VerticalAlignment="Center"
+                                HorizontalAlignment="Center" Spacing="12" Visibility="Collapsed">
+                        <FontIcon Glyph="&#xE8AB;" FontSize="48" Foreground="{ThemeResource SystemBaseMediumColor}" />
+                        <TextBlock Text="No symbol mappings" Style="{StaticResource SubtitleTextBlockStyle}"
+                                   Foreground="{ThemeResource SystemBaseMediumColor}" />
+                        <TextBlock Text="Add mappings to customize symbol formats for different providers."
+                                   TextWrapping="Wrap" MaxWidth="300" TextAlignment="Center"
+                                   Foreground="{ThemeResource SystemBaseMediumColor}" />
+                        <Button Content="Add First Mapping" Style="{StaticResource AccentButtonStyle}"
+                                Click="AddMapping_Click" Margin="0,8,0,0" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Details Panel -->
+            <Border Grid.Column="1" Style="{StaticResource CardStyle}" Padding="16" Margin="8,0,0,0">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Spacing="16">
+                        <TextBlock Text="Mapping Details" Style="{StaticResource SubtitleTextBlockStyle}" />
+
+                        <!-- No Selection State -->
+                        <StackPanel x:Name="NoSelectionPanel" Spacing="8">
+                            <TextBlock Text="Select a mapping to view details"
+                                       Foreground="{ThemeResource SystemBaseMediumColor}" />
+                        </StackPanel>
+
+                        <!-- Details Content -->
+                        <StackPanel x:Name="DetailsPanel" Spacing="16" Visibility="Collapsed">
+                            <!-- Canonical Symbol -->
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Canonical Symbol" Style="{StaticResource CaptionTextBlockStyle}" />
+                                <TextBox x:Name="CanonicalSymbolBox" PlaceholderText="e.g., BRK.B" />
+                            </StackPanel>
+
+                            <!-- Display Name -->
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Display Name" Style="{StaticResource CaptionTextBlockStyle}" />
+                                <TextBox x:Name="DisplayNameBox" PlaceholderText="e.g., Berkshire Hathaway Class B" />
+                            </StackPanel>
+
+                            <!-- Security Type & Exchange -->
+                            <Grid ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Security Type" Style="{StaticResource CaptionTextBlockStyle}" />
+                                    <ComboBox x:Name="SecurityTypeCombo" HorizontalAlignment="Stretch">
+                                        <ComboBoxItem Content="STK" Tag="STK" IsSelected="True" />
+                                        <ComboBoxItem Content="OPT" Tag="OPT" />
+                                        <ComboBoxItem Content="FUT" Tag="FUT" />
+                                        <ComboBoxItem Content="CASH" Tag="CASH" />
+                                        <ComboBoxItem Content="IND" Tag="IND" />
+                                        <ComboBoxItem Content="CFD" Tag="CFD" />
+                                        <ComboBoxItem Content="CRYPTO" Tag="CRYPTO" />
+                                    </ComboBox>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="1" Spacing="4">
+                                    <TextBlock Text="Primary Exchange" Style="{StaticResource CaptionTextBlockStyle}" />
+                                    <ComboBox x:Name="ExchangeCombo" HorizontalAlignment="Stretch" IsEditable="True">
+                                        <ComboBoxItem Content="" />
+                                        <ComboBoxItem Content="NYSE" />
+                                        <ComboBoxItem Content="NASDAQ" />
+                                        <ComboBoxItem Content="ARCA" />
+                                        <ComboBoxItem Content="AMEX" />
+                                        <ComboBoxItem Content="BATS" />
+                                        <ComboBoxItem Content="CME" />
+                                        <ComboBoxItem Content="NYMEX" />
+                                    </ComboBox>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Identifiers -->
+                            <Expander Header="Identifiers (FIGI, ISIN, CUSIP)" HorizontalAlignment="Stretch"
+                                      HorizontalContentAlignment="Stretch">
+                                <StackPanel Spacing="12" Padding="0,8,0,0">
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="FIGI" Style="{StaticResource CaptionTextBlockStyle}" />
+                                        <TextBox x:Name="FigiBox" PlaceholderText="e.g., BBG000B9XRY4" />
+                                    </StackPanel>
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="ISIN" Style="{StaticResource CaptionTextBlockStyle}" />
+                                        <TextBox x:Name="IsinBox" PlaceholderText="e.g., US0846707026" />
+                                    </StackPanel>
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="CUSIP" Style="{StaticResource CaptionTextBlockStyle}" />
+                                        <TextBox x:Name="CusipBox" PlaceholderText="e.g., 084670702" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Expander>
+
+                            <!-- Provider Symbols -->
+                            <StackPanel Spacing="8">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="Provider-Specific Symbols" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                    <Button Content="Auto-Fill" FontSize="11" Padding="8,4"
+                                            Click="AutoFillProviders_Click"
+                                            ToolTipService.ToolTip="Apply default transformations to empty fields" />
+                                </StackPanel>
+
+                                <TextBlock Text="Leave empty to use default transformation, or specify custom symbol."
+                                           Style="{StaticResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource SystemBaseMediumColor}" TextWrapping="Wrap" />
+
+                                <ItemsControl x:Name="ProviderSymbolsList">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Margin="0,4" ColumnSpacing="8">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="100" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+
+                                                <StackPanel VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding ProviderId}" FontWeight="SemiBold" />
+                                                    <TextBlock Text="{Binding ProviderName}"
+                                                               Style="{StaticResource CaptionTextBlockStyle}"
+                                                               Foreground="{ThemeResource SystemBaseMediumColor}" />
+                                                </StackPanel>
+
+                                                <TextBox Grid.Column="1" Text="{Binding Symbol, Mode=TwoWay}"
+                                                         PlaceholderText="{Binding DefaultSymbol}"
+                                                         Tag="{Binding ProviderId}" />
+
+                                                <Button Grid.Column="2" Content="↻" Padding="8,6"
+                                                        ToolTipService.ToolTip="Reset to default"
+                                                        Tag="{Binding ProviderId}"
+                                                        Click="ResetProviderSymbol_Click" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+
+                            <!-- Notes -->
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Notes" Style="{StaticResource CaptionTextBlockStyle}" />
+                                <TextBox x:Name="NotesBox" PlaceholderText="Optional notes about this mapping..."
+                                         TextWrapping="Wrap" AcceptsReturn="True" MinHeight="60" />
+                            </StackPanel>
+
+                            <!-- Custom Mapping Toggle -->
+                            <ToggleSwitch x:Name="IsCustomToggle" Header="Mark as custom mapping"
+                                          OffContent="Auto-generated" OnContent="Custom override" />
+
+                            <!-- Action Buttons -->
+                            <Grid ColumnSpacing="8" Margin="0,8,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <Button Content="Delete" Click="DeleteMapping_Click"
+                                        Foreground="#F56565" />
+                                <Button Grid.Column="1" Content="Save Changes"
+                                        Style="{StaticResource AccentButtonStyle}"
+                                        Click="SaveMapping_Click" />
+                            </Grid>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+
+        <!-- InfoBar for notifications -->
+        <InfoBar x:Name="StatusInfoBar" Grid.Row="2" VerticalAlignment="Bottom"
+                 Margin="0,0,0,16" IsOpen="False" />
+    </Grid>
+</Page>

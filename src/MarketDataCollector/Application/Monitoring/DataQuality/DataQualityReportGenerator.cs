@@ -183,8 +183,8 @@ public sealed class DataQualityReportGenerator
             ct.ThrowIfCancellationRequested();
             try
             {
-                var report = await GenerateDailyReportAsync(currentDate, options, ct);
-                dailyReports.Add(report);
+                var dailyReport = await GenerateDailyReportAsync(currentDate, options, ct);
+                dailyReports.Add(dailyReport);
             }
             catch (Exception ex)
             {

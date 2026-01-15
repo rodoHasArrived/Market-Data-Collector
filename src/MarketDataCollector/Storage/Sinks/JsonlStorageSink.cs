@@ -5,6 +5,8 @@ using System.Text;
 using System.Text.Json;
 using System.Linq;
 using System.Threading;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Storage.Interfaces;
@@ -83,6 +85,7 @@ public sealed class JsonlStorageSink : IStorageSink
     private readonly StorageOptions _options;
     private readonly IStoragePolicy _policy;
     private readonly JsonlBatchOptions _batchOptions;
+    private readonly ILogger<JsonlStorageSink> _logger;
     private readonly RetentionManager? _retention;
     private readonly Timer? _flushTimer;
     private bool _disposed;
@@ -114,22 +117,23 @@ public sealed class JsonlStorageSink : IStorageSink
     /// <summary>
     /// Creates a JsonlStorageSink with default options (no batching for backward compatibility).
     /// </summary>
-    public JsonlStorageSink(StorageOptions options, IStoragePolicy policy)
-        : this(options, policy, JsonlBatchOptions.NoBatching)
+    public JsonlStorageSink(StorageOptions options, IStoragePolicy policy, ILogger<JsonlStorageSink>? logger = null)
+        : this(options, policy, JsonlBatchOptions.NoBatching, logger)
     {
     }
 
     /// <summary>
     /// Creates a JsonlStorageSink with configurable batch options.
     /// </summary>
-    public JsonlStorageSink(StorageOptions options, IStoragePolicy policy, JsonlBatchOptions batchOptions)
+    public JsonlStorageSink(StorageOptions options, IStoragePolicy policy, JsonlBatchOptions batchOptions, ILogger<JsonlStorageSink>? logger = null)
     {
         _options = options ?? throw new ArgumentNullException(nameof(options));
         _policy = policy ?? throw new ArgumentNullException(nameof(policy));
         _batchOptions = batchOptions ?? throw new ArgumentNullException(nameof(batchOptions));
+        _logger = logger ?? NullLogger<JsonlStorageSink>.Instance;
         _retention = options.RetentionDays is null && options.MaxTotalBytes is null
             ? null
-            : new RetentionManager(options.RootPath, options.RetentionDays, options.MaxTotalBytes);
+            : new RetentionManager(options.RootPath, options.RetentionDays, options.MaxTotalBytes, _logger);
 
         if (_batchOptions.Enabled)
         {
@@ -262,6 +266,9 @@ public sealed class JsonlStorageSink : IStorageSink
 
         _writers.Clear();
         _buffers.Clear();
+
+        // Dispose retention manager
+        _retention?.Dispose();
     }
 
     /// <summary>
@@ -397,34 +404,60 @@ public sealed class JsonlStorageSink : IStorageSink
         }
     }
 
-    private sealed class RetentionManager
+    private sealed class RetentionManager : IDisposable
     {
         private readonly string _root;
         private readonly int? _retentionDays;
         private readonly long? _maxBytes;
-        // TODO: Consider using ReaderWriterLockSlim for better concurrency - reads are more frequent
-        private readonly object _sync = new();
+        private readonly ILogger _logger;
+        // Using ReaderWriterLockSlim for better concurrency - reads (timestamp checks) are more frequent than writes
+        private readonly ReaderWriterLockSlim _lock = new(LockRecursionPolicy.NoRecursion);
         private DateTime _lastSweep = DateTime.MinValue;
+        private bool _disposed;
         private static readonly string[] _extensions = new[] { ".jsonl", ".jsonl.gz", ".jsonl.gzip" };
+        private bool _disposed;
 
-        public RetentionManager(string root, int? retentionDays, long? maxBytes)
+        public RetentionManager(string root, int? retentionDays, long? maxBytes, ILogger logger)
         {
             _root = root;
             _retentionDays = retentionDays;
             _maxBytes = maxBytes;
+            _logger = logger;
         }
 
         public void MaybeCleanup()
         {
-            if (_retentionDays is null && _maxBytes is null)
+            if (_disposed || (_retentionDays is null && _maxBytes is null))
                 return;
 
-            lock (_sync)
+            if (_disposed)
+                return;
+
+            // Fast path: check if cleanup is needed using read lock (allows concurrent reads)
+            _lock.EnterReadLock();
+            try
             {
+                if ((DateTime.UtcNow - _lastSweep) < TimeSpan.FromSeconds(15))
+                    return;
+            }
+            finally
+            {
+                _lock.ExitReadLock();
+            }
+
+            // Slow path: need to update timestamp, acquire write lock
+            _lock.EnterWriteLock();
+            try
+            {
+                // Double-check after acquiring write lock (another thread may have updated)
                 if ((DateTime.UtcNow - _lastSweep) < TimeSpan.FromSeconds(15))
                     return;
 
                 _lastSweep = DateTime.UtcNow;
+            }
+            finally
+            {
+                _lock.ExitWriteLock();
             }
 
             try
@@ -461,18 +494,41 @@ public sealed class JsonlStorageSink : IStorageSink
                     }
                 }
             }
-            // TODO: Add structured logging for retention cleanup failures to monitor storage health
-            catch
+            catch (Exception ex)
             {
                 // Soft-fail; retention is best-effort and should not block writes.
+                _logger.LogWarning(
+                    ex,
+                    "Retention cleanup failed for storage root {RootPath}. RetentionDays={RetentionDays}, MaxBytes={MaxBytes}",
+                    _root,
+                    _retentionDays,
+                    _maxBytes);
             }
         }
 
-        private static void TryDelete(FileInfo file)
+        private void TryDelete(FileInfo file)
         {
-            // TODO: Log file deletion failures for debugging retention issues
-            try { file.Delete(); }
-            catch { }
+            try
+            {
+                file.Delete();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug(
+                    ex,
+                    "Failed to delete file during retention cleanup: {FilePath}, Size={FileSize} bytes",
+                    file.FullName,
+                    file.Exists ? file.Length : 0);
+            }
+        }
+
+        public void Dispose()
+        {
+            if (_disposed)
+                return;
+
+            _disposed = true;
+            _lock.Dispose();
         }
     }
 }

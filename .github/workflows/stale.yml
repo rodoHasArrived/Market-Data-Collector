@@ -1,9 +1,68 @@
+name: "Manage Stale Issues and PRs"
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Run daily at midnight UTC
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    
+    steps:
+    - uses: actions/stale@v9
+      with:
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+        
+        # Issue settings
+        stale-issue-message: |
+          This issue has been automatically marked as stale because it has not had recent activity. 
+          It will be closed in 7 days if no further activity occurs. 
+          Please update the issue if it is still relevant.
+        close-issue-message: |
+          This issue was automatically closed due to inactivity. 
+          If you believe this issue is still relevant, please reopen it with updated information.
+        days-before-issue-stale: 60
+        days-before-issue-close: 7
+        stale-issue-label: 'stale'
+        exempt-issue-labels: 'pinned,security,bug,enhancement'
+        
+        # PR settings
+        stale-pr-message: |
+          This pull request has been automatically marked as stale because it has not had recent activity. 
+          It will be closed in 14 days if no further activity occurs. 
+          Please update the PR if it is still relevant.
+        close-pr-message: |
+          This pull request was automatically closed due to inactivity. 
+          If you would like to continue work on this PR, please reopen it.
+        days-before-pr-stale: 45
+        days-before-pr-close: 14
+        stale-pr-label: 'stale'
+        exempt-pr-labels: 'pinned,security,work-in-progress'
+        
+        # Other settings
+        operations-per-run: 30
+        remove-stale-when-updated: true
+        ascending: true
 name: Mark Stale Issues and PRs
 
 on:
   schedule:
     - cron: '0 0 * * *'  # Run daily at midnight UTC
   workflow_dispatch:
+    inputs:
+      debug_only:
+        description: 'Run in debug mode (no modifications)'
+        required: false
+        default: false
+        type: boolean
+      days_before_stale:
+        description: 'Override days before marking stale (issues)'
+        required: false
+        type: number
 
 permissions:
   issues: write
@@ -11,14 +70,15 @@ permissions:
 
 jobs:
   stale:
-    name: Close Stale Issues and PRs
+    name: Mark and Close Stale Issues and PRs
     runs-on: ubuntu-latest
 
     steps:
       - name: Mark stale issues and pull requests
-        uses: actions/stale@v9
+        uses: actions/stale@v10
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
+          debug-only: ${{ github.event.inputs.debug_only || false }}
 
           # Issue settings
           stale-issue-message: |
@@ -28,10 +88,10 @@ jobs:
           close-issue-message: |
             This issue was automatically closed because it has been stale for 7 days with no activity.
             Feel free to reopen if this is still relevant.
-          days-before-issue-stale: 60
+          days-before-issue-stale: ${{ github.event.inputs.days_before_stale || 60 }}
           days-before-issue-close: 7
           stale-issue-label: 'stale'
-          exempt-issue-labels: 'pinned,security,bug,enhancement'
+          exempt-issue-labels: 'pinned,security,bug,enhancement,blocked,in-progress,help-wanted,good-first-issue'
 
           # Pull request settings
           stale-pr-message: |
@@ -44,8 +104,14 @@ jobs:
           days-before-pr-stale: 30
           days-before-pr-close: 14
           stale-pr-label: 'stale'
-          exempt-pr-labels: 'pinned,security,work-in-progress'
+          exempt-pr-labels: 'pinned,security,work-in-progress,wip,blocked,in-progress,do-not-merge'
+          exempt-draft-pr: true
 
           # General settings
           operations-per-run: 100
           remove-stale-when-updated: true
+          ascending: true
+          delete-branch: false
+
+          # Exempt issues/PRs with milestones
+          exempt-all-milestones: true

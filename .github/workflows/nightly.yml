@@ -1,0 +1,143 @@
+name: Nightly Testing
+
+on:
+  schedule:
+    # Run every day at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+env:
+  DOTNET_VERSION: '9.0.x'
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+  DOTNET_NOLOGO: true
+
+jobs:
+  test-matrix:
+    name: Test on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Restore dependencies
+      run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
+
+    - name: Build
+      run: dotnet build MarketDataCollector.sln -c Release --no-restore /p:EnableWindowsTargeting=true
+
+    - name: Run tests
+      run: |
+        dotnet test MarketDataCollector.sln \
+          -c Release \
+          --no-build \
+          /p:EnableWindowsTargeting=true \
+          --logger "console;verbosity=detailed" \
+          --collect:"XPlat Code Coverage" \
+          --results-directory ./coverage
+
+    - name: Upload coverage
+      uses: codecov/codecov-action@v5
+      with:
+        directory: ./coverage
+        flags: ${{ matrix.os }}
+        fail_ci_if_error: false
+        token: ${{ secrets.CODECOV_TOKEN }}
+
+  benchmark:
+    name: Run Benchmarks
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Run benchmarks
+      run: |
+        dotnet run \
+          --project benchmarks/MarketDataCollector.Benchmarks/MarketDataCollector.Benchmarks.csproj \
+          -c Release \
+          -- --filter * --exporters json
+
+    - name: Upload benchmark results
+      uses: actions/upload-artifact@v4
+      with:
+        name: benchmark-results
+        path: BenchmarkDotNet.Artifacts/results/
+        retention-days: 30
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Start services
+      run: |
+        # Create minimal config for testing
+        cp config/appsettings.sample.json config/appsettings.json || true
+        mkdir -p data logs
+
+    - name: Build
+      run: dotnet build MarketDataCollector.sln -c Release /p:EnableWindowsTargeting=true
+
+    - name: Run self-tests
+      run: |
+        dotnet run \
+          --project src/MarketDataCollector/MarketDataCollector.csproj \
+          --no-build \
+          -c Release \
+          -- --selftest
+
+  notify:
+    name: Notify on Failure
+    needs: [test-matrix, benchmark, integration-tests]
+    runs-on: ubuntu-latest
+    if: failure()
+    
+    steps:
+    - name: Create issue on failure
+      uses: actions/github-script@v8
+      with:
+        script: |
+          const title = `Nightly tests failed on ${new Date().toISOString().split('T')[0]}`;
+          const body = `The nightly test suite failed. Please check the [workflow run](${context.payload.repository.html_url}/actions/runs/${context.runId}) for details.`;
+          
+          // Check if similar issue already exists
+          const issues = await github.rest.issues.listForRepo({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            state: 'open',
+            labels: 'automated,nightly-tests',
+          });
+          
+          if (issues.data.length === 0) {
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['automated', 'nightly-tests', 'bug'],
+            });
+          }

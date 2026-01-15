@@ -1,6 +1,6 @@
 # Market Data Collector - Changelog
 
-**Last Updated:** 2026-01-09
+**Last Updated:** 2026-01-14
 **Current Version:** 1.5.0
 
 This document tracks implemented improvements and version history for the Market Data Collector system.
@@ -10,6 +10,60 @@ This document tracks implemented improvements and version history for the Market
 ## Version 1.5.0 (Current)
 
 ### New Features
+
+#### Auto-Configuration & Onboarding (2026-01-14)
+- **Configuration Wizard**: Interactive step-by-step setup wizard (`--wizard`)
+- **Auto-Configuration**: Automatic provider detection from environment variables (`--auto-config`)
+- **Provider Detection**: Discover available providers and their status (`--detect-providers`)
+- **Credential Validation**: Validate API credentials before running (`--validate-credentials`)
+- **First-Run Detection**: Automatic detection and guidance for new users
+- **Friendly Error Messages**: User-friendly error formatting with actionable suggestions
+- **Progress Display**: Visual progress indicators for long-running operations
+- **Startup Summary**: Configuration summary display at application startup
+
+**New Services:**
+- `AutoConfigurationService` - Auto-detect providers from environment
+- `ConfigurationWizard` - Interactive setup wizard
+- `ConnectivityTestService` - Test provider connectivity
+- `CredentialValidationService` - Validate API credentials
+- `FirstRunDetector` - Detect first-run conditions
+- `FriendlyErrorFormatter` - User-friendly error messages
+- `ProgressDisplayService` - Display progress of operations
+- `StartupSummary` - Show startup configuration summary
+
+#### Symbol Management CLI (2026-01-14)
+- **CLI Commands**: Full symbol management from command line
+  - `symbols list` - List all subscribed symbols
+  - `symbols add <symbol>` - Add new symbol
+  - `symbols remove <symbol>` - Remove symbol
+  - `symbols import <file>` - Bulk import from CSV
+  - `symbols export <file>` - Export to CSV
+
+#### UWP Desktop App Enhancements (2026-01-14)
+- **Admin & Maintenance Page**: Comprehensive administrative interface
+  - Quick system check with health status indicators
+  - Maintenance scheduling with cron expressions
+  - Storage tier usage visualization (Hot/Warm/Cold)
+  - Retention policy management per tier
+  - Maintenance history with status tracking
+
+- **Advanced Analytics Page**: Deep data quality analysis
+  - Quality summary cards with letter grade system (A+, A, B, C, D, F)
+  - Per-symbol quality reports with drill-down capability
+  - Gap analysis with date range selection and symbol filtering
+  - Cross-provider comparison tools
+  - Latency histogram visualization with percentiles
+  - AI-powered recommendations for data quality improvement
+
+**New UWP Services:**
+- `SymbolManagementService` - Full symbol CRUD operations
+- `AdminMaintenanceService` - Archive scheduling, tier migration, retention policies
+- `AdvancedAnalyticsService` - Gap analysis, cross-provider comparison, quality reports
+- `ProviderManagementService` - Failover configuration, rate limit tracking
+
+#### Documentation & Diagrams (2026-01-14)
+- **PlantUML PNG Generation**: Automated PNG image generation from PlantUML diagrams
+- **Updated Architecture Diagrams**: All diagrams refreshed to reflect current application state
 
 #### Technical Indicators (Skender.Stock.Indicators)
 - 200+ technical indicators available via `TechnicalIndicatorService`

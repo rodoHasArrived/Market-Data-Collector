@@ -1,0 +1,421 @@
+name: Desktop App Build
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'src/MarketDataCollector.Uwp/**'
+      - 'src/MarketDataCollector.Contracts/**'
+      - '.github/workflows/desktop-app.yml'
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'src/MarketDataCollector.Uwp/**'
+      - 'src/MarketDataCollector.Contracts/**'
+      - '.github/workflows/desktop-app.yml'
+  workflow_dispatch:
+    inputs:
+      build_config:
+        description: 'Build configuration'
+        required: false
+        default: 'Release'
+        type: choice
+        options:
+          - Release
+          - Debug
+      verbose_logging:
+        description: 'Enable verbose build logging'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desktop-app-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_VERSION: '9.0.x'
+  SOLUTION_PATH: 'MarketDataCollector.sln'
+  PROJECT_PATH: 'src/MarketDataCollector.Uwp/MarketDataCollector.Uwp.csproj'
+  BUILD_CONFIG: ${{ inputs.build_config || 'Release' }}
+  VERBOSE_LOGGING: ${{ inputs.verbose_logging || 'false' }}
+
+jobs:
+  # Generate icons if needed (runs on any OS)
+  generate-assets:
+    name: Generate Assets
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate icons
+        run: node scripts/generate-icons.mjs
+
+      - name: Upload generated assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-assets
+          path: src/MarketDataCollector.Uwp/Assets/*.png
+          retention-days: 1
+
+  # Build desktop app (Windows only)
+  build:
+    name: Build ${{ matrix.platform }}
+    needs: generate-assets
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [x64, arm64]
+        include:
+          - platform: x64
+            rid: win-x64
+          - platform: arm64
+            rid: win-arm64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download generated assets
+        uses: actions/download-artifact@v4
+        with:
+          name: generated-assets
+          path: src/MarketDataCollector.Uwp/Assets/
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Display build environment
+        run: |
+          Write-Host "======================================================================" -ForegroundColor Cyan
+          Write-Host "  Build Environment Information" -ForegroundColor Cyan
+          Write-Host "======================================================================" -ForegroundColor Cyan
+          Write-Host ""
+          Write-Host "  Platform:       ${{ matrix.platform }}" -ForegroundColor White
+          Write-Host "  Runtime ID:     ${{ matrix.rid }}" -ForegroundColor White
+          Write-Host "  Configuration:  ${{ env.BUILD_CONFIG }}" -ForegroundColor White
+          Write-Host "  .NET Version:   $(dotnet --version)" -ForegroundColor White
+          Write-Host "  OS:             $env:OS" -ForegroundColor White
+          Write-Host ""
+          Write-Host "  .NET SDKs installed:" -ForegroundColor Yellow
+          dotnet --list-sdks | ForEach-Object { Write-Host "    $_" -ForegroundColor Gray }
+          Write-Host ""
+        shell: pwsh
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/*.fsproj', 'Directory.Build.props') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore dependencies
+        id: restore
+        run: |
+          Write-Host "::group::Restoring NuGet packages"
+          $startTime = Get-Date
+
+          $verbosity = if ("${{ env.VERBOSE_LOGGING }}" -eq "true") { "detailed" } else { "normal" }
+          dotnet restore ${{ env.PROJECT_PATH }} -r ${{ matrix.rid }} -v $verbosity
+
+          $duration = (Get-Date) - $startTime
+          Write-Host "::endgroup::"
+
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host "::notice::Restore completed in $([math]::Round($duration.TotalSeconds, 1)) seconds"
+          } else {
+            Write-Host "::error::Restore failed after $([math]::Round($duration.TotalSeconds, 1)) seconds"
+            exit 1
+          }
+        shell: pwsh
+
+      - name: Build
+        id: build
+        run: |
+          Write-Host "::group::Building Desktop Application"
+          $startTime = Get-Date
+
+          $verbosity = if ("${{ env.VERBOSE_LOGGING }}" -eq "true") { "detailed" } else { "normal" }
+
+          # Build with notification targets enabled
+          dotnet build ${{ env.PROJECT_PATH }} `
+            -c ${{ env.BUILD_CONFIG }} `
+            -r ${{ matrix.rid }} `
+            --no-restore `
+            -p:Platform=${{ matrix.platform }} `
+            -p:BuildNotificationsVerbose=${{ env.VERBOSE_LOGGING }} `
+            -v $verbosity 2>&1 | Tee-Object -Variable buildOutput
+
+          $buildExitCode = $LASTEXITCODE
+          $duration = (Get-Date) - $startTime
+          Write-Host "::endgroup::"
+
+          # Analyze build output
+          $warnings = $buildOutput | Select-String -Pattern "warning [A-Z]+\d+:" -AllMatches
+          $errors = $buildOutput | Select-String -Pattern "error [A-Z]+\d+:" -AllMatches
+
+          if ($warnings.Count -gt 0) {
+            Write-Host "::warning::Build completed with $($warnings.Count) warning(s)"
+          }
+
+          if ($buildExitCode -eq 0) {
+            Write-Host "::notice::Build completed successfully in $([math]::Round($duration.TotalSeconds, 1)) seconds"
+          } else {
+            Write-Host "::error::Build failed after $([math]::Round($duration.TotalSeconds, 1)) seconds with $($errors.Count) error(s)"
+
+            # Show first few errors in annotations
+            $errors | Select-Object -First 5 | ForEach-Object {
+              Write-Host "::error::$($_.Line)"
+            }
+            exit 1
+          }
+        shell: pwsh
+
+      - name: Publish
+        id: publish
+        run: |
+          Write-Host "::group::Publishing Desktop Application"
+          $startTime = Get-Date
+
+          $verbosity = if ("${{ env.VERBOSE_LOGGING }}" -eq "true") { "detailed" } else { "normal" }
+
+          dotnet publish ${{ env.PROJECT_PATH }} `
+            -c ${{ env.BUILD_CONFIG }} `
+            -r ${{ matrix.rid }} `
+            -o ./publish/${{ matrix.platform }} `
+            --self-contained true `
+            -p:Platform=${{ matrix.platform }} `
+            -p:PublishReadyToRun=true `
+            -p:PublishTrimmed=false `
+            -p:BuildNotificationsVerbose=${{ env.VERBOSE_LOGGING }} `
+            -v $verbosity
+
+          $publishExitCode = $LASTEXITCODE
+          $duration = (Get-Date) - $startTime
+          Write-Host "::endgroup::"
+
+          if ($publishExitCode -eq 0) {
+            Write-Host "::notice::Publish completed in $([math]::Round($duration.TotalSeconds, 1)) seconds"
+          } else {
+            Write-Host "::error::Publish failed after $([math]::Round($duration.TotalSeconds, 1)) seconds"
+            exit 1
+          }
+        shell: pwsh
+
+      - name: Build Summary
+        run: |
+          Write-Host ""
+          Write-Host "======================================================================" -ForegroundColor Green
+          Write-Host "                      BUILD SUMMARY" -ForegroundColor Green
+          Write-Host "======================================================================" -ForegroundColor Green
+          Write-Host ""
+
+          # List publish output with details
+          $outputPath = "./publish/${{ matrix.platform }}"
+          $files = Get-ChildItem -Path $outputPath -Recurse -File
+          $totalSize = ($files | Measure-Object -Property Length -Sum).Sum
+          $totalSizeMB = [math]::Round($totalSize / 1MB, 2)
+
+          Write-Host "  Platform:     ${{ matrix.platform }}" -ForegroundColor White
+          Write-Host "  Runtime:      ${{ matrix.rid }}" -ForegroundColor White
+          Write-Host "  Files:        $($files.Count)" -ForegroundColor White
+          Write-Host "  Total Size:   $totalSizeMB MB" -ForegroundColor White
+          Write-Host ""
+
+          # Find main executable
+          $exe = $files | Where-Object { $_.Name -eq "MarketDataCollector.Desktop.exe" }
+          if ($exe) {
+            $exeSizeMB = [math]::Round($exe.Length / 1MB, 2)
+            Write-Host "  Executable:   $($exe.Name) ($exeSizeMB MB)" -ForegroundColor Cyan
+          }
+
+          # List largest files
+          Write-Host ""
+          Write-Host "  Largest files:" -ForegroundColor Yellow
+          $files | Sort-Object Length -Descending | Select-Object -First 10 | ForEach-Object {
+            $sizeMB = [math]::Round($_.Length / 1MB, 2)
+            Write-Host "    $($_.Name): $sizeMB MB" -ForegroundColor Gray
+          }
+
+          Write-Host ""
+          Write-Host "======================================================================" -ForegroundColor Green
+        shell: pwsh
+
+      - name: Create archive
+        run: |
+          Compress-Archive -Path ./publish/${{ matrix.platform }}/* `
+            -DestinationPath MarketDataCollector.Desktop-${{ matrix.rid }}.zip
+
+          $zipSize = (Get-Item "MarketDataCollector.Desktop-${{ matrix.rid }}.zip").Length
+          $zipSizeMB = [math]::Round($zipSize / 1MB, 2)
+          Write-Host "::notice::Created archive: MarketDataCollector.Desktop-${{ matrix.rid }}.zip ($zipSizeMB MB)"
+        shell: pwsh
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MarketDataCollector.Desktop-${{ matrix.rid }}
+          path: MarketDataCollector.Desktop-${{ matrix.rid }}.zip
+          retention-days: 30
+
+      - name: Upload build logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs-${{ matrix.rid }}
+          path: |
+            **/*.log
+            **/msbuild*.binlog
+          retention-days: 7
+
+  # MSIX package build (optional, for Store distribution)
+  build-msix:
+    name: Build MSIX Package
+    needs: generate-assets
+    runs-on: windows-latest
+    # Only build MSIX on tags or manual dispatch
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download generated assets
+        uses: actions/download-artifact@v4
+        with:
+          name: generated-assets
+          path: src/MarketDataCollector.Uwp/Assets/
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/*.fsproj', 'Directory.Build.props') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore dependencies
+        run: dotnet restore ${{ env.PROJECT_PATH }}
+
+      # Note: MSIX packaging requires additional setup:
+      # 1. A valid signing certificate
+      # 2. Package.appxmanifest configuration
+      # 3. WindowsPackageType set to MSIX in project
+      # For now, we build as unpackaged (WindowsPackageType=None)
+      - name: Build MSIX (x64)
+        run: |
+          dotnet publish ${{ env.PROJECT_PATH }} `
+            -c ${{ env.BUILD_CONFIG }} `
+            -r win-x64 `
+            -o ./publish/msix-x64 `
+            --self-contained true `
+            -p:Platform=x64 `
+            -p:PublishReadyToRun=true
+
+      - name: Create MSIX archive
+        run: |
+          Compress-Archive -Path ./publish/msix-x64/* `
+            -DestinationPath MarketDataCollector.Desktop-msix-x64.zip
+
+      - name: Upload MSIX artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MarketDataCollector.Desktop-msix-x64
+          path: MarketDataCollector.Desktop-msix-x64.zip
+          retention-days: 30
+
+  # Test the built app (smoke test)
+  test:
+    name: Test Desktop App
+    needs: build
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Run integration tests
+        run: |
+          dotnet test tests/MarketDataCollector.Tests `
+            --filter "FullyQualifiedName~UwpCoreIntegration" `
+            -c Release `
+            --verbosity normal
+
+  # Create release with desktop app
+  release:
+    name: Release Desktop App
+    needs: [build, build-msix]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          pattern: MarketDataCollector.Desktop-*
+          merge-multiple: false
+
+      - name: Display artifacts
+        run: find artifacts -type f -name "*.zip"
+
+      - name: Prepare release files
+        run: |
+          mkdir -p release
+          find artifacts -name "*.zip" -exec cp {} release/ \;
+          ls -la release/
+
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/*.zip
+          fail_on_unmatched_files: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Cleanup intermediate artifacts
+  cleanup:
+    name: Cleanup
+    needs: [build, release]
+    runs-on: ubuntu-latest
+    if: always()
+    permissions:
+      actions: write
+
+    steps:
+      - name: Delete generated-assets artifact
+        uses: geekyeggo/delete-artifact@v5
+        with:
+          name: generated-assets
+          failOnError: false

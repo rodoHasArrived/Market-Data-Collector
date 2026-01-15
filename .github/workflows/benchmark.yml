@@ -1,12 +1,95 @@
 name: Benchmark Performance
 
 on:
+  pull_request:
   push:
     branches: [ "main" ]
     paths:
       - 'src/**'
       - 'benchmarks/**'
       - '.github/workflows/benchmark.yml'
+  workflow_dispatch:
+
+jobs:
+  benchmark:
+    name: Run Benchmarks and Compare
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    
+    steps:
+    - name: Checkout PR branch
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+
+    - name: Run benchmarks (PR)
+      run: |
+        dotnet run \
+          --project benchmarks/MarketDataCollector.Benchmarks/MarketDataCollector.Benchmarks.csproj \
+          -c Release \
+          -- --filter * --exporters json --artifacts ./BenchmarkDotNet.Artifacts/PR
+
+    - name: Save PR results
+      run: |
+        mkdir -p /tmp/benchmark-results
+        cp -r BenchmarkDotNet.Artifacts/PR/results/* /tmp/benchmark-results/ || true
+
+    - name: Checkout base branch
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.base_ref }}
+        clean: false
+
+    - name: Run benchmarks (base)
+      run: |
+        dotnet run \
+          --project benchmarks/MarketDataCollector.Benchmarks/MarketDataCollector.Benchmarks.csproj \
+          -c Release \
+          -- --filter * --exporters json --artifacts ./BenchmarkDotNet.Artifacts/Base
+
+    - name: Compare results
+      id: compare
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          
+          // This is a simplified comparison - in production, you'd parse the JSON results
+          const comment = `## Benchmark Results
+          
+          Benchmark comparison between base branch and PR.
+          
+          📊 Detailed results are available in the workflow artifacts.
+          
+          > **Note:** Please review the benchmark results to ensure no performance regressions were introduced.
+          `;
+          
+          return comment;
+
+    - name: Comment PR
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const comment = `${{ steps.compare.outputs.result }}`;
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });
+
+    - name: Upload benchmark results
+      uses: actions/upload-artifact@v4
+      with:
+        name: benchmark-comparison
+        path: BenchmarkDotNet.Artifacts/
+        retention-days: 30
   pull_request:
     branches: [ "main" ]
     paths:

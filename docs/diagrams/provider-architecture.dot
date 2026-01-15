@@ -1,6 +1,6 @@
 // Provider Architecture Diagram
 // Market Data Collector v1.5.0
-// Last Updated: 2026-01-08
+// Last Updated: 2026-01-14
 //
 // This diagram shows the provider abstraction layer and all implemented
 // data providers for both real-time streaming and historical backfill.

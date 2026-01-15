@@ -133,7 +133,7 @@ public sealed class ScheduledBackfillService : IAsyncDisposable
             // Expected during shutdown
         }
 
-        await _workerService.StopAsync(ct);
+        await _workerService.StopAsync();
 
         _logger.LogInformation("Scheduled backfill service stopped");
     }
@@ -149,7 +149,6 @@ public sealed class ScheduledBackfillService : IAsyncDisposable
             ?? throw new KeyNotFoundException($"Schedule not found: {scheduleId}");
 
         var execution = _scheduleManager.CreateManualExecution(schedule);
-        execution.Trigger = ExecutionTrigger.Manual;
 
         _logger.LogInformation(
             "Manually triggering schedule {ScheduleId}: {Name}",
@@ -260,9 +259,7 @@ public sealed class ScheduledBackfillService : IAsyncDisposable
                 {
                     if (_executionQueue.Count > 0)
                     {
-                        var (execution, _) = _executionQueue.Peek();
-                        scheduled = execution;
-                        _executionQueue.Dequeue();
+                        _executionQueue.TryDequeue(out scheduled, out _);
                     }
                 }
 
@@ -361,15 +358,22 @@ public sealed class ScheduledBackfillService : IAsyncDisposable
                 }
             }
 
-            // Create backfill job
-            var job = schedule.CreateJob(execution.FromDate, execution.ToDate);
-            job.Symbols.Clear();
-            job.Symbols.AddRange(symbols);
+            // Create backfill job using the schedule template
+            var templateJob = schedule.CreateJob(execution.FromDate, execution.ToDate);
+
+            // Create and start the job via the manager
+            var job = await _jobManager.CreateJobAsync(
+                templateJob.Name,
+                symbols,
+                execution.FromDate,
+                execution.ToDate,
+                templateJob.Granularity,
+                templateJob.Options,
+                templateJob.PreferredProviders,
+                ct);
 
             execution.JobId = job.JobId;
 
-            // Create and start the job
-            await _jobManager.CreateJobAsync(job, ct);
             await _jobManager.StartJobAsync(job.JobId, ct);
 
             // Wait for job completion

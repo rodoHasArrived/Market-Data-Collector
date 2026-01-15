@@ -15,8 +15,8 @@ namespace MarketDataCollector.Application.Config;
 /// <para>See <see href="https://docs.alpaca.markets/docs/real-time-stock-pricing-data">Alpaca Real-Time Data Docs</see></para>
 /// </remarks>
 public sealed record AlpacaOptions(
-    string KeyId,
-    string SecretKey,
+    string KeyId = "",
+    string SecretKey = "",
     string Feed = "iex",            // v2/{feed}: iex, sip, delayed_sip
     bool UseSandbox = false,        // stream.data.sandbox.alpaca.markets
     bool SubscribeQuotes = false    // if true, subscribes to quotes too (currently not wired to L2 collector)

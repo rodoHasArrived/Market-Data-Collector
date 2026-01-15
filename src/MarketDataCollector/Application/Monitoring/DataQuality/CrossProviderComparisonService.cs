@@ -200,7 +200,7 @@ public sealed class CrossProviderComparisonService : IDisposable
                     var priceDiff = Math.Abs(latestP1.Price - latestP2.Price);
                     var priceDiffPercent = priceDiff / Math.Max(latestP1.Price, latestP2.Price) * 100;
 
-                    if (priceDiffPercent > _config.PriceDiscrepancyThresholdPercent)
+                    if ((double)priceDiffPercent > _config.PriceDiscrepancyThresholdPercent)
                     {
                         var discrepancy = new ProviderDiscrepancy(
                             Timestamp: timestamp,
@@ -246,7 +246,7 @@ public sealed class CrossProviderComparisonService : IDisposable
                     var bidDiff = Math.Abs(q1.BidPrice - q2.BidPrice);
                     var bidDiffPercent = bidDiff / Math.Max(q1.BidPrice, q2.BidPrice) * 100;
 
-                    if (bidDiffPercent > _config.QuoteDiscrepancyThresholdPercent)
+                    if ((double)bidDiffPercent > _config.QuoteDiscrepancyThresholdPercent)
                     {
                         var discrepancy = new ProviderDiscrepancy(
                             Timestamp: timestamp,

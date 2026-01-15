@@ -500,6 +500,9 @@ public sealed class GapAnalysisResult
     public int SymbolsComplete { get; set; }
     public int TotalGapDays { get; set; }
 
+    /// <summary>Alias for TotalGapDays for API compatibility.</summary>
+    public int TotalGaps => TotalGapDays;
+
     public Dictionary<string, SymbolGapInfo> SymbolGaps { get; init; } = new();
 
     public bool HasGaps => SymbolsWithGaps > 0;

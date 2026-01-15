@@ -103,8 +103,11 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
             {
                 _log.Warning(ex, "Connection attempt to Alpaca WebSocket failed at {Uri}. Will retry per policy.", uri);
                 // Clean up failed connection attempt
-                // TODO: Add logging for disposal failures to help diagnose connection cleanup issues
-                try { _ws?.Dispose(); } catch { }
+                try { _ws?.Dispose(); }
+                catch (Exception disposeEx)
+                {
+                    _log.Debug(disposeEx, "WebSocket disposal failed during connection cleanup");
+                }
                 _ws = null;
                 _cts?.Dispose();
                 _cts = null;
@@ -185,23 +188,36 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
             await heartbeat.DisposeAsync();
         }
 
-        // TODO: Log exceptions from CancellationTokenSource operations for debugging connection cleanup
         if (cts != null)
         {
-            try { cts.Cancel(); } catch { }
-            try { cts.Dispose(); } catch { }
+            try { cts.Cancel(); }
+            catch (Exception ex)
+            {
+                _log.Debug(ex, "CancellationTokenSource.Cancel failed during connection cleanup");
+            }
+            try { cts.Dispose(); }
+            catch (Exception ex)
+            {
+                _log.Debug(ex, "CancellationTokenSource.Dispose failed during connection cleanup");
+            }
         }
 
-        // TODO: Log WebSocket disposal errors to track resource cleanup issues
         if (ws != null)
         {
-            try { ws.Dispose(); } catch { }
+            try { ws.Dispose(); }
+            catch (Exception ex)
+            {
+                _log.Debug(ex, "WebSocket disposal failed during connection cleanup");
+            }
         }
 
-        // TODO: Log receive loop completion errors to diagnose data streaming issues
         if (_recvLoop != null)
         {
-            try { await _recvLoop.ConfigureAwait(false); } catch { }
+            try { await _recvLoop.ConfigureAwait(false); }
+            catch (Exception ex)
+            {
+                _log.Debug(ex, "Receive loop task completion error during connection cleanup");
+            }
             _recvLoop = null;
         }
     }
@@ -225,11 +241,18 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
             await heartbeat.DisposeAsync();
         }
 
-        // TODO: Log CancellationTokenSource operation failures during disconnect for better debugging
         if (cts != null)
         {
-            try { cts.Cancel(); } catch { }
-            try { cts.Dispose(); } catch { }
+            try { cts.Cancel(); }
+            catch (Exception ex)
+            {
+                _log.Debug(ex, "CancellationTokenSource.Cancel failed during disconnect");
+            }
+            try { cts.Dispose(); }
+            catch (Exception ex)
+            {
+                _log.Debug(ex, "CancellationTokenSource.Dispose failed during disconnect");
+            }
         }
 
         if (ws != null)
@@ -243,14 +266,20 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
             {
                 _log.Warning(ex, "Error during WebSocket close, connection may have been lost");
             }
-            // TODO: Log WebSocket disposal failures during disconnect
-            try { ws.Dispose(); } catch { }
+            try { ws.Dispose(); }
+            catch (Exception ex)
+            {
+                _log.Debug(ex, "WebSocket disposal failed during disconnect");
+            }
         }
 
-        // TODO: Log receive loop task completion errors during disconnect
         if (_recvLoop != null)
         {
-            try { await _recvLoop.ConfigureAwait(false); } catch { }
+            try { await _recvLoop.ConfigureAwait(false); }
+            catch (Exception ex)
+            {
+                _log.Debug(ex, "Receive loop task completion error during disconnect");
+            }
         }
         _recvLoop = null;
 

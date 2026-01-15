@@ -8,18 +8,24 @@ namespace MarketDataCollector.Uwp.Services;
 
 /// <summary>
 /// Service for managing backfill operations with progress tracking.
+/// Uses real API integration with the core Market Data Collector service.
 /// </summary>
-public class BackfillService
+public sealed class BackfillService
 {
     private static BackfillService? _instance;
     private static readonly object _lock = new();
 
     private readonly NotificationService _notificationService;
+    private readonly BackfillApiService _backfillApiService;
     private BackfillProgress? _currentProgress;
     private CancellationTokenSource? _cancellationTokenSource;
     private DateTime _startTime;
     private int _totalBarsDownloaded;
     private readonly object _progressLock = new();
+
+    // Polling configuration for progress updates
+    private const int ProgressPollIntervalMs = 1000;
+    private const int MaxPollAttempts = 3600; // 1 hour max at 1 second intervals
 
     public static BackfillService Instance
     {
@@ -39,6 +45,7 @@ public class BackfillService
     private BackfillService()
     {
         _notificationService = NotificationService.Instance;
+        _backfillApiService = new BackfillApiService();
     }
 
     /// <summary>
@@ -100,7 +107,7 @@ public class BackfillService
     }
 
     /// <summary>
-    /// Starts a new backfill operation.
+    /// Starts a new backfill operation using the real API.
     /// </summary>
     public async Task StartBackfillAsync(
         string[] symbols,
@@ -202,69 +209,190 @@ public class BackfillService
         var tradingDays = (int)((toDate - fromDate).TotalDays * 252 / 365);
         _currentProgress!.TotalBars = symbols.Length * tradingDays;
 
-        for (int i = 0; i < symbols.Length; i++)
+        // Format dates for API
+        var fromStr = fromDate.ToString("yyyy-MM-dd");
+        var toStr = toDate.ToString("yyyy-MM-dd");
+
+        // Call the real API to start the backfill
+        var result = await _backfillApiService.RunBackfillAsync(
+            provider,
+            symbols,
+            fromStr,
+            toStr,
+            cancellationToken);
+
+        if (result == null)
         {
-            cancellationToken.ThrowIfCancellationRequested();
+            throw new InvalidOperationException("Failed to connect to the Market Data Collector service. Please ensure the service is running.");
+        }
 
-            var symbol = symbols[i];
-            var symbolProgress = _currentProgress.SymbolProgress![i];
+        if (!result.Success)
+        {
+            throw new InvalidOperationException(result.Error ?? "Backfill operation failed");
+        }
 
-            // Check if paused
-            while (IsPaused && !cancellationToken.IsCancellationRequested)
+        // Update progress based on API result
+        lock (_progressLock)
+        {
+            _totalBarsDownloaded = result.BarsWritten;
+            _currentProgress.DownloadedBars = result.BarsWritten;
+            _currentProgress.CompletedSymbols = result.Symbols?.Length ?? symbols.Length;
+            _currentProgress.BarsPerSecond = BarsPerSecond;
+
+            // Mark all symbols as completed based on API response
+            if (_currentProgress.SymbolProgress != null)
             {
-                await Task.Delay(500, cancellationToken);
+                var completedSymbols = result.Symbols ?? symbols;
+                foreach (var symbolProgress in _currentProgress.SymbolProgress)
+                {
+                    if (completedSymbols.Contains(symbolProgress.Symbol))
+                    {
+                        symbolProgress.Status = "Completed";
+                        symbolProgress.Progress = 100;
+                        symbolProgress.CompletedAt = result.CompletedUtc;
+                        symbolProgress.BarsDownloaded = result.BarsWritten / Math.Max(1, completedSymbols.Length);
+                        symbolProgress.Provider = result.Provider;
+                    }
+                }
+            }
+        }
+
+        ProgressUpdated?.Invoke(this, new BackfillProgressEventArgs { Progress = _currentProgress });
+        progressCallback?.Invoke(_currentProgress);
+    }
+
+    /// <summary>
+    /// Starts a quick gap-fill operation for immediate data gaps.
+    /// </summary>
+    public async Task StartGapFillAsync(
+        string[] symbols,
+        int lookbackDays = 30,
+        Action<BackfillProgress>? progressCallback = null)
+    {
+        if (IsRunning)
+        {
+            throw new InvalidOperationException("A backfill operation is already running");
+        }
+
+        _cancellationTokenSource = new CancellationTokenSource();
+        _startTime = DateTime.UtcNow;
+        _totalBarsDownloaded = 0;
+
+        _currentProgress = new BackfillProgress
+        {
+            JobId = Guid.NewGuid().ToString(),
+            Status = "Running",
+            TotalSymbols = symbols.Length,
+            StartedAt = DateTime.UtcNow,
+            CurrentProvider = "composite",
+            SymbolProgress = symbols.Select(s => new SymbolBackfillProgress
+            {
+                Symbol = s,
+                Status = "Pending"
+            }).ToArray()
+        };
+
+        ProgressUpdated?.Invoke(this, new BackfillProgressEventArgs { Progress = _currentProgress });
+
+        try
+        {
+            var result = await _backfillApiService.RunGapFillAsync(
+                symbols,
+                lookbackDays,
+                "High",
+                _cancellationTokenSource.Token);
+
+            if (result == null)
+            {
+                throw new InvalidOperationException("Gap-fill request failed - service may be unavailable");
             }
 
-            symbolProgress.Status = "Downloading";
-            symbolProgress.StartedAt = DateTime.UtcNow;
-            symbolProgress.Provider = provider;
-            symbolProgress.ExpectedBars = tradingDays;
+            _currentProgress.Status = "Completed";
+            _currentProgress.CompletedAt = DateTime.UtcNow;
+            _currentProgress.CompletedSymbols = symbols.Length;
 
-            ProgressUpdated?.Invoke(this, new BackfillProgressEventArgs { Progress = _currentProgress });
-            progressCallback?.Invoke(_currentProgress);
+            await _notificationService.NotifyBackfillCompleteAsync(
+                true,
+                symbols.Length,
+                0,
+                DateTime.UtcNow - _startTime);
 
-            // Simulate download progress for demo
-            // In real implementation, this would be actual download logic
-            for (int j = 0; j <= 100; j += 10)
+            BackfillCompleted?.Invoke(this, new BackfillCompletedEventArgs
             {
-                cancellationToken.ThrowIfCancellationRequested();
+                Success = true,
+                Progress = _currentProgress
+            });
+        }
+        catch (OperationCanceledException)
+        {
+            _currentProgress.Status = "Cancelled";
+            _currentProgress.CompletedAt = DateTime.UtcNow;
 
-                while (IsPaused && !cancellationToken.IsCancellationRequested)
-                {
-                    await Task.Delay(500, cancellationToken);
-                }
+            BackfillCompleted?.Invoke(this, new BackfillCompletedEventArgs
+            {
+                Success = false,
+                Progress = _currentProgress,
+                WasCancelled = true
+            });
+        }
+        catch (Exception ex)
+        {
+            _currentProgress.Status = "Failed";
+            _currentProgress.ErrorMessage = ex.Message;
+            _currentProgress.CompletedAt = DateTime.UtcNow;
 
-                await Task.Delay(100, cancellationToken); // Simulate network delay
-
-                symbolProgress.Progress = j;
-                symbolProgress.BarsDownloaded = (int)(tradingDays * j / 100.0);
-
-                lock (_progressLock)
-                {
-                    _totalBarsDownloaded += symbolProgress.BarsDownloaded - (int)(tradingDays * (j - 10) / 100.0);
-                    _currentProgress.DownloadedBars = _totalBarsDownloaded;
-                    _currentProgress.BarsPerSecond = BarsPerSecond;
-
-                    var remaining = EstimatedTimeRemaining;
-                    _currentProgress.EstimatedSecondsRemaining = remaining.HasValue
-                        ? (int)remaining.Value.TotalSeconds
-                        : null;
-                }
-
-                ProgressUpdated?.Invoke(this, new BackfillProgressEventArgs { Progress = _currentProgress });
-                progressCallback?.Invoke(_currentProgress);
-            }
-
-            symbolProgress.Status = "Completed";
-            symbolProgress.Progress = 100;
-            symbolProgress.CompletedAt = DateTime.UtcNow;
-            symbolProgress.BarsDownloaded = tradingDays;
-
-            _currentProgress.CompletedSymbols++;
-
+            BackfillCompleted?.Invoke(this, new BackfillCompletedEventArgs
+            {
+                Success = false,
+                Progress = _currentProgress,
+                Error = ex
+            });
+        }
+        finally
+        {
             ProgressUpdated?.Invoke(this, new BackfillProgressEventArgs { Progress = _currentProgress });
             progressCallback?.Invoke(_currentProgress);
         }
+    }
+
+    /// <summary>
+    /// Gets available backfill providers from the API.
+    /// </summary>
+    public async Task<List<BackfillProviderInfo>> GetProvidersAsync(CancellationToken ct = default)
+    {
+        return await _backfillApiService.GetProvidersAsync(ct);
+    }
+
+    /// <summary>
+    /// Gets backfill presets from the API.
+    /// </summary>
+    public async Task<List<BackfillPreset>> GetPresetsAsync(CancellationToken ct = default)
+    {
+        return await _backfillApiService.GetPresetsAsync(ct);
+    }
+
+    /// <summary>
+    /// Checks provider health.
+    /// </summary>
+    public async Task<BackfillHealthResponse?> CheckProviderHealthAsync(CancellationToken ct = default)
+    {
+        return await _backfillApiService.CheckProviderHealthAsync(ct);
+    }
+
+    /// <summary>
+    /// Gets execution history.
+    /// </summary>
+    public async Task<List<BackfillExecution>> GetExecutionHistoryAsync(int limit = 50, CancellationToken ct = default)
+    {
+        return await _backfillApiService.GetExecutionHistoryAsync(limit, ct);
+    }
+
+    /// <summary>
+    /// Gets backfill statistics.
+    /// </summary>
+    public async Task<BackfillStatistics?> GetStatisticsAsync(int? hours = null, CancellationToken ct = default)
+    {
+        return await _backfillApiService.GetStatisticsAsync(hours, ct);
     }
 
     /// <summary>

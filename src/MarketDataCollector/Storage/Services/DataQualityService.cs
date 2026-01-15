@@ -3,6 +3,8 @@ using System.Text.Json;
 using System.Threading;
 using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Storage.Interfaces;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace MarketDataCollector.Storage.Services;
 
@@ -13,13 +15,15 @@ public sealed class DataQualityService : IDataQualityService
 {
     private readonly StorageOptions _options;
     private readonly ISourceRegistry? _sourceRegistry;
+    private readonly ILogger<DataQualityService> _logger;
     private readonly ConcurrentDictionary<string, DataQualityScore> _scoreCache = new();
     private readonly ConcurrentDictionary<string, QualityTrend> _trendCache = new();
 
-    public DataQualityService(StorageOptions options, ISourceRegistry? sourceRegistry = null)
+    public DataQualityService(StorageOptions options, ISourceRegistry? sourceRegistry = null, ILogger<DataQualityService>? logger = null)
     {
         _options = options;
         _sourceRegistry = sourceRegistry;
+        _logger = logger ?? NullLogger<DataQualityService>.Instance;
     }
 
     public async Task<DataQualityScore> ScoreAsync(string path, CancellationToken ct = default)
@@ -84,8 +88,10 @@ public sealed class DataQualityService : IDataQualityService
                             scores.Add(score);
                         }
                     }
-                    // TODO: Log file scoring failures to identify problematic files and improve quality analysis
-                    catch { }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to score file {FilePath} during quality report generation", file);
+                    }
                 }
             }
             else if (File.Exists(path))
@@ -98,8 +104,10 @@ public sealed class DataQualityService : IDataQualityService
                         scores.Add(score);
                     }
                 }
-                // TODO: Log individual file scoring errors for debugging quality report generation
-                catch { }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to score individual file {FilePath} for quality report", path);
+                }
             }
         }
 
@@ -169,8 +177,10 @@ public sealed class DataQualityService : IDataQualityService
                         score = await ScoreAsync(path, ct);
                         break;
                     }
-                    // TODO: Log source ranking score failures to diagnose provider data issues
-                    catch { }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to score source file {FilePath} for source {SourceId} ranking", path, source.Id);
+                    }
                 }
             }
 
@@ -379,16 +389,16 @@ public sealed class DataQualityService : IDataQualityService
                             duplicates++;
                     }
                 }
-                // TODO: Consider logging schema violation details for data quality debugging
-                catch
+                catch (JsonException ex)
                 {
                     schemaViolations++;
+                    _logger.LogDebug(ex, "Schema violation at line {LineNumber} in {FilePath}", totalLines, path);
                 }
             }
         }
-        // TODO: Log the actual exception to understand why consistency check failed
-        catch
+        catch (Exception ex)
         {
+            _logger.LogWarning(ex, "Consistency check failed for {FilePath}", path);
             return (0.5, new[] { "Could not read file for consistency check" });
         }
 
@@ -430,9 +440,9 @@ public sealed class DataQualityService : IDataQualityService
                 return (0.0, issues.ToArray());
             }
         }
-        // TODO: Log the actual exception for diagnosing file integrity issues
-        catch
+        catch (Exception ex)
         {
+            _logger.LogWarning(ex, "Integrity check failed - file {FilePath} is unreadable", path);
             issues.Add("File unreadable");
             return (0.0, issues.ToArray());
         }
@@ -445,11 +455,13 @@ public sealed class DataQualityService : IDataQualityService
         var issues = new List<string>();
         var gaps = 0;
         long lastSeq = -1;
+        var lineNumber = 0;
 
         try
         {
             await foreach (var line in File.ReadLinesAsync(path, ct))
             {
+                lineNumber++;
                 if (string.IsNullOrWhiteSpace(line)) continue;
 
                 try
@@ -465,13 +477,15 @@ public sealed class DataQualityService : IDataQualityService
                         lastSeq = seq;
                     }
                 }
-                // TODO: Log JSON parsing errors for continuity analysis debugging
-                catch { }
+                catch (JsonException ex)
+                {
+                    _logger.LogDebug(ex, "JSON parsing error at line {LineNumber} during continuity check of {FilePath}", lineNumber, path);
+                }
             }
         }
-        // TODO: Log the actual exception for diagnosing continuity check failures
-        catch
+        catch (Exception ex)
         {
+            _logger.LogWarning(ex, "Continuity check failed for {FilePath}", path);
             return (0.5, new[] { "Could not read file for continuity check" });
         }
 
@@ -495,8 +509,10 @@ public sealed class DataQualityService : IDataQualityService
                 count++;
             }
         }
-        // TODO: Log event counting failures to diagnose file read issues
-        catch { }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to count events in {FilePath}", path);
+        }
         return count;
     }
 

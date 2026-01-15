@@ -68,7 +68,8 @@ public static class MassTransitServiceExtensions
 
         busConfig.UsingInMemory((context, cfg) =>
         {
-            ConfigureEndpoints(cfg, context, config);
+            ApplyEndpointPrefix(cfg, config);
+            cfg.ConfigureEndpoints(context);
         });
     }
 
@@ -113,7 +114,8 @@ public static class MassTransitServiceExtensions
             });
 
             ConfigureRetry(cfg, config.Retry);
-            ConfigureEndpoints(cfg, context, config);
+            ApplyEndpointPrefix(cfg, config);
+            cfg.ConfigureEndpoints(context);
         });
     }
 
@@ -142,7 +144,8 @@ public static class MassTransitServiceExtensions
             }
 
             ConfigureRetry(cfg, config.Retry);
-            ConfigureEndpoints(cfg, context, config);
+            ApplyEndpointPrefix(cfg, config);
+            cfg.ConfigureEndpoints(context);
         });
     }
 
@@ -160,10 +163,7 @@ public static class MassTransitServiceExtensions
         });
     }
 
-    private static void ConfigureEndpoints(
-        IBusFactoryConfigurator cfg,
-        IBusRegistrationContext context,
-        MassTransitConfig config)
+    private static void ApplyEndpointPrefix(IBusFactoryConfigurator cfg, MassTransitConfig config)
     {
         // Apply endpoint prefix if configured
         if (!string.IsNullOrEmpty(config.EndpointPrefix))
@@ -171,8 +171,6 @@ public static class MassTransitServiceExtensions
             cfg.MessageTopology.SetEntityNameFormatter(
                 new PrefixEntityNameFormatter(cfg.MessageTopology.EntityNameFormatter, config.EndpointPrefix));
         }
-
-        cfg.ConfigureEndpoints(context);
     }
 
     private static MassTransitTransport ParseTransport(string? value)

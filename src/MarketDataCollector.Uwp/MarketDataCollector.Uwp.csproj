@@ -54,7 +54,8 @@
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
     <PackageReference Include="CommunityToolkit.WinUI.Controls.Primitives" Version="8.0.240109" />
     <PackageReference Include="CommunityToolkit.WinUI.Controls.Sizers" Version="8.0.240109" />
-    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.5.240627000" />
+    <!-- Windows App SDK 1.6+ required for .NET 9 support (fixes XamlCompiler compatibility) -->
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.6.250108002" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.1" />
     <PackageReference Include="System.Text.Json" Version="9.0.0" />
   </ItemGroup>
@@ -85,4 +86,7 @@
   <ItemGroup Condition="'$(IsWindows)' == 'true'">
     <TrimmerRootAssembly Include="System.Text.Json" />
   </ItemGroup>
+
+  <!-- Import build notification targets for enhanced debugging output -->
+  <Import Project="Build.Notifications.targets" Condition="Exists('Build.Notifications.targets')" />
 </Project>

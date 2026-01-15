@@ -636,6 +636,15 @@ public class AppSettings
 
     [JsonPropertyName("statusRefreshIntervalSeconds")]
     public int StatusRefreshIntervalSeconds { get; set; } = 2;
+
+    [JsonPropertyName("serviceUrl")]
+    public string ServiceUrl { get; set; } = "http://localhost:8080";
+
+    [JsonPropertyName("serviceTimeoutSeconds")]
+    public int ServiceTimeoutSeconds { get; set; } = 30;
+
+    [JsonPropertyName("backfillTimeoutMinutes")]
+    public int BackfillTimeoutMinutes { get; set; } = 60;
 }
 
 /// <summary>

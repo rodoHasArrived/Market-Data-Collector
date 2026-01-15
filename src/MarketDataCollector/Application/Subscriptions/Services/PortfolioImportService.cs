@@ -221,6 +221,8 @@ public sealed class PortfolioImportService
         );
     }
 
+    // TODO: Implement full IB portfolio import using TWS API or IBAutomater
+    // Current implementation only supports Client Portal API which requires manual login
     private async Task<PortfolioSummary> FetchInteractiveBrokersPortfolioAsync(IBOptions ibConfig, CancellationToken ct)
     {
         // IB Client Portal API or TWS API integration
@@ -228,7 +230,7 @@ public sealed class PortfolioImportService
         // In production, this would use the IBAutomater or Client Portal API
 
         // Check if Client Portal is running (typically on port 5000)
-        var clientPortalUrl = $"https://localhost:{ibConfig.Port ?? 5000}";
+        var clientPortalUrl = $"https://localhost:{ibConfig.Port}";
 
         try
         {

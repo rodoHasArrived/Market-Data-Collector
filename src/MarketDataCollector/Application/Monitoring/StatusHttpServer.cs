@@ -14,6 +14,7 @@ namespace MarketDataCollector.Application.Monitoring;
 /// <summary>
 /// Lightweight HTTP server exposing runtime status, metrics (Prometheus format), and a minimal HTML dashboard.
 /// Avoids pulling in ASP.NET for small deployments.
+/// Enhanced with detailed health check (QW-32), backpressure status (MON-18), and provider latency (PROV-11).
 /// </summary>
 public sealed class StatusHttpServer : IAsyncDisposable
 {
@@ -22,9 +23,16 @@ public sealed class StatusHttpServer : IAsyncDisposable
     private readonly Func<MetricsSnapshot> _metricsProvider;
     private readonly Func<PipelineStatistics> _pipelineProvider;
     private readonly Func<IReadOnlyList<DepthIntegrityEvent>> _integrityProvider;
+    private readonly Func<ErrorRingBuffer?> _errorBufferProvider;
     private readonly CancellationTokenSource _cts = new();
     private readonly DateTimeOffset _startTime = DateTimeOffset.UtcNow;
     private Task? _loop;
+
+    // Optional providers for extended functionality (QW-32, MON-18, PROV-11)
+    private Func<Task<DetailedHealthReport>>? _detailedHealthProvider;
+    private Func<BackpressureStatus>? _backpressureProvider;
+    private Func<ProviderLatencySummary>? _providerLatencyProvider;
+    private Func<ConnectionHealthSnapshot>? _connectionHealthProvider;
 
     // Health check thresholds
     private const double HighDropRateThreshold = 5.0; // 5% drop rate is concerning
@@ -34,11 +42,13 @@ public sealed class StatusHttpServer : IAsyncDisposable
     public StatusHttpServer(int port,
         Func<MetricsSnapshot> metricsProvider,
         Func<PipelineStatistics> pipelineProvider,
-        Func<IReadOnlyList<DepthIntegrityEvent>> integrityProvider)
+        Func<IReadOnlyList<DepthIntegrityEvent>> integrityProvider,
+        Func<ErrorRingBuffer?>? errorBufferProvider = null)
     {
         _metricsProvider = metricsProvider;
         _pipelineProvider = pipelineProvider;
         _integrityProvider = integrityProvider;
+        _errorBufferProvider = errorBufferProvider ?? (() => null);
         _listener.Prefixes.Add($"http://*:{port}/");
     }
 
@@ -47,6 +57,22 @@ public sealed class StatusHttpServer : IAsyncDisposable
         _listener.Start();
         _loop = Task.Run(HandleAsync);
         _log.Information("StatusHttpServer started");
+    }
+
+    /// <summary>
+    /// Registers extended providers for detailed health, backpressure, and provider latency endpoints.
+    /// </summary>
+    public void RegisterExtendedProviders(
+        Func<Task<DetailedHealthReport>>? detailedHealth = null,
+        Func<BackpressureStatus>? backpressure = null,
+        Func<ProviderLatencySummary>? providerLatency = null,
+        Func<ConnectionHealthSnapshot>? connectionHealth = null)
+    {
+        _detailedHealthProvider = detailedHealth;
+        _backpressureProvider = backpressure;
+        _providerLatencyProvider = providerLatency;
+        _connectionHealthProvider = connectionHealth;
+        _log.Debug("Extended providers registered for StatusHttpServer");
     }
 
     private async Task HandleAsync()
@@ -78,6 +104,9 @@ public sealed class StatusHttpServer : IAsyncDisposable
                 case "healthz":
                     await WriteHealthCheckAsync(ctx.Response);
                     break;
+                case "health/detailed":
+                    await WriteDetailedHealthAsync(ctx.Response);
+                    break;
                 case "ready":
                 case "readyz":
                     await WriteReadinessAsync(ctx.Response);
@@ -91,6 +120,18 @@ public sealed class StatusHttpServer : IAsyncDisposable
                     break;
                 case "status":
                     await WriteStatusAsync(ctx.Response);
+                    break;
+                case "errors":
+                    await WriteErrorsAsync(ctx.Response, ctx.Request.QueryString);
+                    break;
+                case "backpressure":
+                    await WriteBackpressureAsync(ctx.Response);
+                    break;
+                case "providers/latency":
+                    await WriteProviderLatencyAsync(ctx.Response);
+                    break;
+                case "connections":
+                    await WriteConnectionHealthAsync(ctx.Response);
                     break;
                 case "backfill/providers":
                     await WriteBackfillProvidersAsync(ctx.Response);
@@ -399,7 +440,7 @@ public sealed class StatusHttpServer : IAsyncDisposable
 table{border-collapse:collapse;} td,th{border:1px solid #ccc;padding:4px 8px;}</style></head>
 <body>
 <h2>MarketDataCollector Status</h2>
-<p><a href='/metrics'>Prometheus metrics</a> | <a href='/status'>JSON status</a></p>
+<p><a href='/metrics'>Prometheus metrics</a> | <a href='/status'>JSON status</a> | <a href='/errors'>Recent errors</a></p>
 <pre id='metrics'>Loading metrics...</pre>
 <h3>Recent integrity events</h3>
 <table id='integrity'><thead><tr><th>Timestamp</th><th>Symbol</th><th>Kind</th><th>Details</th></tr></thead><tbody></tbody></table>
@@ -420,6 +461,296 @@ setInterval(refresh,2000);refresh();
 </body></html>";
 
         var bytes = Encoding.UTF8.GetBytes(html);
+        return resp.OutputStream.WriteAsync(bytes, 0, bytes.Length);
+    }
+
+    /// <summary>
+    /// Returns the last N errors endpoint (QW-58).
+    /// Supports query parameters: count (default 10), level (warning/error/critical), symbol
+    /// </summary>
+    private Task WriteErrorsAsync(HttpListenerResponse resp, System.Collections.Specialized.NameValueCollection queryString)
+    {
+        resp.ContentType = "application/json";
+
+        var errorBuffer = _errorBufferProvider();
+        if (errorBuffer == null)
+        {
+            var emptyResponse = new
+            {
+                errors = Array.Empty<object>(),
+                stats = new { totalErrors = 0, errorsInLastMinute = 0, errorsInLastHour = 0 },
+                message = "Error buffer not configured"
+            };
+
+            var emptyJson = JsonSerializer.Serialize(emptyResponse, new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                WriteIndented = true
+            });
+            var emptyBytes = Encoding.UTF8.GetBytes(emptyJson);
+            return resp.OutputStream.WriteAsync(emptyBytes, 0, emptyBytes.Length);
+        }
+
+        // Parse query parameters
+        var countStr = queryString["count"];
+        var count = 10;
+        if (!string.IsNullOrEmpty(countStr) && int.TryParse(countStr, out var parsedCount) && parsedCount > 0)
+        {
+            count = Math.Min(parsedCount, 100); // Cap at 100
+        }
+
+        var levelStr = queryString["level"];
+        var symbolFilter = queryString["symbol"];
+
+        IReadOnlyList<ErrorEntry> errors;
+
+        // Apply filters
+        if (!string.IsNullOrEmpty(symbolFilter))
+        {
+            errors = errorBuffer.GetBySymbol(symbolFilter, count);
+        }
+        else if (!string.IsNullOrEmpty(levelStr) && Enum.TryParse<ErrorLevel>(levelStr, ignoreCase: true, out var level))
+        {
+            errors = errorBuffer.GetByLevel(level, count);
+        }
+        else
+        {
+            errors = errorBuffer.GetRecent(count);
+        }
+
+        var stats = errorBuffer.GetStats();
+
+        var response = new
+        {
+            errors = errors.Select(e => new
+            {
+                id = e.Id,
+                timestamp = e.Timestamp,
+                level = e.Level.ToString().ToLowerInvariant(),
+                source = e.Source,
+                message = e.Message,
+                exceptionType = e.ExceptionType,
+                context = e.Context,
+                symbol = e.Symbol,
+                provider = e.Provider
+            }),
+            stats = new
+            {
+                totalErrors = stats.TotalErrors,
+                errorsInLastMinute = stats.ErrorsInLastMinute,
+                errorsInLastHour = stats.ErrorsInLastHour,
+                warningCount = stats.WarningCount,
+                errorCount = stats.ErrorCount,
+                criticalCount = stats.CriticalCount,
+                lastErrorTime = stats.LastErrorTime
+            }
+        };
+
+        var json = JsonSerializer.Serialize(response, new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = true
+        });
+        var bytes = Encoding.UTF8.GetBytes(json);
+        return resp.OutputStream.WriteAsync(bytes, 0, bytes.Length);
+    }
+
+    /// <summary>
+    /// Detailed health check endpoint (QW-32).
+    /// Returns comprehensive health information including dependencies.
+    /// </summary>
+    private async Task WriteDetailedHealthAsync(HttpListenerResponse resp)
+    {
+        if (_detailedHealthProvider == null)
+        {
+            resp.StatusCode = 501;
+            resp.ContentType = "application/json";
+            var notImpl = JsonSerializer.Serialize(new { error = "Detailed health check not configured" });
+            var bytes = Encoding.UTF8.GetBytes(notImpl);
+            await resp.OutputStream.WriteAsync(bytes, 0, bytes.Length);
+            return;
+        }
+
+        try
+        {
+            var report = await _detailedHealthProvider();
+
+            resp.StatusCode = report.Status switch
+            {
+                DetailedHealthStatus.Healthy => 200,
+                DetailedHealthStatus.Degraded => 200,
+                DetailedHealthStatus.Unhealthy => 503,
+                _ => 200
+            };
+
+            resp.ContentType = "application/json";
+            var json = JsonSerializer.Serialize(report, new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                WriteIndented = true
+            });
+            var bytes = Encoding.UTF8.GetBytes(json);
+            await resp.OutputStream.WriteAsync(bytes, 0, bytes.Length);
+        }
+        catch (Exception ex)
+        {
+            _log.Error(ex, "Error generating detailed health report");
+            resp.StatusCode = 500;
+            resp.ContentType = "application/json";
+            var error = JsonSerializer.Serialize(new { error = ex.Message });
+            var bytes = Encoding.UTF8.GetBytes(error);
+            await resp.OutputStream.WriteAsync(bytes, 0, bytes.Length);
+        }
+    }
+
+    /// <summary>
+    /// Backpressure status endpoint (MON-18).
+    /// Returns current pipeline backpressure information.
+    /// </summary>
+    private Task WriteBackpressureAsync(HttpListenerResponse resp)
+    {
+        resp.ContentType = "application/json";
+
+        if (_backpressureProvider == null)
+        {
+            // Return basic backpressure info from pipeline stats
+            var pipeline = _pipelineProvider();
+            var dropRate = pipeline.PublishedCount > 0
+                ? (double)pipeline.DroppedCount / pipeline.PublishedCount * 100
+                : 0;
+
+            var basicStatus = new
+            {
+                isActive = dropRate > 5 || pipeline.QueueUtilization > 70,
+                level = dropRate > 20 || pipeline.QueueUtilization > 90 ? "critical" :
+                       dropRate > 5 || pipeline.QueueUtilization > 70 ? "warning" : "none",
+                queueUtilization = Math.Round(pipeline.QueueUtilization, 2),
+                droppedEvents = pipeline.DroppedCount,
+                dropRate = Math.Round(dropRate, 2),
+                message = $"Queue: {pipeline.QueueUtilization:F1}%, Drop rate: {dropRate:F2}%"
+            };
+
+            var basicJson = JsonSerializer.Serialize(basicStatus, new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                WriteIndented = true
+            });
+            var basicBytes = Encoding.UTF8.GetBytes(basicJson);
+            return resp.OutputStream.WriteAsync(basicBytes, 0, basicBytes.Length);
+        }
+
+        var status = _backpressureProvider();
+        var response = new
+        {
+            isActive = status.IsActive,
+            level = status.Level.ToString().ToLowerInvariant(),
+            queueUtilization = Math.Round(status.QueueUtilization, 2),
+            droppedEvents = status.DroppedEvents,
+            dropRate = Math.Round(status.DropRate, 2),
+            durationSeconds = status.Duration.TotalSeconds,
+            message = status.Message
+        };
+
+        var json = JsonSerializer.Serialize(response, new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = true
+        });
+        var bytes = Encoding.UTF8.GetBytes(json);
+        return resp.OutputStream.WriteAsync(bytes, 0, bytes.Length);
+    }
+
+    /// <summary>
+    /// Provider latency histogram endpoint (PROV-11).
+    /// Returns latency statistics per data provider.
+    /// </summary>
+    private Task WriteProviderLatencyAsync(HttpListenerResponse resp)
+    {
+        resp.ContentType = "application/json";
+
+        if (_providerLatencyProvider == null)
+        {
+            var notConfigured = new
+            {
+                error = "Provider latency tracking not configured",
+                providers = Array.Empty<object>()
+            };
+
+            var notConfiguredJson = JsonSerializer.Serialize(notConfigured, new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                WriteIndented = true
+            });
+            var notConfiguredBytes = Encoding.UTF8.GetBytes(notConfiguredJson);
+            return resp.OutputStream.WriteAsync(notConfiguredBytes, 0, notConfiguredBytes.Length);
+        }
+
+        var summary = _providerLatencyProvider();
+
+        var json = JsonSerializer.Serialize(summary, new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = true
+        });
+        var bytes = Encoding.UTF8.GetBytes(json);
+        return resp.OutputStream.WriteAsync(bytes, 0, bytes.Length);
+    }
+
+    /// <summary>
+    /// Connection health endpoint.
+    /// Returns health status of all monitored connections.
+    /// </summary>
+    private Task WriteConnectionHealthAsync(HttpListenerResponse resp)
+    {
+        resp.ContentType = "application/json";
+
+        if (_connectionHealthProvider == null)
+        {
+            var notConfigured = new
+            {
+                error = "Connection health monitoring not configured",
+                connections = Array.Empty<object>()
+            };
+
+            var notConfiguredJson = JsonSerializer.Serialize(notConfigured, new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                WriteIndented = true
+            });
+            var notConfiguredBytes = Encoding.UTF8.GetBytes(notConfiguredJson);
+            return resp.OutputStream.WriteAsync(notConfiguredBytes, 0, notConfiguredBytes.Length);
+        }
+
+        var snapshot = _connectionHealthProvider();
+
+        var response = new
+        {
+            timestamp = snapshot.Timestamp,
+            totalConnections = snapshot.TotalConnections,
+            healthyConnections = snapshot.HealthyConnections,
+            unhealthyConnections = snapshot.UnhealthyConnections,
+            globalAverageLatencyMs = Math.Round(snapshot.GlobalAverageLatencyMs, 2),
+            globalMinLatencyMs = Math.Round(snapshot.GlobalMinLatencyMs, 2),
+            globalMaxLatencyMs = Math.Round(snapshot.GlobalMaxLatencyMs, 2),
+            connections = snapshot.Connections.Select(c => new
+            {
+                connectionId = c.ConnectionId,
+                providerName = c.ProviderName,
+                isConnected = c.IsConnected,
+                isHealthy = c.IsHealthy,
+                lastHeartbeatTime = c.LastHeartbeatTime,
+                missedHeartbeats = c.MissedHeartbeats,
+                uptimeSeconds = c.UptimeDuration.TotalSeconds,
+                averageLatencyMs = Math.Round(c.AverageLatencyMs, 2)
+            })
+        };
+
+        var json = JsonSerializer.Serialize(response, new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = true
+        });
+        var bytes = Encoding.UTF8.GetBytes(json);
         return resp.OutputStream.WriteAsync(bytes, 0, bytes.Length);
     }
 
