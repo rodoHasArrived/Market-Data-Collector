@@ -394,6 +394,7 @@ public class OrderBookMatchingEngineTests
     }
 
     [Fact]
+    public void ModifyOrder_NonExistentOrder_ShouldReturnFailure()
     public void ModifyOrder_NonExistentOrder_ShouldReturnOrderNotFoundError()
     {
         // Arrange
@@ -404,6 +405,12 @@ public class OrderBookMatchingEngineTests
 
         // Assert
         result.IsSuccess.Should().BeFalse();
+        result.Error.Should().Be(ModifyOrderError.OrderNotFound);
+        result.ErrorMessage.Should().Contain("99999");
+    }
+
+    [Fact]
+    public void ModifyOrder_CancelledOrder_ShouldReturnFailure()
         result.Error.Should().NotBeNull();
         result.Error!.Kind.Should().Be(ModifyOrderErrorKind.OrderNotFound);
         result.Error.OrderId.Should().Be(99999);
@@ -428,6 +435,12 @@ public class OrderBookMatchingEngineTests
 
         // Assert
         result.IsSuccess.Should().BeFalse();
+        result.Error.Should().Be(ModifyOrderError.InvalidOrderStatus);
+        result.ErrorMessage.Should().Contain("Cancelled");
+    }
+
+    [Fact]
+    public void ModifyOrder_FilledOrder_ShouldReturnFailure()
         result.Error.Should().NotBeNull();
         result.Error!.Kind.Should().Be(ModifyOrderErrorKind.InvalidStatus);
         result.Error.CurrentStatus.Should().Be(OrderStatus.Cancelled);
@@ -466,6 +479,8 @@ public class OrderBookMatchingEngineTests
 
         // Assert
         result.IsSuccess.Should().BeFalse();
+        result.Error.Should().Be(ModifyOrderError.InvalidOrderStatus);
+        result.ErrorMessage.Should().Contain("Filled");
         result.Error.Should().NotBeNull();
         result.Error!.Kind.Should().Be(ModifyOrderErrorKind.InvalidStatus);
         result.Error.CurrentStatus.Should().Be(OrderStatus.Filled);
@@ -489,6 +504,10 @@ public class OrderBookMatchingEngineTests
 
         // Assert
         result.IsSuccess.Should().BeTrue();
+        result.Value.Should().NotBeNull();
+        result.Value!.Order.Price.Should().Be(451.00m);
+        result.Value.Order.Quantity.Should().Be(150);
+        result.Value.Order.Status.Should().Be(OrderStatus.Open);
         result.OrderResult.Should().NotBeNull();
         result.OrderResult!.Order.Price.Should().Be(451.00m);
         result.OrderResult.Order.Quantity.Should().Be(150);
@@ -497,6 +516,7 @@ public class OrderBookMatchingEngineTests
     }
 
     [Fact]
+    public void ModifyOrder_Result_MatchPattern_ShouldWork()
     public void ModifyOrderResult_Match_ShouldHandleSuccessCorrectly()
     {
         // Arrange
@@ -511,6 +531,12 @@ public class OrderBookMatchingEngineTests
 
         // Act
         var result = engine.ModifyOrder(originalOrder.Order.OrderId, 451.00m, 150);
+        var message = result.Match(
+            onSuccess: orderResult => $"Modified to price {orderResult.Order.Price}",
+            onFailure: (error, msg) => $"Failed: {error} - {msg}");
+
+        // Assert
+        message.Should().Be("Modified to price 451.00");
         var matchResult = result.Match(
             onSuccess: orderResult => $"Modified to price {orderResult.Order.Price}",
             onFailure: error => $"Failed: {error.Message}"
