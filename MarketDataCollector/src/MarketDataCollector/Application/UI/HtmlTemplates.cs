@@ -1657,7 +1657,9 @@ public static class HtmlTemplates
         return;
       }}
 
-      grid.innerHTML = Object.entries(health).map(function([name, status]) {{
+      grid.innerHTML = Object.entries(health).map(function(entry) {{
+        const name = entry[0];
+        const status = entry[1];
         const isAvailable = status.isAvailable;
         const color = isAvailable ? '#48bb78' : '#f56565';
         const icon = isAvailable ? '✓' : '✗';
