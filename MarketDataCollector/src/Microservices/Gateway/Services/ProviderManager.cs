@@ -33,7 +33,7 @@ public sealed class ProviderManager : IProviderManager, IAsyncDisposable
 {
     private readonly GatewayConfig _config;
     private readonly IDataRouter _dataRouter;
-    private readonly ILogger _log = Log.ForContext<ProviderManager>();
+    private readonly Serilog.ILogger _log = Log.ForContext<ProviderManager>();
     private readonly ConcurrentDictionary<string, ProviderState> _providers = new();
     private readonly ConcurrentDictionary<int, SubscriptionInfo> _subscriptions = new();
     private int _nextSubscriptionId;

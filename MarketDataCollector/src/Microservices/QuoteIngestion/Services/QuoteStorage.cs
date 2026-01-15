@@ -14,7 +14,7 @@ public interface IQuoteStorage
 public sealed class JsonlQuoteStorage : IQuoteStorage, IAsyncDisposable
 {
     private readonly QuoteServiceConfig _config;
-    private readonly ILogger _log = Log.ForContext<JsonlQuoteStorage>();
+    private readonly Serilog.ILogger _log = Log.ForContext<JsonlQuoteStorage>();
     private readonly Dictionary<string, StreamWriter> _writers = new();
     private readonly SemaphoreSlim _lock = new(1, 1);
     private readonly JsonSerializerOptions _jsonOptions = new()

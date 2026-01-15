@@ -19,7 +19,7 @@ public sealed class BackfillWorkerService : BackgroundService
     private readonly IPublishEndpoint _publishEndpoint;
     private readonly HistoricalServiceConfig _config;
     private readonly HistoricalMetrics _metrics;
-    private readonly ILogger _log = Log.ForContext<BackfillWorkerService>();
+    private readonly Serilog.ILogger _log = Log.ForContext<BackfillWorkerService>();
     private readonly Channel<BackfillRequest> _requestChannel;
     private readonly TimeSpan _shutdownTimeout = TimeSpan.FromSeconds(30);
 

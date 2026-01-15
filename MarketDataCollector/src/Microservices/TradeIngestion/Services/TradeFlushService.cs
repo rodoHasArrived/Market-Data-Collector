@@ -12,7 +12,7 @@ public sealed class TradeFlushService : BackgroundService
     private readonly ITradeStorage _storage;
     private readonly ITradeProcessor _processor;
     private readonly TradeServiceConfig _config;
-    private readonly ILogger _log = Log.ForContext<TradeFlushService>();
+    private readonly Serilog.ILogger _log = Log.ForContext<TradeFlushService>();
     private readonly TimeSpan _shutdownTimeout = TimeSpan.FromSeconds(30);
 
     public TradeFlushService(
