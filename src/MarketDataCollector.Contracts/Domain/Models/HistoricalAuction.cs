@@ -9,13 +9,45 @@ namespace MarketDataCollector.Contracts.Domain.Models;
 /// </summary>
 public sealed record HistoricalAuction : MarketEventPayload
 {
+    /// <summary>
+    /// Gets the ticker symbol for the security.
+    /// </summary>
     public string Symbol { get; }
+
+    /// <summary>
+    /// Gets the trading session date.
+    /// </summary>
     public DateOnly SessionDate { get; }
+
+    /// <summary>
+    /// Gets the collection of opening auction prices.
+    /// </summary>
     public IReadOnlyList<AuctionPrice> OpeningAuctions { get; }
+
+    /// <summary>
+    /// Gets the collection of closing auction prices.
+    /// </summary>
     public IReadOnlyList<AuctionPrice> ClosingAuctions { get; }
+
+    /// <summary>
+    /// Gets the data source identifier (e.g., "alpaca").
+    /// </summary>
     public string Source { get; }
+
+    /// <summary>
+    /// Gets the sequence number for ordering events.
+    /// </summary>
     public long SequenceNumber { get; }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="HistoricalAuction"/> record.
+    /// </summary>
+    /// <param name="Symbol">The ticker symbol.</param>
+    /// <param name="SessionDate">The trading session date.</param>
+    /// <param name="OpeningAuctions">The opening auction prices.</param>
+    /// <param name="ClosingAuctions">The closing auction prices.</param>
+    /// <param name="Source">The data source identifier.</param>
+    /// <param name="SequenceNumber">The sequence number for ordering.</param>
     public HistoricalAuction(
         string Symbol,
         DateOnly SessionDate,
@@ -71,12 +103,39 @@ public sealed record HistoricalAuction : MarketEventPayload
 /// </summary>
 public sealed record AuctionPrice
 {
+    /// <summary>
+    /// Gets the timestamp of the auction price.
+    /// </summary>
     public DateTimeOffset Timestamp { get; }
+
+    /// <summary>
+    /// Gets the auction price.
+    /// </summary>
     public decimal Price { get; }
+
+    /// <summary>
+    /// Gets the auction size (number of shares).
+    /// </summary>
     public long Size { get; }
+
+    /// <summary>
+    /// Gets the exchange code where the auction occurred.
+    /// </summary>
     public string? Exchange { get; }
+
+    /// <summary>
+    /// Gets the auction condition code.
+    /// </summary>
     public string? Condition { get; }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AuctionPrice"/> record.
+    /// </summary>
+    /// <param name="Timestamp">The timestamp of the auction.</param>
+    /// <param name="Price">The auction price.</param>
+    /// <param name="Size">The auction size.</param>
+    /// <param name="Exchange">The exchange code.</param>
+    /// <param name="Condition">The auction condition.</param>
     public AuctionPrice(
         DateTimeOffset Timestamp,
         decimal Price,

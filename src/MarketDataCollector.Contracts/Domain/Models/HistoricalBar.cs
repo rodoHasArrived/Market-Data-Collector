@@ -7,16 +7,63 @@ namespace MarketDataCollector.Contracts.Domain.Models;
 /// </summary>
 public sealed record HistoricalBar : MarketEventPayload
 {
+    /// <summary>
+    /// Gets the ticker symbol for the security.
+    /// </summary>
     public string Symbol { get; }
+
+    /// <summary>
+    /// Gets the trading session date for this bar.
+    /// </summary>
     public DateOnly SessionDate { get; }
+
+    /// <summary>
+    /// Gets the opening price for the session.
+    /// </summary>
     public decimal Open { get; }
+
+    /// <summary>
+    /// Gets the highest price during the session.
+    /// </summary>
     public decimal High { get; }
+
+    /// <summary>
+    /// Gets the lowest price during the session.
+    /// </summary>
     public decimal Low { get; }
+
+    /// <summary>
+    /// Gets the closing price for the session.
+    /// </summary>
     public decimal Close { get; }
+
+    /// <summary>
+    /// Gets the total trading volume for the session.
+    /// </summary>
     public long Volume { get; }
+
+    /// <summary>
+    /// Gets the data source identifier (e.g., "stooq", "alpaca").
+    /// </summary>
     public string Source { get; }
+
+    /// <summary>
+    /// Gets the sequence number for ordering events.
+    /// </summary>
     public long SequenceNumber { get; }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="HistoricalBar"/> record.
+    /// </summary>
+    /// <param name="Symbol">The ticker symbol.</param>
+    /// <param name="SessionDate">The trading session date.</param>
+    /// <param name="Open">The opening price.</param>
+    /// <param name="High">The highest price.</param>
+    /// <param name="Low">The lowest price.</param>
+    /// <param name="Close">The closing price.</param>
+    /// <param name="Volume">The total volume.</param>
+    /// <param name="Source">The data source identifier.</param>
+    /// <param name="SequenceNumber">The sequence number for ordering.</param>
     public HistoricalBar(
         string Symbol,
         DateOnly SessionDate,
