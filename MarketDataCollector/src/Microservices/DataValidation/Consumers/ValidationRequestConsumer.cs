@@ -10,7 +10,7 @@ public sealed class ValidationRequestConsumer : IConsumer<IValidateIngestionData
 {
     private readonly IDataValidator _validator;
     private readonly IQualityMetricsAggregator _aggregator;
-    private readonly ILogger _log = Log.ForContext<ValidationRequestConsumer>();
+    private readonly Serilog.ILogger _log = Log.ForContext<ValidationRequestConsumer>();
 
     public ValidationRequestConsumer(IDataValidator validator, IQualityMetricsAggregator aggregator)
     {
@@ -22,7 +22,7 @@ public sealed class ValidationRequestConsumer : IConsumer<IValidateIngestionData
     {
         var msg = context.Message;
 
-        ValidationResult result = msg.ValidationType switch
+        DataIngestion.ValidationService.Services.ValidationResult result = msg.ValidationType switch
         {
             DataValidationType.Trade => ValidateTrade(msg),
             DataValidationType.Quote => ValidateQuote(msg),
@@ -51,7 +51,7 @@ public sealed class ValidationRequestConsumer : IConsumer<IValidateIngestionData
         });
     }
 
-    private ValidationResult ValidateTrade(IValidateIngestionData msg)
+    private DataIngestion.ValidationService.Services.ValidationResult ValidateTrade(IValidateIngestionData msg)
     {
         try
         {
@@ -68,7 +68,7 @@ public sealed class ValidationRequestConsumer : IConsumer<IValidateIngestionData
         }
     }
 
-    private ValidationResult ValidateQuote(IValidateIngestionData msg)
+    private DataIngestion.ValidationService.Services.ValidationResult ValidateQuote(IValidateIngestionData msg)
     {
         try
         {
@@ -84,7 +84,7 @@ public sealed class ValidationRequestConsumer : IConsumer<IValidateIngestionData
         }
     }
 
-    private ValidationResult ValidateOrderBook(IValidateIngestionData msg)
+    private DataIngestion.ValidationService.Services.ValidationResult ValidateOrderBook(IValidateIngestionData msg)
     {
         // Simplified order book validation
         return new ValidationResult(true, new List<ValidationIssue>());

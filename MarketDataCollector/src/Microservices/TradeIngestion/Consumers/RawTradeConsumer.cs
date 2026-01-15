@@ -13,7 +13,7 @@ namespace DataIngestion.TradeService.Consumers;
 public sealed class RawTradeConsumer : IConsumer<IRouteIngestionData>
 {
     private readonly ITradeProcessor _processor;
-    private readonly ILogger _log = Log.ForContext<RawTradeConsumer>();
+    private readonly Serilog.ILogger _log = Log.ForContext<RawTradeConsumer>();
 
     public RawTradeConsumer(ITradeProcessor processor)
     {

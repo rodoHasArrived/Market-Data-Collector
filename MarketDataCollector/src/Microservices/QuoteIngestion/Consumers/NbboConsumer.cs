@@ -10,7 +10,7 @@ namespace DataIngestion.QuoteService.Consumers;
 public sealed class NbboConsumer : IConsumer<INbboUpdate>
 {
     private readonly IQuoteProcessor _processor;
-    private readonly ILogger _log = Log.ForContext<NbboConsumer>();
+    private readonly Serilog.ILogger _log = Log.ForContext<NbboConsumer>();
 
     public NbboConsumer(IQuoteProcessor processor) => _processor = processor;
 

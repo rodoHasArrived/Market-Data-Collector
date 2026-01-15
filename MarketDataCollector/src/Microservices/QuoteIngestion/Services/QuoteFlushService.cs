@@ -12,7 +12,7 @@ public sealed class QuoteFlushService : BackgroundService
     private readonly IQuoteProcessor _processor;
     private readonly IQuoteStorage _storage;
     private readonly QuoteServiceConfig _config;
-    private readonly ILogger _log = Log.ForContext<QuoteFlushService>();
+    private readonly Serilog.ILogger _log = Log.ForContext<QuoteFlushService>();
     private readonly TimeSpan _shutdownTimeout = TimeSpan.FromSeconds(30);
 
     public QuoteFlushService(IQuoteProcessor processor, IQuoteStorage storage, QuoteServiceConfig config)

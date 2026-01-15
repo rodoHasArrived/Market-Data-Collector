@@ -207,7 +207,7 @@ type AggressorInference private () =
     static member Infer(tradePrice: decimal, bidPrice: Nullable<decimal>, askPrice: Nullable<decimal>) : int =
         let bidOpt = if bidPrice.HasValue then Some bidPrice.Value else None
         let askOpt = if askPrice.HasValue then Some askPrice.Value else None
-        (Sides.inferAggressor tradePrice bidOpt askOpt).ToInt()
+        (inferAggressor tradePrice bidOpt askOpt).ToInt()
 
     static member InferFromQuote(tradePrice: decimal, quote: QuoteEvent) : int =
-        (Sides.inferAggressor tradePrice (Some quote.BidPrice) (Some quote.AskPrice)).ToInt()
+        (inferAggressor tradePrice (Some quote.BidPrice) (Some quote.AskPrice)).ToInt()

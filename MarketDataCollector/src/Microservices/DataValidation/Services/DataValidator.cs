@@ -30,7 +30,7 @@ public sealed class DataValidator : IDataValidator
 {
     private readonly ValidationServiceConfig _config;
     private readonly ValidationMetrics _metrics;
-    private readonly ILogger _log = Log.ForContext<DataValidator>();
+    private readonly Serilog.ILogger _log = Log.ForContext<DataValidator>();
 
     public DataValidator(ValidationServiceConfig config, ValidationMetrics metrics)
     {
