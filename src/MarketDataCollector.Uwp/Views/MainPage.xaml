@@ -154,53 +154,9 @@
                     <FontIcon Glyph="&#xE787;" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
-            <NavigationViewItem Content="Symbols" Tag="Symbols"
-                                AutomationProperties.Name="Symbols - Manage symbol subscriptions"
-                                ToolTipService.ToolTip="Manage symbol subscriptions">
+            <NavigationViewItem Content="Data Browser" Tag="DataBrowser">
                 <NavigationViewItem.Icon>
-                    <FontIcon Glyph="&#xE8D4;" />
-                </NavigationViewItem.Icon>
-            </NavigationViewItem>
-            <NavigationViewItem Content="Mapping" Tag="SymbolMapping"
-                                AutomationProperties.Name="Symbol Mapping - Cross-reference provider symbols"
-                                ToolTipService.ToolTip="Cross-reference symbols across providers">
-                <NavigationViewItem.Icon>
-                    <FontIcon Glyph="&#xE8AB;" />
-                </NavigationViewItem.Icon>
-            </NavigationViewItem>
-            <NavigationViewItem Content="Storage" Tag="Storage"
-                                AutomationProperties.Name="Storage - View storage usage and settings"
-                                ToolTipService.ToolTip="View storage usage and data lifecycle">
-                <NavigationViewItem.Icon>
-                    <FontIcon Glyph="&#xE8B7;" />
-                </NavigationViewItem.Icon>
-            </NavigationViewItem>
-            <NavigationViewItem Content="Backfill" Tag="Backfill"
-                                AutomationProperties.Name="Backfill - Download historical data"
-                                ToolTipService.ToolTip="Download historical market data">
-                <NavigationViewItem.Icon>
-                    <FontIcon Glyph="&#xE787;" />
-                </NavigationViewItem.Icon>
-            </NavigationViewItem>
-            <NavigationViewItem Content="Portfolio Import" Tag="PortfolioImport"
-                                AutomationProperties.Name="Portfolio Import - Import symbols from files"
-                                ToolTipService.ToolTip="Import symbols from CSV, JSON, or index constituents">
-                <NavigationViewItem.Icon>
-                    <FontIcon Glyph="&#xE8B5;" />
-                </NavigationViewItem.Icon>
-            </NavigationViewItem>
-            <NavigationViewItem Content="Index Subscription" Tag="IndexSubscription"
-                                AutomationProperties.Name="Index Subscription - Subscribe to index constituents"
-                                ToolTipService.ToolTip="Subscribe to S&amp;P 500, Nasdaq 100, and sector ETFs">
-                <NavigationViewItem.Icon>
-                    <FontIcon Glyph="&#xE8EC;" />
-                </NavigationViewItem.Icon>
-            </NavigationViewItem>
-            <NavigationViewItem Content="Schedules" Tag="Schedules"
-                                AutomationProperties.Name="Schedules - Manage scheduled tasks"
-                                ToolTipService.ToolTip="Manage backfill and maintenance schedules">
-                <NavigationViewItem.Icon>
-                    <FontIcon Glyph="&#xE823;" />
+                    <FontIcon Glyph="&#xE8A5;" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
 
