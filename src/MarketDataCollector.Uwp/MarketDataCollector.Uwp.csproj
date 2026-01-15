@@ -48,16 +48,17 @@
 
     <!-- Globalization settings -->
     <InvariantGlobalization>false</InvariantGlobalization>
+
   </PropertyGroup>
 
   <!-- Windows-only package references -->
   <ItemGroup Condition="'$(IsWindows)' == 'true'">
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
-    <PackageReference Include="CommunityToolkit.WinUI.Controls.Primitives" Version="8.0.240109" />
-    <PackageReference Include="CommunityToolkit.WinUI.Controls.Sizers" Version="8.0.240109" />
+    <PackageReference Include="CommunityToolkit.WinUI.Controls.Primitives" Version="8.2.251219" />
+    <PackageReference Include="CommunityToolkit.WinUI.Controls.Sizers" Version="8.2.250402" />
     <!-- Windows App SDK 1.7.x for .NET 9 support
          See https://github.com/microsoft/WindowsAppSDK/releases for latest versions -->
-    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.7.250127001" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.7.250310001" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.1" />
     <PackageReference Include="System.Text.Json" Version="9.0.0" />
   </ItemGroup>

@@ -574,7 +574,7 @@ public sealed class PortablePackagerService
 ## Contents
 - **Symbols**: {string.Join(", ", manifest.Symbols ?? new[] { "All" })}
 - **Event Types**: {string.Join(", ", manifest.EventTypes ?? new[] { "All" })}
-- **Date Range**: {manifest.DateRange?.Start?.ToString(""yyyy-MM-dd"")} to {manifest.DateRange?.End?.ToString(""yyyy-MM-dd"")}
+- **Date Range**: {(manifest.DateRange?.Start?.ToString("yyyy-MM-dd") ?? "N/A")} to {(manifest.DateRange?.End?.ToString("yyyy-MM-dd") ?? "N/A")}
 - **Total Files**: {manifest.TotalFiles:N0}
 - **Original Size**: {FormatBytes(manifest.TotalBytesOriginal)}
 

@@ -56,7 +56,13 @@
       "Bash(git rm:*)",
       "Bash(dotnet test:*)",
       "Bash(xxd:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(dir:*)",
+      "Bash(dotnet:*)",
+      "Bash(where:*)",
+      "Bash(\"C:\\Users\\Andrew James Rowden\\.nuget\\packages\\microsoft.windowsappsdk\\1.7.250310001\\tools\\net472\\XamlCompiler.exe\" \"C:\\Users\\Andrew James Rowden\\OneDrive\\Documents\\GitHub\\Market-Data-Collector\\src\\MarketDataCollector.Uwp\\obj\\Debug\\net9.0-windows10.0.19041.0\\win-x64\\input.json\" \"C:\\Users\\Andrew James Rowden\\OneDrive\\Documents\\GitHub\\Market-Data-Collector\\src\\MarketDataCollector.Uwp\\obj\\Debug\\net9.0-windows10.0.19041.0\\win-x64\\output_test.json\")",
+      "Bash(\"C:\\Users\\Andrew James Rowden\\.nuget\\packages\\microsoft.windowsappsdk\\1.7.250310001\\tools\\net472\\XamlCompiler.exe\" \"obj\\Debug\\net9.0-windows10.0.19041.0\\win-x64\\input.json\" \"obj\\Debug\\net9.0-windows10.0.19041.0\\win-x64\\output_test2.json\")",
+      "Bash(echo \"Exit code: $?\")"
     ]
   }
 }
