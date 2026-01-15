@@ -8,13 +8,44 @@ namespace MarketDataCollector.Contracts.Domain.Models;
 /// </summary>
 public sealed record Trade : MarketEventPayload
 {
+    /// <summary>
+    /// Gets the timestamp when the trade was executed.
+    /// </summary>
     public DateTimeOffset Timestamp { get; }
+
+    /// <summary>
+    /// Gets the ticker symbol for the security.
+    /// </summary>
     public string Symbol { get; }
+
+    /// <summary>
+    /// Gets the execution price of the trade.
+    /// </summary>
     public decimal Price { get; }
+
+    /// <summary>
+    /// Gets the number of shares traded.
+    /// </summary>
     public long Size { get; }
+
+    /// <summary>
+    /// Gets the side that initiated the trade (buyer or seller).
+    /// </summary>
     public AggressorSide Aggressor { get; }
+
+    /// <summary>
+    /// Gets the sequence number for ordering events.
+    /// </summary>
     public long SequenceNumber { get; }
+
+    /// <summary>
+    /// Gets the stream identifier for data source tracking.
+    /// </summary>
     public string? StreamId { get; }
+
+    /// <summary>
+    /// Gets the trading venue or exchange identifier.
+    /// </summary>
     public string? Venue { get; }
 
     /// <summary>

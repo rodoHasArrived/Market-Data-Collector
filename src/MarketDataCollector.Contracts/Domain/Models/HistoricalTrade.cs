@@ -8,17 +8,69 @@ namespace MarketDataCollector.Contracts.Domain.Models;
 /// </summary>
 public sealed record HistoricalTrade : MarketEventPayload
 {
+    /// <summary>
+    /// Gets the ticker symbol for the security.
+    /// </summary>
     public string Symbol { get; }
+
+    /// <summary>
+    /// Gets the timestamp when the trade was executed.
+    /// </summary>
     public DateTimeOffset Timestamp { get; }
+
+    /// <summary>
+    /// Gets the exchange code where the trade occurred.
+    /// </summary>
     public string Exchange { get; }
+
+    /// <summary>
+    /// Gets the execution price of the trade.
+    /// </summary>
     public decimal Price { get; }
+
+    /// <summary>
+    /// Gets the number of shares traded.
+    /// </summary>
     public long Size { get; }
+
+    /// <summary>
+    /// Gets the unique identifier for this trade.
+    /// </summary>
     public string TradeId { get; }
+
+    /// <summary>
+    /// Gets the trade condition codes.
+    /// </summary>
     public IReadOnlyList<string>? Conditions { get; }
+
+    /// <summary>
+    /// Gets the tape identifier (A, B, or C).
+    /// </summary>
     public string? Tape { get; }
+
+    /// <summary>
+    /// Gets the data source identifier (e.g., "alpaca").
+    /// </summary>
     public string Source { get; }
+
+    /// <summary>
+    /// Gets the sequence number for ordering events.
+    /// </summary>
     public long SequenceNumber { get; }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="HistoricalTrade"/> record.
+    /// </summary>
+    /// <param name="Symbol">The ticker symbol.</param>
+    /// <param name="Timestamp">The trade timestamp.</param>
+    /// <param name="Exchange">The exchange code.</param>
+    /// <param name="Price">The execution price.</param>
+    /// <param name="Size">The trade size.</param>
+    /// <param name="TradeId">The unique trade identifier.</param>
+    /// <param name="Conditions">The trade conditions.</param>
+    /// <param name="Tape">The tape identifier.</param>
+    /// <param name="Source">The data source identifier.</param>
+    /// <param name="SequenceNumber">The sequence number for ordering.</param>
     public HistoricalTrade(
         string Symbol,
         DateTimeOffset Timestamp,

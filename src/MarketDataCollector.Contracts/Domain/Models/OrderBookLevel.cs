@@ -27,10 +27,29 @@ namespace MarketDataCollector.Contracts.Domain.Models;
 /// </remarks>
 public sealed record OrderBookLevel
 {
+    /// <summary>
+    /// Gets the side of the order book (bid or ask).
+    /// </summary>
     public OrderBookSide Side { get; init; }
+
+    /// <summary>
+    /// Gets the depth level in the order book (0 = best price).
+    /// </summary>
     public int Level { get; init; }
+
+    /// <summary>
+    /// Gets the price at this level.
+    /// </summary>
     public decimal Price { get; init; }
+
+    /// <summary>
+    /// Gets the total size available at this price level.
+    /// </summary>
     public decimal Size { get; init; }
+
+    /// <summary>
+    /// Gets the market maker identifier (if available).
+    /// </summary>
     public string? MarketMaker { get; init; }
 
     /// <summary>
