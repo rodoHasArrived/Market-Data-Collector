@@ -22,6 +22,7 @@ public sealed class StatusHttpServer : IAsyncDisposable
     private readonly Func<MetricsSnapshot> _metricsProvider;
     private readonly Func<PipelineStatistics> _pipelineProvider;
     private readonly Func<IReadOnlyList<DepthIntegrityEvent>> _integrityProvider;
+    private readonly Func<ErrorRingBuffer?> _errorBufferProvider;
     private readonly CancellationTokenSource _cts = new();
     private readonly DateTimeOffset _startTime = DateTimeOffset.UtcNow;
     private Task? _loop;
@@ -34,11 +35,13 @@ public sealed class StatusHttpServer : IAsyncDisposable
     public StatusHttpServer(int port,
         Func<MetricsSnapshot> metricsProvider,
         Func<PipelineStatistics> pipelineProvider,
-        Func<IReadOnlyList<DepthIntegrityEvent>> integrityProvider)
+        Func<IReadOnlyList<DepthIntegrityEvent>> integrityProvider,
+        Func<ErrorRingBuffer?>? errorBufferProvider = null)
     {
         _metricsProvider = metricsProvider;
         _pipelineProvider = pipelineProvider;
         _integrityProvider = integrityProvider;
+        _errorBufferProvider = errorBufferProvider ?? (() => null);
         _listener.Prefixes.Add($"http://*:{port}/");
     }
 
@@ -91,6 +94,9 @@ public sealed class StatusHttpServer : IAsyncDisposable
                     break;
                 case "status":
                     await WriteStatusAsync(ctx.Response);
+                    break;
+                case "errors":
+                    await WriteErrorsAsync(ctx.Response, ctx.Request.QueryString);
                     break;
                 case "backfill/providers":
                     await WriteBackfillProvidersAsync(ctx.Response);
@@ -399,7 +405,7 @@ public sealed class StatusHttpServer : IAsyncDisposable
 table{border-collapse:collapse;} td,th{border:1px solid #ccc;padding:4px 8px;}</style></head>
 <body>
 <h2>MarketDataCollector Status</h2>
-<p><a href='/metrics'>Prometheus metrics</a> | <a href='/status'>JSON status</a></p>
+<p><a href='/metrics'>Prometheus metrics</a> | <a href='/status'>JSON status</a> | <a href='/errors'>Recent errors</a></p>
 <pre id='metrics'>Loading metrics...</pre>
 <h3>Recent integrity events</h3>
 <table id='integrity'><thead><tr><th>Timestamp</th><th>Symbol</th><th>Kind</th><th>Details</th></tr></thead><tbody></tbody></table>
@@ -420,6 +426,97 @@ setInterval(refresh,2000);refresh();
 </body></html>";
 
         var bytes = Encoding.UTF8.GetBytes(html);
+        return resp.OutputStream.WriteAsync(bytes, 0, bytes.Length);
+    }
+
+    /// <summary>
+    /// Returns the last N errors endpoint (QW-58).
+    /// Supports query parameters: count (default 10), level (warning/error/critical), symbol
+    /// </summary>
+    private Task WriteErrorsAsync(HttpListenerResponse resp, System.Collections.Specialized.NameValueCollection queryString)
+    {
+        resp.ContentType = "application/json";
+
+        var errorBuffer = _errorBufferProvider();
+        if (errorBuffer == null)
+        {
+            var emptyResponse = new
+            {
+                errors = Array.Empty<object>(),
+                stats = new { totalErrors = 0, errorsInLastMinute = 0, errorsInLastHour = 0 },
+                message = "Error buffer not configured"
+            };
+
+            var emptyJson = JsonSerializer.Serialize(emptyResponse, new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                WriteIndented = true
+            });
+            var emptyBytes = Encoding.UTF8.GetBytes(emptyJson);
+            return resp.OutputStream.WriteAsync(emptyBytes, 0, emptyBytes.Length);
+        }
+
+        // Parse query parameters
+        var countStr = queryString["count"];
+        var count = 10;
+        if (!string.IsNullOrEmpty(countStr) && int.TryParse(countStr, out var parsedCount) && parsedCount > 0)
+        {
+            count = Math.Min(parsedCount, 100); // Cap at 100
+        }
+
+        var levelStr = queryString["level"];
+        var symbolFilter = queryString["symbol"];
+
+        IReadOnlyList<ErrorEntry> errors;
+
+        // Apply filters
+        if (!string.IsNullOrEmpty(symbolFilter))
+        {
+            errors = errorBuffer.GetBySymbol(symbolFilter, count);
+        }
+        else if (!string.IsNullOrEmpty(levelStr) && Enum.TryParse<ErrorLevel>(levelStr, ignoreCase: true, out var level))
+        {
+            errors = errorBuffer.GetByLevel(level, count);
+        }
+        else
+        {
+            errors = errorBuffer.GetRecent(count);
+        }
+
+        var stats = errorBuffer.GetStats();
+
+        var response = new
+        {
+            errors = errors.Select(e => new
+            {
+                id = e.Id,
+                timestamp = e.Timestamp,
+                level = e.Level.ToString().ToLowerInvariant(),
+                source = e.Source,
+                message = e.Message,
+                exceptionType = e.ExceptionType,
+                context = e.Context,
+                symbol = e.Symbol,
+                provider = e.Provider
+            }),
+            stats = new
+            {
+                totalErrors = stats.TotalErrors,
+                errorsInLastMinute = stats.ErrorsInLastMinute,
+                errorsInLastHour = stats.ErrorsInLastHour,
+                warningCount = stats.WarningCount,
+                errorCount = stats.ErrorCount,
+                criticalCount = stats.CriticalCount,
+                lastErrorTime = stats.LastErrorTime
+            }
+        };
+
+        var json = JsonSerializer.Serialize(response, new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = true
+        });
+        var bytes = Encoding.UTF8.GetBytes(json);
         return resp.OutputStream.WriteAsync(bytes, 0, bytes.Length);
     }
 

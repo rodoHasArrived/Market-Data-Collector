@@ -1,7 +1,7 @@
 # Market Data Collector - Roadmap
 
-**Version:** 1.5.0
-**Last Updated:** 2026-01-14
+**Version:** 1.6.0
+**Last Updated:** 2026-01-15
 **Status:** Production Ready
 
 This document provides the feature roadmap, backlog, and development priorities for the Market Data Collector system.
@@ -14,13 +14,13 @@ This document provides the feature roadmap, backlog, and development priorities 
 |----------|-------------|---------|-------|
 | Core Features | 55+ | - | 55+ |
 | Technical Debt | 2 | 6 | 8 |
-| Quick Wins (≤2 days) | 22 | 103 | 125 |
+| Quick Wins (≤2 days) | 32 | 93 | 125 |
 | Provider Integration | 4 | 18 | 22 |
-| Monitoring & Alerting | 14 | 10 | 24 |
-| Data Quality | 10 | 13 | 23 |
+| Monitoring & Alerting | 19 | 5 | 24 |
+| Data Quality | 16 | 7 | 23 |
 | Storage & Archival | 9 | 4 | 13 |
 | Cloud Integration | 0 | 100+ | 100+ |
-| **Total** | **116** | **254+** | **370+** |
+| **Total** | **137** | **233+** | **370+** |
 
 ---
 
@@ -62,6 +62,9 @@ This document provides the feature roadmap, backlog, and development priorities 
 - [x] Connection health monitor with latency tracking
 - [x] Data quality report generator (JSON, CSV, HTML, Markdown)
 - [x] Cross-provider comparison service
+- [x] Last N errors endpoint (QW-58)
+- [x] Events per second gauge (QW-82)
+- [x] Error ring buffer for diagnostics
 
 ### Data Quality
 - [x] Crossed market detector (bid > ask)
@@ -73,6 +76,13 @@ This document provides the feature roadmap, backlog, and development priorities 
 - [x] Anomaly detector with statistical outliers
 - [x] Completeness score calculator
 - [x] Latency histogram tracking
+- [x] Negative price detector (QW-107)
+- [x] Future timestamp detector (QW-109)
+- [x] Tick size validator (DQ-13)
+- [x] Duplicate event detector (DQ-2)
+- [x] Bad tick filter (DQ-20)
+- [x] Price spike alert (QW-6)
+- [x] Spread monitor (QW-7)
 
 ### User Interfaces
 - [x] Web Dashboard (HTML/JS, auto-refresh)
@@ -96,6 +106,9 @@ This document provides the feature roadmap, backlog, and development priorities 
 - [x] Technical indicator service (200+ indicators via Skender.Stock.Indicators)
 - [x] Symbol management CLI commands (list, add, remove, import, export)
 - [x] PlantUML diagram PNG generation
+- [x] Log level runtime toggle (QW-53)
+- [x] Config path override (QW-95)
+- [x] Sensitive value masking (QW-78)
 
 ---
 
@@ -130,16 +143,16 @@ Items that should be addressed before new feature development.
 - [x] DQ-15: Timestamp Monotonicity
 - [x] QW-30: Graceful Shutdown with Event Flush
 
-### Sprint 2: Data Quality & Alerts - **NEXT**
-| ID | Feature | Effort | Priority |
-|----|---------|--------|----------|
-| QW-6 | Price Spike Alert | 1 day | P1 |
-| QW-7 | Spread Monitor | 1 day | P1 |
-| DQ-2 | Duplicate Event Detector | 1 day | P1 |
-| DQ-20 | Bad Tick Filter | 1 day | P1 |
-| QW-32 | Detailed Health Check Endpoint | 1 day | P1 |
-| MON-18 | Backpressure Alert | 1 day | P1 |
-| MON-6 | Connection Status Webhook | 1 day | P1 |
+### Sprint 2: Data Quality & Alerts - **COMPLETE**
+| ID | Feature | Effort | Priority | Status |
+|----|---------|--------|----------|--------|
+| QW-6 | Price Spike Alert | 1 day | P1 | **Done** |
+| QW-7 | Spread Monitor | 1 day | P1 | **Done** |
+| DQ-2 | Duplicate Event Detector | 1 day | P1 | **Done** |
+| DQ-20 | Bad Tick Filter | 1 day | P1 | **Done** |
+| QW-32 | Detailed Health Check Endpoint | 1 day | P1 | Pending |
+| MON-18 | Backpressure Alert | 1 day | P1 | Pending |
+| MON-6 | Connection Status Webhook | 1 day | P1 | Pending |
 
 ### Sprint 3: Developer Experience
 | ID | Feature | Effort | Priority | Status |
@@ -182,30 +195,30 @@ Items that should be addressed before new feature development.
 ### Quick Wins (≤2 Days) - Highest ROI
 
 #### Health & Monitoring
-| ID | Feature | Effort | Impact |
-|----|---------|--------|--------|
-| QW-32 | Detailed Health Check Endpoint | 1 day | High |
-| QW-33 | Dependency Health Checks | 1 day | High |
-| QW-58 | Last N Errors Endpoint | 0.5 day | High |
-| QW-82 | Events Per Second Gauge | 0.5 day | High |
-| QW-87 | Latency Percentiles (P50/P95/P99) | 1 day | High |
+| ID | Feature | Effort | Impact | Status |
+|----|---------|--------|--------|--------|
+| QW-32 | Detailed Health Check Endpoint | 1 day | High | Pending |
+| QW-33 | Dependency Health Checks | 1 day | High | Pending |
+| QW-58 | Last N Errors Endpoint | 0.5 day | High | **Done** |
+| QW-82 | Events Per Second Gauge | 0.5 day | High | **Done** |
+| QW-87 | Latency Percentiles (P50/P95/P99) | 1 day | High | Pending |
 
 #### Data Validation
-| ID | Feature | Effort | Impact |
-|----|---------|--------|--------|
-| QW-107 | Negative Price Detector | 0.5 day | High |
-| QW-109 | Future Timestamp Detector | 0.5 day | High |
-| QW-112 | Sequence Gap Counter | 1 day | High |
-| DQ-13 | Tick Size Validator | 0.5 day | Medium |
-| DQ-16 | Price Continuity Checker | 1 day | Medium |
+| ID | Feature | Effort | Impact | Status |
+|----|---------|--------|--------|--------|
+| QW-107 | Negative Price Detector | 0.5 day | High | **Done** |
+| QW-109 | Future Timestamp Detector | 0.5 day | High | **Done** |
+| QW-112 | Sequence Gap Counter | 1 day | High | Pending |
+| DQ-13 | Tick Size Validator | 0.5 day | Medium | **Done** |
+| DQ-16 | Price Continuity Checker | 1 day | Medium | Pending |
 
 #### CLI & Configuration
 | ID | Feature | Effort | Impact | Status |
 |----|---------|--------|--------|--------|
-| QW-53 | Log Level Runtime Toggle | 0.5 day | High | Pending |
+| QW-53 | Log Level Runtime Toggle | 0.5 day | High | **Done** |
 | QW-93 | Dry Run Mode | 1 day | High | Pending |
-| QW-95 | Config Path Override | 0.5 day | High | Pending |
-| QW-78 | Sensitive Value Masking | 0.5 day | High | Pending |
+| QW-95 | Config Path Override | 0.5 day | High | **Done** |
+| QW-78 | Sensitive Value Masking | 0.5 day | High | **Done** |
 | QW-76 | Config Template Generator | 1 day | High | **Done** |
 
 ### Provider Integration
