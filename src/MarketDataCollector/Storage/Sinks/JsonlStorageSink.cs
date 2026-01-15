@@ -413,6 +413,7 @@ public sealed class JsonlStorageSink : IStorageSink
         // Using ReaderWriterLockSlim for better concurrency - reads (timestamp checks) are more frequent than writes
         private readonly ReaderWriterLockSlim _lock = new(LockRecursionPolicy.NoRecursion);
         private DateTime _lastSweep = DateTime.MinValue;
+        private bool _disposed;
         private static readonly string[] _extensions = new[] { ".jsonl", ".jsonl.gz", ".jsonl.gzip" };
         private bool _disposed;
 
@@ -426,7 +427,7 @@ public sealed class JsonlStorageSink : IStorageSink
 
         public void MaybeCleanup()
         {
-            if (_retentionDays is null && _maxBytes is null)
+            if (_disposed || (_retentionDays is null && _maxBytes is null))
                 return;
 
             if (_disposed)
