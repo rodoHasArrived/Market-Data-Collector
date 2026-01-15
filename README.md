@@ -13,7 +13,7 @@ A high-performance, cross-platform market data collection system for real-time a
 [![Docker Build](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/docker-build.yml/badge.svg)](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/docker-build.yml)
 [![Code Quality](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/code-quality.yml/badge.svg)](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/code-quality.yml)
 
-**Status**: Production Ready | **Version**: 1.5.0 | **Last Updated**: 2026-01-09
+**Status**: Production Ready | **Version**: 1.5.0 | **Last Updated**: 2026-01-14
 
 ---
 
@@ -54,6 +54,12 @@ make docker
 
 # Native installation with web UI
 make run-ui
+
+# Run tests
+make test
+
+# Run diagnostics (troubleshooting)
+make doctor
 ```
 
 ### Windows Installation
@@ -109,6 +115,42 @@ Market Data Collector is a modular, event-driven system that captures, validates
 - **ADR compliance**: Architecture Decision Records for consistent design patterns
 
 ## Quick Start
+
+### New User? Use the Configuration Wizard
+
+For first-time users, the interactive wizard guides you through setup:
+
+```bash
+# Clone the repository
+git clone https://github.com/rodoHasArrived/Market-Data-Collector.git
+cd Market-Data-Collector
+
+# Run the interactive configuration wizard (recommended for new users)
+dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --wizard
+```
+
+The wizard will:
+- Detect available data providers from your environment
+- Guide you through provider selection and configuration
+- Set up symbols, storage, and backfill options
+- Generate your `appsettings.json` automatically
+
+### Quick Auto-Configuration
+
+If you have environment variables set, use quick auto-configuration:
+
+```bash
+# Auto-detect providers from environment variables
+dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --auto-config
+
+# Check what providers are available
+dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --detect-providers
+
+# Validate your API credentials
+dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --validate-credentials
+```
+
+### Manual Setup
 
 ```bash
 # Clone the repository
@@ -257,7 +299,7 @@ export ALPACA__SECRETKEY=your-secret-key
 
 ## CI/CD and Automation
 
-The repository includes comprehensive GitHub Actions workflows for automated testing, security, and deployment:
+The repository includes 16 comprehensive GitHub Actions workflows for automated testing, security, and deployment:
 
 - **🔨 Build & Release** - Automated builds and cross-platform releases
 - **🔒 CodeQL Analysis** - Security vulnerability scanning (weekly + on changes)
@@ -267,8 +309,54 @@ The repository includes comprehensive GitHub Actions workflows for automated tes
 - **🏷️ Auto Labeling** - Intelligent PR and issue labeling
 - **🔍 Dependency Review** - Security checks for dependencies in PRs
 - **🗑️ Stale Management** - Automatic issue/PR lifecycle management
+- **📊 Build Observability** - Build metrics and diagnostic capture
+- **📖 Documentation Auto-Update** - Automatically update docs on provider changes
+- **🔄 Documentation Sync** - Keep documentation structure in sync with codebase
 
 See [`.github/workflows/README.md`](.github/workflows/README.md) for detailed documentation.
+
+## Troubleshooting
+
+### Quick Diagnostics
+
+```bash
+# Run full environment health check
+make doctor
+
+# Quick environment check
+make doctor-quick
+
+# Run build diagnostics
+make diagnose
+
+# Show build metrics
+make metrics
+```
+
+### Common Issues
+
+| Issue | Solution |
+|-------|----------|
+| Build fails with NETSDK1100 | Ensure `EnableWindowsTargeting=true` is set in `Directory.Build.props` |
+| Provider connection errors | Run `make doctor` and verify API credentials with `--validate-credentials` |
+| Missing configuration | Run `make setup-config` to create `appsettings.json` from template |
+| High memory usage | Check channel capacity settings in `EventPipeline` configuration |
+| Rate limit errors | Review `ProviderRateLimitTracker` logs and adjust request intervals |
+
+### Debug Information
+
+```bash
+# Collect debug bundle for issue reporting
+make collect-debug
+
+# Build with binary log for detailed analysis
+make build-binlog
+
+# Validate JSONL data integrity
+make validate-data
+```
+
+For more troubleshooting details, see [docs/HELP.md](docs/HELP.md).
 
 ### Docker Images
 
@@ -289,7 +377,7 @@ docker run -d -p 8080:8080 \
 
 ```
 Market-Data-Collector/
-├── .github/              # CI/CD workflows (13+), AI prompts, Dependabot
+├── .github/              # CI/CD workflows (16), AI prompts, Dependabot
 ├── docs/                 # Documentation, ADRs, AI assistant guides
 ├── scripts/              # Install, publish, run, and diagnostic scripts
 ├── deploy/               # Docker, systemd, and monitoring configs

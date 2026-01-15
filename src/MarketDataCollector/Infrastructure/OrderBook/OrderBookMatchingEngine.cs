@@ -94,8 +94,10 @@ public sealed class OrderBookMatchingEngine
                             // IOC/FOK orders are cancelled if not fully filled
                             if (request.TimeInForce == TimeInForce.FOK && trades.Count > 0)
                             {
-                                // TODO: Implement FOK rollback - currently partial fills are not reverted
-                                // FOK requires full fill - should roll back partial executions and restore order book state
+                                // FOK requires full fill - roll back partial executions and restore order book state
+                                RollbackTrades(trades, order);
+                                trades.Clear();
+                                order.RemainingQuantity = order.Quantity;
                             }
                             order.Status = OrderStatus.Cancelled;
                         }
@@ -167,7 +169,9 @@ public sealed class OrderBookMatchingEngine
             if (!_orders.TryGetValue(orderId, out var existingOrder))
             {
                 _log.Warning("Order modification failed: order {OrderId} not found for {Symbol}", orderId, _symbol);
-                return ModifyOrderResult.Failure(ModifyOrderError.OrderNotFound(orderId));
+                return ModifyOrderResult.Failure(
+                    ModifyOrderError.OrderNotFound,
+                    $"Order {orderId} not found for {_symbol}");
             }
 
             // Check if order is in a modifiable state
@@ -176,7 +180,9 @@ public sealed class OrderBookMatchingEngine
                 _log.Warning(
                     "Order modification failed: order {OrderId} has status {Status}, expected {ExpectedStatus} for {Symbol}",
                     orderId, existingOrder.Status, OrderStatus.Open, _symbol);
-                return ModifyOrderResult.Failure(ModifyOrderError.InvalidStatus(orderId, existingOrder.Status));
+                return ModifyOrderResult.Failure(
+                    ModifyOrderError.InvalidOrderStatus,
+                    $"Order {orderId} has status {existingOrder.Status}, expected {OrderStatus.Open}");
             }
 
             if (!CancelOrder(orderId))
@@ -185,7 +191,9 @@ public sealed class OrderBookMatchingEngine
                 _log.Warning(
                     "Order modification failed: unexpected cancellation failure for order {OrderId} on {Symbol}",
                     orderId, _symbol);
-                return ModifyOrderResult.Failure(ModifyOrderError.CancellationFailed(orderId));
+                return ModifyOrderResult.Failure(
+                    ModifyOrderError.CancellationFailed,
+                    $"Unexpected cancellation failure for order {orderId} on {_symbol}");
             }
 
             var oldOrder = _orders[orderId];
@@ -348,6 +356,45 @@ public sealed class OrderBookMatchingEngine
     {
         var side = order.Side == OrderBookSide.Bid ? _bids : _asks;
         side.AddOrder(order.Price, order.OrderId, order.RemainingQuantity);
+    }
+
+    /// <summary>
+    /// Rolls back trades for a FOK order that couldn't be fully filled.
+    /// Restores resting order quantities and status, and re-adds them to the order book.
+    /// </summary>
+    private void RollbackTrades(List<TradeExecution> trades, Order aggressorOrder)
+    {
+        var opposingSide = aggressorOrder.Side == OrderBookSide.Bid ? _asks : _bids;
+
+        foreach (var trade in trades)
+        {
+            if (_orders.TryGetValue(trade.PassiveOrderId, out var restingOrder))
+            {
+                // Restore the quantity that was taken from this resting order
+                restingOrder.RemainingQuantity += trade.Quantity;
+
+                // If the resting order was marked as filled, it needs to be reopened
+                if (restingOrder.Status == OrderStatus.Filled)
+                {
+                    restingOrder.Status = OrderStatus.Open;
+                    // Re-add to the order book since it was removed when filled
+                    opposingSide.AddOrder(restingOrder.Price, restingOrder.OrderId, restingOrder.RemainingQuantity);
+                }
+                else
+                {
+                    // Update the quantity in the order book
+                    opposingSide.UpdateOrderQuantity(restingOrder.Price, restingOrder.OrderId, restingOrder.RemainingQuantity);
+                }
+
+                _log.Debug(
+                    "FOK rollback: restored {Quantity} to order {OrderId} at {Price} for {Symbol}",
+                    trade.Quantity, trade.PassiveOrderId, trade.Price, _symbol);
+            }
+        }
+
+        _log.Information(
+            "FOK order {OrderId} rolled back {TradeCount} trades for {Symbol} - order could not be fully filled",
+            aggressorOrder.OrderId, trades.Count, _symbol);
     }
 }
 
@@ -514,140 +561,6 @@ public sealed class Order
 
 public sealed record OrderResult(Order Order, List<TradeExecution> Trades);
 
-/// <summary>
-/// Result type for order modification operations.
-/// Provides explicit success/failure states with detailed error information.
-/// </summary>
-public sealed record ModifyOrderResult
-{
-    /// <summary>
-    /// Whether the modification was successful.
-    /// </summary>
-    public bool IsSuccess { get; init; }
-
-    /// <summary>
-    /// The result of the new order if modification was successful.
-    /// </summary>
-    public OrderResult? OrderResult { get; init; }
-
-    /// <summary>
-    /// The error that occurred if modification failed.
-    /// </summary>
-    public ModifyOrderError? Error { get; init; }
-
-    /// <summary>
-    /// Creates a successful modification result.
-    /// </summary>
-    public static ModifyOrderResult Success(OrderResult orderResult) => new()
-    {
-        IsSuccess = true,
-        OrderResult = orderResult
-    };
-
-    /// <summary>
-    /// Creates a failed modification result.
-    /// </summary>
-    public static ModifyOrderResult Failure(ModifyOrderError error) => new()
-    {
-        IsSuccess = false,
-        Error = error
-    };
-
-    /// <summary>
-    /// Match on success or failure (pattern matching helper).
-    /// </summary>
-    public T Match<T>(Func<OrderResult, T> onSuccess, Func<ModifyOrderError, T> onFailure)
-    {
-        return IsSuccess && OrderResult != null
-            ? onSuccess(OrderResult)
-            : onFailure(Error ?? ModifyOrderError.Unknown("Unknown error"));
-    }
-}
-
-/// <summary>
-/// Error types for order modification operations.
-/// </summary>
-public sealed record ModifyOrderError
-{
-    /// <summary>
-    /// The type of error that occurred.
-    /// </summary>
-    public ModifyOrderErrorKind Kind { get; init; }
-
-    /// <summary>
-    /// The order ID that was being modified.
-    /// </summary>
-    public long OrderId { get; init; }
-
-    /// <summary>
-    /// A human-readable description of the error.
-    /// </summary>
-    public string Message { get; init; } = string.Empty;
-
-    /// <summary>
-    /// The current status of the order (if applicable).
-    /// </summary>
-    public OrderStatus? CurrentStatus { get; init; }
-
-    /// <summary>
-    /// Create an error for order not found.
-    /// </summary>
-    public static ModifyOrderError OrderNotFound(long orderId) => new()
-    {
-        Kind = ModifyOrderErrorKind.OrderNotFound,
-        OrderId = orderId,
-        Message = $"Order {orderId} was not found"
-    };
-
-    /// <summary>
-    /// Create an error for invalid order status.
-    /// </summary>
-    public static ModifyOrderError InvalidStatus(long orderId, OrderStatus currentStatus) => new()
-    {
-        Kind = ModifyOrderErrorKind.InvalidStatus,
-        OrderId = orderId,
-        CurrentStatus = currentStatus,
-        Message = $"Order {orderId} has status {currentStatus}, but must be Open to modify"
-    };
-
-    /// <summary>
-    /// Create an error for cancellation failure.
-    /// </summary>
-    public static ModifyOrderError CancellationFailed(long orderId) => new()
-    {
-        Kind = ModifyOrderErrorKind.CancellationFailed,
-        OrderId = orderId,
-        Message = $"Failed to cancel order {orderId} during modification"
-    };
-
-    /// <summary>
-    /// Create an unknown error.
-    /// </summary>
-    public static ModifyOrderError Unknown(string message) => new()
-    {
-        Kind = ModifyOrderErrorKind.Unknown,
-        Message = message
-    };
-}
-
-/// <summary>
-/// Types of errors that can occur during order modification.
-/// </summary>
-public enum ModifyOrderErrorKind
-{
-    /// <summary>The order was not found in the order book.</summary>
-    OrderNotFound,
-
-    /// <summary>The order is not in a modifiable state (must be Open).</summary>
-    InvalidStatus,
-
-    /// <summary>The cancellation step of modify failed.</summary>
-    CancellationFailed,
-
-    /// <summary>An unknown error occurred.</summary>
-    Unknown
-}
-
 public sealed class TradeExecution
 {
     public long TradeId { get; init; }
@@ -690,4 +603,65 @@ public sealed class OrderBookChangedEventArgs : EventArgs
         Symbol = symbol;
         Snapshot = snapshot;
     }
+}
+
+/// <summary>
+/// Represents the result of an order modification attempt.
+/// Uses the Result pattern for explicit error handling instead of null returns.
+/// </summary>
+public sealed class ModifyOrderResult
+{
+    public bool IsSuccess { get; }
+    public OrderResult? Value { get; }
+    public ModifyOrderError? Error { get; }
+    public string? ErrorMessage { get; }
+
+    private ModifyOrderResult(bool isSuccess, OrderResult? value, ModifyOrderError? error, string? errorMessage)
+    {
+        IsSuccess = isSuccess;
+        Value = value;
+        Error = error;
+        ErrorMessage = errorMessage;
+    }
+
+    public static ModifyOrderResult Success(OrderResult value) =>
+        new(true, value, null, null);
+
+    public static ModifyOrderResult Failure(ModifyOrderError error, string message) =>
+        new(false, null, error, message);
+
+    /// <summary>
+    /// Pattern match on the result to handle success and failure cases.
+    /// </summary>
+    public T Match<T>(Func<OrderResult, T> onSuccess, Func<ModifyOrderError, string, T> onFailure) =>
+        IsSuccess ? onSuccess(Value!) : onFailure(Error!.Value, ErrorMessage!);
+
+    /// <summary>
+    /// Execute an action if the result is successful.
+    /// </summary>
+    public void IfSuccess(Action<OrderResult> action)
+    {
+        if (IsSuccess) action(Value!);
+    }
+
+    /// <summary>
+    /// Execute an action if the result is a failure.
+    /// </summary>
+    public void IfFailure(Action<ModifyOrderError, string> action)
+    {
+        if (!IsSuccess) action(Error!.Value, ErrorMessage!);
+    }
+}
+
+/// <summary>
+/// Specific error types for order modification failures.
+/// </summary>
+public enum ModifyOrderError
+{
+    /// <summary>The specified order ID was not found.</summary>
+    OrderNotFound,
+    /// <summary>The order is not in a modifiable state (not Open).</summary>
+    InvalidOrderStatus,
+    /// <summary>The cancellation step of modify failed unexpectedly.</summary>
+    CancellationFailed
 }

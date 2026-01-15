@@ -1,6 +1,7 @@
 using System.Text.Json;
 using MarketDataCollector.Application.Backfill;
 using MarketDataCollector.Application.Config;
+using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Storage;
 
 namespace MarketDataCollector.Application.UI;
@@ -96,5 +97,32 @@ public sealed class ConfigStore
         var root = string.IsNullOrWhiteSpace(cfg.DataRoot) ? "data" : cfg.DataRoot;
         var baseDir = Path.GetDirectoryName(ConfigPath)!;
         return Path.IsPathRooted(root) ? root : Path.GetFullPath(Path.Combine(baseDir, root));
+    }
+
+    public string GetProviderMetricsPath(AppConfig? cfg = null)
+    {
+        cfg ??= Load();
+        var root = GetDataRoot(cfg);
+        return Path.Combine(root, "_status", "providers.json");
+    }
+
+    public ProviderMetricsStatus? TryLoadProviderMetrics()
+    {
+        try
+        {
+            var path = GetProviderMetricsPath();
+            if (!File.Exists(path))
+                return null;
+
+            var json = File.ReadAllText(path);
+            return JsonSerializer.Deserialize<ProviderMetricsStatus>(json, new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            });
+        }
+        catch
+        {
+            return null;
+        }
     }
 }

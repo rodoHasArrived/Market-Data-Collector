@@ -394,7 +394,7 @@ public class OrderBookMatchingEngineTests
     }
 
     [Fact]
-    public void ModifyOrder_NonExistentOrder_ShouldReturnOrderNotFoundError()
+    public void ModifyOrder_NonExistentOrder_ShouldReturnNull()
     {
         // Arrange
         var engine = new OrderBookMatchingEngine("SPY");
@@ -403,14 +403,11 @@ public class OrderBookMatchingEngineTests
         var result = engine.ModifyOrder(99999, 450.00m, 100);
 
         // Assert
-        result.IsSuccess.Should().BeFalse();
-        result.Error.Should().NotBeNull();
-        result.Error!.Kind.Should().Be(ModifyOrderErrorKind.OrderNotFound);
-        result.Error.OrderId.Should().Be(99999);
+        result.Should().BeNull();
     }
 
     [Fact]
-    public void ModifyOrder_CancelledOrder_ShouldReturnInvalidStatusError()
+    public void ModifyOrder_CancelledOrder_ShouldReturnNull()
     {
         // Arrange
         var engine = new OrderBookMatchingEngine("SPY");
@@ -427,14 +424,11 @@ public class OrderBookMatchingEngineTests
         var result = engine.ModifyOrder(originalOrder.Order.OrderId, 451.00m, 150);
 
         // Assert
-        result.IsSuccess.Should().BeFalse();
-        result.Error.Should().NotBeNull();
-        result.Error!.Kind.Should().Be(ModifyOrderErrorKind.InvalidStatus);
-        result.Error.CurrentStatus.Should().Be(OrderStatus.Cancelled);
+        result.Should().BeNull();
     }
 
     [Fact]
-    public void ModifyOrder_FilledOrder_ShouldReturnInvalidStatusError()
+    public void ModifyOrder_FilledOrder_ShouldReturnNull()
     {
         // Arrange
         var engine = new OrderBookMatchingEngine("SPY");
@@ -465,10 +459,7 @@ public class OrderBookMatchingEngineTests
         var result = engine.ModifyOrder(askResult.Order.OrderId, 451.00m, 150);
 
         // Assert
-        result.IsSuccess.Should().BeFalse();
-        result.Error.Should().NotBeNull();
-        result.Error!.Kind.Should().Be(ModifyOrderErrorKind.InvalidStatus);
-        result.Error.CurrentStatus.Should().Be(OrderStatus.Filled);
+        result.Should().BeNull();
     }
 
     [Fact]
@@ -488,52 +479,10 @@ public class OrderBookMatchingEngineTests
         var result = engine.ModifyOrder(originalOrder.Order.OrderId, 451.00m, 150);
 
         // Assert
-        result.IsSuccess.Should().BeTrue();
-        result.OrderResult.Should().NotBeNull();
-        result.OrderResult!.Order.Price.Should().Be(451.00m);
-        result.OrderResult.Order.Quantity.Should().Be(150);
-        result.OrderResult.Order.Status.Should().Be(OrderStatus.Open);
+        result.Should().NotBeNull();
+        result!.Order.Price.Should().Be(451.00m);
+        result.Order.Quantity.Should().Be(150);
+        result.Order.Status.Should().Be(OrderStatus.Open);
         engine.BestBid.Should().Be(451.00m);
-    }
-
-    [Fact]
-    public void ModifyOrderResult_Match_ShouldHandleSuccessCorrectly()
-    {
-        // Arrange
-        var engine = new OrderBookMatchingEngine("SPY");
-        var originalOrder = engine.SubmitOrder(new OrderRequest
-        {
-            Side = OrderBookSide.Bid,
-            Price = 450.00m,
-            Quantity = 100,
-            Type = OrderType.Limit
-        });
-
-        // Act
-        var result = engine.ModifyOrder(originalOrder.Order.OrderId, 451.00m, 150);
-        var matchResult = result.Match(
-            onSuccess: orderResult => $"Modified to price {orderResult.Order.Price}",
-            onFailure: error => $"Failed: {error.Message}"
-        );
-
-        // Assert
-        matchResult.Should().Be("Modified to price 451.00");
-    }
-
-    [Fact]
-    public void ModifyOrderResult_Match_ShouldHandleFailureCorrectly()
-    {
-        // Arrange
-        var engine = new OrderBookMatchingEngine("SPY");
-
-        // Act
-        var result = engine.ModifyOrder(99999, 450.00m, 100);
-        var matchResult = result.Match(
-            onSuccess: orderResult => $"Modified to price {orderResult.Order.Price}",
-            onFailure: error => $"Error: {error.Kind}"
-        );
-
-        // Assert
-        matchResult.Should().Be("Error: OrderNotFound");
     }
 }

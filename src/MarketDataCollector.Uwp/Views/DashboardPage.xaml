@@ -14,7 +14,9 @@
         <converters:BoolToConnectionStatusConverter x:Key="BoolToConnectionStatus" />
     </Page.Resources>
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="24">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="24"
+                  AutomationProperties.Name="Dashboard content - Real-time market data monitoring"
+                  AutomationProperties.HelpText="Press F5 to refresh, Ctrl+S to start collector">
         <StackPanel Spacing="24">
             <!-- Header with Quick Actions -->
             <Grid>
@@ -23,33 +25,68 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12">
-                    <FontIcon Glyph="&#xE80F;" FontSize="28" Foreground="{ThemeResource SystemAccentColor}" />
-                    <TextBlock Text="Dashboard" Style="{StaticResource TitleTextBlockStyle}" VerticalAlignment="Center" />
-                    <Border x:Name="CollectorStatusBadge" Background="#48BB78" CornerRadius="4" Padding="8,4" VerticalAlignment="Center">
-                        <TextBlock x:Name="CollectorStatusText" Text="Running" FontSize="12" Foreground="White" />
-                    </Border>
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="16">
+                    <StackPanel Spacing="2">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <TextBlock Text="Dashboard"
+                                       Style="{StaticResource PageTitleStyle}"
+                                       VerticalAlignment="Center"
+                                       AutomationProperties.HeadingLevel="Level1" />
+                            <Border x:Name="CollectorStatusBadge"
+                                    Background="{StaticResource SuccessColorBrush}"
+                                    CornerRadius="4"
+                                    Padding="10,4"
+                                    VerticalAlignment="Center"
+                                    AutomationProperties.Name="Collector status">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <Ellipse Width="6" Height="6" Fill="White" VerticalAlignment="Center" />
+                                    <TextBlock x:Name="CollectorStatusText"
+                                               Text="Running"
+                                               FontSize="12"
+                                               FontWeight="SemiBold"
+                                               Foreground="White" />
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                        <TextBlock Text="Real-time market data monitoring and collection status"
+                                   Style="{StaticResource CardDescriptionStyle}"
+                                   Margin="0" />
+                    </StackPanel>
                 </StackPanel>
 
                 <!-- Quick Actions -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
-                    <Button x:Name="StartCollectorButton" Click="StartCollector_Click">
+                    <Button x:Name="StartCollectorButton"
+                            Click="StartCollector_Click"
+                            Style="{StaticResource PrimaryButtonStyle}"
+                            AutomationProperties.Name="Start collector"
+                            ToolTipService.ToolTip="Start data collection (Ctrl+S)">
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <FontIcon Glyph="&#xE768;" FontSize="14" />
                             <TextBlock Text="Start" />
                         </StackPanel>
+                        <Button.KeyboardAccelerators>
+                            <KeyboardAccelerator Modifiers="Control" Key="S" />
+                        </Button.KeyboardAccelerators>
                     </Button>
-                    <Button x:Name="StopCollectorButton" Click="StopCollector_Click">
+                    <Button x:Name="StopCollectorButton"
+                            Click="StopCollector_Click"
+                            Style="{StaticResource GhostButtonStyle}"
+                            AutomationProperties.Name="Stop collector"
+                            ToolTipService.ToolTip="Stop data collection">
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <FontIcon Glyph="&#xE71A;" FontSize="14" />
                             <TextBlock Text="Stop" />
                         </StackPanel>
                     </Button>
-                    <Button Command="{x:Bind ViewModel.RefreshStatusCommand}">
-                        <StackPanel Orientation="Horizontal" Spacing="6">
-                            <FontIcon Glyph="&#xE72C;" FontSize="14" />
-                            <TextBlock Text="Refresh" />
-                        </StackPanel>
+                    <Button Command="{x:Bind ViewModel.RefreshStatusCommand}"
+                            Style="{StaticResource IconButtonStyle}"
+                            AutomationProperties.Name="Refresh status"
+                            ToolTipService.ToolTip="Refresh dashboard data (F5)">
+                        <FontIcon Glyph="&#xE72C;" FontSize="16" />
+                        <Button.KeyboardAccelerators>
+                            <KeyboardAccelerator Key="F5" />
+                        </Button.KeyboardAccelerators>
                     </Button>
                 </StackPanel>
             </Grid>
@@ -501,7 +538,14 @@
                     <ListView x:Name="SymbolPerformanceList"
                               ItemsSource="{x:Bind ViewModel.Symbols, Mode=OneWay}"
                               SelectionMode="None"
-                              MaxHeight="300">
+                              MaxHeight="300"
+                              AutomationProperties.Name="Symbol performance list">
+                        <!-- Enable virtualization for better performance -->
+                        <ListView.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <ItemsStackPanel Orientation="Vertical" />
+                            </ItemsPanelTemplate>
+                        </ListView.ItemsPanel>
                         <ListView.HeaderTemplate>
                             <DataTemplate>
                                 <Grid Padding="8,4" Background="{ThemeResource SystemFillColorNeutralBackgroundBrush}">
@@ -594,7 +638,14 @@
                             </Button>
                         </Grid>
 
-                        <ListView x:Name="ActivityFeedList" MaxHeight="250" SelectionMode="None">
+                        <ListView x:Name="ActivityFeedList" MaxHeight="250" SelectionMode="None"
+                                  AutomationProperties.Name="Recent activity list">
+                            <!-- Enable virtualization for better performance -->
+                            <ListView.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <ItemsStackPanel Orientation="Vertical" />
+                                </ItemsPanelTemplate>
+                            </ListView.ItemsPanel>
                             <ListView.ItemTemplate>
                                 <DataTemplate>
                                     <Grid Padding="8,10" ColumnSpacing="12">
@@ -731,7 +782,8 @@
             </Grid>
 
             <!-- Quick Stats Summary -->
-            <Border Style="{StaticResource CardStyle}">
+            <Border Style="{StaticResource CardStyle}"
+                    AutomationProperties.Name="Quick statistics summary">
                 <Grid ColumnSpacing="24">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
@@ -741,39 +793,64 @@
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
-                    <StackPanel Grid.Column="0" HorizontalAlignment="Center">
-                        <TextBlock x:Name="TotalEventsToday" Text="1.2M" FontSize="24" FontWeight="Bold"
-                                   Foreground="{ThemeResource SystemAccentColor}" HorizontalAlignment="Center" />
-                        <TextBlock Text="Events Today" FontSize="11"
-                                   Foreground="{ThemeResource SystemBaseMediumColor}" HorizontalAlignment="Center" />
+                    <StackPanel Grid.Column="0" HorizontalAlignment="Center" Spacing="4">
+                        <TextBlock x:Name="TotalEventsToday"
+                                   Text="1.2M"
+                                   Style="{StaticResource DataValueStyle}"
+                                   Foreground="{StaticResource InfoColorBrush}"
+                                   HorizontalAlignment="Center"
+                                   AutomationProperties.Name="Total events today: 1.2 million" />
+                        <TextBlock Text="EVENTS TODAY"
+                                   Style="{StaticResource DataLabelStyle}"
+                                   HorizontalAlignment="Center" />
                     </StackPanel>
 
-                    <StackPanel Grid.Column="1" HorizontalAlignment="Center">
-                        <TextBlock x:Name="ActiveSymbolsCount" Text="8" FontSize="24" FontWeight="Bold"
-                                   Foreground="{StaticResource SuccessColorBrush}" HorizontalAlignment="Center" />
-                        <TextBlock Text="Active Symbols" FontSize="11"
-                                   Foreground="{ThemeResource SystemBaseMediumColor}" HorizontalAlignment="Center" />
+                    <StackPanel Grid.Column="1" HorizontalAlignment="Center" Spacing="4">
+                        <TextBlock x:Name="ActiveSymbolsCount"
+                                   Text="8"
+                                   Style="{StaticResource DataValueStyle}"
+                                   Foreground="{StaticResource SuccessColorBrush}"
+                                   HorizontalAlignment="Center"
+                                   AutomationProperties.Name="Active symbols: 8" />
+                        <TextBlock Text="ACTIVE SYMBOLS"
+                                   Style="{StaticResource DataLabelStyle}"
+                                   HorizontalAlignment="Center" />
                     </StackPanel>
 
-                    <StackPanel Grid.Column="2" HorizontalAlignment="Center">
-                        <TextBlock x:Name="StorageUsedText" Text="2.4 GB" FontSize="24" FontWeight="Bold"
-                                   Foreground="{StaticResource InfoColorBrush}" HorizontalAlignment="Center" />
-                        <TextBlock Text="Storage Used" FontSize="11"
-                                   Foreground="{ThemeResource SystemBaseMediumColor}" HorizontalAlignment="Center" />
+                    <StackPanel Grid.Column="2" HorizontalAlignment="Center" Spacing="4">
+                        <TextBlock x:Name="StorageUsedText"
+                                   Text="2.4 GB"
+                                   Style="{StaticResource DataValueStyle}"
+                                   Foreground="{StaticResource AccentCyanBrush}"
+                                   HorizontalAlignment="Center"
+                                   AutomationProperties.Name="Storage used: 2.4 gigabytes" />
+                        <TextBlock Text="STORAGE USED"
+                                   Style="{StaticResource DataLabelStyle}"
+                                   HorizontalAlignment="Center" />
                     </StackPanel>
 
-                    <StackPanel Grid.Column="3" HorizontalAlignment="Center">
-                        <TextBlock x:Name="DataQualityText" Text="99.8%" FontSize="24" FontWeight="Bold"
-                                   Foreground="{StaticResource SuccessColorBrush}" HorizontalAlignment="Center" />
-                        <TextBlock Text="Data Quality" FontSize="11"
-                                   Foreground="{ThemeResource SystemBaseMediumColor}" HorizontalAlignment="Center" />
+                    <StackPanel Grid.Column="3" HorizontalAlignment="Center" Spacing="4">
+                        <TextBlock x:Name="DataQualityText"
+                                   Text="99.8%"
+                                   Style="{StaticResource DataValueStyle}"
+                                   Foreground="{StaticResource SuccessColorBrush}"
+                                   HorizontalAlignment="Center"
+                                   AutomationProperties.Name="Data quality: 99.8 percent" />
+                        <TextBlock Text="DATA QUALITY"
+                                   Style="{StaticResource DataLabelStyle}"
+                                   HorizontalAlignment="Center" />
                     </StackPanel>
 
-                    <StackPanel Grid.Column="4" HorizontalAlignment="Center">
-                        <TextBlock x:Name="AvgLatencyText" Text="12ms" FontSize="24" FontWeight="Bold"
-                                   Foreground="{StaticResource SuccessColorBrush}" HorizontalAlignment="Center" />
-                        <TextBlock Text="Avg Latency" FontSize="11"
-                                   Foreground="{ThemeResource SystemBaseMediumColor}" HorizontalAlignment="Center" />
+                    <StackPanel Grid.Column="4" HorizontalAlignment="Center" Spacing="4">
+                        <TextBlock x:Name="AvgLatencyText"
+                                   Text="12ms"
+                                   Style="{StaticResource DataValueStyle}"
+                                   Foreground="{StaticResource SuccessColorBrush}"
+                                   HorizontalAlignment="Center"
+                                   AutomationProperties.Name="Average latency: 12 milliseconds" />
+                        <TextBlock Text="AVG LATENCY"
+                                   Style="{StaticResource DataLabelStyle}"
+                                   HorizontalAlignment="Center" />
                     </StackPanel>
                 </Grid>
             </Border>
@@ -882,7 +959,14 @@
 
                         <TextBlock Text="Recent Integrity Events" Style="{StaticResource BodyStrongTextBlockStyle}" />
 
-                        <ListView x:Name="IntegrityEventsList" MaxHeight="300" SelectionMode="None">
+                        <ListView x:Name="IntegrityEventsList" MaxHeight="300" SelectionMode="None"
+                                  AutomationProperties.Name="Integrity events list">
+                            <!-- Enable virtualization for better performance -->
+                            <ListView.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <ItemsStackPanel Orientation="Vertical" />
+                                </ItemsPanelTemplate>
+                            </ListView.ItemsPanel>
                             <ListView.ItemTemplate>
                                 <DataTemplate>
                                     <Grid Padding="8,10" ColumnSpacing="12">

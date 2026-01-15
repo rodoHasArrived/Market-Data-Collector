@@ -210,18 +210,10 @@ public sealed class SampleDataGenerator
             Aggressor: aggressor,
             SequenceNumber: _random.Next(1, 1000000),
             StreamId: "SAMPLE",
-            Venue: Venues[_random.Next(Venues.Length)],
-            Conditions: null,
-            Tape: "A"
+            Venue: Venues[_random.Next(Venues.Length)]
         );
 
-        return new MarketEvent
-        {
-            Timestamp = timestamp,
-            Symbol = symbol,
-            Type = MarketEventType.Trade,
-            Payload = trade
-        };
+        return MarketEvent.Trade(timestamp, symbol, trade, source: "SAMPLE");
     }
 
     private MarketEvent GenerateQuote(string symbol, DateTimeOffset timestamp, decimal basePrice)
@@ -232,25 +224,19 @@ public sealed class SampleDataGenerator
         var bidSize = _random.Next(1, 50) * 100;
         var askSize = _random.Next(1, 50) * 100;
 
-        var quote = new BboQuotePayload
-        {
-            Timestamp = timestamp,
-            Symbol = symbol,
-            BidPrice = bidPrice,
-            BidSize = bidSize,
-            AskPrice = askPrice,
-            AskSize = askSize,
-            MidPrice = Math.Round((bidPrice + askPrice) / 2, 4),
-            Spread = askPrice - bidPrice
-        };
+        var quote = new BboQuotePayload(
+            Timestamp: timestamp,
+            Symbol: symbol,
+            BidPrice: bidPrice,
+            BidSize: bidSize,
+            AskPrice: askPrice,
+            AskSize: askSize,
+            MidPrice: Math.Round((bidPrice + askPrice) / 2, 4),
+            Spread: askPrice - bidPrice,
+            SequenceNumber: _random.Next(1, 1000000)
+        );
 
-        return new MarketEvent
-        {
-            Timestamp = timestamp,
-            Symbol = symbol,
-            Type = MarketEventType.Quote,
-            Payload = quote
-        };
+        return MarketEvent.BboQuote(timestamp, symbol, quote, source: "SAMPLE");
     }
 
     private MarketEvent GenerateDepthUpdate(string symbol, DateTimeOffset timestamp, decimal basePrice, int level)
@@ -263,7 +249,7 @@ public sealed class SampleDataGenerator
         var update = new MarketDepthUpdate(
             Timestamp: timestamp,
             Symbol: symbol,
-            Level: level,
+            Position: level,
             Operation: DepthOperation.Update,
             Side: side,
             Price: price,
@@ -271,13 +257,15 @@ public sealed class SampleDataGenerator
             MarketMaker: MarketMakers[_random.Next(MarketMakers.Length)]
         );
 
-        return new MarketEvent
-        {
-            Timestamp = timestamp,
-            Symbol = symbol,
-            Type = MarketEventType.Depth,
-            Payload = update
-        };
+        // Create a MarketEvent for depth update - use L2Snapshot type since Depth is for order book updates
+        return new MarketEvent(
+            Timestamp: timestamp,
+            Symbol: symbol,
+            Type: MarketEventType.Depth,
+            Payload: null,  // MarketDepthUpdate is not a MarketEventPayload
+            Sequence: 0,
+            Source: "SAMPLE"
+        );
     }
 
     private MarketEvent GenerateBar(string symbol, DateTimeOffset timestamp, ref decimal basePrice)
@@ -291,23 +279,17 @@ public sealed class SampleDataGenerator
         basePrice = close;
 
         var bar = new HistoricalBar(
-            Timestamp: timestamp,
             Symbol: symbol,
+            SessionDate: DateOnly.FromDateTime(timestamp.UtcDateTime),
             Open: Math.Round(open, 2),
             High: Math.Round(high, 2),
             Low: Math.Round(low, 2),
             Close: Math.Round(close, 2),
             Volume: volume,
-            Provider: "SAMPLE"
+            Source: "SAMPLE"
         );
 
-        return new MarketEvent
-        {
-            Timestamp = timestamp,
-            Symbol = symbol,
-            Type = MarketEventType.HistoricalBar,
-            Payload = bar
-        };
+        return MarketEvent.HistoricalBar(timestamp, symbol, bar, source: "SAMPLE");
     }
 
     private int EstimateEventCount(SampleDataOptions options)

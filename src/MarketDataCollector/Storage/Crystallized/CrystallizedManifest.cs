@@ -7,7 +7,7 @@ namespace MarketDataCollector.Storage.Crystallized;
 /// Manifest file for a symbol directory, describing available data.
 /// Stored as _manifest.json in each symbol folder.
 /// </summary>
-public sealed class SymbolManifest
+public sealed record SymbolManifest
 {
     /// <summary>
     /// Schema version for manifest file format.
@@ -473,23 +473,149 @@ public sealed class ManifestService
         return result;
     }
 
-    // TODO: Implement actual directory scanning to compute real file counts, byte sizes,
-    // date ranges, and row counts. Current implementation returns placeholder metadata.
     private Task<CategoryMetadata?> ScanCategoryAsync(
         string provider,
         string symbol,
         CrystallizedDataCategory category,
         CancellationToken ct)
     {
-        // This would scan the actual directory structure
-        // For now, return a placeholder that would be implemented with actual file scanning
+        // Get the symbol directory from the manifest path
+        var manifestPath = _format.GetSymbolManifestPath(provider, symbol);
+        var symbolDir = Path.GetDirectoryName(manifestPath);
 
-        return Task.FromResult<CategoryMetadata?>(new CategoryMetadata
+        if (string.IsNullOrEmpty(symbolDir))
+            return Task.FromResult<CategoryMetadata?>(null);
+
+        var categoryDir = Path.Combine(symbolDir, category.ToFolderName());
+
+        if (!Directory.Exists(categoryDir))
+            return Task.FromResult<CategoryMetadata?>(null);
+
+        // Supported file extensions for market data files
+        var supportedExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ".jsonl", ".csv",
+            ".gz", ".gzip",
+            ".zst", ".zstd",
+            ".lz4", ".br"
+        };
+
+        var files = new List<FileInfo>();
+        var granularities = new List<string>();
+
+        try
+        {
+            // Enumerate all files recursively
+            foreach (var filePath in Directory.EnumerateFiles(categoryDir, "*", SearchOption.AllDirectories))
+            {
+                ct.ThrowIfCancellationRequested();
+
+                var ext = Path.GetExtension(filePath);
+                if (!supportedExtensions.Contains(ext))
+                    continue;
+
+                // Check for compound extensions like .jsonl.gz
+                var fileName = Path.GetFileName(filePath);
+                if (!fileName.Contains(".jsonl") && !fileName.Contains(".csv"))
+                    continue;
+
+                files.Add(new FileInfo(filePath));
+            }
+
+            // For bars and orderflow categories, detect available granularities from subdirectories
+            if (category == CrystallizedDataCategory.Bars || category == CrystallizedDataCategory.OrderFlow)
+            {
+                foreach (var subDir in Directory.EnumerateDirectories(categoryDir))
+                {
+                    var dirName = Path.GetFileName(subDir);
+                    if (!string.IsNullOrEmpty(dirName) && !dirName.StartsWith("_"))
+                    {
+                        granularities.Add(dirName);
+                    }
+                }
+            }
+        }
+        catch (UnauthorizedAccessException)
+        {
+            // Skip directories we can't access
+            return Task.FromResult<CategoryMetadata?>(null);
+        }
+        catch (DirectoryNotFoundException)
+        {
+            return Task.FromResult<CategoryMetadata?>(null);
+        }
+
+        if (files.Count == 0)
+            return Task.FromResult<CategoryMetadata?>(null);
+
+        // Compute file statistics
+        var totalBytes = files.Sum(f => f.Length);
+        var fileCount = files.Count;
+
+        // Extract dates from file names to determine date range
+        var dates = new List<DateOnly>();
+        foreach (var file in files)
+        {
+            var parsed = CrystallizedStorageFormat.ParseFileName(file.Name);
+            if (parsed != null && TryParseDatePartition(parsed.DatePartition, out var date))
+            {
+                dates.Add(date);
+            }
+        }
+
+        DateOnly? earliestDate = dates.Count > 0 ? dates.Min() : null;
+        DateOnly? latestDate = dates.Count > 0 ? dates.Max() : null;
+
+        var metadata = new CategoryMetadata
         {
             DisplayName = category.ToDisplayName(),
             Description = category.GetDescription(),
+            Granularities = granularities.Count > 0 ? granularities.OrderBy(g => g).ToList() : null,
+            EarliestDate = earliestDate,
+            LatestDate = latestDate,
+            FileCount = fileCount,
+            TotalBytes = totalBytes,
             Columns = category.GetCsvHeaders()
-        });
+        };
+
+        return Task.FromResult<CategoryMetadata?>(metadata);
+    }
+
+    /// <summary>
+    /// Attempts to parse a date partition string into a DateOnly.
+    /// Supports formats: yyyy-MM-dd, yyyy-MM, yyyy
+    /// </summary>
+    private static bool TryParseDatePartition(string partition, out DateOnly date)
+    {
+        date = default;
+
+        if (string.IsNullOrEmpty(partition))
+            return false;
+
+        // Try full date format: yyyy-MM-dd
+        if (DateOnly.TryParseExact(partition, "yyyy-MM-dd", null, System.Globalization.DateTimeStyles.None, out date))
+            return true;
+
+        // Try month format: yyyy-MM (use first day of month)
+        if (partition.Length == 7 && partition[4] == '-')
+        {
+            if (int.TryParse(partition.AsSpan(0, 4), out var year) &&
+                int.TryParse(partition.AsSpan(5, 2), out var month) &&
+                year >= 1 && year <= 9999 && month >= 1 && month <= 12)
+            {
+                date = new DateOnly(year, month, 1);
+                return true;
+            }
+        }
+
+        // Try year format: yyyy (use first day of year)
+        if (partition.Length == 4 && int.TryParse(partition, out var yearOnly) && yearOnly >= 1 && yearOnly <= 9999)
+        {
+            date = new DateOnly(yearOnly, 1, 1);
+            return true;
+        }
+
+        return false;
     }
 
     /// <summary>

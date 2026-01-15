@@ -11,6 +11,7 @@ using Microsoft.UI.Xaml.Media;
 using MarketDataCollector.Uwp.ViewModels;
 using MarketDataCollector.Uwp.Services;
 using Windows.UI;
+using Windows.Foundation;
 
 namespace MarketDataCollector.Uwp.Views;
 
@@ -19,16 +20,43 @@ namespace MarketDataCollector.Uwp.Views;
 /// </summary>
 public sealed partial class DashboardPage : Page
 {
+    #region Cached Brushes (Performance Optimization)
+
+    // Static cached brushes to avoid repeated allocations
+    private static readonly SolidColorBrush s_successBrush = new(Color.FromArgb(255, 72, 187, 120));
+    private static readonly SolidColorBrush s_warningBrush = new(Color.FromArgb(255, 237, 137, 54));
+    private static readonly SolidColorBrush s_dangerBrush = new(Color.FromArgb(255, 245, 101, 101));
+    private static readonly SolidColorBrush s_infoBrush = new(Color.FromArgb(255, 88, 166, 255));
+    private static readonly SolidColorBrush s_inactiveBrush = new(Color.FromArgb(255, 160, 174, 192));
+    private static readonly SolidColorBrush s_criticalBrush = new(Color.FromArgb(255, 248, 81, 73));
+    private static readonly SolidColorBrush s_warningEventBrush = new(Color.FromArgb(255, 210, 153, 34));
+
+    #endregion
+
     public MainViewModel ViewModel { get; }
 
-    private readonly DispatcherTimer _refreshTimer;
-    private readonly DispatcherTimer _sparklineTimer;
-    private readonly List<double> _publishedHistory = new();
-    private readonly List<double> _droppedHistory = new();
-    private readonly List<double> _integrityHistory = new();
-    private readonly List<double> _throughputHistory = new();
+    // Consolidated single timer for all updates (performance optimization)
+    private readonly DispatcherTimer _unifiedTimer;
+    private int _timerTickCount = 0;
+
+    // Use fixed-size arrays with circular buffer pattern for O(1) operations
+    private const int SparklineCapacity = 20;
+    private const int ThroughputCapacity = 30;
+    private readonly double[] _publishedHistory = new double[SparklineCapacity];
+    private readonly double[] _droppedHistory = new double[SparklineCapacity];
+    private readonly double[] _integrityHistory = new double[SparklineCapacity];
+    private readonly double[] _throughputHistory = new double[ThroughputCapacity];
+    private int _sparklineIndex = 0;
+    private int _sparklineCount = 0;
+    private int _throughputIndex = 0;
+    private int _throughputCount = 0;
+
+    // Reusable PointCollection instances to avoid allocations
+    private readonly PointCollection _publishedPoints = new();
+    private readonly PointCollection _droppedPoints = new();
+    private readonly PointCollection _integrityPoints = new();
+
     private readonly Random _random = new();
-    private readonly DispatcherTimer _uptimeTimer;
     private readonly ActivityFeedService _activityFeedService;
     private readonly IntegrityEventsService _integrityEventsService;
     private readonly ObservableCollection<ActivityDisplayItem> _activityItems;
@@ -38,6 +66,9 @@ public sealed partial class DashboardPage : Page
     private bool _isIntegrityPanelExpanded = false;
     private DateTime _startTime;
     private DateTime _collectorStartTime;
+
+    // Cancellation token source for async operations (e.g., InfoBar auto-dismiss)
+    private CancellationTokenSource? _infoDismissCts;
 
     // Stream status tracking
     private int _tradesStreamCount = 5;
@@ -62,14 +93,12 @@ public sealed partial class DashboardPage : Page
         ActivityFeedList.ItemsSource = _activityItems;
         IntegrityEventsList.ItemsSource = _integrityItems;
 
-        _refreshTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
-        _refreshTimer.Tick += RefreshTimer_Tick;
-
-        _sparklineTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
-        _sparklineTimer.Tick += SparklineTimer_Tick;
-
-        _uptimeTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
-        _uptimeTimer.Tick += UptimeTimer_Tick;
+        // Single unified timer at 500ms interval (replaces 3 separate timers)
+        // - Sparkline updates: every tick (500ms)
+        // - Uptime updates: every 2 ticks (1s)
+        // - Refresh updates: every 4 ticks (2s)
+        _unifiedTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
+        _unifiedTimer.Tick += UnifiedTimer_Tick;
 
         _activityFeedService.ActivityAdded += ActivityFeedService_ActivityAdded;
         _integrityEventsService.EventRecorded += IntegrityEventsService_EventRecorded;
@@ -85,9 +114,7 @@ public sealed partial class DashboardPage : Page
         InitializeSparklineData();
         LoadActivityFeed();
         LoadIntegrityEvents();
-        _refreshTimer.Start();
-        _sparklineTimer.Start();
-        _uptimeTimer.Start();
+        _unifiedTimer.Start();
         UpdateCollectorStatus();
         UpdateQuickActionsCollectorStatus();
         UpdateStreamStatusBadges();
@@ -100,89 +127,204 @@ public sealed partial class DashboardPage : Page
 
     private void DashboardPage_Unloaded(object sender, RoutedEventArgs e)
     {
-        _refreshTimer.Stop();
-        _sparklineTimer.Stop();
-        _uptimeTimer.Stop();
+        // Stop and dispose timer to prevent resource leaks
+        _unifiedTimer.Stop();
+        _unifiedTimer.Tick -= UnifiedTimer_Tick;
+
+        // Cancel any pending InfoBar dismiss operations
+        _infoDismissCts?.Cancel();
+        _infoDismissCts?.Dispose();
+        _infoDismissCts = null;
+
+        // Unsubscribe from service events to prevent memory leaks
+        _activityFeedService.ActivityAdded -= ActivityFeedService_ActivityAdded;
+        _integrityEventsService.EventRecorded -= IntegrityEventsService_EventRecorded;
+        _integrityEventsService.EventsCleared -= IntegrityEventsService_EventsCleared;
     }
 
-    private void RefreshTimer_Tick(object? sender, object e)
+    /// <summary>
+    /// Shows the InfoBar with auto-dismiss after a delay based on severity.
+    /// Errors stay visible longer (10s) to ensure users notice them.
+    /// Success messages dismiss quickly (3s).
+    /// </summary>
+    private async Task ShowInfoBarAsync(InfoBarSeverity severity, string title, string message, int? customDelayMs = null)
     {
-        UpdateUptime();
-        UpdateLatency();
-        UpdateThroughputStats();
+        // Cancel any previous pending dismiss
+        _infoDismissCts?.Cancel();
+        _infoDismissCts?.Dispose();
+        _infoDismissCts = new CancellationTokenSource();
+
+        DashboardInfoBar.Severity = severity;
+        DashboardInfoBar.Title = title;
+        DashboardInfoBar.Message = message;
+        DashboardInfoBar.IsOpen = true;
+
+        // Use severity-appropriate durations:
+        // - Success: 3 seconds (quick confirmation)
+        // - Info: 4 seconds
+        // - Warning: 6 seconds (user should notice)
+        // - Error: 10 seconds (requires attention)
+        var delayMs = customDelayMs ?? InfoBarService.GetDurationForSeverity(severity);
+
+        if (delayMs > 0)
+        {
+            try
+            {
+                await Task.Delay(delayMs, _infoDismissCts.Token);
+                DashboardInfoBar.IsOpen = false;
+            }
+            catch (OperationCanceledException)
+            {
+                // Dismiss was cancelled (page unloaded or new message shown) - this is expected
+            }
+        }
+        // If delayMs is 0, keep the InfoBar open until manually closed
     }
 
-    private void SparklineTimer_Tick(object? sender, object e)
+    /// <summary>
+    /// Shows an error InfoBar with context and remedy information.
+    /// Error messages stay visible for 10 seconds.
+    /// </summary>
+    private async Task ShowErrorAsync(string title, string message, string? context = null, string? remedy = null)
     {
+        var fullMessage = message;
+        if (!string.IsNullOrEmpty(context))
+        {
+            fullMessage += $"\n\nDetails: {context}";
+        }
+        if (!string.IsNullOrEmpty(remedy))
+        {
+            fullMessage += $"\n\nSuggestion: {remedy}";
+        }
+
+        await ShowInfoBarAsync(InfoBarSeverity.Error, title, fullMessage);
+    }
+
+    /// <summary>
+    /// Shows an error InfoBar from an exception with user-friendly details.
+    /// </summary>
+    private async Task ShowExceptionErrorAsync(Exception ex, string operation)
+    {
+        var errorDetails = InfoBarService.CreateErrorDetails(ex, operation);
+        await ShowInfoBarAsync(errorDetails.Severity, errorDetails.Title, errorDetails.GetFormattedMessage());
+    }
+
+    /// <summary>
+    /// Unified timer tick handler that replaces 3 separate timers.
+    /// Runs at 500ms and dispatches work based on tick count.
+    /// </summary>
+    private void UnifiedTimer_Tick(object? sender, object e)
+    {
+        _timerTickCount++;
+
+        // Sparkline updates: every tick (500ms) - highest frequency
         AddSparklineData();
         UpdateSparklines();
-    }
 
-    private void UptimeTimer_Tick(object? sender, object e)
-    {
-        UpdateCollectorUptime();
+        // Uptime updates: every 2 ticks (1s)
+        if (_timerTickCount % 2 == 0)
+        {
+            UpdateCollectorUptime();
+        }
+
+        // Refresh updates: every 4 ticks (2s) - lowest frequency
+        if (_timerTickCount % 4 == 0)
+        {
+            UpdateUptime();
+            UpdateLatency();
+            UpdateThroughputStats();
+        }
     }
 
     private void InitializeSparklineData()
     {
-        // Initialize with sample data
-        for (int i = 0; i < 20; i++)
+        // Initialize circular buffers with sample data
+        for (int i = 0; i < SparklineCapacity; i++)
         {
-            _publishedHistory.Add(800 + _random.Next(0, 400));
-            _droppedHistory.Add(_random.Next(0, 5));
-            _integrityHistory.Add(_random.Next(0, 3));
-            _throughputHistory.Add(1000 + _random.Next(-200, 400));
+            _publishedHistory[i] = 800 + _random.Next(0, 400);
+            _droppedHistory[i] = _random.Next(0, 5);
+            _integrityHistory[i] = _random.Next(0, 3);
         }
+        _sparklineIndex = 0;
+        _sparklineCount = SparklineCapacity;
+
+        for (int i = 0; i < ThroughputCapacity; i++)
+        {
+            _throughputHistory[i] = 1000 + _random.Next(-200, 400);
+        }
+        _throughputIndex = 0;
+        _throughputCount = ThroughputCapacity;
     }
 
     private void AddSparklineData()
     {
-        // Add new data points
-        _publishedHistory.Add(800 + _random.Next(0, 400));
-        _droppedHistory.Add(_random.Next(0, 5));
-        _integrityHistory.Add(_random.Next(0, 3));
-        _throughputHistory.Add(1000 + _random.Next(-200, 400));
+        // Add new data points using circular buffer pattern (O(1) instead of O(n))
+        _publishedHistory[_sparklineIndex] = 800 + _random.Next(0, 400);
+        _droppedHistory[_sparklineIndex] = _random.Next(0, 5);
+        _integrityHistory[_sparklineIndex] = _random.Next(0, 3);
 
-        // Keep last 20 points
-        if (_publishedHistory.Count > 20) _publishedHistory.RemoveAt(0);
-        if (_droppedHistory.Count > 20) _droppedHistory.RemoveAt(0);
-        if (_integrityHistory.Count > 20) _integrityHistory.RemoveAt(0);
-        if (_throughputHistory.Count > 30) _throughputHistory.RemoveAt(0);
+        _sparklineIndex = (_sparklineIndex + 1) % SparklineCapacity;
+        if (_sparklineCount < SparklineCapacity) _sparklineCount++;
+
+        _throughputHistory[_throughputIndex] = 1000 + _random.Next(-200, 400);
+        _throughputIndex = (_throughputIndex + 1) % ThroughputCapacity;
+        if (_throughputCount < ThroughputCapacity) _throughputCount++;
     }
 
     private void UpdateSparklines()
     {
-        UpdateSparkline(PublishedSparklinePath, _publishedHistory, PublishedSparkline.ActualWidth, 30);
-        UpdateSparkline(DroppedSparklinePath, _droppedHistory, DroppedSparkline.ActualWidth, 30);
-        UpdateSparkline(IntegritySparklinePath, _integrityHistory, IntegritySparkline.ActualWidth, 30);
+        // Use reusable PointCollections to avoid allocations
+        UpdateSparklineCircular(PublishedSparklinePath, _publishedHistory, _sparklineIndex, _sparklineCount,
+            PublishedSparkline.ActualWidth, 30, _publishedPoints);
+        UpdateSparklineCircular(DroppedSparklinePath, _droppedHistory, _sparklineIndex, _sparklineCount,
+            DroppedSparkline.ActualWidth, 30, _droppedPoints);
+        UpdateSparklineCircular(IntegritySparklinePath, _integrityHistory, _sparklineIndex, _sparklineCount,
+            IntegritySparkline.ActualWidth, 30, _integrityPoints);
 
-        // Update rate text
-        if (_publishedHistory.Count > 0)
+        // Update rate text - get most recent value from circular buffer
+        if (_sparklineCount > 0)
         {
-            var rate = (int)_publishedHistory[^1];
+            var lastIndex = (_sparklineIndex - 1 + SparklineCapacity) % SparklineCapacity;
+            var rate = (int)_publishedHistory[lastIndex];
             PublishedRateText.Text = $"+{rate:N0}/s";
         }
     }
 
-    private void UpdateSparkline(Microsoft.UI.Xaml.Shapes.Polyline polyline, List<double> data, double width, double height)
+    /// <summary>
+    /// Updates sparkline using circular buffer data and reusable PointCollection.
+    /// </summary>
+    private static void UpdateSparklineCircular(
+        Microsoft.UI.Xaml.Shapes.Polyline polyline,
+        double[] data,
+        int currentIndex,
+        int count,
+        double width,
+        double height,
+        PointCollection points)
     {
-        if (data.Count < 2 || width <= 0) return;
+        if (count < 2 || width <= 0) return;
 
-        var points = new PointCollection();
+        // Clear and reuse the PointCollection instead of creating new
+        points.Clear();
+
         var max = 1.0;
         var min = 0.0;
 
-        foreach (var val in data)
+        // Find max value in circular buffer
+        for (int i = 0; i < count; i++)
         {
-            if (val > max) max = val;
+            var idx = (currentIndex - count + i + data.Length) % data.Length;
+            if (data[idx] > max) max = data[idx];
         }
 
-        var step = width / (data.Count - 1);
+        var step = width / (count - 1);
 
-        for (int i = 0; i < data.Count; i++)
+        // Build points in order from oldest to newest
+        for (int i = 0; i < count; i++)
         {
+            var idx = (currentIndex - count + i + data.Length) % data.Length;
             var x = i * step;
-            var y = height - ((data[i] - min) / (max - min) * height);
+            var y = height - ((data[idx] - min) / (max - min) * height);
             points.Add(new Windows.Foundation.Point(x, Math.Max(2, Math.Min(height - 2, y))));
         }
 
@@ -198,18 +340,22 @@ public sealed partial class DashboardPage : Page
 
     private void UpdateThroughputStats()
     {
-        if (_throughputHistory.Count > 0)
+        if (_throughputCount > 0)
         {
-            var current = (int)_throughputHistory[^1];
+            // Get most recent value from circular buffer
+            var lastIndex = (_throughputIndex - 1 + ThroughputCapacity) % ThroughputCapacity;
+            var current = (int)_throughputHistory[lastIndex];
             var avg = 0.0;
             var peak = 0.0;
 
-            foreach (var val in _throughputHistory)
+            // Calculate from circular buffer
+            for (int i = 0; i < _throughputCount; i++)
             {
-                avg += val;
-                if (val > peak) peak = val;
+                var idx = (_throughputIndex - _throughputCount + i + ThroughputCapacity) % ThroughputCapacity;
+                avg += _throughputHistory[idx];
+                if (_throughputHistory[idx] > peak) peak = _throughputHistory[idx];
             }
-            avg /= _throughputHistory.Count;
+            avg /= _throughputCount;
 
             CurrentThroughputText.Text = $"{current:N0}/s";
             AvgThroughputText.Text = $"{(int)avg:N0}/s";
@@ -229,11 +375,9 @@ public sealed partial class DashboardPage : Page
     {
         var latency = 8 + _random.Next(0, 10);
         LatencyText.Text = $"{latency}ms";
-        LatencyText.Foreground = latency < 20
-            ? new SolidColorBrush(Color.FromArgb(255, 72, 187, 120))
-            : latency < 50
-                ? new SolidColorBrush(Color.FromArgb(255, 237, 137, 54))
-                : new SolidColorBrush(Color.FromArgb(255, 245, 101, 101));
+        // Use cached brushes instead of creating new instances
+        LatencyText.Foreground = latency < 20 ? s_successBrush
+            : latency < 50 ? s_warningBrush : s_dangerBrush;
     }
 
     private void UpdateCollectorStatus()
@@ -242,12 +386,12 @@ public sealed partial class DashboardPage : Page
         {
             if (_isCollectorPaused)
             {
-                CollectorStatusBadge.Background = new SolidColorBrush(Color.FromArgb(255, 237, 137, 54));
+                CollectorStatusBadge.Background = s_warningBrush;
                 CollectorStatusText.Text = "Paused";
             }
             else
             {
-                CollectorStatusBadge.Background = new SolidColorBrush(Color.FromArgb(255, 72, 187, 120));
+                CollectorStatusBadge.Background = s_successBrush;
                 CollectorStatusText.Text = "Running";
             }
             StartCollectorButton.IsEnabled = false;
@@ -255,7 +399,7 @@ public sealed partial class DashboardPage : Page
         }
         else
         {
-            CollectorStatusBadge.Background = new SolidColorBrush(Color.FromArgb(255, 245, 101, 101));
+            CollectorStatusBadge.Background = s_dangerBrush;
             CollectorStatusText.Text = "Stopped";
             StartCollectorButton.IsEnabled = true;
             StopCollectorButton.IsEnabled = false;
@@ -293,32 +437,29 @@ public sealed partial class DashboardPage : Page
 
     private void UpdateStreamStatusBadges()
     {
-        // Update Trades stream badge
-        TradesStreamBadge.Background = new SolidColorBrush(
-            _tradesStreamActive && _isCollectorRunning && !_isCollectorPaused
-                ? Color.FromArgb(255, 72, 187, 120)  // Green - active
-                : _tradesStreamActive && _isCollectorPaused
-                    ? Color.FromArgb(255, 237, 137, 54)  // Orange - paused
-                    : Color.FromArgb(255, 160, 174, 192)); // Gray - inactive
+        // Update Trades stream badge using cached brushes
+        TradesStreamBadge.Background = GetStreamStatusBrush(_tradesStreamActive);
         TradesStreamCount.Text = $"({_tradesStreamCount})";
 
         // Update Depth stream badge
-        DepthStreamBadge.Background = new SolidColorBrush(
-            _depthStreamActive && _isCollectorRunning && !_isCollectorPaused
-                ? Color.FromArgb(255, 72, 187, 120)
-                : _depthStreamActive && _isCollectorPaused
-                    ? Color.FromArgb(255, 237, 137, 54)
-                    : Color.FromArgb(255, 160, 174, 192));
+        DepthStreamBadge.Background = GetStreamStatusBrush(_depthStreamActive);
         DepthStreamCount.Text = $"({_depthStreamCount})";
 
         // Update Quotes stream badge
-        QuotesStreamBadge.Background = new SolidColorBrush(
-            _quotesStreamActive && _isCollectorRunning && !_isCollectorPaused
-                ? Color.FromArgb(255, 72, 187, 120)
-                : _quotesStreamActive && _isCollectorPaused
-                    ? Color.FromArgb(255, 237, 137, 54)
-                    : Color.FromArgb(255, 160, 174, 192));
+        QuotesStreamBadge.Background = GetStreamStatusBrush(_quotesStreamActive);
         QuotesStreamCount.Text = $"({_quotesStreamCount})";
+    }
+
+    /// <summary>
+    /// Gets the appropriate cached brush for stream status.
+    /// </summary>
+    private SolidColorBrush GetStreamStatusBrush(bool isStreamActive)
+    {
+        if (isStreamActive && _isCollectorRunning && !_isCollectorPaused)
+            return s_successBrush;
+        if (isStreamActive && _isCollectorPaused)
+            return s_warningBrush;
+        return s_inactiveBrush;
     }
 
     private void UpdateCollectorUptime()
@@ -347,101 +488,138 @@ public sealed partial class DashboardPage : Page
 
     private async void QuickStartCollector_Click(object sender, RoutedEventArgs e)
     {
-        _isCollectorRunning = true;
-        _isCollectorPaused = false;
-        _collectorStartTime = DateTime.UtcNow;
-        _startTime = DateTime.UtcNow;
-        UpdateCollectorStatus();
-        UpdateQuickActionsCollectorStatus();
-        UpdateStreamStatusBadges();
+        try
+        {
+            _isCollectorRunning = true;
+            _isCollectorPaused = false;
+            _collectorStartTime = DateTime.UtcNow;
+            _startTime = DateTime.UtcNow;
+            UpdateCollectorStatus();
+            UpdateQuickActionsCollectorStatus();
+            UpdateStreamStatusBadges();
 
-        DashboardInfoBar.Severity = InfoBarSeverity.Success;
-        DashboardInfoBar.Title = "Collector Started";
-        DashboardInfoBar.Message = "Market data collection has been started.";
-        DashboardInfoBar.IsOpen = true;
-
-        await Task.Delay(3000);
-        DashboardInfoBar.IsOpen = false;
+            await ShowInfoBarAsync(InfoBarSeverity.Success, "Collector Started", "Market data collection has been started.");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error starting collector: {ex.Message}");
+        }
     }
 
     private async void QuickStopCollector_Click(object sender, RoutedEventArgs e)
     {
-        _isCollectorRunning = false;
-        _isCollectorPaused = false;
-        UpdateCollectorStatus();
-        UpdateQuickActionsCollectorStatus();
-        UpdateStreamStatusBadges();
+        try
+        {
+            // Show confirmation dialog before stopping
+            var dialog = new ContentDialog
+            {
+                Title = "Stop Data Collection?",
+                Content = "Are you sure you want to stop the market data collector? All active subscriptions will be disconnected and you may miss market data.",
+                PrimaryButtonText = "Stop Collector",
+                CloseButtonText = "Cancel",
+                DefaultButton = ContentDialogButton.Close,
+                XamlRoot = this.XamlRoot
+            };
 
-        DashboardInfoBar.Severity = InfoBarSeverity.Warning;
-        DashboardInfoBar.Title = "Collector Stopped";
-        DashboardInfoBar.Message = "Market data collection has been stopped.";
-        DashboardInfoBar.IsOpen = true;
+            var result = await dialog.ShowAsync();
+            if (result != ContentDialogResult.Primary)
+            {
+                return; // User cancelled
+            }
 
-        await Task.Delay(3000);
-        DashboardInfoBar.IsOpen = false;
+            _isCollectorRunning = false;
+            _isCollectorPaused = false;
+            UpdateCollectorStatus();
+            UpdateQuickActionsCollectorStatus();
+            UpdateStreamStatusBadges();
+
+            await ShowInfoBarAsync(InfoBarSeverity.Warning, "Collector Stopped", "Market data collection has been stopped. Click Start to resume.");
+        }
+        catch (Exception ex)
+        {
+            await ShowExceptionErrorAsync(ex, "stopping collector");
+        }
     }
 
     private async void QuickPauseCollector_Click(object sender, RoutedEventArgs e)
     {
-        if (!_isCollectorRunning) return;
-
-        _isCollectorPaused = !_isCollectorPaused;
-        UpdateCollectorStatus();
-        UpdateQuickActionsCollectorStatus();
-        UpdateStreamStatusBadges();
-
-        if (_isCollectorPaused)
+        try
         {
-            DashboardInfoBar.Severity = InfoBarSeverity.Informational;
-            DashboardInfoBar.Title = "Collection Paused";
-            DashboardInfoBar.Message = "Market data collection has been paused. Click Resume to continue.";
-        }
-        else
-        {
-            DashboardInfoBar.Severity = InfoBarSeverity.Success;
-            DashboardInfoBar.Title = "Collection Resumed";
-            DashboardInfoBar.Message = "Market data collection has been resumed.";
-        }
-        DashboardInfoBar.IsOpen = true;
+            if (!_isCollectorRunning) return;
 
-        await Task.Delay(3000);
-        DashboardInfoBar.IsOpen = false;
+            _isCollectorPaused = !_isCollectorPaused;
+            UpdateCollectorStatus();
+            UpdateQuickActionsCollectorStatus();
+            UpdateStreamStatusBadges();
+
+            if (_isCollectorPaused)
+            {
+                await ShowInfoBarAsync(InfoBarSeverity.Informational, "Collection Paused", "Market data collection has been paused. Click Resume to continue.");
+            }
+            else
+            {
+                await ShowInfoBarAsync(InfoBarSeverity.Success, "Collection Resumed", "Market data collection has been resumed.");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error pausing collector: {ex.Message}");
+        }
     }
 
     private async void StartCollector_Click(object sender, RoutedEventArgs e)
     {
-        _isCollectorRunning = true;
-        _isCollectorPaused = false;
-        _collectorStartTime = DateTime.UtcNow;
-        _startTime = DateTime.UtcNow;
-        UpdateCollectorStatus();
-        UpdateQuickActionsCollectorStatus();
-        UpdateStreamStatusBadges();
+        try
+        {
+            _isCollectorRunning = true;
+            _isCollectorPaused = false;
+            _collectorStartTime = DateTime.UtcNow;
+            _startTime = DateTime.UtcNow;
+            UpdateCollectorStatus();
+            UpdateQuickActionsCollectorStatus();
+            UpdateStreamStatusBadges();
 
-        DashboardInfoBar.Severity = InfoBarSeverity.Success;
-        DashboardInfoBar.Title = "Collector Started";
-        DashboardInfoBar.Message = "Market data collection has been started.";
-        DashboardInfoBar.IsOpen = true;
-
-        await Task.Delay(3000);
-        DashboardInfoBar.IsOpen = false;
+            await ShowInfoBarAsync(InfoBarSeverity.Success, "Collector Started", "Market data collection has been started.");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error starting collector: {ex.Message}");
+        }
     }
 
     private async void StopCollector_Click(object sender, RoutedEventArgs e)
     {
-        _isCollectorRunning = false;
-        _isCollectorPaused = false;
-        UpdateCollectorStatus();
-        UpdateQuickActionsCollectorStatus();
-        UpdateStreamStatusBadges();
+        try
+        {
+            // Show confirmation dialog before stopping
+            var dialog = new ContentDialog
+            {
+                Title = "Stop Data Collection?",
+                Content = "Are you sure you want to stop the market data collector? All active subscriptions will be disconnected and you may miss market data.",
+                PrimaryButtonText = "Stop Collector",
+                CloseButtonText = "Cancel",
+                DefaultButton = ContentDialogButton.Close,
+                XamlRoot = this.XamlRoot
+            };
 
-        DashboardInfoBar.Severity = InfoBarSeverity.Warning;
-        DashboardInfoBar.Title = "Collector Stopped";
-        DashboardInfoBar.Message = "Market data collection has been stopped.";
-        DashboardInfoBar.IsOpen = true;
+            var result = await dialog.ShowAsync();
+            if (result != ContentDialogResult.Primary)
+            {
+                return; // User cancelled
+            }
 
-        await Task.Delay(3000);
-        DashboardInfoBar.IsOpen = false;
+            _isCollectorRunning = false;
+            _isCollectorPaused = false;
+            UpdateCollectorStatus();
+            UpdateQuickActionsCollectorStatus();
+            UpdateStreamStatusBadges();
+
+            await ShowInfoBarAsync(InfoBarSeverity.Warning, "Collector Stopped", "Market data collection has been stopped. Click Start to resume.");
+        }
+        catch (Exception ex)
+        {
+            await ShowExceptionErrorAsync(ex, "stopping collector");
+        }
     }
 
     private void QuickAddSymbol_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
@@ -478,20 +656,67 @@ public sealed partial class DashboardPage : Page
 
     private async void QuickAddSymbol_Click(object sender, RoutedEventArgs e)
     {
-        var symbol = QuickAddSymbolBox.Text?.ToUpper();
+        var symbol = QuickAddSymbolBox.Text?.ToUpper()?.Trim();
 
+        // Validate symbol format
         if (string.IsNullOrWhiteSpace(symbol))
         {
-            DashboardInfoBar.Severity = InfoBarSeverity.Warning;
-            DashboardInfoBar.Title = "Invalid Symbol";
-            DashboardInfoBar.Message = "Please enter a valid symbol.";
-            DashboardInfoBar.IsOpen = true;
+            await ShowInfoBarAsync(InfoBarSeverity.Warning, "Symbol Required", "Please enter a stock symbol (e.g., AAPL, MSFT).");
+            QuickAddSymbolBox.Focus(FocusState.Programmatic);
+            return;
+        }
+
+        // Validate symbol format (letters, numbers, dots for international symbols)
+        if (!System.Text.RegularExpressions.Regex.IsMatch(symbol, @"^[A-Z0-9.]{1,10}$"))
+        {
+            await ShowInfoBarAsync(InfoBarSeverity.Warning, "Invalid Symbol Format", "Symbol must contain only uppercase letters, numbers, or dots (max 10 characters).");
+            QuickAddSymbolBox.Focus(FocusState.Programmatic);
             return;
         }
 
         var trades = QuickAddTradesCheck.IsChecked == true;
         var depth = QuickAddDepthCheck.IsChecked == true;
         var quotes = QuickAddQuotesCheck.IsChecked == true;
+
+        // Validate at least one stream is selected
+        if (!trades && !depth && !quotes)
+        {
+            await ShowInfoBarAsync(InfoBarSeverity.Warning, "Select Data Streams", "Please select at least one data stream (Trades, Depth, or Quotes).");
+            return;
+        }
+
+        // Check if collector is running
+        if (!_isCollectorRunning)
+        {
+            // Ask user if they want to start the collector
+            var dialog = new ContentDialog
+            {
+                Title = "Collector Not Running",
+                Content = $"The data collector is not running. Would you like to add {symbol} and start the collector?",
+                PrimaryButtonText = "Add & Start",
+                SecondaryButtonText = "Add Only",
+                CloseButtonText = "Cancel",
+                DefaultButton = ContentDialogButton.Primary,
+                XamlRoot = this.XamlRoot
+            };
+
+            var result = await dialog.ShowAsync();
+            if (result == ContentDialogResult.None)
+            {
+                return; // User cancelled
+            }
+
+            if (result == ContentDialogResult.Primary)
+            {
+                // Start the collector
+                _isCollectorRunning = true;
+                _isCollectorPaused = false;
+                _collectorStartTime = DateTime.UtcNow;
+                _startTime = DateTime.UtcNow;
+                UpdateCollectorStatus();
+                UpdateQuickActionsCollectorStatus();
+            }
+        }
 
         // Update stream counts based on subscriptions
         if (trades)
@@ -516,17 +741,16 @@ public sealed partial class DashboardPage : Page
         if (trades) subscriptions.Add("Trades");
         if (depth) subscriptions.Add("Depth");
         if (quotes) subscriptions.Add("Quotes");
-        var subscriptionText = subscriptions.Count > 0 ? string.Join(", ", subscriptions) : "None";
-
-        DashboardInfoBar.Severity = InfoBarSeverity.Success;
-        DashboardInfoBar.Title = "Symbol Added";
-        DashboardInfoBar.Message = $"Added {symbol} subscription ({subscriptionText})";
-        DashboardInfoBar.IsOpen = true;
+        var subscriptionText = string.Join(", ", subscriptions);
 
         QuickAddSymbolBox.Text = string.Empty;
 
-        await Task.Delay(3000);
-        DashboardInfoBar.IsOpen = false;
+        // Reset checkboxes to default state
+        QuickAddTradesCheck.IsChecked = true;
+        QuickAddDepthCheck.IsChecked = false;
+        QuickAddQuotesCheck.IsChecked = false;
+
+        await ShowInfoBarAsync(InfoBarSeverity.Success, "Symbol Added", $"Added {symbol} with {subscriptionText} data streams.");
     }
 
     private void ViewLogs_Click(object sender, RoutedEventArgs e)
@@ -570,6 +794,7 @@ public sealed partial class DashboardPage : Page
 
     private void AddSampleActivities()
     {
+        // Use cached brushes for sample activities
         var sampleActivities = new[]
         {
             new ActivityDisplayItem
@@ -577,7 +802,7 @@ public sealed partial class DashboardPage : Page
                 Title = "Collector Started",
                 Description = "Data collection has been started for all providers",
                 Icon = "\uE768",
-                IconBackground = new SolidColorBrush(Color.FromArgb(255, 72, 187, 120)),
+                IconBackground = s_successBrush,
                 RelativeTime = "Just now"
             },
             new ActivityDisplayItem
@@ -585,7 +810,7 @@ public sealed partial class DashboardPage : Page
                 Title = "Symbol Added",
                 Description = "NVDA has been added to your watchlist",
                 Icon = "\uE710",
-                IconBackground = new SolidColorBrush(Color.FromArgb(255, 88, 166, 255)),
+                IconBackground = s_infoBrush,
                 RelativeTime = "2m ago"
             },
             new ActivityDisplayItem
@@ -593,7 +818,7 @@ public sealed partial class DashboardPage : Page
                 Title = "Backfill Completed",
                 Description = "Downloaded 12,450 bars for SPY from Alpaca",
                 Icon = "\uE73E",
-                IconBackground = new SolidColorBrush(Color.FromArgb(255, 72, 187, 120)),
+                IconBackground = s_successBrush,
                 RelativeTime = "15m ago"
             },
             new ActivityDisplayItem
@@ -601,7 +826,7 @@ public sealed partial class DashboardPage : Page
                 Title = "Provider Connected",
                 Description = "Interactive Brokers connection established",
                 Icon = "\uE703",
-                IconBackground = new SolidColorBrush(Color.FromArgb(255, 88, 166, 255)),
+                IconBackground = s_infoBrush,
                 RelativeTime = "1h ago"
             }
         };
@@ -614,12 +839,13 @@ public sealed partial class DashboardPage : Page
 
     private static ActivityDisplayItem CreateActivityDisplayItem(ActivityItem activity)
     {
+        // Use cached brushes based on color category
         var iconBackground = activity.ColorCategory switch
         {
-            "Success" => new SolidColorBrush(Color.FromArgb(255, 72, 187, 120)),
-            "Error" => new SolidColorBrush(Color.FromArgb(255, 248, 81, 73)),
-            "Warning" => new SolidColorBrush(Color.FromArgb(255, 210, 153, 34)),
-            _ => new SolidColorBrush(Color.FromArgb(255, 88, 166, 255))
+            "Success" => s_successBrush,
+            "Error" => s_criticalBrush,
+            "Warning" => s_warningEventBrush,
+            _ => s_infoBrush
         };
 
         return new ActivityDisplayItem
@@ -875,14 +1101,7 @@ public sealed partial class DashboardPage : Page
         if (result == ContentDialogResult.Primary)
         {
             _integrityEventsService.ClearEvents();
-
-            DashboardInfoBar.Severity = InfoBarSeverity.Success;
-            DashboardInfoBar.Title = "Alerts Cleared";
-            DashboardInfoBar.Message = "All integrity alerts have been cleared.";
-            DashboardInfoBar.IsOpen = true;
-
-            await Task.Delay(3000);
-            DashboardInfoBar.IsOpen = false;
+            await ShowInfoBarAsync(InfoBarSeverity.Success, "Alerts Cleared", "All integrity alerts have been cleared.");
         }
     }
 
@@ -942,13 +1161,7 @@ public sealed partial class DashboardPage : Page
         dataPackage.SetText(report);
         Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(dataPackage);
 
-        DashboardInfoBar.Severity = InfoBarSeverity.Success;
-        DashboardInfoBar.Title = "Report Exported";
-        DashboardInfoBar.Message = "Integrity report has been copied to clipboard.";
-        DashboardInfoBar.IsOpen = true;
-
-        await Task.Delay(3000);
-        DashboardInfoBar.IsOpen = false;
+        await ShowInfoBarAsync(InfoBarSeverity.Success, "Report Exported", "Integrity report has been copied to clipboard.");
     }
 
     #endregion

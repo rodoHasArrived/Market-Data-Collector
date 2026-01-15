@@ -231,7 +231,6 @@ public sealed class MemoryMappedJsonlReader
                 Interlocked.Add(ref _bytesRead, chunkSize);
 
                 // Process the chunk into lines
-                var chunkSpan = buffer.AsSpan(0, chunkSize);
                 var lineStart = 0;
 
                 for (int i = 0; i < chunkSize; i++)
@@ -239,8 +238,8 @@ public sealed class MemoryMappedJsonlReader
                     if (buffer[i] == '\n')
                     {
                         // Complete line found
-                        var lineBytes = chunkSpan.Slice(lineStart, i - lineStart);
-                        var lineText = Encoding.UTF8.GetString(lineBytes).TrimEnd('\r');
+                        var lineLength = i - lineStart;
+                        var lineText = Encoding.UTF8.GetString(buffer, lineStart, lineLength).TrimEnd('\r');
 
                         if (lineBuilder.Length > 0)
                         {
@@ -270,8 +269,8 @@ public sealed class MemoryMappedJsonlReader
                 // Handle partial line at end of chunk
                 if (lineStart < chunkSize)
                 {
-                    var remaining = chunkSpan.Slice(lineStart);
-                    lineBuilder.Append(Encoding.UTF8.GetString(remaining));
+                    var remainingLength = chunkSize - lineStart;
+                    lineBuilder.Append(Encoding.UTF8.GetString(buffer, lineStart, remainingLength));
                 }
 
                 position += chunkSize;

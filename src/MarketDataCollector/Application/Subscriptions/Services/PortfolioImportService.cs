@@ -230,7 +230,7 @@ public sealed class PortfolioImportService
         // In production, this would use the IBAutomater or Client Portal API
 
         // Check if Client Portal is running (typically on port 5000)
-        var clientPortalUrl = $"https://localhost:{ibConfig.Port ?? 5000}";
+        var clientPortalUrl = $"https://localhost:{ibConfig.Port}";
 
         try
         {

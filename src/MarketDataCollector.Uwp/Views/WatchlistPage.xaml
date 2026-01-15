@@ -85,10 +85,11 @@
                         <TextBlock Text="Favorites" FontWeight="SemiBold" />
                     </StackPanel>
 
-                    <ListView x:Name="FavoritesList" SelectionMode="None" IsItemClickEnabled="True" ItemClick="Symbol_ItemClick">
+                    <ListView x:Name="FavoritesList" SelectionMode="None" IsItemClickEnabled="True" ItemClick="Symbol_ItemClick"
+                              RightTapped="SymbolItem_RightTapped">
                         <ListView.ItemTemplate>
                             <DataTemplate>
-                                <Grid Padding="8,12" ColumnSpacing="16">
+                                <Grid Padding="8,12" ColumnSpacing="16" RightTapped="SymbolItem_RightTapped" Tag="{Binding Symbol}">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto" />
                                         <ColumnDefinition Width="100" />
@@ -189,7 +190,8 @@
                     </Grid>
 
                     <!-- List View -->
-                    <ListView x:Name="AllSymbolsList" SelectionMode="None" IsItemClickEnabled="True" ItemClick="Symbol_ItemClick">
+                    <ListView x:Name="AllSymbolsList" SelectionMode="None" IsItemClickEnabled="True" ItemClick="Symbol_ItemClick"
+                              RightTapped="SymbolItem_RightTapped">
                         <ListView.HeaderTemplate>
                             <DataTemplate>
                                 <Grid Padding="8,8" Background="{ThemeResource SystemFillColorNeutralBackgroundBrush}">
@@ -215,7 +217,7 @@
                         </ListView.HeaderTemplate>
                         <ListView.ItemTemplate>
                             <DataTemplate>
-                                <Grid Padding="8,12" ColumnSpacing="16">
+                                <Grid Padding="8,12" ColumnSpacing="16" RightTapped="SymbolItem_RightTapped" Tag="{Binding Symbol}">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto" />
                                         <ColumnDefinition Width="100" />
@@ -287,10 +289,12 @@
                     </ListView>
 
                     <!-- Grid View (Alternative) -->
-                    <GridView x:Name="AllSymbolsGrid" Visibility="Collapsed" SelectionMode="None">
+                    <GridView x:Name="AllSymbolsGrid" Visibility="Collapsed" SelectionMode="None"
+                              RightTapped="SymbolItem_RightTapped">
                         <GridView.ItemTemplate>
                             <DataTemplate>
-                                <Border Style="{StaticResource CardStyle}" Width="200" Margin="4" Padding="16">
+                                <Border Style="{StaticResource CardStyle}" Width="200" Margin="4" Padding="16"
+                                        RightTapped="SymbolItem_RightTapped" Tag="{Binding Symbol}">
                                     <StackPanel Spacing="12">
                                         <Grid>
                                             <Grid.ColumnDefinitions>

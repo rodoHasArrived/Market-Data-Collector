@@ -4,6 +4,9 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using MarketDataCollector.Application.Logging;
+using Parquet;
+using Parquet.Data;
+using Parquet.Schema;
 using Serilog;
 
 namespace MarketDataCollector.Storage.Export;
@@ -294,8 +297,6 @@ public class AnalysisExportService
     {
         var exportedFiles = new List<ExportedFile>();
 
-        // For Parquet, we'll create a simple CSV as a placeholder
-        // In a real implementation, you'd use Parquet.Net or PyArrow
         var grouped = profile.SplitBySymbol
             ? sourceFiles.GroupBy(f => f.Symbol)
             : new[] { sourceFiles.AsEnumerable() }.Select(g => g);
@@ -307,7 +308,7 @@ public class AnalysisExportService
                 request.OutputDirectory,
                 $"{symbol}_{DateTime.UtcNow:yyyyMMdd}.parquet");
 
-            // For now, create a JSON manifest that describes what would be in the Parquet file
+            // Collect all records first to determine schema
             var records = new List<Dictionary<string, object?>>();
             long recordCount = 0;
 
@@ -317,19 +318,17 @@ public class AnalysisExportService
                 {
                     records.Add(record);
                     recordCount++;
-
-                    // Limit records in memory
-                    if (records.Count >= 10000)
-                    {
-                        await WriteParquetPlaceholderAsync(outputPath, records, recordCount > 10000);
-                        records.Clear();
-                    }
                 }
             }
 
             if (records.Count > 0)
             {
-                await WriteParquetPlaceholderAsync(outputPath, records, recordCount > records.Count);
+                await WriteParquetFileAsync(outputPath, records, ct);
+            }
+            else
+            {
+                // Create empty parquet file with minimal schema
+                await WriteEmptyParquetFileAsync(outputPath, ct);
             }
 
             var fileInfo = new FileInfo(outputPath);
@@ -348,23 +347,191 @@ public class AnalysisExportService
         return exportedFiles;
     }
 
-    // TODO: Implement proper Parquet export using Parquet.Net or Apache Arrow
-    // Currently writes JSON as a placeholder - Parquet format provides better compression
-    // and columnar storage for analytics workloads
-    private async Task WriteParquetPlaceholderAsync(
+    /// <summary>
+    /// Writes records to a Parquet file using columnar storage format.
+    /// Dynamically builds schema from record keys and writes data in columnar format
+    /// for optimal compression and analytics performance.
+    /// </summary>
+    private async Task WriteParquetFileAsync(
         string path,
         List<Dictionary<string, object?>> records,
-        bool append)
+        CancellationToken ct)
     {
-        // Placeholder implementation - writes JSON instead of Parquet
-        // Real implementation would use Parquet.Net
-        var mode = append ? FileMode.Append : FileMode.Create;
-        await using var fs = new FileStream(path, mode, FileAccess.Write);
-        await using var writer = new StreamWriter(fs);
+        if (records.Count == 0) return;
 
+        // Build schema from the first record's keys
+        var firstRecord = records[0];
+        var columns = firstRecord.Keys.ToList();
+        var dataFields = new List<DataField>();
+
+        // Infer schema from first record's values
+        foreach (var column in columns)
+        {
+            var value = firstRecord[column];
+            var dataField = InferDataField(column, value);
+            dataFields.Add(dataField);
+        }
+
+        var schema = new ParquetSchema(dataFields);
+
+        // Prepare columnar data
+        var columnData = new Dictionary<string, List<object?>>();
+        foreach (var column in columns)
+        {
+            columnData[column] = new List<object?>(records.Count);
+        }
+
+        // Extract data into columns
         foreach (var record in records)
         {
-            await writer.WriteLineAsync(JsonSerializer.Serialize(record));
+            foreach (var column in columns)
+            {
+                record.TryGetValue(column, out var value);
+                columnData[column].Add(value);
+            }
+        }
+
+        // Write to Parquet file
+        await using var fileStream = File.Create(path);
+        using var parquetWriter = await ParquetWriter.CreateAsync(schema, fileStream);
+        using var rowGroupWriter = parquetWriter.CreateRowGroup();
+
+        for (int i = 0; i < columns.Count; i++)
+        {
+            var column = columns[i];
+            var dataField = dataFields[i];
+            var values = columnData[column];
+            var dataColumn = CreateDataColumn(dataField, values);
+            await rowGroupWriter.WriteColumnAsync(dataColumn);
+        }
+
+        _log.Debug("Wrote {RecordCount} records to Parquet file: {Path}", records.Count, path);
+    }
+
+    /// <summary>
+    /// Creates an empty Parquet file with a minimal schema.
+    /// </summary>
+    private async Task WriteEmptyParquetFileAsync(string path, CancellationToken ct)
+    {
+        var schema = new ParquetSchema(
+            new DataField<string>("_empty")
+        );
+
+        await using var fileStream = File.Create(path);
+        using var parquetWriter = await ParquetWriter.CreateAsync(schema, fileStream);
+        using var rowGroupWriter = parquetWriter.CreateRowGroup();
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(schema.DataFields[0], Array.Empty<string>()));
+    }
+
+    /// <summary>
+    /// Infers the appropriate Parquet DataField type from a sample value.
+    /// </summary>
+    private static DataField InferDataField(string columnName, object? sampleValue)
+    {
+        return sampleValue switch
+        {
+            int => new DataField<int?>(columnName),
+            long => new DataField<long?>(columnName),
+            float => new DataField<float?>(columnName),
+            double => new DataField<double?>(columnName),
+            decimal => new DataField<decimal?>(columnName),
+            bool => new DataField<bool?>(columnName),
+            DateTime => new DataField<DateTimeOffset?>(columnName),
+            DateTimeOffset => new DataField<DateTimeOffset?>(columnName),
+            _ => new DataField<string>(columnName) // Default to string for unknown types
+        };
+    }
+
+    /// <summary>
+    /// Creates a DataColumn from a list of values, converting them to the appropriate type.
+    /// </summary>
+    private static DataColumn CreateDataColumn(DataField dataField, List<object?> values)
+    {
+        var clrType = dataField.ClrType;
+
+        if (clrType == typeof(int?))
+        {
+            var typedValues = values.Select(v => v switch
+            {
+                int i => (int?)i,
+                long l => (int?)l,
+                double d => (int?)d,
+                _ => v != null ? (int?)Convert.ToInt32(v) : null
+            }).ToArray();
+            return new DataColumn(dataField, typedValues);
+        }
+        else if (clrType == typeof(long?))
+        {
+            var typedValues = values.Select(v => v switch
+            {
+                long l => (long?)l,
+                int i => (long?)i,
+                double d => (long?)d,
+                _ => v != null ? (long?)Convert.ToInt64(v) : null
+            }).ToArray();
+            return new DataColumn(dataField, typedValues);
+        }
+        else if (clrType == typeof(float?))
+        {
+            var typedValues = values.Select(v => v switch
+            {
+                float f => (float?)f,
+                double d => (float?)d,
+                int i => (float?)i,
+                _ => v != null ? (float?)Convert.ToSingle(v) : null
+            }).ToArray();
+            return new DataColumn(dataField, typedValues);
+        }
+        else if (clrType == typeof(double?))
+        {
+            var typedValues = values.Select(v => v switch
+            {
+                double d => (double?)d,
+                float f => (double?)f,
+                int i => (double?)i,
+                long l => (double?)l,
+                _ => v != null ? (double?)Convert.ToDouble(v) : null
+            }).ToArray();
+            return new DataColumn(dataField, typedValues);
+        }
+        else if (clrType == typeof(decimal?))
+        {
+            var typedValues = values.Select(v => v switch
+            {
+                decimal dec => (decimal?)dec,
+                double d => (decimal?)Convert.ToDecimal(d),
+                float f => (decimal?)Convert.ToDecimal(f),
+                int i => (decimal?)i,
+                long l => (decimal?)l,
+                _ => v != null ? (decimal?)Convert.ToDecimal(v) : null
+            }).ToArray();
+            return new DataColumn(dataField, typedValues);
+        }
+        else if (clrType == typeof(bool?))
+        {
+            var typedValues = values.Select(v => v switch
+            {
+                bool b => (bool?)b,
+                _ => v != null ? (bool?)Convert.ToBoolean(v) : null
+            }).ToArray();
+            return new DataColumn(dataField, typedValues);
+        }
+        else if (clrType == typeof(DateTimeOffset?))
+        {
+            var typedValues = values.Select(v => v switch
+            {
+                DateTimeOffset dto => (DateTimeOffset?)dto,
+                DateTime dt => (DateTimeOffset?)new DateTimeOffset(dt),
+                string s when DateTimeOffset.TryParse(s, out var parsed) => (DateTimeOffset?)parsed,
+                _ => null
+            }).ToArray();
+            return new DataColumn(dataField, typedValues);
+        }
+        else
+        {
+            // Default to string
+            var typedValues = values.Select(v => v?.ToString() ?? string.Empty).ToArray();
+            return new DataColumn(dataField, typedValues);
         }
     }
 

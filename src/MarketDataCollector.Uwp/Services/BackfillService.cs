@@ -10,7 +10,7 @@ namespace MarketDataCollector.Uwp.Services;
 /// Service for managing backfill operations with progress tracking.
 /// Uses real API integration with the core Market Data Collector service.
 /// </summary>
-public class BackfillService
+public sealed class BackfillService
 {
     private static BackfillService? _instance;
     private static readonly object _lock = new();
@@ -460,6 +460,41 @@ public class BackfillService
         if (speed >= 1000)
             return $"{speed / 1000:F1}k bars/s";
         return $"{speed:F0} bars/s";
+    }
+
+    /// <summary>
+    /// Fills a specific data gap for a symbol.
+    /// </summary>
+    public async Task FillGapAsync(string symbol, DateTime startDate, DateTime endDate, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(symbol))
+            throw new ArgumentException("Symbol is required", nameof(symbol));
+
+        if (startDate > endDate)
+            throw new ArgumentException("Start date must be before end date");
+
+        await StartBackfillAsync(
+            new[] { symbol },
+            "composite", // Use composite provider to try multiple sources
+            startDate,
+            endDate);
+    }
+
+    /// <summary>
+    /// Fills multiple data gaps in batch.
+    /// </summary>
+    public async Task FillGapsBatchAsync(
+        IEnumerable<(string Symbol, DateTime Start, DateTime End)> gaps,
+        CancellationToken ct = default)
+    {
+        var gapsList = gaps.ToList();
+        if (gapsList.Count == 0) return;
+
+        foreach (var (symbol, start, end) in gapsList)
+        {
+            ct.ThrowIfCancellationRequested();
+            await FillGapAsync(symbol, start, end, ct);
+        }
     }
 
     /// <summary>

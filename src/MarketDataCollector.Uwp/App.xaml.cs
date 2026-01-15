@@ -85,25 +85,83 @@ public partial class App : Application
     }
 
     /// <summary>
-    /// Handles app exit for clean shutdown of background services.
+    /// Handles app exit for clean shutdown of background services with timeout.
     /// </summary>
     private async void OnAppExit(object sender, EventArgs e)
     {
+        const int ShutdownTimeoutMs = 5000; // 5 second timeout for graceful shutdown
+
         try
         {
             System.Diagnostics.Debug.WriteLine("App exiting, shutting down services...");
 
-            // Shutdown services in order
-            await BackgroundTaskSchedulerService.Instance.StopAsync();
-            await PendingOperationsQueueService.Instance.ShutdownAsync();
-            await OfflineTrackingPersistenceService.Instance.ShutdownAsync();
+            using var cts = new System.Threading.CancellationTokenSource(ShutdownTimeoutMs);
+
+            // Shutdown services in parallel with timeout for better performance
+            var shutdownTasks = new[]
+            {
+                ShutdownServiceAsync(() => BackgroundTaskSchedulerService.Instance.StopAsync(), "BackgroundTaskScheduler", cts.Token),
+                ShutdownServiceAsync(() => PendingOperationsQueueService.Instance.ShutdownAsync(), "PendingOperationsQueue", cts.Token),
+                ShutdownServiceAsync(() => OfflineTrackingPersistenceService.Instance.ShutdownAsync(), "OfflineTrackingPersistence", cts.Token),
+                ShutdownServiceAsync(() => ConnectionService.Instance.StopMonitoring(), "ConnectionService", cts.Token)
+            };
+
+            await Task.WhenAll(shutdownTasks);
 
             System.Diagnostics.Debug.WriteLine("Services shut down cleanly");
+        }
+        catch (OperationCanceledException)
+        {
+            System.Diagnostics.Debug.WriteLine("App shutdown timed out - forcing exit");
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Error during app exit: {ex.Message}");
         }
+    }
+
+    /// <summary>
+    /// Helper method to shutdown a service with proper error handling.
+    /// </summary>
+    private static async Task ShutdownServiceAsync(Func<Task> shutdownAction, string serviceName, System.Threading.CancellationToken ct)
+    {
+        try
+        {
+            await shutdownAction().WaitAsync(ct);
+            System.Diagnostics.Debug.WriteLine($"{serviceName} shut down successfully");
+        }
+        catch (OperationCanceledException)
+        {
+            System.Diagnostics.Debug.WriteLine($"{serviceName} shutdown timed out");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"{serviceName} shutdown failed: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Helper method to shutdown a synchronous service.
+    /// </summary>
+    private static async Task ShutdownServiceAsync(Action shutdownAction, string serviceName, System.Threading.CancellationToken ct)
+    {
+        await Task.Run(() =>
+        {
+            try
+            {
+                ct.ThrowIfCancellationRequested();
+                shutdownAction();
+                System.Diagnostics.Debug.WriteLine($"{serviceName} shut down successfully");
+            }
+            catch (OperationCanceledException)
+            {
+                System.Diagnostics.Debug.WriteLine($"{serviceName} shutdown timed out");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"{serviceName} shutdown failed: {ex.Message}");
+            }
+        }, ct);
     }
 
     /// <summary>

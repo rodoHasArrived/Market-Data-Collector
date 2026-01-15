@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
+using MarketDataCollector.Uwp.Collections;
 using MarketDataCollector.Uwp.Models;
 using MarketDataCollector.Uwp.Services;
 using Windows.Storage.Pickers;
@@ -17,6 +18,19 @@ using Microsoft.Windows.AppNotifications;
 using Microsoft.Windows.AppNotifications.Builder;
 
 namespace MarketDataCollector.Uwp.Views;
+
+/// <summary>
+/// Shared cached brushes for settings UI to avoid repeated allocations.
+/// </summary>
+internal static class SettingsBrushes
+{
+    public static readonly SolidColorBrush Green = new(Color.FromArgb(255, 72, 187, 120));
+    public static readonly SolidColorBrush Yellow = new(Color.FromArgb(255, 237, 137, 54));
+    public static readonly SolidColorBrush Red = new(Color.FromArgb(255, 245, 101, 101));
+    public static readonly SolidColorBrush Gray = new(Color.FromArgb(255, 160, 160, 160));
+    public static readonly SolidColorBrush Blue = new(Color.FromArgb(255, 102, 126, 234));
+    public static readonly SolidColorBrush Purple = new(Color.FromArgb(255, 128, 90, 213));
+}
 
 /// <summary>
 /// Enhanced settings page with notifications, config export/import, system status,
@@ -28,14 +42,7 @@ public sealed partial class SettingsPage : Page
     private readonly CredentialService _credentialService;
     private readonly OAuthRefreshService _oauthRefreshService;
     private readonly ObservableCollection<CredentialDisplayInfo> _storedCredentials = new();
-    private readonly ObservableCollection<ActivityItem> _recentActivity = new();
-
-    // Colors for status indicators
-    private static readonly SolidColorBrush GreenBrush = new(Color.FromArgb(255, 72, 187, 120));
-    private static readonly SolidColorBrush YellowBrush = new(Color.FromArgb(255, 237, 137, 54));
-    private static readonly SolidColorBrush RedBrush = new(Color.FromArgb(255, 245, 101, 101));
-    private static readonly SolidColorBrush GrayBrush = new(Color.FromArgb(255, 160, 160, 160));
-    private static readonly SolidColorBrush BlueBrush = new(Color.FromArgb(255, 102, 126, 234));
+    private readonly BoundedObservableCollection<ActivityItem> _recentActivity = new(20);
 
     public SettingsPage()
     {
@@ -628,8 +635,8 @@ public sealed partial class SettingsPage : Page
         RefreshStoredCredentials();
         UpdateSystemStatus();
 
-        // Add to activity log
-        _recentActivity.Insert(0, new ActivityItem
+        // Add to activity log using efficient Prepend
+        _recentActivity.Prepend(new ActivityItem
         {
             Icon = failCount == 0 ? "\uE73E" : "\uE7BA",
             IconColor = failCount == 0 ? GreenBrush : YellowBrush,
@@ -743,8 +750,8 @@ public sealed partial class SettingsPage : Page
             CredentialExpirationWarning.IsOpen = true;
             CredentialExpirationWarning.Message = $"{friendlyName} will expire in {FormatTimeRemaining(e.TimeRemaining)}.";
 
-            // Add to activity log
-            _recentActivity.Insert(0, new ActivityItem
+            // Add to activity log using efficient Prepend
+            _recentActivity.Prepend(new ActivityItem
             {
                 Icon = "\uE7BA",
                 IconColor = YellowBrush,
@@ -760,7 +767,8 @@ public sealed partial class SettingsPage : Page
         {
             RefreshStoredCredentials();
 
-            _recentActivity.Insert(0, new ActivityItem
+            // Add to activity log using efficient Prepend
+            _recentActivity.Prepend(new ActivityItem
             {
                 Icon = "\uE72C",
                 IconColor = GreenBrush,
@@ -779,7 +787,8 @@ public sealed partial class SettingsPage : Page
             TestResultInfoBar.Message = $"Failed to refresh {e.ProviderId} token: {e.ErrorMessage}";
             TestResultInfoBar.IsOpen = true;
 
-            _recentActivity.Insert(0, new ActivityItem
+            // Add to activity log using efficient Prepend
+            _recentActivity.Prepend(new ActivityItem
             {
                 Icon = "\uE783",
                 IconColor = RedBrush,
@@ -817,16 +826,10 @@ public sealed partial class SettingsPage : Page
 
 /// <summary>
 /// Display wrapper for credential information with UI-specific properties.
+/// Uses shared SettingsBrushes to avoid duplicate brush allocations.
 /// </summary>
 public class CredentialDisplayInfo
 {
-    private static readonly SolidColorBrush GreenBrush = new(Color.FromArgb(255, 72, 187, 120));
-    private static readonly SolidColorBrush YellowBrush = new(Color.FromArgb(255, 237, 137, 54));
-    private static readonly SolidColorBrush RedBrush = new(Color.FromArgb(255, 245, 101, 101));
-    private static readonly SolidColorBrush GrayBrush = new(Color.FromArgb(255, 160, 160, 160));
-    private static readonly SolidColorBrush BlueBrush = new(Color.FromArgb(255, 102, 126, 234));
-    private static readonly SolidColorBrush PurpleBrush = new(Color.FromArgb(255, 128, 90, 213));
-
     private readonly Models.CredentialInfo _credential;
 
     public CredentialDisplayInfo(Models.CredentialInfo credential)
@@ -842,20 +845,20 @@ public class CredentialDisplayInfo
 
     public SolidColorBrush TestStatusColor => _credential.TestStatus switch
     {
-        CredentialTestStatus.Success => GreenBrush,
-        CredentialTestStatus.Failed => RedBrush,
-        CredentialTestStatus.Expired => RedBrush,
-        CredentialTestStatus.Testing => BlueBrush,
-        _ => GrayBrush
+        CredentialTestStatus.Success => SettingsBrushes.Green,
+        CredentialTestStatus.Failed => SettingsBrushes.Red,
+        CredentialTestStatus.Expired => SettingsBrushes.Red,
+        CredentialTestStatus.Testing => SettingsBrushes.Blue,
+        _ => SettingsBrushes.Gray
     };
 
     public SolidColorBrush ExpirationColor
     {
         get
         {
-            if (_credential.IsExpired) return RedBrush;
-            if (_credential.IsExpiringSoon) return YellowBrush;
-            return GrayBrush;
+            if (_credential.IsExpired) return SettingsBrushes.Red;
+            if (_credential.IsExpiringSoon) return SettingsBrushes.Yellow;
+            return SettingsBrushes.Gray;
         }
     }
 
@@ -869,9 +872,9 @@ public class CredentialDisplayInfo
 
     public SolidColorBrush TypeBadgeColor => _credential.CredentialType switch
     {
-        CredentialType.OAuth2Token => PurpleBrush,
-        CredentialType.ApiKeyWithSecret => BlueBrush,
-        _ => GrayBrush
+        CredentialType.OAuth2Token => SettingsBrushes.Purple,
+        CredentialType.ApiKeyWithSecret => SettingsBrushes.Blue,
+        _ => SettingsBrushes.Gray
     };
 
     public Visibility TypeBadgeVisibility =>

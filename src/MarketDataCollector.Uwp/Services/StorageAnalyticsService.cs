@@ -10,7 +10,7 @@ namespace MarketDataCollector.Uwp.Services;
 /// <summary>
 /// Service for analyzing storage usage and providing analytics.
 /// </summary>
-public class StorageAnalyticsService
+public sealed class StorageAnalyticsService
 {
     private static StorageAnalyticsService? _instance;
     private static readonly object _lock = new();

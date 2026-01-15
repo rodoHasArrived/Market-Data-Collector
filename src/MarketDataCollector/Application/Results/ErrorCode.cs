@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Application.Results;
+namespace MarketDataCollector.Application.ResultTypes;
 
 /// <summary>
 /// Standardized error codes for the Market Data Collector system.

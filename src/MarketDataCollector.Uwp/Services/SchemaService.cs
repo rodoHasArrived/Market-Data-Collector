@@ -13,7 +13,7 @@ namespace MarketDataCollector.Uwp.Services;
 /// Service for generating schemas and data dictionaries (#37/72 - P0 High).
 /// Auto-generates comprehensive documentation for all event types.
 /// </summary>
-public class SchemaService
+public sealed class SchemaService
 {
     private static SchemaService? _instance;
     private static readonly object _lock = new();

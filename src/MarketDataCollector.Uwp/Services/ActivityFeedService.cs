@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Text.Json;
+using MarketDataCollector.Uwp.Collections;
 
 namespace MarketDataCollector.Uwp.Services;
 
@@ -16,7 +17,7 @@ public sealed class ActivityFeedService
     private static readonly object _lock = new();
 
     private readonly string _activityLogPath;
-    private readonly ObservableCollection<ActivityItem> _activities;
+    private readonly BoundedObservableCollection<ActivityItem> _activities;
     private readonly JsonSerializerOptions _jsonOptions;
 
     /// <summary>
@@ -39,8 +40,9 @@ public sealed class ActivityFeedService
 
     /// <summary>
     /// Gets the observable collection of activities.
+    /// Uses BoundedObservableCollection for efficient O(1) prepend operations.
     /// </summary>
-    public ObservableCollection<ActivityItem> Activities => _activities;
+    public BoundedObservableCollection<ActivityItem> Activities => _activities;
 
     /// <summary>
     /// Event raised when a new activity is added.
@@ -51,19 +53,22 @@ public sealed class ActivityFeedService
     {
         var appDir = AppContext.BaseDirectory;
         _activityLogPath = Path.Combine(appDir, "data", "_logs", ActivityLogFileName);
-        _activities = new ObservableCollection<ActivityItem>();
+        _activities = new BoundedObservableCollection<ActivityItem>(MaxActivities);
         _jsonOptions = new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             WriteIndented = true
         };
 
-        // Load initial activities
-        _ = LoadActivitiesAsync();
+        // Load initial activities with proper exception handling
+        _ = LoadActivitiesAsync().ContinueWith(
+            t => System.Diagnostics.Debug.WriteLine($"Failed to load activities: {t.Exception?.InnerException?.Message}"),
+            TaskContinuationOptions.OnlyOnFaulted);
     }
 
     /// <summary>
     /// Adds an activity item directly (for ViewModel convenience).
+    /// Uses efficient Prepend operation - O(1) with automatic capacity management.
     /// </summary>
     public void AddActivity(ActivityItem activity)
     {
@@ -73,24 +78,21 @@ public sealed class ActivityFeedService
             activity.Timestamp = DateTime.UtcNow;
         }
 
-        // Add to beginning of collection
-        _activities.Insert(0, activity);
-
-        // Trim to max size
-        while (_activities.Count > MaxActivities)
-        {
-            _activities.RemoveAt(_activities.Count - 1);
-        }
+        // Prepend to collection - automatically handles capacity limit
+        _activities.Prepend(activity);
 
         // Raise event
         ActivityAdded?.Invoke(this, activity);
 
-        // Persist to disk asynchronously
-        _ = SaveActivitiesAsync();
+        // Persist to disk asynchronously with proper exception handling
+        _ = SaveActivitiesAsync().ContinueWith(
+            t => System.Diagnostics.Debug.WriteLine($"Failed to save activities: {t.Exception?.InnerException?.Message}"),
+            TaskContinuationOptions.OnlyOnFaulted);
     }
 
     /// <summary>
     /// Logs a new activity event.
+    /// Uses efficient Prepend operation - O(1) with automatic capacity management.
     /// </summary>
     public async Task LogActivityAsync(
         ActivityType type,
@@ -112,14 +114,8 @@ public sealed class ActivityFeedService
             Metadata = metadata
         };
 
-        // Add to beginning of collection
-        _activities.Insert(0, activity);
-
-        // Trim to max size
-        while (_activities.Count > MaxActivities)
-        {
-            _activities.RemoveAt(_activities.Count - 1);
-        }
+        // Prepend to collection - automatically handles capacity limit
+        _activities.Prepend(activity);
 
         // Raise event
         ActivityAdded?.Invoke(this, activity);

@@ -1,6 +1,5 @@
-/// Entry point for running F# tests.
+/// Entry point module for F# tests - required for xUnit test discovery.
 module MarketDataCollector.FSharp.Tests.Program
 
-[<EntryPoint>]
-let main args =
-    0
+// This module is intentionally minimal - xUnit discovers tests via attributes.
+// The test SDK handles execution.

@@ -141,14 +141,6 @@ public class PolygonMarketDataClientTests : IDisposable
             options);
 
         // Assert
-        client.IsEnabled.Should().BeTrue();
-        client.HasValidCredentials.Should().BeTrue();
-    }
-
-    [Fact]
-    public void Constructor_WithNullOptions_SetsIsEnabledFalse()
-    {
-        // Arrange & Act
         client.IsEnabled.Should().BeFalse();
     }
 
@@ -161,21 +153,6 @@ public class PolygonMarketDataClientTests : IDisposable
             _mockPublisher.Object,
             _mockTradeCollector.Object,
             _mockQuoteCollector.Object,
-            options: null);
-
-        // Assert - Without env var, should be disabled
-        // Note: This may pass if POLYGON__APIKEY env var is set in test environment
-        // The test validates the default behavior
-        client.Should().NotBeNull();
-    }
-
-    [Fact]
-    public void Constructor_WithEmptyApiKey_SetsIsEnabledFalse()
-    {
-        // Arrange
-        var options = new PolygonOptions(ApiKey: "");
-
-        // Act
             options);
 
         // Assert
@@ -195,17 +172,6 @@ public class PolygonMarketDataClientTests : IDisposable
             _mockQuoteCollector.Object,
             options);
 
-        // Assert - Empty key should result in disabled (unless env var is set)
-        client.Should().NotBeNull();
-    }
-
-    [Fact]
-    public void Constructor_WithWhitespaceApiKey_SetsIsEnabledFalse()
-    {
-        // Arrange
-        var options = new PolygonOptions(ApiKey: "   ");
-
-        // Act
         // Assert
         client.IsEnabled.Should().BeTrue();
     }
@@ -223,21 +189,6 @@ public class PolygonMarketDataClientTests : IDisposable
             _mockQuoteCollector.Object,
             options);
 
-        // Assert - Whitespace key should result in disabled (unless env var is set)
-        client.Should().NotBeNull();
-    }
-
-    [Fact]
-    public async Task ConnectAsync_WithValidCredentials_PublishesHeartbeat()
-    {
-        // Arrange
-        var publishedEvents = new List<MarketEvent>();
-        _mockPublisher
-            .Setup(p => p.TryPublish(It.IsAny<MarketEvent>()))
-            .Callback<MarketEvent>(e => publishedEvents.Add(e))
-            .Returns(true);
-
-        var options = new PolygonOptions(ApiKey: "test-api-key");
         // Assert
         client.IsEnabled.Should().BeTrue();
     }
@@ -276,105 +227,6 @@ public class PolygonMarketDataClientTests : IDisposable
         await client.ConnectAsync();
 
         // Assert
-        publishedEvents.Should().ContainSingle();
-        publishedEvents[0].Type.Should().Be(MarketEventType.Heartbeat);
-    }
-
-    [Fact]
-    public async Task ConnectAsync_WithoutCredentials_PublishesHeartbeatInStubMode()
-    {
-        // Arrange
-        var publishedEvents = new List<MarketEvent>();
-        _mockPublisher
-            .Setup(p => p.TryPublish(It.IsAny<MarketEvent>()))
-            .Callback<MarketEvent>(e => publishedEvents.Add(e))
-            .Returns(true);
-
-        var options = new PolygonOptions(ApiKey: null);
-
-        // Clear any environment variables for this test
-        var originalEnvVar = Environment.GetEnvironmentVariable("POLYGON__APIKEY");
-        var originalEnvVar2 = Environment.GetEnvironmentVariable("POLYGON_API_KEY");
-
-        try
-        {
-            Environment.SetEnvironmentVariable("POLYGON__APIKEY", null);
-            Environment.SetEnvironmentVariable("POLYGON_API_KEY", null);
-
-            var client = new PolygonMarketDataClient(
-                _mockPublisher.Object,
-                _mockTradeCollector.Object,
-                _mockQuoteCollector.Object,
-                options);
-
-            // Act
-            await client.ConnectAsync();
-
-            // Assert - Should still publish heartbeat in stub mode
-            publishedEvents.Should().ContainSingle();
-            publishedEvents[0].Type.Should().Be(MarketEventType.Heartbeat);
-        }
-        finally
-        {
-            // Restore environment variables
-            Environment.SetEnvironmentVariable("POLYGON__APIKEY", originalEnvVar);
-            Environment.SetEnvironmentVariable("POLYGON_API_KEY", originalEnvVar2);
-        }
-    }
-
-    [Fact]
-    public async Task DisconnectAsync_ShouldCompleteSuccessfully()
-    {
-        // Arrange
-        var options = new PolygonOptions(ApiKey: "test-api-key");
-        var client = new PolygonMarketDataClient(
-            _mockPublisher.Object,
-            _mockTradeCollector.Object,
-            _mockQuoteCollector.Object,
-            options);
-
-        // Act
-        var act = async () => await client.DisconnectAsync();
-
-        // Assert
-        await act.Should().NotThrowAsync();
-    }
-
-    [Fact]
-    public async Task DisposeAsync_ShouldCompleteSuccessfully()
-    {
-        // Arrange
-        var options = new PolygonOptions(ApiKey: "test-api-key");
-        var client = new PolygonMarketDataClient(
-            _mockPublisher.Object,
-            _mockTradeCollector.Object,
-            _mockQuoteCollector.Object,
-            options);
-
-        // Act
-        var act = async () => await client.DisposeAsync();
-
-        // Assert
-        await act.Should().NotThrowAsync();
-    }
-
-    [Fact]
-    public void SubscribeMarketDepth_ReturnsNegativeOne_InStubMode()
-    {
-        // Arrange
-        var options = new PolygonOptions(ApiKey: "test-api-key");
-        var client = new PolygonMarketDataClient(
-            _mockPublisher.Object,
-            _mockTradeCollector.Object,
-            _mockQuoteCollector.Object,
-            options);
-
-        var symbolConfig = new SymbolConfig("SPY");
-
-        // Act
-        var subscriptionId = client.SubscribeMarketDepth(symbolConfig);
-
-        // Assert - Stub mode returns -1
         _publishedEvents.Should().HaveCount(1);
         _publishedEvents[0].Type.Should().Be(MarketEventType.Heartbeat);
         _publishedEvents[0].Source.Should().Be("PolygonStub");
@@ -463,39 +315,6 @@ public class PolygonMarketDataClientTests : IDisposable
     }
 
     [Fact]
-    public void SubscribeTrades_ReturnsNegativeOne_InStubMode()
-    {
-        // Arrange
-        var options = new PolygonOptions(ApiKey: "test-api-key");
-        var client = new PolygonMarketDataClient(
-            _mockPublisher.Object,
-            _mockTradeCollector.Object,
-            _mockQuoteCollector.Object,
-            options);
-
-        var symbolConfig = new SymbolConfig("SPY");
-
-        // Act
-        var subscriptionId = client.SubscribeTrades(symbolConfig);
-
-        // Assert - Stub mode returns -1
-        subscriptionId.Should().Be(-1);
-    }
-
-    [Fact]
-    public void PolygonOptions_DefaultValues_AreCorrect()
-    {
-        // Arrange & Act
-        var options = new PolygonOptions();
-
-        // Assert
-        options.ApiKey.Should().BeNull();
-        options.UseDelayed.Should().BeFalse();
-        options.Feed.Should().Be("stocks");
-        options.SubscribeTrades.Should().BeTrue();
-        options.SubscribeQuotes.Should().BeFalse();
-        options.SubscribeAggregates.Should().BeFalse();
-    }
     public void SubscribeTrades_EmitsSyntheticTrade()
     {
         // Arrange

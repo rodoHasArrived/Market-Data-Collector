@@ -48,6 +48,12 @@ make help        # Show all available commands
 make doctor      # Run full diagnostic check
 make diagnose    # Build diagnostics
 make metrics     # Show build metrics
+
+# First-Time Setup (Auto-Configuration)
+dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --wizard           # Interactive configuration wizard
+dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --auto-config     # Quick auto-configuration from env vars
+dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --detect-providers # Show available providers
+dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --validate-credentials # Validate API credentials
 ```
 
 ---
@@ -57,7 +63,7 @@ make metrics     # Show build metrics
 ```
 Market-Data-Collector/
 ├── .github/                          # GitHub configuration
-│   ├── workflows/                    # CI/CD pipelines (13+ workflows)
+│   ├── workflows/                    # CI/CD pipelines (16 workflows)
 │   │   ├── dotnet-desktop.yml        # Main build/test/publish
 │   │   ├── benchmark.yml             # Performance benchmarks
 │   │   ├── code-quality.yml          # Linting and analysis
@@ -390,6 +396,18 @@ _logger.LogInformation($"Received {bars.Count} bars for {symbol}");
 | `AlpacaMarketDataClient` | `src/MarketDataCollector/Infrastructure/Providers/Alpaca/` | Alpaca WebSocket client |
 | `CompositeHistoricalDataProvider` | `src/MarketDataCollector/Infrastructure/Providers/Backfill/` | Multi-provider backfill with fallback |
 
+### Application Services (Onboarding & Diagnostics)
+| Service | Location | Purpose |
+|---------|----------|---------|
+| `AutoConfigurationService` | `src/MarketDataCollector/Application/Services/` | Auto-detect providers from environment |
+| `ConfigurationWizard` | `src/MarketDataCollector/Application/Services/` | Interactive setup wizard |
+| `ConnectivityTestService` | `src/MarketDataCollector/Application/Services/` | Test provider connectivity |
+| `CredentialValidationService` | `src/MarketDataCollector/Application/Services/` | Validate API credentials |
+| `FirstRunDetector` | `src/MarketDataCollector/Application/Services/` | Detect first-run and guide onboarding |
+| `FriendlyErrorFormatter` | `src/MarketDataCollector/Application/Services/` | User-friendly error messages |
+| `ProgressDisplayService` | `src/MarketDataCollector/Application/Services/` | Display progress of operations |
+| `StartupSummary` | `src/MarketDataCollector/Application/Services/` | Show startup configuration summary |
+
 ---
 
 ## Storage Architecture
@@ -471,7 +489,7 @@ make run-backfill SYMBOLS=SPY,AAPL
 ## CI/CD
 
 ### GitHub Actions Workflows
-Located at `.github/workflows/`:
+Located at `.github/workflows/` (16 total):
 
 | Workflow | Trigger | Purpose |
 |----------|---------|---------|
@@ -484,6 +502,13 @@ Located at `.github/workflows/`:
 | `test-matrix.yml` | Push/PR | Cross-platform testing |
 | `dependency-review.yml` | PR | Dependency vulnerability check |
 | `scheduled-maintenance.yml` | Cron | Cleanup and maintenance |
+| `codeql-analysis.yml` | Push/PR + Weekly | CodeQL security analysis |
+| `build-observability.yml` | Push/PR | Build metrics capture |
+| `label-management.yml` | Issue/PR activity | Auto-labeling |
+| `stale.yml` | Daily | Issue/PR lifecycle management |
+| `desktop-app.yml` | Push/PR | Desktop app build/test |
+| `docs-auto-update.yml` | Push | Auto-update docs on changes |
+| `docs-structure-sync.yml` | Push | Sync doc structure with code |
 
 ### Build Requirements
 - .NET 9.0 SDK
@@ -605,4 +630,4 @@ dotnet restore /p:EnableWindowsTargeting=true -v diag
 
 ---
 
-*Last Updated: 2026-01-09*
+*Last Updated: 2026-01-14*

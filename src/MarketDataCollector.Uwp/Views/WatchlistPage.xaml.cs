@@ -2,8 +2,10 @@ using System.Collections.ObjectModel;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using MarketDataCollector.Uwp.Services;
+using Windows.ApplicationModel.DataTransfer;
 
 namespace MarketDataCollector.Uwp.Views;
 
@@ -12,7 +14,15 @@ namespace MarketDataCollector.Uwp.Views;
 /// </summary>
 public sealed partial class WatchlistPage : Page
 {
+    // Static cached brushes to avoid repeated allocations
+    private static readonly SolidColorBrush LimeGreenBrush = new(Microsoft.UI.Colors.LimeGreen);
+    private static readonly SolidColorBrush GrayBrush = new(Microsoft.UI.Colors.Gray);
+    private static readonly SolidColorBrush GoldBrush = new(Microsoft.UI.Colors.Gold);
+    private static readonly SolidColorBrush OrangeBrush = new(Microsoft.UI.Colors.Orange);
+    private static readonly SolidColorBrush RedBrush = new(Microsoft.UI.Colors.Red);
+
     private readonly WatchlistService _watchlistService;
+    private readonly ContextMenuService _contextMenuService;
     private readonly ObservableCollection<WatchlistDisplayItem> _favorites;
     private readonly ObservableCollection<WatchlistDisplayItem> _allSymbols;
     private readonly DispatcherTimer _refreshTimer;
@@ -21,6 +31,7 @@ public sealed partial class WatchlistPage : Page
     {
         this.InitializeComponent();
         _watchlistService = WatchlistService.Instance;
+        _contextMenuService = ContextMenuService.Instance;
         _favorites = new ObservableCollection<WatchlistDisplayItem>();
         _allSymbols = new ObservableCollection<WatchlistDisplayItem>();
 
@@ -49,6 +60,8 @@ public sealed partial class WatchlistPage : Page
     private void WatchlistPage_Unloaded(object sender, RoutedEventArgs e)
     {
         _refreshTimer.Stop();
+        // Unsubscribe from service events to prevent memory leaks
+        _watchlistService.WatchlistChanged -= WatchlistService_WatchlistChanged;
     }
 
     private void RefreshTimer_Tick(object? sender, object e)
@@ -87,7 +100,7 @@ public sealed partial class WatchlistPage : Page
         EmptyState.Visibility = _allSymbols.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
     }
 
-    private static WatchlistDisplayItem CreateDisplayItem(WatchlistItem item)
+    private WatchlistDisplayItem CreateDisplayItem(WatchlistItem item)
     {
         var isStreaming = item.Status?.IsStreaming ?? false;
         var eventRate = item.Status?.EventRate ?? 0;
@@ -99,23 +112,15 @@ public sealed partial class WatchlistPage : Page
             Notes = item.Notes ?? string.Empty,
             IsFavorite = item.IsFavorite,
             FavoriteIcon = item.IsFavorite ? "\uE735" : "\uE734",
-            FavoriteColor = item.IsFavorite
-                ? new SolidColorBrush(Microsoft.UI.Colors.Gold)
-                : new SolidColorBrush(Microsoft.UI.Colors.Gray),
+            FavoriteColor = item.IsFavorite ? GoldBrush : GrayBrush,
             IsStreaming = isStreaming,
             StatusText = isStreaming ? "Streaming" : "Idle",
-            StatusColor = isStreaming
-                ? new SolidColorBrush(Microsoft.UI.Colors.LimeGreen)
-                : new SolidColorBrush(Microsoft.UI.Colors.Gray),
+            StatusColor = isStreaming ? LimeGreenBrush : GrayBrush,
             EventRateText = $"{eventRate:N1}",
             EventCount = item.Status?.EventCount ?? 0,
             HealthScore = healthScore,
             HealthText = $"{healthScore:N0}%",
-            HealthColor = healthScore >= 95
-                ? new SolidColorBrush(Microsoft.UI.Colors.LimeGreen)
-                : healthScore >= 80
-                    ? new SolidColorBrush(Microsoft.UI.Colors.Orange)
-                    : new SolidColorBrush(Microsoft.UI.Colors.Red),
+            HealthColor = healthScore >= 95 ? LimeGreenBrush : healthScore >= 80 ? OrangeBrush : RedBrush,
             HealthIcon = healthScore >= 95 ? "\uE73E" : healthScore >= 80 ? "\uE7BA" : "\uE783",
             LastEventText = item.Status?.LastEventTime?.ToString("HH:mm:ss") ?? "No data",
             AddedAt = item.AddedAt
@@ -133,9 +138,8 @@ public sealed partial class WatchlistPage : Page
                 var isStreaming = random.Next(100) < 70; // 70% chance of streaming
                 item.IsStreaming = isStreaming;
                 item.StatusText = isStreaming ? "Streaming" : "Idle";
-                item.StatusColor = isStreaming
-                    ? new SolidColorBrush(Microsoft.UI.Colors.LimeGreen)
-                    : new SolidColorBrush(Microsoft.UI.Colors.Gray);
+                // Use cached brushes to avoid allocations on every tick
+                item.StatusColor = isStreaming ? LimeGreenBrush : GrayBrush;
 
                 if (isStreaming)
                 {
@@ -309,6 +313,125 @@ public sealed partial class WatchlistPage : Page
         };
         timer.Start();
     }
+
+    #region Context Menu
+
+    private void SymbolItem_RightTapped(object sender, RightTappedRoutedEventArgs e)
+    {
+        string? symbol = null;
+        bool isFavorite = false;
+
+        // Try to get symbol from the element's Tag or DataContext
+        if (sender is FrameworkElement element)
+        {
+            if (element.Tag is string tagSymbol)
+            {
+                symbol = tagSymbol;
+            }
+            else if (element.DataContext is WatchlistDisplayItem item)
+            {
+                symbol = item.Symbol;
+                isFavorite = item.IsFavorite;
+            }
+        }
+
+        if (string.IsNullOrEmpty(symbol)) return;
+
+        // Find the display item to get favorite status
+        var displayItem = _allSymbols.FirstOrDefault(s => s.Symbol == symbol);
+        if (displayItem != null)
+        {
+            isFavorite = displayItem.IsFavorite;
+        }
+
+        var menu = _contextMenuService.CreateSymbolContextMenu(
+            symbol,
+            isFavorite,
+            onToggleFavorite: async (s) =>
+            {
+                await _watchlistService.ToggleFavoriteAsync(s);
+                ShowInfoBar("Updated", $"{s} favorite status changed.", InfoBarSeverity.Success);
+            },
+            onViewDetails: async (s) =>
+            {
+                await Task.CompletedTask;
+                Frame.Navigate(typeof(SymbolStoragePage), s);
+            },
+            onViewLiveData: async (s) =>
+            {
+                await Task.CompletedTask;
+                Frame.Navigate(typeof(LiveDataViewerPage), s);
+            },
+            onRunBackfill: async (s) =>
+            {
+                await Task.CompletedTask;
+                Frame.Navigate(typeof(BackfillPage), s);
+            },
+            onCopySymbol: async (s) =>
+            {
+                await Task.CompletedTask;
+                var dataPackage = new DataPackage();
+                dataPackage.SetText(s);
+                Clipboard.SetContent(dataPackage);
+                ShowInfoBar("Copied", $"{s} copied to clipboard.", InfoBarSeverity.Success);
+            },
+            onRemove: async (s) =>
+            {
+                var removed = await _watchlistService.RemoveSymbolAsync(s);
+                if (removed)
+                {
+                    ShowInfoBar("Removed", $"{s} removed from watchlist.", InfoBarSeverity.Informational);
+                }
+            },
+            onAddNote: async (s) =>
+            {
+                await ShowAddNoteDialogAsync(s);
+            });
+
+        // Show the menu at the pointer position
+        if (sender is UIElement uiElement)
+        {
+            menu.ShowAt(uiElement, e.GetPosition(uiElement));
+        }
+
+        e.Handled = true;
+    }
+
+    private async Task ShowAddNoteDialogAsync(string symbol)
+    {
+        var noteBox = new TextBox
+        {
+            PlaceholderText = "Enter a note for this symbol...",
+            AcceptsReturn = true,
+            TextWrapping = TextWrapping.Wrap,
+            Height = 100
+        };
+
+        // Get existing note
+        var item = _allSymbols.FirstOrDefault(s => s.Symbol == symbol);
+        if (item != null)
+        {
+            noteBox.Text = item.Notes;
+        }
+
+        var dialog = new ContentDialog
+        {
+            Title = $"Note for {symbol}",
+            Content = noteBox,
+            PrimaryButtonText = "Save",
+            CloseButtonText = "Cancel",
+            XamlRoot = this.XamlRoot
+        };
+
+        var result = await dialog.ShowAsync();
+        if (result == ContentDialogResult.Primary)
+        {
+            await _watchlistService.UpdateNoteAsync(symbol, noteBox.Text);
+            ShowInfoBar("Saved", "Note saved successfully.", InfoBarSeverity.Success);
+        }
+    }
+
+    #endregion
 }
 
 /// <summary>

@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Application.Results;
+namespace MarketDataCollector.Application.ResultTypes;
 
 /// <summary>
 /// Represents a standardized error from any operation in the system.

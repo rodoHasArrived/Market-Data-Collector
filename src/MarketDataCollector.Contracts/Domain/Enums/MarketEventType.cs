@@ -63,5 +63,10 @@ public enum MarketEventType
     /// <summary>
     /// Historical auction data.
     /// </summary>
-    HistoricalAuction = 11
+    HistoricalAuction = 11,
+
+    /// <summary>
+    /// Real-time aggregate bar (OHLCV) from streaming providers.
+    /// </summary>
+    AggregateBar = 12
 }

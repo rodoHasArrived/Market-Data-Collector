@@ -8,6 +8,8 @@ using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Application.Subscriptions;
 using MarketDataCollector.Application.Pipeline;
 using MarketDataCollector.Application.Config.Credentials;
+using MarketDataCollector.Application.Services;
+using MarketDataCollector.Application.Subscriptions.Services;
 using MarketDataCollector.Application.Testing;
 using MarketDataCollector.Application.UI;
 using MarketDataCollector.Domain.Collectors;
@@ -70,6 +72,307 @@ internal static class Program
         if (args.Any(a => a.Equals("--help", StringComparison.OrdinalIgnoreCase) || a.Equals("-h", StringComparison.OrdinalIgnoreCase)))
         {
             ShowHelp();
+            return;
+        }
+
+        // Wizard Mode - Interactive configuration wizard
+        if (args.Any(a => a.Equals("--wizard", StringComparison.OrdinalIgnoreCase)))
+        {
+            log.Information("Starting configuration wizard...");
+            var wizard = new ConfigurationWizard();
+            using var cts = new CancellationTokenSource();
+            Console.CancelKeyPress += (_, e) => { e.Cancel = true; cts.Cancel(); };
+
+            var result = await wizard.RunAsync(cts.Token);
+            Environment.Exit(result.Success ? 0 : 1);
+            return;
+        }
+
+        // Auto-Config Mode - Automatic configuration based on environment
+        if (args.Any(a => a.Equals("--auto-config", StringComparison.OrdinalIgnoreCase)))
+        {
+            log.Information("Running auto-configuration...");
+            var wizard = new ConfigurationWizard();
+            var result = wizard.RunQuickSetup();
+            Environment.Exit(result.Success ? 0 : 1);
+            return;
+        }
+
+        // Detect Providers Mode - Show available providers
+        if (args.Any(a => a.Equals("--detect-providers", StringComparison.OrdinalIgnoreCase)))
+        {
+            var autoConfig = new AutoConfigurationService();
+            var providers = autoConfig.DetectAvailableProviders();
+
+            Console.WriteLine();
+            Console.WriteLine("Detected Data Providers:");
+            Console.WriteLine("-".PadRight(60, '-'));
+
+            foreach (var provider in providers)
+            {
+                var status = provider.HasCredentials ? "[OK]" : "[--]";
+                Console.WriteLine($"  {status} {provider.DisplayName,-25} Priority: {provider.SuggestedPriority}");
+                Console.WriteLine($"        Capabilities: {string.Join(", ", provider.Capabilities)}");
+
+                if (!provider.HasCredentials && provider.MissingCredentials.Length > 0)
+                {
+                    Console.WriteLine($"        Missing: {string.Join(", ", provider.MissingCredentials)}");
+                }
+            }
+
+            var configured = providers.Count(p => p.HasCredentials);
+            Console.WriteLine();
+            Console.WriteLine($"  {configured}/{providers.Count} providers configured");
+
+            if (configured == 0)
+            {
+                Console.WriteLine();
+                Console.WriteLine("  To configure providers, set environment variables:");
+                Console.WriteLine("    export ALPACA_KEY_ID=your-key-id");
+                Console.WriteLine("    export ALPACA_SECRET_KEY=your-secret-key");
+                Console.WriteLine();
+                Console.WriteLine("  Or run the configuration wizard:");
+                Console.WriteLine("    MarketDataCollector --wizard");
+            }
+            Console.WriteLine();
+            return;
+        }
+
+        // Validate Credentials Mode - Test API credentials
+        if (args.Any(a => a.Equals("--validate-credentials", StringComparison.OrdinalIgnoreCase)))
+        {
+            log.Information("Validating API credentials...");
+
+            await using var validator = new CredentialValidationService();
+            var validationResult = await validator.ValidateAllAsync(cfg);
+            validator.PrintSummary(validationResult);
+
+            Environment.Exit(validationResult.AllValid ? 0 : 1);
+            return;
+        }
+
+        // Generate Config Mode - Generate configuration template
+        if (args.Any(a => a.Equals("--generate-config", StringComparison.OrdinalIgnoreCase)))
+        {
+            var templateName = GetArgValue(args, "--template") ?? "minimal";
+            var outputPath = GetArgValue(args, "--output") ?? "config/appsettings.generated.json";
+
+            var generator = new ConfigTemplateGenerator();
+            var template = generator.GetTemplate(templateName);
+
+            if (template == null)
+            {
+                Console.Error.WriteLine($"Unknown template: {templateName}");
+                Console.Error.WriteLine("Available templates: minimal, full, alpaca, backfill, production, docker");
+                Environment.Exit(1);
+                return;
+            }
+
+            // Ensure directory exists
+            var dir = Path.GetDirectoryName(outputPath);
+            if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+            {
+                Directory.CreateDirectory(dir);
+            }
+
+            File.WriteAllText(outputPath, template.Json);
+            Console.WriteLine($"Generated {template.Name} configuration template: {outputPath}");
+
+            if (template.EnvironmentVariables?.Count > 0)
+            {
+                Console.WriteLine();
+                Console.WriteLine("Required environment variables:");
+                foreach (var (key, desc) in template.EnvironmentVariables)
+                {
+                    Console.WriteLine($"  {key}: {desc}");
+                }
+            }
+            return;
+        }
+
+        // Quick Check Mode - Fast health diagnostics
+        if (args.Any(a => a.Equals("--quick-check", StringComparison.OrdinalIgnoreCase)))
+        {
+            log.Information("Running quick configuration check...");
+
+            var summary = new StartupSummary();
+            var result = summary.PerformQuickCheck(cfg);
+            summary.DisplayQuickCheck(result);
+
+            Environment.Exit(result.Success ? 0 : 1);
+            return;
+        }
+
+        // Test Connectivity Mode - Test provider connections
+        if (args.Any(a => a.Equals("--test-connectivity", StringComparison.OrdinalIgnoreCase)))
+        {
+            log.Information("Testing provider connectivity...");
+
+            await using var tester = new ConnectivityTestService();
+            var result = await tester.TestAllAsync(cfg);
+            tester.DisplaySummary(result);
+
+            Environment.Exit(result.AllReachable ? 0 : 1);
+            return;
+        }
+
+        // Show Error Codes Mode - Display error code reference
+        if (args.Any(a => a.Equals("--error-codes", StringComparison.OrdinalIgnoreCase)))
+        {
+            FriendlyErrorFormatter.DisplayErrorCodeReference();
+            return;
+        }
+
+        // Show Summary Mode - Display configuration summary
+        if (args.Any(a => a.Equals("--show-config", StringComparison.OrdinalIgnoreCase)))
+        {
+            var summary = new StartupSummary();
+            summary.Display(cfg, cfgPath, args);
+            return;
+        }
+
+        // Symbol Management Commands
+        var symbolManagementService = new SymbolManagementService(
+            new ConfigStore(cfgPath),
+            cfg.DataRoot,
+            log
+        );
+
+        // List all symbols (monitored + archived)
+        if (args.Any(a => a.Equals("--symbols", StringComparison.OrdinalIgnoreCase)))
+        {
+            await symbolManagementService.DisplayAllSymbolsAsync();
+            return;
+        }
+
+        // List monitored symbols only
+        if (args.Any(a => a.Equals("--symbols-monitored", StringComparison.OrdinalIgnoreCase)))
+        {
+            var result = symbolManagementService.GetMonitoredSymbols();
+            symbolManagementService.DisplayMonitoredSymbols(result);
+            return;
+        }
+
+        // List archived symbols only
+        if (args.Any(a => a.Equals("--symbols-archived", StringComparison.OrdinalIgnoreCase)))
+        {
+            var result = await symbolManagementService.GetArchivedSymbolsAsync();
+            symbolManagementService.DisplayArchivedSymbols(result);
+            return;
+        }
+
+        // Add symbols
+        if (args.Any(a => a.Equals("--symbols-add", StringComparison.OrdinalIgnoreCase)))
+        {
+            var symbolsArg = GetArgValue(args, "--symbols-add");
+            if (string.IsNullOrWhiteSpace(symbolsArg))
+            {
+                Console.Error.WriteLine("Error: --symbols-add requires a comma-separated list of symbols");
+                Console.Error.WriteLine("Example: --symbols-add AAPL,MSFT,GOOGL");
+                Environment.Exit(1);
+                return;
+            }
+
+            var symbolsToAdd = symbolsArg.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            var options = new SymbolAddOptions(
+                SubscribeTrades: !args.Any(a => a.Equals("--no-trades", StringComparison.OrdinalIgnoreCase)),
+                SubscribeDepth: !args.Any(a => a.Equals("--no-depth", StringComparison.OrdinalIgnoreCase)),
+                DepthLevels: int.TryParse(GetArgValue(args, "--depth-levels"), out var levels) ? levels : 10,
+                UpdateExisting: args.Any(a => a.Equals("--update", StringComparison.OrdinalIgnoreCase))
+            );
+
+            var result = await symbolManagementService.AddSymbolsAsync(symbolsToAdd, options);
+            Console.WriteLine();
+            Console.WriteLine(result.Success ? "Symbol Addition Result" : "Symbol Addition Failed");
+            Console.WriteLine(new string('=', 50));
+            Console.WriteLine($"  {result.Message}");
+            if (result.AffectedSymbols.Length > 0)
+            {
+                Console.WriteLine($"  Symbols: {string.Join(", ", result.AffectedSymbols)}");
+            }
+            Console.WriteLine();
+
+            Environment.Exit(result.Success ? 0 : 1);
+            return;
+        }
+
+        // Remove symbols
+        if (args.Any(a => a.Equals("--symbols-remove", StringComparison.OrdinalIgnoreCase)))
+        {
+            var symbolsArg = GetArgValue(args, "--symbols-remove");
+            if (string.IsNullOrWhiteSpace(symbolsArg))
+            {
+                Console.Error.WriteLine("Error: --symbols-remove requires a comma-separated list of symbols");
+                Console.Error.WriteLine("Example: --symbols-remove AAPL,MSFT");
+                Environment.Exit(1);
+                return;
+            }
+
+            var symbolsToRemove = symbolsArg.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            var result = await symbolManagementService.RemoveSymbolsAsync(symbolsToRemove);
+
+            Console.WriteLine();
+            Console.WriteLine(result.Success ? "Symbol Removal Result" : "Symbol Removal Failed");
+            Console.WriteLine(new string('=', 50));
+            Console.WriteLine($"  {result.Message}");
+            if (result.AffectedSymbols.Length > 0)
+            {
+                Console.WriteLine($"  Removed: {string.Join(", ", result.AffectedSymbols)}");
+            }
+            Console.WriteLine();
+
+            Environment.Exit(result.Success ? 0 : 1);
+            return;
+        }
+
+        // Check status of a specific symbol
+        if (args.Any(a => a.Equals("--symbol-status", StringComparison.OrdinalIgnoreCase)))
+        {
+            var symbolArg = GetArgValue(args, "--symbol-status");
+            if (string.IsNullOrWhiteSpace(symbolArg))
+            {
+                Console.Error.WriteLine("Error: --symbol-status requires a symbol");
+                Console.Error.WriteLine("Example: --symbol-status AAPL");
+                Environment.Exit(1);
+                return;
+            }
+
+            var status = await symbolManagementService.GetSymbolStatusAsync(symbolArg);
+
+            Console.WriteLine();
+            Console.WriteLine($"Symbol Status: {status.Symbol}");
+            Console.WriteLine(new string('=', 50));
+            Console.WriteLine($"  Monitored: {(status.IsMonitored ? "Yes" : "No")}");
+            Console.WriteLine($"  Has Archived Data: {(status.HasArchivedData ? "Yes" : "No")}");
+
+            if (status.MonitoredConfig != null)
+            {
+                Console.WriteLine();
+                Console.WriteLine("  Monitoring Configuration:");
+                Console.WriteLine($"    Subscribe Trades: {status.MonitoredConfig.SubscribeTrades}");
+                Console.WriteLine($"    Subscribe Depth: {status.MonitoredConfig.SubscribeDepth}");
+                Console.WriteLine($"    Depth Levels: {status.MonitoredConfig.DepthLevels}");
+                Console.WriteLine($"    Security Type: {status.MonitoredConfig.SecurityType}");
+                Console.WriteLine($"    Exchange: {status.MonitoredConfig.Exchange}");
+            }
+
+            if (status.ArchivedInfo != null)
+            {
+                Console.WriteLine();
+                Console.WriteLine("  Archived Data:");
+                Console.WriteLine($"    Files: {status.ArchivedInfo.FileCount}");
+                Console.WriteLine($"    Size: {FormatBytes(status.ArchivedInfo.TotalSizeBytes)}");
+                if (status.ArchivedInfo.OldestData.HasValue && status.ArchivedInfo.NewestData.HasValue)
+                {
+                    Console.WriteLine($"    Date Range: {status.ArchivedInfo.OldestData:yyyy-MM-dd} to {status.ArchivedInfo.NewestData:yyyy-MM-dd}");
+                }
+                if (status.ArchivedInfo.DataTypes.Length > 0)
+                {
+                    Console.WriteLine($"    Data Types: {string.Join(", ", status.ArchivedInfo.DataTypes)}");
+                }
+            }
+
+            Console.WriteLine();
             return;
         }
 
@@ -496,6 +799,33 @@ MODES:
     --dry-run               Comprehensive validation without starting (QW-93)
     --help, -h              Show this help message
 
+AUTO-CONFIGURATION (First-time setup):
+    --wizard                Interactive configuration wizard (recommended for new users)
+    --auto-config           Quick auto-configuration based on environment variables
+    --detect-providers      Show available data providers and their status
+    --validate-credentials  Validate configured API credentials
+    --generate-config       Generate a configuration template
+
+DIAGNOSTICS & TROUBLESHOOTING:
+    --quick-check           Fast configuration health check
+    --test-connectivity     Test connectivity to all configured providers
+    --show-config           Display current configuration summary
+    --error-codes           Show error code reference guide
+
+SYMBOL MANAGEMENT:
+    --symbols               Show all symbols (monitored + archived)
+    --symbols-monitored     List symbols currently configured for monitoring
+    --symbols-archived      List symbols with archived data files
+    --symbols-add <list>    Add symbols to configuration (comma-separated)
+    --symbols-remove <list> Remove symbols from configuration
+    --symbol-status <sym>   Show detailed status for a specific symbol
+
+SYMBOL OPTIONS (use with --symbols-add):
+    --no-trades             Don't subscribe to trade data
+    --no-depth              Don't subscribe to depth/L2 data
+    --depth-levels <n>      Number of depth levels (default: 10)
+    --update                Update existing symbols instead of skipping
+
 OPTIONS:
     --config <path>         Path to configuration file (default: appsettings.json)
     --http-port <port>      HTTP server port (default: 8080)
@@ -533,6 +863,11 @@ IMPORT OPTIONS:
     --import-destination <path>     Destination directory (default: data root)
     --skip-validation               Skip checksum validation during import
     --merge                         Merge with existing data (don't overwrite)
+
+AUTO-CONFIGURATION OPTIONS:
+    --template <name>       Template for --generate-config: minimal, full, alpaca,
+                            backfill, production, docker (default: minimal)
+    --output <path>         Output path for generated config (default: config/appsettings.generated.json)
 
 EXAMPLES:
     # Start web dashboard on default port
@@ -573,6 +908,54 @@ EXAMPLES:
     # Validate a package
     MarketDataCollector --validate-package ./packages/my-data.zip
 
+    # Run interactive configuration wizard (recommended for new users)
+    MarketDataCollector --wizard
+
+    # Quick auto-configuration based on environment variables
+    MarketDataCollector --auto-config
+
+    # Detect available data providers
+    MarketDataCollector --detect-providers
+
+    # Validate configured API credentials
+    MarketDataCollector --validate-credentials
+
+    # Generate a configuration template
+    MarketDataCollector --generate-config --template alpaca --output config/appsettings.json
+
+    # Quick configuration health check
+    MarketDataCollector --quick-check
+
+    # Test connectivity to all providers
+    MarketDataCollector --test-connectivity
+
+    # Show current configuration summary
+    MarketDataCollector --show-config
+
+    # View all error codes and their meanings
+    MarketDataCollector --error-codes
+
+    # Show all symbols (both monitored and archived)
+    MarketDataCollector --symbols
+
+    # Show only symbols currently being monitored
+    MarketDataCollector --symbols-monitored
+
+    # Show symbols that have archived data
+    MarketDataCollector --symbols-archived
+
+    # Add new symbols for monitoring
+    MarketDataCollector --symbols-add AAPL,MSFT,GOOGL
+
+    # Add symbols with custom options
+    MarketDataCollector --symbols-add SPY,QQQ --no-depth --depth-levels 5
+
+    # Remove symbols from monitoring
+    MarketDataCollector --symbols-remove AAPL,MSFT
+
+    # Check status of a specific symbol
+    MarketDataCollector --symbol-status AAPL
+
 CONFIGURATION:
     Configuration is loaded from appsettings.json by default, but can be customized:
 
@@ -606,7 +989,9 @@ SUPPORT:
     Documentation: ./HELP.md
 
 ╔══════════════════════════════════════════════════════════════════════╗
-║  Quick Start: ./MarketDataCollector --ui                             ║
+║  NEW USER?     Run: ./MarketDataCollector --wizard                   ║
+║  QUICK CHECK:  Run: ./MarketDataCollector --quick-check              ║
+║  START UI:     Run: ./MarketDataCollector --ui                       ║
 ║  Then open http://localhost:8080 in your browser                     ║
 ╚══════════════════════════════════════════════════════════════════════╝
 ");
@@ -1270,5 +1655,21 @@ SUPPORT:
         return providers
             .OrderBy(p => p is IHistoricalDataProviderV2 v2 ? v2.Priority : 100)
             .ToList();
+    }
+
+    /// <summary>
+    /// Format bytes as human-readable string.
+    /// </summary>
+    private static string FormatBytes(long bytes)
+    {
+        string[] sizes = { "B", "KB", "MB", "GB", "TB" };
+        var order = 0;
+        double size = bytes;
+        while (size >= 1024 && order < sizes.Length - 1)
+        {
+            order++;
+            size /= 1024;
+        }
+        return $"{size:0.##} {sizes[order]}";
     }
 }

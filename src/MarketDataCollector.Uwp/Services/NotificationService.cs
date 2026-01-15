@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using MarketDataCollector.Uwp.Collections;
 using Microsoft.Windows.AppNotifications;
 using Microsoft.Windows.AppNotifications.Builder;
 
@@ -9,13 +10,14 @@ namespace MarketDataCollector.Uwp.Services;
 /// <summary>
 /// Service for managing Windows toast notifications.
 /// </summary>
-public class NotificationService
+public sealed class NotificationService
 {
     private static NotificationService? _instance;
     private static readonly object _lock = new();
 
     private NotificationSettings _settings = new();
-    private readonly List<NotificationHistoryItem> _history = new();
+    private readonly BoundedObservableCollection<NotificationHistoryItem> _history;
+    private readonly object _historyLock = new();
     private const int MaxHistoryItems = 50;
 
     public static NotificationService Instance
@@ -35,14 +37,17 @@ public class NotificationService
 
     private NotificationService()
     {
+        _history = new BoundedObservableCollection<NotificationHistoryItem>(MaxHistoryItems);
+
         try
         {
             AppNotificationManager.Default.NotificationInvoked += OnNotificationInvoked;
             AppNotificationManager.Default.Register();
         }
-        catch
+        catch (Exception ex)
         {
-            // Notifications may not be available in all environments
+            // Notifications may not be available in all environments (e.g., headless, containers)
+            System.Diagnostics.Debug.WriteLine($"[NotificationService] Failed to register for notifications: {ex.GetType().Name} - {ex.Message}");
         }
     }
 
@@ -62,12 +67,24 @@ public class NotificationService
     /// <summary>
     /// Gets notification history.
     /// </summary>
-    public IReadOnlyList<NotificationHistoryItem> GetHistory() => _history.AsReadOnly();
+    public IReadOnlyList<NotificationHistoryItem> GetHistory()
+    {
+        lock (_historyLock)
+        {
+            return _history.ToList().AsReadOnly();
+        }
+    }
 
     /// <summary>
     /// Clears notification history.
     /// </summary>
-    public void ClearHistory() => _history.Clear();
+    public void ClearHistory()
+    {
+        lock (_historyLock)
+        {
+            _history.Clear();
+        }
+    }
 
     /// <summary>
     /// Shows a connection status notification.
@@ -248,20 +265,18 @@ public class NotificationService
         string tag,
         string? actionUrl = null)
     {
-        // Add to history
-        _history.Insert(0, new NotificationHistoryItem
+        // Add to history with thread-safe access using efficient Prepend
+        lock (_historyLock)
         {
-            Title = title,
-            Message = message,
-            Type = type,
-            Timestamp = DateTime.Now,
-            Tag = tag
-        });
-
-        // Trim history
-        while (_history.Count > MaxHistoryItems)
-        {
-            _history.RemoveAt(_history.Count - 1);
+            _history.Prepend(new NotificationHistoryItem
+            {
+                Title = title,
+                Message = message,
+                Type = type,
+                Timestamp = DateTime.Now,
+                Tag = tag
+            });
+            // No manual trimming needed - BoundedObservableCollection handles capacity automatically
         }
 
         // Raise event for in-app notification handling
@@ -299,9 +314,10 @@ public class NotificationService
                 AppNotificationManager.Default.Show(notification);
             });
         }
-        catch
+        catch (Exception ex)
         {
-            // Notification display failed - already logged to history
+            // Notification display failed - already logged to history, log for diagnostics
+            System.Diagnostics.Debug.WriteLine($"[NotificationService] Failed to display notification '{title}': {ex.GetType().Name} - {ex.Message}");
         }
     }
 

@@ -1,5 +1,8 @@
 using System.Globalization;
+using System.IO.Compression;
+using System.Runtime.CompilerServices;
 using System.Text;
+using System.Text.Json;
 using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Storage.Crystallized;
@@ -218,7 +221,7 @@ public sealed class CsvExporter
             FormatTimestamp(trade.Timestamp),
             FormatDecimal(trade.Price),
             trade.Size.ToString(CultureInfo.InvariantCulture),
-            trade.AggressorSide.ToString().ToLowerInvariant(),
+            trade.Aggressor.ToString().ToLowerInvariant(),
             trade.SequenceNumber.ToString(CultureInfo.InvariantCulture)
         };
 
@@ -243,8 +246,8 @@ public sealed class CsvExporter
             quote.BidSize.ToString(CultureInfo.InvariantCulture),
             FormatDecimal(quote.AskPrice),
             quote.AskSize.ToString(CultureInfo.InvariantCulture),
-            FormatDecimal(quote.Spread),
-            FormatDecimal(quote.MidPrice),
+            quote.Spread.HasValue ? FormatDecimal(quote.Spread.Value) : "",
+            quote.MidPrice.HasValue ? FormatDecimal(quote.MidPrice.Value) : "",
             quote.SequenceNumber.ToString(CultureInfo.InvariantCulture)
         };
 
@@ -262,7 +265,7 @@ public sealed class CsvExporter
         var data = evt.Payload switch
         {
             HistoricalBar bar => $"O={bar.Open}|H={bar.High}|L={bar.Low}|C={bar.Close}|V={bar.Volume}",
-            Trade trade => $"P={trade.Price}|S={trade.Size}|Side={trade.AggressorSide}",
+            Trade trade => $"P={trade.Price}|S={trade.Size}|Side={trade.Aggressor}",
             BboQuotePayload quote => $"Bid={quote.BidPrice}x{quote.BidSize}|Ask={quote.AskPrice}x{quote.AskSize}",
             _ => evt.Payload?.ToString() ?? ""
         };
@@ -306,7 +309,7 @@ public sealed class CsvExporter
 /// <summary>
 /// Options for CSV export.
 /// </summary>
-public sealed class CsvExportOptions
+public sealed record CsvExportOptions
 {
     /// <summary>
     /// Column delimiter character.
@@ -400,20 +403,22 @@ public sealed class CrystallizedCsvExporter
 {
     private readonly CrystallizedStorageFormat _format;
     private readonly CsvExporter _csvExporter;
+    private readonly CsvExportOptions _csvOptions;
+    private static readonly JsonSerializerOptions JsonOpts = new(JsonSerializerDefaults.Web);
 
     public CrystallizedCsvExporter(
         CrystallizedStorageFormat format,
         CsvExportOptions? csvOptions = null)
     {
         _format = format ?? throw new ArgumentNullException(nameof(format));
-        _csvExporter = new CsvExporter(csvOptions);
+        _csvOptions = csvOptions ?? new CsvExportOptions();
+        _csvExporter = new CsvExporter(_csvOptions);
     }
 
     /// <summary>
     /// Exports all bar data for a symbol to a single CSV file.
     /// Useful for Excel users who want one file per symbol.
     /// </summary>
-    // TODO: Implement actual crystallized storage reading - currently a placeholder
     public async Task ExportSymbolBarsAsync(
         string provider,
         string symbol,
@@ -423,16 +428,21 @@ public sealed class CrystallizedCsvExporter
         DateOnly? toDate = null,
         CancellationToken ct = default)
     {
-        // Implementation would read from crystallized storage and export to CSV
-        // This is a placeholder showing the intended API
-        await Task.CompletedTask;
+        if (string.IsNullOrWhiteSpace(provider))
+            throw new ArgumentException("Provider is required", nameof(provider));
+        if (string.IsNullOrWhiteSpace(symbol))
+            throw new ArgumentException("Symbol is required", nameof(symbol));
+        if (string.IsNullOrWhiteSpace(outputPath))
+            throw new ArgumentException("Output path is required", nameof(outputPath));
+
+        var bars = ReadBarsFromStorageAsync(provider, symbol, granularity, fromDate, toDate, ct);
+        await _csvExporter.ExportBarsAsync(bars, outputPath, ct);
     }
 
     /// <summary>
     /// Creates a combined export of multiple symbols into a single CSV.
     /// Each row includes the symbol column.
     /// </summary>
-    // TODO: Implement multi-symbol export from crystallized storage - currently a placeholder
     public async Task ExportMultipleSymbolsAsync(
         string provider,
         IEnumerable<string> symbols,
@@ -442,7 +452,312 @@ public sealed class CrystallizedCsvExporter
         DateOnly? toDate = null,
         CancellationToken ct = default)
     {
-        // Implementation would combine multiple symbols into one file
-        await Task.CompletedTask;
+        if (string.IsNullOrWhiteSpace(provider))
+            throw new ArgumentException("Provider is required", nameof(provider));
+        if (symbols is null)
+            throw new ArgumentNullException(nameof(symbols));
+        if (string.IsNullOrWhiteSpace(outputPath))
+            throw new ArgumentException("Output path is required", nameof(outputPath));
+
+        var symbolList = symbols.ToList();
+        if (symbolList.Count == 0)
+            throw new ArgumentException("At least one symbol is required", nameof(symbols));
+
+        // Ensure output directory exists
+        var outputDir = Path.GetDirectoryName(outputPath);
+        if (!string.IsNullOrEmpty(outputDir))
+            Directory.CreateDirectory(outputDir);
+
+        // Create exporter with symbol column enabled
+        var multiSymbolOptions = _csvOptions with { IncludeSymbol = true };
+        var multiExporter = new CsvExporter(multiSymbolOptions);
+
+        await using var writer = new StreamWriter(outputPath, false, Encoding.UTF8);
+
+        if (multiSymbolOptions.IncludeHeader)
+        {
+            await writer.WriteLineAsync(multiExporter.GetBarHeader());
+        }
+
+        // Stream bars from all symbols
+        foreach (var symbol in symbolList)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            await foreach (var bar in ReadBarsFromStorageAsync(provider, symbol, granularity, fromDate, toDate, ct))
+            {
+                var line = FormatBarWithSymbol(bar, multiSymbolOptions);
+                await writer.WriteLineAsync(line);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Reads historical bars from crystallized storage for a specific symbol.
+    /// </summary>
+    private async IAsyncEnumerable<HistoricalBar> ReadBarsFromStorageAsync(
+        string provider,
+        string symbol,
+        TimeGranularity granularity,
+        DateOnly? fromDate,
+        DateOnly? toDate,
+        [EnumeratorCancellation] CancellationToken ct)
+    {
+        var barFiles = EnumerateBarFiles(provider, symbol, granularity);
+
+        foreach (var filePath in barFiles)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            await foreach (var bar in ReadBarsFromFileAsync(filePath, ct))
+            {
+                // Filter by date range if specified
+                if (fromDate.HasValue && bar.SessionDate < fromDate.Value)
+                    continue;
+                if (toDate.HasValue && bar.SessionDate > toDate.Value)
+                    continue;
+
+                yield return bar;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Enumerates all bar files for a symbol from crystallized storage.
+    /// </summary>
+    private IEnumerable<string> EnumerateBarFiles(string provider, string symbol, TimeGranularity granularity)
+    {
+        // Get the symbol manifest path to determine the base directory
+        var manifestPath = _format.GetSymbolManifestPath(provider, symbol);
+        var symbolDir = Path.GetDirectoryName(manifestPath);
+
+        if (string.IsNullOrEmpty(symbolDir) || !Directory.Exists(symbolDir))
+            yield break;
+
+        // Build the bars directory path based on granularity
+        var barsDir = Path.Combine(symbolDir, "bars", granularity.ToFileSuffix());
+
+        if (!Directory.Exists(barsDir))
+            yield break;
+
+        // Find all data files (JSONL or CSV, optionally compressed)
+        var patterns = new[] { "*.jsonl", "*.jsonl.gz", "*.jsonl.zst", "*.jsonl.lz4", "*.csv", "*.csv.gz" };
+
+        var files = new List<string>();
+        foreach (var pattern in patterns)
+        {
+            files.AddRange(Directory.EnumerateFiles(barsDir, pattern, SearchOption.TopDirectoryOnly));
+        }
+
+        // Sort files by name to ensure chronological order
+        foreach (var file in files.OrderBy(f => f, StringComparer.OrdinalIgnoreCase))
+        {
+            yield return file;
+        }
+    }
+
+    /// <summary>
+    /// Reads historical bars from a single JSONL or CSV file.
+    /// </summary>
+    private async IAsyncEnumerable<HistoricalBar> ReadBarsFromFileAsync(
+        string filePath,
+        [EnumeratorCancellation] CancellationToken ct)
+    {
+        var isCompressed = filePath.EndsWith(".gz", StringComparison.OrdinalIgnoreCase);
+        var isCsv = filePath.Contains(".csv", StringComparison.OrdinalIgnoreCase);
+
+        await using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, 64 * 1024, useAsync: true);
+        Stream stream = fs;
+
+        if (isCompressed)
+        {
+            stream = new GZipStream(fs, CompressionMode.Decompress);
+        }
+
+        using var reader = new StreamReader(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true, bufferSize: 64 * 1024);
+
+        var isFirstLine = true;
+        string[]? csvHeaders = null;
+
+        while (!reader.EndOfStream)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            var line = await reader.ReadLineAsync(ct).ConfigureAwait(false);
+            if (string.IsNullOrWhiteSpace(line))
+                continue;
+
+            // Handle CSV header row
+            if (isCsv && isFirstLine)
+            {
+                isFirstLine = false;
+                // Check if this looks like a header row
+                if (line.StartsWith("date", StringComparison.OrdinalIgnoreCase) ||
+                    line.StartsWith("symbol", StringComparison.OrdinalIgnoreCase) ||
+                    line.StartsWith("timestamp", StringComparison.OrdinalIgnoreCase))
+                {
+                    csvHeaders = line.Split(',');
+                    continue;
+                }
+            }
+            isFirstLine = false;
+
+            HistoricalBar? bar = null;
+
+            if (isCsv)
+            {
+                bar = ParseCsvBar(line, csvHeaders);
+            }
+            else
+            {
+                bar = ParseJsonlBar(line);
+            }
+
+            if (bar != null)
+            {
+                yield return bar;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Parses a HistoricalBar from a JSONL line.
+    /// </summary>
+    private static HistoricalBar? ParseJsonlBar(string line)
+    {
+        try
+        {
+            var doc = JsonDocument.Parse(line);
+            var root = doc.RootElement;
+
+            var symbol = root.TryGetProperty("symbol", out var symProp) ? symProp.GetString() ?? "" : "";
+            var source = root.TryGetProperty("source", out var srcProp) ? srcProp.GetString() ?? "unknown" : "unknown";
+
+            DateOnly sessionDate;
+            if (root.TryGetProperty("sessionDate", out var dateProp))
+            {
+                sessionDate = DateOnly.Parse(dateProp.GetString() ?? "");
+            }
+            else if (root.TryGetProperty("date", out var date2Prop))
+            {
+                sessionDate = DateOnly.Parse(date2Prop.GetString() ?? "");
+            }
+            else
+            {
+                return null;
+            }
+
+            var open = root.TryGetProperty("open", out var openProp) ? openProp.GetDecimal() : 0m;
+            var high = root.TryGetProperty("high", out var highProp) ? highProp.GetDecimal() : 0m;
+            var low = root.TryGetProperty("low", out var lowProp) ? lowProp.GetDecimal() : 0m;
+            var close = root.TryGetProperty("close", out var closeProp) ? closeProp.GetDecimal() : 0m;
+            var volume = root.TryGetProperty("volume", out var volProp) ? volProp.GetInt64() : 0L;
+            var sequence = root.TryGetProperty("sequenceNumber", out var seqProp) ? seqProp.GetInt64() : 0L;
+
+            if (open <= 0 || high <= 0 || low <= 0 || close <= 0)
+                return null;
+
+            return new HistoricalBar(symbol, sessionDate, open, high, low, close, volume, source, sequence);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Parses a HistoricalBar from a CSV line.
+    /// </summary>
+    private static HistoricalBar? ParseCsvBar(string line, string[]? headers)
+    {
+        try
+        {
+            var parts = line.Split(',');
+            if (parts.Length < 6)
+                return null;
+
+            // Determine column indices based on headers or default order
+            int dateIdx = 0, openIdx = 1, highIdx = 2, lowIdx = 3, closeIdx = 4, volumeIdx = 5;
+            int symbolIdx = -1, sourceIdx = -1;
+
+            if (headers != null)
+            {
+                for (int i = 0; i < headers.Length; i++)
+                {
+                    var h = headers[i].Trim().ToLowerInvariant();
+                    switch (h)
+                    {
+                        case "date" or "sessiondate" or "timestamp": dateIdx = i; break;
+                        case "open": openIdx = i; break;
+                        case "high": highIdx = i; break;
+                        case "low": lowIdx = i; break;
+                        case "close": closeIdx = i; break;
+                        case "volume": volumeIdx = i; break;
+                        case "symbol": symbolIdx = i; break;
+                        case "source": sourceIdx = i; break;
+                    }
+                }
+            }
+
+            var dateStr = parts[dateIdx].Trim();
+            if (!DateOnly.TryParse(dateStr, out var sessionDate))
+                return null;
+
+            if (!decimal.TryParse(parts[openIdx].Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out var open) || open <= 0)
+                return null;
+            if (!decimal.TryParse(parts[highIdx].Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out var high) || high <= 0)
+                return null;
+            if (!decimal.TryParse(parts[lowIdx].Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out var low) || low <= 0)
+                return null;
+            if (!decimal.TryParse(parts[closeIdx].Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out var close) || close <= 0)
+                return null;
+            if (!long.TryParse(parts[volumeIdx].Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out var volume))
+                volume = 0;
+
+            var symbol = symbolIdx >= 0 && symbolIdx < parts.Length ? parts[symbolIdx].Trim() : "";
+            var source = sourceIdx >= 0 && sourceIdx < parts.Length ? parts[sourceIdx].Trim() : "csv";
+
+            return new HistoricalBar(symbol.Length > 0 ? symbol : "UNKNOWN", sessionDate, open, high, low, close, volume, source);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Formats a bar as a CSV line including the symbol column.
+    /// </summary>
+    private static string FormatBarWithSymbol(HistoricalBar bar, CsvExportOptions options)
+    {
+        var cols = new List<string>();
+
+        if (options.IncludeSymbol)
+            cols.Add(EscapeCsv(bar.Symbol, options.Delimiter));
+
+        cols.Add(bar.SessionDate.ToString(options.DateFormat, CultureInfo.InvariantCulture));
+        cols.Add(bar.Open.ToString($"F{options.DecimalPrecision}", CultureInfo.InvariantCulture));
+        cols.Add(bar.High.ToString($"F{options.DecimalPrecision}", CultureInfo.InvariantCulture));
+        cols.Add(bar.Low.ToString($"F{options.DecimalPrecision}", CultureInfo.InvariantCulture));
+        cols.Add(bar.Close.ToString($"F{options.DecimalPrecision}", CultureInfo.InvariantCulture));
+        cols.Add(bar.Volume.ToString(CultureInfo.InvariantCulture));
+
+        if (options.IncludeSource)
+            cols.Add(EscapeCsv(bar.Source, options.Delimiter));
+
+        return string.Join(options.Delimiter, cols);
+    }
+
+    private static string EscapeCsv(string value, string delimiter)
+    {
+        if (string.IsNullOrEmpty(value))
+            return "";
+
+        if (value.Contains(delimiter) || value.Contains('"') || value.Contains('\n'))
+        {
+            return $"\"{value.Replace("\"", "\"\"")}\"";
+        }
+
+        return value;
     }
 }

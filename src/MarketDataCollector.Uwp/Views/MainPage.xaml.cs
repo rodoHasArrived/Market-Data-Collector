@@ -214,6 +214,9 @@ public sealed partial class MainPage : Page
             case "Backfill":
                 ContentFrame.Navigate(typeof(BackfillPage));
                 break;
+            case "Schedules":
+                ContentFrame.Navigate(typeof(ScheduleManagerPage));
+                break;
             case "CollectionSessions":
                 ContentFrame.Navigate(typeof(CollectionSessionPage));
                 break;
@@ -234,6 +237,66 @@ public sealed partial class MainPage : Page
                 break;
             case "Welcome":
                 ContentFrame.Navigate(typeof(WelcomePage));
+                break;
+            case "DataQuality":
+                ContentFrame.Navigate(typeof(DataQualityPage));
+                break;
+            case "LiveData":
+                ContentFrame.Navigate(typeof(LiveDataViewerPage));
+                break;
+            case "SystemHealth":
+                ContentFrame.Navigate(typeof(SystemHealthPage));
+                break;
+            case "PortfolioImport":
+                ContentFrame.Navigate(typeof(PortfolioImportPage));
+                break;
+            case "IndexSubscription":
+                ContentFrame.Navigate(typeof(IndexSubscriptionPage));
+                break;
+            case "Diagnostics":
+                ContentFrame.Navigate(typeof(DiagnosticsPage));
+                break;
+            case "EventReplay":
+                ContentFrame.Navigate(typeof(EventReplayPage));
+                break;
+            case "PackageManager":
+                ContentFrame.Navigate(typeof(PackageManagerPage));
+                break;
+            case "AnalysisExport":
+                ContentFrame.Navigate(typeof(AnalysisExportPage));
+                break;
+            case "LeanIntegration":
+                ContentFrame.Navigate(typeof(LeanIntegrationPage));
+                break;
+            case "MessagingHub":
+                ContentFrame.Navigate(typeof(MessagingHubPage));
+                break;
+            case "SymbolStorage":
+                ContentFrame.Navigate(typeof(SymbolStoragePage));
+                break;
+            case "KeyboardShortcuts":
+                ContentFrame.Navigate(typeof(KeyboardShortcutsPage));
+                break;
+            case "AdminMaintenance":
+                ContentFrame.Navigate(typeof(AdminMaintenancePage));
+                break;
+            case "AdvancedAnalytics":
+                ContentFrame.Navigate(typeof(AdvancedAnalyticsPage));
+                break;
+            case "OrderBook":
+                ContentFrame.Navigate(typeof(OrderBookPage));
+                break;
+            case "Charts":
+                ContentFrame.Navigate(typeof(ChartingPage));
+                break;
+            case "DataCalendar":
+                ContentFrame.Navigate(typeof(DataCalendarPage));
+                break;
+            case "SetupWizard":
+                ContentFrame.Navigate(typeof(SetupWizardPage));
+                break;
+            case "AnalysisExportWizard":
+                ContentFrame.Navigate(typeof(AnalysisExportWizardPage));
                 break;
         }
     }

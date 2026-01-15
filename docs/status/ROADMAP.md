@@ -1,7 +1,7 @@
 # Market Data Collector - Roadmap
 
-**Version:** 1.5.0
-**Last Updated:** 2026-01-09
+**Version:** 1.6.0
+**Last Updated:** 2026-01-15
 **Status:** Production Ready
 
 This document provides the feature roadmap, backlog, and development priorities for the Market Data Collector system.
@@ -12,15 +12,15 @@ This document provides the feature roadmap, backlog, and development priorities 
 
 | Category | Implemented | Pending | Total |
 |----------|-------------|---------|-------|
-| Core Features | 52+ | - | 52+ |
-| Technical Debt | 2 | 6 | 8 |
-| Quick Wins (≤2 days) | 20 | 105 | 125 |
-| Provider Integration | 4 | 18 | 22 |
-| Monitoring & Alerting | 14 | 10 | 24 |
-| Data Quality | 10 | 13 | 23 |
+| Core Features | 55+ | - | 55+ |
+| Technical Debt | 5 | 3 | 8 |
+| Quick Wins (≤2 days) | 42 | 83 | 125 |
+| Provider Integration | 5 | 17 | 22 |
+| Monitoring & Alerting | 24 | 0 | 24 |
+| Data Quality | 21 | 2 | 23 |
 | Storage & Archival | 9 | 4 | 13 |
 | Cloud Integration | 0 | 100+ | 100+ |
-| **Total** | **111** | **256+** | **367+** |
+| **Total** | **161** | **209+** | **370+** |
 
 ---
 
@@ -62,6 +62,9 @@ This document provides the feature roadmap, backlog, and development priorities 
 - [x] Connection health monitor with latency tracking
 - [x] Data quality report generator (JSON, CSV, HTML, Markdown)
 - [x] Cross-provider comparison service
+- [x] Last N errors endpoint (QW-58)
+- [x] Events per second gauge (QW-82)
+- [x] Error ring buffer for diagnostics
 
 ### Data Quality
 - [x] Crossed market detector (bid > ask)
@@ -73,10 +76,17 @@ This document provides the feature roadmap, backlog, and development priorities 
 - [x] Anomaly detector with statistical outliers
 - [x] Completeness score calculator
 - [x] Latency histogram tracking
+- [x] Negative price detector (QW-107)
+- [x] Future timestamp detector (QW-109)
+- [x] Tick size validator (DQ-13)
+- [x] Duplicate event detector (DQ-2)
+- [x] Bad tick filter (DQ-20)
+- [x] Price spike alert (QW-6)
+- [x] Spread monitor (QW-7)
 
 ### User Interfaces
 - [x] Web Dashboard (HTML/JS, auto-refresh)
-- [x] UWP Desktop Application (Windows native, 15 pages)
+- [x] UWP Desktop Application (Windows native, 17+ pages including Admin/Maintenance and Advanced Analytics)
 - [x] Microservices architecture (6 services)
 - [x] CLI with hot-reload configuration
 
@@ -94,6 +104,11 @@ This document provides the feature roadmap, backlog, and development priorities 
 - [x] Config template generator (multiple deployment scenarios)
 - [x] Sample data generator (realistic test data)
 - [x] Technical indicator service (200+ indicators via Skender.Stock.Indicators)
+- [x] Symbol management CLI commands (list, add, remove, import, export)
+- [x] PlantUML diagram PNG generation
+- [x] Log level runtime toggle (QW-53)
+- [x] Config path override (QW-95)
+- [x] Sensitive value masking (QW-78)
 
 ---
 
@@ -103,7 +118,7 @@ Items that should be addressed before new feature development.
 
 | ID | Item | Priority | Effort | Status |
 |----|------|----------|--------|--------|
-| TD-1 | Replace `double` with `decimal` for prices | High | Medium | Pending |
+| TD-1 | Replace `double` with `decimal` for prices | High | Medium | **Done** |
 | TD-2 | Add authentication to HTTP endpoints | High | Low | **Done** |
 | TD-3 | Complete Alpaca quote message handling | Medium | Low | **Done** |
 | TD-4 | Fix UWP/Core API endpoint mismatch | Medium | Low | **Done** |
@@ -128,16 +143,16 @@ Items that should be addressed before new feature development.
 - [x] DQ-15: Timestamp Monotonicity
 - [x] QW-30: Graceful Shutdown with Event Flush
 
-### Sprint 2: Data Quality & Alerts - **NEXT**
-| ID | Feature | Effort | Priority |
-|----|---------|--------|----------|
-| QW-6 | Price Spike Alert | 1 day | P1 |
-| QW-7 | Spread Monitor | 1 day | P1 |
-| DQ-2 | Duplicate Event Detector | 1 day | P1 |
-| DQ-20 | Bad Tick Filter | 1 day | P1 |
-| QW-32 | Detailed Health Check Endpoint | 1 day | P1 |
-| MON-18 | Backpressure Alert | 1 day | P1 |
-| MON-6 | Connection Status Webhook | 1 day | P1 |
+### Sprint 2: Data Quality & Alerts - **COMPLETE**
+| ID | Feature | Effort | Priority | Status |
+|----|---------|--------|----------|--------|
+| QW-6 | Price Spike Alert | 1 day | P1 | **Done** |
+| QW-7 | Spread Monitor | 1 day | P1 | **Done** |
+| DQ-2 | Duplicate Event Detector | 1 day | P1 | **Done** |
+| DQ-20 | Bad Tick Filter | 1 day | P1 | **Done** |
+| QW-32 | Detailed Health Check Endpoint | 1 day | P1 | **Done** |
+| MON-18 | Backpressure Alert | 1 day | P1 | **Done** |
+| MON-6 | Connection Status Webhook | 1 day | P1 | **Done** |
 
 ### Sprint 3: Developer Experience
 | ID | Feature | Effort | Priority | Status |
@@ -180,40 +195,40 @@ Items that should be addressed before new feature development.
 ### Quick Wins (≤2 Days) - Highest ROI
 
 #### Health & Monitoring
-| ID | Feature | Effort | Impact |
-|----|---------|--------|--------|
-| QW-32 | Detailed Health Check Endpoint | 1 day | High |
-| QW-33 | Dependency Health Checks | 1 day | High |
-| QW-58 | Last N Errors Endpoint | 0.5 day | High |
-| QW-82 | Events Per Second Gauge | 0.5 day | High |
-| QW-87 | Latency Percentiles (P50/P95/P99) | 1 day | High |
+| ID | Feature | Effort | Impact | Status |
+|----|---------|--------|--------|--------|
+| QW-32 | Detailed Health Check Endpoint | 1 day | High | **Done** |
+| QW-33 | Dependency Health Checks | 1 day | High | **Done** |
+| QW-58 | Last N Errors Endpoint | 0.5 day | High | **Done** |
+| QW-82 | Events Per Second Gauge | 0.5 day | High | **Done** |
+| QW-87 | Latency Percentiles (P50/P95/P99) | 1 day | High | **Done** |
 
 #### Data Validation
-| ID | Feature | Effort | Impact |
-|----|---------|--------|--------|
-| QW-107 | Negative Price Detector | 0.5 day | High |
-| QW-109 | Future Timestamp Detector | 0.5 day | High |
-| QW-112 | Sequence Gap Counter | 1 day | High |
-| DQ-13 | Tick Size Validator | 0.5 day | Medium |
-| DQ-16 | Price Continuity Checker | 1 day | Medium |
+| ID | Feature | Effort | Impact | Status |
+|----|---------|--------|--------|--------|
+| QW-107 | Negative Price Detector | 0.5 day | High | **Done** |
+| QW-109 | Future Timestamp Detector | 0.5 day | High | **Done** |
+| QW-112 | Sequence Gap Counter | 1 day | High | **Done** |
+| DQ-13 | Tick Size Validator | 0.5 day | Medium | **Done** |
+| DQ-16 | Price Continuity Checker | 1 day | Medium | **Done** |
 
 #### CLI & Configuration
 | ID | Feature | Effort | Impact | Status |
 |----|---------|--------|--------|--------|
-| QW-53 | Log Level Runtime Toggle | 0.5 day | High | Pending |
+| QW-53 | Log Level Runtime Toggle | 0.5 day | High | **Done** |
 | QW-93 | Dry Run Mode | 1 day | High | Pending |
-| QW-95 | Config Path Override | 0.5 day | High | Pending |
-| QW-78 | Sensitive Value Masking | 0.5 day | High | Pending |
+| QW-95 | Config Path Override | 0.5 day | High | **Done** |
+| QW-78 | Sensitive Value Masking | 0.5 day | High | **Done** |
 | QW-76 | Config Template Generator | 1 day | High | **Done** |
 
 ### Provider Integration
-| ID | Feature | Effort | Priority |
-|----|---------|--------|----------|
-| PROV-7 | Polygon.io WebSocket | 1 week | P2 |
-| PROV-20 | Coinbase/Kraken Crypto | 1 week | P2 |
-| PROV-22 | Provider Config Wizard | 2 days | P1 |
-| PROV-11 | Provider Latency Histogram | 1 day | P1 |
-| PROV-4 | Multi-Provider Failover | 3 days | P1 |
+| ID | Feature | Effort | Priority | Status |
+|----|---------|--------|----------|--------|
+| PROV-7 | Polygon.io WebSocket | 1 week | P2 | Pending |
+| PROV-20 | Coinbase/Kraken Crypto | 1 week | P2 | Pending |
+| PROV-22 | Provider Config Wizard | 2 days | P1 | Pending |
+| PROV-11 | Provider Latency Histogram | 1 day | P1 | **Done** |
+| PROV-4 | Multi-Provider Failover | 3 days | P1 | Pending |
 
 ### Storage & Archival
 | ID | Feature | Effort | Priority | Status |

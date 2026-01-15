@@ -410,10 +410,12 @@ public sealed class JsonlStorageSink : IStorageSink
         private readonly int? _retentionDays;
         private readonly long? _maxBytes;
         private readonly ILogger _logger;
-        private readonly ReaderWriterLockSlim _rwLock = new(LockRecursionPolicy.NoRecursion);
+        // Using ReaderWriterLockSlim for better concurrency - reads (timestamp checks) are more frequent than writes
+        private readonly ReaderWriterLockSlim _lock = new(LockRecursionPolicy.NoRecursion);
         private DateTime _lastSweep = DateTime.MinValue;
         private bool _disposed;
         private static readonly string[] _extensions = new[] { ".jsonl", ".jsonl.gz", ".jsonl.gzip" };
+        private bool _disposed;
 
         public RetentionManager(string root, int? retentionDays, long? maxBytes, ILogger logger)
         {
@@ -428,8 +430,11 @@ public sealed class JsonlStorageSink : IStorageSink
             if (_disposed || (_retentionDays is null && _maxBytes is null))
                 return;
 
-            // Fast path: use read lock to check if cleanup is needed
-            _rwLock.EnterReadLock();
+            if (_disposed)
+                return;
+
+            // Fast path: check if cleanup is needed using read lock (allows concurrent reads)
+            _lock.EnterReadLock();
             try
             {
                 if ((DateTime.UtcNow - _lastSweep) < TimeSpan.FromSeconds(15))
@@ -437,11 +442,11 @@ public sealed class JsonlStorageSink : IStorageSink
             }
             finally
             {
-                _rwLock.ExitReadLock();
+                _lock.ExitReadLock();
             }
 
-            // Slow path: upgrade to write lock to update timestamp
-            _rwLock.EnterWriteLock();
+            // Slow path: need to update timestamp, acquire write lock
+            _lock.EnterWriteLock();
             try
             {
                 // Double-check after acquiring write lock (another thread may have updated)
@@ -452,7 +457,7 @@ public sealed class JsonlStorageSink : IStorageSink
             }
             finally
             {
-                _rwLock.ExitWriteLock();
+                _lock.ExitWriteLock();
             }
 
             try
@@ -523,7 +528,7 @@ public sealed class JsonlStorageSink : IStorageSink
                 return;
 
             _disposed = true;
-            _rwLock.Dispose();
+            _lock.Dispose();
         }
     }
 }

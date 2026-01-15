@@ -80,12 +80,17 @@
         </NavigationView.AutoSuggestBox>
 
         <NavigationView.MenuItems>
-            <NavigationViewItem Content="Dashboard" Tag="Dashboard" IsSelected="True">
+            <!-- Primary Navigation -->
+            <NavigationViewItem Content="Dashboard" Tag="Dashboard" IsSelected="True"
+                                AutomationProperties.Name="Dashboard - View system overview and metrics"
+                                ToolTipService.ToolTip="System overview and real-time metrics">
                 <NavigationViewItem.Icon>
                     <FontIcon Glyph="&#xE80F;" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
-            <NavigationViewItem Content="Watchlist" Tag="Watchlist">
+            <NavigationViewItem Content="Watchlist" Tag="Watchlist"
+                                AutomationProperties.Name="Watchlist - View favorite symbols"
+                                ToolTipService.ToolTip="Quick access to your favorite symbols">
                 <NavigationViewItem.Icon>
                     <FontIcon Glyph="&#xE728;" />
                 </NavigationViewItem.Icon>
@@ -93,18 +98,25 @@
 
             <NavigationViewItemSeparator />
 
-            <NavigationViewItemHeader Content="Data Sources" />
-            <NavigationViewItem Content="Data Provider" Tag="Provider">
+            <!-- Data Sources Section -->
+            <NavigationViewItemHeader Content="DATA SOURCES" />
+            <NavigationViewItem Content="Provider" Tag="Provider"
+                                AutomationProperties.Name="Data Provider - Configure active data provider"
+                                ToolTipService.ToolTip="Configure active data provider">
                 <NavigationViewItem.Icon>
                     <FontIcon Glyph="&#xE703;" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
-            <NavigationViewItem Content="Multi-Source Config" Tag="DataSources">
+            <NavigationViewItem Content="Multi-Source" Tag="DataSources"
+                                AutomationProperties.Name="Multi-Source Config - Configure multiple data sources"
+                                ToolTipService.ToolTip="Configure multiple data sources and failover">
                 <NavigationViewItem.Icon>
                     <FontIcon Glyph="&#xE943;" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
-            <NavigationViewItem Content="Plugins" Tag="Plugins">
+            <NavigationViewItem Content="Plugins" Tag="Plugins"
+                                AutomationProperties.Name="Plugins - Manage extensions and plugins"
+                                ToolTipService.ToolTip="Manage extensions and plugins">
                 <NavigationViewItem.Icon>
                     <FontIcon Glyph="&#xEA86;" />
                 </NavigationViewItem.Icon>
@@ -112,60 +124,220 @@
 
             <NavigationViewItemSeparator />
 
-            <NavigationViewItemHeader Content="Data Management" />
-            <NavigationViewItem Content="Symbols" Tag="Symbols">
+            <!-- Data Management Section -->
+            <NavigationViewItemHeader Content="DATA" />
+            <NavigationViewItem Content="Live Data" Tag="LiveData"
+                                AutomationProperties.Name="Live Data - Real-time market data viewer"
+                                ToolTipService.ToolTip="View real-time trades, quotes, and order book">
                 <NavigationViewItem.Icon>
                     <FontIcon Glyph="&#xE9D9;" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
-            <NavigationViewItem Content="Symbol Mapping" Tag="SymbolMapping">
+            <NavigationViewItem Content="Order Book" Tag="OrderBook"
+                                AutomationProperties.Name="Order Book - Live L2 depth visualization"
+                                ToolTipService.ToolTip="Real-time order book heatmap and depth chart">
                 <NavigationViewItem.Icon>
-                    <FontIcon Glyph="&#xE8AB;" />
+                    <FontIcon Glyph="&#xE8C4;" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
-            <NavigationViewItem Content="Storage" Tag="Storage">
+            <NavigationViewItem Content="Charts" Tag="Charts"
+                                AutomationProperties.Name="Charts - Advanced candlestick charts"
+                                ToolTipService.ToolTip="Interactive charts with technical indicators">
                 <NavigationViewItem.Icon>
-                    <FontIcon Glyph="&#xE8B7;" />
+                    <FontIcon Glyph="&#xE9D9;" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
-            <NavigationViewItem Content="Backfill" Tag="Backfill">
+            <NavigationViewItem Content="Data Calendar" Tag="DataCalendar"
+                                AutomationProperties.Name="Data Calendar - Completeness heatmap"
+                                ToolTipService.ToolTip="View data coverage and gaps by date">
                 <NavigationViewItem.Icon>
                     <FontIcon Glyph="&#xE787;" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
-
-            <NavigationViewItemSeparator />
-
-            <NavigationViewItemHeader Content="Archive &amp; Sessions" />
-            <NavigationViewItem Content="Collection Sessions" Tag="CollectionSessions">
+            <NavigationViewItem Content="Symbols" Tag="Symbols"
+                                AutomationProperties.Name="Symbols - Manage symbol subscriptions"
+                                ToolTipService.ToolTip="Manage symbol subscriptions">
                 <NavigationViewItem.Icon>
-                    <FontIcon Glyph="&#xE8F1;" />
+                    <FontIcon Glyph="&#xE8D4;" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
-            <NavigationViewItem Content="Archive Health" Tag="ArchiveHealth">
+            <NavigationViewItem Content="Mapping" Tag="SymbolMapping"
+                                AutomationProperties.Name="Symbol Mapping - Cross-reference provider symbols"
+                                ToolTipService.ToolTip="Cross-reference symbols across providers">
                 <NavigationViewItem.Icon>
-                    <FontIcon Glyph="&#xE9F5;" />
+                    <FontIcon Glyph="&#xE8AB;" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
-
-            <NavigationViewItemSeparator />
-
-            <NavigationViewItem Content="Service Manager" Tag="ServiceManager">
+            <NavigationViewItem Content="Storage" Tag="Storage"
+                                AutomationProperties.Name="Storage - View storage usage and settings"
+                                ToolTipService.ToolTip="View storage usage and data lifecycle">
                 <NavigationViewItem.Icon>
-                    <FontIcon Glyph="&#xE912;" />
+                    <FontIcon Glyph="&#xE8B7;" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
-            <NavigationViewItem Content="Data Export" Tag="DataExport">
+            <NavigationViewItem Content="Backfill" Tag="Backfill"
+                                AutomationProperties.Name="Backfill - Download historical data"
+                                ToolTipService.ToolTip="Download historical market data">
                 <NavigationViewItem.Icon>
-                    <FontIcon Glyph="&#xEDE1;" />
+                    <FontIcon Glyph="&#xE787;" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
-            <NavigationViewItem Content="Trading Hours" Tag="TradingHours">
+            <NavigationViewItem Content="Portfolio Import" Tag="PortfolioImport"
+                                AutomationProperties.Name="Portfolio Import - Import symbols from files"
+                                ToolTipService.ToolTip="Import symbols from CSV, JSON, or index constituents">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE8B5;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem Content="Index Subscription" Tag="IndexSubscription"
+                                AutomationProperties.Name="Index Subscription - Subscribe to index constituents"
+                                ToolTipService.ToolTip="Subscribe to S&amp;P 500, Nasdaq 100, and sector ETFs">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE8EC;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem Content="Schedules" Tag="Schedules"
+                                AutomationProperties.Name="Schedules - Manage scheduled tasks"
+                                ToolTipService.ToolTip="Manage backfill and maintenance schedules">
                 <NavigationViewItem.Icon>
                     <FontIcon Glyph="&#xE823;" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
-            <NavigationViewItem Content="Help" Tag="Help">
+
+            <NavigationViewItemSeparator />
+
+            <!-- Monitoring Section -->
+            <NavigationViewItemHeader Content="MONITORING" />
+            <NavigationViewItem Content="Data Quality" Tag="DataQuality"
+                                AutomationProperties.Name="Data Quality - Monitor data quality scores"
+                                ToolTipService.ToolTip="Monitor quality scores, alerts, and trends">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE9F5;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem Content="Sessions" Tag="CollectionSessions"
+                                AutomationProperties.Name="Collection Sessions - View session history"
+                                ToolTipService.ToolTip="View collection session history and uptime">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE8F1;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem Content="Archive Health" Tag="ArchiveHealth"
+                                AutomationProperties.Name="Archive Health - Monitor data integrity"
+                                ToolTipService.ToolTip="Monitor archive integrity and data quality">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE7BA;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem Content="Service Manager" Tag="ServiceManager"
+                                AutomationProperties.Name="Service Manager - Control collector services"
+                                ToolTipService.ToolTip="Start, stop, and monitor collector services">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE912;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem Content="System Health" Tag="SystemHealth"
+                                AutomationProperties.Name="System Health - Connection diagnostics"
+                                ToolTipService.ToolTip="View connection health and diagnostics">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE770;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem Content="Diagnostics" Tag="Diagnostics"
+                                AutomationProperties.Name="Diagnostics - Run diagnostic tests"
+                                ToolTipService.ToolTip="Dry-run, preflight checks, and diagnostic bundles">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE9D9;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem Content="Admin" Tag="AdminMaintenance"
+                                AutomationProperties.Name="Admin - Maintenance and retention"
+                                ToolTipService.ToolTip="Archive scheduling, tier migration, retention policies">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE912;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+
+            <NavigationViewItemSeparator />
+
+            <!-- Tools Section -->
+            <NavigationViewItemHeader Content="TOOLS" />
+            <NavigationViewItem Content="Setup Wizard" Tag="SetupWizard"
+                                AutomationProperties.Name="Setup Wizard - Guided system configuration"
+                                ToolTipService.ToolTip="Guided setup with preflight checks">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE945;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem Content="Export" Tag="DataExport"
+                                AutomationProperties.Name="Data Export - Export collected data"
+                                ToolTipService.ToolTip="Export data to various formats">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xEDE1;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem Content="Analysis Export" Tag="AnalysisExportWizard"
+                                AutomationProperties.Name="Analysis Export Wizard - Guided data export"
+                                ToolTipService.ToolTip="Export wizard for Python, R, QuantConnect, and more">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE9F9;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem Content="Analytics" Tag="AdvancedAnalytics"
+                                AutomationProperties.Name="Advanced Analytics - Gap analysis and quality reports"
+                                ToolTipService.ToolTip="Gap analysis, cross-provider comparison, latency metrics">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE9F5;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem Content="Event Replay" Tag="EventReplay"
+                                AutomationProperties.Name="Event Replay - Replay historical events"
+                                ToolTipService.ToolTip="Replay JSONL market data files">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE768;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem Content="Package Manager" Tag="PackageManager"
+                                AutomationProperties.Name="Package Manager - Manage data packages"
+                                ToolTipService.ToolTip="Create, import, and validate portable packages">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE7B8;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem Content="Trading Hours" Tag="TradingHours"
+                                AutomationProperties.Name="Trading Hours - Configure market hours"
+                                ToolTipService.ToolTip="Configure market hours and holidays">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE823;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+
+            <NavigationViewItemSeparator />
+
+            <!-- Integrations Section -->
+            <NavigationViewItemHeader Content="INTEGRATIONS" />
+            <NavigationViewItem Content="Lean Backtesting" Tag="LeanIntegration"
+                                AutomationProperties.Name="Lean Integration - QuantConnect Lean backtesting"
+                                ToolTipService.ToolTip="Configure and run QuantConnect Lean backtests">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE9F5;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem Content="Messaging Hub" Tag="MessagingHub"
+                                AutomationProperties.Name="Messaging Hub - MassTransit message bus"
+                                ToolTipService.ToolTip="View message bus status and consumers">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE715;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+
+            <NavigationViewItemSeparator />
+
+            <!-- Help Section -->
+            <NavigationViewItemHeader Content="SUPPORT" />
+            <NavigationViewItem Content="Help" Tag="Help"
+                                AutomationProperties.Name="Help - Documentation and support"
+                                ToolTipService.ToolTip="Documentation, guides, and support">
                 <NavigationViewItem.Icon>
                     <FontIcon Glyph="&#xE897;" />
                 </NavigationViewItem.Icon>
