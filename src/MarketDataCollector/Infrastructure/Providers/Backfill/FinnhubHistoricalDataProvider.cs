@@ -395,14 +395,14 @@ public sealed class FinnhubHistoricalDataProvider : IHistoricalDataProviderV2, I
         };
     }
 
-    private static decimal GetDecimalValue(double[]? array, int index)
+    private static decimal GetDecimalValue(decimal[]? array, int index)
     {
         if (array is null || index >= array.Length)
             return 0m;
-        return (decimal)array[index];
+        return array[index];
     }
 
-    private static long GetLongValue(double[]? array, int index)
+    private static long GetLongValue(decimal[]? array, int index)
     {
         if (array is null || index >= array.Length)
             return 0;
@@ -422,16 +422,16 @@ public sealed class FinnhubHistoricalDataProvider : IHistoricalDataProviderV2, I
     private sealed class FinnhubCandleResponse
     {
         [JsonPropertyName("c")]
-        public double[]? Close { get; set; }
+        public decimal[]? Close { get; set; }
 
         [JsonPropertyName("h")]
-        public double[]? High { get; set; }
+        public decimal[]? High { get; set; }
 
         [JsonPropertyName("l")]
-        public double[]? Low { get; set; }
+        public decimal[]? Low { get; set; }
 
         [JsonPropertyName("o")]
-        public double[]? Open { get; set; }
+        public decimal[]? Open { get; set; }
 
         [JsonPropertyName("s")]
         public string? Status { get; set; }
@@ -440,7 +440,7 @@ public sealed class FinnhubHistoricalDataProvider : IHistoricalDataProviderV2, I
         public long[]? Timestamp { get; set; }
 
         [JsonPropertyName("v")]
-        public double[]? Volume { get; set; }
+        public decimal[]? Volume { get; set; }
     }
 
     #endregion

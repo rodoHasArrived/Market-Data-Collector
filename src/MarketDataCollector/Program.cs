@@ -8,6 +8,8 @@ using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Application.Subscriptions;
 using MarketDataCollector.Application.Pipeline;
 using MarketDataCollector.Application.Config.Credentials;
+using MarketDataCollector.Application.Services;
+using MarketDataCollector.Application.Subscriptions.Services;
 using MarketDataCollector.Application.Testing;
 using MarketDataCollector.Application.UI;
 using MarketDataCollector.Domain.Collectors;
@@ -23,6 +25,7 @@ using BackfillRequest = MarketDataCollector.Application.Backfill.BackfillRequest
 using MarketDataCollector.Messaging.Configuration;
 using MarketDataCollector.Messaging.Publishers;
 using MarketDataCollector.Storage;
+using MarketDataCollector.Storage.Packaging;
 using MarketDataCollector.Storage.Policies;
 using MarketDataCollector.Storage.Services;
 using MarketDataCollector.Storage.Sinks;
@@ -72,6 +75,307 @@ internal static class Program
             return;
         }
 
+        // Wizard Mode - Interactive configuration wizard
+        if (args.Any(a => a.Equals("--wizard", StringComparison.OrdinalIgnoreCase)))
+        {
+            log.Information("Starting configuration wizard...");
+            var wizard = new ConfigurationWizard();
+            using var cts = new CancellationTokenSource();
+            Console.CancelKeyPress += (_, e) => { e.Cancel = true; cts.Cancel(); };
+
+            var result = await wizard.RunAsync(cts.Token);
+            Environment.Exit(result.Success ? 0 : 1);
+            return;
+        }
+
+        // Auto-Config Mode - Automatic configuration based on environment
+        if (args.Any(a => a.Equals("--auto-config", StringComparison.OrdinalIgnoreCase)))
+        {
+            log.Information("Running auto-configuration...");
+            var wizard = new ConfigurationWizard();
+            var result = wizard.RunQuickSetup();
+            Environment.Exit(result.Success ? 0 : 1);
+            return;
+        }
+
+        // Detect Providers Mode - Show available providers
+        if (args.Any(a => a.Equals("--detect-providers", StringComparison.OrdinalIgnoreCase)))
+        {
+            var autoConfig = new AutoConfigurationService();
+            var providers = autoConfig.DetectAvailableProviders();
+
+            Console.WriteLine();
+            Console.WriteLine("Detected Data Providers:");
+            Console.WriteLine("-".PadRight(60, '-'));
+
+            foreach (var provider in providers)
+            {
+                var status = provider.HasCredentials ? "[OK]" : "[--]";
+                Console.WriteLine($"  {status} {provider.DisplayName,-25} Priority: {provider.SuggestedPriority}");
+                Console.WriteLine($"        Capabilities: {string.Join(", ", provider.Capabilities)}");
+
+                if (!provider.HasCredentials && provider.MissingCredentials.Length > 0)
+                {
+                    Console.WriteLine($"        Missing: {string.Join(", ", provider.MissingCredentials)}");
+                }
+            }
+
+            var configured = providers.Count(p => p.HasCredentials);
+            Console.WriteLine();
+            Console.WriteLine($"  {configured}/{providers.Count} providers configured");
+
+            if (configured == 0)
+            {
+                Console.WriteLine();
+                Console.WriteLine("  To configure providers, set environment variables:");
+                Console.WriteLine("    export ALPACA_KEY_ID=your-key-id");
+                Console.WriteLine("    export ALPACA_SECRET_KEY=your-secret-key");
+                Console.WriteLine();
+                Console.WriteLine("  Or run the configuration wizard:");
+                Console.WriteLine("    MarketDataCollector --wizard");
+            }
+            Console.WriteLine();
+            return;
+        }
+
+        // Validate Credentials Mode - Test API credentials
+        if (args.Any(a => a.Equals("--validate-credentials", StringComparison.OrdinalIgnoreCase)))
+        {
+            log.Information("Validating API credentials...");
+
+            await using var validator = new CredentialValidationService();
+            var validationResult = await validator.ValidateAllAsync(cfg);
+            validator.PrintSummary(validationResult);
+
+            Environment.Exit(validationResult.AllValid ? 0 : 1);
+            return;
+        }
+
+        // Generate Config Mode - Generate configuration template
+        if (args.Any(a => a.Equals("--generate-config", StringComparison.OrdinalIgnoreCase)))
+        {
+            var templateName = GetArgValue(args, "--template") ?? "minimal";
+            var outputPath = GetArgValue(args, "--output") ?? "config/appsettings.generated.json";
+
+            var generator = new ConfigTemplateGenerator();
+            var template = generator.GetTemplate(templateName);
+
+            if (template == null)
+            {
+                Console.Error.WriteLine($"Unknown template: {templateName}");
+                Console.Error.WriteLine("Available templates: minimal, full, alpaca, backfill, production, docker");
+                Environment.Exit(1);
+                return;
+            }
+
+            // Ensure directory exists
+            var dir = Path.GetDirectoryName(outputPath);
+            if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+            {
+                Directory.CreateDirectory(dir);
+            }
+
+            File.WriteAllText(outputPath, template.Json);
+            Console.WriteLine($"Generated {template.Name} configuration template: {outputPath}");
+
+            if (template.EnvironmentVariables?.Count > 0)
+            {
+                Console.WriteLine();
+                Console.WriteLine("Required environment variables:");
+                foreach (var (key, desc) in template.EnvironmentVariables)
+                {
+                    Console.WriteLine($"  {key}: {desc}");
+                }
+            }
+            return;
+        }
+
+        // Quick Check Mode - Fast health diagnostics
+        if (args.Any(a => a.Equals("--quick-check", StringComparison.OrdinalIgnoreCase)))
+        {
+            log.Information("Running quick configuration check...");
+
+            var summary = new StartupSummary();
+            var result = summary.PerformQuickCheck(cfg);
+            summary.DisplayQuickCheck(result);
+
+            Environment.Exit(result.Success ? 0 : 1);
+            return;
+        }
+
+        // Test Connectivity Mode - Test provider connections
+        if (args.Any(a => a.Equals("--test-connectivity", StringComparison.OrdinalIgnoreCase)))
+        {
+            log.Information("Testing provider connectivity...");
+
+            await using var tester = new ConnectivityTestService();
+            var result = await tester.TestAllAsync(cfg);
+            tester.DisplaySummary(result);
+
+            Environment.Exit(result.AllReachable ? 0 : 1);
+            return;
+        }
+
+        // Show Error Codes Mode - Display error code reference
+        if (args.Any(a => a.Equals("--error-codes", StringComparison.OrdinalIgnoreCase)))
+        {
+            FriendlyErrorFormatter.DisplayErrorCodeReference();
+            return;
+        }
+
+        // Show Summary Mode - Display configuration summary
+        if (args.Any(a => a.Equals("--show-config", StringComparison.OrdinalIgnoreCase)))
+        {
+            var summary = new StartupSummary();
+            summary.Display(cfg, cfgPath, args);
+            return;
+        }
+
+        // Symbol Management Commands
+        var symbolManagementService = new SymbolManagementService(
+            new ConfigStore(cfgPath),
+            cfg.DataRoot,
+            log
+        );
+
+        // List all symbols (monitored + archived)
+        if (args.Any(a => a.Equals("--symbols", StringComparison.OrdinalIgnoreCase)))
+        {
+            await symbolManagementService.DisplayAllSymbolsAsync();
+            return;
+        }
+
+        // List monitored symbols only
+        if (args.Any(a => a.Equals("--symbols-monitored", StringComparison.OrdinalIgnoreCase)))
+        {
+            var result = symbolManagementService.GetMonitoredSymbols();
+            symbolManagementService.DisplayMonitoredSymbols(result);
+            return;
+        }
+
+        // List archived symbols only
+        if (args.Any(a => a.Equals("--symbols-archived", StringComparison.OrdinalIgnoreCase)))
+        {
+            var result = await symbolManagementService.GetArchivedSymbolsAsync();
+            symbolManagementService.DisplayArchivedSymbols(result);
+            return;
+        }
+
+        // Add symbols
+        if (args.Any(a => a.Equals("--symbols-add", StringComparison.OrdinalIgnoreCase)))
+        {
+            var symbolsArg = GetArgValue(args, "--symbols-add");
+            if (string.IsNullOrWhiteSpace(symbolsArg))
+            {
+                Console.Error.WriteLine("Error: --symbols-add requires a comma-separated list of symbols");
+                Console.Error.WriteLine("Example: --symbols-add AAPL,MSFT,GOOGL");
+                Environment.Exit(1);
+                return;
+            }
+
+            var symbols = symbolsArg.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            var options = new SymbolAddOptions(
+                SubscribeTrades: !args.Any(a => a.Equals("--no-trades", StringComparison.OrdinalIgnoreCase)),
+                SubscribeDepth: !args.Any(a => a.Equals("--no-depth", StringComparison.OrdinalIgnoreCase)),
+                DepthLevels: int.TryParse(GetArgValue(args, "--depth-levels"), out var levels) ? levels : 10,
+                UpdateExisting: args.Any(a => a.Equals("--update", StringComparison.OrdinalIgnoreCase))
+            );
+
+            var result = await symbolManagementService.AddSymbolsAsync(symbols, options);
+            Console.WriteLine();
+            Console.WriteLine(result.Success ? "Symbol Addition Result" : "Symbol Addition Failed");
+            Console.WriteLine(new string('=', 50));
+            Console.WriteLine($"  {result.Message}");
+            if (result.AffectedSymbols.Length > 0)
+            {
+                Console.WriteLine($"  Symbols: {string.Join(", ", result.AffectedSymbols)}");
+            }
+            Console.WriteLine();
+
+            Environment.Exit(result.Success ? 0 : 1);
+            return;
+        }
+
+        // Remove symbols
+        if (args.Any(a => a.Equals("--symbols-remove", StringComparison.OrdinalIgnoreCase)))
+        {
+            var symbolsArg = GetArgValue(args, "--symbols-remove");
+            if (string.IsNullOrWhiteSpace(symbolsArg))
+            {
+                Console.Error.WriteLine("Error: --symbols-remove requires a comma-separated list of symbols");
+                Console.Error.WriteLine("Example: --symbols-remove AAPL,MSFT");
+                Environment.Exit(1);
+                return;
+            }
+
+            var symbols = symbolsArg.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            var result = await symbolManagementService.RemoveSymbolsAsync(symbols);
+
+            Console.WriteLine();
+            Console.WriteLine(result.Success ? "Symbol Removal Result" : "Symbol Removal Failed");
+            Console.WriteLine(new string('=', 50));
+            Console.WriteLine($"  {result.Message}");
+            if (result.AffectedSymbols.Length > 0)
+            {
+                Console.WriteLine($"  Removed: {string.Join(", ", result.AffectedSymbols)}");
+            }
+            Console.WriteLine();
+
+            Environment.Exit(result.Success ? 0 : 1);
+            return;
+        }
+
+        // Check status of a specific symbol
+        if (args.Any(a => a.Equals("--symbol-status", StringComparison.OrdinalIgnoreCase)))
+        {
+            var symbolArg = GetArgValue(args, "--symbol-status");
+            if (string.IsNullOrWhiteSpace(symbolArg))
+            {
+                Console.Error.WriteLine("Error: --symbol-status requires a symbol");
+                Console.Error.WriteLine("Example: --symbol-status AAPL");
+                Environment.Exit(1);
+                return;
+            }
+
+            var status = await symbolManagementService.GetSymbolStatusAsync(symbolArg);
+
+            Console.WriteLine();
+            Console.WriteLine($"Symbol Status: {status.Symbol}");
+            Console.WriteLine(new string('=', 50));
+            Console.WriteLine($"  Monitored: {(status.IsMonitored ? "Yes" : "No")}");
+            Console.WriteLine($"  Has Archived Data: {(status.HasArchivedData ? "Yes" : "No")}");
+
+            if (status.MonitoredConfig != null)
+            {
+                Console.WriteLine();
+                Console.WriteLine("  Monitoring Configuration:");
+                Console.WriteLine($"    Subscribe Trades: {status.MonitoredConfig.SubscribeTrades}");
+                Console.WriteLine($"    Subscribe Depth: {status.MonitoredConfig.SubscribeDepth}");
+                Console.WriteLine($"    Depth Levels: {status.MonitoredConfig.DepthLevels}");
+                Console.WriteLine($"    Security Type: {status.MonitoredConfig.SecurityType}");
+                Console.WriteLine($"    Exchange: {status.MonitoredConfig.Exchange}");
+            }
+
+            if (status.ArchivedInfo != null)
+            {
+                Console.WriteLine();
+                Console.WriteLine("  Archived Data:");
+                Console.WriteLine($"    Files: {status.ArchivedInfo.FileCount}");
+                Console.WriteLine($"    Size: {FormatBytes(status.ArchivedInfo.TotalSizeBytes)}");
+                if (status.ArchivedInfo.OldestData.HasValue && status.ArchivedInfo.NewestData.HasValue)
+                {
+                    Console.WriteLine($"    Date Range: {status.ArchivedInfo.OldestData:yyyy-MM-dd} to {status.ArchivedInfo.NewestData:yyyy-MM-dd}");
+                }
+                if (status.ArchivedInfo.DataTypes.Length > 0)
+                {
+                    Console.WriteLine($"    Data Types: {string.Join(", ", status.ArchivedInfo.DataTypes)}");
+                }
+            }
+
+            Console.WriteLine();
+            return;
+        }
+
         // Validate Config Mode - Check configuration without starting
         if (args.Any(a => a.Equals("--validate-config", StringComparison.OrdinalIgnoreCase)))
         {
@@ -79,6 +383,30 @@ internal static class Program
             var validator = new ConfigValidatorCli(log);
             var exitCode = validator.Validate(configPathArg);
             Environment.Exit(exitCode);
+            return;
+        }
+
+        // Dry Run Mode - Validate everything without starting (QW-93)
+        if (args.Any(a => a.Equals("--dry-run", StringComparison.OrdinalIgnoreCase)))
+        {
+            log.Information("Running in dry-run mode...");
+            Application.Services.DryRunService.EnableDryRunMode();
+
+            var dryRunService = new Application.Services.DryRunService();
+            var options = new Application.Services.DryRunOptions(
+                ValidateConfiguration: true,
+                ValidateFileSystem: true,
+                ValidateConnectivity: !args.Any(a => a.Equals("--offline", StringComparison.OrdinalIgnoreCase)),
+                ValidateProviders: true,
+                ValidateSymbols: true,
+                ValidateResources: true
+            );
+
+            var result = await dryRunService.ValidateAsync(cfg, options);
+            var report = dryRunService.GenerateReport(result);
+            Console.WriteLine(report);
+
+            Environment.Exit(result.OverallSuccess ? 0 : 1);
             return;
         }
 
@@ -116,6 +444,58 @@ internal static class Program
             DepthBufferSelfTests.Run();
             log.Information("Self-tests passed");
             Console.WriteLine("Self-tests passed.");
+            return;
+        }
+
+        // Package Mode - Create a portable data package
+        if (args.Any(a => a.Equals("--package", StringComparison.OrdinalIgnoreCase)))
+        {
+            await RunPackageCommandAsync(cfg, args, log);
+            return;
+        }
+
+        // Import Package Mode - Import a package into storage
+        if (args.Any(a => a.Equals("--import-package", StringComparison.OrdinalIgnoreCase)))
+        {
+            var packagePath = GetArgValue(args, "--import-package");
+            if (string.IsNullOrWhiteSpace(packagePath))
+            {
+                Console.Error.WriteLine("Error: --import-package requires a path to the package file");
+                Environment.Exit(1);
+                return;
+            }
+
+            await RunImportPackageCommandAsync(cfg, packagePath, args, log);
+            return;
+        }
+
+        // List Package Contents Mode
+        if (args.Any(a => a.Equals("--list-package", StringComparison.OrdinalIgnoreCase)))
+        {
+            var packagePath = GetArgValue(args, "--list-package");
+            if (string.IsNullOrWhiteSpace(packagePath))
+            {
+                Console.Error.WriteLine("Error: --list-package requires a path to the package file");
+                Environment.Exit(1);
+                return;
+            }
+
+            await RunListPackageCommandAsync(packagePath, log);
+            return;
+        }
+
+        // Validate Package Mode
+        if (args.Any(a => a.Equals("--validate-package", StringComparison.OrdinalIgnoreCase)))
+        {
+            var packagePath = GetArgValue(args, "--validate-package");
+            if (string.IsNullOrWhiteSpace(packagePath))
+            {
+                Console.Error.WriteLine("Error: --validate-package requires a path to the package file");
+                Environment.Exit(1);
+                return;
+            }
+
+            await RunValidatePackageCommandAsync(packagePath, log);
             return;
         }
 
@@ -410,9 +790,41 @@ MODES:
     --serve-status          Enable status monitoring endpoint
     --backfill              Run historical data backfill
     --replay <path>         Replay events from JSONL file
+    --package               Create a portable data package
+    --import-package <path> Import a package into storage
+    --list-package <path>   List contents of a package
+    --validate-package <path> Validate a package
     --selftest              Run system self-tests
     --validate-config       Validate configuration without starting
+    --dry-run               Comprehensive validation without starting (QW-93)
     --help, -h              Show this help message
+
+AUTO-CONFIGURATION (First-time setup):
+    --wizard                Interactive configuration wizard (recommended for new users)
+    --auto-config           Quick auto-configuration based on environment variables
+    --detect-providers      Show available data providers and their status
+    --validate-credentials  Validate configured API credentials
+    --generate-config       Generate a configuration template
+
+DIAGNOSTICS & TROUBLESHOOTING:
+    --quick-check           Fast configuration health check
+    --test-connectivity     Test connectivity to all configured providers
+    --show-config           Display current configuration summary
+    --error-codes           Show error code reference guide
+
+SYMBOL MANAGEMENT:
+    --symbols               Show all symbols (monitored + archived)
+    --symbols-monitored     List symbols currently configured for monitoring
+    --symbols-archived      List symbols with archived data files
+    --symbols-add <list>    Add symbols to configuration (comma-separated)
+    --symbols-remove <list> Remove symbols from configuration
+    --symbol-status <sym>   Show detailed status for a specific symbol
+
+SYMBOL OPTIONS (use with --symbols-add):
+    --no-trades             Don't subscribe to trade data
+    --no-depth              Don't subscribe to depth/L2 data
+    --depth-levels <n>      Number of depth levels (default: 10)
+    --update                Update existing symbols instead of skipping
 
 OPTIONS:
     --config <path>         Path to configuration file (default: appsettings.json)
@@ -431,6 +843,31 @@ BACKFILL OPTIONS:
     --backfill-symbols <list>       Comma-separated symbols (e.g., AAPL,MSFT)
     --backfill-from <date>          Start date (YYYY-MM-DD)
     --backfill-to <date>            End date (YYYY-MM-DD)
+
+PACKAGING OPTIONS:
+    --package-name <name>           Package name (default: market-data-YYYYMMDD)
+    --package-description <text>    Package description
+    --package-output <path>         Output directory (default: packages)
+    --package-symbols <list>        Comma-separated symbols to include
+    --package-events <list>         Event types (Trade,BboQuote,L2Snapshot)
+    --package-from <date>           Start date (YYYY-MM-DD)
+    --package-to <date>             End date (YYYY-MM-DD)
+    --package-format <fmt>          Format: zip, tar.gz (default: zip)
+    --package-compression <level>   Compression: none, fast, balanced, max
+    --no-quality-report             Exclude quality report from package
+    --no-data-dictionary            Exclude data dictionary
+    --no-loader-scripts             Exclude loader scripts
+    --skip-checksums                Skip checksum verification
+
+IMPORT OPTIONS:
+    --import-destination <path>     Destination directory (default: data root)
+    --skip-validation               Skip checksum validation during import
+    --merge                         Merge with existing data (don't overwrite)
+
+AUTO-CONFIGURATION OPTIONS:
+    --template <name>       Template for --generate-config: minimal, full, alpaca,
+                            backfill, production, docker (default: minimal)
+    --output <path>         Output path for generated config (default: config/appsettings.generated.json)
 
 EXAMPLES:
     # Start web dashboard on default port
@@ -454,6 +891,70 @@ EXAMPLES:
 
     # Validate a specific configuration file
     MarketDataCollector --validate-config --config /path/to/config.json
+
+    # Create a portable data package
+    MarketDataCollector --package --package-name my-data \\
+        --package-symbols AAPL,MSFT --package-from 2024-01-01
+
+    # Create package with maximum compression
+    MarketDataCollector --package --package-compression max
+
+    # Import a package
+    MarketDataCollector --import-package ./packages/my-data.zip
+
+    # List package contents
+    MarketDataCollector --list-package ./packages/my-data.zip
+
+    # Validate a package
+    MarketDataCollector --validate-package ./packages/my-data.zip
+
+    # Run interactive configuration wizard (recommended for new users)
+    MarketDataCollector --wizard
+
+    # Quick auto-configuration based on environment variables
+    MarketDataCollector --auto-config
+
+    # Detect available data providers
+    MarketDataCollector --detect-providers
+
+    # Validate configured API credentials
+    MarketDataCollector --validate-credentials
+
+    # Generate a configuration template
+    MarketDataCollector --generate-config --template alpaca --output config/appsettings.json
+
+    # Quick configuration health check
+    MarketDataCollector --quick-check
+
+    # Test connectivity to all providers
+    MarketDataCollector --test-connectivity
+
+    # Show current configuration summary
+    MarketDataCollector --show-config
+
+    # View all error codes and their meanings
+    MarketDataCollector --error-codes
+
+    # Show all symbols (both monitored and archived)
+    MarketDataCollector --symbols
+
+    # Show only symbols currently being monitored
+    MarketDataCollector --symbols-monitored
+
+    # Show symbols that have archived data
+    MarketDataCollector --symbols-archived
+
+    # Add new symbols for monitoring
+    MarketDataCollector --symbols-add AAPL,MSFT,GOOGL
+
+    # Add symbols with custom options
+    MarketDataCollector --symbols-add SPY,QQQ --no-depth --depth-levels 5
+
+    # Remove symbols from monitoring
+    MarketDataCollector --symbols-remove AAPL,MSFT
+
+    # Check status of a specific symbol
+    MarketDataCollector --symbol-status AAPL
 
 CONFIGURATION:
     Configuration is loaded from appsettings.json by default, but can be customized:
@@ -488,7 +989,9 @@ SUPPORT:
     Documentation: ./HELP.md
 
 ╔══════════════════════════════════════════════════════════════════════╗
-║  Quick Start: ./MarketDataCollector --ui                             ║
+║  NEW USER?     Run: ./MarketDataCollector --wizard                   ║
+║  QUICK CHECK:  Run: ./MarketDataCollector --quick-check              ║
+║  START UI:     Run: ./MarketDataCollector --ui                       ║
 ║  Then open http://localhost:8080 in your browser                     ║
 ╚══════════════════════════════════════════════════════════════════════╝
 ");
@@ -693,6 +1196,350 @@ SUPPORT:
     }
 
     /// <summary>
+    /// Run the package creation command.
+    /// </summary>
+    private static async Task RunPackageCommandAsync(AppConfig cfg, string[] args, ILogger log)
+    {
+        log.Information("Creating portable data package...");
+
+        var options = new PackageOptions
+        {
+            Name = GetArgValue(args, "--package-name") ?? $"market-data-{DateTime.UtcNow:yyyyMMdd}",
+            Description = GetArgValue(args, "--package-description"),
+            OutputDirectory = GetArgValue(args, "--package-output") ?? "packages",
+            IncludeQualityReport = !args.Any(a => a.Equals("--no-quality-report", StringComparison.OrdinalIgnoreCase)),
+            IncludeDataDictionary = !args.Any(a => a.Equals("--no-data-dictionary", StringComparison.OrdinalIgnoreCase)),
+            IncludeLoaderScripts = !args.Any(a => a.Equals("--no-loader-scripts", StringComparison.OrdinalIgnoreCase)),
+            VerifyChecksums = !args.Any(a => a.Equals("--skip-checksums", StringComparison.OrdinalIgnoreCase))
+        };
+
+        // Parse symbols
+        var symbolsArg = GetArgValue(args, "--package-symbols");
+        if (!string.IsNullOrWhiteSpace(symbolsArg))
+        {
+            options.Symbols = symbolsArg.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        }
+
+        // Parse event types
+        var eventTypesArg = GetArgValue(args, "--package-events");
+        if (!string.IsNullOrWhiteSpace(eventTypesArg))
+        {
+            options.EventTypes = eventTypesArg.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        }
+
+        // Parse date range
+        var fromArg = GetArgValue(args, "--package-from");
+        if (DateTime.TryParse(fromArg, out var from))
+        {
+            options.StartDate = from;
+        }
+
+        var toArg = GetArgValue(args, "--package-to");
+        if (DateTime.TryParse(toArg, out var to))
+        {
+            options.EndDate = to;
+        }
+
+        // Parse format
+        var formatArg = GetArgValue(args, "--package-format");
+        if (!string.IsNullOrWhiteSpace(formatArg))
+        {
+            options.Format = formatArg.ToLowerInvariant() switch
+            {
+                "zip" => PackageFormat.Zip,
+                "tar.gz" or "targz" or "tgz" => PackageFormat.TarGz,
+                "7z" or "7zip" => PackageFormat.SevenZip,
+                _ => PackageFormat.Zip
+            };
+        }
+
+        // Parse compression level
+        var compressionArg = GetArgValue(args, "--package-compression");
+        if (!string.IsNullOrWhiteSpace(compressionArg))
+        {
+            options.CompressionLevel = compressionArg.ToLowerInvariant() switch
+            {
+                "none" => PackageCompressionLevel.None,
+                "fast" => PackageCompressionLevel.Fast,
+                "balanced" => PackageCompressionLevel.Balanced,
+                "maximum" or "max" => PackageCompressionLevel.Maximum,
+                _ => PackageCompressionLevel.Balanced
+            };
+        }
+
+        var packager = new PortableDataPackager(cfg.DataRoot);
+
+        // Subscribe to progress events
+        packager.ProgressChanged += (_, progress) =>
+        {
+            var percent = progress.TotalFiles > 0
+                ? (double)progress.FilesProcessed / progress.TotalFiles * 100
+                : 0;
+            Console.Write($"\r[{progress.Stage}] {progress.FilesProcessed}/{progress.TotalFiles} files ({percent:F1}%)    ");
+        };
+
+        var result = await packager.CreatePackageAsync(options);
+
+        Console.WriteLine(); // New line after progress
+
+        if (result.Success)
+        {
+            Console.WriteLine();
+            Console.WriteLine("╔══════════════════════════════════════════════════════════════════════╗");
+            Console.WriteLine("║                    Package Created Successfully                       ║");
+            Console.WriteLine("╚══════════════════════════════════════════════════════════════════════╝");
+            Console.WriteLine();
+            Console.WriteLine($"  Package: {result.PackagePath}");
+            Console.WriteLine($"  Size: {result.PackageSizeBytes:N0} bytes");
+            Console.WriteLine($"  Compression: {result.CompressionRatio:F2}x");
+            Console.WriteLine($"  Files: {result.FilesIncluded:N0}");
+            Console.WriteLine($"  Events: {result.TotalEvents:N0}");
+            Console.WriteLine($"  Symbols: {string.Join(", ", result.Symbols)}");
+            Console.WriteLine($"  Event Types: {string.Join(", ", result.EventTypes)}");
+            if (result.DateRange != null)
+            {
+                Console.WriteLine($"  Date Range: {result.DateRange.Start:yyyy-MM-dd} to {result.DateRange.End:yyyy-MM-dd}");
+            }
+            Console.WriteLine($"  Checksum: {result.PackageChecksum}");
+            Console.WriteLine();
+
+            if (result.Warnings.Length > 0)
+            {
+                Console.WriteLine("Warnings:");
+                foreach (var warning in result.Warnings)
+                {
+                    Console.WriteLine($"  - {warning}");
+                }
+            }
+
+            log.Information("Package created: {PackagePath} ({SizeBytes:N0} bytes, {CompressionRatio:F2}x compression)",
+                result.PackagePath, result.PackageSizeBytes, result.CompressionRatio);
+        }
+        else
+        {
+            Console.Error.WriteLine($"Error: {result.Error}");
+            log.Error("Package creation failed: {Error}", result.Error);
+            Environment.Exit(1);
+        }
+    }
+
+    /// <summary>
+    /// Run the package import command.
+    /// </summary>
+    private static async Task RunImportPackageCommandAsync(AppConfig cfg, string packagePath, string[] args, ILogger log)
+    {
+        log.Information("Importing package: {PackagePath}", packagePath);
+
+        var destinationDir = GetArgValue(args, "--import-destination") ?? cfg.DataRoot;
+        var validateChecksums = !args.Any(a => a.Equals("--skip-validation", StringComparison.OrdinalIgnoreCase));
+        var mergeWithExisting = args.Any(a => a.Equals("--merge", StringComparison.OrdinalIgnoreCase));
+
+        var packager = new PortableDataPackager(cfg.DataRoot);
+
+        // Subscribe to progress events
+        packager.ProgressChanged += (_, progress) =>
+        {
+            var percent = progress.TotalFiles > 0
+                ? (double)progress.FilesProcessed / progress.TotalFiles * 100
+                : 0;
+            Console.Write($"\r[{progress.Stage}] {progress.FilesProcessed}/{progress.TotalFiles} files ({percent:F1}%)    ");
+        };
+
+        var result = await packager.ImportPackageAsync(packagePath, destinationDir, validateChecksums, mergeWithExisting);
+
+        Console.WriteLine(); // New line after progress
+
+        if (result.Success)
+        {
+            Console.WriteLine();
+            Console.WriteLine("╔══════════════════════════════════════════════════════════════════════╗");
+            Console.WriteLine("║                    Package Imported Successfully                      ║");
+            Console.WriteLine("╚══════════════════════════════════════════════════════════════════════╝");
+            Console.WriteLine();
+            Console.WriteLine($"  Source: {result.SourcePath}");
+            Console.WriteLine($"  Destination: {result.DestinationPath}");
+            Console.WriteLine($"  Files Extracted: {result.FilesExtracted:N0}");
+            Console.WriteLine($"  Bytes Extracted: {result.BytesExtracted:N0}");
+            Console.WriteLine($"  Files Validated: {result.FilesValidated:N0}");
+            Console.WriteLine($"  Symbols: {string.Join(", ", result.Symbols)}");
+            Console.WriteLine($"  Event Types: {string.Join(", ", result.EventTypes)}");
+            Console.WriteLine($"  Duration: {result.DurationSeconds:F2} seconds");
+            Console.WriteLine();
+
+            if (result.Warnings.Length > 0)
+            {
+                Console.WriteLine("Warnings:");
+                foreach (var warning in result.Warnings)
+                {
+                    Console.WriteLine($"  - {warning}");
+                }
+            }
+
+            log.Information("Package imported: {FilesExtracted} files, {BytesExtracted:N0} bytes",
+                result.FilesExtracted, result.BytesExtracted);
+        }
+        else
+        {
+            Console.Error.WriteLine($"Error: {result.Error}");
+
+            if (result.ValidationErrors?.Length > 0)
+            {
+                Console.Error.WriteLine("\nValidation Errors:");
+                foreach (var error in result.ValidationErrors)
+                {
+                    Console.Error.WriteLine($"  - {error.FilePath}: {error.Message}");
+                }
+            }
+
+            log.Error("Package import failed: {Error}", result.Error);
+            Environment.Exit(1);
+        }
+    }
+
+    /// <summary>
+    /// Run the list package contents command.
+    /// </summary>
+    private static async Task RunListPackageCommandAsync(string packagePath, ILogger log)
+    {
+        log.Information("Listing package contents: {PackagePath}", packagePath);
+
+        var packager = new PortableDataPackager(".");
+
+        try
+        {
+            var contents = await packager.ListPackageContentsAsync(packagePath);
+
+            Console.WriteLine();
+            Console.WriteLine("╔══════════════════════════════════════════════════════════════════════╗");
+            Console.WriteLine("║                         Package Contents                              ║");
+            Console.WriteLine("╚══════════════════════════════════════════════════════════════════════╝");
+            Console.WriteLine();
+            Console.WriteLine($"  Name: {contents.Name}");
+            Console.WriteLine($"  Package ID: {contents.PackageId}");
+            if (!string.IsNullOrEmpty(contents.Description))
+            {
+                Console.WriteLine($"  Description: {contents.Description}");
+            }
+            Console.WriteLine($"  Created: {contents.CreatedAt:yyyy-MM-dd HH:mm:ss} UTC");
+            Console.WriteLine();
+            Console.WriteLine("  Summary:");
+            Console.WriteLine($"    Total Files: {contents.TotalFiles:N0}");
+            Console.WriteLine($"    Total Events: {contents.TotalEvents:N0}");
+            Console.WriteLine($"    Package Size: {contents.PackageSizeBytes:N0} bytes");
+            Console.WriteLine($"    Uncompressed Size: {contents.UncompressedSizeBytes:N0} bytes");
+            Console.WriteLine();
+            Console.WriteLine($"  Symbols: {string.Join(", ", contents.Symbols)}");
+            Console.WriteLine($"  Event Types: {string.Join(", ", contents.EventTypes)}");
+            if (contents.DateRange != null)
+            {
+                Console.WriteLine($"  Date Range: {contents.DateRange.Start:yyyy-MM-dd} to {contents.DateRange.End:yyyy-MM-dd}");
+                Console.WriteLine($"  Trading Days: {contents.DateRange.TradingDays}");
+            }
+            Console.WriteLine();
+
+            if (contents.Quality != null)
+            {
+                Console.WriteLine("  Quality Metrics:");
+                Console.WriteLine($"    Overall Score: {contents.Quality.OverallScore:F2}");
+                Console.WriteLine($"    Completeness: {contents.Quality.CompletenessScore:F2}");
+                Console.WriteLine($"    Integrity: {contents.Quality.IntegrityScore:F2}");
+                Console.WriteLine($"    Grade: {contents.Quality.Grade}");
+                Console.WriteLine();
+            }
+
+            Console.WriteLine("  Files:");
+            foreach (var file in contents.Files.Take(20)) // Show first 20 files
+            {
+                var size = file.SizeBytes > 1024 * 1024
+                    ? $"{file.SizeBytes / (1024.0 * 1024.0):F1} MB"
+                    : $"{file.SizeBytes / 1024.0:F1} KB";
+                Console.WriteLine($"    {file.Path} ({size}, {file.EventCount:N0} events)");
+            }
+
+            if (contents.Files.Length > 20)
+            {
+                Console.WriteLine($"    ... and {contents.Files.Length - 20} more files");
+            }
+            Console.WriteLine();
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error reading package: {ex.Message}");
+            log.Error(ex, "Failed to list package contents");
+            Environment.Exit(1);
+        }
+    }
+
+    /// <summary>
+    /// Run the validate package command.
+    /// </summary>
+    private static async Task RunValidatePackageCommandAsync(string packagePath, ILogger log)
+    {
+        log.Information("Validating package: {PackagePath}", packagePath);
+
+        var packager = new PortableDataPackager(".");
+        var result = await packager.ValidatePackageAsync(packagePath);
+
+        Console.WriteLine();
+        if (result.IsValid)
+        {
+            Console.WriteLine("╔══════════════════════════════════════════════════════════════════════╗");
+            Console.WriteLine("║                      Package Validation: PASSED                       ║");
+            Console.WriteLine("╚══════════════════════════════════════════════════════════════════════╝");
+            Console.WriteLine();
+            Console.WriteLine($"  Package: {packagePath}");
+            if (result.Manifest != null)
+            {
+                Console.WriteLine($"  Name: {result.Manifest.Name}");
+                Console.WriteLine($"  Package ID: {result.Manifest.PackageId}");
+                Console.WriteLine($"  Files: {result.Manifest.TotalFiles:N0}");
+                Console.WriteLine($"  Events: {result.Manifest.TotalEvents:N0}");
+            }
+            Console.WriteLine();
+            log.Information("Package validation passed: {PackagePath}", packagePath);
+        }
+        else
+        {
+            Console.WriteLine("╔══════════════════════════════════════════════════════════════════════╗");
+            Console.WriteLine("║                      Package Validation: FAILED                       ║");
+            Console.WriteLine("╚══════════════════════════════════════════════════════════════════════╝");
+            Console.WriteLine();
+            Console.WriteLine($"  Package: {packagePath}");
+
+            if (!string.IsNullOrEmpty(result.Error))
+            {
+                Console.WriteLine($"  Error: {result.Error}");
+            }
+
+            if (result.Issues?.Length > 0)
+            {
+                Console.WriteLine("\n  Issues:");
+                foreach (var issue in result.Issues)
+                {
+                    Console.WriteLine($"    - {issue}");
+                }
+            }
+
+            if (result.MissingFiles?.Length > 0)
+            {
+                Console.WriteLine("\n  Missing Files:");
+                foreach (var file in result.MissingFiles.Take(10))
+                {
+                    Console.WriteLine($"    - {file}");
+                }
+                if (result.MissingFiles.Length > 10)
+                {
+                    Console.WriteLine($"    ... and {result.MissingFiles.Length - 10} more");
+                }
+            }
+
+            Console.WriteLine();
+            log.Warning("Package validation failed: {PackagePath}", packagePath);
+            Environment.Exit(1);
+        }
+    }
+
+    /// <summary>
     /// Creates backfill providers based on configuration.
     /// </summary>
     private static List<IHistoricalDataProvider> CreateBackfillProviders(AppConfig cfg, ILogger log)
@@ -808,5 +1655,21 @@ SUPPORT:
         return providers
             .OrderBy(p => p is IHistoricalDataProviderV2 v2 ? v2.Priority : 100)
             .ToList();
+    }
+
+    /// <summary>
+    /// Format bytes as human-readable string.
+    /// </summary>
+    private static string FormatBytes(long bytes)
+    {
+        string[] sizes = { "B", "KB", "MB", "GB", "TB" };
+        var order = 0;
+        double size = bytes;
+        while (size >= 1024 && order < sizes.Length - 1)
+        {
+            order++;
+            size /= 1024;
+        }
+        return $"{size:0.##} {sizes[order]}";
     }
 }

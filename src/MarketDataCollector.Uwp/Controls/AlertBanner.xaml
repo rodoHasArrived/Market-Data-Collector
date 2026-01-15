@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="MarketDataCollector.Uwp.Controls.AlertBanner"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:MarketDataCollector.Uwp.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Border x:Name="AlertBorder"
+            CornerRadius="8"
+            Padding="16,12"
+            BorderThickness="1"
+            AutomationProperties.Name="{x:Bind Title, Mode=OneWay}"
+            AutomationProperties.LiveSetting="Polite">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Severity Icon -->
+            <Border x:Name="IconContainer"
+                    Grid.Column="0"
+                    Width="32" Height="32"
+                    CornerRadius="6"
+                    Margin="0,0,12,0"
+                    VerticalAlignment="Top">
+                <FontIcon x:Name="SeverityIcon"
+                          FontSize="16"
+                          HorizontalAlignment="Center"
+                          VerticalAlignment="Center" />
+            </Border>
+
+            <!-- Content -->
+            <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
+                <TextBlock x:Name="TitleText"
+                           Text="{x:Bind Title, Mode=OneWay}"
+                           FontSize="14"
+                           FontWeight="SemiBold"
+                           TextWrapping="Wrap"
+                           Visibility="{x:Bind TitleVisibility, Mode=OneWay}" />
+
+                <TextBlock x:Name="MessageText"
+                           Text="{x:Bind Message, Mode=OneWay}"
+                           FontSize="13"
+                           TextWrapping="Wrap"
+                           Opacity="0.9"
+                           Visibility="{x:Bind MessageVisibility, Mode=OneWay}" />
+
+                <!-- Optional expandable details -->
+                <Expander x:Name="DetailsExpander"
+                          Visibility="{x:Bind DetailsVisibility, Mode=OneWay}"
+                          Margin="0,8,0,0"
+                          HorizontalAlignment="Left"
+                          HorizontalContentAlignment="Stretch"
+                          IsExpanded="False">
+                    <Expander.Header>
+                        <TextBlock Text="Show details"
+                                   FontSize="12"
+                                   FontWeight="SemiBold" />
+                    </Expander.Header>
+                    <Border Background="{StaticResource ConsoleBackgroundDarkBrush}"
+                            CornerRadius="6"
+                            Padding="12"
+                            Margin="0,8,0,0">
+                        <TextBlock Text="{x:Bind Details, Mode=OneWay}"
+                                   FontFamily="Cascadia Code, Consolas, monospace"
+                                   FontSize="12"
+                                   TextWrapping="Wrap"
+                                   IsTextSelectionEnabled="True"
+                                   Foreground="{StaticResource ConsoleTextSecondaryBrush}" />
+                    </Border>
+                </Expander>
+            </StackPanel>
+
+            <!-- Action Button -->
+            <Button x:Name="ActionButton"
+                    Grid.Column="2"
+                    Content="{x:Bind ActionText, Mode=OneWay}"
+                    Click="ActionButton_Click"
+                    Visibility="{x:Bind ActionVisibility, Mode=OneWay}"
+                    Margin="12,0,0,0"
+                    Padding="12,6"
+                    FontSize="12"
+                    FontWeight="SemiBold"
+                    VerticalAlignment="Center" />
+
+            <!-- Dismiss Button -->
+            <Button x:Name="DismissButton"
+                    Grid.Column="3"
+                    Click="DismissButton_Click"
+                    Visibility="{x:Bind DismissVisibility, Mode=OneWay}"
+                    Style="{StaticResource IconButtonStyle}"
+                    Margin="8,0,0,0"
+                    Width="28" Height="28"
+                    VerticalAlignment="Top"
+                    ToolTipService.ToolTip="Dismiss"
+                    AutomationProperties.Name="Dismiss alert">
+                <FontIcon Glyph="&#xE711;" FontSize="12" />
+            </Button>
+        </Grid>
+    </Border>
+</UserControl>

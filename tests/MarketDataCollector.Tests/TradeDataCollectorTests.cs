@@ -167,6 +167,99 @@ public class TradeDataCollectorTests
         integrityEvents.Should().BeEmpty();
     }
 
+    [Fact]
+    public void OnTrade_WithSymbolTooLong_PublishesIntegrityEventAndRejectsTrade()
+    {
+        // Arrange - Symbol exceeding 50 character limit
+        var longSymbol = new string('A', 51);
+        var update = CreateTrade(longSymbol, seqNum: 1);
+
+        // Act
+        _collector.OnTrade(update);
+
+        // Assert - Should only publish integrity event (rejected)
+        _publishedEvents.Should().HaveCount(1);
+        _publishedEvents[0].Type.Should().Be(MarketEventType.Integrity);
+        var integrity = _publishedEvents[0].Payload as IntegrityEvent;
+        integrity.Should().NotBeNull();
+        integrity!.Description.Should().Contain("exceeds maximum length");
+    }
+
+    [Theory]
+    [InlineData("SPY@NYSE")]
+    [InlineData("AAPL$")]
+    [InlineData("TEST#1")]
+    [InlineData("SYMBOL<>")]
+    public void OnTrade_WithInvalidSymbolCharacters_PublishesIntegrityEventAndRejectsTrade(string invalidSymbol)
+    {
+        // Arrange
+        var update = CreateTrade(invalidSymbol, seqNum: 1);
+
+        // Act
+        _collector.OnTrade(update);
+
+        // Assert - Should only publish integrity event (rejected)
+        _publishedEvents.Should().HaveCount(1);
+        _publishedEvents[0].Type.Should().Be(MarketEventType.Integrity);
+        var integrity = _publishedEvents[0].Payload as IntegrityEvent;
+        integrity.Should().NotBeNull();
+        integrity!.Description.Should().Contain("invalid character");
+    }
+
+    [Theory]
+    [InlineData("SPY")]
+    [InlineData("AAPL.O")]
+    [InlineData("ES-2024")]
+    [InlineData("BTC_USD")]
+    [InlineData("EUR:USD")]
+    [InlineData("SPY/CALL")]
+    [InlineData("AAPL123")]
+    public void OnTrade_WithValidSymbolFormats_AcceptsTrade(string validSymbol)
+    {
+        // Arrange
+        var update = CreateTrade(validSymbol, seqNum: 1);
+
+        // Act
+        _collector.OnTrade(update);
+
+        // Assert - Should publish Trade and OrderFlow events (no integrity event)
+        _publishedEvents.Should().HaveCount(2);
+        _publishedEvents[0].Type.Should().Be(MarketEventType.Trade);
+        _publishedEvents[1].Type.Should().Be(MarketEventType.OrderFlow);
+    }
+
+    [Fact]
+    public void OnTrade_WithNegativeSequenceNumber_PublishesIntegrityEventAndRejectsTrade()
+    {
+        // Arrange
+        var update = CreateTrade("SPY", seqNum: -1);
+
+        // Act
+        _collector.OnTrade(update);
+
+        // Assert - Should only publish integrity event (rejected)
+        _publishedEvents.Should().HaveCount(1);
+        _publishedEvents[0].Type.Should().Be(MarketEventType.Integrity);
+        var integrity = _publishedEvents[0].Payload as IntegrityEvent;
+        integrity.Should().NotBeNull();
+        integrity!.Description.Should().Contain("non-negative");
+    }
+
+    [Fact]
+    public void OnTrade_WithZeroSequenceNumber_AcceptsTrade()
+    {
+        // Arrange - Zero is a valid sequence number
+        var update = CreateTrade("SPY", seqNum: 0);
+
+        // Act
+        _collector.OnTrade(update);
+
+        // Assert - Should publish Trade and OrderFlow events
+        _publishedEvents.Should().HaveCount(2);
+        _publishedEvents[0].Type.Should().Be(MarketEventType.Trade);
+        _publishedEvents[1].Type.Should().Be(MarketEventType.OrderFlow);
+    }
+
     private static MarketTradeUpdate CreateTrade(
         string symbol,
         decimal price = 100m,

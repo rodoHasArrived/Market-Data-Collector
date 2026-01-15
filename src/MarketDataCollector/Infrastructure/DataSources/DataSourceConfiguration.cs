@@ -486,13 +486,37 @@ public sealed record CredentialConfig
     }
 
     /// <summary>
+    /// Resolves the username from configured source.
+    /// </summary>
+    public string? ResolveUsername()
+    {
+        if (!string.IsNullOrWhiteSpace(UsernameVar))
+            return Environment.GetEnvironmentVariable(UsernameVar);
+        return null;
+    }
+
+    /// <summary>
+    /// Resolves the password from configured source.
+    /// </summary>
+    public string? ResolvePassword()
+    {
+        if (!string.IsNullOrWhiteSpace(PasswordVar))
+            return Environment.GetEnvironmentVariable(PasswordVar);
+        return null;
+    }
+
+    /// <summary>
     /// Validates that required credentials are configured and resolvable.
     /// Use this for pre-flight checks before starting a data source.
     /// </summary>
     /// <param name="requireApiKey">Whether an API key is required.</param>
     /// <param name="requireKeyIdAndSecret">Whether key ID and secret are required.</param>
+    /// <param name="requireUsernameAndPassword">Whether username and password are required.</param>
     /// <returns>Validation result with any errors found.</returns>
-    public CredentialValidationResult Validate(bool requireApiKey = false, bool requireKeyIdAndSecret = false)
+    public CredentialValidationResult Validate(
+        bool requireApiKey = false,
+        bool requireKeyIdAndSecret = false,
+        bool requireUsernameAndPassword = false)
     {
         var errors = new List<string>();
 
@@ -529,6 +553,27 @@ public sealed record CredentialConfig
             }
         }
 
+        if (requireUsernameAndPassword)
+        {
+            if (string.IsNullOrWhiteSpace(UsernameVar))
+            {
+                errors.Add("UsernameVar is not configured");
+            }
+            else if (string.IsNullOrWhiteSpace(ResolveUsername()))
+            {
+                errors.Add($"Environment variable '{UsernameVar}' is not set or empty");
+            }
+
+            if (string.IsNullOrWhiteSpace(PasswordVar))
+            {
+                errors.Add("PasswordVar is not configured");
+            }
+            else if (string.IsNullOrWhiteSpace(ResolvePassword()))
+            {
+                errors.Add($"Environment variable '{PasswordVar}' is not set or empty");
+            }
+        }
+
         // Validate file source if specified
         if (Source.Equals("File", StringComparison.OrdinalIgnoreCase))
         {
@@ -562,10 +607,15 @@ public sealed record CredentialConfig
     /// <param name="sourceName">Name of the data source for error messages.</param>
     /// <param name="requireApiKey">Whether an API key is required.</param>
     /// <param name="requireKeyIdAndSecret">Whether key ID and secret are required.</param>
+    /// <param name="requireUsernameAndPassword">Whether username and password are required.</param>
     /// <exception cref="InvalidOperationException">Thrown when validation fails.</exception>
-    public void EnsureValid(string sourceName, bool requireApiKey = false, bool requireKeyIdAndSecret = false)
+    public void EnsureValid(
+        string sourceName,
+        bool requireApiKey = false,
+        bool requireKeyIdAndSecret = false,
+        bool requireUsernameAndPassword = false)
     {
-        var result = Validate(requireApiKey, requireKeyIdAndSecret);
+        var result = Validate(requireApiKey, requireKeyIdAndSecret, requireUsernameAndPassword);
         if (!result.IsValid)
         {
             throw new InvalidOperationException(

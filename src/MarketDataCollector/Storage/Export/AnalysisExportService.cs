@@ -4,6 +4,9 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using MarketDataCollector.Application.Logging;
+using Parquet;
+using Parquet.Data;
+using Parquet.Schema;
 using Serilog;
 
 namespace MarketDataCollector.Storage.Export;
@@ -294,8 +297,6 @@ public class AnalysisExportService
     {
         var exportedFiles = new List<ExportedFile>();
 
-        // For Parquet, we'll create a simple CSV as a placeholder
-        // In a real implementation, you'd use Parquet.Net or PyArrow
         var grouped = profile.SplitBySymbol
             ? sourceFiles.GroupBy(f => f.Symbol)
             : new[] { sourceFiles.AsEnumerable() }.Select(g => g);
@@ -307,7 +308,7 @@ public class AnalysisExportService
                 request.OutputDirectory,
                 $"{symbol}_{DateTime.UtcNow:yyyyMMdd}.parquet");
 
-            // For now, create a JSON manifest that describes what would be in the Parquet file
+            // Collect all records first to determine schema
             var records = new List<Dictionary<string, object?>>();
             long recordCount = 0;
 
@@ -317,19 +318,17 @@ public class AnalysisExportService
                 {
                     records.Add(record);
                     recordCount++;
-
-                    // Limit records in memory
-                    if (records.Count >= 10000)
-                    {
-                        await WriteParquetPlaceholderAsync(outputPath, records, recordCount > 10000);
-                        records.Clear();
-                    }
                 }
             }
 
             if (records.Count > 0)
             {
-                await WriteParquetPlaceholderAsync(outputPath, records, recordCount > records.Count);
+                await WriteParquetFileAsync(outputPath, records, ct);
+            }
+            else
+            {
+                // Create empty parquet file with minimal schema
+                await WriteEmptyParquetFileAsync(outputPath, ct);
             }
 
             var fileInfo = new FileInfo(outputPath);
@@ -348,20 +347,191 @@ public class AnalysisExportService
         return exportedFiles;
     }
 
-    private async Task WriteParquetPlaceholderAsync(
+    /// <summary>
+    /// Writes records to a Parquet file using columnar storage format.
+    /// Dynamically builds schema from record keys and writes data in columnar format
+    /// for optimal compression and analytics performance.
+    /// </summary>
+    private async Task WriteParquetFileAsync(
         string path,
         List<Dictionary<string, object?>> records,
-        bool append)
+        CancellationToken ct)
     {
-        // Placeholder implementation - writes JSON instead of Parquet
-        // Real implementation would use Parquet.Net
-        var mode = append ? FileMode.Append : FileMode.Create;
-        await using var fs = new FileStream(path, mode, FileAccess.Write);
-        await using var writer = new StreamWriter(fs);
+        if (records.Count == 0) return;
 
+        // Build schema from the first record's keys
+        var firstRecord = records[0];
+        var columns = firstRecord.Keys.ToList();
+        var dataFields = new List<DataField>();
+
+        // Infer schema from first record's values
+        foreach (var column in columns)
+        {
+            var value = firstRecord[column];
+            var dataField = InferDataField(column, value);
+            dataFields.Add(dataField);
+        }
+
+        var schema = new ParquetSchema(dataFields);
+
+        // Prepare columnar data
+        var columnData = new Dictionary<string, List<object?>>();
+        foreach (var column in columns)
+        {
+            columnData[column] = new List<object?>(records.Count);
+        }
+
+        // Extract data into columns
         foreach (var record in records)
         {
-            await writer.WriteLineAsync(JsonSerializer.Serialize(record));
+            foreach (var column in columns)
+            {
+                record.TryGetValue(column, out var value);
+                columnData[column].Add(value);
+            }
+        }
+
+        // Write to Parquet file
+        await using var fileStream = File.Create(path);
+        using var parquetWriter = await ParquetWriter.CreateAsync(schema, fileStream);
+        using var rowGroupWriter = parquetWriter.CreateRowGroup();
+
+        for (int i = 0; i < columns.Count; i++)
+        {
+            var column = columns[i];
+            var dataField = dataFields[i];
+            var values = columnData[column];
+            var dataColumn = CreateDataColumn(dataField, values);
+            await rowGroupWriter.WriteColumnAsync(dataColumn);
+        }
+
+        _log.Debug("Wrote {RecordCount} records to Parquet file: {Path}", records.Count, path);
+    }
+
+    /// <summary>
+    /// Creates an empty Parquet file with a minimal schema.
+    /// </summary>
+    private async Task WriteEmptyParquetFileAsync(string path, CancellationToken ct)
+    {
+        var schema = new ParquetSchema(
+            new DataField<string>("_empty")
+        );
+
+        await using var fileStream = File.Create(path);
+        using var parquetWriter = await ParquetWriter.CreateAsync(schema, fileStream);
+        using var rowGroupWriter = parquetWriter.CreateRowGroup();
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(schema.DataFields[0], Array.Empty<string>()));
+    }
+
+    /// <summary>
+    /// Infers the appropriate Parquet DataField type from a sample value.
+    /// </summary>
+    private static DataField InferDataField(string columnName, object? sampleValue)
+    {
+        return sampleValue switch
+        {
+            int => new DataField<int?>(columnName),
+            long => new DataField<long?>(columnName),
+            float => new DataField<float?>(columnName),
+            double => new DataField<double?>(columnName),
+            decimal => new DataField<decimal?>(columnName),
+            bool => new DataField<bool?>(columnName),
+            DateTime => new DataField<DateTimeOffset?>(columnName),
+            DateTimeOffset => new DataField<DateTimeOffset?>(columnName),
+            _ => new DataField<string>(columnName) // Default to string for unknown types
+        };
+    }
+
+    /// <summary>
+    /// Creates a DataColumn from a list of values, converting them to the appropriate type.
+    /// </summary>
+    private static DataColumn CreateDataColumn(DataField dataField, List<object?> values)
+    {
+        var clrType = dataField.ClrType;
+
+        if (clrType == typeof(int?))
+        {
+            var typedValues = values.Select(v => v switch
+            {
+                int i => (int?)i,
+                long l => (int?)l,
+                double d => (int?)d,
+                _ => v != null ? (int?)Convert.ToInt32(v) : null
+            }).ToArray();
+            return new DataColumn(dataField, typedValues);
+        }
+        else if (clrType == typeof(long?))
+        {
+            var typedValues = values.Select(v => v switch
+            {
+                long l => (long?)l,
+                int i => (long?)i,
+                double d => (long?)d,
+                _ => v != null ? (long?)Convert.ToInt64(v) : null
+            }).ToArray();
+            return new DataColumn(dataField, typedValues);
+        }
+        else if (clrType == typeof(float?))
+        {
+            var typedValues = values.Select(v => v switch
+            {
+                float f => (float?)f,
+                double d => (float?)d,
+                int i => (float?)i,
+                _ => v != null ? (float?)Convert.ToSingle(v) : null
+            }).ToArray();
+            return new DataColumn(dataField, typedValues);
+        }
+        else if (clrType == typeof(double?))
+        {
+            var typedValues = values.Select(v => v switch
+            {
+                double d => (double?)d,
+                float f => (double?)f,
+                int i => (double?)i,
+                long l => (double?)l,
+                _ => v != null ? (double?)Convert.ToDouble(v) : null
+            }).ToArray();
+            return new DataColumn(dataField, typedValues);
+        }
+        else if (clrType == typeof(decimal?))
+        {
+            var typedValues = values.Select(v => v switch
+            {
+                decimal dec => (decimal?)dec,
+                double d => (decimal?)Convert.ToDecimal(d),
+                float f => (decimal?)Convert.ToDecimal(f),
+                int i => (decimal?)i,
+                long l => (decimal?)l,
+                _ => v != null ? (decimal?)Convert.ToDecimal(v) : null
+            }).ToArray();
+            return new DataColumn(dataField, typedValues);
+        }
+        else if (clrType == typeof(bool?))
+        {
+            var typedValues = values.Select(v => v switch
+            {
+                bool b => (bool?)b,
+                _ => v != null ? (bool?)Convert.ToBoolean(v) : null
+            }).ToArray();
+            return new DataColumn(dataField, typedValues);
+        }
+        else if (clrType == typeof(DateTimeOffset?))
+        {
+            var typedValues = values.Select(v => v switch
+            {
+                DateTimeOffset dto => (DateTimeOffset?)dto,
+                DateTime dt => (DateTimeOffset?)new DateTimeOffset(dt),
+                string s when DateTimeOffset.TryParse(s, out var parsed) => (DateTimeOffset?)parsed,
+                _ => null
+            }).ToArray();
+            return new DataColumn(dataField, typedValues);
+        }
+        else
+        {
+            // Default to string
+            var typedValues = values.Select(v => v?.ToString() ?? string.Empty).ToArray();
+            return new DataColumn(dataField, typedValues);
         }
     }
 
@@ -551,6 +721,7 @@ public class AnalysisExportService
                 Symbol = symbol,
                 Format = "xlsx",
                 SizeBytes = fileInfo.Length,
+                RecordCount = records.Count,
                 RecordCount = recordCount,
                 ChecksumSha256 = await ComputeChecksumAsync(outputPath, ct)
             });
@@ -559,6 +730,20 @@ public class AnalysisExportService
         return exportedFiles;
     }
 
+    private async Task WriteXlsxFileAsync(
+        string path,
+        List<Dictionary<string, object?>> records,
+        string sheetName,
+        CancellationToken ct)
+    {
+        if (records.Count == 0) return;
+
+        var columns = records[0].Keys.ToList();
+
+        await using var fileStream = File.Create(path);
+        using var archive = new ZipArchive(fileStream, ZipArchiveMode.Create);
+
+        // [Content_Types].xml
     private async Task<long> CreateXlsxFileAsync(
         string outputPath,
         List<SourceFile> sourceFiles,
@@ -575,6 +760,20 @@ public class AnalysisExportService
         await using (var stream = contentTypesEntry.Open())
         await using (var writer = new StreamWriter(stream, Encoding.UTF8))
         {
+            await writer.WriteAsync("""
+                <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+                <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+                  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+                  <Default Extension="xml" ContentType="application/xml"/>
+                  <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
+                  <Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
+                  <Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>
+                  <Override PartName="/xl/sharedStrings.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml"/>
+                </Types>
+                """);
+        }
+
+        // _rels/.rels
             await writer.WriteAsync(GetContentTypesXml());
         }
 
@@ -583,6 +782,15 @@ public class AnalysisExportService
         await using (var stream = relsEntry.Open())
         await using (var writer = new StreamWriter(stream, Encoding.UTF8))
         {
+            await writer.WriteAsync("""
+                <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+                <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+                  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
+                </Relationships>
+                """);
+        }
+
+        // xl/workbook.xml
             await writer.WriteAsync(GetRelsXml());
         }
 
@@ -591,6 +799,17 @@ public class AnalysisExportService
         await using (var stream = workbookEntry.Open())
         await using (var writer = new StreamWriter(stream, Encoding.UTF8))
         {
+            await writer.WriteAsync($"""
+                <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+                <workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+                  <sheets>
+                    <sheet name="{XmlEscape(sheetName)}" sheetId="1" r:id="rId1"/>
+                  </sheets>
+                </workbook>
+                """);
+        }
+
+        // xl/_rels/workbook.xml.rels
             await writer.WriteAsync(GetWorkbookXml());
         }
 
@@ -599,6 +818,17 @@ public class AnalysisExportService
         await using (var stream = workbookRelsEntry.Open())
         await using (var writer = new StreamWriter(stream, Encoding.UTF8))
         {
+            await writer.WriteAsync("""
+                <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+                <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+                  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
+                  <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+                  <Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings" Target="sharedStrings.xml"/>
+                </Relationships>
+                """);
+        }
+
+        // xl/styles.xml
             await writer.WriteAsync(GetWorkbookRelsXml());
         }
 
@@ -607,6 +837,140 @@ public class AnalysisExportService
         await using (var stream = stylesEntry.Open())
         await using (var writer = new StreamWriter(stream, Encoding.UTF8))
         {
+            await writer.WriteAsync("""
+                <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+                <styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+                  <fonts count="2">
+                    <font><sz val="11"/><name val="Calibri"/></font>
+                    <font><b/><sz val="11"/><name val="Calibri"/></font>
+                  </fonts>
+                  <fills count="2">
+                    <fill><patternFill patternType="none"/></fill>
+                    <fill><patternFill patternType="gray125"/></fill>
+                  </fills>
+                  <borders count="1">
+                    <border><left/><right/><top/><bottom/><diagonal/></border>
+                  </borders>
+                  <cellXfs count="2">
+                    <xf fontId="0" fillId="0" borderId="0"/>
+                    <xf fontId="1" fillId="0" borderId="0"/>
+                  </cellXfs>
+                </styleSheet>
+                """);
+        }
+
+        // Build shared strings for string values
+        var sharedStrings = new List<string>();
+        var stringToIndex = new Dictionary<string, int>();
+
+        foreach (var col in columns)
+        {
+            if (!stringToIndex.ContainsKey(col))
+            {
+                stringToIndex[col] = sharedStrings.Count;
+                sharedStrings.Add(col);
+            }
+        }
+
+        foreach (var record in records)
+        {
+            foreach (var value in record.Values)
+            {
+                if (value is string s && !stringToIndex.ContainsKey(s))
+                {
+                    stringToIndex[s] = sharedStrings.Count;
+                    sharedStrings.Add(s);
+                }
+            }
+        }
+
+        // xl/sharedStrings.xml
+        var sharedStringsEntry = archive.CreateEntry("xl/sharedStrings.xml");
+        await using (var stream = sharedStringsEntry.Open())
+        await using (var writer = new StreamWriter(stream, Encoding.UTF8))
+        {
+            await writer.WriteAsync($"""
+                <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+                <sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="{sharedStrings.Count}" uniqueCount="{sharedStrings.Count}">
+                """);
+
+            foreach (var str in sharedStrings)
+            {
+                await writer.WriteAsync($"<si><t>{XmlEscape(str)}</t></si>");
+            }
+
+            await writer.WriteAsync("</sst>");
+        }
+
+        // xl/worksheets/sheet1.xml
+        var sheetEntry = archive.CreateEntry("xl/worksheets/sheet1.xml");
+        await using (var stream = sheetEntry.Open())
+        await using (var writer = new StreamWriter(stream, Encoding.UTF8))
+        {
+            await writer.WriteAsync("""
+                <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+                <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+                <sheetData>
+                """);
+
+            // Header row with bold style
+            await writer.WriteAsync("<row r=\"1\">");
+            for (int col = 0; col < columns.Count; col++)
+            {
+                var cellRef = GetCellReference(col, 0);
+                var stringIndex = stringToIndex[columns[col]];
+                await writer.WriteAsync($"<c r=\"{cellRef}\" t=\"s\" s=\"1\"><v>{stringIndex}</v></c>");
+            }
+            await writer.WriteAsync("</row>");
+
+            // Data rows
+            for (int row = 0; row < records.Count; row++)
+            {
+                var record = records[row];
+                var rowNum = row + 2; // 1-indexed, after header
+                await writer.WriteAsync($"<row r=\"{rowNum}\">");
+
+                for (int col = 0; col < columns.Count; col++)
+                {
+                    var cellRef = GetCellReference(col, row + 1);
+                    var value = record.TryGetValue(columns[col], out var v) ? v : null;
+
+                    if (value == null)
+                    {
+                        continue; // Skip empty cells
+                    }
+                    else if (value is string s)
+                    {
+                        var stringIndex = stringToIndex[s];
+                        await writer.WriteAsync($"<c r=\"{cellRef}\" t=\"s\"><v>{stringIndex}</v></c>");
+                    }
+                    else if (value is bool b)
+                    {
+                        await writer.WriteAsync($"<c r=\"{cellRef}\" t=\"b\"><v>{(b ? 1 : 0)}</v></c>");
+                    }
+                    else if (IsNumeric(value))
+                    {
+                        await writer.WriteAsync($"<c r=\"{cellRef}\"><v>{value}</v></c>");
+                    }
+                    else
+                    {
+                        // Convert to string and use shared strings
+                        var strVal = value.ToString() ?? "";
+                        if (!stringToIndex.TryGetValue(strVal, out var idx))
+                        {
+                            idx = sharedStrings.Count;
+                            stringToIndex[strVal] = idx;
+                            sharedStrings.Add(strVal);
+                        }
+                        await writer.WriteAsync($"<c r=\"{cellRef}\" t=\"s\"><v>{idx}</v></c>");
+                    }
+                }
+
+                await writer.WriteAsync("</row>");
+            }
+
+            await writer.WriteAsync("</sheetData></worksheet>");
+        }
             await writer.WriteAsync(GetStylesXml());
         }
 
@@ -727,6 +1091,18 @@ public class AnalysisExportService
 
     private static string GetCellReference(int col, int row)
     {
+        var colName = new StringBuilder();
+        var colNum = col;
+        do
+        {
+            colName.Insert(0, (char)('A' + colNum % 26));
+            colNum = colNum / 26 - 1;
+        } while (colNum >= 0);
+
+        return $"{colName}{row + 1}";
+    }
+
+    private static string XmlEscape(string value)
         // Convert column index to Excel column letter (0=A, 1=B, ..., 26=AA, etc.)
         var colName = new StringBuilder();
         var colNum = col;
@@ -796,6 +1172,10 @@ public class AnalysisExportService
             .Replace("'", "&apos;");
     }
 
+    private static bool IsNumeric(object? value)
+    {
+        return value is byte or sbyte or short or ushort or int or uint
+            or long or ulong or float or double or decimal;
     private static string GetContentTypesXml() => """
         <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
         <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">

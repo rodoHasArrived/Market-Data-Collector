@@ -9,8 +9,8 @@ Market Data Collector is a high-performance, cross-platform market data collecti
 **Version:** 1.5.0 | **Status:** Production Ready
 
 ### Key Capabilities
-- Real-time streaming from Interactive Brokers, Alpaca, NYSE, StockSharp
-- Historical backfill from 9+ providers (Yahoo Finance, Stooq, Tiingo, etc.)
+- Real-time streaming from Interactive Brokers, Alpaca, NYSE, Polygon, StockSharp
+- Historical backfill from 9+ providers (Yahoo Finance, Stooq, Tiingo, Alpha Vantage, Finnhub, Nasdaq Data Link, etc.)
 - Archival-first storage with Write-Ahead Logging (WAL)
 - Microservices architecture with MassTransit messaging
 - Web dashboard and native UWP Windows desktop application
@@ -41,7 +41,19 @@ make build       # Build the project
 make test        # Run tests
 make run-ui      # Run with web dashboard
 make docker      # Build and run Docker container
+make docs        # Generate documentation
 make help        # Show all available commands
+
+# Diagnostics (via Makefile)
+make doctor      # Run full diagnostic check
+make diagnose    # Build diagnostics
+make metrics     # Show build metrics
+
+# First-Time Setup (Auto-Configuration)
+dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --wizard           # Interactive configuration wizard
+dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --auto-config     # Quick auto-configuration from env vars
+dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --detect-providers # Show available providers
+dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --validate-credentials # Validate API credentials
 ```
 
 ---
@@ -51,8 +63,21 @@ make help        # Show all available commands
 ```
 Market-Data-Collector/
 ├── .github/                          # GitHub configuration
-│   ├── workflows/                    # CI/CD pipelines
-│   └── prompts/                      # AI assistant prompts
+│   ├── workflows/                    # CI/CD pipelines (16 workflows)
+│   │   ├── dotnet-desktop.yml        # Main build/test/publish
+│   │   ├── benchmark.yml             # Performance benchmarks
+│   │   ├── code-quality.yml          # Linting and analysis
+│   │   ├── docker-build.yml          # Docker image builds
+│   │   ├── documentation.yml         # Docs generation
+│   │   ├── security.yml              # Security scanning
+│   │   ├── test-matrix.yml           # Cross-platform tests
+│   │   └── ...                       # More workflows
+│   ├── agents/                       # AI agent configurations
+│   │   └── documentation-agent.md    # Documentation agent prompt
+│   ├── prompts/                      # AI assistant prompts
+│   ├── copilot-instructions.md       # GitHub Copilot instructions
+│   ├── dependabot.yml                # Dependency updates
+│   └── labeler.yml                   # PR auto-labeling
 │
 ├── docs/                             # All documentation
 │   ├── architecture/                 # System architecture docs
@@ -61,21 +86,46 @@ Market-Data-Collector/
 │   ├── integrations/                 # Integration guides
 │   ├── api/                          # API reference
 │   ├── status/                       # Roadmap, backlog
+│   ├── adr/                          # Architecture Decision Records
+│   │   ├── 001-provider-abstraction.md
+│   │   ├── 002-tiered-storage-architecture.md
+│   │   ├── 003-microservices-decomposition.md
+│   │   ├── 004-async-streaming-patterns.md
+│   │   └── 005-attribute-based-discovery.md
 │   ├── ai-assistants/                # Specialized AI guides
 │   │   ├── CLAUDE.fsharp.md          # F# domain guide
 │   │   ├── CLAUDE.microservices.md   # Microservices guide
 │   │   ├── CLAUDE.providers.md       # Data providers guide
 │   │   ├── CLAUDE.storage.md         # Storage architecture guide
 │   │   └── CLAUDE.testing.md         # Testing strategy guide
+│   ├── changelogs/                   # Version changelogs
+│   ├── diagrams/                     # Architecture diagrams
+│   ├── docfx/                        # DocFX configuration
+│   ├── generated/                    # Auto-generated docs
+│   ├── reference/                    # Reference documentation
 │   ├── USAGE.md                      # Detailed usage guide
 │   ├── HELP.md                       # User guide with FAQ
-│   └── DEPENDENCIES.md               # Package documentation
+│   ├── DEPENDENCIES.md               # Package documentation
+│   └── toc.yml                       # Documentation TOC
 │
 ├── scripts/                          # All scripts
 │   ├── install/                      # Installation scripts
 │   ├── publish/                      # Publishing scripts
 │   ├── run/                          # Runtime scripts
-│   └── diagnostics/                  # Diagnostic scripts
+│   ├── diagnostics/                  # Diagnostic scripts
+│   └── generate-diagrams.mjs         # Diagram generation (Node.js)
+│
+├── build-system/                     # Python build tooling
+│   ├── cli/                          # Command-line tools
+│   │   └── buildctl.py               # Build control CLI
+│   ├── adapters/                     # Build adapters
+│   ├── analytics/                    # Build analytics
+│   ├── core/                         # Core utilities
+│   ├── diagnostics/                  # Diagnostic tools
+│   └── knowledge/                    # Build knowledge base
+│
+├── tools/                            # Development tools
+│   └── DocGenerator/                 # Documentation generator (.NET)
 │
 ├── deploy/                           # Deployment configurations
 │   ├── docker/                       # Dockerfile, docker-compose
@@ -83,18 +133,39 @@ Market-Data-Collector/
 │   └── monitoring/                   # Prometheus, Grafana configs
 │
 ├── config/                           # Configuration files
-│   ├── appsettings.json              # Runtime config
+│   ├── appsettings.json              # Runtime config (gitignored)
 │   └── appsettings.sample.json       # Configuration template
 │
 ├── src/                              # Source code
 │   ├── MarketDataCollector/          # Core application (entry point)
-│   │   ├── Domain/                   # Business logic, collectors
+│   │   ├── Domain/                   # Business logic
+│   │   │   ├── Collectors/           # Data collectors
+│   │   │   ├── Events/               # Domain events
+│   │   │   └── Models/               # Domain models
 │   │   ├── Infrastructure/           # Provider implementations
-│   │   │   ├── DataSources/          # Data source abstractions
-│   │   │   └── Providers/            # IB, Alpaca, NYSE, etc.
-│   │   ├── Storage/                  # JSONL/Parquet sinks
+│   │   │   ├── Providers/            # Data providers
+│   │   │   │   ├── Abstractions/     # Provider interfaces
+│   │   │   │   ├── Alpaca/           # Alpaca Markets
+│   │   │   │   ├── Backfill/         # Historical data providers
+│   │   │   │   ├── InteractiveBrokers/ # IB Gateway
+│   │   │   │   ├── NYSE/             # NYSE data
+│   │   │   │   ├── Polygon/          # Polygon.io
+│   │   │   │   ├── StockSharp/       # StockSharp connectors
+│   │   │   │   ├── MultiProvider/    # Multi-provider routing
+│   │   │   │   └── Resilience/       # Retry/circuit breaker
+│   │   │   └── IMarketDataClient.cs  # Core streaming interface
+│   │   ├── Storage/                  # Data persistence
+│   │   │   ├── Sinks/                # JSONL/Parquet writers
+│   │   │   ├── Archival/             # Archive management
+│   │   │   ├── Export/               # Data export
+│   │   │   ├── Replay/               # Data replay
+│   │   │   ├── Policies/             # Retention policies
+│   │   │   └── Services/             # Storage services
 │   │   ├── Messaging/                # MassTransit publishers
-│   │   └── Application/              # Startup, config, HTTP
+│   │   ├── Application/              # Startup, config, HTTP
+│   │   ├── Integrations/             # External integrations
+│   │   │   └── Lean/                 # QuantConnect Lean
+│   │   └── Tools/                    # Utility tools
 │   ├── MarketDataCollector.FSharp/   # F# domain models
 │   ├── MarketDataCollector.Contracts/# Shared DTOs
 │   ├── MarketDataCollector.Ui/       # Web dashboard
@@ -106,7 +177,9 @@ Market-Data-Collector/
 │       ├── OrderBookIngestion/       # Order book (5003)
 │       ├── HistoricalDataIngestion/  # Historical (5004)
 │       ├── DataValidation/           # Validation (5005)
-│       └── Shared/                   # Shared contracts
+│       ├── Shared/                   # Shared contracts
+│       ├── docker-compose.microservices.yml
+│       └── prometheus.yml
 │
 ├── tests/                            # Test projects
 │   ├── MarketDataCollector.Tests/    # C# unit tests
@@ -118,6 +191,7 @@ Market-Data-Collector/
 ├── MarketDataCollector.sln           # Solution file
 ├── Directory.Build.props             # Build settings
 ├── Makefile                          # Build automation
+├── package.json                      # Node.js tools (diagrams)
 ├── CLAUDE.md                         # This file
 ├── README.md                         # Project overview
 └── LICENSE                           # License
@@ -138,6 +212,7 @@ When contributing to this project, **always follow these rules**:
 - **NEVER** log sensitive data (API keys, credentials)
 - **NEVER** use `Task.Run` for I/O-bound operations (wastes thread pool)
 - **NEVER** block async code with `.Result` or `.Wait()` (causes deadlocks)
+- **ALWAYS** add `[ImplementsAdr]` attributes when implementing ADR contracts
 
 ### Architecture Principles
 1. **Provider Independence** - All providers implement `IMarketDataClient` interface
@@ -145,37 +220,65 @@ When contributing to this project, **always follow these rules**:
 3. **Security First** - Environment variables for credentials
 4. **Observability** - Structured logging, Prometheus metrics, health endpoints
 5. **Modularity** - Separate projects for core, domain, UI, microservices
+6. **ADR Compliance** - Follow Architecture Decision Records in `docs/adr/`
 
 ---
 
 ## Key Interfaces
 
 ### IMarketDataClient (Streaming)
+Location: `src/MarketDataCollector/Infrastructure/IMarketDataClient.cs`
+
 ```csharp
+[ImplementsAdr("ADR-001", "Core streaming data provider contract")]
+[ImplementsAdr("ADR-004", "All async methods support CancellationToken")]
 public interface IMarketDataClient : IAsyncDisposable
 {
+    bool IsEnabled { get; }
     Task ConnectAsync(CancellationToken ct = default);
-    Task DisconnectAsync();
-    Task SubscribeAsync(SymbolSubscription subscription, CancellationToken ct = default);
-    Task UnsubscribeAsync(string symbol, CancellationToken ct = default);
-    IAsyncEnumerable<MarketDataEvent> GetEventsAsync(CancellationToken ct = default);
-    ConnectionState State { get; }
+    Task DisconnectAsync(CancellationToken ct = default);
+    int SubscribeMarketDepth(SymbolConfig cfg);
+    void UnsubscribeMarketDepth(int subscriptionId);
+    int SubscribeTrades(SymbolConfig cfg);
+    void UnsubscribeTrades(int subscriptionId);
 }
 ```
 
 ### IHistoricalDataProvider (Backfill)
+Location: `src/MarketDataCollector/Infrastructure/Providers/Backfill/IHistoricalDataProvider.cs`
+
 ```csharp
+[ImplementsAdr("ADR-001", "Core historical data provider contract")]
+[ImplementsAdr("ADR-004", "All async methods support CancellationToken")]
 public interface IHistoricalDataProvider
 {
-    Task<IReadOnlyList<OhlcBar>> GetHistoricalBarsAsync(
-        string symbol, DateTime start, DateTime end,
-        BarTimeframe timeframe, CancellationToken ct = default);
-
-    IAsyncEnumerable<OhlcBar> StreamHistoricalBarsAsync(
-        string symbol, DateTime start, DateTime end,
-        BarTimeframe timeframe, CancellationToken ct = default);
+    string Name { get; }
+    string DisplayName { get; }
+    string Description { get; }
+    Task<IReadOnlyList<HistoricalBar>> GetDailyBarsAsync(
+        string symbol, DateOnly? from, DateOnly? to, CancellationToken ct = default);
 }
+
+// Extended versions available:
+// - IHistoricalDataProviderV2: Adds priority, rate limiting, capabilities
+// - IHistoricalDataProviderExtended: Adds tick-level data (quotes, trades, auctions)
 ```
+
+---
+
+## Architecture Decision Records (ADRs)
+
+ADRs document significant architectural decisions. Located in `docs/adr/`:
+
+| ADR | Title | Key Points |
+|-----|-------|------------|
+| ADR-001 | Provider Abstraction | Interface contracts for data providers |
+| ADR-002 | Tiered Storage | Hot/cold storage architecture |
+| ADR-003 | Microservices Decomposition | Service boundaries and messaging |
+| ADR-004 | Async Streaming Patterns | CancellationToken, IAsyncEnumerable |
+| ADR-005 | Attribute-Based Discovery | `[DataSource]`, `[ImplementsAdr]` attributes |
+
+Use `[ImplementsAdr("ADR-XXX", "reason")]` attribute when implementing ADR contracts.
 
 ---
 
@@ -218,6 +321,8 @@ API credentials should be set via environment variables:
 export ALPACA__KEYID=your-key-id
 export ALPACA__SECRETKEY=your-secret-key
 export NYSE__APIKEY=your-api-key
+export POLYGON__APIKEY=your-api-key
+export TIINGO__TOKEN=your-token
 ```
 
 Note: Use double underscore (`__`) for nested configuration (maps to `Alpaca:KeyId`).
@@ -229,7 +334,7 @@ cp config/appsettings.sample.json config/appsettings.json
 ```
 
 Key sections:
-- `DataSource` - Active provider (IB, Alpaca, NYSE)
+- `DataSource` - Active provider (IB, Alpaca, NYSE, Polygon)
 - `Symbols` - List of symbols to subscribe
 - `Storage` - File organization, retention, compression
 - `Backfill` - Historical data settings
@@ -286,9 +391,22 @@ _logger.LogInformation($"Received {bars.Count} bars for {symbol}");
 | `TradeDataCollector` | `src/MarketDataCollector/Domain/Collectors/` | Tick-by-tick trade processing |
 | `MarketDepthCollector` | `src/MarketDataCollector/Domain/Collectors/` | L2 order book maintenance |
 | `QuoteCollector` | `src/MarketDataCollector/Domain/Collectors/` | BBO state tracking |
-| `EventPipeline` | `src/MarketDataCollector/Storage/` | Bounded channel event routing |
+| `EventPipeline` | `src/MarketDataCollector/Storage/Services/` | Bounded channel event routing |
 | `JsonlStorageSink` | `src/MarketDataCollector/Storage/Sinks/` | JSONL file persistence |
-| `AlpacaMarketDataClient` | `src/MarketDataCollector/Infrastructure/Providers/` | Alpaca WebSocket client |
+| `AlpacaMarketDataClient` | `src/MarketDataCollector/Infrastructure/Providers/Alpaca/` | Alpaca WebSocket client |
+| `CompositeHistoricalDataProvider` | `src/MarketDataCollector/Infrastructure/Providers/Backfill/` | Multi-provider backfill with fallback |
+
+### Application Services (Onboarding & Diagnostics)
+| Service | Location | Purpose |
+|---------|----------|---------|
+| `AutoConfigurationService` | `src/MarketDataCollector/Application/Services/` | Auto-detect providers from environment |
+| `ConfigurationWizard` | `src/MarketDataCollector/Application/Services/` | Interactive setup wizard |
+| `ConnectivityTestService` | `src/MarketDataCollector/Application/Services/` | Test provider connectivity |
+| `CredentialValidationService` | `src/MarketDataCollector/Application/Services/` | Validate API credentials |
+| `FirstRunDetector` | `src/MarketDataCollector/Application/Services/` | Detect first-run and guide onboarding |
+| `FriendlyErrorFormatter` | `src/MarketDataCollector/Application/Services/` | User-friendly error messages |
+| `ProgressDisplayService` | `src/MarketDataCollector/Application/Services/` | Display progress of operations |
+| `StartupSummary` | `src/MarketDataCollector/Application/Services/` | Show startup configuration summary |
 
 ---
 
@@ -342,15 +460,17 @@ When running with `--ui` flag:
 1. Create client class in `src/MarketDataCollector/Infrastructure/Providers/{ProviderName}/`
 2. Implement `IMarketDataClient` interface
 3. Add `[DataSource("provider-name")]` attribute
-4. Register in DI container in `Program.cs`
-5. Add configuration section in `config/appsettings.sample.json`
-6. Add tests in `tests/MarketDataCollector.Tests/`
+4. Add `[ImplementsAdr("ADR-001", "reason")]` attribute
+5. Register in DI container in `Program.cs`
+6. Add configuration section in `config/appsettings.sample.json`
+7. Add tests in `tests/MarketDataCollector.Tests/`
 
 ### Adding a New Historical Provider
 1. Create provider in `src/MarketDataCollector/Infrastructure/Providers/Backfill/`
-2. Implement `IHistoricalDataProvider` interface
-3. Register in `CompositeHistoricalDataProvider`
-4. Add to provider priority list
+2. Implement `IHistoricalDataProvider` (or V2/Extended versions)
+3. Add `[ImplementsAdr]` attributes
+4. Register in `CompositeHistoricalDataProvider`
+5. Add to provider priority list
 
 ### Running Backfill
 ```bash
@@ -368,16 +488,61 @@ make run-backfill SYMBOLS=SPY,AAPL
 
 ## CI/CD
 
-### GitHub Actions Workflow
-Located at `.github/workflows/dotnet-desktop.yml`:
-- Builds on push to `main` and PRs
-- Runs tests on Ubuntu
-- Publishes for Linux, Windows, macOS (x64 + ARM64)
-- Creates releases on version tags (`v*`)
+### GitHub Actions Workflows
+Located at `.github/workflows/` (16 total):
+
+| Workflow | Trigger | Purpose |
+|----------|---------|---------|
+| `dotnet-desktop.yml` | Push/PR to main | Build, test, publish |
+| `benchmark.yml` | Manual/Schedule | Performance benchmarks |
+| `code-quality.yml` | Push/PR | Linting, static analysis |
+| `docker-build.yml` | Push/Tag | Docker image builds |
+| `documentation.yml` | Push/Manual | Generate and deploy docs |
+| `security.yml` | Push/Schedule | Security scanning |
+| `test-matrix.yml` | Push/PR | Cross-platform testing |
+| `dependency-review.yml` | PR | Dependency vulnerability check |
+| `scheduled-maintenance.yml` | Cron | Cleanup and maintenance |
+| `codeql-analysis.yml` | Push/PR + Weekly | CodeQL security analysis |
+| `build-observability.yml` | Push/PR | Build metrics capture |
+| `label-management.yml` | Issue/PR activity | Auto-labeling |
+| `stale.yml` | Daily | Issue/PR lifecycle management |
+| `desktop-app.yml` | Push/PR | Desktop app build/test |
+| `docs-auto-update.yml` | Push | Auto-update docs on changes |
+| `docs-structure-sync.yml` | Push | Sync doc structure with code |
 
 ### Build Requirements
 - .NET 9.0 SDK
 - `EnableWindowsTargeting=true` for cross-platform builds (set in `Directory.Build.props`)
+- Python 3 for build tooling (`build-system/`)
+- Node.js for diagram generation (optional)
+
+---
+
+## Build System
+
+### Python Build Tools
+Located in `build-system/`, provides advanced build diagnostics:
+
+```bash
+# Via Makefile (recommended)
+make doctor          # Full diagnostic check
+make diagnose        # Build diagnostics
+make metrics         # Show build metrics
+make build-graph     # Generate dependency graph
+make fingerprint     # Build fingerprinting
+make env-capture     # Capture environment
+make impact          # Impact analysis
+
+# Direct invocation
+python3 build-system/cli/buildctl.py --help
+```
+
+### Documentation Generation
+```bash
+make docs            # Generate documentation
+make verify-adrs     # Verify ADR compliance
+make verify-contracts # Verify contract tests
+```
 
 ---
 
@@ -392,20 +557,41 @@ Located at `.github/workflows/dotnet-desktop.yml`:
 | Creating new `HttpClient` instances | Socket exhaustion, DNS issues |
 | Logging with string interpolation | Loses structured logging benefits |
 | Missing CancellationToken | Prevents graceful shutdown |
+| Missing `[ImplementsAdr]` attribute | Loses ADR traceability |
+
+---
+
+## Backfill Providers
+
+Available historical data providers (in priority order):
+
+| Provider | Free Tier | Data Types | Rate Limits |
+|----------|-----------|------------|-------------|
+| Alpaca | Yes (with account) | Bars, trades, quotes | 200/min |
+| Polygon | Limited | Bars, trades, quotes, aggregates | Varies |
+| Tiingo | Yes | Daily bars | 500/hour |
+| Yahoo Finance | Yes | Daily bars | Unofficial |
+| Stooq | Yes | Daily bars | Low |
+| Finnhub | Yes | Daily bars | 60/min |
+| Alpha Vantage | Yes | Daily bars | 5/min |
+| Nasdaq Data Link | Limited | Various | Varies |
+
+Configure fallback chain in `appsettings.json` under `Backfill.ProviderPriority`.
 
 ---
 
 ## Documentation
 
-Key documentation files in `docs/`:
-- `guides/getting-started.md` - Setup and first run
-- `guides/configuration.md` - All configuration options
-- `guides/operator-runbook.md` - Production operations
-- `architecture/overview.md` - System architecture
-- `architecture/domains.md` - Event contracts
-- `providers/backfill-guide.md` - Historical data guide
-- `integrations/lean-integration.md` - QuantConnect Lean guide
-- `ai-assistants/CLAUDE.*.md` - Specialized AI assistant guides
+Key documentation files:
+- `docs/guides/getting-started.md` - Setup and first run
+- `docs/guides/configuration.md` - All configuration options
+- `docs/guides/operator-runbook.md` - Production operations
+- `docs/architecture/overview.md` - System architecture
+- `docs/architecture/domains.md` - Event contracts
+- `docs/providers/backfill-guide.md` - Historical data guide
+- `docs/integrations/lean-integration.md` - QuantConnect Lean guide
+- `docs/adr/` - Architecture Decision Records
+- `docs/ai-assistants/CLAUDE.*.md` - Specialized AI assistant guides
 
 ---
 
@@ -416,6 +602,9 @@ Key documentation files in `docs/`:
 # Run diagnostic script
 ./scripts/diagnostics/diagnose-build.sh
 
+# Use build control CLI
+make doctor
+
 # Manual restore with diagnostics
 dotnet restore /p:EnableWindowsTargeting=true -v diag
 ```
@@ -425,6 +614,7 @@ dotnet restore /p:EnableWindowsTargeting=true -v diag
 2. **Credential errors** - Check environment variables are set
 3. **Connection failures** - Verify API keys and network connectivity
 4. **High memory** - Check channel capacity in `EventPipeline`
+5. **Provider rate limits** - Check `ProviderRateLimitTracker` logs
 
 ---
 
@@ -434,8 +624,10 @@ dotnet restore /p:EnableWindowsTargeting=true -v diag
 - [docs/USAGE.md](docs/USAGE.md) - Detailed usage guide
 - [docs/HELP.md](docs/HELP.md) - User guide with FAQ
 - [docs/DEPENDENCIES.md](docs/DEPENDENCIES.md) - Package documentation
+- [docs/adr/](docs/adr/) - Architecture Decision Records
 - [docs/ai-assistants/](docs/ai-assistants/) - Specialized AI guides
+- [.github/copilot-instructions.md](.github/copilot-instructions.md) - Copilot instructions
 
 ---
 
-*Last Updated: 2026-01-08*
+*Last Updated: 2026-01-14*

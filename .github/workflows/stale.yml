@@ -4,6 +4,16 @@ on:
   schedule:
     - cron: '0 0 * * *'  # Run daily at midnight UTC
   workflow_dispatch:
+    inputs:
+      debug_only:
+        description: 'Run in debug mode (no modifications)'
+        required: false
+        default: false
+        type: boolean
+      days_before_stale:
+        description: 'Override days before marking stale (issues)'
+        required: false
+        type: number
 
 permissions:
   issues: write
@@ -11,7 +21,7 @@ permissions:
 
 jobs:
   stale:
-    name: Close Stale Issues and PRs
+    name: Mark and Close Stale Issues and PRs
     runs-on: ubuntu-latest
 
     steps:
@@ -19,6 +29,7 @@ jobs:
         uses: actions/stale@v9
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
+          debug-only: ${{ github.event.inputs.debug_only || false }}
 
           # Issue settings
           stale-issue-message: |
@@ -28,10 +39,10 @@ jobs:
           close-issue-message: |
             This issue was automatically closed because it has been stale for 7 days with no activity.
             Feel free to reopen if this is still relevant.
-          days-before-issue-stale: 60
+          days-before-issue-stale: ${{ github.event.inputs.days_before_stale || 60 }}
           days-before-issue-close: 7
           stale-issue-label: 'stale'
-          exempt-issue-labels: 'pinned,security,bug,enhancement'
+          exempt-issue-labels: 'pinned,security,bug,enhancement,blocked,in-progress,help-wanted,good-first-issue'
 
           # Pull request settings
           stale-pr-message: |
@@ -44,8 +55,14 @@ jobs:
           days-before-pr-stale: 30
           days-before-pr-close: 14
           stale-pr-label: 'stale'
-          exempt-pr-labels: 'pinned,security,work-in-progress'
+          exempt-pr-labels: 'pinned,security,work-in-progress,wip,blocked,in-progress,do-not-merge'
+          exempt-draft-pr: true
 
           # General settings
           operations-per-run: 100
           remove-stale-when-updated: true
+          ascending: true
+          delete-branch: false
+
+          # Exempt issues/PRs with milestones
+          exempt-all-milestones: true

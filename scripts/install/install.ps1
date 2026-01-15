@@ -29,6 +29,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$RepoRoot = (Resolve-Path (Join-Path $ScriptDir "..\..")).Path
 
 # Colors
 function Write-ColorOutput($ForegroundColor) {
@@ -168,8 +169,8 @@ function Show-Prerequisites-Suggestions {
 function Setup-Config {
     Write-Info "Setting up configuration..."
 
-    $configPath = Join-Path $ScriptDir "appsettings.json"
-    $samplePath = Join-Path $ScriptDir "appsettings.sample.json"
+    $configPath = Join-Path $RepoRoot "config\appsettings.json"
+    $samplePath = Join-Path $RepoRoot "config\appsettings.sample.json"
 
     if (-not (Test-Path $configPath)) {
         if (Test-Path $samplePath) {
@@ -187,8 +188,8 @@ function Setup-Config {
     }
 
     # Create data directory
-    $dataDir = Join-Path $ScriptDir "data"
-    $logsDir = Join-Path $ScriptDir "logs"
+    $dataDir = Join-Path $RepoRoot "data"
+    $logsDir = Join-Path $RepoRoot "logs"
 
     if (-not (Test-Path $dataDir)) { New-Item -ItemType Directory -Path $dataDir | Out-Null }
     if (-not (Test-Path $logsDir)) { New-Item -ItemType Directory -Path $logsDir | Out-Null }
@@ -200,7 +201,7 @@ function Setup-Config {
 function Install-Docker {
     Write-Info "Installing with Docker..."
 
-    Push-Location $ScriptDir
+    Push-Location $RepoRoot
 
     try {
         # Build image
@@ -255,10 +256,10 @@ function Install-Native {
         return
     }
 
-    Push-Location $ScriptDir
+    Push-Location $RepoRoot
 
     try {
-        $projectPath = Join-Path $ScriptDir "src\MarketDataCollector\MarketDataCollector.csproj"
+        $projectPath = Join-Path $RepoRoot "src\MarketDataCollector\MarketDataCollector.csproj"
 
         # Restore and build
         Write-Info "Restoring dependencies..."
@@ -307,11 +308,11 @@ function Install-Desktop {
         return
     }
 
-    Push-Location $ScriptDir
+    Push-Location $RepoRoot
 
     try {
-        $desktopProjectPath = Join-Path $ScriptDir "src\MarketDataCollector.Uwp\MarketDataCollector.Uwp.csproj"
-        $outputPath = Join-Path $ScriptDir "dist\win-x64\desktop"
+        $desktopProjectPath = Join-Path $RepoRoot "src\MarketDataCollector.Uwp\MarketDataCollector.Uwp.csproj"
+        $outputPath = Join-Path $RepoRoot "dist\win-x64\desktop"
 
         # Restore and build
         Write-Info "Restoring dependencies..."
@@ -337,8 +338,8 @@ function Install-Desktop {
         if (-not (Setup-Config)) { return }
 
         # Copy config to output
-        $configFile = Join-Path $ScriptDir "appsettings.json"
-        $sampleConfigFile = Join-Path $ScriptDir "appsettings.sample.json"
+        $configFile = Join-Path $RepoRoot "config\appsettings.json"
+        $sampleConfigFile = Join-Path $RepoRoot "config\appsettings.sample.json"
 
         if (Test-Path $configFile) {
             Copy-Item $configFile -Destination $outputPath
@@ -373,7 +374,7 @@ function Install-Desktop {
 function Uninstall-Docker {
     Write-Info "Uninstalling Docker containers and images..."
 
-    Push-Location $ScriptDir
+    Push-Location $RepoRoot
 
     try {
         # Stop containers

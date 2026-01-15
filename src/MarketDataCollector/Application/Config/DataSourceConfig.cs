@@ -191,5 +191,120 @@ public sealed record DataSourcesConfig(
     /// <summary>
     /// Timeout in seconds before failover to next source.
     /// </summary>
-    int FailoverTimeoutSeconds = 30
+    int FailoverTimeoutSeconds = 30,
+
+    /// <summary>
+    /// Health check interval in seconds.
+    /// </summary>
+    int HealthCheckIntervalSeconds = 10,
+
+    /// <summary>
+    /// Whether to automatically recover to primary when it becomes healthy.
+    /// </summary>
+    bool AutoRecover = true,
+
+    /// <summary>
+    /// Configured failover rules.
+    /// </summary>
+    FailoverRuleConfig[]? FailoverRules = null,
+
+    /// <summary>
+    /// Symbol mappings configuration.
+    /// </summary>
+    SymbolMappingsConfig? SymbolMappings = null
+);
+
+/// <summary>
+/// Configuration for a failover rule.
+/// </summary>
+public sealed record FailoverRuleConfig(
+    /// <summary>
+    /// Unique identifier for this rule.
+    /// </summary>
+    string Id,
+
+    /// <summary>
+    /// The primary provider ID.
+    /// </summary>
+    string PrimaryProviderId,
+
+    /// <summary>
+    /// Ordered list of backup provider IDs.
+    /// </summary>
+    string[] BackupProviderIds,
+
+    /// <summary>
+    /// Number of consecutive failures before triggering failover.
+    /// </summary>
+    int FailoverThreshold = 3,
+
+    /// <summary>
+    /// Number of consecutive successes required for recovery.
+    /// </summary>
+    int RecoveryThreshold = 5,
+
+    /// <summary>
+    /// Minimum data quality score (0-100). 0 = disabled.
+    /// </summary>
+    double DataQualityThreshold = 0,
+
+    /// <summary>
+    /// Maximum acceptable latency in ms. 0 = disabled.
+    /// </summary>
+    double MaxLatencyMs = 0
+);
+
+/// <summary>
+/// Configuration for symbol mappings.
+/// </summary>
+public sealed record SymbolMappingsConfig(
+    /// <summary>
+    /// Path to persist symbol mappings.
+    /// </summary>
+    string? PersistencePath = null,
+
+    /// <summary>
+    /// List of symbol mappings.
+    /// </summary>
+    SymbolMappingConfig[]? Mappings = null
+);
+
+/// <summary>
+/// Configuration for a single symbol mapping.
+/// </summary>
+public sealed record SymbolMappingConfig(
+    /// <summary>
+    /// The canonical (normalized) symbol used internally.
+    /// </summary>
+    string CanonicalSymbol,
+
+    /// <summary>
+    /// Symbol used by Interactive Brokers.
+    /// </summary>
+    string? IbSymbol = null,
+
+    /// <summary>
+    /// Symbol used by Alpaca.
+    /// </summary>
+    string? AlpacaSymbol = null,
+
+    /// <summary>
+    /// Symbol used by Polygon.
+    /// </summary>
+    string? PolygonSymbol = null,
+
+    /// <summary>
+    /// Symbol used by Yahoo Finance.
+    /// </summary>
+    string? YahooSymbol = null,
+
+    /// <summary>
+    /// Security name.
+    /// </summary>
+    string? Name = null,
+
+    /// <summary>
+    /// Optional FIGI identifier.
+    /// </summary>
+    string? Figi = null
 );

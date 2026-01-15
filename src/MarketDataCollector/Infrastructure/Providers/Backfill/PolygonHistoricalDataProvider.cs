@@ -150,19 +150,19 @@ public sealed class PolygonHistoricalDataProvider : IHistoricalDataProviderV2, I
                 bars.Add(new AdjustedHistoricalBar(
                     Symbol: symbol.ToUpperInvariant(),
                     SessionDate: sessionDate,
-                    Open: (decimal)result.Open,
-                    High: (decimal)result.High,
-                    Low: (decimal)result.Low,
-                    Close: (decimal)result.Close,
+                    Open: result.Open,
+                    High: result.High,
+                    Low: result.Low,
+                    Close: result.Close,
                     Volume: (long)(result.Volume ?? 0),
                     Source: Name,
                     SequenceNumber: sessionDate.DayNumber,
                     // Polygon returns adjusted prices by default when adjusted=true
                     // The raw prices are the adjusted prices in this case
-                    AdjustedOpen: (decimal)result.Open,
-                    AdjustedHigh: (decimal)result.High,
-                    AdjustedLow: (decimal)result.Low,
-                    AdjustedClose: (decimal)result.Close,
+                    AdjustedOpen: result.Open,
+                    AdjustedHigh: result.High,
+                    AdjustedLow: result.Low,
+                    AdjustedClose: result.Close,
                     AdjustedVolume: (long)(result.Volume ?? 0),
                     SplitFactor: null, // Would need separate call to get split info
                     DividendAmount: null // Would need separate call to get dividend info
@@ -249,17 +249,17 @@ public sealed class PolygonHistoricalDataProvider : IHistoricalDataProviderV2, I
                 bars.Add(new AdjustedHistoricalBar(
                     Symbol: symbol.ToUpperInvariant(),
                     SessionDate: sessionDate,
-                    Open: (decimal)result.Open,
-                    High: (decimal)result.High,
-                    Low: (decimal)result.Low,
-                    Close: (decimal)result.Close,
+                    Open: result.Open,
+                    High: result.High,
+                    Low: result.Low,
+                    Close: result.Close,
                     Volume: (long)(result.Volume ?? 0),
                     Source: Name,
                     SequenceNumber: result.Timestamp,
-                    AdjustedOpen: (decimal)result.Open,
-                    AdjustedHigh: (decimal)result.High,
-                    AdjustedLow: (decimal)result.Low,
-                    AdjustedClose: (decimal)result.Close,
+                    AdjustedOpen: result.Open,
+                    AdjustedHigh: result.High,
+                    AdjustedLow: result.Low,
+                    AdjustedClose: result.Close,
                     AdjustedVolume: (long)(result.Volume ?? 0)
                 ));
             }
@@ -306,8 +306,8 @@ public sealed class PolygonHistoricalDataProvider : IHistoricalDataProviderV2, I
             return data.Results.Select(s => new SplitInfo(
                 Symbol: symbol.ToUpperInvariant(),
                 ExDate: DateOnly.ParseExact(s.ExecutionDate ?? s.ExDate ?? "", "yyyy-MM-dd", CultureInfo.InvariantCulture),
-                SplitFrom: (decimal)(s.SplitFrom ?? 1),
-                SplitTo: (decimal)(s.SplitTo ?? 1),
+                SplitFrom: s.SplitFrom ?? 1,
+                SplitTo: s.SplitTo ?? 1,
                 Source: Name
             )).ToList();
         }
@@ -350,7 +350,7 @@ public sealed class PolygonHistoricalDataProvider : IHistoricalDataProviderV2, I
                 ExDate: DateOnly.ParseExact(d.ExDividendDate ?? "", "yyyy-MM-dd", CultureInfo.InvariantCulture),
                 PaymentDate: !string.IsNullOrEmpty(d.PayDate) ? DateOnly.ParseExact(d.PayDate, "yyyy-MM-dd", CultureInfo.InvariantCulture) : null,
                 RecordDate: !string.IsNullOrEmpty(d.RecordDate) ? DateOnly.ParseExact(d.RecordDate, "yyyy-MM-dd", CultureInfo.InvariantCulture) : null,
-                Amount: (decimal)(d.CashAmount ?? 0),
+                Amount: d.CashAmount ?? 0,
                 Currency: d.Currency ?? "USD",
                 Type: ParseDividendType(d.DividendType),
                 Source: Name
@@ -439,22 +439,22 @@ public sealed class PolygonHistoricalDataProvider : IHistoricalDataProviderV2, I
     private sealed class PolygonAggregate
     {
         [JsonPropertyName("o")]
-        public double Open { get; set; }
+        public decimal Open { get; set; }
 
         [JsonPropertyName("h")]
-        public double High { get; set; }
+        public decimal High { get; set; }
 
         [JsonPropertyName("l")]
-        public double Low { get; set; }
+        public decimal Low { get; set; }
 
         [JsonPropertyName("c")]
-        public double Close { get; set; }
+        public decimal Close { get; set; }
 
         [JsonPropertyName("v")]
-        public double? Volume { get; set; }
+        public decimal? Volume { get; set; }
 
         [JsonPropertyName("vw")]
-        public double? VWAP { get; set; }
+        public decimal? VWAP { get; set; }
 
         [JsonPropertyName("t")]
         public long Timestamp { get; set; }
@@ -481,10 +481,10 @@ public sealed class PolygonHistoricalDataProvider : IHistoricalDataProviderV2, I
         public string? ExDate { get; set; }
 
         [JsonPropertyName("split_from")]
-        public double? SplitFrom { get; set; }
+        public decimal? SplitFrom { get; set; }
 
         [JsonPropertyName("split_to")]
-        public double? SplitTo { get; set; }
+        public decimal? SplitTo { get; set; }
 
         [JsonPropertyName("ticker")]
         public string? Ticker { get; set; }
@@ -502,7 +502,7 @@ public sealed class PolygonHistoricalDataProvider : IHistoricalDataProviderV2, I
     private sealed class PolygonDividend
     {
         [JsonPropertyName("cash_amount")]
-        public double? CashAmount { get; set; }
+        public decimal? CashAmount { get; set; }
 
         [JsonPropertyName("currency")]
         public string? Currency { get; set; }
