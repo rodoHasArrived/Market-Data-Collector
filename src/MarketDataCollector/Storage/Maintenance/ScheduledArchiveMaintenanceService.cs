@@ -362,7 +362,10 @@ public sealed class ScheduledArchiveMaintenanceService : BackgroundService, IArc
                             deletedFiles++;
                         }
                     }
-                    catch { }
+                    catch (Exception ex)
+                    {
+                        _logger.LogDebug(ex, "Failed to delete temp file during cleanup: {FilePath}", tempFile);
+                    }
                 }
             }
         }

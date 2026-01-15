@@ -30,10 +30,20 @@ public sealed class UiServer : IAsyncDisposable
 
     private readonly WebApplication _app;
     private readonly DateTimeOffset _startTime = DateTimeOffset.UtcNow;
+    private readonly ILogger<UiServer> _logger;
+
+    /// <summary>
+    /// Logs an exception and returns a Problem result with a user-friendly message.
+    /// </summary>
+    private IResult LogAndProblem(Exception ex, string operation, string? context = null)
+    {
+        var contextInfo = context is not null ? $" Context: {context}" : "";
+        _logger.LogError(ex, "API operation failed: {Operation}.{Context}", operation, contextInfo);
+        return Results.Problem($"{operation}: {ex.Message}");
+    }
 
     public UiServer(string configPath, int port = 8080)
     {
-
         var builder = WebApplication.CreateBuilder();
 
         // Minimize logging from ASP.NET Core
@@ -121,6 +131,7 @@ public sealed class UiServer : IAsyncDisposable
         });
 
         _app = builder.Build();
+        _logger = _app.Services.GetRequiredService<ILoggerFactory>().CreateLogger<UiServer>();
 
         ConfigureRoutes();
     }
@@ -192,7 +203,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to update data source: {ex.Message}");
+                return LogAndProblem(ex, "Failed to update data source", $"DataSource={req.DataSource}");
             }
         });
 
@@ -207,7 +218,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to save Alpaca settings: {ex.Message}");
+                return LogAndProblem(ex, "Failed to save Alpaca settings");
             }
         });
 
@@ -233,7 +244,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to save storage settings: {ex.Message}");
+                return LogAndProblem(ex, "Failed to save storage settings");
             }
         });
 
@@ -258,7 +269,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to add symbol: {ex.Message}");
+                return LogAndProblem(ex, "Failed to add symbol", $"Symbol={symbol.Symbol}");
             }
         });
 
@@ -275,7 +286,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to delete symbol: {ex.Message}");
+                return LogAndProblem(ex, "Failed to delete symbol", $"Symbol={symbol}");
             }
         });
 
@@ -288,7 +299,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to load status: {ex.Message}");
+                return LogAndProblem(ex, "Failed to load status");
             }
         });
 
@@ -301,7 +312,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to get providers: {ex.Message}");
+                return LogAndProblem(ex, "Failed to get providers");
             }
         });
 
@@ -316,7 +327,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to load backfill status: {ex.Message}");
+                return LogAndProblem(ex, "Failed to load backfill status");
             }
         });
 
@@ -342,7 +353,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Backfill failed: {ex.Message}");
+                return LogAndProblem(ex, "Backfill failed");
             }
         });
 
@@ -355,7 +366,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Health check failed: {ex.Message}");
+                return LogAndProblem(ex, "Health check failed");
             }
         });
 
@@ -374,7 +385,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Symbol resolution failed: {ex.Message}");
+                return LogAndProblem(ex, "Symbol resolution failed");
             }
         });
 
@@ -408,7 +419,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to discover catalog: {ex.Message}");
+                return LogAndProblem(ex, "Failed to discover catalog");
             }
         });
 
@@ -434,7 +445,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Search failed: {ex.Message}");
+                return LogAndProblem(ex, "Search failed");
             }
         });
 
@@ -455,7 +466,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Faceted search failed: {ex.Message}");
+                return LogAndProblem(ex, "Faceted search failed");
             }
         });
 
@@ -471,7 +482,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Natural language parsing failed: {ex.Message}");
+                return LogAndProblem(ex, "Natural language parsing failed");
             }
         });
 
@@ -485,7 +496,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Index rebuild failed: {ex.Message}");
+                return LogAndProblem(ex, "Index rebuild failed");
             }
         });
 
@@ -507,7 +518,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Health check failed: {ex.Message}");
+                return LogAndProblem(ex, "Health check failed");
             }
         });
 
@@ -520,7 +531,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Orphan scan failed: {ex.Message}");
+                return LogAndProblem(ex, "Orphan scan failed");
             }
         });
 
@@ -540,7 +551,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Repair failed: {ex.Message}");
+                return LogAndProblem(ex, "Repair failed");
             }
         });
 
@@ -558,7 +569,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Defragmentation failed: {ex.Message}");
+                return LogAndProblem(ex, "Defragmentation failed");
             }
         });
 
@@ -573,7 +584,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Quality scoring failed: {ex.Message}");
+                return LogAndProblem(ex, "Quality scoring failed");
             }
         });
 
@@ -593,7 +604,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Quality report failed: {ex.Message}");
+                return LogAndProblem(ex, "Quality report failed");
             }
         });
 
@@ -606,7 +617,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to get quality alerts: {ex.Message}");
+                return LogAndProblem(ex, "Failed to get quality alerts");
             }
         });
 
@@ -622,7 +633,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Source ranking failed: {ex.Message}");
+                return LogAndProblem(ex, "Source ranking failed");
             }
         });
 
@@ -636,7 +647,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Trend analysis failed: {ex.Message}");
+                return LogAndProblem(ex, "Trend analysis failed");
             }
         });
 
@@ -651,7 +662,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to get tier statistics: {ex.Message}");
+                return LogAndProblem(ex, "Failed to get tier statistics");
             }
         });
 
@@ -664,7 +675,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Migration planning failed: {ex.Message}");
+                return LogAndProblem(ex, "Migration planning failed");
             }
         });
 
@@ -686,7 +697,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Migration failed: {ex.Message}");
+                return LogAndProblem(ex, "Migration failed");
             }
         });
 
@@ -699,7 +710,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to determine tier: {ex.Message}");
+                return LogAndProblem(ex, "Failed to determine tier");
             }
         });
 
@@ -714,7 +725,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to get sources: {ex.Message}");
+                return LogAndProblem(ex, "Failed to get sources");
             }
         });
 
@@ -729,7 +740,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to get source: {ex.Message}");
+                return LogAndProblem(ex, "Failed to get source");
             }
         });
 
@@ -742,7 +753,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to register source: {ex.Message}");
+                return LogAndProblem(ex, "Failed to register source");
             }
         });
 
@@ -755,7 +766,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to get priority order: {ex.Message}");
+                return LogAndProblem(ex, "Failed to get priority order");
             }
         });
 
@@ -770,7 +781,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to get symbol info: {ex.Message}");
+                return LogAndProblem(ex, "Failed to get symbol info");
             }
         });
 
@@ -783,7 +794,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to register symbol: {ex.Message}");
+                return LogAndProblem(ex, "Failed to register symbol");
             }
         });
 
@@ -796,7 +807,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to resolve alias: {ex.Message}");
+                return LogAndProblem(ex, "Failed to resolve alias");
             }
         });
 
@@ -833,7 +844,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to get storage overview: {ex.Message}");
+                return LogAndProblem(ex, "Failed to get storage overview");
             }
         });
     }
@@ -867,7 +878,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Import failed: {ex.Message}");
+                return LogAndProblem(ex, "Import failed");
             }
         });
 
@@ -885,7 +896,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Export failed: {ex.Message}");
+                return LogAndProblem(ex, "Export failed");
             }
         });
 
@@ -903,7 +914,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Export failed: {ex.Message}");
+                return LogAndProblem(ex, "Export failed");
             }
         });
 
@@ -918,7 +929,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to get templates: {ex.Message}");
+                return LogAndProblem(ex, "Failed to get templates");
             }
         });
 
@@ -933,7 +944,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to get template: {ex.Message}");
+                return LogAndProblem(ex, "Failed to get template");
             }
         });
 
@@ -946,7 +957,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to apply template: {ex.Message}");
+                return LogAndProblem(ex, "Failed to apply template");
             }
         });
 
@@ -971,7 +982,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to create template: {ex.Message}");
+                return LogAndProblem(ex, "Failed to create template");
             }
         });
 
@@ -987,7 +998,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to create template: {ex.Message}");
+                return LogAndProblem(ex, "Failed to create template");
             }
         });
 
@@ -1002,7 +1013,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to delete template: {ex.Message}");
+                return LogAndProblem(ex, "Failed to delete template");
             }
         });
 
@@ -1017,7 +1028,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to get schedules: {ex.Message}");
+                return LogAndProblem(ex, "Failed to get schedules");
             }
         });
 
@@ -1032,7 +1043,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to get schedule: {ex.Message}");
+                return LogAndProblem(ex, "Failed to get schedule");
             }
         });
 
@@ -1047,7 +1058,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to get schedule status: {ex.Message}");
+                return LogAndProblem(ex, "Failed to get schedule status");
             }
         });
 
@@ -1066,7 +1077,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to create schedule: {ex.Message}");
+                return LogAndProblem(ex, "Failed to create schedule");
             }
         });
 
@@ -1084,7 +1095,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to update schedule: {ex.Message}");
+                return LogAndProblem(ex, "Failed to update schedule");
             }
         });
 
@@ -1099,7 +1110,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to enable schedule: {ex.Message}");
+                return LogAndProblem(ex, "Failed to enable schedule");
             }
         });
 
@@ -1114,7 +1125,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to disable schedule: {ex.Message}");
+                return LogAndProblem(ex, "Failed to disable schedule");
             }
         });
 
@@ -1129,7 +1140,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to execute schedule: {ex.Message}");
+                return LogAndProblem(ex, "Failed to execute schedule");
             }
         });
 
@@ -1142,7 +1153,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to delete schedule: {ex.Message}");
+                return LogAndProblem(ex, "Failed to delete schedule");
             }
         });
 
@@ -1159,7 +1170,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to get metadata: {ex.Message}");
+                return LogAndProblem(ex, "Failed to get metadata");
             }
         });
 
@@ -1174,7 +1185,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to get metadata: {ex.Message}");
+                return LogAndProblem(ex, "Failed to get metadata");
             }
         });
 
@@ -1189,7 +1200,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to filter symbols: {ex.Message}");
+                return LogAndProblem(ex, "Failed to filter symbols");
             }
         });
 
@@ -1202,7 +1213,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to get sectors: {ex.Message}");
+                return LogAndProblem(ex, "Failed to get sectors");
             }
         });
 
@@ -1218,7 +1229,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to get industries: {ex.Message}");
+                return LogAndProblem(ex, "Failed to get industries");
             }
         });
 
@@ -1233,7 +1244,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to update metadata: {ex.Message}");
+                return LogAndProblem(ex, "Failed to update metadata");
             }
         });
 
@@ -1269,7 +1280,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Symbol search failed: {ex.Message}");
+                return LogAndProblem(ex, "Symbol search failed");
             }
         });
 
@@ -1285,7 +1296,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Symbol search failed: {ex.Message}");
+                return LogAndProblem(ex, "Symbol search failed");
             }
         });
 
@@ -1300,7 +1311,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to get providers: {ex.Message}");
+                return LogAndProblem(ex, "Failed to get providers");
             }
         });
 
@@ -1322,7 +1333,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to get symbol details: {ex.Message}");
+                return LogAndProblem(ex, "Failed to get symbol details");
             }
         });
 
@@ -1341,7 +1352,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"FIGI lookup failed: {ex.Message}");
+                return LogAndProblem(ex, "FIGI lookup failed");
             }
         });
 
@@ -1360,7 +1371,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Bulk FIGI lookup failed: {ex.Message}");
+                return LogAndProblem(ex, "Bulk FIGI lookup failed");
             }
         });
 
@@ -1383,7 +1394,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"FIGI search failed: {ex.Message}");
+                return LogAndProblem(ex, "FIGI search failed");
             }
         });
 
@@ -1396,7 +1407,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to clear cache: {ex.Message}");
+                return LogAndProblem(ex, "Failed to clear cache");
             }
         });
 
@@ -1411,7 +1422,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to get indices: {ex.Message}");
+                return LogAndProblem(ex, "Failed to get indices");
             }
         });
 
@@ -1428,7 +1439,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to get index components: {ex.Message}");
+                return LogAndProblem(ex, "Failed to get index components");
             }
         });
 
@@ -1443,7 +1454,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to get subscription status: {ex.Message}");
+                return LogAndProblem(ex, "Failed to get subscription status");
             }
         });
 
@@ -1467,7 +1478,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to subscribe to index: {ex.Message}");
+                return LogAndProblem(ex, "Failed to subscribe to index");
             }
         });
 
@@ -1482,7 +1493,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to unsubscribe from index: {ex.Message}");
+                return LogAndProblem(ex, "Failed to unsubscribe from index");
             }
         });
     }
@@ -1500,7 +1511,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to get symbols: {ex.Message}");
+                return LogAndProblem(ex, "Failed to get symbols");
             }
         });
 
@@ -1513,7 +1524,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to get date range: {ex.Message}");
+                return LogAndProblem(ex, "Failed to get date range");
             }
         });
 
@@ -1538,7 +1549,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Query failed: {ex.Message}");
+                return LogAndProblem(ex, "Query failed");
             }
         });
 
@@ -1563,7 +1574,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Bundle generation failed: {ex.Message}");
+                return LogAndProblem(ex, "Bundle generation failed");
             }
         });
 
@@ -1580,7 +1591,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Download failed: {ex.Message}");
+                return LogAndProblem(ex, "Download failed");
             }
         });
 
@@ -1616,7 +1627,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Sample data generation failed: {ex.Message}");
+                return LogAndProblem(ex, "Sample data generation failed");
             }
         });
 
@@ -1629,7 +1640,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Preview failed: {ex.Message}");
+                return LogAndProblem(ex, "Preview failed");
             }
         });
 
@@ -1644,7 +1655,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to get errors: {ex.Message}");
+                return LogAndProblem(ex, "Failed to get errors");
             }
         });
 
@@ -1658,7 +1669,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to get error stats: {ex.Message}");
+                return LogAndProblem(ex, "Failed to get error stats");
             }
         });
 
@@ -1671,7 +1682,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to parse log errors: {ex.Message}");
+                return LogAndProblem(ex, "Failed to parse log errors");
             }
         });
 
@@ -1692,7 +1703,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to get templates: {ex.Message}");
+                return LogAndProblem(ex, "Failed to get templates");
             }
         });
 
@@ -1708,7 +1719,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to get template: {ex.Message}");
+                return LogAndProblem(ex, "Failed to get template");
             }
         });
 
@@ -1724,7 +1735,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Validation failed: {ex.Message}");
+                return LogAndProblem(ex, "Validation failed");
             }
         });
 
@@ -1739,7 +1750,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to get environment overrides: {ex.Message}");
+                return LogAndProblem(ex, "Failed to get environment overrides");
             }
         });
 
@@ -1752,7 +1763,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to get documentation: {ex.Message}");
+                return LogAndProblem(ex, "Failed to get documentation");
             }
         });
 
@@ -1777,7 +1788,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Dry run failed: {ex.Message}");
+                return LogAndProblem(ex, "Dry run failed");
             }
         });
 
@@ -1792,7 +1803,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Report generation failed: {ex.Message}");
+                return LogAndProblem(ex, "Report generation failed");
             }
         });
 
@@ -1812,7 +1823,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to generate OpenAPI spec: {ex.Message}");
+                return LogAndProblem(ex, "Failed to generate OpenAPI spec");
             }
         });
 
@@ -1825,7 +1836,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to generate docs: {ex.Message}");
+                return LogAndProblem(ex, "Failed to generate docs");
             }
         });
 
@@ -1838,7 +1849,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to generate markdown: {ex.Message}");
+                return LogAndProblem(ex, "Failed to generate markdown");
             }
         });
 
@@ -1851,7 +1862,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to generate Swagger UI: {ex.Message}");
+                return LogAndProblem(ex, "Failed to generate Swagger UI");
             }
         });
     }
@@ -1886,7 +1897,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Credential test failed: {ex.Message}");
+                return LogAndProblem(ex, "Credential test failed");
             }
         });
 
@@ -1903,7 +1914,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Credential test failed: {ex.Message}");
+                return LogAndProblem(ex, "Credential test failed");
             }
         });
 
@@ -1933,7 +1944,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to get credential status: {ex.Message}");
+                return LogAndProblem(ex, "Failed to get credential status");
             }
         });
 
@@ -1967,7 +1978,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to get credential status: {ex.Message}");
+                return LogAndProblem(ex, "Failed to get credential status");
             }
         });
 
@@ -1996,7 +2007,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to get OAuth tokens: {ex.Message}");
+                return LogAndProblem(ex, "Failed to get OAuth tokens");
             }
         });
 
@@ -2012,7 +2023,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Token refresh failed: {ex.Message}");
+                return LogAndProblem(ex, "Token refresh failed");
             }
         });
 
@@ -2044,7 +2055,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to store token: {ex.Message}");
+                return LogAndProblem(ex, "Failed to store token");
             }
         });
 
@@ -2060,7 +2071,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to remove token: {ex.Message}");
+                return LogAndProblem(ex, "Failed to remove token");
             }
         });
 
@@ -2078,7 +2089,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to render credentials dashboard: {ex.Message}");
+                return LogAndProblem(ex, "Failed to render credentials dashboard");
             }
         });
     }
@@ -2111,7 +2122,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Text import failed: {ex.Message}");
+                return LogAndProblem(ex, "Text import failed");
             }
         });
 
@@ -2138,7 +2149,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Import failed: {ex.Message}");
+                return LogAndProblem(ex, "Import failed");
             }
         });
 
@@ -2153,7 +2164,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to get watchlists: {ex.Message}");
+                return LogAndProblem(ex, "Failed to get watchlists");
             }
         });
 
@@ -2166,7 +2177,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to get watchlist summaries: {ex.Message}");
+                return LogAndProblem(ex, "Failed to get watchlist summaries");
             }
         });
 
@@ -2181,7 +2192,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to get watchlist: {ex.Message}");
+                return LogAndProblem(ex, "Failed to get watchlist");
             }
         });
 
@@ -2197,7 +2208,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to create watchlist: {ex.Message}");
+                return LogAndProblem(ex, "Failed to create watchlist");
             }
         });
 
@@ -2215,7 +2226,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to update watchlist: {ex.Message}");
+                return LogAndProblem(ex, "Failed to update watchlist");
             }
         });
 
@@ -2228,7 +2239,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to delete watchlist: {ex.Message}");
+                return LogAndProblem(ex, "Failed to delete watchlist");
             }
         });
 
@@ -2248,7 +2259,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to add symbols: {ex.Message}");
+                return LogAndProblem(ex, "Failed to add symbols");
             }
         });
 
@@ -2268,7 +2279,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to remove symbols: {ex.Message}");
+                return LogAndProblem(ex, "Failed to remove symbols");
             }
         });
 
@@ -2289,7 +2300,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to subscribe watchlist: {ex.Message}");
+                return LogAndProblem(ex, "Failed to subscribe watchlist");
             }
         });
 
@@ -2304,7 +2315,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to unsubscribe watchlist: {ex.Message}");
+                return LogAndProblem(ex, "Failed to unsubscribe watchlist");
             }
         });
 
@@ -2319,7 +2330,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to export watchlist: {ex.Message}");
+                return LogAndProblem(ex, "Failed to export watchlist");
             }
         });
 
@@ -2337,7 +2348,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to import watchlist: {ex.Message}");
+                return LogAndProblem(ex, "Failed to import watchlist");
             }
         });
 
@@ -2350,7 +2361,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to reorder watchlists: {ex.Message}");
+                return LogAndProblem(ex, "Failed to reorder watchlists");
             }
         });
 
@@ -2365,7 +2376,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to get brokers: {ex.Message}");
+                return LogAndProblem(ex, "Failed to get brokers");
             }
         });
 
@@ -2380,7 +2391,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to get portfolio summary: {ex.Message}");
+                return LogAndProblem(ex, "Failed to get portfolio summary");
             }
         });
 
@@ -2409,7 +2420,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to import from portfolio: {ex.Message}");
+                return LogAndProblem(ex, "Failed to import from portfolio");
             }
         });
 
@@ -2441,7 +2452,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to import manual portfolio: {ex.Message}");
+                return LogAndProblem(ex, "Failed to import manual portfolio");
             }
         });
 
@@ -2459,7 +2470,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Batch add failed: {ex.Message}");
+                return LogAndProblem(ex, "Batch add failed");
             }
         });
 
@@ -2475,7 +2486,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Batch delete failed: {ex.Message}");
+                return LogAndProblem(ex, "Batch delete failed");
             }
         });
 
@@ -2491,7 +2502,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Batch toggle failed: {ex.Message}");
+                return LogAndProblem(ex, "Batch toggle failed");
             }
         });
 
@@ -2507,7 +2518,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Batch update failed: {ex.Message}");
+                return LogAndProblem(ex, "Batch update failed");
             }
         });
 
@@ -2523,7 +2534,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Enable trades failed: {ex.Message}");
+                return LogAndProblem(ex, "Enable trades failed");
             }
         });
 
@@ -2539,7 +2550,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Disable trades failed: {ex.Message}");
+                return LogAndProblem(ex, "Disable trades failed");
             }
         });
 
@@ -2555,7 +2566,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Enable depth failed: {ex.Message}");
+                return LogAndProblem(ex, "Enable depth failed");
             }
         });
 
@@ -2571,7 +2582,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Disable depth failed: {ex.Message}");
+                return LogAndProblem(ex, "Disable depth failed");
             }
         });
 
@@ -2592,7 +2603,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Copy settings failed: {ex.Message}");
+                return LogAndProblem(ex, "Copy settings failed");
             }
         });
 
@@ -2613,7 +2624,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Move to watchlist failed: {ex.Message}");
+                return LogAndProblem(ex, "Move to watchlist failed");
             }
         });
 
@@ -2626,7 +2637,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Filter failed: {ex.Message}");
+                return LogAndProblem(ex, "Filter failed");
             }
         });
 
@@ -2644,7 +2655,7 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Filtered operation failed: {ex.Message}");
+                return LogAndProblem(ex, "Filtered operation failed");
             }
         });
     }

@@ -77,7 +77,7 @@ public sealed class DeadLetterQueue : IDeadLetterQueue, IAsyncDisposable
     private readonly ConcurrentQueue<DeadLetteredTrade> _queue = new();
     private readonly DeadLetterConfig _config;
     private readonly TradeMetrics _metrics;
-    private readonly ILogger _log = Log.ForContext<DeadLetterQueue>();
+    private readonly Serilog.ILogger _log = Log.ForContext<DeadLetterQueue>();
     private readonly JsonSerializerOptions _jsonOptions;
     private readonly SemaphoreSlim _persistLock = new(1, 1);
 

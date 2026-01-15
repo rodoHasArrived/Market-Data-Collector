@@ -8,6 +8,7 @@ using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Infrastructure.Performance;
 using MarketDataCollector.Storage.Interfaces;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace MarketDataCollector.Application.Pipeline;
 
@@ -19,7 +20,7 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
 {
     private readonly Channel<MarketEvent> _channel;
     private readonly IStorageSink _sink;
-    private readonly ILogger<EventPipeline>? _logger;
+    private readonly ILogger<EventPipeline> _logger;
     private readonly CancellationTokenSource _cts = new();
     private readonly Task _consumer;
     private readonly Task? _flusher;
@@ -58,7 +59,7 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
         ILogger<EventPipeline>? logger = null)
     {
         _sink = sink ?? throw new ArgumentNullException(nameof(sink));
-        _logger = logger;
+        _logger = logger ?? NullLogger<EventPipeline>.Instance;
         if (capacity <= 0)
             throw new ArgumentOutOfRangeException(nameof(capacity), capacity, "Capacity must be a positive value.");
         _capacity = capacity;
@@ -241,7 +242,7 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
             }
             catch (Exception ex)
             {
-                _logger?.LogError(ex, "Final flush failed during pipeline shutdown. Consumed {ConsumedCount} events before failure - potential data loss", _consumedCount);
+                _logger.LogError(ex, "Final flush failed during pipeline shutdown. Consumed {ConsumedCount} events before failure - potential data loss", _consumedCount);
             }
         }
     }
@@ -265,7 +266,7 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
                 }
                 catch (Exception ex)
                 {
-                    _logger?.LogWarning(ex, "Periodic flush failed. Queue size: {QueueSize}, consumed: {ConsumedCount}. May indicate storage issues", CurrentQueueSize, _consumedCount);
+                    _logger.LogWarning(ex, "Periodic flush failed. Queue size: {QueueSize}, consumed: {ConsumedCount}. May indicate storage issues", CurrentQueueSize, _consumedCount);
                 }
             }
         }
@@ -286,7 +287,7 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger?.LogError(ex, "Consumer task failed during disposal. Published: {PublishedCount}, consumed: {ConsumedCount}", _publishedCount, _consumedCount);
+            _logger.LogError(ex, "Consumer task failed during disposal. Published: {PublishedCount}, consumed: {ConsumedCount}", _publishedCount, _consumedCount);
         }
 
         if (_flusher is not null)
@@ -297,7 +298,7 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
-                _logger?.LogError(ex, "Flusher task failed during disposal. Last flush was {TimeSinceLastFlush} ago", TimeSinceLastFlush);
+                _logger.LogError(ex, "Flusher task failed during disposal. Last flush was {TimeSinceLastFlush} ago", TimeSinceLastFlush);
             }
         }
 

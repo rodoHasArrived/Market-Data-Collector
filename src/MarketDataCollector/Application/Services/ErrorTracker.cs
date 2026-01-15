@@ -224,9 +224,9 @@ public sealed class ErrorTracker
                         lineNumber - currentError.Count));
                 }
             }
-            catch (IOException)
+            catch (IOException ex)
             {
-                // Log file might be locked
+                _log.Debug(ex, "Log file is locked or inaccessible: {FilePath}", logFile);
             }
         }
 

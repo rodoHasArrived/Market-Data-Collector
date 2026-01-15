@@ -15,8 +15,8 @@
 
   <ItemGroup>
     <!-- MassTransit -->
-    <PackageReference Include="MassTransit" Version="8.5.7" />
-    <PackageReference Include="MassTransit.RabbitMQ" Version="8.5.7" />
+    <PackageReference Include="MassTransit" Version="9.0.0" />
+    <PackageReference Include="MassTransit.RabbitMQ" Version="9.0.0" />
 
     <!-- Logging -->
     <PackageReference Include="Serilog.AspNetCore" Version="8.0.3" />

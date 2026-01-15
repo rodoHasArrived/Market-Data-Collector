@@ -165,7 +165,7 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
     /// Connects to Polygon WebSocket stream.
     /// In stub mode, emits a synthetic heartbeat. In live mode, will connect to Polygon WebSocket.
     /// </summary>
-    public async Task ConnectAsync(CancellationToken ct = default)
+    public Task ConnectAsync(CancellationToken ct = default)
     {
         if (IsStubMode)
         {

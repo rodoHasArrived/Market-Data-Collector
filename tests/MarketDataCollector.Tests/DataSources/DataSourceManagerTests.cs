@@ -4,6 +4,7 @@ using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Infrastructure.DataSources;
 using MarketDataCollector.Infrastructure.Providers.Backfill;
 using Xunit;
+using InfraDataSourceType = MarketDataCollector.Infrastructure.DataSources.DataSourceType;
 
 namespace MarketDataCollector.Tests.DataSources;
 
@@ -328,7 +329,7 @@ internal class TestHistoricalDataSource : IHistoricalDataSource
     public string Id { get; }
     public string DisplayName => Id;
     public string Description => $"Test source: {Id}";
-    public DataSourceType Type => DataSourceType.Historical;
+    public InfraDataSourceType Type => InfraDataSourceType.Historical;
     public DataSourceCategory Category => DataSourceCategory.Free;
     public int Priority { get; }
     public DataSourceCapabilities Capabilities => _capabilities;
@@ -376,7 +377,7 @@ internal class TestRealtimeDataSource : IRealtimeDataSource
     public string Id { get; }
     public string DisplayName => Id;
     public string Description => $"Test realtime source: {Id}";
-    public DataSourceType Type => DataSourceType.Realtime;
+    public InfraDataSourceType Type => InfraDataSourceType.Realtime;
     public DataSourceCategory Category => DataSourceCategory.Broker;
     public int Priority { get; }
     public DataSourceCapabilities Capabilities => DataSourceCapabilities.RealtimeTrades | DataSourceCapabilities.RealtimeQuotes;

@@ -16,7 +16,7 @@ namespace MarketDataCollector.Ui.Services;
 public sealed class BackfillCoordinator
 {
     private readonly ConfigStore _store;
-    private readonly ILogger _log = LoggingSetup.ForContext<BackfillCoordinator>();
+    private readonly Serilog.ILogger _log = LoggingSetup.ForContext<BackfillCoordinator>();
     private readonly SemaphoreSlim _gate = new(1, 1);
     private BackfillResult? _lastRun;
 
@@ -45,7 +45,7 @@ public sealed class BackfillCoordinator
     /// Runs a backfill operation for the specified request.
     /// Thread-safe - only one backfill can run at a time.
     /// </summary>
-    public async Task<BackfillResult> RunAsync(BackfillRequest request, CancellationToken ct = default)
+    public async Task<BackfillResult> RunAsync(Application.Backfill.BackfillRequest request, CancellationToken ct = default)
     {
         if (!await _gate.WaitAsync(TimeSpan.Zero, ct).ConfigureAwait(false))
             throw new InvalidOperationException("A backfill is already running. Please try again after it completes.");

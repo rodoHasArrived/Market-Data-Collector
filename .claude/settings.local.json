@@ -53,7 +53,10 @@
       "Bash(ls:*)",
       "Bash(MSBUILD_XamlCompilerDiagnosticLevel=4 \"C:\\Users\\Andrew James Rowden\\.nuget\\packages\\microsoft.windowsappsdk\\1.6.250108002\\tools\\net472\\XamlCompiler.exe\":*)",
       "Bash(\"C:\\Users\\Andrew James Rowden\\.nuget\\packages\\microsoft.windowsappsdk\\1.6.250108002\\tools\\net472\\XamlCompiler.exe\" \"C:\\Users\\Andrew James Rowden\\OneDrive\\Documents\\GitHub\\Market-Data-Collector\\src\\MarketDataCollector.Uwp\\obj\\Release\\net9.0-windows10.0.19041.0\\win-x64\\input.json\" \"C:\\Users\\Andrew James Rowden\\OneDrive\\Documents\\GitHub\\Market-Data-Collector\\src\\MarketDataCollector.Uwp\\obj\\Release\\net9.0-windows10.0.19041.0\\win-x64\\output.json\")",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "Bash(dotnet test:*)",
+      "Bash(xxd:*)",
+      "Bash(grep:*)"
     ]
   }
 }

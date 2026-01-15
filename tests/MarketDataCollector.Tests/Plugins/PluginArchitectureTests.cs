@@ -8,6 +8,7 @@ using MarketDataCollector.Infrastructure.DataSources.Plugins;
 using MarketDataCollector.Infrastructure.Providers.Backfill;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
+using InfraDataSourceType = MarketDataCollector.Infrastructure.DataSources.DataSourceType;
 
 namespace MarketDataCollector.Tests.Plugins;
 
@@ -505,7 +506,7 @@ internal class TestPlugin : IDataSourcePlugin
     public string Id => "test-plugin";
     public string DisplayName => "Test Plugin";
     public string Description => "A test plugin for unit testing";
-    public DataSourceType Type => DataSourceType.Historical;
+    public InfraDataSourceType Type => InfraDataSourceType.Historical;
     public DataSourceCategory Category => DataSourceCategory.Free;
     public int Priority => 100;
     public DataSourceCapabilities Capabilities => DataSourceCapabilities.HistoricalDailyBars;

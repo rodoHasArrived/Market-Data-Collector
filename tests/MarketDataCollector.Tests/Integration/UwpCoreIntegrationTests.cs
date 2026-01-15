@@ -16,7 +16,7 @@ public class UwpCoreIntegrationTests : IAsyncLifetime
     private StatusHttpServer? _server;
     private HttpClient? _httpClient;
     private const int TestPort = 18080;
-    private const string BaseUrl = $"http://localhost:{TestPort}";
+    private static readonly string BaseUrl = $"http://localhost:{TestPort}";
 
     public async Task InitializeAsync()
     {

@@ -555,7 +555,7 @@ public sealed class CredentialValidationService : IAsyncDisposable
             : "Some credentials failed validation. Check warnings above.");
     }
 
-    private static string GetErrorMessage(string content)
+    private string GetErrorMessage(string content)
     {
         try
         {
@@ -565,9 +565,10 @@ public sealed class CredentialValidationService : IAsyncDisposable
             if (doc.RootElement.TryGetProperty("error", out var err))
                 return err.GetString() ?? "Unknown error";
         }
-        catch
+        catch (JsonException ex)
         {
-            // Ignore JSON parse errors
+            _log.Debug(ex, "Failed to parse error response as JSON, using raw content. Content: {Content}",
+                content.Length > 200 ? content[..200] + "..." : content);
         }
 
         return content.Length > 100 ? content[..100] + "..." : content;

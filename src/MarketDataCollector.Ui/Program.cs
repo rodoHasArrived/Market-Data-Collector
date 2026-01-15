@@ -252,7 +252,7 @@ app.MapPost("/api/backfill/run", async (BackfillCoordinator backfill, BackfillRe
 
     try
     {
-        var request = new BackfillRequest(
+        var request = new MarketDataCollector.Application.Backfill.BackfillRequest(
             string.IsNullOrWhiteSpace(req.Provider) ? "stooq" : req.Provider!,
             req.Symbols,
             req.From,
@@ -1706,9 +1706,9 @@ function addLog(message, type = '') {{
   const line = document.createElement('div');
   line.className = 'terminal-line';
   line.innerHTML = `
-    <span class="terminal-prompt">$</span>
-    <span class="terminal-time">${{time}}</span>
-    <span class="terminal-msg ${{type}}">${{message}}</span>
+    <span class=""terminal-prompt"">&#36;</span>
+    <span class=""terminal-time"">${{time}}</span>
+    <span class=""terminal-msg ${{type}}"">${{message}}</span>
   `;
 
   logBody.appendChild(line);
@@ -1728,7 +1728,7 @@ function scrollToSection(sectionId) {{
 
     // Update active nav item
     document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-    const navItem = document.querySelector(`.nav-item[onclick*="${{sectionId}}"]`);
+    const navItem = document.querySelector(`.nav-item[onclick*=""${{sectionId}}""]`);
     if (navItem) navItem.classList.add('active');
   }}
 }}
@@ -1804,18 +1804,18 @@ function renderDataSourcesTable() {{
     const statusColor = ds.enabled ? 'var(--accent-green)' : 'var(--text-muted)';
     tr.innerHTML = `
       <td>
-        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-          <input type="checkbox" ${{ds.enabled ? 'checked' : ''}} onchange="toggleDataSource('${{ds.id}}', this.checked)" />
-          <span style="width: 8px; height: 8px; border-radius: 50%; background: ${{statusColor}};"></span>
+        <label style=""display: flex; align-items: center; gap: 8px; cursor: pointer;"">
+          <input type=""checkbox"" ${{ds.enabled ? 'checked' : ''}} onchange=""toggleDataSource('${{ds.id}}', this.checked)"" />
+          <span style=""width: 8px; height: 8px; border-radius: 50%; background: ${{statusColor}};""></span>
         </label>
       </td>
-      <td><span style="font-weight: 600; font-family: var(--font-mono);">${{ds.name}}</span></td>
-      <td><span class="tag ${{tagClass}}">${{ds.provider}}</span></td>
-      <td style="color: var(--text-secondary);">${{ds.type}}</td>
-      <td style="font-family: var(--font-mono);">${{ds.priority}}</td>
+      <td><span style=""font-weight: 600; font-family: var(--font-mono);"">${{ds.name}}</span></td>
+      <td><span class=""tag ${{tagClass}}"">${{ds.provider}}</span></td>
+      <td style=""color: var(--text-secondary);"">${{ds.type}}</td>
+      <td style=""font-family: var(--font-mono);"">${{ds.priority}}</td>
       <td>
-        <button class="btn-secondary" onclick="editDataSource('${{ds.id}}')" style="padding: 6px 12px; font-size: 12px; margin-right: 4px;">Edit</button>
-        <button class="btn-danger" onclick="deleteDataSource('${{ds.id}}')">Delete</button>
+        <button class=""btn-secondary"" onclick=""editDataSource('${{ds.id}}')"" style=""padding: 6px 12px; font-size: 12px; margin-right: 4px;"">Edit</button>
+        <button class=""btn-danger"" onclick=""deleteDataSource('${{ds.id}}')"">Delete</button>
       </td>
     `;
     tbody.appendChild(tr);
@@ -2001,31 +2001,31 @@ async function saveFailoverSettings() {{
   msg.textContent = r.ok ? 'Failover settings saved.' : 'Error saving failover settings.';
 }}
 
-async function loadBackfillProviders(selectedProvider) {
-  try {
+async function loadBackfillProviders(selectedProvider) {{
+  try {{
     const r = await fetch('/api/backfill/providers');
     if (!r.ok) return;
     backfillProviders = await r.json();
     const select = document.getElementById('backfillProvider');
     if (!select) return;
     select.innerHTML = '';
-    for (const p of backfillProviders) {
+    for (const p of backfillProviders) {{
       const opt = document.createElement('option');
       opt.value = p.name;
       opt.textContent = p.displayName || p.name;
       select.appendChild(opt);
-    }
-    if (selectedProvider) {
+    }}
+    if (selectedProvider) {{
       select.value = selectedProvider;
-    }
+    }}
     const help = document.getElementById('backfillHelp');
-    if (help && backfillProviders.length) {
+    if (help && backfillProviders.length) {{
       help.textContent = backfillProviders.map(p => `${{p.displayName || p.name}}: ${{p.description || ''}}`).join(' • ');
-    }
-  } catch (e) {
+    }}
+  }} catch (e) {{
     console.warn('Unable to load backfill providers', e);
-  }
-}
+  }}
+}}
 
 async function loadConfig() {{
   const r = await fetch('/api/config');
@@ -2072,18 +2072,18 @@ async function loadConfig() {{
   tbody.innerHTML = '';
 
   if (symbols.length === 0) {{
-    tbody.innerHTML = '<tr><td colspan="7" class="muted" style="text-align: center; padding: 24px;">No symbols configured. Add one below.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan=""7"" class=""muted"" style=""text-align: center; padding: 24px;"">No symbols configured. Add one below.</td></tr>';
   }} else {{
     for (const s of symbols) {{
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td><span style="font-weight: 600; font-family: var(--font-mono); color: var(--accent-cyan);">${{s.symbol}}</span></td>
-        <td>${{s.subscribeTrades ? '<span class="good">ON</span>' : '<span class="muted">OFF</span>'}}</td>
-        <td>${{s.subscribeDepth ? '<span class="good">ON</span>' : '<span class="muted">OFF</span>'}}</td>
-        <td style="font-family: var(--font-mono);">${{s.depthLevels || 10}}</td>
-        <td style="color: var(--text-secondary);">${{s.localSymbol || '-'}}</td>
-        <td style="color: var(--text-secondary);">${{s.exchange || '-'}}</td>
-        <td><button class="btn-danger" onclick="deleteSymbol('${{s.symbol}}')">Delete</button></td>
+        <td><span style=""font-weight: 600; font-family: var(--font-mono); color: var(--accent-cyan);"">${{s.symbol}}</span></td>
+        <td>${{s.subscribeTrades ? '<span class=""good"">ON</span>' : '<span class=""muted"">OFF</span>'}}</td>
+        <td>${{s.subscribeDepth ? '<span class=""good"">ON</span>' : '<span class=""muted"">OFF</span>'}}</td>
+        <td style=""font-family: var(--font-mono);"">${{s.depthLevels || 10}}</td>
+        <td style=""color: var(--text-secondary);"">${{s.localSymbol || '-'}}</td>
+        <td style=""color: var(--text-secondary);"">${{s.exchange || '-'}}</td>
+        <td><button class=""btn-danger"" onclick=""deleteSymbol('${{s.symbol}}')"">Delete</button></td>
       `;
       tbody.appendChild(tr);
     }}
@@ -2264,18 +2264,18 @@ async function loadBackfillStatus() {{
   try {{
     const r = await fetch('/api/backfill/status');
     if (!r.ok) {{
-      box.innerHTML = `<div class="terminal-line"><span class="terminal-prompt">$</span><span class="terminal-msg">Ready to start backfill operation...</span></div>`;
+      box.innerHTML = `<div class=""terminal-line""><span class=""terminal-prompt"">&#36;</span><span class=""terminal-msg"">Ready to start backfill operation...</span></div>`;
       return;
     }}
     const status = await r.json();
     box.innerHTML = formatBackfillStatus(status);
   }} catch (e) {{
-    box.innerHTML = `<div class="terminal-line"><span class="terminal-prompt">$</span><span class="terminal-msg error">Unable to load backfill status</span></div>`;
+    box.innerHTML = `<div class=""terminal-line""><span class=""terminal-prompt"">&#36;</span><span class=""terminal-msg error"">Unable to load backfill status</span></div>`;
   }}
 }}
 
 function formatBackfillStatus(status) {{
-  if (!status) return `<div class="terminal-line"><span class="terminal-prompt">$</span><span class="terminal-msg">No backfill runs yet.</span></div>`;
+  if (!status) return `<div class=""terminal-line""><span class=""terminal-prompt"">&#36;</span><span class=""terminal-msg"">No backfill runs yet.</span></div>`;
 
   const started = status.startedUtc ? new Date(status.startedUtc).toLocaleString() : 'n/a';
   const completed = status.completedUtc ? new Date(status.completedUtc).toLocaleString() : 'n/a';
@@ -2284,26 +2284,26 @@ function formatBackfillStatus(status) {{
   const symbols = (status.symbols || []).join(', ');
 
   let html = `
-    <div class="terminal-line">
-      <span class="terminal-prompt">$</span>
-      <span class="terminal-msg ${{statusClass}}">[${{statusText}}] Backfill completed</span>
+    <div class=""terminal-line"">
+      <span class=""terminal-prompt"">&#36;</span>
+      <span class=""terminal-msg ${{statusClass}}"">[${{statusText}}] Backfill completed</span>
     </div>
-    <div class="terminal-line">
-      <span class="terminal-prompt">&nbsp;</span>
-      <span class="terminal-msg">Provider: ${{status.provider}} | Bars written: ${{status.barsWritten || 0}}</span>
+    <div class=""terminal-line"">
+      <span class=""terminal-prompt"">&nbsp;</span>
+      <span class=""terminal-msg"">Provider: ${{status.provider}} | Bars written: ${{status.barsWritten || 0}}</span>
     </div>
-    <div class="terminal-line">
-      <span class="terminal-prompt">&nbsp;</span>
-      <span class="terminal-msg">Symbols: ${{symbols || 'n/a'}}</span>
+    <div class=""terminal-line"">
+      <span class=""terminal-prompt"">&nbsp;</span>
+      <span class=""terminal-msg"">Symbols: ${{symbols || 'n/a'}}</span>
     </div>
-    <div class="terminal-line">
-      <span class="terminal-prompt">&nbsp;</span>
-      <span class="terminal-msg" style="color: var(--text-muted);">Started: ${{started}} | Completed: ${{completed}}</span>
+    <div class=""terminal-line"">
+      <span class=""terminal-prompt"">&nbsp;</span>
+      <span class=""terminal-msg"" style=""color: var(--text-muted);"">Started: ${{started}} | Completed: ${{completed}}</span>
     </div>
   `;
 
   if (status.error) {{
-    html += `<div class="terminal-line"><span class="terminal-prompt">!</span><span class="terminal-msg error">${{status.error}}</span></div>`;
+    html += `<div class=""terminal-line""><span class=""terminal-prompt"">!</span><span class=""terminal-msg error"">${{status.error}}</span></div>`;
   }}
 
   return html;
@@ -2321,18 +2321,18 @@ async function runBackfill() {{
   const to = document.getElementById('backfillTo').value || null;
 
   if (!symbols.length) {{
-    statusBox.innerHTML = `<div class="terminal-line"><span class="terminal-prompt">!</span><span class="terminal-msg warning">Please enter at least one symbol to backfill.</span></div>`;
+    statusBox.innerHTML = `<div class=""terminal-line""><span class=""terminal-prompt"">!</span><span class=""terminal-msg warning"">Please enter at least one symbol to backfill.</span></div>`;
     showToast('Please enter at least one symbol', 'warning');
     return;
   }}
 
   // Show loading state
   btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> Running...';
+  btn.innerHTML = '<span class=""spinner""></span> Running...';
 
   statusBox.innerHTML = `
-    <div class="terminal-line"><span class="terminal-prompt">$</span><span class="terminal-msg">Initializing backfill for ${{symbols.join(', ')}}...</span></div>
-    <div class="terminal-line"><span class="terminal-prompt">$</span><span class="terminal-msg">Provider: ${{provider}}</span></div>
+    <div class=""terminal-line""><span class=""terminal-prompt"">&#36;</span><span class=""terminal-msg"">Initializing backfill for ${{symbols.join(', ')}}...</span></div>
+    <div class=""terminal-line""><span class=""terminal-prompt"">&#36;</span><span class=""terminal-msg"">Provider: ${{provider}}</span></div>
   `;
 
   addLog(`Starting backfill: ${{symbols.join(', ')}}`, 'success');
@@ -2347,7 +2347,7 @@ async function runBackfill() {{
 
     if (!r.ok) {{
       const msg = await r.text();
-      statusBox.innerHTML = `<div class="terminal-line"><span class="terminal-prompt">!</span><span class="terminal-msg error">${{msg || 'Backfill failed'}}</span></div>`;
+      statusBox.innerHTML = `<div class=""terminal-line""><span class=""terminal-prompt"">!</span><span class=""terminal-msg error"">${{msg || 'Backfill failed'}}</span></div>`;
       showToast('Backfill failed', 'error');
       addLog('Backfill failed: ' + (msg || 'Unknown error'), 'error');
       return;
@@ -2391,7 +2391,7 @@ async function addSymbol() {{
 
   const msg = document.getElementById('msg');
   if (r.ok) {{
-    msg.innerHTML = `<span class="good">Symbol ${{symbol}} added successfully.</span>`;
+    msg.innerHTML = `<span class=""good"">Symbol ${{symbol}} added successfully.</span>`;
     showToast(`Symbol ${{symbol}} added`, 'success');
     addLog(`Symbol added: ${{symbol}}`, 'success');
     document.getElementById('sym').value = '';
@@ -2399,7 +2399,7 @@ async function addSymbol() {{
     document.getElementById('pexch').value = '';
     await loadConfig();
   }} else {{
-    msg.innerHTML = '<span class="bad">Error adding symbol.</span>';
+    msg.innerHTML = '<span class=""bad"">Error adding symbol.</span>';
     showToast('Failed to add symbol', 'error');
   }}
 }}
@@ -2507,7 +2507,7 @@ public sealed class ConfigStore
 public sealed class BackfillCoordinator
 {
     private readonly ConfigStore _store;
-    private readonly ILogger _log = LoggingSetup.ForContext<BackfillCoordinator>();
+    private readonly Serilog.ILogger _log = LoggingSetup.ForContext<BackfillCoordinator>();
     private readonly SemaphoreSlim _gate = new(1, 1);
     private BackfillResult? _lastRun;
 
@@ -2526,7 +2526,7 @@ public sealed class BackfillCoordinator
 
     public BackfillResult? TryReadLast() => _lastRun ?? _store.TryLoadBackfillStatus();
 
-    public async Task<BackfillResult> RunAsync(BackfillRequest request, CancellationToken ct = default)
+    public async Task<BackfillResult> RunAsync(MarketDataCollector.Application.Backfill.BackfillRequest request, CancellationToken ct = default)
     {
         if (!await _gate.WaitAsync(TimeSpan.Zero, ct).ConfigureAwait(false))
             throw new InvalidOperationException("A backfill is already running. Please try again after it completes.");

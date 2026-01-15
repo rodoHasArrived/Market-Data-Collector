@@ -76,4 +76,13 @@
   <ItemGroup>
     <ProjectReference Include="..\MarketDataCollector\MarketDataCollector.csproj" />
   </ItemGroup>
+
+  <!-- Exclude incomplete refactored code from compilation -->
+  <ItemGroup>
+    <Compile Remove="Endpoints\**" />
+    <Compile Remove="Services\**" />
+    <Compile Remove="Templates\**" />
+    <Compile Remove="Models\**" />
+    <Compile Remove="Program.Refactored.cs.bak" />
+  </ItemGroup>
 </Project>
