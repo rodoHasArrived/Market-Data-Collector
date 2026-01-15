@@ -1520,15 +1520,14 @@ public static class HtmlTemplates
         document.getElementById('metricIntegrity').textContent = (s.metrics && s.metrics.integrity) || 0;
         document.getElementById('metricBars').textContent = (s.metrics && s.metrics.historicalBars) || 0;
       }} catch (e) {{
-        box.innerHTML = `
-          <div class=""status-badge status-disconnected"">
-            <span class=""status-dot""></span>
-            No Status
-          </div>
-          <div style=""margin-top: 8px; font-size: 12px; color: #718096;"">
-            Start collector with --serve-status
-          </div>
-        `;
+        box.innerHTML =
+          '<div class=""status-badge status-disconnected"">' +
+            '<span class=""status-dot""></span>' +
+            'No Status' +
+          '</div>' +
+          '<div style=""margin-top: 8px; font-size: 12px; color: #718096;"">' +
+            'Start collector with --serve-status' +
+          '</div>';
       }}
     }}
 
@@ -1568,7 +1567,7 @@ public static class HtmlTemplates
     function editSymbol(symbol) {
       const match = (cachedSymbols || []).find(s => (s.symbol || '').toLowerCase() === symbol.toLowerCase());
       if (!match) {
-        showToast('error', 'Not Found', `Cannot find ${symbol} in current configuration`);
+        showToast('error', 'Not Found', 'Cannot find ' + symbol + ' in current configuration');
         return;
       }
 
@@ -1580,7 +1579,7 @@ public static class HtmlTemplates
       document.getElementById('exch').value = match.exchange || 'SMART';
       document.getElementById('pexch').value = match.primaryExchange || '';
 
-      showToast('info', 'Editing symbol', `Loaded ${symbol} into the form. Update fields and click Add Symbol to save.`);
+      showToast('info', 'Editing symbol', 'Loaded ' + symbol + ' into the form. Update fields and click Add Symbol to save.');
     }
 
     async function addSymbol() {{
@@ -1846,7 +1845,7 @@ public static class HtmlTemplates
         return;
       }}
 
-      grid.innerHTML = providers.map(p => {{
+      grid.innerHTML = providers.map(function(p) {{
         const statusColor = p.isConnected ? '#48bb78' : '#f56565';
         const statusText = p.isConnected ? 'Connected' : 'Disconnected';
         return `
@@ -2038,7 +2037,7 @@ public static class HtmlTemplates
         return;
       }}
 
-      container.innerHTML = rules.map(rule => {{
+      container.innerHTML = rules.map(function(rule) {{
         const statusColor = rule.isInFailoverState ? '#ecc94b' : '#48bb78';
         const statusText = rule.isInFailoverState ? 'In Failover' : 'Normal';
         return `
