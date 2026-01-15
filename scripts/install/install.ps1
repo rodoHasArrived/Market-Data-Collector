@@ -4,9 +4,19 @@
 
 .DESCRIPTION
     This script automates the installation and setup of Market Data Collector on Windows.
+    Features enhanced debugging output, progress tracking, and Windows toast notifications.
 
 .PARAMETER Mode
-    Installation mode: Docker, Native, Check, or Uninstall
+    Installation mode: Docker, Native, Desktop, Check, Uninstall, or Help
+
+.PARAMETER Verbose
+    Enable verbose logging output
+
+.PARAMETER NoNotify
+    Disable Windows toast notifications
+
+.PARAMETER LogPath
+    Custom path for the installation log file
 
 .EXAMPLE
     .\install.ps1
@@ -17,21 +27,42 @@
     Docker-based installation
 
 .EXAMPLE
-    .\install.ps1 -Mode Native
-    Native .NET installation
+    .\install.ps1 -Mode Desktop -Verbose
+    Windows Desktop installation with verbose output
+
+.EXAMPLE
+    .\install.ps1 -Mode Native -NoNotify
+    Native .NET installation without notifications
 #>
 
 param(
     [Parameter(Position = 0)]
     [ValidateSet("Docker", "Native", "Desktop", "Check", "Uninstall", "Help")]
-    [string]$Mode = ""
+    [string]$Mode = "",
+
+    [switch]$Verbose,
+
+    [switch]$NoNotify,
+
+    [string]$LogPath = ""
 )
 
 $ErrorActionPreference = "Stop"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $RepoRoot = (Resolve-Path (Join-Path $ScriptDir "..\..")).Path
+$LibDir = Join-Path (Split-Path -Parent $ScriptDir) "lib"
 
-# Colors
+# Import the build notification module
+$notificationModule = Join-Path $LibDir "BuildNotification.psm1"
+if (Test-Path $notificationModule) {
+    Import-Module $notificationModule -Force
+    $useNotificationModule = $true
+}
+else {
+    $useNotificationModule = $false
+}
+
+# Fallback functions if module not available
 function Write-ColorOutput($ForegroundColor) {
     $fc = $host.UI.RawUI.ForegroundColor
     $host.UI.RawUI.ForegroundColor = $ForegroundColor
@@ -43,16 +74,21 @@ function Write-ColorOutput($ForegroundColor) {
 
 function Write-Info($message) { Write-Host "[INFO] $message" -ForegroundColor Blue }
 function Write-Success($message) { Write-Host "[SUCCESS] $message" -ForegroundColor Green }
-function Write-Warning($message) { Write-Host "[WARNING] $message" -ForegroundColor Yellow }
-function Write-Error($message) { Write-Host "[ERROR] $message" -ForegroundColor Red }
+function Write-Warn($message) { Write-Host "[WARNING] $message" -ForegroundColor Yellow }
+function Write-Err($message) { Write-Host "[ERROR] $message" -ForegroundColor Red }
 
 function Show-Header {
-    Write-Host ""
-    Write-Host "======================================================================" -ForegroundColor Cyan
-    Write-Host "           Market Data Collector - Installation Script                " -ForegroundColor Cyan
-    Write-Host "                         Version 1.1.0                                " -ForegroundColor Cyan
-    Write-Host "======================================================================" -ForegroundColor Cyan
-    Write-Host ""
+    if ($useNotificationModule) {
+        Show-BuildHeader -Title "Market Data Collector - Installation Script" -Subtitle "Version 1.2.0 - Enhanced Debugging Edition"
+    }
+    else {
+        Write-Host ""
+        Write-Host "======================================================================" -ForegroundColor Cyan
+        Write-Host "           Market Data Collector - Installation Script                " -ForegroundColor Cyan
+        Write-Host "                         Version 1.2.0                                " -ForegroundColor Cyan
+        Write-Host "======================================================================" -ForegroundColor Cyan
+        Write-Host ""
+    }
 }
 
 function Show-Help {
@@ -300,42 +336,326 @@ function Install-Native {
 }
 
 function Install-Desktop {
-    Write-Info "Installing Windows Desktop Application..."
+    if ($useNotificationModule) {
+        Show-BuildSection -Title "Windows Desktop Application Installation"
+        Initialize-BuildNotification -EnableToast (-not $NoNotify) -Verbose $Verbose
+    }
+    else {
+        Write-Info "Installing Windows Desktop Application..."
+    }
 
     if (-not (Test-Command "dotnet")) {
-        Write-Error ".NET SDK is required for Desktop installation"
+        if ($useNotificationModule) {
+            Show-BuildError -Error ".NET SDK is required for Desktop installation" `
+                -Suggestion "Install .NET SDK 9.0 or later from https://dotnet.microsoft.com/download" `
+                -Details @(
+                    "The Windows Desktop App requires .NET 9.0 SDK",
+                    "Windows App SDK 1.6+ is also required (installed via NuGet)"
+                )
+        }
+        else {
+            Write-Err ".NET SDK is required for Desktop installation"
+        }
         Show-Prerequisites-Suggestions
         return
     }
 
     Push-Location $RepoRoot
+    $buildSuccess = $false
 
     try {
         $desktopProjectPath = Join-Path $RepoRoot "src\MarketDataCollector.Uwp\MarketDataCollector.Uwp.csproj"
         $outputPath = Join-Path $RepoRoot "dist\win-x64\desktop"
+        $diagnosticLogDir = Join-Path $RepoRoot "diagnostic-logs"
 
-        # Restore and build
-        Write-Info "Restoring dependencies..."
-        dotnet restore $desktopProjectPath
+        # Ensure diagnostic log directory exists
+        if (-not (Test-Path $diagnosticLogDir)) {
+            New-Item -ItemType Directory -Path $diagnosticLogDir -Force | Out-Null
+        }
 
-        Write-Info "Building Windows Desktop App..."
-        dotnet publish $desktopProjectPath `
-            -c Release `
-            -r win-x64 `
-            -o $outputPath `
-            --self-contained true `
-            -p:WindowsPackageType=None `
-            -p:PublishReadyToRun=true
+        $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
 
-        if ($LASTEXITCODE -ne 0) {
-            Write-Error "Build failed"
+        # ==================== STEP 1: Environment Check ====================
+        if ($useNotificationModule) {
+            Start-BuildStep -Name "Environment Verification" -Description "Checking build environment"
+        }
+        else {
+            Write-Info "Verifying build environment..."
+        }
+
+        # Check .NET version
+        $dotnetVersion = dotnet --version
+        $dotnetSdkList = dotnet --list-sdks
+        if ($useNotificationModule) {
+            Update-BuildProgress -Message ".NET SDK version: $dotnetVersion"
+            Update-BuildProgress -Message "Available SDKs: $($dotnetSdkList -join ', ')"
+        }
+        else {
+            Write-Info ".NET SDK version: $dotnetVersion"
+        }
+
+        # Check for Windows SDK
+        $windowsSdkPath = "C:\Program Files (x86)\Windows Kits\10"
+        $hasWindowsSdk = Test-Path $windowsSdkPath
+        if ($useNotificationModule) {
+            if ($hasWindowsSdk) {
+                Update-BuildProgress -Message "Windows SDK: Found at $windowsSdkPath"
+            }
+            else {
+                Update-BuildProgress -Message "Windows SDK: Not found (will use Windows App SDK from NuGet)"
+            }
+            Complete-BuildStep -Success $true -Message "Environment verified"
+        }
+        else {
+            if ($hasWindowsSdk) {
+                Write-Success "Windows SDK found"
+            }
+        }
+
+        # ==================== STEP 2: Clean Previous Build ====================
+        if ($useNotificationModule) {
+            Start-BuildStep -Name "Clean Previous Build" -Description "Removing old build artifacts"
+        }
+        else {
+            Write-Info "Cleaning previous build..."
+        }
+
+        if (Test-Path $outputPath) {
+            Remove-Item -Path $outputPath -Recurse -Force
+            if ($useNotificationModule) {
+                Update-BuildProgress -Message "Removed previous build at $outputPath"
+            }
+        }
+
+        # Clean obj/bin directories for the project
+        $objPath = Join-Path (Split-Path -Parent $desktopProjectPath) "obj"
+        $binPath = Join-Path (Split-Path -Parent $desktopProjectPath) "bin"
+        if (Test-Path $objPath) {
+            Remove-Item -Path $objPath -Recurse -Force -ErrorAction SilentlyContinue
+            if ($useNotificationModule) {
+                Update-BuildProgress -Message "Cleaned obj directory"
+            }
+        }
+
+        if ($useNotificationModule) {
+            Complete-BuildStep -Success $true -Message "Clean completed"
+        }
+
+        # ==================== STEP 3: Restore Dependencies ====================
+        if ($useNotificationModule) {
+            Start-BuildStep -Name "Restore Dependencies" -Description "Restoring NuGet packages"
+        }
+        else {
+            Write-Info "Restoring dependencies..."
+        }
+
+        $restoreLogFile = Join-Path $diagnosticLogDir "desktop-restore-$timestamp.log"
+        $restoreArgs = @(
+            "restore"
+            $desktopProjectPath
+            "-r", "win-x64"
+            "-v", "normal"
+        )
+
+        if ($Verbose) {
+            $restoreArgs += @("-v", "detailed")
+        }
+
+        if ($useNotificationModule) {
+            Update-BuildProgress -Message "Running: dotnet $($restoreArgs -join ' ')"
+        }
+
+        $restoreOutput = & dotnet $restoreArgs 2>&1 | Tee-Object -FilePath $restoreLogFile
+        $restoreExitCode = $LASTEXITCODE
+
+        if ($restoreExitCode -ne 0) {
+            if ($useNotificationModule) {
+                Complete-BuildStep -Success $false -Message "Restore failed"
+                Show-BuildError -Error "Failed to restore NuGet packages" `
+                    -LogFile $restoreLogFile `
+                    -Suggestion "Check network connectivity and NuGet source configuration" `
+                    -Details @(
+                        "Exit code: $restoreExitCode",
+                        "Check log file for detailed error messages",
+                        "Run 'dotnet nuget list source' to verify NuGet sources"
+                    )
+            }
+            else {
+                Write-Err "Restore failed. Check log: $restoreLogFile"
+            }
             return
         }
 
-        Write-Success "Build completed successfully"
+        # Count restored packages
+        $packageCount = ($restoreOutput | Select-String -Pattern "Restored" -AllMatches).Count
+        if ($useNotificationModule) {
+            Update-BuildProgress -Message "Restored $packageCount package reference(s)"
+            Complete-BuildStep -Success $true -Message "Dependencies restored"
+        }
+        else {
+            Write-Success "Dependencies restored ($packageCount packages)"
+        }
 
-        # Setup config
-        if (-not (Setup-Config)) { return }
+        # ==================== STEP 4: Build Application ====================
+        if ($useNotificationModule) {
+            Start-BuildStep -Name "Build Application" -Description "Compiling Windows Desktop App"
+        }
+        else {
+            Write-Info "Building Windows Desktop App..."
+        }
+
+        $buildLogFile = Join-Path $diagnosticLogDir "desktop-build-$timestamp.log"
+        $publishLogFile = Join-Path $diagnosticLogDir "desktop-publish-$timestamp.log"
+
+        # Build first to catch compilation errors
+        $buildArgs = @(
+            "build"
+            $desktopProjectPath
+            "-c", "Release"
+            "-r", "win-x64"
+            "--no-restore"
+            "-p:Platform=x64"
+        )
+
+        if ($Verbose) {
+            $buildArgs += @("-v", "detailed")
+        }
+        else {
+            $buildArgs += @("-v", "normal")
+        }
+
+        if ($useNotificationModule) {
+            Update-BuildProgress -Message "Compiling C# code..."
+            Update-BuildProgress -Message "Target: win-x64 | Config: Release"
+        }
+
+        $buildOutput = & dotnet $buildArgs 2>&1 | Tee-Object -FilePath $buildLogFile
+        $buildExitCode = $LASTEXITCODE
+
+        # Extract warnings and errors
+        $buildWarnings = $buildOutput | Select-String -Pattern "warning [A-Z]+\d+:" -AllMatches
+        $buildErrors = $buildOutput | Select-String -Pattern "error [A-Z]+\d+:" -AllMatches
+
+        if ($buildExitCode -ne 0) {
+            if ($useNotificationModule) {
+                Complete-BuildStep -Success $false -Message "Build failed"
+
+                $errorDetails = @("Exit code: $buildExitCode")
+                if ($buildErrors.Count -gt 0) {
+                    $errorDetails += "Errors found: $($buildErrors.Count)"
+                    # Show first few errors
+                    $buildErrors | Select-Object -First 5 | ForEach-Object {
+                        $errorDetails += "  $_"
+                    }
+                }
+
+                Show-BuildError -Error "Build compilation failed" `
+                    -LogFile $buildLogFile `
+                    -Suggestion "Review the build errors above and fix the code issues" `
+                    -Details $errorDetails
+            }
+            else {
+                Write-Err "Build failed. Check log: $buildLogFile"
+                if ($buildErrors.Count -gt 0) {
+                    Write-Host "Errors:" -ForegroundColor Red
+                    $buildErrors | Select-Object -First 5 | ForEach-Object { Write-Host "  $_" -ForegroundColor Red }
+                }
+            }
+            return
+        }
+
+        if ($buildWarnings.Count -gt 0) {
+            if ($useNotificationModule) {
+                Show-BuildWarning -Message "Build completed with $($buildWarnings.Count) warning(s)" `
+                    -Suggestion "Review warnings in: $buildLogFile"
+            }
+            else {
+                Write-Warn "Build completed with $($buildWarnings.Count) warning(s)"
+            }
+        }
+
+        if ($useNotificationModule) {
+            Update-BuildProgress -Message "Build succeeded, proceeding to publish..."
+            Complete-BuildStep -Success $true -Message "Compilation successful"
+        }
+        else {
+            Write-Success "Build completed"
+        }
+
+        # ==================== STEP 5: Publish Application ====================
+        if ($useNotificationModule) {
+            Start-BuildStep -Name "Publish Application" -Description "Creating self-contained deployment"
+        }
+        else {
+            Write-Info "Publishing application..."
+        }
+
+        $publishArgs = @(
+            "publish"
+            $desktopProjectPath
+            "-c", "Release"
+            "-r", "win-x64"
+            "-o", $outputPath
+            "--self-contained", "true"
+            "-p:WindowsPackageType=None"
+            "-p:PublishReadyToRun=true"
+            "-p:Platform=x64"
+        )
+
+        if ($Verbose) {
+            $publishArgs += @("-v", "detailed")
+        }
+        else {
+            $publishArgs += @("-v", "normal")
+        }
+
+        if ($useNotificationModule) {
+            Update-BuildProgress -Message "Publishing self-contained application..."
+            Update-BuildProgress -Message "ReadyToRun: Enabled (faster startup)"
+        }
+
+        $publishOutput = & dotnet $publishArgs 2>&1 | Tee-Object -FilePath $publishLogFile
+        $publishExitCode = $LASTEXITCODE
+
+        if ($publishExitCode -ne 0) {
+            if ($useNotificationModule) {
+                Complete-BuildStep -Success $false -Message "Publish failed"
+                Show-BuildError -Error "Failed to publish application" `
+                    -LogFile $publishLogFile `
+                    -Suggestion "Check if all required Windows SDK components are installed" `
+                    -Details @(
+                        "Exit code: $publishExitCode",
+                        "The publish step creates the final executable",
+                        "Ensure Windows App SDK dependencies are available"
+                    )
+            }
+            else {
+                Write-Err "Publish failed. Check log: $publishLogFile"
+            }
+            return
+        }
+
+        if ($useNotificationModule) {
+            Complete-BuildStep -Success $true -Message "Application published"
+        }
+        else {
+            Write-Success "Publish completed"
+        }
+
+        # ==================== STEP 6: Setup Configuration ====================
+        if ($useNotificationModule) {
+            Start-BuildStep -Name "Setup Configuration" -Description "Copying configuration files"
+        }
+        else {
+            Write-Info "Setting up configuration..."
+        }
+
+        if (-not (Setup-Config)) {
+            if ($useNotificationModule) {
+                Complete-BuildStep -Success $false -Message "Configuration setup failed"
+            }
+            return
+        }
 
         # Copy config to output
         $configFile = Join-Path $RepoRoot "config\appsettings.json"
@@ -343,31 +663,122 @@ function Install-Desktop {
 
         if (Test-Path $configFile) {
             Copy-Item $configFile -Destination $outputPath
+            if ($useNotificationModule) {
+                Update-BuildProgress -Message "Copied appsettings.json"
+            }
         }
         if (Test-Path $sampleConfigFile) {
             Copy-Item $sampleConfigFile -Destination $outputPath
+            if ($useNotificationModule) {
+                Update-BuildProgress -Message "Copied appsettings.sample.json"
+            }
         }
 
-        # Create data directory
+        # Create data directories
         $dataDir = Join-Path $outputPath "data"
-        if (-not (Test-Path $dataDir)) {
-            New-Item -ItemType Directory -Path $dataDir | Out-Null
+        $logsDir = Join-Path $outputPath "logs"
+        if (-not (Test-Path $dataDir)) { New-Item -ItemType Directory -Path $dataDir | Out-Null }
+        if (-not (Test-Path $logsDir)) { New-Item -ItemType Directory -Path $logsDir | Out-Null }
+
+        if ($useNotificationModule) {
+            Update-BuildProgress -Message "Created data and logs directories"
+            Complete-BuildStep -Success $true -Message "Configuration ready"
+        }
+
+        # ==================== STEP 7: Verify Installation ====================
+        if ($useNotificationModule) {
+            Start-BuildStep -Name "Verify Installation" -Description "Checking build output"
+        }
+        else {
+            Write-Info "Verifying installation..."
+        }
+
+        $exePath = Join-Path $outputPath "MarketDataCollector.Desktop.exe"
+        if (-not (Test-Path $exePath)) {
+            if ($useNotificationModule) {
+                Complete-BuildStep -Success $false -Message "Executable not found"
+                Show-BuildError -Error "Executable not found at expected location" `
+                    -Suggestion "Check build output and ensure the project compiled correctly" `
+                    -Details @(
+                        "Expected: $exePath",
+                        "Check publish output directory: $outputPath"
+                    )
+            }
+            else {
+                Write-Err "Executable not found: $exePath"
+            }
+            return
+        }
+
+        # Get file details
+        $exeFile = Get-Item $exePath
+        $exeSize = "{0:N2} MB" -f ($exeFile.Length / 1MB)
+        $fileCount = (Get-ChildItem -Path $outputPath -Recurse -File).Count
+        $totalSize = "{0:N2} MB" -f ((Get-ChildItem -Path $outputPath -Recurse -File | Measure-Object -Property Length -Sum).Sum / 1MB)
+
+        if ($useNotificationModule) {
+            Update-BuildProgress -Message "Executable: $exeSize"
+            Update-BuildProgress -Message "Total files: $fileCount ($totalSize)"
+            Complete-BuildStep -Success $true -Message "Installation verified"
+        }
+        else {
+            Write-Success "Executable verified: $exeSize"
+        }
+
+        $buildSuccess = $true
+
+        # Show final summary
+        if ($useNotificationModule) {
+            Show-BuildSummary -Success $true -OutputPath $outputPath
         }
 
         Write-Host ""
         Write-Host "======================================================================" -ForegroundColor Green
         Write-Host "           Windows Desktop App Installation Complete!                 " -ForegroundColor Green
         Write-Host "======================================================================" -ForegroundColor Green
-        Write-Host "  Location:  $outputPath" -ForegroundColor White
-        Write-Host "" -ForegroundColor White
-        Write-Host "  To run the app:" -ForegroundColor White
-        Write-Host "    $outputPath\MarketDataCollector.Desktop.exe" -ForegroundColor Gray
-        Write-Host "" -ForegroundColor White
-        Write-Host "  Or create a shortcut to the executable on your desktop." -ForegroundColor White
+        Write-Host ""
+        Write-Host "  Location:  " -ForegroundColor White -NoNewline
+        Write-Host $outputPath -ForegroundColor Cyan
+        Write-Host "  Executable: " -ForegroundColor White -NoNewline
+        Write-Host "MarketDataCollector.Desktop.exe" -ForegroundColor Cyan
+        Write-Host "  Size:      " -ForegroundColor White -NoNewline
+        Write-Host "$totalSize ($fileCount files)" -ForegroundColor Gray
+        Write-Host ""
+        Write-Host "  To run the app:" -ForegroundColor Yellow
+        Write-Host "    $exePath" -ForegroundColor Gray
+        Write-Host ""
+        Write-Host "  Build logs saved to:" -ForegroundColor DarkGray
+        Write-Host "    $diagnosticLogDir" -ForegroundColor Gray
+        Write-Host ""
+        Write-Host "  Or create a shortcut to the executable on your desktop." -ForegroundColor DarkGray
         Write-Host "======================================================================" -ForegroundColor Green
+    }
+    catch {
+        if ($useNotificationModule) {
+            Show-BuildError -Error "Unexpected error during installation" `
+                -Details @(
+                    "Exception: $($_.Exception.Message)",
+                    "Line: $($_.InvocationInfo.ScriptLineNumber)"
+                ) `
+                -Suggestion "Check the diagnostic logs for more details"
+            Show-BuildSummary -Success $false
+        }
+        else {
+            Write-Err "Unexpected error: $($_.Exception.Message)"
+        }
+        throw
     }
     finally {
         Pop-Location
+        if (-not $buildSuccess -and $useNotificationModule) {
+            Write-Host ""
+            Write-Host "  Troubleshooting Resources:" -ForegroundColor Yellow
+            Write-Host "    • Run diagnostic script: .\scripts\diagnostics\diagnose-build.ps1 -Action desktop" -ForegroundColor Gray
+            Write-Host "    • Check .NET SDK: dotnet --info" -ForegroundColor Gray
+            Write-Host "    • Verify Windows SDK: Get-ItemProperty 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows Kits\Installed Roots'" -ForegroundColor Gray
+            Write-Host "    • Documentation: docs/guides/troubleshooting.md" -ForegroundColor Gray
+            Write-Host ""
+        }
     }
 }
 
