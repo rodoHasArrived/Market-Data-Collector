@@ -54,10 +54,11 @@ public class CredentialErrorEventArgs : EventArgs
 /// and CredentialPicker UI. Enhanced with OAuth support, expiration tracking,
 /// and credential testing capabilities.
 /// </summary>
-public class CredentialService
+public sealed class CredentialService : IDisposable
 {
     private const string ResourcePrefix = "MarketDataCollector";
     private const string MetadataFileName = "credential_metadata.json";
+    private const string LogPrefix = "[CredentialService]";
 
     // Credential resource names
     public const string AlpacaCredentialResource = $"{ResourcePrefix}.Alpaca";
@@ -73,6 +74,9 @@ public class CredentialService
     private readonly HttpClient _httpClient;
     private Dictionary<string, CredentialMetadata> _metadataCache;
     private readonly string _metadataPath;
+    private readonly object _metadataLock = new();
+    private bool _disposed;
+    private bool _metadataLoaded;
 
     /// <summary>
     /// Event raised when credential metadata is updated.
@@ -110,8 +114,34 @@ public class CredentialService
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "MarketDataCollector",
             MetadataFileName);
+    }
 
-        LoadMetadataAsync().ConfigureAwait(false);
+    /// <summary>
+    /// Initializes the credential service by loading metadata.
+    /// Call this after construction to ensure metadata is loaded.
+    /// </summary>
+    public async Task InitializeAsync()
+    {
+        if (_metadataLoaded) return;
+
+        await LoadMetadataAsync();
+        _metadataLoaded = true;
+    }
+
+    /// <summary>
+    /// Disposes the credential service and releases resources.
+    /// </summary>
+    public void Dispose()
+    {
+        if (_disposed) return;
+
+        _httpClient.Dispose();
+        _disposed = true;
+    }
+
+    private void ThrowIfDisposed()
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
     }
 
     /// <summary>
@@ -661,13 +691,20 @@ public class CredentialService
                 var metadata = JsonSerializer.Deserialize<Dictionary<string, CredentialMetadata>>(json);
                 if (metadata != null)
                 {
-                    _metadataCache = metadata;
+                    lock (_metadataLock)
+                    {
+                        _metadataCache = metadata;
+                    }
                 }
             }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            _metadataCache = new Dictionary<string, CredentialMetadata>();
+            Debug.WriteLine($"[CredentialService] Failed to load metadata: {ex.GetType().Name} - {ex.Message}");
+            lock (_metadataLock)
+            {
+                _metadataCache = new Dictionary<string, CredentialMetadata>();
+            }
         }
     }
 
@@ -684,15 +721,21 @@ public class CredentialService
                 Directory.CreateDirectory(directory);
             }
 
-            var json = JsonSerializer.Serialize(_metadataCache, new JsonSerializerOptions
+            Dictionary<string, CredentialMetadata> cacheSnapshot;
+            lock (_metadataLock)
+            {
+                cacheSnapshot = new Dictionary<string, CredentialMetadata>(_metadataCache);
+            }
+
+            var json = JsonSerializer.Serialize(cacheSnapshot, new JsonSerializerOptions
             {
                 WriteIndented = true
             });
             await File.WriteAllTextAsync(_metadataPath, json);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // Ignore save errors
+            Debug.WriteLine($"[CredentialService] Failed to save metadata: {ex.GetType().Name} - {ex.Message}");
         }
     }
 
@@ -701,7 +744,11 @@ public class CredentialService
     /// </summary>
     public CredentialMetadata? GetMetadata(string resource)
     {
-        return _metadataCache.TryGetValue(resource, out var metadata) ? metadata : null;
+        ThrowIfDisposed();
+        lock (_metadataLock)
+        {
+            return _metadataCache.TryGetValue(resource, out var metadata) ? metadata : null;
+        }
     }
 
     /// <summary>
@@ -709,13 +756,20 @@ public class CredentialService
     /// </summary>
     public async Task UpdateMetadataAsync(string resource, Action<CredentialMetadata> update)
     {
-        if (!_metadataCache.TryGetValue(resource, out var metadata))
+        ThrowIfDisposed();
+
+        CredentialMetadata metadata;
+        lock (_metadataLock)
         {
-            metadata = new CredentialMetadata { Resource = resource };
-            _metadataCache[resource] = metadata;
+            if (!_metadataCache.TryGetValue(resource, out metadata!))
+            {
+                metadata = new CredentialMetadata { Resource = resource };
+                _metadataCache[resource] = metadata;
+            }
+
+            update(metadata);
         }
 
-        update(metadata);
         await SaveMetadataAsync();
 
         MetadataUpdated?.Invoke(this, new CredentialMetadataEventArgs(resource, metadata));
@@ -1201,6 +1255,86 @@ public class CredentialService
     }
 
     #endregion
+
+    #region Logging Helpers
+
+    /// <summary>
+    /// Logs a debug message with structured parameters.
+    /// </summary>
+    private void LogDebug(string messageTemplate, params object[] args)
+    {
+        var message = FormatMessage(messageTemplate, args);
+        Debug.WriteLine($"{LogPrefix} [DEBUG] {message}");
+    }
+
+    /// <summary>
+    /// Logs a warning with exception details.
+    /// </summary>
+    private void LogWarning(Exception ex, CredentialOperation operation, string? resource, string messageTemplate, params object[] args)
+    {
+        var message = FormatMessage(messageTemplate, args);
+        Debug.WriteLine($"{LogPrefix} [WARN] {message} | Operation: {operation} | Resource: {resource ?? "N/A"} | Exception: {ex.GetType().Name}");
+
+        RaiseCredentialError(operation, resource, message, ex, CredentialErrorSeverity.Warning);
+    }
+
+    /// <summary>
+    /// Logs an error with exception details and raises the CredentialError event.
+    /// </summary>
+    private void LogError(Exception ex, CredentialOperation operation, string? resource, string messageTemplate, params object[] args)
+    {
+        var message = FormatMessage(messageTemplate, args);
+        Debug.WriteLine($"{LogPrefix} [ERROR] {message} | Operation: {operation} | Resource: {resource ?? "N/A"} | Exception: {ex.GetType().Name} - {ex.Message}");
+
+        RaiseCredentialError(operation, resource, message, ex, CredentialErrorSeverity.Error);
+    }
+
+    /// <summary>
+    /// Formats a message template with arguments, similar to structured logging.
+    /// </summary>
+    private static string FormatMessage(string template, object[] args)
+    {
+        if (args.Length == 0) return template;
+
+        try
+        {
+            // Simple placeholder replacement for {Name} style templates
+            var result = template;
+            var index = 0;
+            while (result.Contains('{') && index < args.Length)
+            {
+                var start = result.IndexOf('{');
+                var end = result.IndexOf('}', start);
+                if (end > start)
+                {
+                    result = result[..start] + (args[index]?.ToString() ?? "null") + result[(end + 1)..];
+                    index++;
+                }
+                else break;
+            }
+            return result;
+        }
+        catch
+        {
+            return template;
+        }
+    }
+
+    /// <summary>
+    /// Raises the CredentialError event with the specified details.
+    /// </summary>
+    private void RaiseCredentialError(CredentialOperation operation, string? resource, string message, Exception? exception, CredentialErrorSeverity severity)
+    {
+        CredentialError?.Invoke(this, new CredentialErrorEventArgs(
+            operation,
+            resource,
+            message,
+            exception,
+            severity,
+            DateTime.UtcNow));
+    }
+
+    #endregion
 }
 
 /// <summary>
@@ -1232,4 +1366,104 @@ public class CredentialExpirationEventArgs : EventArgs
         Resource = resource;
         ExpiresAt = expiresAt;
     }
+}
+
+/// <summary>
+/// Event args for credential operation errors.
+/// </summary>
+public class CredentialErrorEventArgs : EventArgs
+{
+    /// <summary>
+    /// The operation that failed.
+    /// </summary>
+    public CredentialOperation Operation { get; }
+
+    /// <summary>
+    /// The resource (credential name) involved, if applicable.
+    /// </summary>
+    public string? Resource { get; }
+
+    /// <summary>
+    /// Human-readable error message.
+    /// </summary>
+    public string Message { get; }
+
+    /// <summary>
+    /// The exception that caused the error, if any.
+    /// </summary>
+    public Exception? Exception { get; }
+
+    /// <summary>
+    /// Severity level of the error.
+    /// </summary>
+    public CredentialErrorSeverity Severity { get; }
+
+    /// <summary>
+    /// When the error occurred.
+    /// </summary>
+    public DateTime Timestamp { get; }
+
+    public CredentialErrorEventArgs(
+        CredentialOperation operation,
+        string? resource,
+        string message,
+        Exception? exception,
+        CredentialErrorSeverity severity,
+        DateTime timestamp)
+    {
+        Operation = operation;
+        Resource = resource;
+        Message = message;
+        Exception = exception;
+        Severity = severity;
+        Timestamp = timestamp;
+    }
+}
+
+/// <summary>
+/// Types of credential operations that can fail.
+/// </summary>
+public enum CredentialOperation
+{
+    /// <summary>Prompting user for credentials.</summary>
+    PromptCredentials,
+
+    /// <summary>Prompting user for API key.</summary>
+    PromptApiKey,
+
+    /// <summary>Saving credential to vault.</summary>
+    Save,
+
+    /// <summary>Retrieving credential from vault.</summary>
+    Retrieve,
+
+    /// <summary>Removing credential from vault.</summary>
+    Remove,
+
+    /// <summary>Listing all credentials.</summary>
+    ListAll,
+
+    /// <summary>Testing credential validity.</summary>
+    Test,
+
+    /// <summary>Refreshing OAuth token.</summary>
+    Refresh
+}
+
+/// <summary>
+/// Severity levels for credential errors.
+/// </summary>
+public enum CredentialErrorSeverity
+{
+    /// <summary>Informational - operation failed but not critical.</summary>
+    Info,
+
+    /// <summary>Warning - operation failed, may require user attention.</summary>
+    Warning,
+
+    /// <summary>Error - operation failed, likely requires user action.</summary>
+    Error,
+
+    /// <summary>Critical - security-related failure, immediate attention required.</summary>
+    Critical
 }

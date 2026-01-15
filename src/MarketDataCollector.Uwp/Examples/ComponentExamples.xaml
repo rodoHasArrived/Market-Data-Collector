@@ -1,0 +1,453 @@
+<!--
+    ComponentExamples.xaml
+
+    This file demonstrates all reusable UI components for the Market Data Collector desktop app.
+    Copy and adapt these patterns for your pages.
+
+    Note: This is a reference file, not meant to be compiled directly.
+    Copy components to your actual pages.
+-->
+
+<Page
+    x:Class="MarketDataCollector.Uwp.Examples.ComponentExamples"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Background="{StaticResource ConsoleBackgroundDarkBrush}">
+
+    <Page.Resources>
+        <!-- Import the main style dictionary -->
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="ms-appx:///Styles/AppStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Page.Resources>
+
+    <ScrollViewer>
+        <StackPanel Padding="32" Spacing="32">
+
+            <!-- ═══════════════════════════════════════════════════════════════════
+                 SECTION: BUTTONS
+                 ═══════════════════════════════════════════════════════════════════ -->
+            <StackPanel Spacing="16">
+                <TextBlock Text="Buttons" Style="{StaticResource SectionHeaderStyle}"/>
+
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <!-- Primary/Accent Button -->
+                    <Button Style="{StaticResource AccentButtonStyle}" Content="Connect"/>
+
+                    <!-- Secondary Button -->
+                    <Button Style="{StaticResource SecondaryButtonStyle}" Content="Cancel"/>
+
+                    <!-- Danger Button -->
+                    <Button Style="{StaticResource DangerButtonStyle}" Content="Delete"/>
+
+                    <!-- Icon Button -->
+                    <Button Style="{StaticResource SecondaryButtonStyle}" Padding="8">
+                        <FontIcon Glyph="&#xE72C;" FontSize="16"/>
+                    </Button>
+
+                    <!-- Button with Icon and Text -->
+                    <Button Style="{StaticResource AccentButtonStyle}">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon Glyph="&#xE768;" FontSize="14"/>
+                            <TextBlock Text="Refresh"/>
+                        </StackPanel>
+                    </Button>
+
+                    <!-- Disabled Button -->
+                    <Button Style="{StaticResource SecondaryButtonStyle}" Content="Disabled" IsEnabled="False"/>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- ═══════════════════════════════════════════════════════════════════
+                 SECTION: STATUS BADGES
+                 ═══════════════════════════════════════════════════════════════════ -->
+            <StackPanel Spacing="16">
+                <TextBlock Text="Status Badges" Style="{StaticResource SectionHeaderStyle}"/>
+
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <!-- Live Badge (Green) -->
+                    <Border Style="{StaticResource LiveBadgeStyle}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <Ellipse Width="8" Height="8" Fill="#3fb950"/>
+                            <TextBlock Text="LIVE" FontSize="11" FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Connected Badge -->
+                    <Border Style="{StaticResource StreamBadgeActiveStyle}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <Ellipse Width="8" Height="8" Fill="#3fb950"/>
+                            <TextBlock Text="CONNECTED" FontSize="11" FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Disconnected Badge -->
+                    <Border Background="#2d1f1f" CornerRadius="4" Padding="8,4">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <Ellipse Width="8" Height="8" Fill="#f85149"/>
+                            <TextBlock Text="DISCONNECTED" FontSize="11" FontWeight="SemiBold" Foreground="#f85149"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Connecting Badge -->
+                    <Border Background="#2d2a1f" CornerRadius="4" Padding="8,4">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <ProgressRing Width="12" Height="12" IsActive="True"/>
+                            <TextBlock Text="CONNECTING..." FontSize="11" FontWeight="SemiBold" Foreground="#d29922"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Count Badge -->
+                    <Border Style="{StaticResource CountBadgeStyle}">
+                        <TextBlock Text="42" FontSize="11" FontWeight="SemiBold"/>
+                    </Border>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- ═══════════════════════════════════════════════════════════════════
+                 SECTION: PROVIDER TAGS
+                 ═══════════════════════════════════════════════════════════════════ -->
+            <StackPanel Spacing="16">
+                <TextBlock Text="Provider Tags" Style="{StaticResource SectionHeaderStyle}"/>
+
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <!-- Interactive Brokers Tag -->
+                    <Border Style="{StaticResource TagIBStyle}">
+                        <TextBlock Text="IB" FontSize="11" FontWeight="Bold"/>
+                    </Border>
+
+                    <!-- Alpaca Tag -->
+                    <Border Style="{StaticResource TagAlpacaStyle}">
+                        <TextBlock Text="ALPACA" FontSize="11" FontWeight="Bold"/>
+                    </Border>
+
+                    <!-- Polygon Tag -->
+                    <Border Style="{StaticResource TagPolygonStyle}">
+                        <TextBlock Text="POLYGON" FontSize="11" FontWeight="Bold"/>
+                    </Border>
+
+                    <!-- NYSE Tag -->
+                    <Border Background="#39c5cf" CornerRadius="4" Padding="6,2">
+                        <TextBlock Text="NYSE" FontSize="11" FontWeight="Bold" Foreground="#0d1117"/>
+                    </Border>
+
+                    <!-- Stooq Tag -->
+                    <Border Background="#6e7681" CornerRadius="4" Padding="6,2">
+                        <TextBlock Text="STOOQ" FontSize="11" FontWeight="Bold" Foreground="#e6edf3"/>
+                    </Border>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- ═══════════════════════════════════════════════════════════════════
+                 SECTION: METRIC CARDS
+                 ═══════════════════════════════════════════════════════════════════ -->
+            <StackPanel Spacing="16">
+                <TextBlock Text="Metric Cards" Style="{StaticResource SectionHeaderStyle}"/>
+
+                <StackPanel Orientation="Horizontal" Spacing="16">
+                    <!-- Standard Metric Card -->
+                    <Border Style="{StaticResource MetricCardStyle}" Width="180">
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="Events Published" Style="{StaticResource MetricLabelStyle}"/>
+                            <TextBlock Text="1,234,567" Style="{StaticResource MetricValueStyle}"/>
+                            <TextBlock Text="+12,345 today" FontSize="12" Foreground="#3fb950"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Success Metric Card -->
+                    <Border Style="{StaticResource MetricCardSuccessStyle}" Width="180">
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="Uptime" Style="{StaticResource MetricLabelStyle}"/>
+                            <TextBlock Text="14:32:15" Style="{StaticResource MetricValueStyle}"/>
+                            <TextBlock Text="99.98% this month" FontSize="12" Foreground="#3fb950"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Warning Metric Card -->
+                    <Border Style="{StaticResource MetricCardWarningStyle}" Width="180">
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="Dropped Events" Style="{StaticResource MetricLabelStyle}"/>
+                            <TextBlock Text="23" Style="{StaticResource MetricValueStyle}"/>
+                            <TextBlock Text="Rate: 0.002%" FontSize="12" Foreground="#d29922"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Danger Metric Card -->
+                    <Border Style="{StaticResource MetricCardDangerStyle}" Width="180">
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="Integrity Errors" Style="{StaticResource MetricLabelStyle}"/>
+                            <TextBlock Text="5" Style="{StaticResource MetricValueStyle}"/>
+                            <TextBlock Text="Action required" FontSize="12" Foreground="#f85149"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- ═══════════════════════════════════════════════════════════════════
+                 SECTION: TERMINAL-STYLE PANELS
+                 ═══════════════════════════════════════════════════════════════════ -->
+            <StackPanel Spacing="16">
+                <TextBlock Text="Terminal-Style Panels" Style="{StaticResource SectionHeaderStyle}"/>
+
+                <!-- Terminal Panel -->
+                <Border Style="{StaticResource TerminalCardStyle}" MaxWidth="600">
+                    <!-- Terminal Header -->
+                    <StackPanel>
+                        <Border Style="{StaticResource TerminalHeaderStyle}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Ellipse Width="12" Height="12" Fill="#f85149"/>
+                                    <Ellipse Width="12" Height="12" Fill="#d29922"/>
+                                    <Ellipse Width="12" Height="12" Fill="#3fb950"/>
+                                    <TextBlock Text="Event Log" Margin="12,0,0,0" FontSize="12" Foreground="#8b949e"/>
+                                </StackPanel>
+                                <Button Grid.Column="1" Style="{StaticResource SecondaryButtonStyle}" Padding="8,4" Content="Clear"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- Terminal Body -->
+                        <Border Style="{StaticResource TerminalBodyStyle}" Padding="12" MinHeight="150">
+                            <StackPanel Spacing="4">
+                                <TextBlock Style="{StaticResource TerminalMessageStyle}">
+                                    <Run Text="[10:42:15]" Foreground="#6e7681"/>
+                                    <Run Text=" INFO " Foreground="#58a6ff"/>
+                                    <Run Text="Connected to Alpaca WebSocket"/>
+                                </TextBlock>
+                                <TextBlock Style="{StaticResource TerminalMessageStyle}">
+                                    <Run Text="[10:42:16]" Foreground="#6e7681"/>
+                                    <Run Text=" TRADE" Foreground="#3fb950"/>
+                                    <Run Text=" AAPL 185.42 x 100 @ NYSE"/>
+                                </TextBlock>
+                                <TextBlock Style="{StaticResource TerminalMessageStyle}">
+                                    <Run Text="[10:42:16]" Foreground="#6e7681"/>
+                                    <Run Text=" QUOTE" Foreground="#39c5cf"/>
+                                    <Run Text=" SPY 478.91/478.92 1000x500"/>
+                                </TextBlock>
+                                <TextBlock Style="{StaticResource TerminalMessageStyle}">
+                                    <Run Text="[10:42:17]" Foreground="#6e7681"/>
+                                    <Run Text=" WARN " Foreground="#d29922"/>
+                                    <Run Text="Rate limit approaching (180/200)"/>
+                                </TextBlock>
+                                <TextBlock Style="{StaticResource TerminalPromptStyle}">
+                                    <Run Text="$" Foreground="#a371f7"/>
+                                    <Run Text=" █" Foreground="#e6edf3"/>
+                                </TextBlock>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <!-- ═══════════════════════════════════════════════════════════════════
+                 SECTION: FORM CONTROLS
+                 ═══════════════════════════════════════════════════════════════════ -->
+            <StackPanel Spacing="16">
+                <TextBlock Text="Form Controls" Style="{StaticResource SectionHeaderStyle}"/>
+
+                <Grid ColumnSpacing="24" RowSpacing="16" MaxWidth="600">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Text Input -->
+                    <StackPanel Grid.Row="0" Grid.Column="0" Spacing="6">
+                        <TextBlock Text="API Key" FontSize="12" Foreground="#8b949e"/>
+                        <TextBox Style="{StaticResource FormTextBoxStyle}" PlaceholderText="Enter your API key"/>
+                    </StackPanel>
+
+                    <!-- Password Input -->
+                    <StackPanel Grid.Row="0" Grid.Column="1" Spacing="6">
+                        <TextBlock Text="Secret Key" FontSize="12" Foreground="#8b949e"/>
+                        <PasswordBox Background="#21262d" Foreground="#e6edf3" BorderBrush="#30363d"
+                                     PlaceholderText="Enter secret key" Padding="8"/>
+                    </StackPanel>
+
+                    <!-- Dropdown -->
+                    <StackPanel Grid.Row="1" Grid.Column="0" Spacing="6">
+                        <TextBlock Text="Data Provider" FontSize="12" Foreground="#8b949e"/>
+                        <ComboBox Style="{StaticResource FormComboBoxStyle}" SelectedIndex="0" Width="200">
+                            <ComboBoxItem Content="Interactive Brokers"/>
+                            <ComboBoxItem Content="Alpaca Markets"/>
+                            <ComboBoxItem Content="Polygon.io"/>
+                            <ComboBoxItem Content="NYSE"/>
+                        </ComboBox>
+                    </StackPanel>
+
+                    <!-- Number Input -->
+                    <StackPanel Grid.Row="1" Grid.Column="1" Spacing="6">
+                        <TextBlock Text="Port" FontSize="12" Foreground="#8b949e"/>
+                        <NumberBox Background="#21262d" Foreground="#e6edf3" BorderBrush="#30363d"
+                                   Value="7496" Minimum="1" Maximum="65535"/>
+                    </StackPanel>
+
+                    <!-- Toggle Switch -->
+                    <StackPanel Grid.Row="2" Grid.Column="0" Spacing="6">
+                        <TextBlock Text="Auto-connect" FontSize="12" Foreground="#8b949e"/>
+                        <ToggleSwitch IsOn="True" OnContent="Enabled" OffContent="Disabled"/>
+                    </StackPanel>
+
+                    <!-- Checkbox -->
+                    <StackPanel Grid.Row="2" Grid.Column="1" Spacing="6">
+                        <TextBlock Text="Options" FontSize="12" Foreground="#8b949e"/>
+                        <CheckBox Content="Enable compression" IsChecked="True"/>
+                        <CheckBox Content="Enable encryption"/>
+                    </StackPanel>
+
+                    <!-- Radio Buttons -->
+                    <StackPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Spacing="6">
+                        <TextBlock Text="Storage Format" FontSize="12" Foreground="#8b949e"/>
+                        <StackPanel Orientation="Horizontal" Spacing="16">
+                            <RadioButton Content="JSONL" GroupName="Format" IsChecked="True"/>
+                            <RadioButton Content="Parquet" GroupName="Format"/>
+                            <RadioButton Content="CSV" GroupName="Format"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Grid>
+            </StackPanel>
+
+            <!-- ═══════════════════════════════════════════════════════════════════
+                 SECTION: PROGRESS INDICATORS
+                 ═══════════════════════════════════════════════════════════════════ -->
+            <StackPanel Spacing="16">
+                <TextBlock Text="Progress Indicators" Style="{StaticResource SectionHeaderStyle}"/>
+
+                <StackPanel Spacing="16" MaxWidth="400">
+                    <!-- Indeterminate Progress -->
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Loading..." FontSize="12" Foreground="#8b949e"/>
+                        <ProgressBar IsIndeterminate="True"/>
+                    </StackPanel>
+
+                    <!-- Determinate Progress -->
+                    <StackPanel Spacing="8">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Backfill Progress" FontSize="12" Foreground="#8b949e"/>
+                            <TextBlock Grid.Column="1" Text="67%" FontSize="12" Foreground="#e6edf3"/>
+                        </Grid>
+                        <ProgressBar Value="67" Maximum="100"/>
+                    </StackPanel>
+
+                    <!-- Progress Ring -->
+                    <StackPanel Orientation="Horizontal" Spacing="16">
+                        <ProgressRing IsActive="True" Width="32" Height="32"/>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Connecting to provider..." Foreground="#e6edf3"/>
+                            <TextBlock Text="This may take a few seconds" FontSize="12" Foreground="#6e7681"/>
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- ═══════════════════════════════════════════════════════════════════
+                 SECTION: INFO BARS & ALERTS
+                 ═══════════════════════════════════════════════════════════════════ -->
+            <StackPanel Spacing="16">
+                <TextBlock Text="Info Bars &amp; Alerts" Style="{StaticResource SectionHeaderStyle}"/>
+
+                <StackPanel Spacing="12" MaxWidth="600">
+                    <!-- Info Alert -->
+                    <Border Background="#1f2937" BorderBrush="#58a6ff" BorderThickness="0,0,0,2" Padding="16" CornerRadius="6">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <FontIcon Glyph="&#xE946;" FontSize="20" Foreground="#58a6ff"/>
+                            <StackPanel>
+                                <TextBlock Text="Information" FontWeight="SemiBold" Foreground="#e6edf3"/>
+                                <TextBlock Text="Your session will expire in 30 minutes." FontSize="12" Foreground="#8b949e"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Success Alert -->
+                    <Border Background="#1a2e1f" BorderBrush="#3fb950" BorderThickness="0,0,0,2" Padding="16" CornerRadius="6">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <FontIcon Glyph="&#xE73E;" FontSize="20" Foreground="#3fb950"/>
+                            <StackPanel>
+                                <TextBlock Text="Success" FontWeight="SemiBold" Foreground="#e6edf3"/>
+                                <TextBlock Text="Backfill completed successfully. 1,234 bars imported." FontSize="12" Foreground="#8b949e"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Warning Alert -->
+                    <Border Background="#2d2a1f" BorderBrush="#d29922" BorderThickness="0,0,0,2" Padding="16" CornerRadius="6">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <FontIcon Glyph="&#xE7BA;" FontSize="20" Foreground="#d29922"/>
+                            <StackPanel>
+                                <TextBlock Text="Warning" FontWeight="SemiBold" Foreground="#e6edf3"/>
+                                <TextBlock Text="API rate limit at 80%. Consider reducing request frequency." FontSize="12" Foreground="#8b949e"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Error Alert -->
+                    <Border Background="#2d1f1f" BorderBrush="#f85149" BorderThickness="0,0,0,2" Padding="16" CornerRadius="6">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <FontIcon Glyph="&#xE783;" FontSize="20" Foreground="#f85149"/>
+                            <StackPanel>
+                                <TextBlock Text="Error" FontWeight="SemiBold" Foreground="#e6edf3"/>
+                                <TextBlock Text="Connection failed. Check your credentials and try again." FontSize="12" Foreground="#8b949e"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- ═══════════════════════════════════════════════════════════════════
+                 SECTION: EMPTY STATES
+                 ═══════════════════════════════════════════════════════════════════ -->
+            <StackPanel Spacing="16">
+                <TextBlock Text="Empty States" Style="{StaticResource SectionHeaderStyle}"/>
+
+                <Border Style="{StaticResource CardStyle}" MaxWidth="400" Padding="32">
+                    <StackPanel Spacing="16" HorizontalAlignment="Center">
+                        <FontIcon Glyph="&#xE8B7;" FontSize="48" Foreground="#6e7681"/>
+                        <TextBlock Text="No symbols configured" FontSize="16" FontWeight="SemiBold"
+                                   Foreground="#e6edf3" TextAlignment="Center"/>
+                        <TextBlock Text="Add symbols to start collecting market data" FontSize="12"
+                                   Foreground="#8b949e" TextAlignment="Center"/>
+                        <Button Style="{StaticResource AccentButtonStyle}" Content="Add Symbol" Margin="0,8,0,0"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <!-- ═══════════════════════════════════════════════════════════════════
+                 SECTION: SKELETON LOADING
+                 ═══════════════════════════════════════════════════════════════════ -->
+            <StackPanel Spacing="16">
+                <TextBlock Text="Skeleton Loading States" Style="{StaticResource SectionHeaderStyle}"/>
+
+                <Border Style="{StaticResource CardStyle}" MaxWidth="400" Padding="16">
+                    <StackPanel Spacing="12">
+                        <!-- Skeleton Header -->
+                        <Border Background="#21262d" CornerRadius="4" Height="20" Width="150"/>
+
+                        <!-- Skeleton Lines -->
+                        <Border Background="#21262d" CornerRadius="4" Height="14"/>
+                        <Border Background="#21262d" CornerRadius="4" Height="14" Width="300"/>
+                        <Border Background="#21262d" CornerRadius="4" Height="14" Width="250"/>
+
+                        <!-- Skeleton Button -->
+                        <Border Background="#21262d" CornerRadius="4" Height="32" Width="100" Margin="0,8,0,0"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+        </StackPanel>
+    </ScrollViewer>
+</Page>

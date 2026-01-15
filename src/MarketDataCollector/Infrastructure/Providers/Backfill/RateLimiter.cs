@@ -21,6 +21,9 @@ public sealed class RateLimiter : IDisposable
 
     public RateLimiter(int maxRequestsPerWindow, TimeSpan window, TimeSpan? minDelayBetweenRequests = null, ILogger? log = null)
     {
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(maxRequestsPerWindow, 0, nameof(maxRequestsPerWindow));
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(window, TimeSpan.Zero, nameof(window));
+
         _maxRequests = maxRequestsPerWindow;
         _window = window;
         _minDelay = minDelayBetweenRequests ?? TimeSpan.Zero;

@@ -24,7 +24,7 @@ NC='\033[0m' # No Color
 
 # Script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$SCRIPT_DIR"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 # Print colored output
 print_info() { echo -e "${BLUE}[INFO]${NC} $1"; }
@@ -160,13 +160,13 @@ suggest_prerequisites() {
 setup_config() {
     print_info "Setting up configuration..."
 
-    if [ ! -f "$PROJECT_ROOT/appsettings.json" ]; then
-        if [ -f "$PROJECT_ROOT/appsettings.sample.json" ]; then
-            cp "$PROJECT_ROOT/appsettings.sample.json" "$PROJECT_ROOT/appsettings.json"
+    if [ ! -f "$PROJECT_ROOT/config/appsettings.json" ]; then
+        if [ -f "$PROJECT_ROOT/config/appsettings.sample.json" ]; then
+            cp "$PROJECT_ROOT/config/appsettings.sample.json" "$PROJECT_ROOT/config/appsettings.json"
             print_success "Created appsettings.json from template"
-            print_warning "Remember to edit appsettings.json with your API credentials"
+            print_warning "Remember to edit config/appsettings.json with your API credentials"
         else
-            print_error "appsettings.sample.json not found"
+            print_error "config/appsettings.sample.json not found"
             return 1
         fi
     else

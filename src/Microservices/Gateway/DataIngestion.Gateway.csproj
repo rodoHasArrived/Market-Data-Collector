@@ -19,13 +19,13 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.9.0" />
 
     <!-- MassTransit -->
-    <PackageReference Include="MassTransit" Version="8.2.5" />
-    <PackageReference Include="MassTransit.RabbitMQ" Version="8.2.5" />
-    <PackageReference Include="MassTransit.Azure.ServiceBus.Core" Version="8.2.5" />
+    <PackageReference Include="MassTransit" Version="8.5.7" />
+    <PackageReference Include="MassTransit.RabbitMQ" Version="8.5.7" />
+    <PackageReference Include="MassTransit.Azure.ServiceBus.Core" Version="8.5.7" />
 
     <!-- Logging -->
     <PackageReference Include="Serilog.AspNetCore" Version="8.0.3" />
-    <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
     <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
 
     <!-- Monitoring -->
@@ -38,7 +38,7 @@
     <PackageReference Include="AspNetCoreRateLimit" Version="5.0.0" />
 
     <!-- Health Checks -->
-    <PackageReference Include="AspNetCore.HealthChecks.Rabbitmq" Version="8.0.2" />
+    <PackageReference Include="AspNetCore.HealthChecks.Rabbitmq" Version="9.0.0" />
 
     <!-- Resilience -->
     <PackageReference Include="Polly" Version="8.6.5" />

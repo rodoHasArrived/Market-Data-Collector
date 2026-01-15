@@ -3,6 +3,13 @@ namespace MarketDataCollector.Application.Config;
 /// <summary>
 /// MassTransit message broker configuration.
 /// </summary>
+/// <remarks>
+/// <para><b>Credentials:</b> Credentials are resolved from environment variables:</para>
+/// <list type="bullet">
+/// <item><description>RabbitMQ: <c>RABBITMQ_USERNAME</c>, <c>RABBITMQ_PASSWORD</c></description></item>
+/// <item><description>Azure Service Bus: <c>AZURE_SERVICEBUS_CONNECTION_STRING</c></description></item>
+/// </list>
+/// </remarks>
 public sealed record MassTransitConfig(
     /// <summary>
     /// Whether MassTransit messaging is enabled.
@@ -44,6 +51,10 @@ public sealed record MassTransitConfig(
 /// <summary>
 /// RabbitMQ transport configuration.
 /// </summary>
+/// <remarks>
+/// <para><b>Credentials:</b> Set <c>RABBITMQ_USERNAME</c> and <c>RABBITMQ_PASSWORD</c> environment variables.</para>
+/// <para>Config values are used as fallback if environment variables are not set.</para>
+/// </remarks>
 public sealed record RabbitMqConfig(
     /// <summary>
     /// RabbitMQ server hostname.
@@ -61,13 +72,12 @@ public sealed record RabbitMqConfig(
     string VirtualHost = "/",
 
     /// <summary>
-    /// Username for authentication.
+    /// Username for authentication (fallback if RABBITMQ_USERNAME env var not set).
     /// </summary>
     string Username = "guest",
 
     /// <summary>
-    /// Password for authentication.
-    /// Consider using environment variables in production.
+    /// Password for authentication (fallback if RABBITMQ_PASSWORD env var not set).
     /// </summary>
     string Password = "guest",
 
@@ -85,15 +95,32 @@ public sealed record RabbitMqConfig(
     /// Cluster nodes for high availability (optional).
     /// </summary>
     string[]? ClusterNodes = null
-);
+)
+{
+    /// <summary>
+    /// Resolves username from environment variable or config fallback.
+    /// </summary>
+    public string ResolveUsername()
+        => Environment.GetEnvironmentVariable("RABBITMQ_USERNAME") ?? Username;
+
+    /// <summary>
+    /// Resolves password from environment variable or config fallback.
+    /// </summary>
+    public string ResolvePassword()
+        => Environment.GetEnvironmentVariable("RABBITMQ_PASSWORD") ?? Password;
+}
 
 /// <summary>
 /// Azure Service Bus transport configuration.
 /// </summary>
+/// <remarks>
+/// <para><b>Credentials:</b> Set <c>AZURE_SERVICEBUS_CONNECTION_STRING</c> environment variable,
+/// or use managed identity authentication (recommended for Azure deployments).</para>
+/// </remarks>
 public sealed record AzureServiceBusConfig(
     /// <summary>
-    /// Azure Service Bus connection string.
-    /// Consider using environment variables in production.
+    /// Azure Service Bus connection string (fallback if env var not set).
+    /// Prefer using AZURE_SERVICEBUS_CONNECTION_STRING environment variable.
     /// </summary>
     string ConnectionString = "",
 
@@ -105,6 +132,7 @@ public sealed record AzureServiceBusConfig(
 
     /// <summary>
     /// Whether to use Azure Managed Identity instead of connection string.
+    /// Recommended for Azure deployments (no credentials needed).
     /// </summary>
     bool UseManagedIdentity = false,
 
@@ -112,7 +140,14 @@ public sealed record AzureServiceBusConfig(
     /// Enable premium features (message sessions, large messages).
     /// </summary>
     bool EnablePremiumFeatures = false
-);
+)
+{
+    /// <summary>
+    /// Resolves connection string from environment variable or config fallback.
+    /// </summary>
+    public string ResolveConnectionString()
+        => Environment.GetEnvironmentVariable("AZURE_SERVICEBUS_CONNECTION_STRING") ?? ConnectionString;
+}
 
 /// <summary>
 /// Retry configuration for message handling.

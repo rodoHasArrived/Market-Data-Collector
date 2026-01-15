@@ -1,5 +1,8 @@
-using MarketDataCollector.Application.Config;
+using System.Net.WebSockets;
+using System.Text;
+using System.Text.Json;
 using System.Threading;
+using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Domain.Collectors;
 using MarketDataCollector.Domain.Events;
@@ -20,7 +23,12 @@ namespace MarketDataCollector.Infrastructure.Providers.Polygon;
 /// - Quotes: Stub mode only (not yet wired)
 /// - Aggregates: Not implemented
 ///
-/// Connection Resilience (when fully implemented):
+/// Current support:
+/// - Trades: YES (streams "T" messages and forwards to TradeDataCollector)
+/// - Quotes: YES (streams "Q" messages and forwards to QuoteCollector)
+/// - Aggregates: Not yet implemented
+///
+/// Connection Resilience:
 /// - Uses Polly-based WebSocketResiliencePolicy for connection retry with exponential backoff
 /// - Implements circuit breaker pattern to prevent cascading failures
 /// - Automatic reconnection on connection loss with jitter
@@ -48,7 +56,6 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
     private readonly PolygonOptions _options;
 
     // Resilience pipeline for connection retry with exponential backoff
-    // Pre-configured for when full WebSocket implementation is added
     private readonly ResiliencePipeline _connectionPipeline;
 
     // Subscription tracking
@@ -87,7 +94,6 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
         }
 
         // Initialize resilience pipeline with exponential backoff
-        // Ready to use when full WebSocket implementation is added
         _connectionPipeline = WebSocketResiliencePolicy.CreateComprehensivePipeline(
             maxRetries: 5,
             retryBaseDelay: TimeSpan.FromSeconds(2),
@@ -159,7 +165,7 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
     /// Connects to Polygon WebSocket stream.
     /// In stub mode, emits a synthetic heartbeat. In live mode, will connect to Polygon WebSocket.
     /// </summary>
-    public Task ConnectAsync(CancellationToken ct = default)
+    public async Task ConnectAsync(CancellationToken ct = default)
     {
         if (IsStubMode)
         {

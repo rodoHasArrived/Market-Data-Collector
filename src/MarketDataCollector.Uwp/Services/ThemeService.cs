@@ -8,7 +8,7 @@ namespace MarketDataCollector.Uwp.Services;
 /// <summary>
 /// Service for managing application theme settings.
 /// </summary>
-public class ThemeService
+public sealed class ThemeService
 {
     private static ThemeService? _instance;
     private static readonly object _lock = new();

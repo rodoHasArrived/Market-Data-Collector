@@ -1,3 +1,6 @@
+version: 2
+updates:
+  # Enable version updates for NuGet packages
 # Dependabot Configuration
 # https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
 
@@ -15,6 +18,23 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 10
+    assignees:
+      - "rodoHasArrived"
+    labels:
+      - "dependencies"
+      - "nuget"
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore"
+      include: "scope"
+    versioning-strategy: increase
+    groups:
+      # Group minor and patch updates together
+      production-dependencies:
+        patterns:
+          - "*"
       time: "06:00"
       timezone: "UTC"
     open-pull-requests-limit: 10
@@ -35,6 +55,7 @@ updates:
           - "minor"
           - "patch"
 
+  # Enable version updates for GitHub Actions
       microsoft-aspnetcore:
         patterns:
           - "Microsoft.AspNetCore.*"
@@ -107,6 +128,17 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
+      time: "09:00"
+    assignees:
+      - "rodoHasArrived"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+
+  # Enable version updates for Docker
       time: "06:00"
       timezone: "UTC"
     open-pull-requests-limit: 5
@@ -131,6 +163,15 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
+      time: "09:00"
+    assignees:
+      - "rodoHasArrived"
+    labels:
+      - "dependencies"
+      - "docker"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
       time: "06:00"
       timezone: "UTC"
     open-pull-requests-limit: 3

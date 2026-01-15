@@ -18,5 +18,8 @@ public enum DataSourceKind
     /// StockSharp unified connector framework.
     /// Provides access to 90+ data sources including Rithmic, IQFeed, CQG, and more.
     /// </summary>
-    StockSharp = 3
+    StockSharp = 3,
+
+    /// <summary>NYSE market data feed.</summary>
+    NYSE = 4
 }

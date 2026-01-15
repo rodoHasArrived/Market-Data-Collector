@@ -192,6 +192,69 @@ public class DataSourceConfigDto
 
     [JsonPropertyName("tags")]
     public string[]? Tags { get; set; }
+
+    [JsonPropertyName("alpaca")]
+    public AlpacaOptionsDto? Alpaca { get; set; }
+
+    [JsonPropertyName("polygon")]
+    public PolygonOptionsDto? Polygon { get; set; }
+
+    [JsonPropertyName("ib")]
+    public IBOptionsDto? IB { get; set; }
+
+    [JsonPropertyName("symbols")]
+    public string[]? Symbols { get; set; }
+}
+
+/// <summary>
+/// Polygon.io API configuration options.
+/// </summary>
+public class PolygonOptionsDto
+{
+    [JsonPropertyName("apiKey")]
+    public string? ApiKey { get; set; }
+
+    [JsonPropertyName("useDelayed")]
+    public bool UseDelayed { get; set; }
+
+    [JsonPropertyName("feed")]
+    public string Feed { get; set; } = "stocks";
+
+    [JsonPropertyName("subscribeTrades")]
+    public bool SubscribeTrades { get; set; } = true;
+
+    [JsonPropertyName("subscribeQuotes")]
+    public bool SubscribeQuotes { get; set; }
+
+    [JsonPropertyName("subscribeAggregates")]
+    public bool SubscribeAggregates { get; set; }
+}
+
+/// <summary>
+/// Interactive Brokers connection options.
+/// </summary>
+public class IBOptionsDto
+{
+    [JsonPropertyName("host")]
+    public string Host { get; set; } = "127.0.0.1";
+
+    [JsonPropertyName("port")]
+    public int Port { get; set; } = 7496;
+
+    [JsonPropertyName("clientId")]
+    public int ClientId { get; set; }
+
+    [JsonPropertyName("usePaperTrading")]
+    public bool UsePaperTrading { get; set; }
+
+    [JsonPropertyName("subscribeDepth")]
+    public bool SubscribeDepth { get; set; } = true;
+
+    [JsonPropertyName("depthLevels")]
+    public int DepthLevels { get; set; } = 10;
+
+    [JsonPropertyName("tickByTick")]
+    public bool TickByTick { get; set; } = true;
 }
 
 /// <summary>
@@ -243,6 +306,72 @@ public class SymbolGroupDto
 
     [JsonPropertyName("sortOrder")]
     public int SortOrder { get; set; }
+
+    [JsonPropertyName("createdAt")]
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    [JsonPropertyName("updatedAt")]
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+    [JsonPropertyName("tags")]
+    public string[]? Tags { get; set; }
+
+    [JsonPropertyName("smartCriteria")]
+    public SmartGroupCriteriaDto? SmartCriteria { get; set; }
+}
+
+/// <summary>
+/// Criteria for smart/dynamic symbol groups.
+/// </summary>
+public class SmartGroupCriteriaDto
+{
+    [JsonPropertyName("isSmartGroup")]
+    public bool IsSmartGroup { get; set; }
+
+    [JsonPropertyName("sectorFilter")]
+    public string? SectorFilter { get; set; }
+
+    [JsonPropertyName("industryFilter")]
+    public string? IndustryFilter { get; set; }
+
+    [JsonPropertyName("exchangeFilter")]
+    public string? ExchangeFilter { get; set; }
+
+    [JsonPropertyName("minPrice")]
+    public decimal? MinPrice { get; set; }
+
+    [JsonPropertyName("maxPrice")]
+    public decimal? MaxPrice { get; set; }
+
+    [JsonPropertyName("tagsFilter")]
+    public string[]? TagsFilter { get; set; }
+}
+
+/// <summary>
+/// Extended symbol configuration with group membership and status.
+/// </summary>
+public class ExtendedSymbolConfigDto : SymbolConfigDto
+{
+    [JsonPropertyName("groupIds")]
+    public string[]? GroupIds { get; set; }
+
+    [JsonPropertyName("tags")]
+    public string[]? Tags { get; set; }
+
+    [JsonPropertyName("notes")]
+    public string? Notes { get; set; }
+
+    [JsonPropertyName("addedAt")]
+    public DateTime AddedAt { get; set; } = DateTime.UtcNow;
+
+    [JsonPropertyName("lastModified")]
+    public DateTime LastModified { get; set; } = DateTime.UtcNow;
+
+    [JsonPropertyName("isFavorite")]
+    public bool IsFavorite { get; set; }
+
+    [JsonPropertyName("customColor")]
+    public string? CustomColor { get; set; }
 }
 
 /// <summary>

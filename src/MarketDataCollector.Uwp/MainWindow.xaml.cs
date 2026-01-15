@@ -1,4 +1,5 @@
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Navigation;
 using MarketDataCollector.Uwp.Services;
 using MarketDataCollector.Uwp.Views;
 
@@ -32,13 +33,26 @@ public sealed partial class MainWindow : Window
         RootFrame.Navigate(typeof(MainPage));
 
         // Initialize keyboard shortcuts after navigation
-        RootFrame.Navigated += (s, e) =>
+        RootFrame.Navigated += OnRootFrameNavigated;
+
+        // Clean up event subscriptions when window closes
+        Closed += OnWindowClosed;
+    }
+
+    private void OnRootFrameNavigated(object sender, NavigationEventArgs e)
+    {
+        if (e.Content is FrameworkElement element)
         {
-            if (e.Content is FrameworkElement element)
-            {
-                KeyboardShortcutService.Instance.Initialize(element);
-            }
-        };
+            KeyboardShortcutService.Instance.Initialize(element);
+        }
+    }
+
+    private void OnWindowClosed(object sender, WindowEventArgs args)
+    {
+        // Unsubscribe from all events to prevent memory leaks
+        KeyboardShortcutService.Instance.ShortcutInvoked -= OnShortcutInvoked;
+        NotificationService.Instance.NotificationReceived -= OnNotificationReceived;
+        RootFrame.Navigated -= OnRootFrameNavigated;
     }
 
     private void OnShortcutInvoked(object? sender, ShortcutInvokedEventArgs e)

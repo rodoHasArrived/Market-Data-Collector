@@ -1,0 +1,123 @@
+@startuml Communication Diagram - Component Message Exchange
+!theme plain
+skinparam linetype ortho
+
+title Market Data Collector - Communication Diagram
+
+' ==================== COMPONENTS ====================
+
+rectangle "External Systems" {
+    component [Data Providers\n(IB, Alpaca, Polygon)] as Providers
+    component [Message Broker\n(RabbitMQ)] as MsgBroker
+    component [External API Clients] as ExtClients
+}
+
+rectangle "Application Layer" {
+    component [SubscriptionManager] as SubMgr
+    component [ConfigWatcher] as ConfigWatch
+    component [HealthMonitor] as HealthMon
+}
+
+rectangle "Domain Layer" {
+    component [QuoteCollector] as QuoteColl
+    component [TradeDataCollector] as TradeColl
+    component [MarketDepthCollector] as DepthColl
+}
+
+rectangle "Infrastructure Layer" {
+    component [AlpacaMarketDataClient] as AlpacaClient
+    component [IBMarketDataClient] as IBClient
+    component [CompositeHistoricalProvider] as HistProvider
+}
+
+rectangle "Pipeline Layer" {
+    component [EventPipeline] as Pipeline
+    component [MassTransitPublisher] as MTPublisher
+}
+
+rectangle "Storage Layer" {
+    component [JsonlStorageSink] as JsonlSink
+    component [ParquetStorageSink] as ParquetSink
+    component [RetentionManager] as Retention
+}
+
+rectangle "Microservices" {
+    component [Gateway\n(5000)] as Gateway
+    component [TradeIngestion\n(5001)] as TradeSvc
+    component [QuoteIngestion\n(5002)] as QuoteSvc
+    component [DataValidation\n(5005)] as ValidationSvc
+}
+
+' ==================== MESSAGES ====================
+
+' Provider to Client
+Providers -[#blue]-> AlpacaClient : 1: WebSocket Events\n(Trade, Quote, Depth JSON)
+Providers -[#blue]-> IBClient : 1: TWS Callbacks\n(tickPrice, tickSize, updateMktDepth)
+
+' Client to Collectors
+AlpacaClient -[#green]-> TradeColl : 2: OnTrade(MarketTradeUpdate)
+AlpacaClient -[#green]-> QuoteColl : 3: OnQuote(MarketQuoteUpdate)
+AlpacaClient -[#green]-> DepthColl : 4: OnDepth(MarketDepthUpdate)
+
+IBClient -[#green]-> TradeColl : 2: OnTrade(MarketTradeUpdate)
+IBClient -[#green]-> QuoteColl : 3: OnQuote(MarketQuoteUpdate)
+IBClient -[#green]-> DepthColl : 4: OnDepth(MarketDepthUpdate)
+
+' Collector to Collector
+TradeColl -[#orange]-> QuoteColl : 5: GetLatestQuote(symbol)\nfor aggressor inference
+
+' Collectors to Pipeline
+TradeColl -[#red]-> Pipeline : 6: TryPublish(Trade, OrderFlow, Integrity)
+QuoteColl -[#red]-> Pipeline : 7: TryPublish(BboQuote)
+DepthColl -[#red]-> Pipeline : 8: TryPublish(L2Snapshot, DepthIntegrity)
+
+' Pipeline to Storage
+Pipeline -[#purple]-> JsonlSink : 9: AppendAsync(MarketEvent)
+Pipeline -[#purple]-> ParquetSink : 9: AppendAsync(MarketEvent)
+Pipeline -[#purple]-> MTPublisher : 10: PublishAsync(event)
+
+' Storage Management
+JsonlSink -[#gray]-> Retention : 11: MaybeCleanup()
+
+' MassTransit to Broker
+MTPublisher -[#brown]-> MsgBroker : 12: Publish(IMarketEventMessage)
+
+' Subscription Management
+SubMgr -[#cyan]-> AlpacaClient : A: SubscribeAsync(symbol)
+SubMgr -[#cyan]-> IBClient : A: SubscribeAsync(symbol)
+SubMgr -[#cyan]-> DepthColl : B: RegisterSubscription(symbol)
+
+' Config Hot-Reload
+ConfigWatch -[#magenta]-> SubMgr : C: Apply(newConfig)
+
+' Health Monitoring
+HealthMon -[#olive]-> AlpacaClient : D: CheckHealth()
+HealthMon -[#olive]-> IBClient : D: CheckHealth()
+
+' Microservices Communication
+ExtClients -[#navy]-> Gateway : E: POST /api/v1/ingest/*
+Gateway -[#navy]-> MsgBroker : F: Route(IRouteIngestionData)
+MsgBroker -[#navy]-> TradeSvc : G: Consume(IRawTradeIngested)
+MsgBroker -[#navy]-> QuoteSvc : G: Consume(IQuoteMessage)
+MsgBroker -[#navy]-> ValidationSvc : G: Consume(IValidationRequest)
+
+' Historical Backfill
+HistProvider -[#teal]-> Providers : H: HTTP GET historical bars
+
+' ==================== LEGEND ====================
+legend bottom
+    | Color | Message Type |
+    | Blue | Provider Streaming Data |
+    | Green | Collector Updates |
+    | Orange | Cross-Collector Queries |
+    | Red | Event Publication |
+    | Purple | Storage Operations |
+    | Brown | Message Broker |
+    | Cyan | Subscription Management |
+    | Magenta | Configuration |
+    | Olive | Health Monitoring |
+    | Navy | Microservices API |
+    | Teal | Historical Data |
+endlegend
+
+@enduml

@@ -2,6 +2,7 @@ using MarketDataCollector.Application.Config;
 using System.Threading;
 using MarketDataCollector.Domain.Collectors;
 using MarketDataCollector.Domain.Events;
+using Serilog;
 
 namespace MarketDataCollector.Infrastructure.Providers.InteractiveBrokers;
 
@@ -40,6 +41,7 @@ public sealed class IBMarketDataClient : IMarketDataClient
 #if IBAPI
 internal sealed class IBMarketDataClientIBApi : IMarketDataClient
 {
+    private static readonly ILogger _log = Log.ForContext<IBMarketDataClientIBApi>();
     private readonly EnhancedIBConnectionManager _conn;
     private readonly IBCallbackRouter _router;
 
@@ -77,7 +79,14 @@ internal sealed class IBMarketDataClientIBApi : IMarketDataClient
 
     public ValueTask DisposeAsync()
     {
-        try { _conn.Dispose(); } catch { }
+        try
+        {
+            _conn.Dispose();
+        }
+        catch (Exception ex)
+        {
+            _log.Warning(ex, "Error disposing IB connection manager during cleanup");
+        }
         return ValueTask.CompletedTask;
     }
 }

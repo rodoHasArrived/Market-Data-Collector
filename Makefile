@@ -16,9 +16,11 @@
 .PHONY: help install docker docker-build docker-up docker-down docker-logs \
         run run-ui run-backfill test build publish clean check-deps \
         setup-config lint benchmark docs verify-adrs verify-contracts gen-context \
+        gen-interfaces gen-structure gen-providers gen-workflows update-claude-md docs-all \
         doctor doctor-quick doctor-fix diagnose diagnose-build diagnose-restore diagnose-clean \
         collect-debug collect-debug-minimal build-profile build-binlog validate-data analyze-errors \
-        build-graph fingerprint env-capture env-diff impact bisect metrics history app-metrics
+        build-graph fingerprint env-capture env-diff impact bisect metrics history app-metrics \
+        icons desktop desktop-publish
 
 # Default target
 .DEFAULT_GOAL := help
@@ -26,6 +28,7 @@
 # Project settings
 PROJECT := src/MarketDataCollector/MarketDataCollector.csproj
 UI_PROJECT := src/MarketDataCollector.Ui/MarketDataCollector.Ui.csproj
+DESKTOP_PROJECT := src/MarketDataCollector.Uwp/MarketDataCollector.Uwp.csproj
 TEST_PROJECT := tests/MarketDataCollector.Tests/MarketDataCollector.Tests.csproj
 BENCHMARK_PROJECT := benchmarks/MarketDataCollector.Benchmarks/MarketDataCollector.Benchmarks.csproj
 DOCGEN_PROJECT := tools/DocGenerator/DocGenerator.csproj
@@ -70,10 +73,13 @@ help: ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'run|build|test|clean|bench|lint' | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-18s$(NC) %s\n", $$1, $$2}'
 	@echo ""
 	@echo "$(BLUE)Documentation:$(NC)"
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'docs|verify-adr|verify-contract|gen-context' | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-18s$(NC) %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'docs|verify-adr|verify-contract|gen-context|gen-interface|gen-structure|gen-provider|gen-workflow|update-claude' | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-18s$(NC) %s\n", $$1, $$2}'
 	@echo ""
 	@echo "$(BLUE)Publishing:$(NC)"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'publish' | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-18s$(NC) %s\n", $$1, $$2}'
+	@echo ""
+	@echo "$(BLUE)Desktop App:$(NC)"
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'icons|desktop' | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-18s$(NC) %s\n", $$1, $$2}'
 	@echo ""
 	@echo "$(BLUE)Diagnostics:$(NC)"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'doctor|diagnose|collect-debug|build-profile|build-binlog|build-graph|fingerprint|env-|impact|bisect|metrics|history|validate-data|analyze-errors' | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-18s$(NC) %s\n", $$1, $$2}'
@@ -262,6 +268,40 @@ gen-interfaces: ## Extract interface documentation from code
 		--output docs/generated/interfaces.md
 	@echo "$(GREEN)Generated docs/generated/interfaces.md$(NC)"
 
+gen-structure: ## Generate repository structure documentation
+	@echo "$(BLUE)Generating repository structure documentation...$(NC)"
+	@mkdir -p docs/generated
+	@python3 scripts/docs/generate-structure-docs.py \
+		--output docs/generated/repository-structure.md
+	@echo "$(GREEN)Generated docs/generated/repository-structure.md$(NC)"
+
+gen-providers: ## Generate provider registry documentation
+	@echo "$(BLUE)Generating provider registry documentation...$(NC)"
+	@mkdir -p docs/generated
+	@python3 scripts/docs/generate-structure-docs.py \
+		--output docs/generated/provider-registry.md \
+		--providers-only \
+		--extract-attributes
+	@echo "$(GREEN)Generated docs/generated/provider-registry.md$(NC)"
+
+gen-workflows: ## Generate workflows overview documentation
+	@echo "$(BLUE)Generating workflows overview documentation...$(NC)"
+	@mkdir -p docs/generated
+	@python3 scripts/docs/generate-structure-docs.py \
+		--output docs/generated/workflows-overview.md \
+		--workflows-only
+	@echo "$(GREEN)Generated docs/generated/workflows-overview.md$(NC)"
+
+update-claude-md: gen-structure ## Update CLAUDE.md repository structure
+	@echo "$(BLUE)Updating CLAUDE.md repository structure...$(NC)"
+	@python3 scripts/docs/update-claude-md.py \
+		--claude-md CLAUDE.md \
+		--structure-source docs/generated/repository-structure.md
+	@echo "$(GREEN)Updated CLAUDE.md$(NC)"
+
+docs-all: gen-context gen-interfaces gen-structure gen-providers gen-workflows verify-adrs ## Generate all documentation
+	@echo "$(GREEN)All documentation generated$(NC)"
+
 # =============================================================================
 # Diagnostics
 # =============================================================================
@@ -336,3 +376,33 @@ metrics: ## Show build metrics summary
 
 history: ## Show build history summary
 	@$(BUILDCTL) history
+
+# =============================================================================
+# Desktop App
+# =============================================================================
+
+icons: ## Generate desktop app icons from SVG
+	@echo "$(BLUE)Generating desktop app icons...$(NC)"
+	@npm ci --silent
+	@node scripts/generate-icons.mjs
+	@echo "$(GREEN)Icons generated in src/MarketDataCollector.Uwp/Assets/$(NC)"
+
+desktop: icons ## Build desktop app (Windows only)
+	@echo "$(BLUE)Building desktop app...$(NC)"
+ifeq ($(OS),Windows_NT)
+	dotnet build $(DESKTOP_PROJECT) -c Release -r win-x64
+else
+	@echo "$(YELLOW)Desktop app build requires Windows. Use GitHub Actions for CI builds.$(NC)"
+	@echo "The desktop app can be built on Windows with:"
+	@echo "  dotnet build $(DESKTOP_PROJECT) -c Release -r win-x64"
+endif
+
+desktop-publish: icons ## Publish desktop app (Windows only)
+	@echo "$(BLUE)Publishing desktop app...$(NC)"
+ifeq ($(OS),Windows_NT)
+	dotnet publish $(DESKTOP_PROJECT) -c Release -r win-x64 -o publish/desktop --self-contained true
+	@echo "$(GREEN)Published to publish/desktop/$(NC)"
+else
+	@echo "$(YELLOW)Desktop app publish requires Windows.$(NC)"
+	@echo "Use GitHub Actions workflow 'Desktop App Build' for CI builds."
+endif

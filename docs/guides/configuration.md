@@ -11,6 +11,144 @@ Configuration is loaded from multiple sources in order of precedence (highest fi
 3. **appsettings.json** file
 4. **Default values** in code
 
+## Credential Management
+
+> **SECURITY WARNING**: Never store API keys, secrets, or passwords in configuration files.
+> Always use environment variables for sensitive credentials.
+
+### Required Environment Variables
+
+Set these environment variables based on which providers you use:
+
+#### Data Providers
+
+| Provider | Environment Variable | Description |
+|----------|---------------------|-------------|
+| Alpaca | `ALPACA_KEY_ID` | Alpaca API Key ID |
+| Alpaca | `ALPACA_SECRET_KEY` | Alpaca Secret Key |
+| Polygon.io | `POLYGON_API_KEY` | Polygon API Key |
+| Tiingo | `TIINGO_API_TOKEN` | Tiingo API Token |
+| Finnhub | `FINNHUB_API_KEY` | Finnhub API Key |
+| Alpha Vantage | `ALPHA_VANTAGE_API_KEY` | Alpha Vantage API Key |
+| Nasdaq Data Link | `NASDAQ_API_KEY` | Nasdaq Data Link API Key |
+| OpenFIGI | `OPENFIGI_API_KEY` | OpenFIGI API Key (optional, higher rate limits) |
+| NYSE | `NYSE_API_KEY` | NYSE Connect API Key |
+| NYSE | `NYSE_API_SECRET` | NYSE Connect API Secret |
+| NYSE | `NYSE_CLIENT_ID` | NYSE OAuth Client ID |
+
+#### Message Brokers (MassTransit)
+
+| Broker | Environment Variable | Description |
+|--------|---------------------|-------------|
+| RabbitMQ | `RABBITMQ_USERNAME` | RabbitMQ username |
+| RabbitMQ | `RABBITMQ_PASSWORD` | RabbitMQ password |
+| Azure Service Bus | `AZURE_SERVICEBUS_CONNECTION_STRING` | Connection string |
+
+### Setting Environment Variables
+
+#### Linux/macOS (bash)
+
+```bash
+# Add to ~/.bashrc or ~/.zshrc for persistence
+export ALPACA_KEY_ID="your-key-id"
+export ALPACA_SECRET_KEY="your-secret-key"
+export POLYGON_API_KEY="your-polygon-key"
+export TIINGO_API_TOKEN="your-tiingo-token"
+```
+
+#### Windows (PowerShell)
+
+```powershell
+# Session only
+$env:ALPACA_KEY_ID = "your-key-id"
+$env:ALPACA_SECRET_KEY = "your-secret-key"
+
+# Permanent (user scope)
+[Environment]::SetEnvironmentVariable("ALPACA_KEY_ID", "your-key-id", "User")
+[Environment]::SetEnvironmentVariable("ALPACA_SECRET_KEY", "your-secret-key", "User")
+```
+
+#### Windows (Command Prompt)
+
+```cmd
+set ALPACA_KEY_ID=your-key-id
+set ALPACA_SECRET_KEY=your-secret-key
+
+:: Permanent (use setx)
+setx ALPACA_KEY_ID "your-key-id"
+setx ALPACA_SECRET_KEY "your-secret-key"
+```
+
+#### Docker
+
+```bash
+# Using docker run
+docker run -e ALPACA_KEY_ID=your-key-id \
+           -e ALPACA_SECRET_KEY=your-secret-key \
+           market-data-collector
+
+# Using docker-compose.yml
+services:
+  collector:
+    environment:
+      - ALPACA_KEY_ID=${ALPACA_KEY_ID}
+      - ALPACA_SECRET_KEY=${ALPACA_SECRET_KEY}
+```
+
+#### Kubernetes
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mdc-credentials
+type: Opaque
+stringData:
+  ALPACA_KEY_ID: your-key-id
+  ALPACA_SECRET_KEY: your-secret-key
+---
+apiVersion: apps/v1
+kind: Deployment
+spec:
+  template:
+    spec:
+      containers:
+        - name: collector
+          envFrom:
+            - secretRef:
+                name: mdc-credentials
+```
+
+### .NET User Secrets (Local Development)
+
+For local development, you can use .NET User Secrets:
+
+```bash
+cd src/MarketDataCollector
+dotnet user-secrets init
+dotnet user-secrets set "Alpaca:KeyId" "your-key-id"
+dotnet user-secrets set "Alpaca:SecretKey" "your-secret-key"
+```
+
+### Secret Vault Integration
+
+For production deployments, consider using a secrets management solution:
+
+- **Azure Key Vault** - Use managed identity for Azure deployments
+- **AWS Secrets Manager** - Use IAM roles for AWS deployments
+- **HashiCorp Vault** - For multi-cloud or on-premises deployments
+
+### Verifying Credentials
+
+Check which credentials are configured:
+
+```bash
+# Run with --preflight to check configuration
+dotnet run --project src/MarketDataCollector -- --preflight
+```
+
+The preflight check reports which providers have valid credentials configured.
+
 ## Core Settings
 
 ### DataRoot
@@ -65,10 +203,11 @@ Ensure TWS/Gateway is running with API enabled before starting the collector.
 
 **Section**: `Alpaca`
 
+> **Credentials**: Set `ALPACA_KEY_ID` and `ALPACA_SECRET_KEY` environment variables.
+> See [Credential Management](#credential-management) for details.
+
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
-| `KeyId` | string | Yes | - | Alpaca API Key ID |
-| `SecretKey` | string | Yes | - | Alpaca Secret Key |
 | `Feed` | string | No | `"iex"` | Data feed: `"iex"` (free) or `"sip"` (paid) |
 | `UseSandbox` | boolean | No | `false` | Use paper trading environment |
 | `SubscribeQuotes` | boolean | No | `false` | Subscribe to quote (BBO) data |
@@ -76,20 +215,12 @@ Ensure TWS/Gateway is running with API enabled before starting the collector.
 ```json
 {
   "Alpaca": {
-    "KeyId": "AKXXXXXXXXXXXXXXXXXX",
-    "SecretKey": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
     "Feed": "sip",
     "UseSandbox": false,
     "SubscribeQuotes": true
   }
 }
 ```
-
-**Environment Variables**:
-- `ALPACA_KEY_ID` - Overrides `Alpaca.KeyId`
-- `ALPACA_SECRET_KEY` - Overrides `Alpaca.SecretKey`
-
-**Security Best Practice**: Use environment variables for credentials rather than storing them in config files.
 
 ## Storage Settings
 
@@ -283,6 +414,9 @@ The collector uses Serilog for structured logging. You can customize log levels 
 
 ## Complete Example
 
+> **Note**: Credentials are provided via environment variables, not in the config file.
+> Before running, set: `ALPACA_KEY_ID` and `ALPACA_SECRET_KEY`
+
 ```json
 {
   "DataRoot": "data",
@@ -290,8 +424,6 @@ The collector uses Serilog for structured logging. You can customize log levels 
   "DataSource": "Alpaca",
 
   "Alpaca": {
-    "KeyId": "AKXXXXXXXXXXXXXXXXXX",
-    "SecretKey": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
     "Feed": "sip",
     "UseSandbox": false,
     "SubscribeQuotes": true
@@ -406,19 +538,27 @@ Optional distributed messaging for microservices deployments using MassTransit.
 
 ### RabbitMQ Settings
 
+> **Credentials**: Set `RABBITMQ_USERNAME` and `RABBITMQ_PASSWORD` environment variables.
+> See [Credential Management](#credential-management) for details.
+
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
 | `Host` | string | `"localhost"` | RabbitMQ host |
 | `Port` | integer | `5672` | RabbitMQ port |
-| `Username` | string | `"guest"` | Username |
-| `Password` | string | `"guest"` | Password |
 | `VirtualHost` | string | `"/"` | Virtual host |
+| `UseSsl` | boolean | `false` | Use SSL/TLS |
+| `PublisherConfirmation` | boolean | `true` | Enable publisher confirms |
 
 ### Azure Service Bus Settings
 
+> **Credentials**: Set `AZURE_SERVICEBUS_CONNECTION_STRING` environment variable,
+> or use managed identity authentication (recommended for Azure deployments).
+
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `ConnectionString` | string | - | Azure Service Bus connection string |
+| `Namespace` | string | - | Service Bus namespace (for managed identity) |
+| `UseManagedIdentity` | boolean | `false` | Use Azure Managed Identity |
+| `EnablePremiumFeatures` | boolean | `false` | Enable premium features |
 
 ### Example
 
@@ -429,18 +569,17 @@ Optional distributed messaging for microservices deployments using MassTransit.
   "RabbitMQ": {
     "Host": "rabbitmq.example.com",
     "Port": 5672,
-    "Username": "ingestion",
-    "Password": "secret",
-    "VirtualHost": "/market-data"
+    "VirtualHost": "/market-data",
+    "UseSsl": true
   }
 }
 ```
 
-### Environment Variables
-
-- `*__MassTransit__Enabled` - Enable/disable messaging
-- `*__MassTransit__Transport` - Transport type
-- `*__MassTransit__RabbitMQ__Host` - RabbitMQ host
+Before running, set credentials:
+```bash
+export RABBITMQ_USERNAME="ingestion"
+export RABBITMQ_PASSWORD="your-secret-password"
+```
 
 ## Validation
 
@@ -525,6 +664,9 @@ Each entry in the `Sources` array represents a configured data source:
 
 ### Example: Multiple Data Sources
 
+> **Note**: Credentials are provided via environment variables, not in the config file.
+> Set `ALPACA_KEY_ID`, `ALPACA_SECRET_KEY`, and `POLYGON_API_KEY` before running.
+
 ```json
 {
   "DataSources": {
@@ -572,7 +714,6 @@ Each entry in the `Sources` array represents a configured data source:
         "Enabled": true,
         "Description": "Historical data from Polygon.io",
         "Polygon": {
-          "ApiKey": "YOUR_POLYGON_API_KEY",
           "Feed": "stocks",
           "UseDelayed": false
         }

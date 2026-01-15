@@ -1,0 +1,328 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="MarketDataCollector.Uwp.Views.PackageManagerPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="380" />
+        </Grid.ColumnDefinitions>
+
+        <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" Padding="24">
+            <StackPanel Spacing="24" MaxWidth="900">
+                <!-- Header -->
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <FontIcon Glyph="&#xE7B8;" FontSize="28" Foreground="{ThemeResource SystemAccentColor}" />
+                    <TextBlock Text="Data Package Manager" Style="{StaticResource TitleTextBlockStyle}" VerticalAlignment="Center" />
+                </StackPanel>
+
+                <TextBlock Text="Create, import, and validate portable data packages with integrity verification."
+                           Style="{StaticResource BodyTextBlockStyle}"
+                           Foreground="{ThemeResource SystemBaseMediumColor}" />
+
+                <!-- Create Package Section -->
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel Spacing="16">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon Glyph="&#xE948;" Foreground="{ThemeResource SystemAccentColor}" />
+                            <TextBlock Text="Create Package" Style="{StaticResource SubtitleTextBlockStyle}" />
+                        </StackPanel>
+
+                        <TextBlock Text="Package collected data for sharing or backup."
+                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                   Foreground="{ThemeResource SystemBaseMediumColor}" />
+
+                        <TextBox x:Name="PackageNameBox" Header="Package Name" PlaceholderText="my-data-package" />
+
+                        <TextBox x:Name="PackageDescriptionBox" Header="Description (optional)"
+                                 PlaceholderText="Description of the data package"
+                                 AcceptsReturn="True" TextWrapping="Wrap" Height="60" />
+
+                        <Grid ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <CalendarDatePicker x:Name="CreateFromDate" Header="From Date" HorizontalAlignment="Stretch" />
+                            <CalendarDatePicker x:Name="CreateToDate" Header="To Date" HorizontalAlignment="Stretch" />
+                        </Grid>
+
+                        <AutoSuggestBox x:Name="PackageSymbolsBox" Header="Symbols (comma-separated, empty for all)"
+                                        PlaceholderText="AAPL,MSFT,TSLA" />
+
+                        <Grid ColumnSpacing="24">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0" Spacing="8">
+                                <TextBlock Text="Include Data Types:" FontWeight="SemiBold" />
+                                <CheckBox x:Name="IncludeTradesCheck" Content="Trades" IsChecked="True" />
+                                <CheckBox x:Name="IncludeQuotesCheck" Content="Quotes" IsChecked="True" />
+                                <CheckBox x:Name="IncludeBarsCheck" Content="Historical Bars" IsChecked="True" />
+                                <CheckBox x:Name="IncludeLOBCheck" Content="Order Book Snapshots" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1" Spacing="8">
+                                <TextBlock Text="Options:" FontWeight="SemiBold" />
+                                <CheckBox x:Name="IncludeMetadataCheck" Content="Include Metadata" IsChecked="True" />
+                                <CheckBox x:Name="GenerateChecksumsCheck" Content="Generate Checksums" IsChecked="True" />
+                                <ComboBox x:Name="CompressionCombo" Header="Compression" SelectedIndex="2" HorizontalAlignment="Stretch">
+                                    <ComboBoxItem Content="None" Tag="none" />
+                                    <ComboBoxItem Content="Gzip (Fast)" Tag="gzip" />
+                                    <ComboBoxItem Content="ZSTD (Best)" Tag="zstd" />
+                                </ComboBox>
+                            </StackPanel>
+                        </Grid>
+
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <Button x:Name="CreatePackageButton"
+                                    Content="Create Package"
+                                    Style="{StaticResource AccentButtonStyle}"
+                                    Click="CreatePackage_Click" />
+                            <ProgressRing x:Name="CreateProgress" IsActive="False" Width="24" Height="24" />
+                            <TextBlock x:Name="CreateStatusText" VerticalAlignment="Center"
+                                       Style="{StaticResource CaptionTextBlockStyle}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Import Package Section -->
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel Spacing="16">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon Glyph="&#xE8B5;" Foreground="{ThemeResource SystemAccentColor}" />
+                            <TextBlock Text="Import Package" Style="{StaticResource SubtitleTextBlockStyle}" />
+                        </StackPanel>
+
+                        <TextBlock Text="Import a data package into your collection."
+                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                   Foreground="{ThemeResource SystemBaseMediumColor}" />
+
+                        <Grid ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBox x:Name="ImportPathBox" PlaceholderText="Select a package to import..." IsReadOnly="True" />
+                            <Button Grid.Column="1" Content="Browse..." Click="BrowseImport_Click" />
+                        </Grid>
+
+                        <CheckBox x:Name="ValidateBeforeImportCheck" Content="Validate checksums before import" IsChecked="True" />
+                        <CheckBox x:Name="OverwriteExistingCheck" Content="Overwrite existing data" />
+
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <Button x:Name="ImportPackageButton"
+                                    Content="Import Package"
+                                    Style="{StaticResource AccentButtonStyle}"
+                                    Click="ImportPackage_Click"
+                                    IsEnabled="False" />
+                            <ProgressRing x:Name="ImportProgress" IsActive="False" Width="24" Height="24" />
+                            <TextBlock x:Name="ImportStatusText" VerticalAlignment="Center"
+                                       Style="{StaticResource CaptionTextBlockStyle}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Validate Package Section -->
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel Spacing="16">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon Glyph="&#xE73E;" Foreground="{ThemeResource SystemAccentColor}" />
+                            <TextBlock Text="Validate Package" Style="{StaticResource SubtitleTextBlockStyle}" />
+                        </StackPanel>
+
+                        <TextBlock Text="Verify package integrity and contents."
+                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                   Foreground="{ThemeResource SystemBaseMediumColor}" />
+
+                        <Grid ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBox x:Name="ValidatePathBox" PlaceholderText="Select a package to validate..." IsReadOnly="True" />
+                            <Button Grid.Column="1" Content="Browse..." Click="BrowseValidate_Click" />
+                        </Grid>
+
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <Button x:Name="ValidatePackageButton"
+                                    Content="Validate"
+                                    Click="ValidatePackage_Click"
+                                    IsEnabled="False" />
+                            <ProgressRing x:Name="ValidateProgress" IsActive="False" Width="24" Height="24" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Validation Results -->
+                <Border x:Name="ValidationResultsCard" Style="{StaticResource CardStyle}" Visibility="Collapsed">
+                    <StackPanel Spacing="16">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon x:Name="ValidationResultIcon" Glyph="&#xE73E;" Foreground="#48BB78" />
+                            <TextBlock Text="Validation Results" Style="{StaticResource SubtitleTextBlockStyle}" />
+                        </StackPanel>
+
+                        <Grid ColumnSpacing="24">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                <TextBlock x:Name="ValidFilesCountText" Text="0"
+                                           Style="{StaticResource SubheaderTextBlockStyle}"
+                                           Foreground="#48BB78" />
+                                <TextBlock Text="Valid Files" Style="{StaticResource CaptionTextBlockStyle}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1">
+                                <TextBlock x:Name="CorruptFilesCountText" Text="0"
+                                           Style="{StaticResource SubheaderTextBlockStyle}"
+                                           Foreground="#F56565" />
+                                <TextBlock Text="Corrupt" Style="{StaticResource CaptionTextBlockStyle}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock x:Name="MissingFilesCountText" Text="0"
+                                           Style="{StaticResource SubheaderTextBlockStyle}"
+                                           Foreground="#ED8936" />
+                                <TextBlock Text="Missing" Style="{StaticResource CaptionTextBlockStyle}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="3">
+                                <TextBlock x:Name="TotalSizeText" Text="0 MB"
+                                           Style="{StaticResource SubheaderTextBlockStyle}"
+                                           Foreground="{ThemeResource SystemAccentColor}" />
+                                <TextBlock Text="Total Size" Style="{StaticResource CaptionTextBlockStyle}" />
+                            </StackPanel>
+                        </Grid>
+
+                        <ListView x:Name="ValidationIssuesList" SelectionMode="None" MaxHeight="200"
+                                  Visibility="Collapsed">
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <FontIcon Glyph="{Binding Icon}" Foreground="{Binding IconColor}" FontSize="14" />
+                                        <TextBlock Text="{Binding Message}" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Right Panel -->
+        <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" Padding="12,24,24,24">
+            <StackPanel Spacing="16">
+                <!-- Package Info -->
+                <Border x:Name="PackageInfoCard" Style="{StaticResource CardStyle}" Visibility="Collapsed">
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="Package Contents" Style="{StaticResource BodyStrongTextBlockStyle}" />
+
+                        <Grid RowSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="100" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Name:" FontWeight="SemiBold" />
+                            <TextBlock x:Name="InfoPackageName" Grid.Row="0" Grid.Column="1" />
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Created:" FontWeight="SemiBold" />
+                            <TextBlock x:Name="InfoCreatedDate" Grid.Row="1" Grid.Column="1" />
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Date Range:" FontWeight="SemiBold" />
+                            <TextBlock x:Name="InfoDateRange" Grid.Row="2" Grid.Column="1" />
+
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Symbols:" FontWeight="SemiBold" />
+                            <TextBlock x:Name="InfoSymbolCount" Grid.Row="3" Grid.Column="1" />
+
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Files:" FontWeight="SemiBold" />
+                            <TextBlock x:Name="InfoFileCount" Grid.Row="4" Grid.Column="1" />
+
+                            <TextBlock Grid.Row="5" Grid.Column="0" Text="Size:" FontWeight="SemiBold" />
+                            <TextBlock x:Name="InfoTotalSize" Grid.Row="5" Grid.Column="1" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Recent Packages -->
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="Recent Packages" Style="{StaticResource BodyStrongTextBlockStyle}" />
+
+                        <ListView x:Name="RecentPackagesList" SelectionMode="None" MaxHeight="250">
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Padding="4" ColumnSpacing="8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
+
+                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding Name}" FontWeight="SemiBold" />
+                                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SizeText}"
+                                                   Foreground="{ThemeResource SystemBaseMediumColor}" />
+
+                                        <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                                                   Text="{Binding DateText}"
+                                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                                   Foreground="{ThemeResource SystemBaseMediumColor}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+
+                        <TextBlock x:Name="NoRecentPackagesText" Text="No recent packages"
+                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                   Foreground="{ThemeResource SystemBaseMediumColor}" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Package Format Info -->
+                <Border Style="{StaticResource CardStyle}"
+                        Background="{ThemeResource SystemFillColorNeutralBackgroundBrush}">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Package Format" Style="{StaticResource BodyStrongTextBlockStyle}" />
+
+                        <TextBlock Text="Packages include:"
+                                   Style="{StaticResource CaptionTextBlockStyle}" />
+
+                        <StackPanel Spacing="4" Margin="8,0,0,0">
+                            <TextBlock Text="manifest.json - Package metadata"
+                                       Style="{StaticResource CaptionTextBlockStyle}" />
+                            <TextBlock Text="checksums.sha256 - File integrity"
+                                       Style="{StaticResource CaptionTextBlockStyle}" />
+                            <TextBlock Text="data/ - JSONL data files"
+                                       Style="{StaticResource CaptionTextBlockStyle}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Page>
