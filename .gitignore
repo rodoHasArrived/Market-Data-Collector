@@ -80,6 +80,20 @@ Thumbs.db
 *.swp
 *~
 
+# Build output logs and debug artifacts
+build_output.txt
+*_stderr.txt
+*_stdout.txt
+
+# Windows NUL device artifacts
+nul
+
+# Temporary debug/test scripts
+test-*.ps1
+
+# Malformed path directories (Windows path corruption)
+C:*/
+
 # Publish output
 publish/
 

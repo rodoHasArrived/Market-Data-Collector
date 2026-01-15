@@ -54,16 +54,20 @@
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
     <PackageReference Include="CommunityToolkit.WinUI.Controls.Primitives" Version="8.0.240109" />
     <PackageReference Include="CommunityToolkit.WinUI.Controls.Sizers" Version="8.0.240109" />
-    <!-- Windows App SDK 1.6+ required for .NET 9 support (fixes XamlCompiler compatibility) -->
+    <!-- Windows App SDK 1.6+ required for .NET 9 support
+         Note: SDK 1.8.x has XamlCompiler crashes - staying on 1.6 until fixed
+         See https://github.com/microsoft/WindowsAppSDK/releases for latest versions -->
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.6.250108002" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.1" />
     <PackageReference Include="System.Text.Json" Version="9.0.0" />
   </ItemGroup>
 
-  <!-- Project references only on Windows where the app actually builds -->
-  <ItemGroup Condition="'$(IsWindows)' == 'true'">
-    <ProjectReference Include="..\MarketDataCollector.Contracts\MarketDataCollector.Contracts.csproj" />
-  </ItemGroup>
+  <!--
+    NOTE: MarketDataCollector.Contracts project reference was removed because
+    the WinUI 3 XAML compiler rejects assemblies not designed for its type system
+    with error "Assembly is not allowed in type universe".
+    Local model classes in Models/ folder mirror the Contracts DTOs instead.
+  -->
 
   <ItemGroup Condition="'$(IsWindows)' == 'true' AND Exists('Assets')">
     <Content Include="Assets\**\*" Exclude="Assets\**\*.placeholder">

@@ -258,6 +258,9 @@ public class StatusResponse
 
     [JsonPropertyName("metrics")]
     public MetricsData? Metrics { get; set; }
+
+    [JsonPropertyName("pipeline")]
+    public PipelineData? Pipeline { get; set; }
 }
 
 /// <summary>
@@ -276,6 +279,51 @@ public class MetricsData
 
     [JsonPropertyName("historicalBars")]
     public long HistoricalBars { get; set; }
+
+    [JsonPropertyName("eventsPerSecond")]
+    public double EventsPerSecond { get; set; }
+
+    [JsonPropertyName("dropRate")]
+    public double DropRate { get; set; }
+
+    [JsonPropertyName("trades")]
+    public long Trades { get; set; }
+
+    [JsonPropertyName("depthUpdates")]
+    public long DepthUpdates { get; set; }
+
+    [JsonPropertyName("quotes")]
+    public long Quotes { get; set; }
+}
+
+/// <summary>
+/// Pipeline statistics.
+/// </summary>
+public class PipelineData
+{
+    [JsonPropertyName("publishedCount")]
+    public long PublishedCount { get; set; }
+
+    [JsonPropertyName("droppedCount")]
+    public long DroppedCount { get; set; }
+
+    [JsonPropertyName("consumedCount")]
+    public long ConsumedCount { get; set; }
+
+    [JsonPropertyName("currentQueueSize")]
+    public int CurrentQueueSize { get; set; }
+
+    [JsonPropertyName("peakQueueSize")]
+    public long PeakQueueSize { get; set; }
+
+    [JsonPropertyName("queueCapacity")]
+    public int QueueCapacity { get; set; }
+
+    [JsonPropertyName("queueUtilization")]
+    public double QueueUtilization { get; set; }
+
+    [JsonPropertyName("averageProcessingTimeUs")]
+    public double AverageProcessingTimeUs { get; set; }
 }
 
 /// <summary>
