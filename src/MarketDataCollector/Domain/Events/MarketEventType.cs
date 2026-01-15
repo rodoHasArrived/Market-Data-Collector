@@ -14,5 +14,7 @@ public enum MarketEventType
     HistoricalQuote = 9,
     HistoricalTrade = 10,
     HistoricalAuction = 11,
-    AggregateBar = 12
+    AggregateBar = 12,
+    Quote = 13,
+    Depth = 14
 }

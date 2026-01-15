@@ -206,27 +206,6 @@ public enum ScheduledBackfillType
 }
 
 /// <summary>
-/// Priority level for scheduled backfill jobs.
-/// </summary>
-public enum BackfillPriority
-{
-    /// <summary>Critical priority - process immediately.</summary>
-    Critical = 0,
-
-    /// <summary>High priority - process before normal jobs.</summary>
-    High = 10,
-
-    /// <summary>Normal priority (default).</summary>
-    Normal = 50,
-
-    /// <summary>Low priority - process after higher priority jobs.</summary>
-    Low = 100,
-
-    /// <summary>Deferred - process only when system is idle.</summary>
-    Deferred = 200
-}
-
-/// <summary>
 /// Preset schedule templates for common use cases.
 /// </summary>
 public static class BackfillSchedulePresets

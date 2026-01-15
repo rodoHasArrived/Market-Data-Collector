@@ -62,8 +62,7 @@ public sealed class ErrorTracker
     /// </summary>
     public ErrorQueryResult GetLastErrors(int count = 10, string? filterType = null, string? filterContext = null)
     {
-        var errors = _errors.ToArray()
-            .OrderByDescending(e => e.Timestamp);
+        IEnumerable<TrackedError> errors = _errors.ToArray();
 
         if (!string.IsNullOrWhiteSpace(filterType))
         {
@@ -79,7 +78,7 @@ public sealed class ErrorTracker
 
         return new ErrorQueryResult
         {
-            Errors = errors.Take(count).ToList(),
+            Errors = errors.OrderByDescending(e => e.Timestamp).Take(count).ToList(),
             TotalErrors = _totalErrorCount,
             QueuedErrors = _errors.Count,
             QueryTime = DateTimeOffset.UtcNow

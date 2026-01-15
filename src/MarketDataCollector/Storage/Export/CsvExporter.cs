@@ -221,7 +221,7 @@ public sealed class CsvExporter
             FormatTimestamp(trade.Timestamp),
             FormatDecimal(trade.Price),
             trade.Size.ToString(CultureInfo.InvariantCulture),
-            trade.AggressorSide.ToString().ToLowerInvariant(),
+            trade.Aggressor.ToString().ToLowerInvariant(),
             trade.SequenceNumber.ToString(CultureInfo.InvariantCulture)
         };
 
@@ -246,8 +246,8 @@ public sealed class CsvExporter
             quote.BidSize.ToString(CultureInfo.InvariantCulture),
             FormatDecimal(quote.AskPrice),
             quote.AskSize.ToString(CultureInfo.InvariantCulture),
-            FormatDecimal(quote.Spread),
-            FormatDecimal(quote.MidPrice),
+            quote.Spread.HasValue ? FormatDecimal(quote.Spread.Value) : "",
+            quote.MidPrice.HasValue ? FormatDecimal(quote.MidPrice.Value) : "",
             quote.SequenceNumber.ToString(CultureInfo.InvariantCulture)
         };
 
@@ -265,7 +265,7 @@ public sealed class CsvExporter
         var data = evt.Payload switch
         {
             HistoricalBar bar => $"O={bar.Open}|H={bar.High}|L={bar.Low}|C={bar.Close}|V={bar.Volume}",
-            Trade trade => $"P={trade.Price}|S={trade.Size}|Side={trade.AggressorSide}",
+            Trade trade => $"P={trade.Price}|S={trade.Size}|Side={trade.Aggressor}",
             BboQuotePayload quote => $"Bid={quote.BidPrice}x{quote.BidSize}|Ask={quote.AskPrice}x{quote.AskSize}",
             _ => evt.Payload?.ToString() ?? ""
         };
@@ -309,7 +309,7 @@ public sealed class CsvExporter
 /// <summary>
 /// Options for CSV export.
 /// </summary>
-public sealed class CsvExportOptions
+public sealed record CsvExportOptions
 {
     /// <summary>
     /// Column delimiter character.

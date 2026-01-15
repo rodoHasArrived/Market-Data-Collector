@@ -7,7 +7,7 @@ namespace MarketDataCollector.Storage.Crystallized;
 /// Manifest file for a symbol directory, describing available data.
 /// Stored as _manifest.json in each symbol folder.
 /// </summary>
-public sealed class SymbolManifest
+public sealed record SymbolManifest
 {
     /// <summary>
     /// Schema version for manifest file format.

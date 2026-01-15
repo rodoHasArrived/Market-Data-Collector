@@ -273,7 +273,7 @@ internal static class Program
                 return;
             }
 
-            var symbols = symbolsArg.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            var symbolsToAdd = symbolsArg.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
             var options = new SymbolAddOptions(
                 SubscribeTrades: !args.Any(a => a.Equals("--no-trades", StringComparison.OrdinalIgnoreCase)),
                 SubscribeDepth: !args.Any(a => a.Equals("--no-depth", StringComparison.OrdinalIgnoreCase)),
@@ -281,7 +281,7 @@ internal static class Program
                 UpdateExisting: args.Any(a => a.Equals("--update", StringComparison.OrdinalIgnoreCase))
             );
 
-            var result = await symbolManagementService.AddSymbolsAsync(symbols, options);
+            var result = await symbolManagementService.AddSymbolsAsync(symbolsToAdd, options);
             Console.WriteLine();
             Console.WriteLine(result.Success ? "Symbol Addition Result" : "Symbol Addition Failed");
             Console.WriteLine(new string('=', 50));
@@ -308,8 +308,8 @@ internal static class Program
                 return;
             }
 
-            var symbols = symbolsArg.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-            var result = await symbolManagementService.RemoveSymbolsAsync(symbols);
+            var symbolsToRemove = symbolsArg.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            var result = await symbolManagementService.RemoveSymbolsAsync(symbolsToRemove);
 
             Console.WriteLine();
             Console.WriteLine(result.Success ? "Symbol Removal Result" : "Symbol Removal Failed");

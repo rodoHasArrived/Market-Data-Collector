@@ -6,6 +6,7 @@ using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Application.Services;
 using MarketDataCollector.Application.Subscriptions.Models;
 using MarketDataCollector.Application.Subscriptions.Services;
+using MarketDataCollector.Infrastructure.Providers.Backfill.Scheduling;
 using MarketDataCollector.Infrastructure.Providers.SymbolSearch;
 using MarketDataCollector.Storage;
 using MarketDataCollector.Storage.Interfaces;
