@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using MarketDataCollector.Application.Logging;
+using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Storage.Archival;
 using Serilog;
 

@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet --version:*)",
+      "Bash(dotnet restore:*)",
+      "Bash(dotnet build:*)",
+      "Bash(Select-String -Path \"src\\MarketDataCollector\\Storage\\Export\\AnalysisExportService.cs\" -Pattern \"^public class|^private class|^internal class|^sealed class|^namespace\")",
+      "Bash(Select-Object LineNumber, Line)",
+      "Bash(findstr:*)",
+      "Bash(git checkout:*)",
+      "Bash(git fetch:*)",
+      "Bash(git stash:*)"
+    ]
+  }
+}
