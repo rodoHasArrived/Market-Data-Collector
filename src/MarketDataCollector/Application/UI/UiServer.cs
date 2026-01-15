@@ -1856,7 +1856,6 @@ public sealed class UiServer : IAsyncDisposable
     }
 
     private void ConfigureCredentialManagementRoutes()
-    private void ConfigureBulkSymbolManagementRoutes()
     {
         var jsonOptions = new JsonSerializerOptions
         {
@@ -1882,29 +1881,7 @@ public sealed class UiServer : IAsyncDisposable
                     req.ApiSecret,
                     req.CredentialSource);
 
-        // ==================== TEXT/CSV IMPORT ====================
-
-        _app.MapPost("/api/symbols/import/text", async (
-            SymbolImportExportService importExport,
-            HttpRequest request) =>
-        {
-            try
-            {
-                using var reader = new StreamReader(request.Body);
-                var content = await reader.ReadToEndAsync();
-
-                if (string.IsNullOrWhiteSpace(content))
-                    return Results.BadRequest("Content is required.");
-
-                var options = new BulkImportOptions(
-                    SkipExisting: request.Query["skipExisting"] != "false",
-                    UpdateExisting: request.Query["updateExisting"] == "true",
-                    HasHeader: false,
-                    ValidateSymbols: request.Query["validate"] != "false"
-                );
-
-                var result = await importExport.ImportFromTextAsync(content, options);
-                return Results.Json(result, s_jsonOptions);
+                return Results.Json(result, jsonOptions);
             }
             catch (Exception ex)
             {
@@ -2030,6 +2007,109 @@ public sealed class UiServer : IAsyncDisposable
             try
             {
                 var result = await oauthService.RefreshTokenAsync(provider);
+                return Results.Json(result, jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Token refresh failed: {ex.Message}");
+            }
+        });
+
+        // Store OAuth token for a provider
+        _app.MapPost("/api/credentials/oauth/store", async (
+            OAuthTokenRefreshService oauthService,
+            OAuthTokenStoreRequest req) =>
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(req.Provider))
+                    return Results.BadRequest("Provider name is required");
+
+                if (string.IsNullOrWhiteSpace(req.AccessToken))
+                    return Results.BadRequest("Access token is required");
+
+                var token = new OAuthToken(
+                    AccessToken: req.AccessToken,
+                    TokenType: req.TokenType ?? "Bearer",
+                    ExpiresAt: req.ExpiresAt ?? DateTimeOffset.UtcNow.AddHours(1),
+                    RefreshToken: req.RefreshToken,
+                    RefreshTokenExpiresAt: req.RefreshTokenExpiresAt,
+                    Scope: req.Scope,
+                    IssuedAt: DateTimeOffset.UtcNow
+                );
+
+                await oauthService.StoreTokenAsync(req.Provider, token);
+                return Results.Ok(new { message = "Token stored successfully" });
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to store token: {ex.Message}");
+            }
+        });
+
+        // Remove OAuth token for a provider
+        _app.MapDelete("/api/credentials/oauth/{provider}", async (
+            OAuthTokenRefreshService oauthService,
+            string provider) =>
+        {
+            try
+            {
+                await oauthService.RemoveTokenAsync(provider);
+                return Results.Ok(new { message = $"Token removed for {provider}" });
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to remove token: {ex.Message}");
+            }
+        });
+
+        // ==================== CREDENTIAL MANAGEMENT UI ====================
+
+        // Get credentials dashboard HTML
+        _app.MapGet("/credentials", (ConfigStore store, CredentialTestingService credentialService) =>
+        {
+            try
+            {
+                var config = store.Load();
+                var statuses = credentialService.GetAllCachedStatuses();
+                var html = HtmlTemplates.CredentialsDashboard(config, statuses);
+                return Results.Content(html, "text/html");
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to render credentials dashboard: {ex.Message}");
+            }
+        });
+    }
+
+    private void ConfigureBulkSymbolManagementRoutes()
+    {
+        // ==================== TEXT/CSV IMPORT ====================
+
+        _app.MapPost("/api/symbols/import/text", async (
+            SymbolImportExportService importExport,
+            HttpRequest request) =>
+        {
+            try
+            {
+                using var reader = new StreamReader(request.Body);
+                var content = await reader.ReadToEndAsync();
+
+                if (string.IsNullOrWhiteSpace(content))
+                    return Results.BadRequest("Content is required.");
+
+                var options = new BulkImportOptions(
+                    SkipExisting: request.Query["skipExisting"] != "false",
+                    UpdateExisting: request.Query["updateExisting"] == "true",
+                    HasHeader: false,
+                    ValidateSymbols: request.Query["validate"] != "false"
+                );
+
+                var result = await importExport.ImportFromTextAsync(content, options);
+                return Results.Json(result, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
                 return Results.Problem($"Text import failed: {ex.Message}");
             }
         });
@@ -2223,73 +2303,6 @@ public sealed class UiServer : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Token refresh failed: {ex.Message}");
-            }
-        });
-
-        // Store OAuth token for a provider
-        _app.MapPost("/api/credentials/oauth/store", async (
-            OAuthTokenRefreshService oauthService,
-            OAuthTokenStoreRequest req) =>
-        {
-            try
-            {
-                if (string.IsNullOrWhiteSpace(req.Provider))
-                    return Results.BadRequest("Provider name is required");
-
-                if (string.IsNullOrWhiteSpace(req.AccessToken))
-                    return Results.BadRequest("Access token is required");
-
-                var token = new OAuthToken(
-                    AccessToken: req.AccessToken,
-                    TokenType: req.TokenType ?? "Bearer",
-                    ExpiresAt: req.ExpiresAt ?? DateTimeOffset.UtcNow.AddHours(1),
-                    RefreshToken: req.RefreshToken,
-                    RefreshTokenExpiresAt: req.RefreshTokenExpiresAt,
-                    Scope: req.Scope,
-                    IssuedAt: DateTimeOffset.UtcNow
-                );
-
-                await oauthService.StoreTokenAsync(req.Provider, token);
-                return Results.Ok(new { message = "Token stored successfully" });
-            }
-            catch (Exception ex)
-            {
-                return Results.Problem($"Failed to store token: {ex.Message}");
-            }
-        });
-
-        // Remove OAuth token for a provider
-        _app.MapDelete("/api/credentials/oauth/{provider}", async (
-            OAuthTokenRefreshService oauthService,
-            string provider) =>
-        {
-            try
-            {
-                await oauthService.RemoveTokenAsync(provider);
-                return Results.Ok(new { message = $"Token removed for {provider}" });
-            }
-            catch (Exception ex)
-            {
-                return Results.Problem($"Failed to remove token: {ex.Message}");
-            }
-        });
-
-        // ==================== CREDENTIAL MANAGEMENT UI ====================
-
-        // Get credentials dashboard HTML
-        _app.MapGet("/credentials", (ConfigStore store, CredentialTestingService credentialService) =>
-        {
-            try
-            {
-                var config = store.Load();
-                var statuses = credentialService.GetAllCachedStatuses();
-                var html = HtmlTemplates.CredentialsDashboard(config, statuses);
-                return Results.Content(html, "text/html");
-            }
-            catch (Exception ex)
-            {
-                return Results.Problem($"Failed to render credentials dashboard: {ex.Message}");
                 return Results.Problem($"Failed to unsubscribe watchlist: {ex.Message}");
             }
         });
@@ -2797,6 +2810,8 @@ public record OAuthTokenStoreRequest(
     string? RefreshToken = null,
     DateTimeOffset? RefreshTokenExpiresAt = null,
     string? Scope = null
+);
+
 // ==================== BULK SYMBOL MANAGEMENT DTOs ====================
 
 public record WatchlistSymbolsRequest(
