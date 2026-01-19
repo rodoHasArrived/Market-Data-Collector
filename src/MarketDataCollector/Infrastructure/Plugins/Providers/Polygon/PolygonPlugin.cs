@@ -138,51 +138,43 @@ public sealed class PolygonPlugin : MarketDataPluginBase
 
             var url = $"/v2/aggs/ticker/{symbol}/range/{multiplier}/{timespan}/{from}/{to}?adjusted=true&sort=asc&limit=50000&apiKey={_apiKey}";
 
-            HttpResponseMessage? response = null;
-            try
+            using var response = await _httpClient.GetAsync(url, ct);
+
+            if ((int)response.StatusCode == 429)
             {
-                response = await _httpClient.GetAsync(url, ct);
-
-                if ((int)response.StatusCode == 429)
-                {
-                    Logger.Warning("Polygon rate limit exceeded for {Symbol}", symbol);
-                    RecordHealth(false, "Rate limit exceeded");
-                    continue;
-                }
-
-                response.EnsureSuccessStatusCode();
-                var json = await response.Content.ReadAsStringAsync(ct);
-                var data = JsonSerializer.Deserialize<PolygonAggregateResponse>(json);
-
-                if (data?.Results == null)
-                {
-                    Logger.Warning("No data returned for {Symbol}", symbol);
-                    continue;
-                }
-
-                RecordHealth(true);
-
-                foreach (var bar in data.Results)
-                {
-                    var timestamp = DateTimeOffset.FromUnixTimeMilliseconds(bar.Timestamp);
-                    yield return MarketDataEvent.Bar(
-                        symbol: symbol,
-                        timestamp: timestamp,
-                        open: bar.Open,
-                        high: bar.High,
-                        low: bar.Low,
-                        close: bar.Close,
-                        volume: bar.Volume,
-                        interval: request.Interval ?? BarInterval.Daily
-                    );
-                }
-
-                Logger.Information("Retrieved {Count} bars for {Symbol}", data.Results.Length, symbol);
+                Logger.Warning("Polygon rate limit exceeded for {Symbol}", symbol);
+                RecordHealth(false, "Rate limit exceeded");
+                continue;
             }
-            finally
+
+            response.EnsureSuccessStatusCode();
+            var json = await response.Content.ReadAsStringAsync(ct);
+            var data = JsonSerializer.Deserialize<PolygonAggregateResponse>(json);
+
+            if (data?.Results == null)
             {
-                response?.Dispose();
+                Logger.Warning("No data returned for {Symbol}", symbol);
+                continue;
             }
+
+            RecordHealth(true);
+
+            foreach (var bar in data.Results)
+            {
+                var timestamp = DateTimeOffset.FromUnixTimeMilliseconds(bar.Timestamp);
+                yield return MarketDataEvent.Bar(
+                    symbol: symbol,
+                    timestamp: timestamp,
+                    open: bar.Open,
+                    high: bar.High,
+                    low: bar.Low,
+                    close: bar.Close,
+                    volume: bar.Volume,
+                    interval: request.Interval ?? BarInterval.Daily
+                );
+            }
+
+            Logger.Information("Retrieved {Count} bars for {Symbol}", data.Results.Length, symbol);
         }
     }
 
