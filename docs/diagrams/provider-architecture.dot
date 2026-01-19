@@ -150,8 +150,6 @@ digraph ProviderArchitecture {
       style="dashed";
       color="#991b1b";
 
-      FAILOVER [fillcolor="#fecaca", label="AutomaticFailoverManager\n\nMulti-provider failover\nHealth-based routing\nAutomatic recovery"];
-      MULTI_CONN [fillcolor="#fecaca", label="MultiProviderConnectionManager\n\nConcurrent connections\nLoad distribution\nRedundancy"];
       CIRCUIT [fillcolor="#fecaca", label="CircuitBreaker\n\nOpen/Closed/HalfOpen\nFailure counting\nAuto recovery"];
       RATE_LIMIT [fillcolor="#fecaca", label="RateLimiter\n\nPer-provider limits\nToken bucket\nRequest queuing"];
     }
