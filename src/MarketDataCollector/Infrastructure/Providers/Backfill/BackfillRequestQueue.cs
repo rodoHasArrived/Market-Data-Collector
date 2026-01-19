@@ -207,7 +207,7 @@ public sealed class BackfillRequestQueue : IDisposable
         // Get available providers for this request
         var providers = request.PreferredProviders.Count > 0
             ? request.PreferredProviders
-            : new List<string> { "alpaca", "yahoo", "stooq", "nasdaq" };
+            : (IList<string>)["alpaca", "yahoo", "stooq", "nasdaq"];
 
         foreach (var provider in providers)
         {
@@ -310,26 +310,9 @@ public sealed class BackfillRequestQueue : IDisposable
         await _queueLock.WaitAsync(ct).ConfigureAwait(false);
         try
         {
-            var requests = new List<BackfillRequest>();
-
-            // Get pending
-            var tempQueue = new PriorityQueue<BackfillRequest, int>();
-            while (_pendingRequests.TryDequeue(out var req, out var pri))
-            {
-                if (req.JobId == jobId)
-                    requests.Add(req);
-                tempQueue.Enqueue(req, pri);
-            }
-
-            while (tempQueue.TryDequeue(out var req, out var pri))
-            {
-                _pendingRequests.Enqueue(req, pri);
-            }
-
-            // Get in-flight
-            requests.AddRange(_inFlightRequests.Values.Where(r => r.JobId == jobId));
-
-            return requests;
+            var matchingPending = FilterPendingRequests(r => r.JobId == jobId);
+            var matchingInFlight = _inFlightRequests.Values.Where(r => r.JobId == jobId);
+            return [..matchingPending, ..matchingInFlight];
         }
         finally
         {
@@ -345,21 +328,7 @@ public sealed class BackfillRequestQueue : IDisposable
         await _queueLock.WaitAsync(ct).ConfigureAwait(false);
         try
         {
-            var tempQueue = new PriorityQueue<BackfillRequest, int>();
-
-            while (_pendingRequests.TryDequeue(out var req, out var pri))
-            {
-                if (req.JobId != jobId)
-                {
-                    tempQueue.Enqueue(req, pri);
-                }
-            }
-
-            while (tempQueue.TryDequeue(out var req, out var pri))
-            {
-                _pendingRequests.Enqueue(req, pri);
-            }
-
+            FilterPendingRequests(r => r.JobId != jobId, removeMatching: true);
             _log.Information("Cancelled pending requests for job {JobId}", jobId);
             NotifyQueueStateChanged();
         }
@@ -367,6 +336,33 @@ public sealed class BackfillRequestQueue : IDisposable
         {
             _queueLock.Release();
         }
+    }
+
+    /// <summary>
+    /// Filters pending requests, optionally keeping only those that match the predicate.
+    /// </summary>
+    private List<BackfillRequest> FilterPendingRequests(Func<BackfillRequest, bool> predicate, bool removeMatching = false)
+    {
+        var matching = new List<BackfillRequest>();
+        var tempQueue = new PriorityQueue<BackfillRequest, int>();
+
+        while (_pendingRequests.TryDequeue(out var req, out var pri))
+        {
+            if (predicate(req))
+            {
+                if (!removeMatching) tempQueue.Enqueue(req, pri);
+                matching.Add(req);
+            }
+            else
+            {
+                if (removeMatching) tempQueue.Enqueue(req, pri);
+            }
+        }
+
+        while (tempQueue.TryDequeue(out var req, out var pri))
+            _pendingRequests.Enqueue(req, pri);
+
+        return matching;
     }
 
     /// <summary>
@@ -418,15 +414,19 @@ public sealed class BackfillRequestQueue : IDisposable
             return true;
 
         // Non-retryable errors
-        var nonRetryable = new[]
-        {
+        ReadOnlySpan<string> nonRetryable =
+        [
             "not found", "404",
             "invalid symbol",
             "authentication failed", "403",
             "unauthorized", "401"
-        };
+        ];
 
-        return !nonRetryable.Any(e => error.Contains(e, StringComparison.OrdinalIgnoreCase));
+        foreach (var e in nonRetryable)
+            if (error.Contains(e, StringComparison.OrdinalIgnoreCase))
+                return false;
+
+        return true;
     }
 
     private void NotifyQueueStateChanged()
@@ -459,7 +459,7 @@ public sealed class BackfillRequest
     public DateOnly FromDate { get; init; }
     public DateOnly ToDate { get; init; }
     public DataGranularity Granularity { get; init; } = DataGranularity.Daily;
-    public List<string> PreferredProviders { get; init; } = new();
+    public List<string> PreferredProviders { get; init; } = [];
     public string? AssignedProvider { get; set; }
     public int Priority { get; set; } = 10;
     public int MaxRetries { get; init; } = 3;
@@ -491,8 +491,8 @@ public sealed class QueueStatistics
 {
     public int PendingRequests { get; init; }
     public int InFlightRequests { get; init; }
-    public Dictionary<string, int> ActiveByProvider { get; init; } = new();
-    public Dictionary<string, TimeSpan> CooldownsByProvider { get; init; } = new();
+    public Dictionary<string, int> ActiveByProvider { get; init; } = [];
+    public Dictionary<string, TimeSpan> CooldownsByProvider { get; init; } = [];
 }
 
 /// <summary>

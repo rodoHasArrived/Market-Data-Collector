@@ -19,11 +19,11 @@ public sealed class DiagnosticBundleService
     private readonly Func<MetricsSnapshot>? _metricsProvider;
     private readonly Func<AppConfig>? _configProvider;
 
-    private static readonly string[] SensitiveKeys = new[]
-    {
+    private static readonly string[] SensitiveKeys =
+    [
         "password", "secret", "key", "token", "apikey", "api_key",
         "connectionstring", "credential", "auth"
-    };
+    ];
 
     public DiagnosticBundleService(
         string dataRoot,
@@ -99,8 +99,8 @@ public sealed class DiagnosticBundleService
             });
             await File.WriteAllTextAsync(Path.Combine(tempDir, "manifest.json"), manifestJson, ct);
 
-            // Create ZIP archive
-            if (File.Exists(zipPath)) File.Delete(zipPath);
+            // Create ZIP archive (delete existing if present)
+            File.Delete(zipPath); // No-op if file doesn't exist
             ZipFile.CreateFromDirectory(tempDir, zipPath, CompressionLevel.Optimal, false);
 
             var zipInfo = new FileInfo(zipPath);
@@ -189,7 +189,7 @@ public sealed class DiagnosticBundleService
     private async Task CollectConfigurationAsync(string tempDir, DiagnosticManifest manifest, CancellationToken ct)
     {
         // Collect sanitized configuration
-        if (_configProvider != null)
+        if (_configProvider is not null)
         {
             try
             {
@@ -213,7 +213,7 @@ public sealed class DiagnosticBundleService
         }
 
         // Collect sample config if exists
-        var sampleConfigPath = "config/appsettings.sample.json";
+        const string sampleConfigPath = "config/appsettings.sample.json";
         if (File.Exists(sampleConfigPath))
         {
             File.Copy(sampleConfigPath, Path.Combine(tempDir, "appsettings.sample.json"));
@@ -324,35 +324,27 @@ public sealed class DiagnosticBundleService
 
     private async Task CollectEnvironmentVariablesAsync(string tempDir, DiagnosticManifest manifest, CancellationToken ct)
     {
-        var info = new StringBuilder();
-        info.AppendLine("=== ENVIRONMENT VARIABLES (MDC/DOTNET related) ===");
+        string[] relevantPrefixes = ["MDC_", "DOTNET_", "ASPNET", "ALPACA", "POLYGON", "PATH"];
 
-        var relevantPrefixes = new[] { "MDC_", "DOTNET_", "ASPNET", "ALPACA", "POLYGON", "PATH" };
+        var envVars = Environment.GetEnvironmentVariables()
+            .Cast<System.Collections.DictionaryEntry>()
+            .Select(e => (Key: e.Key.ToString() ?? "", Value: e.Value?.ToString() ?? ""))
+            .Where(e => relevantPrefixes.Any(p => e.Key.StartsWith(p, StringComparison.OrdinalIgnoreCase)))
+            .Select(e => $"{e.Key}={SanitizeEnvValue(e.Key, e.Value)}");
 
-        foreach (System.Collections.DictionaryEntry env in Environment.GetEnvironmentVariables())
-        {
-            var key = env.Key.ToString() ?? "";
-            var value = env.Value?.ToString() ?? "";
+        var content = $"""
+            === ENVIRONMENT VARIABLES (MDC/DOTNET related) ===
+            {string.Join(Environment.NewLine, envVars)}
+            """;
 
-            if (relevantPrefixes.Any(p => key.StartsWith(p, StringComparison.OrdinalIgnoreCase)))
-            {
-                // Sanitize sensitive values
-                if (IsSensitiveKey(key))
-                {
-                    value = "[REDACTED]";
-                }
-                else if (key.Equals("PATH", StringComparison.OrdinalIgnoreCase))
-                {
-                    value = "[PATH variable - omitted for brevity]";
-                }
-
-                info.AppendLine($"{key}={value}");
-            }
-        }
-
-        await File.WriteAllTextAsync(Path.Combine(tempDir, "environment.txt"), info.ToString(), ct);
+        await File.WriteAllTextAsync(Path.Combine(tempDir, "environment.txt"), content, ct);
         manifest.FilesCollected.Add("environment.txt");
     }
+
+    private static string SanitizeEnvValue(string key, string value) =>
+        IsSensitiveKey(key) ? "[REDACTED]" :
+        key.Equals("PATH", StringComparison.OrdinalIgnoreCase) ? "[PATH variable - omitted for brevity]" :
+        value;
 
     private static async Task ListDirectoryAsync(string path, StringBuilder sb, string indent, int maxDepth)
     {
@@ -459,7 +451,7 @@ public sealed class DiagnosticBundleResult
     public string? BundleId { get; set; }
     public string? ZipPath { get; set; }
     public long SizeBytes { get; set; }
-    public List<string> FilesIncluded { get; set; } = new();
+    public List<string> FilesIncluded { get; set; } = [];
     public string? Message { get; set; }
 }
 
@@ -474,5 +466,5 @@ internal sealed class DiagnosticManifest
     public string? OsVersion { get; set; }
     public string? DotNetVersion { get; set; }
     public DiagnosticBundleOptions? Options { get; set; }
-    public List<string> FilesCollected { get; set; } = new();
+    public List<string> FilesCollected { get; set; } = [];
 }

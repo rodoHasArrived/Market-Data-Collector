@@ -119,7 +119,7 @@ public sealed class CompositeHistoricalDataProvider : IHistoricalDataProvider, I
         if (string.IsNullOrWhiteSpace(symbol))
             throw new ArgumentException("Symbol is required", nameof(symbol));
 
-        var errors = new List<(string Provider, Exception Error)>();
+        List<(string Provider, Exception Error)> errors = [];
 
         // Get providers ordered by rate limit availability if rotation is enabled
         var orderedProviders = GetOrderedProviders();
@@ -253,21 +253,12 @@ public sealed class CompositeHistoricalDataProvider : IHistoricalDataProvider, I
     /// Check if an exception indicates a rate limit error (HTTP 429).
     /// Supports both the strongly-typed RateLimitException and legacy string-based detection.
     /// </summary>
-    private static bool IsRateLimitException(Exception ex)
-    {
-        // Check for strongly-typed RateLimitException first
-        if (ex is RateLimitException)
-            return true;
-
-        // Check inner exceptions
-        if (ex.InnerException is RateLimitException)
-            return true;
-
-        // Fall back to string-based detection for backwards compatibility
-        return ex.Message.Contains("429") ||
-               ex.Message.Contains("rate limit", StringComparison.OrdinalIgnoreCase) ||
-               ex.Message.Contains("too many requests", StringComparison.OrdinalIgnoreCase);
-    }
+    private static bool IsRateLimitException(Exception ex) =>
+        ex is RateLimitException ||
+        ex.InnerException is RateLimitException ||
+        ex.Message.Contains("429") ||
+        ex.Message.Contains("rate limit", StringComparison.OrdinalIgnoreCase) ||
+        ex.Message.Contains("too many requests", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
     /// Extract Retry-After duration from an exception if available.
@@ -303,19 +294,11 @@ public sealed class CompositeHistoricalDataProvider : IHistoricalDataProvider, I
     /// <summary>
     /// Get the shortest wait time until any provider's rate limit resets.
     /// </summary>
-    private TimeSpan? GetShortestRateLimitWait()
-    {
-        TimeSpan? shortest = null;
-        foreach (var provider in _providers)
-        {
-            var wait = _rateLimitTracker.GetTimeUntilReset(provider.Name);
-            if (wait.HasValue && (!shortest.HasValue || wait.Value < shortest.Value))
-            {
-                shortest = wait;
-            }
-        }
-        return shortest;
-    }
+    private TimeSpan? GetShortestRateLimitWait() =>
+        _providers
+            .Select(p => _rateLimitTracker.GetTimeUntilReset(p.Name))
+            .Where(w => w.HasValue)
+            .Min();
 
     public async Task<IReadOnlyList<AdjustedHistoricalBar>> GetAdjustedDailyBarsAsync(string symbol, DateOnly? from, DateOnly? to, CancellationToken ct = default)
     {
