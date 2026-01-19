@@ -17,8 +17,7 @@ namespace MarketDataCollector.Domain.Models;
 /// <item>
 /// <description>
 /// <b>Cross-side validation:</b> Bid/ask price validation (bid &lt; ask) is performed at the
-/// order book level in <see cref="MarketDataCollector.Infrastructure.OrderBook.OrderBookMatchingEngine"/>
-/// rather than at the individual level, since single levels don't have visibility into the opposite side.
+/// order book level rather than at the individual level, since single levels don't have visibility into the opposite side.
 /// </description>
 /// </item>
 /// </list>

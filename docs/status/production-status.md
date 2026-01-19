@@ -294,12 +294,11 @@ When `IBAPI` is NOT defined:
 |----------|----------|
 | Domain Models | ✅ TradeModelTests, BboQuotePayloadTests, OrderBookLevelTests |
 | Collectors | ✅ TradeDataCollectorTests, QuoteCollectorTests |
-| Config | ✅ ConfigValidatorTests, MassTransitConfigTests |
-| Messaging | ✅ MassTransitPublisherTests, CompositePublisherTests |
+| Config | ✅ ConfigValidatorTests |
+| Messaging | ✅ CompositePublisherTests |
 | Resilience | ✅ WebSocketResiliencePolicyTests, ConnectionRetryIntegrationTests |
 | Storage | ✅ FilePermissionsServiceTests, StockSharpStorageTests, FormatConverterTests |
 | Serialization | ✅ HighPerformanceJsonTests |
-| Order Book | ✅ OrderBookMatchingEngineTests |
 | Indicators | ✅ TechnicalIndicatorServiceTests |
 | Data Sources | ✅ DataSourceManagerTests, FallbackOrchestratorTests, SymbolMapperTests |
 | Plugins | ✅ PluginArchitectureTests, PluginManagerTests |
