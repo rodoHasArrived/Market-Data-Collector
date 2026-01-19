@@ -98,57 +98,49 @@ public sealed class FinnhubPlugin : HistoricalPluginBase
 
         Logger.Debug("Fetching Finnhub data for {Symbol} with resolution {Resolution}", symbol, resolution);
 
-        HttpResponseMessage? response = null;
-        try
+        using var response = await HttpClient.GetAsync(url, ct);
+
+        if ((int)response.StatusCode == 429)
         {
-            response = await HttpClient.GetAsync(url, ct);
-
-            if ((int)response.StatusCode == 429)
-            {
-                Logger.Warning("Finnhub rate limit exceeded for {Symbol}", symbol);
-                RecordHealth(false, "Rate limit exceeded");
-                yield break;
-            }
-
-            if (!response.IsSuccessStatusCode)
-            {
-                Logger.Warning("Finnhub request failed for {Symbol}: {StatusCode}", symbol, response.StatusCode);
-                RecordHealth(false, $"HTTP {response.StatusCode}");
-                yield break;
-            }
-
-            var json = await response.Content.ReadAsStringAsync(ct);
-            var data = JsonSerializer.Deserialize<FinnhubCandleResponse>(json, JsonOptions);
-
-            if (data == null || data.Status == "no_data" || data.Timestamps == null)
-            {
-                Logger.Debug("No data returned from Finnhub for {Symbol}", symbol);
-                yield break;
-            }
-
-            RecordHealth(true);
-            Logger.Information("Retrieved {Count} bars from Finnhub for {Symbol}", data.Timestamps.Length, symbol);
-
-            for (var i = 0; i < data.Timestamps.Length; i++)
-            {
-                var timestamp = DateTimeOffset.FromUnixTimeSeconds(data.Timestamps[i]);
-
-                yield return MarketDataEvent.Bar(
-                    symbol: symbol,
-                    timestamp: timestamp,
-                    open: GetDecimalValue(data.Open, i),
-                    high: GetDecimalValue(data.High, i),
-                    low: GetDecimalValue(data.Low, i),
-                    close: GetDecimalValue(data.Close, i),
-                    volume: GetDecimalValue(data.Volume, i),
-                    interval: interval,
-                    isAdjusted: false // Finnhub returns unadjusted prices
-                );
-            }
+            Logger.Warning("Finnhub rate limit exceeded for {Symbol}", symbol);
+            RecordHealth(false, "Rate limit exceeded");
+            yield break;
         }
-        finally
+
+        if (!response.IsSuccessStatusCode)
         {
-            response?.Dispose();
+            Logger.Warning("Finnhub request failed for {Symbol}: {StatusCode}", symbol, response.StatusCode);
+            RecordHealth(false, $"HTTP {response.StatusCode}");
+            yield break;
+        }
+
+        var json = await response.Content.ReadAsStringAsync(ct);
+        var data = JsonSerializer.Deserialize<FinnhubCandleResponse>(json, JsonOptions);
+
+        if (data == null || data.Status == "no_data" || data.Timestamps == null)
+        {
+            Logger.Debug("No data returned from Finnhub for {Symbol}", symbol);
+            yield break;
+        }
+
+        RecordHealth(true);
+        Logger.Information("Retrieved {Count} bars from Finnhub for {Symbol}", data.Timestamps.Length, symbol);
+
+        for (var i = 0; i < data.Timestamps.Length; i++)
+        {
+            var timestamp = DateTimeOffset.FromUnixTimeSeconds(data.Timestamps[i]);
+
+            yield return MarketDataEvent.Bar(
+                symbol: symbol,
+                timestamp: timestamp,
+                open: GetDecimalValue(data.Open, i),
+                high: GetDecimalValue(data.High, i),
+                low: GetDecimalValue(data.Low, i),
+                close: GetDecimalValue(data.Close, i),
+                volume: GetDecimalValue(data.Volume, i),
+                interval: interval,
+                isAdjusted: false // Finnhub returns unadjusted prices
+            );
         }
     }
 
