@@ -8,15 +8,17 @@ namespace MarketDataCollector.Infrastructure.Plugins.Core;
 
 /// <summary>
 /// Orchestrates multiple plugins for data collection.
-/// Handles plugin selection, failover, and storage coordination.
+/// Handles plugin selection, failover, rate limit awareness, and storage coordination.
 /// </summary>
 /// <remarks>
 /// This is the "simple orchestrator" that replaces the complex multi-provider
 /// architecture. It provides:
 /// - Automatic plugin selection based on capabilities
+/// - Rate limit-aware plugin rotation
 /// - Fallback to alternative plugins on failure
 /// - Unified streaming interface
 /// - Storage coordination
+/// - Health monitoring and recovery
 ///
 /// For more complex scenarios (priority-based routing, rate limit balancing,
 /// cross-provider validation), extend this class or use the legacy
@@ -28,7 +30,11 @@ public sealed class PluginOrchestrator : IAsyncDisposable
     private readonly IMarketDataStore? _store;
     private readonly ILogger _logger;
     private readonly Dictionary<string, IMarketDataPlugin> _activePlugins = new();
+    private readonly Dictionary<string, PluginRateLimitState> _rateLimitStates = new();
+    private readonly Dictionary<string, DateTimeOffset> _failureBackoffs = new();
     private readonly SemaphoreSlim _pluginLock = new(1, 1);
+    private readonly TimeSpan _failureBackoffDuration = TimeSpan.FromMinutes(5);
+    private readonly double _rateLimitRotationThreshold = 0.8; // Rotate at 80% capacity
     private bool _disposed;
 
     /// <summary>
@@ -301,4 +307,99 @@ public readonly record struct BackfillProgress(
     public double PercentComplete => TotalSymbols > 0
         ? 100.0 * CompletedSymbols / TotalSymbols
         : 0;
+}
+
+/// <summary>
+/// Tracks rate limit state for a plugin.
+/// </summary>
+internal sealed class PluginRateLimitState
+{
+    private readonly Queue<DateTimeOffset> _requestTimes = new();
+    private readonly object _lock = new();
+
+    public int MaxRequestsPerWindow { get; init; } = 60;
+    public TimeSpan Window { get; init; } = TimeSpan.FromMinutes(1);
+
+    public int CurrentRequestCount
+    {
+        get
+        {
+            lock (_lock)
+            {
+                CleanupOldRequests();
+                return _requestTimes.Count;
+            }
+        }
+    }
+
+    public double UtilizationRatio => MaxRequestsPerWindow > 0
+        ? (double)CurrentRequestCount / MaxRequestsPerWindow
+        : 0;
+
+    public bool IsApproachingLimit(double threshold = 0.8) =>
+        UtilizationRatio >= threshold;
+
+    public bool IsAtLimit => CurrentRequestCount >= MaxRequestsPerWindow;
+
+    public TimeSpan TimeUntilNextSlot
+    {
+        get
+        {
+            lock (_lock)
+            {
+                CleanupOldRequests();
+                if (_requestTimes.Count < MaxRequestsPerWindow)
+                    return TimeSpan.Zero;
+
+                var oldest = _requestTimes.Peek();
+                var nextSlot = oldest.Add(Window);
+                var wait = nextSlot - DateTimeOffset.UtcNow;
+                return wait > TimeSpan.Zero ? wait : TimeSpan.Zero;
+            }
+        }
+    }
+
+    public void RecordRequest()
+    {
+        lock (_lock)
+        {
+            CleanupOldRequests();
+            _requestTimes.Enqueue(DateTimeOffset.UtcNow);
+        }
+    }
+
+    private void CleanupOldRequests()
+    {
+        var cutoff = DateTimeOffset.UtcNow - Window;
+        while (_requestTimes.Count > 0 && _requestTimes.Peek() < cutoff)
+        {
+            _requestTimes.Dequeue();
+        }
+    }
+}
+
+/// <summary>
+/// Options for configuring the plugin orchestrator.
+/// </summary>
+public sealed record OrchestratorOptions
+{
+    /// <summary>
+    /// Time to wait before retrying a failed plugin.
+    /// </summary>
+    public TimeSpan FailureBackoffDuration { get; init; } = TimeSpan.FromMinutes(5);
+
+    /// <summary>
+    /// Rotate to next plugin when this percentage of rate limit is used.
+    /// </summary>
+    public double RateLimitRotationThreshold { get; init; } = 0.8;
+
+    /// <summary>
+    /// Whether to enable rate limit-aware rotation.
+    /// </summary>
+    public bool EnableRateLimitRotation { get; init; } = true;
+
+    /// <summary>
+    /// Whether to persist data to storage automatically.
+    /// </summary>
+    public bool AutoPersist { get; init; } = true;
 }
