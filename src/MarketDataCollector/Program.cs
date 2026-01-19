@@ -438,6 +438,14 @@ internal static class Program
             return;
         }
 
+        // Plugin Mode - Use the new unified plugin architecture
+        if (args.Any(a => a.Equals("--plugin-mode", StringComparison.OrdinalIgnoreCase)))
+        {
+            log.Information("Running with new unified plugin architecture...");
+            await Infrastructure.Plugins.Integration.PluginModeRunner.RunAsync(cfg, args, log);
+            return;
+        }
+
         if (args.Any(a => a.Equals("--selftest", StringComparison.OrdinalIgnoreCase)))
         {
             log.Information("Running self-tests...");
@@ -676,12 +684,15 @@ internal static class Program
             },
             LoggingSetup.ForContext<CredentialResolver>());
 
+        // Legacy provider selection - use --plugin-mode for new unified architecture
+#pragma warning disable CS0618 // IMarketDataClient is obsolete - retained for backward compatibility
         await using IMarketDataClient dataClient = cfg.DataSource switch
         {
             DataSourceKind.Alpaca => new AlpacaMarketDataClient(tradeCollector, quoteCollector, credentialResolver.ResolveAlpaca(cfg)),
             DataSourceKind.Polygon => new PolygonMarketDataClient(publisher, tradeCollector, quoteCollector),
             _ => new IBMarketDataClient(publisher, tradeCollector, depthCollector)
         };
+#pragma warning restore CS0618
 
         await dataClient.ConnectAsync();
 
@@ -797,6 +808,7 @@ MODES:
     --selftest              Run system self-tests
     --validate-config       Validate configuration without starting
     --dry-run               Comprehensive validation without starting (QW-93)
+    --plugin-mode           Use new unified plugin architecture (recommended)
     --help, -h              Show this help message
 
 AUTO-CONFIGURATION (First-time setup):

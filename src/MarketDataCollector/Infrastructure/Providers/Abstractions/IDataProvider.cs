@@ -3,6 +3,24 @@ using System.Threading;
 
 namespace MarketDataCollector.Infrastructure.Providers.Abstractions;
 
+// =====================================================================================
+// DEPRECATION NOTICE
+// =====================================================================================
+// The interfaces in this file (IDataProvider, IStreamingDataProvider, IHistoricalDataProvider,
+// IUnifiedDataProvider) are being replaced by the unified IMarketDataPlugin interface.
+//
+// Migration path:
+//   1. Use --plugin-mode flag to run with new architecture
+//   2. Implement IMarketDataPlugin instead of these interfaces
+//   3. See Infrastructure/Plugins/README.md for migration guide
+//
+// The new plugin system provides:
+//   - Single interface for all data sources
+//   - Environment variable configuration
+//   - IAsyncEnumerable streaming model
+//   - Built-in rate limiting and health tracking
+// =====================================================================================
+
 /// <summary>
 /// Connection state for streaming providers.
 /// </summary>
