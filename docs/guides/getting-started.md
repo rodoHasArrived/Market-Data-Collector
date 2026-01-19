@@ -309,6 +309,6 @@ For more issues, see [Troubleshooting](troubleshooting.md).
 
 ---
 
-**Version:** 1.5.0
-**Last Updated:** 2026-01-14
-**See Also:** [HELP.md](../../HELP.md) | [Configuration](configuration.md) | [Architecture](../architecture/overview.md) | [Lean Integration](../integrations/lean-integration.md)
+**Version:** 1.6.0
+**Last Updated:** 2026-01-19
+**See Also:** [HELP.md](../HELP.md) | [Configuration](configuration.md) | [Architecture](../architecture/overview.md) | [Lean Integration](../integrations/lean-integration.md)

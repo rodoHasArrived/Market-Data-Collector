@@ -1,10 +1,17 @@
 # Market Data Collector
 
-**Version**: 1.5.0 (Production Ready) | **Last Updated**: 2026-01-14
+**Version**: 1.6.0 (Production Ready) | **Last Updated**: 2026-01-19
 
 A cross-platform, production-ready market data collector with an intuitive web dashboard. Ingests real-time market data from multiple sources (Interactive Brokers, Alpaca, Polygon), normalizes them into domain events, and persists them as JSONL for downstream research. Features comprehensive error handling, single-executable deployment, and built-in help system.
 
-## ✨ New in v1.5
+## ✨ New in v1.6
+
+- **🧹 Simplified Architecture** - Streamlined monolithic architecture with removal of microservices complexity
+- **📖 Enhanced Documentation** - Comprehensive documentation updates across all guides
+- **🔧 Improved Maintainability** - Removed dead code and simplified codebase structure
+- **⚡ Optimized GitHub Actions** - Faster CI/CD workflows with better caching
+
+## ✨ v1.5 Features
 
 - **🔒 Archival-First Storage Pipeline** - Write-ahead logging (WAL) for crash-safe data persistence with checksums
 - **📁 Compression Profiles** - Optimized compression profiles for hot/warm/cold storage tiers (LZ4, ZSTD, Gzip)
@@ -391,6 +398,12 @@ var vwap = AggregationFunctions.Vwap(trades);
 See [`docs/FSHARP_INTEGRATION.md`](docs/FSHARP_INTEGRATION.md) for comprehensive documentation.
 
 ## Recent Improvements
+
+### Simplified Architecture (2026-01-19) - v1.6.0
+- **Monolithic Core**: Removed microservices layer for improved simplicity and maintainability
+- **Dead Code Removal**: Cleaned up unused code and deprecated features
+- **Documentation Refresh**: Updated all documentation to reflect current architecture
+- **Optimized CI/CD**: Improved GitHub Actions workflows with better caching and faster builds
 
 ### Archival & Export Excellence (2026-01-04)
 - **Archival-First Storage Pipeline**: Write-Ahead Logging (WAL) for crash-safe persistence with SHA256 checksums

@@ -389,8 +389,7 @@ Market-Data-Collector/
 │   ├── MarketDataCollector.FSharp/ # F# domain models
 │   ├── MarketDataCollector.Contracts/ # Shared DTOs
 │   ├── MarketDataCollector.Ui/     # Web dashboard
-│   ├── MarketDataCollector.Uwp/    # Windows desktop app
-│   └── Microservices/              # Decomposed services
+│   └── MarketDataCollector.Uwp/    # Windows desktop app
 ├── tests/                # C# and F# test projects
 ├── benchmarks/           # Performance benchmarks
 ├── MarketDataCollector.sln

@@ -1,7 +1,7 @@
 # Market Data Collector - Roadmap
 
 **Version:** 1.6.0
-**Last Updated:** 2026-01-15
+**Last Updated:** 2026-01-19
 **Status:** Production Ready
 
 This document provides the feature roadmap, backlog, and development priorities for the Market Data Collector system.
@@ -24,7 +24,7 @@ This document provides the feature roadmap, backlog, and development priorities 
 
 ---
 
-## What's Implemented (v1.5.0)
+## What's Implemented (v1.6.0)
 
 ### Core Data Collection
 - [x] Multi-provider streaming (Alpaca, Interactive Brokers, NYSE, Polygon stub)
@@ -87,7 +87,7 @@ This document provides the feature roadmap, backlog, and development priorities 
 ### User Interfaces
 - [x] Web Dashboard (HTML/JS, auto-refresh)
 - [x] UWP Desktop Application (Windows native, 17+ pages including Admin/Maintenance and Advanced Analytics)
-- [x] Microservices architecture (6 services)
+- [x] Monolithic architecture (simplified in v1.6.0)
 - [x] CLI with hot-reload configuration
 
 ### Developer Features
