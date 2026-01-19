@@ -143,7 +143,6 @@ public sealed class NavigationService
         // Data Sources
         _pageRegistry["Provider"] = typeof(ProviderPage);
         _pageRegistry["DataSources"] = typeof(DataSourcesPage);
-        _pageRegistry["Plugins"] = typeof(PluginsPage);
 
         // Data Management
         _pageRegistry["LiveData"] = typeof(LiveDataViewerPage);

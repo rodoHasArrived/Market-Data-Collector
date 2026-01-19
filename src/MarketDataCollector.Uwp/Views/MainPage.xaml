@@ -114,13 +114,6 @@
                     <FontIcon Glyph="&#xE943;" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
-            <NavigationViewItem Content="Plugins" Tag="Plugins"
-                                AutomationProperties.Name="Plugins - Manage extensions and plugins"
-                                ToolTipService.ToolTip="Manage extensions and plugins">
-                <NavigationViewItem.Icon>
-                    <FontIcon Glyph="&#xEA86;" />
-                </NavigationViewItem.Icon>
-            </NavigationViewItem>
 
             <NavigationViewItemSeparator />
 
