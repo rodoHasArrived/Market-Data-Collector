@@ -46,7 +46,6 @@ public static class SimplifiedConfigurationLoader
         var dataPath = GetString(root, "DataPath", "DATA_PATH", "./data");
 
         // Parse storage configuration
-        var storageSection = root.GetSection("Storage");
         var storage = new StorageConfiguration(
             Type: GetString(root, "Storage:Type", null, "SQLite"),
             Path: GetString(root, "Storage:Path", null, Path.Combine(dataPath, "market_data.db"))
