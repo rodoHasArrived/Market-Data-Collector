@@ -51,12 +51,14 @@ BenchmarkDotNet.Artifacts/
 appsettings.json
 appsettings.*.json
 !appsettings.sample.json
+!appsettings.*.sample.json
 credentials.json
 *.pfx
 *.key
 *.pem
 *.env
 .env.*
+!.env.sample
 
 # Data directories
 data/
