@@ -4,10 +4,12 @@
 name: Security
 
 on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+  # push trigger disabled
+  # push:
+  #   branches: [ "main" ]
+  # pull_request trigger disabled
+  # pull_request:
+  #   branches: [ "main" ]
   schedule:
     # Run security scans weekly on Monday at 6:00 UTC
     - cron: '0 6 * * 1'

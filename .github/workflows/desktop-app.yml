@@ -1,20 +1,22 @@
 name: Desktop App Build
 
 on:
-  push:
-    branches: [ "main" ]
-    paths:
-      - 'src/MarketDataCollector.Uwp/**'
-      - 'src/MarketDataCollector.Contracts/**'
-      - '.github/workflows/desktop-app.yml'
-    tags:
-      - 'v*'
-  pull_request:
-    branches: [ "main" ]
-    paths:
-      - 'src/MarketDataCollector.Uwp/**'
-      - 'src/MarketDataCollector.Contracts/**'
-      - '.github/workflows/desktop-app.yml'
+  # push trigger disabled
+  # push:
+  #   branches: [ "main" ]
+  #   paths:
+  #     - 'src/MarketDataCollector.Uwp/**'
+  #     - 'src/MarketDataCollector.Contracts/**'
+  #     - '.github/workflows/desktop-app.yml'
+  #   tags:
+  #     - 'v*'
+  # pull_request trigger disabled
+  # pull_request:
+  #   branches: [ "main" ]
+  #   paths:
+  #     - 'src/MarketDataCollector.Uwp/**'
+  #     - 'src/MarketDataCollector.Contracts/**'
+  #     - '.github/workflows/desktop-app.yml'
   workflow_dispatch:
     inputs:
       build_config:

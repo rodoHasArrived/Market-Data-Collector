@@ -1,8 +1,10 @@
 name: Dependency Review
 
 on:
-  pull_request:
-    branches: [ "main" ]
+  # pull_request trigger disabled - run manually via workflow_dispatch if needed
+  # pull_request:
+  #   branches: [ "main" ]
+  workflow_dispatch:
 
 permissions:
   contents: read
