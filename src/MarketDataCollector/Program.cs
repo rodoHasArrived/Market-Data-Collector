@@ -667,18 +667,13 @@ internal static class Program
         }
 
         // Market data client (provider selected by config)
-        var credentialResolver = new CredentialResolver(
-            new IAlpacaCredentialSource[]
-            {
-                new EnvironmentAlpacaCredentialSource(),
-                new FileAlpacaCredentialSource(),
-                new ConfigAlpacaCredentialSource()
-            },
-            LoggingSetup.ForContext<CredentialResolver>());
+        var credentialResolver = new ProviderCredentialResolver(LoggingSetup.ForContext<ProviderCredentialResolver>());
+        var (alpacaKeyId, alpacaSecretKey) = credentialResolver.ResolveAlpaca(cfg.Alpaca?.KeyId, cfg.Alpaca?.SecretKey);
 
         await using IMarketDataClient dataClient = cfg.DataSource switch
         {
-            DataSourceKind.Alpaca => new AlpacaMarketDataClient(tradeCollector, quoteCollector, credentialResolver.ResolveAlpaca(cfg)),
+            DataSourceKind.Alpaca => new AlpacaMarketDataClient(tradeCollector, quoteCollector,
+                cfg.Alpaca! with { KeyId = alpacaKeyId ?? "", SecretKey = alpacaSecretKey ?? "" }),
             DataSourceKind.Polygon => new PolygonMarketDataClient(publisher, tradeCollector, quoteCollector),
             _ => new IBMarketDataClient(publisher, tradeCollector, depthCollector)
         };
