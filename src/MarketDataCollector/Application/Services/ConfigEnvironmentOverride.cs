@@ -57,15 +57,7 @@ public sealed class ConfigEnvironmentOverride
         ["POLYGON_API_KEY"] = "Backfill:Providers:Polygon:ApiKey",
         ["TIINGO_API_TOKEN"] = "Backfill:Providers:Tiingo:ApiToken",
         ["FINNHUB_API_KEY"] = "Backfill:Providers:Finnhub:ApiKey",
-        ["ALPHA_VANTAGE_API_KEY"] = "Backfill:Providers:AlphaVantage:ApiKey",
-
-        // MassTransit settings
-        ["MDC_MASSTRANSIT_ENABLED"] = "MassTransit:Enabled",
-        ["MDC_MASSTRANSIT_TRANSPORT"] = "MassTransit:Transport",
-        ["MDC_RABBITMQ_HOST"] = "MassTransit:RabbitMQ:Host",
-        ["MDC_RABBITMQ_PORT"] = "MassTransit:RabbitMQ:Port",
-        ["MDC_RABBITMQ_USER"] = "MassTransit:RabbitMQ:Username",
-        ["MDC_RABBITMQ_PASS"] = "MassTransit:RabbitMQ:Password"
+        ["ALPHA_VANTAGE_API_KEY"] = "Backfill:Providers:AlphaVantage:ApiKey"
     };
 
     /// <summary>
@@ -200,7 +192,6 @@ public sealed class ConfigEnvironmentOverride
             "Alpaca" => ApplyAlpacaOverride(config, parts.Skip(1).ToArray(), value),
             "Storage" => ApplyStorageOverride(config, parts.Skip(1).ToArray(), value),
             "Backfill" => ApplyBackfillOverride(config, parts.Skip(1).ToArray(), value),
-            "MassTransit" => ApplyMassTransitOverride(config, parts.Skip(1).ToArray(), value),
             _ => config
         };
     }
@@ -269,38 +260,6 @@ public sealed class ConfigEnvironmentOverride
         return config with { Backfill = backfill };
     }
 
-    private AppConfig ApplyMassTransitOverride(AppConfig config, string[] path, string value)
-    {
-        var mt = config.MassTransit ?? new MassTransitConfig();
-
-        if (path.Length == 0) return config;
-
-        if (path[0] == "RabbitMQ" && path.Length >= 2)
-        {
-            var rmq = mt.RabbitMQ ?? new RabbitMqConfig();
-            rmq = path[1] switch
-            {
-                "Host" => rmq with { Host = value },
-                "Port" => rmq with { Port = ParseInt(value) ?? 5672 },
-                "Username" => rmq with { Username = value },
-                "Password" => rmq with { Password = value },
-                _ => rmq
-            };
-            mt = mt with { RabbitMQ = rmq };
-        }
-        else
-        {
-            mt = path[0] switch
-            {
-                "Enabled" => mt with { Enabled = ParseBool(value) },
-                "Transport" => mt with { Transport = value },
-                _ => mt
-            };
-        }
-
-        return config with { MassTransit = mt };
-    }
-
     private static string ConvertEnvVarToConfigPath(string envVar)
     {
         // Remove MDC_ prefix
@@ -347,7 +306,6 @@ public sealed class ConfigEnvironmentOverride
         if (envVar.StartsWith("MDC_ALPACA") || envVar.StartsWith("ALPACA")) return "Alpaca Configuration";
         if (envVar.StartsWith("MDC_STORAGE")) return "Storage Configuration";
         if (envVar.StartsWith("MDC_BACKFILL")) return "Backfill Configuration";
-        if (envVar.StartsWith("MDC_MASSTRANSIT") || envVar.StartsWith("MDC_RABBITMQ")) return "MassTransit Configuration";
         if (envVar.Contains("API_KEY") || envVar.Contains("TOKEN")) return "API Keys";
         return "Core Configuration";
     }

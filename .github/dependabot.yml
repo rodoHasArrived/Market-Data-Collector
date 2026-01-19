@@ -91,14 +91,6 @@ updates:
           - "minor"
           - "patch"
 
-      messaging:
-        patterns:
-          - "MassTransit*"
-          - "RabbitMQ.*"
-        update-types:
-          - "minor"
-          - "patch"
-
       data-providers:
         patterns:
           - "Alpaca.*"
@@ -117,8 +109,6 @@ updates:
           - "patch"
 
     ignore:
-      - dependency-name: "MassTransit*"
-        update-types: ["version-update:semver-major"]
       - dependency-name: "Microsoft.EntityFrameworkCore*"
         update-types: ["version-update:semver-major"]
 

@@ -39,7 +39,6 @@ Welcome to the Market Data Collector! This comprehensive guide will help you get
 - [Archival-First Storage](#archival-first-storage-v15)
 - [Analysis-Ready Exports](#analysis-ready-exports-v15)
 - [QuantConnect Lean Integration](#quantconnect-lean-integration)
-- [Microservices Architecture](#microservices-architecture)
 - [Offline Storage & Archival](#offline-storage--archival)
 - [Web Dashboard](#web-dashboard)
 - [Windows Desktop App](#windows-desktop-app)
@@ -57,7 +56,7 @@ Welcome to the Market Data Collector! This comprehensive guide will help you get
 
 Market Data Collector is a high-performance, cross-platform market data collection system built on **.NET 9.0** using **C# 11** and **F# 8.0**. It captures real-time and historical market microstructure data from multiple providers and persists it for downstream research, backtesting, and algorithmic trading.
 
-**Version:** 1.5.0 | **Status:** Production Ready
+**Version:** 1.6.0 | **Status:** Production Ready
 
 ### Key Features
 
@@ -73,7 +72,7 @@ Market Data Collector is a high-performance, cross-platform market data collecti
 - **Automatic Failover**: Configure failover rules between providers with circuit breaker pattern
 - **Web Dashboard**: Easy-to-use interface for configuration and monitoring
 - **Windows Desktop App**: Native UWP/XAML application with secure credential management
-- **Microservices Architecture**: Scalable decomposition with MassTransit messaging
+- **Monolithic Core**: Simple, maintainable architecture with optional UI components
 - **High Performance**: Event-driven architecture with backpressure handling
 - **Production Ready**: Comprehensive error handling, logging, and Prometheus metrics
 - **Secure Credentials**: Windows CredentialPicker integration for API keys
@@ -1112,51 +1111,6 @@ See [docs/integrations/lean-integration.md](integrations/lean-integration.md) fo
 
 ---
 
-## Microservices Architecture
-
-For large-scale deployments, Market Data Collector can run as a distributed microservices architecture.
-
-### Services
-
-| Service | Port | Description |
-|---------|------|-------------|
-| Gateway | 5000 | API Gateway and load balancer |
-| TradeIngestion | 5001 | Trade data processing |
-| QuoteIngestion | 5002 | Quote data processing |
-| OrderBookIngestion | 5003 | Order book management |
-| HistoricalDataIngestion | 5004 | Historical data backfill |
-| DataValidation | 5005 | Data quality and validation |
-
-### Running Microservices
-
-```bash
-# Using Docker Compose
-cd src/Microservices
-docker-compose -f docker-compose.microservices.yml up
-
-# Or run individual services
-dotnet run --project src/Microservices/TradeIngestion
-```
-
-### Messaging
-
-Services communicate via MassTransit with RabbitMQ:
-
-```json
-{
-  "MassTransit": {
-    "Host": "localhost",
-    "VirtualHost": "/",
-    "Username": "guest",
-    "Password": "guest"
-  }
-}
-```
-
-See [docs/ai-assistants/CLAUDE.microservices.md](ai-assistants/CLAUDE.microservices.md) for detailed microservices documentation.
-
----
-
 ## Offline Storage & Archival
 
 Market Data Collector v1.2 includes comprehensive tools for managing archived data offline.
@@ -2142,6 +2096,6 @@ Before contributing code:
 
 ---
 
-**Version:** 1.5.0
-**Last Updated:** 2026-01-14
+**Version:** 1.6.0
+**Last Updated:** 2026-01-19
 **License:** See LICENSE file

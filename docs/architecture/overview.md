@@ -19,7 +19,6 @@ provider failover, and data quality monitoring.
 
 The architecture supports multiple deployment modes:
 - **Standalone Console Application** – Single-process data collection with local storage
-- **Distributed Microservices** – Horizontally scalable architecture with message bus coordination
 - **UWP Desktop Application** – Native Windows app for configuration and monitoring
 - **Web Dashboard** – Browser-based monitoring and management interface
 
@@ -30,14 +29,14 @@ The architecture supports multiple deployment modes:
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
 │                           Presentation Layer                              │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────────────┐  │
-│  │  Web Dashboard  │  │  UWP Desktop    │  │  Microservices (6)      │  │
-│  │  (ASP.NET)      │  │  (WinUI 3)      │  │  Gateway/Ingestion/etc  │  │
-│  └────────┬────────┘  └────────┬────────┘  └────────────┬────────────┘  │
-└───────────┼────────────────────┼────────────────────────┼───────────────┘
-            │ JSON/FS            │ Config/Status          │ REST/MassTransit
-┌───────────┼────────────────────┼────────────────────────┼───────────────┐
-│           ▼                    ▼                        ▼               │
+│  ┌─────────────────┐  ┌─────────────────┐                               │
+│  │  Web Dashboard  │  │  UWP Desktop    │                               │
+│  │  (ASP.NET)      │  │  (WinUI 3)      │                               │
+│  └────────┬────────┘  └────────┬────────┘                               │
+└───────────┼────────────────────┼────────────────────────────────────────┘
+            │ JSON/FS            │ Config/Status
+┌───────────┼────────────────────┼────────────────────────────────────────┐
+│           ▼                    ▼                                        │
 │                       Application Layer                                  │
 │  ┌─────────────────────────────────────────────────────────────────┐   │
 │  │  Program.cs | ConfigWatcher | StatusWriter | StatusHttpServer   │   │
@@ -49,7 +48,7 @@ The architecture supports multiple deployment modes:
 │                          Domain Layer                                    │
 │  ┌─────────────────────────────────┴───────────────────────────────┐   │
 │  │  TradeDataCollector | MarketDepthCollector | QuoteCollector     │   │
-│  │  HighPerformanceMarketDepthCollector | SymbolSubscriptionTracker│   │
+│  │  SymbolSubscriptionTracker                                      │   │
 │  │  Domain Models: Trade, LOBSnapshot, BboQuote, OrderFlow, etc.   │   │
 │  └─────────────────────────────────┬───────────────────────────────┘   │
 └────────────────────────────────────┼────────────────────────────────────┘
@@ -58,17 +57,16 @@ The architecture supports multiple deployment modes:
 │                       Event Pipeline Layer                               │
 │  ┌─────────────────────────────────┴───────────────────────────────┐   │
 │  │  EventPipeline (bounded Channel<MarketEvent>, 100K capacity)    │   │
-│  │  CompositePublisher → Local Storage + MassTransit Bus           │   │
-│  └──────────────┬────────────────────────────────┬─────────────────┘   │
-└─────────────────┼────────────────────────────────┼──────────────────────┘
-                  │ append()                        │ publish()
-┌─────────────────┼────────────────────────────────┼──────────────────────┐
-│           Storage Layer                    Messaging Layer               │
-│  ┌─────────────┴────────────┐     ┌─────────────┴────────────────┐     │
-│  │ JsonlStorageSink         │     │ MassTransit (InMemory/       │     │
-│  │ ParquetStorageSink       │     │ RabbitMQ/Azure Service Bus)  │     │
-│  │ TieredStorageManager     │     │ Trade/Quote/Depth Consumers  │     │
-│  │ DataRetentionPolicy      │     └──────────────────────────────┘     │
+│  └──────────────┬──────────────────────────────────────────────────┘   │
+└─────────────────┼───────────────────────────────────────────────────────┘
+                  │ append()
+┌─────────────────┼───────────────────────────────────────────────────────┐
+│           Storage Layer                                                  │
+│  ┌─────────────┴────────────┐                                           │
+│  │ JsonlStorageSink         │                                           │
+│  │ ParquetStorageSink       │                                           │
+│  │ TieredStorageManager     │                                           │
+│  │ DataRetentionPolicy      │                                           │
 │  └──────────────────────────┘                                           │
 └─────────────────────────────────────────────────────────────────────────┘
                   ↑
@@ -124,7 +122,6 @@ The architecture supports multiple deployment modes:
 * `SymbolSubscriptionTracker` – base class providing thread-safe subscription management (registration, unregistration, auto-subscription)
 * `TradeDataCollector` – tick-by-tick trades with sequence validation and order-flow statistics
 * `MarketDepthCollector` – L2 order book maintenance with integrity checking (extends `SymbolSubscriptionTracker`)
-* `HighPerformanceMarketDepthCollector` – lock-free order book with immutable snapshots (extends `SymbolSubscriptionTracker`)
 * `QuoteCollector` – BBO state cache and `BboQuote` event emission
 * Domain models: `Trade`, `LOBSnapshot`, `BboQuotePayload`, `OrderFlowStatistics`, integrity events
 
@@ -172,16 +169,6 @@ The architecture supports multiple deployment modes:
   - `TieredStorageManager` – hot/warm/cold storage tier management with automatic migration
   - `DataRetentionPolicy` – time-based and capacity-based retention enforcement
 * `StorageOptions` – configurable naming conventions, partitioning strategies, retention policies, and capacity limits
-
-### Messaging (MassTransit)
-* Optional distributed messaging layer for microservices and event streaming
-* `CompositePublisher` – publishes events to both local storage and message bus
-* Supports multiple transports:
-  - `InMemory` – for testing and single-process deployments
-  - `RabbitMQ` – for distributed deployments
-  - `AzureServiceBus` – for cloud deployments
-* Message consumers for Trade, Quote, L2Snapshot, and Integrity events
-* Configurable retry policies with exponential backoff
 
 ---
 
@@ -306,61 +293,6 @@ await foreach (var evt in replayer.ReadEventsAsync(cancellationToken))
 
 ---
 
----
-
-## Microservices Architecture
-
-For high-throughput deployments, the system can be deployed as a set of microservices:
-
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                            API Gateway (Port 5000)                       │
-│  ├── Request routing and rate limiting                                  │
-│  ├── Provider connection management                                     │
-│  └── Subscription management                                            │
-└───────────────────────────────────┬─────────────────────────────────────┘
-                                    │
-        ┌───────────────────────────┼───────────────────────────┐
-        │                           │                           │
-┌───────▼───────┐         ┌─────────▼─────────┐       ┌─────────▼─────────┐
-│ Trade Service │         │ OrderBook Service │       │ Quote Service     │
-│ (Port 5001)   │         │ (Port 5002)       │       │ (Port 5003)       │
-│ ├─ High-      │         │ ├─ Snapshot/delta │       │ ├─ Spread calc    │
-│ │  throughput │         │ │  processing     │       │ ├─ Crossed/locked │
-│ ├─ Sequence   │         │ ├─ Integrity      │       │ │  detection      │
-│ │  validation │         │ │  checking       │       │ └─ Quote state    │
-│ └─ Order flow │         │ └─ Book freeze    │       │    tracking       │
-└───────────────┘         └───────────────────┘       └───────────────────┘
-        │                           │                           │
-        └───────────────────────────┼───────────────────────────┘
-                                    │
-        ┌───────────────────────────┼───────────────────────────┐
-        │                           │                           │
-┌───────▼───────────┐     ┌─────────▼─────────┐     ┌───────────▼───────┐
-│ Historical Service│     │ Validation Service│     │     Storage       │
-│ (Port 5004)       │     │ (Port 5005)       │     │   (JSONL/DB)      │
-│ ├─ Backfill jobs  │     │ ├─ Quality rules  │     │                   │
-│ ├─ Progress       │     │ ├─ Metrics agg    │     │                   │
-│ │  tracking       │     │ └─ Alert gen      │     │                   │
-│ └─ Multi-source   │     │                   │     │                   │
-└───────────────────┘     └───────────────────┘     └───────────────────┘
-```
-
-### Microservices Components
-
-| Service | Port | Purpose |
-|---------|------|---------|
-| **Gateway** | 5000 | API entry point, routing, rate limiting, provider management |
-| **TradeIngestion** | 5001 | High-throughput trade processing, sequence validation, deduplication |
-| **OrderBookIngestion** | 5002 | L2 order book state, snapshot/delta processing, integrity checking |
-| **QuoteIngestion** | 5003 | BBO/NBBO quotes, spread calculation, crossed market detection |
-| **HistoricalDataIngestion** | 5004 | Backfill job management, progress tracking, multi-source support |
-| **DataValidation** | 5005 | Quality rules, metrics aggregation, alerting |
-
-See [Microservices README](../src/Microservices/README.md) for deployment instructions.
-
----
-
 ## Historical Data Backfill
 
 The system supports historical data backfill from multiple providers with automatic failover:
@@ -478,14 +410,13 @@ The system supports multiple credential sources with priority resolution:
 
 The system includes several high-performance features:
 
-* **System.IO.Pipelines** – Zero-copy WebSocket processing with `Utf8JsonReader`
 * **Source-Generated JSON** – 2-3x faster serialization via `MarketDataJsonContext`
-* **Lock-Free Order Book** – `LockFreeOrderBook` for high-frequency updates
-* **Object Pooling** – Reusable buffers to reduce GC pressure
+* **Bounded Channel Pipeline** – Async event processing with configurable backpressure
 * **Parallel Provider Execution** – Concurrent backfill across multiple providers
+* **Connection Warmup** – Pre-JIT critical paths and connection pooling
 
 ---
 
-**Version:** 1.5.0
-**Last Updated:** 2026-01-08
-**See Also:** [c4-diagrams.md](c4-diagrams.md) | [domains.md](domains.md) | [why-this-architecture.md](why-this-architecture.md) | [Microservices README](../../src/Microservices/README.md) | [provider-management.md](provider-management.md) | [F# Integration](../integrations/fsharp-integration.md)
+**Version:** 1.6.0
+**Last Updated:** 2026-01-19
+**See Also:** [c4-diagrams.md](c4-diagrams.md) | [domains.md](domains.md) | [why-this-architecture.md](why-this-architecture.md) | [provider-management.md](provider-management.md) | [F# Integration](../integrations/fsharp-integration.md)

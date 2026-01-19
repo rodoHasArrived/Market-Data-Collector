@@ -99,26 +99,6 @@ services:
     depends_on:
       - prometheus
 
-  # ---------------------------------------------------------------------------
-  # RabbitMQ - Message Bus (Optional, for MassTransit)
-  # ---------------------------------------------------------------------------
-  rabbitmq:
-    image: rabbitmq:3-management-alpine
-    container_name: mdc-rabbitmq
-    profiles:
-      - messaging
-    restart: unless-stopped
-    ports:
-      - "5672:5672"   # AMQP
-      - "15672:15672" # Management UI
-    volumes:
-      - rabbitmq-data:/var/lib/rabbitmq
-    environment:
-      - RABBITMQ_DEFAULT_USER=mdc
-      - RABBITMQ_DEFAULT_PASS=mdc-secret
-    networks:
-      - mdc-network
-
 networks:
   mdc-network:
     driver: bridge
@@ -126,7 +106,6 @@ networks:
 volumes:
   prometheus-data:
   grafana-data:
-  rabbitmq-data:
 
 # =============================================================================
 # Usage:
@@ -139,12 +118,6 @@ volumes:
 # Start with monitoring stack:
 #   docker compose -f deploy/docker/docker-compose.yml --profile monitoring up -d
 #   # Or: make docker-monitoring
-#
-# Start with message bus:
-#   docker compose -f deploy/docker/docker-compose.yml --profile messaging up -d
-#
-# Start everything:
-#   docker compose -f deploy/docker/docker-compose.yml --profile monitoring --profile messaging up -d
 #
 # View logs:
 #   docker compose -f deploy/docker/docker-compose.yml logs -f marketdatacollector

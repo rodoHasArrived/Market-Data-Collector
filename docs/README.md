@@ -1,7 +1,7 @@
 # Market Data Collector Documentation
 
-**Version:** 1.5.0
-**Last Updated:** 2026-01-14
+**Version:** 1.6.0
+**Last Updated:** 2026-01-19
 
 Welcome to the Market Data Collector documentation. This guide will help you find the information you need.
 
@@ -80,9 +80,8 @@ Project status and future planning.
 | Document | Description |
 |----------|-------------|
 | [production-status.md](status/production-status.md) | Production readiness assessment |
-| [improvements.md](status/improvements.md) | Implemented and planned improvements |
-| [FEATURE_BACKLOG.md](status/FEATURE_BACKLOG.md) | Feature backlog and roadmap |
-| [uwp-feature-ideas.md](status/uwp-feature-ideas.md) | Windows desktop app feature ideas |
+| [ROADMAP.md](status/ROADMAP.md) | Feature roadmap and backlog |
+| [CHANGELOG.md](status/CHANGELOG.md) | Version changelog and history |
 
 ---
 
@@ -124,7 +123,7 @@ Additional reference documentation.
 ### For Developers
 1. [Architecture Overview](architecture/overview.md)
 2. [Provider Management](architecture/provider-management.md)
-3. [Improvements](status/improvements.md)
+3. [Roadmap](status/ROADMAP.md)
 
 ### For Quant Developers
 1. [Lean Integration](integrations/lean-integration.md)

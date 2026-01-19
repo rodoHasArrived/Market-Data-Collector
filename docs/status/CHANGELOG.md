@@ -1,13 +1,42 @@
 # Market Data Collector - Changelog
 
-**Last Updated:** 2026-01-14
-**Current Version:** 1.5.0
+**Last Updated:** 2026-01-19
+**Current Version:** 1.6.0
 
 This document tracks implemented improvements and version history for the Market Data Collector system.
 
 ---
 
-## Version 1.5.0 (Current)
+## Version 1.6.0 (Current)
+
+### New Features
+
+#### Simplified Architecture (2026-01-19)
+- **Monolithic Core**: Removed microservices layer for improved simplicity and maintainability
+- **Dead Code Removal**: Cleaned up unused code, deprecated features, and legacy components
+- **Streamlined Codebase**: Reduced complexity by consolidating services into the core application
+
+#### Documentation Updates (2026-01-19)
+- **Comprehensive Refresh**: Updated all documentation to reflect current v1.6.0 architecture
+- **Fixed Broken Links**: Resolved links to non-existent files in documentation hub
+- **Removed Microservices References**: Updated guides to reflect simplified architecture
+- **Version Sync**: Synchronized version numbers across all documentation files
+
+#### CI/CD Improvements (2026-01-19)
+- **Optimized GitHub Actions**: Faster builds with improved caching strategies
+- **Reduced Workflow Complexity**: Streamlined CI/CD pipelines for better reliability
+
+### Breaking Changes
+- Microservices architecture has been removed; use the monolithic core for all deployments
+- MassTransit messaging is no longer used; the application uses direct in-process communication
+
+### Migration Notes
+- If you were using the microservices deployment, migrate to the monolithic core
+- Remove any MassTransit/RabbitMQ configuration from your deployment
+
+---
+
+## Version 1.5.0
 
 ### New Features
 

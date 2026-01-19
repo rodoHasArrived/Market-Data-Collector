@@ -120,12 +120,7 @@
     <!-- HTTP Client for REST APIs (Polygon, etc.) -->
     <PackageReference Include="System.Net.Http.Json" Version="10.0.2" />
 
-    <!-- MassTransit - Distributed Application Framework -->
-    <PackageReference Include="MassTransit" Version="9.0.0" />
-    <PackageReference Include="MassTransit.RabbitMQ" Version="9.0.0" />
-    <PackageReference Include="MassTransit.Azure.ServiceBus.Core" Version="9.0.0" />
-
-    <!-- Hosting support for MassTransit -->
+    <!-- Hosting support -->
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.12" />
 
     <!-- ASP.NET Core - Web Dashboard Support -->
