@@ -1,5 +1,6 @@
 # Code Quality Workflow
-# Runs code formatting checks and static analysis on every PR and push to main
+# Runs code formatting checks, static analysis, and documentation validation
+# Consolidated into single job to reduce restore/build cycles
 
 name: Code Quality
 
@@ -22,10 +23,6 @@ on:
   #     - 'src/**'
   #     - 'tests/**'
   #     - 'benchmarks/**'
-  #     - '*.props'
-  #     - '*.targets'
-  #     - '**/*.csproj'
-  #     - '**/*.fsproj'
   workflow_dispatch:
 
 permissions:
@@ -41,65 +38,31 @@ env:
   DOTNET_CLI_TELEMETRY_OPTOUT: true
 
 jobs:
-  format-check:
-    name: Code Formatting
+  quality-checks:
+    name: Code Quality Checks
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v5
+      - name: Setup .NET with Cache
+        uses: ./.github/actions/setup-dotnet-cache
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
-
-      - name: Cache NuGet packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.nuget/packages
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/*.fsproj', 'Directory.Build.props') }}
-          restore-keys: |
-            ${{ runner.os }}-nuget-
 
       - name: Restore dependencies
         run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
 
+      # Format check (doesn't need build)
       - name: Check code formatting
-        run: dotnet format MarketDataCollector.sln --verify-no-changes --verbosity diagnostic
-        continue-on-error: true
         id: format-check
+        run: dotnet format MarketDataCollector.sln --verify-no-changes --verbosity normal
+        continue-on-error: true
 
-      - name: Report formatting issues
-        if: steps.format-check.outcome == 'failure'
-        run: |
-          echo "::warning::Code formatting issues detected. Run 'dotnet format' locally to fix."
-
-  static-analysis:
-    name: Static Analysis
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
-
-      - name: Cache NuGet packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.nuget/packages
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/*.fsproj', 'Directory.Build.props') }}
-          restore-keys: |
-            ${{ runner.os }}-nuget-
-
-      - name: Restore dependencies
-        run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
-
-      - name: Build with analysis
+      # Single build with all analysis enabled
+      - name: Build with analysis and documentation
+        id: build
         run: |
           dotnet build MarketDataCollector.sln \
             -c Release \
@@ -108,60 +71,56 @@ jobs:
             /p:TreatWarningsAsErrors=false \
             /p:AnalysisLevel=latest \
             /p:EnforceCodeStyleInBuild=true \
-            /p:RunAnalyzersDuringBuild=true
+            /p:RunAnalyzersDuringBuild=true \
+            /p:GenerateDocumentationFile=true \
+            /p:NoWarn=1591 \
+            2>&1 | tee build-output.log
 
-      - name: Check for nullable reference warnings
+      # Analyze build output for issues
+      - name: Analyze build results
         run: |
-          dotnet build MarketDataCollector.sln \
-            -c Release \
-            --no-restore \
-            /p:EnableWindowsTargeting=true \
-            /warnaserror:nullable 2>&1 | tee build.log || true
+          echo "## Code Quality Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Generated:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
 
-          NULLABLE_WARNINGS=$(grep -c "warning CS86" build.log || true)
-          if [ "$NULLABLE_WARNINGS" -gt 0 ]; then
-            echo "::warning::Found $NULLABLE_WARNINGS nullable reference warnings"
+          # Format check results
+          echo "### Code Formatting" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.format-check.outcome }}" = "success" ]; then
+            echo "- Status: Passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- Status: Issues detected" >> $GITHUB_STEP_SUMMARY
+            echo "- Run \`dotnet format\` locally to fix" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Static analysis results
+          echo "### Static Analysis" >> $GITHUB_STEP_SUMMARY
+          ANALYZER_WARNINGS=$(grep -cE "warning (CA|CS|IDE)" build-output.log || true)
+          echo "- Analyzer warnings: $ANALYZER_WARNINGS" >> $GITHUB_STEP_SUMMARY
+
+          # Security warnings
+          SECURITY_WARNINGS=$(grep -cE "warning SCS" build-output.log || true)
+          if [ "$SECURITY_WARNINGS" -gt 0 ]; then
+            echo "- Security warnings: $SECURITY_WARNINGS" >> $GITHUB_STEP_SUMMARY
           fi
 
-  xml-documentation:
-    name: XML Documentation Check
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
-
-      - name: Cache NuGet packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.nuget/packages
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/*.fsproj', 'Directory.Build.props') }}
-          restore-keys: |
-            ${{ runner.os }}-nuget-
-
-      - name: Restore dependencies
-        run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
-
-      - name: Build with XML documentation
-        run: |
-          dotnet build MarketDataCollector.sln \
-            -c Release \
-            --no-restore \
-            /p:EnableWindowsTargeting=true \
-            /p:GenerateDocumentationFile=true \
-            /p:NoWarn=1591
-
-      - name: Validate XML documentation exists
-        run: |
-          echo "## XML Documentation Files" >> $GITHUB_STEP_SUMMARY
+          # Nullable warnings
+          NULLABLE_WARNINGS=$(grep -cE "warning CS86" build-output.log || true)
+          if [ "$NULLABLE_WARNINGS" -gt 0 ]; then
+            echo "- Nullable reference warnings: $NULLABLE_WARNINGS" >> $GITHUB_STEP_SUMMARY
+          fi
           echo "" >> $GITHUB_STEP_SUMMARY
-          find . -name "*.xml" -path "*/bin/Release/*" | while read xmlfile; do
-            if [ -s "$xmlfile" ]; then
-              echo "- $(basename $xmlfile)" >> $GITHUB_STEP_SUMMARY
-            fi
-          done
+
+          # XML documentation
+          echo "### XML Documentation" >> $GITHUB_STEP_SUMMARY
+          XML_COUNT=$(find . -name "*.xml" -path "*/bin/Release/*" 2>/dev/null | wc -l)
+          echo "- Documentation files generated: $XML_COUNT" >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload build log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output
+          path: build-output.log
+          retention-days: 7
