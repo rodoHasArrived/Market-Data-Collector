@@ -104,7 +104,7 @@
 
     <!-- Performance -->
   <PackageReference Include="System.Text.Json" Version="10.0.2" />
-    <PackageReference Include="System.Threading.Channels" Version="9.0.0" />
+    <PackageReference Include="System.Threading.Channels" Version="10.0.2" />
     <PackageReference Include="System.IO.Pipelines" Version="10.0.2" />
 
     <!-- Validation -->
