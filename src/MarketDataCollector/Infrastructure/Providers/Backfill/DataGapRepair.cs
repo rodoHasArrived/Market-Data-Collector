@@ -331,7 +331,6 @@ public sealed class DataGapRepairService
         CancellationToken ct)
     {
         var availableProviders = _providers
-            .OfType<IHistoricalDataProviderV2>()
             .Where(p => p.IsAvailableAsync(ct).GetAwaiter().GetResult())
             .Select(p => p.Name)
             .ToArray();

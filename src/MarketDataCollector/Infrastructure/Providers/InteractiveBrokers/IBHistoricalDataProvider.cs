@@ -22,7 +22,7 @@ namespace MarketDataCollector.Infrastructure.Providers.InteractiveBrokers;
 /// Note: Historical data requires active Level 1 streaming subscription for US equities.
 /// Free streaming data is available via Cboe One + IEX (non-consolidated).
 /// </summary>
-public sealed class IBHistoricalDataProvider : IHistoricalDataProviderV2, IRateLimitAwareProvider, IDisposable
+public sealed class IBHistoricalDataProvider : IHistoricalDataProvider, IRateLimitAwareProvider, IDisposable
 {
     private readonly EnhancedIBConnectionManager _connectionManager;
     private readonly RateLimiter _globalRateLimiter;

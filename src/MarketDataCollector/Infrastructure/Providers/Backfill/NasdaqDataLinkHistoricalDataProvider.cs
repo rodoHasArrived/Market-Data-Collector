@@ -13,7 +13,7 @@ namespace MarketDataCollector.Infrastructure.Providers.Backfill;
 /// Free tier: 50 calls/day, 300 calls/10 seconds.
 /// Provides access to various datasets including WIKI (end-of-life) and premium datasets.
 /// </summary>
-public sealed class NasdaqDataLinkHistoricalDataProvider : IHistoricalDataProviderV2, IDisposable
+public sealed class NasdaqDataLinkHistoricalDataProvider : IHistoricalDataProvider, IDisposable
 {
     private const string BaseUrl = "https://data.nasdaq.com/api/v3";
 

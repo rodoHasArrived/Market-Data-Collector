@@ -15,7 +15,7 @@ namespace MarketDataCollector.Infrastructure.Providers.Backfill;
 /// Coverage: 60,000+ global securities with company fundamentals.
 /// Best for: Earnings data, fundamentals, news, and high-frequency backfill operations.
 /// </summary>
-public sealed class FinnhubHistoricalDataProvider : IHistoricalDataProviderV2, IDisposable
+public sealed class FinnhubHistoricalDataProvider : IHistoricalDataProvider, IDisposable
 {
     private const string BaseUrl = "https://finnhub.io/api/v1";
 

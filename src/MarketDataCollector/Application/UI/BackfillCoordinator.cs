@@ -46,9 +46,9 @@ public sealed class BackfillCoordinator : IDisposable
                 p.Name,
                 p.DisplayName,
                 p.Description,
-                Priority = p is IHistoricalDataProviderV2 v2 ? v2.Priority : 100,
-                SupportsAdjustedPrices = p is IHistoricalDataProviderV2 v2a && v2a.SupportsAdjustedPrices,
-                SupportsDividends = p is IHistoricalDataProviderV2 v2d && v2d.SupportsDividends
+                p.Priority,
+                p.SupportsAdjustedPrices,
+                p.SupportsDividends
             });
     }
 
@@ -67,17 +67,7 @@ public sealed class BackfillCoordinator : IDisposable
             var startTime = DateTimeOffset.UtcNow;
             try
             {
-                bool isAvailable;
-                if (provider is IHistoricalDataProviderV2 v2)
-                {
-                    isAvailable = await v2.IsAvailableAsync(ct).ConfigureAwait(false);
-                }
-                else
-                {
-                    // Basic providers assumed available
-                    isAvailable = true;
-                }
-
+                var isAvailable = await provider.IsAvailableAsync(ct).ConfigureAwait(false);
                 var elapsed = DateTimeOffset.UtcNow - startTime;
                 results[provider.Name] = new ProviderHealthStatus(
                     provider.Name,
@@ -193,7 +183,7 @@ public sealed class BackfillCoordinator : IDisposable
 
         // Sort by priority
         return providers
-            .OrderBy(p => p is IHistoricalDataProviderV2 v2 ? v2.Priority : 100)
+            .OrderBy(p => p.Priority)
             .ToList();
     }
 

@@ -14,7 +14,7 @@ namespace MarketDataCollector.Infrastructure.Providers.Backfill;
 /// as well as tick-level quotes (NBBO), trades, and auction data.
 /// Coverage: US equities, ETFs.
 /// </summary>
-public sealed class AlpacaHistoricalDataProvider : IHistoricalDataProviderExtended, IRateLimitAwareProvider, IDisposable
+public sealed class AlpacaHistoricalDataProvider : IHistoricalDataProvider, IRateLimitAwareProvider, IDisposable
 {
     private const string BaseUrl = "https://data.alpaca.markets/v2/stocks";
     private const string EnvKeyId = "ALPACA_KEY_ID";

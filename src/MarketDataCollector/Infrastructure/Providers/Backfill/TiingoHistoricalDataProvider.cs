@@ -14,7 +14,7 @@ namespace MarketDataCollector.Infrastructure.Providers.Backfill;
 /// Coverage: 65,000+ US/international equities, ETFs, mutual funds.
 /// Free tier: 1,000 requests/day, 50 requests/hour.
 /// </summary>
-public sealed class TiingoHistoricalDataProvider : IHistoricalDataProviderV2, IDisposable
+public sealed class TiingoHistoricalDataProvider : IHistoricalDataProvider, IDisposable
 {
     private const string BaseUrl = "https://api.tiingo.com/tiingo/daily";
 
