@@ -16,7 +16,7 @@
   <ItemGroup>
     <!-- ASP.NET Core -->
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.12" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.9.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.0" />
 
     <!-- MassTransit -->
     <PackageReference Include="MassTransit" Version="9.0.0" />
