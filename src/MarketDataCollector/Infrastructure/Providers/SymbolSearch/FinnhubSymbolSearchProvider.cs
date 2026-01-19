@@ -258,29 +258,7 @@ public sealed class FinnhubSymbolSearchProvider : IFilterableSymbolSearchProvide
     }
 
     private static int CalculateMatchScore(string query, string symbol, string? name, int position)
-    {
-        var score = 50;
-        var queryUpper = query.ToUpperInvariant();
-        var symbolUpper = symbol.ToUpperInvariant();
-
-        // Exact symbol match
-        if (symbolUpper == queryUpper)
-            score = 100;
-        // Symbol starts with query
-        else if (symbolUpper.StartsWith(queryUpper))
-            score = 80 + (10 - Math.Min(10, symbolUpper.Length - queryUpper.Length));
-        // Symbol contains query
-        else if (symbolUpper.Contains(queryUpper))
-            score = 60;
-        // Name contains query
-        else if (name?.Contains(query, StringComparison.OrdinalIgnoreCase) == true)
-            score = 40;
-
-        // Position penalty (prefer earlier results from API)
-        score -= Math.Min(20, position * 2);
-
-        return Math.Max(0, score);
-    }
+        => SymbolSearchUtility.CalculateMatchScore(query, symbol, name, position);
 
     private static DateOnly? ParseIpoDate(string? ipoDate)
     {

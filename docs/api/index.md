@@ -15,7 +15,6 @@ docfx docs/docfx/docfx.json
 ### Domain Layer
 - `TradeDataCollector` - Tick-by-tick trade processing with sequence validation
 - `MarketDepthCollector` - L2 order book maintenance with integrity checking
-- `HighPerformanceMarketDepthCollector` - Optimized depth collector for high-volume streams
 - `QuoteCollector` - BBO state cache and quote event emission
 - `SymbolSubscriptionTracker` - Thread-safe subscription management base class
 
@@ -54,11 +53,6 @@ docfx docs/docfx/docfx.json
 - `PolygonHistoricalDataProvider` - Polygon aggregated data
 - `CompositeHistoricalDataProvider` - Automatic failover across providers
 
-### Messaging Layer
-- `CompositePublisher` - Publishes to local storage and message bus
-- `MassTransitConfiguration` - RabbitMQ/Azure Service Bus setup
-- Trade, Quote, L2Snapshot consumers
-
 ### Lean Integration
 - `MarketDataCollectorTradeData` - Custom Lean BaseData for trades
 - `MarketDataCollectorQuoteData` - Custom Lean BaseData for quotes
@@ -72,6 +66,6 @@ docfx docs/docfx/docfx.json
 
 ---
 
-**Version:** 1.5.0
-**Last Updated:** 2026-01-08
+**Version:** 1.6.0
+**Last Updated:** 2026-01-19
 **See Also:** [Architecture Overview](../architecture/overview.md) | [Domain Model](../architecture/domains.md) | [Lean Integration](../integrations/lean-integration.md)

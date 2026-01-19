@@ -21,7 +21,7 @@ messages:
       - Batching for efficient I/O operations
 
       ### Order Book Management
-      - HighPerformanceMarketDepthCollector for lock-free updates
+      - MarketDepthCollector for L2 order book maintenance
       - SortedDictionary for price level management
       - Snapshot generation with minimal allocations
 

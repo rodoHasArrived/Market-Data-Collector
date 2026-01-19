@@ -1,7 +1,7 @@
 # Architecture Diagrams
 
-**Last Updated:** 2026-01-14
-**Version:** 1.5.0
+**Last Updated:** 2026-01-19
+**Version:** 1.6.0
 
 This folder contains architecture diagrams for the Market Data Collector system in Graphviz DOT format.
 
@@ -17,7 +17,6 @@ This folder contains architecture diagrams for the Market Data Collector system 
 | **Data Flow** | End-to-end data flow from sources to export | `data-flow.dot` |
 | **Provider Architecture** | Data provider abstraction and implementation | `provider-architecture.dot` |
 | **Storage Architecture** | Storage pipeline with WAL, compression, tiering | `storage-architecture.dot` |
-| **Microservices** | Optional distributed microservices deployment | `microservices-architecture.dot` |
 | **Event Pipeline Sequence** | Detailed event processing sequence | `event-pipeline-sequence.dot` |
 | **Resilience Patterns** | Circuit breakers, retry, failover patterns | `resilience-patterns.dot` |
 | **Deployment Options** | Standalone to Kubernetes deployment paths | `deployment-options.dot` |
@@ -53,11 +52,10 @@ Shows the major deployable units:
 ### C4 Level 3: Component Diagram
 
 Detailed view of the core collector internals:
-- **Infrastructure Layer**: Streaming clients (IB, Alpaca, NYSE, StockSharp), Historical providers (9), Connection/Resilience management, Performance optimizations (Pipelines, LockFreeOrderBook)
-- **Domain Layer**: Collectors (Trade, Quote, Depth, HighPerformance), Domain models, F# validation pipeline
-- **Application Layer**: EventPipeline (100K bounded channel), Technical indicators (200+), Config/Monitoring, Backfill service, **Onboarding & Diagnostics** (8 new services: AutoConfiguration, Wizard, FirstRunDetector, ConnectivityTest, CredentialValidation, ErrorFormatter, ProgressDisplay, StartupSummary)
+- **Infrastructure Layer**: Streaming clients (IB, Alpaca, NYSE, StockSharp), Historical providers (9), Connection/Resilience management, Performance optimizations (source-generated JSON, connection warmup)
+- **Domain Layer**: Collectors (Trade, Quote, Depth), Domain models, F# validation pipeline
+- **Application Layer**: EventPipeline (100K bounded channel), Technical indicators (200+), Config/Monitoring, Backfill service, **Onboarding & Diagnostics** (8 services: AutoConfiguration, Wizard, FirstRunDetector, ConnectivityTest, CredentialValidation, ErrorFormatter, ProgressDisplay, StartupSummary)
 - **Storage Layer**: Write path (WAL, JSONL, Parquet), Compression profiles, Export service, Quality reporting
-- **Messaging Layer**: Composite/Pipeline/MassTransit publishers
 
 ### Data Flow Diagram
 
@@ -95,19 +93,6 @@ Details the archival-first storage pipeline:
 - **Tiered Storage**: Hot (SSD, 0-7d) → Warm (HDD, 7-30d) → Cold (S3/Glacier, 30d+)
 - **Export Formats**: Python/Pandas, R Statistics, QuantConnect Lean, Excel, PostgreSQL
 - **Quality Assessment**: Multi-dimensional scoring, outlier detection (4σ), A+ to F grading
-
-### Microservices Architecture
-
-Shows the optional distributed deployment:
-- **API Gateway** (:5000) - Routing, JWT auth, rate limiting, health aggregation
-- **Trade Ingestion** (:5001) - High-throughput, sequence validation, VWAP
-- **OrderBook Ingestion** (:5002) - L2 depth, book reconstruction, imbalance
-- **Quote Ingestion** (:5003) - BBO/NBBO, spread calculation
-- **Historical Service** (:5004) - Backfill coordination, gap repair
-- **Validation Service** (:5005) - Quality rules, anomaly detection
-- **Message Bus**: RabbitMQ/Azure SB with MassTransit, fanout exchanges
-- **Observability**: Prometheus (metrics), Jaeger/Tempo (tracing), Loki (logging), Grafana (visualization)
-- **Deployment**: Docker Compose (dev), Kubernetes with HPA (production)
 
 ### Event Pipeline Sequence (NEW)
 

@@ -1,6 +1,6 @@
 // C4 Level 3: Component Diagram
-// Market Data Collector v1.5.0
-// Last Updated: 2026-01-14
+// Market Data Collector v1.6.0
+// Last Updated: 2026-01-19
 //
 // This diagram shows the internal components of the Market Data Collector Core.
 // It answers: "What are the building blocks and their responsibilities?"
@@ -16,7 +16,7 @@ digraph C4_Components {
 
   // Title
   labelloc="t";
-  label="Market Data Collector - Component Diagram (C4 Level 3)\nCore Collector Internals | v1.5.0";
+  label="Market Data Collector - Component Diagram (C4 Level 3)\nCore Collector Internals | v1.6.0";
 
   // External Systems
   subgraph cluster_external {
@@ -38,9 +38,6 @@ digraph C4_Components {
 
   FS [shape=cylinder, style="filled", fillcolor="#718096", fontcolor="white",
       label="File System\n[Local/Cloud]"];
-
-  MQ [shape=box, style="rounded,filled", fillcolor="#e53e3e", fontcolor="white",
-      label="Message Bus\n[RabbitMQ/Azure SB]"];
 
   // Core Collector Container
   subgraph cluster_core {
@@ -96,9 +93,8 @@ digraph C4_Components {
         style="dashed";
         color="#1e40af";
 
-        PIPELINES [label="PipelinesWebSocketProcessor\n[Component]\n\nSystem.IO.Pipelines\nZero-copy parsing\nUtf8JsonReader", fillcolor="#bfdbfe"];
-        ORDERBOOK [label="LockFreeOrderBook\n[Component]\n\nLock-free data structure\nImmutable snapshots\nHigh-frequency updates", fillcolor="#bfdbfe"];
         JSON_CTX [label="MarketDataJsonContext\n[Component]\n\nSource-generated JSON\n2-3x faster serialization", fillcolor="#bfdbfe"];
+        CONN_WARMUP [label="ConnectionWarmUp\n[Component]\n\nPre-JIT critical paths\nConnection pooling", fillcolor="#bfdbfe"];
       }
     }
 
@@ -118,7 +114,6 @@ digraph C4_Components {
         TRADE_COLL [label="TradeDataCollector\n[Component]\n\nTick-by-tick processing\nSequence validation\nOrder-flow statistics\nAggressor inference", fillcolor="#a7f3d0"];
         QUOTE_COLL [label="QuoteCollector\n[Component]\n\nBBO state cache\nSpread calculation\nCrossed market detection\nQuote event emission", fillcolor="#a7f3d0"];
         DEPTH_COLL [label="MarketDepthCollector\n[Component]\n\nL2 order book state\nInsert/Update/Delete ops\nIntegrity checking\nBook freeze on error", fillcolor="#a7f3d0"];
-        HP_DEPTH [label="HighPerformanceMarketDepthCollector\n[Component]\n\nLock-free implementation\nImmutable snapshots", fillcolor="#a7f3d0"];
       }
 
       // Models
@@ -222,17 +217,6 @@ digraph C4_Components {
       }
     }
 
-    // Messaging Layer
-    subgraph cluster_messaging {
-      label="Messaging Layer - Distribution";
-      color="#e53e3e";
-      style="rounded";
-      bgcolor="#fecaca";
-
-      COMPOSITE_PUB [label="CompositePublisher\n[Component]\n\nFanout to multiple sinks\nLocal + distributed", fillcolor="#feb2b2"];
-      PIPELINE_PUB [label="PipelinePublisher\n[Component]\n\nLocal storage path", fillcolor="#feb2b2"];
-      MT_PUB [label="MassTransitPublisher\n[Component]\n\nRabbitMQ/Azure SB\nEvent distribution", fillcolor="#feb2b2"];
-    }
   }
 
   // External -> Infrastructure
@@ -242,7 +226,6 @@ digraph C4_Components {
   ALP_CLIENT -> WS_RESILIENCE [color="#2b6cb0"];
   NYSE -> NYSE_CLIENT [color="#2b6cb0"];
   SS -> SS_CLIENT [color="#2b6cb0"];
-  POL_CLIENT -> PIPELINES [style=dashed];
   HIST_API -> HIST_COMPOSITE [color="#2c7a7b"];
   HIST_COMPOSITE -> HIST_IMPLS;
 
@@ -259,8 +242,6 @@ digraph C4_Components {
   TRADE_COLL -> MODELS;
   QUOTE_COLL -> MODELS;
   DEPTH_COLL -> MODELS;
-  DEPTH_COLL -> ORDERBOOK;
-  HP_DEPTH -> ORDERBOOK;
   MODELS -> FSHARP_TYPES;
   FSHARP_TYPES -> VALIDATION;
   QUOTE_COLL -> TRADE_COLL [style=dashed, label="BBO state\nfor aggressor"];
@@ -273,15 +254,9 @@ digraph C4_Components {
 
   // Application internal
   PIPELINE -> INDICATORS [style=dashed];
-  PIPELINE -> COMPOSITE_PUB [color="#805ad5"];
-
-  // Messaging internal
-  COMPOSITE_PUB -> PIPELINE_PUB;
-  COMPOSITE_PUB -> MT_PUB;
-  MT_PUB -> MQ [color="#e53e3e"];
 
   // Storage path
-  PIPELINE_PUB -> WAL [color="#c53030", label="1. journal"];
+  PIPELINE -> WAL [color="#c53030", label="1. journal"];
   WAL -> JSONL_SINK [color="#c53030", label="2. persist"];
   JSONL_SINK -> COMPRESS [color="#c53030", label="3. compress"];
   COMPRESS -> PARQUET_SINK [color="#c53030", label="4. archive"];
