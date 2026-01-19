@@ -17,7 +17,6 @@ namespace MarketDataCollector.Application.Config;
 /// <param name="StockSharp">StockSharp connector configuration (required if DataSource == DataSourceKind.StockSharp).</param>
 /// <param name="Storage">Storage configuration options (naming convention, partitioning, etc.).</param>
 /// <param name="Symbols">Symbol subscriptions.</param>
-/// <param name="MassTransit">MassTransit distributed messaging configuration.</param>
 /// <param name="Backfill">Optional historical backfill defaults.</param>
 /// <param name="Tiering">Tiered storage configuration.</param>
 /// <param name="Quotas">Storage quota configuration.</param>
@@ -34,7 +33,6 @@ public sealed record AppConfig(
     StockSharpConfig? StockSharp = null,
     StorageConfig? Storage = null,
     SymbolConfig[]? Symbols = null,
-    MassTransitConfig? MassTransit = null,
     BackfillConfig? Backfill = null,
     TieringConfig? Tiering = null,
     QuotaConfig? Quotas = null,

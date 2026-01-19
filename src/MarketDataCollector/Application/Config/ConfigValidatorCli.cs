@@ -196,11 +196,6 @@ public sealed class ConfigValidatorCli
             Console.WriteLine($"    Partitioning:    {config.Storage.DatePartition}");
         }
 
-        if (config.MassTransit?.Enabled == true)
-        {
-            Console.WriteLine($"    MassTransit:     {config.MassTransit.Transport}");
-        }
-
         Console.WriteLine();
 
         // Symbol summary
@@ -308,14 +303,6 @@ public sealed class ExtendedAppConfigValidator : AbstractValidator<AppConfig>
                 .GreaterThan(0)
                 .When(x => x.Storage!.RetentionDays.HasValue)
                 .WithMessage("RetentionDays must be positive");
-        });
-
-        // Check MassTransit config when enabled
-        When(x => x.MassTransit?.Enabled == true, () =>
-        {
-            RuleFor(x => x.MassTransit!.Transport)
-                .NotEmpty()
-                .WithMessage("MassTransit transport must be specified when enabled");
         });
 
         // Warn about common configuration issues

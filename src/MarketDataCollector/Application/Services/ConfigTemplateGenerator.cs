@@ -209,20 +209,6 @@ public sealed class ConfigTemplateGenerator
                 RetentionDays = 365,
                 MaxTotalMegabytes = 102400
             },
-            MassTransit = new
-            {
-                Enabled = true,
-                Transport = "RabbitMQ",
-                RabbitMQ = new
-                {
-                    Host = "${RABBITMQ_HOST}",
-                    Port = 5672,
-                    VirtualHost = "/",
-                    Username = "${RABBITMQ_USER}",
-                    Password = "${RABBITMQ_PASS}",
-                    UseSsl = true
-                }
-            },
             Symbols = new[]
             {
                 new { Symbol = "SPY", SubscribeTrades = true, SubscribeDepth = true, DepthLevels = 10 },
@@ -247,10 +233,7 @@ public sealed class ConfigTemplateGenerator
             EnvironmentVariables = new Dictionary<string, string>
             {
                 ["ALPACA_KEY_ID"] = "Your Alpaca API Key ID",
-                ["ALPACA_SECRET_KEY"] = "Your Alpaca Secret Key",
-                ["RABBITMQ_HOST"] = "RabbitMQ server hostname",
-                ["RABBITMQ_USER"] = "RabbitMQ username",
-                ["RABBITMQ_PASS"] = "RabbitMQ password"
+                ["ALPACA_SECRET_KEY"] = "Your Alpaca Secret Key"
             }
         };
     }

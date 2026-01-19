@@ -36,14 +36,6 @@ Set these environment variables based on which providers you use:
 | NYSE | `NYSE_API_SECRET` | NYSE Connect API Secret |
 | NYSE | `NYSE_CLIENT_ID` | NYSE OAuth Client ID |
 
-#### Message Brokers (MassTransit)
-
-| Broker | Environment Variable | Description |
-|--------|---------------------|-------------|
-| RabbitMQ | `RABBITMQ_USERNAME` | RabbitMQ username |
-| RabbitMQ | `RABBITMQ_PASSWORD` | RabbitMQ password |
-| Azure Service Bus | `AZURE_SERVICEBUS_CONNECTION_STRING` | Connection string |
-
 ### Setting Environment Variables
 
 #### Linux/macOS (bash)
@@ -524,62 +516,6 @@ Backfill options seed historical daily bars before live capture begins. They can
 - `--backfill-provider <name>` chooses a provider
 - `--backfill-symbols <CSV>` overrides symbols
 - `--backfill-from <yyyy-MM-dd>` / `--backfill-to <yyyy-MM-dd>` override date bounds
-
-## MassTransit (Distributed Messaging)
-
-Optional distributed messaging for microservices deployments using MassTransit.
-
-**Section**: `MassTransit`
-
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `Enabled` | boolean | `false` | Enable message publishing |
-| `Transport` | string | `"InMemory"` | Transport: `"InMemory"`, `"RabbitMQ"`, `"AzureServiceBus"` |
-
-### RabbitMQ Settings
-
-> **Credentials**: Set `RABBITMQ_USERNAME` and `RABBITMQ_PASSWORD` environment variables.
-> See [Credential Management](#credential-management) for details.
-
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `Host` | string | `"localhost"` | RabbitMQ host |
-| `Port` | integer | `5672` | RabbitMQ port |
-| `VirtualHost` | string | `"/"` | Virtual host |
-| `UseSsl` | boolean | `false` | Use SSL/TLS |
-| `PublisherConfirmation` | boolean | `true` | Enable publisher confirms |
-
-### Azure Service Bus Settings
-
-> **Credentials**: Set `AZURE_SERVICEBUS_CONNECTION_STRING` environment variable,
-> or use managed identity authentication (recommended for Azure deployments).
-
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `Namespace` | string | - | Service Bus namespace (for managed identity) |
-| `UseManagedIdentity` | boolean | `false` | Use Azure Managed Identity |
-| `EnablePremiumFeatures` | boolean | `false` | Enable premium features |
-
-### Example
-
-```json
-"MassTransit": {
-  "Enabled": true,
-  "Transport": "RabbitMQ",
-  "RabbitMQ": {
-    "Host": "rabbitmq.example.com",
-    "Port": 5672,
-    "VirtualHost": "/market-data",
-    "UseSsl": true
-  }
-}
-```
-
-Before running, set credentials:
-```bash
-export RABBITMQ_USERNAME="ingestion"
-export RABBITMQ_PASSWORD="your-secret-password"
-```
 
 ## Validation
 

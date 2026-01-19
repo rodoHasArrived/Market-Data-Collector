@@ -405,7 +405,6 @@ public sealed class DiagnosticBundleService
             } : null,
             storage = config.Storage,
             symbolCount = config.Symbols?.Length ?? 0,
-            massTransitEnabled = config.MassTransit?.Enabled ?? false,
             backfillEnabled = config.Backfill?.Enabled ?? false
         };
     }
