@@ -146,8 +146,8 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v5
+      - name: Setup .NET with Cache
+        uses: ./.github/actions/setup-dotnet-cache
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
@@ -155,14 +155,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Cache NuGet packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.nuget/packages
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/*.fsproj') }}
-          restore-keys: |
-            ${{ runner.os }}-nuget-
 
       - name: Build project to extract metadata
         run: |
@@ -267,18 +259,10 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v5
+      - name: Setup .NET with Cache
+        uses: ./.github/actions/setup-dotnet-cache
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
-
-      - name: Cache NuGet packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.nuget/packages
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/*.fsproj') }}
-          restore-keys: |
-            ${{ runner.os }}-nuget-
 
       - name: Verify ADR links
         run: |
