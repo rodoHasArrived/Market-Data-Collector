@@ -5,8 +5,9 @@ on:
     branches: [ "main" ]
     tags:
       - 'v*'
-  pull_request:
-    branches: [ "main" ]
+  # pull_request trigger disabled
+  # pull_request:
+  #   branches: [ "main" ]
   workflow_dispatch:
 
 env:

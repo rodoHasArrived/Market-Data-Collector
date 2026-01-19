@@ -1,11 +1,12 @@
 name: Validate Workflows
 
 on:
-  pull_request:
-    paths:
-      - '.github/workflows/**'
-      - '.github/dependabot.yml'
-      - '.github/labeler.yml'
+  # pull_request trigger disabled
+  # pull_request:
+  #   paths:
+  #     - '.github/workflows/**'
+  #     - '.github/dependabot.yml'
+  #     - '.github/labeler.yml'
   push:
     branches: [ "main" ]
     paths:

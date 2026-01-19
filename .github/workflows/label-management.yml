@@ -3,8 +3,9 @@ name: Label Management
 on:
   issues:
     types: [opened, edited, reopened]
-  pull_request:
-    types: [opened, edited, reopened, synchronize]
+  # pull_request trigger disabled
+  # pull_request:
+  #   types: [opened, edited, reopened, synchronize]
   push:
     branches: [main, master]
     paths:

@@ -15,10 +15,11 @@ on:
       - 'tests/**'
       - 'benchmarks/**'
       - '.github/workflows/**'
-  pull_request:
-    branches: [main]
-    paths:
-      - 'src/**'
+  # pull_request trigger disabled
+  # pull_request:
+  #   branches: [main]
+  #   paths:
+  #     - 'src/**'
   workflow_dispatch:
     inputs:
       force_update:

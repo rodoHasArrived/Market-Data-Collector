@@ -1,12 +1,14 @@
 name: Pull Request Checks
 
 on:
-  pull_request:
-    branches: [ "main", "develop" ]
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - '.github/prompts/**'
+  # pull_request trigger disabled - run manually via workflow_dispatch if needed
+  # pull_request:
+  #   branches: [ "main", "develop" ]
+  #   paths-ignore:
+  #     - '**.md'
+  #     - 'docs/**'
+  #     - '.github/prompts/**'
+  workflow_dispatch:
 
 env:
   DOTNET_VERSION: '9.0.x'

@@ -16,12 +16,13 @@ on:
       - 'src/Microservices/**'
       - 'docs/adr/**'
       - 'config/appsettings.sample.json'
-  pull_request:
-    branches: [main]
-    types: [opened, synchronize]
-    paths:
-      - 'src/MarketDataCollector/Infrastructure/Providers/**'
-      - 'docs/adr/**'
+  # pull_request trigger disabled
+  # pull_request:
+  #   branches: [main]
+  #   types: [opened, synchronize]
+  #   paths:
+  #     - 'src/MarketDataCollector/Infrastructure/Providers/**'
+  #     - 'docs/adr/**'
   workflow_dispatch:
     inputs:
       update_all:

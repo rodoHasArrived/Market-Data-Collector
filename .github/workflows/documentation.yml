@@ -14,15 +14,16 @@ on:
       - 'CLAUDE.md'
       - 'README.md'
       - '.github/workflows/documentation.yml'
-  pull_request:
-    branches: [ "main" ]
-    paths:
-      - 'docs/**'
-      - 'src/**/*.cs'
-      - 'src/**/*.fs'
-      - 'tools/DocGenerator/**'
-      - 'CLAUDE.md'
-      - 'README.md'
+  # pull_request trigger disabled
+  # pull_request:
+  #   branches: [ "main" ]
+  #   paths:
+  #     - 'docs/**'
+  #     - 'src/**/*.cs'
+  #     - 'src/**/*.fs'
+  #     - 'tools/DocGenerator/**'
+  #     - 'CLAUDE.md'
+  #     - 'README.md'
   workflow_dispatch:
     inputs:
       regenerate:

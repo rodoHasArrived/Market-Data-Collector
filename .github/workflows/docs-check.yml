@@ -1,11 +1,12 @@
 name: Documentation Quality Check
 
 on:
-  pull_request:
-    paths:
-      - 'docs/**'
-      - '**.md'
-      - '.github/workflows/docs-check.yml'
+  # pull_request trigger disabled
+  # pull_request:
+  #   paths:
+  #     - 'docs/**'
+  #     - '**.md'
+  #     - '.github/workflows/docs-check.yml'
   workflow_dispatch:
 
 jobs:
