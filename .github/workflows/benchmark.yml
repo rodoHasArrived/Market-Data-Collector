@@ -3,12 +3,13 @@ name: Benchmark Performance
 on:
   # pull_request trigger disabled
   # pull_request:
-  push:
-    branches: [ "main" ]
-    paths:
-      - 'src/**'
-      - 'benchmarks/**'
-      - '.github/workflows/benchmark.yml'
+  # push trigger disabled
+  # push:
+  #   branches: [ "main" ]
+  #   paths:
+  #     - 'src/**'
+  #     - 'benchmarks/**'
+  #     - '.github/workflows/benchmark.yml'
   workflow_dispatch:
     inputs:
       filter:

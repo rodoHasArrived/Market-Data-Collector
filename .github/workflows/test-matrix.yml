@@ -5,15 +5,16 @@
 name: Test Matrix
 
 on:
-  push:
-    branches: [ "main" ]
-    paths:
-      - 'src/**'
-      - 'tests/**'
-      - '**/*.csproj'
-      - '**/*.fsproj'
-      - 'Directory.Build.props'
-      - '.github/workflows/test-matrix.yml'
+  # push trigger disabled
+  # push:
+  #   branches: [ "main" ]
+  #   paths:
+  #     - 'src/**'
+  #     - 'tests/**'
+  #     - '**/*.csproj'
+  #     - '**/*.fsproj'
+  #     - 'Directory.Build.props'
+  #     - '.github/workflows/test-matrix.yml'
   # pull_request trigger disabled
   # pull_request:
   #   branches: [ "main" ]

@@ -1,15 +1,17 @@
 name: Label Management
 
 on:
-  issues:
-    types: [opened, edited, reopened]
+  # issues trigger disabled
+  # issues:
+  #   types: [opened, edited, reopened]
   # pull_request trigger disabled
   # pull_request:
   #   types: [opened, edited, reopened, synchronize]
-  push:
-    branches: [main, master]
-    paths:
-      - '.github/labels.yml'
+  # push trigger disabled
+  # push:
+  #   branches: [main, master]
+  #   paths:
+  #     - '.github/labels.yml'
   workflow_dispatch:
     inputs:
       sync_labels:

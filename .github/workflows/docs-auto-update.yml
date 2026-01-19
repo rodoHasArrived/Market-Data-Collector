@@ -5,17 +5,17 @@
 name: Docs Auto-Update
 
 on:
-  push:
-    branches: [main]
-    paths:
-      # Trigger when key code areas change
-      - 'src/MarketDataCollector/Infrastructure/Providers/**'
-      - 'src/MarketDataCollector/Infrastructure/IMarketDataClient.cs'
-      - 'src/MarketDataCollector/Infrastructure/Providers/Backfill/IHistoricalDataProvider*.cs'
-      - 'src/MarketDataCollector/Domain/**'
-      - 'src/Microservices/**'
-      - 'docs/adr/**'
-      - 'config/appsettings.sample.json'
+  # push trigger disabled
+  # push:
+  #   branches: [main]
+  #   paths:
+  #     - 'src/MarketDataCollector/Infrastructure/Providers/**'
+  #     - 'src/MarketDataCollector/Infrastructure/IMarketDataClient.cs'
+  #     - 'src/MarketDataCollector/Infrastructure/Providers/Backfill/IHistoricalDataProvider*.cs'
+  #     - 'src/MarketDataCollector/Domain/**'
+  #     - 'src/Microservices/**'
+  #     - 'docs/adr/**'
+  #     - 'config/appsettings.sample.json'
   # pull_request trigger disabled
   # pull_request:
   #   branches: [main]

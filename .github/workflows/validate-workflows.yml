@@ -7,10 +7,11 @@ on:
   #     - '.github/workflows/**'
   #     - '.github/dependabot.yml'
   #     - '.github/labeler.yml'
-  push:
-    branches: [ "main" ]
-    paths:
-      - '.github/workflows/**'
+  # push trigger disabled
+  # push:
+  #   branches: [ "main" ]
+  #   paths:
+  #     - '.github/workflows/**'
   workflow_dispatch:
 
 jobs:

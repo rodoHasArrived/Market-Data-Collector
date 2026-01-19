@@ -4,16 +4,17 @@
 name: Documentation
 
 on:
-  push:
-    branches: [ "main" ]
-    paths:
-      - 'docs/**'
-      - 'src/**/*.cs'
-      - 'src/**/*.fs'
-      - 'tools/DocGenerator/**'
-      - 'CLAUDE.md'
-      - 'README.md'
-      - '.github/workflows/documentation.yml'
+  # push trigger disabled
+  # push:
+  #   branches: [ "main" ]
+  #   paths:
+  #     - 'docs/**'
+  #     - 'src/**/*.cs'
+  #     - 'src/**/*.fs'
+  #     - 'tools/DocGenerator/**'
+  #     - 'CLAUDE.md'
+  #     - 'README.md'
+  #     - '.github/workflows/documentation.yml'
   # pull_request trigger disabled
   # pull_request:
   #   branches: [ "main" ]

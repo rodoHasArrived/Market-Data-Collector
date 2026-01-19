@@ -5,16 +5,17 @@
 name: Docs Structure Sync
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'src/**'
-      - 'docs/**'
-      - 'scripts/**'
-      - 'tools/**'
-      - 'tests/**'
-      - 'benchmarks/**'
-      - '.github/workflows/**'
+  # push trigger disabled
+  # push:
+  #   branches: [main]
+  #   paths:
+  #     - 'src/**'
+  #     - 'docs/**'
+  #     - 'scripts/**'
+  #     - 'tools/**'
+  #     - 'tests/**'
+  #     - 'benchmarks/**'
+  #     - '.github/workflows/**'
   # pull_request trigger disabled
   # pull_request:
   #   branches: [main]
