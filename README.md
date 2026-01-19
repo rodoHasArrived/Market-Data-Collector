@@ -13,7 +13,7 @@ A high-performance, cross-platform market data collection system for real-time a
 [![Docker Build](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/docker-build.yml/badge.svg)](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/docker-build.yml)
 [![Code Quality](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/code-quality.yml/badge.svg)](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/code-quality.yml)
 
-**Status**: Production Ready | **Version**: 1.5.0 | **Last Updated**: 2026-01-14
+**Status**: Production Ready | **Version**: 1.6.0 | **Last Updated**: 2026-01-19
 
 ---
 
@@ -77,7 +77,7 @@ make doctor
 
 ## Overview
 
-Market Data Collector is a modular, event-driven system that captures, validates, and persists high-fidelity market data from multiple providers including Interactive Brokers, Alpaca, NYSE, Polygon, and StockSharp. It features a microservices architecture with MassTransit messaging, a modern web dashboard, a native Windows desktop application (UWP/XAML), structured logging, and supports deployment as a single self-contained executable or distributed microservices for enterprise scale.
+Market Data Collector is a modular, event-driven system that captures, validates, and persists high-fidelity market data from multiple providers including Interactive Brokers, Alpaca, NYSE, Polygon, and StockSharp. It features a modern web dashboard, a native Windows desktop application (UWP/XAML), structured logging, and supports deployment as a single self-contained executable.
 
 ## Key Features
 
@@ -110,8 +110,8 @@ Market Data Collector is a modular, event-driven system that captures, validates
 - **Environment variable support**: API credentials via environment variables for production deployments
 
 ### Architecture
-- **Microservices ready**: Decomposed services (Gateway, TradeIngestion, QuoteIngestion, OrderBookIngestion, HistoricalData, Validation)
-- **MassTransit messaging**: Reliable inter-service communication with RabbitMQ/Azure Service Bus
+- **Monolithic core**: Simple, maintainable architecture with optional UI components
+- **Provider abstraction**: Clean interfaces for adding new data providers
 - **ADR compliance**: Architecture Decision Records for consistent design patterns
 
 ## Quick Start
@@ -198,7 +198,7 @@ Comprehensive documentation is available in the `docs/` directory:
 
 ### AI Assistant Guides
 - **[CLAUDE.md](CLAUDE.md)** - Main AI assistant guide
-- **[docs/ai-assistants/](docs/ai-assistants/)** - Specialized guides for subsystems (F#, microservices, providers, storage, testing)
+- **[docs/ai-assistants/](docs/ai-assistants/)** - Specialized guides for subsystems (F#, providers, storage, testing)
 
 ## Supported Data Sources
 

@@ -335,7 +335,6 @@ public sealed class SearchService
             new("Watchlist", "Watchlist", "\uE728", "Your favorite symbols", new[] { "favorites", "tracked", "symbols" }),
             new("Data Provider", "Provider", "\uE703", "Configure data providers", new[] { "source", "api", "connection" }),
             new("Data Sources", "DataSources", "\uE943", "Manage multiple data sources", new[] { "sources", "providers" }),
-            new("Plugins", "Plugins", "\uEA86", "Manage plugins", new[] { "extensions", "addons" }),
             new("Storage", "Storage", "\uE8B7", "Storage configuration", new[] { "files", "disk", "compression" }),
             new("Symbols", "Symbols", "\uE9D9", "Manage symbols", new[] { "stocks", "tickers", "securities" }),
             new("Backfill", "Backfill", "\uE787", "Historical data download", new[] { "historical", "download", "history" }),
