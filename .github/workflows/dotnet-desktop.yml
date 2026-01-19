@@ -38,8 +38,6 @@ jobs:
     - name: Test
       run: |
         dotnet test ${{ env.PROJECT_PATH }}/tests/MarketDataCollector.Tests/MarketDataCollector.Tests.csproj -c Release --verbosity normal /p:EnableWindowsTargeting=true --logger "console;verbosity=detailed"
-      continue-on-error: true
-
   publish:
     name: Publish ${{ matrix.rid }}
     runs-on: ${{ matrix.os }}
