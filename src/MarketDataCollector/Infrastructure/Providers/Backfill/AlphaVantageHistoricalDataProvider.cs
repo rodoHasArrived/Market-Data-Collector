@@ -15,7 +15,7 @@ namespace MarketDataCollector.Infrastructure.Providers.Backfill;
 /// Coverage: US equities, global indices, forex, crypto.
 /// Free tier: 25 requests/day (severely limited), 5 calls/minute.
 /// </summary>
-public sealed class AlphaVantageHistoricalDataProvider : IHistoricalDataProviderV2, IDisposable
+public sealed class AlphaVantageHistoricalDataProvider : IHistoricalDataProvider, IDisposable
 {
     private const string BaseUrl = "https://www.alphavantage.co/query";
 

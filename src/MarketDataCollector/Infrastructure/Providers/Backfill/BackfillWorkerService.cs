@@ -396,7 +396,7 @@ public sealed class BackfillServiceFactory
         var rateLimitTracker = new ProviderRateLimitTracker(_log);
 
         // Register providers with rate limit tracker
-        foreach (var provider in providers.OfType<IHistoricalDataProviderV2>())
+        foreach (var provider in providers)
         {
             rateLimitTracker.RegisterProvider(provider);
         }

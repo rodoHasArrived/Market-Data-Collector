@@ -1653,7 +1653,7 @@ SUPPORT:
 
         // Sort by priority (lower = tried first)
         return providers
-            .OrderBy(p => p is IHistoricalDataProviderV2 v2 ? v2.Priority : 100)
+            .OrderBy(p => p.Priority)
             .ToList();
     }
 

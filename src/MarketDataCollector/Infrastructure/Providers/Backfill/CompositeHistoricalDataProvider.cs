@@ -13,7 +13,7 @@ namespace MarketDataCollector.Infrastructure.Providers.Backfill;
 /// Supports symbol resolution, provider health tracking, rate-limit aware rotation,
 /// and cross-provider validation.
 /// </summary>
-public sealed class CompositeHistoricalDataProvider : IHistoricalDataProviderV2, IDisposable
+public sealed class CompositeHistoricalDataProvider : IHistoricalDataProvider, IDisposable
 {
     private readonly List<IHistoricalDataProvider> _providers;
     private readonly ISymbolResolver? _symbolResolver;
@@ -41,13 +41,15 @@ public sealed class CompositeHistoricalDataProvider : IHistoricalDataProviderV2,
     public int MaxRequestsPerWindow => int.MaxValue;
     public TimeSpan RateLimitWindow => TimeSpan.FromHours(1);
 
-    public bool SupportsAdjustedPrices => _providers.OfType<IHistoricalDataProviderV2>().Any(p => p.SupportsAdjustedPrices);
-    public bool SupportsIntraday => _providers.OfType<IHistoricalDataProviderV2>().Any(p => p.SupportsIntraday);
-    public bool SupportsDividends => _providers.OfType<IHistoricalDataProviderV2>().Any(p => p.SupportsDividends);
-    public bool SupportsSplits => _providers.OfType<IHistoricalDataProviderV2>().Any(p => p.SupportsSplits);
+    public bool SupportsAdjustedPrices => _providers.Any(p => p.SupportsAdjustedPrices);
+    public bool SupportsIntraday => _providers.Any(p => p.SupportsIntraday);
+    public bool SupportsDividends => _providers.Any(p => p.SupportsDividends);
+    public bool SupportsSplits => _providers.Any(p => p.SupportsSplits);
+    public bool SupportsQuotes => _providers.Any(p => p.SupportsQuotes);
+    public bool SupportsTrades => _providers.Any(p => p.SupportsTrades);
+    public bool SupportsAuctions => _providers.Any(p => p.SupportsAuctions);
 
     public IReadOnlyList<string> SupportedMarkets => _providers
-        .OfType<IHistoricalDataProviderV2>()
         .SelectMany(p => p.SupportedMarkets)
         .Distinct()
         .ToList();
@@ -72,7 +74,7 @@ public sealed class CompositeHistoricalDataProvider : IHistoricalDataProviderV2,
         ILogger? log = null)
     {
         _providers = providers
-            .OrderBy(p => p is IHistoricalDataProviderV2 v2 ? v2.Priority : 100)
+            .OrderBy(p => p.Priority)
             .ToList();
 
         if (_providers.Count == 0)
@@ -87,7 +89,7 @@ public sealed class CompositeHistoricalDataProvider : IHistoricalDataProviderV2,
 
         // Initialize rate limit tracker
         _rateLimitTracker = new ProviderRateLimitTracker(_log);
-        foreach (var provider in _providers.OfType<IHistoricalDataProviderV2>())
+        foreach (var provider in _providers)
         {
             _rateLimitTracker.RegisterProvider(provider);
         }
@@ -104,16 +106,8 @@ public sealed class CompositeHistoricalDataProvider : IHistoricalDataProviderV2,
         // Available if any provider is available
         foreach (var provider in _providers)
         {
-            if (provider is IHistoricalDataProviderV2 v2)
-            {
-                if (await v2.IsAvailableAsync(ct).ConfigureAwait(false))
-                    return true;
-            }
-            else
-            {
-                // Assume basic providers are always available
+            if (await provider.IsAvailableAsync(ct).ConfigureAwait(false))
                 return true;
-            }
         }
         return false;
     }
@@ -251,8 +245,7 @@ public sealed class CompositeHistoricalDataProvider : IHistoricalDataProviderV2,
             if (_rateLimitTracker.IsApproachingLimit(p.Name, _rateLimitRotationThreshold))
                 return 100 + (int)(_rateLimitTracker.GetStatus(p.Name)?.UsagePercent ?? 0);
 
-            // Use priority for providers with capacity
-            return p is IHistoricalDataProviderV2 v2 ? v2.Priority : 50;
+            return p.Priority;
         });
     }
 
@@ -328,10 +321,8 @@ public sealed class CompositeHistoricalDataProvider : IHistoricalDataProviderV2,
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
 
-        // Get V2 providers that support adjusted prices, ordered by rate limit availability
-        var adjustedProviders = _providers
-            .OfType<IHistoricalDataProviderV2>()
-            .Where(p => p.SupportsAdjustedPrices);
+        // Get providers that support adjusted prices, ordered by rate limit availability
+        var adjustedProviders = _providers.Where(p => p.SupportsAdjustedPrices);
 
         if (_enableRateLimitRotation)
         {
@@ -405,22 +396,20 @@ public sealed class CompositeHistoricalDataProvider : IHistoricalDataProviderV2,
     /// </summary>
     public async Task<IReadOnlyDictionary<string, ProviderHealthStatus>> CheckAllProvidersHealthAsync(CancellationToken ct = default)
     {
-        var tasks = _providers
-            .OfType<IHistoricalDataProviderV2>()
-            .Select(async p =>
+        var tasks = _providers.Select(async p =>
+        {
+            var startTime = DateTimeOffset.UtcNow;
+            try
             {
-                var startTime = DateTimeOffset.UtcNow;
-                try
-                {
-                    var available = await p.IsAvailableAsync(ct).ConfigureAwait(false);
-                    var elapsed = DateTimeOffset.UtcNow - startTime;
-                    UpdateHealthStatus(p.Name, available, available ? "Healthy" : "Unavailable", elapsed);
-                }
-                catch (Exception ex)
-                {
-                    UpdateHealthStatus(p.Name, false, ex.Message);
-                }
-            });
+                var available = await p.IsAvailableAsync(ct).ConfigureAwait(false);
+                var elapsed = DateTimeOffset.UtcNow - startTime;
+                UpdateHealthStatus(p.Name, available, available ? "Healthy" : "Unavailable", elapsed);
+            }
+            catch (Exception ex)
+            {
+                UpdateHealthStatus(p.Name, false, ex.Message);
+            }
+        });
 
         await Task.WhenAll(tasks).ConfigureAwait(false);
         return _healthStatus;

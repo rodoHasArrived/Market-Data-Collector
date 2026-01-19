@@ -15,7 +15,7 @@ namespace MarketDataCollector.Infrastructure.Providers.Backfill;
 /// Coverage: US equities, options, forex, crypto.
 /// Free tier: 5 API calls/minute, delayed data, 2 years history.
 /// </summary>
-public sealed class PolygonHistoricalDataProvider : IHistoricalDataProviderV2, IDisposable
+public sealed class PolygonHistoricalDataProvider : IHistoricalDataProvider, IDisposable
 {
     private const string BaseUrl = "https://api.polygon.io";
 

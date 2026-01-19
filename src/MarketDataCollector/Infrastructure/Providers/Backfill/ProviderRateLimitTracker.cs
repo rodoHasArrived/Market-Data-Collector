@@ -34,9 +34,9 @@ public sealed class ProviderRateLimitTracker : IDisposable
     }
 
     /// <summary>
-    /// Register a provider from its V2 interface properties.
+    /// Register a provider from its interface properties.
     /// </summary>
-    public void RegisterProvider(IHistoricalDataProviderV2 provider)
+    public void RegisterProvider(IHistoricalDataProvider provider)
     {
         RegisterProvider(
             provider.Name,

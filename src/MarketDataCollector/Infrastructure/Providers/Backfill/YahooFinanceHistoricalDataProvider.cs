@@ -13,7 +13,7 @@ namespace MarketDataCollector.Infrastructure.Providers.Backfill;
 /// Provides daily OHLCV with adjusted close prices.
 /// Coverage: 50,000+ global equities, ETFs, indices, crypto.
 /// </summary>
-public sealed class YahooFinanceHistoricalDataProvider : IHistoricalDataProviderV2, IDisposable
+public sealed class YahooFinanceHistoricalDataProvider : IHistoricalDataProvider, IDisposable
 {
     private const string BaseUrl = "https://query1.finance.yahoo.com/v8/finance/chart";
 
