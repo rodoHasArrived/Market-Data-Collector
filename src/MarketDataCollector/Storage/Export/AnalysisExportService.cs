@@ -54,10 +54,8 @@ public class AnalysisExportService
     public async Task<ExportResult> ExportAsync(ExportRequest request, CancellationToken ct = default)
     {
         var profile = request.CustomProfile ?? GetProfile(request.ProfileId);
-        if (profile == null)
-        {
+        if (profile is null)
             return ExportResult.CreateFailure(request.ProfileId, $"Unknown profile: {request.ProfileId}");
-        }
 
         var result = ExportResult.CreateSuccess(profile.Id, request.OutputDirectory);
 
@@ -71,9 +69,9 @@ public class AnalysisExportService
 
             // Find source files to export
             var sourceFiles = FindSourceFiles(request);
-            if (sourceFiles.Count == 0)
+            if (sourceFiles.Count is 0)
             {
-                result.Warnings = result.Warnings.Append("No source data found for the specified criteria").ToArray();
+                result.Warnings = [..result.Warnings, "No source data found for the specified criteria"];
                 result.CompletedAt = DateTime.UtcNow;
                 return result;
             }
@@ -159,45 +157,21 @@ public class AnalysisExportService
 
     private List<SourceFile> FindSourceFiles(ExportRequest request)
     {
-        var files = new List<SourceFile>();
+        if (!Directory.Exists(_dataRoot)) return [];
 
-        // Search for JSONL files in the data root
-        if (!Directory.Exists(_dataRoot)) return files;
-
-        var patterns = new[] { "*.jsonl", "*.jsonl.gz" };
-        foreach (var pattern in patterns)
-        {
-            foreach (var file in Directory.GetFiles(_dataRoot, pattern, SearchOption.AllDirectories))
-            {
-                var parsed = ParseFileName(file);
-                if (parsed == null) continue;
-
-                // Filter by symbol
-                if (request.Symbols != null && request.Symbols.Length > 0)
-                {
-                    if (!request.Symbols.Contains(parsed.Symbol, StringComparer.OrdinalIgnoreCase))
-                        continue;
-                }
-
-                // Filter by event type
-                if (request.EventTypes != null && request.EventTypes.Length > 0)
-                {
-                    if (!request.EventTypes.Contains(parsed.EventType, StringComparer.OrdinalIgnoreCase))
-                        continue;
-                }
-
-                // Filter by date (if available)
-                if (parsed.Date.HasValue)
-                {
-                    if (parsed.Date.Value < request.StartDate.Date || parsed.Date.Value > request.EndDate.Date)
-                        continue;
-                }
-
-                files.Add(parsed);
-            }
-        }
-
-        return files.OrderBy(f => f.Symbol).ThenBy(f => f.Date).ToList();
+        return ["*.jsonl", "*.jsonl.gz"]
+            .SelectMany(pattern => Directory.GetFiles(_dataRoot, pattern, SearchOption.AllDirectories))
+            .Select(ParseFileName)
+            .Where(f => f is not null)
+            .Where(f => request.Symbols is not { Length: > 0 } ||
+                        request.Symbols.Contains(f!.Symbol, StringComparer.OrdinalIgnoreCase))
+            .Where(f => request.EventTypes is not { Length: > 0 } ||
+                        request.EventTypes.Contains(f!.EventType, StringComparer.OrdinalIgnoreCase))
+            .Where(f => !f!.Date.HasValue ||
+                        (f.Date.Value >= request.StartDate.Date && f.Date.Value <= request.EndDate.Date))
+            .OrderBy(f => f!.Symbol)
+            .ThenBy(f => f!.Date)
+            .ToList()!;
     }
 
     private SourceFile? ParseFileName(string path)
@@ -239,13 +213,9 @@ public class AnalysisExportService
     {
         var exportedFiles = new List<ExportedFile>();
 
-        var grouped = profile.SplitBySymbol
-            ? sourceFiles.GroupBy(f => f.Symbol)
-            : new[] { sourceFiles.AsEnumerable() }.Select(g => g);
-
-        foreach (var group in grouped)
+        foreach (var group in GroupBySymbolIfRequired(sourceFiles, profile.SplitBySymbol))
         {
-            var symbol = profile.SplitBySymbol ? group.First().Symbol : "combined";
+            var symbol = group.Key ?? "combined";
             var outputPath = Path.Combine(
                 request.OutputDirectory,
                 $"{symbol}_{DateTime.UtcNow:yyyyMMdd}.csv");
@@ -297,13 +267,9 @@ public class AnalysisExportService
     {
         var exportedFiles = new List<ExportedFile>();
 
-        var grouped = profile.SplitBySymbol
-            ? sourceFiles.GroupBy(f => f.Symbol)
-            : new[] { sourceFiles.AsEnumerable() }.Select(g => g);
-
-        foreach (var group in grouped)
+        foreach (var group in GroupBySymbolIfRequired(sourceFiles, profile.SplitBySymbol))
         {
-            var symbol = profile.SplitBySymbol ? group.First().Symbol : "combined";
+            var symbol = group.Key ?? "combined";
             var outputPath = Path.Combine(
                 request.OutputDirectory,
                 $"{symbol}_{DateTime.UtcNow:yyyyMMdd}.parquet");
@@ -321,15 +287,10 @@ public class AnalysisExportService
                 }
             }
 
-            if (records.Count > 0)
-            {
+            if (records.Count is > 0)
                 await WriteParquetFileAsync(outputPath, records, ct);
-            }
             else
-            {
-                // Create empty parquet file with minimal schema
                 await WriteEmptyParquetFileAsync(outputPath, ct);
-            }
 
             var fileInfo = new FileInfo(outputPath);
             exportedFiles.Add(new ExportedFile
@@ -445,95 +406,81 @@ public class AnalysisExportService
     /// <summary>
     /// Creates a DataColumn from a list of values, converting them to the appropriate type.
     /// </summary>
-    private static DataColumn CreateDataColumn(DataField dataField, List<object?> values)
-    {
-        var clrType = dataField.ClrType;
+    private static DataColumn CreateDataColumn(DataField dataField, List<object?> values) =>
+        dataField.ClrType switch
+        {
+            var t when t == typeof(int?) => new DataColumn(dataField, values.Select(ConvertToInt).ToArray()),
+            var t when t == typeof(long?) => new DataColumn(dataField, values.Select(ConvertToLong).ToArray()),
+            var t when t == typeof(float?) => new DataColumn(dataField, values.Select(ConvertToFloat).ToArray()),
+            var t when t == typeof(double?) => new DataColumn(dataField, values.Select(ConvertToDouble).ToArray()),
+            var t when t == typeof(decimal?) => new DataColumn(dataField, values.Select(ConvertToDecimal).ToArray()),
+            var t when t == typeof(bool?) => new DataColumn(dataField, values.Select(ConvertToBool).ToArray()),
+            var t when t == typeof(DateTimeOffset?) => new DataColumn(dataField, values.Select(ConvertToDateTimeOffset).ToArray()),
+            _ => new DataColumn(dataField, values.Select(v => v?.ToString() ?? string.Empty).ToArray())
+        };
 
-        if (clrType == typeof(int?))
-        {
-            var typedValues = values.Select(v => v switch
-            {
-                int i => (int?)i,
-                long l => (int?)l,
-                double d => (int?)d,
-                _ => v != null ? (int?)Convert.ToInt32(v) : null
-            }).ToArray();
-            return new DataColumn(dataField, typedValues);
-        }
-        else if (clrType == typeof(long?))
-        {
-            var typedValues = values.Select(v => v switch
-            {
-                long l => (long?)l,
-                int i => (long?)i,
-                double d => (long?)d,
-                _ => v != null ? (long?)Convert.ToInt64(v) : null
-            }).ToArray();
-            return new DataColumn(dataField, typedValues);
-        }
-        else if (clrType == typeof(float?))
-        {
-            var typedValues = values.Select(v => v switch
-            {
-                float f => (float?)f,
-                double d => (float?)d,
-                int i => (float?)i,
-                _ => v != null ? (float?)Convert.ToSingle(v) : null
-            }).ToArray();
-            return new DataColumn(dataField, typedValues);
-        }
-        else if (clrType == typeof(double?))
-        {
-            var typedValues = values.Select(v => v switch
-            {
-                double d => (double?)d,
-                float f => (double?)f,
-                int i => (double?)i,
-                long l => (double?)l,
-                _ => v != null ? (double?)Convert.ToDouble(v) : null
-            }).ToArray();
-            return new DataColumn(dataField, typedValues);
-        }
-        else if (clrType == typeof(decimal?))
-        {
-            var typedValues = values.Select(v => v switch
-            {
-                decimal dec => (decimal?)dec,
-                double d => (decimal?)Convert.ToDecimal(d),
-                float f => (decimal?)Convert.ToDecimal(f),
-                int i => (decimal?)i,
-                long l => (decimal?)l,
-                _ => v != null ? (decimal?)Convert.ToDecimal(v) : null
-            }).ToArray();
-            return new DataColumn(dataField, typedValues);
-        }
-        else if (clrType == typeof(bool?))
-        {
-            var typedValues = values.Select(v => v switch
-            {
-                bool b => (bool?)b,
-                _ => v != null ? (bool?)Convert.ToBoolean(v) : null
-            }).ToArray();
-            return new DataColumn(dataField, typedValues);
-        }
-        else if (clrType == typeof(DateTimeOffset?))
-        {
-            var typedValues = values.Select(v => v switch
-            {
-                DateTimeOffset dto => (DateTimeOffset?)dto,
-                DateTime dt => (DateTimeOffset?)new DateTimeOffset(dt),
-                string s when DateTimeOffset.TryParse(s, out var parsed) => (DateTimeOffset?)parsed,
-                _ => null
-            }).ToArray();
-            return new DataColumn(dataField, typedValues);
-        }
-        else
-        {
-            // Default to string
-            var typedValues = values.Select(v => v?.ToString() ?? string.Empty).ToArray();
-            return new DataColumn(dataField, typedValues);
-        }
-    }
+    private static int? ConvertToInt(object? v) => v switch
+    {
+        int i => i,
+        long l => (int)l,
+        double d => (int)d,
+        null => null,
+        _ => Convert.ToInt32(v)
+    };
+
+    private static long? ConvertToLong(object? v) => v switch
+    {
+        long l => l,
+        int i => i,
+        double d => (long)d,
+        null => null,
+        _ => Convert.ToInt64(v)
+    };
+
+    private static float? ConvertToFloat(object? v) => v switch
+    {
+        float f => f,
+        double d => (float)d,
+        int i => i,
+        null => null,
+        _ => Convert.ToSingle(v)
+    };
+
+    private static double? ConvertToDouble(object? v) => v switch
+    {
+        double d => d,
+        float f => f,
+        int i => i,
+        long l => l,
+        null => null,
+        _ => Convert.ToDouble(v)
+    };
+
+    private static decimal? ConvertToDecimal(object? v) => v switch
+    {
+        decimal dec => dec,
+        double d => Convert.ToDecimal(d),
+        float f => Convert.ToDecimal(f),
+        int i => i,
+        long l => l,
+        null => null,
+        _ => Convert.ToDecimal(v)
+    };
+
+    private static bool? ConvertToBool(object? v) => v switch
+    {
+        bool b => b,
+        null => null,
+        _ => Convert.ToBoolean(v)
+    };
+
+    private static DateTimeOffset? ConvertToDateTimeOffset(object? v) => v switch
+    {
+        DateTimeOffset dto => dto,
+        DateTime dt => new DateTimeOffset(dt),
+        string s when DateTimeOffset.TryParse(s, out var parsed) => parsed,
+        _ => null
+    };
 
     private async Task<List<ExportedFile>> ExportToJsonlAsync(
         List<SourceFile> sourceFiles,
@@ -700,13 +647,9 @@ public class AnalysisExportService
         var exportedFiles = new List<ExportedFile>();
 
         // Group by symbol if requested
-        var grouped = profile.SplitBySymbol
-            ? sourceFiles.GroupBy(f => f.Symbol)
-            : new[] { sourceFiles.AsEnumerable() }.Select(g => g);
-
-        foreach (var group in grouped)
+        foreach (var group in GroupBySymbolIfRequired(sourceFiles, profile.SplitBySymbol))
         {
-            var symbol = profile.SplitBySymbol ? group.First().Symbol : "combined";
+            var symbol = group.Key ?? "combined";
             var outputPath = Path.Combine(
                 request.OutputDirectory,
                 $"{symbol}_{DateTime.UtcNow:yyyyMMdd}.xlsx");
@@ -1032,20 +975,13 @@ public class AnalysisExportService
         </worksheet>
         """;
 
-    private static string GetSharedStringsXml(List<string> strings)
-    {
-        var sb = new StringBuilder();
-        sb.AppendLine("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>");
-        sb.AppendLine($"<sst xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" count=\"{strings.Count}\" uniqueCount=\"{strings.Count}\">");
-
-        foreach (var str in strings)
-        {
-            sb.AppendLine($"<si><t>{str}</t></si>");
-        }
-
-        sb.AppendLine("</sst>");
-        return sb.ToString();
-    }
+    private static string GetSharedStringsXml(List<string> strings) =>
+        $"""
+        <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+        <sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="{strings.Count}" uniqueCount="{strings.Count}">
+        {string.Join(Environment.NewLine, strings.Select(s => $"<si><t>{s}</t></si>"))}
+        </sst>
+        """;
 
     private string GenerateDdl(string[] eventTypes)
     {
@@ -1389,11 +1325,20 @@ load_trades <- function(symbol = NULL) {
         var count = 0;
         for (var date = start.Date; date <= end.Date; date = date.AddDays(1))
         {
-            if (date.DayOfWeek != DayOfWeek.Saturday && date.DayOfWeek != DayOfWeek.Sunday)
+            if (date.DayOfWeek is not DayOfWeek.Saturday and not DayOfWeek.Sunday)
                 count++;
         }
         return count;
     }
+
+    /// <summary>
+    /// Groups source files by symbol if requested, otherwise returns a single group.
+    /// </summary>
+    private static IEnumerable<IGrouping<string?, SourceFile>> GroupBySymbolIfRequired(
+        List<SourceFile> files, bool splitBySymbol) =>
+        splitBySymbol
+            ? files.GroupBy(f => f.Symbol)
+            : files.GroupBy(_ => (string?)"combined");
 
     private class SourceFile
     {
