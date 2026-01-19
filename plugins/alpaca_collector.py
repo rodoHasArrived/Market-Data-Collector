@@ -27,7 +27,7 @@ import sys
 import signal
 from datetime import datetime, timezone
 from dataclasses import dataclass, asdict
-from typing import Optional, List, Dict, Any
+from typing import Optional, Dict, Any
 
 # Alpaca imports
 try:
