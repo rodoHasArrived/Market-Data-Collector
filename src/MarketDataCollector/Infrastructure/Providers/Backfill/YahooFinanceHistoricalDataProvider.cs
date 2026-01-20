@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 using System.Threading;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Domain.Models;
+using MarketDataCollector.Infrastructure.Contracts;
 using Serilog;
 
 namespace MarketDataCollector.Infrastructure.Providers.Backfill;
@@ -13,6 +14,8 @@ namespace MarketDataCollector.Infrastructure.Providers.Backfill;
 /// Provides daily OHLCV with adjusted close prices.
 /// Coverage: 50,000+ global equities, ETFs, indices, crypto.
 /// </summary>
+[ImplementsAdr("ADR-001", "Yahoo Finance historical data provider implementation")]
+[ImplementsAdr("ADR-004", "All async methods support CancellationToken")]
 public sealed class YahooFinanceHistoricalDataProvider : IHistoricalDataProvider, IDisposable
 {
     private const string BaseUrl = "https://query1.finance.yahoo.com/v8/finance/chart";

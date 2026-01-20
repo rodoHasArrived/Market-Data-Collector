@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 using System.Threading;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Domain.Models;
+using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.DataSources;
 using Serilog;
 
@@ -15,6 +16,8 @@ namespace MarketDataCollector.Infrastructure.Providers.Backfill;
 /// Coverage: 60,000+ global securities with company fundamentals.
 /// Best for: Earnings data, fundamentals, news, and high-frequency backfill operations.
 /// </summary>
+[ImplementsAdr("ADR-001", "Finnhub historical data provider implementation")]
+[ImplementsAdr("ADR-004", "All async methods support CancellationToken")]
 public sealed class FinnhubHistoricalDataProvider : IHistoricalDataProvider, IDisposable
 {
     private const string BaseUrl = "https://finnhub.io/api/v1";

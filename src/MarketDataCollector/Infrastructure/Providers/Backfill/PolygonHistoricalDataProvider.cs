@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 using System.Threading;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Domain.Models;
+using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.DataSources;
 using Serilog;
 
@@ -15,6 +16,8 @@ namespace MarketDataCollector.Infrastructure.Providers.Backfill;
 /// Coverage: US equities, options, forex, crypto.
 /// Free tier: 5 API calls/minute, delayed data, 2 years history.
 /// </summary>
+[ImplementsAdr("ADR-001", "Polygon.io historical data provider implementation")]
+[ImplementsAdr("ADR-004", "All async methods support CancellationToken")]
 public sealed class PolygonHistoricalDataProvider : IHistoricalDataProvider, IDisposable
 {
     private const string BaseUrl = "https://api.polygon.io";

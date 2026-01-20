@@ -1,4 +1,5 @@
 using MarketDataCollector.Application.Config;
+using MarketDataCollector.Infrastructure.Contracts;
 using System.Threading;
 using MarketDataCollector.Domain.Collectors;
 using MarketDataCollector.Domain.Events;
@@ -11,6 +12,8 @@ namespace MarketDataCollector.Infrastructure.Providers.InteractiveBrokers;
 /// - Without IBAPI defined, this type exists but delegates to NoOp.
 /// - With IBAPI defined, it uses EnhancedIBConnectionManager + IBCallbackRouter.
 /// </summary>
+[ImplementsAdr("ADR-001", "Interactive Brokers streaming data provider implementation")]
+[ImplementsAdr("ADR-004", "All async methods support CancellationToken")]
 public sealed class IBMarketDataClient : IMarketDataClient
 {
     private readonly IMarketDataClient _inner;
@@ -39,6 +42,8 @@ public sealed class IBMarketDataClient : IMarketDataClient
 }
 
 #if IBAPI
+[ImplementsAdr("ADR-001", "Interactive Brokers API streaming data provider")]
+[ImplementsAdr("ADR-004", "All async methods support CancellationToken")]
 internal sealed class IBMarketDataClientIBApi : IMarketDataClient
 {
     private static readonly ILogger _log = Log.ForContext<IBMarketDataClientIBApi>();

@@ -403,16 +403,16 @@ public sealed class PriorityBackfillQueue : IDisposable
     /// <summary>
     /// Re-queue a job with backoff delay.
     /// </summary>
-    public async Task RequeueWithBackoffAsync(BackfillJob job, TimeSpan? delay = null)
+    public async Task RequeueWithBackoffAsync(BackfillJob job, TimeSpan? delay = null, CancellationToken ct = default)
     {
         delay ??= TimeSpan.FromMinutes(1) * Math.Pow(2, job.Statistics.FailedRequests);
         delay = TimeSpan.FromMinutes(Math.Min(delay.Value.TotalMinutes, 30)); // Cap at 30 minutes
 
         _log.Information("Re-queuing job {JobId} after {Delay}", job.JobId, delay);
 
-        await Task.Delay(delay.Value).ConfigureAwait(false);
+        await Task.Delay(delay.Value, ct).ConfigureAwait(false);
 
-        _queueLock.Wait();
+        await _queueLock.WaitAsync(ct).ConfigureAwait(false);
         try
         {
             job.Status = BackfillJobStatus.Pending;

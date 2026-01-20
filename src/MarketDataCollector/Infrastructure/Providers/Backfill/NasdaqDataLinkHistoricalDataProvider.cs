@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 using System.Threading;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Domain.Models;
+using MarketDataCollector.Infrastructure.Contracts;
 using Serilog;
 
 namespace MarketDataCollector.Infrastructure.Providers.Backfill;
@@ -13,6 +14,8 @@ namespace MarketDataCollector.Infrastructure.Providers.Backfill;
 /// Free tier: 50 calls/day, 300 calls/10 seconds.
 /// Provides access to various datasets including WIKI (end-of-life) and premium datasets.
 /// </summary>
+[ImplementsAdr("ADR-001", "Nasdaq Data Link historical data provider implementation")]
+[ImplementsAdr("ADR-004", "All async methods support CancellationToken")]
 public sealed class NasdaqDataLinkHistoricalDataProvider : IHistoricalDataProvider, IDisposable
 {
     private const string BaseUrl = "https://data.nasdaq.com/api/v3";

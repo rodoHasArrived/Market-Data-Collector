@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 using System.Threading;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Domain.Models;
+using MarketDataCollector.Infrastructure.Contracts;
 using Serilog;
 
 namespace MarketDataCollector.Infrastructure.Providers.Backfill;
@@ -14,6 +15,8 @@ namespace MarketDataCollector.Infrastructure.Providers.Backfill;
 /// as well as tick-level quotes (NBBO), trades, and auction data.
 /// Coverage: US equities, ETFs.
 /// </summary>
+[ImplementsAdr("ADR-001", "Alpaca historical data provider implementation")]
+[ImplementsAdr("ADR-004", "All async methods support CancellationToken")]
 public sealed class AlpacaHistoricalDataProvider : IHistoricalDataProvider, IRateLimitAwareProvider, IDisposable
 {
     private const string BaseUrl = "https://data.alpaca.markets/v2/stocks";
