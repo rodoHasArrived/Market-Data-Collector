@@ -7,6 +7,7 @@ using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Domain.Collectors;
 using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Domain.Models;
+using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Providers;
 using MarketDataCollector.Infrastructure.Resilience;
 using Polly;
@@ -47,6 +48,8 @@ namespace MarketDataCollector.Infrastructure.Providers.Polygon;
 /// 3. Subscribe to channels: T.{symbol} for trades, Q.{symbol} for quotes
 /// 4. Parse incoming JSON messages and route to appropriate collectors
 /// </remarks>
+[ImplementsAdr("ADR-001", "Polygon.io streaming data provider implementation")]
+[ImplementsAdr("ADR-004", "All async methods support CancellationToken")]
 public sealed class PolygonMarketDataClient : IMarketDataClient
 {
     private readonly ILogger _log = LoggingSetup.ForContext<PolygonMarketDataClient>();

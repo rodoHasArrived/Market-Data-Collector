@@ -1,4 +1,5 @@
 using MarketDataCollector.Application.Config;
+using MarketDataCollector.Infrastructure.Contracts;
 using System.Threading;
 
 namespace MarketDataCollector.Infrastructure;
@@ -7,6 +8,8 @@ namespace MarketDataCollector.Infrastructure;
 /// Runtime no-op implementation used when no data provider is configured or available.
 /// Keeps Program logic identical in all builds.
 /// </summary>
+[ImplementsAdr("ADR-001", "No-op data provider for disabled/unconfigured scenarios")]
+[ImplementsAdr("ADR-004", "All async methods support CancellationToken")]
 public sealed class NoOpMarketDataClient : IMarketDataClient
 {
     public bool IsEnabled => false;

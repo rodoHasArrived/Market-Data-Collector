@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 using System.Threading;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Domain.Models;
+using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.DataSources;
 using Serilog;
 
@@ -15,6 +16,8 @@ namespace MarketDataCollector.Infrastructure.Providers.Backfill;
 /// Coverage: US equities, global indices, forex, crypto.
 /// Free tier: 25 requests/day (severely limited), 5 calls/minute.
 /// </summary>
+[ImplementsAdr("ADR-001", "Alpha Vantage historical data provider implementation")]
+[ImplementsAdr("ADR-004", "All async methods support CancellationToken")]
 public sealed class AlphaVantageHistoricalDataProvider : IHistoricalDataProvider, IDisposable
 {
     private const string BaseUrl = "https://www.alphavantage.co/query";

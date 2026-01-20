@@ -6,6 +6,7 @@ using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Domain.Collectors;
 using MarketDataCollector.Domain.Models;
+using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Resilience;
 using Polly;
 using Serilog;
@@ -23,6 +24,8 @@ namespace MarketDataCollector.Infrastructure.Providers.Alpaca;
 /// - Alpaca typically limits to 1 active stream connection per user per endpoint.
 /// - Authentication is performed by sending an "auth" message immediately after connect.
 /// </summary>
+[ImplementsAdr("ADR-001", "Alpaca streaming data provider implementation")]
+[ImplementsAdr("ADR-004", "All async methods support CancellationToken")]
 public sealed class AlpacaMarketDataClient : IMarketDataClient
 {
     private readonly ILogger _log = LoggingSetup.ForContext<AlpacaMarketDataClient>();

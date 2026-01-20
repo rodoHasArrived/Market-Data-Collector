@@ -8,6 +8,7 @@ using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Domain.Collectors;
 using MarketDataCollector.Domain.Models;
+using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Providers.StockSharp.Converters;
 using Serilog;
 
@@ -30,6 +31,8 @@ namespace MarketDataCollector.Infrastructure.Providers.StockSharp;
 ///
 /// See StockSharpConnectorFactory for available connector types.
 /// </summary>
+[ImplementsAdr("ADR-001", "StockSharp streaming data provider implementation")]
+[ImplementsAdr("ADR-004", "All async methods support CancellationToken")]
 public sealed class StockSharpMarketDataClient : IMarketDataClient
 {
     private readonly ILogger _log = LoggingSetup.ForContext<StockSharpMarketDataClient>();

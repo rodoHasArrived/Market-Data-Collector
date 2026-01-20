@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 using System.Threading;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Domain.Models;
+using MarketDataCollector.Infrastructure.Contracts;
 using Serilog;
 
 namespace MarketDataCollector.Infrastructure.Providers.Backfill;
@@ -14,6 +15,8 @@ namespace MarketDataCollector.Infrastructure.Providers.Backfill;
 /// Coverage: 65,000+ US/international equities, ETFs, mutual funds.
 /// Free tier: 1,000 requests/day, 50 requests/hour.
 /// </summary>
+[ImplementsAdr("ADR-001", "Tiingo historical data provider implementation")]
+[ImplementsAdr("ADR-004", "All async methods support CancellationToken")]
 public sealed class TiingoHistoricalDataProvider : IHistoricalDataProvider, IDisposable
 {
     private const string BaseUrl = "https://api.tiingo.com/tiingo/daily";

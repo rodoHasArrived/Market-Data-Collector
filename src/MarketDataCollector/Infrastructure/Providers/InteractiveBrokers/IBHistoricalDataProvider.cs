@@ -6,6 +6,7 @@ using IBApi;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Domain.Models;
+using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Providers.Backfill;
 using Serilog;
 
@@ -22,6 +23,8 @@ namespace MarketDataCollector.Infrastructure.Providers.InteractiveBrokers;
 /// Note: Historical data requires active Level 1 streaming subscription for US equities.
 /// Free streaming data is available via Cboe One + IEX (non-consolidated).
 /// </summary>
+[ImplementsAdr("ADR-001", "Interactive Brokers historical data provider implementation")]
+[ImplementsAdr("ADR-004", "All async methods support CancellationToken")]
 public sealed class IBHistoricalDataProvider : IHistoricalDataProvider, IRateLimitAwareProvider, IDisposable
 {
     private readonly EnhancedIBConnectionManager _connectionManager;

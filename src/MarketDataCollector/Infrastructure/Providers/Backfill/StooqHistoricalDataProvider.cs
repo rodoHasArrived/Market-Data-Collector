@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Domain.Models;
+using MarketDataCollector.Infrastructure.Contracts;
 using Serilog;
 
 namespace MarketDataCollector.Infrastructure.Providers.Backfill;
@@ -10,6 +11,8 @@ namespace MarketDataCollector.Infrastructure.Providers.Backfill;
 /// <summary>
 /// Pulls free end-of-day historical bars from Stooq (https://stooq.pl).
 /// </summary>
+[ImplementsAdr("ADR-001", "Stooq historical data provider implementation")]
+[ImplementsAdr("ADR-004", "All async methods support CancellationToken")]
 public sealed class StooqHistoricalDataProvider : IHistoricalDataProvider
 {
     private readonly HttpClient _http;

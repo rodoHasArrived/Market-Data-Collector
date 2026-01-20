@@ -3,6 +3,7 @@ using System.Threading;
 using MarketDataCollector.Application.Exceptions;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Domain.Models;
+using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Providers.Backfill.SymbolResolution;
 using Serilog;
 
@@ -13,6 +14,8 @@ namespace MarketDataCollector.Infrastructure.Providers.Backfill;
 /// Supports symbol resolution, provider health tracking, rate-limit aware rotation,
 /// and cross-provider validation.
 /// </summary>
+[ImplementsAdr("ADR-001", "Composite historical data provider with failover")]
+[ImplementsAdr("ADR-004", "All async methods support CancellationToken")]
 public sealed class CompositeHistoricalDataProvider : IHistoricalDataProvider, IDisposable
 {
     private readonly List<IHistoricalDataProvider> _providers;
