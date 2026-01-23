@@ -10,6 +10,7 @@ using System.Threading;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Domain.Models;
+using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.DataSources;
 using MarketDataCollector.Infrastructure.Providers.Backfill;
 using Serilog;
@@ -38,6 +39,8 @@ namespace MarketDataCollector.Infrastructure.Providers.NYSE;
     category: DataSourceCategory.Exchange,
     Priority = 5,
     Description = "Direct connection to NYSE for real-time and historical US equity data")]
+[ImplementsAdr("ADR-001", "NYSE streaming and historical data provider implementation")]
+[ImplementsAdr("ADR-004", "All async methods support CancellationToken")]
 public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHistoricalDataSource
 {
     #region Fields
