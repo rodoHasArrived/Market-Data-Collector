@@ -225,11 +225,11 @@ public sealed class PriorityBackfillQueue : IDisposable
     /// <summary>
     /// Dequeue the next job to process.
     /// </summary>
-    public BackfillJob? DequeueNext()
+    public async Task<BackfillJob?> DequeueNextAsync(CancellationToken ct = default)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
 
-        _queueLock.Wait();
+        await _queueLock.WaitAsync(ct).ConfigureAwait(false);
         try
         {
             while (_priorityQueue.TryDequeue(out var job, out _))
@@ -326,7 +326,7 @@ public sealed class PriorityBackfillQueue : IDisposable
     /// <summary>
     /// Resume a paused job.
     /// </summary>
-    public bool ResumeJob(string jobId)
+    public async Task<bool> ResumeJobAsync(string jobId, CancellationToken ct = default)
     {
         if (!_allJobs.TryGetValue(jobId, out var job))
             return false;
@@ -338,7 +338,7 @@ public sealed class PriorityBackfillQueue : IDisposable
         job.Status = BackfillJobStatus.Pending;
         job.StatusReason = null;
 
-        _queueLock.Wait();
+        await _queueLock.WaitAsync(ct).ConfigureAwait(false);
         try
         {
             _priorityQueue.Enqueue(job, GetPriorityScore(job, (BackfillPriority)job.Options.Priority));
@@ -384,7 +384,7 @@ public sealed class PriorityBackfillQueue : IDisposable
     /// <summary>
     /// Mark a job as completed.
     /// </summary>
-    public void MarkCompleted(string jobId, bool success, string? message = null)
+    public async Task MarkCompletedAsync(string jobId, bool success, string? message = null, CancellationToken ct = default)
     {
         if (!_allJobs.TryGetValue(jobId, out var job))
             return;
@@ -397,7 +397,7 @@ public sealed class PriorityBackfillQueue : IDisposable
         OnJobStatusChanged(job, previousStatus, job.Status);
 
         // Check if any dependent jobs can now run
-        CheckDependentJobs(jobId);
+        await CheckDependentJobsAsync(jobId, ct).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -455,7 +455,7 @@ public sealed class PriorityBackfillQueue : IDisposable
             depJob.Status is not BackfillJobStatus.Completed);
     }
 
-    private void CheckDependentJobs(string completedJobId)
+    private async Task CheckDependentJobsAsync(string completedJobId, CancellationToken ct = default)
     {
         foreach (var job in _allJobs.Values)
         {
@@ -463,7 +463,7 @@ public sealed class PriorityBackfillQueue : IDisposable
                 job.StatusReason?.Contains("dependencies") == true)
             {
                 // Re-evaluate this job
-                ResumeJob(job.JobId);
+                await ResumeJobAsync(job.JobId, ct).ConfigureAwait(false);
             }
         }
     }
