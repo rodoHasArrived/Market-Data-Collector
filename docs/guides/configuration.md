@@ -400,8 +400,7 @@ The collector uses Serilog for structured logging. You can customize log levels 
 | Argument | Description |
 |----------|-------------|
 | `--selftest` | Run internal self-tests and exit |
-| `--serve-status` | Enable HTTP status server |
-| `--status-port <port>` | HTTP server port (default: 8080) |
+| `--http-port <port>` | Enable HTTP monitoring server on specified port (default: 8080) |
 | `--replay <path>` | Replay JSONL files from path |
 
 ## Complete Example

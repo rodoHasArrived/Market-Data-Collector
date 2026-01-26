@@ -204,7 +204,7 @@ These are small, focused tasks broken down from larger features. Each can typica
 | TD-8.4 | Update start-collector.ps1 to use --http-port | 0.5 hour | None | **Done** |
 | TD-8.5 | Update Dockerfile CMD to use --http-port | 0.5 hour | None | **Done** |
 | TD-8.6 | Update systemd service file | 0.5 hour | None | **Done** |
-| TD-8.7 | Update documentation (USAGE.md, HELP.md, configuration.md) | 1 hour | None | Pending |
+| TD-8.7 | Update documentation (USAGE.md, HELP.md, configuration.md) | 1 hour | None | **Done** |
 | TD-8.8 | Update HtmlTemplates.cs UI references | 0.5 hour | None | **Done** |
 | TD-8.9 | Update UWP UI references | 0.5 hour | None | **Done** |
 | TD-8.10 | Remove --serve-status from Program.cs (breaking change) | 1 hour | TD-8.1 to TD-8.9 | Pending |
