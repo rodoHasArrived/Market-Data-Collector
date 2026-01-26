@@ -525,22 +525,10 @@ internal static class Program
         }
         log.Information("Data directory permissions configured: {Message}", permissionsResult.Message);
 
-        // TD-8.1: Log deprecation warning for --serve-status option
-        if (args.Any(a => a.Equals("--serve-status", StringComparison.OrdinalIgnoreCase)))
-        {
-            log.Warning("The --serve-status option is deprecated and will be removed in a future version. " +
-                "Please use --http-port <port> or --ui instead for HTTP-based monitoring. " +
-                "See: https://github.com/rodoHasArrived/Market-Data-Collector/blob/main/docs/status/ROADMAP.md#td-8-remove-deprecated---serve-status-option");
-        }
-
         var replayPath = GetArgValue(args, "--replay");
-        var statusPort = int.TryParse(GetArgValue(args, "--status-port"), out var parsedPort) ? parsedPort : 8080;
 
         var statusPath = Path.Combine(cfg.DataRoot, "_status", "status.json");
         await using var statusWriter = new StatusWriter(statusPath, () => LoadConfigWithEnvironmentOverlay(cfgPath));
-        if (args.Any(a => a.Equals("--serve-status", StringComparison.OrdinalIgnoreCase)))
-            statusWriter.Start(TimeSpan.FromSeconds(1));
-        StatusHttpServer? statusHttp = null;
         ConfigWatcher? watcher = null;
 
         // Build storage options from config
@@ -605,9 +593,6 @@ internal static class Program
             await pipeline.FlushAsync();
             await statusWriter.WriteOnceAsync();
 
-            if (statusHttp is not null)
-                await statusHttp.DisposeAsync();
-
             if (!result.Success)
                 Environment.ExitCode = 1;
             return;
@@ -618,13 +603,6 @@ internal static class Program
         var tradeCollector = new TradeDataCollector(publisher, quoteCollector);
         var depthCollector = new MarketDepthCollector(publisher, requireExplicitSubscription: true);
 
-        if (args.Any(a => a.Equals("--serve-status", StringComparison.OrdinalIgnoreCase)))
-        {
-            statusHttp = new StatusHttpServer(statusPort, Metrics.GetSnapshot, pipeline.GetStatistics, () => depthCollector.GetRecentIntegrityEvents());
-            statusHttp.Start();
-            log.Information("Status/metrics dashboard running at http://localhost:{Port}/", statusPort);
-        }
-
         if (!string.IsNullOrWhiteSpace(replayPath))
         {
             log.Information("Replaying events from {ReplayPath}...", replayPath);
@@ -634,8 +612,6 @@ internal static class Program
 
             await pipeline.FlushAsync();
             await statusWriter.WriteOnceAsync();
-            if (statusHttp is not null)
-                await statusHttp.DisposeAsync();
             return;
         }
 
@@ -707,27 +683,10 @@ internal static class Program
         log.Information("Metrics: published={Published}, integrity={Integrity}, dropped={Dropped}",
             Metrics.Published, Metrics.Integrity, Metrics.Dropped);
 
-        if (args.Any(a => a.Equals("--serve-status", StringComparison.OrdinalIgnoreCase)))
-        {
-            log.Information("Status serving enabled (writing data/_status/status.json). Press Ctrl+C to stop.");
-            Console.WriteLine("Press Ctrl+C to stop...");
-            var done = new TaskCompletionSource();
-            Console.CancelKeyPress += (_, e) =>
-            {
-                e.Cancel = true;
-                log.Information("Shutdown requested, stopping gracefully...");
-                done.TrySetResult();
-            };
-            await done.Task;
-        }
-
         log.Information("Disconnecting from data provider...");
         await dataClient.DisconnectAsync();
 
         log.Information("Shutdown complete");
-
-        if (statusHttp is not null)
-            await statusHttp.DisposeAsync();
 
         watcher?.Dispose();
     }
@@ -745,7 +704,6 @@ USAGE:
 
 MODES:
     --ui                    Start web dashboard (http://localhost:8080)
-    --serve-status          Enable status monitoring endpoint
     --backfill              Run historical data backfill
     --replay <path>         Replay events from JSONL file
     --package               Create a portable data package
@@ -787,7 +745,6 @@ SYMBOL OPTIONS (use with --symbols-add):
 OPTIONS:
     --config <path>         Path to configuration file (default: appsettings.json)
     --http-port <port>      HTTP server port (default: 8080)
-    --status-port <port>    Status endpoint port
     --watch-config          Enable hot-reload of configuration
 
 ENVIRONMENT VARIABLES:
@@ -834,8 +791,8 @@ EXAMPLES:
     # Start web dashboard on custom port
     MarketDataCollector --ui --http-port 9000
 
-    # Production mode with status endpoint and hot-reload
-    MarketDataCollector --serve-status --watch-config
+    # Production mode with web dashboard and hot-reload
+    MarketDataCollector --ui --watch-config
 
     # Run historical backfill
     MarketDataCollector --backfill --backfill-symbols AAPL,MSFT,GOOGL \\

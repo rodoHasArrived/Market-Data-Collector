@@ -56,7 +56,7 @@ dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj
 dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --ui --http-port 8080
 
 # Run with config hot reload
-dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --watch-config --serve-status
+dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --ui --watch-config
 
 # Run self-tests
 dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --selftest

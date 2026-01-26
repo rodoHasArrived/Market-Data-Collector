@@ -211,11 +211,11 @@ When `IBAPI` is NOT defined:
 
 ### Legacy Status File (`--serve-status`)
 
-**Status:** ⚠️ Deprecated as of v1.5.0
+**Status:** ❌ Removed as of v1.6.1
 
 **Reason:** The file-based status approach has been superseded by the HTTP monitoring server which provides real-time access to status, metrics, and health endpoints.
 
-**Migration:** Replace `--serve-status` with `--http-port 8080` and access:
+**Migration:** Use `--ui` to start the web dashboard and access:
 - `/status` for JSON status
 - `/metrics` for Prometheus metrics
 - `/health` for health checks
