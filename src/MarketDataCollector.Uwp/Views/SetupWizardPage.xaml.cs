@@ -125,7 +125,12 @@ public sealed partial class SetupWizardPage : Page
         }
     }
 
-    private async void TestConnection_Click(object sender, RoutedEventArgs e)
+    private void TestConnection_Click(object sender, RoutedEventArgs e)
+    {
+        _ = SafeTestConnectionAsync();
+    }
+
+    private async Task SafeTestConnectionAsync()
     {
         TestConnectionButton.IsEnabled = false;
         TestConnectionProgress.IsActive = true;
@@ -150,6 +155,14 @@ public sealed partial class SetupWizardPage : Page
             }
 
             ConnectionTestInfoBar.IsOpen = true;
+        }
+        catch (Exception ex)
+        {
+            ConnectionTestInfoBar.Severity = InfoBarSeverity.Error;
+            ConnectionTestInfoBar.Title = "Connection Test Error";
+            ConnectionTestInfoBar.Message = ex.Message;
+            ConnectionTestInfoBar.IsOpen = true;
+            System.Diagnostics.Debug.WriteLine($"[SetupWizardPage] Error testing connection: {ex.Message}");
         }
         finally
         {
@@ -184,7 +197,12 @@ public sealed partial class SetupWizardPage : Page
         return credentials;
     }
 
-    private async void RunPreflight_Click(object sender, RoutedEventArgs e)
+    private void RunPreflight_Click(object sender, RoutedEventArgs e)
+    {
+        _ = SafeRunPreflightAsync();
+    }
+
+    private async Task SafeRunPreflightAsync()
     {
         RunPreflightButton.IsEnabled = false;
         PreflightProgress.IsActive = true;
@@ -225,6 +243,14 @@ public sealed partial class SetupWizardPage : Page
 
             PreflightInfoBar.IsOpen = true;
         }
+        catch (Exception ex)
+        {
+            PreflightInfoBar.Severity = InfoBarSeverity.Error;
+            PreflightInfoBar.Title = "Preflight Check Error";
+            PreflightInfoBar.Message = ex.Message;
+            PreflightInfoBar.IsOpen = true;
+            System.Diagnostics.Debug.WriteLine($"[SetupWizardPage] Error during preflight: {ex.Message}");
+        }
         finally
         {
             RunPreflightButton.IsEnabled = true;
@@ -254,51 +280,63 @@ public sealed partial class SetupWizardPage : Page
         }
     }
 
-    private async void Next_Click(object sender, RoutedEventArgs e)
+    private void Next_Click(object sender, RoutedEventArgs e)
     {
-        if (_currentStep < TotalSteps)
+        _ = SafeNextClickAsync(sender, e);
+    }
+
+    private async Task SafeNextClickAsync(object sender, RoutedEventArgs e)
+    {
+        try
         {
-            if (_currentStep == 2)
+            if (_currentStep < TotalSteps)
             {
-                // Auto-run preflight when moving to step 3
+                if (_currentStep == 2)
+                {
+                    // Auto-run preflight when moving to step 3
+                    _currentStep++;
+                    UpdateStepUI();
+                    RunPreflight_Click(sender, e);
+                    return;
+                }
+
+                if (_currentStep == 3)
+                {
+                    // Save configuration before completing
+                    await SaveConfigurationAsync();
+                    UpdateSummary();
+                }
+
                 _currentStep++;
                 UpdateStepUI();
-                RunPreflight_Click(sender, e);
-                return;
-            }
 
-            if (_currentStep == 3)
-            {
-                // Save configuration before completing
-                await SaveConfigurationAsync();
-                UpdateSummary();
-            }
-
-            _currentStep++;
-            UpdateStepUI();
-
-            if (_currentStep == 2)
-            {
-                // Set default provider based on preset
-                var presets = _wizardService.GetSetupPresets();
-                var preset = presets.FirstOrDefault(p => p.Id == _selectedPreset);
-                if (preset?.RecommendedProviders.Length > 0)
+                if (_currentStep == 2)
                 {
-                    var recommendedProvider = preset.RecommendedProviders[0];
-                    foreach (ComboBoxItem item in ProviderCombo.Items)
+                    // Set default provider based on preset
+                    var presets = _wizardService.GetSetupPresets();
+                    var preset = presets.FirstOrDefault(p => p.Id == _selectedPreset);
+                    if (preset?.RecommendedProviders.Length > 0)
                     {
-                        if (item.Content?.ToString()?.Contains(recommendedProvider.Split(' ')[0]) == true)
+                        var recommendedProvider = preset.RecommendedProviders[0];
+                        foreach (ComboBoxItem item in ProviderCombo.Items)
                         {
-                            ProviderCombo.SelectedItem = item;
-                            break;
+                            if (item.Content?.ToString()?.Contains(recommendedProvider.Split(' ')[0]) == true)
+                            {
+                                ProviderCombo.SelectedItem = item;
+                                break;
+                            }
                         }
                     }
                 }
             }
+            else
+            {
+                NavigateToDashboard();
+            }
         }
-        else
+        catch (Exception ex)
         {
-            NavigateToDashboard();
+            System.Diagnostics.Debug.WriteLine($"[SetupWizardPage] Error during next click: {ex.Message}");
         }
     }
 

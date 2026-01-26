@@ -36,7 +36,12 @@ public sealed partial class CollectionSessionPage : Page
         _sessionService.StatisticsUpdated += OnStatisticsUpdated;
     }
 
-    private async void Page_Loaded(object sender, RoutedEventArgs e)
+    private void Page_Loaded(object sender, RoutedEventArgs e)
+    {
+        _ = SafePageLoadedAsync();
+    }
+
+    private async Task SafePageLoadedAsync()
     {
         try
         {
@@ -46,7 +51,7 @@ public sealed partial class CollectionSessionPage : Page
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error loading collection session page: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"[CollectionSessionPage] Error loading page: {ex.Message}");
         }
     }
 
@@ -147,17 +152,34 @@ public sealed partial class CollectionSessionPage : Page
 
     private EventHandler<object>? _refreshTimer_Tick;
 
-    private async void NewSession_Click(object sender, RoutedEventArgs e)
+    private void NewSession_Click(object sender, RoutedEventArgs e)
     {
-        NewSessionNameBox.Text = $"{DateTime.Now:yyyy-MM-dd}-custom";
-        NewSessionDescriptionBox.Text = "";
-        NewSessionTagsBox.Text = "";
-        StartImmediatelyCheck.IsChecked = true;
-
-        await NewSessionDialog.ShowAsync();
+        _ = SafeNewSessionClickAsync();
     }
 
-    private async void CreateDaily_Click(object sender, RoutedEventArgs e)
+    private async Task SafeNewSessionClickAsync()
+    {
+        try
+        {
+            NewSessionNameBox.Text = $"{DateTime.Now:yyyy-MM-dd}-custom";
+            NewSessionDescriptionBox.Text = "";
+            NewSessionTagsBox.Text = "";
+            StartImmediatelyCheck.IsChecked = true;
+
+            await NewSessionDialog.ShowAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[CollectionSessionPage] Error showing new session dialog: {ex.Message}");
+        }
+    }
+
+    private void CreateDaily_Click(object sender, RoutedEventArgs e)
+    {
+        _ = SafeCreateDailyAsync();
+    }
+
+    private async Task SafeCreateDailyAsync()
     {
         try
         {
@@ -168,16 +190,30 @@ public sealed partial class CollectionSessionPage : Page
         catch (Exception ex)
         {
             await ShowErrorAsync("Failed to create daily session", ex.Message);
+            System.Diagnostics.Debug.WriteLine($"[CollectionSessionPage] Error creating daily session: {ex.Message}");
         }
     }
 
-    private async void Refresh_Click(object sender, RoutedEventArgs e)
+    private void Refresh_Click(object sender, RoutedEventArgs e)
     {
-        await LoadSessionsAsync();
+        _ = SafeRefreshAsync();
     }
 
-    private async void NewSessionDialog_PrimaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
+    private async Task SafeRefreshAsync()
     {
+        try
+        {
+            await LoadSessionsAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[CollectionSessionPage] Error refreshing sessions: {ex.Message}");
+        }
+    }
+
+    private void NewSessionDialog_PrimaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
+    {
+        // Synchronous validation must happen before deferral
         var name = NewSessionNameBox.Text?.Trim();
         if (string.IsNullOrEmpty(name))
         {
@@ -185,6 +221,12 @@ public sealed partial class CollectionSessionPage : Page
             return;
         }
 
+        // Fire-and-forget for async work after validation
+        _ = SafeNewSessionDialogCreateAsync(name);
+    }
+
+    private async Task SafeNewSessionDialogCreateAsync(string name)
+    {
         try
         {
             var description = NewSessionDescriptionBox.Text?.Trim();
@@ -203,10 +245,16 @@ public sealed partial class CollectionSessionPage : Page
         catch (Exception ex)
         {
             await ShowErrorAsync("Failed to create session", ex.Message);
+            System.Diagnostics.Debug.WriteLine($"[CollectionSessionPage] Error creating session: {ex.Message}");
         }
     }
 
-    private async void PauseSession_Click(object sender, RoutedEventArgs e)
+    private void PauseSession_Click(object sender, RoutedEventArgs e)
+    {
+        _ = SafePauseSessionAsync();
+    }
+
+    private async Task SafePauseSessionAsync()
     {
         if (_activeSession == null) return;
 
@@ -229,71 +277,108 @@ public sealed partial class CollectionSessionPage : Page
         catch (Exception ex)
         {
             await ShowErrorAsync("Failed to pause/resume session", ex.Message);
+            System.Diagnostics.Debug.WriteLine($"[CollectionSessionPage] Error pausing/resuming session: {ex.Message}");
         }
     }
 
-    private async void StopSession_Click(object sender, RoutedEventArgs e)
+    private void StopSession_Click(object sender, RoutedEventArgs e)
+    {
+        _ = SafeStopSessionAsync();
+    }
+
+    private async Task SafeStopSessionAsync()
     {
         if (_activeSession == null) return;
 
-        var dialog = new ContentDialog
+        try
         {
-            Title = "Stop Session",
-            Content = $"Are you sure you want to stop the session '{_activeSession.Name}'?\n\nA manifest will be generated for the collected data.",
-            PrimaryButtonText = "Stop",
-            SecondaryButtonText = "Cancel",
-            XamlRoot = this.XamlRoot
-        };
+            var dialog = new ContentDialog
+            {
+                Title = "Stop Session",
+                Content = $"Are you sure you want to stop the session '{_activeSession.Name}'?\n\nA manifest will be generated for the collected data.",
+                PrimaryButtonText = "Stop",
+                SecondaryButtonText = "Cancel",
+                XamlRoot = this.XamlRoot
+            };
 
-        var result = await dialog.ShowAsync();
-        if (result == ContentDialogResult.Primary)
-        {
-            try
+            var result = await dialog.ShowAsync();
+            if (result == ContentDialogResult.Primary)
             {
                 await _sessionService.StopSessionAsync(_activeSession.Id, GenerateManifestToggle.IsOn);
                 await LoadSessionsAsync();
             }
-            catch (Exception ex)
-            {
-                await ShowErrorAsync("Failed to stop session", ex.Message);
-            }
+        }
+        catch (Exception ex)
+        {
+            await ShowErrorAsync("Failed to stop session", ex.Message);
+            System.Diagnostics.Debug.WriteLine($"[CollectionSessionPage] Error stopping session: {ex.Message}");
         }
     }
 
-    private async void ViewSessionDetails_Click(object sender, RoutedEventArgs e)
+    private void ViewSessionDetails_Click(object sender, RoutedEventArgs e)
     {
         if (sender is Button button && button.DataContext is CollectionSession session)
+        {
+            _ = SafeViewSessionDetailsAsync(session);
+        }
+    }
+
+    private async Task SafeViewSessionDetailsAsync(CollectionSession session)
+    {
+        try
         {
             var summary = _sessionService.GenerateSessionSummary(session);
             DetailsSummaryText.Text = summary;
             SessionDetailsDialog.Title = $"Session: {session.Name}";
             await SessionDetailsDialog.ShowAsync();
         }
-    }
-
-    private async void ExportSession_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is Button button && button.DataContext is CollectionSession session)
+        catch (Exception ex)
         {
-            try
-            {
-                var manifestService = ManifestService.Instance;
-                var (manifest, path) = await manifestService.GenerateManifestForSessionAsync(session);
-
-                await ShowInfoAsync("Manifest Exported", $"Manifest saved to:\n{path}");
-            }
-            catch (Exception ex)
-            {
-                await ShowErrorAsync("Failed to export manifest", ex.Message);
-            }
+            System.Diagnostics.Debug.WriteLine($"[CollectionSessionPage] Error viewing session details: {ex.Message}");
         }
     }
 
-    private async void AutoCreateDaily_Toggled(object sender, RoutedEventArgs e)
+    private void ExportSession_Click(object sender, RoutedEventArgs e)
     {
-        var config = await _sessionService.LoadSessionsAsync();
-        config.AutoCreateDailySessions = AutoCreateDailyToggle.IsOn;
-        await _sessionService.SaveSessionsAsync();
+        if (sender is Button button && button.DataContext is CollectionSession session)
+        {
+            _ = SafeExportSessionAsync(session);
+        }
+    }
+
+    private async Task SafeExportSessionAsync(CollectionSession session)
+    {
+        try
+        {
+            var manifestService = ManifestService.Instance;
+            var (manifest, path) = await manifestService.GenerateManifestForSessionAsync(session);
+
+            await ShowInfoAsync("Manifest Exported", $"Manifest saved to:\n{path}");
+        }
+        catch (Exception ex)
+        {
+            await ShowErrorAsync("Failed to export manifest", ex.Message);
+            System.Diagnostics.Debug.WriteLine($"[CollectionSessionPage] Error exporting session: {ex.Message}");
+        }
+    }
+
+    private void AutoCreateDaily_Toggled(object sender, RoutedEventArgs e)
+    {
+        _ = SafeAutoCreateDailyToggledAsync();
+    }
+
+    private async Task SafeAutoCreateDailyToggledAsync()
+    {
+        try
+        {
+            var config = await _sessionService.LoadSessionsAsync();
+            config.AutoCreateDailySessions = AutoCreateDailyToggle.IsOn;
+            await _sessionService.SaveSessionsAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[CollectionSessionPage] Error toggling auto-create daily: {ex.Message}");
+        }
     }
 
     private void OnSessionStarted(object? sender, CollectionSessionEventArgs e)

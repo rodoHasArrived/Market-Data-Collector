@@ -34,9 +34,21 @@ public sealed partial class SymbolMappingPage : Page
         Loaded += SymbolMappingPage_Loaded;
     }
 
-    private async void SymbolMappingPage_Loaded(object sender, RoutedEventArgs e)
+    private void SymbolMappingPage_Loaded(object sender, RoutedEventArgs e)
     {
-        await LoadMappingsAsync();
+        _ = SafeSymbolMappingPageLoadedAsync();
+    }
+
+    private async Task SafeSymbolMappingPageLoadedAsync()
+    {
+        try
+        {
+            await LoadMappingsAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SymbolMappingPage] Error during page load: {ex.Message}");
+        }
     }
 
     private async Task LoadMappingsAsync()
@@ -192,40 +204,45 @@ public sealed partial class SymbolMappingPage : Page
         }
     }
 
-    private async void SaveMapping_Click(object sender, RoutedEventArgs e)
+    private void SaveMapping_Click(object sender, RoutedEventArgs e)
     {
-        var canonicalSymbol = CanonicalSymbolBox.Text?.Trim().ToUpperInvariant();
-        if (string.IsNullOrWhiteSpace(canonicalSymbol))
-        {
-            ShowInfoBar("Canonical symbol is required.", InfoBarSeverity.Warning);
-            return;
-        }
+        _ = SafeSaveMappingAsync();
+    }
 
-        var mapping = new SymbolMapping
-        {
-            CanonicalSymbol = canonicalSymbol,
-            DisplayName = string.IsNullOrWhiteSpace(DisplayNameBox.Text) ? null : DisplayNameBox.Text.Trim(),
-            SecurityType = (SecurityTypeCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "STK",
-            PrimaryExchange = string.IsNullOrWhiteSpace(ExchangeCombo.Text) ? null : ExchangeCombo.Text.Trim(),
-            Figi = string.IsNullOrWhiteSpace(FigiBox.Text) ? null : FigiBox.Text.Trim(),
-            Isin = string.IsNullOrWhiteSpace(IsinBox.Text) ? null : IsinBox.Text.Trim(),
-            Cusip = string.IsNullOrWhiteSpace(CusipBox.Text) ? null : CusipBox.Text.Trim(),
-            Notes = string.IsNullOrWhiteSpace(NotesBox.Text) ? null : NotesBox.Text.Trim(),
-            IsCustomMapping = IsCustomToggle.IsOn,
-            ProviderSymbols = new Dictionary<string, string>()
-        };
-
-        // Collect provider symbols (only non-empty custom values)
-        foreach (var entry in _providerEntries)
-        {
-            if (!string.IsNullOrWhiteSpace(entry.Symbol))
-            {
-                mapping.ProviderSymbols[entry.ProviderId] = entry.Symbol.Trim();
-            }
-        }
-
+    private async Task SafeSaveMappingAsync()
+    {
         try
         {
+            var canonicalSymbol = CanonicalSymbolBox.Text?.Trim().ToUpperInvariant();
+            if (string.IsNullOrWhiteSpace(canonicalSymbol))
+            {
+                ShowInfoBar("Canonical symbol is required.", InfoBarSeverity.Warning);
+                return;
+            }
+
+            var mapping = new SymbolMapping
+            {
+                CanonicalSymbol = canonicalSymbol,
+                DisplayName = string.IsNullOrWhiteSpace(DisplayNameBox.Text) ? null : DisplayNameBox.Text.Trim(),
+                SecurityType = (SecurityTypeCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "STK",
+                PrimaryExchange = string.IsNullOrWhiteSpace(ExchangeCombo.Text) ? null : ExchangeCombo.Text.Trim(),
+                Figi = string.IsNullOrWhiteSpace(FigiBox.Text) ? null : FigiBox.Text.Trim(),
+                Isin = string.IsNullOrWhiteSpace(IsinBox.Text) ? null : IsinBox.Text.Trim(),
+                Cusip = string.IsNullOrWhiteSpace(CusipBox.Text) ? null : CusipBox.Text.Trim(),
+                Notes = string.IsNullOrWhiteSpace(NotesBox.Text) ? null : NotesBox.Text.Trim(),
+                IsCustomMapping = IsCustomToggle.IsOn,
+                ProviderSymbols = new Dictionary<string, string>()
+            };
+
+            // Collect provider symbols (only non-empty custom values)
+            foreach (var entry in _providerEntries)
+            {
+                if (!string.IsNullOrWhiteSpace(entry.Symbol))
+                {
+                    mapping.ProviderSymbols[entry.ProviderId] = entry.Symbol.Trim();
+                }
+            }
+
             await _mappingService.AddOrUpdateMappingAsync(mapping);
             RefreshMappingsList(SearchBox.Text);
 
@@ -243,27 +260,33 @@ public sealed partial class SymbolMappingPage : Page
         catch (Exception ex)
         {
             ShowInfoBar($"Failed to save mapping: {ex.Message}", InfoBarSeverity.Error);
+            System.Diagnostics.Debug.WriteLine($"[SymbolMappingPage] Error saving mapping: {ex.Message}");
         }
     }
 
-    private async void DeleteMapping_Click(object sender, RoutedEventArgs e)
+    private void DeleteMapping_Click(object sender, RoutedEventArgs e)
     {
-        if (_selectedMapping == null || _isNewMapping) return;
+        _ = SafeDeleteMappingAsync();
+    }
 
-        var dialog = new ContentDialog
+    private async Task SafeDeleteMappingAsync()
+    {
+        try
         {
-            Title = "Delete Mapping",
-            Content = $"Are you sure you want to delete the mapping for '{_selectedMapping.CanonicalSymbol}'?",
-            PrimaryButtonText = "Delete",
-            CloseButtonText = "Cancel",
-            DefaultButton = ContentDialogButton.Close,
-            XamlRoot = this.XamlRoot
-        };
+            if (_selectedMapping == null || _isNewMapping) return;
 
-        var result = await dialog.ShowAsync();
-        if (result == ContentDialogResult.Primary)
-        {
-            try
+            var dialog = new ContentDialog
+            {
+                Title = "Delete Mapping",
+                Content = $"Are you sure you want to delete the mapping for '{_selectedMapping.CanonicalSymbol}'?",
+                PrimaryButtonText = "Delete",
+                CloseButtonText = "Cancel",
+                DefaultButton = ContentDialogButton.Close,
+                XamlRoot = this.XamlRoot
+            };
+
+            var result = await dialog.ShowAsync();
+            if (result == ContentDialogResult.Primary)
             {
                 await _mappingService.RemoveMappingAsync(_selectedMapping.CanonicalSymbol);
                 RefreshMappingsList(SearchBox.Text);
@@ -271,10 +294,11 @@ public sealed partial class SymbolMappingPage : Page
                 _selectedMapping = null;
                 ShowInfoBar("Mapping deleted successfully.", InfoBarSeverity.Success);
             }
-            catch (Exception ex)
-            {
-                ShowInfoBar($"Failed to delete mapping: {ex.Message}", InfoBarSeverity.Error);
-            }
+        }
+        catch (Exception ex)
+        {
+            ShowInfoBar($"Failed to delete mapping: {ex.Message}", InfoBarSeverity.Error);
+            System.Diagnostics.Debug.WriteLine($"[SymbolMappingPage] Error deleting mapping: {ex.Message}");
         }
     }
 
@@ -346,7 +370,12 @@ public sealed partial class SymbolMappingPage : Page
         TestResultsList.ItemsSource = results.ToList();
     }
 
-    private async void ImportCsv_Click(object sender, RoutedEventArgs e)
+    private void ImportCsv_Click(object sender, RoutedEventArgs e)
+    {
+        _ = SafeImportCsvAsync();
+    }
+
+    private async Task SafeImportCsvAsync()
     {
         try
         {
@@ -370,10 +399,16 @@ public sealed partial class SymbolMappingPage : Page
         catch (Exception ex)
         {
             ShowInfoBar($"Failed to import CSV: {ex.Message}", InfoBarSeverity.Error);
+            System.Diagnostics.Debug.WriteLine($"[SymbolMappingPage] Error importing CSV: {ex.Message}");
         }
     }
 
-    private async void ExportCsv_Click(object sender, RoutedEventArgs e)
+    private void ExportCsv_Click(object sender, RoutedEventArgs e)
+    {
+        _ = SafeExportCsvAsync();
+    }
+
+    private async Task SafeExportCsvAsync()
     {
         try
         {
@@ -396,6 +431,7 @@ public sealed partial class SymbolMappingPage : Page
         catch (Exception ex)
         {
             ShowInfoBar($"Failed to export CSV: {ex.Message}", InfoBarSeverity.Error);
+            System.Diagnostics.Debug.WriteLine($"[SymbolMappingPage] Error exporting CSV: {ex.Message}");
         }
     }
 
