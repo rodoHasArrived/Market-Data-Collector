@@ -13,14 +13,15 @@ This document provides the feature roadmap, backlog, and development priorities 
 | Category | Implemented | Pending | Total |
 |----------|-------------|---------|-------|
 | Core Features | 55+ | - | 55+ |
-| Technical Debt | 5 | 3 | 8 |
+| Technical Debt | 5 | 6 | 11 |
+| Technical Debt (P0) | 0 | 3 | 3 |
 | Quick Wins (≤2 days) | 44 | 81 | 125 |
 | Provider Integration | 5 | 17 | 22 |
 | Monitoring & Alerting | 24 | 0 | 24 |
 | Data Quality | 23 | 0 | 23 |
 | Storage & Archival | 9 | 4 | 13 |
 | Cloud Integration | 0 | 100+ | 100+ |
-| **Total** | **165** | **205+** | **370+** |
+| **Total** | **165** | **211+** | **376+** |
 
 ---
 
@@ -154,6 +155,9 @@ Items that should be addressed before new feature development.
 | TD-6 | Add missing integration tests | Low | High | Pending |
 | TD-7 | Standardize error handling patterns | Medium | Medium | Pending |
 | TD-8 | Remove deprecated `--serve-status` option | Low | Low | Pending |
+| **TD-9** | **Fix async void methods (30+ instances)** | **P0** | **Medium** | **Pending** |
+| **TD-10** | **Replace instance HttpClient with IHttpClientFactory** | **P0** | **Medium** | **Pending** |
+| **TD-11** | **Replace Thread.Sleep with Task.Delay in async code** | **P0** | **Low** | **Pending** |
 
 ---
 
@@ -269,6 +273,40 @@ These are small, focused tasks broken down from larger features. Each can typica
 | PROV-22.7 | Add symbol selection step | 1 hour | PROV-22.2 |
 | PROV-22.8 | Add storage configuration step | 1 hour | PROV-22.2 |
 | PROV-22.9 | Add --wizard flag to Program.cs | 0.5 hour | PROV-22.6 |
+
+### TD-9: Fix Async Void Methods (P0)
+| Sub-ID | Task | Effort | Dependencies |
+|--------|------|--------|--------------|
+| TD-9.1 | Fix async void in OAuthRefreshService (OnRefreshTimerElapsed, OnExpirationCheckElapsed) | 1 hour | None |
+| TD-9.2 | Fix async void in DashboardViewModel (OnRefreshTimerElapsed) | 1 hour | None |
+| TD-9.3 | Fix async void in PendingOperationsQueueService (OnConnectionStateChanged) | 1 hour | None |
+| TD-9.4 | Fix async void Dispose in DataExportViewModel (implement IAsyncDisposable) | 1 hour | None |
+| TD-9.5 | Fix async void in App.xaml.cs (OnLaunched, OnAppExit) | 2 hours | None |
+| TD-9.6 | Fix async void in UWP Views (SymbolMappingPage, MainPage, SetupWizardPage, CollectionSessionPage) | 3 hours | None |
+| TD-9.7 | Fix async void in DetailedHealthCheck | 1 hour | None |
+| TD-9.8 | Add try-catch with logging to converted async Task methods | 2 hours | TD-9.1 to TD-9.7 |
+| TD-9.9 | Add unit tests for exception handling in async paths | 2 hours | TD-9.8 |
+
+### TD-10: Replace Instance HttpClient with IHttpClientFactory (P0)
+| Sub-ID | Task | Effort | Dependencies |
+|--------|------|--------|--------------|
+| TD-10.1 | Register IHttpClientFactory in DI container | 1 hour | None |
+| TD-10.2 | Create named HttpClient configurations for each provider | 2 hours | TD-10.1 |
+| TD-10.3 | Refactor Backfill providers (Alpaca, Polygon, Tiingo, Yahoo, Stooq, Finnhub, AlphaVantage, Nasdaq) | 4 hours | TD-10.1 |
+| TD-10.4 | Refactor SymbolSearch providers (Alpaca, Polygon, Finnhub, OpenFigi) | 2 hours | TD-10.1 |
+| TD-10.5 | Refactor Application services (CredentialValidation, DailySummaryWebhook, Connectivity, OAuth) | 2 hours | TD-10.1 |
+| TD-10.6 | Refactor UWP services (CredentialService, SetupWizardService) | 2 hours | TD-10.1 |
+| TD-10.7 | Add Polly retry policies to HttpClientFactory configuration | 2 hours | TD-10.2 |
+| TD-10.8 | Remove HttpClient instance fields and IDisposable implementations | 1 hour | TD-10.3 to TD-10.6 |
+| TD-10.9 | Add integration tests for HTTP client lifecycle | 2 hours | TD-10.8 |
+
+### TD-11: Replace Thread.Sleep with Task.Delay (P0)
+| Sub-ID | Task | Effort | Dependencies |
+|--------|------|--------|--------------|
+| TD-11.1 | Fix ConnectionWarmUp.cs Thread.Sleep(10) → await Task.Delay(10) | 0.5 hour | None |
+| TD-11.2 | Fix ConfigWatcher.cs Thread.Sleep(delayMs) → await Task.Delay(delayMs) | 0.5 hour | None |
+| TD-11.3 | Ensure calling methods are properly async | 1 hour | TD-11.1, TD-11.2 |
+| TD-11.4 | Add CancellationToken support to delay operations | 1 hour | TD-11.3 |
 
 ### ADQ-2: Reference Price Validator
 | Sub-ID | Task | Effort | Dependencies |
