@@ -22,27 +22,55 @@ public partial class App : Application
         this.Exit += OnAppExit;
     }
 
-    protected override async void OnLaunched(LaunchActivatedEventArgs args)
+    protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
-        // Run first-time setup before showing window
-        await InitializeFirstRunAsync();
+        // Fire-and-forget async initialization with proper exception handling
+        _ = SafeOnLaunchedAsync();
+    }
 
-        _window = new MainWindow();
-        MainWindow = _window;
+    /// <summary>
+    /// Performs async initialization with proper exception handling.
+    /// Called from OnLaunched via fire-and-forget pattern.
+    /// </summary>
+    private async Task SafeOnLaunchedAsync()
+    {
+        try
+        {
+            // Run first-time setup before showing window
+            await InitializeFirstRunAsync();
 
-        // Initialize theme service
-        ThemeService.Instance.Initialize(_window);
+            _window = new MainWindow();
+            MainWindow = _window;
 
-        // Start connection monitoring
-        ConnectionService.Instance.StartMonitoring();
+            // Initialize theme service
+            ThemeService.Instance.Initialize(_window);
 
-        // Initialize offline tracking persistence (handles recovery from crashes/restarts)
-        await InitializeOfflineTrackingAsync();
+            // Start connection monitoring
+            ConnectionService.Instance.StartMonitoring();
 
-        // Start background task scheduler
-        await InitializeBackgroundServicesAsync();
+            // Initialize offline tracking persistence (handles recovery from crashes/restarts)
+            await InitializeOfflineTrackingAsync();
 
-        _window.Activate();
+            // Start background task scheduler
+            await InitializeBackgroundServicesAsync();
+
+            _window.Activate();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[App] Error during application launch: {ex.Message}");
+            // Try to show a basic window even if initialization fails
+            try
+            {
+                _window ??= new MainWindow();
+                MainWindow = _window;
+                _window.Activate();
+            }
+            catch
+            {
+                // If we can't even create the window, there's nothing we can do
+            }
+        }
     }
 
     /// <summary>
@@ -87,7 +115,17 @@ public partial class App : Application
     /// <summary>
     /// Handles app exit for clean shutdown of background services with timeout.
     /// </summary>
-    private async void OnAppExit(object sender, EventArgs e)
+    private void OnAppExit(object sender, EventArgs e)
+    {
+        // Fire-and-forget async shutdown with proper exception handling
+        _ = SafeOnAppExitAsync();
+    }
+
+    /// <summary>
+    /// Performs async shutdown with proper exception handling.
+    /// Called from OnAppExit via fire-and-forget pattern.
+    /// </summary>
+    private async Task SafeOnAppExitAsync()
     {
         const int ShutdownTimeoutMs = 5000; // 5 second timeout for graceful shutdown
 
@@ -116,7 +154,7 @@ public partial class App : Application
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error during app exit: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"[App] Error during app exit: {ex.Message}");
         }
     }
 
