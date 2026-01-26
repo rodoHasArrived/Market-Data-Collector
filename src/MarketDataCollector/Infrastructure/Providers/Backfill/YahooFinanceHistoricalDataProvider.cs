@@ -5,6 +5,7 @@ using System.Threading;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Infrastructure.Contracts;
+using MarketDataCollector.Infrastructure.Http;
 using Serilog;
 
 namespace MarketDataCollector.Infrastructure.Providers.Backfill;
@@ -43,7 +44,8 @@ public sealed class YahooFinanceHistoricalDataProvider : IHistoricalDataProvider
     public YahooFinanceHistoricalDataProvider(HttpClient? httpClient = null, ILogger? log = null)
     {
         _log = log ?? LoggingSetup.ForContext<YahooFinanceHistoricalDataProvider>();
-        _http = httpClient ?? new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+        // TD-10: Use HttpClientFactory instead of creating new HttpClient instances
+        _http = httpClient ?? HttpClientFactoryProvider.CreateClient(HttpClientNames.YahooFinanceHistorical);
         _http.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
 
         _rateLimiter = new RateLimiter(MaxRequestsPerWindow, RateLimitWindow, RateLimitDelay, _log);

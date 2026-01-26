@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Subscriptions.Models;
+using MarketDataCollector.Infrastructure.Http;
 using MarketDataCollector.Infrastructure.Providers.Backfill;
 using Serilog;
 
@@ -44,7 +45,8 @@ public sealed class AlpacaSymbolSearchProvider : IFilterableSymbolSearchProvider
         _secretKey = secretKey ?? Environment.GetEnvironmentVariable(EnvSecretKey)
                                 ?? Environment.GetEnvironmentVariable("ALPACA__SECRETKEY");
 
-        _http = httpClient ?? new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+        // TD-10: Use HttpClientFactory instead of creating new HttpClient instances
+        _http = httpClient ?? HttpClientFactoryProvider.CreateClient(HttpClientNames.AlpacaSymbolSearch);
         ConfigureHttpClient();
 
         // Alpaca has generous rate limits: 200/min

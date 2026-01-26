@@ -5,6 +5,7 @@ using System.Threading;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Infrastructure.Contracts;
+using MarketDataCollector.Infrastructure.Http;
 using Serilog;
 
 namespace MarketDataCollector.Infrastructure.Providers.Backfill;
@@ -59,7 +60,8 @@ public sealed class NasdaqDataLinkHistoricalDataProvider : IHistoricalDataProvid
         _database = database;
         _log = log ?? LoggingSetup.ForContext<NasdaqDataLinkHistoricalDataProvider>();
 
-        _http = httpClient ?? new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+        // TD-10: Use HttpClientFactory instead of creating new HttpClient instances
+        _http = httpClient ?? HttpClientFactoryProvider.CreateClient(HttpClientNames.NasdaqDataLinkHistorical);
 
         // Free tier: 50 calls/day without key, 300/10sec burst limit
         _rateLimiter = new RateLimiter(MaxRequestsPerWindow, RateLimitWindow, RateLimitDelay, _log);

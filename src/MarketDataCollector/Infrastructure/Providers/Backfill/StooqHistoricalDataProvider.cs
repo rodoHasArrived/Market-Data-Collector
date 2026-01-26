@@ -4,6 +4,7 @@ using System.Threading;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Infrastructure.Contracts;
+using MarketDataCollector.Infrastructure.Http;
 using Serilog;
 
 namespace MarketDataCollector.Infrastructure.Providers.Backfill;
@@ -24,7 +25,8 @@ public sealed class StooqHistoricalDataProvider : IHistoricalDataProvider
 
     public StooqHistoricalDataProvider(HttpClient? httpClient = null, ILogger? log = null)
     {
-        _http = httpClient ?? new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+        // TD-10: Use HttpClientFactory instead of creating new HttpClient instances
+        _http = httpClient ?? HttpClientFactoryProvider.CreateClient(HttpClientNames.StooqHistorical);
         _log = log ?? LoggingSetup.ForContext<StooqHistoricalDataProvider>();
     }
 

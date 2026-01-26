@@ -5,6 +5,7 @@ using System.Threading;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Infrastructure.Contracts;
+using MarketDataCollector.Infrastructure.Http;
 using Serilog;
 
 namespace MarketDataCollector.Infrastructure.Providers.Backfill;
@@ -47,7 +48,8 @@ public sealed class TiingoHistoricalDataProvider : IHistoricalDataProvider, IDis
         _log = log ?? LoggingSetup.ForContext<TiingoHistoricalDataProvider>();
         _apiToken = apiToken ?? Environment.GetEnvironmentVariable("TIINGO_API_TOKEN");
 
-        _http = httpClient ?? new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+        // TD-10: Use HttpClientFactory instead of creating new HttpClient instances
+        _http = httpClient ?? HttpClientFactoryProvider.CreateClient(HttpClientNames.TiingoHistorical);
         _http.DefaultRequestHeaders.Add("Content-Type", "application/json");
 
         if (!string.IsNullOrEmpty(_apiToken))

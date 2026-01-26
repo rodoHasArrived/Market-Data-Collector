@@ -15,6 +15,7 @@ using MarketDataCollector.Domain.Collectors;
 using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Infrastructure;
+using MarketDataCollector.Infrastructure.Http;
 using MarketDataCollector.Infrastructure.Providers.InteractiveBrokers;
 using MarketDataCollector.Infrastructure.Providers.Alpaca;
 using MarketDataCollector.Infrastructure.Providers.Polygon;
@@ -65,6 +66,9 @@ internal static class Program
 
     private static async Task RunAsync(string[] args, AppConfig cfg, string cfgPath, ILogger log)
     {
+        // Initialize HttpClientFactory for proper HTTP client lifecycle management (TD-10)
+        InitializeHttpClientFactory(log);
+
         // Help Mode - Display usage information
         if (args.Any(a => a.Equals("--help", StringComparison.OrdinalIgnoreCase) || a.Equals("-h", StringComparison.OrdinalIgnoreCase)))
         {
@@ -1585,5 +1589,25 @@ SUPPORT:
             size /= 1024;
         }
         return $"{size:0.##} {sizes[order]}";
+    }
+
+    /// <summary>
+    /// Initializes HttpClientFactory for proper HTTP client lifecycle management.
+    /// Implements TD-10: Replace instance HttpClient with IHttpClientFactory.
+    /// </summary>
+    private static void InitializeHttpClientFactory(ILogger log)
+    {
+        var services = new ServiceCollection();
+
+        // Register all named HttpClient configurations with Polly policies
+        services.AddMarketDataHttpClients();
+
+        // Build the service provider
+        var serviceProvider = services.BuildServiceProvider();
+
+        // Initialize the static factory provider for backward compatibility
+        HttpClientFactoryProvider.Initialize(serviceProvider);
+
+        log.Debug("HttpClientFactory initialized with named clients for all data providers (TD-10)");
     }
 }

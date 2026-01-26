@@ -2,6 +2,7 @@ using System.Net.Http.Headers;
 using System.Text.Json;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Logging;
+using MarketDataCollector.Infrastructure.Http;
 using Serilog;
 
 namespace MarketDataCollector.Application.Services;
@@ -18,10 +19,8 @@ public sealed class CredentialValidationService : IAsyncDisposable
 
     public CredentialValidationService()
     {
-        _httpClient = new HttpClient
-        {
-            Timeout = TimeSpan.FromSeconds(10)
-        };
+        // TD-10: Use HttpClientFactory instead of creating new HttpClient instances
+        _httpClient = HttpClientFactoryProvider.CreateClient(HttpClientNames.CredentialValidation);
     }
 
     /// <summary>

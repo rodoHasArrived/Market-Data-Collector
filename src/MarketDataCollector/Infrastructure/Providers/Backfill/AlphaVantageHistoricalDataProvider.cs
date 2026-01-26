@@ -6,6 +6,7 @@ using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.DataSources;
+using MarketDataCollector.Infrastructure.Http;
 using Serilog;
 
 namespace MarketDataCollector.Infrastructure.Providers.Backfill;
@@ -53,7 +54,8 @@ public sealed class AlphaVantageHistoricalDataProvider : IHistoricalDataProvider
         _log = log ?? LoggingSetup.ForContext<AlphaVantageHistoricalDataProvider>();
         _apiKey = apiKey ?? Environment.GetEnvironmentVariable("ALPHA_VANTAGE_API_KEY");
 
-        _http = httpClient ?? new HttpClient { Timeout = TimeSpan.FromSeconds(60) };
+        // TD-10: Use HttpClientFactory instead of creating new HttpClient instances
+        _http = httpClient ?? HttpClientFactoryProvider.CreateClient(HttpClientNames.AlphaVantageHistorical);
         _http.DefaultRequestHeaders.Add("User-Agent", "MarketDataCollector/1.0");
 
         _rateLimiter = new RateLimiter(MaxRequestsPerWindow, RateLimitWindow, RateLimitDelay, _log);

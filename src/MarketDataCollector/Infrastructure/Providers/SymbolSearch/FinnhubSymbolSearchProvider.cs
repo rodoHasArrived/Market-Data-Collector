@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Subscriptions.Models;
+using MarketDataCollector.Infrastructure.Http;
 using MarketDataCollector.Infrastructure.Providers.Backfill;
 using Serilog;
 
@@ -42,7 +43,8 @@ public sealed class FinnhubSymbolSearchProvider : IFilterableSymbolSearchProvide
         _log = log ?? LoggingSetup.ForContext<FinnhubSymbolSearchProvider>();
         _apiKey = apiKey ?? Environment.GetEnvironmentVariable("FINNHUB_API_KEY");
 
-        _http = httpClient ?? new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+        // TD-10: Use HttpClientFactory instead of creating new HttpClient instances
+        _http = httpClient ?? HttpClientFactoryProvider.CreateClient(HttpClientNames.FinnhubSymbolSearch);
         _http.DefaultRequestHeaders.Add("User-Agent", "MarketDataCollector/1.0");
 
         if (!string.IsNullOrEmpty(_apiKey))

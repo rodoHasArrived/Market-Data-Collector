@@ -4,6 +4,7 @@ using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Threading;
 using MarketDataCollector.Application.Logging;
+using MarketDataCollector.Infrastructure.Http;
 using MarketDataCollector.Storage.Services;
 using Serilog;
 
@@ -528,7 +529,8 @@ public sealed class PreflightChecker
 
         var results = new List<(string name, bool reachable, int? statusCode, string? error)>();
 
-        using var httpClient = new HttpClient { Timeout = TimeSpan.FromMilliseconds(_config.NetworkTimeoutMs) };
+        // TD-10: Use HttpClientFactory instead of creating new HttpClient instances
+        using var httpClient = HttpClientFactoryProvider.CreateClient(HttpClientNames.PreflightChecker);
 
         foreach (var (name, url, _) in providers)
         {
