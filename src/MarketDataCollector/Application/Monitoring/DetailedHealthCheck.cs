@@ -326,10 +326,16 @@ public sealed class DetailedHealthCheck : IDisposable
         return DetailedHealthStatus.Healthy;
     }
 
-    private async void CheckDependencies(object? state)
+    private void CheckDependencies(object? state)
     {
         if (_isDisposed) return;
 
+        // Fire-and-forget the async work, but with proper exception handling in the async method
+        _ = CheckDependenciesInternalAsync();
+    }
+
+    private async Task CheckDependenciesInternalAsync()
+    {
         try
         {
             foreach (var kvp in _dependencies)
@@ -340,7 +346,7 @@ public sealed class DetailedHealthCheck : IDisposable
                 try
                 {
                     using var cts = new CancellationTokenSource(dep.Timeout);
-                    var isHealthy = await dep.HealthCheck(cts.Token);
+                    var isHealthy = await dep.HealthCheck(cts.Token).ConfigureAwait(false);
                     dep.UpdateStatus(isHealthy);
 
                     if (wasHealthy && !isHealthy)

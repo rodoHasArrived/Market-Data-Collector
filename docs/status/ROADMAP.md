@@ -275,17 +275,17 @@ These are small, focused tasks broken down from larger features. Each can typica
 | PROV-22.9 | Add --wizard flag to Program.cs | 0.5 hour | PROV-22.6 |
 
 ### TD-9: Fix Async Void Methods (P0)
-| Sub-ID | Task | Effort | Dependencies |
-|--------|------|--------|--------------|
-| TD-9.1 | Fix async void in OAuthRefreshService (OnRefreshTimerElapsed, OnExpirationCheckElapsed) | 1 hour | None |
-| TD-9.2 | Fix async void in DashboardViewModel (OnRefreshTimerElapsed) | 1 hour | None |
-| TD-9.3 | Fix async void in PendingOperationsQueueService (OnConnectionStateChanged) | 1 hour | None |
-| TD-9.4 | Fix async void Dispose in DataExportViewModel (implement IAsyncDisposable) | 1 hour | None |
-| TD-9.5 | Fix async void in App.xaml.cs (OnLaunched, OnAppExit) | 2 hours | None |
-| TD-9.6 | Fix async void in UWP Views (SymbolMappingPage, MainPage, SetupWizardPage, CollectionSessionPage) | 3 hours | None |
-| TD-9.7 | Fix async void in DetailedHealthCheck | 1 hour | None |
-| TD-9.8 | Add try-catch with logging to converted async Task methods | 2 hours | TD-9.1 to TD-9.7 |
-| TD-9.9 | Add unit tests for exception handling in async paths | 2 hours | TD-9.8 |
+| Sub-ID | Task | Effort | Dependencies | Status |
+|--------|------|--------|--------------|--------|
+| TD-9.1 | Fix async void in OAuthRefreshService (OnRefreshTimerElapsed, OnExpirationCheckElapsed) | 1 hour | None | Pending |
+| TD-9.2 | Fix async void in DashboardViewModel (OnRefreshTimerElapsed) | 1 hour | None | Pending |
+| TD-9.3 | Fix async void in PendingOperationsQueueService (OnConnectionStateChanged) | 1 hour | None | Pending |
+| TD-9.4 | Fix async void Dispose in DataExportViewModel (implement IAsyncDisposable) | 1 hour | None | Pending |
+| TD-9.5 | Fix async void in App.xaml.cs (OnLaunched, OnAppExit) | 2 hours | None | Pending |
+| TD-9.6 | Fix async void in UWP Views (SymbolMappingPage, MainPage, SetupWizardPage, CollectionSessionPage) | 3 hours | None | Pending |
+| TD-9.7 | Fix async void in DetailedHealthCheck | 1 hour | None | **Done** |
+| TD-9.8 | Add try-catch with logging to converted async Task methods | 2 hours | TD-9.1 to TD-9.7 | Pending |
+| TD-9.9 | Add unit tests for exception handling in async paths | 2 hours | TD-9.8 | Pending |
 
 ### TD-10: Replace Instance HttpClient with IHttpClientFactory (P0)
 | Sub-ID | Task | Effort | Dependencies |
