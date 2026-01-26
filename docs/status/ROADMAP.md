@@ -1,7 +1,7 @@
 # Market Data Collector - Roadmap
 
 **Version:** 1.6.0
-**Last Updated:** 2026-01-19
+**Last Updated:** 2026-01-26
 **Status:** Production Ready
 
 This document provides the feature roadmap, backlog, and development priorities for the Market Data Collector system.
@@ -112,6 +112,31 @@ This document provides the feature roadmap, backlog, and development priorities 
 
 ---
 
+## Recent Updates (2026-01-26)
+
+### Dependency Updates
+- **OpenTelemetry**: Updated all OpenTelemetry packages to v1.15.0
+  - `OpenTelemetry.Instrumentation.Http` → 1.15.0
+  - `OpenTelemetry.Instrumentation.AspNetCore` → 1.15.0
+  - `OpenTelemetry.Api` → 1.15.0
+  - `OpenTelemetry.Exporter.OpenTelemetryProtocol` → 1.15.0
+  - `OpenTelemetry.Extensions.Hosting` → 1.15.0
+
+### CI/CD Improvements
+- Updated GitHub Actions to latest versions:
+  - `actions/upload-artifact` → v6
+  - `actions/download-artifact` → v7
+  - `actions/labeler` → v6
+  - `actions/setup-python` → v6
+  - `DavidAnson/markdownlint-cli2-action` → v22
+
+### Code Quality
+- Fixed blocking sync methods converted to async patterns
+- Added missing `[ImplementsAdr]` attributes for ADR compliance
+- Updated CLAUDE.md with comprehensive codebase documentation
+
+---
+
 ## Technical Debt (Critical)
 
 Items that should be addressed before new feature development.
@@ -154,11 +179,11 @@ Items that should be addressed before new feature development.
 | MON-18 | Backpressure Alert | 1 day | P1 | **Done** |
 | MON-6 | Connection Status Webhook | 1 day | P1 | **Done** |
 
-### Sprint 3: Developer Experience
+### Sprint 3: Developer Experience - **COMPLETE**
 | ID | Feature | Effort | Priority | Status |
 |----|---------|--------|----------|--------|
 | QW-16 | Diagnostic Bundle Generator | 1 day | P1 | **Done** |
-| TD-1 | Replace double with decimal | 3 days | P0 | Pending |
+| TD-1 | Replace double with decimal | 3 days | P0 | **Done** |
 | QW-15 | Query Endpoint for Historical Data | 2 days | P1 | Pending |
 | DEV-9 | API Explorer / Swagger UI | 2 days | P2 | Pending |
 | QW-17 | Sample Data Generator | 1.5 days | P2 | **Done** |
