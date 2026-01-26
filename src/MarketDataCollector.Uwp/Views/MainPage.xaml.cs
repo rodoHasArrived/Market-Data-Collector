@@ -45,20 +45,33 @@ public sealed partial class MainPage : Page
         Unloaded += MainPage_Unloaded;
     }
 
-    private async void MainPage_Loaded(object sender, RoutedEventArgs e)
+    private void MainPage_Loaded(object sender, RoutedEventArgs e)
     {
-        // Check for first run and show welcome wizard
-        if (await _firstRunService.IsFirstRunAsync())
+        // Fire-and-forget with proper exception handling
+        _ = SafeMainPageLoadedAsync();
+    }
+
+    private async Task SafeMainPageLoadedAsync()
+    {
+        try
         {
-            ContentFrame.Navigate(typeof(WelcomePage));
-            await _firstRunService.InitializeAsync();
-            return;
+            // Check for first run and show welcome wizard
+            if (await _firstRunService.IsFirstRunAsync())
+            {
+                ContentFrame.Navigate(typeof(WelcomePage));
+                await _firstRunService.InitializeAsync();
+                return;
+            }
+
+            await ViewModel.LoadAsync();
+
+            // Start connection monitoring
+            _connectionService.StartMonitoring();
         }
-
-        await ViewModel.LoadAsync();
-
-        // Start connection monitoring
-        _connectionService.StartMonitoring();
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[MainPage] Error during page load: {ex.Message}");
+        }
     }
 
     private void MainPage_Unloaded(object sender, RoutedEventArgs e)
@@ -298,9 +311,18 @@ public sealed partial class MainPage : Page
         }
     }
 
-    private async void SearchBox_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
+    private void SearchBox_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
     {
         if (args.Reason == AutoSuggestionBoxTextChangeReason.UserInput)
+        {
+            // Fire-and-forget with proper exception handling
+            _ = SafeSearchBoxTextChangedAsync(sender);
+        }
+    }
+
+    private async Task SafeSearchBoxTextChangedAsync(AutoSuggestBox sender)
+    {
+        try
         {
             var suggestions = await _searchService.GetSuggestionsAsync(sender.Text);
             sender.ItemsSource = suggestions.Select(s => new SearchSuggestionDisplay
@@ -310,6 +332,10 @@ public sealed partial class MainPage : Page
                 Icon = s.Icon,
                 NavigationTarget = s.NavigationTarget
             }).ToList();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[MainPage] Error during search: {ex.Message}");
         }
     }
 
