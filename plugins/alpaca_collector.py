@@ -236,8 +236,9 @@ class AlpacaCollector:
                     self.stream.unsubscribe_bars(symbol)
                     self.stream.unsubscribe_trades(symbol)
                     self.stream.unsubscribe_quotes(symbol)
-            except Exception:
-                pass
+            except Exception as e:
+                # Ignore unsubscription failures during shutdown, but log for diagnostics
+                emit_error(f"Error while unsubscribing from Alpaca stream during shutdown: {e}")
 
 
 async def main() -> None:
