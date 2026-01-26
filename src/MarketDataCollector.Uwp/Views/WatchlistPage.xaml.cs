@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -24,17 +26,38 @@ public sealed partial class WatchlistPage : Page
     private static readonly SolidColorBrush OrangeBrush = new(Microsoft.UI.Colors.Orange);
     private static readonly SolidColorBrush RedBrush = new(Microsoft.UI.Colors.Red);
 
-    // Popular symbols for autocomplete suggestions
+    // Extended list of popular symbols for autocomplete (when SearchService is unavailable)
     private static readonly string[] PopularSymbols =
     [
-        "AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "META", "TSLA", "BRK.B", "JPM", "V",
-        "UNH", "XOM", "JNJ", "WMT", "MA", "PG", "HD", "CVX", "MRK", "ABBV",
-        "LLY", "PFE", "KO", "PEP", "BAC", "COST", "AVGO", "TMO", "MCD", "CSCO",
-        "ACN", "ABT", "DHR", "ADBE", "CRM", "NKE", "CMCSA", "TXN", "NEE", "VZ",
-        "SPY", "QQQ", "IWM", "DIA", "VTI", "VOO", "XLF", "XLE", "XLK", "XLV"
+        // Mega-cap tech
+        "AAPL", "MSFT", "GOOGL", "GOOG", "AMZN", "NVDA", "META", "TSLA",
+        // Large-cap tech
+        "AVGO", "ADBE", "CRM", "ORCL", "CSCO", "ACN", "IBM", "INTC", "AMD", "QCOM",
+        // Financials
+        "BRK.B", "BRK.A", "JPM", "V", "MA", "BAC", "WFC", "GS", "MS", "AXP",
+        // Healthcare
+        "UNH", "JNJ", "LLY", "PFE", "MRK", "ABBV", "TMO", "ABT", "DHR", "BMY",
+        // Consumer
+        "WMT", "PG", "KO", "PEP", "COST", "HD", "MCD", "NKE", "SBUX", "TGT",
+        // Energy
+        "XOM", "CVX", "COP", "SLB", "EOG", "MPC", "PSX", "VLO", "OXY", "HAL",
+        // Industrials
+        "CAT", "DE", "UNP", "HON", "GE", "BA", "RTX", "LMT", "UPS", "FDX",
+        // ETFs
+        "SPY", "QQQ", "IWM", "DIA", "VTI", "VOO", "VEA", "VWO", "BND", "GLD",
+        // Sector ETFs
+        "XLF", "XLE", "XLK", "XLV", "XLI", "XLY", "XLP", "XLU", "XLB", "XLRE"
     ];
 
+    // Debounce configuration for autocomplete
+    private const int DebounceDelayMs = 150;
+    private CancellationTokenSource? _searchCts;
+    private readonly DispatcherTimer _debounceTimer;
+    private string _pendingSearchText = string.Empty;
+    private AutoSuggestBox? _pendingSearchBox;
+
     private readonly WatchlistService _watchlistService;
+    private readonly SearchService _searchService;
     private readonly ContextMenuService _contextMenuService;
     private readonly ObservableCollection<WatchlistDisplayItem> _favorites;
     private readonly ObservableCollection<WatchlistDisplayItem> _allSymbols;
@@ -44,6 +67,7 @@ public sealed partial class WatchlistPage : Page
     {
         this.InitializeComponent();
         _watchlistService = WatchlistService.Instance;
+        _searchService = SearchService.Instance;
         _contextMenuService = ContextMenuService.Instance;
         _favorites = new ObservableCollection<WatchlistDisplayItem>();
         _allSymbols = new ObservableCollection<WatchlistDisplayItem>();
@@ -57,6 +81,13 @@ public sealed partial class WatchlistPage : Page
             Interval = TimeSpan.FromSeconds(5)
         };
         _refreshTimer.Tick += RefreshTimer_Tick;
+
+        // Initialize debounce timer for autocomplete
+        _debounceTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromMilliseconds(DebounceDelayMs)
+        };
+        _debounceTimer.Tick += DebounceTimer_Tick;
 
         Loaded += WatchlistPage_Loaded;
         Unloaded += WatchlistPage_Unloaded;
@@ -73,6 +104,10 @@ public sealed partial class WatchlistPage : Page
     private void WatchlistPage_Unloaded(object sender, RoutedEventArgs e)
     {
         _refreshTimer.Stop();
+        _debounceTimer.Stop();
+        _searchCts?.Cancel();
+        _searchCts?.Dispose();
+        _searchCts = null;
         // Unsubscribe from service events to prevent memory leaks
         _watchlistService.WatchlistChanged -= WatchlistService_WatchlistChanged;
     }
@@ -170,33 +205,42 @@ public sealed partial class WatchlistPage : Page
 
     private async void AddSymbol_QuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
     {
+        // Stop any pending searches
+        _debounceTimer.Stop();
+        _searchCts?.Cancel();
+
         string? symbolToAdd = null;
 
-        if (args.ChosenSuggestion is string suggestion)
+        if (args.ChosenSuggestion is SymbolSuggestion suggestion)
         {
-            // User selected a suggestion from the dropdown
-            if (suggestion.StartsWith("+ Add \"", StringComparison.OrdinalIgnoreCase))
+            // User selected a SymbolSuggestion from the dropdown
+            symbolToAdd = suggestion.Symbol.ToUpperInvariant();
+        }
+        else if (args.ChosenSuggestion is string strSuggestion)
+        {
+            // Fallback for string suggestions (backwards compatibility)
+            if (strSuggestion.StartsWith("+ Add \"", StringComparison.OrdinalIgnoreCase))
             {
-                // Extract symbol from "+ Add "SYMBOL"" pattern
-                symbolToAdd = suggestion.Replace("+ Add \"", "").Replace("\"", "").Trim().ToUpperInvariant();
+                symbolToAdd = strSuggestion.Replace("+ Add \"", "").Replace("\"", "").Trim().ToUpperInvariant();
             }
             else
             {
-                symbolToAdd = suggestion.ToUpperInvariant();
+                symbolToAdd = strSuggestion.ToUpperInvariant();
             }
         }
         else if (!string.IsNullOrWhiteSpace(args.QueryText))
         {
             // User pressed Enter without selecting a suggestion
             var query = args.QueryText.Trim().ToUpperInvariant();
-            if (query.StartsWith("+ ADD \"", StringComparison.OrdinalIgnoreCase))
+
+            // Validate symbol format before adding
+            if (!IsValidSymbolFormat(query))
             {
-                symbolToAdd = query.Replace("+ ADD \"", "").Replace("\"", "").Trim();
+                ShowInfoBar("Invalid Symbol", "Please enter a valid symbol (letters, numbers, dots, or hyphens).", InfoBarSeverity.Warning);
+                return;
             }
-            else
-            {
-                symbolToAdd = query;
-            }
+
+            symbolToAdd = query;
         }
 
         if (!string.IsNullOrWhiteSpace(symbolToAdd))
@@ -208,40 +252,209 @@ public sealed partial class WatchlistPage : Page
 
     private void AddSymbol_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
     {
-        if (args.Reason == AutoSuggestionBoxTextChangeReason.UserInput)
+        if (args.Reason != AutoSuggestionBoxTextChangeReason.UserInput)
+            return;
+
+        var text = sender.Text?.Trim() ?? string.Empty;
+
+        if (string.IsNullOrEmpty(text))
         {
-            var text = sender.Text?.Trim().ToUpperInvariant() ?? string.Empty;
-
-            if (string.IsNullOrEmpty(text))
-            {
-                sender.ItemsSource = null;
-                return;
-            }
-
-            var suggestions = new List<string>();
-
-            // Add matching popular symbols that start with the input text
-            suggestions.AddRange(
-                PopularSymbols
-                    .Where(s => s.StartsWith(text, StringComparison.OrdinalIgnoreCase))
-                    .Take(8));
-
-            // Also add symbols that contain the text (but don't start with it)
-            suggestions.AddRange(
-                PopularSymbols
-                    .Where(s => !s.StartsWith(text, StringComparison.OrdinalIgnoreCase)
-                                && s.Contains(text, StringComparison.OrdinalIgnoreCase))
-                    .Take(4));
-
-            // If the typed text is not already in the watchlist and not in suggestions, offer to add it
-            if (!_allSymbols.Any(s => s.Symbol.Equals(text, StringComparison.OrdinalIgnoreCase))
-                && !suggestions.Contains(text))
-            {
-                suggestions.Add($"+ Add \"{text}\"");
-            }
-
-            sender.ItemsSource = suggestions.Count > 0 ? suggestions : null;
+            _debounceTimer.Stop();
+            sender.ItemsSource = null;
+            return;
         }
+
+        // Store pending search info and restart debounce timer
+        _pendingSearchText = text;
+        _pendingSearchBox = sender;
+        _debounceTimer.Stop();
+        _debounceTimer.Start();
+    }
+
+    private async void DebounceTimer_Tick(object? sender, object e)
+    {
+        _debounceTimer.Stop();
+
+        if (_pendingSearchBox == null || string.IsNullOrEmpty(_pendingSearchText))
+            return;
+
+        var searchBox = _pendingSearchBox;
+        var searchText = _pendingSearchText.ToUpperInvariant();
+
+        // Cancel any previous search operation
+        _searchCts?.Cancel();
+        _searchCts?.Dispose();
+        _searchCts = new CancellationTokenSource();
+        var ct = _searchCts.Token;
+
+        try
+        {
+            var suggestions = await BuildSymbolSuggestionsAsync(searchText, ct);
+
+            if (ct.IsCancellationRequested)
+                return;
+
+            searchBox.ItemsSource = suggestions.Count > 0 ? suggestions : null;
+        }
+        catch (OperationCanceledException)
+        {
+            // Search was cancelled, ignore
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[WatchlistPage] Error fetching suggestions: {ex.Message}");
+            // Fall back to simple local search on error
+            searchBox.ItemsSource = BuildLocalSuggestions(searchText);
+        }
+    }
+
+    /// <summary>
+    /// Builds comprehensive symbol suggestions using SearchService and local data.
+    /// </summary>
+    private async Task<List<SymbolSuggestion>> BuildSymbolSuggestionsAsync(string searchText, CancellationToken ct)
+    {
+        var suggestions = new List<SymbolSuggestion>();
+        var addedSymbols = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        // 1. First check current watchlist for matches (highest priority - already tracked)
+        foreach (var item in _allSymbols.Where(s =>
+            s.Symbol.StartsWith(searchText, StringComparison.OrdinalIgnoreCase)))
+        {
+            if (addedSymbols.Add(item.Symbol))
+            {
+                suggestions.Add(new SymbolSuggestion(
+                    item.Symbol,
+                    "In Watchlist",
+                    item.IsFavorite ? "\uE735" : "\uE728"));
+            }
+        }
+
+        // 2. Use SearchService for comprehensive search (config, watchlist, popular)
+        try
+        {
+            var searchSuggestions = await _searchService.GetSuggestionsAsync(searchText);
+            ct.ThrowIfCancellationRequested();
+
+            foreach (var suggestion in searchSuggestions
+                .Where(s => s.Category is "Symbol" or "Watchlist" or "Popular Symbol"))
+            {
+                if (addedSymbols.Add(suggestion.Text))
+                {
+                    suggestions.Add(new SymbolSuggestion(
+                        suggestion.Text,
+                        suggestion.Category,
+                        suggestion.Icon));
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch
+        {
+            // SearchService failed, continue with local fallback
+        }
+
+        // 3. Add matching symbols from extended popular list (fallback/supplement)
+        foreach (var symbol in PopularSymbols
+            .Where(s => s.StartsWith(searchText, StringComparison.OrdinalIgnoreCase))
+            .Take(10))
+        {
+            if (addedSymbols.Add(symbol))
+            {
+                suggestions.Add(new SymbolSuggestion(symbol, "Popular", "\uE8D6"));
+            }
+        }
+
+        // 4. Also include symbols that contain (but don't start with) the text
+        foreach (var symbol in PopularSymbols
+            .Where(s => !s.StartsWith(searchText, StringComparison.OrdinalIgnoreCase)
+                        && s.Contains(searchText, StringComparison.OrdinalIgnoreCase))
+            .Take(5))
+        {
+            if (addedSymbols.Add(symbol))
+            {
+                suggestions.Add(new SymbolSuggestion(symbol, "Related", "\uE721"));
+            }
+        }
+
+        // 5. If the typed text looks like a valid symbol and isn't in suggestions, offer to add it
+        if (IsValidSymbolFormat(searchText) && !addedSymbols.Contains(searchText))
+        {
+            suggestions.Add(new SymbolSuggestion(
+                searchText,
+                $"+ Add \"{searchText}\"",
+                "\uE710",
+                isAddNew: true));
+        }
+
+        // Limit total suggestions
+        return suggestions.Take(12).ToList();
+    }
+
+    /// <summary>
+    /// Builds simple local suggestions when SearchService is unavailable.
+    /// </summary>
+    private List<SymbolSuggestion> BuildLocalSuggestions(string searchText)
+    {
+        var suggestions = new List<SymbolSuggestion>();
+        var addedSymbols = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        // Check watchlist
+        foreach (var item in _allSymbols
+            .Where(s => s.Symbol.StartsWith(searchText, StringComparison.OrdinalIgnoreCase))
+            .Take(5))
+        {
+            if (addedSymbols.Add(item.Symbol))
+            {
+                suggestions.Add(new SymbolSuggestion(item.Symbol, "In Watchlist", "\uE728"));
+            }
+        }
+
+        // Popular symbols
+        foreach (var symbol in PopularSymbols
+            .Where(s => s.StartsWith(searchText, StringComparison.OrdinalIgnoreCase))
+            .Take(8))
+        {
+            if (addedSymbols.Add(symbol))
+            {
+                suggestions.Add(new SymbolSuggestion(symbol, "Popular", "\uE8D6"));
+            }
+        }
+
+        // Add new option
+        if (IsValidSymbolFormat(searchText) && !addedSymbols.Contains(searchText))
+        {
+            suggestions.Add(new SymbolSuggestion(
+                searchText,
+                $"+ Add \"{searchText}\"",
+                "\uE710",
+                isAddNew: true));
+        }
+
+        return suggestions;
+    }
+
+    /// <summary>
+    /// Validates that the input looks like a valid stock symbol.
+    /// </summary>
+    private static bool IsValidSymbolFormat(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text) || text.Length < 1 || text.Length > 10)
+            return false;
+
+        // Must start with a letter, can contain letters, numbers, dots, and hyphens
+        if (!char.IsLetter(text[0]))
+            return false;
+
+        foreach (var c in text)
+        {
+            if (!char.IsLetterOrDigit(c) && c != '.' && c != '-')
+                return false;
+        }
+
+        return true;
     }
 
     private async Task AddSymbolFromInput()
@@ -627,4 +840,53 @@ public class WatchlistDisplayItem : CommunityToolkit.Mvvm.ComponentModel.Observa
         get => _addedAt;
         set => SetProperty(ref _addedAt, value);
     }
+}
+
+/// <summary>
+/// Represents a symbol suggestion in the autocomplete dropdown.
+/// </summary>
+public sealed class SymbolSuggestion
+{
+    /// <summary>
+    /// The stock symbol (e.g., AAPL, MSFT).
+    /// </summary>
+    public string Symbol { get; }
+
+    /// <summary>
+    /// Category or description text (e.g., "In Watchlist", "Popular", "+ Add").
+    /// </summary>
+    public string Category { get; }
+
+    /// <summary>
+    /// Icon character for display (Segoe MDL2 Assets).
+    /// </summary>
+    public string Icon { get; }
+
+    /// <summary>
+    /// Whether this is an "Add new symbol" suggestion.
+    /// </summary>
+    public bool IsAddNew { get; }
+
+    /// <summary>
+    /// Display text shown in the dropdown.
+    /// </summary>
+    public string DisplayText => IsAddNew ? Category : Symbol;
+
+    /// <summary>
+    /// Secondary text shown below the symbol (category info).
+    /// </summary>
+    public string SecondaryText => IsAddNew ? string.Empty : Category;
+
+    public SymbolSuggestion(string symbol, string category, string icon, bool isAddNew = false)
+    {
+        Symbol = symbol;
+        Category = category;
+        Icon = icon;
+        IsAddNew = isAddNew;
+    }
+
+    /// <summary>
+    /// Returns the display text for the AutoSuggestBox.
+    /// </summary>
+    public override string ToString() => DisplayText;
 }
