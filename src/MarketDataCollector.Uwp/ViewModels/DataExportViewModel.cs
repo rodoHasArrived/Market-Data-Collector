@@ -8,7 +8,7 @@ namespace MarketDataCollector.Uwp.ViewModels;
 /// <summary>
 /// ViewModel for the DataExportPage with real-time export progress.
 /// </summary>
-public sealed partial class DataExportViewModel : ObservableObject, IDisposable
+public sealed partial class DataExportViewModel : ObservableObject, IAsyncDisposable
 {
     private readonly BatchExportSchedulerService _exportService;
     private readonly ConfigService _configService;
@@ -380,7 +380,7 @@ public sealed partial class DataExportViewModel : ObservableObject, IDisposable
         return $"{size:0.##} {suffixes[order]}";
     }
 
-    public async void Dispose()
+    public async ValueTask DisposeAsync()
     {
         if (_disposed) return;
 
@@ -389,7 +389,15 @@ public sealed partial class DataExportViewModel : ObservableObject, IDisposable
         _exportService.JobFailed -= OnJobFailed;
         _exportService.JobProgress -= OnJobProgress;
 
-        await _exportService.DisposeAsync();
+        try
+        {
+            await _exportService.DisposeAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[DataExportViewModel] Error during disposal: {ex.Message}");
+        }
+
         _disposed = true;
     }
 }
