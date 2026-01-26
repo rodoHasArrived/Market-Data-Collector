@@ -181,20 +181,17 @@ public sealed record PluginCapabilities
             return false;
 
         // Check data types
-        foreach (var dataType in request.DataTypes)
+        if (!request.DataTypes.All(dataType => dataType switch
         {
-            bool supported = dataType switch
-            {
-                DataType.Trade => SupportsTrades,
-                DataType.Quote => SupportsQuotes,
-                DataType.Depth => SupportsDepth,
-                DataType.Bar => SupportsBars,
-                DataType.Dividend => SupportsDividends,
-                DataType.Split => SupportsSplits,
-                _ => false
-            };
-            if (!supported) return false;
-        }
+            DataType.Trade => SupportsTrades,
+            DataType.Quote => SupportsQuotes,
+            DataType.Depth => SupportsDepth,
+            DataType.Bar => SupportsBars,
+            DataType.Dividend => SupportsDividends,
+            DataType.Split => SupportsSplits,
+            _ => false
+        }))
+            return false;
 
         // Check symbol count
         if (request.Symbols.Count > MaxSymbolsPerRequest)
