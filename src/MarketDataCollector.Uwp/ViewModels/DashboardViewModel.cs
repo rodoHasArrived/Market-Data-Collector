@@ -432,22 +432,35 @@ public sealed partial class DashboardViewModel : ObservableObject, IDisposable
         RecentActivities.Prepend(e);
     }
 
-    private async void OnRefreshTimerElapsed(object? sender, System.Timers.ElapsedEventArgs e)
+    private void OnRefreshTimerElapsed(object? sender, System.Timers.ElapsedEventArgs e)
     {
-        await RefreshStatusAsync();
+        // Fire-and-forget the async work, with proper exception handling in the async method
+        _ = SafeRefreshTimerWorkAsync();
+    }
 
-        // Update collector uptime
-        if (IsCollectorRunning)
+    private async Task SafeRefreshTimerWorkAsync()
+    {
+        try
         {
-            var uptime = DateTime.UtcNow - _collectorStartTime;
-            CollectorUptimeText = $"{(int)uptime.TotalHours:D2}:{uptime.Minutes:D2}:{uptime.Seconds:D2}";
-        }
+            await RefreshStatusAsync();
 
-        // Update dashboard uptime
-        var dashboardUptime = DateTime.UtcNow - _collectorStartTime;
-        UptimeText = dashboardUptime.TotalHours >= 1
-            ? $"{(int)dashboardUptime.TotalHours}h {dashboardUptime.Minutes}m"
-            : $"{dashboardUptime.Minutes}m {dashboardUptime.Seconds}s";
+            // Update collector uptime
+            if (IsCollectorRunning)
+            {
+                var uptime = DateTime.UtcNow - _collectorStartTime;
+                CollectorUptimeText = $"{(int)uptime.TotalHours:D2}:{uptime.Minutes:D2}:{uptime.Seconds:D2}";
+            }
+
+            // Update dashboard uptime
+            var dashboardUptime = DateTime.UtcNow - _collectorStartTime;
+            UptimeText = dashboardUptime.TotalHours >= 1
+                ? $"{(int)dashboardUptime.TotalHours}h {dashboardUptime.Minutes}m"
+                : $"{dashboardUptime.Minutes}m {dashboardUptime.Seconds}s";
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] Error in refresh timer: {ex.Message}");
+        }
     }
 
     public void Dispose()
