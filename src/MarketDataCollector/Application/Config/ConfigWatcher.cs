@@ -78,10 +78,16 @@ public sealed class ConfigWatcher : IDisposable
         }
         if (!doWork) return;
 
+        // Fire-and-forget async flush with proper error handling
+        _ = FlushAsyncCore();
+    }
+
+    private async Task FlushAsyncCore()
+    {
         try
         {
             // File writes can be non-atomic; retry briefly.
-            var cfg = TryLoadWithRetries(_path, attempts: 5, delayMs: 120);
+            var cfg = await TryLoadWithRetriesAsync(_path, attempts: 5, delayMs: 120).ConfigureAwait(false);
             if (cfg is not null)
                 ConfigChanged?.Invoke(cfg);
         }
@@ -91,14 +97,14 @@ public sealed class ConfigWatcher : IDisposable
         }
     }
 
-    private static AppConfig? TryLoadWithRetries(string path, int attempts, int delayMs)
+    private static async Task<AppConfig?> TryLoadWithRetriesAsync(string path, int attempts, int delayMs)
     {
         for (int i = 0; i < attempts; i++)
         {
             try
             {
                 if (!File.Exists(path)) return new AppConfig();
-                var json = File.ReadAllText(path);
+                var json = await File.ReadAllTextAsync(path).ConfigureAwait(false);
                 var cfg = JsonSerializer.Deserialize<AppConfig>(json, AppConfigJsonOptions.Read);
                 return cfg ?? new AppConfig();
             }
@@ -110,7 +116,7 @@ public sealed class ConfigWatcher : IDisposable
                     i + 1,
                     attempts,
                     ex.GetType().Name);
-                Thread.Sleep(delayMs);
+                await Task.Delay(delayMs).ConfigureAwait(false);
             }
         }
         return null;
