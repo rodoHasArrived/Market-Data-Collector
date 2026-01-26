@@ -328,7 +328,7 @@ These are small, focused tasks broken down from larger features. Each can typica
 | ADQ-4.4 | Implement SLA violation detection | 1 hour | ADQ-4.2, ADQ-4.3 | **Done** |
 | ADQ-4.5 | Add SLA metrics (sla_violations, freshness_ms) | 1 hour | ADQ-4.4 | **Done** |
 | ADQ-4.6 | Add `/api/sla/status` endpoint | 1 hour | ADQ-4.2 | **Done** |
-| ADQ-4.7 | Add unit tests | 1 hour | ADQ-4.4 | Pending |
+| ADQ-4.7 | Add unit tests | 1 hour | ADQ-4.4 | **Done** |
 
 ---
 
