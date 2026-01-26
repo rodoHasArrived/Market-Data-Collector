@@ -532,7 +532,25 @@ public sealed class PendingOperationsQueueService
 
     #region Connection Handling
 
-    private async void OnConnectionStateChanged(object? sender, ConnectionStateEventArgs e)
+    private void OnConnectionStateChanged(object? sender, ConnectionStateEventArgs e)
+    {
+        // Fire-and-forget the async work, with proper exception handling in the async method
+        _ = SafeHandleConnectionStateChangedAsync(e);
+    }
+
+    private async Task SafeHandleConnectionStateChangedAsync(ConnectionStateEventArgs e)
+    {
+        try
+        {
+            await HandleConnectionStateChangedAsync(e);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[PendingOperationsQueueService] Error handling connection state change: {ex.Message}");
+        }
+    }
+
+    private async Task HandleConnectionStateChangedAsync(ConnectionStateEventArgs e)
     {
         if (e.NewState == ConnectionState.Connected && _config.ProcessOnReconnect)
         {
@@ -543,14 +561,7 @@ public sealed class PendingOperationsQueueService
             }
 
             // Process the queue
-            try
-            {
-                await ProcessQueueAsync();
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error processing queue on reconnect: {ex.Message}");
-            }
+            await ProcessQueueAsync();
         }
         else if (e.NewState == ConnectionState.Disconnected)
         {
