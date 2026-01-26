@@ -132,7 +132,7 @@ public partial class MainViewModel : ObservableObject
         {
             IsConnected = false;
             ConnectionStatusText = "No Status";
-            LastUpdateText = "Start collector with --serve-status";
+            LastUpdateText = "Start collector with --http-port 8080";
         }
     }
 

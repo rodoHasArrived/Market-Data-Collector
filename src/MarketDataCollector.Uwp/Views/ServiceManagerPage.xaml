@@ -59,7 +59,7 @@
 
                             <TextBlock Grid.Row="3" Grid.Column="0" Text="Command:" FontWeight="SemiBold" />
                             <TextBlock x:Name="CommandText" Grid.Row="3" Grid.Column="1"
-                                       Text="MarketDataCollector --serve-status --watch-config"
+                                       Text="MarketDataCollector --http-port 8080 --watch-config"
                                        TextWrapping="Wrap" FontFamily="Consolas" FontSize="12" />
                         </Grid>
                     </StackPanel>
