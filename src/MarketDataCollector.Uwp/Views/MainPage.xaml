@@ -206,11 +206,39 @@
                     <FontIcon Glyph="&#xE912;" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
+            <NavigationViewItem Content="Notifications" Tag="NotificationCenter"
+                                AutomationProperties.Name="Notification Center - View notification history and incidents"
+                                ToolTipService.ToolTip="Notification history, incident timeline, and snooze rules">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE7E7;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem Content="Retention" Tag="RetentionAssurance"
+                                AutomationProperties.Name="Retention Assurance - Manage retention policies safely"
+                                ToolTipService.ToolTip="Guardrails, legal holds, and retention policy management">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE72E;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem Content="Optimization" Tag="StorageOptimization"
+                                AutomationProperties.Name="Storage Optimization - Analyze and optimize storage"
+                                ToolTipService.ToolTip="Find duplicates, compression opportunities, and tier migration">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE9F5;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
 
             <NavigationViewItemSeparator />
 
             <!-- Tools Section -->
             <NavigationViewItemHeader Content="TOOLS" />
+            <NavigationViewItem Content="Workspaces" Tag="Workspaces"
+                                AutomationProperties.Name="Workspaces - Manage workspace templates"
+                                ToolTipService.ToolTip="Save and restore workspace layouts and sessions">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE8F1;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
             <NavigationViewItem Content="Setup Wizard" Tag="SetupWizard"
                                 AutomationProperties.Name="Setup Wizard - Guided system configuration"
                                 ToolTipService.ToolTip="Guided setup with preflight checks">
