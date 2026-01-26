@@ -13,8 +13,8 @@ This document provides the feature roadmap, backlog, and development priorities 
 | Category | Implemented | Pending | Total |
 |----------|-------------|---------|-------|
 | Core Features | 55+ | - | 55+ |
-| Technical Debt | 5 | 6 | 11 |
-| Technical Debt (P0) | 0 | 3 | 3 |
+| Technical Debt | 6 | 5 | 11 |
+| Technical Debt (P0) | 1 | 2 | 3 |
 | Quick Wins (≤2 days) | 44 | 81 | 125 |
 | Provider Integration | 5 | 17 | 22 |
 | Monitoring & Alerting | 24 | 0 | 24 |
@@ -157,7 +157,7 @@ Items that should be addressed before new feature development.
 | TD-8 | Remove deprecated `--serve-status` option | Low | Low | Pending |
 | **TD-9** | **Fix async void methods (30+ instances)** | **P0** | **Medium** | **Pending** |
 | **TD-10** | **Replace instance HttpClient with IHttpClientFactory** | **P0** | **Medium** | **Pending** |
-| **TD-11** | **Replace Thread.Sleep with Task.Delay in async code** | **P0** | **Low** | **Pending** |
+| **TD-11** | **Replace Thread.Sleep with Task.Delay in async code** | **P0** | **Low** | **Done** |
 
 ---
 
@@ -301,12 +301,12 @@ These are small, focused tasks broken down from larger features. Each can typica
 | TD-10.9 | Add integration tests for HTTP client lifecycle | 2 hours | TD-10.8 |
 
 ### TD-11: Replace Thread.Sleep with Task.Delay (P0)
-| Sub-ID | Task | Effort | Dependencies |
-|--------|------|--------|--------------|
-| TD-11.1 | Fix ConnectionWarmUp.cs Thread.Sleep(10) → await Task.Delay(10) | 0.5 hour | None |
-| TD-11.2 | Fix ConfigWatcher.cs Thread.Sleep(delayMs) → await Task.Delay(delayMs) | 0.5 hour | None |
-| TD-11.3 | Ensure calling methods are properly async | 1 hour | TD-11.1, TD-11.2 |
-| TD-11.4 | Add CancellationToken support to delay operations | 1 hour | TD-11.3 |
+| Sub-ID | Task | Effort | Dependencies | Status |
+|--------|------|--------|--------------|--------|
+| TD-11.1 | Fix ConnectionWarmUp.cs Thread.Sleep(10) → await Task.Delay(10) | 0.5 hour | None | **Done** |
+| TD-11.2 | Fix ConfigWatcher.cs Thread.Sleep(delayMs) → await Task.Delay(delayMs) | 0.5 hour | None | **Done** |
+| TD-11.3 | Ensure calling methods are properly async | 1 hour | TD-11.1, TD-11.2 | **Done** |
+| TD-11.4 | Add CancellationToken support to delay operations | 1 hour | TD-11.3 | **Done** |
 
 ### ADQ-2: Reference Price Validator
 | Sub-ID | Task | Effort | Dependencies |

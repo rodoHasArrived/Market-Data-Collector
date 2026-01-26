@@ -94,9 +94,12 @@ public sealed class ConnectionWarmUp
     }
 
     /// <summary>
-    /// Executes synchronous warm-up (for connection establishment).
+    /// Executes a synchronous warm-up cycle using the provided action.
+    /// The action is executed synchronously, but delays between iterations use async Task.Delay.
     /// </summary>
-    public WarmUpStatistics ExecuteWarmUp(Action warmUpAction)
+    /// <param name="warmUpAction">Synchronous action to execute for each warm-up iteration</param>
+    /// <param name="ct">Cancellation token</param>
+    public async Task<WarmUpStatistics> ExecuteWarmUpAsync(Action warmUpAction, CancellationToken ct = default)
     {
         var latencies = new List<double>(_warmUpIterations);
         var errors = 0;
@@ -104,6 +107,8 @@ public sealed class ConnectionWarmUp
 
         for (int i = 0; i < _warmUpIterations; i++)
         {
+            ct.ThrowIfCancellationRequested();
+
             var iterStart = Stopwatch.GetTimestamp();
             try
             {
@@ -111,14 +116,18 @@ public sealed class ConnectionWarmUp
                 var latencyUs = HighResolutionTimestamp.GetElapsedMicroseconds(iterStart);
                 latencies.Add(latencyUs);
             }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
             catch
             {
                 errors++;
             }
 
-            // Small delay between iterations
+            // Small delay between iterations to avoid flooding
             if (i < _warmUpIterations - 1)
-                Thread.Sleep(10);
+                await Task.Delay(10, ct).ConfigureAwait(false);
         }
 
         _lastWarmUpTimestamp = Stopwatch.GetTimestamp();
