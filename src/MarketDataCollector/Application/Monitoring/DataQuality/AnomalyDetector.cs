@@ -36,8 +36,8 @@ public sealed class AnomalyDetector : IDisposable
             TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(10));
 
         _log.Information("AnomalyDetector initialized with price spike threshold: {PriceThreshold}%, " +
-            "volume spike multiplier: {VolumeMultiplier}x",
-            _config.PriceSpikeThresholdPercent, _config.VolumeSpikeThresholdMultiplier);
+            "volume spike multiplier: {VolumeSpikeMultiplier}x, volume drop threshold: {VolumeDropMultiplier}x",
+            _config.PriceSpikeThresholdPercent, _config.VolumeSpikeThresholdMultiplier, _config.VolumeDropThresholdMultiplier);
     }
 
     /// <summary>
@@ -566,7 +566,7 @@ public sealed class AnomalyDetector : IDisposable
                     }
                 }
 
-                // Check for volume spike
+                // Check for volume spike or volume drop
                 if (config.EnableVolumeAnomalies && _volumeHistory.Count >= _minSamples && volume > 0)
                 {
                     var meanVolume = _volumeSum / _volumeHistory.Count;
@@ -586,6 +586,27 @@ public sealed class AnomalyDetector : IDisposable
                                 ExpectedValue: (double)meanVolume,
                                 ActualValue: (double)volume,
                                 DeviationPercent: Math.Round((double)((volumeMultiplier - 1) * 100), 2),
+                                ZScore: 0,
+                                Provider: null,
+                                IsAcknowledged: false,
+                                DetectedAt: DateTimeOffset.UtcNow
+                            );
+                        }
+                        else if (volumeMultiplier < (decimal)config.VolumeDropThresholdMultiplier)
+                        {
+                            // Detect abnormally low volume (potential liquidity issues)
+                            var dropPercent = (1 - volumeMultiplier) * 100;
+                            anomaly = new DataAnomaly(
+                                Id: "",
+                                Timestamp: timestamp,
+                                Symbol: _symbol,
+                                Type: AnomalyType.VolumeDrop,
+                                Severity: volumeMultiplier < (decimal)config.VolumeDropThresholdMultiplier / 2
+                                    ? AnomalySeverity.Error : AnomalySeverity.Warning,
+                                Description: $"Volume drop: {volume:F0} is only {volumeMultiplier:P1} of average ({meanVolume:F0})",
+                                ExpectedValue: (double)meanVolume,
+                                ActualValue: (double)volume,
+                                DeviationPercent: Math.Round((double)dropPercent, 2),
                                 ZScore: 0,
                                 Provider: null,
                                 IsAcknowledged: false,

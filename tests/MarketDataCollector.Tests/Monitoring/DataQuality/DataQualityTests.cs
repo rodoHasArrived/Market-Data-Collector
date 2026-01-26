@@ -376,6 +376,84 @@ public sealed class AnomalyDetectorTests : IDisposable
         acknowledged[0].IsAcknowledged.Should().BeTrue();
     }
 
+    [Fact]
+    public void ProcessTrade_WithVolumeSpike_ShouldDetectAnomaly()
+    {
+        // Arrange
+        var timestamp = DateTimeOffset.UtcNow;
+
+        // Build up history with stable volume around 100
+        for (int i = 0; i < 20; i++)
+        {
+            _detector.ProcessTrade("MSFT", timestamp.AddSeconds(i), 300.00m, 100, "Provider1");
+        }
+
+        // Act - Significant volume spike (10x average with threshold of 5x)
+        var anomaly = _detector.ProcessTrade("MSFT", timestamp.AddSeconds(21), 300.00m, 1000, "Provider1");
+
+        // Assert
+        anomaly.Should().NotBeNull();
+        anomaly!.Type.Should().Be(AnomalyType.VolumeSpike);
+        anomaly.Symbol.Should().Be("MSFT");
+        anomaly.Severity.Should().BeOneOf(AnomalySeverity.Warning, AnomalySeverity.Error);
+    }
+
+    [Fact]
+    public void ProcessTrade_WithVolumeDrop_ShouldDetectAnomaly()
+    {
+        // Arrange - Create detector with specific volume drop threshold
+        using var detector = new AnomalyDetector(new AnomalyDetectionConfig
+        {
+            PriceSpikeThresholdPercent = 5.0,
+            VolumeSpikeThresholdMultiplier = 5.0,
+            VolumeDropThresholdMultiplier = 0.2, // Detect when volume < 20% of average
+            MinSamplesForStatistics = 10,
+            EnablePriceAnomalies = true,
+            EnableVolumeAnomalies = true,
+            AlertCooldownSeconds = 0 // Disable cooldown for tests
+        });
+
+        var timestamp = DateTimeOffset.UtcNow;
+
+        // Build up history with stable volume around 1000
+        for (int i = 0; i < 20; i++)
+        {
+            detector.ProcessTrade("GOOGL", timestamp.AddSeconds(i), 150.00m, 1000, "Provider1");
+        }
+
+        // Act - Significant volume drop (10 is only 1% of average 1000, well below 20% threshold)
+        var anomaly = detector.ProcessTrade("GOOGL", timestamp.AddSeconds(21), 150.00m, 10, "Provider1");
+
+        // Assert
+        anomaly.Should().NotBeNull();
+        anomaly!.Type.Should().Be(AnomalyType.VolumeDrop);
+        anomaly.Symbol.Should().Be("GOOGL");
+        anomaly.Description.Should().Contain("Volume drop");
+    }
+
+    [Fact]
+    public void ProcessTrade_WithNormalVolume_ShouldNotDetectVolumeAnomaly()
+    {
+        // Arrange
+        var timestamp = DateTimeOffset.UtcNow;
+
+        // Build up history with volume around 100
+        for (int i = 0; i < 20; i++)
+        {
+            _detector.ProcessTrade("TSLA", timestamp.AddSeconds(i), 250.00m, 100, "Provider1");
+        }
+
+        // Act - Normal volume (120 is within normal range, not spike or drop)
+        var anomaly = _detector.ProcessTrade("TSLA", timestamp.AddSeconds(21), 250.00m, 120, "Provider1");
+
+        // Assert - No volume anomaly expected (though price anomaly might occur if price changed significantly)
+        if (anomaly != null)
+        {
+            anomaly.Type.Should().NotBe(AnomalyType.VolumeSpike);
+            anomaly.Type.Should().NotBe(AnomalyType.VolumeDrop);
+        }
+    }
+
     public void Dispose()
     {
         _detector.Dispose();
