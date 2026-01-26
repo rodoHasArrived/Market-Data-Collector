@@ -6,7 +6,7 @@ This document provides essential context for AI assistants (Claude, Copilot, etc
 
 Market Data Collector is a high-performance, cross-platform market data collection system built on **.NET 9.0** using **C# 11** and **F# 8.0**. It captures real-time and historical market microstructure data from multiple providers and persists it for downstream research, backtesting, and algorithmic trading.
 
-**Version:** 1.6.0 | **Status:** Production Ready
+**Version:** 1.0.0 | **Status:** Production Ready | **Files:** 429 source files
 
 ### Key Capabilities
 - Real-time streaming from Interactive Brokers, Alpaca, NYSE, Polygon, StockSharp
@@ -14,6 +14,19 @@ Market Data Collector is a high-performance, cross-platform market data collecti
 - Archival-first storage with Write-Ahead Logging (WAL)
 - Web dashboard and native UWP Windows desktop application
 - QuantConnect Lean Engine integration for backtesting
+
+### Project Statistics
+| Metric | Count |
+|--------|-------|
+| Total Source Files | 429 |
+| C# Files | ~389 |
+| F# Files | ~40 |
+| Test Files | 45 |
+| Documentation Files | 55+ |
+| Main Projects | 5 (+ 3 test/benchmark) |
+| Provider Implementations | 7+ streaming, 8+ historical |
+| CI/CD Workflows | 20 |
+| Makefile Targets | 60+ |
 
 ---
 
@@ -112,13 +125,15 @@ Market-Data-Collector/
 ├── src/                              # Source code
 │   ├── MarketDataCollector/          # Core application (entry point)
 │   │   ├── Domain/                   # Business logic
-│   │   │   ├── Collectors/           # Data collectors
-│   │   │   ├── Events/               # Domain events
-│   │   │   └── Models/               # Domain models
-│   │   ├── Infrastructure/           # Provider implementations
+│   │   │   ├── Collectors/           # Data collectors (5 files)
+│   │   │   ├── Events/               # Domain events (7 files)
+│   │   │   └── Models/               # Domain models (21 files)
+│   │   ├── Infrastructure/           # Provider implementations (~50 files)
+│   │   │   ├── Contracts/            # Core interfaces
 │   │   │   ├── Providers/            # Data providers
 │   │   │   │   ├── Alpaca/           # Alpaca Markets
-│   │   │   │   ├── Backfill/         # Historical data providers
+│   │   │   │   ├── Backfill/         # Historical data providers (20+ files)
+│   │   │   │   │   └── Scheduling/   # Cron-based scheduling
 │   │   │   │   ├── InteractiveBrokers/ # IB Gateway
 │   │   │   │   ├── NYSE/             # NYSE data
 │   │   │   │   ├── Polygon/          # Polygon.io
@@ -128,23 +143,52 @@ Market-Data-Collector/
 │   │   │   ├── DataSources/          # Data source abstractions
 │   │   │   ├── Resilience/           # WebSocket resilience (Polly)
 │   │   │   └── IMarketDataClient.cs  # Core streaming interface
-│   │   ├── Storage/                  # Data persistence
+│   │   ├── Storage/                  # Data persistence (~35 files)
 │   │   │   ├── Sinks/                # JSONL/Parquet writers
-│   │   │   ├── Archival/             # Archive management
-│   │   │   ├── Export/               # Data export
+│   │   │   ├── Archival/             # Archive management, WAL
+│   │   │   ├── Export/               # Data export, quality reports
 │   │   │   ├── Maintenance/          # Archive maintenance
 │   │   │   ├── Packaging/            # Portable data packages
-│   │   │   ├── Replay/               # Data replay
+│   │   │   ├── Replay/               # Data replay, memory-mapped readers
 │   │   │   ├── Policies/             # Retention policies
 │   │   │   └── Services/             # Storage services
-│   │   ├── Application/              # Startup, config, HTTP
+│   │   ├── Application/              # Startup, config, services (~90 files)
+│   │   │   ├── Backfill/             # Backfill service, requests, results
+│   │   │   ├── Config/               # Configuration management
+│   │   │   │   └── Credentials/      # Credential providers, OAuth
+│   │   │   ├── Exceptions/           # Custom exception types
+│   │   │   ├── Filters/              # Event filtering
+│   │   │   ├── Indicators/           # Technical indicators
+│   │   │   ├── Logging/              # Structured logging setup
+│   │   │   ├── Monitoring/           # Metrics, health checks
+│   │   │   │   └── DataQuality/      # Quality monitoring (~10 files)
+│   │   │   ├── Pipeline/             # Event pipeline
+│   │   │   ├── Results/              # Result<T, TError> types
+│   │   │   ├── Serialization/        # JSON serialization
+│   │   │   ├── Services/             # Application services (~20 files)
+│   │   │   ├── Subscriptions/        # Symbol subscription management
+│   │   │   │   ├── Models/           # Watchlists, portfolios
+│   │   │   │   └── Services/         # Subscription services
+│   │   │   └── UI/                   # HTTP endpoint services
 │   │   ├── Integrations/             # External integrations
 │   │   │   └── Lean/                 # QuantConnect Lean
 │   │   └── Tools/                    # Utility tools
-│   ├── MarketDataCollector.FSharp/   # F# domain models
-│   ├── MarketDataCollector.Contracts/# Shared DTOs
-│   ├── MarketDataCollector.Ui/       # Web dashboard
+│   ├── MarketDataCollector.FSharp/   # F# domain models (12 files)
+│   │   ├── Domain/                   # F# domain types
+│   │   ├── Validation/               # Railway-oriented validation
+│   │   ├── Calculations/             # Spread, imbalance, VWAP
+│   │   └── Pipeline/                 # Data transforms
+│   ├── MarketDataCollector.Contracts/# Shared DTOs, contracts
+│   │   ├── Api/                      # HTTP API contracts
+│   │   ├── Domain/                   # Shared domain contracts
+│   │   └── Configuration/            # Configuration schema
+│   ├── MarketDataCollector.Ui/       # Web dashboard (10 files)
+│   │   ├── Endpoints/                # HTTP endpoints
+│   │   └── wwwroot/                  # Static assets
 │   └── MarketDataCollector.Uwp/      # Windows desktop app
+│       ├── Views/                    # XAML UI pages
+│       ├── ViewModels/               # MVVM view models
+│       └── Services/                 # Windows services
 │
 ├── tests/                            # Test projects
 │   ├── MarketDataCollector.Tests/    # C# unit tests
@@ -271,10 +315,25 @@ dotnet test --collect:"XPlat Code Coverage"
 dotnet test tests/MarketDataCollector.FSharp.Tests
 ```
 
-### Test Categories
-- Unit tests: `tests/MarketDataCollector.Tests/`
-- F# domain tests: `tests/MarketDataCollector.FSharp.Tests/`
-- Benchmarks: `benchmarks/MarketDataCollector.Benchmarks/`
+### Test Organization (45 test files total)
+| Directory | Purpose | Files |
+|-----------|---------|-------|
+| `tests/MarketDataCollector.Tests/Backfill/` | Backfill provider tests | 4 |
+| `tests/MarketDataCollector.Tests/Credentials/` | Credential provider tests | 3 |
+| `tests/MarketDataCollector.Tests/Indicators/` | Technical indicator tests | 1 |
+| `tests/MarketDataCollector.Tests/Infrastructure/` | Infrastructure tests | 1 |
+| `tests/MarketDataCollector.Tests/Integration/` | End-to-end tests | 1 |
+| `tests/MarketDataCollector.Tests/Models/` | Domain model tests | 1 |
+| `tests/MarketDataCollector.Tests/Monitoring/` | Monitoring/quality tests | 5 |
+| `tests/MarketDataCollector.Tests/Pipeline/` | Event pipeline tests | 1 |
+| `tests/MarketDataCollector.Tests/Providers/` | Provider-specific tests | 1 |
+| `tests/MarketDataCollector.Tests/Serialization/` | JSON serialization tests | 1 |
+| `tests/MarketDataCollector.Tests/Storage/` | Storage and archival tests | 4 |
+| `tests/MarketDataCollector.Tests/SymbolSearch/` | Symbol resolution tests | 2 |
+| `tests/MarketDataCollector.FSharp.Tests/` | F# domain tests | 5 |
+
+### Benchmarks
+Located in `benchmarks/MarketDataCollector.Benchmarks/` using BenchmarkDotNet.
 
 ---
 
@@ -325,6 +384,18 @@ _logger.LogInformation($"Received {bars.Count} bars for {symbol}");
 - Throw `InvalidOperationException` for state errors
 - Use `Result<T, TError>` in F# code
 
+#### Custom Exception Types (in `Application/Exceptions/`)
+| Exception | Purpose |
+|-----------|---------|
+| `ConfigurationException` | Invalid configuration |
+| `ConnectionException` | Connection failures |
+| `DataProviderException` | Provider errors |
+| `RateLimitException` | Rate limit exceeded |
+| `SequenceValidationException` | Data sequence issues |
+| `StorageException` | Storage/persistence errors |
+| `ValidationException` | Data validation failures |
+| `OperationTimeoutException` | Operation timeouts |
+
 ### Naming Conventions
 - Async methods end with `Async`
 - Cancellation token parameter named `ct` or `cancellationToken`
@@ -353,13 +424,22 @@ _logger.LogInformation($"Received {bars.Count} bars for {symbol}");
 ### Key Classes
 | Class | Location | Purpose |
 |-------|----------|---------|
-| `TradeDataCollector` | `src/MarketDataCollector/Domain/Collectors/` | Tick-by-tick trade processing |
-| `MarketDepthCollector` | `src/MarketDataCollector/Domain/Collectors/` | L2 order book maintenance |
-| `QuoteCollector` | `src/MarketDataCollector/Domain/Collectors/` | BBO state tracking |
-| `EventPipeline` | `src/MarketDataCollector/Storage/Services/` | Bounded channel event routing |
-| `JsonlStorageSink` | `src/MarketDataCollector/Storage/Sinks/` | JSONL file persistence |
-| `AlpacaMarketDataClient` | `src/MarketDataCollector/Infrastructure/Providers/Alpaca/` | Alpaca WebSocket client |
-| `CompositeHistoricalDataProvider` | `src/MarketDataCollector/Infrastructure/Providers/Backfill/` | Multi-provider backfill with fallback |
+| `TradeDataCollector` | `Domain/Collectors/` | Tick-by-tick trade processing |
+| `MarketDepthCollector` | `Domain/Collectors/` | L2 order book maintenance |
+| `QuoteCollector` | `Domain/Collectors/` | BBO state tracking |
+| `EventPipeline` | `Application/Pipeline/` | Bounded channel event routing |
+| `JsonlStorageSink` | `Storage/Sinks/` | JSONL file persistence |
+| `ParquetStorageSink` | `Storage/Sinks/` | Parquet file persistence |
+| `AlpacaMarketDataClient` | `Infrastructure/Providers/Alpaca/` | Alpaca WebSocket client |
+| `CompositeHistoricalDataProvider` | `Infrastructure/Providers/Backfill/` | Multi-provider backfill with fallback |
+| `BackfillWorkerService` | `Infrastructure/Providers/Backfill/` | Background backfill service |
+| `DataQualityMonitoringService` | `Application/Monitoring/DataQuality/` | Data quality monitoring |
+| `GracefulShutdownService` | `Application/Services/` | Graceful shutdown handling |
+| `ConfigurationWizard` | `Application/Services/` | Interactive configuration setup |
+| `TechnicalIndicatorService` | `Application/Indicators/` | Technical indicators (via Skender) |
+| `WriteAheadLog` | `Storage/Archival/` | WAL for data durability |
+
+*All locations relative to `src/MarketDataCollector/`*
 
 ---
 
@@ -436,6 +516,35 @@ dotnet run --project src/MarketDataCollector -- \
 # Via Makefile
 make run-backfill SYMBOLS=SPY,AAPL
 ```
+
+---
+
+## CI/CD Pipelines
+
+The project uses GitHub Actions with 20 workflows in `.github/workflows/`:
+
+| Workflow | Purpose |
+|----------|---------|
+| `test-matrix.yml` | Multi-platform test matrix (Windows, Linux, macOS) |
+| `code-quality.yml` | Code quality checks (formatting, analyzers) |
+| `security.yml` | Security scanning (CodeQL, dependency audit) |
+| `benchmark.yml` | Performance benchmarks |
+| `docker.yml` | Docker image building and publishing |
+| `dotnet-desktop.yml` | Desktop application builds |
+| `desktop-app.yml` | UWP app builds |
+| `documentation.yml` | Documentation generation |
+| `docs-auto-update.yml` | Auto-update docs on changes |
+| `docs-structure-sync.yml` | Sync documentation structure |
+| `release.yml` | Release automation |
+| `pr-checks.yml` | PR validation checks |
+| `dependency-review.yml` | Dependency review |
+| `labeling.yml` | PR auto-labeling |
+| `nightly.yml` | Nightly builds |
+| `scheduled-maintenance.yml` | Scheduled maintenance tasks |
+| `stale.yml` | Stale issue management |
+| `cache-management.yml` | Build cache management |
+| `validate-workflows.yml` | Workflow validation |
+| `build-observability.yml` | Build metrics collection |
 
 ---
 
@@ -532,4 +641,4 @@ dotnet restore /p:EnableWindowsTargeting=true -v diag
 
 ---
 
-*Last Updated: 2026-01-19*
+*Last Updated: 2026-01-26*
