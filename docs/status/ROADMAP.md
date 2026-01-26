@@ -196,18 +196,18 @@ These are small, focused tasks broken down from larger features. Each can typica
 | TD-7.7 | Document error codes in API documentation | 1 hour | TD-7.1 |
 
 ### TD-8: Remove Deprecated --serve-status Option
-| Sub-ID | Task | Effort | Dependencies |
-|--------|------|--------|--------------|
-| TD-8.1 | Add deprecation warning log when --serve-status is used | 0.5 hour | None |
-| TD-8.2 | Update Makefile to use --http-port instead | 0.5 hour | None |
-| TD-8.3 | Update start-collector.sh to use --http-port | 0.5 hour | None |
-| TD-8.4 | Update start-collector.ps1 to use --http-port | 0.5 hour | None |
-| TD-8.5 | Update Dockerfile CMD to use --http-port | 0.5 hour | None |
-| TD-8.6 | Update systemd service file | 0.5 hour | None |
-| TD-8.7 | Update documentation (USAGE.md, HELP.md, configuration.md) | 1 hour | None |
-| TD-8.8 | Update HtmlTemplates.cs UI references | 0.5 hour | None |
-| TD-8.9 | Update UWP UI references | 0.5 hour | None |
-| TD-8.10 | Remove --serve-status from Program.cs (breaking change) | 1 hour | TD-8.1 to TD-8.9 |
+| Sub-ID | Task | Effort | Dependencies | Status |
+|--------|------|--------|--------------|--------|
+| TD-8.1 | Add deprecation warning log when --serve-status is used | 0.5 hour | None | **Done** |
+| TD-8.2 | Update Makefile to use --http-port instead | 0.5 hour | None | Pending |
+| TD-8.3 | Update start-collector.sh to use --http-port | 0.5 hour | None | Pending |
+| TD-8.4 | Update start-collector.ps1 to use --http-port | 0.5 hour | None | Pending |
+| TD-8.5 | Update Dockerfile CMD to use --http-port | 0.5 hour | None | Pending |
+| TD-8.6 | Update systemd service file | 0.5 hour | None | Pending |
+| TD-8.7 | Update documentation (USAGE.md, HELP.md, configuration.md) | 1 hour | None | Pending |
+| TD-8.8 | Update HtmlTemplates.cs UI references | 0.5 hour | None | Pending |
+| TD-8.9 | Update UWP UI references | 0.5 hour | None | Pending |
+| TD-8.10 | Remove --serve-status from Program.cs (breaking change) | 1 hour | TD-8.1 to TD-8.9 | Pending |
 
 ### QW-15: Query Endpoint for Historical Data
 | Sub-ID | Task | Effort | Dependencies |
