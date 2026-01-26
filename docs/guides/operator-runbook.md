@@ -25,8 +25,6 @@ dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --wat
 - `--watch-config`: Enables hot reload of `appsettings.json` (handled by `ConfigWatcher`)
 - `--http-port 8080`: Starts HTTP monitoring server on port 8080 (recommended for production monitoring)
 
-> **Note:** The `--serve-status` option is deprecated. Use `--http-port` instead for HTTP-based monitoring.
-
 ### UI
 ```bash
 dotnet run --project src/MarketDataCollector.Ui/MarketDataCollector.Ui.csproj
@@ -127,11 +125,11 @@ Access counters via `Metrics` static class in code:
 - `Metrics.Dropped`: Events dropped due to backpressure
 - `Metrics.Integrity`: Integrity events emitted
 
-### Legacy Status File (Deprecated)
+### Legacy Status File (Removed)
 
-> **Deprecated:** The `--serve-status` option is deprecated as of v1.5.0. Use `--http-port` instead.
+> **Removed:** The `--serve-status` option was removed in v1.6.1. Use `--ui` or `--http-port` instead.
 
-When the legacy `--serve-status` option was used, periodic health snapshots were written to `data/_status/status.json`. This approach has been superseded by the HTTP monitoring server which provides real-time access to the same information via `/status`, `/metrics`, and `/health` endpoints.
+The legacy `--serve-status` option has been removed. Use `--ui` to start the web dashboard which provides real-time access to the same information via `/status`, `/metrics`, and `/health` endpoints.
 
 ---
 

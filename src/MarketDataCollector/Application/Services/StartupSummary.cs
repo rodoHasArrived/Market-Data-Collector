@@ -130,11 +130,6 @@ public sealed class StartupSummary
         {
             sb.AppendLine("    Running:      Historical Backfill");
         }
-        else if (args.Any(a => a.Equals("--serve-status", StringComparison.OrdinalIgnoreCase)))
-        {
-            var port = GetArgValue(args, "--status-port") ?? "8080";
-            sb.AppendLine($"    Running:      Real-time Collection with Status Server (:{port})");
-        }
         else
         {
             sb.AppendLine("    Running:      Real-time Collection");
@@ -150,9 +145,9 @@ public sealed class StartupSummary
         sb.AppendLine("  Tips:");
         sb.AppendLine("    - Press Ctrl+C to stop gracefully");
         sb.AppendLine("    - Check logs in: logs/ directory");
-        if (!args.Any(a => a.Equals("--serve-status", StringComparison.OrdinalIgnoreCase)))
+        if (!args.Any(a => a.Equals("--ui", StringComparison.OrdinalIgnoreCase)))
         {
-            sb.AppendLine("    - Add --serve-status for real-time monitoring");
+            sb.AppendLine("    - Add --ui for real-time monitoring dashboard");
         }
         sb.AppendLine();
 

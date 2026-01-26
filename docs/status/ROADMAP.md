@@ -154,7 +154,7 @@ Items that should be addressed before new feature development.
 | TD-5 | Create shared contracts library (UWP/Core) | Medium | Medium | Pending |
 | TD-6 | Add missing integration tests | Low | High | Pending |
 | TD-7 | Standardize error handling patterns | Medium | Medium | Pending |
-| TD-8 | Remove deprecated `--serve-status` option | Low | Low | Pending |
+| TD-8 | Remove deprecated `--serve-status` option | Low | Low | **Done** |
 | **TD-9** | **Fix async void methods (30+ instances)** | **P0** | **Medium** | **Pending** |
 | **TD-10** | **Replace instance HttpClient with IHttpClientFactory** | **P0** | **Medium** | **Pending** |
 | **TD-11** | **Replace Thread.Sleep with Task.Delay in async code** | **P0** | **Low** | **Done** |
@@ -211,7 +211,7 @@ These are small, focused tasks broken down from larger features. Each can typica
 | TD-8.7 | Update documentation (USAGE.md, HELP.md, configuration.md) | 1 hour | None | **Done** |
 | TD-8.8 | Update HtmlTemplates.cs UI references | 0.5 hour | None | **Done** |
 | TD-8.9 | Update UWP UI references | 0.5 hour | None | **Done** |
-| TD-8.10 | Remove --serve-status from Program.cs (breaking change) | 1 hour | TD-8.1 to TD-8.9 | Pending |
+| TD-8.10 | Remove --serve-status from Program.cs (breaking change) | 1 hour | TD-8.1 to TD-8.9 | **Done** |
 
 ### QW-15: Query Endpoint for Historical Data
 | Sub-ID | Task | Effort | Dependencies |
