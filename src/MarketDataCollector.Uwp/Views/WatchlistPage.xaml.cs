@@ -49,8 +49,19 @@ public sealed partial class WatchlistPage : Page
         "XLF", "XLE", "XLK", "XLV", "XLI", "XLY", "XLP", "XLU", "XLB", "XLRE"
     ];
 
+    // Recent symbols cache - persisted across page loads (limited size)
+    private static readonly LinkedList<string> RecentSymbols = new();
+    private const int MaxRecentSymbols = 10;
+    private static readonly object RecentSymbolsLock = new();
+
+    // Search result cache - brief TTL to avoid redundant searches
+    private static readonly Dictionary<string, (List<SymbolSuggestion> Results, DateTime CachedAt)> SearchCache = new();
+    private const int SearchCacheTtlMs = 5000; // 5 second cache TTL
+    private static readonly object SearchCacheLock = new();
+
     // Debounce configuration for autocomplete
     private const int DebounceDelayMs = 150;
+    private const int MinSearchLength = 1; // Minimum characters before searching
     private CancellationTokenSource? _searchCts;
     private readonly DispatcherTimer _debounceTimer;
     private string _pendingSearchText = string.Empty;
@@ -120,6 +131,8 @@ public sealed partial class WatchlistPage : Page
 
     private async void WatchlistService_WatchlistChanged(object? sender, WatchlistChangedEventArgs e)
     {
+        // Clear cache when watchlist changes to ensure fresh suggestions
+        ClearSearchCache();
         await LoadWatchlistAsync();
     }
 
@@ -281,6 +294,21 @@ public sealed partial class WatchlistPage : Page
         var searchBox = _pendingSearchBox;
         var searchText = _pendingSearchText.ToUpperInvariant();
 
+        // Minimum length check
+        if (searchText.Length < MinSearchLength)
+        {
+            searchBox.ItemsSource = null;
+            return;
+        }
+
+        // Check cache first
+        var cachedResults = GetCachedResults(searchText);
+        if (cachedResults != null)
+        {
+            searchBox.ItemsSource = cachedResults.Count > 0 ? cachedResults : null;
+            return;
+        }
+
         // Cancel any previous search operation
         _searchCts?.Cancel();
         _searchCts?.Dispose();
@@ -293,6 +321,9 @@ public sealed partial class WatchlistPage : Page
 
             if (ct.IsCancellationRequested)
                 return;
+
+            // Cache the results
+            CacheResults(searchText, suggestions);
 
             searchBox.ItemsSource = suggestions.Count > 0 ? suggestions : null;
         }
@@ -308,28 +339,196 @@ public sealed partial class WatchlistPage : Page
         }
     }
 
+    #region Cache Management
+
+    /// <summary>
+    /// Gets cached search results if valid.
+    /// </summary>
+    private static List<SymbolSuggestion>? GetCachedResults(string searchText)
+    {
+        lock (SearchCacheLock)
+        {
+            if (SearchCache.TryGetValue(searchText, out var cached))
+            {
+                if ((DateTime.UtcNow - cached.CachedAt).TotalMilliseconds < SearchCacheTtlMs)
+                {
+                    return cached.Results;
+                }
+                // Expired, remove it
+                SearchCache.Remove(searchText);
+            }
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Caches search results.
+    /// </summary>
+    private static void CacheResults(string searchText, List<SymbolSuggestion> results)
+    {
+        lock (SearchCacheLock)
+        {
+            // Limit cache size
+            if (SearchCache.Count > 50)
+            {
+                // Remove oldest entries
+                var oldest = SearchCache
+                    .OrderBy(kvp => kvp.Value.CachedAt)
+                    .Take(10)
+                    .Select(kvp => kvp.Key)
+                    .ToList();
+                foreach (var key in oldest)
+                {
+                    SearchCache.Remove(key);
+                }
+            }
+
+            SearchCache[searchText] = (results, DateTime.UtcNow);
+        }
+    }
+
+    /// <summary>
+    /// Clears the search cache (call when watchlist changes).
+    /// </summary>
+    private static void ClearSearchCache()
+    {
+        lock (SearchCacheLock)
+        {
+            SearchCache.Clear();
+        }
+    }
+
+    #endregion
+
+    #region Recent Symbols
+
+    /// <summary>
+    /// Adds a symbol to the recent symbols list.
+    /// </summary>
+    private static void AddToRecentSymbols(string symbol)
+    {
+        lock (RecentSymbolsLock)
+        {
+            // Remove if already exists (to move to front)
+            var existing = RecentSymbols.Find(symbol);
+            if (existing != null)
+            {
+                RecentSymbols.Remove(existing);
+            }
+
+            // Add to front
+            RecentSymbols.AddFirst(symbol);
+
+            // Trim to max size
+            while (RecentSymbols.Count > MaxRecentSymbols)
+            {
+                RecentSymbols.RemoveLast();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Checks if a symbol is in the recent list.
+    /// </summary>
+    private static bool IsRecentSymbol(string symbol)
+    {
+        lock (RecentSymbolsLock)
+        {
+            return RecentSymbols.Contains(symbol);
+        }
+    }
+
+    /// <summary>
+    /// Gets recent symbols that match the search text.
+    /// </summary>
+    private static IEnumerable<string> GetMatchingRecentSymbols(string searchText)
+    {
+        lock (RecentSymbolsLock)
+        {
+            return RecentSymbols
+                .Where(s => s.StartsWith(searchText, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+    }
+
+    #endregion
+
     /// <summary>
     /// Builds comprehensive symbol suggestions using SearchService and local data.
+    /// Results are sorted by relevance score (highest first).
     /// </summary>
     private async Task<List<SymbolSuggestion>> BuildSymbolSuggestionsAsync(string searchText, CancellationToken ct)
     {
         var suggestions = new List<SymbolSuggestion>();
         var addedSymbols = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        // 1. First check current watchlist for matches (highest priority - already tracked)
+        // Helper to calculate relevance score
+        int CalculateScore(string symbol, int baseScore, bool isExact = false)
+        {
+            var score = baseScore;
+
+            // Exact match bonus
+            if (symbol.Equals(searchText, StringComparison.OrdinalIgnoreCase))
+                score += SuggestionRelevance.ExactMatch;
+
+            // Recent symbol bonus
+            if (IsRecentSymbol(symbol))
+                score += SuggestionRelevance.RecentSymbol;
+
+            // Length-based bonuses
+            if (symbol.Length <= 4)
+                score += SuggestionRelevance.ShortSymbolBonus;
+            if (symbol.Length == searchText.Length)
+                score += SuggestionRelevance.ExactLengthBonus;
+
+            return score;
+        }
+
+        // Helper to get relevance text badge
+        static string GetRelevanceText(string symbol, string searchText, bool isRecent, bool isExact)
+        {
+            if (isExact) return "Exact";
+            if (isRecent) return "Recent";
+            return string.Empty;
+        }
+
+        // 1. Check recent symbols first (highest priority for returning users)
+        foreach (var symbol in GetMatchingRecentSymbols(searchText))
+        {
+            if (addedSymbols.Add(symbol))
+            {
+                var isExact = symbol.Equals(searchText, StringComparison.OrdinalIgnoreCase);
+                var score = CalculateScore(symbol, SuggestionRelevance.RecentSymbol);
+                suggestions.Add(new SymbolSuggestion(
+                    symbol,
+                    "Recent",
+                    "\uE81C",
+                    relevanceScore: score,
+                    relevanceText: GetRelevanceText(symbol, searchText, true, isExact)));
+            }
+        }
+
+        // 2. Check current watchlist for matches
         foreach (var item in _allSymbols.Where(s =>
             s.Symbol.StartsWith(searchText, StringComparison.OrdinalIgnoreCase)))
         {
             if (addedSymbols.Add(item.Symbol))
             {
+                var isExact = item.Symbol.Equals(searchText, StringComparison.OrdinalIgnoreCase);
+                var baseScore = item.IsFavorite
+                    ? SuggestionRelevance.InWatchlistFavorite
+                    : SuggestionRelevance.InWatchlist;
+                var score = CalculateScore(item.Symbol, baseScore);
                 suggestions.Add(new SymbolSuggestion(
                     item.Symbol,
-                    "In Watchlist",
-                    item.IsFavorite ? "\uE735" : "\uE728"));
+                    item.IsFavorite ? "Favorite" : "In Watchlist",
+                    item.IsFavorite ? "\uE735" : "\uE728",
+                    relevanceScore: score,
+                    relevanceText: isExact ? "Exact" : string.Empty));
             }
         }
 
-        // 2. Use SearchService for comprehensive search (config, watchlist, popular)
+        // 3. Use SearchService for comprehensive search (config, watchlist, popular)
         try
         {
             var searchSuggestions = await _searchService.GetSuggestionsAsync(searchText);
@@ -340,10 +539,15 @@ public sealed partial class WatchlistPage : Page
             {
                 if (addedSymbols.Add(suggestion.Text))
                 {
+                    var baseScore = suggestion.Category == "Symbol"
+                        ? SuggestionRelevance.ConfiguredSymbol
+                        : SuggestionRelevance.PopularSymbol;
+                    var score = CalculateScore(suggestion.Text, baseScore);
                     suggestions.Add(new SymbolSuggestion(
                         suggestion.Text,
                         suggestion.Category,
-                        suggestion.Icon));
+                        suggestion.Icon,
+                        relevanceScore: score));
                 }
             }
         }
@@ -356,70 +560,112 @@ public sealed partial class WatchlistPage : Page
             // SearchService failed, continue with local fallback
         }
 
-        // 3. Add matching symbols from extended popular list (fallback/supplement)
+        // 4. Add matching symbols from extended popular list (fallback/supplement)
         foreach (var symbol in PopularSymbols
-            .Where(s => s.StartsWith(searchText, StringComparison.OrdinalIgnoreCase))
-            .Take(10))
+            .Where(s => s.StartsWith(searchText, StringComparison.OrdinalIgnoreCase)))
         {
             if (addedSymbols.Add(symbol))
             {
-                suggestions.Add(new SymbolSuggestion(symbol, "Popular", "\uE8D6"));
+                var score = CalculateScore(symbol, SuggestionRelevance.PopularSymbol + SuggestionRelevance.StartsWithMatch);
+                suggestions.Add(new SymbolSuggestion(
+                    symbol,
+                    "Popular",
+                    "\uE8D6",
+                    relevanceScore: score));
             }
         }
 
-        // 4. Also include symbols that contain (but don't start with) the text
+        // 5. Include symbols that contain (but don't start with) the text
         foreach (var symbol in PopularSymbols
             .Where(s => !s.StartsWith(searchText, StringComparison.OrdinalIgnoreCase)
-                        && s.Contains(searchText, StringComparison.OrdinalIgnoreCase))
-            .Take(5))
+                        && s.Contains(searchText, StringComparison.OrdinalIgnoreCase)))
         {
             if (addedSymbols.Add(symbol))
             {
-                suggestions.Add(new SymbolSuggestion(symbol, "Related", "\uE721"));
+                var score = CalculateScore(symbol, SuggestionRelevance.ContainsMatch);
+                suggestions.Add(new SymbolSuggestion(
+                    symbol,
+                    "Related",
+                    "\uE721",
+                    relevanceScore: score));
             }
         }
 
-        // 5. If the typed text looks like a valid symbol and isn't in suggestions, offer to add it
+        // 6. If the typed text looks like a valid symbol and isn't in suggestions, offer to add it
         if (IsValidSymbolFormat(searchText) && !addedSymbols.Contains(searchText))
         {
             suggestions.Add(new SymbolSuggestion(
                 searchText,
                 $"+ Add \"{searchText}\"",
                 "\uE710",
-                isAddNew: true));
+                isAddNew: true,
+                relevanceScore: SuggestionRelevance.AddNew));
         }
 
-        // Limit total suggestions
-        return suggestions.Take(12).ToList();
+        // Sort by relevance score (highest first) and limit results
+        return suggestions
+            .OrderByDescending(s => s.RelevanceScore)
+            .Take(12)
+            .ToList();
     }
 
     /// <summary>
     /// Builds simple local suggestions when SearchService is unavailable.
+    /// Results are sorted by relevance score.
     /// </summary>
     private List<SymbolSuggestion> BuildLocalSuggestions(string searchText)
     {
         var suggestions = new List<SymbolSuggestion>();
         var addedSymbols = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
+        // Recent symbols first
+        foreach (var symbol in GetMatchingRecentSymbols(searchText))
+        {
+            if (addedSymbols.Add(symbol))
+            {
+                var isExact = symbol.Equals(searchText, StringComparison.OrdinalIgnoreCase);
+                var score = SuggestionRelevance.RecentSymbol + (isExact ? SuggestionRelevance.ExactMatch : 0);
+                suggestions.Add(new SymbolSuggestion(
+                    symbol,
+                    "Recent",
+                    "\uE81C",
+                    relevanceScore: score,
+                    relevanceText: isExact ? "Exact" : "Recent"));
+            }
+        }
+
         // Check watchlist
         foreach (var item in _allSymbols
-            .Where(s => s.Symbol.StartsWith(searchText, StringComparison.OrdinalIgnoreCase))
-            .Take(5))
+            .Where(s => s.Symbol.StartsWith(searchText, StringComparison.OrdinalIgnoreCase)))
         {
             if (addedSymbols.Add(item.Symbol))
             {
-                suggestions.Add(new SymbolSuggestion(item.Symbol, "In Watchlist", "\uE728"));
+                var isExact = item.Symbol.Equals(searchText, StringComparison.OrdinalIgnoreCase);
+                var score = (item.IsFavorite ? SuggestionRelevance.InWatchlistFavorite : SuggestionRelevance.InWatchlist)
+                    + (isExact ? SuggestionRelevance.ExactMatch : 0);
+                suggestions.Add(new SymbolSuggestion(
+                    item.Symbol,
+                    item.IsFavorite ? "Favorite" : "In Watchlist",
+                    item.IsFavorite ? "\uE735" : "\uE728",
+                    relevanceScore: score,
+                    relevanceText: isExact ? "Exact" : string.Empty));
             }
         }
 
         // Popular symbols
         foreach (var symbol in PopularSymbols
-            .Where(s => s.StartsWith(searchText, StringComparison.OrdinalIgnoreCase))
-            .Take(8))
+            .Where(s => s.StartsWith(searchText, StringComparison.OrdinalIgnoreCase)))
         {
             if (addedSymbols.Add(symbol))
             {
-                suggestions.Add(new SymbolSuggestion(symbol, "Popular", "\uE8D6"));
+                var isExact = symbol.Equals(searchText, StringComparison.OrdinalIgnoreCase);
+                var score = SuggestionRelevance.PopularSymbol + SuggestionRelevance.StartsWithMatch
+                    + (isExact ? SuggestionRelevance.ExactMatch : 0);
+                suggestions.Add(new SymbolSuggestion(
+                    symbol,
+                    "Popular",
+                    "\uE8D6",
+                    relevanceScore: score));
             }
         }
 
@@ -430,10 +676,15 @@ public sealed partial class WatchlistPage : Page
                 searchText,
                 $"+ Add \"{searchText}\"",
                 "\uE710",
-                isAddNew: true));
+                isAddNew: true,
+                relevanceScore: SuggestionRelevance.AddNew));
         }
 
-        return suggestions;
+        // Sort by relevance and limit
+        return suggestions
+            .OrderByDescending(s => s.RelevanceScore)
+            .Take(12)
+            .ToList();
     }
 
     /// <summary>
@@ -465,11 +716,19 @@ public sealed partial class WatchlistPage : Page
         var added = await _watchlistService.AddSymbolAsync(symbol);
         if (added)
         {
+            // Track as recent symbol for better future suggestions
+            AddToRecentSymbols(symbol);
+
+            // Clear cache since watchlist changed
+            ClearSearchCache();
+
             AddSymbolBox.Text = string.Empty;
             ShowInfoBar("Symbol Added", $"{symbol} has been added to your watchlist.", InfoBarSeverity.Success);
         }
         else
         {
+            // Still track as recent even if already exists (user is interested in it)
+            AddToRecentSymbols(symbol);
             ShowInfoBar("Already Exists", $"{symbol} is already in your watchlist.", InfoBarSeverity.Warning);
         }
     }
@@ -478,9 +737,13 @@ public sealed partial class WatchlistPage : Page
     {
         if (sender is Button button && button.Tag is string symbol)
         {
+            // Track as recent symbol
+            AddToRecentSymbols(symbol);
+
             var added = await _watchlistService.AddSymbolAsync(symbol);
             if (added)
             {
+                ClearSearchCache();
                 ShowInfoBar("Symbol Added", $"{symbol} has been added to your watchlist.", InfoBarSeverity.Success);
             }
             else
@@ -868,6 +1131,11 @@ public sealed class SymbolSuggestion
     public bool IsAddNew { get; }
 
     /// <summary>
+    /// Relevance score for sorting (higher = more relevant).
+    /// </summary>
+    public int RelevanceScore { get; }
+
+    /// <summary>
     /// Display text shown in the dropdown.
     /// </summary>
     public string DisplayText => IsAddNew ? Category : Symbol;
@@ -877,16 +1145,50 @@ public sealed class SymbolSuggestion
     /// </summary>
     public string SecondaryText => IsAddNew ? string.Empty : Category;
 
-    public SymbolSuggestion(string symbol, string category, string icon, bool isAddNew = false)
+    /// <summary>
+    /// Relevance indicator text (shown as badge).
+    /// </summary>
+    public string RelevanceText { get; }
+
+    public SymbolSuggestion(
+        string symbol,
+        string category,
+        string icon,
+        bool isAddNew = false,
+        int relevanceScore = 0,
+        string? relevanceText = null)
     {
         Symbol = symbol;
         Category = category;
         Icon = icon;
         IsAddNew = isAddNew;
+        RelevanceScore = relevanceScore;
+        RelevanceText = relevanceText ?? string.Empty;
     }
 
     /// <summary>
     /// Returns the display text for the AutoSuggestBox.
     /// </summary>
     public override string ToString() => DisplayText;
+}
+
+/// <summary>
+/// Relevance scoring constants for symbol suggestions.
+/// </summary>
+internal static class SuggestionRelevance
+{
+    // Base scores by category
+    public const int ExactMatch = 1000;
+    public const int RecentSymbol = 500;
+    public const int InWatchlistFavorite = 400;
+    public const int InWatchlist = 300;
+    public const int ConfiguredSymbol = 250;
+    public const int StartsWithMatch = 200;
+    public const int ContainsMatch = 100;
+    public const int PopularSymbol = 50;
+    public const int AddNew = 10;
+
+    // Bonus modifiers
+    public const int ShortSymbolBonus = 20;  // Symbols <= 4 chars
+    public const int ExactLengthBonus = 30;  // Same length as search
 }

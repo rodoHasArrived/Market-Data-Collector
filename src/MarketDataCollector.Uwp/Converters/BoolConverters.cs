@@ -125,3 +125,24 @@ public class InverseBoolConverter : IValueConverter
         return false;
     }
 }
+
+/// <summary>
+/// Converts a string to Visibility (Visible if non-empty, Collapsed if null/empty).
+/// </summary>
+public class StringVisibilityConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, string language)
+    {
+        if (value is string s && !string.IsNullOrEmpty(s))
+        {
+            return Visibility.Visible;
+        }
+        return Visibility.Collapsed;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, string language)
+    {
+        // One-way converter
+        return string.Empty;
+    }
+}
