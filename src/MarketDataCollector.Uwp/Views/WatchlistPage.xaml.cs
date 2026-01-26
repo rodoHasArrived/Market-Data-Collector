@@ -26,28 +26,8 @@ public sealed partial class WatchlistPage : Page
     private static readonly SolidColorBrush OrangeBrush = new(Microsoft.UI.Colors.Orange);
     private static readonly SolidColorBrush RedBrush = new(Microsoft.UI.Colors.Red);
 
-    // Extended list of popular symbols for autocomplete (when SearchService is unavailable)
-    private static readonly string[] PopularSymbols =
-    [
-        // Mega-cap tech
-        "AAPL", "MSFT", "GOOGL", "GOOG", "AMZN", "NVDA", "META", "TSLA",
-        // Large-cap tech
-        "AVGO", "ADBE", "CRM", "ORCL", "CSCO", "ACN", "IBM", "INTC", "AMD", "QCOM",
-        // Financials
-        "BRK.B", "BRK.A", "JPM", "V", "MA", "BAC", "WFC", "GS", "MS", "AXP",
-        // Healthcare
-        "UNH", "JNJ", "LLY", "PFE", "MRK", "ABBV", "TMO", "ABT", "DHR", "BMY",
-        // Consumer
-        "WMT", "PG", "KO", "PEP", "COST", "HD", "MCD", "NKE", "SBUX", "TGT",
-        // Energy
-        "XOM", "CVX", "COP", "SLB", "EOG", "MPC", "PSX", "VLO", "OXY", "HAL",
-        // Industrials
-        "CAT", "DE", "UNP", "HON", "GE", "BA", "RTX", "LMT", "UPS", "FDX",
-        // ETFs
-        "SPY", "QQQ", "IWM", "DIA", "VTI", "VOO", "VEA", "VWO", "BND", "GLD",
-        // Sector ETFs
-        "XLF", "XLE", "XLK", "XLV", "XLI", "XLY", "XLP", "XLU", "XLB", "XLRE"
-    ];
+    // Symbol catalog service for dynamic symbol loading from configuration
+    private readonly SymbolCatalogService _symbolCatalogService = SymbolCatalogService.Instance;
 
     // Recent symbols cache - persisted across page loads (limited size)
     private static readonly LinkedList<string> RecentSymbols = new();
@@ -335,7 +315,16 @@ public sealed partial class WatchlistPage : Page
         {
             System.Diagnostics.Debug.WriteLine($"[WatchlistPage] Error fetching suggestions: {ex.Message}");
             // Fall back to simple local search on error
-            searchBox.ItemsSource = BuildLocalSuggestions(searchText);
+            try
+            {
+                var localSuggestions = await BuildLocalSuggestionsAsync(searchText);
+                searchBox.ItemsSource = localSuggestions.Count > 0 ? localSuggestions : null;
+            }
+            catch
+            {
+                // Even local search failed, show nothing
+                searchBox.ItemsSource = null;
+            }
         }
     }
 
@@ -560,35 +549,37 @@ public sealed partial class WatchlistPage : Page
             // SearchService failed, continue with local fallback
         }
 
-        // 4. Add matching symbols from extended popular list (fallback/supplement)
-        foreach (var symbol in PopularSymbols
-            .Where(s => s.StartsWith(searchText, StringComparison.OrdinalIgnoreCase)))
+        // 4. Add matching symbols from symbol catalog (dynamic configuration)
+        try
         {
-            if (addedSymbols.Add(symbol))
+            var catalogResults = await _symbolCatalogService.SearchAsync(searchText, limit: 20);
+            ct.ThrowIfCancellationRequested();
+
+            foreach (var catalogSymbol in catalogResults)
             {
-                var score = CalculateScore(symbol, SuggestionRelevance.PopularSymbol + SuggestionRelevance.StartsWithMatch);
-                suggestions.Add(new SymbolSuggestion(
-                    symbol,
-                    "Popular",
-                    "\uE8D6",
-                    relevanceScore: score));
+                if (addedSymbols.Add(catalogSymbol.Ticker))
+                {
+                    var startsWithMatch = catalogSymbol.Ticker.StartsWith(searchText, StringComparison.OrdinalIgnoreCase);
+                    var baseScore = startsWithMatch
+                        ? SuggestionRelevance.PopularSymbol + SuggestionRelevance.StartsWithMatch
+                        : SuggestionRelevance.ContainsMatch;
+                    var score = CalculateScore(catalogSymbol.Ticker, baseScore);
+
+                    suggestions.Add(new SymbolSuggestion(
+                        catalogSymbol.Ticker,
+                        catalogSymbol.Category,
+                        catalogSymbol.Icon,
+                        relevanceScore: score));
+                }
             }
         }
-
-        // 5. Include symbols that contain (but don't start with) the text
-        foreach (var symbol in PopularSymbols
-            .Where(s => !s.StartsWith(searchText, StringComparison.OrdinalIgnoreCase)
-                        && s.Contains(searchText, StringComparison.OrdinalIgnoreCase)))
+        catch (OperationCanceledException)
         {
-            if (addedSymbols.Add(symbol))
-            {
-                var score = CalculateScore(symbol, SuggestionRelevance.ContainsMatch);
-                suggestions.Add(new SymbolSuggestion(
-                    symbol,
-                    "Related",
-                    "\uE721",
-                    relevanceScore: score));
-            }
+            throw;
+        }
+        catch
+        {
+            // Catalog service failed, continue without catalog suggestions
         }
 
         // 6. If the typed text looks like a valid symbol and isn't in suggestions, offer to add it
@@ -613,7 +604,7 @@ public sealed partial class WatchlistPage : Page
     /// Builds simple local suggestions when SearchService is unavailable.
     /// Results are sorted by relevance score.
     /// </summary>
-    private List<SymbolSuggestion> BuildLocalSuggestions(string searchText)
+    private async Task<List<SymbolSuggestion>> BuildLocalSuggestionsAsync(string searchText)
     {
         var suggestions = new List<SymbolSuggestion>();
         var addedSymbols = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -652,21 +643,28 @@ public sealed partial class WatchlistPage : Page
             }
         }
 
-        // Popular symbols
-        foreach (var symbol in PopularSymbols
-            .Where(s => s.StartsWith(searchText, StringComparison.OrdinalIgnoreCase)))
+        // Symbols from catalog (loaded from configuration file)
+        try
         {
-            if (addedSymbols.Add(symbol))
+            var catalogResults = await _symbolCatalogService.SearchAsync(searchText, limit: 15);
+            foreach (var catalogSymbol in catalogResults)
             {
-                var isExact = symbol.Equals(searchText, StringComparison.OrdinalIgnoreCase);
-                var score = SuggestionRelevance.PopularSymbol + SuggestionRelevance.StartsWithMatch
-                    + (isExact ? SuggestionRelevance.ExactMatch : 0);
-                suggestions.Add(new SymbolSuggestion(
-                    symbol,
-                    "Popular",
-                    "\uE8D6",
-                    relevanceScore: score));
+                if (addedSymbols.Add(catalogSymbol.Ticker))
+                {
+                    var isExact = catalogSymbol.Ticker.Equals(searchText, StringComparison.OrdinalIgnoreCase);
+                    var score = SuggestionRelevance.PopularSymbol + SuggestionRelevance.StartsWithMatch
+                        + (isExact ? SuggestionRelevance.ExactMatch : 0);
+                    suggestions.Add(new SymbolSuggestion(
+                        catalogSymbol.Ticker,
+                        catalogSymbol.Category,
+                        catalogSymbol.Icon,
+                        relevanceScore: score));
+                }
             }
+        }
+        catch
+        {
+            // Catalog unavailable, continue with what we have
         }
 
         // Add new option

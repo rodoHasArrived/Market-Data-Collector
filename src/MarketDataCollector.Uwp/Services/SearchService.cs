@@ -13,6 +13,7 @@ public sealed class SearchService
 
     private readonly ConfigService _configService;
     private readonly WatchlistService _watchlistService;
+    private readonly SymbolCatalogService _symbolCatalogService;
 
     /// <summary>
     /// Gets the singleton instance of the SearchService.
@@ -36,6 +37,7 @@ public sealed class SearchService
     {
         _configService = new ConfigService();
         _watchlistService = WatchlistService.Instance;
+        _symbolCatalogService = SymbolCatalogService.Instance;
     }
 
     /// <summary>
@@ -127,20 +129,27 @@ public sealed class SearchService
             }
         }
 
-        // Popular symbol suggestions
-        var popularSymbols = new[] { "SPY", "QQQ", "AAPL", "MSFT", "NVDA", "TSLA", "AMZN", "META", "GOOG", "GOOGL" };
-        foreach (var symbol in popularSymbols.Where(s => s.Contains(normalizedQuery)))
+        // Popular symbol suggestions from catalog (dynamically loaded)
+        try
         {
-            if (!suggestions.Any(s => s.Text == symbol))
+            var catalogSymbols = await _symbolCatalogService.SearchAsync(normalizedQuery, limit: 10);
+            foreach (var catalogSymbol in catalogSymbols)
             {
-                suggestions.Add(new SearchSuggestion
+                if (!suggestions.Any(s => s.Text == catalogSymbol.Ticker))
                 {
-                    Text = symbol,
-                    Category = "Popular Symbol",
-                    Icon = "\uE8D6",
-                    NavigationTarget = $"symbol:{symbol}"
-                });
+                    suggestions.Add(new SearchSuggestion
+                    {
+                        Text = catalogSymbol.Ticker,
+                        Category = "Popular Symbol",
+                        Icon = catalogSymbol.Icon,
+                        NavigationTarget = $"symbol:{catalogSymbol.Ticker}"
+                    });
+                }
             }
+        }
+        catch
+        {
+            // Catalog service unavailable, continue without popular symbols
         }
 
         // Page suggestions

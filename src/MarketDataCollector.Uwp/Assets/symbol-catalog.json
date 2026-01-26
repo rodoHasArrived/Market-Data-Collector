@@ -1,0 +1,219 @@
+{
+  "version": "1.0",
+  "lastUpdated": "2026-01-26",
+  "description": "Symbol catalog for autocomplete suggestions. Edit this file to customize available symbols.",
+  "categories": [
+    {
+      "name": "Major Index ETFs",
+      "description": "ETFs tracking major market indices",
+      "icon": "\uE9D9",
+      "symbols": [
+        { "ticker": "SPY", "name": "SPDR S&P 500 ETF Trust", "exchange": "NYSE", "type": "ETF" },
+        { "ticker": "QQQ", "name": "Invesco QQQ Trust", "exchange": "NASDAQ", "type": "ETF" },
+        { "ticker": "DIA", "name": "SPDR Dow Jones Industrial Average ETF", "exchange": "NYSE", "type": "ETF" },
+        { "ticker": "IWM", "name": "iShares Russell 2000 ETF", "exchange": "NYSE", "type": "ETF" },
+        { "ticker": "VTI", "name": "Vanguard Total Stock Market ETF", "exchange": "NYSE", "type": "ETF" },
+        { "ticker": "VOO", "name": "Vanguard S&P 500 ETF", "exchange": "NYSE", "type": "ETF" },
+        { "ticker": "IVV", "name": "iShares Core S&P 500 ETF", "exchange": "NYSE", "type": "ETF" }
+      ]
+    },
+    {
+      "name": "Mega-Cap Technology",
+      "description": "Largest technology companies by market cap",
+      "icon": "\uE950",
+      "symbols": [
+        { "ticker": "AAPL", "name": "Apple Inc.", "exchange": "NASDAQ", "type": "Stock" },
+        { "ticker": "MSFT", "name": "Microsoft Corporation", "exchange": "NASDAQ", "type": "Stock" },
+        { "ticker": "GOOGL", "name": "Alphabet Inc. Class A", "exchange": "NASDAQ", "type": "Stock" },
+        { "ticker": "GOOG", "name": "Alphabet Inc. Class C", "exchange": "NASDAQ", "type": "Stock" },
+        { "ticker": "AMZN", "name": "Amazon.com Inc.", "exchange": "NASDAQ", "type": "Stock" },
+        { "ticker": "NVDA", "name": "NVIDIA Corporation", "exchange": "NASDAQ", "type": "Stock" },
+        { "ticker": "META", "name": "Meta Platforms Inc.", "exchange": "NASDAQ", "type": "Stock" },
+        { "ticker": "TSLA", "name": "Tesla Inc.", "exchange": "NASDAQ", "type": "Stock" }
+      ]
+    },
+    {
+      "name": "Technology",
+      "description": "Technology sector stocks",
+      "icon": "\uE8BA",
+      "symbols": [
+        { "ticker": "AVGO", "name": "Broadcom Inc.", "exchange": "NASDAQ", "type": "Stock" },
+        { "ticker": "ADBE", "name": "Adobe Inc.", "exchange": "NASDAQ", "type": "Stock" },
+        { "ticker": "CRM", "name": "Salesforce Inc.", "exchange": "NYSE", "type": "Stock" },
+        { "ticker": "ORCL", "name": "Oracle Corporation", "exchange": "NYSE", "type": "Stock" },
+        { "ticker": "CSCO", "name": "Cisco Systems Inc.", "exchange": "NASDAQ", "type": "Stock" },
+        { "ticker": "ACN", "name": "Accenture plc", "exchange": "NYSE", "type": "Stock" },
+        { "ticker": "IBM", "name": "International Business Machines", "exchange": "NYSE", "type": "Stock" },
+        { "ticker": "INTC", "name": "Intel Corporation", "exchange": "NASDAQ", "type": "Stock" },
+        { "ticker": "AMD", "name": "Advanced Micro Devices Inc.", "exchange": "NASDAQ", "type": "Stock" },
+        { "ticker": "QCOM", "name": "Qualcomm Inc.", "exchange": "NASDAQ", "type": "Stock" },
+        { "ticker": "TXN", "name": "Texas Instruments Inc.", "exchange": "NASDAQ", "type": "Stock" },
+        { "ticker": "NOW", "name": "ServiceNow Inc.", "exchange": "NYSE", "type": "Stock" },
+        { "ticker": "INTU", "name": "Intuit Inc.", "exchange": "NASDAQ", "type": "Stock" }
+      ]
+    },
+    {
+      "name": "Financials",
+      "description": "Financial services and banking stocks",
+      "icon": "\uE8C7",
+      "symbols": [
+        { "ticker": "BRK.B", "name": "Berkshire Hathaway Inc. Class B", "exchange": "NYSE", "type": "Stock" },
+        { "ticker": "JPM", "name": "JPMorgan Chase & Co.", "exchange": "NYSE", "type": "Stock" },
+        { "ticker": "V", "name": "Visa Inc.", "exchange": "NYSE", "type": "Stock" },
+        { "ticker": "MA", "name": "Mastercard Inc.", "exchange": "NYSE", "type": "Stock" },
+        { "ticker": "BAC", "name": "Bank of America Corporation", "exchange": "NYSE", "type": "Stock" },
+        { "ticker": "WFC", "name": "Wells Fargo & Company", "exchange": "NYSE", "type": "Stock" },
+        { "ticker": "GS", "name": "Goldman Sachs Group Inc.", "exchange": "NYSE", "type": "Stock" },
+        { "ticker": "MS", "name": "Morgan Stanley", "exchange": "NYSE", "type": "Stock" },
+        { "ticker": "AXP", "name": "American Express Company", "exchange": "NYSE", "type": "Stock" },
+        { "ticker": "C", "name": "Citigroup Inc.", "exchange": "NYSE", "type": "Stock" },
+        { "ticker": "SCHW", "name": "Charles Schwab Corporation", "exchange": "NYSE", "type": "Stock" }
+      ]
+    },
+    {
+      "name": "Healthcare",
+      "description": "Healthcare and pharmaceutical stocks",
+      "icon": "\uE8EA",
+      "symbols": [
+        { "ticker": "UNH", "name": "UnitedHealth Group Inc.", "exchange": "NYSE", "type": "Stock" },
+        { "ticker": "JNJ", "name": "Johnson & Johnson", "exchange": "NYSE", "type": "Stock" },
+        { "ticker": "LLY", "name": "Eli Lilly and Company", "exchange": "NYSE", "type": "Stock" },
+        { "ticker": "PFE", "name": "Pfizer Inc.", "exchange": "NYSE", "type": "Stock" },
+        { "ticker": "MRK", "name": "Merck & Co. Inc.", "exchange": "NYSE", "type": "Stock" },
+        { "ticker": "ABBV", "name": "AbbVie Inc.", "exchange": "NYSE", "type": "Stock" },
+        { "ticker": "TMO", "name": "Thermo Fisher Scientific Inc.", "exchange": "NYSE", "type": "Stock" },
+        { "ticker": "ABT", "name": "Abbott Laboratories", "exchange": "NYSE", "type": "Stock" },
+        { "ticker": "DHR", "name": "Danaher Corporation", "exchange": "NYSE", "type": "Stock" },
+        { "ticker": "BMY", "name": "Bristol-Myers Squibb Company", "exchange": "NYSE", "type": "Stock" }
+      ]
+    },
+    {
+      "name": "Consumer",
+      "description": "Consumer discretionary and staples stocks",
+      "icon": "\uE719",
+      "symbols": [
+        { "ticker": "WMT", "name": "Walmart Inc.", "exchange": "NYSE", "type": "Stock" },
+        { "ticker": "PG", "name": "Procter & Gamble Company", "exchange": "NYSE", "type": "Stock" },
+        { "ticker": "KO", "name": "Coca-Cola Company", "exchange": "NYSE", "type": "Stock" },
+        { "ticker": "PEP", "name": "PepsiCo Inc.", "exchange": "NASDAQ", "type": "Stock" },
+        { "ticker": "COST", "name": "Costco Wholesale Corporation", "exchange": "NASDAQ", "type": "Stock" },
+        { "ticker": "HD", "name": "Home Depot Inc.", "exchange": "NYSE", "type": "Stock" },
+        { "ticker": "MCD", "name": "McDonald's Corporation", "exchange": "NYSE", "type": "Stock" },
+        { "ticker": "NKE", "name": "Nike Inc.", "exchange": "NYSE", "type": "Stock" },
+        { "ticker": "SBUX", "name": "Starbucks Corporation", "exchange": "NASDAQ", "type": "Stock" },
+        { "ticker": "TGT", "name": "Target Corporation", "exchange": "NYSE", "type": "Stock" },
+        { "ticker": "LOW", "name": "Lowe's Companies Inc.", "exchange": "NYSE", "type": "Stock" }
+      ]
+    },
+    {
+      "name": "Energy",
+      "description": "Oil, gas, and energy stocks",
+      "icon": "\uE945",
+      "symbols": [
+        { "ticker": "XOM", "name": "Exxon Mobil Corporation", "exchange": "NYSE", "type": "Stock" },
+        { "ticker": "CVX", "name": "Chevron Corporation", "exchange": "NYSE", "type": "Stock" },
+        { "ticker": "COP", "name": "ConocoPhillips", "exchange": "NYSE", "type": "Stock" },
+        { "ticker": "SLB", "name": "Schlumberger Limited", "exchange": "NYSE", "type": "Stock" },
+        { "ticker": "EOG", "name": "EOG Resources Inc.", "exchange": "NYSE", "type": "Stock" },
+        { "ticker": "MPC", "name": "Marathon Petroleum Corporation", "exchange": "NYSE", "type": "Stock" },
+        { "ticker": "PSX", "name": "Phillips 66", "exchange": "NYSE", "type": "Stock" },
+        { "ticker": "VLO", "name": "Valero Energy Corporation", "exchange": "NYSE", "type": "Stock" },
+        { "ticker": "OXY", "name": "Occidental Petroleum Corporation", "exchange": "NYSE", "type": "Stock" }
+      ]
+    },
+    {
+      "name": "Industrials",
+      "description": "Industrial and manufacturing stocks",
+      "icon": "\uE912",
+      "symbols": [
+        { "ticker": "CAT", "name": "Caterpillar Inc.", "exchange": "NYSE", "type": "Stock" },
+        { "ticker": "DE", "name": "Deere & Company", "exchange": "NYSE", "type": "Stock" },
+        { "ticker": "UNP", "name": "Union Pacific Corporation", "exchange": "NYSE", "type": "Stock" },
+        { "ticker": "HON", "name": "Honeywell International Inc.", "exchange": "NASDAQ", "type": "Stock" },
+        { "ticker": "GE", "name": "General Electric Company", "exchange": "NYSE", "type": "Stock" },
+        { "ticker": "BA", "name": "Boeing Company", "exchange": "NYSE", "type": "Stock" },
+        { "ticker": "RTX", "name": "RTX Corporation", "exchange": "NYSE", "type": "Stock" },
+        { "ticker": "LMT", "name": "Lockheed Martin Corporation", "exchange": "NYSE", "type": "Stock" },
+        { "ticker": "UPS", "name": "United Parcel Service Inc.", "exchange": "NYSE", "type": "Stock" },
+        { "ticker": "FDX", "name": "FedEx Corporation", "exchange": "NYSE", "type": "Stock" }
+      ]
+    },
+    {
+      "name": "Communications",
+      "description": "Communications and media stocks",
+      "icon": "\uE715",
+      "symbols": [
+        { "ticker": "NFLX", "name": "Netflix Inc.", "exchange": "NASDAQ", "type": "Stock" },
+        { "ticker": "DIS", "name": "Walt Disney Company", "exchange": "NYSE", "type": "Stock" },
+        { "ticker": "CMCSA", "name": "Comcast Corporation", "exchange": "NASDAQ", "type": "Stock" },
+        { "ticker": "VZ", "name": "Verizon Communications Inc.", "exchange": "NYSE", "type": "Stock" },
+        { "ticker": "T", "name": "AT&T Inc.", "exchange": "NYSE", "type": "Stock" },
+        { "ticker": "TMUS", "name": "T-Mobile US Inc.", "exchange": "NASDAQ", "type": "Stock" }
+      ]
+    },
+    {
+      "name": "Sector ETFs",
+      "description": "ETFs tracking specific market sectors",
+      "icon": "\uE8D6",
+      "symbols": [
+        { "ticker": "XLF", "name": "Financial Select Sector SPDR Fund", "exchange": "NYSE", "type": "ETF" },
+        { "ticker": "XLE", "name": "Energy Select Sector SPDR Fund", "exchange": "NYSE", "type": "ETF" },
+        { "ticker": "XLK", "name": "Technology Select Sector SPDR Fund", "exchange": "NYSE", "type": "ETF" },
+        { "ticker": "XLV", "name": "Health Care Select Sector SPDR Fund", "exchange": "NYSE", "type": "ETF" },
+        { "ticker": "XLI", "name": "Industrial Select Sector SPDR Fund", "exchange": "NYSE", "type": "ETF" },
+        { "ticker": "XLY", "name": "Consumer Discretionary Select Sector SPDR Fund", "exchange": "NYSE", "type": "ETF" },
+        { "ticker": "XLP", "name": "Consumer Staples Select Sector SPDR Fund", "exchange": "NYSE", "type": "ETF" },
+        { "ticker": "XLU", "name": "Utilities Select Sector SPDR Fund", "exchange": "NYSE", "type": "ETF" },
+        { "ticker": "XLB", "name": "Materials Select Sector SPDR Fund", "exchange": "NYSE", "type": "ETF" },
+        { "ticker": "XLRE", "name": "Real Estate Select Sector SPDR Fund", "exchange": "NYSE", "type": "ETF" }
+      ]
+    },
+    {
+      "name": "International ETFs",
+      "description": "ETFs for international market exposure",
+      "icon": "\uE774",
+      "symbols": [
+        { "ticker": "VEA", "name": "Vanguard FTSE Developed Markets ETF", "exchange": "NYSE", "type": "ETF" },
+        { "ticker": "VWO", "name": "Vanguard FTSE Emerging Markets ETF", "exchange": "NYSE", "type": "ETF" },
+        { "ticker": "EFA", "name": "iShares MSCI EAFE ETF", "exchange": "NYSE", "type": "ETF" },
+        { "ticker": "EEM", "name": "iShares MSCI Emerging Markets ETF", "exchange": "NYSE", "type": "ETF" },
+        { "ticker": "IEMG", "name": "iShares Core MSCI Emerging Markets ETF", "exchange": "NYSE", "type": "ETF" }
+      ]
+    },
+    {
+      "name": "Fixed Income ETFs",
+      "description": "Bond and fixed income ETFs",
+      "icon": "\uE8C8",
+      "symbols": [
+        { "ticker": "BND", "name": "Vanguard Total Bond Market ETF", "exchange": "NYSE", "type": "ETF" },
+        { "ticker": "AGG", "name": "iShares Core U.S. Aggregate Bond ETF", "exchange": "NYSE", "type": "ETF" },
+        { "ticker": "LQD", "name": "iShares iBoxx $ Investment Grade Corporate Bond ETF", "exchange": "NYSE", "type": "ETF" },
+        { "ticker": "TLT", "name": "iShares 20+ Year Treasury Bond ETF", "exchange": "NYSE", "type": "ETF" },
+        { "ticker": "HYG", "name": "iShares iBoxx $ High Yield Corporate Bond ETF", "exchange": "NYSE", "type": "ETF" },
+        { "ticker": "SHY", "name": "iShares 1-3 Year Treasury Bond ETF", "exchange": "NYSE", "type": "ETF" }
+      ]
+    },
+    {
+      "name": "Commodities",
+      "description": "Commodity ETFs and related securities",
+      "icon": "\uE8D4",
+      "symbols": [
+        { "ticker": "GLD", "name": "SPDR Gold Shares", "exchange": "NYSE", "type": "ETF" },
+        { "ticker": "SLV", "name": "iShares Silver Trust", "exchange": "NYSE", "type": "ETF" },
+        { "ticker": "USO", "name": "United States Oil Fund", "exchange": "NYSE", "type": "ETF" },
+        { "ticker": "UNG", "name": "United States Natural Gas Fund", "exchange": "NYSE", "type": "ETF" },
+        { "ticker": "DBA", "name": "Invesco DB Agriculture Fund", "exchange": "NYSE", "type": "ETF" }
+      ]
+    },
+    {
+      "name": "Volatility",
+      "description": "Volatility-related securities",
+      "icon": "\uE9CE",
+      "symbols": [
+        { "ticker": "VIX", "name": "CBOE Volatility Index", "exchange": "CBOE", "type": "Index" },
+        { "ticker": "VXX", "name": "iPath Series B S&P 500 VIX Short-Term Futures ETN", "exchange": "NYSE", "type": "ETN" },
+        { "ticker": "UVXY", "name": "ProShares Ultra VIX Short-Term Futures ETF", "exchange": "NYSE", "type": "ETF" }
+      ]
+    }
+  ]
+}
