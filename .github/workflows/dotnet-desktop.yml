@@ -122,7 +122,7 @@ jobs:
           Compress-Archive -Path publish/* -DestinationPath MarketDataCollector-${{ matrix.rid }}${{ matrix.asset_extension }}
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: MarketDataCollector-${{ matrix.rid }}
           path: MarketDataCollector-${{ matrix.rid }}${{ matrix.asset_extension }}
