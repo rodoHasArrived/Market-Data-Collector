@@ -1,7 +1,7 @@
 # Market Data Collector - Production Status
 
-**Last Updated:** 2026-01-14
-**Version:** 1.5.0
+**Last Updated:** 2026-01-26
+**Version:** 1.6.0
 **Status:** Production Ready
 
 This document consolidates the architecture assessment and production readiness information for the Market Data Collector system.
@@ -31,10 +31,9 @@ The Market Data Collector is a mature, well-architected system with comprehensiv
 | Interactive Brokers | ⚠️ Requires Build Flag | Needs IBAPI compilation constant |
 | Polygon Provider | ❌ Stub Only | Synthetic heartbeat only |
 | Monitoring | ✅ Production Ready | HTTP server, Prometheus metrics |
-| MassTransit Messaging | ✅ Production Ready | RabbitMQ, Azure Service Bus support |
 | UWP Desktop App | ✅ Production Ready | Full feature set with 17+ pages including Admin/Maintenance and Advanced Analytics |
-| Microservices | ✅ Production Ready | 6 services, Docker Compose orchestration |
 | QuantConnect Lean | ✅ Production Ready | Custom data types and IDataProvider |
+| Architecture | ✅ Monolithic | Simplified in v1.6.0 (microservices/MassTransit removed) |
 
 ---
 
@@ -58,13 +57,13 @@ The `EventPipeline` class is production-grade:
 - Nanosecond precision timing
 - Thread-safe statistics
 
-### 3. MassTransit Integration
+### 3. Simplified Architecture (v1.6.0)
 
-Full distributed messaging support:
-- InMemory (development)
-- RabbitMQ (production)
-- Azure Service Bus (cloud)
-- Retry policies with exponential backoff
+The application now uses a monolithic architecture:
+- Direct in-process communication (no external messaging)
+- Simplified deployment and configuration
+- Reduced operational complexity
+- MassTransit/RabbitMQ dependencies removed
 
 ### 4. Storage Layer
 
@@ -85,9 +84,9 @@ Multiple storage strategies:
 │  │ ConfigService│  │StatusService │  │ BackfillService          │   │
 │  └─────────────┘  └──────────────┘  └──────────────────────────┘   │
 └─────────────────────────────────────────────────────────────────────┘
-                           │
+                           │ HTTP API
 ┌─────────────────────────────────────────────────────────────────────┐
-│                      CORE APPLICATION                                │
+│                      CORE APPLICATION (Monolithic)                   │
 │  ┌──────────────────┐      ┌─────────────────────────────────────┐  │
 │  │ StatusHttpServer │◄────►│ EventPipeline                       │  │
 │  │ /status /metrics │      │ System.Threading.Channels           │  │
@@ -99,15 +98,10 @@ Multiple storage strategies:
 │  └─────────────────────────────────────────────────────────────────┘ │
 │           │                              │                          │
 │  ┌───────────────────┐      ┌──────────────────────────────────┐   │
-│  │ CompositePublisher│      │ IStorageSink                      │   │
-│  │ ├─PipelinePublisher│     │ ├─JsonlStorageSink               │   │
-│  │ └─MassTransitPub  │      │ └─ParquetStorageSink             │   │
+│  │ PipelinePublisher │      │ IStorageSink                      │   │
+│  │ (direct in-proc)  │      │ ├─JsonlStorageSink               │   │
+│  │                   │      │ └─ParquetStorageSink             │   │
 │  └───────────────────┘      └──────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────────┘
-                           │
-┌─────────────────────────────────────────────────────────────────────┐
-│                      MESSAGING LAYER                                 │
-│  MassTransit: InMemory (dev) │ RabbitMQ (prod) │ Azure SB (cloud)  │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -275,12 +269,13 @@ When `IBAPI` is NOT defined:
 
 | Item | Priority | Effort | Impact |
 |------|----------|--------|--------|
-| Replace `double` with `decimal` for prices | High | Medium | High |
-| Add authentication to HTTP endpoints | High | Low | High |
-| Complete Alpaca quote message handling | Medium | Low | Medium |
+| ~~Replace `double` with `decimal` for prices~~ | ~~High~~ | ~~Medium~~ | ~~Fixed in v1.6.0~~ |
+| ~~Add authentication to HTTP endpoints~~ | ~~High~~ | ~~Low~~ | ~~Fixed in v1.5.0~~ |
+| ~~Complete Alpaca quote message handling~~ | ~~Medium~~ | ~~Low~~ | ~~Fixed in v1.5.0~~ |
 | ~~Fix UWP/Core API endpoint mismatch~~ | ~~Medium~~ | ~~Low~~ | ~~Fixed in v1.5.0~~ |
 | Create shared contracts library | Medium | Medium | Medium |
 | Add missing integration tests | Low | High | Medium |
+| Standardize error handling patterns | Medium | Medium | Medium |
 
 ---
 
@@ -335,4 +330,4 @@ When `IBAPI` is NOT defined:
 
 ---
 
-*Last Updated: 2026-01-14*
+*Last Updated: 2026-01-26*
