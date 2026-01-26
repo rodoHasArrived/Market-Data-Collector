@@ -15,7 +15,8 @@ public sealed class SetupWizardService
 
     public SetupWizardService()
     {
-        _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
+        // TD-10: Use HttpClientFactory instead of creating new HttpClient instances
+        _httpClient = HttpClientFactoryProvider.CreateClient(HttpClientNames.SetupWizard);
         _configService = new ConfigService();
         _credentialService = new CredentialService();
     }

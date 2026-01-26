@@ -53,7 +53,8 @@ public sealed class ApiClientService : IDisposable
         _baseUrl = "http://localhost:8080";
         _timeoutSeconds = 30;
         _backfillTimeoutMinutes = 60;
-        _httpClient = CreateHttpClient(_timeoutSeconds);
+        // TD-10: Use HttpClientFactory instead of creating new HttpClient instances
+        _httpClient = HttpClientFactoryProvider.CreateClient(HttpClientNames.ApiClient);
     }
 
     /// <summary>
@@ -123,10 +124,10 @@ public sealed class ApiClientService : IDisposable
 
     private static HttpClient CreateHttpClient(int timeoutSeconds)
     {
-        return new HttpClient
-        {
-            Timeout = TimeSpan.FromSeconds(timeoutSeconds)
-        };
+        // TD-10: Use HttpClientFactory instead of creating new HttpClient instances
+        var client = HttpClientFactoryProvider.CreateClient(HttpClientNames.ApiClient);
+        client.Timeout = TimeSpan.FromSeconds(timeoutSeconds);
+        return client;
     }
 
     /// <summary>
@@ -139,10 +140,12 @@ public sealed class ApiClientService : IDisposable
         {
             lock (_lock)
             {
-                _backfillHttpClient ??= new HttpClient
+                if (_backfillHttpClient == null)
                 {
-                    Timeout = TimeSpan.FromMinutes(_backfillTimeoutMinutes)
-                };
+                    // TD-10: Use HttpClientFactory instead of creating new HttpClient instances
+                    _backfillHttpClient = HttpClientFactoryProvider.CreateClient(HttpClientNames.BackfillClient);
+                    _backfillHttpClient.Timeout = TimeSpan.FromMinutes(_backfillTimeoutMinutes);
+                }
             }
         }
         return _backfillHttpClient;
@@ -158,10 +161,10 @@ public sealed class ApiClientService : IDisposable
     [Obsolete("Prefer GetBackfillClient() to avoid socket exhaustion. Only use when custom timeout is required.")]
     public HttpClient CreateBackfillClient()
     {
-        return new HttpClient
-        {
-            Timeout = TimeSpan.FromMinutes(_backfillTimeoutMinutes)
-        };
+        // TD-10: Use HttpClientFactory instead of creating new HttpClient instances
+        var client = HttpClientFactoryProvider.CreateClient(HttpClientNames.BackfillClient);
+        client.Timeout = TimeSpan.FromMinutes(_backfillTimeoutMinutes);
+        return client;
     }
 
     /// <summary>
