@@ -91,6 +91,160 @@ let ``relativeSpread calculates percentage`` () =
         value |> should be (lessThan 0.11m)
     | None -> failwith "Expected Some value"
 
+[<Fact>]
+let ``halfSpread calculates half of spread`` () =
+    let half = SpreadCalc.halfSpread 100.00m 100.10m
+    half |> should equal (Some 0.05m)
+
+[<Fact>]
+let ``halfSpread returns None for invalid prices`` () =
+    SpreadCalc.halfSpread 0m 100.00m |> should equal None
+    SpreadCalc.halfSpread 100.10m 100.00m |> should equal None // crossed
+
+[<Fact>]
+let ``midPriceFromQuote calculates mid from quote`` () =
+    let quote = createTestQuote 100.00m 1000L 100.10m 500L
+    let mid = SpreadCalc.midPriceFromQuote quote
+    mid |> should equal (Some 100.05m)
+
+[<Fact>]
+let ``spreadBpsFromQuote calculates bps from quote`` () =
+    let quote = createTestQuote 100.00m 1000L 100.10m 500L
+    let bps = SpreadCalc.spreadBpsFromQuote quote
+    match bps with
+    | Some value ->
+        // 0.10 / 100.05 * 10000 ≈ 9.995
+        value |> should be (greaterThan 9.9m)
+        value |> should be (lessThan 10.1m)
+    | None -> failwith "Expected Some value"
+
+[<Fact>]
+let ``effectiveSpreadBps calculates effective spread in basis points`` () =
+    // Trade at ask: effective spread = 0.10, mid = 100.05
+    // bps = 0.10 / 100.05 * 10000 ≈ 9.995
+    let effBps = SpreadCalc.effectiveSpreadBps 100.10m 100.00m 100.10m
+    match effBps with
+    | Some value ->
+        value |> should be (greaterThan 9.9m)
+        value |> should be (lessThan 10.1m)
+    | None -> failwith "Expected Some value"
+
+[<Fact>]
+let ``effectiveSpreadBps at mid returns zero`` () =
+    let effBps = SpreadCalc.effectiveSpreadBps 100.05m 100.00m 100.10m
+    effBps |> should equal (Some 0.0m)
+
+let createTestOrderBook bidPrice bidQty askPrice askQty : OrderBookSnapshot = {
+    Symbol = "TEST"
+    Bids = [ { Price = bidPrice; Quantity = bidQty; OrderCount = 1 } ]
+    Asks = [ { Price = askPrice; Quantity = askQty; OrderCount = 1 } ]
+    SequenceNumber = 1L
+    Timestamp = DateTimeOffset.UtcNow
+    StreamId = None
+}
+
+let createEmptyOrderBook () : OrderBookSnapshot = {
+    Symbol = "TEST"
+    Bids = []
+    Asks = []
+    SequenceNumber = 1L
+    Timestamp = DateTimeOffset.UtcNow
+    StreamId = None
+}
+
+[<Fact>]
+let ``fromOrderBook calculates spread from order book`` () =
+    let book = createTestOrderBook 100.00m 1000L 100.10m 500L
+    let spread = SpreadCalc.fromOrderBook book
+    spread |> should equal (Some 0.10m)
+
+[<Fact>]
+let ``fromOrderBook returns None for empty book`` () =
+    let book = createEmptyOrderBook ()
+    let spread = SpreadCalc.fromOrderBook book
+    spread |> should equal None
+
+[<Fact>]
+let ``midPriceFromOrderBook calculates mid from order book`` () =
+    let book = createTestOrderBook 100.00m 1000L 100.10m 500L
+    let mid = SpreadCalc.midPriceFromOrderBook book
+    mid |> should equal (Some 100.05m)
+
+[<Fact>]
+let ``midPriceFromOrderBook returns None for empty book`` () =
+    let book = createEmptyOrderBook ()
+    let mid = SpreadCalc.midPriceFromOrderBook book
+    mid |> should equal None
+
+[<Fact>]
+let ``spreadBpsFromOrderBook calculates bps from order book`` () =
+    let book = createTestOrderBook 100.00m 1000L 100.10m 500L
+    let bps = SpreadCalc.spreadBpsFromOrderBook book
+    match bps with
+    | Some value ->
+        value |> should be (greaterThan 9.9m)
+        value |> should be (lessThan 10.1m)
+    | None -> failwith "Expected Some value"
+
+[<Fact>]
+let ``spreadBpsFromOrderBook returns None for empty book`` () =
+    let book = createEmptyOrderBook ()
+    let bps = SpreadCalc.spreadBpsFromOrderBook book
+    bps |> should equal None
+
+[<Fact>]
+let ``isSpreadAcceptable returns true when under threshold`` () =
+    // Spread is ~10 bps, threshold is 20 bps
+    let result = SpreadCalc.isSpreadAcceptable 20m 100.00m 100.10m
+    result |> should equal true
+
+[<Fact>]
+let ``isSpreadAcceptable returns false when over threshold`` () =
+    // Spread is ~10 bps, threshold is 5 bps
+    let result = SpreadCalc.isSpreadAcceptable 5m 100.00m 100.10m
+    result |> should equal false
+
+[<Fact>]
+let ``isSpreadAcceptable returns false for invalid prices`` () =
+    let result = SpreadCalc.isSpreadAcceptable 20m 0m 100.00m
+    result |> should equal false
+
+[<Fact>]
+let ``calculateStatistics returns correct stats for multiple quotes`` () =
+    let quotes = [
+        createTestQuote 100.00m 1000L 100.10m 500L  // spread = 0.10
+        createTestQuote 100.00m 1000L 100.20m 500L  // spread = 0.20
+        createTestQuote 100.00m 1000L 100.15m 500L  // spread = 0.15
+    ]
+    let stats = SpreadCalc.calculateStatistics quotes
+    match stats with
+    | Some s ->
+        s.Count |> should equal 3
+        s.MinSpread |> should equal 0.10m
+        s.MaxSpread |> should equal 0.20m
+        s.AvgSpread |> should equal 0.15m
+        s.MedianSpread |> should equal 0.15m
+    | None -> failwith "Expected Some stats"
+
+[<Fact>]
+let ``calculateStatistics returns None for empty list`` () =
+    let stats = SpreadCalc.calculateStatistics Seq.empty
+    stats |> should equal None
+
+[<Fact>]
+let ``calculateStatistics handles single quote`` () =
+    let quotes = [ createTestQuote 100.00m 1000L 100.10m 500L ]
+    let stats = SpreadCalc.calculateStatistics quotes
+    match stats with
+    | Some s ->
+        s.Count |> should equal 1
+        s.MinSpread |> should equal 0.10m
+        s.MaxSpread |> should equal 0.10m
+        s.AvgSpread |> should equal 0.10m
+        s.MedianSpread |> should equal 0.10m
+        s.StdDevSpread |> should equal 0m
+    | None -> failwith "Expected Some stats"
+
 // Imbalance Tests
 
 [<Fact>]
