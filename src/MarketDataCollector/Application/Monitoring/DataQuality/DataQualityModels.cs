@@ -277,6 +277,7 @@ public sealed record AnomalyDetectionConfig
 {
     public double PriceSpikeThresholdPercent { get; init; } = 5.0;
     public double VolumeSpikeThresholdMultiplier { get; init; } = 10.0;
+    public double VolumeDropThresholdMultiplier { get; init; } = 0.1;
     public double SpreadThresholdPercent { get; init; } = 2.0;
     public int StaleDataThresholdSeconds { get; init; } = 60;
     public double RapidChangeThresholdPercent { get; init; } = 1.0;

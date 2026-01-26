@@ -1,6 +1,6 @@
 # Market Data Collector - Roadmap
 
-**Version:** 1.6.0
+**Version:** 1.6.1
 **Last Updated:** 2026-01-26
 **Status:** Production Ready
 
@@ -14,13 +14,13 @@ This document provides the feature roadmap, backlog, and development priorities 
 |----------|-------------|---------|-------|
 | Core Features | 55+ | - | 55+ |
 | Technical Debt | 5 | 3 | 8 |
-| Quick Wins (≤2 days) | 42 | 83 | 125 |
+| Quick Wins (≤2 days) | 44 | 81 | 125 |
 | Provider Integration | 5 | 17 | 22 |
 | Monitoring & Alerting | 24 | 0 | 24 |
-| Data Quality | 21 | 2 | 23 |
+| Data Quality | 23 | 0 | 23 |
 | Storage & Archival | 9 | 4 | 13 |
 | Cloud Integration | 0 | 100+ | 100+ |
-| **Total** | **161** | **209+** | **370+** |
+| **Total** | **165** | **205+** | **370+** |
 
 ---
 
@@ -83,6 +83,8 @@ This document provides the feature roadmap, backlog, and development priorities 
 - [x] Bad tick filter (DQ-20)
 - [x] Price spike alert (QW-6)
 - [x] Spread monitor (QW-7)
+- [x] Volume spike detector (ADQ-3)
+- [x] Volume drop detector (ADQ-3b)
 
 ### User Interfaces
 - [x] Web Dashboard (HTML/JS, auto-refresh)
@@ -109,6 +111,7 @@ This document provides the feature roadmap, backlog, and development priorities 
 - [x] Log level runtime toggle (QW-53)
 - [x] Config path override (QW-95)
 - [x] Sensitive value masking (QW-78)
+- [x] Dry run mode (QW-93)
 
 ---
 
@@ -151,6 +154,143 @@ Items that should be addressed before new feature development.
 | TD-6 | Add missing integration tests | Low | High | Pending |
 | TD-7 | Standardize error handling patterns | Medium | Medium | Pending |
 | TD-8 | Remove deprecated `--serve-status` option | Low | Low | Pending |
+
+---
+
+## Micro-Tasks (Bite-Sized Work Items)
+
+These are small, focused tasks broken down from larger features. Each can typically be completed in 1-4 hours.
+
+### TD-5: Create Shared Contracts Library (UWP/Core)
+| Sub-ID | Task | Effort | Dependencies |
+|--------|------|--------|--------------|
+| TD-5.1 | Create `MarketDataCollector.Contracts` project | 1 hour | None |
+| TD-5.2 | Extract common DTOs (StatusResponse, HealthResponse) | 2 hours | TD-5.1 |
+| TD-5.3 | Add API request models (BackfillRequest, SubscriptionRequest) | 2 hours | TD-5.1 |
+| TD-5.4 | Add API response models (BackfillResult, QueryResult) | 2 hours | TD-5.3 |
+| TD-5.5 | Update Core project to use contracts | 2 hours | TD-5.2, TD-5.4 |
+| TD-5.6 | Update UWP project to use contracts | 2 hours | TD-5.2, TD-5.4 |
+| TD-5.7 | Remove duplicate model definitions | 1 hour | TD-5.5, TD-5.6 |
+
+### TD-6: Add Missing Integration Tests
+| Sub-ID | Task | Effort | Dependencies |
+|--------|------|--------|--------------|
+| TD-6.1 | Create integration test project structure | 1 hour | None |
+| TD-6.2 | Add test fixtures for provider mocking | 2 hours | TD-6.1 |
+| TD-6.3 | Add Alpaca provider connection test | 2 hours | TD-6.2 |
+| TD-6.4 | Add JSONL storage sink write/read test | 2 hours | TD-6.1 |
+| TD-6.5 | Add Parquet storage sink write/read test | 2 hours | TD-6.4 |
+| TD-6.6 | Add backfill workflow end-to-end test | 3 hours | TD-6.2 |
+| TD-6.7 | Add API endpoint integration tests | 3 hours | TD-6.1 |
+| TD-6.8 | Add graceful shutdown integration test | 2 hours | TD-6.1 |
+
+### TD-7: Standardize Error Handling Patterns
+| Sub-ID | Task | Effort | Dependencies |
+|--------|------|--------|--------------|
+| TD-7.1 | Create ErrorCode enum with categories | 1 hour | None |
+| TD-7.2 | Create standardized ErrorResponse model | 1 hour | TD-7.1 |
+| TD-7.3 | Add Result<T, TError> pattern to Application layer | 2 hours | TD-7.2 |
+| TD-7.4 | Update provider error handling to use ErrorCode | 2 hours | TD-7.1 |
+| TD-7.5 | Update API endpoints to return ErrorResponse | 2 hours | TD-7.2 |
+| TD-7.6 | Add error handling middleware for HTTP | 2 hours | TD-7.5 |
+| TD-7.7 | Document error codes in API documentation | 1 hour | TD-7.1 |
+
+### TD-8: Remove Deprecated --serve-status Option
+| Sub-ID | Task | Effort | Dependencies |
+|--------|------|--------|--------------|
+| TD-8.1 | Add deprecation warning log when --serve-status is used | 0.5 hour | None |
+| TD-8.2 | Update Makefile to use --http-port instead | 0.5 hour | None |
+| TD-8.3 | Update start-collector.sh to use --http-port | 0.5 hour | None |
+| TD-8.4 | Update start-collector.ps1 to use --http-port | 0.5 hour | None |
+| TD-8.5 | Update Dockerfile CMD to use --http-port | 0.5 hour | None |
+| TD-8.6 | Update systemd service file | 0.5 hour | None |
+| TD-8.7 | Update documentation (USAGE.md, HELP.md, configuration.md) | 1 hour | None |
+| TD-8.8 | Update HtmlTemplates.cs UI references | 0.5 hour | None |
+| TD-8.9 | Update UWP UI references | 0.5 hour | None |
+| TD-8.10 | Remove --serve-status from Program.cs (breaking change) | 1 hour | TD-8.1 to TD-8.9 |
+
+### QW-15: Query Endpoint for Historical Data
+| Sub-ID | Task | Effort | Dependencies |
+|--------|------|--------|--------------|
+| QW-15.1 | Create HistoricalQueryRequest model | 1 hour | None |
+| QW-15.2 | Create HistoricalQueryResponse model | 1 hour | QW-15.1 |
+| QW-15.3 | Add date range parameter parsing | 1 hour | QW-15.1 |
+| QW-15.4 | Implement file lookup logic for date range | 2 hours | QW-15.3 |
+| QW-15.5 | Add pagination support (offset, limit) | 1 hour | QW-15.4 |
+| QW-15.6 | Add format selection (JSON, CSV, JSONL) | 2 hours | QW-15.5 |
+| QW-15.7 | Create `/api/historical/query` endpoint | 2 hours | QW-15.2 to QW-15.6 |
+| QW-15.8 | Add endpoint to DataQualityEndpoints | 1 hour | QW-15.7 |
+| QW-15.9 | Add unit tests for query logic | 2 hours | QW-15.7 |
+
+### DEV-9: API Explorer / Swagger UI
+| Sub-ID | Task | Effort | Dependencies |
+|--------|------|--------|--------------|
+| DEV-9.1 | Add Swashbuckle.AspNetCore NuGet package | 0.5 hour | None |
+| DEV-9.2 | Create OpenAPI endpoint documentation | 2 hours | DEV-9.1 |
+| DEV-9.3 | Add XML documentation to API endpoints | 2 hours | None |
+| DEV-9.4 | Configure Swagger UI hosting at /swagger | 1 hour | DEV-9.1 |
+| DEV-9.5 | Add authentication documentation | 1 hour | DEV-9.2 |
+| DEV-9.6 | Add example request/response models | 1 hour | DEV-9.2 |
+
+### PERF-1/STO-5: Batch Write Optimization
+| Sub-ID | Task | Effort | Dependencies |
+|--------|------|--------|--------------|
+| PERF-1.1 | Add BatchWriteConfig with size and timeout settings | 1 hour | None |
+| PERF-1.2 | Create BatchBuffer<T> class with thread-safe queue | 2 hours | None |
+| PERF-1.3 | Add flush timer to BatchBuffer | 1 hour | PERF-1.2 |
+| PERF-1.4 | Integrate BatchBuffer into JsonlStorageSink | 2 hours | PERF-1.2, PERF-1.3 |
+| PERF-1.5 | Add batch write metrics (batch_size, flush_count) | 1 hour | PERF-1.4 |
+| PERF-1.6 | Add configuration options to appsettings.json | 0.5 hour | PERF-1.1 |
+| PERF-1.7 | Add unit tests for batching behavior | 2 hours | PERF-1.4 |
+
+### ARCH-1: Dead Letter Queue
+| Sub-ID | Task | Effort | Dependencies |
+|--------|------|--------|--------------|
+| ARCH-1.1 | Create DeadLetterEntry model | 1 hour | None |
+| ARCH-1.2 | Create DLQ storage directory structure | 1 hour | None |
+| ARCH-1.3 | Implement DeadLetterQueue class | 2 hours | ARCH-1.1, ARCH-1.2 |
+| ARCH-1.4 | Add failed event capture in EventPipeline | 2 hours | ARCH-1.3 |
+| ARCH-1.5 | Implement retry mechanism with backoff | 2 hours | ARCH-1.3 |
+| ARCH-1.6 | Add `/api/dlq/list` endpoint | 1 hour | ARCH-1.3 |
+| ARCH-1.7 | Add `/api/dlq/retry` endpoint | 1 hour | ARCH-1.5 |
+| ARCH-1.8 | Add `/api/dlq/purge` endpoint | 1 hour | ARCH-1.3 |
+| ARCH-1.9 | Add DLQ metrics (dlq_size, dlq_retries) | 1 hour | ARCH-1.3 |
+| ARCH-1.10 | Add unit tests for DLQ | 2 hours | ARCH-1.3 to ARCH-1.5 |
+
+### PROV-22: Provider Config Wizard
+| Sub-ID | Task | Effort | Dependencies |
+|--------|------|--------|--------------|
+| PROV-22.1 | Create WizardStep model and flow | 1 hour | None |
+| PROV-22.2 | Add interactive console prompts helper | 1 hour | None |
+| PROV-22.3 | Implement provider selection step | 1 hour | PROV-22.2 |
+| PROV-22.4 | Add credential input prompts per provider | 2 hours | PROV-22.2 |
+| PROV-22.5 | Add credential validation step | 1 hour | PROV-22.4 |
+| PROV-22.6 | Generate appsettings.json from wizard inputs | 1 hour | PROV-22.3 to PROV-22.5 |
+| PROV-22.7 | Add symbol selection step | 1 hour | PROV-22.2 |
+| PROV-22.8 | Add storage configuration step | 1 hour | PROV-22.2 |
+| PROV-22.9 | Add --wizard flag to Program.cs | 0.5 hour | PROV-22.6 |
+
+### ADQ-2: Reference Price Validator
+| Sub-ID | Task | Effort | Dependencies |
+|--------|------|--------|--------------|
+| ADQ-2.1 | Create ReferencePriceConfig model | 0.5 hour | None |
+| ADQ-2.2 | Add reference price lookup interface | 1 hour | None |
+| ADQ-2.3 | Implement Yahoo Finance reference lookup | 2 hours | ADQ-2.2 |
+| ADQ-2.4 | Create ReferencePriceValidator class | 2 hours | ADQ-2.2 |
+| ADQ-2.5 | Integrate validator into DataQualityMonitoringService | 1 hour | ADQ-2.4 |
+| ADQ-2.6 | Add deviation threshold configuration | 0.5 hour | ADQ-2.1 |
+| ADQ-2.7 | Add unit tests | 2 hours | ADQ-2.4 |
+
+### ADQ-4: Data Freshness SLA Monitor
+| Sub-ID | Task | Effort | Dependencies |
+|--------|------|--------|--------------|
+| ADQ-4.1 | Create SlaConfig model with thresholds | 0.5 hour | None |
+| ADQ-4.2 | Create DataFreshnessSlaMonitor class | 2 hours | ADQ-4.1 |
+| ADQ-4.3 | Track last event timestamp per symbol | 1 hour | ADQ-4.2 |
+| ADQ-4.4 | Implement SLA violation detection | 1 hour | ADQ-4.2, ADQ-4.3 |
+| ADQ-4.5 | Add SLA metrics (sla_violations, freshness_ms) | 1 hour | ADQ-4.4 |
+| ADQ-4.6 | Add `/api/sla/status` endpoint | 1 hour | ADQ-4.2 |
+| ADQ-4.7 | Add unit tests | 1 hour | ADQ-4.4 |
 
 ---
 
@@ -241,7 +381,7 @@ Items that should be addressed before new feature development.
 | ID | Feature | Effort | Impact | Status |
 |----|---------|--------|--------|--------|
 | QW-53 | Log Level Runtime Toggle | 0.5 day | High | **Done** |
-| QW-93 | Dry Run Mode | 1 day | High | Pending |
+| QW-93 | Dry Run Mode | 1 day | High | **Done** |
 | QW-95 | Config Path Override | 0.5 day | High | **Done** |
 | QW-78 | Sensitive Value Masking | 0.5 day | High | **Done** |
 | QW-76 | Config Template Generator | 1 day | High | **Done** |
@@ -306,12 +446,12 @@ These are new feature ideas for consideration in upcoming development cycles.
 | INT-5 | Redis Cache Layer | 1 week | P2 | Cache recent data for low-latency access |
 
 ### Advanced Data Quality
-| ID | Feature | Effort | Priority | Description |
-|----|---------|--------|----------|-------------|
-| ADQ-1 | Machine Learning Anomaly Detection | 2 weeks | P2 | ML-based detection of unusual patterns |
-| ADQ-2 | Reference Price Validator | 3 days | P1 | Cross-validate prices against multiple sources |
-| ADQ-3 | Volume Spike Detector | 1 day | P1 | Alert on unusual volume patterns |
-| ADQ-4 | Data Freshness SLA Monitor | 2 days | P1 | Track and alert on data delivery delays |
+| ID | Feature | Effort | Priority | Description | Status |
+|----|---------|--------|----------|-------------|--------|
+| ADQ-1 | Machine Learning Anomaly Detection | 2 weeks | P2 | ML-based detection of unusual patterns | Pending |
+| ADQ-2 | Reference Price Validator | 3 days | P1 | Cross-validate prices against multiple sources | Pending |
+| ADQ-3 | Volume Spike/Drop Detector | 1 day | P1 | Alert on unusual volume patterns (high & low) | **Done** |
+| ADQ-4 | Data Freshness SLA Monitor | 2 days | P1 | Track and alert on data delivery delays | Pending |
 
 ### Developer Experience
 | ID | Feature | Effort | Priority | Description |
