@@ -87,7 +87,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 
 # Default entrypoint - web dashboard mode
 ENTRYPOINT ["dotnet", "MarketDataCollector.dll"]
-CMD ["--ui", "--serve-status", "--watch-config"]
+CMD ["--ui", "--http-port", "8080", "--watch-config"]
 
 # =============================================================================
 # Usage Examples:

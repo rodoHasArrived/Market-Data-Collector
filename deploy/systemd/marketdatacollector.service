@@ -17,8 +17,8 @@ Environment=IB_HOST=127.0.0.1
 Environment=IB_PORT=7497
 Environment=IB_CLIENT_ID=17
 
-# Run collector (hot reload + status)
-ExecStart=/usr/bin/dotnet run --project /opt/marketdatacollector/src/MarketDataCollector/MarketDataCollector.csproj --configuration Release -- --watch-config --serve-status
+# Run collector (hot reload + HTTP monitoring)
+ExecStart=/usr/bin/dotnet run --project /opt/marketdatacollector/src/MarketDataCollector/MarketDataCollector.csproj --configuration Release -- --watch-config --http-port 8080
 
 # Graceful stop
 KillSignal=SIGTERM
