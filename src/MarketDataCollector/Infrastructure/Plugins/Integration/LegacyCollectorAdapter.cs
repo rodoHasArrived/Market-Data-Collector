@@ -130,41 +130,39 @@ public sealed class LegacyCollectorAdapter
 
         foreach (var bid in depth.Bids)
         {
-            var update = new MarketDepthUpdate(
-                Timestamp: depth.Timestamp,
-                Symbol: depth.Symbol,
-                Position: position++,
-                Operation: depth.IsSnapshot ? DepthOperation.Insert : DepthOperation.Update,
-                Side: OrderBookSide.Bid,
-                Price: bid.Price,
-                Size: bid.Size,
-                MarketMaker: bid.Exchange,
-                SequenceNumber: depth.SequenceNumber ?? 0,
-                StreamId: depth.Source,
-                Venue: bid.Exchange
-            );
-
-            _depthCollector.OnDepth(update);
+            _depthCollector.OnDepth(
+                new MarketDepthUpdate(
+                    Timestamp: depth.Timestamp,
+                    Symbol: depth.Symbol,
+                    Position: position++,
+                    Operation: depth.IsSnapshot ? DepthOperation.Insert : DepthOperation.Update,
+                    Side: OrderBookSide.Bid,
+                    Price: bid.Price,
+                    Size: bid.Size,
+                    MarketMaker: bid.Exchange,
+                    SequenceNumber: depth.SequenceNumber ?? 0,
+                    StreamId: depth.Source,
+                    Venue: bid.Exchange
+                ));
         }
 
         position = 0;
         foreach (var ask in depth.Asks)
         {
-            var update = new MarketDepthUpdate(
-                Timestamp: depth.Timestamp,
-                Symbol: depth.Symbol,
-                Position: position++,
-                Operation: depth.IsSnapshot ? DepthOperation.Insert : DepthOperation.Update,
-                Side: OrderBookSide.Ask,
-                Price: ask.Price,
-                Size: ask.Size,
-                MarketMaker: ask.Exchange,
-                SequenceNumber: depth.SequenceNumber ?? 0,
-                StreamId: depth.Source,
-                Venue: ask.Exchange
-            );
-
-            _depthCollector.OnDepth(update);
+            _depthCollector.OnDepth(
+                new MarketDepthUpdate(
+                    Timestamp: depth.Timestamp,
+                    Symbol: depth.Symbol,
+                    Position: position++,
+                    Operation: depth.IsSnapshot ? DepthOperation.Insert : DepthOperation.Update,
+                    Side: OrderBookSide.Ask,
+                    Price: ask.Price,
+                    Size: ask.Size,
+                    MarketMaker: ask.Exchange,
+                    SequenceNumber: depth.SequenceNumber ?? 0,
+                    StreamId: depth.Source,
+                    Venue: ask.Exchange
+                ));
         }
     }
 
