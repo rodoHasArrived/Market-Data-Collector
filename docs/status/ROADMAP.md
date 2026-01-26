@@ -277,7 +277,7 @@ These are small, focused tasks broken down from larger features. Each can typica
 ### TD-9: Fix Async Void Methods (P0)
 | Sub-ID | Task | Effort | Dependencies | Status |
 |--------|------|--------|--------------|--------|
-| TD-9.1 | Fix async void in OAuthRefreshService (OnRefreshTimerElapsed, OnExpirationCheckElapsed) | 1 hour | None | Pending |
+| TD-9.1 | Fix async void in OAuthRefreshService (OnRefreshTimerElapsed, OnExpirationCheckElapsed) | 1 hour | None | **Done** |
 | TD-9.2 | Fix async void in DashboardViewModel (OnRefreshTimerElapsed) | 1 hour | None | Pending |
 | TD-9.3 | Fix async void in PendingOperationsQueueService (OnConnectionStateChanged) | 1 hour | None | Pending |
 | TD-9.4 | Fix async void Dispose in DataExportViewModel (implement IAsyncDisposable) | 1 hour | None | Pending |

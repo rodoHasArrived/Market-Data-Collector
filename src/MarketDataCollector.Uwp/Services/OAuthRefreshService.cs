@@ -169,14 +169,40 @@ public sealed class OAuthRefreshService : IDisposable
         await _credentialService.UpdateMetadataAsync(resource, m => m.AutoRefreshEnabled = enabled);
     }
 
-    private async void OnRefreshTimerElapsed(object? sender, ElapsedEventArgs e)
+    private void OnRefreshTimerElapsed(object? sender, ElapsedEventArgs e)
     {
-        await CheckAndRefreshTokensAsync();
+        // Fire-and-forget the async work, with proper exception handling in the async method
+        _ = SafeCheckAndRefreshTokensAsync();
     }
 
-    private async void OnExpirationCheckElapsed(object? sender, ElapsedEventArgs e)
+    private void OnExpirationCheckElapsed(object? sender, ElapsedEventArgs e)
     {
-        await CheckExpiringTokensAsync();
+        // Fire-and-forget the async work, with proper exception handling in the async method
+        _ = SafeCheckExpiringTokensAsync();
+    }
+
+    private async Task SafeCheckAndRefreshTokensAsync()
+    {
+        try
+        {
+            await CheckAndRefreshTokensAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[OAuthRefreshService] Error in refresh timer: {ex.Message}");
+        }
+    }
+
+    private async Task SafeCheckExpiringTokensAsync()
+    {
+        try
+        {
+            await CheckExpiringTokensAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[OAuthRefreshService] Error in expiration check timer: {ex.Message}");
+        }
     }
 
     private async Task CheckAndRefreshTokensAsync()
