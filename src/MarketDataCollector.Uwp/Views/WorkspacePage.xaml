@@ -1,0 +1,332 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="MarketDataCollector.Uwp.Views.WorkspacePage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:MarketDataCollector.Uwp.Views"
+    xmlns:services="using:MarketDataCollector.Uwp.Services"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="24" Padding="0,0,24,24">
+            <!-- Page Header -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel>
+                    <TextBlock Text="Workspaces" Style="{StaticResource TitleTextBlockStyle}" />
+                    <TextBlock Text="Manage workspace templates for different workflows and restore sessions"
+                               Style="{StaticResource CaptionTextBlockStyle}"
+                               Foreground="{ThemeResource SystemBaseMediumColor}" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                    <Button Content="Create Workspace" Style="{StaticResource AccentButtonStyle}"
+                            Click="CreateWorkspace_Click">
+                        <Button.KeyboardAccelerators>
+                            <KeyboardAccelerator Modifiers="Control" Key="N" />
+                        </Button.KeyboardAccelerators>
+                    </Button>
+                    <Button Content="Import" Click="ImportWorkspace_Click" />
+                </StackPanel>
+            </Grid>
+
+            <!-- Active Workspace Section -->
+            <Border Style="{StaticResource CardStyle}" x:Name="ActiveWorkspaceSection">
+                <StackPanel Spacing="16">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE8F1;" Foreground="{ThemeResource SystemAccentColor}" />
+                        <TextBlock Text="Active Workspace" Style="{StaticResource SubtitleTextBlockStyle}" />
+                    </StackPanel>
+
+                    <Grid x:Name="ActiveWorkspaceContent" Visibility="Collapsed">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" Spacing="8">
+                            <TextBlock x:Name="ActiveWorkspaceName" FontWeight="SemiBold" FontSize="18" />
+                            <TextBlock x:Name="ActiveWorkspaceDescription"
+                                       Foreground="{ThemeResource SystemBaseMediumColor}" TextWrapping="Wrap" />
+                            <StackPanel Orientation="Horizontal" Spacing="16">
+                                <TextBlock x:Name="ActiveWorkspacePages"
+                                           Style="{StaticResource CaptionTextBlockStyle}" />
+                                <TextBlock x:Name="ActiveWorkspaceUpdated"
+                                           Style="{StaticResource CaptionTextBlockStyle}" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Top">
+                            <Button Content="Switch" Click="SwitchWorkspace_Click" />
+                            <Button Content="Update" Click="UpdateActiveWorkspace_Click" />
+                        </StackPanel>
+                    </Grid>
+
+                    <TextBlock x:Name="NoActiveWorkspaceText" Text="No workspace active. Select a workspace below to activate it."
+                               Foreground="{ThemeResource SystemBaseMediumColor}"
+                               Visibility="Visible" />
+                </StackPanel>
+            </Border>
+
+            <!-- Session Restore Section -->
+            <Border Style="{StaticResource CardStyle}" x:Name="SessionRestoreSection">
+                <StackPanel Spacing="16">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon Glyph="&#xE777;" Foreground="{ThemeResource SystemAccentColor}" />
+                            <TextBlock Text="Session Restore" Style="{StaticResource SubtitleTextBlockStyle}" />
+                        </StackPanel>
+
+                        <ToggleSwitch x:Name="AutoRestoreToggle" Grid.Column="1"
+                                      Header="Auto-restore on startup"
+                                      IsOn="True" Toggled="AutoRestoreToggle_Toggled" />
+                    </Grid>
+
+                    <TextBlock Text="Restore your last session including open pages, filters, and scroll positions"
+                               Style="{StaticResource CaptionTextBlockStyle}"
+                               Foreground="{ThemeResource SystemBaseMediumColor}" />
+
+                    <Grid x:Name="LastSessionContent" Visibility="Collapsed">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" Spacing="8">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="Last saved:" Foreground="{ThemeResource SystemBaseMediumColor}" />
+                                <TextBlock x:Name="LastSessionTime" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="Active page:" Foreground="{ThemeResource SystemBaseMediumColor}" />
+                                <TextBlock x:Name="LastSessionPage" />
+                            </StackPanel>
+                            <TextBlock x:Name="LastSessionPages" Style="{StaticResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource SystemBaseMediumColor}" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Top">
+                            <Button Content="Restore Now" Style="{StaticResource AccentButtonStyle}"
+                                    Click="RestoreSession_Click" />
+                            <Button Content="Save Current" Click="SaveCurrentSession_Click" />
+                        </StackPanel>
+                    </Grid>
+
+                    <TextBlock x:Name="NoSessionText" Text="No previous session to restore"
+                               Foreground="{ThemeResource SystemBaseMediumColor}"
+                               Visibility="Visible" />
+                </StackPanel>
+            </Border>
+
+            <!-- Built-in Workspaces Section -->
+            <Border Style="{StaticResource CardStyle}">
+                <StackPanel Spacing="16">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE8F1;" Foreground="{ThemeResource SystemAccentColor}" />
+                        <TextBlock Text="Built-in Workspaces" Style="{StaticResource SubtitleTextBlockStyle}" />
+                    </StackPanel>
+
+                    <TextBlock Text="Pre-configured workspaces optimized for common workflows"
+                               Style="{StaticResource CaptionTextBlockStyle}"
+                               Foreground="{ThemeResource SystemBaseMediumColor}" />
+
+                    <GridView x:Name="BuiltInWorkspacesGrid" SelectionMode="None">
+                        <GridView.ItemTemplate>
+                            <DataTemplate x:DataType="services:WorkspaceTemplate">
+                                <Border Style="{StaticResource CardStyle}" Width="280" Margin="0,0,8,8"
+                                        Background="{ThemeResource SystemFillColorSolidNeutralBackgroundBrush}">
+                                    <StackPanel Spacing="12" Padding="4">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <FontIcon Glyph="&#xE8F1;" Foreground="{ThemeResource SystemAccentColor}" />
+                                                <TextBlock Text="{x:Bind Name}" FontWeight="SemiBold" />
+                                            </StackPanel>
+
+                                            <Border Grid.Column="1" Background="{ThemeResource SystemAccentColor}"
+                                                    CornerRadius="4" Padding="6,2">
+                                                <TextBlock Text="Built-in" FontSize="10" Foreground="White" />
+                                            </Border>
+                                        </Grid>
+
+                                        <TextBlock Text="{x:Bind Description}" TextWrapping="Wrap"
+                                                   Foreground="{ThemeResource SystemBaseMediumColor}"
+                                                   MaxLines="2" />
+
+                                        <ItemsControl ItemsSource="{x:Bind Pages}">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <StackPanel Orientation="Horizontal" Spacing="4" />
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate x:DataType="services:WorkspacePage">
+                                                    <Border Background="{ThemeResource SystemFillColorNeutralBackgroundBrush}"
+                                                            CornerRadius="4" Padding="6,2">
+                                                        <TextBlock Text="{x:Bind Title}" FontSize="11" />
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+
+                                        <Button Content="Activate" HorizontalAlignment="Stretch"
+                                                Click="ActivateWorkspace_Click" Tag="{x:Bind Id}" />
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </GridView.ItemTemplate>
+                    </GridView>
+                </StackPanel>
+            </Border>
+
+            <!-- Custom Workspaces Section -->
+            <Border Style="{StaticResource CardStyle}">
+                <StackPanel Spacing="16">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon Glyph="&#xE728;" Foreground="{ThemeResource SystemAccentColor}" />
+                            <TextBlock Text="Custom Workspaces" Style="{StaticResource SubtitleTextBlockStyle}" />
+                            <TextBlock x:Name="CustomWorkspaceCount" Text="(0)"
+                                       Foreground="{ThemeResource SystemBaseMediumColor}"
+                                       VerticalAlignment="Center" />
+                        </StackPanel>
+
+                        <Button Grid.Column="1" Content="Capture Current State" Click="CaptureCurrentState_Click" />
+                    </Grid>
+
+                    <TextBlock Text="Your saved workspace configurations"
+                               Style="{StaticResource CaptionTextBlockStyle}"
+                               Foreground="{ThemeResource SystemBaseMediumColor}" />
+
+                    <TextBlock x:Name="NoCustomWorkspacesText" Text="No custom workspaces. Create one to save your preferred layout."
+                               Foreground="{ThemeResource SystemBaseMediumColor}"
+                               Visibility="Visible" />
+
+                    <ListView x:Name="CustomWorkspacesList" SelectionMode="None" Visibility="Collapsed">
+                        <ListView.ItemTemplate>
+                            <DataTemplate x:DataType="services:WorkspaceTemplate">
+                                <Border CornerRadius="4" Padding="12" Margin="0,4"
+                                        Background="{ThemeResource SystemFillColorSolidNeutralBackgroundBrush}">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackPanel Grid.Column="0" Spacing="4">
+                                            <TextBlock Text="{x:Bind Name}" FontWeight="SemiBold" />
+                                            <TextBlock Text="{x:Bind Description}" TextWrapping="Wrap"
+                                                       Foreground="{ThemeResource SystemBaseMediumColor}" />
+                                            <StackPanel Orientation="Horizontal" Spacing="16">
+                                                <TextBlock Style="{StaticResource CaptionTextBlockStyle}">
+                                                    <Run Text="{x:Bind Pages.Count}" />
+                                                    <Run Text="pages" />
+                                                </TextBlock>
+                                                <TextBlock Style="{StaticResource CaptionTextBlockStyle}">
+                                                    <Run Text="Updated:" />
+                                                    <Run Text="{x:Bind UpdatedAt}" />
+                                                </TextBlock>
+                                            </StackPanel>
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Top">
+                                            <Button Content="Activate" Click="ActivateWorkspace_Click" Tag="{x:Bind Id}" />
+                                            <Button Content="Edit" Click="EditWorkspace_Click" Tag="{x:Bind Id}" />
+                                            <Button Content="Export" Click="ExportWorkspace_Click" Tag="{x:Bind Id}" />
+                                            <Button Click="DeleteWorkspace_Click" Tag="{x:Bind Id}">
+                                                <FontIcon Glyph="&#xE74D;" FontSize="14" />
+                                            </Button>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                </StackPanel>
+            </Border>
+
+            <!-- Keyboard Shortcuts Section -->
+            <Border Style="{StaticResource CardStyle}">
+                <StackPanel Spacing="16">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE765;" Foreground="{ThemeResource SystemAccentColor}" />
+                        <TextBlock Text="Keyboard Shortcuts" Style="{StaticResource SubtitleTextBlockStyle}" />
+                    </StackPanel>
+
+                    <Grid ColumnSpacing="32" RowSpacing="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                            <Border Background="{ThemeResource SystemFillColorNeutralBackgroundBrush}"
+                                    CornerRadius="4" Padding="8,4">
+                                <TextBlock Text="Ctrl+1-4" FontFamily="Consolas" />
+                            </Border>
+                            <TextBlock Text="Switch to workspace 1-4" VerticalAlignment="Center" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                            <Border Background="{ThemeResource SystemFillColorNeutralBackgroundBrush}"
+                                    CornerRadius="4" Padding="8,4">
+                                <TextBlock Text="Ctrl+N" FontFamily="Consolas" />
+                            </Border>
+                            <TextBlock Text="Create new workspace" VerticalAlignment="Center" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                            <Border Background="{ThemeResource SystemFillColorNeutralBackgroundBrush}"
+                                    CornerRadius="4" Padding="8,4">
+                                <TextBlock Text="Ctrl+Shift+S" FontFamily="Consolas" />
+                            </Border>
+                            <TextBlock Text="Save current session" VerticalAlignment="Center" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                            <Border Background="{ThemeResource SystemFillColorNeutralBackgroundBrush}"
+                                    CornerRadius="4" Padding="8,4">
+                                <TextBlock Text="Ctrl+Shift+R" FontFamily="Consolas" />
+                            </Border>
+                            <TextBlock Text="Restore last session" VerticalAlignment="Center" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="2" Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                            <Border Background="{ThemeResource SystemFillColorNeutralBackgroundBrush}"
+                                    CornerRadius="4" Padding="8,4">
+                                <TextBlock Text="Ctrl+W" FontFamily="Consolas" />
+                            </Border>
+                            <TextBlock Text="Workspace switcher" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

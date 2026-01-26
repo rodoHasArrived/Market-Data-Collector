@@ -308,6 +308,18 @@ public sealed partial class MainPage : Page
             case "AnalysisExportWizard":
                 ContentFrame.Navigate(typeof(AnalysisExportWizardPage));
                 break;
+            case "NotificationCenter":
+                ContentFrame.Navigate(typeof(NotificationCenterPage));
+                break;
+            case "Workspaces":
+                ContentFrame.Navigate(typeof(WorkspacePage));
+                break;
+            case "RetentionAssurance":
+                ContentFrame.Navigate(typeof(RetentionAssurancePage));
+                break;
+            case "StorageOptimization":
+                ContentFrame.Navigate(typeof(StorageOptimizationPage));
+                break;
         }
     }
 
