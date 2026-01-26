@@ -100,68 +100,60 @@ public sealed class TiingoPlugin : HistoricalPluginBase
 
         Logger.Debug("Fetching Tiingo data for {Symbol} from {Start} to {End}", symbol, startDate, endDate);
 
-        HttpResponseMessage? response = null;
-        try
+        using var response = await HttpClient.GetAsync(url, ct);
+
+        if ((int)response.StatusCode == 429)
         {
-            response = await HttpClient.GetAsync(url, ct);
-
-            if ((int)response.StatusCode == 429)
-            {
-                Logger.Warning("Tiingo rate limit exceeded for {Symbol}", symbol);
-                RecordHealth(false, "Rate limit exceeded");
-                yield break;
-            }
-
-            if (!response.IsSuccessStatusCode)
-            {
-                Logger.Warning("Tiingo request failed for {Symbol}: {StatusCode}", symbol, response.StatusCode);
-                RecordHealth(false, $"HTTP {response.StatusCode}");
-                yield break;
-            }
-
-            var json = await response.Content.ReadAsStringAsync(ct);
-            var bars = JsonSerializer.Deserialize<TiingoPriceData[]>(json, JsonOptions);
-
-            if (bars == null || bars.Length == 0)
-            {
-                Logger.Debug("No data returned from Tiingo for {Symbol}", symbol);
-                yield break;
-            }
-
-            RecordHealth(true);
-            Logger.Information("Retrieved {Count} bars from Tiingo for {Symbol}", bars.Length, symbol);
-
-            foreach (var bar in bars)
-            {
-                if (bar.Date == null) continue;
-
-                var date = DateTime.Parse(bar.Date);
-
-                // Use adjusted prices if requested
-                var open = adjusted ? bar.AdjOpen ?? bar.Open : bar.Open;
-                var high = adjusted ? bar.AdjHigh ?? bar.High : bar.High;
-                var low = adjusted ? bar.AdjLow ?? bar.Low : bar.Low;
-                var close = adjusted ? bar.AdjClose ?? bar.Close : bar.Close;
-                var volume = adjusted ? bar.AdjVolume ?? bar.Volume : bar.Volume;
-
-                yield return MarketDataEvent.Bar(
-                    symbol: symbol,
-                    timestamp: new DateTimeOffset(date, TimeSpan.Zero),
-                    open: open,
-                    high: high,
-                    low: low,
-                    close: close,
-                    volume: volume,
-                    interval: BarInterval.Daily,
-                    isAdjusted: adjusted,
-                    dividend: bar.DivCash,
-                    splitFactor: bar.SplitFactor != 1 ? bar.SplitFactor : null
-                );
-            }
+            Logger.Warning("Tiingo rate limit exceeded for {Symbol}", symbol);
+            RecordHealth(false, "Rate limit exceeded");
+            yield break;
         }
-        finally
+
+        if (!response.IsSuccessStatusCode)
         {
-            response?.Dispose();
+            Logger.Warning("Tiingo request failed for {Symbol}: {StatusCode}", symbol, response.StatusCode);
+            RecordHealth(false, $"HTTP {response.StatusCode}");
+            yield break;
+        }
+
+        var json = await response.Content.ReadAsStringAsync(ct);
+        var bars = JsonSerializer.Deserialize<TiingoPriceData[]>(json, JsonOptions);
+
+        if (bars == null || bars.Length == 0)
+        {
+            Logger.Debug("No data returned from Tiingo for {Symbol}", symbol);
+            yield break;
+        }
+
+        RecordHealth(true);
+        Logger.Information("Retrieved {Count} bars from Tiingo for {Symbol}", bars.Length, symbol);
+
+        foreach (var bar in bars)
+        {
+            if (bar.Date == null) continue;
+
+            var date = DateTime.Parse(bar.Date);
+
+            // Use adjusted prices if requested
+            var open = adjusted ? bar.AdjOpen ?? bar.Open : bar.Open;
+            var high = adjusted ? bar.AdjHigh ?? bar.High : bar.High;
+            var low = adjusted ? bar.AdjLow ?? bar.Low : bar.Low;
+            var close = adjusted ? bar.AdjClose ?? bar.Close : bar.Close;
+            var volume = adjusted ? bar.AdjVolume ?? bar.Volume : bar.Volume;
+
+            yield return MarketDataEvent.Bar(
+                symbol: symbol,
+                timestamp: new DateTimeOffset(date, TimeSpan.Zero),
+                open: open,
+                high: high,
+                low: low,
+                close: close,
+                volume: volume,
+                interval: BarInterval.Daily,
+                isAdjusted: adjusted,
+                dividend: bar.DivCash,
+                splitFactor: bar.SplitFactor != 1 ? bar.SplitFactor : null
+            );
         }
     }
 
