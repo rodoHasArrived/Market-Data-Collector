@@ -158,7 +158,7 @@ build: ## Build the project
 
 run: setup-config ## Run the collector
 	@echo "$(BLUE)Running collector...$(NC)"
-	dotnet run --project $(PROJECT) -- --serve-status --watch-config
+	dotnet run --project $(PROJECT) -- --http-port $(HTTP_PORT) --watch-config
 
 run-ui: setup-config ## Run with web dashboard
 	@echo "$(BLUE)Starting web dashboard on port $(HTTP_PORT)...$(NC)"

@@ -248,7 +248,7 @@ if [[ "$USE_IBAPI" = true ]]; then
   export IB_HOST IB_PORT IB_CLIENT_ID
 fi
 
-dotnet run --project "$SRC_DIR/MarketDataCollector.csproj" --configuration "$DOTNET_CONFIGURATION" --   --watch-config --serve-status   > "$LOG_DIR/collector.log" 2>&1 &
+dotnet run --project "$SRC_DIR/MarketDataCollector.csproj" --configuration "$DOTNET_CONFIGURATION" -- --watch-config --http-port 8080 > "$LOG_DIR/collector.log" 2>&1 &
 
 COLLECTOR_PID=$!
 echo "$COLLECTOR_PID" > "$COLLECTOR_PID_FILE"

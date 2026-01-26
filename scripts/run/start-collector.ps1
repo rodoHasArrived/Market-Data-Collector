@@ -187,7 +187,7 @@ $collectorArgs = @(
   "--configuration", $Config,
   "--",
   "--watch-config",
-  "--serve-status"
+  "--http-port", "8080"
 )
 
 $collector = Start-Process -FilePath "dotnet" -ArgumentList $collectorArgs -PassThru -NoNewWindow `

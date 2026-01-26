@@ -130,7 +130,7 @@ Choose where and how you want data to be stored
 Run the collector in production mode:
 
 ```bash
-./MarketDataCollector --serve-status --watch-config
+./MarketDataCollector --http-port 8080 --watch-config
 ```
 
 ---
@@ -1404,10 +1404,10 @@ Automatically configures the application based on environment variables.
 
 #### Production Mode (Recommended)
 ```bash
-./MarketDataCollector --serve-status --watch-config
+./MarketDataCollector --http-port 8080 --watch-config
 ```
 
-- `--serve-status`: Enable monitoring endpoint at `/status`
+- `--http-port 8080`: Enable HTTP monitoring endpoints
 - `--watch-config`: Auto-reload configuration changes
 
 #### Web Dashboard Mode
@@ -1435,7 +1435,7 @@ Automatically configures the application based on environment variables.
 | `--validate-credentials` | Validate configured API credentials |
 | `--generate-config` | Generate a configuration template |
 | `--ui` | Start web dashboard interface |
-| `--serve-status` | Enable HTTP status endpoint |
+| `--http-port <port>` | Enable HTTP monitoring endpoint on specified port |
 | `--watch-config` | Enable hot-reload of configuration |
 | `--backfill` | Run historical data backfill |
 | `--replay <path>` | Replay events from JSONL file |
@@ -1454,9 +1454,9 @@ Automatically configures the application based on environment variables.
 
 ### Examples
 
-**Start with web UI and monitoring:**
+**Start with web UI:**
 ```bash
-./MarketDataCollector --ui --serve-status
+./MarketDataCollector --ui
 ```
 
 **Run backfill for specific symbols:**
@@ -1469,7 +1469,7 @@ Automatically configures the application based on environment variables.
 
 **Production deployment with custom port:**
 ```bash
-./MarketDataCollector --serve-status --watch-config --http-port 9090
+./MarketDataCollector --http-port 9090 --watch-config
 ```
 
 **Export to Python/Pandas format:**
@@ -1533,7 +1533,7 @@ make help         # Show all available commands
 
 ### Health Endpoints
 
-When running with `--serve-status`, the following endpoints are available:
+When running with `--http-port` or `--ui`, the following endpoints are available:
 
 | Endpoint | Description |
 |----------|-------------|
@@ -1996,7 +1996,7 @@ RUN chmod +x MarketDataCollector
 EXPOSE 8080
 ENV ALPACA__KEYID=""
 ENV ALPACA__SECRETKEY=""
-CMD ["./MarketDataCollector", "--serve-status", "--watch-config"]
+CMD ["./MarketDataCollector", "--http-port", "8080", "--watch-config"]
 ```
 
 Or use the provided docker-compose:

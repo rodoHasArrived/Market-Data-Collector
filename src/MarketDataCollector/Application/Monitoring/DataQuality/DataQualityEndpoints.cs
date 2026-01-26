@@ -605,6 +605,115 @@ public static class DataQualityEndpoints
             }
         });
     }
+
+    /// <summary>
+    /// Maps SLA monitoring endpoints (ADQ-4.6).
+    /// </summary>
+    public static void MapSlaEndpoints(this WebApplication app, DataFreshnessSlaMonitor slaMonitor)
+    {
+        // ==================== SLA STATUS ====================
+
+        app.MapGet("/api/sla/status", () =>
+        {
+            try
+            {
+                var snapshot = slaMonitor.GetSnapshot();
+                return Results.Json(snapshot, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to get SLA status: {ex.Message}");
+            }
+        });
+
+        app.MapGet("/api/sla/status/{symbol}", (string symbol) =>
+        {
+            try
+            {
+                var status = slaMonitor.GetSymbolStatus(symbol);
+                return status != null
+                    ? Results.Json(status, s_jsonOptions)
+                    : Results.NotFound($"No SLA data for {symbol}");
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to get SLA status for symbol: {ex.Message}");
+            }
+        });
+
+        app.MapGet("/api/sla/violations", () =>
+        {
+            try
+            {
+                var snapshot = slaMonitor.GetSnapshot();
+                var violations = snapshot.SymbolStatuses
+                    .Where(s => s.State == SlaState.Violation)
+                    .ToList();
+
+                return Results.Json(new
+                {
+                    count = violations.Count,
+                    totalViolations = snapshot.TotalViolations,
+                    violations
+                }, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to get SLA violations: {ex.Message}");
+            }
+        });
+
+        app.MapGet("/api/sla/health", () =>
+        {
+            try
+            {
+                var snapshot = slaMonitor.GetSnapshot();
+                var status = snapshot.OverallFreshnessScore switch
+                {
+                    >= 90 => "healthy",
+                    >= 70 => "degraded",
+                    _ => "unhealthy"
+                };
+
+                return Results.Json(new
+                {
+                    status,
+                    score = snapshot.OverallFreshnessScore,
+                    totalSymbols = snapshot.TotalSymbols,
+                    healthySymbols = snapshot.HealthySymbols,
+                    warningSymbols = snapshot.WarningSymbols,
+                    violationSymbols = snapshot.ViolationSymbols,
+                    noDataSymbols = snapshot.NoDataSymbols,
+                    totalViolations = snapshot.TotalViolations,
+                    isMarketOpen = snapshot.IsMarketOpen,
+                    timestamp = snapshot.Timestamp
+                }, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to get SLA health: {ex.Message}");
+            }
+        });
+
+        app.MapGet("/api/sla/metrics", () =>
+        {
+            try
+            {
+                return Results.Json(new
+                {
+                    totalViolations = slaMonitor.TotalViolations,
+                    currentViolations = slaMonitor.CurrentViolations,
+                    totalRecoveries = slaMonitor.TotalRecoveries,
+                    isMarketOpen = slaMonitor.IsMarketOpen(),
+                    timestamp = DateTimeOffset.UtcNow
+                }, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem($"Failed to get SLA metrics: {ex.Message}");
+            }
+        });
+    }
 }
 
 /// <summary>

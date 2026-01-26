@@ -482,7 +482,7 @@
                                   HorizontalContentAlignment="Stretch">
                             <StackPanel Spacing="4" Padding="0,8,0,0">
                                 <TextBlock FontFamily="Consolas" FontSize="12" Text="--ui            Web dashboard" />
-                                <TextBlock FontFamily="Consolas" FontSize="12" Text="--serve-status  Status endpoint" />
+                                <TextBlock FontFamily="Consolas" FontSize="12" Text="--http-port     HTTP endpoint" />
                                 <TextBlock FontFamily="Consolas" FontSize="12" Text="--watch-config  Hot-reload" />
                                 <TextBlock FontFamily="Consolas" FontSize="12" Text="--backfill      Run backfill" />
                                 <TextBlock FontFamily="Consolas" FontSize="12" Text="--selftest      Self-tests" />

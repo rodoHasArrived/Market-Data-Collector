@@ -525,6 +525,14 @@ internal static class Program
         }
         log.Information("Data directory permissions configured: {Message}", permissionsResult.Message);
 
+        // TD-8.1: Log deprecation warning for --serve-status option
+        if (args.Any(a => a.Equals("--serve-status", StringComparison.OrdinalIgnoreCase)))
+        {
+            log.Warning("The --serve-status option is deprecated and will be removed in a future version. " +
+                "Please use --http-port <port> or --ui instead for HTTP-based monitoring. " +
+                "See: https://github.com/rodoHasArrived/Market-Data-Collector/blob/main/docs/status/ROADMAP.md#td-8-remove-deprecated---serve-status-option");
+        }
+
         var replayPath = GetArgValue(args, "--replay");
         var statusPort = int.TryParse(GetArgValue(args, "--status-port"), out var parsedPort) ? parsedPort : 8080;
 

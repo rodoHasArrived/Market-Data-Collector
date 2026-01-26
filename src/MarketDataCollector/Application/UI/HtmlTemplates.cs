@@ -1204,7 +1204,7 @@ public static class HtmlTemplates
         <p>Start the collector with various modes:</p>
         <ul>
           <li><code>--ui</code> - Start web dashboard (this interface)</li>
-          <li><code>--serve-status</code> - Enable status endpoint</li>
+          <li><code>--http-port &lt;port&gt;</code> - Enable HTTP monitoring endpoint</li>
           <li><code>--watch-config</code> - Hot-reload configuration changes</li>
           <li><code>--backfill</code> - Run historical backfill</li>
           <li><code>--selftest</code> - Run system self-tests</li>
@@ -1526,7 +1526,7 @@ public static class HtmlTemplates
             No Status
           </div>
           <div style=""margin-top: 8px; font-size: 12px; color: #718096;"">
-            Start collector with --serve-status
+            Start collector with --http-port 8080
           </div>
         `;
       }}

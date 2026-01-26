@@ -143,9 +143,9 @@ Features:
 dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj
 ```
 
-**Production mode** with status endpoint and hot-reload:
+**Production mode** with HTTP monitoring and hot-reload:
 ```bash
-./MarketDataCollector --serve-status --watch-config
+./MarketDataCollector --http-port 8080 --watch-config
 ```
 
 **Self-tests:**

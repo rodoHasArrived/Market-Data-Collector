@@ -159,6 +159,36 @@ public static class PrometheusMetrics
         "mdc_resubscribe_avg_time_milliseconds",
         "Average time taken for successful resubscriptions in milliseconds");
 
+    // SLA metrics (ADQ-4.5)
+    private static readonly Counter SlaViolationsTotal = Prometheus.Metrics.CreateCounter(
+        "mdc_sla_violations_total",
+        "Total number of data freshness SLA violations");
+
+    private static readonly Gauge SlaCurrentViolations = Prometheus.Metrics.CreateGauge(
+        "mdc_sla_current_violations",
+        "Current number of active SLA violations");
+
+    private static readonly Gauge SlaFreshnessScore = Prometheus.Metrics.CreateGauge(
+        "mdc_sla_freshness_score",
+        "Overall data freshness score (0-100)");
+
+    private static readonly Gauge SlaHealthySymbols = Prometheus.Metrics.CreateGauge(
+        "mdc_sla_healthy_symbols",
+        "Number of symbols within SLA thresholds");
+
+    private static readonly Gauge SlaViolationSymbols = Prometheus.Metrics.CreateGauge(
+        "mdc_sla_violation_symbols",
+        "Number of symbols currently in SLA violation");
+
+    private static readonly Histogram SlaFreshnessMs = Prometheus.Metrics.CreateHistogram(
+        "mdc_sla_freshness_milliseconds",
+        "Distribution of data freshness (time since last event) in milliseconds",
+        new HistogramConfiguration
+        {
+            LabelNames = new[] { "symbol" },
+            Buckets = new double[] { 100, 500, 1000, 5000, 10000, 30000, 60000, 120000, 300000 }
+        });
+
     // Symbol-level metrics (with labels)
     private static readonly Counter TradesBySymbol = Prometheus.Metrics.CreateCounter(
         "mdc_trades_by_symbol_total",
@@ -256,6 +286,35 @@ public static class PrometheusMetrics
     public static void RecordProcessingLatency(double latencyMicroseconds)
     {
         ProcessingLatency.Observe(latencyMicroseconds);
+    }
+
+    /// <summary>
+    /// Updates SLA metrics from a DataFreshnessSlaMonitor snapshot (ADQ-4.5).
+    /// </summary>
+    public static void UpdateSlaMetrics(DataQuality.SlaStatusSnapshot snapshot)
+    {
+        SlaViolationsTotal.IncTo(snapshot.TotalViolations);
+        SlaCurrentViolations.Set(snapshot.ViolationSymbols);
+        SlaFreshnessScore.Set(snapshot.OverallFreshnessScore);
+        SlaHealthySymbols.Set(snapshot.HealthySymbols);
+        SlaViolationSymbols.Set(snapshot.ViolationSymbols);
+
+        // Record per-symbol freshness
+        foreach (var status in snapshot.SymbolStatuses)
+        {
+            if (status.FreshnessMs < double.MaxValue)
+            {
+                SlaFreshnessMs.WithLabels(status.Symbol).Observe(status.FreshnessMs);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Records SLA freshness for a specific symbol.
+    /// </summary>
+    public static void RecordSlaFreshness(string symbol, double freshnessMs)
+    {
+        SlaFreshnessMs.WithLabels(symbol).Observe(freshnessMs);
     }
 
     /// <summary>
