@@ -52,18 +52,12 @@ public static class SimplifiedConfigurationLoader
         );
 
         // Parse providers
-        var providers = new List<ProviderConfiguration>();
         var providersSection = root.GetSection("Providers");
-
-        foreach (var providerSection in providersSection.GetChildren())
-        {
-            var provider = ParseProvider(providerSection);
-            if (provider != null)
-            {
-                providers.Add(provider);
-            }
-        }
-
+        var providers = providersSection
+            .GetChildren()
+            .Select(ParseProvider)
+            .OfType<ProviderConfiguration>()
+            .ToList();
         return new SimplifiedAppConfiguration(
             Application: appSettings,
             DataPath: dataPath,
