@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using MarketDataCollector.Application.Logging;
+using MarketDataCollector.Infrastructure.Http;
 using Serilog;
 
 namespace MarketDataCollector.Infrastructure.Providers.Backfill.SymbolResolution;
@@ -29,7 +30,8 @@ public sealed class OpenFigiSymbolResolver : ISymbolResolver, IDisposable
         _apiKey = apiKey;
         _log = log ?? LoggingSetup.ForContext<OpenFigiSymbolResolver>();
 
-        _http = httpClient ?? new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+        // TD-10: Use HttpClientFactory instead of creating new HttpClient instances
+        _http = httpClient ?? HttpClientFactoryProvider.CreateClient(HttpClientNames.OpenFigi);
         _http.DefaultRequestHeaders.Add("Accept", "application/json");
 
         if (!string.IsNullOrEmpty(apiKey))

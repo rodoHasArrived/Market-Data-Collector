@@ -108,7 +108,8 @@ public sealed class CredentialService : IDisposable
     public CredentialService()
     {
         _vault = new PasswordVault();
-        _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
+        // TD-10: Use HttpClientFactory instead of creating new HttpClient instances
+        _httpClient = HttpClientFactoryProvider.CreateClient(HttpClientNames.CredentialTest);
         _metadataCache = new Dictionary<string, CredentialMetadata>();
         _metadataPath = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),

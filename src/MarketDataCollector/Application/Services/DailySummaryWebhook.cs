@@ -6,6 +6,7 @@ using System.Threading;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Application.Pipeline;
+using MarketDataCollector.Infrastructure.Http;
 using Serilog;
 
 namespace MarketDataCollector.Application.Services;
@@ -43,10 +44,9 @@ public sealed class DailySummaryWebhook : IAsyncDisposable
         _config = config ?? throw new ArgumentNullException(nameof(config));
         _tradingCalendar = tradingCalendar ?? new TradingCalendar();
 
-        _httpClient = new HttpClient
-        {
-            Timeout = TimeSpan.FromSeconds(config.TimeoutSeconds)
-        };
+        // TD-10: Use HttpClientFactory instead of creating new HttpClient instances
+        _httpClient = HttpClientFactoryProvider.CreateClient(HttpClientNames.DailySummaryWebhook);
+        _httpClient.Timeout = TimeSpan.FromSeconds(config.TimeoutSeconds);
 
         if (config.EnableScheduledSummary && !string.IsNullOrEmpty(config.ScheduledTime))
         {

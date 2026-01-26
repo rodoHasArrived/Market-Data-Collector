@@ -1,6 +1,7 @@
 using System.Text;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Logging;
+using MarketDataCollector.Infrastructure.Http;
 using Serilog;
 
 namespace MarketDataCollector.Application.Services;
@@ -292,7 +293,8 @@ public sealed class DryRunService
     {
         var section = new ValidationSection { Name = "Connectivity" };
 
-        using var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
+        // TD-10: Use HttpClientFactory instead of creating new HttpClient instances
+        using var httpClient = HttpClientFactoryProvider.CreateClient(HttpClientNames.DryRun);
 
         // Check basic internet connectivity
         try

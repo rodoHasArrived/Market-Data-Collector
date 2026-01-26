@@ -5,6 +5,7 @@ using System.Text.Json.Serialization;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Subscriptions.Models;
 using MarketDataCollector.Application.UI;
+using MarketDataCollector.Infrastructure.Http;
 
 namespace MarketDataCollector.Application.Subscriptions.Services;
 
@@ -25,7 +26,8 @@ public sealed class PortfolioImportService
     {
         _configStore = configStore ?? throw new ArgumentNullException(nameof(configStore));
         _watchlistService = watchlistService ?? throw new ArgumentNullException(nameof(watchlistService));
-        _httpClient = httpClient ?? new HttpClient();
+        // TD-10: Use HttpClientFactory instead of creating new HttpClient instances
+        _httpClient = httpClient ?? HttpClientFactoryProvider.CreateClient(HttpClientNames.PortfolioImport);
     }
 
     /// <summary>

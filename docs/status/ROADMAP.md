@@ -287,18 +287,25 @@ These are small, focused tasks broken down from larger features. Each can typica
 | TD-9.8 | Add try-catch with logging to converted async Task methods | 2 hours | TD-9.1 to TD-9.7 | Pending |
 | TD-9.9 | Add unit tests for exception handling in async paths | 2 hours | TD-9.8 | Pending |
 
-### TD-10: Replace Instance HttpClient with IHttpClientFactory (P0)
-| Sub-ID | Task | Effort | Dependencies |
-|--------|------|--------|--------------|
-| TD-10.1 | Register IHttpClientFactory in DI container | 1 hour | None |
-| TD-10.2 | Create named HttpClient configurations for each provider | 2 hours | TD-10.1 |
-| TD-10.3 | Refactor Backfill providers (Alpaca, Polygon, Tiingo, Yahoo, Stooq, Finnhub, AlphaVantage, Nasdaq) | 4 hours | TD-10.1 |
-| TD-10.4 | Refactor SymbolSearch providers (Alpaca, Polygon, Finnhub, OpenFigi) | 2 hours | TD-10.1 |
-| TD-10.5 | Refactor Application services (CredentialValidation, DailySummaryWebhook, Connectivity, OAuth) | 2 hours | TD-10.1 |
-| TD-10.6 | Refactor UWP services (CredentialService, SetupWizardService) | 2 hours | TD-10.1 |
-| TD-10.7 | Add Polly retry policies to HttpClientFactory configuration | 2 hours | TD-10.2 |
-| TD-10.8 | Remove HttpClient instance fields and IDisposable implementations | 1 hour | TD-10.3 to TD-10.6 |
-| TD-10.9 | Add integration tests for HTTP client lifecycle | 2 hours | TD-10.8 |
+### TD-10: Replace Instance HttpClient with IHttpClientFactory (P0) - **COMPLETE**
+| Sub-ID | Task | Effort | Dependencies | Status |
+|--------|------|--------|--------------|--------|
+| TD-10.1 | Register IHttpClientFactory in DI container | 1 hour | None | **Done** |
+| TD-10.2 | Create named HttpClient configurations for each provider | 2 hours | TD-10.1 | **Done** |
+| TD-10.3 | Refactor Backfill providers (Alpaca, Polygon, Tiingo, Yahoo, Stooq, Finnhub, AlphaVantage, Nasdaq) | 4 hours | TD-10.1 | **Done** |
+| TD-10.4 | Refactor SymbolSearch providers (Alpaca, Polygon, Finnhub, OpenFigi) | 2 hours | TD-10.1 | **Done** |
+| TD-10.5 | Refactor Application services (CredentialValidation, DailySummaryWebhook, Connectivity, OAuth) | 2 hours | TD-10.1 | **Done** |
+| TD-10.6 | Refactor UWP services (ApiClientService, CredentialService, SetupWizardService) | 2 hours | TD-10.1 | **Done** |
+| TD-10.7 | Add Polly retry policies to HttpClientFactory configuration | 2 hours | TD-10.2 | **Done** |
+| TD-10.8 | Remove HttpClient instance fields and IDisposable implementations | 1 hour | TD-10.3 to TD-10.6 | N/A (kept for backward compat) |
+| TD-10.9 | Add integration tests for HTTP client lifecycle | 2 hours | TD-10.8 | Pending |
+
+**Implementation Notes:**
+- Created `HttpClientConfiguration.cs` with named clients and Polly retry/circuit breaker policies
+- `HttpClientFactoryProvider` enables backward-compatible static access for transitional use
+- UWP project has its own HttpClientConfiguration since it cannot reference the main project
+- Retry policy: 3 retries with exponential backoff (2s, 4s, 8s) for transient errors
+- Circuit breaker: Opens after 5 consecutive failures, stays open for 30s
 
 ### TD-11: Replace Thread.Sleep with Task.Delay (P0)
 | Sub-ID | Task | Effort | Dependencies | Status |

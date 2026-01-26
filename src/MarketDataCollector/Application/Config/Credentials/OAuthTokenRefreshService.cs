@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using MarketDataCollector.Application.Logging;
+using MarketDataCollector.Infrastructure.Http;
 using Serilog;
 
 namespace MarketDataCollector.Application.Config.Credentials;
@@ -42,7 +43,8 @@ public sealed class OAuthTokenRefreshService : IAsyncDisposable
 
     private static HttpClient CreateDefaultHttpClient()
     {
-        var client = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+        // TD-10: Use HttpClientFactory instead of creating new HttpClient instances
+        var client = HttpClientFactoryProvider.CreateClient(HttpClientNames.OAuthTokenRefresh);
         client.DefaultRequestHeaders.UserAgent.ParseAdd("MarketDataCollector/1.5.0");
         return client;
     }

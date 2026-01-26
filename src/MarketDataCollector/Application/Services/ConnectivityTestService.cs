@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Net.Sockets;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Logging;
+using MarketDataCollector.Infrastructure.Http;
 using Serilog;
 
 namespace MarketDataCollector.Application.Services;
@@ -19,10 +20,8 @@ public sealed class ConnectivityTestService : IAsyncDisposable
 
     public ConnectivityTestService()
     {
-        _httpClient = new HttpClient
-        {
-            Timeout = TimeSpan.FromSeconds(15)
-        };
+        // TD-10: Use HttpClientFactory instead of creating new HttpClient instances
+        _httpClient = HttpClientFactoryProvider.CreateClient(HttpClientNames.ConnectivityTest);
         _progress = new ProgressDisplayService();
     }
 

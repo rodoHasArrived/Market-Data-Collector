@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Subscriptions.Models;
+using MarketDataCollector.Infrastructure.Http;
 using MarketDataCollector.Infrastructure.Providers.Backfill;
 using Serilog;
 
@@ -62,7 +63,8 @@ public sealed class PolygonSymbolSearchProvider : IFilterableSymbolSearchProvide
         _apiKey = apiKey ?? Environment.GetEnvironmentVariable("POLYGON_API_KEY")
                          ?? Environment.GetEnvironmentVariable("POLYGON__APIKEY");
 
-        _http = httpClient ?? new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+        // TD-10: Use HttpClientFactory instead of creating new HttpClient instances
+        _http = httpClient ?? HttpClientFactoryProvider.CreateClient(HttpClientNames.PolygonSymbolSearch);
         _http.DefaultRequestHeaders.Add("User-Agent", "MarketDataCollector/1.0");
 
         // Free tier: 5/min, paid tiers are higher

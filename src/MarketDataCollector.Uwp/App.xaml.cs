@@ -15,6 +15,10 @@ public partial class App : Application
     {
         this.InitializeComponent();
 
+        // TD-10: Initialize HttpClientFactory early for proper HTTP client lifecycle management
+        // This ensures all services use the factory-created clients with Polly policies
+        HttpClientFactoryProvider.Initialize();
+
         // Handle unhandled exceptions gracefully
         this.UnhandledException += OnUnhandledException;
 
