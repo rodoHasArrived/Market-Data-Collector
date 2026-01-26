@@ -282,15 +282,15 @@ These are small, focused tasks broken down from larger features. Each can typica
 | ADQ-2.7 | Add unit tests | 2 hours | ADQ-2.4 |
 
 ### ADQ-4: Data Freshness SLA Monitor
-| Sub-ID | Task | Effort | Dependencies |
-|--------|------|--------|--------------|
-| ADQ-4.1 | Create SlaConfig model with thresholds | 0.5 hour | None |
-| ADQ-4.2 | Create DataFreshnessSlaMonitor class | 2 hours | ADQ-4.1 |
-| ADQ-4.3 | Track last event timestamp per symbol | 1 hour | ADQ-4.2 |
-| ADQ-4.4 | Implement SLA violation detection | 1 hour | ADQ-4.2, ADQ-4.3 |
-| ADQ-4.5 | Add SLA metrics (sla_violations, freshness_ms) | 1 hour | ADQ-4.4 |
-| ADQ-4.6 | Add `/api/sla/status` endpoint | 1 hour | ADQ-4.2 |
-| ADQ-4.7 | Add unit tests | 1 hour | ADQ-4.4 |
+| Sub-ID | Task | Effort | Dependencies | Status |
+|--------|------|--------|--------------|--------|
+| ADQ-4.1 | Create SlaConfig model with thresholds | 0.5 hour | None | **Done** |
+| ADQ-4.2 | Create DataFreshnessSlaMonitor class | 2 hours | ADQ-4.1 | **Done** |
+| ADQ-4.3 | Track last event timestamp per symbol | 1 hour | ADQ-4.2 | **Done** |
+| ADQ-4.4 | Implement SLA violation detection | 1 hour | ADQ-4.2, ADQ-4.3 | **Done** |
+| ADQ-4.5 | Add SLA metrics (sla_violations, freshness_ms) | 1 hour | ADQ-4.4 | **Done** |
+| ADQ-4.6 | Add `/api/sla/status` endpoint | 1 hour | ADQ-4.2 | **Done** |
+| ADQ-4.7 | Add unit tests | 1 hour | ADQ-4.4 | Pending |
 
 ---
 
@@ -451,7 +451,7 @@ These are new feature ideas for consideration in upcoming development cycles.
 | ADQ-1 | Machine Learning Anomaly Detection | 2 weeks | P2 | ML-based detection of unusual patterns | Pending |
 | ADQ-2 | Reference Price Validator | 3 days | P1 | Cross-validate prices against multiple sources | Pending |
 | ADQ-3 | Volume Spike/Drop Detector | 1 day | P1 | Alert on unusual volume patterns (high & low) | **Done** |
-| ADQ-4 | Data Freshness SLA Monitor | 2 days | P1 | Track and alert on data delivery delays | Pending |
+| ADQ-4 | Data Freshness SLA Monitor | 2 days | P1 | Track and alert on data delivery delays | **Done** |
 
 ### Developer Experience
 | ID | Feature | Effort | Priority | Description |
