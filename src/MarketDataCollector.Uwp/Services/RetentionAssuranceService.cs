@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,6 +12,13 @@ namespace MarketDataCollector.Uwp.Services;
 /// <summary>
 /// Service for retention policy assurance with guardrails, legal holds, and verification.
 /// Implements Feature Refinement #23 - File Retention Assurance.
+///
+/// This service provides UWP-specific features (legal holds, guardrails, UI persistence)
+/// and delegates file operations to the core service via HTTP API endpoints:
+/// - /api/storage/health/check - File health checks with checksum validation
+/// - /api/storage/health/orphans - Find orphaned files
+/// - /api/storage/catalog - Storage catalog for file discovery
+/// - /api/storage/search/files - Search files by criteria
 /// </summary>
 public sealed class RetentionAssuranceService
 {
@@ -23,6 +29,7 @@ public sealed class RetentionAssuranceService
     private const string LegalHoldsKey = "LegalHolds";
     private const string AuditReportsFolder = "RetentionAudits";
 
+    private readonly ApiClientService _apiClient;
     private RetentionConfiguration _config = new();
     private readonly List<LegalHold> _legalHolds = new();
     private readonly List<RetentionAuditReport> _auditReports = new();
@@ -44,6 +51,7 @@ public sealed class RetentionAssuranceService
 
     private RetentionAssuranceService()
     {
+        _apiClient = ApiClientService.Instance;
         _ = LoadConfigurationAsync();
     }
 
@@ -189,7 +197,8 @@ public sealed class RetentionAssuranceService
     }
 
     /// <summary>
-    /// Performs a dry run of retention cleanup.
+    /// Performs a dry run of retention cleanup using the core API for file discovery.
+    /// Falls back to local scanning if the API is unavailable.
     /// </summary>
     public async Task<RetentionDryRunResult> PerformDryRunAsync(
         RetentionPolicy policy,
@@ -204,13 +213,22 @@ public sealed class RetentionAssuranceService
 
         try
         {
+            var heldSymbols = GetSymbolsUnderLegalHold();
+
+            // Try to use core API for file discovery (more efficient and consistent)
+            var apiResult = await PerformDryRunViaApiAsync(policy, heldSymbols, ct);
+            if (apiResult != null)
+            {
+                return apiResult;
+            }
+
+            // Fall back to local directory scanning
             if (!Directory.Exists(dataRoot))
             {
                 result.Errors.Add($"Data root directory not found: {dataRoot}");
                 return result;
             }
 
-            var heldSymbols = GetSymbolsUnderLegalHold();
             var cutoffDate = DateTime.UtcNow.AddDays(-policy.TickDataDays);
             var barCutoffDate = DateTime.UtcNow.AddDays(-policy.BarDataDays);
             var quoteCutoffDate = DateTime.UtcNow.AddDays(-policy.QuoteDataDays);
@@ -235,6 +253,134 @@ public sealed class RetentionAssuranceService
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Performs dry run via core API using /api/storage/search/files endpoint.
+    /// </summary>
+    private async Task<RetentionDryRunResult?> PerformDryRunViaApiAsync(
+        RetentionPolicy policy,
+        HashSet<string> heldSymbols,
+        CancellationToken ct)
+    {
+        try
+        {
+            var tickCutoff = DateTimeOffset.UtcNow.AddDays(-policy.TickDataDays);
+            var barCutoff = DateTimeOffset.UtcNow.AddDays(-policy.BarDataDays);
+            var quoteCutoff = DateTimeOffset.UtcNow.AddDays(-policy.QuoteDataDays);
+
+            // Search for files older than the cutoff dates
+            var searchRequest = new
+            {
+                To = tickCutoff, // Files older than this
+                Take = 10000
+            };
+
+            var response = await _apiClient.PostWithResponseAsync<FileSearchApiResponse>(
+                "/api/storage/search/files", searchRequest, ct);
+
+            if (!response.Success || response.Data == null)
+            {
+                return null; // API unavailable, fall back to local scanning
+            }
+
+            var result = new RetentionDryRunResult
+            {
+                PolicyApplied = policy,
+                ExecutedAt = DateTime.UtcNow
+            };
+
+            foreach (var file in response.Data.Results)
+            {
+                // Skip if symbol is under legal hold
+                if (heldSymbols.Contains(file.Symbol?.ToUpperInvariant() ?? ""))
+                {
+                    result.SkippedFiles.Add(new SkippedFileInfo
+                    {
+                        Path = file.Path,
+                        Symbol = file.Symbol ?? "UNKNOWN",
+                        Reason = "Legal hold active",
+                        Size = file.SizeBytes
+                    });
+                    continue;
+                }
+
+                // Determine applicable cutoff based on event type
+                var cutoff = file.EventType?.ToLowerInvariant() switch
+                {
+                    "trade" or "tick" => tickCutoff,
+                    "bar" or "ohlc" => barCutoff,
+                    "quote" or "bbo" => quoteCutoff,
+                    _ => tickCutoff
+                };
+
+                if (file.Date < cutoff)
+                {
+                    result.FilesToDelete.Add(new FileToDelete
+                    {
+                        Path = file.Path,
+                        Symbol = file.Symbol ?? "UNKNOWN",
+                        Size = file.SizeBytes,
+                        LastModified = file.Date.DateTime,
+                        DataType = file.EventType ?? "Unknown"
+                    });
+                    result.TotalBytesToDelete += file.SizeBytes;
+                }
+            }
+
+            result.GroupBySymbol();
+            return result;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[RetentionAssuranceService] API dry run failed: {ex.Message}");
+            return null; // Fall back to local scanning
+        }
+    }
+
+    /// <summary>
+    /// Runs a health check on storage via the core API.
+    /// </summary>
+    public async Task<StorageHealthCheckResult?> RunHealthCheckAsync(bool validateChecksums = true, CancellationToken ct = default)
+    {
+        try
+        {
+            var request = new
+            {
+                ValidateChecksums = validateChecksums,
+                IdentifyCorruption = true,
+                CheckFilePermissions = true
+            };
+
+            var response = await _apiClient.PostWithResponseAsync<StorageHealthCheckResult>(
+                "/api/storage/health/check", request, ct);
+
+            return response.Success ? response.Data : null;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[RetentionAssuranceService] Health check failed: {ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Finds orphaned files via the core API.
+    /// </summary>
+    public async Task<OrphanFilesResult?> FindOrphanedFilesAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await _apiClient.GetWithResponseAsync<OrphanFilesResult>(
+                "/api/storage/health/orphans", ct);
+
+            return response.Success ? response.Data : null;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[RetentionAssuranceService] Find orphans failed: {ex.Message}");
+            return null;
+        }
     }
 
     private async Task ScanDirectoryForDeletionsAsync(
@@ -803,6 +949,93 @@ public sealed class DeletedFileInfo
 public sealed class LegalHoldEventArgs : EventArgs
 {
     public LegalHold? LegalHold { get; set; }
+}
+
+#endregion
+
+#region API Response Models
+
+/// <summary>
+/// Response from /api/storage/search/files endpoint.
+/// </summary>
+public sealed class FileSearchApiResponse
+{
+    public int TotalMatches { get; set; }
+    public List<FileSearchResult> Results { get; set; } = new();
+}
+
+/// <summary>
+/// File search result from core API.
+/// </summary>
+public sealed class FileSearchResult
+{
+    public string Path { get; set; } = string.Empty;
+    public string? Symbol { get; set; }
+    public string? EventType { get; set; }
+    public string? Source { get; set; }
+    public DateTimeOffset Date { get; set; }
+    public long SizeBytes { get; set; }
+    public long EventCount { get; set; }
+    public double QualityScore { get; set; }
+}
+
+/// <summary>
+/// Response from /api/storage/health/check endpoint.
+/// </summary>
+public sealed class StorageHealthCheckResult
+{
+    public string? ReportId { get; set; }
+    public DateTime GeneratedAt { get; set; }
+    public long ScanDurationMs { get; set; }
+    public HealthSummary? Summary { get; set; }
+    public List<HealthIssue> Issues { get; set; } = new();
+}
+
+/// <summary>
+/// Health summary from core API.
+/// </summary>
+public sealed class HealthSummary
+{
+    public int TotalFiles { get; set; }
+    public long TotalBytes { get; set; }
+    public int HealthyFiles { get; set; }
+    public int WarningFiles { get; set; }
+    public int CorruptedFiles { get; set; }
+    public int OrphanedFiles { get; set; }
+}
+
+/// <summary>
+/// Health issue from core API.
+/// </summary>
+public sealed class HealthIssue
+{
+    public string Severity { get; set; } = string.Empty;
+    public string Type { get; set; } = string.Empty;
+    public string Path { get; set; } = string.Empty;
+    public string? Details { get; set; }
+    public string RecommendedAction { get; set; } = string.Empty;
+    public bool AutoRepairable { get; set; }
+}
+
+/// <summary>
+/// Response from /api/storage/health/orphans endpoint.
+/// </summary>
+public sealed class OrphanFilesResult
+{
+    public DateTime GeneratedAt { get; set; }
+    public List<OrphanedFileInfo> OrphanedFiles { get; set; } = new();
+    public long TotalOrphanedBytes { get; set; }
+}
+
+/// <summary>
+/// Orphaned file info from core API.
+/// </summary>
+public sealed class OrphanedFileInfo
+{
+    public string Path { get; set; } = string.Empty;
+    public string Reason { get; set; } = string.Empty;
+    public long SizeBytes { get; set; }
+    public DateTime LastModified { get; set; }
 }
 
 #endregion

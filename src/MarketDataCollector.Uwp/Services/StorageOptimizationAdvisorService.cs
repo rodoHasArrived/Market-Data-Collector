@@ -11,6 +11,14 @@ namespace MarketDataCollector.Uwp.Services;
 /// <summary>
 /// Service for analyzing storage and providing optimization recommendations.
 /// Implements Feature Refinement #63 - Archive Storage Optimization Advisor.
+///
+/// This service provides storage analysis and delegates operations to the core service
+/// via HTTP API endpoints when available:
+/// - /api/storage/catalog - Storage catalog for file discovery
+/// - /api/storage/tiers/statistics - Tier statistics
+/// - /api/storage/tiers/plan - Migration planning
+/// - /api/storage/tiers/migrate - Tier migration execution
+/// - /api/storage/maintenance/defrag - Defragmentation execution
 /// </summary>
 public sealed class StorageOptimizationAdvisorService
 {
@@ -23,6 +31,8 @@ public sealed class StorageOptimizationAdvisorService
     // Compression thresholds
     private const double GoodCompressionRatio = 0.7; // 30% reduction
     private const double ExcellentCompressionRatio = 0.5; // 50% reduction
+
+    private readonly ApiClientService _apiClient;
 
     public static StorageOptimizationAdvisorService Instance
     {
@@ -39,7 +49,10 @@ public sealed class StorageOptimizationAdvisorService
         }
     }
 
-    private StorageOptimizationAdvisorService() { }
+    private StorageOptimizationAdvisorService()
+    {
+        _apiClient = ApiClientService.Instance;
+    }
 
     /// <summary>
     /// Analyzes storage and generates optimization recommendations.
@@ -563,9 +576,155 @@ public sealed class StorageOptimizationAdvisorService
         IProgress<OptimizationProgress>? progress,
         CancellationToken ct)
     {
-        // Note: Tier migration would move files to archive directory
-        result.Errors.Add("Tier migration execution requires storage configuration");
-        await Task.CompletedTask;
+        // Try to use core API for tier migration
+        var apiResult = await ExecuteTierMigrationViaApiAsync(recommendation, progress, ct);
+        if (apiResult != null)
+        {
+            result.FilesProcessed = apiResult.FilesMigrated;
+            result.BytesSaved = apiResult.BytesMigrated;
+            if (apiResult.Errors.Any())
+            {
+                result.Errors.AddRange(apiResult.Errors);
+            }
+            return;
+        }
+
+        // Fallback: Note that tier migration requires storage configuration
+        result.Errors.Add("Tier migration via API unavailable; manual configuration required");
+    }
+
+    /// <summary>
+    /// Executes tier migration via the core API.
+    /// </summary>
+    private async Task<TierMigrationApiResult?> ExecuteTierMigrationViaApiAsync(
+        OptimizationRecommendation recommendation,
+        IProgress<OptimizationProgress>? progress,
+        CancellationToken ct)
+    {
+        try
+        {
+            var request = new
+            {
+                TargetTier = "cold",
+                Files = recommendation.AffectedFiles,
+                Compress = true,
+                CompressionCodec = "zstd"
+            };
+
+            progress?.Report(new OptimizationProgress
+            {
+                Stage = "Initiating tier migration via API",
+                CurrentFile = string.Empty,
+                Percentage = 10
+            });
+
+            var response = await _apiClient.PostWithResponseAsync<TierMigrationApiResult>(
+                "/api/storage/tiers/migrate", request, ct);
+
+            if (response.Success && response.Data != null)
+            {
+                progress?.Report(new OptimizationProgress
+                {
+                    Stage = "Migration complete",
+                    CurrentFile = string.Empty,
+                    Percentage = 100
+                });
+                return response.Data;
+            }
+
+            return null;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[StorageOptimization] Tier migration API failed: {ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Gets tier statistics from the core API.
+    /// </summary>
+    public async Task<TierStatisticsApiResult?> GetTierStatisticsAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await _apiClient.GetWithResponseAsync<TierStatisticsApiResult>(
+                "/api/storage/tiers/statistics", ct);
+
+            return response.Success ? response.Data : null;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[StorageOptimization] Tier statistics API failed: {ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Gets a migration plan from the core API for files to move between tiers.
+    /// </summary>
+    public async Task<MigrationPlanApiResult?> GetMigrationPlanAsync(
+        string targetTier = "cold",
+        int ageDaysThreshold = 90,
+        CancellationToken ct = default)
+    {
+        try
+        {
+            var request = new
+            {
+                TargetTier = targetTier,
+                AgeDaysThreshold = ageDaysThreshold,
+                PreviewOnly = true
+            };
+
+            var response = await _apiClient.PostWithResponseAsync<MigrationPlanApiResult>(
+                "/api/storage/tiers/plan", request, ct);
+
+            return response.Success ? response.Data : null;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[StorageOptimization] Migration plan API failed: {ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Runs defragmentation via the core API.
+    /// </summary>
+    public async Task<DefragmentationApiResult?> RunDefragmentationAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await _apiClient.PostWithResponseAsync<DefragmentationApiResult>(
+                "/api/storage/maintenance/defrag", null, ct);
+
+            return response.Success ? response.Data : null;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[StorageOptimization] Defragmentation API failed: {ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Gets the storage catalog from the core API for comprehensive file analysis.
+    /// </summary>
+    public async Task<StorageCatalogApiResult?> GetStorageCatalogAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await _apiClient.GetWithResponseAsync<StorageCatalogApiResult>(
+                "/api/storage/catalog", ct);
+
+            return response.Success ? response.Data : null;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[StorageOptimization] Storage catalog API failed: {ex.Message}");
+            return null;
+        }
     }
 }
 
@@ -739,6 +898,7 @@ public enum RecommendationPriority
 /// </summary>
 public sealed class OptimizationProgress
 {
+    public string Stage { get; set; } = string.Empty;
     public string CurrentFile { get; set; } = string.Empty;
     public int Percentage { get; set; }
 }
@@ -756,6 +916,112 @@ public sealed class OptimizationExecutionResult
     public int FilesProcessed { get; set; }
     public long BytesSaved { get; set; }
     public List<string> Errors { get; set; } = new();
+}
+
+#endregion
+
+#region API Response Models
+
+/// <summary>
+/// Response from /api/storage/tiers/migrate endpoint.
+/// </summary>
+public sealed class TierMigrationApiResult
+{
+    public bool Success { get; set; }
+    public int FilesMigrated { get; set; }
+    public long BytesMigrated { get; set; }
+    public TimeSpan Duration { get; set; }
+    public List<string> Errors { get; set; } = new();
+}
+
+/// <summary>
+/// Response from /api/storage/tiers/statistics endpoint.
+/// </summary>
+public sealed class TierStatisticsApiResult
+{
+    public DateTime GeneratedAt { get; set; }
+    public TierStats? Hot { get; set; }
+    public TierStats? Warm { get; set; }
+    public TierStats? Cold { get; set; }
+    public long TotalBytes { get; set; }
+    public int TotalFiles { get; set; }
+}
+
+/// <summary>
+/// Statistics for a storage tier.
+/// </summary>
+public sealed class TierStats
+{
+    public string Name { get; set; } = string.Empty;
+    public int FileCount { get; set; }
+    public long TotalBytes { get; set; }
+    public double PercentageOfTotal { get; set; }
+    public DateTime? OldestFile { get; set; }
+    public DateTime? NewestFile { get; set; }
+}
+
+/// <summary>
+/// Response from /api/storage/tiers/plan endpoint.
+/// </summary>
+public sealed class MigrationPlanApiResult
+{
+    public string TargetTier { get; set; } = string.Empty;
+    public int FilesToMigrate { get; set; }
+    public long BytesToMigrate { get; set; }
+    public TimeSpan EstimatedDuration { get; set; }
+    public List<MigrationPlanItem> Items { get; set; } = new();
+}
+
+/// <summary>
+/// Item in a migration plan.
+/// </summary>
+public sealed class MigrationPlanItem
+{
+    public string Path { get; set; } = string.Empty;
+    public string CurrentTier { get; set; } = string.Empty;
+    public long SizeBytes { get; set; }
+    public DateTime LastAccessed { get; set; }
+}
+
+/// <summary>
+/// Response from /api/storage/maintenance/defrag endpoint.
+/// </summary>
+public sealed class DefragmentationApiResult
+{
+    public bool Success { get; set; }
+    public int FilesProcessed { get; set; }
+    public long BytesReclaimed { get; set; }
+    public TimeSpan Duration { get; set; }
+    public List<string> Errors { get; set; } = new();
+}
+
+/// <summary>
+/// Response from /api/storage/catalog endpoint.
+/// </summary>
+public sealed class StorageCatalogApiResult
+{
+    public DateTime GeneratedAt { get; set; }
+    public int TotalFiles { get; set; }
+    public long TotalBytes { get; set; }
+    public List<CatalogEntry> Entries { get; set; } = new();
+    public Dictionary<string, long> BytesBySymbol { get; set; } = new();
+    public Dictionary<string, long> BytesByDataType { get; set; } = new();
+    public Dictionary<string, long> BytesByTier { get; set; } = new();
+}
+
+/// <summary>
+/// Entry in the storage catalog.
+/// </summary>
+public sealed class CatalogEntry
+{
+    public string Path { get; set; } = string.Empty;
+    public string? Symbol { get; set; }
+    public string? DataType { get; set; }
+    public string Tier { get; set; } = string.Empty;
+    public long SizeBytes { get; set; }
+    public DateTime LastModified { get; set; }
+    public bool IsCompressed { get; set; }
+    public string? Checksum { get; set; }
 }
 
 #endregion
