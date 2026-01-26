@@ -46,6 +46,11 @@ public interface IConfigService
     Task AddOrUpdateSymbolAsync(SymbolConfig symbol, CancellationToken ct = default);
 
     /// <summary>
+    /// Adds a symbol to the configuration (alias for AddOrUpdateSymbolAsync).
+    /// </summary>
+    Task AddSymbolAsync(SymbolConfig symbol, CancellationToken ct = default);
+
+    /// <summary>
     /// Deletes a symbol from the configuration.
     /// </summary>
     Task DeleteSymbolAsync(string symbol, CancellationToken ct = default);

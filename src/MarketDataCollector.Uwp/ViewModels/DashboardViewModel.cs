@@ -400,6 +400,7 @@ public sealed partial class DashboardViewModel : ObservableObject, IDisposable
         {
             Contracts.ConnectionState.Connected => "Connected",
             Contracts.ConnectionState.Connecting => "Connecting...",
+            Contracts.ConnectionState.Reconnecting => "Reconnecting...",
             Contracts.ConnectionState.Disconnected => "Disconnected",
             Contracts.ConnectionState.Error => "Error",
             _ => "Unknown"
