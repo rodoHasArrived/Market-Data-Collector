@@ -1,4 +1,7 @@
+using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -20,6 +23,16 @@ public sealed partial class WatchlistPage : Page
     private static readonly SolidColorBrush GoldBrush = new(Microsoft.UI.Colors.Gold);
     private static readonly SolidColorBrush OrangeBrush = new(Microsoft.UI.Colors.Orange);
     private static readonly SolidColorBrush RedBrush = new(Microsoft.UI.Colors.Red);
+
+    // Popular symbols for autocomplete suggestions
+    private static readonly string[] PopularSymbols =
+    [
+        "AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "META", "TSLA", "BRK.B", "JPM", "V",
+        "UNH", "XOM", "JNJ", "WMT", "MA", "PG", "HD", "CVX", "MRK", "ABBV",
+        "LLY", "PFE", "KO", "PEP", "BAC", "COST", "AVGO", "TMO", "MCD", "CSCO",
+        "ACN", "ABT", "DHR", "ADBE", "CRM", "NKE", "CMCSA", "TXN", "NEE", "VZ",
+        "SPY", "QQQ", "IWM", "DIA", "VTI", "VOO", "XLF", "XLE", "XLK", "XLV"
+    ];
 
     private readonly WatchlistService _watchlistService;
     private readonly ContextMenuService _contextMenuService;
@@ -157,15 +170,78 @@ public sealed partial class WatchlistPage : Page
 
     private async void AddSymbol_QuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
     {
-        if (!string.IsNullOrWhiteSpace(args.QueryText))
+        string? symbolToAdd = null;
+
+        if (args.ChosenSuggestion is string suggestion)
         {
+            // User selected a suggestion from the dropdown
+            if (suggestion.StartsWith("+ Add \"", StringComparison.OrdinalIgnoreCase))
+            {
+                // Extract symbol from "+ Add "SYMBOL"" pattern
+                symbolToAdd = suggestion.Replace("+ Add \"", "").Replace("\"", "").Trim().ToUpperInvariant();
+            }
+            else
+            {
+                symbolToAdd = suggestion.ToUpperInvariant();
+            }
+        }
+        else if (!string.IsNullOrWhiteSpace(args.QueryText))
+        {
+            // User pressed Enter without selecting a suggestion
+            var query = args.QueryText.Trim().ToUpperInvariant();
+            if (query.StartsWith("+ ADD \"", StringComparison.OrdinalIgnoreCase))
+            {
+                symbolToAdd = query.Replace("+ ADD \"", "").Replace("\"", "").Trim();
+            }
+            else
+            {
+                symbolToAdd = query;
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(symbolToAdd))
+        {
+            AddSymbolBox.Text = symbolToAdd;
             await AddSymbolFromInput();
         }
     }
 
     private void AddSymbol_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
     {
-        // Could add symbol suggestions here
+        if (args.Reason == AutoSuggestionBoxTextChangeReason.UserInput)
+        {
+            var text = sender.Text?.Trim().ToUpperInvariant() ?? string.Empty;
+
+            if (string.IsNullOrEmpty(text))
+            {
+                sender.ItemsSource = null;
+                return;
+            }
+
+            var suggestions = new List<string>();
+
+            // Add matching popular symbols that start with the input text
+            suggestions.AddRange(
+                PopularSymbols
+                    .Where(s => s.StartsWith(text, StringComparison.OrdinalIgnoreCase))
+                    .Take(8));
+
+            // Also add symbols that contain the text (but don't start with it)
+            suggestions.AddRange(
+                PopularSymbols
+                    .Where(s => !s.StartsWith(text, StringComparison.OrdinalIgnoreCase)
+                                && s.Contains(text, StringComparison.OrdinalIgnoreCase))
+                    .Take(4));
+
+            // If the typed text is not already in the watchlist and not in suggestions, offer to add it
+            if (!_allSymbols.Any(s => s.Symbol.Equals(text, StringComparison.OrdinalIgnoreCase))
+                && !suggestions.Contains(text))
+            {
+                suggestions.Add($"+ Add \"{text}\"");
+            }
+
+            sender.ItemsSource = suggestions.Count > 0 ? suggestions : null;
+        }
     }
 
     private async Task AddSymbolFromInput()
