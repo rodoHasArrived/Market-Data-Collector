@@ -1,5 +1,5 @@
 // C4 Level 3: Component Diagram
-// Market Data Collector v1.6.0
+// Market Data Collector v1.0.0
 // Last Updated: 2026-01-19
 //
 // This diagram shows the internal components of the Market Data Collector Core.
@@ -16,7 +16,7 @@ digraph C4_Components {
 
   // Title
   labelloc="t";
-  label="Market Data Collector - Component Diagram (C4 Level 3)\nCore Collector Internals | v1.6.0";
+  label="Market Data Collector - Component Diagram (C4 Level 3)\nCore Collector Internals | v1.0.0";
 
   // External Systems
   subgraph cluster_external {

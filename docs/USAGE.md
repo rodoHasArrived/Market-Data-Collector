@@ -1,84 +1,27 @@
 # Market Data Collector
 
-**Version**: 1.6.1 (Production Ready) | **Last Updated**: 2026-01-27
+**Version**: 1.0.0 (repository snapshot) | **Last Updated**: 2026-01-27
 
-A cross-platform, production-ready market data collector with an intuitive web dashboard. Ingests real-time market data from multiple sources (Interactive Brokers, Alpaca, Polygon), normalizes them into domain events, and persists them as JSONL for downstream research. Features comprehensive error handling, single-executable deployment, and built-in help system.
+**Current Status**: Active development. Some providers require credentials or build-time flags; see [production status](status/production-status.md) for readiness notes.
 
-## ✨ New in v1.6.1
+A cross-platform market data collector for real-time and historical market microstructure data. It ingests provider feeds, normalizes them into domain events, and persists them to JSONL/Parquet for downstream research. The current repository snapshot includes a CLI, web dashboard, and a Windows desktop UI (UWP).
 
-- **🔧 Provider Refactoring** - Historical providers now extend `BaseHistoricalDataProvider` for shared HTTP handling
-- **🛠️ HttpResponseHandler** - Centralized HTTP error handling utility across all providers
-- **📊 447 Source Files** - Codebase expanded to 413 C# files and 12 F# files
-- **📖 Documentation Refresh** - All docs updated to reflect current project state
+## Current capabilities
 
-## ✨ New in v1.6
-
-- **🧹 Simplified Architecture** - Streamlined monolithic architecture with removal of microservices complexity
-- **📖 Enhanced Documentation** - Comprehensive documentation updates across all guides
-- **🔧 Improved Maintainability** - Removed dead code and simplified codebase structure
-- **⚡ Optimized GitHub Actions** - Faster CI/CD workflows with better caching
-
-## ✨ v1.5 Features
-
-- **🔒 Archival-First Storage Pipeline** - Write-ahead logging (WAL) for crash-safe data persistence with checksums
-- **📁 Compression Profiles** - Optimized compression profiles for hot/warm/cold storage tiers (LZ4, ZSTD, Gzip)
-- **📋 Schema Versioning** - Long-term format preservation with schema migration and JSON Schema export
-- **📊 Analysis-Ready Exports** - Pre-built export profiles for Python, R, QuantConnect Lean, Excel, PostgreSQL
-- **✅ Data Quality Reports** - Comprehensive quality metrics with outlier detection and gap analysis for exports
-- **🔄 Data Versioning** - Dataset fingerprinting and version tracking for reproducible analysis
-- **🧙 Configuration Wizard** - Interactive setup wizard for first-time users (`--wizard`)
-- **⚡ Auto-Configuration** - Automatic provider detection from environment variables (`--auto-config`)
-- **🔍 Provider Detection** - Discover available providers and their status (`--detect-providers`)
-- **✅ Credential Validation** - Validate API credentials before running (`--validate-credentials`)
-
-## ✨ v1.4 Features
-
-- **🔷 F# Domain Library** - Type-safe domain models using discriminated unions and exhaustive pattern matching
-- **✅ Railway-Oriented Validation** - Composable validation with error accumulation (no more exceptions!)
-- **📊 Pure Functional Calculations** - Spread, imbalance, VWAP, TWAP, and order book analytics
-- **🔄 Pipeline Transforms** - Declarative stream processing for filtering, enriching, and aggregating events
-- **🔗 C# Interop** - Seamless integration with existing C# codebase via wrapper classes
-
-## ✨ v1.3 Features
-
-- **🔌 Unified Provider Abstraction** - Provider-agnostic interface with capability discovery flags
-- **📋 Provider Registry** - Attribute-based automatic provider discovery and registration
-- **⚡ Concurrent Provider Executor** - Parallel operations across multiple providers with configurable strategies
-- **🔄 Circuit Breaker Pattern** - Intelligent failover with automatic recovery and health monitoring
-- **📊 Priority Backfill Queue** - Sophisticated job scheduling with dependencies and priority levels
-- **🔧 Data Gap Repair** - Automatic detection and repair of missing historical data
-- **📈 Data Quality Monitor** - Multi-dimensional quality scoring (completeness, accuracy, timeliness)
-
-## ✨ v1.2 Features
-
-- **🔗 Multi-Provider Connections** - Connect to multiple data providers simultaneously
-- **📊 Provider Comparison View** - Side-by-side data quality metrics across providers
-- **🔄 Automatic Failover** - Configure automatic failover rules between providers
-- **🗺️ Symbol Mapping** - Provider-specific symbol mapping interface
-- **📦 Portable Data Packager** - Create self-contained, portable archive packages
-- **📅 Data Completeness Calendar** - Visual calendar showing data coverage and gaps
-- **🔍 Archive Browser** - In-app file browser for navigating archived data
-- **📤 Batch Export Scheduler** - Schedule and automate recurring export jobs
-
-## ✨ v1.1 Features
-
-- **🖥️ Native Windows Desktop App** - UWP/XAML application with modern WinUI 3 styling
-- **🔐 Secure Credential Management** - Windows CredentialPicker integration for API keys
-- **🎨 Enhanced Dashboard Pages** - Provider, storage, symbols, and backfill configuration
-
-## ✨ v1.0 Features
-
-- **🎨 Modern Web Dashboard** - Full-featured UI for configuration and monitoring
-- **📦 Single Executable** - Deploy as one file, no dependencies
-- **🛡️ Enhanced Error Handling** - Comprehensive error detection and user-friendly messages
-- **📚 Complete Documentation** - Built-in help system with detailed HELP.md guide
-- **🎯 Production Ready** - Robust deployment with systemd support
+- **CLI modes**: real-time collection, backfill, replay, packaging, import, self-test, and config validation
+- **Auto-configuration**: interactive wizard, environment-based auto-config, provider detection, and credential validation
+- **Backfill system**: multi-provider historical backfill with configurable provider priority and job tracking
+- **Storage formats**: JSONL (optionally gzip) and Parquet outputs, plus portable data packages
+- **Observability**: Prometheus metrics and HTTP status endpoints
+- **Optional UWP desktop UI**: Windows-only companion app for configuration/monitoring (feature coverage varies by page)
 
 ## Supported Data Providers
 
-- **Interactive Brokers (IB)** – L2 depth, tick-by-tick trades, quotes
+- **Interactive Brokers (IB)** – Requires an IBAPI build to enable live connections
 - **Alpaca** – Real-time trades and quotes via WebSocket
-- **Polygon** – Stub implementation ready for expansion
+- **Polygon** – Stub mode unless API credentials are configured; WebSocket parsing is still in progress
+- **NYSE** – Direct connection endpoints implemented; requires NYSE credentials
+- **StockSharp** – Provider integration scaffolded (credentials required)
 - Extensible architecture for adding additional providers
 
 ## Quick start
@@ -129,7 +72,7 @@ Then open your browser to `http://localhost:8080` for a full-featured dashboard 
 - 💡 Built-in help and tooltips
 - 🎨 Modern, responsive UI
 
-### **🖥️ Windows Desktop App** (New!)
+### **🖥️ Windows Desktop App (UWP)**
 
 Launch the native UWP desktop application on Windows:
 
@@ -137,11 +80,10 @@ Launch the native UWP desktop application on Windows:
 dotnet run --project src/MarketDataCollector.Uwp/MarketDataCollector.Uwp.csproj
 ```
 
-Features:
+Highlights:
 - 🔐 Secure credential management via Windows CredentialPicker
-- 📊 Native Windows UI with WinUI 3 styling
-- ⚡ Direct integration with Windows security features
-- 🎨 Tabbed interface for all configuration options
+- 📊 Native Windows UI for configuration, status, and exports
+- ⚡ Windows-only companion to the CLI/dashboard (feature coverage varies by page)
 
 ### **🧰 Windows Desktop App Install (MSIX/AppInstaller)**
 
@@ -183,7 +125,7 @@ Use the packaged MSIX/AppInstaller flow for a standard Windows install, upgrade,
 dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj
 ```
 
-**Production mode** with HTTP monitoring and hot-reload:
+**Monitoring mode** with HTTP monitoring and hot-reload:
 ```bash
 ./MarketDataCollector --http-port 8080 --watch-config
 ```
@@ -225,7 +167,7 @@ dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj
 ./MarketDataCollector --generate-config
 ```
 
-See `docs/operator-runbook.md` for production startup scripts, including the systemd unit and PowerShell helpers.
+See `docs/guides/operator-runbook.md` for deployment and operations guidance.
 
 ## Configuration highlights
 
@@ -379,17 +321,17 @@ See [`src/MarketDataCollector/Integrations/Lean/README.md`](src/MarketDataCollec
 
 Detailed diagrams and domain notes live in `./docs`:
 
-* `architecture.md` – layered architecture and event flow
-* `c4-diagrams.md` – rendered system, container, and component diagrams
-* `domains.md` – event contracts and invariants
-* `operator-runbook.md` – operational guidance and startup scripts
-* `why-this-architecture.md` – non-technical overview of design decisions
-* `interactive-brokers-setup.md` – IB API installation and configuration
-* `open-source-references.md` – catalog of related projects and resources
-* `lean-integration.md` – QuantConnect Lean Engine integration guide
-* `STORAGE_ORGANIZATION_DESIGN.md` – comprehensive storage organization improvements and best practices
-* `PROVIDER_MANAGEMENT_ARCHITECTURE.md` – provider abstraction, circuit breakers, and quality monitoring
-* `FSHARP_INTEGRATION.md` – F# domain library integration guide and examples
+* `architecture/overview.md` – layered architecture and event flow
+* `architecture/c4-diagrams.md` – system and component diagrams
+* `architecture/domains.md` – event contracts and invariants
+* `architecture/provider-management.md` – provider abstraction details
+* `architecture/storage-design.md` – storage organization and policies
+* `architecture/why-this-architecture.md` – design rationale
+* `guides/operator-runbook.md` – operational guidance and startup scripts
+* `providers/interactive-brokers-setup.md` – IB API installation and configuration
+* `integrations/lean-integration.md` – QuantConnect Lean Engine integration guide
+* `integrations/fsharp-integration.md` – F# domain library integration guide
+* `reference/open-source-references.md` – related projects and resources
 
 ## F# Domain Library
 
@@ -435,73 +377,12 @@ var imbalance = ImbalanceCalculator.FromQuote(quote);
 var vwap = AggregationFunctions.Vwap(trades);
 ```
 
-See [`docs/FSHARP_INTEGRATION.md`](docs/FSHARP_INTEGRATION.md) for comprehensive documentation.
+See [`docs/integrations/fsharp-integration.md`](docs/integrations/fsharp-integration.md) for comprehensive documentation.
 
-## Recent Improvements
+## Release notes
 
-### Simplified Architecture (2026-01-19) - v1.6.0
-- **Monolithic Core**: Removed microservices layer for improved simplicity and maintainability
-- **Dead Code Removal**: Cleaned up unused code and deprecated features
-- **Documentation Refresh**: Updated all documentation to reflect current architecture
-- **Optimized CI/CD**: Improved GitHub Actions workflows with better caching and faster builds
-
-### Archival & Export Excellence (2026-01-04)
-- **Archival-First Storage Pipeline**: Write-Ahead Logging (WAL) for crash-safe persistence with SHA256 checksums
-- **Compression Profiles**: Pre-built profiles for hot (LZ4), warm (ZSTD-6), and cold (ZSTD-19) storage tiers
-- **Schema Versioning**: Long-term format preservation with migration support and JSON Schema export
-- **Analysis-Ready Export Formats**: Pre-built profiles for Python/Pandas, R, QuantConnect Lean, Excel, PostgreSQL
-- **Data Quality Reports**: Comprehensive quality metrics with outlier detection, gap analysis, and recommendations
-- **Data Versioning**: Dataset fingerprinting and version tracking for reproducible analysis
-
-### F# Domain Library (2026-01-03)
-- **Type-Safe Domain Models**: Discriminated unions for market events with exhaustive pattern matching
-- **Railway-Oriented Validation**: Composable validation with error accumulation using Result types
-- **Pure Functional Calculations**: Spread, imbalance, VWAP, TWAP, microprice, and order flow metrics
-- **Pipeline Transforms**: Declarative stream processing with filtering, enrichment, and aggregation
-- **C# Interop**: Extension methods, wrapper classes, and nullable-friendly APIs for C# consumers
-- **Comprehensive Tests**: 50+ unit tests covering domain, validation, calculations, and pipeline logic
-
-### Provider Management & Data Quality System (2026-01-03)
-- **Unified Provider Abstraction**: Provider-agnostic interfaces with declarative capability discovery (`ProviderCapabilities` flags)
-- **Provider Registry**: Attribute-based automatic provider discovery via `[DataProvider]` attribute
-- **Circuit Breaker Pattern**: Intelligent failover with Open/Closed/HalfOpen states and automatic recovery
-- **Concurrent Provider Executor**: Parallel operations across providers with configurable strategies (FirstSuccess, All, Merge)
-- **Priority Backfill Queue**: Sophisticated job scheduling with Critical/High/Normal/Low/Deferred priority levels
-- **Data Gap Repair**: Automatic detection and repair of missing data using alternate providers
-- **Data Quality Monitor**: Multi-dimensional quality scoring (Completeness 30%, Accuracy 25%, Timeliness 20%, Consistency 15%, Validity 10%)
-
-### Storage Organization Design (2026-01-02)
-- **Comprehensive Design Document**: Best practices for organizing and managing market data at scale
-- **Hierarchical Taxonomy**: Enhanced directory structures with metadata catalogs
-- **Tiered Storage**: Hot/warm/cold tier architecture for cost-effective data management
-- **File Maintenance**: Automated health checks, self-healing, and integrity validation
-- **Data Quality**: Quality scoring system with best-of-breed source selection
-- **Search Infrastructure**: Multi-level indexes with faceted search capabilities
-- **Off-Hours Scheduling**: Trading-hours-aware maintenance automation
-
-### Multi-Provider Support (2026-01-03)
-- **Simultaneous Connections**: Connect to IB, Alpaca, and Polygon providers simultaneously
-- **Provider Comparison**: Side-by-side data quality metrics (latency, drops, throughput)
-- **Automatic Failover**: Configure failover rules with health monitoring and auto-recovery
-- **Symbol Mapping**: Provider-specific symbol mapping with FIGI/ISIN/CUSIP support
-
-### Offline Storage & Archival (2026-01-03)
-- **Portable Data Packager**: Create self-contained archive packages (ZIP, TAR.GZ) with manifests
-- **Data Completeness Calendar**: Visual calendar heatmap showing data coverage by symbol/date
-- **Archive Browser**: Tree-view navigation with file metadata, preview, and verification
-- **Batch Export Scheduler**: Schedule recurring exports with format conversion (CSV, Parquet)
-
-### UWP Desktop Application (2026-01-02)
-- **Native Windows App**: Full-featured UWP/XAML desktop application with WinUI 3 styling
-- **Secure Credentials**: Windows CredentialPicker integration for API key management
-- **Configuration Pages**: Dashboard, Provider, Storage, Symbols, and Backfill pages
-- **Real-time Monitoring**: Live status updates and metrics display
-
-### Code Quality (2026-01-01)
-- **Subscription Management**: New `SymbolSubscriptionTracker` base class provides thread-safe subscription handling for depth collectors
-- **Logging Standardization**: All components now use `LoggingSetup.ForContext<T>()` for consistent logging
-- **Consumer Cleanup**: Removed boilerplate from MassTransit consumer classes
-- **Security**: Added `.gitignore` to protect credentials from version control
+The repository currently tracks changes directly in git without curated release notes. Refer to
+`docs/status/CHANGELOG.md` for the current snapshot summary and `docs/status/ROADMAP.md` for planned work.
 
 ## Troubleshooting
 
@@ -558,22 +439,7 @@ For detailed troubleshooting of common issues, see [HELP.md](HELP.md#troubleshoo
 
 ## Known Limitations and Roadmap
 
-### Current Limitations
-
-**Provider Integration:**
-- Alpaca quote messages ("T":"q") not yet wired to QuoteCollector (trade-only currently)
-- ✅ IB connection now supports auto-retry via Circuit Breaker pattern
-- ✅ Provider failover with automatic recovery implemented
-
-**Security:**
-- ✅ Secure credential management via Windows CredentialPicker (UWP app)
-- ✅ `.gitignore` now excludes credential files from version control
-- API credentials in `appsettings.json` for CLI mode (consider environment variables or secrets manager)
-- No built-in authentication for HTTP monitoring endpoints
-
-**Observability:**
-- ✅ Structured Serilog logging implemented throughout codebase
-- Some error paths may still need additional logging (parse errors, connection failures)
+For current gaps and planned work, refer to `docs/status/production-status.md` and `docs/status/ROADMAP.md`.
 
 **Data Precision:**
 - Order book uses `double` for prices (consider `decimal` to avoid floating-point precision issues)

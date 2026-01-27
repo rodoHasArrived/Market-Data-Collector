@@ -1,5 +1,5 @@
 // C4 Level 2: Container Diagram
-// Market Data Collector v1.5.0
+// Market Data Collector v1.0.0
 // Last Updated: 2026-01-14
 //
 // This diagram shows the major deployable units within the system.
@@ -16,7 +16,7 @@ digraph C4_Containers {
 
   // Title
   labelloc="t";
-  label="Market Data Collector - Container Diagram (C4 Level 2)\nv1.5.0";
+  label="Market Data Collector - Container Diagram (C4 Level 2)\nv1.0.0";
 
   // External Actors
   Operator [shape=oval, style="filled", fillcolor="#08427b", fontcolor="white",

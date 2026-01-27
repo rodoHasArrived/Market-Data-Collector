@@ -1,5 +1,5 @@
 // Deployment Options Diagram
-// Market Data Collector v1.5.0
+// Market Data Collector v1.0.0
 // Last Updated: 2026-01-14
 //
 // This diagram shows the different deployment options available,
@@ -16,7 +16,7 @@ digraph DeploymentOptions {
 
   // Title
   labelloc="t";
-  label="Market Data Collector - Deployment Options\nFrom Development to Production | v1.5.0";
+  label="Market Data Collector - Deployment Options\nFrom Development to Production | v1.0.0";
 
   // Option 1: Standalone Console
   subgraph cluster_standalone {

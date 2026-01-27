@@ -74,11 +74,11 @@ We treat all recorded activity as a stream of standardized `MarketEvent` objects
 
 ### Recently Completed
 
-- **Archival-First Storage (v1.5.0)** – Write-ahead logging (WAL) for crash-safe persistence with per-record checksums
-- **Compression Profiles (v1.5.0)** – Tiered compression with LZ4/ZSTD/Gzip profiles for hot/warm/cold storage
-- **Schema Versioning (v1.5.0)** – Automatic migration between schema versions with JSON Schema export
-- **Analysis Export (v1.5.0)** – Pre-built export profiles for Python, R, Lean, Excel, PostgreSQL
-- **Quality Reports (v1.5.0)** – Data quality assessment with outlier detection and gap analysis
+- **Archival-First Storage** – Write-ahead logging (WAL) for crash-safe persistence with per-record checksums
+- **Compression Profiles** – Tiered compression with LZ4/ZSTD/Gzip profiles for hot/warm/cold storage
+- **Schema Versioning** – Automatic migration between schema versions with JSON Schema export
+- **Analysis Export** – Pre-built export profiles for Python, R, Lean, Excel, PostgreSQL
+- **Quality Reports** – Data quality assessment with outlier detection and gap analysis
 - **F# Domain Library** – Type-safe discriminated unions with railway-oriented validation
 - **Historical Data Backfill** – Multi-provider backfill with Alpaca, Yahoo Finance, Stooq, Nasdaq Data Link, and composite failover
 - **MassTransit Integration** – Distributed messaging with RabbitMQ and Azure Service Bus
@@ -89,6 +89,6 @@ We treat all recorded activity as a stream of standardized `MarketEvent` objects
 
 ---
 
-**Version:** 1.5.0
+**Version:** 1.0.0
 **Last Updated:** 2026-01-08
 **See Also:** [Architecture Overview](overview.md) | [Domains](domains.md) | [C4 Diagrams](c4-diagrams.md) | [Lean Integration](../integrations/lean-integration.md)

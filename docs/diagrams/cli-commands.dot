@@ -1,5 +1,5 @@
 // CLI Commands Reference Diagram
-// Market Data Collector v1.5.0
+// Market Data Collector v1.0.0
 // Last Updated: 2026-01-14
 //
 // This diagram shows all available CLI commands and flags,
@@ -16,7 +16,7 @@ digraph CLICommands {
 
   // Title
   labelloc="t";
-  label="Market Data Collector - CLI Commands Reference\nAll Available Flags and Options | v1.5.0";
+  label="Market Data Collector - CLI Commands Reference\nAll Available Flags and Options | v1.0.0";
 
   // Entry Point
   MDC [shape=box, fillcolor="#438dd5", fontcolor="white", width=3,
@@ -102,7 +102,7 @@ digraph CLICommands {
           label="--help\n\nShow all commands\nUsage examples\nVersion info"];
 
     VERSION [fillcolor="#fbd38d",
-             label="--version\n\nShow version: 1.5.0\n.NET runtime info"];
+             label="--version\n\nShow version: 1.0.0\n.NET runtime info"];
   }
 
   // Common Workflows

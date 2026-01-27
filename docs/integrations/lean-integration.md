@@ -1,7 +1,7 @@
 # Lean Engine Integration Guide
 
-**Status:** ✅ Production Ready
-**Version:** 1.5.0
+**Status:** ✅ Implemented
+**Version:** 1.0.0
 **Last Updated:** 2026-01-08
 
 This guide provides comprehensive instructions for integrating MarketDataCollector with QuantConnect's Lean algorithmic trading engine.

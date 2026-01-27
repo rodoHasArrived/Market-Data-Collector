@@ -1,8 +1,8 @@
 # Market Data Collector - Production Status
 
 **Last Updated:** 2026-01-27
-**Version:** 1.6.1
-**Status:** Production Ready
+**Version:** 1.0.0 (repository snapshot)
+**Status:** Active development
 
 This document consolidates the architecture assessment and production readiness information for the Market Data Collector system.
 
@@ -10,30 +10,24 @@ This document consolidates the architecture assessment and production readiness 
 
 ## Executive Summary
 
-The Market Data Collector is a mature, well-architected system with comprehensive functionality for market data collection, storage, and monitoring. The architecture follows proper layered design patterns with clear separation of concerns.
+The Market Data Collector is a feature-rich system with a working CLI, backfill pipeline, storage, and UI tooling. Some providers require credentials or build-time flags, and certain integrations (notably Polygon streaming) remain partially implemented.
 
-### Overall Assessment: **READY FOR PRODUCTION**
+### Overall Assessment: **DEVELOPMENT / PILOT READY**
 
 | Category | Status | Notes |
 |----------|--------|-------|
-| Core Event Pipeline | ✅ Production Ready | High-performance, channel-based processing |
-| Storage Layer | ✅ Production Ready | JSONL/Parquet with tiered retention policies |
-| Alpaca Provider (Streaming) | ✅ Production Ready | Full WebSocket integration |
-| Alpaca Provider (Historical) | ✅ Production Ready | OHLCV bars, trades, quotes, auctions |
-| Yahoo Finance (Historical) | ✅ Production Ready | 50K+ global securities |
-| Stooq (Historical) | ✅ Production Ready | US equities EOD |
-| Nasdaq Data Link (Historical) | ✅ Production Ready | Alternative datasets |
-| Tiingo (Historical) | ✅ Production Ready | 65K+ dividend-adjusted securities |
-| Finnhub (Historical) | ✅ Production Ready | Global securities with fundamentals |
-| Alpha Vantage (Historical) | ✅ Production Ready | Intraday historical data |
-| Polygon (Historical) | ✅ Production Ready | US equities historical data |
-| Composite Provider | ✅ Production Ready | Automatic failover with rate-limit rotation |
-| Interactive Brokers | ⚠️ Requires Build Flag | Needs IBAPI compilation constant |
-| Polygon Provider | ❌ Stub Only | Synthetic heartbeat only |
-| Monitoring | ✅ Production Ready | HTTP server, Prometheus metrics |
-| UWP Desktop App | ✅ Production Ready | Full feature set with 17+ pages including Admin/Maintenance and Advanced Analytics |
-| QuantConnect Lean | ✅ Production Ready | Custom data types and IDataProvider |
-| Architecture | ✅ Monolithic | Simplified in v1.6.0 (microservices/MassTransit removed) |
+| Core Event Pipeline | ✅ Implemented | Channel-based processing with backpressure |
+| Storage Layer | ✅ Implemented | JSONL/Parquet outputs with WAL support |
+| Backfill Providers | ✅ Implemented | Multiple providers; credentials required for some |
+| Alpaca Provider (Streaming) | ✅ Implemented | Requires Alpaca credentials |
+| NYSE Provider | ⚠️ Needs credentials | NYSE Connect credentials required |
+| Interactive Brokers | ⚠️ Requires build flag | Compile with `IBAPI` and reference IBApi |
+| Polygon Provider | ⚠️ Partial | Stub mode unless configured; WebSocket parsing in progress |
+| StockSharp Provider | ⚠️ Integration scaffold | Requires StockSharp setup |
+| Monitoring | ✅ Implemented | HTTP server + Prometheus metrics |
+| UWP Desktop App | ✅ Implemented | Windows-only companion UI |
+| QuantConnect Lean | ✅ Implemented | Custom data types + IDataProvider |
+| Architecture | ✅ Monolithic | Single-process runtime |
 
 ---
 
@@ -57,20 +51,19 @@ The `EventPipeline` class is production-grade:
 - Nanosecond precision timing
 - Thread-safe statistics
 
-### 3. Simplified Architecture (v1.6.0)
+### 3. Monolithic Architecture
 
-The application now uses a monolithic architecture:
+The application runs as a single-process monolith:
 - Direct in-process communication (no external messaging)
 - Simplified deployment and configuration
 - Reduced operational complexity
-- MassTransit/RabbitMQ dependencies removed
 
 ### 4. Storage Layer
 
 Multiple storage strategies:
 - JSONL (append-only, human-readable)
 - Parquet (columnar, compressed)
-- Tiered storage with migration
+- Write-ahead logging (WAL) for durability
 - Configurable naming conventions
 
 ---
@@ -109,21 +102,15 @@ Multiple storage strategies:
 
 ## Known Issues
 
-### ~~Issue 1: UWP API Endpoint Mismatch~~ (RESOLVED)
+### Polygon Streaming
 
-**Status:** ✅ Fixed in v1.5.0
+**Status:** ⚠️ Partial implementation  
+The Polygon streaming client operates in stub mode when no API key is provided. The WebSocket parsing path is still being completed.
 
-**Resolution:** The `StatusHttpServer.cs` now supports both `/api/*` and `/*` routes. The code strips the `/api/` prefix when present, allowing the UWP app to use `/api/status` while maintaining backward compatibility with `/status`.
+### Interactive Brokers Build Flag
 
-**Files Updated:**
-- `src/MarketDataCollector/Application/Monitoring/StatusHttpServer.cs` - Added `/api/*` route prefix handling
-- `src/MarketDataCollector.Uwp/Services/StatusService.cs` - Uses `/api/status` endpoint
-
-### Issue 2: UWP Project Missing Core Library Reference (LOW PRIORITY)
-
-**Problem:** The UWP project duplicates domain models instead of sharing types with the core library.
-
-**Recommendation:** Create a shared `MarketDataCollector.Contracts` library for common types.
+**Status:** ⚠️ Build-time requirement  
+Interactive Brokers connectivity requires the IBAPI compile flag and a referenced IBApi package/dll.
 
 ---
 
@@ -144,24 +131,17 @@ dotnet build -p:DefineConstants=IBAPI
 
 ### 2. Polygon Provider
 
-**Status:** Stub implementation only
-
-The Polygon provider currently only emits synthetic heartbeat events.
-
-**Action Required for Production:**
-1. Implement WebSocket connection to Polygon streams
-2. Add authentication with Polygon API key
-3. Wire up trade/quote message parsing
+**Status:** Partial implementation  
+The Polygon provider runs in stub mode without credentials and requires full WebSocket message parsing for complete streaming support.
 
 ---
 
-## Stub Implementations
+## Stub/Partial Implementations
 
 | Component | File | Current Behavior | Production Action |
 |-----------|------|------------------|-------------------|
-| Polygon Provider | `Infrastructure/Providers/Polygon/PolygonMarketDataClient.cs` | Synthetic heartbeat | Implement full WebSocket client |
+| Polygon Provider | `Infrastructure/Providers/Polygon/PolygonMarketDataClient.cs` | Stub or partial streaming | Complete WebSocket message parsing |
 | IB Provider (no IBAPI) | `Infrastructure/Providers/InteractiveBrokers/EnhancedIBConnectionManager.cs` | Throws NotSupportedException | Build with IBAPI flag |
-| Index Components | `Application/Subscriptions/Services/IndexSubscriptionService.cs` | Static data | Integrate external API |
 
 ---
 
@@ -211,7 +191,7 @@ When `IBAPI` is NOT defined:
 
 ### Legacy Status File (`--serve-status`)
 
-**Status:** ❌ Removed as of v1.6.1
+**Status:** ❌ Removed
 
 **Reason:** The file-based status approach has been superseded by the HTTP monitoring server which provides real-time access to status, metrics, and health endpoints.
 
@@ -265,61 +245,9 @@ When `IBAPI` is NOT defined:
 
 ---
 
-## Technical Debt
+## Testing Notes
 
-| Item | Priority | Effort | Impact |
-|------|----------|--------|--------|
-| ~~Replace `double` with `decimal` for prices~~ | ~~High~~ | ~~Medium~~ | ~~Fixed in v1.6.0~~ |
-| ~~Add authentication to HTTP endpoints~~ | ~~High~~ | ~~Low~~ | ~~Fixed in v1.5.0~~ |
-| ~~Complete Alpaca quote message handling~~ | ~~Medium~~ | ~~Low~~ | ~~Fixed in v1.5.0~~ |
-| ~~Fix UWP/Core API endpoint mismatch~~ | ~~Medium~~ | ~~Low~~ | ~~Fixed in v1.5.0~~ |
-| ~~Fix async void methods (TD-9)~~ | ~~P0~~ | ~~Medium~~ | ~~Fixed in v1.6.1~~ |
-| ~~Replace HttpClient instances with IHttpClientFactory (TD-10)~~ | ~~P0~~ | ~~Medium~~ | ~~Fixed in v1.6.1~~ |
-| ~~Replace Thread.Sleep with Task.Delay (TD-11)~~ | ~~P0~~ | ~~Low~~ | ~~Fixed in v1.6.1~~ |
-| Create shared contracts library | Medium | Medium | Medium |
-| Consolidate duplicate domain models (TD-12) | Medium | Medium | Medium |
-| Add missing integration tests | Low | High | Medium |
-| Standardize error handling patterns | Medium | Medium | Partial (HttpResponseHandler done) |
-
----
-
-## Test Coverage
-
-### Existing Tests (45 test files):
-
-**C# Tests (28 files):**
-
-| Category | Coverage |
-|----------|----------|
-| Domain Models | ✅ TradeModelTests, BboQuotePayloadTests, OrderBookLevelTests |
-| Collectors | ✅ TradeDataCollectorTests, QuoteCollectorTests |
-| Config | ✅ ConfigValidatorTests |
-| Messaging | ✅ CompositePublisherTests |
-| Resilience | ✅ WebSocketResiliencePolicyTests, ConnectionRetryIntegrationTests |
-| Storage | ✅ FilePermissionsServiceTests, StockSharpStorageTests, FormatConverterTests |
-| Serialization | ✅ HighPerformanceJsonTests |
-| Indicators | ✅ TechnicalIndicatorServiceTests |
-| Data Sources | ✅ DataSourceManagerTests, FallbackOrchestratorTests, SymbolMapperTests |
-| Plugins | ✅ PluginArchitectureTests, PluginManagerTests |
-| Monitoring | ✅ PrometheusMetricsTests, GracefulShutdownTests |
-| Integration | ✅ UwpCoreIntegrationTests, AlpacaQuoteRoutingTests |
-| StockSharp | ✅ StockSharpConfigTests, StockSharpConnectorFactoryTests |
-
-**F# Tests (5 files):**
-
-| Category | Coverage |
-|----------|----------|
-| Domain | ✅ DomainTests.fs |
-| Validation | ✅ ValidationTests.fs |
-| Calculations | ✅ CalculationTests.fs |
-| Pipeline | ✅ PipelineTests.fs |
-| Entry Point | ✅ Program.fs |
-
-### Missing Test Coverage:
-- UWP Services (StatusService, ConfigService)
-- Provider implementations (AlpacaMarketDataClient, IBMarketDataClient)
-- EventPipeline throughput tests
-- End-to-end integration tests
+Automated test coverage is evolving. Refer to the `tests/` directory for the current suite and to the CI pipelines for test execution coverage.
 
 ---
 
