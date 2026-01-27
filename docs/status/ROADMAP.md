@@ -183,7 +183,7 @@ Items that should be addressed before new feature development.
 | TD-10 | Replace instance HttpClient with IHttpClientFactory | P0 | Medium | **Done** |
 | TD-11 | Replace Thread.Sleep with Task.Delay in async code | P0 | Low | **Done** |
 | TD-12 | Consolidate duplicate domain models | Medium | Medium | Pending (12 models) |
-| TD-13 | Migrate remaining providers to BaseHistoricalDataProvider | Low | Medium | **Partial** (4 of 8) |
+| TD-13 | Migrate remaining providers to BaseHistoricalDataProvider | Low | Medium | **Partial** (5 of 8) |
 | TD-14 | UWP service naming conflicts | Low | Low | **Done** |
 
 ---
@@ -360,12 +360,12 @@ These are small, focused tasks broken down from larger features. Each can typica
 | Sub-ID | Task | Effort | Dependencies | Status |
 |--------|------|--------|--------------|--------|
 | TD-13.1 | Migrate Alpaca Historical Provider | 2 hours | None | Pending |
-| TD-13.2 | Migrate Tiingo Historical Provider | 2 hours | None | Pending |
+| TD-13.2 | Migrate Tiingo Historical Provider | 2 hours | None | **Done** |
 | TD-13.3 | Migrate Finnhub Historical Provider | 2 hours | None | Pending |
 | TD-13.4 | Migrate Polygon Historical Provider | 2 hours | None | Pending |
 | TD-13.5 | Update provider tests | 2 hours | TD-13.1-TD-13.4 | Pending |
 
-**Completed Migrations:** Stooq, Yahoo Finance, Nasdaq Data Link, Alpha Vantage
+**Completed Migrations:** Stooq, Yahoo Finance, Nasdaq Data Link, Alpha Vantage, Tiingo
 
 ### TD-14: UWP Service Naming Conflicts - **COMPLETE**
 | Sub-ID | Task | Effort | Dependencies | Status |
@@ -451,7 +451,7 @@ These are small, focused tasks broken down from larger features. Each can typica
 | TD-11 | Replace Thread.Sleep with Task.Delay | 0.5 day | P0 | **Done** |
 | REF-1 | Create BaseHistoricalDataProvider | 1 day | P1 | **Done** |
 | REF-2 | Create shared utilities (SymbolNormalization, etc.) | 1 day | P1 | **Done** |
-| REF-3 | Migrate providers to base class | 2 days | P1 | **Partial** (4/8) |
+| REF-3 | Migrate providers to base class | 2 days | P1 | **Partial** (5/8) |
 | REF-4 | HttpResponseHandler for error handling | 0.5 day | P1 | **Done** |
 | REF-5 | SharedResiliencePolicies | 0.5 day | P1 | **Done** |
 

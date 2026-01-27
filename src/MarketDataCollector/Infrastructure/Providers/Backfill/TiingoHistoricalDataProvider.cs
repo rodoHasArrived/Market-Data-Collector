@@ -1,10 +1,7 @@
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading;
-using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Domain.Models;
-using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Http;
 using MarketDataCollector.Infrastructure.Utilities;
 using Serilog;
@@ -16,56 +13,65 @@ namespace MarketDataCollector.Infrastructure.Providers.Backfill;
 /// Provides excellent dividend-adjusted OHLCV data with full adjustment history.
 /// Coverage: 65,000+ US/international equities, ETFs, mutual funds.
 /// Free tier: 1,000 requests/day, 50 requests/hour.
+/// Extends BaseHistoricalDataProvider for common functionality.
 /// </summary>
 [ImplementsAdr("ADR-001", "Tiingo historical data provider implementation")]
 [ImplementsAdr("ADR-004", "All async methods support CancellationToken")]
-public sealed class TiingoHistoricalDataProvider : IHistoricalDataProvider, IDisposable
+public sealed class TiingoHistoricalDataProvider : BaseHistoricalDataProvider
 {
     private const string BaseUrl = "https://api.tiingo.com/tiingo/daily";
 
-    private readonly HttpClient _http;
-    private readonly RateLimiter _rateLimiter;
-    private readonly ILogger _log;
     private readonly string? _apiToken;
-    private bool _disposed;
 
-    public string Name => "tiingo";
-    public string DisplayName => "Tiingo (free tier)";
-    public string Description => "High-quality dividend-adjusted OHLCV for US/international equities with corporate actions.";
+    #region Abstract Property Implementations
 
-    public int Priority => 15;
-    public TimeSpan RateLimitDelay => TimeSpan.FromSeconds(1.5); // 50 requests/hour = ~72 seconds between requests
-    public int MaxRequestsPerWindow => 50;
-    public TimeSpan RateLimitWindow => TimeSpan.FromHours(1);
+    public override string Name => "tiingo";
+    public override string DisplayName => "Tiingo (free tier)";
+    public override string Description => "High-quality dividend-adjusted OHLCV for US/international equities with corporate actions.";
+    protected override string HttpClientName => HttpClientNames.TiingoHistorical;
 
-    public bool SupportsAdjustedPrices => true;
-    public bool SupportsIntraday => false;
-    public bool SupportsDividends => true;
-    public bool SupportsSplits => true;
-    public IReadOnlyList<string> SupportedMarkets => new[] { "US", "UK", "DE", "CA", "AU" };
+    #endregion
+
+    #region Virtual Property Overrides
+
+    public override int Priority => 15;
+    public override TimeSpan RateLimitDelay => TimeSpan.FromSeconds(1.5); // 50 requests/hour = ~72 seconds between requests
+    public override int MaxRequestsPerWindow => 50;
+    public override TimeSpan RateLimitWindow => TimeSpan.FromHours(1);
+    public override bool SupportsAdjustedPrices => true;
+    public override bool SupportsDividends => true;
+    public override bool SupportsSplits => true;
+    public override IReadOnlyList<string> SupportedMarkets => new[] { "US", "UK", "DE", "CA", "AU" };
+
+    #endregion
 
     public TiingoHistoricalDataProvider(string? apiToken = null, HttpClient? httpClient = null, ILogger? log = null)
+        : base(httpClient, log)
     {
-        _log = log ?? LoggingSetup.ForContext<TiingoHistoricalDataProvider>();
         _apiToken = apiToken ?? Environment.GetEnvironmentVariable("TIINGO_API_TOKEN");
 
-        // TD-10: Use HttpClientFactory instead of creating new HttpClient instances
-        _http = httpClient ?? HttpClientFactoryProvider.CreateClient(HttpClientNames.TiingoHistorical);
-        _http.DefaultRequestHeaders.Add("Content-Type", "application/json");
+        // Configure HTTP headers for Tiingo API
+        Http.DefaultRequestHeaders.Add("Content-Type", "application/json");
 
         if (!string.IsNullOrEmpty(_apiToken))
         {
-            _http.DefaultRequestHeaders.Add("Authorization", $"Token {_apiToken}");
+            Http.DefaultRequestHeaders.Add("Authorization", $"Token {_apiToken}");
         }
-
-        _rateLimiter = new RateLimiter(MaxRequestsPerWindow, RateLimitWindow, RateLimitDelay, _log);
     }
 
-    public async Task<bool> IsAvailableAsync(CancellationToken ct = default)
+    /// <summary>
+    /// Tiingo uses uppercase tickers with dots replaced by dashes.
+    /// </summary>
+    protected override string NormalizeSymbol(string symbol)
+    {
+        return SymbolNormalization.NormalizeForTiingo(symbol);
+    }
+
+    public override async Task<bool> IsAvailableAsync(CancellationToken ct = default)
     {
         if (string.IsNullOrEmpty(_apiToken))
         {
-            _log.Warning("Tiingo API token not configured. Set TIINGO_API_TOKEN environment variable or configure in settings.");
+            Log.Warning("Tiingo API token not configured. Set TIINGO_API_TOKEN environment variable or configure in settings.");
             return false;
         }
 
@@ -73,7 +79,7 @@ public sealed class TiingoHistoricalDataProvider : IHistoricalDataProvider, IDis
         {
             // Quick health check with metadata endpoint
             var url = $"{BaseUrl}/AAPL?token={_apiToken}";
-            using var response = await _http.GetAsync(url, ct).ConfigureAwait(false);
+            using var response = await Http.GetAsync(url, ct).ConfigureAwait(false);
             return response.IsSuccessStatusCode;
         }
         catch
@@ -82,23 +88,29 @@ public sealed class TiingoHistoricalDataProvider : IHistoricalDataProvider, IDis
         }
     }
 
-    public async Task<IReadOnlyList<HistoricalBar>> GetDailyBarsAsync(string symbol, DateOnly? from, DateOnly? to, CancellationToken ct = default)
+    public override async Task<IReadOnlyList<HistoricalBar>> GetDailyBarsAsync(
+        string symbol,
+        DateOnly? from,
+        DateOnly? to,
+        CancellationToken ct = default)
     {
         var adjustedBars = await GetAdjustedDailyBarsAsync(symbol, from, to, ct).ConfigureAwait(false);
         return adjustedBars.Select(b => b.ToHistoricalBar(preferAdjusted: true)).ToList();
     }
 
-    public async Task<IReadOnlyList<AdjustedHistoricalBar>> GetAdjustedDailyBarsAsync(string symbol, DateOnly? from, DateOnly? to, CancellationToken ct = default)
+    public override async Task<IReadOnlyList<AdjustedHistoricalBar>> GetAdjustedDailyBarsAsync(
+        string symbol,
+        DateOnly? from,
+        DateOnly? to,
+        CancellationToken ct = default)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
-
-        if (string.IsNullOrWhiteSpace(symbol))
-            throw new ArgumentException("Symbol is required", nameof(symbol));
+        ThrowIfDisposed();
+        ValidateSymbol(symbol);
 
         if (string.IsNullOrEmpty(_apiToken))
             throw new InvalidOperationException("Tiingo API token is required. Set TIINGO_API_TOKEN environment variable.");
 
-        await _rateLimiter.WaitForSlotAsync(ct).ConfigureAwait(false);
+        await WaitForRateLimitSlotAsync(ct).ConfigureAwait(false);
 
         var normalizedSymbol = NormalizeSymbol(symbol);
 
@@ -108,20 +120,21 @@ public sealed class TiingoHistoricalDataProvider : IHistoricalDataProvider, IDis
 
         var url = $"{BaseUrl}/{normalizedSymbol}/prices?startDate={startDate}&endDate={endDate}&token={_apiToken}";
 
-        _log.Information("Requesting Tiingo history for {Symbol} ({StartDate} to {EndDate})", symbol, startDate, endDate);
+        Log.Information("Requesting Tiingo history for {Symbol} ({StartDate} to {EndDate})", symbol, startDate, endDate);
 
         try
         {
-            using var response = await _http.GetAsync(url, ct).ConfigureAwait(false);
+            using var response = await Http.GetAsync(url, ct).ConfigureAwait(false);
 
             if (!response.IsSuccessStatusCode)
             {
                 var error = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
-                _log.Warning("Tiingo returned {Status} for {Symbol}: {Error}",
+                Log.Warning("Tiingo returned {Status} for {Symbol}: {Error}",
                     response.StatusCode, symbol, error);
 
                 if ((int)response.StatusCode == 429)
                 {
+                    RecordRateLimitHit(TimeSpan.FromMinutes(1));
                     throw new HttpRequestException($"Tiingo rate limit exceeded (429) for {symbol}. Retry-After: 60");
                 }
 
@@ -129,11 +142,11 @@ public sealed class TiingoHistoricalDataProvider : IHistoricalDataProvider, IDis
             }
 
             var json = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
-            var prices = JsonSerializer.Deserialize<List<TiingoPriceData>>(json);
+            var prices = DeserializeResponse<List<TiingoPriceData>>(json, symbol);
 
             if (prices is null || prices.Count == 0)
             {
-                _log.Warning("No data returned from Tiingo for {Symbol}", symbol);
+                Log.Warning("No data returned from Tiingo for {Symbol}", symbol);
                 return Array.Empty<AdjustedHistoricalBar>();
             }
 
@@ -150,8 +163,8 @@ public sealed class TiingoHistoricalDataProvider : IHistoricalDataProvider, IDis
                 if (from.HasValue && sessionDate < from.Value) continue;
                 if (to.HasValue && sessionDate > to.Value) continue;
 
-                // Validate OHLC
-                if (price.Open <= 0 || price.High <= 0 || price.Low <= 0 || price.Close <= 0)
+                // Validate OHLC using base class helper
+                if (!ValidateOhlc(price.Open, price.High, price.Low, price.Close, symbol, sessionDate))
                     continue;
 
                 // Calculate split factor from adjusted/raw close ratio
@@ -192,28 +205,14 @@ public sealed class TiingoHistoricalDataProvider : IHistoricalDataProvider, IDis
                 ));
             }
 
-            _log.Information("Fetched {Count} bars for {Symbol} from Tiingo", bars.Count, symbol);
+            Log.Information("Fetched {Count} bars for {Symbol} from Tiingo", bars.Count, symbol);
             return bars.OrderBy(b => b.SessionDate).ToList();
         }
         catch (JsonException ex)
         {
-            _log.Error(ex, "Failed to parse Tiingo response for {Symbol}", symbol);
+            Log.Error(ex, "Failed to parse Tiingo response for {Symbol}", symbol);
             throw new InvalidOperationException($"Failed to parse Tiingo data for {symbol}", ex);
         }
-    }
-
-    private static string NormalizeSymbol(string symbol)
-    {
-        // Tiingo uses uppercase tickers with dots replaced by dashes
-        return SymbolNormalization.NormalizeForTiingo(symbol);
-    }
-
-    public void Dispose()
-    {
-        if (_disposed) return;
-        _disposed = true;
-        _rateLimiter.Dispose();
-        _http.Dispose();
     }
 
     #region Tiingo API Models
