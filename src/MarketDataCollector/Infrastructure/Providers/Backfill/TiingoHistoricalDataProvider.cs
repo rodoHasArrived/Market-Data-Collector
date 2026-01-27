@@ -6,6 +6,7 @@ using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Http;
+using MarketDataCollector.Infrastructure.Utilities;
 using Serilog;
 
 namespace MarketDataCollector.Infrastructure.Providers.Backfill;
@@ -203,8 +204,8 @@ public sealed class TiingoHistoricalDataProvider : IHistoricalDataProvider, IDis
 
     private static string NormalizeSymbol(string symbol)
     {
-        // Tiingo uses standard uppercase tickers
-        return symbol.ToUpperInvariant().Replace(".", "-");
+        // Tiingo uses uppercase tickers with dots replaced by dashes
+        return SymbolNormalization.NormalizeForTiingo(symbol);
     }
 
     public void Dispose()
