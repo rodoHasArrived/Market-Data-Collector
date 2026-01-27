@@ -7,7 +7,50 @@ This document tracks implemented improvements and version history for the Market
 
 ---
 
-## Version 1.6.0 (Current)
+## Version 1.6.1 (Current)
+
+### Code Quality & Refactoring (2026-01-27)
+
+#### Technical Debt Resolution
+- **TD-9 (Async Void Methods)**: Fixed all 30+ async void instances
+  - OAuthRefreshService, DashboardViewModel, PendingOperationsQueueService
+  - DataExportViewModel, App.xaml.cs, UWP Views (4 pages)
+  - DetailedHealthCheck
+- **TD-10 (IHttpClientFactory)**: Complete implementation
+  - Named HTTP clients with Polly resilience policies
+  - 3 retries with exponential backoff (2s, 4s, 8s)
+  - Circuit breaker: 5 failures → 30s open
+- **TD-11 (Thread.Sleep)**: All blocking calls replaced with async Task.Delay
+
+#### Provider Refactoring
+- **BaseHistoricalDataProvider**: New base class for historical providers
+  - Standardized rate limiting, HTTP client management, response handling
+  - Migrated providers: Stooq, Yahoo Finance, Nasdaq Data Link, Alpha Vantage
+- **SymbolNormalization utility**: Centralized symbol formatting
+  - Provider-specific methods (NormalizeForTiingo, NormalizeForStooq, etc.)
+- **HttpResponseHandler utility**: Centralized HTTP error handling
+  - Consistent handling of 429/403/404 status codes
+
+#### Shared Utilities Created
+- `SharedResiliencePolicies` - Retry and circuit breaker policies
+- `SubscriptionManager` - Thread-safe subscription tracking
+- `EventBuffer<T>` - Generic buffering for storage sinks
+- `StorageChecksumService` - Unified SHA256 checksum computation
+- `CredentialValidator` - API credential validation
+
+#### UWP Improvements
+- Collector refinements (#23, #50, #51, #63)
+- Retention and storage services integrated with core API
+- HttpClientFactory initialization improved
+
+#### Documentation
+- Updated roadmap with Sprint 5 & 6, new technical debt items
+- Added duplicate code analysis report
+- Updated CLAUDE.md with v1.6.1 state
+
+---
+
+## Version 1.6.0
 
 ### New Features
 
