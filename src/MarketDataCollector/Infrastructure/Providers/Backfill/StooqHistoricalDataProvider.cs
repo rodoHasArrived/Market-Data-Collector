@@ -1,55 +1,87 @@
 using System.Globalization;
-using System.Linq;
-using System.Threading;
-using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Domain.Models;
-using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Http;
+using MarketDataCollector.Infrastructure.Utilities;
 using Serilog;
 
 namespace MarketDataCollector.Infrastructure.Providers.Backfill;
 
 /// <summary>
 /// Pulls free end-of-day historical bars from Stooq (https://stooq.pl).
+/// Extends BaseHistoricalDataProvider for common functionality.
 /// </summary>
 [ImplementsAdr("ADR-001", "Stooq historical data provider implementation")]
 [ImplementsAdr("ADR-004", "All async methods support CancellationToken")]
-public sealed class StooqHistoricalDataProvider : IHistoricalDataProvider
+public sealed class StooqHistoricalDataProvider : BaseHistoricalDataProvider
 {
-    private readonly HttpClient _http;
-    private readonly ILogger _log;
+    private const string BaseUrl = "https://stooq.pl/q/d/l";
 
-    public string Name => "stooq";
-    public string DisplayName => "Stooq (free EOD)";
-    public string Description => "Free daily OHLCV from stooq.pl (equities/ETFs, US suffix).";
+    public override string Name => "stooq";
+    public override string DisplayName => "Stooq (free EOD)";
+    public override string Description => "Free daily OHLCV from stooq.pl (equities/ETFs, US suffix).";
+    protected override string HttpClientName => HttpClientNames.StooqHistorical;
+
+    // Stooq has no documented rate limits, use conservative defaults
+    public override int Priority => 15;
 
     public StooqHistoricalDataProvider(HttpClient? httpClient = null, ILogger? log = null)
+        : base(httpClient, log)
     {
-        // TD-10: Use HttpClientFactory instead of creating new HttpClient instances
-        _http = httpClient ?? HttpClientFactoryProvider.CreateClient(HttpClientNames.StooqHistorical);
-        _log = log ?? LoggingSetup.ForContext<StooqHistoricalDataProvider>();
     }
 
-    public async Task<IReadOnlyList<HistoricalBar>> GetDailyBarsAsync(string symbol, DateOnly? from, DateOnly? to, CancellationToken ct = default)
+    /// <summary>
+    /// Stooq uses lowercase symbols with dots replaced by dashes.
+    /// </summary>
+    protected override string NormalizeSymbol(string symbol)
     {
-        if (string.IsNullOrWhiteSpace(symbol))
-            throw new ArgumentException("Symbol is required", nameof(symbol));
+        return SymbolNormalization.NormalizeForStooq(symbol);
+    }
 
-        var normalizedSymbol = Normalize(symbol);
-        var url = $"https://stooq.pl/q/d/l/?s={normalizedSymbol}.us&i=d";
-        _log.Information("Requesting Stooq history for {Symbol} ({Url})", symbol, url);
+    public override async Task<IReadOnlyList<HistoricalBar>> GetDailyBarsAsync(
+        string symbol,
+        DateOnly? from,
+        DateOnly? to,
+        CancellationToken ct = default)
+    {
+        ThrowIfDisposed();
+        ValidateSymbol(symbol);
 
-        using var resp = await _http.GetAsync(url, ct).ConfigureAwait(false);
-        if (!resp.IsSuccessStatusCode)
-            throw new InvalidOperationException($"Stooq returned {(int)resp.StatusCode} for symbol {symbol}");
+        await WaitForRateLimitSlotAsync(ct).ConfigureAwait(false);
 
-        var csv = await resp.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+        var normalizedSymbol = NormalizeSymbol(symbol);
+        var url = $"{BaseUrl}/?s={normalizedSymbol}.us&i=d";
+
+        Log.Information("Requesting Stooq history for {Symbol} ({Url})", symbol, url);
+
+        using var response = await Http.GetAsync(url, ct).ConfigureAwait(false);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var httpResult = await ResponseHandler.HandleResponseAsync(response, symbol, "daily bars", ct: ct).ConfigureAwait(false);
+            if (httpResult.IsNotFound)
+            {
+                Log.Warning("Stooq: Symbol {Symbol} not found", symbol);
+                return Array.Empty<HistoricalBar>();
+            }
+        }
+
+        var csv = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+        var bars = ParseCsvResponse(csv, symbol, from, to);
+
+        Log.Information("Fetched {Count} bars for {Symbol} from Stooq", bars.Count, symbol);
+        return bars.OrderBy(b => b.SessionDate).ToArray();
+    }
+
+    private List<HistoricalBar> ParseCsvResponse(string csv, string symbol, DateOnly? from, DateOnly? to)
+    {
         var bars = new List<HistoricalBar>();
-
         using var reader = new StringReader(csv);
-        var header = await reader.ReadLineAsync(); // Skip header row
+
+        // Skip header row
+        reader.ReadLine();
+
         string? line;
-        while ((line = await reader.ReadLineAsync()) is not null)
+        while ((line = reader.ReadLine()) is not null)
         {
             if (string.IsNullOrWhiteSpace(line)) continue;
 
@@ -58,6 +90,7 @@ public sealed class StooqHistoricalDataProvider : IHistoricalDataProvider
 
             if (!DateOnly.TryParse(parts[0], out var date)) continue;
 
+            // Apply date filter
             if (from is not null && date < from.Value) continue;
             if (to is not null && date > to.Value) continue;
 
@@ -67,16 +100,21 @@ public sealed class StooqHistoricalDataProvider : IHistoricalDataProvider
             if (!decimal.TryParse(parts[4], NumberStyles.Any, CultureInfo.InvariantCulture, out var close)) continue;
             if (!long.TryParse(parts[5], NumberStyles.Any, CultureInfo.InvariantCulture, out var volume)) continue;
 
-            var seq = date.DayNumber;
-            bars.Add(new HistoricalBar(symbol.ToUpperInvariant(), date, open, high, low, close, volume, Source: Name, SequenceNumber: seq));
+            // Validate OHLC
+            if (!IsValidOhlc(open, high, low, close)) continue;
+
+            bars.Add(new HistoricalBar(
+                Symbol: symbol.ToUpperInvariant(),
+                SessionDate: date,
+                Open: open,
+                High: high,
+                Low: low,
+                Close: close,
+                Volume: volume,
+                Source: Name,
+                SequenceNumber: date.DayNumber));
         }
 
-        _log.Information("Fetched {Count} bars for {Symbol} from Stooq", bars.Count, symbol);
-        return bars
-            .OrderBy(b => b.SessionDate)
-            .ToArray();
+        return bars;
     }
-
-    private static string Normalize(string symbol)
-        => symbol.Replace(".", "-").ToLowerInvariant();
 }
