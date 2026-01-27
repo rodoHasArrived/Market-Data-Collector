@@ -20,7 +20,7 @@ public sealed class LoggingService : IDisposable
     private readonly Channel<LogEntry> _logChannel;
     private readonly ConcurrentBag<ILogOutput> _outputs = [];
     private readonly CancellationTokenSource _shutdownCts = new();
-    private Task? _processingTask;
+    private readonly Task? _processingTask;
     private bool _disposed;
 
     public static LoggingService Instance
