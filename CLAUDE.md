@@ -187,10 +187,12 @@ Market-Data-Collector/
 │   ├── MarketDataCollector.Ui/       # Web dashboard (10 files)
 │   │   ├── Endpoints/                # HTTP endpoints
 │   │   └── wwwroot/                  # Static assets
-│   └── MarketDataCollector.Uwp/      # Windows desktop app
+│   └── MarketDataCollector.Uwp/      # Windows desktop app (WinUI 3)
 │       ├── Views/                    # XAML UI pages
 │       ├── ViewModels/               # MVVM view models
-│       └── Services/                 # Windows services
+│       ├── Services/                 # Windows services
+│       ├── Models/                   # UWP-specific models + SharedModelAliases.cs
+│       └── SharedModels/             # Linked source files from Contracts (compile-time)
 │
 ├── tests/                            # Test projects
 │   ├── MarketDataCollector.Tests/    # C# unit tests
@@ -571,6 +573,40 @@ The project uses GitHub Actions with 20 workflows in `.github/workflows/`:
 | Logging with string interpolation | Loses structured logging benefits |
 | Missing CancellationToken | Prevents graceful shutdown |
 | Missing `[ImplementsAdr]` attribute | Loses ADR traceability |
+
+---
+
+## UWP Desktop Application Architecture
+
+The UWP desktop application (`MarketDataCollector.Uwp`) uses **WinUI 3** and has a special architecture requirement:
+
+### Shared Source Files (Not Assembly Reference)
+
+The WinUI 3 XAML compiler rejects assemblies without WinRT metadata with the error:
+> "Assembly is not allowed in type universe"
+
+This prevents using a standard `<ProjectReference>` to `MarketDataCollector.Contracts`.
+
+**Solution:** Include Contracts source files directly during compilation:
+
+```xml
+<!-- In MarketDataCollector.Uwp.csproj -->
+<ItemGroup Condition="'$(IsWindows)' == 'true'">
+  <Compile Include="..\MarketDataCollector.Contracts\Configuration\*.cs"
+           Link="SharedModels\Configuration\%(Filename)%(Extension)" />
+  <!-- Similar for Api, Credentials, Backfill, Session, etc. -->
+</ItemGroup>
+```
+
+**Key Files:**
+- `Models/SharedModelAliases.cs` - Global using directives and type aliases for backwards compatibility
+- `Models/AppConfig.cs` - UWP-specific types only (e.g., `KeyboardShortcut`)
+- `SharedModels/` - Virtual folder containing linked source files from Contracts
+
+**Benefits:**
+- Eliminates ~1,300 lines of duplicated DTOs
+- Single source of truth in Contracts project
+- Type aliases maintain backwards compatibility (`AppConfig` → `AppConfigDto`)
 
 ---
 

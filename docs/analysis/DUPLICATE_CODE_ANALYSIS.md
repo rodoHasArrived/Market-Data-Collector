@@ -228,19 +228,21 @@ Both implement identical lock-based buffer patterns.
 
 ## 6. Summary Statistics
 
-| Category | Duplicate Instances | Files Affected | Est. LOC Savings |
-|----------|---------------------|----------------|------------------|
-| Domain Models | 12 models | 24 files | 600-800 lines |
-| HTTP Configuration | 3 classes | 2 files | 150-200 lines |
-| Symbol Normalization | 6 methods | 6 files | 30-50 lines |
-| Rate Limiter Init | 8 instances | 8 files | 50-80 lines |
-| HTTP Error Handling | 5 implementations | 5 files | 200-300 lines |
-| Subscription Mgmt | 5 implementations | 5 files | 300-400 lines |
-| Storage Checksum | 3 implementations | 3 files | 50-80 lines |
-| Buffer/Batching | 2 implementations | 2 files | 150-200 lines |
-| Retention Policy | 3 implementations | 3 files | 200-300 lines |
-| UWP Services | Various | 59 files | 800-1000 lines |
-| **Total** | **~50+ patterns** | **~100 files** | **2,500-3,500 lines** |
+| Category | Duplicate Instances | Files Affected | Est. LOC Savings | Status |
+|----------|---------------------|----------------|------------------|--------|
+| Domain Models | 12 models | 24 files | 600-800 lines | Pending |
+| HTTP Configuration | 3 classes | 2 files | 150-200 lines | ✅ Fixed |
+| Symbol Normalization | 6 methods | 6 files | 30-50 lines | ✅ Fixed |
+| Rate Limiter Init | 8 instances | 8 files | 50-80 lines | ✅ Fixed |
+| HTTP Error Handling | 5 implementations | 5 files | 200-300 lines | ✅ Fixed |
+| Subscription Mgmt | 5 implementations | 5 files | 300-400 lines | ✅ Fixed |
+| Storage Checksum | 3 implementations | 3 files | 50-80 lines | ✅ Fixed |
+| Buffer/Batching | 2 implementations | 2 files | 150-200 lines | ✅ Fixed |
+| Retention Policy | 3 implementations | 3 files | 200-300 lines | ✅ Fixed |
+| UWP DTO Duplication | ~1,300 lines | 3 files | 1,300+ lines | ✅ Fixed |
+| UWP Services | Various | 59 files | 800-1000 lines | Pending |
+| **Total (Original)** | **~50+ patterns** | **~100 files** | **2,500-3,500 lines** | |
+| **Remaining** | **~15 patterns** | **~85 files** | **~1,400-1,800 lines** | |
 
 ---
 
@@ -346,8 +348,23 @@ Establish `MarketDataCollector.Contracts` as the canonical source for:
 | Item | Reason | Impact |
 |------|--------|--------|
 | Domain model consolidation | 40+ files import `Domain.Models` | Requires namespace migration |
-| UWP HttpClient unification | WinUI 3 cannot reference main project | Intentional duplication |
 | UWP service renaming | Would break existing UWP consumers | Low priority |
+
+### Resolved Items (2026-01-27)
+
+| Item | Solution | Files Changed |
+|------|----------|---------------|
+| UWP DTO duplication (~1,300 lines) | Shared source files from Contracts | `MarketDataCollector.Uwp.csproj`, `Models/SharedModelAliases.cs`, `Models/AppConfig.cs` |
+| UWP CredentialModels duplication | Deleted, now from Contracts | `Models/CredentialModels.cs` (deleted) |
+| DateRangeInfo conflict | Renamed to `TaskDateRange` | `Models/OfflineTrackingModels.cs` |
+
+**Solution Details:**
+The WinUI 3 XAML compiler rejects assemblies without WinRT metadata ("Assembly is not allowed in type universe").
+Instead of duplicating DTOs, we now include Contracts source files directly via `<Compile Include="...">`:
+- Added shared source file includes in project file
+- Created `SharedModelAliases.cs` with global using directives for backwards compatibility
+- Reduced `AppConfig.cs` from ~1,313 lines to ~33 lines (UWP-specific types only)
+- Deleted `CredentialModels.cs` (now from Contracts)
 
 ### Notes on Domain Model Duplication
 

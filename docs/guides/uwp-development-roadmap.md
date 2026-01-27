@@ -1621,6 +1621,31 @@ Start-MDCBackfill -Symbols SPY,QQQ -Days 30 -Schedule "0 6 * * *"
 
 ## Implementation Notes
 
+### Shared Source Files Architecture (2026-01-27)
+
+The UWP project uses **shared source files** instead of assembly references for the Contracts library:
+
+**Why:** The WinUI 3 XAML compiler rejects assemblies without WinRT metadata with error "Assembly is not allowed in type universe".
+
+**Solution:**
+```xml
+<!-- In MarketDataCollector.Uwp.csproj -->
+<ItemGroup Condition="'$(IsWindows)' == 'true'">
+  <Compile Include="..\MarketDataCollector.Contracts\Configuration\*.cs"
+           Link="SharedModels\Configuration\%(Filename)%(Extension)" />
+</ItemGroup>
+```
+
+**Key Files:**
+- `Models/SharedModelAliases.cs` - Global using directives and type aliases
+- `Models/AppConfig.cs` - UWP-specific types only (e.g., `KeyboardShortcut`)
+- Contracts source files linked at compile time in `SharedModels/` virtual folder
+
+**Benefits:**
+- Eliminated ~1,300 lines of duplicated DTOs
+- Single source of truth in Contracts project
+- Type aliases maintain backwards compatibility
+
 ### UI/UX Consistency
 - All new features should follow existing WinUI 3 design patterns
 - Use the established CardStyle and theme resources
@@ -1650,4 +1675,4 @@ Start-MDCBackfill -Symbols SPY,QQQ -Days 30 -Schedule "0 6 * * *"
 
 ---
 
-*Last Updated: 2026-01-14*
+*Last Updated: 2026-01-27*
