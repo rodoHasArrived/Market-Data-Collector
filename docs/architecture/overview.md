@@ -103,14 +103,28 @@ The architecture supports multiple deployment modes:
   - `AlpacaHistoricalDataProvider` – Historical OHLCV bars, trades, quotes, and auctions
   - `YahooFinanceHistoricalDataProvider` – Free EOD data for 50K+ global securities
   - `StooqHistoricalDataProvider` – US equities EOD data
+  - `TiingoHistoricalDataProvider` – Dividend-adjusted historical data with corporate actions
+  - `FinnhubHistoricalDataProvider` – Global securities with fundamentals
+  - `AlphaVantageHistoricalDataProvider` – Intraday historical data
+  - `PolygonHistoricalDataProvider` – US equities historical data
   - `NasdaqDataLinkHistoricalDataProvider` – Alternative datasets via Quandl API
+  - `IBHistoricalDataProvider` – Historical data via Interactive Brokers API
   - `CompositeHistoricalDataProvider` – Automatic failover with rate-limit rotation
-  - `OpenFIGI Symbol Resolver` – Cross-provider symbol normalization
+  - `BaseHistoricalDataProvider` – Shared base class with common HTTP handling
+* **Symbol Search Providers** for symbol resolution:
+  - `AlpacaSymbolSearchProvider` – Symbol search via Alpaca Markets
+  - `FinnhubSymbolSearchProvider` – Global symbol search
+  - `PolygonSymbolSearchProvider` – US equities symbol search
+  - `OpenFigiSymbolResolver` – Cross-provider symbol normalization via OpenFIGI
 * **Resilience Layer**:
   - `CircuitBreaker` – Open/Closed/HalfOpen states with automatic recovery
   - `ConcurrentProviderExecutor` – Parallel operations with configurable strategies
   - `RateLimiter` – Per-provider rate limit tracking and throttling
   - `WebSocketResiliencePolicy` – Automatic reconnection with exponential backoff
+* **Infrastructure Utilities** in `Infrastructure/Utilities/`:
+  - `HttpResponseHandler` – Centralized HTTP error handling with structured logging
+  - `CredentialValidator` – API credential validation
+  - `SymbolNormalization` – Cross-provider symbol normalization
 * All streaming providers implement `IMarketDataClient` interface
 * All historical providers implement `IHistoricalDataProvider` interface
 * `IBCallbackRouter` normalizes IB callbacks into domain updates
@@ -417,6 +431,6 @@ The system includes several high-performance features:
 
 ---
 
-**Version:** 1.6.0
-**Last Updated:** 2026-01-19
+**Version:** 1.6.1
+**Last Updated:** 2026-01-27
 **See Also:** [c4-diagrams.md](c4-diagrams.md) | [domains.md](domains.md) | [why-this-architecture.md](why-this-architecture.md) | [provider-management.md](provider-management.md) | [F# Integration](../integrations/fsharp-integration.md)

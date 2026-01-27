@@ -1,7 +1,7 @@
 # Market Data Collector - Changelog
 
-**Last Updated:** 2026-01-26
-**Current Version:** 1.6.0
+**Last Updated:** 2026-01-27
+**Current Version:** 1.6.1
 
 This document tracks implemented improvements and version history for the Market Data Collector system.
 

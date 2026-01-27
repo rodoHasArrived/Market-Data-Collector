@@ -6,11 +6,12 @@ This document provides essential context for AI assistants (Claude, Copilot, etc
 
 Market Data Collector is a high-performance, cross-platform market data collection system built on **.NET 9.0** using **C# 11** and **F# 8.0**. It captures real-time and historical market microstructure data from multiple providers and persists it for downstream research, backtesting, and algorithmic trading.
 
-**Version:** 1.0.0 | **Status:** Production Ready | **Files:** 429 source files
+**Version:** 1.6.1 | **Status:** Production Ready | **Files:** 447 source files
 
 ### Key Capabilities
 - Real-time streaming from Interactive Brokers, Alpaca, NYSE, Polygon, StockSharp
-- Historical backfill from 9+ providers (Yahoo Finance, Stooq, Tiingo, Alpha Vantage, Finnhub, Nasdaq Data Link, etc.)
+- Historical backfill from 10+ providers (Yahoo Finance, Stooq, Tiingo, Alpha Vantage, Finnhub, Nasdaq Data Link, Polygon, IB, etc.)
+- Symbol search from multiple providers (Alpaca, Finnhub, Polygon, OpenFIGI)
 - Archival-first storage with Write-Ahead Logging (WAL)
 - Web dashboard and native UWP Windows desktop application
 - QuantConnect Lean Engine integration for backtesting
@@ -18,13 +19,14 @@ Market Data Collector is a high-performance, cross-platform market data collecti
 ### Project Statistics
 | Metric | Count |
 |--------|-------|
-| Total Source Files | 429 |
-| C# Files | ~389 |
-| F# Files | ~40 |
+| Total Source Files | 447 |
+| C# Files | 413 |
+| F# Files | 12 |
 | Test Files | 45 |
-| Documentation Files | 55+ |
+| Documentation Files | 56+ |
 | Main Projects | 5 (+ 3 test/benchmark) |
-| Provider Implementations | 7+ streaming, 8+ historical |
+| Provider Implementations | 5 streaming, 10+ historical |
+| Symbol Search Providers | 4 |
 | CI/CD Workflows | 20 |
 | Makefile Targets | 60+ |
 
@@ -641,4 +643,4 @@ dotnet restore /p:EnableWindowsTargeting=true -v diag
 
 ---
 
-*Last Updated: 2026-01-26*
+*Last Updated: 2026-01-27*

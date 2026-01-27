@@ -281,7 +281,7 @@ When `IBAPI` is NOT defined:
 
 ## Test Coverage
 
-### Existing Tests (33 test files):
+### Existing Tests (45 test files):
 
 **C# Tests (28 files):**
 
@@ -330,4 +330,4 @@ When `IBAPI` is NOT defined:
 
 ---
 
-*Last Updated: 2026-01-26*
+*Last Updated: 2026-01-27*
