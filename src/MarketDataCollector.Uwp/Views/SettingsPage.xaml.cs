@@ -363,7 +363,7 @@ public sealed partial class SettingsPage : Page
                 }
 
                 // Merge imported config with current config
-                var currentConfig = await _configService.LoadConfigAsync() ?? new Models.CollectorConfig();
+                var currentConfig = await _configService.LoadConfigAsync() ?? new AppConfig();
 
                 if (importedConfig.TryGetValue("DataSource", out var dataSource))
                     currentConfig.DataSource = dataSource.GetString();
@@ -830,9 +830,9 @@ public sealed partial class SettingsPage : Page
 /// </summary>
 public class CredentialDisplayInfo
 {
-    private readonly Models.CredentialInfo _credential;
+    private readonly CredentialInfo _credential;
 
-    public CredentialDisplayInfo(Models.CredentialInfo credential)
+    public CredentialDisplayInfo(CredentialInfo credential)
     {
         _credential = credential;
     }

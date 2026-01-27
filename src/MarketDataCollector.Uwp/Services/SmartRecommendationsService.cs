@@ -77,8 +77,8 @@ public sealed class SmartRecommendationsService
     }
 
     private async Task<List<QuickAction>> GetQuickActionsAsync(
-        Models.AppConfig? config,
-        Models.StorageAnalytics? analytics,
+        AppConfig? config,
+        StorageAnalytics? analytics,
         CancellationToken ct)
     {
         var actions = new List<QuickAction>();
@@ -160,8 +160,8 @@ public sealed class SmartRecommendationsService
     }
 
     private async Task<List<SuggestedBackfill>> GetSuggestedBackfillsAsync(
-        Models.AppConfig? config,
-        Models.StorageAnalytics? analytics,
+        AppConfig? config,
+        StorageAnalytics? analytics,
         CancellationToken ct)
     {
         var suggestions = new List<SuggestedBackfill>();
@@ -221,7 +221,7 @@ public sealed class SmartRecommendationsService
     }
 
     private async Task<List<DataQualityIssue>> GetDataQualityIssuesAsync(
-        Models.AppConfig? config,
+        AppConfig? config,
         CancellationToken ct)
     {
         var issues = new List<DataQualityIssue>();
@@ -248,8 +248,8 @@ public sealed class SmartRecommendationsService
     }
 
     private async Task<List<InsightMessage>> GetInsightsAsync(
-        Models.AppConfig? config,
-        Models.StorageAnalytics? analytics,
+        AppConfig? config,
+        StorageAnalytics? analytics,
         CancellationToken ct)
     {
         var insights = new List<InsightMessage>();
@@ -293,13 +293,13 @@ public sealed class SmartRecommendationsService
         return new Random().Next(0, 5); // Simulated
     }
 
-    private async Task<List<string>> GetSymbolsWithShortCoverageAsync(Models.SymbolConfig[] symbols, CancellationToken ct)
+    private async Task<List<string>> GetSymbolsWithShortCoverageAsync(SymbolConfig[] symbols, CancellationToken ct)
     {
         await Task.Delay(10, ct);
         return symbols.Take(3).Where(s => !string.IsNullOrEmpty(s.Symbol)).Select(s => s.Symbol!).ToList();
     }
 
-    private async Task<List<string>> GetSymbolsWithoutDataAsync(Models.SymbolConfig[] symbols, CancellationToken ct)
+    private async Task<List<string>> GetSymbolsWithoutDataAsync(SymbolConfig[] symbols, CancellationToken ct)
     {
         await Task.Delay(10, ct);
         return new List<string>(); // Simulated - in real implementation, check which symbols have no data
