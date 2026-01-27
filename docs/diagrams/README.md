@@ -1,7 +1,7 @@
 # Architecture Diagrams
 
 **Last Updated:** 2026-01-27
-**Version:** 1.6.1
+**Version:** 1.0.0
 
 This folder contains architecture diagrams for the Market Data Collector system in Graphviz DOT format.
 

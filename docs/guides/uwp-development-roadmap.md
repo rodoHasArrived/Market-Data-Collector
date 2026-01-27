@@ -1,7 +1,7 @@
 # UWP Desktop App Development Roadmap
 
 **Last Updated:** 2026-01-14
-**Version:** 1.5.2
+**Version:** 1.0.0
 
 This document outlines feature refinements and development roadmap for the Market Data Collector UWP Desktop Application.
 

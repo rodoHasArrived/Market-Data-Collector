@@ -13,27 +13,13 @@ This folder contains project status, roadmap, and changelog documentation for th
 ## Quick Links
 
 ### Current Status
-- **Version:** 1.6.1
-- **Status:** Production Ready
+- **Version:** 1.0.0 (repository snapshot)
+- **Status:** Active development
 - **Last Updated:** 2026-01-27
 
 ### Key Metrics
-- 116+ features implemented
-- 9 historical data providers (production ready)
-- 2 streaming providers (Alpaca, Interactive Brokers)
-- UWP Desktop App with 17+ pages and full CLI-equivalent services
-- 370+ total backlog items
-
-### What's New in v1.5.0
-- Apache Parquet storage (10-20x compression)
-- OpenTelemetry distributed tracing
-- 200+ technical indicators
-- Write-Ahead Logging for crash-safe persistence
-- Daily summary webhooks
-- Data quality validation (crossed markets, timestamp monotonicity)
-- UWP Desktop App with Admin/Maintenance and Advanced Analytics pages
-- CLI symbol management commands
-- Auto-configuration and user-friendly onboarding
+- See [production-status.md](production-status.md) for provider readiness and build-time requirements.
+- See [ROADMAP.md](ROADMAP.md) for planned work and backlog tracking.
 
 ## Related Documentation
 

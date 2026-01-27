@@ -1,7 +1,7 @@
 # Alpaca Market Data Setup Guide
 
 **Last Updated:** 2026-01-08
-**Version:** 1.5.0
+**Version:** 1.0.0
 
 This document provides instructions for setting up Alpaca market data with the Market Data Collector.
 

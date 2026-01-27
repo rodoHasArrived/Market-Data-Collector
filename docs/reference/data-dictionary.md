@@ -1000,4 +1000,4 @@ See `docs/ai-assistants/CLAUDE.fsharp.md` for F# domain model details.
 
 ---
 
-*Generated for Market Data Collector v1.5.0*
+*Generated for Market Data Collector v1.0.0 (repository snapshot)*

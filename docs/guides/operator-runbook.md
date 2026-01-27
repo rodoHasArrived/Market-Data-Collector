@@ -127,7 +127,7 @@ Access counters via `Metrics` static class in code:
 
 ### Legacy Status File (Removed)
 
-> **Removed:** The `--serve-status` option was removed in v1.6.1. Use `--ui` or `--http-port` instead.
+> **Removed:** The `--serve-status` option is deprecated. Use `--ui` or `--http-port` instead.
 
 The legacy `--serve-status` option has been removed. Use `--ui` to start the web dashboard which provides real-time access to the same information via `/status`, `/metrics`, and `/health` endpoints.
 
@@ -583,6 +583,6 @@ This ensures `ContractFactory` resolves to the correct IB contract.
 
 ---
 
-**Version:** 1.5.0
+**Version:** 1.0.0
 **Last Updated:** 2026-01-08
 **See Also:** [Configuration](configuration.md) | [Troubleshooting](troubleshooting.md) | [Architecture](../architecture/overview.md) | [Lean Integration](../integrations/lean-integration.md)

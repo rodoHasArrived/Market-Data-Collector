@@ -181,7 +181,7 @@ The `manifest.json` file contains comprehensive metadata:
   "name": "my-package",
   "description": "Research data package",
   "createdAt": "2024-01-03T12:00:00Z",
-  "creatorVersion": "1.5.0",
+  "creatorVersion": "1.0.0",
   "format": "Zip",
   "compression": "Deflate",
   "packageChecksum": "sha256:abc123...",

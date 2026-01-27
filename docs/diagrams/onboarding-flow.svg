@@ -10,7 +10,7 @@
 <title>OnboardingFlow</title>
 <polygon fill="white" stroke="none" points="-36,36 -36,-2182.38 1376,-2182.38 1376,36 -36,36"/>
 <text xml:space="preserve" text-anchor="middle" x="670" y="-2131.58" font-family="Helvetica,sans-Serif" font-size="12.00">Market Data Collector &#45; Onboarding &amp; Diagnostics Flow</text>
-<text xml:space="preserve" text-anchor="middle" x="670" y="-2117.18" font-family="Helvetica,sans-Serif" font-size="12.00">User Journey from Installation to Operation | v1.5.0</text>
+<text xml:space="preserve" text-anchor="middle" x="670" y="-2117.18" font-family="Helvetica,sans-Serif" font-size="12.00">User Journey from Installation to Operation | v1.0.0</text>
 <g id="clust1" class="cluster">
 <title>cluster_firstrun</title>
 <path fill="#fffaf0" stroke="#ed8936" d="M376,-1733.35C376,-1733.35 510,-1733.35 510,-1733.35 516,-1733.35 522,-1739.35 522,-1745.35 522,-1745.35 522,-1991.55 522,-1991.55 522,-1997.55 516,-2003.55 510,-2003.55 510,-2003.55 376,-2003.55 376,-2003.55 370,-2003.55 364,-1997.55 364,-1991.55 364,-1991.55 364,-1745.35 364,-1745.35 364,-1739.35 370,-1733.35 376,-1733.35"/>

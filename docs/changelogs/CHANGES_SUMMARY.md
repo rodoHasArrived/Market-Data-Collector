@@ -1,8 +1,6 @@
-# Changes Summary
+# Changes Summary (Historical)
 
-This document summarizes major changes and improvements to the Market Data Collector project.
-
-**Current Version:** 1.6.1 | **Last Updated:** 2026-01-27
+This document summarizes historical changes and improvements. It is not the authoritative status for the current repository snapshot.\n\n**Current Snapshot:** See `docs/status/CHANGELOG.md`\n**Last Updated:** 2026-01-27
 
 ---
 

@@ -1,7 +1,8 @@
 # Market Data Collector Documentation
 
-**Version:** 1.6.1
+**Version:** 1.0.0 (repository snapshot)
 **Last Updated:** 2026-01-27
+**Status:** Active development (see [Production Status](status/production-status.md))
 
 Welcome to the Market Data Collector documentation. This guide will help you find the information you need.
 

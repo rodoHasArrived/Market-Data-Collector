@@ -1,7 +1,7 @@
 # Historical Data Backfill Guide
 
 **Last Updated:** 2026-01-08
-**Version:** 1.5.0
+**Version:** 1.0.0
 
 This document provides a comprehensive guide for backfilling historical market data using the Market Data Collector.
 

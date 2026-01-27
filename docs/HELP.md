@@ -56,26 +56,17 @@ Welcome to the Market Data Collector! This comprehensive guide will help you get
 
 Market Data Collector is a high-performance, cross-platform market data collection system built on **.NET 9.0** using **C# 11** and **F# 8.0**. It captures real-time and historical market microstructure data from multiple providers and persists it for downstream research, backtesting, and algorithmic trading.
 
-**Version:** 1.6.0 | **Status:** Production Ready
+**Version:** 1.0.0 | **Status:** Active development (repository snapshot)
 
 ### Key Features
 
-- **Multi-Provider Support**: Interactive Brokers, Alpaca, NYSE, Polygon, and StockSharp
-- **Simultaneous Connections**: Connect to multiple providers at once for comparison and failover
-- **Real-Time Data Collection**: Tick-by-tick trades, Level 2 order books, and quotes
-- **Historical Backfill**: Download historical data from 9+ providers with automatic gap repair
-- **Archival-First Storage**: Write-Ahead Logging (WAL) for crash-safe persistence
-- **Flexible Storage**: Multiple file organization strategies with tiered compression
-- **Analysis-Ready Exports**: Export to Python/Pandas, R, QuantConnect Lean, PostgreSQL
-- **Offline Storage & Archival**: Portable packages, data completeness calendar, archive browser
-- **Batch Export Scheduler**: Automate recurring exports with format conversion
-- **Automatic Failover**: Configure failover rules between providers with circuit breaker pattern
-- **Web Dashboard**: Easy-to-use interface for configuration and monitoring
-- **Windows Desktop App**: Native UWP/XAML application with secure credential management
-- **Monolithic Core**: Simple, maintainable architecture with optional UI components
-- **High Performance**: Event-driven architecture with backpressure handling
-- **Production Ready**: Comprehensive error handling, logging, and Prometheus metrics
-- **Secure Credentials**: Windows CredentialPicker integration for API keys
+- **Multi-provider support**: Interactive Brokers (IBAPI build), Alpaca, NYSE, Polygon (stub unless configured), and StockSharp
+- **Real-time & historical data**: Streaming collectors plus historical backfill providers
+- **Archival-first storage**: Write-Ahead Logging (WAL) plus JSONL/Parquet outputs
+- **Packaging & exports**: Portable data packages and analysis exports
+- **Auto-configuration**: Wizard, quick auto-config, provider detection, credential validation
+- **Observability**: HTTP status endpoints and Prometheus metrics
+- **Web dashboard & Windows UI**: Cross-platform dashboard and a Windows-only UWP companion app
 
 ---
 
@@ -137,7 +128,7 @@ Run the collector in production mode:
 
 ## Auto-Configuration
 
-Market Data Collector v1.5 includes user-friendly auto-configuration features to help new users get started quickly.
+Market Data Collector includes user-friendly auto-configuration features to help new users get started quickly.
 
 ### Configuration Wizard
 
@@ -531,7 +522,7 @@ export NYSE__APIKEY=your-api-key
 
 ## Multi-Provider Support
 
-Market Data Collector v1.2+ supports connecting to multiple data providers simultaneously for enhanced data quality and reliability.
+Market Data Collector supports connecting to multiple data providers simultaneously for enhanced data quality and reliability.
 
 ### Simultaneous Connections
 
@@ -619,7 +610,7 @@ Configure automatic failover rules to maintain data collection when providers fa
 
 **Auto-Recovery**: When the primary provider recovers, subscriptions automatically migrate back.
 
-### Circuit Breaker Pattern (v1.3)
+### Circuit Breaker Pattern
 
 The circuit breaker pattern prevents cascading failures by temporarily disabling unhealthy providers:
 
@@ -642,7 +633,7 @@ The circuit breaker pattern prevents cascading failures by temporarily disabling
 
 The circuit opens after 5 consecutive failures, waits 1 minute, then allows a test request.
 
-### Concurrent Provider Executor (v1.3)
+### Concurrent Provider Executor
 
 Execute operations across multiple providers in parallel:
 
@@ -742,7 +733,7 @@ Historical bars are converted to the same JSONL format as real-time data for con
 {"timestamp":"2024-01-15T21:00:00Z","symbol":"AAPL","type":"HistoricalBar","open":150.0,"high":152.5,"low":149.5,"close":151.75,"volume":50000000}
 ```
 
-### Priority Backfill Queue (v1.3)
+### Priority Backfill Queue
 
 Sophisticated job scheduling with priority levels and dependencies:
 
@@ -761,7 +752,7 @@ Sophisticated job scheduling with priority levels and dependencies:
 - Pause/resume individual jobs
 - Concurrent execution with limits
 
-### Data Gap Detection & Repair (v1.3)
+### Data Gap Detection & Repair
 
 Automatically detect and repair gaps in historical data:
 
@@ -783,7 +774,7 @@ Automatically detect and repair gaps in historical data:
 | Partial | Warning | Incomplete data |
 | Holiday | Info | Expected market closure |
 
-### Data Quality Monitoring (v1.3)
+### Data Quality Monitoring
 
 Multi-dimensional quality scoring for all stored data:
 
@@ -928,9 +919,9 @@ Remove the symbol object from the `Symbols` array
 
 ---
 
-## Archival-First Storage (v1.5)
+## Archival-First Storage
 
-Market Data Collector v1.5 introduces an archival-first storage pipeline designed for crash-safe, long-term data preservation.
+Market Data Collector includes an archival-first storage pipeline designed for crash-safe, long-term data preservation.
 
 ### Write-Ahead Logging (WAL)
 
@@ -989,7 +980,7 @@ Ensure long-term data compatibility with schema versioning:
 
 ---
 
-## Analysis-Ready Exports (v1.5)
+## Analysis-Ready Exports
 
 Export collected data in formats optimized for external analysis tools.
 
@@ -1113,7 +1104,7 @@ See [docs/integrations/lean-integration.md](integrations/lean-integration.md) fo
 
 ## Offline Storage & Archival
 
-Market Data Collector v1.2 includes comprehensive tools for managing archived data offline.
+Market Data Collector includes tools for managing archived data offline.
 
 ### Portable Data Packager
 
@@ -1402,7 +1393,7 @@ Interactive wizard that guides you through configuration step by step.
 
 Automatically configures the application based on environment variables.
 
-#### Production Mode (Recommended)
+#### Monitoring Mode (Recommended)
 ```bash
 ./MarketDataCollector --http-port 8080 --watch-config
 ```
@@ -1467,7 +1458,7 @@ Automatically configures the application based on environment variables.
   --backfill-to 2024-12-31
 ```
 
-**Production deployment with custom port:**
+**Deployment with custom port:**
 ```bash
 ./MarketDataCollector --http-port 9090 --watch-config
 ```
@@ -2049,7 +2040,7 @@ docker-compose up -d
 | [guides/getting-started.md](guides/getting-started.md) | Step-by-step setup guide |
 | [guides/configuration.md](guides/configuration.md) | Configuration reference |
 | [guides/troubleshooting.md](guides/troubleshooting.md) | Troubleshooting guide |
-| [guides/operator-runbook.md](guides/operator-runbook.md) | Production operations |
+| [guides/operator-runbook.md](guides/operator-runbook.md) | Operations and deployment |
 | [architecture/overview.md](architecture/overview.md) | System architecture |
 | [architecture/storage-design.md](architecture/storage-design.md) | Storage design details |
 | [providers/backfill-guide.md](providers/backfill-guide.md) | Historical data guide |
@@ -2096,6 +2087,6 @@ Before contributing code:
 
 ---
 
-**Version:** 1.6.1
+**Version:** 1.0.0
 **Last Updated:** 2026-01-27
 **License:** See LICENSE file

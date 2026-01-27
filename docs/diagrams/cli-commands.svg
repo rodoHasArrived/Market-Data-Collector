@@ -10,7 +10,7 @@
 <title>CLICommands</title>
 <polygon fill="white" stroke="none" points="-36,36 -36,-436.4 2593,-436.4 2593,36 -36,36"/>
 <text xml:space="preserve" text-anchor="middle" x="1278.5" y="-385.6" font-family="Helvetica,sans-Serif" font-size="12.00">Market Data Collector &#45; CLI Commands Reference</text>
-<text xml:space="preserve" text-anchor="middle" x="1278.5" y="-371.2" font-family="Helvetica,sans-Serif" font-size="12.00">All Available Flags and Options | v1.5.0</text>
+<text xml:space="preserve" text-anchor="middle" x="1278.5" y="-371.2" font-family="Helvetica,sans-Serif" font-size="12.00">All Available Flags and Options | v1.0.0</text>
 <g id="clust1" class="cluster">
 <title>cluster_setup</title>
 <path fill="#ede9fe" stroke="#805ad5" d="M20,-116C20,-116 631,-116 631,-116 637,-116 643,-122 643,-128 643,-128 643,-203.6 643,-203.6 643,-209.6 637,-215.6 631,-215.6 631,-215.6 20,-215.6 20,-215.6 14,-215.6 8,-209.6 8,-203.6 8,-203.6 8,-128 8,-128 8,-122 14,-116 20,-116"/>
@@ -269,7 +269,7 @@
 <title>VERSION</title>
 <path fill="#fbd38d" stroke="black" d="M1995.52,-179.8C1995.52,-179.8 1924.48,-179.8 1924.48,-179.8 1918.48,-179.8 1912.48,-173.8 1912.48,-167.8 1912.48,-167.8 1912.48,-141.4 1912.48,-141.4 1912.48,-135.4 1918.48,-129.4 1924.48,-129.4 1924.48,-129.4 1995.52,-129.4 1995.52,-129.4 2001.52,-129.4 2007.52,-135.4 2007.52,-141.4 2007.52,-141.4 2007.52,-167.8 2007.52,-167.8 2007.52,-173.8 2001.52,-179.8 1995.52,-179.8"/>
 <text xml:space="preserve" text-anchor="middle" x="1960" y="-167.7" font-family="Helvetica,sans-Serif" font-size="9.00">&#45;&#45;version</text>
-<text xml:space="preserve" text-anchor="middle" x="1960" y="-146.9" font-family="Helvetica,sans-Serif" font-size="9.00">Show version: 1.5.0</text>
+<text xml:space="preserve" text-anchor="middle" x="1960" y="-146.9" font-family="Helvetica,sans-Serif" font-size="9.00">Show version: 1.0.0</text>
 <text xml:space="preserve" text-anchor="middle" x="1960" y="-136.1" font-family="Helvetica,sans-Serif" font-size="9.00">.NET runtime info</text>
 </g>
 <!-- MDC&#45;&gt;VERSION -->

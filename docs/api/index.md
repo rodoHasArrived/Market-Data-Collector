@@ -26,7 +26,7 @@ docfx docs/docfx/docfx.json
 - `StatusHttpServer` - HTTP monitoring server with Prometheus metrics
 - `BackfillService` - Historical data backfill job management
 
-### Storage & Archival Layer (v1.5.0)
+### Storage & Archival Layer
 - `WriteAheadLog` - Crash-safe persistence with transaction semantics
 - `ArchivalStorageService` - WAL-backed archival storage with checksums
 - `CompressionProfileManager` - Tiered compression profiles (LZ4/ZSTD/Gzip)
@@ -79,6 +79,6 @@ docfx docs/docfx/docfx.json
 
 ---
 
-**Version:** 1.6.1
+**Version:** 1.0.0
 **Last Updated:** 2026-01-27
 **See Also:** [Architecture Overview](../architecture/overview.md) | [Domain Model](../architecture/domains.md) | [Lean Integration](../integrations/lean-integration.md)

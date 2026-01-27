@@ -1,7 +1,7 @@
 # MarketDataCollector Project Context
 
 **Last Updated:** 2026-01-08
-**Version:** 1.5.0
+**Version:** 1.0.0
 
 ## Overview
 

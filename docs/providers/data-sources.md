@@ -1,7 +1,7 @@
 # Historical Data Sources Reference
 
 **Last Updated:** 2026-01-27
-**Version:** 1.6.1
+**Version:** 1.0.0
 
 This document catalogs available free and freemium data sources for historical equity backfilling, with implementation status for each.
 
@@ -11,18 +11,18 @@ This document catalogs available free and freemium data sources for historical e
 
 | Provider | Status | Coverage | Free Tier |
 |----------|--------|----------|-----------|
-| Alpaca | ✅ Implemented | US equities | Real-time + historical |
-| Yahoo Finance | ✅ Implemented | 50K+ global | Unlimited |
+| Alpaca | ✅ Implemented | US equities | Requires credentials |
+| Yahoo Finance | ✅ Implemented | 50K+ global | Unofficial API |
 | Stooq | ✅ Implemented | US equities | Unlimited |
 | Nasdaq Data Link | ✅ Implemented | Alternative data | Limited |
-| Tiingo | ✅ Implemented | 65K+ securities | 1K/day |
-| Finnhub | ✅ Implemented | 60K+ global | 60 calls/min |
-| Alpha Vantage | ✅ Implemented | US equities | 25/day |
-| Polygon (Historical) | ✅ Implemented | US equities | 5 calls/min |
-| IB Historical | ✅ Implemented | US equities | With account |
+| Tiingo | ✅ Implemented | 65K+ securities | Requires credentials |
+| Finnhub | ✅ Implemented | 60K+ global | Requires credentials |
+| Alpha Vantage | ✅ Implemented | US equities | Requires credentials |
+| Polygon (Historical) | ✅ Implemented | US equities | Requires credentials |
+| IB Historical | ⚠️ Requires IBAPI | US equities | With account |
 | Composite Provider | ✅ Implemented | Multi-source | N/A |
 | Interactive Brokers (Streaming) | ⚠️ Requires IBAPI | US equities | With account |
-| Polygon (Streaming) | ❌ Stub only | US equities | 5 calls/min |
+| Polygon (Streaming) | ⚠️ Partial | US equities | Requires credentials |
 
 ### Symbol Search Providers
 
@@ -40,7 +40,7 @@ This document catalogs available free and freemium data sources for historical e
 ### 1. Alpaca Historical Data
 
 **File:** `Infrastructure/Providers/Backfill/AlpacaHistoricalDataProvider.cs`
-**Status:** ✅ Production Ready
+**Status:** ✅ Implemented
 
 | Attribute | Details |
 |-----------|---------|
@@ -59,7 +59,7 @@ This document catalogs available free and freemium data sources for historical e
 ### 2. Yahoo Finance
 
 **File:** `Infrastructure/Providers/Backfill/YahooFinanceHistoricalDataProvider.cs`
-**Status:** ✅ Production Ready
+**Status:** ✅ Implemented
 
 | Attribute | Details |
 |-----------|---------|
@@ -84,7 +84,7 @@ https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?period1={unix}&period
 ### 3. Stooq
 
 **File:** `Infrastructure/Providers/Backfill/StooqHistoricalDataProvider.cs`
-**Status:** ✅ Production Ready
+**Status:** ✅ Implemented
 
 | Attribute | Details |
 |-----------|---------|
@@ -103,7 +103,7 @@ https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?period1={unix}&period
 ### 4. Nasdaq Data Link (formerly Quandl)
 
 **File:** `Infrastructure/Providers/Backfill/NasdaqDataLinkHistoricalDataProvider.cs`
-**Status:** ✅ Production Ready
+**Status:** ✅ Implemented
 
 | Attribute | Details |
 |-----------|---------|
@@ -122,7 +122,7 @@ https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?period1={unix}&period
 ### 5. Composite Provider
 
 **File:** `Infrastructure/Providers/Backfill/CompositeHistoricalDataProvider.cs`
-**Status:** ✅ Production Ready
+**Status:** ✅ Implemented
 
 **Features:**
 - Automatic failover across providers
@@ -169,7 +169,7 @@ dotnet build -p:DefineConstants=IBAPI
 ### 6. Tiingo
 
 **File:** `Infrastructure/Providers/Backfill/TiingoHistoricalDataProvider.cs`
-**Status:** ✅ Production Ready
+**Status:** ✅ Implemented
 
 | Attribute | Details |
 |-----------|---------|
@@ -190,7 +190,7 @@ https://api.tiingo.com/tiingo/daily/{symbol}/prices?startDate={from}&endDate={to
 ### 7. Finnhub
 
 **File:** `Infrastructure/Providers/Backfill/FinnhubHistoricalDataProvider.cs`
-**Status:** ✅ Production Ready
+**Status:** ✅ Implemented
 
 | Attribute | Details |
 |-----------|---------|
@@ -205,7 +205,7 @@ https://api.tiingo.com/tiingo/daily/{symbol}/prices?startDate={from}&endDate={to
 ### 8. Alpha Vantage
 
 **File:** `Infrastructure/Providers/Backfill/AlphaVantageHistoricalDataProvider.cs`
-**Status:** ✅ Production Ready
+**Status:** ✅ Implemented
 
 | Attribute | Details |
 |-----------|---------|
@@ -220,7 +220,7 @@ https://api.tiingo.com/tiingo/daily/{symbol}/prices?startDate={from}&endDate={to
 ### 9. Polygon (Historical)
 
 **File:** `Infrastructure/Providers/Backfill/PolygonHistoricalDataProvider.cs`
-**Status:** ✅ Production Ready
+**Status:** ✅ Implemented
 
 | Attribute | Details |
 |-----------|---------|
@@ -236,7 +236,7 @@ https://api.tiingo.com/tiingo/daily/{symbol}/prices?startDate={from}&endDate={to
 ### 10. Interactive Brokers (Historical)
 
 **File:** `Infrastructure/Providers/InteractiveBrokers/IBHistoricalDataProvider.cs`
-**Status:** ✅ Production Ready (requires IBAPI build flag)
+**Status:** ⚠️ Requires IBAPI build flag
 
 | Attribute | Details |
 |-----------|---------|
