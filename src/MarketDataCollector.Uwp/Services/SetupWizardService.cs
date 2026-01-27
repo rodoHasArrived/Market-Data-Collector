@@ -506,11 +506,11 @@ public sealed class SetupWizardService
     /// </summary>
     public async Task ApplyPresetAsync(SetupPreset preset, string provider, CancellationToken ct = default)
     {
-        var config = await _configService.LoadConfigAsync() ?? new Models.AppConfig();
+        var config = await _configService.LoadConfigAsync() ?? new AppConfig();
 
         config.DataSource = provider;
 
-        var symbols = preset.DefaultSymbols.Select(s => new Models.SymbolConfig
+        var symbols = preset.DefaultSymbols.Select(s => new SymbolConfig
         {
             Symbol = s,
             SubscribeTrades = preset.SubscribeTrades,
@@ -522,7 +522,7 @@ public sealed class SetupWizardService
         }).ToArray();
 
         config.Symbols = symbols;
-        config.Backfill ??= new Models.BackfillOptions();
+        config.Backfill ??= new BackfillConfig();
         config.Backfill.Enabled = preset.EnableBackfill;
 
         await _configService.SaveConfigAsync(config);
