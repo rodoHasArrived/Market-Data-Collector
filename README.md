@@ -73,6 +73,39 @@ make doctor
 .\scripts\install\install.ps1 -Mode Native
 ```
 
+### Windows Desktop App Install
+
+Install the signed Windows desktop app using MSIX/AppInstaller for a native setup/upgrade experience.
+
+**Prerequisites**
+- Windows 10/11 (build 19041 or newer recommended).
+- [App Installer](https://www.microsoft.com/store/productId/9NBLGGH4NNS1) from the Microsoft Store (required for `.appinstaller`).
+- If installing an unpackaged build, install the .NET 9 Desktop Runtime.
+
+**Install (AppInstaller)**
+1. Download the `.appinstaller` file from the release assets.
+2. Double-click it to launch App Installer.
+3. Select **Install** to complete setup.
+
+**Install (MSIX)**
+1. Download the MSIX bundle (`.msix`/`.msixbundle`) from the release assets.
+2. Double-click the file and follow the prompts.
+
+**CI artifacts (preview builds)**
+- GitHub Actions Desktop App Build workflow artifacts include an MSIX archive named `MarketDataCollector.Desktop-msix-x64.zip` for tag/manual runs. Download it from the workflow run artifacts and extract to get the MSIX package.  
+  https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/desktop-app.yml
+
+**Upgrade**
+- Re-open the latest `.appinstaller` file; App Installer detects updates automatically.
+- For MSIX, install the newer package version over the existing one.
+
+**Uninstall**
+- Open **Settings → Apps → Installed apps**, select **Market Data Collector Desktop**, and choose **Uninstall**.
+
+**Troubleshooting install**
+- **Missing signing certificate**: Install the signing cert or use a release-signed package; unsigned MSIX packages cannot be installed.
+- **Blocked package**: If Windows SmartScreen blocks the installer, choose **More info → Run anyway**, or unblock the downloaded file in **Properties**.
+
 ---
 
 ## Overview
