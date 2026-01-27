@@ -103,17 +103,22 @@ This document outlines feature refinements and development roadmap for the Marke
 ## Table of Contents
 
 1. [Recent Updates (January 2026)](#recent-updates-january-2026)
-2. [Feature Refinements](#feature-refinements)
-3. [New Feature Ideas](#new-feature-ideas)
-4. [Offline Storage & Archival Ideas (2026)](#offline-storage--archival-ideas-2026)
-5. [External Analysis Support (2026)](#external-analysis-support-2026)
-6. [Additional New Feature Ideas (2026)](#additional-new-feature-ideas-2026)
-7. [New Feature Ideas (January 2026)](#new-feature-ideas-january-2026)
-8. [Infrastructure & DevOps Features (2026)](#infrastructure--devops-features-2026)
-9. [Priority Matrix](#priority-matrix)
-10. [Implementation Notes](#implementation-notes)
+2. [Desktop-Ready Release Checklist](#desktop-ready-release-checklist)
+3. [Feature Refinements](#feature-refinements)
+4. [New Feature Ideas](#new-feature-ideas)
+5. [Offline Storage & Archival Ideas (2026)](#offline-storage--archival-ideas-2026)
+6. [External Analysis Support (2026)](#external-analysis-support-2026)
+7. [Additional New Feature Ideas (2026)](#additional-new-feature-ideas-2026)
+8. [New Feature Ideas (January 2026)](#new-feature-ideas-january-2026)
+9. [Infrastructure & DevOps Features (2026)](#infrastructure--devops-features-2026)
+10. [Priority Matrix](#priority-matrix)
+11. [Implementation Notes](#implementation-notes)
 
 ---
+
+## Desktop-Ready Release Checklist
+
+Release expectations are captured in the desktop-ready checklist, including must-ship vs. post-ship scope and acceptance criteria. Review it before cutting a release. See [docs/guides/uwp-release-checklist.md](uwp-release-checklist.md).
 
 ## Feature Refinements
 
