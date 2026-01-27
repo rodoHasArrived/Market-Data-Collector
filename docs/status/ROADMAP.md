@@ -13,19 +13,20 @@ This document provides the feature roadmap, backlog, and development priorities 
 | Category | Implemented | Pending | Total |
 |----------|-------------|---------|-------|
 | Core Features | 55+ | - | 55+ |
-| Technical Debt | 6 | 5 | 11 |
-| Technical Debt (P0) | 1 | 2 | 3 |
+| Technical Debt | 10 | 4 | 14 |
+| Technical Debt (P0) | 3 | 0 | 3 |
 | Quick Wins (≤2 days) | 44 | 81 | 125 |
 | Provider Integration | 5 | 17 | 22 |
 | Monitoring & Alerting | 24 | 0 | 24 |
 | Data Quality | 23 | 0 | 23 |
 | Storage & Archival | 9 | 4 | 13 |
+| Code Refactoring | 7 | 3 | 10 |
 | Cloud Integration | 0 | 100+ | 100+ |
-| **Total** | **165** | **211+** | **376+** |
+| **Total** | **180+** | **209+** | **389+** |
 
 ---
 
-## What's Implemented (v1.6.0)
+## What's Implemented (v1.6.1)
 
 ### Core Data Collection
 - [x] Multi-provider streaming (Alpaca, Interactive Brokers, NYSE, Polygon stub)
@@ -116,9 +117,32 @@ This document provides the feature roadmap, backlog, and development priorities 
 
 ---
 
-## Recent Updates (2026-01-26)
+## Recent Updates (2026-01-27)
 
-### Dependency Updates
+### Major Refactoring (2026-01-27)
+- **BaseHistoricalDataProvider**: Created shared base class for all historical providers
+  - Migrated: Stooq, Yahoo Finance, Nasdaq Data Link, Alpha Vantage providers
+  - Includes: Rate limiting, HTTP client management, response handling
+- **Shared Utilities**: Centralized common functionality
+  - `SymbolNormalization` - Provider-agnostic symbol formatting
+  - `HttpResponseHandler` - Centralized HTTP error handling
+  - `SharedResiliencePolicies` - Retry and circuit breaker policies
+  - `SubscriptionManager` - Thread-safe subscription tracking
+  - `EventBuffer<T>` - Generic buffering for storage sinks
+  - `StorageChecksumService` - Unified SHA256 checksum computation
+  - `CredentialValidator` - API credential validation
+
+### Technical Debt Resolution (2026-01-27)
+- **TD-9 (Async Void Methods)**: All P0 async void instances fixed (TD-9.1 through TD-9.7)
+- **TD-10 (IHttpClientFactory)**: Complete implementation with Polly resilience policies
+- **TD-11 (Thread.Sleep)**: All blocking calls replaced with async Task.Delay
+
+### UWP Enhancements (2026-01-27)
+- Collector refinements (#23, #50, #51, #63)
+- Retention and storage services integrated with core API
+- HttpClientFactory initialization improved
+
+### Dependency Updates (2026-01-26)
 - **OpenTelemetry**: Updated all OpenTelemetry packages to v1.15.0
   - `OpenTelemetry.Instrumentation.Http` → 1.15.0
   - `OpenTelemetry.Instrumentation.AspNetCore` → 1.15.0
@@ -126,7 +150,7 @@ This document provides the feature roadmap, backlog, and development priorities 
   - `OpenTelemetry.Exporter.OpenTelemetryProtocol` → 1.15.0
   - `OpenTelemetry.Extensions.Hosting` → 1.15.0
 
-### CI/CD Improvements
+### CI/CD Improvements (2026-01-26)
 - Updated GitHub Actions to latest versions:
   - `actions/upload-artifact` → v6
   - `actions/download-artifact` → v7
@@ -153,11 +177,14 @@ Items that should be addressed before new feature development.
 | TD-4 | Fix UWP/Core API endpoint mismatch | Medium | Low | **Done** |
 | TD-5 | Create shared contracts library (UWP/Core) | Medium | Medium | Pending |
 | TD-6 | Add missing integration tests | Low | High | Pending |
-| TD-7 | Standardize error handling patterns | Medium | Medium | Pending |
+| TD-7 | Standardize error handling patterns | Medium | Medium | **Partial** (HttpResponseHandler done) |
 | TD-8 | Remove deprecated `--serve-status` option | Low | Low | **Done** |
-| **TD-9** | **Fix async void methods (30+ instances)** | **P0** | **Medium** | **Pending** |
-| **TD-10** | **Replace instance HttpClient with IHttpClientFactory** | **P0** | **Medium** | **Pending** |
-| **TD-11** | **Replace Thread.Sleep with Task.Delay in async code** | **P0** | **Low** | **Done** |
+| TD-9 | Fix async void methods (30+ instances) | P0 | Medium | **Done** (TD-9.1-9.7) |
+| TD-10 | Replace instance HttpClient with IHttpClientFactory | P0 | Medium | **Done** |
+| TD-11 | Replace Thread.Sleep with Task.Delay in async code | P0 | Low | **Done** |
+| TD-12 | Consolidate duplicate domain models | Medium | Medium | Pending (12 models) |
+| TD-13 | Migrate remaining providers to BaseHistoricalDataProvider | Low | Medium | **Partial** (4 of 8) |
+| TD-14 | UWP service naming conflicts | Low | Low | Pending |
 
 ---
 
@@ -274,7 +301,7 @@ These are small, focused tasks broken down from larger features. Each can typica
 | PROV-22.8 | Add storage configuration step | 1 hour | PROV-22.2 |
 | PROV-22.9 | Add --wizard flag to Program.cs | 0.5 hour | PROV-22.6 |
 
-### TD-9: Fix Async Void Methods (P0)
+### TD-9: Fix Async Void Methods (P0) - **COMPLETE**
 | Sub-ID | Task | Effort | Dependencies | Status |
 |--------|------|--------|--------------|--------|
 | TD-9.1 | Fix async void in OAuthRefreshService (OnRefreshTimerElapsed, OnExpirationCheckElapsed) | 1 hour | None | **Done** |
@@ -284,8 +311,10 @@ These are small, focused tasks broken down from larger features. Each can typica
 | TD-9.5 | Fix async void in App.xaml.cs (OnLaunched, OnAppExit) | 2 hours | None | **Done** |
 | TD-9.6 | Fix async void in UWP Views (SymbolMappingPage, MainPage, SetupWizardPage, CollectionSessionPage) | 3 hours | None | **Done** |
 | TD-9.7 | Fix async void in DetailedHealthCheck | 1 hour | None | **Done** |
-| TD-9.8 | Add try-catch with logging to converted async Task methods | 2 hours | TD-9.1 to TD-9.7 | Pending |
+| TD-9.8 | Add try-catch with logging to converted async Task methods | 2 hours | TD-9.1 to TD-9.7 | **Done** |
 | TD-9.9 | Add unit tests for exception handling in async paths | 2 hours | TD-9.8 | Pending |
+
+**Note:** All critical async void methods have been fixed. Error handling with logging was added during the fixes.
 
 ### TD-10: Replace Instance HttpClient with IHttpClientFactory (P0) - **COMPLETE**
 | Sub-ID | Task | Effort | Dependencies | Status |
@@ -307,13 +336,44 @@ These are small, focused tasks broken down from larger features. Each can typica
 - Retry policy: 3 retries with exponential backoff (2s, 4s, 8s) for transient errors
 - Circuit breaker: Opens after 5 consecutive failures, stays open for 30s
 
-### TD-11: Replace Thread.Sleep with Task.Delay (P0)
+### TD-11: Replace Thread.Sleep with Task.Delay (P0) - **COMPLETE**
 | Sub-ID | Task | Effort | Dependencies | Status |
 |--------|------|--------|--------------|--------|
 | TD-11.1 | Fix ConnectionWarmUp.cs Thread.Sleep(10) → await Task.Delay(10) | 0.5 hour | None | **Done** |
 | TD-11.2 | Fix ConfigWatcher.cs Thread.Sleep(delayMs) → await Task.Delay(delayMs) | 0.5 hour | None | **Done** |
 | TD-11.3 | Ensure calling methods are properly async | 1 hour | TD-11.1, TD-11.2 | **Done** |
 | TD-11.4 | Add CancellationToken support to delay operations | 1 hour | TD-11.3 | **Done** |
+
+### TD-12: Consolidate Duplicate Domain Models
+| Sub-ID | Task | Effort | Dependencies |
+|--------|------|--------|--------------|
+| TD-12.1 | Identify all imports of `Domain.Models` namespace | 1 hour | None |
+| TD-12.2 | Create migration script for namespace changes | 2 hours | TD-12.1 |
+| TD-12.3 | Update 40+ files to use `Contracts.Domain.Models` | 2 hours | TD-12.2 |
+| TD-12.4 | Delete duplicate models from `Domain/Models/` | 0.5 hour | TD-12.3 |
+| TD-12.5 | Update tests and verify builds | 1 hour | TD-12.4 |
+| TD-12.6 | Consider global using directives | 0.5 hour | TD-12.3 |
+
+**Note:** This affects 12 duplicate models across Domain and Contracts. See `docs/analysis/DUPLICATE_CODE_ANALYSIS.md` for details.
+
+### TD-13: Migrate Remaining Providers to BaseHistoricalDataProvider
+| Sub-ID | Task | Effort | Dependencies | Status |
+|--------|------|--------|--------------|--------|
+| TD-13.1 | Migrate Alpaca Historical Provider | 2 hours | None | Pending |
+| TD-13.2 | Migrate Tiingo Historical Provider | 2 hours | None | Pending |
+| TD-13.3 | Migrate Finnhub Historical Provider | 2 hours | None | Pending |
+| TD-13.4 | Migrate Polygon Historical Provider | 2 hours | None | Pending |
+| TD-13.5 | Update provider tests | 2 hours | TD-13.1-TD-13.4 | Pending |
+
+**Completed Migrations:** Stooq, Yahoo Finance, Nasdaq Data Link, Alpha Vantage
+
+### TD-14: UWP Service Naming Conflicts
+| Sub-ID | Task | Effort | Dependencies |
+|--------|------|--------|--------------|
+| TD-14.1 | Rename `AnalysisExportService` to `UwpAnalysisExportService` | 0.5 hour | None |
+| TD-14.2 | Rename `DataQualityService` to `UwpDataQualityService` | 0.5 hour | None |
+| TD-14.3 | Update all UWP references | 1 hour | TD-14.1, TD-14.2 |
+| TD-14.4 | Document naming convention for UWP services | 0.5 hour | TD-14.3 |
 
 ### ADQ-2: Reference Price Validator
 | Sub-ID | Task | Effort | Dependencies |
@@ -364,7 +424,7 @@ These are small, focused tasks broken down from larger features. Each can typica
 | MON-18 | Backpressure Alert | 1 day | P1 | **Done** |
 | MON-6 | Connection Status Webhook | 1 day | P1 | **Done** |
 
-### Sprint 3: Developer Experience - **COMPLETE**
+### Sprint 3: Developer Experience - **IN PROGRESS**
 | ID | Feature | Effort | Priority | Status |
 |----|---------|--------|----------|--------|
 | QW-16 | Diagnostic Bundle Generator | 1 day | P1 | **Done** |
@@ -380,6 +440,26 @@ These are small, focused tasks broken down from larger features. Each can typica
 | PERF-2 | Memory-Mapped File Reader | 1 day | P1 |
 | ARCH-1 | Dead Letter Queue | 3 days | P1 |
 | ARCH-2 | gRPC Streaming Endpoints | 1 week | P1 |
+
+### Sprint 5: Code Quality & Refactoring - **COMPLETE**
+| ID | Feature | Effort | Priority | Status |
+|----|---------|--------|----------|--------|
+| TD-9 | Fix async void methods | 2 days | P0 | **Done** |
+| TD-10 | Implement IHttpClientFactory | 2 days | P0 | **Done** |
+| TD-11 | Replace Thread.Sleep with Task.Delay | 0.5 day | P0 | **Done** |
+| REF-1 | Create BaseHistoricalDataProvider | 1 day | P1 | **Done** |
+| REF-2 | Create shared utilities (SymbolNormalization, etc.) | 1 day | P1 | **Done** |
+| REF-3 | Migrate providers to base class | 2 days | P1 | **Partial** (4/8) |
+| REF-4 | HttpResponseHandler for error handling | 0.5 day | P1 | **Done** |
+| REF-5 | SharedResiliencePolicies | 0.5 day | P1 | **Done** |
+
+### Sprint 6: Code Consolidation (Next)
+| ID | Feature | Effort | Priority | Status |
+|----|---------|--------|----------|--------|
+| TD-12 | Consolidate duplicate domain models | 1.5 days | P1 | Pending |
+| TD-13 | Migrate remaining providers to base class | 1 day | P1 | Pending |
+| QW-15 | Query Endpoint for Historical Data | 2 days | P1 | Pending |
+| DEV-9 | API Explorer / Swagger UI | 2 days | P2 | Pending |
 
 ---
 
@@ -448,6 +528,20 @@ These are small, focused tasks broken down from larger features. Each can typica
 | STO-5 | Batch Write Optimization | 1 day | P1 | Pending |
 | STO-7 | Storage Optimization Advisor | 2 weeks | P2 | Pending |
 | STO-11 | Tiered Storage Migration | 3 weeks | P2 | Pending |
+
+### Code Refactoring & Quality
+| ID | Feature | Effort | Priority | Status |
+|----|---------|--------|----------|--------|
+| REF-1 | BaseHistoricalDataProvider base class | 1 day | P1 | **Done** |
+| REF-2 | SymbolNormalization utility | 0.5 day | P1 | **Done** |
+| REF-3 | HttpResponseHandler utility | 0.5 day | P1 | **Done** |
+| REF-4 | SharedResiliencePolicies (Polly) | 0.5 day | P1 | **Done** |
+| REF-5 | SubscriptionManager base class | 0.5 day | P1 | **Done** |
+| REF-6 | EventBuffer<T> generic class | 0.5 day | P1 | **Done** |
+| REF-7 | StorageChecksumService | 0.5 day | P1 | **Done** |
+| REF-8 | CredentialValidator utility | 0.5 day | P1 | **Done** |
+| REF-9 | BaseStreamingDataClient | 1 day | P2 | Pending |
+| REF-10 | RetentionPolicyManager consolidation | 1 day | P2 | Pending |
 
 ### Architecture & Infrastructure
 | ID | Feature | Effort | Priority |
@@ -536,6 +630,27 @@ These are new feature ideas for consideration in upcoming development cycles.
 
 ---
 
+## Recommended Next Steps
+
+Based on the current state of the project, the following items are recommended for the next development cycle:
+
+### Immediate Priorities (Sprint 6)
+1. **TD-12: Domain Model Consolidation** - Eliminate 12 duplicate models between `Domain/` and `Contracts/`
+2. **TD-13: Complete Provider Migration** - Migrate remaining 4 providers to `BaseHistoricalDataProvider`
+3. **QW-15: Historical Data Query Endpoint** - Enable querying stored data via HTTP API
+
+### Short-term Goals
+1. **REF-9: BaseStreamingDataClient** - Apply same refactoring pattern to streaming providers
+2. **DEV-9: Swagger/OpenAPI** - Improve API discoverability
+3. **PROV-7: Polygon WebSocket** - Complete the stub implementation
+
+### Technical Debt Focus
+- All P0 technical debt items are now resolved (TD-9, TD-10, TD-11)
+- Remaining items are medium priority code quality improvements
+- See `docs/analysis/DUPLICATE_CODE_ANALYSIS.md` for detailed refactoring guidance
+
+---
+
 ## Priority Legend
 
 - **P0** = Critical (blocks production use)
@@ -558,10 +673,11 @@ These are new feature ideas for consideration in upcoming development cycles.
 
 - [Production Status](production-status.md) - Deployment readiness assessment
 - [Changelog](CHANGELOG.md) - Recent changes and improvements
+- [Duplicate Code Analysis](../analysis/DUPLICATE_CODE_ANALYSIS.md) - Code consolidation opportunities
 - [Architecture Overview](../architecture/overview.md) - System design
 - [Getting Started](../guides/getting-started.md) - Setup guide
 - [Configuration](../guides/configuration.md) - Config reference
 
 ---
 
-*This is a living document. Review and update priorities quarterly based on user feedback and operational needs.*
+*This is a living document. Last updated: 2026-01-27. Review and update priorities quarterly based on user feedback and operational needs.*

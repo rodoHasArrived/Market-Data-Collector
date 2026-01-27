@@ -1,7 +1,7 @@
 # Market Data Collector - Production Status
 
-**Last Updated:** 2026-01-26
-**Version:** 1.6.0
+**Last Updated:** 2026-01-27
+**Version:** 1.6.1
 **Status:** Production Ready
 
 This document consolidates the architecture assessment and production readiness information for the Market Data Collector system.
@@ -273,9 +273,13 @@ When `IBAPI` is NOT defined:
 | ~~Add authentication to HTTP endpoints~~ | ~~High~~ | ~~Low~~ | ~~Fixed in v1.5.0~~ |
 | ~~Complete Alpaca quote message handling~~ | ~~Medium~~ | ~~Low~~ | ~~Fixed in v1.5.0~~ |
 | ~~Fix UWP/Core API endpoint mismatch~~ | ~~Medium~~ | ~~Low~~ | ~~Fixed in v1.5.0~~ |
+| ~~Fix async void methods (TD-9)~~ | ~~P0~~ | ~~Medium~~ | ~~Fixed in v1.6.1~~ |
+| ~~Replace HttpClient instances with IHttpClientFactory (TD-10)~~ | ~~P0~~ | ~~Medium~~ | ~~Fixed in v1.6.1~~ |
+| ~~Replace Thread.Sleep with Task.Delay (TD-11)~~ | ~~P0~~ | ~~Low~~ | ~~Fixed in v1.6.1~~ |
 | Create shared contracts library | Medium | Medium | Medium |
+| Consolidate duplicate domain models (TD-12) | Medium | Medium | Medium |
 | Add missing integration tests | Low | High | Medium |
-| Standardize error handling patterns | Medium | Medium | Medium |
+| Standardize error handling patterns | Medium | Medium | Partial (HttpResponseHandler done) |
 
 ---
 
