@@ -51,6 +51,177 @@ The current Windows desktop application (`MarketDataCollector.Uwp`) uses **WinUI
 
 ---
 
+## Immediate Solutions (Without Framework Change)
+
+Before considering a full migration, there are practical solutions to address the core pain points while staying on WinUI 3.
+
+### Problem 1: Cannot Reference MarketDataCollector.Contracts
+
+**Root Cause:** The WinUI 3 XAML compiler rejects assemblies that don't have Windows Runtime metadata, producing error: `"Assembly is not allowed in type universe"`.
+
+**Current Impact:** 1,300+ lines of duplicated DTOs in `src/MarketDataCollector.Uwp/Models/AppConfig.cs` that must be manually synchronized with `MarketDataCollector.Contracts`.
+
+#### Solution A: Shared Source Files (Recommended)
+
+Use MSBuild `<Compile Link="...">` to include source files directly without assembly reference:
+
+```xml
+<!-- In MarketDataCollector.Uwp.csproj -->
+<ItemGroup Condition="'$(IsWindows)' == 'true'">
+  <!-- Share source files from Contracts project -->
+  <Compile Include="..\MarketDataCollector.Contracts\Api\*.cs"
+           Link="SharedModels\Api\%(Filename)%(Extension)" />
+  <Compile Include="..\MarketDataCollector.Contracts\Configuration\*.cs"
+           Link="SharedModels\Configuration\%(Filename)%(Extension)" />
+  <Compile Include="..\MarketDataCollector.Contracts\Backfill\*.cs"
+           Link="SharedModels\Backfill\%(Filename)%(Extension)" />
+  <!-- Add other folders as needed -->
+</ItemGroup>
+```
+
+**Pros:**
+- Zero code duplication
+- Changes in Contracts immediately reflected in UWP
+- No build tool changes required
+- Namespace consistency maintained
+
+**Cons:**
+- Need to ensure Contracts code doesn't use APIs unavailable in WinUI
+- Linked files appear in Solution Explorer (can be hidden)
+
+**Implementation:**
+1. Audit `MarketDataCollector.Contracts` for Windows-incompatible APIs
+2. Add `<Compile Link>` items to UWP project
+3. Delete local `Models/AppConfig.cs` (keep credential/offline-specific models)
+4. Verify build succeeds
+
+#### Solution B: Source Generator
+
+Create a source generator that reads Contracts types and generates WinUI-compatible mirrors at build time:
+
+```csharp
+[Generator]
+public class ContractsMirrorGenerator : ISourceGenerator
+{
+    public void Execute(GeneratorExecutionContext context)
+    {
+        // Reflect over Contracts assembly and generate mirror types
+    }
+}
+```
+
+**Pros:**
+- Automated synchronization
+- Can transform types if needed (add WinUI attributes, etc.)
+- Single source of truth
+
+**Cons:**
+- More complex to implement and debug
+- Build-time dependency on Contracts
+
+#### Solution C: Shared Project (.shproj)
+
+Create a shared project containing the models:
+
+```
+MarketDataCollector.Models.Shared/
+├── MarketDataCollector.Models.Shared.shproj
+├── Api/
+│   └── StatusModels.cs
+├── Configuration/
+│   └── AppConfigDto.cs
+└── Backfill/
+    └── BackfillProgress.cs
+```
+
+Both `MarketDataCollector.Contracts` and `MarketDataCollector.Uwp` reference the shared project:
+
+```xml
+<Import Project="..\MarketDataCollector.Models.Shared\MarketDataCollector.Models.Shared.projitems"
+        Label="Shared" />
+```
+
+**Pros:**
+- True single source of models
+- Works with any .NET target framework
+- Visual Studio has good tooling support
+
+**Cons:**
+- Requires restructuring Contracts project
+- Shared projects can become unwieldy at scale
+
+### Problem 2: Complex Windows SDK Build Requirements
+
+**Root Cause:** WinUI 3 requires `net9.0-windows10.0.19041.0` TFM and Windows SDK tooling.
+
+#### Solution: Improved Cross-Platform Build Stubs
+
+The current stub approach is good. Enhance it with better conditional compilation:
+
+```xml
+<!-- Directory.Build.props -->
+<PropertyGroup>
+  <IsWindowsBuild Condition="$([MSBuild]::IsOSPlatform('Windows'))">true</IsWindowsBuild>
+  <SkipUwpBuild Condition="'$(IsWindowsBuild)' != 'true'">true</SkipUwpBuild>
+</PropertyGroup>
+
+<!-- In solution filter for CI -->
+<!-- Create MarketDataCollector.CrossPlatform.slnf excluding UWP project -->
+```
+
+Create solution filters for different build scenarios:
+- `MarketDataCollector.Full.slnf` - Everything (Windows only)
+- `MarketDataCollector.Core.slnf` - Core + Tests (cross-platform)
+- `MarketDataCollector.CI.slnf` - For CI/CD pipelines
+
+#### Solution: Docker Build Isolation
+
+Use Windows containers for UWP builds in CI:
+
+```yaml
+# .github/workflows/desktop-app.yml
+jobs:
+  build-uwp:
+    runs-on: windows-latest
+    container:
+      image: mcr.microsoft.com/dotnet/sdk:9.0-windowsservercore-ltsc2022
+```
+
+### Problem 3: Platform Stubs for Cross-Platform CI
+
+**Current Approach:** Empty library output on non-Windows. This works but pollutes the build.
+
+#### Better Solution: Exclude from Solution on Non-Windows
+
+```xml
+<!-- Directory.Build.props -->
+<PropertyGroup Condition="!$([MSBuild]::IsOSPlatform('Windows'))">
+  <ExcludeFromSolutionBuild>true</ExcludeFromSolutionBuild>
+</PropertyGroup>
+```
+
+Or use solution filters:
+
+```bash
+# CI script
+if [[ "$OSTYPE" != "msys" && "$OSTYPE" != "win32" ]]; then
+  dotnet build MarketDataCollector.Core.slnf
+else
+  dotnet build MarketDataCollector.sln
+fi
+```
+
+### Recommended Immediate Actions
+
+| Priority | Action | Effort | Impact |
+|----------|--------|--------|--------|
+| **P0** | Implement Shared Source Files (Solution A) | 2-4 hours | Eliminates 1300+ lines of duplication |
+| **P1** | Create solution filters | 1 hour | Cleaner cross-platform builds |
+| **P2** | Add CI matrix with Windows-only UWP job | 1-2 hours | Faster Linux/macOS CI |
+| **P3** | Document build requirements | 1 hour | Onboarding improvement |
+
+---
+
 ## Alternative Technologies Evaluated
 
 ### 1. Avalonia UI
@@ -376,6 +547,32 @@ Features requiring platform abstraction or alternative implementation:
 
 ## Conclusion
 
-The current WinUI 3 application is well-architected but platform-limited. **Avalonia UI** offers the best path forward for cross-platform support while preserving the team's XAML/MVVM expertise and enabling full code sharing with the core project. The migration effort is moderate and can be done incrementally.
+### Short-Term: Fix the Pain Points
 
-If a complete technology shift is acceptable and web convergence is desired, **Blazor Hybrid** provides a compelling alternative with the largest ecosystem of UI components.
+The three core issues can be resolved **without a framework migration**:
+
+1. **Assembly restriction** → Use `<Compile Link>` to share source files from Contracts (2-4 hours)
+2. **Complex builds** → Create solution filters for cross-platform CI (1 hour)
+3. **Platform stubs** → Exclude UWP from non-Windows builds via solution filters (1 hour)
+
+**Total effort: ~1 day** to eliminate model duplication and simplify cross-platform builds.
+
+### Long-Term: Consider Migration
+
+If cross-platform desktop support becomes a requirement, **Avalonia UI** offers the best path forward:
+- Preserves XAML/MVVM expertise
+- Enables direct assembly references (no workarounds needed)
+- Single codebase for Windows, macOS, Linux
+- Active community with commercial support
+
+**Uno Platform** is the alternative if minimizing migration effort is critical (90% WinUI XAML compatibility).
+
+### Decision Matrix
+
+| Goal | Recommended Action |
+|------|-------------------|
+| Fix model duplication now | Shared source files (Solution A) |
+| Stay Windows-only | Keep WinUI 3 with fixes above |
+| Add macOS/Linux support | Migrate to Avalonia UI |
+| Minimize migration effort | Migrate to Uno Platform |
+| Unify with web dashboard | Migrate to Blazor Hybrid |
