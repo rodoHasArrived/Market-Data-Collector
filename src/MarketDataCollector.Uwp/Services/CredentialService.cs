@@ -801,9 +801,9 @@ public sealed class CredentialService : IDisposable
     /// <summary>
     /// Gets extended credential info with metadata for all stored credentials.
     /// </summary>
-    public List<Models.CredentialInfo> GetAllCredentialsWithMetadata()
+    public List<CredentialInfo> GetAllCredentialsWithMetadata()
     {
-        var credentials = new List<Models.CredentialInfo>();
+        var credentials = new List<CredentialInfo>();
         var resources = GetAllStoredResources();
 
         foreach (var resource in resources)
@@ -811,7 +811,7 @@ public sealed class CredentialService : IDisposable
             var metadata = GetMetadata(resource);
             var (name, credType) = GetCredentialDisplayInfo(resource);
 
-            credentials.Add(new Models.CredentialInfo
+            credentials.Add(new CredentialInfo
             {
                 Name = name,
                 Resource = resource,
@@ -870,7 +870,7 @@ public sealed class CredentialService : IDisposable
     /// <summary>
     /// Gets credentials that are expiring within the specified number of days.
     /// </summary>
-    public List<Models.CredentialInfo> GetExpiringCredentials(int withinDays = 7)
+    public List<CredentialInfo> GetExpiringCredentials(int withinDays = 7)
     {
         return GetAllCredentialsWithMetadata()
             .Where(c => c.IsExpiringSoon || c.IsExpired)
