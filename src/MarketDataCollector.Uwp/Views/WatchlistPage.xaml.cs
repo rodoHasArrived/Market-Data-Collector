@@ -23,6 +23,7 @@ public sealed partial class WatchlistPage : Page
 
     private readonly WatchlistService _watchlistService;
     private readonly ContextMenuService _contextMenuService;
+    private readonly SearchService _searchService;
     private readonly ObservableCollection<WatchlistDisplayItem> _favorites;
     private readonly ObservableCollection<WatchlistDisplayItem> _allSymbols;
     private readonly DispatcherTimer _refreshTimer;
@@ -32,6 +33,7 @@ public sealed partial class WatchlistPage : Page
         this.InitializeComponent();
         _watchlistService = WatchlistService.Instance;
         _contextMenuService = ContextMenuService.Instance;
+        _searchService = SearchService.Instance;
         _favorites = new ObservableCollection<WatchlistDisplayItem>();
         _allSymbols = new ObservableCollection<WatchlistDisplayItem>();
 
@@ -163,9 +165,29 @@ public sealed partial class WatchlistPage : Page
         }
     }
 
-    private void AddSymbol_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
+    private async void AddSymbol_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
     {
-        // Could add symbol suggestions here
+        if (args.Reason != AutoSuggestionBoxTextChangeReason.UserInput)
+        {
+            return;
+        }
+
+        var query = sender.Text?.Trim() ?? string.Empty;
+        if (query.Length < 1)
+        {
+            sender.ItemsSource = null;
+            return;
+        }
+
+        var suggestions = await _searchService.GetSuggestionsAsync(query);
+        var symbolSuggestions = suggestions
+            .Where(s => s.Category is "Symbol" or "Watchlist" or "Popular Symbol")
+            .Select(s => s.Text)
+            .Distinct()
+            .Take(10)
+            .ToList();
+
+        sender.ItemsSource = symbolSuggestions;
     }
 
     private async Task AddSymbolFromInput()
