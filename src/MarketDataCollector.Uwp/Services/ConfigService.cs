@@ -372,12 +372,9 @@ public sealed class ConfigService : IConfigService
             }
 
             // Validate data root path
-            if (!string.IsNullOrWhiteSpace(config.DataRoot))
+            if (!string.IsNullOrWhiteSpace(config.DataRoot) && !Directory.Exists(config.DataRoot))
             {
-                if (!Directory.Exists(config.DataRoot))
-                {
-                    warnings.Add($"Data root directory does not exist: {config.DataRoot}");
-                }
+                warnings.Add($"Data root directory does not exist: {config.DataRoot}");
             }
 
             // Validate symbols
