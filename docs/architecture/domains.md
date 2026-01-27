@@ -251,6 +251,6 @@ record Heartbeat(
 
 ---
 
-**Version:** 1.6.0
-**Last Updated:** 2026-01-19
+**Version:** 1.6.1
+**Last Updated:** 2026-01-27
 **See Also:** [Architecture Overview](overview.md) | [C4 Diagrams](c4-diagrams.md) | [Why This Architecture](why-this-architecture.md)

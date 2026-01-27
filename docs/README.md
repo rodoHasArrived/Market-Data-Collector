@@ -1,7 +1,7 @@
 # Market Data Collector Documentation
 
-**Version:** 1.6.0
-**Last Updated:** 2026-01-19
+**Version:** 1.6.1
+**Last Updated:** 2026-01-27
 
 Welcome to the Market Data Collector documentation. This guide will help you find the information you need.
 
@@ -31,6 +31,9 @@ Step-by-step guides for using the system.
 | [configuration.md](guides/configuration.md) | Complete configuration reference |
 | [troubleshooting.md](guides/troubleshooting.md) | Common issues and solutions |
 | [operator-runbook.md](guides/operator-runbook.md) | Operations guide for production |
+| [provider-implementation.md](guides/provider-implementation.md) | Guide for adding new providers |
+| [portable-data-packager.md](guides/portable-data-packager.md) | Creating portable data archives |
+| [github-actions-summary.md](guides/github-actions-summary.md) | CI/CD workflow documentation |
 
 ---
 
@@ -56,6 +59,9 @@ Documentation for market data providers.
 | Document | Description |
 |----------|-------------|
 | [data-sources.md](providers/data-sources.md) | Available data sources with status |
+| [backfill-guide.md](providers/backfill-guide.md) | Historical data backfill guide |
+| [provider-comparison.md](providers/provider-comparison.md) | Provider feature comparison |
+| [alpaca-setup.md](providers/alpaca-setup.md) | Alpaca Markets setup guide |
 | [interactive-brokers-setup.md](providers/interactive-brokers-setup.md) | IB TWS/Gateway configuration |
 | [interactive-brokers-free-equity-reference.md](providers/interactive-brokers-free-equity-reference.md) | IB API technical reference |
 
@@ -97,13 +103,36 @@ Additional reference documentation.
 
 ---
 
+### [ai-assistants/](ai-assistants/) - AI Assistant Guides
+
+Specialized guides for AI coding assistants working with this codebase.
+
+| Document | Description |
+|----------|-------------|
+| [CLAUDE.providers.md](ai-assistants/CLAUDE.providers.md) | Provider implementation guide |
+| [CLAUDE.storage.md](ai-assistants/CLAUDE.storage.md) | Storage system guide |
+| [CLAUDE.fsharp.md](ai-assistants/CLAUDE.fsharp.md) | F# domain library guide |
+| [CLAUDE.testing.md](ai-assistants/CLAUDE.testing.md) | Testing guide |
+
+---
+
+### [analysis/](analysis/) - Code Analysis
+
+| Document | Description |
+|----------|-------------|
+| [DUPLICATE_CODE_ANALYSIS.md](analysis/DUPLICATE_CODE_ANALYSIS.md) | Duplicate code analysis report |
+
+---
+
 ### Other Directories
 
 | Directory | Description |
 |-----------|-------------|
 | [api/](api/) | API documentation index |
+| [adr/](adr/) | Architecture Decision Records |
 | [changelogs/](changelogs/) | Version change summaries |
 | [diagrams/](diagrams/) | Architecture diagrams (images) |
+| [uml/](uml/) | UML diagrams (PlantUML) |
 | [docfx/](docfx/) | DocFX documentation generator config |
 
 ---

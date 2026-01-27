@@ -1,7 +1,7 @@
 # Historical Data Sources Reference
 
-**Last Updated:** 2026-01-08
-**Version:** 1.5.0
+**Last Updated:** 2026-01-27
+**Version:** 1.6.1
 
 This document catalogs available free and freemium data sources for historical equity backfilling, with implementation status for each.
 
@@ -19,9 +19,19 @@ This document catalogs available free and freemium data sources for historical e
 | Finnhub | ✅ Implemented | 60K+ global | 60 calls/min |
 | Alpha Vantage | ✅ Implemented | US equities | 25/day |
 | Polygon (Historical) | ✅ Implemented | US equities | 5 calls/min |
+| IB Historical | ✅ Implemented | US equities | With account |
 | Composite Provider | ✅ Implemented | Multi-source | N/A |
-| Interactive Brokers | ⚠️ Requires IBAPI | US equities | With account |
+| Interactive Brokers (Streaming) | ⚠️ Requires IBAPI | US equities | With account |
 | Polygon (Streaming) | ❌ Stub only | US equities | 5 calls/min |
+
+### Symbol Search Providers
+
+| Provider | Status | Coverage |
+|----------|--------|----------|
+| Alpaca Symbol Search | ✅ Implemented | US equities |
+| Finnhub Symbol Search | ✅ Implemented | 60K+ global |
+| Polygon Symbol Search | ✅ Implemented | US equities |
+| OpenFIGI Resolver | ✅ Implemented | Global instruments |
 
 ---
 
@@ -29,7 +39,7 @@ This document catalogs available free and freemium data sources for historical e
 
 ### 1. Alpaca Historical Data
 
-**File:** `Infrastructure/HistoricalData/AlpacaHistoricalDataProvider.cs`
+**File:** `Infrastructure/Providers/Backfill/AlpacaHistoricalDataProvider.cs`
 **Status:** ✅ Production Ready
 
 | Attribute | Details |
@@ -48,7 +58,7 @@ This document catalogs available free and freemium data sources for historical e
 
 ### 2. Yahoo Finance
 
-**File:** `Infrastructure/HistoricalData/YahooFinanceHistoricalDataProvider.cs`
+**File:** `Infrastructure/Providers/Backfill/YahooFinanceHistoricalDataProvider.cs`
 **Status:** ✅ Production Ready
 
 | Attribute | Details |
@@ -73,7 +83,7 @@ https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?period1={unix}&period
 
 ### 3. Stooq
 
-**File:** `Infrastructure/HistoricalData/StooqHistoricalDataProvider.cs`
+**File:** `Infrastructure/Providers/Backfill/StooqHistoricalDataProvider.cs`
 **Status:** ✅ Production Ready
 
 | Attribute | Details |
@@ -92,7 +102,7 @@ https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?period1={unix}&period
 
 ### 4. Nasdaq Data Link (formerly Quandl)
 
-**File:** `Infrastructure/HistoricalData/NasdaqDataLinkHistoricalDataProvider.cs`
+**File:** `Infrastructure/Providers/Backfill/NasdaqDataLinkHistoricalDataProvider.cs`
 **Status:** ✅ Production Ready
 
 | Attribute | Details |
@@ -111,7 +121,7 @@ https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?period1={unix}&period
 
 ### 5. Composite Provider
 
-**File:** `Infrastructure/HistoricalData/CompositeHistoricalDataProvider.cs`
+**File:** `Infrastructure/Providers/Backfill/CompositeHistoricalDataProvider.cs`
 **Status:** ✅ Production Ready
 
 **Features:**
@@ -220,6 +230,31 @@ https://api.tiingo.com/tiingo/daily/{symbol}/prices?startDate={from}&endDate={to
 | **Historical Depth** | 2+ years for most equities |
 
 **Note:** Streaming provider is still stub-only; historical data provider is fully functional.
+
+---
+
+### 10. Interactive Brokers (Historical)
+
+**File:** `Infrastructure/Providers/InteractiveBrokers/IBHistoricalDataProvider.cs`
+**Status:** ✅ Production Ready (requires IBAPI build flag)
+
+| Attribute | Details |
+|-----------|---------|
+| **Coverage** | US equities, options, futures, forex |
+| **Data Types** | Daily/Intraday OHLCV, tick data |
+| **Free Tier** | Requires $500 account balance |
+| **Historical Depth** | Varies by data type |
+
+**Features:**
+- Direct integration with IB TWS/Gateway
+- Access to institutional-quality data
+- Supports extended hours data
+- Requires IBAPI compilation flag
+
+**Build Command:**
+```bash
+dotnet build -p:DefineConstants=IBAPI
+```
 
 ---
 

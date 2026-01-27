@@ -2096,6 +2096,6 @@ Before contributing code:
 
 ---
 
-**Version:** 1.6.0
-**Last Updated:** 2026-01-19
+**Version:** 1.6.1
+**Last Updated:** 2026-01-27
 **License:** See LICENSE file

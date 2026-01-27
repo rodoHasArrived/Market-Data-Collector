@@ -51,7 +51,20 @@ docfx docs/docfx/docfx.json
 - `FinnhubHistoricalDataProvider` - Finnhub financial data
 - `TiingoHistoricalDataProvider` - Tiingo premium data
 - `PolygonHistoricalDataProvider` - Polygon aggregated data
+- `IBHistoricalDataProvider` - Interactive Brokers historical data
 - `CompositeHistoricalDataProvider` - Automatic failover across providers
+- `BaseHistoricalDataProvider` - Shared base class with HTTP handling
+
+#### Symbol Search Providers
+- `AlpacaSymbolSearchProvider` - Symbol search via Alpaca Markets
+- `FinnhubSymbolSearchProvider` - Global symbol search via Finnhub
+- `PolygonSymbolSearchProvider` - US equities symbol search via Polygon
+- `OpenFigiSymbolResolver` - Cross-provider symbol normalization via OpenFIGI
+
+#### Infrastructure Utilities
+- `HttpResponseHandler` - Centralized HTTP error handling
+- `CredentialValidator` - API credential validation
+- `SymbolNormalization` - Cross-provider symbol normalization
 
 ### Lean Integration
 - `MarketDataCollectorTradeData` - Custom Lean BaseData for trades
@@ -66,6 +79,6 @@ docfx docs/docfx/docfx.json
 
 ---
 
-**Version:** 1.6.0
-**Last Updated:** 2026-01-19
+**Version:** 1.6.1
+**Last Updated:** 2026-01-27
 **See Also:** [Architecture Overview](../architecture/overview.md) | [Domain Model](../architecture/domains.md) | [Lean Integration](../integrations/lean-integration.md)
