@@ -36,6 +36,9 @@ DOCKER_IMAGE := marketdatacollector:latest
 HTTP_PORT ?= 8080
 BUILDCTL := python3 build-system/cli/buildctl.py
 BUILD_VERBOSITY ?= normal
+APPINSTALLER_URI ?=
+SIGNING_CERT_PFX ?=
+SIGNING_CERT_PASSWORD ?=
 
 ifeq ($(V),0)
 	BUILD_VERBOSITY := quiet
@@ -45,6 +48,17 @@ ifeq ($(V),2)
 endif
 ifeq ($(V),3)
 	BUILD_VERBOSITY := debug
+endif
+
+MSIX_APPINSTALLER_FLAGS :=
+MSIX_SIGNING_FLAGS :=
+ifneq ($(strip $(APPINSTALLER_URI)),)
+	MSIX_APPINSTALLER_FLAGS := -p:GenerateAppInstallerFile=true -p:AppInstallerUri=$(APPINSTALLER_URI) -p:AppInstallerCheckForUpdateFrequency=OnApplicationRun -p:AppInstallerUpdateFrequency=1
+endif
+ifneq ($(strip $(SIGNING_CERT_PFX)),)
+	MSIX_SIGNING_FLAGS := -p:PackageCertificateKeyFile=$(SIGNING_CERT_PFX) -p:PackageCertificatePassword=$(SIGNING_CERT_PASSWORD)
+else
+	MSIX_SIGNING_FLAGS := -p:GenerateTemporaryStoreCertificate=true
 endif
 
 # Colors
@@ -400,8 +414,12 @@ endif
 desktop-publish: icons ## Publish desktop app (Windows only)
 	@echo "$(BLUE)Publishing desktop app...$(NC)"
 ifeq ($(OS),Windows_NT)
-	dotnet publish $(DESKTOP_PROJECT) -c Release -r win-x64 -o publish/desktop --self-contained true
-	@echo "$(GREEN)Published to publish/desktop/$(NC)"
+	dotnet publish $(DESKTOP_PROJECT) -c Release -r win-x64 --self-contained true \
+		-p:WindowsPackageType=MSIX \
+		-p:AppxPackageDir=publish/desktop/ \
+		$(MSIX_APPINSTALLER_FLAGS) \
+		$(MSIX_SIGNING_FLAGS)
+	@echo "$(GREEN)Published MSIX to publish/desktop/$(NC)"
 else
 	@echo "$(YELLOW)Desktop app publish requires Windows.$(NC)"
 	@echo "Use GitHub Actions workflow 'Desktop App Build' for CI builds."

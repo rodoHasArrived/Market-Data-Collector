@@ -365,7 +365,7 @@ function Install-Desktop {
 
     try {
         $desktopProjectPath = Join-Path $RepoRoot "src\MarketDataCollector.Uwp\MarketDataCollector.Uwp.csproj"
-        $outputPath = Join-Path $RepoRoot "dist\win-x64\desktop"
+        $outputPath = Join-Path $RepoRoot "dist\win-x64\msix"
         $diagnosticLogDir = Join-Path $RepoRoot "diagnostic-logs"
 
         # Ensure diagnostic log directory exists
@@ -584,23 +584,45 @@ function Install-Desktop {
 
         # ==================== STEP 5: Publish Application ====================
         if ($useNotificationModule) {
-            Start-BuildStep -Name "Publish Application" -Description "Creating self-contained deployment"
+            Start-BuildStep -Name "Publish Application" -Description "Creating MSIX package"
         }
         else {
-            Write-Info "Publishing application..."
+            Write-Info "Publishing MSIX package..."
         }
 
+        $appInstallerUri = $env:MDC_APPINSTALLER_URI
+        $certPfxPath = $env:MDC_SIGNING_CERT_PFX
+        $certPassword = $env:MDC_SIGNING_CERT_PASSWORD
         $publishArgs = @(
             "publish"
             $desktopProjectPath
             "-c", "Release"
             "-r", "win-x64"
-            "-o", $outputPath
             "--self-contained", "true"
-            "-p:WindowsPackageType=None"
+            "-p:WindowsPackageType=MSIX"
             "-p:PublishReadyToRun=true"
             "-p:Platform=x64"
+            "-p:AppxPackageDir=$outputPath\\"
         )
+
+        if (-not [string]::IsNullOrWhiteSpace($appInstallerUri)) {
+            $publishArgs += @(
+                "-p:GenerateAppInstallerFile=true"
+                "-p:AppInstallerUri=$appInstallerUri"
+                "-p:AppInstallerCheckForUpdateFrequency=OnApplicationRun"
+                "-p:AppInstallerUpdateFrequency=1"
+            )
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($certPfxPath)) {
+            $publishArgs += @(
+                "-p:PackageCertificateKeyFile=$certPfxPath"
+                "-p:PackageCertificatePassword=$certPassword"
+            )
+        }
+        else {
+            $publishArgs += "-p:GenerateTemporaryStoreCertificate=true"
+        }
 
         if ($Verbose) {
             $publishArgs += @("-v", "detailed")
@@ -610,7 +632,7 @@ function Install-Desktop {
         }
 
         if ($useNotificationModule) {
-            Update-BuildProgress -Message "Publishing self-contained application..."
+            Update-BuildProgress -Message "Publishing MSIX package..."
             Update-BuildProgress -Message "ReadyToRun: Enabled (faster startup)"
         }
 
@@ -642,87 +664,40 @@ function Install-Desktop {
             Write-Success "Publish completed"
         }
 
-        # ==================== STEP 6: Setup Configuration ====================
+        # ==================== STEP 6: Verify Installation ====================
         if ($useNotificationModule) {
-            Start-BuildStep -Name "Setup Configuration" -Description "Copying configuration files"
+            Start-BuildStep -Name "Verify Installation" -Description "Checking MSIX output"
         }
         else {
-            Write-Info "Setting up configuration..."
+            Write-Info "Verifying MSIX output..."
         }
 
-        if (-not (Setup-Config)) {
+        $msixPackages = Get-ChildItem -Path $outputPath -Filter "*.msix*" -File -ErrorAction SilentlyContinue
+        if (-not $msixPackages) {
             if ($useNotificationModule) {
-                Complete-BuildStep -Success $false -Message "Configuration setup failed"
-            }
-            return
-        }
-
-        # Copy config to output
-        $configFile = Join-Path $RepoRoot "config\appsettings.json"
-        $sampleConfigFile = Join-Path $RepoRoot "config\appsettings.sample.json"
-
-        if (Test-Path $configFile) {
-            Copy-Item $configFile -Destination $outputPath
-            if ($useNotificationModule) {
-                Update-BuildProgress -Message "Copied appsettings.json"
-            }
-        }
-        if (Test-Path $sampleConfigFile) {
-            Copy-Item $sampleConfigFile -Destination $outputPath
-            if ($useNotificationModule) {
-                Update-BuildProgress -Message "Copied appsettings.sample.json"
-            }
-        }
-
-        # Create data directories
-        $dataDir = Join-Path $outputPath "data"
-        $logsDir = Join-Path $outputPath "logs"
-        if (-not (Test-Path $dataDir)) { New-Item -ItemType Directory -Path $dataDir | Out-Null }
-        if (-not (Test-Path $logsDir)) { New-Item -ItemType Directory -Path $logsDir | Out-Null }
-
-        if ($useNotificationModule) {
-            Update-BuildProgress -Message "Created data and logs directories"
-            Complete-BuildStep -Success $true -Message "Configuration ready"
-        }
-
-        # ==================== STEP 7: Verify Installation ====================
-        if ($useNotificationModule) {
-            Start-BuildStep -Name "Verify Installation" -Description "Checking build output"
-        }
-        else {
-            Write-Info "Verifying installation..."
-        }
-
-        $exePath = Join-Path $outputPath "MarketDataCollector.Desktop.exe"
-        if (-not (Test-Path $exePath)) {
-            if ($useNotificationModule) {
-                Complete-BuildStep -Success $false -Message "Executable not found"
-                Show-BuildError -Error "Executable not found at expected location" `
-                    -Suggestion "Check build output and ensure the project compiled correctly" `
+                Complete-BuildStep -Success $false -Message "MSIX package not found"
+                Show-BuildError -Error "MSIX package not found at expected location" `
+                    -Suggestion "Check build output and ensure the project packaged correctly" `
                     -Details @(
-                        "Expected: $exePath",
+                        "Expected MSIX/MSIXBundle in: $outputPath",
                         "Check publish output directory: $outputPath"
                     )
             }
             else {
-                Write-Err "Executable not found: $exePath"
+                Write-Err "MSIX package not found in: $outputPath"
             }
             return
         }
 
-        # Get file details
-        $exeFile = Get-Item $exePath
-        $exeSize = "{0:N2} MB" -f ($exeFile.Length / 1MB)
-        $fileCount = (Get-ChildItem -Path $outputPath -Recurse -File).Count
-        $totalSize = "{0:N2} MB" -f ((Get-ChildItem -Path $outputPath -Recurse -File | Measure-Object -Property Length -Sum).Sum / 1MB)
+        $packageCount = $msixPackages.Count
+        $totalSize = "{0:N2} MB" -f (($msixPackages | Measure-Object -Property Length -Sum).Sum / 1MB)
 
         if ($useNotificationModule) {
-            Update-BuildProgress -Message "Executable: $exeSize"
-            Update-BuildProgress -Message "Total files: $fileCount ($totalSize)"
+            Update-BuildProgress -Message "Packages: $packageCount ($totalSize total)"
             Complete-BuildStep -Success $true -Message "Installation verified"
         }
         else {
-            Write-Success "Executable verified: $exeSize"
+            Write-Success "MSIX package(s) verified: $packageCount"
         }
 
         $buildSuccess = $true
@@ -739,13 +714,22 @@ function Install-Desktop {
         Write-Host ""
         Write-Host "  Location:  " -ForegroundColor White -NoNewline
         Write-Host $outputPath -ForegroundColor Cyan
-        Write-Host "  Executable: " -ForegroundColor White -NoNewline
-        Write-Host "MarketDataCollector.Desktop.exe" -ForegroundColor Cyan
+        Write-Host "  Packages:  " -ForegroundColor White -NoNewline
+        Write-Host "$packageCount MSIX file(s)" -ForegroundColor Cyan
         Write-Host "  Size:      " -ForegroundColor White -NoNewline
-        Write-Host "$totalSize ($fileCount files)" -ForegroundColor Gray
+        Write-Host "$totalSize total" -ForegroundColor Gray
         Write-Host ""
-        Write-Host "  To run the app:" -ForegroundColor Yellow
-        Write-Host "    $exePath" -ForegroundColor Gray
+        if (-not [string]::IsNullOrWhiteSpace($certPfxPath)) {
+            Write-Host "  Signing:   " -ForegroundColor White -NoNewline
+            Write-Host "Signed with $certPfxPath" -ForegroundColor Gray
+        }
+        else {
+            Write-Host "  Signing:   " -ForegroundColor White -NoNewline
+            Write-Host "Temporary dev certificate used" -ForegroundColor Gray
+        }
+        Write-Host ""
+        Write-Host "  Guidance:  " -ForegroundColor White -NoNewline
+        Write-Host "docs/guides/msix-packaging.md" -ForegroundColor Gray
         Write-Host ""
         Write-Host "  Build logs saved to:" -ForegroundColor DarkGray
         Write-Host "    $diagnosticLogDir" -ForegroundColor Gray

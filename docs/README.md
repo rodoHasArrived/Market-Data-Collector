@@ -33,6 +33,7 @@ Step-by-step guides for using the system.
 | [operator-runbook.md](guides/operator-runbook.md) | Operations guide for production |
 | [provider-implementation.md](guides/provider-implementation.md) | Guide for adding new providers |
 | [portable-data-packager.md](guides/portable-data-packager.md) | Creating portable data archives |
+| [msix-packaging.md](guides/msix-packaging.md) | MSIX packaging and signing for Windows Desktop |
 | [github-actions-summary.md](guides/github-actions-summary.md) | CI/CD workflow documentation |
 
 ---

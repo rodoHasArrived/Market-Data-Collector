@@ -26,7 +26,12 @@
     <RuntimeIdentifiers>win-x86;win-x64;win-arm64</RuntimeIdentifiers>
     <UseWinUI>true</UseWinUI>
     <EnableMsixTooling>true</EnableMsixTooling>
-    <WindowsPackageType>None</WindowsPackageType>
+    <WindowsPackageType>MSIX</WindowsPackageType>
+    <AppxManifest>Package.appxmanifest</AppxManifest>
+    <PackageIdentityName>MarketDataCollector.Desktop</PackageIdentityName>
+    <PackageIdentityPublisher>CN=MarketDataCollector</PackageIdentityPublisher>
+    <PackageVersion>1.0.0.0</PackageVersion>
+    <PackageDisplayName>Market Data Collector</PackageDisplayName>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
 
