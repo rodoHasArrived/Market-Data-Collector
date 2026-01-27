@@ -21,10 +21,10 @@ jobs:
     
     steps:
     - name: Checkout
-      uses: actions/checkout@v6
+      uses: actions/checkout@v4
 
     - name: Set up Python
-      uses: actions/setup-python@v6
+      uses: actions/setup-python@v5
       with:
         python-version: '3.x'
 
@@ -87,7 +87,7 @@ jobs:
     
     steps:
     - name: Checkout
-      uses: actions/checkout@v6
+      uses: actions/checkout@v4
 
     - name: Validate action references
       run: |
@@ -97,7 +97,7 @@ jobs:
         # Check for deprecated actions
         if grep -r "actions/checkout@v[12]" .github/workflows/; then
           echo "⚠️  Warning: Found deprecated checkout action versions"
-          echo "   Consider upgrading to actions/checkout@v6"
+          echo "   Consider upgrading to actions/checkout@v4"
         fi
         
         if grep -r "actions/setup-dotnet@v[12]" .github/workflows/; then
@@ -128,7 +128,7 @@ jobs:
     
     steps:
     - name: Checkout
-      uses: actions/checkout@v6
+      uses: actions/checkout@v4
 
     - name: Analyze permissions
       run: |
@@ -150,7 +150,7 @@ jobs:
     
     steps:
     - name: Checkout
-      uses: actions/checkout@v6
+      uses: actions/checkout@v4
 
     - name: Check schedule syntax
       run: |

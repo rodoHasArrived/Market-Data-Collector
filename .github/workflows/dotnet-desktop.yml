@@ -28,7 +28,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -74,7 +74,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       - name: Setup .NET with Cache
         uses: ./.github/actions/setup-dotnet-cache
@@ -122,7 +122,7 @@ jobs:
           Compress-Archive -Path publish/* -DestinationPath MarketDataCollector-${{ matrix.rid }}${{ matrix.asset_extension }}
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v4
         with:
           name: MarketDataCollector-${{ matrix.rid }}
           path: MarketDataCollector-${{ matrix.rid }}${{ matrix.asset_extension }}
@@ -138,7 +138,7 @@ jobs:
 
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v4
         with:
           path: artifacts
           merge-multiple: true
