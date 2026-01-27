@@ -7,6 +7,7 @@ using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.DataSources;
 using MarketDataCollector.Infrastructure.Http;
+using MarketDataCollector.Infrastructure.Utilities;
 using Serilog;
 
 namespace MarketDataCollector.Infrastructure.Providers.Backfill;
@@ -369,8 +370,8 @@ public sealed class PolygonHistoricalDataProvider : IHistoricalDataProvider, IDi
 
     private static string NormalizeSymbol(string symbol)
     {
-        // Polygon uses standard uppercase tickers
-        return symbol.ToUpperInvariant();
+        // Use centralized symbol normalization utility
+        return SymbolNormalization.Normalize(symbol);
     }
 
     private static (int multiplier, string timespan) ParseInterval(string interval)
