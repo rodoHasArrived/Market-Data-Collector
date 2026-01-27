@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MarketDataCollector.Uwp.Collections;
+using MarketDataCollector.Uwp.Contracts;
 using MarketDataCollector.Uwp.Models;
 using MarketDataCollector.Uwp.Services;
 
@@ -124,11 +125,9 @@ public sealed partial class DashboardViewModel : ObservableObject, IDisposable
 
     private DateTime _collectorStartTime;
 
-    // Use circular buffer for O(1) throughput history operations instead of List with O(n) RemoveAt(0)
+    // Use CircularBuffer for O(1) throughput history operations
     private const int ThroughputHistoryCapacity = 30;
-    private readonly double[] _throughputHistory = new double[ThroughputHistoryCapacity];
-    private int _throughputIndex = 0;
-    private int _throughputCount = 0;
+    private readonly CircularBuffer<double> _throughputHistory = new(ThroughputHistoryCapacity);
 
     public DashboardViewModel()
     {
@@ -138,6 +137,9 @@ public sealed partial class DashboardViewModel : ObservableObject, IDisposable
         _activityFeedService = ActivityFeedService.Instance;
         _sessionService = CollectionSessionService.Instance;
         _configService = ConfigService.Instance;
+
+        // Initialize logging service
+        LoggingService.Instance.LogInfo("DashboardViewModel created");
 
         // Subscribe to connection events
         _connectionService.ConnectionStateChanged += OnConnectionStateChanged;
@@ -211,26 +213,19 @@ public sealed partial class DashboardViewModel : ObservableObject, IDisposable
                 IntegrityCount = status.Metrics.Integrity;
                 HistoricalBarsCount = status.Metrics.HistoricalBars;
 
-                // Update throughput using circular buffer - O(1) operations
-                var previousValue = _throughputCount > 0
-                    ? _throughputHistory[(_throughputIndex - 1 + ThroughputHistoryCapacity) % ThroughputHistoryCapacity]
-                    : 0;
-                _throughputHistory[_throughputIndex] = status.Metrics.Published;
-                _throughputIndex = (_throughputIndex + 1) % ThroughputHistoryCapacity;
-                if (_throughputCount < ThroughputHistoryCapacity) _throughputCount++;
+                // Get previous value before adding new one
+                _throughputHistory.TryGetNewest(out var previousValue);
 
-                if (_throughputCount > 1)
+                // Add current value to circular buffer
+                _throughputHistory.Add(status.Metrics.Published);
+
+                if (_throughputHistory.Count > 1)
                 {
-                    var currentValue = _throughputHistory[(_throughputIndex - 1 + ThroughputHistoryCapacity) % ThroughputHistoryCapacity];
+                    var currentValue = _throughputHistory.GetNewest();
                     CurrentThroughput = (currentValue - previousValue) / 2.0; // Per second
 
-                    // Calculate average from circular buffer
-                    double sum = 0;
-                    for (int i = 0; i < _throughputCount; i++)
-                    {
-                        sum += _throughputHistory[i];
-                    }
-                    AverageThroughput = sum / _throughputCount;
+                    // Calculate average using CircularBuffer extension method
+                    AverageThroughput = _throughputHistory.Average();
                     PeakThroughput = Math.Max(PeakThroughput, CurrentThroughput);
                 }
 
@@ -398,15 +393,16 @@ public sealed partial class DashboardViewModel : ObservableObject, IDisposable
         });
     }
 
-    private void OnConnectionStateChanged(object? sender, ConnectionStateEventArgs e)
+    private void OnConnectionStateChanged(object? sender, Contracts.ConnectionStateEventArgs e)
     {
-        IsConnected = e.State == ConnectionState.Connected;
+        IsConnected = e.State == Contracts.ConnectionState.Connected;
         ConnectionStatusText = e.State switch
         {
-            ConnectionState.Connected => "Connected",
-            ConnectionState.Connecting => "Connecting...",
-            ConnectionState.Disconnected => "Disconnected",
-            ConnectionState.Error => "Error",
+            Contracts.ConnectionState.Connected => "Connected",
+            Contracts.ConnectionState.Connecting => "Connecting...",
+            Contracts.ConnectionState.Reconnecting => "Reconnecting...",
+            Contracts.ConnectionState.Disconnected => "Disconnected",
+            Contracts.ConnectionState.Error => "Error",
             _ => "Unknown"
         };
     }

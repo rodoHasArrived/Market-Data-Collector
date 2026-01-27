@@ -1,14 +1,16 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using MarketDataCollector.Uwp.Contracts;
 
 namespace MarketDataCollector.Uwp.Services;
 
 /// <summary>
 /// Service for managing provider connections with auto-reconnection support.
 /// Uses the centralized ApiClientService for configurable service URL.
+/// Implements <see cref="IConnectionService"/> for testability.
 /// </summary>
-public sealed class ConnectionService : IDisposable
+public sealed class ConnectionService : IConnectionService
 {
     private static ConnectionService? _instance;
     private static readonly object _lock = new();
@@ -17,13 +19,13 @@ public sealed class ConnectionService : IDisposable
     private readonly ApiClientService _apiClient;
     private readonly NotificationService _notificationService;
 
-    private ConnectionState _currentState = ConnectionState.Disconnected;
+    private Contracts.ConnectionState _currentState = Contracts.ConnectionState.Disconnected;
     private string _currentProvider = "Unknown";
     private int _reconnectAttempts;
     private CancellationTokenSource? _reconnectCts;
     private Timer? _healthCheckTimer;
 
-    private ConnectionSettings _settings = new();
+    private Contracts.ConnectionSettings _settings = new();
     private DateTime? _connectedSince;
     private DateTime? _lastDisconnect;
     private int _totalReconnects;
@@ -59,7 +61,7 @@ public sealed class ConnectionService : IDisposable
     /// <summary>
     /// Gets the current connection state.
     /// </summary>
-    public ConnectionState State => _currentState;
+    public Contracts.ConnectionState State => _currentState;
 
     /// <summary>
     /// Gets the current provider name.
@@ -86,7 +88,7 @@ public sealed class ConnectionService : IDisposable
     /// <summary>
     /// Updates connection settings and reconfigures the API client if URL changed.
     /// </summary>
-    public void UpdateSettings(ConnectionSettings settings)
+    public void UpdateSettings(Contracts.ConnectionSettings settings)
     {
         _settings = settings;
 
@@ -110,7 +112,7 @@ public sealed class ConnectionService : IDisposable
     /// <summary>
     /// Gets current connection settings.
     /// </summary>
-    public ConnectionSettings GetSettings() => _settings;
+    public Contracts.ConnectionSettings GetSettings() => _settings;
 
     /// <summary>
     /// Starts the connection monitoring and auto-reconnection.
@@ -150,22 +152,24 @@ public sealed class ConnectionService : IDisposable
     /// <summary>
     /// Initiates a connection to the provider.
     /// </summary>
-    public async Task<bool> ConnectAsync(string provider)
+    public async Task<bool> ConnectAsync(string provider, CancellationToken ct = default)
     {
         _currentProvider = provider;
-        UpdateState(ConnectionState.Connecting);
+        UpdateState(Contracts.ConnectionState.Connecting);
 
         try
         {
+            ct.ThrowIfCancellationRequested();
+
             // Attempt to check service health (which validates connection)
-            var health = await _apiClient.CheckHealthAsync();
+            var health = await _apiClient.CheckHealthAsync(ct);
 
             if (health.IsReachable && health.IsConnected)
             {
                 _connectedSince = DateTime.UtcNow;
                 _reconnectAttempts = 0;
                 _lastLatencyMs = health.LatencyMs;
-                UpdateState(ConnectionState.Connected);
+                UpdateState(Contracts.ConnectionState.Connected);
 
                 await _notificationService.NotifyConnectionStatusAsync(true, provider);
                 return true;
@@ -173,19 +177,23 @@ public sealed class ConnectionService : IDisposable
             else if (health.IsReachable)
             {
                 // Service is reachable but provider not connected
-                UpdateState(ConnectionState.Disconnected);
+                UpdateState(Contracts.ConnectionState.Disconnected);
                 return false;
             }
             else
             {
-                UpdateState(ConnectionState.Error);
+                UpdateState(Contracts.ConnectionState.Error);
                 await _notificationService.NotifyErrorAsync("Connection Failed", health.ErrorMessage ?? "Service unreachable");
                 return false;
             }
         }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
         catch (Exception ex)
         {
-            UpdateState(ConnectionState.Error);
+            UpdateState(Contracts.ConnectionState.Error);
             await _notificationService.NotifyErrorAsync("Connection Failed", ex.Message);
             return false;
         }
@@ -194,11 +202,11 @@ public sealed class ConnectionService : IDisposable
     /// <summary>
     /// Disconnects from the provider.
     /// </summary>
-    public async Task DisconnectAsync()
+    public async Task DisconnectAsync(CancellationToken ct = default)
     {
         CancelReconnection();
         _connectedSince = null;
-        UpdateState(ConnectionState.Disconnected);
+        UpdateState(Contracts.ConnectionState.Disconnected);
 
         await _notificationService.NotifyConnectionStatusAsync(false, _currentProvider, "Manually disconnected");
     }
@@ -222,7 +230,7 @@ public sealed class ConnectionService : IDisposable
 
     private async Task CheckConnectionHealthAsync()
     {
-        if (_currentState == ConnectionState.Reconnecting)
+        if (_currentState == Contracts.ConnectionState.Reconnecting)
             return;
 
         try
@@ -232,13 +240,13 @@ public sealed class ConnectionService : IDisposable
 
             if (health.IsReachable && health.IsConnected)
             {
-                if (_currentState != ConnectionState.Connected)
+                if (_currentState != Contracts.ConnectionState.Connected)
                 {
                     _connectedSince = DateTime.UtcNow;
-                    UpdateState(ConnectionState.Connected);
+                    UpdateState(Contracts.ConnectionState.Connected);
                 }
 
-                ConnectionHealthUpdated?.Invoke(this, new ConnectionHealthEventArgs
+                ConnectionHealthUpdated?.Invoke(this, new Contracts.ConnectionHealthEventArgs
                 {
                     IsHealthy = true,
                     LatencyMs = _lastLatencyMs,
@@ -259,12 +267,12 @@ public sealed class ConnectionService : IDisposable
 
     private async Task HandleConnectionLostAsync()
     {
-        if (_currentState == ConnectionState.Reconnecting)
+        if (_currentState == Contracts.ConnectionState.Reconnecting)
             return;
 
         _lastDisconnect = DateTime.UtcNow;
         _connectedSince = null;
-        UpdateState(ConnectionState.Disconnected);
+        UpdateState(Contracts.ConnectionState.Disconnected);
 
         await _notificationService.NotifyConnectionStatusAsync(false, _currentProvider);
 
@@ -276,10 +284,10 @@ public sealed class ConnectionService : IDisposable
 
     private async Task StartAutoReconnectAsync()
     {
-        if (_currentState == ConnectionState.Reconnecting)
+        if (_currentState == Contracts.ConnectionState.Reconnecting)
             return;
 
-        UpdateState(ConnectionState.Reconnecting);
+        UpdateState(Contracts.ConnectionState.Reconnecting);
         _reconnectCts = new CancellationTokenSource();
 
         try
@@ -316,7 +324,7 @@ public sealed class ConnectionService : IDisposable
                 _reconnectAttempts,
                 _settings.MaxReconnectAttempts);
 
-            ReconnectAttempting?.Invoke(this, new ReconnectEventArgs
+            ReconnectAttempting?.Invoke(this, new Contracts.ReconnectEventArgs
             {
                 Attempt = _reconnectAttempts,
                 MaxAttempts = _settings.MaxReconnectAttempts,
@@ -336,7 +344,7 @@ public sealed class ConnectionService : IDisposable
             // Attempt reconnection
             try
             {
-                var health = await _apiClient.CheckHealthAsync();
+                var health = await _apiClient.CheckHealthAsync(cancellationToken);
 
                 if (health.IsReachable && health.IsConnected)
                 {
@@ -345,7 +353,7 @@ public sealed class ConnectionService : IDisposable
                     _lastLatencyMs = health.LatencyMs;
                     var attempts = _reconnectAttempts;
                     _reconnectAttempts = 0;
-                    UpdateState(ConnectionState.Connected);
+                    UpdateState(Contracts.ConnectionState.Connected);
 
                     await _notificationService.NotifyConnectionStatusAsync(
                         true,
@@ -356,6 +364,10 @@ public sealed class ConnectionService : IDisposable
                     return;
                 }
             }
+            catch (OperationCanceledException)
+            {
+                return;
+            }
             catch
             {
                 // Attempt failed, continue to next attempt
@@ -363,13 +375,13 @@ public sealed class ConnectionService : IDisposable
         }
 
         // Max attempts reached
-        UpdateState(ConnectionState.Error);
+        UpdateState(Contracts.ConnectionState.Error);
 
         await _notificationService.NotifyErrorAsync(
             "Reconnection Failed",
             $"Failed to reconnect to {_currentProvider} after {_reconnectAttempts} attempts");
 
-        ReconnectFailed?.Invoke(this, new ReconnectFailedEventArgs
+        ReconnectFailed?.Invoke(this, new Contracts.ReconnectFailedEventArgs
         {
             Attempts = _reconnectAttempts,
             LastError = "Max reconnection attempts reached"
@@ -384,14 +396,14 @@ public sealed class ConnectionService : IDisposable
         _reconnectAttempts = 0;
     }
 
-    private void UpdateState(ConnectionState newState)
+    private void UpdateState(Contracts.ConnectionState newState)
     {
         var oldState = _currentState;
         _currentState = newState;
 
         if (oldState != newState)
         {
-            StateChanged?.Invoke(this, new ConnectionStateChangedEventArgs
+            StateChanged?.Invoke(this, new Contracts.ConnectionStateChangedEventArgs
             {
                 OldState = oldState,
                 NewState = newState,
@@ -399,7 +411,7 @@ public sealed class ConnectionService : IDisposable
             });
 
             // Also raise the ViewModel-compatible event
-            ConnectionStateChanged?.Invoke(this, new ConnectionStateEventArgs
+            ConnectionStateChanged?.Invoke(this, new Contracts.ConnectionStateEventArgs
             {
                 State = newState,
                 Provider = _currentProvider
@@ -416,12 +428,12 @@ public sealed class ConnectionService : IDisposable
     /// <summary>
     /// Event raised when connection state changes.
     /// </summary>
-    public event EventHandler<ConnectionStateChangedEventArgs>? StateChanged;
+    public event EventHandler<Contracts.ConnectionStateChangedEventArgs>? StateChanged;
 
     /// <summary>
     /// Event raised when connection state changes (alias for StateChanged for ViewModel compatibility).
     /// </summary>
-    public event EventHandler<ConnectionStateEventArgs>? ConnectionStateChanged;
+    public event EventHandler<Contracts.ConnectionStateEventArgs>? ConnectionStateChanged;
 
     /// <summary>
     /// Event raised when latency measurement is updated.
@@ -431,7 +443,7 @@ public sealed class ConnectionService : IDisposable
     /// <summary>
     /// Event raised when a reconnection attempt is starting.
     /// </summary>
-    public event EventHandler<ReconnectEventArgs>? ReconnectAttempting;
+    public event EventHandler<Contracts.ReconnectEventArgs>? ReconnectAttempting;
 
     /// <summary>
     /// Event raised when reconnection succeeds.
@@ -441,85 +453,84 @@ public sealed class ConnectionService : IDisposable
     /// <summary>
     /// Event raised when all reconnection attempts fail.
     /// </summary>
-    public event EventHandler<ReconnectFailedEventArgs>? ReconnectFailed;
+    public event EventHandler<Contracts.ReconnectFailedEventArgs>? ReconnectFailed;
 
     /// <summary>
     /// Event raised when connection health is updated.
     /// </summary>
-    public event EventHandler<ConnectionHealthEventArgs>? ConnectionHealthUpdated;
+    public event EventHandler<Contracts.ConnectionHealthEventArgs>? ConnectionHealthUpdated;
 }
 
-/// <summary>
-/// Connection state event args for ViewModel binding.
-/// </summary>
-public class ConnectionStateEventArgs : EventArgs
-{
-    public ConnectionState State { get; set; }
-    public string Provider { get; set; } = string.Empty;
-}
+#region Legacy type aliases for backward compatibility
 
 /// <summary>
-/// Connection states.
+/// Legacy alias for <see cref="Contracts.ConnectionState"/>.
 /// </summary>
+[Obsolete("Use MarketDataCollector.Uwp.Contracts.ConnectionState instead.")]
 public enum ConnectionState
 {
-    Disconnected,
-    Connecting,
-    Connected,
-    Reconnecting,
-    Error
+    Unknown = Contracts.ConnectionState.Unknown,
+    Disconnected = Contracts.ConnectionState.Disconnected,
+    Connecting = Contracts.ConnectionState.Connecting,
+    Connected = Contracts.ConnectionState.Connected,
+    Reconnecting = Contracts.ConnectionState.Reconnecting,
+    Faulted = Contracts.ConnectionState.Faulted
 }
 
 /// <summary>
-/// Connection settings.
+/// Legacy alias for <see cref="Contracts.ConnectionSettings"/>.
 /// </summary>
-public class ConnectionSettings
+[Obsolete("Use MarketDataCollector.Uwp.Contracts.ConnectionSettings instead.")]
+public class ConnectionSettings : Contracts.ConnectionSettings
 {
-    public bool AutoReconnectEnabled { get; set; } = true;
-    public int MaxReconnectAttempts { get; set; } = 10;
-    public int InitialReconnectDelayMs { get; set; } = 2000; // 2 seconds
-    public int MaxReconnectDelayMs { get; set; } = 300000; // 5 minutes
-    public int HealthCheckIntervalSeconds { get; set; } = 5;
-    public string ServiceUrl { get; set; } = "http://localhost:8080";
-    public int ServiceTimeoutSeconds { get; set; } = 30;
 }
 
 /// <summary>
-/// Connection state change event args.
+/// Legacy alias for <see cref="Contracts.ConnectionStateChangedEventArgs"/>.
 /// </summary>
-public class ConnectionStateChangedEventArgs : EventArgs
+[Obsolete("Use MarketDataCollector.Uwp.Contracts.ConnectionStateChangedEventArgs instead.")]
+public class ConnectionStateChangedEventArgs : Contracts.ConnectionStateChangedEventArgs
 {
-    public ConnectionState OldState { get; set; }
-    public ConnectionState NewState { get; set; }
-    public string Provider { get; set; } = string.Empty;
+    public ConnectionStateChangedEventArgs(Contracts.ConnectionState oldState, Contracts.ConnectionState newState)
+        : base(oldState, newState)
+    {
+    }
 }
 
 /// <summary>
-/// Reconnect attempt event args.
+/// Legacy alias for <see cref="Contracts.ReconnectEventArgs"/>.
 /// </summary>
-public class ReconnectEventArgs : EventArgs
+[Obsolete("Use MarketDataCollector.Uwp.Contracts.ReconnectEventArgs instead.")]
+public class ReconnectEventArgs : Contracts.ReconnectEventArgs
 {
-    public int Attempt { get; set; }
-    public int MaxAttempts { get; set; }
-    public int NextRetryMs { get; set; }
+    public ReconnectEventArgs(int attemptNumber, TimeSpan delay)
+        : base(attemptNumber, delay)
+    {
+    }
 }
 
 /// <summary>
-/// Reconnect failed event args.
+/// Legacy alias for <see cref="Contracts.ReconnectFailedEventArgs"/>.
 /// </summary>
-public class ReconnectFailedEventArgs : EventArgs
+[Obsolete("Use MarketDataCollector.Uwp.Contracts.ReconnectFailedEventArgs instead.")]
+public class ReconnectFailedEventArgs : Contracts.ReconnectFailedEventArgs
 {
-    public int Attempts { get; set; }
-    public string LastError { get; set; } = string.Empty;
+    public ReconnectFailedEventArgs(int totalAttempts, Exception? lastError)
+        : base(totalAttempts, lastError)
+    {
+    }
 }
 
 /// <summary>
-/// Connection health event args.
+/// Legacy alias for <see cref="Contracts.ConnectionHealthEventArgs"/>.
 /// </summary>
-public class ConnectionHealthEventArgs : EventArgs
+[Obsolete("Use MarketDataCollector.Uwp.Contracts.ConnectionHealthEventArgs instead.")]
+public class ConnectionHealthEventArgs : Contracts.ConnectionHealthEventArgs
 {
-    public bool IsHealthy { get; set; }
-    public double LatencyMs { get; set; }
-    public TimeSpan? Uptime { get; set; }
-    public int ReconnectCount { get; set; }
+    public ConnectionHealthEventArgs(bool isHealthy, TimeSpan latency, string? reason)
+        : base(isHealthy, latency, reason)
+    {
+    }
 }
+
+#endregion

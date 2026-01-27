@@ -43,6 +43,9 @@ public partial class App : Application
             // Run first-time setup before showing window
             await InitializeFirstRunAsync();
 
+            // Initialize and validate configuration
+            await InitializeConfigurationAsync();
+
             _window = new MainWindow();
             MainWindow = _window;
 
@@ -59,6 +62,9 @@ public partial class App : Application
             await InitializeBackgroundServicesAsync();
 
             _window.Activate();
+
+            // Log successful startup
+            LoggingService.Instance.LogInfo("Application started successfully");
         }
         catch (Exception ex)
         {
@@ -224,6 +230,44 @@ public partial class App : Application
         catch
         {
             // Continue even if first-run setup fails - app should still work
+        }
+    }
+
+    /// <summary>
+    /// Initializes and validates the application configuration.
+    /// </summary>
+    private static async Task InitializeConfigurationAsync()
+    {
+        try
+        {
+            // Initialize the config service
+            await ConfigService.Instance.InitializeAsync();
+
+            // Validate configuration
+            var validationResult = await ConfigService.Instance.ValidateConfigAsync();
+
+            if (!validationResult.IsValid)
+            {
+                foreach (var error in validationResult.Errors)
+                {
+                    LoggingService.Instance.LogError($"Configuration error: {error}");
+                }
+            }
+
+            foreach (var warning in validationResult.Warnings)
+            {
+                LoggingService.Instance.LogWarning($"Configuration warning: {warning}");
+            }
+
+            LoggingService.Instance.LogInfo("Configuration initialized",
+                ("isValid", validationResult.IsValid.ToString()),
+                ("errors", validationResult.Errors.Length.ToString()),
+                ("warnings", validationResult.Warnings.Length.ToString()));
+        }
+        catch (Exception ex)
+        {
+            LoggingService.Instance.LogError("Failed to initialize configuration", ex);
+            // Continue - app should still work with defaults
         }
     }
 

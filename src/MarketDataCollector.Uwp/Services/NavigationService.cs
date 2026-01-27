@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.UI.Xaml.Controls;
+using MarketDataCollector.Uwp.Contracts;
 using MarketDataCollector.Uwp.Views;
 
 namespace MarketDataCollector.Uwp.Services;
@@ -8,14 +9,15 @@ namespace MarketDataCollector.Uwp.Services;
 /// <summary>
 /// Service for managing navigation throughout the application.
 /// Provides centralized navigation with history tracking and breadcrumb support.
+/// Implements <see cref="INavigationService"/> for testability.
 /// </summary>
-public sealed class NavigationService
+public sealed class NavigationService : INavigationService
 {
     private static NavigationService? _instance;
     private static readonly object _lock = new();
 
     private Frame? _frame;
-    private readonly Stack<NavigationEntry> _navigationHistory = new();
+    private readonly Stack<Contracts.NavigationEntry> _navigationHistory = new();
     private readonly Dictionary<string, Type> _pageRegistry = new();
 
     public static NavigationService Instance
@@ -54,7 +56,7 @@ public sealed class NavigationService
     /// <summary>
     /// Event raised when navigation occurs.
     /// </summary>
-    public event EventHandler<NavigationEventArgs>? Navigated;
+    public event EventHandler<Contracts.NavigationEventArgs>? Navigated;
 
     /// <summary>
     /// Navigates to a page by tag name.
@@ -65,7 +67,7 @@ public sealed class NavigationService
 
         if (_pageRegistry.TryGetValue(pageTag, out var pageType))
         {
-            var entry = new NavigationEntry
+            var entry = new Contracts.NavigationEntry
             {
                 PageTag = pageTag,
                 Parameter = parameter,
@@ -77,7 +79,7 @@ public sealed class NavigationService
 
             if (result)
             {
-                Navigated?.Invoke(this, new NavigationEventArgs
+                Navigated?.Invoke(this, new Contracts.NavigationEventArgs
                 {
                     PageTag = pageTag,
                     Parameter = parameter
@@ -126,7 +128,7 @@ public sealed class NavigationService
     /// <summary>
     /// Gets navigation breadcrumbs.
     /// </summary>
-    public IReadOnlyList<NavigationEntry> GetBreadcrumbs()
+    public IReadOnlyList<Contracts.NavigationEntry> GetBreadcrumbs()
     {
         return _navigationHistory.ToArray();
     }
@@ -180,23 +182,4 @@ public sealed class NavigationService
         _pageRegistry["Settings"] = typeof(SettingsPage);
         _pageRegistry["KeyboardShortcuts"] = typeof(KeyboardShortcutsPage);
     }
-}
-
-/// <summary>
-/// Represents a navigation history entry.
-/// </summary>
-public class NavigationEntry
-{
-    public string PageTag { get; set; } = string.Empty;
-    public object? Parameter { get; set; }
-    public DateTime Timestamp { get; set; }
-}
-
-/// <summary>
-/// Navigation event arguments.
-/// </summary>
-public class NavigationEventArgs : EventArgs
-{
-    public string PageTag { get; set; } = string.Empty;
-    public object? Parameter { get; set; }
 }

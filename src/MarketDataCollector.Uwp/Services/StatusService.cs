@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using MarketDataCollector.Uwp.Contracts;
 using MarketDataCollector.Uwp.Models;
 
 namespace MarketDataCollector.Uwp.Services;
@@ -11,12 +12,31 @@ namespace MarketDataCollector.Uwp.Services;
 /// <summary>
 /// Service for retrieving system status from the collector.
 /// Uses the centralized ApiClientService for configurable URL support.
+/// Implements <see cref="IStatusService"/> for testability.
 /// </summary>
-public sealed class StatusService
+public sealed class StatusService : IStatusService
 {
+    private static StatusService? _instance;
+    private static readonly object _lock = new();
+
     private readonly ApiClientService _apiClient;
 
-    public StatusService()
+    public static StatusService Instance
+    {
+        get
+        {
+            if (_instance == null)
+            {
+                lock (_lock)
+                {
+                    _instance ??= new StatusService();
+                }
+            }
+            return _instance;
+        }
+    }
+
+    private StatusService()
     {
         _apiClient = ApiClientService.Instance;
     }
@@ -37,17 +57,31 @@ public sealed class StatusService
     /// <summary>
     /// Gets the status with full response details.
     /// </summary>
-    public async Task<ApiResponse<StatusResponse>> GetStatusWithResponseAsync(CancellationToken ct = default)
+    public async Task<Contracts.ApiResponse<StatusResponse>> GetStatusWithResponseAsync(CancellationToken ct = default)
     {
-        return await _apiClient.GetWithResponseAsync<StatusResponse>("/api/status", ct);
+        var response = await _apiClient.GetWithResponseAsync<StatusResponse>("/api/status", ct);
+        return new Contracts.ApiResponse<StatusResponse>
+        {
+            Success = response.Success,
+            Data = response.Data,
+            ErrorMessage = response.ErrorMessage,
+            StatusCode = response.StatusCode
+        };
     }
 
     /// <summary>
     /// Checks if the service is healthy and reachable.
     /// </summary>
-    public async Task<ServiceHealthResult> CheckHealthAsync(CancellationToken ct = default)
+    public async Task<Contracts.ServiceHealthResult> CheckHealthAsync(CancellationToken ct = default)
     {
-        return await _apiClient.CheckHealthAsync(ct);
+        var result = await _apiClient.CheckHealthAsync(ct);
+        return new Contracts.ServiceHealthResult
+        {
+            IsReachable = result.IsReachable,
+            IsConnected = result.IsConnected,
+            LatencyMs = result.LatencyMs,
+            ErrorMessage = result.ErrorMessage
+        };
     }
 }
 
