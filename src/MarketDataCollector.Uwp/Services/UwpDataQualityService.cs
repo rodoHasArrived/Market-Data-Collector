@@ -8,12 +8,12 @@ namespace MarketDataCollector.Uwp.Services;
 /// <summary>
 /// Service for managing data quality monitoring, alerts, and quality scoring.
 /// </summary>
-public sealed class DataQualityService
+public sealed class UwpDataQualityService
 {
-    private static DataQualityService? _instance;
+    private static UwpDataQualityService? _instance;
     private static readonly object _lock = new();
 
-    public static DataQualityService Instance
+    public static UwpDataQualityService Instance
     {
         get
         {
@@ -21,14 +21,14 @@ public sealed class DataQualityService
             {
                 lock (_lock)
                 {
-                    _instance ??= new DataQualityService();
+                    _instance ??= new UwpDataQualityService();
                 }
             }
             return _instance;
         }
     }
 
-    private DataQualityService() { }
+    private UwpDataQualityService() { }
 
     /// <summary>
     /// Gets the overall data quality summary.
