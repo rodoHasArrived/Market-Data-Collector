@@ -5,6 +5,7 @@ using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Http;
+using MarketDataCollector.Infrastructure.Utilities;
 using Serilog;
 
 namespace MarketDataCollector.Infrastructure.Providers.Backfill;
@@ -35,7 +36,7 @@ public sealed class StooqHistoricalDataProvider : IHistoricalDataProvider
         if (string.IsNullOrWhiteSpace(symbol))
             throw new ArgumentException("Symbol is required", nameof(symbol));
 
-        var normalizedSymbol = Normalize(symbol);
+        var normalizedSymbol = SymbolNormalization.NormalizeForStooq(symbol);
         var url = $"https://stooq.pl/q/d/l/?s={normalizedSymbol}.us&i=d";
         _log.Information("Requesting Stooq history for {Symbol} ({Url})", symbol, url);
 
@@ -76,7 +77,4 @@ public sealed class StooqHistoricalDataProvider : IHistoricalDataProvider
             .OrderBy(b => b.SessionDate)
             .ToArray();
     }
-
-    private static string Normalize(string symbol)
-        => symbol.Replace(".", "-").ToLowerInvariant();
 }

@@ -7,6 +7,7 @@ using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.DataSources;
 using MarketDataCollector.Infrastructure.Http;
+using MarketDataCollector.Infrastructure.Utilities;
 using Serilog;
 
 namespace MarketDataCollector.Infrastructure.Providers.Backfill;
@@ -26,6 +27,7 @@ public sealed class AlphaVantageHistoricalDataProvider : IHistoricalDataProvider
     private readonly HttpClient _http;
     private readonly RateLimiter _rateLimiter;
     private readonly ILogger _log;
+    private readonly HttpResponseHandler _responseHandler;
     private readonly string? _apiKey;
     private bool _disposed;
 
@@ -59,6 +61,7 @@ public sealed class AlphaVantageHistoricalDataProvider : IHistoricalDataProvider
         _http.DefaultRequestHeaders.Add("User-Agent", "MarketDataCollector/1.0");
 
         _rateLimiter = new RateLimiter(MaxRequestsPerWindow, RateLimitWindow, RateLimitDelay, _log);
+        _responseHandler = new HttpResponseHandler(Name, _log);
     }
 
     public async Task<bool> IsAvailableAsync(CancellationToken ct = default)
@@ -106,7 +109,7 @@ public sealed class AlphaVantageHistoricalDataProvider : IHistoricalDataProvider
 
         await _rateLimiter.WaitForSlotAsync(ct).ConfigureAwait(false);
 
-        var normalizedSymbol = NormalizeSymbol(symbol);
+        var normalizedSymbol = SymbolNormalization.Normalize(symbol);
 
         // Use TIME_SERIES_DAILY_ADJUSTED for full history with adjusted prices
         var url = $"{BaseUrl}?function=TIME_SERIES_DAILY_ADJUSTED&symbol={normalizedSymbol}&outputsize=full&apikey={_apiKey}";
@@ -117,18 +120,11 @@ public sealed class AlphaVantageHistoricalDataProvider : IHistoricalDataProvider
         {
             using var response = await _http.GetAsync(url, ct).ConfigureAwait(false);
 
-            if (!response.IsSuccessStatusCode)
+            var httpResult = await _responseHandler.HandleResponseAsync(response, symbol, "daily bars", ct: ct).ConfigureAwait(false);
+            if (httpResult.IsNotFound)
             {
-                var error = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
-                _log.Warning("Alpha Vantage returned {Status} for {Symbol}: {Error}",
-                    response.StatusCode, symbol, error);
-
-                if ((int)response.StatusCode == 429)
-                {
-                    throw new HttpRequestException($"Alpha Vantage rate limit exceeded (429) for {symbol}. Retry-After: 60");
-                }
-
-                throw new InvalidOperationException($"Alpha Vantage returned {(int)response.StatusCode} for symbol {symbol}");
+                _log.Warning("Alpha Vantage: Symbol {Symbol} not found", symbol);
+                return Array.Empty<AdjustedHistoricalBar>();
             }
 
             var json = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
@@ -254,7 +250,7 @@ public sealed class AlphaVantageHistoricalDataProvider : IHistoricalDataProvider
 
         await _rateLimiter.WaitForSlotAsync(ct).ConfigureAwait(false);
 
-        var normalizedSymbol = NormalizeSymbol(symbol);
+        var normalizedSymbol = SymbolNormalization.Normalize(symbol);
 
         // Use TIME_SERIES_INTRADAY with extended hours and full output
         var url = $"{BaseUrl}?function=TIME_SERIES_INTRADAY&symbol={normalizedSymbol}&interval={normalizedInterval}&outputsize=full&adjusted=true&extended_hours=true&apikey={_apiKey}";
@@ -265,21 +261,15 @@ public sealed class AlphaVantageHistoricalDataProvider : IHistoricalDataProvider
         {
             using var response = await _http.GetAsync(url, ct).ConfigureAwait(false);
 
-            if (!response.IsSuccessStatusCode)
+            var httpResult = await _responseHandler.HandleResponseAsync(response, symbol, "intraday bars", ct: ct).ConfigureAwait(false);
+            if (httpResult.IsNotFound)
             {
-                var error = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
-
-                if ((int)response.StatusCode == 429)
-                {
-                    throw new HttpRequestException($"Alpha Vantage rate limit exceeded (429) for {symbol}");
-                }
-
-                throw new InvalidOperationException($"Alpha Vantage returned {(int)response.StatusCode} for symbol {symbol}");
+                return Array.Empty<IntradayBar>();
             }
 
             var json = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
 
-            // Check for API error messages in response
+            // Alpha Vantage returns 200 OK with error/rate limit messages in body
             if (json.Contains("\"Note\"") || json.Contains("Thank you for using Alpha Vantage"))
             {
                 throw new HttpRequestException($"Alpha Vantage rate limit exceeded for {symbol}");
@@ -344,12 +334,6 @@ public sealed class AlphaVantageHistoricalDataProvider : IHistoricalDataProvider
             _log.Error(ex, "Failed to parse Alpha Vantage intraday response for {Symbol}", symbol);
             throw new InvalidOperationException($"Failed to parse Alpha Vantage intraday data for {symbol}", ex);
         }
-    }
-
-    private static string NormalizeSymbol(string symbol)
-    {
-        // Alpha Vantage uses standard uppercase tickers
-        return symbol.ToUpperInvariant();
     }
 
     private static string NormalizeInterval(string interval)

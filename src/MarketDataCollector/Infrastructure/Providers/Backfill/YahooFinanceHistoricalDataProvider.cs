@@ -6,6 +6,7 @@ using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Http;
+using MarketDataCollector.Infrastructure.Utilities;
 using Serilog;
 
 namespace MarketDataCollector.Infrastructure.Providers.Backfill;
@@ -24,6 +25,7 @@ public sealed class YahooFinanceHistoricalDataProvider : IHistoricalDataProvider
     private readonly HttpClient _http;
     private readonly RateLimiter _rateLimiter;
     private readonly ILogger _log;
+    private readonly HttpResponseHandler _responseHandler;
     private bool _disposed;
 
     public string Name => "yahoo";
@@ -49,6 +51,7 @@ public sealed class YahooFinanceHistoricalDataProvider : IHistoricalDataProvider
         _http.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
 
         _rateLimiter = new RateLimiter(MaxRequestsPerWindow, RateLimitWindow, RateLimitDelay, _log);
+        _responseHandler = new HttpResponseHandler(Name, _log);
     }
 
     public async Task<bool> IsAvailableAsync(CancellationToken ct = default)
@@ -80,7 +83,7 @@ public sealed class YahooFinanceHistoricalDataProvider : IHistoricalDataProvider
 
         await _rateLimiter.WaitForSlotAsync(ct).ConfigureAwait(false);
 
-        var normalizedSymbol = NormalizeSymbol(symbol);
+        var normalizedSymbol = SymbolNormalization.NormalizeForYahoo(symbol);
 
         // Build URL with date range
         var period1 = from.HasValue
@@ -99,28 +102,27 @@ public sealed class YahooFinanceHistoricalDataProvider : IHistoricalDataProvider
         {
             using var response = await _http.GetAsync(url, ct).ConfigureAwait(false);
 
-            if (!response.IsSuccessStatusCode)
+            var httpResult = await _responseHandler.HandleResponseAsync(response, symbol, "daily bars", ct: ct).ConfigureAwait(false);
+            if (httpResult.IsNotFound)
             {
-                var error = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
-                _log.Warning("Yahoo Finance returned {Status} for {Symbol}: {Error}",
-                    response.StatusCode, symbol, error);
-                throw new InvalidOperationException($"Yahoo Finance returned {(int)response.StatusCode} for symbol {symbol}");
+                _log.Warning("Yahoo Finance: Symbol {Symbol} not found", symbol);
+                return Array.Empty<AdjustedHistoricalBar>();
             }
 
             var json = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
             var data = JsonSerializer.Deserialize<YahooChartResponse>(json);
 
-            var result = data?.Chart?.Result?.FirstOrDefault();
-            if (result?.Indicators?.Quote?.FirstOrDefault() is null)
+            var chartResult = data?.Chart?.Result?.FirstOrDefault();
+            if (chartResult?.Indicators?.Quote?.FirstOrDefault() is null)
             {
                 _log.Warning("No data returned from Yahoo Finance for {Symbol}", symbol);
                 return Array.Empty<AdjustedHistoricalBar>();
             }
 
-            var timestamps = result.Timestamp ?? Array.Empty<long>();
-            var quote = result.Indicators.Quote[0];
-            var adjClose = result.Indicators.AdjClose?.FirstOrDefault()?.AdjClose;
-            var events = result.Events;
+            var timestamps = chartResult.Timestamp ?? Array.Empty<long>();
+            var quote = chartResult.Indicators.Quote[0];
+            var adjClose = chartResult.Indicators.AdjClose?.FirstOrDefault()?.AdjClose;
+            var events = chartResult.Events;
 
             var bars = new List<AdjustedHistoricalBar>();
 
@@ -198,13 +200,6 @@ public sealed class YahooFinanceHistoricalDataProvider : IHistoricalDataProvider
             _log.Error(ex, "Failed to parse Yahoo Finance response for {Symbol}", symbol);
             throw new InvalidOperationException($"Failed to parse Yahoo Finance data for {symbol}", ex);
         }
-    }
-
-    private static string NormalizeSymbol(string symbol)
-    {
-        // Yahoo uses standard tickers for US stocks
-        // International: append exchange suffix (e.g., .L for London, .T for Tokyo)
-        return symbol.ToUpperInvariant();
     }
 
     private static decimal? GetDecimalValue(decimal?[]? array, int index)

@@ -43,12 +43,21 @@ public static class SymbolNormalization
 
     /// <summary>
     /// Stooq-specific normalization for Polish market symbols.
-    /// Stooq uses lowercase symbols and specific market suffixes.
+    /// Stooq uses lowercase symbols, replaces dots with dashes, and specific market suffixes.
     /// </summary>
     public static string NormalizeForStooq(string symbol)
     {
-        // Stooq uses lowercase for some markets
-        return symbol.Trim().ToLowerInvariant();
+        // Stooq uses lowercase and replaces dots with dashes
+        return symbol.Trim().Replace(".", "-").ToLowerInvariant();
+    }
+
+    /// <summary>
+    /// Nasdaq Data Link (Quandl) specific normalization.
+    /// Nasdaq Data Link expects uppercase symbols with dots replaced by underscores.
+    /// </summary>
+    public static string NormalizeForNasdaqDataLink(string symbol)
+    {
+        return Normalize(symbol).Replace(".", "_");
     }
 
     /// <summary>

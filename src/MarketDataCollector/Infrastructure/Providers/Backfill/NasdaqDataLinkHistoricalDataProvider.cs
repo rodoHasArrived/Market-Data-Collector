@@ -6,6 +6,7 @@ using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Http;
+using MarketDataCollector.Infrastructure.Utilities;
 using Serilog;
 
 namespace MarketDataCollector.Infrastructure.Providers.Backfill;
@@ -23,6 +24,7 @@ public sealed class NasdaqDataLinkHistoricalDataProvider : IHistoricalDataProvid
 
     private readonly HttpClient _http;
     private readonly RateLimiter _rateLimiter;
+    private readonly HttpResponseHandler _responseHandler;
     private readonly string? _apiKey;
     private readonly string _database;
     private readonly ILogger _log;
@@ -65,6 +67,7 @@ public sealed class NasdaqDataLinkHistoricalDataProvider : IHistoricalDataProvid
 
         // Free tier: 50 calls/day without key, 300/10sec burst limit
         _rateLimiter = new RateLimiter(MaxRequestsPerWindow, RateLimitWindow, RateLimitDelay, _log);
+        _responseHandler = new HttpResponseHandler(Name, _log);
     }
 
     public async Task<bool> IsAvailableAsync(CancellationToken ct = default)
@@ -99,7 +102,7 @@ public sealed class NasdaqDataLinkHistoricalDataProvider : IHistoricalDataProvid
 
         await _rateLimiter.WaitForSlotAsync(ct).ConfigureAwait(false);
 
-        var normalizedSymbol = symbol.ToUpperInvariant().Replace(".", "_");
+        var normalizedSymbol = SymbolNormalization.NormalizeForNasdaqDataLink(symbol);
 
         // Build URL
         var url = $"{BaseUrl}/datasets/{_database}/{normalizedSymbol}.json";
@@ -123,19 +126,11 @@ public sealed class NasdaqDataLinkHistoricalDataProvider : IHistoricalDataProvid
         {
             using var response = await _http.GetAsync(url, ct).ConfigureAwait(false);
 
-            if (!response.IsSuccessStatusCode)
+            var httpResult = await _responseHandler.HandleResponseAsync(response, symbol, "daily bars", ct: ct).ConfigureAwait(false);
+            if (httpResult.IsNotFound)
             {
-                var error = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
-                _log.Warning("Nasdaq Data Link returned {Status} for {Symbol}: {Error}",
-                    response.StatusCode, symbol, error);
-
-                if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
-                {
-                    // Symbol not found, return empty rather than throw
-                    return Array.Empty<AdjustedHistoricalBar>();
-                }
-
-                throw new InvalidOperationException($"Nasdaq Data Link returned {(int)response.StatusCode} for symbol {symbol}");
+                _log.Warning("Nasdaq Data Link: Symbol {Symbol} not found", symbol);
+                return Array.Empty<AdjustedHistoricalBar>();
             }
 
             var json = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
