@@ -6,7 +6,7 @@ namespace MarketDataCollector.Uwp.Collections;
 
 /// <summary>
 /// A fixed-size circular buffer (ring buffer) that provides O(1) operations
-/// for adding elements and computing statistics. When the buffer is full,
+/// for adding elements and O(n) operations for computing statistics. When the buffer is full,
 /// new elements overwrite the oldest elements.
 /// </summary>
 /// <typeparam name="T">The type of elements in the buffer.</typeparam>
