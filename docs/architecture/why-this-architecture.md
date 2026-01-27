@@ -1,94 +1,88 @@
 # Why This Architecture (Non-Engineer Explainer)
 
 ## What this program does
-It records detailed market activity from multiple data providers (Interactive Brokers, Alpaca, and others):
-- **Trades:** every print (tick-by-tick) with sequence validation
-- **Depth:** the live order book (Level 2) with integrity checking
-- **Quotes:** best bid/offer (BBO) snapshots with spread and mid-price
-- **Order Flow:** rolling statistics like VWAP, buy/sell volume, and imbalance
+Market Data Collector captures **live** and **historical** market microstructure data, validates it for quality, and stores it in audit-friendly formats so it can be replayed, analyzed, or fed into research tools.
 
-It stores that data in a format that can be audited, replayed, and analyzed.
+It collects:
+- **Trades:** tick-by-tick prints with sequence checks and quality validation
+- **Quotes:** best bid/offer (BBO) updates for context and spread health
+- **Depth:** Level 2 order book updates with integrity checks
+- **Backfill:** historical bars and supplemental data from multiple providers
+
+It also provides **monitoring dashboards**, **Prometheus metrics**, and **export tooling** for downstream analysis.
 
 ---
 
 ## Why we split it into layers
 
-### 1) Infrastructure (the "adapter")
-Each data provider has its own API and quirks. We isolate each provider so:
-- we can swap providers later if needed (just implement `IMarketDataClient`)
-- the rest of the system stays stable
-- data logic doesn't become entangled with vendor specifics
+### 1) Provider Adapters (the “translators”)
+Each data provider speaks its own API and protocol. We isolate them so:
+- providers can be swapped or added without touching the core logic
+- failures or quirks in one feed don’t poison the whole system
+- historical backfill can run independently of live capture
 
-Key classes: `IBMarketDataClient`, `AlpacaMarketDataClient`, `IBCallbackRouter`, `ContractFactory`
+Examples of current adapters:
+- **Live providers:** Interactive Brokers, Alpaca, NYSE Direct, StockSharp (Polygon currently runs in stub mode)
+- **Historical/backfill providers:** Alpaca, Yahoo Finance, Stooq, Tiingo, Finnhub, Alpha Vantage, Nasdaq Data Link, Polygon
+- **Symbol resolution:** OpenFIGI-based resolution for cross-provider symbol mapping
 
-### 2) Domain (the "brains")
-This is where we decide what the data *means*:
-- `MarketDepthCollector` – keeps an order book and validates every insert/update/delete
-- `TradeDataCollector` – processes trades, validates sequence numbers, computes order-flow statistics
-- `QuoteCollector` – tracks BBO per symbol and provides quote context for aggressor inference
-- detect when data is inconsistent or missing (emit integrity events)
+### 2) Domain Logic (the “brains”)
+This layer decides what the incoming data *means* and whether it’s valid:
+- `TradeDataCollector` validates trade sequences and produces order-flow stats
+- `MarketDepthCollector` maintains the order book and emits integrity events
+- `QuoteCollector` tracks BBO state and quote context
 
-This layer is written so it can be tested without connecting to any provider.
+Because this layer is provider-agnostic, it can be tested without a live feed.
 
-### 3) Application (the "conductor")
-This is the part that runs the show:
-- `Program.cs` – wires everything together
-- `ConfigWatcher` – hot reloads `appsettings.json` without restarts
-- `StatusWriter` – writes health snapshots for monitoring/UI
-- `Metrics` – tracks published, dropped, and integrity event counts
+### 3) Application Services (the “conductor”)
+This is the orchestration layer that wires everything together and exposes tooling:
+- CLI modes for **wizard setup**, **auto-config**, and **credential validation**
+- Subscription management and backfill scheduling
+- Health checks, data quality checks, and alerting hooks
+- HTTP status server for dashboard and metrics endpoints
 
-### 4) Pipeline/Storage (the "transport and memory")
-We treat all recorded activity as a stream of standardized `MarketEvent` objects and store them safely:
-- `EventPipeline` – bounded channel (default 50,000 events) prevents runaway memory use
-- `JsonlStorageSink` – writes events as append-only JSON lines
-- `JsonlStoragePolicy` – partitions files by `<Symbol>.<EventType>.jsonl` for easy audit and replay
+### 4) Pipeline + Storage (the “transport and memory”)
+All domain events flow through a bounded, backpressured pipeline to prevent runaway memory use:
+- `EventPipeline` uses a bounded channel (default **100,000 events**) with drop policies
+- Storage sinks include **JSONL** and **Parquet**
+- **Write-ahead logging (WAL)** for crash-safe persistence
+- **Compression profiles**, **schema versioning**, **retention policies**, and **replay tooling**
+- Export profiles for analytics (Python/R/Lean/SQL-friendly exports)
 
----
-
-## Why this is safer and more "institutional"
-- **Audit-friendly output:** append-only logs per symbol/type (e.g., `AAPL.Trade.jsonl`, `SPY.BboQuote.jsonl`)
-- **Integrity events:** the system detects sequence gaps, out-of-order trades, and book corruption rather than silently writing bad data
-- **Quote-aware analytics:** BBO tracking enables aggressor inference (buy vs. sell) and better validation of trade prints
-- **Hot reload with atomic writes:** reduces operational risk of restarts and partial configs
-- **Provider independence:** the core logic remains correct even if provider integration changes
-- **Backpressure protection:** bounded queues drop oldest events under load rather than exhausting memory
-
----
-
-## Current capabilities
-
-### Implemented
-- Trade sequence validation with `IntegrityEvent` emission
-- Order book integrity checking with `DepthIntegrityEvent`
-- BBO tracking via `QuoteCollector` with `IQuoteStateStore` interface
-- Aggressor inference when BBO context is available
-- Order-flow statistics (VWAP, buy/sell volume, imbalance)
-- Multiple data sources (IB, Alpaca) via pluggable `IMarketDataClient`
-- Hot reload of symbol configuration
-- Status monitoring via `StatusWriter`
-
-### Coming next for production maturity
-- CI test automation and release workflow
-- Authentication for UI if network-exposed
-- Feed-divergence alarms for provider reconciliation
-
-### Recently Completed
-
-- **Archival-First Storage (v1.5.0)** – Write-ahead logging (WAL) for crash-safe persistence with per-record checksums
-- **Compression Profiles (v1.5.0)** – Tiered compression with LZ4/ZSTD/Gzip profiles for hot/warm/cold storage
-- **Schema Versioning (v1.5.0)** – Automatic migration between schema versions with JSON Schema export
-- **Analysis Export (v1.5.0)** – Pre-built export profiles for Python, R, Lean, Excel, PostgreSQL
-- **Quality Reports (v1.5.0)** – Data quality assessment with outlier detection and gap analysis
-- **F# Domain Library** – Type-safe discriminated unions with railway-oriented validation
-- **Historical Data Backfill** – Multi-provider backfill with Alpaca, Yahoo Finance, Stooq, Nasdaq Data Link, and composite failover
-- **MassTransit Integration** – Distributed messaging with RabbitMQ and Azure Service Bus
-- **Microservices Architecture** – Six specialized services for high-throughput deployments
-- **QuantConnect Lean Integration** – Custom data types and IDataProvider for backtesting
-- **UWP Desktop Application** – Native Windows app with comprehensive configuration UI
-- **Tiered Storage** – Hot/warm/cold storage management with automatic migration
+### 5) Presentation + Monitoring (the “eyes and dashboard”)
+The system exposes status and monitoring through:
+- Web dashboard (HTTP status server + UI)
+- Prometheus metrics endpoint
+- Native Windows UWP desktop app for monitoring and configuration
 
 ---
 
-**Version:** 1.5.0
-**Last Updated:** 2026-01-08
+## Why this is safer and more “institutional”
+- **Audit-first storage:** append-only JSONL/Parquet with WAL for durability
+- **Data quality enforcement:** integrity events, spread checks, timestamp checks, and tick-size validation
+- **Provider isolation:** adapters can fail or be replaced without corrupting core logic
+- **Backpressure protection:** bounded queues prevent memory runaway under load
+- **Operational visibility:** live metrics, status endpoints, and UI dashboards
+
+---
+
+## Current capabilities (as implemented in this repo)
+
+### Implemented today
+- Live capture from IB, Alpaca, NYSE Direct, StockSharp (Polygon adapter runs in stub mode today)
+- Historical backfill with provider failover and rate limiting
+- Integrity event emission for trade sequences and order book consistency
+- Quote-aware analytics (BBO context)
+- Storage in JSONL and Parquet with retention, compression, and WAL
+- Data replay and export tooling for downstream analysis
+- Monitoring via Prometheus metrics, status JSON, and web/UWP dashboards
+- QuantConnect Lean integration for backtesting
+
+### Notes on provider maturity
+- Polygon is currently implemented in **stub mode** (synthetic events) until the full WebSocket client is completed.
+
+---
+
+**Version:** 1.6.0
+**Last Updated:** 2026-01-26
 **See Also:** [Architecture Overview](overview.md) | [Domains](domains.md) | [C4 Diagrams](c4-diagrams.md) | [Lean Integration](../integrations/lean-integration.md)
