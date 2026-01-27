@@ -581,7 +581,7 @@ public class ExportTaskPayload
     public string[]? Symbols { get; set; }
 
     [JsonPropertyName("dateRange")]
-    public DateRangeInfo? DateRange { get; set; }
+    public TaskDateRange? DateRange { get; set; }
 
     [JsonPropertyName("outputPath")]
     public string? OutputPath { get; set; }
@@ -595,8 +595,9 @@ public class ExportTaskPayload
 
 /// <summary>
 /// Date range information for scheduled tasks.
+/// Note: Named TaskDateRange to avoid conflict with MarketDataCollector.Contracts.Manifest.DateRangeInfo
 /// </summary>
-public class DateRangeInfo
+public class TaskDateRange
 {
     [JsonPropertyName("from")]
     public DateTime? From { get; set; }
