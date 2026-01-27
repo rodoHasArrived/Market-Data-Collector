@@ -70,8 +70,46 @@
     NOTE: MarketDataCollector.Contracts project reference was removed because
     the WinUI 3 XAML compiler rejects assemblies not designed for its type system
     with error "Assembly is not allowed in type universe".
-    Local model classes in Models/ folder mirror the Contracts DTOs instead.
+
+    SOLUTION: Include Contracts source files directly during compilation (no assembly reference needed).
+    This eliminates ~1,300 lines of duplicated DTOs while avoiding the XAML compiler issue.
+    Type aliases in Models/SharedModelAliases.cs provide backwards compatibility.
   -->
+
+  <!-- Include shared source files from Contracts (Windows only) -->
+  <ItemGroup Condition="'$(IsWindows)' == 'true'">
+    <!-- Configuration DTOs -->
+    <Compile Include="..\MarketDataCollector.Contracts\Configuration\*.cs"
+             Link="SharedModels\Configuration\%(Filename)%(Extension)" />
+
+    <!-- API models (StatusResponse, BackfillResult, etc.) -->
+    <Compile Include="..\MarketDataCollector.Contracts\Api\*.cs"
+             Link="SharedModels\Api\%(Filename)%(Extension)" />
+
+    <!-- Credential models -->
+    <Compile Include="..\MarketDataCollector.Contracts\Credentials\*.cs"
+             Link="SharedModels\Credentials\%(Filename)%(Extension)" />
+
+    <!-- Backfill progress models -->
+    <Compile Include="..\MarketDataCollector.Contracts\Backfill\*.cs"
+             Link="SharedModels\Backfill\%(Filename)%(Extension)" />
+
+    <!-- Session models -->
+    <Compile Include="..\MarketDataCollector.Contracts\Session\*.cs"
+             Link="SharedModels\Session\%(Filename)%(Extension)" />
+
+    <!-- Manifest models -->
+    <Compile Include="..\MarketDataCollector.Contracts\Manifest\*.cs"
+             Link="SharedModels\Manifest\%(Filename)%(Extension)" />
+
+    <!-- Archive health models -->
+    <Compile Include="..\MarketDataCollector.Contracts\Archive\*.cs"
+             Link="SharedModels\Archive\%(Filename)%(Extension)" />
+
+    <!-- Schema models -->
+    <Compile Include="..\MarketDataCollector.Contracts\Schema\*.cs"
+             Link="SharedModels\Schema\%(Filename)%(Extension)" />
+  </ItemGroup>
 
   <ItemGroup Condition="'$(IsWindows)' == 'true' AND Exists('Assets')">
     <Content Include="Assets\**\*" Exclude="Assets\**\*.placeholder">
