@@ -1,10 +1,7 @@
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading;
-using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Domain.Models;
-using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Http;
 using MarketDataCollector.Infrastructure.Utilities;
 using Serilog;
@@ -15,35 +12,30 @@ namespace MarketDataCollector.Infrastructure.Providers.Backfill;
 /// Historical data provider using Nasdaq Data Link (formerly Quandl).
 /// Free tier: 50 calls/day, 300 calls/10 seconds.
 /// Provides access to various datasets including WIKI (end-of-life) and premium datasets.
+/// Extends BaseHistoricalDataProvider for common functionality.
 /// </summary>
 [ImplementsAdr("ADR-001", "Nasdaq Data Link historical data provider implementation")]
 [ImplementsAdr("ADR-004", "All async methods support CancellationToken")]
-public sealed class NasdaqDataLinkHistoricalDataProvider : IHistoricalDataProvider, IDisposable
+public sealed class NasdaqDataLinkHistoricalDataProvider : BaseHistoricalDataProvider
 {
-    private const string BaseUrl = "https://data.nasdaq.com/api/v3";
+    private const string ApiBaseUrl = "https://data.nasdaq.com/api/v3";
 
-    private readonly HttpClient _http;
-    private readonly RateLimiter _rateLimiter;
-    private readonly HttpResponseHandler _responseHandler;
     private readonly string? _apiKey;
     private readonly string _database;
-    private readonly ILogger _log;
-    private bool _disposed;
 
-    public string Name => "nasdaq";
-    public string DisplayName => "Nasdaq Data Link (Quandl)";
-    public string Description => "Alternative and financial datasets from Nasdaq Data Link (formerly Quandl).";
+    public override string Name => "nasdaq";
+    public override string DisplayName => "Nasdaq Data Link (Quandl)";
+    public override string Description => "Alternative and financial datasets from Nasdaq Data Link (formerly Quandl).";
+    protected override string HttpClientName => HttpClientNames.NasdaqDataLinkHistorical;
 
-    public int Priority => 30;
-    public TimeSpan RateLimitDelay => TimeSpan.FromMilliseconds(100);
-    public int MaxRequestsPerWindow => 50;
-    public TimeSpan RateLimitWindow => TimeSpan.FromDays(1);
+    public override int Priority => 30;
+    public override TimeSpan RateLimitDelay => TimeSpan.FromMilliseconds(100);
+    public override int MaxRequestsPerWindow => 50;
+    public override TimeSpan RateLimitWindow => TimeSpan.FromDays(1);
 
-    public bool SupportsAdjustedPrices => true;
-    public bool SupportsIntraday => false;
-    public bool SupportsDividends => true;
-    public bool SupportsSplits => true;
-    public IReadOnlyList<string> SupportedMarkets => new[] { "US" };
+    public override bool SupportsAdjustedPrices => true;
+    public override bool SupportsDividends => true;
+    public override bool SupportsSplits => true;
 
     /// <summary>
     /// Create a Nasdaq Data Link provider.
@@ -57,28 +49,29 @@ public sealed class NasdaqDataLinkHistoricalDataProvider : IHistoricalDataProvid
         string database = "WIKI",
         HttpClient? httpClient = null,
         ILogger? log = null)
+        : base(httpClient, log)
     {
         _apiKey = apiKey;
         _database = database;
-        _log = log ?? LoggingSetup.ForContext<NasdaqDataLinkHistoricalDataProvider>();
-
-        // TD-10: Use HttpClientFactory instead of creating new HttpClient instances
-        _http = httpClient ?? HttpClientFactoryProvider.CreateClient(HttpClientNames.NasdaqDataLinkHistorical);
-
-        // Free tier: 50 calls/day without key, 300/10sec burst limit
-        _rateLimiter = new RateLimiter(MaxRequestsPerWindow, RateLimitWindow, RateLimitDelay, _log);
-        _responseHandler = new HttpResponseHandler(Name, _log);
     }
 
-    public async Task<bool> IsAvailableAsync(CancellationToken ct = default)
+    /// <summary>
+    /// Nasdaq Data Link expects uppercase symbols with dots replaced by underscores.
+    /// </summary>
+    protected override string NormalizeSymbol(string symbol)
+    {
+        return SymbolNormalization.NormalizeForNasdaqDataLink(symbol);
+    }
+
+    public override async Task<bool> IsAvailableAsync(CancellationToken ct = default)
     {
         try
         {
-            var url = $"{BaseUrl}/datasets/{_database}/AAPL/metadata.json";
+            var url = $"{ApiBaseUrl}/datasets/{_database}/AAPL/metadata.json";
             if (!string.IsNullOrEmpty(_apiKey))
                 url += $"?api_key={_apiKey}";
 
-            using var response = await _http.GetAsync(url, ct).ConfigureAwait(false);
+            using var response = await Http.GetAsync(url, ct).ConfigureAwait(false);
             return response.IsSuccessStatusCode;
         }
         catch
@@ -87,25 +80,67 @@ public sealed class NasdaqDataLinkHistoricalDataProvider : IHistoricalDataProvid
         }
     }
 
-    public async Task<IReadOnlyList<HistoricalBar>> GetDailyBarsAsync(string symbol, DateOnly? from, DateOnly? to, CancellationToken ct = default)
+    public override async Task<IReadOnlyList<HistoricalBar>> GetDailyBarsAsync(
+        string symbol,
+        DateOnly? from,
+        DateOnly? to,
+        CancellationToken ct = default)
     {
         var adjustedBars = await GetAdjustedDailyBarsAsync(symbol, from, to, ct).ConfigureAwait(false);
         return adjustedBars.Select(b => b.ToHistoricalBar(preferAdjusted: true)).ToList();
     }
 
-    public async Task<IReadOnlyList<AdjustedHistoricalBar>> GetAdjustedDailyBarsAsync(string symbol, DateOnly? from, DateOnly? to, CancellationToken ct = default)
+    public override async Task<IReadOnlyList<AdjustedHistoricalBar>> GetAdjustedDailyBarsAsync(
+        string symbol,
+        DateOnly? from,
+        DateOnly? to,
+        CancellationToken ct = default)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        ThrowIfDisposed();
+        ValidateSymbol(symbol);
 
-        if (string.IsNullOrWhiteSpace(symbol))
-            throw new ArgumentException("Symbol is required", nameof(symbol));
+        await WaitForRateLimitSlotAsync(ct).ConfigureAwait(false);
 
-        await _rateLimiter.WaitForSlotAsync(ct).ConfigureAwait(false);
+        var normalizedSymbol = NormalizeSymbol(symbol);
+        var url = BuildRequestUrl(normalizedSymbol, from, to);
 
-        var normalizedSymbol = SymbolNormalization.NormalizeForNasdaqDataLink(symbol);
+        Log.Information("Requesting Nasdaq Data Link history for {Symbol} ({Url})", symbol, url);
 
-        // Build URL
-        var url = $"{BaseUrl}/datasets/{_database}/{normalizedSymbol}.json";
+        try
+        {
+            using var response = await Http.GetAsync(url, ct).ConfigureAwait(false);
+
+            var httpResult = await ResponseHandler.HandleResponseAsync(response, symbol, "daily bars", ct: ct).ConfigureAwait(false);
+            if (httpResult.IsNotFound)
+            {
+                Log.Warning("Nasdaq Data Link: Symbol {Symbol} not found", symbol);
+                return Array.Empty<AdjustedHistoricalBar>();
+            }
+
+            var json = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+            var result = DeserializeResponse<QuandlDatasetResponse>(json, symbol);
+
+            if (result?.Dataset?.Data is null)
+            {
+                Log.Warning("No data returned from Nasdaq Data Link for {Symbol}", symbol);
+                return Array.Empty<AdjustedHistoricalBar>();
+            }
+
+            var bars = ParseDatasetResponse(result.Dataset, symbol, from, to);
+
+            Log.Information("Fetched {Count} bars for {Symbol} from Nasdaq Data Link", bars.Count, symbol);
+            return bars.OrderBy(b => b.SessionDate).ToList();
+        }
+        catch (JsonException ex)
+        {
+            Log.Error(ex, "Failed to parse Nasdaq Data Link response for {Symbol}", symbol);
+            throw new InvalidOperationException($"Failed to parse Nasdaq Data Link data for {symbol}", ex);
+        }
+    }
+
+    private string BuildRequestUrl(string normalizedSymbol, DateOnly? from, DateOnly? to)
+    {
+        var url = $"{ApiBaseUrl}/datasets/{_database}/{normalizedSymbol}.json";
         var queryParams = new List<string>();
 
         if (!string.IsNullOrEmpty(_apiKey))
@@ -120,54 +155,29 @@ public sealed class NasdaqDataLinkHistoricalDataProvider : IHistoricalDataProvid
         if (queryParams.Count > 0)
             url += "?" + string.Join("&", queryParams);
 
-        _log.Information("Requesting Nasdaq Data Link history for {Symbol} ({Url})", symbol, url);
+        return url;
+    }
 
-        try
+    private List<AdjustedHistoricalBar> ParseDatasetResponse(QuandlDataset dataset, string symbol, DateOnly? from, DateOnly? to)
+    {
+        var columns = dataset.ColumnNames ?? Array.Empty<string>();
+        var columnIndex = BuildColumnIndex(columns);
+        var bars = new List<AdjustedHistoricalBar>();
+
+        foreach (var row in dataset.Data!)
         {
-            using var response = await _http.GetAsync(url, ct).ConfigureAwait(false);
-
-            var httpResult = await _responseHandler.HandleResponseAsync(response, symbol, "daily bars", ct: ct).ConfigureAwait(false);
-            if (httpResult.IsNotFound)
+            var bar = ParseRow(row, columnIndex, symbol);
+            if (bar is not null)
             {
-                _log.Warning("Nasdaq Data Link: Symbol {Symbol} not found", symbol);
-                return Array.Empty<AdjustedHistoricalBar>();
+                // Apply date filter
+                if (from.HasValue && bar.SessionDate < from.Value) continue;
+                if (to.HasValue && bar.SessionDate > to.Value) continue;
+
+                bars.Add(bar);
             }
-
-            var json = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
-            var result = JsonSerializer.Deserialize<QuandlDatasetResponse>(json);
-
-            if (result?.Dataset?.Data is null)
-            {
-                _log.Warning("No data returned from Nasdaq Data Link for {Symbol}", symbol);
-                return Array.Empty<AdjustedHistoricalBar>();
-            }
-
-            var columns = result.Dataset.ColumnNames ?? Array.Empty<string>();
-            var columnIndex = BuildColumnIndex(columns);
-
-            var bars = new List<AdjustedHistoricalBar>();
-
-            foreach (var row in result.Dataset.Data)
-            {
-                var bar = ParseRow(row, columnIndex, symbol);
-                if (bar is not null)
-                {
-                    // Apply date filter
-                    if (from.HasValue && bar.SessionDate < from.Value) continue;
-                    if (to.HasValue && bar.SessionDate > to.Value) continue;
-
-                    bars.Add(bar);
-                }
-            }
-
-            _log.Information("Fetched {Count} bars for {Symbol} from Nasdaq Data Link", bars.Count, symbol);
-            return bars.OrderBy(b => b.SessionDate).ToList();
         }
-        catch (JsonException ex)
-        {
-            _log.Error(ex, "Failed to parse Nasdaq Data Link response for {Symbol}", symbol);
-            throw new InvalidOperationException($"Failed to parse Nasdaq Data Link data for {symbol}", ex);
-        }
+
+        return bars;
     }
 
     private static Dictionary<string, int> BuildColumnIndex(string[] columns)
@@ -197,7 +207,7 @@ public sealed class NasdaqDataLinkHistoricalDataProvider : IHistoricalDataProvid
             if (open is null || high is null || low is null || close is null)
                 return null;
 
-            if (open <= 0 || high <= 0 || low <= 0 || close <= 0)
+            if (!IsValidOhlc(open.Value, high.Value, low.Value, close.Value))
                 return null;
 
             var adjOpen = GetDecimalValue(row, columns, "Adj. Open");
@@ -230,7 +240,7 @@ public sealed class NasdaqDataLinkHistoricalDataProvider : IHistoricalDataProvid
         }
         catch (Exception ex)
         {
-            _log.Debug(ex, "Failed to parse row for {Symbol}", symbol);
+            Log.Debug(ex, "Failed to parse row for {Symbol}", symbol);
             return null;
         }
     }
@@ -271,14 +281,6 @@ public sealed class NasdaqDataLinkHistoricalDataProvider : IHistoricalDataProvid
             JsonValueKind.String when long.TryParse(element.GetString(), NumberStyles.Any, CultureInfo.InvariantCulture, out var v) => v,
             _ => null
         };
-    }
-
-    public void Dispose()
-    {
-        if (_disposed) return;
-        _disposed = true;
-        _rateLimiter.Dispose();
-        _http.Dispose();
     }
 
     #region Nasdaq Data Link API Models

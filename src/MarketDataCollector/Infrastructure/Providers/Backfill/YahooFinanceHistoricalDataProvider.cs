@@ -1,10 +1,6 @@
-using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading;
-using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Domain.Models;
-using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Http;
 using MarketDataCollector.Infrastructure.Utilities;
 using Serilog;
@@ -15,51 +11,54 @@ namespace MarketDataCollector.Infrastructure.Providers.Backfill;
 /// Historical data provider using Yahoo Finance (free, unofficial API).
 /// Provides daily OHLCV with adjusted close prices.
 /// Coverage: 50,000+ global equities, ETFs, indices, crypto.
+/// Extends BaseHistoricalDataProvider for common functionality.
 /// </summary>
 [ImplementsAdr("ADR-001", "Yahoo Finance historical data provider implementation")]
 [ImplementsAdr("ADR-004", "All async methods support CancellationToken")]
-public sealed class YahooFinanceHistoricalDataProvider : IHistoricalDataProvider, IDisposable
+public sealed class YahooFinanceHistoricalDataProvider : BaseHistoricalDataProvider
 {
-    private const string BaseUrl = "https://query1.finance.yahoo.com/v8/finance/chart";
+    private const string ApiBaseUrl = "https://query1.finance.yahoo.com/v8/finance/chart";
 
-    private readonly HttpClient _http;
-    private readonly RateLimiter _rateLimiter;
-    private readonly ILogger _log;
-    private readonly HttpResponseHandler _responseHandler;
-    private bool _disposed;
+    public override string Name => "yahoo";
+    public override string DisplayName => "Yahoo Finance (free)";
+    public override string Description => "Free daily OHLCV with adjusted prices for global equities, ETFs, indices.";
+    protected override string HttpClientName => HttpClientNames.YahooFinanceHistorical;
 
-    public string Name => "yahoo";
-    public string DisplayName => "Yahoo Finance (free)";
-    public string Description => "Free daily OHLCV with adjusted prices for global equities, ETFs, indices.";
+    public override int Priority => 10;
+    public override TimeSpan RateLimitDelay => TimeSpan.FromSeconds(0.5);
+    public override int MaxRequestsPerWindow => 2000;
+    public override TimeSpan RateLimitWindow => TimeSpan.FromHours(1);
 
-    public int Priority => 10;
-    public TimeSpan RateLimitDelay => TimeSpan.FromSeconds(0.5);
-    public int MaxRequestsPerWindow => 2000;
-    public TimeSpan RateLimitWindow => TimeSpan.FromHours(1);
-
-    public bool SupportsAdjustedPrices => true;
-    public bool SupportsIntraday => false;
-    public bool SupportsDividends => true;
-    public bool SupportsSplits => true;
-    public IReadOnlyList<string> SupportedMarkets => new[] { "US", "UK", "DE", "JP", "CA", "AU", "HK", "SG" };
+    public override bool SupportsAdjustedPrices => true;
+    public override bool SupportsDividends => true;
+    public override bool SupportsSplits => true;
+    public override IReadOnlyList<string> SupportedMarkets => new[] { "US", "UK", "DE", "JP", "CA", "AU", "HK", "SG" };
 
     public YahooFinanceHistoricalDataProvider(HttpClient? httpClient = null, ILogger? log = null)
+        : base(httpClient, log)
     {
-        _log = log ?? LoggingSetup.ForContext<YahooFinanceHistoricalDataProvider>();
-        // TD-10: Use HttpClientFactory instead of creating new HttpClient instances
-        _http = httpClient ?? HttpClientFactoryProvider.CreateClient(HttpClientNames.YahooFinanceHistorical);
-        _http.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
-
-        _rateLimiter = new RateLimiter(MaxRequestsPerWindow, RateLimitWindow, RateLimitDelay, _log);
-        _responseHandler = new HttpResponseHandler(Name, _log);
+        // Yahoo Finance requires a browser-like User-Agent
+        if (!Http.DefaultRequestHeaders.Contains("User-Agent"))
+        {
+            Http.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
+        }
     }
 
-    public async Task<bool> IsAvailableAsync(CancellationToken ct = default)
+    /// <summary>
+    /// Yahoo Finance uses standard tickers for US stocks.
+    /// International symbols append exchange suffix (e.g., .L for London, .T for Tokyo)
+    /// </summary>
+    protected override string NormalizeSymbol(string symbol)
+    {
+        return SymbolNormalization.NormalizeForYahoo(symbol);
+    }
+
+    public override async Task<bool> IsAvailableAsync(CancellationToken ct = default)
     {
         try
         {
             // Quick health check with a known symbol
-            using var response = await _http.GetAsync($"{BaseUrl}/AAPL?range=1d&interval=1d", ct).ConfigureAwait(false);
+            using var response = await Http.GetAsync($"{ApiBaseUrl}/AAPL?range=1d&interval=1d", ct).ConfigureAwait(false);
             return response.IsSuccessStatusCode;
         }
         catch
@@ -68,24 +67,67 @@ public sealed class YahooFinanceHistoricalDataProvider : IHistoricalDataProvider
         }
     }
 
-    public async Task<IReadOnlyList<HistoricalBar>> GetDailyBarsAsync(string symbol, DateOnly? from, DateOnly? to, CancellationToken ct = default)
+    public override async Task<IReadOnlyList<HistoricalBar>> GetDailyBarsAsync(
+        string symbol,
+        DateOnly? from,
+        DateOnly? to,
+        CancellationToken ct = default)
     {
         var adjustedBars = await GetAdjustedDailyBarsAsync(symbol, from, to, ct).ConfigureAwait(false);
         return adjustedBars.Select(b => b.ToHistoricalBar(preferAdjusted: true)).ToList();
     }
 
-    public async Task<IReadOnlyList<AdjustedHistoricalBar>> GetAdjustedDailyBarsAsync(string symbol, DateOnly? from, DateOnly? to, CancellationToken ct = default)
+    public override async Task<IReadOnlyList<AdjustedHistoricalBar>> GetAdjustedDailyBarsAsync(
+        string symbol,
+        DateOnly? from,
+        DateOnly? to,
+        CancellationToken ct = default)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        ThrowIfDisposed();
+        ValidateSymbol(symbol);
 
-        if (string.IsNullOrWhiteSpace(symbol))
-            throw new ArgumentException("Symbol is required", nameof(symbol));
+        await WaitForRateLimitSlotAsync(ct).ConfigureAwait(false);
 
-        await _rateLimiter.WaitForSlotAsync(ct).ConfigureAwait(false);
+        var normalizedSymbol = NormalizeSymbol(symbol);
+        var url = BuildRequestUrl(normalizedSymbol, from, to);
 
-        var normalizedSymbol = SymbolNormalization.NormalizeForYahoo(symbol);
+        Log.Information("Requesting Yahoo Finance history for {Symbol} ({Url})", symbol, url);
 
-        // Build URL with date range
+        try
+        {
+            using var response = await Http.GetAsync(url, ct).ConfigureAwait(false);
+
+            var httpResult = await ResponseHandler.HandleResponseAsync(response, symbol, "daily bars", ct: ct).ConfigureAwait(false);
+            if (httpResult.IsNotFound)
+            {
+                Log.Warning("Yahoo Finance: Symbol {Symbol} not found", symbol);
+                return Array.Empty<AdjustedHistoricalBar>();
+            }
+
+            var json = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+            var data = DeserializeResponse<YahooChartResponse>(json, symbol);
+
+            var chartResult = data?.Chart?.Result?.FirstOrDefault();
+            if (chartResult?.Indicators?.Quote?.FirstOrDefault() is null)
+            {
+                Log.Warning("No data returned from Yahoo Finance for {Symbol}", symbol);
+                return Array.Empty<AdjustedHistoricalBar>();
+            }
+
+            var bars = ParseChartResult(chartResult, symbol, from, to);
+
+            Log.Information("Fetched {Count} bars for {Symbol} from Yahoo Finance", bars.Count, symbol);
+            return bars.OrderBy(b => b.SessionDate).ToList();
+        }
+        catch (JsonException ex)
+        {
+            Log.Error(ex, "Failed to parse Yahoo Finance response for {Symbol}", symbol);
+            throw new InvalidOperationException($"Failed to parse Yahoo Finance data for {symbol}", ex);
+        }
+    }
+
+    private static string BuildRequestUrl(string normalizedSymbol, DateOnly? from, DateOnly? to)
+    {
         var period1 = from.HasValue
             ? new DateTimeOffset(from.Value.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero).ToUnixTimeSeconds()
             : new DateTimeOffset(2000, 1, 1, 0, 0, 0, TimeSpan.Zero).ToUnixTimeSeconds();
@@ -94,112 +136,85 @@ public sealed class YahooFinanceHistoricalDataProvider : IHistoricalDataProvider
             ? new DateTimeOffset(to.Value.ToDateTime(TimeOnly.MaxValue), TimeSpan.Zero).ToUnixTimeSeconds()
             : DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
-        var url = $"{BaseUrl}/{normalizedSymbol}?period1={period1}&period2={period2}&interval=1d&events=div,splits";
+        return $"{ApiBaseUrl}/{normalizedSymbol}?period1={period1}&period2={period2}&interval=1d&events=div,splits";
+    }
 
-        _log.Information("Requesting Yahoo Finance history for {Symbol} ({Url})", symbol, url);
+    private List<AdjustedHistoricalBar> ParseChartResult(YahooChartResult chartResult, string symbol, DateOnly? from, DateOnly? to)
+    {
+        var timestamps = chartResult.Timestamp ?? Array.Empty<long>();
+        var quote = chartResult.Indicators!.Quote![0];
+        var adjClose = chartResult.Indicators.AdjClose?.FirstOrDefault()?.AdjClose;
+        var events = chartResult.Events;
 
-        try
+        var bars = new List<AdjustedHistoricalBar>();
+
+        for (int i = 0; i < timestamps.Length; i++)
         {
-            using var response = await _http.GetAsync(url, ct).ConfigureAwait(false);
+            var date = DateTimeOffset.FromUnixTimeSeconds(timestamps[i]).Date;
+            var sessionDate = DateOnly.FromDateTime(date);
 
-            var httpResult = await _responseHandler.HandleResponseAsync(response, symbol, "daily bars", ct: ct).ConfigureAwait(false);
-            if (httpResult.IsNotFound)
+            // Skip if outside requested range
+            if (from.HasValue && sessionDate < from.Value) continue;
+            if (to.HasValue && sessionDate > to.Value) continue;
+
+            var open = GetDecimalValue(quote.Open, i);
+            var high = GetDecimalValue(quote.High, i);
+            var low = GetDecimalValue(quote.Low, i);
+            var close = GetDecimalValue(quote.Close, i);
+            var volume = GetLongValue(quote.Volume, i);
+
+            if (open is null || high is null || low is null || close is null)
+                continue;
+
+            // Validate OHLC using base class helper
+            if (!IsValidOhlc(open.Value, high.Value, low.Value, close.Value))
+                continue;
+
+            var adjCloseValue = adjClose is not null && i < adjClose.Length
+                ? GetDecimalValue(adjClose, i)
+                : null;
+
+            // Calculate adjustment factor from adjusted close
+            decimal? splitFactor = null;
+            decimal? dividendAmount = null;
+
+            if (adjCloseValue.HasValue && close.Value > 0)
             {
-                _log.Warning("Yahoo Finance: Symbol {Symbol} not found", symbol);
-                return Array.Empty<AdjustedHistoricalBar>();
-            }
-
-            var json = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
-            var data = JsonSerializer.Deserialize<YahooChartResponse>(json);
-
-            var chartResult = data?.Chart?.Result?.FirstOrDefault();
-            if (chartResult?.Indicators?.Quote?.FirstOrDefault() is null)
-            {
-                _log.Warning("No data returned from Yahoo Finance for {Symbol}", symbol);
-                return Array.Empty<AdjustedHistoricalBar>();
-            }
-
-            var timestamps = chartResult.Timestamp ?? Array.Empty<long>();
-            var quote = chartResult.Indicators.Quote[0];
-            var adjClose = chartResult.Indicators.AdjClose?.FirstOrDefault()?.AdjClose;
-            var events = chartResult.Events;
-
-            var bars = new List<AdjustedHistoricalBar>();
-
-            for (int i = 0; i < timestamps.Length; i++)
-            {
-                var date = DateTimeOffset.FromUnixTimeSeconds(timestamps[i]).Date;
-                var sessionDate = DateOnly.FromDateTime(date);
-
-                // Skip if outside requested range
-                if (from.HasValue && sessionDate < from.Value) continue;
-                if (to.HasValue && sessionDate > to.Value) continue;
-
-                var open = GetDecimalValue(quote.Open, i);
-                var high = GetDecimalValue(quote.High, i);
-                var low = GetDecimalValue(quote.Low, i);
-                var close = GetDecimalValue(quote.Close, i);
-                var volume = GetLongValue(quote.Volume, i);
-
-                if (open is null || high is null || low is null || close is null)
-                    continue;
-
-                // Validate OHLC
-                if (open <= 0 || high <= 0 || low <= 0 || close <= 0)
-                    continue;
-
-                var adjCloseValue = adjClose is not null && i < adjClose.Length
-                    ? GetDecimalValue(adjClose, i)
-                    : null;
-
-                // Calculate adjustment factor from adjusted close
-                decimal? splitFactor = null;
-                decimal? dividendAmount = null;
-
-                if (adjCloseValue.HasValue && close.Value > 0)
+                var factor = adjCloseValue.Value / close.Value;
+                if (Math.Abs(factor - 1m) > 0.0001m)
                 {
-                    var factor = adjCloseValue.Value / close.Value;
-                    if (Math.Abs(factor - 1m) > 0.0001m)
-                    {
-                        splitFactor = factor;
-                    }
+                    splitFactor = factor;
                 }
-
-                // Check for dividend/split events on this date
-                var dateKey = timestamps[i].ToString();
-                if (events?.Dividends?.TryGetValue(dateKey, out var dividend) == true)
-                {
-                    dividendAmount = dividend.Amount;
-                }
-
-                bars.Add(new AdjustedHistoricalBar(
-                    Symbol: symbol.ToUpperInvariant(),
-                    SessionDate: sessionDate,
-                    Open: open.Value,
-                    High: high.Value,
-                    Low: low.Value,
-                    Close: close.Value,
-                    Volume: volume ?? 0,
-                    Source: Name,
-                    SequenceNumber: sessionDate.DayNumber,
-                    AdjustedOpen: adjCloseValue.HasValue ? open.Value * (adjCloseValue.Value / close.Value) : null,
-                    AdjustedHigh: adjCloseValue.HasValue ? high.Value * (adjCloseValue.Value / close.Value) : null,
-                    AdjustedLow: adjCloseValue.HasValue ? low.Value * (adjCloseValue.Value / close.Value) : null,
-                    AdjustedClose: adjCloseValue,
-                    AdjustedVolume: null,
-                    SplitFactor: splitFactor,
-                    DividendAmount: dividendAmount
-                ));
             }
 
-            _log.Information("Fetched {Count} bars for {Symbol} from Yahoo Finance", bars.Count, symbol);
-            return bars.OrderBy(b => b.SessionDate).ToList();
+            // Check for dividend/split events on this date
+            var dateKey = timestamps[i].ToString();
+            if (events?.Dividends?.TryGetValue(dateKey, out var dividend) == true)
+            {
+                dividendAmount = dividend.Amount;
+            }
+
+            bars.Add(new AdjustedHistoricalBar(
+                Symbol: symbol.ToUpperInvariant(),
+                SessionDate: sessionDate,
+                Open: open.Value,
+                High: high.Value,
+                Low: low.Value,
+                Close: close.Value,
+                Volume: volume ?? 0,
+                Source: Name,
+                SequenceNumber: sessionDate.DayNumber,
+                AdjustedOpen: adjCloseValue.HasValue ? open.Value * (adjCloseValue.Value / close.Value) : null,
+                AdjustedHigh: adjCloseValue.HasValue ? high.Value * (adjCloseValue.Value / close.Value) : null,
+                AdjustedLow: adjCloseValue.HasValue ? low.Value * (adjCloseValue.Value / close.Value) : null,
+                AdjustedClose: adjCloseValue,
+                AdjustedVolume: null,
+                SplitFactor: splitFactor,
+                DividendAmount: dividendAmount
+            ));
         }
-        catch (JsonException ex)
-        {
-            _log.Error(ex, "Failed to parse Yahoo Finance response for {Symbol}", symbol);
-            throw new InvalidOperationException($"Failed to parse Yahoo Finance data for {symbol}", ex);
-        }
+
+        return bars;
     }
 
     private static decimal? GetDecimalValue(decimal?[]? array, int index)
@@ -214,14 +229,6 @@ public sealed class YahooFinanceHistoricalDataProvider : IHistoricalDataProvider
         if (array is null || index >= array.Length)
             return null;
         return array[index];
-    }
-
-    public void Dispose()
-    {
-        if (_disposed) return;
-        _disposed = true;
-        _rateLimiter.Dispose();
-        _http.Dispose();
     }
 
     #region Yahoo Finance API Models

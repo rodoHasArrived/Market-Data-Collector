@@ -1,11 +1,7 @@
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading;
-using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Domain.Models;
-using MarketDataCollector.Infrastructure.Contracts;
-using MarketDataCollector.Infrastructure.DataSources;
 using MarketDataCollector.Infrastructure.Http;
 using MarketDataCollector.Infrastructure.Utilities;
 using Serilog;
@@ -17,34 +13,30 @@ namespace MarketDataCollector.Infrastructure.Providers.Backfill;
 /// Unique capability: Intraday historical data (1, 5, 15, 30, 60 min intervals).
 /// Coverage: US equities, global indices, forex, crypto.
 /// Free tier: 25 requests/day (severely limited), 5 calls/minute.
+/// Extends BaseHistoricalDataProvider for common functionality.
 /// </summary>
 [ImplementsAdr("ADR-001", "Alpha Vantage historical data provider implementation")]
 [ImplementsAdr("ADR-004", "All async methods support CancellationToken")]
-public sealed class AlphaVantageHistoricalDataProvider : IHistoricalDataProvider, IDisposable
+public sealed class AlphaVantageHistoricalDataProvider : BaseHistoricalDataProvider
 {
-    private const string BaseUrl = "https://www.alphavantage.co/query";
+    private const string ApiBaseUrl = "https://www.alphavantage.co/query";
 
-    private readonly HttpClient _http;
-    private readonly RateLimiter _rateLimiter;
-    private readonly ILogger _log;
-    private readonly HttpResponseHandler _responseHandler;
     private readonly string? _apiKey;
-    private bool _disposed;
 
-    public string Name => "alphavantage";
-    public string DisplayName => "Alpha Vantage (free tier)";
-    public string Description => "US equities with unique intraday historical data support. Limited free tier (25 req/day).";
+    public override string Name => "alphavantage";
+    public override string DisplayName => "Alpha Vantage (free tier)";
+    public override string Description => "US equities with unique intraday historical data support. Limited free tier (25 req/day).";
+    protected override string HttpClientName => HttpClientNames.AlphaVantageHistorical;
 
-    public int Priority => 25; // Lower priority due to very limited free tier
-    public TimeSpan RateLimitDelay => TimeSpan.FromSeconds(12); // 5 requests/minute = 12 seconds between requests
-    public int MaxRequestsPerWindow => 5;
-    public TimeSpan RateLimitWindow => TimeSpan.FromMinutes(1);
+    public override int Priority => 25; // Lower priority due to very limited free tier
+    public override TimeSpan RateLimitDelay => TimeSpan.FromSeconds(12); // 5 requests/minute = 12 seconds between requests
+    public override int MaxRequestsPerWindow => 5;
+    public override TimeSpan RateLimitWindow => TimeSpan.FromMinutes(1);
 
-    public bool SupportsAdjustedPrices => true;
-    public bool SupportsIntraday => true; // Key differentiator!
-    public bool SupportsDividends => true;
-    public bool SupportsSplits => true;
-    public IReadOnlyList<string> SupportedMarkets => new[] { "US" };
+    public override bool SupportsAdjustedPrices => true;
+    public override bool SupportsIntraday => true; // Key differentiator!
+    public override bool SupportsDividends => true;
+    public override bool SupportsSplits => true;
 
     /// <summary>
     /// Supported intraday intervals.
@@ -52,31 +44,30 @@ public sealed class AlphaVantageHistoricalDataProvider : IHistoricalDataProvider
     public static IReadOnlyList<string> SupportedIntervals => new[] { "1min", "5min", "15min", "30min", "60min" };
 
     public AlphaVantageHistoricalDataProvider(string? apiKey = null, HttpClient? httpClient = null, ILogger? log = null)
+        : base(httpClient, log)
     {
-        _log = log ?? LoggingSetup.ForContext<AlphaVantageHistoricalDataProvider>();
         _apiKey = apiKey ?? Environment.GetEnvironmentVariable("ALPHA_VANTAGE_API_KEY");
 
-        // TD-10: Use HttpClientFactory instead of creating new HttpClient instances
-        _http = httpClient ?? HttpClientFactoryProvider.CreateClient(HttpClientNames.AlphaVantageHistorical);
-        _http.DefaultRequestHeaders.Add("User-Agent", "MarketDataCollector/1.0");
-
-        _rateLimiter = new RateLimiter(MaxRequestsPerWindow, RateLimitWindow, RateLimitDelay, _log);
-        _responseHandler = new HttpResponseHandler(Name, _log);
+        // Add custom User-Agent
+        if (!Http.DefaultRequestHeaders.Contains("User-Agent"))
+        {
+            Http.DefaultRequestHeaders.Add("User-Agent", "MarketDataCollector/1.0");
+        }
     }
 
-    public async Task<bool> IsAvailableAsync(CancellationToken ct = default)
+    public override async Task<bool> IsAvailableAsync(CancellationToken ct = default)
     {
         if (string.IsNullOrEmpty(_apiKey))
         {
-            _log.Warning("Alpha Vantage API key not configured. Set ALPHA_VANTAGE_API_KEY environment variable or configure in settings.");
+            Log.Warning("Alpha Vantage API key not configured. Set ALPHA_VANTAGE_API_KEY environment variable or configure in settings.");
             return false;
         }
 
         try
         {
             // Quick health check with quote endpoint
-            var url = $"{BaseUrl}?function=GLOBAL_QUOTE&symbol=AAPL&apikey={_apiKey}";
-            using var response = await _http.GetAsync(url, ct).ConfigureAwait(false);
+            var url = $"{ApiBaseUrl}?function=GLOBAL_QUOTE&symbol=AAPL&apikey={_apiKey}";
+            using var response = await Http.GetAsync(url, ct).ConfigureAwait(false);
 
             if (!response.IsSuccessStatusCode)
                 return false;
@@ -91,135 +82,75 @@ public sealed class AlphaVantageHistoricalDataProvider : IHistoricalDataProvider
         }
     }
 
-    public async Task<IReadOnlyList<HistoricalBar>> GetDailyBarsAsync(string symbol, DateOnly? from, DateOnly? to, CancellationToken ct = default)
+    public override async Task<IReadOnlyList<HistoricalBar>> GetDailyBarsAsync(
+        string symbol,
+        DateOnly? from,
+        DateOnly? to,
+        CancellationToken ct = default)
     {
         var adjustedBars = await GetAdjustedDailyBarsAsync(symbol, from, to, ct).ConfigureAwait(false);
         return adjustedBars.Select(b => b.ToHistoricalBar(preferAdjusted: true)).ToList();
     }
 
-    public async Task<IReadOnlyList<AdjustedHistoricalBar>> GetAdjustedDailyBarsAsync(string symbol, DateOnly? from, DateOnly? to, CancellationToken ct = default)
+    public override async Task<IReadOnlyList<AdjustedHistoricalBar>> GetAdjustedDailyBarsAsync(
+        string symbol,
+        DateOnly? from,
+        DateOnly? to,
+        CancellationToken ct = default)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        ThrowIfDisposed();
+        ValidateSymbol(symbol);
+        ValidateApiKey();
 
-        if (string.IsNullOrWhiteSpace(symbol))
-            throw new ArgumentException("Symbol is required", nameof(symbol));
+        await WaitForRateLimitSlotAsync(ct).ConfigureAwait(false);
 
-        if (string.IsNullOrEmpty(_apiKey))
-            throw new InvalidOperationException("Alpha Vantage API key is required. Set ALPHA_VANTAGE_API_KEY environment variable.");
+        var normalizedSymbol = NormalizeSymbol(symbol);
+        var url = $"{ApiBaseUrl}?function=TIME_SERIES_DAILY_ADJUSTED&symbol={normalizedSymbol}&outputsize=full&apikey={_apiKey}";
 
-        await _rateLimiter.WaitForSlotAsync(ct).ConfigureAwait(false);
-
-        var normalizedSymbol = SymbolNormalization.Normalize(symbol);
-
-        // Use TIME_SERIES_DAILY_ADJUSTED for full history with adjusted prices
-        var url = $"{BaseUrl}?function=TIME_SERIES_DAILY_ADJUSTED&symbol={normalizedSymbol}&outputsize=full&apikey={_apiKey}";
-
-        _log.Information("Requesting Alpha Vantage daily adjusted history for {Symbol}", symbol);
+        Log.Information("Requesting Alpha Vantage daily adjusted history for {Symbol}", symbol);
 
         try
         {
-            using var response = await _http.GetAsync(url, ct).ConfigureAwait(false);
+            using var response = await Http.GetAsync(url, ct).ConfigureAwait(false);
 
-            var httpResult = await _responseHandler.HandleResponseAsync(response, symbol, "daily bars", ct: ct).ConfigureAwait(false);
+            var httpResult = await ResponseHandler.HandleResponseAsync(response, symbol, "daily bars", ct: ct).ConfigureAwait(false);
             if (httpResult.IsNotFound)
             {
-                _log.Warning("Alpha Vantage: Symbol {Symbol} not found", symbol);
+                Log.Warning("Alpha Vantage: Symbol {Symbol} not found", symbol);
                 return Array.Empty<AdjustedHistoricalBar>();
             }
 
             var json = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
 
-            // Check for API error messages in response
-            if (json.Contains("\"Note\"") || json.Contains("Thank you for using Alpha Vantage"))
+            // Alpha Vantage returns 200 OK with error/rate limit messages in body
+            if (IsRateLimitResponse(json))
             {
-                _log.Warning("Alpha Vantage rate limit hit for {Symbol}. Message in response.", symbol);
+                Log.Warning("Alpha Vantage rate limit hit for {Symbol}. Message in response.", symbol);
                 throw new HttpRequestException($"Alpha Vantage rate limit exceeded for {symbol}. Please wait before retrying.");
             }
 
             if (json.Contains("\"Error Message\""))
             {
-                _log.Warning("Alpha Vantage error for {Symbol}: Invalid symbol or other error", symbol);
+                Log.Warning("Alpha Vantage error for {Symbol}: Invalid symbol or other error", symbol);
                 return Array.Empty<AdjustedHistoricalBar>();
             }
 
-            var data = JsonSerializer.Deserialize<AlphaVantageDailyAdjustedResponse>(json);
+            var data = DeserializeResponse<AlphaVantageDailyAdjustedResponse>(json, symbol);
 
             if (data?.TimeSeries is null || data.TimeSeries.Count == 0)
             {
-                _log.Warning("No data returned from Alpha Vantage for {Symbol}", symbol);
+                Log.Warning("No data returned from Alpha Vantage for {Symbol}", symbol);
                 return Array.Empty<AdjustedHistoricalBar>();
             }
 
-            var bars = new List<AdjustedHistoricalBar>();
+            var bars = ParseDailyResponse(data.TimeSeries, symbol, from, to);
 
-            foreach (var kvp in data.TimeSeries)
-            {
-                if (!DateOnly.TryParse(kvp.Key, out var sessionDate))
-                    continue;
-
-                // Skip if outside requested range
-                if (from.HasValue && sessionDate < from.Value) continue;
-                if (to.HasValue && sessionDate > to.Value) continue;
-
-                var price = kvp.Value;
-
-                // Parse values
-                if (!TryParseDecimal(price.Open, out var open)) continue;
-                if (!TryParseDecimal(price.High, out var high)) continue;
-                if (!TryParseDecimal(price.Low, out var low)) continue;
-                if (!TryParseDecimal(price.Close, out var close)) continue;
-                TryParseLong(price.Volume, out var volume);
-                TryParseDecimal(price.AdjustedClose, out var adjClose);
-                TryParseDecimal(price.DividendAmount, out var dividend);
-                TryParseDecimal(price.SplitCoefficient, out var splitCoeff);
-
-                // Validate OHLC
-                if (open <= 0 || high <= 0 || low <= 0 || close <= 0)
-                    continue;
-
-                // Calculate adjustment factor
-                decimal? splitFactor = null;
-                if (adjClose > 0 && close > 0)
-                {
-                    var factor = adjClose / close;
-                    if (Math.Abs(factor - 1m) > 0.0001m)
-                    {
-                        splitFactor = factor;
-                    }
-                }
-
-                // Also use split coefficient if provided
-                if (splitCoeff != 1m && splitCoeff > 0)
-                {
-                    splitFactor = splitCoeff;
-                }
-
-                bars.Add(new AdjustedHistoricalBar(
-                    Symbol: symbol.ToUpperInvariant(),
-                    SessionDate: sessionDate,
-                    Open: open,
-                    High: high,
-                    Low: low,
-                    Close: close,
-                    Volume: volume,
-                    Source: Name,
-                    SequenceNumber: sessionDate.DayNumber,
-                    AdjustedOpen: splitFactor.HasValue ? open * splitFactor.Value : null,
-                    AdjustedHigh: splitFactor.HasValue ? high * splitFactor.Value : null,
-                    AdjustedLow: splitFactor.HasValue ? low * splitFactor.Value : null,
-                    AdjustedClose: adjClose > 0 ? adjClose : null,
-                    AdjustedVolume: null,
-                    SplitFactor: splitCoeff != 1m && splitCoeff > 0 ? splitCoeff : splitFactor,
-                    DividendAmount: dividend > 0 ? dividend : null
-                ));
-            }
-
-            _log.Information("Fetched {Count} bars for {Symbol} from Alpha Vantage", bars.Count, symbol);
+            Log.Information("Fetched {Count} bars for {Symbol} from Alpha Vantage", bars.Count, symbol);
             return bars.OrderBy(b => b.SessionDate).ToList();
         }
         catch (JsonException ex)
         {
-            _log.Error(ex, "Failed to parse Alpha Vantage response for {Symbol}", symbol);
+            Log.Error(ex, "Failed to parse Alpha Vantage response for {Symbol}", symbol);
             throw new InvalidOperationException($"Failed to parse Alpha Vantage data for {symbol}", ex);
         }
     }
@@ -235,33 +166,27 @@ public sealed class AlphaVantageHistoricalDataProvider : IHistoricalDataProvider
         DateTimeOffset? to,
         CancellationToken ct = default)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
-
-        if (string.IsNullOrWhiteSpace(symbol))
-            throw new ArgumentException("Symbol is required", nameof(symbol));
-
-        if (string.IsNullOrEmpty(_apiKey))
-            throw new InvalidOperationException("Alpha Vantage API key is required.");
+        ThrowIfDisposed();
+        ValidateSymbol(symbol);
+        ValidateApiKey();
 
         // Validate interval
         var normalizedInterval = NormalizeInterval(interval);
         if (!SupportedIntervals.Contains(normalizedInterval))
             throw new ArgumentException($"Unsupported interval: {interval}. Supported: {string.Join(", ", SupportedIntervals)}", nameof(interval));
 
-        await _rateLimiter.WaitForSlotAsync(ct).ConfigureAwait(false);
+        await WaitForRateLimitSlotAsync(ct).ConfigureAwait(false);
 
-        var normalizedSymbol = SymbolNormalization.Normalize(symbol);
+        var normalizedSymbol = NormalizeSymbol(symbol);
+        var url = $"{ApiBaseUrl}?function=TIME_SERIES_INTRADAY&symbol={normalizedSymbol}&interval={normalizedInterval}&outputsize=full&adjusted=true&extended_hours=true&apikey={_apiKey}";
 
-        // Use TIME_SERIES_INTRADAY with extended hours and full output
-        var url = $"{BaseUrl}?function=TIME_SERIES_INTRADAY&symbol={normalizedSymbol}&interval={normalizedInterval}&outputsize=full&adjusted=true&extended_hours=true&apikey={_apiKey}";
-
-        _log.Information("Requesting Alpha Vantage {Interval} intraday data for {Symbol}", normalizedInterval, symbol);
+        Log.Information("Requesting Alpha Vantage {Interval} intraday data for {Symbol}", normalizedInterval, symbol);
 
         try
         {
-            using var response = await _http.GetAsync(url, ct).ConfigureAwait(false);
+            using var response = await Http.GetAsync(url, ct).ConfigureAwait(false);
 
-            var httpResult = await _responseHandler.HandleResponseAsync(response, symbol, "intraday bars", ct: ct).ConfigureAwait(false);
+            var httpResult = await ResponseHandler.HandleResponseAsync(response, symbol, "intraday bars", ct: ct).ConfigureAwait(false);
             if (httpResult.IsNotFound)
             {
                 return Array.Empty<IntradayBar>();
@@ -270,7 +195,7 @@ public sealed class AlphaVantageHistoricalDataProvider : IHistoricalDataProvider
             var json = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
 
             // Alpha Vantage returns 200 OK with error/rate limit messages in body
-            if (json.Contains("\"Note\"") || json.Contains("Thank you for using Alpha Vantage"))
+            if (IsRateLimitResponse(json))
             {
                 throw new HttpRequestException($"Alpha Vantage rate limit exceeded for {symbol}");
             }
@@ -280,60 +205,155 @@ public sealed class AlphaVantageHistoricalDataProvider : IHistoricalDataProvider
                 return Array.Empty<IntradayBar>();
             }
 
-            // Parse the dynamic time series key based on interval
-            var timeSeriesKey = $"Time Series ({normalizedInterval})";
-            using var doc = JsonDocument.Parse(json);
+            var bars = ParseIntradayResponse(json, normalizedInterval, symbol, from, to);
 
-            if (!doc.RootElement.TryGetProperty(timeSeriesKey, out var timeSeries))
-            {
-                _log.Warning("No intraday data returned from Alpha Vantage for {Symbol}", symbol);
-                return Array.Empty<IntradayBar>();
-            }
-
-            var bars = new List<IntradayBar>();
-
-            foreach (var prop in timeSeries.EnumerateObject())
-            {
-                if (!DateTimeOffset.TryParse(prop.Name, out var timestamp))
-                    continue;
-
-                // Skip if outside requested range
-                if (from.HasValue && timestamp < from.Value) continue;
-                if (to.HasValue && timestamp > to.Value) continue;
-
-                var price = prop.Value;
-
-                if (!TryParseDecimalFromJson(price, "1. open", out var open)) continue;
-                if (!TryParseDecimalFromJson(price, "2. high", out var high)) continue;
-                if (!TryParseDecimalFromJson(price, "3. low", out var low)) continue;
-                if (!TryParseDecimalFromJson(price, "4. close", out var close)) continue;
-                TryParseLongFromJson(price, "5. volume", out var volume);
-
-                if (open <= 0 || high <= 0 || low <= 0 || close <= 0)
-                    continue;
-
-                bars.Add(new IntradayBar(
-                    Symbol: symbol.ToUpperInvariant(),
-                    Timestamp: timestamp,
-                    Interval: normalizedInterval,
-                    Open: open,
-                    High: high,
-                    Low: low,
-                    Close: close,
-                    Volume: volume,
-                    Source: Name
-                ));
-            }
-
-            _log.Information("Fetched {Count} {Interval} bars for {Symbol} from Alpha Vantage",
+            Log.Information("Fetched {Count} {Interval} bars for {Symbol} from Alpha Vantage",
                 bars.Count, normalizedInterval, symbol);
             return bars.OrderBy(b => b.Timestamp).ToList();
         }
         catch (JsonException ex)
         {
-            _log.Error(ex, "Failed to parse Alpha Vantage intraday response for {Symbol}", symbol);
+            Log.Error(ex, "Failed to parse Alpha Vantage intraday response for {Symbol}", symbol);
             throw new InvalidOperationException($"Failed to parse Alpha Vantage intraday data for {symbol}", ex);
         }
+    }
+
+    private void ValidateApiKey()
+    {
+        if (string.IsNullOrEmpty(_apiKey))
+            throw new InvalidOperationException("Alpha Vantage API key is required. Set ALPHA_VANTAGE_API_KEY environment variable.");
+    }
+
+    private static bool IsRateLimitResponse(string json)
+    {
+        return json.Contains("\"Note\"") || json.Contains("Thank you for using Alpha Vantage");
+    }
+
+    private List<AdjustedHistoricalBar> ParseDailyResponse(
+        Dictionary<string, AlphaVantageDailyPrice> timeSeries,
+        string symbol,
+        DateOnly? from,
+        DateOnly? to)
+    {
+        var bars = new List<AdjustedHistoricalBar>();
+
+        foreach (var kvp in timeSeries)
+        {
+            if (!DateOnly.TryParse(kvp.Key, out var sessionDate))
+                continue;
+
+            // Skip if outside requested range
+            if (from.HasValue && sessionDate < from.Value) continue;
+            if (to.HasValue && sessionDate > to.Value) continue;
+
+            var price = kvp.Value;
+
+            // Parse values
+            if (!TryParseDecimal(price.Open, out var open)) continue;
+            if (!TryParseDecimal(price.High, out var high)) continue;
+            if (!TryParseDecimal(price.Low, out var low)) continue;
+            if (!TryParseDecimal(price.Close, out var close)) continue;
+            TryParseLong(price.Volume, out var volume);
+            TryParseDecimal(price.AdjustedClose, out var adjClose);
+            TryParseDecimal(price.DividendAmount, out var dividend);
+            TryParseDecimal(price.SplitCoefficient, out var splitCoeff);
+
+            // Validate OHLC using base class helper
+            if (!IsValidOhlc(open, high, low, close))
+                continue;
+
+            // Calculate adjustment factor
+            decimal? splitFactor = null;
+            if (adjClose > 0 && close > 0)
+            {
+                var factor = adjClose / close;
+                if (Math.Abs(factor - 1m) > 0.0001m)
+                {
+                    splitFactor = factor;
+                }
+            }
+
+            // Also use split coefficient if provided
+            if (splitCoeff != 1m && splitCoeff > 0)
+            {
+                splitFactor = splitCoeff;
+            }
+
+            bars.Add(new AdjustedHistoricalBar(
+                Symbol: symbol.ToUpperInvariant(),
+                SessionDate: sessionDate,
+                Open: open,
+                High: high,
+                Low: low,
+                Close: close,
+                Volume: volume,
+                Source: Name,
+                SequenceNumber: sessionDate.DayNumber,
+                AdjustedOpen: splitFactor.HasValue ? open * splitFactor.Value : null,
+                AdjustedHigh: splitFactor.HasValue ? high * splitFactor.Value : null,
+                AdjustedLow: splitFactor.HasValue ? low * splitFactor.Value : null,
+                AdjustedClose: adjClose > 0 ? adjClose : null,
+                AdjustedVolume: null,
+                SplitFactor: splitCoeff != 1m && splitCoeff > 0 ? splitCoeff : splitFactor,
+                DividendAmount: dividend > 0 ? dividend : null
+            ));
+        }
+
+        return bars;
+    }
+
+    private List<IntradayBar> ParseIntradayResponse(
+        string json,
+        string normalizedInterval,
+        string symbol,
+        DateTimeOffset? from,
+        DateTimeOffset? to)
+    {
+        var timeSeriesKey = $"Time Series ({normalizedInterval})";
+        using var doc = JsonDocument.Parse(json);
+
+        if (!doc.RootElement.TryGetProperty(timeSeriesKey, out var timeSeries))
+        {
+            Log.Warning("No intraday data returned from Alpha Vantage for {Symbol}", symbol);
+            return new List<IntradayBar>();
+        }
+
+        var bars = new List<IntradayBar>();
+
+        foreach (var prop in timeSeries.EnumerateObject())
+        {
+            if (!DateTimeOffset.TryParse(prop.Name, out var timestamp))
+                continue;
+
+            // Skip if outside requested range
+            if (from.HasValue && timestamp < from.Value) continue;
+            if (to.HasValue && timestamp > to.Value) continue;
+
+            var price = prop.Value;
+
+            if (!TryParseDecimalFromJson(price, "1. open", out var open)) continue;
+            if (!TryParseDecimalFromJson(price, "2. high", out var high)) continue;
+            if (!TryParseDecimalFromJson(price, "3. low", out var low)) continue;
+            if (!TryParseDecimalFromJson(price, "4. close", out var close)) continue;
+            TryParseLongFromJson(price, "5. volume", out var volume);
+
+            if (!IsValidOhlc(open, high, low, close))
+                continue;
+
+            bars.Add(new IntradayBar(
+                Symbol: symbol.ToUpperInvariant(),
+                Timestamp: timestamp,
+                Interval: normalizedInterval,
+                Open: open,
+                High: high,
+                Low: low,
+                Close: close,
+                Volume: volume,
+                Source: Name
+            ));
+        }
+
+        return bars;
     }
 
     private static string NormalizeInterval(string interval)
@@ -375,14 +395,6 @@ public sealed class AlphaVantageHistoricalDataProvider : IHistoricalDataProvider
         result = 0;
         if (!element.TryGetProperty(propertyName, out var prop)) return false;
         return long.TryParse(prop.GetString(), NumberStyles.Any, CultureInfo.InvariantCulture, out result);
-    }
-
-    public void Dispose()
-    {
-        if (_disposed) return;
-        _disposed = true;
-        _rateLimiter.Dispose();
-        _http.Dispose();
     }
 
     #region Alpha Vantage API Models
