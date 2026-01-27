@@ -222,7 +222,7 @@ public sealed partial class DashboardViewModel : ObservableObject, IDisposable
                 if (_throughputHistory.Count > 1)
                 {
                     var currentValue = _throughputHistory.GetNewest();
-                    CurrentThroughput = (currentValue - (previousValue ?? 0)) / 2.0; // Per second
+                    CurrentThroughput = (currentValue - previousValue) / 2.0; // Per second
 
                     // Calculate average using CircularBuffer extension method
                     AverageThroughput = _throughputHistory.Average();
