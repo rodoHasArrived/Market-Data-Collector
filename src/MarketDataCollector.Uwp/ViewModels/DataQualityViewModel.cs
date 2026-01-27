@@ -13,7 +13,7 @@ namespace MarketDataCollector.Uwp.ViewModels;
 /// </summary>
 public sealed partial class DataQualityViewModel : ObservableObject, IDisposable
 {
-    private readonly DataQualityService _qualityService;
+    private readonly UwpDataQualityService _qualityService;
     private readonly System.Timers.Timer _refreshTimer;
     private bool _disposed;
 
@@ -92,7 +92,7 @@ public sealed partial class DataQualityViewModel : ObservableObject, IDisposable
 
     public DataQualityViewModel()
     {
-        _qualityService = DataQualityService.Instance;
+        _qualityService = UwpDataQualityService.Instance;
 
         _refreshTimer = new System.Timers.Timer(30000); // Refresh every 30 seconds
         _refreshTimer.Elapsed += async (s, e) => await RefreshAsync();

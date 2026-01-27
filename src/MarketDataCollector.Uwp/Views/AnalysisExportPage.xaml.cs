@@ -15,13 +15,13 @@ namespace MarketDataCollector.Uwp.Views;
 /// </summary>
 public sealed partial class AnalysisExportPage : Page
 {
-    private readonly AnalysisExportService _exportService;
+    private readonly UwpAnalysisExportService _exportService;
     private string? _outputPath;
 
     public AnalysisExportPage()
     {
         this.InitializeComponent();
-        _exportService = AnalysisExportService.Instance;
+        _exportService = UwpAnalysisExportService.Instance;
         Loaded += AnalysisExportPage_Loaded;
     }
 

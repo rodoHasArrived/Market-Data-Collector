@@ -184,7 +184,7 @@ Items that should be addressed before new feature development.
 | TD-11 | Replace Thread.Sleep with Task.Delay in async code | P0 | Low | **Done** |
 | TD-12 | Consolidate duplicate domain models | Medium | Medium | Pending (12 models) |
 | TD-13 | Migrate remaining providers to BaseHistoricalDataProvider | Low | Medium | **Partial** (4 of 8) |
-| TD-14 | UWP service naming conflicts | Low | Low | Pending |
+| TD-14 | UWP service naming conflicts | Low | Low | **Done** |
 
 ---
 
@@ -367,13 +367,15 @@ These are small, focused tasks broken down from larger features. Each can typica
 
 **Completed Migrations:** Stooq, Yahoo Finance, Nasdaq Data Link, Alpha Vantage
 
-### TD-14: UWP Service Naming Conflicts
-| Sub-ID | Task | Effort | Dependencies |
-|--------|------|--------|--------------|
-| TD-14.1 | Rename `AnalysisExportService` to `UwpAnalysisExportService` | 0.5 hour | None |
-| TD-14.2 | Rename `DataQualityService` to `UwpDataQualityService` | 0.5 hour | None |
-| TD-14.3 | Update all UWP references | 1 hour | TD-14.1, TD-14.2 |
-| TD-14.4 | Document naming convention for UWP services | 0.5 hour | TD-14.3 |
+### TD-14: UWP Service Naming Conflicts - **COMPLETE**
+| Sub-ID | Task | Effort | Dependencies | Status |
+|--------|------|--------|--------------|--------|
+| TD-14.1 | Rename `AnalysisExportService` to `UwpAnalysisExportService` | 0.5 hour | None | **Done** |
+| TD-14.2 | Rename `DataQualityService` to `UwpDataQualityService` | 0.5 hour | None | **Done** |
+| TD-14.3 | Update all UWP references | 1 hour | TD-14.1, TD-14.2 | **Done** |
+| TD-14.4 | Document naming convention for UWP services | 0.5 hour | TD-14.3 | **Done** |
+
+**Naming Convention:** UWP services that share names with core services should be prefixed with `Uwp` (e.g., `UwpAnalysisExportService`, `UwpDataQualityService`).
 
 ### ADQ-2: Reference Price Validator
 | Sub-ID | Task | Effort | Dependencies |

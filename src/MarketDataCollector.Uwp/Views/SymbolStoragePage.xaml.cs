@@ -19,7 +19,7 @@ public sealed partial class SymbolStoragePage : Page
 {
     private readonly StorageService _storageService;
     private readonly BackfillService _backfillService;
-    private readonly DataQualityService _dataQualityService;
+    private readonly UwpDataQualityService _dataQualityService;
     private readonly NotificationService _notificationService;
     private string _currentSymbol = string.Empty;
     private bool _isLoading;
@@ -32,7 +32,7 @@ public sealed partial class SymbolStoragePage : Page
         this.InitializeComponent();
         _storageService = StorageService.Instance;
         _backfillService = BackfillService.Instance;
-        _dataQualityService = DataQualityService.Instance;
+        _dataQualityService = UwpDataQualityService.Instance;
         _notificationService = NotificationService.Instance;
 
         FilesListView.ItemsSource = DataFiles;
