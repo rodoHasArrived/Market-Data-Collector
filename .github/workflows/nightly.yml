@@ -22,10 +22,10 @@ jobs:
         
     steps:
     - name: Checkout
-      uses: actions/checkout@v6
+      uses: actions/checkout@v4
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@v5
+      uses: actions/setup-dotnet@v4
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
@@ -46,7 +46,7 @@ jobs:
           --results-directory ./coverage
 
     - name: Upload coverage
-      uses: codecov/codecov-action@v5
+      uses: codecov/codecov-action@v4
       with:
         directory: ./coverage
         flags: ${{ matrix.os }}
@@ -59,10 +59,10 @@ jobs:
     
     steps:
     - name: Checkout
-      uses: actions/checkout@v6
+      uses: actions/checkout@v4
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@v5
+      uses: actions/setup-dotnet@v4
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
@@ -74,7 +74,7 @@ jobs:
           -- --filter * --exporters json
 
     - name: Upload benchmark results
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v4
       with:
         name: benchmark-results
         path: BenchmarkDotNet.Artifacts/results/
@@ -86,10 +86,10 @@ jobs:
     
     steps:
     - name: Checkout
-      uses: actions/checkout@v6
+      uses: actions/checkout@v4
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@v5
+      uses: actions/setup-dotnet@v4
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
@@ -118,7 +118,7 @@ jobs:
     
     steps:
     - name: Create issue on failure
-      uses: actions/github-script@v8
+      uses: actions/github-script@v7
       with:
         script: |
           const title = `Nightly tests failed on ${new Date().toISOString().split('T')[0]}`;
