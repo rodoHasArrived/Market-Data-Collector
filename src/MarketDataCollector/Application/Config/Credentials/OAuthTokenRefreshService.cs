@@ -45,7 +45,7 @@ public sealed class OAuthTokenRefreshService : IAsyncDisposable
     {
         // TD-10: Use HttpClientFactory instead of creating new HttpClient instances
         var client = HttpClientFactoryProvider.CreateClient(HttpClientNames.OAuthTokenRefresh);
-        client.DefaultRequestHeaders.UserAgent.ParseAdd("MarketDataCollector/1.5.0");
+        client.DefaultRequestHeaders.UserAgent.ParseAdd("MarketDataCollector/1.6.1");
         return client;
     }
 

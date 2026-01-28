@@ -149,7 +149,7 @@ public sealed class UiServer : IAsyncDisposable
                 status = "healthy",
                 timestamp = DateTimeOffset.UtcNow,
                 uptime = uptime.ToString(),
-                version = "1.5.0"
+                version = "1.6.1"
             });
         });
 

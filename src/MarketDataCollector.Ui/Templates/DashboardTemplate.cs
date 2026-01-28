@@ -42,7 +42,7 @@ public static class DashboardTemplate
       </button>
       <div class="logo-icon" aria-hidden="true">MDC</div>
       <span class="logo-text">Market Data Collector</span>
-      <span class="logo-version">v1.5.0</span>
+      <span class="logo-version">v1.6.1</span>
     </div>
     <button class="cmd-palette" onclick="openCommandPalette()" aria-label="Open command palette (Ctrl+K)" tabindex="0">
       <span class="cmd-palette-icon" aria-hidden="true">&#x1F50D;</span>

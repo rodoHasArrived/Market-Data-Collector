@@ -27,7 +27,7 @@ public sealed class ApiDocumentationService
             {
                 Title = "Market Data Collector API",
                 Description = "REST API for Market Data Collector - real-time and historical market data collection",
-                Version = "1.5.0",
+                Version = "1.6.1",
                 Contact = new OpenApiContact
                 {
                     Name = "Market Data Collector",

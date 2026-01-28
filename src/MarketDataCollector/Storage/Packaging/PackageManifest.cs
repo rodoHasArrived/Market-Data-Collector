@@ -43,7 +43,7 @@ public sealed class PackageManifest
     /// Version of MarketDataCollector that created the package.
     /// </summary>
     [JsonPropertyName("creatorVersion")]
-    public string CreatorVersion { get; set; } = "1.5.0";
+    public string CreatorVersion { get; set; } = "1.6.1";
 
     /// <summary>
     /// Machine/hostname that created the package.
