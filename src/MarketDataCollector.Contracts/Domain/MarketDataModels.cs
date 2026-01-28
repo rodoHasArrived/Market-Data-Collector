@@ -36,6 +36,12 @@ public class TradeDto
 
     [JsonPropertyName("conditions")]
     public string[]? Conditions { get; set; }
+
+    /// <summary>
+    /// Returns a string representation of the trade for debugging and logging.
+    /// </summary>
+    public override string ToString() =>
+        $"Trade[{Symbol} {Price:F4} x {Size} {Aggressor} @ {Timestamp:HH:mm:ss.fff}]";
 }
 
 /// <summary>
@@ -75,6 +81,12 @@ public class QuoteDto
 
     [JsonPropertyName("venue")]
     public string? Venue { get; set; }
+
+    /// <summary>
+    /// Returns a string representation of the quote for debugging and logging.
+    /// </summary>
+    public override string ToString() =>
+        $"Quote[{Symbol} {BidPrice:F4}x{BidSize} / {AskPrice:F4}x{AskSize} spr={Spread:F4} @ {Timestamp:HH:mm:ss.fff}]";
 }
 
 /// <summary>
