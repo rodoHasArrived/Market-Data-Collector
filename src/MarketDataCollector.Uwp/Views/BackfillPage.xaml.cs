@@ -9,7 +9,6 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using MarketDataCollector.Uwp.Services;
 using MarketDataCollector.Uwp.Dialogs;
-using Windows.UI;
 
 namespace MarketDataCollector.Uwp.Views;
 
@@ -96,8 +95,10 @@ public sealed partial class BackfillPage : Page
                 RecommendationBadge.Visibility = Visibility.Collapsed;
             }
         }
-        catch
+        catch (Exception ex)
         {
+            // Log the error but don't interrupt page load for non-critical recommendations
+            LoggingService.Instance.LogWarning($"Failed to load backfill recommendations: {ex.Message}");
             RecommendationBadge.Visibility = Visibility.Collapsed;
         }
     }
@@ -181,21 +182,21 @@ public sealed partial class BackfillPage : Page
             Date = "Today 6:00 AM",
             Summary = "12 symbols, 3,456 bars",
             Duration = "2m 34s",
-            StatusColor = new SolidColorBrush(Color.FromArgb(255, 72, 187, 120))
+            StatusColor = BrushRegistry.Success
         });
         _backfillHistory.Add(new BackfillHistoryItem
         {
             Date = "Yesterday 6:00 AM",
             Summary = "12 symbols, 3,421 bars",
             Duration = "2m 28s",
-            StatusColor = new SolidColorBrush(Color.FromArgb(255, 72, 187, 120))
+            StatusColor = BrushRegistry.Success
         });
         _backfillHistory.Add(new BackfillHistoryItem
         {
             Date = "2 days ago",
             Summary = "AAPL failed - rate limit",
             Duration = "1m 45s",
-            StatusColor = new SolidColorBrush(Color.FromArgb(255, 237, 137, 54))
+            StatusColor = BrushRegistry.Warning
         });
     }
 
@@ -355,7 +356,7 @@ public sealed partial class BackfillPage : Page
                 }
 
                 progressItem.StatusText = "Running";
-                progressItem.StatusBackground = new SolidColorBrush(Color.FromArgb(40, 237, 137, 54));
+                progressItem.StatusBackground = BrushRegistry.WarningBackground;
                 BackfillStatusText.Text = $"Downloading {progressItem.Symbol}...";
 
                 // Simulate download with progress
@@ -372,7 +373,7 @@ public sealed partial class BackfillPage : Page
                 {
                     progressItem.Progress = 100;
                     progressItem.StatusText = "Done";
-                    progressItem.StatusBackground = new SolidColorBrush(Color.FromArgb(40, 72, 187, 120));
+                    progressItem.StatusBackground = BrushRegistry.SuccessBackground;
                     progressItem.BarsText = "2,500 bars";
                     progressItem.TimeText = $"{(DateTime.UtcNow - startTime).TotalSeconds:F1}s";
 

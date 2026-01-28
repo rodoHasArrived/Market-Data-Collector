@@ -168,18 +168,45 @@ public sealed class NavigationService : INavigationService
         // Tools
         _pageRegistry["DataExport"] = typeof(DataExportPage);
         _pageRegistry["AnalysisExport"] = typeof(AnalysisExportPage);
+        _pageRegistry["AnalysisExportWizard"] = typeof(AnalysisExportWizardPage);
         _pageRegistry["EventReplay"] = typeof(EventReplayPage);
         _pageRegistry["PackageManager"] = typeof(PackageManagerPage);
         _pageRegistry["TradingHours"] = typeof(TradingHoursPage);
+
+        // Analytics & Visualization
+        _pageRegistry["AdvancedAnalytics"] = typeof(AdvancedAnalyticsPage);
+        _pageRegistry["Charts"] = typeof(ChartingPage);
+        _pageRegistry["OrderBook"] = typeof(OrderBookPage);
+        _pageRegistry["DataCalendar"] = typeof(DataCalendarPage);
+
+        // Storage & Maintenance
+        _pageRegistry["StorageOptimization"] = typeof(StorageOptimizationPage);
+        _pageRegistry["RetentionAssurance"] = typeof(RetentionAssurancePage);
+        _pageRegistry["AdminMaintenance"] = typeof(AdminMaintenancePage);
 
         // Integrations
         _pageRegistry["LeanIntegration"] = typeof(LeanIntegrationPage);
         _pageRegistry["MessagingHub"] = typeof(MessagingHubPage);
 
-        // Support
+        // Workspaces & Notifications
+        _pageRegistry["Workspaces"] = typeof(WorkspacePage);
+        _pageRegistry["NotificationCenter"] = typeof(NotificationCenterPage);
+
+        // Support & Setup
         _pageRegistry["Help"] = typeof(HelpPage);
         _pageRegistry["Welcome"] = typeof(WelcomePage);
         _pageRegistry["Settings"] = typeof(SettingsPage);
         _pageRegistry["KeyboardShortcuts"] = typeof(KeyboardShortcutsPage);
+        _pageRegistry["SetupWizard"] = typeof(SetupWizardPage);
     }
+
+    /// <summary>
+    /// Gets all registered page tags.
+    /// </summary>
+    public IReadOnlyCollection<string> GetRegisteredPages() => _pageRegistry.Keys;
+
+    /// <summary>
+    /// Checks if a page tag is registered.
+    /// </summary>
+    public bool IsPageRegistered(string pageTag) => _pageRegistry.ContainsKey(pageTag);
 }

@@ -5,7 +5,7 @@ using System.Threading;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
-using Windows.UI;
+using MarketDataCollector.Uwp.Services;
 
 namespace MarketDataCollector.Uwp.Views;
 
@@ -91,34 +91,34 @@ public sealed partial class TradingHoursPage : Page
         {
             status = "Closed";
             nextEvent = "Opens Monday 9:30 AM";
-            statusColor = new SolidColorBrush(Color.FromArgb(255, 245, 101, 101));
+            statusColor = BrushRegistry.Error;
         }
         else if (currentTime >= marketOpen && currentTime < marketClose)
         {
             status = "Open";
             var timeUntilClose = marketClose - currentTime;
             nextEvent = $"Closes in {timeUntilClose.Hours}h {timeUntilClose.Minutes}m";
-            statusColor = new SolidColorBrush(Color.FromArgb(255, 72, 187, 120));
+            statusColor = BrushRegistry.Success;
         }
         else if (currentTime >= preMarketStart && currentTime < marketOpen)
         {
             status = "Pre-Market";
             var timeUntilOpen = marketOpen - currentTime;
             nextEvent = $"Opens in {timeUntilOpen.Hours}h {timeUntilOpen.Minutes}m";
-            statusColor = new SolidColorBrush(Color.FromArgb(255, 237, 137, 54));
+            statusColor = BrushRegistry.Warning;
         }
         else if (currentTime >= marketClose && currentTime < postMarketEnd)
         {
             status = "Post-Market";
             var timeUntilEnd = postMarketEnd - currentTime;
             nextEvent = $"Ends in {timeUntilEnd.Hours}h {timeUntilEnd.Minutes}m";
-            statusColor = new SolidColorBrush(Color.FromArgb(255, 237, 137, 54));
+            statusColor = BrushRegistry.Warning;
         }
         else
         {
             status = "Closed";
             nextEvent = "Pre-market opens 4:00 AM";
-            statusColor = new SolidColorBrush(Color.FromArgb(255, 245, 101, 101));
+            statusColor = BrushRegistry.Error;
         }
 
         NyseStatusText.Text = status;
@@ -138,7 +138,7 @@ public sealed partial class TradingHoursPage : Page
         {
             Name = "NYSE",
             Status = "Open",
-            StatusColor = new SolidColorBrush(Color.FromArgb(255, 72, 187, 120)),
+            StatusColor = BrushRegistry.Success,
             PreMarket = "04:00-09:30",
             RegularHours = "09:30-16:00",
             PostMarket = "16:00-20:00",
@@ -150,7 +150,7 @@ public sealed partial class TradingHoursPage : Page
         {
             Name = "NASDAQ",
             Status = "Open",
-            StatusColor = new SolidColorBrush(Color.FromArgb(255, 72, 187, 120)),
+            StatusColor = BrushRegistry.Success,
             PreMarket = "04:00-09:30",
             RegularHours = "09:30-16:00",
             PostMarket = "16:00-20:00",
@@ -162,7 +162,7 @@ public sealed partial class TradingHoursPage : Page
         {
             Name = "CME",
             Status = "Open",
-            StatusColor = new SolidColorBrush(Color.FromArgb(255, 72, 187, 120)),
+            StatusColor = BrushRegistry.Success,
             PreMarket = "-",
             RegularHours = "17:00-16:00",
             PostMarket = "-",
@@ -174,7 +174,7 @@ public sealed partial class TradingHoursPage : Page
         {
             Name = "LSE",
             Status = "Closed",
-            StatusColor = new SolidColorBrush(Color.FromArgb(255, 245, 101, 101)),
+            StatusColor = BrushRegistry.Error,
             PreMarket = "-",
             RegularHours = "08:00-16:30",
             PostMarket = "-",
@@ -186,7 +186,7 @@ public sealed partial class TradingHoursPage : Page
         {
             Name = "TSE",
             Status = "Closed",
-            StatusColor = new SolidColorBrush(Color.FromArgb(255, 245, 101, 101)),
+            StatusColor = BrushRegistry.Error,
             PreMarket = "-",
             RegularHours = "09:00-15:00",
             PostMarket = "-",
@@ -205,7 +205,7 @@ public sealed partial class TradingHoursPage : Page
             Name = "New Year's Day",
             Exchange = "NYSE, NASDAQ",
             Type = "Closed",
-            TypeColor = new SolidColorBrush(Color.FromArgb(255, 245, 101, 101))
+            TypeColor = BrushRegistry.Error
         });
 
         _holidays.Add(new HolidayEntry
@@ -214,7 +214,7 @@ public sealed partial class TradingHoursPage : Page
             Name = "Martin Luther King Jr. Day",
             Exchange = "NYSE, NASDAQ",
             Type = "Closed",
-            TypeColor = new SolidColorBrush(Color.FromArgb(255, 245, 101, 101))
+            TypeColor = BrushRegistry.Error
         });
 
         _holidays.Add(new HolidayEntry
@@ -223,7 +223,7 @@ public sealed partial class TradingHoursPage : Page
             Name = "Presidents' Day",
             Exchange = "NYSE, NASDAQ",
             Type = "Closed",
-            TypeColor = new SolidColorBrush(Color.FromArgb(255, 245, 101, 101))
+            TypeColor = BrushRegistry.Error
         });
 
         _holidays.Add(new HolidayEntry
@@ -232,7 +232,7 @@ public sealed partial class TradingHoursPage : Page
             Name = "Independence Day (Observed)",
             Exchange = "NYSE, NASDAQ",
             Type = "Early Close",
-            TypeColor = new SolidColorBrush(Color.FromArgb(255, 237, 137, 54))
+            TypeColor = BrushRegistry.Warning
         });
     }
 

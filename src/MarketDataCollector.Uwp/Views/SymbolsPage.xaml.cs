@@ -13,7 +13,6 @@ using MarketDataCollector.Uwp.Services;
 using MarketDataCollector.Uwp.ViewModels;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage.Pickers;
-using Windows.UI;
 
 namespace MarketDataCollector.Uwp.Views;
 
@@ -764,16 +763,16 @@ public class EnhancedSymbolViewModel : SymbolViewModel
     public string StatusText => SubscribeTrades || SubscribeDepth ? "Active" : "Inactive";
 
     public SolidColorBrush StatusBackground => SubscribeTrades || SubscribeDepth
-        ? new SolidColorBrush(Color.FromArgb(40, 72, 187, 120))
-        : new SolidColorBrush(Color.FromArgb(40, 160, 160, 160));
+        ? BrushRegistry.SuccessBackground
+        : BrushRegistry.SubtleBackground;
 
     public SolidColorBrush TradesStatusColor => SubscribeTrades
-        ? new SolidColorBrush(Color.FromArgb(255, 72, 187, 120))
-        : new SolidColorBrush(Color.FromArgb(255, 160, 160, 160));
+        ? BrushRegistry.Success
+        : BrushRegistry.Inactive;
 
     public SolidColorBrush DepthStatusColor => SubscribeDepth
-        ? new SolidColorBrush(Color.FromArgb(255, 72, 187, 120))
-        : new SolidColorBrush(Color.FromArgb(255, 160, 160, 160));
+        ? BrushRegistry.Success
+        : BrushRegistry.Inactive;
 
     public EnhancedSymbolViewModel(SymbolConfig config) : base(config)
     {

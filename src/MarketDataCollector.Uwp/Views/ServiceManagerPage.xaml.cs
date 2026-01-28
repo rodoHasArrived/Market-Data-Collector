@@ -2,12 +2,10 @@ using System;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Threading;
-using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using MarketDataCollector.Uwp.Services;
-using Windows.UI;
 
 namespace MarketDataCollector.Uwp.Views;
 
@@ -69,7 +67,7 @@ public sealed partial class ServiceManagerPage : Page
         if (status != null && status.IsConnected)
         {
             _isServiceRunning = true;
-            ServiceStatusIndicator.Fill = new SolidColorBrush(Color.FromArgb(255, 72, 187, 120));
+            ServiceStatusIndicator.Fill = BrushRegistry.Success;
             ServiceStatusText.Text = "Running";
             StartButton.IsEnabled = false;
             StopButton.IsEnabled = true;
@@ -83,7 +81,7 @@ public sealed partial class ServiceManagerPage : Page
         else
         {
             _isServiceRunning = false;
-            ServiceStatusIndicator.Fill = new SolidColorBrush(Color.FromArgb(255, 245, 101, 101));
+            ServiceStatusIndicator.Fill = BrushRegistry.Error;
             ServiceStatusText.Text = "Stopped";
             StartButton.IsEnabled = true;
             StopButton.IsEnabled = false;
@@ -246,10 +244,10 @@ public class LogEntry
         Message = message;
         LevelColor = level switch
         {
-            "ERR" => new SolidColorBrush(Color.FromArgb(255, 245, 101, 101)),
-            "WRN" => new SolidColorBrush(Color.FromArgb(255, 237, 137, 54)),
-            "DBG" => new SolidColorBrush(Color.FromArgb(255, 160, 174, 192)),
-            _ => new SolidColorBrush(Color.FromArgb(255, 72, 187, 120))
+            "ERR" => BrushRegistry.Error,
+            "WRN" => BrushRegistry.Warning,
+            "DBG" => BrushRegistry.Inactive,
+            _ => BrushRegistry.Success
         };
     }
 }
