@@ -23,15 +23,18 @@ public sealed partial class WatchlistPage : Page
 
     private readonly WatchlistService _watchlistService;
     private readonly ContextMenuService _contextMenuService;
+    private readonly SymbolManagementService _symbolManagementService;
     private readonly ObservableCollection<WatchlistDisplayItem> _favorites;
     private readonly ObservableCollection<WatchlistDisplayItem> _allSymbols;
     private readonly DispatcherTimer _refreshTimer;
+    private CancellationTokenSource? _searchCancellationTokenSource;
 
     public WatchlistPage()
     {
         this.InitializeComponent();
         _watchlistService = WatchlistService.Instance;
         _contextMenuService = ContextMenuService.Instance;
+        _symbolManagementService = SymbolManagementService.Instance;
         _favorites = new ObservableCollection<WatchlistDisplayItem>();
         _allSymbols = new ObservableCollection<WatchlistDisplayItem>();
 
@@ -62,6 +65,10 @@ public sealed partial class WatchlistPage : Page
         _refreshTimer.Stop();
         // Unsubscribe from service events to prevent memory leaks
         _watchlistService.WatchlistChanged -= WatchlistService_WatchlistChanged;
+        // Cancel any pending symbol search
+        _searchCancellationTokenSource?.Cancel();
+        _searchCancellationTokenSource?.Dispose();
+        _searchCancellationTokenSource = null;
     }
 
     private void RefreshTimer_Tick(object? sender, object e)
@@ -157,15 +164,75 @@ public sealed partial class WatchlistPage : Page
 
     private async void AddSymbol_QuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
     {
-        if (!string.IsNullOrWhiteSpace(args.QueryText))
+        string? symbolToAdd = null;
+
+        if (args.ChosenSuggestion is string suggestion)
         {
+            // Extract symbol from suggestion format "SYMBOL - Company Name"
+            var dashIndex = suggestion.IndexOf(" - ", StringComparison.Ordinal);
+            symbolToAdd = dashIndex > 0 ? suggestion[..dashIndex] : suggestion;
+        }
+        else if (!string.IsNullOrWhiteSpace(args.QueryText))
+        {
+            symbolToAdd = args.QueryText;
+        }
+
+        if (!string.IsNullOrWhiteSpace(symbolToAdd))
+        {
+            AddSymbolBox.Text = symbolToAdd.Trim().ToUpperInvariant();
             await AddSymbolFromInput();
         }
     }
 
-    private void AddSymbol_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
+    private async void AddSymbol_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
     {
-        // Could add symbol suggestions here
+        // Only search when the user is typing (not when a suggestion is selected)
+        if (args.Reason != AutoSuggestionBoxTextChangeReason.UserInput)
+            return;
+
+        var query = sender.Text?.Trim();
+
+        // Don't search for very short queries
+        if (string.IsNullOrWhiteSpace(query) || query.Length < 1)
+        {
+            sender.ItemsSource = null;
+            return;
+        }
+
+        // Cancel any previous search
+        _searchCancellationTokenSource?.Cancel();
+        _searchCancellationTokenSource = new CancellationTokenSource();
+        var ct = _searchCancellationTokenSource.Token;
+
+        try
+        {
+            // Add a small delay to debounce rapid typing
+            await Task.Delay(200, ct);
+
+            var searchResult = await _symbolManagementService.SearchSymbolsAsync(query, limit: 8, ct);
+
+            if (ct.IsCancellationRequested)
+                return;
+
+            if (searchResult.Success && searchResult.Results.Count > 0)
+            {
+                // Use DisplayText which shows "SYMBOL - Company Name" format
+                sender.ItemsSource = searchResult.Results.Select(r => r.DisplayText).ToList();
+            }
+            else
+            {
+                sender.ItemsSource = null;
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Search was cancelled, ignore
+        }
+        catch
+        {
+            // Silently handle errors - suggestions are not critical
+            sender.ItemsSource = null;
+        }
     }
 
     private async Task AddSymbolFromInput()
