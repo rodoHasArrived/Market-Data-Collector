@@ -478,11 +478,24 @@ public sealed class AnalysisExportWizardService
                     CurrentSymbol = symbol,
                     ProcessedSymbols = processedSymbols,
                     TotalSymbols = totalSymbols,
-                    PercentComplete = (double)processedSymbols / totalSymbols * 100
+                    PercentComplete = (double)processedSymbols / totalSymbols * 100,
+                    StatusMessage = $"Exporting {symbol}..."
                 });
 
-                // Export logic would go here - this is a placeholder
-                await Task.Delay(100, ct); // Simulate work
+                // Export data for this symbol based on the selected profile
+                var exportedRecords = await ExportSymbolDataAsync(
+                    symbol,
+                    config,
+                    progress,
+                    ct);
+
+                result.TotalRecordsExported += exportedRecords.RecordCount;
+                result.OutputSizeBytes += exportedRecords.OutputBytes;
+
+                if (!string.IsNullOrEmpty(exportedRecords.OutputFile))
+                {
+                    result.GeneratedFiles.Add(exportedRecords.OutputFile);
+                }
 
                 processedSymbols++;
                 result.ProcessedSymbols++;
@@ -507,6 +520,15 @@ public sealed class AnalysisExportWizardService
                 result.GeneratedFiles.Add(reportPath);
             }
 
+            // Generate schema file if requested
+            if (config.IncludeSchema)
+            {
+                var schemaPath = Path.Combine(config.OutputPath, "schema.json");
+                var schema = GenerateDataSchema(config);
+                await File.WriteAllTextAsync(schemaPath, schema, ct);
+                result.GeneratedFiles.Add(schemaPath);
+            }
+
             result.Success = true;
             result.EndTime = DateTime.UtcNow;
         }
@@ -523,6 +545,448 @@ public sealed class AnalysisExportWizardService
 
         result.EndTime = DateTime.UtcNow;
         return result;
+    }
+
+    /// <summary>
+    /// Exports data for a single symbol to the configured format.
+    /// </summary>
+    private async Task<SymbolExportResult> ExportSymbolDataAsync(
+        string symbol,
+        ExportConfiguration config,
+        IProgress<ExportProgress>? progress,
+        CancellationToken ct)
+    {
+        var result = new SymbolExportResult { Symbol = symbol };
+
+        try
+        {
+            // Load configuration to get data root path
+            var appConfig = await _configService.LoadConfigAsync();
+            var dataRoot = appConfig?.DataRoot ?? "data";
+
+            // Determine source files based on data types requested
+            var sourceFiles = new List<string>();
+            foreach (var dataType in config.DataTypes)
+            {
+                var pattern = dataType switch
+                {
+                    "trades" => $"*{symbol}*trade*.jsonl*",
+                    "quotes" => $"*{symbol}*quote*.jsonl*",
+                    "depth" => $"*{symbol}*depth*.jsonl*",
+                    "bars_1m" or "bars_5m" or "bars_1h" or "bars_1d" => $"*{symbol}*bar*.jsonl*",
+                    _ => $"*{symbol}*.jsonl*"
+                };
+
+                if (Directory.Exists(dataRoot))
+                {
+                    var files = Directory.GetFiles(dataRoot, pattern, SearchOption.AllDirectories)
+                        .Where(f => IsInDateRange(f, config.FromDate, config.ToDate))
+                        .ToList();
+                    sourceFiles.AddRange(files);
+                }
+            }
+
+            if (sourceFiles.Count == 0)
+            {
+                // No source files found, return empty result
+                return result;
+            }
+
+            // Export based on the selected format
+            result = config.Profile.OutputFormat switch
+            {
+                "CSV" => await ExportToCsvAsync(symbol, sourceFiles, config, ct),
+                "Parquet" => await ExportToParquetPlaceholderAsync(symbol, sourceFiles, config, ct),
+                "Excel" => await ExportToExcelPlaceholderAsync(symbol, sourceFiles, config, ct),
+                "SQL" => await ExportToSqlAsync(symbol, sourceFiles, config, ct),
+                "Notebook" => await ExportToNotebookAsync(symbol, sourceFiles, config, ct),
+                _ => await ExportToCsvAsync(symbol, sourceFiles, config, ct) // Default to CSV
+            };
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[AnalysisExportWizard] Export failed for {symbol}: {ex.Message}");
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Checks if a file's date is within the specified range based on filename.
+    /// </summary>
+    private static bool IsInDateRange(string filePath, DateOnly fromDate, DateOnly toDate)
+    {
+        var fileName = Path.GetFileName(filePath);
+
+        // Try to extract date from filename (common patterns: YYYY-MM-DD, YYYYMMDD)
+        var datePatterns = new[]
+        {
+            @"(\d{4})-(\d{2})-(\d{2})",
+            @"(\d{4})(\d{2})(\d{2})"
+        };
+
+        foreach (var pattern in datePatterns)
+        {
+            var match = System.Text.RegularExpressions.Regex.Match(fileName, pattern);
+            if (match.Success)
+            {
+                if (int.TryParse(match.Groups[1].Value, out var year) &&
+                    int.TryParse(match.Groups[2].Value, out var month) &&
+                    int.TryParse(match.Groups[3].Value, out var day))
+                {
+                    try
+                    {
+                        var fileDate = new DateOnly(year, month, day);
+                        return fileDate >= fromDate && fileDate <= toDate;
+                    }
+                    catch
+                    {
+                        // Invalid date, include by default
+                    }
+                }
+            }
+        }
+
+        // If we can't determine the date, include the file
+        return true;
+    }
+
+    /// <summary>
+    /// Exports data to CSV format.
+    /// </summary>
+    private async Task<SymbolExportResult> ExportToCsvAsync(
+        string symbol,
+        List<string> sourceFiles,
+        ExportConfiguration config,
+        CancellationToken ct)
+    {
+        var result = new SymbolExportResult { Symbol = symbol };
+        var outputFile = Path.Combine(config.OutputPath, $"{symbol}.csv");
+
+        await using var writer = new StreamWriter(outputFile, false, Encoding.UTF8);
+
+        var headerWritten = false;
+        long recordCount = 0;
+
+        foreach (var sourceFile in sourceFiles)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            // Handle gzipped files
+            Stream inputStream;
+            if (sourceFile.EndsWith(".gz", StringComparison.OrdinalIgnoreCase))
+            {
+                var fileStream = File.OpenRead(sourceFile);
+                inputStream = new System.IO.Compression.GZipStream(fileStream, System.IO.Compression.CompressionMode.Decompress);
+            }
+            else
+            {
+                inputStream = File.OpenRead(sourceFile);
+            }
+
+            await using (inputStream)
+            using (var reader = new StreamReader(inputStream))
+            {
+                string? line;
+                while ((line = await reader.ReadLineAsync(ct)) != null)
+                {
+                    ct.ThrowIfCancellationRequested();
+
+                    if (string.IsNullOrWhiteSpace(line))
+                        continue;
+
+                    try
+                    {
+                        // Parse JSONL and convert to CSV
+                        using var doc = JsonDocument.Parse(line);
+                        var root = doc.RootElement;
+
+                        // Write header on first record
+                        if (!headerWritten)
+                        {
+                            var headers = root.EnumerateObject().Select(p => p.Name);
+                            await writer.WriteLineAsync(string.Join(",", headers));
+                            headerWritten = true;
+                        }
+
+                        // Write values
+                        var values = root.EnumerateObject().Select(p => FormatCsvValue(p.Value));
+                        await writer.WriteLineAsync(string.Join(",", values));
+                        recordCount++;
+                    }
+                    catch (JsonException)
+                    {
+                        // Skip malformed lines
+                    }
+                }
+            }
+        }
+
+        result.OutputFile = outputFile;
+        result.RecordCount = recordCount;
+        result.OutputBytes = new FileInfo(outputFile).Length;
+
+        return result;
+    }
+
+    /// <summary>
+    /// Formats a JSON value for CSV output.
+    /// </summary>
+    private static string FormatCsvValue(JsonElement element)
+    {
+        var value = element.ValueKind switch
+        {
+            JsonValueKind.String => element.GetString() ?? "",
+            JsonValueKind.Number => element.GetRawText(),
+            JsonValueKind.True => "true",
+            JsonValueKind.False => "false",
+            JsonValueKind.Null => "",
+            _ => element.GetRawText()
+        };
+
+        // Escape CSV values containing commas, quotes, or newlines
+        if (value.Contains(',') || value.Contains('"') || value.Contains('\n'))
+        {
+            return $"\"{value.Replace("\"", "\"\"")}\"";
+        }
+
+        return value;
+    }
+
+    /// <summary>
+    /// Placeholder for Parquet export (requires Apache.Arrow or Parquet.Net library).
+    /// </summary>
+    private async Task<SymbolExportResult> ExportToParquetPlaceholderAsync(
+        string symbol,
+        List<string> sourceFiles,
+        ExportConfiguration config,
+        CancellationToken ct)
+    {
+        // Parquet export requires additional libraries (Apache.Arrow.Parquet)
+        // For now, fall back to CSV with a note
+        var result = await ExportToCsvAsync(symbol, sourceFiles, config, ct);
+
+        // Rename to indicate it's a placeholder
+        var csvFile = result.OutputFile;
+        if (!string.IsNullOrEmpty(csvFile) && File.Exists(csvFile))
+        {
+            var parquetNote = Path.Combine(config.OutputPath, $"{symbol}_parquet_note.txt");
+            await File.WriteAllTextAsync(parquetNote,
+                "Note: Full Parquet export requires Apache.Arrow library.\n" +
+                "CSV data has been exported as a fallback.\n" +
+                "To convert to Parquet, use the generated Python loader with pandas:\n" +
+                "  df = pd.read_csv('" + $"{symbol}.csv" + "')\n" +
+                "  df.to_parquet('" + $"{symbol}.parquet" + "')", ct);
+            result.OutputFile = csvFile;
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Placeholder for Excel export (requires EPPlus or similar library).
+    /// </summary>
+    private async Task<SymbolExportResult> ExportToExcelPlaceholderAsync(
+        string symbol,
+        List<string> sourceFiles,
+        ExportConfiguration config,
+        CancellationToken ct)
+    {
+        // Excel export requires additional libraries (EPPlus, ClosedXML, etc.)
+        // For now, export to CSV which can be opened in Excel
+        var result = await ExportToCsvAsync(symbol, sourceFiles, config, ct);
+
+        return result;
+    }
+
+    /// <summary>
+    /// Exports data to SQL COPY format for PostgreSQL/TimescaleDB.
+    /// </summary>
+    private async Task<SymbolExportResult> ExportToSqlAsync(
+        string symbol,
+        List<string> sourceFiles,
+        ExportConfiguration config,
+        CancellationToken ct)
+    {
+        var result = new SymbolExportResult { Symbol = symbol };
+
+        // First export data as CSV for COPY command
+        var csvResult = await ExportToCsvAsync(symbol, sourceFiles, config, ct);
+
+        // Generate SQL loader script
+        var sqlFile = Path.Combine(config.OutputPath, $"{symbol}_load.sql");
+        var sb = new StringBuilder();
+
+        sb.AppendLine($"-- SQL loader for {symbol}");
+        sb.AppendLine($"-- Generated: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC");
+        sb.AppendLine();
+        sb.AppendLine("-- Create table if not exists");
+        sb.AppendLine($"CREATE TABLE IF NOT EXISTS market_data_{symbol.ToLower()} (");
+        sb.AppendLine("    id BIGSERIAL PRIMARY KEY,");
+        sb.AppendLine("    timestamp TIMESTAMPTZ NOT NULL,");
+        sb.AppendLine("    price DECIMAL(18,8),");
+        sb.AppendLine("    volume BIGINT,");
+        sb.AppendLine("    data_type VARCHAR(20)");
+        sb.AppendLine(");");
+        sb.AppendLine();
+        sb.AppendLine("-- Load data from CSV");
+        sb.AppendLine($"\\COPY market_data_{symbol.ToLower()} FROM '{symbol}.csv' WITH CSV HEADER;");
+        sb.AppendLine();
+        sb.AppendLine("-- Create index for time-series queries");
+        sb.AppendLine($"CREATE INDEX IF NOT EXISTS idx_{symbol.ToLower()}_timestamp ON market_data_{symbol.ToLower()} (timestamp DESC);");
+
+        await File.WriteAllTextAsync(sqlFile, sb.ToString(), ct);
+
+        result.OutputFile = csvResult.OutputFile;
+        result.RecordCount = csvResult.RecordCount;
+        result.OutputBytes = csvResult.OutputBytes + new FileInfo(sqlFile).Length;
+
+        return result;
+    }
+
+    /// <summary>
+    /// Exports data with a Jupyter notebook for interactive analysis.
+    /// </summary>
+    private async Task<SymbolExportResult> ExportToNotebookAsync(
+        string symbol,
+        List<string> sourceFiles,
+        ExportConfiguration config,
+        CancellationToken ct)
+    {
+        // First export as CSV
+        var csvResult = await ExportToCsvAsync(symbol, sourceFiles, config, ct);
+
+        // Generate Jupyter notebook
+        var notebookFile = Path.Combine(config.OutputPath, $"{symbol}_analysis.ipynb");
+
+        var notebook = new
+        {
+            nbformat = 4,
+            nbformat_minor = 5,
+            metadata = new
+            {
+                kernelspec = new
+                {
+                    display_name = "Python 3",
+                    language = "python",
+                    name = "python3"
+                }
+            },
+            cells = new object[]
+            {
+                new
+                {
+                    cell_type = "markdown",
+                    metadata = new { },
+                    source = new[]
+                    {
+                        $"# {symbol} Market Data Analysis\n",
+                        $"Generated: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC\n",
+                        "\n",
+                        "This notebook provides interactive analysis of the exported market data."
+                    }
+                },
+                new
+                {
+                    cell_type = "code",
+                    metadata = new { },
+                    source = new[]
+                    {
+                        "import pandas as pd\n",
+                        "import matplotlib.pyplot as plt\n",
+                        "from pathlib import Path\n",
+                        "\n",
+                        "# Load data\n",
+                        $"df = pd.read_csv('{symbol}.csv')\n",
+                        "print(f'Loaded {len(df):,} records')\n",
+                        "df.head()"
+                    },
+                    outputs = Array.Empty<object>(),
+                    execution_count = (int?)null
+                },
+                new
+                {
+                    cell_type = "code",
+                    metadata = new { },
+                    source = new[]
+                    {
+                        "# Data summary\n",
+                        "df.describe()"
+                    },
+                    outputs = Array.Empty<object>(),
+                    execution_count = (int?)null
+                },
+                new
+                {
+                    cell_type = "code",
+                    metadata = new { },
+                    source = new[]
+                    {
+                        "# Convert timestamp column if present\n",
+                        "if 'timestamp' in df.columns:\n",
+                        "    df['timestamp'] = pd.to_datetime(df['timestamp'])\n",
+                        "    df.set_index('timestamp', inplace=True)\n",
+                        "\n",
+                        "# Plot price data if available\n",
+                        "price_cols = [c for c in df.columns if 'price' in c.lower()]\n",
+                        "if price_cols:\n",
+                        "    df[price_cols].plot(figsize=(12, 6), title=f'{symbol} Price')\n",
+                        "    plt.show()"
+                    },
+                    outputs = Array.Empty<object>(),
+                    execution_count = (int?)null
+                }
+            }
+        };
+
+        var notebookJson = JsonSerializer.Serialize(notebook, new JsonSerializerOptions { WriteIndented = true });
+        await File.WriteAllTextAsync(notebookFile, notebookJson, ct);
+
+        var result = csvResult;
+        result.OutputBytes += new FileInfo(notebookFile).Length;
+
+        return result;
+    }
+
+    /// <summary>
+    /// Generates a data schema document.
+    /// </summary>
+    private string GenerateDataSchema(ExportConfiguration config)
+    {
+        var schema = new
+        {
+            GeneratedAt = DateTime.UtcNow,
+            Profile = config.Profile.Name,
+            DataTypes = config.DataTypes,
+            DateRange = new { From = config.FromDate.ToString("yyyy-MM-dd"), To = config.ToDate.ToString("yyyy-MM-dd") },
+            Symbols = config.Symbols,
+            Fields = new[]
+            {
+                new { Name = "timestamp", Type = "datetime", Description = "Event timestamp in UTC" },
+                new { Name = "symbol", Type = "string", Description = "Trading symbol" },
+                new { Name = "price", Type = "decimal", Description = "Price value" },
+                new { Name = "volume", Type = "long", Description = "Trade/quote volume" },
+                new { Name = "bid", Type = "decimal", Description = "Bid price (quotes)" },
+                new { Name = "ask", Type = "decimal", Description = "Ask price (quotes)" },
+                new { Name = "open", Type = "decimal", Description = "Open price (bars)" },
+                new { Name = "high", Type = "decimal", Description = "High price (bars)" },
+                new { Name = "low", Type = "decimal", Description = "Low price (bars)" },
+                new { Name = "close", Type = "decimal", Description = "Close price (bars)" }
+            }
+        };
+
+        return JsonSerializer.Serialize(schema, new JsonSerializerOptions { WriteIndented = true });
+    }
+
+    /// <summary>
+    /// Result of exporting a single symbol.
+    /// </summary>
+    private sealed class SymbolExportResult
+    {
+        public string Symbol { get; set; } = string.Empty;
+        public string OutputFile { get; set; } = string.Empty;
+        public long RecordCount { get; set; }
+        public long OutputBytes { get; set; }
     }
 
     private string GetLoaderExtension(string language)

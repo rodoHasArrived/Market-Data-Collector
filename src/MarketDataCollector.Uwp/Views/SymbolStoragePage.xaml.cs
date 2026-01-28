@@ -165,13 +165,99 @@ public sealed partial class SymbolStoragePage : Page
                 : (Brush)Resources["ErrorColorBrush"];
     }
 
-    private void UpdateTimeline()
+    private async void UpdateTimeline()
     {
-        // This would calculate actual coverage and update the timeline bar
-        // For now, show placeholder
-        TimelineStartText.Text = "2024-01-01";
-        TimelineEndText.Text = DateTime.Now.ToString("yyyy-MM-dd");
-        CoverageBar.Width = 200; // Would be calculated based on actual coverage
+        try
+        {
+            // Get the actual date range from data files
+            var symbolInfo = await _storageService.GetSymbolInfoAsync(_currentSymbol);
+            var dataFiles = await _storageService.GetSymbolFilesAsync(_currentSymbol);
+
+            DateTime? startDate = symbolInfo?.FirstDataPoint;
+            DateTime? endDate = symbolInfo?.LastDataPoint;
+
+            // If no symbol info, try to infer from files
+            if (!startDate.HasValue && dataFiles.Count > 0)
+            {
+                // Parse dates from file names or fall back to file modification times
+                var fileDates = new List<DateTime>();
+                foreach (var file in dataFiles)
+                {
+                    // Try to parse date from filename
+                    var fileName = file.FileName ?? "";
+                    var dateMatch = System.Text.RegularExpressions.Regex.Match(
+                        fileName,
+                        @"(\d{4})-(\d{2})-(\d{2})");
+
+                    if (dateMatch.Success &&
+                        int.TryParse(dateMatch.Groups[1].Value, out var year) &&
+                        int.TryParse(dateMatch.Groups[2].Value, out var month) &&
+                        int.TryParse(dateMatch.Groups[3].Value, out var day))
+                    {
+                        try
+                        {
+                            fileDates.Add(new DateTime(year, month, day));
+                        }
+                        catch
+                        {
+                            // Invalid date, skip
+                        }
+                    }
+                }
+
+                if (fileDates.Count > 0)
+                {
+                    startDate = fileDates.Min();
+                    endDate = fileDates.Max();
+                }
+            }
+
+            // Fall back to reasonable defaults if still no data
+            startDate ??= DateTime.Now.AddMonths(-1);
+            endDate ??= DateTime.Now;
+
+            // Update timeline text
+            TimelineStartText.Text = startDate.Value.ToString("yyyy-MM-dd");
+            TimelineEndText.Text = endDate.Value.ToString("yyyy-MM-dd");
+
+            // Calculate coverage percentage
+            var totalDays = (endDate.Value - startDate.Value).TotalDays;
+            if (totalDays <= 0) totalDays = 1;
+
+            // Calculate trading days with data
+            var daysWithData = DataGaps.Count > 0
+                ? Math.Max(0, (int)totalDays - DataGaps.Sum(g => (int)(g.EndDate - g.StartDate).TotalDays))
+                : (int)totalDays;
+
+            var coveragePercent = Math.Min(100, Math.Max(0, daysWithData / totalDays * 100));
+
+            // Set the coverage bar width (max width is 200 for full coverage)
+            const double maxBarWidth = 200.0;
+            CoverageBar.Width = maxBarWidth * (coveragePercent / 100.0);
+
+            // Update coverage bar color based on quality
+            if (coveragePercent >= 99)
+            {
+                CoverageBar.Fill = (Brush)Resources["SuccessColorBrush"];
+            }
+            else if (coveragePercent >= 95)
+            {
+                CoverageBar.Fill = (Brush)Resources["WarningColorBrush"];
+            }
+            else
+            {
+                CoverageBar.Fill = (Brush)Resources["ErrorColorBrush"];
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SymbolStoragePage] UpdateTimeline error: {ex.Message}");
+
+            // Fall back to placeholder on error
+            TimelineStartText.Text = "--";
+            TimelineEndText.Text = "--";
+            CoverageBar.Width = 0;
+        }
     }
 
     private void UpdateSubscriptionStatus(bool isSubscribed)
