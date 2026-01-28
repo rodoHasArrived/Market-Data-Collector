@@ -266,7 +266,7 @@ public static class HttpClientConfiguration
             .ConfigureHttpClient(client =>
             {
                 client.Timeout = DefaultTimeout;
-                client.DefaultRequestHeaders.Add("User-Agent", "MarketDataCollector/1.5.0");
+                client.DefaultRequestHeaders.Add("User-Agent", "MarketDataCollector/1.6.1");
             })
             .AddStandardResiliencePolicy();
 
