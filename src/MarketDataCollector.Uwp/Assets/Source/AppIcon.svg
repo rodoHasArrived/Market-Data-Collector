@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <defs>
+    <!-- Enhanced background gradient with deeper colors -->
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a3656;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#122740;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0a1a2e;stop-opacity:1" />
+    </linearGradient>
+    <!-- Primary chart gradient (green - bullish) -->
+    <linearGradient id="chartPrimary" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" style="stop-color:#00e676;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#00ff88;stop-opacity:1" />
+    </linearGradient>
+    <!-- Secondary chart gradient (blue - volume/comparison) -->
+    <linearGradient id="chartSecondary" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" style="stop-color:#2196f3;stop-opacity:0.6" />
+      <stop offset="100%" style="stop-color:#64b5f6;stop-opacity:0.6" />
+    </linearGradient>
+    <!-- Area fill gradient -->
+    <linearGradient id="areaFill" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#00ff88;stop-opacity:0.25" />
+      <stop offset="100%" style="stop-color:#00ff88;stop-opacity:0.02" />
+    </linearGradient>
+    <!-- Glow filter for data points -->
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <!-- Shadow for depth -->
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000000" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  <!-- Background with rounded corners -->
+  <rect width="256" height="256" rx="40" fill="url(#bg)"/>
+  <!-- Subtle inner border -->
+  <rect x="2" y="2" width="252" height="252" rx="38" fill="none" stroke="#ffffff" stroke-opacity="0.05" stroke-width="1"/>
+  <!-- Grid lines - subtle and professional -->
+  <g stroke="#ffffff" stroke-opacity="0.06" stroke-width="1">
+    <line x1="40" y1="48" x2="40" y2="192"/>
+    <line x1="80" y1="48" x2="80" y2="192"/>
+    <line x1="120" y1="48" x2="120" y2="192"/>
+    <line x1="160" y1="48" x2="160" y2="192"/>
+    <line x1="200" y1="48" x2="200" y2="192"/>
+    <line x1="40" y1="72" x2="216" y2="72"/>
+    <line x1="40" y1="112" x2="216" y2="112"/>
+    <line x1="40" y1="152" x2="216" y2="152"/>
+    <line x1="40" y1="192" x2="216" y2="192"/>
+  </g>
+  <!-- Area fill under primary chart -->
+  <polygon
+    fill="url(#areaFill)"
+    points="48,176 80,144 112,160 144,88 176,112 208,56 216,60 216,192 48,192"/>
+  <!-- Secondary chart line (volume indicator) -->
+  <polyline
+    fill="none"
+    stroke="url(#chartSecondary)"
+    stroke-width="3"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    points="48,168 80,152 112,164 144,136 176,148 208,120"/>
+  <!-- Primary chart line with glow -->
+  <polyline
+    fill="none"
+    stroke="url(#chartPrimary)"
+    stroke-width="5"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    filter="url(#glow)"
+    points="48,176 80,144 112,160 144,88 176,112 208,56"/>
+  <!-- Data points with glow effect -->
+  <g filter="url(#glow)">
+    <circle cx="48" cy="176" r="6" fill="#00ff88"/>
+    <circle cx="80" cy="144" r="6" fill="#00ff88"/>
+    <circle cx="112" cy="160" r="6" fill="#00ff88"/>
+    <circle cx="144" cy="88" r="6" fill="#00ff88"/>
+    <circle cx="176" cy="112" r="6" fill="#00ff88"/>
+    <circle cx="208" cy="56" r="6" fill="#00ff88"/>
+  </g>
+  <!-- Inner highlight on key point -->
+  <circle cx="208" cy="56" r="3" fill="#ffffff" fill-opacity="0.8"/>
+  <!-- Branding text -->
+  <text x="128" y="226" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="600" fill="#ffffff" fill-opacity="0.35" text-anchor="middle" letter-spacing="2">MDC</text>
+</svg>
