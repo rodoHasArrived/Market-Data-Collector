@@ -309,17 +309,141 @@ public sealed partial class NotificationCenterPage : Page
         }
     }
 
-    private void ViewIncidentDetails_Click(object sender, RoutedEventArgs e)
+    private async void ViewIncidentDetails_Click(object sender, RoutedEventArgs e)
     {
-        // Show incident details in a dialog or expandable panel
+        if (sender is Button button && button.Tag is string incidentId)
+        {
+            var incident = _activeIncidents.FirstOrDefault(i => i.Id == incidentId);
+            if (incident != null)
+            {
+                var contentPanel = new StackPanel { Spacing = 12, MinWidth = 350 };
+
+                // Icon and title
+                var headerPanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12 };
+                headerPanel.Children.Add(new FontIcon
+                {
+                    Glyph = incident.Icon,
+                    FontSize = 24
+                });
+                headerPanel.Children.Add(new TextBlock
+                {
+                    Text = incident.Title,
+                    FontSize = 18,
+                    FontWeight = Microsoft.UI.Text.FontWeights.SemiBold
+                });
+                contentPanel.Children.Add(headerPanel);
+
+                // Description
+                contentPanel.Children.Add(new TextBlock
+                {
+                    Text = incident.Description,
+                    TextWrapping = TextWrapping.Wrap,
+                    Opacity = 0.9
+                });
+
+                // Details grid
+                var detailsPanel = new Grid { Margin = new Thickness(0, 12, 0, 0) };
+                detailsPanel.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+                detailsPanel.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(12) });
+                detailsPanel.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                detailsPanel.RowDefinitions.Add(new RowDefinition());
+                detailsPanel.RowDefinitions.Add(new RowDefinition());
+                detailsPanel.RowDefinitions.Add(new RowDefinition());
+                detailsPanel.RowDefinitions.Add(new RowDefinition());
+
+                // Category
+                var categoryLabel = new TextBlock { Text = "Category:", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold };
+                Grid.SetRow(categoryLabel, 0);
+                Grid.SetColumn(categoryLabel, 0);
+                detailsPanel.Children.Add(categoryLabel);
+
+                var categoryValue = new TextBlock { Text = incident.Category };
+                Grid.SetRow(categoryValue, 0);
+                Grid.SetColumn(categoryValue, 2);
+                detailsPanel.Children.Add(categoryValue);
+
+                // Started at
+                var startedLabel = new TextBlock { Text = "Started:", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold };
+                Grid.SetRow(startedLabel, 1);
+                Grid.SetColumn(startedLabel, 0);
+                detailsPanel.Children.Add(startedLabel);
+
+                var startedValue = new TextBlock { Text = incident.StartedAt.Replace("Started: ", "") };
+                Grid.SetRow(startedValue, 1);
+                Grid.SetColumn(startedValue, 2);
+                detailsPanel.Children.Add(startedValue);
+
+                // Duration
+                var durationLabel = new TextBlock { Text = "Duration:", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold };
+                Grid.SetRow(durationLabel, 2);
+                Grid.SetColumn(durationLabel, 0);
+                detailsPanel.Children.Add(durationLabel);
+
+                var durationValue = new TextBlock { Text = incident.Duration.Replace("Duration: ", "") };
+                Grid.SetRow(durationValue, 2);
+                Grid.SetColumn(durationValue, 2);
+                detailsPanel.Children.Add(durationValue);
+
+                // Related events
+                var eventsLabel = new TextBlock { Text = "Related Events:", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold };
+                Grid.SetRow(eventsLabel, 3);
+                Grid.SetColumn(eventsLabel, 0);
+                detailsPanel.Children.Add(eventsLabel);
+
+                var eventsValue = new TextBlock { Text = incident.RelatedEvents };
+                Grid.SetRow(eventsValue, 3);
+                Grid.SetColumn(eventsValue, 2);
+                detailsPanel.Children.Add(eventsValue);
+
+                contentPanel.Children.Add(detailsPanel);
+
+                var dialog = new ContentDialog
+                {
+                    Title = "Incident Details",
+                    Content = contentPanel,
+                    PrimaryButtonText = "Acknowledge",
+                    CloseButtonText = "Close",
+                    DefaultButton = ContentDialogButton.Close,
+                    XamlRoot = this.XamlRoot
+                };
+
+                var result = await dialog.ShowAsync();
+                if (result == ContentDialogResult.Primary)
+                {
+                    _activeIncidents.Remove(incident);
+                    UpdateSummaryCounts();
+                    NoActiveIncidentsText.Visibility = _activeIncidents.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+                    ActiveIncidentsList.Visibility = _activeIncidents.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+                }
+            }
+        }
     }
 
     private void NavigateToSource_Click(object sender, RoutedEventArgs e)
     {
         if (sender is Button button && button.Tag is string navigationTarget)
         {
-            // Use NavigationService or Frame to navigate
-            System.Diagnostics.Debug.WriteLine($"Navigate to: {navigationTarget}");
+            // Parse the navigation target (format: "page:PageName")
+            if (navigationTarget.StartsWith("page:"))
+            {
+                var pageName = navigationTarget.Substring(5);
+                Type? pageType = pageName switch
+                {
+                    "Provider" => typeof(ProviderPage),
+                    "Backfill" => typeof(BackfillPage),
+                    "Storage" => typeof(StoragePage),
+                    "ArchiveHealth" => typeof(ArchiveHealthPage),
+                    "ServiceManager" => typeof(ServiceManagerPage),
+                    "Dashboard" => typeof(DashboardPage),
+                    "DataQuality" => typeof(DataQualityPage),
+                    "Diagnostics" => typeof(DiagnosticsPage),
+                    "Settings" => typeof(SettingsPage),
+                    "SystemHealth" => typeof(SystemHealthPage),
+                    _ => typeof(DashboardPage)
+                };
+
+                Frame.Navigate(pageType);
+            }
         }
     }
 

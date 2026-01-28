@@ -432,9 +432,139 @@ public sealed partial class RetentionAssurancePage : Page
         }
     }
 
-    private void ViewAuditReport_Click(object sender, RoutedEventArgs e)
+    private async void ViewAuditReport_Click(object sender, RoutedEventArgs e)
     {
-        // Show audit report details in a dialog
+        if (sender is Button button && button.Tag is string reportId)
+        {
+            var report = _retentionService.AuditReports.FirstOrDefault(r => r.Id == reportId);
+            if (report != null)
+            {
+                var statusIcon = report.Status switch
+                {
+                    CleanupStatus.Success => "\u2705",
+                    CleanupStatus.PartialSuccess => "\u26A0\uFE0F",
+                    CleanupStatus.Failed => "\u274C",
+                    CleanupStatus.FailedVerification => "\u274C",
+                    CleanupStatus.Cancelled => "\u23F9\uFE0F",
+                    _ => "\u2139\uFE0F"
+                };
+
+                var contentPanel = new StackPanel { Spacing = 12 };
+
+                // Status section
+                contentPanel.Children.Add(new TextBlock
+                {
+                    Text = $"{statusIcon} Status: {report.Status}",
+                    FontWeight = Microsoft.UI.Text.FontWeights.SemiBold
+                });
+
+                // Execution time
+                contentPanel.Children.Add(new TextBlock
+                {
+                    Text = $"Executed: {report.ExecutedAt:yyyy-MM-dd HH:mm:ss}"
+                });
+
+                // Summary stats
+                var statsPanel = new Grid { Margin = new Thickness(0, 8, 0, 8) };
+                statsPanel.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                statsPanel.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                statsPanel.RowDefinitions.Add(new RowDefinition());
+                statsPanel.RowDefinitions.Add(new RowDefinition());
+
+                var filesDeleted = new TextBlock { Text = $"Files Deleted: {report.DeletedFiles.Count:N0}" };
+                Grid.SetRow(filesDeleted, 0);
+                Grid.SetColumn(filesDeleted, 0);
+                statsPanel.Children.Add(filesDeleted);
+
+                var bytesFreed = new TextBlock { Text = $"Bytes Freed: {FormatBytes(report.ActualBytesDeleted)}" };
+                Grid.SetRow(bytesFreed, 0);
+                Grid.SetColumn(bytesFreed, 1);
+                statsPanel.Children.Add(bytesFreed);
+
+                var dryRunFiles = new TextBlock { Text = $"Dry Run Files: {report.DryRunFilesCount:N0}" };
+                Grid.SetRow(dryRunFiles, 1);
+                Grid.SetColumn(dryRunFiles, 0);
+                statsPanel.Children.Add(dryRunFiles);
+
+                var dryRunBytes = new TextBlock { Text = $"Dry Run Bytes: {FormatBytes(report.DryRunBytesTotal)}" };
+                Grid.SetRow(dryRunBytes, 1);
+                Grid.SetColumn(dryRunBytes, 1);
+                statsPanel.Children.Add(dryRunBytes);
+
+                contentPanel.Children.Add(statsPanel);
+
+                // Policy applied
+                if (report.PolicyApplied != null)
+                {
+                    contentPanel.Children.Add(new TextBlock
+                    {
+                        Text = "Policy Applied:",
+                        FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
+                        Margin = new Thickness(0, 8, 0, 0)
+                    });
+                    contentPanel.Children.Add(new TextBlock
+                    {
+                        Text = $"  Tick Data: {report.PolicyApplied.TickDataDays} days, Bar Data: {report.PolicyApplied.BarDataDays} days",
+                        Opacity = 0.8
+                    });
+                }
+
+                // Errors section (if any)
+                if (report.Errors.Any())
+                {
+                    contentPanel.Children.Add(new TextBlock
+                    {
+                        Text = $"Errors ({report.Errors.Count}):",
+                        FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
+                        Foreground = new SolidColorBrush(Windows.UI.Color.FromArgb(255, 245, 101, 101)),
+                        Margin = new Thickness(0, 8, 0, 0)
+                    });
+
+                    var errorsText = new TextBlock
+                    {
+                        Text = string.Join("\n", report.Errors.Take(5)),
+                        TextWrapping = TextWrapping.Wrap,
+                        Opacity = 0.8
+                    };
+                    if (report.Errors.Count > 5)
+                    {
+                        errorsText.Text += $"\n... and {report.Errors.Count - 5} more";
+                    }
+                    contentPanel.Children.Add(errorsText);
+                }
+
+                // Notes section (if any)
+                if (report.Notes.Any())
+                {
+                    contentPanel.Children.Add(new TextBlock
+                    {
+                        Text = "Notes:",
+                        FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
+                        Margin = new Thickness(0, 8, 0, 0)
+                    });
+                    contentPanel.Children.Add(new TextBlock
+                    {
+                        Text = string.Join("\n", report.Notes.Take(3)),
+                        TextWrapping = TextWrapping.Wrap,
+                        Opacity = 0.8
+                    });
+                }
+
+                var dialog = new ContentDialog
+                {
+                    Title = "Audit Report Details",
+                    Content = new ScrollViewer
+                    {
+                        Content = contentPanel,
+                        MaxHeight = 400
+                    },
+                    CloseButtonText = "Close",
+                    XamlRoot = this.XamlRoot
+                };
+
+                await dialog.ShowAsync();
+            }
+        }
     }
 
     private async void ExportAuditReport_Click(object sender, RoutedEventArgs e)
