@@ -1212,8 +1212,133 @@ public static class DashboardTemplate
       );
     }
 
-    function previewBackfill() {
-      Toast.info('Preview', 'Backfill preview is not yet implemented.');
+    async function previewBackfill() {
+      const symbolsInput = document.getElementById('backfillSymbols')?.value;
+      const fromDate = document.getElementById('backfillFrom')?.value;
+      const toDate = document.getElementById('backfillTo')?.value;
+      const provider = document.getElementById('backfillProvider')?.value || 'stooq';
+
+      if (!symbolsInput || !symbolsInput.trim()) {
+        Toast.warning('Missing Input', 'Please enter at least one symbol to preview.');
+        return;
+      }
+
+      const symbols = symbolsInput.split(',').map(s => s.trim()).filter(s => s.length > 0);
+      if (symbols.length === 0) {
+        Toast.warning('Missing Input', 'Please enter at least one valid symbol.');
+        return;
+      }
+
+      Toast.info('Loading...', 'Generating backfill preview...');
+
+      const requestData = {
+        provider: provider,
+        symbols: symbols
+      };
+      if (fromDate) requestData.from = fromDate;
+      if (toDate) requestData.to = toDate;
+
+      const result = await Api.post('/api/backfill/preview', requestData);
+
+      if (result.success && result.data) {
+        const preview = result.data;
+        let html = `
+          <div style=""text-align: left; font-size: 14px;"">
+            <p><strong>Provider:</strong> ${preview.providerDisplayName || preview.provider}</p>
+            <p><strong>Date Range:</strong> ${preview.from} to ${preview.to}</p>
+            <p><strong>Total Days:</strong> ${preview.totalDays} (${preview.estimatedTradingDays} trading days)</p>
+            <p><strong>Estimated Duration:</strong> ${formatDuration(preview.estimatedDurationSeconds)}</p>
+            <hr style=""margin: 10px 0;"">
+            <p><strong>Symbols (${preview.symbols.length}):</strong></p>
+            <ul style=""margin: 5px 0; padding-left: 20px;"">
+        `;
+
+        for (const sym of preview.symbols) {
+          let status = '';
+          if (sym.existingData?.hasData) {
+            if (sym.existingData.isComplete) {
+              status = ' <span style=""color: #48bb78;"">(complete)</span>';
+            } else {
+              status = ' <span style=""color: #ed8936;"">(partial: ' + (sym.existingData.existingFrom || '?') + ' to ' + (sym.existingData.existingTo || '?') + ')</span>';
+            }
+          } else {
+            status = ' <span style=""color: #4299e1;"">(new)</span>';
+          }
+          html += `<li>${sym.symbol} - ~${sym.estimatedBars} bars${status}</li>`;
+        }
+
+        html += '</ul>';
+
+        if (preview.notes && preview.notes.length > 0) {
+          html += '<hr style=""margin: 10px 0;""><p><strong>Notes:</strong></p><ul style=""margin: 5px 0; padding-left: 20px;"">';
+          for (const note of preview.notes) {
+            html += `<li>${note}</li>`;
+          }
+          html += '</ul>';
+        }
+
+        html += '</div>';
+
+        showModal('Backfill Preview', html, [
+          { text: 'Close', action: 'close', primary: false },
+          { text: 'Run Backfill', action: 'run', primary: true }
+        ], (action) => {
+          if (action === 'run') {
+            document.getElementById('backfillForm')?.dispatchEvent(new Event('submit'));
+          }
+        });
+      } else {
+        Toast.error('Preview Failed', result.message || 'Failed to generate backfill preview.');
+      }
+    }
+
+    function formatDuration(seconds) {
+      if (seconds < 60) return seconds + ' seconds';
+      if (seconds < 3600) return Math.round(seconds / 60) + ' minutes';
+      return Math.round(seconds / 3600) + ' hours';
+    }
+
+    function showModal(title, content, buttons, callback) {
+      // Create modal if it doesn't exist
+      let modal = document.getElementById('previewModal');
+      if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'previewModal';
+        modal.className = 'modal hidden';
+        modal.innerHTML = `
+          <div class=""modal-content"" style=""max-width: 500px;"">
+            <h3 id=""previewModalTitle""></h3>
+            <div id=""previewModalBody"" style=""max-height: 400px; overflow-y: auto;""></div>
+            <div id=""previewModalButtons"" style=""margin-top: 15px; text-align: right;""></div>
+          </div>
+        `;
+        document.body.appendChild(modal);
+
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) {
+            modal.classList.add('hidden');
+          }
+        });
+      }
+
+      document.getElementById('previewModalTitle').textContent = title;
+      document.getElementById('previewModalBody').innerHTML = content;
+
+      const buttonsContainer = document.getElementById('previewModalButtons');
+      buttonsContainer.innerHTML = '';
+      for (const btn of buttons) {
+        const button = document.createElement('button');
+        button.textContent = btn.text;
+        button.className = btn.primary ? 'btn btn-primary' : 'btn btn-secondary';
+        button.style.marginLeft = '10px';
+        button.onclick = () => {
+          modal.classList.add('hidden');
+          if (callback) callback(btn.action);
+        };
+        buttonsContainer.appendChild(button);
+      }
+
+      modal.classList.remove('hidden');
     }
 
     // Keyboard shortcuts

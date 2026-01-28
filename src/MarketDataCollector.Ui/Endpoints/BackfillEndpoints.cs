@@ -31,6 +31,29 @@ public static class BackfillEndpoints
                 : Results.Json(status, jsonOptionsIndented);
         });
 
+        // Preview backfill (dry run - shows what would be fetched)
+        app.MapPost("/api/backfill/preview", async (BackfillCoordinator backfill, BackfillRequestDto req) =>
+        {
+            if (req.Symbols is null || req.Symbols.Length == 0)
+                return Results.BadRequest("At least one symbol is required.");
+
+            try
+            {
+                var request = new BackfillRequest(
+                    string.IsNullOrWhiteSpace(req.Provider) ? "stooq" : req.Provider!,
+                    req.Symbols,
+                    req.From,
+                    req.To);
+
+                var preview = await backfill.PreviewAsync(request);
+                return Results.Json(preview, jsonOptionsIndented);
+            }
+            catch (Exception ex)
+            {
+                return Results.BadRequest(ex.Message);
+            }
+        });
+
         // Run backfill
         app.MapPost("/api/backfill/run", async (BackfillCoordinator backfill, BackfillRequestDto req) =>
         {

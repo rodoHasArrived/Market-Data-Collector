@@ -588,7 +588,26 @@ public sealed class NotificationTypeToColorConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, string language)
     {
-        throw new NotImplementedException();
+        // Map SolidColorBrush back to NotificationType based on color
+        if (value is SolidColorBrush brush)
+        {
+            var color = brush.Color;
+
+            // Error: #F56565 (RGB: 245, 101, 101)
+            if (color.R >= 240 && color.G >= 95 && color.G <= 110 && color.B >= 95 && color.B <= 110)
+                return NotificationType.Error;
+
+            // Warning: #ED8936 (RGB: 237, 137, 54)
+            if (color.R >= 230 && color.G >= 130 && color.G <= 145 && color.B >= 50 && color.B <= 60)
+                return NotificationType.Warning;
+
+            // Success: #48BB78 (RGB: 72, 187, 120)
+            if (color.R >= 65 && color.R <= 80 && color.G >= 180 && color.G <= 195 && color.B >= 115 && color.B <= 130)
+                return NotificationType.Success;
+        }
+
+        // Default to Info
+        return NotificationType.Info;
     }
 }
 
@@ -614,7 +633,20 @@ public sealed class NotificationTypeToIconConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, string language)
     {
-        throw new NotImplementedException();
+        // Map icon glyph back to NotificationType
+        if (value is string glyph)
+        {
+            return glyph switch
+            {
+                "\uEA39" => NotificationType.Error,     // Error icon
+                "\uE7BA" => NotificationType.Warning,   // Warning icon
+                "\uE73E" => NotificationType.Success,   // Checkmark icon
+                "\uE946" => NotificationType.Info,      // Info icon
+                _ => NotificationType.Info
+            };
+        }
+
+        return NotificationType.Info;
     }
 }
 
