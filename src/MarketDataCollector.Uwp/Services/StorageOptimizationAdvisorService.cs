@@ -553,10 +553,79 @@ public sealed class StorageOptimizationAdvisorService
         IProgress<OptimizationProgress>? progress,
         CancellationToken ct)
     {
-        // Note: Actual compression would use System.IO.Compression or external libraries
-        // This is a placeholder for the compression logic
-        result.Errors.Add("Compression execution requires additional compression libraries");
-        await Task.CompletedTask;
+        var processed = 0;
+        var totalFiles = recommendation.AffectedFiles.Count;
+
+        foreach (var file in recommendation.AffectedFiles)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            progress?.Report(new OptimizationProgress
+            {
+                Stage = "Compressing files",
+                CurrentFile = Path.GetFileName(file),
+                Percentage = (int)(processed * 100.0 / totalFiles)
+            });
+
+            try
+            {
+                if (!File.Exists(file))
+                {
+                    continue;
+                }
+
+                // Skip already compressed files
+                if (IsCompressedFile(Path.GetExtension(file).ToLowerInvariant()))
+                {
+                    continue;
+                }
+
+                var originalSize = new FileInfo(file).Length;
+                var compressedPath = file + ".gz";
+
+                // Compress using GZip
+                await using (var sourceStream = File.OpenRead(file))
+                await using (var destStream = File.Create(compressedPath))
+                await using (var gzipStream = new System.IO.Compression.GZipStream(
+                    destStream,
+                    System.IO.Compression.CompressionLevel.Optimal))
+                {
+                    await sourceStream.CopyToAsync(gzipStream, ct);
+                }
+
+                // Verify compressed file was created successfully
+                if (File.Exists(compressedPath))
+                {
+                    var compressedSize = new FileInfo(compressedPath).Length;
+
+                    // Only keep compressed version if it's smaller
+                    if (compressedSize < originalSize)
+                    {
+                        File.Delete(file);
+                        result.BytesSaved += originalSize - compressedSize;
+                        result.FilesProcessed++;
+                    }
+                    else
+                    {
+                        // Compression didn't help, remove compressed file
+                        File.Delete(compressedPath);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                result.Errors.Add($"Failed to compress {file}: {ex.Message}");
+            }
+
+            processed++;
+        }
+
+        progress?.Report(new OptimizationProgress
+        {
+            Stage = "Compression complete",
+            CurrentFile = string.Empty,
+            Percentage = 100
+        });
     }
 
     private async Task ExecuteMergeFilesAsync(
@@ -565,9 +634,159 @@ public sealed class StorageOptimizationAdvisorService
         IProgress<OptimizationProgress>? progress,
         CancellationToken ct)
     {
-        // Note: File merging would combine JSONL files by date/symbol
-        result.Errors.Add("File merging execution requires format-specific logic");
-        await Task.CompletedTask;
+        if (recommendation.AffectedFiles.Count < 2)
+        {
+            return;
+        }
+
+        var processed = 0;
+        var totalFiles = recommendation.AffectedFiles.Count;
+
+        // Group files by directory and base name pattern
+        var fileGroups = recommendation.AffectedFiles
+            .GroupBy(f => Path.GetDirectoryName(f) ?? "")
+            .ToList();
+
+        foreach (var group in fileGroups)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            var directory = group.Key;
+            var filesToMerge = group.OrderBy(f => f).ToList();
+
+            if (filesToMerge.Count < 2)
+            {
+                continue;
+            }
+
+            progress?.Report(new OptimizationProgress
+            {
+                Stage = $"Merging {filesToMerge.Count} files",
+                CurrentFile = Path.GetFileName(directory),
+                Percentage = (int)(processed * 100.0 / totalFiles)
+            });
+
+            try
+            {
+                // Determine merged file name based on first and last file dates
+                var firstFile = filesToMerge.First();
+                var lastFile = filesToMerge.Last();
+                var extension = Path.GetExtension(firstFile);
+                var baseName = GetBaseFileName(Path.GetFileName(firstFile));
+
+                var mergedFileName = $"{baseName}_merged{extension}";
+                var mergedPath = Path.Combine(directory, mergedFileName);
+
+                // Check if it's a gzipped file
+                var isGzipped = extension.Equals(".gz", StringComparison.OrdinalIgnoreCase);
+
+                // Merge JSONL files
+                await using (var outputStream = File.Create(mergedPath))
+                {
+                    Stream writeStream = outputStream;
+                    if (isGzipped)
+                    {
+                        writeStream = new System.IO.Compression.GZipStream(
+                            outputStream,
+                            System.IO.Compression.CompressionLevel.Optimal);
+                    }
+
+                    await using (writeStream)
+                    await using (var writer = new StreamWriter(writeStream))
+                    {
+                        foreach (var file in filesToMerge)
+                        {
+                            ct.ThrowIfCancellationRequested();
+
+                            Stream inputStream = File.OpenRead(file);
+                            if (file.EndsWith(".gz", StringComparison.OrdinalIgnoreCase))
+                            {
+                                inputStream = new System.IO.Compression.GZipStream(
+                                    inputStream,
+                                    System.IO.Compression.CompressionMode.Decompress);
+                            }
+
+                            await using (inputStream)
+                            using (var reader = new StreamReader(inputStream))
+                            {
+                                string? line;
+                                while ((line = await reader.ReadLineAsync(ct)) != null)
+                                {
+                                    if (!string.IsNullOrWhiteSpace(line))
+                                    {
+                                        await writer.WriteLineAsync(line);
+                                    }
+                                }
+                            }
+
+                            processed++;
+                        }
+                    }
+                }
+
+                // Delete original files after successful merge
+                var originalTotalSize = filesToMerge.Sum(f => new FileInfo(f).Length);
+                foreach (var file in filesToMerge)
+                {
+                    if (File.Exists(file) && file != mergedPath)
+                    {
+                        File.Delete(file);
+                    }
+                }
+
+                var mergedSize = new FileInfo(mergedPath).Length;
+                result.FilesProcessed += filesToMerge.Count;
+
+                // Note: Merging may not save space but reduces file count
+                // BytesSaved represents the difference if any
+                if (originalTotalSize > mergedSize)
+                {
+                    result.BytesSaved += originalTotalSize - mergedSize;
+                }
+            }
+            catch (Exception ex)
+            {
+                result.Errors.Add($"Failed to merge files in {directory}: {ex.Message}");
+            }
+        }
+
+        progress?.Report(new OptimizationProgress
+        {
+            Stage = "Merge complete",
+            CurrentFile = string.Empty,
+            Percentage = 100
+        });
+    }
+
+    /// <summary>
+    /// Extracts the base file name without date suffixes.
+    /// </summary>
+    private static string GetBaseFileName(string fileName)
+    {
+        // Remove extension
+        var name = Path.GetFileNameWithoutExtension(fileName);
+
+        // Remove .gz extension if double-extension
+        if (name.EndsWith(".jsonl", StringComparison.OrdinalIgnoreCase))
+        {
+            name = Path.GetFileNameWithoutExtension(name);
+        }
+
+        // Remove date patterns (YYYY-MM-DD or YYYYMMDD)
+        var patterns = new[]
+        {
+            @"_\d{4}-\d{2}-\d{2}$",
+            @"_\d{8}$",
+            @"-\d{4}-\d{2}-\d{2}$",
+            @"-\d{8}$"
+        };
+
+        foreach (var pattern in patterns)
+        {
+            name = System.Text.RegularExpressions.Regex.Replace(name, pattern, "");
+        }
+
+        return name;
     }
 
     private async Task ExecuteTierMigrationAsync(

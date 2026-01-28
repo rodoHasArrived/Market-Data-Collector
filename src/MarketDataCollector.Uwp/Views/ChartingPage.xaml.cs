@@ -135,15 +135,232 @@ public sealed partial class ChartingPage : Page
         }
     }
 
+    private DrawingMode _currentDrawingMode = DrawingMode.None;
+    private readonly List<ChartDrawing> _chartDrawings = new();
+    private ChartDrawing? _activeDrawing;
+
     private void DrawingTool_Click(object sender, RoutedEventArgs e)
     {
-        // Drawing tools would require more complex canvas interaction
-        // Placeholder for future implementation
+        if (sender is MenuFlyoutItem item && item.Tag is string toolId)
+        {
+            _currentDrawingMode = toolId switch
+            {
+                "line" => DrawingMode.Line,
+                "trendline" => DrawingMode.TrendLine,
+                "horizontal" => DrawingMode.HorizontalLine,
+                "vertical" => DrawingMode.VerticalLine,
+                "fibonacci" => DrawingMode.FibonacciRetracement,
+                "rectangle" => DrawingMode.Rectangle,
+                "text" => DrawingMode.TextAnnotation,
+                _ => DrawingMode.None
+            };
+
+            if (_currentDrawingMode != DrawingMode.None)
+            {
+                UpdateDrawingCursor();
+                UpdateDrawingStatus($"Drawing: {toolId} - Click to start, click again to finish");
+            }
+        }
     }
 
     private void ClearDrawings_Click(object sender, RoutedEventArgs e)
     {
-        // Clear any drawings
+        _chartDrawings.Clear();
+        _activeDrawing = null;
+        _currentDrawingMode = DrawingMode.None;
+        DrawingsCanvas.Children.Clear();
+        UpdateDrawingStatus(string.Empty);
+    }
+
+    private void UpdateDrawingCursor()
+    {
+        // Change cursor to crosshair when in drawing mode
+        if (_currentDrawingMode != DrawingMode.None)
+        {
+            ChartCanvas.PointerPressed += ChartCanvas_PointerPressed;
+            ChartCanvas.PointerMoved += ChartCanvas_PointerMoved;
+            ChartCanvas.PointerReleased += ChartCanvas_PointerReleased;
+        }
+        else
+        {
+            ChartCanvas.PointerPressed -= ChartCanvas_PointerPressed;
+            ChartCanvas.PointerMoved -= ChartCanvas_PointerMoved;
+            ChartCanvas.PointerReleased -= ChartCanvas_PointerReleased;
+        }
+    }
+
+    private void ChartCanvas_PointerPressed(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+    {
+        if (_currentDrawingMode == DrawingMode.None || _chartData == null)
+            return;
+
+        var point = e.GetCurrentPoint(ChartCanvas).Position;
+
+        _activeDrawing = new ChartDrawing
+        {
+            Mode = _currentDrawingMode,
+            StartPoint = point,
+            EndPoint = point,
+            Color = Microsoft.UI.Colors.Yellow
+        };
+    }
+
+    private void ChartCanvas_PointerMoved(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+    {
+        if (_activeDrawing == null)
+            return;
+
+        var point = e.GetCurrentPoint(ChartCanvas).Position;
+        _activeDrawing.EndPoint = point;
+
+        // Redraw preview
+        RenderDrawingPreview(_activeDrawing);
+    }
+
+    private void ChartCanvas_PointerReleased(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+    {
+        if (_activeDrawing == null)
+            return;
+
+        var point = e.GetCurrentPoint(ChartCanvas).Position;
+        _activeDrawing.EndPoint = point;
+
+        // Finalize drawing
+        _chartDrawings.Add(_activeDrawing);
+        RenderDrawing(_activeDrawing);
+
+        _activeDrawing = null;
+        _currentDrawingMode = DrawingMode.None;
+        UpdateDrawingCursor();
+        UpdateDrawingStatus(string.Empty);
+    }
+
+    private void RenderDrawingPreview(ChartDrawing drawing)
+    {
+        // Clear preview layer
+        PreviewCanvas.Children.Clear();
+
+        RenderDrawingShape(drawing, PreviewCanvas, 0.5);
+    }
+
+    private void RenderDrawing(ChartDrawing drawing)
+    {
+        RenderDrawingShape(drawing, DrawingsCanvas, 1.0);
+    }
+
+    private void RenderDrawingShape(ChartDrawing drawing, Canvas canvas, double opacity)
+    {
+        var brush = new SolidColorBrush(drawing.Color) { Opacity = opacity };
+
+        switch (drawing.Mode)
+        {
+            case DrawingMode.Line:
+            case DrawingMode.TrendLine:
+                var line = new Microsoft.UI.Xaml.Shapes.Line
+                {
+                    X1 = drawing.StartPoint.X,
+                    Y1 = drawing.StartPoint.Y,
+                    X2 = drawing.EndPoint.X,
+                    Y2 = drawing.EndPoint.Y,
+                    Stroke = brush,
+                    StrokeThickness = 2
+                };
+                canvas.Children.Add(line);
+                break;
+
+            case DrawingMode.HorizontalLine:
+                var hLine = new Microsoft.UI.Xaml.Shapes.Line
+                {
+                    X1 = 0,
+                    Y1 = drawing.StartPoint.Y,
+                    X2 = canvas.ActualWidth > 0 ? canvas.ActualWidth : 1000,
+                    Y2 = drawing.StartPoint.Y,
+                    Stroke = brush,
+                    StrokeThickness = 1,
+                    StrokeDashArray = new Microsoft.UI.Xaml.Media.DoubleCollection { 4, 2 }
+                };
+                canvas.Children.Add(hLine);
+                break;
+
+            case DrawingMode.VerticalLine:
+                var vLine = new Microsoft.UI.Xaml.Shapes.Line
+                {
+                    X1 = drawing.StartPoint.X,
+                    Y1 = 0,
+                    X2 = drawing.StartPoint.X,
+                    Y2 = canvas.ActualHeight > 0 ? canvas.ActualHeight : 500,
+                    Stroke = brush,
+                    StrokeThickness = 1,
+                    StrokeDashArray = new Microsoft.UI.Xaml.Media.DoubleCollection { 4, 2 }
+                };
+                canvas.Children.Add(vLine);
+                break;
+
+            case DrawingMode.Rectangle:
+                var rect = new Microsoft.UI.Xaml.Shapes.Rectangle
+                {
+                    Width = Math.Abs(drawing.EndPoint.X - drawing.StartPoint.X),
+                    Height = Math.Abs(drawing.EndPoint.Y - drawing.StartPoint.Y),
+                    Stroke = brush,
+                    StrokeThickness = 1,
+                    Fill = new SolidColorBrush(drawing.Color) { Opacity = 0.1 }
+                };
+                Canvas.SetLeft(rect, Math.Min(drawing.StartPoint.X, drawing.EndPoint.X));
+                Canvas.SetTop(rect, Math.Min(drawing.StartPoint.Y, drawing.EndPoint.Y));
+                canvas.Children.Add(rect);
+                break;
+
+            case DrawingMode.FibonacciRetracement:
+                RenderFibonacciLevels(drawing, canvas, brush);
+                break;
+        }
+    }
+
+    private void RenderFibonacciLevels(ChartDrawing drawing, Canvas canvas, SolidColorBrush brush)
+    {
+        var levels = new[] { 0.0, 0.236, 0.382, 0.5, 0.618, 0.786, 1.0 };
+        var levelNames = new[] { "0%", "23.6%", "38.2%", "50%", "61.8%", "78.6%", "100%" };
+
+        var height = Math.Abs(drawing.EndPoint.Y - drawing.StartPoint.Y);
+        var minY = Math.Min(drawing.StartPoint.Y, drawing.EndPoint.Y);
+        var width = canvas.ActualWidth > 0 ? canvas.ActualWidth : 1000;
+
+        for (var i = 0; i < levels.Length; i++)
+        {
+            var y = minY + height * levels[i];
+            var line = new Microsoft.UI.Xaml.Shapes.Line
+            {
+                X1 = 0,
+                Y1 = y,
+                X2 = width,
+                Y2 = y,
+                Stroke = brush,
+                StrokeThickness = 1,
+                StrokeDashArray = levels[i] == 0.5 || levels[i] == 0.618
+                    ? null
+                    : new Microsoft.UI.Xaml.Media.DoubleCollection { 2, 2 }
+            };
+            canvas.Children.Add(line);
+
+            var label = new TextBlock
+            {
+                Text = levelNames[i],
+                Foreground = brush,
+                FontSize = 10
+            };
+            Canvas.SetLeft(label, 5);
+            Canvas.SetTop(label, y - 12);
+            canvas.Children.Add(label);
+        }
+    }
+
+    private void UpdateDrawingStatus(string message)
+    {
+        if (DrawingStatusText != null)
+        {
+            DrawingStatusText.Text = message;
+            DrawingStatusText.Visibility = string.IsNullOrEmpty(message) ? Visibility.Collapsed : Visibility.Visible;
+        }
     }
 
     private async Task LoadChartDataAsync()
@@ -521,4 +738,32 @@ public class IndicatorValueViewModel
     public string Name { get; set; } = string.Empty;
     public string Value { get; set; } = string.Empty;
     public SolidColorBrush ValueColor { get; set; } = new(Microsoft.UI.Colors.White);
+}
+
+/// <summary>
+/// Drawing modes for chart annotations.
+/// </summary>
+public enum DrawingMode
+{
+    None,
+    Line,
+    TrendLine,
+    HorizontalLine,
+    VerticalLine,
+    FibonacciRetracement,
+    Rectangle,
+    TextAnnotation
+}
+
+/// <summary>
+/// Represents a drawing annotation on the chart.
+/// </summary>
+public class ChartDrawing
+{
+    public DrawingMode Mode { get; set; }
+    public Windows.Foundation.Point StartPoint { get; set; }
+    public Windows.Foundation.Point EndPoint { get; set; }
+    public Windows.UI.Color Color { get; set; } = Microsoft.UI.Colors.Yellow;
+    public string? Text { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

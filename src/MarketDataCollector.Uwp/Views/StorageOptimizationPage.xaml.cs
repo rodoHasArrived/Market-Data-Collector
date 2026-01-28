@@ -286,10 +286,74 @@ public sealed partial class StorageOptimizationPage : Page
             return;
         }
 
-        await _notificationService.NotifyAsync(
-            "Coming Soon",
-            "Batch optimization execution will be available in a future update",
-            NotificationType.Info);
+        // Execute all optimizations
+        ProgressOverlay.Visibility = Visibility.Visible;
+        ProgressText.Text = "Executing optimizations...";
+
+        try
+        {
+            _operationCts = new CancellationTokenSource();
+            var totalSuccess = 0;
+            var totalErrors = new List<string>();
+            var totalBytesSaved = 0L;
+
+            var progress = new Progress<OptimizationProgress>(p =>
+            {
+                DispatcherQueue.TryEnqueue(() =>
+                {
+                    ProgressText.Text = $"{p.Stage}: {p.CurrentFile}";
+                    ProgressBar.Value = p.Percentage;
+                });
+            });
+
+            for (var i = 0; i < _lastReport.Recommendations.Count; i++)
+            {
+                var rec = _lastReport.Recommendations[i];
+                ProgressText.Text = $"Executing {i + 1}/{_lastReport.Recommendations.Count}: {rec.Title}";
+                ProgressBar.Value = (double)i / _lastReport.Recommendations.Count * 100;
+
+                var executionResult = await _optimizationService.ExecuteOptimizationAsync(
+                    rec, progress, _operationCts.Token);
+
+                if (executionResult.Success)
+                {
+                    totalSuccess++;
+                    totalBytesSaved += executionResult.BytesSaved;
+                }
+                else
+                {
+                    totalErrors.AddRange(executionResult.Errors);
+                }
+            }
+
+            var message = $"Completed {totalSuccess}/{_lastReport.Recommendations.Count} optimizations. ";
+            message += $"Saved {FormatBytes(totalBytesSaved)}.";
+
+            if (totalErrors.Any())
+            {
+                message += $" {totalErrors.Count} errors occurred.";
+                await _notificationService.NotifyWarningAsync("Optimizations Complete", message);
+            }
+            else
+            {
+                await _notificationService.NotifyAsync("Optimizations Complete", message, NotificationType.Success);
+            }
+
+            // Refresh analysis
+            AnalyzeStorage_Click(sender, e);
+        }
+        catch (OperationCanceledException)
+        {
+            await _notificationService.NotifyAsync("Cancelled", "Optimization execution was cancelled", NotificationType.Info);
+        }
+        catch (Exception ex)
+        {
+            await _notificationService.NotifyErrorAsync("Execution Failed", ex.Message);
+        }
+        finally
+        {
+            ProgressOverlay.Visibility = Visibility.Collapsed;
+        }
     }
 
     private async void ExportReport_Click(object sender, RoutedEventArgs e)
@@ -378,26 +442,181 @@ public sealed partial class StorageOptimizationPage : Page
 
     private async void CompressWarmTier_Click(object sender, RoutedEventArgs e)
     {
-        await _notificationService.NotifyAsync(
-            "Coming Soon",
-            "Compression execution requires additional libraries and will be available in a future update",
-            NotificationType.Info);
+        if (_lastReport == null) return;
+
+        var compressionRecs = _lastReport.Recommendations
+            .Where(r => r.Type == OptimizationType.Compress)
+            .ToList();
+
+        if (!compressionRecs.Any())
+        {
+            await _notificationService.NotifyAsync("No Files to Compress", "No uncompressed files found in warm tier", NotificationType.Info);
+            return;
+        }
+
+        var totalFiles = compressionRecs.Sum(r => r.AffectedFiles.Count);
+        var totalSavings = compressionRecs.Sum(r => r.PotentialSavingsBytes);
+
+        var dialog = new ContentDialog
+        {
+            Title = "Compress Warm Tier",
+            Content = $"This will compress {totalFiles} files using GZip.\n\nEstimated space savings: {FormatBytes(totalSavings)}",
+            PrimaryButtonText = "Compress",
+            CloseButtonText = "Cancel",
+            DefaultButton = ContentDialogButton.Close,
+            XamlRoot = this.XamlRoot
+        };
+
+        var result = await dialog.ShowAsync();
+        if (result == ContentDialogResult.Primary)
+        {
+            await ExecuteOptimizationsAsync(compressionRecs, "Compressing files...", sender, e);
+        }
     }
 
     private async void MergeSmallFiles_Click(object sender, RoutedEventArgs e)
     {
-        await _notificationService.NotifyAsync(
-            "Coming Soon",
-            "File merging requires format-specific logic and will be available in a future update",
-            NotificationType.Info);
+        if (_lastReport == null) return;
+
+        var mergeRecs = _lastReport.Recommendations
+            .Where(r => r.Type == OptimizationType.MergeFiles)
+            .ToList();
+
+        if (!mergeRecs.Any())
+        {
+            await _notificationService.NotifyAsync("No Files to Merge", "No small files found that can be merged", NotificationType.Info);
+            return;
+        }
+
+        var totalFiles = mergeRecs.Sum(r => r.AffectedFiles.Count);
+
+        var dialog = new ContentDialog
+        {
+            Title = "Merge Small Files",
+            Content = $"This will merge {totalFiles} small JSONL files into consolidated files.\n\nThis reduces file count and may improve performance.",
+            PrimaryButtonText = "Merge",
+            CloseButtonText = "Cancel",
+            DefaultButton = ContentDialogButton.Close,
+            XamlRoot = this.XamlRoot
+        };
+
+        var result = await dialog.ShowAsync();
+        if (result == ContentDialogResult.Primary)
+        {
+            await ExecuteOptimizationsAsync(mergeRecs, "Merging files...", sender, e);
+        }
     }
 
     private async void MoveToCold_Click(object sender, RoutedEventArgs e)
     {
-        await _notificationService.NotifyAsync(
-            "Coming Soon",
-            "Tier migration requires storage configuration and will be available in a future update",
-            NotificationType.Info);
+        if (_lastReport == null) return;
+
+        var tierRecs = _lastReport.Recommendations
+            .Where(r => r.Type == OptimizationType.MoveToTier)
+            .ToList();
+
+        if (!tierRecs.Any())
+        {
+            await _notificationService.NotifyAsync("No Files to Move", "No files eligible for tier migration", NotificationType.Info);
+            return;
+        }
+
+        var totalFiles = tierRecs.Sum(r => r.AffectedFiles.Count);
+        var totalSize = tierRecs.Sum(r => r.AffectedFiles.Sum(f => new System.IO.FileInfo(f).Length));
+
+        var dialog = new ContentDialog
+        {
+            Title = "Move to Cold Storage",
+            Content = $"This will move {totalFiles} files ({FormatBytes(totalSize)}) to cold storage tier.\n\nCold tier files are archived and compressed for long-term storage.",
+            PrimaryButtonText = "Move",
+            CloseButtonText = "Cancel",
+            DefaultButton = ContentDialogButton.Close,
+            XamlRoot = this.XamlRoot
+        };
+
+        var result = await dialog.ShowAsync();
+        if (result == ContentDialogResult.Primary)
+        {
+            await ExecuteOptimizationsAsync(tierRecs, "Moving to cold storage...", sender, e);
+        }
+    }
+
+    private async Task ExecuteOptimizationsAsync(
+        List<OptimizationRecommendation> recommendations,
+        string progressMessage,
+        object sender,
+        RoutedEventArgs e)
+    {
+        ProgressOverlay.Visibility = Visibility.Visible;
+        ProgressText.Text = progressMessage;
+
+        try
+        {
+            _operationCts = new CancellationTokenSource();
+            var totalSuccess = 0;
+            var totalErrors = new List<string>();
+            var totalBytesSaved = 0L;
+
+            var progress = new Progress<OptimizationProgress>(p =>
+            {
+                DispatcherQueue.TryEnqueue(() =>
+                {
+                    ProgressText.Text = $"{p.Stage}: {p.CurrentFile}";
+                    ProgressBar.Value = p.Percentage;
+                });
+            });
+
+            for (var i = 0; i < recommendations.Count; i++)
+            {
+                var rec = recommendations[i];
+                ProgressText.Text = $"Processing {i + 1}/{recommendations.Count}: {rec.Title}";
+                ProgressBar.Value = (double)i / recommendations.Count * 100;
+
+                var executionResult = await _optimizationService.ExecuteOptimizationAsync(
+                    rec, progress, _operationCts.Token);
+
+                if (executionResult.Success)
+                {
+                    totalSuccess++;
+                    totalBytesSaved += executionResult.BytesSaved;
+                }
+                else
+                {
+                    totalErrors.AddRange(executionResult.Errors);
+                }
+            }
+
+            var message = $"Completed {totalSuccess}/{recommendations.Count} operations. ";
+            if (totalBytesSaved > 0)
+            {
+                message += $"Saved {FormatBytes(totalBytesSaved)}.";
+            }
+
+            if (totalErrors.Any())
+            {
+                message += $" {totalErrors.Count} errors occurred.";
+                await _notificationService.NotifyWarningAsync("Operation Complete", message);
+            }
+            else
+            {
+                await _notificationService.NotifyAsync("Operation Complete", message, NotificationType.Success);
+            }
+
+            // Refresh analysis
+            AnalyzeStorage_Click(sender, e);
+        }
+        catch (OperationCanceledException)
+        {
+            await _notificationService.NotifyAsync("Cancelled", "Operation was cancelled", NotificationType.Info);
+        }
+        catch (Exception ex)
+        {
+            await _notificationService.NotifyErrorAsync("Operation Failed", ex.Message);
+        }
+        finally
+        {
+            ProgressOverlay.Visibility = Visibility.Collapsed;
+        }
     }
 
     #endregion

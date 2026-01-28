@@ -226,22 +226,64 @@ public sealed class SmartRecommendationsService
     {
         var issues = new List<DataQualityIssue>();
 
-        // Simulate finding quality issues
-        await Task.Delay(10, ct); // Placeholder for actual analysis
-
-        // Example issues (in real implementation, these would come from actual data analysis)
-        var gapCount = await GetRecentGapCountAsync(ct);
-        if (gapCount > 0)
+        try
         {
-            issues.Add(new DataQualityIssue
+            // Check for data gaps using completeness service
+            var gapCount = await GetRecentGapCountAsync(ct);
+            if (gapCount > 0)
             {
-                Id = "gaps-detected",
-                Severity = IssueSeverity.Warning,
-                Title = "Data Gaps Detected",
-                Description = $"{gapCount} trading days with missing data in the last 30 days",
-                AffectedCount = gapCount,
-                SuggestedAction = "Run gap repair to fill missing data"
-            });
+                issues.Add(new DataQualityIssue
+                {
+                    Id = "gaps-detected",
+                    Severity = gapCount > 5 ? IssueSeverity.Error : IssueSeverity.Warning,
+                    Title = "Data Gaps Detected",
+                    Description = $"{gapCount} trading days with missing data in the last 30 days",
+                    AffectedCount = gapCount,
+                    SuggestedAction = "Run gap repair to fill missing data"
+                });
+            }
+
+            // Check for stale symbols
+            var staleSymbols = await GetStaleSymbolsAsync(ct);
+            if (staleSymbols.Count > 0)
+            {
+                issues.Add(new DataQualityIssue
+                {
+                    Id = "stale-symbols",
+                    Severity = IssueSeverity.Warning,
+                    Title = "Stale Data Detected",
+                    Description = $"{staleSymbols.Count} symbols haven't been updated recently",
+                    AffectedCount = staleSymbols.Count,
+                    SuggestedAction = "Update to latest available data"
+                });
+            }
+
+            // Check completeness for configured symbols
+            if (config?.Symbols != null)
+            {
+                var completeness = await _completenessService.GetCompletenessReportAsync(
+                    config.Symbols.Where(s => !string.IsNullOrEmpty(s.Symbol)).Select(s => s.Symbol!).ToArray(),
+                    DateOnly.FromDateTime(DateTime.Now.AddDays(-30)),
+                    DateOnly.FromDateTime(DateTime.Now),
+                    ct);
+
+                if (completeness.OverallCompleteness < 95)
+                {
+                    issues.Add(new DataQualityIssue
+                    {
+                        Id = "low-completeness",
+                        Severity = completeness.OverallCompleteness < 80 ? IssueSeverity.Error : IssueSeverity.Warning,
+                        Title = "Low Data Completeness",
+                        Description = $"Overall data completeness is {completeness.OverallCompleteness:F1}%",
+                        AffectedCount = (int)(100 - completeness.OverallCompleteness),
+                        SuggestedAction = "Run backfill to improve data coverage"
+                    });
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SmartRecommendations] Error getting quality issues: {ex.Message}");
         }
 
         return issues;
@@ -254,67 +296,275 @@ public sealed class SmartRecommendationsService
     {
         var insights = new List<InsightMessage>();
 
-        await Task.Delay(10, ct); // Placeholder
-
-        // Storage insights
-        if (analytics != null)
+        try
         {
-            var totalGb = analytics.TotalSizeBytes / (1024.0 * 1024.0 * 1024.0);
-            if (totalGb > 10)
+            // Storage insights
+            if (analytics != null)
+            {
+                var totalGb = analytics.TotalSizeBytes / (1024.0 * 1024.0 * 1024.0);
+                var totalMb = analytics.TotalSizeBytes / (1024.0 * 1024.0);
+
+                if (totalGb > 100)
+                {
+                    insights.Add(new InsightMessage
+                    {
+                        Type = InsightType.Warning,
+                        Title = "Large Storage Usage",
+                        Message = $"You have {totalGb:F1} GB of data. Consider archiving old data to cold storage."
+                    });
+                }
+                else if (totalGb > 10)
+                {
+                    insights.Add(new InsightMessage
+                    {
+                        Type = InsightType.Info,
+                        Title = "Storage Usage",
+                        Message = $"You have {totalGb:F1} GB of historical data stored locally."
+                    });
+                }
+                else if (totalMb > 100)
+                {
+                    insights.Add(new InsightMessage
+                    {
+                        Type = InsightType.Info,
+                        Title = "Storage Usage",
+                        Message = $"You have {totalMb:F1} MB of historical data stored locally."
+                    });
+                }
+
+                // File count insight
+                if (analytics.TotalFiles > 10000)
+                {
+                    insights.Add(new InsightMessage
+                    {
+                        Type = InsightType.Tip,
+                        Title = "Many Data Files",
+                        Message = $"You have {analytics.TotalFiles:N0} files. Consider merging small files to improve performance."
+                    });
+                }
+            }
+
+            // Coverage insights
+            if (config?.Symbols != null && config.Symbols.Length > 0)
+            {
+                var symbolCount = config.Symbols.Length;
+                insights.Add(new InsightMessage
+                {
+                    Type = InsightType.Success,
+                    Title = "Symbols Configured",
+                    Message = $"You have {symbolCount} symbol{(symbolCount > 1 ? "s" : "")} configured for data collection."
+                });
+
+                // Check data provider
+                if (!string.IsNullOrEmpty(config.DataSource))
+                {
+                    insights.Add(new InsightMessage
+                    {
+                        Type = InsightType.Info,
+                        Title = "Data Provider",
+                        Message = $"Currently using {config.DataSource} as your primary data source."
+                    });
+                }
+            }
+            else
             {
                 insights.Add(new InsightMessage
                 {
-                    Type = InsightType.Info,
-                    Title = "Storage Usage",
-                    Message = $"You have {totalGb:F1} GB of historical data stored locally."
+                    Type = InsightType.Warning,
+                    Title = "No Symbols Configured",
+                    Message = "Add symbols to start collecting market data."
                 });
             }
-        }
 
-        // Coverage insights
-        if (config?.Symbols != null && config.Symbols.Length > 0)
-        {
-            insights.Add(new InsightMessage
+            // Data freshness insight
+            if (analytics?.LastUpdated != null)
             {
-                Type = InsightType.Success,
-                Title = "Symbols Configured",
-                Message = $"You have {config.Symbols.Length} symbols configured for data collection."
-            });
+                var hoursSinceUpdate = (DateTime.UtcNow - analytics.LastUpdated.Value).TotalHours;
+                if (hoursSinceUpdate > 24)
+                {
+                    insights.Add(new InsightMessage
+                    {
+                        Type = InsightType.Warning,
+                        Title = "Data Not Updated",
+                        Message = $"Data hasn't been updated in {hoursSinceUpdate:F0} hours. Ensure collection is running."
+                    });
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SmartRecommendations] Error generating insights: {ex.Message}");
         }
 
         return insights;
     }
 
-    // Helper methods (simulated for demo - in real implementation these would query actual data)
+    // Helper methods that query actual data from services
 
     private async Task<int> GetRecentGapCountAsync(CancellationToken ct)
     {
-        await Task.Delay(10, ct);
-        return new Random().Next(0, 5); // Simulated
+        try
+        {
+            var config = await _configService.LoadConfigAsync();
+            if (config?.Symbols == null || config.Symbols.Length == 0)
+            {
+                return 0;
+            }
+
+            var symbols = config.Symbols
+                .Where(s => !string.IsNullOrEmpty(s.Symbol))
+                .Select(s => s.Symbol!)
+                .ToArray();
+
+            if (symbols.Length == 0)
+            {
+                return 0;
+            }
+
+            var completeness = await _completenessService.GetCompletenessReportAsync(
+                symbols,
+                DateOnly.FromDateTime(DateTime.Now.AddDays(-30)),
+                DateOnly.FromDateTime(DateTime.Now),
+                ct);
+
+            return completeness.GapCount;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SmartRecommendations] Error getting gap count: {ex.Message}");
+            return 0;
+        }
     }
 
     private async Task<List<string>> GetSymbolsWithShortCoverageAsync(SymbolConfig[] symbols, CancellationToken ct)
     {
-        await Task.Delay(10, ct);
-        return symbols.Take(3).Where(s => !string.IsNullOrEmpty(s.Symbol)).Select(s => s.Symbol!).ToList();
+        var shortCoverageSymbols = new List<string>();
+
+        try
+        {
+            var symbolStrings = symbols
+                .Where(s => !string.IsNullOrEmpty(s.Symbol))
+                .Select(s => s.Symbol!)
+                .ToArray();
+
+            foreach (var symbol in symbolStrings.Take(20)) // Limit to avoid long queries
+            {
+                ct.ThrowIfCancellationRequested();
+
+                var completeness = await _completenessService.GetSymbolCompletenessAsync(
+                    symbol,
+                    DateOnly.FromDateTime(DateTime.Now.AddYears(-1)),
+                    DateOnly.FromDateTime(DateTime.Now),
+                    ct);
+
+                // If less than 200 trading days of data (roughly 1 year), consider it short
+                if (completeness.RecordCount < 200 * 390) // 200 days * ~390 minutes per trading day
+                {
+                    shortCoverageSymbols.Add(symbol);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SmartRecommendations] Error checking coverage: {ex.Message}");
+        }
+
+        return shortCoverageSymbols;
     }
 
     private async Task<List<string>> GetSymbolsWithoutDataAsync(SymbolConfig[] symbols, CancellationToken ct)
     {
-        await Task.Delay(10, ct);
-        return new List<string>(); // Simulated - in real implementation, check which symbols have no data
+        var symbolsWithoutData = new List<string>();
+
+        try
+        {
+            var config = await _configService.LoadConfigAsync();
+            var dataRoot = config?.DataRoot ?? "data";
+
+            foreach (var symbolConfig in symbols.Where(s => !string.IsNullOrEmpty(s.Symbol)).Take(50))
+            {
+                ct.ThrowIfCancellationRequested();
+
+                var symbol = symbolConfig.Symbol!;
+
+                // Check if any data files exist for this symbol
+                var hasData = await _storageService.SymbolHasDataAsync(symbol, dataRoot);
+                if (!hasData)
+                {
+                    symbolsWithoutData.Add(symbol);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SmartRecommendations] Error checking symbols without data: {ex.Message}");
+        }
+
+        return symbolsWithoutData;
     }
 
     private async Task<List<string>> GetStaleSymbolsAsync(CancellationToken ct)
     {
-        await Task.Delay(10, ct);
-        return new List<string>(); // Simulated
+        var staleSymbols = new List<string>();
+
+        try
+        {
+            var config = await _configService.LoadConfigAsync();
+            if (config?.Symbols == null)
+            {
+                return staleSymbols;
+            }
+
+            var dataRoot = config.DataRoot ?? "data";
+            var staleThreshold = DateTime.UtcNow.AddDays(-7);
+
+            foreach (var symbolConfig in config.Symbols.Where(s => !string.IsNullOrEmpty(s.Symbol)).Take(50))
+            {
+                ct.ThrowIfCancellationRequested();
+
+                var symbol = symbolConfig.Symbol!;
+                var lastUpdate = await _storageService.GetLastUpdateTimeAsync(symbol, dataRoot);
+
+                if (lastUpdate.HasValue && lastUpdate.Value < staleThreshold)
+                {
+                    staleSymbols.Add(symbol);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SmartRecommendations] Error checking stale symbols: {ex.Message}");
+        }
+
+        return staleSymbols;
     }
 
     private async Task<List<string>> GetMissingSymbolsAsync(string[] symbols, CancellationToken ct)
     {
-        await Task.Delay(10, ct);
-        return symbols.Take(3).ToList(); // Simulated - return some as "missing"
+        var missingSymbols = new List<string>();
+
+        try
+        {
+            var config = await _configService.LoadConfigAsync();
+            var dataRoot = config?.DataRoot ?? "data";
+
+            foreach (var symbol in symbols)
+            {
+                ct.ThrowIfCancellationRequested();
+
+                var hasData = await _storageService.SymbolHasDataAsync(symbol, dataRoot);
+                if (!hasData)
+                {
+                    missingSymbols.Add(symbol);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SmartRecommendations] Error checking missing symbols: {ex.Message}");
+        }
+
+        return missingSymbols;
     }
 }
 

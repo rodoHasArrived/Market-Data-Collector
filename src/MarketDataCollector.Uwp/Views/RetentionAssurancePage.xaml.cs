@@ -473,8 +473,237 @@ public sealed partial class RetentionAssurancePage : Page
 
     private async void GenerateAttestation_Click(object sender, RoutedEventArgs e)
     {
-        // Generate a compliance attestation report
-        await _notificationService.NotifyAsync("Coming Soon", "Attestation report generation will be available in a future update", NotificationType.Info);
+        try
+        {
+            // Generate a compliance attestation report
+            var attestation = await GenerateComplianceAttestationAsync();
+
+            // Show dialog to select output format
+            var dialog = new ContentDialog
+            {
+                Title = "Generate Attestation Report",
+                Content = new StackPanel
+                {
+                    Spacing = 12,
+                    Children =
+                    {
+                        new TextBlock { Text = "This will generate a compliance attestation report documenting:" },
+                        new TextBlock { Text = "• Current retention policy configuration", Margin = new Thickness(16, 0, 0, 0) },
+                        new TextBlock { Text = "• Active legal holds", Margin = new Thickness(16, 0, 0, 0) },
+                        new TextBlock { Text = "• Guardrail settings", Margin = new Thickness(16, 0, 0, 0) },
+                        new TextBlock { Text = "• Recent audit history", Margin = new Thickness(16, 0, 0, 0) },
+                        new TextBlock { Text = "• Data integrity verification status", Margin = new Thickness(16, 0, 0, 0) }
+                    }
+                },
+                PrimaryButtonText = "Generate Report",
+                CloseButtonText = "Cancel",
+                DefaultButton = ContentDialogButton.Primary,
+                XamlRoot = this.XamlRoot
+            };
+
+            var result = await dialog.ShowAsync();
+            if (result != ContentDialogResult.Primary)
+            {
+                return;
+            }
+
+            // Save the report
+            var picker = new FileSavePicker();
+            picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
+            picker.FileTypeChoices.Add("JSON", new List<string> { ".json" });
+            picker.FileTypeChoices.Add("Text", new List<string> { ".txt" });
+            picker.SuggestedFileName = $"compliance_attestation_{DateTime.Now:yyyyMMdd_HHmmss}";
+
+            var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow);
+            WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
+
+            var file = await picker.PickSaveFileAsync();
+            if (file != null)
+            {
+                string content;
+                if (file.FileType == ".json")
+                {
+                    content = System.Text.Json.JsonSerializer.Serialize(attestation,
+                        new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+                }
+                else
+                {
+                    content = GenerateTextReport(attestation);
+                }
+
+                await FileIO.WriteTextAsync(file, content);
+                await _notificationService.NotifyAsync("Attestation Generated", $"Report saved to {file.Name}", NotificationType.Success);
+            }
+        }
+        catch (Exception ex)
+        {
+            await _notificationService.NotifyErrorAsync("Generation Failed", ex.Message);
+        }
+    }
+
+    private async Task<ComplianceAttestation> GenerateComplianceAttestationAsync()
+    {
+        var config = await _configService.LoadConfigAsync();
+
+        return new ComplianceAttestation
+        {
+            GeneratedAt = DateTime.UtcNow,
+            GeneratedBy = Environment.UserName,
+            MachineName = Environment.MachineName,
+
+            // Retention Configuration
+            RetentionConfiguration = new RetentionConfigurationSummary
+            {
+                TickDataRetentionDays = _retentionService.Configuration.DefaultPolicy.TickDataDays,
+                BarDataRetentionDays = _retentionService.Configuration.DefaultPolicy.BarDataDays,
+                QuoteDataRetentionDays = _retentionService.Configuration.DefaultPolicy.QuoteDataDays,
+                CompressBeforeDelete = _retentionService.Configuration.DefaultPolicy.CompressBeforeDelete,
+                ArchiveToCloud = _retentionService.Configuration.DefaultPolicy.ArchiveToCloud
+            },
+
+            // Guardrails
+            Guardrails = new GuardrailsSummary
+            {
+                MinTickDataDays = _retentionService.Configuration.Guardrails.MinTickDataDays,
+                MinBarDataDays = _retentionService.Configuration.Guardrails.MinBarDataDays,
+                MinQuoteDataDays = _retentionService.Configuration.Guardrails.MinQuoteDataDays,
+                MaxDailyDeletedFiles = _retentionService.Configuration.Guardrails.MaxDailyDeletedFiles,
+                RequireChecksumVerification = _retentionService.Configuration.Guardrails.RequireChecksumVerification,
+                RequireDryRunPreview = _retentionService.Configuration.Guardrails.RequireDryRunPreview
+            },
+
+            // Legal Holds
+            ActiveLegalHolds = _retentionService.LegalHolds
+                .Where(h => h.IsActive)
+                .Select(h => new LegalHoldSummary
+                {
+                    Name = h.Name,
+                    CreatedAt = h.CreatedAt,
+                    Reason = h.Reason ?? "Not specified",
+                    SymbolCount = h.Symbols.Count,
+                    ExpiresAt = h.ExpiresAt
+                })
+                .ToList(),
+
+            // Audit History
+            RecentAudits = _retentionService.AuditReports
+                .OrderByDescending(a => a.ExecutedAt)
+                .Take(10)
+                .Select(a => new AuditSummary
+                {
+                    ExecutedAt = a.ExecutedAt,
+                    Status = a.Status.ToString(),
+                    FilesDeleted = a.DeletedFiles.Count,
+                    BytesFreed = a.ActualBytesDeleted,
+                    ErrorCount = a.Errors.Count
+                })
+                .ToList(),
+
+            // System Status
+            SystemStatus = new SystemStatusSummary
+            {
+                DataRootPath = config?.DataRoot ?? "data",
+                TotalSymbolsConfigured = config?.Symbols?.Length ?? 0,
+                ApplicationVersion = "1.6.1",
+                LastConfigurationChange = _retentionService.Configuration.LastModified
+            },
+
+            // Attestation Statement
+            AttestationStatement = "This attestation confirms the current retention policy configuration " +
+                "and compliance controls are in place. All data retention operations are subject to " +
+                "the guardrails and legal hold protections defined in this document."
+        };
+    }
+
+    private static string GenerateTextReport(ComplianceAttestation attestation)
+    {
+        var sb = new System.Text.StringBuilder();
+
+        sb.AppendLine("================================================================================");
+        sb.AppendLine("                    DATA RETENTION COMPLIANCE ATTESTATION                      ");
+        sb.AppendLine("================================================================================");
+        sb.AppendLine();
+        sb.AppendLine($"Generated: {attestation.GeneratedAt:yyyy-MM-dd HH:mm:ss} UTC");
+        sb.AppendLine($"Generated By: {attestation.GeneratedBy}");
+        sb.AppendLine($"Machine: {attestation.MachineName}");
+        sb.AppendLine();
+        sb.AppendLine("--------------------------------------------------------------------------------");
+        sb.AppendLine("RETENTION CONFIGURATION");
+        sb.AppendLine("--------------------------------------------------------------------------------");
+        sb.AppendLine($"  Tick Data Retention:    {attestation.RetentionConfiguration.TickDataRetentionDays} days");
+        sb.AppendLine($"  Bar Data Retention:     {attestation.RetentionConfiguration.BarDataRetentionDays} days");
+        sb.AppendLine($"  Quote Data Retention:   {attestation.RetentionConfiguration.QuoteDataRetentionDays} days");
+        sb.AppendLine($"  Compress Before Delete: {attestation.RetentionConfiguration.CompressBeforeDelete}");
+        sb.AppendLine($"  Archive to Cloud:       {attestation.RetentionConfiguration.ArchiveToCloud}");
+        sb.AppendLine();
+        sb.AppendLine("--------------------------------------------------------------------------------");
+        sb.AppendLine("GUARDRAILS");
+        sb.AppendLine("--------------------------------------------------------------------------------");
+        sb.AppendLine($"  Minimum Tick Data Days:        {attestation.Guardrails.MinTickDataDays}");
+        sb.AppendLine($"  Minimum Bar Data Days:         {attestation.Guardrails.MinBarDataDays}");
+        sb.AppendLine($"  Minimum Quote Data Days:       {attestation.Guardrails.MinQuoteDataDays}");
+        sb.AppendLine($"  Max Daily Deleted Files:       {attestation.Guardrails.MaxDailyDeletedFiles}");
+        sb.AppendLine($"  Require Checksum Verification: {attestation.Guardrails.RequireChecksumVerification}");
+        sb.AppendLine($"  Require Dry Run Preview:       {attestation.Guardrails.RequireDryRunPreview}");
+        sb.AppendLine();
+        sb.AppendLine("--------------------------------------------------------------------------------");
+        sb.AppendLine($"ACTIVE LEGAL HOLDS ({attestation.ActiveLegalHolds.Count})");
+        sb.AppendLine("--------------------------------------------------------------------------------");
+        if (attestation.ActiveLegalHolds.Any())
+        {
+            foreach (var hold in attestation.ActiveLegalHolds)
+            {
+                sb.AppendLine($"  * {hold.Name}");
+                sb.AppendLine($"      Created: {hold.CreatedAt:yyyy-MM-dd}");
+                sb.AppendLine($"      Reason: {hold.Reason}");
+                sb.AppendLine($"      Symbols Protected: {hold.SymbolCount}");
+                if (hold.ExpiresAt.HasValue)
+                {
+                    sb.AppendLine($"      Expires: {hold.ExpiresAt.Value:yyyy-MM-dd}");
+                }
+                sb.AppendLine();
+            }
+        }
+        else
+        {
+            sb.AppendLine("  No active legal holds.");
+            sb.AppendLine();
+        }
+        sb.AppendLine("--------------------------------------------------------------------------------");
+        sb.AppendLine($"RECENT AUDIT HISTORY ({attestation.RecentAudits.Count} records)");
+        sb.AppendLine("--------------------------------------------------------------------------------");
+        if (attestation.RecentAudits.Any())
+        {
+            foreach (var audit in attestation.RecentAudits)
+            {
+                sb.AppendLine($"  {audit.ExecutedAt:yyyy-MM-dd HH:mm} | {audit.Status} | " +
+                    $"{audit.FilesDeleted} files | {FormatBytes(audit.BytesFreed)} freed | {audit.ErrorCount} errors");
+            }
+        }
+        else
+        {
+            sb.AppendLine("  No audit records available.");
+        }
+        sb.AppendLine();
+        sb.AppendLine("--------------------------------------------------------------------------------");
+        sb.AppendLine("SYSTEM STATUS");
+        sb.AppendLine("--------------------------------------------------------------------------------");
+        sb.AppendLine($"  Data Root:            {attestation.SystemStatus.DataRootPath}");
+        sb.AppendLine($"  Symbols Configured:   {attestation.SystemStatus.TotalSymbolsConfigured}");
+        sb.AppendLine($"  Application Version:  {attestation.SystemStatus.ApplicationVersion}");
+        sb.AppendLine($"  Last Config Change:   {attestation.SystemStatus.LastConfigurationChange:yyyy-MM-dd HH:mm:ss}");
+        sb.AppendLine();
+        sb.AppendLine("================================================================================");
+        sb.AppendLine("ATTESTATION STATEMENT");
+        sb.AppendLine("================================================================================");
+        sb.AppendLine();
+        sb.AppendLine(attestation.AttestationStatement);
+        sb.AppendLine();
+        sb.AppendLine("================================================================================");
+        sb.AppendLine($"                      End of Report - {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC");
+        sb.AppendLine("================================================================================");
+
+        return sb.ToString();
     }
 
     private void EnableScheduledAudits_Toggled(object sender, RoutedEventArgs e)
@@ -501,3 +730,83 @@ public sealed partial class RetentionAssurancePage : Page
 
     #endregion
 }
+
+#region Attestation Models
+
+/// <summary>
+/// Compliance attestation report model.
+/// </summary>
+public class ComplianceAttestation
+{
+    public DateTime GeneratedAt { get; set; }
+    public string GeneratedBy { get; set; } = string.Empty;
+    public string MachineName { get; set; } = string.Empty;
+    public RetentionConfigurationSummary RetentionConfiguration { get; set; } = new();
+    public GuardrailsSummary Guardrails { get; set; } = new();
+    public List<LegalHoldSummary> ActiveLegalHolds { get; set; } = new();
+    public List<AuditSummary> RecentAudits { get; set; } = new();
+    public SystemStatusSummary SystemStatus { get; set; } = new();
+    public string AttestationStatement { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Retention configuration summary for attestation.
+/// </summary>
+public class RetentionConfigurationSummary
+{
+    public int TickDataRetentionDays { get; set; }
+    public int BarDataRetentionDays { get; set; }
+    public int QuoteDataRetentionDays { get; set; }
+    public bool CompressBeforeDelete { get; set; }
+    public bool ArchiveToCloud { get; set; }
+}
+
+/// <summary>
+/// Guardrails summary for attestation.
+/// </summary>
+public class GuardrailsSummary
+{
+    public int MinTickDataDays { get; set; }
+    public int MinBarDataDays { get; set; }
+    public int MinQuoteDataDays { get; set; }
+    public int MaxDailyDeletedFiles { get; set; }
+    public bool RequireChecksumVerification { get; set; }
+    public bool RequireDryRunPreview { get; set; }
+}
+
+/// <summary>
+/// Legal hold summary for attestation.
+/// </summary>
+public class LegalHoldSummary
+{
+    public string Name { get; set; } = string.Empty;
+    public DateTime CreatedAt { get; set; }
+    public string Reason { get; set; } = string.Empty;
+    public int SymbolCount { get; set; }
+    public DateTime? ExpiresAt { get; set; }
+}
+
+/// <summary>
+/// Audit summary for attestation.
+/// </summary>
+public class AuditSummary
+{
+    public DateTime ExecutedAt { get; set; }
+    public string Status { get; set; } = string.Empty;
+    public int FilesDeleted { get; set; }
+    public long BytesFreed { get; set; }
+    public int ErrorCount { get; set; }
+}
+
+/// <summary>
+/// System status summary for attestation.
+/// </summary>
+public class SystemStatusSummary
+{
+    public string DataRootPath { get; set; } = string.Empty;
+    public int TotalSymbolsConfigured { get; set; }
+    public string ApplicationVersion { get; set; } = string.Empty;
+    public DateTime LastConfigurationChange { get; set; }
+}
+
+#endregion
