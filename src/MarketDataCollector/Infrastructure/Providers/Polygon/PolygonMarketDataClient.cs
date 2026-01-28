@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
@@ -17,12 +18,7 @@ namespace MarketDataCollector.Infrastructure.Providers.Polygon;
 
 /// <summary>
 /// Polygon.io market data adapter implementing the IMarketDataClient abstraction.
-/// Currently operates in stub mode with synthetic data until full WebSocket implementation is added.
-///
-/// Current Support:
-/// - Trades: Stub mode only (emits synthetic trades for testing)
-/// - Quotes: Stub mode only (not yet wired)
-/// - Aggregates: Not implemented
+/// Supports full WebSocket streaming for trades and quotes.
 ///
 /// Current support:
 /// - Trades: YES (streams "T" messages and forwards to TradeDataCollector)
@@ -41,13 +37,6 @@ namespace MarketDataCollector.Infrastructure.Providers.Polygon;
 /// - Subscribe: {"action":"subscribe","params":"T.AAPL,Q.AAPL"}
 /// - Message types: T=trade, Q=quote, A=aggregate, AM=minute aggregate
 /// </summary>
-/// <remarks>
-/// When implementing the full WebSocket client:
-/// 1. Connect to wss://socket.polygon.io/{feed} or wss://delayed.polygon.io/{feed}
-/// 2. Authenticate with API key
-/// 3. Subscribe to channels: T.{symbol} for trades, Q.{symbol} for quotes
-/// 4. Parse incoming JSON messages and route to appropriate collectors
-/// </remarks>
 [ImplementsAdr("ADR-001", "Polygon.io streaming data provider implementation")]
 [ImplementsAdr("ADR-004", "All async methods support CancellationToken")]
 public sealed class PolygonMarketDataClient : IMarketDataClient
@@ -68,8 +57,16 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
     private readonly Dictionary<int, (string Symbol, string Kind)> _subs = new();
     private int _nextSubId = 200_000; // Separate ID range from other providers
 
+    // WebSocket connection
+    private ClientWebSocket? _ws;
+    private CancellationTokenSource? _cts;
+    private Task? _receiveLoop;
+    private readonly SemaphoreSlim _sendLock = new(1, 1);
+
     // Connection state
     private bool _isConnected;
+    private bool _isAuthenticated;
+    private long _messageSequence;
 
     /// <summary>
     /// Creates a new Polygon market data client.
@@ -166,9 +163,9 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
 
     /// <summary>
     /// Connects to Polygon WebSocket stream.
-    /// In stub mode, emits a synthetic heartbeat. In live mode, will connect to Polygon WebSocket.
+    /// In stub mode, emits a synthetic heartbeat. In live mode, connects to the actual WebSocket.
     /// </summary>
-    public Task ConnectAsync(CancellationToken ct = default)
+    public async Task ConnectAsync(CancellationToken ct = default)
     {
         if (IsStubMode)
         {
@@ -178,10 +175,10 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
 
             _isConnected = true;
             _publisher.TryPublish(MarketEvent.Heartbeat(DateTimeOffset.UtcNow, source: "PolygonStub"));
-            return Task.CompletedTask;
+            return;
         }
 
-        // Live mode - log connection attempt
+        // Live mode - connect to Polygon WebSocket
         var endpoint = _options.UseDelayed
             ? $"wss://delayed.polygon.io/{_options.Feed}"
             : $"wss://socket.polygon.io/{_options.Feed}";
@@ -191,33 +188,496 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
             endpoint,
             _options.UseDelayed);
 
-        // For now, still stub mode but with credentials available
-        // When implementing full WebSocket:
-        // await _connectionPipeline.ExecuteAsync(async token =>
-        // {
-        //     _ws = new ClientWebSocket();
-        //     await _ws.ConnectAsync(new Uri(endpoint), token);
-        //     await AuthenticateAsync(token);
-        //     _recvLoop = Task.Run(() => ReceiveLoopAsync(_cts!.Token), token);
-        // }, ct).ConfigureAwait(false);
+        _cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
 
-        _isConnected = true;
-        _publisher.TryPublish(MarketEvent.Heartbeat(DateTimeOffset.UtcNow, source: "Polygon"));
+        await _connectionPipeline.ExecuteAsync(async token =>
+        {
+            _ws = new ClientWebSocket();
+            _ws.Options.KeepAliveInterval = TimeSpan.FromSeconds(30);
 
-        _log.Warning(
-            "Polygon WebSocket connection not yet implemented. " +
-            "API key is configured but client is operating in stub mode. " +
-            "Full implementation pending.");
+            await _ws.ConnectAsync(new Uri(endpoint), token).ConfigureAwait(false);
 
-        return Task.CompletedTask;
+            _log.Debug("WebSocket connected, waiting for connection message");
+
+            // Wait for initial connection message from Polygon
+            await WaitForConnectionMessageAsync(token).ConfigureAwait(false);
+
+            // Authenticate with API key
+            await AuthenticateAsync(token).ConfigureAwait(false);
+
+            _isConnected = true;
+            _isAuthenticated = true;
+
+            // Start receive loop
+            _receiveLoop = Task.Run(() => ReceiveLoopAsync(_cts.Token), CancellationToken.None);
+
+            _publisher.TryPublish(MarketEvent.Heartbeat(DateTimeOffset.UtcNow, source: "Polygon"));
+
+            _log.Information("Polygon WebSocket connected and authenticated successfully");
+
+            // Re-subscribe to existing symbols after reconnection
+            await ResubscribeAllAsync(token).ConfigureAwait(false);
+        }, ct).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Waits for the initial connection message from Polygon.
+    /// </summary>
+    private async Task WaitForConnectionMessageAsync(CancellationToken ct)
+    {
+        var buffer = ArrayPool<byte>.Shared.Rent(4096);
+        try
+        {
+            var result = await _ws!.ReceiveAsync(buffer.AsMemory(), ct).ConfigureAwait(false);
+            if (result.MessageType == WebSocketMessageType.Text)
+            {
+                var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
+                _log.Debug("Received connection message: {Message}", message);
+
+                // Parse the message array
+                using var doc = JsonDocument.Parse(message);
+                if (doc.RootElement.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var elem in doc.RootElement.EnumerateArray())
+                    {
+                        if (elem.TryGetProperty("ev", out var evProp) &&
+                            evProp.GetString() == "status" &&
+                            elem.TryGetProperty("status", out var statusProp) &&
+                            statusProp.GetString() == "connected")
+                        {
+                            _log.Debug("Connection status confirmed");
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(buffer);
+        }
+    }
+
+    /// <summary>
+    /// Authenticates with Polygon using the API key.
+    /// </summary>
+    private async Task AuthenticateAsync(CancellationToken ct)
+    {
+        var authMessage = JsonSerializer.Serialize(new { action = "auth", @params = _options.ApiKey });
+        await SendMessageAsync(authMessage, ct).ConfigureAwait(false);
+
+        _log.Debug("Sent authentication message, waiting for response");
+
+        // Wait for auth response
+        var buffer = ArrayPool<byte>.Shared.Rent(4096);
+        try
+        {
+            var result = await _ws!.ReceiveAsync(buffer.AsMemory(), ct).ConfigureAwait(false);
+            if (result.MessageType == WebSocketMessageType.Text)
+            {
+                var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
+                _log.Debug("Received auth response: {Message}", message);
+
+                using var doc = JsonDocument.Parse(message);
+                if (doc.RootElement.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var elem in doc.RootElement.EnumerateArray())
+                    {
+                        if (elem.TryGetProperty("ev", out var evProp) && evProp.GetString() == "status")
+                        {
+                            var status = elem.TryGetProperty("status", out var statusProp) ? statusProp.GetString() : null;
+                            var authMessage2 = elem.TryGetProperty("message", out var msgProp) ? msgProp.GetString() : null;
+
+                            if (status == "auth_success")
+                            {
+                                _log.Information("Polygon authentication successful");
+                                return;
+                            }
+                            else if (status == "auth_failed")
+                            {
+                                throw new InvalidOperationException($"Polygon authentication failed: {authMessage2}");
+                            }
+                        }
+                    }
+                }
+            }
+
+            throw new InvalidOperationException("Did not receive valid authentication response from Polygon");
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(buffer);
+        }
+    }
+
+    /// <summary>
+    /// Sends a message to the WebSocket.
+    /// </summary>
+    private async Task SendMessageAsync(string message, CancellationToken ct)
+    {
+        await _sendLock.WaitAsync(ct).ConfigureAwait(false);
+        try
+        {
+            if (_ws?.State != WebSocketState.Open)
+            {
+                _log.Warning("Cannot send message - WebSocket not open (state: {State})", _ws?.State);
+                return;
+            }
+
+            var bytes = Encoding.UTF8.GetBytes(message);
+            await _ws.SendAsync(bytes.AsMemory(), WebSocketMessageType.Text, true, ct).ConfigureAwait(false);
+            _log.Debug("Sent message: {Message}", message);
+        }
+        finally
+        {
+            _sendLock.Release();
+        }
+    }
+
+    /// <summary>
+    /// Main receive loop for processing incoming WebSocket messages.
+    /// </summary>
+    private async Task ReceiveLoopAsync(CancellationToken ct)
+    {
+        var buffer = ArrayPool<byte>.Shared.Rent(65536);
+        var messageBuilder = new List<byte>();
+
+        try
+        {
+            while (!ct.IsCancellationRequested && _ws?.State == WebSocketState.Open)
+            {
+                WebSocketReceiveResult result;
+                messageBuilder.Clear();
+
+                do
+                {
+                    result = await _ws.ReceiveAsync(buffer.AsMemory(), ct).ConfigureAwait(false);
+
+                    if (result.MessageType == WebSocketMessageType.Close)
+                    {
+                        _log.Warning("Polygon WebSocket closed by server: {Status} {Description}",
+                            result.CloseStatus, result.CloseStatusDescription);
+                        _isConnected = false;
+                        return;
+                    }
+
+                    messageBuilder.AddRange(buffer.Take(result.Count));
+                }
+                while (!result.EndOfMessage);
+
+                if (result.MessageType == WebSocketMessageType.Text && messageBuilder.Count > 0)
+                {
+                    var message = Encoding.UTF8.GetString(messageBuilder.ToArray());
+                    ProcessMessage(message);
+                }
+            }
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            _log.Debug("Polygon receive loop cancelled");
+        }
+        catch (WebSocketException ex)
+        {
+            _log.Error(ex, "Polygon WebSocket error in receive loop");
+            _isConnected = false;
+        }
+        catch (Exception ex)
+        {
+            _log.Error(ex, "Unexpected error in Polygon receive loop");
+            _isConnected = false;
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(buffer);
+        }
+    }
+
+    /// <summary>
+    /// Processes an incoming WebSocket message.
+    /// </summary>
+    private void ProcessMessage(string message)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(message);
+
+            if (doc.RootElement.ValueKind != JsonValueKind.Array)
+            {
+                _log.Warning("Unexpected message format (not array): {Message}", message.Length > 200 ? message[..200] : message);
+                return;
+            }
+
+            foreach (var elem in doc.RootElement.EnumerateArray())
+            {
+                if (!elem.TryGetProperty("ev", out var evProp))
+                    continue;
+
+                var eventType = evProp.GetString();
+                switch (eventType)
+                {
+                    case "T": // Trade
+                        ProcessTrade(elem);
+                        break;
+
+                    case "Q": // Quote
+                        ProcessQuote(elem);
+                        break;
+
+                    case "A": // Second aggregate
+                    case "AM": // Minute aggregate
+                        // Aggregates not yet implemented
+                        break;
+
+                    case "status":
+                        ProcessStatus(elem);
+                        break;
+
+                    default:
+                        _log.Debug("Unhandled event type: {EventType}", eventType);
+                        break;
+                }
+            }
+        }
+        catch (JsonException ex)
+        {
+            _log.Warning(ex, "Failed to parse Polygon message: {Message}", message.Length > 200 ? message[..200] : message);
+        }
+    }
+
+    /// <summary>
+    /// Processes a trade message from Polygon.
+    /// Trade format: { "ev":"T", "sym":"AAPL", "p":150.25, "s":100, "t":1234567890000, "c":[12,37], "i":"trade_id", "x":4, "z":1 }
+    /// </summary>
+    private void ProcessTrade(JsonElement elem)
+    {
+        try
+        {
+            var symbol = elem.TryGetProperty("sym", out var symProp) ? symProp.GetString() : null;
+            if (string.IsNullOrEmpty(symbol)) return;
+
+            lock (_gate)
+            {
+                if (!_tradeSymbols.Contains(symbol))
+                    return;
+            }
+
+            var price = elem.TryGetProperty("p", out var priceProp) ? priceProp.GetDecimal() : 0m;
+            var size = elem.TryGetProperty("s", out var sizeProp) ? sizeProp.GetInt64() : 0L;
+            var timestamp = elem.TryGetProperty("t", out var tsProp) ? tsProp.GetInt64() : 0L;
+            var tradeId = elem.TryGetProperty("i", out var idProp) ? idProp.GetString() : null;
+            var exchange = elem.TryGetProperty("x", out var xProp) ? xProp.GetInt32() : 0;
+
+            // Parse conditions to determine aggressor side
+            var aggressor = AggressorSide.Unknown;
+            if (elem.TryGetProperty("c", out var conditions) && conditions.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var cond in conditions.EnumerateArray())
+                {
+                    var condCode = cond.GetInt32();
+                    // Condition 12 = Form T (Extended Hours Trade)
+                    // Condition 37 = Sold Sale (Seller initiated)
+                    // These are examples - full condition mapping would be more comprehensive
+                    if (condCode == 37)
+                    {
+                        aggressor = AggressorSide.Sell;
+                        break;
+                    }
+                }
+            }
+
+            var seq = Interlocked.Increment(ref _messageSequence);
+            var trade = new MarketTradeUpdate(
+                Timestamp: timestamp > 0
+                    ? DateTimeOffset.FromUnixTimeMilliseconds(timestamp)
+                    : DateTimeOffset.UtcNow,
+                Symbol: symbol,
+                Price: price,
+                Size: size,
+                Aggressor: aggressor,
+                SequenceNumber: seq,
+                StreamId: tradeId ?? $"POLYGON_{seq}",
+                Venue: MapExchangeCode(exchange));
+
+            _tradeCollector.OnTrade(trade);
+        }
+        catch (Exception ex)
+        {
+            _log.Warning(ex, "Failed to process Polygon trade message");
+        }
+    }
+
+    /// <summary>
+    /// Processes a quote message from Polygon.
+    /// Quote format: { "ev":"Q", "sym":"AAPL", "bp":150.20, "bs":100, "ap":150.25, "as":200, "t":1234567890000, "x":4 }
+    /// </summary>
+    private void ProcessQuote(JsonElement elem)
+    {
+        try
+        {
+            var symbol = elem.TryGetProperty("sym", out var symProp) ? symProp.GetString() : null;
+            if (string.IsNullOrEmpty(symbol)) return;
+
+            lock (_gate)
+            {
+                if (!_quoteSymbols.Contains(symbol))
+                    return;
+            }
+
+            var bidPrice = elem.TryGetProperty("bp", out var bpProp) ? bpProp.GetDecimal() : 0m;
+            var bidSize = elem.TryGetProperty("bs", out var bsProp) ? bsProp.GetInt64() : 0L;
+            var askPrice = elem.TryGetProperty("ap", out var apProp) ? apProp.GetDecimal() : 0m;
+            var askSize = elem.TryGetProperty("as", out var asProp) ? asProp.GetInt64() : 0L;
+            var timestamp = elem.TryGetProperty("t", out var tsProp) ? tsProp.GetInt64() : 0L;
+            var exchange = elem.TryGetProperty("x", out var xProp) ? xProp.GetInt32() : 0;
+
+            var ts = timestamp > 0
+                ? DateTimeOffset.FromUnixTimeMilliseconds(timestamp)
+                : DateTimeOffset.UtcNow;
+
+            var quote = new BboQuote(
+                Timestamp: ts,
+                Symbol: symbol,
+                BidPrice: bidPrice,
+                BidSize: bidSize,
+                AskPrice: askPrice,
+                AskSize: askSize,
+                MidPrice: bidPrice > 0 && askPrice > 0 ? (bidPrice + askPrice) / 2 : 0,
+                Spread: askPrice > 0 && bidPrice > 0 ? askPrice - bidPrice : 0,
+                SpreadBps: bidPrice > 0 && askPrice > 0 ? (askPrice - bidPrice) / ((bidPrice + askPrice) / 2) * 10000 : 0,
+                Exchange: MapExchangeCode(exchange));
+
+            _quoteCollector.OnQuote(quote);
+        }
+        catch (Exception ex)
+        {
+            _log.Warning(ex, "Failed to process Polygon quote message");
+        }
+    }
+
+    /// <summary>
+    /// Processes a status message from Polygon.
+    /// </summary>
+    private void ProcessStatus(JsonElement elem)
+    {
+        var status = elem.TryGetProperty("status", out var statusProp) ? statusProp.GetString() : null;
+        var message = elem.TryGetProperty("message", out var msgProp) ? msgProp.GetString() : null;
+
+        _log.Debug("Polygon status: {Status} - {Message}", status, message);
+
+        if (status == "success" && message?.Contains("subscribed") == true)
+        {
+            _log.Information("Polygon subscription confirmed: {Message}", message);
+        }
+    }
+
+    /// <summary>
+    /// Maps Polygon exchange codes to exchange names.
+    /// </summary>
+    private static string MapExchangeCode(int code)
+    {
+        return code switch
+        {
+            1 => "NYSE",
+            2 => "AMEX",
+            3 => "ARCA",
+            4 => "NASDAQ",
+            5 => "NASDAQ_BX",
+            6 => "NASDAQ_PSX",
+            7 => "BATS_Y",
+            8 => "BATS",
+            9 => "IEX",
+            10 => "EDGX",
+            11 => "EDGA",
+            12 => "CHX",
+            13 => "NSX",
+            14 => "FINRA_ADF",
+            15 => "CBOE",
+            16 => "MEMX",
+            17 => "MIAX",
+            19 => "LTSE",
+            _ => $"EX_{code}"
+        };
+    }
+
+    /// <summary>
+    /// Re-subscribes to all symbols after reconnection.
+    /// </summary>
+    private async Task ResubscribeAllAsync(CancellationToken ct)
+    {
+        List<string> tradeSyms;
+        List<string> quoteSyms;
+
+        lock (_gate)
+        {
+            tradeSyms = _tradeSymbols.ToList();
+            quoteSyms = _quoteSymbols.ToList();
+        }
+
+        if (tradeSyms.Count > 0)
+        {
+            var channels = string.Join(",", tradeSyms.Select(s => $"T.{s}"));
+            var subMessage = JsonSerializer.Serialize(new { action = "subscribe", @params = channels });
+            await SendMessageAsync(subMessage, ct).ConfigureAwait(false);
+            _log.Information("Re-subscribed to {Count} trade channels", tradeSyms.Count);
+        }
+
+        if (quoteSyms.Count > 0)
+        {
+            var channels = string.Join(",", quoteSyms.Select(s => $"Q.{s}"));
+            var subMessage = JsonSerializer.Serialize(new { action = "subscribe", @params = channels });
+            await SendMessageAsync(subMessage, ct).ConfigureAwait(false);
+            _log.Information("Re-subscribed to {Count} quote channels", quoteSyms.Count);
+        }
     }
 
     /// <summary>
     /// Disconnects from Polygon WebSocket stream.
     /// </summary>
-    public Task DisconnectAsync(CancellationToken ct = default)
+    public async Task DisconnectAsync(CancellationToken ct = default)
     {
         _log.Information("Polygon client disconnecting (Mode: {Mode})", IsStubMode ? "Stub" : "Live");
+
+        _isConnected = false;
+        _isAuthenticated = false;
+
+        // Cancel receive loop
+        _cts?.Cancel();
+
+        // Wait for receive loop to finish
+        if (_receiveLoop != null)
+        {
+            try
+            {
+                await _receiveLoop.WaitAsync(TimeSpan.FromSeconds(5), ct).ConfigureAwait(false);
+            }
+            catch (TimeoutException)
+            {
+                _log.Warning("Receive loop did not terminate within timeout");
+            }
+            catch (OperationCanceledException)
+            {
+                // Expected
+            }
+        }
+
+        // Close WebSocket connection gracefully
+        if (_ws?.State == WebSocketState.Open)
+        {
+            try
+            {
+                await _ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Client disconnecting", ct).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _log.Warning(ex, "Error closing WebSocket connection");
+            }
+        }
+
+        _ws?.Dispose();
+        _ws = null;
+        _cts?.Dispose();
+        _cts = null;
+        _receiveLoop = null;
 
         lock (_gate)
         {
@@ -225,9 +685,6 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
             _quoteSymbols.Clear();
             _subs.Clear();
         }
-
-        _isConnected = false;
-        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -250,17 +707,23 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
         var symbol = cfg.Symbol.Trim().ToUpperInvariant();
         if (string.IsNullOrEmpty(symbol)) return -1;
 
+        var isNewSymbol = false;
         var id = Interlocked.Increment(ref _nextSubId);
         lock (_gate)
         {
-            _quoteSymbols.Add(symbol);
+            isNewSymbol = _quoteSymbols.Add(symbol);
             _subs[id] = (symbol, "quotes");
         }
 
         _log.Debug("Subscribed to Polygon quotes for {Symbol} (SubId: {SubId}, Mode: {Mode})",
             symbol, id, IsStubMode ? "Stub" : "Live");
 
-        // In live mode, would send: {"action":"subscribe","params":"Q.{symbol}"}
+        // In live mode, send subscribe message to WebSocket
+        if (!IsStubMode && _isConnected && _isAuthenticated && isNewSymbol)
+        {
+            _ = SendSubscribeAsync($"Q.{symbol}");
+        }
+
         return id;
     }
 
@@ -269,6 +732,8 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
     /// </summary>
     public void UnsubscribeMarketDepth(int subscriptionId)
     {
+        string? symbolToUnsubscribe = null;
+
         lock (_gate)
         {
             if (!_subs.TryGetValue(subscriptionId, out var sub)) return;
@@ -279,9 +744,16 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
                 if (!_subs.Values.Any(v => v.Kind == "quotes" && v.Symbol.Equals(sub.Symbol, StringComparison.OrdinalIgnoreCase)))
                 {
                     _quoteSymbols.Remove(sub.Symbol);
+                    symbolToUnsubscribe = sub.Symbol;
                     _log.Debug("Unsubscribed from Polygon quotes for {Symbol}", sub.Symbol);
                 }
             }
+        }
+
+        // Send unsubscribe message to WebSocket
+        if (symbolToUnsubscribe != null && !IsStubMode && _isConnected)
+        {
+            _ = SendUnsubscribeAsync($"Q.{symbolToUnsubscribe}");
         }
     }
 
@@ -302,10 +774,11 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
         var symbol = cfg.Symbol.Trim().ToUpperInvariant();
         if (string.IsNullOrEmpty(symbol)) return -1;
 
+        var isNewSymbol = false;
         var id = Interlocked.Increment(ref _nextSubId);
         lock (_gate)
         {
-            _tradeSymbols.Add(symbol);
+            isNewSymbol = _tradeSymbols.Add(symbol);
             _subs[id] = (symbol, "trades");
         }
 
@@ -325,8 +798,12 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
                 StreamId: "POLYGON_STUB",
                 Venue: "POLYGON"));
         }
+        else if (_isConnected && _isAuthenticated && isNewSymbol)
+        {
+            // In live mode, send subscribe message to WebSocket
+            _ = SendSubscribeAsync($"T.{symbol}");
+        }
 
-        // In live mode, would send: {"action":"subscribe","params":"T.{symbol}"}
         return id;
     }
 
@@ -335,6 +812,8 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
     /// </summary>
     public void UnsubscribeTrades(int subscriptionId)
     {
+        string? symbolToUnsubscribe = null;
+
         lock (_gate)
         {
             if (!_subs.TryGetValue(subscriptionId, out var sub)) return;
@@ -345,9 +824,50 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
                 if (!_subs.Values.Any(v => v.Kind == "trades" && v.Symbol.Equals(sub.Symbol, StringComparison.OrdinalIgnoreCase)))
                 {
                     _tradeSymbols.Remove(sub.Symbol);
+                    symbolToUnsubscribe = sub.Symbol;
                     _log.Debug("Unsubscribed from Polygon trades for {Symbol}", sub.Symbol);
                 }
             }
+        }
+
+        // Send unsubscribe message to WebSocket
+        if (symbolToUnsubscribe != null && !IsStubMode && _isConnected)
+        {
+            _ = SendUnsubscribeAsync($"T.{symbolToUnsubscribe}");
+        }
+    }
+
+    /// <summary>
+    /// Sends a subscribe message to the WebSocket.
+    /// </summary>
+    private async Task SendSubscribeAsync(string channel)
+    {
+        try
+        {
+            var message = JsonSerializer.Serialize(new { action = "subscribe", @params = channel });
+            await SendMessageAsync(message, CancellationToken.None).ConfigureAwait(false);
+            _log.Debug("Sent subscribe request for {Channel}", channel);
+        }
+        catch (Exception ex)
+        {
+            _log.Warning(ex, "Failed to send subscribe message for {Channel}", channel);
+        }
+    }
+
+    /// <summary>
+    /// Sends an unsubscribe message to the WebSocket.
+    /// </summary>
+    private async Task SendUnsubscribeAsync(string channel)
+    {
+        try
+        {
+            var message = JsonSerializer.Serialize(new { action = "unsubscribe", @params = channel });
+            await SendMessageAsync(message, CancellationToken.None).ConfigureAwait(false);
+            _log.Debug("Sent unsubscribe request for {Channel}", channel);
+        }
+        catch (Exception ex)
+        {
+            _log.Warning(ex, "Failed to send unsubscribe message for {Channel}", channel);
         }
     }
 
@@ -394,10 +914,46 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
     }
 
     /// <inheritdoc />
-    public ValueTask DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         _log.Information("Disposing Polygon client");
+
         _isConnected = false;
+        _isAuthenticated = false;
+
+        // Cancel receive loop
+        _cts?.Cancel();
+
+        // Wait for receive loop to complete
+        if (_receiveLoop != null)
+        {
+            try
+            {
+                await _receiveLoop.WaitAsync(TimeSpan.FromSeconds(3)).ConfigureAwait(false);
+            }
+            catch
+            {
+                // Ignore timeout
+            }
+        }
+
+        // Close WebSocket
+        if (_ws?.State == WebSocketState.Open)
+        {
+            try
+            {
+                await _ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Disposing", CancellationToken.None)
+                    .ConfigureAwait(false);
+            }
+            catch
+            {
+                // Ignore close errors during dispose
+            }
+        }
+
+        _ws?.Dispose();
+        _cts?.Dispose();
+        _sendLock.Dispose();
 
         lock (_gate)
         {
@@ -405,7 +961,5 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
             _quoteSymbols.Clear();
             _subs.Clear();
         }
-
-        return ValueTask.CompletedTask;
     }
 }
