@@ -1,3 +1,4 @@
+using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Models;
 using System.Threading;
 using MarketDataCollector.Infrastructure.Providers.Backfill;

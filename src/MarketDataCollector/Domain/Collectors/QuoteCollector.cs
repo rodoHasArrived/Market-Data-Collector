@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Domain.Models;
 

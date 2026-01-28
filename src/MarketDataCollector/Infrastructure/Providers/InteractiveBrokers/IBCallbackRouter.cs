@@ -1,4 +1,6 @@
 using System.Collections.Concurrent;
+using MarketDataCollector.Contracts.Domain.Enums;
+using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Collectors;
 using MarketDataCollector.Domain.Models;
 

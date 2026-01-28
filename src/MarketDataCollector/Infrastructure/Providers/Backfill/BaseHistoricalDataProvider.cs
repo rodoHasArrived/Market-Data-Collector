@@ -1,5 +1,6 @@
 using System.Text.Json;
 using MarketDataCollector.Application.Logging;
+using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Http;

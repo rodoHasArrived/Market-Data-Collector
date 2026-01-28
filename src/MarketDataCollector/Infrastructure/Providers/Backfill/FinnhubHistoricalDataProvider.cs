@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using MarketDataCollector.Application.Logging;
+using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.DataSources;

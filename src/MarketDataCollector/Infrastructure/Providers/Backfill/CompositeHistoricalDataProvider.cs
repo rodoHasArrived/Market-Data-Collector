@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Threading;
 using MarketDataCollector.Application.Exceptions;
 using MarketDataCollector.Application.Logging;
+using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Providers.Backfill.SymbolResolution;

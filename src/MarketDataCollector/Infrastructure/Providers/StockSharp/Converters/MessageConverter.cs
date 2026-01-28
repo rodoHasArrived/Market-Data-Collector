@@ -1,6 +1,7 @@
 #if STOCKSHARP
 using StockSharp.Messages;
 #endif
+using MarketDataCollector.Contracts.Domain.Enums;
 using MarketDataCollector.Domain.Models;
 
 namespace MarketDataCollector.Infrastructure.Providers.StockSharp.Converters;

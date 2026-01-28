@@ -4,6 +4,7 @@ using System.Threading;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Subscriptions.Models;
+using MarketDataCollector.Contracts.Domain.Enums;
 using MarketDataCollector.Domain.Models;
 using Serilog;
 

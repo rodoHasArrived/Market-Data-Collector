@@ -7,6 +7,7 @@ using StockSharp.Messages;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Domain.Collectors;
+using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Providers.StockSharp.Converters;

@@ -5,6 +5,7 @@ using System.Threading;
 using IBApi;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Logging;
+using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Providers.Backfill;
