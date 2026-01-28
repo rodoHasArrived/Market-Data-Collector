@@ -12,9 +12,10 @@ An ADR is a document that captures an important architectural decision along wit
 |----|-------|--------|----------------|
 | [ADR-001](001-provider-abstraction.md) | Provider Abstraction Pattern | Accepted | `IMarketDataClient`, `IHistoricalDataProvider` |
 | [ADR-002](002-tiered-storage-architecture.md) | Tiered Storage Architecture | Accepted | `Storage/` directory |
-| [ADR-003](003-microservices-decomposition.md) | Microservices Decomposition | Accepted | `src/Microservices/` |
+| [ADR-003](003-microservices-decomposition.md) | Microservices Decomposition | Rejected | Monolith preferred |
 | [ADR-004](004-async-streaming-patterns.md) | Async Streaming Patterns | Accepted | `IAsyncEnumerable<T>` usage |
 | [ADR-005](005-attribute-based-discovery.md) | Attribute-Based Provider Discovery | Accepted | `DataSourceAttribute` |
+| [ADR-010](010-httpclient-factory.md) | HttpClientFactory Lifecycle | Accepted | `HttpClientConfiguration` |
 
 ## ADR Lifecycle
 
@@ -39,4 +40,4 @@ This ensures documented decisions remain in sync with actual code.
 
 ---
 
-*Last Updated: 2026-01-27*
+*Last Updated: 2026-01-28*
