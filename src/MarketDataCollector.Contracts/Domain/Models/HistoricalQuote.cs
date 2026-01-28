@@ -140,4 +140,22 @@ public sealed record HistoricalQuote : MarketEventPayload
     /// Spread as a percentage of the mid-price in basis points.
     /// </summary>
     public decimal? SpreadBps => MidPrice > 0 ? (Spread / MidPrice) * 10000m : null;
+
+    /// <summary>
+    /// Gets whether this quote represents a valid market state.
+    /// A valid market has positive bid and ask prices with ask greater than bid.
+    /// </summary>
+    public bool IsValid => BidPrice > 0 && AskPrice > 0 && AskPrice > BidPrice;
+
+    /// <summary>
+    /// Gets whether this quote represents a locked market (bid equals ask).
+    /// Locked markets can occur during halts or at open/close.
+    /// </summary>
+    public bool IsLocked => BidPrice > 0 && AskPrice > 0 && BidPrice == AskPrice;
+
+    /// <summary>
+    /// Gets whether this quote represents a crossed market (bid exceeds ask).
+    /// Crossed markets are invalid states that may indicate data issues.
+    /// </summary>
+    public bool IsCrossed => BidPrice > 0 && AskPrice > 0 && BidPrice > AskPrice;
 }
