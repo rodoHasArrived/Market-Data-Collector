@@ -18,12 +18,12 @@ namespace MarketDataCollector.Infrastructure.Providers.Polygon;
 
 /// <summary>
 /// Polygon.io market data adapter implementing the IMarketDataClient abstraction.
-/// Supports full WebSocket streaming for trades and quotes.
+/// Supports full WebSocket streaming for trades, quotes, and aggregates.
 ///
 /// Current support:
 /// - Trades: YES (streams "T" messages and forwards to TradeDataCollector)
 /// - Quotes: YES (streams "Q" messages and forwards to QuoteCollector)
-/// - Aggregates: Not yet implemented
+/// - Aggregates: YES (streams "A" and "AM" messages for second/minute bars)
 ///
 /// Connection Resilience:
 /// - Uses Polly-based WebSocketResiliencePolicy for connection retry with exponential backoff
@@ -54,6 +54,7 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
     private readonly object _gate = new();
     private readonly HashSet<string> _tradeSymbols = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<string> _quoteSymbols = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<string> _aggregateSymbols = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<int, (string Symbol, string Kind)> _subs = new();
     private int _nextSubId = 200_000; // Separate ID range from other providers
 
@@ -102,11 +103,12 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
             operationTimeout: TimeSpan.FromSeconds(30));
 
         _log.Information(
-            "Polygon client initialized (Mode: {Mode}, Feed: {Feed}, Trades: {Trades}, Quotes: {Quotes})",
+            "Polygon client initialized (Mode: {Mode}, Feed: {Feed}, Trades: {Trades}, Quotes: {Quotes}, Aggregates: {Aggregates})",
             IsStubMode ? "Stub" : "Live",
             _options.Feed,
             _options.SubscribeTrades,
-            _options.SubscribeQuotes);
+            _options.SubscribeQuotes,
+            _options.SubscribeAggregates);
     }
 
     /// <summary>
@@ -424,8 +426,11 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
                         break;
 
                     case "A": // Second aggregate
+                        ProcessAggregate(elem, AggregateTimeframe.Second);
+                        break;
+
                     case "AM": // Minute aggregate
-                        // Aggregates not yet implemented
+                        ProcessAggregate(elem, AggregateTimeframe.Minute);
                         break;
 
                     case "status":
@@ -555,6 +560,82 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
     }
 
     /// <summary>
+    /// Processes an aggregate bar message from Polygon.
+    /// Aggregate format: { "ev":"A/AM", "sym":"AAPL", "o":150.25, "h":150.50, "l":150.00, "c":150.40, "v":1000, "vw":150.30, "s":1234567890000, "e":1234567891000, "n":50 }
+    /// </summary>
+    /// <param name="elem">The JSON element containing the aggregate data.</param>
+    /// <param name="timeframe">The aggregate timeframe (Second or Minute).</param>
+    private void ProcessAggregate(JsonElement elem, AggregateTimeframe timeframe)
+    {
+        try
+        {
+            var symbol = elem.TryGetProperty("sym", out var symProp) ? symProp.GetString() : null;
+            if (string.IsNullOrEmpty(symbol)) return;
+
+            lock (_gate)
+            {
+                if (!_aggregateSymbols.Contains(symbol))
+                    return;
+            }
+
+            // Parse OHLCV data
+            var open = elem.TryGetProperty("o", out var oProp) ? oProp.GetDecimal() : 0m;
+            var high = elem.TryGetProperty("h", out var hProp) ? hProp.GetDecimal() : 0m;
+            var low = elem.TryGetProperty("l", out var lProp) ? lProp.GetDecimal() : 0m;
+            var close = elem.TryGetProperty("c", out var cProp) ? cProp.GetDecimal() : 0m;
+            var volume = elem.TryGetProperty("v", out var vProp) ? vProp.GetInt64() : 0L;
+
+            // Skip aggregates with invalid OHLC data
+            if (open <= 0 || high <= 0 || low <= 0 || close <= 0)
+            {
+                _log.Debug("Skipping aggregate for {Symbol} with invalid OHLC data", symbol);
+                return;
+            }
+
+            // Parse additional fields
+            var vwap = elem.TryGetProperty("vw", out var vwProp) ? vwProp.GetDecimal() : 0m;
+            var startTimestamp = elem.TryGetProperty("s", out var sProp) ? sProp.GetInt64() : 0L;
+            var endTimestamp = elem.TryGetProperty("e", out var eProp) ? eProp.GetInt64() : 0L;
+            var tradeCount = elem.TryGetProperty("n", out var nProp) ? nProp.GetInt32() : 0;
+
+            // Convert timestamps
+            var startTime = startTimestamp > 0
+                ? DateTimeOffset.FromUnixTimeMilliseconds(startTimestamp)
+                : DateTimeOffset.UtcNow;
+            var endTime = endTimestamp > 0
+                ? DateTimeOffset.FromUnixTimeMilliseconds(endTimestamp)
+                : startTime.AddSeconds(timeframe == AggregateTimeframe.Second ? 1 : 60);
+
+            var seq = Interlocked.Increment(ref _messageSequence);
+            var aggregateBar = new AggregateBar(
+                Symbol: symbol,
+                StartTime: startTime,
+                EndTime: endTime,
+                Open: open,
+                High: high,
+                Low: low,
+                Close: close,
+                Volume: volume,
+                Vwap: vwap,
+                TradeCount: tradeCount,
+                Timeframe: timeframe,
+                Source: "Polygon",
+                SequenceNumber: seq);
+
+            // Publish the aggregate bar event
+            _publisher.TryPublish(MarketEvent.AggregateBar(endTime, symbol, aggregateBar, seq, "Polygon"));
+
+            _log.Debug(
+                "Processed {Timeframe} aggregate for {Symbol}: O={Open} H={High} L={Low} C={Close} V={Volume}",
+                timeframe, symbol, open, high, low, close, volume);
+        }
+        catch (Exception ex)
+        {
+            _log.Warning(ex, "Failed to process Polygon aggregate message");
+        }
+    }
+
+    /// <summary>
     /// Processes a status message from Polygon.
     /// </summary>
     private void ProcessStatus(JsonElement elem)
@@ -606,11 +687,13 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
     {
         List<string> tradeSyms;
         List<string> quoteSyms;
+        List<string> aggregateSyms;
 
         lock (_gate)
         {
             tradeSyms = _tradeSymbols.ToList();
             quoteSyms = _quoteSymbols.ToList();
+            aggregateSyms = _aggregateSymbols.ToList();
         }
 
         if (tradeSyms.Count > 0)
@@ -627,6 +710,15 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
             var subMessage = JsonSerializer.Serialize(new { action = "subscribe", @params = channels });
             await SendMessageAsync(subMessage, ct).ConfigureAwait(false);
             _log.Information("Re-subscribed to {Count} quote channels", quoteSyms.Count);
+        }
+
+        if (aggregateSyms.Count > 0)
+        {
+            // Subscribe to both second (A) and minute (AM) aggregates
+            var channels = string.Join(",", aggregateSyms.SelectMany(s => new[] { $"A.{s}", $"AM.{s}" }));
+            var subMessage = JsonSerializer.Serialize(new { action = "subscribe", @params = channels });
+            await SendMessageAsync(subMessage, ct).ConfigureAwait(false);
+            _log.Information("Re-subscribed to {Count} aggregate channels", aggregateSyms.Count);
         }
     }
 
@@ -683,6 +775,7 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
         {
             _tradeSymbols.Clear();
             _quoteSymbols.Clear();
+            _aggregateSymbols.Clear();
             _subs.Clear();
         }
     }
@@ -838,6 +931,75 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
     }
 
     /// <summary>
+    /// Subscribes to aggregate bars (second and minute) for the specified symbol.
+    /// </summary>
+    /// <param name="cfg">Symbol configuration.</param>
+    /// <returns>Subscription ID, or -1 if not supported/not subscribed.</returns>
+    public int SubscribeAggregates(SymbolConfig cfg)
+    {
+        if (cfg is null) throw new ArgumentNullException(nameof(cfg));
+
+        if (!_options.SubscribeAggregates)
+        {
+            _log.Debug("Aggregate subscription disabled in Polygon options, skipping aggregates for {Symbol}", cfg.Symbol);
+            return -1;
+        }
+
+        var symbol = cfg.Symbol.Trim().ToUpperInvariant();
+        if (string.IsNullOrEmpty(symbol)) return -1;
+
+        var isNewSymbol = false;
+        var id = Interlocked.Increment(ref _nextSubId);
+        lock (_gate)
+        {
+            isNewSymbol = _aggregateSymbols.Add(symbol);
+            _subs[id] = (symbol, "aggregates");
+        }
+
+        _log.Debug("Subscribed to Polygon aggregates for {Symbol} (SubId: {SubId}, Mode: {Mode})",
+            symbol, id, IsStubMode ? "Stub" : "Live");
+
+        // In live mode, send subscribe message for both A (second) and AM (minute) channels
+        if (!IsStubMode && _isConnected && _isAuthenticated && isNewSymbol)
+        {
+            _ = SendSubscribeAsync($"A.{symbol},AM.{symbol}");
+        }
+
+        return id;
+    }
+
+    /// <summary>
+    /// Unsubscribes from aggregate bars for the specified subscription.
+    /// </summary>
+    /// <param name="subscriptionId">The subscription ID returned from SubscribeAggregates.</param>
+    public void UnsubscribeAggregates(int subscriptionId)
+    {
+        string? symbolToUnsubscribe = null;
+
+        lock (_gate)
+        {
+            if (!_subs.TryGetValue(subscriptionId, out var sub)) return;
+            _subs.Remove(subscriptionId);
+            if (sub.Kind == "aggregates")
+            {
+                // Only remove symbol if no other aggregate subs exist for it
+                if (!_subs.Values.Any(v => v.Kind == "aggregates" && v.Symbol.Equals(sub.Symbol, StringComparison.OrdinalIgnoreCase)))
+                {
+                    _aggregateSymbols.Remove(sub.Symbol);
+                    symbolToUnsubscribe = sub.Symbol;
+                    _log.Debug("Unsubscribed from Polygon aggregates for {Symbol}", sub.Symbol);
+                }
+            }
+        }
+
+        // Send unsubscribe message to WebSocket for both channels
+        if (symbolToUnsubscribe != null && !IsStubMode && _isConnected)
+        {
+            _ = SendUnsubscribeAsync($"A.{symbolToUnsubscribe},AM.{symbolToUnsubscribe}");
+        }
+    }
+
+    /// <summary>
     /// Sends a subscribe message to the WebSocket.
     /// </summary>
     private async Task SendSubscribeAsync(string channel)
@@ -913,6 +1075,20 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
         }
     }
 
+    /// <summary>
+    /// Gets the list of currently subscribed aggregate symbols.
+    /// </summary>
+    public IReadOnlyList<string> SubscribedAggregateSymbols
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _aggregateSymbols.ToList();
+            }
+        }
+    }
+
     /// <inheritdoc />
     public async ValueTask DisposeAsync()
     {
@@ -959,6 +1135,7 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
         {
             _tradeSymbols.Clear();
             _quoteSymbols.Clear();
+            _aggregateSymbols.Clear();
             _subs.Clear();
         }
     }

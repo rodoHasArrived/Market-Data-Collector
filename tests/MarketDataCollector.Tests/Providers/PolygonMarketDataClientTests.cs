@@ -345,6 +345,115 @@ public class PolygonMarketDataClientTests : IDisposable
         act.Should().NotThrow();
     }
 
+    [Fact]
+    public void SubscribeAggregates_WhenDisabled_ReturnsNegativeOne()
+    {
+        // Arrange - aggregates disabled by default
+        var options = new PolygonOptions(SubscribeAggregates: false);
+        var client = new PolygonMarketDataClient(
+            _mockPublisher.Object,
+            _mockTradeCollector.Object,
+            _mockQuoteCollector.Object,
+            options);
+        var config = new SymbolConfig("SPY");
+
+        // Act
+        var subscriptionId = client.SubscribeAggregates(config);
+
+        // Assert
+        subscriptionId.Should().Be(-1);
+    }
+
+    [Fact]
+    public void SubscribeAggregates_WhenEnabled_ReturnsPositiveId()
+    {
+        // Arrange - aggregates enabled
+        var options = new PolygonOptions(SubscribeAggregates: true);
+        var client = new PolygonMarketDataClient(
+            _mockPublisher.Object,
+            _mockTradeCollector.Object,
+            _mockQuoteCollector.Object,
+            options);
+        var config = new SymbolConfig("AAPL");
+
+        // Act
+        var subscriptionId = client.SubscribeAggregates(config);
+
+        // Assert
+        subscriptionId.Should().BeGreaterThan(0);
+    }
+
+    [Fact]
+    public void SubscribeAggregates_AddsSymbolToSubscribedList()
+    {
+        // Arrange
+        var options = new PolygonOptions(SubscribeAggregates: true);
+        var client = new PolygonMarketDataClient(
+            _mockPublisher.Object,
+            _mockTradeCollector.Object,
+            _mockQuoteCollector.Object,
+            options);
+        var config = new SymbolConfig("MSFT");
+
+        // Act
+        client.SubscribeAggregates(config);
+
+        // Assert
+        client.SubscribedAggregateSymbols.Should().Contain("MSFT");
+    }
+
+    [Fact]
+    public void UnsubscribeAggregates_DoesNotThrow()
+    {
+        // Arrange
+        var client = new PolygonMarketDataClient(
+            _mockPublisher.Object,
+            _mockTradeCollector.Object,
+            _mockQuoteCollector.Object);
+
+        // Act & Assert - should not throw
+        var act = () => client.UnsubscribeAggregates(1);
+        act.Should().NotThrow();
+    }
+
+    [Fact]
+    public void UnsubscribeAggregates_RemovesSymbolFromSubscribedList()
+    {
+        // Arrange
+        var options = new PolygonOptions(SubscribeAggregates: true);
+        var client = new PolygonMarketDataClient(
+            _mockPublisher.Object,
+            _mockTradeCollector.Object,
+            _mockQuoteCollector.Object,
+            options);
+        var config = new SymbolConfig("GOOGL");
+
+        // Act - subscribe then unsubscribe
+        var subscriptionId = client.SubscribeAggregates(config);
+        client.UnsubscribeAggregates(subscriptionId);
+
+        // Assert
+        client.SubscribedAggregateSymbols.Should().NotContain("GOOGL");
+    }
+
+    [Fact]
+    public void SubscribeAggregates_WithNullConfig_ThrowsArgumentNullException()
+    {
+        // Arrange
+        var options = new PolygonOptions(SubscribeAggregates: true);
+        var client = new PolygonMarketDataClient(
+            _mockPublisher.Object,
+            _mockTradeCollector.Object,
+            _mockQuoteCollector.Object,
+            options);
+
+        // Act
+        var act = () => client.SubscribeAggregates(null!);
+
+        // Assert
+        act.Should().Throw<ArgumentNullException>();
+    }
+
     #endregion
 
     #region Disposal Tests
