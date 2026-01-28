@@ -57,6 +57,7 @@ public sealed partial class DashboardPage : Page
     private readonly PointCollection _integrityPoints = new();
 
     private readonly Random _random = new();
+    private readonly ConfigService _configService;
     private readonly ActivityFeedService _activityFeedService;
     private readonly IntegrityEventsService _integrityEventsService;
     private readonly ObservableCollection<ActivityDisplayItem> _activityItems;
@@ -86,6 +87,7 @@ public sealed partial class DashboardPage : Page
         _startTime = DateTime.UtcNow;
         _collectorStartTime = DateTime.UtcNow;
 
+        _configService = new ConfigService();
         _activityFeedService = ActivityFeedService.Instance;
         _integrityEventsService = IntegrityEventsService.Instance;
         _activityItems = new ObservableCollection<ActivityDisplayItem>();
@@ -718,39 +720,70 @@ public sealed partial class DashboardPage : Page
             }
         }
 
-        // Update stream counts based on subscriptions
-        if (trades)
+        try
         {
-            _tradesStreamCount++;
-            _tradesStreamActive = true;
+            // Create symbol configuration and persist it
+            var symbolConfig = new SymbolConfig
+            {
+                Symbol = symbol,
+                SubscribeTrades = trades,
+                SubscribeDepth = depth,
+                DepthLevels = depth ? 10 : 0,
+                Exchange = "SMART",
+                SecurityType = "STK",
+                Currency = "USD"
+            };
+
+            await _configService.AddOrUpdateSymbolAsync(symbolConfig);
+
+            // Update stream counts based on subscriptions
+            if (trades)
+            {
+                _tradesStreamCount++;
+                _tradesStreamActive = true;
+            }
+            if (depth)
+            {
+                _depthStreamCount++;
+                _depthStreamActive = true;
+            }
+            if (quotes)
+            {
+                _quotesStreamCount++;
+                _quotesStreamActive = true;
+            }
+            UpdateStreamStatusBadges();
+
+            // Build subscription details string
+            var subscriptions = new List<string>();
+            if (trades) subscriptions.Add("Trades");
+            if (depth) subscriptions.Add("Depth");
+            if (quotes) subscriptions.Add("Quotes");
+            var subscriptionText = string.Join(", ", subscriptions);
+
+            QuickAddSymbolBox.Text = string.Empty;
+
+            // Reset checkboxes to default state
+            QuickAddTradesCheck.IsChecked = true;
+            QuickAddDepthCheck.IsChecked = false;
+            QuickAddQuotesCheck.IsChecked = false;
+
+            // Log activity
+            _activityFeedService.AddActivity(new ActivityItem
+            {
+                Type = ActivityType.SymbolAdded,
+                Title = "Symbol Added",
+                Description = $"{symbol} added with {subscriptionText}",
+                Symbol = symbol,
+                Timestamp = DateTime.UtcNow
+            });
+
+            await ShowInfoBarAsync(InfoBarSeverity.Success, "Symbol Added", $"Added {symbol} with {subscriptionText} data streams.");
         }
-        if (depth)
+        catch (Exception ex)
         {
-            _depthStreamCount++;
-            _depthStreamActive = true;
+            await ShowExceptionErrorAsync(ex, $"adding symbol {symbol}");
         }
-        if (quotes)
-        {
-            _quotesStreamCount++;
-            _quotesStreamActive = true;
-        }
-        UpdateStreamStatusBadges();
-
-        // Build subscription details string
-        var subscriptions = new List<string>();
-        if (trades) subscriptions.Add("Trades");
-        if (depth) subscriptions.Add("Depth");
-        if (quotes) subscriptions.Add("Quotes");
-        var subscriptionText = string.Join(", ", subscriptions);
-
-        QuickAddSymbolBox.Text = string.Empty;
-
-        // Reset checkboxes to default state
-        QuickAddTradesCheck.IsChecked = true;
-        QuickAddDepthCheck.IsChecked = false;
-        QuickAddQuotesCheck.IsChecked = false;
-
-        await ShowInfoBarAsync(InfoBarSeverity.Success, "Symbol Added", $"Added {symbol} with {subscriptionText} data streams.");
     }
 
     private void ViewLogs_Click(object sender, RoutedEventArgs e)
