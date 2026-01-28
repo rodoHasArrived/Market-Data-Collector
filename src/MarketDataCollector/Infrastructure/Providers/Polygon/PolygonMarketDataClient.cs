@@ -112,10 +112,18 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
     }
 
     /// <summary>
+    /// Minimum length for a valid Polygon API key.
+    /// Polygon API keys are typically 32 characters, but we accept 20+ for flexibility.
+    /// </summary>
+    private const int MinApiKeyLength = 20;
+
+    /// <summary>
     /// Gets whether the client has a valid API key configured.
+    /// A valid API key must be non-empty and at least <see cref="MinApiKeyLength"/> characters.
     /// When false, the client operates in stub mode with synthetic data.
     /// </summary>
-    public bool HasValidCredentials => !string.IsNullOrWhiteSpace(_options.ApiKey);
+    public bool HasValidCredentials =>
+        !string.IsNullOrWhiteSpace(_options.ApiKey) && _options.ApiKey.Length >= MinApiKeyLength;
 
     /// <summary>
     /// Gets whether the client is operating in stub mode (no real connection).
@@ -124,8 +132,9 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
 
     /// <summary>
     /// Gets whether the client is enabled and ready to receive subscriptions.
+    /// Returns true only when a valid API key (20+ characters) is configured.
     /// </summary>
-    public bool IsEnabled => true;
+    public bool IsEnabled => HasValidCredentials;
 
     /// <summary>
     /// Gets the current connection state.
