@@ -1,11 +1,11 @@
 # MarketDataCollector Project Context
 
-**Last Updated:** 2026-01-08
-**Version:** 1.0.0
+**Last Updated:** 2026-01-28
+**Version:** 1.6.1
 
 ## Overview
 
-MarketDataCollector is a high-performance market data collection system on .NET 9.0 that captures real-time and historical data from multiple providers with production-grade reliability. The system features a microservices architecture, tiered storage with compression, and supports 9+ data providers for comprehensive market coverage.
+MarketDataCollector is a high-performance market data collection system on .NET 9.0 that captures real-time and historical data from multiple providers with production-grade reliability. The system features a modular monolithic architecture (see [ADR-003](../adr/003-microservices-decomposition.md)), tiered storage with compression, and supports 10+ data providers for comprehensive market coverage.
 
 ## Critical Rules
 
@@ -19,12 +19,12 @@ When contributing to this project, always follow these rules:
 
 ## Architecture Principles
 
-1. **Provider Independence**: All data providers implement `IMarketDataClient` interface, enabling seamless swapping and concurrent multi-provider operations
+1. **Provider Independence**: All data providers implement `IMarketDataClient` interface, enabling seamless swapping and concurrent multi-provider operations ([ADR-001](../adr/001-provider-abstraction.md))
 2. **No Vendor Lock-in**: Provider-agnostic interfaces with intelligent failover strategies
 3. **Security First**: Environment variable-based credential management, no plain-text secrets
 4. **Observability**: Structured logging, Prometheus metrics, health check endpoints
-5. **Modularity**: Separate projects for core logic, domain models (F#), web UI, UWP desktop app, and microservices
-6. **Microservices Architecture**: Decomposed data ingestion into specialized services with MassTransit messaging
+5. **Modularity**: Separate projects for core logic, domain models (F#), web UI, UWP desktop app, and shared contracts
+6. **Monolithic Simplicity**: Single deployable unit with clear module boundaries for operational simplicity ([ADR-003](../adr/003-microservices-decomposition.md))
 
 ## Technology Stack
 
@@ -35,10 +35,10 @@ When contributing to this project, always follow these rules:
 | Serialization | System.Text.Json |
 | Metrics | OpenTelemetry, Prometheus |
 | Containerization | Docker, Docker Compose |
-| Messaging | MassTransit (RabbitMQ, Azure Service Bus) |
-| Storage | JSONL (hot), Parquet (archive), Write-Ahead Log (durability) |
+| HTTP Clients | IHttpClientFactory with Polly resilience ([ADR-010](../adr/010-httpclient-factory.md)) |
+| Storage | JSONL (hot), Parquet (archive), Write-Ahead Log (durability) ([ADR-002](../adr/002-tiered-storage-architecture.md)) |
 | Compression | LZ4 (real-time), ZSTD (archive), Gzip (compatibility) |
-| Desktop UI | UWP (Windows 10/11) |
+| Desktop UI | UWP/WinUI 3 (Windows 10/11) |
 | Web UI | ASP.NET Core with WebSocket |
 
 ### Streaming Data Providers
@@ -71,62 +71,58 @@ When contributing to this project, always follow these rules:
 MarketDataCollector/
 ├── src/
 │   ├── MarketDataCollector/           # Main application, entry point
+│   │   ├── Domain/                    # Business logic and collectors
+│   │   ├── Infrastructure/            # Provider implementations
+│   │   ├── Application/               # Services, config, pipeline
+│   │   └── Storage/                   # Data persistence
 │   ├── MarketDataCollector.FSharp/    # F# domain models, validation, calculations
 │   ├── MarketDataCollector.Contracts/ # Shared contracts and DTOs
 │   ├── MarketDataCollector.Ui/        # Web dashboard, WebSocket updates
-│   ├── MarketDataCollector.Uwp/       # UWP desktop application (15 pages)
-│   └── Microservices/                 # Decomposed data ingestion services
-│       ├── Gateway/                   # API Gateway (port 5000)
-│       ├── TradeIngestion/            # Trade data service (port 5001)
-│       ├── QuoteIngestion/            # Quote data service (port 5002)
-│       ├── OrderBookIngestion/        # Order book service (port 5003)
-│       ├── HistoricalDataIngestion/   # Historical data service (port 5004)
-│       ├── DataValidation/            # Validation service (port 5005)
-│       └── Shared/                    # Shared contracts
-├── tests/                              # Unit and integration tests (33 files)
+│   └── MarketDataCollector.Uwp/       # UWP desktop application (WinUI 3)
+├── tests/                              # Unit and integration tests (45 files)
+├── benchmarks/                         # Performance benchmarks
 ├── docs/                               # Documentation
-├── deploy/                             # Kubernetes, systemd configs
-└── data/                               # Runtime data storage
+├── deploy/                             # Docker, systemd configs
+├── scripts/                            # Build and diagnostic scripts
+└── build-system/                       # Python build tooling
 ```
 
 ## Key Interfaces
 
 ### IMarketDataClient
 
-Core abstraction for all real-time market data providers:
+Core abstraction for all real-time market data providers ([ADR-001](../adr/001-provider-abstraction.md)):
 
 ```csharp
+[ImplementsAdr("ADR-001", "Core streaming data provider contract")]
 public interface IMarketDataClient : IAsyncDisposable
 {
+    bool IsEnabled { get; }
     Task ConnectAsync(CancellationToken ct = default);
-    Task DisconnectAsync();
-    Task SubscribeAsync(SymbolSubscription subscription, CancellationToken ct = default);
-    Task UnsubscribeAsync(string symbol, CancellationToken ct = default);
-    IAsyncEnumerable<MarketDataEvent> GetEventsAsync(CancellationToken ct = default);
-    ConnectionState State { get; }
-    event EventHandler<ConnectionStateChangedEventArgs>? ConnectionStateChanged;
+    Task DisconnectAsync(CancellationToken ct = default);
+    int SubscribeMarketDepth(SymbolConfig cfg);
+    void UnsubscribeMarketDepth(int subscriptionId);
+    int SubscribeTrades(SymbolConfig cfg);
+    void UnsubscribeTrades(int subscriptionId);
 }
 ```
 
 ### IHistoricalDataProvider
 
-Historical data provider abstraction:
+Historical data provider abstraction ([ADR-001](../adr/001-provider-abstraction.md)):
 
 ```csharp
+[ImplementsAdr("ADR-001", "Core historical data provider contract")]
 public interface IHistoricalDataProvider
 {
-    Task<IReadOnlyList<OhlcBar>> GetHistoricalBarsAsync(
-        string symbol,
-        DateTime start,
-        DateTime end,
-        BarTimeframe timeframe,
-        CancellationToken ct = default);
+    string Name { get; }
+    string DisplayName { get; }
+    string Description { get; }
+    HistoricalDataCapabilities Capabilities { get; }
+    int Priority { get; }
 
-    IAsyncEnumerable<OhlcBar> StreamHistoricalBarsAsync(
-        string symbol,
-        DateTime start,
-        DateTime end,
-        BarTimeframe timeframe,
+    Task<IReadOnlyList<HistoricalBar>> GetDailyBarsAsync(
+        string symbol, DateOnly? from, DateOnly? to,
         CancellationToken ct = default);
 }
 ```
@@ -166,7 +162,8 @@ services.Configure<AlpacaOptions>(configuration.GetSection("Alpaca"));
 | Hardcoding connection strings or credentials | Security risk, inflexible deployment |
 | Using `Task.Run` for I/O-bound operations | Wastes thread pool threads |
 | Blocking async code with `.Result` or `.Wait()` | Can cause deadlocks |
-| Creating new `HttpClient` instances | Socket exhaustion, DNS issues |
+| Creating new `HttpClient` instances | Socket exhaustion, DNS issues (see [ADR-010](../adr/010-httpclient-factory.md)) |
+| Missing `CancellationToken` on async methods | Prevents graceful shutdown (see [ADR-004](../adr/004-async-streaming-patterns.md)) |
 
 ## Storage Architecture
 
@@ -238,12 +235,13 @@ Market Data → Event Pipeline → WAL → JSONL (hot) → Parquet (archive)
 
 | Service | Location |
 |---------|----------|
-| Subscription Management | `Application/Subscriptions/SubscriptionManager.cs` |
 | Event Pipeline | `Application/Pipeline/EventPipeline.cs` |
-| Historical Backfill | `Application/Subscriptions/HistoricalBackfillService.cs` |
-| Data Quality | `Storage/Services/DataQualityService.cs` |
-| Storage Writer | `Storage/Services/JsonlStorageWriter.cs` |
-| Parquet Archive | `Storage/Services/ParquetArchiveService.cs` |
+| Backfill Worker | `Infrastructure/Providers/Backfill/BackfillWorkerService.cs` |
+| Data Quality | `Application/Monitoring/DataQuality/DataQualityMonitoringService.cs` |
+| JSONL Storage | `Storage/Sinks/JsonlStorageSink.cs` |
+| Parquet Storage | `Storage/Sinks/ParquetStorageSink.cs` |
+| HTTP Clients | `Infrastructure/Http/HttpClientConfiguration.cs` |
+| Tier Migration | `Storage/Services/TierMigrationService.cs` |
 
 ## Related Documentation
 
@@ -255,6 +253,15 @@ Market Data → Event Pipeline → WAL → JSONL (hot) → Parquet (archive)
 - [Historical Backfill Guide](../providers/backfill-guide.md)
 - [Production Status](../status/production-status.md)
 
+### Architecture Decision Records
+
+- [ADR-001: Provider Abstraction](../adr/001-provider-abstraction.md)
+- [ADR-002: Tiered Storage](../adr/002-tiered-storage-architecture.md)
+- [ADR-003: Microservices Decision](../adr/003-microservices-decomposition.md)
+- [ADR-004: Async Streaming](../adr/004-async-streaming-patterns.md)
+- [ADR-005: Attribute Discovery](../adr/005-attribute-based-discovery.md)
+- [ADR-010: HttpClientFactory](../adr/010-httpclient-factory.md)
+
 ---
 
-*Last Updated: 2026-01-08*
+*Last Updated: 2026-01-28*
