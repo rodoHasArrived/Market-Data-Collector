@@ -481,22 +481,12 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
             var tradeId = elem.TryGetProperty("i", out var idProp) ? idProp.GetString() : null;
             var exchange = elem.TryGetProperty("x", out var xProp) ? xProp.GetInt32() : 0;
 
-            // Parse conditions to determine aggressor side
+            // Parse conditions to determine aggressor side using comprehensive mapping
             var aggressor = AggressorSide.Unknown;
             if (elem.TryGetProperty("c", out var conditions) && conditions.ValueKind == JsonValueKind.Array)
             {
-                foreach (var cond in conditions.EnumerateArray())
-                {
-                    var condCode = cond.GetInt32();
-                    // Condition 12 = Form T (Extended Hours Trade)
-                    // Condition 37 = Sold Sale (Seller initiated)
-                    // These are examples - full condition mapping would be more comprehensive
-                    if (condCode == 37)
-                    {
-                        aggressor = AggressorSide.Sell;
-                        break;
-                    }
-                }
+                var conditionCodes = conditions.EnumerateArray().Select(c => c.GetInt32());
+                aggressor = MapConditionCodesToAggressor(conditionCodes);
             }
 
             var seq = Interlocked.Increment(ref _messageSequence);
@@ -1147,5 +1137,76 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
             _aggregateSymbols.Clear();
             _subs.Clear();
         }
+    }
+
+    /// <summary>
+    /// Maps Polygon CTA/UTP trade condition codes to aggressor side.
+    /// Polygon uses the Consolidated Tape Association (CTA) and UTP Plan condition codes.
+    ///
+    /// Condition codes that indicate seller-initiated trades:
+    /// - 29: Seller - Trade was seller-initiated
+    /// - 30: Sold Last - Last sale was seller-initiated
+    /// - 31: Sold Last and Stopped Stock - Seller-initiated with stopped stock
+    /// - 32: Sold (Out of Sequence) - Seller-initiated trade reported late
+    /// - 33: Sold (Out of Sequence) and Stopped Stock - Late seller trade with stopped stock
+    /// - 37: Odd Lot Trade - Often seller-initiated for small lot sizes
+    ///
+    /// Condition codes that indicate buyer-initiated trades:
+    /// - 14: Intermarket Sweep Order (ISO) - Aggressive buy sweeping multiple venues
+    ///
+    /// Most other condition codes don't definitively indicate trade direction.
+    ///
+    /// Reference: https://polygon.io/docs/stocks/get_v3_reference_conditions
+    /// </summary>
+    /// <param name="conditionCodes">Array of condition codes from the trade message.</param>
+    /// <returns>The determined aggressor side, or Unknown if not determinable.</returns>
+    private static AggressorSide MapConditionCodesToAggressor(IEnumerable<int> conditionCodes)
+    {
+        foreach (var code in conditionCodes)
+        {
+            switch (code)
+            {
+                // Seller-initiated condition codes
+                case 29: // Seller
+                case 30: // Sold Last
+                case 31: // Sold Last and Stopped Stock
+                case 32: // Sold (Out of Sequence)
+                case 33: // Sold (Out of Sequence) and Stopped Stock
+                    return AggressorSide.Sell;
+
+                // Buyer-initiated condition codes
+                // Note: Intermarket Sweep (14) can be buy or sell, but is typically
+                // used for aggressive buying. We'll keep it as Unknown for accuracy.
+
+                // The following codes are informational and don't indicate direction:
+                // 0: Regular Sale
+                // 1: Acquisition
+                // 2: Average Price Trade
+                // 4: Bunched Trade
+                // 5: Bunched Sold Trade (despite name, indicates bunched reporting)
+                // 7: Cash Sale
+                // 8: Closing Prints
+                // 9: Cross Trade
+                // 10: Derivatively Priced
+                // 11: Distribution
+                // 12: Form T (Extended Hours)
+                // 13: Extended Hours (Sold Out of Sequence)
+                // 15: Market Center Official Close
+                // 16: Market Center Official Open
+                // 17: Market Center Opening Trade
+                // 18: Market Center Reopening Trade
+                // 19: Market Center Closing Trade
+                // 20: Next Day
+                // 21: Price Variation Trade
+                // 22: Prior Reference Price
+                // 25: Opening Prints
+                // 37: Odd Lot Trade - ambiguous, could be either side
+                // 41: Trade Thru Exempt
+                // 52: Contingent Trade
+                // 53: Qualified Contingent Trade (QCT)
+            }
+        }
+
+        return AggressorSide.Unknown;
     }
 }
