@@ -1428,8 +1428,8 @@ Recommendations:
 | P1 | Batch Export Automation (#77) | Medium | High | External Analysis | **IMPLEMENTED** (2026-01-03) |
 | P1 | Analysis-Ready Data Quality Report (#76) | Medium | High | External Analysis | **IMPLEMENTED** (2026-01-04) |
 | P1 | Data Versioning for Analysis (#78) | Medium | High | External Analysis | **IMPLEMENTED** (2026-01-04) |
-| P2 | Time Series Alignment Tools (#73) | Medium | Medium | External Analysis |
-| P2 | Data Sampling & Subset Creation (#71) | Low | Medium | External Analysis |
+| P2 | Time Series Alignment Tools (#73) | Medium | Medium | External Analysis | **IMPLEMENTED** (2026-01-28) |
+| P2 | Data Sampling & Subset Creation (#71) | Low | Medium | External Analysis | **IMPLEMENTED** (2026-01-28) |
 | P2 | External Analysis Workspace Setup (#75) | Medium | Medium | External Analysis |
 | P2 | Feature Engineering Presets (#74) | High | Medium | External Analysis |
 | P3 | Analysis Integration Documentation (#79) | Low | Low | External Analysis |
@@ -1441,7 +1441,7 @@ Recommendations:
 | P0 | Real-Time Notification System | Medium | High | **IMPLEMENTED** (2026-01-11) |
 | P0 | Data Integrity Alerts Dashboard Widget | Medium | High | **IMPLEMENTED** (2026-01-11) |
 | P0 | Auto-Reconnection | Low | High | **IMPLEMENTED** (2026-01-11) |
-| P0 | Dark/Light Theme | Medium | High |
+| P0 | Dark/Light Theme | Medium | High | **IMPLEMENTED** (2026-01-28) |
 | P1 | Symbol Groups & Portfolios | Medium | High |
 | P1 | Backfill Progress Visualization | Low | Medium |
 | P1 | Storage Analytics Dashboard | Medium | Medium |
@@ -1449,7 +1449,7 @@ Recommendations:
 | P1 | Keyboard Shortcuts | Low | Medium | **IMPLEMENTED** (2026-01-28) |
 | P1 | Notification Center & Incident Timeline | Medium | High | **IMPLEMENTED** (2026-01-26) |
 | P1 | Workspace Templates & Session Restore | Low | Medium | **IMPLEMENTED** (2026-01-26) |
-| P2 | Provider Health Score Breakdown | Medium | Medium |
+| P2 | Provider Health Score Breakdown | Medium | Medium | **IMPLEMENTED** (2026-01-28) |
 | P2 | PowerShell Integration | High | Medium |
 | P2 | Offline Cache Mode | Medium | Medium |
 | P2 | Guided Setup & Preflight Checks | Low | Medium |
@@ -1489,6 +1489,10 @@ Recommendations:
 ## Recent Implementations (v1.6.0)
 
 ### January 28, 2026
+- **Time Series Alignment Tools (#73)**: TimeSeriesAlignmentService and TimeSeriesAlignmentPage for aligning tick data to regular intervals with OHLCV aggregation, gap handling strategies, and preset configurations
+- **Provider Health Score Breakdown (#8)**: ProviderHealthService and ProviderHealthPage showing connection stability (30%), latency consistency (25%), data completeness (25%), and reconnection frequency (20%) with trend charts and failover thresholds
+- **Data Sampling & Subset Creation (#71)**: DataSamplingService and DataSamplingPage for creating representative data samples with multiple strategies (random, time-based, stratified, volatility-based)
+- **Dark/Light Theme Toggle (#26)**: ThemeService with System/Light/Dark modes, persistent settings, and full dark theme color palette
 - **Archive Export Presets (#69)**: ExportPresetService and ExportPresetsPage for saving, managing, and using export configurations with scheduling and post-export hooks
 
 ### January 26, 2026

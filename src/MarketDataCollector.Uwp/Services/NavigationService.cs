@@ -144,6 +144,7 @@ public sealed class NavigationService : INavigationService
 
         // Data Sources
         _pageRegistry["Provider"] = typeof(ProviderPage);
+        _pageRegistry["ProviderHealth"] = typeof(ProviderHealthPage);
         _pageRegistry["DataSources"] = typeof(DataSourcesPage);
 
         // Data Management
@@ -167,6 +168,9 @@ public sealed class NavigationService : INavigationService
 
         // Tools
         _pageRegistry["DataExport"] = typeof(DataExportPage);
+        _pageRegistry["DataSampling"] = typeof(DataSamplingPage);
+        _pageRegistry["TimeSeriesAlignment"] = typeof(TimeSeriesAlignmentPage);
+        _pageRegistry["ExportPresets"] = typeof(ExportPresetsPage);
         _pageRegistry["AnalysisExport"] = typeof(AnalysisExportPage);
         _pageRegistry["AnalysisExportWizard"] = typeof(AnalysisExportWizardPage);
         _pageRegistry["EventReplay"] = typeof(EventReplayPage);
