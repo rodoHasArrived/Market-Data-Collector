@@ -109,4 +109,45 @@ public sealed record HistoricalBar : MarketEventPayload
     /// </summary>
     public DateTimeOffset ToTimestampUtc()
         => new DateTimeOffset(SessionDate.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc));
+
+    /// <summary>
+    /// Gets the trading range (High minus Low) for this bar.
+    /// </summary>
+    public decimal Range => High - Low;
+
+    /// <summary>
+    /// Gets the body size (absolute difference between Open and Close).
+    /// This represents the size of the candlestick body.
+    /// </summary>
+    public decimal BodySize => Math.Abs(Close - Open);
+
+    /// <summary>
+    /// Returns true if the bar is bullish (Close greater than Open).
+    /// Also known as a "green candle" in candlestick charting.
+    /// </summary>
+    public bool IsBullish => Close > Open;
+
+    /// <summary>
+    /// Returns true if the bar is bearish (Close less than Open).
+    /// Also known as a "red candle" in candlestick charting.
+    /// </summary>
+    public bool IsBearish => Close < Open;
+
+    /// <summary>
+    /// Gets the percentage change from Open to Close.
+    /// Positive values indicate price increase, negative values indicate decrease.
+    /// </summary>
+    public decimal ChangePercent => Open != 0 ? (Close - Open) / Open * 100m : 0m;
+
+    /// <summary>
+    /// Gets the typical price, calculated as (High + Low + Close) / 3.
+    /// This is a common technical analysis value used in many indicators.
+    /// </summary>
+    public decimal TypicalPrice => (High + Low + Close) / 3m;
+
+    /// <summary>
+    /// Gets the approximate dollar volume (Close price multiplied by Volume).
+    /// Useful for liquidity analysis and position sizing.
+    /// </summary>
+    public decimal Notional => Close * Volume;
 }
