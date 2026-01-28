@@ -1,5 +1,6 @@
 using MarketDataCollector.Application.Config;
 using System.Threading;
+using MarketDataCollector.Contracts.Domain.Enums;
 using MarketDataCollector.Domain.Models;
 
 namespace MarketDataCollector.Infrastructure.DataSources;

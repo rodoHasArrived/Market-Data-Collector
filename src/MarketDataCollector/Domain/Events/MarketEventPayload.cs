@@ -1,10 +1,12 @@
 using System.Text.Json.Serialization;
+using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Models;
 
 namespace MarketDataCollector.Domain.Events;
 
 /// <summary>
 /// Polymorphic payload base for MarketEvent.Payload.
+/// Models are consolidated in Contracts project as single source of truth.
 /// </summary>
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "kind")]
 [JsonDerivedType(typeof(Trade), "trade")]
@@ -18,4 +20,5 @@ namespace MarketDataCollector.Domain.Events;
 [JsonDerivedType(typeof(HistoricalQuote), "historical_quote")]
 [JsonDerivedType(typeof(HistoricalTrade), "historical_trade")]
 [JsonDerivedType(typeof(HistoricalAuction), "historical_auction")]
-public abstract record MarketEventPayload : IMarketEventPayload;
+[JsonDerivedType(typeof(AggregateBar), "aggregate_bar")]
+public abstract record MarketEventPayload : Contracts.Domain.Events.IMarketEventPayload;

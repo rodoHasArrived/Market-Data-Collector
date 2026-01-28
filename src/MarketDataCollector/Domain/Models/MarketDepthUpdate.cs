@@ -1,3 +1,5 @@
+using MarketDataCollector.Contracts.Domain.Enums;
+
 namespace MarketDataCollector.Domain.Models;
 
 /// <summary>

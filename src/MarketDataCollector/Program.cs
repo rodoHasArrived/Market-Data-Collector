@@ -11,6 +11,7 @@ using MarketDataCollector.Application.Services;
 using MarketDataCollector.Application.Subscriptions.Services;
 using MarketDataCollector.Application.Testing;
 using MarketDataCollector.Application.UI;
+using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Collectors;
 using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Domain.Models;
