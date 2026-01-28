@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 71 71">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e3a5f;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0d2137;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="chart" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" style="stop-color:#00ff88;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#00cc6a;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="71" height="71" rx="8" fill="url(#bg)"/>
+  <!-- Simplified chart line -->
+  <polyline
+    fill="none"
+    stroke="url(#chart)"
+    stroke-width="3"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    points="12,50 22,42 32,46 42,30 52,38 60,22"/>
+  <!-- Data points -->
+  <circle cx="12" cy="50" r="3" fill="#00ff88"/>
+  <circle cx="32" cy="46" r="3" fill="#00ff88"/>
+  <circle cx="52" cy="38" r="3" fill="#00ff88"/>
+  <circle cx="60" cy="22" r="3" fill="#00ff88"/>
+</svg>

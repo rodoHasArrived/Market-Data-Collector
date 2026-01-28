@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <!-- Alpaca provider icon (stylized alpaca/llama) -->
+  <defs>
+    <linearGradient id="alpacaYellow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffd54f"/>
+      <stop offset="100%" style="stop-color:#ffb300"/>
+    </linearGradient>
+  </defs>
+  <!-- Body -->
+  <ellipse cx="12" cy="14" rx="6" ry="5" fill="url(#alpacaYellow)"/>
+  <!-- Neck -->
+  <rect x="14" y="6" width="4" height="10" rx="2" fill="url(#alpacaYellow)"/>
+  <!-- Head -->
+  <circle cx="16" cy="5" r="3" fill="url(#alpacaYellow)"/>
+  <!-- Ears -->
+  <ellipse cx="14" cy="3" rx="1" ry="1.5" fill="url(#alpacaYellow)"/>
+  <ellipse cx="18" cy="3" rx="1" ry="1.5" fill="url(#alpacaYellow)"/>
+  <!-- Eye -->
+  <circle cx="15" cy="5" r="0.7" fill="#333333"/>
+  <!-- Legs -->
+  <rect x="8" y="17" width="2" height="5" rx="1" fill="url(#alpacaYellow)"/>
+  <rect x="14" y="17" width="2" height="5" rx="1" fill="url(#alpacaYellow)"/>
+</svg>
