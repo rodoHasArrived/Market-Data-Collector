@@ -1,8 +1,8 @@
 # Provider Management & Data Quality Architecture
 
-**Version:** 2.0 | **Last Updated:** 2026-01-08
+**Version:** 2.0 | **Last Updated:** 2026-01-28
 
-This document describes the unified data provider management system, historical data archival capabilities, and data quality monitoring infrastructure.
+This document describes the unified data provider management system, historical data archival capabilities, and data quality monitoring infrastructure. See also [ADR-001: Provider Abstraction](../adr/001-provider-abstraction.md) and [ADR-005: Attribute-Based Discovery](../adr/005-attribute-based-discovery.md).
 
 ## Overview
 
@@ -539,3 +539,6 @@ See the XML documentation in each source file for detailed API documentation.
 - [Configuration Guide](../guides/configuration.md)
 - [Storage Organization](storage-design.md)
 - [Operator Runbook](../guides/operator-runbook.md)
+- [ADR-001: Provider Abstraction](../adr/001-provider-abstraction.md)
+- [ADR-005: Attribute-Based Discovery](../adr/005-attribute-based-discovery.md)
+- [ADR-010: HttpClientFactory](../adr/010-httpclient-factory.md)

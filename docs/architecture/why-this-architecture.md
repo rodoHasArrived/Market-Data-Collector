@@ -83,6 +83,6 @@ The system exposes status and monitoring through:
 
 ---
 
-**Version:** 1.6.0
-**Last Updated:** 2026-01-26
-**See Also:** [Architecture Overview](overview.md) | [Domains](domains.md) | [C4 Diagrams](c4-diagrams.md) | [Lean Integration](../integrations/lean-integration.md)
+**Version:** 1.6.1
+**Last Updated:** 2026-01-28
+**See Also:** [Architecture Overview](overview.md) | [Domains](domains.md) | [C4 Diagrams](c4-diagrams.md) | [Lean Integration](../integrations/lean-integration.md) | [ADR Index](../adr/README.md)

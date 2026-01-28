@@ -33,12 +33,12 @@ Use `System.Threading.Channels` for producer-consumer scenarios with backpressur
 | Component | Location | Purpose |
 |-----------|----------|---------|
 | Streaming Interface | `src/MarketDataCollector/Infrastructure/IMarketDataClient.cs` | Event streaming |
-| Event Pipeline | `src/MarketDataCollector/Storage/EventPipeline.cs` | Channel-based routing |
+| Event Pipeline | `src/MarketDataCollector/Application/Pipeline/EventPipeline.cs` | Channel-based routing |
 | Trade Collector | `src/MarketDataCollector/Domain/Collectors/TradeDataCollector.cs` | Stream consumer |
 | Quote Collector | `src/MarketDataCollector/Domain/Collectors/QuoteCollector.cs` | Stream consumer |
-| Channel Extensions | `src/MarketDataCollector/Infrastructure/ChannelExtensions.cs` | Utility methods |
+| Event Buffer | `src/MarketDataCollector/Storage/Services/EventBuffer.cs` | Bounded buffering |
 | Backfill Streaming | `src/MarketDataCollector/Infrastructure/Providers/Backfill/` | Historical streaming |
-| Async Tests | `tests/MarketDataCollector.Tests/Streaming/` | Pattern verification |
+| Async Tests | `tests/MarketDataCollector.Tests/Pipeline/` | Pattern verification |
 
 ## Rationale
 
@@ -203,4 +203,4 @@ await foreach (var item in stream.WithCancellation(ct))
 
 ---
 
-*Last Updated: 2026-01-08*
+*Last Updated: 2026-01-28*

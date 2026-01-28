@@ -227,10 +227,8 @@ classDef store fill:#fff5f5,stroke:#c53030,stroke-width:1px;
 | Historical | 5004 | Historical data backfill |
 | Validation | 5005 | Data quality and alerting |
 
-See [Microservices README](../src/Microservices/README.md) for deployment details.
-
 ---
 
-**Version:** 1.0.0
-**Last Updated:** 2026-01-08
-**See Also:** [Architecture Overview](overview.md) | [Domains](domains.md) | [Why This Architecture](why-this-architecture.md) | [Microservices README](../../src/Microservices/README.md)
+**Version:** 1.6.1
+**Last Updated:** 2026-01-28
+**See Also:** [Architecture Overview](overview.md) | [Domains](domains.md) | [Why This Architecture](why-this-architecture.md) | [ADR Index](../adr/README.md)

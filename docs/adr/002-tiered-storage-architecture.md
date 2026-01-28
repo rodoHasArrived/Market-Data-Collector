@@ -34,13 +34,14 @@ Data flows through tiers automatically based on age and access patterns.
 
 | Component | Location | Purpose |
 |-----------|----------|---------|
-| Storage Configuration | `src/MarketDataCollector/Application/Config/StorageOptions.cs` | Tier configuration |
-| Event Pipeline | `src/MarketDataCollector/Storage/EventPipeline.cs` | Bounded channel routing |
+| Storage Configuration | `src/MarketDataCollector/Storage/StorageOptions.cs` | Tier configuration |
+| Event Pipeline | `src/MarketDataCollector/Application/Pipeline/EventPipeline.cs` | Bounded channel routing |
 | JSONL Sink | `src/MarketDataCollector/Storage/Sinks/JsonlStorageSink.cs` | Hot/warm tier writer |
-| Parquet Archive | `src/MarketDataCollector/Storage/Services/ParquetArchiveService.cs` | Cold tier archival |
-| WAL Implementation | `src/MarketDataCollector/Storage/Wal/WriteAheadLog.cs` | Durability layer |
-| Compression Profiles | `src/MarketDataCollector/Storage/Compression/CompressionProfile.cs` | Compression strategies |
-| File Organizer | `src/MarketDataCollector/Storage/FileOrganizer.cs` | Path management |
+| Parquet Sink | `src/MarketDataCollector/Storage/Sinks/ParquetStorageSink.cs` | Cold tier Parquet writer |
+| WAL Implementation | `src/MarketDataCollector/Storage/Archival/WriteAheadLog.cs` | Durability layer |
+| Compression Profiles | `src/MarketDataCollector/Storage/Archival/CompressionProfileManager.cs` | Compression strategies |
+| Tier Migration | `src/MarketDataCollector/Storage/Services/TierMigrationService.cs` | Data lifecycle management |
+| Archival Service | `src/MarketDataCollector/Storage/Archival/ArchivalStorageService.cs` | Archive management |
 | Storage Tests | `tests/MarketDataCollector.Tests/Storage/` | Tier verification |
 
 ## Rationale
@@ -144,8 +145,9 @@ public sealed record CompressionProfile(
 ### Runtime Verification
 
 - `[ImplementsAdr("ADR-002")]` on storage components
-- File naming conventions enforced by `FileOrganizer`
+- File naming conventions enforced by storage services
 - Compression validation on read
+- Tier migration scheduled via `TierMigrationService`
 
 ## References
 
@@ -155,4 +157,4 @@ public sealed record CompressionProfile(
 
 ---
 
-*Last Updated: 2026-01-08*
+*Last Updated: 2026-01-28*
