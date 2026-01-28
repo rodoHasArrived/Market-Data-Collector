@@ -4,8 +4,8 @@ using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
+using MarketDataCollector.Uwp.Services;
 using Windows.System;
-using Windows.UI;
 
 namespace MarketDataCollector.Uwp.Views;
 
@@ -279,18 +279,18 @@ public class TutorialStep
     public bool IsCurrent { get; set; }
 
     public SolidColorBrush StepBackground => IsCompleted
-        ? new SolidColorBrush(Color.FromArgb(255, 72, 187, 120))
+        ? BrushRegistry.Success
         : IsCurrent
-            ? new SolidColorBrush(Color.FromArgb(255, 66, 153, 225))
-            : new SolidColorBrush(Color.FromArgb(255, 160, 174, 192));
+            ? BrushRegistry.ChartPrimary
+            : BrushRegistry.Inactive;
 
     public string StatusGlyph => IsCompleted ? "\uE73E" : IsCurrent ? "\uE768" : "\uE739";
 
     public SolidColorBrush StatusColor => IsCompleted
-        ? new SolidColorBrush(Color.FromArgb(255, 72, 187, 120))
+        ? BrushRegistry.Success
         : IsCurrent
-            ? new SolidColorBrush(Color.FromArgb(255, 66, 153, 225))
-            : new SolidColorBrush(Color.FromArgb(255, 160, 174, 192));
+            ? BrushRegistry.ChartPrimary
+            : BrushRegistry.Inactive;
 }
 
 /// <summary>

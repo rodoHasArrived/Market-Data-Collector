@@ -1,10 +1,8 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Media;
 using MarketDataCollector.Uwp.ViewModels;
 using MarketDataCollector.Uwp.Services;
 
@@ -12,6 +10,7 @@ namespace MarketDataCollector.Uwp.Views;
 
 /// <summary>
 /// Main dashboard page with navigation to different sections.
+/// Uses NavigationService for centralized page routing.
 /// </summary>
 public sealed partial class MainPage : Page
 {
@@ -20,6 +19,7 @@ public sealed partial class MainPage : Page
     private readonly FirstRunService _firstRunService;
     private readonly NotificationService _notificationService;
     private readonly ConnectionService _connectionService;
+    private readonly NavigationService _navigationService;
     private readonly DispatcherTimer _notificationDismissTimer;
     private string? _currentNotificationAction;
 
@@ -32,6 +32,10 @@ public sealed partial class MainPage : Page
         _firstRunService = new FirstRunService();
         _notificationService = NotificationService.Instance;
         _connectionService = ConnectionService.Instance;
+        _navigationService = NavigationService.Instance;
+
+        // Initialize navigation service with the content frame
+        _navigationService.Initialize(ContentFrame);
 
         // Setup notification dismiss timer
         _notificationDismissTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(8) };
@@ -58,7 +62,7 @@ public sealed partial class MainPage : Page
             // Check for first run and show welcome wizard
             if (await _firstRunService.IsFirstRunAsync())
             {
-                ContentFrame.Navigate(typeof(WelcomePage));
+                _navigationService.NavigateTo("Welcome");
                 await _firstRunService.InitializeAsync();
                 return;
             }
@@ -70,7 +74,7 @@ public sealed partial class MainPage : Page
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[MainPage] Error during page load: {ex.Message}");
+            LoggingService.Instance.LogError("MainPage", "Error during page load", ex);
         }
     }
 
@@ -122,13 +126,13 @@ public sealed partial class MainPage : Page
         NotificationMessage.Text = message;
         _currentNotificationAction = action;
 
-        // Set background color and icon based on type
+        // Set background color and icon based on type using cached brushes
         (NotificationBanner.Background, NotificationIcon.Glyph) = type switch
         {
-            NotificationType.Success => (new SolidColorBrush(Windows.UI.Color.FromArgb(255, 72, 187, 120)), "\uE73E"),
-            NotificationType.Warning => (new SolidColorBrush(Windows.UI.Color.FromArgb(255, 237, 137, 54)), "\uE7BA"),
-            NotificationType.Error => (new SolidColorBrush(Windows.UI.Color.FromArgb(255, 245, 101, 101)), "\uEA39"),
-            _ => (new SolidColorBrush(Windows.UI.Color.FromArgb(255, 88, 166, 255)), "\uE946")
+            NotificationType.Success => (BrushRegistry.Success, "\uE73E"),
+            NotificationType.Warning => (BrushRegistry.Warning, "\uE7BA"),
+            NotificationType.Error => (BrushRegistry.Error, "\uEA39"),
+            _ => (BrushRegistry.Info, "\uE946")
         };
 
         // Show action button if there's an action
@@ -185,7 +189,7 @@ public sealed partial class MainPage : Page
     {
         if (args.IsSettingsSelected)
         {
-            ContentFrame.Navigate(typeof(SettingsPage));
+            _navigationService.NavigateTo("Settings");
             return;
         }
 
@@ -196,130 +200,18 @@ public sealed partial class MainPage : Page
         }
     }
 
+    /// <summary>
+    /// Navigates to a page by tag using the centralized NavigationService.
+    /// </summary>
     private void NavigateToPage(string? tag)
     {
-        switch (tag)
+        if (string.IsNullOrEmpty(tag))
+            return;
+
+        // Use NavigationService for centralized page routing
+        if (!_navigationService.NavigateTo(tag))
         {
-            case "Dashboard":
-                ContentFrame.Navigate(typeof(DashboardPage));
-                break;
-            case "Watchlist":
-                ContentFrame.Navigate(typeof(WatchlistPage));
-                break;
-            case "Provider":
-                ContentFrame.Navigate(typeof(ProviderPage));
-                break;
-            case "DataSources":
-                ContentFrame.Navigate(typeof(DataSourcesPage));
-                break;
-            case "Storage":
-                ContentFrame.Navigate(typeof(StoragePage));
-                break;
-            case "Symbols":
-                ContentFrame.Navigate(typeof(SymbolsPage));
-                break;
-            case "SymbolMapping":
-                ContentFrame.Navigate(typeof(SymbolMappingPage));
-                break;
-            case "Backfill":
-                ContentFrame.Navigate(typeof(BackfillPage));
-                break;
-            case "Schedules":
-                ContentFrame.Navigate(typeof(ScheduleManagerPage));
-                break;
-            case "CollectionSessions":
-                ContentFrame.Navigate(typeof(CollectionSessionPage));
-                break;
-            case "ArchiveHealth":
-                ContentFrame.Navigate(typeof(ArchiveHealthPage));
-                break;
-            case "ServiceManager":
-                ContentFrame.Navigate(typeof(ServiceManagerPage));
-                break;
-            case "DataExport":
-                ContentFrame.Navigate(typeof(DataExportPage));
-                break;
-            case "TradingHours":
-                ContentFrame.Navigate(typeof(TradingHoursPage));
-                break;
-            case "Help":
-                ContentFrame.Navigate(typeof(HelpPage));
-                break;
-            case "Welcome":
-                ContentFrame.Navigate(typeof(WelcomePage));
-                break;
-            case "DataQuality":
-                ContentFrame.Navigate(typeof(DataQualityPage));
-                break;
-            case "LiveData":
-                ContentFrame.Navigate(typeof(LiveDataViewerPage));
-                break;
-            case "SystemHealth":
-                ContentFrame.Navigate(typeof(SystemHealthPage));
-                break;
-            case "PortfolioImport":
-                ContentFrame.Navigate(typeof(PortfolioImportPage));
-                break;
-            case "IndexSubscription":
-                ContentFrame.Navigate(typeof(IndexSubscriptionPage));
-                break;
-            case "Diagnostics":
-                ContentFrame.Navigate(typeof(DiagnosticsPage));
-                break;
-            case "EventReplay":
-                ContentFrame.Navigate(typeof(EventReplayPage));
-                break;
-            case "PackageManager":
-                ContentFrame.Navigate(typeof(PackageManagerPage));
-                break;
-            case "AnalysisExport":
-                ContentFrame.Navigate(typeof(AnalysisExportPage));
-                break;
-            case "LeanIntegration":
-                ContentFrame.Navigate(typeof(LeanIntegrationPage));
-                break;
-            case "MessagingHub":
-                ContentFrame.Navigate(typeof(MessagingHubPage));
-                break;
-            case "SymbolStorage":
-                ContentFrame.Navigate(typeof(SymbolStoragePage));
-                break;
-            case "KeyboardShortcuts":
-                ContentFrame.Navigate(typeof(KeyboardShortcutsPage));
-                break;
-            case "AdminMaintenance":
-                ContentFrame.Navigate(typeof(AdminMaintenancePage));
-                break;
-            case "AdvancedAnalytics":
-                ContentFrame.Navigate(typeof(AdvancedAnalyticsPage));
-                break;
-            case "OrderBook":
-                ContentFrame.Navigate(typeof(OrderBookPage));
-                break;
-            case "Charts":
-                ContentFrame.Navigate(typeof(ChartingPage));
-                break;
-            case "DataCalendar":
-                ContentFrame.Navigate(typeof(DataCalendarPage));
-                break;
-            case "SetupWizard":
-                ContentFrame.Navigate(typeof(SetupWizardPage));
-                break;
-            case "AnalysisExportWizard":
-                ContentFrame.Navigate(typeof(AnalysisExportWizardPage));
-                break;
-            case "NotificationCenter":
-                ContentFrame.Navigate(typeof(NotificationCenterPage));
-                break;
-            case "Workspaces":
-                ContentFrame.Navigate(typeof(WorkspacePage));
-                break;
-            case "RetentionAssurance":
-                ContentFrame.Navigate(typeof(RetentionAssurancePage));
-                break;
-            case "StorageOptimization":
-                ContentFrame.Navigate(typeof(StorageOptimizationPage));
-                break;
+            LoggingService.Instance.LogWarning($"Unknown navigation tag: {tag}");
         }
     }
 
@@ -347,7 +239,8 @@ public sealed partial class MainPage : Page
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[MainPage] Error during search: {ex.Message}");
+            LoggingService.Instance.LogWarning($"Search error: {ex.Message}");
+            sender.ItemsSource = null;
         }
     }
 
@@ -388,17 +281,17 @@ public sealed partial class MainPage : Page
                 NavigateToPage(value);
                 break;
             case "symbol":
-                // Navigate to symbol storage page or watchlist
-                ContentFrame.Navigate(typeof(SymbolStoragePage), value);
+                // Navigate to symbol storage page with symbol parameter
+                _navigationService.NavigateTo("SymbolStorage", value);
                 break;
             case "provider":
-                ContentFrame.Navigate(typeof(ProviderPage), value);
+                _navigationService.NavigateTo("Provider", value);
                 break;
             case "action":
                 HandleAction(value);
                 break;
             case "help":
-                ContentFrame.Navigate(typeof(HelpPage), value);
+                _navigationService.NavigateTo("Help", value);
                 break;
         }
     }
@@ -408,28 +301,28 @@ public sealed partial class MainPage : Page
         switch (action)
         {
             case "start":
-                // Trigger collector start
+                // Trigger collector start via service
                 break;
             case "stop":
-                // Trigger collector stop
+                // Trigger collector stop via service
                 break;
             case "backfill":
-                NavigateToPage("Backfill");
+                _navigationService.NavigateTo("Backfill");
                 break;
             case "addsymbol":
-                NavigateToPage("Symbols");
+                _navigationService.NavigateTo("Symbols");
                 break;
             case "export":
-                NavigateToPage("DataExport");
+                _navigationService.NavigateTo("DataExport");
                 break;
             case "verify":
-                NavigateToPage("ArchiveHealth");
+                _navigationService.NavigateTo("ArchiveHealth");
                 break;
             case "logs":
-                NavigateToPage("ServiceManager");
+                _navigationService.NavigateTo("ServiceManager");
                 break;
             case "settings":
-                ContentFrame.Navigate(typeof(SettingsPage));
+                _navigationService.NavigateTo("Settings");
                 break;
             case "refresh":
                 _ = ViewModel.RefreshStatusCommand.ExecuteAsync(null);

@@ -7,7 +7,6 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using MarketDataCollector.Uwp.Models;
 using MarketDataCollector.Uwp.Services;
-using Windows.UI;
 
 namespace MarketDataCollector.Uwp.Views;
 
@@ -17,11 +16,6 @@ namespace MarketDataCollector.Uwp.Views;
 /// </summary>
 public sealed partial class ProviderPage : Page
 {
-    // Static cached brushes for latency indicators to avoid allocations on every tick
-    private static readonly SolidColorBrush LatencyGoodBrush = new(Color.FromArgb(255, 72, 187, 120));
-    private static readonly SolidColorBrush LatencyMediumBrush = new(Color.FromArgb(255, 237, 137, 54));
-    private static readonly SolidColorBrush LatencyPoorBrush = new(Color.FromArgb(255, 245, 101, 101));
-
     private readonly ConfigService _configService;
     private readonly CredentialService _credentialService;
     private readonly DispatcherTimer _healthTimer;
@@ -121,9 +115,7 @@ public sealed partial class ProviderPage : Page
         CurrentLatencyText.Text = $"{latency}ms";
 
         // Use cached brushes to avoid allocations on every tick
-        LatencyDisplayText.Foreground = latency < 20 ? LatencyGoodBrush
-            : latency < 50 ? LatencyMediumBrush
-            : LatencyPoorBrush;
+        LatencyDisplayText.Foreground = BrushRegistry.GetLatencyBrush(latency);
 
         // Calculate stats using reusable buffer to avoid allocations
         double sum = 0;
@@ -245,14 +237,14 @@ public sealed partial class ProviderPage : Page
     private async void TestIbConnection_Click(object sender, RoutedEventArgs e)
     {
         IbTestProgress.IsActive = true;
-        IbTestIndicator.Fill = new SolidColorBrush(Color.FromArgb(255, 237, 137, 54));
+        IbTestIndicator.Fill = BrushRegistry.Warning;
         IbTestStatusText.Text = "Testing...";
 
         await Task.Delay(2000); // Simulate connection test
 
         // Simulate success (in real implementation, would test actual connection)
         IbTestProgress.IsActive = false;
-        IbTestIndicator.Fill = new SolidColorBrush(Color.FromArgb(255, 72, 187, 120));
+        IbTestIndicator.Fill = BrushRegistry.Success;
         IbTestStatusText.Text = "Connected - TWS v10.25";
 
         SaveInfoBar.Severity = InfoBarSeverity.Success;
