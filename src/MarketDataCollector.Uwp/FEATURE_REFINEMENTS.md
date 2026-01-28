@@ -1417,7 +1417,7 @@ Recommendations:
 | P2 | Offline Storage Health Monitoring (#67) | Medium | Medium | Offline Storage |
 | P2 | Offline-First Collection Mode (#60) | High | Medium | Offline Storage |
 | P3 | Data Deduplication System (#68) | High | Low | Offline Storage |
-| P3 | Archive Export Presets (#69) | Low | Low | Offline Storage |
+| P3 | Archive Export Presets (#69) | Low | Low | Offline Storage | **IMPLEMENTED** (2026-01-28) |
 
 ### External Analysis Preparation
 
@@ -1482,11 +1482,14 @@ Recommendations:
 
 ---
 
-*Document Version: 2.3*
-*Last Updated: January 26, 2026*
+*Document Version: 2.4*
+*Last Updated: January 28, 2026*
 *Focus: Offline Data Storage, Collection & Archival Excellence*
 
 ## Recent Implementations (v1.6.0)
+
+### January 28, 2026
+- **Archive Export Presets (#69)**: ExportPresetService and ExportPresetsPage for saving, managing, and using export configurations with scheduling and post-export hooks
 
 ### January 26, 2026
 - **Notification Center & Incident Timeline (#50)**: NotificationCenterPage with history, filtering, incident timeline, and snooze rules

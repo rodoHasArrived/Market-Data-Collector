@@ -114,6 +114,10 @@
     <!-- Schema models -->
     <Compile Include="..\MarketDataCollector.Contracts\Schema\*.cs"
              Link="SharedModels\Schema\%(Filename)%(Extension)" />
+
+    <!-- Export models -->
+    <Compile Include="..\MarketDataCollector.Contracts\Export\*.cs"
+             Link="SharedModels\Export\%(Filename)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(IsWindows)' == 'true' AND Exists('Assets')">
