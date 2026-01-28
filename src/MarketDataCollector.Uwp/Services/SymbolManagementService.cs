@@ -436,6 +436,64 @@ public sealed class SymbolManagementService
             Error = response.ErrorMessage ?? "Bulk remove operation failed"
         };
     }
+
+    /// <summary>
+    /// Searches for symbols matching the query using the backend symbol search service.
+    /// </summary>
+    /// <param name="query">Search query (partial symbol or company name).</param>
+    /// <param name="limit">Maximum number of results (default 10).</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>List of matching symbols with metadata.</returns>
+    public async Task<SymbolSearchResponse> SearchSymbolsAsync(
+        string query,
+        int limit = 10,
+        CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            return new SymbolSearchResponse
+            {
+                Success = true,
+                Results = new List<SymbolSearchResultItem>(),
+                TotalCount = 0,
+                Query = query ?? string.Empty
+            };
+        }
+
+        var encodedQuery = Uri.EscapeDataString(query);
+        var response = await _apiClient.GetWithResponseAsync<SymbolSearchApiResponse>(
+            $"/api/symbols/search?q={encodedQuery}&limit={limit}&includeFigi=false",
+            ct);
+
+        if (response.Success && response.Data != null)
+        {
+            return new SymbolSearchResponse
+            {
+                Success = true,
+                Results = response.Data.Results?.Select(r => new SymbolSearchResultItem
+                {
+                    Symbol = r.Symbol,
+                    Name = r.Name,
+                    Exchange = r.Exchange,
+                    AssetType = r.AssetType,
+                    MatchScore = r.MatchScore
+                }).ToList() ?? new List<SymbolSearchResultItem>(),
+                TotalCount = response.Data.TotalCount,
+                Query = response.Data.Query ?? query,
+                Sources = response.Data.Sources?.ToList() ?? new List<string>(),
+                ElapsedMs = response.Data.ElapsedMs
+            };
+        }
+
+        return new SymbolSearchResponse
+        {
+            Success = false,
+            Results = new List<SymbolSearchResultItem>(),
+            TotalCount = 0,
+            Query = query,
+            Error = response.ErrorMessage ?? "Symbol search failed"
+        };
+    }
 }
 
 #region Result Classes
@@ -606,6 +664,68 @@ public class BulkSymbolOperationResponse
     public int FailCount { get; set; }
     public string[]? SuccessfulSymbols { get; set; }
     public string[]? FailedSymbols { get; set; }
+}
+
+/// <summary>
+/// Response from symbol search operation.
+/// </summary>
+public class SymbolSearchResponse
+{
+    public bool Success { get; set; }
+    public string? Error { get; set; }
+    public List<SymbolSearchResultItem> Results { get; set; } = new();
+    public int TotalCount { get; set; }
+    public string Query { get; set; } = string.Empty;
+    public List<string> Sources { get; set; } = new();
+    public long ElapsedMs { get; set; }
+}
+
+/// <summary>
+/// Individual symbol search result item.
+/// </summary>
+public class SymbolSearchResultItem
+{
+    public string Symbol { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string? Exchange { get; set; }
+    public string? AssetType { get; set; }
+    public int MatchScore { get; set; }
+
+    /// <summary>
+    /// Gets a display string combining symbol and name.
+    /// </summary>
+    public string DisplayText => string.IsNullOrEmpty(Name) || Name == Symbol
+        ? Symbol
+        : $"{Symbol} - {Name}";
+}
+
+/// <summary>
+/// API response model for symbol search endpoint.
+/// </summary>
+public class SymbolSearchApiResponse
+{
+    public SymbolSearchApiResult[]? Results { get; set; }
+    public int TotalCount { get; set; }
+    public string[]? Sources { get; set; }
+    public long ElapsedMs { get; set; }
+    public string? Query { get; set; }
+}
+
+/// <summary>
+/// Individual result from the API response.
+/// </summary>
+public class SymbolSearchApiResult
+{
+    public string Symbol { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string? Exchange { get; set; }
+    public string? AssetType { get; set; }
+    public string? Country { get; set; }
+    public string? Currency { get; set; }
+    public string? Source { get; set; }
+    public int MatchScore { get; set; }
+    public string? Figi { get; set; }
+    public string? CompositeFigi { get; set; }
 }
 
 #endregion
