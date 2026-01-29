@@ -21,7 +21,7 @@ A cross-platform market data collector for real-time and historical market micro
 - **Alpaca** – Real-time trades and quotes via WebSocket
 - **Polygon** – Stub mode unless API credentials are configured; WebSocket parsing is still in progress
 - **NYSE** – Direct connection endpoints implemented; requires NYSE credentials
-- **StockSharp** – Provider integration scaffolded (credentials required)
+- **StockSharp** – Provider integration enabled (credentials + connector setup required)
 - Extensible architecture for adding additional providers
 
 ## Quick start

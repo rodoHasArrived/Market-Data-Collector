@@ -493,8 +493,8 @@ export NYSE__APIKEY=your-api-key
 ### StockSharp
 
 **Requirements:**
-- StockSharp connectors installed
-- Broker/exchange credentials
+- StockSharp core + connector packages installed (StockSharp.Algo, StockSharp.Messages, StockSharp.BusinessEntities, plus connector package)
+- Broker/exchange credentials and transport endpoints (Rithmic/IQFeed/CQG/IB)
 
 **Setup:**
 
@@ -502,21 +502,51 @@ export NYSE__APIKEY=your-api-key
 {
   "DataSource": "StockSharp",
   "StockSharp": {
-    "Connector": "IQFeed",
-    "ConnectionSettings": {
-      "Server": "127.0.0.1",
-      "Port": 9100
+    "Enabled": true,
+    "ConnectorType": "Rithmic",
+    "EnableRealTime": true,
+    "EnableHistorical": true,
+    "UseBinaryStorage": false,
+    "StoragePath": "data/stocksharp",
+    "Rithmic": {
+      "Server": "Rithmic Test",
+      "UserName": "${MDC_STOCKSHARP_RITHMIC_USERNAME}",
+      "Password": "${MDC_STOCKSHARP_RITHMIC_PASSWORD}",
+      "CertFile": "${MDC_STOCKSHARP_RITHMIC_CERTFILE}",
+      "UsePaperTrading": true
     }
   }
 }
 ```
 
+**Environment Variables (recommended):**
+- `MDC_STOCKSHARP_CONNECTOR` - Connector type (Rithmic, IQFeed, CQG, InteractiveBrokers)
+- `MDC_STOCKSHARP_RITHMIC_SERVER` / `MDC_STOCKSHARP_RITHMIC_USERNAME` / `MDC_STOCKSHARP_RITHMIC_PASSWORD`
+- `MDC_STOCKSHARP_IQFEED_HOST` / `MDC_STOCKSHARP_IQFEED_LEVEL1_PORT`
+- `MDC_STOCKSHARP_CQG_USERNAME` / `MDC_STOCKSHARP_CQG_PASSWORD`
+- `MDC_STOCKSHARP_IB_HOST` / `MDC_STOCKSHARP_IB_PORT` / `MDC_STOCKSHARP_IB_CLIENT_ID`
+
 **Supported Connectors:**
+- Rithmic
 - IQFeed
-- LMAX
-- Oanda
-- FXCM
-- And many more (see StockSharp documentation)
+- CQG
+- Interactive Brokers
+- And more (see StockSharp documentation)
+
+**Validation Checklist:**
+1. Validate config + credentials:
+   ```bash
+   MarketDataCollector --validate-config
+   MarketDataCollector --validate-credentials
+   ```
+2. Validate real-time flow:
+   ```bash
+   MarketDataCollector --dry-run
+   ```
+3. Validate backfill flow (independent of real-time provider):
+   ```bash
+   MarketDataCollector --backfill
+   ```
 
 ---
 
