@@ -48,16 +48,10 @@ public sealed class AlpacaHistoricalDataProvider : IHistoricalDataProvider, IRat
     public int MaxRequestsPerWindow { get; }
     public TimeSpan RateLimitWindow => TimeSpan.FromMinutes(1);
 
-    public bool SupportsAdjustedPrices => true;
-    public bool SupportsIntraday => true;
-    public bool SupportsDividends => true;
-    public bool SupportsSplits => true;
-    public IReadOnlyList<string> SupportedMarkets => new[] { "US" };
-
-    // Extended capabilities for tick data
-    public bool SupportsQuotes => true;
-    public bool SupportsTrades => true;
-    public bool SupportsAuctions => true;
+    /// <summary>
+    /// Alpaca supports all data types: adjusted bars, intraday, quotes, trades, and auctions.
+    /// </summary>
+    public HistoricalDataCapabilities Capabilities { get; } = HistoricalDataCapabilities.FullFeatured;
 
     /// <summary>
     /// Event raised when the provider hits a rate limit (HTTP 429).

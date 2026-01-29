@@ -45,18 +45,24 @@ public sealed class CompositeHistoricalDataProvider : IHistoricalDataProvider, I
     public int MaxRequestsPerWindow => int.MaxValue;
     public TimeSpan RateLimitWindow => TimeSpan.FromHours(1);
 
-    public bool SupportsAdjustedPrices => _providers.Any(p => p.SupportsAdjustedPrices);
-    public bool SupportsIntraday => _providers.Any(p => p.SupportsIntraday);
-    public bool SupportsDividends => _providers.Any(p => p.SupportsDividends);
-    public bool SupportsSplits => _providers.Any(p => p.SupportsSplits);
-    public bool SupportsQuotes => _providers.Any(p => p.SupportsQuotes);
-    public bool SupportsTrades => _providers.Any(p => p.SupportsTrades);
-    public bool SupportsAuctions => _providers.Any(p => p.SupportsAuctions);
-
-    public IReadOnlyList<string> SupportedMarkets => _providers
-        .SelectMany(p => p.SupportedMarkets)
-        .Distinct()
-        .ToList();
+    /// <summary>
+    /// Aggregated capabilities from all child providers.
+    /// A capability is supported if ANY child provider supports it.
+    /// </summary>
+    public HistoricalDataCapabilities Capabilities => new()
+    {
+        AdjustedPrices = _providers.Any(p => p.Capabilities.AdjustedPrices),
+        Intraday = _providers.Any(p => p.Capabilities.Intraday),
+        Dividends = _providers.Any(p => p.Capabilities.Dividends),
+        Splits = _providers.Any(p => p.Capabilities.Splits),
+        Quotes = _providers.Any(p => p.Capabilities.Quotes),
+        Trades = _providers.Any(p => p.Capabilities.Trades),
+        Auctions = _providers.Any(p => p.Capabilities.Auctions),
+        SupportedMarkets = _providers
+            .SelectMany(p => p.Capabilities.SupportedMarkets)
+            .Distinct()
+            .ToList()
+    };
 
     /// <summary>
     /// Get current health status of all providers.
@@ -309,7 +315,7 @@ public sealed class CompositeHistoricalDataProvider : IHistoricalDataProvider, I
         ObjectDisposedException.ThrowIf(_disposed, this);
 
         // Get providers that support adjusted prices, ordered by rate limit availability
-        var adjustedProviders = _providers.Where(p => p.SupportsAdjustedPrices);
+        var adjustedProviders = _providers.Where(p => p.Capabilities.AdjustedPrices);
 
         if (_enableRateLimitRotation)
         {

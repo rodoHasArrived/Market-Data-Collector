@@ -49,11 +49,13 @@ public sealed class IBHistoricalDataProvider : IHistoricalDataProvider, IRateLim
     public int MaxRequestsPerWindow => IBApiLimits.MaxHistoricalRequestsPer10Min;
     public TimeSpan RateLimitWindow => IBApiLimits.HistoricalRequestWindow;
 
-    public bool SupportsAdjustedPrices => true;
-    public bool SupportsIntraday => true;
-    public bool SupportsDividends => true;
-    public bool SupportsSplits => true;
-    public IReadOnlyList<string> SupportedMarkets => new[] { "US", "EU", "APAC" };
+    /// <summary>
+    /// IB supports adjusted bars with intraday data for global markets.
+    /// </summary>
+    public HistoricalDataCapabilities Capabilities { get; } = (HistoricalDataCapabilities.BarsOnly with
+    {
+        Intraday = true
+    }).WithMarkets("US", "EU", "APAC");
 
     /// <summary>
     /// Event raised when the provider hits a rate limit (pacing violation).

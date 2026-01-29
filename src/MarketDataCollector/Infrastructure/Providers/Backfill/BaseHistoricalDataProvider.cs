@@ -63,14 +63,18 @@ public abstract class BaseHistoricalDataProvider : IHistoricalDataProvider, IDis
     public virtual TimeSpan RateLimitDelay => TimeSpan.Zero;
     public virtual int MaxRequestsPerWindow => int.MaxValue;
     public virtual TimeSpan RateLimitWindow => TimeSpan.FromHours(1);
-    public virtual bool SupportsAdjustedPrices => false;
-    public virtual bool SupportsIntraday => false;
-    public virtual bool SupportsDividends => false;
-    public virtual bool SupportsSplits => false;
-    public virtual bool SupportsQuotes => false;
-    public virtual bool SupportsTrades => false;
-    public virtual bool SupportsAuctions => false;
-    public virtual IReadOnlyList<string> SupportedMarkets => new[] { "US" };
+
+    /// <summary>
+    /// Consolidated capability flags for this provider.
+    /// Override in derived classes to specify supported features.
+    /// </summary>
+    /// <remarks>
+    /// Use static factory methods for common patterns:
+    /// - <see cref="HistoricalDataCapabilities.None"/> (default)
+    /// - <see cref="HistoricalDataCapabilities.BarsOnly"/>
+    /// - <see cref="HistoricalDataCapabilities.FullFeatured"/>
+    /// </remarks>
+    public virtual HistoricalDataCapabilities Capabilities => HistoricalDataCapabilities.None;
 
     #endregion
 
