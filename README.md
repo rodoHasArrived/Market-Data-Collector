@@ -13,7 +13,7 @@ A high-performance, cross-platform market data collection system for real-time a
 [![Docker Build](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/docker-build.yml/badge.svg)](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/docker-build.yml)
 [![Code Quality](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/code-quality.yml/badge.svg)](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/code-quality.yml)
 
-**Status**: Production Ready | **Version**: 1.6.0 | **Last Updated**: 2026-01-26
+**Status**: Production Ready | **Version**: 1.6.1 | **Last Updated**: 2026-01-29
 
 ---
 
@@ -116,7 +116,7 @@ Market Data Collector is a modular, event-driven system that captures, validates
 
 ### Data Collection
 - **Multi-provider ingest**: Interactive Brokers (L2 depth, tick-by-tick), Alpaca (WebSocket streaming), NYSE (direct feed), Polygon (aggregates), StockSharp (multi-exchange)
-- **Historical backfill**: 9+ providers (Yahoo Finance, Stooq, Tiingo, Alpha Vantage, Finnhub, Nasdaq Data Link) with automatic failover
+- **Historical backfill**: 10+ providers (Yahoo Finance, Stooq, Tiingo, Alpha Vantage, Finnhub, Nasdaq Data Link, Polygon, IB) with automatic failover
 - **Provider-agnostic architecture**: Swap feeds without code changes and preserve stream IDs for reconciliation
 - **Microstructure detail**: Tick-by-tick trades, Level 2 order book, BBO quotes, and order-flow statistics
 
@@ -254,7 +254,13 @@ Comprehensive documentation is available in the `docs/` directory:
 | Alpha Vantage | Yes | Daily bars | 5/min |
 | Nasdaq Data Link | Limited | Various | Varies |
 
-Configure fallback chains in `appsettings.json` under `Backfill.ProviderPriority` for automatic failover between providers
+Configure fallback chains in `appsettings.json` under `Backfill.ProviderPriority` for automatic failover between providers.
+
+### Symbol Search Providers
+- **Alpaca** - Symbol search with exchange info
+- **Finnhub** - Global symbol search
+- **Polygon** - Ticker search with market data
+- **OpenFIGI** - FIGI-based instrument resolution
 
 ## Lean Engine Integration
 
@@ -332,7 +338,7 @@ export ALPACA__SECRETKEY=your-secret-key
 
 ## CI/CD and Automation
 
-The repository includes 16 comprehensive GitHub Actions workflows for automated testing, security, and deployment:
+The repository includes 20 comprehensive GitHub Actions workflows for automated testing, security, and deployment:
 
 - **🔨 Build & Release** - Automated builds and cross-platform releases
 - **🔒 CodeQL Analysis** - Security vulnerability scanning (weekly + on changes)
@@ -408,25 +414,31 @@ docker run -d -p 8080:8080 \
 
 ## Repository Structure
 
+**447 source files** | **413 C#** | **12 F#** | **45 test files** | **56+ documentation files**
+
 ```
 Market-Data-Collector/
-├── .github/              # CI/CD workflows (16), AI prompts, Dependabot
-├── docs/                 # Documentation, ADRs, AI assistant guides
+├── .github/              # CI/CD workflows (20), AI prompts, Dependabot
+├── docs/                 # Documentation (56+ files), ADRs, AI assistant guides
 ├── scripts/              # Install, publish, run, and diagnostic scripts
 ├── deploy/               # Docker, systemd, and monitoring configs
 ├── config/               # Configuration files (appsettings.json)
 ├── build-system/         # Python build tooling and diagnostics
 ├── tools/                # Development tools (DocGenerator)
 ├── src/
-│   ├── MarketDataCollector/        # Core application
-│   ├── MarketDataCollector.FSharp/ # F# domain models
-│   ├── MarketDataCollector.Contracts/ # Shared DTOs
-│   ├── MarketDataCollector.Ui/     # Web dashboard
-│   └── MarketDataCollector.Uwp/    # Windows desktop app
-├── tests/                # C# and F# test projects
-├── benchmarks/           # Performance benchmarks
+│   ├── MarketDataCollector/        # Core application (entry point)
+│   │   ├── Domain/                 # Business logic, collectors, events, models
+│   │   ├── Infrastructure/         # Provider implementations (~50 files)
+│   │   ├── Storage/                # Data persistence (~35 files)
+│   │   └── Application/            # Startup, config, services (~90 files)
+│   ├── MarketDataCollector.FSharp/ # F# domain models (12 files)
+│   ├── MarketDataCollector.Contracts/ # Shared DTOs and contracts
+│   ├── MarketDataCollector.Ui/     # Web dashboard (10 files)
+│   └── MarketDataCollector.Uwp/    # Windows desktop app (WinUI 3)
+├── tests/                # C# and F# test projects (45 files)
+├── benchmarks/           # Performance benchmarks (BenchmarkDotNet)
 ├── MarketDataCollector.sln
-├── Makefile
+├── Makefile              # Build automation (60+ targets)
 └── CLAUDE.md             # AI assistant guide
 ```
 
