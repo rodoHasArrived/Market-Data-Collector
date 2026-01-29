@@ -9,14 +9,14 @@ title Market Data Collector - Real-Time Data Collection Sequence
 participant "User/CLI" as User
 participant "Program.cs\n(Entry Point)" as Program
 participant "SubscriptionManager" as SubMgr
-participant "AlpacaMarketDataClient\n(IMarketDataClient)" as Provider
+participant "IMarketDataClient\n(Alpaca, IB, NYSE,\nPolygon, StockSharp)" as Provider
 box "Collectors" #LightBlue
     participant "QuoteCollector" as QuoteColl
     participant "TradeDataCollector" as TradeColl
     participant "MarketDepthCollector" as DepthColl
 end box
 participant "EventPipeline\n(IMarketEventPublisher)" as Pipeline
-participant "JsonlStorageSink\n(IStorageSink)" as Storage
+participant "IStorageSink\n(Jsonl, Parquet)" as Storage
 participant "MassTransitPublisher" as MassTransit
 
 ' ==================== INITIALIZATION ====================

@@ -14,7 +14,10 @@ actor "Desktop App User" as DesktopUser
 
 actor "Interactive Brokers" as IB <<provider>>
 actor "Alpaca" as Alpaca <<provider>>
-actor "Historical Provider\n(Yahoo, Stooq, Tiingo)" as HistProvider <<provider>>
+actor "NYSE Direct" as NYSE <<provider>>
+actor "Polygon" as Polygon <<provider>>
+actor "Historical Provider\n(Yahoo, Stooq, Tiingo,\nAlpha Vantage, Finnhub,\nNasdaq Data Link)" as HistProvider <<provider>>
+actor "Symbol Search\n(OpenFIGI, Alpaca,\nFinnhub, Polygon)" as SymbolSearch <<provider>>
 actor "Message Broker\n(RabbitMQ)" as MessageBroker <<system>>
 actor "Kubernetes" as K8s <<system>>
 
@@ -37,6 +40,9 @@ rectangle "Market Data Collector System" {
         usecase "Select Backfill Provider" as UC_SelectProvider
         usecase "Download OHLCV Data" as UC_DownloadBars
         usecase "Resolve Symbol (OpenFIGI)" as UC_ResolveSymbol
+        usecase "Schedule Backfill (Cron)" as UC_ScheduleBackfill
+        usecase "Analyze Data Gaps" as UC_AnalyzeGaps
+        usecase "Repair Data Gaps" as UC_RepairGaps
     }
 
     ' --- Storage ---
@@ -62,6 +68,24 @@ rectangle "Market Data Collector System" {
         usecase "Export Prometheus Metrics" as UC_Metrics
         usecase "View Connection Status" as UC_ConnStatus
         usecase "Browse Collected Data" as UC_BrowseData
+    }
+
+    ' --- Data Quality ---
+    package "Data Quality Monitoring" {
+        usecase "Detect Anomalies" as UC_DetectAnomalies
+        usecase "Check Price Continuity" as UC_PriceContinuity
+        usecase "Calculate Completeness Score" as UC_CompletenessScore
+        usecase "Generate Quality Report" as UC_QualityReport
+        usecase "Monitor Data Freshness SLA" as UC_FreshnessSLA
+        usecase "Cross-Provider Comparison" as UC_CrossProviderCompare
+    }
+
+    ' --- Export & Packaging ---
+    package "Export & Packaging" {
+        usecase "Export to CSV/Parquet" as UC_ExportData
+        usecase "Create Data Package" as UC_CreatePackage
+        usecase "Apply Export Profile" as UC_ApplyExportProfile
+        usecase "Generate DuckDB Import" as UC_DuckDBImport
     }
 
     ' --- Microservices ---
@@ -110,6 +134,11 @@ Operator --> UC_Metrics
 Operator --> UC_ConnStatus
 Operator --> UC_Retention
 Operator --> UC_TierMigrate
+Operator --> UC_QualityReport
+Operator --> UC_ScheduleBackfill
+Operator --> UC_AnalyzeGaps
+Operator --> UC_ExportData
+Operator --> UC_CreatePackage
 
 ' Desktop User interactions
 DesktopUser --> UC_ViewDashboard
@@ -122,7 +151,13 @@ IB --> UC_ReceiveQuotes
 IB --> UC_ReceiveDepth
 Alpaca --> UC_ReceiveTrades
 Alpaca --> UC_ReceiveQuotes
+NYSE --> UC_ReceiveTrades
+NYSE --> UC_ReceiveQuotes
+NYSE --> UC_ReceiveDepth
+Polygon --> UC_ReceiveTrades
+Polygon --> UC_ReceiveQuotes
 HistProvider --> UC_DownloadBars
+SymbolSearch --> UC_ResolveSymbol
 
 ' System interactions
 K8s --> UC_Health
@@ -147,6 +182,20 @@ UC_DownloadBars ..> UC_WriteJsonl : <<include>>
 UC_RequestBars ..> UC_SelectProvider : <<include>>
 UC_SelectProvider ..> UC_DownloadBars : <<include>>
 UC_DownloadBars ..> UC_ResolveSymbol : <<extend>>
+UC_ScheduleBackfill ..> UC_RequestBars : <<include>>
+UC_AnalyzeGaps ..> UC_RepairGaps : <<extend>>
+UC_RepairGaps ..> UC_RequestBars : <<include>>
+
+' Data quality relationships
+UC_ReceiveTrades ..> UC_DetectAnomalies : <<extend>>
+UC_DetectAnomalies ..> UC_PriceContinuity : <<include>>
+UC_QualityReport ..> UC_CompletenessScore : <<include>>
+UC_QualityReport ..> UC_FreshnessSLA : <<include>>
+
+' Export relationships
+UC_ExportData ..> UC_ApplyExportProfile : <<extend>>
+UC_CreatePackage ..> UC_ExportData : <<include>>
+UC_DuckDBImport ..> UC_ExportData : <<include>>
 
 ' Configuration relationships
 UC_SetSymbols ..> UC_HotReload : <<extend>>

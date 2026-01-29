@@ -5,13 +5,32 @@ title Market Data Collector - Historical Backfill Process Flow
 
 start
 
-:Parse Backfill Request;
-note right
-  --backfill-provider stooq
-  --backfill-symbols SPY,AAPL
-  --backfill-from 2024-01-01
-  --backfill-to 2024-12-31
-end note
+switch (Backfill Mode?)
+case (CLI Request)
+    :Parse Backfill Request;
+    note right
+      --backfill-provider alpaca
+      --backfill-symbols SPY,AAPL
+      --backfill-from 2024-01-01
+      --backfill-to 2024-12-31
+    end note
+case (Scheduled Backfill)
+    :Load Schedule from Config;
+    note right
+      Cron: "0 0 * * *" (daily)
+      Symbols: from watchlist
+      Provider: auto-select
+    end note
+    :Evaluate Cron Expression;
+    if (Time to Run?) then (yes)
+    else (no)
+        :Wait for Next Trigger;
+        stop
+    endif
+case (Gap Repair)
+    :Analyze Data Gaps;
+    :Build Repair Request;
+endswitch
 
 :Validate Request Parameters;
 
@@ -27,10 +46,15 @@ if (Fallback Enabled?) then (yes)
     :Create CompositeProvider;
     note right
       Priority order:
-      1. Stooq
-      2. Yahoo Finance
-      3. Tiingo
-      4. Alpha Vantage
+      1. Alpaca (if configured)
+      2. Polygon (if configured)
+      3. Interactive Brokers
+      4. Stooq (free)
+      5. Yahoo Finance (free)
+      6. Tiingo
+      7. Alpha Vantage
+      8. Finnhub
+      9. Nasdaq Data Link
     end note
 else (no)
     :Create Single Provider;
@@ -45,7 +69,14 @@ partition "Symbol Processing" {
         :Get Next Symbol;
 
         if (Symbol Resolution Enabled?) then (yes)
-            :Call OpenFIGI API;
+            :Call Symbol Search API;
+            note right
+              Providers:
+              - OpenFIGI
+              - Alpaca
+              - Finnhub
+              - Polygon
+            end note
 
             if (Resolution Success?) then (yes)
                 :Use Resolved Identifier;
