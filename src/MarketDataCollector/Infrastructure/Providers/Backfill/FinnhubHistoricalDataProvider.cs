@@ -40,11 +40,17 @@ public sealed class FinnhubHistoricalDataProvider : IHistoricalDataProvider, IDi
     public int MaxRequestsPerWindow => 60;
     public TimeSpan RateLimitWindow => TimeSpan.FromMinutes(1);
 
-    public bool SupportsAdjustedPrices => false; // Finnhub returns raw prices
-    public bool SupportsIntraday => true;
-    public bool SupportsDividends => true;
-    public bool SupportsSplits => true;
-    public IReadOnlyList<string> SupportedMarkets => new[] { "US", "UK", "DE", "CA", "AU", "HK", "JP", "CN" };
+    /// <summary>
+    /// Finnhub supports intraday bars and corporate actions (raw prices, not adjusted).
+    /// Wide market coverage: US, UK, DE, CA, AU, HK, JP, CN.
+    /// </summary>
+    public HistoricalDataCapabilities Capabilities { get; } = new()
+    {
+        Intraday = true,
+        Dividends = true,
+        Splits = true,
+        SupportedMarkets = new[] { "US", "UK", "DE", "CA", "AU", "HK", "JP", "CN" }
+    };
 
     /// <summary>
     /// Supported candle resolutions.

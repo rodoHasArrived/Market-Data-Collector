@@ -7,6 +7,80 @@ using System.Threading;
 namespace MarketDataCollector.Infrastructure.Providers.Backfill;
 
 /// <summary>
+/// Consolidated capability flags for historical data providers.
+/// Instead of checking individual boolean properties, consumers can check
+/// a single Capabilities object for all supported features.
+/// </summary>
+/// <remarks>
+/// Common capability combinations can be created using static factory methods:
+/// - <see cref="BarsOnly"/> for basic daily bar providers
+/// - <see cref="FullFeatured"/> for providers supporting all data types
+/// </remarks>
+public sealed record HistoricalDataCapabilities
+{
+    /// <summary>Whether the provider returns split/dividend adjusted prices.</summary>
+    public bool AdjustedPrices { get; init; }
+
+    /// <summary>Whether the provider supports intraday bar data.</summary>
+    public bool Intraday { get; init; }
+
+    /// <summary>Whether the provider includes dividend data.</summary>
+    public bool Dividends { get; init; }
+
+    /// <summary>Whether the provider includes split data.</summary>
+    public bool Splits { get; init; }
+
+    /// <summary>Whether the provider supports historical quote (NBBO) data.</summary>
+    public bool Quotes { get; init; }
+
+    /// <summary>Whether the provider supports historical trade data.</summary>
+    public bool Trades { get; init; }
+
+    /// <summary>Whether the provider supports historical auction data.</summary>
+    public bool Auctions { get; init; }
+
+    /// <summary>Market regions/countries supported (e.g., "US", "UK", "DE").</summary>
+    public IReadOnlyList<string> SupportedMarkets { get; init; } = new[] { "US" };
+
+    /// <summary>Default capabilities: no special features, US market only.</summary>
+    public static HistoricalDataCapabilities None { get; } = new();
+
+    /// <summary>Basic bars-only provider with adjusted prices and corporate actions.</summary>
+    public static HistoricalDataCapabilities BarsOnly { get; } = new()
+    {
+        AdjustedPrices = true,
+        Dividends = true,
+        Splits = true
+    };
+
+    /// <summary>Full-featured provider supporting all data types.</summary>
+    public static HistoricalDataCapabilities FullFeatured { get; } = new()
+    {
+        AdjustedPrices = true,
+        Intraday = true,
+        Dividends = true,
+        Splits = true,
+        Quotes = true,
+        Trades = true,
+        Auctions = true
+    };
+
+    /// <summary>Create capabilities with custom markets.</summary>
+    public HistoricalDataCapabilities WithMarkets(params string[] markets) =>
+        this with { SupportedMarkets = markets };
+
+    /// <summary>Check if provider supports a specific market.</summary>
+    public bool SupportsMarket(string market) =>
+        SupportedMarkets.Contains(market, StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Check if provider has any tick-level data capabilities.</summary>
+    public bool HasTickData => Quotes || Trades || Auctions;
+
+    /// <summary>Check if provider has corporate action data.</summary>
+    public bool HasCorporateActions => Dividends || Splits;
+}
+
+/// <summary>
 /// Unified contract for fetching historical data from vendors.
 /// Consolidates previous V1, V2, and Extended interfaces into a single contract
 /// with optional capabilities indicated by properties.
@@ -72,45 +146,58 @@ public interface IHistoricalDataProvider
     #region Data Capabilities
 
     /// <summary>
+    /// Consolidated capability flags for this provider.
+    /// Prefer using this property over the individual SupportsXxx properties.
+    /// </summary>
+    HistoricalDataCapabilities Capabilities => HistoricalDataCapabilities.None;
+
+    /// <summary>
     /// Whether this provider returns split/dividend adjusted prices.
     /// </summary>
-    bool SupportsAdjustedPrices => false;
+    /// <remarks>Delegates to <see cref="Capabilities"/>. Kept for backwards compatibility.</remarks>
+    bool SupportsAdjustedPrices => Capabilities.AdjustedPrices;
 
     /// <summary>
     /// Whether this provider supports intraday bar data.
     /// </summary>
-    bool SupportsIntraday => false;
+    /// <remarks>Delegates to <see cref="Capabilities"/>. Kept for backwards compatibility.</remarks>
+    bool SupportsIntraday => Capabilities.Intraday;
 
     /// <summary>
     /// Whether this provider includes dividend data.
     /// </summary>
-    bool SupportsDividends => false;
+    /// <remarks>Delegates to <see cref="Capabilities"/>. Kept for backwards compatibility.</remarks>
+    bool SupportsDividends => Capabilities.Dividends;
 
     /// <summary>
     /// Whether this provider includes split data.
     /// </summary>
-    bool SupportsSplits => false;
+    /// <remarks>Delegates to <see cref="Capabilities"/>. Kept for backwards compatibility.</remarks>
+    bool SupportsSplits => Capabilities.Splits;
 
     /// <summary>
     /// Whether this provider supports historical quote (NBBO) data.
     /// </summary>
-    bool SupportsQuotes => false;
+    /// <remarks>Delegates to <see cref="Capabilities"/>. Kept for backwards compatibility.</remarks>
+    bool SupportsQuotes => Capabilities.Quotes;
 
     /// <summary>
     /// Whether this provider supports historical trade data.
     /// </summary>
-    bool SupportsTrades => false;
+    /// <remarks>Delegates to <see cref="Capabilities"/>. Kept for backwards compatibility.</remarks>
+    bool SupportsTrades => Capabilities.Trades;
 
     /// <summary>
     /// Whether this provider supports historical auction data.
     /// </summary>
-    bool SupportsAuctions => false;
+    /// <remarks>Delegates to <see cref="Capabilities"/>. Kept for backwards compatibility.</remarks>
+    bool SupportsAuctions => Capabilities.Auctions;
 
     /// <summary>
     /// Market regions/countries supported (e.g., "US", "UK", "DE").
-    /// Default: US only.
     /// </summary>
-    IReadOnlyList<string> SupportedMarkets => new[] { "US" };
+    /// <remarks>Delegates to <see cref="Capabilities"/>. Kept for backwards compatibility.</remarks>
+    IReadOnlyList<string> SupportedMarkets => Capabilities.SupportedMarkets;
 
     #endregion
 

@@ -39,10 +39,12 @@ public sealed class TiingoHistoricalDataProvider : BaseHistoricalDataProvider
     public override TimeSpan RateLimitDelay => TimeSpan.FromSeconds(1.5); // 50 requests/hour = ~72 seconds between requests
     public override int MaxRequestsPerWindow => 50;
     public override TimeSpan RateLimitWindow => TimeSpan.FromHours(1);
-    public override bool SupportsAdjustedPrices => true;
-    public override bool SupportsDividends => true;
-    public override bool SupportsSplits => true;
-    public override IReadOnlyList<string> SupportedMarkets => new[] { "US", "UK", "DE", "CA", "AU" };
+
+    /// <summary>
+    /// Tiingo supports adjusted bars with corporate actions for multiple markets.
+    /// </summary>
+    public override HistoricalDataCapabilities Capabilities { get; } =
+        HistoricalDataCapabilities.BarsOnly.WithMarkets("US", "UK", "DE", "CA", "AU");
 
     #endregion
 

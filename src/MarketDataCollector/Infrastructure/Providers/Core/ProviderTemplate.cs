@@ -66,16 +66,17 @@ public static class ProviderTemplateFactory
 
     public static ProviderTemplate ForBackfill(string name, IHistoricalDataProvider provider, int priority, bool isEnabled)
     {
+        var caps = provider.Capabilities;
         var capabilities = new Dictionary<string, object>
         {
-            ["SupportsAdjustedPrices"] = provider.Capabilities.SupportsAdjustedPrices,
-            ["SupportsIntraday"] = provider.Capabilities.SupportsIntraday,
-            ["SupportsDividends"] = provider.SupportsDividends,
-            ["SupportsSplits"] = provider.SupportsSplits,
-            ["SupportsQuotes"] = provider.SupportsQuotes,
-            ["SupportsTrades"] = provider.SupportsTrades,
-            ["SupportsAuctions"] = provider.SupportsAuctions,
-            ["SupportedMarkets"] = provider.SupportedMarkets
+            ["SupportsAdjustedPrices"] = caps.AdjustedPrices,
+            ["SupportsIntraday"] = caps.Intraday,
+            ["SupportsDividends"] = caps.Dividends,
+            ["SupportsSplits"] = caps.Splits,
+            ["SupportsQuotes"] = caps.Quotes,
+            ["SupportsTrades"] = caps.Trades,
+            ["SupportsAuctions"] = caps.Auctions,
+            ["SupportedMarkets"] = caps.SupportedMarkets
         };
 
         var rateLimit = new ProviderRateLimitProfile(

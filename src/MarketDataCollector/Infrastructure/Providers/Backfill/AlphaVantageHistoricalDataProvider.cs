@@ -34,10 +34,13 @@ public sealed class AlphaVantageHistoricalDataProvider : BaseHistoricalDataProvi
     public override int MaxRequestsPerWindow => 5;
     public override TimeSpan RateLimitWindow => TimeSpan.FromMinutes(1);
 
-    public override bool SupportsAdjustedPrices => true;
-    public override bool SupportsIntraday => true; // Key differentiator!
-    public override bool SupportsDividends => true;
-    public override bool SupportsSplits => true;
+    /// <summary>
+    /// Alpha Vantage supports adjusted bars with intraday historical data (key differentiator).
+    /// </summary>
+    public override HistoricalDataCapabilities Capabilities { get; } = HistoricalDataCapabilities.BarsOnly with
+    {
+        Intraday = true
+    };
 
     /// <summary>
     /// Supported intraday intervals.

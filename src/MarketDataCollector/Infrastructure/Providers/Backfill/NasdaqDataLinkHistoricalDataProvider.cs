@@ -34,9 +34,10 @@ public sealed class NasdaqDataLinkHistoricalDataProvider : BaseHistoricalDataPro
     public override int MaxRequestsPerWindow => 50;
     public override TimeSpan RateLimitWindow => TimeSpan.FromDays(1);
 
-    public override bool SupportsAdjustedPrices => true;
-    public override bool SupportsDividends => true;
-    public override bool SupportsSplits => true;
+    /// <summary>
+    /// Nasdaq Data Link supports adjusted bars with corporate actions.
+    /// </summary>
+    public override HistoricalDataCapabilities Capabilities { get; } = HistoricalDataCapabilities.BarsOnly;
 
     /// <summary>
     /// Create a Nasdaq Data Link provider.

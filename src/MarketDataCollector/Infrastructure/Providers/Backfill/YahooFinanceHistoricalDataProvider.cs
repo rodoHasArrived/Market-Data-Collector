@@ -30,10 +30,11 @@ public sealed class YahooFinanceHistoricalDataProvider : BaseHistoricalDataProvi
     public override int MaxRequestsPerWindow => 2000;
     public override TimeSpan RateLimitWindow => TimeSpan.FromHours(1);
 
-    public override bool SupportsAdjustedPrices => true;
-    public override bool SupportsDividends => true;
-    public override bool SupportsSplits => true;
-    public override IReadOnlyList<string> SupportedMarkets => new[] { "US", "UK", "DE", "JP", "CA", "AU", "HK", "SG" };
+    /// <summary>
+    /// Yahoo Finance supports adjusted bars with corporate actions for global markets.
+    /// </summary>
+    public override HistoricalDataCapabilities Capabilities { get; } =
+        HistoricalDataCapabilities.BarsOnly.WithMarkets("US", "UK", "DE", "JP", "CA", "AU", "HK", "SG");
 
     public YahooFinanceHistoricalDataProvider(HttpClient? httpClient = null, ILogger? log = null)
         : base(httpClient, log)

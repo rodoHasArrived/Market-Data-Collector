@@ -40,11 +40,13 @@ public sealed class PolygonHistoricalDataProvider : IHistoricalDataProvider, IDi
     public int MaxRequestsPerWindow => 5;
     public TimeSpan RateLimitWindow => TimeSpan.FromMinutes(1);
 
-    public bool SupportsAdjustedPrices => true;
-    public bool SupportsIntraday => true; // Polygon supports intraday aggregates
-    public bool SupportsDividends => true;
-    public bool SupportsSplits => true;
-    public IReadOnlyList<string> SupportedMarkets => new[] { "US" };
+    /// <summary>
+    /// Polygon supports adjusted bars with intraday aggregates and corporate actions.
+    /// </summary>
+    public HistoricalDataCapabilities Capabilities { get; } = HistoricalDataCapabilities.BarsOnly with
+    {
+        Intraday = true
+    };
 
     public PolygonHistoricalDataProvider(string? apiKey = null, HttpClient? httpClient = null, ILogger? log = null)
     {
