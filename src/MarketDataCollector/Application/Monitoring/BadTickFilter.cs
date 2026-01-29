@@ -194,14 +194,51 @@ public sealed class BadTickFilter : IDisposable
     /// </summary>
     private static bool IsPlaceholderPrice(decimal price)
     {
-        // Common placeholder patterns
-        if (price == 0.01m || price == 0.001m) return true;
-        if (price == 9999.99m || price == 99999.99m) return true;
-        if (price == 0.0001m) return true;
+        // Common placeholder patterns used by various data providers
+        if (price == 0.01m || price == 0.001m || price == 0.0001m) return true;
+        if (price == 9999m || price == 9999.99m || price == 99999.99m || price == 999999.99m) return true;
+        if (price == 1234.56m || price == 12345.67m) return true; // Sequential placeholders
 
-        // Check for repeating digits that often indicate bad data
-        var priceStr = price.ToString("F4");
-        if (priceStr is "1.0000" or "100.0000" or "1000.0000") return false; // Valid round numbers
+        // Valid round numbers that are NOT placeholders
+        if (price == 1m || price == 10m || price == 100m || price == 1000m || price == 10000m) return false;
+        if (price == 0.1m || price == 0.5m || price == 5m || price == 50m || price == 500m) return false;
+
+        // Check for repeating digit patterns that often indicate bad/test data
+        if (IsRepeatingDigitPattern(price)) return true;
+
+        return false;
+    }
+
+    /// <summary>
+    /// Detects repeating digit patterns like 111.11, 222.22, 333.33, etc.
+    /// These are commonly used as placeholder or test values.
+    /// </summary>
+    private static bool IsRepeatingDigitPattern(decimal price)
+    {
+        // Common repeating digit placeholders
+        decimal[] repeatingPatterns =
+        [
+            11.11m, 22.22m, 33.33m, 44.44m, 55.55m, 66.66m, 77.77m, 88.88m, 99.99m,
+            111.11m, 222.22m, 333.33m, 444.44m, 555.55m, 666.66m, 777.77m, 888.88m, 999.99m,
+            1111.11m, 2222.22m, 3333.33m, 4444.44m, 5555.55m, 6666.66m, 7777.77m, 8888.88m, 9999.99m,
+            11111.11m, 22222.22m, 33333.33m, 44444.44m, 55555.55m, 66666.66m, 77777.77m, 88888.88m, 99999.99m
+        ];
+
+        foreach (var pattern in repeatingPatterns)
+        {
+            if (price == pattern) return true;
+        }
+
+        // Check for all-same-digit patterns in the string representation
+        // This catches patterns we might have missed
+        var priceStr = price.ToString("F2");
+        var digitsOnly = new string(priceStr.Where(char.IsDigit).ToArray());
+
+        // If all digits are the same (e.g., "11111", "22222")
+        if (digitsOnly.Length >= 4 && digitsOnly.Distinct().Count() == 1)
+        {
+            return true;
+        }
 
         return false;
     }
