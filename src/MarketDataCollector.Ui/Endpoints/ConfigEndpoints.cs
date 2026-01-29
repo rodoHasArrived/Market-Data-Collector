@@ -1,6 +1,7 @@
 using System.Text.Json;
 using MarketDataCollector.Application.Config;
-using MarketDataCollector.Ui.Models;
+using MarketDataCollector.Contracts.Api;
+using MarketDataCollector.Contracts.Configuration;
 using MarketDataCollector.Ui.Services;
 
 namespace MarketDataCollector.Ui.Endpoints;
@@ -46,10 +47,10 @@ public static class ConfigEndpoints
         });
 
         // Update Alpaca settings
-        app.MapPost("/api/config/alpaca", async (ConfigStore store, AlpacaOptions alpaca) =>
+        app.MapPost("/api/config/alpaca", async (ConfigStore store, AlpacaOptionsDto alpaca) =>
         {
             var cfg = store.Load();
-            var next = cfg with { Alpaca = alpaca };
+            var next = cfg with { Alpaca = alpaca.ToDomain() };
             await store.SaveAsync(next);
             return Results.Ok();
         });
@@ -62,7 +63,8 @@ public static class ConfigEndpoints
                 NamingConvention: req.NamingConvention ?? "BySymbol",
                 DatePartition: req.DatePartition ?? "Daily",
                 IncludeProvider: req.IncludeProvider,
-                FilePrefix: string.IsNullOrWhiteSpace(req.FilePrefix) ? null : req.FilePrefix
+                FilePrefix: string.IsNullOrWhiteSpace(req.FilePrefix) ? null : req.FilePrefix,
+                Profile: string.IsNullOrWhiteSpace(req.Profile) ? null : req.Profile
             );
             var next = cfg with
             {

@@ -1,6 +1,6 @@
 using System.Text.Json;
 using MarketDataCollector.Application.Config;
-using MarketDataCollector.Ui.Models;
+using MarketDataCollector.Contracts.Api;
 using MarketDataCollector.Ui.Services;
 
 namespace MarketDataCollector.Ui.Endpoints;
