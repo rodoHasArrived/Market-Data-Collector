@@ -25,6 +25,9 @@ public sealed class StatusHttpServer : IAsyncDisposable
     private readonly Func<PipelineStatistics> _pipelineProvider;
     private readonly Func<IReadOnlyList<DepthIntegrityEvent>> _integrityProvider;
     private readonly Func<ErrorRingBuffer?> _errorBufferProvider;
+    private readonly SemaphoreSlim _requestLimiter;
+    private readonly string? _accessToken;
+    private readonly bool _requireRemoteAuth;
     private readonly CancellationTokenSource _cts = new();
     private readonly DateTimeOffset _startTime = DateTimeOffset.UtcNow;
     private Task? _loop;
@@ -44,13 +47,30 @@ public sealed class StatusHttpServer : IAsyncDisposable
         Func<MetricsSnapshot> metricsProvider,
         Func<PipelineStatistics> pipelineProvider,
         Func<IReadOnlyList<DepthIntegrityEvent>> integrityProvider,
-        Func<ErrorRingBuffer?>? errorBufferProvider = null)
+        Func<ErrorRingBuffer?>? errorBufferProvider = null,
+        string bindAddress = "localhost",
+        bool allowRemoteAccess = false,
+        string? accessToken = null,
+        int maxConcurrentRequests = 16)
     {
         _metricsProvider = metricsProvider;
         _pipelineProvider = pipelineProvider;
         _integrityProvider = integrityProvider;
         _errorBufferProvider = errorBufferProvider ?? (() => null);
-        _listener.Prefixes.Add($"http://*:{port}/");
+        _accessToken = string.IsNullOrWhiteSpace(accessToken) ? null : accessToken;
+        _requireRemoteAuth = allowRemoteAccess;
+        _requestLimiter = new SemaphoreSlim(Math.Max(1, maxConcurrentRequests));
+
+        var resolvedBindAddress = ResolveBindAddress(bindAddress, allowRemoteAccess);
+        if (!allowRemoteAccess && !string.Equals(resolvedBindAddress, bindAddress, StringComparison.OrdinalIgnoreCase))
+        {
+            _log.Warning("Remote bind address '{BindAddress}' ignored; binding to localhost only.", bindAddress);
+        }
+        if (allowRemoteAccess && string.IsNullOrWhiteSpace(_accessToken))
+        {
+            _log.Warning("Remote status access enabled without an access token; remote requests will be rejected.");
+        }
+        _listener.Prefixes.Add($"http://{resolvedBindAddress}:{port}/");
     }
 
     public void Start()
@@ -85,7 +105,26 @@ public sealed class StatusHttpServer : IAsyncDisposable
             catch (HttpListenerException) when (_cts.IsCancellationRequested) { break; }
             catch (ObjectDisposedException) { break; }
 
-            _ = Task.Run(() => HandleRequestAsync(ctx), _cts.Token);
+            try
+            {
+                await _requestLimiter.WaitAsync(_cts.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                break;
+            }
+
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await HandleRequestAsync(ctx);
+                }
+                finally
+                {
+                    _requestLimiter.Release();
+                }
+            }, _cts.Token);
         }
     }
 
@@ -93,6 +132,12 @@ public sealed class StatusHttpServer : IAsyncDisposable
     {
         try
         {
+            if (!IsAuthorized(ctx.Request))
+            {
+                await WriteUnauthorizedAsync(ctx.Response);
+                return;
+            }
+
             var path = ctx.Request.Url?.AbsolutePath?.Trim('/')?.ToLowerInvariant() ?? string.Empty;
 
             // Support both /api/* and /* routes for UWP desktop app compatibility
@@ -604,6 +649,67 @@ setInterval(refresh,2000);refresh();
         }
     }
 
+    private bool IsAuthorized(HttpListenerRequest request)
+    {
+        if (request.IsLocal)
+        {
+            return true;
+        }
+
+        if (!_requireRemoteAuth)
+        {
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(_accessToken))
+        {
+            return false;
+        }
+
+        var headerToken = request.Headers["X-MDC-Status-Token"];
+        if (string.IsNullOrWhiteSpace(headerToken))
+        {
+            var authHeader = request.Headers["Authorization"];
+            if (!string.IsNullOrWhiteSpace(authHeader) && authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+            {
+                headerToken = authHeader.Substring("Bearer ".Length).Trim();
+            }
+        }
+
+        return string.Equals(headerToken, _accessToken, StringComparison.Ordinal);
+    }
+
+    private static string ResolveBindAddress(string bindAddress, bool allowRemoteAccess)
+    {
+        if (string.IsNullOrWhiteSpace(bindAddress))
+        {
+            return "localhost";
+        }
+
+        if (!allowRemoteAccess && !IsLoopback(bindAddress))
+        {
+            return "localhost";
+        }
+
+        return bindAddress;
+    }
+
+    private static bool IsLoopback(string bindAddress)
+    {
+        return string.Equals(bindAddress, "localhost", StringComparison.OrdinalIgnoreCase)
+               || string.Equals(bindAddress, "127.0.0.1", StringComparison.OrdinalIgnoreCase)
+               || string.Equals(bindAddress, "::1", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static Task WriteUnauthorizedAsync(HttpListenerResponse resp)
+    {
+        resp.StatusCode = 401;
+        resp.ContentType = "application/json";
+        var payload = JsonSerializer.Serialize(new { error = "Unauthorized" });
+        var bytes = Encoding.UTF8.GetBytes(payload);
+        return resp.OutputStream.WriteAsync(bytes, 0, bytes.Length);
+    }
+
     /// <summary>
     /// Backpressure status endpoint (MON-18).
     /// Returns current pipeline backpressure information.
@@ -765,5 +871,6 @@ setInterval(refresh,2000);refresh();
             catch (OperationCanceledException) { }
         }
         _cts.Dispose();
+        _requestLimiter.Dispose();
     }
 }

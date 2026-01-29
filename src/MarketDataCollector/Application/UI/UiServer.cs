@@ -39,7 +39,7 @@ public sealed class UiServer : IAsyncDisposable
     {
         var contextInfo = context is not null ? $" Context: {context}" : "";
         _logger.LogError(ex, "API operation failed: {Operation}.{Context}", operation, contextInfo);
-        return Results.Problem($"{operation}: {ex.Message}");
+        return Results.Problem($"{operation}. Please check server logs for details.");
     }
 
     public UiServer(string configPath, int port = 8080)

@@ -105,7 +105,7 @@ public sealed class NasdaqDataLinkHistoricalDataProvider : BaseHistoricalDataPro
         var normalizedSymbol = NormalizeSymbol(symbol);
         var url = BuildRequestUrl(normalizedSymbol, from, to);
 
-        Log.Information("Requesting Nasdaq Data Link history for {Symbol} ({Url})", symbol, url);
+        Log.Information("Requesting Nasdaq Data Link history for {Symbol} ({Url})", symbol, RedactApiKey(url));
 
         try
         {
@@ -157,6 +157,24 @@ public sealed class NasdaqDataLinkHistoricalDataProvider : BaseHistoricalDataPro
             url += "?" + string.Join("&", queryParams);
 
         return url;
+    }
+
+    private static string RedactApiKey(string url)
+    {
+        var tokenIndex = url.IndexOf("api_key=", StringComparison.OrdinalIgnoreCase);
+        if (tokenIndex < 0)
+        {
+            return url;
+        }
+
+        var valueStart = tokenIndex + "api_key=".Length;
+        var valueEnd = url.IndexOf('&', valueStart);
+        if (valueEnd < 0)
+        {
+            valueEnd = url.Length;
+        }
+
+        return url.Substring(0, valueStart) + "REDACTED" + url.Substring(valueEnd);
     }
 
     private List<AdjustedHistoricalBar> ParseDatasetResponse(QuandlDataset dataset, string symbol, DateOnly? from, DateOnly? to)

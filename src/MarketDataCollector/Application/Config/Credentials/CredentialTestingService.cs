@@ -293,8 +293,8 @@ public sealed class CredentialTestingService : IAsyncDisposable
     private async Task<(CredentialAuthStatus status, string message, DateTimeOffset? expiresAt)>
         TestPolygonCredentialsAsync(string apiKey, CancellationToken ct)
     {
-        using var request = new HttpRequestMessage(HttpMethod.Get,
-            $"https://api.polygon.io/v3/reference/tickers?limit=1&apiKey={apiKey}");
+        using var request = new HttpRequestMessage(HttpMethod.Get, "https://api.polygon.io/v3/reference/tickers?limit=1");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
 
         using var response = await _httpClient.SendAsync(request, ct);
 
@@ -335,8 +335,8 @@ public sealed class CredentialTestingService : IAsyncDisposable
     private async Task<(CredentialAuthStatus status, string message, DateTimeOffset? expiresAt)>
         TestFinnhubCredentialsAsync(string apiKey, CancellationToken ct)
     {
-        using var request = new HttpRequestMessage(HttpMethod.Get,
-            $"https://finnhub.io/api/v1/stock/symbol?exchange=US&token={apiKey}");
+        using var request = new HttpRequestMessage(HttpMethod.Get, "https://finnhub.io/api/v1/stock/symbol?exchange=US");
+        request.Headers.TryAddWithoutValidation("X-Finnhub-Token", apiKey);
 
         using var response = await _httpClient.SendAsync(request, ct);
 
