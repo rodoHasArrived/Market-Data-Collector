@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Threading.Channels;
 using MarketDataCollector.Application.Backfill;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Exceptions;
@@ -70,6 +71,8 @@ internal static class Program
     {
         // Initialize HttpClientFactory for proper HTTP client lifecycle management (TD-10)
         InitializeHttpClientFactory(log);
+        await using var configService = new ConfigurationService(log);
+        var runMode = ResolveRunMode(args, log);
 
         // Help Mode - Display usage information
         if (args.Any(a => a.Equals("--help", StringComparison.OrdinalIgnoreCase) || a.Equals("-h", StringComparison.OrdinalIgnoreCase)))
@@ -82,11 +85,10 @@ internal static class Program
         if (args.Any(a => a.Equals("--wizard", StringComparison.OrdinalIgnoreCase)))
         {
             log.Information("Starting configuration wizard...");
-            var wizard = new ConfigurationWizard();
             using var cts = new CancellationTokenSource();
             Console.CancelKeyPress += (_, e) => { e.Cancel = true; cts.Cancel(); };
 
-            var result = await wizard.RunAsync(cts.Token);
+            var result = await configService.RunWizardAsync(cts.Token);
             Environment.Exit(result.Success ? 0 : 1);
             return;
         }
@@ -95,8 +97,7 @@ internal static class Program
         if (args.Any(a => a.Equals("--auto-config", StringComparison.OrdinalIgnoreCase)))
         {
             log.Information("Running auto-configuration...");
-            var wizard = new ConfigurationWizard();
-            var result = wizard.RunQuickSetup();
+            var result = configService.RunAutoConfig();
             Environment.Exit(result.Success ? 0 : 1);
             return;
         }
@@ -104,8 +105,7 @@ internal static class Program
         // Detect Providers Mode - Show available providers
         if (args.Any(a => a.Equals("--detect-providers", StringComparison.OrdinalIgnoreCase)))
         {
-            var autoConfig = new AutoConfigurationService();
-            var providers = autoConfig.DetectAvailableProviders();
+            var providers = configService.DetectProviders();
 
             Console.WriteLine();
             Console.WriteLine("Detected Data Providers:");
@@ -383,8 +383,7 @@ internal static class Program
         if (args.Any(a => a.Equals("--validate-config", StringComparison.OrdinalIgnoreCase)))
         {
             var configPathArg = GetArgValue(args, "--config") ?? cfgPath;
-            var validator = new ConfigValidatorCli(log);
-            var exitCode = validator.Validate(configPathArg);
+            var exitCode = configService.ValidateConfig(configPathArg);
             Environment.Exit(exitCode);
             return;
         }
@@ -414,7 +413,7 @@ internal static class Program
         }
 
         // UI Mode - Start web dashboard
-        if (args.Any(a => a.Equals("--ui", StringComparison.OrdinalIgnoreCase)))
+        if (runMode == RunMode.Web || args.Any(a => a.Equals("--ui", StringComparison.OrdinalIgnoreCase)))
         {
             var uiPort = int.TryParse(GetArgValue(args, "--http-port"), out var parsedUiPort) ? parsedUiPort : 8080;
             log.Information("Starting web dashboard on port {Port}...", uiPort);
@@ -536,6 +535,16 @@ internal static class Program
         var statusPath = Path.Combine(cfg.DataRoot, "_status", "status.json");
         await using var statusWriter = new StatusWriter(statusPath, () => LoadConfigWithEnvironmentOverlay(cfgPath));
         ConfigWatcher? watcher = null;
+        UiServer? uiServer = null;
+
+        if (runMode == RunMode.Desktop)
+        {
+            var uiPort = int.TryParse(GetArgValue(args, "--http-port"), out var parsedUiPort) ? parsedUiPort : 8080;
+            log.Information("Desktop mode: starting UI server on port {Port}...", uiPort);
+            uiServer = new UiServer(cfgPath, uiPort);
+            await uiServer.StartAsync();
+            log.Information("Desktop mode UI server started at http://localhost:{Port}", uiPort);
+        }
 
         // Build storage options from config
         var compressionEnabled = cfg.Compress ?? false;
@@ -550,7 +559,8 @@ internal static class Program
 
         var policy = new JsonlStoragePolicy(storageOpt);
         await using var sink = new JsonlStorageSink(storageOpt, policy);
-        await using var pipeline = new EventPipeline(sink, capacity: 50_000);
+        var pipelinePolicy = new EventPipelinePolicy(50_000, BoundedChannelFullMode.DropOldest, EnableMetrics: true);
+        await using var pipeline = new EventPipeline(sink, pipelinePolicy);
 
         // Log storage configuration
         log.Information("Storage path: {RootPath}", storageOpt.RootPath);
@@ -602,6 +612,11 @@ internal static class Program
 
             if (!result.Success)
                 Environment.ExitCode = 1;
+            if (uiServer != null)
+            {
+                await uiServer.StopAsync();
+                await uiServer.DisposeAsync();
+            }
             return;
         }
 
@@ -653,8 +668,7 @@ internal static class Program
 
         if (args.Any(a => a.Equals("--watch-config", StringComparison.OrdinalIgnoreCase)))
         {
-            watcher = new ConfigWatcher(cfgPath);
-            watcher.ConfigChanged += newCfg =>
+            watcher = configService.StartHotReload(cfgPath, newCfg =>
             {
                 try
                 {
@@ -667,9 +681,7 @@ internal static class Program
                 {
                     log.Error(ex, "Failed to apply hot-reloaded configuration");
                 }
-            };
-            watcher.Error += ex => log.Error(ex, "Configuration watcher error");
-            watcher.Start();
+            }, ex => log.Error(ex, "Configuration watcher error"));
             log.Information("Watching {ConfigPath} for subscription changes", cfgPath);
         }
 
@@ -704,6 +716,39 @@ internal static class Program
         log.Information("Shutdown complete");
 
         watcher?.Dispose();
+        if (uiServer != null)
+        {
+            await uiServer.StopAsync();
+            await uiServer.DisposeAsync();
+        }
+    }
+
+    private enum RunMode
+    {
+        Headless,
+        Web,
+        Desktop
+    }
+
+    private static RunMode ResolveRunMode(string[] args, ILogger log)
+    {
+        var modeArg = GetArgValue(args, "--mode");
+        if (string.IsNullOrWhiteSpace(modeArg))
+            return RunMode.Headless;
+
+        var normalized = modeArg.Trim().ToLowerInvariant();
+        return normalized switch
+        {
+            "web" => RunMode.Web,
+            "desktop" => RunMode.Desktop,
+            "headless" => RunMode.Headless,
+            _ =>
+            {
+                log.Error("Unknown mode '{Mode}'. Use web, desktop, or headless.", normalized);
+                Environment.Exit(1);
+                return RunMode.Headless;
+            }
+        };
     }
 
     private static void ShowHelp()
@@ -718,7 +763,8 @@ USAGE:
     MarketDataCollector [OPTIONS]
 
 MODES:
-    --ui                    Start web dashboard (http://localhost:8080)
+    --mode <web|desktop|headless> Unified deployment mode selector
+    --ui                    Start web dashboard (http://localhost:8080) [legacy]
     --backfill              Run historical data backfill
     --replay <path>         Replay events from JSONL file
     --package               Create a portable data package
@@ -802,13 +848,13 @@ AUTO-CONFIGURATION OPTIONS:
 
 EXAMPLES:
     # Start web dashboard on default port
-    MarketDataCollector --ui
+    MarketDataCollector --mode web
 
     # Start web dashboard on custom port
-    MarketDataCollector --ui --http-port 9000
+    MarketDataCollector --mode web --http-port 9000
 
-    # Production mode with web dashboard and hot-reload
-    MarketDataCollector --ui --watch-config
+    # Desktop mode (collector + UI server) with hot-reload
+    MarketDataCollector --mode desktop --watch-config
 
     # Run historical backfill
     MarketDataCollector --backfill --backfill-symbols AAPL,MSFT,GOOGL \\

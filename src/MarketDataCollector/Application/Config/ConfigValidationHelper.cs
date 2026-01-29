@@ -323,6 +323,13 @@ public sealed class StorageConfigValidator : AbstractValidator<StorageConfig>
                 .GreaterThan(0)
                 .WithMessage("MaxTotalMegabytes must be greater than 0");
         });
+
+        When(x => !string.IsNullOrWhiteSpace(x.Profile), () =>
+        {
+            RuleFor(x => x.Profile!)
+                .Must(BeValidProfile)
+                .WithMessage("Profile must be one of: Research, LowLatency, Archival");
+        });
     }
 
     private static bool BeValidNamingConvention(string value)
@@ -340,6 +347,15 @@ public sealed class StorageConfigValidator : AbstractValidator<StorageConfig>
             return false;
 
         var valid = new[] { "none", "daily", "hourly", "monthly" };
+        return valid.Contains(value.ToLowerInvariant());
+    }
+
+    private static bool BeValidProfile(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return false;
+
+        var valid = new[] { "research", "lowlatency", "archival" };
         return valid.Contains(value.ToLowerInvariant());
     }
 }

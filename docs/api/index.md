@@ -20,6 +20,8 @@ docfx docs/docfx/docfx.json
 
 ### Application Layer
 - `EventPipeline` - Bounded channel for event routing (50K capacity)
+- `EventPipelinePolicy` - Shared configuration for bounded channels
+- `ConfigurationService` - Unified wizard, auto-config, validation, and hot reload
 - `JsonlStorageSink` - Append-only JSONL file storage
 - `ParquetStorageSink` - Columnar Parquet storage (experimental)
 - `TieredStorageManager` - Hot/warm/cold storage tier management

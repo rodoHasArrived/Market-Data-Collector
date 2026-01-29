@@ -6,6 +6,7 @@ using StockSharp.Messages;
 #endif
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Logging;
+using MarketDataCollector.Application.Pipeline;
 using MarketDataCollector.Domain.Collectors;
 using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Models;
@@ -113,13 +114,9 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
 #if STOCKSHARP
         // Initialize bounded message channel for high-frequency data buffering
         // This prevents event handler blocking during bursts (Hydra pattern)
+        var policy = new EventPipelinePolicy(50_000, System.Threading.Channels.BoundedChannelFullMode.DropOldest, EnableMetrics: false);
         _messageChannel = System.Threading.Channels.Channel.CreateBounded<Action>(
-            new System.Threading.Channels.BoundedChannelOptions(50_000)
-            {
-                FullMode = System.Threading.Channels.BoundedChannelFullMode.DropOldest,
-                SingleReader = true,
-                SingleWriter = false
-            });
+            policy.ToBoundedOptions(singleReader: true, singleWriter: false));
 #endif
     }
 

@@ -321,22 +321,17 @@ public sealed class ProviderRegistry : IDisposable
 
         foreach (var p in _streamingProviders.Values)
         {
-            result.Add(new ProviderInfo(p.Name, p.Name, ProviderType.Streaming, p.Priority, p.IsEnabled));
+            result.Add(ProviderTemplateFactory.ForStreaming(p.Name, p.Provider, p.Priority, p.IsEnabled).ToInfo());
         }
 
         foreach (var p in _backfillProviders.Values)
         {
-            result.Add(new ProviderInfo(p.Name, p.Provider.DisplayName, ProviderType.Backfill, p.Priority, p.IsEnabled,
-                new Dictionary<string, object>
-                {
-                    ["SupportsAdjustedPrices"] = p.Provider.Capabilities.SupportsAdjustedPrices,
-                    ["SupportsIntraday"] = p.Provider.Capabilities.SupportsIntraday
-                }));
+            result.Add(ProviderTemplateFactory.ForBackfill(p.Name, p.Provider, p.Priority, p.IsEnabled).ToInfo());
         }
 
         foreach (var p in _symbolSearchProviders.Values)
         {
-            result.Add(new ProviderInfo(p.Name, p.Provider.DisplayName, ProviderType.SymbolSearch, p.Priority, p.IsEnabled));
+            result.Add(ProviderTemplateFactory.ForSymbolSearch(p.Provider, p.Priority, p.IsEnabled).ToInfo());
         }
 
         return result;

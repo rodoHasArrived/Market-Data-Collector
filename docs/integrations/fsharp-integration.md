@@ -374,6 +374,12 @@ else
 bool isValid = TradeValidator.IsValid(trade);
 ```
 
+### Generated C# DTOs
+
+Build-time generation produces C# DTO wrappers in `src/MarketDataCollector.FSharp/Generated` for
+core market event records. These files are regenerated during builds via
+`tools/FSharpInteropGenerator` while preserving the existing public API.
+
 ### Calculation Helpers
 
 ```csharp

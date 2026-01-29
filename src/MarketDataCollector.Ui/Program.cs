@@ -9,6 +9,7 @@ using MarketDataCollector.Infrastructure.Providers.Backfill;
 using MarketDataCollector.Storage;
 using MarketDataCollector.Storage.Policies;
 using MarketDataCollector.Storage.Sinks;
+using MarketDataCollector.Contracts.Api;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -67,7 +68,8 @@ app.MapPost("/api/config/storage", async (ConfigStore store, StorageSettingsRequ
         NamingConvention: req.NamingConvention ?? "BySymbol",
         DatePartition: req.DatePartition ?? "Daily",
         IncludeProvider: req.IncludeProvider,
-        FilePrefix: string.IsNullOrWhiteSpace(req.FilePrefix) ? null : req.FilePrefix
+        FilePrefix: string.IsNullOrWhiteSpace(req.FilePrefix) ? null : req.FilePrefix,
+        Profile: string.IsNullOrWhiteSpace(req.Profile) ? null : req.Profile
     );
     var next = cfg with
     {
@@ -138,9 +140,9 @@ app.MapPost("/api/config/datasources", async (ConfigStore store, DataSourceConfi
         Enabled: req.Enabled,
         Type: Enum.TryParse<DataSourceType>(req.Type, ignoreCase: true, out var t) ? t : DataSourceType.RealTime,
         Priority: req.Priority,
-        Alpaca: req.Alpaca,
-        Polygon: req.Polygon,
-        IB: req.IB,
+        Alpaca: req.Alpaca.ToDomain(),
+        Polygon: req.Polygon.ToDomain(),
+        IB: req.IB.ToDomain(),
         Symbols: req.Symbols,
         Description: req.Description,
         Tags: req.Tags
@@ -269,8 +271,6 @@ app.MapPost("/api/backfill/run", async (BackfillCoordinator backfill, BackfillRe
 
 app.Run();
 
-public record DataSourceRequest(string DataSource);
-public record StorageSettingsRequest(string? DataRoot, bool Compress, string? NamingConvention, string? DatePartition, bool IncludeProvider, string? FilePrefix);
 
 // Data Sources API DTOs
 public record DataSourceConfigRequest(
@@ -2573,5 +2573,3 @@ public sealed class BackfillCoordinator
         return new HistoricalBackfillService(providers, _log);
     }
 }
-
-public record BackfillRequestDto(string? Provider, string[] Symbols, DateOnly? From, DateOnly? To);

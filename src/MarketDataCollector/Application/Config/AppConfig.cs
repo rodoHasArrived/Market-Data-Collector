@@ -62,6 +62,11 @@ public sealed record StorageConfig(
     string? FilePrefix = null,
 
     /// <summary>
+    /// Optional storage profile preset (Research, LowLatency, Archival).
+    /// </summary>
+    string? Profile = null,
+
+    /// <summary>
     /// Optional retention window (days). Files older than this are deleted during writes.
     /// </summary>
     int? RetentionDays = null,
@@ -78,7 +83,7 @@ public sealed record StorageConfig(
     /// </summary>
     public StorageOptions ToStorageOptions(string rootPath, bool compress)
     {
-        return new StorageOptions
+        var options = new StorageOptions
         {
             RootPath = rootPath,
             Compress = compress,
@@ -89,6 +94,8 @@ public sealed record StorageConfig(
             RetentionDays = RetentionDays,
             MaxTotalBytes = MaxTotalMegabytes is null ? null : MaxTotalMegabytes * 1024L * 1024L
         };
+
+        return StorageProfilePresets.ApplyProfile(Profile, options);
     }
 
     private static FileNamingConvention ParseNamingConvention(string? value)

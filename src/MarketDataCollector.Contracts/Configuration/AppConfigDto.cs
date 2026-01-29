@@ -187,6 +187,9 @@ public class StorageConfigDto
     [JsonPropertyName("filePrefix")]
     public string? FilePrefix { get; set; }
 
+    [JsonPropertyName("profile")]
+    public string? Profile { get; set; }
+
     [JsonPropertyName("retentionDays")]
     public int? RetentionDays { get; set; }
 
