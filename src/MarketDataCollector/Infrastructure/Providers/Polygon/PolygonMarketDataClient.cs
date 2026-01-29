@@ -11,6 +11,7 @@ using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Providers;
+using MarketDataCollector.Infrastructure.Providers.Core;
 using MarketDataCollector.Infrastructure.Resilience;
 using Polly;
 using Serilog;
@@ -136,6 +137,31 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
     /// Returns true only when a valid API key (20+ characters) is configured.
     /// </summary>
     public bool IsEnabled => HasValidCredentials;
+
+    #region IProviderMetadata
+
+    /// <inheritdoc/>
+    public string ProviderId => "polygon";
+
+    /// <inheritdoc/>
+    public string ProviderDisplayName => "Polygon.io Streaming";
+
+    /// <inheritdoc/>
+    public string ProviderDescription => "Real-time trades, quotes, and aggregates via Polygon.io WebSocket API";
+
+    /// <inheritdoc/>
+    public int ProviderPriority => 15;
+
+    /// <inheritdoc/>
+    public ProviderCapabilities ProviderCapabilities { get; } = ProviderCapabilities.Streaming(
+        trades: true,
+        quotes: true,
+        depth: false) with
+    {
+        SupportedMarkets = new[] { "US" }
+    };
+
+    #endregion
 
     /// <summary>
     /// Gets the current connection state.

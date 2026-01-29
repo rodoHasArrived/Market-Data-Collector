@@ -2,6 +2,7 @@ using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Infrastructure.Contracts;
+using MarketDataCollector.Infrastructure.Providers.Core;
 using System.Threading;
 
 namespace MarketDataCollector.Infrastructure.Providers.Backfill;
@@ -91,10 +92,13 @@ public sealed record HistoricalDataCapabilities
 ///
 /// Capabilities are indicated via properties (SupportsXxx) rather than interface
 /// inheritance, allowing consumers to check capabilities without type casting.
+///
+/// Implements <see cref="IProviderMetadata"/> for unified provider discovery
+/// and capability reporting across all provider types.
 /// </remarks>
 [ImplementsAdr("ADR-001", "Core historical data provider contract")]
 [ImplementsAdr("ADR-004", "All async methods support CancellationToken")]
-public interface IHistoricalDataProvider
+public interface IHistoricalDataProvider : IProviderMetadata, IDisposable
 {
     #region Core Identity
 
@@ -311,6 +315,39 @@ public interface IHistoricalDataProvider
         DateOnly end,
         CancellationToken ct = default)
         => Task.FromResult(new HistoricalAuctionsResult(Array.Empty<HistoricalAuction>()));
+
+    #endregion
+
+    #region IProviderMetadata Default Implementations
+
+    /// <inheritdoc/>
+    string IProviderMetadata.ProviderId => Name;
+
+    /// <inheritdoc/>
+    string IProviderMetadata.ProviderDisplayName => DisplayName;
+
+    /// <inheritdoc/>
+    string IProviderMetadata.ProviderDescription => Description;
+
+    /// <inheritdoc/>
+    int IProviderMetadata.ProviderPriority => Priority;
+
+    /// <inheritdoc/>
+    ProviderCapabilities IProviderMetadata.ProviderCapabilities =>
+        ProviderCapabilities.FromHistoricalCapabilities(
+            Capabilities,
+            MaxRequestsPerWindow == int.MaxValue ? null : MaxRequestsPerWindow,
+            RateLimitWindow,
+            RateLimitDelay == TimeSpan.Zero ? null : RateLimitDelay);
+
+    #endregion
+
+    #region IDisposable Default Implementation
+
+    /// <summary>
+    /// Disposes provider resources. Default implementation does nothing.
+    /// </summary>
+    void IDisposable.Dispose() { }
 
     #endregion
 }

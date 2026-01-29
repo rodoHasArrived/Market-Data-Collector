@@ -44,77 +44,81 @@ public sealed record ProviderRateLimitProfile(
 /// <summary>
 /// Factory for consistent provider templates across streaming, backfill, and search providers.
 /// </summary>
+/// <remarks>
+/// The <see cref="FromMetadata"/> method is the preferred unified approach for creating
+/// templates from any provider implementing <see cref="IProviderMetadata"/>.
+/// The type-specific methods are kept for backwards compatibility.
+/// </remarks>
 public static class ProviderTemplateFactory
 {
-    public static ProviderTemplate ForStreaming(string name, IMarketDataClient provider, int priority, bool isEnabled)
+    /// <summary>
+    /// Creates a provider template from any provider implementing <see cref="IProviderMetadata"/>.
+    /// This is the preferred unified approach that eliminates special-case logic.
+    /// </summary>
+    /// <param name="provider">The provider implementing IProviderMetadata.</param>
+    /// <param name="isEnabled">Whether the provider is currently enabled.</param>
+    /// <param name="priorityOverride">Optional priority override (uses provider's priority if null).</param>
+    /// <returns>A normalized ProviderTemplate for UI/monitoring consumption.</returns>
+    public static ProviderTemplate FromMetadata(IProviderMetadata provider, bool isEnabled, int? priorityOverride = null)
     {
-        var capabilities = new Dictionary<string, object>
+        var caps = provider.ProviderCapabilities;
+        var priority = priorityOverride ?? provider.ProviderPriority;
+
+        ProviderRateLimitProfile? rateLimit = null;
+        if (caps.MaxRequestsPerWindow.HasValue && caps.RateLimitWindow.HasValue)
         {
-            ["SupportsStreaming"] = true,
-            ["SupportsBackfill"] = false,
-            ["SupportsSymbolSearch"] = false
-        };
-
-        return new ProviderTemplate(
-            Name: name,
-            DisplayName: name,
-            ProviderType: ProviderType.Streaming,
-            Priority: priority,
-            IsEnabled: isEnabled,
-            Capabilities: capabilities);
-    }
-
-    public static ProviderTemplate ForBackfill(string name, IHistoricalDataProvider provider, int priority, bool isEnabled)
-    {
-        var caps = provider.Capabilities;
-        var capabilities = new Dictionary<string, object>
-        {
-            ["SupportsAdjustedPrices"] = caps.AdjustedPrices,
-            ["SupportsIntraday"] = caps.Intraday,
-            ["SupportsDividends"] = caps.Dividends,
-            ["SupportsSplits"] = caps.Splits,
-            ["SupportsQuotes"] = caps.Quotes,
-            ["SupportsTrades"] = caps.Trades,
-            ["SupportsAuctions"] = caps.Auctions,
-            ["SupportedMarkets"] = caps.SupportedMarkets
-        };
-
-        var rateLimit = new ProviderRateLimitProfile(
-            provider.MaxRequestsPerWindow,
-            provider.RateLimitWindow,
-            provider.RateLimitDelay == TimeSpan.Zero ? null : provider.RateLimitDelay);
-
-        return new ProviderTemplate(
-            Name: name,
-            DisplayName: provider.DisplayName,
-            ProviderType: ProviderType.Backfill,
-            Priority: priority,
-            IsEnabled: isEnabled,
-            Capabilities: capabilities,
-            RateLimit: rateLimit);
-    }
-
-    public static ProviderTemplate ForSymbolSearch(ISymbolSearchProvider provider, int priority, bool isEnabled)
-    {
-        var capabilities = new Dictionary<string, object>
-        {
-            ["SupportsSymbolSearch"] = true,
-            ["SupportsStreaming"] = false,
-            ["SupportsBackfill"] = false
-        };
-
-        if (provider is IFilterableSymbolSearchProvider filterable)
-        {
-            capabilities["SupportedAssetTypes"] = filterable.SupportedAssetTypes;
-            capabilities["SupportedExchanges"] = filterable.SupportedExchanges;
+            rateLimit = new ProviderRateLimitProfile(
+                caps.MaxRequestsPerWindow.Value,
+                caps.RateLimitWindow.Value,
+                caps.MinRequestDelay);
         }
 
         return new ProviderTemplate(
-            Name: provider.Name,
-            DisplayName: provider.DisplayName,
-            ProviderType: ProviderType.SymbolSearch,
+            Name: provider.ProviderId,
+            DisplayName: provider.ProviderDisplayName,
+            ProviderType: caps.PrimaryType,
             Priority: priority,
             IsEnabled: isEnabled,
-            Capabilities: capabilities);
+            Capabilities: caps.ToDictionary(),
+            RateLimit: rateLimit);
+    }
+
+    /// <summary>
+    /// Creates a provider template for a streaming provider.
+    /// </summary>
+    /// <remarks>
+    /// Delegates to <see cref="FromMetadata"/> for unified handling.
+    /// Kept for backwards compatibility.
+    /// </remarks>
+    public static ProviderTemplate ForStreaming(string name, IMarketDataClient provider, int priority, bool isEnabled)
+    {
+        // Use unified metadata path
+        return FromMetadata(provider, isEnabled, priority);
+    }
+
+    /// <summary>
+    /// Creates a provider template for a backfill provider.
+    /// </summary>
+    /// <remarks>
+    /// Delegates to <see cref="FromMetadata"/> for unified handling.
+    /// Kept for backwards compatibility.
+    /// </remarks>
+    public static ProviderTemplate ForBackfill(string name, IHistoricalDataProvider provider, int priority, bool isEnabled)
+    {
+        // Use unified metadata path
+        return FromMetadata(provider, isEnabled, priority);
+    }
+
+    /// <summary>
+    /// Creates a provider template for a symbol search provider.
+    /// </summary>
+    /// <remarks>
+    /// Delegates to <see cref="FromMetadata"/> for unified handling.
+    /// Kept for backwards compatibility.
+    /// </remarks>
+    public static ProviderTemplate ForSymbolSearch(ISymbolSearchProvider provider, int priority, bool isEnabled)
+    {
+        // Use unified metadata path
+        return FromMetadata(provider, isEnabled, priority);
     }
 }

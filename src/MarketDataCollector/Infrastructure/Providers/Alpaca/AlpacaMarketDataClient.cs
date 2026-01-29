@@ -8,6 +8,7 @@ using MarketDataCollector.Domain.Collectors;
 using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Infrastructure.Contracts;
+using MarketDataCollector.Infrastructure.Providers.Core;
 using MarketDataCollector.Infrastructure.Resilience;
 using Polly;
 using Serilog;
@@ -78,6 +79,31 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
     }
 
     public bool IsEnabled => true;
+
+    #region IProviderMetadata
+
+    /// <inheritdoc/>
+    public string ProviderId => "alpaca";
+
+    /// <inheritdoc/>
+    public string ProviderDisplayName => "Alpaca Markets Streaming";
+
+    /// <inheritdoc/>
+    public string ProviderDescription => "Real-time trades and quotes via Alpaca WebSocket API";
+
+    /// <inheritdoc/>
+    public int ProviderPriority => 10;
+
+    /// <inheritdoc/>
+    public ProviderCapabilities ProviderCapabilities { get; } = ProviderCapabilities.Streaming(
+        trades: true,
+        quotes: true,
+        depth: false) with
+    {
+        SupportedMarkets = new[] { "US" }
+    };
+
+    #endregion
 
     public async Task ConnectAsync(CancellationToken ct = default)
     {
