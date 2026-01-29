@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <!-- Assembly Information -->
+    <AssemblyName>MarketDataCollector.Ui.Shared</AssemblyName>
+    <RootNamespace>MarketDataCollector.Ui.Shared</RootNamespace>
+    <Version>1.0.0</Version>
+    <Authors>MarketDataCollector Team</Authors>
+    <Description>Shared UI endpoint handlers, services, and templates for MarketDataCollector web and desktop hosts</Description>
+    <Product>Market Data Collector UI Shared</Product>
+    <Copyright>Copyright 2024 MarketDataCollector Team</Copyright>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <!-- Web/ASP.NET Core dependencies for endpoint mapping -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <!-- Package dependencies -->
+  <ItemGroup>
+    <PackageReference Include="Serilog" Version="4.2.0" />
+  </ItemGroup>
+
+  <!-- Project references -->
+  <ItemGroup>
+    <ProjectReference Include="..\MarketDataCollector\MarketDataCollector.csproj" />
+    <ProjectReference Include="..\MarketDataCollector.Contracts\MarketDataCollector.Contracts.csproj" />
+  </ItemGroup>
+</Project>
