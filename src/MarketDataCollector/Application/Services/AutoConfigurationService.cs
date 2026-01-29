@@ -98,6 +98,13 @@ public sealed class AutoConfigurationService
             AlternativeEnvVars: Array.Empty<string>(),
             Capabilities: new[] { "Historical", "Daily" },
             Priority: 20
+        ),
+        ["NasdaqDataLink"] = new ProviderCredentialInfo(
+            DisplayName: "Nasdaq Data Link (Quandl)",
+            RequiredEnvVars: new[] { "NASDAQ_API_KEY" },
+            AlternativeEnvVars: new[] { "MDC_NASDAQ_API_KEY", "QUANDL_API_KEY" },
+            Capabilities: new[] { "Historical", "Daily", "AdjustedPrices", "Dividends", "Splits" },
+            Priority: 30
         )
     };
 
@@ -409,6 +416,19 @@ public sealed class AutoConfigurationService
                         Stooq = new StooqConfig(Enabled: true, Priority: provider.SuggestedPriority)
                     };
                     priorityOrder.Add("stooq");
+                    break;
+
+                case "NasdaqDataLink":
+                    var nasdaqKey = GetEnvVar("NASDAQ_API_KEY", "MDC_NASDAQ_API_KEY", "QUANDL_API_KEY");
+                    providers = providers with
+                    {
+                        Nasdaq = new NasdaqDataLinkConfig(
+                            Enabled: true,
+                            ApiKey: nasdaqKey,
+                            Priority: provider.SuggestedPriority
+                        )
+                    };
+                    priorityOrder.Add("nasdaq");
                     break;
             }
         }
