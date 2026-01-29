@@ -20,6 +20,7 @@ using MarketDataCollector.Infrastructure.Http;
 using MarketDataCollector.Infrastructure.Providers.InteractiveBrokers;
 using MarketDataCollector.Infrastructure.Providers.Alpaca;
 using MarketDataCollector.Infrastructure.Providers.Polygon;
+using MarketDataCollector.Infrastructure.Providers.StockSharp;
 using MarketDataCollector.Infrastructure.Providers.Backfill;
 using SymbolResolution = MarketDataCollector.Infrastructure.Providers.Backfill.SymbolResolution;
 using BackfillRequest = MarketDataCollector.Application.Backfill.BackfillRequest;
@@ -165,7 +166,7 @@ internal static class Program
             if (template == null)
             {
                 Console.Error.WriteLine($"Unknown template: {templateName}");
-                Console.Error.WriteLine("Available templates: minimal, full, alpaca, backfill, production, docker");
+                Console.Error.WriteLine("Available templates: minimal, full, alpaca, stocksharp, backfill, production, docker");
                 Environment.Exit(1);
                 return;
             }
@@ -630,6 +631,11 @@ internal static class Program
             DataSourceKind.Alpaca => new AlpacaMarketDataClient(tradeCollector, quoteCollector,
                 cfg.Alpaca! with { KeyId = alpacaKeyId ?? "", SecretKey = alpacaSecretKey ?? "" }),
             DataSourceKind.Polygon => new PolygonMarketDataClient(publisher, tradeCollector, quoteCollector),
+            DataSourceKind.StockSharp => new StockSharpMarketDataClient(
+                tradeCollector,
+                depthCollector,
+                quoteCollector,
+                cfg.StockSharp ?? new StockSharpConfig()),
             _ => new IBMarketDataClient(publisher, tradeCollector, depthCollector)
         };
 
@@ -791,7 +797,7 @@ IMPORT OPTIONS:
 
 AUTO-CONFIGURATION OPTIONS:
     --template <name>       Template for --generate-config: minimal, full, alpaca,
-                            backfill, production, docker (default: minimal)
+                            stocksharp, backfill, production, docker (default: minimal)
     --output <path>         Output path for generated config (default: config/appsettings.generated.json)
 
 EXAMPLES:

@@ -55,6 +55,10 @@
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <DefineConstants>$(DefineConstants);STOCKSHARP;STOCKSHARP_RITHMIC;STOCKSHARP_IQFEED;STOCKSHARP_CQG;STOCKSHARP_INTERACTIVEBROKERS</DefineConstants>
+  </PropertyGroup>
+
   <!-- Platform-specific runtime identifiers -->
   <PropertyGroup Condition="'$(RuntimeIdentifier)' == ''">
     <RuntimeIdentifiers>win-x64;win-arm64;linux-x64;linux-arm64;osx-x64;osx-arm64</RuntimeIdentifiers>
@@ -164,6 +168,15 @@
 
     <!-- Reactive Extensions for Observable patterns -->
     <PackageReference Include="System.Reactive" Version="6.1.0" />
+
+    <!-- StockSharp core + connectors -->
+    <PackageReference Include="StockSharp.Algo" Version="24.2.0" />
+    <PackageReference Include="StockSharp.Messages" Version="24.2.0" />
+    <PackageReference Include="StockSharp.BusinessEntities" Version="24.2.0" />
+    <PackageReference Include="StockSharp.Rithmic" Version="24.2.0" />
+    <PackageReference Include="StockSharp.IQFeed" Version="24.2.0" />
+    <PackageReference Include="StockSharp.Cqg.Com" Version="24.2.0" />
+    <PackageReference Include="StockSharp.InteractiveBrokers" Version="24.2.0" />
   </ItemGroup>
 
   <!-- Project References -->

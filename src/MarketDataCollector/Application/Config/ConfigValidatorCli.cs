@@ -236,6 +236,52 @@ public sealed class ConfigValidatorCli
             }
         }
 
+        if (config.DataSource == DataSourceKind.StockSharp)
+        {
+            var stockSharp = config.StockSharp;
+            var connector = stockSharp?.ConnectorType ?? "";
+
+            if (string.IsNullOrWhiteSpace(connector))
+            {
+                hints.Add("MDC_STOCKSHARP_CONNECTOR - StockSharp connector type (Rithmic, IQFeed, CQG, InteractiveBrokers)");
+            }
+
+            if (connector.Equals("rithmic", StringComparison.OrdinalIgnoreCase))
+            {
+                if (string.IsNullOrWhiteSpace(stockSharp?.Rithmic?.UserName))
+                    hints.Add("MDC_STOCKSHARP_RITHMIC_USERNAME - Rithmic username");
+                if (string.IsNullOrWhiteSpace(stockSharp?.Rithmic?.Password))
+                    hints.Add("MDC_STOCKSHARP_RITHMIC_PASSWORD - Rithmic password");
+                if (string.IsNullOrWhiteSpace(stockSharp?.Rithmic?.Server))
+                    hints.Add("MDC_STOCKSHARP_RITHMIC_SERVER - Rithmic server name");
+            }
+
+            if (connector.Equals("iqfeed", StringComparison.OrdinalIgnoreCase))
+            {
+                if (string.IsNullOrWhiteSpace(stockSharp?.IQFeed?.Host))
+                    hints.Add("MDC_STOCKSHARP_IQFEED_HOST - IQFeed host address");
+                if ((stockSharp?.IQFeed?.Level1Port ?? 0) <= 0)
+                    hints.Add("MDC_STOCKSHARP_IQFEED_LEVEL1_PORT - IQFeed Level1 port");
+            }
+
+            if (connector.Equals("cqg", StringComparison.OrdinalIgnoreCase))
+            {
+                if (string.IsNullOrWhiteSpace(stockSharp?.CQG?.UserName))
+                    hints.Add("MDC_STOCKSHARP_CQG_USERNAME - CQG username");
+                if (string.IsNullOrWhiteSpace(stockSharp?.CQG?.Password))
+                    hints.Add("MDC_STOCKSHARP_CQG_PASSWORD - CQG password");
+            }
+
+            if (connector.Equals("interactivebrokers", StringComparison.OrdinalIgnoreCase)
+                || connector.Equals("ib", StringComparison.OrdinalIgnoreCase))
+            {
+                if (string.IsNullOrWhiteSpace(stockSharp?.InteractiveBrokers?.Host))
+                    hints.Add("MDC_STOCKSHARP_IB_HOST - Interactive Brokers host");
+                if ((stockSharp?.InteractiveBrokers?.Port ?? 0) <= 0)
+                    hints.Add("MDC_STOCKSHARP_IB_PORT - Interactive Brokers port");
+            }
+        }
+
         if (hints.Count > 0)
         {
             Console.WriteLine("  Environment Variables Required:");
@@ -258,6 +304,14 @@ public sealed class ConfigValidatorCli
             "Alpaca.KeyId" => "Set ALPACA_KEY_ID environment variable or update config",
             "Alpaca.SecretKey" => "Set ALPACA_SECRET_KEY environment variable or update config",
             "Alpaca.Feed" => "Use 'iex' for free data or 'sip' for paid subscription",
+            "StockSharp.Enabled" => "Set StockSharp:Enabled to true when using StockSharp",
+            "StockSharp.ConnectorType" => "Use Rithmic, IQFeed, CQG, or InteractiveBrokers",
+            "StockSharp.Rithmic.UserName" => "Set MDC_STOCKSHARP_RITHMIC_USERNAME or update StockSharp:Rithmic:UserName",
+            "StockSharp.Rithmic.Password" => "Set MDC_STOCKSHARP_RITHMIC_PASSWORD or update StockSharp:Rithmic:Password",
+            "StockSharp.IQFeed.Host" => "Set MDC_STOCKSHARP_IQFEED_HOST or update StockSharp:IQFeed:Host",
+            "StockSharp.CQG.UserName" => "Set MDC_STOCKSHARP_CQG_USERNAME or update StockSharp:CQG:UserName",
+            "StockSharp.CQG.Password" => "Set MDC_STOCKSHARP_CQG_PASSWORD or update StockSharp:CQG:Password",
+            "StockSharp.InteractiveBrokers.Host" => "Set MDC_STOCKSHARP_IB_HOST or update StockSharp:InteractiveBrokers:Host",
             var p when p.Contains("Symbol") => "Symbol must be 1-20 uppercase characters",
             var p when p.Contains("DepthLevels") => "Depth levels should be between 1 and 50",
             var p when p.Contains("SecurityType") => "Valid types: STK, OPT, FUT, CASH, IND, CFD, BOND",
