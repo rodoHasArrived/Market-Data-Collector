@@ -2,6 +2,7 @@ using System.Text.Json;
 using MarketDataCollector.Application.Backfill;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Monitoring;
+using MarketDataCollector.Application.Services;
 
 namespace MarketDataCollector.Ui.Shared.Services;
 
@@ -10,8 +11,15 @@ namespace MarketDataCollector.Ui.Shared.Services;
 /// Provides access to config files, status files, and provider metrics.
 /// Shared between web dashboard and desktop applications.
 /// </summary>
+/// <remarks>
+/// This is a thin wrapper around ConfigurationService that provides UI-specific helper methods
+/// for accessing status files and data paths. All configuration loading and saving is delegated
+/// to the unified ConfigurationService.
+/// </remarks>
 public sealed class ConfigStore
 {
+    private readonly ConfigurationService _configService;
+
     /// <summary>
     /// Gets the path to the configuration file.
     /// </summary>
@@ -23,6 +31,7 @@ public sealed class ConfigStore
     /// </summary>
     public ConfigStore()
     {
+        _configService = new ConfigurationService();
         ConfigPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "appsettings.json"));
     }
 
@@ -32,19 +41,30 @@ public sealed class ConfigStore
     /// <param name="configPath">Full path to the configuration file.</param>
     public ConfigStore(string configPath)
     {
+        _configService = new ConfigurationService();
         ConfigPath = configPath;
     }
 
     /// <summary>
-    /// Loads the application configuration from disk.
+    /// Creates a new ConfigStore with a custom configuration path and service.
+    /// </summary>
+    /// <param name="configPath">Full path to the configuration file.</param>
+    /// <param name="configService">ConfigurationService instance to use.</param>
+    public ConfigStore(string configPath, ConfigurationService configService)
+    {
+        _configService = configService;
+        ConfigPath = configPath;
+    }
+
+    /// <summary>
+    /// Loads the application configuration from disk using ConfigurationService.
+    /// Applies environment overlays and MDC_* environment variable overrides.
     /// </summary>
     public AppConfig Load()
     {
         try
         {
-            if (!File.Exists(ConfigPath)) return new AppConfig();
-            var json = File.ReadAllText(ConfigPath);
-            return JsonSerializer.Deserialize<AppConfig>(json, AppConfigJsonOptions.Read) ?? new AppConfig();
+            return _configService.Load(ConfigPath);
         }
         catch
         {
@@ -53,13 +73,11 @@ public sealed class ConfigStore
     }
 
     /// <summary>
-    /// Saves the application configuration to disk.
+    /// Saves the application configuration to disk using ConfigurationService.
     /// </summary>
     public async Task SaveAsync(AppConfig cfg)
     {
-        var json = JsonSerializer.Serialize(cfg, AppConfigJsonOptions.Write);
-        Directory.CreateDirectory(Path.GetDirectoryName(ConfigPath)!);
-        await File.WriteAllTextAsync(ConfigPath, json);
+        await _configService.SaveAsync(cfg, ConfigPath);
     }
 
     /// <summary>

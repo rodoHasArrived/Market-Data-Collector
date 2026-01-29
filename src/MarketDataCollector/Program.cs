@@ -46,15 +46,20 @@ internal static class Program
 
     public static async Task Main(string[] args)
     {
-        // Initialize logging early
-        var cfgPath = ResolveConfigPath(args);
-        var cfg = LoadConfigWithEnvironmentOverlay(cfgPath);
+        // Create ConfigurationService as the single entry point for all config operations
+        await using var configService = new ConfigurationService();
+
+        // Load configuration through the unified service
+        var cfgPath = configService.ResolveConfigPath(args);
+        var cfg = configService.Load(cfgPath);
+
+        // Initialize logging after config is loaded
         LoggingSetup.Initialize(dataRoot: cfg.DataRoot);
         var log = LoggingSetup.ForContext("Program");
 
         try
         {
-            await RunAsync(args, cfg, cfgPath, log);
+            await RunAsync(args, cfg, cfgPath, log, configService);
         }
         catch (Exception ex)
         {
@@ -67,11 +72,10 @@ internal static class Program
         }
     }
 
-    private static async Task RunAsync(string[] args, AppConfig cfg, string cfgPath, ILogger log)
+    private static async Task RunAsync(string[] args, AppConfig cfg, string cfgPath, ILogger log, ConfigurationService configService)
     {
         // Initialize HttpClientFactory for proper HTTP client lifecycle management (TD-10)
         InitializeHttpClientFactory(log);
-        await using var configService = new ConfigurationService(log);
         var runMode = ResolveRunMode(args, log);
 
         // Help Mode - Display usage information
@@ -533,7 +537,7 @@ internal static class Program
         var replayPath = GetArgValue(args, "--replay");
 
         var statusPath = Path.Combine(cfg.DataRoot, "_status", "status.json");
-        await using var statusWriter = new StatusWriter(statusPath, () => LoadConfigWithEnvironmentOverlay(cfgPath));
+        await using var statusWriter = new StatusWriter(statusPath, () => configService.Load(cfgPath));
         ConfigWatcher? watcher = null;
         UiServer? uiServer = null;
 
@@ -1001,84 +1005,38 @@ SUPPORT:
     private static DateOnly? ParseDate(string? value)
         => DateOnly.TryParse(value, out var date) ? date : null;
 
+    // Legacy config loading functions - kept for backward compatibility but deprecated
+    // All configuration loading should go through ConfigurationService
+
+    [Obsolete("Use ConfigurationService.Load() instead. This method will be removed in a future version.")]
     private static AppConfig LoadConfig(string path)
     {
-        try
-        {
-            if (!File.Exists(path))
-            {
-                Console.Error.WriteLine($"[Warning] Configuration file not found: {path}");
-                Console.Error.WriteLine("Using default configuration. Copy appsettings.sample.json to appsettings.json to customize.");
-                return new AppConfig();
-            }
-
-            var json = File.ReadAllText(path);
-            var cfg = JsonSerializer.Deserialize<AppConfig>(json, AppConfigJsonOptions.Read);
-            return cfg ?? new AppConfig();
-        }
-        catch (JsonException ex)
-        {
-            Console.Error.WriteLine($"[Error] Invalid JSON in configuration file: {path}");
-            Console.Error.WriteLine($"  Error: {ex.Message}");
-            Console.Error.WriteLine("  Troubleshooting:");
-            Console.Error.WriteLine("    1. Validate JSON syntax at jsonlint.com");
-            Console.Error.WriteLine("    2. Check for trailing commas or missing quotes");
-            Console.Error.WriteLine("    3. Compare against appsettings.sample.json");
-            Console.Error.WriteLine("    4. Run: dotnet user-secrets init (for sensitive data)");
-            return new AppConfig();
-        }
-        catch (UnauthorizedAccessException)
-        {
-            throw new Application.Exceptions.ConfigurationException(
-                $"Access denied reading configuration file: {path}. Check file permissions.",
-                path, null);
-        }
-        catch (IOException ex)
-        {
-            throw new Application.Exceptions.ConfigurationException(
-                $"I/O error reading configuration file: {path}. {ex.Message}",
-                path, null);
-        }
-        catch (Exception ex)
-        {
-            Console.Error.WriteLine($"[Error] Failed to load configuration: {ex.Message}");
-            Console.Error.WriteLine("Using default configuration.");
-            Console.Error.WriteLine("For detailed help, see HELP.md or run with --help");
-            return new AppConfig();
-        }
+        // Delegate to ConfigurationService for consistent behavior
+        using var configService = new ConfigurationService();
+        return configService.Load(path, applyEnvironmentOverrides: false);
     }
 
     /// <summary>
     /// Resolves the configuration file path from command line arguments, environment variables, or defaults.
     /// Priority: --config argument > MDC_CONFIG_PATH env var > appsettings.json
     /// </summary>
+    [Obsolete("Use ConfigurationService.ResolveConfigPath() instead. This method will be removed in a future version.")]
     private static string ResolveConfigPath(string[] args)
     {
-        // 1. Check command line argument (highest priority)
-        var argValue = GetArgValue(args, "--config");
-        if (!string.IsNullOrWhiteSpace(argValue))
-            return argValue;
-
-        // 2. Check environment variable
-        var envValue = Environment.GetEnvironmentVariable(ConfigPathEnvVar);
-        if (!string.IsNullOrWhiteSpace(envValue))
-            return envValue;
-
-        // 3. Default to appsettings.json
-        return DefaultConfigFileName;
+        // Delegate to ConfigurationService for consistent behavior
+        using var configService = new ConfigurationService();
+        return configService.ResolveConfigPath(args);
     }
 
     /// <summary>
     /// Gets the current environment name from MDC_ENVIRONMENT or DOTNET_ENVIRONMENT.
     /// Returns null if no environment is specified.
     /// </summary>
+    [Obsolete("Use ConfigurationService.GetEnvironmentName() instead. This method will be removed in a future version.")]
     private static string? GetEnvironmentName()
     {
-        var env = Environment.GetEnvironmentVariable(EnvironmentEnvVar);
-        if (!string.IsNullOrWhiteSpace(env))
-            return env;
-
-        return Environment.GetEnvironmentVariable(DotnetEnvironmentEnvVar);
+        using var configService = new ConfigurationService();
+        return configService.GetEnvironmentName();
     }
 
     /// <summary>
@@ -1086,64 +1044,12 @@ SUPPORT:
     /// For example, if MDC_ENVIRONMENT=Production, it will load appsettings.json first,
     /// then merge settings from appsettings.Production.json if it exists.
     /// </summary>
+    [Obsolete("Use ConfigurationService.Load() instead. This method will be removed in a future version.")]
     private static AppConfig LoadConfigWithEnvironmentOverlay(string basePath)
     {
-        // Load base configuration
-        var baseConfig = LoadConfig(basePath);
-
-        // Check for environment-specific overlay
-        var envName = GetEnvironmentName();
-        if (string.IsNullOrWhiteSpace(envName))
-            return baseConfig;
-
-        // Build environment-specific path (e.g., appsettings.Production.json)
-        var directory = Path.GetDirectoryName(basePath) ?? ".";
-        var fileName = Path.GetFileNameWithoutExtension(basePath);
-        var extension = Path.GetExtension(basePath);
-        var envPath = Path.Combine(directory, $"{fileName}.{envName}{extension}");
-
-        // If environment-specific file doesn't exist, return base config
-        if (!File.Exists(envPath))
-            return baseConfig;
-
-        // Load and merge environment-specific config
-        try
-        {
-            Console.WriteLine($"[Info] Loading environment-specific configuration: {envPath}");
-            var envJson = File.ReadAllText(envPath);
-            var envConfig = JsonSerializer.Deserialize<AppConfig>(envJson, AppConfigJsonOptions.Read);
-
-            if (envConfig == null)
-                return baseConfig;
-
-            // Merge configurations: environment-specific values override base values
-            return MergeConfigs(baseConfig, envConfig);
-        }
-        catch (Exception ex)
-        {
-            Console.Error.WriteLine($"[Warning] Failed to load environment config {envPath}: {ex.Message}");
-            return baseConfig;
-        }
-    }
-
-    /// <summary>
-    /// Merges two configurations, with overlay values taking precedence over base values.
-    /// Only non-default values from the overlay are applied.
-    /// </summary>
-    private static AppConfig MergeConfigs(AppConfig baseConfig, AppConfig overlay)
-    {
-        return baseConfig with
-        {
-            DataSource = overlay.DataSource != default ? overlay.DataSource : baseConfig.DataSource,
-            DataRoot = !string.IsNullOrWhiteSpace(overlay.DataRoot) ? overlay.DataRoot : baseConfig.DataRoot,
-            Compress = overlay.Compress ?? baseConfig.Compress,
-            Symbols = overlay.Symbols?.Length > 0 ? overlay.Symbols : baseConfig.Symbols,
-            Alpaca = overlay.Alpaca ?? baseConfig.Alpaca,
-            IB = overlay.IB ?? baseConfig.IB,
-            Polygon = overlay.Polygon ?? baseConfig.Polygon,
-            Storage = overlay.Storage ?? baseConfig.Storage,
-            Backfill = overlay.Backfill ?? baseConfig.Backfill
-        };
+        // Delegate to ConfigurationService for consistent behavior
+        using var configService = new ConfigurationService();
+        return configService.Load(basePath);
     }
 
     private sealed class PipelinePublisher : IMarketEventPublisher

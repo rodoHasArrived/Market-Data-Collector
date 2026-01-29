@@ -2,35 +2,54 @@ using System.Text.Json;
 using MarketDataCollector.Application.Backfill;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Monitoring;
+using MarketDataCollector.Application.Services;
 using MarketDataCollector.Storage;
 
 namespace MarketDataCollector.Application.UI;
 
+/// <summary>
+/// Configuration store for UI components. Delegates to ConfigurationService for consistent behavior.
+/// </summary>
+/// <remarks>
+/// This is a thin wrapper around ConfigurationService that provides UI-specific helper methods
+/// for accessing status files and data paths. All configuration loading and saving is delegated
+/// to the unified ConfigurationService.
+/// </remarks>
 public sealed class ConfigStore
 {
+    private readonly ConfigurationService _configService;
+
+    /// <summary>
+    /// Gets the configuration file path.
+    /// </summary>
     public string ConfigPath { get; }
 
-    public ConfigStore(string? configPath = null)
+    /// <summary>
+    /// Creates a new ConfigStore instance.
+    /// </summary>
+    /// <param name="configPath">Path to the configuration file. If null, uses default resolution.</param>
+    /// <param name="configService">Optional ConfigurationService instance. If null, creates a new one.</param>
+    public ConfigStore(string? configPath = null, ConfigurationService? configService = null)
     {
-        ConfigPath = configPath ?? "appsettings.json";
+        _configService = configService ?? new ConfigurationService();
+
+        ConfigPath = configPath ?? _configService.ResolveConfigPath();
         if (!Path.IsPathRooted(ConfigPath))
         {
             ConfigPath = Path.GetFullPath(ConfigPath);
         }
     }
 
+    /// <summary>
+    /// Loads the configuration using ConfigurationService.
+    /// Applies environment overlays and MDC_* environment variable overrides.
+    /// </summary>
+    /// <returns>The loaded configuration.</returns>
     public AppConfig Load()
     {
         try
         {
-            if (!File.Exists(ConfigPath))
-            {
-                Console.WriteLine($"[Warning] Configuration file not found: {ConfigPath}");
-                return new AppConfig();
-            }
-
-            var json = File.ReadAllText(ConfigPath);
-            return JsonSerializer.Deserialize<AppConfig>(json, AppConfigJsonOptions.Read) ?? new AppConfig();
+            return _configService.Load(ConfigPath);
         }
         catch (Exception ex)
         {
@@ -39,17 +58,15 @@ public sealed class ConfigStore
         }
     }
 
+    /// <summary>
+    /// Saves the configuration using ConfigurationService.
+    /// </summary>
+    /// <param name="cfg">Configuration to save.</param>
     public async Task SaveAsync(AppConfig cfg)
     {
         try
         {
-            var json = JsonSerializer.Serialize(cfg, AppConfigJsonOptions.Write);
-            var dir = Path.GetDirectoryName(ConfigPath);
-            if (!string.IsNullOrEmpty(dir))
-            {
-                Directory.CreateDirectory(dir);
-            }
-            await File.WriteAllTextAsync(ConfigPath, json);
+            await _configService.SaveAsync(cfg, ConfigPath);
         }
         catch (Exception ex)
         {
