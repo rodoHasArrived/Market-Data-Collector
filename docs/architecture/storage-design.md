@@ -72,6 +72,15 @@ The system currently supports:
 | **Metadata** | Minimal | Rich metadata, insights, lineage tracking |
 | **Scheduling** | Manual timing | Trading-hours-aware off-hours automation |
 
+### Storage Profiles (Presets)
+Storage profiles are optional presets that map to existing storage options without removing advanced configuration.
+
+* **Research** – Balanced defaults (manifests + gzip).
+* **LowLatency** – Fast ingest (no compression, hourly partitions).
+* **Archival** – Long-term retention (Zstd + tiering defaults).
+
+Profiles are applied by `StorageProfilePresets.ApplyProfile` and only adjust advanced options unless explicitly overridden.
+
 ---
 
 ## Naming Convention Improvements

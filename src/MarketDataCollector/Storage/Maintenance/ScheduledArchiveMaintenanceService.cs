@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Threading.Channels;
+using MarketDataCollector.Application.Pipeline;
 using MarketDataCollector.Storage.Interfaces;
 using MarketDataCollector.Storage.Services;
 using Microsoft.Extensions.Hosting;
@@ -46,10 +47,9 @@ public sealed class ScheduledArchiveMaintenanceService : BackgroundService, IArc
         _tierMigrationService = tierMigrationService;
         _storageOptions = storageOptions;
 
-        _executionQueue = Channel.CreateBounded<MaintenanceExecution>(new BoundedChannelOptions(100)
-        {
-            FullMode = BoundedChannelFullMode.Wait
-        });
+        var policy = new EventPipelinePolicy(100, BoundedChannelFullMode.Wait, EnableMetrics: false);
+        _executionQueue = Channel.CreateBounded<MaintenanceExecution>(
+            policy.ToBoundedOptions(singleReader: true, singleWriter: false));
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)

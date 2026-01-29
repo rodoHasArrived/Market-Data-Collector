@@ -61,7 +61,7 @@ If you have environment variables set for your providers:
 Start the intuitive web dashboard for easy configuration and monitoring:
 
 ```bash
-./MarketDataCollector --ui
+./MarketDataCollector --mode web
 ```
 
 Then open your browser to `http://localhost:8080` for a full-featured dashboard with:
@@ -125,6 +125,11 @@ Use the packaged MSIX/AppInstaller flow for a standard Windows install, upgrade,
 dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj
 ```
 
+**Desktop mode (collector + UI server sidecar):**
+```bash
+./MarketDataCollector --mode desktop --http-port 8080
+```
+
 **Monitoring mode** with HTTP monitoring and hot-reload:
 ```bash
 ./MarketDataCollector --http-port 8080 --watch-config
@@ -174,7 +179,7 @@ See `docs/guides/operator-runbook.md` for deployment and operations guidance.
 * `appsettings.json` drives symbol subscriptions (trades/depth), provider settings, and API credentials.
 * Hot reload is enabled by default: edits to `appsettings.json` apply without restarting when `--watch-config` is set.
 * Set `DataSource` to `IB`, `Alpaca`, or `Polygon` to select the active data provider; BBO snapshots keep recording with stream IDs preserved for reconciliation.
-* Configure storage options including naming conventions, date partitioning, retention policies, and capacity limits.
+* Configure storage options including naming conventions, date partitioning, retention policies, capacity limits, and optional storage profiles.
 
 ## Outputs
 

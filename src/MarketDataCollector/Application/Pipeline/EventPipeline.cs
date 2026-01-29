@@ -25,6 +25,7 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
     private readonly Task _consumer;
     private readonly Task? _flusher;
     private readonly int _capacity;
+    private readonly bool _metricsEnabled;
 
     // Performance metrics
     private long _publishedCount;
@@ -57,23 +58,38 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
         int batchSize = 100,
         bool enablePeriodicFlush = true,
         ILogger<EventPipeline>? logger = null)
+        : this(
+            sink,
+            new EventPipelinePolicy(capacity, fullMode),
+            flushInterval,
+            batchSize,
+            enablePeriodicFlush,
+            logger)
+    {
+    }
+
+    /// <summary>
+    /// Creates a new EventPipeline with a shared policy for capacity and backpressure.
+    /// </summary>
+    public EventPipeline(
+        IStorageSink sink,
+        EventPipelinePolicy policy,
+        TimeSpan? flushInterval = null,
+        int batchSize = 100,
+        bool enablePeriodicFlush = true,
+        ILogger<EventPipeline>? logger = null)
     {
         _sink = sink ?? throw new ArgumentNullException(nameof(sink));
         _logger = logger ?? NullLogger<EventPipeline>.Instance;
-        if (capacity <= 0)
-            throw new ArgumentOutOfRangeException(nameof(capacity), capacity, "Capacity must be a positive value.");
-        _capacity = capacity;
+        if (policy is null)
+            throw new ArgumentNullException(nameof(policy));
+        _capacity = policy.Capacity;
+        _metricsEnabled = policy.EnableMetrics;
         _flushInterval = flushInterval ?? TimeSpan.FromSeconds(5);
         _batchSize = Math.Max(1, batchSize);
         _enablePeriodicFlush = enablePeriodicFlush;
 
-        _channel = Channel.CreateBounded<MarketEvent>(new BoundedChannelOptions(capacity)
-        {
-            SingleReader = true,
-            SingleWriter = false,
-            FullMode = fullMode,
-            AllowSynchronousContinuations = false // Avoid blocking producers
-        });
+        _channel = Channel.CreateBounded<MarketEvent>(policy.ToBoundedOptions(singleReader: true, singleWriter: false));
 
         // Start consumer with long-running task
         _consumer = Task.Factory.StartNew(
@@ -148,7 +164,10 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
         if (written)
         {
             Interlocked.Increment(ref _publishedCount);
-            Metrics.IncPublished();
+            if (_metricsEnabled)
+            {
+                Metrics.IncPublished();
+            }
 
             // Track peak queue size
             var currentSize = _channel.Reader.Count;
@@ -161,7 +180,10 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
         else
         {
             Interlocked.Increment(ref _droppedCount);
-            Metrics.IncDropped();
+            if (_metricsEnabled)
+            {
+                Metrics.IncDropped();
+            }
         }
 
         return written;
@@ -174,7 +196,10 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
     {
         await _channel.Writer.WriteAsync(evt, ct).ConfigureAwait(false);
         Interlocked.Increment(ref _publishedCount);
-        Metrics.IncPublished();
+        if (_metricsEnabled)
+        {
+            Metrics.IncPublished();
+        }
     }
 
     /// <summary>

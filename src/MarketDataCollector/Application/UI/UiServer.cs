@@ -6,6 +6,7 @@ using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Application.Services;
 using MarketDataCollector.Application.Subscriptions.Models;
 using MarketDataCollector.Application.Subscriptions.Services;
+using MarketDataCollector.Contracts.Api;
 using MarketDataCollector.Infrastructure.Providers.Backfill.Scheduling;
 using MarketDataCollector.Infrastructure.Providers.SymbolSearch;
 using MarketDataCollector.Storage;
@@ -233,7 +234,8 @@ public sealed class UiServer : IAsyncDisposable
                     NamingConvention: req.NamingConvention ?? "BySymbol",
                     DatePartition: req.DatePartition ?? "Daily",
                     IncludeProvider: req.IncludeProvider,
-                    FilePrefix: string.IsNullOrWhiteSpace(req.FilePrefix) ? null : req.FilePrefix
+                    FilePrefix: string.IsNullOrWhiteSpace(req.FilePrefix) ? null : req.FilePrefix,
+                    Profile: string.IsNullOrWhiteSpace(req.Profile) ? null : req.Profile
                 );
                 var next = cfg with
                 {
@@ -248,6 +250,14 @@ public sealed class UiServer : IAsyncDisposable
             {
                 return LogAndProblem(ex, "Failed to save storage settings");
             }
+        });
+
+        _app.MapGet("/api/storage/profiles", () =>
+        {
+            var profiles = StorageProfilePresets.GetPresets()
+                .Select(p => new StorageProfileResponse(p.Id, p.Label, p.Description))
+                .ToArray();
+            return Results.Json(profiles, s_jsonOptions);
         });
 
         _app.MapPost("/api/config/symbols", async (ConfigStore store, SymbolConfig symbol) =>
@@ -2720,9 +2730,6 @@ public record DryRunRequest(
     bool ValidateResources = true
 );
 
-public record DataSourceRequest(string DataSource);
-public record StorageSettingsRequest(string? DataRoot, bool Compress, string? NamingConvention, string? DatePartition, bool IncludeProvider, string? FilePrefix);
-public record BackfillRequestDto(string? Provider, string[] Symbols, DateOnly? From, DateOnly? To);
 
 // Symbol search DTOs
 public record FigiBulkLookupRequest(string[] Symbols);

@@ -22,6 +22,8 @@ The architecture supports multiple deployment modes:
 - **UWP Desktop Application** – Native Windows app for configuration and monitoring
 - **Web Dashboard** – Browser-based monitoring and management interface
 
+See [Consolidation Refactor Guide](consolidation.md) for shared UI contracts, storage profiles, pipeline policy, and configuration-service details.
+
 ---
 
 ## Layered Architecture
@@ -130,6 +132,7 @@ The architecture supports multiple deployment modes:
 * `IBCallbackRouter` normalizes IB callbacks into domain updates
 * `ContractFactory` resolves symbol configurations to IB contracts
 * No domain logic – replaceable / mockable
+* **Provider Templates** – `ProviderTemplateFactory` standardizes metadata for UI/monitoring
 
 ### Domain
 * Pure business logic – deterministic and testable
@@ -157,6 +160,7 @@ The architecture supports multiple deployment modes:
 ### Application
 * `Program.cs` – composition root and startup
 * `ConfigWatcher` – hot reload of `appsettings.json`
+* `ConfigurationService` – unified wizard, auto-config, validation, and hot reload
 * `StatusWriter` – periodic health snapshot to `data/_status/status.json`
 * `StatusHttpServer` – lightweight HTTP server for monitoring (Prometheus metrics, JSON status, HTML dashboard)
 * `EventSchemaValidator` – validates event schema integrity
@@ -164,6 +168,7 @@ The architecture supports multiple deployment modes:
 
 ### Storage
 * `EventPipeline` – bounded `Channel<MarketEvent>` with configurable capacity and drop policy
+* `EventPipelinePolicy` – shared bounded-channel configuration for pipelines and queues
 * **Archival-First Storage Pipeline**:
   - `ArchivalStorageService` – Write-Ahead Logging (WAL) for crash-safe persistence
   - `WriteAheadLog` – Append-only log with checksums and transaction semantics
@@ -183,6 +188,7 @@ The architecture supports multiple deployment modes:
   - `TieredStorageManager` – hot/warm/cold storage tier management with automatic migration
   - `DataRetentionPolicy` – time-based and capacity-based retention enforcement
 * `StorageOptions` – configurable naming conventions, partitioning strategies, retention policies, and capacity limits
+* `StorageProfilePresets` – optional presets for research, low-latency, and archival workflows
 
 ---
 

@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using MarketDataCollector.Contracts.Api;
 using MarketDataCollector.Uwp.Models;
 
 namespace MarketDataCollector.Uwp.Services;
@@ -23,6 +24,7 @@ public sealed class ApiClientService : IDisposable
     private int _timeoutSeconds;
     private int _backfillTimeoutMinutes;
     private bool _disposed;
+    private UiApiClient _uiApiClient;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -55,12 +57,18 @@ public sealed class ApiClientService : IDisposable
         _backfillTimeoutMinutes = 60;
         // TD-10: Use HttpClientFactory instead of creating new HttpClient instances
         _httpClient = HttpClientFactoryProvider.CreateClient(HttpClientNames.ApiClient);
+        _uiApiClient = new UiApiClient(_httpClient, _baseUrl, JsonOptions);
     }
 
     /// <summary>
     /// Gets the current base URL for the service.
     /// </summary>
     public string BaseUrl => _baseUrl;
+
+    /// <summary>
+    /// Shared UI API client for status/config endpoints.
+    /// </summary>
+    public UiApiClient UiApi => _uiApiClient;
 
     /// <summary>
     /// Gets whether the client is configured with a non-default URL.
@@ -92,11 +100,13 @@ public sealed class ApiClientService : IDisposable
             _baseUrl = newUrl.TrimEnd('/');
             _timeoutSeconds = newTimeout;
             _backfillTimeoutMinutes = newBackfillTimeout;
+            _uiApiClient.UpdateBaseUrl(_baseUrl);
 
             // Recreate HTTP client with new timeout
             var oldClient = _httpClient;
             _httpClient = CreateHttpClient(_timeoutSeconds);
             oldClient.Dispose();
+            _uiApiClient = new UiApiClient(_httpClient, _baseUrl, JsonOptions);
 
             if (urlChanged)
             {
@@ -351,16 +361,16 @@ public sealed class ApiClientService : IDisposable
         var startTime = DateTime.UtcNow;
         try
         {
-            var response = await GetWithResponseAsync<StatusResponse>("/api/status", ct);
+            var status = await _uiApiClient.GetStatusAsync(ct);
             var latencyMs = (DateTime.UtcNow - startTime).TotalMilliseconds;
 
             return new ServiceHealthResult
             {
-                IsReachable = response.Success,
-                IsConnected = response.Data?.IsConnected ?? false,
+                IsReachable = status != null,
+                IsConnected = status?.IsConnected ?? false,
                 LatencyMs = latencyMs,
-                StatusCode = response.StatusCode,
-                ErrorMessage = response.ErrorMessage
+                StatusCode = status != null ? 200 : 0,
+                ErrorMessage = status == null ? "Service unreachable" : null
             };
         }
         catch (OperationCanceledException)

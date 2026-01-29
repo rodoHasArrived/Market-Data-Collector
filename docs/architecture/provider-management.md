@@ -15,6 +15,7 @@ The Market Data Collector now features a provider-agnostic, extensible architect
 - **Priority-Based Job Queue** - Sophisticated backfill job scheduling
 - **Gap Detection & Repair** - Automatic identification and repair of data gaps
 - **Data Quality Monitoring** - Multi-dimensional quality scoring
+- **Provider Templates** - Standardized metadata, capabilities, and rate limit descriptors
 
 ## Architecture Diagram
 
@@ -159,6 +160,14 @@ registry.Register(new ProviderRegistration(
     50
 ));
 ```
+
+### 3. Provider Templates
+
+`ProviderTemplateFactory` generates standardized provider metadata for UI/monitoring surfaces:
+
+* Consistent capability keys across streaming/backfill/search providers
+* Rate limit details bundled with registry output
+* Single source of truth for provider registry metadata
 
 ### 3. Circuit Breaker Pattern
 
