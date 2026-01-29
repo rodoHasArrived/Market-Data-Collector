@@ -85,6 +85,13 @@ public sealed class AutoConfigurationService
             Capabilities: new[] { "RealTime", "Historical", "Trades", "Quotes", "L2Depth" },
             Priority: 1
         ),
+        ["NYSE"] = new ProviderCredentialInfo(
+            DisplayName: "NYSE Direct",
+            RequiredEnvVars: new[] { "NYSE_API_KEY" },
+            AlternativeEnvVars: new[] { "MDC_NYSE_API_KEY", "NYSE_API_SECRET" },
+            Capabilities: new[] { "RealTime", "Trades", "Quotes", "L2Depth" },
+            Priority: 3
+        ),
         ["Yahoo"] = new ProviderCredentialInfo(
             DisplayName: "Yahoo Finance",
             RequiredEnvVars: Array.Empty<string>(), // No API key required

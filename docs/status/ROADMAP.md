@@ -1,7 +1,7 @@
 # Market Data Collector - Roadmap
 
 **Version:** 1.0.0 (repository snapshot)
-**Last Updated:** 2026-01-27
+**Last Updated:** 2026-01-29
 **Status:** Active development
 
 This document provides the current focus areas and near-term goals. The full backlog is maintained in the issue tracker.
@@ -27,7 +27,7 @@ This document provides the current focus areas and near-term goals. The full bac
 
 ## Near-Term Goals
 
-- Improve provider status reporting in `--detect-providers`
+- ~~Improve provider status reporting in `--detect-providers`~~ ✅ (Added NYSE Direct and Nasdaq Data Link)
 - Expand backfill scheduling UX in the dashboard and UWP app
 - Document supported HTTP endpoints and response schemas
 
