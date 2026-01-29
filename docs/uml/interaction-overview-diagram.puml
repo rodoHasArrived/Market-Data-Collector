@@ -76,6 +76,21 @@ case (Real-Time)
                 repeat while (Running?)
             end group
 
+        fork again
+            ' Data Quality Monitoring
+            group Data Quality Monitoring
+                repeat
+                    :ref: **Quality Analysis**
+                    ====
+                    Detect anomalies
+                    Check price continuity
+                    Validate sequence integrity
+                    Monitor data freshness SLA
+                    Generate quality metrics
+                    ====;
+                repeat while (Running?)
+            end group
+
         end fork
 
     end group
@@ -86,15 +101,15 @@ case (Backfill)
 
         :ref: **Backfill Initialization**
         ====
-        Parse backfill request
-        Initialize providers
+        Parse backfill request (CLI or Scheduled)
+        Initialize providers (9 available)
         ====;
 
         while (More Symbols?) is (yes)
 
             :ref: **Symbol Resolution (Optional)**
             ====
-            Resolve via OpenFIGI
+            Resolve via OpenFIGI/Alpaca/Finnhub/Polygon
             Map to provider identifier
             ====;
 
@@ -124,7 +139,41 @@ case (Backfill)
         Flush pipeline
         Build result summary
         Write status file
+        Log to BackfillExecutionLog
         ====;
+
+    end group
+
+case (Scheduled Backfill)
+    ' ==================== SCHEDULED BACKFILL MODE ====================
+    group Scheduled Backfill Service
+
+        :ref: **Schedule Initialization**
+        ====
+        Load cron schedules
+        Initialize job manager
+        ====;
+
+        repeat
+            :ref: **Schedule Evaluation**
+            ====
+            Evaluate cron expressions
+            Check for due jobs
+            ====;
+
+            if (Job Due?) then (yes)
+                :ref: **Execute Scheduled Backfill**
+                ====
+                Load symbols from watchlist
+                Auto-select provider
+                Run backfill process
+                Log execution result
+                ====;
+            endif
+
+            :Wait for next check interval;
+
+        repeat while (Running?)
 
     end group
 

@@ -9,8 +9,8 @@ This directory contains UML diagrams documenting the Market Data Collector syste
 
 Defines user interactions with the system, showing:
 - **Actors:** CLI User, Web Dashboard User, API Client, System Operator, Desktop App User
-- **External Systems:** Data Providers (IB, Alpaca), Message Broker, Kubernetes
-- **Use Cases:** Real-time collection, backfill, configuration, monitoring, microservices API
+- **External Systems:** Data Providers (IB, Alpaca, NYSE, Polygon, StockSharp), Message Broker, Kubernetes
+- **Use Cases:** Real-time collection, backfill, scheduled backfill, configuration, monitoring, data quality, export/packaging, microservices API
 
 ### 2. Sequence Diagrams
 Shows step-by-step interactions between objects:
@@ -26,8 +26,8 @@ Represents processes, decision flows, and dynamic system behavior:
 
 | File | Description |
 |------|-------------|
-| `activity-diagram.puml` | Main data collection process with parallel tasks |
-| `activity-diagram-backfill.puml` | Historical backfill workflow with provider fallback |
+| `activity-diagram.puml` | Main data collection process with parallel tasks and data quality monitoring |
+| `activity-diagram-backfill.puml` | Historical backfill workflow with CLI, scheduled, and gap repair modes |
 
 ### 4. State Diagrams
 Tracks object states and transitions:
@@ -43,8 +43,11 @@ Tracks object states and transitions:
 **File:** `communication-diagram.puml`
 
 Shows message exchange between components:
-- Provider to Collector data flow
-- Pipeline to Storage communication
+- Provider to Collector data flow (5 streaming providers)
+- Pipeline to Storage communication (JSONL, Parquet, WAL)
+- Data Quality Monitoring service
+- Scheduled Backfill service
+- Export and Packaging services
 - Microservices routing
 - MassTransit message publishing
 
@@ -53,8 +56,8 @@ Shows message exchange between components:
 
 Combines multiple interactions into a high-level view:
 - Initialization sequence
-- Mode selection (Real-Time, Backfill, Microservices)
-- Parallel task execution
+- Mode selection (Real-Time, Backfill, Scheduled Backfill, Microservices)
+- Parallel task execution (including data quality monitoring)
 - Graceful shutdown
 
 ### 7. Timing Diagrams
@@ -119,24 +122,32 @@ Many Git platforms render PlantUML diagrams automatically in markdown:
 
 ### Actors
 - CLI User, Web Dashboard User, API Client, Operator, Desktop User
-- External: Interactive Brokers, Alpaca, Polygon, Yahoo Finance, Stooq
+- External Streaming: Interactive Brokers, Alpaca, NYSE Direct, Polygon, StockSharp
+- External Historical: Yahoo Finance, Stooq, Tiingo, Alpha Vantage, Finnhub, Nasdaq Data Link, Alpaca, Polygon, IB
+- Symbol Search: OpenFIGI, Alpaca, Finnhub, Polygon
 
 ### Core Components
 - **Collectors:** QuoteCollector, TradeDataCollector, MarketDepthCollector
 - **Pipeline:** EventPipeline (bounded channel, 50K capacity)
-- **Storage:** JsonlStorageSink, ParquetStorageSink
-- **Providers:** AlpacaMarketDataClient, IBMarketDataClient, CompositeHistoricalProvider
+- **Storage:** JsonlStorageSink, ParquetStorageSink, WriteAheadLog
+- **Streaming Providers:** AlpacaMarketDataClient, IBMarketDataClient, NYSEDataSource, PolygonMarketDataClient, StockSharpMarketDataClient
+- **Historical Providers:** CompositeHistoricalDataProvider (9 providers with failover)
+- **Data Quality:** DataQualityMonitoringService, AnomalyDetector, GapAnalyzer, PriceContinuityChecker
+- **Export:** AnalysisExportService, PortableDataPackager, ExportProfile
 
 ### Microservices
 - Gateway (5000), TradeIngestion (5001), QuoteIngestion (5002)
 - OrderBookIngestion (5003), HistoricalDataIngestion (5004), DataValidation (5005)
 
 ### Key Workflows
-1. Real-time streaming data collection
-2. Historical backfill with provider fallback
-3. Microservices API ingestion and routing
-4. Configuration hot-reload
-5. Integrity detection and recovery
+1. Real-time streaming data collection with data quality monitoring
+2. Historical backfill with provider fallback (9 providers)
+3. Scheduled backfill with cron expressions
+4. Data gap detection and repair
+5. Microservices API ingestion and routing
+6. Configuration hot-reload
+7. Integrity detection and recovery
+8. Data export and packaging
 
 ## Updating Diagrams
 
@@ -152,3 +163,7 @@ When modifying system architecture:
 - [Domain Contracts](../architecture/domains.md)
 - [Provider Setup Guides](../providers/)
 - [AI Assistant Guides](../ai-assistants/)
+
+---
+
+*Last Updated: 2026-01-29*
