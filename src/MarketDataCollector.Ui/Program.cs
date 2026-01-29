@@ -5,11 +5,12 @@ using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Application.Pipeline;
+using MarketDataCollector.Contracts.Api;
+using MarketDataCollector.Contracts.Configuration;
 using MarketDataCollector.Infrastructure.Providers.Backfill;
 using MarketDataCollector.Storage;
 using MarketDataCollector.Storage.Policies;
 using MarketDataCollector.Storage.Sinks;
-using MarketDataCollector.Contracts.Api;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -53,10 +54,10 @@ app.MapPost("/api/config/datasource", async (ConfigStore store, DataSourceReques
     return Results.Ok();
 });
 
-app.MapPost("/api/config/alpaca", async (ConfigStore store, AlpacaOptions alpaca) =>
+app.MapPost("/api/config/alpaca", async (ConfigStore store, AlpacaOptionsDto alpaca) =>
 {
     var cfg = store.Load();
-    var next = cfg with { Alpaca = alpaca };
+    var next = cfg with { Alpaca = alpaca.ToDomain() };
     await store.SaveAsync(next);
     return Results.Ok();
 });
@@ -270,26 +271,6 @@ app.MapPost("/api/backfill/run", async (BackfillCoordinator backfill, BackfillRe
 });
 
 app.Run();
-
-
-// Data Sources API DTOs
-public record DataSourceConfigRequest(
-    string? Id,
-    string Name,
-    string Provider = "IB",
-    bool Enabled = true,
-    string Type = "RealTime",
-    int Priority = 100,
-    AlpacaOptions? Alpaca = null,
-    PolygonOptions? Polygon = null,
-    IBOptions? IB = null,
-    string[]? Symbols = null,
-    string? Description = null,
-    string[]? Tags = null);
-
-public record ToggleRequest(bool Enabled);
-public record DefaultSourcesRequest(string? DefaultRealTimeSourceId, string? DefaultHistoricalSourceId);
-public record FailoverSettingsRequest(bool EnableFailover, int FailoverTimeoutSeconds);
 
 public static class HtmlTemplates
 {
