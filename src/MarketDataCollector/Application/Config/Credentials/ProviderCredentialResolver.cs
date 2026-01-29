@@ -116,8 +116,16 @@ public sealed class ProviderCredentialResolver
         string? configUsername = null,
         string? configPassword = null)
     {
-        var username = ResolveCredential("RABBITMQ_USERNAME", configUsername, "RabbitMQ Username") ?? "guest";
-        var password = ResolveCredential("RABBITMQ_PASSWORD", configPassword, "RabbitMQ Password") ?? "guest";
+        var resolvedUsername = ResolveCredential("RABBITMQ_USERNAME", configUsername, "RabbitMQ Username");
+        var resolvedPassword = ResolveCredential("RABBITMQ_PASSWORD", configPassword, "RabbitMQ Password");
+        var username = resolvedUsername ?? "guest";
+        var password = resolvedPassword ?? "guest";
+
+        if (resolvedUsername is null && resolvedPassword is null)
+        {
+            _log.Warning("RabbitMQ credentials not configured; defaulting to guest/guest");
+        }
+
         return (username, password);
     }
 

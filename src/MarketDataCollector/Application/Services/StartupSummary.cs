@@ -81,7 +81,7 @@ public sealed class StartupSummary
         // Storage
         sb.AppendLine("  Storage:");
         sb.AppendLine($"    Root:         {Path.GetFullPath(config.DataRoot)}");
-        sb.AppendLine($"    Compression:  {(config.Compress ? "Enabled (gzip)" : "Disabled")}");
+        sb.AppendLine($"    Compression:  {(config.Compress ?? false ? "Enabled (gzip)" : "Disabled")}");
 
         if (config.Storage != null)
         {
@@ -230,7 +230,7 @@ public sealed class StartupSummary
         }
 
         // Check compression recommendation
-        if (!config.Compress && (config.Symbols?.Length ?? 0) > 10)
+        if (!(config.Compress ?? false) && (config.Symbols?.Length ?? 0) > 10)
         {
             suggestions.Add("Consider enabling compression for better storage efficiency");
         }

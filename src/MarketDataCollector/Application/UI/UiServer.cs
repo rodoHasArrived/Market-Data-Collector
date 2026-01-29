@@ -84,7 +84,9 @@ public sealed class UiServer : IAsyncDisposable
 
         // Storage organization services
         var config = store.Load();
-        var storageOptions = config.Storage?.ToStorageOptions(config.DataRoot, config.Compress) ?? new StorageOptions { RootPath = config.DataRoot, Compress = config.Compress };
+        var compressionEnabled = config.Compress ?? false;
+        var storageOptions = config.Storage?.ToStorageOptions(config.DataRoot, compressionEnabled)
+            ?? new StorageOptions { RootPath = config.DataRoot, Compress = compressionEnabled };
         builder.Services.AddSingleton(storageOptions);
         builder.Services.AddSingleton<ISourceRegistry>(sp => new SourceRegistry(config.Sources?.PersistencePath));
         builder.Services.AddSingleton<IFileMaintenanceService, FileMaintenanceService>();
@@ -178,7 +180,7 @@ public sealed class UiServer : IAsyncDisposable
             return Results.Json(new
             {
                 dataRoot = cfg.DataRoot,
-                compress = cfg.Compress,
+                compress = cfg.Compress ?? false,
                 dataSource = cfg.DataSource.ToString(),
                 alpaca = cfg.Alpaca,
                 storage = cfg.Storage,
