@@ -1,6 +1,6 @@
 // Provider Architecture Diagram
-// Market Data Collector v1.0.0
-// Last Updated: 2026-01-14
+// Market Data Collector v1.6.1
+// Last Updated: 2026-01-29
 //
 // This diagram shows the provider abstraction layer and all implemented
 // data providers for both real-time streaming and historical backfill.
@@ -16,7 +16,7 @@ digraph ProviderArchitecture {
 
   // Title
   labelloc="t";
-  label="Market Data Collector - Provider Architecture\nUnified Data Source Abstraction | v1.0.0";
+  label="Market Data Collector - Provider Architecture\nUnified Data Source Abstraction | v1.6.1";
 
   // Provider Interfaces
   subgraph cluster_interfaces {
@@ -57,7 +57,7 @@ digraph ProviderArchitecture {
 
   // Streaming Providers
   subgraph cluster_streaming {
-    label="Real-Time Streaming Providers (4 Production + 1 Stub)";
+    label="Real-Time Streaming Providers (5 Production)";
     color="#2b6cb0";
     style="rounded";
     bgcolor="#dbeafe";
@@ -77,19 +77,19 @@ digraph ProviderArchitecture {
                  label="StockSharpConnector\n[Production]\n\nMulti-exchange adapter\nGlobal markets\n90+ connectors"];
     }
 
-    subgraph cluster_stub_streaming {
-      label="Stub/Planned";
+    subgraph cluster_polygon_streaming {
+      label="Additional Providers";
       style="dashed";
       color="#1e40af";
 
-      POL_CLIENT [fillcolor="#fecaca",
-                  label="PolygonMarketDataClient\n[Stub]\n\nSynthetic heartbeat\nImplementation pending"];
+      POL_CLIENT [fillcolor="#bfdbfe",
+                  label="PolygonMarketDataClient\n[Production]\n\nPolygon.io streaming\nTrades, quotes, websocket"];
     }
   }
 
   // Historical Providers
   subgraph cluster_historical {
-    label="Historical Data Providers (9 Implemented)";
+    label="Historical Data Providers (8 Implemented)";
     color="#2c7a7b";
     style="rounded";
     bgcolor="#d1fae5";
@@ -99,7 +99,6 @@ digraph ProviderArchitecture {
       style="dashed";
       color="#047857";
 
-      NYSE_HIST [fillcolor="#a7f3d0", label="NYSE Direct\n[Priority 5]\n\nOHLCV, Dividends, Splits\nExchange-direct\nCorporate actions"];
       ALPACA_HIST [fillcolor="#a7f3d0", label="Alpaca Historical\n[Priority 5]\n\nOHLCV, Trades, Auctions\nAdjusted prices\n1min to 1day bars"];
     }
 
@@ -177,7 +176,6 @@ digraph ProviderArchitecture {
   I_MARKET -> POL_CLIENT [style=dashed];
 
   I_HIST_PROVIDER -> ALPACA_HIST [style=dashed];
-  I_HIST_PROVIDER -> NYSE_HIST [style=dashed];
   I_HIST_PROVIDER -> YAHOO_HIST [style=dashed];
   I_HIST_PROVIDER -> STOOQ_HIST [style=dashed];
   I_HIST_PROVIDER -> POLYGON_HIST [style=dashed];
@@ -187,7 +185,6 @@ digraph ProviderArchitecture {
   I_HIST_PROVIDER -> AV_HIST [style=dashed];
 
   // Composite orchestration
-  COMPOSITE -> NYSE_HIST [label="priority 5"];
   COMPOSITE -> ALPACA_HIST [label="priority 5"];
   COMPOSITE -> YAHOO_HIST [label="priority 10"];
   COMPOSITE -> POLYGON_HIST;

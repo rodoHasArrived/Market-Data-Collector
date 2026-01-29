@@ -1,6 +1,6 @@
 // Onboarding & Diagnostics Flow Diagram
-// Market Data Collector v1.0.0
-// Last Updated: 2026-01-14
+// Market Data Collector v1.6.1
+// Last Updated: 2026-01-29
 //
 // This diagram shows the user journey from first-run through setup to operational,
 // including all diagnostic and configuration options.
@@ -16,7 +16,7 @@ digraph OnboardingFlow {
 
   // Title
   labelloc="t";
-  label="Market Data Collector - Onboarding & Diagnostics Flow\nUser Journey from Installation to Operation | v1.0.0";
+  label="Market Data Collector - Onboarding & Diagnostics Flow\nUser Journey from Installation to Operation | v1.6.1";
 
   // Entry Point
   START [shape=oval, fillcolor="#38a169", fontcolor="white",
