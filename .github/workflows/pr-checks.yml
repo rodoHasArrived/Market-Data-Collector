@@ -33,10 +33,11 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
+    - name: Setup .NET with Cache
+      uses: ./.github/actions/setup-dotnet-cache
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
+        cache-suffix: pr-lint
 
     - name: Restore dependencies
       run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
@@ -55,10 +56,11 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
+    - name: Setup .NET with Cache
+      uses: ./.github/actions/setup-dotnet-cache
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
+        cache-suffix: pr-build
 
     - name: Restore dependencies
       run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
@@ -76,10 +78,11 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
+    - name: Setup .NET with Cache
+      uses: ./.github/actions/setup-dotnet-cache
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
+        cache-suffix: pr-test
 
     - name: Restore dependencies
       run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true

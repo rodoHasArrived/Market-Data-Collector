@@ -5,24 +5,22 @@
 name: Code Quality
 
 on:
-  # push trigger disabled
-  # push:
-  #   branches: [ "main" ]
-  #   paths:
-  #     - 'src/**'
-  #     - 'tests/**'
-  #     - 'benchmarks/**'
-  #     - '*.props'
-  #     - '*.targets'
-  #     - '**/*.csproj'
-  #     - '**/*.fsproj'
-  # pull_request trigger disabled
-  # pull_request:
-  #   branches: [ "main" ]
-  #   paths:
-  #     - 'src/**'
-  #     - 'tests/**'
-  #     - 'benchmarks/**'
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'benchmarks/**'
+      - '*.props'
+      - '*.targets'
+      - '**/*.csproj'
+      - '**/*.fsproj'
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'benchmarks/**'
   workflow_dispatch:
 
 permissions:
