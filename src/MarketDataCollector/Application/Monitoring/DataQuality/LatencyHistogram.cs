@@ -312,7 +312,7 @@ public sealed class LatencyHistogram : IDisposable
                 return new LatencyDistribution(
                     Symbol: symbol,
                     Provider: provider,
-                    From: from ?? _samples.FirstOrDefault().Timestamp,
+                    From: from ?? sampleList.First().Timestamp,
                     To: to ?? DateTimeOffset.UtcNow,
                     SampleCount: sampleList.Count,
                     MinLatencyMs: Math.Round(_min, 3),

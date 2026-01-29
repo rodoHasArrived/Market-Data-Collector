@@ -24,6 +24,7 @@ public sealed class PortablePackagerService
     private readonly ArchiveHealthService? _archiveHealthService;
     private readonly SchemaService? _schemaService;
     private readonly List<RecentPackageInfo> _recentPackages = new();
+    private const int MaxRecentPackages = 50;
 
     private PortablePackagerService()
     {
@@ -76,8 +77,14 @@ public sealed class PortablePackagerService
                 Name = options.Name,
                 Path = result.OutputPath,
                 SizeBytes = result.TotalBytes,
-                CreatedAt = DateTime.Now
+                CreatedAt = DateTime.UtcNow
             });
+
+            // Maintain bounded collection size
+            while (_recentPackages.Count > MaxRecentPackages)
+            {
+                _recentPackages.RemoveAt(0);
+            }
         }
 
         return new PackageCreationResult

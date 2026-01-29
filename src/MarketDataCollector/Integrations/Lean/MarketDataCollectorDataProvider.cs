@@ -26,7 +26,7 @@ public sealed class MarketDataCollectorDataProvider : IDataProvider
     public MarketDataCollectorDataProvider(string? dataRoot = null)
     {
         _dataRoot = dataRoot ?? Path.Combine(Directory.GetCurrentDirectory(), "data");
-        Log.Trace($"MarketDataCollectorDataProvider initialized with data root: {_dataRoot}");
+        Log.Trace("MarketDataCollectorDataProvider initialized with data root: " + _dataRoot);
     }
 
     /// <summary>
@@ -72,12 +72,12 @@ public sealed class MarketDataCollectorDataProvider : IDataProvider
                 return OpenFile(alternativeGzPath);
             }
 
-            Log.Trace($"MarketDataCollectorDataProvider: File not found: {key}");
+            Log.Trace("MarketDataCollectorDataProvider: File not found: " + key);
             return Stream.Null;
         }
         catch (Exception ex)
         {
-            Log.Error(ex, $"MarketDataCollectorDataProvider: Error fetching {key}");
+            Log.Error(ex, "MarketDataCollectorDataProvider: Error fetching " + key);
             return Stream.Null;
         }
         finally

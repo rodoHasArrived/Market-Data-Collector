@@ -48,7 +48,14 @@ public sealed partial class SystemHealthPage : Page
 
     private async void RefreshTimer_Tick(object? sender, object e)
     {
-        await LoadDataAsync();
+        try
+        {
+            await LoadDataAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error in RefreshTimer_Tick: {ex.Message}");
+        }
     }
 
     private async Task LoadDataAsync()

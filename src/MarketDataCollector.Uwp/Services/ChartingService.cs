@@ -436,8 +436,17 @@ public sealed class ChartingService
                 break;
         }
 
-        profile.ValueAreaHigh = minPrice + (includedBuckets.Max() + 1) * bucketSize;
-        profile.ValueAreaLow = minPrice + includedBuckets.Min() * bucketSize;
+        if (includedBuckets.Count > 0)
+        {
+            profile.ValueAreaHigh = minPrice + (includedBuckets.Max() + 1) * bucketSize;
+            profile.ValueAreaLow = minPrice + includedBuckets.Min() * bucketSize;
+        }
+        else
+        {
+            // No volume data - use full price range
+            profile.ValueAreaHigh = maxPrice;
+            profile.ValueAreaLow = minPrice;
+        }
 
         return profile;
     }

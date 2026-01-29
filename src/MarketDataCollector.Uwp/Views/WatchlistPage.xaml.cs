@@ -79,7 +79,14 @@ public sealed partial class WatchlistPage : Page
 
     private async void WatchlistService_WatchlistChanged(object? sender, WatchlistChangedEventArgs e)
     {
-        await LoadWatchlistAsync();
+        try
+        {
+            await LoadWatchlistAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error in WatchlistService_WatchlistChanged: {ex.Message}");
+        }
     }
 
     private async Task LoadWatchlistAsync()

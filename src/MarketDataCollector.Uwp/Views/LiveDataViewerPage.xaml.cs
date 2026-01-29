@@ -49,9 +49,16 @@ public sealed partial class LiveDataViewerPage : Page
 
     private async void RefreshTimer_Tick(object? sender, object e)
     {
-        if (!string.IsNullOrEmpty(_currentSymbol) && _isSubscribed)
+        try
         {
-            await RefreshDataAsync();
+            if (!string.IsNullOrEmpty(_currentSymbol) && _isSubscribed)
+            {
+                await RefreshDataAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error in RefreshTimer_Tick: {ex.Message}");
         }
     }
 
