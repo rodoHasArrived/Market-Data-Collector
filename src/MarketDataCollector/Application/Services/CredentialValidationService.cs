@@ -218,9 +218,10 @@ public sealed class CredentialValidationService : IAsyncDisposable
 
         try
         {
-            var url = $"https://api.polygon.io/v3/reference/tickers/AAPL?apiKey={options.ApiKey}";
+            using var request = new HttpRequestMessage(HttpMethod.Get, "https://api.polygon.io/v3/reference/tickers/AAPL");
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", options.ApiKey);
 
-            using var response = await _httpClient.GetAsync(url, ct);
+            using var response = await _httpClient.SendAsync(request, ct);
             sw.Stop();
 
             if (response.IsSuccessStatusCode)
@@ -274,9 +275,10 @@ public sealed class CredentialValidationService : IAsyncDisposable
 
         try
         {
-            var url = $"https://api.tiingo.com/api/test?token={options.ApiToken}";
+            using var request = new HttpRequestMessage(HttpMethod.Get, "https://api.tiingo.com/api/test");
+            request.Headers.TryAddWithoutValidation("X-TIINGO-APIKEY", options.ApiToken);
 
-            using var response = await _httpClient.GetAsync(url, ct);
+            using var response = await _httpClient.SendAsync(request, ct);
             sw.Stop();
 
             if (response.IsSuccessStatusCode)
@@ -329,9 +331,10 @@ public sealed class CredentialValidationService : IAsyncDisposable
 
         try
         {
-            var url = $"https://finnhub.io/api/v1/stock/profile2?symbol=AAPL&token={options.ApiKey}";
+            using var request = new HttpRequestMessage(HttpMethod.Get, "https://finnhub.io/api/v1/stock/profile2?symbol=AAPL");
+            request.Headers.TryAddWithoutValidation("X-Finnhub-Token", options.ApiKey);
 
-            using var response = await _httpClient.GetAsync(url, ct);
+            using var response = await _httpClient.SendAsync(request, ct);
             sw.Stop();
 
             if (response.IsSuccessStatusCode)
@@ -389,9 +392,10 @@ public sealed class CredentialValidationService : IAsyncDisposable
 
         try
         {
-            var url = $"https://api.polygon.io/v3/reference/tickers/AAPL?apiKey={options.ApiKey}";
+            using var request = new HttpRequestMessage(HttpMethod.Get, "https://api.polygon.io/v3/reference/tickers/AAPL");
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", options.ApiKey);
 
-            using var response = await _httpClient.GetAsync(url, ct);
+            using var response = await _httpClient.SendAsync(request, ct);
             sw.Stop();
 
             if (response.IsSuccessStatusCode)
