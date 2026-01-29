@@ -227,7 +227,7 @@ public static class WebSocketResiliencePolicy
 /// Implements ping/pong pattern to detect stale connections.
 /// Based on best practices: send ping every 30-60 seconds, expect pong within 10 seconds.
 /// </summary>
-public class WebSocketHeartbeat : IAsyncDisposable
+public sealed class WebSocketHeartbeat : IAsyncDisposable
 {
     private readonly ClientWebSocket _ws;
     private readonly TimeSpan _pingInterval;

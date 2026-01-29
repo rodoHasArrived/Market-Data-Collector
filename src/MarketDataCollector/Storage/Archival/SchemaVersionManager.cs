@@ -10,7 +10,7 @@ namespace MarketDataCollector.Storage.Archival;
 /// Manages schema versions for long-term format preservation.
 /// Ensures backward compatibility and supports schema migration.
 /// </summary>
-public class SchemaVersionManager
+public sealed class SchemaVersionManager
 {
     private readonly ILogger _log = LoggingSetup.ForContext<SchemaVersionManager>();
     private readonly string _schemaDirectory;
@@ -538,7 +538,7 @@ public class SchemaVersionManager
 /// <summary>
 /// Schema definition for an event type.
 /// </summary>
-public class SchemaDefinition
+public sealed class SchemaDefinition
 {
     [JsonPropertyName("eventType")]
     public string EventType { get; set; } = string.Empty;
@@ -562,7 +562,7 @@ public class SchemaDefinition
 /// <summary>
 /// Field definition within a schema.
 /// </summary>
-public class SchemaField
+public sealed class SchemaField
 {
     [JsonPropertyName("name")]
     public string Name { get; set; } = string.Empty;
@@ -600,7 +600,7 @@ public enum SchemaFieldType
 /// <summary>
 /// Constraints for field validation.
 /// </summary>
-public class FieldConstraints
+public sealed class FieldConstraints
 {
     [JsonPropertyName("minValue")]
     public double? MinValue { get; set; }
@@ -618,7 +618,7 @@ public class FieldConstraints
 /// <summary>
 /// Migration definition between schema versions.
 /// </summary>
-public class SchemaMigration
+public sealed class SchemaMigration
 {
     public string EventType { get; set; } = string.Empty;
     public string FromVersion { get; set; } = string.Empty;
@@ -633,7 +633,7 @@ public class SchemaMigration
 /// <summary>
 /// Result of a migration operation.
 /// </summary>
-public class MigrationResult
+public sealed class MigrationResult
 {
     public string EventType { get; set; } = string.Empty;
     public string FromVersion { get; set; } = string.Empty;
@@ -650,7 +650,7 @@ public class MigrationResult
 /// <summary>
 /// Result of schema validation.
 /// </summary>
-public class SchemaValidationResult
+public sealed class SchemaValidationResult
 {
     public string SchemaId { get; set; } = string.Empty;
     public bool IsValid { get; set; }
@@ -661,7 +661,7 @@ public class SchemaValidationResult
 /// <summary>
 /// Schema registry metadata.
 /// </summary>
-public class SchemaRegistry
+public sealed class SchemaRegistry
 {
     [JsonPropertyName("version")]
     public string Version { get; set; } = "1.0";
@@ -676,7 +676,7 @@ public class SchemaRegistry
 /// <summary>
 /// Entry in the schema registry.
 /// </summary>
-public class SchemaRegistryEntry
+public sealed class SchemaRegistryEntry
 {
     [JsonPropertyName("eventType")]
     public string EventType { get; set; } = string.Empty;

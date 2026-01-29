@@ -251,7 +251,7 @@ public sealed class ArchivalStorageService : IStorageSink
 /// <summary>
 /// Options for the archival storage service.
 /// </summary>
-public class ArchivalStorageOptions
+public sealed class ArchivalStorageOptions
 {
     /// <summary>
     /// WAL configuration.
@@ -282,7 +282,7 @@ public class ArchivalStorageOptions
 /// <summary>
 /// Statistics for the archival storage service.
 /// </summary>
-public class ArchivalStorageStats
+public sealed class ArchivalStorageStats
 {
     public long PendingEvents { get; set; }
     public long LastCommittedSequence { get; set; }

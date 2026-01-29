@@ -15,7 +15,7 @@ namespace MarketDataCollector.Storage.Export;
 /// Service for exporting collected market data in analysis-ready formats.
 /// Supports multiple output formats optimized for external analysis tools.
 /// </summary>
-public class AnalysisExportService
+public sealed class AnalysisExportService
 {
     private readonly ILogger _log = LoggingSetup.ForContext<AnalysisExportService>();
     private readonly string _dataRoot;
