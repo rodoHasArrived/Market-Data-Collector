@@ -22,7 +22,7 @@ namespace MarketDataCollector.Infrastructure.DataSources;
 /// </example>
 [ImplementsAdr("ADR-005", "Core attribute for provider discovery")]
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
-public class DataSourceAttribute : Attribute
+public sealed class DataSourceAttribute : Attribute
 {
     /// <summary>
     /// Unique identifier for this data source (e.g., "alpaca", "yahoo", "ib").

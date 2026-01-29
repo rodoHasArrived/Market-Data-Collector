@@ -13,7 +13,7 @@ namespace MarketDataCollector.Integrations.Lean;
 /// Custom Lean BaseData implementation for MarketDataCollector trade events.
 /// Allows Lean algorithms to consume tick-by-tick trade data collected by MarketDataCollector.
 /// </summary>
-public class MarketDataCollectorTradeData : BaseData
+public sealed class MarketDataCollectorTradeData : BaseData
 {
     private static readonly ILogger _log = Log.ForContext<MarketDataCollectorTradeData>();
 

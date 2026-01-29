@@ -452,7 +452,7 @@ public class IBApiException : Exception
 /// <summary>
 /// Exception thrown when a pacing violation occurs.
 /// </summary>
-public class IBPacingViolationException : IBApiException
+public sealed class IBPacingViolationException : IBApiException
 {
     public IBPacingViolationException(int errorCode, string message)
         : base(errorCode, message)
@@ -468,7 +468,7 @@ public class IBPacingViolationException : IBApiException
 /// <summary>
 /// Exception thrown when market data is not subscribed.
 /// </summary>
-public class IBMarketDataNotSubscribedException : IBApiException
+public sealed class IBMarketDataNotSubscribedException : IBApiException
 {
     public IBMarketDataNotSubscribedException(int errorCode, string message)
         : base(errorCode, message)
@@ -479,7 +479,7 @@ public class IBMarketDataNotSubscribedException : IBApiException
 /// <summary>
 /// Exception thrown when a security definition is not found.
 /// </summary>
-public class IBSecurityNotFoundException : IBApiException
+public sealed class IBSecurityNotFoundException : IBApiException
 {
     public IBSecurityNotFoundException(int errorCode, string message)
         : base(errorCode, message)

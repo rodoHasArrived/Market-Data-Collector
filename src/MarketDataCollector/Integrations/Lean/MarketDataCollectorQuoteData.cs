@@ -13,7 +13,7 @@ namespace MarketDataCollector.Integrations.Lean;
 /// Custom Lean BaseData implementation for MarketDataCollector BBO quote events.
 /// Allows Lean algorithms to consume best bid/offer data collected by MarketDataCollector.
 /// </summary>
-public class MarketDataCollectorQuoteData : BaseData
+public sealed class MarketDataCollectorQuoteData : BaseData
 {
     private static readonly ILogger _log = Log.ForContext<MarketDataCollectorQuoteData>();
 
