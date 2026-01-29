@@ -230,18 +230,23 @@ public sealed class AnalysisQualityReportGenerator
         var sorted = values.OrderBy(v => v).ToList();
         var n = values.Count;
 
+        // Calculate median correctly for both odd and even-sized lists
+        var median = n % 2 == 1
+            ? sorted[n / 2]
+            : (sorted[n / 2 - 1] + sorted[n / 2]) / 2.0;
+
         return new DescriptiveStats
         {
             Count = n,
             Mean = values.Average(),
-            Median = sorted[n / 2],
+            Median = median,
             Min = sorted[0],
             Max = sorted[n - 1],
             StdDev = CalculateStdDev(values),
-            Percentile25 = sorted[(int)(n * 0.25)],
-            Percentile75 = sorted[(int)(n * 0.75)],
-            Percentile95 = sorted[(int)(n * 0.95)],
-            Percentile99 = sorted[(int)(n * 0.99)]
+            Percentile25 = sorted[Math.Min((int)(n * 0.25), n - 1)],
+            Percentile75 = sorted[Math.Min((int)(n * 0.75), n - 1)],
+            Percentile95 = sorted[Math.Min((int)(n * 0.95), n - 1)],
+            Percentile99 = sorted[Math.Min((int)(n * 0.99), n - 1)]
         };
     }
 
