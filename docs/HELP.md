@@ -504,10 +504,12 @@ export NYSE__APIKEY=your-api-key
   "StockSharp": {
     "Enabled": true,
     "ConnectorType": "Rithmic",
+    "AdapterType": "",
+    "AdapterAssembly": "",
     "EnableRealTime": true,
     "EnableHistorical": true,
     "UseBinaryStorage": false,
-    "StoragePath": "data/stocksharp",
+    "StoragePath": "data/stocksharp/{connector}",
     "Rithmic": {
       "Server": "Rithmic Test",
       "UserName": "${MDC_STOCKSHARP_RITHMIC_USERNAME}",
@@ -520,7 +522,9 @@ export NYSE__APIKEY=your-api-key
 ```
 
 **Environment Variables (recommended):**
-- `MDC_STOCKSHARP_CONNECTOR` - Connector type (Rithmic, IQFeed, CQG, InteractiveBrokers)
+- `MDC_STOCKSHARP_CONNECTOR` - Connector type (Rithmic, IQFeed, CQG, InteractiveBrokers, Custom)
+- `MDC_STOCKSHARP_ADAPTER_TYPE` - Adapter type for custom connectors (full type name)
+- `MDC_STOCKSHARP_ADAPTER_ASSEMBLY` - Adapter assembly name (if needed)
 - `MDC_STOCKSHARP_RITHMIC_SERVER` / `MDC_STOCKSHARP_RITHMIC_USERNAME` / `MDC_STOCKSHARP_RITHMIC_PASSWORD`
 - `MDC_STOCKSHARP_IQFEED_HOST` / `MDC_STOCKSHARP_IQFEED_LEVEL1_PORT`
 - `MDC_STOCKSHARP_CQG_USERNAME` / `MDC_STOCKSHARP_CQG_PASSWORD`
@@ -531,7 +535,12 @@ export NYSE__APIKEY=your-api-key
 - IQFeed
 - CQG
 - Interactive Brokers
-- And more (see StockSharp documentation)
+- Custom adapters via `AdapterType` (StockSharp connector catalog)
+
+**Notes:**
+- Use `{connector}` in `StoragePath` to segment storage per connector (e.g., `data/stocksharp/rithmic`).
+- Toggle `EnableRealTime`/`EnableHistorical` to run a single connector for both streaming and backfill.
+- Use `ConnectionParams` to pass connector-specific settings (e.g., API keys, host overrides).
 
 **Validation Checklist:**
 1. Validate config + credentials:

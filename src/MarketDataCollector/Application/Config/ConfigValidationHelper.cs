@@ -148,7 +148,19 @@ public sealed class AlpacaOptionsValidator : AbstractValidator<AlpacaOptions>
 public sealed class StockSharpConfigValidator : AbstractValidator<StockSharpConfig>
 {
     private static readonly string[] SupportedConnectors =
-        ["rithmic", "iqfeed", "cqg", "interactivebrokers", "ib"];
+        ["rithmic", "iqfeed", "cqg", "interactivebrokers", "ib", "custom"];
+
+    private static bool HasCustomAdapter(StockSharpConfig config)
+    {
+        if (!string.IsNullOrWhiteSpace(config.AdapterType))
+        {
+            return true;
+        }
+
+        return config.ConnectionParams != null
+               && config.ConnectionParams.TryGetValue("AdapterType", out var adapterType)
+               && !string.IsNullOrWhiteSpace(adapterType);
+    }
 
     public StockSharpConfigValidator()
     {
@@ -158,9 +170,11 @@ public sealed class StockSharpConfigValidator : AbstractValidator<StockSharpConf
 
         RuleFor(x => x.ConnectorType)
             .NotEmpty()
-            .WithMessage("StockSharp ConnectorType is required")
-            .Must(value => SupportedConnectors.Contains(value.ToLowerInvariant()))
-            .WithMessage("StockSharp ConnectorType must be Rithmic, IQFeed, CQG, or InteractiveBrokers");
+            .WithMessage("StockSharp ConnectorType is required");
+
+        RuleFor(x => x)
+            .Must(config => SupportedConnectors.Contains(config.ConnectorType.ToLowerInvariant()) || HasCustomAdapter(config))
+            .WithMessage("Custom StockSharp connectors require AdapterType (or ConnectionParams.AdapterType) to be set");
 
         When(x => string.Equals(x.ConnectorType, "rithmic", StringComparison.OrdinalIgnoreCase), () =>
         {

@@ -199,6 +199,7 @@
                             <TextBlock Text="Select Provider" FontWeight="SemiBold" />
                             <ComboBox x:Name="ProviderCombo" SelectionChanged="ProviderCombo_SelectionChanged" MinWidth="300">
                                 <ComboBoxItem Content="Interactive Brokers" Tag="IB" />
+                                <ComboBoxItem Content="StockSharp (Multi-Exchange)" Tag="StockSharp" />
                                 <ComboBoxItem Content="Alpaca Markets" Tag="Alpaca" />
                                 <ComboBoxItem Content="Polygon.io" Tag="Polygon" />
                                 <ComboBoxItem Content="Tiingo" Tag="Tiingo" />
@@ -233,6 +234,65 @@
                                 <TextBox x:Name="IBHostBox" Header="TWS/Gateway Host" PlaceholderText="127.0.0.1" Text="127.0.0.1" />
                                 <NumberBox x:Name="IBPortBox" Header="Port" Value="7496" Minimum="1" Maximum="65535" SpinButtonPlacementMode="Inline" />
                                 <CheckBox x:Name="IBPaperCheck" Content="Use Paper Trading Account" />
+                            </StackPanel>
+
+                            <!-- StockSharp Connector Wizard -->
+                            <StackPanel x:Name="StockSharpCredentialsPanel" Spacing="12" Visibility="Collapsed">
+                                <TextBlock Text="StockSharp Connector Wizard" FontWeight="SemiBold" />
+                                <ComboBox x:Name="StockSharpConnectorCombo" SelectionChanged="StockSharpConnector_SelectionChanged">
+                                    <ComboBoxItem Content="Rithmic (Futures)" Tag="Rithmic" />
+                                    <ComboBoxItem Content="IQFeed (Equities/Options)" Tag="IQFeed" />
+                                    <ComboBoxItem Content="CQG (Futures/Options)" Tag="CQG" />
+                                    <ComboBoxItem Content="Interactive Brokers (Multi-Asset)" Tag="InteractiveBrokers" />
+                                    <ComboBoxItem Content="Custom Adapter (90+ Sources)" Tag="Custom" />
+                                </ComboBox>
+
+                                <StackPanel x:Name="StockSharpAdapterPanel" Spacing="8" Visibility="Collapsed">
+                                    <TextBox x:Name="StockSharpAdapterTypeBox" Header="Adapter Type" PlaceholderText="StockSharp.Binance.BinanceMessageAdapter" />
+                                    <TextBox x:Name="StockSharpAdapterAssemblyBox" Header="Adapter Assembly" PlaceholderText="StockSharp.Binance" />
+                                    <TextBox x:Name="StockSharpConnectionParamsBox" Header="Connection Params (key=value, comma-separated)" PlaceholderText="ApiKey=..., Secret=..., UseSandbox=true" />
+                                </StackPanel>
+
+                                <TextBox x:Name="StockSharpStoragePathBox" Header="Storage Path" Text="data/stocksharp/{connector}" />
+
+                                <StackPanel Orientation="Horizontal" Spacing="16">
+                                    <CheckBox x:Name="StockSharpRealTimeCheck" Content="Enable Real-Time" IsChecked="True" />
+                                    <CheckBox x:Name="StockSharpHistoricalCheck" Content="Enable Historical" IsChecked="True" />
+                                    <CheckBox x:Name="StockSharpBinaryCheck" Content="Use Binary Storage" />
+                                </StackPanel>
+
+                                <!-- StockSharp: Rithmic -->
+                                <StackPanel x:Name="StockSharpRithmicPanel" Spacing="8" Visibility="Collapsed">
+                                    <TextBox x:Name="RithmicServerBox" Header="Rithmic Server" Text="Rithmic Test" />
+                                    <TextBox x:Name="RithmicUserBox" Header="Rithmic Username" />
+                                    <PasswordBox x:Name="RithmicPasswordBox" Header="Rithmic Password" />
+                                    <TextBox x:Name="RithmicCertBox" Header="Certificate File" PlaceholderText="path/to/cert.pem" />
+                                    <CheckBox x:Name="RithmicPaperCheck" Content="Use Paper Trading" IsChecked="True" />
+                                </StackPanel>
+
+                                <!-- StockSharp: IQFeed -->
+                                <StackPanel x:Name="StockSharpIqFeedPanel" Spacing="8" Visibility="Collapsed">
+                                    <TextBox x:Name="IqFeedHostBox" Header="IQFeed Host" Text="127.0.0.1" />
+                                    <NumberBox x:Name="IqFeedLevel1PortBox" Header="Level 1 Port" Value="9100" Minimum="1" Maximum="65535" SpinButtonPlacementMode="Inline" />
+                                    <NumberBox x:Name="IqFeedLevel2PortBox" Header="Level 2 Port" Value="9200" Minimum="1" Maximum="65535" SpinButtonPlacementMode="Inline" />
+                                    <NumberBox x:Name="IqFeedLookupPortBox" Header="Lookup Port" Value="9300" Minimum="1" Maximum="65535" SpinButtonPlacementMode="Inline" />
+                                    <TextBox x:Name="IqFeedProductIdBox" Header="Product ID" />
+                                    <TextBox x:Name="IqFeedProductVersionBox" Header="Product Version" Text="1.0" />
+                                </StackPanel>
+
+                                <!-- StockSharp: CQG -->
+                                <StackPanel x:Name="StockSharpCqgPanel" Spacing="8" Visibility="Collapsed">
+                                    <TextBox x:Name="CqgUserBox" Header="CQG Username" />
+                                    <PasswordBox x:Name="CqgPasswordBox" Header="CQG Password" />
+                                    <CheckBox x:Name="CqgDemoCheck" Content="Use Demo Server" IsChecked="True" />
+                                </StackPanel>
+
+                                <!-- StockSharp: Interactive Brokers -->
+                                <StackPanel x:Name="StockSharpIbPanel" Spacing="8" Visibility="Collapsed">
+                                    <TextBox x:Name="StockSharpIbHostBox" Header="TWS/Gateway Host" Text="127.0.0.1" />
+                                    <NumberBox x:Name="StockSharpIbPortBox" Header="Port" Value="7496" Minimum="1" Maximum="65535" SpinButtonPlacementMode="Inline" />
+                                    <NumberBox x:Name="StockSharpIbClientIdBox" Header="Client ID" Value="1" Minimum="1" Maximum="99999" SpinButtonPlacementMode="Inline" />
+                                </StackPanel>
                             </StackPanel>
 
                             <!-- Generic API Key -->

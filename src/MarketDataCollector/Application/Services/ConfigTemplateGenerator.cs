@@ -152,10 +152,12 @@ public sealed class ConfigTemplateGenerator
             {
                 Enabled = true,
                 ConnectorType = "Rithmic",
+                AdapterType = "${MDC_STOCKSHARP_ADAPTER_TYPE}",
+                AdapterAssembly = "${MDC_STOCKSHARP_ADAPTER_ASSEMBLY}",
                 EnableRealTime = true,
                 EnableHistorical = true,
                 UseBinaryStorage = false,
-                StoragePath = "data/stocksharp",
+                StoragePath = "data/stocksharp/{connector}",
                 Rithmic = new
                 {
                     Server = "${MDC_STOCKSHARP_RITHMIC_SERVER}",
@@ -184,7 +186,9 @@ public sealed class ConfigTemplateGenerator
             Category = ConfigTemplateCategory.Provider,
             EnvironmentVariables = new Dictionary<string, string>
             {
-                ["MDC_STOCKSHARP_CONNECTOR"] = "StockSharp connector type (Rithmic, IQFeed, CQG, InteractiveBrokers)",
+                ["MDC_STOCKSHARP_CONNECTOR"] = "StockSharp connector type (Rithmic, IQFeed, CQG, InteractiveBrokers, Custom)",
+                ["MDC_STOCKSHARP_ADAPTER_TYPE"] = "Fully qualified StockSharp adapter type (for custom connectors)",
+                ["MDC_STOCKSHARP_ADAPTER_ASSEMBLY"] = "Adapter assembly name (if needed)",
                 ["MDC_STOCKSHARP_RITHMIC_SERVER"] = "Rithmic server name",
                 ["MDC_STOCKSHARP_RITHMIC_USERNAME"] = "Rithmic username",
                 ["MDC_STOCKSHARP_RITHMIC_PASSWORD"] = "Rithmic password",
