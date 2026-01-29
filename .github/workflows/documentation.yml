@@ -50,6 +50,7 @@ jobs:
   markdown-lint:
     name: Markdown Lint
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - name: Checkout repository
@@ -68,6 +69,7 @@ jobs:
   link-validation:
     name: Link Validation
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - name: Checkout repository
@@ -85,6 +87,7 @@ jobs:
   adr-verification:
     name: ADR Verification
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - name: Checkout repository
@@ -114,6 +117,7 @@ jobs:
   project-context-generation:
     name: Project Context Generation
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.regenerate == 'true')
 
     steps:
@@ -147,6 +151,7 @@ jobs:
   documentation-summary:
     name: Documentation Summary
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     needs: [markdown-lint, link-validation, adr-verification]
     if: always()
 

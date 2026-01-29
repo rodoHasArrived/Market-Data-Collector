@@ -52,6 +52,7 @@ jobs:
   generate-assets:
     name: Generate Assets
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -80,6 +81,7 @@ jobs:
     name: Build ${{ matrix.platform }}
     needs: generate-assets
     runs-on: windows-latest
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -286,6 +288,7 @@ jobs:
     name: Build MSIX Package
     needs: generate-assets
     runs-on: windows-latest
+    timeout-minutes: 30
     # Only build MSIX on tags or manual dispatch
     if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
 
@@ -339,6 +342,7 @@ jobs:
     name: Test Desktop App
     needs: build
     runs-on: windows-latest
+    timeout-minutes: 20
 
     steps:
       - name: Checkout
@@ -361,6 +365,7 @@ jobs:
     name: Release Desktop App
     needs: [build, build-msix]
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     if: startsWith(github.ref, 'refs/tags/v')
     permissions:
       contents: write
@@ -395,6 +400,7 @@ jobs:
     name: Cleanup
     needs: [build, release]
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     if: always()
     permissions:
       actions: write

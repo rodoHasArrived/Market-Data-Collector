@@ -32,10 +32,15 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-and-push:
     name: Build and Push Docker Image
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     permissions:
       contents: read
       id-token: write

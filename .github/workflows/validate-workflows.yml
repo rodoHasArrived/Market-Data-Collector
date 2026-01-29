@@ -14,11 +14,19 @@ on:
   #     - '.github/workflows/**'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   validate-yaml:
     name: Validate YAML Syntax
     runs-on: ubuntu-latest
-    
+    timeout-minutes: 10
+
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -84,7 +92,8 @@ jobs:
   validate-actions:
     name: Validate GitHub Actions
     runs-on: ubuntu-latest
-    
+    timeout-minutes: 10
+
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -125,7 +134,8 @@ jobs:
   check-permissions:
     name: Check Workflow Permissions
     runs-on: ubuntu-latest
-    
+    timeout-minutes: 5
+
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -147,7 +157,8 @@ jobs:
   validate-schedules:
     name: Validate Cron Schedules
     runs-on: ubuntu-latest
-    
+    timeout-minutes: 5
+
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -171,8 +182,9 @@ jobs:
     name: Validation Summary
     needs: [validate-yaml, validate-actions, check-permissions, validate-schedules]
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     if: always()
-    
+
     steps:
     - name: Generate summary
       run: |

@@ -52,6 +52,7 @@ jobs:
   detect-changes:
     name: Detect Structure Changes
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     outputs:
       src_changed: ${{ steps.changes.outputs.src }}
       providers_changed: ${{ steps.changes.outputs.providers }}
@@ -90,6 +91,7 @@ jobs:
   generate-structure-docs:
     name: Generate Structure Documentation
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     needs: detect-changes
     if: |
       needs.detect-changes.outputs.structure_changed == 'true' ||
@@ -188,6 +190,7 @@ jobs:
   sync-provider-docs:
     name: Sync Provider Documentation
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     needs: detect-changes
     if: needs.detect-changes.outputs.providers_changed == 'true'
 
@@ -254,6 +257,7 @@ jobs:
   update-claude-md:
     name: Update CLAUDE.md Structure
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: [detect-changes, generate-structure-docs]
     if: |
       always() &&
@@ -306,6 +310,7 @@ jobs:
   documentation-report:
     name: Documentation Report
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     needs: [detect-changes, generate-structure-docs, sync-provider-docs, update-claude-md]
     if: always()
 
