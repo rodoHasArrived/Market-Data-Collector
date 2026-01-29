@@ -3,7 +3,7 @@ namespace MarketDataCollector.Application.Exceptions;
 /// <summary>
 /// Exception thrown when there are configuration errors
 /// </summary>
-public class ConfigurationException : MarketDataCollectorException
+public sealed class ConfigurationException : MarketDataCollectorException
 {
     public string? ConfigPath { get; }
     public string? FieldName { get; }

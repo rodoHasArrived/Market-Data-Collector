@@ -48,7 +48,7 @@ public static class ConfigValidationHelper
 /// <summary>
 /// Validates AppConfig using FluentValidation patterns.
 /// </summary>
-public class AppConfigValidator : AbstractValidator<AppConfig>
+public sealed class AppConfigValidator : AbstractValidator<AppConfig>
 {
     public AppConfigValidator()
     {
@@ -109,7 +109,7 @@ public class AppConfigValidator : AbstractValidator<AppConfig>
 /// <summary>
 /// Validates AlpacaOptions configuration.
 /// </summary>
-public class AlpacaOptionsValidator : AbstractValidator<AlpacaOptions>
+public sealed class AlpacaOptionsValidator : AbstractValidator<AlpacaOptions>
 {
     public AlpacaOptionsValidator()
     {
@@ -136,7 +136,7 @@ public class AlpacaOptionsValidator : AbstractValidator<AlpacaOptions>
 /// <summary>
 /// Validates StorageConfig settings.
 /// </summary>
-public class StorageConfigValidator : AbstractValidator<StorageConfig>
+public sealed class StorageConfigValidator : AbstractValidator<StorageConfig>
 {
     public StorageConfigValidator()
     {
@@ -185,7 +185,7 @@ public class StorageConfigValidator : AbstractValidator<StorageConfig>
 /// <summary>
 /// Validates SymbolConfig settings.
 /// </summary>
-public class SymbolConfigValidator : AbstractValidator<SymbolConfig>
+public sealed class SymbolConfigValidator : AbstractValidator<SymbolConfig>
 {
     public SymbolConfigValidator()
     {

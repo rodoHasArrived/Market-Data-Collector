@@ -3,7 +3,7 @@ namespace MarketDataCollector.Application.Exceptions;
 /// <summary>
 /// Exception thrown when there are storage/file system errors
 /// </summary>
-public class StorageException : MarketDataCollectorException
+public sealed class StorageException : MarketDataCollectorException
 {
     public string? Path { get; }
 

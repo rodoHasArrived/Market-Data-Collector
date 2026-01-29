@@ -762,7 +762,7 @@ setInterval(refresh,2000);refresh();
         if (_loop is not null)
         {
             try { await _loop.ConfigureAwait(false); }
-            catch { }
+            catch (OperationCanceledException) { }
         }
         _cts.Dispose();
     }

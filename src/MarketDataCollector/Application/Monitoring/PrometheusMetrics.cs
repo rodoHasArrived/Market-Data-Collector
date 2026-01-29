@@ -327,7 +327,7 @@ public static class PrometheusMetrics
 /// <summary>
 /// Background service that periodically updates Prometheus metrics.
 /// </summary>
-public class PrometheusMetricsUpdater : IAsyncDisposable
+public sealed class PrometheusMetricsUpdater : IAsyncDisposable
 {
     private readonly PeriodicTimer _timer;
     private readonly Task _updateTask;

@@ -5,7 +5,7 @@ namespace MarketDataCollector.Storage.Export;
 /// <summary>
 /// Result of an export operation.
 /// </summary>
-public class ExportResult
+public sealed class ExportResult
 {
     /// <summary>
     /// Unique ID for this export job.
@@ -144,7 +144,7 @@ public class ExportResult
 /// <summary>
 /// Date range for export.
 /// </summary>
-public class ExportDateRange
+public sealed class ExportDateRange
 {
     [JsonPropertyName("start")]
     public DateTime Start { get; set; }
@@ -159,7 +159,7 @@ public class ExportDateRange
 /// <summary>
 /// Information about an exported file.
 /// </summary>
-public class ExportedFile
+public sealed class ExportedFile
 {
     [JsonPropertyName("path")]
     public string Path { get; set; } = string.Empty;
@@ -195,7 +195,7 @@ public class ExportedFile
 /// <summary>
 /// Quality summary for exported data.
 /// </summary>
-public class ExportQualitySummary
+public sealed class ExportQualitySummary
 {
     [JsonPropertyName("overallScore")]
     public double OverallScore { get; set; }

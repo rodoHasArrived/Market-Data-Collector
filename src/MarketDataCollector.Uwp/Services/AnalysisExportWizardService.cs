@@ -1285,7 +1285,7 @@ public class ExportProgress
 /// <summary>
 /// Export result.
 /// </summary>
-public class ExportResult
+public sealed class ExportResult
 {
     public bool Success { get; set; }
     public string ErrorMessage { get; set; } = string.Empty;

@@ -74,8 +74,8 @@ public sealed class UiServer : IAsyncDisposable
             return new SymbolSearchService(
                 new ISymbolSearchProvider[]
                 {
-                    new AlpacaSymbolSearchProvider(),
-                    new FinnhubSymbolSearchProvider(),
+                    new AlpacaSymbolSearchProviderRefactored(),
+                    new FinnhubSymbolSearchProviderRefactored(),
                     new PolygonSymbolSearchProvider()
                 },
                 figiClient,
