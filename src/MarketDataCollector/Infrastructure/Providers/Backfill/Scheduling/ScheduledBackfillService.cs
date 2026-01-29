@@ -497,8 +497,9 @@ public sealed class ScheduledBackfillService : IAsyncDisposable
             var lastExecution = schedule.LastExecutedAt.Value;
             var missedCount = 0;
             var checkTime = lastExecution;
+            const int maxIterations = 1000; // Safety limit to prevent infinite loops
 
-            while (true)
+            for (var iteration = 0; iteration < maxIterations; iteration++)
             {
                 var nextExecution = schedule.CalculateNextExecution(checkTime);
                 if (!nextExecution.HasValue || nextExecution.Value > now)
