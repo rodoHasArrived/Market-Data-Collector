@@ -4,12 +4,10 @@
 name: Labeling
 
 on:
-  # pull_request trigger disabled
-  # pull_request:
-  #   types: [opened, edited, synchronize, reopened]
-  # issues trigger disabled
-  # issues:
-  #   types: [opened, edited, reopened]
+  pull_request:
+    types: [opened, synchronize, reopened]
+  issues:
+    types: [opened, reopened]
   workflow_dispatch:
     inputs:
       sync_labels:

@@ -4,27 +4,18 @@
 name: Documentation
 
 on:
-  # push trigger disabled
-  # push:
-  #   branches: [ "main" ]
-  #   paths:
-  #     - 'docs/**'
-  #     - 'src/**/*.cs'
-  #     - 'src/**/*.fs'
-  #     - 'tools/DocGenerator/**'
-  #     - 'CLAUDE.md'
-  #     - 'README.md'
-  #     - '.github/workflows/documentation.yml'
-  # pull_request trigger disabled
-  # pull_request:
-  #   branches: [ "main" ]
-  #   paths:
-  #     - 'docs/**'
-  #     - 'src/**/*.cs'
-  #     - 'src/**/*.fs'
-  #     - 'tools/DocGenerator/**'
-  #     - 'CLAUDE.md'
-  #     - 'README.md'
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'docs/**'
+      - '*.md'
+      - 'tools/DocGenerator/**'
+      - '.github/workflows/documentation.yml'
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'docs/**'
+      - '*.md'
   workflow_dispatch:
     inputs:
       regenerate:
@@ -166,6 +157,16 @@ jobs:
           echo "## Job Status" >> $GITHUB_STEP_SUMMARY
           echo "| Job | Result |" >> $GITHUB_STEP_SUMMARY
           echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Markdown Lint | ${{ needs.markdown-lint.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Link Validation | ${{ needs.link-validation.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| ADR Verification | ${{ needs.adr-verification.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Markdown Lint | ${{ needs.markdown-lint.result == 'success' && '✅ Passed' || (needs.markdown-lint.result == 'skipped' && '⏭️ Skipped' || '❌ Failed') }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Link Validation | ${{ needs.link-validation.result == 'success' && '✅ Passed' || (needs.link-validation.result == 'skipped' && '⏭️ Skipped' || '❌ Failed') }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| ADR Verification | ${{ needs.adr-verification.result == 'success' && '✅ Passed' || (needs.adr-verification.result == 'skipped' && '⏭️ Skipped' || '❌ Failed') }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Overall status
+          if [[ "${{ needs.markdown-lint.result }}" == "failure" ]] || \
+             [[ "${{ needs.link-validation.result }}" == "failure" ]] || \
+             [[ "${{ needs.adr-verification.result }}" == "failure" ]]; then
+            echo "### ❌ Some documentation checks failed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### ✅ All documentation checks passed!" >> $GITHUB_STEP_SUMMARY
+          fi

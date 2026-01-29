@@ -1,19 +1,30 @@
 # Security Scanning Workflow
 # Scans for vulnerabilities in code, dependencies, and Docker images
+# On PRs: Runs quick dependency and secret scans
+# On schedule: Runs full security suite including CodeQL
 
 name: Security
 
 on:
-  # push trigger disabled
-  # push:
-  #   branches: [ "main" ]
-  # pull_request trigger disabled
-  # pull_request:
-  #   branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - '**/*.csproj'
+      - '**/*.fsproj'
+      - 'Directory.Build.props'
+      - 'Directory.Packages.props'
   schedule:
-    # Run security scans weekly on Monday at 5:00 UTC (consolidated - includes CodeQL)
+    # Run full security scans weekly on Monday at 5:00 UTC
     - cron: '0 5 * * 1'
   workflow_dispatch:
+    inputs:
+      full_scan:
+        description: 'Run full security scan (including CodeQL)'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -30,6 +41,7 @@ env:
   DOTNET_CLI_TELEMETRY_OPTOUT: true
 
 jobs:
+  # Quick checks that run on every PR
   dependency-vulnerability-scan:
     name: Dependency Vulnerability Scan
     runs-on: ubuntu-latest
@@ -83,10 +95,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  # SAST and CodeQL only run on schedule or when explicitly requested
   sast-scanning:
     name: SAST Scanning
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
 
     steps:
       - name: Checkout repository
@@ -122,6 +136,8 @@ jobs:
     name: CodeQL Analysis
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # CodeQL only runs on schedule or full_scan dispatch (expensive operation)
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.full_scan)
     permissions:
       security-events: write
       actions: read
@@ -170,10 +186,28 @@ jobs:
           echo "# Security Scan Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Scan Completed:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "**Trigger:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "## Quick Checks (Always Run)" >> $GITHUB_STEP_SUMMARY
           echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Dependency Scan | ${{ needs.dependency-vulnerability-scan.result == 'success' && 'Passed' || 'Failed' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Secret Detection | ${{ needs.secret-detection.result == 'success' && 'Passed' || 'Check logs' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| SAST Scanning | ${{ needs.sast-scanning.result == 'success' && 'Passed' || 'Check logs' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| CodeQL Analysis | ${{ needs.codeql-analysis.result == 'success' && 'Passed' || 'Check logs' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Dependency Scan | ${{ needs.dependency-vulnerability-scan.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Secret Detection | ${{ needs.secret-detection.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "## Deep Scans (Scheduled/Manual)" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| SAST Scanning | ${{ needs.sast-scanning.result == 'success' && '✅ Passed' || (needs.sast-scanning.result == 'skipped' && '⏭️ Skipped' || '❌ Failed') }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| CodeQL Analysis | ${{ needs.codeql-analysis.result == 'success' && '✅ Passed' || (needs.codeql-analysis.result == 'skipped' && '⏭️ Skipped' || '❌ Failed') }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Fail if critical checks failed
+          if [[ "${{ needs.dependency-vulnerability-scan.result }}" == "failure" ]] || \
+             [[ "${{ needs.secret-detection.result }}" == "failure" ]]; then
+            echo "### ❌ Critical security checks failed!" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          else
+            echo "### ✅ All security checks passed!" >> $GITHUB_STEP_SUMMARY
+          fi
