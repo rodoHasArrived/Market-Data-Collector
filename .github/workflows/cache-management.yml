@@ -16,10 +16,15 @@ on:
     # Clean old caches every Sunday at 10:30 AM UTC (distributed from maintenance at 8 AM)
     - cron: '30 10 * * 0'
 
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
 jobs:
   manage-cache:
     name: Manage GitHub Actions Cache
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       actions: write
       contents: read

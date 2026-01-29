@@ -1,0 +1,115 @@
+# Reusable .NET Build and Test Workflow
+# Called by other workflows to perform standard build/test operations
+# Reduces duplication and ensures consistent build configuration
+
+name: Reusable .NET Build
+
+on:
+  workflow_call:
+    inputs:
+      dotnet-version:
+        description: '.NET SDK version'
+        required: false
+        type: string
+        default: '9.0.x'
+      configuration:
+        description: 'Build configuration'
+        required: false
+        type: string
+        default: 'Release'
+      run-tests:
+        description: 'Run tests after build'
+        required: false
+        type: boolean
+        default: true
+      collect-coverage:
+        description: 'Collect code coverage'
+        required: false
+        type: boolean
+        default: false
+      cache-suffix:
+        description: 'Cache key suffix for isolation'
+        required: false
+        type: string
+        default: ''
+      upload-artifacts:
+        description: 'Upload build artifacts'
+        required: false
+        type: boolean
+        default: false
+      artifact-name:
+        description: 'Name for uploaded artifacts'
+        required: false
+        type: string
+        default: 'build-output'
+    outputs:
+      build-result:
+        description: 'Build result (success/failure)'
+        value: ${{ jobs.build.outputs.result }}
+
+jobs:
+  build:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      result: ${{ steps.build.outcome }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET with Cache
+        uses: ./.github/actions/setup-dotnet-cache
+        with:
+          dotnet-version: ${{ inputs.dotnet-version }}
+          cache-suffix: ${{ inputs.cache-suffix }}
+
+      - name: Restore dependencies
+        run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
+
+      - name: Build
+        id: build
+        run: |
+          dotnet build MarketDataCollector.sln \
+            -c ${{ inputs.configuration }} \
+            --no-restore \
+            /p:EnableWindowsTargeting=true
+
+      - name: Run tests
+        if: inputs.run-tests
+        run: |
+          dotnet test MarketDataCollector.sln \
+            -c ${{ inputs.configuration }} \
+            --no-build \
+            /p:EnableWindowsTargeting=true \
+            --verbosity normal \
+            ${{ inputs.collect-coverage && '--collect:"XPlat Code Coverage" --results-directory ./coverage' || '' }}
+
+      - name: Upload coverage
+        if: inputs.collect-coverage && success()
+        uses: codecov/codecov-action@v4
+        with:
+          directory: ./coverage
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Upload build artifacts
+        if: inputs.upload-artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.artifact-name }}
+          path: |
+            src/**/bin/${{ inputs.configuration }}/
+            !src/**/bin/${{ inputs.configuration }}/**/ref/
+          retention-days: 7
+
+      - name: Upload test results on failure
+        if: failure() && inputs.run-tests
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-failure-${{ inputs.cache-suffix || 'default' }}
+          path: |
+            **/*.trx
+            ./coverage/
+          retention-days: 7

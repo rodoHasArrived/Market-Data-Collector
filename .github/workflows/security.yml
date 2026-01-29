@@ -1,19 +1,30 @@
 # Security Scanning Workflow
 # Scans for vulnerabilities in code, dependencies, and Docker images
+# On PRs: Runs quick dependency and secret scans
+# On schedule: Runs full security suite including CodeQL
 
 name: Security
 
 on:
-  # push trigger disabled
-  # push:
-  #   branches: [ "main" ]
-  # pull_request trigger disabled
-  # pull_request:
-  #   branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - '**/*.csproj'
+      - '**/*.fsproj'
+      - 'Directory.Build.props'
+      - 'Directory.Packages.props'
   schedule:
-    # Run security scans weekly on Monday at 5:00 UTC (consolidated - includes CodeQL)
+    # Run full security scans weekly on Monday at 5:00 UTC
     - cron: '0 5 * * 1'
   workflow_dispatch:
+    inputs:
+      full_scan:
+        description: 'Run full security scan (including CodeQL)'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -30,9 +41,11 @@ env:
   DOTNET_CLI_TELEMETRY_OPTOUT: true
 
 jobs:
+  # Quick checks that run on every PR
   dependency-vulnerability-scan:
     name: Dependency Vulnerability Scan
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - name: Checkout repository
@@ -55,7 +68,7 @@ jobs:
 
           dotnet list MarketDataCollector.sln package --vulnerable --include-transitive 2>&1 | tee vuln-scan.txt
 
-          if grep -qE "(Critical|High)" vuln-scan.txt; then
+          if grep -qiE "(critical|high)" vuln-scan.txt; then
             echo "::error::Critical/High vulnerabilities detected!"
             echo "### Vulnerable Packages Found" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
@@ -69,6 +82,7 @@ jobs:
   secret-detection:
     name: Secret Detection
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - name: Checkout repository
@@ -80,11 +94,13 @@ jobs:
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        continue-on-error: true
 
+  # SAST and CodeQL only run on schedule or when explicitly requested
   sast-scanning:
     name: SAST Scanning
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
 
     steps:
       - name: Checkout repository
@@ -109,16 +125,19 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
 
           if grep -qE "SCS[0-9]{4}" sast-output.txt; then
-            echo "Security warnings detected:" >> $GITHUB_STEP_SUMMARY
+            echo "### Security warnings detected:" >> $GITHUB_STEP_SUMMARY
             grep -E "SCS[0-9]{4}" sast-output.txt | head -20 >> $GITHUB_STEP_SUMMARY
+            echo "::warning::Security analyzer warnings detected - review SAST output"
           else
             echo "No SAST issues detected" >> $GITHUB_STEP_SUMMARY
           fi
-        continue-on-error: true
 
   codeql-analysis:
     name: CodeQL Analysis
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # CodeQL only runs on schedule or full_scan dispatch (expensive operation)
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.full_scan)
     permissions:
       security-events: write
       actions: read
@@ -159,6 +178,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [dependency-vulnerability-scan, secret-detection, sast-scanning, codeql-analysis]
     if: always()
+    timeout-minutes: 5
 
     steps:
       - name: Generate security summary
@@ -166,10 +186,28 @@ jobs:
           echo "# Security Scan Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Scan Completed:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "**Trigger:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "## Quick Checks (Always Run)" >> $GITHUB_STEP_SUMMARY
           echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Dependency Scan | ${{ needs.dependency-vulnerability-scan.result == 'success' && 'Passed' || 'Failed' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Secret Detection | ${{ needs.secret-detection.result == 'success' && 'Passed' || 'Check logs' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| SAST Scanning | ${{ needs.sast-scanning.result == 'success' && 'Passed' || 'Check logs' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| CodeQL Analysis | ${{ needs.codeql-analysis.result == 'success' && 'Passed' || 'Check logs' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Dependency Scan | ${{ needs.dependency-vulnerability-scan.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Secret Detection | ${{ needs.secret-detection.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "## Deep Scans (Scheduled/Manual)" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| SAST Scanning | ${{ needs.sast-scanning.result == 'success' && '✅ Passed' || (needs.sast-scanning.result == 'skipped' && '⏭️ Skipped' || '❌ Failed') }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| CodeQL Analysis | ${{ needs.codeql-analysis.result == 'success' && '✅ Passed' || (needs.codeql-analysis.result == 'skipped' && '⏭️ Skipped' || '❌ Failed') }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Fail if critical checks failed
+          if [[ "${{ needs.dependency-vulnerability-scan.result }}" == "failure" ]] || \
+             [[ "${{ needs.secret-detection.result }}" == "failure" ]]; then
+            echo "### ❌ Critical security checks failed!" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          else
+            echo "### ✅ All security checks passed!" >> $GITHUB_STEP_SUMMARY
+          fi

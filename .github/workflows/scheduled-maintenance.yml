@@ -29,10 +29,15 @@ env:
   DOTNET_NOLOGO: true
   DOTNET_CLI_TELEMETRY_OPTOUT: true
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   full-test-suite:
     name: Full Test Suite
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     if: github.event_name == 'schedule' || github.event.inputs.run_full_tests == 'true'
 
     steps:
@@ -92,6 +97,7 @@ jobs:
   dependency-health:
     name: Dependency Health Check
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     if: github.event_name == 'schedule' || github.event.inputs.run_dependency_check == 'true'
 
     steps:
@@ -137,6 +143,7 @@ jobs:
   maintenance-summary:
     name: Maintenance Summary
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     needs: [full-test-suite, dependency-health]
     if: always()
 

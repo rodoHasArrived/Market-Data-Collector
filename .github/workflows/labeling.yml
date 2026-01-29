@@ -4,12 +4,10 @@
 name: Labeling
 
 on:
-  # pull_request trigger disabled
-  # pull_request:
-  #   types: [opened, edited, synchronize, reopened]
-  # issues trigger disabled
-  # issues:
-  #   types: [opened, edited, reopened]
+  pull_request:
+    types: [opened, synchronize, reopened]
+  issues:
+    types: [opened, reopened]
   workflow_dispatch:
     inputs:
       sync_labels:
@@ -23,10 +21,15 @@ permissions:
   issues: write
   pull-requests: write
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   auto-label-pr:
     name: Auto Label PR
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     if: github.event_name == 'pull_request'
 
     steps:
@@ -64,6 +67,7 @@ jobs:
   sync-labels:
     name: Sync Repository Labels
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     if: github.event.inputs.sync_labels == 'true'
 
     steps:

@@ -2,9 +2,17 @@ name: Nightly Testing
 
 on:
   schedule:
-    # Run every day at 2 AM UTC
-    - cron: '0 2 * * *'
+    # Run every day at 1 AM UTC (shifted from 2 AM to avoid midnight spike)
+    - cron: '0 1 * * *'
   workflow_dispatch: # Allow manual trigger
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   DOTNET_VERSION: '9.0.x'
@@ -15,6 +23,7 @@ jobs:
   test-matrix:
     name: Test on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -24,10 +33,11 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
+    - name: Setup .NET with Cache
+      uses: ./.github/actions/setup-dotnet-cache
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
+        cache-suffix: nightly-${{ matrix.os }}
 
     - name: Restore dependencies
       run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
@@ -46,6 +56,7 @@ jobs:
           --results-directory ./coverage
 
     - name: Upload coverage
+      if: success()
       uses: codecov/codecov-action@v4
       with:
         directory: ./coverage
@@ -53,18 +64,30 @@ jobs:
         fail_ci_if_error: false
         token: ${{ secrets.CODECOV_TOKEN }}
 
+    - name: Upload test results on failure
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-failure-logs-${{ matrix.os }}
+        path: |
+          **/*.trx
+          **/coverage/**
+        retention-days: 7
+
   benchmark:
     name: Run Benchmarks
     runs-on: ubuntu-latest
-    
+    timeout-minutes: 45
+
     steps:
     - name: Checkout
       uses: actions/checkout@v4
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
+    - name: Setup .NET with Cache
+      uses: ./.github/actions/setup-dotnet-cache
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
+        cache-suffix: benchmark
 
     - name: Run benchmarks
       run: |
@@ -83,15 +106,17 @@ jobs:
   integration-tests:
     name: Integration Tests
     runs-on: ubuntu-latest
-    
+    timeout-minutes: 20
+
     steps:
     - name: Checkout
       uses: actions/checkout@v4
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
+    - name: Setup .NET with Cache
+      uses: ./.github/actions/setup-dotnet-cache
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
+        cache-suffix: integration
 
     - name: Start services
       run: |
@@ -115,7 +140,8 @@ jobs:
     needs: [test-matrix, benchmark, integration-tests]
     runs-on: ubuntu-latest
     if: failure()
-    
+    timeout-minutes: 5
+
     steps:
     - name: Create issue on failure
       uses: actions/github-script@v7
@@ -141,3 +167,36 @@ jobs:
               labels: ['automated', 'nightly-tests', 'bug'],
             });
           }
+
+  nightly-summary:
+    name: Nightly Summary
+    needs: [test-matrix, benchmark, integration-tests]
+    runs-on: ubuntu-latest
+    if: always()
+    timeout-minutes: 5
+
+    steps:
+    - name: Generate nightly summary
+      run: |
+        echo "# Nightly Test Suite Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Run Date:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+
+        echo "## Test Results" >> $GITHUB_STEP_SUMMARY
+        echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+        echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Test Matrix | ${{ needs.test-matrix.result == 'success' && '✅ Passed' || (needs.test-matrix.result == 'skipped' && '⏭️ Skipped' || '❌ Failed') }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Benchmarks | ${{ needs.benchmark.result == 'success' && '✅ Passed' || (needs.benchmark.result == 'skipped' && '⏭️ Skipped' || '❌ Failed') }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Integration | ${{ needs.integration-tests.result == 'success' && '✅ Passed' || (needs.integration-tests.result == 'skipped' && '⏭️ Skipped' || '❌ Failed') }} |" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+
+        # Overall status
+        if [[ "${{ needs.test-matrix.result }}" == "success" ]] && \
+           [[ "${{ needs.benchmark.result }}" == "success" ]] && \
+           [[ "${{ needs.integration-tests.result }}" == "success" ]]; then
+          echo "## ✅ All nightly checks passed!" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "## ❌ Some nightly checks failed" >> $GITHUB_STEP_SUMMARY
+          echo "Please review the failed jobs above." >> $GITHUB_STEP_SUMMARY
+        fi
