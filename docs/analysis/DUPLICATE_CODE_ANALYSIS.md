@@ -230,7 +230,7 @@ Both implement identical lock-based buffer patterns.
 
 | Category | Duplicate Instances | Files Affected | Est. LOC Savings | Status |
 |----------|---------------------|----------------|------------------|--------|
-| Domain Models | 12 models | 24 files | 600-800 lines | Pending |
+| Domain Models | 12 models | 24 files | 600-800 lines | ✅ Fixed |
 | HTTP Configuration | 3 classes | 2 files | 150-200 lines | ✅ Fixed |
 | Symbol Normalization | 6 methods | 6 files | 30-50 lines | ✅ Fixed |
 | Rate Limiter Init | 8 instances | 8 files | 50-80 lines | ✅ Fixed |
@@ -242,7 +242,7 @@ Both implement identical lock-based buffer patterns.
 | UWP DTO Duplication | ~1,300 lines | 3 files | 1,300+ lines | ✅ Fixed |
 | UWP Services | Various | 59 files | 800-1000 lines | Pending |
 | **Total (Original)** | **~50+ patterns** | **~100 files** | **2,500-3,500 lines** | |
-| **Remaining** | **~15 patterns** | **~85 files** | **~1,400-1,800 lines** | |
+| **Remaining** | **~3 patterns** | **~65 files** | **~800-1,000 lines** | |
 
 ---
 
@@ -276,13 +276,13 @@ Both implement identical lock-based buffer patterns.
 ## 8. Files Requiring Immediate Review
 
 **Critical Priority:**
-- [ ] `src/MarketDataCollector/Domain/Models/*.cs` (12 files to delete)
+- [x] `src/MarketDataCollector/Domain/Models/*.cs` - ✅ Consolidated (only 4 unique models remain)
 - [ ] `src/MarketDataCollector.Uwp/Services/HttpClientConfiguration.cs` (consolidate)
 
 **High Priority:**
-- [ ] All backfill providers in `Infrastructure/Providers/Backfill/` (8 files)
-- [ ] All streaming providers (5 files)
-- [ ] `Storage/Sinks/JsonlStorageSink.cs` and `ParquetStorageSink.cs`
+- [x] All backfill providers in `Infrastructure/Providers/Backfill/` - ✅ Migrated to BaseHistoricalDataProvider
+- [x] All streaming providers - ✅ Using SubscriptionManager
+- [x] `Storage/Sinks/JsonlStorageSink.cs` and `ParquetStorageSink.cs` - ✅ Using EventBuffer<T>
 
 **Medium Priority:**
 - [ ] Symbol search providers (4 files)
@@ -368,12 +368,15 @@ Instead of duplicating DTOs, we now include Contracts source files directly via 
 
 ### Notes on Domain Model Duplication
 
-The duplicate models in `Domain/Models/` vs `Contracts/Domain/Models/` were identified:
-- 12 models are duplicated (Trade, HistoricalBar, LOBSnapshot, etc.)
-- Both have identical implementation, Contracts has more XML docs
-- Migration requires updating 40+ files changing `using MarketDataCollector.Domain.Models` to `using MarketDataCollector.Contracts.Domain.Models`
+**Status:** ✅ Resolved (2026-01-27)
 
-**Recommendation:** Create a migration script or use global using directives to consolidate in a future PR.
+The duplicate domain models have been consolidated. The `Domain/Models/` folder now contains only 4 unique, domain-specific models that are NOT duplicated in Contracts:
+- `AggregateBar.cs` - Real-time OHLCV aggregate bars (intraday streaming)
+- `MarketQuoteUpdate.cs` - Normalized quote update events
+- `MarketDepthUpdate.cs` - Level 2 depth update events
+- `MarketTradeUpdate.cs` - Normalized trade update events
+
+All shared models (Trade, HistoricalBar, LOBSnapshot, etc.) now exist only in `Contracts/Domain/Models/` as the single source of truth.
 
 ---
 
@@ -381,3 +384,4 @@ The duplicate models in `Domain/Models/` vs `Contracts/Domain/Models/` were iden
 *Updated with implementation progress on 2026-01-27*
 *Updated with additional provider refactoring on 2026-01-27*
 *Updated with BaseHistoricalDataProvider migration on 2026-01-27*
+*Updated to reflect domain model consolidation and completed refactoring on 2026-01-29*
