@@ -11,7 +11,7 @@ namespace MarketDataCollector.Storage.Export;
 /// Generates analysis-ready data quality reports for exported datasets.
 /// Focuses on metrics relevant to quantitative analysis and research.
 /// </summary>
-public class AnalysisQualityReportGenerator
+public sealed class AnalysisQualityReportGenerator
 {
     private readonly ILogger _log = LoggingSetup.ForContext<AnalysisQualityReportGenerator>();
 
@@ -681,7 +681,7 @@ public class AnalysisQualityReportGenerator
 /// <summary>
 /// Comprehensive quality report for analysis purposes.
 /// </summary>
-public class AnalysisQualityReport
+public sealed class AnalysisQualityReport
 {
     [JsonPropertyName("generatedAt")]
     public DateTime GeneratedAt { get; set; }
@@ -738,7 +738,7 @@ public class AnalysisQualityReport
 /// <summary>
 /// Quality analysis for a single file.
 /// </summary>
-public class FileQualityAnalysis
+public sealed class FileQualityAnalysis
 {
     public string FilePath { get; set; } = string.Empty;
     public string? Symbol { get; set; }
@@ -757,7 +757,7 @@ public class FileQualityAnalysis
 /// <summary>
 /// Descriptive statistics for a numeric field.
 /// </summary>
-public class DescriptiveStats
+public sealed class DescriptiveStats
 {
     public long Count { get; set; }
     public double Mean { get; set; }
@@ -774,7 +774,7 @@ public class DescriptiveStats
 /// <summary>
 /// Time-related statistics.
 /// </summary>
-public class TimeStats
+public sealed class TimeStats
 {
     public DateTime FirstTimestamp { get; set; }
     public DateTime LastTimestamp { get; set; }
@@ -787,7 +787,7 @@ public class TimeStats
 /// <summary>
 /// Detected data outlier.
 /// </summary>
-public class DataOutlier
+public sealed class DataOutlier
 {
     public int Index { get; set; }
     public DateTime? Timestamp { get; set; }
@@ -800,7 +800,7 @@ public class DataOutlier
 /// <summary>
 /// Detected data gap.
 /// </summary>
-public class DataGap
+public sealed class DataGap
 {
     public DateTime StartTime { get; set; }
     public DateTime EndTime { get; set; }
@@ -823,7 +823,7 @@ public enum GapType
 /// <summary>
 /// Quality issue detected in the data.
 /// </summary>
-public class QualityIssue
+public sealed class QualityIssue
 {
     public IssueSeverity Severity { get; set; }
     public string Category { get; set; } = string.Empty;
@@ -845,7 +845,7 @@ public enum IssueSeverity
 /// <summary>
 /// Recommendation for using the data.
 /// </summary>
-public class AnalysisRecommendation
+public sealed class AnalysisRecommendation
 {
     public string UseCase { get; set; } = string.Empty;
     public bool Suitable { get; set; }

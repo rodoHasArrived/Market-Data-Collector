@@ -444,7 +444,7 @@ public sealed class WriteAheadLog : IAsyncDisposable
 /// <summary>
 /// A record in the Write-Ahead Log.
 /// </summary>
-public class WalRecord
+public sealed class WalRecord
 {
     public long Sequence { get; set; }
     public DateTime Timestamp { get; set; }
@@ -464,7 +464,7 @@ public class WalRecord
 /// <summary>
 /// WAL configuration options.
 /// </summary>
-public class WalOptions
+public sealed class WalOptions
 {
     /// <summary>
     /// Maximum WAL file size before rotation.

@@ -3,7 +3,7 @@ namespace MarketDataCollector.Application.Exceptions;
 /// <summary>
 /// Exception thrown when there are connection issues with data providers
 /// </summary>
-public class ConnectionException : MarketDataCollectorException
+public sealed class ConnectionException : MarketDataCollectorException
 {
     public string? Provider { get; }
     public string? Host { get; }

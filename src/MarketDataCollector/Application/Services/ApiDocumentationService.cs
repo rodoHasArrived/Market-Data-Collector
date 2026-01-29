@@ -489,7 +489,7 @@ public sealed class ApiDocumentationService
 
 #region OpenAPI Models
 
-public class OpenApiSpec
+public sealed class OpenApiSpec
 {
     public string OpenApi { get; set; } = "3.0.3";
     public OpenApiInfo? Info { get; set; }
@@ -499,7 +499,7 @@ public class OpenApiSpec
     public OpenApiComponents? Components { get; set; }
 }
 
-public class OpenApiInfo
+public sealed class OpenApiInfo
 {
     public string? Title { get; set; }
     public string? Description { get; set; }
@@ -508,31 +508,31 @@ public class OpenApiInfo
     public OpenApiLicense? License { get; set; }
 }
 
-public class OpenApiContact
+public sealed class OpenApiContact
 {
     public string? Name { get; set; }
     public string? Url { get; set; }
 }
 
-public class OpenApiLicense
+public sealed class OpenApiLicense
 {
     public string? Name { get; set; }
     public string? Url { get; set; }
 }
 
-public class OpenApiServer
+public sealed class OpenApiServer
 {
     public string? Url { get; set; }
     public string? Description { get; set; }
 }
 
-public class OpenApiTag
+public sealed class OpenApiTag
 {
     public string? Name { get; set; }
     public string? Description { get; set; }
 }
 
-public class OpenApiPathItem
+public sealed class OpenApiPathItem
 {
     public OpenApiOperation? Get { get; set; }
     public OpenApiOperation? Post { get; set; }
@@ -540,7 +540,7 @@ public class OpenApiPathItem
     public OpenApiOperation? Delete { get; set; }
 }
 
-public class OpenApiOperation
+public sealed class OpenApiOperation
 {
     public string[]? Tags { get; set; }
     public string? Summary { get; set; }
@@ -551,7 +551,7 @@ public class OpenApiOperation
     public Dictionary<string, OpenApiResponse>? Responses { get; set; }
 }
 
-public class OpenApiParameter
+public sealed class OpenApiParameter
 {
     public string? Name { get; set; }
     public string? In { get; set; }
@@ -560,30 +560,30 @@ public class OpenApiParameter
     public OpenApiSchema? Schema { get; set; }
 }
 
-public class OpenApiRequestBody
+public sealed class OpenApiRequestBody
 {
     public string? Description { get; set; }
     public bool Required { get; set; }
     public Dictionary<string, OpenApiMediaType>? Content { get; set; }
 }
 
-public class OpenApiMediaType
+public sealed class OpenApiMediaType
 {
     public OpenApiSchema? Schema { get; set; }
 }
 
-public class OpenApiResponse
+public sealed class OpenApiResponse
 {
     public string? Description { get; set; }
     public Dictionary<string, OpenApiMediaType>? Content { get; set; }
 }
 
-public class OpenApiComponents
+public sealed class OpenApiComponents
 {
     public Dictionary<string, OpenApiSchema>? Schemas { get; set; }
 }
 
-public class OpenApiSchema
+public sealed class OpenApiSchema
 {
     public string? Type { get; set; }
     public string? Format { get; set; }

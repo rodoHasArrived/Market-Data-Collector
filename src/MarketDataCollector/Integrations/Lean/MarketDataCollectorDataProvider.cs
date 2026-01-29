@@ -10,7 +10,7 @@ namespace MarketDataCollector.Integrations.Lean;
 /// Custom IDataProvider implementation that reads market data from MarketDataCollector's JSONL files.
 /// Supports both compressed (.jsonl.gz) and uncompressed (.jsonl) files.
 /// </summary>
-public class MarketDataCollectorDataProvider : IDataProvider
+public sealed class MarketDataCollectorDataProvider : IDataProvider
 {
     private readonly string _dataRoot;
 

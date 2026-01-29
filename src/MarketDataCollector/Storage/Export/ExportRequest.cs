@@ -5,7 +5,7 @@ namespace MarketDataCollector.Storage.Export;
 /// <summary>
 /// Request model for export operations.
 /// </summary>
-public class ExportRequest
+public sealed class ExportRequest
 {
     /// <summary>
     /// Export profile to use.
@@ -89,7 +89,7 @@ public class ExportRequest
 /// <summary>
 /// Time series aggregation settings for export.
 /// </summary>
-public class AggregationSettings
+public sealed class AggregationSettings
 {
     /// <summary>
     /// Aggregation interval (e.g., "1min", "5min", "1hour", "1day").
@@ -191,7 +191,7 @@ public enum SessionFilter
 /// <summary>
 /// Feature engineering settings for export.
 /// </summary>
-public class FeatureSettings
+public sealed class FeatureSettings
 {
     /// <summary>
     /// Include basic return features.

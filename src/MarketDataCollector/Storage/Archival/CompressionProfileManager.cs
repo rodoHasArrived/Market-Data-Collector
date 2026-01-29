@@ -11,7 +11,7 @@ namespace MarketDataCollector.Storage.Archival;
 /// Manages compression profiles for different archival use cases.
 /// Supports LZ4, ZSTD, and GZIP codecs with configurable levels.
 /// </summary>
-public class CompressionProfileManager
+public sealed class CompressionProfileManager
 {
     private readonly ILogger _log = LoggingSetup.ForContext<CompressionProfileManager>();
     private readonly Dictionary<string, CompressionProfile> _profiles;
@@ -293,7 +293,7 @@ public class CompressionProfileManager
 /// <summary>
 /// Compression profile configuration.
 /// </summary>
-public class CompressionProfile
+public sealed class CompressionProfile
 {
     [JsonPropertyName("id")]
     public string Id { get; set; } = string.Empty;
@@ -388,7 +388,7 @@ public enum StorageTier
 /// <summary>
 /// Context for selecting compression profile.
 /// </summary>
-public class CompressionContext
+public sealed class CompressionContext
 {
     public string? Symbol { get; set; }
     public StorageTier StorageTier { get; set; } = StorageTier.Warm;
@@ -400,7 +400,7 @@ public class CompressionContext
 /// <summary>
 /// Result of a compression operation.
 /// </summary>
-public class CompressionResult
+public sealed class CompressionResult
 {
     public long InputBytes { get; set; }
     public long OutputBytes { get; set; }
@@ -413,7 +413,7 @@ public class CompressionResult
 /// <summary>
 /// Result of compression benchmark.
 /// </summary>
-public class CompressionBenchmarkResult
+public sealed class CompressionBenchmarkResult
 {
     public string ProfileId { get; set; } = string.Empty;
     public string ProfileName { get; set; } = string.Empty;

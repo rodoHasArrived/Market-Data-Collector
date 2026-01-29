@@ -6,7 +6,7 @@ namespace MarketDataCollector.Storage.Export;
 /// Defines export profiles for different external analysis tools.
 /// Each profile specifies format, settings, and post-processing options.
 /// </summary>
-public class ExportProfile
+public sealed class ExportProfile
 {
     /// <summary>
     /// Unique identifier for this profile.
@@ -218,7 +218,7 @@ public enum ExportFormat
 /// <summary>
 /// Compression settings for exports.
 /// </summary>
-public class CompressionSettings
+public sealed class CompressionSettings
 {
     [JsonPropertyName("type")]
     public CompressionType Type { get; set; } = CompressionType.None;
@@ -243,7 +243,7 @@ public enum CompressionType
 /// <summary>
 /// Timestamp handling settings.
 /// </summary>
-public class TimestampSettings
+public sealed class TimestampSettings
 {
     [JsonPropertyName("format")]
     public TimestampFormat Format { get; set; } = TimestampFormat.Iso8601;
