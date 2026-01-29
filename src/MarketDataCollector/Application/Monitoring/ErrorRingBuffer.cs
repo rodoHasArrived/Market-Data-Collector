@@ -198,7 +198,7 @@ public sealed class ErrorRingBuffer
             WarningCount: byLevel.GetValueOrDefault(ErrorLevel.Warning, 0),
             ErrorCount: byLevel.GetValueOrDefault(ErrorLevel.Error, 0),
             CriticalCount: byLevel.GetValueOrDefault(ErrorLevel.Critical, 0),
-            LastErrorTime: all.FirstOrDefault().Timestamp
+            LastErrorTime: all.Count > 0 ? all[0].Timestamp : DateTimeOffset.MinValue
         );
     }
 
