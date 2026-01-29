@@ -129,7 +129,8 @@ check-deps: ## Check prerequisites
 # Docker
 # =============================================================================
 
-docker: docker-build docker-up ## Build and start Docker container
+docker: ## Build and start Docker container
+	@./scripts/install/install.sh --docker
 
 docker-build: ## Build Docker image
 	@echo "$(BLUE)Building Docker image...$(NC)"

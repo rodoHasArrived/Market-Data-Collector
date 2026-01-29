@@ -19,50 +19,24 @@ A high-performance, cross-platform market data collection system for real-time a
 
 ## Installation
 
-### Option 1: Docker (Recommended)
+### Golden Path (Recommended)
+
+Use the installation orchestrator script for all setups. It keeps Docker and native installs consistent across platforms.
 
 ```bash
-# Quick install with interactive script
-./scripts/install/install.sh --docker
+# Interactive installer (Docker or Native)
+./scripts/install/install.sh
 
-# Or manually with Docker Compose
-cp config/appsettings.sample.json config/appsettings.json
-make docker
+# Or choose a mode explicitly
+./scripts/install/install.sh --docker
+./scripts/install/install.sh --native
 ```
 
 Access the dashboard at **http://localhost:8080**
 
-### Option 2: Native .NET
-
-```bash
-# Quick install with interactive script
-./scripts/install/install.sh --native
-
-# Or manually
-cp config/appsettings.sample.json config/appsettings.json
-dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --ui
-```
-
-### Option 3: Using Make
-
-```bash
-# Show all available commands
-make help
-
-# Docker installation
-make docker
-
-# Native installation with web UI
-make run-ui
-
-# Run tests
-make test
-
-# Run diagnostics (troubleshooting)
-make doctor
-```
-
 ### Windows Installation
+
+The PowerShell installer mirrors the same workflow on Windows.
 
 ```powershell
 # Interactive installation
@@ -71,6 +45,18 @@ make doctor
 # Or specify mode directly
 .\scripts\install\install.ps1 -Mode Docker
 .\scripts\install\install.ps1 -Mode Native
+```
+
+### Optional Make Wrappers
+
+Make targets remain available as thin wrappers around the installer and runtime commands.
+
+```bash
+make help
+make docker
+make run-ui
+make test
+make doctor
 ```
 
 ### Windows Desktop App Install
