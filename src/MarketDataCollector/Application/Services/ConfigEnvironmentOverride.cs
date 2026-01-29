@@ -62,6 +62,8 @@ public sealed class ConfigEnvironmentOverride
         // StockSharp core settings
         ["MDC_STOCKSHARP_ENABLED"] = "StockSharp:Enabled",
         ["MDC_STOCKSHARP_CONNECTOR"] = "StockSharp:ConnectorType",
+        ["MDC_STOCKSHARP_ADAPTER_TYPE"] = "StockSharp:AdapterType",
+        ["MDC_STOCKSHARP_ADAPTER_ASSEMBLY"] = "StockSharp:AdapterAssembly",
         ["MDC_STOCKSHARP_STORAGE_PATH"] = "StockSharp:StoragePath",
         ["MDC_STOCKSHARP_BINARY"] = "StockSharp:UseBinaryStorage",
         ["MDC_STOCKSHARP_REALTIME"] = "StockSharp:EnableRealTime",
@@ -304,6 +306,8 @@ public sealed class ConfigEnvironmentOverride
         {
             "Enabled" => stockSharp with { Enabled = ParseBool(value) },
             "ConnectorType" => stockSharp with { ConnectorType = value },
+            "AdapterType" => stockSharp with { AdapterType = value },
+            "AdapterAssembly" => stockSharp with { AdapterAssembly = value },
             "StoragePath" => stockSharp with { StoragePath = value },
             "UseBinaryStorage" => stockSharp with { UseBinaryStorage = ParseBool(value) },
             "EnableRealTime" => stockSharp with { EnableRealTime = ParseBool(value) },
@@ -450,7 +454,9 @@ public sealed class ConfigEnvironmentOverride
             "MDC_COMPRESS" => "Enable gzip compression (true/false)",
             "MDC_DATASOURCE" => "Data source provider (IB, Alpaca, Polygon, StockSharp, NYSE)",
             "MDC_ALPACA_FEED" => "Alpaca data feed (iex or sip)",
-            "MDC_STOCKSHARP_CONNECTOR" => "StockSharp connector type (Rithmic, IQFeed, CQG, InteractiveBrokers)",
+            "MDC_STOCKSHARP_CONNECTOR" => "StockSharp connector type (Rithmic, IQFeed, CQG, InteractiveBrokers, Custom)",
+            "MDC_STOCKSHARP_ADAPTER_TYPE" => "StockSharp adapter type for custom connectors",
+            "MDC_STOCKSHARP_ADAPTER_ASSEMBLY" => "StockSharp adapter assembly name for custom connectors",
             "MDC_STOCKSHARP_STORAGE_PATH" => "StockSharp storage path",
             "MDC_BACKFILL_SYMBOLS" => "Comma-separated list of symbols",
             _ => ""

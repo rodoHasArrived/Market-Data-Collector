@@ -1,8 +1,11 @@
 #if STOCKSHARP
+using System.ComponentModel;
+using System.Globalization;
 using System.Net;
 using System.Security;
 using StockSharp.Algo;
 using StockSharp.BusinessEntities;
+using StockSharp.Messages;
 #endif
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Logging;
@@ -55,9 +58,8 @@ public static class StockSharpConnectorFactory
                 break;
 
             default:
-                throw new NotSupportedException(
-                    $"Connector type '{config.ConnectorType}' is not supported. " +
-                    "Supported types: Rithmic, IQFeed, CQG, InteractiveBrokers");
+                ConfigureCustomAdapter(connector, config);
+                break;
         }
 
         return connector;
@@ -190,6 +192,115 @@ public static class StockSharpConnectorFactory
         return secure;
     }
 
+    /// <summary>
+    /// Configure a custom adapter using AdapterType/AdapterAssembly and ConnectionParams.
+    /// </summary>
+    private static void ConfigureCustomAdapter(Connector connector, StockSharpConfig config)
+    {
+        var adapterTypeName = config.AdapterType;
+        if (string.IsNullOrWhiteSpace(adapterTypeName) && config.ConnectionParams != null
+            && config.ConnectionParams.TryGetValue("AdapterType", out var adapterType))
+        {
+            adapterTypeName = adapterType;
+        }
+
+        if (string.IsNullOrWhiteSpace(adapterTypeName))
+        {
+            throw new NotSupportedException(
+                $"Connector type '{config.ConnectorType}' is not supported. " +
+                "Set StockSharp.AdapterType (or ConnectionParams:AdapterType) to use a custom connector.");
+        }
+
+        var adapterAssembly = config.AdapterAssembly;
+        if (string.IsNullOrWhiteSpace(adapterAssembly) && config.ConnectionParams != null
+            && config.ConnectionParams.TryGetValue("AdapterAssembly", out var assemblyName))
+        {
+            adapterAssembly = assemblyName;
+        }
+
+        var resolvedTypeName = adapterTypeName.Contains(',')
+            ? adapterTypeName
+            : string.IsNullOrWhiteSpace(adapterAssembly)
+                ? adapterTypeName
+                : $"{adapterTypeName}, {adapterAssembly}";
+
+        var adapterType = Type.GetType(resolvedTypeName, throwOnError: false);
+        if (adapterType == null)
+        {
+            throw new NotSupportedException(
+                $"Unable to load StockSharp adapter '{resolvedTypeName}'. " +
+                "Ensure the connector package is installed and the type name is correct.");
+        }
+
+        object? adapterInstance = null;
+
+        try
+        {
+            adapterInstance = Activator.CreateInstance(adapterType, connector.TransactionIdGenerator);
+        }
+        catch (MissingMethodException)
+        {
+            adapterInstance = Activator.CreateInstance(adapterType);
+        }
+
+        if (adapterInstance is not IMessageAdapter adapter)
+        {
+            throw new NotSupportedException(
+                $"Adapter type '{resolvedTypeName}' does not implement IMessageAdapter.");
+        }
+
+        ApplyAdapterSettings(adapter, config.ConnectionParams);
+
+        connector.Adapter.InnerAdapters.Add(adapter);
+        Log.Information("Custom StockSharp adapter configured successfully: {AdapterType}", resolvedTypeName);
+    }
+
+    private static void ApplyAdapterSettings(IMessageAdapter adapter, IReadOnlyDictionary<string, string>? settings)
+    {
+        if (settings == null) return;
+
+        foreach (var (key, value) in settings)
+        {
+            if (key.Equals("AdapterType", StringComparison.OrdinalIgnoreCase)
+                || key.Equals("AdapterAssembly", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            var property = adapter.GetType().GetProperty(key);
+            if (property == null || !property.CanWrite)
+            {
+                Log.Debug("StockSharp adapter property not found or not writable: {Property}", key);
+                continue;
+            }
+
+            var targetType = Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType;
+            try
+            {
+                object? convertedValue;
+                if (targetType.IsEnum)
+                {
+                    convertedValue = Enum.Parse(targetType, value, ignoreCase: true);
+                }
+                else if (targetType == typeof(TimeSpan))
+                {
+                    convertedValue = TimeSpan.Parse(value, CultureInfo.InvariantCulture);
+                }
+                else
+                {
+                    var converter = TypeDescriptor.GetConverter(targetType);
+                    convertedValue = converter.ConvertFromInvariantString(value);
+                }
+
+                property.SetValue(adapter, convertedValue);
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Failed to apply adapter setting {Key}={Value}", key, value);
+            }
+        }
+    }
+
 #else
     // Stub implementation when StockSharp is not available
 
@@ -212,7 +323,8 @@ public static class StockSharpConnectorFactory
         "Rithmic",      // Futures (CME, NYMEX, COMEX, CBOT)
         "IQFeed",       // US Equities, Options
         "CQG",          // Futures, Options
-        "InteractiveBrokers" // Global multi-asset
+        "InteractiveBrokers", // Global multi-asset
+        "Custom"        // Custom adapters via AdapterType
     };
 
     /// <summary>

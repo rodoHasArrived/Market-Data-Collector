@@ -243,7 +243,7 @@ public sealed class ConfigValidatorCli
 
             if (string.IsNullOrWhiteSpace(connector))
             {
-                hints.Add("MDC_STOCKSHARP_CONNECTOR - StockSharp connector type (Rithmic, IQFeed, CQG, InteractiveBrokers)");
+                hints.Add("MDC_STOCKSHARP_CONNECTOR - StockSharp connector type (Rithmic, IQFeed, CQG, InteractiveBrokers, Custom)");
             }
 
             if (connector.Equals("rithmic", StringComparison.OrdinalIgnoreCase))
@@ -280,6 +280,20 @@ public sealed class ConfigValidatorCli
                 if ((stockSharp?.InteractiveBrokers?.Port ?? 0) <= 0)
                     hints.Add("MDC_STOCKSHARP_IB_PORT - Interactive Brokers port");
             }
+
+            if (!connector.Equals("rithmic", StringComparison.OrdinalIgnoreCase)
+                && !connector.Equals("iqfeed", StringComparison.OrdinalIgnoreCase)
+                && !connector.Equals("cqg", StringComparison.OrdinalIgnoreCase)
+                && !connector.Equals("interactivebrokers", StringComparison.OrdinalIgnoreCase)
+                && !connector.Equals("ib", StringComparison.OrdinalIgnoreCase)
+                && string.IsNullOrWhiteSpace(stockSharp?.AdapterType)
+                && (stockSharp?.ConnectionParams == null
+                    || !stockSharp.ConnectionParams.TryGetValue("AdapterType", out var adapterType)
+                    || string.IsNullOrWhiteSpace(adapterType)))
+            {
+                hints.Add("MDC_STOCKSHARP_ADAPTER_TYPE - Fully qualified StockSharp adapter type (for custom connectors)");
+                hints.Add("MDC_STOCKSHARP_ADAPTER_ASSEMBLY - Adapter assembly name (if needed)");
+            }
         }
 
         if (hints.Count > 0)
@@ -305,7 +319,7 @@ public sealed class ConfigValidatorCli
             "Alpaca.SecretKey" => "Set ALPACA_SECRET_KEY environment variable or update config",
             "Alpaca.Feed" => "Use 'iex' for free data or 'sip' for paid subscription",
             "StockSharp.Enabled" => "Set StockSharp:Enabled to true when using StockSharp",
-            "StockSharp.ConnectorType" => "Use Rithmic, IQFeed, CQG, or InteractiveBrokers",
+            "StockSharp.ConnectorType" => "Use Rithmic, IQFeed, CQG, InteractiveBrokers, or Custom with AdapterType",
             "StockSharp.Rithmic.UserName" => "Set MDC_STOCKSHARP_RITHMIC_USERNAME or update StockSharp:Rithmic:UserName",
             "StockSharp.Rithmic.Password" => "Set MDC_STOCKSHARP_RITHMIC_PASSWORD or update StockSharp:Rithmic:Password",
             "StockSharp.IQFeed.Host" => "Set MDC_STOCKSHARP_IQFEED_HOST or update StockSharp:IQFeed:Host",

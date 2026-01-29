@@ -3,6 +3,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using MarketDataCollector.Uwp.Services;
+using MarketDataCollector.Contracts.Configuration;
 
 namespace MarketDataCollector.Uwp.Views;
 
@@ -105,6 +106,7 @@ public sealed partial class SetupWizardPage : Page
             AlpacaCredentialsPanel.Visibility = Visibility.Collapsed;
             PolygonCredentialsPanel.Visibility = Visibility.Collapsed;
             IBCredentialsPanel.Visibility = Visibility.Collapsed;
+            StockSharpCredentialsPanel.Visibility = Visibility.Collapsed;
             GenericCredentialsPanel.Visibility = Visibility.Collapsed;
 
             switch (provider)
@@ -118,10 +120,50 @@ public sealed partial class SetupWizardPage : Page
                 case "IB":
                     IBCredentialsPanel.Visibility = Visibility.Visible;
                     break;
+                case "StockSharp":
+                    StockSharpCredentialsPanel.Visibility = Visibility.Visible;
+                    if (StockSharpConnectorCombo.SelectedItem == null)
+                    {
+                        StockSharpConnectorCombo.SelectedIndex = 0;
+                    }
+                    break;
                 default:
                     GenericCredentialsPanel.Visibility = Visibility.Visible;
                     break;
             }
+        }
+    }
+
+    private void StockSharpConnector_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (StockSharpConnectorCombo.SelectedItem is not ComboBoxItem item || item.Tag is not string connector)
+        {
+            return;
+        }
+
+        StockSharpRithmicPanel.Visibility = Visibility.Collapsed;
+        StockSharpIqFeedPanel.Visibility = Visibility.Collapsed;
+        StockSharpCqgPanel.Visibility = Visibility.Collapsed;
+        StockSharpIbPanel.Visibility = Visibility.Collapsed;
+        StockSharpAdapterPanel.Visibility = Visibility.Collapsed;
+
+        switch (connector)
+        {
+            case "Rithmic":
+                StockSharpRithmicPanel.Visibility = Visibility.Visible;
+                break;
+            case "IQFeed":
+                StockSharpIqFeedPanel.Visibility = Visibility.Visible;
+                break;
+            case "CQG":
+                StockSharpCqgPanel.Visibility = Visibility.Visible;
+                break;
+            case "InteractiveBrokers":
+                StockSharpIbPanel.Visibility = Visibility.Visible;
+                break;
+            case "Custom":
+                StockSharpAdapterPanel.Visibility = Visibility.Visible;
+                break;
         }
     }
 
@@ -189,10 +231,50 @@ public sealed partial class SetupWizardPage : Page
                 credentials["host"] = IBHostBox.Text ?? "127.0.0.1";
                 credentials["port"] = IBPortBox.Value.ToString();
                 break;
+            case "StockSharp":
+                return GetStockSharpCredentials();
             default:
                 credentials["apiKey"] = GenericApiKeyBox.Text ?? string.Empty;
                 break;
         }
+
+        return credentials;
+    }
+
+    private Dictionary<string, string> GetStockSharpCredentials()
+    {
+        var credentials = new Dictionary<string, string>
+        {
+            ["connectorType"] = (StockSharpConnectorCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "Rithmic",
+            ["adapterType"] = StockSharpAdapterTypeBox.Text ?? string.Empty,
+            ["adapterAssembly"] = StockSharpAdapterAssemblyBox.Text ?? string.Empty,
+            ["connectionParams"] = StockSharpConnectionParamsBox.Text ?? string.Empty,
+            ["storagePath"] = StockSharpStoragePathBox.Text ?? "data/stocksharp/{connector}",
+            ["enableRealTime"] = StockSharpRealTimeCheck.IsChecked?.ToString() ?? "true",
+            ["enableHistorical"] = StockSharpHistoricalCheck.IsChecked?.ToString() ?? "true",
+            ["useBinaryStorage"] = StockSharpBinaryCheck.IsChecked?.ToString() ?? "false"
+        };
+
+        credentials["rithmicServer"] = RithmicServerBox.Text ?? "Rithmic Test";
+        credentials["rithmicUsername"] = RithmicUserBox.Text ?? string.Empty;
+        credentials["rithmicPassword"] = RithmicPasswordBox.Password ?? string.Empty;
+        credentials["rithmicCertFile"] = RithmicCertBox.Text ?? string.Empty;
+        credentials["rithmicPaper"] = RithmicPaperCheck.IsChecked?.ToString() ?? "true";
+
+        credentials["iqfeedHost"] = IqFeedHostBox.Text ?? "127.0.0.1";
+        credentials["iqfeedLevel1Port"] = IqFeedLevel1PortBox.Value.ToString();
+        credentials["iqfeedLevel2Port"] = IqFeedLevel2PortBox.Value.ToString();
+        credentials["iqfeedLookupPort"] = IqFeedLookupPortBox.Value.ToString();
+        credentials["iqfeedProductId"] = IqFeedProductIdBox.Text ?? string.Empty;
+        credentials["iqfeedProductVersion"] = IqFeedProductVersionBox.Text ?? "1.0";
+
+        credentials["cqgUsername"] = CqgUserBox.Text ?? string.Empty;
+        credentials["cqgPassword"] = CqgPasswordBox.Password ?? string.Empty;
+        credentials["cqgDemo"] = CqgDemoCheck.IsChecked?.ToString() ?? "true";
+
+        credentials["ibHost"] = StockSharpIbHostBox.Text ?? "127.0.0.1";
+        credentials["ibPort"] = StockSharpIbPortBox.Value.ToString();
+        credentials["ibClientId"] = StockSharpIbClientIdBox.Value.ToString();
 
         return credentials;
     }
@@ -366,7 +448,90 @@ public sealed partial class SetupWizardPage : Page
 
         var credentials = GetCredentials();
         await _wizardService.SaveCredentialsAsync(_selectedProvider, credentials);
+
+        if (_selectedProvider == "StockSharp")
+        {
+            var stockSharpOptions = BuildStockSharpOptions(credentials);
+            await _wizardService.ApplyStockSharpConfigAsync(stockSharpOptions);
+        }
     }
+
+    private static StockSharpOptionsDto BuildStockSharpOptions(Dictionary<string, string> credentials)
+    {
+        var connectorType = credentials.GetValueOrDefault("connectorType", "Rithmic");
+        var options = new StockSharpOptionsDto
+        {
+            Enabled = true,
+            ConnectorType = connectorType,
+            AdapterType = credentials.GetValueOrDefault("adapterType"),
+            AdapterAssembly = credentials.GetValueOrDefault("adapterAssembly"),
+            ConnectionParams = ParseConnectionParams(credentials.GetValueOrDefault("connectionParams")),
+            StoragePath = credentials.GetValueOrDefault("storagePath", "data/stocksharp/{connector}"),
+            EnableRealTime = bool.TryParse(credentials.GetValueOrDefault("enableRealTime", "true"), out var enableRealtime) && enableRealtime,
+            EnableHistorical = bool.TryParse(credentials.GetValueOrDefault("enableHistorical", "true"), out var enableHistorical) && enableHistorical,
+            UseBinaryStorage = bool.TryParse(credentials.GetValueOrDefault("useBinaryStorage", "false"), out var useBinary) && useBinary
+        };
+
+        options.Rithmic = new RithmicOptionsDto
+        {
+            Server = credentials.GetValueOrDefault("rithmicServer", "Rithmic Test"),
+            UserName = credentials.GetValueOrDefault("rithmicUsername"),
+            Password = credentials.GetValueOrDefault("rithmicPassword"),
+            CertFile = credentials.GetValueOrDefault("rithmicCertFile"),
+            UsePaperTrading = bool.TryParse(credentials.GetValueOrDefault("rithmicPaper", "true"), out var rithmicPaper) && rithmicPaper
+        };
+
+        options.IQFeed = new IQFeedOptionsDto
+        {
+            Host = credentials.GetValueOrDefault("iqfeedHost", "127.0.0.1"),
+            Level1Port = ParseInt(credentials.GetValueOrDefault("iqfeedLevel1Port"), 9100),
+            Level2Port = ParseInt(credentials.GetValueOrDefault("iqfeedLevel2Port"), 9200),
+            LookupPort = ParseInt(credentials.GetValueOrDefault("iqfeedLookupPort"), 9300),
+            ProductId = credentials.GetValueOrDefault("iqfeedProductId"),
+            ProductVersion = credentials.GetValueOrDefault("iqfeedProductVersion", "1.0") ?? "1.0"
+        };
+
+        options.CQG = new CQGOptionsDto
+        {
+            UserName = credentials.GetValueOrDefault("cqgUsername"),
+            Password = credentials.GetValueOrDefault("cqgPassword"),
+            UseDemoServer = bool.TryParse(credentials.GetValueOrDefault("cqgDemo", "true"), out var cqgDemo) && cqgDemo
+        };
+
+        options.InteractiveBrokers = new StockSharpIBOptionsDto
+        {
+            Host = credentials.GetValueOrDefault("ibHost", "127.0.0.1"),
+            Port = ParseInt(credentials.GetValueOrDefault("ibPort"), 7496),
+            ClientId = ParseInt(credentials.GetValueOrDefault("ibClientId"), 1)
+        };
+
+        return options;
+    }
+
+    private static Dictionary<string, string>? ParseConnectionParams(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return null;
+        }
+
+        var items = raw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var item in items)
+        {
+            var parts = item.Split('=', 2, StringSplitOptions.TrimEntries);
+            if (parts.Length == 2)
+            {
+                result[parts[0]] = parts[1];
+            }
+        }
+
+        return result.Count > 0 ? result : null;
+    }
+
+    private static int ParseInt(string? value, int fallback)
+        => int.TryParse(value, out var parsed) ? parsed : fallback;
 
     private void UpdateSummary()
     {

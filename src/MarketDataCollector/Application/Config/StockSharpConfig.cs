@@ -8,8 +8,14 @@ public sealed record StockSharpConfig(
     /// <summary>Whether StockSharp integration is enabled.</summary>
     bool Enabled = false,
 
-    /// <summary>Primary connector type (e.g., "Rithmic", "IQFeed", "CQG", "InteractiveBrokers").</summary>
+    /// <summary>Primary connector type (e.g., "Rithmic", "IQFeed", "CQG", "InteractiveBrokers", "Custom").</summary>
     string ConnectorType = "Rithmic",
+
+    /// <summary>Fully qualified StockSharp adapter type for custom connectors.</summary>
+    string? AdapterType = null,
+
+    /// <summary>Optional assembly name for custom adapters (if AdapterType is not assembly-qualified).</summary>
+    string? AdapterAssembly = null,
 
     /// <summary>Connection parameters specific to the connector.</summary>
     Dictionary<string, string>? ConnectionParams = null,
@@ -17,8 +23,8 @@ public sealed record StockSharpConfig(
     /// <summary>Whether to use StockSharp binary storage format (2 bytes/trade, 7 bytes/order book).</summary>
     bool UseBinaryStorage = false,
 
-    /// <summary>Path to StockSharp storage directory.</summary>
-    string StoragePath = "data/stocksharp",
+    /// <summary>Path to StockSharp storage directory. Supports {connector} placeholder.</summary>
+    string StoragePath = "data/stocksharp/{connector}",
 
     /// <summary>Whether to enable real-time data streaming.</summary>
     bool EnableRealTime = true,

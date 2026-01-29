@@ -1,5 +1,6 @@
 using System.Net.Http;
 using System.Text.Json;
+using MarketDataCollector.Contracts.Configuration;
 
 namespace MarketDataCollector.Uwp.Services;
 
@@ -57,23 +58,26 @@ public sealed class SetupWizardService
         {
             result.StartTime = DateTime.UtcNow;
 
-            switch (provider.ToUpperInvariant())
-            {
-                case "ALPACA":
-                    result = await TestAlpacaAsync(credentials, ct);
-                    break;
-                case "POLYGON":
-                    result = await TestPolygonAsync(credentials, ct);
-                    break;
-                case "IB":
-                case "INTERACTIVEBROKERS":
-                    result = await TestInteractiveBrokersAsync(credentials, ct);
-                    break;
-                case "TIINGO":
-                    result = await TestTiingoAsync(credentials, ct);
-                    break;
-                case "FINNHUB":
-                    result = await TestFinnhubAsync(credentials, ct);
+        switch (provider.ToUpperInvariant())
+        {
+            case "ALPACA":
+                result = await TestAlpacaAsync(credentials, ct);
+                break;
+            case "POLYGON":
+                result = await TestPolygonAsync(credentials, ct);
+                break;
+            case "IB":
+            case "INTERACTIVEBROKERS":
+                result = await TestInteractiveBrokersAsync(credentials, ct);
+                break;
+            case "STOCKSHARP":
+                result = await TestStockSharpAsync(credentials, ct);
+                break;
+            case "TIINGO":
+                result = await TestTiingoAsync(credentials, ct);
+                break;
+            case "FINNHUB":
+                result = await TestFinnhubAsync(credentials, ct);
                     break;
                 case "ALPHAVANTAGE":
                     result = await TestAlphaVantageAsync(credentials, ct);
@@ -225,6 +229,111 @@ public sealed class SetupWizardService
             {
                 result.Success = false;
                 result.ErrorMessage = "Connection timeout - ensure TWS/Gateway is running";
+            }
+        }
+        catch (Exception ex)
+        {
+            result.Success = false;
+            result.ErrorMessage = $"Connection failed: {ex.Message}";
+        }
+
+        return result;
+    }
+
+    private async Task<ProviderTestResult> TestStockSharpAsync(
+        Dictionary<string, string> credentials,
+        CancellationToken ct)
+    {
+        var result = new ProviderTestResult { Provider = "StockSharp" };
+        var connectorType = credentials.GetValueOrDefault("connectorType", "Rithmic");
+
+        switch (connectorType)
+        {
+            case "InteractiveBrokers":
+                return await TestTcpEndpointAsync(
+                    "StockSharp Interactive Brokers",
+                    credentials.GetValueOrDefault("ibHost", "127.0.0.1"),
+                    credentials.GetValueOrDefault("ibPort", "7496"),
+                    ct);
+            case "IQFeed":
+                return await TestTcpEndpointAsync(
+                    "StockSharp IQFeed",
+                    credentials.GetValueOrDefault("iqfeedHost", "127.0.0.1"),
+                    credentials.GetValueOrDefault("iqfeedLevel1Port", "9100"),
+                    ct);
+            case "CQG":
+                return ValidateUsernamePassword(
+                    "StockSharp CQG",
+                    credentials.GetValueOrDefault("cqgUsername"),
+                    credentials.GetValueOrDefault("cqgPassword"));
+            case "Custom":
+                var adapterType = credentials.GetValueOrDefault("adapterType");
+                result.Success = !string.IsNullOrWhiteSpace(adapterType);
+                result.StatusMessage = result.Success
+                    ? "Custom adapter configured"
+                    : "Missing Adapter Type";
+                result.ErrorMessage = result.Success ? "" : "Adapter Type is required for custom connectors";
+                return result;
+            default:
+                return ValidateUsernamePassword(
+                    "StockSharp Rithmic",
+                    credentials.GetValueOrDefault("rithmicUsername"),
+                    credentials.GetValueOrDefault("rithmicPassword"));
+        }
+    }
+
+    private static ProviderTestResult ValidateUsernamePassword(string provider, string? username, string? password)
+    {
+        if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
+        {
+            return new ProviderTestResult
+            {
+                Provider = provider,
+                Success = false,
+                ErrorMessage = "Missing username or password"
+            };
+        }
+
+        return new ProviderTestResult
+        {
+            Provider = provider,
+            Success = true,
+            StatusMessage = "Credentials captured (provider connectivity requires service)"
+        };
+    }
+
+    private static async Task<ProviderTestResult> TestTcpEndpointAsync(
+        string provider,
+        string host,
+        string portStr,
+        CancellationToken ct)
+    {
+        var result = new ProviderTestResult { Provider = provider };
+
+        if (!int.TryParse(portStr, out var port))
+        {
+            result.Success = false;
+            result.ErrorMessage = "Invalid port number";
+            return result;
+        }
+
+        try
+        {
+            using var client = new System.Net.Sockets.TcpClient();
+            var connectTask = client.ConnectAsync(host, port);
+
+            if (await Task.WhenAny(connectTask, Task.Delay(5000, ct)) == connectTask)
+            {
+                result.Success = client.Connected;
+                result.StatusMessage = result.Success
+                    ? $"Endpoint reachable at {host}:{port}"
+                    : "Connection refused";
+                result.ErrorMessage = result.Success ? "" : "Connection refused";
+            }
+            else
+            {
+                result.Success = false;
+                result.ErrorMessage = "Connection timeout";
             }
         }
         catch (Exception ex)
@@ -444,7 +553,7 @@ public sealed class SetupWizardService
                 Name = "Day Trader",
                 Description = "Real-time streaming focus with L2 depth for active trading",
                 Icon = "\uE9D9",
-                RecommendedProviders = new[] { "Interactive Brokers", "Alpaca" },
+                RecommendedProviders = new[] { "Interactive Brokers", "StockSharp", "Alpaca" },
                 DefaultSymbols = new[] { "SPY", "QQQ", "AAPL", "TSLA", "NVDA" },
                 SubscribeTrades = true,
                 SubscribeDepth = true,
@@ -474,7 +583,7 @@ public sealed class SetupWizardService
                 Name = "Data Archivist",
                 Description = "Comprehensive collection and long-term storage",
                 Icon = "\uE8B7",
-                RecommendedProviders = new[] { "Interactive Brokers", "Polygon" },
+                RecommendedProviders = new[] { "Interactive Brokers", "StockSharp", "Polygon" },
                 DefaultSymbols = new[] { "SPY", "QQQ", "AAPL", "MSFT", "GOOGL", "AMZN", "META", "NVDA" },
                 SubscribeTrades = true,
                 SubscribeDepth = true,
@@ -489,7 +598,7 @@ public sealed class SetupWizardService
                 Name = "Minimal Setup",
                 Description = "Basic configuration for testing and evaluation",
                 Icon = "\uE74C",
-                RecommendedProviders = new[] { "Alpaca", "Yahoo Finance" },
+                RecommendedProviders = new[] { "Alpaca", "StockSharp", "Yahoo Finance" },
                 DefaultSymbols = new[] { "SPY" },
                 SubscribeTrades = true,
                 SubscribeDepth = false,
@@ -526,6 +635,17 @@ public sealed class SetupWizardService
         config.Backfill.Enabled = preset.EnableBackfill;
 
         await _configService.SaveConfigAsync(config);
+    }
+
+    /// <summary>
+    /// Applies StockSharp configuration settings.
+    /// </summary>
+    public async Task ApplyStockSharpConfigAsync(StockSharpOptionsDto options, CancellationToken ct = default)
+    {
+        var config = await _configService.LoadConfigAsync(ct) ?? new AppConfig();
+        config.StockSharp = options;
+        config.DataSource = "StockSharp";
+        await _configService.SaveConfigAsync(config, ct);
     }
 
     /// <summary>
