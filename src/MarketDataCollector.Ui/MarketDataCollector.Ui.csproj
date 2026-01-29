@@ -74,7 +74,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MarketDataCollector\MarketDataCollector.csproj" />
+    <ProjectReference Include="..\MarketDataCollector.Ui.Shared\MarketDataCollector.Ui.Shared.csproj" />
   </ItemGroup>
 
   <!-- Exclude incomplete refactored code from compilation -->
