@@ -166,13 +166,12 @@ public sealed class LoggingService : IDisposable
         _logChannel.Writer.Complete();
         _shutdownCts.Cancel();
 
-        try
+        // Allow processing task to complete gracefully without blocking
+        // Using fire-and-forget pattern with proper cancellation signal already sent
+        if (_processingTask is { IsCompleted: false })
         {
-            _processingTask?.Wait(TimeSpan.FromSeconds(2));
-        }
-        catch
-        {
-            // Ignore timeout
+            // Task will complete when cancellation is processed; don't block synchronous Dispose
+            _ = _processingTask.ContinueWith(_ => { }, TaskContinuationOptions.ExecuteSynchronously);
         }
 
         _shutdownCts.Dispose();

@@ -43,9 +43,16 @@ public sealed partial class MessagingHubPage : Page
 
     private async void RefreshTimer_Tick(object? sender, object e)
     {
-        if (LiveActivityToggle.IsOn)
+        try
         {
-            await RefreshActivityAsync();
+            if (LiveActivityToggle.IsOn)
+            {
+                await RefreshActivityAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error in RefreshTimer_Tick: {ex.Message}");
         }
     }
 

@@ -73,7 +73,15 @@ public sealed class ProviderHealthService : IDisposable
 
     private async void OnTimerElapsed(object? sender, ElapsedEventArgs e)
     {
-        await RefreshHealthDataAsync();
+        try
+        {
+            await RefreshHealthDataAsync();
+        }
+        catch (Exception ex)
+        {
+            // Log error but don't crash - timer callbacks must handle their own exceptions
+            System.Diagnostics.Debug.WriteLine($"Error refreshing health data: {ex.Message}");
+        }
     }
 
     /// <summary>

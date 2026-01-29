@@ -56,8 +56,15 @@ public sealed partial class ServiceManagerPage : Page
 
     private async void RefreshTimer_Tick(object? sender, object e)
     {
-        await RefreshStatusAsync();
-        UpdateUptime();
+        try
+        {
+            await RefreshStatusAsync();
+            UpdateUptime();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error in RefreshTimer_Tick: {ex.Message}");
+        }
     }
 
     private async Task RefreshStatusAsync()
