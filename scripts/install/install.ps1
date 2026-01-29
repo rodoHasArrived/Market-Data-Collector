@@ -51,6 +51,8 @@ $ErrorActionPreference = "Stop"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $RepoRoot = (Resolve-Path (Join-Path $ScriptDir "..\..")).Path
 $LibDir = Join-Path (Split-Path -Parent $ScriptDir) "lib"
+$DockerFile = Join-Path $RepoRoot "deploy\docker\Dockerfile"
+$DockerComposeFile = Join-Path $RepoRoot "deploy\docker\docker-compose.yml"
 
 # Import the build notification module
 $notificationModule = Join-Path $LibDir "BuildNotification.psm1"
@@ -242,7 +244,7 @@ function Install-Docker {
     try {
         # Build image
         Write-Info "Building Docker image..."
-        docker build -t marketdatacollector:latest .
+        docker build -f $DockerFile -t marketdatacollector:latest $RepoRoot
 
         if ($LASTEXITCODE -ne 0) {
             Write-Error "Failed to build Docker image"
@@ -256,7 +258,7 @@ function Install-Docker {
 
         # Start container
         Write-Info "Starting container..."
-        docker compose up -d
+        docker compose -f $DockerComposeFile up -d
 
         if ($LASTEXITCODE -eq 0) {
             Write-Success "Container started successfully"
@@ -774,7 +776,7 @@ function Uninstall-Docker {
     try {
         # Stop containers
         Write-Info "Stopping containers..."
-        docker compose down 2>$null
+        docker compose -f $DockerComposeFile down 2>$null
 
         # Remove image
         Write-Info "Removing Docker image..."

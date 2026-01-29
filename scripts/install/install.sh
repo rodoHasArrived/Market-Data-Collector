@@ -25,6 +25,8 @@ NC='\033[0m' # No Color
 # Script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+DOCKERFILE="$PROJECT_ROOT/deploy/docker/Dockerfile"
+DOCKER_COMPOSE_FILE="$PROJECT_ROOT/deploy/docker/docker-compose.yml"
 
 # Print colored output
 print_info() { echo -e "${BLUE}[INFO]${NC} $1"; }
@@ -186,7 +188,7 @@ install_docker() {
     # Build image
     print_info "Building Docker image..."
     cd "$PROJECT_ROOT"
-    docker build -t marketdatacollector:latest .
+    docker build -f "$DOCKERFILE" -t marketdatacollector:latest "$PROJECT_ROOT"
 
     if [ $? -eq 0 ]; then
         print_success "Docker image built successfully"
@@ -200,7 +202,7 @@ install_docker() {
 
     # Start container
     print_info "Starting container..."
-    docker compose up -d
+    docker compose -f "$DOCKER_COMPOSE_FILE" up -d
 
     if [ $? -eq 0 ]; then
         print_success "Container started successfully"
@@ -276,9 +278,9 @@ uninstall_docker() {
     cd "$PROJECT_ROOT"
 
     # Stop containers
-    if docker compose ps -q 2>/dev/null | grep -q .; then
+    if docker compose -f "$DOCKER_COMPOSE_FILE" ps -q 2>/dev/null | grep -q .; then
         print_info "Stopping containers..."
-        docker compose down
+        docker compose -f "$DOCKER_COMPOSE_FILE" down
     fi
 
     # Remove image
