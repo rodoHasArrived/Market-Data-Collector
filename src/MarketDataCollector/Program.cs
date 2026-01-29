@@ -537,11 +537,12 @@ internal static class Program
         ConfigWatcher? watcher = null;
 
         // Build storage options from config
-        var storageOpt = cfg.Storage?.ToStorageOptions(cfg.DataRoot, cfg.Compress)
+        var compressionEnabled = cfg.Compress ?? false;
+        var storageOpt = cfg.Storage?.ToStorageOptions(cfg.DataRoot, compressionEnabled)
             ?? new StorageOptions
             {
                 RootPath = cfg.DataRoot,
-                Compress = cfg.Compress,
+                Compress = compressionEnabled,
                 NamingConvention = FileNamingConvention.BySymbol,
                 DatePartition = DatePartition.Daily
             };
@@ -669,20 +670,23 @@ internal static class Program
         // --- Simulated feed smoke test (depth + trade) ---
 
         // Leave this as a sanity check in non-IB builds. In IBAPI builds, live data should flow too.
-        var now = DateTimeOffset.UtcNow;
-        var sym = symbols[0].Symbol;
+        if (args.Any(a => a.Equals("--simulate-feed", StringComparison.OrdinalIgnoreCase)))
+        {
+            var now = DateTimeOffset.UtcNow;
+            var sym = symbols[0].Symbol;
 
-        depthCollector.OnDepth(new MarketDepthUpdate(now, sym, 0, DepthOperation.Insert, OrderBookSide.Bid, 500.24m, 300m, "MM1"));
-        depthCollector.OnDepth(new MarketDepthUpdate(now, sym, 0, DepthOperation.Insert, OrderBookSide.Ask, 500.26m, 250m, "MM2"));
-        depthCollector.OnDepth(new MarketDepthUpdate(now, sym, 0, DepthOperation.Update, OrderBookSide.Bid, 500.24m, 350m, "MM1"));
-        depthCollector.OnDepth(new MarketDepthUpdate(now, sym, 3, DepthOperation.Update, OrderBookSide.Ask, 500.30m, 100m, "MMX")); // induce integrity
-        depthCollector.ResetSymbolStream(sym);
-        depthCollector.OnDepth(new MarketDepthUpdate(now, sym, 0, DepthOperation.Insert, OrderBookSide.Bid, 500.20m, 100m, "MM3"));
-        depthCollector.OnDepth(new MarketDepthUpdate(now, sym, 0, DepthOperation.Insert, OrderBookSide.Ask, 500.22m, 90m, "MM4"));
+            depthCollector.OnDepth(new MarketDepthUpdate(now, sym, 0, DepthOperation.Insert, OrderBookSide.Bid, 500.24m, 300m, "MM1"));
+            depthCollector.OnDepth(new MarketDepthUpdate(now, sym, 0, DepthOperation.Insert, OrderBookSide.Ask, 500.26m, 250m, "MM2"));
+            depthCollector.OnDepth(new MarketDepthUpdate(now, sym, 0, DepthOperation.Update, OrderBookSide.Bid, 500.24m, 350m, "MM1"));
+            depthCollector.OnDepth(new MarketDepthUpdate(now, sym, 3, DepthOperation.Update, OrderBookSide.Ask, 500.30m, 100m, "MMX")); // induce integrity
+            depthCollector.ResetSymbolStream(sym);
+            depthCollector.OnDepth(new MarketDepthUpdate(now, sym, 0, DepthOperation.Insert, OrderBookSide.Bid, 500.20m, 100m, "MM3"));
+            depthCollector.OnDepth(new MarketDepthUpdate(now, sym, 0, DepthOperation.Insert, OrderBookSide.Ask, 500.22m, 90m, "MM4"));
 
-        tradeCollector.OnTrade(new MarketTradeUpdate(now, sym, 500.21m, 100, Domain.Models.AggressorSide.Buy, SequenceNumber: 1, StreamId: "SIM", Venue: "TEST"));
+            tradeCollector.OnTrade(new MarketTradeUpdate(now, sym, 500.21m, 100, Domain.Models.AggressorSide.Buy, SequenceNumber: 1, StreamId: "SIM", Venue: "TEST"));
 
-        await Task.Delay(200);
+            await Task.Delay(200);
+        }
 
         log.Information("Wrote MarketEvents to {StoragePath}", storageOpt.RootPath);
         log.Information("Metrics: published={Published}, integrity={Integrity}, dropped={Dropped}",
@@ -732,6 +736,7 @@ DIAGNOSTICS & TROUBLESHOOTING:
     --test-connectivity     Test connectivity to all configured providers
     --show-config           Display current configuration summary
     --error-codes           Show error code reference guide
+    --simulate-feed         Emit a synthetic depth/trade event for smoke testing
 
 SYMBOL MANAGEMENT:
     --symbols               Show all symbols (monitored + archived)
@@ -1079,7 +1084,7 @@ SUPPORT:
         {
             DataSource = overlay.DataSource != default ? overlay.DataSource : baseConfig.DataSource,
             DataRoot = !string.IsNullOrWhiteSpace(overlay.DataRoot) ? overlay.DataRoot : baseConfig.DataRoot,
-            Compress = overlay.Compress || baseConfig.Compress,
+            Compress = overlay.Compress ?? baseConfig.Compress,
             Symbols = overlay.Symbols?.Length > 0 ? overlay.Symbols : baseConfig.Symbols,
             Alpaca = overlay.Alpaca ?? baseConfig.Alpaca,
             IB = overlay.IB ?? baseConfig.IB,
@@ -1478,8 +1483,8 @@ SUPPORT:
             if (!string.IsNullOrEmpty(keyId) && !string.IsNullOrEmpty(secretKey))
             {
                 providers.Add(new AlpacaHistoricalDataProvider(
-                    keyId: alpacaCfg?.KeyId,
-                    secretKey: alpacaCfg?.SecretKey,
+                    keyId: keyId,
+                    secretKey: secretKey,
                     feed: alpacaCfg?.Feed ?? "iex",
                     adjustment: alpacaCfg?.Adjustment ?? "all",
                     priority: alpacaCfg?.Priority ?? 5,

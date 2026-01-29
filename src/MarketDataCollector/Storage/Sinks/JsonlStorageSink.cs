@@ -88,6 +88,7 @@ public sealed class JsonlStorageSink : IStorageSink
     private readonly ILogger<JsonlStorageSink> _logger;
     private readonly RetentionManager? _retention;
     private readonly Timer? _flushTimer;
+    private readonly Timer? _retentionTimer;
     private bool _disposed;
 
     private readonly ConcurrentDictionary<string, WriterState> _writers = new(StringComparer.OrdinalIgnoreCase);
@@ -138,10 +139,19 @@ public sealed class JsonlStorageSink : IStorageSink
         if (_batchOptions.Enabled)
         {
             _flushTimer = new Timer(
-                async _ => await FlushAllBuffersAsync().ConfigureAwait(false),
+                _ => _ = FlushAllBuffersSafelyAsync(),
                 null,
                 _batchOptions.FlushInterval,
                 _batchOptions.FlushInterval);
+        }
+
+        if (_retention != null)
+        {
+            _retentionTimer = new Timer(
+                _ => RunRetentionCleanup(),
+                null,
+                TimeSpan.FromSeconds(15),
+                TimeSpan.FromSeconds(15));
         }
     }
 
@@ -150,8 +160,6 @@ public sealed class JsonlStorageSink : IStorageSink
         if (_disposed) throw new ObjectDisposedException(nameof(JsonlStorageSink));
 
         EventSchemaValidator.Validate(evt);
-        _retention?.MaybeCleanup();
-
         var path = _policy.GetPath(evt);
 
         if (!_batchOptions.Enabled)
@@ -230,6 +238,30 @@ public sealed class JsonlStorageSink : IStorageSink
         }
     }
 
+    private async Task FlushAllBuffersSafelyAsync()
+    {
+        try
+        {
+            await FlushAllBuffersAsync().ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Periodic flush failed");
+        }
+    }
+
+    private void RunRetentionCleanup()
+    {
+        try
+        {
+            _retention?.MaybeCleanup();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Periodic retention cleanup failed");
+        }
+    }
+
     public async Task FlushAsync(CancellationToken ct = default)
     {
         // First flush all buffers (if batching enabled)
@@ -252,6 +284,11 @@ public sealed class JsonlStorageSink : IStorageSink
         if (_flushTimer != null)
         {
             await _flushTimer.DisposeAsync().ConfigureAwait(false);
+        }
+
+        if (_retentionTimer != null)
+        {
+            await _retentionTimer.DisposeAsync().ConfigureAwait(false);
         }
 
         // Flush remaining buffered events

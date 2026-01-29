@@ -386,7 +386,7 @@ public sealed class DiagnosticBundleService
         return new
         {
             dataRoot = config.DataRoot,
-            compress = config.Compress,
+            compress = config.Compress ?? false,
             dataSource = config.DataSource.ToString(),
             alpaca = config.Alpaca != null ? new
             {

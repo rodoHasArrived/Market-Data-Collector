@@ -648,7 +648,7 @@ public sealed class AutoConfigurationService
         }
 
         // Recommend compression for production
-        if (!config.Compress && configuredProviders.Count > 0)
+        if (!(config.Compress ?? false) && configuredProviders.Count > 0)
         {
             recommendations.Add("Enable compression (Compress: true) to reduce storage usage in production.");
         }

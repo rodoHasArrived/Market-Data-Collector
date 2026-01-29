@@ -113,11 +113,12 @@ public sealed class BackfillCoordinator : IDisposable
         try
         {
             var cfg = _store.Load();
-            var storageOpt = cfg.Storage?.ToStorageOptions(cfg.DataRoot, cfg.Compress)
+            var compressionEnabled = cfg.Compress ?? false;
+            var storageOpt = cfg.Storage?.ToStorageOptions(cfg.DataRoot, compressionEnabled)
                 ?? new StorageOptions
                 {
                     RootPath = cfg.DataRoot,
-                    Compress = cfg.Compress,
+                    Compress = compressionEnabled,
                     NamingConvention = FileNamingConvention.BySymbol,
                     DatePartition = DatePartition.Daily
                 };

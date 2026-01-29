@@ -7,7 +7,7 @@ namespace MarketDataCollector.Application.Config;
 /// Root configuration model loaded from appsettings.json.
 /// </summary>
 /// <param name="DataRoot">Output directory root for storage sinks.</param>
-/// <param name="Compress">Whether JSONL sinks should gzip.</param>
+/// <param name="Compress">Whether JSONL sinks should gzip. Null means use base configuration/default.</param>
 /// <param name="DataSource">
 /// Market data provider selector:
 /// - <see cref="DataSourceKind.IB"/> (default) uses Interactive Brokers via IMarketDataClient/IBMarketDataClient.
@@ -22,7 +22,7 @@ namespace MarketDataCollector.Application.Config;
 /// <param name="DataSources">Multiple data source configurations for real-time and historical data.</param>
 public sealed record AppConfig(
     string DataRoot = "data",
-    bool Compress = false,
+    bool? Compress = null,
     [property: JsonConverter(typeof(DataSourceKindConverter))] DataSourceKind DataSource = DataSourceKind.IB,
     AlpacaOptions? Alpaca = null,
     IBOptions? IB = null,

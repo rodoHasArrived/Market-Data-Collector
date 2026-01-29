@@ -188,7 +188,7 @@ public sealed class ConfigValidatorCli
         Console.WriteLine($"    Data Source:     {config.DataSource}");
         Console.WriteLine($"    Data Root:       {config.DataRoot}");
         Console.WriteLine($"    Symbols:         {config.Symbols?.Length ?? 0} configured");
-        Console.WriteLine($"    Compression:     {(config.Compress ? "Enabled" : "Disabled")}");
+        Console.WriteLine($"    Compression:     {(config.Compress ?? false ? "Enabled" : "Disabled")}");
 
         if (config.Storage != null)
         {
