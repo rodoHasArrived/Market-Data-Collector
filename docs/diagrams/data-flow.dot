@@ -1,6 +1,6 @@
 // Data Flow Diagram
-// Market Data Collector v1.0.0
-// Last Updated: 2026-01-14
+// Market Data Collector v1.6.1
+// Last Updated: 2026-01-29
 //
 // This diagram shows the end-to-end data flow through the system,
 // from ingestion to storage and export.
@@ -16,7 +16,7 @@ digraph DataFlow {
 
   // Title
   labelloc="t";
-  label="Market Data Collector - Data Flow Diagram\nEnd-to-End Event Processing | v1.0.0";
+  label="Market Data Collector - Data Flow Diagram\nEnd-to-End Event Processing | v1.6.1";
 
   // Onboarding Flow (First-Time Setup)
   subgraph cluster_onboarding {
@@ -47,7 +47,7 @@ digraph DataFlow {
 
   // Data Sources - Historical
   subgraph cluster_historical_sources {
-    label="Historical Data Sources (9 Providers)";
+    label="Historical Data Sources (8 Providers)";
     color="#2c7a7b";
     style="rounded";
     bgcolor="#e6fffa";

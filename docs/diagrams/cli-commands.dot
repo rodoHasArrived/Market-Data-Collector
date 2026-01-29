@@ -1,6 +1,6 @@
 // CLI Commands Reference Diagram
-// Market Data Collector v1.0.0
-// Last Updated: 2026-01-14
+// Market Data Collector v1.6.1
+// Last Updated: 2026-01-29
 //
 // This diagram shows all available CLI commands and flags,
 // organized by category with usage examples.
@@ -16,7 +16,7 @@ digraph CLICommands {
 
   // Title
   labelloc="t";
-  label="Market Data Collector - CLI Commands Reference\nAll Available Flags and Options | v1.0.0";
+  label="Market Data Collector - CLI Commands Reference\nAll Available Flags and Options | v1.6.1";
 
   // Entry Point
   MDC [shape=box, fillcolor="#438dd5", fontcolor="white", width=3,
@@ -63,6 +63,9 @@ digraph CLICommands {
 
     DRY_RUN [fillcolor="#93c5fd",
              label="--dry-run\n\nTest initialization\nValidate everything\nNo data collection"];
+
+    SELFTEST [fillcolor="#93c5fd",
+              label="--selftest\n\nRun self-tests\nValidate components"];
   }
 
   // Operation Commands
@@ -102,7 +105,47 @@ digraph CLICommands {
           label="--help\n\nShow all commands\nUsage examples\nVersion info"];
 
     VERSION [fillcolor="#fbd38d",
-             label="--version\n\nShow version: 1.0.0\n.NET runtime info"];
+             label="--version\n\nShow version: 1.6.1\n.NET runtime info"];
+  }
+
+  // Symbol Management Commands
+  subgraph cluster_symbols {
+    label="Symbol Management Commands";
+    color="#2c7a7b";
+    style="rounded";
+    bgcolor="#d1fae5";
+
+    SYM_LIST [fillcolor="#6ee7b7",
+              label="--symbols\n\nList all symbols\nActive + archived"];
+
+    SYM_ADD [fillcolor="#6ee7b7",
+             label="--symbols-add <list>\n\nAdd new symbols\nOptions: --no-trades,\n--no-depth, --depth-levels"];
+
+    SYM_REMOVE [fillcolor="#a7f3d0",
+                label="--symbols-remove <list>\n\nRemove symbols"];
+
+    SYM_STATUS [fillcolor="#a7f3d0",
+                label="--symbol-status <symbol>\n\nCheck symbol status"];
+  }
+
+  // Package Commands
+  subgraph cluster_packages {
+    label="Package Commands (Data Packaging)";
+    color="#805ad5";
+    style="rounded";
+    bgcolor="#faf5ff";
+
+    PKG_CREATE [fillcolor="#c4b5fd",
+                label="--package\n\nCreate data package\nPortable archive"];
+
+    PKG_IMPORT [fillcolor="#c4b5fd",
+                label="--import-package <path>\n\nImport data package"];
+
+    PKG_LIST [fillcolor="#ddd6fe",
+              label="--list-package <path>\n\nList package contents"];
+
+    PKG_VALIDATE [fillcolor="#ddd6fe",
+                  label="--validate-package <path>\n\nValidate package integrity"];
   }
 
   // Common Workflows
@@ -147,6 +190,7 @@ digraph CLICommands {
   MDC -> QUICK_CHECK [color="#2b6cb0"];
   MDC -> VAL_CONFIG [color="#2b6cb0"];
   MDC -> DRY_RUN [color="#2b6cb0"];
+  MDC -> SELFTEST [color="#2b6cb0"];
 
   MDC -> UI_MODE [color="#38a169"];
   MDC -> BACKFILL [color="#38a169"];
@@ -157,6 +201,16 @@ digraph CLICommands {
   MDC -> ERROR_CODES [color="#ed8936"];
   MDC -> HELP [color="#ed8936"];
   MDC -> VERSION [color="#ed8936"];
+
+  MDC -> SYM_LIST [color="#2c7a7b"];
+  MDC -> SYM_ADD [color="#2c7a7b"];
+  SYM_ADD -> SYM_REMOVE [style=dashed];
+  SYM_ADD -> SYM_STATUS [style=dashed];
+
+  MDC -> PKG_CREATE [color="#805ad5"];
+  MDC -> PKG_IMPORT [color="#805ad5"];
+  PKG_CREATE -> PKG_LIST [style=dashed];
+  PKG_CREATE -> PKG_VALIDATE [style=dashed];
 
   // Legend
   subgraph cluster_legend {
@@ -169,6 +223,8 @@ digraph CLICommands {
     L2 [shape=box, fillcolor="#93c5fd", label="Diagnostic"];
     L3 [shape=box, fillcolor="#68d391", label="Operation"];
     L4 [shape=box, fillcolor="#fbd38d", label="Documentation"];
+    L5 [shape=box, fillcolor="#6ee7b7", label="Symbol Mgmt"];
+    L6 [shape=box, fillcolor="#c4b5fd", label="Package"];
 
     ENV_NOTE [shape=plaintext,
               label="Environment Variables:\n\nALPACA__KEYID, ALPACA__SECRETKEY\nPOLYGON__APIKEY, TIINGO__TOKEN\nNYSE__APIKEY, etc.\n\n(Use double underscore for nested config)"];

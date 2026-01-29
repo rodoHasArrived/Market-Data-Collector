@@ -1,6 +1,6 @@
 // Event Pipeline Sequence Diagram
-// Market Data Collector v1.0.0
-// Last Updated: 2026-01-14
+// Market Data Collector v1.6.1
+// Last Updated: 2026-01-29
 //
 // This diagram shows the sequence of event processing through the pipeline,
 // from data source to storage and optional distributed messaging.
@@ -16,7 +16,7 @@ digraph EventPipelineSequence {
 
   // Title
   labelloc="t";
-  label="Market Data Collector - Event Pipeline Sequence\nAsync Producer-Consumer Pattern | v1.0.0";
+  label="Market Data Collector - Event Pipeline Sequence\nAsync Producer-Consumer Pattern | v1.6.1";
 
   // Phase 1: Data Source
   subgraph cluster_source {

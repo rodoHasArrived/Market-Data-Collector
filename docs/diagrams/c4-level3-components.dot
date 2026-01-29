@@ -1,6 +1,6 @@
 // C4 Level 3: Component Diagram
-// Market Data Collector v1.0.0
-// Last Updated: 2026-01-19
+// Market Data Collector v1.6.1
+// Last Updated: 2026-01-29
 //
 // This diagram shows the internal components of the Market Data Collector Core.
 // It answers: "What are the building blocks and their responsibilities?"
@@ -16,7 +16,7 @@ digraph C4_Components {
 
   // Title
   labelloc="t";
-  label="Market Data Collector - Component Diagram (C4 Level 3)\nCore Collector Internals | v1.0.0";
+  label="Market Data Collector - Component Diagram (C4 Level 3)\nCore Collector Internals | v1.6.1";
 
   // External Systems
   subgraph cluster_external {
@@ -33,7 +33,7 @@ digraph C4_Components {
     SS [shape=box, style="rounded,filled", fillcolor="#4a90d9", fontcolor="white",
         label="StockSharp\n[Multi-Exchange]"];
     HIST_API [shape=box, style="rounded,filled", fillcolor="#38a169", fontcolor="white",
-              label="Historical APIs\n[9 providers]"];
+              label="Historical APIs\n[8 providers]"];
   }
 
   FS [shape=cylinder, style="filled", fillcolor="#718096", fontcolor="white",
@@ -63,7 +63,7 @@ digraph C4_Components {
         ALP_CLIENT [label="AlpacaMarketDataClient\n[Component]\n\nWebSocket streaming\nIEX/SIP feeds\nTrades + Quotes", fillcolor="#bfdbfe"];
         NYSE_CLIENT [label="NYSEDataSource\n[Component]\n\nExchange-direct feed\nUS Equities\nReal-time + Historical", fillcolor="#bfdbfe"];
         SS_CLIENT [label="StockSharpConnector\n[Component]\n\nMulti-exchange adapter\nGlobal markets", fillcolor="#bfdbfe"];
-        POL_CLIENT [label="PolygonMarketDataClient\n[Component]\n\nStub implementation\nSynthetic heartbeat", fillcolor="#fecaca"];
+        POL_CLIENT [label="PolygonMarketDataClient\n[Component]\n\nPolygon.io streaming\nTrades, quotes, websocket", fillcolor="#bfdbfe"];
       }
 
       // Historical Providers

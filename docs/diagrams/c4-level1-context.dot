@@ -1,6 +1,6 @@
 // C4 Level 1: System Context Diagram
-// Market Data Collector v1.0.0
-// Last Updated: 2026-01-14
+// Market Data Collector v1.6.1
+// Last Updated: 2026-01-29
 //
 // This diagram shows the Market Data Collector in context with its users
 // and external systems. It answers: "What is the system and who uses it?"
@@ -16,7 +16,7 @@ digraph C4_Context {
 
   // Title
   labelloc="t";
-  label="Market Data Collector - System Context (C4 Level 1)\nv1.0.0";
+  label="Market Data Collector - System Context (C4 Level 1)\nv1.6.1";
 
   // Actors
   subgraph cluster_actors {
@@ -55,7 +55,7 @@ digraph C4_Context {
 
   // External Systems - Historical Data Providers
   subgraph cluster_historical {
-    label="Historical Data Providers (9 Implemented)";
+    label="Historical Data Providers (8 Implemented)";
     color="#2c7a7b";
     style="rounded";
     bgcolor="#e6fffa";

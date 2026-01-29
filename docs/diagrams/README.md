@@ -1,7 +1,7 @@
 # Architecture Diagrams
 
-**Last Updated:** 2026-01-27
-**Version:** 1.0.0
+**Last Updated:** 2026-01-29
+**Version:** 1.6.1
 
 This folder contains architecture diagrams for the Market Data Collector system in Graphviz DOT format.
 
@@ -32,14 +32,14 @@ This folder contains architecture diagrams for the Market Data Collector system 
 Shows the Market Data Collector in context with:
 - **Users**: Operators, Quants/Analysts, and DevOps
 - **Streaming Providers**: IB, Alpaca, NYSE Direct, StockSharp
-- **Historical Providers**: Yahoo, Tiingo, Finnhub, Polygon, Stooq, and more (9 total)
+- **Historical Providers**: Yahoo, Tiingo, Finnhub, Polygon, Stooq, Alpha Vantage, Nasdaq Data Link, Alpaca (8 total)
 - **Downstream Systems**: QuantConnect Lean, Python/R Analytics, PostgreSQL/TimescaleDB
 - **Infrastructure**: Storage (JSONL/Parquet), Message Bus (RabbitMQ), Monitoring (Prometheus/Grafana)
 
 ### C4 Level 2: Container Diagram
 
 Shows the major deployable units:
-- **Presentation Layer**: UWP Desktop App, Web Dashboard, CLI Interface (11+ flags)
+- **Presentation Layer**: UWP Desktop App, Web Dashboard, CLI Interface (24+ flags)
 - **Onboarding & Diagnostics Layer** (NEW): Configuration Wizard, Auto-Configuration, Diagnostic Services, Error Formatter
 - **Core Collector Service** (.NET 9 Console with 100K bounded channel)
 - **F# Domain Library** (Type-safe validation, discriminated unions)
@@ -52,7 +52,7 @@ Shows the major deployable units:
 ### C4 Level 3: Component Diagram
 
 Detailed view of the core collector internals:
-- **Infrastructure Layer**: Streaming clients (IB, Alpaca, NYSE, StockSharp), Historical providers (9), Connection/Resilience management, Performance optimizations (source-generated JSON, connection warmup)
+- **Infrastructure Layer**: Streaming clients (IB, Alpaca, NYSE, Polygon, StockSharp), Historical providers (8), Connection/Resilience management, Performance optimizations (source-generated JSON, connection warmup)
 - **Domain Layer**: Collectors (Trade, Quote, Depth), Domain models, F# validation pipeline
 - **Application Layer**: EventPipeline (100K bounded channel), Technical indicators (200+), Config/Monitoring, Backfill service, **Onboarding & Diagnostics** (8 services: AutoConfiguration, Wizard, FirstRunDetector, ConnectivityTest, CredentialValidation, ErrorFormatter, ProgressDisplay, StartupSummary)
 - **Storage Layer**: Write path (WAL, JSONL, Parquet), Compression profiles, Export service, Quality reporting
@@ -74,11 +74,11 @@ Shows data moving through the system:
 Details the provider abstraction:
 - **Core Interfaces**: IDataSource, IRealtimeDataSource, IHistoricalDataSource
 - **Legacy Interfaces**: IMarketDataClient, IHistoricalDataProvider
-- **Streaming Providers (4 Production + 1 Stub)**: IB, Alpaca, NYSE, StockSharp, Polygon (stub)
-- **Historical Providers (9 in 3 tiers)**:
-  - Tier 1 (Priority 5): NYSE, Alpaca
+- **Streaming Providers (5 Production)**: IB, Alpaca, NYSE, Polygon, StockSharp
+- **Historical Providers (8 in 3 tiers)**:
+  - Tier 1 (Priority 5): Alpaca
   - Tier 2 (Priority 10-20): Yahoo, Polygon, Stooq
-  - Tier 3 (Priority 25+): Tiingo, Nasdaq, Finnhub, Alpha Vantage
+  - Tier 3 (Priority 25+): Tiingo, Nasdaq Data Link, Finnhub, Alpha Vantage
 - **Resilience**: EnhancedIBConnectionManager, WebSocketResiliencePolicy, AutomaticFailoverManager, CircuitBreaker, RateLimiter
 - **Symbol Resolution**: OpenFIGI, SymbolMapper, ContractFactory
 - **CompositeHistoricalDataProvider**: Automatic failover, rate-limit rotation, priority selection
@@ -149,12 +149,14 @@ Shows the user journey from first-run to operational:
    - `--dry-run` - Full test without data collection
 5. **Error Handling** - FriendlyErrorFormatter with 24 error codes (MDC-XXX-NNN)
 
-### CLI Commands Reference (NEW)
+### CLI Commands Reference
 
-Comprehensive reference for all CLI flags:
+Comprehensive reference for all 24+ CLI flags:
 - **Setup Commands**: --wizard, --auto-config, --generate-config, --detect-providers
-- **Diagnostic Commands**: --validate-credentials, --test-connectivity, --quick-check, --validate-config, --dry-run
-- **Operation Commands**: --ui, --http-port, --backfill, --backfill-provider, --backfill-symbols, --backfill-from, --backfill-to
+- **Diagnostic Commands**: --validate-credentials, --test-connectivity, --quick-check, --validate-config, --dry-run, --selftest
+- **Operation Commands**: --ui, --http-port, --watch-config, --backfill, --backfill-provider, --backfill-symbols, --backfill-from, --backfill-to
+- **Symbol Commands**: --symbols, --symbols-monitored, --symbols-archived, --symbols-add, --symbols-remove, --symbol-status
+- **Package Commands**: --package, --import-package, --list-package, --validate-package
 - **Documentation Commands**: --show-config, --error-codes, --help, --version
 - **Common Workflows**: New installation, CI/CD setup, troubleshooting, backfill operations
 - **Exit Codes**: 0 (success), 1 (general error), 2 (config error), 3 (connection error), 4 (auth error), 5 (validation failed)

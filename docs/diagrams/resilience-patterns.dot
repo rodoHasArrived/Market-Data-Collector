@@ -1,6 +1,6 @@
 // Resilience Patterns Diagram
-// Market Data Collector v1.0.0
-// Last Updated: 2026-01-14
+// Market Data Collector v1.6.1
+// Last Updated: 2026-01-29
 //
 // This diagram shows the resilience patterns implemented in the system,
 // including circuit breakers, retry policies, failover, and rate limiting.
@@ -16,7 +16,7 @@ digraph ResiliencePatterns {
 
   // Title
   labelloc="t";
-  label="Market Data Collector - Resilience Patterns\nFault Tolerance & Recovery Mechanisms | v1.0.0";
+  label="Market Data Collector - Resilience Patterns\nFault Tolerance & Recovery Mechanisms | v1.6.1";
 
   // Circuit Breaker Pattern
   subgraph cluster_circuit_breaker {
