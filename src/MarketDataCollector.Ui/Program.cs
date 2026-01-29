@@ -2516,13 +2516,13 @@ public sealed class BackfillCoordinator
         {
             var cfg = _store.Load();
             var storageOpt = cfg.Storage?.ToStorageOptions(cfg.DataRoot, cfg.Compress)
-                ?? new StorageOptions
+                ?? StorageProfilePresets.ApplyProfile("Research", new StorageOptions
                 {
                     RootPath = cfg.DataRoot,
                     Compress = cfg.Compress,
                     NamingConvention = FileNamingConvention.BySymbol,
                     DatePartition = DatePartition.Daily
-                };
+                });
 
             var policy = new JsonlStoragePolicy(storageOpt);
             await using var sink = new JsonlStorageSink(storageOpt, policy);

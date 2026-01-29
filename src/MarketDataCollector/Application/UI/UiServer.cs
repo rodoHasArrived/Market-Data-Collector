@@ -87,7 +87,7 @@ public sealed class UiServer : IAsyncDisposable
         var config = store.Load();
         var compressionEnabled = config.Compress ?? false;
         var storageOptions = config.Storage?.ToStorageOptions(config.DataRoot, compressionEnabled)
-            ?? new StorageOptions { RootPath = config.DataRoot, Compress = compressionEnabled };
+            ?? StorageProfilePresets.ApplyProfile("Research", new StorageOptions { RootPath = config.DataRoot, Compress = compressionEnabled });
         builder.Services.AddSingleton(storageOptions);
         builder.Services.AddSingleton<ISourceRegistry>(sp => new SourceRegistry(config.Sources?.PersistencePath));
         builder.Services.AddSingleton<IFileMaintenanceService, FileMaintenanceService>();

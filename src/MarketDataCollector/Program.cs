@@ -234,6 +234,13 @@ internal static class Program
             return;
         }
 
+        // Show Storage Profiles Mode - Display available storage profiles
+        if (args.Any(a => a.Equals("--show-profiles", StringComparison.OrdinalIgnoreCase)))
+        {
+            ShowStorageProfiles();
+            return;
+        }
+
         // Symbol Management Commands
         var symbolManagementService = new SymbolManagementService(
             new ConfigStore(cfgPath),
@@ -547,15 +554,31 @@ internal static class Program
         }
 
         // Build storage options from config
+        // CLI --storage-profile takes precedence over config file Profile setting
+        var cliProfile = GetArgValue(args, "--storage-profile");
         var compressionEnabled = cfg.Compress ?? false;
         var storageOpt = cfg.Storage?.ToStorageOptions(cfg.DataRoot, compressionEnabled)
-            ?? new StorageOptions
+            ?? StorageProfilePresets.ApplyProfile("Research", new StorageOptions
             {
                 RootPath = cfg.DataRoot,
                 Compress = compressionEnabled,
                 NamingConvention = FileNamingConvention.BySymbol,
                 DatePartition = DatePartition.Daily
-            };
+            });
+
+        // Apply CLI profile override if specified
+        if (!string.IsNullOrWhiteSpace(cliProfile))
+        {
+            var validProfiles = new[] { "research", "lowlatency", "archival" };
+            if (!validProfiles.Contains(cliProfile.ToLowerInvariant()))
+            {
+                log.Error("Invalid storage profile '{Profile}'. Valid options: Research, LowLatency, Archival", cliProfile);
+                Environment.Exit(1);
+                return;
+            }
+            storageOpt = StorageProfilePresets.ApplyProfile(cliProfile, storageOpt);
+            log.Information("Applied storage profile: {Profile}", cliProfile);
+        }
 
         var policy = new JsonlStoragePolicy(storageOpt);
         await using var sink = new JsonlStorageSink(storageOpt, policy);
@@ -804,6 +827,12 @@ SYMBOL OPTIONS (use with --symbols-add):
     --depth-levels <n>      Number of depth levels (default: 10)
     --update                Update existing symbols instead of skipping
 
+STORAGE OPTIONS:
+    --storage-profile <name> Storage profile preset: Research (default), LowLatency, Archival
+                            Profiles simplify configuration by pre-setting compression, partitioning,
+                            and retention options. Use --show-profiles to see details.
+    --show-profiles         Display available storage profiles and their settings
+
 OPTIONS:
     --config <path>         Path to configuration file (default: appsettings.json)
     --http-port <port>      HTTP server port (default: 8080)
@@ -970,6 +999,76 @@ SUPPORT:
 ║  QUICK CHECK:  Run: ./MarketDataCollector --quick-check              ║
 ║  START UI:     Run: ./MarketDataCollector --ui                       ║
 ║  Then open http://localhost:8080 in your browser                     ║
+╚══════════════════════════════════════════════════════════════════════╝
+");
+    }
+
+    private static void ShowStorageProfiles()
+    {
+        Console.WriteLine(@"
+╔══════════════════════════════════════════════════════════════════════╗
+║                       Storage Profiles                                ║
+║           Simplified configuration for common use cases               ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+Storage profiles provide pre-configured settings optimized for different
+workflows. Select a profile to automatically configure compression,
+partitioning, manifests, and retention policies.
+
+PROFILES:
+
+  Research (Default)
+  ─────────────────────────────────────────────────────────────────────
+  Balanced defaults optimized for analysis and research workflows.
+
+  Settings:
+    • Compression: Enabled (Gzip)
+    • Partitioning: Date → Symbol (Daily)
+    • Manifests: Enabled
+    • Ideal for: Data science, backtesting, exploratory analysis
+
+  LowLatency
+  ─────────────────────────────────────────────────────────────────────
+  Prioritizes write speed with minimal processing overhead.
+
+  Settings:
+    • Compression: Disabled
+    • Partitioning: Symbol → EventType (Hourly)
+    • Manifests: Disabled
+    • Ideal for: Real-time trading, high-frequency data capture
+
+  Archival
+  ─────────────────────────────────────────────────────────────────────
+  Long-term storage with tiered architecture and high compression.
+
+  Settings:
+    • Compression: Enabled (Zstd - highest ratio)
+    • Partitioning: Date → Source (Monthly)
+    • Manifests: Enabled with checksums
+    • Tiering: Hot (7d) → Warm (30d) → Cold (180d) → Archive
+    • Retention: 10 years (3650 days)
+    • Quota: 2 TB maximum
+    • Ideal for: Compliance, historical archives, long-term research
+
+USAGE:
+
+  Command Line:
+    MarketDataCollector --storage-profile Research
+    MarketDataCollector --storage-profile LowLatency
+    MarketDataCollector --storage-profile Archival
+
+  Configuration File (appsettings.json):
+    {
+      ""Storage"": {
+        ""Profile"": ""Research""
+      }
+    }
+
+  Note: Profile settings can be overridden by explicit configuration.
+        CLI --storage-profile takes precedence over config file settings.
+
+╔══════════════════════════════════════════════════════════════════════╗
+║  TIP: Start with 'Research' profile, customize only if needed        ║
 ╚══════════════════════════════════════════════════════════════════════╝
 ");
     }

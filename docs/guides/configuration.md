@@ -218,8 +218,39 @@ Ensure TWS/Gateway is running with API enabled before starting the collector.
 
 **Section**: `Storage`
 
+### Storage Profiles (Recommended)
+
+**Start with a profile** to simplify your storage configuration. Profiles pre-configure compression, partitioning, manifests, and retention for common use cases.
+
+| Profile | Use Case | What It Configures |
+|---------|----------|-------------------|
+| `Research` | Data analysis, backtesting | Gzip compression, daily partitions, manifests enabled |
+| `LowLatency` | Real-time trading | No compression, hourly partitions, minimal overhead |
+| `Archival` | Compliance, long-term storage | Zstd compression, monthly partitions, 10-year retention |
+
+**Quickstart Example (recommended):**
+```json
+{
+  "Storage": {
+    "Profile": "Research"
+  }
+}
+```
+
+**Command Line:**
+```bash
+MarketDataCollector --storage-profile Research
+```
+
+> **Note**: The `Research` profile is automatically applied when no profile is specified. Profile settings can be overridden by explicit configuration below.
+
+### Individual Settings
+
+Use these settings to customize beyond profiles, or when not using a profile:
+
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
+| `Profile` | string | `"Research"` | Storage profile preset (Research, LowLatency, Archival) |
 | `NamingConvention` | string | `"BySymbol"` | File organization strategy |
 | `DatePartition` | string | `"Daily"` | Date-based file splitting |
 | `IncludeProvider` | boolean | `false` | Include provider name in paths |

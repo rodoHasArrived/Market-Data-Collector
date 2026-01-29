@@ -410,8 +410,8 @@ public sealed class DataGapRepairService
 
     private async Task StoreBarsAsync(IReadOnlyList<HistoricalBar> bars, CancellationToken ct)
     {
-        // Store bars using JSONL format
-        var storageOptions = new StorageOptions { RootPath = _dataRoot };
+        // Store bars using JSONL format with Research profile defaults
+        var storageOptions = StorageProfilePresets.ApplyProfile("Research", new StorageOptions { RootPath = _dataRoot });
         var storagePolicy = new JsonlStoragePolicy(storageOptions);
 
         foreach (var bar in bars)

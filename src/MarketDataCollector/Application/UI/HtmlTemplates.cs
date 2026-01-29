@@ -613,6 +613,25 @@ public static class HtmlTemplates
     <!-- Storage Settings -->
     <div class=""card"">
       <h2>💾 Storage Settings</h2>
+
+      <!-- Storage Profile Selector - Prominent -->
+      <div style=""background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 8px; margin-bottom: 20px; color: white;"">
+        <div style=""display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;"">
+          <span style=""font-size: 16px; font-weight: 600;"">⚡ Quick Setup: Storage Profile</span>
+          <span style=""background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 12px; font-size: 12px;"">Recommended</span>
+        </div>
+        <p style=""margin: 0 0 12px 0; opacity: 0.9; font-size: 14px;"">
+          Start with a profile to automatically configure compression, partitioning, and retention. You can customize individual settings below.
+        </p>
+        <select id=""storageProfile"" style=""width: 100%; padding: 12px; border-radius: 6px; border: none; font-size: 14px; background: white; color: #2d3748;"" onchange=""applyStorageProfile(this.value)"">
+          <option value="""">Custom (configure below)</option>
+          <option value=""Research"" selected>Research - Balanced defaults for analysis (Gzip, daily partitions, manifests)</option>
+          <option value=""LowLatency"">Low Latency - Fast ingest for real-time systems (No compression, hourly)</option>
+          <option value=""Archival"">Archival - Long-term storage (Zstd, tiering, 10-year retention)</option>
+        </select>
+        <div id=""profileInfo"" style=""margin-top: 12px; padding: 12px; background: rgba(255,255,255,0.15); border-radius: 6px; font-size: 13px; display: none;""></div>
+      </div>
+
       <div class=""form-row"">
         <div class=""form-group"" style=""grid-column: span 2;"">
           <label>
@@ -1344,10 +1363,19 @@ public static class HtmlTemplates
         document.getElementById('dataRoot').value = cfg.dataRoot || 'data';
         document.getElementById('compress').value = cfg.compress ? 'true' : 'false';
         if (cfg.storage) {{
+          // Load storage profile first (default to Research for new installations)
+          const profile = cfg.storage.profile || 'Research';
+          document.getElementById('storageProfile').value = profile;
+          applyStorageProfile(profile);
+
           document.getElementById('namingConvention').value = cfg.storage.namingConvention || 'BySymbol';
           document.getElementById('datePartition').value = cfg.storage.datePartition || 'Daily';
           document.getElementById('includeProvider').value = cfg.storage.includeProvider ? 'true' : 'false';
           document.getElementById('filePrefix').value = cfg.storage.filePrefix || '';
+        }} else {{
+          // No storage config - default to Research profile
+          document.getElementById('storageProfile').value = 'Research';
+          applyStorageProfile('Research');
         }}
         updateStoragePreview();
 
@@ -1436,13 +1464,15 @@ public static class HtmlTemplates
 
     async function saveStorageSettings() {{
       try {{
+        const profile = document.getElementById('storageProfile').value;
         const payload = {{
           dataRoot: document.getElementById('dataRoot').value,
           compress: document.getElementById('compress').value === 'true',
           namingConvention: document.getElementById('namingConvention').value,
           datePartition: document.getElementById('datePartition').value,
           includeProvider: document.getElementById('includeProvider').value === 'true',
-          filePrefix: document.getElementById('filePrefix').value
+          filePrefix: document.getElementById('filePrefix').value,
+          profile: profile || null
         }};
 
         await apiCall('/api/config/storage', {{
@@ -1451,9 +1481,42 @@ public static class HtmlTemplates
           body: JSON.stringify(payload)
         }});
 
-        showToast('success', 'Settings Saved', 'Storage settings saved. Restart collector to apply.');
+        const profileMsg = profile ? ` Profile '${{profile}}' will be applied.` : '';
+        showToast('success', 'Settings Saved', `Storage settings saved.${{profileMsg}} Restart collector to apply.`);
       }} catch (error) {{
         showToast('error', 'Save Failed', error.message);
+      }}
+    }}
+
+    function applyStorageProfile(profile) {{
+      const profileInfo = document.getElementById('profileInfo');
+      const profiles = {{
+        'Research': {{
+          compress: 'true',
+          datePartition: 'Daily',
+          info: 'Research profile: Gzip compression enabled, daily partitioning, manifests for data analysis. Ideal for backtesting and research workflows.'
+        }},
+        'LowLatency': {{
+          compress: 'false',
+          datePartition: 'Hourly',
+          info: 'Low Latency profile: No compression for fastest writes, hourly partitioning. Ideal for real-time trading systems.'
+        }},
+        'Archival': {{
+          compress: 'true',
+          datePartition: 'Monthly',
+          info: 'Archival profile: Zstd compression (highest ratio), monthly partitioning, tiered storage with 10-year retention. Ideal for compliance and long-term research.'
+        }}
+      }};
+
+      if (profile && profiles[profile]) {{
+        const p = profiles[profile];
+        document.getElementById('compress').value = p.compress;
+        document.getElementById('datePartition').value = p.datePartition;
+        profileInfo.textContent = p.info;
+        profileInfo.style.display = 'block';
+        updateStoragePreview();
+      }} else {{
+        profileInfo.style.display = 'none';
       }}
     }}
 

@@ -72,12 +72,35 @@ The system currently supports:
 | **Metadata** | Minimal | Rich metadata, insights, lineage tracking |
 | **Scheduling** | Manual timing | Trading-hours-aware off-hours automation |
 
-### Storage Profiles (Presets)
-Storage profiles are optional presets that map to existing storage options without removing advanced configuration.
+### Storage Profiles (Recommended Starting Point)
 
-* **Research** – Balanced defaults (manifests + gzip).
-* **LowLatency** – Fast ingest (no compression, hourly partitions).
-* **Archival** – Long-term retention (Zstd + tiering defaults).
+**Start with a storage profile before customizing individual settings.** Profiles provide pre-configured defaults optimized for common use cases, reducing configuration complexity while maintaining full flexibility for advanced users.
+
+| Profile | Use Case | Compression | Partitioning | Manifests | Retention |
+|---------|----------|-------------|--------------|-----------|-----------|
+| **Research** (Default) | Data analysis, backtesting | Gzip | Daily | Enabled | Standard |
+| **LowLatency** | Real-time trading systems | None | Hourly | Disabled | Standard |
+| **Archival** | Compliance, long-term storage | Zstd | Monthly | Enabled + checksums | 10 years |
+
+**Usage:**
+
+```bash
+# Command Line
+MarketDataCollector --storage-profile Research
+
+# Configuration File (appsettings.json)
+{
+  "Storage": {
+    "Profile": "Research"
+  }
+}
+```
+
+**Key Benefits:**
+- **Simplified Configuration**: One setting instead of many
+- **Best Practices Built-in**: Profiles encode recommended settings for each use case
+- **Full Override Capability**: Profile settings can be overridden by explicit configuration
+- **Default Research Profile**: New installations automatically use Research profile for optimal analysis workflows
 
 Profiles are applied by `StorageProfilePresets.ApplyProfile` and only adjust advanced options unless explicitly overridden.
 

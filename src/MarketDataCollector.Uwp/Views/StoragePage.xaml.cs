@@ -38,10 +38,27 @@ public sealed partial class StoragePage : Page
 
             if (config.Storage != null)
             {
+                // Load storage profile first (default to Research if not set)
+                var profile = config.Storage.Profile;
+                if (string.IsNullOrWhiteSpace(profile))
+                {
+                    // Default to Research profile for new installations
+                    SelectComboItemByTag(StorageProfileCombo, "Research");
+                }
+                else
+                {
+                    SelectComboItemByTag(StorageProfileCombo, profile);
+                }
+
                 SelectComboItemByTag(NamingConventionCombo, config.Storage.NamingConvention ?? "BySymbol");
                 SelectComboItemByTag(DatePartitionCombo, config.Storage.DatePartition ?? "Daily");
                 FilePrefixBox.Text = config.Storage.FilePrefix ?? string.Empty;
                 IncludeProviderToggle.IsOn = config.Storage.IncludeProvider;
+            }
+            else
+            {
+                // No storage config - default to Research profile
+                SelectComboItemByTag(StorageProfileCombo, "Research");
             }
 
             UpdatePreviewPath();
@@ -281,6 +298,39 @@ public sealed partial class StoragePage : Page
         }
     }
 
+    private void StorageProfile_Changed(object sender, SelectionChangedEventArgs e)
+    {
+        var profile = GetComboSelectedTag(StorageProfileCombo);
+
+        // Show info about what the profile configures
+        if (!string.IsNullOrEmpty(profile))
+        {
+            var (title, message) = profile switch
+            {
+                "Research" => ("Research Profile Selected",
+                    "This profile enables Gzip compression, daily partitioning, and manifest generation. Ideal for data analysis and backtesting workflows."),
+                "LowLatency" => ("Low Latency Profile Selected",
+                    "This profile disables compression and uses hourly partitioning for fastest write performance. Ideal for real-time trading systems."),
+                "Archival" => ("Archival Profile Selected",
+                    "This profile enables Zstd compression, tiered storage, and 10-year retention. Ideal for compliance and long-term research data."),
+                _ => ("", "")
+            };
+
+            if (!string.IsNullOrEmpty(title))
+            {
+                ProfileInfoBar.Title = title;
+                ProfileInfoBar.Message = message;
+                ProfileInfoBar.IsOpen = true;
+            }
+        }
+        else
+        {
+            ProfileInfoBar.IsOpen = false;
+        }
+
+        UpdatePreviewPath();
+    }
+
     private void UpdatePreview(object sender, object e)
     {
         UpdatePreviewPath();
@@ -346,12 +396,14 @@ public sealed partial class StoragePage : Page
         SaveProgress.IsActive = true;
         try
         {
+            var selectedProfile = GetComboSelectedTag(StorageProfileCombo);
             var storage = new StorageConfig
             {
                 NamingConvention = GetComboSelectedTag(NamingConventionCombo) ?? "BySymbol",
                 DatePartition = GetComboSelectedTag(DatePartitionCombo) ?? "Daily",
                 FilePrefix = string.IsNullOrWhiteSpace(FilePrefixBox.Text) ? null : FilePrefixBox.Text,
-                IncludeProvider = IncludeProviderToggle.IsOn
+                IncludeProvider = IncludeProviderToggle.IsOn,
+                Profile = string.IsNullOrWhiteSpace(selectedProfile) ? null : selectedProfile
             };
 
             await _configService.SaveStorageConfigAsync(
@@ -359,9 +411,12 @@ public sealed partial class StoragePage : Page
                 CompressToggle.IsOn,
                 storage);
 
+            var profileMsg = string.IsNullOrWhiteSpace(selectedProfile)
+                ? ""
+                : $" Profile '{selectedProfile}' will be applied.";
             SaveInfoBar.Severity = InfoBarSeverity.Success;
             SaveInfoBar.Title = "Success";
-            SaveInfoBar.Message = "Storage settings saved. Restart collector to apply changes.";
+            SaveInfoBar.Message = $"Storage settings saved.{profileMsg} Restart collector to apply changes.";
             SaveInfoBar.IsOpen = true;
         }
         catch (Exception ex)

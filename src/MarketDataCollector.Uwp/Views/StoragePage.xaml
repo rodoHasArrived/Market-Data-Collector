@@ -441,6 +441,67 @@
                 </StackPanel>
             </Border>
 
+            <!-- Storage Profile Selection -->
+            <Border Style="{StaticResource CardStyle}" BorderBrush="{ThemeResource SystemAccentColor}" BorderThickness="2">
+                <StackPanel Spacing="16">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE771;" Foreground="{ThemeResource SystemAccentColor}" />
+                        <TextBlock Text="Storage Profile" Style="{StaticResource SubtitleTextBlockStyle}" />
+                        <Border Background="{ThemeResource SystemAccentColorLight3}" CornerRadius="4" Padding="8,2">
+                            <TextBlock Text="Recommended" FontSize="10" Foreground="{ThemeResource SystemAccentColorDark1}" />
+                        </Border>
+                    </StackPanel>
+
+                    <TextBlock Text="Start with a profile to simplify configuration. Profiles pre-configure compression, partitioning, and retention settings for common use cases."
+                               TextWrapping="Wrap" Foreground="{ThemeResource SystemBaseMediumColor}" />
+
+                    <ComboBox x:Name="StorageProfileCombo"
+                              Header="Select a Profile"
+                              HorizontalAlignment="Stretch"
+                              SelectionChanged="StorageProfile_Changed">
+                        <ComboBoxItem Tag="" Content="Custom (No Profile)" />
+                        <ComboBoxItem Tag="Research" IsSelected="True">
+                            <ComboBoxItem.ContentTemplate>
+                                <DataTemplate>
+                                    <StackPanel>
+                                        <TextBlock Text="Research (Recommended)" FontWeight="SemiBold" />
+                                        <TextBlock Text="Balanced defaults for analysis - Gzip compression, daily partitions, manifests enabled"
+                                                   Style="{StaticResource CaptionTextBlockStyle}" TextWrapping="Wrap"
+                                                   Foreground="{ThemeResource SystemBaseMediumColor}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ComboBoxItem.ContentTemplate>
+                        </ComboBoxItem>
+                        <ComboBoxItem Tag="LowLatency">
+                            <ComboBoxItem.ContentTemplate>
+                                <DataTemplate>
+                                    <StackPanel>
+                                        <TextBlock Text="Low Latency" FontWeight="SemiBold" />
+                                        <TextBlock Text="Fast ingest - No compression, hourly partitions, minimal overhead"
+                                                   Style="{StaticResource CaptionTextBlockStyle}" TextWrapping="Wrap"
+                                                   Foreground="{ThemeResource SystemBaseMediumColor}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ComboBoxItem.ContentTemplate>
+                        </ComboBoxItem>
+                        <ComboBoxItem Tag="Archival">
+                            <ComboBoxItem.ContentTemplate>
+                                <DataTemplate>
+                                    <StackPanel>
+                                        <TextBlock Text="Archival" FontWeight="SemiBold" />
+                                        <TextBlock Text="Long-term storage - Zstd compression, tiering enabled, 10-year retention"
+                                                   Style="{StaticResource CaptionTextBlockStyle}" TextWrapping="Wrap"
+                                                   Foreground="{ThemeResource SystemBaseMediumColor}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ComboBoxItem.ContentTemplate>
+                        </ComboBoxItem>
+                    </ComboBox>
+
+                    <InfoBar x:Name="ProfileInfoBar" IsOpen="False" IsClosable="True" Severity="Informational" />
+                </StackPanel>
+            </Border>
+
             <!-- Data Root -->
             <Border Style="{StaticResource CardStyle}">
                 <StackPanel Spacing="16">
