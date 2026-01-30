@@ -64,13 +64,13 @@
   <!-- Web UI Dependencies -->
   <ItemGroup>
     <!-- ASP.NET Core -->
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.12" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
 
     <!-- Logging -->
-    <PackageReference Include="Serilog.AspNetCore" Version="8.0.3" />
+    <PackageReference Include="Serilog.AspNetCore" />
 
     <!-- Monitoring -->
-    <PackageReference Include="prometheus-net.AspNetCore" Version="8.2.1" />
+    <PackageReference Include="prometheus-net.AspNetCore" />
   </ItemGroup>
 
   <ItemGroup>

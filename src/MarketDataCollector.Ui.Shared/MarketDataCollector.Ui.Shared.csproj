@@ -22,7 +22,7 @@
 
   <!-- Package dependencies -->
   <ItemGroup>
-    <PackageReference Include="Serilog" Version="4.2.0" />
+    <PackageReference Include="Serilog" />
   </ItemGroup>
 
   <!-- Project references -->
