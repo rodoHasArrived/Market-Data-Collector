@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Logging;
+using MarketDataCollector.Storage;
 using Serilog;
 
 namespace MarketDataCollector.Application.Services;
@@ -462,10 +463,71 @@ public sealed class ConfigurationWizard
     {
         PrintStep(5, "Configure Storage");
 
-        PrintLine("\n  Storage settings control how market data is organized on disk.\n");
+        PrintLine("\n  Storage profiles provide pre-configured settings for common use cases.\n");
+
+        // Display available profiles
+        var presets = StorageProfilePresets.GetPresets();
+        PrintLine("  Available storage profiles:");
+        for (int i = 0; i < presets.Count; i++)
+        {
+            var preset = presets[i];
+            var isDefault = preset.Id == StorageProfilePresets.DefaultProfile;
+            var marker = isDefault ? " (recommended)" : "";
+            PrintLine($"    {i + 1}. {preset.Label}{marker}");
+            PrintLine($"       {preset.Description}");
+        }
+        PrintLine($"    {presets.Count + 1}. Custom - configure individual settings manually");
+
+        // Get default choice based on use case
+        var defaultChoice = useCase switch
+        {
+            UseCase.Development => 1, // Research
+            UseCase.Research => 1, // Research
+            UseCase.RealTimeTrading => 2, // LowLatency
+            UseCase.Production => 3, // Archival
+            _ => 1 // Research as fallback
+        };
+
+        var profileChoice = await PromptChoiceAsync("Select profile", 1, presets.Count + 1, defaultChoice, ct);
+
+        // Custom configuration path
+        if (profileChoice > presets.Count)
+        {
+            return await ConfigureStorageAdvancedAsync(useCase, ct);
+        }
+
+        // Use selected profile
+        var selectedProfile = presets[profileChoice - 1];
+        PrintLine($"\n  Selected profile: {selectedProfile.Label}");
+
+        // Offer advanced overrides
+        var customize = await PromptYesNoAsync("\nCustomize advanced settings", defaultValue: false, ct: ct);
+        if (customize)
+        {
+            return await ConfigureStorageAdvancedAsync(useCase, ct, selectedProfile.Id);
+        }
+
+        // Use profile defaults with use-case-specific retention
+        int? retentionDays = useCase switch
+        {
+            UseCase.Development => 30,
+            UseCase.Research => null,
+            UseCase.Production => 365,
+            _ => null
+        };
+
+        return new StorageConfig(
+            Profile: selectedProfile.Id,
+            RetentionDays: retentionDays
+        );
+    }
+
+    private async Task<StorageConfig> ConfigureStorageAdvancedAsync(UseCase useCase, CancellationToken ct, string? baseProfile = null)
+    {
+        PrintLine("\n  Advanced storage configuration:\n");
 
         PrintLine("  Naming convention:");
-        PrintLine("    1. BySymbol (recommended) - data/SPY/trades/2024-01-15.jsonl");
+        PrintLine("    1. BySymbol - data/SPY/trades/2024-01-15.jsonl");
         PrintLine("    2. ByDate - data/2024-01-15/SPY/trades.jsonl");
         PrintLine("    3. ByType - data/trades/SPY/2024-01-15.jsonl");
         PrintLine("    4. Flat - data/SPY_trades_2024-01-15.jsonl");
@@ -481,7 +543,7 @@ public sealed class ConfigurationWizard
         };
 
         PrintLine("\n  Date partitioning:");
-        PrintLine("    1. Daily (recommended) - new file each day");
+        PrintLine("    1. Daily - new file each day");
         PrintLine("    2. Hourly - new file each hour");
         PrintLine("    3. Monthly - new file each month");
         PrintLine("    4. None - single file per symbol/type");
@@ -522,7 +584,8 @@ public sealed class ConfigurationWizard
         return new StorageConfig(
             NamingConvention: naming,
             DatePartition: partition,
-            RetentionDays: retentionDays
+            RetentionDays: retentionDays,
+            Profile: baseProfile // Preserve base profile if user wanted to customize on top of it
         );
     }
 

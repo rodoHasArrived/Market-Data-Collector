@@ -115,13 +115,7 @@ public sealed class BackfillCoordinator : IDisposable
             var cfg = _store.Load();
             var compressionEnabled = cfg.Compress ?? false;
             var storageOpt = cfg.Storage?.ToStorageOptions(cfg.DataRoot, compressionEnabled)
-                ?? new StorageOptions
-                {
-                    RootPath = cfg.DataRoot,
-                    Compress = compressionEnabled,
-                    NamingConvention = FileNamingConvention.BySymbol,
-                    DatePartition = DatePartition.Daily
-                };
+                ?? StorageProfilePresets.CreateFromProfile(null, cfg.DataRoot, compressionEnabled);
 
             var policy = new JsonlStoragePolicy(storageOpt);
             await using var sink = new JsonlStorageSink(storageOpt, policy);
