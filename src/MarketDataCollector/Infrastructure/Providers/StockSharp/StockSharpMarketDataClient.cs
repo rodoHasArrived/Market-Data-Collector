@@ -13,6 +13,7 @@ using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Providers.Core;
 using MarketDataCollector.Infrastructure.Providers.StockSharp.Converters;
+using MarketDataCollector.Infrastructure.Resilience;
 using Serilog;
 
 namespace MarketDataCollector.Infrastructure.Providers.StockSharp;
@@ -49,30 +50,17 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
     private readonly Dictionary<int, (Security Security, string Symbol, SubscriptionType Type)> _subscriptions = new();
     private readonly Dictionary<string, Security> _securities = new();
 
+    // Use centralized configuration for reconnection and heartbeat settings
+    private readonly WebSocketConnectionConfig _connectionConfig = WebSocketConnectionConfig.Resilient;
+
     // Reconnection support (Hydra-inspired pattern)
     private CancellationTokenSource? _reconnectCts;
     private Task? _reconnectTask;
     private int _reconnectAttempt;
-    private const int MaxReconnectAttempts = 10;
-    private static readonly TimeSpan[] ReconnectDelays =
-    [
-        TimeSpan.FromSeconds(1),
-        TimeSpan.FromSeconds(2),
-        TimeSpan.FromSeconds(5),
-        TimeSpan.FromSeconds(10),
-        TimeSpan.FromSeconds(30),
-        TimeSpan.FromSeconds(60),
-        TimeSpan.FromMinutes(2),
-        TimeSpan.FromMinutes(5),
-        TimeSpan.FromMinutes(10),
-        TimeSpan.FromMinutes(15)
-    ];
 
     // Heartbeat monitoring - use long (ticks) for thread-safe atomic operations
     private long _lastDataReceivedTicks = DateTimeOffset.UtcNow.Ticks;
     private Timer? _heartbeatTimer;
-    private static readonly TimeSpan HeartbeatInterval = TimeSpan.FromSeconds(30);
-    private static readonly TimeSpan HeartbeatTimeout = TimeSpan.FromMinutes(2);
 
     // Message buffering for high-frequency data
     private readonly System.Threading.Channels.Channel<Action> _messageChannel;
@@ -277,8 +265,8 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
         _heartbeatTimer = new Timer(
             CheckHeartbeat,
             null,
-            HeartbeatInterval,
-            HeartbeatInterval);
+            _connectionConfig.HeartbeatInterval,
+            _connectionConfig.HeartbeatInterval);
     }
 
     /// <summary>
@@ -306,7 +294,9 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
             return;
 
         var timeSinceLastData = DateTimeOffset.UtcNow - GetLastDataReceived();
-        if (timeSinceLastData > HeartbeatTimeout)
+        // Use heartbeat interval + timeout as the staleness threshold
+        var staleThreshold = _connectionConfig.HeartbeatInterval + _connectionConfig.HeartbeatTimeout;
+        if (timeSinceLastData > staleThreshold)
         {
             _log.Warning("No data received for {Duration}s, connection may be stale. Triggering reconnection.",
                 timeSinceLastData.TotalSeconds);
@@ -340,6 +330,7 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
 
     /// <summary>
     /// Reconnect with exponential backoff and subscription recovery (Hydra pattern).
+    /// Uses centralized WebSocketConnectionConfig for retry timing.
     /// </summary>
     private async Task ReconnectWithRecoveryAsync(CancellationToken ct)
     {
@@ -355,13 +346,14 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
         _log.Information("Starting reconnection with {Count} subscriptions to recover", savedSubscriptions.Count);
         SetConnectionState(ConnectionState.Reconnecting);
 
-        while (!ct.IsCancellationRequested && _reconnectAttempt < MaxReconnectAttempts)
+        while (!ct.IsCancellationRequested && _reconnectAttempt < _connectionConfig.MaxReconnectAttempts)
         {
-            var delay = ReconnectDelays[Math.Min(_reconnectAttempt, ReconnectDelays.Length - 1)];
+            // Calculate exponential backoff delay using centralized configuration
+            var delay = CalculateReconnectDelay(_reconnectAttempt);
             _reconnectAttempt++;
 
             _log.Information("Reconnection attempt {Attempt}/{Max} in {Delay}s",
-                _reconnectAttempt, MaxReconnectAttempts, delay.TotalSeconds);
+                _reconnectAttempt, _connectionConfig.MaxReconnectAttempts, delay.TotalSeconds);
 
             try
             {
@@ -451,6 +443,21 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
                 _log.Warning(ex, "Failed to recover subscription for {Symbol}", symbol);
             }
         }
+    }
+
+    /// <summary>
+    /// Calculate reconnection delay using exponential backoff with jitter.
+    /// Based on centralized WebSocketConnectionConfig settings.
+    /// </summary>
+    private TimeSpan CalculateReconnectDelay(int attempt)
+    {
+        var baseDelay = _connectionConfig.RetryBaseDelay.TotalMilliseconds;
+        var maxDelay = _connectionConfig.MaxRetryDelay.TotalMilliseconds;
+        var delay = Math.Min(baseDelay * Math.Pow(2, attempt), maxDelay);
+
+        // Add jitter (±20%) to prevent thundering herd
+        var jitter = delay * 0.2 * (Random.Shared.NextDouble() * 2 - 1);
+        return TimeSpan.FromMilliseconds(delay + jitter);
     }
 
     /// <summary>

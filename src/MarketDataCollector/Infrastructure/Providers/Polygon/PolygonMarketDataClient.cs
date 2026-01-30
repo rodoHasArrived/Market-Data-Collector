@@ -14,7 +14,6 @@ using MarketDataCollector.Infrastructure.Providers;
 using MarketDataCollector.Infrastructure.Providers.Core;
 using MarketDataCollector.Infrastructure.Resilience;
 using MarketDataCollector.Infrastructure.Shared;
-using Polly;
 using Serilog;
 
 namespace MarketDataCollector.Infrastructure.Providers.Polygon;
@@ -50,13 +49,13 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
     private readonly QuoteCollector _quoteCollector;
     private readonly PolygonOptions _options;
 
-    // Resilience pipeline for connection retry with exponential backoff
-    private readonly ResiliencePipeline _connectionPipeline;
+    // Use centralized configuration for resilience settings
+    private readonly WebSocketConnectionConfig _connectionConfig = WebSocketConnectionConfig.Default;
 
     // Centralized subscription management (ID range 200,000+ to separate from other providers)
     private readonly SubscriptionManager _subscriptionManager = new(startingId: 200_000);
 
-    // WebSocket connection
+    // WebSocket connection - kept for protocol-specific handshake operations
     private ClientWebSocket? _ws;
     private CancellationTokenSource? _cts;
     private Task? _receiveLoop;
@@ -91,14 +90,6 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
         {
             ValidateApiKeyFormat(_options.ApiKey);
         }
-
-        // Initialize resilience pipeline with exponential backoff
-        _connectionPipeline = WebSocketResiliencePolicy.CreateComprehensivePipeline(
-            maxRetries: 5,
-            retryBaseDelay: TimeSpan.FromSeconds(2),
-            circuitBreakerFailureThreshold: 5,
-            circuitBreakerDuration: TimeSpan.FromSeconds(30),
-            operationTimeout: TimeSpan.FromSeconds(30));
 
         _log.Information(
             "Polygon client initialized (Mode: {Mode}, Feed: {Feed}, Trades: {Trades}, Quotes: {Quotes}, Aggregates: {Aggregates})",
@@ -247,7 +238,15 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
 
         _cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
 
-        await _connectionPipeline.ExecuteAsync(async token =>
+        // Use centralized resilience configuration
+        var connectionPipeline = WebSocketResiliencePolicy.CreateComprehensivePipeline(
+            maxRetries: _connectionConfig.MaxRetries,
+            retryBaseDelay: _connectionConfig.RetryBaseDelay,
+            circuitBreakerFailureThreshold: _connectionConfig.CircuitBreakerFailureThreshold,
+            circuitBreakerDuration: _connectionConfig.CircuitBreakerDuration,
+            operationTimeout: _connectionConfig.OperationTimeout);
+
+        await connectionPipeline.ExecuteAsync(async token =>
         {
             _ws = new ClientWebSocket();
             _ws.Options.KeepAliveInterval = TimeSpan.FromSeconds(30);
