@@ -59,13 +59,19 @@ var highValueTrades = client.GetTradesAsync(ct)
 
 ### Channel Benefits
 
+Use `EventPipelinePolicy` for consistent channel configuration across the codebase:
+
 ```csharp
-// Bounded channel with backpressure
-var channel = Channel.CreateBounded<MarketEvent>(
-    new BoundedChannelOptions(10_000)
-    {
-        FullMode = BoundedChannelFullMode.Wait
-    });
+using MarketDataCollector.Application.Pipeline;
+
+// Preferred: Use centralized policy with factory method
+var channel = EventPipelinePolicy.Default.CreateChannel<MarketEvent>();
+
+// Or use a specific preset for your use case:
+// - EventPipelinePolicy.HighThroughput  // 50k capacity, DropOldest
+// - EventPipelinePolicy.MessageBuffer   // 50k capacity, no metrics
+// - EventPipelinePolicy.MaintenanceQueue // 100 capacity, Wait/backpressure
+// - EventPipelinePolicy.Logging         // 1k capacity, DropOldest
 
 // Producer
 await channel.Writer.WriteAsync(event, ct);

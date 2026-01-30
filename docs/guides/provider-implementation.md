@@ -29,11 +29,9 @@ public sealed class {Provider}MarketDataClient : IMarketDataClient
     private readonly MarketDepthCollector _depthCollector;
 
     // 2. Internal event channel for buffering (not exposed via IAsyncEnumerable)
+    // Use EventPipelinePolicy for consistent backpressure settings
     private readonly Channel<MarketDataEvent> _eventChannel =
-        Channel.CreateBounded<MarketDataEvent>(new BoundedChannelOptions(10_000)
-        {
-            FullMode = BoundedChannelFullMode.DropOldest
-        });
+        EventPipelinePolicy.HighThroughput.CreateChannel<MarketDataEvent>();
 
     // 3. Connection state management
     private ConnectionState _state = ConnectionState.Disconnected;

@@ -89,7 +89,7 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
         _batchSize = Math.Max(1, batchSize);
         _enablePeriodicFlush = enablePeriodicFlush;
 
-        _channel = Channel.CreateBounded<MarketEvent>(policy.ToBoundedOptions(singleReader: true, singleWriter: false));
+        _channel = policy.CreateChannel<MarketEvent>(singleReader: true, singleWriter: false);
 
         // Start consumer with long-running task
         _consumer = Task.Factory.StartNew(

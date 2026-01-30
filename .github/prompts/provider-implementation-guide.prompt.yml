@@ -24,12 +24,10 @@ messages:
           private readonly {Provider}Options _options;
           private readonly ILogger<{Provider}MarketDataClient> _logger;
 
-          // 2. Event channel with bounded capacity
+          // 2. Event channel with bounded capacity - use centralized policy
+          // See: src/MarketDataCollector/Application/Pipeline/EventPipelinePolicy.cs
           private readonly Channel<MarketDataEvent> _eventChannel =
-              Channel.CreateBounded<MarketDataEvent>(new BoundedChannelOptions(10_000)
-              {
-                  FullMode = BoundedChannelFullMode.DropOldest
-              });
+              EventPipelinePolicy.HighThroughput.CreateChannel<MarketDataEvent>();
 
           // 3. Connection state management
           private ConnectionState _state = ConnectionState.Disconnected;
@@ -106,7 +104,8 @@ messages:
       ```
 
       # Performance Rules
-      - Use `BoundedChannelFullMode.DropOldest` for high-frequency data
+      - Use `EventPipelinePolicy` presets for consistent channel configuration
+      - Use `BoundedChannelFullMode.DropOldest` for high-frequency data (default in most presets)
       - Pool `HttpClient` via `IHttpClientFactory`
       - Use `ValueTask` when operations often complete synchronously
       - Use `Span<T>` and `ArrayPool<T>` in hot paths

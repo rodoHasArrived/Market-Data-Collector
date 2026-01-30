@@ -40,9 +40,16 @@ public sealed class LoggingService : IDisposable
 
     private LoggingService()
     {
+        // Channel configuration follows EventPipelinePolicy.Logging preset:
+        // Capacity: 1000, FullMode: DropOldest, SingleReader: true
+        // Note: UWP cannot reference main project due to WinRT metadata constraints
+        // See: src/MarketDataCollector/Application/Pipeline/EventPipelinePolicy.cs
         _logChannel = Channel.CreateBounded<LogEntry>(new BoundedChannelOptions(1000)
         {
-            FullMode = BoundedChannelFullMode.DropOldest
+            FullMode = BoundedChannelFullMode.DropOldest,
+            SingleReader = true,
+            SingleWriter = false,
+            AllowSynchronousContinuations = false
         });
 
         // Add default debug output

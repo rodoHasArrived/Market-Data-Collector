@@ -117,8 +117,8 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
 #if STOCKSHARP
         // Initialize bounded message channel for high-frequency data buffering
         // This prevents event handler blocking during bursts (Hydra pattern)
-        _messageChannel = System.Threading.Channels.Channel.CreateBounded<Action>(
-            EventPipelinePolicy.MessageBuffer.ToBoundedOptions(singleReader: true, singleWriter: false));
+        _messageChannel = EventPipelinePolicy.MessageBuffer.CreateChannel<Action>(
+            singleReader: true, singleWriter: false);
 #endif
     }
 

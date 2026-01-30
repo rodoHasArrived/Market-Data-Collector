@@ -47,8 +47,8 @@ public sealed class ScheduledArchiveMaintenanceService : BackgroundService, IArc
         _tierMigrationService = tierMigrationService;
         _storageOptions = storageOptions;
 
-        _executionQueue = Channel.CreateBounded<MaintenanceExecution>(
-            EventPipelinePolicy.MaintenanceQueue.ToBoundedOptions(singleReader: true, singleWriter: false));
+        _executionQueue = EventPipelinePolicy.MaintenanceQueue.CreateChannel<MaintenanceExecution>(
+            singleReader: true, singleWriter: false);
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
