@@ -1,5 +1,6 @@
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Infrastructure.Contracts;
+using MarketDataCollector.Infrastructure.Providers.Core;
 using System.Threading;
 using MarketDataCollector.Domain.Collectors;
 using MarketDataCollector.Domain.Events;
@@ -28,6 +29,58 @@ public sealed class IBMarketDataClient : IMarketDataClient
     }
 
     public bool IsEnabled => _inner.IsEnabled;
+
+    #region IProviderMetadata
+
+    /// <inheritdoc/>
+    public string ProviderId => "ib";
+
+    /// <inheritdoc/>
+    public string ProviderDisplayName => "Interactive Brokers";
+
+    /// <inheritdoc/>
+    public string ProviderDescription => "Professional-grade trading and data platform with TWS/Gateway connectivity";
+
+    /// <inheritdoc/>
+    public int ProviderPriority => 20;
+
+    /// <inheritdoc/>
+    public ProviderCapabilities ProviderCapabilities { get; } = ProviderCapabilities.Streaming(
+        trades: true,
+        quotes: true,
+        depth: true,
+        maxDepthLevels: 10) with
+    {
+        SupportedMarkets = new[] { "US", "EU", "APAC", "Global" },
+        MaxRequestsPerWindow = 50,
+        RateLimitWindow = TimeSpan.FromSeconds(1),
+        MinRequestDelay = TimeSpan.FromMilliseconds(20)
+    };
+
+    /// <inheritdoc/>
+    public ProviderCredentialField[] ProviderCredentialFields => new[]
+    {
+        new ProviderCredentialField("Host", null, "TWS/Gateway Host", false, "127.0.0.1"),
+        new ProviderCredentialField("Port", null, "TWS/Gateway Port", false, "7496"),
+        new ProviderCredentialField("ClientId", null, "Client ID", false, "0")
+    };
+
+    /// <inheritdoc/>
+    public string[] ProviderNotes => new[]
+    {
+        "Requires TWS or IB Gateway running locally.",
+        "Account required; paper trading available.",
+        "Professional-grade L2 market depth."
+    };
+
+    /// <inheritdoc/>
+    public string[] ProviderWarnings => new[]
+    {
+        "Requires Interactive Brokers account.",
+        "TWS/Gateway must be running and configured."
+    };
+
+    #endregion
 
     public Task ConnectAsync(CancellationToken ct = default) => _inner.ConnectAsync(ct);
     public Task DisconnectAsync(CancellationToken ct = default) => _inner.DisconnectAsync(ct);

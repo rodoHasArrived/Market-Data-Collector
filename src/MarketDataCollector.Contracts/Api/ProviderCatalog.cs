@@ -7,8 +7,27 @@ namespace MarketDataCollector.Contracts.Api;
 /// Eliminates per-provider conditionals by providing standardized template output
 /// that both Web and UWP can consume without provider-specific logic.
 /// </summary>
+/// <remarks>
+/// This class provides static fallback data for scenarios where the ProviderRegistry
+/// is not available (e.g., Contracts project doesn't reference Infrastructure).
+/// When using the full application stack, prefer using ProviderRegistry.GetProviderCatalog()
+/// which derives catalog entries from actual registered provider metadata via
+/// ProviderTemplateFactory.ToCatalogEntry().
+/// </remarks>
 public static class ProviderCatalog
 {
+    /// <summary>
+    /// Optional delegate for retrieving provider catalog from registered providers.
+    /// Set by the application host to enable runtime-derived catalog data.
+    /// </summary>
+    public static Func<IReadOnlyList<ProviderCatalogEntry>>? RuntimeCatalogProvider { get; set; }
+
+    /// <summary>
+    /// Optional delegate for retrieving a single provider catalog entry by ID.
+    /// Set by the application host to enable runtime-derived catalog data.
+    /// </summary>
+    public static Func<string, ProviderCatalogEntry?>? RuntimeCatalogEntryProvider { get; set; }
+
     private static readonly Dictionary<string, ProviderCatalogEntry> _entries = new(StringComparer.OrdinalIgnoreCase)
     {
         ["stooq"] = new ProviderCatalogEntry
@@ -447,69 +466,114 @@ public static class ProviderCatalog
 
     /// <summary>
     /// Gets all registered providers.
+    /// Uses runtime catalog provider if available, otherwise falls back to static data.
     /// </summary>
-    public static IReadOnlyList<ProviderCatalogEntry> GetAll() =>
-        _entries.Values.ToList();
+    public static IReadOnlyList<ProviderCatalogEntry> GetAll()
+    {
+        if (RuntimeCatalogProvider != null)
+        {
+            var runtimeEntries = RuntimeCatalogProvider();
+            if (runtimeEntries.Count > 0)
+                return runtimeEntries;
+        }
+        return _entries.Values.ToList();
+    }
 
     /// <summary>
     /// Gets providers of a specific type.
     /// </summary>
-    public static IReadOnlyList<ProviderCatalogEntry> GetByType(ProviderTypeKind type) =>
-        _entries.Values.Where(e => e.ProviderType == type || e.ProviderType == ProviderTypeKind.Hybrid).ToList();
+    public static IReadOnlyList<ProviderCatalogEntry> GetByType(ProviderTypeKind type)
+    {
+        var all = GetAll();
+        return all.Where(e => e.ProviderType == type || e.ProviderType == ProviderTypeKind.Hybrid).ToList();
+    }
 
     /// <summary>
     /// Gets backfill-capable providers.
     /// </summary>
-    public static IReadOnlyList<ProviderCatalogEntry> GetBackfillProviders() =>
-        _entries.Values.Where(e =>
+    public static IReadOnlyList<ProviderCatalogEntry> GetBackfillProviders()
+    {
+        var all = GetAll();
+        return all.Where(e =>
             e.ProviderType == ProviderTypeKind.Backfill ||
             e.ProviderType == ProviderTypeKind.Hybrid).ToList();
+    }
 
     /// <summary>
     /// Gets streaming-capable providers.
     /// </summary>
-    public static IReadOnlyList<ProviderCatalogEntry> GetStreamingProviders() =>
-        _entries.Values.Where(e =>
+    public static IReadOnlyList<ProviderCatalogEntry> GetStreamingProviders()
+    {
+        var all = GetAll();
+        return all.Where(e =>
             e.ProviderType == ProviderTypeKind.Streaming ||
             e.ProviderType == ProviderTypeKind.Hybrid).ToList();
+    }
 
     /// <summary>
     /// Tries to get a provider entry by ID.
+    /// Uses runtime catalog provider if available, otherwise falls back to static data.
     /// </summary>
-    public static bool TryGet(string providerId, out ProviderCatalogEntry? entry) =>
-        _entries.TryGetValue(providerId, out entry);
+    public static bool TryGet(string providerId, out ProviderCatalogEntry? entry)
+    {
+        entry = Get(providerId);
+        return entry != null;
+    }
 
     /// <summary>
     /// Gets a provider entry by ID, or null if not found.
+    /// Uses runtime catalog provider if available, otherwise falls back to static data.
     /// </summary>
-    public static ProviderCatalogEntry? Get(string providerId) =>
-        _entries.TryGetValue(providerId, out var entry) ? entry : null;
+    public static ProviderCatalogEntry? Get(string providerId)
+    {
+        if (RuntimeCatalogEntryProvider != null)
+        {
+            var runtimeEntry = RuntimeCatalogEntryProvider(providerId);
+            if (runtimeEntry != null)
+                return runtimeEntry;
+        }
+        return _entries.TryGetValue(providerId, out var entry) ? entry : null;
+    }
 
     /// <summary>
     /// Gets provider notes for UI display.
     /// Returns empty array if provider not found.
     /// </summary>
     public static string[] GetProviderNotes(string providerId) =>
-        _entries.TryGetValue(providerId, out var entry) ? entry.Notes : Array.Empty<string>();
+        Get(providerId)?.Notes ?? Array.Empty<string>();
 
     /// <summary>
     /// Gets provider warnings for UI display.
     /// Returns empty array if provider not found.
     /// </summary>
     public static string[] GetProviderWarnings(string providerId) =>
-        _entries.TryGetValue(providerId, out var entry) ? entry.Warnings : Array.Empty<string>();
+        Get(providerId)?.Warnings ?? Array.Empty<string>();
 
     /// <summary>
     /// Checks if a provider requires credentials.
     /// </summary>
     public static bool RequiresCredentials(string providerId) =>
-        _entries.TryGetValue(providerId, out var entry) && entry.RequiresCredentials;
+        Get(providerId)?.RequiresCredentials ?? false;
 
     /// <summary>
     /// Gets required credential fields for a provider.
     /// </summary>
     public static CredentialFieldInfo[] GetCredentialFields(string providerId) =>
-        _entries.TryGetValue(providerId, out var entry) ? entry.CredentialFields : Array.Empty<CredentialFieldInfo>();
+        Get(providerId)?.CredentialFields ?? Array.Empty<CredentialFieldInfo>();
+
+    /// <summary>
+    /// Initializes the runtime catalog provider from a ProviderRegistry instance.
+    /// Call this during application startup to enable runtime-derived catalog data.
+    /// </summary>
+    /// <param name="getCatalog">Function to get all catalog entries from the registry.</param>
+    /// <param name="getEntry">Function to get a single catalog entry by ID.</param>
+    public static void InitializeFromRegistry(
+        Func<IReadOnlyList<ProviderCatalogEntry>> getCatalog,
+        Func<string, ProviderCatalogEntry?> getEntry)
+    {
+        RuntimeCatalogProvider = getCatalog;
+        RuntimeCatalogEntryProvider = getEntry;
+    }
 }
 
 /// <summary>

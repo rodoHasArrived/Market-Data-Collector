@@ -428,6 +428,45 @@ public sealed class ProviderRegistry : IDisposable
     }
 
     /// <summary>
+    /// Generates catalog entries from all registered providers using <see cref="ProviderTemplateFactory.ToCatalogEntry"/>.
+    /// This replaces static hardcoded catalog data with runtime-derived metadata.
+    /// </summary>
+    /// <returns>A list of <see cref="Contracts.Api.ProviderCatalogEntry"/> objects for UI consumption.</returns>
+    public IReadOnlyList<Contracts.Api.ProviderCatalogEntry> GetProviderCatalog()
+    {
+        return _allProviders.Values
+            .Select(p => ProviderTemplateFactory.ToCatalogEntry(p.Provider))
+            .ToList();
+    }
+
+    /// <summary>
+    /// Generates catalog entries for providers of a specific type.
+    /// </summary>
+    /// <param name="type">The provider type to filter by.</param>
+    /// <returns>A list of <see cref="Contracts.Api.ProviderCatalogEntry"/> objects for UI consumption.</returns>
+    public IReadOnlyList<Contracts.Api.ProviderCatalogEntry> GetProviderCatalogByType(ProviderType type)
+    {
+        return _allProviders.Values
+            .Where(p => p.Provider.ProviderCapabilities.PrimaryType == type ||
+                        (type == ProviderType.Streaming && p.Provider.ProviderCapabilities.SupportsStreaming) ||
+                        (type == ProviderType.Backfill && p.Provider.ProviderCapabilities.SupportsBackfill))
+            .Select(p => ProviderTemplateFactory.ToCatalogEntry(p.Provider))
+            .ToList();
+    }
+
+    /// <summary>
+    /// Gets a catalog entry for a specific provider by ID.
+    /// </summary>
+    /// <param name="providerId">The provider ID to look up.</param>
+    /// <returns>The catalog entry, or null if not found.</returns>
+    public Contracts.Api.ProviderCatalogEntry? GetProviderCatalogEntry(string providerId)
+    {
+        return _allProviders.TryGetValue(providerId, out var registered)
+            ? ProviderTemplateFactory.ToCatalogEntry(registered.Provider)
+            : null;
+    }
+
+    /// <summary>
     /// Gets a summary of registered provider counts.
     /// </summary>
     public ProviderRegistrySummary GetSummary()

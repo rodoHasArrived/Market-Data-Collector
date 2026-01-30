@@ -11,6 +11,7 @@ using MarketDataCollector.Domain.Collectors;
 using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Infrastructure.Contracts;
+using MarketDataCollector.Infrastructure.Providers.Core;
 using MarketDataCollector.Infrastructure.Providers.StockSharp.Converters;
 using Serilog;
 
@@ -126,6 +127,51 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
     /// Whether this client is enabled based on configuration.
     /// </summary>
     public bool IsEnabled => _config.Enabled;
+
+    #region IProviderMetadata
+
+    /// <inheritdoc/>
+    public string ProviderId => "stocksharp";
+
+    /// <inheritdoc/>
+    public string ProviderDisplayName => "StockSharp";
+
+    /// <inheritdoc/>
+    public string ProviderDescription => "Multi-connector trading framework supporting 90+ data sources";
+
+    /// <inheritdoc/>
+    public int ProviderPriority => 30;
+
+    /// <inheritdoc/>
+    public ProviderCapabilities ProviderCapabilities { get; } = ProviderCapabilities.Streaming(
+        trades: true,
+        quotes: true,
+        depth: true) with
+    {
+        SupportedMarkets = new[] { "US", "Futures" }
+    };
+
+    /// <inheritdoc/>
+    public ProviderCredentialField[] ProviderCredentialFields => new[]
+    {
+        new ProviderCredentialField("ConnectorType", null, "Connector Type", true, "Rithmic")
+    };
+
+    /// <inheritdoc/>
+    public string[] ProviderNotes => new[]
+    {
+        "Supports multiple underlying connectors.",
+        "Configure specific connector settings in StockSharp section.",
+        "Supports Rithmic, IQFeed, CQG, and more."
+    };
+
+    /// <inheritdoc/>
+    public string[] ProviderWarnings => new[]
+    {
+        "Requires StockSharp connector-specific credentials."
+    };
+
+    #endregion
 
 #if STOCKSHARP
     /// <summary>

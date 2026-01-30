@@ -2,6 +2,7 @@ using System.Text.Json;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Contracts.Api;
 using MarketDataCollector.Contracts.Configuration;
+using MarketDataCollector.Infrastructure.Providers.Core;
 using MarketDataCollector.Ui.Shared;
 using MarketDataCollector.Ui.Shared.Services;
 using Microsoft.AspNetCore.Builder;
@@ -294,27 +295,50 @@ public static class ProviderEndpoints
         });
 
         // Provider catalog endpoint - centralized metadata for UI consumption
-        app.MapGet(UiApiRoutes.ProviderCatalog, (HttpContext ctx, string? type) =>
+        // Uses ProviderRegistry when available for runtime-derived catalog data,
+        // otherwise falls back to static ProviderCatalog
+        app.MapGet(UiApiRoutes.ProviderCatalog, (HttpContext ctx, string? type, ProviderRegistry? registry) =>
         {
-            var catalogEntries = type?.ToLowerInvariant() switch
+            IReadOnlyList<ProviderCatalogEntry> catalogEntries;
+
+            if (registry != null)
             {
-                "streaming" => ProviderCatalog.GetStreamingProviders(),
-                "backfill" => ProviderCatalog.GetBackfillProviders(),
-                _ => ProviderCatalog.GetAll()
-            };
+                // Use runtime-derived catalog from ProviderRegistry via ProviderTemplateFactory
+                catalogEntries = type?.ToLowerInvariant() switch
+                {
+                    "streaming" => registry.GetProviderCatalogByType(ProviderType.Streaming),
+                    "backfill" => registry.GetProviderCatalogByType(ProviderType.Backfill),
+                    _ => registry.GetProviderCatalog()
+                };
+            }
+            else
+            {
+                // Fall back to static catalog
+                catalogEntries = type?.ToLowerInvariant() switch
+                {
+                    "streaming" => ProviderCatalog.GetStreamingProviders(),
+                    "backfill" => ProviderCatalog.GetBackfillProviders(),
+                    _ => ProviderCatalog.GetAll()
+                };
+            }
 
             return Results.Json(new
             {
                 providers = catalogEntries,
                 totalCount = catalogEntries.Count,
-                timestamp = DateTimeOffset.UtcNow
+                timestamp = DateTimeOffset.UtcNow,
+                source = registry != null ? "registry" : "static"
             }, jsonOptions);
         });
 
         // Single provider catalog entry
-        app.MapGet(UiApiRoutes.ProviderCatalogById, (string providerId) =>
+        // Uses ProviderRegistry when available for runtime-derived catalog data
+        app.MapGet(UiApiRoutes.ProviderCatalogById, (string providerId, ProviderRegistry? registry) =>
         {
-            var entry = ProviderCatalog.Get(providerId);
+            ProviderCatalogEntry? entry = registry != null
+                ? registry.GetProviderCatalogEntry(providerId)
+                : ProviderCatalog.Get(providerId);
+
             if (entry is null)
                 return Results.NotFound(new { error = $"Provider '{providerId}' not found in catalog" });
 

@@ -10,6 +10,9 @@ namespace MarketDataCollector.Infrastructure.Providers.Core;
 /// <remarks>
 /// This interface centralizes provider identity and capabilities into a single
 /// contract, eliminating special-case logic in the registry and UI layers.
+/// UI-specific properties (Notes, Warnings, CredentialFields) have default
+/// implementations returning empty arrays, allowing providers to optionally
+/// override them for richer UI presentation.
 /// </remarks>
 [ImplementsAdr("ADR-001", "Unified provider metadata contract for all provider types")]
 public interface IProviderMetadata
@@ -38,7 +41,76 @@ public interface IProviderMetadata
     /// Unified capability flags and metadata for this provider.
     /// </summary>
     ProviderCapabilities ProviderCapabilities { get; }
+
+    #region UI-Specific Metadata (Default Implementations)
+
+    /// <summary>
+    /// Whether this provider requires credentials to operate.
+    /// </summary>
+    bool RequiresCredentials => ProviderCredentialFields.Length > 0;
+
+    /// <summary>
+    /// Credential fields required for this provider.
+    /// Override to specify API keys, tokens, or other authentication requirements.
+    /// </summary>
+    ProviderCredentialField[] ProviderCredentialFields => Array.Empty<ProviderCredentialField>();
+
+    /// <summary>
+    /// Informational notes about using this provider (displayed in UI).
+    /// </summary>
+    string[] ProviderNotes => Array.Empty<string>();
+
+    /// <summary>
+    /// Warnings about limitations or issues with this provider (displayed in UI).
+    /// </summary>
+    string[] ProviderWarnings => Array.Empty<string>();
+
+    /// <summary>
+    /// Data types supported by this provider (e.g., "DailyBars", "Trades", "Quotes").
+    /// </summary>
+    string[] SupportedDataTypes => DeriveDataTypesFromCapabilities();
+
+    /// <summary>
+    /// Derives supported data types from provider capabilities.
+    /// </summary>
+    private string[] DeriveDataTypesFromCapabilities()
+    {
+        var types = new List<string>();
+        var caps = ProviderCapabilities;
+
+        if (caps.SupportsBackfill)
+        {
+            types.Add("DailyBars");
+            if (caps.SupportsIntraday) types.Add("IntradayBars");
+            if (caps.SupportsDividends) types.Add("Dividends");
+            if (caps.SupportsSplits) types.Add("Splits");
+        }
+
+        if (caps.SupportsRealtimeTrades || caps.SupportsHistoricalTrades) types.Add("Trades");
+        if (caps.SupportsRealtimeQuotes || caps.SupportsHistoricalQuotes) types.Add("Quotes");
+        if (caps.SupportsMarketDepth) types.Add("MarketDepth");
+        if (caps.SupportsHistoricalAuctions) types.Add("Auctions");
+
+        return types.ToArray();
+    }
+
+    #endregion
 }
+
+/// <summary>
+/// Credential field metadata for UI form generation and validation.
+/// </summary>
+/// <param name="Name">Internal field name (e.g., "ApiKey", "SecretKey").</param>
+/// <param name="EnvironmentVariable">Environment variable name (e.g., "ALPACA__KEYID").</param>
+/// <param name="DisplayName">Human-readable label for UI display.</param>
+/// <param name="Required">Whether this field is required.</param>
+/// <param name="DefaultValue">Optional default value hint.</param>
+public sealed record ProviderCredentialField(
+    string Name,
+    string? EnvironmentVariable,
+    string DisplayName,
+    bool Required,
+    string? DefaultValue = null);
 
 /// <summary>
 /// Unified capability record that consolidates capabilities across all provider types.

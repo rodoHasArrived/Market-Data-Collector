@@ -100,7 +100,25 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
         quotes: true,
         depth: false) with
     {
-        SupportedMarkets = new[] { "US" }
+        SupportedMarkets = new[] { "US" },
+        MaxRequestsPerWindow = 200,
+        RateLimitWindow = TimeSpan.FromMinutes(1),
+        MinRequestDelay = TimeSpan.FromMilliseconds(300)
+    };
+
+    /// <inheritdoc/>
+    public ProviderCredentialField[] ProviderCredentialFields => new[]
+    {
+        new ProviderCredentialField("KeyId", "ALPACA__KEYID", "API Key ID", true),
+        new ProviderCredentialField("SecretKey", "ALPACA__SECRETKEY", "API Secret Key", true)
+    };
+
+    /// <inheritdoc/>
+    public string[] ProviderNotes => new[]
+    {
+        "Alpaca requires API credentials (free account available).",
+        "Rate limit: 200 requests/minute.",
+        "IEX feed is free; SIP feed requires subscription."
     };
 
     #endregion

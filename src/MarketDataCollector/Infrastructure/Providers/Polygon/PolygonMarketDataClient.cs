@@ -158,7 +158,30 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
         quotes: true,
         depth: false) with
     {
-        SupportedMarkets = new[] { "US" }
+        SupportedMarkets = new[] { "US" },
+        MaxRequestsPerWindow = 5,
+        RateLimitWindow = TimeSpan.FromMinutes(1),
+        MinRequestDelay = TimeSpan.FromMilliseconds(12000)
+    };
+
+    /// <inheritdoc/>
+    public ProviderCredentialField[] ProviderCredentialFields => new[]
+    {
+        new ProviderCredentialField("ApiKey", "POLYGON__APIKEY", "Polygon API Key", true)
+    };
+
+    /// <inheritdoc/>
+    public string[] ProviderNotes => new[]
+    {
+        "Polygon provides comprehensive market data.",
+        "Free tier has limited rate limits; paid plans offer more.",
+        "Supports stocks, options, forex, and crypto."
+    };
+
+    /// <inheritdoc/>
+    public string[] ProviderWarnings => new[]
+    {
+        "Free tier has 15-minute delayed data for most feeds."
     };
 
     #endregion
