@@ -413,28 +413,18 @@ public sealed class ProviderRegistry : IDisposable
     }
 
     /// <summary>
-    /// Gets information about all registered providers.
+    /// Gets information about all registered providers using standardized metadata.
     /// </summary>
+    /// <remarks>
+    /// Uses <see cref="ProviderTemplateFactory.FromMetadata"/> via the unified
+    /// <see cref="_allProviders"/> dictionary to ensure consistent template output
+    /// across all provider types without type-specific branching.
+    /// </remarks>
     public IReadOnlyList<ProviderInfo> GetAllProviders()
     {
-        var result = new List<ProviderInfo>();
-
-        foreach (var p in _streamingProviders.Values)
-        {
-            result.Add(ProviderTemplateFactory.ForStreaming(p.Name, p.Provider, p.Priority, p.IsEnabled).ToInfo());
-        }
-
-        foreach (var p in _backfillProviders.Values)
-        {
-            result.Add(ProviderTemplateFactory.ForBackfill(p.Name, p.Provider, p.Priority, p.IsEnabled).ToInfo());
-        }
-
-        foreach (var p in _symbolSearchProviders.Values)
-        {
-            result.Add(ProviderTemplateFactory.ForSymbolSearch(p.Provider, p.Priority, p.IsEnabled).ToInfo());
-        }
-
-        return result;
+        return _allProviders.Values
+            .Select(p => ProviderTemplateFactory.FromMetadata(p.Provider, p.IsEnabled, p.Priority).ToInfo())
+            .ToList();
     }
 
     /// <summary>
