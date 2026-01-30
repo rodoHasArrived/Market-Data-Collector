@@ -40,20 +40,22 @@ internal static class Program
 {
     private const string DefaultConfigFileName = "appsettings.json";
     private const string ConfigPathEnvVar = "MDC_CONFIG_PATH";
-    private const string EnvironmentEnvVar = "MDC_ENVIRONMENT";
-    private const string DotnetEnvironmentEnvVar = "DOTNET_ENVIRONMENT";
 
     public static async Task Main(string[] args)
     {
-        // Initialize logging early
+        // Initialize logging early - use minimal config load just for DataRoot
         var cfgPath = ResolveConfigPath(args);
-        var cfg = LoadConfigWithEnvironmentOverlay(cfgPath);
-        LoggingSetup.Initialize(dataRoot: cfg.DataRoot);
+        var initialCfg = LoadConfigMinimal(cfgPath);
+        LoggingSetup.Initialize(dataRoot: initialCfg.DataRoot);
         var log = LoggingSetup.ForContext("Program");
+
+        // Now use ConfigurationService for full config processing (with self-healing, credential resolution, etc.)
+        await using var configService = new ConfigurationService(log);
+        var cfg = configService.LoadAndPrepareConfig(cfgPath);
 
         try
         {
-            await RunAsync(args, cfg, cfgPath, log);
+            await RunAsync(args, cfg, cfgPath, log, configService);
         }
         catch (Exception ex)
         {
@@ -66,11 +68,10 @@ internal static class Program
         }
     }
 
-    private static async Task RunAsync(string[] args, AppConfig cfg, string cfgPath, ILogger log)
+    private static async Task RunAsync(string[] args, AppConfig cfg, string cfgPath, ILogger log, ConfigurationService configService)
     {
         // Initialize HttpClientFactory for proper HTTP client lifecycle management (TD-10)
         InitializeHttpClientFactory(log);
-        await using var configService = new ConfigurationService(log);
         var runMode = ResolveRunMode(args, log);
 
         // Help Mode - Display usage information
@@ -499,7 +500,7 @@ internal static class Program
         var replayPath = GetArgValue(args, "--replay");
 
         var statusPath = Path.Combine(cfg.DataRoot, "_status", "status.json");
-        await using var statusWriter = new StatusWriter(statusPath, () => LoadConfigWithEnvironmentOverlay(cfgPath));
+        await using var statusWriter = new StatusWriter(statusPath, () => configService.LoadAndPrepareConfig(cfgPath));
         ConfigWatcher? watcher = null;
         UiServer? uiServer = null;
 
@@ -545,7 +546,7 @@ internal static class Program
             var backfillRequest = BuildBackfillRequest(cfg, args);
 
             // Create providers based on configuration
-            var backfillProviders = CreateBackfillProviders(cfg, log);
+            var backfillProviders = CreateBackfillProviders(cfg, log, configService);
 
             // Wrap in composite provider if fallback enabled
             IHistoricalDataProvider[] providersArray;
@@ -966,7 +967,12 @@ SUPPORT:
     private static DateOnly? ParseDate(string? value)
         => DateOnly.TryParse(value, out var date) ? date : null;
 
-    private static AppConfig LoadConfig(string path)
+    /// <summary>
+    /// Minimal configuration load for early startup (before logging is set up).
+    /// Only used to get DataRoot for logging initialization.
+    /// For full configuration processing, use ConfigurationService.LoadAndPrepareConfig().
+    /// </summary>
+    private static AppConfig LoadConfigMinimal(string path)
     {
         try
         {
@@ -1033,83 +1039,9 @@ SUPPORT:
         return DefaultConfigFileName;
     }
 
-    /// <summary>
-    /// Gets the current environment name from MDC_ENVIRONMENT or DOTNET_ENVIRONMENT.
-    /// Returns null if no environment is specified.
-    /// </summary>
-    private static string? GetEnvironmentName()
-    {
-        var env = Environment.GetEnvironmentVariable(EnvironmentEnvVar);
-        if (!string.IsNullOrWhiteSpace(env))
-            return env;
-
-        return Environment.GetEnvironmentVariable(DotnetEnvironmentEnvVar);
-    }
-
-    /// <summary>
-    /// Loads the base configuration and overlays environment-specific settings if available.
-    /// For example, if MDC_ENVIRONMENT=Production, it will load appsettings.json first,
-    /// then merge settings from appsettings.Production.json if it exists.
-    /// </summary>
-    private static AppConfig LoadConfigWithEnvironmentOverlay(string basePath)
-    {
-        // Load base configuration
-        var baseConfig = LoadConfig(basePath);
-
-        // Check for environment-specific overlay
-        var envName = GetEnvironmentName();
-        if (string.IsNullOrWhiteSpace(envName))
-            return baseConfig;
-
-        // Build environment-specific path (e.g., appsettings.Production.json)
-        var directory = Path.GetDirectoryName(basePath) ?? ".";
-        var fileName = Path.GetFileNameWithoutExtension(basePath);
-        var extension = Path.GetExtension(basePath);
-        var envPath = Path.Combine(directory, $"{fileName}.{envName}{extension}");
-
-        // If environment-specific file doesn't exist, return base config
-        if (!File.Exists(envPath))
-            return baseConfig;
-
-        // Load and merge environment-specific config
-        try
-        {
-            Console.WriteLine($"[Info] Loading environment-specific configuration: {envPath}");
-            var envJson = File.ReadAllText(envPath);
-            var envConfig = JsonSerializer.Deserialize<AppConfig>(envJson, AppConfigJsonOptions.Read);
-
-            if (envConfig == null)
-                return baseConfig;
-
-            // Merge configurations: environment-specific values override base values
-            return MergeConfigs(baseConfig, envConfig);
-        }
-        catch (Exception ex)
-        {
-            Console.Error.WriteLine($"[Warning] Failed to load environment config {envPath}: {ex.Message}");
-            return baseConfig;
-        }
-    }
-
-    /// <summary>
-    /// Merges two configurations, with overlay values taking precedence over base values.
-    /// Only non-default values from the overlay are applied.
-    /// </summary>
-    private static AppConfig MergeConfigs(AppConfig baseConfig, AppConfig overlay)
-    {
-        return baseConfig with
-        {
-            DataSource = overlay.DataSource != default ? overlay.DataSource : baseConfig.DataSource,
-            DataRoot = !string.IsNullOrWhiteSpace(overlay.DataRoot) ? overlay.DataRoot : baseConfig.DataRoot,
-            Compress = overlay.Compress ?? baseConfig.Compress,
-            Symbols = overlay.Symbols?.Length > 0 ? overlay.Symbols : baseConfig.Symbols,
-            Alpaca = overlay.Alpaca ?? baseConfig.Alpaca,
-            IB = overlay.IB ?? baseConfig.IB,
-            Polygon = overlay.Polygon ?? baseConfig.Polygon,
-            Storage = overlay.Storage ?? baseConfig.Storage,
-            Backfill = overlay.Backfill ?? baseConfig.Backfill
-        };
-    }
+    // NOTE: GetEnvironmentName(), LoadConfigWithEnvironmentOverlay(), and MergeConfigs()
+    // have been removed to consolidate configuration logic through ConfigurationService.
+    // Use ConfigurationService.LoadAndPrepareConfig() for full configuration processing.
 
     private sealed class PipelinePublisher : IMarketEventPublisher
     {
@@ -1482,8 +1414,9 @@ SUPPORT:
 
     /// <summary>
     /// Creates backfill providers based on configuration.
+    /// Credential resolution is handled through ConfigurationService for consistency.
     /// </summary>
-    private static List<IHistoricalDataProvider> CreateBackfillProviders(AppConfig cfg, ILogger log)
+    private static List<IHistoricalDataProvider> CreateBackfillProviders(AppConfig cfg, ILogger log, ConfigurationService configService)
     {
         var backfillCfg = cfg.Backfill;
         var providersCfg = backfillCfg?.Providers;
@@ -1493,9 +1426,8 @@ SUPPORT:
         var alpacaCfg = providersCfg?.Alpaca;
         if (alpacaCfg?.Enabled ?? true)
         {
-            // Only add if credentials are available (env vars or config)
-            var keyId = alpacaCfg?.KeyId ?? Environment.GetEnvironmentVariable("ALPACA_KEY_ID");
-            var secretKey = alpacaCfg?.SecretKey ?? Environment.GetEnvironmentVariable("ALPACA_SECRET_KEY");
+            // Credentials resolved via ConfigurationService for consistency
+            var (keyId, secretKey) = configService.ResolveAlpacaCredentials(alpacaCfg?.KeyId, alpacaCfg?.SecretKey);
 
             if (!string.IsNullOrEmpty(keyId) && !string.IsNullOrEmpty(secretKey))
             {
@@ -1522,7 +1454,7 @@ SUPPORT:
         var polygonCfg = providersCfg?.Polygon;
         if (polygonCfg?.Enabled ?? true)
         {
-            var polygonApiKey = polygonCfg?.ApiKey ?? Environment.GetEnvironmentVariable("POLYGON_API_KEY");
+            var polygonApiKey = configService.ResolvePolygonCredentials(polygonCfg?.ApiKey);
             if (!string.IsNullOrEmpty(polygonApiKey))
             {
                 providers.Add(new PolygonHistoricalDataProvider(
@@ -1536,7 +1468,7 @@ SUPPORT:
         var tiingoCfg = providersCfg?.Tiingo;
         if (tiingoCfg?.Enabled ?? true)
         {
-            var tiingoToken = tiingoCfg?.ApiToken ?? Environment.GetEnvironmentVariable("TIINGO_API_TOKEN");
+            var tiingoToken = configService.ResolveTiingoCredentials(tiingoCfg?.ApiToken);
             if (!string.IsNullOrEmpty(tiingoToken))
             {
                 providers.Add(new TiingoHistoricalDataProvider(
@@ -1550,7 +1482,7 @@ SUPPORT:
         var finnhubCfg = providersCfg?.Finnhub;
         if (finnhubCfg?.Enabled ?? true)
         {
-            var finnhubApiKey = finnhubCfg?.ApiKey ?? Environment.GetEnvironmentVariable("FINNHUB_API_KEY");
+            var finnhubApiKey = configService.ResolveFinnhubCredentials(finnhubCfg?.ApiKey);
             if (!string.IsNullOrEmpty(finnhubApiKey))
             {
                 providers.Add(new FinnhubHistoricalDataProvider(
@@ -1571,7 +1503,7 @@ SUPPORT:
         var alphaVantageCfg = providersCfg?.AlphaVantage;
         if (alphaVantageCfg?.Enabled ?? false) // Disabled by default due to very limited free tier
         {
-            var alphaVantageApiKey = alphaVantageCfg?.ApiKey ?? Environment.GetEnvironmentVariable("ALPHA_VANTAGE_API_KEY");
+            var alphaVantageApiKey = configService.ResolveAlphaVantageCredentials(alphaVantageCfg?.ApiKey);
             if (!string.IsNullOrEmpty(alphaVantageApiKey))
             {
                 providers.Add(new AlphaVantageHistoricalDataProvider(
@@ -1585,8 +1517,9 @@ SUPPORT:
         var nasdaqCfg = providersCfg?.Nasdaq;
         if (nasdaqCfg?.Enabled ?? true)
         {
+            var nasdaqApiKey = configService.ResolveNasdaqCredentials(nasdaqCfg?.ApiKey);
             providers.Add(new NasdaqDataLinkHistoricalDataProvider(
-                apiKey: nasdaqCfg?.ApiKey,
+                apiKey: nasdaqApiKey,
                 database: nasdaqCfg?.Database ?? "WIKI",
                 log: log
             ));
