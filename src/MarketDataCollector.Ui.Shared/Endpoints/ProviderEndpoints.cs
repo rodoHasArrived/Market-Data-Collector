@@ -292,6 +292,34 @@ public static class ProviderEndpoints
 
             return Results.Json(CreateFallbackMetrics(source), jsonOptions);
         });
+
+        // Provider catalog endpoint - centralized metadata for UI consumption
+        app.MapGet(UiApiRoutes.ProviderCatalog, (HttpContext ctx, string? type) =>
+        {
+            var catalogEntries = type?.ToLowerInvariant() switch
+            {
+                "streaming" => ProviderCatalog.GetStreamingProviders(),
+                "backfill" => ProviderCatalog.GetBackfillProviders(),
+                _ => ProviderCatalog.GetAll()
+            };
+
+            return Results.Json(new
+            {
+                providers = catalogEntries,
+                totalCount = catalogEntries.Count,
+                timestamp = DateTimeOffset.UtcNow
+            }, jsonOptions);
+        });
+
+        // Single provider catalog entry
+        app.MapGet(UiApiRoutes.ProviderCatalogById, (string providerId) =>
+        {
+            var entry = ProviderCatalog.Get(providerId);
+            if (entry is null)
+                return Results.NotFound(new { error = $"Provider '{providerId}' not found in catalog" });
+
+            return Results.Json(entry, jsonOptions);
+        });
     }
 
     private static ProviderMetricsResponse CreateFallbackMetrics(DataSourceConfig source) => new(
