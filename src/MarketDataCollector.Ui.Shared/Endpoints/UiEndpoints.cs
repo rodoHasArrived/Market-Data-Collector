@@ -1,4 +1,5 @@
 using System.Text.Json;
+using MarketDataCollector.Application.UI;
 using MarketDataCollector.Ui.Shared.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -19,6 +20,18 @@ public static class UiEndpoints
     {
         services.AddSingleton<ConfigStore>();
         services.AddSingleton<BackfillCoordinator>();
+        return services;
+    }
+
+    /// <summary>
+    /// Registers shared services with a pre-configured StatusEndpointHandlers instance.
+    /// Use this when you want to share the same handlers with StatusHttpServer.
+    /// </summary>
+    public static IServiceCollection AddUiSharedServices(this IServiceCollection services, StatusEndpointHandlers statusHandlers)
+    {
+        services.AddSingleton<ConfigStore>();
+        services.AddSingleton<BackfillCoordinator>();
+        services.AddSingleton(statusHandlers);
         return services;
     }
 
@@ -49,6 +62,32 @@ public static class UiEndpoints
         };
 
         // Map all endpoint groups
+        app.MapConfigEndpoints(jsonOptions);
+        app.MapBackfillEndpoints(jsonOptions, jsonOptionsIndented);
+        app.MapProviderEndpoints(jsonOptions);
+        app.MapFailoverEndpoints(jsonOptions);
+        app.MapSymbolMappingEndpoints(jsonOptions);
+
+        return app;
+    }
+
+    /// <summary>
+    /// Maps all UI API endpoints including status endpoints.
+    /// Use this when StatusEndpointHandlers has been registered in DI.
+    /// </summary>
+    public static WebApplication MapUiEndpointsWithStatus(this WebApplication app, StatusEndpointHandlers statusHandlers)
+    {
+        var jsonOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+        var jsonOptionsIndented = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = true
+        };
+
+        // Map status endpoints using shared handlers
+        app.MapStatusEndpoints(statusHandlers, jsonOptions);
+
+        // Map all other endpoint groups
         app.MapConfigEndpoints(jsonOptions);
         app.MapBackfillEndpoints(jsonOptions, jsonOptionsIndented);
         app.MapProviderEndpoints(jsonOptions);
