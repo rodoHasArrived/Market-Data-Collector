@@ -77,7 +77,7 @@ public class StorageProfileTests
         // Assert
         result.RootPath.Should().Be("data"); // Preserves original value
         result.Compress.Should().BeTrue("Archival profile enables compression");
-        result.DatePartition.Should().Be(DatePartition.Monthly);
+        result.PartitionStrategy.DateGranularity.Should().Be(DateGranularity.Month);
         result.GenerateManifests.Should().BeTrue("Archival profile enables manifests with checksums");
         result.RetentionDays.Should().Be(3650, "Archival profile sets 10-year retention");
     }
