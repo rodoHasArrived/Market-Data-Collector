@@ -4,7 +4,9 @@ using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Http;
+using MarketDataCollector.Infrastructure.Resilience;
 using MarketDataCollector.Infrastructure.Utilities;
+using Polly;
 using Serilog;
 
 namespace MarketDataCollector.Infrastructure.Providers.Backfill;
@@ -14,18 +16,26 @@ namespace MarketDataCollector.Infrastructure.Providers.Backfill;
 /// across all backfill provider implementations. Provides common functionality for:
 /// - Rate limiting initialization and management
 /// - HTTP client setup and error handling
+/// - HTTP resilience (retry, circuit breaker, timeout)
 /// - Credential validation
 /// - Symbol normalization
 /// - Disposed state tracking
 /// </summary>
+/// <remarks>
+/// Derived classes inherit:
+/// - <see cref="IRateLimitAwareProvider"/> implementation with virtual <see cref="OnRateLimitHit"/> event
+/// - Centralized HTTP error handling via <see cref="HandleHttpResponseAsync"/>
+/// - HTTP resilience pipeline for transient fault handling
+/// - Rate limit tracking and Retry-After extraction
+/// </remarks>
 [ImplementsAdr("ADR-001", "Base historical data provider implementation")]
 [ImplementsAdr("ADR-004", "All async methods support CancellationToken")]
-public abstract class BaseHistoricalDataProvider : IHistoricalDataProvider, IDisposable
+public abstract class BaseHistoricalDataProvider : IHistoricalDataProvider, IRateLimitAwareProvider, IDisposable
 {
     protected readonly HttpClient Http;
     protected readonly RateLimiter RateLimiter;
     protected readonly ILogger Log;
-    protected readonly HttpResponseHandler ResponseHandler;
+    protected readonly ResiliencePipeline<HttpResponseMessage> ResiliencePipeline;
 
     private int _requestCount;
     private DateTimeOffset _windowStart;
@@ -78,16 +88,37 @@ public abstract class BaseHistoricalDataProvider : IHistoricalDataProvider, IDis
 
     #endregion
 
+    #region IRateLimitAwareProvider
+
+    /// <summary>
+    /// Event raised when the provider hits a rate limit (HTTP 429).
+    /// Derived classes can subscribe or override to handle rate limit events.
+    /// </summary>
+    public virtual event Action<RateLimitInfo>? OnRateLimitHit;
+
+    /// <summary>
+    /// Raises the <see cref="OnRateLimitHit"/> event.
+    /// </summary>
+    protected virtual void RaiseRateLimitHit(RateLimitInfo info)
+    {
+        OnRateLimitHit?.Invoke(info);
+    }
+
+    #endregion
+
     /// <summary>
     /// Initialize the base provider with common infrastructure.
     /// </summary>
     /// <param name="httpClient">Optional HTTP client (uses factory if not provided).</param>
     /// <param name="log">Optional logger.</param>
-    protected BaseHistoricalDataProvider(HttpClient? httpClient = null, ILogger? log = null)
+    /// <param name="enableResilience">Whether to enable HTTP resilience (retry, circuit breaker). Default: true.</param>
+    protected BaseHistoricalDataProvider(
+        HttpClient? httpClient = null,
+        ILogger? log = null,
+        bool enableResilience = true)
     {
         Log = log ?? LoggingSetup.ForContext(GetType());
         Http = httpClient ?? HttpClientFactoryProvider.CreateClient(HttpClientName);
-        ResponseHandler = new HttpResponseHandler(Name, Log);
 
         // Initialize rate limiter with provider-specific settings
         RateLimiter = new RateLimiter(
@@ -95,6 +126,16 @@ public abstract class BaseHistoricalDataProvider : IHistoricalDataProvider, IDis
             RateLimitWindow,
             RateLimitDelay,
             Log);
+
+        // Initialize resilience pipeline for transient fault handling
+        ResiliencePipeline = enableResilience
+            ? HttpResiliencePolicy.CreateComprehensivePipeline(
+                maxRetries: 3,
+                retryBaseDelay: TimeSpan.FromSeconds(1),
+                circuitBreakerFailureThreshold: 5,
+                circuitBreakerDuration: TimeSpan.FromSeconds(30),
+                requestTimeout: TimeSpan.FromSeconds(30))
+            : ResiliencePipeline<HttpResponseMessage>.Empty;
 
         _windowStart = DateTimeOffset.UtcNow;
     }
@@ -144,7 +185,7 @@ public abstract class BaseHistoricalDataProvider : IHistoricalDataProvider, IDis
     /// <summary>
     /// Get current rate limit information.
     /// </summary>
-    protected RateLimitInfo GetRateLimitInfo()
+    public RateLimitInfo GetRateLimitInfo()
     {
         // Reset window if expired
         if (DateTimeOffset.UtcNow - _windowStart > RateLimitWindow)
@@ -171,8 +212,13 @@ public abstract class BaseHistoricalDataProvider : IHistoricalDataProvider, IDis
     #region HTTP Request Helpers
 
     /// <summary>
-    /// Execute an HTTP GET request with rate limiting and standard error handling.
+    /// Execute an HTTP GET request with rate limiting, resilience, and standard error handling.
     /// </summary>
+    /// <param name="url">The URL to request.</param>
+    /// <param name="symbol">Symbol for logging context.</param>
+    /// <param name="dataType">Data type for logging context (e.g., "bars", "quotes").</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>The HTTP response message.</returns>
     protected async Task<HttpResponseMessage> ExecuteGetAsync(string url, string symbol, string dataType, CancellationToken ct)
     {
         ThrowIfDisposed();
@@ -180,31 +226,138 @@ public abstract class BaseHistoricalDataProvider : IHistoricalDataProvider, IDis
 
         Log.Debug("Requesting {Provider} {DataType} for {Symbol}: {Url}", Name, dataType, symbol, url);
 
-        var response = await Http.GetAsync(url, ct).ConfigureAwait(false);
+        // Execute with resilience pipeline (retry, circuit breaker)
+        var response = await ResiliencePipeline.ExecuteAsync(
+            async token => await Http.GetAsync(url, token).ConfigureAwait(false),
+            ct).ConfigureAwait(false);
+
         return response;
     }
 
     /// <summary>
-    /// Execute an HTTP GET request and handle the response.
+    /// Execute an HTTP GET request, handle the response, and return the content string.
+    /// Provides centralized error handling for all HTTP status codes.
     /// </summary>
+    /// <param name="url">The URL to request.</param>
+    /// <param name="symbol">Symbol for logging context.</param>
+    /// <param name="dataType">Data type for logging context (e.g., "bars", "quotes").</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>The response content as string, or null if not found.</returns>
+    /// <exception cref="InvalidOperationException">Thrown for auth failures or server errors.</exception>
     protected async Task<string?> ExecuteGetAndReadAsync(string url, string symbol, string dataType, CancellationToken ct)
     {
-        var response = await ExecuteGetAsync(url, symbol, dataType, ct).ConfigureAwait(false);
-
-        var result = await ResponseHandler.HandleResponseAsync(
-            response,
-            symbol,
-            dataType,
-            args => RecordRateLimitHit(args.RetryAfter),
-            ct).ConfigureAwait(false);
+        using var response = await ExecuteGetAsync(url, symbol, dataType, ct).ConfigureAwait(false);
+        var result = await HandleHttpResponseAsync(response, symbol, dataType, ct).ConfigureAwait(false);
 
         if (result.IsNotFound)
             return null;
 
         if (!result.IsSuccess)
-            return null;
+        {
+            if (result.IsAuthError)
+                throw new InvalidOperationException($"{Name} API returned authentication error for {symbol}. Verify credentials.");
+
+            if (result.IsRateLimited)
+                throw new InvalidOperationException($"{Name} API rate limit exceeded for {symbol}. Retry-After: {result.RetryAfter?.TotalSeconds ?? 60}s");
+
+            throw new InvalidOperationException($"{Name} API error for {symbol}: {result.ErrorMessage}");
+        }
 
         return await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Centralized HTTP response handling for all providers.
+    /// Handles common status codes: 200 (OK), 404 (Not Found), 401/403 (Auth), 429 (Rate Limit), 5xx (Server Error).
+    /// </summary>
+    /// <param name="response">The HTTP response to handle.</param>
+    /// <param name="symbol">Symbol for logging context.</param>
+    /// <param name="dataType">Data type for logging context.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>A result indicating success or the type of failure.</returns>
+    protected virtual async Task<HttpHandleResult> HandleHttpResponseAsync(
+        HttpResponseMessage response,
+        string symbol,
+        string dataType,
+        CancellationToken ct)
+    {
+        if (response.IsSuccessStatusCode)
+            return HttpHandleResult.Success;
+
+        var statusCode = (int)response.StatusCode;
+
+        switch (statusCode)
+        {
+            case 401:
+                Log.Error("{Provider} API returned 401 for {Symbol} {DataType}: Unauthorized. Check API credentials.", Name, symbol, dataType);
+                return HttpHandleResult.AuthFailure;
+
+            case 403:
+                Log.Error("{Provider} API returned 403 for {Symbol} {DataType}: Forbidden. Verify API permissions.", Name, symbol, dataType);
+                return HttpHandleResult.AuthFailure;
+
+            case 404:
+                Log.Debug("{Provider} API returned 404 for {Symbol} {DataType}: Not found", Name, symbol, dataType);
+                return HttpHandleResult.NotFound;
+
+            case 429:
+                var retryAfter = HttpResiliencePolicy.ExtractRetryAfter(response) ?? TimeSpan.FromSeconds(60);
+                RecordRateLimitHit(retryAfter);
+
+                var rateLimitInfo = GetRateLimitInfo();
+                RaiseRateLimitHit(rateLimitInfo);
+
+                Log.Warning("{Provider} API returned 429 for {Symbol} {DataType}: Rate limit exceeded. Retry-After: {RetryAfter}s",
+                    Name, symbol, dataType, retryAfter.TotalSeconds);
+                return HttpHandleResult.RateLimited(retryAfter);
+
+            case >= 500:
+                Log.Error("{Provider} API returned {StatusCode} for {Symbol} {DataType}: Server error",
+                    Name, statusCode, symbol, dataType);
+                return HttpHandleResult.Error($"Server error: {statusCode}");
+
+            default:
+                Log.Warning("{Provider} API returned {StatusCode} for {Symbol} {DataType}",
+                    Name, statusCode, symbol, dataType);
+                return HttpHandleResult.Error($"HTTP {statusCode}");
+        }
+    }
+
+    /// <summary>
+    /// Synchronous HTTP response handling for backwards compatibility.
+    /// Prefer using <see cref="HandleHttpResponseAsync"/> for new code.
+    /// </summary>
+    protected void HandleHttpResponse(HttpResponseMessage response, string symbol, string dataType)
+    {
+        if (response.IsSuccessStatusCode)
+            return;
+
+        var statusCode = (int)response.StatusCode;
+
+        if (statusCode == 401 || statusCode == 403)
+        {
+            Log.Error("{Provider} API returned {StatusCode} for {Symbol} {DataType}: Authentication failed", Name, statusCode, symbol, dataType);
+            throw new InvalidOperationException($"{Name} API returned {statusCode}: Authentication failed for {symbol}");
+        }
+
+        if (statusCode == 429)
+        {
+            var retryAfter = HttpResiliencePolicy.ExtractRetryAfter(response) ?? TimeSpan.FromSeconds(60);
+            RecordRateLimitHit(retryAfter);
+            RaiseRateLimitHit(GetRateLimitInfo());
+
+            Log.Warning("{Provider} API returned 429 for {Symbol} {DataType}: Rate limit exceeded", Name, symbol, dataType);
+            throw new InvalidOperationException($"{Name} API returned 429: Rate limit exceeded for {symbol}. Retry-After: {retryAfter.TotalSeconds}s");
+        }
+
+        if (statusCode == 404)
+        {
+            Log.Debug("{Provider} API returned 404 for {Symbol} {DataType}: Not found", Name, symbol, dataType);
+            return; // Allow empty results for not found
+        }
+
+        Log.Warning("{Provider} API returned {StatusCode} for {Symbol} {DataType}", Name, statusCode, symbol, dataType);
+        throw new InvalidOperationException($"{Name} API returned {statusCode} for {symbol}");
     }
 
     /// <summary>
