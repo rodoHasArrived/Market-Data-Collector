@@ -135,11 +135,134 @@ public sealed class ProviderRegistry : IDisposable
 
     #endregion
 
-    #region Streaming Providers
+    #region Generic Provider Retrieval
+
+    /// <summary>
+    /// Gets all providers of a specific type, ordered by priority.
+    /// This is the unified generic approach that replaces type-specific methods.
+    /// </summary>
+    /// <typeparam name="T">The provider interface type (e.g., IMarketDataClient, IHistoricalDataProvider).</typeparam>
+    /// <returns>All enabled providers of the specified type, ordered by priority.</returns>
+    public IReadOnlyList<T> GetProviders<T>() where T : class, IProviderMetadata
+    {
+        return _allProviders.Values
+            .Where(r => r.IsEnabled && r.Provider is T)
+            .OrderBy(r => r.Priority)
+            .Select(r => (T)r.Provider)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Gets a provider of a specific type by ID.
+    /// </summary>
+    /// <typeparam name="T">The provider interface type.</typeparam>
+    /// <param name="id">The provider ID.</param>
+    /// <returns>The provider if found and of the correct type, null otherwise.</returns>
+    public T? GetProvider<T>(string id) where T : class, IProviderMetadata
+    {
+        return _allProviders.TryGetValue(id, out var registered) &&
+               registered.IsEnabled &&
+               registered.Provider is T provider
+            ? provider
+            : null;
+    }
+
+    /// <summary>
+    /// Gets the best available provider of a specific type based on priority and availability.
+    /// This is the unified availability check that works for all provider types.
+    /// </summary>
+    /// <typeparam name="T">The provider interface type.</typeparam>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>The best available provider, or null if none available.</returns>
+    public async Task<T?> GetBestAvailableProviderAsync<T>(CancellationToken ct = default)
+        where T : class, IProviderMetadata
+    {
+        var candidates = _allProviders.Values
+            .Where(r => r.IsEnabled && r.Provider is T)
+            .OrderBy(r => r.Priority);
+
+        foreach (var registered in candidates)
+        {
+            var provider = (T)registered.Provider;
+            try
+            {
+                var isAvailable = await CheckProviderAvailabilityAsync(provider, ct);
+                if (isAvailable)
+                {
+                    return provider;
+                }
+            }
+            catch (Exception ex)
+            {
+                _log.Debug(ex, "Provider {Name} availability check failed", registered.Name);
+            }
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Checks availability for any provider type using the appropriate method.
+    /// </summary>
+    private static async Task<bool> CheckProviderAvailabilityAsync(IProviderMetadata provider, CancellationToken ct)
+    {
+        return provider switch
+        {
+            IHistoricalDataProvider backfill => await backfill.IsAvailableAsync(ct),
+            ISymbolSearchProvider search => await search.IsAvailableAsync(ct),
+            IMarketDataClient streaming => streaming.IsEnabled,
+            _ => true // Default to available for unknown types
+        };
+    }
+
+    /// <summary>
+    /// Checks if any provider of the specified type is available.
+    /// </summary>
+    /// <typeparam name="T">The provider interface type.</typeparam>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>True if at least one provider is available.</returns>
+    public async Task<bool> IsAnyProviderAvailableAsync<T>(CancellationToken ct = default)
+        where T : class, IProviderMetadata
+    {
+        return await GetBestAvailableProviderAsync<T>(ct) != null;
+    }
+
+    /// <summary>
+    /// Gets availability status for all providers of a specific type.
+    /// </summary>
+    /// <typeparam name="T">The provider interface type.</typeparam>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>Dictionary mapping provider IDs to availability status.</returns>
+    public async Task<IReadOnlyDictionary<string, bool>> GetProviderAvailabilityAsync<T>(CancellationToken ct = default)
+        where T : class, IProviderMetadata
+    {
+        var results = new Dictionary<string, bool>();
+        var candidates = _allProviders.Values
+            .Where(r => r.Provider is T);
+
+        foreach (var registered in candidates)
+        {
+            try
+            {
+                var isAvailable = registered.IsEnabled &&
+                    await CheckProviderAvailabilityAsync(registered.Provider, ct);
+                results[registered.Name] = isAvailable;
+            }
+            catch
+            {
+                results[registered.Name] = false;
+            }
+        }
+        return results;
+    }
+
+    #endregion
+
+    #region Type-Specific Methods (Convenience wrappers - delegate to generic methods)
 
     /// <summary>
     /// Registers a streaming market data provider.
     /// </summary>
+    /// <remarks>Convenience wrapper that delegates to <see cref="Register{T}"/>.</remarks>
     public void RegisterStreaming(string name, IMarketDataClient provider, int priority = 100)
     {
         ArgumentNullException.ThrowIfNull(provider);
@@ -149,34 +272,19 @@ public sealed class ProviderRegistry : IDisposable
     /// <summary>
     /// Gets a streaming provider by name.
     /// </summary>
-    public IMarketDataClient? GetStreamingProvider(string name)
-    {
-        return _allProviders.TryGetValue(name, out var registered) &&
-               registered.IsEnabled &&
-               registered.Provider is IMarketDataClient client
-            ? client
-            : null;
-    }
+    /// <remarks>Convenience wrapper that delegates to <see cref="GetProvider{T}(string)"/>.</remarks>
+    public IMarketDataClient? GetStreamingProvider(string name) => GetProvider<IMarketDataClient>(name);
 
     /// <summary>
     /// Gets all registered streaming providers ordered by priority.
     /// </summary>
-    public IReadOnlyList<IMarketDataClient> GetStreamingProviders()
-    {
-        return _allProviders.Values
-            .Where(r => r.IsEnabled && r.Provider is IMarketDataClient)
-            .OrderBy(r => r.Priority)
-            .Select(r => (IMarketDataClient)r.Provider)
-            .ToList();
-    }
-
-    #endregion
-
-    #region Backfill Providers
+    /// <remarks>Convenience wrapper that delegates to <see cref="GetProviders{T}"/>.</remarks>
+    public IReadOnlyList<IMarketDataClient> GetStreamingProviders() => GetProviders<IMarketDataClient>();
 
     /// <summary>
     /// Registers a historical data provider.
     /// </summary>
+    /// <remarks>Convenience wrapper that delegates to <see cref="Register{T}"/>.</remarks>
     public void RegisterBackfill(string name, IHistoricalDataProvider provider, int priority = 100)
     {
         ArgumentNullException.ThrowIfNull(provider);
@@ -186,61 +294,26 @@ public sealed class ProviderRegistry : IDisposable
     /// <summary>
     /// Gets a backfill provider by name.
     /// </summary>
-    public IHistoricalDataProvider? GetBackfillProvider(string name)
-    {
-        return _allProviders.TryGetValue(name, out var registered) &&
-               registered.IsEnabled &&
-               registered.Provider is IHistoricalDataProvider provider
-            ? provider
-            : null;
-    }
+    /// <remarks>Convenience wrapper that delegates to <see cref="GetProvider{T}(string)"/>.</remarks>
+    public IHistoricalDataProvider? GetBackfillProvider(string name) => GetProvider<IHistoricalDataProvider>(name);
 
     /// <summary>
     /// Gets all registered backfill providers ordered by priority.
     /// </summary>
-    public IReadOnlyList<IHistoricalDataProvider> GetBackfillProviders()
-    {
-        return _allProviders.Values
-            .Where(r => r.IsEnabled && r.Provider is IHistoricalDataProvider)
-            .OrderBy(r => r.Priority)
-            .Select(r => (IHistoricalDataProvider)r.Provider)
-            .ToList();
-    }
+    /// <remarks>Convenience wrapper that delegates to <see cref="GetProviders{T}"/>.</remarks>
+    public IReadOnlyList<IHistoricalDataProvider> GetBackfillProviders() => GetProviders<IHistoricalDataProvider>();
 
     /// <summary>
     /// Gets the best available backfill provider based on priority and health.
     /// </summary>
-    public async Task<IHistoricalDataProvider?> GetBestBackfillProviderAsync(CancellationToken ct = default)
-    {
-        var backfillProviders = _allProviders.Values
-            .Where(r => r.IsEnabled && r.Provider is IHistoricalDataProvider)
-            .OrderBy(r => r.Priority);
-
-        foreach (var registered in backfillProviders)
-        {
-            var provider = (IHistoricalDataProvider)registered.Provider;
-            try
-            {
-                if (await provider.IsAvailableAsync(ct).ConfigureAwait(false))
-                {
-                    return provider;
-                }
-            }
-            catch (Exception ex)
-            {
-                _log.Debug(ex, "Backfill provider {Name} availability check failed", registered.Name);
-            }
-        }
-        return null;
-    }
-
-    #endregion
-
-    #region Symbol Search Providers
+    /// <remarks>Convenience wrapper that delegates to <see cref="GetBestAvailableProviderAsync{T}"/>.</remarks>
+    public Task<IHistoricalDataProvider?> GetBestBackfillProviderAsync(CancellationToken ct = default)
+        => GetBestAvailableProviderAsync<IHistoricalDataProvider>(ct);
 
     /// <summary>
     /// Registers a symbol search provider.
     /// </summary>
+    /// <remarks>Convenience wrapper that delegates to <see cref="Register{T}"/>.</remarks>
     public void RegisterSymbolSearch(string name, ISymbolSearchProvider provider, int priority = 100)
     {
         ArgumentNullException.ThrowIfNull(provider);
@@ -250,53 +323,21 @@ public sealed class ProviderRegistry : IDisposable
     /// <summary>
     /// Gets a symbol search provider by name.
     /// </summary>
-    public ISymbolSearchProvider? GetSymbolSearchProvider(string name)
-    {
-        return _allProviders.TryGetValue(name, out var registered) &&
-               registered.IsEnabled &&
-               registered.Provider is ISymbolSearchProvider provider
-            ? provider
-            : null;
-    }
+    /// <remarks>Convenience wrapper that delegates to <see cref="GetProvider{T}(string)"/>.</remarks>
+    public ISymbolSearchProvider? GetSymbolSearchProvider(string name) => GetProvider<ISymbolSearchProvider>(name);
 
     /// <summary>
     /// Gets all registered symbol search providers ordered by priority.
     /// </summary>
-    public IReadOnlyList<ISymbolSearchProvider> GetSymbolSearchProviders()
-    {
-        return _allProviders.Values
-            .Where(r => r.IsEnabled && r.Provider is ISymbolSearchProvider)
-            .OrderBy(r => r.Priority)
-            .Select(r => (ISymbolSearchProvider)r.Provider)
-            .ToList();
-    }
+    /// <remarks>Convenience wrapper that delegates to <see cref="GetProviders{T}"/>.</remarks>
+    public IReadOnlyList<ISymbolSearchProvider> GetSymbolSearchProviders() => GetProviders<ISymbolSearchProvider>();
 
     /// <summary>
     /// Gets the best available symbol search provider based on priority and health.
     /// </summary>
-    public async Task<ISymbolSearchProvider?> GetBestSymbolSearchProviderAsync(CancellationToken ct = default)
-    {
-        var searchProviders = _allProviders.Values
-            .Where(r => r.IsEnabled && r.Provider is ISymbolSearchProvider)
-            .OrderBy(r => r.Priority);
-
-        foreach (var registered in searchProviders)
-        {
-            var provider = (ISymbolSearchProvider)registered.Provider;
-            try
-            {
-                if (await provider.IsAvailableAsync(ct).ConfigureAwait(false))
-                {
-                    return provider;
-                }
-            }
-            catch (Exception ex)
-            {
-                _log.Debug(ex, "Symbol search provider {Name} availability check failed", registered.Name);
-            }
-        }
-        return null;
-    }
+    /// <remarks>Convenience wrapper that delegates to <see cref="GetBestAvailableProviderAsync{T}"/>.</remarks>
+    public Task<ISymbolSearchProvider?> GetBestSymbolSearchProviderAsync(CancellationToken ct = default)
+        => GetBestAvailableProviderAsync<ISymbolSearchProvider>(ct);
 
     #endregion
 
