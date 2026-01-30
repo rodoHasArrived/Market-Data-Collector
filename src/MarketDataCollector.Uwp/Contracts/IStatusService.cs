@@ -1,6 +1,6 @@
 using System.Threading;
 using System.Threading.Tasks;
-using MarketDataCollector.Uwp.Models;
+using MarketDataCollector.Contracts.Api;
 
 namespace MarketDataCollector.Uwp.Contracts;
 
@@ -31,25 +31,5 @@ public interface IStatusService
     Task<ServiceHealthResult> CheckHealthAsync(CancellationToken ct = default);
 }
 
-/// <summary>
-/// Result of a service health check.
-/// </summary>
-public sealed class ServiceHealthResult
-{
-    public bool IsReachable { get; init; }
-    public bool IsConnected { get; init; }
-    public double LatencyMs { get; init; }
-    public string? ErrorMessage { get; init; }
-}
-
-/// <summary>
-/// Generic API response wrapper.
-/// </summary>
-/// <typeparam name="T">The type of the response data.</typeparam>
-public sealed class ApiResponse<T>
-{
-    public bool Success { get; init; }
-    public T? Data { get; init; }
-    public string? ErrorMessage { get; init; }
-    public int StatusCode { get; init; }
-}
+// Note: ServiceHealthResult and ApiResponse<T> are now defined in
+// MarketDataCollector.Contracts.Api.ClientModels.cs
