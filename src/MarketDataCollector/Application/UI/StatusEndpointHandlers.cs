@@ -4,6 +4,7 @@ using MarketDataCollector.Application.Pipeline;
 using MarketDataCollector.Contracts.Api;
 using MarketDataCollector.Domain.Collectors;
 using MarketDataCollector.Domain.Models;
+using ProviderCatalog = MarketDataCollector.Contracts.Api.ProviderCatalog;
 
 namespace MarketDataCollector.Application.UI;
 
@@ -517,45 +518,22 @@ public sealed class StatusEndpointHandlers
     }
 
     /// <summary>
-    /// Gets the list of available backfill providers (static info).
+    /// Gets the list of available backfill providers from the unified ProviderCatalog.
+    /// Uses runtime-derived catalog from ProviderRegistry when available, with static fallback.
     /// </summary>
     public static IReadOnlyList<BackfillProviderInfo> GetBackfillProviderInfo()
     {
-        return new[]
+        // Use ProviderCatalog which returns runtime-derived entries from registry if available
+        var catalogEntries = ProviderCatalog.GetBackfillProviders();
+
+        return catalogEntries.Select(entry => new BackfillProviderInfo
         {
-            new BackfillProviderInfo
-            {
-                Name = "alpaca",
-                DisplayName = "Alpaca Markets",
-                Description = "Real-time and historical data with adjustments",
-                IsAvailable = true,
-                RequiresApiKey = true
-            },
-            new BackfillProviderInfo
-            {
-                Name = "yahoo",
-                DisplayName = "Yahoo Finance",
-                Description = "Free historical data for most US equities",
-                IsAvailable = true,
-                RequiresApiKey = false
-            },
-            new BackfillProviderInfo
-            {
-                Name = "stooq",
-                DisplayName = "Stooq",
-                Description = "Free EOD data for global markets",
-                IsAvailable = true,
-                RequiresApiKey = false
-            },
-            new BackfillProviderInfo
-            {
-                Name = "nasdaq",
-                DisplayName = "Nasdaq Data Link",
-                Description = "Historical data (API key may be required)",
-                IsAvailable = true,
-                RequiresApiKey = true
-            }
-        };
+            Name = entry.ProviderId,
+            DisplayName = entry.DisplayName,
+            Description = entry.Description,
+            IsAvailable = true,
+            RequiresApiKey = entry.RequiresCredentials
+        }).ToList();
     }
 
     private enum HealthStatus { Healthy, Degraded, Unhealthy }

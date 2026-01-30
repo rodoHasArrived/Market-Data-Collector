@@ -24,6 +24,8 @@ using MarketDataCollector.Infrastructure.Providers.Alpaca;
 using MarketDataCollector.Infrastructure.Providers.Polygon;
 using MarketDataCollector.Infrastructure.Providers.StockSharp;
 using MarketDataCollector.Infrastructure.Providers.Backfill;
+using MarketDataCollector.Infrastructure.Providers.Core;
+using MarketDataCollector.Contracts.Api;
 using SymbolResolution = MarketDataCollector.Infrastructure.Providers.Backfill.SymbolResolution;
 using BackfillRequest = MarketDataCollector.Application.Backfill.BackfillRequest;
 using MarketDataCollector.Storage;
@@ -79,6 +81,9 @@ internal static class Program
     {
         // Initialize HttpClientFactory for proper HTTP client lifecycle management (TD-10)
         InitializeHttpClientFactory(log);
+
+        // Initialize unified provider registry for centralized provider management
+        var providerRegistry = InitializeProviderRegistry(cfg, configService, log);
 
         // Use deployment context for mode resolution (replaces scattered conditional logic)
         var runMode = deployment.Mode switch
@@ -622,8 +627,8 @@ internal static class Program
         {
             var backfillRequest = BuildBackfillRequest(cfg, args);
 
-            // Create providers based on configuration
-            var backfillProviders = CreateBackfillProviders(cfg, log, configService);
+            // Get backfill providers from unified registry
+            var backfillProviders = providerRegistry.GetBackfillProviders();
 
             // Wrap in composite provider if fallback enabled
             IHistoricalDataProvider[] providersArray;
@@ -1481,125 +1486,6 @@ SUPPORT:
     }
 
     /// <summary>
-    /// Creates backfill providers based on configuration.
-    /// Credential resolution is handled through ConfigurationService for consistency.
-    /// </summary>
-    private static List<IHistoricalDataProvider> CreateBackfillProviders(AppConfig cfg, ILogger log, ConfigurationService configService)
-    {
-        var backfillCfg = cfg.Backfill;
-        var providersCfg = backfillCfg?.Providers;
-        var providers = new List<IHistoricalDataProvider>();
-
-        // Alpaca Markets (highest priority when configured - reliable API with adjustments)
-        var alpacaCfg = providersCfg?.Alpaca;
-        if (alpacaCfg?.Enabled ?? true)
-        {
-            // Credentials resolved via ConfigurationService for consistency
-            var (keyId, secretKey) = configService.ResolveAlpacaCredentials(alpacaCfg?.KeyId, alpacaCfg?.SecretKey);
-
-            if (!string.IsNullOrEmpty(keyId) && !string.IsNullOrEmpty(secretKey))
-            {
-                providers.Add(new AlpacaHistoricalDataProvider(
-                    keyId: keyId,
-                    secretKey: secretKey,
-                    feed: alpacaCfg?.Feed ?? "iex",
-                    adjustment: alpacaCfg?.Adjustment ?? "all",
-                    priority: alpacaCfg?.Priority ?? 5,
-                    rateLimitPerMinute: alpacaCfg?.RateLimitPerMinute ?? 200,
-                    log: log
-                ));
-            }
-        }
-
-        // Yahoo Finance (broadest free coverage)
-        var yahooCfg = providersCfg?.Yahoo;
-        if (yahooCfg?.Enabled ?? true)
-        {
-            providers.Add(new YahooFinanceHistoricalDataProvider(log: log));
-        }
-
-        // Polygon.io (high-quality data, 2-year free tier)
-        var polygonCfg = providersCfg?.Polygon;
-        if (polygonCfg?.Enabled ?? true)
-        {
-            var polygonApiKey = configService.ResolvePolygonCredentials(polygonCfg?.ApiKey);
-            if (!string.IsNullOrEmpty(polygonApiKey))
-            {
-                providers.Add(new PolygonHistoricalDataProvider(
-                    apiKey: polygonApiKey,
-                    log: log
-                ));
-            }
-        }
-
-        // Tiingo (best for dividend-adjusted data)
-        var tiingoCfg = providersCfg?.Tiingo;
-        if (tiingoCfg?.Enabled ?? true)
-        {
-            var tiingoToken = configService.ResolveTiingoCredentials(tiingoCfg?.ApiToken);
-            if (!string.IsNullOrEmpty(tiingoToken))
-            {
-                providers.Add(new TiingoHistoricalDataProvider(
-                    apiToken: tiingoToken,
-                    log: log
-                ));
-            }
-        }
-
-        // Finnhub (generous 60 calls/min free tier)
-        var finnhubCfg = providersCfg?.Finnhub;
-        if (finnhubCfg?.Enabled ?? true)
-        {
-            var finnhubApiKey = configService.ResolveFinnhubCredentials(finnhubCfg?.ApiKey);
-            if (!string.IsNullOrEmpty(finnhubApiKey))
-            {
-                providers.Add(new FinnhubHistoricalDataProvider(
-                    apiKey: finnhubApiKey,
-                    log: log
-                ));
-            }
-        }
-
-        // Stooq (reliable free EOD data - no API key required)
-        var stooqCfg = providersCfg?.Stooq;
-        if (stooqCfg?.Enabled ?? true)
-        {
-            providers.Add(new StooqHistoricalDataProvider(log: log));
-        }
-
-        // Alpha Vantage (unique intraday historical data - limited free tier)
-        var alphaVantageCfg = providersCfg?.AlphaVantage;
-        if (alphaVantageCfg?.Enabled ?? false) // Disabled by default due to very limited free tier
-        {
-            var alphaVantageApiKey = configService.ResolveAlphaVantageCredentials(alphaVantageCfg?.ApiKey);
-            if (!string.IsNullOrEmpty(alphaVantageApiKey))
-            {
-                providers.Add(new AlphaVantageHistoricalDataProvider(
-                    apiKey: alphaVantageApiKey,
-                    log: log
-                ));
-            }
-        }
-
-        // Nasdaq Data Link (Quandl - may require API key for better limits)
-        var nasdaqCfg = providersCfg?.Nasdaq;
-        if (nasdaqCfg?.Enabled ?? true)
-        {
-            var nasdaqApiKey = configService.ResolveNasdaqCredentials(nasdaqCfg?.ApiKey);
-            providers.Add(new NasdaqDataLinkHistoricalDataProvider(
-                apiKey: nasdaqApiKey,
-                database: nasdaqCfg?.Database ?? "WIKI",
-                log: log
-            ));
-        }
-
-        // Sort by priority (lower = tried first)
-        return providers
-            .OrderBy(p => p.Priority)
-            .ToList();
-    }
-
-    /// <summary>
     /// Format bytes as human-readable string.
     /// </summary>
     private static string FormatBytes(long bytes)
@@ -1633,5 +1519,41 @@ SUPPORT:
         HttpClientFactoryProvider.Initialize(serviceProvider);
 
         log.Debug("HttpClientFactory initialized with named clients for all data providers (TD-10)");
+    }
+
+    /// <summary>
+    /// Initializes the unified ProviderRegistry and wires up the ProviderCatalog runtime providers.
+    /// This centralizes all provider registration and enables runtime-derived catalog data.
+    /// </summary>
+    private static ProviderRegistry InitializeProviderRegistry(AppConfig cfg, ConfigurationService configService, ILogger log)
+    {
+        var credentialAdapter = new ConfigurationServiceCredentialAdapter(configService);
+        var registry = new ProviderRegistry(log: log);
+        var factory = new ProviderFactory(cfg, credentialAdapter, log);
+
+        // Register all backfill providers with the unified registry
+        var backfillProviders = factory.CreateBackfillProviders();
+        foreach (var provider in backfillProviders)
+        {
+            registry.Register(provider);
+        }
+
+        // Register symbol search providers
+        var searchProviders = factory.CreateSymbolSearchProviders();
+        foreach (var provider in searchProviders)
+        {
+            registry.Register(provider);
+        }
+
+        // Wire up ProviderCatalog to use runtime-derived catalog from registry
+        ProviderCatalog.InitializeFromRegistry(
+            getCatalog: () => registry.GetProviderCatalog(),
+            getEntry: id => registry.GetProviderCatalogEntry(id));
+
+        var summary = registry.GetSummary();
+        log.Information("Provider registry initialized: {BackfillCount} backfill, {SearchCount} symbol search providers",
+            summary.BackfillCount, summary.SymbolSearchCount);
+
+        return registry;
     }
 }
