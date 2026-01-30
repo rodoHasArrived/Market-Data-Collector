@@ -393,22 +393,20 @@ The repository currently tracks changes directly in git without curated release 
 
 ### Build and Restore Issues
 
-If you encounter issues with `dotnet restore` or `dotnet build`, use the diagnostic scripts to gather detailed information:
+If you encounter issues with `dotnet restore` or `dotnet build`, use the Python build diagnostics to gather detailed information:
 
 **Linux/macOS:**
 ```bash
-./scripts/diagnose-build.sh         # Run full diagnostics
-./scripts/diagnose-build.sh restore # Diagnose restore only
-./scripts/diagnose-build.sh build   # Diagnose build only
-./scripts/diagnose-build.sh clean   # Clean and diagnose
+make diagnose
+python3 build-system/cli/buildctl.py build --project src/MarketDataCollector/MarketDataCollector.csproj --configuration Release
+python3 build-system/cli/buildctl.py doctor
 ```
 
 **Windows:**
 ```powershell
-.\scripts\diagnose-build.ps1              # Run full diagnostics
-.\scripts\diagnose-build.ps1 -Action restore  # Diagnose restore only
-.\scripts\diagnose-build.ps1 -Action build    # Diagnose build only
-.\scripts\diagnose-build.ps1 -Action clean    # Clean and diagnose
+make diagnose
+python build-system\cli\buildctl.py build --project src\MarketDataCollector\MarketDataCollector.csproj --configuration Release
+python build-system\cli\buildctl.py doctor
 ```
 
 **Manual Diagnostic Commands:**
@@ -423,11 +421,11 @@ dotnet build MarketDataCollector -c Release -v diag
 dotnet restore MarketDataCollector /p:EnableWindowsTargeting=true -v diag > restore-diag.log 2>&1
 ```
 
-The diagnostic scripts will:
+The diagnostics tooling will:
 - Check .NET SDK version and installed SDKs
 - Verify NuGet sources configuration
 - Run restore/build with diagnostic logging
-- Save detailed logs to `diagnostic-logs/` directory
+- Save detailed logs to `.build-system/logs` directory
 - Report warnings and errors found
 - Provide commands for log analysis
 

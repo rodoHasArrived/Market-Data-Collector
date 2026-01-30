@@ -759,7 +759,7 @@ function Install-Desktop {
         if (-not $buildSuccess -and $useNotificationModule) {
             Write-Host ""
             Write-Host "  Troubleshooting Resources:" -ForegroundColor Yellow
-            Write-Host "    • Run diagnostic script: .\scripts\diagnostics\diagnose-build.ps1 -Action desktop" -ForegroundColor Gray
+            Write-Host "    • Run build diagnostics: python build-system\cli\buildctl.py doctor" -ForegroundColor Gray
             Write-Host "    • Check .NET SDK: dotnet --info" -ForegroundColor Gray
             Write-Host "    • Verify Windows SDK: Get-ItemProperty 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows Kits\Installed Roots'" -ForegroundColor Gray
             Write-Host "    • Documentation: docs/guides/troubleshooting.md" -ForegroundColor Gray

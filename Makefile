@@ -17,7 +17,7 @@
         run run-ui run-backfill test build publish clean check-deps \
         setup-config lint benchmark docs verify-adrs verify-contracts gen-context \
         gen-interfaces gen-structure gen-providers gen-workflows update-claude-md docs-all \
-        doctor doctor-quick doctor-fix diagnose diagnose-build diagnose-restore diagnose-clean \
+        doctor doctor-quick doctor-fix diagnose diagnose-build \
         collect-debug collect-debug-minimal build-profile build-binlog validate-data analyze-errors \
         build-graph fingerprint env-capture env-diff impact bisect metrics history app-metrics \
         icons desktop desktop-publish
@@ -332,16 +332,10 @@ doctor-fix: ## Run environment check and auto-fix issues
 	@$(BUILDCTL) doctor
 
 diagnose: ## Run build diagnostics (alias)
-	@./scripts/diagnostics/diagnose-build.sh all
+	@$(BUILDCTL) build --project $(PROJECT) --configuration Release
 
 diagnose-build: ## Run full build diagnostics
-	@./scripts/diagnostics/diagnose-build.sh all
-
-diagnose-restore: ## Diagnose NuGet restore issues
-	@./scripts/diagnostics/diagnose-build.sh restore
-
-diagnose-clean: ## Clean and run diagnostics
-	@./scripts/diagnostics/diagnose-build.sh clean
+	@$(BUILDCTL) build --project $(PROJECT) --configuration Release
 
 collect-debug: ## Collect debug bundle for issue reporting
 	@$(BUILDCTL) collect-debug --project $(PROJECT) --configuration Release
@@ -362,7 +356,7 @@ build-binlog: ## Build with MSBuild binary log for detailed analysis
 	@echo "  structuredlogviewer msbuild.binlog"
 
 validate-data: ## Validate JSONL data integrity
-	@./scripts/diagnostics/validate-data.sh data/
+	@$(BUILDCTL) validate-data --directory data/
 
 analyze-errors: ## Analyze build output for known error patterns
 	@echo "$(BLUE)Building and analyzing for known errors...$(NC)"
