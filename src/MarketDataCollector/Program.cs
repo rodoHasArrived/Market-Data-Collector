@@ -468,8 +468,8 @@ internal static class Program
             return;
         }
 
-        // Validate configuration
-        if (!ConfigValidationHelper.ValidateAndLog(cfg))
+        // Validate configuration (routed through ConfigurationService)
+        if (!configService.ValidateConfig(cfg, out _))
         {
             log.Error("Exiting due to configuration errors");
             Environment.Exit(1);
