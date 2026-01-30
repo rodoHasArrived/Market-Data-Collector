@@ -15,11 +15,14 @@ namespace MarketDataCollector.Infrastructure.Providers.Backfill;
 /// Provides daily and intraday OHLCV bars with split/dividend adjustments,
 /// as well as tick-level quotes (NBBO), trades, and auction data.
 /// Coverage: US equities, ETFs.
-/// Extends BaseHistoricalDataProvider for common functionality.
+/// Extends BaseHistoricalDataProvider for common functionality including:
+/// - HTTP resilience (retry, circuit breaker)
+/// - Rate limit tracking with IRateLimitAwareProvider
+/// - Centralized error handling
 /// </summary>
 [ImplementsAdr("ADR-001", "Alpaca historical data provider implementation")]
 [ImplementsAdr("ADR-004", "All async methods support CancellationToken")]
-public sealed class AlpacaHistoricalDataProvider : BaseHistoricalDataProvider, IRateLimitAwareProvider
+public sealed class AlpacaHistoricalDataProvider : BaseHistoricalDataProvider
 {
     private const string BaseUrl = "https://data.alpaca.markets/v2/stocks";
     private const string EnvKeyId = "ALPACA_KEY_ID";
@@ -56,11 +59,6 @@ public sealed class AlpacaHistoricalDataProvider : BaseHistoricalDataProvider, I
     #endregion
 
     /// <summary>
-    /// Event raised when the provider hits a rate limit (HTTP 429).
-    /// </summary>
-    public event Action<RateLimitInfo>? OnRateLimitHit;
-
-    /// <summary>
     /// Creates a new Alpaca historical data provider.
     /// </summary>
     /// <param name="keyId">API Key ID (falls back to ALPACA_KEY_ID env var).</param>
@@ -91,11 +89,6 @@ public sealed class AlpacaHistoricalDataProvider : BaseHistoricalDataProvider, I
 
         ConfigureHttpClient();
     }
-
-    /// <summary>
-    /// Get current rate limit usage information.
-    /// </summary>
-    public RateLimitInfo GetRateLimitInfo() => base.GetRateLimitInfo();
 
     private void ConfigureHttpClient()
     {
@@ -615,40 +608,6 @@ public sealed class AlpacaHistoricalDataProvider : BaseHistoricalDataProvider, I
             throw new InvalidOperationException("Alpaca API credentials are required. Set ALPACA_KEY_ID and ALPACA_SECRET_KEY environment variables or provide them in configuration.");
     }
 
-    private void HandleHttpResponse(HttpResponseMessage response, string symbol, string dataType)
-    {
-        if (response.IsSuccessStatusCode) return;
-
-        var statusCode = (int)response.StatusCode;
-
-        if (statusCode == 403)
-        {
-            Log.Error("Alpaca API returned 403 for {Symbol} {DataType}: Authentication failed. Verify API keys.", symbol, dataType);
-            throw new InvalidOperationException($"Alpaca API returned 403: Authentication failed for symbol {symbol}");
-        }
-
-        if (statusCode == 429)
-        {
-            var retryAfter = ExtractRetryAfterFromResponse(response);
-            RecordRateLimitHit(retryAfter);
-
-            var rateLimitInfo = GetRateLimitInfo();
-            OnRateLimitHit?.Invoke(rateLimitInfo);
-
-            Log.Warning("Alpaca API returned 429 for {Symbol} {DataType}: Rate limit exceeded", symbol, dataType);
-            throw new InvalidOperationException($"Alpaca API returned 429: Rate limit exceeded for symbol {symbol}. Retry-After: {retryAfter?.TotalSeconds ?? 60}s");
-        }
-
-        if (statusCode == 404)
-        {
-            Log.Warning("Alpaca API returned 404 for {Symbol} {DataType}: Symbol not found", symbol, dataType);
-            return; // Allow empty results for not found
-        }
-
-        Log.Warning("Alpaca API returned {Status} for {Symbol} {DataType}", response.StatusCode, symbol, dataType);
-        throw new InvalidOperationException($"Alpaca API returned {statusCode} for symbol {symbol}");
-    }
-
     private string BuildUrl(string symbol, DateOnly? from, DateOnly? to, string? pageToken)
     {
         var startDate = from?.ToString("yyyy-MM-dd") ?? "2000-01-01";
@@ -670,34 +629,6 @@ public sealed class AlpacaHistoricalDataProvider : BaseHistoricalDataProvider, I
     protected override string NormalizeSymbol(string symbol)
     {
         return symbol.ToUpperInvariant().Trim();
-    }
-
-    private static TimeSpan? ExtractRetryAfterFromResponse(HttpResponseMessage response)
-    {
-        // Try to get Retry-After header
-        if (response.Headers.TryGetValues("Retry-After", out var values))
-        {
-            var retryAfterValue = values.FirstOrDefault();
-            if (!string.IsNullOrEmpty(retryAfterValue))
-            {
-                // Try parsing as seconds
-                if (int.TryParse(retryAfterValue, out var seconds))
-                {
-                    return TimeSpan.FromSeconds(seconds);
-                }
-
-                // Try parsing as HTTP date
-                if (DateTimeOffset.TryParse(retryAfterValue, out var retryDate))
-                {
-                    var delay = retryDate - DateTimeOffset.UtcNow;
-                    if (delay > TimeSpan.Zero)
-                        return delay;
-                }
-            }
-        }
-
-        // Default to 60 seconds if no Retry-After header
-        return TimeSpan.FromSeconds(60);
     }
 
     #endregion

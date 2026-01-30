@@ -16,11 +16,14 @@ namespace MarketDataCollector.Infrastructure.Providers.Backfill;
 /// Generous free tier: 60 API calls/minute.
 /// Coverage: 60,000+ global securities with company fundamentals.
 /// Best for: Earnings data, fundamentals, news, and high-frequency backfill operations.
-/// Extends BaseHistoricalDataProvider for common functionality.
+/// Extends BaseHistoricalDataProvider for common functionality including:
+/// - HTTP resilience (retry, circuit breaker)
+/// - Rate limit tracking with IRateLimitAwareProvider
+/// - Centralized error handling
 /// </summary>
 [ImplementsAdr("ADR-001", "Finnhub historical data provider implementation")]
 [ImplementsAdr("ADR-004", "All async methods support CancellationToken")]
-public sealed class FinnhubHistoricalDataProvider : BaseHistoricalDataProvider, IRateLimitAwareProvider
+public sealed class FinnhubHistoricalDataProvider : BaseHistoricalDataProvider
 {
     private const string BaseUrl = "https://finnhub.io/api/v1";
 
@@ -61,11 +64,6 @@ public sealed class FinnhubHistoricalDataProvider : BaseHistoricalDataProvider, 
     /// </summary>
     public static IReadOnlyList<string> SupportedResolutions => ["1", "5", "15", "30", "60", "D", "W", "M"];
 
-    /// <summary>
-    /// Event raised when the provider hits a rate limit (HTTP 429).
-    /// </summary>
-    public event Action<RateLimitInfo>? OnRateLimitHit;
-
     public FinnhubHistoricalDataProvider(string? apiKey = null, HttpClient? httpClient = null, ILogger? log = null)
         : base(httpClient, log)
     {
@@ -79,11 +77,6 @@ public sealed class FinnhubHistoricalDataProvider : BaseHistoricalDataProvider, 
             Http.DefaultRequestHeaders.Add("X-Finnhub-Token", _apiKey);
         }
     }
-
-    /// <summary>
-    /// Get current rate limit usage information.
-    /// </summary>
-    public RateLimitInfo GetRateLimitInfo() => base.GetRateLimitInfo();
 
     public override async Task<bool> IsAvailableAsync(CancellationToken ct = default)
     {
@@ -142,7 +135,7 @@ public sealed class FinnhubHistoricalDataProvider : BaseHistoricalDataProvider, 
 
             if (!response.IsSuccessStatusCode)
             {
-                HandleHttpError(response, symbol);
+                HandleHttpResponse(response, symbol, "candles");
             }
 
             var json = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
@@ -242,7 +235,7 @@ public sealed class FinnhubHistoricalDataProvider : BaseHistoricalDataProvider, 
 
             if (!response.IsSuccessStatusCode)
             {
-                HandleHttpError(response, symbol);
+                HandleHttpResponse(response, symbol, "candles");
             }
 
             var json = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
@@ -372,24 +365,6 @@ public sealed class FinnhubHistoricalDataProvider : BaseHistoricalDataProvider, 
     {
         // Use centralized symbol normalization utility
         return SymbolNormalization.Normalize(symbol);
-    }
-
-    private void HandleHttpError(HttpResponseMessage response, string symbol)
-    {
-        var statusCode = (int)response.StatusCode;
-
-        if (statusCode == 429)
-        {
-            var retryAfter = TimeSpan.FromSeconds(60);
-            RecordRateLimitHit(retryAfter);
-
-            var rateLimitInfo = GetRateLimitInfo();
-            OnRateLimitHit?.Invoke(rateLimitInfo);
-
-            throw new HttpRequestException($"Finnhub rate limit exceeded (429) for {symbol}. Retry-After: 60");
-        }
-
-        throw new InvalidOperationException($"Finnhub returned {statusCode} for symbol {symbol}");
     }
 
     private static string NormalizeResolution(string resolution)

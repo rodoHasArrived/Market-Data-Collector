@@ -16,11 +16,14 @@ namespace MarketDataCollector.Infrastructure.Providers.Backfill;
 /// Provides high-quality OHLCV aggregates with trades, quotes, and reference data.
 /// Coverage: US equities, options, forex, crypto.
 /// Free tier: 5 API calls/minute, delayed data, 2 years history.
-/// Extends BaseHistoricalDataProvider for common functionality.
+/// Extends BaseHistoricalDataProvider for common functionality including:
+/// - HTTP resilience (retry, circuit breaker)
+/// - Rate limit tracking with IRateLimitAwareProvider
+/// - Centralized error handling
 /// </summary>
 [ImplementsAdr("ADR-001", "Polygon.io historical data provider implementation")]
 [ImplementsAdr("ADR-004", "All async methods support CancellationToken")]
-public sealed class PolygonHistoricalDataProvider : BaseHistoricalDataProvider, IRateLimitAwareProvider
+public sealed class PolygonHistoricalDataProvider : BaseHistoricalDataProvider
 {
     private const string BaseUrl = "https://api.polygon.io";
 
@@ -52,11 +55,6 @@ public sealed class PolygonHistoricalDataProvider : BaseHistoricalDataProvider, 
 
     #endregion
 
-    /// <summary>
-    /// Event raised when the provider hits a rate limit (HTTP 429).
-    /// </summary>
-    public event Action<RateLimitInfo>? OnRateLimitHit;
-
     public PolygonHistoricalDataProvider(string? apiKey = null, HttpClient? httpClient = null, ILogger? log = null)
         : base(httpClient, log)
     {
@@ -65,11 +63,6 @@ public sealed class PolygonHistoricalDataProvider : BaseHistoricalDataProvider, 
         Http.DefaultRequestHeaders.Add("User-Agent", "MarketDataCollector/1.0");
         Http.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
     }
-
-    /// <summary>
-    /// Get current rate limit usage information.
-    /// </summary>
-    public RateLimitInfo GetRateLimitInfo() => base.GetRateLimitInfo();
 
     public override async Task<bool> IsAvailableAsync(CancellationToken ct = default)
     {
@@ -126,7 +119,7 @@ public sealed class PolygonHistoricalDataProvider : BaseHistoricalDataProvider, 
 
             if (!response.IsSuccessStatusCode)
             {
-                HandleHttpError(response, symbol);
+                HandleHttpResponse(response, symbol, "bars");
             }
 
             var json = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
@@ -223,7 +216,7 @@ public sealed class PolygonHistoricalDataProvider : BaseHistoricalDataProvider, 
 
             if (!response.IsSuccessStatusCode)
             {
-                HandleHttpError(response, symbol);
+                HandleHttpResponse(response, symbol, "bars");
             }
 
             var json = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
@@ -370,24 +363,6 @@ public sealed class PolygonHistoricalDataProvider : BaseHistoricalDataProvider, 
     {
         // Use centralized symbol normalization utility
         return SymbolNormalization.Normalize(symbol);
-    }
-
-    private void HandleHttpError(HttpResponseMessage response, string symbol)
-    {
-        var statusCode = (int)response.StatusCode;
-
-        if (statusCode == 429)
-        {
-            var retryAfter = response.Headers.RetryAfter?.Delta ?? TimeSpan.FromSeconds(60);
-            RecordRateLimitHit(retryAfter);
-
-            var rateLimitInfo = GetRateLimitInfo();
-            OnRateLimitHit?.Invoke(rateLimitInfo);
-
-            throw new HttpRequestException($"Polygon rate limit exceeded (429) for {symbol}. Retry-After: {retryAfter.TotalSeconds}");
-        }
-
-        throw new InvalidOperationException($"Polygon returned {statusCode} for symbol {symbol}");
     }
 
     private static (int multiplier, string timespan) ParseInterval(string interval)
