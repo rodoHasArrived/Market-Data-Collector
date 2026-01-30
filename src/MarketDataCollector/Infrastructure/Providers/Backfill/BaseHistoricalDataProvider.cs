@@ -9,6 +9,9 @@ using MarketDataCollector.Infrastructure.Utilities;
 using Polly;
 using Serilog;
 
+// Use centralized HttpHandleResult from HttpResiliencePolicy
+using HttpHandleResult = MarketDataCollector.Infrastructure.Resilience.HttpHandleResult;
+
 namespace MarketDataCollector.Infrastructure.Providers.Backfill;
 
 /// <summary>
@@ -36,6 +39,7 @@ public abstract class BaseHistoricalDataProvider : IHistoricalDataProvider, IRat
     protected readonly RateLimiter RateLimiter;
     protected readonly ILogger Log;
     protected readonly ResiliencePipeline<HttpResponseMessage> ResiliencePipeline;
+    private readonly HttpResponseHandler _responseHandler;
 
     private int _requestCount;
     private DateTimeOffset _windowStart;
@@ -136,6 +140,10 @@ public abstract class BaseHistoricalDataProvider : IHistoricalDataProvider, IRat
                 circuitBreakerDuration: TimeSpan.FromSeconds(30),
                 requestTimeout: TimeSpan.FromSeconds(30))
             : ResiliencePipeline<HttpResponseMessage>.Empty;
+
+        // Initialize centralized HTTP response handler (Name property must be available)
+        // Note: Name is abstract, so derived class must implement it before this runs
+        _responseHandler = new HttpResponseHandler(GetType().Name, Log);
 
         _windowStart = DateTimeOffset.UtcNow;
     }
@@ -268,6 +276,7 @@ public abstract class BaseHistoricalDataProvider : IHistoricalDataProvider, IRat
 
     /// <summary>
     /// Centralized HTTP response handling for all providers.
+    /// Delegates to <see cref="HttpResponseHandler.TryHandleResponseAsync"/> to eliminate duplicate code.
     /// Handles common status codes: 200 (OK), 404 (Not Found), 401/403 (Auth), 429 (Rate Limit), 5xx (Server Error).
     /// </summary>
     /// <param name="response">The HTTP response to handle.</param>
@@ -281,46 +290,19 @@ public abstract class BaseHistoricalDataProvider : IHistoricalDataProvider, IRat
         string dataType,
         CancellationToken ct)
     {
-        if (response.IsSuccessStatusCode)
-            return HttpHandleResult.Success;
+        // Delegate to centralized handler with rate limit callback
+        var result = await _responseHandler.TryHandleResponseAsync(
+            response,
+            symbol,
+            dataType,
+            info =>
+            {
+                RecordRateLimitHit(info.RetryAfter);
+                RaiseRateLimitHit(GetRateLimitInfo());
+            },
+            ct).ConfigureAwait(false);
 
-        var statusCode = (int)response.StatusCode;
-
-        switch (statusCode)
-        {
-            case 401:
-                Log.Error("{Provider} API returned 401 for {Symbol} {DataType}: Unauthorized. Check API credentials.", Name, symbol, dataType);
-                return HttpHandleResult.AuthFailure;
-
-            case 403:
-                Log.Error("{Provider} API returned 403 for {Symbol} {DataType}: Forbidden. Verify API permissions.", Name, symbol, dataType);
-                return HttpHandleResult.AuthFailure;
-
-            case 404:
-                Log.Debug("{Provider} API returned 404 for {Symbol} {DataType}: Not found", Name, symbol, dataType);
-                return HttpHandleResult.NotFound;
-
-            case 429:
-                var retryAfter = HttpResiliencePolicy.ExtractRetryAfter(response) ?? TimeSpan.FromSeconds(60);
-                RecordRateLimitHit(retryAfter);
-
-                var rateLimitInfo = GetRateLimitInfo();
-                RaiseRateLimitHit(rateLimitInfo);
-
-                Log.Warning("{Provider} API returned 429 for {Symbol} {DataType}: Rate limit exceeded. Retry-After: {RetryAfter}s",
-                    Name, symbol, dataType, retryAfter.TotalSeconds);
-                return HttpHandleResult.RateLimited(retryAfter);
-
-            case >= 500:
-                Log.Error("{Provider} API returned {StatusCode} for {Symbol} {DataType}: Server error",
-                    Name, statusCode, symbol, dataType);
-                return HttpHandleResult.Error($"Server error: {statusCode}");
-
-            default:
-                Log.Warning("{Provider} API returned {StatusCode} for {Symbol} {DataType}",
-                    Name, statusCode, symbol, dataType);
-                return HttpHandleResult.Error($"HTTP {statusCode}");
-        }
+        return result;
     }
 
     /// <summary>

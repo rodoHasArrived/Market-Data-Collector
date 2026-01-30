@@ -176,32 +176,40 @@ public sealed class ProviderRateLimitTracker : IDisposable
     {
         if (_disposed) return;
         _disposed = true;
+
+        // Dispose all tracked provider states (which now own RateLimiter instances)
+        foreach (var state in _providerStates.Values)
+        {
+            state.Dispose();
+        }
         _providerStates.Clear();
     }
 }
 
 /// <summary>
 /// Internal state tracking for a single provider's rate limits.
+/// Uses the shared <see cref="RateLimiter"/> internally to eliminate duplicate sliding window logic.
 /// </summary>
-internal sealed class ProviderRateLimitState
+internal sealed class ProviderRateLimitState : IDisposable
 {
     private readonly string _providerName;
     private readonly int _maxRequestsPerWindow;
     private readonly TimeSpan _window;
-    private readonly TimeSpan _minDelay;
-    private readonly ConcurrentQueue<DateTimeOffset> _requestTimestamps = new();
+    private readonly RateLimiter _rateLimiter;
     private readonly object _lock = new();
 
     private DateTimeOffset _rateLimitHitAt = DateTimeOffset.MinValue;
     private TimeSpan _rateLimitDuration = TimeSpan.Zero;
     private bool _isExplicitlyRateLimited;
+    private bool _disposed;
 
     public ProviderRateLimitState(string providerName, int maxRequestsPerWindow, TimeSpan window, TimeSpan minDelay)
     {
         _providerName = providerName;
         _maxRequestsPerWindow = maxRequestsPerWindow;
         _window = window;
-        _minDelay = minDelay;
+        // Delegate sliding window tracking to the shared RateLimiter
+        _rateLimiter = new RateLimiter(maxRequestsPerWindow, window, minDelay);
     }
 
     public DateTimeOffset RateLimitResetsAt => _rateLimitHitAt + _rateLimitDuration;
@@ -223,15 +231,15 @@ internal sealed class ProviderRateLimitState
                 }
             }
 
-            // Check if we've hit our request limit
-            CleanupOldTimestamps();
-            return _requestTimestamps.Count >= _maxRequestsPerWindow;
+            // Check if we've hit our request limit using the shared RateLimiter
+            var (requestsInWindow, maxRequests, _) = _rateLimiter.GetStatus();
+            return requestsInWindow >= maxRequests;
         }
     }
 
     public void RecordRequest()
     {
-        _requestTimestamps.Enqueue(DateTimeOffset.UtcNow);
+        _rateLimiter.RecordRequest();
     }
 
     public void RecordRateLimitHit(TimeSpan? retryAfter = null)
@@ -254,8 +262,8 @@ internal sealed class ProviderRateLimitState
 
     public double GetUsageRatio()
     {
-        CleanupOldTimestamps();
-        return (double)_requestTimestamps.Count / _maxRequestsPerWindow;
+        var (requestsInWindow, maxRequests, _) = _rateLimiter.GetStatus();
+        return (double)requestsInWindow / maxRequests;
     }
 
     public TimeSpan? GetTimeUntilReset()
@@ -266,21 +274,16 @@ internal sealed class ProviderRateLimitState
             return remaining > TimeSpan.Zero ? remaining : null;
         }
 
-        if (_requestTimestamps.TryPeek(out var oldest))
-        {
-            var remaining = oldest.Add(_window) - DateTimeOffset.UtcNow;
-            return remaining > TimeSpan.Zero ? remaining : null;
-        }
-
-        return null;
+        var (_, _, windowRemaining) = _rateLimiter.GetStatus();
+        return windowRemaining > TimeSpan.Zero ? windowRemaining : null;
     }
 
     public RateLimitStatus GetStatus()
     {
-        CleanupOldTimestamps();
+        var (requestsInWindow, _, windowRemaining) = _rateLimiter.GetStatus();
         return new RateLimitStatus(
             _providerName,
-            _requestTimestamps.Count,
+            requestsInWindow,
             _maxRequestsPerWindow,
             _window,
             IsRateLimited,
@@ -289,13 +292,11 @@ internal sealed class ProviderRateLimitState
         );
     }
 
-    private void CleanupOldTimestamps()
+    public void Dispose()
     {
-        var cutoff = DateTimeOffset.UtcNow - _window;
-        while (_requestTimestamps.TryPeek(out var oldest) && oldest < cutoff)
-        {
-            _requestTimestamps.TryDequeue(out _);
-        }
+        if (_disposed) return;
+        _disposed = true;
+        _rateLimiter.Dispose();
     }
 }
 

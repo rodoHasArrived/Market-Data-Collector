@@ -1,5 +1,7 @@
 using System.Net;
 using MarketDataCollector.Application.Logging;
+using MarketDataCollector.Infrastructure.Providers.Backfill;
+using MarketDataCollector.Infrastructure.Resilience;
 using Serilog;
 
 namespace MarketDataCollector.Infrastructure.Utilities;
@@ -22,7 +24,7 @@ public sealed class HttpResponseHandler
 
     /// <summary>
     /// Handle HTTP response and throw appropriate exceptions for error status codes.
-    /// Returns true if successful, throws on error.
+    /// Returns result if successful, throws on error (except 404 which returns IsNotFound).
     /// </summary>
     public async Task<HttpResponseResult> HandleResponseAsync(
         HttpResponseMessage response,
@@ -48,6 +50,72 @@ public sealed class HttpResponseHandler
             500 or 502 or 503 or 504 => HandleServerError(statusCode, symbol, dataType, errorContent),
             _ => HandleOtherError(statusCode, symbol, dataType, errorContent)
         };
+    }
+
+    /// <summary>
+    /// Handle HTTP response without throwing exceptions. Returns a result object
+    /// with categorized error information. This is the preferred method for use
+    /// in base provider classes that need to return results rather than throw.
+    /// </summary>
+    /// <remarks>
+    /// Use this method when you need to handle errors in the calling code
+    /// rather than letting exceptions propagate.
+    /// </remarks>
+    public async Task<HttpHandleResult> TryHandleResponseAsync(
+        HttpResponseMessage response,
+        string symbol,
+        string dataType,
+        Action<RateLimitInfo>? onRateLimitHit = null,
+        CancellationToken ct = default)
+    {
+        if (response.IsSuccessStatusCode)
+        {
+            return HttpHandleResult.Success;
+        }
+
+        var statusCode = (int)response.StatusCode;
+
+        switch (statusCode)
+        {
+            case 401:
+                _log.Error("{Provider} API returned 401 for {Symbol} {DataType}: Unauthorized. Check API credentials.",
+                    _providerName, symbol, dataType);
+                return HttpHandleResult.AuthFailure;
+
+            case 403:
+                _log.Error("{Provider} API returned 403 for {Symbol} {DataType}: Forbidden. Verify API permissions.",
+                    _providerName, symbol, dataType);
+                return HttpHandleResult.AuthFailure;
+
+            case 404:
+                _log.Debug("{Provider} API returned 404 for {Symbol} {DataType}: Not found",
+                    _providerName, symbol, dataType);
+                return HttpHandleResult.NotFound;
+
+            case 429:
+                var retryAfter = HttpResiliencePolicy.ExtractRetryAfter(response) ?? TimeSpan.FromSeconds(60);
+
+                if (onRateLimitHit != null)
+                {
+                    var info = new RateLimitInfo(_providerName, 0, 0, TimeSpan.Zero,
+                        DateTimeOffset.UtcNow + retryAfter, true, retryAfter);
+                    onRateLimitHit(info);
+                }
+
+                _log.Warning("{Provider} API returned 429 for {Symbol} {DataType}: Rate limit exceeded. Retry-After: {RetryAfter}s",
+                    _providerName, symbol, dataType, retryAfter.TotalSeconds);
+                return HttpHandleResult.RateLimited(retryAfter);
+
+            case >= 500:
+                _log.Error("{Provider} API returned {StatusCode} for {Symbol} {DataType}: Server error",
+                    _providerName, statusCode, symbol, dataType);
+                return HttpHandleResult.Error($"Server error: {statusCode}");
+
+            default:
+                _log.Warning("{Provider} API returned {StatusCode} for {Symbol} {DataType}",
+                    _providerName, statusCode, symbol, dataType);
+                return HttpHandleResult.Error($"HTTP {statusCode}");
+        }
     }
 
     /// <summary>
