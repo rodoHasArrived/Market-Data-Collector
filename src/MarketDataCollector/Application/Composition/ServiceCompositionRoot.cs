@@ -1,18 +1,26 @@
 using MarketDataCollector.Application.Backfill;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Config.Credentials;
+using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Monitoring;
+using MarketDataCollector.Application.Pipeline;
 using MarketDataCollector.Application.Services;
 using MarketDataCollector.Application.Subscriptions.Models;
 using MarketDataCollector.Application.Subscriptions.Services;
 using MarketDataCollector.Application.UI;
+using MarketDataCollector.Domain.Collectors;
+using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Infrastructure.Contracts;
+using MarketDataCollector.Infrastructure.Http;
 using MarketDataCollector.Infrastructure.Providers.Backfill.Scheduling;
+using MarketDataCollector.Infrastructure.Providers.Core;
 using MarketDataCollector.Infrastructure.Providers.SymbolSearch;
 using MarketDataCollector.Storage;
 using MarketDataCollector.Storage.Interfaces;
 using MarketDataCollector.Storage.Maintenance;
+using MarketDataCollector.Storage.Policies;
 using MarketDataCollector.Storage.Services;
+using MarketDataCollector.Storage.Sinks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Serilog;
@@ -79,6 +87,26 @@ public static class ServiceCompositionRoot
         if (options.EnableCredentialServices)
         {
             services.AddCredentialServices(options);
+        }
+
+        if (options.EnableProviderServices)
+        {
+            services.AddProviderServices(options);
+        }
+
+        if (options.EnablePipelineServices)
+        {
+            services.AddPipelineServices(options);
+        }
+
+        if (options.EnableCollectorServices)
+        {
+            services.AddCollectorServices(options);
+        }
+
+        if (options.EnableHttpClientFactory)
+        {
+            services.AddHttpClientFactoryServices();
         }
 
         return services;
@@ -347,6 +375,163 @@ public static class ServiceCompositionRoot
     }
 
     #endregion
+
+    #region Provider Services
+
+    /// <summary>
+    /// Registers provider factory and registry services.
+    /// Uses the unified ProviderFactory for creating all provider types.
+    /// </summary>
+    private static IServiceCollection AddProviderServices(
+        this IServiceCollection services,
+        CompositionOptions options)
+    {
+        // Register credential resolver - wraps ConfigurationService for provider credential resolution
+        services.AddSingleton<ICredentialResolver>(sp =>
+        {
+            var configService = sp.GetRequiredService<ConfigurationService>();
+            return new ConfigurationServiceCredentialAdapter(configService);
+        });
+
+        // Register provider registry as singleton
+        services.AddSingleton<ProviderRegistry>(sp =>
+        {
+            var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
+            var logger = LoggingSetup.ForContext<ProviderRegistry>();
+            return new ProviderRegistry(alertDispatcher: null, logger);
+        });
+
+        // Register provider factory
+        services.AddSingleton<ProviderFactory>(sp =>
+        {
+            var configStore = sp.GetRequiredService<ConfigStore>();
+            var config = configStore.Load();
+            var credentialResolver = sp.GetRequiredService<ICredentialResolver>();
+            var logger = LoggingSetup.ForContext<ProviderFactory>();
+            return new ProviderFactory(config, credentialResolver, logger);
+        });
+
+        return services;
+    }
+
+    #endregion
+
+    #region Pipeline Services
+
+    /// <summary>
+    /// Registers event pipeline and storage sink services.
+    /// </summary>
+    private static IServiceCollection AddPipelineServices(
+        this IServiceCollection services,
+        CompositionOptions options)
+    {
+        // JsonlStoragePolicy - controls file path generation
+        services.AddSingleton<JsonlStoragePolicy>(sp =>
+        {
+            var storageOptions = sp.GetRequiredService<StorageOptions>();
+            return new JsonlStoragePolicy(storageOptions);
+        });
+
+        // JsonlStorageSink - writes events to JSONL files
+        services.AddSingleton<JsonlStorageSink>(sp =>
+        {
+            var storageOptions = sp.GetRequiredService<StorageOptions>();
+            var policy = sp.GetRequiredService<JsonlStoragePolicy>();
+            return new JsonlStorageSink(storageOptions, policy);
+        });
+
+        // EventPipeline - bounded channel event routing
+        services.AddSingleton<EventPipeline>(sp =>
+        {
+            var sink = sp.GetRequiredService<JsonlStorageSink>();
+            return new EventPipeline(sink, EventPipelinePolicy.HighThroughput);
+        });
+
+        // IMarketEventPublisher - facade for publishing events
+        services.AddSingleton<IMarketEventPublisher>(sp =>
+        {
+            var pipeline = sp.GetRequiredService<EventPipeline>();
+            return new PipelinePublisher(pipeline);
+        });
+
+        return services;
+    }
+
+    #endregion
+
+    #region Collector Services
+
+    /// <summary>
+    /// Registers market data collector services.
+    /// </summary>
+    private static IServiceCollection AddCollectorServices(
+        this IServiceCollection services,
+        CompositionOptions options)
+    {
+        // QuoteCollector - BBO state tracking
+        services.AddSingleton<QuoteCollector>(sp =>
+        {
+            var publisher = sp.GetRequiredService<IMarketEventPublisher>();
+            return new QuoteCollector(publisher);
+        });
+
+        // TradeDataCollector - tick-by-tick trade processing
+        services.AddSingleton<TradeDataCollector>(sp =>
+        {
+            var publisher = sp.GetRequiredService<IMarketEventPublisher>();
+            var quoteCollector = sp.GetRequiredService<QuoteCollector>();
+            return new TradeDataCollector(publisher, quoteCollector);
+        });
+
+        // MarketDepthCollector - L2 order book maintenance
+        services.AddSingleton<MarketDepthCollector>(sp =>
+        {
+            var publisher = sp.GetRequiredService<IMarketEventPublisher>();
+            return new MarketDepthCollector(publisher, requireExplicitSubscription: true);
+        });
+
+        return services;
+    }
+
+    #endregion
+
+    #region HttpClient Factory Services
+
+    /// <summary>
+    /// Registers HttpClientFactory for proper HTTP client lifecycle management.
+    /// Implements ADR-010: HttpClient Factory pattern.
+    /// </summary>
+    [ImplementsAdr("ADR-010", "HttpClientFactory lifecycle management")]
+    private static IServiceCollection AddHttpClientFactoryServices(this IServiceCollection services)
+    {
+        // Register all named HttpClient configurations with Polly policies
+        services.AddMarketDataHttpClients();
+
+        return services;
+    }
+
+    #endregion
+}
+
+/// <summary>
+/// Simple publisher that wraps EventPipeline for IMarketEventPublisher interface.
+/// Registered as singleton in the composition root, but also usable directly.
+/// </summary>
+public sealed class PipelinePublisher : IMarketEventPublisher
+{
+    private readonly EventPipeline _pipeline;
+
+    public PipelinePublisher(EventPipeline pipeline) => _pipeline = pipeline;
+
+    public bool TryPublish(in MarketEvent evt)
+    {
+        var ok = _pipeline.TryPublish(evt);
+        if (ok) Metrics.IncPublished();
+        else Metrics.IncDropped();
+
+        if (evt.Type == MarketEventType.Integrity) Metrics.IncIntegrity();
+        return ok;
+    }
 }
 
 /// <summary>
@@ -363,11 +548,15 @@ public sealed record CompositionOptions
         EnableBackfillServices = true,
         EnableMaintenanceServices = true,
         EnableDiagnosticServices = true,
-        EnableCredentialServices = true
+        EnableCredentialServices = true,
+        EnableProviderServices = true,
+        EnablePipelineServices = true,
+        EnableCollectorServices = true,
+        EnableHttpClientFactory = true
     };
 
     /// <summary>
-    /// Minimal options for console-only operation.
+    /// Minimal options for console-only operation (utility commands, validation, etc.).
     /// </summary>
     public static CompositionOptions Minimal => new()
     {
@@ -375,7 +564,11 @@ public sealed record CompositionOptions
         EnableBackfillServices = false,
         EnableMaintenanceServices = false,
         EnableDiagnosticServices = false,
-        EnableCredentialServices = false
+        EnableCredentialServices = false,
+        EnableProviderServices = false,
+        EnablePipelineServices = false,
+        EnableCollectorServices = false,
+        EnableHttpClientFactory = false
     };
 
     /// <summary>
@@ -387,7 +580,43 @@ public sealed record CompositionOptions
         EnableBackfillServices = true,
         EnableMaintenanceServices = true,
         EnableDiagnosticServices = true,
-        EnableCredentialServices = true
+        EnableCredentialServices = true,
+        EnableProviderServices = true,
+        EnablePipelineServices = true,
+        EnableCollectorServices = true,
+        EnableHttpClientFactory = true
+    };
+
+    /// <summary>
+    /// Options for streaming data collection (CLI headless mode).
+    /// </summary>
+    public static CompositionOptions Streaming => new()
+    {
+        EnableSymbolManagement = true,
+        EnableBackfillServices = true,
+        EnableMaintenanceServices = false,
+        EnableDiagnosticServices = true,
+        EnableCredentialServices = true,
+        EnableProviderServices = true,
+        EnablePipelineServices = true,
+        EnableCollectorServices = true,
+        EnableHttpClientFactory = true
+    };
+
+    /// <summary>
+    /// Options for backfill-only operation.
+    /// </summary>
+    public static CompositionOptions BackfillOnly => new()
+    {
+        EnableSymbolManagement = false,
+        EnableBackfillServices = true,
+        EnableMaintenanceServices = false,
+        EnableDiagnosticServices = false,
+        EnableCredentialServices = true,
+        EnableProviderServices = true,
+        EnablePipelineServices = true,
+        EnableCollectorServices = false,
+        EnableHttpClientFactory = true
     };
 
     /// <summary>
@@ -424,4 +653,24 @@ public sealed record CompositionOptions
     /// Whether to enable credential testing and OAuth services.
     /// </summary>
     public bool EnableCredentialServices { get; init; }
+
+    /// <summary>
+    /// Whether to enable provider factory and registry services.
+    /// </summary>
+    public bool EnableProviderServices { get; init; }
+
+    /// <summary>
+    /// Whether to enable event pipeline and storage sink services.
+    /// </summary>
+    public bool EnablePipelineServices { get; init; }
+
+    /// <summary>
+    /// Whether to enable market data collector services (Trade, Quote, Depth).
+    /// </summary>
+    public bool EnableCollectorServices { get; init; }
+
+    /// <summary>
+    /// Whether to enable HttpClientFactory for HTTP client lifecycle management.
+    /// </summary>
+    public bool EnableHttpClientFactory { get; init; }
 }

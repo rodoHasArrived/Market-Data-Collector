@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Threading.Channels;
 using MarketDataCollector.Application.Backfill;
+using MarketDataCollector.Application.Composition;
 using MarketDataCollector.Application.Config;
 using DeploymentContext = MarketDataCollector.Application.Config.DeploymentContext;
 using DeploymentMode = MarketDataCollector.Application.Config.DeploymentMode;
@@ -613,8 +614,8 @@ internal static class Program
         log.Information("Compression: {CompressionEnabled}", storageOpt.Compress ? "enabled" : "disabled");
         log.Debug("Example path: {ExamplePath}", policy.GetPathPreview());
 
-        // Create publisher for pipeline
-        IMarketEventPublisher publisher = new PipelinePublisher(pipeline);
+        // Create publisher for pipeline (using unified PipelinePublisher from composition root)
+        IMarketEventPublisher publisher = new Application.Composition.PipelinePublisher(pipeline);
 
         var backfillRequested = args.Any(a => a.Equals("--backfill", StringComparison.OrdinalIgnoreCase))
             || (cfg.Backfill?.Enabled == true);
@@ -622,24 +623,15 @@ internal static class Program
         {
             var backfillRequest = BuildBackfillRequest(cfg, args);
 
-            // Create providers based on configuration
-            var backfillProviders = CreateBackfillProviders(cfg, log, configService);
+            // Use HostStartup for unified service creation via composition root
+            await using var hostStartup = HostStartupFactory.CreateForBackfill(cfgPath);
+            var backfillProviders = hostStartup.CreateBackfillProviders();
 
             // Wrap in composite provider if fallback enabled
             IHistoricalDataProvider[] providersArray;
             if (cfg.Backfill?.EnableFallback ?? true)
             {
-                var symbolResolver = (cfg.Backfill?.EnableSymbolResolution ?? true)
-                    ? new SymbolResolution.OpenFigiSymbolResolver(cfg.Backfill?.Providers?.OpenFigi?.ApiKey, log: log)
-                    : null;
-
-                var composite = new CompositeHistoricalDataProvider(
-                    backfillProviders,
-                    symbolResolver,
-                    enableCrossValidation: false,
-                    log: log
-                );
-
+                var composite = hostStartup.CreateCompositeBackfillProvider(backfillProviders);
                 providersArray = new IHistoricalDataProvider[] { composite };
             }
             else
@@ -1111,22 +1103,8 @@ SUPPORT:
     // have been removed to consolidate configuration logic through ConfigurationService.
     // Use ConfigurationService.LoadAndPrepareConfig() for full configuration processing.
 
-    private sealed class PipelinePublisher : IMarketEventPublisher
-    {
-        private readonly EventPipeline _pipeline;
-
-        public PipelinePublisher(EventPipeline pipeline) => _pipeline = pipeline;
-
-        public bool TryPublish(in MarketEvent evt)
-        {
-            var ok = _pipeline.TryPublish(evt);
-            if (ok) Metrics.IncPublished();
-            else Metrics.IncDropped();
-
-            if (evt.Type == MarketEventType.Integrity) Metrics.IncIntegrity();
-            return ok;
-        }
-    }
+    // NOTE: PipelinePublisher has been consolidated into ServiceCompositionRoot
+    // and is accessed via DI through the composition root.
 
     private static AppConfig EnsureDefaultSymbols(AppConfig cfg)
     {
@@ -1480,124 +1458,8 @@ SUPPORT:
         }
     }
 
-    /// <summary>
-    /// Creates backfill providers based on configuration.
-    /// Credential resolution is handled through ConfigurationService for consistency.
-    /// </summary>
-    private static List<IHistoricalDataProvider> CreateBackfillProviders(AppConfig cfg, ILogger log, ConfigurationService configService)
-    {
-        var backfillCfg = cfg.Backfill;
-        var providersCfg = backfillCfg?.Providers;
-        var providers = new List<IHistoricalDataProvider>();
-
-        // Alpaca Markets (highest priority when configured - reliable API with adjustments)
-        var alpacaCfg = providersCfg?.Alpaca;
-        if (alpacaCfg?.Enabled ?? true)
-        {
-            // Credentials resolved via ConfigurationService for consistency
-            var (keyId, secretKey) = configService.ResolveAlpacaCredentials(alpacaCfg?.KeyId, alpacaCfg?.SecretKey);
-
-            if (!string.IsNullOrEmpty(keyId) && !string.IsNullOrEmpty(secretKey))
-            {
-                providers.Add(new AlpacaHistoricalDataProvider(
-                    keyId: keyId,
-                    secretKey: secretKey,
-                    feed: alpacaCfg?.Feed ?? "iex",
-                    adjustment: alpacaCfg?.Adjustment ?? "all",
-                    priority: alpacaCfg?.Priority ?? 5,
-                    rateLimitPerMinute: alpacaCfg?.RateLimitPerMinute ?? 200,
-                    log: log
-                ));
-            }
-        }
-
-        // Yahoo Finance (broadest free coverage)
-        var yahooCfg = providersCfg?.Yahoo;
-        if (yahooCfg?.Enabled ?? true)
-        {
-            providers.Add(new YahooFinanceHistoricalDataProvider(log: log));
-        }
-
-        // Polygon.io (high-quality data, 2-year free tier)
-        var polygonCfg = providersCfg?.Polygon;
-        if (polygonCfg?.Enabled ?? true)
-        {
-            var polygonApiKey = configService.ResolvePolygonCredentials(polygonCfg?.ApiKey);
-            if (!string.IsNullOrEmpty(polygonApiKey))
-            {
-                providers.Add(new PolygonHistoricalDataProvider(
-                    apiKey: polygonApiKey,
-                    log: log
-                ));
-            }
-        }
-
-        // Tiingo (best for dividend-adjusted data)
-        var tiingoCfg = providersCfg?.Tiingo;
-        if (tiingoCfg?.Enabled ?? true)
-        {
-            var tiingoToken = configService.ResolveTiingoCredentials(tiingoCfg?.ApiToken);
-            if (!string.IsNullOrEmpty(tiingoToken))
-            {
-                providers.Add(new TiingoHistoricalDataProvider(
-                    apiToken: tiingoToken,
-                    log: log
-                ));
-            }
-        }
-
-        // Finnhub (generous 60 calls/min free tier)
-        var finnhubCfg = providersCfg?.Finnhub;
-        if (finnhubCfg?.Enabled ?? true)
-        {
-            var finnhubApiKey = configService.ResolveFinnhubCredentials(finnhubCfg?.ApiKey);
-            if (!string.IsNullOrEmpty(finnhubApiKey))
-            {
-                providers.Add(new FinnhubHistoricalDataProvider(
-                    apiKey: finnhubApiKey,
-                    log: log
-                ));
-            }
-        }
-
-        // Stooq (reliable free EOD data - no API key required)
-        var stooqCfg = providersCfg?.Stooq;
-        if (stooqCfg?.Enabled ?? true)
-        {
-            providers.Add(new StooqHistoricalDataProvider(log: log));
-        }
-
-        // Alpha Vantage (unique intraday historical data - limited free tier)
-        var alphaVantageCfg = providersCfg?.AlphaVantage;
-        if (alphaVantageCfg?.Enabled ?? false) // Disabled by default due to very limited free tier
-        {
-            var alphaVantageApiKey = configService.ResolveAlphaVantageCredentials(alphaVantageCfg?.ApiKey);
-            if (!string.IsNullOrEmpty(alphaVantageApiKey))
-            {
-                providers.Add(new AlphaVantageHistoricalDataProvider(
-                    apiKey: alphaVantageApiKey,
-                    log: log
-                ));
-            }
-        }
-
-        // Nasdaq Data Link (Quandl - may require API key for better limits)
-        var nasdaqCfg = providersCfg?.Nasdaq;
-        if (nasdaqCfg?.Enabled ?? true)
-        {
-            var nasdaqApiKey = configService.ResolveNasdaqCredentials(nasdaqCfg?.ApiKey);
-            providers.Add(new NasdaqDataLinkHistoricalDataProvider(
-                apiKey: nasdaqApiKey,
-                database: nasdaqCfg?.Database ?? "WIKI",
-                log: log
-            ));
-        }
-
-        // Sort by priority (lower = tried first)
-        return providers
-            .OrderBy(p => p.Priority)
-            .ToList();
-    }
+    // NOTE: CreateBackfillProviders has been consolidated into ProviderFactory
+    // and is accessed via HostStartup.CreateBackfillProviders() through the composition root.
 
     /// <summary>
     /// Format bytes as human-readable string.
@@ -1619,6 +1481,11 @@ SUPPORT:
     /// Initializes HttpClientFactory for proper HTTP client lifecycle management.
     /// Implements TD-10: Replace instance HttpClient with IHttpClientFactory.
     /// </summary>
+    /// <remarks>
+    /// When using HostStartup via the composition root, HttpClientFactory is initialized
+    /// automatically as part of AddMarketDataServices with EnableHttpClientFactory = true.
+    /// This method is used for the direct startup path that doesn't go through HostStartup.
+    /// </remarks>
     private static void InitializeHttpClientFactory(ILogger log)
     {
         var services = new ServiceCollection();
