@@ -526,8 +526,7 @@ internal static class Program
 
         var policy = new JsonlStoragePolicy(storageOpt);
         await using var sink = new JsonlStorageSink(storageOpt, policy);
-        var pipelinePolicy = new EventPipelinePolicy(50_000, BoundedChannelFullMode.DropOldest, EnableMetrics: true);
-        await using var pipeline = new EventPipeline(sink, pipelinePolicy);
+        await using var pipeline = new EventPipeline(sink, EventPipelinePolicy.HighThroughput);
 
         // Log storage configuration
         log.Information("Storage path: {RootPath}", storageOpt.RootPath);
