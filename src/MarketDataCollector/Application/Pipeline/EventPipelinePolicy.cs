@@ -1,4 +1,5 @@
 using System.Threading.Channels;
+using MarketDataCollector.Contracts.Pipeline;
 
 namespace MarketDataCollector.Application.Pipeline;
 
@@ -13,6 +14,7 @@ namespace MarketDataCollector.Application.Pipeline;
 ///   <item><see cref="MessageBuffer"/> - Internal message buffering (50k capacity, DropOldest, no metrics)</item>
 ///   <item><see cref="MaintenanceQueue"/> - Background tasks (100 capacity, Wait/backpressure)</item>
 ///   <item><see cref="Logging"/> - Log channels (1k capacity, DropOldest)</item>
+///   <item><see cref="CompletionQueue"/> - Completion notifications (500 capacity, Wait/backpressure)</item>
 /// </list>
 /// </para>
 /// </summary>
@@ -22,7 +24,7 @@ namespace MarketDataCollector.Application.Pipeline;
 /// or <see cref="ToBoundedOptions"/> when you need to configure additional options.
 /// </remarks>
 public sealed record EventPipelinePolicy(
-    int Capacity = 100_000,
+    int Capacity = PipelinePolicyConstants.DefaultCapacity,
     BoundedChannelFullMode FullMode = BoundedChannelFullMode.DropOldest,
     bool EnableMetrics = true)
 {
@@ -32,31 +34,56 @@ public sealed record EventPipelinePolicy(
     /// Default policy for general-purpose event pipelines.
     /// High capacity (100k), drops oldest on overflow, metrics enabled.
     /// </summary>
-    public static EventPipelinePolicy Default { get; } = new(100_000, BoundedChannelFullMode.DropOldest, EnableMetrics: true);
+    public static EventPipelinePolicy Default { get; } = new(
+        PipelinePolicyConstants.DefaultCapacity,
+        BoundedChannelFullMode.DropOldest,
+        EnableMetrics: true);
 
     /// <summary>
     /// Policy for high-throughput streaming data pipelines (e.g., market data clients).
     /// Moderate capacity (50k), drops oldest on overflow, metrics enabled for monitoring.
     /// </summary>
-    public static EventPipelinePolicy HighThroughput { get; } = new(50_000, BoundedChannelFullMode.DropOldest, EnableMetrics: true);
+    public static EventPipelinePolicy HighThroughput { get; } = new(
+        PipelinePolicyConstants.HighThroughputCapacity,
+        BoundedChannelFullMode.DropOldest,
+        EnableMetrics: true);
 
     /// <summary>
     /// Policy for internal message buffering channels (e.g., StockSharp message buffer).
     /// Moderate capacity (50k), drops oldest on overflow, metrics disabled for performance.
     /// </summary>
-    public static EventPipelinePolicy MessageBuffer { get; } = new(50_000, BoundedChannelFullMode.DropOldest, EnableMetrics: false);
+    public static EventPipelinePolicy MessageBuffer { get; } = new(
+        PipelinePolicyConstants.MessageBufferCapacity,
+        BoundedChannelFullMode.DropOldest,
+        EnableMetrics: false);
 
     /// <summary>
     /// Policy for background task/maintenance queues where no messages should be dropped.
     /// Low capacity (100), waits when full (backpressure), metrics disabled.
     /// </summary>
-    public static EventPipelinePolicy MaintenanceQueue { get; } = new(100, BoundedChannelFullMode.Wait, EnableMetrics: false);
+    public static EventPipelinePolicy MaintenanceQueue { get; } = new(
+        PipelinePolicyConstants.MaintenanceQueueCapacity,
+        BoundedChannelFullMode.Wait,
+        EnableMetrics: false);
 
     /// <summary>
     /// Policy for logging channels.
     /// Low capacity (1k), drops oldest on overflow, metrics disabled.
     /// </summary>
-    public static EventPipelinePolicy Logging { get; } = new(1_000, BoundedChannelFullMode.DropOldest, EnableMetrics: false);
+    public static EventPipelinePolicy Logging { get; } = new(
+        PipelinePolicyConstants.LoggingCapacity,
+        BoundedChannelFullMode.DropOldest,
+        EnableMetrics: false);
+
+    /// <summary>
+    /// Policy for completion notification channels (e.g., backfill request completions).
+    /// Moderate capacity (500), waits when full (no drops), metrics disabled.
+    /// Use this for channels where completion notifications must not be lost.
+    /// </summary>
+    public static EventPipelinePolicy CompletionQueue { get; } = new(
+        PipelinePolicyConstants.CompletionQueueCapacity,
+        BoundedChannelFullMode.Wait,
+        EnableMetrics: false);
 
     #endregion
 

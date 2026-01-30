@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Threading.Channels;
 using System.Threading;
 using MarketDataCollector.Application.Logging;
+using MarketDataCollector.Application.Pipeline;
 using Serilog;
 
 namespace MarketDataCollector.Infrastructure.Providers.Backfill;
@@ -51,11 +52,10 @@ public sealed class BackfillRequestQueue : IDisposable
     {
         _rateLimitTracker = rateLimitTracker;
         _log = log ?? LoggingSetup.ForContext<BackfillRequestQueue>();
-        _completedChannel = Channel.CreateUnbounded<BackfillRequest>(new UnboundedChannelOptions
-        {
-            SingleReader = true,
-            SingleWriter = false
-        });
+        // Use EventPipelinePolicy for consistent backpressure settings across the application.
+        // CompletionQueue preset: bounded (500 capacity), Wait mode (no drops), metrics disabled.
+        _completedChannel = EventPipelinePolicy.CompletionQueue.CreateChannel<BackfillRequest>(
+            singleReader: true, singleWriter: false);
     }
 
     /// <summary>

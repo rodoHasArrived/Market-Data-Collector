@@ -118,6 +118,10 @@
     <!-- Export models -->
     <Compile Include="..\MarketDataCollector.Contracts\Export\*.cs"
              Link="SharedModels\Export\%(Filename)%(Extension)" />
+
+    <!-- Pipeline policy constants -->
+    <Compile Include="..\MarketDataCollector.Contracts\Pipeline\*.cs"
+             Link="SharedModels\Pipeline\%(Filename)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(IsWindows)' == 'true' AND Exists('Assets')">
