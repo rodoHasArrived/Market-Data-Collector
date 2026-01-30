@@ -174,6 +174,109 @@ public sealed partial class StoragePage : Page
         UpdateLifecycleUI();
     }
 
+    private void StorageProfile_Changed(object sender, SelectionChangedEventArgs e)
+    {
+        // Update the InfoBar to show what the profile will do when applied
+        var profileTag = GetComboSelectedTag(StorageProfileCombo);
+        if (string.IsNullOrEmpty(profileTag))
+        {
+            ProfileInfoBar.IsOpen = false;
+            return;
+        }
+
+        var (title, message) = profileTag switch
+        {
+            "Research" => ("Research Profile",
+                "Enables gzip compression, manifest generation, and daily date partitioning by symbol."),
+            "LowLatency" => ("Low Latency Profile",
+                "Disables compression and manifests for maximum ingest speed. Uses hourly partitioning."),
+            "Archival" => ("Archival Profile",
+                "Enables ZSTD compression, checksums, and monthly partitioning. Configures tiered storage."),
+            _ => ("", "")
+        };
+
+        if (!string.IsNullOrEmpty(title))
+        {
+            ProfileInfoBar.Title = title;
+            ProfileInfoBar.Message = $"{message} Click 'Apply Profile' to update settings.";
+            ProfileInfoBar.Severity = InfoBarSeverity.Informational;
+            ProfileInfoBar.IsOpen = true;
+        }
+    }
+
+    private void ApplyProfile_Click(object sender, RoutedEventArgs e)
+    {
+        var profileTag = GetComboSelectedTag(StorageProfileCombo);
+        if (string.IsNullOrEmpty(profileTag))
+        {
+            ProfileInfoBar.Title = "No Profile Selected";
+            ProfileInfoBar.Message = "Select a profile from the dropdown to apply preset settings.";
+            ProfileInfoBar.Severity = InfoBarSeverity.Warning;
+            ProfileInfoBar.IsOpen = true;
+            return;
+        }
+
+        ApplyStorageProfile(profileTag);
+    }
+
+    /// <summary>
+    /// Applies a storage profile by updating UI controls to reflect the profile's settings.
+    /// </summary>
+    private void ApplyStorageProfile(string profileId)
+    {
+        switch (profileId)
+        {
+            case "Research":
+                // Research: Balanced defaults for analysis workflows
+                CompressToggle.IsOn = true;
+                SelectComboItemByTag(NamingConventionCombo, "BySymbol");
+                SelectComboItemByTag(DatePartitionCombo, "Daily");
+                IncludeProviderToggle.IsOn = false;
+
+                ProfileInfoBar.Title = "Research Profile Applied";
+                ProfileInfoBar.Message = "Settings updated: Compression enabled (gzip), naming by symbol, daily partitioning.";
+                ProfileInfoBar.Severity = InfoBarSeverity.Success;
+                break;
+
+            case "LowLatency":
+                // LowLatency: Prioritizes ingest speed
+                CompressToggle.IsOn = false;
+                SelectComboItemByTag(NamingConventionCombo, "BySymbol");
+                SelectComboItemByTag(DatePartitionCombo, "Hourly");
+                IncludeProviderToggle.IsOn = false;
+
+                ProfileInfoBar.Title = "Low Latency Profile Applied";
+                ProfileInfoBar.Message = "Settings updated: Compression disabled, naming by symbol, hourly partitioning for faster writes.";
+                ProfileInfoBar.Severity = InfoBarSeverity.Success;
+                break;
+
+            case "Archival":
+                // Archival: Long-term retention with tiering-friendly defaults
+                CompressToggle.IsOn = true;
+                SelectComboItemByTag(NamingConventionCombo, "ByDate");
+                SelectComboItemByTag(DatePartitionCombo, "Monthly");
+                IncludeProviderToggle.IsOn = true;
+
+                // Enable lifecycle management for archival
+                LifecycleEnabledToggle.IsOn = true;
+                UpdateLifecycleUI();
+
+                ProfileInfoBar.Title = "Archival Profile Applied";
+                ProfileInfoBar.Message = "Settings updated: Compression enabled, naming by date, monthly partitioning. Data lifecycle management enabled.";
+                ProfileInfoBar.Severity = InfoBarSeverity.Success;
+                break;
+
+            default:
+                ProfileInfoBar.Title = "Unknown Profile";
+                ProfileInfoBar.Message = $"Profile '{profileId}' is not recognized.";
+                ProfileInfoBar.Severity = InfoBarSeverity.Warning;
+                break;
+        }
+
+        ProfileInfoBar.IsOpen = true;
+        UpdatePreviewPath();
+    }
+
     private void UpdateLifecycleUI()
     {
         LifecycleSettingsPanel.Opacity = LifecycleEnabledToggle.IsOn ? 1.0 : 0.5;
