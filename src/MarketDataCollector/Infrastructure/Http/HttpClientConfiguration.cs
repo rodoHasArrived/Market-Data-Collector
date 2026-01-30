@@ -1,8 +1,6 @@
 using System.Net.Http.Headers;
 using MarketDataCollector.Infrastructure.Contracts;
 using Microsoft.Extensions.DependencyInjection;
-using Polly;
-using Polly.Extensions.Http;
 
 namespace MarketDataCollector.Infrastructure.Http;
 
@@ -61,13 +59,13 @@ public static class HttpClientNames
 /// - Prevents socket exhaustion
 /// - Centralized configuration for timeouts, headers, retry policies
 /// - Better testability through DI
+///
+/// Resilience policies (retry, circuit breaker) are provided by SharedResiliencePolicies
+/// to eliminate duplication and ensure consistent behavior across all HttpClients.
 /// </remarks>
 [ImplementsAdr("ADR-010", "HttpClientFactory for proper HTTP client lifecycle management")]
 public static class HttpClientConfiguration
 {
-    private static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(30);
-    private static readonly TimeSpan ShortTimeout = TimeSpan.FromSeconds(10);
-    private static readonly TimeSpan LongTimeout = TimeSpan.FromSeconds(60);
 
     /// <summary>
     /// Registers all named HttpClient configurations with the DI container.
@@ -78,172 +76,172 @@ public static class HttpClientConfiguration
         services.AddHttpClient(HttpClientNames.Default)
             .ConfigureHttpClient(client =>
             {
-                client.Timeout = DefaultTimeout;
+                client.Timeout = SharedResiliencePolicies.DefaultTimeout;
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             })
-            .AddStandardResiliencePolicy();
+            .AddSharedResiliencePolicy();
 
         // Alpaca Trading API client
         services.AddHttpClient(HttpClientNames.Alpaca)
             .ConfigureHttpClient(client =>
             {
-                client.Timeout = DefaultTimeout;
+                client.Timeout = SharedResiliencePolicies.DefaultTimeout;
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             })
-            .AddStandardResiliencePolicy();
+            .AddSharedResiliencePolicy();
 
         // Alpaca Data API client
         services.AddHttpClient(HttpClientNames.AlpacaData)
             .ConfigureHttpClient(client =>
             {
                 client.BaseAddress = new Uri("https://data.alpaca.markets/v2/stocks/");
-                client.Timeout = DefaultTimeout;
+                client.Timeout = SharedResiliencePolicies.DefaultTimeout;
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             })
-            .AddStandardResiliencePolicy();
+            .AddSharedResiliencePolicy();
 
         // Alpaca Historical Data client
         services.AddHttpClient(HttpClientNames.AlpacaHistorical)
             .ConfigureHttpClient(client =>
             {
                 client.BaseAddress = new Uri("https://data.alpaca.markets/v2/stocks/");
-                client.Timeout = DefaultTimeout;
+                client.Timeout = SharedResiliencePolicies.DefaultTimeout;
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             })
-            .AddStandardResiliencePolicy();
+            .AddSharedResiliencePolicy();
 
         // Alpaca Symbol Search client
         services.AddHttpClient(HttpClientNames.AlpacaSymbolSearch)
             .ConfigureHttpClient(client =>
             {
                 client.BaseAddress = new Uri("https://api.alpaca.markets/v2/");
-                client.Timeout = DefaultTimeout;
+                client.Timeout = SharedResiliencePolicies.DefaultTimeout;
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             })
-            .AddStandardResiliencePolicy();
+            .AddSharedResiliencePolicy();
 
         // Polygon clients
         services.AddHttpClient(HttpClientNames.Polygon)
             .ConfigureHttpClient(client =>
             {
                 client.BaseAddress = new Uri("https://api.polygon.io/");
-                client.Timeout = DefaultTimeout;
+                client.Timeout = SharedResiliencePolicies.DefaultTimeout;
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             })
-            .AddStandardResiliencePolicy();
+            .AddSharedResiliencePolicy();
 
         services.AddHttpClient(HttpClientNames.PolygonHistorical)
             .ConfigureHttpClient(client =>
             {
                 client.BaseAddress = new Uri("https://api.polygon.io/");
-                client.Timeout = DefaultTimeout;
+                client.Timeout = SharedResiliencePolicies.DefaultTimeout;
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             })
-            .AddStandardResiliencePolicy();
+            .AddSharedResiliencePolicy();
 
         services.AddHttpClient(HttpClientNames.PolygonSymbolSearch)
             .ConfigureHttpClient(client =>
             {
                 client.BaseAddress = new Uri("https://api.polygon.io/");
-                client.Timeout = DefaultTimeout;
+                client.Timeout = SharedResiliencePolicies.DefaultTimeout;
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             })
-            .AddStandardResiliencePolicy();
+            .AddSharedResiliencePolicy();
 
         // Tiingo Historical client
         services.AddHttpClient(HttpClientNames.TiingoHistorical)
             .ConfigureHttpClient(client =>
             {
                 client.BaseAddress = new Uri("https://api.tiingo.com/");
-                client.Timeout = DefaultTimeout;
+                client.Timeout = SharedResiliencePolicies.DefaultTimeout;
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             })
-            .AddStandardResiliencePolicy();
+            .AddSharedResiliencePolicy();
 
         // Yahoo Finance Historical client
         services.AddHttpClient(HttpClientNames.YahooFinanceHistorical)
             .ConfigureHttpClient(client =>
             {
                 client.BaseAddress = new Uri("https://query1.finance.yahoo.com/");
-                client.Timeout = LongTimeout;
+                client.Timeout = SharedResiliencePolicies.LongTimeout;
                 client.DefaultRequestHeaders.Add("User-Agent", "MarketDataCollector/1.0");
             })
-            .AddStandardResiliencePolicy();
+            .AddSharedResiliencePolicy();
 
         // Stooq Historical client
         services.AddHttpClient(HttpClientNames.StooqHistorical)
             .ConfigureHttpClient(client =>
             {
                 client.BaseAddress = new Uri("https://stooq.com/");
-                client.Timeout = DefaultTimeout;
+                client.Timeout = SharedResiliencePolicies.DefaultTimeout;
             })
-            .AddStandardResiliencePolicy();
+            .AddSharedResiliencePolicy();
 
         // Finnhub clients
         services.AddHttpClient(HttpClientNames.FinnhubHistorical)
             .ConfigureHttpClient(client =>
             {
                 client.BaseAddress = new Uri("https://finnhub.io/api/v1/");
-                client.Timeout = DefaultTimeout;
+                client.Timeout = SharedResiliencePolicies.DefaultTimeout;
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             })
-            .AddStandardResiliencePolicy();
+            .AddSharedResiliencePolicy();
 
         services.AddHttpClient(HttpClientNames.FinnhubSymbolSearch)
             .ConfigureHttpClient(client =>
             {
                 client.BaseAddress = new Uri("https://finnhub.io/api/v1/");
-                client.Timeout = DefaultTimeout;
+                client.Timeout = SharedResiliencePolicies.DefaultTimeout;
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             })
-            .AddStandardResiliencePolicy();
+            .AddSharedResiliencePolicy();
 
         // Alpha Vantage Historical client
         services.AddHttpClient(HttpClientNames.AlphaVantageHistorical)
             .ConfigureHttpClient(client =>
             {
                 client.BaseAddress = new Uri("https://www.alphavantage.co/");
-                client.Timeout = DefaultTimeout;
+                client.Timeout = SharedResiliencePolicies.DefaultTimeout;
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             })
-            .AddStandardResiliencePolicy();
+            .AddSharedResiliencePolicy();
 
         // Nasdaq Data Link Historical client
         services.AddHttpClient(HttpClientNames.NasdaqDataLinkHistorical)
             .ConfigureHttpClient(client =>
             {
                 client.BaseAddress = new Uri("https://data.nasdaq.com/api/v3/");
-                client.Timeout = DefaultTimeout;
+                client.Timeout = SharedResiliencePolicies.DefaultTimeout;
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             })
-            .AddStandardResiliencePolicy();
+            .AddSharedResiliencePolicy();
 
         // OpenFIGI client
         services.AddHttpClient(HttpClientNames.OpenFigi)
             .ConfigureHttpClient(client =>
             {
                 client.BaseAddress = new Uri("https://api.openfigi.com/v3/");
-                client.Timeout = DefaultTimeout;
+                client.Timeout = SharedResiliencePolicies.DefaultTimeout;
                 client.DefaultRequestHeaders.Add("Accept", "application/json");
             })
-            .AddStandardResiliencePolicy();
+            .AddSharedResiliencePolicy();
 
         // NYSE client
         services.AddHttpClient(HttpClientNames.NYSE)
             .ConfigureHttpClient(client =>
             {
-                client.Timeout = DefaultTimeout;
+                client.Timeout = SharedResiliencePolicies.DefaultTimeout;
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             })
-            .AddStandardResiliencePolicy();
+            .AddSharedResiliencePolicy();
 
         // Credential validation client (short timeout)
         services.AddHttpClient(HttpClientNames.CredentialValidation)
             .ConfigureHttpClient(client =>
             {
-                client.Timeout = ShortTimeout;
+                client.Timeout = SharedResiliencePolicies.ShortTimeout;
             })
-            .AddStandardResiliencePolicy();
+            .AddSharedResiliencePolicy();
 
         // Connectivity test client (short timeout)
         services.AddHttpClient(HttpClientNames.ConnectivityTest)
@@ -251,99 +249,58 @@ public static class HttpClientConfiguration
             {
                 client.Timeout = TimeSpan.FromSeconds(15);
             })
-            .AddStandardResiliencePolicy();
+            .AddSharedResiliencePolicy();
 
         // Daily summary webhook client
         services.AddHttpClient(HttpClientNames.DailySummaryWebhook)
             .ConfigureHttpClient(client =>
             {
-                client.Timeout = ShortTimeout;
+                client.Timeout = SharedResiliencePolicies.ShortTimeout;
             })
-            .AddStandardResiliencePolicy();
+            .AddSharedResiliencePolicy();
 
         // OAuth token refresh client
         services.AddHttpClient(HttpClientNames.OAuthTokenRefresh)
             .ConfigureHttpClient(client =>
             {
-                client.Timeout = DefaultTimeout;
+                client.Timeout = SharedResiliencePolicies.DefaultTimeout;
                 client.DefaultRequestHeaders.Add("User-Agent", "MarketDataCollector/1.6.1");
             })
-            .AddStandardResiliencePolicy();
+            .AddSharedResiliencePolicy();
 
         // Credential testing client
         services.AddHttpClient(HttpClientNames.CredentialTesting)
             .ConfigureHttpClient(client =>
             {
-                client.Timeout = ShortTimeout;
+                client.Timeout = SharedResiliencePolicies.ShortTimeout;
             })
-            .AddStandardResiliencePolicy();
+            .AddSharedResiliencePolicy();
 
         // Portfolio import client
         services.AddHttpClient(HttpClientNames.PortfolioImport)
             .ConfigureHttpClient(client =>
             {
-                client.Timeout = DefaultTimeout;
+                client.Timeout = SharedResiliencePolicies.DefaultTimeout;
             })
-            .AddStandardResiliencePolicy();
+            .AddSharedResiliencePolicy();
 
         // Dry run client
         services.AddHttpClient(HttpClientNames.DryRun)
             .ConfigureHttpClient(client =>
             {
-                client.Timeout = ShortTimeout;
+                client.Timeout = SharedResiliencePolicies.ShortTimeout;
             })
-            .AddStandardResiliencePolicy();
+            .AddSharedResiliencePolicy();
 
         // Preflight checker client
         services.AddHttpClient(HttpClientNames.PreflightChecker)
             .ConfigureHttpClient(client =>
             {
-                client.Timeout = ShortTimeout;
+                client.Timeout = SharedResiliencePolicies.ShortTimeout;
             })
-            .AddStandardResiliencePolicy();
+            .AddSharedResiliencePolicy();
 
         return services;
-    }
-
-    /// <summary>
-    /// Adds standard resilience policies (retry with exponential backoff, circuit breaker).
-    /// </summary>
-    private static IHttpClientBuilder AddStandardResiliencePolicy(this IHttpClientBuilder builder)
-    {
-        return builder
-            .AddPolicyHandler(GetRetryPolicy())
-            .AddPolicyHandler(GetCircuitBreakerPolicy());
-    }
-
-    /// <summary>
-    /// Creates a retry policy with exponential backoff for transient HTTP errors.
-    /// </summary>
-    private static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy()
-    {
-        return HttpPolicyExtensions
-            .HandleTransientHttpError()
-            .OrResult(msg => msg.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
-            .WaitAndRetryAsync(
-                retryCount: 3,
-                sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
-                onRetry: (outcome, timespan, retryAttempt, _) =>
-                {
-                    // Log retry attempts (can be enhanced with ILogger if needed)
-                    System.Diagnostics.Debug.WriteLine(
-                        $"Retry {retryAttempt} after {timespan.TotalSeconds}s due to {outcome.Exception?.Message ?? outcome.Result?.StatusCode.ToString()}");
-                });
-    }
-
-    /// <summary>
-    /// Creates a circuit breaker policy to prevent cascading failures.
-    /// </summary>
-    private static IAsyncPolicy<HttpResponseMessage> GetCircuitBreakerPolicy()
-    {
-        return HttpPolicyExtensions
-            .HandleTransientHttpError()
-            .CircuitBreakerAsync(
-                handledEventsAllowedBeforeBreaking: 5,
-                durationOfBreak: TimeSpan.FromSeconds(30));
     }
 }
 
