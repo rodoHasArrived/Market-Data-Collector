@@ -197,7 +197,8 @@ public sealed class MyProviderDataSource : IRealtimeDataSource
     {
         _logger = logger;
         _options = options.Value;
-        _events = Channel.CreateBounded<MarketDataEvent>(10_000);
+        // Use EventPipelinePolicy for consistent channel configuration
+        _events = EventPipelinePolicy.HighThroughput.CreateChannel<MarketDataEvent>();
     }
 
     // Implement IDataSource properties...

@@ -504,22 +504,22 @@ public sealed class AnalysisQualityReport
 
 ### Bounded Channel
 
+Use `EventPipelinePolicy` for consistent channel configuration:
+
 ```csharp
+using MarketDataCollector.Application.Pipeline;
+
 public sealed class EventPipeline
 {
     private readonly Channel<MarketEvent> _channel;
     private readonly int _capacity;
 
-    public EventPipeline(int capacity = 100_000)
+    // Preferred: Use centralized policy
+    public EventPipeline(EventPipelinePolicy? policy = null)
     {
-        _capacity = capacity;
-        _channel = Channel.CreateBounded<MarketEvent>(
-            new BoundedChannelOptions(capacity)
-            {
-                FullMode = BoundedChannelFullMode.DropOldest,
-                SingleReader = true,
-                SingleWriter = false
-            });
+        policy ??= EventPipelinePolicy.Default;
+        _capacity = policy.Capacity;
+        _channel = policy.CreateChannel<MarketEvent>();
     }
 
     public bool TryPublish(MarketEvent evt)

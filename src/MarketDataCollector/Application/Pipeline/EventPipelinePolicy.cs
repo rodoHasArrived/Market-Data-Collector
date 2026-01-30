@@ -3,9 +3,24 @@ using System.Threading.Channels;
 namespace MarketDataCollector.Application.Pipeline;
 
 /// <summary>
-/// Shared configuration policy for bounded-channel pipelines.
-/// Use the static factory methods (presets) to create policies for common scenarios.
+/// Central configuration policy for bounded-channel pipelines.
+/// Provides consistent backpressure settings across the application.
+/// <para>
+/// Use static presets for common scenarios:
+/// <list type="bullet">
+///   <item><see cref="Default"/> - General-purpose event pipelines (100k capacity, DropOldest)</item>
+///   <item><see cref="HighThroughput"/> - Streaming data pipelines (50k capacity, DropOldest)</item>
+///   <item><see cref="MessageBuffer"/> - Internal message buffering (50k capacity, DropOldest, no metrics)</item>
+///   <item><see cref="MaintenanceQueue"/> - Background tasks (100 capacity, Wait/backpressure)</item>
+///   <item><see cref="Logging"/> - Log channels (1k capacity, DropOldest)</item>
+/// </list>
+/// </para>
 /// </summary>
+/// <remarks>
+/// All channel creation in the application should use this policy to ensure consistent
+/// backpressure behavior. Use <see cref="CreateChannel{T}"/> for direct channel creation
+/// or <see cref="ToBoundedOptions"/> when you need to configure additional options.
+/// </remarks>
 public sealed record EventPipelinePolicy(
     int Capacity = 100_000,
     BoundedChannelFullMode FullMode = BoundedChannelFullMode.DropOldest,
@@ -45,8 +60,33 @@ public sealed record EventPipelinePolicy(
 
     #endregion
 
+    #region Factory Methods
+
+    /// <summary>
+    /// Creates a bounded channel with this policy's configuration.
+    /// This is the preferred method for creating channels to ensure consistent backpressure behavior.
+    /// </summary>
+    /// <typeparam name="T">The type of items in the channel.</typeparam>
+    /// <param name="singleReader">Whether there is a single consumer reading from the channel. Default is true.</param>
+    /// <param name="singleWriter">Whether there is a single producer writing to the channel. Default is false.</param>
+    /// <returns>A configured bounded channel.</returns>
+    /// <example>
+    /// <code>
+    /// // Using a preset
+    /// var channel = EventPipelinePolicy.Logging.CreateChannel&lt;LogEntry&gt;();
+    ///
+    /// // Using default policy
+    /// var channel = EventPipelinePolicy.Default.CreateChannel&lt;MarketEvent&gt;();
+    /// </code>
+    /// </example>
+    public Channel<T> CreateChannel<T>(bool singleReader = true, bool singleWriter = false)
+    {
+        return Channel.CreateBounded<T>(ToBoundedOptions(singleReader, singleWriter));
+    }
+
     /// <summary>
     /// Creates a <see cref="BoundedChannelOptions"/> instance from this policy.
+    /// Use this when you need to further customize channel options before creation.
     /// </summary>
     /// <param name="singleReader">Whether there is a single consumer reading from the channel.</param>
     /// <param name="singleWriter">Whether there is a single producer writing to the channel.</param>
@@ -64,4 +104,6 @@ public sealed record EventPipelinePolicy(
             AllowSynchronousContinuations = false
         };
     }
+
+    #endregion
 }
