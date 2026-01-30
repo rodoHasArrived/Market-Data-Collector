@@ -1,6 +1,6 @@
 # Open Source References and Code Improvement Resources
 
-This document catalogs publicly available codebases, libraries, and resources that can help improve the Market Data Collector project.
+This document catalogs publicly available codebases, libraries, and resources that can help improve the Market Data Collector project. It also notes the current integration status for items that are already represented in the codebase or docs so the list reflects the project’s current state.
 
 ## Table of Contents
 1. [Market Data Collection Systems](#market-data-collection-systems)
@@ -20,7 +20,7 @@ This document catalogs publicly available codebases, libraries, and resources th
 - **Language**: C#
 - **License**: Apache 2.0
 - **Relevance**: Full algorithmic trading engine with extensive data collection capabilities
-- **Integration Status**: ✅ **Fully Integrated** (2026-01-01)
+- **Integration Status**: ✅ **Implemented** (custom BaseData types, IDataProvider, export profiles, and docs)
 - **Key Features**:
   - Multi-asset support (equities, options, futures, forex, crypto)
   - Multiple data provider integrations (IB, Alpaca, GDAX, etc.)
@@ -42,6 +42,7 @@ This document catalogs publicly available codebases, libraries, and resources th
 - **Language**: C#
 - **License**: Apache 2.0
 - **Relevance**: Professional trading platform with extensive market data handling
+- **Integration Status**: ⚠️ **Scaffolded** (connector + converters in repo; requires StockSharp packages/credentials)
 - **Key Features**:
   - 70+ broker/exchange connectors
   - Advanced order book reconstruction
@@ -58,6 +59,7 @@ This document catalogs publicly available codebases, libraries, and resources th
 - **Language**: Go
 - **License**: MPL 2.0
 - **Relevance**: High-performance time-series database optimized for financial data
+- **Integration Status**: 📝 **Reference only** (no direct integration yet)
 - **Key Features**:
   - Columnar storage for tick data
   - Native support for OHLCV bars
@@ -78,6 +80,7 @@ This document catalogs publicly available codebases, libraries, and resources th
 - **Language**: Python
 - **License**: BSD-2-Clause
 - **Relevance**: Event-driven wrapper for Interactive Brokers API
+- **Integration Status**: 📝 **Reference only** (IB streaming uses native IB API when built with IBAPI flag)
 - **Key Features**:
   - Async/await support for IB API
   - Automatic connection management
@@ -94,6 +97,7 @@ This document catalogs publicly available codebases, libraries, and resources th
 - **Language**: C#
 - **License**: Apache 2.0
 - **Relevance**: Official Alpaca SDK for .NET
+- **Integration Status**: ✅ **Implemented** (streaming provider + configuration)
 - **Key Features**:
   - WebSocket streaming
   - Real-time market data
@@ -110,6 +114,7 @@ This document catalogs publicly available codebases, libraries, and resources th
 - **Language**: Multiple (including C#)
 - **License**: MIT
 - **Relevance**: Client libraries for Polygon market data API
+- **Integration Status**: ⚠️ **Partial** (provider exists; streaming parsing remains in progress)
 - **Key Features**:
   - REST and WebSocket APIs
   - Real-time and historical data
@@ -159,6 +164,7 @@ This document catalogs publicly available codebases, libraries, and resources th
 - **Language**: C#
 - **License**: Apache 2.0
 - **Relevance**: Event-driven architecture framework for .NET
+- **Integration Status**: 📝 **Reference only** (core pipeline is in-process channels)
 - **Key Features**:
   - Message-based distributed systems
   - Saga pattern implementation
@@ -175,6 +181,7 @@ This document catalogs publicly available codebases, libraries, and resources th
 - **Language**: C#
 - **License**: Apache 2.0
 - **Relevance**: Ultra-low-latency event processing (port of LMAX Disruptor)
+- **Integration Status**: 📝 **Reference only** (Channels currently used)
 - **Key Features**:
   - Lock-free ring buffer
   - Mechanical sympathy
@@ -195,6 +202,7 @@ This document catalogs publicly available codebases, libraries, and resources th
 - **Language**: C#
 - **License**: MIT
 - **Relevance**: Reference implementation for bounded channels
+- **Integration Status**: ✅ **In use** (event pipeline uses Channels)
 - **What to Learn**:
   - Bounded buffer implementation
   - Backpressure handling
@@ -206,6 +214,7 @@ This document catalogs publicly available codebases, libraries, and resources th
 - **Language**: C#
 - **License**: MIT
 - **Relevance**: High-performance I/O operations
+- **Integration Status**: 📝 **Reference only** (future optimization candidate)
 - **Key Features**:
   - Zero-copy buffer management
   - Backpressure propagation
@@ -222,6 +231,7 @@ This document catalogs publicly available codebases, libraries, and resources th
 - **Language**: C#
 - **License**: MIT
 - **Relevance**: Performance benchmarking and profiling
+- **Integration Status**: 📝 **Reference only** (benchmarks not yet in repo)
 - **What to Learn**:
   - Micro-benchmarking best practices
   - Performance regression detection
@@ -236,7 +246,8 @@ This document catalogs publicly available codebases, libraries, and resources th
 - **Repository**: https://github.com/prometheus-net/prometheus-net
 - **Language**: C#
 - **License**: MIT
-- **Relevance**: Prometheus instrumentation for .NET (already added as dependency)
+- **Relevance**: Prometheus instrumentation for .NET
+- **Integration Status**: ✅ **Implemented** (metrics + HTTP endpoint)
 - **Key Features**:
   - Counter, Gauge, Histogram, Summary metrics
   - ASP.NET Core middleware
@@ -253,6 +264,7 @@ This document catalogs publicly available codebases, libraries, and resources th
 - **Language**: C#
 - **License**: Apache 2.0
 - **Relevance**: Unified observability framework (traces, metrics, logs)
+- **Integration Status**: 📝 **Reference only** (not wired yet)
 - **Key Features**:
   - Distributed tracing
   - Metrics collection
@@ -268,6 +280,7 @@ This document catalogs publicly available codebases, libraries, and resources th
 - **Repository**: https://grafana.com/grafana/dashboards/
 - **Search**: "Trading", "Market Data", "Financial"
 - **Relevance**: Pre-built dashboard templates
+- **Integration Status**: 📝 **Reference only** (dashboards not bundled)
 - **What to Learn**:
   - Key metrics visualization
   - Alert configuration
@@ -283,6 +296,7 @@ This document catalogs publicly available codebases, libraries, and resources th
 - **Language**: Java
 - **License**: Apache 2.0
 - **Relevance**: High-performance time-series database optimized for financial data
+- **Integration Status**: 📝 **Reference only** (no storage adapter yet)
 - **Key Features**:
   - Fast ingestion (>1M rows/sec)
   - SQL interface
@@ -299,6 +313,7 @@ This document catalogs publicly available codebases, libraries, and resources th
 - **Language**: Go
 - **License**: MIT / Commercial
 - **Relevance**: Popular time-series database
+- **Integration Status**: 📝 **Reference only** (no storage adapter yet)
 - **Key Features**:
   - Tag-based indexing
   - Downsampling and retention policies
@@ -315,6 +330,7 @@ This document catalogs publicly available codebases, libraries, and resources th
 - **Language**: Python
 - **License**: LGPL
 - **Relevance**: High-performance time-series database built on MongoDB
+- **Integration Status**: 📝 **Reference only** (no storage adapter yet)
 - **Key Features**:
   - Tick data storage
   - Versioned data
@@ -331,6 +347,7 @@ This document catalogs publicly available codebases, libraries, and resources th
 - **Language**: C#
 - **License**: MIT
 - **Relevance**: Columnar storage format for analytics
+- **Integration Status**: ✅ **Implemented** (Parquet export/storage available)
 - **Key Features**:
   - Efficient compression
   - Schema evolution
@@ -348,25 +365,25 @@ This document catalogs publicly available codebases, libraries, and resources th
 
 ### Immediate Integration Opportunities
 
-1. **Structured Logging with Serilog** (already added)
-   - Replace Console.WriteLine with structured logging
+1. **Structured Logging with Serilog** ✅ Implemented
+   - Continue replacing ad-hoc logging with structured log events
    - Add correlation IDs for request tracing
-   - Implement log enrichment with context data
+   - Expand log enrichment with provider/session metadata
 
-2. **Enhanced Metrics with prometheus-net** (already added)
-   - Add histograms for latency tracking
+2. **Enhanced Metrics with prometheus-net** ✅ Implemented
+   - Add additional histograms for latency tracking
    - Implement custom collectors for order book metrics
-   - Add rate metrics for data throughput
+   - Expand rate metrics for data throughput
 
-3. **Resilience with Polly** (already added)
-   - Implement retry policies for WebSocket connections
-   - Add circuit breakers for provider connections
-   - Timeout policies for API calls
+3. **Resilience with Polly** ✅ Implemented
+   - Tune retry policies for provider-specific failure modes
+   - Validate circuit breaker thresholds for each connector
+   - Review timeout budgets for long-running backfills
 
-4. **Configuration Validation with FluentValidation** (already added)
-   - Validate appsettings.json on startup
-   - Provide clear error messages for misconfiguration
-   - Implement custom validation rules for market data settings
+4. **Configuration Validation with FluentValidation** ✅ Implemented
+   - Expand validation for provider-specific options
+   - Improve actionable error messages
+   - Add runtime validation when configs hot-reload
 
 ### Medium-Term Enhancements
 
@@ -476,30 +493,25 @@ This document catalogs publicly available codebases, libraries, and resources th
 
 ## Next Steps
 
-1. **Add Testing Infrastructure**
-   - Create test project with xUnit
-   - Add Moq for mocking
-   - Implement integration tests for providers
+1. **Expand Provider Validation**
+   - Finish Polygon streaming parsing and validation
+   - Validate StockSharp connectors with production credentials
+   - Harden IBAPI build flag workflow and documentation
 
-2. **Enhance Logging**
-   - Integrate Serilog throughout codebase
-   - Add structured logging to collectors
-   - Implement log correlation
+2. **Extend Observability**
+   - Add OpenTelemetry tracing for provider → pipeline → storage
+   - Publish additional Prometheus histograms for latency hot paths
+   - Curate Grafana dashboards for MDC metrics
 
-3. **Improve Resilience**
-   - Add Polly retry policies to WebSocket connections
-   - Implement circuit breakers
-   - Add connection health checks
+3. **Benchmark Performance**
+   - Introduce BenchmarkDotNet suites for ingestion and export paths
+   - Track allocation trends for hot-path serializers
+   - Compare Channels vs. Disruptor-style pipeline performance
 
-4. **Benchmark Performance**
-   - Add BenchmarkDotNet project
-   - Benchmark event pipeline throughput
-   - Measure memory allocation in hot paths
-
-5. **Explore Advanced Storage**
-   - Prototype QuestDB integration
-   - Compare JSONL vs. Parquet for archival
-   - Evaluate compression strategies
+4. **Explore Advanced Storage**
+   - Prototype QuestDB/InfluxDB storage adapters
+   - Expand Parquet archival workflows
+   - Evaluate compression strategies for high-volume feeds
 
 ---
 
@@ -591,12 +603,10 @@ Recent optimizations and patterns:
 
 ---
 
-## Implementation Status
-
-### Recently Implemented (2026-01-01)
+## Implementation Status (Current)
 
 1. **✅ FluentValidation Configuration Validation**
-   - Comprehensive validation for AppConfig, AlpacaOptions, StorageConfig, SymbolConfig
+   - Comprehensive validation for AppConfig, provider options, storage, and symbols
    - Clear error messages with property-level validation
    - Implemented in `Application/Config/ConfigValidationHelper.cs`
 
@@ -604,14 +614,11 @@ Recent optimizations and patterns:
    - Connection retry with exponential backoff and jitter
    - Circuit breaker pattern for preventing cascading failures
    - Timeout policies for operation deadlines
-   - Comprehensive pipeline combining all resilience patterns
    - WebSocket heartbeat/keep-alive implementation
    - Implemented in `Infrastructure/Resilience/WebSocketResiliencePolicy.cs`
 
 3. **✅ Enhanced Prometheus Metrics**
-   - Comprehensive metric types (Counter, Gauge, Histogram)
-   - Symbol-level metrics with labels
-   - Latency histograms with optimized buckets
+   - Counters, gauges, and histograms with symbol-level labels
    - GC and memory metrics
    - Background updater service
    - Implemented in `Application/Monitoring/PrometheusMetrics.cs`
