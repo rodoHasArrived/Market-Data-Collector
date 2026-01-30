@@ -68,5 +68,15 @@ public enum MarketEventType
     /// <summary>
     /// Real-time aggregate bar (OHLCV) from streaming providers.
     /// </summary>
-    AggregateBar = 12
+    AggregateBar = 12,
+
+    /// <summary>
+    /// Quote update event.
+    /// </summary>
+    Quote = 13,
+
+    /// <summary>
+    /// Order book depth update.
+    /// </summary>
+    Depth = 14
 }
