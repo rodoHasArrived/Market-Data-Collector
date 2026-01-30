@@ -20,6 +20,7 @@ namespace MarketDataCollector.Application.Services;
 /// <item><description>Configuration validation with detailed error reporting</description></item>
 /// <item><description>Self-healing fixes for common configuration issues</description></item>
 /// <item><description>Configuration hot reload monitoring</description></item>
+/// <item><description>Unified pipeline producing ValidatedConfig from any entry point</description></item>
 /// </list>
 /// </remarks>
 public sealed class ConfigurationService : IAsyncDisposable
@@ -28,6 +29,7 @@ public sealed class ConfigurationService : IAsyncDisposable
     private readonly ConfigurationWizard _wizard;
     private readonly AutoConfigurationService _autoConfig;
     private readonly ProviderCredentialResolver _credentialResolver;
+    private readonly ConfigurationPipeline _pipeline;
     private ConfigWatcher? _watcher;
 
     public ConfigurationService(
@@ -40,7 +42,13 @@ public sealed class ConfigurationService : IAsyncDisposable
         _wizard = wizard ?? new ConfigurationWizard();
         _autoConfig = autoConfig ?? new AutoConfigurationService();
         _credentialResolver = credentialResolver ?? new ProviderCredentialResolver(_log);
+        _pipeline = new ConfigurationPipeline(_log, _credentialResolver);
     }
+
+    /// <summary>
+    /// Gets the underlying configuration pipeline for advanced scenarios.
+    /// </summary>
+    public ConfigurationPipeline Pipeline => _pipeline;
 
     #region Wizard and Auto-Configuration
 
@@ -592,6 +600,52 @@ public sealed class ConfigurationService : IAsyncDisposable
     }
 
     /// <summary>
+    /// Loads and validates configuration through the unified pipeline.
+    /// Returns a ValidatedConfig with full metadata about validation, fixes, and warnings.
+    /// </summary>
+    /// <remarks>
+    /// This is the preferred method for new code. It provides richer metadata than LoadAndPrepareConfig.
+    /// </remarks>
+    public ValidatedConfig LoadValidatedConfig(string configPath, PipelineOptions? options = null)
+    {
+        var validated = _pipeline.LoadFromFile(configPath, options);
+
+        // Log warnings for visibility
+        foreach (var warning in validated.Warnings)
+        {
+            _log.Warning("Configuration warning: {Warning}", warning);
+        }
+
+        return validated;
+    }
+
+    /// <summary>
+    /// Processes an existing AppConfig through the unified pipeline.
+    /// </summary>
+    public ValidatedConfig ProcessConfig(AppConfig config, PipelineOptions? options = null)
+    {
+        return _pipeline.Process(config, options);
+    }
+
+    /// <summary>
+    /// Runs the wizard and processes the result through the pipeline.
+    /// </summary>
+    public async Task<ValidatedConfig> RunWizardAndValidateAsync(CancellationToken ct = default)
+    {
+        var result = await _wizard.RunAsync(ct);
+        return _pipeline.FromWizardResult(result);
+    }
+
+    /// <summary>
+    /// Runs auto-configuration and processes the result through the pipeline.
+    /// </summary>
+    public ValidatedConfig RunAutoConfigAndValidate(AppConfig? existingConfig = null)
+    {
+        var result = _autoConfig.AutoConfigure(existingConfig);
+        return _pipeline.FromAutoConfigResult(result);
+    }
+
+    /// <summary>
     /// Applies environment-specific configuration overlay (e.g., appsettings.Production.json).
     /// </summary>
     private AppConfig ApplyEnvironmentOverlay(AppConfig baseConfig, string basePath)
@@ -679,6 +733,22 @@ public sealed class ConfigurationService : IAsyncDisposable
     }
 
     /// <summary>
+    /// Starts hot reload monitoring with validated configuration updates.
+    /// The callback receives a ValidatedConfig that has been processed through the full pipeline.
+    /// </summary>
+    public ConfigWatcher StartValidatedHotReload(
+        string configPath,
+        Action<ValidatedConfig> onConfigChanged,
+        Action<Exception>? onError = null,
+        PipelineOptions? options = null)
+    {
+        StopHotReload();
+
+        _watcher = _pipeline.StartHotReload(configPath, onConfigChanged, onError, options);
+        return _watcher;
+    }
+
+    /// <summary>
     /// Stops hot reload monitoring.
     /// </summary>
     public void StopHotReload()
@@ -711,10 +781,10 @@ public sealed class ConfigurationService : IAsyncDisposable
 
     #endregion
 
-    public ValueTask DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         StopHotReload();
-        return ValueTask.CompletedTask;
+        await _pipeline.DisposeAsync();
     }
 }
 
