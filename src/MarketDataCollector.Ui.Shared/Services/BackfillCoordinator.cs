@@ -1,12 +1,7 @@
 using MarketDataCollector.Application.Backfill;
 using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Application.Pipeline;
-using MarketDataCollector.Contracts.Api;
 using MarketDataCollector.Infrastructure.Providers.Backfill;
-using MarketDataCollector.Storage;
-using MarketDataCollector.Storage.Policies;
-using MarketDataCollector.Storage.Sinks;
-using Serilog;
+using CoreBackfillCoordinator = MarketDataCollector.Application.UI.BackfillCoordinator;
 
 namespace MarketDataCollector.Ui.Shared.Services;
 
@@ -49,37 +44,55 @@ public sealed record ExistingDataInfo(
 );
 
 /// <summary>
-/// Coordinates backfill operations for historical data retrieval.
-/// Provides thread-safe execution with status tracking.
-/// Shared between web dashboard and desktop applications.
+/// Extends the core BackfillCoordinator with preview functionality for UI applications.
+/// Wraps the core implementation and adds preview-specific methods.
 /// </summary>
-public sealed class BackfillCoordinator
+/// <remarks>
+/// <para><b>Migration Note:</b> This class wraps the core implementation from
+/// <see cref="MarketDataCollector.Application.UI.BackfillCoordinator"/> to add preview
+/// functionality while delegating core operations to the wrapped instance.</para>
+/// </remarks>
+public sealed class BackfillCoordinator : IDisposable
 {
+    private readonly CoreBackfillCoordinator _core;
     private readonly ConfigStore _store;
     private readonly Serilog.ILogger _log = LoggingSetup.ForContext<BackfillCoordinator>();
-    private readonly SemaphoreSlim _gate = new(1, 1);
-    private BackfillResult? _lastRun;
 
     public BackfillCoordinator(ConfigStore store)
     {
         _store = store;
-        _lastRun = store.TryLoadBackfillStatus();
+        _core = new CoreBackfillCoordinator(store);
     }
 
     /// <summary>
     /// Gets descriptions of all available backfill providers.
     /// </summary>
-    public IEnumerable<object> DescribeProviders()
-    {
-        var service = CreateService();
-        return service.Providers
-            .Select(p => new { p.Name, p.DisplayName, p.Description });
-    }
+    public IEnumerable<object> DescribeProviders() => _core.DescribeProviders();
 
     /// <summary>
     /// Tries to read the last backfill result.
     /// </summary>
-    public BackfillResult? TryReadLast() => _lastRun ?? _store.TryLoadBackfillStatus();
+    public BackfillResult? TryReadLast() => _core.TryReadLast();
+
+    /// <summary>
+    /// Runs a backfill operation for the specified request.
+    /// </summary>
+    public Task<BackfillResult> RunAsync(BackfillRequest request, CancellationToken ct = default)
+        => _core.RunAsync(request, ct);
+
+    /// <summary>
+    /// Gets health status of all providers.
+    /// </summary>
+    public Task<IReadOnlyDictionary<string, MarketDataCollector.Application.Monitoring.ProviderHealthStatus>> CheckProviderHealthAsync(CancellationToken ct = default)
+        => _core.CheckProviderHealthAsync(ct);
+
+    /// <summary>
+    /// Resolve a symbol using OpenFIGI.
+    /// </summary>
+    public Task<MarketDataCollector.Infrastructure.Providers.Backfill.SymbolResolution.SymbolResolution?> ResolveSymbolAsync(string symbol, CancellationToken ct = default)
+        => _core.ResolveSymbolAsync(symbol, ct);
+
+    public void Dispose() => _core.Dispose();
 
     /// <summary>
     /// Previews a backfill operation without actually fetching data.
@@ -280,42 +293,6 @@ public sealed class BackfillCoordinator
         }
 
         return notes.ToArray();
-    }
-
-    /// <summary>
-    /// Runs a backfill operation for the specified request.
-    /// Thread-safe - only one backfill can run at a time.
-    /// </summary>
-    public async Task<BackfillResult> RunAsync(BackfillRequest request, CancellationToken ct = default)
-    {
-        if (!await _gate.WaitAsync(TimeSpan.Zero, ct).ConfigureAwait(false))
-            throw new InvalidOperationException("A backfill is already running. Please try again after it completes.");
-
-        try
-        {
-            var cfg = _store.Load();
-            var storageOpt = cfg.Storage?.ToStorageOptions(cfg.DataRoot, cfg.Compress)
-                ?? StorageProfilePresets.CreateFromProfile(null, cfg.DataRoot, cfg.Compress);
-
-            var policy = new JsonlStoragePolicy(storageOpt);
-            await using var sink = new JsonlStorageSink(storageOpt, policy);
-            await using var pipeline = new EventPipeline(sink, capacity: 20_000, enablePeriodicFlush: false);
-
-            // Keep pipeline counters scoped per run
-            Metrics.Reset();
-
-            var service = CreateService();
-            var result = await service.RunAsync(request, pipeline, ct).ConfigureAwait(false);
-
-            var statusStore = new BackfillStatusStore(_store.GetDataRoot(cfg));
-            await statusStore.WriteAsync(result).ConfigureAwait(false);
-            _lastRun = result;
-            return result;
-        }
-        finally
-        {
-            _gate.Release();
-        }
     }
 
     private HistoricalBackfillService CreateService()

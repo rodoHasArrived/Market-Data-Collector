@@ -2,21 +2,58 @@ using System.Text.Json;
 using MarketDataCollector.Application.Backfill;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Monitoring;
+using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Storage;
 
 namespace MarketDataCollector.Application.UI;
 
+/// <summary>
+/// Service for loading and persisting application configuration.
+/// Provides access to config files, status files, and provider metrics.
+/// This is the single implementation shared by console, web, and desktop hosts.
+/// </summary>
+/// <remarks>
+/// <para><b>Configuration Path Resolution:</b></para>
+/// <list type="bullet">
+/// <item><description>If configPath is provided, it is used directly</description></item>
+/// <item><description>If configPath is null, uses PathResolver delegate if set</description></item>
+/// <item><description>Otherwise defaults to "appsettings.json" in the current directory</description></item>
+/// </list>
+/// </remarks>
+[ImplementsAdr("ADR-001", "Consolidated configuration store shared by all hosts")]
 public sealed class ConfigStore
 {
+    /// <summary>
+    /// Default path resolver that returns the standard appsettings.json path.
+    /// </summary>
+    public static Func<string> DefaultPathResolver { get; set; } = () => "appsettings.json";
+
+    /// <summary>
+    /// Gets the path to the configuration file.
+    /// </summary>
     public string ConfigPath { get; }
 
-    public ConfigStore(string? configPath = null)
+    /// <summary>
+    /// Creates a new ConfigStore with the default configuration path resolution.
+    /// </summary>
+    public ConfigStore()
     {
-        ConfigPath = configPath ?? "appsettings.json";
-        if (!Path.IsPathRooted(ConfigPath))
-        {
-            ConfigPath = Path.GetFullPath(ConfigPath);
-        }
+        ConfigPath = ResolvePath(null);
+    }
+
+    /// <summary>
+    /// Creates a new ConfigStore with a custom configuration path.
+    /// </summary>
+    /// <param name="configPath">Full or relative path to the configuration file.</param>
+    public ConfigStore(string? configPath)
+    {
+        ConfigPath = ResolvePath(configPath);
+    }
+
+    private static string ResolvePath(string? configPath)
+    {
+        var path = configPath ?? DefaultPathResolver();
+        return Path.IsPathRooted(path) ? path : Path.GetFullPath(path);
     }
 
     /// <summary>
