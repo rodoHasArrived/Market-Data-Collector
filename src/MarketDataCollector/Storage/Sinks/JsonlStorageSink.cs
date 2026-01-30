@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using MarketDataCollector.Application.Serialization;
 using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Storage.Interfaces;
@@ -94,7 +95,6 @@ public sealed class JsonlStorageSink : IStorageSink
 
     private readonly ConcurrentDictionary<string, WriterState> _writers = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<string, MarketEventBuffer> _buffers = new(StringComparer.OrdinalIgnoreCase);
-    private static readonly JsonSerializerOptions JsonOpts = new(JsonSerializerDefaults.Web);
 
     // Metrics
     private long _eventsBuffered;
@@ -185,7 +185,7 @@ public sealed class JsonlStorageSink : IStorageSink
     private async ValueTask WriteEventImmediateAsync(string path, MarketEvent evt, CancellationToken ct)
     {
         var writer = _writers.GetOrAdd(path, p => WriterState.Create(p, _options.Compress));
-        var json = JsonSerializer.Serialize(evt, JsonOpts);
+        var json = JsonSerializer.Serialize(evt, MarketDataJsonContext.HighPerformanceOptions);
         await writer.WriteLineAsync(json, ct).ConfigureAwait(false);
         Interlocked.Increment(ref _eventsWritten);
     }
@@ -204,12 +204,12 @@ public sealed class JsonlStorageSink : IStorageSink
             lines = new string[events.Count];
             Parallel.For(0, events.Count, i =>
             {
-                lines[i] = JsonSerializer.Serialize(events[i], JsonOpts);
+                lines[i] = JsonSerializer.Serialize(events[i], MarketDataJsonContext.HighPerformanceOptions);
             });
         }
         else
         {
-            lines = events.Select(e => JsonSerializer.Serialize(e, JsonOpts)).ToArray();
+            lines = events.Select(e => JsonSerializer.Serialize(e, MarketDataJsonContext.HighPerformanceOptions)).ToArray();
         }
 
         // Write all lines in a single batch

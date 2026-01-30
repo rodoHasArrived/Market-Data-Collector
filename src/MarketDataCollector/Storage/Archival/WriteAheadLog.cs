@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using MarketDataCollector.Application.Logging;
+using MarketDataCollector.Application.Serialization;
 using Serilog;
 
 namespace MarketDataCollector.Storage.Archival;
@@ -86,11 +87,8 @@ public sealed class WriteAheadLog : IAsyncDisposable
             var sequence = ++_currentSequence;
             var timestamp = DateTime.UtcNow;
 
-            // Serialize the data
-            var payload = JsonSerializer.Serialize(data, new JsonSerializerOptions
-            {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-            });
+            // Serialize the data using centralized high-performance options
+            var payload = JsonSerializer.Serialize(data, MarketDataJsonContext.HighPerformanceOptions);
 
             // Create record with checksum
             var record = new WalRecord
@@ -454,10 +452,7 @@ public sealed class WalRecord
 
     public T? DeserializePayload<T>()
     {
-        return JsonSerializer.Deserialize<T>(Payload, new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        });
+        return JsonSerializer.Deserialize<T>(Payload, MarketDataJsonContext.HighPerformanceOptions);
     }
 }
 

@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
+using MarketDataCollector.Application.Serialization;
 using MarketDataCollector.Storage.Interfaces;
 
 namespace MarketDataCollector.Storage.Services;
@@ -209,7 +210,7 @@ public sealed class SourceRegistry : ISourceRegistry
                     if (!string.IsNullOrEmpty(dir))
                         Directory.CreateDirectory(dir);
 
-                    var json = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
+                    var json = JsonSerializer.Serialize(data, MarketDataJsonContext.PrettyPrintOptions);
                     File.WriteAllText(_persistencePath, json);
                 }
                 catch

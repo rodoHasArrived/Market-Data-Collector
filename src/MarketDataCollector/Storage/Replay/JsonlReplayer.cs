@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using MarketDataCollector.Application.Logging;
+using MarketDataCollector.Application.Serialization;
 using MarketDataCollector.Domain.Events;
 using Serilog;
 
@@ -50,7 +51,7 @@ public sealed class JsonlReplayer
             if (string.IsNullOrWhiteSpace(line)) continue;
 
             MarketEvent? evt = null;
-            try { evt = JsonSerializer.Deserialize<MarketEvent>(line, new JsonSerializerOptions(JsonSerializerDefaults.Web)); }
+            try { evt = JsonSerializer.Deserialize<MarketEvent>(line, MarketDataJsonContext.HighPerformanceOptions); }
             catch (JsonException ex) { Log.Debug(ex, "Failed to parse JSONL line in {File}", file); }
 
             if (evt is not null)

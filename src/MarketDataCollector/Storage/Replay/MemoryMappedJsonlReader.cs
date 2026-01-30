@@ -4,6 +4,7 @@ using System.IO.MemoryMappedFiles;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
+using MarketDataCollector.Application.Serialization;
 using MarketDataCollector.Domain.Events;
 
 namespace MarketDataCollector.Storage.Replay;
@@ -78,7 +79,6 @@ public sealed class MemoryMappedJsonlReader
 {
     private readonly string _root;
     private readonly MemoryMappedReaderOptions _options;
-    private static readonly JsonSerializerOptions JsonOpts = new(JsonSerializerDefaults.Web);
 
     // Metrics
     private long _filesRead;
@@ -370,7 +370,7 @@ public sealed class MemoryMappedJsonlReader
             {
                 try
                 {
-                    results[i] = JsonSerializer.Deserialize<MarketEvent>(lines[i], JsonOpts);
+                    results[i] = JsonSerializer.Deserialize<MarketEvent>(lines[i], MarketDataJsonContext.HighPerformanceOptions);
                 }
                 catch
                 {
@@ -395,7 +395,7 @@ public sealed class MemoryMappedJsonlReader
                 MarketEvent? evt = null;
                 try
                 {
-                    evt = JsonSerializer.Deserialize<MarketEvent>(line, JsonOpts);
+                    evt = JsonSerializer.Deserialize<MarketEvent>(line, MarketDataJsonContext.HighPerformanceOptions);
                 }
                 catch
                 {

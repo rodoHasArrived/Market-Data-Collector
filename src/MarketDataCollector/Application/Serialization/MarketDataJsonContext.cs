@@ -15,6 +15,11 @@ namespace MarketDataCollector.Application.Serialization;
 ///
 /// Based on: System.Text.Json source generators (.NET 7+)
 /// Reference: docs/open-source-references.md - System.Text.Json High-Performance Techniques
+///
+/// USAGE: All JSON serialization in this codebase should use one of the following:
+/// - MarketDataJsonContext.HighPerformanceOptions for compact output (storage, wire protocol)
+/// - MarketDataJsonContext.PrettyPrintOptions for human-readable output (debugging, config files)
+/// - HighPerformanceJson static methods for MarketEvent serialization
 /// </summary>
 [JsonSourceGenerationOptions(
     WriteIndented = false,
@@ -43,6 +48,7 @@ namespace MarketDataCollector.Application.Serialization;
 [JsonSerializable(typeof(AlpacaOptions))]
 [JsonSerializable(typeof(SymbolConfig))]
 [JsonSerializable(typeof(SymbolConfig[]))]
+[JsonSerializable(typeof(List<SymbolConfig>))]
 [JsonSerializable(typeof(AlpacaTradeMessage))]
 [JsonSerializable(typeof(AlpacaQuoteMessage))]
 [JsonSerializable(typeof(AlpacaMessage[]))]
@@ -52,6 +58,12 @@ public partial class MarketDataJsonContext : JsonSerializerContext
 {
     /// <summary>
     /// Pre-configured options for high-performance serialization.
+    /// Use for storage, wire protocols, and any performance-critical path.
+    /// - Compact output (no indentation)
+    /// - CamelCase property naming
+    /// - Null values omitted
+    /// - Case-insensitive property matching on read
+    /// - Source-generated serializers (no reflection)
     /// </summary>
     public static readonly JsonSerializerOptions HighPerformanceOptions = new()
     {
@@ -63,14 +75,20 @@ public partial class MarketDataJsonContext : JsonSerializerContext
     };
 
     /// <summary>
-    /// Pre-configured options for pretty-printed output (debugging).
+    /// Pre-configured options for pretty-printed output (debugging, config files).
+    /// - Indented output for readability
+    /// - CamelCase property naming
+    /// - Null values omitted
+    /// - Case-insensitive property matching on read
+    /// - Source-generated serializers (no reflection)
     /// </summary>
     public static readonly JsonSerializerOptions PrettyPrintOptions = new()
     {
         TypeInfoResolver = Default,
         WriteIndented = true,
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        PropertyNameCaseInsensitive = true
     };
 }
 

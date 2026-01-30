@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Threading;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Logging;
+using MarketDataCollector.Application.Serialization;
 
 namespace MarketDataCollector.Application.Monitoring;
 
@@ -52,11 +53,7 @@ public sealed class StatusWriter : IAsyncDisposable
             symbols = cfg.Symbols ?? Array.Empty<SymbolConfig>()
         };
 
-        var json = JsonSerializer.Serialize(payload, new JsonSerializerOptions
-        {
-            WriteIndented = true,
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        });
+        var json = JsonSerializer.Serialize(payload, MarketDataJsonContext.PrettyPrintOptions);
 
         await File.WriteAllTextAsync(_path, json);
     }

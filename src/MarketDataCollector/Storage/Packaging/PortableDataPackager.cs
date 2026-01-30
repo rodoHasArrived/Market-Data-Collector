@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using MarketDataCollector.Application.Logging;
+using MarketDataCollector.Application.Serialization;
 using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Storage.Archival;
 using Serilog;
@@ -709,7 +710,7 @@ public sealed class PortableDataPackager
 
             // Add manifest
             await AddFileToZipAsync(archive, ManifestFileName,
-                JsonSerializer.Serialize(manifest, new JsonSerializerOptions { WriteIndented = true }),
+                JsonSerializer.Serialize(manifest, MarketDataJsonContext.PrettyPrintOptions),
                 compressionLevel, ct);
 
             // Add data files
@@ -855,7 +856,7 @@ public sealed class PortableDataPackager
 
         // Write manifest as first entry marker
         await writer.WriteLineAsync($"__MANIFEST__:{ManifestFileName}");
-        await writer.WriteLineAsync(JsonSerializer.Serialize(manifest, new JsonSerializerOptions { WriteIndented = true }));
+        await writer.WriteLineAsync(JsonSerializer.Serialize(manifest, MarketDataJsonContext.PrettyPrintOptions));
         await writer.WriteLineAsync("__END_MANIFEST__");
 
         // Write file entries
@@ -896,7 +897,7 @@ public sealed class PortableDataPackager
         var newEntry = archive.CreateEntry(ManifestFileName, CompressionLevel.Optimal);
         await using var entryStream = newEntry.Open();
         await JsonSerializer.SerializeAsync(entryStream, manifest,
-            new JsonSerializerOptions { WriteIndented = true }, ct);
+            MarketDataJsonContext.PrettyPrintOptions, ct);
     }
 
     private async Task<PackageManifest?> ReadManifestFromPackageAsync(
