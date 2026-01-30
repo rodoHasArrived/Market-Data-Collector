@@ -105,6 +105,9 @@ public sealed class UiServer : IAsyncDisposable
         builder.Services.AddSingleton<DryRunService>();
         builder.Services.AddSingleton<ApiDocumentationService>();
 
+        // Consolidated configuration service - single entry point for all config operations
+        builder.Services.AddSingleton<ConfigurationService>();
+
         // Credential management services
         builder.Services.AddSingleton(new CredentialTestingService(config.DataRoot));
         builder.Services.AddSingleton(new OAuthTokenRefreshService(config.DataRoot));
@@ -2084,6 +2087,230 @@ public sealed class UiServer : IAsyncDisposable
             catch (Exception ex)
             {
                 return LogAndProblem(ex, "Failed to remove token");
+            }
+        });
+
+        // ==================== CONSOLIDATED CONFIGURATION SERVICE ENDPOINTS ====================
+        // These endpoints route through ConfigurationService for unified configuration operations
+
+        // Get detected providers via ConfigurationService
+        _app.MapGet("/api/config/providers", (ConfigurationService configService) =>
+        {
+            try
+            {
+                var providers = configService.DetectProviders();
+                return Results.Json(providers, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return LogAndProblem(ex, "Failed to detect providers");
+            }
+        });
+
+        // Get provider credential status summary
+        _app.MapGet("/api/config/providers/status", (ConfigurationService configService) =>
+        {
+            try
+            {
+                var status = configService.GetCredentialStatus();
+                return Results.Json(status, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return LogAndProblem(ex, "Failed to get credential status");
+            }
+        });
+
+        // Get best real-time provider
+        _app.MapGet("/api/config/providers/best-realtime", (ConfigurationService configService) =>
+        {
+            try
+            {
+                var provider = configService.GetBestRealTimeProvider();
+                if (provider == null)
+                    return Results.NotFound(new { message = "No real-time providers with credentials configured" });
+
+                return Results.Json(provider, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return LogAndProblem(ex, "Failed to get best real-time provider");
+            }
+        });
+
+        // Get historical providers
+        _app.MapGet("/api/config/providers/historical", (ConfigurationService configService) =>
+        {
+            try
+            {
+                var providers = configService.GetHistoricalProviders();
+                return Results.Json(providers, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return LogAndProblem(ex, "Failed to get historical providers");
+            }
+        });
+
+        // Apply self-healing fixes to configuration
+        _app.MapPost("/api/config/self-healing", (ConfigurationService configService, ConfigStore store) =>
+        {
+            try
+            {
+                var config = store.Load();
+                var (fixedConfig, appliedFixes, warnings) = configService.ApplySelfHealingFixes(config);
+
+                return Results.Json(new
+                {
+                    success = true,
+                    appliedFixes = appliedFixes,
+                    warnings = warnings,
+                    configChanged = appliedFixes.Count > 0
+                }, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return LogAndProblem(ex, "Failed to apply self-healing fixes");
+            }
+        });
+
+        // Apply and save self-healing fixes
+        _app.MapPost("/api/config/self-healing/apply", async (ConfigurationService configService, ConfigStore store) =>
+        {
+            try
+            {
+                var config = store.Load();
+                var (fixedConfig, appliedFixes, warnings) = configService.ApplySelfHealingFixes(config);
+
+                if (appliedFixes.Count > 0)
+                {
+                    await store.SaveAsync(fixedConfig);
+                }
+
+                return Results.Json(new
+                {
+                    success = true,
+                    appliedFixes = appliedFixes,
+                    warnings = warnings,
+                    configSaved = appliedFixes.Count > 0
+                }, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return LogAndProblem(ex, "Failed to apply and save self-healing fixes");
+            }
+        });
+
+        // Validate configuration via ConfigurationService
+        _app.MapPost("/api/config/validate", (ConfigurationService configService, ConfigStore store) =>
+        {
+            try
+            {
+                var config = store.Load();
+                var isValid = configService.ValidateConfig(config, out var errors);
+
+                return Results.Json(new
+                {
+                    isValid = isValid,
+                    errors = errors
+                }, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return LogAndProblem(ex, "Failed to validate configuration");
+            }
+        });
+
+        // Perform quick check via ConfigurationService
+        _app.MapGet("/api/config/quick-check", (ConfigurationService configService, ConfigStore store) =>
+        {
+            try
+            {
+                var config = store.Load();
+                var result = configService.PerformQuickCheck(config);
+                return Results.Json(result, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return LogAndProblem(ex, "Failed to perform quick check");
+            }
+        });
+
+        // Resolve all credentials for configuration
+        _app.MapPost("/api/config/resolve-credentials", (ConfigurationService configService, ConfigStore store) =>
+        {
+            try
+            {
+                var config = store.Load();
+                var resolvedConfig = configService.ResolveAllCredentials(config);
+
+                // Don't return sensitive data - just indicate which credentials were resolved
+                var resolvedProviders = new List<string>();
+
+                if (!string.IsNullOrEmpty(resolvedConfig.Alpaca?.KeyId))
+                    resolvedProviders.Add("Alpaca");
+                if (!string.IsNullOrEmpty(resolvedConfig.Polygon?.ApiKey))
+                    resolvedProviders.Add("Polygon");
+                if (!string.IsNullOrEmpty(resolvedConfig.Backfill?.Providers?.Tiingo?.ApiToken))
+                    resolvedProviders.Add("Tiingo");
+                if (!string.IsNullOrEmpty(resolvedConfig.Backfill?.Providers?.Finnhub?.ApiKey))
+                    resolvedProviders.Add("Finnhub");
+                if (!string.IsNullOrEmpty(resolvedConfig.Backfill?.Providers?.AlphaVantage?.ApiKey))
+                    resolvedProviders.Add("AlphaVantage");
+                if (!string.IsNullOrEmpty(resolvedConfig.Backfill?.Providers?.Polygon?.ApiKey))
+                    resolvedProviders.Add("Polygon (Backfill)");
+
+                return Results.Json(new
+                {
+                    resolvedProviders = resolvedProviders,
+                    message = $"Resolved credentials for {resolvedProviders.Count} provider(s)"
+                }, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return LogAndProblem(ex, "Failed to resolve credentials");
+            }
+        });
+
+        // Check if IB Gateway is available
+        _app.MapGet("/api/config/ib-gateway/status", (ConfigurationService configService) =>
+        {
+            try
+            {
+                var available = configService.IsIBGatewayAvailable();
+                return Results.Json(new
+                {
+                    available = available,
+                    checkedPorts = new[] { 7496, 7497, 4001, 4002 },
+                    message = available ? "IB Gateway/TWS is running" : "IB Gateway/TWS not detected"
+                }, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return LogAndProblem(ex, "Failed to check IB Gateway status");
+            }
+        });
+
+        // Get environment name
+        _app.MapGet("/api/config/environment", () =>
+        {
+            try
+            {
+                var envName = ConfigurationService.GetEnvironmentName();
+                return Results.Json(new
+                {
+                    environment = envName ?? "default",
+                    isConfigured = envName != null,
+                    envVars = new
+                    {
+                        MDC_ENVIRONMENT = Environment.GetEnvironmentVariable("MDC_ENVIRONMENT"),
+                        DOTNET_ENVIRONMENT = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT")
+                    }
+                }, s_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return LogAndProblem(ex, "Failed to get environment");
             }
         });
 

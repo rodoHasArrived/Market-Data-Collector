@@ -7,7 +7,6 @@ using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Application.Subscriptions;
 using MarketDataCollector.Application.Pipeline;
-using MarketDataCollector.Application.Config.Credentials;
 using MarketDataCollector.Application.Services;
 using MarketDataCollector.Application.Subscriptions.Services;
 using MarketDataCollector.Application.Testing;
@@ -102,53 +101,21 @@ internal static class Program
             return;
         }
 
-        // Detect Providers Mode - Show available providers
+        // Detect Providers Mode - Show available providers (routed through ConfigurationService)
         if (args.Any(a => a.Equals("--detect-providers", StringComparison.OrdinalIgnoreCase)))
         {
-            var providers = configService.DetectProviders();
-
-            Console.WriteLine();
-            Console.WriteLine("Detected Data Providers:");
-            Console.WriteLine("-".PadRight(60, '-'));
-
-            foreach (var provider in providers)
-            {
-                var status = provider.HasCredentials ? "[OK]" : "[--]";
-                Console.WriteLine($"  {status} {provider.DisplayName,-25} Priority: {provider.SuggestedPriority}");
-                Console.WriteLine($"        Capabilities: {string.Join(", ", provider.Capabilities)}");
-
-                if (!provider.HasCredentials && provider.MissingCredentials.Length > 0)
-                {
-                    Console.WriteLine($"        Missing: {string.Join(", ", provider.MissingCredentials)}");
-                }
-            }
-
-            var configured = providers.Count(p => p.HasCredentials);
-            Console.WriteLine();
-            Console.WriteLine($"  {configured}/{providers.Count} providers configured");
-
-            if (configured == 0)
-            {
-                Console.WriteLine();
-                Console.WriteLine("  To configure providers, set environment variables:");
-                Console.WriteLine("    export ALPACA_KEY_ID=your-key-id");
-                Console.WriteLine("    export ALPACA_SECRET_KEY=your-secret-key");
-                Console.WriteLine();
-                Console.WriteLine("  Or run the configuration wizard:");
-                Console.WriteLine("    MarketDataCollector --wizard");
-            }
-            Console.WriteLine();
+            configService.PrintProviderDetection();
             return;
         }
 
-        // Validate Credentials Mode - Test API credentials
+        // Validate Credentials Mode - Test API credentials (routed through ConfigurationService)
         if (args.Any(a => a.Equals("--validate-credentials", StringComparison.OrdinalIgnoreCase)))
         {
             log.Information("Validating API credentials...");
 
-            await using var validator = new CredentialValidationService();
-            var validationResult = await validator.ValidateAllAsync(cfg);
-            validator.PrintSummary(validationResult);
+            var validationResult = await configService.ValidateCredentialsAsync(cfg);
+            await using var validationService = new CredentialValidationService();
+            validationService.PrintSummary(validationResult);
 
             Environment.Exit(validationResult.AllValid ? 0 : 1);
             return;
@@ -193,26 +160,26 @@ internal static class Program
             return;
         }
 
-        // Quick Check Mode - Fast health diagnostics
+        // Quick Check Mode - Fast health diagnostics (routed through ConfigurationService)
         if (args.Any(a => a.Equals("--quick-check", StringComparison.OrdinalIgnoreCase)))
         {
             log.Information("Running quick configuration check...");
 
+            var result = configService.PerformQuickCheck(cfg);
             var summary = new StartupSummary();
-            var result = summary.PerformQuickCheck(cfg);
             summary.DisplayQuickCheck(result);
 
             Environment.Exit(result.Success ? 0 : 1);
             return;
         }
 
-        // Test Connectivity Mode - Test provider connections
+        // Test Connectivity Mode - Test provider connections (routed through ConfigurationService)
         if (args.Any(a => a.Equals("--test-connectivity", StringComparison.OrdinalIgnoreCase)))
         {
             log.Information("Testing provider connectivity...");
 
+            var result = await configService.TestConnectivityAsync(cfg);
             await using var tester = new ConnectivityTestService();
-            var result = await tester.TestAllAsync(cfg);
             tester.DisplaySummary(result);
 
             Environment.Exit(result.AllReachable ? 0 : 1);
@@ -226,11 +193,10 @@ internal static class Program
             return;
         }
 
-        // Show Summary Mode - Display configuration summary
+        // Show Summary Mode - Display configuration summary (routed through ConfigurationService)
         if (args.Any(a => a.Equals("--show-config", StringComparison.OrdinalIgnoreCase)))
         {
-            var summary = new StartupSummary();
-            summary.Display(cfg, cfgPath, args);
+            configService.DisplayConfigSummary(cfg, cfgPath, args);
             return;
         }
 
@@ -388,13 +354,12 @@ internal static class Program
             return;
         }
 
-        // Dry Run Mode - Validate everything without starting (QW-93)
+        // Dry Run Mode - Validate everything without starting (QW-93) (routed through ConfigurationService)
         if (args.Any(a => a.Equals("--dry-run", StringComparison.OrdinalIgnoreCase)))
         {
             log.Information("Running in dry-run mode...");
             Application.Services.DryRunService.EnableDryRunMode();
 
-            var dryRunService = new Application.Services.DryRunService();
             var options = new Application.Services.DryRunOptions(
                 ValidateConfiguration: true,
                 ValidateFileSystem: true,
@@ -404,7 +369,8 @@ internal static class Program
                 ValidateResources: true
             );
 
-            var result = await dryRunService.ValidateAsync(cfg, options);
+            var result = await configService.DryRunValidationAsync(cfg, options);
+            var dryRunService = new Application.Services.DryRunService();
             var report = dryRunService.GenerateReport(result);
             Console.WriteLine(report);
 
@@ -637,9 +603,8 @@ internal static class Program
             return;
         }
 
-        // Market data client (provider selected by config)
-        var credentialResolver = new ProviderCredentialResolver(LoggingSetup.ForContext<ProviderCredentialResolver>());
-        var (alpacaKeyId, alpacaSecretKey) = credentialResolver.ResolveAlpaca(cfg.Alpaca?.KeyId, cfg.Alpaca?.SecretKey);
+        // Market data client (provider selected by config) - credentials resolved via ConfigurationService
+        var (alpacaKeyId, alpacaSecretKey) = configService.ResolveAlpacaCredentials(cfg.Alpaca?.KeyId, cfg.Alpaca?.SecretKey);
 
         await using IMarketDataClient dataClient = cfg.DataSource switch
         {
