@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Storage.Interfaces;
 
@@ -220,4 +221,268 @@ public sealed class JsonlStoragePolicy : IStoragePolicy
         }
         return new string(buf[..j]);
     }
+
+    /// <summary>
+    /// Attempts to parse metadata from a file path based on the configured naming convention.
+    /// This is the inverse of GetPath() and provides a centralized parser for storage search/indexing.
+    /// </summary>
+    /// <param name="filePath">The full path to the data file.</param>
+    /// <returns>Parsed metadata, or null if the path cannot be parsed.</returns>
+    public ParsedPathMetadata? TryParsePath(string filePath)
+    {
+        if (string.IsNullOrWhiteSpace(filePath)) return null;
+
+        var root = string.IsNullOrWhiteSpace(_options.RootPath) ? "data" : _options.RootPath;
+        var relativePath = filePath.StartsWith(root, StringComparison.OrdinalIgnoreCase)
+            ? filePath.Substring(root.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+            : filePath;
+
+        var parts = relativePath.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        var fileName = Path.GetFileNameWithoutExtension(parts[^1]);
+        // Strip compression extensions
+        fileName = StripExtensions(fileName);
+
+        return _options.NamingConvention switch
+        {
+            FileNamingConvention.Flat => ParseFlatPath(fileName, parts),
+            FileNamingConvention.BySymbol => ParseBySymbolPath(parts, fileName),
+            FileNamingConvention.ByDate => ParseByDatePath(parts, fileName),
+            FileNamingConvention.ByType => ParseByTypePath(parts, fileName),
+            FileNamingConvention.BySource => ParseBySourcePath(parts, fileName),
+            FileNamingConvention.ByAssetClass => ParseByAssetClassPath(parts, fileName),
+            FileNamingConvention.Hierarchical => ParseHierarchicalPath(parts, fileName),
+            FileNamingConvention.Canonical => ParseCanonicalPath(parts, fileName),
+            _ => ParseFallback(filePath, parts, fileName)
+        };
+    }
+
+    private static string StripExtensions(string fileName)
+    {
+        // Strip known compression extensions
+        foreach (var ext in new[] { ".gz", ".gzip", ".zst", ".lz4", ".br", ".jsonl", ".parquet" })
+        {
+            while (fileName.EndsWith(ext, StringComparison.OrdinalIgnoreCase))
+            {
+                fileName = fileName[..^ext.Length];
+            }
+        }
+        return fileName;
+    }
+
+    // Flat: {root}/{prefix}{symbol}_{type}_{date}[_{source}].ext
+    private ParsedPathMetadata? ParseFlatPath(string fileName, string[] parts)
+    {
+        var prefix = string.IsNullOrWhiteSpace(_options.FilePrefix) ? "" : $"{_options.FilePrefix}_";
+        if (!string.IsNullOrEmpty(prefix) && fileName.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            fileName = fileName[prefix.Length..];
+
+        var segments = fileName.Split('_');
+        if (segments.Length < 2) return null;
+
+        var symbol = segments[0];
+        var eventType = segments.Length > 1 ? segments[1] : "Unknown";
+        var date = TryExtractDate(segments.Length > 2 ? segments[2] : null);
+        var source = _options.IncludeProvider && segments.Length > 3 ? segments[^1] : "Unknown";
+
+        return new ParsedPathMetadata(symbol, eventType, source, date);
+    }
+
+    // BySymbol: {root}/{symbol}/{type}/{prefix}{date}.ext
+    private ParsedPathMetadata? ParseBySymbolPath(string[] parts, string fileName)
+    {
+        if (parts.Length < 2) return null;
+
+        var symbol = parts[0];
+        var eventType = parts.Length > 1 ? parts[1] : "Unknown";
+        var dateStr = StripPrefix(fileName);
+        var date = TryExtractDate(dateStr);
+
+        return new ParsedPathMetadata(symbol, eventType, "Unknown", date);
+    }
+
+    // ByDate: {root}/{date}/{symbol}/{prefix}{type}.ext
+    private ParsedPathMetadata? ParseByDatePath(string[] parts, string fileName)
+    {
+        if (parts.Length < 2) return null;
+
+        var dateStr = parts[0];
+        var symbol = parts.Length > 1 ? parts[1] : "Unknown";
+        var eventType = StripPrefix(fileName);
+        var date = TryExtractDate(dateStr);
+
+        return new ParsedPathMetadata(symbol, eventType, "Unknown", date);
+    }
+
+    // ByType: {root}/{type}/{symbol}/{prefix}{date}.ext
+    private ParsedPathMetadata? ParseByTypePath(string[] parts, string fileName)
+    {
+        if (parts.Length < 2) return null;
+
+        var eventType = parts[0];
+        var symbol = parts.Length > 1 ? parts[1] : "Unknown";
+        var dateStr = StripPrefix(fileName);
+        var date = TryExtractDate(dateStr);
+
+        return new ParsedPathMetadata(symbol, eventType, "Unknown", date);
+    }
+
+    // BySource: {root}/{source}/{symbol}/{type}/{prefix}{date}.ext
+    private ParsedPathMetadata? ParseBySourcePath(string[] parts, string fileName)
+    {
+        if (parts.Length < 3) return null;
+
+        var source = parts[0];
+        var symbol = parts[1];
+        var eventType = parts.Length > 2 ? parts[2] : "Unknown";
+        var dateStr = StripPrefix(fileName);
+        var date = TryExtractDate(dateStr);
+
+        return new ParsedPathMetadata(symbol, eventType, source, date);
+    }
+
+    // ByAssetClass: {root}/{asset_class}/{symbol}/{type}/{prefix}{date}.ext
+    private ParsedPathMetadata? ParseByAssetClassPath(string[] parts, string fileName)
+    {
+        if (parts.Length < 3) return null;
+
+        // Asset class is parts[0], not needed for metadata
+        var symbol = parts[1];
+        var eventType = parts.Length > 2 ? parts[2] : "Unknown";
+        var dateStr = StripPrefix(fileName);
+        var date = TryExtractDate(dateStr);
+
+        return new ParsedPathMetadata(symbol, eventType, "Unknown", date);
+    }
+
+    // Hierarchical: {root}/{source}/{asset_class}/{symbol}/{type}/{prefix}{date}.ext
+    private ParsedPathMetadata? ParseHierarchicalPath(string[] parts, string fileName)
+    {
+        if (parts.Length < 4) return null;
+
+        var source = parts[0];
+        // Asset class is parts[1], not needed for metadata
+        var symbol = parts[2];
+        var eventType = parts.Length > 3 ? parts[3] : "Unknown";
+        var dateStr = StripPrefix(fileName);
+        var date = TryExtractDate(dateStr);
+
+        return new ParsedPathMetadata(symbol, eventType, source, date);
+    }
+
+    // Canonical: {root}/{year}/{month}/{day}/{source}/{symbol}/{prefix}{type}.ext
+    private ParsedPathMetadata? ParseCanonicalPath(string[] parts, string fileName)
+    {
+        if (parts.Length < 5) return null;
+
+        var year = parts[0];
+        var month = parts[1];
+        var day = parts[2];
+        var source = parts[3];
+        var symbol = parts.Length > 4 ? parts[4] : "Unknown";
+        var eventType = StripPrefix(fileName);
+
+        DateTimeOffset? date = null;
+        if (int.TryParse(year, out var y) && int.TryParse(month, out var m) && int.TryParse(day, out var d))
+        {
+            try { date = new DateTimeOffset(new DateTime(y, m, d), TimeSpan.Zero); }
+            catch { /* invalid date */ }
+        }
+
+        return new ParsedPathMetadata(symbol, eventType, source, date);
+    }
+
+    // Fallback parser using heuristics
+    private ParsedPathMetadata? ParseFallback(string filePath, string[] parts, string fileName)
+    {
+        string? symbol = null;
+        string? eventType = null;
+        string? source = null;
+        DateTimeOffset? date = null;
+
+        // Try to extract from path segments using common patterns
+        foreach (var part in parts)
+        {
+            // Symbol pattern (1-5 uppercase letters)
+            if (symbol == null && Regex.IsMatch(part, @"^[A-Z]{1,5}$"))
+                symbol = part;
+
+            // Event type pattern
+            if (eventType == null && Enum.TryParse<MarketEventType>(part, true, out _))
+                eventType = part;
+
+            // Date pattern (yyyy-MM-dd)
+            if (date == null && Regex.IsMatch(part, @"^\d{4}-\d{2}-\d{2}"))
+                date = TryExtractDate(part);
+
+            // Known source names
+            if (source == null)
+            {
+                var lowered = part.ToLowerInvariant();
+                if (new[] { "alpaca", "ib", "interactivebrokers", "polygon", "stooq", "yahoo", "tiingo", "finnhub" }.Contains(lowered))
+                    source = part;
+            }
+        }
+
+        // Also try to extract from filename
+        var fileSegments = fileName.Split('_');
+        foreach (var seg in fileSegments)
+        {
+            if (symbol == null && Regex.IsMatch(seg, @"^[A-Z]{1,5}$"))
+                symbol = seg;
+            if (eventType == null && Enum.TryParse<MarketEventType>(seg, true, out _))
+                eventType = seg;
+            if (date == null && Regex.IsMatch(seg, @"^\d{4}-\d{2}-\d{2}"))
+                date = TryExtractDate(seg);
+        }
+
+        return new ParsedPathMetadata(
+            symbol ?? "Unknown",
+            eventType ?? "Unknown",
+            source ?? "Unknown",
+            date);
+    }
+
+    private string StripPrefix(string fileName)
+    {
+        var prefix = string.IsNullOrWhiteSpace(_options.FilePrefix) ? "" : $"{_options.FilePrefix}_";
+        if (!string.IsNullOrEmpty(prefix) && fileName.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            return fileName[prefix.Length..];
+        return fileName;
+    }
+
+    private static DateTimeOffset? TryExtractDate(string? dateStr)
+    {
+        if (string.IsNullOrWhiteSpace(dateStr)) return null;
+
+        // Try various date formats
+        var formats = new[]
+        {
+            "yyyy-MM-dd",
+            "yyyy-MM-dd_HH",
+            "yyyy-MM",
+            "yyyyMMdd",
+            "yyyyMMdd_HH"
+        };
+
+        foreach (var format in formats)
+        {
+            if (DateTime.TryParseExact(dateStr, format, null, System.Globalization.DateTimeStyles.None, out var dt))
+                return new DateTimeOffset(dt, TimeSpan.Zero);
+        }
+
+        // Try generic parse as last resort
+        if (DateTime.TryParse(dateStr[..Math.Min(10, dateStr.Length)], out var genericDt))
+            return new DateTimeOffset(genericDt, TimeSpan.Zero);
+
+        return null;
+    }
 }
+
+/// <summary>
+/// Metadata extracted from a storage file path.
+/// </summary>
+public sealed record ParsedPathMetadata(
+    string Symbol,
+    string EventType,
+    string Source,
+    DateTimeOffset? Date);

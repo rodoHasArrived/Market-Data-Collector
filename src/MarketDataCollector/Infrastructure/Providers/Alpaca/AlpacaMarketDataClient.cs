@@ -10,6 +10,7 @@ using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Providers.Core;
 using MarketDataCollector.Infrastructure.Resilience;
+using MarketDataCollector.Infrastructure.Shared;
 using Polly;
 using Serilog;
 
@@ -40,9 +41,8 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
     private CancellationTokenSource? _cts;
     private WebSocketHeartbeat? _heartbeat;
 
-    private readonly object _gate = new();
-    private readonly HashSet<string> _tradeSymbols = new(StringComparer.OrdinalIgnoreCase);
-    private readonly HashSet<string> _quoteSymbols = new(StringComparer.OrdinalIgnoreCase);
+    // Centralized subscription management
+    private readonly SubscriptionManager _subscriptionManager = new(startingId: 100_000);
 
     // Resilience pipeline for connection retry with exponential backoff
     private readonly ResiliencePipeline _connectionPipeline;
@@ -52,9 +52,6 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
     {
         DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
     };
-
-    private int _nextSubId = 100_000; // keep away from IB ids
-    private readonly Dictionary<int, (string Symbol, string Kind)> _subs = new();
 
     // Reconnection state
     private volatile bool _isReconnecting;
@@ -337,15 +334,8 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
     public int SubscribeTrades(SymbolConfig cfg)
     {
         if (cfg is null) throw new ArgumentNullException(nameof(cfg));
-        var symbol = cfg.Symbol.Trim();
-        if (symbol.Length == 0) return -1;
-
-        var id = Interlocked.Increment(ref _nextSubId);
-        lock (_gate)
-        {
-            _tradeSymbols.Add(symbol);
-            _subs[id] = (symbol, "trades");
-        }
+        var id = _subscriptionManager.Subscribe(cfg.Symbol, "trades");
+        if (id == -1) return -1;
 
         _ = TrySendSubscribeAsync();
         return id;
@@ -353,65 +343,41 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
 
     public void UnsubscribeTrades(int subscriptionId)
     {
-        (string Symbol, string Kind) sub;
-        lock (_gate)
+        var subscription = _subscriptionManager.Unsubscribe(subscriptionId);
+        if (subscription != null)
         {
-            if (!_subs.TryGetValue(subscriptionId, out sub)) return;
-            _subs.Remove(subscriptionId);
-            if (sub.Kind == "trades")
-            {
-                // remove only if no remaining trade subs for this symbol
-                if (!_subs.Values.Any(v => v.Kind == "trades" && v.Symbol.Equals(sub.Symbol, StringComparison.OrdinalIgnoreCase)))
-                    _tradeSymbols.Remove(sub.Symbol);
-            }
+            _ = TrySendSubscribeAsync(); // send updated subscription set
         }
-
-        _ = TrySendSubscribeAsync(); // send updated subscription set
     }
 
     public int SubscribeMarketDepth(SymbolConfig cfg)
     {
         // Not supported for stocks: Alpaca provides quotes, not full L2 depth updates.
         // If you later add QuoteCollector -> L2Snapshot mapping, wire it here.
-        if (_opt.SubscribeQuotes)
-        {
-            var symbol = cfg.Symbol.Trim();
-            if (symbol.Length == 0) return -1;
+        if (!_opt.SubscribeQuotes) return -1;
 
-            var id = Interlocked.Increment(ref _nextSubId);
-            lock (_gate)
-            {
-                _quoteSymbols.Add(symbol);
-                _subs[id] = (symbol, "quotes");
-            }
-            _ = TrySendSubscribeAsync();
-            return id;
-        }
+        if (cfg is null) throw new ArgumentNullException(nameof(cfg));
+        var id = _subscriptionManager.Subscribe(cfg.Symbol, "quotes");
+        if (id == -1) return -1;
 
-        return -1;
+        _ = TrySendSubscribeAsync();
+        return id;
     }
 
     public void UnsubscribeMarketDepth(int subscriptionId)
     {
-        (string Symbol, string Kind) sub;
-        lock (_gate)
+        var subscription = _subscriptionManager.Unsubscribe(subscriptionId);
+        if (subscription != null)
         {
-            if (!_subs.TryGetValue(subscriptionId, out sub)) return;
-            _subs.Remove(subscriptionId);
-            if (sub.Kind == "quotes")
-            {
-                if (!_subs.Values.Any(v => v.Kind == "quotes" && v.Symbol.Equals(sub.Symbol, StringComparison.OrdinalIgnoreCase)))
-                    _quoteSymbols.Remove(sub.Symbol);
-            }
+            _ = TrySendSubscribeAsync();
         }
-
-        _ = TrySendSubscribeAsync();
     }
 
     public async ValueTask DisposeAsync()
     {
         await DisconnectAsync().ConfigureAwait(false);
         _reconnectGate.Dispose();
+        _subscriptionManager.Dispose();
     }
 
     private async Task TrySendSubscribeAsync()
@@ -421,13 +387,8 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
             var ws = _ws;
             if (ws == null || ws.State != WebSocketState.Open) return;
 
-            string[] trades;
-            string[] quotes;
-            lock (_gate)
-            {
-                trades = _tradeSymbols.ToArray();
-                quotes = _quoteSymbols.ToArray();
-            }
+            var trades = _subscriptionManager.GetSymbolsByKind("trades");
+            var quotes = _subscriptionManager.GetSymbolsByKind("quotes");
 
             var msg = new Dictionary<string, object?>
             {

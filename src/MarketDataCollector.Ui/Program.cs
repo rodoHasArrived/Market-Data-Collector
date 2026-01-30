@@ -5,16 +5,9 @@ using MarketDataCollector.Ui.Shared.Endpoints;
 // ═══════════════════════════════════════════════════════════════════════════
 // This is a minimal host shell that uses the shared UI module.
 // All endpoint logic, services, and templates are in MarketDataCollector.Ui.Shared.
+// Uses the consolidated BuildUiHost() helper for single-entry-point setup.
 // ═══════════════════════════════════════════════════════════════════════════
 
-var builder = WebApplication.CreateBuilder(args);
-
-// Register shared UI services
-builder.Services.AddUiSharedServices();
-
-var app = builder.Build();
-
-// Map all UI endpoints (dashboard + API routes)
-app.MapAllUiEndpoints();
+var app = WebApplication.CreateBuilder(args).BuildUiHost();
 
 app.Run();

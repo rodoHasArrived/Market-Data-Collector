@@ -13,6 +13,42 @@ namespace MarketDataCollector.Ui.Shared.Endpoints;
 /// </summary>
 public static class UiEndpoints
 {
+    #region Consolidated Host Setup
+
+    /// <summary>
+    /// Configures the application with all UI services and endpoints.
+    /// This is the single entry point for setting up the UI host and should be used
+    /// instead of calling AddUiSharedServices and MapAllUiEndpoints separately.
+    /// </summary>
+    /// <param name="builder">The web application builder.</param>
+    /// <returns>A configured WebApplication ready to run.</returns>
+    public static WebApplication BuildUiHost(this WebApplicationBuilder builder)
+    {
+        builder.Services.AddUiSharedServices();
+        var app = builder.Build();
+        app.MapAllUiEndpoints();
+        return app;
+    }
+
+    /// <summary>
+    /// Configures the application with UI services, endpoints, and shared status handlers.
+    /// This overload allows sharing StatusEndpointHandlers with StatusHttpServer.
+    /// </summary>
+    /// <param name="builder">The web application builder.</param>
+    /// <param name="statusHandlers">Pre-configured status endpoint handlers to share.</param>
+    /// <returns>A configured WebApplication ready to run.</returns>
+    public static WebApplication BuildUiHost(this WebApplicationBuilder builder, StatusEndpointHandlers statusHandlers)
+    {
+        builder.Services.AddUiSharedServices(statusHandlers);
+        var app = builder.Build();
+        app.MapUiEndpointsWithStatus(statusHandlers);
+        return app;
+    }
+
+    #endregion
+
+    #region Service Registration
+
     /// <summary>
     /// Registers all shared services required by UI endpoints.
     /// </summary>
@@ -34,6 +70,10 @@ public static class UiEndpoints
         services.AddSingleton(statusHandlers);
         return services;
     }
+
+    #endregion
+
+    #region Endpoint Mapping
 
     /// <summary>
     /// Maps all UI API endpoints using default JSON serializer options.
@@ -121,4 +161,6 @@ public static class UiEndpoints
         app.MapUiEndpoints();
         return app;
     }
+
+    #endregion
 }
