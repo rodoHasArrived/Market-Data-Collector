@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using MarketDataCollector.Contracts.Api;
 using MarketDataCollector.Uwp.Models;
 
 namespace MarketDataCollector.Uwp.Services;
@@ -46,7 +47,7 @@ public sealed class SymbolManagementService
     public async Task<SymbolListResult> GetAllSymbolsAsync(CancellationToken ct = default)
     {
         var response = await _apiClient.GetWithResponseAsync<SymbolListResponse>(
-            "/api/symbols",
+            UiApiRoutes.Symbols,
             ct);
 
         if (response.Success && response.Data != null)
@@ -90,7 +91,7 @@ public sealed class SymbolManagementService
     public async Task<SymbolListResult> GetMonitoredSymbolsAsync(CancellationToken ct = default)
     {
         var response = await _apiClient.GetWithResponseAsync<SymbolListResponse>(
-            "/api/symbols/monitored",
+            UiApiRoutes.SymbolsMonitored,
             ct);
 
         if (response.Success && response.Data != null)
@@ -116,7 +117,7 @@ public sealed class SymbolManagementService
     public async Task<SymbolListResult> GetArchivedSymbolsAsync(CancellationToken ct = default)
     {
         var response = await _apiClient.GetWithResponseAsync<SymbolListResponse>(
-            "/api/symbols/archived",
+            UiApiRoutes.SymbolsArchived,
             ct);
 
         if (response.Success && response.Data != null)
@@ -142,7 +143,7 @@ public sealed class SymbolManagementService
     public async Task<SymbolDetailedStatus> GetSymbolStatusAsync(string symbol, CancellationToken ct = default)
     {
         var response = await _apiClient.GetWithResponseAsync<SymbolDetailedStatus>(
-            $"/api/symbols/{Uri.EscapeDataString(symbol)}/status",
+            UiApiRoutes.WithParam(UiApiRoutes.SymbolStatus, "symbol", symbol),
             ct);
 
         if (response.Success && response.Data != null)
@@ -180,7 +181,7 @@ public sealed class SymbolManagementService
         };
 
         var response = await _apiClient.PostWithResponseAsync<SymbolOperationResponse>(
-            "/api/symbols/add",
+            UiApiRoutes.SymbolsAdd,
             request,
             ct);
 
@@ -220,7 +221,7 @@ public sealed class SymbolManagementService
     public async Task<SymbolOperationResult> RemoveSymbolAsync(string symbol, CancellationToken ct = default)
     {
         var response = await _apiClient.PostWithResponseAsync<SymbolOperationResponse>(
-            $"/api/symbols/{Uri.EscapeDataString(symbol)}/remove",
+            UiApiRoutes.WithParam(UiApiRoutes.SymbolRemove, "symbol", symbol),
             null,
             ct);
 
@@ -251,7 +252,7 @@ public sealed class SymbolManagementService
     public async Task<SymbolOperationResult> ToggleTradesAsync(string symbol, bool enabled, CancellationToken ct = default)
     {
         var response = await _apiClient.PostWithResponseAsync<SymbolOperationResponse>(
-            $"/api/symbols/{Uri.EscapeDataString(symbol)}/trades",
+            UiApiRoutes.WithParam(UiApiRoutes.SymbolTrades, "symbol", symbol),
             new { enabled },
             ct);
 
@@ -279,7 +280,7 @@ public sealed class SymbolManagementService
     public async Task<SymbolOperationResult> ToggleDepthAsync(string symbol, bool enabled, int depthLevels = 10, CancellationToken ct = default)
     {
         var response = await _apiClient.PostWithResponseAsync<SymbolOperationResponse>(
-            $"/api/symbols/{Uri.EscapeDataString(symbol)}/depth",
+            UiApiRoutes.WithParam(UiApiRoutes.SymbolDepth, "symbol", symbol),
             new { enabled, depthLevels },
             ct);
 
@@ -307,7 +308,7 @@ public sealed class SymbolManagementService
     public async Task<SymbolStatistics> GetSymbolStatisticsAsync(CancellationToken ct = default)
     {
         var response = await _apiClient.GetWithResponseAsync<SymbolStatistics>(
-            "/api/symbols/statistics",
+            UiApiRoutes.SymbolsStatistics,
             ct);
 
         return response.Data ?? new SymbolStatistics();
@@ -319,7 +320,7 @@ public sealed class SymbolManagementService
     public async Task<SymbolValidationResult> ValidateSymbolAsync(string symbol, string? exchange = null, CancellationToken ct = default)
     {
         var response = await _apiClient.PostWithResponseAsync<SymbolValidationResult>(
-            "/api/symbols/validate",
+            UiApiRoutes.SymbolsValidate,
             new { symbol, exchange },
             ct);
 
@@ -337,7 +338,7 @@ public sealed class SymbolManagementService
     public async Task<SymbolArchiveInfo> GetSymbolArchiveInfoAsync(string symbol, CancellationToken ct = default)
     {
         var response = await _apiClient.GetWithResponseAsync<SymbolArchiveInfo>(
-            $"/api/symbols/{Uri.EscapeDataString(symbol)}/archive",
+            UiApiRoutes.WithParam(UiApiRoutes.SymbolArchive, "symbol", symbol),
             ct);
 
         return response.Data ?? new SymbolArchiveInfo { Symbol = symbol };
@@ -356,7 +357,7 @@ public sealed class SymbolManagementService
         var symbolList = symbols.Select(s => s.ToUpperInvariant()).ToList();
 
         var response = await _apiClient.PostWithResponseAsync<BulkSymbolOperationResponse>(
-            "/api/symbols/bulk-add",
+            UiApiRoutes.SymbolsBulkAdd,
             new
             {
                 symbols = symbolList,
@@ -409,7 +410,7 @@ public sealed class SymbolManagementService
         var symbolList = symbols.Select(s => s.ToUpperInvariant()).ToList();
 
         var response = await _apiClient.PostWithResponseAsync<BulkSymbolOperationResponse>(
-            "/api/symbols/bulk-remove",
+            UiApiRoutes.SymbolsBulkRemove,
             new { symbols = symbolList },
             ct);
 
@@ -462,7 +463,7 @@ public sealed class SymbolManagementService
 
         var encodedQuery = Uri.EscapeDataString(query);
         var response = await _apiClient.GetWithResponseAsync<SymbolSearchApiResponse>(
-            $"/api/symbols/search?q={encodedQuery}&limit={limit}&includeFigi=false",
+            UiApiRoutes.WithQuery(UiApiRoutes.SymbolsSearch, $"q={encodedQuery}&limit={limit}&includeFigi=false"),
             ct);
 
         if (response.Success && response.Data != null)

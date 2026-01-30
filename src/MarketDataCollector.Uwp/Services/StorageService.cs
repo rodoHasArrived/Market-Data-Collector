@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using MarketDataCollector.Contracts.Api;
 using MarketDataCollector.Uwp.Views;
 using Microsoft.UI;
 using Microsoft.UI.Xaml.Media;
@@ -39,7 +40,7 @@ public sealed class StorageService
     /// </summary>
     public async Task<StorageStatsSummary?> GetStorageStatsAsync(CancellationToken ct = default)
     {
-        return await ApiClientService.Instance.GetAsync<StorageStatsSummary>("/api/storage/stats", ct);
+        return await ApiClientService.Instance.GetAsync<StorageStatsSummary>(UiApiRoutes.StorageStats, ct);
     }
 
     /// <summary>
@@ -47,7 +48,7 @@ public sealed class StorageService
     /// </summary>
     public async Task<List<StorageCategory>?> GetStorageBreakdownAsync(CancellationToken ct = default)
     {
-        return await ApiClientService.Instance.GetAsync<List<StorageCategory>>("/api/storage/breakdown", ct);
+        return await ApiClientService.Instance.GetAsync<List<StorageCategory>>(UiApiRoutes.StorageBreakdown, ct);
     }
 
     /// <summary>
@@ -55,7 +56,8 @@ public sealed class StorageService
     /// </summary>
     public async Task<SymbolStorageInfo?> GetSymbolInfoAsync(string symbol, CancellationToken ct = default)
     {
-        return await ApiClientService.Instance.GetAsync<SymbolStorageInfo>($"/api/storage/symbol/{symbol}/info", ct);
+        return await ApiClientService.Instance.GetAsync<SymbolStorageInfo>(
+            UiApiRoutes.WithParam(UiApiRoutes.StorageSymbolInfo, "symbol", symbol), ct);
     }
 
     /// <summary>
@@ -63,7 +65,8 @@ public sealed class StorageService
     /// </summary>
     public async Task<SymbolStorageStats?> GetSymbolStorageStatsAsync(string symbol, CancellationToken ct = default)
     {
-        return await ApiClientService.Instance.GetAsync<SymbolStorageStats>($"/api/storage/symbol/{symbol}/stats", ct);
+        return await ApiClientService.Instance.GetAsync<SymbolStorageStats>(
+            UiApiRoutes.WithParam(UiApiRoutes.StorageSymbolStats, "symbol", symbol), ct);
     }
 
     /// <summary>
@@ -72,7 +75,7 @@ public sealed class StorageService
     public async Task<List<DataFileInfo>> GetSymbolFilesAsync(string symbol, CancellationToken ct = default)
     {
         var response = await ApiClientService.Instance.GetAsync<List<SymbolFileDto>>(
-            $"/api/storage/symbol/{symbol}/files", ct);
+            UiApiRoutes.WithParam(UiApiRoutes.StorageSymbolFiles, "symbol", symbol), ct);
 
         if (response == null) return new List<DataFileInfo>();
 
@@ -100,7 +103,7 @@ public sealed class StorageService
     public async Task<string?> GetSymbolFolderPathAsync(string symbol, CancellationToken ct = default)
     {
         var response = await ApiClientService.Instance.GetAsync<SymbolPathResponse>(
-            $"/api/storage/symbol/{symbol}/path", ct);
+            UiApiRoutes.WithParam(UiApiRoutes.StorageSymbolPath, "symbol", symbol), ct);
         return response?.FolderPath;
     }
 
@@ -109,7 +112,7 @@ public sealed class StorageService
     /// </summary>
     public async Task<StorageHealthReport?> GetStorageHealthAsync(CancellationToken ct = default)
     {
-        return await ApiClientService.Instance.GetAsync<StorageHealthReport>("/api/storage/health", ct);
+        return await ApiClientService.Instance.GetAsync<StorageHealthReport>(UiApiRoutes.StorageHealth, ct);
     }
 
     /// <summary>
@@ -117,7 +120,7 @@ public sealed class StorageService
     /// </summary>
     public async Task<List<CleanupCandidate>?> GetCleanupCandidatesAsync(CancellationToken ct = default)
     {
-        return await ApiClientService.Instance.GetAsync<List<CleanupCandidate>>("/api/storage/cleanup/candidates", ct);
+        return await ApiClientService.Instance.GetAsync<List<CleanupCandidate>>(UiApiRoutes.StorageCleanupCandidates, ct);
     }
 
     /// <summary>
@@ -126,7 +129,7 @@ public sealed class StorageService
     public async Task<CleanupResult?> RunCleanupAsync(bool dryRun = true, CancellationToken ct = default)
     {
         return await ApiClientService.Instance.PostAsync<CleanupResult>(
-            "/api/storage/cleanup",
+            UiApiRoutes.StorageCleanup,
             new { dryRun },
             ct);
     }
@@ -136,7 +139,7 @@ public sealed class StorageService
     /// </summary>
     public async Task<ArchiveStats?> GetArchiveStatsAsync(CancellationToken ct = default)
     {
-        return await ApiClientService.Instance.GetAsync<ArchiveStats>("/api/storage/archive/stats", ct);
+        return await ApiClientService.Instance.GetAsync<ArchiveStats>(UiApiRoutes.StorageArchiveStats, ct);
     }
 
     private static string GetFileIcon(string dataType)
