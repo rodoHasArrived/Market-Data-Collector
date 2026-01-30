@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Storage.Interfaces;
+using MarketDataCollector.Storage.Policies;
 
 namespace MarketDataCollector.Storage.Services;
 
@@ -15,6 +16,7 @@ public sealed class StorageSearchService : IStorageSearchService
 {
     private readonly StorageOptions _options;
     private readonly ISourceRegistry? _sourceRegistry;
+    private readonly JsonlStoragePolicy? _pathParser;
     private readonly ConcurrentDictionary<string, SymbolIndex> _symbolIndex = new();
     private readonly ConcurrentDictionary<string, DateIndex> _dateIndex = new();
     private readonly ConcurrentDictionary<string, FileMetadata> _fileMetadata = new();
@@ -23,10 +25,12 @@ public sealed class StorageSearchService : IStorageSearchService
 
     private static readonly string[] DataExtensions = { ".jsonl", ".jsonl.gz", ".jsonl.zst", ".parquet" };
 
-    public StorageSearchService(StorageOptions options, ISourceRegistry? sourceRegistry = null)
+    public StorageSearchService(StorageOptions options, ISourceRegistry? sourceRegistry = null, JsonlStoragePolicy? pathParser = null)
     {
         _options = options;
         _sourceRegistry = sourceRegistry;
+        // Use provided parser or create one with default options for path parsing
+        _pathParser = pathParser ?? new JsonlStoragePolicy(options, sourceRegistry);
     }
 
     public async Task<SearchResult<FileSearchResult>> SearchFilesAsync(FileSearchQuery query, CancellationToken ct = default)
@@ -449,20 +453,21 @@ public sealed class StorageSearchService : IStorageSearchService
             var fileInfo = new FileInfo(filePath);
             if (!fileInfo.Exists) return null;
 
-            // Parse metadata from path
-            var parts = filePath.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-            var symbol = "Unknown";
-            var eventType = "Unknown";
-            var source = "Unknown";
-            var date = fileInfo.LastWriteTimeUtc;
+            // Use centralized path parser if available
+            var parsed = _pathParser?.TryParsePath(filePath);
 
-            // Try to extract from path based on common patterns
-            foreach (var part in parts)
+            var symbol = parsed?.Symbol ?? "Unknown";
+            var eventType = parsed?.EventType ?? "Unknown";
+            var source = parsed?.Source ?? "Unknown";
+            var date = parsed?.Date ?? new DateTimeOffset(fileInfo.LastWriteTimeUtc, TimeSpan.Zero);
+
+            // Fallback to heuristic parsing if parser returned unknown values
+            if (symbol == "Unknown" || eventType == "Unknown")
             {
-                if (Regex.IsMatch(part, @"^[A-Z]{1,5}$")) symbol = part;
-                if (Enum.TryParse<MarketEventType>(part, true, out var type)) eventType = type.ToString();
-                if (Regex.IsMatch(part, @"^\d{4}-\d{2}-\d{2}")) date = DateTime.Parse(part.Substring(0, 10));
-                if (new[] { "alpaca", "ib", "polygon", "stooq", "yahoo" }.Contains(part.ToLower())) source = part;
+                var fallback = ParsePathFallback(filePath, fileInfo);
+                if (symbol == "Unknown") symbol = fallback.Symbol;
+                if (eventType == "Unknown") eventType = fallback.EventType;
+                if (source == "Unknown" && fallback.Source != "Unknown") source = fallback.Source;
             }
 
             // Count events
@@ -481,7 +486,7 @@ public sealed class StorageSearchService : IStorageSearchService
                 Symbol: symbol,
                 EventType: eventType,
                 Source: source,
-                Date: new DateTimeOffset(date, TimeSpan.Zero),
+                Date: date,
                 SizeBytes: fileInfo.Length,
                 EventCount: eventCount,
                 QualityScore: 1.0,
@@ -493,6 +498,33 @@ public sealed class StorageSearchService : IStorageSearchService
         {
             return null;
         }
+    }
+
+    /// <summary>
+    /// Fallback parser using heuristics when the policy-based parser fails.
+    /// </summary>
+    private static (string Symbol, string EventType, string Source) ParsePathFallback(string filePath, FileInfo fileInfo)
+    {
+        var parts = filePath.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        string symbol = "Unknown";
+        string eventType = "Unknown";
+        string source = "Unknown";
+
+        foreach (var part in parts)
+        {
+            if (symbol == "Unknown" && Regex.IsMatch(part, @"^[A-Z]{1,5}$"))
+                symbol = part;
+            if (eventType == "Unknown" && Enum.TryParse<MarketEventType>(part, true, out var type))
+                eventType = type.ToString();
+            if (source == "Unknown")
+            {
+                var lowered = part.ToLowerInvariant();
+                if (new[] { "alpaca", "ib", "polygon", "stooq", "yahoo", "tiingo", "finnhub" }.Contains(lowered))
+                    source = part;
+            }
+        }
+
+        return (symbol, eventType, source);
     }
 
     private void UpdateSymbolIndex(FileMetadata metadata)

@@ -13,6 +13,7 @@ using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Providers;
 using MarketDataCollector.Infrastructure.Providers.Core;
 using MarketDataCollector.Infrastructure.Resilience;
+using MarketDataCollector.Infrastructure.Shared;
 using Polly;
 using Serilog;
 
@@ -52,13 +53,8 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
     // Resilience pipeline for connection retry with exponential backoff
     private readonly ResiliencePipeline _connectionPipeline;
 
-    // Subscription tracking
-    private readonly object _gate = new();
-    private readonly HashSet<string> _tradeSymbols = new(StringComparer.OrdinalIgnoreCase);
-    private readonly HashSet<string> _quoteSymbols = new(StringComparer.OrdinalIgnoreCase);
-    private readonly HashSet<string> _aggregateSymbols = new(StringComparer.OrdinalIgnoreCase);
-    private readonly Dictionary<int, (string Symbol, string Kind)> _subs = new();
-    private int _nextSubId = 200_000; // Separate ID range from other providers
+    // Centralized subscription management (ID range 200,000+ to separate from other providers)
+    private readonly SubscriptionManager _subscriptionManager = new(startingId: 200_000);
 
     // WebSocket connection
     private ClientWebSocket? _ws;
@@ -519,11 +515,8 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
             var symbol = elem.TryGetProperty("sym", out var symProp) ? symProp.GetString() : null;
             if (string.IsNullOrEmpty(symbol)) return;
 
-            lock (_gate)
-            {
-                if (!_tradeSymbols.Contains(symbol))
-                    return;
-            }
+            if (!_subscriptionManager.HasSubscription(symbol, "trades"))
+                return;
 
             var price = elem.TryGetProperty("p", out var priceProp) ? priceProp.GetDecimal() : 0m;
             var size = elem.TryGetProperty("s", out var sizeProp) ? sizeProp.GetInt64() : 0L;
@@ -571,11 +564,8 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
             var symbol = elem.TryGetProperty("sym", out var symProp) ? symProp.GetString() : null;
             if (string.IsNullOrEmpty(symbol)) return;
 
-            lock (_gate)
-            {
-                if (!_quoteSymbols.Contains(symbol))
-                    return;
-            }
+            if (!_subscriptionManager.HasSubscription(symbol, "quotes"))
+                return;
 
             var bidPrice = elem.TryGetProperty("bp", out var bpProp) ? bpProp.GetDecimal() : 0m;
             var bidSize = elem.TryGetProperty("bs", out var bsProp) ? bsProp.GetInt64() : 0L;
@@ -621,11 +611,8 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
             var symbol = elem.TryGetProperty("sym", out var symProp) ? symProp.GetString() : null;
             if (string.IsNullOrEmpty(symbol)) return;
 
-            lock (_gate)
-            {
-                if (!_aggregateSymbols.Contains(symbol))
-                    return;
-            }
+            if (!_subscriptionManager.HasSubscription(symbol, "aggregates"))
+                return;
 
             // Parse OHLCV data
             var open = elem.TryGetProperty("o", out var oProp) ? oProp.GetDecimal() : 0m;
@@ -734,40 +721,33 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
     /// </summary>
     private async Task ResubscribeAllAsync(CancellationToken ct)
     {
-        List<string> tradeSyms;
-        List<string> quoteSyms;
-        List<string> aggregateSyms;
+        var tradeSyms = _subscriptionManager.GetSymbolsByKind("trades");
+        var quoteSyms = _subscriptionManager.GetSymbolsByKind("quotes");
+        var aggregateSyms = _subscriptionManager.GetSymbolsByKind("aggregates");
 
-        lock (_gate)
-        {
-            tradeSyms = _tradeSymbols.ToList();
-            quoteSyms = _quoteSymbols.ToList();
-            aggregateSyms = _aggregateSymbols.ToList();
-        }
-
-        if (tradeSyms.Count > 0)
+        if (tradeSyms.Length > 0)
         {
             var channels = string.Join(",", tradeSyms.Select(s => $"T.{s}"));
             var subMessage = JsonSerializer.Serialize(new { action = "subscribe", @params = channels });
             await SendMessageAsync(subMessage, ct).ConfigureAwait(false);
-            _log.Information("Re-subscribed to {Count} trade channels", tradeSyms.Count);
+            _log.Information("Re-subscribed to {Count} trade channels", tradeSyms.Length);
         }
 
-        if (quoteSyms.Count > 0)
+        if (quoteSyms.Length > 0)
         {
             var channels = string.Join(",", quoteSyms.Select(s => $"Q.{s}"));
             var subMessage = JsonSerializer.Serialize(new { action = "subscribe", @params = channels });
             await SendMessageAsync(subMessage, ct).ConfigureAwait(false);
-            _log.Information("Re-subscribed to {Count} quote channels", quoteSyms.Count);
+            _log.Information("Re-subscribed to {Count} quote channels", quoteSyms.Length);
         }
 
-        if (aggregateSyms.Count > 0)
+        if (aggregateSyms.Length > 0)
         {
             // Subscribe to both second (A) and minute (AM) aggregates
             var channels = string.Join(",", aggregateSyms.SelectMany(s => new[] { $"A.{s}", $"AM.{s}" }));
             var subMessage = JsonSerializer.Serialize(new { action = "subscribe", @params = channels });
             await SendMessageAsync(subMessage, ct).ConfigureAwait(false);
-            _log.Information("Re-subscribed to {Count} aggregate channels", aggregateSyms.Count);
+            _log.Information("Re-subscribed to {Count} aggregate channels", aggregateSyms.Length);
         }
     }
 
@@ -820,13 +800,7 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
         _cts = null;
         _receiveLoop = null;
 
-        lock (_gate)
-        {
-            _tradeSymbols.Clear();
-            _quoteSymbols.Clear();
-            _aggregateSymbols.Clear();
-            _subs.Clear();
-        }
+        _subscriptionManager.Clear();
     }
 
     /// <summary>
@@ -839,7 +813,6 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
         if (cfg is null) throw new ArgumentNullException(nameof(cfg));
 
         // Polygon provides quotes (BBO), not full L2 depth
-        // We can map quotes to BBO updates via QuoteCollector
         if (!_options.SubscribeQuotes)
         {
             _log.Debug("Quote subscription disabled in Polygon options, skipping depth for {Symbol}", cfg.Symbol);
@@ -847,15 +820,10 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
         }
 
         var symbol = cfg.Symbol.Trim().ToUpperInvariant();
-        if (string.IsNullOrEmpty(symbol)) return -1;
+        var isNewSymbol = !_subscriptionManager.HasSubscription(symbol, "quotes");
 
-        var isNewSymbol = false;
-        var id = Interlocked.Increment(ref _nextSubId);
-        lock (_gate)
-        {
-            isNewSymbol = _quoteSymbols.Add(symbol);
-            _subs[id] = (symbol, "quotes");
-        }
+        var id = _subscriptionManager.Subscribe(symbol, "quotes");
+        if (id == -1) return -1;
 
         _log.Debug("Subscribed to Polygon quotes for {Symbol} (SubId: {SubId}, Mode: {Mode})",
             symbol, id, IsStubMode ? "Stub" : "Live");
@@ -874,28 +842,17 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
     /// </summary>
     public void UnsubscribeMarketDepth(int subscriptionId)
     {
-        string? symbolToUnsubscribe = null;
+        var subscription = _subscriptionManager.Unsubscribe(subscriptionId);
+        if (subscription == null) return;
 
-        lock (_gate)
+        // Only send unsubscribe if no other subscriptions exist for this symbol+kind
+        if (!_subscriptionManager.HasSubscription(subscription.Symbol, "quotes"))
         {
-            if (!_subs.TryGetValue(subscriptionId, out var sub)) return;
-            _subs.Remove(subscriptionId);
-            if (sub.Kind == "quotes")
+            _log.Debug("Unsubscribed from Polygon quotes for {Symbol}", subscription.Symbol);
+            if (!IsStubMode && _isConnected)
             {
-                // Only remove symbol if no other quote subs exist for it
-                if (!_subs.Values.Any(v => v.Kind == "quotes" && v.Symbol.Equals(sub.Symbol, StringComparison.OrdinalIgnoreCase)))
-                {
-                    _quoteSymbols.Remove(sub.Symbol);
-                    symbolToUnsubscribe = sub.Symbol;
-                    _log.Debug("Unsubscribed from Polygon quotes for {Symbol}", sub.Symbol);
-                }
+                _ = SendUnsubscribeAsync($"Q.{subscription.Symbol}");
             }
-        }
-
-        // Send unsubscribe message to WebSocket
-        if (symbolToUnsubscribe != null && !IsStubMode && _isConnected)
-        {
-            _ = SendUnsubscribeAsync($"Q.{symbolToUnsubscribe}");
         }
     }
 
@@ -914,15 +871,10 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
         }
 
         var symbol = cfg.Symbol.Trim().ToUpperInvariant();
-        if (string.IsNullOrEmpty(symbol)) return -1;
+        var isNewSymbol = !_subscriptionManager.HasSubscription(symbol, "trades");
 
-        var isNewSymbol = false;
-        var id = Interlocked.Increment(ref _nextSubId);
-        lock (_gate)
-        {
-            isNewSymbol = _tradeSymbols.Add(symbol);
-            _subs[id] = (symbol, "trades");
-        }
+        var id = _subscriptionManager.Subscribe(symbol, "trades");
+        if (id == -1) return -1;
 
         _log.Debug("Subscribed to Polygon trades for {Symbol} (SubId: {SubId}, Mode: {Mode})",
             symbol, id, IsStubMode ? "Stub" : "Live");
@@ -954,28 +906,17 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
     /// </summary>
     public void UnsubscribeTrades(int subscriptionId)
     {
-        string? symbolToUnsubscribe = null;
+        var subscription = _subscriptionManager.Unsubscribe(subscriptionId);
+        if (subscription == null) return;
 
-        lock (_gate)
+        // Only send unsubscribe if no other subscriptions exist for this symbol+kind
+        if (!_subscriptionManager.HasSubscription(subscription.Symbol, "trades"))
         {
-            if (!_subs.TryGetValue(subscriptionId, out var sub)) return;
-            _subs.Remove(subscriptionId);
-            if (sub.Kind == "trades")
+            _log.Debug("Unsubscribed from Polygon trades for {Symbol}", subscription.Symbol);
+            if (!IsStubMode && _isConnected)
             {
-                // Only remove symbol if no other trade subs exist for it
-                if (!_subs.Values.Any(v => v.Kind == "trades" && v.Symbol.Equals(sub.Symbol, StringComparison.OrdinalIgnoreCase)))
-                {
-                    _tradeSymbols.Remove(sub.Symbol);
-                    symbolToUnsubscribe = sub.Symbol;
-                    _log.Debug("Unsubscribed from Polygon trades for {Symbol}", sub.Symbol);
-                }
+                _ = SendUnsubscribeAsync($"T.{subscription.Symbol}");
             }
-        }
-
-        // Send unsubscribe message to WebSocket
-        if (symbolToUnsubscribe != null && !IsStubMode && _isConnected)
-        {
-            _ = SendUnsubscribeAsync($"T.{symbolToUnsubscribe}");
         }
     }
 
@@ -995,15 +936,10 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
         }
 
         var symbol = cfg.Symbol.Trim().ToUpperInvariant();
-        if (string.IsNullOrEmpty(symbol)) return -1;
+        var isNewSymbol = !_subscriptionManager.HasSubscription(symbol, "aggregates");
 
-        var isNewSymbol = false;
-        var id = Interlocked.Increment(ref _nextSubId);
-        lock (_gate)
-        {
-            isNewSymbol = _aggregateSymbols.Add(symbol);
-            _subs[id] = (symbol, "aggregates");
-        }
+        var id = _subscriptionManager.Subscribe(symbol, "aggregates");
+        if (id == -1) return -1;
 
         _log.Debug("Subscribed to Polygon aggregates for {Symbol} (SubId: {SubId}, Mode: {Mode})",
             symbol, id, IsStubMode ? "Stub" : "Live");
@@ -1023,28 +959,17 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
     /// <param name="subscriptionId">The subscription ID returned from SubscribeAggregates.</param>
     public void UnsubscribeAggregates(int subscriptionId)
     {
-        string? symbolToUnsubscribe = null;
+        var subscription = _subscriptionManager.Unsubscribe(subscriptionId);
+        if (subscription == null) return;
 
-        lock (_gate)
+        // Only send unsubscribe if no other subscriptions exist for this symbol+kind
+        if (!_subscriptionManager.HasSubscription(subscription.Symbol, "aggregates"))
         {
-            if (!_subs.TryGetValue(subscriptionId, out var sub)) return;
-            _subs.Remove(subscriptionId);
-            if (sub.Kind == "aggregates")
+            _log.Debug("Unsubscribed from Polygon aggregates for {Symbol}", subscription.Symbol);
+            if (!IsStubMode && _isConnected)
             {
-                // Only remove symbol if no other aggregate subs exist for it
-                if (!_subs.Values.Any(v => v.Kind == "aggregates" && v.Symbol.Equals(sub.Symbol, StringComparison.OrdinalIgnoreCase)))
-                {
-                    _aggregateSymbols.Remove(sub.Symbol);
-                    symbolToUnsubscribe = sub.Symbol;
-                    _log.Debug("Unsubscribed from Polygon aggregates for {Symbol}", sub.Symbol);
-                }
+                _ = SendUnsubscribeAsync($"A.{subscription.Symbol},AM.{subscription.Symbol}");
             }
-        }
-
-        // Send unsubscribe message to WebSocket for both channels
-        if (symbolToUnsubscribe != null && !IsStubMode && _isConnected)
-        {
-            _ = SendUnsubscribeAsync($"A.{symbolToUnsubscribe},AM.{symbolToUnsubscribe}");
         }
     }
 
@@ -1085,58 +1010,22 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
     /// <summary>
     /// Gets the current subscription count.
     /// </summary>
-    public int SubscriptionCount
-    {
-        get
-        {
-            lock (_gate)
-            {
-                return _subs.Count;
-            }
-        }
-    }
+    public int SubscriptionCount => _subscriptionManager.Count;
 
     /// <summary>
     /// Gets the list of currently subscribed trade symbols.
     /// </summary>
-    public IReadOnlyList<string> SubscribedTradeSymbols
-    {
-        get
-        {
-            lock (_gate)
-            {
-                return _tradeSymbols.ToList();
-            }
-        }
-    }
+    public IReadOnlyList<string> SubscribedTradeSymbols => _subscriptionManager.GetSymbolsByKind("trades");
 
     /// <summary>
     /// Gets the list of currently subscribed quote symbols.
     /// </summary>
-    public IReadOnlyList<string> SubscribedQuoteSymbols
-    {
-        get
-        {
-            lock (_gate)
-            {
-                return _quoteSymbols.ToList();
-            }
-        }
-    }
+    public IReadOnlyList<string> SubscribedQuoteSymbols => _subscriptionManager.GetSymbolsByKind("quotes");
 
     /// <summary>
     /// Gets the list of currently subscribed aggregate symbols.
     /// </summary>
-    public IReadOnlyList<string> SubscribedAggregateSymbols
-    {
-        get
-        {
-            lock (_gate)
-            {
-                return _aggregateSymbols.ToList();
-            }
-        }
-    }
+    public IReadOnlyList<string> SubscribedAggregateSymbols => _subscriptionManager.GetSymbolsByKind("aggregates");
 
     /// <inheritdoc />
     public async ValueTask DisposeAsync()
@@ -1179,14 +1068,7 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
         _ws?.Dispose();
         _cts?.Dispose();
         _sendLock.Dispose();
-
-        lock (_gate)
-        {
-            _tradeSymbols.Clear();
-            _quoteSymbols.Clear();
-            _aggregateSymbols.Clear();
-            _subs.Clear();
-        }
+        _subscriptionManager.Dispose();
     }
 
     /// <summary>

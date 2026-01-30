@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Storage.Interfaces;
+using MarketDataCollector.Storage.Services;
 
 namespace MarketDataCollector.Storage.Sinks;
 
@@ -92,7 +93,7 @@ public sealed class JsonlStorageSink : IStorageSink
     private bool _disposed;
 
     private readonly ConcurrentDictionary<string, WriterState> _writers = new(StringComparer.OrdinalIgnoreCase);
-    private readonly ConcurrentDictionary<string, BatchBuffer> _buffers = new(StringComparer.OrdinalIgnoreCase);
+    private readonly ConcurrentDictionary<string, MarketEventBuffer> _buffers = new(StringComparer.OrdinalIgnoreCase);
     private static readonly JsonSerializerOptions JsonOpts = new(JsonSerializerDefaults.Web);
 
     // Metrics
@@ -170,12 +171,12 @@ public sealed class JsonlStorageSink : IStorageSink
         }
 
         // Batched write mode
-        var buffer = _buffers.GetOrAdd(path, _ => new BatchBuffer(_batchOptions.BatchSize));
+        var buffer = _buffers.GetOrAdd(path, _ => new MarketEventBuffer(_batchOptions.BatchSize));
         buffer.Add(evt);
         Interlocked.Increment(ref _eventsBuffered);
 
         // Flush if buffer is full
-        if (buffer.Count >= _batchOptions.BatchSize)
+        if (buffer.ShouldFlush(_batchOptions.BatchSize))
         {
             await FlushBufferAsync(path, buffer, ct).ConfigureAwait(false);
         }
@@ -189,7 +190,7 @@ public sealed class JsonlStorageSink : IStorageSink
         Interlocked.Increment(ref _eventsWritten);
     }
 
-    private async Task FlushBufferAsync(string path, BatchBuffer buffer, CancellationToken ct)
+    private async Task FlushBufferAsync(string path, MarketEventBuffer buffer, CancellationToken ct)
     {
         var events = buffer.DrainAll();
         if (events.Count == 0) return;
@@ -306,46 +307,6 @@ public sealed class JsonlStorageSink : IStorageSink
 
         // Dispose retention manager
         _retention?.Dispose();
-    }
-
-    /// <summary>
-    /// Thread-safe buffer for accumulating events before batch write.
-    /// </summary>
-    private sealed class BatchBuffer
-    {
-        private readonly List<MarketEvent> _events;
-        private readonly object _lock = new();
-
-        public BatchBuffer(int capacity)
-        {
-            _events = new List<MarketEvent>(capacity);
-        }
-
-        public int Count
-        {
-            get
-            {
-                lock (_lock) return _events.Count;
-            }
-        }
-
-        public void Add(MarketEvent evt)
-        {
-            lock (_lock)
-            {
-                _events.Add(evt);
-            }
-        }
-
-        public List<MarketEvent> DrainAll()
-        {
-            lock (_lock)
-            {
-                var result = new List<MarketEvent>(_events);
-                _events.Clear();
-                return result;
-            }
-        }
     }
 
     private sealed class WriterState : IAsyncDisposable

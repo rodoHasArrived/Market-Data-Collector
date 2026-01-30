@@ -6,6 +6,7 @@ using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Storage.Interfaces;
+using MarketDataCollector.Storage.Services;
 using Parquet;
 using Parquet.Data;
 using Parquet.Schema;
@@ -25,7 +26,7 @@ public sealed class ParquetStorageSink : IStorageSink
     private readonly ILogger _log = LoggingSetup.ForContext<ParquetStorageSink>();
     private readonly StorageOptions _options;
     private readonly ParquetStorageOptions _parquetOptions;
-    private readonly ConcurrentDictionary<string, ParquetBufferState> _buffers = new(StringComparer.OrdinalIgnoreCase);
+    private readonly ConcurrentDictionary<string, MarketEventBuffer> _buffers = new(StringComparer.OrdinalIgnoreCase);
     private readonly Timer _flushTimer;
     private bool _disposed;
 
@@ -105,12 +106,12 @@ public sealed class ParquetStorageSink : IStorageSink
         EventSchemaValidator.Validate(evt);
 
         var bufferKey = GetBufferKey(evt);
-        var buffer = _buffers.GetOrAdd(bufferKey, _ => new ParquetBufferState(_parquetOptions.BufferSize));
+        var buffer = _buffers.GetOrAdd(bufferKey, _ => new MarketEventBuffer(_parquetOptions.BufferSize));
 
         buffer.Add(evt);
 
         // Flush if buffer is full
-        if (buffer.Count >= _parquetOptions.BufferSize)
+        if (buffer.ShouldFlush(_parquetOptions.BufferSize))
         {
             await FlushBufferAsync(bufferKey, buffer, ct);
         }
@@ -132,9 +133,9 @@ public sealed class ParquetStorageSink : IStorageSink
         }
     }
 
-    private async Task FlushBufferAsync(string bufferKey, ParquetBufferState buffer, CancellationToken ct)
+    private async Task FlushBufferAsync(string bufferKey, MarketEventBuffer buffer, CancellationToken ct)
     {
-        var events = buffer.DrainAll();
+        var events = buffer.DrainAll().ToList();
         if (events.Count == 0) return;
 
         try
@@ -340,48 +341,6 @@ public sealed class ParquetStorageSink : IStorageSink
         _buffers.Clear();
 
         _log.Information("ParquetStorageSink disposed");
-    }
-}
-
-/// <summary>
-/// Thread-safe buffer for accumulating events before writing to Parquet.
-/// </summary>
-internal sealed class ParquetBufferState
-{
-    private readonly List<MarketEvent> _events;
-    private readonly object _lock = new();
-    private readonly int _capacity;
-
-    public ParquetBufferState(int capacity)
-    {
-        _capacity = capacity;
-        _events = new List<MarketEvent>(capacity);
-    }
-
-    public int Count
-    {
-        get
-        {
-            lock (_lock) return _events.Count;
-        }
-    }
-
-    public void Add(MarketEvent evt)
-    {
-        lock (_lock)
-        {
-            _events.Add(evt);
-        }
-    }
-
-    public List<MarketEvent> DrainAll()
-    {
-        lock (_lock)
-        {
-            var result = new List<MarketEvent>(_events);
-            _events.Clear();
-            return result;
-        }
     }
 }
 

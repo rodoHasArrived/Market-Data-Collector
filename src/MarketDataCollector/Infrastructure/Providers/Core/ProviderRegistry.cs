@@ -55,9 +55,9 @@ public enum ProviderType
 [ImplementsAdr("ADR-001", "Centralized provider registry for plugin-style management")]
 public sealed class ProviderRegistry : IDisposable
 {
-    private readonly ConcurrentDictionary<string, RegisteredStreamingProvider> _streamingProviders = new();
-    private readonly ConcurrentDictionary<string, RegisteredBackfillProvider> _backfillProviders = new();
-    private readonly ConcurrentDictionary<string, RegisteredSymbolSearchProvider> _symbolSearchProviders = new();
+    /// <summary>
+    /// Single unified registry of all providers. Type-specific queries filter by ProviderCapabilities.
+    /// </summary>
     private readonly ConcurrentDictionary<string, RegisteredProvider> _allProviders = new();
     private readonly ILogger _log;
     private readonly IAlertDispatcher? _alertDispatcher;
@@ -73,7 +73,7 @@ public sealed class ProviderRegistry : IDisposable
 
     /// <summary>
     /// Registers any provider implementing <see cref="IProviderMetadata"/>.
-    /// Automatically routes to the appropriate type-specific dictionary based on capabilities.
+    /// All providers are stored in a single unified registry.
     /// </summary>
     /// <typeparam name="T">The provider type.</typeparam>
     /// <param name="provider">The provider instance.</param>
@@ -86,29 +86,15 @@ public sealed class ProviderRegistry : IDisposable
         var priority = priorityOverride ?? provider.ProviderPriority;
         ValidateName(id);
 
-        // Register in unified dictionary
         var registered = new RegisteredProvider(id, provider, priority, true);
         if (_allProviders.TryAdd(id, registered))
         {
             _log.Information("Registered provider: {Name} (type: {Type}, priority: {Priority})",
                 id, provider.ProviderCapabilities.PrimaryType, priority);
         }
-
-        // Also register in type-specific dictionaries for backwards compatibility
-        switch (provider)
+        else
         {
-            case IMarketDataClient streaming:
-                var streamingReg = new RegisteredStreamingProvider(id, streaming, priority, true);
-                _streamingProviders.TryAdd(id, streamingReg);
-                break;
-            case IHistoricalDataProvider backfill:
-                var backfillReg = new RegisteredBackfillProvider(id, backfill, priority, true);
-                _backfillProviders.TryAdd(id, backfillReg);
-                break;
-            case ISymbolSearchProvider search:
-                var searchReg = new RegisteredSymbolSearchProvider(id, search, priority, true);
-                _symbolSearchProviders.TryAdd(id, searchReg);
-                break;
+            _log.Warning("Provider already registered: {Name}", id);
         }
     }
 
@@ -157,19 +143,7 @@ public sealed class ProviderRegistry : IDisposable
     public void RegisterStreaming(string name, IMarketDataClient provider, int priority = 100)
     {
         ArgumentNullException.ThrowIfNull(provider);
-        ValidateName(name);
-
-        var registered = new RegisteredStreamingProvider(name, provider, priority, true);
-        if (_streamingProviders.TryAdd(name, registered))
-        {
-            // Also register in unified dictionary
-            _allProviders.TryAdd(name, new RegisteredProvider(name, provider, priority, true));
-            _log.Information("Registered streaming provider: {Name} (priority: {Priority})", name, priority);
-        }
-        else
-        {
-            _log.Warning("Streaming provider already registered: {Name}", name);
-        }
+        Register(provider, priority);
     }
 
     /// <summary>
@@ -177,8 +151,10 @@ public sealed class ProviderRegistry : IDisposable
     /// </summary>
     public IMarketDataClient? GetStreamingProvider(string name)
     {
-        return _streamingProviders.TryGetValue(name, out var registered) && registered.IsEnabled
-            ? registered.Provider
+        return _allProviders.TryGetValue(name, out var registered) &&
+               registered.IsEnabled &&
+               registered.Provider is IMarketDataClient client
+            ? client
             : null;
     }
 
@@ -187,10 +163,10 @@ public sealed class ProviderRegistry : IDisposable
     /// </summary>
     public IReadOnlyList<IMarketDataClient> GetStreamingProviders()
     {
-        return _streamingProviders.Values
-            .Where(r => r.IsEnabled)
+        return _allProviders.Values
+            .Where(r => r.IsEnabled && r.Provider is IMarketDataClient)
             .OrderBy(r => r.Priority)
-            .Select(r => r.Provider)
+            .Select(r => (IMarketDataClient)r.Provider)
             .ToList();
     }
 
@@ -204,19 +180,7 @@ public sealed class ProviderRegistry : IDisposable
     public void RegisterBackfill(string name, IHistoricalDataProvider provider, int priority = 100)
     {
         ArgumentNullException.ThrowIfNull(provider);
-        ValidateName(name);
-
-        var registered = new RegisteredBackfillProvider(name, provider, priority, true);
-        if (_backfillProviders.TryAdd(name, registered))
-        {
-            // Also register in unified dictionary
-            _allProviders.TryAdd(name, new RegisteredProvider(name, provider, priority, true));
-            _log.Information("Registered backfill provider: {Name} (priority: {Priority})", name, priority);
-        }
-        else
-        {
-            _log.Warning("Backfill provider already registered: {Name}", name);
-        }
+        Register(provider, priority);
     }
 
     /// <summary>
@@ -224,8 +188,10 @@ public sealed class ProviderRegistry : IDisposable
     /// </summary>
     public IHistoricalDataProvider? GetBackfillProvider(string name)
     {
-        return _backfillProviders.TryGetValue(name, out var registered) && registered.IsEnabled
-            ? registered.Provider
+        return _allProviders.TryGetValue(name, out var registered) &&
+               registered.IsEnabled &&
+               registered.Provider is IHistoricalDataProvider provider
+            ? provider
             : null;
     }
 
@@ -234,10 +200,10 @@ public sealed class ProviderRegistry : IDisposable
     /// </summary>
     public IReadOnlyList<IHistoricalDataProvider> GetBackfillProviders()
     {
-        return _backfillProviders.Values
-            .Where(r => r.IsEnabled)
+        return _allProviders.Values
+            .Where(r => r.IsEnabled && r.Provider is IHistoricalDataProvider)
             .OrderBy(r => r.Priority)
-            .Select(r => r.Provider)
+            .Select(r => (IHistoricalDataProvider)r.Provider)
             .ToList();
     }
 
@@ -246,13 +212,18 @@ public sealed class ProviderRegistry : IDisposable
     /// </summary>
     public async Task<IHistoricalDataProvider?> GetBestBackfillProviderAsync(CancellationToken ct = default)
     {
-        foreach (var registered in _backfillProviders.Values.Where(r => r.IsEnabled).OrderBy(r => r.Priority))
+        var backfillProviders = _allProviders.Values
+            .Where(r => r.IsEnabled && r.Provider is IHistoricalDataProvider)
+            .OrderBy(r => r.Priority);
+
+        foreach (var registered in backfillProviders)
         {
+            var provider = (IHistoricalDataProvider)registered.Provider;
             try
             {
-                if (await registered.Provider.IsAvailableAsync(ct).ConfigureAwait(false))
+                if (await provider.IsAvailableAsync(ct).ConfigureAwait(false))
                 {
-                    return registered.Provider;
+                    return provider;
                 }
             }
             catch (Exception ex)
@@ -273,19 +244,7 @@ public sealed class ProviderRegistry : IDisposable
     public void RegisterSymbolSearch(string name, ISymbolSearchProvider provider, int priority = 100)
     {
         ArgumentNullException.ThrowIfNull(provider);
-        ValidateName(name);
-
-        var registered = new RegisteredSymbolSearchProvider(name, provider, priority, true);
-        if (_symbolSearchProviders.TryAdd(name, registered))
-        {
-            // Also register in unified dictionary
-            _allProviders.TryAdd(name, new RegisteredProvider(name, provider, priority, true));
-            _log.Information("Registered symbol search provider: {Name} (priority: {Priority})", name, priority);
-        }
-        else
-        {
-            _log.Warning("Symbol search provider already registered: {Name}", name);
-        }
+        Register(provider, priority);
     }
 
     /// <summary>
@@ -293,8 +252,10 @@ public sealed class ProviderRegistry : IDisposable
     /// </summary>
     public ISymbolSearchProvider? GetSymbolSearchProvider(string name)
     {
-        return _symbolSearchProviders.TryGetValue(name, out var registered) && registered.IsEnabled
-            ? registered.Provider
+        return _allProviders.TryGetValue(name, out var registered) &&
+               registered.IsEnabled &&
+               registered.Provider is ISymbolSearchProvider provider
+            ? provider
             : null;
     }
 
@@ -303,10 +264,10 @@ public sealed class ProviderRegistry : IDisposable
     /// </summary>
     public IReadOnlyList<ISymbolSearchProvider> GetSymbolSearchProviders()
     {
-        return _symbolSearchProviders.Values
-            .Where(r => r.IsEnabled)
+        return _allProviders.Values
+            .Where(r => r.IsEnabled && r.Provider is ISymbolSearchProvider)
             .OrderBy(r => r.Priority)
-            .Select(r => r.Provider)
+            .Select(r => (ISymbolSearchProvider)r.Provider)
             .ToList();
     }
 
@@ -315,13 +276,18 @@ public sealed class ProviderRegistry : IDisposable
     /// </summary>
     public async Task<ISymbolSearchProvider?> GetBestSymbolSearchProviderAsync(CancellationToken ct = default)
     {
-        foreach (var registered in _symbolSearchProviders.Values.Where(r => r.IsEnabled).OrderBy(r => r.Priority))
+        var searchProviders = _allProviders.Values
+            .Where(r => r.IsEnabled && r.Provider is ISymbolSearchProvider)
+            .OrderBy(r => r.Priority);
+
+        foreach (var registered in searchProviders)
         {
+            var provider = (ISymbolSearchProvider)registered.Provider;
             try
             {
-                if (await registered.Provider.IsAvailableAsync(ct).ConfigureAwait(false))
+                if (await provider.IsAvailableAsync(ct).ConfigureAwait(false))
                 {
-                    return registered.Provider;
+                    return provider;
                 }
             }
             catch (Exception ex)
@@ -341,34 +307,16 @@ public sealed class ProviderRegistry : IDisposable
     /// </summary>
     public void Enable(string name)
     {
-        // Update unified dictionary
-        if (_allProviders.TryGetValue(name, out var unified))
+        if (_allProviders.TryGetValue(name, out var registered))
         {
-            _allProviders[name] = unified with { IsEnabled = true };
+            _allProviders[name] = registered with { IsEnabled = true };
+            _log.Information("Enabled provider: {Name} (type: {Type})",
+                name, registered.Provider.ProviderCapabilities.PrimaryType);
         }
-
-        if (_streamingProviders.TryGetValue(name, out var streaming))
+        else
         {
-            _streamingProviders[name] = streaming with { IsEnabled = true };
-            _log.Information("Enabled streaming provider: {Name}", name);
-            return;
+            _log.Warning("Provider not found: {Name}", name);
         }
-
-        if (_backfillProviders.TryGetValue(name, out var backfill))
-        {
-            _backfillProviders[name] = backfill with { IsEnabled = true };
-            _log.Information("Enabled backfill provider: {Name}", name);
-            return;
-        }
-
-        if (_symbolSearchProviders.TryGetValue(name, out var search))
-        {
-            _symbolSearchProviders[name] = search with { IsEnabled = true };
-            _log.Information("Enabled symbol search provider: {Name}", name);
-            return;
-        }
-
-        _log.Warning("Provider not found: {Name}", name);
     }
 
     /// <summary>
@@ -376,40 +324,25 @@ public sealed class ProviderRegistry : IDisposable
     /// </summary>
     public void Disable(string name)
     {
-        // Update unified dictionary
-        if (_allProviders.TryGetValue(name, out var unified))
+        if (_allProviders.TryGetValue(name, out var registered))
         {
-            _allProviders[name] = unified with { IsEnabled = false };
-        }
+            _allProviders[name] = registered with { IsEnabled = false };
+            _log.Information("Disabled provider: {Name} (type: {Type})",
+                name, registered.Provider.ProviderCapabilities.PrimaryType);
 
-        if (_streamingProviders.TryGetValue(name, out var streaming))
+            if (registered.Provider is IMarketDataClient)
+            {
+                _alertDispatcher?.Publish(MonitoringAlert.Warning(
+                    "ProviderRegistry",
+                    AlertCategory.Provider,
+                    $"Provider Disabled: {name}",
+                    $"Streaming provider {name} has been disabled"));
+            }
+        }
+        else
         {
-            _streamingProviders[name] = streaming with { IsEnabled = false };
-            _log.Information("Disabled streaming provider: {Name}", name);
-
-            _alertDispatcher?.Publish(MonitoringAlert.Warning(
-                "ProviderRegistry",
-                AlertCategory.Provider,
-                $"Provider Disabled: {name}",
-                $"Streaming provider {name} has been disabled"));
-            return;
+            _log.Warning("Provider not found: {Name}", name);
         }
-
-        if (_backfillProviders.TryGetValue(name, out var backfill))
-        {
-            _backfillProviders[name] = backfill with { IsEnabled = false };
-            _log.Information("Disabled backfill provider: {Name}", name);
-            return;
-        }
-
-        if (_symbolSearchProviders.TryGetValue(name, out var search))
-        {
-            _symbolSearchProviders[name] = search with { IsEnabled = false };
-            _log.Information("Disabled symbol search provider: {Name}", name);
-            return;
-        }
-
-        _log.Warning("Provider not found: {Name}", name);
     }
 
     /// <summary>
@@ -471,13 +404,12 @@ public sealed class ProviderRegistry : IDisposable
     /// </summary>
     public ProviderRegistrySummary GetSummary()
     {
+        var providers = _allProviders.Values.ToList();
         return new ProviderRegistrySummary(
-            StreamingCount: _streamingProviders.Count,
-            BackfillCount: _backfillProviders.Count,
-            SymbolSearchCount: _symbolSearchProviders.Count,
-            TotalEnabled: _streamingProviders.Values.Count(p => p.IsEnabled) +
-                         _backfillProviders.Values.Count(p => p.IsEnabled) +
-                         _symbolSearchProviders.Values.Count(p => p.IsEnabled));
+            StreamingCount: providers.Count(p => p.Provider is IMarketDataClient),
+            BackfillCount: providers.Count(p => p.Provider is IHistoricalDataProvider),
+            SymbolSearchCount: providers.Count(p => p.Provider is ISymbolSearchProvider),
+            TotalEnabled: providers.Count(p => p.IsEnabled));
     }
 
     #endregion
@@ -493,37 +425,30 @@ public sealed class ProviderRegistry : IDisposable
         if (_disposed) return;
         _disposed = true;
 
-        // Dispose streaming providers
-        foreach (var p in _streamingProviders.Values)
+        // Dispose all providers based on their capabilities
+        foreach (var registered in _allProviders.Values)
         {
-            try { _ = p.Provider.DisposeAsync().AsTask(); }
-            catch { /* ignore */ }
+            try
+            {
+                switch (registered.Provider)
+                {
+                    case IAsyncDisposable asyncDisposable:
+                        _ = asyncDisposable.DisposeAsync().AsTask();
+                        break;
+                    case IDisposable disposable:
+                        disposable.Dispose();
+                        break;
+                }
+            }
+            catch { /* ignore disposal errors */ }
         }
-        _streamingProviders.Clear();
 
-        // Dispose backfill providers
-        foreach (var p in _backfillProviders.Values)
-        {
-            try { p.Provider.Dispose(); }
-            catch { /* ignore */ }
-        }
-        _backfillProviders.Clear();
-
-        // Dispose symbol search providers
-        foreach (var p in _symbolSearchProviders.Values)
-        {
-            try { (p.Provider as IDisposable)?.Dispose(); }
-            catch { /* ignore */ }
-        }
-        _symbolSearchProviders.Clear();
-
-        // Clear unified registry
         _allProviders.Clear();
     }
 
-    private sealed record RegisteredStreamingProvider(string Name, IMarketDataClient Provider, int Priority, bool IsEnabled);
-    private sealed record RegisteredBackfillProvider(string Name, IHistoricalDataProvider Provider, int Priority, bool IsEnabled);
-    private sealed record RegisteredSymbolSearchProvider(string Name, ISymbolSearchProvider Provider, int Priority, bool IsEnabled);
+    /// <summary>
+    /// Internal record for tracking registered providers in the unified registry.
+    /// </summary>
     private sealed record RegisteredProvider(string Name, IProviderMetadata Provider, int Priority, bool IsEnabled);
 }
 
