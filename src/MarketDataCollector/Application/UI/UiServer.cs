@@ -1,26 +1,22 @@
 using System.Text.Json;
-using MarketDataCollector.Application.Backfill;
+using MarketDataCollector.Application.Composition;
 using MarketDataCollector.Application.Config;
-using MarketDataCollector.Application.Config.Credentials;
-using MarketDataCollector.Application.Monitoring;
-using MarketDataCollector.Application.Services;
-using MarketDataCollector.Application.Subscriptions.Models;
-using MarketDataCollector.Application.Subscriptions.Services;
 using MarketDataCollector.Contracts.Api;
-using MarketDataCollector.Infrastructure.Providers.Backfill.Scheduling;
-using MarketDataCollector.Infrastructure.Providers.SymbolSearch;
+using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Storage;
-using MarketDataCollector.Storage.Interfaces;
-using MarketDataCollector.Storage.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace MarketDataCollector.Application.UI;
 
+/// <summary>
+/// Embedded HTTP server for the web dashboard UI.
+/// Uses ServiceCompositionRoot for centralized service registration.
+/// </summary>
+[ImplementsAdr("ADR-001", "UiServer uses centralized composition root")]
 public sealed class UiServer : IAsyncDisposable
 {
     private static readonly JsonSerializerOptions s_jsonOptions = new()
@@ -43,98 +39,22 @@ public sealed class UiServer : IAsyncDisposable
         return Results.Problem($"{operation}. Please check server logs for details.");
     }
 
+    /// <summary>
+    /// Creates a new UiServer using the centralized ServiceCompositionRoot.
+    /// </summary>
+    /// <param name="configPath">Path to the configuration file.</param>
+    /// <param name="port">HTTP port to listen on.</param>
     public UiServer(string configPath, int port = 8080)
     {
         var builder = WebApplication.CreateBuilder();
 
         // Minimize logging from ASP.NET Core
-        builder.Logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Warning);
-
+        builder.Logging.SetMinimumLevel(LogLevel.Warning);
         builder.WebHost.UseUrls($"http://localhost:{port}");
 
-        var store = new ConfigStore(configPath);
-        builder.Services.AddSingleton(store);
-        builder.Services.AddSingleton<BackfillCoordinator>();
-
-        // Symbol management services
-        builder.Services.AddSingleton<SymbolImportExportService>();
-        builder.Services.AddSingleton<TemplateService>();
-        builder.Services.AddSingleton<SchedulingService>();
-        builder.Services.AddSingleton<MetadataEnrichmentService>();
-        builder.Services.AddSingleton<IndexSubscriptionService>();
-        builder.Services.AddSingleton<WatchlistService>();
-        builder.Services.AddSingleton<BatchOperationsService>();
-        builder.Services.AddSingleton<PortfolioImportService>();
-
-        // Symbol search and autocomplete services
-        builder.Services.AddSingleton<OpenFigiClient>();
-        builder.Services.AddSingleton<SymbolSearchService>(sp =>
-        {
-            var metadataService = sp.GetRequiredService<MetadataEnrichmentService>();
-            var figiClient = sp.GetRequiredService<OpenFigiClient>();
-            return new SymbolSearchService(
-                new ISymbolSearchProvider[]
-                {
-                    new AlpacaSymbolSearchProviderRefactored(),
-                    new FinnhubSymbolSearchProviderRefactored(),
-                    new PolygonSymbolSearchProvider()
-                },
-                figiClient,
-                metadataService);
-        });
-
-        // Storage organization services - uses default profile (Research) when no config provided
-        var config = store.Load();
-        var compressionEnabled = config.Compress ?? false;
-        var storageOptions = config.Storage?.ToStorageOptions(config.DataRoot, compressionEnabled)
-            ?? StorageProfilePresets.CreateFromProfile(null, config.DataRoot, compressionEnabled);
-        builder.Services.AddSingleton(storageOptions);
-        builder.Services.AddSingleton<ISourceRegistry>(sp => new SourceRegistry(config.Sources?.PersistencePath));
-        builder.Services.AddSingleton<IFileMaintenanceService, FileMaintenanceService>();
-        builder.Services.AddSingleton<IDataQualityService, DataQualityService>();
-        builder.Services.AddSingleton<IStorageSearchService, StorageSearchService>();
-        builder.Services.AddSingleton<ITierMigrationService, TierMigrationService>();
-
-        // New services for QW features
-        builder.Services.AddSingleton(new HistoricalDataQueryService(config.DataRoot));
-        builder.Services.AddSingleton(new DiagnosticBundleService(config.DataRoot, null, () => store.Load()));
-        builder.Services.AddSingleton<SampleDataGenerator>();
-        builder.Services.AddSingleton(new ErrorTracker(config.DataRoot));
-        builder.Services.AddSingleton<ConfigTemplateGenerator>();
-        builder.Services.AddSingleton<ConfigEnvironmentOverride>();
-        builder.Services.AddSingleton<DryRunService>();
-        builder.Services.AddSingleton<ApiDocumentationService>();
-
-        // Consolidated configuration service - single entry point for all config operations
-        builder.Services.AddSingleton<ConfigurationService>();
-
-        // Credential management services
-        builder.Services.AddSingleton(new CredentialTestingService(config.DataRoot));
-        builder.Services.AddSingleton(new OAuthTokenRefreshService(config.DataRoot));
-        // Scheduled backfill services
-        var executionHistory = new BackfillExecutionHistory();
-        using var loggerFactory = LoggerFactory.Create(b => b.AddConsole().SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Warning));
-        var scheduleManagerLogger = loggerFactory.CreateLogger<BackfillScheduleManager>();
-        var scheduleManager = new BackfillScheduleManager(scheduleManagerLogger, config.DataRoot, executionHistory);
-        builder.Services.AddSingleton(scheduleManager);
-        builder.Services.AddSingleton(executionHistory);
-
-        // Archive maintenance services
-        var maintenanceHistory = new Storage.Maintenance.MaintenanceExecutionHistory(config.DataRoot);
-        var maintenanceScheduleManagerLogger = loggerFactory.CreateLogger<Storage.Maintenance.ArchiveMaintenanceScheduleManager>();
-        var maintenanceScheduleManager = new Storage.Maintenance.ArchiveMaintenanceScheduleManager(
-            maintenanceScheduleManagerLogger, config.DataRoot, maintenanceHistory);
-        builder.Services.AddSingleton(maintenanceScheduleManager);
-        builder.Services.AddSingleton(maintenanceHistory);
-        builder.Services.AddSingleton<Storage.Maintenance.ScheduledArchiveMaintenanceService>(sp =>
-        {
-            var serviceLogger = sp.GetRequiredService<ILoggerFactory>().CreateLogger<Storage.Maintenance.ScheduledArchiveMaintenanceService>();
-            var schedMgr = sp.GetRequiredService<Storage.Maintenance.ArchiveMaintenanceScheduleManager>();
-            var fileMaint = sp.GetRequiredService<IFileMaintenanceService>();
-            var tierMigration = sp.GetRequiredService<ITierMigrationService>();
-            var storageOpts = sp.GetRequiredService<StorageOptions>();
-            return new Storage.Maintenance.ScheduledArchiveMaintenanceService(serviceLogger, schedMgr, fileMaint, tierMigration, storageOpts);
-        });
+        // Use centralized service composition root
+        var compositionOptions = CompositionOptions.WebDashboard with { ConfigPath = configPath };
+        builder.Services.AddMarketDataServices(compositionOptions);
 
         _app = builder.Build();
         _logger = _app.Services.GetRequiredService<ILoggerFactory>().CreateLogger<UiServer>();

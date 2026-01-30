@@ -1,4 +1,5 @@
 using System.Text.Json;
+using MarketDataCollector.Application.Composition;
 using MarketDataCollector.Application.UI;
 using MarketDataCollector.Ui.Shared.Services;
 using Microsoft.AspNetCore.Builder;
@@ -10,6 +11,7 @@ namespace MarketDataCollector.Ui.Shared.Endpoints;
 /// <summary>
 /// Master extension methods for registering all UI API endpoints.
 /// Provides a single entry point for mapping all shared endpoints.
+/// Uses ServiceCompositionRoot for centralized service registration.
 /// </summary>
 public static class UiEndpoints
 {
@@ -21,10 +23,11 @@ public static class UiEndpoints
     /// instead of calling AddUiSharedServices and MapAllUiEndpoints separately.
     /// </summary>
     /// <param name="builder">The web application builder.</param>
+    /// <param name="configPath">Optional path to configuration file.</param>
     /// <returns>A configured WebApplication ready to run.</returns>
-    public static WebApplication BuildUiHost(this WebApplicationBuilder builder)
+    public static WebApplication BuildUiHost(this WebApplicationBuilder builder, string? configPath = null)
     {
-        builder.Services.AddUiSharedServices();
+        builder.Services.AddUiSharedServices(configPath);
         var app = builder.Build();
         app.MapAllUiEndpoints();
         return app;
@@ -36,10 +39,11 @@ public static class UiEndpoints
     /// </summary>
     /// <param name="builder">The web application builder.</param>
     /// <param name="statusHandlers">Pre-configured status endpoint handlers to share.</param>
+    /// <param name="configPath">Optional path to configuration file.</param>
     /// <returns>A configured WebApplication ready to run.</returns>
-    public static WebApplication BuildUiHost(this WebApplicationBuilder builder, StatusEndpointHandlers statusHandlers)
+    public static WebApplication BuildUiHost(this WebApplicationBuilder builder, StatusEndpointHandlers statusHandlers, string? configPath = null)
     {
-        builder.Services.AddUiSharedServices(statusHandlers);
+        builder.Services.AddUiSharedServices(statusHandlers, configPath);
         var app = builder.Build();
         app.MapUiEndpointsWithStatus(statusHandlers);
         return app;
@@ -50,12 +54,25 @@ public static class UiEndpoints
     #region Service Registration
 
     /// <summary>
-    /// Registers all shared services required by UI endpoints.
+    /// Registers all shared services required by UI endpoints using the centralized composition root.
+    /// Replaces the core BackfillCoordinator with the UI-extended version that includes preview functionality.
     /// </summary>
-    public static IServiceCollection AddUiSharedServices(this IServiceCollection services)
+    /// <param name="services">The service collection.</param>
+    /// <param name="configPath">Optional path to configuration file.</param>
+    public static IServiceCollection AddUiSharedServices(this IServiceCollection services, string? configPath = null)
     {
-        services.AddSingleton<ConfigStore>();
-        services.AddSingleton<BackfillCoordinator>();
+        // Use the centralized composition root (registers core services)
+        var options = CompositionOptions.WebDashboard with { ConfigPath = configPath };
+        services.AddMarketDataServices(options);
+
+        // Replace core BackfillCoordinator with UI-extended version that includes PreviewAsync
+        // The Ui.Shared.Services.BackfillCoordinator wraps the core and adds preview functionality
+        services.AddSingleton<BackfillCoordinator>(sp =>
+        {
+            var configStore = sp.GetRequiredService<ConfigStore>();
+            return new BackfillCoordinator(configStore);
+        });
+
         return services;
     }
 
@@ -63,10 +80,22 @@ public static class UiEndpoints
     /// Registers shared services with a pre-configured StatusEndpointHandlers instance.
     /// Use this when you want to share the same handlers with StatusHttpServer.
     /// </summary>
-    public static IServiceCollection AddUiSharedServices(this IServiceCollection services, StatusEndpointHandlers statusHandlers)
+    /// <param name="services">The service collection.</param>
+    /// <param name="statusHandlers">Status endpoint handlers to register.</param>
+    /// <param name="configPath">Optional path to configuration file.</param>
+    public static IServiceCollection AddUiSharedServices(this IServiceCollection services, StatusEndpointHandlers statusHandlers, string? configPath = null)
     {
-        services.AddSingleton<ConfigStore>();
-        services.AddSingleton<BackfillCoordinator>();
+        // Use the centralized composition root (registers core services)
+        var options = CompositionOptions.WebDashboard with { ConfigPath = configPath };
+        services.AddMarketDataServices(options);
+
+        // Replace core BackfillCoordinator with UI-extended version that includes PreviewAsync
+        services.AddSingleton<BackfillCoordinator>(sp =>
+        {
+            var configStore = sp.GetRequiredService<ConfigStore>();
+            return new BackfillCoordinator(configStore);
+        });
+
         services.AddSingleton(statusHandlers);
         return services;
     }

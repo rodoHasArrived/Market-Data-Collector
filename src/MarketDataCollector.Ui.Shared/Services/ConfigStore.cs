@@ -1,146 +1,58 @@
-using System.Text.Json;
-using MarketDataCollector.Application.Backfill;
-using MarketDataCollector.Application.Config;
-using MarketDataCollector.Application.Monitoring;
+// Re-export the consolidated ConfigStore from the core project.
+// This preserves backward compatibility for existing code referencing this namespace.
+using CoreConfigStore = MarketDataCollector.Application.UI.ConfigStore;
 
 namespace MarketDataCollector.Ui.Shared.Services;
 
 /// <summary>
-/// Service for loading and persisting application configuration.
-/// Provides access to config files, status files, and provider metrics.
-/// Shared between web dashboard and desktop applications.
+/// ConfigStore for web dashboard and shared UI services.
+/// This is a type alias for the consolidated core ConfigStore implementation.
 /// </summary>
-public sealed class ConfigStore
+/// <remarks>
+/// <para><b>Migration Note:</b> This type alias exists for backward compatibility.
+/// New code should reference <see cref="MarketDataCollector.Application.UI.ConfigStore"/> directly.</para>
+/// <para>The web-specific default path resolver is registered via <see cref="ConfigStoreExtensions.UseWebDefaultPath"/>.</para>
+/// </remarks>
+public sealed class ConfigStore : CoreConfigStore
 {
     /// <summary>
-    /// Gets the path to the configuration file.
+    /// Creates a new ConfigStore with the web dashboard default path.
+    /// The default path resolves to appsettings.json at solution root (4 directories up from BaseDirectory).
     /// </summary>
-    public string ConfigPath { get; }
-
-    /// <summary>
-    /// Creates a new ConfigStore with the default configuration path.
-    /// Config lives at solution root by convention.
-    /// </summary>
-    public ConfigStore()
+    public ConfigStore() : base(GetWebDefaultPath())
     {
-        ConfigPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "appsettings.json"));
     }
 
     /// <summary>
     /// Creates a new ConfigStore with a custom configuration path.
     /// </summary>
     /// <param name="configPath">Full path to the configuration file.</param>
-    public ConfigStore(string configPath)
+    public ConfigStore(string configPath) : base(configPath)
     {
-        ConfigPath = configPath;
     }
 
     /// <summary>
-    /// Loads the application configuration from disk.
+    /// Gets the default configuration path for web dashboard hosting.
+    /// Config lives at solution root by convention (4 directories up from bin output).
     /// </summary>
-    public AppConfig Load()
+    private static string GetWebDefaultPath()
     {
-        try
-        {
-            if (!File.Exists(ConfigPath)) return new AppConfig();
-            var json = File.ReadAllText(ConfigPath);
-            return JsonSerializer.Deserialize<AppConfig>(json, AppConfigJsonOptions.Read) ?? new AppConfig();
-        }
-        catch
-        {
-            return new AppConfig();
-        }
+        return Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "appsettings.json"));
     }
+}
 
+/// <summary>
+/// Extension methods for ConfigStore web-specific configuration.
+/// </summary>
+public static class ConfigStoreExtensions
+{
     /// <summary>
-    /// Saves the application configuration to disk.
+    /// Configures the default path resolver for web dashboard hosting.
+    /// Call this at startup before any ConfigStore instances are created.
     /// </summary>
-    public async Task SaveAsync(AppConfig cfg)
+    public static void UseWebDefaultPath()
     {
-        var json = JsonSerializer.Serialize(cfg, AppConfigJsonOptions.Write);
-        Directory.CreateDirectory(Path.GetDirectoryName(ConfigPath)!);
-        await File.WriteAllTextAsync(ConfigPath, json);
-    }
-
-    /// <summary>
-    /// Tries to load the status JSON file contents.
-    /// </summary>
-    public string? TryLoadStatusJson()
-    {
-        try
-        {
-            var statusPath = GetStatusPath();
-            return File.Exists(statusPath) ? File.ReadAllText(statusPath) : null;
-        }
-        catch
-        {
-            return null;
-        }
-    }
-
-    /// <summary>
-    /// Gets the path to the status file.
-    /// </summary>
-    public string GetStatusPath(AppConfig? cfg = null)
-    {
-        cfg ??= Load();
-        var root = GetDataRoot(cfg);
-        return Path.Combine(root, "_status", "status.json");
-    }
-
-    /// <summary>
-    /// Gets the path to the backfill status file.
-    /// </summary>
-    public string GetBackfillStatusPath(AppConfig? cfg = null)
-    {
-        cfg ??= Load();
-        var root = GetDataRoot(cfg);
-        return Path.Combine(root, "_status", "backfill.json");
-    }
-
-    /// <summary>
-    /// Tries to load the backfill status from disk.
-    /// </summary>
-    public BackfillResult? TryLoadBackfillStatus()
-    {
-        var cfg = Load();
-        var store = new BackfillStatusStore(GetDataRoot(cfg));
-        return store.TryRead();
-    }
-
-    /// <summary>
-    /// Gets the data root directory path.
-    /// </summary>
-    public string GetDataRoot(AppConfig? cfg = null)
-    {
-        cfg ??= Load();
-        var root = string.IsNullOrWhiteSpace(cfg.DataRoot) ? "data" : cfg.DataRoot;
-        var baseDir = Path.GetDirectoryName(ConfigPath)!;
-        return Path.GetFullPath(Path.Combine(baseDir, root));
-    }
-
-    /// <summary>
-    /// Tries to load provider metrics from the status file.
-    /// </summary>
-    public ProviderMetricsStatus? TryLoadProviderMetrics()
-    {
-        try
-        {
-            var cfg = Load();
-            var root = GetDataRoot(cfg);
-            var metricsPath = Path.Combine(root, "_status", "provider_metrics.json");
-
-            if (!File.Exists(metricsPath)) return null;
-
-            var json = File.ReadAllText(metricsPath);
-            return JsonSerializer.Deserialize<ProviderMetricsStatus>(json, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
-        }
-        catch
-        {
-            return null;
-        }
+        CoreConfigStore.DefaultPathResolver = () =>
+            Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "appsettings.json"));
     }
 }
