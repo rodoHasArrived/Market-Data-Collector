@@ -1037,6 +1037,12 @@ PROFILES:
     • Manifests: Disabled
     • Ideal for: Real-time trading, high-frequency data capture
 
+  Note:
+    This profile configures partitioning via the newer PartitionStrategy
+    mechanism. The legacy DatePartition option is still present and used
+    in some parts of the system for backward compatibility, but when a
+    storage profile is selected, PartitionStrategy should be treated as
+    the primary source of truth for partitioning behavior.
   Archival
   ─────────────────────────────────────────────────────────────────────
   Long-term storage with tiered architecture and high compression.
