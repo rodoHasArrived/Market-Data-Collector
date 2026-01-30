@@ -33,6 +33,36 @@ public static class ConfigValidationHelper
     }
 
     /// <summary>
+    /// Validates AppConfig and collects errors into a list.
+    /// This overload is used by ConfigurationService for consolidated validation.
+    /// </summary>
+    /// <param name="config">Configuration to validate.</param>
+    /// <param name="errors">List to collect error messages.</param>
+    /// <returns>True if valid, false otherwise.</returns>
+    public static bool ValidateAndLog(AppConfig config, ICollection<string> errors)
+    {
+        var validator = new ExtendedAppConfigValidator();
+        var result = validator.Validate(config);
+
+        if (result.IsValid)
+        {
+            Log.Information("Configuration validation passed");
+            return true;
+        }
+
+        var log = Log.ForContext("SourceContext", "ConfigValidation");
+        log.Error("Configuration validation failed with {ErrorCount} error(s):", result.Errors.Count);
+
+        foreach (var error in result.Errors)
+        {
+            log.Error("  - {PropertyName}: {ErrorMessage}", error.PropertyName, error.ErrorMessage);
+            errors.Add($"{error.PropertyName}: {error.ErrorMessage}");
+        }
+
+        return false;
+    }
+
+    /// <summary>
     /// Validates and throws if configuration is invalid.
     /// </summary>
     public static void ValidateOrThrow(AppConfig config)
