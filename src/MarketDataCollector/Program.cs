@@ -194,6 +194,53 @@ internal static class Program
             return;
         }
 
+        // Check Schemas Mode - Verify stored data schema compatibility
+        if (args.Any(a => a.Equals("--check-schemas", StringComparison.OrdinalIgnoreCase)))
+        {
+            log.Information("Checking stored data schema compatibility...");
+
+            var schemaOptions = new SchemaValidationOptions
+            {
+                EnableVersionTracking = true,
+                MaxFilesToCheck = int.TryParse(GetArgValue(args, "--max-files"), out var maxFiles) ? maxFiles : 100,
+                FailOnFirstIncompatibility = args.Any(a => a.Equals("--fail-fast", StringComparison.OrdinalIgnoreCase))
+            };
+
+            await using var schemaService = new SchemaValidationService(schemaOptions, cfg.DataRoot);
+            var result = await schemaService.PerformStartupCheckAsync();
+
+            Console.WriteLine();
+            if (result.Success)
+            {
+                Console.WriteLine("Schema Compatibility Check: PASSED");
+                Console.WriteLine(new string('=', 50));
+                Console.WriteLine($"  {result.Message}");
+                Console.WriteLine($"  Current schema version: {SchemaValidationService.CurrentSchemaVersion}");
+            }
+            else
+            {
+                Console.WriteLine("Schema Compatibility Check: ISSUES FOUND");
+                Console.WriteLine(new string('=', 50));
+                Console.WriteLine($"  {result.Message}");
+                Console.WriteLine();
+                Console.WriteLine("  Incompatible files:");
+                foreach (var incompat in result.Incompatibilities.Take(10))
+                {
+                    var migratable = incompat.CanMigrate ? " (can migrate)" : "";
+                    Console.WriteLine($"    - {incompat.FilePath}");
+                    Console.WriteLine($"      Version: {incompat.DetectedVersion} (expected {incompat.ExpectedVersion}){migratable}");
+                }
+                if (result.Incompatibilities.Length > 10)
+                {
+                    Console.WriteLine($"    ... and {result.Incompatibilities.Length - 10} more");
+                }
+            }
+            Console.WriteLine();
+
+            Environment.Exit(result.Success ? 0 : 1);
+            return;
+        }
+
         // Show Summary Mode - Display configuration summary (routed through ConfigurationService)
         if (args.Any(a => a.Equals("--show-config", StringComparison.OrdinalIgnoreCase)))
         {
@@ -379,8 +426,8 @@ internal static class Program
             return;
         }
 
-        // UI Mode - Start web dashboard
-        if (runMode == RunMode.Web || args.Any(a => a.Equals("--ui", StringComparison.OrdinalIgnoreCase)))
+        // UI Mode - Start web dashboard (handles both --mode web and legacy --ui flag)
+        if (runMode == CliModeResolver.RunMode.Web)
         {
             var uiPort = int.TryParse(GetArgValue(args, "--http-port"), out var parsedUiPort) ? parsedUiPort : 8080;
             log.Information("Starting web dashboard on port {Port}...", uiPort);
@@ -497,6 +544,31 @@ internal static class Program
         }
         log.Information("Data directory permissions configured: {Message}", permissionsResult.Message);
 
+        // Optional startup schema compatibility check
+        if (args.Any(a => a.Equals("--validate-schemas", StringComparison.OrdinalIgnoreCase)))
+        {
+            log.Information("Running startup schema compatibility check...");
+            await using var schemaService = new SchemaValidationService(
+                new SchemaValidationOptions { EnableVersionTracking = true },
+                cfg.DataRoot);
+
+            var schemaCheckResult = await schemaService.PerformStartupCheckAsync();
+            if (!schemaCheckResult.Success)
+            {
+                log.Warning("Schema compatibility check found issues: {Message}", schemaCheckResult.Message);
+                if (args.Any(a => a.Equals("--strict-schemas", StringComparison.OrdinalIgnoreCase)))
+                {
+                    log.Error("Exiting due to schema incompatibilities (--strict-schemas enabled)");
+                    Environment.Exit(1);
+                    return;
+                }
+            }
+            else
+            {
+                log.Information("Schema compatibility check passed: {Message}", schemaCheckResult.Message);
+            }
+        }
+
         var replayPath = GetArgValue(args, "--replay");
 
         var statusPath = Path.Combine(cfg.DataRoot, "_status", "status.json");
@@ -504,7 +576,7 @@ internal static class Program
         ConfigWatcher? watcher = null;
         UiServer? uiServer = null;
 
-        if (runMode == RunMode.Desktop)
+        if (runMode == CliModeResolver.RunMode.Desktop)
         {
             var uiPort = int.TryParse(GetArgValue(args, "--http-port"), out var parsedUiPort) ? parsedUiPort : 8080;
             log.Information("Desktop mode: starting UI server on port {Port}...", uiPort);
@@ -682,32 +754,16 @@ internal static class Program
         }
     }
 
-    private enum RunMode
+    // Use CliModeResolver.RunMode for run mode handling
+    private static CliModeResolver.RunMode ResolveRunMode(string[] args, ILogger log)
     {
-        Headless,
-        Web,
-        Desktop
-    }
-
-    private static RunMode ResolveRunMode(string[] args, ILogger log)
-    {
-        var modeArg = GetArgValue(args, "--mode");
-        if (string.IsNullOrWhiteSpace(modeArg))
-            return RunMode.Headless;
-
-        var normalized = modeArg.Trim().ToLowerInvariant();
-        return normalized switch
+        var (mode, error) = CliModeResolver.ResolveWithError(args);
+        if (error != null)
         {
-            "web" => RunMode.Web,
-            "desktop" => RunMode.Desktop,
-            "headless" => RunMode.Headless,
-            _ =>
-            {
-                log.Error("Unknown mode '{Mode}'. Use web, desktop, or headless.", normalized);
-                Environment.Exit(1);
-                return RunMode.Headless;
-            }
-        };
+            log.Error(error);
+            Environment.Exit(1);
+        }
+        return mode;
     }
 
     private static void ShowHelp()
@@ -747,7 +803,14 @@ DIAGNOSTICS & TROUBLESHOOTING:
     --test-connectivity     Test connectivity to all configured providers
     --show-config           Display current configuration summary
     --error-codes           Show error code reference guide
+    --check-schemas         Check stored data schema compatibility
     --simulate-feed         Emit a synthetic depth/trade event for smoke testing
+
+SCHEMA VALIDATION OPTIONS:
+    --validate-schemas      Run schema check during startup
+    --strict-schemas        Exit if schema incompatibilities found (use with --validate-schemas)
+    --max-files <n>         Max files to check (default: 100, use with --check-schemas)
+    --fail-fast             Stop on first incompatibility (use with --check-schemas)
 
 SYMBOL MANAGEMENT:
     --symbols               Show all symbols (monitored + archived)
