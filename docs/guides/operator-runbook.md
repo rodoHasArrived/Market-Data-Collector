@@ -583,6 +583,6 @@ This ensures `ContractFactory` resolves to the correct IB contract.
 
 ---
 
-**Version:** 1.0.0
-**Last Updated:** 2026-01-08
+**Version:** 1.6.1
+**Last Updated:** 2026-01-30
 **See Also:** [Configuration](configuration.md) | [Troubleshooting](troubleshooting.md) | [Architecture](../architecture/overview.md) | [Lean Integration](../integrations/lean-integration.md)

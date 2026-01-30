@@ -1,8 +1,8 @@
 # Market Data Collector
 
-**Version**: 1.0.0 (repository snapshot) | **Last Updated**: 2026-01-27
+**Version**: 1.6.1 | **Last Updated**: 2026-01-30
 
-**Current Status**: Active development. Some providers require credentials or build-time flags; see [production status](status/production-status.md) for readiness notes.
+**Current Status**: Production Ready. Some providers require credentials or build-time flags; see [production status](status/production-status.md) for readiness notes.
 
 A cross-platform market data collector for real-time and historical market microstructure data. It ingests provider feeds, normalizes them into domain events, and persists them to JSONL/Parquet for downstream research. The current repository snapshot includes a CLI, web dashboard, and a Windows desktop UI (UWP).
 

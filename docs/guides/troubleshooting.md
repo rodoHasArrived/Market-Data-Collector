@@ -540,6 +540,6 @@ If you're still experiencing issues:
 
 ---
 
-**Version:** 1.0.0
-**Last Updated:** 2026-01-08
+**Version:** 1.6.1
+**Last Updated:** 2026-01-30
 **See Also:** [Getting Started](getting-started.md) | [Configuration](configuration.md) | [Operator Runbook](operator-runbook.md) | [Lean Integration](../integrations/lean-integration.md)

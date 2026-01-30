@@ -6,7 +6,7 @@ This document provides essential context for AI assistants (Claude, Copilot, etc
 
 Market Data Collector is a high-performance, cross-platform market data collection system built on **.NET 9.0** using **C# 11** and **F# 8.0**. It captures real-time and historical market microstructure data from multiple providers and persists it for downstream research, backtesting, and algorithmic trading.
 
-**Version:** 1.6.1 | **Status:** Production Ready | **Files:** 447 source files
+**Version:** 1.6.1 | **Status:** Production Ready | **Files:** 478 source files
 
 ### Key Capabilities
 - Real-time streaming from Interactive Brokers, Alpaca, NYSE, Polygon, StockSharp
@@ -19,16 +19,16 @@ Market Data Collector is a high-performance, cross-platform market data collecti
 ### Project Statistics
 | Metric | Count |
 |--------|-------|
-| Total Source Files | 447 |
-| C# Files | 413 |
+| Total Source Files | 478 |
+| C# Files | 466 |
 | F# Files | 12 |
-| Test Files | 45 |
-| Documentation Files | 56+ |
-| Main Projects | 5 (+ 3 test/benchmark) |
+| Test Files | 50 |
+| Documentation Files | 61 |
+| Main Projects | 6 (+ 3 test/benchmark) |
 | Provider Implementations | 5 streaming, 10+ historical |
 | Symbol Search Providers | 4 |
-| CI/CD Workflows | 20 |
-| Makefile Targets | 60+ |
+| CI/CD Workflows | 21 |
+| Makefile Targets | 67 |
 
 ---
 
@@ -187,6 +187,9 @@ Market-Data-Collector/
 │   ├── MarketDataCollector.Ui/       # Web dashboard (10 files)
 │   │   ├── Endpoints/                # HTTP endpoints
 │   │   └── wwwroot/                  # Static assets
+│   ├── MarketDataCollector.Ui.Shared/ # Shared UI services & endpoints
+│   │   ├── Endpoints/                # Consolidated HTTP endpoints
+│   │   └── Services/                 # Shared UI services
 │   └── MarketDataCollector.Uwp/      # Windows desktop app (WinUI 3)
 │       ├── Views/                    # XAML UI pages
 │       ├── ViewModels/               # MVVM view models
@@ -289,8 +292,10 @@ ADRs document significant architectural decisions. Located in `docs/adr/`:
 |-----|-------|------------|
 | ADR-001 | Provider Abstraction | Interface contracts for data providers |
 | ADR-002 | Tiered Storage | Hot/cold storage architecture |
+| ADR-003 | Microservices Decomposition | Rejected in favor of monolith |
 | ADR-004 | Async Streaming Patterns | CancellationToken, IAsyncEnumerable |
 | ADR-005 | Attribute-Based Discovery | `[DataSource]`, `[ImplementsAdr]` attributes |
+| ADR-010 | HttpClient Factory | HttpClientFactory lifecycle management |
 
 Use `[ImplementsAdr("ADR-XXX", "reason")]` attribute when implementing ADR contracts.
 
@@ -319,16 +324,16 @@ dotnet test --collect:"XPlat Code Coverage"
 dotnet test tests/MarketDataCollector.FSharp.Tests
 ```
 
-### Test Organization (45 test files total)
+### Test Organization (50 test files total)
 | Directory | Purpose | Files |
 |-----------|---------|-------|
 | `tests/MarketDataCollector.Tests/Backfill/` | Backfill provider tests | 4 |
 | `tests/MarketDataCollector.Tests/Credentials/` | Credential provider tests | 3 |
 | `tests/MarketDataCollector.Tests/Indicators/` | Technical indicator tests | 1 |
-| `tests/MarketDataCollector.Tests/Infrastructure/` | Infrastructure tests | 1 |
+| `tests/MarketDataCollector.Tests/Infrastructure/` | Infrastructure tests | 2 |
 | `tests/MarketDataCollector.Tests/Integration/` | End-to-end tests | 1 |
-| `tests/MarketDataCollector.Tests/Models/` | Domain model tests | 1 |
-| `tests/MarketDataCollector.Tests/Monitoring/` | Monitoring/quality tests | 5 |
+| `tests/MarketDataCollector.Tests/Models/` | Domain model tests | 2 |
+| `tests/MarketDataCollector.Tests/Monitoring/` | Monitoring/quality tests | 9 |
 | `tests/MarketDataCollector.Tests/Pipeline/` | Event pipeline tests | 1 |
 | `tests/MarketDataCollector.Tests/Providers/` | Provider-specific tests | 1 |
 | `tests/MarketDataCollector.Tests/Serialization/` | JSON serialization tests | 1 |
@@ -525,7 +530,7 @@ make run-backfill SYMBOLS=SPY,AAPL
 
 ## CI/CD Pipelines
 
-The project uses GitHub Actions with 20 workflows in `.github/workflows/`:
+The project uses GitHub Actions with 21 workflows in `.github/workflows/`:
 
 | Workflow | Purpose |
 |----------|---------|
@@ -549,6 +554,7 @@ The project uses GitHub Actions with 20 workflows in `.github/workflows/`:
 | `cache-management.yml` | Build cache management |
 | `validate-workflows.yml` | Workflow validation |
 | `build-observability.yml` | Build metrics collection |
+| `reusable-dotnet-build.yml` | Reusable .NET build workflow |
 
 ---
 
@@ -679,4 +685,4 @@ dotnet restore /p:EnableWindowsTargeting=true -v diag
 
 ---
 
-*Last Updated: 2026-01-27*
+*Last Updated: 2026-01-30*

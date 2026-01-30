@@ -1,8 +1,8 @@
 # Market Data Collector - Roadmap
 
-**Version:** 1.0.0 (repository snapshot)
-**Last Updated:** 2026-01-29
-**Status:** Active development
+**Version:** 1.6.1
+**Last Updated:** 2026-01-30
+**Status:** Production Ready
 
 This document provides the current focus areas and near-term goals. The full backlog is maintained in the issue tracker.
 

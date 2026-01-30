@@ -5,7 +5,7 @@
 - **Scope:** Architecture, controls, operational posture, and readiness for controlled production use
 - **Audience:** Engineering leadership, risk/compliance stakeholders, and institutional reviewers
 - **Version:** 2.1
-- **Last Updated:** 2026-01-08
+- **Last Updated:** 2026-01-30
 
 ---
 

@@ -1,7 +1,7 @@
 # Market Data Collector - Changelog
 
-**Last Updated:** 2026-01-27
-**Current Version:** 1.0.0 (repository snapshot)
+**Last Updated:** 2026-01-30
+**Current Version:** 1.6.1
 
 This changelog summarizes the current repository snapshot. Historical release notes are not curated in this repo; use git history for detailed diffs.
 

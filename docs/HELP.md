@@ -56,7 +56,7 @@ Welcome to the Market Data Collector! This comprehensive guide will help you get
 
 Market Data Collector is a high-performance, cross-platform market data collection system built on **.NET 9.0** using **C# 11** and **F# 8.0**. It captures real-time and historical market microstructure data from multiple providers and persists it for downstream research, backtesting, and algorithmic trading.
 
-**Version:** 1.0.0 | **Status:** Active development (repository snapshot)
+**Version:** 1.6.1 | **Status:** Production Ready
 
 ### Key Features
 
@@ -2126,6 +2126,6 @@ Before contributing code:
 
 ---
 
-**Version:** 1.0.0
-**Last Updated:** 2026-01-27
+**Version:** 1.6.1
+**Last Updated:** 2026-01-30
 **License:** See LICENSE file
