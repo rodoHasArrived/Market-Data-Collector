@@ -36,10 +36,10 @@ The system is suitable for controlled production deployment provided the operati
 ## 3. Architectural Summary
 
 ### Layering
-- **Infrastructure:** Provider connectivity, callback handling, contract creation. Contains all provider-specific code via `IMarketDataClient` implementations (`IBMarketDataClient`, `AlpacaMarketDataClient`, `NoOpMarketDataClient`).
+- **Infrastructure:** Provider connectivity, callback handling, contract creation. Contains all provider-specific code via `IMarketDataClient` implementations (Interactive Brokers, Alpaca, Polygon, NYSE Direct, StockSharp, and `NoOpMarketDataClient` for offline mode).
 - **Domain:** Order book state (`MarketDepthCollector`), trade analytics (`TradeDataCollector`), BBO caching (`QuoteCollector`), integrity events. Pure logic, testable without providers.
 - **Application:** Orchestration (`Program.cs`), config hot-reload (`ConfigWatcher`), status monitoring (`StatusWriter`, `Metrics`).
-- **Pipeline/Storage:** Bounded channel routing (`EventPipeline`) and buffered persistence (`JsonlStorageSink`, `JsonlStoragePolicy`).
+- **Pipeline/Storage:** Bounded channel routing (`EventPipeline`) and buffered persistence (`JsonlStorageSink`, `JsonlStoragePolicy`), with Parquet export available for analytics workflows.
 
 ### Key Control: Unified Event Stream
 All outputs normalize to `MarketEvent(Type, Symbol, Timestamp, Payload)` with typed payload records derived from `MarketEventPayload`. This provides a stable contract for storage, monitoring, and future replay/backtesting, and ensures BBO quote updates and trade events carry comparable sequencing metadata across all providers.
@@ -54,7 +54,7 @@ All outputs normalize to `MarketEvent(Type, Symbol, Timestamp, Payload)` with ty
 - **Quotes/BBO:** `QuoteCollector` maintains per-symbol BBO state with monotonically increasing sequence numbers. The `IQuoteStateStore` interface allows `TradeDataCollector` to infer aggressor side.
 
 ### 4.2 Backpressure and Bounded Queues
-The `EventPipeline` uses `System.Threading.Channels` with bounded capacity (default 50,000) and `DropOldest` policy. Under pressure:
+The `EventPipeline` uses `System.Threading.Channels` with bounded capacity (50,000 for the high-throughput runtime policy, 100,000 for the default policy) and a `DropOldest` strategy. Under pressure:
 - events may be dropped to protect process stability
 - drops are counted via `Metrics.Dropped` and visible via status
 
@@ -135,14 +135,13 @@ Operational prerequisites:
 
 ### Recently Completed
 
-- ✅ Historical data backfill with multi-provider failover (Alpaca, Yahoo, Stooq, Nasdaq Data Link)
-- ✅ MassTransit integration for distributed messaging (RabbitMQ, Azure Service Bus)
-- ✅ Microservices architecture with six specialized services
-- ✅ QuantConnect Lean integration for backtesting
-- ✅ UWP desktop application with comprehensive UI
-- ✅ Tiered storage management (hot/warm/cold)
-- ✅ Parquet storage format (experimental)
-- ✅ Alpaca quote messages wired to `QuoteCollector`
+- ✅ Historical data backfill with multiple providers (Alpaca, Yahoo, Stooq, Nasdaq Data Link)
+- ✅ QuantConnect Lean integration for backtesting/export
+- ✅ UWP desktop application with operational UI and export tooling
+- ✅ Parquet export/storage format for analytics workflows
+- ✅ Prometheus metrics endpoint and monitoring services
+- ✅ Polly-based WebSocket resilience policies
+- ✅ FluentValidation-based configuration validation
 
 ---
 

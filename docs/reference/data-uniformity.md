@@ -2,8 +2,14 @@
 
 This note expands on the data-quality goals for the collector so downstream users receive a uniform, analysis-ready tape regardless of provider quirks.
 
+## Current implementation snapshot (2026-01-30)
+* **Envelope fields today:** The persisted `MarketEvent` model includes `timestamp`, `symbol`, `type`, `payload`, `sequence`, `source`, `schemaVersion`, and `tier`. Additional provenance fields (such as connector identifiers or integrity flags on every row) are not yet part of the canonical envelope.
+* **Schema evolution:** Payload records are versioned via `schemaVersion` at the event level, but per-payload explicit version fields remain a planned enhancement.
+* **Symbol mapping:** Symbol normalization lives in configuration/UI tooling; ingestion does not yet emit both raw and canonical symbols in the event payloads.
+* **Retention and manifests:** Storage retention policies exist, but manifest files and standardized partition-level quality scores are still roadmap items.
+
 ## Canonical JSONL schema
-* **Single envelope:** Persist `MarketEvent` with fields `{ timestamp, provider, symbol, venue, streamId, sequence, eventType, payload, integrity }` in every row so downstream tools do not need per-provider readers.
+* **Single envelope:** Persist `MarketEvent` with consistent envelope fields for every row so downstream tools do not need per-provider readers.
 * **Typed payloads:** Keep `Trade`, `BboQuote`, `LOBSnapshot`, and `OrderFlowStatistics` payloads stable with explicit version fields to support gradual schema evolution.
 * **Nullable fields:** Represent missing provider values explicitly (`null` for sequence/venue/stream) instead of omitting fields; keeps JSON column order consistent for parquet conversion.
 
