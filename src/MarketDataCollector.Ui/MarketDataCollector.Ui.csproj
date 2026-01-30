@@ -76,13 +76,4 @@
   <ItemGroup>
     <ProjectReference Include="..\MarketDataCollector.Ui.Shared\MarketDataCollector.Ui.Shared.csproj" />
   </ItemGroup>
-
-  <!-- Exclude incomplete refactored code from compilation -->
-  <ItemGroup>
-    <Compile Remove="Endpoints\**" />
-    <Compile Remove="Services\**" />
-    <Compile Remove="Templates\**" />
-    <Compile Remove="Models\**" />
-    <Compile Remove="Program.Refactored.cs.bak" />
-  </ItemGroup>
 </Project>
