@@ -1,5 +1,6 @@
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Infrastructure.Contracts;
+using MarketDataCollector.Infrastructure.Providers.Core;
 using System.Threading;
 
 namespace MarketDataCollector.Infrastructure;
@@ -11,10 +12,13 @@ namespace MarketDataCollector.Infrastructure;
 /// <remarks>
 /// This interface is the core contract for ADR-001 (Provider Abstraction Pattern).
 /// All streaming data providers must implement this interface.
+///
+/// Implements <see cref="IProviderMetadata"/> for unified provider discovery
+/// and capability reporting across all provider types.
 /// </remarks>
 [ImplementsAdr("ADR-001", "Core streaming data provider contract")]
 [ImplementsAdr("ADR-004", "All async methods support CancellationToken")]
-public interface IMarketDataClient : IAsyncDisposable
+public interface IMarketDataClient : IProviderMetadata, IAsyncDisposable
 {
     bool IsEnabled { get; }
 
@@ -32,4 +36,23 @@ public interface IMarketDataClient : IAsyncDisposable
 
     /// <summary>Unsubscribe a previously returned trade subscription id.</summary>
     void UnsubscribeTrades(int subscriptionId);
+
+    #region IProviderMetadata Default Implementations
+
+    /// <inheritdoc/>
+    string IProviderMetadata.ProviderId => GetType().Name.Replace("MarketDataClient", "").ToLowerInvariant();
+
+    /// <inheritdoc/>
+    string IProviderMetadata.ProviderDisplayName => GetType().Name.Replace("MarketDataClient", " Streaming");
+
+    /// <inheritdoc/>
+    string IProviderMetadata.ProviderDescription => "Real-time streaming market data provider";
+
+    /// <inheritdoc/>
+    int IProviderMetadata.ProviderPriority => 100;
+
+    /// <inheritdoc/>
+    ProviderCapabilities IProviderMetadata.ProviderCapabilities => ProviderCapabilities.Streaming();
+
+    #endregion
 }

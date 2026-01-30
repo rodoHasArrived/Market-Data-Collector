@@ -50,6 +50,7 @@ public enum ProviderType
 /// - Priority-based provider routing
 /// - Provider health monitoring and automatic failover
 /// - Capability-based provider selection
+/// - Unified metadata access via <see cref="IProviderMetadata"/>
 /// </remarks>
 [ImplementsAdr("ADR-001", "Centralized provider registry for plugin-style management")]
 public sealed class ProviderRegistry : IDisposable
@@ -57,6 +58,7 @@ public sealed class ProviderRegistry : IDisposable
     private readonly ConcurrentDictionary<string, RegisteredStreamingProvider> _streamingProviders = new();
     private readonly ConcurrentDictionary<string, RegisteredBackfillProvider> _backfillProviders = new();
     private readonly ConcurrentDictionary<string, RegisteredSymbolSearchProvider> _symbolSearchProviders = new();
+    private readonly ConcurrentDictionary<string, RegisteredProvider> _allProviders = new();
     private readonly ILogger _log;
     private readonly IAlertDispatcher? _alertDispatcher;
     private bool _disposed;
@@ -66,6 +68,86 @@ public sealed class ProviderRegistry : IDisposable
         _alertDispatcher = alertDispatcher;
         _log = log ?? LoggingSetup.ForContext<ProviderRegistry>();
     }
+
+    #region Unified Provider Registration
+
+    /// <summary>
+    /// Registers any provider implementing <see cref="IProviderMetadata"/>.
+    /// Automatically routes to the appropriate type-specific dictionary based on capabilities.
+    /// </summary>
+    /// <typeparam name="T">The provider type.</typeparam>
+    /// <param name="provider">The provider instance.</param>
+    /// <param name="priorityOverride">Optional priority override.</param>
+    public void Register<T>(T provider, int? priorityOverride = null) where T : IProviderMetadata
+    {
+        ArgumentNullException.ThrowIfNull(provider);
+
+        var id = provider.ProviderId;
+        var priority = priorityOverride ?? provider.ProviderPriority;
+        ValidateName(id);
+
+        // Register in unified dictionary
+        var registered = new RegisteredProvider(id, provider, priority, true);
+        if (_allProviders.TryAdd(id, registered))
+        {
+            _log.Information("Registered provider: {Name} (type: {Type}, priority: {Priority})",
+                id, provider.ProviderCapabilities.PrimaryType, priority);
+        }
+
+        // Also register in type-specific dictionaries for backwards compatibility
+        switch (provider)
+        {
+            case IMarketDataClient streaming:
+                var streamingReg = new RegisteredStreamingProvider(id, streaming, priority, true);
+                _streamingProviders.TryAdd(id, streamingReg);
+                break;
+            case IHistoricalDataProvider backfill:
+                var backfillReg = new RegisteredBackfillProvider(id, backfill, priority, true);
+                _backfillProviders.TryAdd(id, backfillReg);
+                break;
+            case ISymbolSearchProvider search:
+                var searchReg = new RegisteredSymbolSearchProvider(id, search, priority, true);
+                _symbolSearchProviders.TryAdd(id, searchReg);
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Gets all registered providers as unified metadata.
+    /// </summary>
+    public IReadOnlyList<IProviderMetadata> GetAllProviderMetadata()
+    {
+        return _allProviders.Values
+            .Where(r => r.IsEnabled)
+            .OrderBy(r => r.Priority)
+            .Select(r => r.Provider)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Gets a provider by ID from the unified registry.
+    /// </summary>
+    public IProviderMetadata? GetProvider(string id)
+    {
+        return _allProviders.TryGetValue(id, out var registered) && registered.IsEnabled
+            ? registered.Provider
+            : null;
+    }
+
+    /// <summary>
+    /// Gets providers filtered by capability.
+    /// </summary>
+    /// <param name="predicate">Capability filter predicate.</param>
+    public IReadOnlyList<IProviderMetadata> GetProvidersByCapability(Func<ProviderCapabilities, bool> predicate)
+    {
+        return _allProviders.Values
+            .Where(r => r.IsEnabled && predicate(r.Provider.ProviderCapabilities))
+            .OrderBy(r => r.Priority)
+            .Select(r => r.Provider)
+            .ToList();
+    }
+
+    #endregion
 
     #region Streaming Providers
 
@@ -80,6 +162,8 @@ public sealed class ProviderRegistry : IDisposable
         var registered = new RegisteredStreamingProvider(name, provider, priority, true);
         if (_streamingProviders.TryAdd(name, registered))
         {
+            // Also register in unified dictionary
+            _allProviders.TryAdd(name, new RegisteredProvider(name, provider, priority, true));
             _log.Information("Registered streaming provider: {Name} (priority: {Priority})", name, priority);
         }
         else
@@ -125,6 +209,8 @@ public sealed class ProviderRegistry : IDisposable
         var registered = new RegisteredBackfillProvider(name, provider, priority, true);
         if (_backfillProviders.TryAdd(name, registered))
         {
+            // Also register in unified dictionary
+            _allProviders.TryAdd(name, new RegisteredProvider(name, provider, priority, true));
             _log.Information("Registered backfill provider: {Name} (priority: {Priority})", name, priority);
         }
         else
@@ -192,6 +278,8 @@ public sealed class ProviderRegistry : IDisposable
         var registered = new RegisteredSymbolSearchProvider(name, provider, priority, true);
         if (_symbolSearchProviders.TryAdd(name, registered))
         {
+            // Also register in unified dictionary
+            _allProviders.TryAdd(name, new RegisteredProvider(name, provider, priority, true));
             _log.Information("Registered symbol search provider: {Name} (priority: {Priority})", name, priority);
         }
         else
@@ -253,6 +341,12 @@ public sealed class ProviderRegistry : IDisposable
     /// </summary>
     public void Enable(string name)
     {
+        // Update unified dictionary
+        if (_allProviders.TryGetValue(name, out var unified))
+        {
+            _allProviders[name] = unified with { IsEnabled = true };
+        }
+
         if (_streamingProviders.TryGetValue(name, out var streaming))
         {
             _streamingProviders[name] = streaming with { IsEnabled = true };
@@ -282,6 +376,12 @@ public sealed class ProviderRegistry : IDisposable
     /// </summary>
     public void Disable(string name)
     {
+        // Update unified dictionary
+        if (_allProviders.TryGetValue(name, out var unified))
+        {
+            _allProviders[name] = unified with { IsEnabled = false };
+        }
+
         if (_streamingProviders.TryGetValue(name, out var streaming))
         {
             _streamingProviders[name] = streaming with { IsEnabled = false };
@@ -387,11 +487,15 @@ public sealed class ProviderRegistry : IDisposable
             catch { /* ignore */ }
         }
         _symbolSearchProviders.Clear();
+
+        // Clear unified registry
+        _allProviders.Clear();
     }
 
     private sealed record RegisteredStreamingProvider(string Name, IMarketDataClient Provider, int Priority, bool IsEnabled);
     private sealed record RegisteredBackfillProvider(string Name, IHistoricalDataProvider Provider, int Priority, bool IsEnabled);
     private sealed record RegisteredSymbolSearchProvider(string Name, ISymbolSearchProvider Provider, int Priority, bool IsEnabled);
+    private sealed record RegisteredProvider(string Name, IProviderMetadata Provider, int Priority, bool IsEnabled);
 }
 
 /// <summary>

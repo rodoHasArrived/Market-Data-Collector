@@ -1,11 +1,16 @@
 using MarketDataCollector.Application.Subscriptions.Models;
+using MarketDataCollector.Infrastructure.Providers.Core;
 
 namespace MarketDataCollector.Infrastructure.Providers.SymbolSearch;
 
 /// <summary>
 /// Interface for symbol search and autocomplete providers.
 /// </summary>
-public interface ISymbolSearchProvider
+/// <remarks>
+/// Implements <see cref="IProviderMetadata"/> for unified provider discovery
+/// and capability reporting across all provider types.
+/// </remarks>
+public interface ISymbolSearchProvider : IProviderMetadata
 {
     /// <summary>
     /// Provider identifier.
@@ -46,11 +51,35 @@ public interface ISymbolSearchProvider
     /// <param name="ct">Cancellation token.</param>
     /// <returns>Symbol details or null if not found.</returns>
     Task<SymbolDetails?> GetDetailsAsync(string symbol, CancellationToken ct = default);
+
+    #region IProviderMetadata Default Implementations
+
+    /// <inheritdoc/>
+    string IProviderMetadata.ProviderId => Name;
+
+    /// <inheritdoc/>
+    string IProviderMetadata.ProviderDisplayName => DisplayName;
+
+    /// <inheritdoc/>
+    string IProviderMetadata.ProviderDescription => "Symbol search and lookup provider";
+
+    /// <inheritdoc/>
+    int IProviderMetadata.ProviderPriority => Priority;
+
+    /// <inheritdoc/>
+    ProviderCapabilities IProviderMetadata.ProviderCapabilities => ProviderCapabilities.SymbolSearch;
+
+    #endregion
 }
 
 /// <summary>
 /// Interface for providers that support filtering in symbol search.
 /// </summary>
+/// <remarks>
+/// Extends <see cref="ISymbolSearchProvider"/> with asset type and exchange filtering.
+/// The <see cref="IProviderMetadata.ProviderCapabilities"/> property is overridden to
+/// include filter capabilities.
+/// </remarks>
 public interface IFilterableSymbolSearchProvider : ISymbolSearchProvider
 {
     /// <summary>
@@ -72,4 +101,12 @@ public interface IFilterableSymbolSearchProvider : ISymbolSearchProvider
         string? assetType = null,
         string? exchange = null,
         CancellationToken ct = default);
+
+    #region IProviderMetadata Override
+
+    /// <inheritdoc/>
+    ProviderCapabilities IProviderMetadata.ProviderCapabilities =>
+        ProviderCapabilities.SymbolSearchFilterable(SupportedAssetTypes, SupportedExchanges);
+
+    #endregion
 }
