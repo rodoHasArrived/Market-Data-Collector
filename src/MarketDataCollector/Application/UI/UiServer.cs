@@ -1784,11 +1784,14 @@ public sealed class UiServer : IAsyncDisposable
 
         // ==================== QW-93: DRY RUN MODE ====================
 
-        _app.MapPost("/api/tools/dry-run", async (DryRunService dryRun, ConfigStore store, DryRunRequest? req) =>
+        _app.MapPost("/api/tools/dry-run", async (
+            ConfigurationService configService,
+            ConfigStore store,
+            DryRunRequest? req) =>
         {
             try
             {
-                var config = store.Load();
+                var config = configService.LoadAndPrepareConfig(store.ConfigPath);
                 var options = new DryRunOptions(
                     ValidateConfiguration: req?.ValidateConfiguration ?? true,
                     ValidateFileSystem: req?.ValidateFileSystem ?? true,
@@ -1798,7 +1801,7 @@ public sealed class UiServer : IAsyncDisposable
                     ValidateResources: req?.ValidateResources ?? true
                 );
 
-                var result = await dryRun.ValidateAsync(config, options);
+                var result = await configService.DryRunValidationAsync(config, options);
                 return Results.Json(result, s_jsonOptions);
             }
             catch (Exception ex)
@@ -1807,13 +1810,16 @@ public sealed class UiServer : IAsyncDisposable
             }
         });
 
-        _app.MapPost("/api/tools/dry-run/report", async (DryRunService dryRun, ConfigStore store) =>
+        _app.MapPost("/api/tools/dry-run/report", async (
+            ConfigurationService configService,
+            ConfigStore store,
+            DryRunService dryRunService) =>
         {
             try
             {
-                var config = store.Load();
-                var result = await dryRun.ValidateAsync(config, new DryRunOptions());
-                var report = dryRun.GenerateReport(result);
+                var config = configService.LoadAndPrepareConfig(store.ConfigPath);
+                var result = await configService.DryRunValidationAsync(config, new DryRunOptions());
+                var report = dryRunService.GenerateReport(result);
                 return Results.Text(report, "text/plain");
             }
             catch (Exception ex)
@@ -1919,11 +1925,12 @@ public sealed class UiServer : IAsyncDisposable
         // Test all configured credentials
         _app.MapPost("/api/credentials/test-all", async (
             CredentialTestingService credentialService,
+            ConfigurationService configService,
             ConfigStore store) =>
         {
             try
             {
-                var config = store.Load();
+                var config = configService.LoadAndPrepareConfig(store.ConfigPath);
                 var summary = await credentialService.TestAllCredentialsAsync(config);
                 return Results.Json(summary, jsonOptions);
             }
@@ -2157,7 +2164,7 @@ public sealed class UiServer : IAsyncDisposable
         {
             try
             {
-                var config = store.Load();
+                var config = configService.LoadAndPrepareConfig(store.ConfigPath, applySelfHealing: false);
                 var (fixedConfig, appliedFixes, warnings) = configService.ApplySelfHealingFixes(config);
 
                 return Results.Json(new
@@ -2179,7 +2186,7 @@ public sealed class UiServer : IAsyncDisposable
         {
             try
             {
-                var config = store.Load();
+                var config = configService.LoadAndPrepareConfig(store.ConfigPath, applySelfHealing: false);
                 var (fixedConfig, appliedFixes, warnings) = configService.ApplySelfHealingFixes(config);
 
                 if (appliedFixes.Count > 0)
@@ -2206,7 +2213,7 @@ public sealed class UiServer : IAsyncDisposable
         {
             try
             {
-                var config = store.Load();
+                var config = configService.LoadAndPrepareConfig(store.ConfigPath);
                 var isValid = configService.ValidateConfig(config, out var errors);
 
                 return Results.Json(new
@@ -2226,7 +2233,7 @@ public sealed class UiServer : IAsyncDisposable
         {
             try
             {
-                var config = store.Load();
+                var config = configService.LoadAndPrepareConfig(store.ConfigPath);
                 var result = configService.PerformQuickCheck(config);
                 return Results.Json(result, s_jsonOptions);
             }
@@ -2241,8 +2248,7 @@ public sealed class UiServer : IAsyncDisposable
         {
             try
             {
-                var config = store.Load();
-                var resolvedConfig = configService.ResolveAllCredentials(config);
+                var resolvedConfig = configService.LoadAndPrepareConfig(store.ConfigPath, applySelfHealing: false);
 
                 // Don't return sensitive data - just indicate which credentials were resolved
                 var resolvedProviders = new List<string>();
