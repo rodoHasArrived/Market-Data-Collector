@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
+using MarketDataCollector.Contracts.Pipeline;
 
 namespace MarketDataCollector.Uwp.Services;
 
@@ -40,13 +41,13 @@ public sealed class LoggingService : IDisposable
 
     private LoggingService()
     {
-        // Channel configuration follows EventPipelinePolicy.Logging preset:
-        // Capacity: 1000, FullMode: DropOldest, SingleReader: true
-        // Note: UWP cannot reference main project due to WinRT metadata constraints
-        // See: src/MarketDataCollector/Application/Pipeline/EventPipelinePolicy.cs
-        _logChannel = Channel.CreateBounded<LogEntry>(new BoundedChannelOptions(1000)
+        // Use shared constants from PipelinePolicyConstants to ensure consistency
+        // with EventPipelinePolicy.Logging preset in the main application.
+        // UWP cannot reference main project due to WinRT metadata constraints,
+        // but can share constants via compile-include from Contracts.
+        _logChannel = Channel.CreateBounded<LogEntry>(new BoundedChannelOptions(PipelinePolicyConstants.LoggingCapacity)
         {
-            FullMode = BoundedChannelFullMode.DropOldest,
+            FullMode = (BoundedChannelFullMode)PipelinePolicyConstants.LoggingFullMode,
             SingleReader = true,
             SingleWriter = false,
             AllowSynchronousContinuations = false
