@@ -1552,7 +1552,7 @@ make verify-adrs  # Verify ADR compliance
 
 ```bash
 make doctor       # Run full diagnostic check
-make diagnose     # Build diagnostics
+make diagnose     # Build diagnostics (buildctl)
 make metrics      # Show build metrics
 make help         # Show all available commands
 ```

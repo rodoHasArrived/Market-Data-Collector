@@ -654,8 +654,11 @@ Key documentation files:
 
 ### Build Issues
 ```bash
-# Run diagnostic script
-./scripts/diagnostics/diagnose-build.sh
+# Run build diagnostics
+make diagnose
+
+# Or call the buildctl CLI directly
+python3 build-system/cli/buildctl.py build --project src/MarketDataCollector/MarketDataCollector.csproj --configuration Release
 
 # Use build control CLI
 make doctor

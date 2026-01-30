@@ -23,6 +23,7 @@ from diagnostics.doctor import run_doctor
 from diagnostics.env_diff import capture_environment, diff_envs
 from diagnostics.error_matcher import ErrorMatcher
 from diagnostics.preflight import run_preflight
+from diagnostics.validate_data import validate_directory
 
 
 DEFAULT_PROJECT = "src/MarketDataCollector/MarketDataCollector.csproj"
@@ -283,6 +284,13 @@ def run_analyze_errors(args: argparse.Namespace) -> int:
     return 0
 
 
+def run_validate_data(args: argparse.Namespace) -> int:
+    data_dir = Path(args.directory)
+    if not data_dir.is_absolute():
+        data_dir = ROOT / data_dir
+    return validate_directory(data_dir)
+
+
 def git_info() -> tuple[str, str]:
     sha = run_git(["rev-parse", "HEAD"])
     branch = run_git(["rev-parse", "--abbrev-ref", "HEAD"])
@@ -368,6 +376,9 @@ def build_parser() -> argparse.ArgumentParser:
     analyze = sub.add_parser("analyze-errors", help="Analyze build output for known errors")
     analyze.add_argument("--log")
 
+    validate = sub.add_parser("validate-data", help="Validate JSONL data files")
+    validate.add_argument("--directory", default="data")
+
     return parser
 
 
@@ -400,6 +411,8 @@ def main() -> int:
         return run_bisect(args)
     if args.command == "analyze-errors":
         return run_analyze_errors(args)
+    if args.command == "validate-data":
+        return run_validate_data(args)
     parser.print_help()
     return 1
 

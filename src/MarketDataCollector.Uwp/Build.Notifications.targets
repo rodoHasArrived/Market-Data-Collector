@@ -152,8 +152,8 @@
     <Message Importance="high" Text="" />
     <Message Importance="high" Text="  Troubleshooting steps:" />
     <Message Importance="high" Text="    1. Review error messages above" />
-    <Message Importance="high" Text="    2. Run: .\scripts\diagnostics\diagnose-build.ps1 -Action desktop" />
-    <Message Importance="high" Text="    3. Check diagnostic logs in: diagnostic-logs\" />
+    <Message Importance="high" Text="    2. Run: python build-system\cli\buildctl.py doctor" />
+    <Message Importance="high" Text="    3. Check buildctl logs in: .build-system\logs" />
     <Message Importance="high" Text="" />
     <Message Importance="high" Text="  Common issues:" />
     <Message Importance="high" Text="    - Missing Windows SDK components" />
