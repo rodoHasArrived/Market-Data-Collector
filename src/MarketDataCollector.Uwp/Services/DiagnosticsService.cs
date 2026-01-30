@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using MarketDataCollector.Contracts.Api;
 
 namespace MarketDataCollector.Uwp.Services;
 
@@ -41,7 +42,7 @@ public sealed class DiagnosticsService
     public async Task<DryRunResult> RunDryRunAsync(CancellationToken ct = default)
     {
         var response = await _apiClient.PostWithResponseAsync<DryRunResponse>(
-            "/api/diagnostics/dry-run",
+            UiApiRoutes.DiagnosticsDryRun,
             null,
             ct);
 
@@ -91,7 +92,7 @@ public sealed class DiagnosticsService
 
         // Check provider status
         var providerResponse = await _apiClient.GetWithResponseAsync<ProviderStatusResponse>(
-            "/api/diagnostics/providers",
+            UiApiRoutes.DiagnosticsProviders,
             ct);
 
         if (providerResponse.Success && providerResponse.Data?.Providers != null)
@@ -114,7 +115,7 @@ public sealed class DiagnosticsService
 
         // Check storage
         var storageResponse = await _apiClient.GetWithResponseAsync<StorageStatusResponse>(
-            "/api/diagnostics/storage",
+            UiApiRoutes.DiagnosticsStorage,
             ct);
 
         if (storageResponse.Success && storageResponse.Data != null)
@@ -153,7 +154,7 @@ public sealed class DiagnosticsService
 
         // Check configuration
         var configResponse = await _apiClient.GetWithResponseAsync<ConfigStatusResponse>(
-            "/api/diagnostics/config",
+            UiApiRoutes.DiagnosticsConfig,
             ct);
 
         if (configResponse.Success && configResponse.Data != null)
@@ -196,7 +197,7 @@ public sealed class DiagnosticsService
         CancellationToken ct = default)
     {
         var response = await _apiClient.PostWithResponseAsync<DiagnosticBundleResponse>(
-            "/api/diagnostics/bundle",
+            UiApiRoutes.DiagnosticsBundle,
             new
             {
                 includeLogs = options.IncludeLogs,
@@ -232,7 +233,7 @@ public sealed class DiagnosticsService
     public async Task<SystemMetrics> GetSystemMetricsAsync(CancellationToken ct = default)
     {
         var response = await _apiClient.GetWithResponseAsync<SystemMetrics>(
-            "/api/diagnostics/metrics",
+            UiApiRoutes.DiagnosticsMetrics,
             ct);
 
         return response.Data ?? new SystemMetrics();
@@ -247,7 +248,7 @@ public sealed class DiagnosticsService
         CancellationToken ct = default)
     {
         var response = await _apiClient.PostWithResponseAsync<ValidationResult>(
-            "/api/diagnostics/validate",
+            UiApiRoutes.DiagnosticsValidate,
             new { setting = settingName, value },
             ct);
 
@@ -260,7 +261,7 @@ public sealed class DiagnosticsService
     public async Task<ProviderTestResult> TestProviderAsync(string providerName, CancellationToken ct = default)
     {
         var response = await _apiClient.PostWithResponseAsync<ProviderTestResult>(
-            $"/api/diagnostics/providers/{providerName}/test",
+            UiApiRoutes.WithParam(UiApiRoutes.DiagnosticsProviderTest, "providerName", providerName),
             null,
             ct);
 
@@ -277,7 +278,7 @@ public sealed class DiagnosticsService
     public async Task<QuickCheckResult> RunQuickCheckAsync(CancellationToken ct = default)
     {
         var response = await _apiClient.GetWithResponseAsync<QuickCheckResponse>(
-            "/api/diagnostics/quick-check",
+            UiApiRoutes.DiagnosticsQuickCheck,
             ct);
 
         if (response.Success && response.Data != null)
@@ -303,7 +304,7 @@ public sealed class DiagnosticsService
     public async Task<ShowConfigResult> ShowConfigAsync(CancellationToken ct = default)
     {
         var response = await _apiClient.GetWithResponseAsync<ShowConfigResponse>(
-            "/api/diagnostics/show-config",
+            UiApiRoutes.DiagnosticsShowConfig,
             ct);
 
         if (response.Success && response.Data != null)
@@ -328,7 +329,7 @@ public sealed class DiagnosticsService
     public async Task<ErrorCodesResult> GetErrorCodesAsync(CancellationToken ct = default)
     {
         var response = await _apiClient.GetWithResponseAsync<ErrorCodesResponse>(
-            "/api/diagnostics/error-codes",
+            UiApiRoutes.DiagnosticsErrorCodes,
             ct);
 
         if (response.Success && response.Data != null)
@@ -353,7 +354,7 @@ public sealed class DiagnosticsService
     public async Task<SelfTestResult> RunSelfTestAsync(SelfTestOptions? options = null, CancellationToken ct = default)
     {
         var response = await _apiClient.PostWithResponseAsync<SelfTestResponse>(
-            "/api/diagnostics/selftest",
+            UiApiRoutes.DiagnosticsSelftest,
             options ?? new SelfTestOptions(),
             ct);
 
@@ -382,7 +383,7 @@ public sealed class DiagnosticsService
     public async Task<CredentialValidationResult> ValidateCredentialsAsync(CancellationToken ct = default)
     {
         var response = await _apiClient.GetWithResponseAsync<CredentialValidationResponse>(
-            "/api/diagnostics/validate-credentials",
+            UiApiRoutes.DiagnosticsValidateCredentials,
             ct);
 
         if (response.Success && response.Data != null)
@@ -407,7 +408,7 @@ public sealed class DiagnosticsService
     public async Task<AllProvidersTestResult> TestAllProvidersAsync(CancellationToken ct = default)
     {
         var response = await _apiClient.PostWithResponseAsync<AllProvidersTestResponse>(
-            "/api/diagnostics/test-connectivity",
+            UiApiRoutes.DiagnosticsTestConnectivity,
             null,
             ct);
 
@@ -434,7 +435,7 @@ public sealed class DiagnosticsService
     public async Task<ConfigValidationResult> ValidateFullConfigAsync(CancellationToken ct = default)
     {
         var response = await _apiClient.PostWithResponseAsync<ConfigValidationResponse>(
-            "/api/diagnostics/validate-config",
+            UiApiRoutes.DiagnosticsValidateConfig,
             null,
             ct);
 

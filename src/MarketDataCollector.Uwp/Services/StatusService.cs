@@ -56,7 +56,7 @@ public sealed class StatusService : IStatusService
     /// </summary>
     public async Task<StatusResponse?> GetStatusAsync(CancellationToken ct = default)
     {
-        return await _apiClient.GetAsync<StatusResponse>("/api/status", ct);
+        return await _apiClient.GetAsync<StatusResponse>(UiApiRoutes.Status, ct);
     }
 
     /// <summary>
@@ -65,7 +65,7 @@ public sealed class StatusService : IStatusService
     public async Task<ApiResponse<StatusResponse>> GetStatusWithResponseAsync(CancellationToken ct = default)
     {
         // ApiClientService returns ApiResponse<T> from Contracts.Api
-        return await _apiClient.GetWithResponseAsync<StatusResponse>("/api/status", ct);
+        return await _apiClient.GetWithResponseAsync<StatusResponse>(UiApiRoutes.Status, ct);
     }
 
     /// <summary>
@@ -102,7 +102,7 @@ public sealed class BackfillApiService
     /// </summary>
     public async Task<List<BackfillProviderInfo>> GetProvidersAsync(CancellationToken ct = default)
     {
-        var result = await _apiClient.GetAsync<List<BackfillProviderInfo>>("/api/backfill/providers", ct);
+        var result = await _apiClient.GetAsync<List<BackfillProviderInfo>>(UiApiRoutes.BackfillProviders, ct);
         return result ?? new List<BackfillProviderInfo>();
     }
 
@@ -111,7 +111,7 @@ public sealed class BackfillApiService
     /// </summary>
     public async Task<BackfillResult?> GetLastStatusAsync(CancellationToken ct = default)
     {
-        return await _apiClient.GetAsync<BackfillResult>("/api/backfill/status", ct);
+        return await _apiClient.GetAsync<BackfillResult>(UiApiRoutes.BackfillStatus, ct);
     }
 
     /// <summary>
@@ -135,7 +135,7 @@ public sealed class BackfillApiService
         // Use the shared backfill client with longer timeout
         var backfillClient = _apiClient.GetBackfillClient();
         var response = await _apiClient.PostWithResponseAsync<BackfillResult>(
-            "/api/backfill/run",
+            UiApiRoutes.BackfillRun,
             request,
             ct,
             backfillClient);
@@ -157,7 +157,7 @@ public sealed class BackfillApiService
     /// </summary>
     public async Task<BackfillHealthResponse?> CheckProviderHealthAsync(CancellationToken ct = default)
     {
-        return await _apiClient.GetAsync<BackfillHealthResponse>("/api/backfill/health", ct);
+        return await _apiClient.GetAsync<BackfillHealthResponse>(UiApiRoutes.BackfillHealth, ct);
     }
 
     /// <summary>
@@ -165,7 +165,8 @@ public sealed class BackfillApiService
     /// </summary>
     public async Task<SymbolResolution?> ResolveSymbolAsync(string symbol, CancellationToken ct = default)
     {
-        return await _apiClient.GetAsync<SymbolResolution>($"/api/backfill/resolve/{Uri.EscapeDataString(symbol)}", ct);
+        return await _apiClient.GetAsync<SymbolResolution>(
+            UiApiRoutes.WithParam(UiApiRoutes.BackfillResolve, "symbol", symbol), ct);
     }
 
     /// <summary>
@@ -187,7 +188,7 @@ public sealed class BackfillApiService
         // Use the shared backfill client with longer timeout
         var backfillClient = _apiClient.GetBackfillClient();
         var response = await _apiClient.PostWithResponseAsync<BackfillExecutionResponse>(
-            "/api/backfill/gap-fill",
+            UiApiRoutes.BackfillGapFill,
             request,
             ct,
             backfillClient);
@@ -199,7 +200,7 @@ public sealed class BackfillApiService
     /// </summary>
     public async Task<List<BackfillPreset>> GetPresetsAsync(CancellationToken ct = default)
     {
-        var result = await _apiClient.GetAsync<List<BackfillPreset>>("/api/backfill/presets", ct);
+        var result = await _apiClient.GetAsync<List<BackfillPreset>>(UiApiRoutes.BackfillPresets, ct);
         return result ?? new List<BackfillPreset>();
     }
 
@@ -208,7 +209,8 @@ public sealed class BackfillApiService
     /// </summary>
     public async Task<List<BackfillExecution>> GetExecutionHistoryAsync(int limit = 50, CancellationToken ct = default)
     {
-        var result = await _apiClient.GetAsync<List<BackfillExecution>>($"/api/backfill/executions?limit={limit}", ct);
+        var result = await _apiClient.GetAsync<List<BackfillExecution>>(
+            UiApiRoutes.WithQuery(UiApiRoutes.BackfillExecutions, $"limit={limit}"), ct);
         return result ?? new List<BackfillExecution>();
     }
 
@@ -218,8 +220,8 @@ public sealed class BackfillApiService
     public async Task<BackfillStatistics?> GetStatisticsAsync(int? hours = null, CancellationToken ct = default)
     {
         var endpoint = hours.HasValue
-            ? $"/api/backfill/statistics?hours={hours.Value}"
-            : "/api/backfill/statistics";
+            ? UiApiRoutes.WithQuery(UiApiRoutes.BackfillStatistics, $"hours={hours.Value}")
+            : UiApiRoutes.BackfillStatistics;
         return await _apiClient.GetAsync<BackfillStatistics>(endpoint, ct);
     }
 }
