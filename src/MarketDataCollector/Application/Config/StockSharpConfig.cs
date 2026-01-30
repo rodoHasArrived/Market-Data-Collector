@@ -3,12 +3,13 @@ namespace MarketDataCollector.Application.Config;
 /// <summary>
 /// Configuration for StockSharp connector integration.
 /// Provides access to 90+ data sources through StockSharp's unified connector framework.
+/// Supported connectors: Rithmic, IQFeed, CQG, InteractiveBrokers, Binance, Coinbase, Kraken, and more.
 /// </summary>
 public sealed record StockSharpConfig(
     /// <summary>Whether StockSharp integration is enabled.</summary>
     bool Enabled = false,
 
-    /// <summary>Primary connector type (e.g., "Rithmic", "IQFeed", "CQG", "InteractiveBrokers", "Custom").</summary>
+    /// <summary>Primary connector type (e.g., "Rithmic", "IQFeed", "CQG", "InteractiveBrokers", "Binance", "Coinbase", "Kraken", "Custom").</summary>
     string ConnectorType = "Rithmic",
 
     /// <summary>Fully qualified StockSharp adapter type for custom connectors.</summary>
@@ -42,7 +43,16 @@ public sealed record StockSharpConfig(
     CQGConfig? CQG = null,
 
     /// <summary>Interactive Brokers-specific configuration for StockSharp connector.</summary>
-    StockSharpIBConfig? InteractiveBrokers = null
+    StockSharpIBConfig? InteractiveBrokers = null,
+
+    /// <summary>Binance crypto exchange configuration.</summary>
+    BinanceConfig? Binance = null,
+
+    /// <summary>Coinbase crypto exchange configuration.</summary>
+    CoinbaseConfig? Coinbase = null,
+
+    /// <summary>Kraken crypto exchange configuration.</summary>
+    KrakenConfig? Kraken = null
 );
 
 /// <summary>
@@ -118,4 +128,86 @@ public sealed record StockSharpIBConfig(
 
     /// <summary>Client ID for IB connection.</summary>
     int ClientId = 1
+);
+
+/// <summary>
+/// Binance crypto exchange configuration.
+/// Supports spot and futures markets with real-time WebSocket streams.
+/// Note: Requires StockSharp crowdfunding membership for crypto connectors.
+/// </summary>
+public sealed record BinanceConfig(
+    /// <summary>Binance API key.</summary>
+    string ApiKey = "",
+
+    /// <summary>Binance API secret.</summary>
+    string ApiSecret = "",
+
+    /// <summary>Whether to use the testnet environment.</summary>
+    bool UseTestnet = false,
+
+    /// <summary>Market type: "Spot", "UsdtFutures", "CoinFutures".</summary>
+    string MarketType = "Spot",
+
+    /// <summary>Whether to subscribe to order book updates.</summary>
+    bool SubscribeOrderBook = true,
+
+    /// <summary>Order book depth level (5, 10, 20).</summary>
+    int OrderBookDepth = 20,
+
+    /// <summary>Whether to subscribe to trades.</summary>
+    bool SubscribeTrades = true
+);
+
+/// <summary>
+/// Coinbase crypto exchange configuration.
+/// Supports Coinbase Pro (Advanced Trade) API.
+/// </summary>
+public sealed record CoinbaseConfig(
+    /// <summary>Coinbase API key.</summary>
+    string ApiKey = "",
+
+    /// <summary>Coinbase API secret.</summary>
+    string ApiSecret = "",
+
+    /// <summary>Coinbase API passphrase.</summary>
+    string Passphrase = "",
+
+    /// <summary>Whether to use the sandbox environment.</summary>
+    bool UseSandbox = false,
+
+    /// <summary>Whether to subscribe to order book updates.</summary>
+    bool SubscribeOrderBook = true,
+
+    /// <summary>Order book subscription level: "level2" or "level3".</summary>
+    string OrderBookLevel = "level2",
+
+    /// <summary>Whether to subscribe to trades.</summary>
+    bool SubscribeTrades = true
+);
+
+/// <summary>
+/// Kraken crypto exchange configuration.
+/// Supports spot markets with WebSocket streams.
+/// </summary>
+public sealed record KrakenConfig(
+    /// <summary>Kraken API key.</summary>
+    string ApiKey = "",
+
+    /// <summary>Kraken API secret (private key).</summary>
+    string ApiSecret = "",
+
+    /// <summary>Whether to subscribe to order book updates.</summary>
+    bool SubscribeOrderBook = true,
+
+    /// <summary>Order book depth (10, 25, 100, 500, 1000).</summary>
+    int OrderBookDepth = 25,
+
+    /// <summary>Whether to subscribe to trades.</summary>
+    bool SubscribeTrades = true,
+
+    /// <summary>Whether to subscribe to OHLC candles.</summary>
+    bool SubscribeOhlc = false,
+
+    /// <summary>OHLC interval in minutes (1, 5, 15, 30, 60, 240, 1440, 10080, 21600).</summary>
+    int OhlcInterval = 1
 );

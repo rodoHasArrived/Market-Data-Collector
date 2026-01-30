@@ -1,12 +1,10 @@
 using System.Globalization;
+using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading;
-using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Infrastructure.Contracts;
-using MarketDataCollector.Infrastructure.DataSources;
 using MarketDataCollector.Infrastructure.Http;
 using MarketDataCollector.Infrastructure.Utilities;
 using Serilog;
@@ -18,67 +16,80 @@ namespace MarketDataCollector.Infrastructure.Providers.Backfill;
 /// Generous free tier: 60 API calls/minute.
 /// Coverage: 60,000+ global securities with company fundamentals.
 /// Best for: Earnings data, fundamentals, news, and high-frequency backfill operations.
+/// Extends BaseHistoricalDataProvider for common functionality.
 /// </summary>
 [ImplementsAdr("ADR-001", "Finnhub historical data provider implementation")]
 [ImplementsAdr("ADR-004", "All async methods support CancellationToken")]
-public sealed class FinnhubHistoricalDataProvider : IHistoricalDataProvider, IDisposable
+public sealed class FinnhubHistoricalDataProvider : BaseHistoricalDataProvider, IRateLimitAwareProvider
 {
     private const string BaseUrl = "https://finnhub.io/api/v1";
 
-    private readonly HttpClient _http;
-    private readonly RateLimiter _rateLimiter;
-    private readonly ILogger _log;
     private readonly string? _apiKey;
-    private bool _disposed;
 
-    public string Name => "finnhub";
-    public string DisplayName => "Finnhub (free tier)";
-    public string Description => "Global equities with generous 60 calls/min free tier. Includes fundamentals, earnings, and news.";
+    #region Abstract Property Implementations
 
-    public int Priority => 18;
-    public TimeSpan RateLimitDelay => TimeSpan.FromSeconds(1); // 60 requests/minute = 1 second between requests
-    public int MaxRequestsPerWindow => 60;
-    public TimeSpan RateLimitWindow => TimeSpan.FromMinutes(1);
+    public override string Name => "finnhub";
+    public override string DisplayName => "Finnhub (free tier)";
+    public override string Description => "Global equities with generous 60 calls/min free tier. Includes fundamentals, earnings, and news.";
+    protected override string HttpClientName => HttpClientNames.FinnhubHistorical;
+
+    #endregion
+
+    #region Virtual Property Overrides
+
+    public override int Priority => 18;
+    public override TimeSpan RateLimitDelay => TimeSpan.FromSeconds(1); // 60 requests/minute = 1 second between requests
+    public override int MaxRequestsPerWindow => 60;
+    public override TimeSpan RateLimitWindow => TimeSpan.FromMinutes(1);
 
     /// <summary>
     /// Finnhub supports intraday bars and corporate actions (raw prices, not adjusted).
     /// Wide market coverage: US, UK, DE, CA, AU, HK, JP, CN.
     /// </summary>
-    public HistoricalDataCapabilities Capabilities { get; } = new()
+    public override HistoricalDataCapabilities Capabilities { get; } = new()
     {
         Intraday = true,
         Dividends = true,
         Splits = true,
-        SupportedMarkets = new[] { "US", "UK", "DE", "CA", "AU", "HK", "JP", "CN" }
+        SupportedMarkets = ["US", "UK", "DE", "CA", "AU", "HK", "JP", "CN"]
     };
+
+    #endregion
 
     /// <summary>
     /// Supported candle resolutions.
     /// </summary>
-    public static IReadOnlyList<string> SupportedResolutions => new[] { "1", "5", "15", "30", "60", "D", "W", "M" };
+    public static IReadOnlyList<string> SupportedResolutions => ["1", "5", "15", "30", "60", "D", "W", "M"];
+
+    /// <summary>
+    /// Event raised when the provider hits a rate limit (HTTP 429).
+    /// </summary>
+    public event Action<RateLimitInfo>? OnRateLimitHit;
 
     public FinnhubHistoricalDataProvider(string? apiKey = null, HttpClient? httpClient = null, ILogger? log = null)
+        : base(httpClient, log)
     {
-        _log = log ?? LoggingSetup.ForContext<FinnhubHistoricalDataProvider>();
         _apiKey = apiKey ?? Environment.GetEnvironmentVariable("FINNHUB_API_KEY");
 
-        // TD-10: Use HttpClientFactory instead of creating new HttpClient instances
-        _http = httpClient ?? HttpClientFactoryProvider.CreateClient(HttpClientNames.FinnhubHistorical);
-        _http.DefaultRequestHeaders.Add("User-Agent", "MarketDataCollector/1.0");
+        Http.DefaultRequestHeaders.Add("User-Agent", "MarketDataCollector/1.0");
+        Http.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
         if (!string.IsNullOrEmpty(_apiKey))
         {
-            _http.DefaultRequestHeaders.Add("X-Finnhub-Token", _apiKey);
+            Http.DefaultRequestHeaders.Add("X-Finnhub-Token", _apiKey);
         }
-
-        _rateLimiter = new RateLimiter(MaxRequestsPerWindow, RateLimitWindow, RateLimitDelay, _log);
     }
 
-    public async Task<bool> IsAvailableAsync(CancellationToken ct = default)
+    /// <summary>
+    /// Get current rate limit usage information.
+    /// </summary>
+    public RateLimitInfo GetRateLimitInfo() => base.GetRateLimitInfo();
+
+    public override async Task<bool> IsAvailableAsync(CancellationToken ct = default)
     {
         if (string.IsNullOrEmpty(_apiKey))
         {
-            _log.Warning("Finnhub API key not configured. Set FINNHUB_API_KEY environment variable or configure in settings.");
+            Log.Warning("Finnhub API key not configured. Set FINNHUB_API_KEY environment variable or configure in settings.");
             return false;
         }
 
@@ -86,7 +97,7 @@ public sealed class FinnhubHistoricalDataProvider : IHistoricalDataProvider, IDi
         {
             // Quick health check with quote endpoint
             var url = $"{BaseUrl}/quote?symbol=AAPL&token={_apiKey}";
-            using var response = await _http.GetAsync(url, ct).ConfigureAwait(false);
+            using var response = await Http.GetAsync(url, ct).ConfigureAwait(false);
             return response.IsSuccessStatusCode;
         }
         catch
@@ -95,23 +106,21 @@ public sealed class FinnhubHistoricalDataProvider : IHistoricalDataProvider, IDi
         }
     }
 
-    public async Task<IReadOnlyList<HistoricalBar>> GetDailyBarsAsync(string symbol, DateOnly? from, DateOnly? to, CancellationToken ct = default)
+    public override async Task<IReadOnlyList<HistoricalBar>> GetDailyBarsAsync(string symbol, DateOnly? from, DateOnly? to, CancellationToken ct = default)
     {
         var adjustedBars = await GetAdjustedDailyBarsAsync(symbol, from, to, ct).ConfigureAwait(false);
         return adjustedBars.Select(b => b.ToHistoricalBar(preferAdjusted: false)).ToList();
     }
 
-    public async Task<IReadOnlyList<AdjustedHistoricalBar>> GetAdjustedDailyBarsAsync(string symbol, DateOnly? from, DateOnly? to, CancellationToken ct = default)
+    public override async Task<IReadOnlyList<AdjustedHistoricalBar>> GetAdjustedDailyBarsAsync(string symbol, DateOnly? from, DateOnly? to, CancellationToken ct = default)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
-
-        if (string.IsNullOrWhiteSpace(symbol))
-            throw new ArgumentException("Symbol is required", nameof(symbol));
+        ThrowIfDisposed();
+        ValidateSymbol(symbol);
 
         if (string.IsNullOrEmpty(_apiKey))
             throw new InvalidOperationException("Finnhub API key is required. Set FINNHUB_API_KEY environment variable.");
 
-        await _rateLimiter.WaitForSlotAsync(ct).ConfigureAwait(false);
+        await WaitForRateLimitSlotAsync(ct).ConfigureAwait(false);
 
         var normalizedSymbol = NormalizeSymbol(symbol);
 
@@ -125,37 +134,28 @@ public sealed class FinnhubHistoricalDataProvider : IHistoricalDataProvider, IDi
         // Use stock/candle endpoint with D (daily) resolution
         var url = $"{BaseUrl}/stock/candle?symbol={normalizedSymbol}&resolution=D&from={fromUnix}&to={toUnix}&token={_apiKey}";
 
-        _log.Information("Requesting Finnhub daily history for {Symbol} ({From} to {To})", symbol, fromDate, toDate);
+        Log.Information("Requesting Finnhub daily history for {Symbol} ({From} to {To})", symbol, fromDate, toDate);
 
         try
         {
-            using var response = await _http.GetAsync(url, ct).ConfigureAwait(false);
+            using var response = await Http.GetAsync(url, ct).ConfigureAwait(false);
 
             if (!response.IsSuccessStatusCode)
             {
-                var error = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
-                _log.Warning("Finnhub returned {Status} for {Symbol}: {Error}",
-                    response.StatusCode, symbol, error);
-
-                if ((int)response.StatusCode == 429)
-                {
-                    throw new HttpRequestException($"Finnhub rate limit exceeded (429) for {symbol}. Retry-After: 60");
-                }
-
-                throw new InvalidOperationException($"Finnhub returned {(int)response.StatusCode} for symbol {symbol}");
+                HandleHttpError(response, symbol);
             }
 
             var json = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
-            var data = JsonSerializer.Deserialize<FinnhubCandleResponse>(json);
+            var data = DeserializeResponse<FinnhubCandleResponse>(json, symbol);
 
             if (data?.Status == "no_data" || data?.Close is null || data.Close.Length == 0)
             {
-                _log.Warning("No data returned from Finnhub for {Symbol}", symbol);
+                Log.Warning("No data returned from Finnhub for {Symbol}", symbol);
                 return Array.Empty<AdjustedHistoricalBar>();
             }
 
             var bars = new List<AdjustedHistoricalBar>();
-            var timestamps = data.Timestamp ?? Array.Empty<long>();
+            var timestamps = data.Timestamp ?? [];
 
             for (int i = 0; i < timestamps.Length; i++)
             {
@@ -172,8 +172,8 @@ public sealed class FinnhubHistoricalDataProvider : IHistoricalDataProvider, IDi
                 var close = GetDecimalValue(data.Close, i);
                 var volume = GetLongValue(data.Volume, i);
 
-                // Validate OHLC
-                if (open <= 0 || high <= 0 || low <= 0 || close <= 0)
+                // Validate OHLC using base class helper
+                if (!ValidateOhlc(open, high, low, close, symbol, sessionDate))
                     continue;
 
                 bars.Add(new AdjustedHistoricalBar(
@@ -197,12 +197,12 @@ public sealed class FinnhubHistoricalDataProvider : IHistoricalDataProvider, IDi
                 ));
             }
 
-            _log.Information("Fetched {Count} bars for {Symbol} from Finnhub", bars.Count, symbol);
+            Log.Information("Fetched {Count} bars for {Symbol} from Finnhub", bars.Count, symbol);
             return bars.OrderBy(b => b.SessionDate).ToList();
         }
         catch (JsonException ex)
         {
-            _log.Error(ex, "Failed to parse Finnhub response for {Symbol}", symbol);
+            Log.Error(ex, "Failed to parse Finnhub response for {Symbol}", symbol);
             throw new InvalidOperationException($"Failed to parse Finnhub data for {symbol}", ex);
         }
     }
@@ -217,15 +217,13 @@ public sealed class FinnhubHistoricalDataProvider : IHistoricalDataProvider, IDi
         DateTimeOffset? to,
         CancellationToken ct = default)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
-
-        if (string.IsNullOrWhiteSpace(symbol))
-            throw new ArgumentException("Symbol is required", nameof(symbol));
+        ThrowIfDisposed();
+        ValidateSymbol(symbol);
 
         if (string.IsNullOrEmpty(_apiKey))
             throw new InvalidOperationException("Finnhub API key is required.");
 
-        await _rateLimiter.WaitForSlotAsync(ct).ConfigureAwait(false);
+        await WaitForRateLimitSlotAsync(ct).ConfigureAwait(false);
 
         var normalizedSymbol = NormalizeSymbol(symbol);
         var normalizedResolution = NormalizeResolution(resolution);
@@ -236,26 +234,19 @@ public sealed class FinnhubHistoricalDataProvider : IHistoricalDataProvider, IDi
 
         var url = $"{BaseUrl}/stock/candle?symbol={normalizedSymbol}&resolution={normalizedResolution}&from={fromUnix}&to={toUnix}&token={_apiKey}";
 
-        _log.Information("Requesting Finnhub {Resolution} bars for {Symbol}", normalizedResolution, symbol);
+        Log.Information("Requesting Finnhub {Resolution} bars for {Symbol}", normalizedResolution, symbol);
 
         try
         {
-            using var response = await _http.GetAsync(url, ct).ConfigureAwait(false);
+            using var response = await Http.GetAsync(url, ct).ConfigureAwait(false);
 
             if (!response.IsSuccessStatusCode)
             {
-                var error = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
-
-                if ((int)response.StatusCode == 429)
-                {
-                    throw new HttpRequestException($"Finnhub rate limit exceeded (429) for {symbol}");
-                }
-
-                throw new InvalidOperationException($"Finnhub returned {(int)response.StatusCode} for symbol {symbol}");
+                HandleHttpError(response, symbol);
             }
 
             var json = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
-            var data = JsonSerializer.Deserialize<FinnhubCandleResponse>(json);
+            var data = DeserializeResponse<FinnhubCandleResponse>(json, symbol);
 
             if (data?.Status == "no_data" || data?.Close is null || data.Close.Length == 0)
             {
@@ -263,11 +254,12 @@ public sealed class FinnhubHistoricalDataProvider : IHistoricalDataProvider, IDi
             }
 
             var bars = new List<IntradayBar>();
-            var timestamps = data.Timestamp ?? Array.Empty<long>();
+            var timestamps = data.Timestamp ?? [];
 
             for (int i = 0; i < timestamps.Length; i++)
             {
                 var timestamp = DateTimeOffset.FromUnixTimeSeconds(timestamps[i]);
+                var sessionDate = DateOnly.FromDateTime(timestamp.Date);
 
                 // Skip if outside requested range
                 if (from.HasValue && timestamp < from.Value) continue;
@@ -279,7 +271,7 @@ public sealed class FinnhubHistoricalDataProvider : IHistoricalDataProvider, IDi
                 var close = GetDecimalValue(data.Close, i);
                 var volume = GetLongValue(data.Volume, i);
 
-                if (open <= 0 || high <= 0 || low <= 0 || close <= 0)
+                if (!ValidateOhlc(open, high, low, close, symbol, sessionDate))
                     continue;
 
                 bars.Add(new IntradayBar(
@@ -295,13 +287,13 @@ public sealed class FinnhubHistoricalDataProvider : IHistoricalDataProvider, IDi
                 ));
             }
 
-            _log.Information("Fetched {Count} {Resolution} bars for {Symbol} from Finnhub",
+            Log.Information("Fetched {Count} {Resolution} bars for {Symbol} from Finnhub",
                 bars.Count, normalizedResolution, symbol);
             return bars.OrderBy(b => b.Timestamp).ToList();
         }
         catch (JsonException ex)
         {
-            _log.Error(ex, "Failed to parse Finnhub intraday response for {Symbol}", symbol);
+            Log.Error(ex, "Failed to parse Finnhub intraday response for {Symbol}", symbol);
             throw new InvalidOperationException($"Failed to parse Finnhub intraday data for {symbol}", ex);
         }
     }
@@ -311,17 +303,19 @@ public sealed class FinnhubHistoricalDataProvider : IHistoricalDataProvider, IDi
     /// </summary>
     public async Task<IReadOnlyList<FinnhubEarning>> GetEarningsAsync(string symbol, CancellationToken ct = default)
     {
+        ThrowIfDisposed();
+
         if (string.IsNullOrEmpty(_apiKey))
             throw new InvalidOperationException("Finnhub API key is required.");
 
-        await _rateLimiter.WaitForSlotAsync(ct).ConfigureAwait(false);
+        await WaitForRateLimitSlotAsync(ct).ConfigureAwait(false);
 
         var normalizedSymbol = NormalizeSymbol(symbol);
         var url = $"{BaseUrl}/stock/earnings?symbol={normalizedSymbol}&token={_apiKey}";
 
         try
         {
-            using var response = await _http.GetAsync(url, ct).ConfigureAwait(false);
+            using var response = await Http.GetAsync(url, ct).ConfigureAwait(false);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -329,9 +323,9 @@ public sealed class FinnhubHistoricalDataProvider : IHistoricalDataProvider, IDi
             }
 
             var json = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
-            var data = JsonSerializer.Deserialize<List<FinnhubEarning>>(json);
+            var data = DeserializeResponse<List<FinnhubEarning>>(json, symbol);
 
-            return data ?? Array.Empty<FinnhubEarning>().ToList();
+            return data ?? [];
         }
         catch
         {
@@ -344,17 +338,19 @@ public sealed class FinnhubHistoricalDataProvider : IHistoricalDataProvider, IDi
     /// </summary>
     public async Task<FinnhubCompanyProfile?> GetCompanyProfileAsync(string symbol, CancellationToken ct = default)
     {
+        ThrowIfDisposed();
+
         if (string.IsNullOrEmpty(_apiKey))
             throw new InvalidOperationException("Finnhub API key is required.");
 
-        await _rateLimiter.WaitForSlotAsync(ct).ConfigureAwait(false);
+        await WaitForRateLimitSlotAsync(ct).ConfigureAwait(false);
 
         var normalizedSymbol = NormalizeSymbol(symbol);
         var url = $"{BaseUrl}/stock/profile2?symbol={normalizedSymbol}&token={_apiKey}";
 
         try
         {
-            using var response = await _http.GetAsync(url, ct).ConfigureAwait(false);
+            using var response = await Http.GetAsync(url, ct).ConfigureAwait(false);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -362,7 +358,7 @@ public sealed class FinnhubHistoricalDataProvider : IHistoricalDataProvider, IDi
             }
 
             var json = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
-            return JsonSerializer.Deserialize<FinnhubCompanyProfile>(json);
+            return DeserializeResponse<FinnhubCompanyProfile>(json, symbol);
         }
         catch
         {
@@ -370,10 +366,30 @@ public sealed class FinnhubHistoricalDataProvider : IHistoricalDataProvider, IDi
         }
     }
 
-    private static string NormalizeSymbol(string symbol)
+    #region Helper Methods
+
+    protected override string NormalizeSymbol(string symbol)
     {
         // Use centralized symbol normalization utility
         return SymbolNormalization.Normalize(symbol);
+    }
+
+    private void HandleHttpError(HttpResponseMessage response, string symbol)
+    {
+        var statusCode = (int)response.StatusCode;
+
+        if (statusCode == 429)
+        {
+            var retryAfter = TimeSpan.FromSeconds(60);
+            RecordRateLimitHit(retryAfter);
+
+            var rateLimitInfo = GetRateLimitInfo();
+            OnRateLimitHit?.Invoke(rateLimitInfo);
+
+            throw new HttpRequestException($"Finnhub rate limit exceeded (429) for {symbol}. Retry-After: 60");
+        }
+
+        throw new InvalidOperationException($"Finnhub returned {statusCode} for symbol {symbol}");
     }
 
     private static string NormalizeResolution(string resolution)
@@ -422,13 +438,7 @@ public sealed class FinnhubHistoricalDataProvider : IHistoricalDataProvider, IDi
         return (long)array[index];
     }
 
-    public void Dispose()
-    {
-        if (_disposed) return;
-        _disposed = true;
-        _rateLimiter.Dispose();
-        _http.Dispose();
-    }
+    #endregion
 
     #region Finnhub API Models
 
