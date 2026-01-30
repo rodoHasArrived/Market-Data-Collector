@@ -58,7 +58,7 @@ public class StorageProfileTests
         // Assert
         result.RootPath.Should().Be("data"); // Preserves original value
         result.Compress.Should().BeFalse("LowLatency profile disables compression for speed");
-        result.DatePartition.Should().Be(DatePartition.Hourly);
+        result.PartitionStrategy.DateGranularity.Should().Be(DatePartition.Hourly);
         result.GenerateManifests.Should().BeFalse("LowLatency profile disables manifests for speed");
     }
 
