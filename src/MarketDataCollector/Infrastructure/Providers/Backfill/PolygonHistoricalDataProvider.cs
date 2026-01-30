@@ -1,12 +1,10 @@
 using System.Globalization;
+using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading;
-using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Infrastructure.Contracts;
-using MarketDataCollector.Infrastructure.DataSources;
 using MarketDataCollector.Infrastructure.Http;
 using MarketDataCollector.Infrastructure.Utilities;
 using Serilog;
@@ -18,53 +16,66 @@ namespace MarketDataCollector.Infrastructure.Providers.Backfill;
 /// Provides high-quality OHLCV aggregates with trades, quotes, and reference data.
 /// Coverage: US equities, options, forex, crypto.
 /// Free tier: 5 API calls/minute, delayed data, 2 years history.
+/// Extends BaseHistoricalDataProvider for common functionality.
 /// </summary>
 [ImplementsAdr("ADR-001", "Polygon.io historical data provider implementation")]
 [ImplementsAdr("ADR-004", "All async methods support CancellationToken")]
-public sealed class PolygonHistoricalDataProvider : IHistoricalDataProvider, IDisposable
+public sealed class PolygonHistoricalDataProvider : BaseHistoricalDataProvider, IRateLimitAwareProvider
 {
     private const string BaseUrl = "https://api.polygon.io";
 
-    private readonly HttpClient _http;
-    private readonly RateLimiter _rateLimiter;
-    private readonly ILogger _log;
     private readonly string? _apiKey;
-    private bool _disposed;
 
-    public string Name => "polygon";
-    public string DisplayName => "Polygon.io (free tier)";
-    public string Description => "High-quality OHLCV aggregates for US equities with 2-year history on free tier.";
+    #region Abstract Property Implementations
 
-    public int Priority => 12;
-    public TimeSpan RateLimitDelay => TimeSpan.FromSeconds(12); // 5 requests/minute = 12 seconds between requests
-    public int MaxRequestsPerWindow => 5;
-    public TimeSpan RateLimitWindow => TimeSpan.FromMinutes(1);
+    public override string Name => "polygon";
+    public override string DisplayName => "Polygon.io (free tier)";
+    public override string Description => "High-quality OHLCV aggregates for US equities with 2-year history on free tier.";
+    protected override string HttpClientName => HttpClientNames.PolygonHistorical;
+
+    #endregion
+
+    #region Virtual Property Overrides
+
+    public override int Priority => 12;
+    public override TimeSpan RateLimitDelay => TimeSpan.FromSeconds(12); // 5 requests/minute = 12 seconds between requests
+    public override int MaxRequestsPerWindow => 5;
+    public override TimeSpan RateLimitWindow => TimeSpan.FromMinutes(1);
 
     /// <summary>
     /// Polygon supports adjusted bars with intraday aggregates and corporate actions.
     /// </summary>
-    public HistoricalDataCapabilities Capabilities { get; } = HistoricalDataCapabilities.BarsOnly with
+    public override HistoricalDataCapabilities Capabilities { get; } = HistoricalDataCapabilities.BarsOnly with
     {
         Intraday = true
     };
 
+    #endregion
+
+    /// <summary>
+    /// Event raised when the provider hits a rate limit (HTTP 429).
+    /// </summary>
+    public event Action<RateLimitInfo>? OnRateLimitHit;
+
     public PolygonHistoricalDataProvider(string? apiKey = null, HttpClient? httpClient = null, ILogger? log = null)
+        : base(httpClient, log)
     {
-        _log = log ?? LoggingSetup.ForContext<PolygonHistoricalDataProvider>();
         _apiKey = apiKey ?? Environment.GetEnvironmentVariable("POLYGON_API_KEY");
 
-        // TD-10: Use HttpClientFactory instead of creating new HttpClient instances
-        _http = httpClient ?? HttpClientFactoryProvider.CreateClient(HttpClientNames.PolygonHistorical);
-        _http.DefaultRequestHeaders.Add("User-Agent", "MarketDataCollector/1.0");
-
-        _rateLimiter = new RateLimiter(MaxRequestsPerWindow, RateLimitWindow, RateLimitDelay, _log);
+        Http.DefaultRequestHeaders.Add("User-Agent", "MarketDataCollector/1.0");
+        Http.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
     }
 
-    public async Task<bool> IsAvailableAsync(CancellationToken ct = default)
+    /// <summary>
+    /// Get current rate limit usage information.
+    /// </summary>
+    public RateLimitInfo GetRateLimitInfo() => base.GetRateLimitInfo();
+
+    public override async Task<bool> IsAvailableAsync(CancellationToken ct = default)
     {
         if (string.IsNullOrEmpty(_apiKey))
         {
-            _log.Warning("Polygon API key not configured. Set POLYGON_API_KEY environment variable or configure in settings.");
+            Log.Warning("Polygon API key not configured. Set POLYGON_API_KEY environment variable or configure in settings.");
             return false;
         }
 
@@ -72,7 +83,7 @@ public sealed class PolygonHistoricalDataProvider : IHistoricalDataProvider, IDi
         {
             // Quick health check with ticker details endpoint
             var url = $"{BaseUrl}/v3/reference/tickers/AAPL?apiKey={_apiKey}";
-            using var response = await _http.GetAsync(url, ct).ConfigureAwait(false);
+            using var response = await Http.GetAsync(url, ct).ConfigureAwait(false);
             return response.IsSuccessStatusCode;
         }
         catch
@@ -81,23 +92,21 @@ public sealed class PolygonHistoricalDataProvider : IHistoricalDataProvider, IDi
         }
     }
 
-    public async Task<IReadOnlyList<HistoricalBar>> GetDailyBarsAsync(string symbol, DateOnly? from, DateOnly? to, CancellationToken ct = default)
+    public override async Task<IReadOnlyList<HistoricalBar>> GetDailyBarsAsync(string symbol, DateOnly? from, DateOnly? to, CancellationToken ct = default)
     {
         var adjustedBars = await GetAdjustedDailyBarsAsync(symbol, from, to, ct).ConfigureAwait(false);
         return adjustedBars.Select(b => b.ToHistoricalBar(preferAdjusted: true)).ToList();
     }
 
-    public async Task<IReadOnlyList<AdjustedHistoricalBar>> GetAdjustedDailyBarsAsync(string symbol, DateOnly? from, DateOnly? to, CancellationToken ct = default)
+    public override async Task<IReadOnlyList<AdjustedHistoricalBar>> GetAdjustedDailyBarsAsync(string symbol, DateOnly? from, DateOnly? to, CancellationToken ct = default)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
-
-        if (string.IsNullOrWhiteSpace(symbol))
-            throw new ArgumentException("Symbol is required", nameof(symbol));
+        ThrowIfDisposed();
+        ValidateSymbol(symbol);
 
         if (string.IsNullOrEmpty(_apiKey))
             throw new InvalidOperationException("Polygon API key is required. Set POLYGON_API_KEY environment variable.");
 
-        await _rateLimiter.WaitForSlotAsync(ct).ConfigureAwait(false);
+        await WaitForRateLimitSlotAsync(ct).ConfigureAwait(false);
 
         var normalizedSymbol = NormalizeSymbol(symbol);
 
@@ -109,33 +118,23 @@ public sealed class PolygonHistoricalDataProvider : IHistoricalDataProvider, IDi
         // Use aggregates/range endpoint with adjusted=true for split/dividend adjusted data
         var url = $"{BaseUrl}/v2/aggs/ticker/{normalizedSymbol}/range/1/day/{startDate}/{endDate}?adjusted=true&sort=asc&limit=50000&apiKey={_apiKey}";
 
-        _log.Information("Requesting Polygon history for {Symbol} ({StartDate} to {EndDate})", symbol, startDate, endDate);
+        Log.Information("Requesting Polygon history for {Symbol} ({StartDate} to {EndDate})", symbol, startDate, endDate);
 
         try
         {
-            using var response = await _http.GetAsync(url, ct).ConfigureAwait(false);
+            using var response = await Http.GetAsync(url, ct).ConfigureAwait(false);
 
             if (!response.IsSuccessStatusCode)
             {
-                var error = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
-                _log.Warning("Polygon returned {Status} for {Symbol}: {Error}",
-                    response.StatusCode, symbol, error);
-
-                if ((int)response.StatusCode == 429)
-                {
-                    var retryAfter = response.Headers.RetryAfter?.Delta?.TotalSeconds ?? 60;
-                    throw new HttpRequestException($"Polygon rate limit exceeded (429) for {symbol}. Retry-After: {retryAfter}");
-                }
-
-                throw new InvalidOperationException($"Polygon returned {(int)response.StatusCode} for symbol {symbol}");
+                HandleHttpError(response, symbol);
             }
 
             var json = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
-            var data = JsonSerializer.Deserialize<PolygonAggregatesResponse>(json);
+            var data = DeserializeResponse<PolygonAggregatesResponse>(json, symbol);
 
             if (data?.Results is null || data.Results.Count == 0)
             {
-                _log.Warning("No data returned from Polygon for {Symbol} (resultsCount: {Count})",
+                Log.Warning("No data returned from Polygon for {Symbol} (resultsCount: {Count})",
                     symbol, data?.ResultsCount ?? 0);
                 return Array.Empty<AdjustedHistoricalBar>();
             }
@@ -152,8 +151,8 @@ public sealed class PolygonHistoricalDataProvider : IHistoricalDataProvider, IDi
                 if (from.HasValue && sessionDate < from.Value) continue;
                 if (to.HasValue && sessionDate > to.Value) continue;
 
-                // Validate OHLC
-                if (result.Open <= 0 || result.High <= 0 || result.Low <= 0 || result.Close <= 0)
+                // Validate OHLC using base class helper
+                if (!ValidateOhlc(result.Open, result.High, result.Low, result.Close, symbol, sessionDate))
                     continue;
 
                 bars.Add(new AdjustedHistoricalBar(
@@ -167,23 +166,22 @@ public sealed class PolygonHistoricalDataProvider : IHistoricalDataProvider, IDi
                     Source: Name,
                     SequenceNumber: sessionDate.DayNumber,
                     // Polygon returns adjusted prices by default when adjusted=true
-                    // The raw prices are the adjusted prices in this case
                     AdjustedOpen: result.Open,
                     AdjustedHigh: result.High,
                     AdjustedLow: result.Low,
                     AdjustedClose: result.Close,
                     AdjustedVolume: (long)(result.Volume ?? 0),
-                    SplitFactor: null, // Would need separate call to get split info
-                    DividendAmount: null // Would need separate call to get dividend info
+                    SplitFactor: null,
+                    DividendAmount: null
                 ));
             }
 
-            _log.Information("Fetched {Count} bars for {Symbol} from Polygon", bars.Count, symbol);
+            Log.Information("Fetched {Count} bars for {Symbol} from Polygon", bars.Count, symbol);
             return bars.OrderBy(b => b.SessionDate).ToList();
         }
         catch (JsonException ex)
         {
-            _log.Error(ex, "Failed to parse Polygon response for {Symbol}", symbol);
+            Log.Error(ex, "Failed to parse Polygon response for {Symbol}", symbol);
             throw new InvalidOperationException($"Failed to parse Polygon data for {symbol}", ex);
         }
     }
@@ -198,15 +196,13 @@ public sealed class PolygonHistoricalDataProvider : IHistoricalDataProvider, IDi
         DateOnly? to,
         CancellationToken ct = default)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
-
-        if (string.IsNullOrWhiteSpace(symbol))
-            throw new ArgumentException("Symbol is required", nameof(symbol));
+        ThrowIfDisposed();
+        ValidateSymbol(symbol);
 
         if (string.IsNullOrEmpty(_apiKey))
             throw new InvalidOperationException("Polygon API key is required.");
 
-        await _rateLimiter.WaitForSlotAsync(ct).ConfigureAwait(false);
+        await WaitForRateLimitSlotAsync(ct).ConfigureAwait(false);
 
         var normalizedSymbol = NormalizeSymbol(symbol);
 
@@ -218,27 +214,20 @@ public sealed class PolygonHistoricalDataProvider : IHistoricalDataProvider, IDi
 
         var url = $"{BaseUrl}/v2/aggs/ticker/{normalizedSymbol}/range/{multiplier}/{timespan}/{startDate}/{endDate}?adjusted=true&sort=asc&limit=50000&apiKey={_apiKey}";
 
-        _log.Information("Requesting Polygon {Interval} bars for {Symbol} ({StartDate} to {EndDate})",
+        Log.Information("Requesting Polygon {Interval} bars for {Symbol} ({StartDate} to {EndDate})",
             interval, symbol, startDate, endDate);
 
         try
         {
-            using var response = await _http.GetAsync(url, ct).ConfigureAwait(false);
+            using var response = await Http.GetAsync(url, ct).ConfigureAwait(false);
 
             if (!response.IsSuccessStatusCode)
             {
-                var error = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
-
-                if ((int)response.StatusCode == 429)
-                {
-                    throw new HttpRequestException($"Polygon rate limit exceeded (429) for {symbol}");
-                }
-
-                throw new InvalidOperationException($"Polygon returned {(int)response.StatusCode} for symbol {symbol}");
+                HandleHttpError(response, symbol);
             }
 
             var json = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
-            var data = JsonSerializer.Deserialize<PolygonAggregatesResponse>(json);
+            var data = DeserializeResponse<PolygonAggregatesResponse>(json, symbol);
 
             if (data?.Results is null || data.Results.Count == 0)
             {
@@ -252,7 +241,7 @@ public sealed class PolygonHistoricalDataProvider : IHistoricalDataProvider, IDi
                 var timestamp = DateTimeOffset.FromUnixTimeMilliseconds(result.Timestamp);
                 var sessionDate = DateOnly.FromDateTime(timestamp.Date);
 
-                if (result.Open <= 0 || result.High <= 0 || result.Low <= 0 || result.Close <= 0)
+                if (!ValidateOhlc(result.Open, result.High, result.Low, result.Close, symbol, sessionDate))
                     continue;
 
                 bars.Add(new AdjustedHistoricalBar(
@@ -273,13 +262,13 @@ public sealed class PolygonHistoricalDataProvider : IHistoricalDataProvider, IDi
                 ));
             }
 
-            _log.Information("Fetched {Count} {Interval} bars for {Symbol} from Polygon",
+            Log.Information("Fetched {Count} {Interval} bars for {Symbol} from Polygon",
                 bars.Count, interval, symbol);
             return bars;
         }
         catch (JsonException ex)
         {
-            _log.Error(ex, "Failed to parse Polygon intraday response for {Symbol}", symbol);
+            Log.Error(ex, "Failed to parse Polygon intraday response for {Symbol}", symbol);
             throw new InvalidOperationException($"Failed to parse Polygon intraday data for {symbol}", ex);
         }
     }
@@ -289,17 +278,19 @@ public sealed class PolygonHistoricalDataProvider : IHistoricalDataProvider, IDi
     /// </summary>
     public async Task<IReadOnlyList<SplitInfo>> GetSplitsAsync(string symbol, CancellationToken ct = default)
     {
+        ThrowIfDisposed();
+
         if (string.IsNullOrEmpty(_apiKey))
             throw new InvalidOperationException("Polygon API key is required.");
 
-        await _rateLimiter.WaitForSlotAsync(ct).ConfigureAwait(false);
+        await WaitForRateLimitSlotAsync(ct).ConfigureAwait(false);
 
         var normalizedSymbol = NormalizeSymbol(symbol);
         var url = $"{BaseUrl}/v3/reference/splits?ticker={normalizedSymbol}&apiKey={_apiKey}";
 
         try
         {
-            using var response = await _http.GetAsync(url, ct).ConfigureAwait(false);
+            using var response = await Http.GetAsync(url, ct).ConfigureAwait(false);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -307,7 +298,7 @@ public sealed class PolygonHistoricalDataProvider : IHistoricalDataProvider, IDi
             }
 
             var json = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
-            var data = JsonSerializer.Deserialize<PolygonSplitsResponse>(json);
+            var data = DeserializeResponse<PolygonSplitsResponse>(json, symbol);
 
             if (data?.Results is null)
                 return Array.Empty<SplitInfo>();
@@ -331,17 +322,19 @@ public sealed class PolygonHistoricalDataProvider : IHistoricalDataProvider, IDi
     /// </summary>
     public async Task<IReadOnlyList<DividendInfo>> GetDividendsAsync(string symbol, CancellationToken ct = default)
     {
+        ThrowIfDisposed();
+
         if (string.IsNullOrEmpty(_apiKey))
             throw new InvalidOperationException("Polygon API key is required.");
 
-        await _rateLimiter.WaitForSlotAsync(ct).ConfigureAwait(false);
+        await WaitForRateLimitSlotAsync(ct).ConfigureAwait(false);
 
         var normalizedSymbol = NormalizeSymbol(symbol);
         var url = $"{BaseUrl}/v3/reference/dividends?ticker={normalizedSymbol}&apiKey={_apiKey}";
 
         try
         {
-            using var response = await _http.GetAsync(url, ct).ConfigureAwait(false);
+            using var response = await Http.GetAsync(url, ct).ConfigureAwait(false);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -349,7 +342,7 @@ public sealed class PolygonHistoricalDataProvider : IHistoricalDataProvider, IDi
             }
 
             var json = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
-            var data = JsonSerializer.Deserialize<PolygonDividendsResponse>(json);
+            var data = DeserializeResponse<PolygonDividendsResponse>(json, symbol);
 
             if (data?.Results is null)
                 return Array.Empty<DividendInfo>();
@@ -371,10 +364,30 @@ public sealed class PolygonHistoricalDataProvider : IHistoricalDataProvider, IDi
         }
     }
 
-    private static string NormalizeSymbol(string symbol)
+    #region Helper Methods
+
+    protected override string NormalizeSymbol(string symbol)
     {
         // Use centralized symbol normalization utility
         return SymbolNormalization.Normalize(symbol);
+    }
+
+    private void HandleHttpError(HttpResponseMessage response, string symbol)
+    {
+        var statusCode = (int)response.StatusCode;
+
+        if (statusCode == 429)
+        {
+            var retryAfter = response.Headers.RetryAfter?.Delta ?? TimeSpan.FromSeconds(60);
+            RecordRateLimitHit(retryAfter);
+
+            var rateLimitInfo = GetRateLimitInfo();
+            OnRateLimitHit?.Invoke(rateLimitInfo);
+
+            throw new HttpRequestException($"Polygon rate limit exceeded (429) for {symbol}. Retry-After: {retryAfter.TotalSeconds}");
+        }
+
+        throw new InvalidOperationException($"Polygon returned {statusCode} for symbol {symbol}");
     }
 
     private static (int multiplier, string timespan) ParseInterval(string interval)
@@ -408,13 +421,7 @@ public sealed class PolygonHistoricalDataProvider : IHistoricalDataProvider, IDi
         };
     }
 
-    public void Dispose()
-    {
-        if (_disposed) return;
-        _disposed = true;
-        _rateLimiter.Dispose();
-        _http.Dispose();
-    }
+    #endregion
 
     #region Polygon API Models
 

@@ -53,8 +53,8 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
     private Task? _reconnectTask;
     private int _reconnectAttempt;
     private const int MaxReconnectAttempts = 10;
-    private static readonly TimeSpan[] ReconnectDelays = new[]
-    {
+    private static readonly TimeSpan[] ReconnectDelays =
+    [
         TimeSpan.FromSeconds(1),
         TimeSpan.FromSeconds(2),
         TimeSpan.FromSeconds(5),
@@ -65,10 +65,10 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
         TimeSpan.FromMinutes(5),
         TimeSpan.FromMinutes(10),
         TimeSpan.FromMinutes(15)
-    };
+    ];
 
-    // Heartbeat monitoring
-    private DateTimeOffset _lastDataReceived = DateTimeOffset.UtcNow;
+    // Heartbeat monitoring - use long (ticks) for thread-safe atomic operations
+    private long _lastDataReceivedTicks = DateTimeOffset.UtcNow.Ticks;
     private Timer? _heartbeatTimer;
     private static readonly TimeSpan HeartbeatInterval = TimeSpan.FromSeconds(30);
     private static readonly TimeSpan HeartbeatTimeout = TimeSpan.FromMinutes(2);
@@ -77,6 +77,9 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
     private readonly System.Threading.Channels.Channel<Action> _messageChannel;
     private Task? _messageProcessorTask;
     private CancellationTokenSource? _processorCts;
+
+    // Channel overflow statistics for monitoring
+    private long _messageDropCount;
 #endif
 
     private int _nextSubId = 200_000; // Keep away from other provider IDs
@@ -142,14 +145,8 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
 
         _connector = StockSharpConnectorFactory.Create(_config);
 
-        // Wire up event handlers
-        _connector.Connected += OnConnected;
-        _connector.Disconnected += OnDisconnected;
-        _connector.ConnectionError += OnConnectionError;
-        _connector.NewTrade += OnNewTrade;
-        _connector.MarketDepthChanged += OnMarketDepthChanged;
-        _connector.ValuesChanged += OnValuesChanged;
-        _connector.Error += OnError;
+        // Wire up event handlers using centralized helper
+        AttachEventHandlers(_connector);
 
         var tcs = new TaskCompletionSource<bool>();
         using var registration = ct.Register(() => tcs.TrySetCanceled());
@@ -230,12 +227,28 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
     /// </summary>
     private void StartHeartbeatMonitoring()
     {
-        _lastDataReceived = DateTimeOffset.UtcNow;
+        UpdateLastDataReceived();
         _heartbeatTimer = new Timer(
             CheckHeartbeat,
             null,
             HeartbeatInterval,
             HeartbeatInterval);
+    }
+
+    /// <summary>
+    /// Thread-safe update of last data received timestamp.
+    /// </summary>
+    private void UpdateLastDataReceived()
+    {
+        Interlocked.Exchange(ref _lastDataReceivedTicks, DateTimeOffset.UtcNow.Ticks);
+    }
+
+    /// <summary>
+    /// Thread-safe read of last data received timestamp.
+    /// </summary>
+    private DateTimeOffset GetLastDataReceived()
+    {
+        return new DateTimeOffset(Interlocked.Read(ref _lastDataReceivedTicks), TimeSpan.Zero);
     }
 
     /// <summary>
@@ -246,7 +259,7 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
         if (_disposed || CurrentState != ConnectionState.Connected)
             return;
 
-        var timeSinceLastData = DateTimeOffset.UtcNow - _lastDataReceived;
+        var timeSinceLastData = DateTimeOffset.UtcNow - GetLastDataReceived();
         if (timeSinceLastData > HeartbeatTimeout)
         {
             _log.Warning("No data received for {Duration}s, connection may be stale. Triggering reconnection.",
@@ -322,13 +335,7 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
 
                 // Create new connector and connect
                 _connector = StockSharpConnectorFactory.Create(_config);
-                _connector.Connected += OnConnected;
-                _connector.Disconnected += OnDisconnected;
-                _connector.ConnectionError += OnConnectionError;
-                _connector.NewTrade += OnNewTrade;
-                _connector.MarketDepthChanged += OnMarketDepthChanged;
-                _connector.ValuesChanged += OnValuesChanged;
-                _connector.Error += OnError;
+                AttachEventHandlers(_connector);
 
                 var tcs = new TaskCompletionSource<bool>();
                 using var reg = ct.Register(() => tcs.TrySetCanceled());
@@ -345,7 +352,7 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
                 // Recover subscriptions
                 await RecoverSubscriptionsAsync(savedSubscriptions, ct).ConfigureAwait(false);
 
-                _lastDataReceived = DateTimeOffset.UtcNow;
+                UpdateLastDataReceived();
                 SetConnectionState(ConnectionState.Connected);
                 _log.Information("Reconnection successful. {Count} subscriptions recovered.", savedSubscriptions.Count);
                 return;
@@ -586,14 +593,7 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
 
         if (_connector != null)
         {
-            _connector.Connected -= OnConnected;
-            _connector.Disconnected -= OnDisconnected;
-            _connector.ConnectionError -= OnConnectionError;
-            _connector.NewTrade -= OnNewTrade;
-            _connector.MarketDepthChanged -= OnMarketDepthChanged;
-            _connector.ValuesChanged -= OnValuesChanged;
-            _connector.Error -= OnError;
-
+            DetachEventHandlers(_connector);
             _connector.Dispose();
             _connector = null;
         }
@@ -652,14 +652,14 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
     {
         if (trade == null) return;
 
-        // Update heartbeat timestamp
-        _lastDataReceived = DateTimeOffset.UtcNow;
+        // Update heartbeat timestamp (thread-safe)
+        UpdateLastDataReceived();
 
         var symbol = trade.Security?.Code ?? trade.Security?.Id ?? "UNKNOWN";
 
         // Buffer the message for processing (Hydra pattern)
         // This prevents blocking the connector's callback thread during bursts
-        _messageChannel.Writer.TryWrite(() =>
+        if (!_messageChannel.Writer.TryWrite(() =>
         {
             try
             {
@@ -685,7 +685,15 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
             {
                 _log.Warning(ex, "Error processing StockSharp trade for {Symbol}", symbol);
             }
-        });
+        }))
+        {
+            // Track message drops for monitoring
+            var dropCount = Interlocked.Increment(ref _messageDropCount);
+            if (dropCount % 1000 == 0)
+            {
+                _log.Warning("StockSharp message buffer overflow: {DropCount} messages dropped total", dropCount);
+            }
+        }
     }
 
     /// <summary>
@@ -696,8 +704,8 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
     {
         if (depth?.Security == null) return;
 
-        // Update heartbeat timestamp
-        _lastDataReceived = DateTimeOffset.UtcNow;
+        // Update heartbeat timestamp (thread-safe)
+        UpdateLastDataReceived();
 
         var symbol = depth.Security.Code ?? depth.Security.Id ?? "UNKNOWN";
         var timestamp = depth.LastChangeTime;
@@ -708,7 +716,7 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
         var asks = depth.Asks.ToArray();
 
         // Buffer the message for processing (Hydra pattern)
-        _messageChannel.Writer.TryWrite(() =>
+        if (!_messageChannel.Writer.TryWrite(() =>
         {
             try
             {
@@ -756,7 +764,10 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
             {
                 _log.Warning(ex, "Error processing StockSharp depth for {Symbol}", symbol);
             }
-        });
+        }))
+        {
+            Interlocked.Increment(ref _messageDropCount);
+        }
     }
 
     /// <summary>
@@ -767,8 +778,8 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
     {
         if (security == null) return;
 
-        // Update heartbeat timestamp
-        _lastDataReceived = DateTimeOffset.UtcNow;
+        // Update heartbeat timestamp (thread-safe)
+        UpdateLastDataReceived();
 
         var symbol = security.Code ?? security.Id ?? "UNKNOWN";
         var venue = security.Board?.Code ?? _config.ConnectorType;
@@ -800,7 +811,7 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
         if (bidPrice <= 0 && askPrice <= 0) return;
 
         // Buffer the message for processing (Hydra pattern)
-        _messageChannel.Writer.TryWrite(() =>
+        if (!_messageChannel.Writer.TryWrite(() =>
         {
             try
             {
@@ -822,12 +833,46 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
             {
                 _log.Warning(ex, "Error processing StockSharp Level1 for {Symbol}", symbol);
             }
-        });
+        }))
+        {
+            Interlocked.Increment(ref _messageDropCount);
+        }
     }
 
     #endregion
 
     #region Helpers
+
+    /// <summary>
+    /// Attach all event handlers to a connector instance.
+    /// Centralizes event handler management to prevent duplication.
+    /// </summary>
+    private void AttachEventHandlers(Connector connector)
+    {
+        connector.Connected += OnConnected;
+        connector.Disconnected += OnDisconnected;
+        connector.ConnectionError += OnConnectionError;
+        connector.NewTrade += OnNewTrade;
+        connector.MarketDepthChanged += OnMarketDepthChanged;
+        connector.ValuesChanged += OnValuesChanged;
+        connector.Error += OnError;
+    }
+
+    /// <summary>
+    /// Detach all event handlers from a connector instance.
+    /// </summary>
+    private void DetachEventHandlers(Connector? connector)
+    {
+        if (connector == null) return;
+
+        connector.Connected -= OnConnected;
+        connector.Disconnected -= OnDisconnected;
+        connector.ConnectionError -= OnConnectionError;
+        connector.NewTrade -= OnNewTrade;
+        connector.MarketDepthChanged -= OnMarketDepthChanged;
+        connector.ValuesChanged -= OnValuesChanged;
+        connector.Error -= OnError;
+    }
 
     /// <summary>
     /// Get or create a StockSharp Security from MDC SymbolConfig.

@@ -57,6 +57,18 @@ public static class StockSharpConnectorFactory
                 ConfigureInteractiveBrokers(connector, config.InteractiveBrokers);
                 break;
 
+            case "binance":
+                ConfigureBinance(connector, config.Binance);
+                break;
+
+            case "coinbase":
+                ConfigureCoinbase(connector, config.Coinbase);
+                break;
+
+            case "kraken":
+                ConfigureKraken(connector, config.Kraken);
+                break;
+
             default:
                 ConfigureCustomAdapter(connector, config);
                 break;
@@ -177,6 +189,85 @@ public static class StockSharpConnectorFactory
         throw new NotSupportedException(
             "Interactive Brokers support requires StockSharp.InteractiveBrokers NuGet package. " +
             "Install with: dotnet add package StockSharp.InteractiveBrokers");
+#endif
+    }
+
+    /// <summary>
+    /// Configure Binance crypto exchange adapter.
+    /// Supports spot, USDT futures, and coin-margined futures markets.
+    /// Note: Requires StockSharp crowdfunding membership for crypto connectors.
+    /// </summary>
+    private static void ConfigureBinance(Connector connector, BinanceConfig? cfg)
+    {
+#if STOCKSHARP_BINANCE
+        Log.Debug("Configuring Binance adapter: MarketType={MarketType}, Testnet={Testnet}",
+            cfg?.MarketType ?? "Spot", cfg?.UseTestnet ?? false);
+
+        var adapter = new StockSharp.Binance.BinanceMessageAdapter(
+            connector.TransactionIdGenerator)
+        {
+            Key = ToSecureString(cfg?.ApiKey ?? ""),
+            Secret = ToSecureString(cfg?.ApiSecret ?? ""),
+            IsDemo = cfg?.UseTestnet ?? false
+        };
+
+        connector.Adapter.InnerAdapters.Add(adapter);
+        Log.Information("Binance adapter configured successfully for {MarketType}", cfg?.MarketType ?? "Spot");
+#else
+        throw new NotSupportedException(
+            "Binance support requires StockSharp.Binance NuGet package and crowdfunding membership. " +
+            "See: https://stocksharp.com/store/ for more information.");
+#endif
+    }
+
+    /// <summary>
+    /// Configure Coinbase crypto exchange adapter.
+    /// Supports Coinbase Pro (Advanced Trade) API.
+    /// </summary>
+    private static void ConfigureCoinbase(Connector connector, CoinbaseConfig? cfg)
+    {
+#if STOCKSHARP_COINBASE
+        Log.Debug("Configuring Coinbase adapter: Sandbox={Sandbox}", cfg?.UseSandbox ?? false);
+
+        var adapter = new StockSharp.Coinbase.CoinbaseMessageAdapter(
+            connector.TransactionIdGenerator)
+        {
+            Key = ToSecureString(cfg?.ApiKey ?? ""),
+            Secret = ToSecureString(cfg?.ApiSecret ?? ""),
+            Passphrase = ToSecureString(cfg?.Passphrase ?? "")
+        };
+
+        connector.Adapter.InnerAdapters.Add(adapter);
+        Log.Information("Coinbase adapter configured successfully");
+#else
+        throw new NotSupportedException(
+            "Coinbase support requires StockSharp.Coinbase NuGet package and crowdfunding membership. " +
+            "See: https://stocksharp.com/store/ for more information.");
+#endif
+    }
+
+    /// <summary>
+    /// Configure Kraken crypto exchange adapter.
+    /// Supports spot markets with WebSocket streams.
+    /// </summary>
+    private static void ConfigureKraken(Connector connector, KrakenConfig? cfg)
+    {
+#if STOCKSHARP_KRAKEN
+        Log.Debug("Configuring Kraken adapter: OrderBookDepth={Depth}", cfg?.OrderBookDepth ?? 25);
+
+        var adapter = new StockSharp.Kraken.KrakenMessageAdapter(
+            connector.TransactionIdGenerator)
+        {
+            Key = ToSecureString(cfg?.ApiKey ?? ""),
+            Secret = ToSecureString(cfg?.ApiSecret ?? "")
+        };
+
+        connector.Adapter.InnerAdapters.Add(adapter);
+        Log.Information("Kraken adapter configured successfully");
+#else
+        throw new NotSupportedException(
+            "Kraken support requires StockSharp.Kraken NuGet package and crowdfunding membership. " +
+            "See: https://stocksharp.com/store/ for more information.");
 #endif
     }
 
