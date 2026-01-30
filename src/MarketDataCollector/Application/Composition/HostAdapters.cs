@@ -198,6 +198,88 @@ public sealed class DesktopHostAdapter : IHostAdapter
 }
 
 /// <summary>
+/// Host adapter for streaming/data collection mode (CLI headless with active data collection).
+/// This adapter is used when the application is collecting streaming market data.
+/// </summary>
+public sealed class StreamingHostAdapter : IHostAdapter
+{
+    private readonly DateTimeOffset _startTime = DateTimeOffset.UtcNow;
+    private readonly bool _enableHealthEndpoints;
+    private readonly int? _httpPort;
+
+    public StreamingHostAdapter(bool enableHealthEndpoints = true, int? httpPort = null)
+    {
+        _enableHealthEndpoints = enableHealthEndpoints;
+        _httpPort = httpPort;
+    }
+
+    public void ConfigureServices(IServiceCollection services)
+    {
+        // Streaming mode uses full service set from composition root
+        // No additional services needed beyond what's in CompositionOptions.Streaming
+    }
+
+    public void ConfigureApplication(WebApplication app)
+    {
+        if (_enableHealthEndpoints)
+        {
+            MapStreamingHealthEndpoints(app);
+        }
+    }
+
+    private void MapStreamingHealthEndpoints(WebApplication app)
+    {
+        app.MapGet("/health", () =>
+        {
+            var uptime = DateTimeOffset.UtcNow - _startTime;
+            return Results.Json(new
+            {
+                status = "healthy",
+                mode = "streaming",
+                timestamp = DateTimeOffset.UtcNow,
+                uptime = uptime.ToString()
+            });
+        });
+
+        app.MapGet("/healthz", () => Results.Ok("healthy"));
+        app.MapGet("/ready", () => Results.Ok("ready"));
+        app.MapGet("/live", () => Results.Ok("alive"));
+    }
+}
+
+/// <summary>
+/// Host adapter for backfill-only mode.
+/// This adapter is used when running historical data backfill operations.
+/// </summary>
+public sealed class BackfillHostAdapter : IHostAdapter
+{
+    private readonly DateTimeOffset _startTime = DateTimeOffset.UtcNow;
+
+    public void ConfigureServices(IServiceCollection services)
+    {
+        // Backfill mode uses BackfillOnly service set from composition root
+        // No additional services needed
+    }
+
+    public void ConfigureApplication(WebApplication app)
+    {
+        // Backfill mode typically doesn't need HTTP endpoints
+        // But we can add health endpoints if needed
+        app.MapGet("/health", () =>
+        {
+            var uptime = DateTimeOffset.UtcNow - _startTime;
+            return Results.Json(new
+            {
+                status = "healthy",
+                mode = "backfill",
+                timestamp = DateTimeOffset.UtcNow,
+                uptime = uptime.ToString()
+            });
+        });
+    }
+}
+
+/// <summary>
 /// Builder for creating configured web applications using the composition root and host adapters.
 /// </summary>
 public sealed class HostBuilder
@@ -235,6 +317,34 @@ public sealed class HostBuilder
     }
 
     /// <summary>
+    /// Creates a new host builder for streaming/data collection mode.
+    /// </summary>
+    public static HostBuilder CreateForStreaming(string configPath, int? httpPort = null)
+    {
+        var args = httpPort.HasValue
+            ? new[] { "--urls", $"http://localhost:{httpPort}" }
+            : Array.Empty<string>();
+
+        var builder = WebApplication.CreateBuilder(args);
+        builder.Logging.SetMinimumLevel(LogLevel.Warning);
+
+        var options = CompositionOptions.Streaming with { ConfigPath = configPath };
+        return new HostBuilder(builder, options);
+    }
+
+    /// <summary>
+    /// Creates a new host builder for backfill-only mode.
+    /// </summary>
+    public static HostBuilder CreateForBackfill(string configPath)
+    {
+        var builder = WebApplication.CreateBuilder();
+        builder.Logging.SetMinimumLevel(LogLevel.Warning);
+
+        var options = CompositionOptions.BackfillOnly with { ConfigPath = configPath };
+        return new HostBuilder(builder, options);
+    }
+
+    /// <summary>
     /// Configures the host with a specific adapter.
     /// </summary>
     public HostBuilder WithAdapter(IHostAdapter adapter)
@@ -267,6 +377,24 @@ public sealed class HostBuilder
     public HostBuilder AsDesktop(int port = 8080)
     {
         _adapter = new DesktopHostAdapter(port);
+        return this;
+    }
+
+    /// <summary>
+    /// Configures the host for streaming/data collection mode.
+    /// </summary>
+    public HostBuilder AsStreaming(bool enableHealthEndpoints = true, int? httpPort = null)
+    {
+        _adapter = new StreamingHostAdapter(enableHealthEndpoints, httpPort);
+        return this;
+    }
+
+    /// <summary>
+    /// Configures the host for backfill-only mode.
+    /// </summary>
+    public HostBuilder AsBackfill()
+    {
+        _adapter = new BackfillHostAdapter();
         return this;
     }
 
