@@ -32,6 +32,12 @@ public static class UiApiRoutes
     public const string BackfillProviders = "/api/backfill/providers";
     public const string BackfillStatus = "/api/backfill/status";
     public const string BackfillRun = "/api/backfill/run";
+    public const string BackfillHealth = "/api/backfill/health";
+    public const string BackfillResolve = "/api/backfill/resolve/{symbol}";
+    public const string BackfillGapFill = "/api/backfill/gap-fill";
+    public const string BackfillPresets = "/api/backfill/presets";
+    public const string BackfillExecutions = "/api/backfill/executions";
+    public const string BackfillStatistics = "/api/backfill/statistics";
 
     // Provider endpoints
     public const string ProviderComparison = "/api/providers/comparison";

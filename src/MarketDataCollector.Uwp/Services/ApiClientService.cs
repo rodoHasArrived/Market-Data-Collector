@@ -409,35 +409,14 @@ public sealed class ApiClientService : IDisposable
     }
 }
 
-/// <summary>
-/// Generic API response wrapper.
-/// </summary>
-public class ApiResponse<T> where T : class
-{
-    public bool Success { get; set; }
-    public int StatusCode { get; set; }
-    public T? Data { get; set; }
-    public string? ErrorMessage { get; set; }
-    public bool IsConnectionError { get; set; }
-}
-
-/// <summary>
-/// Service health check result.
-/// </summary>
-public class ServiceHealthResult
-{
-    public bool IsReachable { get; set; }
-    public bool IsConnected { get; set; }
-    public double LatencyMs { get; set; }
-    public int StatusCode { get; set; }
-    public string? ErrorMessage { get; set; }
-}
+// Note: ApiResponse<T> and ServiceHealthResult are now defined in
+// MarketDataCollector.Contracts.Api.ClientModels.cs (imported via SharedModelAliases.cs)
 
 /// <summary>
 /// Event args for service URL changes.
 /// </summary>
-public class ServiceUrlChangedEventArgs : EventArgs
+public sealed class ServiceUrlChangedEventArgs : EventArgs
 {
-    public string OldUrl { get; set; } = string.Empty;
-    public string NewUrl { get; set; } = string.Empty;
+    public string OldUrl { get; init; } = string.Empty;
+    public string NewUrl { get; init; } = string.Empty;
 }

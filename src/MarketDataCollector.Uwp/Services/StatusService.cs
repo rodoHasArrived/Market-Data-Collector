@@ -4,8 +4,13 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using MarketDataCollector.Contracts.Api;
 using MarketDataCollector.Uwp.Contracts;
 using MarketDataCollector.Uwp.Models;
+
+// Type aliases for backwards compatibility with renamed Contracts types
+using ProviderHealth = MarketDataCollector.Contracts.Api.BackfillProviderHealth;
+using SymbolResolution = MarketDataCollector.Contracts.Api.SymbolResolutionResponse;
 
 namespace MarketDataCollector.Uwp.Services;
 
@@ -57,31 +62,19 @@ public sealed class StatusService : IStatusService
     /// <summary>
     /// Gets the status with full response details.
     /// </summary>
-    public async Task<Contracts.ApiResponse<StatusResponse>> GetStatusWithResponseAsync(CancellationToken ct = default)
+    public async Task<ApiResponse<StatusResponse>> GetStatusWithResponseAsync(CancellationToken ct = default)
     {
-        var response = await _apiClient.GetWithResponseAsync<StatusResponse>("/api/status", ct);
-        return new Contracts.ApiResponse<StatusResponse>
-        {
-            Success = response.Success,
-            Data = response.Data,
-            ErrorMessage = response.ErrorMessage,
-            StatusCode = response.StatusCode
-        };
+        // ApiClientService returns ApiResponse<T> from Contracts.Api
+        return await _apiClient.GetWithResponseAsync<StatusResponse>("/api/status", ct);
     }
 
     /// <summary>
     /// Checks if the service is healthy and reachable.
     /// </summary>
-    public async Task<Contracts.ServiceHealthResult> CheckHealthAsync(CancellationToken ct = default)
+    public async Task<ServiceHealthResult> CheckHealthAsync(CancellationToken ct = default)
     {
-        var result = await _apiClient.CheckHealthAsync(ct);
-        return new Contracts.ServiceHealthResult
-        {
-            IsReachable = result.IsReachable,
-            IsConnected = result.IsConnected,
-            LatencyMs = result.LatencyMs,
-            ErrorMessage = result.ErrorMessage
-        };
+        // ApiClientService returns ServiceHealthResult from Contracts.Api
+        return await _apiClient.CheckHealthAsync(ct);
     }
 }
 
@@ -231,97 +224,7 @@ public sealed class BackfillApiService
     }
 }
 
-/// <summary>
-/// Request model for running a backfill.
-/// </summary>
-public class BackfillRequest
-{
-    public string Provider { get; set; } = "composite";
-    public string[] Symbols { get; set; } = Array.Empty<string>();
-    public string? From { get; set; }
-    public string? To { get; set; }
-}
-
-/// <summary>
-/// Response model for backfill health check.
-/// </summary>
-public class BackfillHealthResponse
-{
-    public bool IsHealthy { get; set; }
-    public Dictionary<string, ProviderHealth>? Providers { get; set; }
-}
-
-/// <summary>
-/// Individual provider health status.
-/// </summary>
-public class ProviderHealth
-{
-    public bool IsAvailable { get; set; }
-    public double? LatencyMs { get; set; }
-    public string? ErrorMessage { get; set; }
-    public DateTime? LastChecked { get; set; }
-}
-
-/// <summary>
-/// Symbol resolution result.
-/// </summary>
-public class SymbolResolution
-{
-    public string Symbol { get; set; } = string.Empty;
-    public string? ResolvedSymbol { get; set; }
-    public string? Exchange { get; set; }
-    public string? Currency { get; set; }
-    public string? SecurityType { get; set; }
-    public Dictionary<string, string>? ProviderMappings { get; set; }
-}
-
-/// <summary>
-/// Backfill execution response.
-/// </summary>
-public class BackfillExecutionResponse
-{
-    public string ExecutionId { get; set; } = string.Empty;
-    public string Status { get; set; } = "Pending";
-    public DateTime StartedAt { get; set; }
-    public string[] Symbols { get; set; } = Array.Empty<string>();
-}
-
-/// <summary>
-/// Backfill preset definition.
-/// </summary>
-public class BackfillPreset
-{
-    public string Name { get; set; } = string.Empty;
-    public string DisplayName { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
-    public string CronExpression { get; set; } = string.Empty;
-    public int LookbackDays { get; set; }
-}
-
-/// <summary>
-/// Backfill execution record.
-/// </summary>
-public class BackfillExecution
-{
-    public string Id { get; set; } = string.Empty;
-    public string ScheduleId { get; set; } = string.Empty;
-    public string Status { get; set; } = "Pending";
-    public DateTime StartedAt { get; set; }
-    public DateTime? CompletedAt { get; set; }
-    public int SymbolsProcessed { get; set; }
-    public int BarsDownloaded { get; set; }
-    public string? ErrorMessage { get; set; }
-}
-
-/// <summary>
-/// Backfill statistics summary.
-/// </summary>
-public class BackfillStatistics
-{
-    public int TotalExecutions { get; set; }
-    public int SuccessfulExecutions { get; set; }
-    public int FailedExecutions { get; set; }
-    public long TotalBarsDownloaded { get; set; }
-    public double AverageExecutionTimeSeconds { get; set; }
-    public DateTime? LastSuccessfulExecution { get; set; }
-}
+// Note: Backfill-related models (BackfillRequest, BackfillHealthResponse, BackfillProviderHealth,
+// SymbolResolutionResponse, BackfillExecutionResponse, BackfillPreset, BackfillExecution,
+// BackfillStatistics) are now defined in MarketDataCollector.Contracts.Api.BackfillApiModels.cs
+// and StatusModels.cs. Type aliases at the top of this file maintain backwards compatibility.
