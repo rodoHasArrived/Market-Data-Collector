@@ -7,7 +7,7 @@
     Features enhanced debugging output, progress tracking, and Windows toast notifications.
 
 .PARAMETER Mode
-    Installation mode: Docker, Native, Desktop, Check, Uninstall, or Help
+    Installation mode: Docker, Native, Desktop, Check, Uninstall, UninstallDesktop, or Help
 
 .PARAMETER Verbose
     Enable verbose logging output
@@ -17,6 +17,18 @@
 
 .PARAMETER LogPath
     Custom path for the installation log file
+
+.PARAMETER AutoInstallPrereqs
+    Automatically install missing prerequisites using winget
+
+.PARAMETER Architecture
+    Target architecture for Desktop mode: x64 or ARM64 (default: x64)
+
+.PARAMETER SkipInstall
+    Build only, do not install the MSIX package (Desktop mode)
+
+.PARAMETER NoTrustCert
+    Skip automatic certificate trust prompt (Desktop mode)
 
 .EXAMPLE
     .\install.ps1
@@ -31,20 +43,41 @@
     Windows Desktop installation with verbose output
 
 .EXAMPLE
+    .\install.ps1 -Mode Desktop -Architecture ARM64
+    Build Windows Desktop App for ARM64 architecture
+
+.EXAMPLE
+    .\install.ps1 -Mode Desktop -AutoInstallPrereqs
+    Install Desktop App with automatic prerequisite installation
+
+.EXAMPLE
     .\install.ps1 -Mode Native -NoNotify
     Native .NET installation without notifications
+
+.EXAMPLE
+    .\install.ps1 -Mode UninstallDesktop
+    Uninstall the Windows Desktop App
 #>
 
 param(
     [Parameter(Position = 0)]
-    [ValidateSet("Docker", "Native", "Desktop", "Check", "Uninstall", "Help")]
+    [ValidateSet("Docker", "Native", "Desktop", "Check", "Uninstall", "UninstallDesktop", "Help")]
     [string]$Mode = "",
 
     [switch]$Verbose,
 
     [switch]$NoNotify,
 
-    [string]$LogPath = ""
+    [string]$LogPath = "",
+
+    [switch]$AutoInstallPrereqs,
+
+    [ValidateSet("x64", "ARM64")]
+    [string]$Architecture = "x64",
+
+    [switch]$SkipInstall,
+
+    [switch]$NoTrustCert
 )
 
 $ErrorActionPreference = "Stop"
@@ -79,15 +112,305 @@ function Write-Success($message) { Write-Host "[SUCCESS] $message" -ForegroundCo
 function Write-Warn($message) { Write-Host "[WARNING] $message" -ForegroundColor Yellow }
 function Write-Err($message) { Write-Host "[ERROR] $message" -ForegroundColor Red }
 
+# Desktop app package identity
+$DesktopAppPackageName = "MarketDataCollector.Desktop"
+$DesktopAppPublisher = "CN=MarketDataCollector"
+
+function Test-WingetAvailable {
+    try {
+        $null = Get-Command winget -ErrorAction Stop
+        return $true
+    }
+    catch {
+        return $false
+    }
+}
+
+function Install-PrerequisiteWithWinget {
+    param(
+        [string]$PackageId,
+        [string]$DisplayName
+    )
+
+    if (-not (Test-WingetAvailable)) {
+        Write-Warn "winget is not available. Please install $DisplayName manually."
+        return $false
+    }
+
+    Write-Info "Installing $DisplayName using winget..."
+    try {
+        $result = winget install -e --id $PackageId --accept-package-agreements --accept-source-agreements 2>&1
+        if ($LASTEXITCODE -eq 0) {
+            Write-Success "$DisplayName installed successfully"
+            return $true
+        }
+        else {
+            Write-Warn "Failed to install $DisplayName. Exit code: $LASTEXITCODE"
+            return $false
+        }
+    }
+    catch {
+        Write-Warn "Error installing $DisplayName : $($_.Exception.Message)"
+        return $false
+    }
+}
+
+function Test-DesktopPrerequisites {
+    param(
+        [switch]$AutoInstall
+    )
+
+    Write-Info "Checking Desktop App prerequisites..."
+    $allMet = $true
+    $missing = @()
+
+    # Check .NET SDK 9.0+
+    if (Test-Command "dotnet") {
+        $dotnetVersion = dotnet --version
+        $majorVersion = [int]($dotnetVersion -split '\.')[0]
+        if ($majorVersion -ge 9) {
+            Write-Success ".NET SDK: $dotnetVersion (9.0+ required)"
+        }
+        else {
+            Write-Warn ".NET SDK: $dotnetVersion (9.0+ required for Desktop App)"
+            $missing += @{ Name = ".NET SDK 9.0"; WingetId = "Microsoft.DotNet.SDK.9"; Display = ".NET SDK 9.0" }
+            $allMet = $false
+        }
+    }
+    else {
+        Write-Warn ".NET SDK: Not installed (9.0+ required)"
+        $missing += @{ Name = ".NET SDK 9.0"; WingetId = "Microsoft.DotNet.SDK.9"; Display = ".NET SDK 9.0" }
+        $allMet = $false
+    }
+
+    # Check Windows SDK (optional but recommended)
+    $windowsSdkPath = "C:\Program Files (x86)\Windows Kits\10"
+    if (Test-Path $windowsSdkPath) {
+        $sdkVersions = Get-ChildItem -Path "$windowsSdkPath\Include" -Directory -ErrorAction SilentlyContinue |
+            Where-Object { $_.Name -match '^\d+\.\d+\.\d+\.\d+$' } |
+            Sort-Object { [version]$_.Name } -Descending |
+            Select-Object -First 1
+        if ($sdkVersions) {
+            Write-Success "Windows SDK: $($sdkVersions.Name)"
+        }
+        else {
+            Write-Info "Windows SDK: Found but no version detected (Windows App SDK from NuGet will be used)"
+        }
+    }
+    else {
+        Write-Info "Windows SDK: Not found (Windows App SDK from NuGet will be used)"
+    }
+
+    # Check Visual C++ Redistributable (required for WinUI 3)
+    $vcRedistKey = "HKLM:\SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\X64"
+    if (Test-Path $vcRedistKey) {
+        $vcVersion = (Get-ItemProperty $vcRedistKey -ErrorAction SilentlyContinue).Version
+        if ($vcVersion) {
+            Write-Success "Visual C++ Redistributable: $vcVersion"
+        }
+        else {
+            Write-Success "Visual C++ Redistributable: Installed"
+        }
+    }
+    else {
+        Write-Warn "Visual C++ Redistributable: Not detected (may cause runtime issues)"
+        $missing += @{ Name = "VC++ Redistributable"; WingetId = "Microsoft.VCRedist.2015+.x64"; Display = "Visual C++ Redistributable" }
+        # Don't fail on this - it might be installed differently
+    }
+
+    # Check if running on Windows 10 1809+ or Windows 11
+    $osVersion = [System.Environment]::OSVersion.Version
+    $buildNumber = $osVersion.Build
+    if ($buildNumber -ge 17763) {
+        Write-Success "Windows Version: Build $buildNumber (Windows 10 1809+ or Windows 11)"
+    }
+    else {
+        Write-Warn "Windows Version: Build $buildNumber (Windows 10 1809+ recommended)"
+    }
+
+    # Auto-install missing prerequisites if requested
+    if ($AutoInstall -and $missing.Count -gt 0) {
+        Write-Host ""
+        Write-Info "Attempting to install missing prerequisites..."
+
+        foreach ($prereq in $missing) {
+            $installed = Install-PrerequisiteWithWinget -PackageId $prereq.WingetId -DisplayName $prereq.Display
+            if ($installed) {
+                $allMet = $true  # Re-check after installation
+            }
+        }
+
+        # Refresh environment after installations
+        if ($missing.Count -gt 0) {
+            Write-Info "Refreshing environment variables..."
+            $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
+        }
+    }
+
+    Write-Host ""
+    return @{
+        AllMet = $allMet
+        Missing = $missing
+    }
+}
+
+function Install-TrustedCertificate {
+    param(
+        [string]$MsixPath
+    )
+
+    Write-Info "Extracting certificate from MSIX package..."
+
+    try {
+        # Get the certificate from the MSIX package
+        $signature = Get-AuthenticodeSignature -FilePath $MsixPath -ErrorAction Stop
+        if ($null -eq $signature.SignerCertificate) {
+            Write-Warn "No certificate found in MSIX package"
+            return $false
+        }
+
+        $cert = $signature.SignerCertificate
+
+        # Check if certificate is already trusted
+        $trustedCerts = Get-ChildItem -Path "Cert:\CurrentUser\TrustedPeople" -ErrorAction SilentlyContinue
+        $alreadyTrusted = $trustedCerts | Where-Object { $_.Thumbprint -eq $cert.Thumbprint }
+
+        if ($alreadyTrusted) {
+            Write-Success "Certificate is already trusted"
+            return $true
+        }
+
+        Write-Host ""
+        Write-Host "  Certificate Details:" -ForegroundColor Yellow
+        Write-Host "    Subject:    $($cert.Subject)" -ForegroundColor Gray
+        Write-Host "    Issuer:     $($cert.Issuer)" -ForegroundColor Gray
+        Write-Host "    Thumbprint: $($cert.Thumbprint)" -ForegroundColor Gray
+        Write-Host "    Valid From: $($cert.NotBefore) to $($cert.NotAfter)" -ForegroundColor Gray
+        Write-Host ""
+
+        Write-Host "  To install the Desktop App, the signing certificate must be trusted." -ForegroundColor White
+        Write-Host "  This adds the certificate to your 'Trusted People' certificate store." -ForegroundColor Gray
+        Write-Host ""
+
+        $confirm = Read-Host "  Trust this certificate? [Y/n]"
+        if ($confirm -eq "" -or $confirm -match "^[Yy]") {
+            # Export to temp file and import
+            $tempCertPath = Join-Path $env:TEMP "mdc_temp_cert.cer"
+            [System.IO.File]::WriteAllBytes($tempCertPath, $cert.Export([System.Security.Cryptography.X509Certificates.X509ContentType]::Cert))
+
+            $store = New-Object System.Security.Cryptography.X509Certificates.X509Store("TrustedPeople", "CurrentUser")
+            $store.Open("ReadWrite")
+            $store.Add($cert)
+            $store.Close()
+
+            Remove-Item $tempCertPath -ErrorAction SilentlyContinue
+            Write-Success "Certificate trusted successfully"
+            return $true
+        }
+        else {
+            Write-Warn "Certificate not trusted. MSIX installation may fail."
+            return $false
+        }
+    }
+    catch {
+        Write-Warn "Failed to trust certificate: $($_.Exception.Message)"
+        return $false
+    }
+}
+
+function Install-MsixPackage {
+    param(
+        [string]$MsixPath
+    )
+
+    Write-Info "Installing MSIX package..."
+
+    try {
+        # Use Add-AppxPackage to install
+        Add-AppxPackage -Path $MsixPath -ErrorAction Stop
+        Write-Success "MSIX package installed successfully"
+
+        # Get the installed app info
+        $installedApp = Get-AppxPackage -Name $DesktopAppPackageName -ErrorAction SilentlyContinue
+        if ($installedApp) {
+            Write-Host ""
+            Write-Host "  Installed App Details:" -ForegroundColor Green
+            Write-Host "    Name:    $($installedApp.Name)" -ForegroundColor Gray
+            Write-Host "    Version: $($installedApp.Version)" -ForegroundColor Gray
+            Write-Host "    Status:  $($installedApp.Status)" -ForegroundColor Gray
+            Write-Host ""
+            Write-Host "  The app is now available in your Start Menu." -ForegroundColor White
+            Write-Host "  Search for 'Market Data Collector' to launch it." -ForegroundColor Gray
+        }
+        return $true
+    }
+    catch {
+        Write-Err "Failed to install MSIX package: $($_.Exception.Message)"
+
+        if ($_.Exception.Message -match "trust") {
+            Write-Host ""
+            Write-Host "  The package certificate is not trusted." -ForegroundColor Yellow
+            Write-Host "  Run the script again without -NoTrustCert to trust the certificate." -ForegroundColor Gray
+        }
+        return $false
+    }
+}
+
+function Uninstall-DesktopApp {
+    Write-Info "Uninstalling Windows Desktop App..."
+
+    try {
+        $installedApp = Get-AppxPackage -Name $DesktopAppPackageName -ErrorAction SilentlyContinue
+        if ($null -eq $installedApp) {
+            Write-Warn "Desktop App is not installed"
+            return $false
+        }
+
+        Write-Host ""
+        Write-Host "  Found installed app:" -ForegroundColor Yellow
+        Write-Host "    Name:    $($installedApp.Name)" -ForegroundColor Gray
+        Write-Host "    Version: $($installedApp.Version)" -ForegroundColor Gray
+        Write-Host "    Install: $($installedApp.InstallLocation)" -ForegroundColor Gray
+        Write-Host ""
+
+        $confirm = Read-Host "  Uninstall this app? [Y/n]"
+        if ($confirm -eq "" -or $confirm -match "^[Yy]") {
+            Remove-AppxPackage -Package $installedApp.PackageFullName -ErrorAction Stop
+            Write-Success "Desktop App uninstalled successfully"
+
+            # Optionally remove certificate
+            Write-Host ""
+            $removeCert = Read-Host "  Also remove the trusted certificate? [y/N]"
+            if ($removeCert -match "^[Yy]") {
+                $certs = Get-ChildItem -Path "Cert:\CurrentUser\TrustedPeople" |
+                    Where-Object { $_.Subject -eq $DesktopAppPublisher }
+                foreach ($cert in $certs) {
+                    Remove-Item -Path $cert.PSPath -ErrorAction SilentlyContinue
+                    Write-Success "Removed certificate: $($cert.Thumbprint)"
+                }
+            }
+            return $true
+        }
+        else {
+            Write-Info "Uninstall cancelled"
+            return $false
+        }
+    }
+    catch {
+        Write-Err "Failed to uninstall: $($_.Exception.Message)"
+        return $false
+    }
+}
+
 function Show-Header {
     if ($useNotificationModule) {
-        Show-BuildHeader -Title "Market Data Collector - Installation Script" -Subtitle "Version 1.2.0 - Enhanced Debugging Edition"
+        Show-BuildHeader -Title "Market Data Collector - Installation Script" -Subtitle "Version 1.3.0 - Enhanced Windows Desktop Edition"
     }
     else {
         Write-Host ""
         Write-Host "======================================================================" -ForegroundColor Cyan
         Write-Host "           Market Data Collector - Installation Script                " -ForegroundColor Cyan
-        Write-Host "                         Version 1.2.0                                " -ForegroundColor Cyan
+        Write-Host "                         Version 1.3.0                                " -ForegroundColor Cyan
         Write-Host "======================================================================" -ForegroundColor Cyan
         Write-Host ""
     }
@@ -95,20 +418,41 @@ function Show-Header {
 
 function Show-Help {
     Show-Header
-    Write-Host "Usage: .\install.ps1 [-Mode <mode>]"
+    Write-Host "Usage: .\install.ps1 [-Mode <mode>] [options]"
     Write-Host ""
-    Write-Host "Modes:"
-    Write-Host "  Docker     Install using Docker (recommended for production)"
-    Write-Host "  Native     Install using native .NET SDK (CLI)"
-    Write-Host "  Desktop    Build and install Windows Desktop App (WinUI 3)"
-    Write-Host "  Check      Check prerequisites only"
-    Write-Host "  Uninstall  Remove Docker containers and images"
-    Write-Host "  Help       Show this help message"
+    Write-Host "Modes:" -ForegroundColor Yellow
+    Write-Host "  Docker           Install using Docker (recommended for production)"
+    Write-Host "  Native           Install using native .NET SDK (CLI)"
+    Write-Host "  Desktop          Build and install Windows Desktop App (WinUI 3)"
+    Write-Host "  Check            Check prerequisites only"
+    Write-Host "  Uninstall        Remove Docker containers and images"
+    Write-Host "  UninstallDesktop Remove Windows Desktop App"
+    Write-Host "  Help             Show this help message"
     Write-Host ""
-    Write-Host "Examples:"
-    Write-Host "  .\install.ps1                    # Interactive installation"
-    Write-Host "  .\install.ps1 -Mode Docker       # Quick Docker installation"
-    Write-Host "  .\install.ps1 -Mode Native       # Native .NET installation"
+    Write-Host "Options:" -ForegroundColor Yellow
+    Write-Host "  -Verbose             Enable verbose logging output"
+    Write-Host "  -NoNotify            Disable Windows toast notifications"
+    Write-Host "  -AutoInstallPrereqs  Automatically install missing prerequisites via winget"
+    Write-Host ""
+    Write-Host "Desktop Mode Options:" -ForegroundColor Yellow
+    Write-Host "  -Architecture <arch> Target architecture: x64 (default) or ARM64"
+    Write-Host "  -SkipInstall         Build only, do not install the MSIX package"
+    Write-Host "  -NoTrustCert         Skip automatic certificate trust prompt"
+    Write-Host ""
+    Write-Host "Examples:" -ForegroundColor Yellow
+    Write-Host "  .\install.ps1                                  # Interactive installation"
+    Write-Host "  .\install.ps1 -Mode Docker                     # Quick Docker installation"
+    Write-Host "  .\install.ps1 -Mode Native                     # Native .NET installation"
+    Write-Host "  .\install.ps1 -Mode Desktop                    # Desktop App (x64, with install)"
+    Write-Host "  .\install.ps1 -Mode Desktop -Architecture ARM64 # Desktop App for ARM64"
+    Write-Host "  .\install.ps1 -Mode Desktop -SkipInstall       # Build only, no install"
+    Write-Host "  .\install.ps1 -Mode Desktop -AutoInstallPrereqs # Auto-install .NET SDK etc."
+    Write-Host "  .\install.ps1 -Mode UninstallDesktop           # Uninstall Desktop App"
+    Write-Host ""
+    Write-Host "Environment Variables (Desktop Mode):" -ForegroundColor Yellow
+    Write-Host "  MDC_APPINSTALLER_URI      URI for AppInstaller auto-update"
+    Write-Host "  MDC_SIGNING_CERT_PFX      Path to signing certificate (PFX)"
+    Write-Host "  MDC_SIGNING_CERT_PASSWORD Password for signing certificate"
     Write-Host ""
 }
 
@@ -186,22 +530,44 @@ function Test-Prerequisites {
 }
 
 function Show-Prerequisites-Suggestions {
+    param(
+        [switch]$ForDesktop
+    )
+
     Write-Host ""
     Write-Info "Installation suggestions for Windows:"
     Write-Host ""
-    Write-Host "Using winget (Windows Package Manager):" -ForegroundColor Yellow
-    Write-Host "  winget install -e --id Docker.DockerDesktop"
-    Write-Host "  winget install -e --id Microsoft.DotNet.SDK.8"
-    Write-Host "  winget install -e --id Git.Git"
-    Write-Host ""
-    Write-Host "Using Chocolatey:" -ForegroundColor Yellow
-    Write-Host "  choco install docker-desktop dotnet-sdk git -y"
-    Write-Host ""
-    Write-Host "Manual downloads:" -ForegroundColor Yellow
-    Write-Host "  Docker Desktop: https://www.docker.com/products/docker-desktop"
-    Write-Host "  .NET SDK 8.0:   https://dotnet.microsoft.com/download/dotnet/8.0"
-    Write-Host "  Git:            https://git-scm.com/download/win"
-    Write-Host ""
+
+    if ($ForDesktop) {
+        Write-Host "For Desktop App (WinUI 3):" -ForegroundColor Cyan
+        Write-Host ""
+        Write-Host "Using winget (recommended):" -ForegroundColor Yellow
+        Write-Host "  winget install -e --id Microsoft.DotNet.SDK.9"
+        Write-Host "  winget install -e --id Microsoft.VCRedist.2015+.x64"
+        Write-Host ""
+        Write-Host "Or run with automatic installation:" -ForegroundColor Yellow
+        Write-Host "  .\install.ps1 -Mode Desktop -AutoInstallPrereqs"
+        Write-Host ""
+        Write-Host "Manual downloads:" -ForegroundColor Yellow
+        Write-Host "  .NET SDK 9.0:      https://dotnet.microsoft.com/download/dotnet/9.0"
+        Write-Host "  VC++ Redistributable: https://aka.ms/vs/17/release/vc_redist.x64.exe"
+        Write-Host ""
+    }
+    else {
+        Write-Host "Using winget (Windows Package Manager):" -ForegroundColor Yellow
+        Write-Host "  winget install -e --id Docker.DockerDesktop"
+        Write-Host "  winget install -e --id Microsoft.DotNet.SDK.9"
+        Write-Host "  winget install -e --id Git.Git"
+        Write-Host ""
+        Write-Host "Using Chocolatey:" -ForegroundColor Yellow
+        Write-Host "  choco install docker-desktop dotnet-sdk git -y"
+        Write-Host ""
+        Write-Host "Manual downloads:" -ForegroundColor Yellow
+        Write-Host "  Docker Desktop: https://www.docker.com/products/docker-desktop"
+        Write-Host "  .NET SDK 9.0:   https://dotnet.microsoft.com/download/dotnet/9.0"
+        Write-Host "  Git:            https://git-scm.com/download/win"
+        Write-Host ""
+    }
 }
 
 function Setup-Config {
@@ -346,20 +712,32 @@ function Install-Desktop {
         Write-Info "Installing Windows Desktop Application..."
     }
 
-    if (-not (Test-Command "dotnet")) {
-        if ($useNotificationModule) {
-            Show-BuildError -Error ".NET SDK is required for Desktop installation" `
-                -Suggestion "Install .NET SDK 9.0 or later from https://dotnet.microsoft.com/download" `
-                -Details @(
-                    "The Windows Desktop App requires .NET 9.0 SDK",
-                    "Windows App SDK 1.6+ is also required (installed via NuGet)"
-                )
+    # Determine architecture-specific settings
+    $arch = $Architecture.ToLower()
+    $runtimeId = "win-$arch"
+    $platformName = if ($arch -eq "arm64") { "ARM64" } else { "x64" }
+
+    Write-Info "Target: $platformName ($runtimeId)"
+
+    # Check desktop-specific prerequisites
+    $prereqResult = Test-DesktopPrerequisites -AutoInstall:$AutoInstallPrereqs
+    if (-not $prereqResult.AllMet) {
+        if ($prereqResult.Missing.Count -gt 0) {
+            if ($useNotificationModule) {
+                Show-BuildError -Error "Missing prerequisites for Desktop installation" `
+                    -Suggestion "Install missing prerequisites or use -AutoInstallPrereqs flag" `
+                    -Details @(
+                        "Missing: $($prereqResult.Missing.Display -join ', ')",
+                        "The Windows Desktop App requires .NET 9.0 SDK",
+                        "Windows App SDK 1.6+ is also required (installed via NuGet)"
+                    )
+            }
+            else {
+                Write-Err "Missing prerequisites for Desktop installation"
+            }
+            Show-Prerequisites-Suggestions -ForDesktop
+            return
         }
-        else {
-            Write-Err ".NET SDK is required for Desktop installation"
-        }
-        Show-Prerequisites-Suggestions
-        return
     }
 
     Push-Location $RepoRoot
@@ -367,7 +745,7 @@ function Install-Desktop {
 
     try {
         $desktopProjectPath = Join-Path $RepoRoot "src\MarketDataCollector.Uwp\MarketDataCollector.Uwp.csproj"
-        $outputPath = Join-Path $RepoRoot "dist\win-x64\msix"
+        $outputPath = Join-Path $RepoRoot "dist\$runtimeId\msix"
         $diagnosticLogDir = Join-Path $RepoRoot "diagnostic-logs"
 
         # Ensure diagnostic log directory exists
@@ -455,7 +833,7 @@ function Install-Desktop {
         $restoreArgs = @(
             "restore"
             $desktopProjectPath
-            "-r", "win-x64"
+            "-r", $runtimeId
             "-v", "normal"
         )
 
@@ -514,9 +892,9 @@ function Install-Desktop {
             "build"
             $desktopProjectPath
             "-c", "Release"
-            "-r", "win-x64"
+            "-r", $runtimeId
             "--no-restore"
-            "-p:Platform=x64"
+            "-p:Platform=$platformName"
         )
 
         if ($Verbose) {
@@ -599,11 +977,11 @@ function Install-Desktop {
             "publish"
             $desktopProjectPath
             "-c", "Release"
-            "-r", "win-x64"
+            "-r", $runtimeId
             "--self-contained", "true"
             "-p:WindowsPackageType=MSIX"
             "-p:PublishReadyToRun=true"
-            "-p:Platform=x64"
+            "-p:Platform=$platformName"
             "-p:AppxPackageDir=$outputPath\\"
         )
 
@@ -704,6 +1082,37 @@ function Install-Desktop {
 
         $buildSuccess = $true
 
+        # ==================== STEP 7: Certificate Trust & Installation ====================
+        $msixFile = $msixPackages | Where-Object { $_.Extension -eq ".msix" } | Select-Object -First 1
+        $installedSuccessfully = $false
+
+        if (-not $SkipInstall -and $msixFile) {
+            if ($useNotificationModule) {
+                Start-BuildStep -Name "Install Application" -Description "Installing MSIX package"
+            }
+            else {
+                Write-Info "Preparing to install MSIX package..."
+            }
+
+            # Trust certificate if not using a production certificate and not skipped
+            if (-not $NoTrustCert -and [string]::IsNullOrWhiteSpace($certPfxPath)) {
+                $certTrusted = Install-TrustedCertificate -MsixPath $msixFile.FullName
+                if (-not $certTrusted) {
+                    Write-Warn "Certificate was not trusted. Installation may fail."
+                }
+            }
+
+            # Install the MSIX package
+            $installedSuccessfully = Install-MsixPackage -MsixPath $msixFile.FullName
+
+            if ($useNotificationModule) {
+                Complete-BuildStep -Success $installedSuccessfully -Message $(if ($installedSuccessfully) { "Application installed" } else { "Installation skipped or failed" })
+            }
+        }
+        elseif ($SkipInstall) {
+            Write-Info "Skipping installation (-SkipInstall specified)"
+        }
+
         # Show final summary
         if ($useNotificationModule) {
             Show-BuildSummary -Success $true -OutputPath $outputPath
@@ -711,32 +1120,52 @@ function Install-Desktop {
 
         Write-Host ""
         Write-Host "======================================================================" -ForegroundColor Green
-        Write-Host "           Windows Desktop App Installation Complete!                 " -ForegroundColor Green
+        if ($installedSuccessfully) {
+            Write-Host "           Windows Desktop App Installed Successfully!               " -ForegroundColor Green
+        }
+        else {
+            Write-Host "           Windows Desktop App Build Complete!                       " -ForegroundColor Green
+        }
         Write-Host "======================================================================" -ForegroundColor Green
         Write-Host ""
-        Write-Host "  Location:  " -ForegroundColor White -NoNewline
+        Write-Host "  Architecture: " -ForegroundColor White -NoNewline
+        Write-Host "$platformName ($runtimeId)" -ForegroundColor Cyan
+        Write-Host "  Location:     " -ForegroundColor White -NoNewline
         Write-Host $outputPath -ForegroundColor Cyan
-        Write-Host "  Packages:  " -ForegroundColor White -NoNewline
+        Write-Host "  Packages:     " -ForegroundColor White -NoNewline
         Write-Host "$packageCount MSIX file(s)" -ForegroundColor Cyan
-        Write-Host "  Size:      " -ForegroundColor White -NoNewline
+        Write-Host "  Size:         " -ForegroundColor White -NoNewline
         Write-Host "$totalSize total" -ForegroundColor Gray
         Write-Host ""
         if (-not [string]::IsNullOrWhiteSpace($certPfxPath)) {
-            Write-Host "  Signing:   " -ForegroundColor White -NoNewline
+            Write-Host "  Signing:      " -ForegroundColor White -NoNewline
             Write-Host "Signed with $certPfxPath" -ForegroundColor Gray
         }
         else {
-            Write-Host "  Signing:   " -ForegroundColor White -NoNewline
+            Write-Host "  Signing:      " -ForegroundColor White -NoNewline
             Write-Host "Temporary dev certificate used" -ForegroundColor Gray
         }
         Write-Host ""
-        Write-Host "  Guidance:  " -ForegroundColor White -NoNewline
+        if ($installedSuccessfully) {
+            Write-Host "  Status:       " -ForegroundColor White -NoNewline
+            Write-Host "INSTALLED - Available in Start Menu" -ForegroundColor Green
+            Write-Host ""
+            Write-Host "  Launch:       Search for 'Market Data Collector' in Start Menu" -ForegroundColor Gray
+        }
+        else {
+            Write-Host "  To install manually:" -ForegroundColor Yellow
+            Write-Host "    1. Trust the certificate (if self-signed):" -ForegroundColor Gray
+            Write-Host "       Right-click MSIX > Properties > Digital Signatures > Details > View Certificate > Install" -ForegroundColor DarkGray
+            Write-Host "    2. Double-click the .msix file to install" -ForegroundColor Gray
+            Write-Host ""
+            Write-Host "  Or run: Add-AppxPackage -Path `"$($msixFile.FullName)`"" -ForegroundColor Gray
+        }
+        Write-Host ""
+        Write-Host "  Guidance:     " -ForegroundColor White -NoNewline
         Write-Host "docs/guides/msix-packaging.md" -ForegroundColor Gray
         Write-Host ""
-        Write-Host "  Build logs saved to:" -ForegroundColor DarkGray
-        Write-Host "    $diagnosticLogDir" -ForegroundColor Gray
-        Write-Host ""
-        Write-Host "  Or create a shortcut to the executable on your desktop." -ForegroundColor DarkGray
+        Write-Host "  Build logs:   " -ForegroundColor White -NoNewline
+        Write-Host $diagnosticLogDir -ForegroundColor Gray
         Write-Host "======================================================================" -ForegroundColor Green
     }
     catch {
@@ -800,21 +1229,33 @@ function Show-InteractiveMenu {
     Write-Host "  1) Docker (recommended for production)"
     Write-Host "  2) Native .NET SDK (CLI application)"
     Write-Host "  3) Windows Desktop App (WinUI 3 - recommended for Windows)"
-    Write-Host "  4) Check prerequisites only"
-    Write-Host "  5) Exit"
+    Write-Host "  4) Windows Desktop App (ARM64)"
+    Write-Host "  5) Check prerequisites only"
+    Write-Host "  6) Uninstall Docker containers"
+    Write-Host "  7) Uninstall Desktop App"
+    Write-Host "  8) Exit"
     Write-Host ""
 
-    $choice = Read-Host "Enter choice [1-5]"
+    $choice = Read-Host "Enter choice [1-8]"
 
     switch ($choice) {
         "1" { Install-Docker }
         "2" { Install-Native }
-        "3" { Install-Desktop }
+        "3" {
+            $script:Architecture = "x64"
+            Install-Desktop
+        }
         "4" {
+            $script:Architecture = "ARM64"
+            Install-Desktop
+        }
+        "5" {
             Test-Prerequisites | Out-Null
             Show-Prerequisites-Suggestions
         }
-        "5" {
+        "6" { Uninstall-Docker }
+        "7" { Uninstall-DesktopApp }
+        "8" {
             Write-Host "Exiting..."
             exit 0
         }
@@ -839,7 +1280,6 @@ switch ($Mode) {
     }
     "Desktop" {
         Show-Header
-        Test-Prerequisites | Out-Null
         Install-Desktop
     }
     "Check" {
@@ -850,6 +1290,10 @@ switch ($Mode) {
     "Uninstall" {
         Show-Header
         Uninstall-Docker
+    }
+    "UninstallDesktop" {
+        Show-Header
+        Uninstall-DesktopApp
     }
     "Help" {
         Show-Help

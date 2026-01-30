@@ -3,6 +3,24 @@
 This guide covers producing MSIX packages for the Windows Desktop app and signing them
 for development or release distribution.
 
+## Quick Start
+
+The easiest way to build and install the Desktop App:
+
+```powershell
+# Build, trust certificate, and install in one command
+.\scripts\install\install.ps1 -Mode Desktop
+
+# Build for ARM64 devices (Surface Pro X, etc.)
+.\scripts\install\install.ps1 -Mode Desktop -Architecture ARM64
+
+# Auto-install .NET SDK 9.0 and other prerequisites
+.\scripts\install\install.ps1 -Mode Desktop -AutoInstallPrereqs
+
+# Build only (no installation)
+.\scripts\install\install.ps1 -Mode Desktop -SkipInstall
+```
+
 ## Build MSIX Packages
 
 **Makefile (Windows):**
@@ -20,8 +38,37 @@ make desktop-publish
 Both commands output MSIX packages under:
 
 ```
-dist\win-x64\msix\    (install script)
+dist\win-x64\msix\    (install script, x64)
+dist\win-arm64\msix\  (install script, ARM64)
 publish\desktop\      (make target)
+```
+
+## Installation Options
+
+The install script supports several options for Desktop mode:
+
+| Option | Description |
+|--------|-------------|
+| `-Architecture x64` | Build for x64 (default) |
+| `-Architecture ARM64` | Build for ARM64 (Surface Pro X, etc.) |
+| `-AutoInstallPrereqs` | Auto-install missing prerequisites via winget |
+| `-SkipInstall` | Build only, do not install the MSIX |
+| `-NoTrustCert` | Skip the certificate trust prompt |
+| `-Verbose` | Show detailed build output |
+
+## Uninstalling
+
+To uninstall the Desktop App:
+
+```powershell
+.\scripts\install\install.ps1 -Mode UninstallDesktop
+```
+
+Or use the interactive menu:
+
+```powershell
+.\scripts\install\install.ps1
+# Select option 7) Uninstall Desktop App
 ```
 
 ## Optional AppInstaller File
