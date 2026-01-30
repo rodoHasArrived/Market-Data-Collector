@@ -441,6 +441,81 @@
                 </StackPanel>
             </Border>
 
+            <!-- Storage Profile Selection -->
+            <Border Style="{StaticResource CardStyle}">
+                <StackPanel Spacing="16">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE9F5;" Foreground="{ThemeResource SystemAccentColor}" />
+                        <TextBlock Text="Quick Setup" Style="{StaticResource SubtitleTextBlockStyle}" />
+                    </StackPanel>
+
+                    <TextBlock Text="Select a storage profile to quickly configure recommended settings for your use case."
+                               Style="{StaticResource CaptionTextBlockStyle}"
+                               Foreground="{ThemeResource SystemBaseMediumColor}"
+                               TextWrapping="Wrap" />
+
+                    <Grid ColumnSpacing="16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <ComboBox x:Name="StorageProfileCombo"
+                                  Grid.Column="0"
+                                  Header="Storage Profile"
+                                  HorizontalAlignment="Stretch"
+                                  SelectionChanged="StorageProfile_Changed">
+                            <ComboBoxItem Content="Custom (current settings)" Tag="" IsSelected="True" />
+                            <ComboBoxItem Tag="Research">
+                                <ComboBoxItem.ContentTemplate>
+                                    <DataTemplate>
+                                        <StackPanel>
+                                            <TextBlock Text="Research" FontWeight="SemiBold" />
+                                            <TextBlock Text="Balanced defaults for analysis workflows (compression + manifests)"
+                                                       Style="{StaticResource CaptionTextBlockStyle}"
+                                                       Foreground="{ThemeResource SystemBaseMediumColor}"
+                                                       TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ComboBoxItem.ContentTemplate>
+                            </ComboBoxItem>
+                            <ComboBoxItem Tag="LowLatency">
+                                <ComboBoxItem.ContentTemplate>
+                                    <DataTemplate>
+                                        <StackPanel>
+                                            <TextBlock Text="Low Latency" FontWeight="SemiBold" />
+                                            <TextBlock Text="Prioritizes ingest speed with minimal processing"
+                                                       Style="{StaticResource CaptionTextBlockStyle}"
+                                                       Foreground="{ThemeResource SystemBaseMediumColor}"
+                                                       TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ComboBoxItem.ContentTemplate>
+                            </ComboBoxItem>
+                            <ComboBoxItem Tag="Archival">
+                                <ComboBoxItem.ContentTemplate>
+                                    <DataTemplate>
+                                        <StackPanel>
+                                            <TextBlock Text="Archival" FontWeight="SemiBold" />
+                                            <TextBlock Text="Long-term retention with tiering-friendly defaults (ZSTD compression)"
+                                                       Style="{StaticResource CaptionTextBlockStyle}"
+                                                       Foreground="{ThemeResource SystemBaseMediumColor}"
+                                                       TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ComboBoxItem.ContentTemplate>
+                            </ComboBoxItem>
+                        </ComboBox>
+
+                        <Button Grid.Column="1" Content="Apply Profile" VerticalAlignment="Bottom"
+                                Click="ApplyProfile_Click"
+                                Style="{StaticResource AccentButtonStyle}" />
+                    </Grid>
+
+                    <InfoBar x:Name="ProfileInfoBar" IsOpen="False" IsClosable="True" Severity="Informational" />
+                </StackPanel>
+            </Border>
+
             <!-- Data Root -->
             <Border Style="{StaticResource CardStyle}">
                 <StackPanel Spacing="16">
