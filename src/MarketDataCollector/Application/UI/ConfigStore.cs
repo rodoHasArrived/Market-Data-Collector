@@ -19,17 +19,21 @@ public sealed class ConfigStore
         }
     }
 
-    public AppConfig Load()
+    /// <summary>
+    /// Static method to load configuration from a path.
+    /// Used by ConfigurationService.LoadAndPrepareConfig() for consolidated config loading.
+    /// </summary>
+    public static AppConfig LoadConfig(string path)
     {
         try
         {
-            if (!File.Exists(ConfigPath))
+            if (!File.Exists(path))
             {
-                Console.WriteLine($"[Warning] Configuration file not found: {ConfigPath}");
+                Console.WriteLine($"[Warning] Configuration file not found: {path}");
                 return new AppConfig();
             }
 
-            var json = File.ReadAllText(ConfigPath);
+            var json = File.ReadAllText(path);
             return JsonSerializer.Deserialize<AppConfig>(json, AppConfigJsonOptions.Read) ?? new AppConfig();
         }
         catch (Exception ex)
@@ -38,6 +42,12 @@ public sealed class ConfigStore
             return new AppConfig();
         }
     }
+
+    /// <summary>
+    /// Instance method to load configuration from the configured path.
+    /// Delegates to the static LoadConfig method.
+    /// </summary>
+    public AppConfig Load() => LoadConfig(ConfigPath);
 
     public async Task SaveAsync(AppConfig cfg)
     {
