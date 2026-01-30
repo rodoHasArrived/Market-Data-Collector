@@ -1,6 +1,7 @@
 using MarketDataCollector.Application.Backfill;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Pipeline;
+using MarketDataCollector.Contracts.Api;
 using MarketDataCollector.Infrastructure.Providers.Backfill;
 using MarketDataCollector.Storage;
 using MarketDataCollector.Storage.Policies;
@@ -239,29 +240,43 @@ public sealed class BackfillCoordinator
         return (int)(estimatedRequests / requestsPerSecond) + symbolCount; // Add processing overhead
     }
 
+    /// <summary>
+    /// Gets provider notes from the centralized ProviderCatalog.
+    /// Eliminates per-provider conditionals in favor of standardized catalog lookup.
+    /// </summary>
     private static string[] GetProviderNotes(IHistoricalDataProvider? provider)
     {
-        var notes = new List<string>();
-
         if (provider is null)
         {
-            notes.Add("Provider not found. Backfill may fail.");
-            return notes.ToArray();
+            return new[] { "Provider not found. Backfill may fail." };
         }
 
-        if (provider.Name.Equals("stooq", StringComparison.OrdinalIgnoreCase))
+        // Use centralized ProviderCatalog instead of hardcoded per-provider conditionals
+        var catalogNotes = ProviderCatalog.GetProviderNotes(provider.Name);
+        if (catalogNotes.Length > 0)
         {
-            notes.Add("Stooq provides daily OHLCV data for free.");
-            notes.Add("Rate limits apply. Large date ranges may take several minutes.");
+            return catalogNotes;
         }
-        else if (provider.Name.Equals("yahoo", StringComparison.OrdinalIgnoreCase))
+
+        // Fallback: generate notes from provider's own metadata
+        var notes = new List<string>();
+
+        if (!string.IsNullOrEmpty(provider.Description))
         {
-            notes.Add("Yahoo Finance data is unofficial and may have gaps.");
+            notes.Add(provider.Description);
         }
-        else if (provider.Name.Equals("alpaca", StringComparison.OrdinalIgnoreCase))
+
+        if (provider.MaxRequestsPerWindow < int.MaxValue)
         {
-            notes.Add("Alpaca requires API credentials.");
-            notes.Add("Rate limit: 200 requests/minute.");
+            var window = provider.RateLimitWindow.TotalMinutes >= 1
+                ? $"{provider.RateLimitWindow.TotalMinutes:F0} minute(s)"
+                : $"{provider.RateLimitWindow.TotalSeconds:F0} second(s)";
+            notes.Add($"Rate limit: {provider.MaxRequestsPerWindow} requests/{window}.");
+        }
+
+        if (provider.RateLimitDelay > TimeSpan.Zero)
+        {
+            notes.Add($"Minimum delay between requests: {provider.RateLimitDelay.TotalMilliseconds:F0}ms.");
         }
 
         return notes.ToArray();

@@ -43,6 +43,8 @@ public static class UiApiRoutes
     public const string ProviderComparison = "/api/providers/comparison";
     public const string ProviderStatus = "/api/providers/status";
     public const string ProviderMetrics = "/api/providers/metrics";
+    public const string ProviderCatalog = "/api/providers/catalog";
+    public const string ProviderCatalogById = "/api/providers/catalog/{providerId}";
 
     // Failover endpoints
     public const string FailoverConfig = "/api/failover/config";
