@@ -1,5 +1,6 @@
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Infrastructure.Contracts;
+using MarketDataCollector.Infrastructure.Providers.Core;
 using System.Threading;
 
 namespace MarketDataCollector.Infrastructure;
@@ -13,6 +14,32 @@ namespace MarketDataCollector.Infrastructure;
 public sealed class NoOpMarketDataClient : IMarketDataClient
 {
     public bool IsEnabled => false;
+
+    #region IProviderMetadata
+
+    /// <inheritdoc/>
+    public string ProviderId => "noop";
+
+    /// <inheritdoc/>
+    public string ProviderDisplayName => "No-Op Provider";
+
+    /// <inheritdoc/>
+    public string ProviderDescription => "Placeholder provider when no data source is configured";
+
+    /// <inheritdoc/>
+    public int ProviderPriority => int.MaxValue;
+
+    /// <inheritdoc/>
+    public ProviderCapabilities ProviderCapabilities { get; } = ProviderCapabilities.None;
+
+    /// <inheritdoc/>
+    public string[] ProviderNotes => new[]
+    {
+        "This provider is used when no data source is configured.",
+        "Configure a real data provider in appsettings.json."
+    };
+
+    #endregion
 
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 
