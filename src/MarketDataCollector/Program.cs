@@ -2,6 +2,8 @@ using System.Text.Json;
 using System.Threading.Channels;
 using MarketDataCollector.Application.Backfill;
 using MarketDataCollector.Application.Config;
+using DeploymentContext = MarketDataCollector.Application.Config.DeploymentContext;
+using DeploymentMode = MarketDataCollector.Application.Config.DeploymentMode;
 using MarketDataCollector.Application.Exceptions;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Monitoring;
@@ -49,13 +51,18 @@ internal static class Program
         LoggingSetup.Initialize(dataRoot: initialCfg.DataRoot);
         var log = LoggingSetup.ForContext("Program");
 
+        // Create deployment context for unified startup logic
+        var deploymentContext = DeploymentContext.FromArgs(args, cfgPath);
+        log.Debug("Deployment context: {Mode}, Command: {Command}, Docker: {IsDocker}",
+            deploymentContext.Mode, deploymentContext.Command, deploymentContext.IsDocker);
+
         // Now use ConfigurationService for full config processing (with self-healing, credential resolution, etc.)
         await using var configService = new ConfigurationService(log);
         var cfg = configService.LoadAndPrepareConfig(cfgPath);
 
         try
         {
-            await RunAsync(args, cfg, cfgPath, log, configService);
+            await RunAsync(args, cfg, cfgPath, log, configService, deploymentContext);
         }
         catch (Exception ex)
         {
@@ -68,11 +75,18 @@ internal static class Program
         }
     }
 
-    private static async Task RunAsync(string[] args, AppConfig cfg, string cfgPath, ILogger log, ConfigurationService configService)
+    private static async Task RunAsync(string[] args, AppConfig cfg, string cfgPath, ILogger log, ConfigurationService configService, DeploymentContext deployment)
     {
         // Initialize HttpClientFactory for proper HTTP client lifecycle management (TD-10)
         InitializeHttpClientFactory(log);
-        var runMode = ResolveRunMode(args, log);
+
+        // Use deployment context for mode resolution (replaces scattered conditional logic)
+        var runMode = deployment.Mode switch
+        {
+            DeploymentMode.Web => CliModeResolver.RunMode.Web,
+            DeploymentMode.Desktop => CliModeResolver.RunMode.Desktop,
+            _ => CliModeResolver.RunMode.Headless
+        };
 
         // Help Mode - Display usage information
         if (args.Any(a => a.Equals("--help", StringComparison.OrdinalIgnoreCase) || a.Equals("-h", StringComparison.OrdinalIgnoreCase)))
@@ -427,16 +441,15 @@ internal static class Program
         }
 
         // UI Mode - Start web dashboard (handles both --mode web and legacy --ui flag)
-        if (runMode == CliModeResolver.RunMode.Web)
+        if (deployment.Mode == DeploymentMode.Web)
         {
-            var uiPort = int.TryParse(GetArgValue(args, "--http-port"), out var parsedUiPort) ? parsedUiPort : 8080;
-            log.Information("Starting web dashboard on port {Port}...", uiPort);
+            log.Information("Starting web dashboard ({ModeDescription})...", deployment.ModeDescription);
 
-            await using var uiServer = new UiServer(cfgPath, uiPort);
+            await using var uiServer = new UiServer(cfgPath, deployment.HttpPort);
             await uiServer.StartAsync();
 
-            log.Information("Web dashboard started at http://localhost:{Port}", uiPort);
-            Console.WriteLine($"Web dashboard running at http://localhost:{uiPort}");
+            log.Information("Web dashboard started at http://localhost:{Port}", deployment.HttpPort);
+            Console.WriteLine($"Web dashboard running at http://localhost:{deployment.HttpPort}");
             Console.WriteLine("Press Ctrl+C to stop...");
 
             var done = new TaskCompletionSource();
@@ -576,13 +589,12 @@ internal static class Program
         ConfigWatcher? watcher = null;
         UiServer? uiServer = null;
 
-        if (runMode == CliModeResolver.RunMode.Desktop)
+        if (deployment.Mode == DeploymentMode.Desktop)
         {
-            var uiPort = int.TryParse(GetArgValue(args, "--http-port"), out var parsedUiPort) ? parsedUiPort : 8080;
-            log.Information("Desktop mode: starting UI server on port {Port}...", uiPort);
-            uiServer = new UiServer(cfgPath, uiPort);
+            log.Information("Desktop mode: starting UI server ({ModeDescription})...", deployment.ModeDescription);
+            uiServer = new UiServer(cfgPath, deployment.HttpPort);
             await uiServer.StartAsync();
-            log.Information("Desktop mode UI server started at http://localhost:{Port}", uiPort);
+            log.Information("Desktop mode UI server started at http://localhost:{Port}", deployment.HttpPort);
         }
 
         // Build storage options from config - uses default profile (Research) when no config provided
@@ -697,7 +709,7 @@ internal static class Program
         subscriptionManager.Apply(runtimeCfg);
         var symbols = runtimeCfg.Symbols ?? Array.Empty<SymbolConfig>();
 
-        if (args.Any(a => a.Equals("--watch-config", StringComparison.OrdinalIgnoreCase)))
+        if (deployment.HotReloadEnabled)
         {
             watcher = configService.StartHotReload(cfgPath, newCfg =>
             {
