@@ -1,6 +1,7 @@
 using System.Text.Json;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Logging;
+using MarketDataCollector.Storage;
 using Serilog;
 
 namespace MarketDataCollector.Application.Services;
@@ -251,12 +252,20 @@ public sealed class AutoConfigurationService
             Symbols = GetDefaultSymbols(options.SymbolPreset)
         };
 
-        // Configure storage
+        // Configure storage using profiles based on use case
+        var storageProfile = options.UseCase switch
+        {
+            UseCase.Development => StorageProfilePresets.DefaultProfile, // Research for dev
+            UseCase.Research => StorageProfilePresets.DefaultProfile, // Research
+            UseCase.RealTimeTrading => "LowLatency", // Low latency for trading
+            UseCase.Production => "Archival", // Archival for production
+            _ => StorageProfilePresets.DefaultProfile
+        };
+
         config = config with
         {
             Storage = new StorageConfig(
-                NamingConvention: "BySymbol",
-                DatePartition: "Daily",
+                Profile: storageProfile,
                 RetentionDays: options.UseCase == UseCase.Development ? 30 : null
             ),
             Compress = options.UseCase != UseCase.Development
@@ -500,17 +509,16 @@ public sealed class AutoConfigurationService
             _log.Debug(ex, "Could not auto-detect storage space");
         }
 
+        // Use default profile (Research) instead of scattered individual defaults
         config = config with
         {
             Storage = new StorageConfig(
-                NamingConvention: "BySymbol",
-                DatePartition: "Daily",
-                MaxTotalMegabytes: maxMegabytes,
-                RetentionDays: null
+                Profile: StorageProfilePresets.DefaultProfile,
+                MaxTotalMegabytes: maxMegabytes
             )
         };
 
-        appliedFixes.Add("Auto-configured storage with default naming convention");
+        appliedFixes.Add($"Auto-configured storage with '{StorageProfilePresets.DefaultProfile}' profile");
 
         return config;
     }

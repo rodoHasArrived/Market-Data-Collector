@@ -20,6 +20,12 @@ public sealed record StorageProfilePreset(
 
 public static class StorageProfilePresets
 {
+    /// <summary>
+    /// Default storage profile when none is specified.
+    /// Research profile provides balanced defaults suitable for most use cases.
+    /// </summary>
+    public const string DefaultProfile = "Research";
+
     private static readonly IReadOnlyList<StorageProfilePreset> Presets = new[]
     {
         new StorageProfilePreset(
@@ -79,15 +85,50 @@ public static class StorageProfilePresets
             })
     };
 
-    public static StorageOptions ApplyProfile(string? profile, StorageOptions options)
+    /// <summary>
+    /// Applies a storage profile to the given options.
+    /// If no profile is specified, applies the default profile (Research).
+    /// </summary>
+    /// <param name="profile">Profile ID, or null/empty to use default.</param>
+    /// <param name="options">Base storage options to apply profile to.</param>
+    /// <param name="useDefaultIfEmpty">If true, applies default profile when profile is null/empty. Default is true.</param>
+    /// <returns>Storage options with profile settings applied.</returns>
+    public static StorageOptions ApplyProfile(string? profile, StorageOptions options, bool useDefaultIfEmpty = true)
     {
-        if (string.IsNullOrWhiteSpace(profile))
+        var profileToApply = string.IsNullOrWhiteSpace(profile) && useDefaultIfEmpty
+            ? DefaultProfile
+            : profile;
+
+        if (string.IsNullOrWhiteSpace(profileToApply))
         {
             return options;
         }
 
-        var preset = Presets.FirstOrDefault(p => string.Equals(p.Id, profile, StringComparison.OrdinalIgnoreCase));
+        var preset = Presets.FirstOrDefault(p => string.Equals(p.Id, profileToApply, StringComparison.OrdinalIgnoreCase));
         return preset?.Apply(options) ?? options;
+    }
+
+    /// <summary>
+    /// Gets a profile preset by ID.
+    /// </summary>
+    public static StorageProfilePreset? GetProfile(string id)
+    {
+        return Presets.FirstOrDefault(p => string.Equals(p.Id, id, StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>
+    /// Creates storage options from a profile without requiring a base options object.
+    /// Uses default profile if none specified.
+    /// </summary>
+    public static StorageOptions CreateFromProfile(string? profile, string rootPath, bool? compress = null)
+    {
+        var profileToUse = string.IsNullOrWhiteSpace(profile) ? DefaultProfile : profile;
+        var baseOptions = new StorageOptions
+        {
+            RootPath = rootPath,
+            Compress = compress ?? false
+        };
+        return ApplyProfile(profileToUse, baseOptions, useDefaultIfEmpty: true);
     }
 
     public static IReadOnlyList<StorageProfilePreset> GetPresets() => Presets;

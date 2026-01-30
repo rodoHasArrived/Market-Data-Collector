@@ -83,11 +83,11 @@ public sealed class UiServer : IAsyncDisposable
                 metadataService);
         });
 
-        // Storage organization services
+        // Storage organization services - uses default profile (Research) when no config provided
         var config = store.Load();
         var compressionEnabled = config.Compress ?? false;
         var storageOptions = config.Storage?.ToStorageOptions(config.DataRoot, compressionEnabled)
-            ?? new StorageOptions { RootPath = config.DataRoot, Compress = compressionEnabled };
+            ?? StorageProfilePresets.CreateFromProfile(null, config.DataRoot, compressionEnabled);
         builder.Services.AddSingleton(storageOptions);
         builder.Services.AddSingleton<ISourceRegistry>(sp => new SourceRegistry(config.Sources?.PersistencePath));
         builder.Services.AddSingleton<IFileMaintenanceService, FileMaintenanceService>();
