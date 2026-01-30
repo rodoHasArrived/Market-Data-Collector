@@ -402,7 +402,7 @@ def error(self, reqId, errorCode, errorString, advancedOrderRejectJson): pass
 
 ---
 
-**Version:** 1.0.0
-**Last Updated:** 2026-01-08
+**Version:** 1.6.1
+**Last Updated:** 2026-01-30
 **TWS API Version:** 10.19+
 **See Also:** [IB Setup](interactive-brokers-setup.md) | [Configuration](../guides/configuration.md) | [Troubleshooting](../guides/troubleshooting.md)

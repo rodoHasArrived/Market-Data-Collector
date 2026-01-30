@@ -1,7 +1,7 @@
 # F# Domain Library Integration Guide
 
-**Document Version:** 1.0.0
-**Last Updated:** 2026-01-08
+**Document Version:** 1.6.1
+**Last Updated:** 2026-01-30
 **Status:** Implemented
 
 ---

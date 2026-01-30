@@ -40,4 +40,4 @@ This ensures documented decisions remain in sync with actual code.
 
 ---
 
-*Last Updated: 2026-01-28*
+*Last Updated: 2026-01-30*

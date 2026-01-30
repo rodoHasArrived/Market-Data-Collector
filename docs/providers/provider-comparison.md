@@ -1,7 +1,7 @@
 # Data Provider Comparison Guide
 
-**Last Updated:** 2026-01-27
-**Version:** 1.0.0
+**Last Updated:** 2026-01-30
+**Version:** 1.6.1
 
 This document provides a comprehensive comparison of all data providers supported by the Market Data Collector.
 
@@ -434,4 +434,4 @@ var bars = await composite.GetBarsAsync("AAPL", from, to);
 
 ---
 
-*Last Updated: 2026-01-08*
+*Last Updated: 2026-01-30*

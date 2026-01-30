@@ -13,9 +13,9 @@ This folder contains project status, roadmap, and changelog documentation for th
 ## Quick Links
 
 ### Current Status
-- **Version:** 1.0.0 (repository snapshot)
-- **Status:** Active development
-- **Last Updated:** 2026-01-27
+- **Version:** 1.6.1
+- **Status:** Production Ready
+- **Last Updated:** 2026-01-30
 
 ### Key Metrics
 - See [production-status.md](production-status.md) for provider readiness and build-time requirements.

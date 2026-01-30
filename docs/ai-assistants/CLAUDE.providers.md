@@ -649,4 +649,4 @@ export TIINGO__APIKEY=your-key
 
 ---
 
-*Last Updated: 2026-01-27*
+*Last Updated: 2026-01-30*

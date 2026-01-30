@@ -1,8 +1,8 @@
 # Market Data Collector Documentation
 
-**Version:** 1.0.0 (repository snapshot)
-**Last Updated:** 2026-01-27
-**Status:** Active development (see [Production Status](status/production-status.md))
+**Version:** 1.6.1
+**Last Updated:** 2026-01-30
+**Status:** Production Ready (see [Production Status](status/production-status.md))
 
 Welcome to the Market Data Collector documentation. This guide will help you find the information you need.
 
@@ -35,7 +35,11 @@ Step-by-step guides for using the system.
 | [provider-implementation.md](guides/provider-implementation.md) | Guide for adding new providers |
 | [portable-data-packager.md](guides/portable-data-packager.md) | Creating portable data archives |
 | [msix-packaging.md](guides/msix-packaging.md) | MSIX packaging and signing for Windows Desktop |
+| [uwp-development-roadmap.md](guides/uwp-development-roadmap.md) | UWP desktop app development roadmap |
+| [uwp-release-checklist.md](guides/uwp-release-checklist.md) | UWP release checklist |
 | [github-actions-summary.md](guides/github-actions-summary.md) | CI/CD workflow documentation |
+| [github-actions-testing.md](guides/github-actions-testing.md) | Testing GitHub Actions workflows |
+| [project-context.md](guides/project-context.md) | Project context and background |
 
 ---
 
@@ -50,6 +54,8 @@ Technical documentation about system design.
 | [domains.md](architecture/domains.md) | Domain model and event contracts |
 | [provider-management.md](architecture/provider-management.md) | Provider abstraction layer design |
 | [storage-design.md](architecture/storage-design.md) | Storage organization and policies |
+| [crystallized-storage-format.md](architecture/crystallized-storage-format.md) | Crystallized storage format specification |
+| [consolidation.md](architecture/consolidation.md) | UI layer consolidation guide |
 | [why-this-architecture.md](architecture/why-this-architecture.md) | Design decisions and rationale |
 
 ---
@@ -99,9 +105,11 @@ Additional reference documentation.
 
 | Document | Description |
 |----------|-------------|
-| [open-source-references.md](reference/open-source-references.md) | Related open source projects |
+| [data-dictionary.md](reference/data-dictionary.md) | Data dictionary and field definitions |
 | [data-uniformity.md](reference/data-uniformity.md) | Data consistency guidelines |
 | [design-review-memo.md](reference/design-review-memo.md) | Design review notes |
+| [open-source-references.md](reference/open-source-references.md) | Related open source projects |
+| [sandcastle.md](reference/sandcastle.md) | Sandcastle documentation reference |
 
 ---
 

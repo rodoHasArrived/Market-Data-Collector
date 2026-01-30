@@ -438,5 +438,5 @@ The system includes several high-performance features:
 ---
 
 **Version:** 1.6.1
-**Last Updated:** 2026-01-28
+**Last Updated:** 2026-01-30
 **See Also:** [c4-diagrams.md](c4-diagrams.md) | [domains.md](domains.md) | [why-this-architecture.md](why-this-architecture.md) | [provider-management.md](provider-management.md) | [F# Integration](../integrations/fsharp-integration.md) | [ADR Index](../adr/README.md)

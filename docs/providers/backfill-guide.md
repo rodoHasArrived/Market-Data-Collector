@@ -1,7 +1,7 @@
 # Historical Data Backfill Guide
 
-**Last Updated:** 2026-01-08
-**Version:** 1.0.0
+**Last Updated:** 2026-01-30
+**Version:** 1.6.1
 
 This document provides a comprehensive guide for backfilling historical market data using the Market Data Collector.
 
@@ -539,4 +539,4 @@ GET  /api/backfill/quality/{symbol}
 
 ---
 
-*Last Updated: 2026-01-08*
+*Last Updated: 2026-01-30*
