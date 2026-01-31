@@ -1,0 +1,183 @@
+<Page x:Class="MarketDataCollector.Wpf.Views.DashboardPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+      mc:Ignorable="d" 
+      d:DesignHeight="600" d:DesignWidth="1000"
+      Title="Dashboard">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <Grid Margin="24">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- Page Title -->
+            <TextBlock Grid.Row="0" 
+                       Text="Dashboard" 
+                       Style="{StaticResource TitleTextStyle}"
+                       Margin="0,0,0,24"/>
+
+            <!-- Status Cards Row -->
+            <Grid Grid.Row="1" Margin="0,0,0,24">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Connection Status Card -->
+                <Border Grid.Column="0" Style="{StaticResource CardStyle}">
+                    <StackPanel>
+                        <materialDesign:PackIcon Kind="Connection" 
+                                                Width="48" 
+                                                Height="48"
+                                                HorizontalAlignment="Center"
+                                                Foreground="{StaticResource PrimaryBrush}"/>
+                        <TextBlock Text="Connection" 
+                                   HorizontalAlignment="Center"
+                                   FontSize="16"
+                                   Margin="0,8,0,4"/>
+                        <TextBlock x:Name="ConnectionStatusText"
+                                   Text="Disconnected" 
+                                   HorizontalAlignment="Center"
+                                   FontWeight="Bold"
+                                   FontSize="14"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Symbols Card -->
+                <Border Grid.Column="1" Style="{StaticResource CardStyle}">
+                    <StackPanel>
+                        <materialDesign:PackIcon Kind="Tag" 
+                                                Width="48" 
+                                                Height="48"
+                                                HorizontalAlignment="Center"
+                                                Foreground="{StaticResource AccentBrush}"/>
+                        <TextBlock Text="Active Symbols" 
+                                   HorizontalAlignment="Center"
+                                   FontSize="16"
+                                   Margin="0,8,0,4"/>
+                        <TextBlock x:Name="SymbolCountText"
+                                   Text="0" 
+                                   HorizontalAlignment="Center"
+                                   FontWeight="Bold"
+                                   FontSize="24"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Events Card -->
+                <Border Grid.Column="2" Style="{StaticResource CardStyle}">
+                    <StackPanel>
+                        <materialDesign:PackIcon Kind="ChartLine" 
+                                                Width="48" 
+                                                Height="48"
+                                                HorizontalAlignment="Center"
+                                                Foreground="{StaticResource SuccessBrush}"/>
+                        <TextBlock Text="Events/Sec" 
+                                   HorizontalAlignment="Center"
+                                   FontSize="16"
+                                   Margin="0,8,0,4"/>
+                        <TextBlock x:Name="EventRateText"
+                                   Text="0" 
+                                   HorizontalAlignment="Center"
+                                   FontWeight="Bold"
+                                   FontSize="24"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Uptime Card -->
+                <Border Grid.Column="3" Style="{StaticResource CardStyle}">
+                    <StackPanel>
+                        <materialDesign:PackIcon Kind="Clock" 
+                                                Width="48" 
+                                                Height="48"
+                                                HorizontalAlignment="Center"
+                                                Foreground="{StaticResource WarningBrush}"/>
+                        <TextBlock Text="Uptime" 
+                                   HorizontalAlignment="Center"
+                                   FontSize="16"
+                                   Margin="0,8,0,4"/>
+                        <TextBlock x:Name="UptimeText"
+                                   Text="00:00:00" 
+                                   HorizontalAlignment="Center"
+                                   FontWeight="Bold"
+                                   FontSize="14"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- Main Content Area -->
+            <Grid Grid.Row="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Activity Log -->
+                <Border Grid.Column="0" Style="{StaticResource CardStyle}" Margin="0,0,12,0">
+                    <StackPanel>
+                        <TextBlock Text="Recent Activity" 
+                                   Style="{StaticResource SubtitleTextStyle}"/>
+                        <ScrollViewer Height="300" VerticalScrollBarVisibility="Auto">
+                            <ItemsControl x:Name="ActivityLog">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border BorderBrush="#EEEEEE" 
+                                               BorderThickness="0,0,0,1" 
+                                               Padding="8">
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding Timestamp, StringFormat='{}{0:HH:mm:ss}'}" 
+                                                          FontSize="12"
+                                                          Foreground="Gray"/>
+                                                <TextBlock Text="{Binding Message}" 
+                                                          TextWrapping="Wrap"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </StackPanel>
+                </Border>
+
+                <!-- Quick Actions -->
+                <Border Grid.Column="1" Style="{StaticResource CardStyle}" Margin="12,0,0,0">
+                    <StackPanel>
+                        <TextBlock Text="Quick Actions" 
+                                   Style="{StaticResource SubtitleTextStyle}"/>
+                        
+                        <Button Content="Start Collection"
+                                Style="{StaticResource MaterialDesignRaisedButton}"
+                                Margin="0,8,0,8"
+                                Click="StartCollectionButton_Click"/>
+                        
+                        <Button Content="Stop Collection"
+                                Style="{StaticResource MaterialDesignRaisedButton}"
+                                Margin="0,0,0,8"
+                                Click="StopCollectionButton_Click"/>
+                        
+                        <Button Content="View Symbols"
+                                Style="{StaticResource MaterialDesignOutlinedButton}"
+                                Margin="0,0,0,8"
+                                Click="ViewSymbolsButton_Click"/>
+                        
+                        <Button Content="Run Backfill"
+                                Style="{StaticResource MaterialDesignOutlinedButton}"
+                                Margin="0,0,0,8"
+                                Click="RunBackfillButton_Click"/>
+                        
+                        <Button Content="Settings"
+                                Style="{StaticResource MaterialDesignOutlinedButton}"
+                                Click="SettingsButton_Click"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Grid>
+    </ScrollViewer>
+</Page>

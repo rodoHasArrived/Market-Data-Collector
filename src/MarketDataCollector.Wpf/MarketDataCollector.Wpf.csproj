@@ -1,0 +1,92 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <!-- Detect Windows platform -->
+    <IsWindows Condition="'$(OS)' == 'Windows_NT' OR $([MSBuild]::IsOSPlatform('Windows'))">true</IsWindows>
+  </PropertyGroup>
+
+  <!-- Non-Windows: Create a minimal stub that compiles but produces nothing -->
+  <PropertyGroup Condition="'$(IsWindows)' != 'true'">
+    <TargetFramework>net9.0</TargetFramework>
+    <OutputType>Library</OutputType>
+    <RootNamespace>MarketDataCollector.Wpf</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Exclude all source files on non-Windows -->
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <!-- Windows: Full WPF application -->
+  <PropertyGroup Condition="'$(IsWindows)' == 'true'">
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>MarketDataCollector.Wpf</RootNamespace>
+
+    <!-- Assembly Information -->
+    <AssemblyName>MarketDataCollector.Desktop</AssemblyName>
+    <Version>1.0.0</Version>
+    <Authors>MarketDataCollector Team</Authors>
+    <Description>Windows Desktop Application for Market Data Collector (WPF)</Description>
+    <Product>Market Data Collector Desktop</Product>
+    <Copyright>Copyright 2024-2026 MarketDataCollector Team</Copyright>
+
+    <!-- Windows Desktop Deployment Settings -->
+    <PublishReadyToRun>true</PublishReadyToRun>
+    <SelfContained>true</SelfContained>
+    <DebugType>embedded</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+    <Deterministic>true</Deterministic>
+
+    <!-- Application settings -->
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+    <StartupObject>MarketDataCollector.Wpf.App</StartupObject>
+  </PropertyGroup>
+
+  <!-- Windows-only Package References -->
+  <ItemGroup Condition="'$(IsWindows)' == 'true'">
+    <!-- Core WPF and MVVM -->
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+    
+    <!-- Material Design for modern UI -->
+    <PackageReference Include="MaterialDesignThemes" />
+    <PackageReference Include="MaterialDesignColors" />
+    
+    <!-- Extended WPF Toolkit for additional controls -->
+    <PackageReference Include="Extended.Wpf.Toolkit" />
+    
+    <!-- HTTP Client Factory for proper HttpClient lifecycle management -->
+    <PackageReference Include="Microsoft.Extensions.Http" />
+    <PackageReference Include="Microsoft.Extensions.Http.Polly" />
+    
+    <!-- Configuration and DI -->
+    <PackageReference Include="Microsoft.Extensions.Configuration" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    
+    <!-- JSON Serialization -->
+    <PackageReference Include="System.Text.Json" />
+    <PackageReference Include="Newtonsoft.Json" />
+  </ItemGroup>
+
+  <!-- Windows-only Project References -->
+  <ItemGroup Condition="'$(IsWindows)' == 'true'">
+    <ProjectReference Include="..\MarketDataCollector.Contracts\MarketDataCollector.Contracts.csproj" />
+  </ItemGroup>
+
+  <!-- Copy sample configuration to output -->
+  <ItemGroup Condition="'$(IsWindows)' == 'true'">
+    <None Include="..\..\config\appsettings.sample.json" Condition="Exists('..\..\config\appsettings.sample.json')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <!-- Assets -->
+  <ItemGroup Condition="'$(IsWindows)' == 'true' AND Exists('Assets')">
+    <Content Include="Assets\**\*" Exclude="Assets\**\*.placeholder">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+</Project>
