@@ -63,7 +63,21 @@ public static class ServiceCompositionRoot
         // Storage services - always required for data persistence
         services.AddStorageServices(options);
 
+        // Provider services - must be registered before services that depend on ProviderRegistry
+        // (SymbolManagement, Backfill) to ensure unified provider discovery is available
+        if (options.EnableProviderServices)
+        {
+            services.AddProviderServices(options);
+        }
+
+        // Credential services - often needed alongside provider services
+        if (options.EnableCredentialServices)
+        {
+            services.AddCredentialServices(options);
+        }
+
         // Optional feature sets based on composition options
+        // These may depend on ProviderRegistry for provider discovery
         if (options.EnableSymbolManagement)
         {
             services.AddSymbolManagementServices();
@@ -82,16 +96,6 @@ public static class ServiceCompositionRoot
         if (options.EnableDiagnosticServices)
         {
             services.AddDiagnosticServices(options);
-        }
-
-        if (options.EnableCredentialServices)
-        {
-            services.AddCredentialServices(options);
-        }
-
-        if (options.EnableProviderServices)
-        {
-            services.AddProviderServices(options);
         }
 
         if (options.EnablePipelineServices)
@@ -188,6 +192,11 @@ public static class ServiceCompositionRoot
     /// <summary>
     /// Registers symbol management and search services.
     /// </summary>
+    /// <remarks>
+    /// Symbol search providers are retrieved from <see cref="ProviderRegistry"/> via
+    /// <see cref="ProviderRegistry.GetProviders{T}"/> rather than being instantiated ad-hoc.
+    /// This ensures consistent credential resolution and priority ordering across all providers.
+    /// </remarks>
     private static IServiceCollection AddSymbolManagementServices(this IServiceCollection services)
     {
         // Symbol import/export
@@ -199,21 +208,19 @@ public static class ServiceCompositionRoot
         services.AddSingleton<BatchOperationsService>();
         services.AddSingleton<PortfolioImportService>();
 
-        // Symbol search providers
+        // Symbol search via unified ProviderRegistry
         services.AddSingleton<OpenFigiClient>();
         services.AddSingleton<SymbolSearchService>(sp =>
         {
             var metadataService = sp.GetRequiredService<MetadataEnrichmentService>();
             var figiClient = sp.GetRequiredService<OpenFigiClient>();
-            return new SymbolSearchService(
-                new ISymbolSearchProvider[]
-                {
-                    new AlpacaSymbolSearchProviderRefactored(),
-                    new FinnhubSymbolSearchProviderRefactored(),
-                    new PolygonSymbolSearchProvider()
-                },
-                figiClient,
-                metadataService);
+            var registry = sp.GetService<ProviderRegistry>();
+
+            // Get providers from registry if available, otherwise no providers
+            var providers = registry?.GetProviders<ISymbolSearchProvider>()
+                ?? Array.Empty<ISymbolSearchProvider>();
+
+            return new SymbolSearchService(providers, figiClient, metadataService);
         });
 
         return services;
@@ -226,15 +233,20 @@ public static class ServiceCompositionRoot
     /// <summary>
     /// Registers backfill and scheduling services.
     /// </summary>
+    /// <remarks>
+    /// <see cref="BackfillCoordinator"/> uses <see cref="ProviderRegistry"/> to retrieve
+    /// backfill providers via the unified <see cref="ProviderRegistry.GetProviders{T}"/> method.
+    /// </remarks>
     private static IServiceCollection AddBackfillServices(
         this IServiceCollection services,
         CompositionOptions options)
     {
-        // BackfillCoordinator - the unified implementation from Application.UI
+        // BackfillCoordinator - uses ProviderRegistry for provider discovery
         services.AddSingleton<BackfillCoordinator>(sp =>
         {
             var configStore = sp.GetRequiredService<ConfigStore>();
-            return new BackfillCoordinator(configStore);
+            var registry = sp.GetRequiredService<ProviderRegistry>();
+            return new BackfillCoordinator(configStore, registry);
         });
 
         // SchedulingService - symbol subscription scheduling

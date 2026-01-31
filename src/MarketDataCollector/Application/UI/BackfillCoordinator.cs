@@ -6,6 +6,7 @@ using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Application.Pipeline;
 using MarketDataCollector.Infrastructure.Providers.Backfill;
 using MarketDataCollector.Infrastructure.Providers.Backfill.SymbolResolution;
+using MarketDataCollector.Infrastructure.Providers.Core;
 using BackfillRequest = MarketDataCollector.Application.Backfill.BackfillRequest;
 using MarketDataCollector.Storage;
 using MarketDataCollector.Storage.Policies;
@@ -14,18 +15,28 @@ using Serilog;
 
 namespace MarketDataCollector.Application.UI;
 
+/// <summary>
+/// Coordinates backfill operations using providers from the unified <see cref="ProviderRegistry"/>.
+/// </summary>
+/// <remarks>
+/// All providers are retrieved via <see cref="ProviderRegistry.GetProviders{T}"/> rather than
+/// being instantiated ad-hoc, ensuring consistent credential resolution and priority ordering.
+/// </remarks>
+[ImplementsAdr("ADR-001", "Uses unified ProviderRegistry for provider discovery")]
 public sealed class BackfillCoordinator : IDisposable
 {
     private readonly ConfigStore _store;
+    private readonly ProviderRegistry _registry;
     private readonly ILogger _log = LoggingSetup.ForContext<BackfillCoordinator>();
     private readonly SemaphoreSlim _gate = new(1, 1);
     private readonly OpenFigiSymbolResolver? _symbolResolver;
     private BackfillResult? _lastRun;
     private bool _disposed;
 
-    public BackfillCoordinator(ConfigStore store)
+    public BackfillCoordinator(ConfigStore store, ProviderRegistry registry)
     {
-        _store = store;
+        _store = store ?? throw new ArgumentNullException(nameof(store));
+        _registry = registry ?? throw new ArgumentNullException(nameof(registry));
         _lastRun = store.TryLoadBackfillStatus();
 
         // Initialize symbol resolver
@@ -39,7 +50,7 @@ public sealed class BackfillCoordinator : IDisposable
 
     public IEnumerable<object> DescribeProviders()
     {
-        var providers = CreateProviders();
+        var providers = GetProviders();
         return providers
             .Select(p => new
             {
@@ -59,7 +70,7 @@ public sealed class BackfillCoordinator : IDisposable
     /// </summary>
     public async Task<IReadOnlyDictionary<string, ProviderHealthStatus>> CheckProviderHealthAsync(CancellationToken ct = default)
     {
-        var providers = CreateProviders();
+        var providers = GetProviders();
         var results = new Dictionary<string, ProviderHealthStatus>();
 
         foreach (var provider in providers)
@@ -143,43 +154,25 @@ public sealed class BackfillCoordinator : IDisposable
         }
     }
 
-    private List<IHistoricalDataProvider> CreateProviders()
+    /// <summary>
+    /// Gets backfill providers from the unified registry.
+    /// </summary>
+    /// <remarks>
+    /// Providers are retrieved via <see cref="ProviderRegistry.GetProviders{T}"/> which returns
+    /// all enabled providers of the specified type, already sorted by priority.
+    /// This replaces ad-hoc provider creation with centralized registry discovery.
+    /// </remarks>
+    private IReadOnlyList<IHistoricalDataProvider> GetProviders()
     {
-        var cfg = _store.Load();
-        var backfillCfg = cfg.Backfill;
-        var providersCfg = backfillCfg?.Providers;
+        var providers = _registry.GetProviders<IHistoricalDataProvider>();
 
-        var providers = new List<IHistoricalDataProvider>();
-
-        // Stooq (always available, free)
-        var stooqCfg = providersCfg?.Stooq;
-        if (stooqCfg?.Enabled ?? true)
+        if (providers.Count == 0)
         {
-            providers.Add(new StooqHistoricalDataProvider(log: _log));
+            _log.Warning("No backfill providers registered in ProviderRegistry. " +
+                "Ensure providers are initialized via ProviderFactory.CreateAndRegisterAllAsync()");
         }
 
-        // Yahoo Finance
-        var yahooCfg = providersCfg?.Yahoo;
-        if (yahooCfg?.Enabled ?? true)
-        {
-            providers.Add(new YahooFinanceHistoricalDataProvider(log: _log));
-        }
-
-        // Nasdaq Data Link (Quandl)
-        var nasdaqCfg = providersCfg?.Nasdaq;
-        if (nasdaqCfg?.Enabled ?? true)
-        {
-            providers.Add(new NasdaqDataLinkHistoricalDataProvider(
-                apiKey: nasdaqCfg?.ApiKey,
-                database: nasdaqCfg?.Database ?? "WIKI",
-                log: _log
-            ));
-        }
-
-        // Sort by priority
-        return providers
-            .OrderBy(p => p.Priority)
-            .ToList();
+        return providers;
     }
 
     private HistoricalBackfillService CreateService()
@@ -187,24 +180,24 @@ public sealed class BackfillCoordinator : IDisposable
         var cfg = _store.Load();
         var backfillCfg = cfg.Backfill;
 
-        var providers = CreateProviders();
+        var registryProviders = GetProviders();
+        var providers = new List<IHistoricalDataProvider>(registryProviders);
 
-        // If composite provider requested, wrap all providers
+        // If composite provider requested, wrap all providers with fallback support
         if (string.Equals(backfillCfg?.Provider, "composite", StringComparison.OrdinalIgnoreCase)
             || (backfillCfg?.EnableFallback ?? true))
         {
             var composite = new CompositeHistoricalDataProvider(
-                providers,
+                registryProviders,
                 backfillCfg?.EnableSymbolResolution ?? true ? _symbolResolver : null,
                 enableCrossValidation: false,
                 log: _log
             );
 
+            // Use composite as primary, with individual providers for direct selection
             providers = new List<IHistoricalDataProvider> { composite };
+            providers.AddRange(registryProviders);
         }
-
-        // Add individual providers as well for direct selection
-        providers.AddRange(CreateProviders());
 
         return new HistoricalBackfillService(providers, _log);
     }

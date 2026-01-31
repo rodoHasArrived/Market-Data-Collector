@@ -1,10 +1,12 @@
 using System.Text.Json;
 using MarketDataCollector.Application.Composition;
-using MarketDataCollector.Application.UI;
+using MarketDataCollector.Infrastructure.Providers.Core;
 using MarketDataCollector.Ui.Shared.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
+// Alias to disambiguate from core BackfillCoordinator
+using BackfillCoordinator = MarketDataCollector.Ui.Shared.Services.BackfillCoordinator;
 
 namespace MarketDataCollector.Ui.Shared.Endpoints;
 
@@ -67,10 +69,12 @@ public static class UiEndpoints
 
         // Replace core BackfillCoordinator with UI-extended version that includes PreviewAsync
         // The Ui.Shared.Services.BackfillCoordinator wraps the core and adds preview functionality
+        // Uses ProviderRegistry for unified provider discovery
         services.AddSingleton<BackfillCoordinator>(sp =>
         {
             var configStore = sp.GetRequiredService<ConfigStore>();
-            return new BackfillCoordinator(configStore);
+            var registry = sp.GetRequiredService<ProviderRegistry>();
+            return new BackfillCoordinator(configStore, registry);
         });
 
         return services;
@@ -90,10 +94,12 @@ public static class UiEndpoints
         services.AddMarketDataServices(options);
 
         // Replace core BackfillCoordinator with UI-extended version that includes PreviewAsync
+        // Uses ProviderRegistry for unified provider discovery
         services.AddSingleton<BackfillCoordinator>(sp =>
         {
             var configStore = sp.GetRequiredService<ConfigStore>();
-            return new BackfillCoordinator(configStore);
+            var registry = sp.GetRequiredService<ProviderRegistry>();
+            return new BackfillCoordinator(configStore, registry);
         });
 
         services.AddSingleton(statusHandlers);

@@ -1,6 +1,7 @@
 using MarketDataCollector.Application.Backfill;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Infrastructure.Providers.Backfill;
+using MarketDataCollector.Infrastructure.Providers.Core;
 using CoreBackfillCoordinator = MarketDataCollector.Application.UI.BackfillCoordinator;
 
 namespace MarketDataCollector.Ui.Shared.Services;
@@ -51,17 +52,22 @@ public sealed record ExistingDataInfo(
 /// <para><b>Migration Note:</b> This class wraps the core implementation from
 /// <see cref="MarketDataCollector.Application.UI.BackfillCoordinator"/> to add preview
 /// functionality while delegating core operations to the wrapped instance.</para>
+/// <para>All providers are retrieved via <see cref="ProviderRegistry.GetProviders{T}"/>
+/// for unified provider discovery.</para>
 /// </remarks>
+[ImplementsAdr("ADR-001", "Uses unified ProviderRegistry for provider discovery")]
 public sealed class BackfillCoordinator : IDisposable
 {
     private readonly CoreBackfillCoordinator _core;
     private readonly ConfigStore _store;
+    private readonly ProviderRegistry _registry;
     private readonly Serilog.ILogger _log = LoggingSetup.ForContext<BackfillCoordinator>();
 
-    public BackfillCoordinator(ConfigStore store)
+    public BackfillCoordinator(ConfigStore store, ProviderRegistry registry)
     {
-        _store = store;
-        _core = new CoreBackfillCoordinator(store);
+        _store = store ?? throw new ArgumentNullException(nameof(store));
+        _registry = registry ?? throw new ArgumentNullException(nameof(registry));
+        _core = new CoreBackfillCoordinator(store, registry);
     }
 
     /// <summary>
@@ -295,12 +301,19 @@ public sealed class BackfillCoordinator : IDisposable
         return notes.ToArray();
     }
 
+    /// <summary>
+    /// Creates the backfill service using providers from the unified registry.
+    /// </summary>
     private HistoricalBackfillService CreateService()
     {
-        var providers = new IHistoricalDataProvider[]
+        var providers = _registry.GetProviders<IHistoricalDataProvider>();
+
+        if (providers.Count == 0)
         {
-            new StooqHistoricalDataProvider()
-        };
+            _log.Warning("No backfill providers registered in ProviderRegistry. " +
+                "Ensure providers are initialized via ProviderFactory.CreateAndRegisterAllAsync()");
+        }
+
         return new HistoricalBackfillService(providers, _log);
     }
 }
