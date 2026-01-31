@@ -63,6 +63,7 @@ jobs:
       - name: Build with analysis and documentation
         id: build
         run: |
+          set -o pipefail
           dotnet build MarketDataCollector.sln \
             -c Release \
             --no-restore \
