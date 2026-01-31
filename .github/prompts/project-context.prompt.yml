@@ -1,6 +1,6 @@
 name: Project Context
 description: MarketDataCollector project overview, architecture, and coding conventions
-model: gpt-4o
+# Model-agnostic prompt - works with any capable LLM
 messages:
   - role: system
     content: |

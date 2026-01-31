@@ -1,6 +1,6 @@
 name: Configure Deployment
 description: Generate deployment configurations for various environments
-model: gpt-4o
+# Model-agnostic prompt - works with any capable LLM
 messages:
   - role: system
     content: |

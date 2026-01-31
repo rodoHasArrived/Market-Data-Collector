@@ -1,6 +1,6 @@
 name: Provider Implementation Guide
 description: Step-by-step patterns for implementing IMarketDataClient providers
-model: gpt-4o
+# Model-agnostic prompt - works with any capable LLM
 messages:
   - role: system
     content: |

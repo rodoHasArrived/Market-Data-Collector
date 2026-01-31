@@ -1,14 +1,16 @@
 # Market Data Collector - Copilot Instructions
 
+> **Note:** For comprehensive project context, see [CLAUDE.md](../CLAUDE.md) in the repository root.
+
 ## Repository Overview
 
-**Market Data Collector** is a high-performance, cross-platform market data collection system for real-time and historical market microstructure data. It's a production-ready .NET 9.0 solution with F# domain libraries, supporting multiple data providers (Interactive Brokers, Alpaca, Polygon) and offering flexible storage options.
+**Market Data Collector** is a high-performance, cross-platform market data collection system for real-time and historical market microstructure data. It's a production-ready .NET 9.0 solution with F# domain libraries, supporting multiple data providers (Interactive Brokers, Alpaca, NYSE, Polygon, StockSharp) and offering flexible storage options.
 
 **Project Type:** .NET Solution (C# and F#)
 **Target Framework:** .NET 9.0
 **Languages:** C# 11, F# 8.0
-**Size:** ~50+ project files across 16 projects
-**Architecture:** Event-driven, microservices-capable, layered architecture
+**Size:** 478 source files (466 C#, 12 F#) across 6 main projects
+**Architecture:** Event-driven, monolithic core with optional UI projects
 
 ## Build & Test Commands
 
@@ -88,24 +90,18 @@ MarketDataCollector/
 ├── src/
 │   ├── MarketDataCollector/              # Main console application (C#)
 │   ├── MarketDataCollector.Ui/           # Web dashboard UI (C#)
-│   ├── MarketDataCollector.Uwp/          # Windows UWP desktop app
-│   ├── MarketDataCollector.Contracts/    # Shared contracts
-│   ├── MarketDataCollector.FSharp/       # F# domain library
-│   └── Microservices/                    # Microservices components
-│       ├── Gateway/                      # API Gateway
-│       ├── TradeIngestion/               # Trade data service
-│       ├── QuoteIngestion/               # Quote data service
-│       ├── OrderBookIngestion/           # Order book service
-│       ├── HistoricalDataIngestion/      # Historical data service
-│       ├── DataValidation/               # Validation service
-│       └── Shared/                       # Shared contracts
+│   ├── MarketDataCollector.Ui.Shared/    # Shared UI services & endpoints
+│   ├── MarketDataCollector.Uwp/          # Windows UWP desktop app (WinUI 3)
+│   ├── MarketDataCollector.Contracts/    # Shared contracts and DTOs
+│   └── MarketDataCollector.FSharp/       # F# domain library (12 files)
 ├── tests/
-│   ├── MarketDataCollector.Tests/        # C# unit tests
+│   ├── MarketDataCollector.Tests/        # C# unit tests (50 files)
 │   └── MarketDataCollector.FSharp.Tests/ # F# unit tests
 ├── benchmarks/
 │   └── MarketDataCollector.Benchmarks/   # BenchmarkDotNet performance tests
-├── docs/                                 # Comprehensive documentation
+├── docs/                                 # Comprehensive documentation (61 files)
 ├── scripts/                              # Build and diagnostic scripts
+├── build-system/                         # Python build tooling
 └── deploy/                               # Deployment configurations
 ```
 
@@ -122,11 +118,15 @@ MarketDataCollector/
 
 The main application (`src/MarketDataCollector/`) follows a layered architecture:
 
-- **Infrastructure Layer:** Provider-specific code (IB, Alpaca, Polygon clients)
+- **Infrastructure Layer:** Provider-specific code (IB, Alpaca, NYSE, Polygon, StockSharp clients)
 - **Domain Layer:** Core collectors (TradeDataCollector, MarketDepthCollector, QuoteCollector)
 - **Event Pipeline Layer:** Bounded channel event processing, CompositePublisher
-- **Storage Layer:** JSONL, Parquet, tiered storage, WAL
+- **Storage Layer:** JSONL, Parquet, tiered storage, WAL (Write-Ahead Logging)
 - **Application Layer:** Program.cs, ConfigWatcher, StatusHttpServer, BackfillService
+
+**Key Interfaces:**
+- `IMarketDataClient` - Core streaming interface for real-time data
+- `IHistoricalDataProvider` - Historical/backfill data interface
 
 ### Important Directories
 
@@ -137,9 +137,16 @@ The main application (`src/MarketDataCollector/`) follows a layered architecture
 
 ## CI/CD Workflow
 
-**GitHub Actions:** `.github/workflows/dotnet-desktop.yml`
+**GitHub Actions:** 21 workflows in `.github/workflows/`
 
-The CI pipeline runs on pushes to `main` and pull requests:
+Key workflows include:
+- `test-matrix.yml` - Multi-platform test matrix
+- `pr-checks.yml` - PR validation checks
+- `security.yml` - Security scanning (CodeQL, Trivy)
+- `docker.yml` - Docker image building
+- `release.yml` - Release automation
+
+The main CI pipeline runs on pushes to `main` and pull requests:
 
 1. **Build Job** (ubuntu-latest):
    - Checkout code

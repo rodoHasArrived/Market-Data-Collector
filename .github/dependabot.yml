@@ -1,6 +1,3 @@
-version: 2
-updates:
-  # Enable version updates for NuGet packages
 # Dependabot Configuration
 # https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
 
@@ -18,23 +15,6 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
-      time: "09:00"
-    open-pull-requests-limit: 10
-    assignees:
-      - "rodoHasArrived"
-    labels:
-      - "dependencies"
-      - "nuget"
-    commit-message:
-      prefix: "chore"
-      prefix-development: "chore"
-      include: "scope"
-    versioning-strategy: increase
-    groups:
-      # Group minor and patch updates together
-      production-dependencies:
-        patterns:
-          - "*"
       time: "06:00"
       timezone: "UTC"
     open-pull-requests-limit: 10
@@ -42,6 +22,7 @@ updates:
       - nuget-org
     commit-message:
       prefix: "deps(nuget)"
+      include: "scope"
     labels:
       - "dependencies"
       - "nuget"
@@ -54,15 +35,12 @@ updates:
         update-types:
           - "minor"
           - "patch"
-
-  # Enable version updates for GitHub Actions
       microsoft-aspnetcore:
         patterns:
           - "Microsoft.AspNetCore.*"
         update-types:
           - "minor"
           - "patch"
-
       testing:
         patterns:
           - "xunit*"
@@ -74,7 +52,6 @@ updates:
         update-types:
           - "minor"
           - "patch"
-
       serialization:
         patterns:
           - "System.Text.Json*"
@@ -82,7 +59,6 @@ updates:
         update-types:
           - "minor"
           - "patch"
-
       logging:
         patterns:
           - "Serilog*"
@@ -90,7 +66,6 @@ updates:
         update-types:
           - "minor"
           - "patch"
-
       data-providers:
         patterns:
           - "Alpaca.*"
@@ -98,7 +73,6 @@ updates:
         update-types:
           - "minor"
           - "patch"
-
       analyzers:
         patterns:
           - "Microsoft.CodeAnalysis*"
@@ -107,7 +81,6 @@ updates:
         update-types:
           - "minor"
           - "patch"
-
     ignore:
       - dependency-name: "Microsoft.EntityFrameworkCore*"
         update-types: ["version-update:semver-major"]
@@ -118,22 +91,12 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
-      time: "09:00"
-    assignees:
-      - "rodoHasArrived"
-    labels:
-      - "dependencies"
-      - "github-actions"
-    commit-message:
-      prefix: "chore"
-      include: "scope"
-
-  # Enable version updates for Docker
       time: "06:00"
       timezone: "UTC"
     open-pull-requests-limit: 5
     commit-message:
       prefix: "ci(actions)"
+      include: "scope"
     labels:
       - "dependencies"
       - "github-actions"
@@ -153,20 +116,12 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
-      time: "09:00"
-    assignees:
-      - "rodoHasArrived"
-    labels:
-      - "dependencies"
-      - "docker"
-    commit-message:
-      prefix: "chore"
-      include: "scope"
       time: "06:00"
       timezone: "UTC"
     open-pull-requests-limit: 3
     commit-message:
       prefix: "deps(docker)"
+      include: "scope"
     labels:
       - "dependencies"
       - "docker"
@@ -193,6 +148,7 @@ updates:
       - nuget-org
     commit-message:
       prefix: "deps(benchmarks)"
+      include: "scope"
     labels:
       - "dependencies"
       - "benchmarks"
@@ -219,6 +175,7 @@ updates:
       - nuget-org
     commit-message:
       prefix: "deps(tools)"
+      include: "scope"
     labels:
       - "dependencies"
       - "tools"

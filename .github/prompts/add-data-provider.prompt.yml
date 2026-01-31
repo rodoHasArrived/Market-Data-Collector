@@ -1,6 +1,6 @@
 name: Add New Data Provider
 description: Guide for implementing a new market data provider integration
-model: gpt-4o
+# Model-agnostic prompt - works with any capable LLM
 messages:
   - role: system
     content: |

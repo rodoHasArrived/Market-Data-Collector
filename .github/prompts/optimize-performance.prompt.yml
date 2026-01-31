@@ -1,6 +1,6 @@
 name: Optimize Performance
 description: Performance analysis and optimization guidance for Market Data Collector
-model: gpt-4o
+# Model-agnostic prompt - works with any capable LLM
 messages:
   - role: system
     content: |

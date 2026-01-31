@@ -1,6 +1,6 @@
 name: Explain Architecture
 description: Understand and explain Market Data Collector architecture and design decisions
-model: gpt-4o
+# Model-agnostic prompt - works with any capable LLM
 messages:
   - role: system
     content: |

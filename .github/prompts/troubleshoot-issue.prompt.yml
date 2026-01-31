@@ -1,6 +1,6 @@
 name: Troubleshoot Issue
 description: Diagnose and resolve common issues in Market Data Collector
-model: gpt-4o
+# Model-agnostic prompt - works with any capable LLM
 messages:
   - role: system
     content: |

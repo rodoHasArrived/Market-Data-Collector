@@ -1,6 +1,6 @@
 name: Add Export Format
 description: Implement a new data export format for analysis workflows
-model: gpt-4o
+# Model-agnostic prompt - works with any capable LLM
 messages:
   - role: system
     content: |
