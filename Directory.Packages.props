@@ -107,13 +107,13 @@
   </ItemGroup>
 
   <ItemGroup Label="StockSharp">
-    <PackageVersion Include="StockSharp.Algo" Version="24.2.0" />
-    <PackageVersion Include="StockSharp.Messages" Version="24.2.0" />
-    <PackageVersion Include="StockSharp.BusinessEntities" Version="24.2.0" />
-    <PackageVersion Include="StockSharp.Rithmic" Version="24.2.0" />
-    <PackageVersion Include="StockSharp.IQFeed" Version="24.2.0" />
-    <PackageVersion Include="StockSharp.Cqg.Com" Version="24.2.0" />
-    <PackageVersion Include="StockSharp.InteractiveBrokers" Version="24.2.0" />
+    <PackageVersion Include="StockSharp.Algo" Version="5.0.229" />
+    <PackageVersion Include="StockSharp.Messages" Version="5.0.223" />
+    <PackageVersion Include="StockSharp.BusinessEntities" Version="5.0.216" />
+    <PackageVersion Include="StockSharp.Rithmic" Version="5.0.110" />
+    <PackageVersion Include="StockSharp.IQFeed" Version="5.0.93" />
+    <PackageVersion Include="StockSharp.Cqg.Com" Version="5.0.128" />
+    <PackageVersion Include="StockSharp.InteractiveBrokers" Version="5.0.129" />
   </ItemGroup>
 
   <ItemGroup Label="Benchmarking">
