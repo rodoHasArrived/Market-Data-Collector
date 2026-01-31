@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
 using System.Threading;
-using MarketDataCollector.Domain.Events;
+
 using MarketDataCollector.Storage.Interfaces;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;

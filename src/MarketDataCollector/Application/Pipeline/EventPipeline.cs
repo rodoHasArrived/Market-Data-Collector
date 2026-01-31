@@ -4,7 +4,7 @@ using System.Threading.Channels;
 using System.Threading;
 using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Application.Services;
-using MarketDataCollector.Domain.Events;
+using MarketDataCollector.Domain;
 using MarketDataCollector.Infrastructure.Performance;
 using MarketDataCollector.Storage.Interfaces;
 using Microsoft.Extensions.Logging;

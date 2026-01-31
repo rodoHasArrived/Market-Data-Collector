@@ -1,6 +1,6 @@
 using MarketDataCollector.Application.Services;
 using System.Threading;
-using MarketDataCollector.Domain.Events;
+
 
 namespace MarketDataCollector.Storage.Interfaces;
 

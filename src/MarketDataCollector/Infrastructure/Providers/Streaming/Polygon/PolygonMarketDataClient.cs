@@ -1,3 +1,4 @@
+using MarketDataCollector.Domain;
 using System.Buffers;
 using System.Net.WebSockets;
 using System.Text;
@@ -7,7 +8,7 @@ using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Exceptions;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Domain.Collectors;
-using MarketDataCollector.Domain.Events;
+
 using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Infrastructure.Contracts;

@@ -4,7 +4,7 @@ using System.Threading;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Contracts.Domain.Enums;
 using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Events;
+
 using MarketDataCollector.Domain.Models;
 
 namespace MarketDataCollector.Application.Serialization;

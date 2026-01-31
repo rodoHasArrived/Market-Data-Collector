@@ -3,7 +3,7 @@ using System.Threading;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Events;
+
 using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Storage.Interfaces;
 using MarketDataCollector.Storage.Services;

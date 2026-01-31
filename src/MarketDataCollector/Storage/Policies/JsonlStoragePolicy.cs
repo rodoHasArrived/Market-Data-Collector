@@ -1,5 +1,5 @@
 using System.Text.RegularExpressions;
-using MarketDataCollector.Domain.Events;
+
 using MarketDataCollector.Storage.Interfaces;
 
 namespace MarketDataCollector.Storage.Policies;

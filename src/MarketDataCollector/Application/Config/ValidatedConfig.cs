@@ -124,27 +124,3 @@ public sealed record ValidatedConfig
     /// </summary>
     public static implicit operator AppConfig(ValidatedConfig validated) => validated.Config;
 }
-
-/// <summary>
-/// Indicates how the configuration was sourced/created.
-/// </summary>
-public enum ConfigurationSource
-{
-    /// <summary>Default configuration (no file loaded).</summary>
-    Default,
-
-    /// <summary>Loaded from a configuration file.</summary>
-    File,
-
-    /// <summary>Created by the interactive wizard.</summary>
-    Wizard,
-
-    /// <summary>Created by auto-configuration.</summary>
-    AutoConfig,
-
-    /// <summary>Updated via hot reload.</summary>
-    HotReload,
-
-    /// <summary>Programmatically constructed.</summary>
-    Programmatic
-}

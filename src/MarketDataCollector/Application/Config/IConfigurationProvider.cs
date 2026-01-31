@@ -38,7 +38,19 @@ public enum ConfigurationSource
     CommandLine,
 
     /// <summary>Loaded from remote configuration service.</summary>
-    Remote
+    Remote,
+
+    /// <summary>Created by the interactive wizard.</summary>
+    Wizard,
+
+    /// <summary>Created by auto-configuration.</summary>
+    AutoConfig,
+
+    /// <summary>Updated via hot reload.</summary>
+    HotReload,
+
+    /// <summary>Programmatically constructed.</summary>
+    Programmatic
 }
 
 /// <summary>

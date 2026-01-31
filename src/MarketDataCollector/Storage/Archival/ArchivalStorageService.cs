@@ -2,7 +2,7 @@ using System.Collections.Concurrent;
 using System.Text.Json;
 using System.Threading;
 using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Domain.Events;
+
 using MarketDataCollector.Storage.Interfaces;
 using Serilog;
 

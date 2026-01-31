@@ -1,7 +1,7 @@
 using System.Text.Json;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Events;
+
 using MarketDataCollector.Domain.Models;
 using Serilog;
 

@@ -1,6 +1,6 @@
 using System.Text.Json;
 using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Domain.Events;
+
 using MarketDataCollector.Storage.Archival;
 using Serilog;
 

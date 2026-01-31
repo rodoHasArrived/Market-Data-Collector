@@ -1,4 +1,4 @@
-using MarketDataCollector.Domain.Events;
+
 
 namespace MarketDataCollector.Application.Filters;
 

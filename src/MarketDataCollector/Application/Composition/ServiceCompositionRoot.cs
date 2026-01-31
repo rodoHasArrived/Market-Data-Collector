@@ -1,3 +1,4 @@
+using MarketDataCollector.Domain;
 using MarketDataCollector.Application.Backfill;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Config.Credentials;
@@ -9,7 +10,7 @@ using MarketDataCollector.Application.Subscriptions.Models;
 using MarketDataCollector.Application.Subscriptions.Services;
 using MarketDataCollector.Application.UI;
 using MarketDataCollector.Domain.Collectors;
-using MarketDataCollector.Domain.Events;
+
 using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Http;
 using MarketDataCollector.Infrastructure.Providers.Backfill.Scheduling;
@@ -63,7 +64,6 @@ public static class ServiceCompositionRoot
     /// <item><description>Other services (maintenance, diagnostic, pipeline, collector)</description></item>
     /// </list>
     /// </remarks>
-    [ImplementsAdr("ADR-001", "Provider services registered before dependent services")]
     public static IServiceCollection AddMarketDataServices(
         this IServiceCollection services,
         CompositionOptions? options = null)
@@ -215,7 +215,6 @@ public static class ServiceCompositionRoot
     /// </list>
     /// <para>This ensures all symbol search operations go through <see cref="SymbolSearchService"/>.</para>
     /// </remarks>
-    [ImplementsAdr("ADR-001", "Uses ProviderRegistry for unified symbol search provider discovery")]
     private static IServiceCollection AddSymbolManagementServices(this IServiceCollection services)
     {
         // Symbol import/export
@@ -307,7 +306,6 @@ public static class ServiceCompositionRoot
     /// <para>Requires <see cref="AddProviderServices"/> to be called first to ensure
     /// <see cref="ProviderRegistry"/> and <see cref="ProviderFactory"/> are available.</para>
     /// </remarks>
-    [ImplementsAdr("ADR-001", "Uses ProviderRegistry for unified backfill provider discovery")]
     private static IServiceCollection AddBackfillServices(
         this IServiceCollection services,
         CompositionOptions options)
@@ -585,7 +583,6 @@ public static class ServiceCompositionRoot
     /// Registers HttpClientFactory for proper HTTP client lifecycle management.
     /// Implements ADR-010: HttpClient Factory pattern.
     /// </summary>
-    [ImplementsAdr("ADR-010", "HttpClientFactory lifecycle management")]
     private static IServiceCollection AddHttpClientFactoryServices(this IServiceCollection services)
     {
         // Register all named HttpClient configurations with Polly policies

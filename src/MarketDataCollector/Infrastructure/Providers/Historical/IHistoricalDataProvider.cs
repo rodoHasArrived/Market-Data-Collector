@@ -1,5 +1,5 @@
 using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Events;
+
 using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Providers.Core;
