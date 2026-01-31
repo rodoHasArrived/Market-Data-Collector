@@ -3,7 +3,7 @@ using System.Threading;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Application.Pipeline;
-using MarketDataCollector.Domain.Events;
+using MarketDataCollector.Contracts.Domain.Events;
 using MarketDataCollector.Infrastructure.Providers.Backfill;
 using Serilog;
 

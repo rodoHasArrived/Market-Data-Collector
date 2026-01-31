@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Events;
+using MarketDataCollector.Contracts.Domain.Events;
 using MarketDataCollector.Domain.Models;
 
 namespace MarketDataCollector.Domain.Collectors;

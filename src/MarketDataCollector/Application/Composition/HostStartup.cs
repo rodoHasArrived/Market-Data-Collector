@@ -5,7 +5,7 @@ using MarketDataCollector.Application.Services;
 using MarketDataCollector.Application.Subscriptions;
 using MarketDataCollector.Application.UI;
 using MarketDataCollector.Domain.Collectors;
-using MarketDataCollector.Domain.Events;
+using MarketDataCollector.Contracts.Domain.Events;
 using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Http;
 using MarketDataCollector.Infrastructure.Providers.Alpaca;

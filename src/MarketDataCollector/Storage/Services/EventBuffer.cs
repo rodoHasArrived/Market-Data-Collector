@@ -1,4 +1,4 @@
-using MarketDataCollector.Domain.Events;
+using MarketDataCollector.Contracts.Domain.Events;
 
 namespace MarketDataCollector.Storage.Services;
 
