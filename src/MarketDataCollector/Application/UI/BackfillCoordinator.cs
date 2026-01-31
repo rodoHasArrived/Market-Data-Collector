@@ -24,10 +24,10 @@ namespace MarketDataCollector.Application.UI;
 /// <list type="number">
 /// <item><description>ProviderRegistry.GetBackfillProviders() - unified registry</description></item>
 /// <item><description>ProviderFactory.CreateBackfillProviders() - factory creation with credential resolution</description></item>
-/// <item><description>Manual instantiation - backwards compatibility fallback</description></item>
 /// </list>
+/// <para>Providers are never instantiated without proper credential resolution to ensure consistent behavior.</para>
 /// </remarks>
-[ImplementsAdr("ADR-001", "Uses ProviderRegistry for unified provider discovery")]
+[ImplementsAdr("ADR-001", "Uses ProviderRegistry exclusively for unified provider discovery")]
 public sealed class BackfillCoordinator : IDisposable
 {
     private readonly ConfigStore _store;
@@ -171,8 +171,11 @@ public sealed class BackfillCoordinator : IDisposable
     /// Creates backfill providers using a priority-based discovery approach:
     /// 1. ProviderRegistry.GetBackfillProviders() - unified registry
     /// 2. ProviderFactory.CreateBackfillProviders() - factory with credential resolution
-    /// 3. Manual instantiation - backwards compatibility fallback
     /// </summary>
+    /// <remarks>
+    /// Providers are always created through ProviderFactory with proper credential resolution.
+    /// No fallback to manual instantiation to ensure consistent behavior.
+    /// </remarks>
     private List<IHistoricalDataProvider> CreateProviders()
     {
         // Priority 1: Use ProviderRegistry if available and populated
@@ -207,52 +210,9 @@ public sealed class BackfillCoordinator : IDisposable
             }
         }
 
-        // Priority 3: Fallback to manual instantiation (backwards compatibility)
-        _log.Debug("Using fallback manual provider instantiation");
-        return CreateProvidersManually();
-    }
-
-    /// <summary>
-    /// Fallback method for manual provider creation when ProviderRegistry and ProviderFactory
-    /// are not available. Maintains backwards compatibility.
-    /// </summary>
-    private List<IHistoricalDataProvider> CreateProvidersManually()
-    {
-        var cfg = _store.Load();
-        var backfillCfg = cfg.Backfill;
-        var providersCfg = backfillCfg?.Providers;
-
-        var providers = new List<IHistoricalDataProvider>();
-
-        // Stooq (always available, free)
-        var stooqCfg = providersCfg?.Stooq;
-        if (stooqCfg?.Enabled ?? true)
-        {
-            providers.Add(new StooqHistoricalDataProvider(log: _log));
-        }
-
-        // Yahoo Finance
-        var yahooCfg = providersCfg?.Yahoo;
-        if (yahooCfg?.Enabled ?? true)
-        {
-            providers.Add(new YahooFinanceHistoricalDataProvider(log: _log));
-        }
-
-        // Nasdaq Data Link (Quandl)
-        var nasdaqCfg = providersCfg?.Nasdaq;
-        if (nasdaqCfg?.Enabled ?? true)
-        {
-            providers.Add(new NasdaqDataLinkHistoricalDataProvider(
-                apiKey: nasdaqCfg?.ApiKey,
-                database: nasdaqCfg?.Database ?? "WIKI",
-                log: _log
-            ));
-        }
-
-        // Sort by priority
-        return providers
-            .OrderBy(p => p.Priority)
-            .ToList();
+        // No providers available - log warning instead of creating credential-less fallbacks
+        _log.Warning("No backfill providers available. Configure provider credentials to enable backfill operations.");
+        return new List<IHistoricalDataProvider>();
     }
 
     private HistoricalBackfillService CreateService()

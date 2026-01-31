@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Subscriptions.Models;
+using MarketDataCollector.Infrastructure.Providers.Core;
 using MarketDataCollector.Infrastructure.Providers.SymbolSearch;
 using Serilog;
 
@@ -11,6 +12,10 @@ namespace MarketDataCollector.Application.Subscriptions.Services;
 /// Service for searching and autocompleting symbols across multiple providers.
 /// Aggregates results from Finnhub, Polygon, Alpaca, and OpenFIGI.
 /// </summary>
+/// <remarks>
+/// Providers are obtained through <see cref="ProviderRegistry"/> to ensure centralized
+/// registration, credential resolution, and consistent provider discovery.
+/// </remarks>
 public sealed class SymbolSearchService : IDisposable
 {
     private readonly List<ISymbolSearchProvider> _providers = new();
@@ -24,26 +29,45 @@ public sealed class SymbolSearchService : IDisposable
     private bool _disposed;
 
     /// <summary>
-    /// Creates a new symbol search service with default provider configuration.
+    /// Creates a symbol search service using providers from <see cref="ProviderRegistry"/>.
+    /// This is the preferred constructor for DI scenarios.
     /// </summary>
+    /// <param name="registry">Provider registry containing symbol search providers.</param>
+    /// <param name="figiClient">OpenFIGI client for FIGI enrichment.</param>
+    /// <param name="metadataService">Metadata enrichment service.</param>
+    /// <param name="searchCacheDuration">Optional cache duration for search results.</param>
+    /// <param name="detailsCacheDuration">Optional cache duration for symbol details.</param>
+    /// <param name="log">Optional logger.</param>
     public SymbolSearchService(
-        MetadataEnrichmentService? metadataService = null,
+        ProviderRegistry registry,
+        OpenFigiClient? figiClient,
+        MetadataEnrichmentService metadataService,
         TimeSpan? searchCacheDuration = null,
         TimeSpan? detailsCacheDuration = null,
         ILogger? log = null)
+        : this(
+            registry?.GetSymbolSearchProviders() ?? Array.Empty<ISymbolSearchProvider>(),
+            figiClient,
+            metadataService,
+            searchCacheDuration,
+            detailsCacheDuration,
+            log)
     {
-        _log = log ?? LoggingSetup.ForContext<SymbolSearchService>();
-        _metadataService = metadataService ?? new MetadataEnrichmentService();
-        _searchCacheDuration = searchCacheDuration ?? TimeSpan.FromMinutes(5);
-        _detailsCacheDuration = detailsCacheDuration ?? TimeSpan.FromMinutes(30);
-
-        // Initialize default providers
-        InitializeDefaultProviders();
+        ArgumentNullException.ThrowIfNull(registry);
+        _log.Information("SymbolSearchService initialized with {Count} providers from ProviderRegistry",
+            _providers.Count);
     }
 
     /// <summary>
-    /// Creates a symbol search service with custom providers.
+    /// Creates a symbol search service with explicit providers.
+    /// Use this constructor for testing or when providers are resolved outside the registry.
     /// </summary>
+    /// <param name="providers">Symbol search providers in priority order.</param>
+    /// <param name="figiClient">OpenFIGI client for FIGI enrichment.</param>
+    /// <param name="metadataService">Metadata enrichment service.</param>
+    /// <param name="searchCacheDuration">Optional cache duration for search results.</param>
+    /// <param name="detailsCacheDuration">Optional cache duration for symbol details.</param>
+    /// <param name="log">Optional logger.</param>
     public SymbolSearchService(
         IEnumerable<ISymbolSearchProvider> providers,
         OpenFigiClient? figiClient,
@@ -58,21 +82,6 @@ public sealed class SymbolSearchService : IDisposable
         _metadataService = metadataService;
         _searchCacheDuration = searchCacheDuration ?? TimeSpan.FromMinutes(5);
         _detailsCacheDuration = detailsCacheDuration ?? TimeSpan.FromMinutes(30);
-    }
-
-    private void InitializeDefaultProviders()
-    {
-        try
-        {
-            // Initialize providers in priority order
-            _providers.Add(new AlpacaSymbolSearchProviderRefactored());
-            _providers.Add(new FinnhubSymbolSearchProviderRefactored());
-            _providers.Add(new PolygonSymbolSearchProvider());
-        }
-        catch (Exception ex)
-        {
-            _log.Warning(ex, "Failed to initialize one or more symbol search providers");
-        }
     }
 
     /// <summary>
