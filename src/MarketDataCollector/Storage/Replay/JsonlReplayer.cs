@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Serialization;
-using MarketDataCollector.Domain.Events;
+using MarketDataCollector.Contracts.Domain.Events;
 using Serilog;
 
 namespace MarketDataCollector.Storage.Replay;

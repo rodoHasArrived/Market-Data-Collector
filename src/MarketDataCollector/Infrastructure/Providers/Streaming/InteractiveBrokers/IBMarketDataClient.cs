@@ -3,7 +3,7 @@ using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Providers.Core;
 using System.Threading;
 using MarketDataCollector.Domain.Collectors;
-using MarketDataCollector.Domain.Events;
+using MarketDataCollector.Contracts.Domain.Events;
 using Serilog;
 
 namespace MarketDataCollector.Infrastructure.Providers.InteractiveBrokers;

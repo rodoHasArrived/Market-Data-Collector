@@ -8,7 +8,7 @@ using System.Threading;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using MarketDataCollector.Application.Serialization;
-using MarketDataCollector.Domain.Events;
+using MarketDataCollector.Contracts.Domain.Events;
 using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Storage.Interfaces;
 using MarketDataCollector.Storage.Services;

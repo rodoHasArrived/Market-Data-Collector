@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Domain.Events;
+namespace MarketDataCollector.Contracts.Domain.Events;
 
 /// <summary>
 /// Minimal publish contract so collectors can emit MarketEvents without knowing transport.

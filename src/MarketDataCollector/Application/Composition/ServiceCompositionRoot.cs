@@ -9,7 +9,7 @@ using MarketDataCollector.Application.Subscriptions.Models;
 using MarketDataCollector.Application.Subscriptions.Services;
 using MarketDataCollector.Application.UI;
 using MarketDataCollector.Domain.Collectors;
-using MarketDataCollector.Domain.Events;
+using MarketDataCollector.Contracts.Domain.Events;
 using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Http;
 using MarketDataCollector.Infrastructure.Providers.Backfill.Scheduling;

@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using MarketDataCollector.Application.Serialization;
-using MarketDataCollector.Domain.Events;
+using MarketDataCollector.Contracts.Domain.Events;
 
 namespace MarketDataCollector.Storage.Replay;
 

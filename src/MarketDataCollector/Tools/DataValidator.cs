@@ -2,7 +2,7 @@ using System.IO.Compression;
 using System.Text.Json;
 using System.Threading;
 using MarketDataCollector.Application.Logging;
-using MarketDataCollector.Domain.Events;
+using MarketDataCollector.Contracts.Domain.Events;
 using Serilog;
 
 namespace MarketDataCollector.Tools;
