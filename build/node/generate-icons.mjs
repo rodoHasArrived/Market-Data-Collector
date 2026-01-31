@@ -17,7 +17,7 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const projectRoot = join(__dirname, '..');
+const projectRoot = join(__dirname, '..', '..');
 const assetsDir = join(projectRoot, 'src', 'MarketDataCollector.Uwp', 'Assets');
 const svgPath = join(assetsDir, 'AppIcon.svg');
 

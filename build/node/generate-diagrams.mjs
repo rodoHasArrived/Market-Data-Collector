@@ -7,9 +7,12 @@
 import { instance } from '@viz-js/viz';
 import sharp from 'sharp';
 import { readdir, readFile, writeFile } from 'fs/promises';
-import { join, basename } from 'path';
+import { join, basename, dirname } from 'path';
+import { fileURLToPath } from 'url';
 
-const DIAGRAMS_DIR = 'docs/diagrams';
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const projectRoot = join(__dirname, '..', '..');
+const DIAGRAMS_DIR = join(projectRoot, 'docs', 'diagrams');
 
 async function main() {
   const viz = await instance();
