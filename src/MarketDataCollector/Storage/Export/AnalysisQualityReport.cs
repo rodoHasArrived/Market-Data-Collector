@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using MarketDataCollector.Application.Logging;
+using MarketDataCollector.Application.Serialization;
 using Serilog;
 
 namespace MarketDataCollector.Storage.Export;
@@ -75,7 +76,7 @@ public sealed class AnalysisQualityReportGenerator
         if (format.HasFlag(ReportFormat.Json))
         {
             var jsonPath = Path.Combine(outputDirectory, "quality_report.json");
-            var json = JsonSerializer.Serialize(report, new JsonSerializerOptions { WriteIndented = true });
+            var json = JsonSerializer.Serialize(report, MarketDataJsonContext.PrettyPrintOptions);
             await File.WriteAllTextAsync(jsonPath, json, ct);
             _log.Information("Quality report exported to {Path}", jsonPath);
         }

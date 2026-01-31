@@ -1,31 +1,54 @@
 using System.Text.Json;
+using MarketDataCollector.Application.Serialization;
 
 namespace MarketDataCollector.Application.Config;
 
 /// <summary>
 /// Centralized JSON serializer options for reading/writing AppConfig.
+/// Extends MarketDataJsonContext options with custom converters for configuration-specific types.
 /// </summary>
 public static class AppConfigJsonOptions
 {
-    public static JsonSerializerOptions Read { get; } = CreateBase();
+    /// <summary>
+    /// Options for reading AppConfig JSON files.
+    /// Uses source-generated serializers with custom DataSourceKind converter.
+    /// </summary>
+    public static JsonSerializerOptions Read { get; } = CreateRead();
 
+    /// <summary>
+    /// Options for writing AppConfig JSON files (pretty-printed).
+    /// Uses source-generated serializers with custom DataSourceKind converter.
+    /// </summary>
     public static JsonSerializerOptions Write { get; } = CreateWrite();
 
-    private static JsonSerializerOptions CreateBase()
+    private static JsonSerializerOptions CreateRead()
     {
+        // Start with the source-generated context options
         var opts = new JsonSerializerOptions
         {
-            PropertyNameCaseInsensitive = true
+            TypeInfoResolver = MarketDataJsonContext.Default,
+            PropertyNameCaseInsensitive = true,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         };
 
+        // Add custom converter for DataSourceKind enum parsing
         opts.Converters.Add(new DataSourceKindConverter());
         return opts;
     }
 
     private static JsonSerializerOptions CreateWrite()
     {
-        var opts = CreateBase();
-        opts.WriteIndented = true;
+        // Start with the source-generated context options
+        var opts = new JsonSerializerOptions
+        {
+            TypeInfoResolver = MarketDataJsonContext.Default,
+            PropertyNameCaseInsensitive = true,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = true
+        };
+
+        // Add custom converter for DataSourceKind enum parsing
+        opts.Converters.Add(new DataSourceKindConverter());
         return opts;
     }
 }

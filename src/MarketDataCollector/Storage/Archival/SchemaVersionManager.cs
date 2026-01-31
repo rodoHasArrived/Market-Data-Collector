@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using MarketDataCollector.Application.Logging;
+using MarketDataCollector.Application.Serialization;
 using Serilog;
 
 namespace MarketDataCollector.Storage.Archival;
@@ -247,7 +248,7 @@ public sealed class SchemaVersionManager
             required = schema.Fields.Where(f => f.Required).Select(f => f.Name).ToList()
         };
 
-        var json = JsonSerializer.Serialize(jsonSchema, new JsonSerializerOptions { WriteIndented = true });
+        var json = JsonSerializer.Serialize(jsonSchema, MarketDataJsonContext.PrettyPrintOptions);
         await File.WriteAllTextAsync(outputPath, json, ct);
 
         _log.Information("Exported schema {EventType} v{Version} to {Path}",
@@ -282,7 +283,7 @@ public sealed class SchemaVersionManager
         };
 
         var registryPath = Path.Combine(_schemaDirectory, "registry.json");
-        var registryJson = JsonSerializer.Serialize(registry, new JsonSerializerOptions { WriteIndented = true });
+        var registryJson = JsonSerializer.Serialize(registry, MarketDataJsonContext.PrettyPrintOptions);
         await File.WriteAllTextAsync(registryPath, registryJson, ct);
 
         _log.Information("Exported {Count} schemas to {Directory}", _schemas.Count, _schemaDirectory);
