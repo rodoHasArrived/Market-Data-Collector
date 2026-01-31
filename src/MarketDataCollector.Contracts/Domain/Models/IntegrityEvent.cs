@@ -50,4 +50,38 @@ public sealed record IntegrityEvent(
             SequenceNumber: received,
             StreamId: streamId,
             Venue: venue);
+
+    /// <summary>
+    /// Creates an invalid symbol integrity event.
+    /// </summary>
+    public static IntegrityEvent InvalidSymbol(
+        DateTimeOffset ts,
+        string symbol,
+        string message,
+        long seq = 0,
+        string? streamId = null,
+        string? venue = null)
+        => new(ts, symbol, IntegritySeverity.Error,
+            message,
+            ErrorCode: 1003,
+            SequenceNumber: seq,
+            StreamId: streamId,
+            Venue: venue);
+
+    /// <summary>
+    /// Creates an invalid sequence number integrity event.
+    /// </summary>
+    public static IntegrityEvent InvalidSequenceNumber(
+        DateTimeOffset ts,
+        string symbol,
+        string message,
+        long seq = 0,
+        string? streamId = null,
+        string? venue = null)
+        => new(ts, symbol, IntegritySeverity.Error,
+            message,
+            ErrorCode: 1004,
+            SequenceNumber: seq,
+            StreamId: streamId,
+            Venue: venue);
 }

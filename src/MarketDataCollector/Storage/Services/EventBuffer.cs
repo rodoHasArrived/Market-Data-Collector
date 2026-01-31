@@ -8,7 +8,7 @@ namespace MarketDataCollector.Storage.Services;
 /// Both were implementing identical lock-based buffer patterns.
 /// </summary>
 /// <typeparam name="T">Type of events to buffer.</typeparam>
-public sealed class EventBuffer<T> : IDisposable where T : class
+public class EventBuffer<T> : IDisposable where T : class
 {
     private readonly object _lock = new();
     private readonly List<T> _events;

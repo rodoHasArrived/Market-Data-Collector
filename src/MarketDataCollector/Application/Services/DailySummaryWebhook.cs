@@ -5,6 +5,7 @@ using System.Text.Json.Serialization;
 using System.Threading;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Monitoring;
+using MarketDataCollector.Application.Monitoring.DataQuality;
 using MarketDataCollector.Application.Pipeline;
 using MarketDataCollector.Infrastructure.Http;
 using Serilog;

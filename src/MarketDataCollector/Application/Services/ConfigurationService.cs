@@ -333,7 +333,7 @@ public sealed class ConfigurationService : IAsyncDisposable
     /// <summary>
     /// Performs comprehensive validation without starting the collector (dry-run).
     /// </summary>
-    public async Task<DryRunService.DryRunResult> DryRunValidationAsync(
+    public async Task<DryRunResult> DryRunValidationAsync(
         AppConfig config,
         DryRunOptions? options = null,
         CancellationToken ct = default)

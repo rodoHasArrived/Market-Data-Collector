@@ -88,4 +88,32 @@ public sealed record MarketEvent(
     /// </summary>
     public static MarketEvent CreateHistoricalAuction(DateTimeOffset ts, string symbol, HistoricalAuction auction, long seq = 0, string source = "alpaca")
         => new(ts, symbol, MarketEventType.HistoricalAuction, auction, seq == 0 ? auction.SequenceNumber : seq, source);
+
+    // Backwards compatibility aliases (without "Create" prefix)
+    public static MarketEvent Trade(DateTimeOffset ts, string symbol, Trade trade, long seq = 0, string source = "IB")
+        => CreateTrade(ts, symbol, trade, seq, source);
+
+    public static MarketEvent L2Snapshot(DateTimeOffset ts, string symbol, LOBSnapshot snap, long seq = 0, string source = "IB")
+        => CreateL2Snapshot(ts, symbol, snap, seq, source);
+
+    public static MarketEvent BboQuote(DateTimeOffset ts, string symbol, BboQuotePayload quote, long seq = 0, string source = "ALPACA")
+        => CreateBboQuote(ts, symbol, quote, seq, source);
+
+    public static MarketEvent OrderFlow(DateTimeOffset ts, string symbol, OrderFlowStatistics stats, long seq = 0, string source = "IB")
+        => CreateOrderFlow(ts, symbol, stats, seq, source);
+
+    public static MarketEvent Integrity(DateTimeOffset ts, string symbol, IntegrityEvent integrity, long seq = 0, string source = "IB")
+        => CreateIntegrity(ts, symbol, integrity, seq, source);
+
+    public static MarketEvent HistoricalBar(DateTimeOffset ts, string symbol, HistoricalBar bar, long seq = 0, string source = "stooq")
+        => CreateHistoricalBar(ts, symbol, bar, seq, source);
+
+    public static MarketEvent HistoricalQuote(DateTimeOffset ts, string symbol, HistoricalQuote quote, long seq = 0, string source = "alpaca")
+        => CreateHistoricalQuote(ts, symbol, quote, seq, source);
+
+    public static MarketEvent HistoricalTrade(DateTimeOffset ts, string symbol, HistoricalTrade trade, long seq = 0, string source = "alpaca")
+        => CreateHistoricalTrade(ts, symbol, trade, seq, source);
+
+    public static MarketEvent HistoricalAuction(DateTimeOffset ts, string symbol, HistoricalAuction auction, long seq = 0, string source = "alpaca")
+        => CreateHistoricalAuction(ts, symbol, auction, seq, source);
 }

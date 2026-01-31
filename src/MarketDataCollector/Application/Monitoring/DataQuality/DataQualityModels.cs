@@ -94,6 +94,17 @@ public sealed record GapAnalysisResult(
 );
 
 /// <summary>
+/// Alert for symbols with stale (no recent) data.
+/// </summary>
+public sealed record StaleDataAlert(
+    string Symbol,
+    DateTimeOffset LastDataTimestamp,
+    TimeSpan StaleDuration,
+    string DataType,
+    string? LastKnownProvider
+);
+
+/// <summary>
 /// Sequence error event.
 /// </summary>
 public sealed record SequenceError(
