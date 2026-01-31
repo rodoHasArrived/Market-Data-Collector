@@ -10,11 +10,8 @@ namespace MarketDataCollector.Uwp.Services;
 public sealed class WatchlistService
 {
     private const string WatchlistFileName = "watchlist.json";
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = true
-    };
+    // Use centralized JSON options to avoid duplication across services
+    private static JsonSerializerOptions JsonOptions => UwpJsonOptions.PrettyPrint;
 
     private static WatchlistService? _instance;
     private static readonly object _lock = new();
@@ -70,8 +67,10 @@ public sealed class WatchlistService
                 await SaveWatchlistAsync(_cachedData);
             }
         }
-        catch
+        catch (Exception ex)
         {
+            // Log the error but gracefully degrade to defaults
+            LoggingService.Instance.LogWarning("Failed to load watchlist, using defaults", ex);
             _cachedData = CreateDefaultWatchlist();
         }
 
@@ -95,9 +94,10 @@ public sealed class WatchlistService
             await File.WriteAllTextAsync(_watchlistPath, json);
             _cachedData = data;
         }
-        catch
+        catch (Exception ex)
         {
-            // Ignore save errors
+            // Log the error but don't crash - watchlist is non-critical
+            LoggingService.Instance.LogWarning("Failed to save watchlist", ex);
         }
     }
 

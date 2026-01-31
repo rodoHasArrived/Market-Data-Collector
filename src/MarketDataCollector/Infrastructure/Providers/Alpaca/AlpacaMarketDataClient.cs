@@ -39,8 +39,8 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
     private readonly WebSocketConnectionManager _connectionManager;
     private Uri? _wsUri;
 
-    // Centralized subscription management
-    private readonly SubscriptionManager _subscriptionManager = new(startingId: 100_000);
+    // Centralized subscription management with provider-specific ID range
+    private readonly SubscriptionManager _subscriptionManager = new(startingId: ProviderSubscriptionRanges.AlpacaStart);
 
     // Cached serializer options to avoid allocations in hot path
     private static readonly JsonSerializerOptions s_serializerOptions = new()
