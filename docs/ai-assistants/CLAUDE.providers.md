@@ -21,11 +21,16 @@ The system uses a unified abstraction layer supporting both **real-time streamin
 │ ├─ Interactive Brkrs│              │ ├─ Yahoo Finance        │
 │ ├─ StockSharp       │              │ ├─ Stooq                │
 │ ├─ NYSE Direct      │              │ ├─ Tiingo               │
-│ └─ Polygon (stub)   │              │ ├─ Finnhub              │
+│ └─ Polygon          │              │ ├─ Finnhub              │
 └─────────────────────┘              │ ├─ Alpha Vantage        │
                                      │ ├─ Nasdaq Data Link     │
-                                     │ └─ Polygon              │
-                                     └─────────────────────────┘
+┌─────────────────────┐              │ └─ Polygon              │
+│ Symbol Search       │              └─────────────────────────┘
+│ ├─ Alpaca           │
+│ ├─ Polygon          │
+│ ├─ Finnhub          │
+│ └─ OpenFIGI         │
+└─────────────────────┘
 ```
 
 ---
@@ -42,13 +47,22 @@ The system uses a unified abstraction layer supporting both **real-time streamin
 | `Infrastructure/DataSources/DataSourceManager.cs` | Provider lifecycle management |
 
 ### Streaming Providers
-| Provider | Location |
-|----------|----------|
-| Alpaca | `Infrastructure/Providers/Alpaca/AlpacaMarketDataClient.cs` |
-| Interactive Brokers | `Infrastructure/Providers/InteractiveBrokers/IBMarketDataClient.cs` |
-| StockSharp | `Infrastructure/Providers/StockSharp/StockSharpMarketDataClient.cs` |
-| NYSE | `Infrastructure/Providers/NYSE/NYSEDataSource.cs` |
-| Polygon | `Infrastructure/Providers/Polygon/PolygonMarketDataClient.cs` |
+| Provider | Location | Files |
+|----------|----------|-------|
+| Alpaca | `Infrastructure/Providers/Alpaca/AlpacaMarketDataClient.cs` | 1 |
+| Interactive Brokers | `Infrastructure/Providers/InteractiveBrokers/` | 8 |
+| StockSharp | `Infrastructure/Providers/StockSharp/` | 4 |
+| NYSE | `Infrastructure/Providers/NYSE/` | 3 |
+| Polygon | `Infrastructure/Providers/Polygon/PolygonMarketDataClient.cs` | 1 |
+
+**Interactive Brokers files:**
+- `IBMarketDataClient.cs` - Main streaming client
+- `IBConnectionManager.cs` - Connection lifecycle
+- `IBCallbackRouter.cs` - Callback handling
+- `ContractFactory.cs` - IB contract creation
+- `IBHistoricalDataProvider.cs` - Historical data
+- `EnhancedIBConnectionManager.cs` - Enhanced connection management
+- `IBApiLimits.cs` - API rate limiting
 
 ### Historical Providers
 | Provider | Location |
@@ -63,6 +77,19 @@ The system uses a unified abstraction layer supporting both **real-time streamin
 | Nasdaq Data Link | `Infrastructure/Providers/Backfill/NasdaqDataLinkHistoricalDataProvider.cs` |
 | Polygon | `Infrastructure/Providers/Backfill/PolygonHistoricalDataProvider.cs` |
 
+### Symbol Search Providers
+| Provider | Location |
+|----------|----------|
+| Alpaca | `Infrastructure/Providers/SymbolSearch/AlpacaSymbolSearchProviderRefactored.cs` |
+| Polygon | `Infrastructure/Providers/SymbolSearch/PolygonSymbolSearchProvider.cs` |
+| Finnhub | `Infrastructure/Providers/SymbolSearch/FinnhubSymbolSearchProviderRefactored.cs` |
+| OpenFIGI | `Infrastructure/Providers/SymbolSearch/OpenFigiClient.cs` |
+
+Supporting files:
+- `ISymbolSearchProvider.cs` - Base interface
+- `BaseSymbolSearchProvider.cs` - Common implementation
+- `SymbolSearchUtility.cs` - Search utilities
+
 ### Resilience Infrastructure
 | File | Purpose |
 |------|---------|
@@ -70,7 +97,9 @@ The system uses a unified abstraction layer supporting both **real-time streamin
 | `Infrastructure/Providers/Resilience/ConcurrentProviderExecutor.cs` | Parallel provider operations |
 | `Infrastructure/Providers/Backfill/RateLimiter.cs` | Per-provider rate limiting |
 | `Infrastructure/Providers/Backfill/DataGapRepair.cs` | Automatic gap detection/repair |
+| `Infrastructure/Providers/Backfill/DataGapAnalyzer.cs` | Gap analysis and reporting |
 | `Infrastructure/Providers/Backfill/DataQualityMonitor.cs` | Multi-dimensional quality scoring |
+| `Infrastructure/Providers/Backfill/ProviderRateLimitTracker.cs` | Rate limit tracking across providers |
 
 ---
 
@@ -650,4 +679,4 @@ export TIINGO__APIKEY=your-key
 
 ---
 
-*Last Updated: 2026-01-30*
+*Last Updated: 2026-01-31*

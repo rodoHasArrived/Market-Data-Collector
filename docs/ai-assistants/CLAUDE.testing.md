@@ -20,11 +20,13 @@ This document provides guidance for AI assistants working with tests in Market D
 
 ## Test Project Locations
 
-| Project | Location | Purpose |
-|---------|----------|---------|
-| C# Unit Tests | `tests/MarketDataCollector.Tests/` | Main test suite |
-| F# Tests | `tests/MarketDataCollector.FSharp.Tests/` | F# domain tests |
-| Benchmarks | `benchmarks/MarketDataCollector.Benchmarks/` | Performance benchmarks |
+| Project | Location | Files | Purpose |
+|---------|----------|-------|---------|
+| C# Unit Tests | `tests/MarketDataCollector.Tests/` | 48 | Main test suite |
+| F# Tests | `tests/MarketDataCollector.FSharp.Tests/` | 5 | F# domain tests |
+| Benchmarks | `benchmarks/MarketDataCollector.Benchmarks/` | - | Performance benchmarks |
+
+**Total: 53 test files**
 
 ---
 
@@ -83,27 +85,55 @@ make test-coverage
 
 ## Test Organization
 
-### Test File Naming
+### Test Directory Structure
 
 ```
 tests/MarketDataCollector.Tests/
-├── Domain/
-│   ├── TradeDataCollectorTests.cs
-│   ├── MarketDepthCollectorTests.cs
-│   └── QuoteCollectorTests.cs
-├── Infrastructure/
-│   ├── Providers/
-│   │   ├── AlpacaClientTests.cs
-│   │   └── IBClientTests.cs
-│   └── Storage/
-│       ├── JsonlStorageSinkTests.cs
-│       └── JsonlReplayerTests.cs
-├── Integration/
-│   ├── ConnectionRetryIntegrationTests.cs
-│   └── UwpCoreIntegrationTests.cs
-└── Messaging/
-    ├── MassTransitPublisherTests.cs
-    └── MassTransitConfigTests.cs
+├── Backfill/                          # 4 files
+│   ├── BackfillWorkerServiceTests.cs
+│   ├── RateLimiterTests.cs
+│   ├── HistoricalProviderContractTests.cs
+│   └── ScheduledBackfillTests.cs
+├── Credentials/                       # 3 files
+│   ├── OAuthTokenTests.cs
+│   ├── CredentialTestingServiceTests.cs
+│   └── CredentialStatusTests.cs
+├── Indicators/                        # 1 file
+│   └── TechnicalIndicatorTests.cs
+├── Infrastructure/                    # 2 files
+├── Integration/                       # 1 file
+├── Models/                            # 2 files
+│   ├── HistoricalBarTests.cs
+│   └── AggregateBarTests.cs
+├── Monitoring/                        # 10 files
+│   ├── BadTickFilterTests.cs
+│   ├── SchemaValidationServiceTests.cs
+│   ├── ErrorRingBufferTests.cs
+│   ├── TickSizeValidatorTests.cs
+│   ├── SpreadMonitorTests.cs
+│   ├── BackpressureAlertServiceTests.cs
+│   ├── ProviderLatencyServiceTests.cs
+│   ├── PriceContinuityCheckerTests.cs
+│   └── DataQuality/                   # 2 files
+├── Pipeline/                          # 1 file
+├── Providers/                         # 1 file
+├── Serialization/                     # 1 file
+├── Storage/                           # 4 files
+│   ├── AnalysisExportServiceTests.cs
+│   ├── PortableDataPackagerTests.cs
+│   ├── JsonlBatchWriteTests.cs
+│   └── MemoryMappedJsonlReaderTests.cs
+├── SymbolSearch/                      # 2 files
+│   ├── SymbolSearchServiceTests.cs
+│   └── OpenFigiClientTests.cs
+└── (root level tests)                 # 15+ files
+
+tests/MarketDataCollector.FSharp.Tests/
+├── Program.fs
+├── CalculationTests.fs
+├── ValidationTests.fs
+├── DomainTests.fs
+└── PipelineTests.fs
 ```
 
 ### Test Class Naming
@@ -762,4 +792,4 @@ public void PerformanceTest() { }
 
 ---
 
-*Last Updated: 2026-01-30*
+*Last Updated: 2026-01-31*
