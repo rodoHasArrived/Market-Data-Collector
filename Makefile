@@ -31,10 +31,10 @@ UI_PROJECT := src/MarketDataCollector.Ui/MarketDataCollector.Ui.csproj
 DESKTOP_PROJECT := src/MarketDataCollector.Uwp/MarketDataCollector.Uwp.csproj
 TEST_PROJECT := tests/MarketDataCollector.Tests/MarketDataCollector.Tests.csproj
 BENCHMARK_PROJECT := benchmarks/MarketDataCollector.Benchmarks/MarketDataCollector.Benchmarks.csproj
-DOCGEN_PROJECT := tools/DocGenerator/DocGenerator.csproj
+DOCGEN_PROJECT := build/dotnet/DocGenerator/DocGenerator.csproj
 DOCKER_IMAGE := marketdatacollector:latest
 HTTP_PORT ?= 8080
-BUILDCTL := python3 build-system/cli/buildctl.py
+BUILDCTL := python3 build/python/cli/buildctl.py
 BUILD_VERBOSITY ?= normal
 APPINSTALLER_URI ?=
 SIGNING_CERT_PFX ?=
@@ -104,13 +104,13 @@ help: ## Show this help message
 # =============================================================================
 
 install: ## Interactive installation (Docker or Native)
-	@./scripts/install/install.sh
+	@./build/scripts/install/install.sh
 
 install-docker: ## Docker-based installation
-	@./scripts/install/install.sh --docker
+	@./build/scripts/install/install.sh --docker
 
 install-native: ## Native .NET installation
-	@./scripts/install/install.sh --native
+	@./build/scripts/install/install.sh --native
 
 setup-config: ## Create appsettings.json from template
 	@if [ ! -f config/appsettings.json ]; then \
@@ -123,14 +123,14 @@ setup-config: ## Create appsettings.json from template
 	@mkdir -p data logs
 
 check-deps: ## Check prerequisites
-	@./scripts/install/install.sh --check
+	@./build/scripts/install/install.sh --check
 
 # =============================================================================
 # Docker
 # =============================================================================
 
 docker: ## Build and start Docker container
-	@./scripts/install/install.sh --docker
+	@./build/scripts/install/install.sh --docker
 
 docker-build: ## Build Docker image
 	@echo "$(BLUE)Building Docker image...$(NC)"
@@ -218,16 +218,16 @@ clean: ## Clean build artifacts
 
 publish: ## Publish for all platforms
 	@echo "$(BLUE)Publishing for all platforms...$(NC)"
-	./scripts/publish/publish.sh
+	./build/scripts/publish/publish.sh
 
 publish-linux: ## Publish for Linux x64
-	./scripts/publish/publish.sh linux-x64
+	./build/scripts/publish/publish.sh linux-x64
 
 publish-windows: ## Publish for Windows x64
-	./scripts/publish/publish.sh win-x64
+	./build/scripts/publish/publish.sh win-x64
 
 publish-macos: ## Publish for macOS x64
-	./scripts/publish/publish.sh osx-x64
+	./build/scripts/publish/publish.sh osx-x64
 
 # =============================================================================
 # Utilities
@@ -286,14 +286,14 @@ gen-interfaces: ## Extract interface documentation from code
 gen-structure: ## Generate repository structure documentation
 	@echo "$(BLUE)Generating repository structure documentation...$(NC)"
 	@mkdir -p docs/generated
-	@python3 scripts/docs/generate-structure-docs.py \
+	@python3 build/scripts/docs/generate-structure-docs.py \
 		--output docs/generated/repository-structure.md
 	@echo "$(GREEN)Generated docs/generated/repository-structure.md$(NC)"
 
 gen-providers: ## Generate provider registry documentation
 	@echo "$(BLUE)Generating provider registry documentation...$(NC)"
 	@mkdir -p docs/generated
-	@python3 scripts/docs/generate-structure-docs.py \
+	@python3 build/scripts/docs/generate-structure-docs.py \
 		--output docs/generated/provider-registry.md \
 		--providers-only \
 		--extract-attributes
@@ -302,14 +302,14 @@ gen-providers: ## Generate provider registry documentation
 gen-workflows: ## Generate workflows overview documentation
 	@echo "$(BLUE)Generating workflows overview documentation...$(NC)"
 	@mkdir -p docs/generated
-	@python3 scripts/docs/generate-structure-docs.py \
+	@python3 build/scripts/docs/generate-structure-docs.py \
 		--output docs/generated/workflows-overview.md \
 		--workflows-only
 	@echo "$(GREEN)Generated docs/generated/workflows-overview.md$(NC)"
 
 update-claude-md: gen-structure ## Update CLAUDE.md repository structure
 	@echo "$(BLUE)Updating CLAUDE.md repository structure...$(NC)"
-	@python3 scripts/docs/update-claude-md.py \
+	@python3 build/scripts/docs/update-claude-md.py \
 		--claude-md CLAUDE.md \
 		--structure-source docs/generated/repository-structure.md
 	@echo "$(GREEN)Updated CLAUDE.md$(NC)"
@@ -393,7 +393,7 @@ history: ## Show build history summary
 icons: ## Generate desktop app icons from SVG
 	@echo "$(BLUE)Generating desktop app icons...$(NC)"
 	@npm ci --silent
-	@node scripts/generate-icons.mjs
+	@node build/node/generate-icons.mjs
 	@echo "$(GREEN)Icons generated in src/MarketDataCollector.Uwp/Assets/$(NC)"
 
 desktop: icons ## Build desktop app (Windows only)
