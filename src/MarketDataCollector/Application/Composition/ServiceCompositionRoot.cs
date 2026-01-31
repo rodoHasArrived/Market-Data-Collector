@@ -189,10 +189,11 @@ public static class ServiceCompositionRoot
     /// Registers symbol management and search services.
     /// </summary>
     /// <remarks>
-    /// Symbol search providers are created via <see cref="ProviderFactory"/> when available,
-    /// otherwise falls back to direct instantiation with credential resolution from environment variables.
-    /// This ensures all symbol search operations go through <see cref="SymbolSearchService"/>.
+    /// Symbol search providers are retrieved from the unified <see cref="ProviderRegistry"/>
+    /// using <see cref="ProviderRegistry.GetProviders{T}"/>. All providers are registered
+    /// through <see cref="ProviderFactory.CreateAndRegisterAllAsync"/> during initialization.
     /// </remarks>
+    [ImplementsAdr("ADR-001", "Uses unified ProviderRegistry for symbol search provider discovery")]
     private static IServiceCollection AddSymbolManagementServices(this IServiceCollection services)
     {
         // Symbol import/export
@@ -205,30 +206,26 @@ public static class ServiceCompositionRoot
         services.AddSingleton<PortfolioImportService>();
 
         // Symbol search providers - consolidated through SymbolSearchService
+        // All providers are retrieved from the unified ProviderRegistry
         services.AddSingleton<OpenFigiClient>();
         services.AddSingleton<SymbolSearchService>(sp =>
         {
             var metadataService = sp.GetRequiredService<MetadataEnrichmentService>();
             var figiClient = sp.GetRequiredService<OpenFigiClient>();
 
-            // Use ProviderFactory when available for consistent credential resolution,
-            // otherwise fall back to direct instantiation (providers self-resolve from env vars)
-            var factory = sp.GetService<ProviderFactory>();
+            // Get symbol search providers from the unified registry
+            var registry = sp.GetService<ProviderRegistry>();
             IEnumerable<ISymbolSearchProvider> providers;
 
-            if (factory != null)
+            if (registry != null)
             {
-                providers = factory.CreateSymbolSearchProviders();
+                providers = registry.GetProviders<ISymbolSearchProvider>();
             }
             else
             {
-                // Fallback: providers load credentials from environment variables
-                providers = new ISymbolSearchProvider[]
-                {
-                    new AlpacaSymbolSearchProviderRefactored(),
-                    new FinnhubSymbolSearchProviderRefactored(),
-                    new PolygonSymbolSearchProvider()
-                };
+                // Registry not available - use factory as fallback
+                var factory = sp.GetService<ProviderFactory>();
+                providers = factory?.CreateSymbolSearchProviders() ?? Array.Empty<ISymbolSearchProvider>();
             }
 
             return new SymbolSearchService(providers, figiClient, metadataService);
@@ -244,15 +241,21 @@ public static class ServiceCompositionRoot
     /// <summary>
     /// Registers backfill and scheduling services.
     /// </summary>
+    /// <remarks>
+    /// BackfillCoordinator uses the unified <see cref="ProviderRegistry"/> for provider discovery
+    /// via <see cref="ProviderRegistry.GetProviders{T}"/>.
+    /// </remarks>
+    [ImplementsAdr("ADR-001", "BackfillCoordinator uses unified ProviderRegistry for provider discovery")]
     private static IServiceCollection AddBackfillServices(
         this IServiceCollection services,
         CompositionOptions options)
     {
-        // BackfillCoordinator - the unified implementation from Application.UI
+        // BackfillCoordinator - uses unified ProviderRegistry for provider discovery
         services.AddSingleton<BackfillCoordinator>(sp =>
         {
             var configStore = sp.GetRequiredService<ConfigStore>();
-            return new BackfillCoordinator(configStore);
+            var registry = sp.GetRequiredService<ProviderRegistry>();
+            return new BackfillCoordinator(configStore, registry);
         });
 
         // SchedulingService - symbol subscription scheduling

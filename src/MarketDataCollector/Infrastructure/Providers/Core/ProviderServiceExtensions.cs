@@ -69,68 +69,22 @@ public static class ProviderServiceExtensions
     }
 
     /// <summary>
-    /// Adds all backfill providers to the registry based on configuration.
-    /// </summary>
-    /// <param name="registry">The provider registry.</param>
-    /// <param name="config">The application configuration.</param>
-    /// <param name="credentialResolver">The credential resolver.</param>
-    /// <param name="log">Optional logger.</param>
-    /// <returns>List of registered backfill providers.</returns>
-    public static IReadOnlyList<IHistoricalDataProvider> RegisterBackfillProviders(
-        this ProviderRegistry registry,
-        AppConfig config,
-        ICredentialResolver credentialResolver,
-        ILogger? log = null)
-    {
-        var factory = new ProviderFactory(config, credentialResolver, log);
-        var providers = factory.CreateBackfillProviders();
-
-        foreach (var provider in providers)
-        {
-            registry.Register(provider);
-        }
-
-        return providers;
-    }
-
-    /// <summary>
-    /// Adds all symbol search providers to the registry based on configuration.
-    /// </summary>
-    /// <param name="registry">The provider registry.</param>
-    /// <param name="config">The application configuration.</param>
-    /// <param name="credentialResolver">The credential resolver.</param>
-    /// <param name="log">Optional logger.</param>
-    /// <returns>List of registered symbol search providers.</returns>
-    public static IReadOnlyList<ISymbolSearchProvider> RegisterSymbolSearchProviders(
-        this ProviderRegistry registry,
-        AppConfig config,
-        ICredentialResolver credentialResolver,
-        ILogger? log = null)
-    {
-        var factory = new ProviderFactory(config, credentialResolver, log);
-        var providers = factory.CreateSymbolSearchProviders();
-
-        foreach (var provider in providers)
-        {
-            registry.Register(provider);
-        }
-
-        return providers;
-    }
-
-    /// <summary>
     /// Gets the composite backfill provider with automatic failover.
-    /// Creates one if not already registered.
+    /// Uses providers already registered in the unified registry.
     /// </summary>
     /// <param name="registry">The provider registry.</param>
-    /// <param name="config">The application configuration.</param>
-    /// <param name="credentialResolver">The credential resolver.</param>
+    /// <param name="config">The application configuration (for composite creation settings).</param>
     /// <param name="log">Optional logger.</param>
-    /// <returns>The composite backfill provider.</returns>
-    public static CompositeHistoricalDataProvider GetOrCreateCompositeBackfillProvider(
+    /// <returns>The composite backfill provider, or null if no providers are registered.</returns>
+    /// <remarks>
+    /// All providers should be registered through <see cref="ProviderFactory.CreateAndRegisterAllAsync"/>
+    /// before calling this method. The unified registration flow ensures all providers
+    /// are available in the registry via <see cref="ProviderRegistry.GetProviders{T}"/>.
+    /// </remarks>
+    [ImplementsAdr("ADR-001", "Uses unified ProviderRegistry for composite provider creation")]
+    public static CompositeHistoricalDataProvider? GetOrCreateCompositeBackfillProvider(
         this ProviderRegistry registry,
         AppConfig config,
-        ICredentialResolver credentialResolver,
         ILogger? log = null)
     {
         // Check if already registered
@@ -138,15 +92,33 @@ public static class ProviderServiceExtensions
         if (existing != null)
             return existing;
 
-        // Create and register
-        var providers = registry.GetProviders<IHistoricalDataProvider>();
+        // Get providers from the unified registry (should already be registered via ProviderFactory)
+        var providers = registry.GetProviders<IHistoricalDataProvider>()
+            .Where(p => p is not CompositeHistoricalDataProvider)
+            .ToList();
+
         if (providers.Count == 0)
         {
-            providers = registry.RegisterBackfillProviders(config, credentialResolver, log);
+            log?.Warning("No backfill providers registered in the unified registry. " +
+                "Ensure ProviderFactory.CreateAndRegisterAllAsync() was called during initialization.");
+            return null;
         }
 
-        var factory = new ProviderFactory(config, credentialResolver, log);
-        var composite = factory.CreateCompositeBackfillProvider(providers);
+        // Create composite from registered providers
+        var openFigiApiKey = config.Backfill?.Providers?.OpenFigi?.ApiKey;
+        var enableSymbolResolution = config.Backfill?.EnableSymbolResolution ?? true;
+
+        Backfill.SymbolResolution.OpenFigiSymbolResolver? symbolResolver = null;
+        if (enableSymbolResolution)
+        {
+            symbolResolver = new Backfill.SymbolResolution.OpenFigiSymbolResolver(openFigiApiKey, log: log);
+        }
+
+        var composite = new CompositeHistoricalDataProvider(
+            providers,
+            symbolResolver,
+            enableCrossValidation: false,
+            log: log);
 
         registry.Register(composite);
 
