@@ -16,11 +16,8 @@ public sealed class SymbolMappingService
     private readonly string _mappingsFilePath;
     private SymbolMappingsConfig _config = new();
 
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = true
-    };
+    // Use centralized JSON options to avoid duplication across services
+    private static JsonSerializerOptions JsonOptions => UwpJsonOptions.PrettyPrint;
 
     /// <summary>
     /// Known data providers with their display names and default transformations.
@@ -65,8 +62,10 @@ public sealed class SymbolMappingService
                 _config = new SymbolMappingsConfig();
             }
         }
-        catch
+        catch (Exception ex)
         {
+            // Log the error but gracefully degrade to empty config
+            LoggingService.Instance.LogWarning("Failed to load symbol mappings, using defaults", ex);
             _config = new SymbolMappingsConfig();
         }
     }
@@ -88,9 +87,10 @@ public sealed class SymbolMappingService
             await File.WriteAllTextAsync(_mappingsFilePath, json);
             MappingsChanged?.Invoke(this, EventArgs.Empty);
         }
-        catch
+        catch (Exception ex)
         {
-            // Log error in production
+            // Log the error but don't crash - mappings are recoverable
+            LoggingService.Instance.LogWarning("Failed to save symbol mappings", ex);
         }
     }
 

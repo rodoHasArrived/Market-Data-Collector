@@ -1,4 +1,5 @@
 using System.Text.Json;
+using MarketDataCollector.Application.Exceptions;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Models;
@@ -263,12 +264,21 @@ public abstract class BaseHistoricalDataProvider : IHistoricalDataProvider, IRat
         if (!result.IsSuccess)
         {
             if (result.IsAuthError)
-                throw new InvalidOperationException($"{Name} API returned authentication error for {symbol}. Verify credentials.");
+                throw new ConnectionException(
+                    $"{Name} API returned authentication error for {symbol}. Verify credentials.",
+                    provider: Name);
 
             if (result.IsRateLimited)
-                throw new InvalidOperationException($"{Name} API rate limit exceeded for {symbol}. Retry-After: {result.RetryAfter?.TotalSeconds ?? 60}s");
+                throw new RateLimitException(
+                    $"{Name} API rate limit exceeded for {symbol}",
+                    provider: Name,
+                    symbol: symbol,
+                    retryAfter: result.RetryAfter ?? TimeSpan.FromSeconds(60));
 
-            throw new InvalidOperationException($"{Name} API error for {symbol}: {result.ErrorMessage}");
+            throw new DataProviderException(
+                $"{Name} API error for {symbol}: {result.ErrorMessage}",
+                provider: Name,
+                symbol: symbol);
         }
 
         return await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
@@ -319,7 +329,9 @@ public abstract class BaseHistoricalDataProvider : IHistoricalDataProvider, IRat
         if (statusCode == 401 || statusCode == 403)
         {
             Log.Error("{Provider} API returned {StatusCode} for {Symbol} {DataType}: Authentication failed", Name, statusCode, symbol, dataType);
-            throw new InvalidOperationException($"{Name} API returned {statusCode}: Authentication failed for {symbol}");
+            throw new ConnectionException(
+                $"{Name} API returned {statusCode}: Authentication failed for {symbol}",
+                provider: Name);
         }
 
         if (statusCode == 429)
@@ -329,7 +341,11 @@ public abstract class BaseHistoricalDataProvider : IHistoricalDataProvider, IRat
             RaiseRateLimitHit(GetRateLimitInfo());
 
             Log.Warning("{Provider} API returned 429 for {Symbol} {DataType}: Rate limit exceeded", Name, symbol, dataType);
-            throw new InvalidOperationException($"{Name} API returned 429: Rate limit exceeded for {symbol}. Retry-After: {retryAfter.TotalSeconds}s");
+            throw new RateLimitException(
+                $"{Name} API rate limit exceeded for {symbol}",
+                provider: Name,
+                symbol: symbol,
+                retryAfter: retryAfter);
         }
 
         if (statusCode == 404)
@@ -339,7 +355,10 @@ public abstract class BaseHistoricalDataProvider : IHistoricalDataProvider, IRat
         }
 
         Log.Warning("{Provider} API returned {StatusCode} for {Symbol} {DataType}", Name, statusCode, symbol, dataType);
-        throw new InvalidOperationException($"{Name} API returned {statusCode} for {symbol}");
+        throw new DataProviderException(
+            $"{Name} API returned {statusCode} for {symbol}",
+            provider: Name,
+            symbol: symbol);
     }
 
     /// <summary>
@@ -357,7 +376,10 @@ public abstract class BaseHistoricalDataProvider : IHistoricalDataProvider, IRat
         catch (JsonException ex)
         {
             Log.Error(ex, "Failed to parse {Provider} response for {Symbol}", Name, symbol);
-            throw new InvalidOperationException($"Failed to parse {Name} data for {symbol}", ex);
+            throw new DataProviderException(
+                $"Failed to parse {Name} data for {symbol}",
+                provider: Name,
+                symbol: symbol);
         }
     }
 

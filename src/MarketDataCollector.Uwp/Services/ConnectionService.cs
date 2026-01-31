@@ -23,6 +23,7 @@ public sealed class ConnectionService : IConnectionService
     private string _currentProvider = "Unknown";
     private int _reconnectAttempts;
     private CancellationTokenSource? _reconnectCts;
+    private CancellationTokenSource? _healthCheckCts;
     private Timer? _healthCheckTimer;
 
     private Contracts.ConnectionSettings _settings = new();
@@ -116,12 +117,30 @@ public sealed class ConnectionService : IConnectionService
 
     /// <summary>
     /// Starts the connection monitoring and auto-reconnection.
+    /// Uses CancellationToken to enable graceful shutdown of async operations.
     /// </summary>
     public void StartMonitoring()
     {
-        _healthCheckTimer?.Dispose();
+        StopMonitoring();
+        _healthCheckCts = new CancellationTokenSource();
+        var ct = _healthCheckCts.Token;
+
         _healthCheckTimer = new Timer(
-            async _ => await CheckConnectionHealthAsync(),
+            async _ =>
+            {
+                try
+                {
+                    await CheckConnectionHealthAsync(ct).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    // Expected during shutdown, ignore
+                }
+                catch (Exception ex)
+                {
+                    LoggingService.Instance.LogWarning("Health check failed", ex);
+                }
+            },
             null,
             TimeSpan.Zero,
             TimeSpan.FromSeconds(_settings.HealthCheckIntervalSeconds));
@@ -132,8 +151,21 @@ public sealed class ConnectionService : IConnectionService
     /// </summary>
     public void StopMonitoring()
     {
+        // Cancel any pending health check operations
+        try
+        {
+            _healthCheckCts?.Cancel();
+        }
+        catch (ObjectDisposedException)
+        {
+            // Already disposed, ignore
+        }
+
         _healthCheckTimer?.Dispose();
         _healthCheckTimer = null;
+        _healthCheckCts?.Dispose();
+        _healthCheckCts = null;
+
         CancelReconnection();
     }
 
@@ -228,14 +260,16 @@ public sealed class ConnectionService : IConnectionService
         _settings.AutoReconnectEnabled = true;
     }
 
-    private async Task CheckConnectionHealthAsync()
+    private async Task CheckConnectionHealthAsync(CancellationToken ct = default)
     {
         if (_currentState == Contracts.ConnectionState.Reconnecting)
             return;
 
+        ct.ThrowIfCancellationRequested();
+
         try
         {
-            var health = await _apiClient.CheckHealthAsync();
+            var health = await _apiClient.CheckHealthAsync(ct).ConfigureAwait(false);
             RaiseLatencyUpdated(health.LatencyMs);
 
             if (health.IsReachable && health.IsConnected)
@@ -256,12 +290,16 @@ public sealed class ConnectionService : IConnectionService
             }
             else
             {
-                await HandleConnectionLostAsync();
+                await HandleConnectionLostAsync().ConfigureAwait(false);
             }
+        }
+        catch (OperationCanceledException)
+        {
+            throw; // Propagate cancellation
         }
         catch
         {
-            await HandleConnectionLostAsync();
+            await HandleConnectionLostAsync().ConfigureAwait(false);
         }
     }
 

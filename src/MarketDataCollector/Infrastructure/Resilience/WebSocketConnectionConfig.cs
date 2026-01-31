@@ -8,10 +8,44 @@ namespace MarketDataCollector.Infrastructure.Resilience;
 /// to eliminate duplicate configuration across providers.
 /// </summary>
 /// <remarks>
-/// Default values are based on production best practices:
-/// - 5 retries with 2s base delay provides ~62s total retry time
-/// - 30s circuit breaker allows service recovery
-/// - 30s heartbeat interval with 10s timeout for stale connection detection
+/// <para>
+/// <b>Profile Selection Guide:</b>
+/// </para>
+/// <list type="bullet">
+///   <item>
+///     <term><see cref="Default"/></term>
+///     <description>
+///       Use for providers with fast reconnection (Alpaca, Polygon).
+///       5 retries with 2s base delay provides ~62s total retry time.
+///       Suitable for providers with reliable infrastructure.
+///     </description>
+///   </item>
+///   <item>
+///     <term><see cref="Resilient"/></term>
+///     <description>
+///       Use for providers with slower reconnection or on unreliable networks (StockSharp, IB Gateway).
+///       10 retries with 3s base delay and longer circuit breaker duration.
+///       Suitable when provider infrastructure is slower or network is unstable.
+///     </description>
+///   </item>
+///   <item>
+///     <term><see cref="HighFrequency"/></term>
+///     <description>
+///       Use for tick-by-tick data where latency is critical.
+///       Shorter timeouts (15s) ensure faster failure detection.
+///       Trade-off: May disconnect more frequently on slow networks.
+///     </description>
+///   </item>
+/// </list>
+/// <para>
+/// <b>Current Provider Assignments:</b>
+/// </para>
+/// <list type="bullet">
+///   <item>Alpaca: Default (fast cloud infrastructure)</item>
+///   <item>Polygon: Default (fast cloud infrastructure)</item>
+///   <item>StockSharp: Resilient (broker-dependent latency)</item>
+///   <item>Interactive Brokers: Resilient (TWS/Gateway may have delays)</item>
+/// </list>
 /// </remarks>
 public sealed record WebSocketConnectionConfig
 {

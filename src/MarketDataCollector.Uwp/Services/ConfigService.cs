@@ -14,11 +14,8 @@ public sealed class ConfigService : IConfigService
     private static ConfigService? _instance;
     private static readonly object _lock = new();
 
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = true
-    };
+    // Use centralized JSON options to avoid duplication across services
+    private static JsonSerializerOptions JsonOptions => UwpJsonOptions.PrettyPrint;
 
     public static ConfigService Instance
     {

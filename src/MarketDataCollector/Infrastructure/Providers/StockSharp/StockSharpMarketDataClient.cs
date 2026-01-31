@@ -71,7 +71,8 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
     private long _messageDropCount;
 #endif
 
-    private int _nextSubId = 200_000; // Keep away from other provider IDs
+    // Use centralized subscription ID range to avoid collisions with other providers
+    private int _nextSubId = ProviderSubscriptionRanges.StockSharpStart;
     private bool _disposed;
     private readonly object _gate = new();
 

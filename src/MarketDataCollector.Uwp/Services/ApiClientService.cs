@@ -26,11 +26,8 @@ public sealed class ApiClientService : IDisposable
     private bool _disposed;
     private UiApiClient _uiApiClient;
 
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        PropertyNameCaseInsensitive = true
-    };
+    // Use centralized JSON options to avoid duplication across services
+    private static JsonSerializerOptions JsonOptions => UwpJsonOptions.Api;
 
     /// <summary>
     /// Gets the singleton instance of the ApiClientService.

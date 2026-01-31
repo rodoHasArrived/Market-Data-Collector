@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using MarketDataCollector.Application.Config;
+using MarketDataCollector.Application.Exceptions;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Domain.Collectors;
 using MarketDataCollector.Domain.Events;
@@ -52,8 +53,8 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
     // Use centralized configuration for resilience settings
     private readonly WebSocketConnectionConfig _connectionConfig = WebSocketConnectionConfig.Default;
 
-    // Centralized subscription management (ID range 200,000+ to separate from other providers)
-    private readonly SubscriptionManager _subscriptionManager = new(startingId: 200_000);
+    // Centralized subscription management with provider-specific ID range
+    private readonly SubscriptionManager _subscriptionManager = new(startingId: ProviderSubscriptionRanges.PolygonStart);
 
     // WebSocket connection - kept for protocol-specific handshake operations
     private ClientWebSocket? _ws;
@@ -351,14 +352,18 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
                             }
                             else if (status == "auth_failed")
                             {
-                                throw new InvalidOperationException($"Polygon authentication failed: {authMessage2}");
+                                throw new ConnectionException(
+                                    $"Polygon authentication failed: {authMessage2}",
+                                    provider: "Polygon");
                             }
                         }
                     }
                 }
             }
 
-            throw new InvalidOperationException("Did not receive valid authentication response from Polygon");
+            throw new ConnectionException(
+                "Did not receive valid authentication response from Polygon",
+                provider: "Polygon");
         }
         finally
         {
