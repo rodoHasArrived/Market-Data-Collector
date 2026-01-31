@@ -1,6 +1,14 @@
 # Market Data Collector - User Guide
 
-Welcome to the Market Data Collector! This comprehensive guide will help you get started and make the most of the system.
+Welcome to the Market Data Collector! This tool helps you **build your own market data archive** by connecting to financial data providers, capturing market data in real-time, and storing everything locally for research, backtesting, and algorithmic trading.
+
+**Why use this tool?**
+- **Own your data** — Everything is stored locally in JSONL/Parquet files, not locked in a vendor's cloud
+- **Save money** — Use free-tier APIs strategically, pay only for premium data you actually need
+- **Stay reliable** — Automatic reconnection, provider failover, and data quality monitoring
+- **Stay flexible** — Switch providers without losing data, collect exactly what you need
+
+This guide covers everything from installation to advanced configuration.
 
 ## Table of Contents
 
@@ -54,19 +62,22 @@ Welcome to the Market Data Collector! This comprehensive guide will help you get
 
 ## Overview
 
-Market Data Collector is a high-performance, cross-platform market data collection system built on **.NET 9.0** using **C# 11** and **F# 8.0**. It captures real-time and historical market microstructure data from multiple providers and persists it for downstream research, backtesting, and algorithmic trading.
-
 **Version:** 1.6.1 | **Status:** Production Ready
 
-### Key Features
+### What You Can Do
 
-- **Multi-provider support**: Interactive Brokers (IBAPI build), Alpaca, NYSE, Polygon (stub unless configured), and StockSharp
-- **Real-time & historical data**: Streaming collectors plus historical backfill providers
-- **Archival-first storage**: Write-Ahead Logging (WAL) plus JSONL/Parquet outputs
-- **Packaging & exports**: Portable data packages and analysis exports
-- **Auto-configuration**: Wizard, quick auto-config, provider detection, credential validation
-- **Observability**: HTTP status endpoints and Prometheus metrics
-- **Web dashboard & Windows UI**: Cross-platform dashboard and a Windows-only UWP companion app
+| Task | How It Helps You |
+|------|------------------|
+| **Stream real-time data** | Capture live trades, quotes, and order book depth from Interactive Brokers, Alpaca, NYSE, Polygon, or StockSharp |
+| **Download historical data** | Backfill years of price data from 10+ providers (Yahoo Finance, Tiingo, Polygon, etc.) with automatic failover |
+| **Store data locally** | Own your data in structured JSONL or Parquet files—no vendor lock-in, full offline access |
+| **Monitor data quality** | Automatic validation catches missing data, sequence gaps, and anomalies |
+| **Export and package** | Create portable data packages for sharing, backup, or use in other tools |
+| **Run backtests** | Feed your collected data into QuantConnect Lean for algorithmic strategy development |
+
+### Technical Stack
+
+Built on **.NET 9.0** using **C# 11** and **F# 8.0**. Supports deployment as a self-contained executable, Docker container, or systemd service. Includes a web dashboard and native Windows desktop app (UWP).
 
 ---
 

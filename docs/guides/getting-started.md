@@ -2,6 +2,15 @@
 
 This guide walks you through setting up and running MarketDataCollector for the first time.
 
+## What You'll Accomplish
+
+By the end of this guide, you'll have:
+- A working market data collector capturing real-time or historical data
+- Data stored locally in structured files you own and control
+- A live dashboard showing collection status and data quality metrics
+
+Market Data Collector solves the problem of expensive, vendor-locked market data by letting you build your own archive from multiple providers with automatic failover and data validation.
+
 ## Prerequisites
 
 - **.NET 9.0 SDK** or later

@@ -1,10 +1,20 @@
 # Market Data Collector Documentation
 
 **Version:** 1.6.1
-**Last Updated:** 2026-01-30
+**Last Updated:** 2026-01-31
 **Status:** Production Ready (see [Production Status](status/production-status.md))
 
 Welcome to the Market Data Collector documentation. This guide will help you find the information you need.
+
+## What This Project Does
+
+Market Data Collector is a complete solution for **building your own market data archive**. It connects to financial data providers, captures market data in real-time, and stores everything locally so you have full ownership and offline access to your data.
+
+**Core benefits:**
+- **Data independence** — Switch providers without losing your archive or rewriting code
+- **Cost control** — Use free-tier APIs strategically, pay only for premium data you need
+- **Reliability** — Automatic reconnection, failover between providers, and data integrity checks
+- **Flexibility** — Collect exactly the symbols and data types you need, store them how you want
 
 ---
 
