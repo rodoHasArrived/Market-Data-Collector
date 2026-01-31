@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Monitoring.Core;
+using MarketDataCollector.Contracts.Api;
 using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Providers.Backfill;
 using MarketDataCollector.Infrastructure.Providers.SymbolSearch;

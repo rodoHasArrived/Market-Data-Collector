@@ -5,11 +5,15 @@ using System.Text.Json.Serialization;
 using System.Threading;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Monitoring;
+using MarketDataCollector.Application.Monitoring.DataQuality;
 using MarketDataCollector.Application.Pipeline;
 using MarketDataCollector.Infrastructure.Http;
 using Serilog;
 
 namespace MarketDataCollector.Application.Services;
+
+// Type alias: StaleDataAlert is a DataAnomaly with Type = StaleData
+using StaleDataAlert = MarketDataCollector.Application.Monitoring.DataQuality.DataAnomaly;
 
 /// <summary>
 /// Sends end-of-day summary digests via webhook to external services.

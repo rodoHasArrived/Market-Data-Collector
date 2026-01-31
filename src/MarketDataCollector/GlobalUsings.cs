@@ -3,7 +3,11 @@
 
 global using MarketDataCollector.Contracts.Domain.Models;
 global using MarketDataCollector.Contracts.Domain.Enums;
-global using MarketDataCollector.Contracts.Domain.Events;
+
+// Type alias to resolve ambiguity between Domain.Events.MarketEvent and Contracts.Domain.Events.MarketEvent
+// Domain.Events.MarketEvent is the primary type used throughout the application
+global using MarketEvent = MarketDataCollector.Domain.Events.MarketEvent;
+global using MarketEventPayload = MarketDataCollector.Domain.Events.MarketEventPayload;
 
 // Type aliases for backwards compatibility during migration
 // These allow existing code using Domain.Models to continue working
