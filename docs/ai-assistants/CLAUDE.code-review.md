@@ -3,12 +3,15 @@
 > **Target:** Market Data Collector v1.6.1
 > **.NET 9.0** | **C# 11** | **F# 8.0** | **WinUI 3 (Desktop)**
 > **Files:** 478 source | 50 tests | 6 projects
+> **Strategic Priority:** Maximize StockSharp framework utilization
 
 ---
 
 ## 1) Role + Non-Negotiables
 
 You are a senior .NET/WinUI 3 code reviewer and refactoring specialist for the **Market Data Collector** project—a high-performance market data collection system with streaming providers, historical backfill, and a Windows desktop application.
+
+**Strategic Goal:** This review should prioritize **full utilization of the StockSharp framework** to consolidate provider implementations, reduce custom code, and leverage S#'s battle-tested infrastructure for market data collection.
 
 **Hard constraints (must obey):**
 
@@ -18,6 +21,7 @@ You are a senior .NET/WinUI 3 code reviewer and refactoring specialist for the *
   - `CommunityToolkit.Mvvm`, `CommunityToolkit.WinUI.*`
   - `Microsoft.WindowsAppSDK`, `Microsoft.Extensions.Http`, `Polly`
   - `System.Text.Json`, `Skender.Stock.Indicators`
+  - **StockSharp packages** (see Section 4 for full list)
 - Focus on what exists, not "what we could build"
 - Do not provide full implementations or large code dumps—keep changes at the core functional level: refactor intent, before/after structure, small illustrative snippets only
 - Respect existing **Architecture Decision Records (ADRs)** in `docs/adr/`
@@ -71,7 +75,140 @@ Provider → Collector → EventPipeline (Channel) → StorageSink (JSONL/Parque
 
 ---
 
-## 4) What to Analyze (Dimensions)
+## 4) StockSharp Framework Utilization (Strategic Priority)
+
+### Referenced StockSharp Packages
+The project already references these S# packages—**all features from these packages are in scope**:
+
+| Package | Purpose | Current Usage |
+|---------|---------|---------------|
+| `StockSharp.Algo` | Core connector/adapter framework | ✅ Used via `Connector` class |
+| `StockSharp.Messages` | Message types (ExecutionMessage, QuoteChangeMessage, etc.) | ✅ Partial (streaming only) |
+| `StockSharp.BusinessEntities` | Security, Trade, MarketDepth, ExchangeBoard | ✅ Partial |
+| `StockSharp.Rithmic` | Rithmic futures connector (CME, NYMEX) | ✅ Configured |
+| `StockSharp.IQFeed` | IQFeed equities connector | ✅ Configured |
+| `StockSharp.Cqg.Com` | CQG futures/options connector | ✅ Configured |
+| `StockSharp.InteractiveBrokers` | IB TWS/Gateway connector | ✅ Configured |
+
+### Current StockSharp Implementation
+| Component | Location | Status |
+|-----------|----------|--------|
+| `StockSharpMarketDataClient` | `Infrastructure/Providers/StockSharp/` | Streaming trades, depth, quotes |
+| `StockSharpConnectorFactory` | `Infrastructure/Providers/StockSharp/` | Creates connectors by type |
+| `MessageConverter` | `Infrastructure/Providers/StockSharp/Converters/` | S# messages → MDC domain |
+| `SecurityConverter` | `Infrastructure/Providers/StockSharp/Converters/` | MDC SymbolConfig → S# Security |
+| `StockSharpConfig` | `Application/Config/` | Configuration records |
+
+### UNDERUTILIZED StockSharp Features (Review Focus)
+
+Identify opportunities to leverage these S# features that are **already available** but not fully utilized:
+
+#### 1. Historical Data via S# (High Priority)
+```csharp
+// StockSharpConfig has EnableHistorical=true but no IHistoricalDataProvider implementation
+// S# connectors support historical data via HistoryMessageAdapter
+```
+- **Gap:** No `StockSharpHistoricalDataProvider` implementing `IHistoricalDataProvider`
+- **Opportunity:** Rithmic, IQFeed, CQG all provide historical bars via S#
+- **Evidence:** `StockSharpConfig.EnableHistorical` exists but unused
+- **Action:** Create S# historical provider to complement existing backfill providers
+
+#### 2. Binary Storage (High Priority)
+```csharp
+// StockSharpConfig.UseBinaryStorage = false (default)
+// StockSharpConfig.StoragePath = "data/stocksharp/{connector}"
+// S# binary format: 2 bytes/trade, 7 bytes/order book level
+```
+- **Gap:** Config exists but `StorageRegistry` not implemented
+- **Opportunity:** 10-50x storage compression vs JSONL for high-frequency data
+- **Evidence:** `UseBinaryStorage` and `StoragePath` in config but no implementation
+- **Action:** Implement `IStorageRegistry` integration for S# binary format
+
+#### 3. Candle/OHLC Subscription (Medium Priority)
+```csharp
+// MessageConverter.ToHistoricalBar(TimeFrameCandleMessage) exists
+// But StockSharpMarketDataClient has no SubscribeCandles method
+```
+- **Gap:** Converter exists but no subscription mechanism
+- **Opportunity:** Real-time candle building via S# instead of custom aggregation
+- **Evidence:** `ToHistoricalBar` converter in `MessageConverter.cs:117-130`
+- **Action:** Add `SubscribeCandles` to `StockSharpMarketDataClient`
+
+#### 4. Security Lookup/Search (Medium Priority)
+```csharp
+// S# provides SecurityLookupMessage for symbol search
+// Project has ISymbolSearchProvider but no S# implementation
+```
+- **Gap:** No `StockSharpSymbolSearchProvider`
+- **Opportunity:** Unified symbol search across 90+ S# connectors
+- **Evidence:** `ISymbolSearchProvider` interface exists in `Infrastructure/Providers/SymbolSearch/`
+- **Action:** Implement S# security lookup via `SecurityLookupMessage`
+
+#### 5. Market Calendar/Trading Hours (Medium Priority)
+```csharp
+// S# ExchangeBoard has WorkingTime, trading sessions, holidays
+// Currently not used for schedule-aware operations
+```
+- **Gap:** `SecurityConverter.ResolveBoard()` returns board but trading hours unused
+- **Opportunity:** Schedule-aware backfill, market hours validation
+- **Evidence:** `ExchangeBoard.Cme`, etc. used but `WorkingTime` ignored
+- **Action:** Use `ExchangeBoard.WorkingTime` for schedule validation
+
+#### 6. Subscription Management (Low Priority)
+```csharp
+// StockSharpMarketDataClient uses manual _subscriptions dictionary
+// S# has built-in ISubscriptionManager with recovery support
+```
+- **Gap:** Manual subscription tracking with custom recovery
+- **Opportunity:** Use S# `Connector.SubscriptionManager` for subscription lifecycle
+- **Evidence:** `_subscriptions` dictionary in `StockSharpMarketDataClient.cs:50-51`
+- **Action:** Evaluate S# subscription manager vs custom implementation
+
+#### 7. Order Log/Tape Data (Low Priority)
+```csharp
+// S# supports OrderLogMessage for full order book reconstruction
+// Not currently collected
+```
+- **Gap:** No order log subscription (where connectors support it)
+- **Opportunity:** Full tape data for market microstructure analysis
+- **Action:** Add `SubscribeOrderLog` for supported connectors (IQFeed, Rithmic)
+
+#### 8. Data Validation (Low Priority)
+```csharp
+// S# has message validators for sequence, timestamp, price checks
+// Currently using custom validation in collectors
+```
+- **Gap:** Custom validation in `TradeDataCollector`, `MarketDepthCollector`
+- **Opportunity:** Use S# validators for consistency
+- **Action:** Evaluate replacing custom validators with S# equivalents
+
+### StockSharp Review Checklist
+
+When reviewing code, check these S# utilization opportunities:
+
+- [ ] **Replace custom code with S# equivalents** where S# provides same functionality
+- [ ] **Implement missing IHistoricalDataProvider** for S# connectors
+- [ ] **Enable binary storage** for high-frequency data paths
+- [ ] **Add candle subscriptions** using existing `TimeFrameCandleMessage` converter
+- [ ] **Implement symbol search** via `SecurityLookupMessage`
+- [ ] **Use ExchangeBoard.WorkingTime** for schedule-aware operations
+- [ ] **Consolidate subscription tracking** with S# subscription manager
+- [ ] **Add order log collection** for supported connectors
+- [ ] **Document connector-specific capabilities** (what each S# connector supports)
+
+### StockSharp-Specific Anti-Patterns
+
+| Anti-Pattern | Why It's Bad | Evidence Location |
+|--------------|--------------|-------------------|
+| Reimplementing S# features | Duplicates tested code, maintenance burden | Compare with `StockSharp.Algo` capabilities |
+| Ignoring connector capabilities | Missing data types the connector supports | Check `ProviderCapabilities` vs actual S# support |
+| Not using S# storage | Missing 10-50x compression opportunity | `UseBinaryStorage=false` default |
+| Manual subscription recovery | S# has built-in recovery with `SubscriptionManager` | `_subscriptions` dictionary |
+| Ignoring S# validators | Duplicates validation logic | Custom validation in collectors |
+
+---
+
+## 5) General Analysis Dimensions
 
 Analyze the project along these dimensions, using **only source code evidence**:
 
@@ -127,7 +264,7 @@ Analyze the project along these dimensions, using **only source code evidence**:
 
 ---
 
-## 5) Project-Specific Anti-Patterns to Flag
+## 6) Project-Specific Anti-Patterns to Flag
 
 | Anti-Pattern | Why It's Bad | Check Locations |
 |--------------|--------------|-----------------|
@@ -144,13 +281,13 @@ Analyze the project along these dimensions, using **only source code evidence**:
 
 ---
 
-## 6) Required Deliverable Format (Strict)
+## 7) Required Deliverable Format (Strict)
 
 For each recommendation:
 
 ```
 ├─ Priority Rank: (1 = highest)
-├─ Category: Code Quality | Provider | Feature | Usability | Dependency | Architecture
+├─ Category: StockSharp | Code Quality | Provider | Feature | Usability | Dependency | Architecture
 ├─ ADR Relevance: (if applicable: ADR-001, ADR-004, ADR-010, etc.)
 ├─ Current State (Evidence):
 │   ├─ File: relative/path/to/file.cs
@@ -171,7 +308,7 @@ For each recommendation:
 
 ---
 
-## 7) Prioritization Rules
+## 8) Prioritization Rules
 
 Sort all recommendations using this rubric:
 1. **Impact** (user experience + code health gain)
@@ -185,11 +322,11 @@ Produce a **Top 10 Backlog** summary at the end:
 |------|-------|----------|------|--------|------|
 | 1 | ... | Code Quality | Providers | Small | Low |
 
-**Areas:** Providers, Storage, Pipeline, UWP/Views, UWP/ViewModels, UWP/Services, Domain, Application, F# |
+**Areas:** StockSharp, Providers, Storage, Pipeline, UWP/Views, UWP/ViewModels, UWP/Services, Domain, Application, F# |
 
 ---
 
-## 8) Friction Questions (Answer Using Code Evidence)
+## 9) Friction Questions (Answer Using Code Evidence)
 
 You must answer these based on **code evidence only**:
 
@@ -218,7 +355,7 @@ If code doesn't reveal enough (no telemetry/logging/UI state), explicitly state 
 
 ---
 
-## 9) Output Guardrails
+## 10) Output Guardrails
 
 - **Don't speculate** about intent. Don't invent features.
 - **Don't suggest rewriting** the whole app.
@@ -230,12 +367,14 @@ If code doesn't reveal enough (no telemetry/logging/UI state), explicitly state 
 
 ---
 
-## 10) Project-Specific File Hints
+## 11) Project-Specific File Hints
 
 When searching for evidence, prioritize these high-value locations:
 
 | Concern | Key Files |
 |---------|-----------|
+| **StockSharp integration** | `Infrastructure/Providers/StockSharp/*.cs`, `Converters/*.cs` |
+| **StockSharp config** | `Application/Config/StockSharpConfig.cs` |
 | Streaming providers | `Infrastructure/Providers/Alpaca/`, `InteractiveBrokers/`, `Polygon/` |
 | Backfill providers | `Infrastructure/Providers/Backfill/*.cs` |
 | Event processing | `Application/Pipeline/EventPipeline.cs` |
@@ -249,4 +388,21 @@ When searching for evidence, prioritize these high-value locations:
 
 ---
 
-*Use this prompt when requesting comprehensive code review of the Market Data Collector codebase.*
+## 12) StockSharp Connector Capabilities Reference
+
+Document actual connector capabilities vs current implementation:
+
+| Connector | Streaming | Historical | Candles | Order Log | Security Lookup |
+|-----------|-----------|------------|---------|-----------|-----------------|
+| Rithmic | ✅ Trades, Depth, L1 | ⚠️ Available but not impl | ⚠️ Not impl | ⚠️ Available | ⚠️ Not impl |
+| IQFeed | ✅ Trades, Depth, L1 | ⚠️ Available but not impl | ⚠️ Not impl | ⚠️ Available | ⚠️ Not impl |
+| CQG | ✅ Trades, Depth, L1 | ⚠️ Available but not impl | ⚠️ Not impl | ❌ N/A | ⚠️ Not impl |
+| IB (S#) | ✅ Trades, Depth, L1 | ⚠️ Available but not impl | ⚠️ Not impl | ❌ N/A | ⚠️ Not impl |
+
+**Legend:** ✅ Implemented | ⚠️ Available in S# but not implemented | ❌ Not available
+
+**Review Task:** Verify these capabilities against actual S# connector documentation and identify implementation gaps.
+
+---
+
+*Use this prompt when requesting comprehensive code review of the Market Data Collector codebase with focus on StockSharp framework utilization.*
