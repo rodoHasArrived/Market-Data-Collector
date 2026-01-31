@@ -1,10 +1,20 @@
 # Market Data Collector
 
-**Version**: 1.6.1 | **Last Updated**: 2026-01-30
+**Version**: 1.6.1 | **Last Updated**: 2026-01-31
 
 **Current Status**: Production Ready. Some providers require credentials or build-time flags; see [production status](status/production-status.md) for readiness notes.
 
-A cross-platform market data collector for real-time and historical market microstructure data. It ingests provider feeds, normalizes them into domain events, and persists them to JSONL/Parquet for downstream research. The current repository snapshot includes a CLI, web dashboard, and a Windows desktop UI (UWP).
+## What This Tool Does For You
+
+Market Data Collector helps you **build your own market data archive**. Instead of relying on expensive data vendors or cloud-only solutions, you can:
+
+- **Collect real-time data** from multiple brokers and exchanges (Interactive Brokers, Alpaca, NYSE, Polygon, StockSharp)
+- **Download historical data** from 10+ free and premium providers with automatic failover
+- **Own your data locally** in structured JSONL or Parquet files—no vendor lock-in
+- **Monitor data quality** with automatic validation, gap detection, and integrity checks
+- **Use your data** for research, backtesting, and algorithmic trading with QuantConnect Lean integration
+
+Whether you're a quantitative researcher, algorithmic trader, or hobbyist building a personal market data archive, this tool gives you data independence, cost control, and reliability.
 
 ## Current capabilities
 

@@ -17,6 +17,41 @@ A high-performance, cross-platform market data collection system for real-time a
 
 ---
 
+## What This Project Does
+
+Market Data Collector is a complete solution for **building your own market data archive**. It connects to financial data providers, captures market data in real-time, and stores everything locally so you have full ownership and offline access to your data.
+
+### Core Capabilities
+
+| Capability | What It Does For You |
+|------------|---------------------|
+| **📡 Real-Time Streaming** | Capture live trades, quotes, and order book depth as they happen from Interactive Brokers, Alpaca, NYSE, Polygon, or StockSharp |
+| **📥 Historical Backfill** | Download years of historical price data from 10+ providers (Yahoo Finance, Tiingo, Polygon, Alpaca, and more) with automatic failover |
+| **💾 Local Data Storage** | Own your data—everything is stored in structured JSONL or Parquet files on your machine, not locked in a vendor's cloud |
+| **🔍 Data Quality Monitoring** | Automatic validation catches missing data, sequence gaps, and anomalies before they corrupt your analysis |
+| **📦 Data Packaging** | Export and package your data for sharing, backup, or use in other tools |
+| **📊 Live Dashboards** | Monitor collection status, throughput, and data quality through a web dashboard or Windows desktop app |
+| **🔬 Backtesting Integration** | Feed your collected data directly into QuantConnect Lean for algorithmic strategy development |
+
+### Who Is This For?
+
+- **Quantitative researchers** who need tick-level market microstructure data for analysis
+- **Algorithmic traders** building strategies that require historical and real-time market data
+- **Data engineers** who want to build a reliable market data pipeline
+- **Hobbyist traders** who want to collect and own their own market data archive
+- **Students and academics** studying market microstructure, price formation, or trading systems
+
+### The Problem It Solves
+
+Commercial market data is expensive, vendor APIs change without notice, and cloud-only solutions mean you never truly own your data. Market Data Collector gives you:
+
+1. **Data independence** — Switch providers without losing your archive or rewriting code
+2. **Cost control** — Use free-tier APIs strategically, pay only for premium data you actually need
+3. **Reliability** — Automatic reconnection, failover between providers, and data integrity checks
+4. **Flexibility** — Collect exactly the symbols and data types you need, store them how you want
+
+---
+
 ## Installation
 
 ### Golden Path (Recommended)
@@ -94,9 +129,9 @@ Install the signed Windows desktop app using MSIX/AppInstaller for a native setu
 
 ---
 
-## Overview
+## Technical Overview
 
-Market Data Collector is a modular, event-driven system that captures, validates, and persists high-fidelity market data from multiple providers including Interactive Brokers, Alpaca, NYSE, Polygon, and StockSharp. It features a modern web dashboard, a native Windows desktop application (UWP/XAML), structured logging, and supports deployment as a single self-contained executable.
+Market Data Collector is built on **.NET 9.0** using **C# 11** and **F# 8.0**. It uses a modular, event-driven architecture with bounded channels for high-throughput data processing. The system supports deployment as a single self-contained executable, a Docker container, or a systemd service.
 
 ## Key Features
 
