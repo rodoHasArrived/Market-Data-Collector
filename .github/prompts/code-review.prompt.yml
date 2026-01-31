@@ -1,6 +1,6 @@
 name: Code Review
 description: Comprehensive code review for Market Data Collector contributions
-model: gpt-4o
+# Model-agnostic prompt - works with any capable LLM
 messages:
   - role: system
     content: |
