@@ -56,6 +56,11 @@
   </PropertyGroup>
 
   <PropertyGroup>
+    <!-- StockSharp integration is optional because packages may require a separate feed/license. -->
+    <EnableStockSharp Condition="'$(EnableStockSharp)' == ''">false</EnableStockSharp>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(EnableStockSharp)' == 'true'">
     <DefineConstants>$(DefineConstants);STOCKSHARP;STOCKSHARP_RITHMIC;STOCKSHARP_IQFEED;STOCKSHARP_CQG;STOCKSHARP_INTERACTIVEBROKERS</DefineConstants>
   </PropertyGroup>
 
@@ -168,14 +173,14 @@
     <!-- Reactive Extensions for Observable patterns -->
     <PackageReference Include="System.Reactive" />
 
-    <!-- StockSharp core + connectors -->
-    <PackageReference Include="StockSharp.Algo" />
-    <PackageReference Include="StockSharp.Messages" />
-    <PackageReference Include="StockSharp.BusinessEntities" />
-    <PackageReference Include="StockSharp.Rithmic" />
-    <PackageReference Include="StockSharp.IQFeed" />
-    <PackageReference Include="StockSharp.Cqg.Com" />
-    <PackageReference Include="StockSharp.InteractiveBrokers" />
+    <!-- StockSharp core + connectors (optional) -->
+    <PackageReference Include="StockSharp.Algo" Condition="'$(EnableStockSharp)' == 'true'" />
+    <PackageReference Include="StockSharp.Messages" Condition="'$(EnableStockSharp)' == 'true'" />
+    <PackageReference Include="StockSharp.BusinessEntities" Condition="'$(EnableStockSharp)' == 'true'" />
+    <PackageReference Include="StockSharp.Rithmic" Condition="'$(EnableStockSharp)' == 'true'" />
+    <PackageReference Include="StockSharp.IQFeed" Condition="'$(EnableStockSharp)' == 'true'" />
+    <PackageReference Include="StockSharp.Cqg.Com" Condition="'$(EnableStockSharp)' == 'true'" />
+    <PackageReference Include="StockSharp.InteractiveBrokers" Condition="'$(EnableStockSharp)' == 'true'" />
   </ItemGroup>
 
   <!-- Project References -->
