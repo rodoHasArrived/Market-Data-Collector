@@ -504,6 +504,7 @@ export NYSE__APIKEY=your-api-key
 ### StockSharp
 
 **Requirements:**
+- Build with `EnableStockSharp=true` to restore StockSharp packages (defaults to false).
 - StockSharp core + connector packages installed (StockSharp.Algo, StockSharp.Messages, StockSharp.BusinessEntities, plus connector package)
 - Broker/exchange credentials and transport endpoints (Rithmic/IQFeed/CQG/IB)
 
