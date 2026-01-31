@@ -67,7 +67,7 @@ jobs:
         run: npm ci
 
       - name: Generate icons
-        run: node scripts/generate-icons.mjs
+        run: node build/node/generate-icons.mjs
 
       - name: Upload generated assets
         uses: actions/upload-artifact@v4

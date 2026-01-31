@@ -11,8 +11,7 @@ on:
   #   paths:
   #     - 'src/**'
   #     - 'docs/**'
-  #     - 'scripts/**'
-  #     - 'tools/**'
+  #     - 'build/**'
   #     - 'tests/**'
   #     - 'benchmarks/**'
   #     - '.github/workflows/**'
@@ -85,8 +84,7 @@ jobs:
             structure:
               - added|deleted: 'src/**'
               - added|deleted: 'docs/**'
-              - added|deleted: 'scripts/**'
-              - added|deleted: 'tools/**'
+              - added|deleted: 'build/**'
 
   generate-structure-docs:
     name: Generate Structure Documentation
@@ -118,7 +116,7 @@ jobs:
       - name: Generate repository structure
         id: gen-structure
         run: |
-          python3 scripts/docs/generate-structure-docs.py \
+          python3 build/scripts/docs/generate-structure-docs.py \
             --output docs/generated/repository-structure.md \
             --format markdown
 
@@ -129,7 +127,7 @@ jobs:
       - name: Generate provider registry
         id: gen-providers
         run: |
-          python3 scripts/docs/generate-structure-docs.py \
+          python3 build/scripts/docs/generate-structure-docs.py \
             --output docs/generated/provider-registry.md \
             --providers-only
 
@@ -140,7 +138,7 @@ jobs:
       - name: Generate workflow documentation
         id: gen-workflows
         run: |
-          python3 scripts/docs/generate-structure-docs.py \
+          python3 build/scripts/docs/generate-structure-docs.py \
             --output docs/generated/workflows-overview.md \
             --workflows-only
 
@@ -223,7 +221,7 @@ jobs:
 
       - name: Extract provider information
         run: |
-          python3 scripts/docs/generate-structure-docs.py \
+          python3 build/scripts/docs/generate-structure-docs.py \
             --output docs/generated/provider-registry.md \
             --providers-only \
             --extract-attributes
@@ -279,7 +277,7 @@ jobs:
 
       - name: Update CLAUDE.md repository structure section
         run: |
-          python3 scripts/docs/update-claude-md.py \
+          python3 build/scripts/docs/update-claude-md.py \
             --claude-md CLAUDE.md \
             --structure-source docs/generated/repository-structure.md
 

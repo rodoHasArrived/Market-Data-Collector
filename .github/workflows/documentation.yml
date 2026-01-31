@@ -9,7 +9,7 @@ on:
     paths:
       - 'docs/**'
       - '*.md'
-      - 'tools/DocGenerator/**'
+      - 'build/dotnet/DocGenerator/**'
       - '.github/workflows/documentation.yml'
   pull_request:
     branches: [ "main" ]
@@ -91,9 +91,9 @@ jobs:
 
       - name: Restore and build DocGenerator
         run: |
-          if [ -d "tools/DocGenerator" ]; then
-            dotnet restore tools/DocGenerator/DocGenerator.csproj
-            dotnet build tools/DocGenerator/DocGenerator.csproj -c Release --no-restore
+          if [ -d "build/dotnet/DocGenerator" ]; then
+            dotnet restore build/dotnet/DocGenerator/DocGenerator.csproj
+            dotnet build build/dotnet/DocGenerator/DocGenerator.csproj -c Release --no-restore
           fi
         continue-on-error: true
 
