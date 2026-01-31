@@ -682,6 +682,31 @@ public sealed record FailoverConfig
     }
 }
 
+/// <summary>
+/// Fallback options for provider failover.
+/// </summary>
+public sealed record FallbackOptions(
+    bool Enabled,
+    FallbackStrategy Strategy,
+    int MaxAttempts,
+    TimeSpan CooldownPeriod
+);
+
+/// <summary>
+/// Fallback strategy for provider selection.
+/// </summary>
+public enum FallbackStrategy
+{
+    /// <summary>Priority-based selection (use provider priority).</summary>
+    Priority,
+    /// <summary>Health-score-based selection.</summary>
+    HealthScore,
+    /// <summary>Round-robin selection.</summary>
+    RoundRobin,
+    /// <summary>Random selection.</summary>
+    Random
+}
+
 #region Configuration Extensions
 
 /// <summary>

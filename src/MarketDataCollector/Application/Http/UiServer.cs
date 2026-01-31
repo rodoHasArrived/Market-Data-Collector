@@ -1,6 +1,7 @@
 using System.Text.Json;
 using MarketDataCollector.Application.Composition;
 using MarketDataCollector.Application.Config;
+using MarketDataCollector.Application.Subscriptions.Models;
 using MarketDataCollector.Contracts.Api;
 using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Storage;

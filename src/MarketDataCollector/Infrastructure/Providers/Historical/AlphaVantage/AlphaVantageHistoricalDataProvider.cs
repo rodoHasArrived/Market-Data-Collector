@@ -3,6 +3,8 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Models;
+using MarketDataCollector.Infrastructure.Contracts;
+using MarketDataCollector.Infrastructure.DataSources;
 using MarketDataCollector.Infrastructure.Http;
 using MarketDataCollector.Infrastructure.Utilities;
 using Serilog;
