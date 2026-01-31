@@ -4,8 +4,10 @@ using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Application.Pipeline;
+using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Providers.Backfill;
 using MarketDataCollector.Infrastructure.Providers.Backfill.SymbolResolution;
+using MarketDataCollector.Infrastructure.Providers.Core;
 using BackfillRequest = MarketDataCollector.Application.Backfill.BackfillRequest;
 using MarketDataCollector.Storage;
 using MarketDataCollector.Storage.Policies;
@@ -14,18 +16,40 @@ using Serilog;
 
 namespace MarketDataCollector.Application.UI;
 
+/// <summary>
+/// Coordinates backfill operations using providers from <see cref="ProviderRegistry"/>.
+/// </summary>
+/// <remarks>
+/// <para>Provider discovery follows a priority order:</para>
+/// <list type="number">
+/// <item><description>ProviderRegistry.GetBackfillProviders() - unified registry</description></item>
+/// <item><description>ProviderFactory.CreateBackfillProviders() - factory creation with credential resolution</description></item>
+/// <item><description>Manual instantiation - backwards compatibility fallback</description></item>
+/// </list>
+/// </remarks>
+[ImplementsAdr("ADR-001", "Uses ProviderRegistry for unified provider discovery")]
 public sealed class BackfillCoordinator : IDisposable
 {
     private readonly ConfigStore _store;
+    private readonly ProviderRegistry? _registry;
+    private readonly ProviderFactory? _factory;
     private readonly ILogger _log = LoggingSetup.ForContext<BackfillCoordinator>();
     private readonly SemaphoreSlim _gate = new(1, 1);
     private readonly OpenFigiSymbolResolver? _symbolResolver;
     private BackfillResult? _lastRun;
     private bool _disposed;
 
-    public BackfillCoordinator(ConfigStore store)
+    /// <summary>
+    /// Creates a BackfillCoordinator using the unified ProviderRegistry for provider discovery.
+    /// </summary>
+    /// <param name="store">Configuration store.</param>
+    /// <param name="registry">Provider registry for unified provider discovery.</param>
+    /// <param name="factory">Provider factory for creating providers if registry is empty.</param>
+    public BackfillCoordinator(ConfigStore store, ProviderRegistry? registry = null, ProviderFactory? factory = null)
     {
         _store = store;
+        _registry = registry;
+        _factory = factory;
         _lastRun = store.TryLoadBackfillStatus();
 
         // Initialize symbol resolver
@@ -143,7 +167,56 @@ public sealed class BackfillCoordinator : IDisposable
         }
     }
 
+    /// <summary>
+    /// Creates backfill providers using a priority-based discovery approach:
+    /// 1. ProviderRegistry.GetBackfillProviders() - unified registry
+    /// 2. ProviderFactory.CreateBackfillProviders() - factory with credential resolution
+    /// 3. Manual instantiation - backwards compatibility fallback
+    /// </summary>
     private List<IHistoricalDataProvider> CreateProviders()
+    {
+        // Priority 1: Use ProviderRegistry if available and populated
+        if (_registry != null)
+        {
+            var registryProviders = _registry.GetBackfillProviders();
+            if (registryProviders.Count > 0)
+            {
+                _log.Information("Using {Count} providers from ProviderRegistry", registryProviders.Count);
+                return registryProviders.ToList();
+            }
+        }
+
+        // Priority 2: Use ProviderFactory if available
+        if (_factory != null)
+        {
+            var factoryProviders = _factory.CreateBackfillProviders();
+            if (factoryProviders.Count > 0)
+            {
+                _log.Information("Using {Count} providers from ProviderFactory", factoryProviders.Count);
+
+                // Register with registry if available (populate for future use)
+                if (_registry != null)
+                {
+                    foreach (var provider in factoryProviders)
+                    {
+                        _registry.Register(provider);
+                    }
+                }
+
+                return factoryProviders.ToList();
+            }
+        }
+
+        // Priority 3: Fallback to manual instantiation (backwards compatibility)
+        _log.Debug("Using fallback manual provider instantiation");
+        return CreateProvidersManually();
+    }
+
+    /// <summary>
+    /// Fallback method for manual provider creation when ProviderRegistry and ProviderFactory
+    /// are not available. Maintains backwards compatibility.
+    /// </summary>
+    private List<IHistoricalDataProvider> CreateProvidersManually()
     {
         var cfg = _store.Load();
         var backfillCfg = cfg.Backfill;

@@ -51,6 +51,19 @@ public static class ServiceCompositionRoot
     /// <param name="services">The service collection to configure.</param>
     /// <param name="options">Composition options controlling which services to register.</param>
     /// <returns>The configured service collection for chaining.</returns>
+    /// <remarks>
+    /// <para><b>Service Registration Order:</b></para>
+    /// <list type="number">
+    /// <item><description>Core configuration services (always required)</description></item>
+    /// <item><description>Storage services (always required)</description></item>
+    /// <item><description>Credential services (before providers for credential resolution)</description></item>
+    /// <item><description>Provider services (ProviderRegistry, ProviderFactory - before dependent services)</description></item>
+    /// <item><description>Symbol management services (depends on ProviderFactory/Registry)</description></item>
+    /// <item><description>Backfill services (depends on ProviderRegistry/Factory)</description></item>
+    /// <item><description>Other services (maintenance, diagnostic, pipeline, collector)</description></item>
+    /// </list>
+    /// </remarks>
+    [ImplementsAdr("ADR-001", "Provider services registered before dependent services")]
     public static IServiceCollection AddMarketDataServices(
         this IServiceCollection services,
         CompositionOptions? options = null)
@@ -63,17 +76,32 @@ public static class ServiceCompositionRoot
         // Storage services - always required for data persistence
         services.AddStorageServices(options);
 
-        // Optional feature sets based on composition options
+        // Credential services - must come before provider services for credential resolution
+        if (options.EnableCredentialServices)
+        {
+            services.AddCredentialServices(options);
+        }
+
+        // Provider services (ProviderRegistry, ProviderFactory) - must come before
+        // dependent services (SymbolManagement, Backfill) to ensure providers are available
+        if (options.EnableProviderServices)
+        {
+            services.AddProviderServices(options);
+        }
+
+        // Symbol management - depends on ProviderFactory/ProviderRegistry
         if (options.EnableSymbolManagement)
         {
             services.AddSymbolManagementServices();
         }
 
+        // Backfill services - depends on ProviderRegistry/ProviderFactory
         if (options.EnableBackfillServices)
         {
             services.AddBackfillServices(options);
         }
 
+        // Remaining optional services
         if (options.EnableMaintenanceServices)
         {
             services.AddMaintenanceServices(options);
@@ -82,16 +110,6 @@ public static class ServiceCompositionRoot
         if (options.EnableDiagnosticServices)
         {
             services.AddDiagnosticServices(options);
-        }
-
-        if (options.EnableCredentialServices)
-        {
-            services.AddCredentialServices(options);
-        }
-
-        if (options.EnableProviderServices)
-        {
-            services.AddProviderServices(options);
         }
 
         if (options.EnablePipelineServices)
@@ -189,10 +207,15 @@ public static class ServiceCompositionRoot
     /// Registers symbol management and search services.
     /// </summary>
     /// <remarks>
-    /// Symbol search providers are created via <see cref="ProviderFactory"/> when available,
-    /// otherwise falls back to direct instantiation with credential resolution from environment variables.
-    /// This ensures all symbol search operations go through <see cref="SymbolSearchService"/>.
+    /// <para>Symbol search providers are discovered using a priority-based approach:</para>
+    /// <list type="number">
+    /// <item><description><see cref="ProviderRegistry.GetSymbolSearchProviders()"/> - unified registry</description></item>
+    /// <item><description><see cref="ProviderFactory.CreateSymbolSearchProviders()"/> - factory with credential resolution</description></item>
+    /// <item><description>Direct instantiation - backwards compatibility fallback</description></item>
+    /// </list>
+    /// <para>This ensures all symbol search operations go through <see cref="SymbolSearchService"/>.</para>
     /// </remarks>
+    [ImplementsAdr("ADR-001", "Uses ProviderRegistry for unified symbol search provider discovery")]
     private static IServiceCollection AddSymbolManagementServices(this IServiceCollection services)
     {
         // Symbol import/export
@@ -210,31 +233,66 @@ public static class ServiceCompositionRoot
         {
             var metadataService = sp.GetRequiredService<MetadataEnrichmentService>();
             var figiClient = sp.GetRequiredService<OpenFigiClient>();
+            var log = LoggingSetup.ForContext<SymbolSearchService>();
 
-            // Use ProviderFactory when available for consistent credential resolution,
-            // otherwise fall back to direct instantiation (providers self-resolve from env vars)
-            var factory = sp.GetService<ProviderFactory>();
-            IEnumerable<ISymbolSearchProvider> providers;
-
-            if (factory != null)
-            {
-                providers = factory.CreateSymbolSearchProviders();
-            }
-            else
-            {
-                // Fallback: providers load credentials from environment variables
-                providers = new ISymbolSearchProvider[]
-                {
-                    new AlpacaSymbolSearchProviderRefactored(),
-                    new FinnhubSymbolSearchProviderRefactored(),
-                    new PolygonSymbolSearchProvider()
-                };
-            }
+            // Priority-based provider discovery
+            var providers = GetSymbolSearchProviders(sp, log);
 
             return new SymbolSearchService(providers, figiClient, metadataService);
         });
 
         return services;
+    }
+
+    /// <summary>
+    /// Gets symbol search providers using a priority-based discovery approach.
+    /// </summary>
+    private static IEnumerable<ISymbolSearchProvider> GetSymbolSearchProviders(
+        IServiceProvider sp,
+        Serilog.ILogger log)
+    {
+        // Priority 1: Use ProviderRegistry if available and populated
+        var registry = sp.GetService<ProviderRegistry>();
+        if (registry != null)
+        {
+            var registryProviders = registry.GetSymbolSearchProviders();
+            if (registryProviders.Count > 0)
+            {
+                log.Information("Using {Count} symbol search providers from ProviderRegistry", registryProviders.Count);
+                return registryProviders;
+            }
+        }
+
+        // Priority 2: Use ProviderFactory if available
+        var factory = sp.GetService<ProviderFactory>();
+        if (factory != null)
+        {
+            var factoryProviders = factory.CreateSymbolSearchProviders();
+            if (factoryProviders.Count > 0)
+            {
+                log.Information("Using {Count} symbol search providers from ProviderFactory", factoryProviders.Count);
+
+                // Register with registry if available (populate for future use)
+                if (registry != null)
+                {
+                    foreach (var provider in factoryProviders)
+                    {
+                        registry.Register(provider);
+                    }
+                }
+
+                return factoryProviders;
+            }
+        }
+
+        // Priority 3: Fallback to direct instantiation (backwards compatibility)
+        log.Debug("Using fallback symbol search provider instantiation");
+        return new ISymbolSearchProvider[]
+        {
+            new AlpacaSymbolSearchProviderRefactored(),
+            new FinnhubSymbolSearchProviderRefactored(),
+            new PolygonSymbolSearchProvider()
+        };
     }
 
     #endregion
@@ -243,16 +301,24 @@ public static class ServiceCompositionRoot
 
     /// <summary>
     /// Registers backfill and scheduling services.
+    /// Uses <see cref="ProviderRegistry"/> for unified provider discovery.
     /// </summary>
+    /// <remarks>
+    /// <para>Requires <see cref="AddProviderServices"/> to be called first to ensure
+    /// <see cref="ProviderRegistry"/> and <see cref="ProviderFactory"/> are available.</para>
+    /// </remarks>
+    [ImplementsAdr("ADR-001", "Uses ProviderRegistry for unified backfill provider discovery")]
     private static IServiceCollection AddBackfillServices(
         this IServiceCollection services,
         CompositionOptions options)
     {
-        // BackfillCoordinator - the unified implementation from Application.UI
+        // BackfillCoordinator - uses ProviderRegistry for unified provider discovery
         services.AddSingleton<BackfillCoordinator>(sp =>
         {
             var configStore = sp.GetRequiredService<ConfigStore>();
-            return new BackfillCoordinator(configStore);
+            var registry = sp.GetService<ProviderRegistry>();
+            var factory = sp.GetService<ProviderFactory>();
+            return new BackfillCoordinator(configStore, registry, factory);
         });
 
         // SchedulingService - symbol subscription scheduling
