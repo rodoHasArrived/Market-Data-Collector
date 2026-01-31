@@ -1,6 +1,7 @@
 using MarketDataCollector.Domain;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Logging;
+using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Application.Pipeline;
 using MarketDataCollector.Application.Services;
 using MarketDataCollector.Application.Subscriptions;

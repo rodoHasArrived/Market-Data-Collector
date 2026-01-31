@@ -1,3 +1,4 @@
+using MarketDataCollector.Infrastructure.DataSources;
 using System.Globalization;
 using System.Net.Http.Headers;
 using System.Text.Json;

@@ -1,3 +1,4 @@
+using MarketDataCollector.Infrastructure.DataSources;
 using MarketDataCollector.Infrastructure.Contracts;
 using System.Globalization;
 using System.Text.Json;

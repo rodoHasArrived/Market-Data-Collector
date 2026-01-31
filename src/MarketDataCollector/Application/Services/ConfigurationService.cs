@@ -83,7 +83,7 @@ public sealed class ConfigurationService : IAsyncDisposable
     /// Detects all available providers based on environment variables and configuration.
     /// This is the single source of truth for provider detection.
     /// </summary>
-    public IReadOnlyList<DetectedProvider> DetectProviders()
+    public IReadOnlyList<AutoConfigurationService.DetectedProvider> DetectProviders()
         => _autoConfig.DetectAvailableProviders();
 
     /// <summary>
@@ -95,7 +95,7 @@ public sealed class ConfigurationService : IAsyncDisposable
     /// <summary>
     /// Gets detected providers filtered by capability.
     /// </summary>
-    public IReadOnlyList<DetectedProvider> GetProvidersByCapability(string capability)
+    public IReadOnlyList<AutoConfigurationService.DetectedProvider> GetProvidersByCapability(string capability)
     {
         return DetectProviders()
             .Where(p => p.Capabilities.Contains(capability, StringComparer.OrdinalIgnoreCase))
@@ -105,7 +105,7 @@ public sealed class ConfigurationService : IAsyncDisposable
     /// <summary>
     /// Gets the best available provider for real-time streaming.
     /// </summary>
-    public DetectedProvider? GetBestRealTimeProvider()
+    public AutoConfigurationService.DetectedProvider? GetBestRealTimeProvider()
     {
         return GetProvidersByCapability("RealTime")
             .Where(p => p.HasCredentials)
@@ -116,7 +116,7 @@ public sealed class ConfigurationService : IAsyncDisposable
     /// <summary>
     /// Gets available providers for historical data backfill.
     /// </summary>
-    public IReadOnlyList<DetectedProvider> GetHistoricalProviders()
+    public IReadOnlyList<AutoConfigurationService.DetectedProvider> GetHistoricalProviders()
     {
         return GetProvidersByCapability("Historical")
             .Where(p => p.HasCredentials)
@@ -127,7 +127,7 @@ public sealed class ConfigurationService : IAsyncDisposable
     /// <summary>
     /// Prints provider detection results to console (for CLI commands).
     /// </summary>
-    public void PrintProviderDetection(IReadOnlyList<DetectedProvider>? providers = null)
+    public void PrintProviderDetection(IReadOnlyList<AutoConfigurationService.DetectedProvider>? providers = null)
     {
         providers ??= DetectProviders();
 
