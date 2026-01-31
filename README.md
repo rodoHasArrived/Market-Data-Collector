@@ -13,7 +13,7 @@ A high-performance, cross-platform market data collection system for real-time a
 [![Docker Build](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/docker-build.yml/badge.svg)](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/docker-build.yml)
 [![Code Quality](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/code-quality.yml/badge.svg)](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/code-quality.yml)
 
-**Status**: Production Ready | **Version**: 1.6.1 | **Last Updated**: 2026-01-29
+**Status**: Production Ready | **Version**: 1.6.1 | **Last Updated**: 2026-01-31
 
 ---
 
@@ -324,7 +324,7 @@ export ALPACA__SECRETKEY=your-secret-key
 
 ## CI/CD and Automation
 
-The repository includes 20 comprehensive GitHub Actions workflows for automated testing, security, and deployment:
+The repository includes 21 comprehensive GitHub Actions workflows for automated testing, security, and deployment:
 
 - **🔨 Build & Release** - Automated builds and cross-platform releases
 - **🔒 CodeQL Analysis** - Security vulnerability scanning (weekly + on changes)
@@ -400,12 +400,12 @@ docker run -d -p 8080:8080 \
 
 ## Repository Structure
 
-**447 source files** | **413 C#** | **12 F#** | **45 test files** | **56+ documentation files**
+**478 source files** | **466 C#** | **12 F#** | **50 test files** | **61 documentation files**
 
 ```
 Market-Data-Collector/
-├── .github/              # CI/CD workflows (20), AI prompts, Dependabot
-├── docs/                 # Documentation (56+ files), ADRs, AI assistant guides
+├── .github/              # CI/CD workflows (21), AI prompts, Dependabot
+├── docs/                 # Documentation (61 files), ADRs, AI assistant guides
 ├── scripts/              # Install, publish, run, and diagnostic scripts
 ├── deploy/               # Docker, systemd, and monitoring configs
 ├── config/               # Configuration files (appsettings.json)
@@ -421,10 +421,10 @@ Market-Data-Collector/
 │   ├── MarketDataCollector.Contracts/ # Shared DTOs and contracts
 │   ├── MarketDataCollector.Ui/     # Web dashboard (10 files)
 │   └── MarketDataCollector.Uwp/    # Windows desktop app (WinUI 3)
-├── tests/                # C# and F# test projects (45 files)
+├── tests/                # C# and F# test projects (50 files)
 ├── benchmarks/           # Performance benchmarks (BenchmarkDotNet)
 ├── MarketDataCollector.sln
-├── Makefile              # Build automation (60+ targets)
+├── Makefile              # Build automation (67 targets)
 └── CLAUDE.md             # AI assistant guide
 ```
 
