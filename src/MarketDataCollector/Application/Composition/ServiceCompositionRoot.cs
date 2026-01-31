@@ -188,6 +188,11 @@ public static class ServiceCompositionRoot
     /// <summary>
     /// Registers symbol management and search services.
     /// </summary>
+    /// <remarks>
+    /// Symbol search providers are created via <see cref="ProviderFactory"/> when available,
+    /// otherwise falls back to direct instantiation with credential resolution from environment variables.
+    /// This ensures all symbol search operations go through <see cref="SymbolSearchService"/>.
+    /// </remarks>
     private static IServiceCollection AddSymbolManagementServices(this IServiceCollection services)
     {
         // Symbol import/export
@@ -199,21 +204,34 @@ public static class ServiceCompositionRoot
         services.AddSingleton<BatchOperationsService>();
         services.AddSingleton<PortfolioImportService>();
 
-        // Symbol search providers
+        // Symbol search providers - consolidated through SymbolSearchService
         services.AddSingleton<OpenFigiClient>();
         services.AddSingleton<SymbolSearchService>(sp =>
         {
             var metadataService = sp.GetRequiredService<MetadataEnrichmentService>();
             var figiClient = sp.GetRequiredService<OpenFigiClient>();
-            return new SymbolSearchService(
-                new ISymbolSearchProvider[]
+
+            // Use ProviderFactory when available for consistent credential resolution,
+            // otherwise fall back to direct instantiation (providers self-resolve from env vars)
+            var factory = sp.GetService<ProviderFactory>();
+            IEnumerable<ISymbolSearchProvider> providers;
+
+            if (factory != null)
+            {
+                providers = factory.CreateSymbolSearchProviders();
+            }
+            else
+            {
+                // Fallback: providers load credentials from environment variables
+                providers = new ISymbolSearchProvider[]
                 {
                     new AlpacaSymbolSearchProviderRefactored(),
                     new FinnhubSymbolSearchProviderRefactored(),
                     new PolygonSymbolSearchProvider()
-                },
-                figiClient,
-                metadataService);
+                };
+            }
+
+            return new SymbolSearchService(providers, figiClient, metadataService);
         });
 
         return services;

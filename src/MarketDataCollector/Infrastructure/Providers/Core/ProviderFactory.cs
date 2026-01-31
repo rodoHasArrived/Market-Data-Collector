@@ -356,7 +356,7 @@ public sealed class ProviderFactory
         var (keyId, secretKey) = _credentialResolver.ResolveAlpacaCredentials(cfg?.KeyId, cfg?.SecretKey);
         if (string.IsNullOrEmpty(keyId) || string.IsNullOrEmpty(secretKey)) return null;
 
-        return new AlpacaSymbolSearchProvider(keyId, secretKey, _log);
+        return new AlpacaSymbolSearchProviderRefactored(keyId, secretKey, httpClient: null, log: _log);
     }
 
     private ISymbolSearchProvider? CreateFinnhubSearchProvider(FinnhubBackfillConfig? cfg)
@@ -367,7 +367,7 @@ public sealed class ProviderFactory
         var apiKey = _credentialResolver.ResolveFinnhubCredentials(cfg?.ApiKey);
         if (string.IsNullOrEmpty(apiKey)) return null;
 
-        return new FinnhubSymbolSearchProvider(apiKey, _log);
+        return new FinnhubSymbolSearchProviderRefactored(apiKey, httpClient: null, log: _log);
     }
 
     private ISymbolSearchProvider? CreatePolygonSearchProvider(PolygonBackfillConfig? cfg)
@@ -378,7 +378,7 @@ public sealed class ProviderFactory
         var apiKey = _credentialResolver.ResolvePolygonCredentials(cfg?.ApiKey);
         if (string.IsNullOrEmpty(apiKey)) return null;
 
-        return new PolygonSymbolSearchProvider(apiKey, _log);
+        return new PolygonSymbolSearchProvider(apiKey, httpClient: null, log: _log);
     }
 
     /// <summary>
