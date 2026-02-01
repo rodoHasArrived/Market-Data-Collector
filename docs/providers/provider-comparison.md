@@ -16,7 +16,7 @@ This document provides a comprehensive comparison of all data providers supporte
 | **Alpaca** | ✅ Implemented | Easy | IEX feed | Good | Development, basic collection |
 | **Interactive Brokers** | ⚠️ IBAPI Required | Complex | Cboe One + IEX | Excellent | Professional trading, L2 depth |
 | **Polygon** | ⚠️ Partial | Medium | 5 calls/min | Excellent | (Future implementation) |
-| **StockSharp** | ⚠️ Requires setup | Medium | Varies | Good | Multi-exchange |
+| **StockSharp** | ⚠️ Requires setup | Medium | Varies | Good | Multi-exchange (8 connectors) |
 | **NYSE** | ⚠️ Requires credentials | Medium | Subscription | Excellent | NYSE-specific feeds |
 
 ### Historical Providers (Backfill)
@@ -309,6 +309,51 @@ This document provides a comprehensive comparison of all data providers supporte
 
 ---
 
+### StockSharp
+
+**Best For:** Multi-exchange connectivity, futures, crypto exchanges
+
+| Attribute | Details |
+|-----------|---------|
+| **Type** | Streaming + Historical |
+| **Status** | ⚠️ Requires STOCKSHARP build flag |
+| **Setup Complexity** | Medium (connector packages required) |
+| **Authentication** | Varies by connector |
+| **Connector Types** | 8 implemented (5 public + 3 crypto) |
+
+**Supported Connectors:**
+
+| Connector | Markets | Status | Notes |
+|-----------|---------|--------|-------|
+| Rithmic | CME, NYMEX, COMEX, CBOT futures | Public | Low-latency direct access |
+| IQFeed | US equities, options | Public | Historical lookups |
+| CQG | Futures, options | Public | Excellent historical coverage |
+| InteractiveBrokers | Global multi-asset | Public | Via StockSharp adapter |
+| Custom | Any via AdapterType | Public | Extensible adapter system |
+| Binance | Crypto spot & futures | Licensed | Requires crowdfunding membership |
+| Coinbase | Coinbase Pro markets | Licensed | Requires crowdfunding membership |
+| Kraken | Crypto spot | Licensed | Requires crowdfunding membership |
+
+**Note:** Crypto connectors (Binance, Coinbase, Kraken) require StockSharp crowdfunding membership. See https://stocksharp.com/store/ for licensing.
+
+**Pros:**
+- 90+ data sources via StockSharp ecosystem
+- Professional-grade market data infrastructure
+- Unified API across multiple exchanges
+- Active development and community
+
+**Cons:**
+- Requires separate StockSharp packages
+- Crypto connectors require paid license
+- Learning curve for StockSharp API
+- Build flags required for each connector
+
+**Files:**
+- `Infrastructure/Providers/Streaming/StockSharp/StockSharpMarketDataClient.cs`
+- `Infrastructure/Providers/Streaming/StockSharp/StockSharpConnectorFactory.cs`
+
+---
+
 ## Feature Comparison Matrix
 
 ### Data Types Supported
@@ -434,4 +479,4 @@ var bars = await composite.GetBarsAsync("AAPL", from, to);
 
 ---
 
-*Last Updated: 2026-01-30*
+*Last Updated: 2026-02-01*

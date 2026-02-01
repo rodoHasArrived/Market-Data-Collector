@@ -472,7 +472,9 @@ public interface IHistoricalDataProvider
 
 ## HTTP API Reference
 
-The application exposes a comprehensive REST API when running with `--ui` or `--mode web`.
+The application exposes a REST API when running with `--ui` or `--mode web`.
+
+**Implementation Note:** The codebase declares ~269 route constants in `UiApiRoutes.cs`, but approximately 136 endpoints have full handler implementations. Core endpoints (status, health, config, backfill) are fully functional. Some advanced endpoints may return stub responses or 501 Not Implemented.
 
 ### Core Endpoints
 | Endpoint | Method | Purpose |
