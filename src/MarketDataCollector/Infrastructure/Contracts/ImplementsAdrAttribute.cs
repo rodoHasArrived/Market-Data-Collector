@@ -13,7 +13,7 @@ namespace MarketDataCollector.Infrastructure.Contracts;
 /// }
 /// </code>
 /// </example>
-[AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface, AllowMultiple = true, Inherited = false)]
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface | AttributeTargets.Method, AllowMultiple = true, Inherited = false)]
 public sealed class ImplementsAdrAttribute : Attribute
 {
     /// <summary>
