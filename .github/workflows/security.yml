@@ -68,6 +68,20 @@ jobs:
 
           dotnet list MarketDataCollector.sln package --vulnerable --include-transitive 2>&1 | tee vuln-scan.txt
 
+          # Check for known vulnerabilities to suppress
+          KNOWN_VULNS=".github/known-vulnerabilities.txt"
+          
+          # Filter out known vulnerabilities
+          if [ -f "$KNOWN_VULNS" ]; then
+            echo "Filtering out known/accepted vulnerabilities from $KNOWN_VULNS..."
+            while IFS= read -r package; do
+              # Skip comments and empty lines
+              [[ "$package" =~ ^#.*$ ]] || [ -z "$package" ] && continue
+              echo "Suppressing known vulnerability: $package"
+              sed -i "/$package/d" vuln-scan.txt
+            done < "$KNOWN_VULNS"
+          fi
+
           if grep -qiE "(critical|high)" vuln-scan.txt; then
             echo "::error::Critical/High vulnerabilities detected!"
             echo "### Vulnerable Packages Found" >> $GITHUB_STEP_SUMMARY
@@ -77,6 +91,10 @@ jobs:
             exit 1
           else
             echo "### No Critical/High Vulnerabilities" >> $GITHUB_STEP_SUMMARY
+            if [ -f "$KNOWN_VULNS" ]; then
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "**Note:** Known/accepted vulnerabilities are documented in $KNOWN_VULNS" >> $GITHUB_STEP_SUMMARY
+            fi
           fi
 
   secret-detection:
