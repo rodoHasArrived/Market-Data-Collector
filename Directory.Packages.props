@@ -138,6 +138,10 @@
     <PackageVersion Include="CommunityToolkit.WinUI.Controls.Sizers" Version="8.2.250402" />
     <PackageVersion Include="Microsoft.WindowsAppSDK" Version="1.7.250310001" />
     <PackageVersion Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.1" />
+    <!-- WPF-specific packages -->
+    <PackageVersion Include="MaterialDesignThemes" Version="5.1.1" />
+    <PackageVersion Include="MaterialDesignColors" Version="3.1.0" />
+    <PackageVersion Include="Extended.Wpf.Toolkit" Version="4.6.1" />
   </ItemGroup>
 
   <ItemGroup Label="Code Analysis and Tools">

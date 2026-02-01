@@ -96,14 +96,29 @@ make doctor
 
 ### Windows Desktop App Install
 
-Install the signed Windows desktop app using MSIX/AppInstaller for a native setup/upgrade experience.
+**Two Options Available:**
 
-**Prerequisites**
-- Windows 10/11 (build 19041 or newer recommended).
-- [App Installer](https://www.microsoft.com/store/productId/9NBLGGH4NNS1) from the Microsoft Store (required for `.appinstaller`).
-- If installing an unpackaged build, install the .NET 9 Desktop Runtime.
+1. **WPF Desktop App (Recommended)** - Modern WPF application with maximum Windows stability
+   - Works on Windows 7+
+   - Simple .exe deployment
+   - Direct assembly references (no WinRT limitations)
+   - See [WPF README](src/MarketDataCollector.Wpf/README.md) for details
 
-**Install (AppInstaller)**
+2. **UWP Desktop App (Legacy)** - Windows 10+ only
+   - MSIX packaging required
+   - Windows 10 build 19041+ required
+   - See instructions below
+
+**WPF Installation:**
+```bash
+# Build from source
+dotnet build src/MarketDataCollector.Wpf/MarketDataCollector.Wpf.csproj -c Release
+
+# Run
+dotnet run --project src/MarketDataCollector.Wpf/MarketDataCollector.Wpf.csproj
+```
+
+**UWP Installation (AppInstaller):**
 1. Download the `.appinstaller` file from the release assets.
 2. Double-click it to launch App Installer.
 3. Select **Install** to complete setup.
