@@ -1110,36 +1110,36 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
                 case 33: // Sold (Out of Sequence) and Stopped Stock
                     return AggressorSide.Sell;
 
-                // Buyer-initiated condition codes
-                // Note: Intermarket Sweep (14) can be buy or sell, but is typically
-                // used for aggressive buying. We'll keep it as Unknown for accuracy.
+                    // Buyer-initiated condition codes
+                    // Note: Intermarket Sweep (14) can be buy or sell, but is typically
+                    // used for aggressive buying. We'll keep it as Unknown for accuracy.
 
-                // The following codes are informational and don't indicate direction:
-                // 0: Regular Sale
-                // 1: Acquisition
-                // 2: Average Price Trade
-                // 4: Bunched Trade
-                // 5: Bunched Sold Trade (despite name, indicates bunched reporting)
-                // 7: Cash Sale
-                // 8: Closing Prints
-                // 9: Cross Trade
-                // 10: Derivatively Priced
-                // 11: Distribution
-                // 12: Form T (Extended Hours)
-                // 13: Extended Hours (Sold Out of Sequence)
-                // 15: Market Center Official Close
-                // 16: Market Center Official Open
-                // 17: Market Center Opening Trade
-                // 18: Market Center Reopening Trade
-                // 19: Market Center Closing Trade
-                // 20: Next Day
-                // 21: Price Variation Trade
-                // 22: Prior Reference Price
-                // 25: Opening Prints
-                // 37: Odd Lot Trade - ambiguous, could be either side
-                // 41: Trade Thru Exempt
-                // 52: Contingent Trade
-                // 53: Qualified Contingent Trade (QCT)
+                    // The following codes are informational and don't indicate direction:
+                    // 0: Regular Sale
+                    // 1: Acquisition
+                    // 2: Average Price Trade
+                    // 4: Bunched Trade
+                    // 5: Bunched Sold Trade (despite name, indicates bunched reporting)
+                    // 7: Cash Sale
+                    // 8: Closing Prints
+                    // 9: Cross Trade
+                    // 10: Derivatively Priced
+                    // 11: Distribution
+                    // 12: Form T (Extended Hours)
+                    // 13: Extended Hours (Sold Out of Sequence)
+                    // 15: Market Center Official Close
+                    // 16: Market Center Official Open
+                    // 17: Market Center Opening Trade
+                    // 18: Market Center Reopening Trade
+                    // 19: Market Center Closing Trade
+                    // 20: Next Day
+                    // 21: Price Variation Trade
+                    // 22: Prior Reference Price
+                    // 25: Opening Prints
+                    // 37: Odd Lot Trade - ambiguous, could be either side
+                    // 41: Trade Thru Exempt
+                    // 52: Contingent Trade
+                    // 53: Qualified Contingent Trade (QCT)
             }
         }
 

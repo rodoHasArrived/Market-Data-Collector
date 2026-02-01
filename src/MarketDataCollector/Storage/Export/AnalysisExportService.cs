@@ -71,7 +71,7 @@ public sealed class AnalysisExportService
             var sourceFiles = FindSourceFiles(request);
             if (sourceFiles.Count is 0)
             {
-                result.Warnings = [..result.Warnings, "No source data found for the specified criteria"];
+                result.Warnings = [.. result.Warnings, "No source data found for the specified criteria"];
                 result.CompletedAt = DateTime.UtcNow;
                 return result;
             }
