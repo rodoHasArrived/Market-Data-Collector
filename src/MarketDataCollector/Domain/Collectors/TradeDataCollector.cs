@@ -163,7 +163,7 @@ public sealed class TradeDataCollector
             else if (bbo.BidPrice > 0m && update.Price <= bbo.BidPrice) aggressor = AggressorSide.Sell;
         }
 
-// -------- Trade record --------
+        // -------- Trade record --------
         var trade = new Trade(
             Timestamp: update.Timestamp,
             Symbol: symbol,
