@@ -40,7 +40,7 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
     private Uri? _wsUri;
 
     // Centralized subscription management with provider-specific ID range
-    private readonly SubscriptionManager _subscriptionManager = new(startingId: ProviderSubscriptionRanges.AlpacaStart);
+    private readonly Infrastructure.Shared.SubscriptionManager _subscriptionManager = new(startingId: ProviderSubscriptionRanges.AlpacaStart);
 
     // Cached serializer options to avoid allocations in hot path
     private static readonly JsonSerializerOptions s_serializerOptions = new()
