@@ -1,0 +1,13 @@
+# Known Vulnerabilities - Accepted Risk
+# This file documents vulnerabilities that are known and accepted due to third-party dependency constraints.
+# Each entry should include: Package name, Version, CVE/GHSA, Reason for acceptance
+
+# DotNetZip 1.16.0 - Directory Traversal (GHSA-xhg6-9j5j-w4vf / CVE-2024-48510)
+# Reason: Transitive dependency from QuantConnect.Lean 2.5.17414
+# Mitigation: Cannot upgrade QuantConnect.Lean to 2.5.17508+ (requires .NET 10, project uses .NET 9)
+#            DotNetZip 1.16.0 is the latest available version
+#            Vulnerability is directory traversal in ZIP extraction - QuantConnect.Lean uses this internally
+#            Not directly exposed to user-controlled input in our use case
+# Risk Level: Low (not exploitable in our context)
+# Tracking Issue: To be migrated to .NET 10 when QuantConnect.Lean stabilizes on .NET 10
+DotNetZip

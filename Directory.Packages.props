@@ -87,6 +87,24 @@
     <PackageVersion Include="System.Reactive" Version="6.1.0" />
   </ItemGroup>
 
+  <ItemGroup Label="Security - Transitive Dependency Overrides">
+    <!-- Override vulnerable transitive dependencies from QuantConnect.Lean and StockSharp -->
+    <!-- System.Net.Security 4.3.2 is the latest available version, addresses some vulnerabilities -->
+    <PackageVersion Include="System.Net.Security" Version="4.3.2" />
+    <!-- System.Drawing.Common 10.0.2 replaces vulnerable 4.7.0 -->
+    <PackageVersion Include="System.Drawing.Common" Version="10.0.2" />
+    <!-- System.Net.Http.WinHttpHandler 10.0.2 replaces vulnerable 4.4.0 -->
+    <PackageVersion Include="System.Net.Http.WinHttpHandler" Version="10.0.2" />
+    <!-- System.Private.ServiceModel 4.10.3 replaces vulnerable 4.4.0 -->
+    <PackageVersion Include="System.Private.ServiceModel" Version="4.10.3" />
+    <!-- System.ServiceModel.Primitives 4.10.3 replaces vulnerable 4.4.0 -->
+    <PackageVersion Include="System.ServiceModel.Primitives" Version="4.10.3" />
+    <!-- System.Formats.Asn1 10.0.2 replaces vulnerable 6.0.0 -->
+    <PackageVersion Include="System.Formats.Asn1" Version="10.0.2" />
+    <!-- System.Security.Cryptography.Pkcs 10.0.2 replaces vulnerable 6.0.1 -->
+    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.2" />
+  </ItemGroup>
+
   <ItemGroup Label="WebSocket">
     <PackageVersion Include="Websocket.Client" Version="5.3.0" />
   </ItemGroup>
