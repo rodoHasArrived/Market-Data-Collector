@@ -17,7 +17,6 @@ box "Collectors" #LightBlue
 end box
 participant "EventPipeline\n(IMarketEventPublisher)" as Pipeline
 participant "IStorageSink\n(Jsonl, Parquet)" as Storage
-participant "MassTransitPublisher" as MassTransit
 
 ' ==================== INITIALIZATION ====================
 == Initialization Phase ==
@@ -139,12 +138,6 @@ loop Batch Processing
         Storage -> Storage: Serialize(event) → JSON
         Storage -> Storage: WriteLineAsync(json)
         Storage --> Pipeline: OK
-
-        opt MassTransit Enabled
-            Pipeline -> MassTransit: PublishAsync(event)
-            MassTransit -> MassTransit: Convert → ITradeOccurred
-            MassTransit --> Pipeline: (fire-and-forget)
-        end
     end
 
     Pipeline -> Pipeline: UpdateMetrics()
