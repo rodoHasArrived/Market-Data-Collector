@@ -47,7 +47,22 @@ public sealed class QuoteCollector : IQuoteStateStore
         // We keep our own monotonically increasing per-symbol sequence for quotes.
         var nextSeq = _seq.AddOrUpdate(symbol, _ => 1, (_, v) => v + 1);
 
-        var payload = BboQuotePayload.FromUpdate(update, nextSeq);
+        var midPrice = (update.BidPrice + update.AskPrice) / 2m;
+        var spread = update.AskPrice - update.BidPrice;
+
+        var payload = new BboQuotePayload(
+            update.Timestamp,
+            update.Symbol,
+            update.BidPrice,
+            update.BidSize,
+            update.AskPrice,
+            update.AskSize,
+            midPrice,
+            spread,
+            nextSeq,
+            update.StreamId,
+            update.Venue
+        );
         _latest[symbol] = payload;
 
         return payload;

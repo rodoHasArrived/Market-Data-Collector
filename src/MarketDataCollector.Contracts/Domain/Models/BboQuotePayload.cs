@@ -17,28 +17,4 @@ public sealed record BboQuotePayload(
     long SequenceNumber,
     string? StreamId = null,
     string? Venue = null
-) : MarketEventPayload
-{
-    /// <summary>
-    /// Creates a BboQuotePayload from a MarketQuoteUpdate.
-    /// </summary>
-    public static BboQuotePayload FromUpdate(MarketDataCollector.Domain.Models.MarketQuoteUpdate update, long sequenceNumber)
-    {
-        var midPrice = (update.BidPrice + update.AskPrice) / 2m;
-        var spread = update.AskPrice - update.BidPrice;
-
-        return new BboQuotePayload(
-            update.Timestamp,
-            update.Symbol,
-            update.BidPrice,
-            update.BidSize,
-            update.AskPrice,
-            update.AskSize,
-            midPrice,
-            spread,
-            sequenceNumber,
-            update.StreamId,
-            update.Venue
-        );
-    }
-}
+) : MarketEventPayload;
