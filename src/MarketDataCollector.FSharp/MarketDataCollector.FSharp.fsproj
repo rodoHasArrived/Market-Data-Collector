@@ -41,7 +41,7 @@
     <PropertyGroup>
       <InteropOutput>$(MSBuildProjectDirectory)/Generated/MarketDataCollector.FSharp.Interop.g.cs</InteropOutput>
     </PropertyGroup>
-    <Exec Command="dotnet run --project &quot;$(MSBuildProjectDirectory)/../../tools/FSharpInteropGenerator/FSharpInteropGenerator.csproj&quot; -- --output &quot;$(InteropOutput)&quot;" />
+    <Exec Command="dotnet run --project &quot;$(MSBuildProjectDirectory)/../../build/dotnet/FSharpInteropGenerator/FSharpInteropGenerator.csproj&quot; -- --output &quot;$(InteropOutput)&quot;" />
     <ItemGroup>
       <None Include="$(InteropOutput)" Pack="true" PackagePath="contentFiles/any/any/Generated/" />
     </ItemGroup>

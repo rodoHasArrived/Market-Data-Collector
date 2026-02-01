@@ -57,7 +57,7 @@ public sealed class ConfigurationPipeline : IAsyncDisposable
             config = ApplyEnvironmentOverlay(config, configPath);
 
             // Run through common pipeline
-            return RunPipeline(config, configPath, environmentName, ConfigurationSource.File, options);
+            return RunPipeline(config, configPath, environmentName, ConfigurationOrigin.File, options);
         }
         catch (Exception ex)
         {
@@ -66,7 +66,7 @@ public sealed class ConfigurationPipeline : IAsyncDisposable
                 null,
                 new[] { $"Failed to load configuration: {ex.Message}" },
                 configPath,
-                ConfigurationSource.File);
+                ConfigurationOrigin.File);
         }
     }
 
@@ -79,7 +79,7 @@ public sealed class ConfigurationPipeline : IAsyncDisposable
         options ??= PipelineOptions.Default;
         var environmentName = GetEnvironmentName();
 
-        return RunPipeline(config, null, environmentName, ConfigurationSource.Programmatic, options);
+        return RunPipeline(config, null, environmentName, ConfigurationOrigin.Programmatic, options);
     }
 
     /// <summary>
@@ -92,13 +92,13 @@ public sealed class ConfigurationPipeline : IAsyncDisposable
             return ValidatedConfig.Failed(
                 null,
                 new[] { result.Message ?? "Wizard did not produce a valid configuration" },
-                source: ConfigurationSource.Wizard);
+                source: ConfigurationOrigin.Wizard);
         }
 
         options ??= PipelineOptions.Default;
         var environmentName = GetEnvironmentName();
 
-        return RunPipeline(result.Config, result.ConfigPath, environmentName, ConfigurationSource.Wizard, options);
+        return RunPipeline(result.Config, result.ConfigPath, environmentName, ConfigurationOrigin.Wizard, options);
     }
 
     /// <summary>
@@ -115,7 +115,7 @@ public sealed class ConfigurationPipeline : IAsyncDisposable
             warnings.AddRange(result.Recommendations.Select(r => $"Recommendation: {r}"));
         }
 
-        var validated = RunPipeline(result.Config, null, environmentName, ConfigurationSource.AutoConfig, options);
+        var validated = RunPipeline(result.Config, null, environmentName, ConfigurationOrigin.AutoConfig, options);
 
         // Merge auto-config specific info
         return validated with
@@ -133,7 +133,7 @@ public sealed class ConfigurationPipeline : IAsyncDisposable
         options ??= PipelineOptions.Default with { ApplySelfHealing = true };
         var environmentName = GetEnvironmentName();
 
-        return RunPipeline(config, configPath, environmentName, ConfigurationSource.HotReload, options);
+        return RunPipeline(config, configPath, environmentName, ConfigurationOrigin.HotReload, options);
     }
 
     #endregion
