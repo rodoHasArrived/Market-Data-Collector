@@ -76,7 +76,7 @@ jobs:
             echo "Filtering out known/accepted vulnerabilities from $KNOWN_VULNS..."
             while IFS= read -r package; do
               # Skip comments and empty lines
-              [[ "$package" =~ ^#.*$ ]] || [ -z "$package" ] && continue
+              ([[ "$package" =~ ^#.*$ ]] || [ -z "$package" ]) && continue
               echo "Suppressing known vulnerability: $package"
               sed -i "/$package/d" vuln-scan.txt
             done < "$KNOWN_VULNS"
