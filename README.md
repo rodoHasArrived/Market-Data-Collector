@@ -435,7 +435,7 @@ docker run -d -p 8080:8080 \
 
 ## Repository Structure
 
-**478 source files** | **466 C#** | **12 F#** | **50 test files** | **61 documentation files**
+**501 source files** | **489 C#** | **12 F#** | **48 test files** | **66 documentation files**
 
 ```
 Market-Data-Collector/
@@ -459,7 +459,7 @@ Market-Data-Collector/
 ├── tests/                # C# and F# test projects (50 files)
 ├── benchmarks/           # Performance benchmarks (BenchmarkDotNet)
 ├── MarketDataCollector.sln
-├── Makefile              # Build automation (67 targets)
+├── Makefile              # Build automation (65 targets)
 └── CLAUDE.md             # AI assistant guide
 ```
 

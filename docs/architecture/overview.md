@@ -416,7 +416,8 @@ The system supports multiple credential sources with priority resolution:
 1. **Environment Variables** – `NYSE_API_KEY`, `ALPACA_API_KEY`, etc.
 2. **Windows Credential Store** – Via UWP CredentialPicker
 3. **Configuration File** – `appsettings.json` (development only)
-4. **Azure Key Vault** – For cloud deployments (planned)
+
+Note: Cloud secret managers (Azure Key Vault, AWS Secrets Manager) are not currently implemented.
 
 ### Credential Testing & Expiration
 

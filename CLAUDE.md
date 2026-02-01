@@ -6,7 +6,7 @@ This document provides essential context for AI assistants (Claude, Copilot, etc
 
 Market Data Collector is a high-performance, cross-platform market data collection system built on **.NET 9.0** using **C# 11** and **F# 8.0**. It captures real-time and historical market microstructure data from multiple providers and persists it for downstream research, backtesting, and algorithmic trading.
 
-**Version:** 1.6.1 | **Status:** Production Ready | **Files:** 498 source files
+**Version:** 1.6.1 | **Status:** Production Ready | **Files:** 501 source files
 
 ### Key Capabilities
 - Real-time streaming from Interactive Brokers, Alpaca, NYSE, Polygon, StockSharp (90+ data sources)
@@ -22,13 +22,13 @@ Market Data Collector is a high-performance, cross-platform market data collecti
 ### Project Statistics
 | Metric | Count |
 |--------|-------|
-| Total Source Files | 498 |
-| C# Files | 486 |
+| Total Source Files | 501 |
+| C# Files | 489 |
 | F# Files | 12 |
-| Test Files | 53 |
-| Documentation Files | 61 |
+| Test Files | 48 |
+| Documentation Files | 66 |
 | Main Projects | 6 (+ 3 test/benchmark) |
-| Provider Implementations | 6 streaming, 10 historical |
+| Provider Implementations | 5 streaming, 10 historical |
 | Symbol Search Providers | 4 |
 | CI/CD Workflows | 21 |
 | Makefile Targets | 65 |
@@ -472,7 +472,9 @@ public interface IHistoricalDataProvider
 
 ## HTTP API Reference
 
-The application exposes a comprehensive REST API when running with `--ui` or `--mode web`.
+The application exposes a REST API when running with `--ui` or `--mode web`.
+
+**Implementation Note:** The codebase declares ~269 route constants in `UiApiRoutes.cs`, but approximately 136 endpoints have full handler implementations. Core endpoints (status, health, config, backfill) are fully functional. Some advanced endpoints may return stub responses or 501 Not Implemented.
 
 ### Core Endpoints
 | Endpoint | Method | Purpose |
@@ -1082,4 +1084,4 @@ See `docs/guides/troubleshooting.md` for detailed solutions.
 
 ---
 
-*Last Updated: 2026-01-31*
+*Last Updated: 2026-02-01*
