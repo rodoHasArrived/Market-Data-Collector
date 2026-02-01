@@ -100,7 +100,7 @@ public sealed class YahooFinanceHistoricalDataProvider : BaseHistoricalDataProvi
         {
             using var response = await Http.GetAsync(url, ct).ConfigureAwait(false);
 
-            var httpResult = await ResponseHandler.HandleResponseAsync(response, symbol, "daily bars", ct: ct).ConfigureAwait(false);
+            var httpResult = await HandleHttpResponseAsync(response, symbol, "daily bars", ct).ConfigureAwait(false);
             if (httpResult.IsNotFound)
             {
                 Log.Warning("Yahoo Finance: Symbol {Symbol} not found", symbol);
