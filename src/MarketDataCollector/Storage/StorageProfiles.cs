@@ -50,7 +50,7 @@ public static class StorageProfilePresets
                     Policies = options.Policies,
                     GenerateManifests = true,
                     EmbedChecksum = options.EmbedChecksum,
-                    PartitionStrategy = options.PartitionStrategy ?? new PartitionStrategy(PartitionDimension.Date, PartitionDimension.Symbol, DatePartition.Daily)
+                    PartitionStrategy = options.PartitionStrategy ?? new PartitionStrategy(PartitionDimension.Date, PartitionDimension.Symbol, DateGranularity: DatePartition.Daily)
                 };
             }),
         new StorageProfilePreset(
@@ -75,7 +75,7 @@ public static class StorageProfilePresets
                     Policies = options.Policies,
                     GenerateManifests = false,
                     EmbedChecksum = options.EmbedChecksum,
-                    PartitionStrategy = options.PartitionStrategy ?? new PartitionStrategy(PartitionDimension.Symbol, PartitionDimension.EventType, DatePartition.Hourly)
+                    PartitionStrategy = options.PartitionStrategy ?? new PartitionStrategy(PartitionDimension.Symbol, PartitionDimension.EventType, DateGranularity: DatePartition.Hourly)
                 };
             }),
         new StorageProfilePreset(
@@ -112,7 +112,7 @@ public static class StorageProfilePresets
                     Policies = options.Policies,
                     GenerateManifests = true,
                     EmbedChecksum = true,
-                    PartitionStrategy = options.PartitionStrategy ?? new PartitionStrategy(PartitionDimension.Date, PartitionDimension.Source, DatePartition.Monthly)
+                    PartitionStrategy = options.PartitionStrategy ?? new PartitionStrategy(PartitionDimension.Date, PartitionDimension.Source, DateGranularity: DatePartition.Monthly)
                 };
             })
     };
