@@ -4,6 +4,7 @@ using MarketDataCollector.Application.Pipeline;
 using MarketDataCollector.Contracts.Api;
 using MarketDataCollector.Domain.Collectors;
 using MarketDataCollector.Domain.Models;
+using HealthCheckDto = MarketDataCollector.Contracts.Api.HealthCheckItem;
 
 namespace MarketDataCollector.Application.UI;
 
@@ -76,13 +77,13 @@ public sealed class StatusEndpointHandlers
         var pipeline = _pipelineProvider();
         var integrity = _integrityProvider();
 
-        var checks = new List<HealthCheckItem>();
+        var checks = new List<HealthCheckDto>();
         var overallStatus = HealthStatus.Healthy;
 
         // Check 1: Drop rate
         if (metrics.DropRate >= CriticalDropRateThreshold)
         {
-            checks.Add(new HealthCheckItem
+            checks.Add(new HealthCheckDto
             {
                 Name = "drop_rate",
                 Status = "unhealthy",
@@ -92,7 +93,7 @@ public sealed class StatusEndpointHandlers
         }
         else if (metrics.DropRate >= HighDropRateThreshold)
         {
-            checks.Add(new HealthCheckItem
+            checks.Add(new HealthCheckDto
             {
                 Name = "drop_rate",
                 Status = "degraded",
@@ -102,7 +103,7 @@ public sealed class StatusEndpointHandlers
         }
         else
         {
-            checks.Add(new HealthCheckItem
+            checks.Add(new HealthCheckDto
             {
                 Name = "drop_rate",
                 Status = "healthy",
@@ -113,7 +114,7 @@ public sealed class StatusEndpointHandlers
         // Check 2: Queue utilization
         if (pipeline.QueueUtilization > 90)
         {
-            checks.Add(new HealthCheckItem
+            checks.Add(new HealthCheckDto
             {
                 Name = "queue",
                 Status = "unhealthy",
@@ -123,7 +124,7 @@ public sealed class StatusEndpointHandlers
         }
         else if (pipeline.QueueUtilization > 70)
         {
-            checks.Add(new HealthCheckItem
+            checks.Add(new HealthCheckDto
             {
                 Name = "queue",
                 Status = "degraded",
@@ -133,7 +134,7 @@ public sealed class StatusEndpointHandlers
         }
         else
         {
-            checks.Add(new HealthCheckItem
+            checks.Add(new HealthCheckDto
             {
                 Name = "queue",
                 Status = "healthy",
@@ -144,7 +145,7 @@ public sealed class StatusEndpointHandlers
         // Check 3: Data freshness
         if (metrics.Published > 0 && pipeline.TimeSinceLastFlush.TotalSeconds > StaleDataThresholdSeconds)
         {
-            checks.Add(new HealthCheckItem
+            checks.Add(new HealthCheckDto
             {
                 Name = "data_freshness",
                 Status = "degraded",
@@ -154,7 +155,7 @@ public sealed class StatusEndpointHandlers
         }
         else
         {
-            checks.Add(new HealthCheckItem
+            checks.Add(new HealthCheckDto
             {
                 Name = "data_freshness",
                 Status = "healthy",
@@ -166,7 +167,7 @@ public sealed class StatusEndpointHandlers
         var recentIntegrity = integrity.Count(e => e.Timestamp > DateTimeOffset.UtcNow.AddMinutes(-5));
         if (recentIntegrity > 10)
         {
-            checks.Add(new HealthCheckItem
+            checks.Add(new HealthCheckDto
             {
                 Name = "integrity",
                 Status = "degraded",
@@ -176,7 +177,7 @@ public sealed class StatusEndpointHandlers
         }
         else
         {
-            checks.Add(new HealthCheckItem
+            checks.Add(new HealthCheckDto
             {
                 Name = "integrity",
                 Status = "healthy",
@@ -187,7 +188,7 @@ public sealed class StatusEndpointHandlers
         // Check 5: Memory usage
         if (metrics.MemoryUsageMb > 1024)
         {
-            checks.Add(new HealthCheckItem
+            checks.Add(new HealthCheckDto
             {
                 Name = "memory",
                 Status = "degraded",
@@ -197,7 +198,7 @@ public sealed class StatusEndpointHandlers
         }
         else
         {
-            checks.Add(new HealthCheckItem
+            checks.Add(new HealthCheckDto
             {
                 Name = "memory",
                 Status = "healthy",
