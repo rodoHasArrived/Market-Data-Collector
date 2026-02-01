@@ -142,7 +142,7 @@ public sealed class ProviderFactory
         return new AlpacaMarketDataClient(
             tradeCollector: null!, // Will be set during initialization
             quoteCollector: null!, // Will be set during initialization
-            config: _config.Alpaca! with { KeyId = keyId, SecretKey = secretKey });
+            opt: _config.Alpaca! with { KeyId = keyId, SecretKey = secretKey });
     }
 
     private IMarketDataClient CreatePolygonStreamingClient()

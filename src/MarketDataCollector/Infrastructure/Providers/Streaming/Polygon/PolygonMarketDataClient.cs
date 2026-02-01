@@ -54,7 +54,7 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
     private readonly WebSocketConnectionConfig _connectionConfig = WebSocketConnectionConfig.Default;
 
     // Centralized subscription management with provider-specific ID range
-    private readonly SubscriptionManager _subscriptionManager = new(startingId: ProviderSubscriptionRanges.PolygonStart);
+    private readonly Infrastructure.Shared.SubscriptionManager _subscriptionManager = new(startingId: ProviderSubscriptionRanges.PolygonStart);
 
     // WebSocket connection - kept for protocol-specific handshake operations
     private ClientWebSocket? _ws;
@@ -407,7 +407,7 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
         {
             while (!ct.IsCancellationRequested && _ws?.State == WebSocketState.Open)
             {
-                WebSocketReceiveResult result;
+                ValueWebSocketReceiveResult result;
                 messageBuilder.Clear();
 
                 do
@@ -417,7 +417,7 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
                     if (result.MessageType == WebSocketMessageType.Close)
                     {
                         _log.Warning("Polygon WebSocket closed by server: {Status} {Description}",
-                            result.CloseStatus, result.CloseStatusDescription);
+                            _ws.CloseStatus, _ws.CloseStatusDescription);
                         _isConnected = false;
                         return;
                     }
@@ -582,17 +582,16 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
                 ? DateTimeOffset.FromUnixTimeMilliseconds(timestamp)
                 : DateTimeOffset.UtcNow;
 
-            var quote = new BboQuote(
+            var quote = new MarketQuoteUpdate(
                 Timestamp: ts,
                 Symbol: symbol,
                 BidPrice: bidPrice,
                 BidSize: bidSize,
                 AskPrice: askPrice,
                 AskSize: askSize,
-                MidPrice: bidPrice > 0 && askPrice > 0 ? (bidPrice + askPrice) / 2 : 0,
-                Spread: askPrice > 0 && bidPrice > 0 ? askPrice - bidPrice : 0,
-                SpreadBps: bidPrice > 0 && askPrice > 0 ? (askPrice - bidPrice) / ((bidPrice + askPrice) / 2) * 10000 : 0,
-                Exchange: MapExchangeCode(exchange));
+                SequenceNumber: null,
+                StreamId: "POLYGON",
+                Venue: MapExchangeCode(exchange));
 
             _quoteCollector.OnQuote(quote);
         }
