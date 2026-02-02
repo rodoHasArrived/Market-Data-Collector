@@ -21,7 +21,12 @@ public sealed class FakeMarketEventPublisher : IMarketEventPublisher
     {
         if (_publishFunc != null)
         {
-            return _publishFunc(evt);
+            var result = _publishFunc(evt);
+            if (result)
+            {
+                _events.Add(evt);
+            }
+            return result;
         }
         
         _events.Add(evt);
