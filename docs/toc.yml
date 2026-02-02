@@ -52,6 +52,12 @@
       href: adr/004-async-streaming-patterns.md
     - name: ADR-005 Attribute Discovery
       href: adr/005-attribute-based-discovery.md
+    - name: ADR-010 HttpClientFactory
+      href: adr/010-httpclient-factory.md
+    - name: ADR-011 Configuration & Credentials
+      href: adr/011-centralized-configuration-and-credentials.md
+    - name: ADR-012 Monitoring & Alerting
+      href: adr/012-monitoring-and-alerting-pipeline.md
 
 - name: Diagrams
   items:

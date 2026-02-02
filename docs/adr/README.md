@@ -16,6 +16,8 @@ An ADR is a document that captures an important architectural decision along wit
 | [ADR-004](004-async-streaming-patterns.md) | Async Streaming Patterns | Accepted | `IAsyncEnumerable<T>` usage |
 | [ADR-005](005-attribute-based-discovery.md) | Attribute-Based Provider Discovery | Accepted | `DataSourceAttribute` |
 | [ADR-010](010-httpclient-factory.md) | HttpClientFactory Lifecycle | Accepted | `HttpClientConfiguration` |
+| [ADR-011](011-centralized-configuration-and-credentials.md) | Centralized Configuration & Credentials | Accepted | `IConfigurationProvider`, `ICredentialStore` |
+| [ADR-012](012-monitoring-and-alerting-pipeline.md) | Unified Monitoring & Alerting Pipeline | Accepted | `IHealthCheckProvider`, `IAlertDispatcher` |
 
 ## ADR Lifecycle
 
@@ -40,4 +42,4 @@ This ensures documented decisions remain in sync with actual code.
 
 ---
 
-*Last Updated: 2026-01-30*
+*Last Updated: 2026-02-02*
