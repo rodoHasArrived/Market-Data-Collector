@@ -1,7 +1,7 @@
 using FluentAssertions;
 using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Domain.Models;
-using MarketDataCollector.Messaging.Publishers;
+// using MarketDataCollector.Messaging.Publishers; // Namespace doesn't exist - obsolete test
 using Moq;
 using Xunit;
 
