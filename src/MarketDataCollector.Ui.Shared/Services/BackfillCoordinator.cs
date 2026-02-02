@@ -156,7 +156,7 @@ public sealed class BackfillCoordinator : IDisposable
             TotalDays: totalDays,
             EstimatedTradingDays: tradingDays,
             Symbols: symbolPreviews.ToArray(),
-            EstimatedDurationSeconds: EstimateBackfillDuration(request.Symbols.Length, tradingDays),
+            EstimatedDurationSeconds: EstimateBackfillDuration(request.Symbols.Count, tradingDays),
             Notes: GetProviderNotes(providerInfo)
         );
     }
