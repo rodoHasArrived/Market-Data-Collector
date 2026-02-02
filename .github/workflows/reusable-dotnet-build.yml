@@ -57,7 +57,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v6.0.1
 
       - name: Setup .NET with Cache
         uses: ./.github/actions/setup-dotnet-cache
@@ -88,7 +88,7 @@ jobs:
 
       - name: Upload coverage
         if: inputs.collect-coverage && success()
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5.5.2
         with:
           directory: ./coverage
           fail_ci_if_error: false
@@ -96,7 +96,7 @@ jobs:
 
       - name: Upload build artifacts
         if: inputs.upload-artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6.0.0
         with:
           name: ${{ inputs.artifact-name }}
           path: |
@@ -106,7 +106,7 @@ jobs:
 
       - name: Upload test results on failure
         if: failure() && inputs.run-tests
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6.0.0
         with:
           name: test-failure-${{ inputs.cache-suffix || 'default' }}
           path: |
