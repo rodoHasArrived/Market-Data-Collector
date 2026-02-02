@@ -79,7 +79,7 @@ public sealed record IntegrityEvent(
         string? streamId = null,
         string? venue = null)
         => new(ts, symbol, IntegritySeverity.Error,
-            $"Invalid sequence number {sequenceNumber}: {reason}",
+            $"Invalid sequence number: {reason}",
             ErrorCode: 1004,
             SequenceNumber: sequenceNumber,
             StreamId: streamId,
