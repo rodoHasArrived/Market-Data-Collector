@@ -188,7 +188,7 @@ public sealed class ConfigurationPipeline : IAsyncDisposable
         AppConfig config,
         string? sourcePath,
         string? environmentName,
-        ConfigurationSource source,
+        ConfigurationOrigin source,
         PipelineOptions options)
     {
         var appliedFixes = new List<string>();

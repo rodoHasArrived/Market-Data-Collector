@@ -6,6 +6,7 @@ using MarketDataCollector.Application.Services;
 using MarketDataCollector.Application.Subscriptions.Models;
 using MarketDataCollector.Application.Subscriptions.Services;
 using MarketDataCollector.Contracts.Api;
+using MarketDataCollector.Contracts.Domain.Enums;
 using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Storage;
 using MarketDataCollector.Storage.Interfaces;
@@ -370,7 +371,7 @@ public sealed class UiServer : IAsyncDisposable
             {
                 var query = new FileSearchQuery(
                     Symbols: req.Symbols,
-                    Types: req.Types?.Select(t => Enum.Parse<Domain.Events.MarketEventType>(t, true)).ToArray(),
+                    Types: req.Types?.Select(t => Enum.Parse<MarketEventType>(t, true)).ToArray(),
                     Sources: req.Sources,
                     From: req.From,
                     To: req.To,
@@ -396,7 +397,7 @@ public sealed class UiServer : IAsyncDisposable
             {
                 var query = new FacetedSearchQuery(
                     Symbols: req.Symbols,
-                    Types: req.Types?.Select(t => Enum.Parse<Domain.Events.MarketEventType>(t, true)).ToArray(),
+                    Types: req.Types?.Select(t => Enum.Parse<MarketEventType>(t, true)).ToArray(),
                     Sources: req.Sources,
                     From: req.From,
                     To: req.To,
@@ -569,7 +570,7 @@ public sealed class UiServer : IAsyncDisposable
                 var rankings = await quality.RankSourcesAsync(
                     symbol,
                     date ?? DateTimeOffset.UtcNow.Date,
-                    Domain.Events.MarketEventType.Trade);
+                    MarketEventType.Trade);
                 return Results.Json(rankings, s_jsonOptions);
             }
             catch (Exception ex)

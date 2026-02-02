@@ -14,6 +14,7 @@ using MarketDataCollector.Application.Services;
 using MarketDataCollector.Application.Subscriptions.Services;
 using MarketDataCollector.Application.Testing;
 using MarketDataCollector.Application.UI;
+using MarketDataCollector.Contracts.Domain.Enums;
 using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Collectors;
 using MarketDataCollector.Domain.Events;
@@ -736,7 +737,7 @@ internal static class Program
             depthCollector.OnDepth(new MarketDepthUpdate(now, sym, 0, DepthOperation.Insert, OrderBookSide.Bid, 500.20m, 100m, "MM3"));
             depthCollector.OnDepth(new MarketDepthUpdate(now, sym, 0, DepthOperation.Insert, OrderBookSide.Ask, 500.22m, 90m, "MM4"));
 
-            tradeCollector.OnTrade(new MarketTradeUpdate(now, sym, 500.21m, 100, Domain.Models.AggressorSide.Buy, SequenceNumber: 1, StreamId: "SIM", Venue: "TEST"));
+            tradeCollector.OnTrade(new MarketTradeUpdate(now, sym, 500.21m, 100, AggressorSide.Buy, SequenceNumber: 1, StreamId: "SIM", Venue: "TEST"));
 
             await Task.Delay(200);
         }
