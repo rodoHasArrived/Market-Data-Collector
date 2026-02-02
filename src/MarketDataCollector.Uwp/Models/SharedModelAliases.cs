@@ -15,9 +15,17 @@ global using MarketDataCollector.Contracts.Api;
 global using MarketDataCollector.Contracts.Archive;
 global using MarketDataCollector.Contracts.Backfill;
 global using MarketDataCollector.Contracts.Credentials;
+global using MarketDataCollector.Contracts.Export;
 global using MarketDataCollector.Contracts.Manifest;
+global using MarketDataCollector.Contracts.Pipeline;
 global using MarketDataCollector.Contracts.Schema;
 global using MarketDataCollector.Contracts.Session;
+
+// Domain namespaces (Models, Events, Enums)
+global using MarketDataCollector.Contracts.Domain;
+global using MarketDataCollector.Contracts.Domain.Models;
+global using MarketDataCollector.Contracts.Domain.Events;
+global using MarketDataCollector.Contracts.Domain.Enums;
 
 // Configuration type aliases (Dto suffix -> non-Dto names for backwards compatibility)
 global using AppConfig = MarketDataCollector.Contracts.Configuration.AppConfigDto;
