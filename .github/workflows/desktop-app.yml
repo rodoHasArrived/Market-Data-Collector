@@ -55,10 +55,10 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v6.0.1
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6.2.0
         with:
           node-version: '20'
           cache: 'npm'
@@ -70,7 +70,7 @@ jobs:
         run: node build/node/generate-icons.mjs
 
       - name: Upload generated assets
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6.0.0
         with:
           name: generated-assets
           path: src/MarketDataCollector.Uwp/Assets/*.png
@@ -94,10 +94,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v6.0.1
 
       - name: Download generated assets
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7.0.0
         with:
           name: generated-assets
           path: src/MarketDataCollector.Uwp/Assets/
@@ -267,7 +267,7 @@ jobs:
         shell: pwsh
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6.0.0
         with:
           name: MarketDataCollector.Desktop-${{ matrix.rid }}
           path: MarketDataCollector.Desktop-${{ matrix.rid }}.zip
@@ -275,7 +275,7 @@ jobs:
 
       - name: Upload build logs
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6.0.0
         with:
           name: build-logs-${{ matrix.rid }}
           path: |
@@ -294,10 +294,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v6.0.1
 
       - name: Download generated assets
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7.0.0
         with:
           name: generated-assets
           path: src/MarketDataCollector.Uwp/Assets/
@@ -331,7 +331,7 @@ jobs:
             -DestinationPath MarketDataCollector.Desktop-msix-x64.zip
 
       - name: Upload MSIX artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6.0.0
         with:
           name: MarketDataCollector.Desktop-msix-x64
           path: MarketDataCollector.Desktop-msix-x64.zip
@@ -346,10 +346,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v6.0.1
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@v5.1.0
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
@@ -372,7 +372,7 @@ jobs:
 
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7.0.0
         with:
           path: artifacts
           pattern: MarketDataCollector.Desktop-*
@@ -388,7 +388,7 @@ jobs:
           ls -la release/
 
       - name: Upload to Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v2.5.0
         with:
           files: release/*.zip
           fail_on_unmatched_files: false
@@ -407,7 +407,7 @@ jobs:
 
     steps:
       - name: Delete generated-assets artifact
-        uses: geekyeggo/delete-artifact@v5
+        uses: geekyeggo/delete-artifact@v5.1.0
         with:
           name: generated-assets
           failOnError: false
