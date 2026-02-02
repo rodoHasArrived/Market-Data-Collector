@@ -229,10 +229,12 @@ Ensure TWS/Gateway is running with API enabled before starting the collector.
 
 ### NamingConvention Options
 
+> **Recommended**: `BySymbol` (default) provides the best balance of organization and query performance for most use cases.
+
 | Value | Structure | Best For |
 |-------|-----------|----------|
 | `Flat` | `{root}/{symbol}_{type}_{date}.jsonl` | Small datasets |
-| `BySymbol` | `{root}/{symbol}/{type}/{date}.jsonl` | Per-symbol analysis |
+| **`BySymbol`** ⭐ | **`{root}/{symbol}/{type}/{date}.jsonl`** | **Per-symbol analysis (Recommended Default)** |
 | `ByDate` | `{root}/{date}/{symbol}/{type}.jsonl` | Daily batch processing |
 | `ByType` | `{root}/{type}/{symbol}/{date}.jsonl` | Event type analysis |
 
