@@ -75,7 +75,17 @@ Optional secrets:
 
 Note: `GITHUB_TOKEN` is automatically provided by GitHub Actions.
 
-### 3. Enable Dependabot Alerts
+### 3. Allow Actions to Create Pull Requests
+
+**Settings** → **Actions** → **General**
+
+Set:
+- ✅ **Workflow permissions** → **Read and write permissions**
+- ✅ **Allow GitHub Actions to create and approve pull requests**
+
+This is required for workflows that open documentation/update PRs using the `gh` CLI.
+
+### 4. Enable Dependabot Alerts
 
 Go to: **Settings** → **Security** → **Code security and analysis**
 
@@ -84,7 +94,7 @@ Enable:
 - ✅ Dependabot security updates
 - ✅ Dependabot version updates
 
-### 4. Review First Workflow Runs
+### 5. Review First Workflow Runs
 
 - Go to **Actions** tab
 - Review any failing workflows
