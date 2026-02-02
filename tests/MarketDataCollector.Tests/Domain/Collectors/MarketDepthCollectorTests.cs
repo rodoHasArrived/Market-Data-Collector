@@ -4,6 +4,7 @@ using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Collectors;
 using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Domain.Models;
+using MarketDataCollector.Tests.TestHelpers;
 using Moq;
 using Xunit;
 
@@ -15,22 +16,17 @@ namespace MarketDataCollector.Tests;
 /// </summary>
 public class MarketDepthCollectorTests
 {
-    private readonly Mock<IMarketEventPublisher> _mockPublisher;
+    private readonly FakeMarketEventPublisher _publisher;
     private readonly MarketDepthCollector _collector;
     private readonly List<MarketEvent> _publishedEvents;
 
     public MarketDepthCollectorTests()
     {
-        _mockPublisher = new Mock<IMarketEventPublisher>();
         _publishedEvents = new List<MarketEvent>();
-
-        _mockPublisher
-            .Setup(p => p.TryPublish(It.IsAny<MarketEvent>()))
-            .Callback<MarketEvent>(e => _publishedEvents.Add(e))
-            .Returns(true);
+        _publisher = new FakeMarketEventPublisher(_publishedEvents);
 
         // Create collector with explicit subscription disabled for simpler testing
-        _collector = new MarketDepthCollector(_mockPublisher.Object, requireExplicitSubscription: false);
+        _collector = new MarketDepthCollector(_publisher, requireExplicitSubscription: false);
     }
 
     #region Basic Depth Update Tests
@@ -372,7 +368,7 @@ public class MarketDepthCollectorTests
     public void OnDepth_WithExplicitSubscriptionRequired_IgnoresUnsubscribedSymbols()
     {
         // Arrange
-        var collector = new MarketDepthCollector(_mockPublisher.Object, requireExplicitSubscription: true);
+        var collector = new MarketDepthCollector(_publisher, requireExplicitSubscription: true);
         _publishedEvents.Clear();
 
         // Act - No subscription, should be ignored
@@ -386,7 +382,7 @@ public class MarketDepthCollectorTests
     public void OnDepth_WithExplicitSubscription_ProcessesSubscribedSymbols()
     {
         // Arrange
-        var collector = new MarketDepthCollector(_mockPublisher.Object, requireExplicitSubscription: true);
+        var collector = new MarketDepthCollector(_publisher, requireExplicitSubscription: true);
         collector.RegisterSubscription("SPY");
         _publishedEvents.Clear();
 
@@ -401,7 +397,7 @@ public class MarketDepthCollectorTests
     public void UnregisterSubscription_IgnoresFutureUpdates()
     {
         // Arrange
-        var collector = new MarketDepthCollector(_mockPublisher.Object, requireExplicitSubscription: true);
+        var collector = new MarketDepthCollector(_publisher, requireExplicitSubscription: true);
         collector.RegisterSubscription("SPY");
         collector.OnDepth(CreateDepthUpdate("SPY", DepthOperation.Insert, OrderBookSide.Bid, 0, 450.00m, 100));
 
