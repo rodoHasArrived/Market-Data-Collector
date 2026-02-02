@@ -148,4 +148,16 @@
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.0.0" />
     <PackageVersion Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
   </ItemGroup>
+
+  <!-- Security Overrides for Transitive Dependencies -->
+  <!-- These packages override vulnerable transitive dependencies from StockSharp and other packages -->
+  <ItemGroup Label="Security Overrides">
+    <PackageVersion Include="System.Drawing.Common" Version="10.0.2" />
+    <PackageVersion Include="System.Net.Http.WinHttpHandler" Version="10.0.2" />
+    <PackageVersion Include="System.Net.Security" Version="4.3.2" />
+    <PackageVersion Include="System.Private.ServiceModel" Version="4.10.3" />
+    <PackageVersion Include="System.ServiceModel.Primitives" Version="4.10.3" />
+    <PackageVersion Include="System.Formats.Asn1" Version="10.0.2" />
+    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.2" />
+  </ItemGroup>
 </Project>
