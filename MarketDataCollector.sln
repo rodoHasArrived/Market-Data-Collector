@@ -8,7 +8,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MarketDataCollector.Ui", "s
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MarketDataCollector.Uwp", "src\MarketDataCollector.Uwp\MarketDataCollector.Uwp.csproj", "{D8888888-E999-F000-A111-B22222222222}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MarketDataCollector.Wpf", "src\MarketDataCollector.Wpf\MarketDataCollector.Wpf.csproj", "{W1111111-P222-F333-A444-B55555555555}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MarketDataCollector.Wpf", "src\MarketDataCollector.Wpf\MarketDataCollector.Wpf.csproj", "{6F8D3A55-3E95-4F9D-9C8F-DBA9A6230B1E}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MarketDataCollector.Contracts", "src\MarketDataCollector.Contracts\MarketDataCollector.Contracts.csproj", "{F1111111-A222-B333-C444-D55555555555}"
 EndProject
