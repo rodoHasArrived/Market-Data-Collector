@@ -121,7 +121,7 @@ public sealed class ProviderFactory
             DataSourceKind.Alpaca => CreateAlpacaStreamingClient(),
             DataSourceKind.Polygon => CreatePolygonStreamingClient(),
             DataSourceKind.StockSharp => CreateStockSharpStreamingClient(),
-            DataSourceKind.IB or DataSourceKind.None => CreateIBStreamingClient(),
+            DataSourceKind.IB => CreateIBStreamingClient(),
             _ => CreateIBStreamingClient()
         };
 

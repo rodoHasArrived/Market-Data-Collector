@@ -5,6 +5,8 @@ using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Providers.Backfill;
 using MarketDataCollector.Infrastructure.Providers.Core;
 using CoreBackfillCoordinator = MarketDataCollector.Application.UI.BackfillCoordinator;
+using BackfillRequest = MarketDataCollector.Application.Backfill.BackfillRequest;
+using BackfillResult = MarketDataCollector.Application.Backfill.BackfillResult;
 
 namespace MarketDataCollector.Ui.Shared.Services;
 
@@ -100,7 +102,7 @@ public sealed class BackfillCoordinator : IDisposable
     /// <summary>
     /// Gets health status of all providers.
     /// </summary>
-    public Task<IReadOnlyDictionary<string, MarketDataCollector.Application.Monitoring.ProviderHealthStatus>> CheckProviderHealthAsync(CancellationToken ct = default)
+    public Task<IReadOnlyDictionary<string, Infrastructure.Providers.Backfill.ProviderHealthStatus>> CheckProviderHealthAsync(CancellationToken ct = default)
         => _core.CheckProviderHealthAsync(ct);
 
     /// <summary>

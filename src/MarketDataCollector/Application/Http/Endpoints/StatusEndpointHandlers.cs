@@ -442,22 +442,26 @@ public sealed class StatusEndpointHandlers
         }
 
         var summary = _providerLatencyProvider();
+        var globalAvgMs = summary.Providers.Any() 
+            ? summary.Providers.Average(p => p.MeanMs) 
+            : 0.0;
+        
         return (new ProviderLatencySummaryDto
         {
-            Timestamp = summary.Timestamp,
+            Timestamp = summary.CalculatedAt,
             Providers = summary.Providers.Select(p => new ProviderLatencyStatsDto
             {
                 Provider = p.Provider,
-                AverageMs = Math.Round(p.AverageMs, 2),
+                AverageMs = Math.Round(p.MeanMs, 2),
                 MinMs = Math.Round(p.MinMs, 2),
                 MaxMs = Math.Round(p.MaxMs, 2),
                 P50Ms = Math.Round(p.P50Ms, 2),
                 P95Ms = Math.Round(p.P95Ms, 2),
                 P99Ms = Math.Round(p.P99Ms, 2),
                 SampleCount = p.SampleCount,
-                IsHealthy = p.IsHealthy
+                IsHealthy = p.P99Ms < 1000.0 // Consider healthy if p99 latency is under 1 second
             }).ToList(),
-            GlobalAverageMs = Math.Round(summary.GlobalAverageMs, 2),
+            GlobalAverageMs = Math.Round(globalAvgMs, 2),
             GlobalP99Ms = Math.Round(summary.GlobalP99Ms, 2)
         }, null);
     }

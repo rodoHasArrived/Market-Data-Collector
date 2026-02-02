@@ -280,7 +280,7 @@ public sealed class UiServer : IAsyncDisposable
                 if (req.Symbols is null || req.Symbols.Length == 0)
                     return Results.BadRequest("At least one symbol is required.");
 
-                var request = new BackfillRequest(
+                var request = new Application.Backfill.BackfillRequest(
                     string.IsNullOrWhiteSpace(req.Provider) ? "composite" : req.Provider!,
                     req.Symbols,
                     req.From,

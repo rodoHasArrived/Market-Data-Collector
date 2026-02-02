@@ -43,6 +43,23 @@ public sealed record MarketEvent(
     public static MarketEvent HistoricalBar(DateTimeOffset ts, string symbol, HistoricalBar bar, long seq = 0, string source = "stooq")
         => new(ts, symbol, MarketEventType.HistoricalBar, bar, seq == 0 ? bar.SequenceNumber : seq, source);
 
-    public static MarketEvent AggregateBar(DateTimeOffset ts, string symbol, AggregateBar bar, long seq = 0, string source = "Polygon")
-        => new(ts, symbol, MarketEventType.AggregateBar, bar, seq == 0 ? bar.SequenceNumber : seq, source);
+    public static MarketEvent AggregateBar(DateTimeOffset ts, string symbol, Domain.Models.AggregateBar bar, long seq = 0, string source = "Polygon")
+    {
+        var payload = new Contracts.Domain.Models.AggregateBarPayload(
+            Symbol: bar.Symbol,
+            StartTime: bar.StartTime,
+            EndTime: bar.EndTime,
+            Open: bar.Open,
+            High: bar.High,
+            Low: bar.Low,
+            Close: bar.Close,
+            Volume: bar.Volume,
+            Vwap: bar.Vwap,
+            TradeCount: bar.TradeCount,
+            Timeframe: (Contracts.Domain.Models.AggregateTimeframe)bar.Timeframe,
+            Source: bar.Source,
+            SequenceNumber: seq == 0 ? bar.SequenceNumber : seq
+        );
+        return new(ts, symbol, MarketEventType.AggregateBar, payload, seq == 0 ? bar.SequenceNumber : seq, source);
+    }
 }
