@@ -178,9 +178,7 @@ public sealed class ParquetStorageSink : IStorageSink
     {
         var trades = events
             .Where(e => e.Payload is Trade)
-            .Select(e => (Event: e, Trade: e.Payload as Trade))
-            .Where(t => t.Trade is not null)
-            .Select(t => (t.Event, Trade: t.Trade!))
+            .Select(e => (Event: e, Trade: (Trade)e.Payload))
             .ToList();
 
         if (trades.Count is 0) return;
