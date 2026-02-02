@@ -3,7 +3,7 @@
 A high-performance, cross-platform market data collection system for real-time and historical market microstructure data.
 
 [![.NET](https://img.shields.io/badge/.NET-9.0-blue)](https://dotnet.microsoft.com/)
-[![C#](https://img.shields.io/badge/C%23-11-blue)](https://docs.microsoft.com/en-us/dotnet/csharp/)
+[![C#](https://img.shields.io/badge/C%23-13-blue)](https://docs.microsoft.com/en-us/dotnet/csharp/)
 [![F#](https://img.shields.io/badge/F%23-8.0-blue)](https://fsharp.org/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue)](https://www.docker.com/)
 [![License](https://img.shields.io/badge/license-See%20LICENSE-green)](LICENSE)
@@ -13,7 +13,7 @@ A high-performance, cross-platform market data collection system for real-time a
 [![Docker Build](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/docker-build.yml/badge.svg)](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/docker-build.yml)
 [![Code Quality](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/code-quality.yml/badge.svg)](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/code-quality.yml)
 
-**Status**: Production Ready | **Version**: 1.6.1 | **Last Updated**: 2026-01-31
+**Status**: Development / Pilot Ready
 
 ---
 
@@ -146,7 +146,7 @@ dotnet run --project src/MarketDataCollector.Wpf/MarketDataCollector.Wpf.csproj
 
 ## Technical Overview
 
-Market Data Collector is built on **.NET 9.0** using **C# 11** and **F# 8.0**. It uses a modular, event-driven architecture with bounded channels for high-throughput data processing. The system supports deployment as a single self-contained executable, a Docker container, or a systemd service.
+Market Data Collector is built on **.NET 9.0** using **C# 13** and **F# 8.0**. It uses a modular, event-driven architecture with bounded channels for high-throughput data processing. The system supports deployment as a single self-contained executable, a Docker container, or a systemd service.
 
 ## Key Features
 
@@ -169,7 +169,7 @@ Market Data Collector is built on **.NET 9.0** using **C# 11** and **F# 8.0**. I
 
 ### Monitoring and Observability
 - **Web dashboard**: Modern HTML dashboard for live monitoring, integrity event tracking, and backfill controls
-- **Native Windows app**: UWP/XAML desktop application with full configuration and monitoring capabilities
+- **Native Windows apps**: WPF desktop application (recommended) and a legacy UWP app for Windows-only configuration and monitoring
 - **Metrics and status**: Prometheus metrics at `/metrics`, JSON status at `/status`, HTML dashboard at `/`
 - **Logging**: Structured logging via Serilog with ready-to-use sinks
 
