@@ -599,39 +599,75 @@ public enum ProviderTypeKind
 /// </summary>
 public sealed class ProviderCatalogEntry
 {
+    /// <summary>
+    /// Gets the unique provider identifier.
+    /// </summary>
     [JsonPropertyName("providerId")]
     public string ProviderId { get; init; } = string.Empty;
 
+    /// <summary>
+    /// Gets the human-friendly display name for the provider.
+    /// </summary>
     [JsonPropertyName("displayName")]
     public string DisplayName { get; init; } = string.Empty;
 
+    /// <summary>
+    /// Gets a short description of the provider.
+    /// </summary>
     [JsonPropertyName("description")]
     public string Description { get; init; } = string.Empty;
 
+    /// <summary>
+    /// Gets the provider type classification.
+    /// </summary>
     [JsonPropertyName("providerType")]
     public ProviderTypeKind ProviderType { get; init; }
 
+    /// <summary>
+    /// Gets a value indicating whether credentials are required.
+    /// </summary>
     [JsonPropertyName("requiresCredentials")]
     public bool RequiresCredentials { get; init; }
 
+    /// <summary>
+    /// Gets the credential fields required by the provider.
+    /// </summary>
     [JsonPropertyName("credentialFields")]
     public CredentialFieldInfo[] CredentialFields { get; init; } = Array.Empty<CredentialFieldInfo>();
 
+    /// <summary>
+    /// Gets rate limit information for the provider, if available.
+    /// </summary>
     [JsonPropertyName("rateLimit")]
     public RateLimitInfo? RateLimit { get; init; }
 
+    /// <summary>
+    /// Gets informational notes for the provider.
+    /// </summary>
     [JsonPropertyName("notes")]
     public string[] Notes { get; init; } = Array.Empty<string>();
 
+    /// <summary>
+    /// Gets warning messages for the provider.
+    /// </summary>
     [JsonPropertyName("warnings")]
     public string[] Warnings { get; init; } = Array.Empty<string>();
 
+    /// <summary>
+    /// Gets the supported market identifiers.
+    /// </summary>
     [JsonPropertyName("supportedMarkets")]
     public string[] SupportedMarkets { get; init; } = new[] { "US" };
 
+    /// <summary>
+    /// Gets the data types offered by the provider.
+    /// </summary>
     [JsonPropertyName("dataTypes")]
     public string[] DataTypes { get; init; } = Array.Empty<string>();
 
+    /// <summary>
+    /// Gets the provider capability metadata.
+    /// </summary>
     [JsonPropertyName("capabilities")]
     public CapabilityInfo Capabilities { get; init; } = new();
 }
@@ -639,6 +675,11 @@ public sealed class ProviderCatalogEntry
 /// <summary>
 /// Credential field metadata for UI form generation.
 /// </summary>
+/// <param name="Name">The machine-readable credential field name.</param>
+/// <param name="EnvironmentVariable">The environment variable name, if applicable.</param>
+/// <param name="DisplayName">The display label for the credential field.</param>
+/// <param name="Required">Whether the credential field is required.</param>
+/// <param name="DefaultValue">The default value to use when none is provided.</param>
 public sealed record CredentialFieldInfo(
     [property: JsonPropertyName("name")] string Name,
     [property: JsonPropertyName("envVar")] string? EnvironmentVariable,
@@ -652,15 +693,27 @@ public sealed record CredentialFieldInfo(
 /// </summary>
 public sealed class RateLimitInfo
 {
+    /// <summary>
+    /// Gets the maximum requests allowed per time window.
+    /// </summary>
     [JsonPropertyName("maxRequestsPerWindow")]
     public int MaxRequestsPerWindow { get; init; }
 
+    /// <summary>
+    /// Gets the length of the rate-limit window in seconds.
+    /// </summary>
     [JsonPropertyName("windowSeconds")]
     public int WindowSeconds { get; init; }
 
+    /// <summary>
+    /// Gets the minimum delay between requests in milliseconds.
+    /// </summary>
     [JsonPropertyName("minDelayMs")]
     public int MinDelayMs { get; init; }
 
+    /// <summary>
+    /// Gets the rate-limit description for display purposes.
+    /// </summary>
     [JsonPropertyName("description")]
     public string Description { get; init; } = string.Empty;
 }
@@ -671,33 +724,63 @@ public sealed class RateLimitInfo
 /// </summary>
 public sealed class CapabilityInfo
 {
+    /// <summary>
+    /// Gets a value indicating whether streaming is supported.
+    /// </summary>
     [JsonPropertyName("supportsStreaming")]
     public bool SupportsStreaming { get; init; }
 
+    /// <summary>
+    /// Gets a value indicating whether market depth is supported.
+    /// </summary>
     [JsonPropertyName("supportsMarketDepth")]
     public bool SupportsMarketDepth { get; init; }
 
+    /// <summary>
+    /// Gets the maximum number of depth levels supported, if any.
+    /// </summary>
     [JsonPropertyName("maxDepthLevels")]
     public int? MaxDepthLevels { get; init; }
 
+    /// <summary>
+    /// Gets a value indicating whether adjusted prices are supported.
+    /// </summary>
     [JsonPropertyName("supportsAdjustedPrices")]
     public bool SupportsAdjustedPrices { get; init; }
 
+    /// <summary>
+    /// Gets a value indicating whether dividend data is supported.
+    /// </summary>
     [JsonPropertyName("supportsDividends")]
     public bool SupportsDividends { get; init; }
 
+    /// <summary>
+    /// Gets a value indicating whether split data is supported.
+    /// </summary>
     [JsonPropertyName("supportsSplits")]
     public bool SupportsSplits { get; init; }
 
+    /// <summary>
+    /// Gets a value indicating whether intraday bars are supported.
+    /// </summary>
     [JsonPropertyName("supportsIntraday")]
     public bool SupportsIntraday { get; init; }
 
+    /// <summary>
+    /// Gets a value indicating whether trade data is supported.
+    /// </summary>
     [JsonPropertyName("supportsTrades")]
     public bool SupportsTrades { get; init; }
 
+    /// <summary>
+    /// Gets a value indicating whether quote data is supported.
+    /// </summary>
     [JsonPropertyName("supportsQuotes")]
     public bool SupportsQuotes { get; init; }
 
+    /// <summary>
+    /// Gets a value indicating whether auction data is supported.
+    /// </summary>
     [JsonPropertyName("supportsAuctions")]
     public bool SupportsAuctions { get; init; }
 

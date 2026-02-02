@@ -12,7 +12,7 @@ namespace MarketDataCollector.Application.Monitoring;
 /// </summary>
 /// <remarks>
 /// Different securities have different tick sizes:
-/// - Most US equities: $0.01 for prices >= $1.00, $0.0001 for prices < $1.00
+/// - Most US equities: $0.01 for prices &gt;= $1.00, $0.0001 for prices &lt; $1.00
 /// - Futures/Forex: Various tick sizes depending on contract
 /// This validator detects when prices fall on unexpected increments.
 /// </remarks>
@@ -297,7 +297,7 @@ public sealed record TickSizeValidatorConfig
     public decimal DefaultTickSize { get; init; } = 0.01m;
 
     /// <summary>
-    /// Tick size for sub-dollar prices (< $1.00).
+    /// Tick size for sub-dollar prices (&lt; $1.00).
     /// Standard US equity sub-dollar tick size is $0.0001.
     /// </summary>
     public decimal SubDollarTickSize { get; init; } = 0.0001m;
