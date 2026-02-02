@@ -51,4 +51,43 @@ public sealed record BboQuotePayload(
             Venue: venue
         );
     }
+
+    /// <summary>
+    /// Creates a BboQuotePayload from a MarketQuoteUpdate with conditional spread/mid-price calculation.
+    /// Returns null for spread and mid-price if:
+    /// - Either bid or ask price is 0
+    /// - Market is crossed (bid > ask)
+    /// </summary>
+    /// <param name="update">The market quote update</param>
+    /// <param name="seq">The sequence number to use (overrides update.SequenceNumber)</param>
+    /// <returns>A new BboQuotePayload</returns>
+    public static BboQuotePayload FromUpdate(MarketQuoteUpdate update, long seq)
+    {
+        if (update is null) throw new ArgumentNullException(nameof(update));
+
+        // Calculate spread and mid-price conditionally
+        decimal? midPrice = null;
+        decimal? spread = null;
+
+        // Only calculate if both prices are non-zero and market is not crossed
+        if (update.BidPrice > 0 && update.AskPrice > 0 && update.BidPrice <= update.AskPrice)
+        {
+            midPrice = (update.BidPrice + update.AskPrice) / 2m;
+            spread = update.AskPrice - update.BidPrice;
+        }
+
+        return new BboQuotePayload(
+            Timestamp: update.Timestamp,
+            Symbol: update.Symbol,
+            BidPrice: update.BidPrice,
+            BidSize: update.BidSize,
+            AskPrice: update.AskPrice,
+            AskSize: update.AskSize,
+            MidPrice: midPrice,
+            Spread: spread,
+            SequenceNumber: seq,
+            StreamId: update.StreamId,
+            Venue: update.Venue
+        );
+    }
 }
