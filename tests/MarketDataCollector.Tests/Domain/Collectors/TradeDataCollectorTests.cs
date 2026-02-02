@@ -22,7 +22,17 @@ public class TradeDataCollectorTests
 
         _mockPublisher
             .Setup(p => p.TryPublish(It.IsAny<MarketEvent>()))
-            .Callback<MarketEvent>(e => _publishedEvents.Add(e))
+            .Callback(() =>
+            {
+                // Capture the event from mock invocations
+                var invocations = _mockPublisher.Invocations;
+                if (invocations.Count > 0)
+                {
+                    var lastInvocation = invocations[invocations.Count - 1];
+                    var evt = (MarketEvent)lastInvocation.Arguments[0];
+                    _publishedEvents.Add(evt);
+                }
+            })
             .Returns(true);
 
         _collector = new TradeDataCollector(_mockPublisher.Object);

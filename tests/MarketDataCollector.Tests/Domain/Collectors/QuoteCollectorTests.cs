@@ -22,10 +22,23 @@ public class QuoteCollectorTests
 
         _mockPublisher
             .Setup(p => p.TryPublish(It.IsAny<MarketEvent>()))
-            .Callback<MarketEvent>(e => _publishedEvents.Add(e))
             .Returns(true);
 
         _collector = new QuoteCollector(_mockPublisher.Object);
+    }
+
+    // Helper method to capture events from mock invocations
+    private void CapturePublishedEvents()
+    {
+        _publishedEvents.Clear();
+        foreach (var invocation in _mockPublisher.Invocations)
+        {
+            if (invocation.Method.Name == nameof(IMarketEventPublisher.TryPublish))
+            {
+                var evt = (MarketEvent)invocation.Arguments[0];
+                _publishedEvents.Add(evt);
+            }
+        }
     }
 
     [Fact]
@@ -45,6 +58,7 @@ public class QuoteCollectorTests
 
         // Act
         _collector.OnQuote(update);
+        CapturePublishedEvents();
 
         // Assert
         _publishedEvents.Should().HaveCount(1);
