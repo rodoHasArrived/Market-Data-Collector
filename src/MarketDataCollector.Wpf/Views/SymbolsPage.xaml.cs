@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -15,11 +17,13 @@ namespace MarketDataCollector.Wpf.Views;
 public partial class SymbolsPage : Page
 {
     private readonly ConfigService _configService;
+    private readonly WatchlistService _watchlistService;
     private readonly ObservableCollection<SymbolViewModel> _symbols = new();
     private readonly ObservableCollection<SymbolViewModel> _filteredSymbols = new();
     private readonly ObservableCollection<WatchlistInfo> _watchlists = new();
     private SymbolViewModel? _selectedSymbol;
     private bool _isEditMode;
+    private CancellationTokenSource? _loadCts;
 
     private static readonly Dictionary<string, string[]> SymbolTemplates = new()
     {
@@ -35,14 +39,30 @@ public partial class SymbolsPage : Page
         InitializeComponent();
 
         _configService = ConfigService.Instance;
+        _watchlistService = WatchlistService.Instance;
         SymbolsListView.ItemsSource = _filteredSymbols;
         WatchlistsView.ItemsSource = _watchlists;
+
+        _watchlistService.WatchlistsChanged += OnWatchlistsChanged;
+        Unloaded += OnPageUnloaded;
     }
 
-    private void OnPageLoaded(object sender, RoutedEventArgs e)
+    private void OnPageUnloaded(object sender, RoutedEventArgs e)
+    {
+        _watchlistService.WatchlistsChanged -= OnWatchlistsChanged;
+        _loadCts?.Cancel();
+        _loadCts?.Dispose();
+    }
+
+    private void OnWatchlistsChanged(object? sender, WatchlistsChangedEventArgs e)
+    {
+        Dispatcher.Invoke(() => LoadWatchlistsAsync());
+    }
+
+    private async void OnPageLoaded(object sender, RoutedEventArgs e)
     {
         LoadSymbols();
-        LoadWatchlists();
+        await LoadWatchlistsAsync();
     }
 
     private void LoadSymbols()
@@ -60,12 +80,35 @@ public partial class SymbolsPage : Page
         SymbolCountText.Text = $"{_symbols.Count} symbols";
     }
 
-    private void LoadWatchlists()
+    private async Task LoadWatchlistsAsync()
     {
-        _watchlists.Clear();
-        _watchlists.Add(new WatchlistInfo { Name = "My Tech Picks", SymbolCount = "8 symbols" });
-        _watchlists.Add(new WatchlistInfo { Name = "Dividend Stocks", SymbolCount = "12 symbols" });
-        _watchlists.Add(new WatchlistInfo { Name = "Day Trading", SymbolCount = "5 symbols" });
+        _loadCts?.Cancel();
+        _loadCts = new CancellationTokenSource();
+
+        try
+        {
+            var watchlists = await _watchlistService.GetAllWatchlistsAsync(_loadCts.Token);
+            _watchlists.Clear();
+            foreach (var wl in watchlists)
+            {
+                _watchlists.Add(new WatchlistInfo
+                {
+                    Id = wl.Id,
+                    Name = wl.Name,
+                    SymbolCount = $"{wl.Symbols.Count} symbols",
+                    Color = wl.Color,
+                    IsPinned = wl.IsPinned
+                });
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Cancelled - ignore
+        }
+        catch (Exception ex)
+        {
+            LoggingService.Instance.LogError("Failed to load watchlists", ex);
+        }
     }
 
     private void ApplyFilters()
@@ -393,28 +436,134 @@ public partial class SymbolsPage : Page
         }
     }
 
-    private void LoadWatchlist_Click(object sender, RoutedEventArgs e)
+    private async void LoadWatchlist_Click(object sender, RoutedEventArgs e)
     {
-        NotificationService.Instance.ShowNotification(
-            "Watchlist",
-            "Watchlist loading will be available in a future update.",
-            NotificationType.Info);
+        if (sender is not Button btn || btn.Tag is not string watchlistId)
+        {
+            // If no specific watchlist, show selection dialog
+            if (_watchlists.Count == 0)
+            {
+                NotificationService.Instance.ShowNotification(
+                    "No Watchlists",
+                    "No watchlists available. Create a watchlist first.",
+                    NotificationType.Warning);
+                return;
+            }
+
+            // Use first watchlist or show a selection prompt
+            var firstWatchlist = _watchlists.FirstOrDefault();
+            if (firstWatchlist == null) return;
+            watchlistId = firstWatchlist.Id;
+        }
+
+        try
+        {
+            var watchlist = await _watchlistService.GetWatchlistAsync(watchlistId);
+            if (watchlist == null)
+            {
+                NotificationService.Instance.ShowNotification(
+                    "Watchlist Not Found",
+                    "The selected watchlist could not be found.",
+                    NotificationType.Error);
+                return;
+            }
+
+            // Clear current symbols and load watchlist symbols
+            _symbols.Clear();
+            foreach (var symbol in watchlist.Symbols)
+            {
+                _symbols.Add(new SymbolViewModel
+                {
+                    Symbol = symbol,
+                    SubscribeTrades = true,
+                    SubscribeDepth = false,
+                    DepthLevels = 10,
+                    Exchange = "SMART"
+                });
+            }
+
+            ApplyFilters();
+            SymbolCountText.Text = $"{_symbols.Count} symbols";
+
+            NotificationService.Instance.ShowNotification(
+                "Watchlist Loaded",
+                $"Loaded {watchlist.Symbols.Count} symbols from '{watchlist.Name}'.",
+                NotificationType.Success);
+        }
+        catch (Exception ex)
+        {
+            LoggingService.Instance.LogError("Failed to load watchlist", ex);
+            NotificationService.Instance.ShowNotification(
+                "Error",
+                "Failed to load watchlist. Please try again.",
+                NotificationType.Error);
+        }
     }
 
-    private void SaveWatchlist_Click(object sender, RoutedEventArgs e)
+    private async void SaveWatchlist_Click(object sender, RoutedEventArgs e)
     {
-        NotificationService.Instance.ShowNotification(
-            "Save Watchlist",
-            "Watchlist saving will be available in a future update.",
-            NotificationType.Info);
+        if (_symbols.Count == 0)
+        {
+            NotificationService.Instance.ShowNotification(
+                "No Symbols",
+                "Add some symbols before saving a watchlist.",
+                NotificationType.Warning);
+            return;
+        }
+
+        // Show save dialog
+        var dialog = new SaveWatchlistDialog(_watchlists.Select(w => w.Name).ToList());
+        if (dialog.ShowDialog() != true) return;
+
+        var name = dialog.WatchlistName;
+        var saveAsNew = dialog.SaveAsNew;
+        var selectedWatchlistId = dialog.SelectedWatchlistId;
+
+        try
+        {
+            var symbols = _symbols.Select(s => s.Symbol).ToArray();
+
+            if (saveAsNew || string.IsNullOrEmpty(selectedWatchlistId))
+            {
+                // Create new watchlist
+                var watchlist = await _watchlistService.CreateWatchlistAsync(name, symbols);
+                NotificationService.Instance.ShowNotification(
+                    "Watchlist Created",
+                    $"Created watchlist '{watchlist.Name}' with {symbols.Length} symbols.",
+                    NotificationType.Success);
+            }
+            else
+            {
+                // Update existing watchlist - clear and add all symbols
+                var existing = await _watchlistService.GetWatchlistAsync(selectedWatchlistId);
+                if (existing != null)
+                {
+                    await _watchlistService.RemoveSymbolsAsync(selectedWatchlistId, existing.Symbols);
+                    await _watchlistService.AddSymbolsAsync(selectedWatchlistId, symbols);
+                    NotificationService.Instance.ShowNotification(
+                        "Watchlist Updated",
+                        $"Updated watchlist '{existing.Name}' with {symbols.Length} symbols.",
+                        NotificationType.Success);
+                }
+            }
+
+            await LoadWatchlistsAsync();
+        }
+        catch (Exception ex)
+        {
+            LoggingService.Instance.LogError("Failed to save watchlist", ex);
+            NotificationService.Instance.ShowNotification(
+                "Error",
+                "Failed to save watchlist. Please try again.",
+                NotificationType.Error);
+        }
     }
 
     private void ManageWatchlists_Click(object sender, RoutedEventArgs e)
     {
-        NotificationService.Instance.ShowNotification(
-            "Manage Watchlists",
-            "Watchlist management will be available in a future update.",
-            NotificationType.Info);
+        // Navigate to the Watchlist management page
+        var navigationService = NavigationService.Instance;
+        navigationService.NavigateTo(typeof(WatchlistPage));
     }
 
     private void RefreshList_Click(object sender, RoutedEventArgs e)
@@ -472,10 +621,192 @@ public class SymbolViewModel
 }
 
 /// <summary>
-/// Watchlist information model.
+/// Watchlist information model for display.
 /// </summary>
 public class WatchlistInfo
 {
+    public string Id { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string SymbolCount { get; set; } = string.Empty;
+    public string? Color { get; set; }
+    public bool IsPinned { get; set; }
+
+    public SolidColorBrush ColorBrush
+    {
+        get
+        {
+            if (string.IsNullOrEmpty(Color))
+                return new SolidColorBrush(Colors.Gray);
+
+            try
+            {
+                var color = (System.Windows.Media.Color)ColorConverter.ConvertFromString(Color);
+                return new SolidColorBrush(color);
+            }
+            catch
+            {
+                return new SolidColorBrush(Colors.Gray);
+            }
+        }
+    }
+}
+
+/// <summary>
+/// Dialog for saving watchlists.
+/// </summary>
+public class SaveWatchlistDialog : Window
+{
+    private readonly TextBox _nameBox;
+    private readonly ComboBox _existingCombo;
+    private readonly CheckBox _saveAsNewCheck;
+    private readonly List<string> _existingWatchlists;
+
+    public string WatchlistName => _nameBox.Text;
+    public bool SaveAsNew => _saveAsNewCheck.IsChecked ?? true;
+    public string? SelectedWatchlistId { get; private set; }
+
+    public SaveWatchlistDialog(List<string> existingWatchlists)
+    {
+        _existingWatchlists = existingWatchlists;
+
+        Title = "Save Watchlist";
+        Width = 400;
+        Height = 220;
+        WindowStartupLocation = WindowStartupLocation.CenterOwner;
+        ResizeMode = ResizeMode.NoResize;
+        Background = new SolidColorBrush((System.Windows.Media.Color)ColorConverter.ConvertFromString("#1E1E2E"));
+
+        var grid = new Grid { Margin = new Thickness(16) };
+        grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+        grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+        // Save as new checkbox
+        _saveAsNewCheck = new CheckBox
+        {
+            Content = "Create new watchlist",
+            IsChecked = true,
+            Foreground = Brushes.White,
+            Margin = new Thickness(0, 0, 0, 12)
+        };
+        _saveAsNewCheck.Checked += (_, _) => UpdateUIState();
+        _saveAsNewCheck.Unchecked += (_, _) => UpdateUIState();
+        Grid.SetRow(_saveAsNewCheck, 0);
+        grid.Children.Add(_saveAsNewCheck);
+
+        // Name label
+        var nameLabel = new TextBlock
+        {
+            Text = "Watchlist Name:",
+            Foreground = Brushes.White,
+            Margin = new Thickness(0, 0, 0, 4)
+        };
+        Grid.SetRow(nameLabel, 1);
+        grid.Children.Add(nameLabel);
+
+        // Name textbox
+        _nameBox = new TextBox
+        {
+            Margin = new Thickness(0, 0, 0, 12),
+            Background = new SolidColorBrush((System.Windows.Media.Color)ColorConverter.ConvertFromString("#2A2A3E")),
+            Foreground = Brushes.White,
+            BorderBrush = new SolidColorBrush((System.Windows.Media.Color)ColorConverter.ConvertFromString("#3A3A4E")),
+            Padding = new Thickness(8, 4, 8, 4)
+        };
+        Grid.SetRow(_nameBox, 2);
+        grid.Children.Add(_nameBox);
+
+        // Existing watchlist label
+        var existingLabel = new TextBlock
+        {
+            Text = "Or update existing:",
+            Foreground = Brushes.Gray,
+            Margin = new Thickness(0, 0, 0, 4)
+        };
+        Grid.SetRow(existingLabel, 3);
+        grid.Children.Add(existingLabel);
+
+        // Existing watchlist combo
+        _existingCombo = new ComboBox
+        {
+            Margin = new Thickness(0, 0, 0, 16),
+            IsEnabled = false,
+            Background = new SolidColorBrush((System.Windows.Media.Color)ColorConverter.ConvertFromString("#2A2A3E")),
+            Foreground = Brushes.White
+        };
+        foreach (var name in existingWatchlists)
+        {
+            _existingCombo.Items.Add(name);
+        }
+        Grid.SetRow(_existingCombo, 4);
+        grid.Children.Add(_existingCombo);
+
+        // Buttons
+        var buttonPanel = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Right
+        };
+        Grid.SetRow(buttonPanel, 5);
+
+        var cancelButton = new Button
+        {
+            Content = "Cancel",
+            Width = 80,
+            Margin = new Thickness(0, 0, 8, 0),
+            Background = new SolidColorBrush((System.Windows.Media.Color)ColorConverter.ConvertFromString("#3A3A4E")),
+            Foreground = Brushes.White,
+            BorderThickness = new Thickness(0),
+            Padding = new Thickness(8, 4, 8, 4)
+        };
+        cancelButton.Click += (_, _) => { DialogResult = false; Close(); };
+        buttonPanel.Children.Add(cancelButton);
+
+        var saveButton = new Button
+        {
+            Content = "Save",
+            Width = 80,
+            Background = new SolidColorBrush((System.Windows.Media.Color)ColorConverter.ConvertFromString("#4CAF50")),
+            Foreground = Brushes.White,
+            BorderThickness = new Thickness(0),
+            Padding = new Thickness(8, 4, 8, 4)
+        };
+        saveButton.Click += OnSaveClick;
+        buttonPanel.Children.Add(saveButton);
+
+        grid.Children.Add(buttonPanel);
+        Content = grid;
+    }
+
+    private void UpdateUIState()
+    {
+        var isNew = _saveAsNewCheck.IsChecked ?? true;
+        _nameBox.IsEnabled = isNew;
+        _existingCombo.IsEnabled = !isNew && _existingWatchlists.Count > 0;
+    }
+
+    private void OnSaveClick(object sender, RoutedEventArgs e)
+    {
+        if (SaveAsNew)
+        {
+            if (string.IsNullOrWhiteSpace(_nameBox.Text))
+            {
+                MessageBox.Show("Please enter a watchlist name.", "Validation Error",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+        }
+        else if (_existingCombo.SelectedItem == null)
+        {
+            MessageBox.Show("Please select an existing watchlist.", "Validation Error",
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        DialogResult = true;
+        Close();
+    }
 }

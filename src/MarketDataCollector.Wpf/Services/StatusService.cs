@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace MarketDataCollector.Wpf.Services;
@@ -58,15 +60,26 @@ public sealed class StatusService
     /// <summary>
     /// Gets status from the API endpoint.
     /// </summary>
+    /// <param name="ct">Cancellation token.</param>
     /// <returns>A task containing the status information.</returns>
-    public async Task<SimpleStatus?> GetStatusAsync()
+    public async Task<SimpleStatus?> GetStatusAsync(CancellationToken ct = default)
     {
         try
         {
-            var response = await _httpClient.GetAsync($"{_baseUrl}/api/status");
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            cts.CancelAfter(TimeSpan.FromSeconds(10));
+
+            var statusTask = _httpClient.GetAsync($"{_baseUrl}/api/status", cts.Token);
+            var providerTask = GetProviderStatusAsync(cts.Token);
+
+            await Task.WhenAll(statusTask, providerTask);
+
+            var response = await statusTask;
+            var providerInfo = await providerTask;
+
             if (response.IsSuccessStatusCode)
             {
-                var json = await response.Content.ReadAsStringAsync();
+                var json = await response.Content.ReadAsStringAsync(cts.Token);
                 var apiStatus = JsonSerializer.Deserialize<ApiStatusResponse>(json, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
@@ -80,7 +93,50 @@ public sealed class StatusService
                         Dropped = apiStatus.Metrics.Dropped,
                         Integrity = apiStatus.Metrics.Integrity,
                         Historical = apiStatus.Metrics.HistoricalBars,
-                        Provider = null // TODO: Add provider info if available
+                        Provider = providerInfo
+                    };
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Request was cancelled - return null
+        }
+        catch
+        {
+            // Return null on error - caller will handle
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Gets provider status from the API endpoint.
+    /// </summary>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>A task containing the provider information.</returns>
+    public async Task<ProviderStatusInfo?> GetProviderStatusAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync($"{_baseUrl}/api/providers/status", ct);
+            if (response.IsSuccessStatusCode)
+            {
+                var json = await response.Content.ReadAsStringAsync(ct);
+                var providerStatus = JsonSerializer.Deserialize<ProviderStatusResponse>(json, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+                if (providerStatus != null)
+                {
+                    return new ProviderStatusInfo
+                    {
+                        ActiveProvider = providerStatus.ActiveProvider,
+                        IsConnected = providerStatus.IsConnected,
+                        ConnectionCount = providerStatus.ConnectionCount,
+                        LastHeartbeat = providerStatus.LastHeartbeat,
+                        AvailableProviders = providerStatus.AvailableProviders ?? new List<string>()
                     };
                 }
             }
@@ -91,6 +147,34 @@ public sealed class StatusService
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Gets the list of available streaming providers.
+    /// </summary>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>A task containing the list of available providers.</returns>
+    public async Task<IReadOnlyList<ProviderInfo>> GetAvailableProvidersAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync($"{_baseUrl}/api/providers/catalog", ct);
+            if (response.IsSuccessStatusCode)
+            {
+                var json = await response.Content.ReadAsStringAsync(ct);
+                var providers = JsonSerializer.Deserialize<List<ProviderInfo>>(json, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+                return providers ?? new List<ProviderInfo>();
+            }
+        }
+        catch
+        {
+            // Return empty list on error
+        }
+
+        return new List<ProviderInfo>();
     }
 
     /// <summary>
@@ -214,6 +298,76 @@ public sealed class StatusChangedEventArgs : EventArgs
 }
 
 /// <summary>
+/// Simplified status for display in the WPF UI.
+/// </summary>
+public sealed class SimpleStatus
+{
+    /// <summary>Total events published.</summary>
+    public long Published { get; set; }
+
+    /// <summary>Total events dropped.</summary>
+    public long Dropped { get; set; }
+
+    /// <summary>Total integrity events.</summary>
+    public long Integrity { get; set; }
+
+    /// <summary>Total historical bars received.</summary>
+    public long Historical { get; set; }
+
+    /// <summary>Current provider status information.</summary>
+    public ProviderStatusInfo? Provider { get; set; }
+}
+
+/// <summary>
+/// Provider status information.
+/// </summary>
+public sealed class ProviderStatusInfo
+{
+    /// <summary>Name of the currently active provider.</summary>
+    public string? ActiveProvider { get; set; }
+
+    /// <summary>Whether the provider is connected.</summary>
+    public bool IsConnected { get; set; }
+
+    /// <summary>Number of active connections.</summary>
+    public int ConnectionCount { get; set; }
+
+    /// <summary>Last heartbeat timestamp.</summary>
+    public DateTimeOffset? LastHeartbeat { get; set; }
+
+    /// <summary>List of available providers.</summary>
+    public IReadOnlyList<string> AvailableProviders { get; set; } = new List<string>();
+
+    /// <summary>
+    /// Gets a display string for the provider status.
+    /// </summary>
+    public string DisplayStatus => IsConnected
+        ? $"Connected to {ActiveProvider ?? "Unknown"}"
+        : "Disconnected";
+}
+
+/// <summary>
+/// Provider information for display.
+/// </summary>
+public sealed class ProviderInfo
+{
+    /// <summary>Provider identifier.</summary>
+    public string ProviderId { get; set; } = string.Empty;
+
+    /// <summary>Display name for the provider.</summary>
+    public string DisplayName { get; set; } = string.Empty;
+
+    /// <summary>Description of the provider.</summary>
+    public string Description { get; set; } = string.Empty;
+
+    /// <summary>Provider type (Streaming, Backfill, Hybrid).</summary>
+    public string ProviderType { get; set; } = string.Empty;
+
+    /// <summary>Whether the provider requires credentials.</summary>
+    public bool RequiresCredentials { get; set; }
+}
+
+/// <summary>
 /// API status response model.
 /// </summary>
 internal sealed class ApiStatusResponse
@@ -230,4 +384,16 @@ internal sealed class ApiMetrics
     public long Dropped { get; set; }
     public long Integrity { get; set; }
     public long HistoricalBars { get; set; }
+}
+
+/// <summary>
+/// Provider status API response model.
+/// </summary>
+internal sealed class ProviderStatusResponse
+{
+    public string? ActiveProvider { get; set; }
+    public bool IsConnected { get; set; }
+    public int ConnectionCount { get; set; }
+    public DateTimeOffset? LastHeartbeat { get; set; }
+    public List<string>? AvailableProviders { get; set; }
 }
