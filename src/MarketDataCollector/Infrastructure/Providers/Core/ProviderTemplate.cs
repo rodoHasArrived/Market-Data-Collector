@@ -1,6 +1,7 @@
 using MarketDataCollector.Contracts.Api;
 using MarketDataCollector.Infrastructure.Providers.Backfill;
 using MarketDataCollector.Infrastructure.Providers.SymbolSearch;
+using RateLimitInfo = MarketDataCollector.Infrastructure.Providers.Backfill.RateLimitInfo;
 
 namespace MarketDataCollector.Infrastructure.Providers.Core;
 
