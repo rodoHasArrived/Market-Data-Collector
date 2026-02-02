@@ -222,6 +222,10 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           BRANCH="docs/auto-update-$(date +%Y%m%d-%H%M%S)"
+          
+          # Save branch name immediately for fallback step (in case any subsequent command fails)
+          echo "BRANCH_NAME=$BRANCH" >> $GITHUB_ENV
+          
           git checkout -b "$BRANCH"
 
           git config user.name "github-actions[bot]"
@@ -231,9 +235,6 @@ jobs:
           git commit -m "docs: auto-update provider documentation"
 
           git push -u origin "$BRANCH"
-
-          # Save branch name for fallback step (before gh pr create that might fail)
-          echo "BRANCH_NAME=$BRANCH" >> $GITHUB_ENV
 
           gh pr create \
             --title "docs: Auto-update provider documentation" \
@@ -259,6 +260,13 @@ jobs:
           github.event.inputs.create_pr == 'true' &&
           steps.create-pr.outcome == 'failure'
         run: |
+          # Validate BRANCH_NAME is set
+          if [ -z "${{ env.BRANCH_NAME }}" ]; then
+            echo "::error::BRANCH_NAME not set. The step may have failed before branch creation."
+            echo "::notice::Please check the logs and create a branch manually."
+            exit 1
+          fi
+          
           echo "::warning::PR creation failed. This is likely due to GitHub Actions permissions."
           echo "::notice::A branch has been created with the documentation updates: ${{ env.BRANCH_NAME }}"
           echo "::notice::You can create the PR manually at: https://github.com/${{ github.repository }}/compare/${{ env.BRANCH_NAME }}"
