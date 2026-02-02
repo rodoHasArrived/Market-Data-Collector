@@ -15,6 +15,7 @@ global using MarketDataCollector.Contracts.Api;
 global using MarketDataCollector.Contracts.Archive;
 global using MarketDataCollector.Contracts.Backfill;
 global using MarketDataCollector.Contracts.Credentials;
+global using MarketDataCollector.Contracts.Export;
 global using MarketDataCollector.Contracts.Manifest;
 global using MarketDataCollector.Contracts.Schema;
 global using MarketDataCollector.Contracts.Session;
