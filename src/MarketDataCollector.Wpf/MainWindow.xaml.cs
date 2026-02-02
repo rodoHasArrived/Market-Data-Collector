@@ -1,9 +1,12 @@
+using System;
+using System.ComponentModel;
+using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Media;
+using MarketDataCollector.Wpf.Contracts;
 using MarketDataCollector.Wpf.Services;
-using Microsoft.Extensions.DependencyInjection;
+using MarketDataCollector.Wpf.Views;
+using SysNavigation = System.Windows.Navigation;
 
 namespace MarketDataCollector.Wpf;
 
@@ -14,91 +17,54 @@ namespace MarketDataCollector.Wpf;
 public partial class MainWindow : Window
 {
     private readonly IConnectionService _connectionService;
-    private readonly INavigationService _navigationService;
-    private readonly INotificationService _notificationService;
-    private readonly IKeyboardShortcutService _keyboardShortcutService;
-    private readonly IMessagingService _messagingService;
+    private readonly NavigationService _navigationService;
 
-    public MainWindow(
-        IConnectionService connectionService,
-        INavigationService navigationService,
-        INotificationService notificationService,
-        IKeyboardShortcutService keyboardShortcutService,
-        IMessagingService messagingService)
+    public MainWindow()
     {
         InitializeComponent();
 
-        _connectionService = connectionService;
-        _navigationService = navigationService;
-        _notificationService = notificationService;
-        _keyboardShortcutService = keyboardShortcutService;
-        _messagingService = messagingService;
-
-        // Initialize navigation service with the frame
-        _navigationService.Initialize(MainFrame);
+        // Get service instances
+        _connectionService = ConnectionService.Instance;
+        _navigationService = NavigationService.Instance;
 
         // Subscribe to keyboard shortcuts
-        _keyboardShortcutService.ShortcutInvoked += OnShortcutInvoked;
+        KeyboardShortcutService.Instance.ShortcutInvoked += OnShortcutInvoked;
 
         // Subscribe to notifications for in-app display
-        _notificationService.NotificationReceived += OnNotificationReceived;
-
-        // Subscribe to connection status changes
-        _connectionService.ConnectionStatusChanged += OnConnectionStatusChanged;
-
-        // Set up keyboard shortcuts
-        SetupKeyboardShortcuts();
-
-        // Navigate to the dashboard page
-        NavigateToDashboard(this, null!);
-
-        // Clean up event subscriptions when window closes
-        Closed += OnWindowClosed;
+        NotificationService.Instance.NotificationReceived += OnNotificationReceived;
     }
 
-    /// <summary>
-    /// Sets up keyboard shortcuts for the application.
-    /// </summary>
-    private void SetupKeyboardShortcuts()
+    private void OnWindowLoaded(object sender, RoutedEventArgs e)
     {
-        // Navigation shortcuts
-        InputBindings.Add(new KeyBinding(
-            new RelayCommand(_ => _navigationService.NavigateTo("Dashboard")),
-            Key.D, ModifierKeys.Control));
+        // Initialize navigation service with the frame
+        _navigationService.Initialize(RootFrame);
 
-        InputBindings.Add(new KeyBinding(
-            new RelayCommand(_ => _navigationService.NavigateTo("Symbols")),
-            Key.S, ModifierKeys.Control));
+        // Initialize keyboard shortcuts
+        KeyboardShortcutService.Instance.Initialize(this);
 
-        InputBindings.Add(new KeyBinding(
-            new RelayCommand(_ => _navigationService.NavigateTo("Backfill")),
-            Key.B, ModifierKeys.Control));
-
-        InputBindings.Add(new KeyBinding(
-            new RelayCommand(_ => _navigationService.NavigateTo("Settings")),
-            Key.OemComma, ModifierKeys.Control));
-
-        // Collector control shortcuts
-        InputBindings.Add(new KeyBinding(
-            new RelayCommand(async _ => await StartCollectorAsync()),
-            Key.F5, ModifierKeys.None));
-
-        InputBindings.Add(new KeyBinding(
-            new RelayCommand(async _ => await StopCollectorAsync()),
-            Key.F6, ModifierKeys.None));
-
-        // Theme toggle
-        InputBindings.Add(new KeyBinding(
-            new RelayCommand(_ => ToggleTheme()),
-            Key.T, ModifierKeys.Control | ModifierKeys.Shift));
+        // Navigate to the main page
+        RootFrame.Navigate(new MainPage());
     }
 
-    private void OnWindowClosed(object? sender, EventArgs e)
+    private void OnWindowClosing(object? sender, CancelEventArgs e)
     {
         // Unsubscribe from all events to prevent memory leaks
-        _keyboardShortcutService.ShortcutInvoked -= OnShortcutInvoked;
-        _notificationService.NotificationReceived -= OnNotificationReceived;
-        _connectionService.ConnectionStatusChanged -= OnConnectionStatusChanged;
+        KeyboardShortcutService.Instance.ShortcutInvoked -= OnShortcutInvoked;
+        NotificationService.Instance.NotificationReceived -= OnNotificationReceived;
+    }
+
+    private void OnRootFrameNavigated(object sender, NavigationEventArgs e)
+    {
+        if (e.Content is FrameworkElement element)
+        {
+            KeyboardShortcutService.Instance.Initialize(element);
+        }
+    }
+
+    private void OnWindowKeyDown(object sender, KeyEventArgs e)
+    {
+        // Route key events to keyboard shortcut service
+        KeyboardShortcutService.Instance.HandleKeyDown(e);
     }
 
     private void OnShortcutInvoked(object? sender, ShortcutInvokedEventArgs e)
@@ -128,17 +94,66 @@ public partial class MainWindow : Window
                 _ = StopCollectorAsync();
                 break;
 
+            // Backfill shortcuts
+            case "RunBackfill":
+                _navigationService.NavigateTo("Backfill");
+                break;
+            case "PauseBackfill":
+                // Send message to BackfillPage when active
+                MessagingService.Instance.Send("PauseBackfill");
+                break;
+            case "CancelBackfill":
+                // Send message to BackfillPage when active
+                MessagingService.Instance.Send("CancelBackfill");
+                break;
+
+            // Symbol shortcuts
+            case "AddSymbol":
+                _navigationService.NavigateTo("Symbols");
+                MessagingService.Instance.Send("AddSymbol");
+                break;
+            case "SearchSymbols":
+                // Focus search box in current page
+                MessagingService.Instance.Send("FocusSearch");
+                break;
+            case "DeleteSelected":
+                // Send delete message to current page
+                MessagingService.Instance.Send("DeleteSelected");
+                break;
+            case "SelectAll":
+                // Send select all message to current page
+                MessagingService.Instance.Send("SelectAll");
+                break;
+
             // View shortcuts
             case "ToggleTheme":
-                ToggleTheme();
+                ThemeService.Instance.ToggleTheme();
+                break;
+            case "ViewLogs":
+                _navigationService.NavigateTo("ServiceManager");
                 break;
             case "RefreshStatus":
-                _messagingService.Send("RefreshStatus");
+                // Send refresh message to current page
+                MessagingService.Instance.Send("RefreshStatus");
+                break;
+            case "ZoomIn":
+                MessagingService.Instance.Send("ZoomIn");
+                break;
+            case "ZoomOut":
+                MessagingService.Instance.Send("ZoomOut");
                 break;
 
             // General shortcuts
+            case "Save":
+                // Send save message to current page
+                MessagingService.Instance.Send("Save");
+                break;
             case "Help":
                 _navigationService.NavigateTo("Help");
+                break;
+            case "QuickCommand":
+                // Focus the search box for quick command entry
+                MessagingService.Instance.Send("QuickCommand");
                 break;
         }
     }
@@ -159,22 +174,28 @@ public partial class MainWindow : Window
             var success = await _connectionService.ConnectAsync(provider);
             if (success)
             {
-                await _notificationService.NotifySuccessAsync(
+                NotificationService.Instance.ShowNotification(
                     "Collector Started",
-                    "Data collection has started successfully.");
+                    "Data collection has started successfully.",
+                    NotificationType.Success,
+                    "collector");
             }
             else
             {
-                await _notificationService.NotifyErrorAsync(
+                NotificationService.Instance.ShowNotification(
                     "Start Failed",
-                    "Failed to start the data collector. Check service connection.");
+                    "Failed to start the data collector. Check service connection.",
+                    NotificationType.Error,
+                    "collector");
             }
         }
         catch (Exception ex)
         {
-            await _notificationService.NotifyErrorAsync(
+            NotificationService.Instance.ShowNotification(
                 "Start Error",
-                $"Error starting collector: {ex.Message}");
+                $"Error starting collector: {ex.Message}",
+                NotificationType.Error,
+                "collector");
         }
     }
 
@@ -186,108 +207,25 @@ public partial class MainWindow : Window
         try
         {
             await _connectionService.DisconnectAsync();
-            await _notificationService.NotifyWarningAsync(
+            NotificationService.Instance.ShowNotification(
                 "Collector Stopped",
-                "Data collection has been stopped.");
+                "Data collection has been stopped.",
+                NotificationType.Warning,
+                "collector");
         }
         catch (Exception ex)
         {
-            await _notificationService.NotifyErrorAsync(
+            NotificationService.Instance.ShowNotification(
                 "Stop Error",
-                $"Error stopping collector: {ex.Message}");
+                $"Error stopping collector: {ex.Message}",
+                NotificationType.Error,
+                "collector");
         }
-    }
-
-    /// <summary>
-    /// Toggles between light and dark themes.
-    /// </summary>
-    private void ToggleTheme()
-    {
-        var themeService = App.Services?.GetService<IThemeService>();
-        themeService?.ToggleTheme();
     }
 
     private void OnNotificationReceived(object? sender, NotificationEventArgs e)
     {
         // In-app notification handling can be added here
-        // For now, showing a simple message
-        Dispatcher.Invoke(() =>
-        {
-            // Could display a toast notification or update a notification panel
-            System.Diagnostics.Debug.WriteLine($"Notification: {e.Title} - {e.Message}");
-        });
+        // For now, notifications are handled by the NotificationService
     }
-
-    private void OnConnectionStatusChanged(object? sender, ConnectionStatusChangedEventArgs e)
-    {
-        // Update the status indicator on the UI thread
-        Dispatcher.Invoke(() =>
-        {
-            StatusText.Text = e.Status;
-
-            // Update indicator color based on connection status
-            StatusIndicator.Background = e.Status.ToLowerInvariant() switch
-            {
-                "connected" => new SolidColorBrush(Colors.LimeGreen),
-                "connecting" => new SolidColorBrush(Colors.Orange),
-                "disconnected" => new SolidColorBrush(Colors.Gray),
-                "error" => new SolidColorBrush(Colors.Red),
-                _ => new SolidColorBrush(Colors.Gray)
-            };
-        });
-    }
-
-    // Navigation button handlers
-    private void MenuButton_Click(object sender, RoutedEventArgs e)
-    {
-        // Toggle navigation panel visibility
-        NavigationPanel.Visibility = NavigationPanel.Visibility == Visibility.Visible
-            ? Visibility.Collapsed
-            : Visibility.Visible;
-    }
-
-    private void NavigateToDashboard(object sender, RoutedEventArgs e)
-    {
-        _navigationService.NavigateTo("Dashboard");
-    }
-
-    private void NavigateToSymbols(object sender, RoutedEventArgs e)
-    {
-        _navigationService.NavigateTo("Symbols");
-    }
-
-    private void NavigateToBackfill(object sender, RoutedEventArgs e)
-    {
-        _navigationService.NavigateTo("Backfill");
-    }
-
-    private void NavigateToSettings(object sender, RoutedEventArgs e)
-    {
-        _navigationService.NavigateTo("Settings");
-    }
-}
-
-/// <summary>
-/// Simple relay command implementation for WPF commands.
-/// </summary>
-public class RelayCommand : ICommand
-{
-    private readonly Action<object?> _execute;
-    private readonly Func<object?, bool>? _canExecute;
-
-    public RelayCommand(Action<object?> execute, Func<object?, bool>? canExecute = null)
-    {
-        _execute = execute ?? throw new ArgumentNullException(nameof(execute));
-        _canExecute = canExecute;
-    }
-
-    public event EventHandler? CanExecuteChanged
-    {
-        add => CommandManager.RequerySuggested += value;
-        remove => CommandManager.RequerySuggested -= value;
-    }
-
-    public bool CanExecute(object? parameter) => _canExecute?.Invoke(parameter) ?? true;
-
-    public void Execute(object? parameter) => _execute(parameter);
 }

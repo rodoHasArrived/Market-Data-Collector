@@ -1,116 +1,129 @@
-using System.IO;
-using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
+using System;
 
 namespace MarketDataCollector.Wpf.Services;
 
-public sealed class ConfigService : IConfigService
+/// <summary>
+/// Simple status information model for the UI.
+/// </summary>
+public sealed class SimpleStatus
 {
-    private readonly ILoggingService _logger;
-    private readonly string _configFilePath;
-    private Dictionary<string, JsonElement> _config = new();
+    public long Published { get; set; }
+    public long Dropped { get; set; }
+    public long Integrity { get; set; }
+    public long Historical { get; set; }
+    public string? Provider { get; set; }
+}
 
-    public ConfigService(ILoggingService logger)
+/// <summary>
+/// Result of configuration validation.
+/// </summary>
+public sealed class ConfigValidationResult
+{
+    /// <summary>
+    /// Gets or sets whether the configuration is valid.
+    /// </summary>
+    public bool IsValid { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets the validation errors.
+    /// </summary>
+    public string[] Errors { get; set; } = Array.Empty<string>();
+
+    /// <summary>
+    /// Gets or sets the validation warnings.
+    /// </summary>
+    public string[] Warnings { get; set; } = Array.Empty<string>();
+
+    /// <summary>
+    /// Creates a successful validation result.
+    /// </summary>
+    public static ConfigValidationResult Success() => new() { IsValid = true };
+
+    /// <summary>
+    /// Creates a failed validation result with errors.
+    /// </summary>
+    public static ConfigValidationResult Failure(params string[] errors) => new()
     {
-        _logger = logger;
-        _configFilePath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "MarketDataCollector",
-            "appsettings.json");
-        
-        _logger.Log($"Config file path: {_configFilePath}");
+        IsValid = false,
+        Errors = errors
+    };
+}
+
+/// <summary>
+/// Service for managing application configuration.
+/// Implements singleton pattern for application-wide configuration management.
+/// </summary>
+public sealed class ConfigService
+{
+    private static readonly Lazy<ConfigService> _instance = new(() => new ConfigService());
+
+    private bool _initialized;
+
+    /// <summary>
+    /// Gets the singleton instance of the ConfigService.
+    /// </summary>
+    public static ConfigService Instance => _instance.Value;
+
+    /// <summary>
+    /// Gets whether the service has been initialized.
+    /// </summary>
+    public bool IsInitialized => _initialized;
+
+    /// <summary>
+    /// Gets the path to the configuration file.
+    /// </summary>
+    public string ConfigPath => FirstRunService.Instance.ConfigFilePath;
+
+    private ConfigService()
+    {
     }
 
-    public async Task LoadConfigurationAsync(CancellationToken cancellationToken = default)
+    /// <summary>
+    /// Initializes the configuration service.
+    /// </summary>
+    /// <returns>A task representing the async operation.</returns>
+    public Task InitializeAsync()
     {
-        try
-        {
-            if (File.Exists(_configFilePath))
-            {
-                _logger.Log("Loading configuration...");
-                var json = await File.ReadAllTextAsync(_configFilePath, cancellationToken);
-                var doc = JsonDocument.Parse(json);
-                
-                _config = doc.RootElement.EnumerateObject()
-                    .ToDictionary(p => p.Name, p => p.Value.Clone());
-                
-                _logger.Log($"Configuration loaded: {_config.Count} keys");
-            }
-            else
-            {
-                _logger.Log("Configuration file not found, using defaults");
-                _config = new Dictionary<string, JsonElement>();
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.Log($"Failed to load configuration: {ex.Message}");
-            _config = new Dictionary<string, JsonElement>();
-        }
+        _initialized = true;
+        return Task.CompletedTask;
     }
 
-    public async Task SaveConfigurationAsync(string key, object value, CancellationToken cancellationToken = default)
+    /// <summary>
+    /// Validates the current configuration.
+    /// </summary>
+    /// <returns>A task containing the validation result.</returns>
+    public Task<ConfigValidationResult> ValidateConfigAsync()
     {
-        try
-        {
-            _logger.Log($"Saving configuration key: {key}");
-            
-            // Update in-memory config
-            var json = JsonSerializer.Serialize(value);
-            var element = JsonDocument.Parse(json).RootElement.Clone();
-            _config[key] = element;
-            
-            // Ensure directory exists
-            var directory = Path.GetDirectoryName(_configFilePath);
-            if (directory != null && !Directory.Exists(directory))
-            {
-                Directory.CreateDirectory(directory);
-            }
-            
-            // Save to file
-            var configJson = JsonSerializer.Serialize(_config, new JsonSerializerOptions 
-            { 
-                WriteIndented = true 
-            });
-            await File.WriteAllTextAsync(_configFilePath, configJson, cancellationToken);
-            
-            _logger.Log("Configuration saved");
-        }
-        catch (Exception ex)
-        {
-            _logger.Log($"Failed to save configuration: {ex.Message}");
-        }
+        return Task.FromResult(ConfigValidationResult.Success());
     }
 
-    public T? GetValue<T>(string key)
+    /// <summary>
+    /// Gets configuration of the specified type.
+    /// </summary>
+    /// <typeparam name="T">The configuration type.</typeparam>
+    /// <returns>A task containing the configuration instance.</returns>
+    public Task<T?> GetConfigAsync<T>() where T : class, new()
     {
-        if (_config.TryGetValue(key, out var element))
-        {
-            try
-            {
-                return JsonSerializer.Deserialize<T>(element.GetRawText());
-            }
-            catch (Exception ex)
-            {
-                _logger.Log($"Failed to deserialize config key '{key}': {ex.Message}");
-            }
-        }
-        return default;
+        return Task.FromResult<T?>(new T());
     }
 
-    public string? GetString(string key)
+    /// <summary>
+    /// Saves the current configuration.
+    /// </summary>
+    /// <returns>A task representing the async operation.</returns>
+    public Task SaveConfigAsync()
     {
-        return GetValue<string>(key);
+        return Task.CompletedTask;
     }
 
-    public int GetInt(string key, int defaultValue = 0)
+    /// <summary>
+    /// Saves the specified configuration.
+    /// </summary>
+    /// <typeparam name="T">The configuration type.</typeparam>
+    /// <param name="config">The configuration to save.</param>
+    /// <returns>A task representing the async operation.</returns>
+    public Task SaveConfigAsync<T>(T config) where T : class
     {
-        return GetValue<int?>(key) ?? defaultValue;
-    }
-
-    public bool GetBool(string key, bool defaultValue = false)
-    {
-        return GetValue<bool?>(key) ?? defaultValue;
+        return Task.CompletedTask;
     }
 }

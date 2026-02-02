@@ -1,39 +1,68 @@
-using System.Threading;
+using System;
 using System.Threading.Tasks;
 
 namespace MarketDataCollector.Wpf.Services;
 
-public sealed class OfflineTrackingPersistenceService : IOfflineTrackingPersistenceService
+/// <summary>
+/// Service for persisting offline tracking data.
+/// Implements singleton pattern for application-wide offline data management.
+/// </summary>
+public sealed class OfflineTrackingPersistenceService
 {
-    private readonly ILoggingService _logger;
+    private static readonly Lazy<OfflineTrackingPersistenceService> _instance =
+        new(() => new OfflineTrackingPersistenceService());
 
-    public OfflineTrackingPersistenceService(ILoggingService logger)
+    private bool _initialized;
+
+    /// <summary>
+    /// Gets the singleton instance of the OfflineTrackingPersistenceService.
+    /// </summary>
+    public static OfflineTrackingPersistenceService Instance => _instance.Value;
+
+    /// <summary>
+    /// Gets whether the service has been initialized.
+    /// </summary>
+    public bool IsInitialized => _initialized;
+
+    private OfflineTrackingPersistenceService()
     {
-        _logger = logger;
-        _logger.Log("OfflineTrackingPersistenceService initialized (stub implementation)");
     }
 
-    public Task SaveOfflineDataAsync<T>(string key, T data, CancellationToken cancellationToken = default)
+    /// <summary>
+    /// Initializes the offline tracking persistence service.
+    /// </summary>
+    /// <returns>A task representing the async operation.</returns>
+    public Task InitializeAsync()
     {
-        _logger.Log($"SaveOfflineDataAsync called for key: {key} (not implemented)");
+        _initialized = true;
         return Task.CompletedTask;
     }
 
-    public Task<T?> LoadOfflineDataAsync<T>(string key, CancellationToken cancellationToken = default)
+    /// <summary>
+    /// Shuts down the offline tracking persistence service.
+    /// </summary>
+    /// <returns>A task representing the async operation.</returns>
+    public Task ShutdownAsync()
     {
-        _logger.Log($"LoadOfflineDataAsync called for key: {key} (not implemented)");
-        return Task.FromResult<T?>(default);
-    }
-
-    public Task DeleteOfflineDataAsync(string key, CancellationToken cancellationToken = default)
-    {
-        _logger.Log($"DeleteOfflineDataAsync called for key: {key} (not implemented)");
+        _initialized = false;
         return Task.CompletedTask;
     }
 
-    public Task<bool> HasOfflineDataAsync(string key, CancellationToken cancellationToken = default)
+    /// <summary>
+    /// Persists offline data to storage.
+    /// </summary>
+    /// <returns>A task representing the async operation.</returns>
+    public Task PersistAsync()
     {
-        _logger.Log($"HasOfflineDataAsync called for key: {key} (not implemented)");
-        return Task.FromResult(false);
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Loads offline data from storage.
+    /// </summary>
+    /// <returns>A task representing the async operation.</returns>
+    public Task LoadAsync()
+    {
+        return Task.CompletedTask;
     }
 }

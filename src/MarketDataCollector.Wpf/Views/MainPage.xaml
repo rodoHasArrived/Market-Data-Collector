@@ -1,0 +1,358 @@
+<Page x:Class="MarketDataCollector.Wpf.Views.MainPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      mc:Ignorable="d"
+      d:DesignHeight="900" d:DesignWidth="1400"
+      Background="{DynamicResource ConsoleBackgroundDarkBrush}"
+      Loaded="OnPageLoaded">
+
+    <Page.Resources>
+        <!-- Navigation Item Style -->
+        <Style x:Key="NavItemStyle" TargetType="ListBoxItem">
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Padding" Value="16,12" />
+            <Setter Property="Margin" Value="8,2" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{StaticResource ConsoleTextSecondaryBrush}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="border"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="8"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="{StaticResource ConsoleBackgroundHoverBrush}" />
+                                <Setter Property="Foreground" Value="{StaticResource ConsoleTextPrimaryBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="{StaticResource ConsoleBackgroundActiveBrush}" />
+                                <Setter Property="Foreground" Value="{StaticResource ConsoleTextPrimaryBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Navigation Icon Style -->
+        <Style x:Key="NavIconStyle" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="{StaticResource SymbolThemeFontFamily}" />
+            <Setter Property="FontSize" Value="18" />
+            <Setter Property="Width" Value="24" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <!-- Navigation Label Style -->
+        <Style x:Key="NavLabelStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="12,0,0,0" />
+        </Style>
+    </Page.Resources>
+
+    <DockPanel>
+        <!-- Sidebar Navigation -->
+        <Border DockPanel.Dock="Left"
+                Width="260"
+                Background="{StaticResource ConsoleBackgroundMediumBrush}"
+                BorderBrush="{StaticResource ConsoleBorderBrush}"
+                BorderThickness="0,0,1,0">
+            <DockPanel>
+                <!-- Header with Logo/Title -->
+                <Border DockPanel.Dock="Top"
+                        Padding="20,24,20,20"
+                        BorderBrush="{StaticResource ConsoleBorderBrush}"
+                        BorderThickness="0,0,0,1">
+                    <StackPanel>
+                        <!-- App Title -->
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{StaticResource IconChart}"
+                                       FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                       FontSize="24"
+                                       Foreground="{StaticResource SuccessColorBrush}"
+                                       VerticalAlignment="Center" />
+                            <TextBlock Text="Market Data"
+                                       FontSize="20"
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource ConsoleTextPrimaryBrush}"
+                                       Margin="12,0,0,0"
+                                       VerticalAlignment="Center" />
+                        </StackPanel>
+                        <TextBlock Text="Collector"
+                                   FontSize="20"
+                                   FontWeight="SemiBold"
+                                   Foreground="{StaticResource ConsoleTextPrimaryBrush}"
+                                   Margin="36,2,0,0" />
+
+                        <!-- Version Badge -->
+                        <Border Margin="0,12,0,0"
+                                HorizontalAlignment="Left"
+                                Style="{StaticResource NeutralBadgeStyle}">
+                            <TextBlock Text="v1.6.1"
+                                       FontSize="11"
+                                       Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                       FontFamily="Cascadia Code, Consolas, monospace" />
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+                <!-- Navigation Menu -->
+                <ScrollViewer DockPanel.Dock="Top"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Margin="0,8,0,8">
+                        <!-- Primary Navigation Section -->
+                        <TextBlock Text="NAVIGATION"
+                                   FontSize="11"
+                                   FontWeight="SemiBold"
+                                   Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                   Margin="20,12,20,8" />
+
+                        <ListBox x:Name="NavigationList"
+                                 Background="Transparent"
+                                 BorderThickness="0"
+                                 ItemContainerStyle="{StaticResource NavItemStyle}"
+                                 SelectionChanged="OnNavigationSelectionChanged">
+
+                            <!-- Dashboard -->
+                            <ListBoxItem Tag="Dashboard">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{StaticResource IconDashboard}"
+                                               Style="{StaticResource NavIconStyle}" />
+                                    <TextBlock Text="Dashboard"
+                                               Style="{StaticResource NavLabelStyle}" />
+                                </StackPanel>
+                            </ListBoxItem>
+
+                            <!-- Symbols -->
+                            <ListBoxItem Tag="Symbols">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{StaticResource IconList}"
+                                               Style="{StaticResource NavIconStyle}" />
+                                    <TextBlock Text="Symbols"
+                                               Style="{StaticResource NavLabelStyle}" />
+                                </StackPanel>
+                            </ListBoxItem>
+
+                            <!-- Backfill -->
+                            <ListBoxItem Tag="Backfill">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{StaticResource IconDownload}"
+                                               Style="{StaticResource NavIconStyle}" />
+                                    <TextBlock Text="Backfill"
+                                               Style="{StaticResource NavLabelStyle}" />
+                                </StackPanel>
+                            </ListBoxItem>
+
+                            <!-- Settings -->
+                            <ListBoxItem Tag="Settings">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{StaticResource IconSettings}"
+                                               Style="{StaticResource NavIconStyle}" />
+                                    <TextBlock Text="Settings"
+                                               Style="{StaticResource NavLabelStyle}" />
+                                </StackPanel>
+                            </ListBoxItem>
+                        </ListBox>
+
+                        <!-- Divider -->
+                        <Rectangle Style="{StaticResource HorizontalDividerStyle}"
+                                   Margin="20,8" />
+
+                        <!-- Secondary Navigation -->
+                        <TextBlock Text="MONITORING"
+                                   FontSize="11"
+                                   FontWeight="SemiBold"
+                                   Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                   Margin="20,8,20,8" />
+
+                        <ListBox x:Name="SecondaryNavigationList"
+                                 Background="Transparent"
+                                 BorderThickness="0"
+                                 ItemContainerStyle="{StaticResource NavItemStyle}"
+                                 SelectionChanged="OnSecondaryNavigationSelectionChanged">
+
+                            <!-- Data Quality -->
+                            <ListBoxItem Tag="DataQuality">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{StaticResource IconCheckmark}"
+                                               Style="{StaticResource NavIconStyle}" />
+                                    <TextBlock Text="Data Quality"
+                                               Style="{StaticResource NavLabelStyle}" />
+                                </StackPanel>
+                            </ListBoxItem>
+
+                            <!-- Provider Health -->
+                            <ListBoxItem Tag="ProviderHealth">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{StaticResource IconNetwork}"
+                                               Style="{StaticResource NavIconStyle}" />
+                                    <TextBlock Text="Provider Health"
+                                               Style="{StaticResource NavLabelStyle}" />
+                                </StackPanel>
+                            </ListBoxItem>
+
+                            <!-- Storage -->
+                            <ListBoxItem Tag="Storage">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{StaticResource IconDatabase}"
+                                               Style="{StaticResource NavIconStyle}" />
+                                    <TextBlock Text="Storage"
+                                               Style="{StaticResource NavLabelStyle}" />
+                                </StackPanel>
+                            </ListBoxItem>
+                        </ListBox>
+
+                        <!-- Divider -->
+                        <Rectangle Style="{StaticResource HorizontalDividerStyle}"
+                                   Margin="20,8" />
+
+                        <!-- Tools Section -->
+                        <TextBlock Text="TOOLS"
+                                   FontSize="11"
+                                   FontWeight="SemiBold"
+                                   Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                   Margin="20,8,20,8" />
+
+                        <ListBox x:Name="ToolsNavigationList"
+                                 Background="Transparent"
+                                 BorderThickness="0"
+                                 ItemContainerStyle="{StaticResource NavItemStyle}"
+                                 SelectionChanged="OnToolsNavigationSelectionChanged">
+
+                            <!-- Data Export -->
+                            <ListBoxItem Tag="DataExport">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{StaticResource IconExport}"
+                                               Style="{StaticResource NavIconStyle}" />
+                                    <TextBlock Text="Data Export"
+                                               Style="{StaticResource NavLabelStyle}" />
+                                </StackPanel>
+                            </ListBoxItem>
+
+                            <!-- Charts -->
+                            <ListBoxItem Tag="Charts">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{StaticResource IconChartLine}"
+                                               Style="{StaticResource NavIconStyle}" />
+                                    <TextBlock Text="Charts"
+                                               Style="{StaticResource NavLabelStyle}" />
+                                </StackPanel>
+                            </ListBoxItem>
+                        </ListBox>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- Footer with Help Link -->
+                <Border DockPanel.Dock="Bottom"
+                        Padding="20,16"
+                        BorderBrush="{StaticResource ConsoleBorderBrush}"
+                        BorderThickness="0,1,0,0">
+                    <Button x:Name="HelpButton"
+                            Style="{StaticResource GhostButtonStyle}"
+                            HorizontalAlignment="Stretch"
+                            Click="OnHelpButtonClick">
+                        <StackPanel Orientation="Horizontal"
+                                    HorizontalAlignment="Center">
+                            <TextBlock Text="{StaticResource IconHelp}"
+                                       FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                       FontSize="16"
+                                       VerticalAlignment="Center" />
+                            <TextBlock Text="Help &amp; Support"
+                                       Margin="8,0,0,0"
+                                       VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                </Border>
+            </DockPanel>
+        </Border>
+
+        <!-- Main Content Area -->
+        <Grid>
+            <!-- Top Header Bar -->
+            <Border DockPanel.Dock="Top"
+                    Height="56"
+                    VerticalAlignment="Top"
+                    Background="{StaticResource ConsoleBackgroundMediumBrush}"
+                    BorderBrush="{StaticResource ConsoleBorderBrush}"
+                    BorderThickness="0,0,0,1"
+                    Padding="24,0">
+                <Grid>
+                    <!-- Page Title (Breadcrumb) -->
+                    <StackPanel Orientation="Horizontal"
+                                VerticalAlignment="Center"
+                                HorizontalAlignment="Left">
+                        <Button x:Name="BackButton"
+                                Style="{StaticResource IconButtonStyle}"
+                                Visibility="Collapsed"
+                                Click="OnBackButtonClick"
+                                ToolTip="Go Back">
+                            <TextBlock Text="{StaticResource IconBack}"
+                                       FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                       FontSize="16" />
+                        </Button>
+                        <TextBlock x:Name="PageTitleText"
+                                   Text="Dashboard"
+                                   FontSize="18"
+                                   FontWeight="SemiBold"
+                                   Foreground="{StaticResource ConsoleTextPrimaryBrush}"
+                                   VerticalAlignment="Center"
+                                   Margin="8,0,0,0" />
+                    </StackPanel>
+
+                    <!-- Connection Status and Actions -->
+                    <StackPanel Orientation="Horizontal"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Center">
+                        <!-- Connection Status Indicator -->
+                        <Border x:Name="ConnectionStatusBadge"
+                                Style="{StaticResource SuccessBadgeStyle}"
+                                Margin="0,0,16,0">
+                            <StackPanel Orientation="Horizontal">
+                                <Ellipse x:Name="ConnectionStatusDot"
+                                         Width="8" Height="8"
+                                         Fill="{StaticResource SuccessColorBrush}"
+                                         Margin="0,0,6,0" />
+                                <TextBlock x:Name="ConnectionStatusText"
+                                           Text="Connected"
+                                           FontSize="12"
+                                           Foreground="{StaticResource SuccessColorBrush}" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Refresh Button -->
+                        <Button Style="{StaticResource IconButtonStyle}"
+                                ToolTip="Refresh (F5)"
+                                Click="OnRefreshButtonClick">
+                            <TextBlock Text="{StaticResource IconRefresh}"
+                                       FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                       FontSize="16" />
+                        </Button>
+
+                        <!-- Notifications Button -->
+                        <Button Style="{StaticResource IconButtonStyle}"
+                                ToolTip="Notifications"
+                                Margin="4,0,0,0"
+                                Click="OnNotificationsButtonClick">
+                            <TextBlock Text="{StaticResource IconBell}"
+                                       FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                       FontSize="16" />
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Content Frame -->
+            <Frame x:Name="ContentFrame"
+                   NavigationUIVisibility="Hidden"
+                   Margin="0,56,0,0"
+                   Navigated="OnContentFrameNavigated" />
+        </Grid>
+    </DockPanel>
+</Page>

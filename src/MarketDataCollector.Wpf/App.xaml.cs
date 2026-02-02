@@ -1,96 +1,115 @@
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
-using MarketDataCollector.Wpf.Services;
-using Microsoft.Extensions.Configuration;
+using System.Windows.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using MarketDataCollector.Wpf.Services;
 
 namespace MarketDataCollector.Wpf;
 
 /// <summary>
 /// Market Data Collector WPF Application
+/// Provides maximum stability through WPF (.NET 9) for Windows-only deployment.
 /// </summary>
 public partial class App : Application
 {
-    private IHost? _host;
     private static bool _isFirstRun;
+    private IHost? _host;
 
-    public App()
+    /// <summary>
+    /// Gets the service provider for dependency injection.
+    /// </summary>
+    public static IServiceProvider Services { get; private set; } = null!;
+
+    /// <summary>
+    /// Gets the main application window.
+    /// </summary>
+    public static new MainWindow? MainWindow => Current.MainWindow as MainWindow;
+
+    /// <summary>
+    /// Gets whether this is the first run of the application.
+    /// </summary>
+    public static bool IsFirstRun => _isFirstRun;
+
+    /// <summary>
+    /// Gets the notification service instance.
+    /// </summary>
+    public static NotificationService Notifications => NotificationService.Instance;
+
+    /// <summary>
+    /// Gets the connection service instance.
+    /// </summary>
+    public static ConnectionService Connection => ConnectionService.Instance;
+
+    /// <summary>
+    /// Gets the theme service instance.
+    /// </summary>
+    public static ThemeService Theme => ThemeService.Instance;
+
+    /// <summary>
+    /// Gets the offline tracking persistence service instance.
+    /// </summary>
+    public static OfflineTrackingPersistenceService OfflineTracking => OfflineTrackingPersistenceService.Instance;
+
+    /// <summary>
+    /// Gets the background task scheduler service instance.
+    /// </summary>
+    public static BackgroundTaskSchedulerService Scheduler => BackgroundTaskSchedulerService.Instance;
+
+    /// <summary>
+    /// Gets the pending operations queue service instance.
+    /// </summary>
+    public static PendingOperationsQueueService OperationsQueue => PendingOperationsQueueService.Instance;
+
+    private async void OnStartup(object sender, StartupEventArgs e)
     {
-        // Initialize HttpClientFactory early for proper HTTP client lifecycle management
-        // This ensures all services use the factory-created clients with Polly policies
-        InitializeHttpClientFactory();
+        // Configure the host with dependency injection
+        _host = Host.CreateDefaultBuilder()
+            .ConfigureServices((context, services) =>
+            {
+                ConfigureServices(services);
+            })
+            .Build();
+
+        Services = _host.Services;
+
+        // TD-10: Initialize HttpClientFactory early for proper HTTP client lifecycle management
+        HttpClientFactoryProvider.Initialize();
 
         // Handle unhandled exceptions gracefully
         DispatcherUnhandledException += OnDispatcherUnhandledException;
-        AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
+        AppDomain.CurrentDomain.UnhandledException += OnDomainUnhandledException;
+        TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
 
-        // Handle app exit for clean shutdown
-        Exit += OnAppExit;
-    }
-
-    protected override async void OnStartup(StartupEventArgs e)
-    {
-        base.OnStartup(e);
-
-        // Build and start the host
-        _host = CreateHostBuilder(e.Args).Build();
-        await _host.StartAsync();
-
-        // Perform async initialization
+        // Fire-and-forget async initialization with proper exception handling
         await SafeOnStartupAsync();
     }
 
     /// <summary>
-    /// Creates and configures the application host with dependency injection.
+    /// Configures services for dependency injection.
     /// </summary>
-    private static IHostBuilder CreateHostBuilder(string[] args) =>
-        Host.CreateDefaultBuilder(args)
-            .ConfigureAppConfiguration((context, config) =>
-            {
-                config.SetBasePath(AppContext.BaseDirectory);
-                config.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
-                config.AddJsonFile("appsettings.sample.json", optional: true, reloadOnChange: false);
-                config.AddEnvironmentVariables();
-                config.AddCommandLine(args);
-            })
-            .ConfigureServices((context, services) =>
-            {
-                // Register services
-                RegisterServices(services, context.Configuration);
-
-                // Register MainWindow
-                services.AddSingleton<MainWindow>();
-            });
-
-    /// <summary>
-    /// Registers all application services with the DI container.
-    /// </summary>
-    private static void RegisterServices(IServiceCollection services, IConfiguration configuration)
+    private static void ConfigureServices(IServiceCollection services)
     {
-        // HttpClient with Polly
+        // Register HttpClient factory
         services.AddHttpClient();
 
         // Register singleton services
-        services.AddSingleton<IConnectionService, ConnectionService>();
-        services.AddSingleton<INavigationService, NavigationService>();
-        services.AddSingleton<INotificationService, NotificationService>();
-        services.AddSingleton<IThemeService, ThemeService>();
-        services.AddSingleton<IConfigService, ConfigService>();
-        services.AddSingleton<ILoggingService, LoggingService>();
-        services.AddSingleton<IKeyboardShortcutService, KeyboardShortcutService>();
-        services.AddSingleton<IMessagingService, MessagingService>();
-        services.AddSingleton<IOfflineTrackingPersistenceService, OfflineTrackingPersistenceService>();
-        services.AddSingleton<IBackgroundTaskSchedulerService, BackgroundTaskSchedulerService>();
-        services.AddSingleton<IPendingOperationsQueueService, PendingOperationsQueueService>();
-    }
+        services.AddSingleton<NavigationService>();
+        services.AddSingleton<ConfigService>();
+        services.AddSingleton<ConnectionService>();
+        services.AddSingleton<ThemeService>();
+        services.AddSingleton<NotificationService>();
+        services.AddSingleton<LoggingService>();
+        services.AddSingleton<KeyboardShortcutService>();
+        services.AddSingleton<MessagingService>();
+        services.AddSingleton<StatusService>();
 
-    /// <summary>
-    /// Initializes HttpClientFactory for proper HTTP client lifecycle management.
-    /// </summary>
-    private static void InitializeHttpClientFactory()
-    {
-        // HttpClientFactory will be initialized through DI container
-        // This is handled in RegisterServices
+        // Register background services
+        services.AddSingleton<BackgroundTaskSchedulerService>();
+        services.AddSingleton<OfflineTrackingPersistenceService>();
+        services.AddSingleton<PendingOperationsQueueService>();
     }
 
     /// <summary>
@@ -100,77 +119,45 @@ public partial class App : Application
     {
         try
         {
-            if (_host == null)
-            {
-                throw new InvalidOperationException("Host is not initialized");
-            }
-
             // Run first-time setup before showing window
             await InitializeFirstRunAsync();
 
             // Initialize and validate configuration
             await InitializeConfigurationAsync();
 
-            // Get and show MainWindow
-            var mainWindow = _host.Services.GetRequiredService<MainWindow>();
-            mainWindow.Show();
-
             // Initialize theme service
-            var themeService = _host.Services.GetRequiredService<IThemeService>();
-            themeService.Initialize();
+            if (Current.MainWindow is MainWindow mainWindow)
+            {
+                ThemeService.Instance.Initialize(mainWindow);
+            }
 
             // Start connection monitoring
-            var connectionService = _host.Services.GetRequiredService<IConnectionService>();
-            await connectionService.StartMonitoringAsync();
+            ConnectionService.Instance.StartMonitoring();
 
-            // Initialize offline tracking persistence
+            // Initialize offline tracking persistence (handles recovery from crashes/restarts)
             await InitializeOfflineTrackingAsync();
 
             // Start background task scheduler
             await InitializeBackgroundServicesAsync();
 
             // Log successful startup
-            var loggingService = _host.Services.GetRequiredService<ILoggingService>();
-            loggingService.LogInfo("Application started successfully");
+            LoggingService.Instance.LogInfo("Application started successfully");
         }
         catch (Exception ex)
         {
-            MessageBox.Show(
-                $"Error during application startup: {ex.Message}\n\n{ex.StackTrace}",
-                "Startup Error",
-                MessageBoxButton.OK,
-                MessageBoxImage.Error);
-
-            // Try to show a basic window even if initialization fails
-            try
-            {
-                var mainWindow = _host?.Services.GetRequiredService<MainWindow>();
-                if (mainWindow != null)
-                {
-                    mainWindow.Show();
-                }
-            }
-            catch
-            {
-                // If we can't even create the window, shut down
-                Shutdown(1);
-            }
+            System.Diagnostics.Debug.WriteLine($"[App] Error during application startup: {ex.Message}");
         }
     }
 
     /// <summary>
     /// Initializes offline tracking persistence and performs recovery if needed.
     /// </summary>
-    private async Task InitializeOfflineTrackingAsync()
+    private static async Task InitializeOfflineTrackingAsync()
     {
         try
         {
-            var offlineTracking = _host?.Services.GetRequiredService<IOfflineTrackingPersistenceService>();
-            if (offlineTracking != null)
-            {
-                await offlineTracking.InitializeAsync();
-                System.Diagnostics.Debug.WriteLine("Offline tracking persistence initialized");
-            }
+            await OfflineTrackingPersistenceService.Instance.InitializeAsync();
+            System.Diagnostics.Debug.WriteLine("Offline tracking persistence initialized");
         }
         catch (Exception ex)
         {
@@ -182,23 +169,17 @@ public partial class App : Application
     /// <summary>
     /// Initializes background services for scheduled tasks and offline queue processing.
     /// </summary>
-    private async Task InitializeBackgroundServicesAsync()
+    private static async Task InitializeBackgroundServicesAsync()
     {
         try
         {
-            var operationsQueue = _host?.Services.GetRequiredService<IPendingOperationsQueueService>();
-            if (operationsQueue != null)
-            {
-                await operationsQueue.InitializeAsync();
-                System.Diagnostics.Debug.WriteLine("Pending operations queue initialized");
-            }
+            // Initialize pending operations queue
+            await PendingOperationsQueueService.Instance.InitializeAsync();
+            System.Diagnostics.Debug.WriteLine("Pending operations queue initialized");
 
-            var scheduler = _host?.Services.GetRequiredService<IBackgroundTaskSchedulerService>();
-            if (scheduler != null)
-            {
-                await scheduler.StartAsync();
-                System.Diagnostics.Debug.WriteLine("Background task scheduler started");
-            }
+            // Start background task scheduler
+            await BackgroundTaskSchedulerService.Instance.StartAsync();
+            System.Diagnostics.Debug.WriteLine("Background task scheduler started");
         }
         catch (Exception ex)
         {
@@ -208,13 +189,102 @@ public partial class App : Application
     }
 
     /// <summary>
-    /// Performs first-run initialization including config setup.
+    /// Handles app exit for clean shutdown of background services with timeout.
     /// </summary>
-    private async Task InitializeFirstRunAsync()
+    private async void OnExit(object sender, ExitEventArgs e)
+    {
+        await SafeOnExitAsync();
+        _host?.Dispose();
+    }
+
+    /// <summary>
+    /// Performs async shutdown with proper exception handling.
+    /// </summary>
+    private static async Task SafeOnExitAsync()
+    {
+        const int ShutdownTimeoutMs = 5000; // 5 second timeout for graceful shutdown
+
+        try
+        {
+            System.Diagnostics.Debug.WriteLine("App exiting, shutting down services...");
+
+            using var cts = new CancellationTokenSource(ShutdownTimeoutMs);
+
+            // Shutdown services in parallel with timeout for better performance
+            var shutdownTasks = new[]
+            {
+                ShutdownServiceAsync(() => BackgroundTaskSchedulerService.Instance.StopAsync(), "BackgroundTaskScheduler", cts.Token),
+                ShutdownServiceAsync(() => PendingOperationsQueueService.Instance.ShutdownAsync(), "PendingOperationsQueue", cts.Token),
+                ShutdownServiceAsync(() => OfflineTrackingPersistenceService.Instance.ShutdownAsync(), "OfflineTrackingPersistence", cts.Token),
+                ShutdownServiceAsync(() => ConnectionService.Instance.StopMonitoring(), "ConnectionService", cts.Token)
+            };
+
+            await Task.WhenAll(shutdownTasks);
+
+            System.Diagnostics.Debug.WriteLine("Services shut down cleanly");
+        }
+        catch (OperationCanceledException)
+        {
+            System.Diagnostics.Debug.WriteLine("App shutdown timed out - forcing exit");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[App] Error during app exit: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Helper method to shutdown a service with proper error handling.
+    /// </summary>
+    private static async Task ShutdownServiceAsync(Func<Task> shutdownAction, string serviceName, CancellationToken ct)
     {
         try
         {
-            var firstRunService = new FirstRunService();
+            await shutdownAction().WaitAsync(ct);
+            System.Diagnostics.Debug.WriteLine($"{serviceName} shut down successfully");
+        }
+        catch (OperationCanceledException)
+        {
+            System.Diagnostics.Debug.WriteLine($"{serviceName} shutdown timed out");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"{serviceName} shutdown failed: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Helper method to shutdown a synchronous service.
+    /// </summary>
+    private static async Task ShutdownServiceAsync(Action shutdownAction, string serviceName, CancellationToken ct)
+    {
+        await Task.Run(() =>
+        {
+            try
+            {
+                ct.ThrowIfCancellationRequested();
+                shutdownAction();
+                System.Diagnostics.Debug.WriteLine($"{serviceName} shut down successfully");
+            }
+            catch (OperationCanceledException)
+            {
+                System.Diagnostics.Debug.WriteLine($"{serviceName} shutdown timed out");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"{serviceName} shutdown failed: {ex.Message}");
+            }
+        }, ct);
+    }
+
+    /// <summary>
+    /// Performs first-run initialization including config setup.
+    /// </summary>
+    private static async Task InitializeFirstRunAsync()
+    {
+        try
+        {
+            var firstRunService = FirstRunService.Instance;
             _isFirstRun = await firstRunService.IsFirstRunAsync();
 
             if (_isFirstRun)
@@ -231,138 +301,80 @@ public partial class App : Application
     /// <summary>
     /// Initializes and validates the application configuration.
     /// </summary>
-    private async Task InitializeConfigurationAsync()
+    private static async Task InitializeConfigurationAsync()
     {
         try
         {
-            var configService = _host?.Services.GetRequiredService<IConfigService>();
-            if (configService == null) return;
+            // Initialize the config service
+            await ConfigService.Instance.InitializeAsync();
 
-            await configService.InitializeAsync();
-
-            var validationResult = await configService.ValidateConfigAsync();
-            var loggingService = _host?.Services.GetRequiredService<ILoggingService>();
+            // Validate configuration
+            var validationResult = await ConfigService.Instance.ValidateConfigAsync();
 
             if (!validationResult.IsValid)
             {
                 foreach (var error in validationResult.Errors)
                 {
-                    loggingService?.LogError($"Configuration error: {error}");
+                    LoggingService.Instance.LogError($"Configuration error: {error}");
                 }
             }
 
             foreach (var warning in validationResult.Warnings)
             {
-                loggingService?.LogWarning($"Configuration warning: {warning}");
+                LoggingService.Instance.LogWarning($"Configuration warning: {warning}");
             }
 
-            loggingService?.LogInfo("Configuration initialized",
+            LoggingService.Instance.LogInfo("Configuration initialized",
                 ("isValid", validationResult.IsValid.ToString()),
                 ("errors", validationResult.Errors.Length.ToString()),
                 ("warnings", validationResult.Warnings.Length.ToString()));
         }
         catch (Exception ex)
         {
-            var loggingService = _host?.Services.GetRequiredService<ILoggingService>();
-            loggingService?.LogError("Failed to initialize configuration", ex);
+            LoggingService.Instance.LogError("Failed to initialize configuration", ex);
             // Continue - app should still work with defaults
         }
     }
 
     /// <summary>
-    /// Handles app exit for clean shutdown of background services with timeout.
+    /// Handles unhandled exceptions on the UI thread.
     /// </summary>
-    private async void OnAppExit(object sender, ExitEventArgs e)
+    private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
     {
-        const int ShutdownTimeoutMs = 5000; // 5 second timeout for graceful shutdown
-
-        try
-        {
-            System.Diagnostics.Debug.WriteLine("App exiting, shutting down services...");
-
-            using var cts = new System.Threading.CancellationTokenSource(ShutdownTimeoutMs);
-
-            if (_host != null)
-            {
-                // Shutdown services
-                var scheduler = _host.Services.GetService<IBackgroundTaskSchedulerService>();
-                var operationsQueue = _host.Services.GetService<IPendingOperationsQueueService>();
-                var offlineTracking = _host.Services.GetService<IOfflineTrackingPersistenceService>();
-                var connectionService = _host.Services.GetService<IConnectionService>();
-
-                var shutdownTasks = new List<Task>();
-
-                if (scheduler != null)
-                    shutdownTasks.Add(scheduler.StopAsync());
-
-                if (operationsQueue != null)
-                    shutdownTasks.Add(operationsQueue.ShutdownAsync());
-
-                if (offlineTracking != null)
-                    shutdownTasks.Add(offlineTracking.ShutdownAsync());
-
-                if (connectionService != null)
-                    shutdownTasks.Add(connectionService.StopMonitoringAsync());
-
-                await Task.WhenAll(shutdownTasks).WaitAsync(cts.Token);
-
-                // Stop the host
-                await _host.StopAsync(cts.Token);
-                _host.Dispose();
-            }
-
-            System.Diagnostics.Debug.WriteLine("Services shut down cleanly");
-        }
-        catch (OperationCanceledException)
-        {
-            System.Diagnostics.Debug.WriteLine("App shutdown timed out - forcing exit");
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Error during app exit: {ex.Message}");
-        }
-    }
-
-    /// <summary>
-    /// Handles unhandled dispatcher exceptions to prevent crashes.
-    /// </summary>
-    private void OnDispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
-    {
-        System.Diagnostics.Debug.WriteLine($"Unhandled dispatcher exception: {e.Exception}");
+        // Log the exception but don't crash
+        System.Diagnostics.Debug.WriteLine($"Dispatcher unhandled exception: {e.Exception}");
         e.Handled = true;
 
         // Notify user of the error
         try
         {
-            var notificationService = _host?.Services.GetService<INotificationService>();
-            notificationService?.NotifyErrorAsync("Application Error", e.Exception.Message);
+            _ = NotificationService.Instance.NotifyErrorAsync(
+                "Application Error",
+                e.Exception.Message);
         }
         catch
         {
             // Ignore notification failures
-            MessageBox.Show(e.Exception.Message, "Application Error", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
     /// <summary>
-    /// Handles unhandled domain exceptions.
+    /// Handles unhandled exceptions from non-UI threads.
     /// </summary>
-    private void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
+    private void OnDomainUnhandledException(object sender, UnhandledExceptionEventArgs e)
     {
         if (e.ExceptionObject is Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Unhandled domain exception: {ex}");
-            MessageBox.Show(ex.Message, "Fatal Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            System.Diagnostics.Debug.WriteLine($"Domain unhandled exception: {ex}");
         }
     }
 
     /// <summary>
-    /// Gets whether this is the first run of the application.
+    /// Handles unobserved task exceptions.
     /// </summary>
-    public static bool IsFirstRun => _isFirstRun;
-
-    /// <summary>
-    /// Gets the service provider for dependency injection.
-    /// </summary>
-    public static IServiceProvider? Services => ((App)Current)._host?.Services;
+    private void OnUnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e)
+    {
+        System.Diagnostics.Debug.WriteLine($"Unobserved task exception: {e.Exception}");
+        e.SetObserved(); // Prevent the process from terminating
+    }
 }

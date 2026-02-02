@@ -1,0 +1,81 @@
+<Page x:Class="MarketDataCollector.Wpf.Views.ProviderHealthPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      mc:Ignorable="d"
+      Background="{DynamicResource ConsoleBackgroundDarkBrush}">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="24">
+        <StackPanel MaxWidth="1200">
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,24">
+                <TextBlock Text="{StaticResource IconNetwork}"
+                           FontFamily="{StaticResource SymbolThemeFontFamily}"
+                           FontSize="28" Foreground="{StaticResource InfoColorBrush}"
+                           VerticalAlignment="Center" />
+                <TextBlock Text="Provider Health"
+                           Style="{StaticResource PageTitleStyle}"
+                           Margin="12,0,0,0" VerticalAlignment="Center" />
+            </StackPanel>
+
+            <!-- Provider Status Cards -->
+            <Grid Margin="0,0,0,24">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="16" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="16" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0" Style="{StaticResource CardStyle}">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                            <Ellipse Width="12" Height="12" Fill="{StaticResource SuccessColorBrush}" />
+                            <TextBlock Text="Alpaca" FontWeight="SemiBold" Margin="8,0,0,0"
+                                       Foreground="{StaticResource ConsoleTextPrimaryBrush}" />
+                        </StackPanel>
+                        <TextBlock Text="Connected" Foreground="{StaticResource SuccessColorBrush}" />
+                        <TextBlock Text="Latency: 8ms" Foreground="{StaticResource ConsoleTextMutedBrush}" FontSize="12" />
+                        <TextBlock Text="Uptime: 99.9%" Foreground="{StaticResource ConsoleTextMutedBrush}" FontSize="12" />
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="2" Style="{StaticResource CardStyle}">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                            <Ellipse Width="12" Height="12" Fill="{StaticResource WarningColorBrush}" />
+                            <TextBlock Text="Interactive Brokers" FontWeight="SemiBold" Margin="8,0,0,0"
+                                       Foreground="{StaticResource ConsoleTextPrimaryBrush}" />
+                        </StackPanel>
+                        <TextBlock Text="Reconnecting" Foreground="{StaticResource WarningColorBrush}" />
+                        <TextBlock Text="Latency: --" Foreground="{StaticResource ConsoleTextMutedBrush}" FontSize="12" />
+                        <TextBlock Text="Uptime: 95.2%" Foreground="{StaticResource ConsoleTextMutedBrush}" FontSize="12" />
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="4" Style="{StaticResource CardStyle}">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                            <Ellipse Width="12" Height="12" Fill="{StaticResource ConsoleTextMutedBrush}" />
+                            <TextBlock Text="Polygon" FontWeight="SemiBold" Margin="8,0,0,0"
+                                       Foreground="{StaticResource ConsoleTextPrimaryBrush}" />
+                        </StackPanel>
+                        <TextBlock Text="Disabled" Foreground="{StaticResource ConsoleTextMutedBrush}" />
+                        <TextBlock Text="Latency: --" Foreground="{StaticResource ConsoleTextMutedBrush}" FontSize="12" />
+                        <TextBlock Text="Uptime: --" Foreground="{StaticResource ConsoleTextMutedBrush}" FontSize="12" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- Connection History -->
+            <Border Style="{StaticResource CardStyle}">
+                <StackPanel>
+                    <TextBlock Text="Connection History" Style="{StaticResource CardHeaderStyle}" Margin="0,0,0,16" />
+                    <TextBlock Text="No connection events in the last hour."
+                               Foreground="{StaticResource ConsoleTextMutedBrush}" />
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

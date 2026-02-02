@@ -1,130 +1,203 @@
+using System;
 using System.Windows;
-using System.Windows.Media;
 
 namespace MarketDataCollector.Wpf.Services;
 
-public sealed class ThemeService : IThemeService
+/// <summary>
+/// Represents the available application themes.
+/// </summary>
+public enum AppTheme
 {
-    private readonly ILoggingService _logger;
+    Light,
+    Dark
+}
+
+/// <summary>
+/// Service for handling light/dark theme switching in WPF applications.
+/// Implements singleton pattern for application-wide theme management.
+/// </summary>
+public sealed class ThemeService
+{
+    private static readonly Lazy<ThemeService> _instance = new(() => new ThemeService());
+
+    private Window? _mainWindow;
     private AppTheme _currentTheme = AppTheme.Light;
 
-    public AppTheme CurrentTheme
+    private const string LightThemeUri = "pack://application:,,,/Themes/LightTheme.xaml";
+    private const string DarkThemeUri = "pack://application:,,,/Themes/DarkTheme.xaml";
+
+    /// <summary>
+    /// Gets the singleton instance of the ThemeService.
+    /// </summary>
+    public static ThemeService Instance => _instance.Value;
+
+    /// <summary>
+    /// Gets the current application theme.
+    /// </summary>
+    public AppTheme CurrentTheme => _currentTheme;
+
+    /// <summary>
+    /// Occurs when the theme is changed.
+    /// </summary>
+    public event EventHandler<ThemeChangedEventArgs>? ThemeChanged;
+
+    private ThemeService()
     {
-        get => _currentTheme;
-        private set
-        {
-            if (_currentTheme != value)
-            {
-                _currentTheme = value;
-                ThemeChanged?.Invoke(this, value);
-            }
-        }
     }
 
-    public event EventHandler<AppTheme>? ThemeChanged;
-
-    public ThemeService(ILoggingService logger)
+    /// <summary>
+    /// Initializes the theme service with the main application window.
+    /// </summary>
+    /// <param name="window">The main application window.</param>
+    /// <exception cref="ArgumentNullException">Thrown when window is null.</exception>
+    public void Initialize(Window window)
     {
-        _logger = logger;
-        
-        // Initialize with saved preference or system default
-        var savedTheme = LoadThemePreference();
-        SetTheme(savedTheme);
+        ArgumentNullException.ThrowIfNull(window);
+
+        _mainWindow = window;
+        ApplyTheme(_currentTheme);
     }
 
+    /// <summary>
+    /// Toggles between light and dark themes.
+    /// </summary>
+    public void ToggleTheme()
+    {
+        var newTheme = _currentTheme == AppTheme.Light ? AppTheme.Dark : AppTheme.Light;
+        SetTheme(newTheme);
+    }
+
+    /// <summary>
+    /// Sets the application theme to the specified value.
+    /// </summary>
+    /// <param name="theme">The theme to apply.</param>
     public void SetTheme(AppTheme theme)
     {
-        _logger.Log($"Setting theme to: {theme}");
-        
-        var actualTheme = theme == AppTheme.System ? GetSystemTheme() : theme;
-        CurrentTheme = actualTheme;
-        
-        ApplyTheme(actualTheme);
-        SaveThemePreference(theme);
-    }
+        if (_currentTheme == theme)
+        {
+            return;
+        }
 
-    public AppTheme GetSystemTheme()
-    {
-        try
-        {
-            // Check Windows system theme
-            using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(
-                @"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize");
-            
-            var value = key?.GetValue("AppsUseLightTheme");
-            if (value is int intValue)
-            {
-                return intValue == 0 ? AppTheme.Dark : AppTheme.Light;
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.Log($"Failed to get system theme: {ex.Message}");
-        }
-        
-        return AppTheme.Light;
+        var previousTheme = _currentTheme;
+        _currentTheme = theme;
+        ApplyTheme(theme);
+
+        OnThemeChanged(new ThemeChangedEventArgs(previousTheme, theme));
     }
 
     private void ApplyTheme(AppTheme theme)
     {
-        var app = Application.Current;
-        if (app == null) return;
+        if (_mainWindow is null)
+        {
+            return;
+        }
+
+        var themeUri = theme == AppTheme.Dark ? DarkThemeUri : LightThemeUri;
 
         try
         {
-            // Clear existing theme resources
-            var themeDicts = app.Resources.MergedDictionaries
-                .Where(d => d.Source?.OriginalString.Contains("Themes/") == true)
-                .ToList();
-            
-            foreach (var dict in themeDicts)
+            // Remove existing theme dictionaries
+            var toRemove = new System.Collections.Generic.List<ResourceDictionary>();
+            foreach (var dict in Application.Current.Resources.MergedDictionaries)
             {
-                app.Resources.MergedDictionaries.Remove(dict);
+                if (dict.Source?.OriginalString.Contains("Theme", StringComparison.OrdinalIgnoreCase) is true)
+                {
+                    toRemove.Add(dict);
+                }
             }
 
-            // Load new theme
-            var themeFile = theme == AppTheme.Dark ? "DarkTheme.xaml" : "LightTheme.xaml";
-            var themeUri = new Uri($"Themes/{themeFile}", UriKind.Relative);
-            
-            var themeDict = new ResourceDictionary { Source = themeUri };
-            app.Resources.MergedDictionaries.Add(themeDict);
-            
-            _logger.Log($"Applied {theme} theme");
+            foreach (var dict in toRemove)
+            {
+                Application.Current.Resources.MergedDictionaries.Remove(dict);
+            }
+
+            // Add new theme dictionary
+            var newThemeDict = new ResourceDictionary
+            {
+                Source = new Uri(themeUri, UriKind.Absolute)
+            };
+            Application.Current.Resources.MergedDictionaries.Add(newThemeDict);
+
+            // Update system colors for window chrome
+            UpdateWindowChrome(theme);
         }
         catch (Exception ex)
         {
-            _logger.Log($"Failed to apply theme: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"Failed to apply theme: {ex.Message}");
+            // Fall back to programmatic theming if resource dictionaries aren't available
+            ApplyProgrammaticTheme(theme);
         }
     }
 
-    private AppTheme LoadThemePreference()
+    private void ApplyProgrammaticTheme(AppTheme theme)
     {
-        try
+        if (_mainWindow is null)
         {
-            var saved = Properties.Settings.Default.Theme;
-            if (Enum.TryParse<AppTheme>(saved, out var theme))
-            {
-                return theme;
-            }
+            return;
         }
-        catch (Exception ex)
-        {
-            _logger.Log($"Failed to load theme preference: {ex.Message}");
-        }
-        
-        return AppTheme.System;
+
+        var isDark = theme == AppTheme.Dark;
+
+        Application.Current.Resources["WindowBackgroundBrush"] = isDark
+            ? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(30, 30, 30))
+            : new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White);
+
+        Application.Current.Resources["TextBrush"] = isDark
+            ? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White)
+            : new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.Black);
+
+        Application.Current.Resources["AccentBrush"] = isDark
+            ? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0, 120, 215))
+            : new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0, 99, 177));
     }
 
-    private void SaveThemePreference(AppTheme theme)
+    private void UpdateWindowChrome(AppTheme theme)
     {
-        try
+        if (_mainWindow is null)
         {
-            Properties.Settings.Default.Theme = theme.ToString();
-            Properties.Settings.Default.Save();
+            return;
         }
-        catch (Exception ex)
-        {
-            _logger.Log($"Failed to save theme preference: {ex.Message}");
-        }
+
+        // Update window background based on theme
+        var isDark = theme == AppTheme.Dark;
+        _mainWindow.Background = isDark
+            ? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(30, 30, 30))
+            : new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White);
+    }
+
+    /// <summary>
+    /// Raises the ThemeChanged event.
+    /// </summary>
+    /// <param name="e">The event arguments.</param>
+    protected virtual void OnThemeChanged(ThemeChangedEventArgs e)
+    {
+        ThemeChanged?.Invoke(this, e);
+    }
+}
+
+/// <summary>
+/// Event arguments for theme change events.
+/// </summary>
+public sealed class ThemeChangedEventArgs : EventArgs
+{
+    /// <summary>
+    /// Gets the previous theme.
+    /// </summary>
+    public AppTheme PreviousTheme { get; }
+
+    /// <summary>
+    /// Gets the new theme.
+    /// </summary>
+    public AppTheme NewTheme { get; }
+
+    /// <summary>
+    /// Initializes a new instance of the ThemeChangedEventArgs class.
+    /// </summary>
+    /// <param name="previousTheme">The previous theme.</param>
+    /// <param name="newTheme">The new theme.</param>
+    public ThemeChangedEventArgs(AppTheme previousTheme, AppTheme newTheme)
+    {
+        PreviousTheme = previousTheme;
+        NewTheme = newTheme;
     }
 }

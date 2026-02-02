@@ -1,187 +1,202 @@
-using System.Collections.ObjectModel;
+using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
+using MarketDataCollector.Wpf.Contracts;
 using MarketDataCollector.Wpf.Services;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace MarketDataCollector.Wpf.Views;
 
 /// <summary>
-/// Dashboard page showing system status and quick actions.
+/// Dashboard page showing real-time metrics and system status.
 /// </summary>
 public partial class DashboardPage : Page
 {
+    private readonly NavigationService _navigationService;
     private readonly IConnectionService _connectionService;
-    private readonly INavigationService _navigationService;
-    private readonly INotificationService _notificationService;
-    private readonly DispatcherTimer _updateTimer;
-    private DateTime _startTime = DateTime.UtcNow;
-    private readonly ObservableCollection<ActivityLogEntry> _activityLog = new();
+    private readonly StatusService _statusService;
+    private readonly DispatcherTimer _refreshTimer;
 
     public DashboardPage()
     {
         InitializeComponent();
 
-        // Get services from DI
-        _connectionService = App.Services?.GetRequiredService<IConnectionService>()!;
-        _navigationService = App.Services?.GetRequiredService<INavigationService>()!;
-        _notificationService = App.Services?.GetRequiredService<INotificationService>()!;
+        _navigationService = NavigationService.Instance;
+        _connectionService = ConnectionService.Instance;
+        _statusService = StatusService.Instance;
 
-        // Set up activity log
-        ActivityLog.ItemsSource = _activityLog;
-
-        // Subscribe to connection status changes
-        _connectionService.ConnectionStatusChanged += OnConnectionStatusChanged;
-
-        // Set up periodic update timer
-        _updateTimer = new DispatcherTimer
+        // Set up refresh timer
+        _refreshTimer = new DispatcherTimer
         {
-            Interval = TimeSpan.FromSeconds(1)
+            Interval = TimeSpan.FromSeconds(2)
         };
-        _updateTimer.Tick += UpdateTimer_Tick;
-        _updateTimer.Start();
+        _refreshTimer.Tick += OnRefreshTimerTick;
 
-        // Add initial log entry
-        AddActivityLogEntry("Dashboard loaded");
+        // Subscribe to messaging
+        MessagingService.Instance.MessageReceived += OnMessageReceived;
 
-        // Initial status refresh
-        _ = RefreshStatusAsync();
-
-        // Clean up when unloaded
-        Unloaded += OnUnloaded;
+        // Subscribe to connection changes
+        _connectionService.ConnectionStateChanged += OnConnectionStateChanged;
+        _connectionService.LatencyUpdated += OnLatencyUpdated;
     }
 
-    private void OnUnloaded(object sender, RoutedEventArgs e)
+    private void OnPageLoaded(object sender, RoutedEventArgs e)
     {
-        _updateTimer.Stop();
-        _connectionService.ConnectionStatusChanged -= OnConnectionStatusChanged;
+        // Start refresh timer
+        _refreshTimer.Start();
+
+        // Initial load
+        RefreshStatus();
     }
 
-    private void UpdateTimer_Tick(object? sender, EventArgs e)
+    private void OnPageUnloaded(object sender, RoutedEventArgs e)
     {
-        // Update uptime
-        var uptime = DateTime.UtcNow - _startTime;
-        UptimeText.Text = $"{uptime.Hours:D2}:{uptime.Minutes:D2}:{uptime.Seconds:D2}";
+        // Stop refresh timer
+        _refreshTimer.Stop();
+
+        // Unsubscribe from events to prevent memory leaks
+        MessagingService.Instance.MessageReceived -= OnMessageReceived;
+        _connectionService.ConnectionStateChanged -= OnConnectionStateChanged;
+        _connectionService.LatencyUpdated -= OnLatencyUpdated;
     }
 
-    private async Task RefreshStatusAsync()
+    private async void RefreshStatus()
     {
         try
         {
-            // This would normally call the backend API to get status
-            // For now, just update with placeholder data
-            SymbolCountText.Text = "5";
-            EventRateText.Text = "127";
+            var status = await _statusService.GetStatusAsync();
 
-            AddActivityLogEntry("Status refreshed");
+            if (status != null)
+            {
+                PublishedCount.Text = FormatNumber(status.Published);
+                DroppedCount.Text = FormatNumber(status.Dropped);
+                IntegrityCount.Text = FormatNumber(status.Integrity);
+                HistoricalCount.Text = FormatNumber(status.Historical);
+
+                ActiveProviderText.Text = status.Provider ?? "Not Connected";
+            }
+
+            // Update connection info
+            UpdateConnectionInfo();
         }
         catch (Exception ex)
         {
-            AddActivityLogEntry($"Error refreshing status: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"Failed to refresh status: {ex.Message}");
         }
     }
 
-    private void OnConnectionStatusChanged(object? sender, ConnectionStatusChangedEventArgs e)
+    private void UpdateConnectionInfo()
+    {
+        var latency = _connectionService.LastLatencyMs;
+        LatencyText.Text = latency > 0 ? $"{latency:F0} ms" : "-- ms";
+
+        var uptime = _connectionService.Uptime;
+        UptimeText.Text = uptime.HasValue
+            ? $"{uptime.Value.Hours:D2}:{uptime.Value.Minutes:D2}:{uptime.Value.Seconds:D2}"
+            : "--:--:--";
+    }
+
+    private void OnRefreshTimerTick(object? sender, EventArgs e)
+    {
+        RefreshStatus();
+    }
+
+    private void OnMessageReceived(object? sender, string message)
+    {
+        if (message == "RefreshStatus")
+        {
+            Dispatcher.Invoke(RefreshStatus);
+        }
+    }
+
+    private void OnConnectionStateChanged(object? sender, ConnectionStateEventArgs e)
     {
         Dispatcher.Invoke(() =>
         {
-            ConnectionStatusText.Text = e.Status;
-            AddActivityLogEntry($"Connection status: {e.Status}");
+            var state = e.State == ConnectionState.Connected ? "Connected" : e.State.ToString();
+            ActiveProviderText.Text = e.Provider ?? state;
+            AddActivityLog($"Connection state changed: {state}");
         });
     }
 
-    private void AddActivityLogEntry(string message)
+    private void OnLatencyUpdated(object? sender, int latencyMs)
     {
         Dispatcher.Invoke(() =>
         {
-            _activityLog.Insert(0, new ActivityLogEntry
-            {
-                Timestamp = DateTime.Now,
-                Message = message
-            });
-
-            // Keep only last 50 entries
-            while (_activityLog.Count > 50)
-            {
-                _activityLog.RemoveAt(_activityLog.Count - 1);
-            }
+            LatencyText.Text = $"{latencyMs} ms";
         });
     }
 
-    private async void StartCollectionButton_Click(object sender, RoutedEventArgs e)
+    private void AddActivityLog(string message)
+    {
+        var timestamp = DateTime.Now.ToString("HH:mm:ss");
+        var logEntry = new TextBlock
+        {
+            Style = (Style)FindResource("TerminalMessageStyle"),
+            Text = $"  [{timestamp}] {message}"
+        };
+
+        ActivityLogPanel.Children.Add(logEntry);
+
+        // Keep only last 50 entries
+        while (ActivityLogPanel.Children.Count > 50)
+        {
+            ActivityLogPanel.Children.RemoveAt(0);
+        }
+    }
+
+    private static string FormatNumber(long number)
+    {
+        return number switch
+        {
+            >= 1_000_000_000 => $"{number / 1_000_000_000.0:F1}B",
+            >= 1_000_000 => $"{number / 1_000_000.0:F1}M",
+            >= 1_000 => $"{number / 1_000.0:F1}K",
+            _ => number.ToString("N0")
+        };
+    }
+
+    private async void OnStartCollectorClick(object sender, RoutedEventArgs e)
     {
         try
         {
-            AddActivityLogEntry("Starting data collection...");
-            var success = await _connectionService.ConnectAsync("default");
+            var provider = _connectionService.CurrentProvider ?? "default";
+            var success = await _connectionService.ConnectAsync(provider);
 
             if (success)
             {
-                await _notificationService.NotifySuccessAsync(
-                    "Collection Started",
-                    "Data collection has started successfully.");
-                AddActivityLogEntry("Data collection started");
+                AddActivityLog("Collector started successfully");
+                NotificationService.Instance.ShowNotification(
+                    "Collector Started",
+                    "Data collection has started.",
+                    NotificationType.Success);
             }
             else
             {
-                await _notificationService.NotifyErrorAsync(
+                AddActivityLog("Failed to start collector");
+                NotificationService.Instance.ShowNotification(
                     "Start Failed",
-                    "Failed to start data collection.");
-                AddActivityLogEntry("Failed to start data collection");
+                    "Failed to start the data collector.",
+                    NotificationType.Error);
             }
         }
         catch (Exception ex)
         {
-            await _notificationService.NotifyErrorAsync(
+            AddActivityLog($"Error: {ex.Message}");
+            NotificationService.Instance.ShowNotification(
                 "Error",
-                $"Error starting collection: {ex.Message}");
-            AddActivityLogEntry($"Error: {ex.Message}");
+                ex.Message,
+                NotificationType.Error);
         }
     }
 
-    private async void StopCollectionButton_Click(object sender, RoutedEventArgs e)
-    {
-        try
-        {
-            AddActivityLogEntry("Stopping data collection...");
-            await _connectionService.DisconnectAsync();
-
-            await _notificationService.NotifyWarningAsync(
-                "Collection Stopped",
-                "Data collection has been stopped.");
-            AddActivityLogEntry("Data collection stopped");
-        }
-        catch (Exception ex)
-        {
-            await _notificationService.NotifyErrorAsync(
-                "Error",
-                $"Error stopping collection: {ex.Message}");
-            AddActivityLogEntry($"Error: {ex.Message}");
-        }
-    }
-
-    private void ViewSymbolsButton_Click(object sender, RoutedEventArgs e)
-    {
-        _navigationService.NavigateTo("Symbols");
-    }
-
-    private void RunBackfillButton_Click(object sender, RoutedEventArgs e)
+    private void OnRunBackfillClick(object sender, RoutedEventArgs e)
     {
         _navigationService.NavigateTo("Backfill");
     }
 
-    private void SettingsButton_Click(object sender, RoutedEventArgs e)
+    private void OnViewLogsClick(object sender, RoutedEventArgs e)
     {
-        _navigationService.NavigateTo("Settings");
+        _navigationService.NavigateTo("ServiceManager");
     }
-}
-
-/// <summary>
-/// Activity log entry model.
-/// </summary>
-public class ActivityLogEntry
-{
-    public DateTime Timestamp { get; set; }
-    public string Message { get; set; } = string.Empty;
 }
