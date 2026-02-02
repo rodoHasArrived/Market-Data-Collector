@@ -39,7 +39,7 @@ public class StorageProfileTests
         // Assert
         result.RootPath.Should().Be("data"); // Preserves original value
         result.Compress.Should().BeTrue("Research profile enables compression");
-        result.DatePartition.Should().Be(DatePartition.Daily);
+        result.PartitionStrategy.DateGranularity.Should().Be(DatePartition.Daily);
         result.GenerateManifests.Should().BeTrue("Research profile enables manifests");
     }
 
@@ -77,7 +77,7 @@ public class StorageProfileTests
         // Assert
         result.RootPath.Should().Be("data"); // Preserves original value
         result.Compress.Should().BeTrue("Archival profile enables compression");
-        result.PartitionStrategy.DateGranularity.Should().Be(DateGranularity.Month);
+        result.PartitionStrategy.DateGranularity.Should().Be(DatePartition.Monthly);
         result.GenerateManifests.Should().BeTrue("Archival profile enables manifests with checksums");
         result.RetentionDays.Should().Be(3650, "Archival profile sets 10-year retention");
     }
@@ -176,7 +176,7 @@ public class StorageProfileTests
 
         // Result should have profile defaults
         result.Compress.Should().BeTrue();
-        result.DatePartition.Should().Be(DatePartition.Daily);
+        result.PartitionStrategy.DateGranularity.Should().Be(DatePartition.Daily);
     }
 
     [Fact]
@@ -193,7 +193,7 @@ public class StorageProfileTests
 
         // Assert - Research profile provides balanced defaults
         result.Compress.Should().BeTrue("Research profile enables compression for space efficiency");
-        result.DatePartition.Should().Be(DatePartition.Daily, "Research profile uses daily partitions for analysis");
+        result.PartitionStrategy.DateGranularity.Should().Be(DatePartition.Daily, "Research profile uses daily partitions for analysis");
         result.GenerateManifests.Should().BeTrue("Research profile enables manifests for data discovery");
     }
 }
