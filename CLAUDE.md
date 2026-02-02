@@ -830,10 +830,10 @@ data/
 ```
 
 ### Naming Conventions
-- **BySymbol** (default): `{root}/{symbol}/{type}/{date}.jsonl`
-- **ByDate**: `{root}/{date}/{symbol}/{type}.jsonl`
-- **ByType**: `{root}/{type}/{symbol}/{date}.jsonl`
-- **Flat**: `{root}/{symbol}_{type}_{date}.jsonl`
+- **BySymbol** (default, recommended): `{root}/{symbol}/{type}/{date}.jsonl` - Organized by symbol, then data type
+- **ByDate**: `{root}/{date}/{symbol}/{type}.jsonl` - Organized by date
+- **ByType**: `{root}/{type}/{symbol}/{date}.jsonl` - Organized by event type
+- **Flat**: `{root}/{symbol}_{type}_{date}.jsonl` - All files in root directory
 
 ### Compression Profiles
 | Profile | Algorithm | Use Case |

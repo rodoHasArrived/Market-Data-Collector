@@ -163,7 +163,7 @@ Market Data Collector is built on **.NET 9.0** using **C# 11** and **F# 8.0**. I
 - **Graceful shutdown**: Flushes all events and metrics before exit
 
 ### Storage and Data Management
-- **Flexible JSONL storage**: Naming conventions (BySymbol, ByDate, ByType, Flat) with optional gzip compression
+- **Flexible JSONL storage**: Default BySymbol naming convention `{root}/{symbol}/{type}/{date}.jsonl` for optimal organization (also supports ByDate, ByType, Flat) with optional gzip compression
 - **Partitioning and retention**: Daily/hourly/monthly/none plus retention by age or total capacity
 - **Data replay**: Stream historical JSONL files for backtesting and research
 
