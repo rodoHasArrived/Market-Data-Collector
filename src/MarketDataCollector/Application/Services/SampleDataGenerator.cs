@@ -110,13 +110,12 @@ public sealed class SampleDataGenerator
     /// <summary>
     /// Generates sample data and writes it to JSONL files.
     /// </summary>
-    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access",
-        Justification = "System.Text.Json is preserved via TrimmerRootAssembly. JSON serialization types are safe with partial trimming.")]
     public async Task<SampleDataResult> GenerateToFileAsync(
         SampleDataOptions options,
         string outputPath,
         CancellationToken ct = default)
     {
+#pragma warning disable IL2026 // System.Text.Json is preserved via TrimmerRootAssembly
         var result = Generate(options);
 
         if (!result.Success || result.Events == null)
@@ -153,6 +152,7 @@ public sealed class SampleDataGenerator
         result.Message = $"Generated {result.TotalEvents} events to {filesWritten.Count} files";
 
         return result;
+#pragma warning restore IL2026
     }
 
     /// <summary>

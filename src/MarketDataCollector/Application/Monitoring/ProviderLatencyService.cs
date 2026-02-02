@@ -158,16 +158,16 @@ public sealed class ProviderLatencyService : IDisposable
     /// <summary>
     /// Serializes the summary to JSON.
     /// </summary>
-    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access",
-        Justification = "System.Text.Json is preserved via TrimmerRootAssembly. JSON serialization types are safe with partial trimming.")]
     public string ToJson()
     {
+#pragma warning disable IL2026 // System.Text.Json is preserved via TrimmerRootAssembly
         var summary = GetSummary();
         return JsonSerializer.Serialize(summary, new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             WriteIndented = true
         });
+#pragma warning restore IL2026
     }
 
     private void CleanupOldData(object? state)

@@ -70,10 +70,9 @@ public sealed class UiServer : IAsyncDisposable
         ConfigureRoutes();
     }
 
-    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access",
-        Justification = "System.Text.Json is preserved via TrimmerRootAssembly. JSON serialization types are safe with partial trimming.")]
     private void ConfigureRoutes()
     {
+#pragma warning disable IL2026 // System.Text.Json is preserved via TrimmerRootAssembly
         // ==================== HEALTH CHECK ENDPOINTS ====================
         // These endpoints support container orchestration (Docker, Kubernetes)
 
@@ -349,6 +348,7 @@ public sealed class UiServer : IAsyncDisposable
 
         // Configure archive maintenance endpoints
         _app.MapArchiveMaintenanceEndpoints();
+#pragma warning restore IL2026
     }
 
     private void ConfigureStorageOrganizationRoutes()

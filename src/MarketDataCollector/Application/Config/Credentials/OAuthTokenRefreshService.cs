@@ -216,14 +216,13 @@ public sealed class OAuthTokenRefreshService : IAsyncDisposable
         return daysUntilExpiration <= _config.WarnDaysBeforeExpiration && !token.IsExpired;
     }
 
-    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access",
-        Justification = "System.Text.Json is preserved via TrimmerRootAssembly. JSON serialization types are safe with partial trimming.")]
     private async Task<OAuthRefreshResult> RefreshTokenInternalAsync(
         string providerName,
         OAuthToken currentToken,
         OAuthProviderConfig providerConfig,
         CancellationToken ct)
     {
+#pragma warning disable IL2026 // System.Text.Json is preserved via TrimmerRootAssembly
         if (!currentToken.CanRefresh)
         {
             return new OAuthRefreshResult(false, Error: "Token cannot be refreshed (no refresh token or refresh token expired)");
@@ -311,6 +310,7 @@ public sealed class OAuthTokenRefreshService : IAsyncDisposable
         {
             _refreshLock.Release();
         }
+#pragma warning restore IL2026
     }
 
     private static TokenStatus GetTokenStatus(OAuthToken token)
@@ -320,10 +320,9 @@ public sealed class OAuthTokenRefreshService : IAsyncDisposable
         return TokenStatus.Valid;
     }
 
-    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access",
-        Justification = "System.Text.Json is preserved via TrimmerRootAssembly. JSON serialization types are safe with partial trimming.")]
     private void LoadPersistedTokens()
     {
+#pragma warning disable IL2026 // System.Text.Json is preserved via TrimmerRootAssembly
         try
         {
             if (!File.Exists(_tokenPersistencePath))
@@ -346,12 +345,12 @@ public sealed class OAuthTokenRefreshService : IAsyncDisposable
         {
             _log.Warning(ex, "Failed to load persisted OAuth tokens");
         }
+#pragma warning restore IL2026
     }
 
-    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access",
-        Justification = "System.Text.Json is preserved via TrimmerRootAssembly. JSON serialization types are safe with partial trimming.")]
     private async Task PersistTokensAsync()
     {
+#pragma warning disable IL2026 // System.Text.Json is preserved via TrimmerRootAssembly
         try
         {
             var directory = Path.GetDirectoryName(_tokenPersistencePath);
@@ -368,6 +367,7 @@ public sealed class OAuthTokenRefreshService : IAsyncDisposable
         {
             _log.Warning(ex, "Failed to persist OAuth tokens");
         }
+#pragma warning restore IL2026
     }
 
     public async ValueTask DisposeAsync()
