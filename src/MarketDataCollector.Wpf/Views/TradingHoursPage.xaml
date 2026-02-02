@@ -1,0 +1,20 @@
+<Page x:Class="MarketDataCollector.Wpf.Views.TradingHoursPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Background="{DynamicResource ConsoleBackgroundDarkBrush}">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="24">
+        <StackPanel MaxWidth="1200">
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,24">
+                <TextBlock Text="&#xE823;" FontFamily="{StaticResource SymbolThemeFontFamily}"
+                           FontSize="28" Foreground="{StaticResource InfoColorBrush}" VerticalAlignment="Center" />
+                <TextBlock Text="Trading Hours" Style="{StaticResource PageTitleStyle}" Margin="12,0,0,0" VerticalAlignment="Center" />
+            </StackPanel>
+            <Border Style="{StaticResource CardStyle}">
+                <StackPanel>
+                    <TextBlock Text="Coming Soon" Style="{StaticResource CardHeaderStyle}" Margin="0,0,0,16" />
+                    <TextBlock Text="This feature is under development." Foreground="{StaticResource ConsoleTextMutedBrush}" />
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</Page>
