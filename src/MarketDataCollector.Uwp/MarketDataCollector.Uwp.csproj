@@ -58,6 +58,24 @@
 
   </PropertyGroup>
 
+  <!-- Fix for XAML compiler double backslash issue in intermediate output path
+       The Windows App SDK 1.7.x XAML compiler incorrectly concatenates paths when
+       the intermediate output directory has certain configurations, resulting in
+       paths like "obj\x64\Debug\net9.0-windows10.0.19041.0\win-x64\\input.json"
+       with double backslashes that cause XamlCompiler.exe to fail.
+       
+       This workaround explicitly normalizes the intermediate output path to ensure
+       it doesn't have a trailing directory separator, preventing the double backslash.
+       
+       Ref: GitHub Actions run 21609121398 - XAML compilation failure -->
+  <PropertyGroup Condition="'$(IsWindows)' == 'true' AND '$(RuntimeIdentifier)' != ''">
+    <!-- Build normalized path without trailing slash -->
+    <IntermediateOutputPath Condition="'$(IntermediateOutputPath)' == ''">obj\$(Platform)\$(Configuration)\$(TargetFramework)\$(RuntimeIdentifier)</IntermediateOutputPath>
+    <!-- Ensure no trailing backslash - MSBuild will auto-add when needed
+         Using NormalizePath to properly handle path separators -->
+    <IntermediateOutputPath>$([MSBuild]::NormalizePath($(IntermediateOutputPath)))</IntermediateOutputPath>
+  </PropertyGroup>
+
   <!-- Windows-only package references -->
   <ItemGroup Condition="'$(IsWindows)' == 'true'">
     <PackageReference Include="CommunityToolkit.Mvvm" />
