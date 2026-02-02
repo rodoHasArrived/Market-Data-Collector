@@ -1,4 +1,5 @@
 using FluentAssertions;
+using MarketDataCollector.Contracts.Domain.Enums;
 using MarketDataCollector.Domain.Models;
 using Xunit;
 
