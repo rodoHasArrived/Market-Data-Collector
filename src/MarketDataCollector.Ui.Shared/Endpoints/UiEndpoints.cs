@@ -1,10 +1,12 @@
 using System.Text.Json;
 using MarketDataCollector.Application.Composition;
 using MarketDataCollector.Application.UI;
-using MarketDataCollector.Ui.Shared.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
+using CoreConfigStore = MarketDataCollector.Application.UI.ConfigStore;
+using CoreBackfillCoordinator = MarketDataCollector.Application.UI.BackfillCoordinator;
+using UiBackfillCoordinator = MarketDataCollector.Ui.Shared.Services.BackfillCoordinator;
 
 namespace MarketDataCollector.Ui.Shared.Endpoints;
 
@@ -67,10 +69,10 @@ public static class UiEndpoints
 
         // Replace core BackfillCoordinator with UI-extended version that includes PreviewAsync
         // The Ui.Shared.Services.BackfillCoordinator wraps the core and adds preview functionality
-        services.AddSingleton<BackfillCoordinator>(sp =>
+        services.AddSingleton<UiBackfillCoordinator>(sp =>
         {
-            var configStore = sp.GetRequiredService<ConfigStore>();
-            return new BackfillCoordinator(configStore);
+            var configStore = sp.GetRequiredService<CoreConfigStore>();
+            return new UiBackfillCoordinator(configStore);
         });
 
         return services;
@@ -90,10 +92,10 @@ public static class UiEndpoints
         services.AddMarketDataServices(options);
 
         // Replace core BackfillCoordinator with UI-extended version that includes PreviewAsync
-        services.AddSingleton<BackfillCoordinator>(sp =>
+        services.AddSingleton<UiBackfillCoordinator>(sp =>
         {
-            var configStore = sp.GetRequiredService<ConfigStore>();
-            return new BackfillCoordinator(configStore);
+            var configStore = sp.GetRequiredService<CoreConfigStore>();
+            return new UiBackfillCoordinator(configStore);
         });
 
         services.AddSingleton(statusHandlers);
@@ -171,7 +173,7 @@ public static class UiEndpoints
     /// </summary>
     public static WebApplication MapDashboard(this WebApplication app)
     {
-        app.MapGet("/", (ConfigStore store) =>
+        app.MapGet("/", (CoreConfigStore store) =>
         {
             var html = HtmlTemplates.Index(store.ConfigPath, store.GetStatusPath(), store.GetBackfillStatusPath());
             return Results.Content(html, "text/html");

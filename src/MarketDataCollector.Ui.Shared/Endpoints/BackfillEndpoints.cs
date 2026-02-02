@@ -1,9 +1,10 @@
 using System.Text.Json;
 using MarketDataCollector.Application.Backfill;
 using MarketDataCollector.Contracts.Api;
-using MarketDataCollector.Ui.Shared.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using UiBackfillCoordinator = MarketDataCollector.Ui.Shared.Services.BackfillCoordinator;
+using CoreBackfillRequest = MarketDataCollector.Application.Backfill.BackfillRequest;
 
 namespace MarketDataCollector.Ui.Shared.Endpoints;
 
@@ -19,14 +20,14 @@ public static class BackfillEndpoints
     public static void MapBackfillEndpoints(this WebApplication app, JsonSerializerOptions jsonOptions, JsonSerializerOptions jsonOptionsIndented)
     {
         // Get available providers
-        app.MapGet(UiApiRoutes.BackfillProviders, (BackfillCoordinator backfill) =>
+        app.MapGet(UiApiRoutes.BackfillProviders, (UiBackfillCoordinator backfill) =>
         {
             var providers = backfill.DescribeProviders();
             return Results.Json(providers, jsonOptions);
         });
 
         // Get last backfill status
-        app.MapGet(UiApiRoutes.BackfillStatus, (BackfillCoordinator backfill) =>
+        app.MapGet(UiApiRoutes.BackfillStatus, (UiBackfillCoordinator backfill) =>
         {
             var status = backfill.TryReadLast();
             return status is null
@@ -35,14 +36,14 @@ public static class BackfillEndpoints
         });
 
         // Preview backfill (dry run - shows what would be fetched)
-        app.MapPost(UiApiRoutes.BackfillRun + "/preview", async (BackfillCoordinator backfill, BackfillRequestDto req) =>
+        app.MapPost(UiApiRoutes.BackfillRun + "/preview", async (UiBackfillCoordinator backfill, BackfillRequestDto req) =>
         {
             if (req.Symbols is null || req.Symbols.Length == 0)
                 return Results.BadRequest("At least one symbol is required.");
 
             try
             {
-                var request = new BackfillRequest(
+                var request = new CoreBackfillRequest(
                     string.IsNullOrWhiteSpace(req.Provider) ? "stooq" : req.Provider!,
                     req.Symbols,
                     req.From,
@@ -58,14 +59,14 @@ public static class BackfillEndpoints
         });
 
         // Run backfill
-        app.MapPost(UiApiRoutes.BackfillRun, async (BackfillCoordinator backfill, BackfillRequestDto req) =>
+        app.MapPost(UiApiRoutes.BackfillRun, async (UiBackfillCoordinator backfill, BackfillRequestDto req) =>
         {
             if (req.Symbols is null || req.Symbols.Length == 0)
                 return Results.BadRequest("At least one symbol is required.");
 
             try
             {
-                var request = new BackfillRequest(
+                var request = new CoreBackfillRequest(
                     string.IsNullOrWhiteSpace(req.Provider) ? "stooq" : req.Provider!,
                     req.Symbols,
                     req.From,
