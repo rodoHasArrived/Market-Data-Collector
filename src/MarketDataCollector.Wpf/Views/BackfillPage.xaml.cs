@@ -277,7 +277,7 @@ public partial class BackfillPage : Page
     {
         if (ScheduleSettingsPanel != null)
         {
-            ScheduleSettingsPanel.Opacity = ScheduledBackfillToggle.IsChecked == true ? 1.0 : 0.5;
+            ScheduleSettingsPanel.Opacity = ScheduledBackfillToggle.IsChecked.GetValueOrDefault() ? 1.0 : 0.5;
         }
     }
 
