@@ -3,6 +3,7 @@ using MarketDataCollector.Contracts.Domain.Enums;
 using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Collectors;
 using MarketDataCollector.Domain.Events;
+using MarketDataCollector.Tests.TestHelpers;
 using Moq;
 using Xunit;
 
@@ -14,21 +15,15 @@ namespace MarketDataCollector.Tests;
 /// </summary>
 public class AlpacaQuoteRoutingTests
 {
-    private readonly Mock<IMarketEventPublisher> _mockPublisher;
+    private readonly FakeMarketEventPublisher _publisher;
     private readonly QuoteCollector _quoteCollector;
     private readonly List<MarketEvent> _publishedEvents;
 
     public AlpacaQuoteRoutingTests()
     {
-        _mockPublisher = new Mock<IMarketEventPublisher>();
         _publishedEvents = new List<MarketEvent>();
-
-        _mockPublisher
-            .Setup(p => p.TryPublish(It.IsAny<MarketEvent>()))
-            .Callback<MarketEvent>(e => _publishedEvents.Add(e))
-            .Returns(true);
-
-        _quoteCollector = new QuoteCollector(_mockPublisher.Object);
+        _publisher = new FakeMarketEventPublisher(_publishedEvents);
+        _quoteCollector = new QuoteCollector(_publisher);
     }
 
     [Fact]
@@ -205,20 +200,20 @@ public class AlpacaQuoteRoutingTests
     [Fact]
     public void OnQuote_WhenPublisherRejectsDueToBackpressure_DoesNotThrow()
     {
-        // Arrange
-        _mockPublisher
-            .Setup(p => p.TryPublish(It.IsAny<MarketEvent>()))
-            .Returns(false); // Simulate backpressure
+        // Arrange - create a publisher that returns false
+        var rejectedEvents = new List<MarketEvent>();
+        var rejectingPublisher = new FakeMarketEventPublisher(rejectedEvents, _ => false);
+        var collector = new QuoteCollector(rejectingPublisher);
 
         var quote = CreateAlpacaQuote("AAPL", 185.50m, 185.55m);
 
         // Act
-        var act = () => _quoteCollector.OnQuote(quote);
+        var act = () => collector.OnQuote(quote);
 
         // Assert
         act.Should().NotThrow();
         // State should still be updated even if publish fails
-        _quoteCollector.TryGet("AAPL", out _).Should().BeTrue();
+        collector.TryGet("AAPL", out _).Should().BeTrue();
     }
 
     [Theory]
