@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -157,6 +158,8 @@ public sealed class ProviderLatencyService : IDisposable
     /// <summary>
     /// Serializes the summary to JSON.
     /// </summary>
+    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access",
+        Justification = "System.Text.Json is preserved via TrimmerRootAssembly. JSON serialization types are safe with partial trimming.")]
     public string ToJson()
     {
         var summary = GetSummary();

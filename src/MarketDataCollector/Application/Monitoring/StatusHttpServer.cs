@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Collections.Generic;
 using System.Text;
@@ -292,6 +293,8 @@ public sealed class StatusHttpServer : IAsyncDisposable
     /// <summary>
     /// Returns current backfill status for UWP app.
     /// </summary>
+    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access",
+        Justification = "System.Text.Json is preserved via TrimmerRootAssembly. JSON serialization types are safe with partial trimming.")]
     private Task WriteBackfillStatusAsync(HttpListenerResponse resp)
     {
         resp.ContentType = "application/json";
@@ -344,6 +347,8 @@ setInterval(refresh,2000);refresh();
     /// Returns the last N errors endpoint using shared handlers.
     /// Supports query parameters: count (default 10), level (warning/error/critical), symbol
     /// </summary>
+    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access",
+        Justification = "System.Text.Json is preserved via TrimmerRootAssembly. JSON serialization types are safe with partial trimming.")]
     private Task WriteErrorsAsync(HttpListenerResponse resp, System.Collections.Specialized.NameValueCollection queryString)
     {
         resp.ContentType = "application/json";
@@ -366,6 +371,8 @@ setInterval(refresh,2000);refresh();
     /// Detailed health check endpoint using shared handlers.
     /// Returns comprehensive health information including dependencies.
     /// </summary>
+    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access",
+        Justification = "System.Text.Json is preserved via TrimmerRootAssembly. JSON serialization types are safe with partial trimming.")]
     private async Task WriteDetailedHealthAsync(HttpListenerResponse resp)
     {
         var (report, error) = await _handlers.GetDetailedHealthAsync();
@@ -446,6 +453,8 @@ setInterval(refresh,2000);refresh();
                || string.Equals(bindAddress, "::1", StringComparison.OrdinalIgnoreCase);
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access",
+        Justification = "System.Text.Json is preserved via TrimmerRootAssembly. JSON serialization types are safe with partial trimming.")]
     private static Task WriteUnauthorizedAsync(HttpListenerResponse resp)
     {
         resp.StatusCode = 401;
@@ -459,6 +468,8 @@ setInterval(refresh,2000);refresh();
     /// Backpressure status endpoint using shared handlers.
     /// Returns current pipeline backpressure information.
     /// </summary>
+    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access",
+        Justification = "System.Text.Json is preserved via TrimmerRootAssembly. JSON serialization types are safe with partial trimming.")]
     private Task WriteBackpressureAsync(HttpListenerResponse resp)
     {
         resp.ContentType = "application/json";
@@ -472,6 +483,8 @@ setInterval(refresh,2000);refresh();
     /// Provider latency histogram endpoint using shared handlers.
     /// Returns latency statistics per data provider.
     /// </summary>
+    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access",
+        Justification = "System.Text.Json is preserved via TrimmerRootAssembly. JSON serialization types are safe with partial trimming.")]
     private Task WriteProviderLatencyAsync(HttpListenerResponse resp)
     {
         resp.ContentType = "application/json";
@@ -493,6 +506,8 @@ setInterval(refresh,2000);refresh();
     /// Connection health endpoint using shared handlers.
     /// Returns health status of all monitored connections.
     /// </summary>
+    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access",
+        Justification = "System.Text.Json is preserved via TrimmerRootAssembly. JSON serialization types are safe with partial trimming.")]
     private Task WriteConnectionHealthAsync(HttpListenerResponse resp)
     {
         resp.ContentType = "application/json";

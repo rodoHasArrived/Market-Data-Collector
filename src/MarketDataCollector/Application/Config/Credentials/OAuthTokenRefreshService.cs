@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
@@ -215,6 +216,8 @@ public sealed class OAuthTokenRefreshService : IAsyncDisposable
         return daysUntilExpiration <= _config.WarnDaysBeforeExpiration && !token.IsExpired;
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access",
+        Justification = "System.Text.Json is preserved via TrimmerRootAssembly. JSON serialization types are safe with partial trimming.")]
     private async Task<OAuthRefreshResult> RefreshTokenInternalAsync(
         string providerName,
         OAuthToken currentToken,
@@ -317,6 +320,8 @@ public sealed class OAuthTokenRefreshService : IAsyncDisposable
         return TokenStatus.Valid;
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access",
+        Justification = "System.Text.Json is preserved via TrimmerRootAssembly. JSON serialization types are safe with partial trimming.")]
     private void LoadPersistedTokens()
     {
         try
@@ -343,6 +348,8 @@ public sealed class OAuthTokenRefreshService : IAsyncDisposable
         }
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access",
+        Justification = "System.Text.Json is preserved via TrimmerRootAssembly. JSON serialization types are safe with partial trimming.")]
     private async Task PersistTokensAsync()
     {
         try

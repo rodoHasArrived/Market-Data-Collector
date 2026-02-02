@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using MarketDataCollector.Application.Composition;
 using MarketDataCollector.Application.Config;
@@ -69,6 +70,8 @@ public sealed class UiServer : IAsyncDisposable
         ConfigureRoutes();
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access",
+        Justification = "System.Text.Json is preserved via TrimmerRootAssembly. JSON serialization types are safe with partial trimming.")]
     private void ConfigureRoutes()
     {
         // ==================== HEALTH CHECK ENDPOINTS ====================

@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Contracts.Domain.Models;
@@ -109,6 +110,8 @@ public sealed class SampleDataGenerator
     /// <summary>
     /// Generates sample data and writes it to JSONL files.
     /// </summary>
+    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access",
+        Justification = "System.Text.Json is preserved via TrimmerRootAssembly. JSON serialization types are safe with partial trimming.")]
     public async Task<SampleDataResult> GenerateToFileAsync(
         SampleDataOptions options,
         string outputPath,
