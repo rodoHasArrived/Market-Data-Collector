@@ -1,9 +1,25 @@
 # UWP Desktop App Development Roadmap
 
-**Last Updated:** 2026-01-29
+**Last Updated:** 2026-02-02
 **Version:** 1.0.0
 
 This document outlines feature refinements and development roadmap for the Market Data Collector UWP Desktop Application.
+
+## Recent Updates (February 2026)
+
+### Critical Build Fix (February 2, 2026)
+
+#### XAML Compiler Compatibility Issue Resolved
+Fixed long-standing build failure in GitHub Actions Desktop App Build workflow:
+
+- **Problem**: All 81+ desktop app workflow runs were failing with `XamlCompiler.exe` exit code 1
+- **Root Cause**: WinUI 3 XAML compiler (`XamlCompiler.exe`) is a .NET Framework 4.7.2 (net472) executable that cannot process C# 9 record types used extensively in `MarketDataCollector.Contracts` (e.g., `MarketEvent`, `CredentialFieldInfo`, `FieldError`, etc.)
+- **Solution**: Added `<UseXamlCompilerExecutable>false</UseXamlCompilerExecutable>` to project file to use managed (.NET) XAML compiler instead
+- **Impact**: Enables successful builds for x64, arm64, and MSIX packages
+- **Reference**: [Microsoft WinUI Issue #5315](https://github.com/microsoft/microsoft-ui-xaml/issues/5315)
+- **Workflow Enhancement**: Added binary logging (`-bl`) to build commands for improved diagnostics
+
+This fix unblocks desktop app deployment and CI/CD automation.
 
 ## Recent Updates (January 2026)
 
