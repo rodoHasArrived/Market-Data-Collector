@@ -35,6 +35,8 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
 
+    <!-- Define UWP_BUILD symbol to allow conditional compilation in shared source files -->
+    <DefineConstants>$(DefineConstants);UWP_BUILD</DefineConstants>
 
     <!-- Assembly Information -->
     <AssemblyName>MarketDataCollector.Desktop</AssemblyName>
@@ -132,6 +134,8 @@
              Link="SharedModels\Domain\Models\%(Filename)%(Extension)" />
 
     <!-- Domain events (MarketEvent, MarketEventPayload, IMarketEventPayload) -->
+    <!-- Note: MarketEventPayload.cs uses conditional compilation (#if !UWP_BUILD) to exclude
+         [JsonPolymorphic] attributes that the WinUI 3 XAML compiler (net472-based) cannot process -->
     <Compile Include="..\MarketDataCollector.Contracts\Domain\Events\*.cs"
              Link="SharedModels\Domain\Events\%(Filename)%(Extension)" />
 
