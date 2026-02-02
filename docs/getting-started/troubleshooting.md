@@ -444,6 +444,26 @@ chmod -R 755 data/
 
 ## Build and IDE Issues
 
+### XAML Compiler Fails with "exited with code 1"
+
+**Symptom**: Building the UWP desktop app fails with error:
+```
+error MSB3073: The command "XamlCompiler.exe" "obj\x64\Debug\...\win-x64\\input.json" exited with code 1
+```
+
+**Root Cause**: Windows App SDK 1.7.x XAML compiler has a path concatenation issue that creates double backslashes in intermediate output paths.
+
+**Solution**: This issue is fixed in the project file as of commit f28815c. If you encounter this error:
+1. Ensure you have the latest version of `src/MarketDataCollector.Uwp/MarketDataCollector.Uwp.csproj`
+2. The fix normalizes `IntermediateOutputPath` to prevent trailing slashes
+3. Clean and rebuild:
+   ```bash
+   dotnet clean src/MarketDataCollector.Uwp
+   dotnet build src/MarketDataCollector.Uwp -c Release -r win-x64 -p:Platform=x64
+   ```
+
+**Reference**: GitHub Actions run 21609121398
+
 ### "The SDK 'Microsoft.NET.Sdk.Web' specified could not be found"
 
 **Symptom**: `dotnet restore`/`dotnet build` or OmniSharp fails when loading microservice projects.
