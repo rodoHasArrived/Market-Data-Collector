@@ -446,8 +446,8 @@ internal static class Program
         {
             log.Information("Starting web dashboard ({ModeDescription})...", deployment.ModeDescription);
 
-            await using var uiServer = new UiServer(cfgPath, deployment.HttpPort);
-            await uiServer.StartAsync();
+            await using var webDashboard = new UiServer(cfgPath, deployment.HttpPort);
+            await webDashboard.StartAsync();
 
             log.Information("Web dashboard started at http://localhost:{Port}", deployment.HttpPort);
             Console.WriteLine($"Web dashboard running at http://localhost:{deployment.HttpPort}");
@@ -463,7 +463,7 @@ internal static class Program
             await done.Task;
 
             log.Information("Stopping web dashboard...");
-            await uiServer.StopAsync();
+            await webDashboard.StopAsync();
             log.Information("Web dashboard stopped");
             return;
         }
@@ -736,7 +736,7 @@ internal static class Program
             depthCollector.OnDepth(new MarketDepthUpdate(now, sym, 0, DepthOperation.Insert, OrderBookSide.Bid, 500.20m, 100m, "MM3"));
             depthCollector.OnDepth(new MarketDepthUpdate(now, sym, 0, DepthOperation.Insert, OrderBookSide.Ask, 500.22m, 90m, "MM4"));
 
-            tradeCollector.OnTrade(new MarketTradeUpdate(now, sym, 500.21m, 100, Domain.Models.AggressorSide.Buy, SequenceNumber: 1, StreamId: "SIM", Venue: "TEST"));
+            tradeCollector.OnTrade(new MarketTradeUpdate(now, sym, 500.21m, 100, Contracts.Domain.Enums.AggressorSide.Buy, SequenceNumber: 1, StreamId: "SIM", Venue: "TEST"));
 
             await Task.Delay(200);
         }

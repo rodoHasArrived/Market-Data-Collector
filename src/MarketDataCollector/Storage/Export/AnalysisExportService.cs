@@ -157,9 +157,9 @@ public sealed class AnalysisExportService
 
     private List<SourceFile> FindSourceFiles(ExportRequest request)
     {
-        if (!Directory.Exists(_dataRoot)) return [];
+        if (!Directory.Exists(_dataRoot)) return new List<SourceFile>();
 
-        return ["*.jsonl", "*.jsonl.gz"]
+        return new[] { "*.jsonl", "*.jsonl.gz" }
             .SelectMany(pattern => Directory.GetFiles(_dataRoot, pattern, SearchOption.AllDirectories))
             .Select(ParseFileName)
             .Where(f => f is not null)

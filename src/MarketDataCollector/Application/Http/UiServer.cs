@@ -1,4 +1,5 @@
 using System.Text.Json;
+using MarketDataCollector.Application.Backfill;
 using MarketDataCollector.Application.Composition;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Subscriptions.Models;
@@ -276,10 +277,10 @@ public sealed class UiServer : IAsyncDisposable
                     return Results.BadRequest("At least one symbol is required.");
 
                 var request = new BackfillRequest(
-                    string.IsNullOrWhiteSpace(req.Provider) ? "composite" : req.Provider!,
-                    req.Symbols,
-                    req.From,
-                    req.To);
+                    Provider: string.IsNullOrWhiteSpace(req.Provider) ? "composite" : req.Provider!,
+                    Symbols: req.Symbols,
+                    From: req.From,
+                    To: req.To);
 
                 var result = await backfill.RunAsync(request, ct);
                 return Results.Json(result, s_jsonOptions);

@@ -8,7 +8,7 @@ public sealed record MarketEvent(
     DateTimeOffset Timestamp,
     string Symbol,
     MarketEventType Type,
-    MarketEventPayload? Payload,
+    Contracts.Domain.Events.MarketEventPayload? Payload,
     long Sequence = 0,
     string Source = "IB",
     int SchemaVersion = 1,

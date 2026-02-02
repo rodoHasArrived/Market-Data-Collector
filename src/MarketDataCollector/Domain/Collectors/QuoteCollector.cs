@@ -47,10 +47,30 @@ public sealed class QuoteCollector : IQuoteStateStore
         // We keep our own monotonically increasing per-symbol sequence for quotes.
         var nextSeq = _seq.AddOrUpdate(symbol, _ => 1, (_, v) => v + 1);
 
-        var payload = BboQuotePayload.FromUpdate(update, nextSeq);
+        var payload = CreateBboQuotePayload(update, nextSeq);
         _latest[symbol] = payload;
 
         return payload;
+    }
+
+    private static BboQuotePayload CreateBboQuotePayload(MarketQuoteUpdate update, long sequenceNumber)
+    {
+        var midPrice = (update.BidPrice + update.AskPrice) / 2m;
+        var spread = update.AskPrice - update.BidPrice;
+
+        return new BboQuotePayload(
+            Timestamp: update.Timestamp,
+            Symbol: update.Symbol,
+            BidPrice: update.BidPrice,
+            BidSize: update.BidSize,
+            AskPrice: update.AskPrice,
+            AskSize: update.AskSize,
+            MidPrice: midPrice,
+            Spread: spread,
+            SequenceNumber: sequenceNumber,
+            StreamId: update.StreamId,
+            Venue: update.Venue
+        );
     }
 
     public bool TryRemove(string symbol, out BboQuotePayload? removed)
