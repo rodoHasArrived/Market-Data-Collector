@@ -42,9 +42,23 @@ public sealed class ConfigStore
     /// <summary>
     /// Loads configuration from the config file.
     /// </summary>
-    public static MarketDataCollector.Storage.AppConfig LoadConfig(string path) => CoreConfigStore.LoadConfig(path);
-    {
-    }
+    public static MarketDataCollector.Application.Config.AppConfig LoadConfig(string path) => CoreConfigStore.LoadConfig(path);
+
+    /// <summary>
+    /// Instance method to load configuration from the configured path.
+    /// </summary>
+    public MarketDataCollector.Application.Config.AppConfig Load() => _core.Load();
+
+    /// <summary>
+    /// Saves configuration to the config file.
+    /// </summary>
+    public System.Threading.Tasks.Task SaveAsync(MarketDataCollector.Application.Config.AppConfig cfg) => _core.SaveAsync(cfg);
+
+    /// <summary>
+    /// Attempts to load provider metrics from the status file.
+    /// </summary>
+    public MarketDataCollector.Application.Monitoring.ProviderMetricsStatus? TryLoadProviderMetrics()
+        => _core.TryLoadProviderMetrics();
 
     /// <summary>
     /// Gets the default configuration path for web dashboard hosting.

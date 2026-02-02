@@ -26,7 +26,7 @@ public sealed class ConfigurationUnificationTests
             appliedFixes: new[] { "Fix1", "Fix2" },
             warnings: new[] { "Warning1" },
             environmentName: "Production",
-            source: ConfigurationSource.File);
+            source: ConfigurationOrigin.File);
 
         validated.Config.Should().Be(config);
         validated.IsValid.Should().BeTrue();
@@ -34,7 +34,7 @@ public sealed class ConfigurationUnificationTests
         validated.AppliedFixes.Should().HaveCount(2);
         validated.Warnings.Should().HaveCount(1);
         validated.EnvironmentName.Should().Be("Production");
-        validated.Source.Should().Be(ConfigurationSource.File);
+        validated.Source.Should().Be(ConfigurationOrigin.File);
     }
 
     [Fact]
@@ -56,7 +56,7 @@ public sealed class ConfigurationUnificationTests
         var validated = ValidatedConfig.Default();
 
         validated.IsValid.Should().BeTrue();
-        validated.Source.Should().Be(ConfigurationSource.Default);
+        validated.Source.Should().Be(ConfigurationOrigin.Default);
         validated.Config.Should().NotBeNull();
     }
 
@@ -248,16 +248,16 @@ public sealed class ConfigurationUnificationTests
     #region ConfigurationSource Tests
 
     [Fact]
-    public void ConfigurationSource_HasAllExpectedValues()
+    public void ConfigurationOrigin_HasAllExpectedValues()
     {
-        var sources = Enum.GetValues<ConfigurationSource>();
+        var sources = Enum.GetValues<ConfigurationOrigin>();
 
-        sources.Should().Contain(ConfigurationSource.Default);
-        sources.Should().Contain(ConfigurationSource.File);
-        sources.Should().Contain(ConfigurationSource.Wizard);
-        sources.Should().Contain(ConfigurationSource.AutoConfig);
-        sources.Should().Contain(ConfigurationSource.HotReload);
-        sources.Should().Contain(ConfigurationSource.Programmatic);
+        sources.Should().Contain(ConfigurationOrigin.Default);
+        sources.Should().Contain(ConfigurationOrigin.File);
+        sources.Should().Contain(ConfigurationOrigin.Wizard);
+        sources.Should().Contain(ConfigurationOrigin.AutoConfig);
+        sources.Should().Contain(ConfigurationOrigin.HotReload);
+        sources.Should().Contain(ConfigurationOrigin.Programmatic);
     }
 
     #endregion

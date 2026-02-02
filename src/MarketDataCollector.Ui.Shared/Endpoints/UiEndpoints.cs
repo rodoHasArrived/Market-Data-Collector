@@ -67,10 +67,10 @@ public static class UiEndpoints
 
         // Replace core BackfillCoordinator with UI-extended version that includes PreviewAsync
         // The Ui.Shared.Services.BackfillCoordinator wraps the core and adds preview functionality
-        services.AddSingleton<BackfillCoordinator>(sp =>
+        services.AddSingleton<MarketDataCollector.Ui.Shared.Services.BackfillCoordinator>(sp =>
         {
-            var configStore = sp.GetRequiredService<ConfigStore>();
-            return new BackfillCoordinator(configStore);
+            var configStore = sp.GetRequiredService<MarketDataCollector.Ui.Shared.Services.ConfigStore>();
+            return new MarketDataCollector.Ui.Shared.Services.BackfillCoordinator(configStore);
         });
 
         return services;
@@ -90,10 +90,10 @@ public static class UiEndpoints
         services.AddMarketDataServices(options);
 
         // Replace core BackfillCoordinator with UI-extended version that includes PreviewAsync
-        services.AddSingleton<BackfillCoordinator>(sp =>
+        services.AddSingleton<MarketDataCollector.Ui.Shared.Services.BackfillCoordinator>(sp =>
         {
-            var configStore = sp.GetRequiredService<ConfigStore>();
-            return new BackfillCoordinator(configStore);
+            var configStore = sp.GetRequiredService<MarketDataCollector.Ui.Shared.Services.ConfigStore>();
+            return new MarketDataCollector.Ui.Shared.Services.BackfillCoordinator(configStore);
         });
 
         services.AddSingleton(statusHandlers);
