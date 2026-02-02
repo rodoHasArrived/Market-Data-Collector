@@ -122,7 +122,7 @@ public partial class SettingsPage : Page
     {
         if (NotificationSettingsPanel != null)
         {
-            NotificationSettingsPanel.Opacity = NotificationsEnabledToggle.IsChecked == true ? 1.0 : 0.5;
+            NotificationSettingsPanel.Opacity = NotificationsEnabledToggle.IsChecked.GetValueOrDefault() ? 1.0 : 0.5;
         }
     }
 

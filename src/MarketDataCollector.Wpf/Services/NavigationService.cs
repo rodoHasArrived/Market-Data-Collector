@@ -55,7 +55,7 @@ public sealed class NavigationService : INavigationService
     /// <summary>
     /// Gets whether navigation can go back.
     /// </summary>
-    public bool CanGoBack => _frame?.CanGoBack == true;
+    public bool CanGoBack => _frame?.CanGoBack ?? false;
 
     /// <summary>
     /// Event raised when navigation occurs.
@@ -130,7 +130,7 @@ public sealed class NavigationService : INavigationService
     /// </summary>
     public void GoBack()
     {
-        if (_frame?.CanGoBack == true)
+        if (_frame?.CanGoBack ?? false)
         {
             _frame.GoBack();
             if (_navigationHistory.Count > 0)
@@ -247,7 +247,7 @@ public sealed class NavigationService : INavigationService
     public void ClearHistory()
     {
         _navigationHistory.Clear();
-        while (_frame?.CanGoBack == true)
+        while (_frame?.CanGoBack ?? false)
         {
             _frame.RemoveBackEntry();
         }
