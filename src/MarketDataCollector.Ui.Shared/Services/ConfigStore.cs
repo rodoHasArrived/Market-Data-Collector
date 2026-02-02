@@ -43,8 +43,6 @@ public sealed class ConfigStore
     /// Loads configuration from the config file.
     /// </summary>
     public static MarketDataCollector.Storage.AppConfig LoadConfig(string path) => CoreConfigStore.LoadConfig(path);
-    {
-    }
 
     /// <summary>
     /// Gets the default configuration path for web dashboard hosting.

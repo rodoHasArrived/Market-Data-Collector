@@ -456,11 +456,11 @@ public class HistoricalProviderContractTests
         // Assert
         provider.Name.Should().Be("yahoo");
         provider.DisplayName.Should().Contain("Yahoo");
-        provider.SupportsAdjustedPrices.Should().BeTrue();
-        provider.SupportsDividends.Should().BeTrue();
-        provider.SupportsSplits.Should().BeTrue();
-        provider.SupportsIntraday.Should().BeFalse();
-        provider.SupportedMarkets.Should().Contain("US");
+        provider.Capabilities.SupportsAdjustedPrices.Should().BeTrue();
+        provider.Capabilities.SupportsDividends.Should().BeTrue();
+        provider.Capabilities.SupportsSplits.Should().BeTrue();
+        provider.Capabilities.SupportsIntraday.Should().BeFalse();
+        provider.Capabilities.SupportedMarkets.Should().Contain("US");
     }
 
     [Fact]
