@@ -4,6 +4,7 @@ using MarketDataCollector.Contracts.Api;
 using MarketDataCollector.Ui.Shared.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using BackfillRequest = MarketDataCollector.Application.Backfill.BackfillRequest;
 
 namespace MarketDataCollector.Ui.Shared.Endpoints;
 

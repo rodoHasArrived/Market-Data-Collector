@@ -80,7 +80,9 @@ public sealed class BackfillCoordinator : IDisposable
         _store = store;
         _registry = registry;
         _factory = factory;
-        _core = new CoreBackfillCoordinator(store, registry, factory);
+        // Convert Ui.Shared.ConfigStore wrapper to the core ConfigStore for the core coordinator
+        var coreStore = new MarketDataCollector.Application.UI.ConfigStore(store.ConfigPath);
+        _core = new CoreBackfillCoordinator(coreStore, registry, factory);
     }
 
     /// <summary>
@@ -154,7 +156,7 @@ public sealed class BackfillCoordinator : IDisposable
             TotalDays: totalDays,
             EstimatedTradingDays: tradingDays,
             Symbols: symbolPreviews.ToArray(),
-            EstimatedDurationSeconds: EstimateBackfillDuration(request.Symbols.Length, tradingDays),
+            EstimatedDurationSeconds: EstimateBackfillDuration(request.Symbols.Count, tradingDays),
             Notes: GetProviderNotes(providerInfo)
         );
     }

@@ -91,6 +91,54 @@ public abstract class BaseHistoricalDataProvider : IHistoricalDataProvider, IRat
     /// </remarks>
     public virtual HistoricalDataCapabilities Capabilities => HistoricalDataCapabilities.None;
 
+    /// <summary>
+    /// Whether this provider returns split/dividend adjusted prices.
+    /// </summary>
+    /// <remarks>Delegates to <see cref="Capabilities"/>. Provided for backwards compatibility.</remarks>
+    public bool SupportsAdjustedPrices => Capabilities.AdjustedPrices;
+
+    /// <summary>
+    /// Whether this provider supports intraday bar data.
+    /// </summary>
+    /// <remarks>Delegates to <see cref="Capabilities"/>. Provided for backwards compatibility.</remarks>
+    public bool SupportsIntraday => Capabilities.Intraday;
+
+    /// <summary>
+    /// Whether this provider includes dividend data.
+    /// </summary>
+    /// <remarks>Delegates to <see cref="Capabilities"/>. Provided for backwards compatibility.</remarks>
+    public bool SupportsDividends => Capabilities.Dividends;
+
+    /// <summary>
+    /// Whether this provider includes split data.
+    /// </summary>
+    /// <remarks>Delegates to <see cref="Capabilities"/>. Provided for backwards compatibility.</remarks>
+    public bool SupportsSplits => Capabilities.Splits;
+
+    /// <summary>
+    /// Whether this provider supports historical quote (NBBO) data.
+    /// </summary>
+    /// <remarks>Delegates to <see cref="Capabilities"/>. Provided for backwards compatibility.</remarks>
+    public bool SupportsQuotes => Capabilities.Quotes;
+
+    /// <summary>
+    /// Whether this provider supports historical trade data.
+    /// </summary>
+    /// <remarks>Delegates to <see cref="Capabilities"/>. Provided for backwards compatibility.</remarks>
+    public bool SupportsTrades => Capabilities.Trades;
+
+    /// <summary>
+    /// Whether this provider supports historical auction data.
+    /// </summary>
+    /// <remarks>Delegates to <see cref="Capabilities"/>. Provided for backwards compatibility.</remarks>
+    public bool SupportsAuctions => Capabilities.Auctions;
+
+    /// <summary>
+    /// Market regions/countries supported (e.g., "US", "UK", "DE").
+    /// </summary>
+    /// <remarks>Delegates to <see cref="Capabilities"/>. Provided for backwards compatibility.</remarks>
+    public IReadOnlyList<string> SupportedMarkets => Capabilities.SupportedMarkets;
+
     #endregion
 
     #region IRateLimitAwareProvider
