@@ -488,6 +488,34 @@ error MSB3073: The command "XamlCompiler.exe" "obj\x64\Debug\...\win-x64\\input.
    dotnet restore
    ```
 
+### "XamlCompiler.exe exited with code 1" (Desktop App)
+
+**Symptom**: UWP/Desktop app build fails with error: `XamlCompiler.exe exited with code 1` without detailed error messages.
+
+**Root Cause**: The WinUI 3 XAML compiler (`XamlCompiler.exe`) is a .NET Framework 4.7.2 (net472) executable that cannot process modern C# features like:
+- C# 9 `record` types
+- `init` accessors
+- Global using directives
+- Some System.Text.Json attributes
+
+**Solution**: The project file should include:
+```xml
+<UseXamlCompilerExecutable>false</UseXamlCompilerExecutable>
+```
+
+This switches from the legacy net472 compiler to the managed (.NET) XAML compiler that understands modern C# syntax.
+
+**Reference**: [Microsoft WinUI Issue #5315](https://github.com/microsoft/microsoft-ui-xaml/issues/5315)
+
+**Additional Diagnostics**:
+- Enable binary logging to inspect build details:
+  ```bash
+  dotnet build -bl:msbuild.binlog
+  ```
+- View the binary log using MSBuild Structured Log Viewer:
+  - Download from: https://msbuildlog.com/
+  - Open `msbuild.binlog` to see detailed build steps and failures
+
 ## Microservices Issues
 
 ### "Cannot connect to RabbitMQ"
