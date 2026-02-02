@@ -4,6 +4,7 @@ using System.Text.Json;
 using FluentAssertions;
 using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Application.Pipeline;
+using MarketDataCollector.Contracts.Domain.Enums;
 using MarketDataCollector.Domain.Models;
 using Xunit;
 
