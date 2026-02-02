@@ -178,7 +178,9 @@ public sealed class ParquetStorageSink : IStorageSink
     {
         var trades = events
             .Where(e => e.Payload is Trade)
-            .Select(e => (Event: e, Trade: (Trade)e.Payload))
+            .Select(e => (Event: e, Trade: e.Payload as Trade))
+            .Where(t => t.Trade is not null)
+            .Select(t => (t.Event, Trade: t.Trade!))
             .ToList();
 
         if (trades.Count is 0) return;
@@ -200,7 +202,9 @@ public sealed class ParquetStorageSink : IStorageSink
     {
         var quotes = events
             .Where(e => e.Payload is BboQuotePayload)
-            .Select(e => (Event: e, Quote: (BboQuotePayload)e.Payload))
+            .Select(e => (Event: e, Quote: e.Payload as BboQuotePayload))
+            .Where(q => q.Quote is not null)
+            .Select(q => (q.Event, Quote: q.Quote!))
             .ToList();
 
         if (quotes.Count is 0) return;
@@ -244,12 +248,14 @@ public sealed class ParquetStorageSink : IStorageSink
         await rowGroupWriter.WriteColumnAsync(new DataColumn(L2Schema.DataFields[10], snapshots.Select(s => System.Text.Json.JsonSerializer.Serialize(s.Data.Snapshot!.Asks ?? (IReadOnlyList<OrderBookLevel>)[])).ToArray()));
     }
 
-    private static (LOBSnapshot? Snapshot, long SequenceNumber) ExtractL2Data(MarketEvent evt) => evt.Payload switch
+    private static (LOBSnapshot? Snapshot, long SequenceNumber) ExtractL2Data(MarketEvent evt)
     {
-        L2SnapshotPayload l2 => (l2.Snapshot, l2.SequenceNumber),
-        LOBSnapshot lob => (lob, lob.SequenceNumber),
-        _ => (null, 0)
-    };
+        if (evt.Payload is L2SnapshotPayload l2)
+            return (l2.Snapshot, l2.SequenceNumber);
+        if (evt.Payload is LOBSnapshot lob)
+            return (lob, lob.SequenceNumber);
+        return (null, 0);
+    }
 
     private static decimal? ComputeSpread(LOBSnapshot snap)
     {
@@ -262,7 +268,9 @@ public sealed class ParquetStorageSink : IStorageSink
     {
         var bars = events
             .Where(e => e.Payload is HistoricalBar)
-            .Select(e => (Event: e, Bar: (HistoricalBar)e.Payload))
+            .Select(e => (Event: e, Bar: e.Payload as HistoricalBar))
+            .Where(b => b.Bar is not null)
+            .Select(b => (b.Event, Bar: b.Bar!))
             .ToList();
 
         if (bars.Count is 0) return;

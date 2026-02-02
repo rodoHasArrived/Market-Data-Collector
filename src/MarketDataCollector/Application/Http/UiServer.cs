@@ -1,16 +1,21 @@
 using System.Text.Json;
 using MarketDataCollector.Application.Composition;
 using MarketDataCollector.Application.Config;
+using MarketDataCollector.Application.Config.Credentials;
+using MarketDataCollector.Application.Services;
 using MarketDataCollector.Application.Subscriptions.Models;
 using MarketDataCollector.Application.Subscriptions.Services;
 using MarketDataCollector.Contracts.Api;
 using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Storage;
+using MarketDataCollector.Storage.Services;
+using MarketDataCollector.Storage.Interfaces;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using BackfillRequest = MarketDataCollector.Application.Backfill.BackfillRequest;
 
 namespace MarketDataCollector.Application.UI;
 
@@ -366,7 +371,7 @@ public sealed class UiServer : IAsyncDisposable
             {
                 var query = new FileSearchQuery(
                     Symbols: req.Symbols,
-                    Types: req.Types?.Select(t => Enum.Parse<Domain.Events.MarketEventType>(t, true)).ToArray(),
+                    Types: req.Types?.Select(t => Enum.Parse<Contracts.Domain.Enums.MarketEventType>(t, true)).ToArray(),
                     Sources: req.Sources,
                     From: req.From,
                     To: req.To,
@@ -392,7 +397,7 @@ public sealed class UiServer : IAsyncDisposable
             {
                 var query = new FacetedSearchQuery(
                     Symbols: req.Symbols,
-                    Types: req.Types?.Select(t => Enum.Parse<Domain.Events.MarketEventType>(t, true)).ToArray(),
+                    Types: req.Types?.Select(t => Enum.Parse<Contracts.Domain.Enums.MarketEventType>(t, true)).ToArray(),
                     Sources: req.Sources,
                     From: req.From,
                     To: req.To,
@@ -565,7 +570,7 @@ public sealed class UiServer : IAsyncDisposable
                 var rankings = await quality.RankSourcesAsync(
                     symbol,
                     date ?? DateTimeOffset.UtcNow.Date,
-                    Domain.Events.MarketEventType.Trade);
+                    Contracts.Domain.Enums.MarketEventType.Trade);
                 return Results.Json(rankings, s_jsonOptions);
             }
             catch (Exception ex)

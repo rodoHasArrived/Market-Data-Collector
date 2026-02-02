@@ -1,4 +1,4 @@
-using MarketDataCollector.Domain.Events;
+using ContractsMarketEventPayload = MarketDataCollector.Contracts.Domain.Events.MarketEventPayload;
 
 namespace MarketDataCollector.Domain.Models;
 
@@ -12,7 +12,7 @@ namespace MarketDataCollector.Domain.Models;
 /// - "A" (per-second aggregates)
 /// - "AM" (per-minute aggregates)
 /// </remarks>
-public sealed record AggregateBar : MarketEventPayload
+public sealed record AggregateBar : ContractsMarketEventPayload
 {
     /// <summary>
     /// The ticker symbol for this aggregate.

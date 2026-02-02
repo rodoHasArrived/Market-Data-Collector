@@ -40,7 +40,7 @@ public abstract class BaseHistoricalDataProvider : IHistoricalDataProvider, IRat
     protected readonly RateLimiter RateLimiter;
     protected readonly ILogger Log;
     protected readonly ResiliencePipeline<HttpResponseMessage> ResiliencePipeline;
-    private readonly HttpResponseHandler _responseHandler;
+    protected readonly HttpResponseHandler ResponseHandler;
 
     private int _requestCount;
     private DateTimeOffset _windowStart;
@@ -144,7 +144,7 @@ public abstract class BaseHistoricalDataProvider : IHistoricalDataProvider, IRat
 
         // Initialize centralized HTTP response handler (Name property must be available)
         // Note: Name is abstract, so derived class must implement it before this runs
-        _responseHandler = new HttpResponseHandler(GetType().Name, Log);
+        ResponseHandler = new HttpResponseHandler(GetType().Name, Log);
 
         _windowStart = DateTimeOffset.UtcNow;
     }
@@ -301,7 +301,7 @@ public abstract class BaseHistoricalDataProvider : IHistoricalDataProvider, IRat
         CancellationToken ct)
     {
         // Delegate to centralized handler with rate limit callback
-        var result = await _responseHandler.TryHandleResponseAsync(
+        var result = await ResponseHandler.TryHandleResponseAsync(
             response,
             symbol,
             dataType,

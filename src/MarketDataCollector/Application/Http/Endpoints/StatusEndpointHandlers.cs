@@ -442,22 +442,24 @@ public sealed class StatusEndpointHandlers
         }
 
         var summary = _providerLatencyProvider();
+        var providers = summary.Providers.Select(p => new ProviderLatencyStatsDto
+        {
+            Provider = p.Provider,
+            AverageMs = Math.Round(p.MeanMs, 2),
+            MinMs = Math.Round(p.MinMs, 2),
+            MaxMs = Math.Round(p.MaxMs, 2),
+            P50Ms = Math.Round(p.P50Ms, 2),
+            P95Ms = Math.Round(p.P95Ms, 2),
+            P99Ms = Math.Round(p.P99Ms, 2),
+            SampleCount = p.SampleCount,
+            IsHealthy = p.P99Ms < 1000.0 // Consider healthy if P99 latency is below 1 second
+        }).ToList();
+        
         return (new ProviderLatencySummaryDto
         {
-            Timestamp = summary.Timestamp,
-            Providers = summary.Providers.Select(p => new ProviderLatencyStatsDto
-            {
-                Provider = p.Provider,
-                AverageMs = Math.Round(p.AverageMs, 2),
-                MinMs = Math.Round(p.MinMs, 2),
-                MaxMs = Math.Round(p.MaxMs, 2),
-                P50Ms = Math.Round(p.P50Ms, 2),
-                P95Ms = Math.Round(p.P95Ms, 2),
-                P99Ms = Math.Round(p.P99Ms, 2),
-                SampleCount = p.SampleCount,
-                IsHealthy = p.IsHealthy
-            }).ToList(),
-            GlobalAverageMs = Math.Round(summary.GlobalAverageMs, 2),
+            Timestamp = summary.CalculatedAt,
+            Providers = providers,
+            GlobalAverageMs = providers.Count > 0 ? Math.Round(providers.Average(p => p.AverageMs), 2) : 0.0,
             GlobalP99Ms = Math.Round(summary.GlobalP99Ms, 2)
         }, null);
     }
