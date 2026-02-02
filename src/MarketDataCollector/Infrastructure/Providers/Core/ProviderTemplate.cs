@@ -154,10 +154,10 @@ public static class ProviderTemplateFactory
             .ToArray();
 
         // Build rate limit info if available
-        RateLimitInfo? rateLimit = null;
+        MarketDataCollector.Contracts.Api.RateLimitInfo? rateLimit = null;
         if (caps.MaxRequestsPerWindow.HasValue || caps.RateLimitWindow.HasValue)
         {
-            rateLimit = new RateLimitInfo
+            rateLimit = new MarketDataCollector.Contracts.Api.RateLimitInfo
             {
                 MaxRequestsPerWindow = caps.MaxRequestsPerWindow ?? 0,
                 WindowSeconds = (int)(caps.RateLimitWindow?.TotalSeconds ?? 0),

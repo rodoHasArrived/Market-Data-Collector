@@ -5,6 +5,8 @@ using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Providers.Backfill;
 using MarketDataCollector.Infrastructure.Providers.Core;
 using CoreBackfillCoordinator = MarketDataCollector.Application.UI.BackfillCoordinator;
+using BackfillRequest = MarketDataCollector.Application.Backfill.BackfillRequest;
+using BackfillResult = MarketDataCollector.Application.Backfill.BackfillResult;
 
 namespace MarketDataCollector.Ui.Shared.Services;
 
@@ -78,7 +80,9 @@ public sealed class BackfillCoordinator : IDisposable
         _store = store;
         _registry = registry;
         _factory = factory;
-        _core = new CoreBackfillCoordinator(store, registry, factory);
+        // Convert Ui.Shared.ConfigStore wrapper to the core ConfigStore for the core coordinator
+        var coreStore = new MarketDataCollector.Application.UI.ConfigStore(store.ConfigPath);
+        _core = new CoreBackfillCoordinator(coreStore, registry, factory);
     }
 
     /// <summary>
@@ -100,7 +104,7 @@ public sealed class BackfillCoordinator : IDisposable
     /// <summary>
     /// Gets health status of all providers.
     /// </summary>
-    public Task<IReadOnlyDictionary<string, MarketDataCollector.Application.Monitoring.ProviderHealthStatus>> CheckProviderHealthAsync(CancellationToken ct = default)
+    public Task<IReadOnlyDictionary<string, Infrastructure.Providers.Backfill.ProviderHealthStatus>> CheckProviderHealthAsync(CancellationToken ct = default)
         => _core.CheckProviderHealthAsync(ct);
 
     /// <summary>
@@ -152,7 +156,7 @@ public sealed class BackfillCoordinator : IDisposable
             TotalDays: totalDays,
             EstimatedTradingDays: tradingDays,
             Symbols: symbolPreviews.ToArray(),
-            EstimatedDurationSeconds: EstimateBackfillDuration(request.Symbols.Length, tradingDays),
+            EstimatedDurationSeconds: EstimateBackfillDuration(request.Symbols.Count, tradingDays),
             Notes: GetProviderNotes(providerInfo)
         );
     }

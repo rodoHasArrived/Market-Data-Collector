@@ -7,14 +7,13 @@ This directory contains automated workflows that help maintain code quality, sec
 ### Build and Release Workflows
 
 #### 1. **Build and Release** (`dotnet-desktop.yml`)
-- **Trigger**: Push to `main`, Pull Requests, Git tags starting with `v*`
-- **Purpose**: Main CI/CD pipeline that builds, tests, and publishes releases
+- **Trigger**: Manual workflow dispatch
+- **Purpose**: Builds, tests, and publishes multi-platform releases on demand
 - **Features**:
   - Builds on Ubuntu with .NET 9.0
-  - Runs all tests with detailed logging
+  - Runs the full test suite
   - Multi-platform publishing (Linux, Windows, macOS x64/ARM64)
-  - Creates GitHub releases for version tags
-  - Generates single-file executables with trimming
+  - Prepares artifacts for release distribution
 
 #### 2. **Pull Request Checks** (`pr-checks.yml`)
 - **Trigger**: Pull requests to `main` or `develop`
@@ -26,14 +25,14 @@ This directory contains automated workflows that help maintain code quality, sec
   - Coverage reports uploaded to Codecov
   - Combined status reporting
 
-#### 3. **Docker Publish** (`docker-publish.yml`)
-- **Trigger**: Push to `main`, version tags, releases, manual dispatch
-- **Purpose**: Builds and publishes Docker images to GitHub Container Registry
+#### 3. **Docker Build & Publish** (`docker.yml`)
+- **Trigger**: Manual workflow dispatch
+- **Purpose**: Builds multi-arch Docker images and optionally pushes to GHCR
 - **Features**:
   - Multi-platform builds (amd64, arm64)
   - Automatic tagging (latest, semver, sha)
   - Build cache optimization
-  - Published to `ghcr.io`
+  - Optional registry push based on input
 
 #### 4. **Release Management** (`release.yml`)
 - **Trigger**: Manual workflow dispatch
@@ -45,28 +44,62 @@ This directory contains automated workflows that help maintain code quality, sec
   - GitHub release creation
   - Triggers build workflow automatically
 
-### Code Quality Workflows
-
-#### 5. **CodeQL Security Analysis** (`codeql.yml`)
-- **Trigger**: Push to `main`, Pull Requests, Weekly schedule (Mondays 5 AM UTC)
-- **Purpose**: Automated security vulnerability scanning
+#### 5. **Desktop App Build** (`desktop-app.yml`)
+- **Trigger**: Manual workflow dispatch
+- **Purpose**: Builds the Windows desktop app with generated assets
 - **Features**:
-  - Scans C# codebase for security issues
-  - Uses GitHub's CodeQL engine
-  - Security and quality queries
-  - Results appear in GitHub Security tab
+  - Generates icons via Node.js tooling
+  - Builds Windows desktop app for x64 and arm64
+  - Uploads build artifacts for distribution
 
-#### 6. **Security Scan** (`security-scan.yml`)
-- **Trigger**: Push/PR to `main`, Weekly schedule (Tuesdays 3 AM UTC), Manual
+### Code Quality and Security Workflows
+
+#### 6. **Code Quality** (`code-quality.yml`)
+- **Trigger**: Push/PRs that touch source, tests, or project files
+- **Purpose**: Runs formatting, analyzers, and documentation checks in one pass
+- **Features**:
+  - Formatting verification
+  - Analyzer-enabled build with documentation output
+  - Summarized results in workflow summary
+
+#### 7. **Dependency Review** (`dependency-review.yml`)
+- **Trigger**: Pull requests to `main`
+- **Purpose**: Blocks vulnerable or disallowed dependencies
+- **Features**:
+  - High-severity vulnerability gating
+  - License deny list (GPL-2.0, GPL-3.0)
+  - PR summary comments
+
+#### 8. **Security Scan** (`security.yml`)
+- **Trigger**: Pull requests to `main`, weekly schedule, manual dispatch
 - **Purpose**: Multi-layered security scanning
 - **Features**:
-  - Dependency review (on PRs)
-  - Trivy filesystem vulnerability scanning
-  - .NET package vulnerability checking
-  - License compliance checking (blocks GPL-2.0, GPL-3.0)
-  - Automated vulnerability reports
+  - .NET package vulnerability checks
+  - Secret detection with Gitleaks
+  - SAST build analysis
+  - CodeQL analysis on schedule or manual full scan
 
-#### 7. **Benchmark Performance** (`benchmark.yml`)
+### Testing Workflows
+
+#### 9. **Test Matrix** (`test-matrix.yml`)
+- **Trigger**: Push/PRs that touch source or tests
+- **Purpose**: Runs cross-platform tests with coverage reporting
+- **Features**:
+  - Linux tests on PRs
+  - Windows/macOS tests on pushes to `main`
+  - Coverage uploaded to Codecov
+
+#### 10. **Nightly Testing** (`nightly.yml`)
+- **Trigger**: Daily schedule, Manual dispatch
+- **Purpose**: Comprehensive cross-platform testing
+- **Features**:
+  - Tests on Ubuntu, Windows, macOS
+  - Runs benchmark suite
+  - Integration self-tests
+  - Creates issue on failure
+  - Multi-platform coverage reports
+
+#### 11. **Benchmark Performance** (`benchmark.yml`)
 - **Trigger**: Pull requests changing code, Manual dispatch
 - **Purpose**: Performance regression detection
 - **Features**:
@@ -75,32 +108,35 @@ This directory contains automated workflows that help maintain code quality, sec
   - Posts results as PR comment
   - Uploads detailed results as artifacts
 
-### Testing Workflows
-
-#### 8. **Nightly Testing** (`nightly.yml`)
-- **Trigger**: Daily at 2 AM UTC, Manual dispatch
-- **Purpose**: Comprehensive cross-platform testing
-- **Features**:
-  - Tests on Ubuntu, Windows, macOS
-  - Runs full benchmark suite
-  - Integration tests with self-tests
-  - Creates issue on failure
-  - Multi-platform coverage reports
-
 ### Documentation Workflows
 
-#### 9. **Documentation Quality Check** (`docs-check.yml`)
-- **Trigger**: Pull requests changing documentation or Markdown files
-- **Purpose**: Ensures documentation quality
+#### 12. **Documentation Validation** (`documentation.yml`)
+- **Trigger**: Push/PRs touching docs, markdown, or tooling
+- **Purpose**: Ensures documentation quality and generates summaries
 - **Features**:
-  - Markdown linting (markdownlint-cli2)
-  - Link checking (validates all links)
-  - Spell checking
-  - Only checks modified files in PRs
+  - Markdown linting and link checking
+  - ADR verification
+  - Documentation statistics summaries
 
-### Automation Workflows
+#### 13. **Docs Auto-Update** (`docs-auto-update.yml`)
+- **Trigger**: Manual workflow dispatch
+- **Purpose**: Regenerates provider/config documentation on demand
+- **Features**:
+  - Analyzes code changes for doc impacts
+  - Updates provider and config references
+  - Optional PR creation for updates
 
-#### 10. **Auto Label PRs** (`auto-label.yml`)
+#### 14. **Docs Structure Sync** (`docs-structure-sync.yml`)
+- **Trigger**: Manual workflow dispatch
+- **Purpose**: Updates repository structure documentation
+- **Features**:
+  - Detects structural changes
+  - Regenerates structure docs
+  - Optional dry-run mode
+
+### Automation and Maintenance Workflows
+
+#### 15. **Auto Label PRs** (`labeling.yml`)
 - **Trigger**: PR opened, edited, synchronized, reopened
 - **Purpose**: Automatically categorizes pull requests
 - **Features**:
@@ -109,7 +145,7 @@ This directory contains automated workflows that help maintain code quality, sec
   - Warns about large PRs
   - Uses `.github/labeler.yml` configuration
 
-#### 11. **Manage Stale Issues and PRs** (`stale.yml`)
+#### 16. **Manage Stale Issues and PRs** (`stale.yml`)
 - **Trigger**: Daily at midnight UTC, Manual dispatch
 - **Purpose**: Keeps issue tracker clean
 - **Features**:
@@ -119,7 +155,7 @@ This directory contains automated workflows that help maintain code quality, sec
   - Closes stale PRs after 14 more days
   - Exempts pinned, security, and WIP items
 
-#### 12. **Cache Management** (`cache-management.yml`)
+#### 17. **Cache Management** (`cache-management.yml`)
 - **Trigger**: Weekly (Sundays 4 AM UTC), Manual dispatch
 - **Purpose**: Manages GitHub Actions cache
 - **Features**:
@@ -127,6 +163,37 @@ This directory contains automated workflows that help maintain code quality, sec
   - Cleans caches older than 30 days
   - Manual option to clean all caches
   - Helps manage storage limits
+
+#### 18. **Scheduled Maintenance** (`scheduled-maintenance.yml`)
+- **Trigger**: Weekly schedule, Manual dispatch
+- **Purpose**: Runs periodic tests and dependency health checks
+- **Features**:
+  - Weekly full test suite
+  - Dependency health report (outdated, deprecated, vulnerable)
+  - Summary report output
+
+#### 19. **Build Observability** (`build-observability.yml`)
+- **Trigger**: Manual workflow dispatch
+- **Purpose**: Generates build diagnostics and observability bundles
+- **Features**:
+  - Runs build diagnostics targets
+  - Collects build fingerprints and metrics
+  - Uploads debug artifacts
+
+#### 20. **Workflow Validation** (`validate-workflows.yml`)
+- **Trigger**: Pull requests touching workflows or manual dispatch
+- **Purpose**: Validates workflow syntax and checks reusable references
+- **Features**:
+  - Ensures workflow YAML consistency
+  - Catches invalid reusable workflow usage
+  - Fast feedback for workflow edits
+
+#### 21. **Reusable Build Helpers** (`reusable-dotnet-build.yml`)
+- **Trigger**: Reusable workflow (called by other workflows)
+- **Purpose**: Standardizes build/test steps for .NET jobs
+- **Features**:
+  - Shared build/test steps
+  - Consistent caching and restore behavior
 
 ## 🔧 Configuration Files
 
@@ -199,8 +266,8 @@ Standard template requiring:
 
 3. **Understanding PR Status Checks**:
    - ✅ All checks must pass before merge
-   - Review any security warnings from CodeQL
-   - Check code coverage reports
+   - Review dependency review and security scan summaries
+   - Check code coverage reports in Codecov uploads
 
 ### For Maintainers
 
@@ -213,7 +280,7 @@ Standard template requiring:
 2. **Security Monitoring**:
    - Check Security tab regularly
    - Review Dependabot PRs promptly
-   - CodeQL runs automatically on schedule
+   - CodeQL runs on the weekly security schedule or manual full scans
 
 3. **Managing Stale Items**:
    - Workflow runs automatically
@@ -223,10 +290,10 @@ Standard template requiring:
 ## 🔒 Security Features
 
 - **CodeQL**: Advanced security scanning with security-and-quality queries
-- **Trivy**: Container and filesystem vulnerability scanning
 - **Dependency Review**: Blocks PRs with vulnerable or prohibited dependencies
 - **Package Audit**: Scans for vulnerable NuGet packages
-- **License Compliance**: Prevents GPL-licensed dependencies
+- **Secret Detection**: Gitleaks scans for exposed credentials
+- **SAST**: Analyzer-based security warnings during builds
 
 ## 📊 Metrics and Monitoring
 
@@ -240,24 +307,33 @@ Standard template requiring:
 ```mermaid
 graph TD
     PR[Pull Request] --> PRChecks[PR Checks]
+    PR --> CodeQuality[Code Quality]
+    PR --> DependencyReview[Dependency Review]
     PR --> Security[Security Scan]
-    PR --> Docs[Docs Check]
+    PR --> Docs[Documentation]
     PR --> AutoLabel[Auto Label]
+    PR --> Validate[Validate Workflows]
     
     PRChecks --> Lint[Format Check]
     PRChecks --> Build[Build]
     PRChecks --> Test[Test + Coverage]
     
-    Push[Push to Main] --> BuildRelease[Build and Release]
-    Push --> Docker[Docker Publish]
-    Push --> CodeQL[CodeQL Scan]
+    Push[Push to Main] --> TestMatrix[Test Matrix]
+    Push --> CodeQuality
+    Push --> Docs
     
     Schedule[Scheduled] --> Nightly[Nightly Tests]
     Schedule --> Stale[Stale Management]
     Schedule --> Cache[Cache Cleanup]
+    Schedule --> Maintenance[Scheduled Maintenance]
     
-    Tag[Version Tag] --> Release[Release Workflow]
-    Release --> BuildRelease
+    Manual[Manual Dispatch] --> BuildRelease[Build and Release]
+    Manual --> Docker[Docker Build]
+    Manual --> Desktop[Desktop App Build]
+    Manual --> Observability[Build Observability]
+    Manual --> DocsAuto[Docs Auto-Update]
+    Manual --> DocsStructure[Docs Structure Sync]
+    Manual --> Release[Release Workflow]
 ```
 
 ## 📚 Best Practices

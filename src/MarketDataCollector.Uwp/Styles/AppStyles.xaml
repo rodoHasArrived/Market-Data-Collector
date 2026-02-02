@@ -310,8 +310,8 @@
 
     <!-- Glow Effect Brush -->
     <LinearGradientBrush x:Key="GlowGradientBrush" StartPoint="0,0" EndPoint="1,0">
-        <GradientStop Color="{StaticResource ConsoleAccentGreen}" Offset="0" />
-        <GradientStop Color="{StaticResource ConsoleAccentCyan}" Offset="1" />
+        <GradientStop Color="#3fb950" Offset="0" />
+        <GradientStop Color="#39c5cf" Offset="1" />
     </LinearGradientBrush>
 
     <!-- Top Border Accent -->

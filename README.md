@@ -96,14 +96,29 @@ make doctor
 
 ### Windows Desktop App Install
 
-Install the signed Windows desktop app using MSIX/AppInstaller for a native setup/upgrade experience.
+**Two Options Available:**
 
-**Prerequisites**
-- Windows 10/11 (build 19041 or newer recommended).
-- [App Installer](https://www.microsoft.com/store/productId/9NBLGGH4NNS1) from the Microsoft Store (required for `.appinstaller`).
-- If installing an unpackaged build, install the .NET 9 Desktop Runtime.
+1. **WPF Desktop App (Recommended)** - Modern WPF application with maximum Windows stability
+   - Works on Windows 7+
+   - Simple .exe deployment
+   - Direct assembly references (no WinRT limitations)
+   - See [WPF README](src/MarketDataCollector.Wpf/README.md) for details
 
-**Install (AppInstaller)**
+2. **UWP Desktop App (Legacy)** - Windows 10+ only
+   - MSIX packaging required
+   - Windows 10 build 19041+ required
+   - See instructions below
+
+**WPF Installation:**
+```bash
+# Build from source
+dotnet build src/MarketDataCollector.Wpf/MarketDataCollector.Wpf.csproj -c Release
+
+# Run
+dotnet run --project src/MarketDataCollector.Wpf/MarketDataCollector.Wpf.csproj
+```
+
+**UWP Installation (AppInstaller):**
 1. Download the `.appinstaller` file from the release assets.
 2. Double-click it to launch App Installer.
 3. Select **Install** to complete setup.
@@ -148,7 +163,7 @@ Market Data Collector is built on **.NET 9.0** using **C# 11** and **F# 8.0**. I
 - **Graceful shutdown**: Flushes all events and metrics before exit
 
 ### Storage and Data Management
-- **Flexible JSONL storage**: Naming conventions (BySymbol, ByDate, ByType, Flat) with optional gzip compression
+- **Flexible JSONL storage**: Default BySymbol naming convention `{root}/{symbol}/{type}/{date}.jsonl` for optimal organization (also supports ByDate, ByType, Flat) with optional gzip compression
 - **Partitioning and retention**: Daily/hourly/monthly/none plus retention by age or total capacity
 - **Data replay**: Stream historical JSONL files for backtesting and research
 
@@ -435,7 +450,7 @@ docker run -d -p 8080:8080 \
 
 ## Repository Structure
 
-**478 source files** | **466 C#** | **12 F#** | **50 test files** | **61 documentation files**
+**501 source files** | **489 C#** | **12 F#** | **48 test files** | **66 documentation files**
 
 ```
 Market-Data-Collector/
@@ -459,7 +474,7 @@ Market-Data-Collector/
 ├── tests/                # C# and F# test projects (50 files)
 ├── benchmarks/           # Performance benchmarks (BenchmarkDotNet)
 ├── MarketDataCollector.sln
-├── Makefile              # Build automation (67 targets)
+├── Makefile              # Build automation (65 targets)
 └── CLAUDE.md             # AI assistant guide
 ```
 

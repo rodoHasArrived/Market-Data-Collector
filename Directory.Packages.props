@@ -18,9 +18,9 @@
   </PropertyGroup>
 
   <ItemGroup Label="Microsoft.Extensions">
-    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="9.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="10.0.2" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="9.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.2" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="9.0.12" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.CommandLine" Version="9.0.12" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="9.0.12" />
@@ -107,13 +107,13 @@
   </ItemGroup>
 
   <ItemGroup Label="StockSharp">
-    <PackageVersion Include="StockSharp.Algo" Version="24.2.0" />
-    <PackageVersion Include="StockSharp.Messages" Version="24.2.0" />
-    <PackageVersion Include="StockSharp.BusinessEntities" Version="24.2.0" />
-    <PackageVersion Include="StockSharp.Rithmic" Version="24.2.0" />
-    <PackageVersion Include="StockSharp.IQFeed" Version="24.2.0" />
-    <PackageVersion Include="StockSharp.Cqg.Com" Version="24.2.0" />
-    <PackageVersion Include="StockSharp.InteractiveBrokers" Version="24.2.0" />
+    <PackageVersion Include="StockSharp.Algo" Version="5.0.229" />
+    <PackageVersion Include="StockSharp.Messages" Version="5.0.223" />
+    <PackageVersion Include="StockSharp.BusinessEntities" Version="5.0.216" />
+    <PackageVersion Include="StockSharp.Rithmic" Version="5.0.110" />
+    <PackageVersion Include="StockSharp.IQFeed" Version="5.0.93" />
+    <PackageVersion Include="StockSharp.Cqg.Com" Version="5.0.128" />
+    <PackageVersion Include="StockSharp.InteractiveBrokers" Version="5.0.129" />
   </ItemGroup>
 
   <ItemGroup Label="Benchmarking">
@@ -138,6 +138,10 @@
     <PackageVersion Include="CommunityToolkit.WinUI.Controls.Sizers" Version="8.2.250402" />
     <PackageVersion Include="Microsoft.WindowsAppSDK" Version="1.7.250310001" />
     <PackageVersion Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.1" />
+    <!-- WPF-specific packages -->
+    <PackageVersion Include="MaterialDesignThemes" Version="5.1.1" />
+    <PackageVersion Include="MaterialDesignColors" Version="3.1.0" />
+    <PackageVersion Include="Extended.Wpf.Toolkit" Version="4.6.1" />
   </ItemGroup>
 
   <ItemGroup Label="Code Analysis and Tools">

@@ -2,6 +2,8 @@ using System.IO.Compression;
 using System.Text;
 using System.Text.Json;
 using FluentAssertions;
+using MarketDataCollector.Contracts.Domain.Enums;
+using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Storage.Replay;

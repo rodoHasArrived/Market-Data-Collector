@@ -27,7 +27,7 @@ public sealed record UnifiedDataSourcesConfig
     /// <summary>
     /// Symbol mapping configuration.
     /// </summary>
-    public SymbolMappingConfig SymbolMapping { get; init; } = new();
+    public SymbolMappingConfig SymbolMapping { get; init; } = new(CanonicalSymbol: "DEFAULT");
 
     /// <summary>
     /// Plugin system configuration.
@@ -680,6 +680,31 @@ public sealed record FailoverConfig
             TimeSpan.FromSeconds(CooldownSeconds)
         );
     }
+}
+
+/// <summary>
+/// Fallback options for provider failover.
+/// </summary>
+public sealed record FallbackOptions(
+    bool Enabled,
+    FallbackStrategy Strategy,
+    int MaxAttempts,
+    TimeSpan CooldownPeriod
+);
+
+/// <summary>
+/// Fallback strategy for provider selection.
+/// </summary>
+public enum FallbackStrategy
+{
+    /// <summary>Priority-based selection (use provider priority).</summary>
+    Priority,
+    /// <summary>Health-score-based selection.</summary>
+    HealthScore,
+    /// <summary>Round-robin selection.</summary>
+    RoundRobin,
+    /// <summary>Random selection.</summary>
+    Random
 }
 
 #region Configuration Extensions

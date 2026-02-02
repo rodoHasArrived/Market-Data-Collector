@@ -43,7 +43,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6.0.1
 
       - name: Setup .NET with Cache
         uses: ./.github/actions/setup-dotnet-cache
@@ -63,6 +63,7 @@ jobs:
       - name: Build with analysis and documentation
         id: build
         run: |
+          set -o pipefail
           dotnet build MarketDataCollector.sln \
             -c Release \
             --no-restore \
@@ -118,7 +119,7 @@ jobs:
 
       - name: Upload build log
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6.0.0
         with:
           name: build-output
           path: build-output.log

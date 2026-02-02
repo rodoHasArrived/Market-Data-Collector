@@ -31,7 +31,7 @@ jobs:
         
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6.0.1
 
     - name: Setup .NET with Cache
       uses: ./.github/actions/setup-dotnet-cache
@@ -57,7 +57,7 @@ jobs:
 
     - name: Upload coverage
       if: success()
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v5.5.2
       with:
         directory: ./coverage
         flags: ${{ matrix.os }}
@@ -66,7 +66,7 @@ jobs:
 
     - name: Upload test results on failure
       if: failure()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6.0.0
       with:
         name: test-failure-logs-${{ matrix.os }}
         path: |
@@ -81,7 +81,7 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6.0.1
 
     - name: Setup .NET with Cache
       uses: ./.github/actions/setup-dotnet-cache
@@ -97,7 +97,7 @@ jobs:
           -- --filter * --exporters json
 
     - name: Upload benchmark results
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6.0.0
       with:
         name: benchmark-results
         path: BenchmarkDotNet.Artifacts/results/
@@ -110,7 +110,7 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6.0.1
 
     - name: Setup .NET with Cache
       uses: ./.github/actions/setup-dotnet-cache
@@ -144,7 +144,7 @@ jobs:
 
     steps:
     - name: Create issue on failure
-      uses: actions/github-script@v7
+      uses: actions/github-script@v8
       with:
         script: |
           const title = `Nightly tests failed on ${new Date().toISOString().split('T')[0]}`;

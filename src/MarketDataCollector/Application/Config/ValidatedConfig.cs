@@ -59,7 +59,7 @@ public sealed record ValidatedConfig
     /// <summary>
     /// How the configuration was sourced.
     /// </summary>
-    public ConfigurationSource Source { get; init; } = ConfigurationSource.File;
+    public ConfigurationOrigin Source { get; init; } = ConfigurationOrigin.File;
 
     /// <summary>
     /// Creates a validated config from a raw AppConfig after running it through validation.
@@ -72,7 +72,7 @@ public sealed record ValidatedConfig
         IReadOnlyList<string>? appliedFixes = null,
         IReadOnlyList<string>? warnings = null,
         string? environmentName = null,
-        ConfigurationSource source = ConfigurationSource.File)
+        ConfigurationOrigin source = ConfigurationOrigin.File)
     {
         return new ValidatedConfig
         {
@@ -95,7 +95,7 @@ public sealed record ValidatedConfig
         AppConfig? config,
         IReadOnlyList<string> errors,
         string? sourcePath = null,
-        ConfigurationSource source = ConfigurationSource.File)
+        ConfigurationOrigin source = ConfigurationOrigin.File)
     {
         return new ValidatedConfig
         {
@@ -115,7 +115,7 @@ public sealed record ValidatedConfig
     {
         Config = new AppConfig(),
         IsValid = true,
-        Source = ConfigurationSource.Default,
+        Source = ConfigurationOrigin.Default,
         Timestamp = DateTimeOffset.UtcNow
     };
 
@@ -128,7 +128,7 @@ public sealed record ValidatedConfig
 /// <summary>
 /// Indicates how the configuration was sourced/created.
 /// </summary>
-public enum ConfigurationSource
+public enum ConfigurationOrigin
 {
     /// <summary>Default configuration (no file loaded).</summary>
     Default,

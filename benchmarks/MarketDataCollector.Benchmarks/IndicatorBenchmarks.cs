@@ -1,6 +1,8 @@
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Order;
 using MarketDataCollector.Application.Indicators;
+using MarketDataCollector.Contracts.Domain.Enums;
+using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Models;
 
 namespace MarketDataCollector.Benchmarks;
@@ -68,7 +70,8 @@ public class IndicatorBenchmarks
             var close = basePrice + dayChange;
 
             _bars[i] = new HistoricalBar(
-                Timestamp: DateTimeOffset.UtcNow.AddDays(-DataPoints + i),
+                Symbol: "SPY",
+                SessionDate: DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-DataPoints + i)),
                 Open: basePrice,
                 High: high,
                 Low: low,
@@ -144,7 +147,8 @@ public class SingleIndicatorBenchmarks
             var close = basePrice + dayChange;
 
             _bars[i] = new HistoricalBar(
-                Timestamp: DateTimeOffset.UtcNow.AddDays(-500 + i),
+                Symbol: "SPY",
+                SessionDate: DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-500 + i)),
                 Open: basePrice,
                 High: high,
                 Low: low,

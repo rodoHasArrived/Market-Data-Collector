@@ -9,7 +9,7 @@ on:
     paths:
       - 'docs/**'
       - '*.md'
-      - 'tools/DocGenerator/**'
+      - 'build/dotnet/DocGenerator/**'
       - '.github/workflows/documentation.yml'
   pull_request:
     branches: [ "main" ]
@@ -45,10 +45,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6.0.1
 
       - name: Lint Markdown files
-        uses: DavidAnson/markdownlint-cli2-action@v22
+        uses: DavidAnson/markdownlint-cli2-action@v22.0.0
         with:
           globs: |
             **/*.md
@@ -64,10 +64,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6.0.1
 
       - name: Check links in documentation
-        uses: gaurav-nelson/github-action-markdown-link-check@v1
+        uses: gaurav-nelson/github-action-markdown-link-check@1.0.17
         with:
           use-quiet-mode: 'yes'
           use-verbose-mode: 'no'
@@ -82,7 +82,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6.0.1
 
       - name: Setup .NET with Cache
         uses: ./.github/actions/setup-dotnet-cache
@@ -91,9 +91,9 @@ jobs:
 
       - name: Restore and build DocGenerator
         run: |
-          if [ -d "tools/DocGenerator" ]; then
-            dotnet restore tools/DocGenerator/DocGenerator.csproj
-            dotnet build tools/DocGenerator/DocGenerator.csproj -c Release --no-restore
+          if [ -d "build/dotnet/DocGenerator" ]; then
+            dotnet restore build/dotnet/DocGenerator/DocGenerator.csproj
+            dotnet build build/dotnet/DocGenerator/DocGenerator.csproj -c Release --no-restore
           fi
         continue-on-error: true
 
@@ -113,7 +113,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6.0.1
 
       - name: Setup .NET with Cache
         uses: ./.github/actions/setup-dotnet-cache

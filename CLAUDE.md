@@ -6,7 +6,7 @@ This document provides essential context for AI assistants (Claude, Copilot, etc
 
 Market Data Collector is a high-performance, cross-platform market data collection system built on **.NET 9.0** using **C# 11** and **F# 8.0**. It captures real-time and historical market microstructure data from multiple providers and persists it for downstream research, backtesting, and algorithmic trading.
 
-**Version:** 1.6.1 | **Status:** Production Ready | **Files:** 498 source files
+**Version:** 1.6.1 | **Status:** Production Ready | **Files:** 501 source files
 
 ### Key Capabilities
 - Real-time streaming from Interactive Brokers, Alpaca, NYSE, Polygon, StockSharp (90+ data sources)
@@ -22,13 +22,13 @@ Market Data Collector is a high-performance, cross-platform market data collecti
 ### Project Statistics
 | Metric | Count |
 |--------|-------|
-| Total Source Files | 498 |
-| C# Files | 486 |
+| Total Source Files | 501 |
+| C# Files | 489 |
 | F# Files | 12 |
-| Test Files | 53 |
-| Documentation Files | 61 |
+| Test Files | 48 |
+| Documentation Files | 66 |
 | Main Projects | 6 (+ 3 test/benchmark) |
-| Provider Implementations | 6 streaming, 10 historical |
+| Provider Implementations | 5 streaming, 10 historical |
 | Symbol Search Providers | 4 |
 | CI/CD Workflows | 21 |
 | Makefile Targets | 65 |
@@ -143,12 +143,15 @@ Market-Data-Collector/
 │   ├── agents/                       # AI agent configurations
 │   │   └── documentation-agent.md   # Documentation specialist guide
 │   ├── prompts/                      # AI assistant prompts
-│   ├── copilot-instructions.md       # GitHub Copilot instructions
 │   ├── QUICKSTART.md                 # Workflow quick start guide
 │   ├── dependabot.yml                # Dependency updates
 │   └── labeler.yml                   # PR auto-labeling
 │
-├── docs/                             # All documentation (61 files)
+├── docs/                             # All documentation
+│   ├── getting-started/              # Onboarding guides
+│   │   ├── setup.md                  # Setup and first run
+│   │   ├── configuration.md          # Configuration options
+│   │   └── troubleshooting.md        # Common issues and solutions
 │   ├── architecture/                 # System architecture docs
 │   │   ├── overview.md               # System architecture
 │   │   ├── domains.md                # Event contracts
@@ -157,14 +160,17 @@ Market-Data-Collector/
 │   │   ├── crystallized-storage-format.md # Storage format spec
 │   │   ├── c4-diagrams.md            # C4 model visualizations
 │   │   └── why-this-architecture.md  # Design rationale
-│   ├── guides/                       # How-to guides
-│   │   ├── getting-started.md        # Setup and first run
-│   │   ├── configuration.md          # Configuration options
-│   │   ├── operator-runbook.md       # Production operations
-│   │   ├── provider-implementation.md # Adding new providers
+│   ├── operations/                   # Production operations
+│   │   ├── operator-runbook.md       # Operations guide
 │   │   ├── portable-data-packager.md # Data packaging guide
-│   │   ├── troubleshooting.md        # Common issues and solutions
-│   │   └── uwp-development-roadmap.md # UWP development status
+│   │   └── msix-packaging.md         # Desktop packaging
+│   ├── development/                  # Developer guides
+│   │   ├── provider-implementation.md # Adding new providers
+│   │   ├── uwp-development-roadmap.md # UWP development status
+│   │   ├── uwp-release-checklist.md  # UWP release process
+│   │   ├── github-actions-summary.md # CI/CD overview
+│   │   ├── github-actions-testing.md # Testing workflows
+│   │   └── project-context.md        # Project context
 │   ├── providers/                    # Provider setup guides
 │   │   ├── backfill-guide.md         # Historical data guide
 │   │   ├── data-sources.md           # Available data sources
@@ -173,38 +179,46 @@ Market-Data-Collector/
 │   │   ├── lean-integration.md       # QuantConnect Lean guide
 │   │   ├── fsharp-integration.md     # F# domain library
 │   │   └── language-strategy.md      # Polyglot architecture
+│   ├── ai/                           # AI assistant guides
+│   │   ├── claude/                   # Claude-specific guides
+│   │   │   ├── CLAUDE.providers.md   # Provider implementation
+│   │   │   ├── CLAUDE.storage.md     # Storage system
+│   │   │   ├── CLAUDE.fsharp.md      # F# domain library
+│   │   │   └── CLAUDE.testing.md     # Testing guide
+│   │   └── copilot/                  # Copilot guides
+│   │       └── instructions.md       # GitHub Copilot instructions
 │   ├── api/                          # API reference
-│   ├── status/                       # Roadmap, backlog
+│   ├── status/                       # Roadmap, backlog, changelogs
 │   ├── adr/                          # Architecture Decision Records
-│   ├── ai-assistants/                # Specialized AI guides
-│   │   ├── CLAUDE.providers.md       # Provider implementation
-│   │   ├── CLAUDE.storage.md         # Storage system
-│   │   ├── CLAUDE.fsharp.md          # F# domain library
-│   │   └── CLAUDE.testing.md         # Testing guide
 │   ├── reference/                    # Reference materials
 │   │   ├── data-dictionary.md        # Field definitions
 │   │   └── data-uniformity.md        # Consistency guidelines
-│   ├── changelogs/                   # Version changelogs
 │   ├── diagrams/                     # Architecture diagrams
+│   ├── uml/                          # UML diagrams
 │   ├── USAGE.md                      # Detailed usage guide
 │   ├── HELP.md                       # User guide with FAQ
 │   └── DEPENDENCIES.md               # Package documentation
 │
-├── scripts/                          # All scripts
-│   ├── install/                      # Installation scripts
-│   ├── publish/                      # Publishing scripts
-│   ├── run/                          # Runtime scripts
-│   └── diagnostics/                  # Diagnostic scripts
-│
-├── build-system/                     # Python build tooling
-│   ├── cli/                          # Command-line tools
-│   ├── adapters/                     # Build adapters
-│   ├── analytics/                    # Build analytics
-│   ├── core/                         # Core utilities
-│   └── diagnostics/                  # Diagnostic tools
-│
-├── tools/                            # Development tools
-│   └── DocGenerator/                 # Documentation generator (.NET)
+├── build/                            # All build tooling (consolidated)
+│   ├── python/                       # Python build tooling
+│   │   ├── cli/                      # Command-line tools (buildctl.py)
+│   │   ├── adapters/                 # Build adapters
+│   │   ├── analytics/                # Build analytics
+│   │   ├── core/                     # Core utilities
+│   │   ├── diagnostics/              # Diagnostic tools
+│   │   └── knowledge/                # Error pattern catalogs
+│   ├── scripts/                      # Shell scripts
+│   │   ├── install/                  # Installation scripts
+│   │   ├── publish/                  # Publishing scripts
+│   │   ├── run/                      # Runtime scripts
+│   │   ├── lib/                      # Script utilities
+│   │   └── docs/                     # Documentation scripts
+│   ├── node/                         # Node.js tooling
+│   │   ├── generate-diagrams.mjs     # Diagram generation
+│   │   └── generate-icons.mjs        # Icon generation
+│   └── dotnet/                       # .NET tools
+│       ├── DocGenerator/             # Documentation generator
+│       └── FSharpInteropGenerator/   # F# interop generator
 │
 ├── deploy/                           # Deployment configurations
 │   ├── docker/                       # Dockerfile, docker-compose
@@ -221,18 +235,33 @@ Market-Data-Collector/
 │   │   │   ├── Collectors/           # Data collectors (5 files)
 │   │   │   ├── Events/               # Domain events (7 files)
 │   │   │   └── Models/               # Domain models (21 files)
-│   │   ├── Infrastructure/           # Provider implementations (~50 files)
+│   │   ├── Infrastructure/           # Provider implementations
 │   │   │   ├── Contracts/            # Core interfaces
 │   │   │   ├── Providers/            # Data providers
-│   │   │   │   ├── Alpaca/           # Alpaca Markets (streaming + historical)
-│   │   │   │   ├── Backfill/         # Historical data providers (20+ files)
-│   │   │   │   │   └── Scheduling/   # Cron-based scheduling
-│   │   │   │   ├── InteractiveBrokers/ # IB Gateway (streaming + historical)
-│   │   │   │   ├── NYSE/             # NYSE data (hybrid DataSource)
-│   │   │   │   ├── Polygon/          # Polygon.io (streaming + historical)
-│   │   │   │   ├── StockSharp/       # StockSharp connectors (90+ sources)
-│   │   │   │   ├── MultiProvider/    # Multi-provider routing
-│   │   │   │   └── SymbolSearch/     # Symbol search providers
+│   │   │   │   ├── Core/             # Provider infrastructure
+│   │   │   │   ├── Streaming/        # Real-time streaming providers
+│   │   │   │   │   ├── Alpaca/       # Alpaca Markets
+│   │   │   │   │   ├── InteractiveBrokers/ # IB Gateway
+│   │   │   │   │   ├── NYSE/         # NYSE data
+│   │   │   │   │   ├── Polygon/      # Polygon.io
+│   │   │   │   │   └── StockSharp/   # StockSharp (90+ sources)
+│   │   │   │   ├── Historical/       # Historical data providers
+│   │   │   │   │   ├── Alpaca/       # Alpaca historical
+│   │   │   │   │   ├── AlphaVantage/ # Alpha Vantage
+│   │   │   │   │   ├── Finnhub/      # Finnhub
+│   │   │   │   │   ├── InteractiveBrokers/ # IB historical
+│   │   │   │   │   ├── NasdaqDataLink/    # Nasdaq Data Link
+│   │   │   │   │   ├── Polygon/      # Polygon historical
+│   │   │   │   │   ├── StockSharp/   # StockSharp historical
+│   │   │   │   │   ├── Stooq/        # Stooq
+│   │   │   │   │   ├── Tiingo/       # Tiingo
+│   │   │   │   │   ├── YahooFinance/ # Yahoo Finance
+│   │   │   │   │   ├── RateLimiting/ # Rate limit tracking
+│   │   │   │   │   ├── Queue/        # Backfill job queue
+│   │   │   │   │   ├── GapAnalysis/  # Gap detection/repair
+│   │   │   │   │   └── SymbolResolution/ # Symbol resolvers
+│   │   │   │   ├── SymbolSearch/     # Symbol search providers
+│   │   │   │   └── MultiProvider/    # Multi-provider routing
 │   │   │   ├── DataSources/          # Data source abstractions
 │   │   │   ├── Resilience/           # WebSocket resilience (Polly)
 │   │   │   └── IMarketDataClient.cs  # Core streaming interface
@@ -257,12 +286,14 @@ Market-Data-Collector/
 │   │   │   │   └── DataQuality/      # Quality monitoring (~12 files)
 │   │   │   ├── Pipeline/             # Event pipeline
 │   │   │   ├── Results/              # Result<T, TError> types
+│   │   │   ├── Scheduling/           # Backfill scheduling (cron)
 │   │   │   ├── Serialization/        # JSON serialization
 │   │   │   ├── Services/             # Application services (~25 files)
 │   │   │   ├── Subscriptions/        # Symbol subscription management
 │   │   │   │   ├── Models/           # Watchlists, portfolios
 │   │   │   │   └── Services/         # Subscription services
-│   │   │   └── UI/                   # HTTP endpoint services
+│   │   │   └── Http/                 # HTTP endpoints
+│   │   │       └── Endpoints/        # All HTTP endpoint handlers
 │   │   ├── Integrations/             # External integrations
 │   │   │   └── Lean/                 # QuantConnect Lean
 │   │   └── Tools/                    # Utility tools
@@ -288,8 +319,28 @@ Market-Data-Collector/
 │       ├── Models/                   # UWP-specific models + SharedModelAliases.cs
 │       └── SharedModels/             # Linked source files from Contracts (compile-time)
 │
-├── tests/                            # Test projects
-│   ├── MarketDataCollector.Tests/    # C# unit tests (48 files)
+├── tests/                            # Test projects (mirrors src structure)
+│   ├── MarketDataCollector.Tests/    # C# unit tests
+│   │   ├── Application/              # Application layer tests
+│   │   │   ├── Backfill/             # Backfill tests
+│   │   │   ├── Config/               # Config tests
+│   │   │   ├── Credentials/          # Credential tests
+│   │   │   ├── Indicators/           # Indicator tests
+│   │   │   ├── Monitoring/           # Monitoring tests
+│   │   │   │   └── DataQuality/      # Data quality tests
+│   │   │   ├── Pipeline/             # Pipeline tests
+│   │   │   └── Services/             # Service tests
+│   │   ├── Domain/                   # Domain layer tests
+│   │   │   ├── Collectors/           # Collector tests
+│   │   │   └── Models/               # Model tests
+│   │   ├── Infrastructure/           # Infrastructure tests
+│   │   │   ├── Providers/            # Provider tests
+│   │   │   ├── Resilience/           # Resilience tests
+│   │   │   └── Shared/               # Shared utilities
+│   │   ├── Integration/              # Integration tests
+│   │   ├── Serialization/            # Serialization tests
+│   │   ├── Storage/                  # Storage tests
+│   │   └── SymbolSearch/             # Symbol search tests
 │   └── MarketDataCollector.FSharp.Tests/ # F# tests (5 files)
 │
 ├── benchmarks/                       # Performance benchmarks
@@ -421,7 +472,9 @@ public interface IHistoricalDataProvider
 
 ## HTTP API Reference
 
-The application exposes a comprehensive REST API when running with `--ui` or `--mode web`.
+The application exposes a REST API when running with `--ui` or `--mode web`.
+
+**Implementation Note:** The codebase declares ~269 route constants in `UiApiRoutes.cs`, but approximately 136 endpoints have full handler implementations. Core endpoints (status, health, config, backfill) are fully functional. Some advanced endpoints may return stub responses or 501 Not Implemented.
 
 ### Core Endpoints
 | Endpoint | Method | Purpose |
@@ -777,10 +830,10 @@ data/
 ```
 
 ### Naming Conventions
-- **BySymbol** (default): `{root}/{symbol}/{type}/{date}.jsonl`
-- **ByDate**: `{root}/{date}/{symbol}/{type}.jsonl`
-- **ByType**: `{root}/{type}/{symbol}/{date}.jsonl`
-- **Flat**: `{root}/{symbol}_{type}_{date}.jsonl`
+- **BySymbol** (default, recommended): `{root}/{symbol}/{type}/{date}.jsonl` - Organized by symbol, then data type
+- **ByDate**: `{root}/{date}/{symbol}/{type}.jsonl` - Organized by date
+- **ByType**: `{root}/{type}/{symbol}/{date}.jsonl` - Organized by event type
+- **Flat**: `{root}/{symbol}_{type}_{date}.jsonl` - All files in root directory
 
 ### Compression Profiles
 | Profile | Algorithm | Use Case |
@@ -1031,4 +1084,4 @@ See `docs/guides/troubleshooting.md` for detailed solutions.
 
 ---
 
-*Last Updated: 2026-01-31*
+*Last Updated: 2026-02-01*

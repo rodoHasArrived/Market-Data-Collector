@@ -66,7 +66,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6.0.1
         with:
           fetch-depth: 2
 
@@ -143,7 +143,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6.0.1
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -154,7 +154,7 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6.2.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
@@ -171,16 +171,16 @@ jobs:
       - name: Generate provider documentation
         run: |
           mkdir -p docs/generated
-          python3 scripts/docs/generate-structure-docs.py \
+          python3 build/scripts/docs/generate-structure-docs.py \
             --output docs/generated/provider-registry.md \
             --providers-only \
             --extract-attributes
 
       - name: Generate project context
         run: |
-          if [ -d "tools/DocGenerator" ]; then
-            dotnet build tools/DocGenerator/DocGenerator.csproj -c Release -v q || true
-            dotnet run --project tools/DocGenerator/DocGenerator.csproj --no-build -c Release -- context \
+          if [ -d "build/dotnet/DocGenerator" ]; then
+            dotnet build build/dotnet/DocGenerator/DocGenerator.csproj -c Release -v q || true
+            dotnet run --project build/dotnet/DocGenerator/DocGenerator.csproj --no-build -c Release -- context \
               --src src/MarketDataCollector \
               --output docs/generated/project-context.md || true
           fi
@@ -257,7 +257,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6.0.1
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -269,9 +269,9 @@ jobs:
 
       - name: Verify ADR links
         run: |
-          if [ -d "tools/DocGenerator" ]; then
-            dotnet build tools/DocGenerator/DocGenerator.csproj -c Release -v q || true
-            dotnet run --project tools/DocGenerator/DocGenerator.csproj --no-build -c Release -- verify-adrs \
+          if [ -d "build/dotnet/DocGenerator" ]; then
+            dotnet build build/dotnet/DocGenerator/DocGenerator.csproj -c Release -v q || true
+            dotnet run --project build/dotnet/DocGenerator/DocGenerator.csproj --no-build -c Release -- verify-adrs \
               --adr-dir docs/adr \
               --src-dir . || true
           fi
@@ -334,13 +334,13 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6.0.1
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6.2.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 

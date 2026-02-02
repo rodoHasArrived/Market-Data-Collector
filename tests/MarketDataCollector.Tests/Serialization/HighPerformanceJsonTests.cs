@@ -1,6 +1,8 @@
 using System.Text.Json;
 using FluentAssertions;
 using MarketDataCollector.Application.Serialization;
+using MarketDataCollector.Contracts.Domain.Enums;
+using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Domain.Models;
 using Xunit;

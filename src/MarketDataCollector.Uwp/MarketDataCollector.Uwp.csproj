@@ -35,6 +35,8 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
 
+    <!-- Define UWP_BUILD symbol to allow conditional compilation in shared source files -->
+    <DefineConstants>$(DefineConstants);UWP_BUILD</DefineConstants>
 
     <!-- Assembly Information -->
     <AssemblyName>MarketDataCollector.Desktop</AssemblyName>
@@ -122,6 +124,24 @@
     <!-- Pipeline policy constants -->
     <Compile Include="..\MarketDataCollector.Contracts\Pipeline\*.cs"
              Link="SharedModels\Pipeline\%(Filename)%(Extension)" />
+
+    <!-- Domain root files (DTOs) -->
+    <Compile Include="..\MarketDataCollector.Contracts\Domain\*.cs"
+             Link="SharedModels\Domain\%(Filename)%(Extension)" />
+
+    <!-- Domain models (Trade, LOBSnapshot, IntegrityEvent, etc.) -->
+    <Compile Include="..\MarketDataCollector.Contracts\Domain\Models\*.cs"
+             Link="SharedModels\Domain\Models\%(Filename)%(Extension)" />
+
+    <!-- Domain events (MarketEvent, MarketEventPayload, IMarketEventPayload) -->
+    <!-- Note: MarketEventPayload.cs uses conditional compilation (#if !UWP_BUILD) to exclude
+         [JsonPolymorphic] attributes that the WinUI 3 XAML compiler (net472-based) cannot process -->
+    <Compile Include="..\MarketDataCollector.Contracts\Domain\Events\*.cs"
+             Link="SharedModels\Domain\Events\%(Filename)%(Extension)" />
+
+    <!-- Domain enums (AggressorSide, MarketEventType, etc.) -->
+    <Compile Include="..\MarketDataCollector.Contracts\Domain\Enums\*.cs"
+             Link="SharedModels\Domain\Enums\%(Filename)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(IsWindows)' == 'true' AND Exists('Assets')">

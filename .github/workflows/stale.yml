@@ -31,7 +31,7 @@ jobs:
 
     steps:
       - name: Mark stale issues and pull requests
-        uses: actions/stale@v10
+        uses: actions/stale@v10.1.1
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           debug-only: ${{ github.event.inputs.debug_only || false }}

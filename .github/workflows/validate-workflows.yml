@@ -29,10 +29,10 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6.0.1
 
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6.2.0
       with:
         python-version: '3.x'
 
@@ -96,7 +96,7 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6.0.1
 
     - name: Validate action references
       run: |
@@ -104,14 +104,19 @@ jobs:
         EXIT_CODE=0
         
         # Check for deprecated actions
-        if grep -r "actions/checkout@v[12]" .github/workflows/; then
+        if grep -r "actions/checkout@v[1-5]" .github/workflows/; then
           echo "⚠️  Warning: Found deprecated checkout action versions"
-          echo "   Consider upgrading to actions/checkout@v4"
+          echo "   Consider upgrading to actions/checkout@v6.0.1"
         fi
-        
-        if grep -r "actions/setup-dotnet@v[12]" .github/workflows/; then
+
+        if grep -r "actions/setup-dotnet@v[1-4]" .github/workflows/; then
           echo "⚠️  Warning: Found deprecated setup-dotnet action versions"
-          echo "   Consider upgrading to actions/setup-dotnet@v4"
+          echo "   Consider upgrading to actions/setup-dotnet@v5.1.0"
+        fi
+
+        if grep -r "actions/github-script@v[1-7]" .github/workflows/; then
+          echo "⚠️  Warning: Found deprecated github-script action versions"
+          echo "   Consider upgrading to actions/github-script@v8"
         fi
         
         # Check for potentially insecure patterns
@@ -138,7 +143,7 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6.0.1
 
     - name: Analyze permissions
       run: |
@@ -161,7 +166,7 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6.0.1
 
     - name: Check schedule syntax
       run: |

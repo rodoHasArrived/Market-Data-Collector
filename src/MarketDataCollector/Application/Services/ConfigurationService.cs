@@ -1,7 +1,9 @@
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Config.Credentials;
 using MarketDataCollector.Application.Logging;
+using MarketDataCollector.Application.UI;
 using Serilog;
+using static MarketDataCollector.Application.Services.AutoConfigurationService;
 
 namespace MarketDataCollector.Application.Services;
 
@@ -333,7 +335,7 @@ public sealed class ConfigurationService : IAsyncDisposable
     /// <summary>
     /// Performs comprehensive validation without starting the collector (dry-run).
     /// </summary>
-    public async Task<DryRunService.DryRunResult> DryRunValidationAsync(
+    public async Task<DryRunResult> DryRunValidationAsync(
         AppConfig config,
         DryRunOptions? options = null,
         CancellationToken ct = default)
