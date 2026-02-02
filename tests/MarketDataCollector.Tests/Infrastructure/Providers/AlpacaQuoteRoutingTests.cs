@@ -25,10 +25,23 @@ public class AlpacaQuoteRoutingTests
 
         _mockPublisher
             .Setup(p => p.TryPublish(It.IsAny<MarketEvent>()))
-            .Callback<MarketEvent>(e => _publishedEvents.Add(e))
             .Returns(true);
 
         _quoteCollector = new QuoteCollector(_mockPublisher.Object);
+    }
+
+    // Helper method to capture events from mock invocations
+    private void CapturePublishedEvents()
+    {
+        _publishedEvents.Clear();
+        foreach (var invocation in _mockPublisher.Invocations)
+        {
+            if (invocation.Method.Name == nameof(IMarketEventPublisher.TryPublish))
+            {
+                var evt = (MarketEvent)invocation.Arguments[0];
+                _publishedEvents.Add(evt);
+            }
+        }
     }
 
     [Fact]
@@ -49,6 +62,7 @@ public class AlpacaQuoteRoutingTests
 
         // Act
         _quoteCollector.OnQuote(quoteUpdate);
+        CapturePublishedEvents();
 
         // Assert
         _publishedEvents.Should().HaveCount(1);
@@ -80,6 +94,7 @@ public class AlpacaQuoteRoutingTests
         _quoteCollector.OnQuote(msftQuote1);
         _quoteCollector.OnQuote(aaplQuote2);
         _quoteCollector.OnQuote(msftQuote2);
+        CapturePublishedEvents();
 
         // Assert
         _publishedEvents.Should().HaveCount(4);
@@ -112,6 +127,7 @@ public class AlpacaQuoteRoutingTests
         {
             _quoteCollector.OnQuote(quote);
         }
+        CapturePublishedEvents();
 
         // Assert
         _publishedEvents.Should().HaveCount(100);
@@ -157,6 +173,7 @@ public class AlpacaQuoteRoutingTests
 
         // Act
         _quoteCollector.OnQuote(quote);
+        CapturePublishedEvents();
 
         // Assert
         _publishedEvents.Should().HaveCount(1);
@@ -172,6 +189,7 @@ public class AlpacaQuoteRoutingTests
         _quoteCollector.OnQuote(CreateAlpacaQuote("AAPL", 185.50m, 185.55m));
         _quoteCollector.OnQuote(CreateAlpacaQuote("MSFT", 380.00m, 380.10m));
         _quoteCollector.OnQuote(CreateAlpacaQuote("GOOGL", 140.00m, 140.10m));
+        CapturePublishedEvents();
 
         // Act
         var snapshot = _quoteCollector.Snapshot();
@@ -187,6 +205,7 @@ public class AlpacaQuoteRoutingTests
         // Arrange
         _quoteCollector.OnQuote(CreateAlpacaQuote("AAPL", 185.50m, 185.55m));
         _quoteCollector.OnQuote(CreateAlpacaQuote("AAPL", 186.00m, 186.05m));
+        CapturePublishedEvents();
 
         // Act
         var removed = _quoteCollector.TryRemove("AAPL", out var removedQuote);
@@ -198,6 +217,7 @@ public class AlpacaQuoteRoutingTests
         // Add new quote - sequence should restart
         _publishedEvents.Clear();
         _quoteCollector.OnQuote(CreateAlpacaQuote("AAPL", 187.00m, 187.05m));
+        CapturePublishedEvents();
         var newPayload = _publishedEvents[0].Payload as BboQuotePayload;
         newPayload!.SequenceNumber.Should().Be(1);
     }

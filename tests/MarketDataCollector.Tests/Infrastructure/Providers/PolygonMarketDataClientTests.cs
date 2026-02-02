@@ -17,8 +17,8 @@ namespace MarketDataCollector.Tests.Providers;
 public class PolygonMarketDataClientTests : IDisposable
 {
     private readonly Mock<IMarketEventPublisher> _mockPublisher;
-    private readonly Mock<TradeDataCollector> _mockTradeCollector;
-    private readonly Mock<QuoteCollector> _mockQuoteCollector;
+    private readonly TradeDataCollector _tradeCollector;
+    private readonly QuoteCollector _quoteCollector;
     private readonly List<MarketEvent> _publishedEvents;
 
     // Store original environment variable values for cleanup
@@ -32,12 +32,11 @@ public class PolygonMarketDataClientTests : IDisposable
 
         _mockPublisher
             .Setup(p => p.TryPublish(It.IsAny<MarketEvent>()))
-            .Callback<MarketEvent>(e => _publishedEvents.Add(e))
             .Returns(true);
 
         // Create real collectors with mock publisher for testing
-        _mockTradeCollector = new Mock<TradeDataCollector>(_mockPublisher.Object, null) { CallBase = true };
-        _mockQuoteCollector = new Mock<QuoteCollector>(_mockPublisher.Object) { CallBase = true };
+        _tradeCollector = new TradeDataCollector(_mockPublisher.Object, null);
+        _quoteCollector = new QuoteCollector(_mockPublisher.Object);
 
         // Store and clear environment variables for predictable testing
         _originalPolygonApiKey = Environment.GetEnvironmentVariable("POLYGON_API_KEY");
@@ -53,6 +52,20 @@ public class PolygonMarketDataClientTests : IDisposable
         Environment.SetEnvironmentVariable("POLYGON__APIKEY", _originalPolygonApiKeyAlt);
     }
 
+    // Helper method to capture events from mock invocations
+    private void CapturePublishedEvents()
+    {
+        _publishedEvents.Clear();
+        foreach (var invocation in _mockPublisher.Invocations)
+        {
+            if (invocation.Method.Name == nameof(IMarketEventPublisher.TryPublish))
+            {
+                var evt = (MarketEvent)invocation.Arguments[0];
+                _publishedEvents.Add(evt);
+            }
+        }
+    }
+
     #region Constructor Tests
 
     [Fact]
@@ -61,8 +74,8 @@ public class PolygonMarketDataClientTests : IDisposable
         // Act
         var act = () => new PolygonMarketDataClient(
             null!,
-            _mockTradeCollector.Object,
-            _mockQuoteCollector.Object);
+            _tradeCollector,
+            _quoteCollector);
 
         // Assert
         act.Should().Throw<ArgumentNullException>()
@@ -76,7 +89,7 @@ public class PolygonMarketDataClientTests : IDisposable
         var act = () => new PolygonMarketDataClient(
             _mockPublisher.Object,
             null!,
-            _mockQuoteCollector.Object);
+            _quoteCollector);
 
         // Assert
         act.Should().Throw<ArgumentNullException>()
@@ -89,7 +102,7 @@ public class PolygonMarketDataClientTests : IDisposable
         // Act
         var act = () => new PolygonMarketDataClient(
             _mockPublisher.Object,
-            _mockTradeCollector.Object,
+            _tradeCollector,
             null!);
 
         // Assert
@@ -103,8 +116,8 @@ public class PolygonMarketDataClientTests : IDisposable
         // Act - should not throw
         var client = new PolygonMarketDataClient(
             _mockPublisher.Object,
-            _mockTradeCollector.Object,
-            _mockQuoteCollector.Object,
+            _tradeCollector,
+            _quoteCollector,
             options: null);
 
         // Assert - client should be created successfully
@@ -122,8 +135,8 @@ public class PolygonMarketDataClientTests : IDisposable
         var options = new PolygonOptions();
         var client = new PolygonMarketDataClient(
             _mockPublisher.Object,
-            _mockTradeCollector.Object,
-            _mockQuoteCollector.Object,
+            _tradeCollector,
+            _quoteCollector,
             options);
 
         // Assert
@@ -137,8 +150,8 @@ public class PolygonMarketDataClientTests : IDisposable
         var options = new PolygonOptions(ApiKey: "shortkey");
         var client = new PolygonMarketDataClient(
             _mockPublisher.Object,
-            _mockTradeCollector.Object,
-            _mockQuoteCollector.Object,
+            _tradeCollector,
+            _quoteCollector,
             options);
 
         // Assert
@@ -152,8 +165,8 @@ public class PolygonMarketDataClientTests : IDisposable
         var options = new PolygonOptions(ApiKey: "abcdefghijklmnopqrstuvwxyz123456");
         var client = new PolygonMarketDataClient(
             _mockPublisher.Object,
-            _mockTradeCollector.Object,
-            _mockQuoteCollector.Object,
+            _tradeCollector,
+            _quoteCollector,
             options);
 
         // Assert
@@ -169,8 +182,8 @@ public class PolygonMarketDataClientTests : IDisposable
         var options = new PolygonOptions(); // No API key in options
         var client = new PolygonMarketDataClient(
             _mockPublisher.Object,
-            _mockTradeCollector.Object,
-            _mockQuoteCollector.Object,
+            _tradeCollector,
+            _quoteCollector,
             options);
 
         // Assert
@@ -186,8 +199,8 @@ public class PolygonMarketDataClientTests : IDisposable
         var options = new PolygonOptions(); // No API key in options
         var client = new PolygonMarketDataClient(
             _mockPublisher.Object,
-            _mockTradeCollector.Object,
-            _mockQuoteCollector.Object,
+            _tradeCollector,
+            _quoteCollector,
             options);
 
         // Assert
@@ -203,8 +216,8 @@ public class PolygonMarketDataClientTests : IDisposable
         var options = new PolygonOptions(ApiKey: "short"); // Invalid options key
         var client = new PolygonMarketDataClient(
             _mockPublisher.Object,
-            _mockTradeCollector.Object,
-            _mockQuoteCollector.Object,
+            _tradeCollector,
+            _quoteCollector,
             options);
 
         // Assert - env var should take precedence
@@ -221,11 +234,12 @@ public class PolygonMarketDataClientTests : IDisposable
         // Arrange
         var client = new PolygonMarketDataClient(
             _mockPublisher.Object,
-            _mockTradeCollector.Object,
-            _mockQuoteCollector.Object);
+            _tradeCollector,
+            _quoteCollector);
 
         // Act
         await client.ConnectAsync();
+        CapturePublishedEvents();
 
         // Assert
         _publishedEvents.Should().HaveCount(1);
@@ -239,12 +253,13 @@ public class PolygonMarketDataClientTests : IDisposable
         // Arrange
         var client = new PolygonMarketDataClient(
             _mockPublisher.Object,
-            _mockTradeCollector.Object,
-            _mockQuoteCollector.Object);
+            _tradeCollector,
+            _quoteCollector);
         using var cts = new CancellationTokenSource();
 
         // Act - should complete without throwing for stub implementation
         await client.ConnectAsync(cts.Token);
+        CapturePublishedEvents();
 
         // Assert
         _publishedEvents.Should().HaveCount(1);
@@ -256,8 +271,8 @@ public class PolygonMarketDataClientTests : IDisposable
         // Arrange
         var client = new PolygonMarketDataClient(
             _mockPublisher.Object,
-            _mockTradeCollector.Object,
-            _mockQuoteCollector.Object);
+            _tradeCollector,
+            _quoteCollector);
 
         // Act & Assert - should not throw
         await client.DisconnectAsync();
@@ -273,8 +288,8 @@ public class PolygonMarketDataClientTests : IDisposable
         // Arrange
         var client = new PolygonMarketDataClient(
             _mockPublisher.Object,
-            _mockTradeCollector.Object,
-            _mockQuoteCollector.Object);
+            _tradeCollector,
+            _quoteCollector);
         var config = new SymbolConfig("SPY");
 
         // Act
@@ -290,8 +305,8 @@ public class PolygonMarketDataClientTests : IDisposable
         // Arrange
         var client = new PolygonMarketDataClient(
             _mockPublisher.Object,
-            _mockTradeCollector.Object,
-            _mockQuoteCollector.Object);
+            _tradeCollector,
+            _quoteCollector);
 
         // Act & Assert - should not throw
         var act = () => client.UnsubscribeMarketDepth(1);
@@ -304,8 +319,8 @@ public class PolygonMarketDataClientTests : IDisposable
         // Arrange
         var client = new PolygonMarketDataClient(
             _mockPublisher.Object,
-            _mockTradeCollector.Object,
-            _mockQuoteCollector.Object);
+            _tradeCollector,
+            _quoteCollector);
         var config = new SymbolConfig("AAPL");
 
         // Act
@@ -321,12 +336,13 @@ public class PolygonMarketDataClientTests : IDisposable
         // Arrange
         var client = new PolygonMarketDataClient(
             _mockPublisher.Object,
-            _mockTradeCollector.Object,
-            _mockQuoteCollector.Object);
+            _tradeCollector,
+            _quoteCollector);
         var config = new SymbolConfig("AAPL");
 
         // Act
         client.SubscribeTrades(config);
+        CapturePublishedEvents();
 
         // Assert - should have published a trade event via the collector
         _publishedEvents.Should().Contain(e => e.Type == MarketEventType.Trade);
@@ -338,8 +354,8 @@ public class PolygonMarketDataClientTests : IDisposable
         // Arrange
         var client = new PolygonMarketDataClient(
             _mockPublisher.Object,
-            _mockTradeCollector.Object,
-            _mockQuoteCollector.Object);
+            _tradeCollector,
+            _quoteCollector);
 
         // Act & Assert - should not throw
         var act = () => client.UnsubscribeTrades(1);
@@ -353,8 +369,8 @@ public class PolygonMarketDataClientTests : IDisposable
         var options = new PolygonOptions(SubscribeAggregates: false);
         var client = new PolygonMarketDataClient(
             _mockPublisher.Object,
-            _mockTradeCollector.Object,
-            _mockQuoteCollector.Object,
+            _tradeCollector,
+            _quoteCollector,
             options);
         var config = new SymbolConfig("SPY");
 
@@ -372,8 +388,8 @@ public class PolygonMarketDataClientTests : IDisposable
         var options = new PolygonOptions(SubscribeAggregates: true);
         var client = new PolygonMarketDataClient(
             _mockPublisher.Object,
-            _mockTradeCollector.Object,
-            _mockQuoteCollector.Object,
+            _tradeCollector,
+            _quoteCollector,
             options);
         var config = new SymbolConfig("AAPL");
 
@@ -391,8 +407,8 @@ public class PolygonMarketDataClientTests : IDisposable
         var options = new PolygonOptions(SubscribeAggregates: true);
         var client = new PolygonMarketDataClient(
             _mockPublisher.Object,
-            _mockTradeCollector.Object,
-            _mockQuoteCollector.Object,
+            _tradeCollector,
+            _quoteCollector,
             options);
         var config = new SymbolConfig("MSFT");
 
@@ -409,8 +425,8 @@ public class PolygonMarketDataClientTests : IDisposable
         // Arrange
         var client = new PolygonMarketDataClient(
             _mockPublisher.Object,
-            _mockTradeCollector.Object,
-            _mockQuoteCollector.Object);
+            _tradeCollector,
+            _quoteCollector);
 
         // Act & Assert - should not throw
         var act = () => client.UnsubscribeAggregates(1);
@@ -424,8 +440,8 @@ public class PolygonMarketDataClientTests : IDisposable
         var options = new PolygonOptions(SubscribeAggregates: true);
         var client = new PolygonMarketDataClient(
             _mockPublisher.Object,
-            _mockTradeCollector.Object,
-            _mockQuoteCollector.Object,
+            _tradeCollector,
+            _quoteCollector,
             options);
         var config = new SymbolConfig("GOOGL");
 
@@ -444,8 +460,8 @@ public class PolygonMarketDataClientTests : IDisposable
         var options = new PolygonOptions(SubscribeAggregates: true);
         var client = new PolygonMarketDataClient(
             _mockPublisher.Object,
-            _mockTradeCollector.Object,
-            _mockQuoteCollector.Object,
+            _tradeCollector,
+            _quoteCollector,
             options);
 
         // Act
@@ -465,8 +481,8 @@ public class PolygonMarketDataClientTests : IDisposable
         // Arrange
         var client = new PolygonMarketDataClient(
             _mockPublisher.Object,
-            _mockTradeCollector.Object,
-            _mockQuoteCollector.Object);
+            _tradeCollector,
+            _quoteCollector);
 
         // Act & Assert - should not throw
         await client.DisposeAsync();
@@ -478,8 +494,8 @@ public class PolygonMarketDataClientTests : IDisposable
         // Arrange
         var client = new PolygonMarketDataClient(
             _mockPublisher.Object,
-            _mockTradeCollector.Object,
-            _mockQuoteCollector.Object);
+            _tradeCollector,
+            _quoteCollector);
 
         // Act & Assert - should not throw on multiple calls
         await client.DisposeAsync();
@@ -504,8 +520,8 @@ public class PolygonMarketDataClientTests : IDisposable
         // Act
         var client = new PolygonMarketDataClient(
             _mockPublisher.Object,
-            _mockTradeCollector.Object,
-            _mockQuoteCollector.Object,
+            _tradeCollector,
+            _quoteCollector,
             options);
 
         // Assert

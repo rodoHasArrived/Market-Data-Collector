@@ -26,11 +26,24 @@ public class MarketDepthCollectorTests
 
         _mockPublisher
             .Setup(p => p.TryPublish(It.IsAny<MarketEvent>()))
-            .Callback<MarketEvent>(e => _publishedEvents.Add(e))
             .Returns(true);
 
         // Create collector with explicit subscription disabled for simpler testing
         _collector = new MarketDepthCollector(_mockPublisher.Object, requireExplicitSubscription: false);
+    }
+
+    // Helper method to capture events from mock invocations
+    private void CapturePublishedEvents()
+    {
+        _publishedEvents.Clear();
+        foreach (var invocation in _mockPublisher.Invocations)
+        {
+            if (invocation.Method.Name == nameof(IMarketEventPublisher.TryPublish))
+            {
+                var evt = (MarketEvent)invocation.Arguments[0];
+                _publishedEvents.Add(evt);
+            }
+        }
     }
 
     #region Basic Depth Update Tests
@@ -43,6 +56,7 @@ public class MarketDepthCollectorTests
 
         // Act
         _collector.OnDepth(update);
+        CapturePublishedEvents();
 
         // Assert
         _publishedEvents.Should().HaveCount(1);
@@ -63,6 +77,7 @@ public class MarketDepthCollectorTests
         _collector.OnDepth(CreateDepthUpdate("SPY", DepthOperation.Insert, OrderBookSide.Bid, 0, 450.00m, 100));
         _collector.OnDepth(CreateDepthUpdate("SPY", DepthOperation.Insert, OrderBookSide.Bid, 1, 449.90m, 150));
         _collector.OnDepth(CreateDepthUpdate("SPY", DepthOperation.Insert, OrderBookSide.Bid, 2, 449.80m, 200));
+        CapturePublishedEvents();
 
         // Assert
         var lastSnapshot = _publishedEvents.Last().Payload as LOBSnapshot;
@@ -99,6 +114,7 @@ public class MarketDepthCollectorTests
 
         // Act - Update the level
         _collector.OnDepth(CreateDepthUpdate("SPY", DepthOperation.Update, OrderBookSide.Bid, 0, 450.00m, 200));
+        CapturePublishedEvents();
 
         // Assert
         var lastSnapshot = _publishedEvents.Last().Payload as LOBSnapshot;
@@ -114,6 +130,7 @@ public class MarketDepthCollectorTests
 
         // Act
         _collector.OnDepth(CreateDepthUpdate("SPY", DepthOperation.Update, OrderBookSide.Bid, 0, 449.95m, 100));
+        CapturePublishedEvents();
 
         // Assert
         var lastSnapshot = _publishedEvents.Last().Payload as LOBSnapshot;
@@ -133,6 +150,7 @@ public class MarketDepthCollectorTests
 
         // Act - Delete first level
         _collector.OnDepth(CreateDepthUpdate("SPY", DepthOperation.Delete, OrderBookSide.Bid, 0, 0, 0));
+        CapturePublishedEvents();
 
         // Assert
         var lastSnapshot = _publishedEvents.Last().Payload as LOBSnapshot;
@@ -149,6 +167,7 @@ public class MarketDepthCollectorTests
 
         // Act
         _collector.OnDepth(CreateDepthUpdate("SPY", DepthOperation.Delete, OrderBookSide.Bid, 0, 0, 0));
+        CapturePublishedEvents();
 
         // Assert
         var lastSnapshot = _publishedEvents.Last().Payload as LOBSnapshot;
@@ -165,6 +184,7 @@ public class MarketDepthCollectorTests
         // Arrange & Act
         _collector.OnDepth(CreateDepthUpdate("SPY", DepthOperation.Insert, OrderBookSide.Bid, 0, 450.00m, 100));
         _collector.OnDepth(CreateDepthUpdate("SPY", DepthOperation.Insert, OrderBookSide.Ask, 0, 450.10m, 100));
+        CapturePublishedEvents();
 
         // Assert
         var lastSnapshot = _publishedEvents.Last().Payload as LOBSnapshot;
@@ -177,6 +197,7 @@ public class MarketDepthCollectorTests
         // Arrange & Act - Bid size > Ask size
         _collector.OnDepth(CreateDepthUpdate("SPY", DepthOperation.Insert, OrderBookSide.Bid, 0, 450.00m, 300));
         _collector.OnDepth(CreateDepthUpdate("SPY", DepthOperation.Insert, OrderBookSide.Ask, 0, 450.10m, 100));
+        CapturePublishedEvents();
 
         // Assert - Imbalance = (300 - 100) / (300 + 100) = 0.5
         var lastSnapshot = _publishedEvents.Last().Payload as LOBSnapshot;
@@ -189,6 +210,7 @@ public class MarketDepthCollectorTests
         // Arrange & Act
         _collector.OnDepth(CreateDepthUpdate("SPY", DepthOperation.Insert, OrderBookSide.Bid, 0, 450.00m, 100));
         _collector.OnDepth(CreateDepthUpdate("SPY", DepthOperation.Insert, OrderBookSide.Ask, 0, 450.10m, 100));
+        CapturePublishedEvents();
 
         // Assert
         var lastSnapshot = _publishedEvents.Last().Payload as LOBSnapshot;
@@ -200,6 +222,7 @@ public class MarketDepthCollectorTests
     {
         // Arrange & Act
         _collector.OnDepth(CreateDepthUpdate("SPY", DepthOperation.Insert, OrderBookSide.Bid, 0, 450.00m, 100));
+        CapturePublishedEvents();
 
         // Assert
         var lastSnapshot = _publishedEvents.Last().Payload as LOBSnapshot;
@@ -219,6 +242,7 @@ public class MarketDepthCollectorTests
 
         // Act
         _collector.OnDepth(update);
+        CapturePublishedEvents();
 
         // Assert
         _publishedEvents.Should().HaveCount(1);
@@ -252,6 +276,7 @@ public class MarketDepthCollectorTests
 
         // Act
         _collector.OnDepth(update);
+        CapturePublishedEvents();
 
         // Assert
         _publishedEvents.Should().HaveCount(1);
@@ -281,6 +306,7 @@ public class MarketDepthCollectorTests
 
         // Act - Try to update again
         _collector.OnDepth(CreateDepthUpdate("SPY", DepthOperation.Insert, OrderBookSide.Bid, 0, 450.00m, 100));
+        CapturePublishedEvents();
 
         // Assert
         _publishedEvents.Should().HaveCount(1);
@@ -305,6 +331,7 @@ public class MarketDepthCollectorTests
 
         // Insert should work now
         _collector.OnDepth(CreateDepthUpdate("SPY", DepthOperation.Insert, OrderBookSide.Bid, 0, 450.00m, 100));
+        CapturePublishedEvents();
 
         // Assert
         _collector.IsSymbolStreamStale("SPY").Should().BeFalse();
@@ -338,6 +365,7 @@ public class MarketDepthCollectorTests
         _collector.OnDepth(CreateDepthUpdate("SPY", DepthOperation.Insert, OrderBookSide.Bid, 0, 450.00m, 100));
         _collector.OnDepth(CreateDepthUpdate("AAPL", DepthOperation.Insert, OrderBookSide.Bid, 0, 180.00m, 200));
         _collector.OnDepth(CreateDepthUpdate("SPY", DepthOperation.Insert, OrderBookSide.Bid, 1, 449.90m, 150));
+        CapturePublishedEvents();
 
         // Assert
         var spySnapshots = _publishedEvents.Where(e => e.Symbol == "SPY").ToList();
@@ -377,6 +405,7 @@ public class MarketDepthCollectorTests
 
         // Act - No subscription, should be ignored
         collector.OnDepth(CreateDepthUpdate("SPY", DepthOperation.Insert, OrderBookSide.Bid, 0, 450.00m, 100));
+        CapturePublishedEvents();
 
         // Assert
         _publishedEvents.Should().BeEmpty();
@@ -392,6 +421,7 @@ public class MarketDepthCollectorTests
 
         // Act
         collector.OnDepth(CreateDepthUpdate("SPY", DepthOperation.Insert, OrderBookSide.Bid, 0, 450.00m, 100));
+        CapturePublishedEvents();
 
         // Assert
         _publishedEvents.Should().HaveCount(1);
@@ -410,6 +440,7 @@ public class MarketDepthCollectorTests
 
         // Act
         collector.OnDepth(CreateDepthUpdate("SPY", DepthOperation.Insert, OrderBookSide.Bid, 1, 449.90m, 150));
+        CapturePublishedEvents();
 
         // Assert
         _publishedEvents.Should().BeEmpty();
@@ -437,6 +468,7 @@ public class MarketDepthCollectorTests
 
         // Act
         _collector.OnDepth(update);
+        CapturePublishedEvents();
 
         // Assert
         _publishedEvents.Should().BeEmpty();
@@ -450,6 +482,7 @@ public class MarketDepthCollectorTests
 
         // Act
         _collector.OnDepth(update);
+        CapturePublishedEvents();
 
         // Assert
         _publishedEvents.Should().BeEmpty();
@@ -461,6 +494,7 @@ public class MarketDepthCollectorTests
         // Arrange & Act
         _collector.OnDepth(CreateDepthUpdate("spy", DepthOperation.Insert, OrderBookSide.Bid, 0, 450.00m, 100));
         _collector.OnDepth(CreateDepthUpdate("SPY", DepthOperation.Insert, OrderBookSide.Bid, 1, 449.90m, 150));
+        CapturePublishedEvents();
 
         // Assert - Should update same book
         var lastSnapshot = _publishedEvents.Last().Payload as LOBSnapshot;
@@ -501,6 +535,7 @@ public class MarketDepthCollectorTests
 
         // Act - Delete middle level
         _collector.OnDepth(CreateDepthUpdate("SPY", DepthOperation.Delete, OrderBookSide.Bid, 1, 0, 0));
+        CapturePublishedEvents();
 
         // Assert
         var lastSnapshot = _publishedEvents.Last().Payload as LOBSnapshot;
@@ -520,6 +555,7 @@ public class MarketDepthCollectorTests
 
         // Act - Insert at position 1 (middle)
         _collector.OnDepth(CreateDepthUpdate("SPY", DepthOperation.Insert, OrderBookSide.Bid, 1, 449.90m, 150));
+        CapturePublishedEvents();
 
         // Assert
         var lastSnapshot = _publishedEvents.Last().Payload as LOBSnapshot;
@@ -549,6 +585,7 @@ public class MarketDepthCollectorTests
 
         // Act
         _collector.OnDepth(update);
+        CapturePublishedEvents();
 
         // Assert
         var snapshot = _publishedEvents[0].Payload as LOBSnapshot;
