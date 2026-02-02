@@ -1,9 +1,9 @@
 using System;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Navigation;
 using MarketDataCollector.Wpf.Contracts;
 using MarketDataCollector.Wpf.Services;
+using SysNavigation = System.Windows.Navigation;
 
 namespace MarketDataCollector.Wpf.Views;
 
@@ -42,9 +42,10 @@ public partial class MainPage : Page
         }
         else
         {
+            // Set selected index first (before navigation to avoid triggering SelectionChanged)
+            NavigationList.SelectedIndex = 0;
             // Default to Dashboard
             _navigationService.NavigateTo("Dashboard");
-            NavigationList.SelectedIndex = 0; // Select Dashboard
         }
 
         // Update connection status display
