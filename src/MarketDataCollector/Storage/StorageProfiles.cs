@@ -32,56 +32,77 @@ public static class StorageProfilePresets
             Id: "Research",
             Label: "Research",
             Description: "Balanced defaults for analysis workflows (manifests + compression).",
-            Apply: options =>
+            Apply: options => new StorageOptions
             {
-                var updated = Clone(options);
-                updated.Compress = true;
-                updated.CompressionCodec = CompressionCodec.Gzip;
-                updated.GenerateManifests = true;
-                updated.PartitionStrategy ??= new PartitionStrategy(PartitionDimension.Date, PartitionDimension.Symbol, DatePartition.Daily);
-                return updated;
+                RootPath = options.RootPath,
+                Compress = true,
+                CompressionCodec = CompressionCodec.Gzip,
+                NamingConvention = options.NamingConvention,
+                DatePartition = options.DatePartition,
+                IncludeProvider = options.IncludeProvider,
+                FilePrefix = options.FilePrefix,
+                RetentionDays = options.RetentionDays,
+                MaxTotalBytes = options.MaxTotalBytes,
+                Tiering = options.Tiering,
+                Quotas = options.Quotas,
+                Policies = options.Policies,
+                GenerateManifests = true,
+                EmbedChecksum = options.EmbedChecksum,
+                PartitionStrategy = options.PartitionStrategy ?? new PartitionStrategy(PartitionDimension.Date, PartitionDimension.Symbol, Tertiary: null, DateGranularity: DatePartition.Daily)
             }),
         new StorageProfilePreset(
             Id: "LowLatency",
             Label: "Low Latency",
             Description: "Prioritizes ingest speed with minimal processing.",
-            Apply: options =>
+            Apply: options => new StorageOptions
             {
-                var updated = Clone(options);
-                updated.Compress = false;
-                updated.CompressionCodec = CompressionCodec.None;
-                updated.GenerateManifests = false;
-                updated.PartitionStrategy ??= new PartitionStrategy(PartitionDimension.Symbol, PartitionDimension.EventType, DatePartition.Hourly);
-                return updated;
+                RootPath = options.RootPath,
+                Compress = false,
+                CompressionCodec = CompressionCodec.None,
+                NamingConvention = options.NamingConvention,
+                DatePartition = options.DatePartition,
+                IncludeProvider = options.IncludeProvider,
+                FilePrefix = options.FilePrefix,
+                RetentionDays = options.RetentionDays,
+                MaxTotalBytes = options.MaxTotalBytes,
+                Tiering = options.Tiering,
+                Quotas = options.Quotas,
+                Policies = options.Policies,
+                GenerateManifests = false,
+                EmbedChecksum = options.EmbedChecksum,
+                PartitionStrategy = options.PartitionStrategy ?? new PartitionStrategy(PartitionDimension.Symbol, PartitionDimension.EventType, Tertiary: null, DateGranularity: DatePartition.Hourly)
             }),
         new StorageProfilePreset(
             Id: "Archival",
             Label: "Archival",
             Description: "Long-term retention with tiering-friendly defaults.",
-            Apply: options =>
+            Apply: options => new StorageOptions
             {
-                var updated = Clone(options);
-                updated.Compress = true;
-                updated.CompressionCodec = CompressionCodec.Zstd;
-                updated.GenerateManifests = true;
-                updated.EmbedChecksum = true;
-                updated.RetentionDays ??= 3650;
-                updated.MaxTotalBytes ??= 2L * 1024L * 1024L * 1024L * 1024L;
-                updated.PartitionStrategy ??= new PartitionStrategy(PartitionDimension.Date, PartitionDimension.Source, DatePartition.Monthly);
-
-                updated.Tiering ??= new TieringOptions
+                RootPath = options.RootPath,
+                Compress = true,
+                CompressionCodec = CompressionCodec.Zstd,
+                NamingConvention = options.NamingConvention,
+                DatePartition = options.DatePartition,
+                IncludeProvider = options.IncludeProvider,
+                FilePrefix = options.FilePrefix,
+                RetentionDays = options.RetentionDays ?? 3650,
+                MaxTotalBytes = options.MaxTotalBytes ?? 2L * 1024L * 1024L * 1024L * 1024L,
+                Tiering = options.Tiering ?? new TieringOptions
                 {
                     Enabled = true,
                     Tiers = new List<TierConfig>
                     {
-                        new() { Name = "hot", Path = Path.Combine(updated.RootPath, "hot"), MaxAgeDays = 7, Format = "jsonl", Compression = CompressionCodec.None },
-                        new() { Name = "warm", Path = Path.Combine(updated.RootPath, "warm"), MaxAgeDays = 30, Format = "jsonl", Compression = CompressionCodec.Gzip },
-                        new() { Name = "cold", Path = Path.Combine(updated.RootPath, "cold"), MaxAgeDays = 180, Format = "parquet", Compression = CompressionCodec.Zstd },
-                        new() { Name = "archive", Path = Path.Combine(updated.RootPath, "archive"), Format = "parquet", Compression = CompressionCodec.Zstd }
+                        new() { Name = "hot", Path = Path.Combine(options.RootPath, "hot"), MaxAgeDays = 7, Format = "jsonl", Compression = CompressionCodec.None },
+                        new() { Name = "warm", Path = Path.Combine(options.RootPath, "warm"), MaxAgeDays = 30, Format = "jsonl", Compression = CompressionCodec.Gzip },
+                        new() { Name = "cold", Path = Path.Combine(options.RootPath, "cold"), MaxAgeDays = 180, Format = "parquet", Compression = CompressionCodec.Zstd },
+                        new() { Name = "archive", Path = Path.Combine(options.RootPath, "archive"), Format = "parquet", Compression = CompressionCodec.Zstd }
                     }
-                };
-
-                return updated;
+                },
+                Quotas = options.Quotas,
+                Policies = options.Policies,
+                GenerateManifests = true,
+                EmbedChecksum = true,
+                PartitionStrategy = options.PartitionStrategy ?? new PartitionStrategy(PartitionDimension.Date, PartitionDimension.Source, Tertiary: null, DateGranularity: DatePartition.Monthly)
             })
     };
 
@@ -132,26 +153,4 @@ public static class StorageProfilePresets
     }
 
     public static IReadOnlyList<StorageProfilePreset> GetPresets() => Presets;
-
-    private static StorageOptions Clone(StorageOptions options)
-    {
-        return new StorageOptions
-        {
-            RootPath = options.RootPath,
-            Compress = options.Compress,
-            CompressionCodec = options.CompressionCodec,
-            NamingConvention = options.NamingConvention,
-            DatePartition = options.DatePartition,
-            IncludeProvider = options.IncludeProvider,
-            FilePrefix = options.FilePrefix,
-            RetentionDays = options.RetentionDays,
-            MaxTotalBytes = options.MaxTotalBytes,
-            Tiering = options.Tiering,
-            Quotas = options.Quotas,
-            Policies = options.Policies,
-            GenerateManifests = options.GenerateManifests,
-            EmbedChecksum = options.EmbedChecksum,
-            PartitionStrategy = options.PartitionStrategy
-        };
-    }
 }
