@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Domain.Models;
+namespace MarketDataCollector.Contracts.Domain.Models;
 
 /// <summary>
 /// Normalized best-bid/offer quote update (adapter input into QuoteCollector).
