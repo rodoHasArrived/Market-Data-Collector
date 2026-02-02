@@ -1,6 +1,8 @@
 using System.Threading.Channels;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Order;
+using MarketDataCollector.Contracts.Domain.Enums;
+using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Domain.Models;
 

@@ -232,10 +232,10 @@ public sealed class SchemaValidationServiceTests : IAsyncDisposable
     }
 
     [Fact]
-    public void GetVersionManager_WhenDisabled_ShouldReturnNull()
+    public async Task GetVersionManager_WhenDisabled_ShouldReturnNull()
     {
         // Arrange
-        using var serviceWithoutTracking = new SchemaValidationService(
+        await using var serviceWithoutTracking = new SchemaValidationService(
             new SchemaValidationOptions { EnableVersionTracking = false });
 
         // Act

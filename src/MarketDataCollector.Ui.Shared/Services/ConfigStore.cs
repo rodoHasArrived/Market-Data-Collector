@@ -1,5 +1,8 @@
 // Re-export the consolidated ConfigStore from the core project.
 // This preserves backward compatibility for existing code referencing this namespace.
+using MarketDataCollector.Application.Backfill;
+using MarketDataCollector.Application.Config;
+using MarketDataCollector.Application.Monitoring;
 using CoreConfigStore = MarketDataCollector.Application.UI.ConfigStore;
 
 namespace MarketDataCollector.Ui.Shared.Services;
@@ -42,9 +45,32 @@ public sealed class ConfigStore
     /// <summary>
     /// Loads configuration from the config file.
     /// </summary>
-    public static MarketDataCollector.Storage.AppConfig LoadConfig(string path) => CoreConfigStore.LoadConfig(path);
-    {
-    }
+    public static AppConfig LoadConfig(string path) => CoreConfigStore.LoadConfig(path);
+
+    /// <summary>
+    /// Loads configuration from the configured config path.
+    /// </summary>
+    public AppConfig Load() => _core.Load();
+
+    /// <summary>
+    /// Saves configuration to the config file.
+    /// </summary>
+    public Task SaveAsync(AppConfig cfg) => _core.SaveAsync(cfg);
+
+    /// <summary>
+    /// Tries to load status JSON.
+    /// </summary>
+    public string? TryLoadStatusJson() => _core.TryLoadStatusJson();
+
+    /// <summary>
+    /// Tries to load backfill status.
+    /// </summary>
+    public BackfillResult? TryLoadBackfillStatus() => _core.TryLoadBackfillStatus();
+
+    /// <summary>
+    /// Tries to load provider metrics.
+    /// </summary>
+    public ProviderMetricsStatus? TryLoadProviderMetrics() => _core.TryLoadProviderMetrics();
 
     /// <summary>
     /// Gets the default configuration path for web dashboard hosting.
