@@ -1,6 +1,7 @@
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Config.Credentials;
 using MarketDataCollector.Application.Logging;
+using MarketDataCollector.Application.UI;
 using Serilog;
 using static MarketDataCollector.Application.Services.AutoConfigurationService;
 

@@ -3,6 +3,7 @@ using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Providers.Alpaca;
 using MarketDataCollector.Infrastructure.Providers.Backfill;
+using MarketDataCollector.Infrastructure.Providers.Backfill.SymbolResolution;
 using MarketDataCollector.Infrastructure.Providers.InteractiveBrokers;
 using MarketDataCollector.Infrastructure.Providers.Polygon;
 using MarketDataCollector.Infrastructure.Providers.StockSharp;
@@ -120,7 +121,7 @@ public sealed class ProviderFactory
             DataSourceKind.Alpaca => CreateAlpacaStreamingClient(),
             DataSourceKind.Polygon => CreatePolygonStreamingClient(),
             DataSourceKind.StockSharp => CreateStockSharpStreamingClient(),
-            DataSourceKind.IB or DataSourceKind.None => CreateIBStreamingClient(),
+            DataSourceKind.IB => CreateIBStreamingClient(),
             _ => CreateIBStreamingClient()
         };
 
@@ -390,10 +391,10 @@ public sealed class ProviderFactory
         var openFigiApiKey = _config.Backfill?.Providers?.OpenFigi?.ApiKey;
         var enableSymbolResolution = _config.Backfill?.EnableSymbolResolution ?? true;
 
-        SymbolResolution.OpenFigiSymbolResolver? symbolResolver = null;
+        OpenFigiSymbolResolver? symbolResolver = null;
         if (enableSymbolResolution)
         {
-            symbolResolver = new SymbolResolution.OpenFigiSymbolResolver(openFigiApiKey, log: _log);
+            symbolResolver = new OpenFigiSymbolResolver(openFigiApiKey, log: _log);
         }
 
         return new CompositeHistoricalDataProvider(

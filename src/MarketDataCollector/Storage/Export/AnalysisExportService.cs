@@ -159,7 +159,8 @@ public sealed class AnalysisExportService
     {
         if (!Directory.Exists(_dataRoot)) return [];
 
-        return ["*.jsonl", "*.jsonl.gz"]
+        string[] patterns = ["*.jsonl", "*.jsonl.gz"];
+        return patterns
             .SelectMany(pattern => Directory.GetFiles(_dataRoot, pattern, SearchOption.AllDirectories))
             .Select(ParseFileName)
             .Where(f => f is not null)
