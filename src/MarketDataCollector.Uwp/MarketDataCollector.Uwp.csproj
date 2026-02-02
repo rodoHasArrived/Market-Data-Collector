@@ -71,8 +71,9 @@
   <PropertyGroup Condition="'$(IsWindows)' == 'true' AND '$(RuntimeIdentifier)' != ''">
     <!-- Build normalized path without trailing slash -->
     <IntermediateOutputPath Condition="'$(IntermediateOutputPath)' == ''">obj\$(Platform)\$(Configuration)\$(TargetFramework)\$(RuntimeIdentifier)</IntermediateOutputPath>
-    <!-- Ensure no trailing backslash - MSBuild will auto-add when needed -->
-    <IntermediateOutputPath>$(IntermediateOutputPath.TrimEnd('\'))</IntermediateOutputPath>
+    <!-- Ensure no trailing backslash - MSBuild will auto-add when needed
+         Using NormalizePath to properly handle path separators -->
+    <IntermediateOutputPath>$([MSBuild]::NormalizePath($(IntermediateOutputPath)))</IntermediateOutputPath>
   </PropertyGroup>
 
   <!-- Windows-only package references -->
