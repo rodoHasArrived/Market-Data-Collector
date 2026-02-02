@@ -13,10 +13,10 @@ Usage:
 
 import argparse
 import json
-import os
 import re
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
+from fnmatch import fnmatch
 from pathlib import Path
 from typing import Any
 
@@ -47,6 +47,11 @@ IMPORTANT_DIRS = {
     'benchmarks': 'Performance benchmarks',
     'build-system': 'Build tooling'
 }
+
+
+def format_timestamp() -> str:
+    """Return a UTC timestamp string for generated docs."""
+    return datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
 
 
 def parse_args() -> argparse.Namespace:
@@ -101,7 +106,7 @@ def should_exclude(path: Path) -> bool:
     if path.name in EXCLUDE_DIRS:
         return True
     for pattern in EXCLUDE_PATTERNS:
-        if path.match(pattern):
+        if fnmatch(path.name, pattern):
             return True
     return False
 
@@ -128,6 +133,8 @@ def get_directory_tree(root: Path, max_depth: int = 4, current_depth: int = 0) -
         if should_exclude(item):
             continue
 
+        if item.is_symlink():
+            continue
         if item.is_dir():
             child = get_directory_tree(item, max_depth, current_depth + 1)
             tree['children'].append(child)
@@ -187,7 +194,7 @@ def generate_structure_markdown(root: Path, max_depth: int = 4) -> str:
 
     content = f"""# Repository Structure
 
-> Auto-generated on {datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')}
+> Auto-generated on {format_timestamp()}
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -235,6 +242,12 @@ This document provides an overview of the Market Data Collector repository struc
 *This file is auto-generated. Do not edit manually.*
 """
     return content
+
+
+def generate_structure_tree(root: Path, max_depth: int = 4) -> str:
+    """Generate repository structure as a plain tree string."""
+    tree = get_directory_tree(root, max_depth)
+    return tree_to_markdown(tree)
 
 
 def extract_providers(root: Path) -> list[dict[str, str]]:
@@ -310,7 +323,7 @@ def generate_provider_registry(root: Path, extract_attrs: bool = False) -> str:
 
     content = f"""# Provider Registry
 
-> Auto-generated on {datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')}
+> Auto-generated on {format_timestamp()}
 
 This document lists all data providers available in the Market Data Collector.
 
@@ -375,8 +388,6 @@ def extract_workflows(root: Path) -> list[dict[str, str]]:
         return workflows
 
     name_pattern = re.compile(r'^name:\s*["\']?([^"\'#\n]+)["\']?\s*$', re.MULTILINE)
-    trigger_pattern = re.compile(r'^on:\s*$', re.MULTILINE)
-
     for yml_file in workflows_dir.glob('*.yml'):
         try:
             content = yml_file.read_text(encoding='utf-8')
@@ -412,7 +423,7 @@ def generate_workflows_overview(root: Path) -> str:
 
     content = f"""# GitHub Workflows Overview
 
-> Auto-generated on {datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')}
+> Auto-generated on {format_timestamp()}
 
 This document provides an overview of all GitHub Actions workflows in the repository.
 
@@ -476,6 +487,8 @@ def main() -> int:
         elif args.format == 'json':
             tree = get_directory_tree(root, args.max_depth)
             content = json.dumps(tree, indent=2)
+        elif args.format == 'tree':
+            content = generate_structure_tree(root, args.max_depth)
         else:
             content = generate_structure_markdown(root, args.max_depth)
 
