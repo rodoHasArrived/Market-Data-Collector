@@ -2,6 +2,11 @@
 
 This guide helps you diagnose and resolve common issues with MarketDataCollector.
 
+## Specialized Troubleshooting Guides
+
+For specific component issues, see:
+- **[Desktop App (WinUI 3) XAML Compiler Errors](../troubleshooting/desktop-app-xaml-compiler-errors.md)** - XAML compilation failures, WindowsAppSDK issues
+
 ## Quick Diagnostics
 
 ### Health Check
