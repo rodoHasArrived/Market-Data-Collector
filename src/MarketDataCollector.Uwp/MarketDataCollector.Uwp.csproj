@@ -35,6 +35,12 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
 
+    <!-- XAML Compilation Settings -->
+    <!-- Use the managed XAML compiler instead of .NET Framework-based XamlCompiler.exe -->
+    <!-- This avoids silent failures in CI environments that lack .NET Framework 4.7.2 -->
+    <UseXamlCompilerExecutable>false</UseXamlCompilerExecutable>
+    <!-- Enable detailed XAML compiler diagnostics for better error reporting -->
+    <XamlCompilerVerbosity>detailed</XamlCompilerVerbosity>
 
     <!-- Assembly Information -->
     <AssemblyName>MarketDataCollector.Desktop</AssemblyName>
