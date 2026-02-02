@@ -35,6 +35,12 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
 
+    <!-- Use managed XAML compiler instead of net472-based XamlCompiler.exe -->
+    <!-- This is required because the net472 compiler cannot process C# 9 record types -->
+    <!-- used in linked source files from MarketDataCollector.Contracts -->
+    <!-- See: https://github.com/microsoft/microsoft-ui-xaml/issues/5315 -->
+    <UseXamlCompilerExecutable>false</UseXamlCompilerExecutable>
+
     <!-- Define UWP_BUILD symbol to allow conditional compilation in shared source files -->
     <DefineConstants>$(DefineConstants);UWP_BUILD</DefineConstants>
 
