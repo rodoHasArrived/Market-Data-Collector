@@ -136,7 +136,8 @@
     <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.2.2" />
     <PackageVersion Include="CommunityToolkit.WinUI.Controls.Primitives" Version="8.2.251219" />
     <PackageVersion Include="CommunityToolkit.WinUI.Controls.Sizers" Version="8.2.250402" />
-    <PackageVersion Include="Microsoft.WindowsAppSDK" Version="1.7.250310001" />
+    <!-- Use stable 1.7.7 release (1.7.251107005) instead of preview 1.7.0 (1.7.250310001) for better .NET 9 compatibility -->
+    <PackageVersion Include="Microsoft.WindowsAppSDK" Version="1.7.251107005" />
     <PackageVersion Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.1" />
     <!-- WPF-specific packages -->
     <PackageVersion Include="MaterialDesignThemes" Version="5.1.1" />
