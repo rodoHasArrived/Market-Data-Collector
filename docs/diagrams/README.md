@@ -1,7 +1,6 @@
 # Architecture Diagrams
 
-**Last Updated:** 2026-01-29
-**Version:** 1.6.1
+**Status:** Updated to reflect the current monolithic runtime, UI options, and provider list.
 
 This folder contains architecture diagrams for the Market Data Collector system in Graphviz DOT format.
 
@@ -19,9 +18,9 @@ This folder contains architecture diagrams for the Market Data Collector system 
 | **Storage Architecture** | Storage pipeline with WAL, compression, tiering | `storage-architecture.dot` |
 | **Event Pipeline Sequence** | Detailed event processing sequence | `event-pipeline-sequence.dot` |
 | **Resilience Patterns** | Circuit breakers, retry, failover patterns | `resilience-patterns.dot` |
-| **Deployment Options** | Standalone to Kubernetes deployment paths | `deployment-options.dot` |
-| **Onboarding Flow** (NEW) | User journey from first-run to operation | `onboarding-flow.dot` |
-| **CLI Commands** (NEW) | All CLI flags and commands reference | `cli-commands.dot` |
+| **Deployment Options** | Standalone and Docker deployment paths | `deployment-options.dot` |
+| **Onboarding Flow** | User journey from first-run to operation | `onboarding-flow.dot` |
+| **CLI Commands** | All CLI flags and commands reference | `cli-commands.dot` |
 
 ---
 
@@ -31,54 +30,49 @@ This folder contains architecture diagrams for the Market Data Collector system 
 
 Shows the Market Data Collector in context with:
 - **Users**: Operators, Quants/Analysts, and DevOps
-- **Streaming Providers**: IB, Alpaca, NYSE Direct, StockSharp
-- **Historical Providers**: Yahoo, Tiingo, Finnhub, Polygon, Stooq, Alpha Vantage, Nasdaq Data Link, Alpaca (8 total)
+- **Streaming Providers**: IB, Alpaca, NYSE Direct, Polygon, StockSharp
+- **Historical Providers**: Alpaca, Alpha Vantage, Finnhub, Interactive Brokers, Nasdaq Data Link, Polygon, Stooq, Tiingo, Yahoo Finance, StockSharp (10+ total)
 - **Downstream Systems**: QuantConnect Lean, Python/R Analytics, PostgreSQL/TimescaleDB
-- **Infrastructure**: Storage (JSONL/Parquet), Message Bus (RabbitMQ), Monitoring (Prometheus/Grafana)
+- **Infrastructure**: Storage (JSONL/Parquet), Monitoring (Prometheus/Grafana), Status HTTP endpoints
 
 ### C4 Level 2: Container Diagram
 
 Shows the major deployable units:
-- **Presentation Layer**: UWP Desktop App, Web Dashboard, CLI Interface (24+ flags)
-- **Onboarding & Diagnostics Layer** (NEW): Configuration Wizard, Auto-Configuration, Diagnostic Services, Error Formatter
-- **Core Collector Service** (.NET 9 Console with 100K bounded channel)
+- **Presentation Layer**: Web Dashboard, WPF Desktop App, legacy UWP Desktop App, CLI Interface
+- **Onboarding & Diagnostics Layer**: Configuration Wizard, Auto-Configuration, Diagnostic Services, Error Formatter
+- **Core Collector Service** (.NET 9 console with 50K bounded channel policy)
 - **F# Domain Library** (Type-safe validation, discriminated unions)
-- **Contracts Library** (Shared DTOs, MassTransit contracts)
-- **Microservices** (6 services + Gateway on ports 5000-5005)
-- **Message Bus** (RabbitMQ/Azure Service Bus with MassTransit)
+- **Contracts Library** (Shared DTOs, pipeline contracts)
 - **Storage Layer** (WAL → JSONL → Parquet with tiered storage)
-- **Observability** (Prometheus, Grafana, Jaeger/Tempo)
+- **Observability** (Prometheus, Grafana, structured logs)
 
 ### C4 Level 3: Component Diagram
 
 Detailed view of the core collector internals:
-- **Infrastructure Layer**: Streaming clients (IB, Alpaca, NYSE, Polygon, StockSharp), Historical providers (8), Connection/Resilience management, Performance optimizations (source-generated JSON, connection warmup)
+- **Infrastructure Layer**: Streaming clients (IB, Alpaca, NYSE, Polygon, StockSharp), Historical providers (10+), Connection/Resilience management, Performance optimizations (source-generated JSON, connection warmup)
 - **Domain Layer**: Collectors (Trade, Quote, Depth), Domain models, F# validation pipeline
-- **Application Layer**: EventPipeline (100K bounded channel), Technical indicators (200+), Config/Monitoring, Backfill service, **Onboarding & Diagnostics** (8 services: AutoConfiguration, Wizard, FirstRunDetector, ConnectivityTest, CredentialValidation, ErrorFormatter, ProgressDisplay, StartupSummary)
+- **Application Layer**: EventPipeline (50K bounded channel policy), Technical indicators, Config/Monitoring, Backfill service, **Onboarding & Diagnostics** (AutoConfiguration, Wizard, FirstRunDetector, ConnectivityTest, CredentialValidation, ErrorFormatter, ProgressDisplay, StartupSummary)
 - **Storage Layer**: Write path (WAL, JSONL, Parquet), Compression profiles, Export service, Quality reporting
 
 ### Data Flow Diagram
 
 Shows data moving through the system:
-0. **First-Time Setup** (NEW): First-run detection → Wizard/Auto-config → Generate appsettings.json
-1. **Streaming Sources**: IB, Alpaca, NYSE, StockSharp → Real-time ingestion
-2. **Historical Sources**: Yahoo, Tiingo, Finnhub, Polygon → Batch backfill
+0. **First-Time Setup**: First-run detection → Wizard/Auto-config → Generate appsettings.json
+1. **Streaming Sources**: IB, Alpaca, NYSE, Polygon, StockSharp → Real-time ingestion
+2. **Historical Sources**: Alpaca, Alpha Vantage, Finnhub, IB, Nasdaq Data Link, Polygon, Stooq, Tiingo, Yahoo Finance → Batch backfill
 3. **Processing**: Domain collectors → F# validation → Technical indicators
-4. **Pipeline**: Bounded channel (100K) → Composite publisher
+4. **Pipeline**: Bounded channel (50K policy) → Composite publisher
 5. **Storage**: WAL → JSONL (hot) → Compression → Parquet (archive) → Tiered storage
 6. **Export**: Python/Pandas, R, QuantConnect Lean, Excel, PostgreSQL
-7. **Optional Messaging**: RabbitMQ → Microservice consumers
+7. **Optional Exports**: Downstream exports to Lean, Python/R, or database targets
 
 ### Provider Architecture
 
 Details the provider abstraction:
 - **Core Interfaces**: IDataSource, IRealtimeDataSource, IHistoricalDataSource
 - **Legacy Interfaces**: IMarketDataClient, IHistoricalDataProvider
-- **Streaming Providers (5 Production)**: IB, Alpaca, NYSE, Polygon, StockSharp
-- **Historical Providers (8 in 3 tiers)**:
-  - Tier 1 (Priority 5): Alpaca
-  - Tier 2 (Priority 10-20): Yahoo, Polygon, Stooq
-  - Tier 3 (Priority 25+): Tiingo, Nasdaq Data Link, Finnhub, Alpha Vantage
+- **Streaming Providers (5)**: Interactive Brokers, Alpaca, NYSE, Polygon, StockSharp
+- **Historical Providers (10+)**: Alpaca, Alpha Vantage, Finnhub, Interactive Brokers, Nasdaq Data Link, Polygon, StockSharp, Stooq, Tiingo, Yahoo Finance
 - **Resilience**: EnhancedIBConnectionManager, WebSocketResiliencePolicy, AutomaticFailoverManager, CircuitBreaker, RateLimiter
 - **Symbol Resolution**: OpenFIGI, SymbolMapper, ContractFactory
 - **CompositeHistoricalDataProvider**: Automatic failover, rate-limit rotation, priority selection
@@ -104,8 +98,7 @@ Shows the detailed event processing sequence:
 5. **Event Pipeline** → Bounded channel async write/read
 6. **Composite Publisher** → Fanout to configured sinks
 7. **Storage Path** → WAL journal → JSONL persist
-8. **Messaging Path** (optional) → MassTransit → RabbitMQ → Consumers
-9. **Observability** → Metrics, traces, status endpoints
+8. **Observability** → Metrics, traces, status endpoints
 
 ### Resilience Patterns (NEW)
 
@@ -123,11 +116,8 @@ Shows fault tolerance mechanisms:
 Shows deployment paths from simple to enterprise:
 1. **Standalone Console** - Single .NET app, local storage, simplest setup
 2. **Docker Compose** - Containerized, service orchestration, team development
-3. **Docker Microservices** - Distributed architecture, horizontal scaling
-4. **Kubernetes** - Cloud-native, HPA auto-scaling, self-healing
-5. **Cloud Managed** - Azure AKS/Service Bus, AWS EKS/MQ/S3
-6. **System Service** - systemd (Linux), Windows Service for bare metal
-7. **Pre-Deployment Setup** (NEW) - First-time configuration via wizard or auto-config
+3. **System Service** - systemd (Linux) for long-running collectors
+4. **Pre-Deployment Setup** - First-time configuration via wizard or auto-config
 
 ### Onboarding Flow (NEW)
 
@@ -197,7 +187,6 @@ dot -Tpng c4-level3-components.dot -o c4-level3-components.png
 dot -Tpng data-flow.dot -o data-flow.png
 dot -Tpng provider-architecture.dot -o provider-architecture.png
 dot -Tpng storage-architecture.dot -o storage-architecture.png
-dot -Tpng microservices-architecture.dot -o microservices-architecture.png
 dot -Tpng event-pipeline-sequence.dot -o event-pipeline-sequence.png
 dot -Tpng resilience-patterns.dot -o resilience-patterns.png
 dot -Tpng deployment-options.dot -o deployment-options.png
@@ -235,7 +224,7 @@ The diagrams use a consistent color palette based on Tailwind CSS colors:
 | Light Blue | `#4a90d9` | Streaming providers |
 | Pale Blue | `#dbeafe` / `#bfdbfe` | Infrastructure components |
 | **Domain Layer** | | |
-| Teal | `#2c7a7b` | Domain/Microservices |
+| Teal | `#2c7a7b` | Domain and pipeline components |
 | Green | `#38a169` | Historical providers |
 | Light Green | `#d1fae5` / `#a7f3d0` | Domain components |
 | Mint | `#6ee7b7` | F# components |
@@ -247,9 +236,6 @@ The diagrams use a consistent color palette based on Tailwind CSS colors:
 | Light Red | `#fee2e2` / `#fecaca` | Storage components |
 | Hot tier | `#fc8181` | WAL, Hot storage |
 | Warm tier | `#fbd38d` | JSONL, Compression |
-| **Messaging** | | |
-| Bright Red | `#e53e3e` | Message bus/RabbitMQ |
-| Light Coral | `#feb2b2` | Message consumers |
 | **Infrastructure** | | |
 | Orange | `#ed8936` | HTTP/Monitoring servers |
 | Gray | `#718096` | External/Shared systems |
