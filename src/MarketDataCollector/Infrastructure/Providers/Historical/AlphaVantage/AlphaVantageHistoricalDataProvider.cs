@@ -119,7 +119,7 @@ public sealed class AlphaVantageHistoricalDataProvider : BaseHistoricalDataProvi
         {
             using var response = await Http.GetAsync(url, ct).ConfigureAwait(false);
 
-            var httpResult = await ResponseHandler.HandleResponseAsync(response, symbol, "daily bars", ct: ct).ConfigureAwait(false);
+            var httpResult = await HandleHttpResponseAsync(response, symbol, "daily bars", ct).ConfigureAwait(false);
             if (httpResult.IsNotFound)
             {
                 Log.Warning("Alpha Vantage: Symbol {Symbol} not found", symbol);
@@ -192,7 +192,7 @@ public sealed class AlphaVantageHistoricalDataProvider : BaseHistoricalDataProvi
         {
             using var response = await Http.GetAsync(url, ct).ConfigureAwait(false);
 
-            var httpResult = await ResponseHandler.HandleResponseAsync(response, symbol, "intraday bars", ct: ct).ConfigureAwait(false);
+            var httpResult = await HandleHttpResponseAsync(response, symbol, "intraday bars", ct).ConfigureAwait(false);
             if (httpResult.IsNotFound)
             {
                 return Array.Empty<IntradayBar>();
