@@ -49,6 +49,17 @@ public partial class DashboardPage : Page
         RefreshStatus();
     }
 
+    private void OnPageUnloaded(object sender, RoutedEventArgs e)
+    {
+        // Stop refresh timer
+        _refreshTimer.Stop();
+
+        // Unsubscribe from events to prevent memory leaks
+        MessagingService.Instance.MessageReceived -= OnMessageReceived;
+        _connectionService.ConnectionStateChanged -= OnConnectionStateChanged;
+        _connectionService.LatencyUpdated -= OnLatencyUpdated;
+    }
+
     private async void RefreshStatus()
     {
         try

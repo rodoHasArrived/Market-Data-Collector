@@ -1,7 +1,18 @@
 using System;
-using System.Threading.Tasks;
 
 namespace MarketDataCollector.Wpf.Services;
+
+/// <summary>
+/// Simple status information model for the UI.
+/// </summary>
+public sealed class SimpleStatus
+{
+    public long Published { get; set; }
+    public long Dropped { get; set; }
+    public long Integrity { get; set; }
+    public long Historical { get; set; }
+    public string? Provider { get; set; }
+}
 
 /// <summary>
 /// Result of configuration validation.
@@ -57,6 +68,11 @@ public sealed class ConfigService
     /// Gets whether the service has been initialized.
     /// </summary>
     public bool IsInitialized => _initialized;
+
+    /// <summary>
+    /// Gets the path to the configuration file.
+    /// </summary>
+    public string ConfigPath => FirstRunService.Instance.ConfigFilePath;
 
     private ConfigService()
     {

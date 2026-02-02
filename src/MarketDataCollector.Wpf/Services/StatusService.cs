@@ -1,4 +1,7 @@
 using System;
+using System.Net.Http;
+using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace MarketDataCollector.Wpf.Services;
 
@@ -9,14 +12,25 @@ namespace MarketDataCollector.Wpf.Services;
 public sealed class StatusService
 {
     private static readonly Lazy<StatusService> _instance = new(() => new StatusService());
+    private static readonly HttpClient _httpClient = new();
 
     private string _currentStatus = "Ready";
     private readonly object _lock = new();
+    private string _baseUrl = "http://localhost:8080";
 
     /// <summary>
     /// Gets the singleton instance of the StatusService.
     /// </summary>
     public static StatusService Instance => _instance.Value;
+
+    /// <summary>
+    /// Gets or sets the base URL for the API.
+    /// </summary>
+    public string BaseUrl
+    {
+        get => _baseUrl;
+        set => _baseUrl = value;
+    }
 
     /// <summary>
     /// Gets the current application status.
@@ -39,6 +53,44 @@ public sealed class StatusService
 
     private StatusService()
     {
+    }
+
+    /// <summary>
+    /// Gets status from the API endpoint.
+    /// </summary>
+    /// <returns>A task containing the status information.</returns>
+    public async Task<SimpleStatus?> GetStatusAsync()
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync($"{_baseUrl}/api/status");
+            if (response.IsSuccessStatusCode)
+            {
+                var json = await response.Content.ReadAsStringAsync();
+                var apiStatus = JsonSerializer.Deserialize<ApiStatusResponse>(json, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+                if (apiStatus?.Metrics != null)
+                {
+                    return new SimpleStatus
+                    {
+                        Published = apiStatus.Metrics.Published,
+                        Dropped = apiStatus.Metrics.Dropped,
+                        Integrity = apiStatus.Metrics.Integrity,
+                        Historical = apiStatus.Metrics.HistoricalBars,
+                        Provider = null // TODO: Add provider info if available
+                    };
+                }
+            }
+        }
+        catch
+        {
+            // Return null on error - caller will handle
+        }
+
+        return null;
     }
 
     /// <summary>
@@ -159,4 +211,23 @@ public sealed class StatusChangedEventArgs : EventArgs
         NewStatus = newStatus;
         Timestamp = DateTime.UtcNow;
     }
+}
+
+/// <summary>
+/// API status response model.
+/// </summary>
+internal sealed class ApiStatusResponse
+{
+    public ApiMetrics? Metrics { get; set; }
+}
+
+/// <summary>
+/// API metrics model.
+/// </summary>
+internal sealed class ApiMetrics
+{
+    public long Published { get; set; }
+    public long Dropped { get; set; }
+    public long Integrity { get; set; }
+    public long HistoricalBars { get; set; }
 }

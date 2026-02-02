@@ -6,7 +6,8 @@
       mc:Ignorable="d"
       d:DesignHeight="800" d:DesignWidth="1200"
       Background="{DynamicResource ConsoleBackgroundDarkBrush}"
-      Loaded="OnPageLoaded">
+      Loaded="OnPageLoaded"
+      Unloaded="OnPageUnloaded">
 
     <ScrollViewer VerticalScrollBarVisibility="Auto"
                   Padding="24">

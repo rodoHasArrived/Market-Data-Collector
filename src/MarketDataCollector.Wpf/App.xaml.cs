@@ -110,13 +110,6 @@ public partial class App : Application
         services.AddSingleton<BackgroundTaskSchedulerService>();
         services.AddSingleton<OfflineTrackingPersistenceService>();
         services.AddSingleton<PendingOperationsQueueService>();
-
-        // Register ViewModels
-        services.AddTransient<ViewModels.MainViewModel>();
-        services.AddTransient<ViewModels.DashboardViewModel>();
-        services.AddTransient<ViewModels.BackfillViewModel>();
-        services.AddTransient<ViewModels.DataExportViewModel>();
-        services.AddTransient<ViewModels.DataQualityViewModel>();
     }
 
     /// <summary>
@@ -291,7 +284,7 @@ public partial class App : Application
     {
         try
         {
-            var firstRunService = new FirstRunService();
+            var firstRunService = FirstRunService.Instance;
             _isFirstRun = await firstRunService.IsFirstRunAsync();
 
             if (_isFirstRun)

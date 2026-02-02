@@ -3,10 +3,10 @@ using System.ComponentModel;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
-using System.Windows.Navigation;
 using MarketDataCollector.Wpf.Contracts;
 using MarketDataCollector.Wpf.Services;
 using MarketDataCollector.Wpf.Views;
+using SysNavigation = System.Windows.Navigation;
 
 namespace MarketDataCollector.Wpf;
 

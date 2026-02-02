@@ -71,14 +71,6 @@ public sealed class NavigationService : INavigationService
 
         if (_pageRegistry.TryGetValue(pageTag, out var pageType))
         {
-            var entry = new NavigationEntry
-            {
-                PageTag = pageTag,
-                Parameter = parameter,
-                Timestamp = DateTime.UtcNow
-            };
-            _navigationHistory.Push(entry);
-
             bool result;
             if (parameter != null)
             {
@@ -99,6 +91,15 @@ public sealed class NavigationService : INavigationService
 
             if (result)
             {
+                // Only push to history after successful navigation
+                var entry = new NavigationEntry
+                {
+                    PageTag = pageTag,
+                    Parameter = parameter,
+                    Timestamp = DateTime.UtcNow
+                };
+                _navigationHistory.Push(entry);
+
                 Navigated?.Invoke(this, new NavigationEventArgs
                 {
                     PageTag = pageTag,
@@ -169,8 +170,9 @@ public sealed class NavigationService : INavigationService
         _pageRegistry["ProviderHealth"] = typeof(ProviderHealthPage);
         _pageRegistry["DataSources"] = typeof(DataSourcesPage);
 
-        // Data Management (8 pages)
+        // Data Management (9 pages)
         _pageRegistry["LiveData"] = typeof(LiveDataViewerPage);
+        _pageRegistry["DataBrowser"] = typeof(DataBrowserPage);
         _pageRegistry["Symbols"] = typeof(SymbolsPage);
         _pageRegistry["SymbolMapping"] = typeof(SymbolMappingPage);
         _pageRegistry["SymbolStorage"] = typeof(SymbolStoragePage);
