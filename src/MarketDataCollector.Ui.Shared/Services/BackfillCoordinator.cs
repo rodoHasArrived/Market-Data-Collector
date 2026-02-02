@@ -5,6 +5,7 @@ using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Providers.Backfill;
 using MarketDataCollector.Infrastructure.Providers.Core;
 using CoreBackfillCoordinator = MarketDataCollector.Application.UI.BackfillCoordinator;
+using CoreConfigStore = MarketDataCollector.Application.UI.ConfigStore;
 using BackfillRequest = MarketDataCollector.Application.Backfill.BackfillRequest;
 using BackfillResult = MarketDataCollector.Application.Backfill.BackfillResult;
 
@@ -64,7 +65,7 @@ public sealed record ExistingDataInfo(
 public sealed class BackfillCoordinator : IDisposable
 {
     private readonly CoreBackfillCoordinator _core;
-    private readonly ConfigStore _store;
+    private readonly CoreConfigStore _store;
     private readonly ProviderRegistry? _registry;
     private readonly ProviderFactory? _factory;
     private readonly Serilog.ILogger _log = LoggingSetup.ForContext<BackfillCoordinator>();
@@ -75,7 +76,7 @@ public sealed class BackfillCoordinator : IDisposable
     /// <param name="store">Configuration store.</param>
     /// <param name="registry">Optional provider registry for unified provider discovery.</param>
     /// <param name="factory">Optional provider factory for creating providers if registry is empty.</param>
-    public BackfillCoordinator(ConfigStore store, ProviderRegistry? registry = null, ProviderFactory? factory = null)
+    public BackfillCoordinator(CoreConfigStore store, ProviderRegistry? registry = null, ProviderFactory? factory = null)
     {
         _store = store;
         _registry = registry;
@@ -154,7 +155,7 @@ public sealed class BackfillCoordinator : IDisposable
             TotalDays: totalDays,
             EstimatedTradingDays: tradingDays,
             Symbols: symbolPreviews.ToArray(),
-            EstimatedDurationSeconds: EstimateBackfillDuration(request.Symbols.Length, tradingDays),
+            EstimatedDurationSeconds: EstimateBackfillDuration(request.Symbols.Count, tradingDays),
             Notes: GetProviderNotes(providerInfo)
         );
     }
