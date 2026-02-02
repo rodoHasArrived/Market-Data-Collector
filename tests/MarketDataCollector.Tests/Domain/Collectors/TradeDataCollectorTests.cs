@@ -22,20 +22,23 @@ public class TradeDataCollectorTests
 
         _mockPublisher
             .Setup(p => p.TryPublish(It.IsAny<MarketEvent>()))
-            .Callback(() =>
-            {
-                // Capture the event from mock invocations
-                var invocations = _mockPublisher.Invocations;
-                if (invocations.Count > 0)
-                {
-                    var lastInvocation = invocations[invocations.Count - 1];
-                    var evt = (MarketEvent)lastInvocation.Arguments[0];
-                    _publishedEvents.Add(evt);
-                }
-            })
             .Returns(true);
 
         _collector = new TradeDataCollector(_mockPublisher.Object);
+    }
+
+    // Helper method to capture events from mock invocations
+    private void CapturePublishedEvents()
+    {
+        _publishedEvents.Clear();
+        foreach (var invocation in _mockPublisher.Invocations)
+        {
+            if (invocation.Method.Name == nameof(IMarketEventPublisher.TryPublish))
+            {
+                var evt = (MarketEvent)invocation.Arguments[0];
+                _publishedEvents.Add(evt);
+            }
+        }
     }
 
     [Fact]
@@ -55,6 +58,7 @@ public class TradeDataCollectorTests
 
         // Act
         _collector.OnTrade(update);
+        CapturePublishedEvents();
 
         // Assert
         _publishedEvents.Should().HaveCount(2);
@@ -87,6 +91,7 @@ public class TradeDataCollectorTests
 
         // Act
         _collector.OnTrade(update);
+        CapturePublishedEvents();
 
         // Assert
         _publishedEvents.Should().BeEmpty();
@@ -103,6 +108,7 @@ public class TradeDataCollectorTests
         _collector.OnTrade(first);
         _publishedEvents.Clear();
         _collector.OnTrade(second);
+        CapturePublishedEvents();
 
         // Assert
         _publishedEvents.Should().HaveCount(1);
@@ -120,6 +126,7 @@ public class TradeDataCollectorTests
         _collector.OnTrade(first);
         _publishedEvents.Clear();
         _collector.OnTrade(second);
+        CapturePublishedEvents();
 
         // Assert
         // Should publish: Integrity (gap), Trade, OrderFlow
@@ -136,6 +143,7 @@ public class TradeDataCollectorTests
         _collector.OnTrade(CreateTrade("SPY", size: 100, aggressor: AggressorSide.Buy, seqNum: 1));
         _collector.OnTrade(CreateTrade("SPY", size: 50, aggressor: AggressorSide.Sell, seqNum: 2));
         _collector.OnTrade(CreateTrade("SPY", size: 25, aggressor: AggressorSide.Unknown, seqNum: 3));
+        CapturePublishedEvents();
 
         // Assert - Check the last OrderFlow event
         var orderFlowEvents = _publishedEvents.Where(e => e.Type == MarketEventType.OrderFlow).ToList();
@@ -159,6 +167,7 @@ public class TradeDataCollectorTests
         _collector.OnTrade(first);
         _publishedEvents.Clear();
         _collector.OnTrade(duplicate);
+        CapturePublishedEvents();
 
         // Assert - Should only publish integrity event (rejected)
         _publishedEvents.Should().HaveCount(1);
@@ -173,6 +182,7 @@ public class TradeDataCollectorTests
         _collector.OnTrade(CreateTrade("AAPL", seqNum: 1));
         _collector.OnTrade(CreateTrade("SPY", seqNum: 2));
         _collector.OnTrade(CreateTrade("AAPL", seqNum: 2));
+        CapturePublishedEvents();
 
         // Assert - No integrity events, all trades accepted
         var integrityEvents = _publishedEvents.Where(e => e.Type == MarketEventType.Integrity);
@@ -188,6 +198,7 @@ public class TradeDataCollectorTests
 
         // Act
         _collector.OnTrade(update);
+        CapturePublishedEvents();
 
         // Assert - Should only publish integrity event (rejected)
         _publishedEvents.Should().HaveCount(1);
@@ -209,6 +220,7 @@ public class TradeDataCollectorTests
 
         // Act
         _collector.OnTrade(update);
+        CapturePublishedEvents();
 
         // Assert - Should only publish integrity event (rejected)
         _publishedEvents.Should().HaveCount(1);
@@ -233,6 +245,7 @@ public class TradeDataCollectorTests
 
         // Act
         _collector.OnTrade(update);
+        CapturePublishedEvents();
 
         // Assert - Should publish Trade and OrderFlow events (no integrity event)
         _publishedEvents.Should().HaveCount(2);
@@ -248,6 +261,7 @@ public class TradeDataCollectorTests
 
         // Act
         _collector.OnTrade(update);
+        CapturePublishedEvents();
 
         // Assert - Should only publish integrity event (rejected)
         _publishedEvents.Should().HaveCount(1);
@@ -265,6 +279,7 @@ public class TradeDataCollectorTests
 
         // Act
         _collector.OnTrade(update);
+        CapturePublishedEvents();
 
         // Assert - Should publish Trade and OrderFlow events
         _publishedEvents.Should().HaveCount(2);

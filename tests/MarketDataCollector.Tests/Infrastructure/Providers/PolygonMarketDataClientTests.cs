@@ -32,17 +32,6 @@ public class PolygonMarketDataClientTests : IDisposable
 
         _mockPublisher
             .Setup(p => p.TryPublish(It.IsAny<MarketEvent>()))
-            .Callback(() =>
-            {
-                // Capture the event from mock invocations
-                var invocations = _mockPublisher.Invocations;
-                if (invocations.Count > 0)
-                {
-                    var lastInvocation = invocations[invocations.Count - 1];
-                    var evt = (MarketEvent)lastInvocation.Arguments[0];
-                    _publishedEvents.Add(evt);
-                }
-            })
             .Returns(true);
 
         // Create real collectors with mock publisher for testing
@@ -61,6 +50,20 @@ public class PolygonMarketDataClientTests : IDisposable
         // Restore original environment variables
         Environment.SetEnvironmentVariable("POLYGON_API_KEY", _originalPolygonApiKey);
         Environment.SetEnvironmentVariable("POLYGON__APIKEY", _originalPolygonApiKeyAlt);
+    }
+
+    // Helper method to capture events from mock invocations
+    private void CapturePublishedEvents()
+    {
+        _publishedEvents.Clear();
+        foreach (var invocation in _mockPublisher.Invocations)
+        {
+            if (invocation.Method.Name == nameof(IMarketEventPublisher.TryPublish))
+            {
+                var evt = (MarketEvent)invocation.Arguments[0];
+                _publishedEvents.Add(evt);
+            }
+        }
     }
 
     #region Constructor Tests
@@ -236,6 +239,7 @@ public class PolygonMarketDataClientTests : IDisposable
 
         // Act
         await client.ConnectAsync();
+        CapturePublishedEvents();
 
         // Assert
         _publishedEvents.Should().HaveCount(1);
@@ -255,6 +259,7 @@ public class PolygonMarketDataClientTests : IDisposable
 
         // Act - should complete without throwing for stub implementation
         await client.ConnectAsync(cts.Token);
+        CapturePublishedEvents();
 
         // Assert
         _publishedEvents.Should().HaveCount(1);
@@ -337,6 +342,7 @@ public class PolygonMarketDataClientTests : IDisposable
 
         // Act
         client.SubscribeTrades(config);
+        CapturePublishedEvents();
 
         // Assert - should have published a trade event via the collector
         _publishedEvents.Should().Contain(e => e.Type == MarketEventType.Trade);
