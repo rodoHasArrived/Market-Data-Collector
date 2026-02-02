@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Collections.Generic;
 using System.Text;
@@ -294,6 +295,7 @@ public sealed class StatusHttpServer : IAsyncDisposable
     /// </summary>
     private Task WriteBackfillStatusAsync(HttpListenerResponse resp)
     {
+#pragma warning disable IL2026 // System.Text.Json is preserved via TrimmerRootAssembly
         resp.ContentType = "application/json";
         // Return empty status when no backfill is running
         var status = new BackfillResult
@@ -305,6 +307,7 @@ public sealed class StatusHttpServer : IAsyncDisposable
         var json = JsonSerializer.Serialize(status, s_jsonOptions);
         var bytes = Encoding.UTF8.GetBytes(json);
         return resp.OutputStream.WriteAsync(bytes, 0, bytes.Length);
+#pragma warning restore IL2026
     }
 
     private Task WriteDashboardAsync(HttpListenerResponse resp)
@@ -346,6 +349,7 @@ setInterval(refresh,2000);refresh();
     /// </summary>
     private Task WriteErrorsAsync(HttpListenerResponse resp, System.Collections.Specialized.NameValueCollection queryString)
     {
+#pragma warning disable IL2026 // System.Text.Json is preserved via TrimmerRootAssembly
         resp.ContentType = "application/json";
 
         // Parse query parameters
@@ -360,6 +364,7 @@ setInterval(refresh,2000);refresh();
         var json = JsonSerializer.Serialize(response, s_jsonOptions);
         var bytes = Encoding.UTF8.GetBytes(json);
         return resp.OutputStream.WriteAsync(bytes, 0, bytes.Length);
+#pragma warning restore IL2026
     }
 
     /// <summary>
@@ -368,6 +373,7 @@ setInterval(refresh,2000);refresh();
     /// </summary>
     private async Task WriteDetailedHealthAsync(HttpListenerResponse resp)
     {
+#pragma warning disable IL2026 // System.Text.Json is preserved via TrimmerRootAssembly
         var (report, error) = await _handlers.GetDetailedHealthAsync();
 
         if (error != null)
@@ -391,6 +397,8 @@ setInterval(refresh,2000);refresh();
         resp.ContentType = "application/json";
         var reportJson = JsonSerializer.Serialize(report, s_jsonOptions);
         var reportBytes = Encoding.UTF8.GetBytes(reportJson);
+        await resp.OutputStream.WriteAsync(reportBytes, 0, reportBytes.Length);
+#pragma warning restore IL2026
         await resp.OutputStream.WriteAsync(reportBytes, 0, reportBytes.Length);
     }
 
@@ -448,11 +456,13 @@ setInterval(refresh,2000);refresh();
 
     private static Task WriteUnauthorizedAsync(HttpListenerResponse resp)
     {
+#pragma warning disable IL2026 // System.Text.Json is preserved via TrimmerRootAssembly
         resp.StatusCode = 401;
         resp.ContentType = "application/json";
         var payload = JsonSerializer.Serialize(new { error = "Unauthorized" });
         var bytes = Encoding.UTF8.GetBytes(payload);
         return resp.OutputStream.WriteAsync(bytes, 0, bytes.Length);
+#pragma warning restore IL2026
     }
 
     /// <summary>
@@ -461,11 +471,13 @@ setInterval(refresh,2000);refresh();
     /// </summary>
     private Task WriteBackpressureAsync(HttpListenerResponse resp)
     {
+#pragma warning disable IL2026 // System.Text.Json is preserved via TrimmerRootAssembly
         resp.ContentType = "application/json";
         var response = _handlers.GetBackpressure();
         var json = JsonSerializer.Serialize(response, s_jsonOptions);
         var bytes = Encoding.UTF8.GetBytes(json);
         return resp.OutputStream.WriteAsync(bytes, 0, bytes.Length);
+#pragma warning restore IL2026
     }
 
     /// <summary>
@@ -474,6 +486,7 @@ setInterval(refresh,2000);refresh();
     /// </summary>
     private Task WriteProviderLatencyAsync(HttpListenerResponse resp)
     {
+#pragma warning disable IL2026 // System.Text.Json is preserved via TrimmerRootAssembly
         resp.ContentType = "application/json";
         var (summary, error) = _handlers.GetProviderLatency();
 
@@ -487,6 +500,7 @@ setInterval(refresh,2000);refresh();
         var responseJson = JsonSerializer.Serialize(summary, s_jsonOptions);
         var responseBytes = Encoding.UTF8.GetBytes(responseJson);
         return resp.OutputStream.WriteAsync(responseBytes, 0, responseBytes.Length);
+#pragma warning restore IL2026
     }
 
     /// <summary>
@@ -495,6 +509,7 @@ setInterval(refresh,2000);refresh();
     /// </summary>
     private Task WriteConnectionHealthAsync(HttpListenerResponse resp)
     {
+#pragma warning disable IL2026 // System.Text.Json is preserved via TrimmerRootAssembly
         resp.ContentType = "application/json";
         var (snapshot, error) = _handlers.GetConnectionHealth();
 
@@ -508,6 +523,7 @@ setInterval(refresh,2000);refresh();
         var responseJson = JsonSerializer.Serialize(snapshot, s_jsonOptions);
         var responseBytes = Encoding.UTF8.GetBytes(responseJson);
         return resp.OutputStream.WriteAsync(responseBytes, 0, responseBytes.Length);
+#pragma warning restore IL2026
     }
 
     public async ValueTask DisposeAsync()

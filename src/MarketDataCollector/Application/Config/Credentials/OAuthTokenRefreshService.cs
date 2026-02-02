@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
@@ -221,6 +222,7 @@ public sealed class OAuthTokenRefreshService : IAsyncDisposable
         OAuthProviderConfig providerConfig,
         CancellationToken ct)
     {
+#pragma warning disable IL2026 // System.Text.Json is preserved via TrimmerRootAssembly
         if (!currentToken.CanRefresh)
         {
             return new OAuthRefreshResult(false, Error: "Token cannot be refreshed (no refresh token or refresh token expired)");
@@ -308,6 +310,7 @@ public sealed class OAuthTokenRefreshService : IAsyncDisposable
         {
             _refreshLock.Release();
         }
+#pragma warning restore IL2026
     }
 
     private static TokenStatus GetTokenStatus(OAuthToken token)
@@ -319,6 +322,7 @@ public sealed class OAuthTokenRefreshService : IAsyncDisposable
 
     private void LoadPersistedTokens()
     {
+#pragma warning disable IL2026 // System.Text.Json is preserved via TrimmerRootAssembly
         try
         {
             if (!File.Exists(_tokenPersistencePath))
@@ -341,10 +345,12 @@ public sealed class OAuthTokenRefreshService : IAsyncDisposable
         {
             _log.Warning(ex, "Failed to load persisted OAuth tokens");
         }
+#pragma warning restore IL2026
     }
 
     private async Task PersistTokensAsync()
     {
+#pragma warning disable IL2026 // System.Text.Json is preserved via TrimmerRootAssembly
         try
         {
             var directory = Path.GetDirectoryName(_tokenPersistencePath);
@@ -361,6 +367,7 @@ public sealed class OAuthTokenRefreshService : IAsyncDisposable
         {
             _log.Warning(ex, "Failed to persist OAuth tokens");
         }
+#pragma warning restore IL2026
     }
 
     public async ValueTask DisposeAsync()

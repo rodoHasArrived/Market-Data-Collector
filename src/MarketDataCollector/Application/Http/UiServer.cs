@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using MarketDataCollector.Application.Composition;
 using MarketDataCollector.Application.Config;
@@ -71,6 +72,7 @@ public sealed class UiServer : IAsyncDisposable
 
     private void ConfigureRoutes()
     {
+#pragma warning disable IL2026 // System.Text.Json is preserved via TrimmerRootAssembly
         // ==================== HEALTH CHECK ENDPOINTS ====================
         // These endpoints support container orchestration (Docker, Kubernetes)
 
@@ -346,6 +348,7 @@ public sealed class UiServer : IAsyncDisposable
 
         // Configure archive maintenance endpoints
         _app.MapArchiveMaintenanceEndpoints();
+#pragma warning restore IL2026
     }
 
     private void ConfigureStorageOrganizationRoutes()

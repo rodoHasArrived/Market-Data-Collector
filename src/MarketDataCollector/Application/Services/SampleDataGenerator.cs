@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Contracts.Domain.Models;
@@ -114,6 +115,7 @@ public sealed class SampleDataGenerator
         string outputPath,
         CancellationToken ct = default)
     {
+#pragma warning disable IL2026 // System.Text.Json is preserved via TrimmerRootAssembly
         var result = Generate(options);
 
         if (!result.Success || result.Events == null)
@@ -150,6 +152,7 @@ public sealed class SampleDataGenerator
         result.Message = $"Generated {result.TotalEvents} events to {filesWritten.Count} files";
 
         return result;
+#pragma warning restore IL2026
     }
 
     /// <summary>

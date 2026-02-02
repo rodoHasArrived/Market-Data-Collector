@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -159,12 +160,14 @@ public sealed class ProviderLatencyService : IDisposable
     /// </summary>
     public string ToJson()
     {
+#pragma warning disable IL2026 // System.Text.Json is preserved via TrimmerRootAssembly
         var summary = GetSummary();
         return JsonSerializer.Serialize(summary, new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             WriteIndented = true
         });
+#pragma warning restore IL2026
     }
 
     private void CleanupOldData(object? state)
