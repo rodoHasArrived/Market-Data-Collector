@@ -100,7 +100,7 @@ public sealed class ThemeService
             var toRemove = new System.Collections.Generic.List<ResourceDictionary>();
             foreach (var dict in Application.Current.Resources.MergedDictionaries)
             {
-                if (dict.Source?.OriginalString.Contains("Theme", StringComparison.OrdinalIgnoreCase) == true)
+                if (dict.Source?.OriginalString.Contains("Theme", StringComparison.OrdinalIgnoreCase) is true)
                 {
                     toRemove.Add(dict);
                 }
