@@ -1673,6 +1673,38 @@ The UWP project uses **shared source files** instead of assembly references for 
 - Single source of truth in Contracts project
 - Type aliases maintain backwards compatibility
 
+### XAML Compiler Configuration (2026-02-02)
+
+The UWP project is configured to use the **managed XAML compiler** instead of the legacy .NET Framework-based XamlCompiler.exe:
+
+**Why:** The default XamlCompiler.exe is a .NET Framework 4.7.2 application that:
+- Fails silently in CI environments without full .NET Framework
+- Provides poor diagnostics when errors occur
+- Has issues with complex XAML files and x:Bind expressions on ARM64 builds
+
+**Solution:**
+```xml
+<!-- In MarketDataCollector.Uwp.csproj -->
+<PropertyGroup Condition="'$(IsWindows)' == 'true'">
+  <!-- Use the managed XAML compiler -->
+  <UseXamlCompilerExecutable>false</UseXamlCompilerExecutable>
+  <!-- Enable detailed diagnostics -->
+  <XamlCompilerVerbosity>detailed</XamlCompilerVerbosity>
+</PropertyGroup>
+```
+
+**Benefits:**
+- More reliable builds in CI/CD pipelines (GitHub Actions, Azure DevOps)
+- Better error messages for XAML syntax and resource issues
+- Consistent behavior across x64, ARM64, and x86 platforms
+- No dependency on .NET Framework installation
+
+**Troubleshooting:**
+- If XAML compilation fails, check the build logs for detailed error messages
+- Ensure resource dictionaries load in the correct order in `App.xaml`
+- Clean build output folders (`obj/`, `bin/`) before rebuilding
+- See [Troubleshooting Guide](../getting-started/troubleshooting.md) for more details
+
 ### UI/UX Consistency
 - All new features should follow existing WinUI 3 design patterns
 - Use the established CardStyle and theme resources

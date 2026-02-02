@@ -528,12 +528,42 @@ dotnet run -- --http-port 8080
 2. Check app's local data folder permissions
 3. Verify `appsettings.json` is not read-only
 
+### "XAML compilation fails with exit code 1"
+
+**Symptom**: Desktop app build fails during XAML compilation with silent error:
+```
+error MSB3073: The command "XamlCompiler.exe" ... exited with code 1
+```
+
+**Root Cause**: The default XAML compiler (XamlCompiler.exe) is a .NET Framework 4.7.2 application that fails silently in CI environments lacking the full .NET Framework.
+
+**Solution** (already implemented in the project):
+The project file (`src/MarketDataCollector.Uwp/MarketDataCollector.Uwp.csproj`) includes:
+```xml
+<!-- Use managed XAML compiler instead of .NET Framework-based XamlCompiler.exe -->
+<UseXamlCompilerExecutable>false</UseXamlCompilerExecutable>
+<!-- Enable detailed diagnostics for better error reporting -->
+<XamlCompilerVerbosity>detailed</XamlCompilerVerbosity>
+```
+
+**If the issue persists**:
+1. Clean the build: `dotnet clean`
+2. Delete `obj/` and `bin/` folders
+3. Rebuild: `dotnet build -c Release`
+4. Check for XAML syntax errors in resource dictionaries
+5. Verify resource loading order in `App.xaml`
+
+**Additional Notes**:
+- This issue commonly affects ARM64 builds in CI/CD pipelines
+- The managed compiler is more reliable and provides better error messages
+- For more details, see: [UWP Development Roadmap](../development/uwp-development-roadmap.md)
+
 ## Getting Help
 
 If you're still experiencing issues:
 
 1. **Check the logs** - Most errors include detailed context
-2. **Review documentation** - [Architecture](../architecture/overview.md), [Operator Runbook](operator-runbook.md)
+2. **Review documentation** - [Architecture](../architecture/overview.md), [Operator Runbook](../operations/operator-runbook.md)
 3. **Run self-tests** - `dotnet run -- --selftest`
 4. **Check backfill status** - `GET /api/backfill/status`
 5. **File an issue** - Include logs, configuration (without secrets), and steps to reproduce
