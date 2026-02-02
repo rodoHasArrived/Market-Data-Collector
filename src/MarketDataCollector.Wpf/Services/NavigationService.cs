@@ -55,7 +55,7 @@ public sealed class NavigationService : INavigationService
     /// <summary>
     /// Gets whether navigation can go back.
     /// </summary>
-    public bool CanGoBack => _frame?.CanGoBack == true || _navigationHistory.Count > 0;
+    public bool CanGoBack => _frame?.CanGoBack == true;
 
     /// <summary>
     /// Event raised when navigation occurs.
