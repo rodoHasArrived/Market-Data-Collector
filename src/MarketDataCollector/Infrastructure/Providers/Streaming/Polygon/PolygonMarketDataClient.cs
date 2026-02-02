@@ -485,11 +485,11 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
                         break;
 
                     case "A": // Second aggregate
-                        ProcessAggregate(elem, AggregateTimeframe.Second);
+                        ProcessAggregate(elem, Domain.Models.AggregateTimeframe.Second);
                         break;
 
                     case "AM": // Minute aggregate
-                        ProcessAggregate(elem, AggregateTimeframe.Minute);
+                        ProcessAggregate(elem, Domain.Models.AggregateTimeframe.Minute);
                         break;
 
                     case "status":
@@ -607,7 +607,7 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
     /// </summary>
     /// <param name="elem">The JSON element containing the aggregate data.</param>
     /// <param name="timeframe">The aggregate timeframe (Second or Minute).</param>
-    private void ProcessAggregate(JsonElement elem, AggregateTimeframe timeframe)
+    private void ProcessAggregate(JsonElement elem, Domain.Models.AggregateTimeframe timeframe)
     {
         try
         {
@@ -643,7 +643,7 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
                 : DateTimeOffset.UtcNow;
             var endTime = endTimestamp > 0
                 ? DateTimeOffset.FromUnixTimeMilliseconds(endTimestamp)
-                : startTime.AddSeconds(timeframe == AggregateTimeframe.Second ? 1 : 60);
+                : startTime.AddSeconds(timeframe == Domain.Models.AggregateTimeframe.Second ? 1 : 60);
 
             var seq = Interlocked.Increment(ref _messageSequence);
             var aggregateBar = new AggregateBar(

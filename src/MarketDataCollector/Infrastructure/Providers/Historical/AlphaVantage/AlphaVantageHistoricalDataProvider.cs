@@ -6,6 +6,7 @@ using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.DataSources;
 using MarketDataCollector.Infrastructure.Http;
+using MarketDataCollector.Infrastructure.Providers.Historical.Core;
 using MarketDataCollector.Infrastructure.Utilities;
 using Serilog;
 

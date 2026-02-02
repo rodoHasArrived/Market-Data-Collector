@@ -6,20 +6,22 @@ namespace MarketDataCollector.Ui.Shared.Services;
 
 /// <summary>
 /// ConfigStore for web dashboard and shared UI services.
-/// This is a type alias for the consolidated core ConfigStore implementation.
+/// This is a wrapper around the consolidated core ConfigStore implementation.
 /// </summary>
 /// <remarks>
-/// <para><b>Migration Note:</b> This type alias exists for backward compatibility.
+/// <para><b>Migration Note:</b> This wrapper exists for backward compatibility.
 /// New code should reference <see cref="MarketDataCollector.Application.UI.ConfigStore"/> directly.</para>
 /// <para>The web-specific default path resolver is registered via <see cref="ConfigStoreExtensions.UseWebDefaultPath"/>.</para>
 /// </remarks>
-public sealed class ConfigStore : CoreConfigStore
+public sealed class ConfigStore
 {
+    private readonly CoreConfigStore _core;
+
     /// <summary>
     /// Creates a new ConfigStore with the web dashboard default path.
     /// The default path resolves to appsettings.json at solution root (4 directories up from BaseDirectory).
     /// </summary>
-    public ConfigStore() : base(GetWebDefaultPath())
+    public ConfigStore() : this(GetWebDefaultPath())
     {
     }
 
@@ -27,7 +29,20 @@ public sealed class ConfigStore : CoreConfigStore
     /// Creates a new ConfigStore with a custom configuration path.
     /// </summary>
     /// <param name="configPath">Full path to the configuration file.</param>
-    public ConfigStore(string configPath) : base(configPath)
+    public ConfigStore(string? configPath)
+    {
+        _core = new CoreConfigStore(configPath);
+    }
+
+    /// <summary>
+    /// Gets the path to the configuration file.
+    /// </summary>
+    public string ConfigPath => _core.ConfigPath;
+
+    /// <summary>
+    /// Loads configuration from the config file.
+    /// </summary>
+    public static MarketDataCollector.Storage.AppConfig LoadConfig(string path) => CoreConfigStore.LoadConfig(path);
     {
     }
 

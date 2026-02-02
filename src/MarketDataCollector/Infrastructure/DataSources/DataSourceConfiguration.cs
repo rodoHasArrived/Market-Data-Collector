@@ -27,7 +27,7 @@ public sealed record UnifiedDataSourcesConfig
     /// <summary>
     /// Symbol mapping configuration.
     /// </summary>
-    public SymbolMappingConfig SymbolMapping { get; init; } = new();
+    public SymbolMappingConfig SymbolMapping { get; init; } = new(CanonicalSymbol: "DEFAULT");
 
     /// <summary>
     /// Plugin system configuration.

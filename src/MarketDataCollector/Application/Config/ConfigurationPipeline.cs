@@ -91,7 +91,7 @@ public sealed class ConfigurationPipeline : IAsyncDisposable
         {
             return ValidatedConfig.Failed(
                 null,
-                new[] { result.Message ?? "Wizard did not produce a valid configuration" },
+                new[] { "Wizard did not produce a valid configuration" },
                 source: ConfigurationOrigin.Wizard);
         }
 
@@ -120,7 +120,7 @@ public sealed class ConfigurationPipeline : IAsyncDisposable
         // Merge auto-config specific info
         return validated with
         {
-            AppliedFixes = validated.AppliedFixes.Concat(result.AppliedChanges).ToList(),
+            AppliedFixes = validated.AppliedFixes.Concat(result.AppliedFixes).ToList(),
             Warnings = validated.Warnings.Concat(warnings).ToList()
         };
     }
@@ -188,7 +188,7 @@ public sealed class ConfigurationPipeline : IAsyncDisposable
         AppConfig config,
         string? sourcePath,
         string? environmentName,
-        ConfigurationSource source,
+        ConfigurationOrigin source,
         PipelineOptions options)
     {
         var appliedFixes = new List<string>();
