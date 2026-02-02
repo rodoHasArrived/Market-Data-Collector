@@ -1,6 +1,7 @@
 using FluentAssertions;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Services;
+using MarketDataCollector.Contracts.Domain.Enums;
 using Xunit;
 
 namespace MarketDataCollector.Tests.Config;

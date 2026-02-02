@@ -1,5 +1,7 @@
 using FluentAssertions;
 using MarketDataCollector.Application.Monitoring;
+using MarketDataCollector.Contracts.Domain.Enums;
+using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Events;
 using Xunit;
 
