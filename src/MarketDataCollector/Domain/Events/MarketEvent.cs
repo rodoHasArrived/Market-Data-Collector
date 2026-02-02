@@ -1,4 +1,5 @@
 using MarketDataCollector.Contracts.Domain.Enums;
+using MarketDataCollector.Contracts.Domain.Events;
 using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Models;
 
@@ -8,7 +9,7 @@ public sealed record MarketEvent(
     DateTimeOffset Timestamp,
     string Symbol,
     MarketEventType Type,
-    MarketEventPayload? Payload,
+    Contracts.Domain.Events.MarketEventPayload? Payload,
     long Sequence = 0,
     string Source = "IB",
     int SchemaVersion = 1,
