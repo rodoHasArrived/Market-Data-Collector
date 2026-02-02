@@ -4,6 +4,7 @@ using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Domain.Events.Publishers;
 using MarketDataCollector.Domain.Models;
+using MarketDataCollector.Tests.TestHelpers;
 using Moq;
 using Xunit;
 
@@ -15,13 +16,12 @@ public class CompositePublisherTests
     public void TryPublish_AllPublishersSucceed_ReturnsTrue()
     {
         // Arrange
-        var publisher1 = new Mock<IMarketEventPublisher>();
-        var publisher2 = new Mock<IMarketEventPublisher>();
+        var events1 = new List<MarketEvent>();
+        var events2 = new List<MarketEvent>();
+        var publisher1 = new FakeMarketEventPublisher(events1);
+        var publisher2 = new FakeMarketEventPublisher(events2);
 
-        publisher1.Setup(p => p.TryPublish(It.IsAny<MarketEvent>())).Returns(true);
-        publisher2.Setup(p => p.TryPublish(It.IsAny<MarketEvent>())).Returns(true);
-
-        var composite = new CompositePublisher(publisher1.Object, publisher2.Object);
+        var composite = new CompositePublisher(publisher1, publisher2);
         var evt = CreateTestEvent();
 
         // Act
@@ -29,21 +29,19 @@ public class CompositePublisherTests
 
         // Assert
         result.Should().BeTrue();
-        publisher1.Verify(p => p.TryPublish(evt), Times.Once);
-        publisher2.Verify(p => p.TryPublish(evt), Times.Once);
+        events1.Should().ContainSingle().Which.Should().BeEquivalentTo(evt);
+        events2.Should().ContainSingle().Which.Should().BeEquivalentTo(evt);
     }
 
     [Fact]
     public void TryPublish_OnePublisherFails_StillReturnsTrue()
     {
         // Arrange
-        var publisher1 = new Mock<IMarketEventPublisher>();
-        var publisher2 = new Mock<IMarketEventPublisher>();
+        var events1 = new List<MarketEvent>();
+        var publisher1 = new FakeMarketEventPublisher(events1);
+        var publisher2 = new FakeMarketEventPublisher(new List<MarketEvent>(), _ => false); // Always fails
 
-        publisher1.Setup(p => p.TryPublish(It.IsAny<MarketEvent>())).Returns(true);
-        publisher2.Setup(p => p.TryPublish(It.IsAny<MarketEvent>())).Returns(false);
-
-        var composite = new CompositePublisher(publisher1.Object, publisher2.Object);
+        var composite = new CompositePublisher(publisher1, publisher2);
         var evt = CreateTestEvent();
 
         // Act
@@ -51,21 +49,17 @@ public class CompositePublisherTests
 
         // Assert
         result.Should().BeTrue(); // At least one succeeded
-        publisher1.Verify(p => p.TryPublish(evt), Times.Once);
-        publisher2.Verify(p => p.TryPublish(evt), Times.Once);
+        events1.Should().ContainSingle().Which.Should().BeEquivalentTo(evt);
     }
 
     [Fact]
     public void TryPublish_AllPublishersFail_ReturnsFalse()
     {
         // Arrange
-        var publisher1 = new Mock<IMarketEventPublisher>();
-        var publisher2 = new Mock<IMarketEventPublisher>();
+        var publisher1 = new FakeMarketEventPublisher(new List<MarketEvent>(), _ => false);
+        var publisher2 = new FakeMarketEventPublisher(new List<MarketEvent>(), _ => false);
 
-        publisher1.Setup(p => p.TryPublish(It.IsAny<MarketEvent>())).Returns(false);
-        publisher2.Setup(p => p.TryPublish(It.IsAny<MarketEvent>())).Returns(false);
-
-        var composite = new CompositePublisher(publisher1.Object, publisher2.Object);
+        var composite = new CompositePublisher(publisher1, publisher2);
         var evt = CreateTestEvent();
 
         // Act
@@ -79,13 +73,11 @@ public class CompositePublisherTests
     public void TryPublish_PublisherThrowsException_ContinuesToOthers()
     {
         // Arrange
-        var publisher1 = new Mock<IMarketEventPublisher>();
-        var publisher2 = new Mock<IMarketEventPublisher>();
+        var events2 = new List<MarketEvent>();
+        var publisher1 = new FakeMarketEventPublisher(new List<MarketEvent>(), _ => throw new Exception("Test exception"));
+        var publisher2 = new FakeMarketEventPublisher(events2);
 
-        publisher1.Setup(p => p.TryPublish(It.IsAny<MarketEvent>())).Throws(new Exception("Test exception"));
-        publisher2.Setup(p => p.TryPublish(It.IsAny<MarketEvent>())).Returns(true);
-
-        var composite = new CompositePublisher(publisher1.Object, publisher2.Object);
+        var composite = new CompositePublisher(publisher1, publisher2);
         var evt = CreateTestEvent();
 
         // Act
@@ -93,8 +85,7 @@ public class CompositePublisherTests
 
         // Assert
         result.Should().BeTrue(); // Second publisher succeeded
-        publisher1.Verify(p => p.TryPublish(evt), Times.Once);
-        publisher2.Verify(p => p.TryPublish(evt), Times.Once);
+        events2.Should().ContainSingle().Which.Should().BeEquivalentTo(evt);
     }
 
     [Fact]
@@ -122,10 +113,10 @@ public class CompositePublisherTests
     public void TryPublish_SinglePublisher_DelegatesToPublisher()
     {
         // Arrange
-        var publisher = new Mock<IMarketEventPublisher>();
-        publisher.Setup(p => p.TryPublish(It.IsAny<MarketEvent>())).Returns(true);
+        var events = new List<MarketEvent>();
+        var publisher = new FakeMarketEventPublisher(events);
 
-        var composite = new CompositePublisher(publisher.Object);
+        var composite = new CompositePublisher(publisher);
         var evt = CreateTestEvent();
 
         // Act
@@ -133,7 +124,7 @@ public class CompositePublisherTests
 
         // Assert
         result.Should().BeTrue();
-        publisher.Verify(p => p.TryPublish(evt), Times.Once);
+        events.Should().ContainSingle().Which.Should().BeEquivalentTo(evt);
     }
 
     private static MarketEvent CreateTestEvent()
