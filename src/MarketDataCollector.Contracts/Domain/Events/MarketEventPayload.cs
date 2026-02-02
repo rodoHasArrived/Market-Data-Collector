@@ -7,9 +7,9 @@ namespace MarketDataCollector.Contracts.Domain.Events;
 /// Polymorphic payload base for MarketEvent.Payload.
 /// Supports JSON serialization with type discriminator.
 /// </summary>
-#if !UWP_BUILD
 // Note: [JsonPolymorphic] attribute not supported by WinUI 3 XAML compiler (net472-based)
 // When building for UWP, these attributes are excluded via conditional compilation
+#if !UWP_BUILD
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "kind")]
 [JsonDerivedType(typeof(Trade), "trade")]
 [JsonDerivedType(typeof(LOBSnapshot), "l2")]
