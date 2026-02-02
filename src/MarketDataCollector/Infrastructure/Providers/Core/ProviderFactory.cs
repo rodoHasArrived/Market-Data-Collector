@@ -17,6 +17,7 @@ using FinnhubBackfillConfig = MarketDataCollector.Application.Config.FinnhubConf
 using StooqBackfillConfig = MarketDataCollector.Application.Config.StooqConfig;
 using AlphaVantageBackfillConfig = MarketDataCollector.Application.Config.AlphaVantageConfig;
 using NasdaqBackfillConfig = MarketDataCollector.Application.Config.NasdaqDataLinkConfig;
+using SymbolResolution = MarketDataCollector.Infrastructure.Providers.Backfill.SymbolResolution;
 
 namespace MarketDataCollector.Infrastructure.Providers.Core;
 

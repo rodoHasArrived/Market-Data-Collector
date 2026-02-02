@@ -1,11 +1,15 @@
 using System.Text.Json;
 using MarketDataCollector.Application.Composition;
 using MarketDataCollector.Application.Config;
+using MarketDataCollector.Application.Config.Credentials;
+using MarketDataCollector.Application.Services;
 using MarketDataCollector.Application.Subscriptions.Models;
 using MarketDataCollector.Application.Subscriptions.Services;
 using MarketDataCollector.Contracts.Api;
 using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Storage;
+using MarketDataCollector.Storage.Interfaces;
+using MarketDataCollector.Storage.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
