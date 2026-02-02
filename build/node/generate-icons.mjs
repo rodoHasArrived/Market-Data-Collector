@@ -8,6 +8,7 @@
  * - Square44x44Logo.png (44x44)
  * - Square150x150Logo.png (150x150)
  * - StoreLogo.png (50x50)
+ * - BadgeLogo.png (24x24) - for lock screen badges
  * - Additional sizes for Windows Store and taskbar
  */
 
@@ -62,6 +63,12 @@ const iconSizes = [
   { name: 'SplashScreen.scale-125.png', size: 775, height: 375 },
   { name: 'SplashScreen.scale-150.png', size: 930, height: 450 },
   { name: 'SplashScreen.scale-200.png', size: 1240, height: 600 },
+  { name: 'BadgeLogo.png', size: 24 },
+  { name: 'BadgeLogo.scale-100.png', size: 24 },
+  { name: 'BadgeLogo.scale-125.png', size: 30 },
+  { name: 'BadgeLogo.scale-150.png', size: 36 },
+  { name: 'BadgeLogo.scale-200.png', size: 48 },
+  { name: 'BadgeLogo.scale-400.png', size: 96 },
 ];
 
 async function generateIcons() {
