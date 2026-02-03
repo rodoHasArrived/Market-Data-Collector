@@ -52,9 +52,18 @@ This directory contains automated workflows that help maintain code quality, sec
   - Builds Windows desktop app for x64 and arm64
   - Uploads build artifacts for distribution
 
+#### 6. **WPF Commands** (`wpf-commands.yml`)
+- **Trigger**: Manual workflow dispatch
+- **Purpose**: Executes restore, build, run, and self-contained publish commands for the WPF project
+- **Features**:
+  - Restores WPF project dependencies
+  - Builds the WPF app in Release configuration
+  - Runs the WPF app briefly to validate startup
+  - Publishes a self-contained Windows build
+
 ### Code Quality and Security Workflows
 
-#### 6. **Code Quality** (`code-quality.yml`)
+#### 7. **Code Quality** (`code-quality.yml`)
 - **Trigger**: Push/PRs that touch source, tests, or project files
 - **Purpose**: Runs formatting, analyzers, and documentation checks in one pass
 - **Features**:
@@ -62,7 +71,7 @@ This directory contains automated workflows that help maintain code quality, sec
   - Analyzer-enabled build with documentation output
   - Summarized results in workflow summary
 
-#### 7. **Dependency Review** (`dependency-review.yml`)
+#### 8. **Dependency Review** (`dependency-review.yml`)
 - **Trigger**: Pull requests to `main`
 - **Purpose**: Blocks vulnerable or disallowed dependencies
 - **Features**:
@@ -70,7 +79,7 @@ This directory contains automated workflows that help maintain code quality, sec
   - License deny list (GPL-2.0, GPL-3.0)
   - PR summary comments
 
-#### 8. **Security Scan** (`security.yml`)
+#### 9. **Security Scan** (`security.yml`)
 - **Trigger**: Pull requests to `main`, weekly schedule, manual dispatch
 - **Purpose**: Multi-layered security scanning
 - **Features**:
@@ -81,7 +90,7 @@ This directory contains automated workflows that help maintain code quality, sec
 
 ### Testing Workflows
 
-#### 9. **Test Matrix** (`test-matrix.yml`)
+#### 10. **Test Matrix** (`test-matrix.yml`)
 - **Trigger**: Push/PRs that touch source or tests
 - **Purpose**: Runs cross-platform tests with coverage reporting
 - **Features**:
@@ -89,7 +98,7 @@ This directory contains automated workflows that help maintain code quality, sec
   - Windows/macOS tests on pushes to `main`
   - Coverage uploaded to Codecov
 
-#### 10. **Nightly Testing** (`nightly.yml`)
+#### 11. **Nightly Testing** (`nightly.yml`)
 - **Trigger**: Daily schedule, Manual dispatch
 - **Purpose**: Comprehensive cross-platform testing
 - **Features**:
@@ -99,7 +108,7 @@ This directory contains automated workflows that help maintain code quality, sec
   - Creates issue on failure
   - Multi-platform coverage reports
 
-#### 11. **Benchmark Performance** (`benchmark.yml`)
+#### 12. **Benchmark Performance** (`benchmark.yml`)
 - **Trigger**: Pull requests changing code, Manual dispatch
 - **Purpose**: Performance regression detection
 - **Features**:
@@ -110,7 +119,7 @@ This directory contains automated workflows that help maintain code quality, sec
 
 ### Documentation Workflows
 
-#### 12. **Documentation Validation** (`documentation.yml`)
+#### 13. **Documentation Validation** (`documentation.yml`)
 - **Trigger**: Push/PRs touching docs, markdown, or tooling
 - **Purpose**: Ensures documentation quality and generates summaries
 - **Features**:
@@ -118,7 +127,7 @@ This directory contains automated workflows that help maintain code quality, sec
   - ADR verification
   - Documentation statistics summaries
 
-#### 13. **Docs Auto-Update** (`docs-auto-update.yml`)
+#### 14. **Docs Auto-Update** (`docs-auto-update.yml`)
 - **Trigger**: Manual workflow dispatch
 - **Purpose**: Regenerates provider/config documentation on demand
 - **Features**:
@@ -126,7 +135,7 @@ This directory contains automated workflows that help maintain code quality, sec
   - Updates provider and config references
   - Optional PR creation for updates
 
-#### 14. **Docs Structure Sync** (`docs-structure-sync.yml`)
+#### 15. **Docs Structure Sync** (`docs-structure-sync.yml`)
 - **Trigger**: Manual workflow dispatch
 - **Purpose**: Updates repository structure documentation
 - **Features**:
@@ -136,7 +145,7 @@ This directory contains automated workflows that help maintain code quality, sec
 
 ### Automation and Maintenance Workflows
 
-#### 15. **Auto Label PRs** (`labeling.yml`)
+#### 16. **Auto Label PRs** (`labeling.yml`)
 - **Trigger**: PR opened, edited, synchronized, reopened
 - **Purpose**: Automatically categorizes pull requests
 - **Features**:
@@ -145,7 +154,7 @@ This directory contains automated workflows that help maintain code quality, sec
   - Warns about large PRs
   - Uses `.github/labeler.yml` configuration
 
-#### 16. **Manage Stale Issues and PRs** (`stale.yml`)
+#### 17. **Manage Stale Issues and PRs** (`stale.yml`)
 - **Trigger**: Daily at midnight UTC, Manual dispatch
 - **Purpose**: Keeps issue tracker clean
 - **Features**:
@@ -155,7 +164,7 @@ This directory contains automated workflows that help maintain code quality, sec
   - Closes stale PRs after 14 more days
   - Exempts pinned, security, and WIP items
 
-#### 17. **Cache Management** (`cache-management.yml`)
+#### 18. **Cache Management** (`cache-management.yml`)
 - **Trigger**: Weekly (Sundays 4 AM UTC), Manual dispatch
 - **Purpose**: Manages GitHub Actions cache
 - **Features**:
@@ -164,7 +173,7 @@ This directory contains automated workflows that help maintain code quality, sec
   - Manual option to clean all caches
   - Helps manage storage limits
 
-#### 18. **Scheduled Maintenance** (`scheduled-maintenance.yml`)
+#### 19. **Scheduled Maintenance** (`scheduled-maintenance.yml`)
 - **Trigger**: Weekly schedule, Manual dispatch
 - **Purpose**: Runs periodic tests and dependency health checks
 - **Features**:
@@ -172,7 +181,7 @@ This directory contains automated workflows that help maintain code quality, sec
   - Dependency health report (outdated, deprecated, vulnerable)
   - Summary report output
 
-#### 19. **Build Observability** (`build-observability.yml`)
+#### 20. **Build Observability** (`build-observability.yml`)
 - **Trigger**: Manual workflow dispatch
 - **Purpose**: Generates build diagnostics and observability bundles
 - **Features**:
@@ -180,7 +189,7 @@ This directory contains automated workflows that help maintain code quality, sec
   - Collects build fingerprints and metrics
   - Uploads debug artifacts
 
-#### 20. **Workflow Validation** (`validate-workflows.yml`)
+#### 21. **Workflow Validation** (`validate-workflows.yml`)
 - **Trigger**: Pull requests touching workflows or manual dispatch
 - **Purpose**: Validates workflow syntax and checks reusable references
 - **Features**:
@@ -188,7 +197,7 @@ This directory contains automated workflows that help maintain code quality, sec
   - Catches invalid reusable workflow usage
   - Fast feedback for workflow edits
 
-#### 21. **Reusable Build Helpers** (`reusable-dotnet-build.yml`)
+#### 22. **Reusable Build Helpers** (`reusable-dotnet-build.yml`)
 - **Trigger**: Reusable workflow (called by other workflows)
 - **Purpose**: Standardizes build/test steps for .NET jobs
 - **Features**:

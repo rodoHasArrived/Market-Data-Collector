@@ -1,0 +1,53 @@
+name: WPF Commands
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: wpf-commands-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_VERSION: '9.0.x'
+  WPF_PROJECT: src/MarketDataCollector.Wpf/MarketDataCollector.Wpf.csproj
+
+jobs:
+  wpf-commands:
+    name: Run WPF Commands
+    runs-on: windows-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6.0.1
+
+      - name: Setup .NET with Cache
+        uses: ./.github/actions/setup-dotnet-cache
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore ${{ env.WPF_PROJECT }}
+
+      - name: Build
+        run: dotnet build ${{ env.WPF_PROJECT }} -c Release --no-restore
+
+      - name: Run
+        shell: pwsh
+        run: |
+          $process = Start-Process dotnet -ArgumentList @(
+            "run",
+            "--project",
+            "${{ env.WPF_PROJECT }}",
+            "--configuration",
+            "Release",
+            "--no-build"
+          ) -PassThru
+          Start-Sleep -Seconds 10
+          Stop-Process -Id $process.Id
+
+      - name: Publish (self-contained)
+        run: dotnet publish ${{ env.WPF_PROJECT }} -c Release -r win-x64 --self-contained true
