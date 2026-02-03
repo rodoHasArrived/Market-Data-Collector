@@ -306,7 +306,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: analyze-changes
-    if: needs.analyze-changes.outputs.adrs_changed == 'true'
+    if: |
+      needs.analyze-changes.outputs.adrs_changed == 'true' ||
+      github.event.inputs.update_all == 'true'
 
     steps:
       - name: Checkout repository
@@ -383,7 +385,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: analyze-changes
-    if: needs.analyze-changes.outputs.config_changed == 'true'
+    if: |
+      needs.analyze-changes.outputs.config_changed == 'true' ||
+      github.event.inputs.update_all == 'true'
 
     steps:
       - name: Checkout repository
