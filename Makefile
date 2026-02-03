@@ -324,6 +324,9 @@ docs-all: gen-context gen-interfaces gen-structure gen-providers gen-workflows v
 doctor: ## Run environment health check
 	@$(BUILDCTL) doctor
 
+doctor-ci: ## Run environment health check for CI (warnings don't fail)
+	@$(BUILDCTL) doctor --no-fail-on-warn
+
 doctor-quick: ## Run quick environment check
 	@$(BUILDCTL) doctor --quick
 

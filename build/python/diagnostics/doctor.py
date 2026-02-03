@@ -211,15 +211,15 @@ def format_results(results: list[DoctorResult]) -> str:
     return "\n".join(lines)
 
 
-def exit_code(results: list[DoctorResult]) -> int:
+def exit_code(results: list[DoctorResult], fail_on_warn: bool = True) -> int:
     if any(result.status == "fail" for result in results):
         return 2
-    if any(result.status == "warn" for result in results):
+    if fail_on_warn and any(result.status == "warn" for result in results):
         return 1
     return 0
 
 
-def run_doctor(root: Path, quick: bool, json_output: bool) -> int:
+def run_doctor(root: Path, quick: bool, json_output: bool, fail_on_warn: bool = True) -> int:
     doctor = Doctor(root, quick)
     results = doctor.run()
     if json_output:
@@ -230,4 +230,4 @@ def run_doctor(root: Path, quick: bool, json_output: bool) -> int:
         print(colorize(header, "0;36"))
         print(colorize("=" * len(header), "0;36"))
         print(format_results(results))
-    return exit_code(results)
+    return exit_code(results, fail_on_warn)

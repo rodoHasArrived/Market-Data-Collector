@@ -171,7 +171,7 @@ def run_fingerprint(args: argparse.Namespace) -> int:
 
 
 def run_doctor_cmd(args: argparse.Namespace) -> int:
-    return run_doctor(ROOT, args.quick, args.json)
+    return run_doctor(ROOT, args.quick, args.json, not args.no_fail_on_warn)
 
 
 def run_collect_debug(args: argparse.Namespace) -> int:
@@ -344,6 +344,7 @@ def build_parser() -> argparse.ArgumentParser:
     doctor = sub.add_parser("doctor", help="Run build environment doctor")
     doctor.add_argument("--quick", action="store_true")
     doctor.add_argument("--json", action="store_true")
+    doctor.add_argument("--no-fail-on-warn", action="store_true", help="Don't fail on warnings (useful in CI)")
 
     graph = sub.add_parser("build-graph", help="Generate dependency graph")
     graph.add_argument("--project", default=DEFAULT_PROJECT)

@@ -32,7 +32,7 @@ jobs:
           dotnet-version: '9.0.x'
 
       - name: Run environment doctor
-        run: make doctor
+        run: make doctor-ci
 
       - name: Build with observability
         run: make build
