@@ -264,11 +264,13 @@ jobs:
             exit 1
           fi
 
+      # Fallback handler when PR creation fails
+      # Checks both outcome (for failed steps with continue-on-error) and output (for explicit failures)
       - name: PR creation fallback
         if: |
           steps.check.outputs.has_changes == 'true' &&
           github.event.inputs.create_pr == 'true' &&
-          steps.create-pr.outputs.pr_created == 'false'
+          (steps.create-pr.outcome == 'failure' || steps.create-pr.outputs.pr_created == 'false')
         run: |
           # Validate BRANCH_NAME is set
           if [ -z "$BRANCH_NAME" ]; then
