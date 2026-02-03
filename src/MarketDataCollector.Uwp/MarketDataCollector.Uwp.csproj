@@ -63,6 +63,14 @@
     <!-- Globalization settings -->
     <InvariantGlobalization>false</InvariantGlobalization>
 
+    <!-- Prevent MSBuild from appending RuntimeIdentifier and TargetFramework to paths
+         This fixes Windows App SDK 1.7.x XAML compiler path duplication issue where
+         paths like "obj\x64\Debug\net9.0-windows10.0.19041.0\win-x64\net9.0-windows10.0.19041.0\win-x64\\"
+         are generated with duplicate TargetFramework\RuntimeIdentifier segments.
+         See: https://learn.microsoft.com/en-us/visualstudio/ide/how-to-change-the-build-output-directory -->
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+
   </PropertyGroup>
 
   <!-- Fix for XAML compiler double backslash issue in intermediate output path
