@@ -26,10 +26,8 @@ public static class PackagingEndpoints
 
         // ==================== PACKAGE CREATION ====================
 
-        /// <summary>
-        /// Create a new portable data package.
-        /// POST /api/packaging/create
-        /// </summary>
+        // Create a new portable data package.
+        // POST /api/packaging/create
         app.MapPost("/api/packaging/create", async (PackageRequest request, CancellationToken ct) =>
         {
             try
@@ -71,10 +69,8 @@ public static class PackagingEndpoints
 
         // ==================== PACKAGE IMPORT ====================
 
-        /// <summary>
-        /// Import a package into storage.
-        /// POST /api/packaging/import
-        /// </summary>
+        // Import a package into storage.
+        // POST /api/packaging/import
         app.MapPost("/api/packaging/import", async (ImportRequest request, CancellationToken ct) =>
         {
             try
@@ -107,10 +103,8 @@ public static class PackagingEndpoints
 
         // ==================== PACKAGE VALIDATION ====================
 
-        /// <summary>
-        /// Validate a package without extracting.
-        /// POST /api/packaging/validate
-        /// </summary>
+        // Validate a package without extracting.
+        // POST /api/packaging/validate
         app.MapPost("/api/packaging/validate", async (ValidateRequest request, CancellationToken ct) =>
         {
             try
@@ -140,10 +134,8 @@ public static class PackagingEndpoints
 
         // ==================== PACKAGE CONTENTS ====================
 
-        /// <summary>
-        /// List contents of a package.
-        /// GET /api/packaging/contents?path={packagePath}
-        /// </summary>
+        // List contents of a package.
+        // GET /api/packaging/contents?path={packagePath}
         app.MapGet("/api/packaging/contents", async (string path, CancellationToken ct) =>
         {
             try
@@ -173,10 +165,8 @@ public static class PackagingEndpoints
 
         // ==================== LIST PACKAGES ====================
 
-        /// <summary>
-        /// List available packages in the packages directory.
-        /// GET /api/packaging/list
-        /// </summary>
+        // List available packages in the packages directory.
+        // GET /api/packaging/list
         app.MapGet("/api/packaging/list", (string? directory) =>
         {
             try
@@ -211,10 +201,8 @@ public static class PackagingEndpoints
 
         // ==================== DELETE PACKAGE ====================
 
-        /// <summary>
-        /// Delete a package file.
-        /// DELETE /api/packaging/{fileName}
-        /// </summary>
+        // Delete a package file.
+        // DELETE /api/packaging/{fileName}
         app.MapDelete("/api/packaging/{fileName}", (string fileName, string? directory) =>
         {
             try
@@ -248,10 +236,9 @@ public static class PackagingEndpoints
 
         // ==================== PACKAGE DOWNLOAD ====================
 
-        /// <summary>
-        /// Download a package file.
-        /// GET /api/packaging/download/{fileName}
-        /// </summary>
+        //
+        // Download a package file.
+        // GET /api/packaging/download/{fileName}
         app.MapGet("/api/packaging/download/{fileName}", (string fileName, string? directory) =>
         {
             try

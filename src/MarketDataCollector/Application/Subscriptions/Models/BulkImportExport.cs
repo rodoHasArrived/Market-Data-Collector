@@ -4,22 +4,16 @@ namespace MarketDataCollector.Application.Subscriptions.Models;
 /// Result of a bulk CSV import operation.
 /// </summary>
 public sealed record BulkImportResult(
-    /// <summary>Number of symbols successfully imported.</summary>
     int SuccessCount,
 
-    /// <summary>Number of symbols that failed to import.</summary>
     int FailureCount,
 
-    /// <summary>Number of symbols skipped (already exist).</summary>
     int SkippedCount,
 
-    /// <summary>Details of any errors encountered.</summary>
     ImportError[] Errors,
 
-    /// <summary>Symbols that were successfully imported.</summary>
     string[] ImportedSymbols,
 
-    /// <summary>Total processing time in milliseconds.</summary>
     long ProcessingTimeMs
 );
 
@@ -27,13 +21,10 @@ public sealed record BulkImportResult(
 /// Error encountered during import.
 /// </summary>
 public sealed record ImportError(
-    /// <summary>Line number in the CSV (1-based).</summary>
     int LineNumber,
 
-    /// <summary>Symbol that caused the error (if parseable).</summary>
     string? Symbol,
 
-    /// <summary>Error message.</summary>
     string Message
 );
 
@@ -41,19 +32,14 @@ public sealed record ImportError(
 /// Options for CSV import operation.
 /// </summary>
 public sealed record BulkImportOptions(
-    /// <summary>Whether to skip symbols that already exist.</summary>
     bool SkipExisting = true,
 
-    /// <summary>Whether to update existing symbols with new settings.</summary>
     bool UpdateExisting = false,
 
-    /// <summary>Whether the CSV has a header row.</summary>
     bool HasHeader = true,
 
-    /// <summary>Default values to apply if not specified in CSV.</summary>
     ImportDefaults? Defaults = null,
 
-    /// <summary>Whether to validate symbols before importing.</summary>
     bool ValidateSymbols = true
 );
 
@@ -73,16 +59,12 @@ public sealed record ImportDefaults(
 /// Options for CSV export operation.
 /// </summary>
 public sealed record BulkExportOptions(
-    /// <summary>Whether to include a header row.</summary>
     bool IncludeHeader = true,
 
-    /// <summary>Columns to include in export (null = all).</summary>
     string[]? Columns = null,
 
-    /// <summary>Filter to specific symbols.</summary>
     string[]? FilterSymbols = null,
 
-    /// <summary>Include metadata if available.</summary>
     bool IncludeMetadata = false
 );
 

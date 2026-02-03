@@ -5,22 +5,16 @@ namespace MarketDataCollector.Application.Subscriptions.Models;
 /// Supports equity groups, sectors, and indices.
 /// </summary>
 public sealed record SymbolTemplate(
-    /// <summary>Unique template identifier.</summary>
     string Id,
 
-    /// <summary>Display name for the template.</summary>
     string Name,
 
-    /// <summary>Template description.</summary>
     string Description,
 
-    /// <summary>Category: Sector, Index, Custom, MarketCap.</summary>
     TemplateCategory Category,
 
-    /// <summary>List of symbols included in this template.</summary>
     string[] Symbols,
 
-    /// <summary>Default subscription settings for symbols in this template.</summary>
     TemplateSubscriptionDefaults Defaults
 );
 
@@ -41,16 +35,12 @@ public sealed record TemplateSubscriptionDefaults(
 /// </summary>
 public enum TemplateCategory
 {
-    /// <summary>Industry sector (e.g., Technology, Healthcare).</summary>
     Sector,
 
-    /// <summary>Market index components (e.g., S&amp;P 500, NASDAQ 100).</summary>
     Index,
 
-    /// <summary>Market capitalization groups (e.g., Large Cap, Small Cap).</summary>
     MarketCap,
 
-    /// <summary>Custom user-defined template.</summary>
     Custom
 }
 

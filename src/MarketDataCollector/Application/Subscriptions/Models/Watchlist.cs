@@ -4,37 +4,26 @@ namespace MarketDataCollector.Application.Subscriptions.Models;
 /// A named group of symbols for organization and bulk operations.
 /// </summary>
 public sealed record Watchlist(
-    /// <summary>Unique watchlist identifier.</summary>
     string Id,
 
-    /// <summary>Display name for the watchlist.</summary>
     string Name,
 
-    /// <summary>Optional description.</summary>
     string? Description,
 
-    /// <summary>Symbols in this watchlist.</summary>
     string[] Symbols,
 
-    /// <summary>Color for UI display (hex format).</summary>
     string? Color,
 
-    /// <summary>Sort order for UI.</summary>
     int SortOrder,
 
-    /// <summary>Whether this watchlist is pinned/favorited.</summary>
     bool IsPinned,
 
-    /// <summary>Whether subscriptions are active for this watchlist.</summary>
     bool IsActive,
 
-    /// <summary>Default subscription settings for new symbols.</summary>
     WatchlistDefaults Defaults,
 
-    /// <summary>When the watchlist was created.</summary>
     DateTimeOffset CreatedAt,
 
-    /// <summary>When the watchlist was last modified.</summary>
     DateTimeOffset ModifiedAt
 );
 
