@@ -43,7 +43,33 @@
 </PropertyGroup>
 ```
 
-#### 3. .NET 9 Compatibility Issues
+#### 3. Duplicate Path Segments in IntermediateOutputPath (FIXED)
+**Problem**: When building with a RuntimeIdentifier specified (e.g., `dotnet publish -r win-x64`), the XAML compiler receives paths with duplicate TargetFramework\RuntimeIdentifier segments:
+
+```
+obj\x64\Debug\net9.0-windows10.0.19041.0\win-x64\net9.0-windows10.0.19041.0\win-x64\\input.json
+```
+
+This occurs because MSBuild automatically appends these to intermediate paths, and the XAML compiler adds them again.
+
+**Solution**: Disable automatic path appending in the project file.
+
+```xml
+<!-- MarketDataCollector.Uwp.csproj -->
+<PropertyGroup Condition="'$(IsWindows)' == 'true'">
+  <!-- Prevent MSBuild from appending RuntimeIdentifier and TargetFramework to paths -->
+  <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+  <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+</PropertyGroup>
+```
+
+**Status**: Fixed in commit 85a8861 (February 2026).
+
+**References**:
+- [Microsoft Docs: Change build output directory](https://learn.microsoft.com/en-us/visualstudio/ide/how-to-change-the-build-output-directory)
+- GitHub Actions run: 21619579668
+
+#### 4. .NET 9 Compatibility Issues
 **Problem**: WindowsAppSDK 1.7.x was primarily tested with .NET 6/7/8. .NET 9 support is indirect and may require:
 - Updated Visual Studio (17.12+)
 - Explicit SDK version targeting
@@ -100,6 +126,7 @@
 
 - [ ] Update WindowsAppSDK to stable 1.7.7+ (Version `1.7.251107005` or higher)
 - [ ] Add explicit `TargetPlatformVersion` to project file
+- [ ] Disable automatic path appending (add `AppendRuntimeIdentifierToOutputPath=false` and `AppendTargetFrameworkToOutputPath=false`)
 - [ ] Verify .NET SDK version (9.0.310+ for .NET 9)
 - [ ] Ensure Visual Studio is up-to-date (17.12+ for .NET 9 projects)
 - [ ] Clean build directories: `dotnet clean && rd /s /q bin obj`
