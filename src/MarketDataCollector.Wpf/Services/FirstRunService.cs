@@ -224,9 +224,9 @@ public sealed class FirstRunService
 
     private void CreateFirstRunMarker()
     {
-        var markerContent = $"""
+        var markerContent = $$"""
             {{
-              "InitializedAt": "{DateTime.UtcNow:O}",
+              "InitializedAt": "{{DateTime.UtcNow:O}}",
               "Version": "1.0.0"
             }}
             """;
