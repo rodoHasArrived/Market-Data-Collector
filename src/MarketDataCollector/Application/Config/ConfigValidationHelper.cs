@@ -156,19 +156,32 @@ public sealed class AlpacaOptionsValidator : AbstractValidator<AlpacaOptions>
             .NotEmpty()
             .WithMessage("Alpaca KeyId is required")
             .MinimumLength(10)
-            .WithMessage("Alpaca KeyId appears to be invalid (too short)");
+            .WithMessage("Alpaca KeyId appears to be invalid (too short)")
+            .Must(key => !IsPlaceholder(key))
+            .WithMessage("Alpaca KeyId appears to be a placeholder value - please set a real API key");
 
         RuleFor(x => x.SecretKey)
             .NotEmpty()
             .WithMessage("Alpaca SecretKey is required")
             .MinimumLength(10)
-            .WithMessage("Alpaca SecretKey appears to be invalid (too short)");
+            .WithMessage("Alpaca SecretKey appears to be invalid (too short)")
+            .Must(key => !IsPlaceholder(key))
+            .WithMessage("Alpaca SecretKey appears to be a placeholder value - please set a real API key");
 
         RuleFor(x => x.Feed)
             .NotEmpty()
             .WithMessage("Alpaca Feed must be specified (e.g., 'iex', 'sip')")
             .Must(feed => feed == "iex" || feed == "sip")
             .WithMessage("Alpaca Feed must be either 'iex' or 'sip'");
+    }
+
+    private static bool IsPlaceholder(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return false;
+
+        var placeholders = new[] { "__SET_ME__", "YOUR_", "REPLACE_", "ENTER_", "INSERT_", "TODO" };
+        return placeholders.Any(p => value.Contains(p, StringComparison.OrdinalIgnoreCase));
     }
 }
 
@@ -395,6 +408,8 @@ public sealed class StorageConfigValidator : AbstractValidator<StorageConfig>
 /// </summary>
 public sealed class SymbolConfigValidator : AbstractValidator<SymbolConfig>
 {
+    private static readonly string[] ValidSecurityTypes = { "STK", "OPT", "FUT", "CASH", "IND", "FOP", "CFD", "BOND", "CMDTY", "CRYPTO" };
+
     public SymbolConfigValidator()
     {
         RuleFor(x => x.Symbol)
@@ -402,6 +417,13 @@ public sealed class SymbolConfigValidator : AbstractValidator<SymbolConfig>
             .WithMessage("Symbol cannot be empty")
             .Matches(@"^[A-Z0-9\-\.\/]+$")
             .WithMessage("Symbol must contain only uppercase letters, numbers, hyphens, dots, or slashes");
+
+        When(x => !string.IsNullOrWhiteSpace(x.SecurityType), () =>
+        {
+            RuleFor(x => x.SecurityType)
+                .Must(st => ValidSecurityTypes.Contains(st!, StringComparer.OrdinalIgnoreCase))
+                .WithMessage($"SecurityType must be one of: {string.Join(", ", ValidSecurityTypes)}");
+        });
 
         When(x => x.SubscribeDepth, () =>
         {
