@@ -121,7 +121,7 @@ public sealed record EventPipelinePolicy(
     public BoundedChannelOptions ToBoundedOptions(bool singleReader, bool singleWriter)
     {
         if (Capacity <= 0)
-            throw new ArgumentOutOfRangeException(nameof(Capacity), Capacity, "Capacity must be positive.");
+            throw new ArgumentOutOfRangeException("capacity", Capacity, "Capacity must be positive.");
 
         return new BoundedChannelOptions(Capacity)
         {
