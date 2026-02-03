@@ -56,6 +56,96 @@ public class HistoricalBarTests
         bar.SequenceNumber.Should().Be(0);
     }
 
+    [Fact]
+    public void Constructor_WhenOpenExceedsHigh_ThrowsArgumentOutOfRangeException()
+    {
+        // Arrange & Act
+        var act = () => new HistoricalBar(
+            Symbol: "SPY",
+            SessionDate: new DateOnly(2026, 1, 15),
+            Open: 455.00m,  // Open exceeds high
+            High: 450.00m,
+            Low: 445.00m,
+            Close: 448.00m,
+            Volume: 1000000);
+
+        // Assert
+        act.Should().Throw<ArgumentOutOfRangeException>()
+            .WithMessage("*Open/Close cannot exceed high*");
+    }
+
+    [Fact]
+    public void Constructor_WhenCloseExceedsHigh_ThrowsArgumentOutOfRangeException()
+    {
+        // Arrange & Act
+        var act = () => new HistoricalBar(
+            Symbol: "SPY",
+            SessionDate: new DateOnly(2026, 1, 15),
+            Open: 448.00m,
+            High: 450.00m,
+            Low: 445.00m,
+            Close: 455.00m,  // Close exceeds high
+            Volume: 1000000);
+
+        // Assert
+        act.Should().Throw<ArgumentOutOfRangeException>()
+            .WithMessage("*Open/Close cannot exceed high*");
+    }
+
+    [Fact]
+    public void Constructor_WhenOpenBelowLow_ThrowsArgumentOutOfRangeException()
+    {
+        // Arrange & Act
+        var act = () => new HistoricalBar(
+            Symbol: "SPY",
+            SessionDate: new DateOnly(2026, 1, 15),
+            Open: 440.00m,  // Open below low
+            High: 450.00m,
+            Low: 445.00m,
+            Close: 448.00m,
+            Volume: 1000000);
+
+        // Assert
+        act.Should().Throw<ArgumentOutOfRangeException>()
+            .WithMessage("*Open/Close cannot be below low*");
+    }
+
+    [Fact]
+    public void Constructor_WhenCloseBelowLow_ThrowsArgumentOutOfRangeException()
+    {
+        // Arrange & Act
+        var act = () => new HistoricalBar(
+            Symbol: "SPY",
+            SessionDate: new DateOnly(2026, 1, 15),
+            Open: 448.00m,
+            High: 450.00m,
+            Low: 445.00m,
+            Close: 440.00m,  // Close below low
+            Volume: 1000000);
+
+        // Assert
+        act.Should().Throw<ArgumentOutOfRangeException>()
+            .WithMessage("*Open/Close cannot be below low*");
+    }
+
+    [Fact]
+    public void Constructor_WhenLowExceedsHigh_ThrowsArgumentOutOfRangeException()
+    {
+        // Arrange & Act
+        var act = () => new HistoricalBar(
+            Symbol: "SPY",
+            SessionDate: new DateOnly(2026, 1, 15),
+            Open: 448.00m,
+            High: 450.00m,
+            Low: 455.00m,  // Low exceeds high
+            Close: 448.00m,
+            Volume: 1000000);
+
+        // Assert
+        act.Should().Throw<ArgumentOutOfRangeException>()
+            .WithMessage("*Low cannot exceed high*");
+    }
+
     #endregion
 
     #region Range Property Tests

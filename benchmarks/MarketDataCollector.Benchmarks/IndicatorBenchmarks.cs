@@ -65,14 +65,21 @@ public class IndicatorBenchmarks
         for (int i = 0; i < DataPoints; i++)
         {
             var dayChange = (decimal)(random.NextDouble() - 0.5) * 5m;
-            var high = basePrice + (decimal)random.NextDouble() * 2m;
-            var low = basePrice - (decimal)random.NextDouble() * 2m;
+            var open = basePrice;
             var close = basePrice + dayChange;
+            
+            // Ensure high is always >= max(open, close)
+            var maxPrice = Math.Max(open, close);
+            var high = maxPrice + (decimal)random.NextDouble() * 2m;
+            
+            // Ensure low is always <= min(open, close)
+            var minPrice = Math.Min(open, close);
+            var low = minPrice - (decimal)random.NextDouble() * 2m;
 
             _bars[i] = new HistoricalBar(
                 Symbol: "SPY",
                 SessionDate: DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-DataPoints + i)),
-                Open: basePrice,
+                Open: open,
                 High: high,
                 Low: low,
                 Close: close,
@@ -142,14 +149,21 @@ public class SingleIndicatorBenchmarks
         for (int i = 0; i < 500; i++)
         {
             var dayChange = (decimal)(random.NextDouble() - 0.5) * 2m;
-            var high = basePrice + (decimal)random.NextDouble() * 1m;
-            var low = basePrice - (decimal)random.NextDouble() * 1m;
+            var open = basePrice;
             var close = basePrice + dayChange;
+            
+            // Ensure high is always >= max(open, close)
+            var maxPrice = Math.Max(open, close);
+            var high = maxPrice + (decimal)random.NextDouble() * 1m;
+            
+            // Ensure low is always <= min(open, close)
+            var minPrice = Math.Min(open, close);
+            var low = minPrice - (decimal)random.NextDouble() * 1m;
 
             _bars[i] = new HistoricalBar(
                 Symbol: "SPY",
                 SessionDate: DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-500 + i)),
-                Open: basePrice,
+                Open: open,
                 High: high,
                 Low: low,
                 Close: close,
