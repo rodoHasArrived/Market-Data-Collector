@@ -4,28 +4,21 @@ using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Collectors;
 using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Domain.Models;
-using Moq;
+using MarketDataCollector.Tests.TestHelpers;
 using Xunit;
 
 namespace MarketDataCollector.Tests;
 
 public class QuoteCollectorTests
 {
-    private readonly Mock<IMarketEventPublisher> _mockPublisher;
+    private readonly TestMarketEventPublisher _publisher;
     private readonly QuoteCollector _collector;
-    private readonly List<MarketEvent> _publishedEvents;
+    private IReadOnlyList<MarketEvent> _publishedEvents => _publisher.PublishedEvents;
 
     public QuoteCollectorTests()
     {
-        _mockPublisher = new Mock<IMarketEventPublisher>();
-        _publishedEvents = new List<MarketEvent>();
-
-        _mockPublisher
-            .Setup(p => p.TryPublish(It.IsAny<MarketEvent>()))
-            .Callback<MarketEvent>(e => _publishedEvents.Add(e))
-            .Returns(true);
-
-        _collector = new QuoteCollector(_mockPublisher.Object);
+        _publisher = new TestMarketEventPublisher();
+        _collector = new QuoteCollector(_publisher);
     }
 
     [Fact]

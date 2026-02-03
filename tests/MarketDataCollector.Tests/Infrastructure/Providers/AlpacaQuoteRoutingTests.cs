@@ -3,7 +3,7 @@ using MarketDataCollector.Contracts.Domain.Enums;
 using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Collectors;
 using MarketDataCollector.Domain.Events;
-using Moq;
+using MarketDataCollector.Tests.TestHelpers;
 using Xunit;
 
 namespace MarketDataCollector.Tests;
@@ -14,21 +14,14 @@ namespace MarketDataCollector.Tests;
 /// </summary>
 public class AlpacaQuoteRoutingTests
 {
-    private readonly Mock<IMarketEventPublisher> _mockPublisher;
+    private readonly TestMarketEventPublisher _publisher;
     private readonly QuoteCollector _quoteCollector;
-    private readonly List<MarketEvent> _publishedEvents;
+    private IReadOnlyList<MarketEvent> _publishedEvents => _publisher.PublishedEvents;
 
     public AlpacaQuoteRoutingTests()
     {
-        _mockPublisher = new Mock<IMarketEventPublisher>();
-        _publishedEvents = new List<MarketEvent>();
-
-        _mockPublisher
-            .Setup(p => p.TryPublish(It.IsAny<MarketEvent>()))
-            .Callback<MarketEvent>(e => _publishedEvents.Add(e))
-            .Returns(true);
-
-        _quoteCollector = new QuoteCollector(_mockPublisher.Object);
+        _publisher = new TestMarketEventPublisher();
+        _quoteCollector = new QuoteCollector(_publisher);
     }
 
     [Fact]
@@ -196,7 +189,7 @@ public class AlpacaQuoteRoutingTests
         removedQuote.SequenceNumber.Should().Be(2);
 
         // Add new quote - sequence should restart
-        _publishedEvents.Clear();
+        _publisher.Clear();
         _quoteCollector.OnQuote(CreateAlpacaQuote("AAPL", 187.00m, 187.05m));
         var newPayload = _publishedEvents[0].Payload as BboQuotePayload;
         newPayload!.SequenceNumber.Should().Be(1);
@@ -206,9 +199,7 @@ public class AlpacaQuoteRoutingTests
     public void OnQuote_WhenPublisherRejectsDueToBackpressure_DoesNotThrow()
     {
         // Arrange
-        _mockPublisher
-            .Setup(p => p.TryPublish(It.IsAny<MarketEvent>()))
-            .Returns(false); // Simulate backpressure
+        _publisher.SetReturnValue(false); // Simulate backpressure
 
         var quote = CreateAlpacaQuote("AAPL", 185.50m, 185.55m);
 
