@@ -888,8 +888,8 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
             _tradeCollector.OnTrade(new MarketTradeUpdate(
                 Timestamp: DateTimeOffset.UtcNow,
                 Symbol: symbol,
-                Price: 0m,
-                Size: 0,
+                Price: 100m,  // Use positive price for valid trade
+                Size: 1,
                 Aggressor: AggressorSide.Unknown,
                 SequenceNumber: 0,
                 StreamId: "POLYGON_STUB",
