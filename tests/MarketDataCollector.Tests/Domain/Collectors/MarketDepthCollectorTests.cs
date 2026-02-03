@@ -4,7 +4,7 @@ using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Collectors;
 using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Domain.Models;
-using Moq;
+using MarketDataCollector.Tests.TestHelpers;
 using Xunit;
 
 namespace MarketDataCollector.Tests;
@@ -15,22 +15,16 @@ namespace MarketDataCollector.Tests;
 /// </summary>
 public class MarketDepthCollectorTests
 {
-    private readonly Mock<IMarketEventPublisher> _mockPublisher;
+    private readonly TestMarketEventPublisher _publisher;
     private readonly MarketDepthCollector _collector;
-    private readonly List<MarketEvent> _publishedEvents;
+    private IReadOnlyList<MarketEvent> _publishedEvents => _publisher.PublishedEvents;
 
     public MarketDepthCollectorTests()
     {
-        _mockPublisher = new Mock<IMarketEventPublisher>();
-        _publishedEvents = new List<MarketEvent>();
-
-        _mockPublisher
-            .Setup(p => p.TryPublish(It.IsAny<MarketEvent>()))
-            .Callback<MarketEvent>(e => _publishedEvents.Add(e))
-            .Returns(true);
+        _publisher = new TestMarketEventPublisher();
 
         // Create collector with explicit subscription disabled for simpler testing
-        _collector = new MarketDepthCollector(_mockPublisher.Object, requireExplicitSubscription: false);
+        _collector = new MarketDepthCollector(_publisher, requireExplicitSubscription: false);
     }
 
     #region Basic Depth Update Tests
@@ -277,7 +271,7 @@ public class MarketDepthCollectorTests
     {
         // Arrange - Cause stale state
         _collector.OnDepth(CreateDepthUpdate("SPY", DepthOperation.Update, OrderBookSide.Bid, 0, 450.00m, 100));
-        _publishedEvents.Clear();
+        _publisher.Clear();
 
         // Act - Try to update again
         _collector.OnDepth(CreateDepthUpdate("SPY", DepthOperation.Insert, OrderBookSide.Bid, 0, 450.00m, 100));
@@ -301,7 +295,7 @@ public class MarketDepthCollectorTests
 
         // Act
         _collector.ResetSymbolStream("SPY");
-        _publishedEvents.Clear();
+        _publisher.Clear();
 
         // Insert should work now
         _collector.OnDepth(CreateDepthUpdate("SPY", DepthOperation.Insert, OrderBookSide.Bid, 0, 450.00m, 100));
@@ -372,8 +366,8 @@ public class MarketDepthCollectorTests
     public void OnDepth_WithExplicitSubscriptionRequired_IgnoresUnsubscribedSymbols()
     {
         // Arrange
-        var collector = new MarketDepthCollector(_mockPublisher.Object, requireExplicitSubscription: true);
-        _publishedEvents.Clear();
+        var collector = new MarketDepthCollector(_publisher, requireExplicitSubscription: true);
+        _publisher.Clear();
 
         // Act - No subscription, should be ignored
         collector.OnDepth(CreateDepthUpdate("SPY", DepthOperation.Insert, OrderBookSide.Bid, 0, 450.00m, 100));
@@ -386,9 +380,9 @@ public class MarketDepthCollectorTests
     public void OnDepth_WithExplicitSubscription_ProcessesSubscribedSymbols()
     {
         // Arrange
-        var collector = new MarketDepthCollector(_mockPublisher.Object, requireExplicitSubscription: true);
+        var collector = new MarketDepthCollector(_publisher, requireExplicitSubscription: true);
         collector.RegisterSubscription("SPY");
-        _publishedEvents.Clear();
+        _publisher.Clear();
 
         // Act
         collector.OnDepth(CreateDepthUpdate("SPY", DepthOperation.Insert, OrderBookSide.Bid, 0, 450.00m, 100));
@@ -401,12 +395,12 @@ public class MarketDepthCollectorTests
     public void UnregisterSubscription_IgnoresFutureUpdates()
     {
         // Arrange
-        var collector = new MarketDepthCollector(_mockPublisher.Object, requireExplicitSubscription: true);
+        var collector = new MarketDepthCollector(_publisher, requireExplicitSubscription: true);
         collector.RegisterSubscription("SPY");
         collector.OnDepth(CreateDepthUpdate("SPY", DepthOperation.Insert, OrderBookSide.Bid, 0, 450.00m, 100));
 
         collector.UnregisterSubscription("SPY");
-        _publishedEvents.Clear();
+        _publisher.Clear();
 
         // Act
         collector.OnDepth(CreateDepthUpdate("SPY", DepthOperation.Insert, OrderBookSide.Bid, 1, 449.90m, 150));
