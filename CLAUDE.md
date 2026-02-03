@@ -138,223 +138,966 @@ dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --mod
 
 ```
 Market-Data-Collector/
-├── .github/                          # GitHub configuration
-│   ├── workflows/                    # CI/CD pipelines (21 workflows)
-│   ├── agents/                       # AI agent configurations
-│   │   └── documentation-agent.md   # Documentation specialist guide
-│   ├── prompts/                      # AI assistant prompts
-│   ├── QUICKSTART.md                 # Workflow quick start guide
-│   ├── dependabot.yml                # Dependency updates
-│   └── labeler.yml                   # PR auto-labeling
-│
-├── docs/                             # All documentation
-│   ├── getting-started/              # Onboarding guides
-│   │   ├── setup.md                  # Setup and first run
-│   │   ├── configuration.md          # Configuration options
-│   │   └── troubleshooting.md        # Common issues and solutions
-│   ├── architecture/                 # System architecture docs
-│   │   ├── overview.md               # System architecture
-│   │   ├── domains.md                # Event contracts
-│   │   ├── storage-design.md         # Storage organization
-│   │   ├── consolidation.md          # UI layer consolidation
-│   │   ├── crystallized-storage-format.md # Storage format spec
-│   │   ├── c4-diagrams.md            # C4 model visualizations
-│   │   └── why-this-architecture.md  # Design rationale
-│   ├── operations/                   # Production operations
-│   │   ├── operator-runbook.md       # Operations guide
-│   │   ├── portable-data-packager.md # Data packaging guide
-│   │   └── msix-packaging.md         # Desktop packaging
-│   ├── development/                  # Developer guides
-│   │   ├── provider-implementation.md # Adding new providers
-│   │   ├── uwp-development-roadmap.md # UWP development status
-│   │   ├── uwp-release-checklist.md  # UWP release process
-│   │   ├── github-actions-summary.md # CI/CD overview
-│   │   ├── github-actions-testing.md # Testing workflows
-│   │   └── project-context.md        # Project context
-│   ├── providers/                    # Provider setup guides
-│   │   ├── backfill-guide.md         # Historical data guide
-│   │   ├── data-sources.md           # Available data sources
-│   │   └── provider-comparison.md    # Feature comparison matrix
-│   ├── integrations/                 # Integration guides
-│   │   ├── lean-integration.md       # QuantConnect Lean guide
-│   │   ├── fsharp-integration.md     # F# domain library
-│   │   └── language-strategy.md      # Polyglot architecture
-│   ├── ai/                           # AI assistant guides
-│   │   ├── claude/                   # Claude-specific guides
-│   │   │   ├── CLAUDE.providers.md   # Provider implementation
-│   │   │   ├── CLAUDE.storage.md     # Storage system
-│   │   │   ├── CLAUDE.fsharp.md      # F# domain library
-│   │   │   └── CLAUDE.testing.md     # Testing guide
-│   │   └── copilot/                  # Copilot guides
-│   │       └── instructions.md       # GitHub Copilot instructions
-│   ├── api/                          # API reference
-│   ├── status/                       # Roadmap, backlog, changelogs
-│   ├── adr/                          # Architecture Decision Records
-│   ├── reference/                    # Reference materials
-│   │   ├── data-dictionary.md        # Field definitions
-│   │   └── data-uniformity.md        # Consistency guidelines
-│   ├── diagrams/                     # Architecture diagrams
-│   ├── uml/                          # UML diagrams
-│   ├── USAGE.md                      # Detailed usage guide
-│   ├── HELP.md                       # User guide with FAQ
-│   └── DEPENDENCIES.md               # Package documentation
-│
-├── build/                            # All build tooling (consolidated)
-│   ├── python/                       # Python build tooling
-│   │   ├── cli/                      # Command-line tools (buildctl.py)
-│   │   ├── adapters/                 # Build adapters
-│   │   ├── analytics/                # Build analytics
-│   │   ├── core/                     # Core utilities
-│   │   ├── diagnostics/              # Diagnostic tools
-│   │   └── knowledge/                # Error pattern catalogs
-│   ├── scripts/                      # Shell scripts
-│   │   ├── install/                  # Installation scripts
-│   │   ├── publish/                  # Publishing scripts
-│   │   ├── run/                      # Runtime scripts
-│   │   ├── lib/                      # Script utilities
-│   │   └── docs/                     # Documentation scripts
-│   ├── node/                         # Node.js tooling
-│   │   ├── generate-diagrams.mjs     # Diagram generation
-│   │   └── generate-icons.mjs        # Icon generation
-│   └── dotnet/                       # .NET tools
-│       ├── DocGenerator/             # Documentation generator
-│       └── FSharpInteropGenerator/   # F# interop generator
-│
-├── deploy/                           # Deployment configurations
-│   ├── docker/                       # Dockerfile, docker-compose
-│   ├── systemd/                      # Linux systemd service
-│   └── monitoring/                   # Prometheus, Grafana configs
-│
-├── config/                           # Configuration files
-│   ├── appsettings.json              # Runtime config (gitignored)
-│   └── appsettings.sample.json       # Configuration template
-│
-├── src/                              # Source code
-│   ├── MarketDataCollector/          # Core application (entry point)
-│   │   ├── Domain/                   # Business logic
-│   │   │   ├── Collectors/           # Data collectors (5 files)
-│   │   │   ├── Events/               # Domain events (7 files)
-│   │   │   └── Models/               # Domain models (21 files)
-│   │   ├── Infrastructure/           # Provider implementations
-│   │   │   ├── Contracts/            # Core interfaces
-│   │   │   ├── Providers/            # Data providers
-│   │   │   │   ├── Core/             # Provider infrastructure
-│   │   │   │   ├── Streaming/        # Real-time streaming providers
-│   │   │   │   │   ├── Alpaca/       # Alpaca Markets
-│   │   │   │   │   ├── InteractiveBrokers/ # IB Gateway
-│   │   │   │   │   ├── NYSE/         # NYSE data
-│   │   │   │   │   ├── Polygon/      # Polygon.io
-│   │   │   │   │   └── StockSharp/   # StockSharp (90+ sources)
-│   │   │   │   ├── Historical/       # Historical data providers
-│   │   │   │   │   ├── Alpaca/       # Alpaca historical
-│   │   │   │   │   ├── AlphaVantage/ # Alpha Vantage
-│   │   │   │   │   ├── Finnhub/      # Finnhub
-│   │   │   │   │   ├── InteractiveBrokers/ # IB historical
-│   │   │   │   │   ├── NasdaqDataLink/    # Nasdaq Data Link
-│   │   │   │   │   ├── Polygon/      # Polygon historical
-│   │   │   │   │   ├── StockSharp/   # StockSharp historical
-│   │   │   │   │   ├── Stooq/        # Stooq
-│   │   │   │   │   ├── Tiingo/       # Tiingo
-│   │   │   │   │   ├── YahooFinance/ # Yahoo Finance
-│   │   │   │   │   ├── RateLimiting/ # Rate limit tracking
-│   │   │   │   │   ├── Queue/        # Backfill job queue
-│   │   │   │   │   ├── GapAnalysis/  # Gap detection/repair
-│   │   │   │   │   └── SymbolResolution/ # Symbol resolvers
-│   │   │   │   ├── SymbolSearch/     # Symbol search providers
-│   │   │   │   └── MultiProvider/    # Multi-provider routing
-│   │   │   ├── DataSources/          # Data source abstractions
-│   │   │   ├── Resilience/           # WebSocket resilience (Polly)
-│   │   │   └── IMarketDataClient.cs  # Core streaming interface
-│   │   ├── Storage/                  # Data persistence (~35 files)
-│   │   │   ├── Sinks/                # JSONL/Parquet writers
-│   │   │   ├── Archival/             # Archive management, WAL
-│   │   │   ├── Export/               # Data export, quality reports
-│   │   │   ├── Maintenance/          # Scheduled archive maintenance
-│   │   │   ├── Packaging/            # Portable data packages
-│   │   │   ├── Replay/               # Data replay, memory-mapped readers
-│   │   │   ├── Policies/             # Retention policies
-│   │   │   └── Services/             # Storage services
-│   │   ├── Application/              # Startup, config, services (~90 files)
-│   │   │   ├── Backfill/             # Backfill service, requests, results
-│   │   │   ├── Config/               # Configuration management
-│   │   │   │   └── Credentials/      # Credential providers, OAuth
-│   │   │   ├── Exceptions/           # Custom exception types
-│   │   │   ├── Filters/              # Event filtering
-│   │   │   ├── Indicators/           # Technical indicators
-│   │   │   ├── Logging/              # Structured logging setup
-│   │   │   ├── Monitoring/           # Metrics, health checks
-│   │   │   │   └── DataQuality/      # Quality monitoring (~12 files)
-│   │   │   ├── Pipeline/             # Event pipeline
-│   │   │   ├── Results/              # Result<T, TError> types
-│   │   │   ├── Scheduling/           # Backfill scheduling (cron)
-│   │   │   ├── Serialization/        # JSON serialization
-│   │   │   ├── Services/             # Application services (~25 files)
-│   │   │   ├── Subscriptions/        # Symbol subscription management
-│   │   │   │   ├── Models/           # Watchlists, portfolios
-│   │   │   │   └── Services/         # Subscription services
-│   │   │   └── Http/                 # HTTP endpoints
-│   │   │       └── Endpoints/        # All HTTP endpoint handlers
-│   │   ├── Integrations/             # External integrations
-│   │   │   └── Lean/                 # QuantConnect Lean
-│   │   └── Tools/                    # Utility tools
-│   ├── MarketDataCollector.FSharp/   # F# domain models (12 files)
-│   │   ├── Domain/                   # F# domain types
-│   │   ├── Validation/               # Railway-oriented validation
-│   │   ├── Calculations/             # Spread, imbalance, VWAP
-│   │   └── Pipeline/                 # Data transforms
-│   ├── MarketDataCollector.Contracts/# Shared DTOs, contracts
-│   │   ├── Api/                      # HTTP API contracts
-│   │   ├── Domain/                   # Shared domain contracts
-│   │   └── Configuration/            # Configuration schema
-│   ├── MarketDataCollector.Ui/       # Web dashboard (10 files)
-│   │   ├── Endpoints/                # HTTP endpoints
-│   │   └── wwwroot/                  # Static assets
-│   ├── MarketDataCollector.Ui.Shared/ # Shared UI services & endpoints
-│   │   ├── Endpoints/                # Consolidated HTTP endpoints
-│   │   └── Services/                 # Shared UI services
-│   └── MarketDataCollector.Uwp/      # Windows desktop app (WinUI 3)
-│       ├── Views/                    # XAML UI pages
-│       ├── ViewModels/               # MVVM view models
-│       ├── Services/                 # Windows services
-│       ├── Models/                   # UWP-specific models + SharedModelAliases.cs
-│       └── SharedModels/             # Linked source files from Contracts (compile-time)
-│
-├── tests/                            # Test projects (mirrors src structure)
-│   ├── MarketDataCollector.Tests/    # C# unit tests
-│   │   ├── Application/              # Application layer tests
-│   │   │   ├── Backfill/             # Backfill tests
-│   │   │   ├── Config/               # Config tests
-│   │   │   ├── Credentials/          # Credential tests
-│   │   │   ├── Indicators/           # Indicator tests
-│   │   │   ├── Monitoring/           # Monitoring tests
-│   │   │   │   └── DataQuality/      # Data quality tests
-│   │   │   ├── Pipeline/             # Pipeline tests
-│   │   │   └── Services/             # Service tests
-│   │   ├── Domain/                   # Domain layer tests
-│   │   │   ├── Collectors/           # Collector tests
-│   │   │   └── Models/               # Model tests
-│   │   ├── Infrastructure/           # Infrastructure tests
-│   │   │   ├── Providers/            # Provider tests
-│   │   │   ├── Resilience/           # Resilience tests
-│   │   │   └── Shared/               # Shared utilities
-│   │   ├── Integration/              # Integration tests
-│   │   ├── Serialization/            # Serialization tests
-│   │   ├── Storage/                  # Storage tests
-│   │   └── SymbolSearch/             # Symbol search tests
-│   └── MarketDataCollector.FSharp.Tests/ # F# tests (5 files)
-│
-├── benchmarks/                       # Performance benchmarks
+├── .claude/
+│   └── settings.local.json
+├── .github/  # GitHub configuration
+│   ├── actions/
+│   │   └── setup-dotnet-cache/
+│   │       └── action.yml
+│   ├── agents/
+│   │   └── documentation-agent.md
+│   ├── ISSUE_TEMPLATE/
+│   │   ├── .gitkeep
+│   │   ├── bug_report.yml
+│   │   ├── config.yml
+│   │   └── feature_request.yml
+│   ├── prompts/
+│   │   ├── add-data-provider.prompt.yml
+│   │   ├── add-export-format.prompt.yml
+│   │   ├── code-review.prompt.yml
+│   │   ├── configure-deployment.prompt.yml
+│   │   ├── explain-architecture.prompt.yml
+│   │   ├── optimize-performance.prompt.yml
+│   │   ├── project-context.prompt.yml
+│   │   ├── provider-implementation-guide.prompt.yml
+│   │   ├── README.md
+│   │   ├── troubleshoot-issue.prompt.yml
+│   │   └── write-unit-tests.prompt.yml
+│   ├── workflows/
+│   │   ├── ai-instructions-sync.yml
+│   │   ├── benchmark.yml
+│   │   ├── build-observability.yml
+│   │   ├── cache-management.yml
+│   │   ├── code-quality.yml
+│   │   ├── dependency-review.yml
+│   │   ├── desktop-app.yml
+│   │   ├── docker.yml
+│   │   ├── docs-auto-update.yml
+│   │   ├── docs-structure-sync.yml
+│   │   ├── documentation.yml
+│   │   ├── dotnet-desktop.yml
+│   │   ├── labeling.yml
+│   │   ├── nightly.yml
+│   │   ├── pr-checks.yml
+│   │   ├── README.md
+│   │   ├── release.yml
+│   │   ├── reusable-dotnet-build.yml
+│   │   ├── scheduled-maintenance.yml
+│   │   ├── security.yml
+│   │   ├── stale.yml
+│   │   ├── test-matrix.yml
+│   │   ├── validate-workflows.yml
+│   │   └── wpf-commands.yml
+│   ├── dependabot.yml
+│   ├── labeler.yml
+│   ├── labels.yml
+│   ├── markdown-link-check-config.json
+│   ├── PULL_REQUEST_TEMPLATE.md
+│   ├── QUICKSTART.md
+│   ├── spellcheck-config.yml
+│   └── WORKFLOW_IMPROVEMENTS.md
+├── benchmarks/  # Performance benchmarks
 │   └── MarketDataCollector.Benchmarks/
-│
-├── MarketDataCollector.sln           # Solution file
-├── Directory.Build.props             # Build settings
-├── Makefile                          # Build automation
-├── CLAUDE.md                         # This file
-├── README.md                         # Project overview
-└── LICENSE                           # License
+│       ├── EventPipelineBenchmarks.cs
+│       ├── IndicatorBenchmarks.cs
+│       ├── JsonSerializationBenchmarks.cs
+│       ├── MarketDataCollector.Benchmarks.csproj
+│       └── Program.cs
+├── build/
+│   ├── dotnet/
+│   │   ├── DocGenerator/
+│   │   │   ├── DocGenerator.csproj
+│   │   │   └── Program.cs
+│   │   └── FSharpInteropGenerator/
+│   │       ├── FSharpInteropGenerator.csproj
+│   │       └── Program.cs
+│   ├── node/
+│   │   ├── generate-diagrams.mjs
+│   │   └── generate-icons.mjs
+│   ├── python/
+│   │   ├── adapters/
+│   │   │   ├── __init__.py
+│   │   │   └── dotnet.py
+│   │   ├── analytics/
+│   │   │   ├── __init__.py
+│   │   │   ├── history.py
+│   │   │   ├── metrics.py
+│   │   │   └── profile.py
+│   │   ├── cli/
+│   │   │   └── buildctl.py
+│   │   ├── core/
+│   │   │   ├── __init__.py
+│   │   │   ├── events.py
+│   │   │   ├── fingerprint.py
+│   │   │   ├── graph.py
+│   │   │   └── utils.py
+│   │   ├── diagnostics/
+│   │   │   ├── __init__.py
+│   │   │   ├── doctor.py
+│   │   │   ├── env_diff.py
+│   │   │   ├── error_matcher.py
+│   │   │   ├── preflight.py
+│   │   │   └── validate_data.py
+│   │   ├── knowledge/
+│   │   │   └── errors/
+│   │   │       ...
+│   │   └── __init__.py
+│   └── scripts/  # Automation scripts
+│       ├── docs/  # Documentation
+│       │   ├── generate-structure-docs.py
+│       │   └── update-claude-md.py
+│       ├── install/
+│       │   ├── install.ps1
+│       │   └── install.sh
+│       ├── lib/
+│       │   └── BuildNotification.psm1
+│       └── run/
+│           ├── start-collector.ps1
+│           ├── start-collector.sh
+│           ├── stop-collector.ps1
+│           └── stop-collector.sh
+├── config/  # Configuration files
+│   ├── appsettings.json
+│   └── appsettings.sample.json
+├── deploy/  # Deployment configurations
+│   ├── docker/
+│   │   ├── .dockerignore
+│   │   ├── docker-compose.yml
+│   │   └── Dockerfile
+│   ├── monitoring/
+│   │   ├── grafana/
+│   │   │   └── provisioning/
+│   │   │       ...
+│   │   └── prometheus.yml
+│   └── systemd/
+│       └── marketdatacollector.service
+├── docs/  # Documentation
+│   ├── adr/
+│   │   ├── 001-provider-abstraction.md
+│   │   ├── 002-tiered-storage-architecture.md
+│   │   ├── 003-microservices-decomposition.md
+│   │   ├── 004-async-streaming-patterns.md
+│   │   ├── 005-attribute-based-discovery.md
+│   │   ├── 010-httpclient-factory.md
+│   │   ├── 011-centralized-configuration-and-credentials.md
+│   │   ├── 012-monitoring-and-alerting-pipeline.md
+│   │   ├── _template.md
+│   │   └── README.md
+│   ├── ai/
+│   │   ├── claude/
+│   │   │   ├── CLAUDE.fsharp.md
+│   │   │   ├── CLAUDE.providers.md
+│   │   │   ├── CLAUDE.storage.md
+│   │   │   └── CLAUDE.testing.md
+│   │   ├── copilot/
+│   │   │   └── instructions.md
+│   │   └── README.md
+│   ├── api/
+│   │   └── index.md
+│   ├── architecture/
+│   │   ├── c4-context.png
+│   │   ├── c4-context.puml
+│   │   ├── c4-diagrams.md
+│   │   ├── consolidation.md
+│   │   ├── crystallized-storage-format.md
+│   │   ├── domains.md
+│   │   ├── overview.md
+│   │   ├── provider-management.md
+│   │   ├── storage-design.md
+│   │   └── why-this-architecture.md
+│   ├── development/
+│   │   ├── github-actions-summary.md
+│   │   ├── github-actions-testing.md
+│   │   ├── project-context.md
+│   │   ├── provider-implementation.md
+│   │   ├── uwp-development-roadmap.md
+│   │   ├── uwp-release-checklist.md
+│   │   └── uwp-to-wpf-migration.md
+│   ├── diagrams/
+│   │   ├── c4-level1-context.dot
+│   │   ├── c4-level1-context.png
+│   │   ├── c4-level1-context.svg
+│   │   ├── c4-level2-containers.dot
+│   │   ├── c4-level2-containers.png
+│   │   ├── c4-level2-containers.svg
+│   │   ├── c4-level3-components.dot
+│   │   ├── c4-level3-components.png
+│   │   ├── c4-level3-components.svg
+│   │   ├── cli-commands.dot
+│   │   ├── cli-commands.png
+│   │   ├── cli-commands.svg
+│   │   ├── data-flow.dot
+│   │   ├── data-flow.png
+│   │   ├── deployment-options.dot
+│   │   ├── deployment-options.png
+│   │   ├── event-pipeline-sequence.dot
+│   │   ├── event-pipeline-sequence.png
+│   │   ├── onboarding-flow.dot
+│   │   ├── onboarding-flow.png
+│   │   ├── onboarding-flow.svg
+│   │   ├── provider-architecture.dot
+│   │   ├── provider-architecture.png
+│   │   ├── README.md
+│   │   ├── resilience-patterns.dot
+│   │   ├── resilience-patterns.png
+│   │   ├── storage-architecture.dot
+│   │   └── storage-architecture.png
+│   ├── docfx/
+│   │   ├── docfx.json
+│   │   └── README.md
+│   ├── evaluations/
+│   │   ├── desktop-ui-alternatives-evaluation.md
+│   │   └── wpf-implementation-notes.md
+│   ├── generated/
+│   │   └── .gitkeep
+│   ├── getting-started/
+│   │   ├── configuration.md
+│   │   ├── README.md
+│   │   ├── setup.md
+│   │   └── troubleshooting.md
+│   ├── integrations/
+│   │   ├── fsharp-integration.md
+│   │   ├── language-strategy.md
+│   │   └── lean-integration.md
+│   ├── operations/
+│   │   ├── msix-packaging.md
+│   │   ├── operator-runbook.md
+│   │   └── portable-data-packager.md
+│   ├── providers/
+│   │   ├── alpaca-setup.md
+│   │   ├── backfill-guide.md
+│   │   ├── data-sources.md
+│   │   ├── interactive-brokers-free-equity-reference.md
+│   │   ├── interactive-brokers-setup.md
+│   │   └── provider-comparison.md
+│   ├── reference/
+│   │   ├── data-dictionary.md
+│   │   ├── data-uniformity.md
+│   │   ├── design-review-memo.md
+│   │   ├── DUPLICATE_CODE_ANALYSIS.md
+│   │   ├── open-source-references.md
+│   │   └── sandcastle.md
+│   ├── status/
+│   │   ├── CHANGELOG.md
+│   │   ├── CHANGES_SUMMARY.md
+│   │   ├── production-status.md
+│   │   ├── README.md
+│   │   └── ROADMAP.md
+│   ├── structure/
+│   │   ├── README.md
+│   │   └── REPOSITORY_REORGANIZATION_PLAN.md
+│   ├── troubleshooting/
+│   │   └── desktop-app-xaml-compiler-errors.md
+│   ├── uml/
+│   │   ├── activity-diagram-backfill.png
+│   │   ├── activity-diagram-backfill.puml
+│   │   ├── activity-diagram.png
+│   │   ├── activity-diagram.puml
+│   │   ├── communication-diagram.png
+│   │   ├── communication-diagram.puml
+│   │   ├── interaction-overview-diagram.png
+│   │   ├── interaction-overview-diagram.puml
+│   │   ├── README.md
+│   │   ├── sequence-diagram-backfill.png
+│   │   ├── sequence-diagram-backfill.puml
+│   │   ├── sequence-diagram.png
+│   │   ├── sequence-diagram.puml
+│   │   ├── state-diagram-backfill.png
+│   │   ├── state-diagram-backfill.puml
+│   │   ├── state-diagram-orderbook.png
+│   │   ├── state-diagram-orderbook.puml
+│   │   ├── state-diagram-trade-sequence.png
+│   │   ├── state-diagram-trade-sequence.puml
+│   │   ├── state-diagram.png
+│   │   ├── state-diagram.puml
+│   │   ├── timing-diagram-backfill.png
+│   │   ├── timing-diagram-backfill.puml
+│   │   ├── timing-diagram.png
+│   │   ├── timing-diagram.puml
+│   │   ├── use-case-diagram.png
+│   │   └── use-case-diagram.puml
+│   ├── build-observability.md
+│   ├── DEPENDENCIES.md
+│   ├── HELP.md
+│   ├── README.md
+│   ├── toc.yml
+│   └── USAGE.md
+├── src/  # Source code
+│   ├── MarketDataCollector/
+│   │   ├── Application/
+│   │   │   ├── Backfill/
+│   │   │   │   ...
+│   │   │   ├── Composition/
+│   │   │   │   ...
+│   │   │   ├── Config/
+│   │   │   │   ...
+│   │   │   ├── Credentials/
+│   │   │   │   ...
+│   │   │   ├── Exceptions/
+│   │   │   │   ...
+│   │   │   ├── Filters/
+│   │   │   │   ...
+│   │   │   ├── Http/
+│   │   │   │   ...
+│   │   │   ├── Indicators/
+│   │   │   │   ...
+│   │   │   ├── Logging/
+│   │   │   │   ...
+│   │   │   ├── Monitoring/
+│   │   │   │   ...
+│   │   │   ├── Pipeline/
+│   │   │   │   ...
+│   │   │   ├── Results/
+│   │   │   │   ...
+│   │   │   ├── Scheduling/
+│   │   │   │   ...
+│   │   │   ├── Serialization/
+│   │   │   │   ...
+│   │   │   ├── Services/
+│   │   │   │   ...
+│   │   │   ├── Subscriptions/
+│   │   │   │   ...
+│   │   │   ├── Testing/
+│   │   │   │   ...
+│   │   │   └── Tracing/
+│   │   │       ...
+│   │   ├── Domain/
+│   │   │   ├── Collectors/
+│   │   │   │   ...
+│   │   │   ├── Events/
+│   │   │   │   ...
+│   │   │   └── Models/
+│   │   │       ...
+│   │   ├── Infrastructure/
+│   │   │   ├── Contracts/
+│   │   │   │   ...
+│   │   │   ├── DataSources/
+│   │   │   │   ...
+│   │   │   ├── Http/
+│   │   │   │   ...
+│   │   │   ├── Performance/
+│   │   │   │   ...
+│   │   │   ├── Providers/
+│   │   │   │   ...
+│   │   │   ├── Resilience/
+│   │   │   │   ...
+│   │   │   ├── Shared/
+│   │   │   │   ...
+│   │   │   ├── Utilities/
+│   │   │   │   ...
+│   │   │   ├── IMarketDataClient.cs
+│   │   │   └── NoOpMarketDataClient.cs
+│   │   ├── Integrations/
+│   │   │   └── Lean/
+│   │   │       ...
+│   │   ├── Storage/
+│   │   │   ├── Archival/
+│   │   │   │   ...
+│   │   │   ├── Export/
+│   │   │   │   ...
+│   │   │   ├── Interfaces/
+│   │   │   │   ...
+│   │   │   ├── Maintenance/
+│   │   │   │   ...
+│   │   │   ├── Packaging/
+│   │   │   │   ...
+│   │   │   ├── Policies/
+│   │   │   │   ...
+│   │   │   ├── Replay/
+│   │   │   │   ...
+│   │   │   ├── Services/
+│   │   │   │   ...
+│   │   │   ├── Sinks/
+│   │   │   │   ...
+│   │   │   ├── StorageOptions.cs
+│   │   │   └── StorageProfiles.cs
+│   │   ├── Tools/
+│   │   │   └── DataValidator.cs
+│   │   ├── wwwroot/
+│   │   │   └── templates/
+│   │   │       ...
+│   │   ├── app.manifest
+│   │   ├── GlobalUsings.cs
+│   │   ├── MarketDataCollector.csproj
+│   │   ├── Program.cs
+│   │   └── runtimeconfig.template.json
+│   ├── MarketDataCollector.Contracts/
+│   │   ├── Api/
+│   │   │   ├── BackfillApiModels.cs
+│   │   │   ├── ClientModels.cs
+│   │   │   ├── ErrorResponse.cs
+│   │   │   ├── ProviderCatalog.cs
+│   │   │   ├── StatusEndpointModels.cs
+│   │   │   ├── StatusModels.cs
+│   │   │   ├── UiApiClient.cs
+│   │   │   ├── UiApiRoutes.cs
+│   │   │   └── UiDashboardModels.cs
+│   │   ├── Archive/
+│   │   │   └── ArchiveHealthModels.cs
+│   │   ├── Backfill/
+│   │   │   └── BackfillProgress.cs
+│   │   ├── Configuration/
+│   │   │   └── AppConfigDto.cs
+│   │   ├── Credentials/
+│   │   │   └── CredentialModels.cs
+│   │   ├── Domain/
+│   │   │   ├── Enums/
+│   │   │   │   ...
+│   │   │   ├── Events/
+│   │   │   │   ...
+│   │   │   ├── Models/
+│   │   │   │   ...
+│   │   │   └── MarketDataModels.cs
+│   │   ├── Export/
+│   │   │   └── ExportPreset.cs
+│   │   ├── Manifest/
+│   │   │   └── DataManifest.cs
+│   │   ├── Pipeline/
+│   │   │   └── PipelinePolicyConstants.cs
+│   │   ├── Schema/
+│   │   │   └── EventSchema.cs
+│   │   ├── Session/
+│   │   │   └── CollectionSession.cs
+│   │   └── MarketDataCollector.Contracts.csproj
+│   ├── MarketDataCollector.FSharp/
+│   │   ├── Calculations/
+│   │   │   ├── Aggregations.fs
+│   │   │   ├── Imbalance.fs
+│   │   │   └── Spread.fs
+│   │   ├── Domain/
+│   │   │   ├── Integrity.fs
+│   │   │   ├── MarketEvents.fs
+│   │   │   └── Sides.fs
+│   │   ├── Generated/
+│   │   │   └── MarketDataCollector.FSharp.Interop.g.cs
+│   │   ├── Pipeline/
+│   │   │   └── Transforms.fs
+│   │   ├── Validation/
+│   │   │   ├── QuoteValidator.fs
+│   │   │   ├── TradeValidator.fs
+│   │   │   ├── ValidationPipeline.fs
+│   │   │   └── ValidationTypes.fs
+│   │   ├── Interop.fs
+│   │   └── MarketDataCollector.FSharp.fsproj
+│   ├── MarketDataCollector.Ui/
+│   │   ├── wwwroot/
+│   │   │   └── static/
+│   │   │       ...
+│   │   ├── app.manifest
+│   │   ├── MarketDataCollector.Ui.csproj
+│   │   └── Program.cs
+│   ├── MarketDataCollector.Ui.Shared/
+│   │   ├── Endpoints/
+│   │   │   ├── BackfillEndpoints.cs
+│   │   │   ├── ConfigEndpoints.cs
+│   │   │   ├── FailoverEndpoints.cs
+│   │   │   ├── ProviderEndpoints.cs
+│   │   │   ├── StatusEndpoints.cs
+│   │   │   ├── SymbolMappingEndpoints.cs
+│   │   │   └── UiEndpoints.cs
+│   │   ├── Services/
+│   │   │   ├── BackfillCoordinator.cs
+│   │   │   └── ConfigStore.cs
+│   │   ├── DtoExtensions.cs
+│   │   ├── HtmlTemplates.cs
+│   │   └── MarketDataCollector.Ui.Shared.csproj
+│   ├── MarketDataCollector.Uwp/
+│   │   ├── Assets/
+│   │   │   ├── Icons/
+│   │   │   │   ...
+│   │   │   ├── Source/
+│   │   │   │   ...
+│   │   │   ├── AppIcon.svg
+│   │   │   ├── BadgeLogo.png
+│   │   │   ├── BadgeLogo.scale-100.png
+│   │   │   ├── BadgeLogo.scale-125.png
+│   │   │   ├── BadgeLogo.scale-150.png
+│   │   │   ├── BadgeLogo.scale-200.png
+│   │   │   ├── BadgeLogo.scale-400.png
+│   │   │   ├── generate-assets.ps1
+│   │   │   ├── generate-assets.sh
+│   │   │   ├── LargeTile.scale-100.png
+│   │   │   ├── LargeTile.scale-125.png
+│   │   │   ├── LargeTile.scale-150.png
+│   │   │   ├── LargeTile.scale-200.png
+│   │   │   ├── README.md
+│   │   │   ├── SmallTile.scale-100.png
+│   │   │   ├── SmallTile.scale-125.png
+│   │   │   ├── SmallTile.scale-150.png
+│   │   │   ├── SmallTile.scale-200.png
+│   │   │   ├── SplashScreen.scale-100.png
+│   │   │   ├── SplashScreen.scale-125.png
+│   │   │   ├── SplashScreen.scale-150.png
+│   │   │   ├── SplashScreen.scale-200.png
+│   │   │   ├── Square150x150Logo.png
+│   │   │   ├── Square150x150Logo.scale-100.png
+│   │   │   ├── Square150x150Logo.scale-125.png
+│   │   │   ├── Square150x150Logo.scale-150.png
+│   │   │   ├── Square150x150Logo.scale-200.png
+│   │   │   ├── Square150x150Logo.scale-400.png
+│   │   │   ├── Square44x44Logo.png
+│   │   │   ├── Square44x44Logo.scale-100.png
+│   │   │   ├── Square44x44Logo.scale-125.png
+│   │   │   ├── Square44x44Logo.scale-150.png
+│   │   │   ├── Square44x44Logo.scale-200.png
+│   │   │   ├── Square44x44Logo.scale-400.png
+│   │   │   ├── Square44x44Logo.targetsize-16.png
+│   │   │   ├── Square44x44Logo.targetsize-24.png
+│   │   │   ├── Square44x44Logo.targetsize-256.png
+│   │   │   ├── Square44x44Logo.targetsize-32.png
+│   │   │   ├── Square44x44Logo.targetsize-48.png
+│   │   │   ├── StoreLogo.png
+│   │   │   ├── StoreLogo.scale-100.png
+│   │   │   ├── StoreLogo.scale-125.png
+│   │   │   ├── StoreLogo.scale-150.png
+│   │   │   ├── StoreLogo.scale-200.png
+│   │   │   ├── StoreLogo.scale-400.png
+│   │   │   ├── Wide310x150Logo.scale-100.png
+│   │   │   ├── Wide310x150Logo.scale-125.png
+│   │   │   ├── Wide310x150Logo.scale-150.png
+│   │   │   └── Wide310x150Logo.scale-200.png
+│   │   ├── Collections/
+│   │   │   ├── BoundedObservableCollection.cs
+│   │   │   └── CircularBuffer.cs
+│   │   ├── Contracts/
+│   │   │   ├── IConfigService.cs
+│   │   │   ├── IConnectionService.cs
+│   │   │   ├── INavigationService.cs
+│   │   │   └── IStatusService.cs
+│   │   ├── Controls/
+│   │   │   ├── AlertBanner.xaml
+│   │   │   ├── AlertBanner.xaml.cs
+│   │   │   ├── DataCoverageCalendar.xaml
+│   │   │   ├── DataCoverageCalendar.xaml.cs
+│   │   │   ├── DataTable.xaml
+│   │   │   ├── DataTable.xaml.cs
+│   │   │   ├── LoadingOverlay.xaml
+│   │   │   ├── LoadingOverlay.xaml.cs
+│   │   │   ├── MetricCard.xaml
+│   │   │   ├── MetricCard.xaml.cs
+│   │   │   ├── ProgressCard.xaml
+│   │   │   ├── ProgressCard.xaml.cs
+│   │   │   ├── SectionHeader.xaml
+│   │   │   ├── SectionHeader.xaml.cs
+│   │   │   ├── StatusBadge.xaml
+│   │   │   └── StatusBadge.xaml.cs
+│   │   ├── Converters/
+│   │   │   └── BoolConverters.cs
+│   │   ├── Dialogs/
+│   │   │   ├── BackfillWizardDialog.xaml
+│   │   │   └── BackfillWizardDialog.xaml.cs
+│   │   ├── Examples/
+│   │   │   ├── CardLayoutExamples.xaml
+│   │   │   ├── ChartExamples.xaml
+│   │   │   ├── ComponentExamples.xaml
+│   │   │   ├── DataGridExamples.xaml
+│   │   │   ├── NotificationExamples.xaml
+│   │   │   ├── README.md
+│   │   │   ├── StatusIndicatorExamples.xaml
+│   │   │   └── VisualDesignGuide.md
+│   │   ├── Extensions/
+│   │   │   └── TaskExtensions.cs
+│   │   ├── Helpers/
+│   │   │   ├── AccessibilityHelper.cs
+│   │   │   └── ResponsiveLayoutHelper.cs
+│   │   ├── Models/
+│   │   │   ├── AppConfig.cs
+│   │   │   ├── OfflineTrackingModels.cs
+│   │   │   └── SharedModelAliases.cs
+│   │   ├── Services/
+│   │   │   ├── ActivityFeedService.cs
+│   │   │   ├── AdminMaintenanceService.cs
+│   │   │   ├── AdvancedAnalyticsService.cs
+│   │   │   ├── AnalysisExportWizardService.cs
+│   │   │   ├── ApiClientService.cs
+│   │   │   ├── ArchiveBrowserService.cs
+│   │   │   ├── ArchiveHealthService.cs
+│   │   │   ├── BackfillService.cs
+│   │   │   ├── BackgroundTaskSchedulerService.cs
+│   │   │   ├── BatchExportSchedulerService.cs
+│   │   │   ├── BrushRegistry.cs
+│   │   │   ├── ChartingService.cs
+│   │   │   ├── CollectionSessionService.cs
+│   │   │   ├── ConfigService.cs
+│   │   │   ├── ConnectionService.cs
+│   │   │   ├── ContextMenuService.cs
+│   │   │   ├── CredentialService.cs
+│   │   │   ├── DataCalendarService.cs
+│   │   │   ├── DataCompletenessService.cs
+│   │   │   ├── DataSamplingService.cs
+│   │   │   ├── DiagnosticsService.cs
+│   │   │   ├── ErrorHandlingService.cs
+│   │   │   ├── ErrorMessages.cs
+│   │   │   ├── EventReplayService.cs
+│   │   │   ├── ExportPresetService.cs
+│   │   │   ├── FirstRunService.cs
+│   │   │   ├── FormValidationService.cs
+│   │   │   ├── HttpClientConfiguration.cs
+│   │   │   ├── InfoBarService.cs
+│   │   │   ├── IntegrityEventsService.cs
+│   │   │   ├── KeyboardShortcutService.cs
+│   │   │   ├── LeanIntegrationService.cs
+│   │   │   ├── LiveDataService.cs
+│   │   │   ├── LoggingService.cs
+│   │   │   ├── ManifestService.cs
+│   │   │   ├── MessagingService.cs
+│   │   │   ├── NavigationService.cs
+│   │   │   ├── NotificationService.cs
+│   │   │   ├── OAuthRefreshService.cs
+│   │   │   ├── OfflineTrackingPersistenceService.cs
+│   │   │   ├── OrderBookVisualizationService.cs
+│   │   │   ├── PendingOperationsQueueService.cs
+│   │   │   ├── PortablePackagerService.cs
+│   │   │   ├── PortfolioImportService.cs
+│   │   │   ├── ProviderHealthService.cs
+│   │   │   ├── ProviderManagementService.cs
+│   │   │   ├── RetentionAssuranceService.cs
+│   │   │   ├── ScheduledMaintenanceService.cs
+│   │   │   ├── ScheduleManagerService.cs
+│   │   │   ├── SchemaService.cs
+│   │   │   ├── SearchService.cs
+│   │   │   ├── SetupWizardService.cs
+│   │   │   ├── SmartRecommendationsService.cs
+│   │   │   ├── StatusService.cs
+│   │   │   ├── StorageAnalyticsService.cs
+│   │   │   ├── StorageOptimizationAdvisorService.cs
+│   │   │   ├── StorageService.cs
+│   │   │   ├── SymbolGroupService.cs
+│   │   │   ├── SymbolManagementService.cs
+│   │   │   ├── SymbolMappingService.cs
+│   │   │   ├── SystemHealthService.cs
+│   │   │   ├── ThemeService.cs
+│   │   │   ├── TimeSeriesAlignmentService.cs
+│   │   │   ├── TooltipService.cs
+│   │   │   ├── UwpAnalysisExportService.cs
+│   │   │   ├── UwpDataQualityService.cs
+│   │   │   ├── UwpJsonOptions.cs
+│   │   │   ├── WatchlistService.cs
+│   │   │   └── WorkspaceService.cs
+│   │   ├── Styles/
+│   │   │   ├── Animations.xaml
+│   │   │   ├── AppStyles.xaml
+│   │   │   └── IconResources.xaml
+│   │   ├── ViewModels/
+│   │   │   ├── BackfillViewModel.cs
+│   │   │   ├── DashboardViewModel.cs
+│   │   │   ├── DataExportViewModel.cs
+│   │   │   ├── DataQualityViewModel.cs
+│   │   │   └── MainViewModel.cs
+│   │   ├── Views/
+│   │   │   ├── AdminMaintenancePage.xaml
+│   │   │   ├── AdminMaintenancePage.xaml.cs
+│   │   │   ├── AdvancedAnalyticsPage.xaml
+│   │   │   ├── AdvancedAnalyticsPage.xaml.cs
+│   │   │   ├── AnalysisExportPage.xaml
+│   │   │   ├── AnalysisExportPage.xaml.cs
+│   │   │   ├── AnalysisExportWizardPage.xaml
+│   │   │   ├── AnalysisExportWizardPage.xaml.cs
+│   │   │   ├── ArchiveHealthPage.xaml
+│   │   │   ├── ArchiveHealthPage.xaml.cs
+│   │   │   ├── BackfillPage.xaml
+│   │   │   ├── BackfillPage.xaml.cs
+│   │   │   ├── ChartingPage.xaml
+│   │   │   ├── ChartingPage.xaml.cs
+│   │   │   ├── CollectionSessionPage.xaml
+│   │   │   ├── CollectionSessionPage.xaml.cs
+│   │   │   ├── DashboardPage.xaml
+│   │   │   ├── DashboardPage.xaml.cs
+│   │   │   ├── DataBrowserPage.xaml
+│   │   │   ├── DataBrowserPage.xaml.cs
+│   │   │   ├── DataCalendarPage.xaml
+│   │   │   ├── DataCalendarPage.xaml.cs
+│   │   │   ├── DataExportPage.xaml
+│   │   │   ├── DataExportPage.xaml.cs
+│   │   │   ├── DataQualityPage.xaml
+│   │   │   ├── DataQualityPage.xaml.cs
+│   │   │   ├── DataSamplingPage.xaml
+│   │   │   ├── DataSamplingPage.xaml.cs
+│   │   │   ├── DataSourcesPage.xaml
+│   │   │   ├── DataSourcesPage.xaml.cs
+│   │   │   ├── DiagnosticsPage.xaml
+│   │   │   ├── DiagnosticsPage.xaml.cs
+│   │   │   ├── EventReplayPage.xaml
+│   │   │   ├── EventReplayPage.xaml.cs
+│   │   │   ├── ExportPresetsPage.xaml
+│   │   │   ├── ExportPresetsPage.xaml.cs
+│   │   │   ├── HelpPage.xaml
+│   │   │   ├── HelpPage.xaml.cs
+│   │   │   ├── IndexSubscriptionPage.xaml
+│   │   │   ├── IndexSubscriptionPage.xaml.cs
+│   │   │   ├── KeyboardShortcutsPage.xaml
+│   │   │   ├── KeyboardShortcutsPage.xaml.cs
+│   │   │   ├── LeanIntegrationPage.xaml
+│   │   │   ├── LeanIntegrationPage.xaml.cs
+│   │   │   ├── LiveDataViewerPage.xaml
+│   │   │   ├── LiveDataViewerPage.xaml.cs
+│   │   │   ├── MainPage.xaml
+│   │   │   ├── MainPage.xaml.cs
+│   │   │   ├── MessagingHubPage.xaml
+│   │   │   ├── MessagingHubPage.xaml.cs
+│   │   │   ├── NotificationCenterPage.xaml
+│   │   │   ├── NotificationCenterPage.xaml.cs
+│   │   │   ├── OrderBookPage.xaml
+│   │   │   ├── OrderBookPage.xaml.cs
+│   │   │   ├── PackageManagerPage.xaml
+│   │   │   ├── PackageManagerPage.xaml.cs
+│   │   │   ├── PortfolioImportPage.xaml
+│   │   │   ├── PortfolioImportPage.xaml.cs
+│   │   │   ├── ProviderHealthPage.xaml
+│   │   │   ├── ProviderHealthPage.xaml.cs
+│   │   │   ├── ProviderPage.xaml
+│   │   │   ├── ProviderPage.xaml.cs
+│   │   │   ├── RetentionAssurancePage.xaml
+│   │   │   ├── RetentionAssurancePage.xaml.cs
+│   │   │   ├── ScheduleManagerPage.xaml
+│   │   │   ├── ScheduleManagerPage.xaml.cs
+│   │   │   ├── ServiceManagerPage.xaml
+│   │   │   ├── ServiceManagerPage.xaml.cs
+│   │   │   ├── SettingsPage.xaml
+│   │   │   ├── SettingsPage.xaml.cs
+│   │   │   ├── SetupWizardPage.xaml
+│   │   │   ├── SetupWizardPage.xaml.cs
+│   │   │   ├── StorageOptimizationPage.xaml
+│   │   │   ├── StorageOptimizationPage.xaml.cs
+│   │   │   ├── StoragePage.xaml
+│   │   │   ├── StoragePage.xaml.cs
+│   │   │   ├── SymbolMappingPage.xaml
+│   │   │   ├── SymbolMappingPage.xaml.cs
+│   │   │   ├── SymbolsPage.xaml
+│   │   │   ├── SymbolsPage.xaml.cs
+│   │   │   ├── SymbolStoragePage.xaml
+│   │   │   ├── SymbolStoragePage.xaml.cs
+│   │   │   ├── SystemHealthPage.xaml
+│   │   │   ├── SystemHealthPage.xaml.cs
+│   │   │   ├── TimeSeriesAlignmentPage.xaml
+│   │   │   ├── TimeSeriesAlignmentPage.xaml.cs
+│   │   │   ├── TradingHoursPage.xaml
+│   │   │   ├── TradingHoursPage.xaml.cs
+│   │   │   ├── WatchlistPage.xaml
+│   │   │   ├── WatchlistPage.xaml.cs
+│   │   │   ├── WelcomePage.xaml
+│   │   │   ├── WelcomePage.xaml.cs
+│   │   │   ├── WorkspacePage.xaml
+│   │   │   └── WorkspacePage.xaml.cs
+│   │   ├── app.manifest
+│   │   ├── App.xaml
+│   │   ├── App.xaml.cs
+│   │   ├── Build.Notifications.targets
+│   │   ├── FEATURE_REFINEMENTS.md
+│   │   ├── MainWindow.xaml
+│   │   ├── MainWindow.xaml.cs
+│   │   ├── MarketDataCollector.Uwp.csproj
+│   │   └── Package.appxmanifest
+│   └── MarketDataCollector.Wpf/
+│       ├── Contracts/
+│       │   ├── IConnectionService.cs
+│       │   └── INavigationService.cs
+│       ├── Services/
+│       │   ├── BackgroundTaskSchedulerService.cs
+│       │   ├── ConfigService.cs
+│       │   ├── ConnectionService.cs
+│       │   ├── FirstRunService.cs
+│       │   ├── HttpClientFactoryProvider.cs
+│       │   ├── IBackgroundTaskSchedulerService.cs
+│       │   ├── IConfigService.cs
+│       │   ├── IConnectionService.cs
+│       │   ├── IKeyboardShortcutService.cs
+│       │   ├── ILoggingService.cs
+│       │   ├── IMessagingService.cs
+│       │   ├── INavigationService.cs
+│       │   ├── INotificationService.cs
+│       │   ├── IOfflineTrackingPersistenceService.cs
+│       │   ├── IPendingOperationsQueueService.cs
+│       │   ├── IThemeService.cs
+│       │   ├── KeyboardShortcutService.cs
+│       │   ├── LoggingService.cs
+│       │   ├── MessagingService.cs
+│       │   ├── NavigationService.cs
+│       │   ├── NotificationService.cs
+│       │   ├── OfflineTrackingPersistenceService.cs
+│       │   ├── PendingOperationsQueueService.cs
+│       │   ├── StatusService.cs
+│       │   ├── ThemeService.cs
+│       │   └── WatchlistService.cs
+│       ├── Styles/
+│       │   ├── Animations.xaml
+│       │   ├── AppStyles.xaml
+│       │   └── IconResources.xaml
+│       ├── Views/
+│       │   ├── ActivityLogPage.xaml
+│       │   ├── ActivityLogPage.xaml.cs
+│       │   ├── AdminMaintenancePage.xaml
+│       │   ├── AdminMaintenancePage.xaml.cs
+│       │   ├── AdvancedAnalyticsPage.xaml
+│       │   ├── AdvancedAnalyticsPage.xaml.cs
+│       │   ├── AnalysisExportPage.xaml
+│       │   ├── AnalysisExportPage.xaml.cs
+│       │   ├── AnalysisExportWizardPage.xaml
+│       │   ├── AnalysisExportWizardPage.xaml.cs
+│       │   ├── ArchiveHealthPage.xaml
+│       │   ├── ArchiveHealthPage.xaml.cs
+│       │   ├── BackfillPage.xaml
+│       │   ├── BackfillPage.xaml.cs
+│       │   ├── ChartingPage.xaml
+│       │   ├── ChartingPage.xaml.cs
+│       │   ├── CollectionSessionPage.xaml
+│       │   ├── CollectionSessionPage.xaml.cs
+│       │   ├── DashboardPage.xaml
+│       │   ├── DashboardPage.xaml.cs
+│       │   ├── DataBrowserPage.xaml
+│       │   ├── DataBrowserPage.xaml.cs
+│       │   ├── DataCalendarPage.xaml
+│       │   ├── DataCalendarPage.xaml.cs
+│       │   ├── DataExportPage.xaml
+│       │   ├── DataExportPage.xaml.cs
+│       │   ├── DataQualityPage.xaml
+│       │   ├── DataQualityPage.xaml.cs
+│       │   ├── DataSamplingPage.xaml
+│       │   ├── DataSamplingPage.xaml.cs
+│       │   ├── DataSourcesPage.xaml
+│       │   ├── DataSourcesPage.xaml.cs
+│       │   ├── DiagnosticsPage.xaml
+│       │   ├── DiagnosticsPage.xaml.cs
+│       │   ├── EventReplayPage.xaml
+│       │   ├── EventReplayPage.xaml.cs
+│       │   ├── ExportPresetsPage.xaml
+│       │   ├── ExportPresetsPage.xaml.cs
+│       │   ├── HelpPage.xaml
+│       │   ├── HelpPage.xaml.cs
+│       │   ├── IndexSubscriptionPage.xaml
+│       │   ├── IndexSubscriptionPage.xaml.cs
+│       │   ├── KeyboardShortcutsPage.xaml
+│       │   ├── KeyboardShortcutsPage.xaml.cs
+│       │   ├── LeanIntegrationPage.xaml
+│       │   ├── LeanIntegrationPage.xaml.cs
+│       │   ├── LiveDataViewerPage.xaml
+│       │   ├── LiveDataViewerPage.xaml.cs
+│       │   ├── MainPage.xaml
+│       │   ├── MainPage.xaml.cs
+│       │   ├── MessagingHubPage.xaml
+│       │   ├── MessagingHubPage.xaml.cs
+│       │   ├── NotificationCenterPage.xaml
+│       │   ├── NotificationCenterPage.xaml.cs
+│       │   ├── OrderBookPage.xaml
+│       │   ├── OrderBookPage.xaml.cs
+│       │   ├── PackageManagerPage.xaml
+│       │   ├── PackageManagerPage.xaml.cs
+│       │   ├── Pages.cs
+│       │   ├── PortfolioImportPage.xaml
+│       │   ├── PortfolioImportPage.xaml.cs
+│       │   ├── ProviderHealthPage.xaml
+│       │   ├── ProviderHealthPage.xaml.cs
+│       │   ├── ProviderPage.xaml
+│       │   ├── ProviderPage.xaml.cs
+│       │   ├── RetentionAssurancePage.xaml
+│       │   ├── RetentionAssurancePage.xaml.cs
+│       │   ├── ScheduleManagerPage.xaml
+│       │   ├── ScheduleManagerPage.xaml.cs
+│       │   ├── ServiceManagerPage.xaml
+│       │   ├── ServiceManagerPage.xaml.cs
+│       │   ├── SettingsPage.xaml
+│       │   ├── SettingsPage.xaml.cs
+│       │   ├── SetupWizardPage.xaml
+│       │   ├── SetupWizardPage.xaml.cs
+│       │   ├── StorageOptimizationPage.xaml
+│       │   ├── StorageOptimizationPage.xaml.cs
+│       │   ├── StoragePage.xaml
+│       │   ├── StoragePage.xaml.cs
+│       │   ├── SymbolMappingPage.xaml
+│       │   ├── SymbolMappingPage.xaml.cs
+│       │   ├── SymbolsPage.xaml
+│       │   ├── SymbolsPage.xaml.cs
+│       │   ├── SymbolStoragePage.xaml
+│       │   ├── SymbolStoragePage.xaml.cs
+│       │   ├── SystemHealthPage.xaml
+│       │   ├── SystemHealthPage.xaml.cs
+│       │   ├── TimeSeriesAlignmentPage.xaml
+│       │   ├── TimeSeriesAlignmentPage.xaml.cs
+│       │   ├── TradingHoursPage.xaml
+│       │   ├── TradingHoursPage.xaml.cs
+│       │   ├── WatchlistPage.xaml
+│       │   ├── WatchlistPage.xaml.cs
+│       │   ├── WelcomePage.xaml
+│       │   ├── WelcomePage.xaml.cs
+│       │   ├── WorkspacePage.xaml
+│       │   └── WorkspacePage.xaml.cs
+│       ├── App.xaml
+│       ├── App.xaml.cs
+│       ├── MainWindow.xaml
+│       ├── MainWindow.xaml.cs
+│       ├── MarketDataCollector.Wpf.csproj
+│       └── README.md
+├── tests/  # Test projects
+│   ├── MarketDataCollector.FSharp.Tests/
+│   │   ├── CalculationTests.fs
+│   │   ├── DomainTests.fs
+│   │   ├── MarketDataCollector.FSharp.Tests.fsproj
+│   │   ├── PipelineTests.fs
+│   │   ├── Program.fs
+│   │   └── ValidationTests.fs
+│   ├── MarketDataCollector.Tests/
+│   │   ├── Application/
+│   │   │   ├── Backfill/
+│   │   │   │   ...
+│   │   │   ├── Config/
+│   │   │   │   ...
+│   │   │   ├── Credentials/
+│   │   │   │   ...
+│   │   │   ├── Indicators/
+│   │   │   │   ...
+│   │   │   ├── Monitoring/
+│   │   │   │   ...
+│   │   │   ├── Pipeline/
+│   │   │   │   ...
+│   │   │   └── Services/
+│   │   │       ...
+│   │   ├── Domain/
+│   │   │   ├── Collectors/
+│   │   │   │   ...
+│   │   │   └── Models/
+│   │   │       ...
+│   │   ├── Infrastructure/
+│   │   │   ├── Providers/
+│   │   │   │   ...
+│   │   │   ├── Resilience/
+│   │   │   │   ...
+│   │   │   └── Shared/
+│   │   │       ...
+│   │   ├── Integration/
+│   │   │   ├── ConnectionRetryIntegrationTests.cs
+│   │   │   └── UwpCoreIntegrationTests.cs
+│   │   ├── Serialization/
+│   │   │   └── HighPerformanceJsonTests.cs
+│   │   ├── Storage/
+│   │   │   ├── AnalysisExportServiceTests.cs
+│   │   │   ├── FilePermissionsServiceTests.cs
+│   │   │   ├── JsonlBatchWriteTests.cs
+│   │   │   ├── MemoryMappedJsonlReaderTests.cs
+│   │   │   ├── PortableDataPackagerTests.cs
+│   │   │   └── StorageOptionsDefaultsTests.cs
+│   │   ├── SymbolSearch/
+│   │   │   ├── OpenFigiClientTests.cs
+│   │   │   └── SymbolSearchServiceTests.cs
+│   │   ├── TestHelpers/
+│   │   │   └── TestMarketEventPublisher.cs
+│   │   └── MarketDataCollector.Tests.csproj
+│   └── coverlet.runsettings
+├── .gitignore
+├── build-final.txt
+├── build-output.txt
+├── build-output2.txt
+├── CLAUDE.md
+├── Directory.Build.props
+├── Directory.Packages.props
+├── global.json
+├── LICENSE
+├── Makefile
+├── MarketDataCollector.sln
+├── package-lock.json
+├── package.json
+├── README.md
+└── WPF_MIGRATION_SUMMARY.md
 ```
-
----
 
 ## Critical Rules
 
@@ -1084,4 +1827,4 @@ See `docs/guides/troubleshooting.md` for detailed solutions.
 
 ---
 
-*Last Updated: 2026-02-01*
+*Last Updated: 2026-02-03*
