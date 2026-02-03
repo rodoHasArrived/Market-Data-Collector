@@ -264,6 +264,8 @@ jobs:
             exit 1
           fi
 
+      # Fallback handler when PR creation fails
+      # Checks both outcome (for failed steps with continue-on-error) and output (for explicit failures)
       - name: PR creation fallback
         if: |
           steps.check.outputs.has_changes == 'true' &&
