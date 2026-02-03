@@ -194,6 +194,8 @@ This directory contains automated workflows that help maintain code quality, sec
 - **Purpose**: Validates workflow syntax and checks reusable references
 - **Features**:
   - Ensures workflow YAML consistency
+  - Validates issue template YAML files
+  - Validates AI assistant prompt YAML files
   - Catches invalid reusable workflow usage
   - Fast feedback for workflow edits
 
