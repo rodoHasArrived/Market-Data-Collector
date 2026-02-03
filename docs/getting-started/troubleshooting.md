@@ -493,17 +493,20 @@ error MSB3073: The command "XamlCompiler.exe" "obj\x64\Debug\...\win-x64\\input.
 **Symptom**: UWP/Desktop app build fails with error: `XamlCompiler.exe exited with code 1` without detailed error messages.
 
 **Root Cause**: The WinUI 3 XAML compiler (`XamlCompiler.exe`) is a .NET Framework 4.7.2 (net472) executable that cannot process modern C# features like:
+- C# 11 features
 - C# 9 `record` types
 - `init` accessors
 - Global using directives
 - Some System.Text.Json attributes
 
-**Solution**: The project file should include:
+**Solution**: For Windows App SDK 1.6+, the project file should include:
 ```xml
-<UseXamlCompilerExecutable>false</UseXamlCompilerExecutable>
+<XamlCompilerPlatform>Managed</XamlCompilerPlatform>
 ```
 
 This switches from the legacy net472 compiler to the managed (.NET) XAML compiler that understands modern C# syntax.
+
+**Note**: The older `<UseXamlCompilerExecutable>false</UseXamlCompilerExecutable>` property is deprecated and ineffective with Windows App SDK 1.6+.
 
 **Reference**: [Microsoft WinUI Issue #5315](https://github.com/microsoft/microsoft-ui-xaml/issues/5315)
 

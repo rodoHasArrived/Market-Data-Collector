@@ -13,8 +13,10 @@ This document outlines feature refinements and development roadmap for the Marke
 Fixed long-standing build failure in GitHub Actions Desktop App Build workflow:
 
 - **Problem**: All 81+ desktop app workflow runs were failing with `XamlCompiler.exe` exit code 1
-- **Root Cause**: WinUI 3 XAML compiler (`XamlCompiler.exe`) is a .NET Framework 4.7.2 (net472) executable that cannot process C# 9 record types used extensively in `MarketDataCollector.Contracts` (e.g., `MarketEvent`, `CredentialFieldInfo`, `FieldError`, etc.)
-- **Solution**: Added `<UseXamlCompilerExecutable>false</UseXamlCompilerExecutable>` to project file to use managed (.NET) XAML compiler instead
+- **Root Cause**: WinUI 3 XAML compiler (`XamlCompiler.exe`) is a .NET Framework 4.7.2 (net472) executable that cannot process C# 11 features used extensively in `MarketDataCollector.Contracts` (e.g., `MarketEvent`, `CredentialFieldInfo`, `FieldError`, etc.)
+- **Solution**: Added `<XamlCompilerPlatform>Managed</XamlCompilerPlatform>` to project file to use managed (.NET) XAML compiler instead
+  - Note: Previous attempts with `<UseXamlCompilerExecutable>false</UseXamlCompilerExecutable>` were ineffective
+  - For Windows App SDK 1.6+, `XamlCompilerPlatform=Managed` is the correct property
 - **Impact**: Enables successful builds for x64, arm64, and MSIX packages
 - **Reference**: [Microsoft WinUI Issue #5315](https://github.com/microsoft/microsoft-ui-xaml/issues/5315)
 - **Workflow Enhancement**: Added binary logging (`-bl`) to build commands for improved diagnostics
