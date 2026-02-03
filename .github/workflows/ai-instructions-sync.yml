@@ -1,0 +1,99 @@
+# AI Instruction Sync Workflow
+# Updates AI assistant guidance files with the latest repository structure
+
+name: AI Instructions Sync
+
+on:
+  schedule:
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run - show changes without committing'
+        required: false
+        default: 'false'
+        type: boolean
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ai-instructions-sync-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  update-ai-instructions:
+    name: Update AI Instruction Files
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6.0.1
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v6.2.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Generate repository structure reference
+        run: |
+          python3 build/scripts/docs/generate-structure-docs.py \
+            --output /tmp/repository-structure.md \
+            --format markdown
+
+      - name: Update AI instruction files
+        run: |
+          files=(
+            "CLAUDE.md"
+            "docs/ai/copilot/instructions.md"
+            ".github/agents/documentation-agent.md"
+          )
+
+          for file in "${files[@]}"; do
+            python3 build/scripts/docs/update-claude-md.py \
+              --claude-md "$file" \
+              --structure-source /tmp/repository-structure.md
+          done
+
+      - name: Check for changes
+        id: check-changes
+        run: |
+          if [ -n "$(git status --porcelain CLAUDE.md docs/ai/copilot/instructions.md .github/agents/documentation-agent.md)" ]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit AI instruction updates
+        if: |
+          steps.check-changes.outputs.has_changes == 'true' &&
+          github.event.inputs.dry_run != 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add CLAUDE.md docs/ai/copilot/instructions.md .github/agents/documentation-agent.md
+          git commit -m "docs: sync AI instruction repository structure
+
+          Updates AI assistant instruction files with the latest repository structure.
+
+          [skip ci]"
+
+          git push
+
+      - name: Summary
+        run: |
+          echo "## AI Instruction Sync" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| File | Updated |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|---------|" >> $GITHUB_STEP_SUMMARY
+          echo "| CLAUDE.md | ${{ steps.check-changes.outputs.has_changes == 'true' && '✅' || '⏭️' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| docs/ai/copilot/instructions.md | ${{ steps.check-changes.outputs.has_changes == 'true' && '✅' || '⏭️' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| .github/agents/documentation-agent.md | ${{ steps.check-changes.outputs.has_changes == 'true' && '✅' || '⏭️' }} |" >> $GITHUB_STEP_SUMMARY

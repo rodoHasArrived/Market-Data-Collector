@@ -105,6 +105,226 @@ MarketDataCollector/
 └── deploy/                               # Deployment configurations
 ```
 
+## Repository Structure
+
+```
+Market-Data-Collector/
+├── .github/                          # GitHub configuration
+│   ├── workflows/                    # CI/CD pipelines (21 workflows)
+│   ├── agents/                       # AI agent configurations
+│   │   └── documentation-agent.md   # Documentation specialist guide
+│   ├── prompts/                      # AI assistant prompts
+│   ├── QUICKSTART.md                 # Workflow quick start guide
+│   ├── dependabot.yml                # Dependency updates
+│   └── labeler.yml                   # PR auto-labeling
+│
+├── docs/                             # All documentation
+│   ├── getting-started/              # Onboarding guides
+│   │   ├── setup.md                  # Setup and first run
+│   │   ├── configuration.md          # Configuration options
+│   │   └── troubleshooting.md        # Common issues and solutions
+│   ├── architecture/                 # System architecture docs
+│   │   ├── overview.md               # System architecture
+│   │   ├── domains.md                # Event contracts
+│   │   ├── storage-design.md         # Storage organization
+│   │   ├── consolidation.md          # UI layer consolidation
+│   │   ├── crystallized-storage-format.md # Storage format spec
+│   │   ├── c4-diagrams.md            # C4 model visualizations
+│   │   └── why-this-architecture.md  # Design rationale
+│   ├── operations/                   # Production operations
+│   │   ├── operator-runbook.md       # Operations guide
+│   │   ├── portable-data-packager.md # Data packaging guide
+│   │   └── msix-packaging.md         # Desktop packaging
+│   ├── development/                  # Developer guides
+│   │   ├── provider-implementation.md # Adding new providers
+│   │   ├── uwp-development-roadmap.md # UWP development status
+│   │   ├── uwp-release-checklist.md  # UWP release process
+│   │   ├── github-actions-summary.md # CI/CD overview
+│   │   ├── github-actions-testing.md # Testing workflows
+│   │   └── project-context.md        # Project context
+│   ├── providers/                    # Provider setup guides
+│   │   ├── backfill-guide.md         # Historical data guide
+│   │   ├── data-sources.md           # Available data sources
+│   │   └── provider-comparison.md    # Feature comparison matrix
+│   ├── integrations/                 # Integration guides
+│   │   ├── lean-integration.md       # QuantConnect Lean guide
+│   │   ├── fsharp-integration.md     # F# domain library
+│   │   └── language-strategy.md      # Polyglot architecture
+│   ├── ai/                           # AI assistant guides
+│   │   ├── claude/                   # Claude-specific guides
+│   │   │   ├── CLAUDE.providers.md   # Provider implementation
+│   │   │   ├── CLAUDE.storage.md     # Storage system
+│   │   │   ├── CLAUDE.fsharp.md      # F# domain library
+│   │   │   └── CLAUDE.testing.md     # Testing guide
+│   │   └── copilot/                  # Copilot guides
+│   │       └── instructions.md       # GitHub Copilot instructions
+│   ├── api/                          # API reference
+│   ├── status/                       # Roadmap, backlog, changelogs
+│   ├── adr/                          # Architecture Decision Records
+│   ├── reference/                    # Reference materials
+│   │   ├── data-dictionary.md        # Field definitions
+│   │   └── data-uniformity.md        # Consistency guidelines
+│   ├── diagrams/                     # Architecture diagrams
+│   ├── uml/                          # UML diagrams
+│   ├── USAGE.md                      # Detailed usage guide
+│   ├── HELP.md                       # User guide with FAQ
+│   └── DEPENDENCIES.md               # Package documentation
+│
+├── build/                            # All build tooling (consolidated)
+│   ├── python/                       # Python build tooling
+│   │   ├── cli/                      # Command-line tools (buildctl.py)
+│   │   ├── adapters/                 # Build adapters
+│   │   ├── analytics/                # Build analytics
+│   │   ├── core/                     # Core utilities
+│   │   ├── diagnostics/              # Diagnostic tools
+│   │   └── knowledge/                # Error pattern catalogs
+│   ├── scripts/                      # Shell scripts
+│   │   ├── install/                  # Installation scripts
+│   │   ├── publish/                  # Publishing scripts
+│   │   ├── run/                      # Runtime scripts
+│   │   ├── lib/                      # Script utilities
+│   │   └── docs/                     # Documentation scripts
+│   ├── node/                         # Node.js tooling
+│   │   ├── generate-diagrams.mjs     # Diagram generation
+│   │   └── generate-icons.mjs        # Icon generation
+│   └── dotnet/                       # .NET tools
+│       ├── DocGenerator/             # Documentation generator
+│       └── FSharpInteropGenerator/   # F# interop generator
+│
+├── deploy/                           # Deployment configurations
+│   ├── docker/                       # Dockerfile, docker-compose
+│   ├── systemd/                      # Linux systemd service
+│   └── monitoring/                   # Prometheus, Grafana configs
+│
+├── config/                           # Configuration files
+│   ├── appsettings.json              # Runtime config (gitignored)
+│   └── appsettings.sample.json       # Configuration template
+│
+├── src/                              # Source code
+│   ├── MarketDataCollector/          # Core application (entry point)
+│   │   ├── Domain/                   # Business logic
+│   │   │   ├── Collectors/           # Data collectors (5 files)
+│   │   │   ├── Events/               # Domain events (7 files)
+│   │   │   └── Models/               # Domain models (21 files)
+│   │   ├── Infrastructure/           # Provider implementations
+│   │   │   ├── Contracts/            # Core interfaces
+│   │   │   ├── Providers/            # Data providers
+│   │   │   │   ├── Core/             # Provider infrastructure
+│   │   │   │   ├── Streaming/        # Real-time streaming providers
+│   │   │   │   │   ├── Alpaca/       # Alpaca Markets
+│   │   │   │   │   ├── InteractiveBrokers/ # IB Gateway
+│   │   │   │   │   ├── NYSE/         # NYSE data
+│   │   │   │   │   ├── Polygon/      # Polygon.io
+│   │   │   │   │   └── StockSharp/   # StockSharp (90+ sources)
+│   │   │   │   ├── Historical/       # Historical data providers
+│   │   │   │   │   ├── Alpaca/       # Alpaca historical
+│   │   │   │   │   ├── AlphaVantage/ # Alpha Vantage
+│   │   │   │   │   ├── Finnhub/      # Finnhub
+│   │   │   │   │   ├── InteractiveBrokers/ # IB historical
+│   │   │   │   │   ├── NasdaqDataLink/    # Nasdaq Data Link
+│   │   │   │   │   ├── Polygon/      # Polygon historical
+│   │   │   │   │   ├── StockSharp/   # StockSharp historical
+│   │   │   │   │   ├── Stooq/        # Stooq
+│   │   │   │   │   ├── Tiingo/       # Tiingo
+│   │   │   │   │   ├── YahooFinance/ # Yahoo Finance
+│   │   │   │   │   ├── RateLimiting/ # Rate limit tracking
+│   │   │   │   │   ├── Queue/        # Backfill job queue
+│   │   │   │   │   ├── GapAnalysis/  # Gap detection/repair
+│   │   │   │   │   └── SymbolResolution/ # Symbol resolvers
+│   │   │   │   ├── SymbolSearch/     # Symbol search providers
+│   │   │   │   └── MultiProvider/    # Multi-provider routing
+│   │   │   ├── DataSources/          # Data source abstractions
+│   │   │   ├── Resilience/           # WebSocket resilience (Polly)
+│   │   │   └── IMarketDataClient.cs  # Core streaming interface
+│   │   ├── Storage/                  # Data persistence (~35 files)
+│   │   │   ├── Sinks/                # JSONL/Parquet writers
+│   │   │   ├── Archival/             # Archive management, WAL
+│   │   │   ├── Export/               # Data export, quality reports
+│   │   │   ├── Maintenance/          # Scheduled archive maintenance
+│   │   │   ├── Packaging/            # Portable data packages
+│   │   │   ├── Replay/               # Data replay, memory-mapped readers
+│   │   │   ├── Policies/             # Retention policies
+│   │   │   └── Services/             # Storage services
+│   │   ├── Application/              # Startup, config, services (~90 files)
+│   │   │   ├── Backfill/             # Backfill service, requests, results
+│   │   │   ├── Config/               # Configuration management
+│   │   │   │   └── Credentials/      # Credential providers, OAuth
+│   │   │   ├── Exceptions/           # Custom exception types
+│   │   │   ├── Filters/              # Event filtering
+│   │   │   ├── Indicators/           # Technical indicators
+│   │   │   ├── Logging/              # Structured logging setup
+│   │   │   ├── Monitoring/           # Metrics, health checks
+│   │   │   │   └── DataQuality/      # Quality monitoring (~12 files)
+│   │   │   ├── Pipeline/             # Event pipeline
+│   │   │   ├── Results/              # Result<T, TError> types
+│   │   │   ├── Scheduling/           # Backfill scheduling (cron)
+│   │   │   ├── Serialization/        # JSON serialization
+│   │   │   ├── Services/             # Application services (~25 files)
+│   │   │   ├── Subscriptions/        # Symbol subscription management
+│   │   │   │   ├── Models/           # Watchlists, portfolios
+│   │   │   │   └── Services/         # Subscription services
+│   │   │   └── Http/                 # HTTP endpoints
+│   │   │       └── Endpoints/        # All HTTP endpoint handlers
+│   │   ├── Integrations/             # External integrations
+│   │   │   └── Lean/                 # QuantConnect Lean
+│   │   └── Tools/                    # Utility tools
+│   ├── MarketDataCollector.FSharp/   # F# domain models (12 files)
+│   │   ├── Domain/                   # F# domain types
+│   │   ├── Validation/               # Railway-oriented validation
+│   │   ├── Calculations/             # Spread, imbalance, VWAP
+│   │   └── Pipeline/                 # Data transforms
+│   ├── MarketDataCollector.Contracts/# Shared DTOs, contracts
+│   │   ├── Api/                      # HTTP API contracts
+│   │   ├── Domain/                   # Shared domain contracts
+│   │   └── Configuration/            # Configuration schema
+│   ├── MarketDataCollector.Ui/       # Web dashboard (10 files)
+│   │   ├── Endpoints/                # HTTP endpoints
+│   │   └── wwwroot/                  # Static assets
+│   ├── MarketDataCollector.Ui.Shared/ # Shared UI services & endpoints
+│   │   ├── Endpoints/                # Consolidated HTTP endpoints
+│   │   └── Services/                 # Shared UI services
+│   └── MarketDataCollector.Uwp/      # Windows desktop app (WinUI 3)
+│       ├── Views/                    # XAML UI pages
+│       ├── ViewModels/               # MVVM view models
+│       ├── Services/                 # Windows services
+│       ├── Models/                   # UWP-specific models + SharedModelAliases.cs
+│       └── SharedModels/             # Linked source files from Contracts (compile-time)
+│
+├── tests/                            # Test projects (mirrors src structure)
+│   ├── MarketDataCollector.Tests/    # C# unit tests
+│   │   ├── Application/              # Application layer tests
+│   │   │   ├── Backfill/             # Backfill tests
+│   │   │   ├── Config/               # Config tests
+│   │   │   ├── Credentials/          # Credential tests
+│   │   │   ├── Indicators/           # Indicator tests
+│   │   │   ├── Monitoring/           # Monitoring tests
+│   │   │   │   └── DataQuality/      # Data quality tests
+│   │   │   ├── Pipeline/             # Pipeline tests
+│   │   │   └── Services/             # Service tests
+│   │   ├── Domain/                   # Domain layer tests
+│   │   │   ├── Collectors/           # Collector tests
+│   │   │   └── Models/               # Model tests
+│   │   ├── Infrastructure/           # Infrastructure tests
+│   │   │   ├── Providers/            # Provider tests
+│   │   │   ├── Resilience/           # Resilience tests
+│   │   │   └── Shared/               # Shared utilities
+│   │   ├── Integration/              # Integration tests
+│   │   ├── Serialization/            # Serialization tests
+│   │   ├── Storage/                  # Storage tests
+│   │   └── SymbolSearch/             # Symbol search tests
+│   └── MarketDataCollector.FSharp.Tests/ # F# tests (5 files)
+│
+├── benchmarks/                       # Performance benchmarks
+│   └── MarketDataCollector.Benchmarks/
+│
+├── MarketDataCollector.sln           # Solution file
+├── Directory.Build.props             # Build settings
+├── Makefile                          # Build automation
+├── CLAUDE.md                         # This file
+├── README.md                         # Project overview
+└── LICENSE                           # License
+```
+
 ### Key Configuration Files
 
 - **`Directory.Build.props`** - Root MSBuild properties, enables `EnableWindowsTargeting=true` for cross-platform builds
