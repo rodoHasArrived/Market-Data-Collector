@@ -5,20 +5,36 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       mc:Ignorable="d"
       d:DesignHeight="800" d:DesignWidth="1200"
-      Background="{DynamicResource ConsoleBackgroundDarkBrush}">
+      Background="{DynamicResource ConsoleBackgroundDarkBrush}"
+      Loaded="OnPageLoaded">
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="24">
         <StackPanel MaxWidth="1200">
             <!-- Header -->
-            <StackPanel Orientation="Horizontal" Margin="0,0,0,24">
-                <TextBlock Text="{StaticResource IconChart}"
-                           FontFamily="{StaticResource SymbolThemeFontFamily}"
-                           FontSize="28" Foreground="{StaticResource InfoColorBrush}"
-                           VerticalAlignment="Center" />
-                <TextBlock Text="Data Quality Monitor"
-                           Style="{StaticResource PageTitleStyle}"
-                           Margin="12,0,0,0" VerticalAlignment="Center" />
-            </StackPanel>
+            <Grid Margin="0,0,0,24">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                    <TextBlock Text="&#xE9D9;" FontFamily="{StaticResource SymbolThemeFontFamily}"
+                               FontSize="28" Foreground="{StaticResource InfoColorBrush}"
+                               VerticalAlignment="Center" />
+                    <TextBlock Text="Data Quality Monitor" Style="{StaticResource PageTitleStyle}"
+                               Margin="12,0,0,0" VerticalAlignment="Center" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <TextBlock x:Name="LastUpdateText" Text="Last updated: --"
+                               Foreground="{StaticResource ConsoleTextMutedBrush}"
+                               VerticalAlignment="Center" Margin="0,0,16,0"/>
+                    <Button Content="Refresh" Click="Refresh_Click"
+                            Background="{DynamicResource ConsoleBackgroundMediumBrush}"
+                            Foreground="{DynamicResource ConsoleTextBrush}"
+                            BorderThickness="0" Padding="16,8"/>
+                </StackPanel>
+            </Grid>
 
             <!-- Quality Metrics Overview -->
             <Grid Margin="0,0,0,24">
@@ -34,7 +50,7 @@
 
                 <Border Grid.Column="0" Style="{StaticResource CardStyle}">
                     <StackPanel HorizontalAlignment="Center">
-                        <TextBlock Text="98.5%" FontSize="32" FontWeight="Bold"
+                        <TextBlock x:Name="CompletenessText" Text="--" FontSize="32" FontWeight="Bold"
                                    Foreground="{StaticResource SuccessColorBrush}"
                                    HorizontalAlignment="Center" />
                         <TextBlock Text="Completeness Score" HorizontalAlignment="Center"
@@ -44,7 +60,7 @@
 
                 <Border Grid.Column="2" Style="{StaticResource CardStyle}">
                     <StackPanel HorizontalAlignment="Center">
-                        <TextBlock Text="3" FontSize="32" FontWeight="Bold"
+                        <TextBlock x:Name="GapsCountText" Text="--" FontSize="32" FontWeight="Bold"
                                    Foreground="{StaticResource WarningColorBrush}"
                                    HorizontalAlignment="Center" />
                         <TextBlock Text="Data Gaps" HorizontalAlignment="Center"
@@ -54,7 +70,7 @@
 
                 <Border Grid.Column="4" Style="{StaticResource CardStyle}">
                     <StackPanel HorizontalAlignment="Center">
-                        <TextBlock Text="0" FontSize="32" FontWeight="Bold"
+                        <TextBlock x:Name="ErrorsCountText" Text="--" FontSize="32" FontWeight="Bold"
                                    Foreground="{StaticResource SuccessColorBrush}"
                                    HorizontalAlignment="Center" />
                         <TextBlock Text="Sequence Errors" HorizontalAlignment="Center"
@@ -64,7 +80,7 @@
 
                 <Border Grid.Column="6" Style="{StaticResource CardStyle}">
                     <StackPanel HorizontalAlignment="Center">
-                        <TextBlock Text="12ms" FontSize="32" FontWeight="Bold"
+                        <TextBlock x:Name="LatencyText" Text="--" FontSize="32" FontWeight="Bold"
                                    Foreground="{StaticResource InfoColorBrush}"
                                    HorizontalAlignment="Center" />
                         <TextBlock Text="Avg Latency" HorizontalAlignment="Center"
@@ -73,35 +89,222 @@
                 </Border>
             </Grid>
 
+            <!-- Symbol Quality Grid -->
+            <Border Style="{StaticResource CardStyle}" Margin="0,0,0,24">
+                <StackPanel>
+                    <Grid Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="Symbol Quality" Style="{StaticResource CardHeaderStyle}"/>
+                        <ComboBox x:Name="TimeRangeCombo" Grid.Column="1" Width="120"
+                                  SelectionChanged="TimeRange_SelectionChanged"
+                                  Background="{DynamicResource ConsoleBackgroundMediumBrush}"
+                                  Foreground="{DynamicResource ConsoleTextBrush}"
+                                  BorderThickness="1" Padding="8,4">
+                            <ComboBoxItem Content="Last Hour" IsSelected="True"/>
+                            <ComboBoxItem Content="Last 24 Hours"/>
+                            <ComboBoxItem Content="Last 7 Days"/>
+                            <ComboBoxItem Content="Last 30 Days"/>
+                        </ComboBox>
+                    </Grid>
+
+                    <ItemsControl x:Name="SymbolQualityControl">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border BorderThickness="0,0,0,1" BorderBrush="{StaticResource ConsoleBorderBrush}"
+                                        Padding="0,12">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="100"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="100"/>
+                                            <ColumnDefinition Width="100"/>
+                                            <ColumnDefinition Width="80"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Grid.Column="0" Text="{Binding Symbol}" FontWeight="SemiBold"
+                                                   Foreground="{StaticResource ConsoleTextPrimaryBrush}"
+                                                   VerticalAlignment="Center"/>
+
+                                        <!-- Quality Bar -->
+                                        <Grid Grid.Column="1" Margin="16,0">
+                                            <Border Background="{StaticResource ConsoleBackgroundMediumBrush}"
+                                                    CornerRadius="4" Height="8"/>
+                                            <Border Background="{Binding QualityColor}" CornerRadius="4" Height="8"
+                                                    HorizontalAlignment="Left" Width="{Binding QualityWidth}"/>
+                                        </Grid>
+
+                                        <TextBlock Grid.Column="2" Text="{Binding QualityPercent}" FontWeight="SemiBold"
+                                                   Foreground="{Binding QualityColor}" VerticalAlignment="Center"/>
+
+                                        <TextBlock Grid.Column="3" Text="{Binding GapsText}"
+                                                   Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                                   VerticalAlignment="Center"/>
+
+                                        <TextBlock Grid.Column="4" Text="{Binding LatencyText}"
+                                                   Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                                   VerticalAlignment="Center" TextAlignment="Right"/>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <TextBlock x:Name="NoSymbolsText" Text="No symbols are currently being monitored."
+                               Foreground="{StaticResource ConsoleTextMutedBrush}"
+                               Visibility="Collapsed" Margin="0,8,0,0"/>
+                </StackPanel>
+            </Border>
+
             <!-- Gap Analysis -->
             <Border Style="{StaticResource CardStyle}" Margin="0,0,0,24">
                 <StackPanel>
-                    <TextBlock Text="Gap Analysis" Style="{StaticResource CardHeaderStyle}" Margin="0,0,0,16" />
-                    <ListView x:Name="GapsListView" Background="Transparent" BorderThickness="0" MaxHeight="200">
-                        <ListViewItem>
-                            <Grid Width="800">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="80" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="120" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="AAPL" FontWeight="SemiBold" Foreground="{StaticResource ConsoleTextPrimaryBrush}" />
-                                <TextBlock Grid.Column="1" Text="Missing 156 bars between 2024-01-15 and 2024-01-17" Foreground="{StaticResource ConsoleTextSecondaryBrush}" />
-                                <TextBlock Grid.Column="2" Text="2 days" Foreground="{StaticResource WarningColorBrush}" />
-                                <Button Grid.Column="3" Content="Repair" Style="{StaticResource GhostButtonStyle}" />
-                            </Grid>
-                        </ListViewItem>
-                    </ListView>
+                    <Grid Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="Gap Analysis" Style="{StaticResource CardHeaderStyle}"/>
+                        <Button Grid.Column="1" Content="Repair All" Click="RepairAllGaps_Click"
+                                Background="Transparent" Foreground="{StaticResource InfoColorBrush}"
+                                BorderThickness="0" Padding="8,4" FontSize="12"/>
+                    </Grid>
+
+                    <ItemsControl x:Name="GapsControl">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border BorderThickness="0,0,0,1" BorderBrush="{StaticResource ConsoleBorderBrush}"
+                                        Padding="0,8">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="80"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="100"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Grid.Column="0" Text="{Binding Symbol}" FontWeight="SemiBold"
+                                                   Foreground="{StaticResource ConsoleTextPrimaryBrush}"
+                                                   VerticalAlignment="Center"/>
+
+                                        <TextBlock Grid.Column="1" Text="{Binding Description}"
+                                                   Foreground="{StaticResource ConsoleTextSecondaryBrush}"
+                                                   VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+
+                                        <TextBlock Grid.Column="2" Text="{Binding Duration}"
+                                                   Foreground="{StaticResource WarningColorBrush}"
+                                                   VerticalAlignment="Center"/>
+
+                                        <Button Grid.Column="3" Content="Repair" Tag="{Binding GapId}"
+                                                Click="RepairGap_Click"
+                                                Background="{DynamicResource ConsoleBackgroundMediumBrush}"
+                                                Foreground="{DynamicResource ConsoleTextBrush}"
+                                                BorderThickness="0" Padding="12,4" FontSize="12"/>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <TextBlock x:Name="NoGapsText" Text="No data gaps detected."
+                               Foreground="{StaticResource SuccessColorBrush}" Visibility="Collapsed"/>
                 </StackPanel>
             </Border>
 
             <!-- Anomaly Detection -->
+            <Border Style="{StaticResource CardStyle}" Margin="0,0,0,24">
+                <StackPanel>
+                    <TextBlock Text="Anomaly Detection" Style="{StaticResource CardHeaderStyle}" Margin="0,0,0,16"/>
+
+                    <ItemsControl x:Name="AnomaliesControl">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border BorderThickness="0,0,0,1" BorderBrush="{StaticResource ConsoleBorderBrush}"
+                                        Padding="0,8">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="80"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="120"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <Ellipse Grid.Column="0" Width="8" Height="8" Fill="{Binding SeverityColor}"
+                                                 VerticalAlignment="Center" Margin="0,0,12,0"/>
+
+                                        <TextBlock Grid.Column="1" Text="{Binding Symbol}" FontWeight="SemiBold"
+                                                   Foreground="{StaticResource ConsoleTextPrimaryBrush}"
+                                                   VerticalAlignment="Center"/>
+
+                                        <TextBlock Grid.Column="2" Text="{Binding Description}"
+                                                   Foreground="{StaticResource ConsoleTextSecondaryBrush}"
+                                                   VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+
+                                        <TextBlock Grid.Column="3" Text="{Binding Timestamp}"
+                                                   Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                                   VerticalAlignment="Center" TextAlignment="Right"/>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <TextBlock x:Name="NoAnomaliesText" Text="No anomalies detected in the selected time range."
+                               Foreground="{StaticResource SuccessColorBrush}" Visibility="Visible"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Latency Distribution -->
             <Border Style="{StaticResource CardStyle}">
                 <StackPanel>
-                    <TextBlock Text="Anomaly Detection" Style="{StaticResource CardHeaderStyle}" Margin="0,0,0,16" />
-                    <TextBlock Text="No anomalies detected in the last 24 hours."
-                               Foreground="{StaticResource ConsoleTextMutedBrush}" />
+                    <TextBlock Text="Latency Distribution" Style="{StaticResource CardHeaderStyle}" Margin="0,0,0,16"/>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" HorizontalAlignment="Center">
+                            <TextBlock Text="P50" FontSize="10" Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                       HorizontalAlignment="Center"/>
+                            <TextBlock x:Name="P50Text" Text="--" FontSize="18" FontWeight="SemiBold"
+                                       Foreground="{StaticResource SuccessColorBrush}" HorizontalAlignment="Center"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" HorizontalAlignment="Center">
+                            <TextBlock Text="P75" FontSize="10" Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                       HorizontalAlignment="Center"/>
+                            <TextBlock x:Name="P75Text" Text="--" FontSize="18" FontWeight="SemiBold"
+                                       Foreground="{StaticResource SuccessColorBrush}" HorizontalAlignment="Center"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2" HorizontalAlignment="Center">
+                            <TextBlock Text="P90" FontSize="10" Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                       HorizontalAlignment="Center"/>
+                            <TextBlock x:Name="P90Text" Text="--" FontSize="18" FontWeight="SemiBold"
+                                       Foreground="{StaticResource InfoColorBrush}" HorizontalAlignment="Center"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="3" HorizontalAlignment="Center">
+                            <TextBlock Text="P95" FontSize="10" Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                       HorizontalAlignment="Center"/>
+                            <TextBlock x:Name="P95Text" Text="--" FontSize="18" FontWeight="SemiBold"
+                                       Foreground="{StaticResource WarningColorBrush}" HorizontalAlignment="Center"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="4" HorizontalAlignment="Center">
+                            <TextBlock Text="P99" FontSize="10" Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                       HorizontalAlignment="Center"/>
+                            <TextBlock x:Name="P99Text" Text="--" FontSize="18" FontWeight="SemiBold"
+                                       Foreground="{StaticResource ErrorColorBrush}" HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Grid>
                 </StackPanel>
             </Border>
         </StackPanel>
