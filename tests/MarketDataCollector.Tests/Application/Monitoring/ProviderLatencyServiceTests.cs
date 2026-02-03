@@ -59,8 +59,8 @@ public sealed class ProviderLatencyServiceTests : IDisposable
         var summary = _service.GetSummary();
 
         // Assert
-        summary.FastestProvider.Should().Be("Fast");
-        summary.SlowestProvider.Should().Be("Slow");
+        summary.FastestProvider.Should().Be("fast");
+        summary.SlowestProvider.Should().Be("slow");
         summary.TotalSamples.Should().Be(3);
     }
 
@@ -116,7 +116,7 @@ public sealed class ProviderLatencyServiceTests : IDisposable
 
         // Assert
         highLatency.Should().HaveCount(1);
-        highLatency[0].Provider.Should().Be("Slow");
+        highLatency[0].Provider.Should().Be("slow");
     }
 
     [Fact]

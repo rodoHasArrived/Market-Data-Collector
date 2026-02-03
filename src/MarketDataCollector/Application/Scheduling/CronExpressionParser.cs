@@ -103,11 +103,19 @@ public static class CronExpressionParser
                     var rangeParts = range.Split('-');
                     start = int.Parse(rangeParts[0]);
                     end = int.Parse(rangeParts[1]);
+                    
+                    // Validate range bounds
+                    if (start < min || start > max || end < min || end > max)
+                        throw new ArgumentOutOfRangeException(nameof(field), $"Range {start}-{end} is outside valid bounds [{min}-{max}]");
                 }
                 else
                 {
                     start = int.Parse(range);
                     end = max;
+                    
+                    // Validate start value
+                    if (start < min || start > max)
+                        throw new ArgumentOutOfRangeException(nameof(field), $"Value {start} is outside valid bounds [{min}-{max}]");
                 }
 
                 for (var i = start; i <= end; i += step)
@@ -119,12 +127,22 @@ public static class CronExpressionParser
                 var start = int.Parse(rangeParts[0]);
                 var end = int.Parse(rangeParts[1]);
 
+                // Validate range bounds
+                if (start < min || start > max || end < min || end > max)
+                    throw new ArgumentOutOfRangeException(nameof(field), $"Range {start}-{end} is outside valid bounds [{min}-{max}]");
+
                 for (var i = start; i <= end; i++)
                     values.Add(i);
             }
             else
             {
-                values.Add(int.Parse(part));
+                var value = int.Parse(part);
+                
+                // Validate single value is within bounds
+                if (value < min || value > max)
+                    throw new ArgumentOutOfRangeException(nameof(field), $"Value {value} is outside valid bounds [{min}-{max}]");
+                
+                values.Add(value);
             }
         }
 

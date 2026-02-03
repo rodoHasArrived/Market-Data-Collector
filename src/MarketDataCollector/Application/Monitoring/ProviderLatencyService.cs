@@ -40,7 +40,9 @@ public sealed class ProviderLatencyService : IDisposable
         if (_isDisposed || string.IsNullOrEmpty(provider)) return;
         if (latencyMs < 0) return;
 
-        var tracker = _providers.GetOrAdd(provider, p => new ProviderLatencyTracker(p, _config));
+        // Normalize provider name to lowercase for consistent API output
+        var normalizedProvider = provider.ToLowerInvariant();
+        var tracker = _providers.GetOrAdd(normalizedProvider, p => new ProviderLatencyTracker(p, _config));
         tracker.Record(latencyMs, symbol);
     }
 
@@ -58,7 +60,8 @@ public sealed class ProviderLatencyService : IDisposable
     /// </summary>
     public ProviderLatencyHistogram? GetHistogram(string provider)
     {
-        return _providers.TryGetValue(provider, out var tracker) ? tracker.GetHistogram() : null;
+        var normalizedProvider = provider.ToLowerInvariant();
+        return _providers.TryGetValue(normalizedProvider, out var tracker) ? tracker.GetHistogram() : null;
     }
 
     /// <summary>
@@ -143,7 +146,8 @@ public sealed class ProviderLatencyService : IDisposable
     /// </summary>
     public void Reset(string provider)
     {
-        _providers.TryRemove(provider, out _);
+        var normalizedProvider = provider.ToLowerInvariant();
+        _providers.TryRemove(normalizedProvider, out _);
     }
 
     /// <summary>
