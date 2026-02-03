@@ -142,7 +142,7 @@
     <PackageVersion Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.1" />
     <!-- WPF-specific packages -->
     <PackageVersion Include="MaterialDesignThemes" Version="5.1.1" />
-    <PackageVersion Include="MaterialDesignColors" Version="3.1.0" />
+    <PackageVersion Include="MaterialDesignColors" Version="5.2.0" />
     <PackageVersion Include="Extended.Wpf.Toolkit" Version="4.6.1" />
   </ItemGroup>
 
