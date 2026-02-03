@@ -293,7 +293,7 @@ internal sealed class SymbolIndicatorState
     {
         _symbol = symbol;
         _config = config;
-        _currentDay = DateTime.UtcNow.Date;
+        _currentDay = DateTime.MinValue;  // Initialize to min to handle historical data
     }
 
     public IndicatorSnapshot? AddTrade(MarketTradeUpdate trade)
@@ -302,8 +302,8 @@ internal sealed class SymbolIndicatorState
         {
             var tradeDate = trade.Timestamp.UtcDateTime.Date;
 
-            // Check for day rollover
-            if (tradeDate > _currentDay)
+            // Check for day rollover (handles both forward and backward time)
+            if (tradeDate != _currentDay)
             {
                 // Finalize previous day's bar
                 if (_dayOpen != 0)
