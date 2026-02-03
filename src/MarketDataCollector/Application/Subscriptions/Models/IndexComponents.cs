@@ -4,19 +4,14 @@ namespace MarketDataCollector.Application.Subscriptions.Models;
 /// Components of a market index.
 /// </summary>
 public sealed record IndexComponents(
-    /// <summary>Index identifier (e.g., "SPX", "NDX").</summary>
     string IndexId,
 
-    /// <summary>Index display name.</summary>
     string Name,
 
-    /// <summary>Component symbols.</summary>
     IndexComponent[] Components,
 
-    /// <summary>When the components were last updated.</summary>
     DateTimeOffset LastUpdated,
 
-    /// <summary>Data source for component list.</summary>
     string Source
 );
 
@@ -24,16 +19,12 @@ public sealed record IndexComponents(
 /// Individual component of an index.
 /// </summary>
 public sealed record IndexComponent(
-    /// <summary>Symbol ticker.</summary>
     string Symbol,
 
-    /// <summary>Company name.</summary>
     string Name,
 
-    /// <summary>Weight in the index (0-1).</summary>
     decimal? Weight = null,
 
-    /// <summary>Sector classification.</summary>
     string? Sector = null
 );
 
@@ -67,19 +58,14 @@ public sealed record IndexDefinition(
 /// Request to auto-subscribe to index components.
 /// </summary>
 public sealed record IndexSubscribeRequest(
-    /// <summary>Index identifier to subscribe to.</summary>
     string IndexId,
 
-    /// <summary>Maximum number of components to subscribe (by weight).</summary>
     int? MaxComponents = null,
 
-    /// <summary>Custom subscription settings for the components.</summary>
     TemplateSubscriptionDefaults? Defaults = null,
 
-    /// <summary>Whether to replace existing subscriptions.</summary>
     bool ReplaceExisting = false,
 
-    /// <summary>Only subscribe to components in these sectors.</summary>
     string[]? FilterSectors = null
 );
 

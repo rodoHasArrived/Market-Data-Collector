@@ -3,35 +3,26 @@ namespace MarketDataCollector.Application.Subscriptions.Models;
 /// <summary>
 /// Represents a single symbol search result from autocomplete.
 /// </summary>
+/// <param name="Symbol">Symbol ticker (e.g., AAPL, MSFT).</param>
+/// <param name="Name">Company or instrument name.</param>
+/// <param name="Exchange">Primary exchange where the symbol trades.</param>
+/// <param name="AssetType">Asset type: Stock, ETF, ADR, Crypto, etc.</param>
+/// <param name="Country">Country or region of the instrument.</param>
+/// <param name="Currency">Currency in which the instrument trades.</param>
+/// <param name="Source">Provider that returned this result.</param>
+/// <param name="MatchScore">Match score/relevance (0-100, higher is better).</param>
+/// <param name="Figi">FIGI identifier if available.</param>
+/// <param name="CompositeFigi">Composite FIGI if available.</param>
 public sealed record SymbolSearchResult(
-    /// <summary>Symbol ticker (e.g., AAPL, MSFT).</summary>
     string Symbol,
-
-    /// <summary>Company or instrument name.</summary>
     string Name,
-
-    /// <summary>Primary exchange where the symbol trades.</summary>
     string? Exchange = null,
-
-    /// <summary>Asset type: Stock, ETF, ADR, Crypto, etc.</summary>
     string? AssetType = null,
-
-    /// <summary>Country or region of the instrument.</summary>
     string? Country = null,
-
-    /// <summary>Currency in which the instrument trades.</summary>
     string? Currency = null,
-
-    /// <summary>Provider that returned this result.</summary>
     string? Source = null,
-
-    /// <summary>Match score/relevance (0-100, higher is better).</summary>
     int MatchScore = 0,
-
-    /// <summary>FIGI identifier if available.</summary>
     string? Figi = null,
-
-    /// <summary>Composite FIGI if available.</summary>
     string? CompositeFigi = null
 );
 
