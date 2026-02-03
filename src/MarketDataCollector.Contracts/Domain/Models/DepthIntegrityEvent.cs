@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using MarketDataCollector.Contracts.Domain.Enums;
 using MarketDataCollector.Contracts.Domain.Events;
 
@@ -9,7 +10,7 @@ namespace MarketDataCollector.Contracts.Domain.Models;
 public sealed record DepthIntegrityEvent(
     DateTimeOffset Timestamp,
     string Symbol,
-    DepthIntegrityKind Kind,
+    [property: JsonPropertyName("integrityKind")] DepthIntegrityKind Kind,
     string Description,
     int Position,
     DepthOperation Operation,
