@@ -4,7 +4,8 @@ using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Domain.Events.Publishers;
 using MarketDataCollector.Domain.Models;
-using Moq;
+using NSubstitute;
+using NSubstitute.ExceptionExtensions;
 using Xunit;
 
 namespace MarketDataCollector.Tests;
@@ -15,13 +16,13 @@ public class CompositePublisherTests
     public void TryPublish_AllPublishersSucceed_ReturnsTrue()
     {
         // Arrange
-        var publisher1 = new Mock<IMarketEventPublisher>();
-        var publisher2 = new Mock<IMarketEventPublisher>();
+        var publisher1 = Substitute.For<IMarketEventPublisher>();
+        var publisher2 = Substitute.For<IMarketEventPublisher>();
 
-        publisher1.Setup(p => p.TryPublish(It.IsAny<MarketEvent>())).Returns(true);
-        publisher2.Setup(p => p.TryPublish(It.IsAny<MarketEvent>())).Returns(true);
+        publisher1.TryPublish(Arg.Any<MarketEvent>()).Returns(true);
+        publisher2.TryPublish(Arg.Any<MarketEvent>()).Returns(true);
 
-        var composite = new CompositePublisher(publisher1.Object, publisher2.Object);
+        var composite = new CompositePublisher(publisher1, publisher2);
         var evt = CreateTestEvent();
 
         // Act
@@ -29,21 +30,21 @@ public class CompositePublisherTests
 
         // Assert
         result.Should().BeTrue();
-        publisher1.Verify(p => p.TryPublish(evt), Times.Once);
-        publisher2.Verify(p => p.TryPublish(evt), Times.Once);
+        publisher1.Received(1).TryPublish(Arg.Any<MarketEvent>());
+        publisher2.Received(1).TryPublish(Arg.Any<MarketEvent>());
     }
 
     [Fact]
     public void TryPublish_OnePublisherFails_StillReturnsTrue()
     {
         // Arrange
-        var publisher1 = new Mock<IMarketEventPublisher>();
-        var publisher2 = new Mock<IMarketEventPublisher>();
+        var publisher1 = Substitute.For<IMarketEventPublisher>();
+        var publisher2 = Substitute.For<IMarketEventPublisher>();
 
-        publisher1.Setup(p => p.TryPublish(It.IsAny<MarketEvent>())).Returns(true);
-        publisher2.Setup(p => p.TryPublish(It.IsAny<MarketEvent>())).Returns(false);
+        publisher1.TryPublish(Arg.Any<MarketEvent>()).Returns(true);
+        publisher2.TryPublish(Arg.Any<MarketEvent>()).Returns(false);
 
-        var composite = new CompositePublisher(publisher1.Object, publisher2.Object);
+        var composite = new CompositePublisher(publisher1, publisher2);
         var evt = CreateTestEvent();
 
         // Act
@@ -51,21 +52,21 @@ public class CompositePublisherTests
 
         // Assert
         result.Should().BeTrue(); // At least one succeeded
-        publisher1.Verify(p => p.TryPublish(evt), Times.Once);
-        publisher2.Verify(p => p.TryPublish(evt), Times.Once);
+        publisher1.Received(1).TryPublish(Arg.Any<MarketEvent>());
+        publisher2.Received(1).TryPublish(Arg.Any<MarketEvent>());
     }
 
     [Fact]
     public void TryPublish_AllPublishersFail_ReturnsFalse()
     {
         // Arrange
-        var publisher1 = new Mock<IMarketEventPublisher>();
-        var publisher2 = new Mock<IMarketEventPublisher>();
+        var publisher1 = Substitute.For<IMarketEventPublisher>();
+        var publisher2 = Substitute.For<IMarketEventPublisher>();
 
-        publisher1.Setup(p => p.TryPublish(It.IsAny<MarketEvent>())).Returns(false);
-        publisher2.Setup(p => p.TryPublish(It.IsAny<MarketEvent>())).Returns(false);
+        publisher1.TryPublish(Arg.Any<MarketEvent>()).Returns(false);
+        publisher2.TryPublish(Arg.Any<MarketEvent>()).Returns(false);
 
-        var composite = new CompositePublisher(publisher1.Object, publisher2.Object);
+        var composite = new CompositePublisher(publisher1, publisher2);
         var evt = CreateTestEvent();
 
         // Act
@@ -79,13 +80,13 @@ public class CompositePublisherTests
     public void TryPublish_PublisherThrowsException_ContinuesToOthers()
     {
         // Arrange
-        var publisher1 = new Mock<IMarketEventPublisher>();
-        var publisher2 = new Mock<IMarketEventPublisher>();
+        var publisher1 = Substitute.For<IMarketEventPublisher>();
+        var publisher2 = Substitute.For<IMarketEventPublisher>();
 
-        publisher1.Setup(p => p.TryPublish(It.IsAny<MarketEvent>())).Throws(new Exception("Test exception"));
-        publisher2.Setup(p => p.TryPublish(It.IsAny<MarketEvent>())).Returns(true);
+        publisher1.TryPublish(Arg.Any<MarketEvent>()).Throws(new Exception("Test exception"));
+        publisher2.TryPublish(Arg.Any<MarketEvent>()).Returns(true);
 
-        var composite = new CompositePublisher(publisher1.Object, publisher2.Object);
+        var composite = new CompositePublisher(publisher1, publisher2);
         var evt = CreateTestEvent();
 
         // Act
@@ -93,8 +94,8 @@ public class CompositePublisherTests
 
         // Assert
         result.Should().BeTrue(); // Second publisher succeeded
-        publisher1.Verify(p => p.TryPublish(evt), Times.Once);
-        publisher2.Verify(p => p.TryPublish(evt), Times.Once);
+        publisher1.Received(1).TryPublish(Arg.Any<MarketEvent>());
+        publisher2.Received(1).TryPublish(Arg.Any<MarketEvent>());
     }
 
     [Fact]
@@ -122,10 +123,10 @@ public class CompositePublisherTests
     public void TryPublish_SinglePublisher_DelegatesToPublisher()
     {
         // Arrange
-        var publisher = new Mock<IMarketEventPublisher>();
-        publisher.Setup(p => p.TryPublish(It.IsAny<MarketEvent>())).Returns(true);
+        var publisher = Substitute.For<IMarketEventPublisher>();
+        publisher.TryPublish(Arg.Any<MarketEvent>()).Returns(true);
 
-        var composite = new CompositePublisher(publisher.Object);
+        var composite = new CompositePublisher(publisher);
         var evt = CreateTestEvent();
 
         // Act
@@ -133,7 +134,7 @@ public class CompositePublisherTests
 
         // Assert
         result.Should().BeTrue();
-        publisher.Verify(p => p.TryPublish(evt), Times.Once);
+        publisher.Received(1).TryPublish(Arg.Any<MarketEvent>());
     }
 
     private static MarketEvent CreateTestEvent()
