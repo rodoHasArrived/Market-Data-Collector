@@ -1,20 +1,332 @@
 <Page x:Class="MarketDataCollector.Wpf.Views.OrderBookPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      Background="{DynamicResource ConsoleBackgroundDarkBrush}">
-    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="24">
-        <StackPanel MaxWidth="1200">
-            <StackPanel Orientation="Horizontal" Margin="0,0,0,24">
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      mc:Ignorable="d"
+      Background="{DynamicResource ConsoleBackgroundDarkBrush}"
+      Loaded="OnPageLoaded">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Grid Grid.Row="0" Margin="24,24,24,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0" Orientation="Horizontal">
                 <TextBlock Text="&#xE8A1;" FontFamily="{StaticResource SymbolThemeFontFamily}"
-                           FontSize="28" Foreground="{StaticResource InfoColorBrush}" VerticalAlignment="Center" />
-                <TextBlock Text="Order Book" Style="{StaticResource PageTitleStyle}" Margin="12,0,0,0" VerticalAlignment="Center" />
+                           FontSize="28" Foreground="{StaticResource InfoColorBrush}"
+                           VerticalAlignment="Center" />
+                <TextBlock Text="Order Book" Style="{StaticResource PageTitleStyle}"
+                           Margin="12,0,0,0" VerticalAlignment="Center" />
             </StackPanel>
-            <Border Style="{StaticResource CardStyle}">
-                <StackPanel>
-                    <TextBlock Text="Coming Soon" Style="{StaticResource CardHeaderStyle}" Margin="0,0,0,16" />
-                    <TextBlock Text="This feature is under development." Foreground="{StaticResource ConsoleTextMutedBrush}" />
-                </StackPanel>
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <!-- Symbol Selector -->
+                <TextBlock Text="Symbol:" Foreground="{StaticResource ConsoleTextMutedBrush}"
+                           VerticalAlignment="Center" Margin="0,0,8,0"/>
+                <ComboBox x:Name="SymbolComboBox" Width="120" SelectionChanged="Symbol_SelectionChanged"
+                          Background="{DynamicResource ConsoleBackgroundMediumBrush}"
+                          Foreground="{DynamicResource ConsoleTextBrush}"
+                          BorderThickness="1" Padding="8,4"/>
+
+                <!-- Depth Levels -->
+                <TextBlock Text="Levels:" Foreground="{StaticResource ConsoleTextMutedBrush}"
+                           VerticalAlignment="Center" Margin="16,0,8,0"/>
+                <ComboBox x:Name="LevelsComboBox" Width="80" SelectionChanged="Levels_SelectionChanged"
+                          Background="{DynamicResource ConsoleBackgroundMediumBrush}"
+                          Foreground="{DynamicResource ConsoleTextBrush}"
+                          BorderThickness="1" Padding="8,4">
+                    <ComboBoxItem Content="5"/>
+                    <ComboBoxItem Content="10" IsSelected="True"/>
+                    <ComboBoxItem Content="20"/>
+                    <ComboBoxItem Content="50"/>
+                </ComboBox>
+
+                <!-- Connection Status -->
+                <Border CornerRadius="4" Padding="8,4" Margin="16,0,0,0"
+                        Background="{StaticResource ConsoleBackgroundMediumBrush}">
+                    <StackPanel Orientation="Horizontal">
+                        <Ellipse x:Name="ConnectionIndicator" Width="8" Height="8"
+                                 Fill="{StaticResource ConsoleTextMutedBrush}" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="ConnectionStatusText" Text="Disconnected" Margin="8,0,0,0"
+                                   Foreground="{StaticResource ConsoleTextMutedBrush}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Grid>
+
+        <!-- Main Content -->
+        <Grid Grid.Row="1" Margin="24,0,24,24">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="16"/>
+                <ColumnDefinition Width="320"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Order Book Ladder -->
+            <Border Grid.Column="0" Style="{StaticResource CardStyle}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Asks Header -->
+                    <Grid Grid.Row="0" Margin="0,0,0,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="100"/>
+                            <ColumnDefinition Width="100"/>
+                            <ColumnDefinition Width="100"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="ASKS" FontWeight="SemiBold"
+                                   Foreground="{StaticResource ErrorColorBrush}"/>
+                        <TextBlock Grid.Column="1" Text="Price" FontSize="11"
+                                   Foreground="{StaticResource ConsoleTextMutedBrush}" TextAlignment="Right"/>
+                        <TextBlock Grid.Column="2" Text="Size" FontSize="11"
+                                   Foreground="{StaticResource ConsoleTextMutedBrush}" TextAlignment="Right"/>
+                        <TextBlock Grid.Column="3" Text="Total" FontSize="11"
+                                   Foreground="{StaticResource ConsoleTextMutedBrush}" TextAlignment="Right"/>
+                    </Grid>
+
+                    <!-- Asks List -->
+                    <ItemsControl x:Name="AsksControl" Grid.Row="1">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,2">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="100"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Depth Bar -->
+                                    <Border Grid.Column="0" Background="{StaticResource ErrorColorBrush}"
+                                            Opacity="0.15" HorizontalAlignment="Right"
+                                            Width="{Binding DepthWidth}" Height="20" CornerRadius="2"/>
+
+                                    <TextBlock Grid.Column="1" Text="{Binding Price}"
+                                               Foreground="{StaticResource ErrorColorBrush}"
+                                               FontFamily="Consolas" FontSize="12" TextAlignment="Right"
+                                               VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="2" Text="{Binding Size}"
+                                               Foreground="{StaticResource ConsoleTextPrimaryBrush}"
+                                               FontFamily="Consolas" FontSize="12" TextAlignment="Right"
+                                               VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="3" Text="{Binding Total}"
+                                               Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                               FontFamily="Consolas" FontSize="12" TextAlignment="Right"
+                                               VerticalAlignment="Center"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <!-- Spread Divider -->
+                    <Border Grid.Row="2" Background="{StaticResource ConsoleBorderBrush}"
+                            Height="1" Margin="0,8"/>
+                    <Grid Grid.Row="2" Margin="0,8">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <TextBlock Text="Spread: " Foreground="{StaticResource ConsoleTextMutedBrush}" FontSize="11"/>
+                            <TextBlock x:Name="SpreadText" Text="--" FontWeight="SemiBold"
+                                       Foreground="{StaticResource InfoColorBrush}" FontSize="11"/>
+                            <TextBlock x:Name="SpreadPercentText" Text="" Margin="8,0,0,0"
+                                       Foreground="{StaticResource ConsoleTextMutedBrush}" FontSize="11"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Bids Header -->
+                    <Grid Grid.Row="2" Margin="0,24,0,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="100"/>
+                            <ColumnDefinition Width="100"/>
+                            <ColumnDefinition Width="100"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="BIDS" FontWeight="SemiBold"
+                                   Foreground="{StaticResource SuccessColorBrush}"/>
+                        <TextBlock Grid.Column="1" Text="Price" FontSize="11"
+                                   Foreground="{StaticResource ConsoleTextMutedBrush}" TextAlignment="Right"/>
+                        <TextBlock Grid.Column="2" Text="Size" FontSize="11"
+                                   Foreground="{StaticResource ConsoleTextMutedBrush}" TextAlignment="Right"/>
+                        <TextBlock Grid.Column="3" Text="Total" FontSize="11"
+                                   Foreground="{StaticResource ConsoleTextMutedBrush}" TextAlignment="Right"/>
+                    </Grid>
+
+                    <!-- Bids List -->
+                    <ItemsControl x:Name="BidsControl" Grid.Row="3">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,2">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="100"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Depth Bar -->
+                                    <Border Grid.Column="0" Background="{StaticResource SuccessColorBrush}"
+                                            Opacity="0.15" HorizontalAlignment="Right"
+                                            Width="{Binding DepthWidth}" Height="20" CornerRadius="2"/>
+
+                                    <TextBlock Grid.Column="1" Text="{Binding Price}"
+                                               Foreground="{StaticResource SuccessColorBrush}"
+                                               FontFamily="Consolas" FontSize="12" TextAlignment="Right"
+                                               VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="2" Text="{Binding Size}"
+                                               Foreground="{StaticResource ConsoleTextPrimaryBrush}"
+                                               FontFamily="Consolas" FontSize="12" TextAlignment="Right"
+                                               VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="3" Text="{Binding Total}"
+                                               Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                               FontFamily="Consolas" FontSize="12" TextAlignment="Right"
+                                               VerticalAlignment="Center"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <TextBlock x:Name="NoDataText" Grid.RowSpan="4"
+                               Text="No order book data available. Select a symbol and ensure connection is active."
+                               Foreground="{StaticResource ConsoleTextMutedBrush}"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                               Visibility="Visible"/>
+                </Grid>
             </Border>
-        </StackPanel>
-    </ScrollViewer>
+
+            <!-- Right Panel: Stats and Trade Tape -->
+            <StackPanel Grid.Column="2">
+                <!-- Market Stats -->
+                <Border Style="{StaticResource CardStyle}" Margin="0,0,0,16">
+                    <StackPanel>
+                        <TextBlock Text="Market Statistics" Style="{StaticResource CardHeaderStyle}" Margin="0,0,0,16"/>
+
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Best Bid" Foreground="{StaticResource ConsoleTextMutedBrush}"/>
+                            <TextBlock x:Name="BestBidText" Grid.Column="1" Text="--"
+                                       Foreground="{StaticResource SuccessColorBrush}" FontWeight="SemiBold"/>
+                        </Grid>
+
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Best Ask" Foreground="{StaticResource ConsoleTextMutedBrush}"/>
+                            <TextBlock x:Name="BestAskText" Grid.Column="1" Text="--"
+                                       Foreground="{StaticResource ErrorColorBrush}" FontWeight="SemiBold"/>
+                        </Grid>
+
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Mid Price" Foreground="{StaticResource ConsoleTextMutedBrush}"/>
+                            <TextBlock x:Name="MidPriceText" Grid.Column="1" Text="--"
+                                       Foreground="{StaticResource InfoColorBrush}" FontWeight="SemiBold"/>
+                        </Grid>
+
+                        <Border Height="1" Background="{StaticResource ConsoleBorderBrush}" Margin="0,8"/>
+
+                        <Grid Margin="0,8,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Bid Volume" Foreground="{StaticResource ConsoleTextMutedBrush}"/>
+                            <TextBlock x:Name="BidVolumeText" Grid.Column="1" Text="--"
+                                       Foreground="{StaticResource SuccessColorBrush}" FontWeight="SemiBold"/>
+                        </Grid>
+
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Ask Volume" Foreground="{StaticResource ConsoleTextMutedBrush}"/>
+                            <TextBlock x:Name="AskVolumeText" Grid.Column="1" Text="--"
+                                       Foreground="{StaticResource ErrorColorBrush}" FontWeight="SemiBold"/>
+                        </Grid>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Imbalance" Foreground="{StaticResource ConsoleTextMutedBrush}"/>
+                            <TextBlock x:Name="ImbalanceText" Grid.Column="1" Text="--"
+                                       Foreground="{StaticResource ConsoleTextPrimaryBrush}" FontWeight="SemiBold"/>
+                        </Grid>
+
+                        <!-- Imbalance Bar -->
+                        <Grid Margin="0,12,0,0" Height="8">
+                            <Border Background="{StaticResource ConsoleBackgroundMediumBrush}" CornerRadius="4"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition x:Name="BidBarColumn" Width="*"/>
+                                    <ColumnDefinition x:Name="AskBarColumn" Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Grid.Column="0" Background="{StaticResource SuccessColorBrush}"
+                                        CornerRadius="4,0,0,4" HorizontalAlignment="Stretch"/>
+                                <Border Grid.Column="1" Background="{StaticResource ErrorColorBrush}"
+                                        CornerRadius="0,4,4,0" HorizontalAlignment="Stretch"/>
+                            </Grid>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Recent Trades -->
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel>
+                        <TextBlock Text="Recent Trades" Style="{StaticResource CardHeaderStyle}" Margin="0,0,0,16"/>
+
+                        <ItemsControl x:Name="RecentTradesControl">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,2">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="60"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="60"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Grid.Column="0" Text="{Binding Time}"
+                                                   Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                                   FontFamily="Consolas" FontSize="10"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding Price}"
+                                                   Foreground="{Binding PriceColor}"
+                                                   FontFamily="Consolas" FontSize="11" FontWeight="SemiBold"/>
+                                        <TextBlock Grid.Column="2" Text="{Binding Size}"
+                                                   Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                                   FontFamily="Consolas" FontSize="10" TextAlignment="Right"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <TextBlock x:Name="NoTradesText" Text="No recent trades."
+                                   Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                   Visibility="Visible"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Grid>
+    </Grid>
 </Page>
