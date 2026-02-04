@@ -53,7 +53,7 @@ public partial class MainWindow : Window
         NotificationService.Instance.NotificationReceived -= OnNotificationReceived;
     }
 
-    private void OnRootFrameNavigated(object sender, NavigationEventArgs e)
+    private void OnRootFrameNavigated(object sender, SysNavigation.NavigationEventArgs e)
     {
         if (e.Content is FrameworkElement element)
         {
@@ -178,7 +178,7 @@ public partial class MainWindow : Window
                     "Collector Started",
                     "Data collection has started successfully.",
                     NotificationType.Success,
-                    "collector");
+                    5000);
             }
             else
             {
@@ -186,7 +186,7 @@ public partial class MainWindow : Window
                     "Start Failed",
                     "Failed to start the data collector. Check service connection.",
                     NotificationType.Error,
-                    "collector");
+                    0);
             }
         }
         catch (Exception ex)
@@ -195,7 +195,7 @@ public partial class MainWindow : Window
                 "Start Error",
                 $"Error starting collector: {ex.Message}",
                 NotificationType.Error,
-                "collector");
+                0);
         }
     }
 
@@ -211,7 +211,7 @@ public partial class MainWindow : Window
                 "Collector Stopped",
                 "Data collection has been stopped.",
                 NotificationType.Warning,
-                "collector");
+                5000);
         }
         catch (Exception ex)
         {
@@ -219,7 +219,7 @@ public partial class MainWindow : Window
                 "Stop Error",
                 $"Error stopping collector: {ex.Message}",
                 NotificationType.Error,
-                "collector");
+                0);
         }
     }
 

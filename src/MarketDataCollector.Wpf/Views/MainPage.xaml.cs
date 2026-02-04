@@ -160,7 +160,7 @@ public partial class MainPage : Page
         UpdatePageTitle("Notifications");
     }
 
-    private void OnContentFrameNavigated(object sender, NavigationEventArgs e)
+    private void OnContentFrameNavigated(object sender, SysNavigation.NavigationEventArgs e)
     {
         UpdateBackButtonVisibility();
     }
