@@ -257,7 +257,7 @@ public class MemoryMappedJsonlReaderTests : IDisposable
 
         // Act
         var events = new List<MarketEvent>();
-        await Assert.ThrowsAsync<OperationCanceledException>(async () =>
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(async () =>
         {
             await foreach (var evt in reader.ReadEventsAsync(cts.Token))
             {

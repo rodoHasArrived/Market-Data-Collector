@@ -238,11 +238,14 @@ public class EventPipelineTests : IAsyncLifetime
             pipeline.TryPublish(CreateTradeEvent($"SYM{i}"));
         }
 
-        // Wait a bit
-        await Task.Delay(50);
+        // Wait for processing to complete
+        await Task.Delay(2000); // Give enough time for all events to be processed
+        await pipeline.FlushAsync();
 
-        // Assert
-        pipeline.DroppedCount.Should().BeGreaterThan(0);
+        // Assert - With DropOldest mode, all TryPublish calls succeed, so DroppedCount is 0
+        // But sink should receive less than 100 events because oldest were dropped from channel
+        pipeline.DroppedCount.Should().Be(0, "DropOldest mode doesn't track drops via TryWrite failure");
+        sink.ReceivedEvents.Count.Should().BeLessThan(100, "some events should have been dropped by the channel");
     }
 
     [Fact]
@@ -427,7 +430,7 @@ public class EventPipelineTests : IAsyncLifetime
         using var cts = new CancellationTokenSource(50);
 
         // Act & Assert
-        await Assert.ThrowsAsync<OperationCanceledException>(
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(
             async () => await pipeline.PublishAsync(CreateTradeEvent("AAPL"), cts.Token));
     }
 

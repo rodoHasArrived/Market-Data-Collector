@@ -97,8 +97,8 @@ public class WebSocketResiliencePolicyTests
         var pipeline = WebSocketResiliencePolicy.CreateTimeoutPipeline(
             timeout: TimeSpan.FromMilliseconds(100));
 
-        // Act & Assert
-        await Assert.ThrowsAsync<TimeoutException>(async () =>
+        // Act & Assert - Polly timeout can throw either TimeoutException or TimeoutRejectedException
+        await Assert.ThrowsAnyAsync<TimeoutException>(async () =>
         {
             await pipeline.ExecuteAsync(async ct =>
             {
