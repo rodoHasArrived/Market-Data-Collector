@@ -83,7 +83,8 @@ Market-Data-Collector/
 │   │   ├── stale.yml
 │   │   ├── test-matrix.yml
 │   │   ├── validate-workflows.yml
-│   │   └── wpf-commands.yml
+│   │   ├── wpf-commands.yml
+│   │   └── wpf-desktop.yml
 │   ├── dependabot.yml
 │   ├── labeler.yml
 │   ├── labels.yml
@@ -242,7 +243,11 @@ Market-Data-Collector/
 │   │   ├── docfx.json
 │   │   └── README.md
 │   ├── evaluations/
+│   │   ├── data-quality-monitoring-evaluation.md
 │   │   ├── desktop-ui-alternatives-evaluation.md
+│   │   ├── historical-data-providers-evaluation.md
+│   │   ├── realtime-streaming-architecture-evaluation.md
+│   │   ├── storage-architecture-evaluation.md
 │   │   └── wpf-implementation-notes.md
 │   ├── generated/
 │   │   └── .gitkeep
