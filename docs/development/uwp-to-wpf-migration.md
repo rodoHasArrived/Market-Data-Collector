@@ -131,6 +131,20 @@ All 23 services implemented:
 - [x] Added to solution configuration
 - [x] Package version management in Directory.Packages.props
 
+## Current Status Snapshot
+
+### What Works Today
+
+- WPF application boots, hosts DI container, and shows the main window.
+- Navigation shell renders with Material Design styling.
+- Core services compile and can be injected into views.
+
+### What Is Stubbed
+
+- ViewModel logic beyond basic wiring.
+- Majority of feature pages (content and behaviors).
+- Specialized controls and data visualizations.
+
 ## Key Architectural Changes
 
 ### 1. Assembly References
@@ -241,6 +255,13 @@ public MainWindow(IConnectionService connectionService, ...)
 - [ ] **Styles & Themes** (complete Material Design integration)
 - [ ] **Assets** (icons, images, animations)
 
+### Short-Term Next Steps (Suggested Order)
+
+1. Implement `MainViewModel` and `DashboardViewModel` to validate navigation, telemetry, and theme toggling.
+2. Migrate `DataQualityPage` and `DataBrowserPage` to validate data-bound grids and filters.
+3. Port UWP converters into a shared WPF converters project to unlock remaining pages.
+4. Establish a WPF-specific UI test harness for smoke checks.
+
 ### Low Priority
 
 - [ ] **Testing** (unit tests for ViewModels and Services)
@@ -284,6 +305,12 @@ Common control migrations from UWP to WPF:
 - [ ] Unit tests for ViewModels
 - [ ] Integration tests for Services
 - [ ] UI tests for critical workflows
+
+### Recommended Tooling
+
+- **xUnit + FluentAssertions** for ViewModel and service tests
+- **Playwright for .NET** for UI smoke tests
+- **Coverlet** for code coverage
 
 ## Deployment Strategy
 
@@ -376,4 +403,4 @@ The remaining work primarily involves migrating the extensive page collection fr
 
 ---
 
-*Last Updated: 2026-01-31*
+*Last Updated: 2026-02-01*
