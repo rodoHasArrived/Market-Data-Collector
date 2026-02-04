@@ -192,7 +192,7 @@ public sealed class ReconnectFailedEventArgs : EventArgs
 public sealed class ConnectionHealthEventArgs : EventArgs
 {
     public bool IsHealthy { get; init; }
-    public int LatencyMs { get; init; }
+    public double LatencyMs { get; init; }
     public string? ErrorMessage { get; init; }
     public DateTime Timestamp { get; init; }
 }
