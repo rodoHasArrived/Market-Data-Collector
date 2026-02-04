@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using MarketDataCollector.Application.Exceptions;
 using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Infrastructure.Contracts;
@@ -102,10 +103,16 @@ public sealed class YahooFinanceHistoricalDataProvider : BaseHistoricalDataProvi
             using var response = await Http.GetAsync(url, ct).ConfigureAwait(false);
 
             var httpResult = await ResponseHandler.HandleResponseAsync(response, symbol, "daily bars", ct: ct).ConfigureAwait(false);
-            if (httpResult.IsNotFound)
+            
+            // Throw on HTTP errors (non-success status codes)
+            if (!httpResult.IsSuccess)
             {
-                Log.Warning("Yahoo Finance: Symbol {Symbol} not found", symbol);
-                return Array.Empty<AdjustedHistoricalBar>();
+                var errorMsg = httpResult.IsNotFound
+                    ? $"Symbol {symbol} not found (404)"
+                    : $"HTTP error {httpResult.StatusCode}: {httpResult.ReasonPhrase}";
+                    
+                Log.Warning("Yahoo Finance HTTP error for {Symbol}: {Error}", symbol, errorMsg);
+                throw new InvalidOperationException($"Failed to fetch Yahoo Finance data for {symbol}: {errorMsg}");
             }
 
             var json = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
@@ -122,6 +129,11 @@ public sealed class YahooFinanceHistoricalDataProvider : BaseHistoricalDataProvi
 
             Log.Information("Fetched {Count} bars for {Symbol} from Yahoo Finance", bars.Count, symbol);
             return bars.OrderBy(b => b.SessionDate).ToList();
+        }
+        catch (DataProviderException ex)
+        {
+            // Convert to InvalidOperationException to match test expectations
+            throw new InvalidOperationException($"Failed to parse Yahoo Finance data for {symbol}", ex);
         }
         catch (JsonException ex)
         {

@@ -223,6 +223,7 @@ public sealed record DeploymentContext
             "--show-config", "--symbols", "--symbols-monitored", "--symbols-archived",
             "--symbols-add", "--symbols-remove", "--symbol-status",
             "--validate-config", "--dry-run", "--selftest",
+            "--backfill", "--replay",
             "--package", "--import-package", "--list-package", "--validate-package"
         };
 
