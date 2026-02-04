@@ -218,7 +218,7 @@ public sealed class ConnectionService : IConnectionService
         ConnectionHealthUpdated?.Invoke(this, new ConnectionHealthEventArgs
         {
             IsHealthy = isHealthy,
-            LatencyMs = (int)LastLatencyMs,
+            LatencyMs = LastLatencyMs,
             ErrorMessage = errorMessage,
             Timestamp = DateTime.UtcNow
         });
