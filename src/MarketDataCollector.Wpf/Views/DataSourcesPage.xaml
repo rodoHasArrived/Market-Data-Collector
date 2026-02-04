@@ -27,7 +27,7 @@
                         <TextBlock Text="Failover Settings" Style="{StaticResource CardHeaderStyle}" Margin="8,0,0,0" />
                     </StackPanel>
 
-                    <Grid ColumnSpacing="16" RowSpacing="12">
+                    <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="*" />
@@ -74,7 +74,7 @@
                         <TextBlock Text="Default Data Sources" Style="{StaticResource CardHeaderStyle}" Margin="8,0,0,0" />
                     </StackPanel>
 
-                    <Grid ColumnSpacing="16">
+                    <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="*" />
@@ -143,7 +143,7 @@
                                         Padding="12"
                                         CornerRadius="8"
                                         Background="{StaticResource ConsoleBackgroundLightBrush}">
-                                    <Grid ColumnSpacing="12">
+                                    <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto" />
                                             <ColumnDefinition Width="*" />
@@ -218,7 +218,7 @@
                                    Style="{StaticResource CardHeaderStyle}" Margin="8,0,0,0" />
                     </StackPanel>
 
-                    <Grid ColumnSpacing="16" RowSpacing="12" Margin="0,0,0,16">
+                    <Grid Margin="0,0,0,16">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="*" />
@@ -281,7 +281,7 @@
                             Margin="0,0,0,16">
                         <StackPanel>
                             <TextBlock Text="Interactive Brokers Settings" FontWeight="SemiBold" Margin="0,0,0,8" />
-                            <Grid ColumnSpacing="16" RowSpacing="12">
+                            <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="*" />
@@ -337,7 +337,7 @@
                                 <TextBlock Text="API credentials are stored securely. Use the Provider page to manage credentials."
                                            Foreground="{StaticResource ConsoleTextSecondaryBrush}" TextWrapping="Wrap" />
                             </Border>
-                            <Grid ColumnSpacing="16">
+                            <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="*" />
@@ -374,7 +374,7 @@
                             Visibility="Collapsed">
                         <StackPanel>
                             <TextBlock Text="Polygon.io Settings" FontWeight="SemiBold" Margin="0,0,0,8" />
-                            <Grid ColumnSpacing="16" RowSpacing="12">
+                            <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="*" />
