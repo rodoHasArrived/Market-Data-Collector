@@ -30,10 +30,10 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Restore dependencies
-        run: dotnet restore ${{ env.WPF_PROJECT }}
+        run: dotnet restore ${{ env.WPF_PROJECT }} -p:TargetFramework=net9.0-windows
 
       - name: Build
-        run: dotnet build ${{ env.WPF_PROJECT }} -c Release --no-restore
+        run: dotnet build ${{ env.WPF_PROJECT }} -c Release --no-restore -p:TargetFramework=net9.0-windows
 
       - name: Run
         shell: pwsh
@@ -50,4 +50,4 @@ jobs:
           Stop-Process -Id $process.Id
 
       - name: Publish (self-contained)
-        run: dotnet publish ${{ env.WPF_PROJECT }} -c Release -r win-x64 --self-contained true
+        run: dotnet publish ${{ env.WPF_PROJECT }} -c Release -r win-x64 --self-contained true -p:TargetFramework=net9.0-windows
