@@ -171,9 +171,9 @@ public sealed class ConnectionStateChangedEventArgs : EventArgs
 /// </summary>
 public sealed class ReconnectEventArgs : EventArgs
 {
-    public int Attempt { get; init; }
-    public int MaxAttempts { get; init; }
-    public int NextRetryMs { get; init; }
+    public int AttemptNumber { get; init; }
+    public int DelayMs { get; init; }
+    public string Provider { get; init; } = string.Empty;
 }
 
 /// <summary>
@@ -181,8 +181,9 @@ public sealed class ReconnectEventArgs : EventArgs
 /// </summary>
 public sealed class ReconnectFailedEventArgs : EventArgs
 {
-    public int Attempts { get; init; }
-    public string LastError { get; init; } = string.Empty;
+    public int AttemptNumber { get; init; }
+    public string Error { get; init; } = string.Empty;
+    public bool WillRetry { get; init; }
 }
 
 /// <summary>
@@ -191,7 +192,7 @@ public sealed class ReconnectFailedEventArgs : EventArgs
 public sealed class ConnectionHealthEventArgs : EventArgs
 {
     public bool IsHealthy { get; init; }
-    public double LatencyMs { get; init; }
-    public TimeSpan? Uptime { get; init; }
-    public int ReconnectCount { get; init; }
+    public int LatencyMs { get; init; }
+    public string? ErrorMessage { get; init; }
+    public DateTime Timestamp { get; init; }
 }
