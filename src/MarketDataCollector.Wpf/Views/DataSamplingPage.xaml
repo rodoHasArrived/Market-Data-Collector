@@ -16,7 +16,7 @@
             <Border Style="{StaticResource CardStyle}" Margin="0,0,0,16">
                 <StackPanel>
                     <TextBlock Text="Sampling Configuration" Style="{StaticResource CardHeaderStyle}" Margin="0,0,0,16" />
-                    <Grid ColumnSpacing="16" RowSpacing="12">
+                    <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="*" />

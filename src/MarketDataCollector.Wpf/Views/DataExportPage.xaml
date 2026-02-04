@@ -27,7 +27,7 @@
                         <TextBlock Text="Quick Export" Style="{StaticResource CardHeaderStyle}" Margin="8,0,0,0" />
                     </StackPanel>
 
-                    <Grid ColumnSpacing="16" RowSpacing="16">
+                    <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="*" />
@@ -154,7 +154,7 @@
                                    Foreground="{StaticResource ConsoleTextSecondaryBrush}" />
                     </Border>
 
-                    <Grid ColumnSpacing="16" RowSpacing="16">
+                    <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="*" />
@@ -238,7 +238,7 @@
                               Checked="EnableScheduledExportsToggle_Changed"
                               Unchecked="EnableScheduledExportsToggle_Changed" />
 
-                    <Grid x:Name="ScheduledExportsPanel" ColumnSpacing="16" RowSpacing="16" Margin="0,12,0,0">
+                    <Grid x:Name="ScheduledExportsPanel" Margin="0,12,0,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="*" />
@@ -311,7 +311,7 @@
                     <TextBlock Text="Webhook URL" Style="{StaticResource FormLabelStyle}" Margin="0,12,0,0" />
                     <TextBox x:Name="WebhookUrlBox" Style="{StaticResource FormTextBoxStyle}" />
 
-                    <Grid ColumnSpacing="16" Margin="0,12,0,0">
+                    <Grid Margin="0,12,0,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="*" />
@@ -368,7 +368,7 @@
                     <TextBlock Text="Export data in QuantConnect Lean format for algorithmic backtesting."
                                Foreground="{StaticResource ConsoleTextSecondaryBrush}" />
 
-                    <Grid ColumnSpacing="16" Margin="0,12,0,0">
+                    <Grid Margin="0,12,0,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
