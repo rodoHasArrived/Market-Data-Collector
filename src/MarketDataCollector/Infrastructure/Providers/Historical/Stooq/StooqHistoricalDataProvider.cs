@@ -61,11 +61,12 @@ public sealed class StooqHistoricalDataProvider : BaseHistoricalDataProvider
         if (!response.IsSuccessStatusCode)
         {
             var httpResult = await ResponseHandler.HandleResponseAsync(response, symbol, "daily bars", ct: ct).ConfigureAwait(false);
-            if (httpResult.IsNotFound)
-            {
-                Log.Warning("Stooq: Symbol {Symbol} not found", symbol);
-                return Array.Empty<HistoricalBar>();
-            }
+            var errorMsg = httpResult.IsNotFound
+                ? $"Symbol {symbol} not found (404)"
+                : $"HTTP error {httpResult.StatusCode}: {httpResult.ReasonPhrase}";
+                
+            Log.Warning("Stooq HTTP error for {Symbol}: {Error}", symbol, errorMsg);
+            throw new InvalidOperationException($"Failed to fetch Stooq data for {symbol}: {errorMsg}");
         }
 
         var csv = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
