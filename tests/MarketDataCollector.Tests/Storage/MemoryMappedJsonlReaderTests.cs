@@ -257,6 +257,7 @@ public class MemoryMappedJsonlReaderTests : IDisposable
 
         // Act
         var events = new List<MarketEvent>();
+        bool cancellationWasObserved = false;
         try
         {
             await foreach (var evt in reader.ReadEventsAsync(cts.Token))
@@ -269,9 +270,13 @@ public class MemoryMappedJsonlReaderTests : IDisposable
         catch (OperationCanceledException)
         {
             // Expected - cancellation was triggered
+            cancellationWasObserved = true;
         }
 
-        // Assert - Should have read some events but stopped after cancellation
+        // Assert - Cancellation must have been observed
+        cancellationWasObserved.Should().BeTrue("ReadEventsAsync should throw OperationCanceledException when cancelled");
+        
+        // Should have read some events but stopped after cancellation
         // May read a few more after cancel due to buffering, but should be < 100
         events.Should().NotBeEmpty();
         events.Should().HaveCountLessThan(100, "should stop reading after cancellation");

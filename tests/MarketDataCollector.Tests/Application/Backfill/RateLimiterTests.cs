@@ -337,25 +337,27 @@ public class RateLimiterTests : IDisposable
     [Fact]
     public async Task WaitForSlotAsync_ConcurrentRequests_RespectLimit()
     {
-        // Arrange - With limit of 5 and 10 concurrent requests, the second batch must wait
-        _rateLimiter = new RateLimiter(maxRequestsPerWindow: 5, window: TimeSpan.FromSeconds(5));
-        var tasks = new List<Task<TimeSpan>>();
+        // Arrange - Use a much shorter window (200ms) to make test fast
+        // With limit of 3 and 6 concurrent requests, the second batch must wait
+        _rateLimiter = new RateLimiter(maxRequestsPerWindow: 3, window: TimeSpan.FromMilliseconds(200));
+        
+        // Act - Launch 6 concurrent requests (2x limit)
+        var tasks = Enumerable.Range(0, 6)
+            .Select(_ => _rateLimiter.WaitForSlotAsync())
+            .ToList();
 
-        // Act - Launch 10 concurrent requests
-        for (int i = 0; i < 10; i++)
-        {
-            tasks.Add(_rateLimiter.WaitForSlotAsync());
-        }
+        var waitTimes = await Task.WhenAll(tasks);
 
-        await Task.WhenAll(tasks);
-
-        var (requestsInWindow, _, _) = _rateLimiter.GetStatus();
-
-        // Assert - Since limit is 5, only 5 requests can be in window at once.
-        // The second batch of 5 waits for first batch to complete.
-        // By the time all complete, first batch may have aged out of the 5s window.
-        requestsInWindow.Should().BeLessOrEqualTo(10, "shouldn't track more than 10 requests");
-        requestsInWindow.Should().BeGreaterOrEqualTo(5, "at least the last batch should be in window");
+        // Assert - Some tasks should have waited (rate limited), others should not
+        // First 3 requests should complete immediately (or near-zero wait)
+        var immediateRequests = waitTimes.Count(t => t.TotalMilliseconds < 50);
+        var delayedRequests = waitTimes.Count(t => t.TotalMilliseconds >= 50);
+        
+        immediateRequests.Should().BeGreaterOrEqualTo(3, "at least 3 requests should proceed immediately");
+        delayedRequests.Should().BeGreaterOrEqualTo(3, "at least 3 requests should be delayed by rate limiting");
+        
+        // At least some requests should have waited a non-trivial duration (>= window/2)
+        waitTimes.Should().Contain(t => t.TotalMilliseconds >= 100, "some requests should wait for rate limit window");
     }
 
     [Fact]
