@@ -135,6 +135,8 @@ jobs:
 
       - name: Build
         shell: bash
+        env:
+          MSYS_NO_PATHCONV: 1
         run: |
           dotnet build MarketDataCollector.sln \
             -c Release \
@@ -154,6 +156,8 @@ jobs:
       - name: Run F# unit tests
         id: fsharp-tests
         shell: bash
+        env:
+          MSYS_NO_PATHCONV: 1
         run: |
           dotnet test tests/MarketDataCollector.FSharp.Tests/MarketDataCollector.FSharp.Tests.fsproj \
             -c Release \
