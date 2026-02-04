@@ -169,7 +169,7 @@ public sealed class ThemeService
     /// Raises the ThemeChanged event.
     /// </summary>
     /// <param name="e">The event arguments.</param>
-    protected virtual void OnThemeChanged(ThemeChangedEventArgs e)
+    private void OnThemeChanged(ThemeChangedEventArgs e)
     {
         ThemeChanged?.Invoke(this, e);
     }

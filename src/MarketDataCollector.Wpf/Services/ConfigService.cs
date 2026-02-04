@@ -3,18 +3,6 @@ using System;
 namespace MarketDataCollector.Wpf.Services;
 
 /// <summary>
-/// Simple status information model for the UI.
-/// </summary>
-public sealed class SimpleStatus
-{
-    public long Published { get; set; }
-    public long Dropped { get; set; }
-    public long Integrity { get; set; }
-    public long Historical { get; set; }
-    public string? Provider { get; set; }
-}
-
-/// <summary>
 /// Result of configuration validation.
 /// </summary>
 public sealed class ConfigValidationResult
