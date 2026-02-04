@@ -68,7 +68,7 @@ public static class HtmlTemplates
     private static class LegacyTemplates
     {
         public static string Index(string configPath, string statusPath, string backfillPath) => $@"
-<!doctype html>
+<!DOCTYPE html>
 <html lang=""en"">
 <head>
   <meta charset=""utf-8"" />
@@ -178,7 +178,7 @@ public static class HtmlTemplates
             var nasdaqConfigured = config.Backfill?.Providers?.Nasdaq != null && !string.IsNullOrWhiteSpace(config.Backfill.Providers.Nasdaq.ApiKey);
 
             return $@"
-<!doctype html>
+<!DOCTYPE html>
 <html lang=""en"">
 <head>
   <meta charset=""utf-8"" />

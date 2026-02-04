@@ -73,14 +73,14 @@ public sealed class SpreadMonitorTests : IDisposable
     public void ProcessQuote_ShouldTrackSpreadStatistics()
     {
         // Arrange & Act
-        _monitor.ProcessQuote("AAPL", 149.90m, 150.10m, "Provider1"); // 20 bps
-        _monitor.ProcessQuote("AAPL", 149.85m, 150.15m, "Provider1"); // 30 bps
+        _monitor.ProcessQuote("AAPL", 149.90m, 150.10m, "Provider1"); // 13.33 bps
+        _monitor.ProcessQuote("AAPL", 149.85m, 150.15m, "Provider1"); // 20.00 bps
 
         // Assert
         var snapshot = _monitor.GetSpreadSnapshot("AAPL");
         snapshot.Should().NotBeNull();
         snapshot!.Value.TotalQuotes.Should().Be(2);
-        snapshot.Value.AverageSpreadBps.Should().BeApproximately(25.0, 5.0);
+        snapshot.Value.AverageSpreadBps.Should().BeApproximately(16.67, 1.0);
     }
 
     [Fact]
@@ -141,7 +141,7 @@ public sealed class SpreadMonitorTests : IDisposable
         smallCapMonitor.OnWideSpread += alert => capturedAlert = alert;
 
         // Act - 3% spread (300 bps) is below 500 bps threshold
-        var detected = smallCapMonitor.ProcessQuote("PENNY", 0.97m, 1.03m, "Provider1");
+        var detected = smallCapMonitor.ProcessQuote("PENNY", 0.985m, 1.015m, "Provider1");
 
         // Assert
         detected.Should().BeFalse();
