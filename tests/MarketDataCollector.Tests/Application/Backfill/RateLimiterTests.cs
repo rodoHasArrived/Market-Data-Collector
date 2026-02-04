@@ -338,11 +338,13 @@ public class RateLimiterTests : IDisposable
     public async Task WaitForSlotAsync_ConcurrentRequests_RespectLimit()
     {
         // Arrange
-        _rateLimiter = new RateLimiter(maxRequestsPerWindow: 5, window: TimeSpan.FromSeconds(60));
+        const int maxRequests = 5;
+        const int totalRequests = 10;
+        _rateLimiter = new RateLimiter(maxRequestsPerWindow: maxRequests, window: TimeSpan.FromSeconds(60));
         var tasks = new List<Task<TimeSpan>>();
 
         // Act - Launch 10 concurrent requests
-        for (int i = 0; i < 10; i++)
+        for (int i = 0; i < totalRequests; i++)
         {
             tasks.Add(_rateLimiter.WaitForSlotAsync());
         }
@@ -352,9 +354,10 @@ public class RateLimiterTests : IDisposable
         var (requestsInWindow, _, _) = _rateLimiter.GetStatus();
 
         // Assert - At least maxRequests should be tracked
-        // (Some may have been cleaned up depending on timing)
-        requestsInWindow.Should().BeGreaterThanOrEqualTo(5);
-        requestsInWindow.Should().BeLessOrEqualTo(10);
+        // (Some may have been cleaned up depending on timing, but at minimum
+        // the maxRequests value should be present since we're within the window)
+        requestsInWindow.Should().BeGreaterThanOrEqualTo(maxRequests);
+        requestsInWindow.Should().BeLessOrEqualTo(totalRequests);
     }
 
     [Fact]
