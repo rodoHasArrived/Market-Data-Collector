@@ -82,6 +82,8 @@ Thumbs.db
 
 # Build output logs and debug artifacts
 build_output.txt
+build-output*.txt
+build-final*.txt
 *_stderr.txt
 *_stdout.txt
 
