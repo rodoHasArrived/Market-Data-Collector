@@ -225,10 +225,10 @@ public sealed class FirstRunService
     private void CreateFirstRunMarker()
     {
         var markerContent = $$"""
-            {{
+            {
               "InitializedAt": "{{DateTime.UtcNow:O}}",
               "Version": "1.0.0"
-            }}
+            }
             """;
 
         File.WriteAllText(FirstRunMarkerPath, markerContent);
