@@ -156,6 +156,15 @@ public partial class BackfillPage : Page
 
     private void StartBackfill_Click(object sender, RoutedEventArgs e)
     {
+        if (_isRunning)
+        {
+            NotificationService.Instance.ShowNotification(
+                "Backfill In Progress",
+                "A backfill operation is already running.",
+                NotificationType.Warning);
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(SymbolsBox.Text))
         {
             SymbolsValidationError.Text = "Please enter at least one symbol";
