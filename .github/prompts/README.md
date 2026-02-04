@@ -16,6 +16,7 @@ This directory contains reusable prompt templates for AI assistants (Claude, Cop
 | [optimize-performance.prompt.yml](optimize-performance.prompt.yml) | Performance optimization guidance | Improving hot paths |
 | [configure-deployment.prompt.yml](configure-deployment.prompt.yml) | Deployment configuration help | Setting up environments |
 | [add-export-format.prompt.yml](add-export-format.prompt.yml) | Export format implementation | Adding new export types |
+| [wpf-debug-improve.prompt.yml](wpf-debug-improve.prompt.yml) | WPF debugging and improvement guide | Fixing or completing WPF UI work |
 
 ## How to Use
 
