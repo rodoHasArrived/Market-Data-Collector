@@ -310,12 +310,12 @@ public sealed class StatusHttpServer : IAsyncDisposable
     private Task WriteDashboardAsync(HttpListenerResponse resp)
     {
         resp.ContentType = "text/html";
-        var html = @"<!doctype html>
-<html><head><title>MarketDataCollector Status</title>
+        var html = @"<!DOCTYPE html>
+<html><head><title>Market Data Collector Status</title>
 <style>body{font-family:Arial;margin:20px;} code{background:#f4f4f4;padding:4px;display:block;}
 table{border-collapse:collapse;} td,th{border:1px solid #ccc;padding:4px 8px;}</style></head>
 <body>
-<h2>MarketDataCollector Status</h2>
+<h2>Market Data Collector Status</h2>
 <p><a href='/metrics'>Prometheus metrics</a> | <a href='/status'>JSON status</a> | <a href='/errors'>Recent errors</a></p>
 <pre id='metrics'>Loading metrics...</pre>
 <h3>Recent integrity events</h3>
