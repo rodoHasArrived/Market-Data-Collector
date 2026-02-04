@@ -4,15 +4,6 @@ using System.Windows;
 namespace MarketDataCollector.Wpf.Services;
 
 /// <summary>
-/// Represents the available application themes.
-/// </summary>
-public enum AppTheme
-{
-    Light,
-    Dark
-}
-
-/// <summary>
 /// Service for handling light/dark theme switching in WPF applications.
 /// Implements singleton pattern for application-wide theme management.
 /// </summary>
@@ -169,7 +160,7 @@ public sealed class ThemeService
     /// Raises the ThemeChanged event.
     /// </summary>
     /// <param name="e">The event arguments.</param>
-    protected virtual void OnThemeChanged(ThemeChangedEventArgs e)
+    protected void OnThemeChanged(ThemeChangedEventArgs e)
     {
         ThemeChanged?.Invoke(this, e);
     }
