@@ -84,7 +84,21 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
         _publisher = publisher ?? throw new ArgumentNullException(nameof(publisher));
         _tradeCollector = tradeCollector ?? throw new ArgumentNullException(nameof(tradeCollector));
         _quoteCollector = quoteCollector ?? throw new ArgumentNullException(nameof(quoteCollector));
-        _options = options ?? new PolygonOptions();
+        
+        // Check environment variables if API key is not provided in options
+        var providedOptions = options ?? new PolygonOptions();
+        if (string.IsNullOrWhiteSpace(providedOptions.ApiKey))
+        {
+            var envApiKey = Environment.GetEnvironmentVariable("POLYGON_API_KEY") 
+                         ?? Environment.GetEnvironmentVariable("POLYGON__APIKEY");
+            if (!string.IsNullOrWhiteSpace(envApiKey))
+            {
+                // Create new options with environment variable API key
+                providedOptions = providedOptions with { ApiKey = envApiKey };
+            }
+        }
+        
+        _options = providedOptions;
 
         // Validate API key format if provided
         if (!string.IsNullOrWhiteSpace(_options.ApiKey))
