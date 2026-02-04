@@ -307,13 +307,13 @@ Market-Data-Collector/
 │   │   ├── storage-design.md
 │   │   └── why-this-architecture.md
 │   ├── development/
+│   │   ├── desktop-app-xaml-compiler-errors.md
 │   │   ├── github-actions-summary.md
 │   │   ├── github-actions-testing.md
 │   │   ├── project-context.md
 │   │   ├── provider-implementation.md
-│   │   ├── uwp-development-roadmap.md
-│   │   ├── uwp-release-checklist.md
-│   │   └── uwp-to-wpf-migration.md
+│   │   ├── uwp-to-wpf-migration.md
+│   │   └── wpf-implementation-notes.md
 │   ├── diagrams/
 │   │   ├── c4-level1-context.dot
 │   │   ├── c4-level1-context.png
@@ -348,18 +348,11 @@ Market-Data-Collector/
 │   │   └── README.md
 │   ├── evaluations/
 │   │   ├── data-quality-monitoring-evaluation.md
-│   │   ├── desktop-ui-alternatives-evaluation.md
 │   │   ├── historical-data-providers-evaluation.md
 │   │   ├── realtime-streaming-architecture-evaluation.md
-│   │   ├── storage-architecture-evaluation.md
-│   │   └── wpf-implementation-notes.md
-│   ├── generated/
-│   │   └── .gitkeep
+│   │   └── storage-architecture-evaluation.md
 │   ├── getting-started/
-│   │   ├── configuration.md
-│   │   ├── README.md
-│   │   ├── setup.md
-│   │   └── troubleshooting.md
+│   │   └── README.md
 │   ├── integrations/
 │   │   ├── fsharp-integration.md
 │   │   ├── language-strategy.md
@@ -384,15 +377,16 @@ Market-Data-Collector/
 │   │   └── sandcastle.md
 │   ├── status/
 │   │   ├── CHANGELOG.md
-│   │   ├── CHANGES_SUMMARY.md
 │   │   ├── production-status.md
 │   │   ├── README.md
 │   │   └── ROADMAP.md
-│   ├── structure/
+│   ├── archived/
+│   │   ├── CHANGES_SUMMARY.md
+│   │   ├── desktop-ui-alternatives-evaluation.md
 │   │   ├── README.md
-│   │   └── REPOSITORY_REORGANIZATION_PLAN.md
-│   ├── troubleshooting/
-│   │   └── desktop-app-xaml-compiler-errors.md
+│   │   ├── REPOSITORY_REORGANIZATION_PLAN.md
+│   │   ├── uwp-development-roadmap.md
+│   │   └── uwp-release-checklist.md
 │   ├── uml/
 │   │   ├── activity-diagram-backfill.png
 │   │   ├── activity-diagram-backfill.puml
@@ -425,8 +419,7 @@ Market-Data-Collector/
 │   ├── DEPENDENCIES.md
 │   ├── HELP.md
 │   ├── README.md
-│   ├── toc.yml
-│   └── USAGE.md
+│   └── toc.yml
 ├── src/  # Source code
 │   ├── MarketDataCollector/
 │   │   ├── Application/
@@ -1610,7 +1603,7 @@ data/
 6. Add configuration section in `config/appsettings.sample.json`
 7. Add tests in `tests/MarketDataCollector.Tests/`
 
-See `docs/guides/provider-implementation.md` for detailed patterns.
+See `docs/development/provider-implementation.md` for detailed patterns.
 
 ### Adding a New Historical Provider
 1. Create provider in `src/MarketDataCollector/Infrastructure/Providers/Backfill/`
@@ -1647,7 +1640,7 @@ dotnet run --project src/MarketDataCollector -- \
   --merge
 ```
 
-See `docs/guides/portable-data-packager.md` for details.
+See `docs/operations/portable-data-packager.md` for details.
 
 ---
 
@@ -1737,7 +1730,7 @@ This prevents using a standard `<ProjectReference>` to `MarketDataCollector.Cont
 - Single source of truth in Contracts project
 - Type aliases maintain backwards compatibility (`AppConfig` → `AppConfigDto`)
 
-See `docs/guides/uwp-development-roadmap.md` for development status.
+See `docs/development/uwp-to-wpf-migration.md` for WPF migration status.
 
 ---
 
@@ -1746,14 +1739,11 @@ See `docs/guides/uwp-development-roadmap.md` for development status.
 ### Core Documentation
 | File | Purpose |
 |------|---------|
-| `docs/guides/getting-started.md` | Setup and first run |
-| `docs/guides/configuration.md` | All configuration options |
-| `docs/guides/operator-runbook.md` | Production operations |
-| `docs/guides/troubleshooting.md` | Common issues and solutions |
-| `docs/guides/provider-implementation.md` | Adding new providers |
-| `docs/guides/portable-data-packager.md` | Data packaging guide |
-| `docs/USAGE.md` | Detailed usage guide |
-| `docs/HELP.md` | User guide with FAQ |
+| `docs/HELP.md` | Complete user guide with FAQ |
+| `docs/getting-started/README.md` | Quick start index |
+| `docs/operations/operator-runbook.md` | Production operations |
+| `docs/development/provider-implementation.md` | Adding new providers |
+| `docs/operations/portable-data-packager.md` | Data packaging guide |
 
 ### Architecture Documentation
 | File | Purpose |
@@ -1771,13 +1761,20 @@ See `docs/guides/uwp-development-roadmap.md` for development status.
 | `docs/providers/data-sources.md` | Available data sources |
 | `docs/providers/provider-comparison.md` | Feature comparison |
 
+### Development Guides
+| File | Purpose |
+|------|---------|
+| `docs/development/uwp-to-wpf-migration.md` | WPF desktop app migration |
+| `docs/development/wpf-implementation-notes.md` | WPF implementation details |
+| `docs/development/github-actions-summary.md` | CI/CD workflows |
+
 ### AI Assistant Guides
 | File | Purpose |
 |------|---------|
-| `docs/ai-assistants/CLAUDE.providers.md` | Provider implementation |
-| `docs/ai-assistants/CLAUDE.storage.md` | Storage system |
-| `docs/ai-assistants/CLAUDE.fsharp.md` | F# domain library |
-| `docs/ai-assistants/CLAUDE.testing.md` | Testing guide |
+| `docs/ai/claude/CLAUDE.providers.md` | Provider implementation |
+| `docs/ai/claude/CLAUDE.storage.md` | Storage system |
+| `docs/ai/claude/CLAUDE.fsharp.md` | F# domain library |
+| `docs/ai/claude/CLAUDE.testing.md` | Testing guide |
 | `.github/agents/documentation-agent.md` | Documentation maintenance |
 
 ### Reference Materials
@@ -1813,19 +1810,17 @@ dotnet restore /p:EnableWindowsTargeting=true -v diag
 4. **High memory** - Check channel capacity in `EventPipeline`
 5. **Provider rate limits** - Check `ProviderRateLimitTracker` logs
 
-See `docs/guides/troubleshooting.md` for detailed solutions.
+See `docs/HELP.md#troubleshooting` for detailed solutions.
 
 ---
 
 ## Related Resources
 
 - [README.md](README.md) - Project overview
-- [docs/USAGE.md](docs/USAGE.md) - Detailed usage guide
-- [docs/HELP.md](docs/HELP.md) - User guide with FAQ
+- [docs/HELP.md](docs/HELP.md) - Complete user guide with FAQ
 - [docs/DEPENDENCIES.md](docs/DEPENDENCIES.md) - Package documentation
 - [docs/adr/](docs/adr/) - Architecture Decision Records
-- [docs/ai-assistants/](docs/ai-assistants/) - Specialized AI guides
-- [docs/guides/troubleshooting.md](docs/guides/troubleshooting.md) - Troubleshooting guide
+- [docs/ai/](docs/ai/) - Specialized AI guides
 - [docs/providers/provider-comparison.md](docs/providers/provider-comparison.md) - Provider comparison
 - [.github/copilot-instructions.md](.github/copilot-instructions.md) - Copilot instructions
 - [.github/agents/documentation-agent.md](.github/agents/documentation-agent.md) - Documentation agent
