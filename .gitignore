@@ -104,6 +104,7 @@ msbuild.binlog
 vulnerable-packages.txt
 coverage/
 TestResults/
+todo-scan-results.json
 # Node.js (for diagram generation scripts)
 node_modules/
 
