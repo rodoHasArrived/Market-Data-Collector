@@ -226,7 +226,7 @@ public sealed class FirstRunService
     {
         var markerContent = $$"""
             {
-              "InitializedAt": "{{{DateTime.UtcNow:O}}}",
+              "InitializedAt": "{{DateTime.UtcNow:O}}",
               "Version": "1.0.0"
             }
             """;
