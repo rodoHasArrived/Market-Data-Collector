@@ -1,155 +1,469 @@
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
+using MarketDataCollector.Contracts.Configuration;
 using MarketDataCollector.Wpf.Services;
 
 namespace MarketDataCollector.Wpf.Views;
 
+/// <summary>
+/// Page for managing multiple data source configurations.
+/// </summary>
 public partial class DataSourcesPage : Page
 {
-    private readonly ObservableCollection<ProviderCatalogItem> _providers = new();
-    private CancellationTokenSource? _cts;
+    private readonly ConfigService _configService;
+    private string? _editingSourceId;
+
+    public ObservableCollection<DataSourceConfigDto> DataSources { get; } = new();
 
     public DataSourcesPage()
     {
         InitializeComponent();
-        ProvidersList.ItemsSource = _providers;
+        _configService = ConfigService.Instance;
+        DataContext = this;
     }
 
     private async void OnPageLoaded(object sender, RoutedEventArgs e)
     {
-        await RefreshAsync();
+        await LoadDataSourcesAsync();
     }
 
-    private void OnPageUnloaded(object sender, RoutedEventArgs e)
+    private async Task LoadDataSourcesAsync()
     {
-        _cts?.Cancel();
-        _cts?.Dispose();
-    }
-
-    private async void Refresh_Click(object sender, RoutedEventArgs e)
-    {
-        await RefreshAsync();
-    }
-
-    private async Task RefreshAsync()
-    {
-        _cts?.Cancel();
-        _cts?.Dispose();
-        _cts = new CancellationTokenSource();
-
         try
         {
-            var catalog = await StatusService.Instance.GetAvailableProvidersAsync(_cts.Token);
-            var status = await StatusService.Instance.GetProviderStatusAsync(_cts.Token);
+            var config = await _configService.GetDataSourcesConfigAsync();
 
-            var providers = catalog.ToList();
-            if (providers.Count == 0)
+            EnableFailoverToggle.IsChecked = config.EnableFailover;
+            FailoverTimeoutBox.Text = config.FailoverTimeoutSeconds.ToString();
+
+            DataSources.Clear();
+            var sources = config.Sources ?? Array.Empty<DataSourceConfigDto>();
+            foreach (var source in sources)
             {
-                providers = GetDemoProviders();
+                DataSources.Add(source);
             }
 
-            UpdateProviderList(providers, status);
-            UpdateSummary(providers);
-
-            LastUpdatedText.Text = $"Last updated: {DateTime.Now:HH:mm:ss}";
-        }
-        catch (OperationCanceledException)
-        {
-            // ignore
+            UpdateSourceCountText();
+            UpdateDefaultSourceCombos(config);
+            NoSourcesText.Visibility = DataSources.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         }
         catch (Exception ex)
         {
-            LoggingService.Instance.LogError("Failed to refresh data sources", ex);
+            ShowStatus($"Failed to load data sources: {ex.Message}", isError: true);
         }
     }
 
-    private void UpdateProviderList(IReadOnlyList<ProviderInfo> providers, ProviderStatusInfo? status)
+    private void UpdateSourceCountText()
     {
-        _providers.Clear();
-
-        var activeProvider = status?.ActiveProvider ?? string.Empty;
-        var isConnected = status?.IsConnected == true;
-
-        foreach (var provider in providers)
-        {
-            var isActive = !string.IsNullOrWhiteSpace(activeProvider) &&
-                           provider.ProviderId.Equals(activeProvider, StringComparison.OrdinalIgnoreCase);
-
-            var statusText = isActive
-                ? (isConnected ? "Connected" : "Disconnected")
-                : "Idle";
-
-            _providers.Add(new ProviderCatalogItem
-            {
-                ProviderId = provider.ProviderId,
-                DisplayName = provider.DisplayName,
-                ProviderType = provider.ProviderType,
-                Description = provider.Description,
-                CredentialsText = provider.RequiresCredentials ? "Credentials Required" : "No Credentials",
-                StatusText = statusText,
-                StatusBrush = new SolidColorBrush(isActive
-                    ? (isConnected ? Color.FromRgb(63, 185, 80) : Color.FromRgb(244, 67, 54))
-                    : Color.FromRgb(139, 148, 158))
-            });
-        }
-
-        ProviderCountText.Text = $"{_providers.Count} provider{(_providers.Count == 1 ? "" : "s")}";
-        NoProvidersText.Visibility = _providers.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        SourceCountText.Text = $"({DataSources.Count})";
     }
 
-    private void UpdateSummary(IReadOnlyList<ProviderInfo> providers)
+    private void UpdateDefaultSourceCombos(DataSourcesConfigDto config)
     {
-        StreamingCountText.Text = providers.Count(p => p.ProviderType == "Streaming").ToString();
-        BackfillCountText.Text = providers.Count(p => p.ProviderType == "Backfill").ToString();
-        HybridCountText.Text = providers.Count(p => p.ProviderType == "Hybrid").ToString();
+        var realTimeSources = DataSources.Where(s => s.Type is "RealTime" or "Both").ToList();
+        var historicalSources = DataSources.Where(s => s.Type is "Historical" or "Both").ToList();
+
+        DefaultRealTimeCombo.ItemsSource = realTimeSources;
+        DefaultHistoricalCombo.ItemsSource = historicalSources;
+
+        DefaultRealTimeCombo.SelectedItem = realTimeSources.FirstOrDefault(s => s.Id == config.DefaultRealTimeSourceId);
+        DefaultHistoricalCombo.SelectedItem = historicalSources.FirstOrDefault(s => s.Id == config.DefaultHistoricalSourceId);
     }
 
-    private static List<ProviderInfo> GetDemoProviders()
+    private void AddDataSource_Click(object sender, RoutedEventArgs e)
     {
-        return new List<ProviderInfo>
+        _editingSourceId = null;
+        EditPanelTitle.Text = "Add Data Source";
+        ClearEditForm();
+        EditPanel.Visibility = Visibility.Visible;
+    }
+
+    private void EditDataSource_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button button && button.Tag is string sourceId)
         {
-            new()
+            var source = DataSources.FirstOrDefault(s => s.Id == sourceId);
+            if (source != null)
             {
-                ProviderId = "alpaca",
-                DisplayName = "Alpaca Markets",
-                ProviderType = "Streaming",
-                Description = "Commission-free stock and crypto data feed.",
-                RequiresCredentials = true
-            },
-            new()
-            {
-                ProviderId = "polygon",
-                DisplayName = "Polygon.io",
-                ProviderType = "Hybrid",
-                Description = "Realtime equities with robust backfill support.",
-                RequiresCredentials = true
-            },
-            new()
-            {
-                ProviderId = "yahoo",
-                DisplayName = "Yahoo Finance",
-                ProviderType = "Backfill",
-                Description = "Free historical EOD data source.",
-                RequiresCredentials = false
+                _editingSourceId = sourceId;
+                EditPanelTitle.Text = "Edit Data Source";
+                PopulateEditForm(source);
+                EditPanel.Visibility = Visibility.Visible;
             }
-        };
+        }
     }
 
-    private sealed class ProviderCatalogItem
+    private async void DeleteDataSource_Click(object sender, RoutedEventArgs e)
     {
-        public string ProviderId { get; init; } = string.Empty;
-        public string DisplayName { get; init; } = string.Empty;
-        public string ProviderType { get; init; } = string.Empty;
-        public string Description { get; init; } = string.Empty;
-        public string CredentialsText { get; init; } = string.Empty;
-        public string StatusText { get; init; } = string.Empty;
-        public Brush StatusBrush { get; init; } = new SolidColorBrush(Color.FromRgb(139, 148, 158));
+        if (sender is Button button && button.Tag is string sourceId)
+        {
+            var source = DataSources.FirstOrDefault(s => s.Id == sourceId);
+            if (source == null)
+            {
+                return;
+            }
+
+            var result = MessageBox.Show(
+                $"Are you sure you want to delete '{source.Name}'?",
+                "Delete Data Source",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                try
+                {
+                    await _configService.DeleteDataSourceAsync(sourceId);
+                    await LoadDataSourcesAsync();
+                    ShowStatus("Data source deleted successfully.");
+                }
+                catch (Exception ex)
+                {
+                    ShowStatus($"Failed to delete data source: {ex.Message}", isError: true);
+                }
+            }
+        }
+    }
+
+    private async void SaveDataSource_Click(object sender, RoutedEventArgs e)
+    {
+        if (!ValidateEditForm())
+        {
+            return;
+        }
+
+        SaveProgress.Visibility = Visibility.Visible;
+        SaveSourceButton.IsEnabled = false;
+
+        try
+        {
+            var source = BuildDataSourceFromForm();
+            await _configService.AddOrUpdateDataSourceAsync(source);
+
+            EditPanel.Visibility = Visibility.Collapsed;
+            await LoadDataSourcesAsync();
+
+            ShowStatus(_editingSourceId == null
+                ? "Data source added successfully."
+                : "Data source updated successfully.");
+        }
+        catch (Exception ex)
+        {
+            ShowStatus($"Failed to save data source: {ex.Message}", isError: true);
+        }
+        finally
+        {
+            SaveProgress.Visibility = Visibility.Collapsed;
+            SaveSourceButton.IsEnabled = true;
+        }
+    }
+
+    private void CancelEdit_Click(object sender, RoutedEventArgs e)
+    {
+        EditPanel.Visibility = Visibility.Collapsed;
+        _editingSourceId = null;
+    }
+
+    private DataSourceConfigDto BuildDataSourceFromForm()
+    {
+        var source = new DataSourceConfigDto
+        {
+            Id = _editingSourceId ?? Guid.NewGuid().ToString("N"),
+            Name = SourceNameBox.Text.Trim(),
+            Provider = GetComboSelectedTag(ProviderCombo) ?? "IB",
+            Type = GetComboSelectedTag(TypeCombo) ?? "RealTime",
+            Priority = ParseIntOrDefault(PriorityBox.Text, 100),
+            Description = DescriptionBox.Text.Trim(),
+            Enabled = true
+        };
+
+        if (!string.IsNullOrWhiteSpace(SymbolsBox.Text))
+        {
+            source.Symbols = SymbolsBox.Text
+                .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(s => s.Trim().ToUpperInvariant())
+                .Where(s => !string.IsNullOrEmpty(s))
+                .ToArray();
+        }
+
+        switch (source.Provider)
+        {
+            case "IB":
+                source.IB = new IBOptionsDto
+                {
+                    Host = IBHostBox.Text.Trim(),
+                    Port = ParseIntOrDefault(IBPortBox.Text, 7496),
+                    ClientId = ParseIntOrDefault(IBClientIdBox.Text, 0),
+                    UsePaperTrading = IBPaperTradingCheck.IsChecked ?? false,
+                    SubscribeDepth = IBSubscribeDepthCheck.IsChecked ?? true,
+                    TickByTick = IBTickByTickCheck.IsChecked ?? true
+                };
+                break;
+            case "Alpaca":
+                source.Alpaca = new AlpacaOptionsDto
+                {
+                    Feed = GetComboSelectedTag(AlpacaFeedCombo) ?? "iex",
+                    UseSandbox = GetComboSelectedTag(AlpacaEnvironmentCombo) == "true",
+                    SubscribeQuotes = AlpacaSubscribeQuotesCheck.IsChecked ?? false
+                };
+                break;
+            case "Polygon":
+                source.Polygon = new PolygonOptionsDto
+                {
+                    ApiKey = PolygonApiKeyBox.Password,
+                    Feed = GetComboSelectedTag(PolygonFeedCombo) ?? "stocks",
+                    UseDelayed = PolygonDelayedCheck.IsChecked ?? false,
+                    SubscribeTrades = PolygonTradesCheck.IsChecked ?? true,
+                    SubscribeQuotes = PolygonQuotesCheck.IsChecked ?? false,
+                    SubscribeAggregates = PolygonAggregatesCheck.IsChecked ?? false
+                };
+                break;
+        }
+
+        return source;
+    }
+
+    private void PopulateEditForm(DataSourceConfigDto source)
+    {
+        SourceNameBox.Text = source.Name;
+        SelectComboItemByTag(ProviderCombo, source.Provider);
+        SelectComboItemByTag(TypeCombo, source.Type);
+        PriorityBox.Text = source.Priority.ToString();
+        DescriptionBox.Text = source.Description ?? string.Empty;
+        SymbolsBox.Text = source.Symbols != null ? string.Join(", ", source.Symbols) : string.Empty;
+
+        UpdateProviderSettingsPanels(source.Provider);
+
+        if (source.IB != null)
+        {
+            IBHostBox.Text = source.IB.Host;
+            IBPortBox.Text = source.IB.Port.ToString();
+            IBClientIdBox.Text = source.IB.ClientId.ToString();
+            IBPaperTradingCheck.IsChecked = source.IB.UsePaperTrading;
+            IBSubscribeDepthCheck.IsChecked = source.IB.SubscribeDepth;
+            IBTickByTickCheck.IsChecked = source.IB.TickByTick;
+        }
+
+        if (source.Alpaca != null)
+        {
+            SelectComboItemByTag(AlpacaFeedCombo, source.Alpaca.Feed ?? "iex");
+            SelectComboItemByTag(AlpacaEnvironmentCombo, source.Alpaca.UseSandbox ? "true" : "false");
+            AlpacaSubscribeQuotesCheck.IsChecked = source.Alpaca.SubscribeQuotes;
+        }
+
+        if (source.Polygon != null)
+        {
+            PolygonApiKeyBox.Password = source.Polygon.ApiKey ?? string.Empty;
+            SelectComboItemByTag(PolygonFeedCombo, source.Polygon.Feed);
+            PolygonDelayedCheck.IsChecked = source.Polygon.UseDelayed;
+            PolygonTradesCheck.IsChecked = source.Polygon.SubscribeTrades;
+            PolygonQuotesCheck.IsChecked = source.Polygon.SubscribeQuotes;
+            PolygonAggregatesCheck.IsChecked = source.Polygon.SubscribeAggregates;
+        }
+    }
+
+    private void ClearEditForm()
+    {
+        SourceNameBox.Text = string.Empty;
+        ProviderCombo.SelectedIndex = 0;
+        TypeCombo.SelectedIndex = 0;
+        PriorityBox.Text = "100";
+        DescriptionBox.Text = string.Empty;
+        SymbolsBox.Text = string.Empty;
+
+        IBHostBox.Text = "127.0.0.1";
+        IBPortBox.Text = "7496";
+        IBClientIdBox.Text = "0";
+        IBPaperTradingCheck.IsChecked = false;
+        IBSubscribeDepthCheck.IsChecked = true;
+        IBTickByTickCheck.IsChecked = true;
+
+        AlpacaFeedCombo.SelectedIndex = 0;
+        AlpacaEnvironmentCombo.SelectedIndex = 0;
+        AlpacaSubscribeQuotesCheck.IsChecked = false;
+
+        PolygonApiKeyBox.Password = string.Empty;
+        PolygonFeedCombo.SelectedIndex = 0;
+        PolygonDelayedCheck.IsChecked = false;
+        PolygonTradesCheck.IsChecked = true;
+        PolygonQuotesCheck.IsChecked = false;
+        PolygonAggregatesCheck.IsChecked = false;
+
+        ClearValidationErrors();
+        UpdateProviderSettingsPanels("IB");
+    }
+
+    private void ProviderCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        var provider = GetComboSelectedTag(ProviderCombo) ?? "IB";
+        UpdateProviderSettingsPanels(provider);
+    }
+
+    private void UpdateProviderSettingsPanels(string provider)
+    {
+        IBSettingsPanel.Visibility = provider == "IB" ? Visibility.Visible : Visibility.Collapsed;
+        AlpacaSettingsPanel.Visibility = provider == "Alpaca" ? Visibility.Visible : Visibility.Collapsed;
+        PolygonSettingsPanel.Visibility = provider == "Polygon" ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private async void EnableFailoverToggle_Changed(object sender, RoutedEventArgs e)
+    {
+        await UpdateFailoverSettingsAsync();
+    }
+
+    private async void FailoverTimeoutBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        await UpdateFailoverSettingsAsync();
+    }
+
+    private async Task UpdateFailoverSettingsAsync()
+    {
+        if (!TryParseTimeout(out var timeoutSeconds))
+        {
+            return;
+        }
+
+        try
+        {
+            await _configService.UpdateFailoverSettingsAsync(
+                EnableFailoverToggle.IsChecked ?? false,
+                timeoutSeconds);
+        }
+        catch (Exception ex)
+        {
+            ShowStatus($"Failed to update failover settings: {ex.Message}", isError: true);
+        }
+    }
+
+    private async void DefaultRealTimeCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (DefaultRealTimeCombo.SelectedItem is DataSourceConfigDto source)
+        {
+            try
+            {
+                await _configService.SetDefaultDataSourceAsync(source.Id, isHistorical: false);
+            }
+            catch (Exception ex)
+            {
+                ShowStatus($"Failed to set default real-time source: {ex.Message}", isError: true);
+            }
+        }
+    }
+
+    private async void DefaultHistoricalCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (DefaultHistoricalCombo.SelectedItem is DataSourceConfigDto source)
+        {
+            try
+            {
+                await _configService.SetDefaultDataSourceAsync(source.Id, isHistorical: true);
+            }
+            catch (Exception ex)
+            {
+                ShowStatus($"Failed to set default historical source: {ex.Message}", isError: true);
+            }
+        }
+    }
+
+    private async void SourceEnabled_Changed(object sender, RoutedEventArgs e)
+    {
+        if (sender is CheckBox checkBox && checkBox.DataContext is DataSourceConfigDto source)
+        {
+            try
+            {
+                source.Enabled = checkBox.IsChecked ?? false;
+                await _configService.AddOrUpdateDataSourceAsync(source);
+            }
+            catch (Exception ex)
+            {
+                ShowStatus($"Failed to update data source: {ex.Message}", isError: true);
+            }
+        }
+    }
+
+    private bool ValidateEditForm()
+    {
+        ClearValidationErrors();
+        var hasError = false;
+
+        if (string.IsNullOrWhiteSpace(SourceNameBox.Text))
+        {
+            SourceNameError.Text = "Name is required.";
+            SourceNameError.Visibility = Visibility.Visible;
+            hasError = true;
+        }
+
+        if (!int.TryParse(PriorityBox.Text, out var priority) || priority is < 1 or > 1000)
+        {
+            PriorityError.Text = "Priority must be between 1 and 1000.";
+            PriorityError.Visibility = Visibility.Visible;
+            hasError = true;
+        }
+
+        if (!TryParseTimeout(out _))
+        {
+            hasError = true;
+        }
+
+        return !hasError;
+    }
+
+    private bool TryParseTimeout(out int timeoutSeconds)
+    {
+        FailoverTimeoutError.Visibility = Visibility.Collapsed;
+
+        if (!int.TryParse(FailoverTimeoutBox.Text, out timeoutSeconds) || timeoutSeconds is < 5 or > 300)
+        {
+            FailoverTimeoutError.Text = "Timeout must be between 5 and 300 seconds.";
+            FailoverTimeoutError.Visibility = Visibility.Visible;
+            return false;
+        }
+
+        return true;
+    }
+
+    private void ClearValidationErrors()
+    {
+        SourceNameError.Visibility = Visibility.Collapsed;
+        PriorityError.Visibility = Visibility.Collapsed;
+        FailoverTimeoutError.Visibility = Visibility.Collapsed;
+    }
+
+    private void ShowStatus(string message, bool isError = false)
+    {
+        StatusPanel.Visibility = Visibility.Visible;
+        StatusPanel.Background = isError
+            ? (System.Windows.Media.Brush)FindResource("ConsoleAccentRedAlpha10Brush")
+            : (System.Windows.Media.Brush)FindResource("ConsoleAccentGreenAlpha10Brush");
+        StatusText.Text = message;
+        StatusText.Foreground = isError
+            ? (System.Windows.Media.Brush)FindResource("ErrorColorBrush")
+            : (System.Windows.Media.Brush)FindResource("SuccessColorBrush");
+    }
+
+    private static void SelectComboItemByTag(ComboBox combo, string tag)
+    {
+        foreach (var item in combo.Items)
+        {
+            if (item is ComboBoxItem cbi && cbi.Tag?.ToString() == tag)
+            {
+                combo.SelectedItem = item;
+                return;
+            }
+        }
+    }
+
+    private static string? GetComboSelectedTag(ComboBox combo)
+    {
+        return (combo.SelectedItem as ComboBoxItem)?.Tag?.ToString();
+    }
+
+    private static int ParseIntOrDefault(string? value, int fallback)
+    {
+        return int.TryParse(value, out var parsed) ? parsed : fallback;
     }
 }

@@ -1,4 +1,8 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text.Json;
+using MarketDataCollector.Contracts.Configuration;
 
 namespace MarketDataCollector.Wpf.Services;
 
@@ -56,6 +60,13 @@ public sealed class ConfigValidationResult
 public sealed class ConfigService
 {
     private static readonly Lazy<ConfigService> _instance = new(() => new ConfigService());
+    private static readonly JsonSerializerOptions _jsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        ReadCommentHandling = JsonCommentHandling.Skip,
+        AllowTrailingCommas = true,
+        WriteIndented = true
+    };
 
     private bool _initialized;
 
@@ -98,6 +109,94 @@ public sealed class ConfigService
     }
 
     /// <summary>
+    /// Gets the data sources configuration.
+    /// </summary>
+    public async Task<DataSourcesConfigDto> GetDataSourcesConfigAsync()
+    {
+        var config = await LoadConfigAsync() ?? new AppConfigDto();
+        return config.DataSources ?? new DataSourcesConfigDto();
+    }
+
+    /// <summary>
+    /// Adds or updates a data source configuration.
+    /// </summary>
+    public async Task AddOrUpdateDataSourceAsync(DataSourceConfigDto dataSource)
+    {
+        var config = await LoadConfigAsync() ?? new AppConfigDto();
+        var dataSources = config.DataSources ?? new DataSourcesConfigDto();
+        var sources = dataSources.Sources?.ToList() ?? new List<DataSourceConfigDto>();
+
+        var existingIndex = sources.FindIndex(s =>
+            string.Equals(s.Id, dataSource.Id, StringComparison.OrdinalIgnoreCase));
+
+        if (existingIndex >= 0)
+        {
+            sources[existingIndex] = dataSource;
+        }
+        else
+        {
+            sources.Add(dataSource);
+        }
+
+        dataSources.Sources = sources.ToArray();
+        config.DataSources = dataSources;
+        await SaveConfigAsync(config);
+    }
+
+    /// <summary>
+    /// Deletes a data source by ID.
+    /// </summary>
+    public async Task DeleteDataSourceAsync(string id)
+    {
+        var config = await LoadConfigAsync() ?? new AppConfigDto();
+        var dataSources = config.DataSources ?? new DataSourcesConfigDto();
+        var sources = dataSources.Sources?.ToList() ?? new List<DataSourceConfigDto>();
+
+        sources.RemoveAll(s =>
+            string.Equals(s.Id, id, StringComparison.OrdinalIgnoreCase));
+
+        dataSources.Sources = sources.ToArray();
+        config.DataSources = dataSources;
+        await SaveConfigAsync(config);
+    }
+
+    /// <summary>
+    /// Sets the default data source for real-time or historical data.
+    /// </summary>
+    public async Task SetDefaultDataSourceAsync(string id, bool isHistorical)
+    {
+        var config = await LoadConfigAsync() ?? new AppConfigDto();
+        var dataSources = config.DataSources ?? new DataSourcesConfigDto();
+
+        if (isHistorical)
+        {
+            dataSources.DefaultHistoricalSourceId = id;
+        }
+        else
+        {
+            dataSources.DefaultRealTimeSourceId = id;
+        }
+
+        config.DataSources = dataSources;
+        await SaveConfigAsync(config);
+    }
+
+    /// <summary>
+    /// Updates failover settings for data sources.
+    /// </summary>
+    public async Task UpdateFailoverSettingsAsync(bool enableFailover, int failoverTimeoutSeconds)
+    {
+        var config = await LoadConfigAsync() ?? new AppConfigDto();
+        var dataSources = config.DataSources ?? new DataSourcesConfigDto();
+
+        dataSources.EnableFailover = enableFailover;
+        dataSources.FailoverTimeoutSeconds = failoverTimeoutSeconds;
+
+        config.DataSources = dataSources;
+        await SaveConfigAsync(config);
+    }
+
+    /// <summary>
     /// Gets configuration of the specified type.
     /// </summary>
     /// <typeparam name="T">The configuration type.</typeparam>
@@ -125,5 +224,49 @@ public sealed class ConfigService
     public Task SaveConfigAsync<T>(T config) where T : class
     {
         return Task.CompletedTask;
+    }
+
+    private async Task<AppConfigDto?> LoadConfigAsync()
+    {
+        try
+        {
+            if (!File.Exists(ConfigPath))
+            {
+                return new AppConfigDto();
+            }
+
+            var json = await File.ReadAllTextAsync(ConfigPath);
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return new AppConfigDto();
+            }
+
+            return JsonSerializer.Deserialize<AppConfigDto>(json, _jsonOptions) ?? new AppConfigDto();
+        }
+        catch (Exception ex)
+        {
+            LoggingService.Instance.LogError("Failed to load configuration", ex);
+            return new AppConfigDto();
+        }
+    }
+
+    private async Task SaveConfigAsync(AppConfigDto config)
+    {
+        try
+        {
+            var directory = Path.GetDirectoryName(ConfigPath);
+            if (!string.IsNullOrWhiteSpace(directory) && !Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            var json = JsonSerializer.Serialize(config, _jsonOptions);
+            await File.WriteAllTextAsync(ConfigPath, json);
+        }
+        catch (Exception ex)
+        {
+            LoggingService.Instance.LogError("Failed to save configuration", ex);
+            throw;
+        }
     }
 }
