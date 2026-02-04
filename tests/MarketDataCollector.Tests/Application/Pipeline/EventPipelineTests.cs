@@ -420,16 +420,17 @@ public class EventPipelineTests : IAsyncLifetime
     [Fact]
     public async Task PublishAsync_WithCancellation_ThrowsWhenCancelled()
     {
-        // Arrange
-        await using var sink = new MockStorageSink { ProcessingDelay = TimeSpan.FromMilliseconds(1000) };
+        // Arrange - Use very slow consumer and fill queue completely
+        await using var sink = new MockStorageSink { ProcessingDelay = TimeSpan.FromSeconds(10) };
         await using var pipeline = new EventPipeline(sink, capacity: 1, enablePeriodicFlush: false);
 
-        // Fill the queue
+        // Fill the queue - wait a bit to ensure first item is being processed
         pipeline.TryPublish(CreateTradeEvent("SPY"));
+        await Task.Delay(10); // Let consumer start processing
 
-        using var cts = new CancellationTokenSource(50);
+        using var cts = new CancellationTokenSource(100); // Longer timeout to be more reliable
 
-        // Act & Assert
+        // Act & Assert - Second publish should block since queue is full and consumer is slow
         await Assert.ThrowsAnyAsync<OperationCanceledException>(
             async () => await pipeline.PublishAsync(CreateTradeEvent("AAPL"), cts.Token));
     }
