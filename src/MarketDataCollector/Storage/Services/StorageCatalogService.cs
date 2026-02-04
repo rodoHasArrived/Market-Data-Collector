@@ -8,6 +8,7 @@ using MarketDataCollector.Application.Serialization;
 using MarketDataCollector.Contracts.Catalog;
 using MarketDataCollector.Storage.Interfaces;
 using Serilog;
+using CatalogSymbolEntry = MarketDataCollector.Contracts.Catalog.SymbolCatalogEntry;
 
 namespace MarketDataCollector.Storage.Services;
 
@@ -1015,7 +1016,7 @@ public sealed class StorageCatalogService : IStorageCatalogService
         foreach (var group in symbolGroups)
         {
             var files = group.ToList();
-            var symbolEntry = new SymbolCatalogEntry
+            var symbolEntry = new CatalogSymbolEntry
             {
                 Symbol = group.Key,
                 FileCount = files.Count,
@@ -1105,7 +1106,7 @@ public sealed class StorageCatalogService : IStorageCatalogService
 
         if (!_catalog.Symbols.TryGetValue(entry.Symbol, out var symbolEntry))
         {
-            symbolEntry = new SymbolCatalogEntry { Symbol = entry.Symbol };
+            symbolEntry = new CatalogSymbolEntry { Symbol = entry.Symbol };
             _catalog.Symbols[entry.Symbol] = symbolEntry;
         }
 
