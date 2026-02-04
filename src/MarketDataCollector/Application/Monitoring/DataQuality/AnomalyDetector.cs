@@ -503,42 +503,71 @@ public sealed class AnomalyDetector : IDisposable
                 if (config.EnablePriceAnomalies && _priceHistory.Count >= _minSamples)
                 {
                     var mean = _priceSum / _priceHistory.Count;
-                    var variance = (_priceSumSquares / _priceHistory.Count) - (mean * mean);
-                    var stdDev = (decimal)Math.Sqrt(Math.Max(0, (double)variance));
+                    var deviationPercent = Math.Abs((price - mean) / mean * 100);
 
-                    if (stdDev > 0)
+                    // Check deviation percent first (works even with zero stdDev for stable prices)
+                    if (deviationPercent > (decimal)config.PriceSpikeThresholdPercent)
                     {
-                        var zScore = (price - mean) / stdDev;
-                        var deviationPercent = Math.Abs((price - mean) / mean * 100);
+                        var type = price > mean ? AnomalyType.PriceSpike : AnomalyType.PriceDrop;
+                        var severity = deviationPercent > (decimal)config.PriceSpikeThresholdPercent * 2
+                            ? AnomalySeverity.Critical
+                            : AnomalySeverity.Error;
 
-                        if (Math.Abs(zScore) > (decimal)config.ZScoreThreshold ||
-                            deviationPercent > (decimal)config.PriceSpikeThresholdPercent)
+                        anomaly = new DataAnomaly(
+                            Id: "",
+                            Timestamp: timestamp,
+                            Symbol: _symbol,
+                            Type: type,
+                            Severity: severity,
+                            Description: $"{type}: price {price:F4} deviates {deviationPercent:F2}% from mean {mean:F4}",
+                            ExpectedValue: (double)mean,
+                            ActualValue: (double)price,
+                            DeviationPercent: Math.Round((double)deviationPercent, 2),
+                            ZScore: 0, // Z-score not calculated when stdDev is 0
+                            Provider: null,
+                            IsAcknowledged: false,
+                            DetectedAt: DateTimeOffset.UtcNow
+                        );
+                    }
+                    // Also check z-score if stdDev > 0 and no deviation anomaly detected
+                    else
+                    {
+                        var variance = (_priceSumSquares / _priceHistory.Count) - (mean * mean);
+                        var stdDev = (decimal)Math.Sqrt(Math.Max(0, (double)variance));
+
+                        if (stdDev > 0)
                         {
-                            var type = price > mean ? AnomalyType.PriceSpike : AnomalyType.PriceDrop;
-                            var severity = deviationPercent > (decimal)config.PriceSpikeThresholdPercent * 2
-                                ? AnomalySeverity.Critical
-                                : (deviationPercent > (decimal)config.PriceSpikeThresholdPercent ? AnomalySeverity.Error : AnomalySeverity.Warning);
+                            var zScore = (price - mean) / stdDev;
+                            
+                            if (Math.Abs(zScore) > (decimal)config.ZScoreThreshold)
+                            {
+                                var type = price > mean ? AnomalyType.PriceSpike : AnomalyType.PriceDrop;
+                                var severity = Math.Abs(zScore) > (decimal)config.ZScoreThreshold * 2
+                                    ? AnomalySeverity.Critical
+                                    : AnomalySeverity.Warning;
 
-                            anomaly = new DataAnomaly(
-                                Id: "",
-                                Timestamp: timestamp,
-                                Symbol: _symbol,
-                                Type: type,
-                                Severity: severity,
-                                Description: $"{type}: price {price:F4} deviates {deviationPercent:F2}% from mean {mean:F4}",
-                                ExpectedValue: (double)mean,
-                                ActualValue: (double)price,
-                                DeviationPercent: Math.Round((double)deviationPercent, 2),
-                                ZScore: Math.Round((double)zScore, 2),
-                                Provider: null,
-                                IsAcknowledged: false,
-                                DetectedAt: DateTimeOffset.UtcNow
-                            );
+                                anomaly = new DataAnomaly(
+                                    Id: "",
+                                    Timestamp: timestamp,
+                                    Symbol: _symbol,
+                                    Type: type,
+                                    Severity: severity,
+                                    Description: $"{type}: price {price:F4} deviates {deviationPercent:F2}% from mean {mean:F4} (z-score: {zScore:F2})",
+                                    ExpectedValue: (double)mean,
+                                    ActualValue: (double)price,
+                                    DeviationPercent: Math.Round((double)deviationPercent, 2),
+                                    ZScore: Math.Round((double)zScore, 2),
+                                    Provider: null,
+                                    IsAcknowledged: false,
+                                    DetectedAt: DateTimeOffset.UtcNow
+                                );
+                            }
                         }
                     }
 
-                    // Check for rapid price change
-                    if (_lastPrice > 0 && _lastPriceTime != DateTimeOffset.MinValue)
+                    // Check for rapid price change only if no price spike/drop was detected
+                    // (price spikes take priority as they're more significant)
+                    if (anomaly == null && _lastPrice > 0 && _lastPriceTime != DateTimeOffset.MinValue)
                     {
                         var timeDelta = (timestamp - _lastPriceTime).TotalSeconds;
                         if (timeDelta <= config.RapidChangeWindowSeconds && timeDelta > 0)
@@ -566,8 +595,9 @@ public sealed class AnomalyDetector : IDisposable
                     }
                 }
 
-                // Check for volume spike or volume drop
-                if (config.EnableVolumeAnomalies && _volumeHistory.Count >= _minSamples && volume > 0)
+                // Check for volume spike or volume drop (only if no price anomaly detected)
+                // Price anomalies are generally more critical than volume anomalies
+                if (anomaly == null && config.EnableVolumeAnomalies && _volumeHistory.Count >= _minSamples && volume > 0)
                 {
                     var meanVolume = _volumeSum / _volumeHistory.Count;
                     if (meanVolume > 0)
