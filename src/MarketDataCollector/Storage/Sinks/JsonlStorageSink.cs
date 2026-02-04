@@ -279,7 +279,6 @@ public sealed class JsonlStorageSink : IStorageSink
     public async ValueTask DisposeAsync()
     {
         if (_disposed) return;
-        _disposed = true;
 
         // Stop the timer first
         if (_flushTimer != null)
@@ -292,11 +291,14 @@ public sealed class JsonlStorageSink : IStorageSink
             await _retentionTimer.DisposeAsync().ConfigureAwait(false);
         }
 
-        // Flush remaining buffered events
+        // Flush remaining buffered events BEFORE setting _disposed
         if (_batchOptions.Enabled)
         {
             await FlushAllBuffersAsync().ConfigureAwait(false);
         }
+
+        // Now set disposed flag
+        _disposed = true;
 
         // Dispose all writers
         foreach (var kv in _writers)
@@ -362,8 +364,9 @@ public sealed class JsonlStorageSink : IStorageSink
                 {
                     await _writer.WriteLineAsync(line).ConfigureAwait(false);
                 }
-                // Flush after batch to ensure durability
+                // Flush after batch to ensure durability - must flush both writer and underlying stream
                 await _writer.FlushAsync().ConfigureAwait(false);
+                await _stream.FlushAsync(ct).ConfigureAwait(false);
             }
             finally
             {

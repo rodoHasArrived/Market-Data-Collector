@@ -418,46 +418,61 @@ public sealed class PortableDataPackager
         // Pattern: SYMBOL.EventType.Date or SYMBOL_EventType_Date
         var parts = baseName.Split('.', '_');
 
-        if (parts.Length >= 1)
+        // First check path parts for metadata (e.g., AAPL/Trade/2026-01-03.jsonl)
+        // This takes priority over filename parsing
+        for (int i = 0; i < pathParts.Length; i++)
+        {
+            var pathPart = pathParts[i];
+            
+            // First path part is likely the symbol (if not a date or event type)
+            if (i == 0 && !DateTime.TryParse(pathPart, out _) && !IsKnownEventType(pathPart))
+            {
+                info.Symbol = pathPart.ToUpperInvariant();
+            }
+            
+            // Check for known event types in path
+            if (IsKnownEventType(pathPart))
+            {
+                info.EventType = pathPart;
+            }
+            
+            // Check for dates in path
+            if (DateTime.TryParse(pathPart, out var date))
+            {
+                info.Date = date;
+            }
+        }
+
+        // If symbol not found in path, try filename (for flat naming like AAPL_Trade_2026-01-03.jsonl)
+        if (info.Symbol == null && parts.Length >= 1 && !DateTime.TryParse(parts[0], out _))
         {
             info.Symbol = parts[0].ToUpperInvariant();
         }
 
-        if (parts.Length >= 2)
+        // If event type not found in path, try filename
+        if (info.EventType == null && parts.Length >= 2)
         {
             info.EventType = parts[1];
         }
 
-        // Try to parse date from parts
-        foreach (var part in parts)
+        // Try to parse date from filename parts if not found in path
+        if (info.Date == null)
         {
-            if (DateTime.TryParse(part, out var date))
+            foreach (var part in parts)
             {
-                info.Date = date;
-                break;
-            }
+                if (DateTime.TryParse(part, out var date))
+                {
+                    info.Date = date;
+                    break;
+                }
 
-            // Try yyyy-MM-dd format
-            if (part.Length == 10 && DateTime.TryParseExact(part, "yyyy-MM-dd", null,
-                    System.Globalization.DateTimeStyles.None, out date))
-            {
-                info.Date = date;
-                break;
-            }
-        }
-
-        // Also check path parts for additional context
-        foreach (var pathPart in pathParts)
-        {
-            if (DateTime.TryParse(pathPart, out var date))
-            {
-                info.Date ??= date;
-            }
-
-            // Check for known event types
-            if (IsKnownEventType(pathPart))
-            {
-                info.EventType ??= pathPart;
+                // Try yyyy-MM-dd format
+                if (part.Length == 10 && DateTime.TryParseExact(part, "yyyy-MM-dd", null,
+                        System.Globalization.DateTimeStyles.None, out date))
+                {
+                    info.Date = date;
+                    break;
+                }
             }
         }
 
