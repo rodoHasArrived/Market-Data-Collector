@@ -323,7 +323,7 @@ public partial class WatchlistPage : Page
         }
     }
 
-    private async void WatchlistMenu_Click(object sender, RoutedEventArgs e)
+    private void WatchlistMenu_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button btn || btn.Tag is not string watchlistId) return;
 

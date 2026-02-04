@@ -242,7 +242,7 @@ public sealed class FirstRunService
     /// Raises the Initialized event.
     /// </summary>
     /// <param name="e">The event arguments.</param>
-    protected void OnInitialized(FirstRunInitializedEventArgs e)
+    private void OnInitialized(FirstRunInitializedEventArgs e)
     {
         Initialized?.Invoke(this, e);
     }
