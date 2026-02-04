@@ -210,7 +210,7 @@ public partial class WatchlistPage : Page
             }
 
             // Navigate to symbols page with this watchlist loaded
-            NavigationService.Instance.NavigateTo(typeof(SymbolsPage), watchlist);
+            Services.NavigationService.Instance.NavigateTo(typeof(SymbolsPage), watchlist);
 
             NotificationService.Instance.ShowNotification(
                 "Watchlist Loaded",

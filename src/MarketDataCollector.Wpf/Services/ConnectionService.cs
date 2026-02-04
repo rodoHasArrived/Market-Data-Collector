@@ -137,7 +137,7 @@ public sealed class ConnectionService : IConnectionService
             _monitoringTimer.Start();
 
             LoggingService.Instance.LogInfo("Connection monitoring started",
-                ("Interval", _monitoringTimer.Interval));
+                ("Interval", _monitoringTimer.Interval.ToString()));
         }
 
         // Perform initial health check
@@ -331,8 +331,8 @@ public sealed class ConnectionService : IConnectionService
             });
 
             LoggingService.Instance.LogInfo("Scheduling reconnect attempt",
-                ("Attempt", _reconnectAttempts),
-                ("DelayMs", delayMs));
+                ("Attempt", _reconnectAttempts.ToString()),
+                ("DelayMs", delayMs.ToString()));
         }
     }
 
@@ -371,7 +371,7 @@ public sealed class ConnectionService : IConnectionService
                 ReconnectSucceeded?.Invoke(this, EventArgs.Empty);
 
                 LoggingService.Instance.LogInfo("Reconnection successful",
-                    ("TotalReconnects", TotalReconnects));
+                    ("TotalReconnects", TotalReconnects.ToString()));
 
                 _reconnectAttempts = 0;
             }
@@ -390,7 +390,7 @@ public sealed class ConnectionService : IConnectionService
             });
 
             LoggingService.Instance.LogWarning("Reconnect attempt failed",
-                ("Attempt", _reconnectAttempts),
+                ("Attempt", _reconnectAttempts.ToString()),
                 ("Error", ex.Message));
 
             // Schedule another attempt if enabled

@@ -105,25 +105,9 @@ public partial class OrderBookPage : Page
             {
                 _availableSymbols.Clear();
 
-                if (status.TryGetProperty("activeSubscriptions", out var subs) && subs.ValueKind == JsonValueKind.Array)
-                {
-                    foreach (var sub in subs.EnumerateArray())
-                    {
-                        if (sub.TryGetProperty("symbol", out var symProp))
-                        {
-                            var symbol = symProp.GetString();
-                            if (!string.IsNullOrEmpty(symbol) && !_availableSymbols.Contains(symbol))
-                            {
-                                _availableSymbols.Add(symbol);
-                            }
-                        }
-                    }
-                }
-
-                if (_availableSymbols.Count == 0)
-                {
-                    _availableSymbols.AddRange(new[] { "SPY", "AAPL", "MSFT", "GOOGL", "AMZN" });
-                }
+                // SimpleStatus doesn't contain subscription details, so use default symbols
+                // In a real implementation, this would call a separate API endpoint
+                _availableSymbols.AddRange(new[] { "SPY", "AAPL", "MSFT", "GOOGL", "AMZN", "QQQ", "IWM", "DIA" });
 
                 SymbolComboBox.ItemsSource = _availableSymbols;
                 if (_availableSymbols.Count > 0 && SymbolComboBox.SelectedItem == null)

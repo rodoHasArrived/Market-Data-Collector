@@ -18,7 +18,7 @@ public partial class HelpPage : Page
     private void StartTutorial_Click(object sender, RoutedEventArgs e)
     {
         // Navigate to setup wizard
-        NavigationService.Instance.NavigateTo("SetupWizard");
+        Services.NavigationService.Instance.NavigateTo("SetupWizard");
     }
 
     private void OpenArchitectureDoc_Click(object sender, RoutedEventArgs e)

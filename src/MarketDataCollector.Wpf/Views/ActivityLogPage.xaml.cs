@@ -43,14 +43,14 @@ public partial class ActivityLogPage : Page
         _baseUrl = StatusService.Instance.BaseUrl;
 
         // Subscribe to logging service events
-        LoggingService.Instance.LogEntryAdded += OnLogEntryAdded;
+        LoggingService.Instance.LogWritten += OnLogEntryAdded;
 
         Unloaded += OnPageUnloaded;
     }
 
     private void OnPageUnloaded(object sender, RoutedEventArgs e)
     {
-        LoggingService.Instance.LogEntryAdded -= OnLogEntryAdded;
+        LoggingService.Instance.LogWritten -= OnLogEntryAdded;
         _refreshTimer?.Stop();
         _refreshTimer?.Dispose();
         _cts?.Cancel();
@@ -67,7 +67,7 @@ public partial class ActivityLogPage : Page
         _refreshTimer.Start();
     }
 
-    private void OnLogEntryAdded(object? sender, LogEntryEventArgs e)
+    private void OnLogEntryAdded(object? sender, Services.LogEntryEventArgs e)
     {
         Dispatcher.Invoke(() =>
         {
@@ -75,11 +75,11 @@ public partial class ActivityLogPage : Page
             {
                 RawTimestamp = e.Timestamp,
                 Timestamp = e.Timestamp.ToString("HH:mm:ss"),
-                Level = e.Level,
-                Category = e.Category ?? "System",
+                Level = e.Level.ToString(),
+                Category = "System",
                 Message = e.Message,
-                LevelBackground = GetLevelBackground(e.Level),
-                LevelForeground = GetLevelForeground(e.Level)
+                LevelBackground = GetLevelBackground(e.Level.ToString()),
+                LevelForeground = GetLevelForeground(e.Level.ToString())
             };
 
             _allLogs.Insert(0, entry);

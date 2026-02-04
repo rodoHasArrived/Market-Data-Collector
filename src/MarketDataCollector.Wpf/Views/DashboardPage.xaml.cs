@@ -21,7 +21,7 @@ public partial class DashboardPage : Page
     {
         InitializeComponent();
 
-        _navigationService = NavigationService.Instance;
+        _navigationService = Services.NavigationService.Instance;
         _connectionService = ConnectionService.Instance;
         _statusService = StatusService.Instance;
 
@@ -73,7 +73,7 @@ public partial class DashboardPage : Page
                 IntegrityCount.Text = FormatNumber(status.Integrity);
                 HistoricalCount.Text = FormatNumber(status.Historical);
 
-                ActiveProviderText.Text = status.Provider ?? "Not Connected";
+                ActiveProviderText.Text = status.Provider?.DisplayStatus ?? "Not Connected";
             }
 
             // Update connection info
