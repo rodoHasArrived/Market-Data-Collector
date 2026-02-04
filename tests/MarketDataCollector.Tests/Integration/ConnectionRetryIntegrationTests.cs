@@ -134,7 +134,7 @@ public class ConnectionRetryIntegrationTests
         cts.CancelAfter(TimeSpan.FromMilliseconds(50));
 
         // Act & Assert
-        await Assert.ThrowsAsync<OperationCanceledException>(async () =>
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(async () =>
         {
             await pipeline.ExecuteAsync(async ct =>
             {

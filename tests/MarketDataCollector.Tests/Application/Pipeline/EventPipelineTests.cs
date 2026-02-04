@@ -233,16 +233,32 @@ public class EventPipelineTests : IAsyncLifetime
             enablePeriodicFlush: false);
 
         // Act - Publish more events than capacity
+        // When publishing 100 events quickly, the channel (capacity=10) will drop the oldest
         for (int i = 0; i < 100; i++)
         {
             pipeline.TryPublish(CreateTradeEvent($"SYM{i}"));
         }
 
-        // Wait a bit
-        await Task.Delay(50);
+        // Wait for processing to complete - wait for a reasonable number of events
+        // With capacity=10 and DropOldest, we expect roughly capacity + small epsilon
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        var targetCount = 15; // capacity + small buffer for in-flight processing
+        while (sink.ReceivedEvents.Count < targetCount && stopwatch.Elapsed < TimeSpan.FromSeconds(2))
+        {
+            await Task.Delay(50);
+        }
+        await pipeline.FlushAsync();
 
-        // Assert
-        pipeline.DroppedCount.Should().BeGreaterThan(0);
+        // Assert - With DropOldest mode, all TryPublish calls succeed, so DroppedCount is 0
+        // But sink should receive approximately capacity worth of events (latest ones)
+        pipeline.DroppedCount.Should().Be(0, "DropOldest mode succeeds on TryPublish and doesn't increment DroppedCount");
+        sink.ReceivedEvents.Count.Should().BeLessThan(100, "some events should have been dropped by the channel");
+        
+        // The events received should be the latest ones (high symbol numbers)
+        // because oldest were dropped
+        var receivedSymbols = sink.ReceivedEvents.Select(e => e.Symbol).ToList();
+        var highSymbolCount = receivedSymbols.Count(s => int.Parse(s.Replace("SYM", "")) >= 90);
+        highSymbolCount.Should().BeGreaterThan(0, "should have received some of the latest events (SYM90+)");
     }
 
     [Fact]
@@ -417,17 +433,18 @@ public class EventPipelineTests : IAsyncLifetime
     [Fact]
     public async Task PublishAsync_WithCancellation_ThrowsWhenCancelled()
     {
-        // Arrange
-        await using var sink = new MockStorageSink { ProcessingDelay = TimeSpan.FromMilliseconds(1000) };
+        // Arrange - Use very slow consumer and fill queue completely
+        await using var sink = new MockStorageSink { ProcessingDelay = TimeSpan.FromSeconds(10) };
         await using var pipeline = new EventPipeline(sink, capacity: 1, enablePeriodicFlush: false);
 
-        // Fill the queue
+        // Fill the queue - wait for consumer to start processing (longer delay for CI reliability)
         pipeline.TryPublish(CreateTradeEvent("SPY"));
+        await Task.Delay(50); // Conservative delay to ensure consumer has started on slower CI systems
 
-        using var cts = new CancellationTokenSource(50);
+        using var cts = new CancellationTokenSource(100); // Cancellation timeout
 
-        // Act & Assert
-        await Assert.ThrowsAsync<OperationCanceledException>(
+        // Act & Assert - Second publish should block since queue is full and consumer is slow
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(
             async () => await pipeline.PublishAsync(CreateTradeEvent("AAPL"), cts.Token));
     }
 

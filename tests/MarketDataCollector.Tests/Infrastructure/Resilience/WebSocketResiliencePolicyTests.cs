@@ -1,6 +1,7 @@
 using FluentAssertions;
 using MarketDataCollector.Infrastructure.Resilience;
 using Polly;
+using Polly.Timeout;
 using System.Net.WebSockets;
 using Xunit;
 
@@ -97,8 +98,8 @@ public class WebSocketResiliencePolicyTests
         var pipeline = WebSocketResiliencePolicy.CreateTimeoutPipeline(
             timeout: TimeSpan.FromMilliseconds(100));
 
-        // Act & Assert
-        await Assert.ThrowsAsync<TimeoutException>(async () =>
+        // Act & Assert - Polly throws TimeoutRejectedException
+        await Assert.ThrowsAsync<TimeoutRejectedException>(async () =>
         {
             await pipeline.ExecuteAsync(async ct =>
             {

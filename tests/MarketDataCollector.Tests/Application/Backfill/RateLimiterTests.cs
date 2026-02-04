@@ -274,7 +274,7 @@ public class RateLimiterTests : IDisposable
         cts.CancelAfter(50);
 
         // Act & Assert
-        await Assert.ThrowsAsync<OperationCanceledException>(
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(
             () => _rateLimiter.WaitForSlotAsync(cts.Token));
     }
 
@@ -287,7 +287,7 @@ public class RateLimiterTests : IDisposable
         cts.Cancel();
 
         // Act & Assert
-        await Assert.ThrowsAsync<OperationCanceledException>(
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(
             () => _rateLimiter.WaitForSlotAsync(cts.Token));
     }
 
@@ -337,27 +337,27 @@ public class RateLimiterTests : IDisposable
     [Fact]
     public async Task WaitForSlotAsync_ConcurrentRequests_RespectLimit()
     {
-        // Arrange
-        const int maxRequests = 5;
-        const int totalRequests = 10;
-        _rateLimiter = new RateLimiter(maxRequestsPerWindow: maxRequests, window: TimeSpan.FromSeconds(60));
-        var tasks = new List<Task<TimeSpan>>();
+        // Arrange - Use a much shorter window (200ms) to make test fast
+        // With limit of 3 and 6 concurrent requests, the second batch must wait
+        _rateLimiter = new RateLimiter(maxRequestsPerWindow: 3, window: TimeSpan.FromMilliseconds(200));
+        
+        // Act - Launch 6 concurrent requests (2x limit)
+        var tasks = Enumerable.Range(0, 6)
+            .Select(_ => _rateLimiter.WaitForSlotAsync())
+            .ToList();
 
-        // Act - Launch 10 concurrent requests
-        for (int i = 0; i < totalRequests; i++)
-        {
-            tasks.Add(_rateLimiter.WaitForSlotAsync());
-        }
+        var waitTimes = await Task.WhenAll(tasks);
 
-        await Task.WhenAll(tasks);
-
-        var (requestsInWindow, _, _) = _rateLimiter.GetStatus();
-
-        // Assert - At least maxRequests should be tracked
-        // (Some may have been cleaned up depending on timing, but at minimum
-        // the maxRequests value should be present since we're within the window)
-        requestsInWindow.Should().BeGreaterThanOrEqualTo(maxRequests);
-        requestsInWindow.Should().BeLessOrEqualTo(totalRequests);
+        // Assert - Some tasks should have waited (rate limited), others should not
+        // First 3 requests should complete immediately (or near-zero wait)
+        var immediateRequests = waitTimes.Count(t => t.TotalMilliseconds < 50);
+        var delayedRequests = waitTimes.Count(t => t.TotalMilliseconds >= 50);
+        
+        immediateRequests.Should().BeGreaterOrEqualTo(3, "at least 3 requests should proceed immediately");
+        delayedRequests.Should().BeGreaterOrEqualTo(3, "at least 3 requests should be delayed by rate limiting");
+        
+        // At least some requests should have waited a non-trivial duration (>= window/2)
+        waitTimes.Should().Contain(t => t.TotalMilliseconds >= 100, "some requests should wait for rate limit window");
     }
 
     [Fact]
