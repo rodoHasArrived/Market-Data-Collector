@@ -45,10 +45,10 @@ jobs:
           cache-suffix: 'wpf'
 
       - name: Restore dependencies
-        run: dotnet restore ${{ env.PROJECT_PATH }}
+        run: dotnet restore ${{ env.PROJECT_PATH }} -p:TargetFramework=net9.0-windows
 
       - name: Build
-        run: dotnet build ${{ env.PROJECT_PATH }} -c Release --no-restore
+        run: dotnet build ${{ env.PROJECT_PATH }} -c Release --no-restore -p:TargetFramework=net9.0-windows
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v6.0.0
@@ -89,6 +89,7 @@ jobs:
             -r ${{ matrix.rid }} `
             -o ./publish/${{ matrix.rid }} `
             --self-contained true `
+            -p:TargetFramework=net9.0-windows `
             -p:PublishSingleFile=true `
             -p:PublishReadyToRun=true `
             -p:EnableCompressionInSingleFile=true `
@@ -101,6 +102,7 @@ jobs:
             -r ${{ matrix.rid }} `
             -o ./publish/${{ matrix.rid }}-fdd `
             --self-contained false `
+            -p:TargetFramework=net9.0-windows `
             -p:PublishSingleFile=true `
             -p:PublishReadyToRun=true
 
