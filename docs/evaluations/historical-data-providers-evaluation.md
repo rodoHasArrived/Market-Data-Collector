@@ -772,4 +772,348 @@ The current implementation handles the complexity of 10 providers well through t
 
 ---
 
+## G. StockSharp Provider Consolidation Analysis
+
+### Overview
+
+StockSharp is a unified trading framework that provides access to **90+ data sources** through a single adapter pattern. This section analyzes how StockSharp connectors can potentially consolidate or replace multiple standalone historical data provider implementations in the codebase.
+
+**Key Insight:** The Market Data Collector currently maintains 10 separate historical data provider implementations. Several of these could be consolidated under StockSharp's unified adapter framework, reducing maintenance burden while maintaining or improving capabilities.
+
+---
+
+### Currently Implemented StockSharp Connectors
+
+| Connector | Implementation Status | Primary Data Types | Markets |
+|-----------|----------------------|-------------------|---------|
+| Rithmic | Full implementation | Bars, trades, depth, order log | CME, NYMEX, COMEX, CBOT, ICE |
+| IQFeed | Full implementation | Bars, trades, quotes, depth | NYSE, NASDAQ, AMEX, CME, NYMEX, COMEX, CBOT |
+| CQG | Full implementation | Bars, depth, quotes | CME, NYMEX, COMEX, CBOT, ICE, Eurex, LME |
+| Interactive Brokers | Full implementation | Bars, trades, depth, quotes | NYSE, NASDAQ, AMEX, ARCA, BATS, CME, LSE, TSE, HKEX |
+| Binance | Crowdfunding required | Bars, trades, depth | Crypto |
+| Coinbase | Crowdfunding required | Bars, trades, depth | Crypto |
+| Kraken | Crowdfunding required | Bars, trades, depth | Crypto |
+| Custom | Via AdapterType/AdapterAssembly | Varies | Any supported by S# adapter |
+
+---
+
+### Provider Overlap Analysis
+
+#### 1. Interactive Brokers Overlap
+
+**Current State:** Two IB implementations exist
+- `Infrastructure/Providers/Historical/InteractiveBrokers/` - Standalone via IBApi
+- `Infrastructure/Providers/Streaming/StockSharp/` - Via StockSharp adapter
+
+**StockSharp Capabilities vs Standalone:**
+
+| Feature | Standalone IB | StockSharp IB |
+|---------|--------------|---------------|
+| Historical bars | ✓ | ✓ |
+| Trades | ✓ | ✓ |
+| Depth (L2) | ✓ | ✓ (10 levels) |
+| Quotes (L1) | ✓ | ✓ |
+| Adjusted prices | ✓ | ✓ |
+| Dividends | ✓ | ✓ |
+| Splits | ✓ | ✓ |
+| Connection management | Manual | Automatic reconnection |
+| Error handling | Custom | StockSharp patterns |
+
+**Recommendation:** Consider consolidating to StockSharp IB adapter for:
+- Unified connection management with automatic reconnection
+- Consistent message buffering and backpressure handling
+- Simplified maintenance (single adapter framework)
+
+**Considerations:**
+- Standalone implementation has more granular control over IB-specific features
+- StockSharp requires additional dependency (StockSharp.InteractiveBrokers package)
+
+---
+
+#### 2. US Equities Coverage via IQFeed
+
+**Current US Equity Providers:**
+- Alpaca (primary)
+- Polygon (professional)
+- Tiingo (daily)
+- Yahoo Finance (fallback)
+- Finnhub (alternative)
+- Alpha Vantage (last resort)
+
+**IQFeed via StockSharp Can Provide:**
+
+| Data Type | IQFeed Capability | Current Coverage By |
+|-----------|------------------|-------------------|
+| Historical tick data | ✓ Full | Polygon only |
+| Historical bars | ✓ All timeframes | Multiple providers |
+| Real-time + historical | ✓ Unified | Alpaca, Polygon, IB |
+| Options chains | ✓ Full | Polygon, IB |
+| Futures data | ✓ Full | Rithmic, CQG, IB |
+| Symbol lookup | ✓ Native | Multiple providers |
+
+**Consolidation Potential:**
+- IQFeed could replace Alpaca + Polygon for organizations with IQFeed subscription
+- Particularly valuable for high-frequency backtesting requiring tick data
+- Provides both real-time and historical from single source
+
+**Limitations:**
+- Windows-only (IQFeed client must run locally)
+- Requires DTN IQFeed subscription ($75-300/month)
+- Does not replace free-tier providers for cost-sensitive deployments
+
+---
+
+#### 3. Futures Coverage via Rithmic/CQG
+
+**Current Futures Coverage:**
+- Interactive Brokers (comprehensive but complex pacing)
+- StockSharp Rithmic (low-latency futures)
+- StockSharp CQG (historical excellence)
+
+**Rithmic Advantages:**
+- **Order log support** - Full depth of book and order flow
+- **Low latency** - Sub-millisecond for live trading
+- **CME Group focus** - Optimized for CME, NYMEX, COMEX, CBOT
+- **Paper trading** - Available for testing
+
+**CQG Advantages:**
+- **Historical coverage** - Decades of historical data
+- **European exchanges** - Eurex, LME support
+- **Demo server** - Easy development testing
+
+**Recommendation:** For futures-focused applications:
+1. Rithmic for order log and low-latency requirements
+2. CQG for historical data and European futures
+3. IB as fallback for global coverage
+
+---
+
+#### 4. Cryptocurrency Coverage
+
+**Current Crypto Coverage:**
+- Alpaca (basic crypto support)
+- Tiingo (crypto data)
+
+**StockSharp Crypto Connectors:**
+
+| Connector | Spot | Futures | Depth Levels | Historical |
+|-----------|------|---------|--------------|-----------|
+| Binance | ✓ | ✓ (USDT + Coin) | 20 | ✓ |
+| Coinbase | ✓ | - | 50 | ✓ |
+| Kraken | ✓ | - | 1000 | ✓ |
+
+**Note:** Crypto connectors require StockSharp crowdfunding membership.
+
+**Consolidation Potential:**
+- If crowdfunding membership obtained, StockSharp crypto connectors provide:
+  - Deeper order book data (up to 1000 levels on Kraken)
+  - Unified interface across exchanges
+  - Consistent historical data format
+
+---
+
+### StockSharp Connector Capability Matrix
+
+| Connector | Streaming | Historical | Candles | Trades | Depth | Quotes | Order Log | Symbol Lookup |
+|-----------|-----------|-----------|---------|--------|-------|--------|-----------|---------------|
+| Rithmic | ✓ | ✓ | ✓ | ✓ | ✓ (20) | ✓ | ✓ | ✓ |
+| IQFeed | ✓ | ✓ | ✓ | ✓ | ✓ (10) | ✓ | ✓ | ✓ |
+| CQG | ✓ | ✓ | ✓ | ✓ | ✓ (10) | ✓ | - | ✓ |
+| Interactive Brokers | ✓ | ✓ | ✓ | ✓ | ✓ (10) | ✓ | - | ✓ |
+| Binance | ✓ | ✓ | ✓ | ✓ | ✓ (20) | ✓ | - | ✓ |
+| Coinbase | ✓ | ✓ | ✓ | ✓ | ✓ (50) | ✓ | - | ✓ |
+| Kraken | ✓ | ✓ | ✓ | ✓ | ✓ (1000) | ✓ | - | ✓ |
+
+---
+
+### Consolidation Recommendations
+
+#### Scenario 1: Professional Trading Operations
+
+**Recommended Stack:**
+```
+Primary:   StockSharp → IQFeed (US equities, full tick history)
+Futures:   StockSharp → Rithmic (order log, low latency)
+Global:    StockSharp → Interactive Brokers (international, multi-asset)
+Crypto:    StockSharp → Binance (if S# crowdfunding obtained)
+Fallback:  Tiingo, Yahoo Finance (free tier backup)
+```
+
+**Benefit:** 4 StockSharp connectors replace 6-7 standalone providers while adding:
+- Unified connection management and reconnection
+- Consistent message buffering
+- Order log capability (Rithmic)
+- Full tick history (IQFeed)
+
+---
+
+#### Scenario 2: Cost-Optimized Research
+
+**Recommended Stack:**
+```
+Primary:   Alpaca (free with account)
+Backup:    Tiingo (generous free tier)
+Historical: StockSharp → CQG Demo (futures historical)
+Fallback:  Stooq, Yahoo Finance (free)
+```
+
+**Benefit:** Leverages free tiers while using CQG demo for futures historical data testing.
+
+---
+
+#### Scenario 3: Futures-Focused Quantitative Research
+
+**Recommended Stack:**
+```
+Primary:   StockSharp → Rithmic (live + historical, order log)
+Historical: StockSharp → CQG (deep historical coverage)
+Backup:    StockSharp → Interactive Brokers (global fallback)
+```
+
+**Benefit:** Full order log capability and decades of historical futures data.
+
+---
+
+### Implementation Architecture
+
+#### Current Multi-Provider Flow
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                CompositeHistoricalDataProvider                     │
+├──────────────────────────────────────────────────────────────────┤
+│  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐ │
+│  │ Alpaca  │  │ Polygon │  │   IB    │  │ Tiingo  │  │  Stooq  │ │
+│  └────┬────┘  └────┬────┘  └────┬────┘  └────┬────┘  └────┬────┘ │
+│       │            │            │            │            │       │
+│       └────────────┴────────────┴────────────┴────────────┘       │
+│                              ↓                                     │
+│                    Priority-based Fallback                        │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+#### Proposed StockSharp-Consolidated Flow
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                CompositeHistoricalDataProvider                     │
+├──────────────────────────────────────────────────────────────────┤
+│  ┌─────────────────────────────────────────────────┐             │
+│  │           StockSharpHistoricalDataProvider        │  ┌───────┐ │
+│  │  ┌─────────┬─────────┬─────────┬────────────┐   │  │Alpaca │ │
+│  │  │ IQFeed  │ Rithmic │   CQG   │     IB     │   │  └───┬───┘ │
+│  │  └────┬────┴────┬────┴────┬────┴─────┬──────┘   │      │     │
+│  │       └─────────┴─────────┴──────────┘          │      │     │
+│  │                  Unified Connector               │      │     │
+│  └──────────────────────────┬──────────────────────┘      │     │
+│                             │                              │     │
+│  ┌──────────────────────────┴──────────────────────┐      │     │
+│  │  Free-Tier Fallbacks: Tiingo → Stooq → Yahoo    │←─────┘     │
+│  └─────────────────────────────────────────────────┘            │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### Additional StockSharp Connectors Available
+
+StockSharp supports 90+ adapters beyond those currently implemented. Notable additions that could be integrated:
+
+| Connector | Markets | Notes |
+|-----------|---------|-------|
+| MOEX | Moscow Exchange | Russian equities, derivatives |
+| BTCE | Various crypto | Multiple exchange support |
+| LMAX | Forex, CFDs | Institutional forex |
+| Oanda | Forex | Popular retail forex |
+| FXCM | Forex | Forex and CFD trading |
+| Plaza 2 | MOEX derivatives | Russian derivatives |
+| Transaq | Russian markets | Russian broker connector |
+| BitStamp | Crypto | European crypto exchange |
+| Bitfinex | Crypto | Major crypto exchange |
+| FTX (deprecated) | Crypto | Historical data only |
+
+**Custom Adapter Support:** Any StockSharp adapter can be loaded dynamically via:
+```json
+{
+  "StockSharp": {
+    "Enabled": true,
+    "ConnectorType": "Custom",
+    "AdapterType": "StockSharp.Oanda.OandaMessageAdapter",
+    "AdapterAssembly": "StockSharp.Oanda",
+    "ConnectionParams": {
+      "Token": "your-oanda-token",
+      "Server": "practice"
+    }
+  }
+}
+```
+
+---
+
+### Migration Considerations
+
+#### Advantages of StockSharp Consolidation
+
+| Benefit | Description |
+|---------|-------------|
+| **Unified API** | Single interface across all data sources |
+| **Automatic reconnection** | Built-in connection recovery with subscription restoration |
+| **Message buffering** | Bounded channels prevent backpressure issues |
+| **Heartbeat monitoring** | Stale connection detection |
+| **Thread safety** | Interlocked operations, proper locking |
+| **Reduced maintenance** | Single framework to maintain vs N providers |
+| **Order log support** | Rithmic provides full order flow data |
+
+#### Disadvantages / Risks
+
+| Risk | Mitigation |
+|------|------------|
+| **StockSharp dependency** | Keep free-tier providers as fallbacks |
+| **Licensing costs** | Crypto connectors require crowdfunding |
+| **Windows requirement** | IQFeed is Windows-only |
+| **Learning curve** | Team must understand S# patterns |
+| **Framework updates** | Must track S# version compatibility |
+| **Conditional compilation** | Build complexity with feature flags |
+
+---
+
+### Priority Ranking: StockSharp Connectors
+
+For organizations evaluating which StockSharp connectors to enable:
+
+| Priority | Connector | Justification |
+|----------|-----------|---------------|
+| 1 | IQFeed | Comprehensive US data, tick history, single source for streaming + backfill |
+| 2 | Interactive Brokers | Global coverage, already have IB accounts typically |
+| 3 | Rithmic | Order log capability unique, essential for order flow analysis |
+| 4 | CQG | Historical excellence for futures, demo server for testing |
+| 5 | Binance | If crypto required and crowdfunding obtained |
+| 6 | Coinbase/Kraken | Additional crypto coverage if needed |
+
+---
+
+### Summary
+
+StockSharp provides a compelling path toward provider consolidation:
+
+1. **IQFeed via StockSharp** could replace Alpaca + Polygon for professional US equity needs
+2. **Rithmic via StockSharp** adds unique order log capability not available elsewhere
+3. **CQG via StockSharp** provides deep historical futures data with demo testing
+4. **IB via StockSharp** offers unified connection management for global coverage
+5. **Free-tier providers** (Tiingo, Stooq, Yahoo) should remain as fallbacks
+
+The `StockSharpHistoricalDataProvider` implementation at `Infrastructure/Providers/Historical/StockSharp/StockSharpHistoricalDataProvider.cs` already supports this consolidation with:
+- Priority 25 (higher than external APIs when connector available)
+- Connector-specific capability detection
+- Proper ADR-001 and ADR-004 compliance
+- Graceful fallback when connectors unavailable
+
+**Next Steps:**
+1. Enable StockSharp packages for required connectors (`-p:EnableStockSharp=true`)
+2. Configure desired connector in `appsettings.json`
+3. Adjust `CompositeHistoricalDataProvider` priority chain
+4. Monitor performance and fallback behavior
+5. Consider deprecating redundant standalone implementations
+
+---
+
 *Evaluation Date: 2026-02-03*
+*StockSharp Analysis Added: 2026-02-04*
