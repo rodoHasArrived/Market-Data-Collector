@@ -81,6 +81,9 @@
     <SolidColorBrush x:Key="InfoColorBrush" Color="{StaticResource ConsoleAccentBlue}" />
     <SolidColorBrush x:Key="AccentCyanBrush" Color="{StaticResource ConsoleAccentCyan}" />
     <SolidColorBrush x:Key="AccentPurpleBrush" Color="{StaticResource ConsoleAccentPurple}" />
+    <SolidColorBrush x:Key="ConsoleAccentGreenAlpha10Brush" Color="{StaticResource ConsoleAccentGreenAlpha10}" />
+    <SolidColorBrush x:Key="ConsoleAccentBlueAlpha10Brush" Color="{StaticResource ConsoleAccentBlueAlpha10}" />
+    <SolidColorBrush x:Key="ConsoleAccentRedAlpha10Brush" Color="{StaticResource ConsoleAccentRedAlpha10}" />
 
     <!-- Glow Effect Brush -->
     <LinearGradientBrush x:Key="GlowGradientBrush" StartPoint="0,0" EndPoint="1,0">
