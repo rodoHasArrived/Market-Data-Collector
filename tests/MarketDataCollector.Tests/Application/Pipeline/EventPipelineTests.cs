@@ -233,23 +233,32 @@ public class EventPipelineTests : IAsyncLifetime
             enablePeriodicFlush: false);
 
         // Act - Publish more events than capacity
+        // When publishing 100 events quickly, the channel (capacity=10) will drop the oldest
         for (int i = 0; i < 100; i++)
         {
             pipeline.TryPublish(CreateTradeEvent($"SYM{i}"));
         }
 
-        // Wait for processing to complete - poll until events are processed or timeout
+        // Wait for processing to complete - wait for a reasonable number of events
+        // With capacity=10 and DropOldest, we expect roughly capacity + small epsilon
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-        while (sink.ReceivedEvents.Count < 50 && stopwatch.Elapsed < TimeSpan.FromSeconds(5))
+        var targetCount = 15; // capacity + small buffer for in-flight processing
+        while (sink.ReceivedEvents.Count < targetCount && stopwatch.Elapsed < TimeSpan.FromSeconds(2))
         {
-            await Task.Delay(100);
+            await Task.Delay(50);
         }
         await pipeline.FlushAsync();
 
         // Assert - With DropOldest mode, all TryPublish calls succeed, so DroppedCount is 0
-        // But sink should receive less than 100 events because oldest were dropped from channel
+        // But sink should receive approximately capacity worth of events (latest ones)
         pipeline.DroppedCount.Should().Be(0, "DropOldest mode succeeds on TryPublish and doesn't increment DroppedCount");
         sink.ReceivedEvents.Count.Should().BeLessThan(100, "some events should have been dropped by the channel");
+        
+        // The events received should be the latest ones (high symbol numbers)
+        // because oldest were dropped
+        var receivedSymbols = sink.ReceivedEvents.Select(e => e.Symbol).ToList();
+        var highSymbolCount = receivedSymbols.Count(s => int.Parse(s.Replace("SYM", "")) >= 90);
+        highSymbolCount.Should().BeGreaterThan(0, "should have received some of the latest events (SYM90+)");
     }
 
     [Fact]
