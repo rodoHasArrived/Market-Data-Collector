@@ -46,6 +46,9 @@ jobs:
       run: dotnet build MarketDataCollector.sln -c Release --no-restore /p:EnableWindowsTargeting=true
 
     - name: Run tests
+      shell: bash
+      env:
+        MSYS_NO_PATHCONV: 1
       run: |
         dotnet test MarketDataCollector.sln \
           -c Release \
@@ -90,6 +93,7 @@ jobs:
         cache-suffix: benchmark
 
     - name: Run benchmarks
+      shell: bash
       run: |
         dotnet run \
           --project benchmarks/MarketDataCollector.Benchmarks/MarketDataCollector.Benchmarks.csproj \
@@ -119,6 +123,7 @@ jobs:
         cache-suffix: integration
 
     - name: Start services
+      shell: bash
       run: |
         # Create minimal config for testing
         cp config/appsettings.sample.json config/appsettings.json || true
@@ -128,6 +133,7 @@ jobs:
       run: dotnet build MarketDataCollector.sln -c Release /p:EnableWindowsTargeting=true
 
     - name: Run self-tests
+      shell: bash
       run: |
         dotnet run \
           --project src/MarketDataCollector/MarketDataCollector.csproj \
@@ -177,6 +183,7 @@ jobs:
 
     steps:
     - name: Generate nightly summary
+      shell: bash
       run: |
         echo "# Nightly Test Suite Summary" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
