@@ -10,6 +10,7 @@ Located in `claude/`:
 - **[CLAUDE.storage.md](claude/CLAUDE.storage.md)** - Storage system guide
 - **[CLAUDE.fsharp.md](claude/CLAUDE.fsharp.md)** - F# domain library guide
 - **[CLAUDE.testing.md](claude/CLAUDE.testing.md)** - Testing guide
+- **[CLAUDE.actions.md](claude/CLAUDE.actions.md)** - GitHub Actions/CI guide
 
 ## Copilot Guides
 
