@@ -131,6 +131,7 @@ jobs:
         run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
 
       - name: Build
+        shell: bash
         run: |
           dotnet build MarketDataCollector.sln \
             -c Release \
@@ -138,6 +139,7 @@ jobs:
             /p:EnableWindowsTargeting=true
 
       - name: Run C# unit tests
+        shell: bash
         run: |
           dotnet test tests/MarketDataCollector.Tests/MarketDataCollector.Tests.csproj \
             -c Release \
@@ -148,6 +150,7 @@ jobs:
 
       - name: Run F# unit tests
         id: fsharp-tests
+        shell: bash
         run: |
           dotnet test tests/MarketDataCollector.FSharp.Tests/MarketDataCollector.FSharp.Tests.fsproj \
             -c Release \
