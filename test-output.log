@@ -1,0 +1,214 @@
+Test run for /home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/bin/Release/net9.0/MarketDataCollector.Tests.dll (.NETCoreApp,Version=v9.0)
+VSTest version 17.14.1 (x64)
+
+Starting test execution, please wait...
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:00:00.76]     MarketDataCollector.Tests.Serialization.HighPerformanceJsonTests.ParseAlpacaQuote_ShouldParseCorrectly [SKIP]
+  Skipped MarketDataCollector.Tests.Serialization.HighPerformanceJsonTests.ParseAlpacaQuote_ShouldParseCorrectly [1 ms]
+[xUnit.net 00:00:00.76]     MarketDataCollector.Tests.Serialization.HighPerformanceJsonTests.ParseAlpacaTrade_ShouldParseCorrectly [SKIP]
+  Skipped MarketDataCollector.Tests.Serialization.HighPerformanceJsonTests.ParseAlpacaTrade_ShouldParseCorrectly [1 ms]
+[xUnit.net 00:00:00.79]     MarketDataCollector.Tests.Integration.UwpCoreIntegrationTests.MetricsEndpoint_WithApiPrefix_ReturnsPrometheusFormat [FAIL]
+[xUnit.net 00:00:00.80]     MarketDataCollector.Tests.Integration.UwpCoreIntegrationTests.RootEndpoint_ReturnsDashboardHtml [FAIL]
+  Failed MarketDataCollector.Tests.Integration.UwpCoreIntegrationTests.MetricsEndpoint_WithApiPrefix_ReturnsPrometheusFormat [94 ms]
+  Error Message:
+   Expected content "# HELP mdc_published Total events published
+# TYPE mdc_published counter
+mdc_published 100
+# HELP mdc_dropped Total events dropped
+# TYPE mdc_dropped counter
+mdc_dropped 5
+# HELP mdc_integrity Integrity events
+# TYPE mdc_integrity counter
+mdc_integrity 2
+# HELP mdc_trades Trades processed
+# TYPE mdc_trades counter
+mdc_trades 80
+# HELP mdc_depth_updates Depth updates processed
+# TYPE mdc_depth_updates counter
+mdc_depth_updates 15
+# HELP mdc_quotes Quotes processed
+# TYPE mdc_quotes counter
+mdc_quotes 5
+# HELP mdc_historical_bars Historical bar events processed
+# TYPE mdc_historical_bars counter
+mdc_historical_bars 50
+# HELP mdc_events_per_second Current event rate
+# TYPE mdc_events_per_second gauge
+mdc_events_per_second 1000.0000
+# HELP mdc_drop_rate Drop rate percent
+# TYPE mdc_drop_rate gauge
+mdc_drop_rate 0.0500
+# HELP mdc_historical_bars_per_second Historical bar rate
+# TYPE mdc_historical_bars_per_second gauge
+mdc_historical_bars_per_second 50.0000
+" to contain "mdc_events_published".
+  Stack Trace:
+     at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
+   at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
+   at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
+   at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+   at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+   at FluentAssertions.Execution.AssertionScope.FailWith(String message, Object[] args)
+   at FluentAssertions.Primitives.StringAssertions`1.Contain(String expected, String because, Object[] becauseArgs)
+   at MarketDataCollector.Tests.Integration.UwpCoreIntegrationTests.MetricsEndpoint_WithApiPrefix_ReturnsPrometheusFormat() in /home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/Integration/UwpCoreIntegrationTests.cs:line 202
+--- End of stack trace from previous location ---
+  Failed MarketDataCollector.Tests.Integration.UwpCoreIntegrationTests.RootEndpoint_ReturnsDashboardHtml [3 ms]
+  Error Message:
+   Expected content "<!doctype html>
+<html><head><title>MarketDataCollector Status</title>
+<style>body{font-family:Arial;margin:20px;} code{background:#f4f4f4;padding:4px;display:block;}
+table{border-collapse:collapse;} td,th{border:1px solid #ccc;padding:4px 8px;}</style></head>
+<body>
+<h2>MarketDataCollector Status</h2>
+<p><a href='/metrics'>Prometheus metrics</a> | <a href='/status'>JSON status</a> | <a href='/errors'>Recent errors</a></p>
+<pre id='metrics'>Loading metrics...</pre>
+<h3>Recent integrity events</h3>
+<table id='integrity'><thead><tr><th>Timestamp</th><th>Symbol</th><th>Kind</th><th>Details</th></tr></thead><tbody></tbody></table>
+<script>
+async function refresh(){
+ const status=await fetch('/status').then(r=>r.json());
+ document.getElementById('metrics').textContent=JSON.stringify(status.metrics,null,2);
+ const tbody=document.querySelector('#integrity tbody');
+ tbody.innerHTML='';
+ (status.integrity||[]).forEach(ev=>{
+  const row=document.createElement('tr');
+  row.innerHTML=`<td>${{ev.timestamp}}</td><td>${{ev.symbol}}</td><td>${{ev.kind}}</td><td>${{ev.description||''}}</td>`;
+  tbody.appendChild(row);
+ });
+}
+setInterval(refresh,2000);refresh();
+</script>
+</body></html>" to contain "<!DOCTYPE html>".
+  Stack Trace:
+     at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
+   at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
+   at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
+   at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+   at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+   at FluentAssertions.Execution.AssertionScope.FailWith(String message, Object[] args)
+   at FluentAssertions.Primitives.StringAssertions`1.Contain(String expected, String because, Object[] becauseArgs)
+   at MarketDataCollector.Tests.Integration.UwpCoreIntegrationTests.RootEndpoint_ReturnsDashboardHtml() in /home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/Integration/UwpCoreIntegrationTests.cs:line 279
+--- End of stack trace from previous location ---
+[xUnit.net 00:00:00.91]     MarketDataCollector.Tests.Monitoring.SpreadMonitorTests.ProcessQuote_ShouldTrackSpreadStatistics [FAIL]
+  Failed MarketDataCollector.Tests.Monitoring.SpreadMonitorTests.ProcessQuote_ShouldTrackSpreadStatistics [43 ms]
+  Error Message:
+   Expected snapshot.Value.AverageSpreadBps to approximate 25.0 +/- 5.0, but 16.666666666666668 differed by 8.333333333333332.
+  Stack Trace:
+     at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
+   at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
+   at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
+   at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+   at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+   at FluentAssertions.Execution.AssertionScope.FailWith(String message, Object[] args)
+   at FluentAssertions.NumericAssertionsExtensions.FailIfDifferenceOutsidePrecision[T](Boolean differenceWithinPrecision, NumericAssertions`1 parent, T expectedValue, T precision, T actualDifference, String because, Object[] becauseArgs)
+   at FluentAssertions.NumericAssertionsExtensions.BeApproximately(NumericAssertions`1 parent, Double expectedValue, Double precision, String because, Object[] becauseArgs)
+   at MarketDataCollector.Tests.Monitoring.SpreadMonitorTests.ProcessQuote_ShouldTrackSpreadStatistics() in /home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/Application/Monitoring/SpreadMonitorTests.cs:line 83
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+[xUnit.net 00:00:00.92]     MarketDataCollector.Tests.Monitoring.SpreadMonitorTests.SmallCapConfig_ShouldAllowWiderSpreads [FAIL]
+  Failed MarketDataCollector.Tests.Monitoring.SpreadMonitorTests.SmallCapConfig_ShouldAllowWiderSpreads [3 ms]
+  Error Message:
+   Expected detected to be False, but found True.
+  Stack Trace:
+     at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
+   at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
+   at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
+   at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+   at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+   at FluentAssertions.Execution.AssertionScope.FailWith(String message, Object[] args)
+   at FluentAssertions.Primitives.BooleanAssertions`1.BeFalse(String because, Object[] becauseArgs)
+   at MarketDataCollector.Tests.Monitoring.SpreadMonitorTests.SmallCapConfig_ShouldAllowWiderSpreads() in /home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/Application/Monitoring/SpreadMonitorTests.cs:line 147
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+[xUnit.net 00:00:01.01]     MarketDataCollector.Tests.SymbolSearch.OpenFigiClientTests.BulkLookupByTickersAsync_DeduplicatesTickers [FAIL]
+  Failed MarketDataCollector.Tests.SymbolSearch.OpenFigiClientTests.BulkLookupByTickersAsync_DeduplicatesTickers [7 ms]
+  Error Message:
+   System.Net.Http.HttpRequestException : Name or service not known (api.openfigi.com:443)
+---- System.Net.Sockets.SocketException : Name or service not known
+  Stack Trace:
+     at System.Net.Http.HttpConnectionPool.ConnectToTcpHostAsync(String host, Int32 port, HttpRequestMessage initialRequest, Boolean async, CancellationToken cancellationToken)
+   at System.Net.Http.HttpConnectionPool.ConnectAsync(HttpRequestMessage request, Boolean async, CancellationToken cancellationToken)
+   at System.Net.Http.HttpConnectionPool.CreateHttp11ConnectionAsync(HttpRequestMessage request, Boolean async, CancellationToken cancellationToken)
+   at System.Net.Http.HttpConnectionPool.InjectNewHttp11ConnectionAsync(QueueItem queueItem)
+   at System.Threading.Tasks.TaskCompletionSourceWithCancellation`1.WaitWithCancellationAsync(CancellationToken cancellationToken)
+   at System.Net.Http.HttpConnectionPool.SendWithVersionDetectionAndRetryAsync(HttpRequestMessage request, Boolean async, Boolean doRequestAuth, CancellationToken cancellationToken)
+   at System.Net.Http.RedirectHandler.SendAsync(HttpRequestMessage request, Boolean async, CancellationToken cancellationToken)
+   at System.Net.Http.HttpClient.<SendAsync>g__Core|83_0(HttpRequestMessage request, HttpCompletionOption completionOption, CancellationTokenSource cts, Boolean disposeCts, CancellationTokenSource pendingRequestsCts, CancellationToken originalCancellationToken)
+   at MarketDataCollector.Infrastructure.Providers.SymbolSearch.OpenFigiClient.MappingRequestAsync(IReadOnlyList`1 requests, CancellationToken ct) in /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector/Infrastructure/Providers/SymbolSearch/OpenFigiClient.cs:line 299
+   at MarketDataCollector.Infrastructure.Providers.SymbolSearch.OpenFigiClient.BulkLookupByTickersAsync(IEnumerable`1 tickers, String exchangeCode, String marketSector, CancellationToken ct) in /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector/Infrastructure/Providers/SymbolSearch/OpenFigiClient.cs:line 185
+   at MarketDataCollector.Tests.SymbolSearch.OpenFigiClientTests.BulkLookupByTickersAsync_DeduplicatesTickers() in /home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/SymbolSearch/OpenFigiClientTests.cs:line 130
+--- End of stack trace from previous location ---
+----- Inner Stack Trace -----
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.ThrowException(SocketError error, CancellationToken cancellationToken)
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.System.Threading.Tasks.Sources.IValueTaskSource.GetResult(Int16 token)
+   at System.Net.Sockets.Socket.<ConnectAsync>g__WaitForConnectWithCancellation|285_0(AwaitableSocketAsyncEventArgs saea, ValueTask connectTask, CancellationToken cancellationToken)
+   at System.Net.Http.HttpConnectionPool.ConnectToTcpHostAsync(String host, Int32 port, HttpRequestMessage initialRequest, Boolean async, CancellationToken cancellationToken)
+[xUnit.net 00:00:01.16]     MarketDataCollector.Tests.Monitoring.PriceContinuityCheckerTests.GetStatistics_ShouldReturnCorrectCounts [FAIL]
+  Failed MarketDataCollector.Tests.Monitoring.PriceContinuityCheckerTests.GetStatistics_ShouldReturnCorrectCounts [2 ms]
+  Error Message:
+   Expected stats.TotalDiscontinuities to be 2L, but found 1L.
+  Stack Trace:
+     at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
+   at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
+   at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
+   at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+   at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+   at FluentAssertions.Execution.AssertionScope.FailWith(String message, Object[] args)
+   at FluentAssertions.Numeric.NumericAssertions`2.Be(T expected, String because, Object[] becauseArgs)
+   at MarketDataCollector.Tests.Monitoring.PriceContinuityCheckerTests.GetStatistics_ShouldReturnCorrectCounts() in /home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/Application/Monitoring/PriceContinuityCheckerTests.cs:line 160
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+[xUnit.net 00:00:01.33]     MarketDataCollector.Tests.Storage.PortableDataPackagerTests.ListPackageContentsAsync_ShouldReturnContents [FAIL]
+  Failed MarketDataCollector.Tests.Storage.PortableDataPackagerTests.ListPackageContentsAsync_ShouldReturnContents [13 ms]
+  Error Message:
+   Expected contents.Symbols {"2026-01-03"} to contain "AAPL".
+  Stack Trace:
+     at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
+   at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
+   at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
+   at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+   at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+   at FluentAssertions.Execution.AssertionScope.FailWith(String message, Object[] args)
+   at FluentAssertions.Collections.GenericCollectionAssertions`3.Contain(T expected, String because, Object[] becauseArgs)
+   at MarketDataCollector.Tests.Storage.PortableDataPackagerTests.ListPackageContentsAsync_ShouldReturnContents() in /home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/Storage/PortableDataPackagerTests.cs:line 348
+--- End of stack trace from previous location ---
+[xUnit.net 00:00:01.37]     MarketDataCollector.Tests.Storage.PortableDataPackagerTests.CreatePackageAsync_WithSymbolFilter_ShouldFilterFiles [FAIL]
+  Failed MarketDataCollector.Tests.Storage.PortableDataPackagerTests.CreatePackageAsync_WithSymbolFilter_ShouldFilterFiles [3 ms]
+  Error Message:
+   Expected result.Success to be True, but found False.
+  Stack Trace:
+     at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
+   at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
+   at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
+   at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+   at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+   at FluentAssertions.Execution.AssertionScope.FailWith(String message, Object[] args)
+   at FluentAssertions.Primitives.BooleanAssertions`1.BeTrue(String because, Object[] becauseArgs)
+   at MarketDataCollector.Tests.Storage.PortableDataPackagerTests.CreatePackageAsync_WithSymbolFilter_ShouldFilterFiles() in /home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/Storage/PortableDataPackagerTests.cs:line 110
+--- End of stack trace from previous location ---
+[xUnit.net 00:00:02.11]     MarketDataCollector.Tests.Storage.JsonlBatchWriteTests.DisposeAsync_FlushesRemainingEvents [FAIL]
+  Failed MarketDataCollector.Tests.Storage.JsonlBatchWriteTests.DisposeAsync_FlushesRemainingEvents [1 ms]
+  Error Message:
+   Expected files to contain 1 item(s), but found 0: {empty}.
+  Stack Trace:
+     at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
+   at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
+   at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
+   at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+   at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+   at FluentAssertions.Execution.AssertionScope.FailWith(String message, Object[] args)
+   at FluentAssertions.Collections.GenericCollectionAssertions`3.HaveCount(Int32 expected, String because, Object[] becauseArgs)
+   at MarketDataCollector.Tests.Storage.JsonlBatchWriteTests.DisposeAsync_FlushesRemainingEvents() in /home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/Storage/JsonlBatchWriteTests.cs:line 164
+--- End of stack trace from previous location ---
+[xUnit.net 00:00:04.26]     MarketDataCollector.Tests.Pipeline.EventPipelineTests.PublishAsync_WithCancellation_ThrowsWhenCancelled [FAIL]
+  Failed MarketDataCollector.Tests.Pipeline.EventPipelineTests.PublishAsync_WithCancellation_ThrowsWhenCancelled [53 ms]
+  Error Message:
+   Assert.ThrowsAny() Failure: No exception was thrown
+Expected: typeof(System.OperationCanceledException)
+  Stack Trace:
+     at MarketDataCollector.Tests.Pipeline.EventPipelineTests.PublishAsync_WithCancellation_ThrowsWhenCancelled() in /home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/Application/Pipeline/EventPipelineTests.cs:line 447
+   at MarketDataCollector.Tests.Pipeline.EventPipelineTests.PublishAsync_WithCancellation_ThrowsWhenCancelled() in /home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/Application/Pipeline/EventPipelineTests.cs:line 447
+   at MarketDataCollector.Tests.Pipeline.EventPipelineTests.PublishAsync_WithCancellation_ThrowsWhenCancelled() in /home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/Application/Pipeline/EventPipelineTests.cs:line 447
+--- End of stack trace from previous location ---
+
+Failed!  - Failed:    10, Passed:   950, Skipped:     2, Total:   962, Duration: 6 s - MarketDataCollector.Tests.dll (net9.0)
