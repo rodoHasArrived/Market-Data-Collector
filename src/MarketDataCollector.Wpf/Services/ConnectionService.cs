@@ -137,7 +137,7 @@ public sealed class ConnectionService : IConnectionService
             _monitoringTimer.Start();
 
             LoggingService.Instance.LogInfo("Connection monitoring started",
-                ("Interval", _monitoringTimer.Interval.ToString()));
+                ("Interval", _monitoringTimer.Interval.ToString("F0")));
         }
 
         // Perform initial health check

@@ -55,7 +55,8 @@ public partial class MainWindow : Window
 
     private void OnRootFrameNavigated(object sender, SysNavigation.NavigationEventArgs e)
     {
-        if (e.Content is FrameworkElement element)
+        // In WPF, get content from the Frame (sender), not from event args
+        if (sender is System.Windows.Controls.Frame frame && frame.Content is FrameworkElement element)
         {
             KeyboardShortcutService.Instance.Initialize(element);
         }

@@ -226,7 +226,7 @@ public partial class SetupWizardPage : Page
         ValidationStatusText.Text = "Configuration saved and backend verified. Redirecting to dashboard...";
         NotificationService.Instance.NotifySuccess("Setup Wizard", "Setup complete. Welcome!");
 
-        Services.NavigationService.Instance.NavigateTo("Dashboard");
+        MarketDataCollector.Wpf.Services.NavigationService.Instance.NavigateTo("Dashboard");
     }
 
     private bool TryGetWizardInputs(out string provider, out string storageLocation)

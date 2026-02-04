@@ -83,7 +83,7 @@ public partial class BackfillPage : Page
 
     private void OpenWizard_Click(object sender, RoutedEventArgs e)
     {
-        Services.NavigationService.Instance.NavigateTo("AnalysisExportWizard");
+        MarketDataCollector.Wpf.Services.NavigationService.Instance.NavigateTo("AnalysisExportWizard");
     }
 
     private void FillAllGaps_Click(object sender, RoutedEventArgs e)
@@ -109,7 +109,7 @@ public partial class BackfillPage : Page
 
     private void BrowseData_Click(object sender, RoutedEventArgs e)
     {
-        Services.NavigationService.Instance.NavigateTo("DataBrowser");
+        MarketDataCollector.Wpf.Services.NavigationService.Instance.NavigateTo("DataBrowser");
     }
 
     private void AddAllSubscribed_Click(object sender, RoutedEventArgs e)

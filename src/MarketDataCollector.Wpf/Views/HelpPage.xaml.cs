@@ -18,7 +18,7 @@ public partial class HelpPage : Page
     private void StartTutorial_Click(object sender, RoutedEventArgs e)
     {
         // Navigate to setup wizard
-        Services.NavigationService.Instance.NavigateTo("SetupWizard");
+        MarketDataCollector.Wpf.Services.NavigationService.Instance.NavigateTo("SetupWizard");
     }
 
     private void OpenArchitectureDoc_Click(object sender, RoutedEventArgs e)

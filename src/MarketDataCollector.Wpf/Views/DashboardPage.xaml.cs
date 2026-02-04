@@ -21,7 +21,7 @@ public partial class DashboardPage : Page
     {
         InitializeComponent();
 
-        _navigationService = Services.NavigationService.Instance;
+        _navigationService = MarketDataCollector.Wpf.Services.NavigationService.Instance;
         _connectionService = ConnectionService.Instance;
         _statusService = StatusService.Instance;
 

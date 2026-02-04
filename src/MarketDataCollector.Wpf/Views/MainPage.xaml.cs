@@ -20,8 +20,8 @@ public partial class MainPage : Page
     {
         InitializeComponent();
 
-        _navigationService = Services.NavigationService.Instance;
-        _connectionService = Services.ConnectionService.Instance;
+        _navigationService = MarketDataCollector.Wpf.Services.NavigationService.Instance;
+        _connectionService = MarketDataCollector.Wpf.Services.ConnectionService.Instance;
 
         // Subscribe to connection state changes
         _connectionService.ConnectionStateChanged += OnConnectionStateChanged;
