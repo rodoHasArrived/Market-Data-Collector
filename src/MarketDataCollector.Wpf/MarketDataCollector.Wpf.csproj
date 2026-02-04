@@ -1,8 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <!-- Detect Windows platform -->
-    <IsWindows Condition="'$(OS)' == 'Windows_NT' OR $([MSBuild]::IsOSPlatform('Windows'))">true</IsWindows>
+    <!-- Detect Windows platform with multiple fallback methods -->
+    <IsWindows Condition="'$(OS)' == 'Windows_NT'">true</IsWindows>
+    <IsWindows Condition="'$(IsWindows)' != 'true' AND $([MSBuild]::IsOSPlatform('Windows'))">true</IsWindows>
+    <IsWindows Condition="'$(IsWindows)' != 'true' AND '$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' == 'True'">true</IsWindows>
+    <!-- Default to false if all checks fail -->
+    <IsWindows Condition="'$(IsWindows)' == ''">false</IsWindows>
   </PropertyGroup>
 
   <!-- Non-Windows: Create a minimal stub that compiles but produces nothing -->
