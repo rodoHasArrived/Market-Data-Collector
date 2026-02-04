@@ -562,7 +562,7 @@ public partial class SymbolsPage : Page
     private void ManageWatchlists_Click(object sender, RoutedEventArgs e)
     {
         // Navigate to the Watchlist management page
-        var navigationService = Services.NavigationService.Instance;
+        var navigationService = MarketDataCollector.Wpf.Services.NavigationService.Instance;
         navigationService.NavigateTo(typeof(WatchlistPage));
     }
 

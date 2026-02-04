@@ -210,7 +210,7 @@ public partial class WatchlistPage : Page
             }
 
             // Navigate to symbols page with this watchlist loaded
-            Services.NavigationService.Instance.NavigateTo(typeof(SymbolsPage), watchlist);
+            MarketDataCollector.Wpf.Services.NavigationService.Instance.NavigateTo(typeof(SymbolsPage), watchlist);
 
             NotificationService.Instance.ShowNotification(
                 "Watchlist Loaded",
