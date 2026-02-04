@@ -1,23 +1,53 @@
 # Getting Started
 
-This folder contains essential guides for new users of the Market Data Collector.
+Quick start guide for the Market Data Collector. For comprehensive documentation, see [HELP.md](../HELP.md).
 
-## Guides
-
-1. **[setup.md](setup.md)** - Initial setup and first run instructions
-2. **[configuration.md](configuration.md)** - Configuration options and settings
-3. **[troubleshooting.md](troubleshooting.md)** - Common issues and solutions
-
-## Quick Start
-
-For the fastest setup experience, run:
+## Fastest Setup
 
 ```bash
-# Interactive configuration wizard
-dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --wizard
+# Clone and build
+git clone <repository-url>
+cd Market-Data-Collector
+dotnet build
 
-# Or auto-configure from environment variables
-dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --auto-config
+# Run the interactive wizard
+dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --wizard
 ```
 
-See [setup.md](setup.md) for detailed instructions.
+The wizard guides you through provider selection, symbol configuration, and storage setup.
+
+## Alternative Setup Methods
+
+| Method | Command | Best For |
+|--------|---------|----------|
+| **Configuration Wizard** | `--wizard` | New users, interactive setup |
+| **Auto-Configuration** | `--auto-config` | Users with env vars already set |
+| **Web Dashboard** | `--mode web` | Visual configuration |
+| **Manual Config** | Edit `config/appsettings.json` | Power users |
+
+## Quick Reference
+
+- **[User Guide](../HELP.md)** - Complete reference for all features
+- **[Configuration](../HELP.md#configuration)** - All configuration options
+- **[Data Providers](../HELP.md#data-providers)** - Provider setup guides
+- **[Troubleshooting](../HELP.md#troubleshooting)** - Common issues and solutions
+- **[FAQ](../HELP.md#faq)** - Frequently asked questions
+
+## Prerequisites
+
+- .NET 9.0 SDK
+- At least one data provider account:
+  - Alpaca (free tier available)
+  - Interactive Brokers (requires TWS/Gateway)
+  - Polygon, NYSE, or StockSharp (various tiers)
+
+## Next Steps
+
+After initial setup:
+1. **Start collecting**: `dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --mode web`
+2. **Run backfill**: See [Backfill Guide](../providers/backfill-guide.md)
+3. **Monitor quality**: Check the Data Quality page in the web dashboard
+
+---
+
+*See [HELP.md](../HELP.md) for the complete user guide.*
