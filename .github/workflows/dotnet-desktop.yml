@@ -84,6 +84,7 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Publish Collector
+        shell: bash
         run: |
           dotnet publish src/MarketDataCollector/MarketDataCollector.csproj \
             -c Release \
@@ -96,6 +97,7 @@ jobs:
             -p:IncludeNativeLibrariesForSelfExtract=true
 
       - name: Publish UI
+        shell: bash
         run: |
           dotnet publish src/MarketDataCollector.Ui/MarketDataCollector.Ui.csproj \
             -c Release \
@@ -108,12 +110,14 @@ jobs:
             -p:IncludeNativeLibrariesForSelfExtract=true
 
       - name: Copy configuration
+        shell: bash
         run: |
           cp config/appsettings.json ./publish/collector/ || true
           cp config/appsettings.json ./publish/ui/ || true
 
       - name: Create archive (Unix)
         if: runner.os != 'Windows'
+        shell: bash
         run: |
           cd publish
           tar -czvf ../MarketDataCollector-${{ matrix.rid }}${{ matrix.asset_extension }} .

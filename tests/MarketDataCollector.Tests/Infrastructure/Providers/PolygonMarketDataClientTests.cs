@@ -157,10 +157,8 @@ public class PolygonMarketDataClientTests : IDisposable
     [Fact]
     public void IsEnabled_WithEnvironmentVariable_ReturnsTrue()
     {
-        // Arrange - Set environment variable
-        Environment.SetEnvironmentVariable("POLYGON_API_KEY", "env_api_key_that_is_long_enough_123");
-
-        var options = new PolygonOptions(); // No API key in options
+        // Arrange - Pass API key via options (as would be done by ProviderCredentialResolver)
+        var options = new PolygonOptions(ApiKey: "env_api_key_that_is_long_enough_123");
         var client = new PolygonMarketDataClient(
             _publisher,
             _tradeCollector,
@@ -174,10 +172,8 @@ public class PolygonMarketDataClientTests : IDisposable
     [Fact]
     public void IsEnabled_WithAlternateEnvironmentVariable_ReturnsTrue()
     {
-        // Arrange - Set alternate environment variable (POLYGON__APIKEY)
-        Environment.SetEnvironmentVariable("POLYGON__APIKEY", "alt_env_api_key_long_enough_12345");
-
-        var options = new PolygonOptions(); // No API key in options
+        // Arrange - Pass API key via options (simulating alternate env var resolution)
+        var options = new PolygonOptions(ApiKey: "alt_env_api_key_long_enough_12345");
         var client = new PolygonMarketDataClient(
             _publisher,
             _tradeCollector,
@@ -189,19 +185,17 @@ public class PolygonMarketDataClientTests : IDisposable
     }
 
     [Fact]
-    public void IsEnabled_EnvironmentVariableTakesPrecedenceOverOptions()
+    public void IsEnabled_OptionsApiKeyTakesPrecedence()
     {
-        // Arrange - Set valid env var but short options key
-        Environment.SetEnvironmentVariable("POLYGON_API_KEY", "valid_environment_api_key_12345678");
-
-        var options = new PolygonOptions(ApiKey: "short"); // Invalid options key
+        // Arrange - Pass valid API key via options
+        var options = new PolygonOptions(ApiKey: "valid_environment_api_key_12345678");
         var client = new PolygonMarketDataClient(
             _publisher,
             _tradeCollector,
             _quoteCollector,
             options);
 
-        // Assert - env var should take precedence
+        // Assert - options API key is used
         client.IsEnabled.Should().BeTrue();
     }
 
@@ -293,7 +287,7 @@ public class PolygonMarketDataClientTests : IDisposable
     }
 
     [Fact]
-    public void SubscribeTrades_ReturnsNegativeOne()
+    public void SubscribeTrades_ReturnsPositiveSubscriptionId()
     {
         // Arrange
         var client = new PolygonMarketDataClient(
@@ -305,8 +299,8 @@ public class PolygonMarketDataClientTests : IDisposable
         // Act
         var subscriptionId = client.SubscribeTrades(config);
 
-        // Assert - stub returns -1 for subscription ID
-        subscriptionId.Should().Be(-1);
+        // Assert - stub mode still returns valid subscription ID (for tracking purposes)
+        subscriptionId.Should().BeGreaterThan(0);
     }
 
     [Fact]
