@@ -238,13 +238,17 @@ public class EventPipelineTests : IAsyncLifetime
             pipeline.TryPublish(CreateTradeEvent($"SYM{i}"));
         }
 
-        // Wait for processing to complete
-        await Task.Delay(2000); // Give enough time for all events to be processed
+        // Wait for processing to complete - poll until events are processed or timeout
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        while (sink.ReceivedEvents.Count < 50 && stopwatch.Elapsed < TimeSpan.FromSeconds(5))
+        {
+            await Task.Delay(100);
+        }
         await pipeline.FlushAsync();
 
         // Assert - With DropOldest mode, all TryPublish calls succeed, so DroppedCount is 0
         // But sink should receive less than 100 events because oldest were dropped from channel
-        pipeline.DroppedCount.Should().Be(0, "DropOldest mode doesn't track drops via TryWrite failure");
+        pipeline.DroppedCount.Should().Be(0, "DropOldest mode succeeds on TryPublish and doesn't increment DroppedCount");
         sink.ReceivedEvents.Count.Should().BeLessThan(100, "some events should have been dropped by the channel");
     }
 
@@ -424,11 +428,11 @@ public class EventPipelineTests : IAsyncLifetime
         await using var sink = new MockStorageSink { ProcessingDelay = TimeSpan.FromSeconds(10) };
         await using var pipeline = new EventPipeline(sink, capacity: 1, enablePeriodicFlush: false);
 
-        // Fill the queue - wait a bit to ensure first item is being processed
+        // Fill the queue - wait for consumer to start processing (longer delay for CI reliability)
         pipeline.TryPublish(CreateTradeEvent("SPY"));
-        await Task.Delay(10); // Let consumer start processing
+        await Task.Delay(50); // Conservative delay to ensure consumer has started on slower CI systems
 
-        using var cts = new CancellationTokenSource(100); // Longer timeout to be more reliable
+        using var cts = new CancellationTokenSource(100); // Cancellation timeout
 
         // Act & Assert - Second publish should block since queue is full and consumer is slow
         await Assert.ThrowsAnyAsync<OperationCanceledException>(

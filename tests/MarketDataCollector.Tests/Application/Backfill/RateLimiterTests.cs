@@ -337,8 +337,8 @@ public class RateLimiterTests : IDisposable
     [Fact]
     public async Task WaitForSlotAsync_ConcurrentRequests_RespectLimit()
     {
-        // Arrange - Use short window (100ms) so requests can complete quickly
-        _rateLimiter = new RateLimiter(maxRequestsPerWindow: 5, window: TimeSpan.FromMilliseconds(100));
+        // Arrange - With limit of 5 and 10 concurrent requests, the second batch must wait
+        _rateLimiter = new RateLimiter(maxRequestsPerWindow: 5, window: TimeSpan.FromSeconds(5));
         var tasks = new List<Task<TimeSpan>>();
 
         // Act - Launch 10 concurrent requests
@@ -351,9 +351,11 @@ public class RateLimiterTests : IDisposable
 
         var (requestsInWindow, _, _) = _rateLimiter.GetStatus();
 
-        // Assert - All 10 should have been tracked, but with 100ms window,
-        // some older requests may have aged out, so we expect at least 5
-        requestsInWindow.Should().BeGreaterOrEqualTo(5).And.BeLessOrEqualTo(10);
+        // Assert - Since limit is 5, only 5 requests can be in window at once.
+        // The second batch of 5 waits for first batch to complete.
+        // By the time all complete, first batch may have aged out of the 5s window.
+        requestsInWindow.Should().BeLessOrEqualTo(10, "shouldn't track more than 10 requests");
+        requestsInWindow.Should().BeGreaterOrEqualTo(5, "at least the last batch should be in window");
     }
 
     [Fact]
