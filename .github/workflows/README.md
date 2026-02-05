@@ -200,12 +200,20 @@ Workflows have been consolidated from 25 to 16 files, reducing duplication and a
 ### Special Workflows
 
 #### **TODO Automation** (`todo-automation.yml`)
-- **Trigger**: Push to main, Weekly schedule, Manual dispatch
-- **Purpose**: Scans codebase for TODO/FIXME comments and creates issues
+- **Trigger**: Push to main, Pull requests to main, Weekly schedule, Manual dispatch
+- **Purpose**: Comprehensive TODO lifecycle management with scanning, analysis, and tracking
 - **Features**:
-  - Detects TODO, FIXME, HACK, BUG comments
-  - AI-powered issue body generation
-  - Deduplication to avoid repeat issues
+  - **Core scan:** Detects TODO, FIXME, HACK, BUG, PERF, OPTIMIZE, REFACTOR, NOTE comments
+  - **AI triage:** Copilot-powered priority recommendations with deterministic fallback
+  - **Trend tracking:** Compares TODO counts across runs using git history, warns on upward trends
+  - **Stale detection:** Uses git blame to find TODOs older than configurable threshold (default 90 days)
+  - **Resolved-issue audit:** Flags TODOs whose linked GitHub issues have been closed (orphaned TODOs)
+  - **PR diff:** Comments on pull requests that introduce new TODOs with type/file/description table
+  - **Duplicate detection:** Finds similar/duplicate TODOs using Jaccard token similarity (60% threshold)
+  - **Hotspot analysis:** Identifies files and directories with highest TODO density, flags high-concentration files
+  - **Issue creation:** Creates GitHub issues for untracked TODOs (manual trigger, rate-limited to 5 per run)
+  - Deduplication to avoid repeat PR comments and issues
+  - **AI**: Copilot triage recommendations for priority, labels, and batching
 
 ## Configuration Files
 
