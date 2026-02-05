@@ -190,12 +190,10 @@ public class WebSocketHeartbeatTests : IAsyncLifetime
     {
         // Arrange
         await using var heartbeat = new WebSocketHeartbeat(_ws!);
-        var eventFired = false;
 
         // Act - Subscribe to the event
         heartbeat.ConnectionLost += async () =>
         {
-            eventFired = true;
             await Task.CompletedTask;
         };
 

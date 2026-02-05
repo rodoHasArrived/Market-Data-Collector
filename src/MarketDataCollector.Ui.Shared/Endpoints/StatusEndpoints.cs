@@ -101,12 +101,12 @@ public static class StatusEndpoints
         app.MapGet(UiApiRoutes.HealthDetailed, async () =>
         {
             var (report, error) = await handlers.GetDetailedHealthAsync();
-            if (error != null)
+            if (error != null || report is null)
             {
-                return Results.Json(new { error }, jsonOptions, statusCode: 501);
+                return Results.Json(new { error = error ?? "Health report unavailable" }, jsonOptions, statusCode: 501);
             }
 
-            var statusCode = report!.Status switch
+            var statusCode = report.Status switch
             {
                 DetailedHealthStatus.Healthy => 200,
                 DetailedHealthStatus.Degraded => 200,

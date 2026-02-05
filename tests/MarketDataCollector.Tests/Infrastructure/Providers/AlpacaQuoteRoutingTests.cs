@@ -80,14 +80,14 @@ public class AlpacaQuoteRoutingTests
         // AAPL sequences: 1, 2
         var aaplEvents = _publishedEvents
             .Where(e => e.Symbol == "AAPL")
-            .Select(e => (e.Payload as BboQuotePayload)!.SequenceNumber)
+            .Select(e => ((BboQuotePayload)e.Payload).SequenceNumber)
             .ToList();
         aaplEvents.Should().BeEquivalentTo(new[] { 1L, 2L });
 
         // MSFT sequences: 1, 2
         var msftEvents = _publishedEvents
             .Where(e => e.Symbol == "MSFT")
-            .Select(e => (e.Payload as BboQuotePayload)!.SequenceNumber)
+            .Select(e => ((BboQuotePayload)e.Payload).SequenceNumber)
             .ToList();
         msftEvents.Should().BeEquivalentTo(new[] { 1L, 2L });
     }
@@ -109,7 +109,7 @@ public class AlpacaQuoteRoutingTests
         // Assert
         _publishedEvents.Should().HaveCount(100);
         var sequences = _publishedEvents
-            .Select(e => (e.Payload as BboQuotePayload)!.SequenceNumber)
+            .Select(e => ((BboQuotePayload)e.Payload).SequenceNumber)
             .ToList();
         sequences.Should().BeInAscendingOrder();
         sequences.Last().Should().Be(100);
@@ -153,8 +153,8 @@ public class AlpacaQuoteRoutingTests
 
         // Assert
         _publishedEvents.Should().HaveCount(1);
-        var payload = _publishedEvents[0].Payload as BboQuotePayload;
-        payload!.Spread.Should().BeNull(); // No spread calculation for zero prices
+        var payload = (BboQuotePayload)_publishedEvents[0].Payload;
+        payload.Spread.Should().BeNull(); // No spread calculation for zero prices
         payload.MidPrice.Should().BeNull();
     }
 
@@ -191,8 +191,8 @@ public class AlpacaQuoteRoutingTests
         // Add new quote - sequence should restart
         _publisher.Clear();
         _quoteCollector.OnQuote(CreateAlpacaQuote("AAPL", 187.00m, 187.05m));
-        var newPayload = _publishedEvents[0].Payload as BboQuotePayload;
-        newPayload!.SequenceNumber.Should().Be(1);
+        var newPayload = (BboQuotePayload)_publishedEvents[0].Payload;
+        newPayload.SequenceNumber.Should().Be(1);
     }
 
     [Fact]
