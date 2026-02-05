@@ -1,6 +1,6 @@
 # MarketDataCollector Project Context
 
-**Generated:** 2026-02-05 20:11:51 UTC
+**Generated:** 2026-02-05 21:23:35 UTC
 **Source:** Auto-generated from code annotations
 
 ## Key Interfaces
@@ -412,6 +412,7 @@ Generic interface for thread-safe symbol-keyed state storage. Abstracts the 35+ 
 | `HealthCheckAggregator` | `MarketDataCollector/Application/Monitoring/Core/HealthCheckAggregator.cs` | Health check aggregator implementation |
 | `HostStartup` | `MarketDataCollector/Application/Composition/HostStartup.cs` | Unified host startup for all deployment modes |
 | `IBHistoricalDataProvider` | `MarketDataCollector/Infrastructure/Providers/Historical/InteractiveBrokers/IBHistoricalDataProvider.cs` | Interactive Brokers historical data provider implementation |
+| `IBHistoricalDataProvider` | `MarketDataCollector/Infrastructure/Providers/Historical/InteractiveBrokers/IBHistoricalDataProvider.cs` | Interactive Brokers historical data provider stub |
 | `IBMarketDataClient` | `MarketDataCollector/Infrastructure/Providers/Streaming/InteractiveBrokers/IBMarketDataClient.cs` | Interactive Brokers streaming data provider implementation |
 | `IBMarketDataClientIBApi` | `MarketDataCollector/Infrastructure/Providers/Streaming/InteractiveBrokers/IBMarketDataClient.cs` | Interactive Brokers API streaming data provider |
 | `NasdaqDataLinkHistoricalDataProvider` | `MarketDataCollector/Infrastructure/Providers/Historical/NasdaqDataLink/NasdaqDataLinkHistoricalDataProvider.cs` | Nasdaq Data Link historical data provider implementation |

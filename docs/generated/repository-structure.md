@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-05 20:11:48 UTC
+> Auto-generated on 2026-02-05 21:23:31 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -478,6 +478,7 @@ Market-Data-Collector/
 │   │   │   ├── BackfillEndpoints.cs
 │   │   │   ├── ConfigEndpoints.cs
 │   │   │   ├── FailoverEndpoints.cs
+│   │   │   ├── IBEndpoints.cs
 │   │   │   ├── PathValidation.cs
 │   │   │   ├── ProviderEndpoints.cs
 │   │   │   ├── StatusEndpoints.cs

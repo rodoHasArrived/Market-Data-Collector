@@ -506,6 +506,7 @@ Market-Data-Collector/
 │   │   │   ├── BackfillEndpoints.cs
 │   │   │   ├── ConfigEndpoints.cs
 │   │   │   ├── FailoverEndpoints.cs
+│   │   │   ├── IBEndpoints.cs
 │   │   │   ├── PathValidation.cs
 │   │   │   ├── ProviderEndpoints.cs
 │   │   │   ├── StatusEndpoints.cs
