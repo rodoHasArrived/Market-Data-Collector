@@ -158,7 +158,9 @@ public sealed class YahooFinanceHistoricalDataProvider : BaseHistoricalDataProvi
     private List<AdjustedHistoricalBar> ParseChartResult(YahooChartResult chartResult, string symbol, DateOnly? from, DateOnly? to)
     {
         var timestamps = chartResult.Timestamp ?? Array.Empty<long>();
-        var quote = chartResult.Indicators!.Quote![0];
+        if (chartResult.Indicators?.Quote is not { Count: > 0 })
+            throw new DataProviderException("Yahoo Finance response missing indicator data");
+        var quote = chartResult.Indicators.Quote[0];
         var adjClose = chartResult.Indicators.AdjClose?.FirstOrDefault()?.AdjClose;
         var events = chartResult.Events;
 

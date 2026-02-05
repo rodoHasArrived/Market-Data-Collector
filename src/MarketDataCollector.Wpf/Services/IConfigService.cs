@@ -9,7 +9,7 @@ public interface IConfigService
     string? GetString(string key);
     int GetInt(string key, int defaultValue = 0);
     bool GetBool(string key, bool defaultValue = false);
-    
+
     Task LoadConfigurationAsync(CancellationToken cancellationToken = default);
     Task SaveConfigurationAsync(string key, object value, CancellationToken cancellationToken = default);
 }

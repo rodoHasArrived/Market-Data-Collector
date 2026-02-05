@@ -10,9 +10,9 @@ public enum AppTheme
 public interface IThemeService
 {
     AppTheme CurrentTheme { get; }
-    
+
     event EventHandler<AppTheme>? ThemeChanged;
-    
+
     void SetTheme(AppTheme theme);
     AppTheme GetSystemTheme();
 }

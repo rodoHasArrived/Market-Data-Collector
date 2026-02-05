@@ -224,6 +224,7 @@ public sealed class ParquetStorageSink : IStorageSink
         var snapshots = events
             .Select(e => (Event: e, Data: ExtractL2Data(e)))
             .Where(x => x.Data.Snapshot is not null)
+            .Select(x => (x.Event, Snapshot: x.Data.Snapshot!, x.Data.SequenceNumber))
             .ToList();
 
         if (snapshots.Count is 0) return;
@@ -233,15 +234,15 @@ public sealed class ParquetStorageSink : IStorageSink
 
         await rowGroupWriter.WriteColumnAsync(new DataColumn(L2Schema.DataFields[0], snapshots.Select(s => s.Event.Timestamp).ToArray()));
         await rowGroupWriter.WriteColumnAsync(new DataColumn(L2Schema.DataFields[1], snapshots.Select(s => s.Event.Symbol).ToArray()));
-        await rowGroupWriter.WriteColumnAsync(new DataColumn(L2Schema.DataFields[2], snapshots.Select(s => s.Data.Snapshot!.Bids?.Count ?? 0).ToArray()));
-        await rowGroupWriter.WriteColumnAsync(new DataColumn(L2Schema.DataFields[3], snapshots.Select(s => s.Data.Snapshot!.Asks?.Count ?? 0).ToArray()));
-        await rowGroupWriter.WriteColumnAsync(new DataColumn(L2Schema.DataFields[4], snapshots.Select(s => s.Data.Snapshot!.Bids?.FirstOrDefault()?.Price ?? 0m).ToArray()));
-        await rowGroupWriter.WriteColumnAsync(new DataColumn(L2Schema.DataFields[5], snapshots.Select(s => s.Data.Snapshot!.Asks?.FirstOrDefault()?.Price ?? 0m).ToArray()));
-        await rowGroupWriter.WriteColumnAsync(new DataColumn(L2Schema.DataFields[6], snapshots.Select(s => ComputeSpread(s.Data.Snapshot!)).ToArray()));
-        await rowGroupWriter.WriteColumnAsync(new DataColumn(L2Schema.DataFields[7], snapshots.Select(s => s.Data.SequenceNumber).ToArray()));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(L2Schema.DataFields[2], snapshots.Select(s => s.Snapshot.Bids?.Count ?? 0).ToArray()));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(L2Schema.DataFields[3], snapshots.Select(s => s.Snapshot.Asks?.Count ?? 0).ToArray()));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(L2Schema.DataFields[4], snapshots.Select(s => s.Snapshot.Bids?.FirstOrDefault()?.Price ?? 0m).ToArray()));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(L2Schema.DataFields[5], snapshots.Select(s => s.Snapshot.Asks?.FirstOrDefault()?.Price ?? 0m).ToArray()));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(L2Schema.DataFields[6], snapshots.Select(s => ComputeSpread(s.Snapshot)).ToArray()));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(L2Schema.DataFields[7], snapshots.Select(s => s.SequenceNumber).ToArray()));
         await rowGroupWriter.WriteColumnAsync(new DataColumn(L2Schema.DataFields[8], snapshots.Select(s => s.Event.Source).ToArray()));
-        await rowGroupWriter.WriteColumnAsync(new DataColumn(L2Schema.DataFields[9], snapshots.Select(s => System.Text.Json.JsonSerializer.Serialize(s.Data.Snapshot!.Bids ?? (IReadOnlyList<OrderBookLevel>)[])).ToArray()));
-        await rowGroupWriter.WriteColumnAsync(new DataColumn(L2Schema.DataFields[10], snapshots.Select(s => System.Text.Json.JsonSerializer.Serialize(s.Data.Snapshot!.Asks ?? (IReadOnlyList<OrderBookLevel>)[])).ToArray()));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(L2Schema.DataFields[9], snapshots.Select(s => System.Text.Json.JsonSerializer.Serialize(s.Snapshot.Bids ?? (IReadOnlyList<OrderBookLevel>)[])).ToArray()));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(L2Schema.DataFields[10], snapshots.Select(s => System.Text.Json.JsonSerializer.Serialize(s.Snapshot.Asks ?? (IReadOnlyList<OrderBookLevel>)[])).ToArray()));
     }
 
     private static (LOBSnapshot? Snapshot, long SequenceNumber) ExtractL2Data(MarketEvent evt) => evt.Payload switch

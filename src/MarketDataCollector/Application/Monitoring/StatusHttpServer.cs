@@ -370,17 +370,17 @@ setInterval(refresh,2000);refresh();
     {
         var (report, error) = await _handlers.GetDetailedHealthAsync();
 
-        if (error != null)
+        if (error != null || report is null)
         {
             resp.StatusCode = 501;
             resp.ContentType = "application/json";
-            var json = JsonSerializer.Serialize(new { error }, s_jsonOptions);
+            var json = JsonSerializer.Serialize(new { error = error ?? "Health report unavailable" }, s_jsonOptions);
             var bytes = Encoding.UTF8.GetBytes(json);
             await resp.OutputStream.WriteAsync(bytes, 0, bytes.Length);
             return;
         }
 
-        resp.StatusCode = report!.Status switch
+        resp.StatusCode = report.Status switch
         {
             DetailedHealthStatus.Healthy => 200,
             DetailedHealthStatus.Degraded => 200,

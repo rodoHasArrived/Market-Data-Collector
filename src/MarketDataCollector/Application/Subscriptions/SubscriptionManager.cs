@@ -12,7 +12,7 @@ namespace MarketDataCollector.Application.Subscriptions;
 /// Responsible for:
 /// - registering symbols with collectors (domain)
 /// - subscribing/unsubscribing market depth (infrastructure) via IMarketDataClient
-/// 
+///
 /// Trades are currently always accepted by TradeDataCollector, but this class is future-proofed to support
 /// explicit per-symbol trade subscriptions once you wire them in (tick-by-tick reqs).
 /// </summary>

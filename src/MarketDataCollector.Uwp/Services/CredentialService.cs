@@ -354,7 +354,7 @@ public sealed class CredentialService : IDisposable
             Interlocked.Increment(ref _credentialSaveFailures);
             var errorType = ClassifyException(ex);
             RaiseCredentialError("SaveCredential", resource, errorType, ex.Message, ex);
-            
+
             // We don't throw here to maintain backward compatibility.
             // Callers should subscribe to CredentialError event for critical operations.
         }
@@ -485,7 +485,7 @@ public sealed class CredentialService : IDisposable
             // - COMException with E_FAIL: Vault service unavailable
             var errorType = ClassifyException(ex);
             Debug.WriteLine($"CredentialService: HasCredential FAILED for resource '{resource}' - {errorType}: {ex.Message}");
-            
+
             // We don't increment counters or raise events for HasCredential
             // as it's often called in tight loops for UI updates.
             return false;

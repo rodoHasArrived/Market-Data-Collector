@@ -163,15 +163,16 @@ public sealed class AnalysisExportService
             .SelectMany(pattern => Directory.GetFiles(_dataRoot, pattern, SearchOption.AllDirectories))
             .Select(ParseFileName)
             .Where(f => f is not null)
+            .Select(f => f!)
             .Where(f => request.Symbols is not { Length: > 0 } ||
-                        request.Symbols.Contains(f!.Symbol, StringComparer.OrdinalIgnoreCase))
+                        request.Symbols.Contains(f.Symbol, StringComparer.OrdinalIgnoreCase))
             .Where(f => request.EventTypes is not { Length: > 0 } ||
-                        request.EventTypes.Contains(f!.EventType, StringComparer.OrdinalIgnoreCase))
-            .Where(f => !f!.Date.HasValue ||
+                        request.EventTypes.Contains(f.EventType, StringComparer.OrdinalIgnoreCase))
+            .Where(f => !f.Date.HasValue ||
                         (f.Date.Value >= request.StartDate.Date && f.Date.Value <= request.EndDate.Date))
-            .OrderBy(f => f!.Symbol)
-            .ThenBy(f => f!.Date)
-            .ToList()!;
+            .OrderBy(f => f.Symbol)
+            .ThenBy(f => f.Date)
+            .ToList();
     }
 
     private SourceFile? ParseFileName(string path)

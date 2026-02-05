@@ -2,7 +2,7 @@ namespace MarketDataCollector.Application.Config;
 
 /// <summary>
 /// Configuration for a subscribed symbol and how to build its IB contract.
-/// 
+///
 /// Notes for preferred shares on IB:
 /// - Preferreds are usually represented as SecType=STK with a LocalSymbol like "PCG PRA" or "PCG PR A".
 /// - To avoid ambiguity, set LocalSymbol explicitly when possible.
