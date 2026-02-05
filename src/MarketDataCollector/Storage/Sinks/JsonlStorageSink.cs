@@ -91,6 +91,7 @@ public sealed class JsonlStorageSink : IStorageSink
     private readonly RetentionManager? _retention;
     private readonly Timer? _flushTimer;
     private readonly Timer? _retentionTimer;
+    private readonly CancellationTokenSource _disposalCts = new();
     private bool _disposed;
 
     private readonly ConcurrentDictionary<string, WriterState> _writers = new(StringComparer.OrdinalIgnoreCase);
@@ -243,7 +244,11 @@ public sealed class JsonlStorageSink : IStorageSink
     {
         try
         {
-            await FlushAllBuffersAsync().ConfigureAwait(false);
+            await FlushAllBuffersAsync(_disposalCts.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (_disposalCts.IsCancellationRequested)
+        {
+            // Disposal in progress, stop flushing
         }
         catch (Exception ex)
         {
@@ -280,6 +285,9 @@ public sealed class JsonlStorageSink : IStorageSink
     {
         if (_disposed) return;
 
+        // Signal disposal to timer callbacks
+        _disposalCts.Cancel();
+
         // Stop the timer first
         if (_flushTimer != null)
         {
@@ -291,7 +299,7 @@ public sealed class JsonlStorageSink : IStorageSink
             await _retentionTimer.DisposeAsync().ConfigureAwait(false);
         }
 
-        // Flush remaining buffered events
+        // Flush remaining buffered events (final flush, not timer-driven)
         if (_batchOptions.Enabled)
         {
             await FlushAllBuffersAsync().ConfigureAwait(false);
@@ -306,6 +314,7 @@ public sealed class JsonlStorageSink : IStorageSink
 
         // Dispose retention manager
         _retention?.Dispose();
+        _disposalCts.Dispose();
 
         _disposed = true;
     }

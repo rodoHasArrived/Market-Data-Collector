@@ -174,7 +174,7 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
         var id = _subscriptionManager.Subscribe(cfg.Symbol, "trades");
         if (id == -1) return -1;
 
-        _ = TrySendSubscribeAsync();
+        _ = SendSubscribeWithLoggingAsync("SubscribeTrades", cfg.Symbol);
         return id;
     }
 
@@ -183,7 +183,7 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
         var subscription = _subscriptionManager.Unsubscribe(subscriptionId);
         if (subscription != null)
         {
-            _ = TrySendSubscribeAsync(); // send updated subscription set
+            _ = SendSubscribeWithLoggingAsync("UnsubscribeTrades", subscription.Symbol);
         }
     }
 
@@ -197,7 +197,7 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
         var id = _subscriptionManager.Subscribe(cfg.Symbol, "quotes");
         if (id == -1) return -1;
 
-        _ = TrySendSubscribeAsync();
+        _ = SendSubscribeWithLoggingAsync("SubscribeMarketDepth", cfg.Symbol);
         return id;
     }
 
@@ -206,7 +206,20 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
         var subscription = _subscriptionManager.Unsubscribe(subscriptionId);
         if (subscription != null)
         {
-            _ = TrySendSubscribeAsync();
+            _ = SendSubscribeWithLoggingAsync("UnsubscribeMarketDepth", subscription.Symbol);
+        }
+    }
+
+    private async Task SendSubscribeWithLoggingAsync(string operation, string symbol)
+    {
+        try
+        {
+            await TrySendSubscribeAsync().ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _log.Error(ex, "Fire-and-forget subscription update failed during {Operation} for {Symbol}. " +
+                "The subscription state may be inconsistent.", operation, symbol);
         }
     }
 

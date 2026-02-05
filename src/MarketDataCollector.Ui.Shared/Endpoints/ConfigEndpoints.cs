@@ -73,9 +73,13 @@ public static class ConfigEndpoints
                 FilePrefix: string.IsNullOrWhiteSpace(req.FilePrefix) ? null : req.FilePrefix,
                 Profile: string.IsNullOrWhiteSpace(req.Profile) ? null : req.Profile
             );
+            var sanitizedRoot = PathValidation.SanitizeDataRoot(req.DataRoot);
+            if (sanitizedRoot is null)
+                return Results.BadRequest("Invalid DataRoot: must be a relative path without traversal sequences.");
+
             var next = cfg with
             {
-                DataRoot = string.IsNullOrWhiteSpace(req.DataRoot) ? "data" : req.DataRoot,
+                DataRoot = sanitizedRoot,
                 Compress = req.Compress,
                 Storage = storage
             };

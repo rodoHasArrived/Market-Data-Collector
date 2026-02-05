@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Threading.Channels;
 using MarketDataCollector.Application.Backfill;
+using MarketDataCollector.Application.Commands;
 using MarketDataCollector.Application.Composition;
 using MarketDataCollector.Application.Config;
 using DeploymentContext = MarketDataCollector.Application.Config.DeploymentContext;
@@ -97,170 +98,33 @@ internal static class Program
             return;
         }
 
-        // Wizard Mode - Interactive configuration wizard
-        if (args.Any(a => a.Equals("--wizard", StringComparison.OrdinalIgnoreCase)))
+        // Configuration setup commands (--wizard, --auto-config, --detect-providers, --generate-config)
+        // Extracted to Application/Commands/ConfigCommands.cs
+        var configCommands = new ConfigCommands(configService, log);
+        if (configCommands.CanHandle(args))
         {
-            log.Information("Starting configuration wizard...");
-            using var cts = new CancellationTokenSource();
-            Console.CancelKeyPress += (_, e) => { e.Cancel = true; cts.Cancel(); };
-
-            var result = await configService.RunWizardAsync(cts.Token);
-            Environment.Exit(result.Success ? 0 : 1);
+            var exitCode = await configCommands.ExecuteAsync(args);
+            if (exitCode != 0) Environment.Exit(exitCode);
             return;
         }
 
-        // Auto-Config Mode - Automatic configuration based on environment
-        if (args.Any(a => a.Equals("--auto-config", StringComparison.OrdinalIgnoreCase)))
+        // Diagnostics commands (--quick-check, --test-connectivity, --error-codes, --show-config, --validate-credentials)
+        // Extracted to Application/Commands/DiagnosticsCommands.cs
+        var diagCommands = new DiagnosticsCommands(cfg, cfgPath, configService, log);
+        if (diagCommands.CanHandle(args))
         {
-            log.Information("Running auto-configuration...");
-            var result = configService.RunAutoConfig();
-            Environment.Exit(result.Success ? 0 : 1);
+            var exitCode = await diagCommands.ExecuteAsync(args);
+            if (exitCode != 0) Environment.Exit(exitCode);
             return;
         }
 
-        // Detect Providers Mode - Show available providers (routed through ConfigurationService)
-        if (args.Any(a => a.Equals("--detect-providers", StringComparison.OrdinalIgnoreCase)))
+        // Schema check command (--check-schemas)
+        // Extracted to Application/Commands/SchemaCheckCommand.cs
+        var schemaCheck = new SchemaCheckCommand(cfg, log);
+        if (schemaCheck.CanHandle(args))
         {
-            configService.PrintProviderDetection();
-            return;
-        }
-
-        // Validate Credentials Mode - Test API credentials (routed through ConfigurationService)
-        if (args.Any(a => a.Equals("--validate-credentials", StringComparison.OrdinalIgnoreCase)))
-        {
-            log.Information("Validating API credentials...");
-
-            var validationResult = await configService.ValidateCredentialsAsync(cfg);
-            await using var validationService = new CredentialValidationService();
-            validationService.PrintSummary(validationResult);
-
-            Environment.Exit(validationResult.AllValid ? 0 : 1);
-            return;
-        }
-
-        // Generate Config Mode - Generate configuration template
-        if (args.Any(a => a.Equals("--generate-config", StringComparison.OrdinalIgnoreCase)))
-        {
-            var templateName = GetArgValue(args, "--template") ?? "minimal";
-            var outputPath = GetArgValue(args, "--output") ?? "config/appsettings.generated.json";
-
-            var generator = new ConfigTemplateGenerator();
-            var template = generator.GetTemplate(templateName);
-
-            if (template == null)
-            {
-                Console.Error.WriteLine($"Unknown template: {templateName}");
-                Console.Error.WriteLine("Available templates: minimal, full, alpaca, stocksharp, backfill, production, docker");
-                Environment.Exit(1);
-                return;
-            }
-
-            // Ensure directory exists
-            var dir = Path.GetDirectoryName(outputPath);
-            if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
-            {
-                Directory.CreateDirectory(dir);
-            }
-
-            File.WriteAllText(outputPath, template.Json);
-            Console.WriteLine($"Generated {template.Name} configuration template: {outputPath}");
-
-            if (template.EnvironmentVariables?.Count > 0)
-            {
-                Console.WriteLine();
-                Console.WriteLine("Required environment variables:");
-                foreach (var (key, desc) in template.EnvironmentVariables)
-                {
-                    Console.WriteLine($"  {key}: {desc}");
-                }
-            }
-            return;
-        }
-
-        // Quick Check Mode - Fast health diagnostics (routed through ConfigurationService)
-        if (args.Any(a => a.Equals("--quick-check", StringComparison.OrdinalIgnoreCase)))
-        {
-            log.Information("Running quick configuration check...");
-
-            var result = configService.PerformQuickCheck(cfg);
-            var summary = new StartupSummary();
-            summary.DisplayQuickCheck(result);
-
-            Environment.Exit(result.Success ? 0 : 1);
-            return;
-        }
-
-        // Test Connectivity Mode - Test provider connections (routed through ConfigurationService)
-        if (args.Any(a => a.Equals("--test-connectivity", StringComparison.OrdinalIgnoreCase)))
-        {
-            log.Information("Testing provider connectivity...");
-
-            var result = await configService.TestConnectivityAsync(cfg);
-            await using var tester = new ConnectivityTestService();
-            tester.DisplaySummary(result);
-
-            Environment.Exit(result.AllReachable ? 0 : 1);
-            return;
-        }
-
-        // Show Error Codes Mode - Display error code reference
-        if (args.Any(a => a.Equals("--error-codes", StringComparison.OrdinalIgnoreCase)))
-        {
-            FriendlyErrorFormatter.DisplayErrorCodeReference();
-            return;
-        }
-
-        // Check Schemas Mode - Verify stored data schema compatibility
-        if (args.Any(a => a.Equals("--check-schemas", StringComparison.OrdinalIgnoreCase)))
-        {
-            log.Information("Checking stored data schema compatibility...");
-
-            var schemaOptions = new SchemaValidationOptions
-            {
-                EnableVersionTracking = true,
-                MaxFilesToCheck = int.TryParse(GetArgValue(args, "--max-files"), out var maxFiles) ? maxFiles : 100,
-                FailOnFirstIncompatibility = args.Any(a => a.Equals("--fail-fast", StringComparison.OrdinalIgnoreCase))
-            };
-
-            await using var schemaService = new SchemaValidationService(schemaOptions, cfg.DataRoot);
-            var result = await schemaService.PerformStartupCheckAsync();
-
-            Console.WriteLine();
-            if (result.Success)
-            {
-                Console.WriteLine("Schema Compatibility Check: PASSED");
-                Console.WriteLine(new string('=', 50));
-                Console.WriteLine($"  {result.Message}");
-                Console.WriteLine($"  Current schema version: {SchemaValidationService.CurrentSchemaVersion}");
-            }
-            else
-            {
-                Console.WriteLine("Schema Compatibility Check: ISSUES FOUND");
-                Console.WriteLine(new string('=', 50));
-                Console.WriteLine($"  {result.Message}");
-                Console.WriteLine();
-                Console.WriteLine("  Incompatible files:");
-                foreach (var incompat in result.Incompatibilities.Take(10))
-                {
-                    var migratable = incompat.CanMigrate ? " (can migrate)" : "";
-                    Console.WriteLine($"    - {incompat.FilePath}");
-                    Console.WriteLine($"      Version: {incompat.DetectedVersion} (expected {incompat.ExpectedVersion}){migratable}");
-                }
-                if (result.Incompatibilities.Length > 10)
-                {
-                    Console.WriteLine($"    ... and {result.Incompatibilities.Length - 10} more");
-                }
-            }
-            Console.WriteLine();
-
-            Environment.Exit(result.Success ? 0 : 1);
-            return;
-        }
-
-        // Show Summary Mode - Display configuration summary (routed through ConfigurationService)
-        if (args.Any(a => a.Equals("--show-config", StringComparison.OrdinalIgnoreCase)))
-        {
-            configService.DisplayConfigSummary(cfg, cfgPath, args);
+            var exitCode = await schemaCheck.ExecuteAsync(args);
+            if (exitCode != 0) Environment.Exit(exitCode);
             return;
         }
 
@@ -478,55 +342,13 @@ internal static class Program
             return;
         }
 
-        // Package Mode - Create a portable data package
-        if (args.Any(a => a.Equals("--package", StringComparison.OrdinalIgnoreCase)))
+        // Package commands (--package, --import-package, --list-package, --validate-package)
+        // Extracted to Application/Commands/PackageCommands.cs for testability
+        var packageCommands = new PackageCommands(cfg, log);
+        if (packageCommands.CanHandle(args))
         {
-            await RunPackageCommandAsync(cfg, args, log);
-            return;
-        }
-
-        // Import Package Mode - Import a package into storage
-        if (args.Any(a => a.Equals("--import-package", StringComparison.OrdinalIgnoreCase)))
-        {
-            var packagePath = GetArgValue(args, "--import-package");
-            if (string.IsNullOrWhiteSpace(packagePath))
-            {
-                Console.Error.WriteLine("Error: --import-package requires a path to the package file");
-                Environment.Exit(1);
-                return;
-            }
-
-            await RunImportPackageCommandAsync(cfg, packagePath, args, log);
-            return;
-        }
-
-        // List Package Contents Mode
-        if (args.Any(a => a.Equals("--list-package", StringComparison.OrdinalIgnoreCase)))
-        {
-            var packagePath = GetArgValue(args, "--list-package");
-            if (string.IsNullOrWhiteSpace(packagePath))
-            {
-                Console.Error.WriteLine("Error: --list-package requires a path to the package file");
-                Environment.Exit(1);
-                return;
-            }
-
-            await RunListPackageCommandAsync(packagePath, log);
-            return;
-        }
-
-        // Validate Package Mode
-        if (args.Any(a => a.Equals("--validate-package", StringComparison.OrdinalIgnoreCase)))
-        {
-            var packagePath = GetArgValue(args, "--validate-package");
-            if (string.IsNullOrWhiteSpace(packagePath))
-            {
-                Console.Error.WriteLine("Error: --validate-package requires a path to the package file");
-                Environment.Exit(1);
-                return;
-            }
-
-            await RunValidatePackageCommandAsync(packagePath, log);
+            var exitCode = await packageCommands.ExecuteAsync(args);
+            if (exitCode != 0) Environment.Exit(exitCode);
             return;
         }
 
@@ -690,7 +512,15 @@ internal static class Program
             _ => new IBMarketDataClient(publisher, tradeCollector, depthCollector)
         };
 
-        await dataClient.ConnectAsync();
+        try
+        {
+            await dataClient.ConnectAsync();
+        }
+        catch (Exception ex)
+        {
+            log.Error(ex, "Failed to connect to {DataSource} data provider. Check credentials and connectivity.", cfg.DataSource);
+            throw;
+        }
 
         var subscriptionManager = new SubscriptionManager(
             depthCollector,
@@ -1115,352 +945,7 @@ SUPPORT:
         return cfg with { Symbols = fallback };
     }
 
-    /// <summary>
-    /// Run the package creation command.
-    /// </summary>
-    private static async Task RunPackageCommandAsync(AppConfig cfg, string[] args, ILogger log)
-    {
-        log.Information("Creating portable data package...");
-
-        var options = new PackageOptions
-        {
-            Name = GetArgValue(args, "--package-name") ?? $"market-data-{DateTime.UtcNow:yyyyMMdd}",
-            Description = GetArgValue(args, "--package-description"),
-            OutputDirectory = GetArgValue(args, "--package-output") ?? "packages",
-            IncludeQualityReport = !args.Any(a => a.Equals("--no-quality-report", StringComparison.OrdinalIgnoreCase)),
-            IncludeDataDictionary = !args.Any(a => a.Equals("--no-data-dictionary", StringComparison.OrdinalIgnoreCase)),
-            IncludeLoaderScripts = !args.Any(a => a.Equals("--no-loader-scripts", StringComparison.OrdinalIgnoreCase)),
-            VerifyChecksums = !args.Any(a => a.Equals("--skip-checksums", StringComparison.OrdinalIgnoreCase))
-        };
-
-        // Parse symbols
-        var symbolsArg = GetArgValue(args, "--package-symbols");
-        if (!string.IsNullOrWhiteSpace(symbolsArg))
-        {
-            options.Symbols = symbolsArg.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        }
-
-        // Parse event types
-        var eventTypesArg = GetArgValue(args, "--package-events");
-        if (!string.IsNullOrWhiteSpace(eventTypesArg))
-        {
-            options.EventTypes = eventTypesArg.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        }
-
-        // Parse date range
-        var fromArg = GetArgValue(args, "--package-from");
-        if (DateTime.TryParse(fromArg, out var from))
-        {
-            options.StartDate = from;
-        }
-
-        var toArg = GetArgValue(args, "--package-to");
-        if (DateTime.TryParse(toArg, out var to))
-        {
-            options.EndDate = to;
-        }
-
-        // Parse format
-        var formatArg = GetArgValue(args, "--package-format");
-        if (!string.IsNullOrWhiteSpace(formatArg))
-        {
-            options.Format = formatArg.ToLowerInvariant() switch
-            {
-                "zip" => PackageFormat.Zip,
-                "tar.gz" or "targz" or "tgz" => PackageFormat.TarGz,
-                "7z" or "7zip" => PackageFormat.SevenZip,
-                _ => PackageFormat.Zip
-            };
-        }
-
-        // Parse compression level
-        var compressionArg = GetArgValue(args, "--package-compression");
-        if (!string.IsNullOrWhiteSpace(compressionArg))
-        {
-            options.CompressionLevel = compressionArg.ToLowerInvariant() switch
-            {
-                "none" => PackageCompressionLevel.None,
-                "fast" => PackageCompressionLevel.Fast,
-                "balanced" => PackageCompressionLevel.Balanced,
-                "maximum" or "max" => PackageCompressionLevel.Maximum,
-                _ => PackageCompressionLevel.Balanced
-            };
-        }
-
-        var packager = new PortableDataPackager(cfg.DataRoot);
-
-        // Subscribe to progress events
-        packager.ProgressChanged += (_, progress) =>
-        {
-            var percent = progress.TotalFiles > 0
-                ? (double)progress.FilesProcessed / progress.TotalFiles * 100
-                : 0;
-            Console.Write($"\r[{progress.Stage}] {progress.FilesProcessed}/{progress.TotalFiles} files ({percent:F1}%)    ");
-        };
-
-        var result = await packager.CreatePackageAsync(options);
-
-        Console.WriteLine(); // New line after progress
-
-        if (result.Success)
-        {
-            Console.WriteLine();
-            Console.WriteLine("╔══════════════════════════════════════════════════════════════════════╗");
-            Console.WriteLine("║                    Package Created Successfully                       ║");
-            Console.WriteLine("╚══════════════════════════════════════════════════════════════════════╝");
-            Console.WriteLine();
-            Console.WriteLine($"  Package: {result.PackagePath}");
-            Console.WriteLine($"  Size: {result.PackageSizeBytes:N0} bytes");
-            Console.WriteLine($"  Compression: {result.CompressionRatio:F2}x");
-            Console.WriteLine($"  Files: {result.FilesIncluded:N0}");
-            Console.WriteLine($"  Events: {result.TotalEvents:N0}");
-            Console.WriteLine($"  Symbols: {string.Join(", ", result.Symbols)}");
-            Console.WriteLine($"  Event Types: {string.Join(", ", result.EventTypes)}");
-            if (result.DateRange != null)
-            {
-                Console.WriteLine($"  Date Range: {result.DateRange.Start:yyyy-MM-dd} to {result.DateRange.End:yyyy-MM-dd}");
-            }
-            Console.WriteLine($"  Checksum: {result.PackageChecksum}");
-            Console.WriteLine();
-
-            if (result.Warnings.Length > 0)
-            {
-                Console.WriteLine("Warnings:");
-                foreach (var warning in result.Warnings)
-                {
-                    Console.WriteLine($"  - {warning}");
-                }
-            }
-
-            log.Information("Package created: {PackagePath} ({SizeBytes:N0} bytes, {CompressionRatio:F2}x compression)",
-                result.PackagePath, result.PackageSizeBytes, result.CompressionRatio);
-        }
-        else
-        {
-            Console.Error.WriteLine($"Error: {result.Error}");
-            log.Error("Package creation failed: {Error}", result.Error);
-            Environment.Exit(1);
-        }
-    }
-
-    /// <summary>
-    /// Run the package import command.
-    /// </summary>
-    private static async Task RunImportPackageCommandAsync(AppConfig cfg, string packagePath, string[] args, ILogger log)
-    {
-        log.Information("Importing package: {PackagePath}", packagePath);
-
-        var destinationDir = GetArgValue(args, "--import-destination") ?? cfg.DataRoot;
-        var validateChecksums = !args.Any(a => a.Equals("--skip-validation", StringComparison.OrdinalIgnoreCase));
-        var mergeWithExisting = args.Any(a => a.Equals("--merge", StringComparison.OrdinalIgnoreCase));
-
-        var packager = new PortableDataPackager(cfg.DataRoot);
-
-        // Subscribe to progress events
-        packager.ProgressChanged += (_, progress) =>
-        {
-            var percent = progress.TotalFiles > 0
-                ? (double)progress.FilesProcessed / progress.TotalFiles * 100
-                : 0;
-            Console.Write($"\r[{progress.Stage}] {progress.FilesProcessed}/{progress.TotalFiles} files ({percent:F1}%)    ");
-        };
-
-        var result = await packager.ImportPackageAsync(packagePath, destinationDir, validateChecksums, mergeWithExisting);
-
-        Console.WriteLine(); // New line after progress
-
-        if (result.Success)
-        {
-            Console.WriteLine();
-            Console.WriteLine("╔══════════════════════════════════════════════════════════════════════╗");
-            Console.WriteLine("║                    Package Imported Successfully                      ║");
-            Console.WriteLine("╚══════════════════════════════════════════════════════════════════════╝");
-            Console.WriteLine();
-            Console.WriteLine($"  Source: {result.SourcePath}");
-            Console.WriteLine($"  Destination: {result.DestinationPath}");
-            Console.WriteLine($"  Files Extracted: {result.FilesExtracted:N0}");
-            Console.WriteLine($"  Bytes Extracted: {result.BytesExtracted:N0}");
-            Console.WriteLine($"  Files Validated: {result.FilesValidated:N0}");
-            Console.WriteLine($"  Symbols: {string.Join(", ", result.Symbols)}");
-            Console.WriteLine($"  Event Types: {string.Join(", ", result.EventTypes)}");
-            Console.WriteLine($"  Duration: {result.DurationSeconds:F2} seconds");
-            Console.WriteLine();
-
-            if (result.Warnings.Length > 0)
-            {
-                Console.WriteLine("Warnings:");
-                foreach (var warning in result.Warnings)
-                {
-                    Console.WriteLine($"  - {warning}");
-                }
-            }
-
-            log.Information("Package imported: {FilesExtracted} files, {BytesExtracted:N0} bytes",
-                result.FilesExtracted, result.BytesExtracted);
-        }
-        else
-        {
-            Console.Error.WriteLine($"Error: {result.Error}");
-
-            if (result.ValidationErrors?.Length > 0)
-            {
-                Console.Error.WriteLine("\nValidation Errors:");
-                foreach (var error in result.ValidationErrors)
-                {
-                    Console.Error.WriteLine($"  - {error.FilePath}: {error.Message}");
-                }
-            }
-
-            log.Error("Package import failed: {Error}", result.Error);
-            Environment.Exit(1);
-        }
-    }
-
-    /// <summary>
-    /// Run the list package contents command.
-    /// </summary>
-    private static async Task RunListPackageCommandAsync(string packagePath, ILogger log)
-    {
-        log.Information("Listing package contents: {PackagePath}", packagePath);
-
-        var packager = new PortableDataPackager(".");
-
-        try
-        {
-            var contents = await packager.ListPackageContentsAsync(packagePath);
-
-            Console.WriteLine();
-            Console.WriteLine("╔══════════════════════════════════════════════════════════════════════╗");
-            Console.WriteLine("║                         Package Contents                              ║");
-            Console.WriteLine("╚══════════════════════════════════════════════════════════════════════╝");
-            Console.WriteLine();
-            Console.WriteLine($"  Name: {contents.Name}");
-            Console.WriteLine($"  Package ID: {contents.PackageId}");
-            if (!string.IsNullOrEmpty(contents.Description))
-            {
-                Console.WriteLine($"  Description: {contents.Description}");
-            }
-            Console.WriteLine($"  Created: {contents.CreatedAt:yyyy-MM-dd HH:mm:ss} UTC");
-            Console.WriteLine();
-            Console.WriteLine("  Summary:");
-            Console.WriteLine($"    Total Files: {contents.TotalFiles:N0}");
-            Console.WriteLine($"    Total Events: {contents.TotalEvents:N0}");
-            Console.WriteLine($"    Package Size: {contents.PackageSizeBytes:N0} bytes");
-            Console.WriteLine($"    Uncompressed Size: {contents.UncompressedSizeBytes:N0} bytes");
-            Console.WriteLine();
-            Console.WriteLine($"  Symbols: {string.Join(", ", contents.Symbols)}");
-            Console.WriteLine($"  Event Types: {string.Join(", ", contents.EventTypes)}");
-            if (contents.DateRange != null)
-            {
-                Console.WriteLine($"  Date Range: {contents.DateRange.Start:yyyy-MM-dd} to {contents.DateRange.End:yyyy-MM-dd}");
-                Console.WriteLine($"  Trading Days: {contents.DateRange.TradingDays}");
-            }
-            Console.WriteLine();
-
-            if (contents.Quality != null)
-            {
-                Console.WriteLine("  Quality Metrics:");
-                Console.WriteLine($"    Overall Score: {contents.Quality.OverallScore:F2}");
-                Console.WriteLine($"    Completeness: {contents.Quality.CompletenessScore:F2}");
-                Console.WriteLine($"    Integrity: {contents.Quality.IntegrityScore:F2}");
-                Console.WriteLine($"    Grade: {contents.Quality.Grade}");
-                Console.WriteLine();
-            }
-
-            Console.WriteLine("  Files:");
-            foreach (var file in contents.Files.Take(20)) // Show first 20 files
-            {
-                var size = file.SizeBytes > 1024 * 1024
-                    ? $"{file.SizeBytes / (1024.0 * 1024.0):F1} MB"
-                    : $"{file.SizeBytes / 1024.0:F1} KB";
-                Console.WriteLine($"    {file.Path} ({size}, {file.EventCount:N0} events)");
-            }
-
-            if (contents.Files.Length > 20)
-            {
-                Console.WriteLine($"    ... and {contents.Files.Length - 20} more files");
-            }
-            Console.WriteLine();
-        }
-        catch (Exception ex)
-        {
-            Console.Error.WriteLine($"Error reading package: {ex.Message}");
-            log.Error(ex, "Failed to list package contents");
-            Environment.Exit(1);
-        }
-    }
-
-    /// <summary>
-    /// Run the validate package command.
-    /// </summary>
-    private static async Task RunValidatePackageCommandAsync(string packagePath, ILogger log)
-    {
-        log.Information("Validating package: {PackagePath}", packagePath);
-
-        var packager = new PortableDataPackager(".");
-        var result = await packager.ValidatePackageAsync(packagePath);
-
-        Console.WriteLine();
-        if (result.IsValid)
-        {
-            Console.WriteLine("╔══════════════════════════════════════════════════════════════════════╗");
-            Console.WriteLine("║                      Package Validation: PASSED                       ║");
-            Console.WriteLine("╚══════════════════════════════════════════════════════════════════════╝");
-            Console.WriteLine();
-            Console.WriteLine($"  Package: {packagePath}");
-            if (result.Manifest != null)
-            {
-                Console.WriteLine($"  Name: {result.Manifest.Name}");
-                Console.WriteLine($"  Package ID: {result.Manifest.PackageId}");
-                Console.WriteLine($"  Files: {result.Manifest.TotalFiles:N0}");
-                Console.WriteLine($"  Events: {result.Manifest.TotalEvents:N0}");
-            }
-            Console.WriteLine();
-            log.Information("Package validation passed: {PackagePath}", packagePath);
-        }
-        else
-        {
-            Console.WriteLine("╔══════════════════════════════════════════════════════════════════════╗");
-            Console.WriteLine("║                      Package Validation: FAILED                       ║");
-            Console.WriteLine("╚══════════════════════════════════════════════════════════════════════╝");
-            Console.WriteLine();
-            Console.WriteLine($"  Package: {packagePath}");
-
-            if (!string.IsNullOrEmpty(result.Error))
-            {
-                Console.WriteLine($"  Error: {result.Error}");
-            }
-
-            if (result.Issues?.Length > 0)
-            {
-                Console.WriteLine("\n  Issues:");
-                foreach (var issue in result.Issues)
-                {
-                    Console.WriteLine($"    - {issue}");
-                }
-            }
-
-            if (result.MissingFiles?.Length > 0)
-            {
-                Console.WriteLine("\n  Missing Files:");
-                foreach (var file in result.MissingFiles.Take(10))
-                {
-                    Console.WriteLine($"    - {file}");
-                }
-                if (result.MissingFiles.Length > 10)
-                {
-                    Console.WriteLine($"    ... and {result.MissingFiles.Length - 10} more");
-                }
-            }
-
-            Console.WriteLine();
-            log.Warning("Package validation failed: {PackagePath}", packagePath);
-            Environment.Exit(1);
-        }
-    }
-
-    // CreateBackfillProviders has been consolidated into ProviderFactory
-    // and is accessed via HostStartup.CreateBackfillProviders() through the composition root.
+    // Package commands now handled by Application/Commands/PackageCommands.cs
 
     /// <summary>
     /// Format bytes as human-readable string.

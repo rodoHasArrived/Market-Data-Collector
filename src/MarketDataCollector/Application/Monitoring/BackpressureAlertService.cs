@@ -97,10 +97,16 @@ public sealed class BackpressureAlertService : IDisposable
             Message: GetStatusMessage(level, stats.Value.QueueUtilization, dropRate));
     }
 
-    private async void CheckBackpressure(object? state)
+    private void CheckBackpressure(object? state)
     {
         if (_isDisposed) return;
 
+        // Timer callbacks must not be async void; fire-and-forget with logging wrapper
+        _ = CheckBackpressureCoreAsync();
+    }
+
+    private async Task CheckBackpressureCoreAsync()
+    {
         try
         {
             var stats = _pipelineStatsProvider?.Invoke();

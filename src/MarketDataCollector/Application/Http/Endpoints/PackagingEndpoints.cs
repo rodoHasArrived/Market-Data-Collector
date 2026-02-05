@@ -80,6 +80,17 @@ public static class PackagingEndpoints
                     return Results.BadRequest(new { error = "PackagePath is required" });
                 }
 
+                if (request.PackagePath.Contains("..") || request.PackagePath.Contains('\0'))
+                {
+                    return Results.BadRequest(new { error = "Invalid PackagePath: traversal sequences not allowed" });
+                }
+
+                if (request.DestinationDirectory is not null &&
+                    (request.DestinationDirectory.Contains("..") || request.DestinationDirectory.Contains('\0')))
+                {
+                    return Results.BadRequest(new { error = "Invalid DestinationDirectory: traversal sequences not allowed" });
+                }
+
                 var result = await packager.ImportPackageAsync(
                     request.PackagePath,
                     request.DestinationDirectory ?? dataRoot,
@@ -114,6 +125,11 @@ public static class PackagingEndpoints
                     return Results.BadRequest(new { error = "PackagePath is required" });
                 }
 
+                if (request.PackagePath.Contains("..") || request.PackagePath.Contains('\0'))
+                {
+                    return Results.BadRequest(new { error = "Invalid PackagePath: traversal sequences not allowed" });
+                }
+
                 var result = await packager.ValidatePackageAsync(request.PackagePath, ct);
 
                 return Results.Json(new
@@ -145,6 +161,12 @@ public static class PackagingEndpoints
                     return Results.BadRequest(new { error = "Path query parameter is required" });
                 }
 
+                // Validate path stays within the data root
+                if (path.Contains("..") || path.Contains('\0'))
+                {
+                    return Results.BadRequest(new { error = "Invalid path: traversal sequences not allowed" });
+                }
+
                 var contents = await packager.ListPackageContentsAsync(path, ct);
 
                 return Results.Json(contents, s_jsonOptions);
@@ -171,7 +193,23 @@ public static class PackagingEndpoints
         {
             try
             {
-                var packagesDir = directory ?? Path.Combine(dataRoot, "..", "packages");
+                var defaultPackagesDir = Path.GetFullPath(Path.Combine(dataRoot, "..", "packages"));
+                string packagesDir;
+
+                if (directory is not null)
+                {
+                    // Validate user-supplied directory stays within the project boundary
+                    if (directory.Contains("..") || directory.Contains('\0'))
+                    {
+                        return Results.BadRequest(new { error = "Invalid directory: traversal sequences not allowed" });
+                    }
+                    packagesDir = Path.GetFullPath(directory);
+                }
+                else
+                {
+                    packagesDir = defaultPackagesDir;
+                }
+
                 if (!Directory.Exists(packagesDir))
                 {
                     return Results.Json(new { packages = Array.Empty<object>() }, s_jsonOptions);

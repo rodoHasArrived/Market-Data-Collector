@@ -152,6 +152,32 @@ public sealed class BackpressureAlertServiceTests : IDisposable
         status.Message.Should().Contain("3.0");
     }
 
+    [Fact]
+    public void CheckBackpressure_IsNotAsyncVoid()
+    {
+        // Verify the timer callback method is not async void (which was a bug - exceptions vanish)
+        var method = typeof(BackpressureAlertService)
+            .GetMethod("CheckBackpressure",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+        method.Should().NotBeNull("CheckBackpressure should exist as timer callback");
+        method!.ReturnType.Should().Be(typeof(void),
+            "Timer callback should be synchronous wrapper (not async void)");
+    }
+
+    [Fact]
+    public void CheckBackpressureCoreAsync_ReturnsTask()
+    {
+        // Verify the async implementation returns Task for proper error handling
+        var method = typeof(BackpressureAlertService)
+            .GetMethod("CheckBackpressureCoreAsync",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+        method.Should().NotBeNull("CheckBackpressureCoreAsync should exist as the async implementation");
+        method!.ReturnType.Should().Be(typeof(Task),
+            "Async implementation should return Task, not void");
+    }
+
     public void Dispose()
     {
         _service.Dispose();

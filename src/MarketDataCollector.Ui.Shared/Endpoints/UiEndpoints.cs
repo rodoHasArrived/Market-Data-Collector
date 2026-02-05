@@ -29,6 +29,7 @@ public static class UiEndpoints
     {
         builder.Services.AddUiSharedServices(configPath);
         var app = builder.Build();
+        app.UseApiKeyAuthentication();
         app.MapAllUiEndpoints();
         return app;
     }
@@ -45,6 +46,7 @@ public static class UiEndpoints
     {
         builder.Services.AddUiSharedServices(statusHandlers, configPath);
         var app = builder.Build();
+        app.UseApiKeyAuthentication();
         app.MapUiEndpointsWithStatus(statusHandlers);
         return app;
     }
