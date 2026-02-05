@@ -358,7 +358,7 @@
                             </ComboBox>
                         </Grid>
 
-                        <ListView x:Name="AlertsList" MaxHeight="400" SelectionMode="None">
+                        <ListView x:Name="AlertsList" MaxHeight="400" IsHitTestVisible="False">
                             <ListView.ItemTemplate>
                                 <DataTemplate>
                                     <Border Padding="8,12">
@@ -548,7 +548,7 @@
                         </Border>
                     </Grid>
 
-                    <ListView x:Name="AnomaliesList" MaxHeight="250" SelectionMode="None">
+                    <ListView x:Name="AnomaliesList" MaxHeight="250" IsHitTestVisible="False">
                         <ListView.ItemTemplate>
                             <DataTemplate>
                                 <Border Padding="8,10">

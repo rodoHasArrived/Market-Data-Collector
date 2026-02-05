@@ -244,7 +244,7 @@
                             <TextBlock Text="Recommendations" Style="{StaticResource CardHeaderStyle}" />
                         </StackPanel>
 
-                        <ListView x:Name="RecommendationsList" SelectionMode="None" MaxHeight="250" Background="Transparent" BorderThickness="0">
+                        <ListView x:Name="RecommendationsList" IsHitTestVisible="False" MaxHeight="250" Background="Transparent" BorderThickness="0">
                             <ListView.ItemTemplate>
                                 <DataTemplate>
                                     <Grid Margin="0,4">
