@@ -51,6 +51,10 @@ concurrency:
   group: docs-comprehensive-${{ github.ref }}
   cancel-in-progress: true
 
+defaults:
+  run:
+    shell: bash
+
 env:
   DOTNET_VERSION: '9.0.x'
   PYTHON_VERSION: '3.11'
@@ -61,6 +65,7 @@ jobs:
   detect-changes:
     name: Detect Documentation/Workflow Changes
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     outputs:
       docs_changed: ${{ steps.filter.outputs.docs }}
       structure_changed: ${{ steps.filter.outputs.structure }}
@@ -101,6 +106,7 @@ jobs:
   validate-docs:
     name: Validate Documentation Quality
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: detect-changes
     if: |
       needs.detect-changes.outputs.docs_changed == 'true' ||
@@ -132,6 +138,7 @@ jobs:
 
       - name: ADR inventory
         run: |
+          set -euo pipefail
           echo "## ADR Verification Report" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           ADR_COUNT=$(find docs -path "*/adr/*.md" -o -path "*/decisions/*.md" 2>/dev/null | wc -l)
@@ -140,6 +147,7 @@ jobs:
   regenerate-docs:
     name: Regenerate Generated Docs + AI Instructions
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     needs: detect-changes
     if: |
       needs.detect-changes.outputs.structure_changed == 'true' ||
@@ -151,6 +159,7 @@ jobs:
       github.event_name == 'schedule'
     outputs:
       has_changes: ${{ steps.changes.outputs.has_changes }}
+      changed_files: ${{ steps.changes.outputs.changed_files }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -170,6 +179,7 @@ jobs:
 
       - name: Build project for metadata extraction
         run: |
+          set -euo pipefail
           dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
           dotnet build src/MarketDataCollector/MarketDataCollector.csproj \
             -c Release \
@@ -180,6 +190,7 @@ jobs:
 
       - name: Generate structure and workflow docs
         run: |
+          set -euo pipefail
           mkdir -p docs/generated
           python3 build/scripts/docs/generate-structure-docs.py --output docs/generated/repository-structure.md --format markdown
           python3 build/scripts/docs/generate-structure-docs.py --output docs/generated/provider-registry.md --providers-only
@@ -187,14 +198,32 @@ jobs:
 
       - name: Generate project context doc (if tool exists)
         run: |
+          set -euo pipefail
           if [ -d "build/dotnet/DocGenerator" ]; then
             dotnet restore build/dotnet/DocGenerator/DocGenerator.csproj
             dotnet build build/dotnet/DocGenerator/DocGenerator.csproj -c Release -v q || true
             dotnet run --project build/dotnet/DocGenerator/DocGenerator.csproj --no-build -c Release -- context --src src/MarketDataCollector --output docs/generated/project-context.md || true
           fi
 
+      - name: Validate required documentation automation inputs
+        run: |
+          set -euo pipefail
+          required=(
+            "build/scripts/docs/generate-structure-docs.py"
+            "build/scripts/docs/update-claude-md.py"
+            "docs/generated/repository-structure.md"
+          )
+
+          for path in "${required[@]}"; do
+            if [ ! -e "$path" ]; then
+              echo "Missing required file: $path" >&2
+              exit 1
+            fi
+          done
+
       - name: Sync AI instruction files
         run: |
+          set -euo pipefail
           files=(
             "CLAUDE.md"
             "docs/ai/copilot/instructions.md"
@@ -202,14 +231,19 @@ jobs:
           )
 
           for file in "${files[@]}"; do
-            python3 build/scripts/docs/update-claude-md.py \
-              --claude-md "$file" \
-              --structure-source docs/generated/repository-structure.md
+            if [ -f "$file" ]; then
+              python3 build/scripts/docs/update-claude-md.py \
+                --claude-md "$file" \
+                --structure-source docs/generated/repository-structure.md
+            else
+              echo "Skipping missing AI instruction file: $file"
+            fi
           done
 
       - name: Check for generated changes
         id: changes
         run: |
+          set -euo pipefail
           watched=(
             "docs/generated/"
             "CLAUDE.md"
@@ -217,10 +251,19 @@ jobs:
             ".github/agents/documentation-agent.md"
           )
 
+          changed_files=$(git status --porcelain "${watched[@]}" | awk '{print $2}' | paste -sd ',' -)
+
           if [ -n "$(git status --porcelain "${watched[@]}")" ]; then
             echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "changed_files=$changed_files" >> $GITHUB_OUTPUT
+            {
+              echo "### Generated files changed"
+              git status --short -- "${watched[@]}"
+            } >> "$GITHUB_STEP_SUMMARY"
           else
             echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "changed_files=" >> $GITHUB_OUTPUT
+            echo "No generated documentation changes detected." >> "$GITHUB_STEP_SUMMARY"
           fi
 
       - name: Show dry-run diff
@@ -229,13 +272,36 @@ jobs:
           github.event_name == 'workflow_dispatch' &&
           github.event.inputs.dry_run == 'true'
         run: |
+          set -euo pipefail
           git --no-pager diff -- docs/generated/ CLAUDE.md docs/ai/copilot/instructions.md .github/agents/documentation-agent.md
+
+      - name: Upload dry-run patch artifact
+        if: |
+          steps.changes.outputs.has_changes == 'true' &&
+          github.event_name == 'workflow_dispatch' &&
+          github.event.inputs.dry_run == 'true'
+        run: |
+          set -euo pipefail
+          git --no-pager diff --binary -- docs/generated/ CLAUDE.md docs/ai/copilot/instructions.md .github/agents/documentation-agent.md > docs-automation.patch
+
+      - name: Publish dry-run patch artifact
+        if: |
+          steps.changes.outputs.has_changes == 'true' &&
+          github.event_name == 'workflow_dispatch' &&
+          github.event.inputs.dry_run == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-automation-diff
+          path: docs-automation.patch
+          if-no-files-found: error
 
       - name: Commit direct updates
         if: |
           steps.changes.outputs.has_changes == 'true' &&
-          (github.event_name == 'push' || github.event_name == 'schedule')
+          (github.event_name == 'push' || github.event_name == 'schedule') &&
+          github.actor != 'github-actions[bot]'
         run: |
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
@@ -273,6 +339,7 @@ jobs:
   report:
     name: Documentation Automation Report
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: [detect-changes, validate-docs, regenerate-docs]
     if: always()
     steps:
@@ -292,3 +359,8 @@ jobs:
           echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
           echo "| Validate docs | ${{ needs.validate-docs.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Regenerate docs | ${{ needs.regenerate-docs.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Generated Changes | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------------------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| has_changes | ${{ needs.regenerate-docs.outputs.has_changes || 'false' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| changed_files | ${{ needs.regenerate-docs.outputs.changed_files || 'none' }} |" >> $GITHUB_STEP_SUMMARY
