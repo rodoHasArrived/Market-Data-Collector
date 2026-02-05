@@ -32,6 +32,11 @@ on:
         required: false
         default: 'false'
         type: boolean
+      update_all:
+        description: 'Update all auto-generated documentation outputs'
+        required: false
+        default: 'false'
+        type: boolean
       dry_run:
         description: 'Show changes without committing'
         required: false
@@ -254,6 +259,10 @@ jobs:
       structure_changed: ${{ steps.filter.outputs.structure }}
       workflow_changed: ${{ steps.filter.outputs.workflows }}
       providers_changed: ${{ steps.filter.outputs.providers }}
+      interfaces_changed: ${{ steps.filter.outputs.interfaces }}
+      adrs_changed: ${{ steps.filter.outputs.adrs }}
+      config_changed: ${{ steps.filter.outputs.config }}
+      microservices_changed: ${{ steps.filter.outputs.microservices }}
       ai_files_changed: ${{ steps.filter.outputs.ai_files }}
     steps:
       - name: Checkout repository
@@ -281,6 +290,15 @@ jobs:
               - added|deleted: 'docs/**'
             providers:
               - 'src/MarketDataCollector/Infrastructure/Providers/**'
+            interfaces:
+              - 'src/MarketDataCollector/Infrastructure/IMarketDataClient.cs'
+              - 'src/MarketDataCollector/Infrastructure/Providers/Backfill/IHistoricalDataProvider*.cs'
+            adrs:
+              - 'docs/adr/**'
+            config:
+              - 'config/appsettings.sample.json'
+            microservices:
+              - 'src/Microservices/**'
             ai_files:
               - 'docs/ai/**'
               - '.github/agents/**'
@@ -337,7 +355,12 @@ jobs:
       needs.detect-changes.outputs.docs_changed == 'true' ||
       needs.detect-changes.outputs.workflow_changed == 'true' ||
       needs.detect-changes.outputs.providers_changed == 'true' ||
+      needs.detect-changes.outputs.interfaces_changed == 'true' ||
+      needs.detect-changes.outputs.adrs_changed == 'true' ||
+      needs.detect-changes.outputs.config_changed == 'true' ||
+      needs.detect-changes.outputs.microservices_changed == 'true' ||
       needs.detect-changes.outputs.ai_files_changed == 'true' ||
+      github.event.inputs.update_all == 'true' ||
       github.event_name == 'workflow_dispatch' ||
       github.event_name == 'schedule'
     outputs:
@@ -378,6 +401,80 @@ jobs:
           python3 build/scripts/docs/generate-structure-docs.py --output docs/generated/repository-structure.md --format markdown
           python3 build/scripts/docs/generate-structure-docs.py --output docs/generated/provider-registry.md --providers-only
           python3 build/scripts/docs/generate-structure-docs.py --output docs/generated/workflows-overview.md --workflows-only
+
+      - name: Generate ADR index
+        run: |
+          set -euo pipefail
+          mkdir -p docs/generated
+          echo "# Architecture Decision Records" > docs/generated/adr-index.md
+          echo "" >> docs/generated/adr-index.md
+          echo "> Auto-generated on $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> docs/generated/adr-index.md
+          echo "" >> docs/generated/adr-index.md
+          echo "| ADR | Title | Status |" >> docs/generated/adr-index.md
+          echo "|-----|-------|--------|" >> docs/generated/adr-index.md
+
+          for adr in docs/adr/*.md; do
+            if [ -f "$adr" ]; then
+              filename=$(basename "$adr")
+              title=$(head -1 "$adr" | sed 's/^# //')
+              status="Accepted"
+              if grep -qi "status:.*superseded" "$adr"; then
+                status="Superseded"
+              elif grep -qi "status:.*deprecated" "$adr"; then
+                status="Deprecated"
+              fi
+              echo "| [$filename](../adr/$filename) | $title | $status |" >> docs/generated/adr-index.md
+            fi
+          done
+
+          echo "" >> docs/generated/adr-index.md
+          echo "---" >> docs/generated/adr-index.md
+          echo "*This file is auto-generated. Do not edit manually.*" >> docs/generated/adr-index.md
+
+      - name: Generate configuration documentation
+        run: |
+          set -euo pipefail
+          mkdir -p docs/generated
+
+          cat > docs/generated/configuration-schema.md << 'EOF'
+          # Configuration Schema
+
+          > Auto-generated from `config/appsettings.sample.json`
+
+          This document describes the configuration options available in the Market Data Collector.
+
+          ## Configuration Sections
+
+          EOF
+
+          if [ -f "config/appsettings.sample.json" ]; then
+            python3 -c "
+          import json
+          import sys
+
+          try:
+              with open('config/appsettings.sample.json', 'r') as f:
+                  config = json.load(f)
+
+              for section, value in config.items():
+                  print(f'### {section}')
+                  print('')
+                  if isinstance(value, dict):
+                      print('| Setting | Type | Description |')
+                      print('|---------|------|-------------|')
+                      for key, val in value.items():
+                          val_type = type(val).__name__
+                          print(f'| \`{key}\` | {val_type} | - |')
+                  else:
+                      print(f'Type: \`{type(value).__name__}\`')
+                  print('')
+          except Exception as e:
+              print(f'Error parsing config: {e}', file=sys.stderr)
+          " >> docs/generated/configuration-schema.md
+          fi
+
+          echo "---" >> docs/generated/configuration-schema.md
+          echo "*This file is auto-generated. Do not edit manually.*" >> docs/generated/configuration-schema.md
 
       - name: Generate project context doc (if tool exists)
         run: |
@@ -429,6 +526,8 @@ jobs:
           set -euo pipefail
           watched=(
             "docs/generated/"
+            "docs/generated/adr-index.md"
+            "docs/generated/configuration-schema.md"
             "CLAUDE.md"
             "docs/ai/copilot/instructions.md"
             ".github/agents/documentation-agent.md"
@@ -513,6 +612,8 @@ jobs:
           body: |
             ## Summary
             - Regenerated `docs/generated/*` artifacts.
+            - Updated `docs/generated/adr-index.md` from ADR source files.
+            - Updated `docs/generated/configuration-schema.md` from sample configuration.
             - Synced repository-structure sections in AI instruction files.
             - Consolidated all documentation automation outputs into one run.
           labels: |
@@ -536,6 +637,10 @@ jobs:
           echo "| Workflows | ${{ needs.detect-changes.outputs.workflow_changed }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Structure | ${{ needs.detect-changes.outputs.structure_changed }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Providers | ${{ needs.detect-changes.outputs.providers_changed }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Interfaces | ${{ needs.detect-changes.outputs.interfaces_changed }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| ADRs | ${{ needs.detect-changes.outputs.adrs_changed }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Configuration | ${{ needs.detect-changes.outputs.config_changed }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Microservices | ${{ needs.detect-changes.outputs.microservices_changed }} |" >> $GITHUB_STEP_SUMMARY
           echo "| AI files | ${{ needs.detect-changes.outputs.ai_files_changed }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Job | Result |" >> $GITHUB_STEP_SUMMARY
