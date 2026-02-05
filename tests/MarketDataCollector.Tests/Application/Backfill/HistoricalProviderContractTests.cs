@@ -630,7 +630,7 @@ public static class YahooFinanceResponses
     """;
 
     /// <summary>
-    /// Valid response for PCG-A (Pacific Gas & Electric Preferred Stock Series A).
+    /// Valid response for PCG-A (Pacific Gas and Electric Preferred Stock Series A).
     /// Preferred stocks typically have lower volume and stable price ranges.
     /// </summary>
     public const string ValidPcgAResponse = """
