@@ -133,6 +133,7 @@ Market-Data-Collector/
 │   │   ├── provider-implementation-guide.prompt.yml
 │   │   ├── README.md
 │   │   ├── troubleshoot-issue.prompt.yml
+│   │   ├── wpf-debug-improve.prompt.yml
 │   │   └── write-unit-tests.prompt.yml
 │   ├── workflows/
 │   │   ├── ai-instructions-sync.yml
@@ -157,6 +158,7 @@ Market-Data-Collector/
 │   │   ├── security.yml
 │   │   ├── stale.yml
 │   │   ├── test-matrix.yml
+│   │   ├── todo-automation.yml
 │   │   ├── validate-workflows.yml
 │   │   ├── wpf-commands.yml
 │   │   └── wpf-desktop.yml
@@ -217,6 +219,7 @@ Market-Data-Collector/
 │   └── scripts/  # Automation scripts
 │       ├── docs/  # Documentation
 │       │   ├── generate-structure-docs.py
+│       │   ├── scan-todos.py
 │       │   └── update-claude-md.py
 │       ├── install/
 │       │   ├── install.ps1
@@ -257,6 +260,7 @@ Market-Data-Collector/
 │   │   └── README.md
 │   ├── ai/
 │   │   ├── claude/
+│   │   │   ├── CLAUDE.actions.md
 │   │   │   ├── CLAUDE.fsharp.md
 │   │   │   ├── CLAUDE.providers.md
 │   │   │   ├── CLAUDE.storage.md
@@ -277,14 +281,21 @@ Market-Data-Collector/
 │   │   ├── provider-management.md
 │   │   ├── storage-design.md
 │   │   └── why-this-architecture.md
+│   ├── archived/
+│   │   ├── CHANGES_SUMMARY.md
+│   │   ├── desktop-ui-alternatives-evaluation.md
+│   │   ├── README.md
+│   │   ├── REPOSITORY_REORGANIZATION_PLAN.md
+│   │   ├── uwp-development-roadmap.md
+│   │   └── uwp-release-checklist.md
 │   ├── development/
+│   │   ├── desktop-app-xaml-compiler-errors.md
 │   │   ├── github-actions-summary.md
 │   │   ├── github-actions-testing.md
 │   │   ├── project-context.md
 │   │   ├── provider-implementation.md
-│   │   ├── uwp-development-roadmap.md
-│   │   ├── uwp-release-checklist.md
-│   │   └── uwp-to-wpf-migration.md
+│   │   ├── uwp-to-wpf-migration.md
+│   │   └── wpf-implementation-notes.md
 │   ├── diagrams/
 │   │   ├── c4-level1-context.dot
 │   │   ├── c4-level1-context.png
@@ -319,18 +330,11 @@ Market-Data-Collector/
 │   │   └── README.md
 │   ├── evaluations/
 │   │   ├── data-quality-monitoring-evaluation.md
-│   │   ├── desktop-ui-alternatives-evaluation.md
 │   │   ├── historical-data-providers-evaluation.md
 │   │   ├── realtime-streaming-architecture-evaluation.md
-│   │   ├── storage-architecture-evaluation.md
-│   │   └── wpf-implementation-notes.md
-│   ├── generated/
-│   │   └── .gitkeep
+│   │   └── storage-architecture-evaluation.md
 │   ├── getting-started/
-│   │   ├── configuration.md
-│   │   ├── README.md
-│   │   ├── setup.md
-│   │   └── troubleshooting.md
+│   │   └── README.md
 │   ├── integrations/
 │   │   ├── fsharp-integration.md
 │   │   ├── language-strategy.md
@@ -355,15 +359,10 @@ Market-Data-Collector/
 │   │   └── sandcastle.md
 │   ├── status/
 │   │   ├── CHANGELOG.md
-│   │   ├── CHANGES_SUMMARY.md
 │   │   ├── production-status.md
 │   │   ├── README.md
-│   │   └── ROADMAP.md
-│   ├── structure/
-│   │   ├── README.md
-│   │   └── REPOSITORY_REORGANIZATION_PLAN.md
-│   ├── troubleshooting/
-│   │   └── desktop-app-xaml-compiler-errors.md
+│   │   ├── ROADMAP.md
+│   │   └── TODO.md
 │   ├── uml/
 │   │   ├── activity-diagram-backfill.png
 │   │   ├── activity-diagram-backfill.puml
@@ -396,8 +395,7 @@ Market-Data-Collector/
 │   ├── DEPENDENCIES.md
 │   ├── HELP.md
 │   ├── README.md
-│   ├── toc.yml
-│   └── USAGE.md
+│   └── toc.yml
 ├── src/  # Source code
 │   ├── MarketDataCollector/
 │   │   ├── Application/
@@ -512,6 +510,10 @@ Market-Data-Collector/
 │   │   │   └── ArchiveHealthModels.cs
 │   │   ├── Backfill/
 │   │   │   └── BackfillProgress.cs
+│   │   ├── Catalog/
+│   │   │   ├── DirectoryIndex.cs
+│   │   │   ├── StorageCatalog.cs
+│   │   │   └── SymbolRegistry.cs
 │   │   ├── Configuration/
 │   │   │   └── AppConfigDto.cs
 │   │   ├── Credentials/
@@ -869,6 +871,9 @@ Market-Data-Collector/
 │       │   ├── IConnectionService.cs
 │       │   └── INavigationService.cs
 │       ├── Services/
+│       │   ├── AdminMaintenanceService.cs
+│       │   ├── AdvancedAnalyticsService.cs
+│       │   ├── ArchiveHealthService.cs
 │       │   ├── BackgroundTaskSchedulerService.cs
 │       │   ├── ConfigService.cs
 │       │   ├── ConnectionService.cs
@@ -876,11 +881,9 @@ Market-Data-Collector/
 │       │   ├── HttpClientFactoryProvider.cs
 │       │   ├── IBackgroundTaskSchedulerService.cs
 │       │   ├── IConfigService.cs
-│       │   ├── IConnectionService.cs
 │       │   ├── IKeyboardShortcutService.cs
 │       │   ├── ILoggingService.cs
 │       │   ├── IMessagingService.cs
-│       │   ├── INavigationService.cs
 │       │   ├── INotificationService.cs
 │       │   ├── IOfflineTrackingPersistenceService.cs
 │       │   ├── IPendingOperationsQueueService.cs
@@ -892,6 +895,7 @@ Market-Data-Collector/
 │       │   ├── NotificationService.cs
 │       │   ├── OfflineTrackingPersistenceService.cs
 │       │   ├── PendingOperationsQueueService.cs
+│       │   ├── SchemaService.cs
 │       │   ├── StatusService.cs
 │       │   ├── ThemeService.cs
 │       │   └── WatchlistService.cs
@@ -899,6 +903,8 @@ Market-Data-Collector/
 │       │   ├── Animations.xaml
 │       │   ├── AppStyles.xaml
 │       │   └── IconResources.xaml
+│       ├── ViewModels/
+│       │   └── BindableBase.cs
 │       ├── Views/
 │       │   ├── ActivityLogPage.xaml
 │       │   ├── ActivityLogPage.xaml.cs
@@ -1050,7 +1056,9 @@ Market-Data-Collector/
 │   │   │   ├── JsonlBatchWriteTests.cs
 │   │   │   ├── MemoryMappedJsonlReaderTests.cs
 │   │   │   ├── PortableDataPackagerTests.cs
-│   │   │   └── StorageOptionsDefaultsTests.cs
+│   │   │   ├── StorageCatalogServiceTests.cs
+│   │   │   ├── StorageOptionsDefaultsTests.cs
+│   │   │   └── SymbolRegistryServiceTests.cs
 │   │   ├── SymbolSearch/
 │   │   │   ├── OpenFigiClientTests.cs
 │   │   │   └── SymbolSearchServiceTests.cs
@@ -1059,9 +1067,6 @@ Market-Data-Collector/
 │   │   └── MarketDataCollector.Tests.csproj
 │   └── coverlet.runsettings
 ├── .gitignore
-├── build-final.txt
-├── build-output.txt
-├── build-output2.txt
 ├── CLAUDE.md
 ├── Directory.Build.props
 ├── Directory.Packages.props
@@ -1071,8 +1076,7 @@ Market-Data-Collector/
 ├── MarketDataCollector.sln
 ├── package-lock.json
 ├── package.json
-├── README.md
-└── WPF_MIGRATION_SUMMARY.md
+└── README.md
 ```
 
 ## CI/CD Workflow
