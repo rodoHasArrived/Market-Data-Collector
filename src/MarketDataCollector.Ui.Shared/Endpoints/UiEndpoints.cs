@@ -137,6 +137,7 @@ public static class UiEndpoints
         app.MapBackfillEndpoints(jsonOptions, jsonOptionsIndented);
         app.MapProviderEndpoints(jsonOptions);
         app.MapFailoverEndpoints(jsonOptions);
+        app.MapIBEndpoints(jsonOptions);
         app.MapSymbolMappingEndpoints(jsonOptions);
 
         return app;
@@ -163,6 +164,7 @@ public static class UiEndpoints
         app.MapBackfillEndpoints(jsonOptions, jsonOptionsIndented);
         app.MapProviderEndpoints(jsonOptions);
         app.MapFailoverEndpoints(jsonOptions);
+        app.MapIBEndpoints(jsonOptions);
         app.MapSymbolMappingEndpoints(jsonOptions);
 
         return app;

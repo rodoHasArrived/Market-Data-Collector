@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using MarketDataCollector.Application.Backfill;
 using MarketDataCollector.Contracts.Api;
 using MarketDataCollector.Ui.Shared.Services;
@@ -14,6 +15,9 @@ namespace MarketDataCollector.Ui.Shared.Endpoints;
 /// </summary>
 public static class BackfillEndpoints
 {
+    // Symbols should be 1-20 uppercase alphanumeric chars, dots, or hyphens
+    private static readonly Regex SymbolPattern = new(@"^[A-Za-z0-9.\-]{1,20}$", RegexOptions.Compiled);
+
     /// <summary>
     /// Maps all backfill API endpoints.
     /// </summary>
@@ -38,37 +42,41 @@ public static class BackfillEndpoints
         // Preview backfill (dry run - shows what would be fetched)
         app.MapPost(UiApiRoutes.BackfillRun + "/preview", async (BackfillCoordinator backfill, BackfillRequestDto req) =>
         {
-            if (req.Symbols is null || req.Symbols.Length == 0)
-                return Results.BadRequest("At least one symbol is required.");
+            var validation = ValidateBackfillRequest(req);
+            if (validation is not null) return validation;
 
             try
             {
                 var request = new BackfillRequest(
                     string.IsNullOrWhiteSpace(req.Provider) ? "stooq" : req.Provider!,
-                    req.Symbols,
+                    req.Symbols!,
                     req.From,
                     req.To);
 
                 var preview = await backfill.PreviewAsync(request);
                 return Results.Json(preview, jsonOptionsIndented);
             }
-            catch (Exception ex)
+            catch (InvalidOperationException ex)
             {
-                return Results.BadRequest(ex.Message);
+                return Results.BadRequest(new { error = ex.Message });
+            }
+            catch (Exception)
+            {
+                return Results.BadRequest(new { error = "Backfill preview failed. Check provider name and symbol format." });
             }
         });
 
         // Run backfill
         app.MapPost(UiApiRoutes.BackfillRun, async (BackfillCoordinator backfill, BackfillRequestDto req) =>
         {
-            if (req.Symbols is null || req.Symbols.Length == 0)
-                return Results.BadRequest("At least one symbol is required.");
+            var validation = ValidateBackfillRequest(req);
+            if (validation is not null) return validation;
 
             try
             {
                 var request = new BackfillRequest(
                     string.IsNullOrWhiteSpace(req.Provider) ? "stooq" : req.Provider!,
-                    req.Symbols,
+                    req.Symbols!,
                     req.From,
                     req.To);
 
@@ -77,8 +85,36 @@ public static class BackfillEndpoints
             }
             catch (InvalidOperationException ex)
             {
-                return Results.BadRequest(ex.Message);
+                return Results.BadRequest(new { error = ex.Message });
+            }
+            catch (Exception)
+            {
+                return Results.BadRequest(new { error = "Backfill execution failed. Check provider name and symbol format." });
             }
         });
+    }
+
+    private static IResult? ValidateBackfillRequest(BackfillRequestDto req)
+    {
+        if (req.Symbols is null || req.Symbols.Length == 0)
+            return Results.BadRequest(new { error = "At least one symbol is required." });
+
+        if (req.Symbols.Length > 100)
+            return Results.BadRequest(new { error = "Maximum 100 symbols per backfill request." });
+
+        var invalidSymbols = req.Symbols.Where(s => !SymbolPattern.IsMatch(s)).ToArray();
+        if (invalidSymbols.Length > 0)
+            return Results.BadRequest(new { error = $"Invalid symbol format: {string.Join(", ", invalidSymbols.Take(5))}. Symbols must be 1-20 alphanumeric characters." });
+
+        if (req.From.HasValue && req.To.HasValue && req.From.Value > req.To.Value)
+            return Results.BadRequest(new { error = "From date must be before or equal to To date." });
+
+        if (req.From.HasValue && req.From.Value < new DateOnly(1970, 1, 1))
+            return Results.BadRequest(new { error = "From date must be after 1970-01-01." });
+
+        if (req.To.HasValue && req.To.Value > DateOnly.FromDateTime(DateTime.UtcNow.AddDays(1)))
+            return Results.BadRequest(new { error = "To date cannot be in the future." });
+
+        return null;
     }
 }

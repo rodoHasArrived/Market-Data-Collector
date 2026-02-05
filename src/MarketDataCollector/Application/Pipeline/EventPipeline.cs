@@ -34,6 +34,7 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
     private long _peakQueueSize;
     private long _totalProcessingTimeNs;
     private long _lastFlushTimestamp;
+    private bool _highWaterMarkWarned;
 
     // Configuration
     private readonly TimeSpan _flushInterval;
@@ -169,12 +170,26 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
                 Metrics.IncPublished();
             }
 
-            // Track peak queue size
+            // Track peak queue size and warn on high utilization
             var currentSize = _channel.Reader.Count;
             var peak = Interlocked.Read(ref _peakQueueSize);
             if (currentSize > peak)
             {
                 Interlocked.CompareExchange(ref _peakQueueSize, currentSize, peak);
+            }
+
+            var utilization = (double)currentSize / _capacity;
+            if (utilization >= 0.8 && !_highWaterMarkWarned)
+            {
+                _highWaterMarkWarned = true;
+                _logger.LogWarning(
+                    "Pipeline queue utilization at {Utilization:P0} ({CurrentSize}/{Capacity}). Events may be dropped if queue fills. Consider increasing capacity or reducing event rate",
+                    utilization, currentSize, _capacity);
+            }
+            else if (utilization < 0.5 && _highWaterMarkWarned)
+            {
+                _highWaterMarkWarned = false;
+                _logger.LogInformation("Pipeline queue utilization recovered to {Utilization:P0}", utilization);
             }
         }
         else

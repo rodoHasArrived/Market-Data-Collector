@@ -10,23 +10,31 @@ namespace MarketDataCollector.Infrastructure.Providers.InteractiveBrokers;
 
 /// <summary>
 /// Concrete Interactive Brokers market data client. Buildable out-of-the-box:
-/// - Without IBAPI defined, this type exists but delegates to NoOp.
-/// - With IBAPI defined, it uses EnhancedIBConnectionManager + IBCallbackRouter.
+/// - Without IBAPI defined, delegates to IBSimulationClient (generates synthetic data for testing).
+/// - With IBAPI defined, uses EnhancedIBConnectionManager + IBCallbackRouter for real TWS/Gateway.
 /// </summary>
 [ImplementsAdr("ADR-001", "Interactive Brokers streaming data provider implementation")]
 [ImplementsAdr("ADR-004", "All async methods support CancellationToken")]
 public sealed class IBMarketDataClient : IMarketDataClient
 {
     private readonly IMarketDataClient _inner;
+    private readonly bool _isSimulation;
 
-    public IBMarketDataClient(IMarketEventPublisher publisher, TradeDataCollector tradeCollector, MarketDepthCollector depthCollector)
+    public IBMarketDataClient(IMarketEventPublisher publisher, TradeDataCollector tradeCollector, MarketDepthCollector depthCollector, QuoteCollector? quoteCollector = null)
     {
 #if IBAPI
-        _inner = new IBMarketDataClientIBApi(publisher, tradeCollector, depthCollector);
+        _inner = new IBMarketDataClientIBApi(publisher, tradeCollector, depthCollector, quoteCollector);
+        _isSimulation = false;
 #else
-        _inner = new NoOpMarketDataClient();
+        _inner = new IBSimulationClient(publisher);
+        _isSimulation = true;
 #endif
     }
+
+    /// <summary>
+    /// True when running without the IBAPI reference (simulation mode).
+    /// </summary>
+    public bool IsSimulation => _isSimulation;
 
     public bool IsEnabled => _inner.IsEnabled;
 
@@ -106,10 +114,11 @@ internal sealed class IBMarketDataClientIBApi : IMarketDataClient
     // Track subscription ids if you want per-symbol teardown later
     public bool IsEnabled => true;
 
-    public IBMarketDataClientIBApi(IMarketEventPublisher publisher, TradeDataCollector tradeCollector, MarketDepthCollector depthCollector)
+    public IBMarketDataClientIBApi(IMarketEventPublisher publisher, TradeDataCollector tradeCollector, MarketDepthCollector depthCollector, QuoteCollector? quoteCollector = null)
     {
         // Router wires IB callbacks -> collectors (collectors already publish into publisher).
-        _router = new IBCallbackRouter(depthCollector, tradeCollector);
+        // QuoteCollector enables Level 1 BBO quote emission from reqMktData callbacks.
+        _router = new IBCallbackRouter(depthCollector, tradeCollector, quoteCollector);
         _conn = new EnhancedIBConnectionManager(_router, host: "127.0.0.1", port: 7497, clientId: 1);
     }
 

@@ -47,18 +47,46 @@ window.onclick = function(event) {
   }
 };
 
-// API Functions with Error Handling
+// API Functions with Error Handling and Timeout
 async function apiCall(url, options = {}) {
+  const timeoutMs = options.timeoutMs || 30000;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
   try {
-    const response = await fetch(url, options);
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal
+    });
     if (!response.ok) {
-      const text = await response.text();
-      throw new Error(text || `HTTP ${response.status}`);
+      let errorMsg;
+      try {
+        const body = await response.json();
+        errorMsg = body.error || body.message || `HTTP ${response.status}`;
+      } catch {
+        errorMsg = `HTTP ${response.status}`;
+      }
+      if (response.status === 400) {
+        showToast('error', 'Validation Error', errorMsg);
+      } else if (response.status === 404) {
+        showToast('info', 'Not Found', errorMsg);
+      } else if (response.status >= 500) {
+        showToast('error', 'Server Error', 'The server encountered an error. Please try again.');
+      }
+      throw new Error(errorMsg);
     }
     return response;
   } catch (error) {
-    console.error('API Error:', error);
+    if (error.name === 'AbortError') {
+      showToast('error', 'Timeout', `Request to ${url.split('?')[0]} timed out after ${timeoutMs / 1000}s`);
+      throw new Error(`Request timed out after ${timeoutMs / 1000}s`);
+    }
+    if (error instanceof TypeError && error.message === 'Failed to fetch') {
+      showToast('error', 'Connection Error', 'Unable to reach the server. Check your connection.');
+    }
     throw error;
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
 

@@ -519,4 +519,83 @@ public sealed record IntradayBar(
     int TradeCount,
     string Source = "ibkr"
 );
+#else
+
+using MarketDataCollector.Application.Logging;
+using MarketDataCollector.Contracts.Domain.Models;
+using MarketDataCollector.Infrastructure.Contracts;
+using MarketDataCollector.Infrastructure.Providers.Backfill;
+using MarketDataCollector.Infrastructure.Providers.Core;
+
+namespace MarketDataCollector.Infrastructure.Providers.InteractiveBrokers;
+
+/// <summary>
+/// Stub IB historical data provider for non-IBAPI builds.
+/// Registers in the provider list so users can see IB is available but requires IBAPI.
+/// </summary>
+[ImplementsAdr("ADR-001", "Interactive Brokers historical data provider stub")]
+public sealed class IBHistoricalDataProvider : IHistoricalDataProvider
+{
+    private static readonly Serilog.ILogger _log = LoggingSetup.ForContext<IBHistoricalDataProvider>();
+
+    public string Name => "ibkr";
+    public string DisplayName => "Interactive Brokers (requires IBAPI build)";
+    public string Description =>
+        "Historical OHLCV data via TWS API. Build with -p:DefineConstants=IBAPI and reference IBApi to enable.";
+
+    public int Priority => 80;
+    public TimeSpan RateLimitDelay => TimeSpan.FromSeconds(15);
+    public int MaxRequestsPerWindow => 60;
+    public TimeSpan RateLimitWindow => TimeSpan.FromMinutes(10);
+
+    public HistoricalDataCapabilities Capabilities { get; } =
+        (HistoricalDataCapabilities.BarsOnly with { Intraday = true }).WithMarkets("US", "EU", "APAC");
+
+    // IProviderMetadata
+    public string ProviderId => "ibkr";
+    public string ProviderDisplayName => "Interactive Brokers";
+    public string ProviderDescription => Description;
+    public int ProviderPriority => Priority;
+
+    public ProviderCapabilities ProviderCapabilities { get; } = new()
+    {
+        SupportedMarkets = new[] { "US", "EU", "APAC" },
+        MaxRequestsPerWindow = 60,
+        RateLimitWindow = TimeSpan.FromMinutes(10),
+        MinRequestDelay = TimeSpan.FromSeconds(15)
+    };
+
+    public ProviderCredentialField[] ProviderCredentialFields => new[]
+    {
+        new ProviderCredentialField("Host", null, "TWS/Gateway Host", false, "127.0.0.1"),
+        new ProviderCredentialField("Port", null, "TWS/Gateway Port", false, "7497")
+    };
+
+    public string[] ProviderNotes => new[]
+    {
+        "Requires IBAPI build flag to enable full functionality.",
+        "Build with: dotnet build -p:DefineConstants=IBAPI"
+    };
+
+    public string[] ProviderWarnings => new[]
+    {
+        "IBAPI not compiled — historical data operations will return empty results.",
+        "Reference the official IBApi package and rebuild to enable."
+    };
+
+    public Task<bool> IsAvailableAsync(CancellationToken ct = default)
+    {
+        _log.Debug("IB historical provider not available — IBAPI not compiled");
+        return Task.FromResult(false);
+    }
+
+    public Task<IReadOnlyList<HistoricalBar>> GetDailyBarsAsync(
+        string symbol, DateOnly? from, DateOnly? to, CancellationToken ct = default)
+    {
+        _log.Warning("IB historical data requested for {Symbol} but IBAPI is not compiled. Returning empty result", symbol);
+        return Task.FromResult<IReadOnlyList<HistoricalBar>>(Array.Empty<HistoricalBar>());
+    }
+
+    public void Dispose() { }
+}
 #endif
