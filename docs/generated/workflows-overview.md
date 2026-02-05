@@ -1,6 +1,6 @@
 # GitHub Workflows Overview
 
-> Auto-generated on 2026-02-05 10:36:56 UTC
+> Auto-generated on 2026-02-05 11:15:34 UTC
 
 This document provides an overview of all GitHub Actions workflows in the repository.
 

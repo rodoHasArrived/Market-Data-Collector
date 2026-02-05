@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-05 10:36:56 UTC
+> Auto-generated on 2026-02-05 11:15:34 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -160,6 +160,7 @@ Market-Data-Collector/
 │   │   │   └── CLAUDE.testing.md
 │   │   ├── copilot/
 │   │   │   └── instructions.md
+│   │   ├── ai-known-errors.md
 │   │   └── README.md
 │   ├── api/
 │   │   └── index.md
@@ -172,7 +173,9 @@ Market-Data-Collector/
 │   │   ├── domains.md
 │   │   ├── overview.md
 │   │   ├── provider-management.md
+│   │   ├── REDESIGN_IMPROVEMENTS.md
 │   │   ├── storage-design.md
+│   │   ├── ui-redesign.md
 │   │   └── why-this-architecture.md
 │   ├── archived/
 │   │   ├── CHANGES_SUMMARY.md
@@ -181,11 +184,6 @@ Market-Data-Collector/
 │   │   ├── REPOSITORY_REORGANIZATION_PLAN.md
 │   │   ├── uwp-development-roadmap.md
 │   │   └── uwp-release-checklist.md
-│   ├── architecture/
-│   │   ├── REDESIGN_IMPROVEMENTS.md
-│   │   └── ui-redesign.md
-│   │   ├── REDESIGN_IMPROVEMENTS.md
-│   │   └── ui-redesign.md
 │   ├── development/
 │   │   ├── central-package-management.md
 │   │   ├── desktop-app-xaml-compiler-errors.md
@@ -233,6 +231,8 @@ Market-Data-Collector/
 │   │   ├── realtime-streaming-architecture-evaluation.md
 │   │   └── storage-architecture-evaluation.md
 │   ├── generated/
+│   │   ├── adr-index.md
+│   │   ├── configuration-schema.md
 │   │   ├── project-context.md
 │   │   ├── provider-registry.md
 │   │   ├── repository-structure.md
@@ -295,8 +295,6 @@ Market-Data-Collector/
 │   │   ├── timing-diagram.puml
 │   │   ├── use-case-diagram.png
 │   │   └── use-case-diagram.puml
-│   ├── ai/
-│   │   ├── ai-known-errors.md
 │   ├── ARTIFACT_ACTIONS_DOWNGRADE.md
 │   ├── build-observability.md
 │   ├── DEPENDENCIES.md
@@ -961,13 +959,17 @@ Market-Data-Collector/
 │   │   │   └── HighPerformanceJsonTests.cs
 │   │   ├── Storage/
 │   │   │   ├── AnalysisExportServiceTests.cs
+│   │   │   ├── AtomicFileWriterTests.cs
+│   │   │   ├── DataValidatorTests.cs
 │   │   │   ├── FilePermissionsServiceTests.cs
 │   │   │   ├── JsonlBatchWriteTests.cs
 │   │   │   ├── MemoryMappedJsonlReaderTests.cs
 │   │   │   ├── PortableDataPackagerTests.cs
 │   │   │   ├── StorageCatalogServiceTests.cs
+│   │   │   ├── StorageChecksumServiceTests.cs
 │   │   │   ├── StorageOptionsDefaultsTests.cs
-│   │   │   └── SymbolRegistryServiceTests.cs
+│   │   │   ├── SymbolRegistryServiceTests.cs
+│   │   │   └── WriteAheadLogTests.cs
 │   │   ├── SymbolSearch/
 │   │   │   ├── OpenFigiClientTests.cs
 │   │   │   └── SymbolSearchServiceTests.cs
