@@ -94,6 +94,7 @@
 
   <ItemGroup Label="Storage">
     <PackageVersion Include="Parquet.Net" Version="5.5.0" />
+    <PackageVersion Include="ZstdSharp.Port" Version="0.8.7" />
   </ItemGroup>
 
   <ItemGroup Label="QuantConnect Lean">
