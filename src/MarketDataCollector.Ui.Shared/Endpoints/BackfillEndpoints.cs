@@ -108,6 +108,12 @@ public static class BackfillEndpoints
         }
         else
         {
+            // Check for maximum symbols limit
+            if (req.Symbols.Length > 100)
+            {
+                fieldErrors.Add(new FieldError("symbols", "Maximum 100 symbols per backfill request."));
+            }
+
             foreach (var symbol in req.Symbols)
             {
                 if (string.IsNullOrWhiteSpace(symbol))
@@ -125,11 +131,28 @@ public static class BackfillEndpoints
             }
         }
 
+        // Date range validation
         if (req.From.HasValue && req.To.HasValue && req.From.Value > req.To.Value)
         {
             fieldErrors.Add(new FieldError("from",
                 $"'From' date ({req.From.Value}) must not be after 'To' date ({req.To.Value}).",
                 AttemptedValue: req.From.Value.ToString("yyyy-MM-dd")));
+        }
+
+        // Historical data should not be before 1970
+        if (req.From.HasValue && req.From.Value < new DateOnly(1970, 1, 1))
+        {
+            fieldErrors.Add(new FieldError("from",
+                "From date must be after 1970-01-01.",
+                AttemptedValue: req.From.Value.ToString("yyyy-MM-dd")));
+        }
+
+        // Cannot backfill future data
+        if (req.To.HasValue && req.To.Value > DateOnly.FromDateTime(DateTime.UtcNow.AddDays(1)))
+        {
+            fieldErrors.Add(new FieldError("to",
+                "To date cannot be in the future.",
+                AttemptedValue: req.To.Value.ToString("yyyy-MM-dd")));
         }
 
         if (fieldErrors.Count > 0)

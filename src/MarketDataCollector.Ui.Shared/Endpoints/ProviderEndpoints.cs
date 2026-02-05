@@ -359,8 +359,8 @@ public static class ProviderEndpoints
         AverageLatencyMs: 0,
         MinLatencyMs: 0,
         MaxLatencyMs: 0,
-        DataQualityScore: 100,
-        ConnectionSuccessRate: 100,
+        DataQualityScore: 0,
+        ConnectionSuccessRate: 0,
         Timestamp: DateTimeOffset.UtcNow,
         IsSimulated: true
     );
