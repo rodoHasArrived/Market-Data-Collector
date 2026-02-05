@@ -321,6 +321,7 @@ Market-Data-Collector/
 │   │   ├── REDESIGN_IMPROVEMENTS.md
 │   │   └── ui-redesign.md
 │   ├── development/
+│   │   ├── central-package-management.md
 │   │   ├── desktop-app-xaml-compiler-errors.md
 │   │   ├── github-actions-summary.md
 │   │   ├── github-actions-testing.md
@@ -1701,6 +1702,51 @@ The project uses GitHub Actions with 21 workflows in `.github/workflows/`:
 
 ---
 
+## Central Package Management (CPM)
+
+This repository uses **Central Package Management** to ensure consistent package versions across all projects.
+
+### Key Rules
+
+1. **All package versions** are defined in `Directory.Packages.props`
+2. **Project files** reference packages WITHOUT version numbers
+3. **Never** add `Version` attributes to `<PackageReference>` items
+
+### Correct Usage
+
+```xml
+<!-- ✅ CORRECT - In .csproj file -->
+<PackageReference Include="Serilog" />
+
+<!-- ❌ INCORRECT - Will cause NU1008 error -->
+<PackageReference Include="Serilog" Version="4.3.0" />
+```
+
+### Error NU1008
+
+If you see this error during restore/build:
+```
+error NU1008: Projects that use central package version management should not define 
+the version on the PackageReference items...
+```
+
+**Fix**: Remove all `Version="..."` attributes from `<PackageReference>` items in the failing project file.
+
+### Adding New Packages
+
+1. Add version to `Directory.Packages.props`:
+   ```xml
+   <PackageVersion Include="NewPackage" Version="1.0.0" />
+   ```
+2. Reference in project file (no version):
+   ```xml
+   <PackageReference Include="NewPackage" />
+   ```
+
+See [Central Package Management Guide](docs/development/central-package-management.md) for complete documentation.
+
+---
+
 ## Anti-Patterns to Avoid
 
 | Anti-Pattern | Why It's Bad |
@@ -1713,6 +1759,7 @@ The project uses GitHub Actions with 21 workflows in `.github/workflows/`:
 | Logging with string interpolation | Loses structured logging benefits |
 | Missing CancellationToken | Prevents graceful shutdown |
 | Missing `[ImplementsAdr]` attribute | Loses ADR traceability |
+| Adding Version to PackageReference | Violates Central Package Management (NU1008 error) |
 
 ---
 
