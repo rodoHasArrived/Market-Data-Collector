@@ -70,7 +70,7 @@ jobs:
         run: node build/node/generate-icons.mjs
 
       - name: Upload generated assets
-        uses: actions/upload-artifact@v6.0.0
+        uses: actions/upload-artifact@v4
         with:
           name: generated-assets
           path: src/MarketDataCollector.Uwp/Assets/*.png
@@ -97,7 +97,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Download generated assets
-        uses: actions/download-artifact@v7.0.0
+        uses: actions/download-artifact@v4
         with:
           name: generated-assets
           path: src/MarketDataCollector.Uwp/Assets/
@@ -268,7 +268,7 @@ jobs:
         shell: pwsh
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v6.0.0
+        uses: actions/upload-artifact@v4
         with:
           name: MarketDataCollector.Desktop-${{ matrix.rid }}
           path: MarketDataCollector.Desktop-${{ matrix.rid }}.zip
@@ -276,7 +276,7 @@ jobs:
 
       - name: Upload build logs
         if: failure()
-        uses: actions/upload-artifact@v6.0.0
+        uses: actions/upload-artifact@v4
         with:
           name: build-logs-${{ matrix.rid }}
           path: |
@@ -298,7 +298,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Download generated assets
-        uses: actions/download-artifact@v7.0.0
+        uses: actions/download-artifact@v4
         with:
           name: generated-assets
           path: src/MarketDataCollector.Uwp/Assets/
@@ -333,7 +333,7 @@ jobs:
             -DestinationPath MarketDataCollector.Desktop-msix-x64.zip
 
       - name: Upload MSIX artifact
-        uses: actions/upload-artifact@v6.0.0
+        uses: actions/upload-artifact@v4
         with:
           name: MarketDataCollector.Desktop-msix-x64
           path: MarketDataCollector.Desktop-msix-x64.zip
@@ -374,7 +374,7 @@ jobs:
 
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v7.0.0
+        uses: actions/download-artifact@v4
         with:
           path: artifacts
           pattern: MarketDataCollector.Desktop-*
