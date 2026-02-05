@@ -1100,11 +1100,11 @@ SUPPORT:
         return DefaultConfigFileName;
     }
 
-    // NOTE: GetEnvironmentName(), LoadConfigWithEnvironmentOverlay(), and MergeConfigs()
+    // GetEnvironmentName(), LoadConfigWithEnvironmentOverlay(), and MergeConfigs()
     // have been removed to consolidate configuration logic through ConfigurationService.
     // Use ConfigurationService.LoadAndPrepareConfig() for full configuration processing.
 
-    // NOTE: PipelinePublisher has been consolidated into ServiceCompositionRoot
+    // PipelinePublisher has been consolidated into ServiceCompositionRoot
     // and is accessed via DI through the composition root.
 
     private static AppConfig EnsureDefaultSymbols(AppConfig cfg)
@@ -1459,7 +1459,7 @@ SUPPORT:
         }
     }
 
-    // NOTE: CreateBackfillProviders has been consolidated into ProviderFactory
+    // CreateBackfillProviders has been consolidated into ProviderFactory
     // and is accessed via HostStartup.CreateBackfillProviders() through the composition root.
 
     /// <summary>

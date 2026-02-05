@@ -354,7 +354,8 @@ public sealed class CredentialService : IDisposable
             Interlocked.Increment(ref _credentialSaveFailures);
             var errorType = ClassifyException(ex);
             RaiseCredentialError("SaveCredential", resource, errorType, ex.Message, ex);
-            // Note: We don't throw here to maintain backward compatibility.
+            
+            // We don't throw here to maintain backward compatibility.
             // Callers should subscribe to CredentialError event for critical operations.
         }
     }
@@ -484,8 +485,9 @@ public sealed class CredentialService : IDisposable
             // - COMException with E_FAIL: Vault service unavailable
             var errorType = ClassifyException(ex);
             Debug.WriteLine($"CredentialService: HasCredential FAILED for resource '{resource}' - {errorType}: {ex.Message}");
-            // Note: We don't increment counters or raise events for HasCredential
-            // as it's often called in tight loops for UI updates
+            
+            // We don't increment counters or raise events for HasCredential
+            // as it's often called in tight loops for UI updates.
             return false;
         }
     }
@@ -520,7 +522,7 @@ public sealed class CredentialService : IDisposable
             // Expected exceptions:
             // - COMException with E_ACCESSDENIED: Cannot enumerate vault
             // - COMException with E_FAIL: Vault service unavailable
-            // Note: Empty vault also throws E_ELEMENT_NOT_FOUND on some Windows versions
+            // Empty vault also throws E_ELEMENT_NOT_FOUND on some Windows versions.
             Interlocked.Increment(ref _vaultAccessFailures);
             var errorType = ClassifyException(ex);
             RaiseCredentialError("GetAllStoredResources", ResourcePrefix, errorType, ex.Message, ex);

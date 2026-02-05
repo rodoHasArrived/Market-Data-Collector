@@ -190,8 +190,8 @@ public abstract class BaseHistoricalDataProvider : IHistoricalDataProvider, IRat
                 requestTimeout: TimeSpan.FromSeconds(30))
             : ResiliencePipeline<HttpResponseMessage>.Empty;
 
-        // Initialize centralized HTTP response handler (Name property must be available)
-        // Note: Name is abstract, so derived class must implement it before this runs
+        // Initialize centralized HTTP response handler (Name property must be available).
+        // Name is abstract, so derived class must implement it before this runs.
         _responseHandler = new HttpResponseHandler(GetType().Name, Log);
 
         _windowStart = DateTimeOffset.UtcNow;

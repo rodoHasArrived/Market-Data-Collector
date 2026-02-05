@@ -20,10 +20,11 @@ namespace MarketDataCollector.Infrastructure.Providers.InteractiveBrokers;
 /// - Max 6 requests per 2 seconds for same contract
 /// - Min 15 seconds between identical requests
 /// - Max 50 concurrent requests
-///
-/// Note: Historical data requires active Level 1 streaming subscription for US equities.
-/// Free streaming data is available via Cboe One + IEX (non-consolidated).
 /// </summary>
+/// <remarks>
+/// Historical data requires active Level 1 streaming subscription for US equities.
+/// Free streaming data is available via Cboe One + IEX (non-consolidated).
+/// </remarks>
 [ImplementsAdr("ADR-001", "Interactive Brokers historical data provider implementation")]
 [ImplementsAdr("ADR-004", "All async methods support CancellationToken")]
 public sealed class IBHistoricalDataProvider : IHistoricalDataProvider, IRateLimitAwareProvider, IDisposable

@@ -28,8 +28,10 @@ public interface IStatusService
     /// <summary>
     /// Checks if the service is healthy and reachable.
     /// </summary>
+    /// <returns>A <see cref="ServiceHealthResult"/> containing health status information.</returns>
+    /// <remarks>
+    /// ServiceHealthResult and ApiResponse&lt;T&gt; are now defined in
+    /// MarketDataCollector.Contracts.Api.ClientModels.cs
+    /// </remarks>
     Task<ServiceHealthResult> CheckHealthAsync(CancellationToken ct = default);
 }
-
-// Note: ServiceHealthResult and ApiResponse<T> are now defined in
-// MarketDataCollector.Contracts.Api.ClientModels.cs

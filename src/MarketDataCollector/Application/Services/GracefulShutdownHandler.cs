@@ -509,4 +509,4 @@ public enum ShutdownReason
     ResourceExhausted
 }
 
-// Note: IFlushable interface is defined in GracefulShutdownService.cs
+// IFlushable interface is defined in GracefulShutdownService.cs.

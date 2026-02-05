@@ -324,7 +324,7 @@ public sealed class TierMigrationService : ITierMigrationService
         // Copy file
         await CopyFileAsync(source, target, tierConfig, ct);
 
-        // Note: Verification of compressed files would need decompression
+        // Verification of compressed files would need decompression.
     }
 
     private long EstimateSavings(FileInfo file, TierConfig source, TierConfig target)
