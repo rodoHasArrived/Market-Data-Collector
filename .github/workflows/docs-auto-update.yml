@@ -1,0 +1,504 @@
+# Documentation Auto-Update Workflow
+# Automatically updates documentation when features are added or removed
+# Monitors changes to providers, interfaces, ADRs, and configuration
+
+name: Docs Auto-Update
+
+on:
+  # push trigger disabled
+  # push:
+  #   branches: [main]
+  #   paths:
+  #     - 'src/MarketDataCollector/Infrastructure/Providers/**'
+  #     - 'src/MarketDataCollector/Infrastructure/IMarketDataClient.cs'
+  #     - 'src/MarketDataCollector/Infrastructure/Providers/Backfill/IHistoricalDataProvider*.cs'
+  #     - 'src/MarketDataCollector/Domain/**'
+  #     - 'src/Microservices/**'
+  #     - 'docs/adr/**'
+  #     - 'config/appsettings.sample.json'
+  # pull_request trigger disabled
+  # pull_request:
+  #   branches: [main]
+  #   types: [opened, synchronize]
+  #   paths:
+  #     - 'src/MarketDataCollector/Infrastructure/Providers/**'
+  #     - 'docs/adr/**'
+  workflow_dispatch:
+    inputs:
+      update_all:
+        description: 'Update all auto-generated documentation'
+        required: false
+        default: 'false'
+        type: boolean
+      create_pr:
+        description: 'Create PR for documentation changes (instead of direct commit)'
+        required: false
+        default: 'false'
+        type: boolean
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: docs-auto-update-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: '3.11'
+  DOTNET_VERSION: '9.0.x'
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  analyze-changes:
+    name: Analyze Code Changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      providers_changed: ${{ steps.analyze.outputs.providers_changed }}
+      interfaces_changed: ${{ steps.analyze.outputs.interfaces_changed }}
+      adrs_changed: ${{ steps.analyze.outputs.adrs_changed }}
+      config_changed: ${{ steps.analyze.outputs.config_changed }}
+      microservices_changed: ${{ steps.analyze.outputs.microservices_changed }}
+      new_providers: ${{ steps.analyze.outputs.new_providers }}
+      removed_providers: ${{ steps.analyze.outputs.removed_providers }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Analyze changes
+        id: analyze
+        run: |
+          # Get changed files
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }})
+          else
+            CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "")
+          fi
+
+          echo "Changed files:"
+          echo "$CHANGED_FILES"
+
+          # Check for provider changes
+          if echo "$CHANGED_FILES" | grep -q "src/MarketDataCollector/Infrastructure/Providers/"; then
+            echo "providers_changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "providers_changed=false" >> $GITHUB_OUTPUT
+          fi
+
+          # Check for interface changes
+          if echo "$CHANGED_FILES" | grep -qE "IMarketDataClient\.cs|IHistoricalDataProvider"; then
+            echo "interfaces_changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "interfaces_changed=false" >> $GITHUB_OUTPUT
+          fi
+
+          # Check for ADR changes
+          if echo "$CHANGED_FILES" | grep -q "docs/adr/"; then
+            echo "adrs_changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "adrs_changed=false" >> $GITHUB_OUTPUT
+          fi
+
+          # Check for config changes
+          if echo "$CHANGED_FILES" | grep -q "appsettings.sample.json"; then
+            echo "config_changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "config_changed=false" >> $GITHUB_OUTPUT
+          fi
+
+          # Check for microservices changes
+          if echo "$CHANGED_FILES" | grep -q "src/Microservices/"; then
+            echo "microservices_changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "microservices_changed=false" >> $GITHUB_OUTPUT
+          fi
+
+          # Detect new/removed providers
+          NEW_PROVIDERS=""
+          REMOVED_PROVIDERS=""
+
+          for file in $(echo "$CHANGED_FILES" | grep "Infrastructure/Providers/.*/.*Client\.cs$" || true); do
+            if [ -f "$file" ]; then
+              provider_name=$(basename $(dirname "$file"))
+              NEW_PROVIDERS="$NEW_PROVIDERS $provider_name"
+            fi
+          done
+
+          echo "new_providers=$NEW_PROVIDERS" >> $GITHUB_OUTPUT
+          echo "removed_providers=$REMOVED_PROVIDERS" >> $GITHUB_OUTPUT
+
+  update-provider-docs:
+    name: Update Provider Documentation
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: analyze-changes
+    if: |
+      needs.analyze-changes.outputs.providers_changed == 'true' ||
+      github.event.inputs.update_all == 'true'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup .NET with Cache
+        uses: ./.github/actions/setup-dotnet-cache
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v6.2.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Build project to extract metadata
+        run: |
+          dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
+          dotnet build src/MarketDataCollector/MarketDataCollector.csproj \
+            -c Release \
+            --no-restore \
+            /p:EnableWindowsTargeting=true \
+            /p:GenerateDocumentationFile=true
+        continue-on-error: true
+
+      - name: Generate provider documentation
+        run: |
+          mkdir -p docs/generated
+          python3 build/scripts/docs/generate-structure-docs.py \
+            --output docs/generated/provider-registry.md \
+            --providers-only \
+            --extract-attributes
+
+      - name: Generate project context
+        run: |
+          if [ -d "build/dotnet/DocGenerator" ]; then
+            dotnet build build/dotnet/DocGenerator/DocGenerator.csproj -c Release -v q || true
+            dotnet run --project build/dotnet/DocGenerator/DocGenerator.csproj --no-build -c Release -- context \
+              --src src/MarketDataCollector \
+              --output docs/generated/project-context.md || true
+          fi
+
+      - name: Check for changes
+        id: check
+        run: |
+          if [ -n "$(git status --porcelain docs/generated/)" ]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit changes
+        if: |
+          steps.check.outputs.has_changes == 'true' &&
+          github.event_name == 'push' &&
+          github.event.inputs.create_pr != 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add docs/generated/
+          git commit -m "docs: auto-update provider documentation
+
+          Providers changed: ${{ needs.analyze-changes.outputs.new_providers }}
+
+          [skip ci]"
+
+          git push
+
+      - name: Create PR for changes
+        id: create-pr
+        if: |
+          steps.check.outputs.has_changes == 'true' &&
+          github.event.inputs.create_pr == 'true'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Set default output in case of early failure
+          echo "pr_created=false" >> $GITHUB_OUTPUT
+          
+          BRANCH="docs/auto-update-$(date +%Y%m%d-%H%M%S)"
+          git checkout -b "$BRANCH"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add docs/generated/
+          git commit -m "docs: auto-update provider documentation"
+
+          git push -u origin "$BRANCH"
+          
+          # Save branch name after successful push for fallback step
+          # (Only set if branch exists remotely, so fallback can confidently reference it)
+          echo "BRANCH_NAME=$BRANCH" >> $GITHUB_ENV
+          
+          # Try to create PR and capture result
+          if gh pr create \
+            --title "docs: Auto-update provider documentation" \
+            --body "## Summary
+
+          Automatically generated documentation updates based on code changes.
+
+          ### Changes Detected
+          - Providers changed: ${{ needs.analyze-changes.outputs.providers_changed }}
+          - Interfaces changed: ${{ needs.analyze-changes.outputs.interfaces_changed }}
+
+          ### Updated Files
+          - docs/generated/provider-registry.md
+          - docs/generated/project-context.md
+
+          ---
+          *This PR was automatically generated by the Docs Auto-Update workflow.*" \
+            --label "documentation"; then
+            echo "pr_created=true" >> $GITHUB_OUTPUT
+            exit 0
+          else
+            # Keep pr_created=false (already set at top)
+            exit 1
+          fi
+
+      # Fallback handler when PR creation fails
+      # Checks both outcome (for failed steps with continue-on-error) and output (for explicit failures)
+      - name: PR creation fallback
+        if: |
+          steps.check.outputs.has_changes == 'true' &&
+          github.event.inputs.create_pr == 'true' &&
+          (steps.create-pr.outcome == 'failure' || steps.create-pr.outputs.pr_created == 'false')
+        run: |
+          # Validate BRANCH_NAME is set
+          if [ -z "$BRANCH_NAME" ]; then
+            echo "::error::BRANCH_NAME not set. The step may have failed before branch creation or push."
+            echo "::notice::Please check the logs and create a branch manually if needed."
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "## ⚠️ PR Creation Failed" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "GitHub Actions attempted to create a PR but failed." >> $GITHUB_STEP_SUMMARY
+            echo "The branch may not have been created. Please check the logs above." >> $GITHUB_STEP_SUMMARY
+            exit 0
+          fi
+          
+          echo "::warning::PR creation failed. This is likely due to GitHub Actions permissions."
+          echo "::notice::A branch has been created with the documentation updates: $BRANCH_NAME"
+          echo "::notice::You can create the PR manually at: https://github.com/${{ github.repository }}/compare/$BRANCH_NAME"
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## ⚠️ PR Creation Failed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "GitHub Actions doesn't have permission to create pull requests automatically." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Manual Steps Required" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "1. A branch has been created: \`$BRANCH_NAME\`" >> $GITHUB_STEP_SUMMARY
+          echo "2. Create the PR manually: [Click here](https://github.com/${{ github.repository }}/compare/$BRANCH_NAME)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Alternative: Enable PR Creation" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "To allow GitHub Actions to create PRs automatically:" >> $GITHUB_STEP_SUMMARY
+          echo "1. Go to repository Settings → Actions → General" >> $GITHUB_STEP_SUMMARY
+          echo "2. Under 'Workflow permissions', enable 'Allow GitHub Actions to create and approve pull requests'" >> $GITHUB_STEP_SUMMARY
+
+  update-adr-docs:
+    name: Update ADR Documentation
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: analyze-changes
+    if: |
+      needs.analyze-changes.outputs.adrs_changed == 'true' ||
+      github.event.inputs.update_all == 'true'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup .NET with Cache
+        uses: ./.github/actions/setup-dotnet-cache
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Verify ADR links
+        run: |
+          if [ -d "build/dotnet/DocGenerator" ]; then
+            dotnet build build/dotnet/DocGenerator/DocGenerator.csproj -c Release -v q || true
+            dotnet run --project build/dotnet/DocGenerator/DocGenerator.csproj --no-build -c Release -- verify-adrs \
+              --adr-dir docs/adr \
+              --src-dir . || true
+          fi
+
+      - name: Generate ADR index
+        run: |
+          echo "# Architecture Decision Records" > docs/generated/adr-index.md
+          echo "" >> docs/generated/adr-index.md
+          echo "> Auto-generated on $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> docs/generated/adr-index.md
+          echo "" >> docs/generated/adr-index.md
+          echo "| ADR | Title | Status |" >> docs/generated/adr-index.md
+          echo "|-----|-------|--------|" >> docs/generated/adr-index.md
+
+          for adr in docs/adr/*.md; do
+            if [ -f "$adr" ]; then
+              filename=$(basename "$adr")
+              title=$(head -1 "$adr" | sed 's/^# //')
+              status="Accepted"
+              if grep -qi "status:.*superseded" "$adr"; then
+                status="Superseded"
+              elif grep -qi "status:.*deprecated" "$adr"; then
+                status="Deprecated"
+              fi
+              echo "| [$filename](../adr/$filename) | $title | $status |" >> docs/generated/adr-index.md
+            fi
+          done
+
+          echo "" >> docs/generated/adr-index.md
+          echo "---" >> docs/generated/adr-index.md
+          echo "*This file is auto-generated. Do not edit manually.*" >> docs/generated/adr-index.md
+
+      - name: Check for changes
+        id: check
+        run: |
+          if [ -n "$(git status --porcelain docs/generated/adr-index.md)" ]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit changes
+        if: steps.check.outputs.has_changes == 'true' && github.event_name == 'push'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add docs/generated/adr-index.md
+          git commit -m "docs: auto-update ADR index
+
+          [skip ci]"
+
+          git push
+
+  update-config-docs:
+    name: Update Configuration Documentation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: analyze-changes
+    if: |
+      needs.analyze-changes.outputs.config_changed == 'true' ||
+      github.event.inputs.update_all == 'true'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v6.2.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Generate configuration documentation
+        run: |
+          mkdir -p docs/generated
+
+          cat > docs/generated/configuration-schema.md << 'EOF'
+          # Configuration Schema
+
+          > Auto-generated from `config/appsettings.sample.json`
+
+          This document describes the configuration options available in the Market Data Collector.
+
+          ## Configuration Sections
+
+          EOF
+
+          if [ -f "config/appsettings.sample.json" ]; then
+            # Extract top-level sections
+            python3 -c "
+          import json
+          import sys
+
+          try:
+              with open('config/appsettings.sample.json', 'r') as f:
+                  config = json.load(f)
+
+              for section, value in config.items():
+                  print(f'### {section}')
+                  print('')
+                  if isinstance(value, dict):
+                      print('| Setting | Type | Description |')
+                      print('|---------|------|-------------|')
+                      for key, val in value.items():
+                          val_type = type(val).__name__
+                          print(f'| \`{key}\` | {val_type} | - |')
+                  else:
+                      print(f'Type: \`{type(value).__name__}\`')
+                  print('')
+          except Exception as e:
+              print(f'Error parsing config: {e}', file=sys.stderr)
+          " >> docs/generated/configuration-schema.md
+          fi
+
+          echo "---" >> docs/generated/configuration-schema.md
+          echo "*This file is auto-generated. Do not edit manually.*" >> docs/generated/configuration-schema.md
+
+      - name: Check for changes
+        id: check
+        run: |
+          if [ -n "$(git status --porcelain docs/generated/configuration-schema.md)" ]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit changes
+        if: steps.check.outputs.has_changes == 'true' && github.event_name == 'push'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add docs/generated/configuration-schema.md
+          git commit -m "docs: auto-update configuration schema
+
+          [skip ci]"
+
+          git push
+
+  summary:
+    name: Documentation Update Summary
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [analyze-changes, update-provider-docs, update-adr-docs, update-config-docs]
+    if: always()
+
+    steps:
+      - name: Generate summary
+        run: |
+          echo "# Documentation Auto-Update Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Trigger:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Changes Detected" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Area | Changed |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|---------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Providers | ${{ needs.analyze-changes.outputs.providers_changed }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Interfaces | ${{ needs.analyze-changes.outputs.interfaces_changed }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| ADRs | ${{ needs.analyze-changes.outputs.adrs_changed }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Configuration | ${{ needs.analyze-changes.outputs.config_changed }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Microservices | ${{ needs.analyze-changes.outputs.microservices_changed }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Job Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Update Provider Docs | ${{ needs.update-provider-docs.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Update ADR Docs | ${{ needs.update-adr-docs.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Update Config Docs | ${{ needs.update-config-docs.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY

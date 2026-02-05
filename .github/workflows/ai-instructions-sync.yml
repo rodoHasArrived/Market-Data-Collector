@@ -1,0 +1,221 @@
+# AI Instruction Sync Workflow
+# Updates AI assistant guidance files with the latest repository structure
+#
+# Repository Settings Required:
+# - For PR creation to work: Go to Settings > Actions > General
+#   and enable "Allow GitHub Actions to create and approve pull requests"
+# - Workflow permissions: "Read and write permissions" must be enabled
+#
+# The workflow will gracefully fallback to direct commits if PR creation
+# is not permitted due to repository settings.
+
+name: AI Instructions Sync
+
+on:
+  schedule:
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run - show changes without committing'
+        required: false
+        default: 'false'
+        type: boolean
+      create_pr:
+        description: 'Create a pull request instead of pushing directly (manual runs only)'
+        required: false
+        default: 'false'
+        type: boolean
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: ai-instructions-sync-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  update-ai-instructions:
+    name: Update AI Instruction Files
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v6.2.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Validate AI sync prerequisites
+        run: |
+          required_files=(
+            "build/scripts/docs/generate-structure-docs.py"
+            "build/scripts/docs/update-claude-md.py"
+            "CLAUDE.md"
+            "docs/ai/copilot/instructions.md"
+            ".github/agents/documentation-agent.md"
+          )
+
+          for file in "${required_files[@]}"; do
+            if [ ! -f "$file" ]; then
+              echo "Missing required file: $file"
+              exit 1
+            fi
+          done
+
+      - name: Generate repository structure reference
+        run: |
+          python3 build/scripts/docs/generate-structure-docs.py \
+            --output /tmp/repository-structure.md \
+            --format markdown
+
+      - name: Update AI instruction files
+        run: |
+          files=(
+            "CLAUDE.md"
+            "docs/ai/copilot/instructions.md"
+            ".github/agents/documentation-agent.md"
+          )
+
+          for file in "${files[@]}"; do
+            python3 build/scripts/docs/update-claude-md.py \
+              --claude-md "$file" \
+              --structure-source /tmp/repository-structure.md
+          done
+
+      - name: Check for changes
+        id: check-changes
+        run: |
+          watched_files=(
+            "CLAUDE.md"
+            "docs/ai/copilot/instructions.md"
+            ".github/agents/documentation-agent.md"
+          )
+
+          changed_files="$(git status --porcelain "${watched_files[@]}")"
+
+          if [ -n "$changed_files" ]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
+
+          for file in "${watched_files[@]}"; do
+            key="changed_$(echo "$file" | tr '/.-' '___')"
+            if git diff --quiet -- "$file"; then
+              echo "$key=false" >> $GITHUB_OUTPUT
+            else
+              echo "$key=true" >> $GITHUB_OUTPUT
+            fi
+          done
+
+      - name: Show dry-run diff
+        if: |
+          steps.check-changes.outputs.has_changes == 'true' &&
+          github.event.inputs.dry_run == 'true'
+        run: |
+          git --no-pager diff -- CLAUDE.md docs/ai/copilot/instructions.md .github/agents/documentation-agent.md
+
+      - name: Commit AI instruction updates
+        if: |
+          steps.check-changes.outputs.has_changes == 'true' &&
+          github.event.inputs.create_pr != 'true' &&
+          github.event.inputs.dry_run != 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add CLAUDE.md docs/ai/copilot/instructions.md .github/agents/documentation-agent.md
+          git commit -m "docs: sync AI instruction repository structure
+
+          Updates AI assistant instruction files with the latest repository structure.
+
+          [skip ci]"
+
+          git push
+
+      - name: Create pull request for AI instruction updates
+        id: create-pr
+        if: |
+          steps.check-changes.outputs.has_changes == 'true' &&
+          github.event.inputs.create_pr == 'true' &&
+          github.event.inputs.dry_run != 'true'
+        continue-on-error: true
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "docs: sync AI instruction repository structure"
+          title: "docs: sync AI instruction repository structure"
+          body: |
+            ## Summary
+            - Sync AI instruction files with the latest generated repository structure.
+            - Updated files:
+              - `CLAUDE.md`
+              - `docs/ai/copilot/instructions.md`
+              - `.github/agents/documentation-agent.md`
+          branch: automation/ai-instructions-sync
+          delete-branch: true
+          labels: |
+            documentation
+            automation
+
+      - name: Fallback - Commit directly if PR creation failed
+        if: |
+          steps.check-changes.outputs.has_changes == 'true' &&
+          github.event.inputs.create_pr == 'true' &&
+          github.event.inputs.dry_run != 'true' &&
+          steps.create-pr.outcome == 'failure'
+        run: |
+          echo "::warning::PR creation failed. Falling back to direct commit."
+          echo "::notice::To enable PR creation, go to Settings > Actions > General and enable 'Allow GitHub Actions to create and approve pull requests'"
+          
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add CLAUDE.md docs/ai/copilot/instructions.md .github/agents/documentation-agent.md
+          git commit -m "docs: sync AI instruction repository structure
+
+          Updates AI assistant instruction files with the latest repository structure.
+          
+          Note: Committed directly because PR creation is disabled in repository settings.
+
+          [skip ci]"
+
+          git push
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## AI Instruction Sync" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Dry run: \
+          ${{ github.event.inputs.dry_run == 'true' && 'yes' || 'no' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Create PR mode: \
+          ${{ github.event.inputs.create_pr == 'true' && 'yes' || 'no' }}" >> $GITHUB_STEP_SUMMARY
+          
+          # Only show PR creation status if PR mode was enabled
+          if [ "${{ github.event.inputs.create_pr }}" == "true" ] && [ "${{ github.event.inputs.dry_run }}" != "true" ]; then
+            if [ "${{ steps.create-pr.outcome }}" == "success" ]; then
+              echo "- PR Creation: ✅ Success" >> $GITHUB_STEP_SUMMARY
+            elif [ "${{ steps.create-pr.outcome }}" == "failure" ]; then
+              echo "- PR Creation: ⚠️ Failed (fell back to direct commit)" >> $GITHUB_STEP_SUMMARY
+              echo "  > Enable PR creation in Settings > Actions > General" >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| File | Updated |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|---------|" >> $GITHUB_STEP_SUMMARY
+          echo "| CLAUDE.md | ${{ steps.check-changes.outputs.changed_CLAUDE_md == 'true' && '✅' || '⏭️' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| docs/ai/copilot/instructions.md | ${{ steps.check-changes.outputs.changed_docs_ai_copilot_instructions_md == 'true' && '✅' || '⏭️' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| .github/agents/documentation-agent.md | ${{ steps.check-changes.outputs.changed__github_agents_documentation_agent_md == 'true' && '✅' || '⏭️' }} |" >> $GITHUB_STEP_SUMMARY
