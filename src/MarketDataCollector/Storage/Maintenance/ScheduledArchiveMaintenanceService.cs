@@ -426,9 +426,18 @@ public sealed class ScheduledArchiveMaintenanceService : BackgroundService, IArc
         MaintenanceExecution execution,
         CancellationToken ct)
     {
+        // Check market hours to avoid I/O interference during market hours
         if (options.RunOnlyDuringMarketClosedHours && !IsMarketClosed(options))
         {
-            execution.LogMessages.Add("Tier migration skipped because market is currently open for configured hours");
+            var nowUtc = DateTimeOffset.UtcNow;
+            var tz = TimeZoneInfo.FindSystemTimeZoneById(options.MarketTimeZoneId);
+            var marketNow = TimeZoneInfo.ConvertTime(nowUtc, tz);
+            
+            var message = $"Tier migration skipped because market is currently open (Market time: {marketNow:HH:mm:ss}, TZ: {options.MarketTimeZoneId})";
+            execution.LogMessages.Add(message);
+            _logger.LogInformation("Tier migration skipped during market hours. Market time: {MarketTime}, TimeZone: {TimeZone}", 
+                marketNow.ToString("HH:mm:ss"), options.MarketTimeZoneId);
+            
             return new MaintenanceResult
             {
                 Success = true,
@@ -457,6 +466,7 @@ public sealed class ScheduledArchiveMaintenanceService : BackgroundService, IArc
             };
         }
 
+        // Select files for incremental migration (oldest first, capped by file count and byte budget)
         var maxFiles = Math.Max(1, options.MaxMigrationsPerRun);
         var maxBytes = options.MaxMigrationBytesPerRun ?? long.MaxValue;
         var selectedActions = plan.Actions
@@ -476,6 +486,14 @@ public sealed class ScheduledArchiveMaintenanceService : BackgroundService, IArc
             selectedBytes += action.SizeBytes;
         }
 
+        _logger.LogInformation(
+            "Selected {SelectedCount} of {TotalCount} files for migration (total: {TotalSize:F2} MB, limit: {MaxFiles} files, {MaxBytes:F0} MB)",
+            incrementalActions.Count, 
+            plan.Actions.Count,
+            selectedBytes / 1024.0 / 1024.0,
+            maxFiles,
+            maxBytes / 1024.0 / 1024.0);
+
         var totalMigrated = 0;
         var totalFailed = 0;
         long bytesSaved = 0;
@@ -489,6 +507,11 @@ public sealed class ScheduledArchiveMaintenanceService : BackgroundService, IArc
             ParallelFiles: options.ParallelOperations
         );
 
+        _logger.LogInformation(
+            "Starting parallel tier migration with {Parallelism} degree of parallelism for {FileCount} files",
+            Math.Max(1, options.ParallelOperations),
+            incrementalActions.Count);
+
         await Parallel.ForEachAsync(
             incrementalActions,
             new ParallelOptions
@@ -498,35 +521,45 @@ public sealed class ScheduledArchiveMaintenanceService : BackgroundService, IArc
             },
             async (action, token) =>
             {
-                if (options.DryRun)
+                try
                 {
-                    lock (execution.LogMessages)
+                    if (options.DryRun)
                     {
-                        execution.LogMessages.Add($"[DRY RUN] Would migrate {action.SourcePath} to {action.TargetTier}");
+                        lock (execution.LogMessages)
+                        {
+                            execution.LogMessages.Add($"[DRY RUN] Would migrate {action.SourcePath} to {action.TargetTier}");
+                        }
+                        Interlocked.Increment(ref totalMigrated);
+                        return;
                     }
-                    Interlocked.Increment(ref totalMigrated);
-                    return;
+
+                    var result = await _tierMigrationService.MigrateAsync(
+                        action.SourcePath,
+                        action.TargetTier,
+                        migrationOptions,
+                        token);
+
+                    Interlocked.Add(ref bytesProcessed, result.BytesProcessed);
+
+                    if (result.Success)
+                    {
+                        Interlocked.Increment(ref totalMigrated);
+                        Interlocked.Add(ref bytesSaved, result.BytesSaved);
+                        return;
+                    }
+
+                    Interlocked.Increment(ref totalFailed);
+                    foreach (var error in result.Errors)
+                    {
+                        failureErrors.Add(error);
+                    }
                 }
-
-                var result = await _tierMigrationService.MigrateAsync(
-                    action.SourcePath,
-                    action.TargetTier,
-                    migrationOptions,
-                    token);
-
-                Interlocked.Add(ref bytesProcessed, result.BytesProcessed);
-
-                if (result.Success)
+                catch (Exception ex) when (ex is not OperationCanceledException)
                 {
-                    Interlocked.Increment(ref totalMigrated);
-                    Interlocked.Add(ref bytesSaved, result.BytesSaved);
-                    return;
-                }
-
-                Interlocked.Increment(ref totalFailed);
-                foreach (var error in result.Errors)
-                {
-                    failureErrors.Add(error);
+                    Interlocked.Increment(ref totalFailed);
+                    var errorMsg = $"Unhandled exception migrating {action.SourcePath}: {ex.Message}";
+                    failureErrors.Add(errorMsg);
+                    _logger.LogError(ex, "Unhandled exception during migration of {SourcePath}", action.SourcePath);
                 }
             });
 
@@ -537,7 +570,18 @@ public sealed class ScheduledArchiveMaintenanceService : BackgroundService, IArc
         if (!failureErrors.IsEmpty)
         {
             execution.LogMessages.AddRange(failureErrors.Take(100));
+            if (failureErrors.Count > 100)
+            {
+                execution.LogMessages.Add($"... and {failureErrors.Count - 100} more errors (showing first 100)");
+            }
         }
+
+        _logger.LogInformation(
+            "Tier migration completed: {SuccessCount} succeeded, {FailedCount} failed, {BytesSaved:F2} MB saved, {BytesProcessed:F2} MB processed",
+            totalMigrated,
+            totalFailed,
+            bytesSaved / 1024.0 / 1024.0,
+            bytesProcessed / 1024.0 / 1024.0);
 
         return new MaintenanceResult
         {
@@ -554,15 +598,24 @@ public sealed class ScheduledArchiveMaintenanceService : BackgroundService, IArc
         };
     }
 
+    /// <summary>
+    /// Determines whether the market is currently closed based on the configured market hours.
+    /// Checks day of week (weekends are always closed) and time of day in the configured market timezone.
+    /// </summary>
+    /// <param name="options">Maintenance task options containing market hours configuration.</param>
+    /// <returns>True if the market is closed; false if the market is currently open.</returns>
+    /// <exception cref="TimeZoneNotFoundException">Thrown if the configured TimeZoneId is invalid.</exception>
     private static bool IsMarketClosed(MaintenanceTaskOptions options)
     {
         var nowUtc = DateTimeOffset.UtcNow;
         var tz = TimeZoneInfo.FindSystemTimeZoneById(options.MarketTimeZoneId);
         var marketNow = TimeZoneInfo.ConvertTime(nowUtc, tz);
 
+        // Weekends are always closed
         if (marketNow.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday)
             return true;
 
+        // Check if current time is within market hours
         var tod = marketNow.TimeOfDay;
         var isOpen = tod >= options.MarketOpenTime && tod < options.MarketCloseTime;
         return !isOpen;

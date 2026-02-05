@@ -250,11 +250,41 @@ public sealed class MaintenanceTaskOptions
     public bool DryRun { get; set; } = false;
     public bool DeleteSourceAfterMigration { get; set; } = false;
     public bool VerifyAfterMigration { get; set; } = true;
+    
+    /// <summary>
+    /// Maximum number of files to migrate in a single maintenance run for incremental processing.
+    /// Default is 250 files to limit the duration of each run.
+    /// </summary>
     public int MaxMigrationsPerRun { get; set; } = 250;
+    
+    /// <summary>
+    /// Maximum total bytes to migrate in a single run for incremental processing.
+    /// Default is 2 GB to prevent excessive I/O during a single maintenance window.
+    /// </summary>
     public long? MaxMigrationBytesPerRun { get; set; } = 2L * 1024 * 1024 * 1024;
+    
+    /// <summary>
+    /// Whether to skip tier migration when market hours are open to avoid I/O interference.
+    /// Default is true for US equity markets.
+    /// </summary>
     public bool RunOnlyDuringMarketClosedHours { get; set; } = true;
+    
+    /// <summary>
+    /// IANA time zone identifier for market hours checking (e.g., "America/New_York").
+    /// Default is "America/New_York" for US equity markets.
+    /// </summary>
     public string MarketTimeZoneId { get; set; } = "America/New_York";
+    
+    /// <summary>
+    /// Market opening time for market-hours checking.
+    /// Default is 09:30:00 (US equity market open).
+    /// </summary>
     public TimeSpan MarketOpenTime { get; set; } = new(9, 30, 0);
+    
+    /// <summary>
+    /// Market closing time for market-hours checking.
+    /// Default is 16:00:00 (US equity market close).
+    /// </summary>
     public TimeSpan MarketCloseTime { get; set; } = new(16, 0, 0);
 
     // Compression options
