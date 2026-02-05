@@ -143,9 +143,24 @@ This directory contains automated workflows that help maintain code quality, sec
   - Regenerates structure docs
   - Optional dry-run mode
 
+#### 16. **AI Instructions Sync** (`ai-instructions-sync.yml`)
+- **Trigger**: Weekly schedule (Mondays 3 AM UTC), Manual dispatch
+- **Purpose**: Syncs AI assistant instruction files with latest repository structure
+- **Features**:
+  - Validates prerequisites (required files exist)
+  - Generates fresh repository structure reference
+  - Updates CLAUDE.md, Copilot instructions, and documentation agent files
+  - Supports dry-run mode
+  - Can create PR or commit directly
+  - Graceful fallback to direct commit if PR creation is not permitted
+- **Repository Settings Required**:
+  - For PR creation: Go to Settings > Actions > General and enable "Allow GitHub Actions to create and approve pull requests"
+  - Workflow permissions: "Read and write permissions" must be enabled
+  - The workflow will gracefully fallback to direct commits if PR creation is not available
+
 ### Automation and Maintenance Workflows
 
-#### 16. **Auto Label PRs** (`labeling.yml`)
+#### 17. **Auto Label PRs** (`labeling.yml`)
 - **Trigger**: PR opened, edited, synchronized, reopened
 - **Purpose**: Automatically categorizes pull requests
 - **Features**:
@@ -154,7 +169,7 @@ This directory contains automated workflows that help maintain code quality, sec
   - Warns about large PRs
   - Uses `.github/labeler.yml` configuration
 
-#### 17. **Manage Stale Issues and PRs** (`stale.yml`)
+#### 18. **Manage Stale Issues and PRs** (`stale.yml`)
 - **Trigger**: Daily at midnight UTC, Manual dispatch
 - **Purpose**: Keeps issue tracker clean
 - **Features**:
@@ -164,7 +179,7 @@ This directory contains automated workflows that help maintain code quality, sec
   - Closes stale PRs after 14 more days
   - Exempts pinned, security, and WIP items
 
-#### 18. **Cache Management** (`cache-management.yml`)
+#### 19. **Cache Management** (`cache-management.yml`)
 - **Trigger**: Weekly (Sundays 4 AM UTC), Manual dispatch
 - **Purpose**: Manages GitHub Actions cache
 - **Features**:
@@ -173,7 +188,7 @@ This directory contains automated workflows that help maintain code quality, sec
   - Manual option to clean all caches
   - Helps manage storage limits
 
-#### 19. **Scheduled Maintenance** (`scheduled-maintenance.yml`)
+#### 20. **Scheduled Maintenance** (`scheduled-maintenance.yml`)
 - **Trigger**: Weekly schedule, Manual dispatch
 - **Purpose**: Runs periodic tests and dependency health checks
 - **Features**:
@@ -181,7 +196,7 @@ This directory contains automated workflows that help maintain code quality, sec
   - Dependency health report (outdated, deprecated, vulnerable)
   - Summary report output
 
-#### 20. **Build Observability** (`build-observability.yml`)
+#### 21. **Build Observability** (`build-observability.yml`)
 - **Trigger**: Manual workflow dispatch
 - **Purpose**: Generates build diagnostics and observability bundles
 - **Features**:
@@ -189,7 +204,7 @@ This directory contains automated workflows that help maintain code quality, sec
   - Collects build fingerprints and metrics
   - Uploads debug artifacts
 
-#### 21. **Workflow Validation** (`validate-workflows.yml`)
+#### 22. **Workflow Validation** (`validate-workflows.yml`)
 - **Trigger**: Pull requests touching workflows or manual dispatch
 - **Purpose**: Validates workflow syntax and checks reusable references
 - **Features**:
@@ -199,7 +214,7 @@ This directory contains automated workflows that help maintain code quality, sec
   - Catches invalid reusable workflow usage
   - Fast feedback for workflow edits
 
-#### 22. **Reusable Build Helpers** (`reusable-dotnet-build.yml`)
+#### 23. **Reusable Build Helpers** (`reusable-dotnet-build.yml`)
 - **Trigger**: Reusable workflow (called by other workflows)
 - **Purpose**: Standardizes build/test steps for .NET jobs
 - **Features**:

@@ -1,5 +1,13 @@
 # AI Instruction Sync Workflow
 # Updates AI assistant guidance files with the latest repository structure
+#
+# Repository Settings Required:
+# - For PR creation to work: Go to Settings > Actions > General
+#   and enable "Allow GitHub Actions to create and approve pull requests"
+# - Workflow permissions: "Read and write permissions" must be enabled
+#
+# The workflow will gracefully fallback to direct commits if PR creation
+# is not permitted due to repository settings.
 
 name: AI Instructions Sync
 
@@ -137,10 +145,12 @@ jobs:
           git push
 
       - name: Create pull request for AI instruction updates
+        id: create-pr
         if: |
           steps.check-changes.outputs.has_changes == 'true' &&
           github.event.inputs.create_pr == 'true' &&
           github.event.inputs.dry_run != 'true'
+        continue-on-error: true
         uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -159,7 +169,32 @@ jobs:
             documentation
             automation
 
+      - name: Fallback - Commit directly if PR creation failed
+        if: |
+          steps.check-changes.outputs.has_changes == 'true' &&
+          github.event.inputs.create_pr == 'true' &&
+          github.event.inputs.dry_run != 'true' &&
+          steps.create-pr.outcome == 'failure'
+        run: |
+          echo "::warning::PR creation failed. Falling back to direct commit."
+          echo "::notice::To enable PR creation, go to Settings > Actions > General and enable 'Allow GitHub Actions to create and approve pull requests'"
+          
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add CLAUDE.md docs/ai/copilot/instructions.md .github/agents/documentation-agent.md
+          git commit -m "docs: sync AI instruction repository structure
+
+          Updates AI assistant instruction files with the latest repository structure.
+          
+          Note: Committed directly because PR creation is disabled in repository settings.
+
+          [skip ci]"
+
+          git push
+
       - name: Summary
+        if: always()
         run: |
           echo "## AI Instruction Sync" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -167,6 +202,17 @@ jobs:
           ${{ github.event.inputs.dry_run == 'true' && 'yes' || 'no' }}" >> $GITHUB_STEP_SUMMARY
           echo "- Create PR mode: \
           ${{ github.event.inputs.create_pr == 'true' && 'yes' || 'no' }}" >> $GITHUB_STEP_SUMMARY
+          
+          # Only show PR creation status if PR mode was enabled
+          if [ "${{ github.event.inputs.create_pr }}" == "true" ] && [ "${{ github.event.inputs.dry_run }}" != "true" ]; then
+            if [ "${{ steps.create-pr.outcome }}" == "success" ]; then
+              echo "- PR Creation: ✅ Success" >> $GITHUB_STEP_SUMMARY
+            elif [ "${{ steps.create-pr.outcome }}" == "failure" ]; then
+              echo "- PR Creation: ⚠️ Failed (fell back to direct commit)" >> $GITHUB_STEP_SUMMARY
+              echo "  > Enable PR creation in Settings > Actions > General" >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+          
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| File | Updated |" >> $GITHUB_STEP_SUMMARY
           echo "|------|---------|" >> $GITHUB_STEP_SUMMARY
