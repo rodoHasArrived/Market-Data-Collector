@@ -27,6 +27,9 @@ public sealed record BackpressureStatusDto
 
     [JsonPropertyName("message")]
     public string? Message { get; init; }
+
+    [JsonPropertyName("queueDepthWarning")]
+    public bool QueueDepthWarning { get; init; }
 }
 
 /// <summary>

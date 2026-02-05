@@ -64,7 +64,7 @@ public static class BackfillEndpoints
             {
                 return Results.BadRequest(new { error = "Backfill preview failed. Check provider name and symbol format." });
             }
-        });
+        }).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
         // Run backfill
         app.MapPost(UiApiRoutes.BackfillRun, async (BackfillCoordinator backfill, BackfillRequestDto req) =>
@@ -91,7 +91,7 @@ public static class BackfillEndpoints
             {
                 return Results.BadRequest(new { error = "Backfill execution failed. Check provider name and symbol format." });
             }
-        });
+        }).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
     }
 
     private static IResult? ValidateBackfillRequest(BackfillRequestDto req)

@@ -51,7 +51,7 @@ public static class ConfigEndpoints
             await store.SaveAsync(next);
 
             return Results.Ok();
-        });
+        }).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
         // Update Alpaca settings
         app.MapPost(UiApiRoutes.ConfigAlpaca, async (ConfigStore store, AlpacaOptionsDto alpaca) =>
@@ -60,7 +60,7 @@ public static class ConfigEndpoints
             var next = cfg with { Alpaca = alpaca.ToDomain() };
             await store.SaveAsync(next);
             return Results.Ok();
-        });
+        }).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
         // Update storage settings
         app.MapPost(UiApiRoutes.ConfigStorage, async (ConfigStore store, StorageSettingsRequest req) =>
@@ -85,7 +85,7 @@ public static class ConfigEndpoints
             };
             await store.SaveAsync(next);
             return Results.Ok();
-        });
+        }).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
         // Add or update symbol
         app.MapPost(UiApiRoutes.ConfigSymbols, async (ConfigStore store, SymbolConfig symbol) =>
@@ -104,7 +104,7 @@ public static class ConfigEndpoints
             await store.SaveAsync(next);
 
             return Results.Ok();
-        });
+        }).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
         // Delete symbol
         app.MapDelete(UiApiRoutes.ConfigSymbols + "/{symbol}", async (ConfigStore store, string symbol) =>
@@ -115,7 +115,7 @@ public static class ConfigEndpoints
             var next = cfg with { Symbols = list.ToArray() };
             await store.SaveAsync(next);
             return Results.Ok();
-        });
+        }).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
         // Get derivatives configuration
         app.MapGet(UiApiRoutes.ConfigDerivatives, (ConfigStore store) =>
@@ -131,7 +131,7 @@ public static class ConfigEndpoints
             var next = cfg with { Derivatives = derivatives.ToDomain() };
             await store.SaveAsync(next);
             return Results.Ok();
-        });
+        }).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
         // Get status
         app.MapGet(UiApiRoutes.Status, (ConfigStore store) =>

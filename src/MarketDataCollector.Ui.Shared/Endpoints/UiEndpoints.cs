@@ -1,9 +1,11 @@
 using System.Text.Json;
+using System.Threading.RateLimiting;
 using MarketDataCollector.Application.Composition;
 using MarketDataCollector.Application.UI;
 using MarketDataCollector.Ui.Shared.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MarketDataCollector.Ui.Shared.Endpoints;
@@ -30,6 +32,7 @@ public static class UiEndpoints
         builder.Services.AddUiSharedServices(configPath);
         var app = builder.Build();
         app.UseApiKeyAuthentication();
+        app.UseRateLimiter();
         app.MapAllUiEndpoints();
         return app;
     }
@@ -47,6 +50,7 @@ public static class UiEndpoints
         builder.Services.AddUiSharedServices(statusHandlers, configPath);
         var app = builder.Build();
         app.UseApiKeyAuthentication();
+        app.UseRateLimiter();
         app.MapUiEndpointsWithStatus(statusHandlers);
         return app;
     }
@@ -75,6 +79,8 @@ public static class UiEndpoints
             return new MarketDataCollector.Ui.Shared.Services.BackfillCoordinator(configStore);
         });
 
+        services.AddMutationRateLimiter();
+
         return services;
     }
 
@@ -99,6 +105,7 @@ public static class UiEndpoints
         });
 
         services.AddSingleton(statusHandlers);
+        services.AddMutationRateLimiter();
         return services;
     }
 
@@ -193,6 +200,39 @@ public static class UiEndpoints
         app.MapDashboard();
         app.MapUiEndpoints();
         return app;
+    }
+
+    #endregion
+
+    #region Rate Limiting
+
+    /// <summary>
+    /// Rate limiting policy name applied to mutation (POST/PUT/DELETE) endpoints.
+    /// </summary>
+    public const string MutationRateLimitPolicy = "mutation";
+
+    /// <summary>
+    /// Registers a per-IP fixed-window rate limiter for mutation endpoints.
+    /// Allows 10 requests per minute per IP with a small queue for bursts.
+    /// </summary>
+    private static IServiceCollection AddMutationRateLimiter(this IServiceCollection services)
+    {
+        services.AddRateLimiter(options =>
+        {
+            options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+            options.AddPolicy(MutationRateLimitPolicy, httpContext =>
+                RateLimitPartition.GetFixedWindowLimiter(
+                    partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                    factory: _ => new FixedWindowRateLimiterOptions
+                    {
+                        PermitLimit = 10,
+                        Window = TimeSpan.FromMinutes(1),
+                        QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                        QueueLimit = 2
+                    }));
+        });
+
+        return services;
     }
 
     #endregion
