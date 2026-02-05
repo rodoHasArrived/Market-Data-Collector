@@ -1,13 +1,15 @@
-# Consolidated Documentation & AI Instruction Automation
+# Consolidated Documentation, AI Instruction Sync & TODO Automation
 #
 # Replaces and combines:
 #   - docs-comprehensive.yml (Documentation & Workflow Automation)
 #   - docs-auto-update.yml (Docs Auto-Update)
 #   - docs-structure-sync.yml (Docs Structure Sync)
 #   - ai-instructions-sync.yml (AI Instructions Sync)
+#   - todo-automation.yml (TODO Scanning & Documentation)
 #
-# All documentation generation, validation, AI instruction sync, and
-# known-error intake functionality is unified here. No functionality removed.
+# All documentation generation, validation, AI instruction sync,
+# known-error intake, and TODO scanning is unified here.
+# No functionality removed.
 
 name: Documentation Automation
 
@@ -22,6 +24,7 @@ on:
       - '.github/agents/**'
       - 'build/scripts/docs/**'
       - 'build/dotnet/DocGenerator/**'
+      - 'build/**/*.py'
       - 'src/**'
       - 'tests/**'
       - 'benchmarks/**'
@@ -65,22 +68,37 @@ on:
         description: 'Optional issue number to ingest into docs/ai-known-errors.md'
         required: false
         type: string
-      update_all:
-        description: 'Update all auto-generated documentation (providers, ADRs, config)'
-        required: false
-        default: 'false'
-        type: boolean
       force_update:
         description: 'Force regenerate all structure documentation'
         required: false
         default: 'false'
+        type: boolean
+      scan_todos:
+        description: 'Run TODO scan and documentation update'
+        required: false
+        default: 'true'
+        type: boolean
+      create_issues:
+        description: 'Create GitHub issues for untracked TODOs'
+        required: false
+        default: false
+        type: boolean
+      include_notes:
+        description: 'Include NOTE comments in TODO documentation'
+        required: false
+        default: true
+        type: boolean
+      use_copilot:
+        description: 'Use AI to generate TODO triage recommendations'
+        required: false
+        default: true
         type: boolean
   issues:
     types: [opened, edited, labeled, reopened]
 
 permissions:
   contents: write
-  issues: read
+  issues: write
   pull-requests: write
   models: read
 
@@ -99,7 +117,7 @@ env:
   DOTNET_CLI_TELEMETRY_OPTOUT: true
 
 jobs:
-  # ─── AI Known Errors Intake (from docs-comprehensive) ──────────────────
+  # ─── AI Known Errors Intake ──────────────────────────────────────────
   ai-known-errors-intake:
     name: AI Known Errors Intake
     if: |
@@ -275,7 +293,7 @@ jobs:
             documentation
             automation
 
-  # ─── Change Detection (unified from all 4 workflows) ──────────────────
+  # ─── Change Detection ────────────────────────────────────────────────
   detect-changes:
     name: Detect Documentation & Structure Changes
     if: github.event_name != 'issues'
@@ -292,9 +310,6 @@ jobs:
       microservices_changed: ${{ steps.filter.outputs.microservices }}
       ai_files_changed: ${{ steps.filter.outputs.ai_files }}
       src_changed: ${{ steps.filter.outputs.src }}
-      adrs_changed: ${{ steps.filter.outputs.adrs }}
-      config_changed: ${{ steps.filter.outputs.config }}
-      interfaces_changed: ${{ steps.filter.outputs.interfaces }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -337,15 +352,8 @@ jobs:
             src:
               - 'src/**/*.cs'
               - 'src/**/*.fs'
-            adrs:
-              - 'docs/adr/**'
-            config:
-              - 'config/appsettings.sample.json'
-            interfaces:
-              - 'src/MarketDataCollector/Infrastructure/IMarketDataClient.cs'
-              - 'src/MarketDataCollector/Infrastructure/Providers/Backfill/IHistoricalDataProvider*.cs'
 
-  # ─── Validate Documentation Quality ────────────────────────────────────
+  # ─── Validate Documentation Quality ──────────────────────────────────
   validate-docs:
     name: Validate Documentation Quality
     runs-on: ubuntu-latest
@@ -387,7 +395,7 @@ jobs:
           ADR_COUNT=$(find docs -path "*/adr/*.md" -o -path "*/decisions/*.md" 2>/dev/null | wc -l)
           echo "Found $ADR_COUNT ADR files" >> $GITHUB_STEP_SUMMARY
 
-  # ─── Regenerate All Documentation (unified from all 4 workflows) ───────
+  # ─── Regenerate All Documentation ────────────────────────────────────
   regenerate-docs:
     name: Regenerate Docs, Structure & AI Instructions
     runs-on: ubuntu-latest
@@ -438,7 +446,7 @@ jobs:
             /p:GenerateDocumentationFile=true
         continue-on-error: true
 
-      # --- Structure docs (from docs-comprehensive + docs-structure-sync) ---
+      # --- Structure docs ---
       - name: Generate structure and workflow docs
         run: |
           set -euo pipefail
@@ -446,7 +454,7 @@ jobs:
           python3 build/scripts/docs/generate-structure-docs.py --output docs/generated/repository-structure.md --format markdown
           python3 build/scripts/docs/generate-structure-docs.py --output docs/generated/workflows-overview.md --workflows-only
 
-      # --- Provider docs (from docs-comprehensive + docs-auto-update + docs-structure-sync) ---
+      # --- Provider docs ---
       - name: Generate provider registry
         if: |
           needs.detect-changes.outputs.providers_changed == 'true' ||
@@ -460,6 +468,20 @@ jobs:
             --output docs/generated/provider-registry.md \
             --providers-only \
             --extract-attributes
+
+      # --- ADR compliance and index ---
+      - name: Verify ADR compliance
+        if: |
+          needs.detect-changes.outputs.adrs_changed == 'true' ||
+          github.event.inputs.update_all == 'true' ||
+          github.event_name == 'schedule'
+        run: |
+          set -euo pipefail
+          if [ -d "build/dotnet/DocGenerator" ]; then
+            dotnet run --project build/dotnet/DocGenerator/DocGenerator.csproj --no-build -c Release -- verify-adrs \
+              --adr-dir docs/adr \
+              --src-dir . || true
+          fi
 
       - name: Generate ADR index
         run: |
@@ -490,7 +512,8 @@ jobs:
           echo "---" >> docs/generated/adr-index.md
           echo "*This file is auto-generated. Do not edit manually.*" >> docs/generated/adr-index.md
 
-      - name: Generate configuration documentation
+      # --- Configuration schema ---
+      - name: Generate configuration schema
         run: |
           set -euo pipefail
           mkdir -p docs/generated
@@ -535,8 +558,8 @@ jobs:
           echo "---" >> docs/generated/configuration-schema.md
           echo "*This file is auto-generated. Do not edit manually.*" >> docs/generated/configuration-schema.md
 
-      # --- Project context doc (from docs-comprehensive + docs-auto-update) ---
-      - name: Generate project context doc (if tool exists)
+      # --- Project context ---
+      - name: Generate project context doc
         run: |
           set -euo pipefail
           if [ -d "build/dotnet/DocGenerator" ]; then
@@ -545,96 +568,7 @@ jobs:
             dotnet run --project build/dotnet/DocGenerator/DocGenerator.csproj --no-build -c Release -- context --src src/MarketDataCollector --output docs/generated/project-context.md || true
           fi
 
-      # --- ADR index (from docs-auto-update) ---
-      - name: Generate ADR index
-        if: |
-          needs.detect-changes.outputs.adrs_changed == 'true' ||
-          github.event.inputs.update_all == 'true' ||
-          github.event_name == 'schedule'
-        run: |
-          set -euo pipefail
-          if [ -d "build/dotnet/DocGenerator" ]; then
-            dotnet run --project build/dotnet/DocGenerator/DocGenerator.csproj --no-build -c Release -- verify-adrs \
-              --adr-dir docs/adr \
-              --src-dir . || true
-          fi
-
-          echo "# Architecture Decision Records" > docs/generated/adr-index.md
-          echo "" >> docs/generated/adr-index.md
-          echo "> Auto-generated on $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> docs/generated/adr-index.md
-          echo "" >> docs/generated/adr-index.md
-          echo "| ADR | Title | Status |" >> docs/generated/adr-index.md
-          echo "|-----|-------|--------|" >> docs/generated/adr-index.md
-
-          for adr in docs/adr/*.md; do
-            if [ -f "$adr" ]; then
-              filename=$(basename "$adr")
-              title=$(head -1 "$adr" | sed 's/^# //')
-              status="Accepted"
-              if grep -qi "status:.*superseded" "$adr"; then
-                status="Superseded"
-              elif grep -qi "status:.*deprecated" "$adr"; then
-                status="Deprecated"
-              fi
-              echo "| [$filename](../adr/$filename) | $title | $status |" >> docs/generated/adr-index.md
-            fi
-          done
-
-          echo "" >> docs/generated/adr-index.md
-          echo "---" >> docs/generated/adr-index.md
-          echo "*This file is auto-generated. Do not edit manually.*" >> docs/generated/adr-index.md
-
-      # --- Configuration schema (from docs-auto-update) ---
-      - name: Generate configuration schema
-        if: |
-          needs.detect-changes.outputs.config_changed == 'true' ||
-          github.event.inputs.update_all == 'true' ||
-          github.event_name == 'schedule'
-        run: |
-          set -euo pipefail
-          mkdir -p docs/generated
-
-          cat > docs/generated/configuration-schema.md << 'EOF'
-          # Configuration Schema
-
-          > Auto-generated from `config/appsettings.sample.json`
-
-          This document describes the configuration options available in the Market Data Collector.
-
-          ## Configuration Sections
-
-          EOF
-
-          if [ -f "config/appsettings.sample.json" ]; then
-            python3 -c "
-          import json
-          import sys
-
-          try:
-              with open('config/appsettings.sample.json', 'r') as f:
-                  config = json.load(f)
-
-              for section, value in config.items():
-                  print(f'### {section}')
-                  print('')
-                  if isinstance(value, dict):
-                      print('| Setting | Type | Description |')
-                      print('|---------|------|-------------|')
-                      for key, val in value.items():
-                          val_type = type(val).__name__
-                          print(f'| \`{key}\` | {val_type} | - |')
-                  else:
-                      print(f'Type: \`{type(value).__name__}\`')
-                  print('')
-          except Exception as e:
-              print(f'Error parsing config: {e}', file=sys.stderr)
-          " >> docs/generated/configuration-schema.md
-          fi
-
-          echo "---" >> docs/generated/configuration-schema.md
-          echo "*This file is auto-generated. Do not edit manually.*" >> docs/generated/configuration-schema.md
-
-      # --- AI instruction sync (from docs-comprehensive + ai-instructions-sync) ---
+      # --- AI instruction sync ---
       - name: Validate documentation automation inputs
         run: |
           set -euo pipefail
@@ -841,12 +775,370 @@ jobs:
 
           git push
 
-  # ─── Report (enhanced from all 4 workflows) ───────────────────────────
+  # ─── TODO Scanning and Documentation (from todo-automation.yml) ──────
+  scan-todos:
+    name: Scan and Document TODOs
+    needs: [detect-changes, regenerate-docs]
+    if: |
+      always() &&
+      needs.detect-changes.result == 'success' &&
+      github.event_name != 'issues' && (
+        needs.detect-changes.outputs.src_changed == 'true' ||
+        needs.detect-changes.outputs.structure_changed == 'true' ||
+        github.event_name == 'schedule' ||
+        (github.event_name == 'workflow_dispatch' && github.event.inputs.scan_todos != 'false')
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      total_count: ${{ steps.scan.outputs.total_count }}
+      new_todos: ${{ steps.scan.outputs.new_todos }}
+      has_changes: ${{ steps.check-changes.outputs.has_changes }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Pull latest changes
+        run: |
+          git pull origin ${{ github.ref_name }} --rebase || true
+
+      - name: Set up Python
+        uses: actions/setup-python@v6.2.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Scan codebase for TODOs
+        id: scan
+        run: |
+          python3 build/scripts/docs/scan-todos.py \
+            --output docs/status/TODO.md \
+            --format markdown \
+            --include-notes ${{ github.event.inputs.include_notes || 'true' }} \
+            --json-output todo-scan-results.json
+
+          # Extract metrics for workflow outputs
+          if [ -f todo-scan-results.json ]; then
+            TOTAL=$(python3 -c "import json; data=json.load(open('todo-scan-results.json')); print(data.get('total_count', 0))")
+            NEW=$(python3 -c "import json; data=json.load(open('todo-scan-results.json')); print(len([t for t in data.get('todos', []) if not t.get('has_issue', False)]))")
+            SCAN_JSON=$(python3 -c "import json; data=json.load(open('todo-scan-results.json')); print(json.dumps(data, separators=(',', ':')))")
+            echo "total_count=$TOTAL" >> $GITHUB_OUTPUT
+            echo "new_todos=$NEW" >> $GITHUB_OUTPUT
+            echo "scan_json=$SCAN_JSON" >> $GITHUB_OUTPUT
+          else
+            echo "total_count=0" >> $GITHUB_OUTPUT
+            echo "new_todos=0" >> $GITHUB_OUTPUT
+            echo 'scan_json={"total_count":0,"todos":[]}' >> $GITHUB_OUTPUT
+          fi
+
+      - name: Generate Copilot triage recommendations
+        id: copilot
+        if: github.event.inputs.use_copilot != 'false'
+        continue-on-error: true
+        uses: actions/ai-inference@v1
+        with:
+          model: openai/gpt-4.1-mini
+          max-tokens: 1800
+          prompt: |
+            You are an engineering assistant helping triage TODO comments in a repository.
+            Produce a concise markdown report with these sections:
+            1) Highest-priority TODOs (max 5)
+            2) Recommended issue labels
+            3) Immediate risk items
+            4) Suggested batching plan
+
+            Keep the output under 300 words.
+            Use this scan JSON:
+            ${{ steps.scan.outputs.scan_json }}
+
+      - name: Build fallback triage report
+        if: always()
+        run: |
+          set -euo pipefail
+
+          python3 << 'EOF'
+          import json
+          from pathlib import Path
+
+          scan_path = Path('todo-scan-results.json')
+          report_path = Path('todo-triage.md')
+
+          if not scan_path.exists():
+              report_path.write_text('# TODO Triage\n\nNo scan results were found.\n', encoding='utf-8')
+              raise SystemExit(0)
+
+          data = json.loads(scan_path.read_text(encoding='utf-8'))
+          todos = data.get('todos', [])
+          untracked = [t for t in todos if not t.get('has_issue', False)]
+
+          lines = [
+              '# TODO Triage Recommendations',
+              '',
+              '_Generated by Documentation Automation workflow (TODO scan). Copilot output is appended when available; otherwise this deterministic fallback is produced._',
+              '',
+              f"- Total TODOs: **{data.get('total_count', 0)}**",
+              f"- Untracked TODOs: **{len(untracked)}**",
+              '',
+              '## Highest-priority TODOs (fallback)',
+              ''
+          ]
+
+          for i, todo in enumerate(untracked[:5], 1):
+              todo_type = todo.get('type', 'TODO')
+              text = todo.get('text', 'No description')
+              file_path = todo.get('file', 'unknown')
+              line = todo.get('line', 0)
+              lines.append(f"{i}. **[{todo_type}]** `{file_path}:{line}` — {text}")
+
+          if not untracked:
+              lines.append('- No untracked TODO items found.')
+
+          lines.extend([
+              '',
+              '## Suggested labels',
+              '',
+              '- `todo-automation` for all imported TODO items',
+              '- `bug` for FIXME items',
+              '- `tech-debt` for HACK items',
+              '',
+              '## Suggested batching plan',
+              '',
+              '1. Resolve untracked FIXME items first.',
+              '2. Group TODO/HACK items by directory owner.',
+              '3. Convert remaining high-value TODOs into tracked issues.'
+          ])
+
+          report_path.write_text('\n'.join(lines) + '\n', encoding='utf-8')
+          EOF
+
+      - name: Append Copilot triage output to report
+        if: always() && steps.copilot.outputs.response != ''
+        run: |
+          {
+            echo ""
+            echo "## Copilot Recommendations"
+            echo ""
+            echo "${{ steps.copilot.outputs.response }}"
+          } >> todo-triage.md
+
+      - name: Check for changes
+        id: check-changes
+        run: |
+          git add docs/status/TODO.md
+          if git diff --staged --quiet; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "No changes to TODO documentation"
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "Changes detected in TODO documentation"
+          fi
+
+      - name: Generate summary
+        run: |
+          echo "## TODO Scan Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ -f todo-scan-results.json ]; then
+            python3 << 'EOF'
+          import json
+          import os
+
+          with open('todo-scan-results.json', 'r') as f:
+              data = json.load(f)
+
+          summary = []
+          summary.append(f"**Total TODOs:** {data.get('total_count', 0)}")
+          summary.append(f"**Linked to Issues:** {len([t for t in data.get('todos', []) if t.get('has_issue', False)])}")
+          summary.append(f"**Untracked:** {len([t for t in data.get('todos', []) if not t.get('has_issue', False)])}")
+          summary.append("")
+
+          # By type
+          by_type = {}
+          for todo in data.get('todos', []):
+              t = todo.get('type', 'TODO')
+              by_type[t] = by_type.get(t, 0) + 1
+
+          if by_type:
+              summary.append("### By Type")
+              summary.append("| Type | Count |")
+              summary.append("|------|-------|")
+              for t, count in sorted(by_type.items()):
+                  summary.append(f"| {t} | {count} |")
+              summary.append("")
+
+          # By directory
+          by_dir = {}
+          for todo in data.get('todos', []):
+              path = todo.get('file', '')
+              parts = path.split('/')
+              if len(parts) > 1:
+                  dir_name = parts[0] if parts[0] != '.' else parts[1] if len(parts) > 1 else 'root'
+              else:
+                  dir_name = 'root'
+              by_dir[dir_name] = by_dir.get(dir_name, 0) + 1
+
+          if by_dir:
+              summary.append("### By Directory")
+              summary.append("| Directory | Count |")
+              summary.append("|-----------|-------|")
+              for d, count in sorted(by_dir.items(), key=lambda x: -x[1]):
+                  summary.append(f"| `{d}/` | {count} |")
+
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as f:
+              f.write('\n'.join(summary))
+          EOF
+          else
+            echo "No TODO scan results found." >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ -f todo-triage.md ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Triage Recommendations" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            cat todo-triage.md >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload scan results
+        uses: actions/upload-artifact@v4
+        with:
+          name: todo-scan-results
+          path: |
+            todo-scan-results.json
+            docs/status/TODO.md
+            todo-triage.md
+          retention-days: 30
+
+      - name: Commit changes
+        if: |
+          steps.check-changes.outputs.has_changes == 'true' &&
+          github.event.inputs.dry_run != 'true' &&
+          (github.event_name == 'push' || github.event_name == 'schedule' ||
+           (github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run != 'true'))
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add docs/status/TODO.md
+          git commit -m "docs: update TODO documentation [skip ci]
+
+          Auto-generated TODO tracking documentation.
+
+          - Total TODOs: ${{ steps.scan.outputs.total_count }}
+          - Untracked: ${{ steps.scan.outputs.new_todos }}
+
+          Generated by Documentation Automation workflow."
+
+          git push
+
+  # ─── Create Issues for Untracked TODOs ───────────────────────────────
+  create-todo-issues:
+    name: Create Issues for Untracked TODOs
+    needs: scan-todos
+    if: |
+      github.event_name == 'workflow_dispatch' &&
+      github.event.inputs.create_issues == 'true' &&
+      needs.scan-todos.outputs.new_todos > 0
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download scan results
+        uses: actions/download-artifact@v4
+        with:
+          name: todo-scan-results
+
+      - name: Set up Python
+        uses: actions/setup-python@v6.2.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Create issues for untracked TODOs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 << 'EOF'
+          import json
+          import subprocess
+          import os
+
+          with open('todo-scan-results.json', 'r') as f:
+              data = json.load(f)
+
+          created_count = 0
+          max_issues = 5  # Limit to prevent spam
+
+          for todo in data.get('todos', []):
+              if created_count >= max_issues:
+                  print(f"Reached maximum issue limit ({max_issues})")
+                  break
+
+              if todo.get('has_issue', False):
+                  continue
+
+              todo_type = todo.get('type', 'TODO')
+              file_path = todo.get('file', 'unknown')
+              line = todo.get('line', 0)
+              text = todo.get('text', 'No description')
+
+              # Determine labels
+              labels = ['todo-automation']
+              if todo_type == 'FIXME':
+                  labels.append('bug')
+              elif todo_type == 'HACK':
+                  labels.append('tech-debt')
+
+              title = f"[{todo_type}] {text[:60]}{'...' if len(text) > 60 else ''}"
+
+              body = f"""## TODO Item
+
+          **Type:** {todo_type}
+          **File:** `{file_path}`
+          **Line:** {line}
+
+          ### Description
+
+          {text}
+
+          ### Context
+
+          ```
+          {todo.get('context', 'No context available')}
+          ```
+
+          ---
+          *This issue was automatically created by the Documentation Automation workflow.*
+          """
+
+              try:
+                  result = subprocess.run([
+                      'gh', 'issue', 'create',
+                      '--title', title,
+                      '--body', body,
+                      '--label', ','.join(labels)
+                  ], capture_output=True, text=True, check=True)
+
+                  print(f"Created issue: {result.stdout.strip()}")
+                  created_count += 1
+              except subprocess.CalledProcessError as e:
+                  print(f"Failed to create issue: {e.stderr}")
+
+          print(f"\nCreated {created_count} issues")
+
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as f:
+              f.write(f"\n\n## Issues Created\n\nCreated **{created_count}** new issues for untracked TODOs.\n")
+          EOF
+
+  # ─── Report ──────────────────────────────────────────────────────────
   report:
     name: Documentation Automation Report
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: [detect-changes, validate-docs, regenerate-docs]
+    needs: [detect-changes, validate-docs, regenerate-docs, scan-todos, create-todo-issues]
     if: github.event_name != 'issues' && always()
     steps:
       - name: Publish summary
@@ -871,9 +1163,6 @@ jobs:
           echo "| Microservices | ${{ needs.detect-changes.outputs.microservices_changed }} |" >> $GITHUB_STEP_SUMMARY
           echo "| AI files | ${{ needs.detect-changes.outputs.ai_files_changed }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Source code | ${{ needs.detect-changes.outputs.src_changed }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| ADRs | ${{ needs.detect-changes.outputs.adrs_changed }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Configuration | ${{ needs.detect-changes.outputs.config_changed }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Interfaces | ${{ needs.detect-changes.outputs.interfaces_changed }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## Job Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -881,8 +1170,18 @@ jobs:
           echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
           echo "| Validate docs | ${{ needs.validate-docs.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Regenerate docs | ${{ needs.regenerate-docs.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Scan TODOs | ${{ needs.scan-todos.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Create TODO issues | ${{ needs.create-todo-issues.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Generated Changes | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|-------------------|-------|" >> $GITHUB_STEP_SUMMARY
           echo "| has_changes | ${{ needs.regenerate-docs.outputs.has_changes || 'false' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| changed_files | ${{ needs.regenerate-docs.outputs.changed_files || 'none' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## TODO Scan" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Total TODOs | ${{ needs.scan-todos.outputs.total_count || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Untracked TODOs | ${{ needs.scan-todos.outputs.new_todos || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| TODO doc updated | ${{ needs.scan-todos.outputs.has_changes || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY

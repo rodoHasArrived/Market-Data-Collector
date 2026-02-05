@@ -30,7 +30,7 @@ Market Data Collector is a high-performance, cross-platform market data collecti
 | Main Projects | 6 (+ 3 test/benchmark) |
 | Provider Implementations | 5 streaming, 10 historical |
 | Symbol Search Providers | 4 |
-| CI/CD Workflows | 21 |
+| CI/CD Workflows | 20 |
 | Makefile Targets | 65 |
 
 ---
@@ -89,7 +89,7 @@ dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --mod
 To reduce repeated mistakes across agents, always review and update:
 
 - `docs/ai-known-errors.md` — canonical log of recurring agent mistakes, root causes, and prevention checks.
-- `.github/workflows/docs-comprehensive.yml (AI Known Errors Intake job)` — automation that ingests labeled GitHub issues into the known-error registry via PR.
+- `.github/workflows/documentation.yml (AI Known Errors Intake job)` — automation that ingests labeled GitHub issues into the known-error registry via PR.
 
 ### Required workflow for AI agents
 
@@ -212,7 +212,6 @@ Market-Data-Collector/
 │   │   ├── stale.yml
 │   │   ├── test-matrix.yml
 │   │   ├── TESTING_AI_SYNC.md
-│   │   ├── todo-automation.yml
 │   │   ├── validate-workflows.yml
 │   │   ├── wpf-commands.yml
 │   │   └── wpf-desktop.yml
@@ -1699,7 +1698,7 @@ See `docs/operations/portable-data-packager.md` for details.
 
 ## CI/CD Pipelines
 
-The project uses GitHub Actions with 21 workflows in `.github/workflows/`:
+The project uses GitHub Actions with 20 workflows in `.github/workflows/`:
 
 | Workflow | Purpose |
 |----------|---------|
@@ -1710,9 +1709,7 @@ The project uses GitHub Actions with 21 workflows in `.github/workflows/`:
 | `docker.yml` | Docker image building and publishing |
 | `dotnet-desktop.yml` | Desktop application builds |
 | `desktop-app.yml` | UWP app builds |
-| `documentation.yml` | Documentation generation |
-| `docs-auto-update.yml` | Auto-update docs on changes |
-| `docs-structure-sync.yml` | Sync documentation structure |
+| `documentation.yml` | Documentation generation, AI instruction sync, TODO scanning |
 | `release.yml` | Release automation |
 | `pr-checks.yml` | PR validation checks |
 | `dependency-review.yml` | Dependency review |

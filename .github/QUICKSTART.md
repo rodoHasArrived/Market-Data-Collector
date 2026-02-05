@@ -6,7 +6,7 @@ Your Market Data Collector repository now has **professional-grade CI/CD automat
 
 ## 📦 Complete List of Additions
 
-### Workflows (21 total)
+### Workflows (20 total)
 
 | Workflow | Purpose |
 |----------|---------|
@@ -17,9 +17,7 @@ Your Market Data Collector repository now has **professional-grade CI/CD automat
 | `docker.yml` | Docker image building and publishing |
 | `dotnet-desktop.yml` | Desktop application builds |
 | `desktop-app.yml` | UWP app builds |
-| `documentation.yml` | Documentation generation |
-| `docs-auto-update.yml` | Auto-update docs on changes |
-| `docs-structure-sync.yml` | Sync documentation structure |
+| `documentation.yml` | Documentation generation, AI instruction sync, TODO scanning |
 | `release.yml` | Release automation |
 | `pr-checks.yml` | PR validation checks |
 | `dependency-review.yml` | Dependency review |

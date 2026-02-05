@@ -4,11 +4,11 @@ This directory contains automated workflows that help maintain code quality, sec
 
 ## Consolidation Summary
 
-Workflows have been consolidated from 25 to 16 files, reducing duplication and adding AI-powered analysis throughout. The following merges were performed:
+Workflows have been consolidated from 25 to 15 files, reducing duplication and adding AI-powered analysis throughout. The following merges were performed:
 
 | Consolidated Workflow | Replaces | AI Features |
 |----------------------|----------|-------------|
-| `documentation.yml` | `docs-comprehensive.yml`, `docs-auto-update.yml`, `docs-structure-sync.yml`, `ai-instructions-sync.yml` | AI documentation quality review |
+| `documentation.yml` | `docs-comprehensive.yml`, `docs-auto-update.yml`, `docs-structure-sync.yml`, `ai-instructions-sync.yml`, `todo-automation.yml` | AI documentation quality review, AI TODO triage |
 | `desktop-builds.yml` | `desktop-app.yml`, `wpf-desktop.yml`, `wpf-commands.yml` | AI build failure diagnosis |
 | `security.yml` | absorbed `dependency-review.yml` | AI vulnerability assessment |
 | `scheduled-maintenance.yml` | absorbed `cache-management.yml` | AI dependency upgrade recommendations |
@@ -128,15 +128,17 @@ Workflows have been consolidated from 25 to 16 files, reducing duplication and a
 
 #### 11. **Documentation** (`documentation.yml`) *(consolidated)*
 - **Trigger**: Push/PRs touching docs/workflows/source, weekly schedule (Mondays 3 AM UTC), issues with `ai-known-error` label, manual dispatch
-- **Purpose**: Centralized documentation quality checks, generation, and AI instruction sync
-- **Replaces**: `docs-comprehensive.yml`, `docs-auto-update.yml`, `docs-structure-sync.yml`, `ai-instructions-sync.yml`
+- **Purpose**: Centralized documentation quality checks, generation, AI instruction sync, and TODO tracking
+- **Replaces**: `docs-comprehensive.yml`, `docs-auto-update.yml`, `docs-structure-sync.yml`, `ai-instructions-sync.yml`, `todo-automation.yml`
 - **Features**:
   - AI known errors intake from labeled GitHub issues
-  - Change detection across 9 categories (source, providers, docs, workflows, etc.)
+  - Change detection across 10 categories (source, providers, docs, workflows, etc.)
   - Markdown linting and link validation
   - Regenerates structure, provider registry, workflow, project context, ADR, and config schema docs
   - AI instruction sync for CLAUDE.md, Copilot instructions, and documentation agent
-  - **AI**: Documentation quality review with completeness and accuracy assessment
+  - TODO/FIXME/HACK/NOTE comment scanning with documentation generation
+  - Optional GitHub issue creation for untracked TODOs
+  - **AI**: Documentation quality review, TODO triage recommendations
 
 ### Automation and Maintenance Workflows
 
@@ -196,16 +198,6 @@ Workflows have been consolidated from 25 to 16 files, reducing duplication and a
 - **Features**:
   - Shared build/test steps
   - Consistent caching and restore behavior
-
-### Special Workflows
-
-#### **TODO Automation** (`todo-automation.yml`)
-- **Trigger**: Push to main, Weekly schedule, Manual dispatch
-- **Purpose**: Scans codebase for TODO/FIXME comments and creates issues
-- **Features**:
-  - Detects TODO, FIXME, HACK, BUG comments
-  - AI-powered issue body generation
-  - Deduplication to avoid repeat issues
 
 ## Configuration Files
 
@@ -269,9 +261,8 @@ All AI-powered features use `actions/ai-inference@v1` with `openai/gpt-4.1-mini`
 | `security.yml` | Vulnerability Assessment | Risk analysis and remediation priorities |
 | `nightly.yml` | Failure Diagnosis | Root cause analysis and triage priority |
 | `scheduled-maintenance.yml` | Dependency Analysis | Upgrade recommendations with risk assessment |
-| `documentation.yml` | Doc Quality Review | Completeness and accuracy assessment |
+| `documentation.yml` | Doc Quality Review, TODO Triage | Completeness/accuracy assessment, TODO prioritization |
 | `desktop-builds.yml` | Build Analysis | Common failure pattern diagnosis |
-| `todo-automation.yml` | Issue Generation | AI-powered issue body creation |
 
 ## Workflow Dependencies
 
