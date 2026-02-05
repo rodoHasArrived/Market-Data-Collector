@@ -1,0 +1,647 @@
+# Consolidated Desktop Application Builds
+#
+# Replaces and combines:
+#   - desktop-app.yml (Desktop App Build - UWP/WinUI)
+#   - wpf-desktop.yml (WPF Desktop Build)
+#   - wpf-commands.yml (WPF Commands - smoke test)
+#
+# All desktop build, publish, test, and release functionality unified here.
+
+name: Desktop Builds
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'src/MarketDataCollector.Wpf/**'
+      - 'src/MarketDataCollector.Uwp/**'
+      - 'src/MarketDataCollector.Contracts/**'
+      - '.github/workflows/desktop-builds.yml'
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'src/MarketDataCollector.Wpf/**'
+      - 'src/MarketDataCollector.Uwp/**'
+      - 'src/MarketDataCollector.Contracts/**'
+      - '.github/workflows/desktop-builds.yml'
+  workflow_dispatch:
+    inputs:
+      build_config:
+        description: 'Build configuration'
+        required: false
+        default: 'Release'
+        type: choice
+        options:
+          - Release
+          - Debug
+      verbose_logging:
+        description: 'Enable verbose build logging'
+        required: false
+        default: false
+        type: boolean
+      build_target:
+        description: 'Which desktop app to build'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - uwp
+          - wpf
+          - wpf-smoke-test
+
+permissions:
+  contents: read
+  models: read
+
+concurrency:
+  group: desktop-builds-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_VERSION: '9.0.x'
+  UWP_PROJECT: 'src/MarketDataCollector.Uwp/MarketDataCollector.Uwp.csproj'
+  WPF_PROJECT: 'src/MarketDataCollector.Wpf/MarketDataCollector.Wpf.csproj'
+  BUILD_CONFIG: ${{ inputs.build_config || 'Release' }}
+  VERBOSE_LOGGING: ${{ inputs.verbose_logging || 'false' }}
+
+jobs:
+  # ═══════════════════════════════════════════════════════════════════════
+  # UWP / WinUI Desktop App (from desktop-app.yml)
+  # ═══════════════════════════════════════════════════════════════════════
+
+  uwp-generate-assets:
+    name: UWP - Generate Assets
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: |
+      github.event.inputs.build_target == 'all' ||
+      github.event.inputs.build_target == 'uwp' ||
+      github.event.inputs.build_target == '' ||
+      github.event.inputs.build_target == null
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6.2.0
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate icons
+        run: node build/node/generate-icons.mjs
+
+      - name: Upload generated assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-assets
+          path: src/MarketDataCollector.Uwp/Assets/*.png
+          retention-days: 1
+
+  uwp-build:
+    name: UWP - Build ${{ matrix.platform }}
+    needs: uwp-generate-assets
+    runs-on: windows-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [x64, arm64]
+        include:
+          - platform: x64
+            rid: win-x64
+          - platform: arm64
+            rid: win-arm64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download generated assets
+        uses: actions/download-artifact@v4
+        with:
+          name: generated-assets
+          path: src/MarketDataCollector.Uwp/Assets/
+
+      - name: Setup .NET with Cache
+        uses: ./.github/actions/setup-dotnet-cache
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Display build environment
+        run: |
+          Write-Host "======================================================================" -ForegroundColor Cyan
+          Write-Host "  UWP Build Environment Information" -ForegroundColor Cyan
+          Write-Host "======================================================================" -ForegroundColor Cyan
+          Write-Host ""
+          Write-Host "  Platform:       ${{ matrix.platform }}" -ForegroundColor White
+          Write-Host "  Runtime ID:     ${{ matrix.rid }}" -ForegroundColor White
+          Write-Host "  Configuration:  ${{ env.BUILD_CONFIG }}" -ForegroundColor White
+          Write-Host "  .NET Version:   $(dotnet --version)" -ForegroundColor White
+          Write-Host "  OS:             $env:OS" -ForegroundColor White
+          Write-Host ""
+          Write-Host "  .NET SDKs installed:" -ForegroundColor Yellow
+          dotnet --list-sdks | ForEach-Object { Write-Host "    $_" -ForegroundColor Gray }
+          Write-Host ""
+        shell: pwsh
+
+      - name: Restore dependencies
+        id: restore
+        run: |
+          Write-Host "::group::Restoring NuGet packages"
+          $startTime = Get-Date
+
+          $verbosity = if ("${{ env.VERBOSE_LOGGING }}" -eq "true") { "detailed" } else { "normal" }
+          dotnet restore ${{ env.UWP_PROJECT }} -r ${{ matrix.rid }} -v $verbosity
+
+          $duration = (Get-Date) - $startTime
+          Write-Host "::endgroup::"
+
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host "::notice::Restore completed in $([math]::Round($duration.TotalSeconds, 1)) seconds"
+          } else {
+            Write-Host "::error::Restore failed after $([math]::Round($duration.TotalSeconds, 1)) seconds"
+            exit 1
+          }
+        shell: pwsh
+
+      - name: Build
+        id: build
+        run: |
+          Write-Host "::group::Building UWP Desktop Application"
+          $startTime = Get-Date
+
+          $verbosity = if ("${{ env.VERBOSE_LOGGING }}" -eq "true") { "detailed" } else { "normal" }
+
+          dotnet build ${{ env.UWP_PROJECT }} `
+            -c ${{ env.BUILD_CONFIG }} `
+            -r ${{ matrix.rid }} `
+            --no-restore `
+            -p:Platform=${{ matrix.platform }} `
+            -p:BuildNotificationsVerbose=${{ env.VERBOSE_LOGGING }} `
+            -bl:msbuild-uwp-${{ matrix.platform }}.binlog `
+            -v $verbosity 2>&1 | Tee-Object -Variable buildOutput
+
+          $buildExitCode = $LASTEXITCODE
+          $duration = (Get-Date) - $startTime
+          Write-Host "::endgroup::"
+
+          $warnings = $buildOutput | Select-String -Pattern "warning [A-Z]+\d+:" -AllMatches
+          $errors = $buildOutput | Select-String -Pattern "error [A-Z]+\d+:" -AllMatches
+
+          if ($warnings.Count -gt 0) {
+            Write-Host "::warning::Build completed with $($warnings.Count) warning(s)"
+          }
+
+          if ($buildExitCode -eq 0) {
+            Write-Host "::notice::Build completed successfully in $([math]::Round($duration.TotalSeconds, 1)) seconds"
+          } else {
+            Write-Host "::error::Build failed after $([math]::Round($duration.TotalSeconds, 1)) seconds with $($errors.Count) error(s)"
+            $errors | Select-Object -First 5 | ForEach-Object {
+              Write-Host "::error::$($_.Line)"
+            }
+            exit 1
+          }
+        shell: pwsh
+
+      - name: Publish
+        id: publish
+        run: |
+          Write-Host "::group::Publishing UWP Desktop Application"
+          $startTime = Get-Date
+
+          $verbosity = if ("${{ env.VERBOSE_LOGGING }}" -eq "true") { "detailed" } else { "normal" }
+
+          dotnet publish ${{ env.UWP_PROJECT }} `
+            -c ${{ env.BUILD_CONFIG }} `
+            -r ${{ matrix.rid }} `
+            -o ./publish/uwp-${{ matrix.platform }} `
+            --self-contained true `
+            -p:Platform=${{ matrix.platform }} `
+            -p:PublishReadyToRun=true `
+            -p:PublishTrimmed=false `
+            -p:BuildNotificationsVerbose=${{ env.VERBOSE_LOGGING }} `
+            -v $verbosity
+
+          $publishExitCode = $LASTEXITCODE
+          $duration = (Get-Date) - $startTime
+          Write-Host "::endgroup::"
+
+          if ($publishExitCode -eq 0) {
+            Write-Host "::notice::Publish completed in $([math]::Round($duration.TotalSeconds, 1)) seconds"
+          } else {
+            Write-Host "::error::Publish failed after $([math]::Round($duration.TotalSeconds, 1)) seconds"
+            exit 1
+          }
+        shell: pwsh
+
+      - name: Build Summary
+        run: |
+          Write-Host ""
+          Write-Host "======================================================================" -ForegroundColor Green
+          Write-Host "                      UWP BUILD SUMMARY" -ForegroundColor Green
+          Write-Host "======================================================================" -ForegroundColor Green
+          Write-Host ""
+
+          $outputPath = "./publish/uwp-${{ matrix.platform }}"
+          $files = Get-ChildItem -Path $outputPath -Recurse -File
+          $totalSize = ($files | Measure-Object -Property Length -Sum).Sum
+          $totalSizeMB = [math]::Round($totalSize / 1MB, 2)
+
+          Write-Host "  Platform:     ${{ matrix.platform }}" -ForegroundColor White
+          Write-Host "  Runtime:      ${{ matrix.rid }}" -ForegroundColor White
+          Write-Host "  Files:        $($files.Count)" -ForegroundColor White
+          Write-Host "  Total Size:   $totalSizeMB MB" -ForegroundColor White
+          Write-Host ""
+
+          $exe = $files | Where-Object { $_.Name -eq "MarketDataCollector.Desktop.exe" }
+          if ($exe) {
+            $exeSizeMB = [math]::Round($exe.Length / 1MB, 2)
+            Write-Host "  Executable:   $($exe.Name) ($exeSizeMB MB)" -ForegroundColor Cyan
+          }
+
+          Write-Host ""
+          Write-Host "  Largest files:" -ForegroundColor Yellow
+          $files | Sort-Object Length -Descending | Select-Object -First 10 | ForEach-Object {
+            $sizeMB = [math]::Round($_.Length / 1MB, 2)
+            Write-Host "    $($_.Name): $sizeMB MB" -ForegroundColor Gray
+          }
+
+          Write-Host ""
+          Write-Host "======================================================================" -ForegroundColor Green
+        shell: pwsh
+
+      - name: Create archive
+        run: |
+          Compress-Archive -Path ./publish/uwp-${{ matrix.platform }}/* `
+            -DestinationPath MarketDataCollector.Desktop-${{ matrix.rid }}.zip
+
+          $zipSize = (Get-Item "MarketDataCollector.Desktop-${{ matrix.rid }}.zip").Length
+          $zipSizeMB = [math]::Round($zipSize / 1MB, 2)
+          Write-Host "::notice::Created archive: MarketDataCollector.Desktop-${{ matrix.rid }}.zip ($zipSizeMB MB)"
+        shell: pwsh
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MarketDataCollector.Desktop-${{ matrix.rid }}
+          path: MarketDataCollector.Desktop-${{ matrix.rid }}.zip
+          retention-days: 30
+
+      - name: Upload build logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: uwp-build-logs-${{ matrix.rid }}
+          path: |
+            **/*.log
+            **/msbuild*.binlog
+          retention-days: 7
+
+  uwp-build-msix:
+    name: UWP - Build MSIX Package
+    needs: uwp-generate-assets
+    runs-on: windows-latest
+    timeout-minutes: 30
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download generated assets
+        uses: actions/download-artifact@v4
+        with:
+          name: generated-assets
+          path: src/MarketDataCollector.Uwp/Assets/
+
+      - name: Setup .NET with Cache
+        uses: ./.github/actions/setup-dotnet-cache
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore ${{ env.UWP_PROJECT }}
+
+      - name: Build MSIX (x64)
+        run: |
+          dotnet publish ${{ env.UWP_PROJECT }} `
+            -c ${{ env.BUILD_CONFIG }} `
+            -r win-x64 `
+            -o ./publish/msix-x64 `
+            --self-contained true `
+            -p:Platform=x64 `
+            -p:PublishReadyToRun=true `
+            -bl:msbuild-msix-x64.binlog
+
+      - name: Create MSIX archive
+        run: |
+          Compress-Archive -Path ./publish/msix-x64/* `
+            -DestinationPath MarketDataCollector.Desktop-msix-x64.zip
+
+      - name: Upload MSIX artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MarketDataCollector.Desktop-msix-x64
+          path: MarketDataCollector.Desktop-msix-x64.zip
+          retention-days: 30
+
+  uwp-test:
+    name: UWP - Integration Tests
+    needs: uwp-build
+    runs-on: windows-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5.1.0
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Run integration tests
+        run: |
+          dotnet test tests/MarketDataCollector.Tests `
+            --filter "FullyQualifiedName~UwpCoreIntegration" `
+            -c Release `
+            --verbosity normal
+
+  uwp-release:
+    name: UWP - Release
+    needs: [uwp-build, uwp-build-msix]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          pattern: MarketDataCollector.Desktop-*
+          merge-multiple: false
+
+      - name: Display artifacts
+        run: find artifacts -type f -name "*.zip"
+
+      - name: Prepare release files
+        run: |
+          mkdir -p release
+          find artifacts -name "*.zip" -exec cp {} release/ \;
+          ls -la release/
+
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v2.5.0
+        with:
+          files: release/*.zip
+          fail_on_unmatched_files: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ═══════════════════════════════════════════════════════════════════════
+  # WPF Desktop App (from wpf-desktop.yml)
+  # ═══════════════════════════════════════════════════════════════════════
+
+  wpf-build:
+    name: WPF - Build
+    runs-on: windows-latest
+    timeout-minutes: 20
+    if: |
+      github.event.inputs.build_target == 'all' ||
+      github.event.inputs.build_target == 'wpf' ||
+      github.event.inputs.build_target == 'wpf-smoke-test' ||
+      github.event.inputs.build_target == '' ||
+      github.event.inputs.build_target == null
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET with Cache
+        uses: ./.github/actions/setup-dotnet-cache
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          cache-suffix: 'wpf'
+
+      - name: Restore dependencies
+        run: dotnet restore ${{ env.WPF_PROJECT }} -p:TargetFramework=net9.0-windows
+
+      - name: Build
+        run: dotnet build ${{ env.WPF_PROJECT }} -c ${{ env.BUILD_CONFIG }} --no-restore -p:TargetFramework=net9.0-windows
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: wpf-build-output
+          path: src/MarketDataCollector.Wpf/bin/${{ env.BUILD_CONFIG }}/
+          retention-days: 7
+
+  wpf-publish:
+    name: WPF - Publish ${{ matrix.artifact_suffix }}
+    needs: wpf-build
+    runs-on: windows-latest
+    timeout-minutes: 30
+    if: |
+      (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch') &&
+      github.event.inputs.build_target != 'wpf-smoke-test'
+
+    strategy:
+      matrix:
+        include:
+          - rid: win-x64
+            artifact_suffix: x64
+          - rid: win-arm64
+            artifact_suffix: arm64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET with Cache
+        uses: ./.github/actions/setup-dotnet-cache
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          cache-suffix: 'wpf'
+
+      - name: Publish (self-contained)
+        run: |
+          dotnet publish ${{ env.WPF_PROJECT }} `
+            -c ${{ env.BUILD_CONFIG }} `
+            -r ${{ matrix.rid }} `
+            -o ./publish/${{ matrix.rid }} `
+            --self-contained true `
+            -p:TargetFramework=net9.0-windows `
+            -p:PublishSingleFile=true `
+            -p:PublishReadyToRun=true `
+            -p:EnableCompressionInSingleFile=true `
+            -p:IncludeNativeLibrariesForSelfExtract=true
+
+      - name: Publish (framework-dependent)
+        run: |
+          dotnet publish ${{ env.WPF_PROJECT }} `
+            -c ${{ env.BUILD_CONFIG }} `
+            -r ${{ matrix.rid }} `
+            -o ./publish/${{ matrix.rid }}-fdd `
+            --self-contained false `
+            -p:TargetFramework=net9.0-windows `
+            -p:PublishSingleFile=true `
+            -p:PublishReadyToRun=true
+
+      - name: Copy configuration
+        run: |
+          if (Test-Path "config/appsettings.sample.json") {
+            Copy-Item "config/appsettings.sample.json" "./publish/${{ matrix.rid }}/appsettings.json"
+            Copy-Item "config/appsettings.sample.json" "./publish/${{ matrix.rid }}-fdd/appsettings.json"
+          }
+        shell: pwsh
+
+      - name: Create archive (self-contained)
+        run: |
+          Compress-Archive -Path "./publish/${{ matrix.rid }}/*" -DestinationPath "MarketDataCollector.Desktop-${{ matrix.rid }}-selfcontained.zip"
+
+      - name: Create archive (framework-dependent)
+        run: |
+          Compress-Archive -Path "./publish/${{ matrix.rid }}-fdd/*" -DestinationPath "MarketDataCollector.Desktop-${{ matrix.rid }}-fdd.zip"
+
+      - name: Upload self-contained artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MarketDataCollector.Desktop-${{ matrix.rid }}-selfcontained
+          path: MarketDataCollector.Desktop-${{ matrix.rid }}-selfcontained.zip
+          retention-days: 30
+
+      - name: Upload framework-dependent artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MarketDataCollector.Desktop-${{ matrix.rid }}-fdd
+          path: MarketDataCollector.Desktop-${{ matrix.rid }}-fdd.zip
+          retention-days: 30
+
+  # ═══════════════════════════════════════════════════════════════════════
+  # WPF Smoke Test (from wpf-commands.yml)
+  # ═══════════════════════════════════════════════════════════════════════
+
+  wpf-smoke-test:
+    name: WPF - Smoke Test
+    needs: wpf-build
+    runs-on: windows-latest
+    timeout-minutes: 20
+    if: github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET with Cache
+        uses: ./.github/actions/setup-dotnet-cache
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore ${{ env.WPF_PROJECT }} -p:TargetFramework=net9.0-windows
+
+      - name: Build
+        run: dotnet build ${{ env.WPF_PROJECT }} -c ${{ env.BUILD_CONFIG }} --no-restore -p:TargetFramework=net9.0-windows
+
+      - name: Run (smoke test)
+        shell: pwsh
+        run: |
+          $process = Start-Process dotnet -ArgumentList @(
+            "run",
+            "--project",
+            "${{ env.WPF_PROJECT }}",
+            "--configuration",
+            "${{ env.BUILD_CONFIG }}",
+            "--no-build"
+          ) -PassThru
+          Start-Sleep -Seconds 10
+          Stop-Process -Id $process.Id
+
+      - name: Publish (self-contained verification)
+        run: dotnet publish ${{ env.WPF_PROJECT }} -c ${{ env.BUILD_CONFIG }} -r win-x64 --self-contained true -p:TargetFramework=net9.0-windows
+
+  # ═══════════════════════════════════════════════════════════════════════
+  # AI Build Failure Analysis
+  # ═══════════════════════════════════════════════════════════════════════
+
+  ai-build-analysis:
+    name: AI Build Failure Analysis
+    needs: [uwp-build, wpf-build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: failure()
+
+    steps:
+      - name: Download build logs
+        uses: actions/download-artifact@v4
+        with:
+          pattern: '*-build-logs-*'
+          path: build-logs/
+          merge-multiple: true
+        continue-on-error: true
+
+      - name: AI analyze build failures
+        id: ai-analysis
+        continue-on-error: true
+        uses: actions/ai-inference@v1
+        with:
+          model: openai/gpt-4.1-mini
+          max-tokens: 1500
+          prompt: |
+            A desktop application build has failed in a CI/CD pipeline.
+            The project is a .NET 9.0 WPF/WinUI desktop application for market data collection.
+
+            Common failure patterns include:
+            - XAML compiler errors ("Assembly is not allowed in type universe")
+            - Missing WinRT metadata
+            - Platform-specific build issues (x64 vs arm64)
+            - NuGet restore failures
+            - Central Package Management (NU1008) errors
+
+            Based on these common patterns, provide:
+            1) Top 3 most likely causes for the failure
+            2) Suggested diagnostic steps
+            3) Quick fix recommendations
+
+            Keep response under 200 words in markdown format.
+
+      - name: Post analysis to summary
+        if: always()
+        run: |
+          echo "## AI Build Failure Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -n "${{ steps.ai-analysis.outputs.response }}" ]; then
+            echo "${{ steps.ai-analysis.outputs.response }}" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "AI analysis was not available. Check build logs manually." >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # ═══════════════════════════════════════════════════════════════════════
+  # Cleanup
+  # ═══════════════════════════════════════════════════════════════════════
+
+  cleanup:
+    name: Cleanup Intermediate Artifacts
+    needs: [uwp-build, uwp-release, wpf-build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: always()
+    permissions:
+      actions: write
+
+    steps:
+      - name: Delete generated-assets artifact
+        uses: geekyeggo/delete-artifact@v5.1.0
+        with:
+          name: generated-assets
+          failOnError: false

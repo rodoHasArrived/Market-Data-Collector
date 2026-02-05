@@ -1,4 +1,15 @@
-name: Documentation & Workflow Automation
+# Consolidated Documentation & AI Instruction Automation
+#
+# Replaces and combines:
+#   - docs-comprehensive.yml (Documentation & Workflow Automation)
+#   - docs-auto-update.yml (Docs Auto-Update)
+#   - docs-structure-sync.yml (Docs Structure Sync)
+#   - ai-instructions-sync.yml (AI Instructions Sync)
+#
+# All documentation generation, validation, AI instruction sync, and
+# known-error intake functionality is unified here. No functionality removed.
+
+name: Documentation Automation
 
 on:
   push:
@@ -12,6 +23,9 @@ on:
       - 'build/scripts/docs/**'
       - 'build/dotnet/DocGenerator/**'
       - 'src/**'
+      - 'tests/**'
+      - 'benchmarks/**'
+      - 'config/appsettings.sample.json'
   pull_request:
     branches: ["main"]
     paths:
@@ -46,6 +60,16 @@ on:
         description: 'Optional issue number to ingest into docs/ai-known-errors.md'
         required: false
         type: string
+      update_all:
+        description: 'Update all auto-generated documentation (providers, ADRs, config)'
+        required: false
+        default: 'false'
+        type: boolean
+      force_update:
+        description: 'Force regenerate all structure documentation'
+        required: false
+        default: 'false'
+        type: boolean
   issues:
     types: [opened, edited, labeled, reopened]
 
@@ -53,9 +77,10 @@ permissions:
   contents: write
   issues: read
   pull-requests: write
+  models: read
 
 concurrency:
-  group: docs-comprehensive-${{ github.ref }}
+  group: documentation-${{ github.ref }}
   cancel-in-progress: true
 
 defaults:
@@ -69,6 +94,7 @@ env:
   DOTNET_CLI_TELEMETRY_OPTOUT: true
 
 jobs:
+  # ─── AI Known Errors Intake (from docs-comprehensive) ──────────────────
   ai-known-errors-intake:
     name: AI Known Errors Intake
     if: |
@@ -244,8 +270,9 @@ jobs:
             documentation
             automation
 
+  # ─── Change Detection (unified from all 4 workflows) ──────────────────
   detect-changes:
-    name: Detect Documentation/Workflow Changes
+    name: Detect Documentation & Structure Changes
     if: github.event_name != 'issues'
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -255,6 +282,10 @@ jobs:
       workflow_changed: ${{ steps.filter.outputs.workflows }}
       providers_changed: ${{ steps.filter.outputs.providers }}
       ai_files_changed: ${{ steps.filter.outputs.ai_files }}
+      src_changed: ${{ steps.filter.outputs.src }}
+      adrs_changed: ${{ steps.filter.outputs.adrs }}
+      config_changed: ${{ steps.filter.outputs.config }}
+      interfaces_changed: ${{ steps.filter.outputs.interfaces }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -285,7 +316,18 @@ jobs:
               - 'docs/ai/**'
               - '.github/agents/**'
               - 'CLAUDE.md'
+            src:
+              - 'src/**/*.cs'
+              - 'src/**/*.fs'
+            adrs:
+              - 'docs/adr/**'
+            config:
+              - 'config/appsettings.sample.json'
+            interfaces:
+              - 'src/MarketDataCollector/Infrastructure/IMarketDataClient.cs'
+              - 'src/MarketDataCollector/Infrastructure/Providers/Backfill/IHistoricalDataProvider*.cs'
 
+  # ─── Validate Documentation Quality ────────────────────────────────────
   validate-docs:
     name: Validate Documentation Quality
     runs-on: ubuntu-latest
@@ -327,10 +369,11 @@ jobs:
           ADR_COUNT=$(find docs -path "*/adr/*.md" -o -path "*/decisions/*.md" 2>/dev/null | wc -l)
           echo "Found $ADR_COUNT ADR files" >> $GITHUB_STEP_SUMMARY
 
+  # ─── Regenerate All Documentation (unified from all 4 workflows) ───────
   regenerate-docs:
-    name: Regenerate Generated Docs + AI Instructions
+    name: Regenerate Docs, Structure & AI Instructions
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
     needs: detect-changes
     if: |
       needs.detect-changes.outputs.structure_changed == 'true' ||
@@ -338,6 +381,10 @@ jobs:
       needs.detect-changes.outputs.workflow_changed == 'true' ||
       needs.detect-changes.outputs.providers_changed == 'true' ||
       needs.detect-changes.outputs.ai_files_changed == 'true' ||
+      needs.detect-changes.outputs.src_changed == 'true' ||
+      needs.detect-changes.outputs.adrs_changed == 'true' ||
+      needs.detect-changes.outputs.config_changed == 'true' ||
+      needs.detect-changes.outputs.interfaces_changed == 'true' ||
       github.event_name == 'workflow_dispatch' ||
       github.event_name == 'schedule'
     outputs:
@@ -371,15 +418,31 @@ jobs:
             /p:GenerateDocumentationFile=true
         continue-on-error: true
 
+      # --- Structure docs (from docs-comprehensive + docs-structure-sync) ---
       - name: Generate structure and workflow docs
         run: |
           set -euo pipefail
           mkdir -p docs/generated
           python3 build/scripts/docs/generate-structure-docs.py --output docs/generated/repository-structure.md --format markdown
-          python3 build/scripts/docs/generate-structure-docs.py --output docs/generated/provider-registry.md --providers-only
           python3 build/scripts/docs/generate-structure-docs.py --output docs/generated/workflows-overview.md --workflows-only
 
-      - name: Generate project context doc (if tool exists)
+      # --- Provider docs (from docs-comprehensive + docs-auto-update + docs-structure-sync) ---
+      - name: Generate provider registry
+        if: |
+          needs.detect-changes.outputs.providers_changed == 'true' ||
+          needs.detect-changes.outputs.interfaces_changed == 'true' ||
+          github.event.inputs.update_all == 'true' ||
+          github.event.inputs.force_update == 'true' ||
+          github.event_name == 'schedule'
+        run: |
+          set -euo pipefail
+          python3 build/scripts/docs/generate-structure-docs.py \
+            --output docs/generated/provider-registry.md \
+            --providers-only \
+            --extract-attributes
+
+      # --- Project context doc (from docs-comprehensive + docs-auto-update) ---
+      - name: Generate project context doc
         run: |
           set -euo pipefail
           if [ -d "build/dotnet/DocGenerator" ]; then
@@ -388,7 +451,97 @@ jobs:
             dotnet run --project build/dotnet/DocGenerator/DocGenerator.csproj --no-build -c Release -- context --src src/MarketDataCollector --output docs/generated/project-context.md || true
           fi
 
-      - name: Validate required documentation automation inputs
+      # --- ADR index (from docs-auto-update) ---
+      - name: Generate ADR index
+        if: |
+          needs.detect-changes.outputs.adrs_changed == 'true' ||
+          github.event.inputs.update_all == 'true' ||
+          github.event_name == 'schedule'
+        run: |
+          set -euo pipefail
+          if [ -d "build/dotnet/DocGenerator" ]; then
+            dotnet run --project build/dotnet/DocGenerator/DocGenerator.csproj --no-build -c Release -- verify-adrs \
+              --adr-dir docs/adr \
+              --src-dir . || true
+          fi
+
+          echo "# Architecture Decision Records" > docs/generated/adr-index.md
+          echo "" >> docs/generated/adr-index.md
+          echo "> Auto-generated on $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> docs/generated/adr-index.md
+          echo "" >> docs/generated/adr-index.md
+          echo "| ADR | Title | Status |" >> docs/generated/adr-index.md
+          echo "|-----|-------|--------|" >> docs/generated/adr-index.md
+
+          for adr in docs/adr/*.md; do
+            if [ -f "$adr" ]; then
+              filename=$(basename "$adr")
+              title=$(head -1 "$adr" | sed 's/^# //')
+              status="Accepted"
+              if grep -qi "status:.*superseded" "$adr"; then
+                status="Superseded"
+              elif grep -qi "status:.*deprecated" "$adr"; then
+                status="Deprecated"
+              fi
+              echo "| [$filename](../adr/$filename) | $title | $status |" >> docs/generated/adr-index.md
+            fi
+          done
+
+          echo "" >> docs/generated/adr-index.md
+          echo "---" >> docs/generated/adr-index.md
+          echo "*This file is auto-generated. Do not edit manually.*" >> docs/generated/adr-index.md
+
+      # --- Configuration schema (from docs-auto-update) ---
+      - name: Generate configuration schema
+        if: |
+          needs.detect-changes.outputs.config_changed == 'true' ||
+          github.event.inputs.update_all == 'true' ||
+          github.event_name == 'schedule'
+        run: |
+          set -euo pipefail
+          mkdir -p docs/generated
+
+          cat > docs/generated/configuration-schema.md << 'EOF'
+          # Configuration Schema
+
+          > Auto-generated from `config/appsettings.sample.json`
+
+          This document describes the configuration options available in the Market Data Collector.
+
+          ## Configuration Sections
+
+          EOF
+
+          if [ -f "config/appsettings.sample.json" ]; then
+            python3 -c "
+          import json
+          import sys
+
+          try:
+              with open('config/appsettings.sample.json', 'r') as f:
+                  config = json.load(f)
+
+              for section, value in config.items():
+                  print(f'### {section}')
+                  print('')
+                  if isinstance(value, dict):
+                      print('| Setting | Type | Description |')
+                      print('|---------|------|-------------|')
+                      for key, val in value.items():
+                          val_type = type(val).__name__
+                          print(f'| \`{key}\` | {val_type} | - |')
+                  else:
+                      print(f'Type: \`{type(value).__name__}\`')
+                  print('')
+          except Exception as e:
+              print(f'Error parsing config: {e}', file=sys.stderr)
+          " >> docs/generated/configuration-schema.md
+          fi
+
+          echo "---" >> docs/generated/configuration-schema.md
+          echo "*This file is auto-generated. Do not edit manually.*" >> docs/generated/configuration-schema.md
+
+      # --- AI instruction sync (from docs-comprehensive + ai-instructions-sync) ---
+      - name: Validate documentation automation inputs
         run: |
           set -euo pipefail
           required=(
@@ -423,6 +576,40 @@ jobs:
             fi
           done
 
+      # --- AI-powered documentation quality review ---
+      - name: AI documentation quality review
+        id: ai-doc-review
+        if: |
+          github.event_name == 'schedule' ||
+          (github.event_name == 'workflow_dispatch' && github.event.inputs.regenerate == 'true')
+        continue-on-error: true
+        uses: actions/ai-inference@v1
+        with:
+          model: openai/gpt-4.1-mini
+          max-tokens: 1500
+          prompt: |
+            You are a documentation quality reviewer for a .NET market data collection project.
+            Review the following generated documentation file list and provide:
+            1) A brief quality assessment (completeness, consistency)
+            2) Any gaps in documentation coverage
+            3) Suggestions for improvement (max 3)
+
+            Keep the response under 200 words in markdown format.
+
+            Generated documentation files:
+            - docs/generated/repository-structure.md
+            - docs/generated/provider-registry.md
+            - docs/generated/workflows-overview.md
+            - docs/generated/project-context.md
+            - docs/generated/adr-index.md
+            - docs/generated/configuration-schema.md
+
+            AI instruction files synced:
+            - CLAUDE.md
+            - docs/ai/copilot/instructions.md
+            - .github/agents/documentation-agent.md
+
+      # --- Check for changes ---
       - name: Check for generated changes
         id: changes
         run: |
@@ -448,6 +635,16 @@ jobs:
             echo "changed_files=" >> $GITHUB_OUTPUT
             echo "No generated documentation changes detected." >> "$GITHUB_STEP_SUMMARY"
           fi
+
+      - name: Append AI review to summary
+        if: always() && steps.ai-doc-review.outputs.response != ''
+        run: |
+          {
+            echo ""
+            echo "### AI Documentation Quality Review"
+            echo ""
+            echo "${{ steps.ai-doc-review.outputs.response }}"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Show dry-run diff
         if: |
@@ -489,36 +686,64 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
           git add docs/generated/ CLAUDE.md docs/ai/copilot/instructions.md .github/agents/documentation-agent.md
-          git commit -m "docs: consolidate documentation automation updates
+          git commit -m "docs: consolidated documentation automation updates
 
           - Regenerated docs/generated artifacts
           - Synced AI instruction files
+          - Updated provider registry, ADR index, config schema
 
           [skip ci]"
           git push
 
       - name: Create pull request for manual updates
+        id: create-pr
         if: |
           steps.changes.outputs.has_changes == 'true' &&
           github.event_name == 'workflow_dispatch' &&
           github.event.inputs.create_pr == 'true' &&
           github.event.inputs.dry_run != 'true'
+        continue-on-error: true
         uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           branch: automation/docs-comprehensive-sync
           delete-branch: true
-          commit-message: "docs: consolidate documentation automation updates"
-          title: "docs: consolidate documentation automation updates"
+          commit-message: "docs: consolidated documentation automation updates"
+          title: "docs: consolidated documentation automation updates"
           body: |
             ## Summary
             - Regenerated `docs/generated/*` artifacts.
             - Synced repository-structure sections in AI instruction files.
+            - Updated provider registry, ADR index, configuration schema.
             - Consolidated all documentation automation outputs into one run.
           labels: |
             documentation
             automation
 
+      - name: Fallback - Commit directly if PR creation failed
+        if: |
+          steps.changes.outputs.has_changes == 'true' &&
+          github.event_name == 'workflow_dispatch' &&
+          github.event.inputs.create_pr == 'true' &&
+          github.event.inputs.dry_run != 'true' &&
+          steps.create-pr.outcome == 'failure'
+        run: |
+          echo "::warning::PR creation failed. Falling back to direct commit."
+          echo "::notice::To enable PR creation, go to Settings > Actions > General and enable 'Allow GitHub Actions to create and approve pull requests'"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add docs/generated/ CLAUDE.md docs/ai/copilot/instructions.md .github/agents/documentation-agent.md
+          git commit -m "docs: consolidated documentation automation updates
+
+          Note: Committed directly because PR creation is disabled in repository settings.
+
+          [skip ci]"
+
+          git push
+
+  # ─── Report (enhanced from all 4 workflows) ───────────────────────────
   report:
     name: Documentation Automation Report
     runs-on: ubuntu-latest
@@ -528,7 +753,13 @@ jobs:
     steps:
       - name: Publish summary
         run: |
-          echo "# Documentation & Workflow Automation Report" >> $GITHUB_STEP_SUMMARY
+          echo "# Documentation Automation Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Trigger:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Change Detection" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Area | Changed |" >> $GITHUB_STEP_SUMMARY
           echo "|------|---------|" >> $GITHUB_STEP_SUMMARY
@@ -537,6 +768,12 @@ jobs:
           echo "| Structure | ${{ needs.detect-changes.outputs.structure_changed }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Providers | ${{ needs.detect-changes.outputs.providers_changed }} |" >> $GITHUB_STEP_SUMMARY
           echo "| AI files | ${{ needs.detect-changes.outputs.ai_files_changed }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Source code | ${{ needs.detect-changes.outputs.src_changed }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| ADRs | ${{ needs.detect-changes.outputs.adrs_changed }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Configuration | ${{ needs.detect-changes.outputs.config_changed }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Interfaces | ${{ needs.detect-changes.outputs.interfaces_changed }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Job Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Job | Result |" >> $GITHUB_STEP_SUMMARY
           echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY

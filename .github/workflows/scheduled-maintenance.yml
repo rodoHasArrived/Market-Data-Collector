@@ -1,11 +1,17 @@
-# Scheduled Maintenance Workflow
-# Runs periodic maintenance tasks including full test suite, dependency checks, and health reports
+# Scheduled Maintenance Workflow (Consolidated)
+#
+# Now also includes functionality from cache-management.yml:
+#   - GitHub Actions cache listing and cleanup
+#   - Automated cache pruning on schedule
+#
+# Runs periodic maintenance tasks including full test suite, dependency checks,
+# cache management, and AI-powered health reports.
 
 name: Scheduled Maintenance
 
 on:
   schedule:
-    # Run weekly on Sunday at 8:00 UTC (distributed to avoid conflicts with nightly at 2 AM)
+    # Run weekly on Sunday at 8:00 UTC (distributed to avoid conflicts with nightly at 1 AM)
     - cron: '0 8 * * 0'
   workflow_dispatch:
     inputs:
@@ -19,10 +25,22 @@ on:
         required: false
         default: 'true'
         type: boolean
+      cache_action:
+        description: 'Cache management action'
+        required: false
+        default: 'clean-old'
+        type: choice
+        options:
+          - none
+          - list
+          - clean-old
+          - clean-all
 
 permissions:
   contents: read
   issues: write
+  actions: write
+  models: read
 
 env:
   DOTNET_VERSION: '9.0.x'
@@ -34,6 +52,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # ─── Full Test Suite ───────────────────────────────────────────────────
   full-test-suite:
     name: Full Test Suite
     runs-on: ubuntu-latest
@@ -94,11 +113,15 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Date:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
 
+  # ─── Dependency Health Check ───────────────────────────────────────────
   dependency-health:
     name: Dependency Health Check
     runs-on: ubuntu-latest
     timeout-minutes: 15
     if: github.event_name == 'schedule' || github.event.inputs.run_dependency_check == 'true'
+    outputs:
+      outdated_summary: ${{ steps.outdated.outputs.summary }}
+      vulnerable_summary: ${{ steps.vulnerable.outputs.summary }}
 
     steps:
       - name: Checkout repository
@@ -113,6 +136,7 @@ jobs:
         run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
 
       - name: Check for outdated packages
+        id: outdated
         run: |
           echo "## Dependency Health Report" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -121,8 +145,13 @@ jobs:
 
           echo "### Outdated Packages" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          dotnet list MarketDataCollector.sln package --outdated 2>&1 | head -50 >> $GITHUB_STEP_SUMMARY
+          dotnet list MarketDataCollector.sln package --outdated 2>&1 | tee outdated.txt | head -50 >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
+
+          # Save for AI analysis
+          echo "summary<<OUTDATEDEOF" >> $GITHUB_OUTPUT
+          head -30 outdated.txt >> $GITHUB_OUTPUT
+          echo "OUTDATEDEOF" >> $GITHUB_OUTPUT
 
       - name: Check for deprecated packages
         run: |
@@ -133,18 +162,177 @@ jobs:
           echo '```' >> $GITHUB_STEP_SUMMARY
 
       - name: Check for vulnerable packages
+        id: vulnerable
         run: |
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Vulnerable Packages" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          dotnet list MarketDataCollector.sln package --vulnerable --include-transitive 2>&1 >> $GITHUB_STEP_SUMMARY
+          dotnet list MarketDataCollector.sln package --vulnerable --include-transitive 2>&1 | tee vulnerable.txt >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
 
+          # Save for AI analysis
+          echo "summary<<VULNEOF" >> $GITHUB_OUTPUT
+          head -30 vulnerable.txt >> $GITHUB_OUTPUT
+          echo "VULNEOF" >> $GITHUB_OUTPUT
+
+  # ─── Cache Management (absorbed from cache-management.yml) ─────────────
+  cache-management:
+    name: Cache Management
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: List caches
+        if: |
+          github.event.inputs.cache_action == 'list' ||
+          github.event_name == 'schedule'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const caches = await github.rest.actions.getActionsCacheList({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+            console.log(`Total caches: ${caches.data.total_count}`);
+            console.log('Cache list:');
+            caches.data.actions_caches.forEach(cache => {
+              console.log(`- ${cache.key} (${(cache.size_in_bytes / 1024 / 1024).toFixed(2)} MB, last accessed: ${cache.last_accessed_at})`);
+            });
+
+            // Write summary
+            const lines = [
+              '## Cache Management Report',
+              '',
+              `**Total caches:** ${caches.data.total_count}`,
+              '',
+              '| Cache Key | Size (MB) | Last Accessed |',
+              '|-----------|-----------|---------------|',
+            ];
+            caches.data.actions_caches.forEach(cache => {
+              lines.push(`| \`${cache.key.substring(0, 60)}\` | ${(cache.size_in_bytes / 1024 / 1024).toFixed(2)} | ${cache.last_accessed_at} |`);
+            });
+
+            const fs = require('fs');
+            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, lines.join('\n') + '\n');
+
+      - name: Clean old caches (>30 days)
+        if: |
+          github.event.inputs.cache_action == 'clean-old' ||
+          github.event_name == 'schedule'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const caches = await github.rest.actions.getActionsCacheList({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+            let deletedCount = 0;
+            let freedBytes = 0;
+            for (const cache of caches.data.actions_caches) {
+              const lastAccessed = new Date(cache.last_accessed_at);
+              if (lastAccessed < thirtyDaysAgo) {
+                console.log(`Deleting old cache: ${cache.key}`);
+                await github.rest.actions.deleteActionsCacheById({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  cache_id: cache.id,
+                });
+                deletedCount++;
+                freedBytes += cache.size_in_bytes;
+              }
+            }
+            const freedMB = (freedBytes / 1024 / 1024).toFixed(2);
+            console.log(`Deleted ${deletedCount} old caches (freed ${freedMB} MB)`);
+
+            const fs = require('fs');
+            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,
+              `\n### Cache Cleanup\n\nDeleted **${deletedCount}** stale caches (freed **${freedMB} MB**).\n`
+            );
+
+      - name: Clean all caches
+        if: github.event.inputs.cache_action == 'clean-all'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const caches = await github.rest.actions.getActionsCacheList({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+
+            for (const cache of caches.data.actions_caches) {
+              console.log(`Deleting cache: ${cache.key}`);
+              await github.rest.actions.deleteActionsCacheById({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                cache_id: cache.id,
+              });
+            }
+            console.log(`Deleted all ${caches.data.total_count} caches`);
+
+  # ─── AI Dependency Recommendations ─────────────────────────────────────
+  ai-dependency-analysis:
+    name: AI Dependency Analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [dependency-health]
+    if: |
+      always() &&
+      needs.dependency-health.result == 'success'
+
+    steps:
+      - name: AI dependency upgrade recommendations
+        id: ai-deps
+        continue-on-error: true
+        uses: actions/ai-inference@v1
+        with:
+          model: openai/gpt-4.1-mini
+          max-tokens: 1500
+          prompt: |
+            You are a .NET dependency management expert reviewing a weekly maintenance report
+            for a .NET 9.0 market data collection application.
+
+            The project uses Central Package Management (Directory.Packages.props) and has
+            dependencies including: Serilog, Polly, System.Text.Json, BenchmarkDotNet,
+            xUnit, FluentAssertions, Skender.Stock.Indicators, and various Microsoft packages.
+
+            Outdated packages report:
+            ${{ needs.dependency-health.outputs.outdated_summary }}
+
+            Vulnerable packages report:
+            ${{ needs.dependency-health.outputs.vulnerable_summary }}
+
+            Provide:
+            1) Priority upgrade recommendations (which packages to update first and why)
+            2) Any breaking change warnings for major version updates
+            3) Security-critical updates that should be done immediately
+            4) Packages that are safe to batch-update together
+
+            Keep response under 300 words in markdown format.
+
+      - name: Post AI recommendations to summary
+        if: always()
+        run: |
+          echo "## AI Dependency Upgrade Recommendations" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -n "${{ steps.ai-deps.outputs.response }}" ]; then
+            echo "${{ steps.ai-deps.outputs.response }}" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "_AI recommendations were not available for this run._" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # ─── Maintenance Summary ───────────────────────────────────────────────
   maintenance-summary:
     name: Maintenance Summary
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    needs: [full-test-suite, dependency-health]
+    needs: [full-test-suite, dependency-health, cache-management, ai-dependency-analysis]
     if: always()
 
     steps:
@@ -159,5 +347,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Full Test Suite | ${{ needs.full-test-suite.result == 'success' && 'Passed' || needs.full-test-suite.result == 'skipped' && 'Skipped' || 'Failed' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Dependency Health | ${{ needs.dependency-health.result == 'success' && 'Passed' || needs.dependency-health.result == 'skipped' && 'Skipped' || 'Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Full Test Suite | ${{ needs.full-test-suite.result == 'success' && 'Passed' || (needs.full-test-suite.result == 'skipped' && 'Skipped' || 'Failed') }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Dependency Health | ${{ needs.dependency-health.result == 'success' && 'Passed' || (needs.dependency-health.result == 'skipped' && 'Skipped' || 'Failed') }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Cache Management | ${{ needs.cache-management.result == 'success' && 'Completed' || (needs.cache-management.result == 'skipped' && 'Skipped' || 'Failed') }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| AI Dependency Analysis | ${{ needs.ai-dependency-analysis.result == 'success' && 'Completed' || (needs.ai-dependency-analysis.result == 'skipped' && 'Skipped' || 'Unavailable') }} |" >> $GITHUB_STEP_SUMMARY
