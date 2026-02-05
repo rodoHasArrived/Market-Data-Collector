@@ -25,6 +25,6 @@ The main `CLAUDE.md` file at the repository root provides the primary AI assista
 ## AI Error Memory Workflow
 
 - Use `docs/ai-known-errors.md` as the canonical registry of repeated AI mistakes.
-- Label GitHub issues with `ai-known-error` to trigger the `AI Known Errors Intake` job in `.github/workflows/documentation.yml`, which opens a PR that records the issue in the registry.
+- Label GitHub issues with `ai-known-error` to trigger the `AI Known Errors Intake` job in `.github/workflows/docs-comprehensive.yml`, which opens a PR that records the issue in the registry.
 - Include headings in issue bodies for best automation quality: `Area`, `Symptoms`, `Root cause`, `Prevention checklist`, and `Verification commands`.
 

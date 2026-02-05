@@ -89,7 +89,7 @@ dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --mod
 To reduce repeated mistakes across agents, always review and update:
 
 - `docs/ai-known-errors.md` — canonical log of recurring agent mistakes, root causes, and prevention checks.
-- `.github/workflows/documentation.yml` (AI Known Errors Intake job) — automation that ingests labeled GitHub issues into the known-error registry via PR.
+- `.github/workflows/docs-comprehensive.yml` (AI Known Errors Intake job) — automation that ingests labeled GitHub issues into the known-error registry via PR.
 
 ### Required workflow for AI agents
 
@@ -188,17 +188,17 @@ Market-Data-Collector/
 │   │   ├── wpf-debug-improve.prompt.yml
 │   │   └── write-unit-tests.prompt.yml
 │   ├── workflows/
-│   │   ├── ai-instructions-sync.yml
 │   │   ├── benchmark.yml
 │   │   ├── build-observability.yml
 │   │   ├── cache-management.yml
 │   │   ├── code-quality.yml
+│   │   ├── CONSOLIDATION_SUMMARY.md
 │   │   ├── dependency-review.yml
 │   │   ├── desktop-app.yml
 │   │   ├── docker.yml
 │   │   ├── docs-auto-update.yml
+│   │   ├── docs-comprehensive.yml
 │   │   ├── docs-structure-sync.yml
-│   │   ├── documentation.yml
 │   │   ├── dotnet-desktop.yml
 │   │   ├── labeling.yml
 │   │   ├── nightly.yml
@@ -1700,9 +1700,9 @@ The project uses GitHub Actions with 21 workflows in `.github/workflows/`:
 | `docker.yml` | Docker image building and publishing |
 | `dotnet-desktop.yml` | Desktop application builds |
 | `desktop-app.yml` | UWP app builds |
-| `documentation.yml` | Documentation generation |
-| `docs-auto-update.yml` | Auto-update docs on changes |
-| `docs-structure-sync.yml` | Sync documentation structure |
+| `docs-comprehensive.yml` | Comprehensive documentation automation with AI Known Errors Intake |
+| `docs-auto-update.yml` | Auto-update docs on changes (manual only) |
+| `docs-structure-sync.yml` | Sync documentation structure (manual only) |
 | `release.yml` | Release automation |
 | `pr-checks.yml` | PR validation checks |
 | `dependency-review.yml` | Dependency review |
