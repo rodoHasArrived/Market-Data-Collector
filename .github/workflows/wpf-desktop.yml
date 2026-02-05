@@ -51,7 +51,7 @@ jobs:
         run: dotnet build ${{ env.PROJECT_PATH }} -c Release --no-restore -p:TargetFramework=net9.0-windows
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v6.0.0
+        uses: actions/upload-artifact@v4
         with:
           name: wpf-build-output
           path: src/MarketDataCollector.Wpf/bin/Release/
@@ -123,14 +123,14 @@ jobs:
           Compress-Archive -Path "./publish/${{ matrix.rid }}-fdd/*" -DestinationPath "MarketDataCollector.Desktop-${{ matrix.rid }}-fdd.zip"
 
       - name: Upload self-contained artifact
-        uses: actions/upload-artifact@v6.0.0
+        uses: actions/upload-artifact@v4
         with:
           name: MarketDataCollector.Desktop-${{ matrix.rid }}-selfcontained
           path: MarketDataCollector.Desktop-${{ matrix.rid }}-selfcontained.zip
           retention-days: 30
 
       - name: Upload framework-dependent artifact
-        uses: actions/upload-artifact@v6.0.0
+        uses: actions/upload-artifact@v4
         with:
           name: MarketDataCollector.Desktop-${{ matrix.rid }}-fdd
           path: MarketDataCollector.Desktop-${{ matrix.rid }}-fdd.zip

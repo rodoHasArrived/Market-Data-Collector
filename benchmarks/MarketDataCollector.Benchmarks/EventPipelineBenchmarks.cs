@@ -10,7 +10,7 @@ namespace MarketDataCollector.Benchmarks;
 
 /// <summary>
 /// Benchmarks for event pipeline throughput and latency.
-/// Tests Channel<T> performance with various configurations.
+/// Tests Channel{T} performance with various configurations.
 ///
 /// Reference: docs/open-source-references.md #11 (System.Threading.Channels)
 /// </summary>
