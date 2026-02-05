@@ -73,14 +73,17 @@ public sealed class SpreadMonitorTests : IDisposable
     public void ProcessQuote_ShouldTrackSpreadStatistics()
     {
         // Arrange & Act
-        _monitor.ProcessQuote("AAPL", 149.90m, 150.10m, "Provider1"); // 20 bps
-        _monitor.ProcessQuote("AAPL", 149.85m, 150.15m, "Provider1"); // 30 bps
+        // Quote 1: spread=0.20, mid=150.00, spreadBps=(0.20/150.00)*10000=13.33 bps
+        _monitor.ProcessQuote("AAPL", 149.90m, 150.10m, "Provider1");
+        // Quote 2: spread=0.30, mid=150.00, spreadBps=(0.30/150.00)*10000=20.00 bps
+        _monitor.ProcessQuote("AAPL", 149.85m, 150.15m, "Provider1");
 
         // Assert
         var snapshot = _monitor.GetSpreadSnapshot("AAPL");
         snapshot.Should().NotBeNull();
         snapshot!.Value.TotalQuotes.Should().Be(2);
-        snapshot.Value.AverageSpreadBps.Should().BeApproximately(25.0, 5.0);
+        // Average: (13.33 + 20.00) / 2 = 16.67 bps
+        snapshot.Value.AverageSpreadBps.Should().BeApproximately(16.67, 1.0);
     }
 
     [Fact]
