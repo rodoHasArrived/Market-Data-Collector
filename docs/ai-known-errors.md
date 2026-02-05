@@ -54,3 +54,18 @@ If headings are missing, the workflow still creates an entry with safe defaults 
   - `rg "AI-" docs/ai-known-errors.md`
 - **Source issue**: manual bootstrap
 - **Status**: mitigated
+
+### AI-20260205-wpf-grid-padding
+- **Area**: build/WPF/XAML
+- **Symptoms**: WPF builds fail with error MC3072: "The property 'Padding' does not exist in XML namespace". Build succeeds in UWP but fails in WPF.
+- **Root cause**: Grid control doesn't support Padding property in WPF (unlike UWP/WinUI). This is a WPF/UWP API compatibility difference that agents may not be aware of when porting XAML code.
+- **Prevention checklist**:
+  - [ ] When working with WPF XAML, check that Grid elements don't use Padding, CornerRadius, BorderBrush, or BorderThickness properties
+  - [ ] If padding is needed on a Grid in WPF, wrap it in a Border element instead
+  - [ ] Search for `<Grid.*Padding=` pattern in WPF .xaml files before committing
+  - [ ] Remember: Border, StackPanel, and DockPanel support Padding in WPF, but Grid does not
+- **Verification commands**:
+  - `grep -rn '<Grid.*Padding=' src/MarketDataCollector.Wpf --include="*.xaml"`
+  - `dotnet build src/MarketDataCollector.Wpf/MarketDataCollector.Wpf.csproj -c Release --no-restore -p:TargetFramework=net9.0-windows`
+- **Source issue**: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/21707017569/job/62600607213
+- **Status**: fixed

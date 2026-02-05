@@ -669,31 +669,33 @@
                             </ListView.ItemsPanel>
                             <ListView.ItemTemplate>
                                 <DataTemplate>
-                                    <Grid Padding="8,10">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
+                                    <Border Padding="8,10">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
 
-                                        <Border Grid.Column="0" Width="36" Height="36" CornerRadius="18"
-                                                Background="{Binding IconBackground}">
-                                            <TextBlock Text="{Binding IconGlyph}" FontSize="14" Foreground="White"
-                                                       FontFamily="{StaticResource SymbolThemeFontFamily}"
-                                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                        </Border>
+                                            <Border Grid.Column="0" Width="36" Height="36" CornerRadius="18"
+                                                    Background="{Binding IconBackground}">
+                                                <TextBlock Text="{Binding IconGlyph}" FontSize="14" Foreground="White"
+                                                           FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
 
-                                        <StackPanel Grid.Column="1" Margin="12,0,0,0">
-                                            <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
-                                            <TextBlock Text="{Binding Description}" FontSize="12"
+                                            <StackPanel Grid.Column="1" Margin="12,0,0,0">
+                                                <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
+                                                <TextBlock Text="{Binding Description}" FontSize="12"
+                                                           Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                                           TextTrimming="CharacterEllipsis" />
+                                            </StackPanel>
+
+                                            <TextBlock Grid.Column="2" Text="{Binding RelativeTime}" FontSize="11"
                                                        Foreground="{StaticResource ConsoleTextMutedBrush}"
-                                                       TextTrimming="CharacterEllipsis" />
-                                        </StackPanel>
-
-                                        <TextBlock Grid.Column="2" Text="{Binding RelativeTime}" FontSize="11"
-                                                   Foreground="{StaticResource ConsoleTextMutedBrush}"
-                                                   VerticalAlignment="Top" />
-                                    </Grid>
+                                                       VerticalAlignment="Top" />
+                                        </Grid>
+                                    </Border>
                                 </DataTemplate>
                             </ListView.ItemTemplate>
                         </ListView>
@@ -971,37 +973,39 @@
                             </ListView.ItemsPanel>
                             <ListView.ItemTemplate>
                                 <DataTemplate>
-                                    <Grid Padding="8,10">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="80" />
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
+                                    <Border Padding="8,10">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="80" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
 
-                                        <Border Grid.Column="0" Width="4" CornerRadius="2" Background="{Binding SeverityColor}" />
+                                            <Border Grid.Column="0" Width="4" CornerRadius="2" Background="{Binding SeverityColor}" />
 
-                                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="8,0,0,0">
-                                            <TextBlock Text="{Binding Symbol}" FontWeight="SemiBold" />
-                                            <TextBlock Text="{Binding EventTypeName}" FontSize="11"
-                                                       Foreground="{StaticResource ConsoleTextMutedBrush}" />
-                                        </StackPanel>
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="8,0,0,0">
+                                                <TextBlock Text="{Binding Symbol}" FontWeight="SemiBold" />
+                                                <TextBlock Text="{Binding EventTypeName}" FontSize="11"
+                                                           Foreground="{StaticResource ConsoleTextMutedBrush}" />
+                                            </StackPanel>
 
-                                        <TextBlock Grid.Column="2" Text="{Binding Description}"
-                                                   VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="8,0,0,0" />
+                                            <TextBlock Grid.Column="2" Text="{Binding Description}"
+                                                       VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="8,0,0,0" />
 
-                                        <TextBlock Grid.Column="3" Text="{Binding RelativeTime}" FontSize="11"
-                                                   Foreground="{StaticResource ConsoleTextMutedBrush}"
-                                                   VerticalAlignment="Center" Margin="8,0,0,0" />
+                                            <TextBlock Grid.Column="3" Text="{Binding RelativeTime}" FontSize="11"
+                                                       Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                                       VerticalAlignment="Center" Margin="8,0,0,0" />
 
-                                        <Button Grid.Column="4" Click="AcknowledgeIntegrityEvent_Click"
-                                                Tag="{Binding Id}" Padding="6,4"
-                                                Visibility="{Binding IsNotAcknowledged, Converter={StaticResource BoolToVisibilityConverter}}">
-                                            <TextBlock Text="{StaticResource IconSuccess}" FontSize="12"
-                                                       FontFamily="{StaticResource SymbolThemeFontFamily}" />
-                                        </Button>
-                                    </Grid>
+                                            <Button Grid.Column="4" Click="AcknowledgeIntegrityEvent_Click"
+                                                    Tag="{Binding Id}" Padding="6,4"
+                                                    Visibility="{Binding IsNotAcknowledged, Converter={StaticResource BoolToVisibilityConverter}}">
+                                                <TextBlock Text="{StaticResource IconSuccess}" FontSize="12"
+                                                           FontFamily="{StaticResource SymbolThemeFontFamily}" />
+                                            </Button>
+                                        </Grid>
+                                    </Border>
                                 </DataTemplate>
                             </ListView.ItemTemplate>
                         </ListView>
