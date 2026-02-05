@@ -4,7 +4,9 @@
     <EnableWindowsTargeting Condition="'$([MSBuild]::IsOSPlatform(&quot;Windows&quot;))' != 'true'">true</EnableWindowsTargeting>
     
     <!-- Suppress common benign warnings across all projects -->
+    <!-- MSB3277: Assembly binding conflict (typically transitive dependencies, resolved automatically) -->
+    <!-- NETSDK1206: Version-specific or distribution-specific RID (legacy RIDs, handled by newer .NET) -->
     <!-- NU1608: Package version outside of dependency constraint (transitive dependencies) -->
-    <NoWarn>$(NoWarn);NU1608</NoWarn>
+    <NoWarn>$(NoWarn);MSB3277;NETSDK1206;NU1608</NoWarn>
   </PropertyGroup>
 </Project>

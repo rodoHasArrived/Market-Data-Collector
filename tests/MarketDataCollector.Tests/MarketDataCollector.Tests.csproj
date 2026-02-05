@@ -8,10 +8,11 @@
     <IsTestProject>true</IsTestProject>
     
     <!-- Suppress expected warnings in tests -->
+    <!-- CS0219: Variable assigned but not used (tests often assign for verification/debugging) -->
     <!-- CS8602: Dereference of a possibly null reference (tests intentionally work with nulls) -->
     <!-- CS8600: Converting null literal or possible null value to non-nullable type (tests intentionally work with nulls) -->
     <!-- CS8625: Cannot convert null literal to non-nullable reference type (tests intentionally work with nulls) -->
-    <NoWarn>$(NoWarn);CS8602;CS8600;CS8625</NoWarn>
+    <NoWarn>$(NoWarn);CS0219;CS8602;CS8600;CS8625</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
