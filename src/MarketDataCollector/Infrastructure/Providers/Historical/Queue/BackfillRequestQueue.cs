@@ -312,7 +312,7 @@ public sealed class BackfillRequestQueue : IDisposable
         {
             var matchingPending = FilterPendingRequests(r => r.JobId == jobId);
             var matchingInFlight = _inFlightRequests.Values.Where(r => r.JobId == jobId);
-            return [..matchingPending, ..matchingInFlight];
+            return [.. matchingPending, .. matchingInFlight];
         }
         finally
         {

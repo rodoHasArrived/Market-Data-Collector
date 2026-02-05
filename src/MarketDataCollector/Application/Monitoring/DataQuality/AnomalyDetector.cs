@@ -538,7 +538,7 @@ public sealed class AnomalyDetector : IDisposable
                         if (stdDev > 0)
                         {
                             var zScore = (price - mean) / stdDev;
-                            
+
                             if (Math.Abs(zScore) > (decimal)config.ZScoreThreshold)
                             {
                                 var type = price > mean ? AnomalyType.PriceSpike : AnomalyType.PriceDrop;

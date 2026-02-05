@@ -409,7 +409,7 @@ public sealed class PortableDataPackager
         for (var i = 0; i < pathParts.Length - 1; i++) // Exclude filename itself
         {
             var part = pathParts[i];
-            
+
             // Skip common provider/root directories
             if (i == 0 && (part.Equals("live", StringComparison.OrdinalIgnoreCase) ||
                            part.Equals("historical", StringComparison.OrdinalIgnoreCase) ||
@@ -417,21 +417,21 @@ public sealed class PortableDataPackager
             {
                 continue;
             }
-            
+
             // Check for known event types in path
             if (IsKnownEventType(part))
             {
                 info.EventType ??= part;
                 continue;
             }
-            
+
             // If we haven't found symbol yet and this isn't a date, it's likely the symbol
             if (info.Symbol == null && !DateTime.TryParse(part, out _))
             {
                 info.Symbol = part.ToUpperInvariant();
             }
         }
-        
+
         // Remove extensions to get base name
         var baseName = fileName;
         foreach (var ext in new[] { ".gz", ".zst", ".jsonl", ".parquet", ".csv" })

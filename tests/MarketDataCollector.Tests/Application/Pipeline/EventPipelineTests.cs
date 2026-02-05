@@ -253,7 +253,7 @@ public class EventPipelineTests : IAsyncLifetime
         // But sink should receive approximately capacity worth of events (latest ones)
         pipeline.DroppedCount.Should().Be(0, "DropOldest mode succeeds on TryPublish and doesn't increment DroppedCount");
         sink.ReceivedEvents.Count.Should().BeLessThan(100, "some events should have been dropped by the channel");
-        
+
         // The events received should be the latest ones (high symbol numbers)
         // because oldest were dropped
         var receivedSymbols = sink.ReceivedEvents.Select(e => e.Symbol).ToList();
@@ -444,7 +444,7 @@ public class EventPipelineTests : IAsyncLifetime
         // Fill the channel completely (2 items)
         pipeline.TryPublish(CreateTradeEvent("SPY"));
         pipeline.TryPublish(CreateTradeEvent("MSFT"));
-        
+
         // Wait a bit for consumer to start processing (but not finish due to delay)
         await Task.Delay(20);
 
