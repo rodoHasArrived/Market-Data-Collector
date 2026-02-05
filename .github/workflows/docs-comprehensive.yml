@@ -1,0 +1,294 @@
+name: Documentation & Workflow Automation
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - 'docs/**'
+      - '*.md'
+      - 'CLAUDE.md'
+      - '.github/workflows/**'
+      - '.github/agents/**'
+      - 'build/scripts/docs/**'
+      - 'build/dotnet/DocGenerator/**'
+      - 'src/**'
+  pull_request:
+    branches: ["main"]
+    paths:
+      - 'docs/**'
+      - '*.md'
+      - 'CLAUDE.md'
+      - '.github/workflows/**'
+      - '.github/agents/**'
+      - 'build/scripts/docs/**'
+      - 'build/dotnet/DocGenerator/**'
+      - 'src/**'
+  schedule:
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+    inputs:
+      regenerate:
+        description: 'Force regenerate generated docs and AI instruction files'
+        required: false
+        default: 'false'
+        type: boolean
+      dry_run:
+        description: 'Show changes without committing'
+        required: false
+        default: 'true'
+        type: boolean
+      create_pr:
+        description: 'Create PR for generated updates (manual runs only)'
+        required: false
+        default: 'false'
+        type: boolean
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: docs-comprehensive-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_VERSION: '9.0.x'
+  PYTHON_VERSION: '3.11'
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  detect-changes:
+    name: Detect Documentation/Workflow Changes
+    runs-on: ubuntu-latest
+    outputs:
+      docs_changed: ${{ steps.filter.outputs.docs }}
+      structure_changed: ${{ steps.filter.outputs.structure }}
+      workflow_changed: ${{ steps.filter.outputs.workflows }}
+      providers_changed: ${{ steps.filter.outputs.providers }}
+      ai_files_changed: ${{ steps.filter.outputs.ai_files }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Detect changed areas
+        id: filter
+        uses: dorny/paths-filter@v3.0.2
+        with:
+          filters: |
+            docs:
+              - 'docs/**'
+              - '*.md'
+              - 'CLAUDE.md'
+            workflows:
+              - '.github/workflows/**'
+            structure:
+              - 'src/**'
+              - 'tests/**'
+              - 'benchmarks/**'
+              - 'build/**'
+              - added|deleted: 'src/**'
+              - added|deleted: 'docs/**'
+            providers:
+              - 'src/MarketDataCollector/Infrastructure/Providers/**'
+            ai_files:
+              - 'docs/ai/**'
+              - '.github/agents/**'
+              - 'CLAUDE.md'
+
+  validate-docs:
+    name: Validate Documentation Quality
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: |
+      needs.detect-changes.outputs.docs_changed == 'true' ||
+      needs.detect-changes.outputs.workflow_changed == 'true' ||
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'schedule'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Markdown lint
+        uses: DavidAnson/markdownlint-cli2-action@v22.0.0
+        with:
+          globs: |
+            **/*.md
+            !**/node_modules/**
+            !**/bin/**
+            !**/obj/**
+        continue-on-error: true
+
+      - name: Link validation
+        uses: gaurav-nelson/github-action-markdown-link-check@1.0.17
+        with:
+          use-quiet-mode: 'yes'
+          use-verbose-mode: 'no'
+          folder-path: 'docs/'
+          max-depth: 5
+        continue-on-error: true
+
+      - name: ADR inventory
+        run: |
+          echo "## ADR Verification Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          ADR_COUNT=$(find docs -path "*/adr/*.md" -o -path "*/decisions/*.md" 2>/dev/null | wc -l)
+          echo "Found $ADR_COUNT ADR files" >> $GITHUB_STEP_SUMMARY
+
+  regenerate-docs:
+    name: Regenerate Generated Docs + AI Instructions
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: |
+      needs.detect-changes.outputs.structure_changed == 'true' ||
+      needs.detect-changes.outputs.docs_changed == 'true' ||
+      needs.detect-changes.outputs.workflow_changed == 'true' ||
+      needs.detect-changes.outputs.providers_changed == 'true' ||
+      needs.detect-changes.outputs.ai_files_changed == 'true' ||
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'schedule'
+    outputs:
+      has_changes: ${{ steps.changes.outputs.has_changes }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v6.2.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Setup .NET with Cache
+        uses: ./.github/actions/setup-dotnet-cache
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Build project for metadata extraction
+        run: |
+          dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
+          dotnet build src/MarketDataCollector/MarketDataCollector.csproj \
+            -c Release \
+            --no-restore \
+            /p:EnableWindowsTargeting=true \
+            /p:GenerateDocumentationFile=true
+        continue-on-error: true
+
+      - name: Generate structure and workflow docs
+        run: |
+          mkdir -p docs/generated
+          python3 build/scripts/docs/generate-structure-docs.py --output docs/generated/repository-structure.md --format markdown
+          python3 build/scripts/docs/generate-structure-docs.py --output docs/generated/provider-registry.md --providers-only
+          python3 build/scripts/docs/generate-structure-docs.py --output docs/generated/workflows-overview.md --workflows-only
+
+      - name: Generate project context doc (if tool exists)
+        run: |
+          if [ -d "build/dotnet/DocGenerator" ]; then
+            dotnet restore build/dotnet/DocGenerator/DocGenerator.csproj
+            dotnet build build/dotnet/DocGenerator/DocGenerator.csproj -c Release -v q || true
+            dotnet run --project build/dotnet/DocGenerator/DocGenerator.csproj --no-build -c Release -- context --src src/MarketDataCollector --output docs/generated/project-context.md || true
+          fi
+
+      - name: Sync AI instruction files
+        run: |
+          files=(
+            "CLAUDE.md"
+            "docs/ai/copilot/instructions.md"
+            ".github/agents/documentation-agent.md"
+          )
+
+          for file in "${files[@]}"; do
+            python3 build/scripts/docs/update-claude-md.py \
+              --claude-md "$file" \
+              --structure-source docs/generated/repository-structure.md
+          done
+
+      - name: Check for generated changes
+        id: changes
+        run: |
+          watched=(
+            "docs/generated/"
+            "CLAUDE.md"
+            "docs/ai/copilot/instructions.md"
+            ".github/agents/documentation-agent.md"
+          )
+
+          if [ -n "$(git status --porcelain "${watched[@]}")" ]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Show dry-run diff
+        if: |
+          steps.changes.outputs.has_changes == 'true' &&
+          github.event_name == 'workflow_dispatch' &&
+          github.event.inputs.dry_run == 'true'
+        run: |
+          git --no-pager diff -- docs/generated/ CLAUDE.md docs/ai/copilot/instructions.md .github/agents/documentation-agent.md
+
+      - name: Commit direct updates
+        if: |
+          steps.changes.outputs.has_changes == 'true' &&
+          (github.event_name == 'push' || github.event_name == 'schedule')
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add docs/generated/ CLAUDE.md docs/ai/copilot/instructions.md .github/agents/documentation-agent.md
+          git commit -m "docs: consolidate documentation automation updates
+
+          - Regenerated docs/generated artifacts
+          - Synced AI instruction files
+
+          [skip ci]"
+          git push
+
+      - name: Create pull request for manual updates
+        if: |
+          steps.changes.outputs.has_changes == 'true' &&
+          github.event_name == 'workflow_dispatch' &&
+          github.event.inputs.create_pr == 'true' &&
+          github.event.inputs.dry_run != 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: automation/docs-comprehensive-sync
+          delete-branch: true
+          commit-message: "docs: consolidate documentation automation updates"
+          title: "docs: consolidate documentation automation updates"
+          body: |
+            ## Summary
+            - Regenerated `docs/generated/*` artifacts.
+            - Synced repository-structure sections in AI instruction files.
+            - Consolidated all documentation automation outputs into one run.
+          labels: |
+            documentation
+            automation
+
+  report:
+    name: Documentation Automation Report
+    runs-on: ubuntu-latest
+    needs: [detect-changes, validate-docs, regenerate-docs]
+    if: always()
+    steps:
+      - name: Publish summary
+        run: |
+          echo "# Documentation & Workflow Automation Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Area | Changed |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|---------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Docs | ${{ needs.detect-changes.outputs.docs_changed }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Workflows | ${{ needs.detect-changes.outputs.workflow_changed }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Structure | ${{ needs.detect-changes.outputs.structure_changed }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Providers | ${{ needs.detect-changes.outputs.providers_changed }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| AI files | ${{ needs.detect-changes.outputs.ai_files_changed }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Result |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Validate docs | ${{ needs.validate-docs.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Regenerate docs | ${{ needs.regenerate-docs.result }} |" >> $GITHUB_STEP_SUMMARY
