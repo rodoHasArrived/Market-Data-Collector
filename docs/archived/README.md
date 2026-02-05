@@ -12,6 +12,8 @@ Documents are moved here when they:
 
 ## Contents
 
+- `ARTIFACT_ACTIONS_DOWNGRADE.md` - Legacy notes for downgraded artifact actions compatibility.
+
 | Document | Original Location | Reason Archived | Date |
 |----------|-------------------|-----------------|------|
 | `desktop-ui-alternatives-evaluation.md` | `evaluations/` | Recommended WinUI 3; project migrated to WPF | 2026-02-04 |

@@ -2088,10 +2088,10 @@ docker-compose up -d
 | [README.md](../README.md) | Project overview and quick start |
 | [HELP.md](HELP.md) | This comprehensive user guide |
 | [USAGE.md](USAGE.md) | Detailed usage guide |
-| [guides/getting-started.md](guides/getting-started.md) | Step-by-step setup guide |
-| [guides/configuration.md](guides/configuration.md) | Configuration reference |
-| [guides/troubleshooting.md](guides/troubleshooting.md) | Troubleshooting guide |
-| [guides/operator-runbook.md](guides/operator-runbook.md) | Operations and deployment |
+| [getting-started/README.md](getting-started/README.md) | Step-by-step setup guide |
+| [HELP.md#configuration](HELP.md#configuration) | Configuration reference |
+| [HELP.md#troubleshooting](HELP.md#troubleshooting) | Troubleshooting guide |
+| [operations/operator-runbook.md](operations/operator-runbook.md) | Operations and deployment |
 | [architecture/overview.md](architecture/overview.md) | System architecture |
 | [architecture/storage-design.md](architecture/storage-design.md) | Storage design details |
 | [providers/backfill-guide.md](providers/backfill-guide.md) | Historical data guide |

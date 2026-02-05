@@ -22,7 +22,9 @@ MarketDataCollector/docs/
 ├── changelogs/                  # Version change summaries
 ├── diagrams/                    # Architecture diagrams (DOT, PlantUML, PNG, SVG)
 ├── docfx/                       # DocFX documentation generator config
-├── guides/                      # User and operator guides
+├── getting-started/             # Getting-started index
+├── development/                 # Developer guides
+├── operations/                  # Operator runbooks
 ├── integrations/                # External integration docs
 ├── providers/                   # Data provider documentation
 ├── reference/                   # Reference material
@@ -319,7 +321,7 @@ Market-Data-Collector/
 │   │   ├── timing-diagram.puml
 │   │   ├── use-case-diagram.png
 │   │   └── use-case-diagram.puml
-│   ├── ai-known-errors.md
+│   ├── ai/ai-known-errors.md
 │   ├── ARTIFACT_ACTIONS_DOWNGRADE.md
 │   ├── build-observability.md
 │   ├── DEPENDENCIES.md
@@ -1017,7 +1019,7 @@ Market-Data-Collector/
 
 ## Key Documentation Areas
 
-### 1. Guides (`docs/guides/`)
+### 1. Guides (`docs/`)
 
 User-facing documentation for operating the system.
 
@@ -1151,7 +1153,7 @@ Visual documentation in multiple formats.
    - Use `# Example:` or `// Example:` for inline examples
 
 3. **Links:**
-   - Use relative links for internal documentation: `[text](../guides/file.md)`
+   - Use relative links for internal documentation: `[text](../operations/file.md) or [text](../development/file.md)`
    - Use descriptive link text (not "click here")
    - Verify all links work after updates
 
@@ -1189,8 +1191,8 @@ Maintain consistency across documentation:
 ### Task 1: Document a New Feature
 
 **Checklist:**
-- [ ] Update `docs/guides/getting-started.md` if user-facing
-- [ ] Update `docs/guides/configuration.md` if configurable
+- [ ] Update `docs/getting-started.md` if user-facing
+- [ ] Update `docs/configuration.md` if configurable
 - [ ] Update `docs/architecture/overview.md` if architectural impact
 - [ ] Add to `docs/status/improvements.md` as implemented
 - [ ] Update root `README.md` if significant feature
@@ -1202,7 +1204,7 @@ Maintain consistency across documentation:
 ### Task 2: Document a Configuration Change
 
 **Checklist:**
-- [ ] Update `docs/guides/configuration.md` with new options
+- [ ] Update `docs/configuration.md` with new options
 - [ ] Update `appsettings.sample.json` with examples
 - [ ] Document default values and valid ranges
 - [ ] Explain impact and use cases
@@ -1496,13 +1498,13 @@ markdown-link-check docs/**/*.md
 
 2. `docs/providers/data-sources.md` - Add entry to provider table
 3. `docs/providers/provider-comparison.md` - Add comparison row
-4. `docs/guides/configuration.md` - Add configuration section
+4. `docs/configuration.md` - Add configuration section
 5. `docs/architecture/provider-management.md` - Document integration approach
 6. `docs/README.md` - Add to provider documentation list
 
 ### Example 2: Documenting a Configuration Option
 
-**In `docs/guides/configuration.md`:**
+**In `docs/configuration.md`:**
 
 ```markdown
 ### StorageBufferSize
