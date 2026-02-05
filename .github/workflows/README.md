@@ -119,44 +119,17 @@ This directory contains automated workflows that help maintain code quality, sec
 
 ### Documentation Workflows
 
-#### 13. **Documentation Validation** (`documentation.yml`)
-- **Trigger**: Push/PRs touching docs, markdown, or tooling
-- **Purpose**: Ensures documentation quality and generates summaries
+#### 13. **Documentation & Workflow Automation** (`docs-comprehensive.yml`)
+- **Trigger**: Push/PRs touching docs/workflows/source, weekly schedule (Mondays 3 AM UTC), manual dispatch
+- **Purpose**: Centralized documentation quality checks, generated docs sync, and AI instruction synchronization
 - **Features**:
-  - Markdown linting and link checking
-  - ADR verification
-  - Documentation statistics summaries
-
-#### 14. **Docs Auto-Update** (`docs-auto-update.yml`)
-- **Trigger**: Manual workflow dispatch
-- **Purpose**: Regenerates provider/config documentation on demand
-- **Features**:
-  - Analyzes code changes for doc impacts
-  - Updates provider and config references
-  - Optional PR creation for updates
-
-#### 15. **Docs Structure Sync** (`docs-structure-sync.yml`)
-- **Trigger**: Manual workflow dispatch
-- **Purpose**: Updates repository structure documentation
-- **Features**:
-  - Detects structural changes
-  - Regenerates structure docs
-  - Optional dry-run mode
-
-#### 16. **AI Instructions Sync** (`ai-instructions-sync.yml`)
-- **Trigger**: Weekly schedule (Mondays 3 AM UTC), Manual dispatch
-- **Purpose**: Syncs AI assistant instruction files with latest repository structure
-- **Features**:
-  - Validates prerequisites (required files exist)
-  - Generates fresh repository structure reference
-  - Updates CLAUDE.md, Copilot instructions, and documentation agent files
-  - Supports dry-run mode
-  - Can create PR or commit directly
-  - Graceful fallback to direct commit if PR creation is not permitted
-- **Repository Settings Required**:
-  - For PR creation: Go to Settings > Actions > General and enable "Allow GitHub Actions to create and approve pull requests"
-  - Workflow permissions: "Read and write permissions" must be enabled
-  - The workflow will gracefully fallback to direct commits if PR creation is not available
+  - Markdown linting and link validation for documentation quality
+  - ADR inventory summary reporting
+  - Regenerates structure/provider/workflow documentation artifacts
+  - Regenerates project context doc when DocGenerator is available
+  - Synchronizes repository structure sections in `CLAUDE.md`, Copilot instructions, and documentation agent guidance
+  - Supports dry-run and optional PR creation in manual runs
+  - Publishes a single consolidated run summary for docs + workflow automation
 
 ### Automation and Maintenance Workflows
 
@@ -357,8 +330,7 @@ graph TD
     Manual --> Docker[Docker Build]
     Manual --> Desktop[Desktop App Build]
     Manual --> Observability[Build Observability]
-    Manual --> DocsAuto[Docs Auto-Update]
-    Manual --> DocsStructure[Docs Structure Sync]
+    Manual --> DocsAutomation[Docs & Workflow Automation]
     Manual --> Release[Release Workflow]
 ```
 
@@ -408,5 +380,5 @@ graph TD
 
 ---
 
-**Last Updated**: 2026-01-31
+**Last Updated**: 2026-02-05
 **Maintained By**: Market Data Collector Team
