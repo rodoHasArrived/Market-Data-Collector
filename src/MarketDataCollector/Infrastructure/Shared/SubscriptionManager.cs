@@ -57,6 +57,12 @@ public sealed class SubscriptionManager : IDisposable
     }
 
     /// <summary>
+    /// Gets the total number of active subscriptions.
+    /// Alias for <see cref="Count"/> for monitoring clarity.
+    /// </summary>
+    public int ActiveSubscriptionCount => Count;
+
+    /// <summary>
     /// Creates a new subscription for a symbol with the specified kind.
     /// </summary>
     /// <param name="symbol">Symbol to subscribe to.</param>
@@ -113,6 +119,13 @@ public sealed class SubscriptionManager : IDisposable
                 if (!hasOtherSubscriptions)
                 {
                     symbols.Remove(subscription.Symbol);
+
+                    // Remove empty kind entries to prevent unbounded memory growth
+                    // when cycling through many subscription kinds over time
+                    if (symbols.Count == 0)
+                    {
+                        _symbolsByKind.Remove(subscription.Kind);
+                    }
                 }
             }
 

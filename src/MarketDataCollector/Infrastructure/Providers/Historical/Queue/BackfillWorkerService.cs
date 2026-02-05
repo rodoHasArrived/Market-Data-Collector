@@ -28,6 +28,14 @@ public sealed class BackfillWorkerService : IDisposable
     private bool _disposed;
     private bool _isRunning;
 
+    // Rate limit backoff tracking
+    private int _consecutiveEmptyPolls;
+    private const int MaxRetryAttemptsPerRequest = 3;
+    private static readonly TimeSpan EmptyPollBaseDelay = TimeSpan.FromMilliseconds(200);
+    private static readonly TimeSpan EmptyPollMaxDelay = TimeSpan.FromSeconds(10);
+    private static readonly TimeSpan RateLimitBaseDelay = TimeSpan.FromSeconds(2);
+    private static readonly TimeSpan RateLimitMaxDelay = TimeSpan.FromSeconds(60);
+
     /// <summary>
     /// Event raised when a bar is successfully written to storage.
     /// </summary>
@@ -113,6 +121,7 @@ public sealed class BackfillWorkerService : IDisposable
 
     /// <summary>
     /// Main worker loop that processes requests from the queue.
+    /// Uses exponential backoff when the queue is empty or providers are rate-limited.
     /// </summary>
     private async Task RunWorkerLoopAsync(CancellationToken ct)
     {
@@ -133,15 +142,24 @@ public sealed class BackfillWorkerService : IDisposable
                     // No requests available, check if all providers are rate-limited
                     if (CheckAllProvidersRateLimited())
                     {
+                        _consecutiveEmptyPolls = 0;
                         await HandleAllProvidersRateLimitedAsync(ct).ConfigureAwait(false);
                     }
                     else
                     {
-                        // Wait a bit before trying again
-                        await Task.Delay(100, ct).ConfigureAwait(false);
+                        // Exponential backoff on consecutive empty polls
+                        _consecutiveEmptyPolls++;
+                        var delay = CalculateBackoff(
+                            _consecutiveEmptyPolls,
+                            EmptyPollBaseDelay,
+                            EmptyPollMaxDelay);
+                        await Task.Delay(delay, ct).ConfigureAwait(false);
                     }
                     continue;
                 }
+
+                // Reset empty poll counter on successful dequeue
+                _consecutiveEmptyPolls = 0;
 
                 // Process request in background
                 _ = ProcessRequestAsync(request, ct);
@@ -159,46 +177,91 @@ public sealed class BackfillWorkerService : IDisposable
     }
 
     /// <summary>
-    /// Process a single backfill request.
+    /// Process a single backfill request with automatic retry and exponential backoff
+    /// for rate-limited responses.
     /// </summary>
     private async Task ProcessRequestAsync(BackfillRequest request, CancellationToken ct)
     {
+        var retryAttempt = 0;
+
         try
         {
-            _log.Debug("Processing request: {Symbol} {From}-{To} via {Provider}",
-                request.Symbol, request.FromDate, request.ToDate, request.AssignedProvider);
-
-            // Fetch data from provider
-            var bars = await FetchBarsAsync(request, ct).ConfigureAwait(false);
-
-            if (bars.Count > 0)
+            while (!ct.IsCancellationRequested)
             {
-                // Write to storage
-                await WriteBarsToStorageAsync(request, bars, ct).ConfigureAwait(false);
-                request.BarsRetrieved = bars.Count;
+                try
+                {
+                    _log.Debug("Processing request: {Symbol} {From}-{To} via {Provider} (attempt {Attempt})",
+                        request.Symbol, request.FromDate, request.ToDate, request.AssignedProvider, retryAttempt + 1);
+
+                    // Fetch data from provider
+                    var bars = await FetchBarsAsync(request, ct).ConfigureAwait(false);
+
+                    if (bars.Count > 0)
+                    {
+                        // Write to storage
+                        await WriteBarsToStorageAsync(request, bars, ct).ConfigureAwait(false);
+                        request.BarsRetrieved = bars.Count;
+                    }
+
+                    // Mark as complete
+                    await _requestQueue.CompleteRequestAsync(request, true, ct: ct).ConfigureAwait(false);
+                    await _jobManager.UpdateJobProgressAsync(request, ct).ConfigureAwait(false);
+                    return;
+                }
+                catch (OperationCanceledException) when (ct.IsCancellationRequested)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    var isRateLimited = ex.Message.Contains("429") ||
+                                        ex.Message.Contains("rate limit", StringComparison.OrdinalIgnoreCase);
+
+                    if (isRateLimited && request.AssignedProvider != null)
+                    {
+                        _requestQueue.RecordProviderRateLimitHit(request.AssignedProvider);
+
+                        // Retry with exponential backoff if within retry budget
+                        if (retryAttempt < MaxRetryAttemptsPerRequest)
+                        {
+                            retryAttempt++;
+                            var delay = CalculateBackoff(retryAttempt, RateLimitBaseDelay, RateLimitMaxDelay);
+                            _log.Information(
+                                "Rate limited for {Symbol} via {Provider}, retrying in {Delay}ms (attempt {Attempt}/{Max})",
+                                request.Symbol, request.AssignedProvider, delay.TotalMilliseconds,
+                                retryAttempt, MaxRetryAttemptsPerRequest);
+                            await Task.Delay(delay, ct).ConfigureAwait(false);
+                            continue;
+                        }
+
+                        _log.Warning(
+                            "Rate limit retry budget exhausted for {Symbol} via {Provider} after {Attempts} attempts",
+                            request.Symbol, request.AssignedProvider, retryAttempt);
+                    }
+
+                    await _requestQueue.CompleteRequestAsync(request, false, ex.Message, ct).ConfigureAwait(false);
+                    await _jobManager.UpdateJobProgressAsync(request, ct).ConfigureAwait(false);
+                    return;
+                }
             }
-
-            // Mark as complete
-            await _requestQueue.CompleteRequestAsync(request, true, ct: ct).ConfigureAwait(false);
-            await _jobManager.UpdateJobProgressAsync(request, ct).ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            var isRateLimited = ex.Message.Contains("429") ||
-                                ex.Message.Contains("rate limit", StringComparison.OrdinalIgnoreCase);
-
-            if (isRateLimited && request.AssignedProvider != null)
-            {
-                _requestQueue.RecordProviderRateLimitHit(request.AssignedProvider);
-            }
-
-            await _requestQueue.CompleteRequestAsync(request, false, ex.Message, ct).ConfigureAwait(false);
-            await _jobManager.UpdateJobProgressAsync(request, ct).ConfigureAwait(false);
         }
         finally
         {
             _concurrencySemaphore.Release();
         }
+    }
+
+    /// <summary>
+    /// Calculates exponential backoff delay with jitter.
+    /// </summary>
+    private static TimeSpan CalculateBackoff(int attempt, TimeSpan baseDelay, TimeSpan maxDelay)
+    {
+        var baseMs = baseDelay.TotalMilliseconds;
+        var maxMs = maxDelay.TotalMilliseconds;
+        var delay = Math.Min(baseMs * Math.Pow(2, attempt - 1), maxMs);
+        // Add jitter (±25%) to prevent thundering herd
+        var jitter = delay * 0.25 * (Random.Shared.NextDouble() * 2 - 1);
+        return TimeSpan.FromMilliseconds(delay + jitter);
     }
 
     /// <summary>
