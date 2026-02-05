@@ -69,3 +69,19 @@ If headings are missing, the workflow still creates an entry with safe defaults 
   - `dotnet build src/MarketDataCollector.Wpf/MarketDataCollector.Wpf.csproj -c Release --no-restore -p:TargetFramework=net9.0-windows`
 - **Source issue**: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/21707017569/job/62600607213
 - **Status**: fixed
+
+### AI-20260205-cpm-missing-package
+- **Area**: build/NuGet/CPM
+- **Symptoms**: Build fails with error NU1008: "Projects that use central package version management should not define the version on the PackageReference items but on the PackageVersion items: <PackageName>". Common on Windows runners during restore/build.
+- **Root cause**: A PackageReference was added to a .csproj file without adding the corresponding PackageVersion entry to Directory.Packages.props. Central Package Management (CPM) is enabled repository-wide and requires ALL package versions to be defined centrally.
+- **Prevention checklist**:
+  - [ ] When adding a new PackageReference, ALWAYS add the version to Directory.Packages.props first
+  - [ ] In .csproj files, PackageReference must NOT include Version attribute (e.g., `<PackageReference Include="MyPackage" />`)
+  - [ ] In Directory.Packages.props, use PackageVersion with Version attribute (e.g., `<PackageVersion Include="MyPackage" Version="1.0.0" />`)
+  - [ ] After adding a package, run `dotnet restore` to verify no NU1008 errors
+  - [ ] Search for any PackageReference items with Version attributes: `grep -r 'PackageReference.*Version=' --include='*.csproj' --include='*.fsproj'`
+- **Verification commands**:
+  - `dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true`
+  - `grep -r 'PackageReference.*Version=' --include='*.csproj' --include='*.fsproj' . | grep -v '<!--'`
+- **Source issue**: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/21707148084/job/62601061503
+- **Status**: fixed
