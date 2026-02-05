@@ -51,7 +51,7 @@ jobs:
 
       - name: Upload observability artifacts
         if: always()
-        uses: actions/upload-artifact@v6.0.0
+        uses: actions/upload-artifact@v4
         with:
           name: build-observability
           path: .build-system/

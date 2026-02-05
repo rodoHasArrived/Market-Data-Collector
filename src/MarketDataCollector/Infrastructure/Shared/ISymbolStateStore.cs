@@ -52,6 +52,7 @@ public interface ISymbolStateStore<T> : IDisposable where T : class
     /// Updates state with a transformation function.
     /// </summary>
     /// <param name="symbol">Symbol key.</param>
+    /// <param name="addFactory">Function to create state if not present.</param>
     /// <param name="updateFactory">Function to update state.</param>
     /// <returns>Updated state.</returns>
     T AddOrUpdate(string symbol, Func<string, T> addFactory, Func<string, T, T> updateFactory);

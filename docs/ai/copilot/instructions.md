@@ -288,6 +288,9 @@ Market-Data-Collector/
 │   │   ├── REPOSITORY_REORGANIZATION_PLAN.md
 │   │   ├── uwp-development-roadmap.md
 │   │   └── uwp-release-checklist.md
+│   ├── design/
+│   │   ├── REDESIGN_IMPROVEMENTS.md
+│   │   └── ui-redesign.md
 │   ├── development/
 │   │   ├── desktop-app-xaml-compiler-errors.md
 │   │   ├── github-actions-summary.md
@@ -1067,6 +1070,7 @@ Market-Data-Collector/
 │   │   └── MarketDataCollector.Tests.csproj
 │   └── coverlet.runsettings
 ├── .gitignore
+├── .globalconfig
 ├── CLAUDE.md
 ├── Directory.Build.props
 ├── Directory.Packages.props
@@ -1076,7 +1080,10 @@ Market-Data-Collector/
 ├── MarketDataCollector.sln
 ├── package-lock.json
 ├── package.json
-└── README.md
+├── PR_SUMMARY.md
+├── README.md
+├── UI_IMPROVEMENTS_SUMMARY.md
+└── VISUAL_CODE_EXAMPLES.md
 ```
 
 ## CI/CD Workflow
