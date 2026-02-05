@@ -344,6 +344,7 @@ public partial class WatchlistPage : Page
         contextMenu.Items.Add(deleteItem);
 
         contextMenu.IsOpen = true;
+        await Task.CompletedTask;
     }
 
     private async Task ExportWatchlistAsync(string watchlistId)

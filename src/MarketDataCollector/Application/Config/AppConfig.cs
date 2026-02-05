@@ -16,6 +16,8 @@ namespace MarketDataCollector.Application.Config;
 /// - <see cref="DataSourceKind.NYSE"/> uses the NYSE market data feed.
 /// </param>
 /// <param name="Alpaca">Alpaca provider options (required if DataSource == DataSourceKind.Alpaca).</param>
+/// <param name="IB">Interactive Brokers provider options (required if DataSource == DataSourceKind.IB).</param>
+/// <param name="Polygon">Polygon provider options (required if DataSource == DataSourceKind.Polygon).</param>
 /// <param name="StockSharp">StockSharp connector configuration (required if DataSource == DataSourceKind.StockSharp).</param>
 /// <param name="Storage">Storage configuration options (naming convention, partitioning, etc.).</param>
 /// <param name="Symbols">Symbol subscriptions.</param>

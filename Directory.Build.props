@@ -7,6 +7,9 @@
     <!-- MSB3277: Assembly binding conflict (typically transitive dependencies, resolved automatically) -->
     <!-- NETSDK1206: Version-specific or distribution-specific RID (legacy RIDs, handled by newer .NET) -->
     <!-- NU1608: Package version outside of dependency constraint (transitive dependencies) -->
-    <NoWarn>$(NoWarn);MSB3277;NETSDK1206;NU1608</NoWarn>
+    <!-- IL2026: RequiresUnreferencedCode (JSON serialization) -->
+    <!-- IL2070: Dynamic type access (JSON serialization) -->
+    <!-- CS1587: XML comment placement (false positive with records) -->
+    <NoWarn>$(NoWarn);MSB3277;NETSDK1206;NU1608;IL2026;IL2070;CS1587</NoWarn>
   </PropertyGroup>
 </Project>
