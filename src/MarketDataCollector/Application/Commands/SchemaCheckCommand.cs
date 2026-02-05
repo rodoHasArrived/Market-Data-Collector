@@ -1,4 +1,5 @@
 using MarketDataCollector.Application.Config;
+using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Application.Services;
 using Serilog;
 
