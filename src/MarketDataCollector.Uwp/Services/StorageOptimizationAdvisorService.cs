@@ -746,8 +746,8 @@ public sealed class StorageOptimizationAdvisorService
                 var mergedSize = new FileInfo(mergedPath).Length;
                 result.FilesProcessed += filesToMerge.Count;
 
-                // Note: Merging may not save space but reduces file count
-                // BytesSaved represents the difference if any
+                // Merging may not save space but reduces file count.
+                // BytesSaved represents the difference if any.
                 if (originalTotalSize > mergedSize)
                 {
                     result.BytesSaved += originalTotalSize - mergedSize;
@@ -972,9 +972,9 @@ public sealed class StorageOptimizationAdvisorService
                     newPath = file[..^3] + ".zst"; // Remove .gz and add .zst
                 }
 
-                // Decompress gzip and recompress with zstd
-                // Note: Using GZip for decompression; in production, integrate ZstdSharp for zstd compression
-                // For now, we'll use GZip with optimal compression as a fallback
+                // Decompress gzip and recompress with zstd.
+                // TODO: Using GZip for decompression; in production, integrate ZstdSharp for zstd compression.
+                // For now, we'll use GZip with optimal compression as a fallback.
                 await using (var sourceStream = File.OpenRead(file))
                 await using (var gzipDecompressStream = new System.IO.Compression.GZipStream(
                     sourceStream, System.IO.Compression.CompressionMode.Decompress))

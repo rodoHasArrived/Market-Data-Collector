@@ -1,6 +1,6 @@
 # Multi-Platform Test Matrix Workflow
 # Runs tests across multiple operating systems and generates coverage reports
-# NOTE: On PRs, only ubuntu tests run to reduce billing costs. Full matrix runs on pushes to main.
+# On PRs, only ubuntu tests run to reduce billing costs. Full matrix runs on pushes to main.
 
 name: Test Matrix
 

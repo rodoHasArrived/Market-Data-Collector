@@ -100,8 +100,10 @@ public sealed record StockSharpIBConfig(
 /// <summary>
 /// Binance crypto exchange configuration.
 /// Supports spot and futures markets with real-time WebSocket streams.
-/// Note: Requires StockSharp crowdfunding membership for crypto connectors.
 /// </summary>
+/// <remarks>
+/// Requires StockSharp crowdfunding membership for crypto connectors.
+/// </remarks>
 public sealed record BinanceConfig(
     string ApiKey = "",
 

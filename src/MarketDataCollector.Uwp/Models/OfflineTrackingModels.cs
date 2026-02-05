@@ -595,8 +595,10 @@ public class ExportTaskPayload
 
 /// <summary>
 /// Date range information for scheduled tasks.
-/// Note: Named TaskDateRange to avoid conflict with MarketDataCollector.Contracts.Manifest.DateRangeInfo
 /// </summary>
+/// <remarks>
+/// Named TaskDateRange to avoid conflict with MarketDataCollector.Contracts.Manifest.DateRangeInfo
+/// </remarks>
 public class TaskDateRange
 {
     [JsonPropertyName("from")]

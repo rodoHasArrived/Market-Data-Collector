@@ -164,8 +164,10 @@ public sealed class AlphaVantageHistoricalDataProvider : BaseHistoricalDataProvi
 
     /// <summary>
     /// Get intraday historical bars. This is the unique capability of Alpha Vantage.
-    /// Note: Free tier only returns 1-2 months of intraday data.
     /// </summary>
+    /// <remarks>
+    /// Free tier only returns 1-2 months of intraday data.
+    /// </remarks>
     public async Task<IReadOnlyList<IntradayBar>> GetIntradayBarsAsync(
         string symbol,
         string interval,

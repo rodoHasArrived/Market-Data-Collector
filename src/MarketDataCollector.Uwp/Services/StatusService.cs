@@ -226,7 +226,7 @@ public sealed class BackfillApiService
     }
 }
 
-// Note: Backfill-related models (BackfillRequest, BackfillHealthResponse, BackfillProviderHealth,
+// Backfill-related models (BackfillRequest, BackfillHealthResponse, BackfillProviderHealth,
 // SymbolResolutionResponse, BackfillExecutionResponse, BackfillPreset, BackfillExecution,
 // BackfillStatistics) are now defined in MarketDataCollector.Contracts.Api.BackfillApiModels.cs
 // and StatusModels.cs. Type aliases at the top of this file maintain backwards compatibility.

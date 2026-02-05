@@ -808,9 +808,11 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
 
     /// <summary>
     /// Subscribes to market depth (L2) for the specified symbol.
-    /// Note: Polygon provides BBO quotes, not full L2 order book depth.
     /// </summary>
     /// <returns>Subscription ID, or -1 if not supported/not subscribed.</returns>
+    /// <remarks>
+    /// Polygon provides BBO quotes, not full L2 order book depth.
+    /// </remarks>
     public int SubscribeMarketDepth(SymbolConfig cfg)
     {
         if (cfg is null) throw new ArgumentNullException(nameof(cfg));
@@ -1110,7 +1112,7 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
                     return AggressorSide.Sell;
 
                 // Buyer-initiated condition codes
-                // Note: Intermarket Sweep (14) can be buy or sell, but is typically
+                // Intermarket Sweep (14) can be buy or sell, but is typically
                 // used for aggressive buying. We'll keep it as Unknown for accuracy.
 
                 // The following codes are informational and don't indicate direction:

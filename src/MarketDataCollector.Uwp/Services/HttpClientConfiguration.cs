@@ -48,8 +48,9 @@ public static class HttpClientNames
 /// - Prevents socket exhaustion
 /// - Centralized configuration for timeouts, headers, retry policies
 /// - Better testability through DI
-///
-/// NOTE: This intentionally duplicates resilience policies from
+/// </summary>
+/// <remarks>
+/// This intentionally duplicates resilience policies from
 /// MarketDataCollector.Infrastructure.Http.SharedResiliencePolicies because UWP/WinUI 3
 /// cannot reference the main project (XAML compiler error: "Assembly is not allowed in type universe").
 /// When updating retry/circuit breaker policies, keep both implementations in sync.

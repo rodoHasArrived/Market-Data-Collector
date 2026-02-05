@@ -594,7 +594,7 @@ public sealed record CredentialConfig
             {
                 errors.Add("VaultPath is required when Source is 'Vault'");
             }
-            // Note: Vault support (AWS Secrets Manager, Azure Key Vault) requires additional implementation
+            // TODO: Vault support (AWS Secrets Manager, Azure Key Vault) requires additional implementation.
         }
 
         return new CredentialValidationResult(errors.Count == 0, errors);

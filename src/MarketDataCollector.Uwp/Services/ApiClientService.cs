@@ -406,12 +406,13 @@ public sealed class ApiClientService : IDisposable
     }
 }
 
-// Note: ApiResponse<T> and ServiceHealthResult are now defined in
-// MarketDataCollector.Contracts.Api.ClientModels.cs (imported via SharedModelAliases.cs)
-
 /// <summary>
 /// Event args for service URL changes.
 /// </summary>
+/// <remarks>
+/// ApiResponse&lt;T&gt; and ServiceHealthResult are now defined in
+/// MarketDataCollector.Contracts.Api.ClientModels.cs (imported via SharedModelAliases.cs)
+/// </remarks>
 public sealed class ServiceUrlChangedEventArgs : EventArgs
 {
     public string OldUrl { get; init; } = string.Empty;

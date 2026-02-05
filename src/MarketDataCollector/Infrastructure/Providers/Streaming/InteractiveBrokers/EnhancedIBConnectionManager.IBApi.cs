@@ -704,8 +704,8 @@ public sealed partial class EnhancedIBConnectionManager : EWrapper, IDisposable
         }
     }
 
-    // Note: The IB API has a typo in the method name (histoicalData vs historicalData)
-    // Some versions use one or the other
+    // The IB API has a typo in the method name (histoicalData vs historicalData).
+    // Some versions use one or the other.
     public void histoicalData(int reqId, Bar bar)
     {
         historicalData(reqId, bar);
@@ -733,6 +733,6 @@ public sealed partial class EnhancedIBConnectionManager : EWrapper, IDisposable
         // For keepUpToDate=True subscriptions - route to callback if needed
     }
 
-    // NOTE: The full EWrapper interface is extensive. Add methods as you need them for trades/ticks/orders.
+    // The full EWrapper interface is extensive. Add methods as you need them for trades/ticks/orders.
 }
 #endif

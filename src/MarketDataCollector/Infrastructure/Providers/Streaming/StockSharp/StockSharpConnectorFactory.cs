@@ -195,8 +195,10 @@ public static class StockSharpConnectorFactory
     /// <summary>
     /// Configure Binance crypto exchange adapter.
     /// Supports spot, USDT futures, and coin-margined futures markets.
-    /// Note: Requires StockSharp crowdfunding membership for crypto connectors.
     /// </summary>
+    /// <remarks>
+    /// Requires StockSharp crowdfunding membership for crypto connectors.
+    /// </remarks>
     private static void ConfigureBinance(Connector connector, BinanceConfig? cfg)
     {
 #if STOCKSHARP_BINANCE

@@ -266,9 +266,9 @@ public sealed class WebSocketHeartbeat : IAsyncDisposable
                 if (_ws.State != WebSocketState.Open)
                     break;
 
-                // Send ping (empty message or specific ping frame)
-                // Note: ClientWebSocket doesn't expose ping/pong frames directly
-                // This is a simplified version - production code might use custom ping messages
+                // Send ping (empty message or specific ping frame).
+                // ClientWebSocket doesn't expose ping/pong frames directly.
+                // This is a simplified version - production code might use custom ping messages.
                 var timeSinceLastPong = DateTimeOffset.UtcNow - _lastPongReceived;
                 if (timeSinceLastPong > _pongTimeout + _pingInterval)
                 {

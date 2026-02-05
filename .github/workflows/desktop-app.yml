@@ -311,11 +311,11 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore ${{ env.PROJECT_PATH }}
 
-      # Note: MSIX packaging requires additional setup:
+      # MSIX packaging requires additional setup:
       # 1. A valid signing certificate
       # 2. Package.appxmanifest configuration
       # 3. WindowsPackageType set to MSIX in project
-      # For now, we build as unpackaged (WindowsPackageType=None)
+      # Currently building as unpackaged (WindowsPackageType=None) until these requirements are met.
       - name: Build MSIX (x64)
         run: |
           dotnet publish ${{ env.PROJECT_PATH }} `

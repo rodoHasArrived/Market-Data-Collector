@@ -653,7 +653,7 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
             _subscriptions.Remove(subscriptionId);
         }
 
-        // Note: StockSharp candle unsubscription is handled via subscription object
+        // StockSharp candle unsubscription is handled via subscription object.
         _log.Debug("Unsubscribed from candles: {Symbol} (subId={SubId})", sub.Symbol, subscriptionId);
     }
 
