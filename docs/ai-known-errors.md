@@ -86,3 +86,20 @@ If headings are missing, the workflow still creates an entry with safe defaults 
   - `grep -r 'PackageReference Include=".*" Version=' --include="*.csproj" --include="*.fsproj" src/ | grep -v '<!--'` (should return no results)
 - **Source issue**: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/21707148084/job/62601061503
 - **Status**: fixed
+
+### AI-20260205-nu1008-conditional-itemgroup
+- **Area**: build/NuGet/CPM/Windows
+- **Symptoms**: Windows builds fail with error NU1008: "Projects that use central package version management should not define the version on the PackageReference items but on the PackageVersion items: ZstdSharp.Port". The PackageReference has NO `Version` attribute, and the version IS properly defined in `Directory.Packages.props`. The error only occurs on Windows, while Linux/macOS builds succeed.
+- **Root cause**: When a PackageReference is inside a conditional ItemGroup (`Condition="'$(IsWindows)' == 'true'"`), NuGet's restore process on Windows can misinterpret the conditional reference as having version conflicts with CPM, even though no `Version` attribute is present. This is a platform-specific quirk in how NuGet evaluates conditional PackageReferences during Windows-specific restores with CPM enabled.
+- **Prevention checklist**:
+  - [ ] When adding PackageReferences to conditional ItemGroups in CPM projects, test restore on all target platforms (Windows, Linux, macOS)
+  - [ ] If NU1008 occurs without a `Version` attribute, check if the problematic package is in a conditional ItemGroup
+  - [ ] Consider making package references unconditional if they cause CPM issues with platform-specific conditions
+  - [ ] Document any platform-specific NuGet/CPM workarounds with detailed comments in the .csproj file
+  - [ ] Verify the package is not transitively included by other dependencies (use `dotnet list package --include-transitive`)
+- **Verification commands**:
+  - `dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true` (test on Windows specifically)
+  - `dotnet build src/MarketDataCollector.Uwp/MarketDataCollector.Uwp.csproj -c Release --no-restore /p:EnableWindowsTargeting=true`
+  - `grep -A5 'Condition.*IsWindows.*true' src/MarketDataCollector.Uwp/MarketDataCollector.Uwp.csproj | grep PackageReference` (check for conditional package references)
+- **Source issue**: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/21707582852/job/62602550653
+- **Status**: fixed
