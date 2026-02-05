@@ -1,6 +1,6 @@
 # MarketDataCollector Project Context
 
-**Generated:** 2026-02-05 21:36:07 UTC
+**Generated:** 2026-02-05 22:10:24 UTC
 **Source:** Auto-generated from code annotations
 
 ## Key Interfaces
@@ -48,6 +48,17 @@ Interface for archive maintenance service that orchestrates scheduled and on-dem
 | `intenanceExecution> GetExecutionsByTimeRange(DateTimeOffset from, DateTimeOffset to)` | Get executions within a time range. |
 | `intenanceStatistics GetStatistics(TimeSpan? period = null)` | Get overall maintenance statistics. |
 | `Task<int> CleanupOldRecordsAsync(int maxAgeDays = 90, CancellationToken ct = default)` | Clean up old execution records. |
+
+### ICliCommand
+
+**Location:** `MarketDataCollector/Application/Commands/ICliCommand.cs`
+
+Interface for CLI command handlers extracted from Program.cs. Each implementation handles one or more related CLI flags.
+
+| Method | Description |
+|--------|-------------|
+| `bool CanHandle(string[] args)` | Returns true if this command should handle the given args. |
+| `Task<int> ExecuteAsync(string[] args, CancellationToken ct = default)` | Executes the command. Returns the exit code (0 = success). |
 
 ### IConfigurationProvider
 
