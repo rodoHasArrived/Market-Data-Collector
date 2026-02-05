@@ -190,34 +190,34 @@ Market-Data-Collector/
 │   │   │   └── instructions.md
 │   │   ├── ai-known-errors.md
 │   │   └── README.md
-│   ├── api/
-│   │   └── index.md
 │   ├── architecture/
 │   │   ├── c4-context.png
 │   │   ├── c4-context.puml
 │   │   ├── c4-diagrams.md
-│   │   ├── consolidation.md
 │   │   ├── crystallized-storage-format.md
 │   │   ├── domains.md
 │   │   ├── overview.md
 │   │   ├── provider-management.md
-│   │   ├── REDESIGN_IMPROVEMENTS.md
 │   │   ├── storage-design.md
 │   │   ├── ui-redesign.md
 │   │   └── why-this-architecture.md
 │   ├── archived/
+│   │   ├── ARTIFACT_ACTIONS_DOWNGRADE.md
 │   │   ├── CHANGES_SUMMARY.md
+│   │   ├── consolidation.md
 │   │   ├── desktop-ui-alternatives-evaluation.md
+│   │   ├── DUPLICATE_CODE_ANALYSIS.md
 │   │   ├── README.md
+│   │   ├── REDESIGN_IMPROVEMENTS.md
 │   │   ├── REPOSITORY_REORGANIZATION_PLAN.md
 │   │   ├── uwp-development-roadmap.md
 │   │   └── uwp-release-checklist.md
 │   ├── development/
+│   │   ├── build-observability.md
 │   │   ├── central-package-management.md
 │   │   ├── desktop-app-xaml-compiler-errors.md
 │   │   ├── github-actions-summary.md
 │   │   ├── github-actions-testing.md
-│   │   ├── project-context.md
 │   │   ├── provider-implementation.md
 │   │   ├── uwp-to-wpf-migration.md
 │   │   └── wpf-implementation-notes.md
@@ -260,9 +260,9 @@ Market-Data-Collector/
 │   │   └── storage-architecture-evaluation.md
 │   ├── generated/
 │   │   ├── adr-index.md
-│   │   ├── configuration-schema.md
 │   │   ├── project-context.md
 │   │   ├── provider-registry.md
+│   │   ├── README.md
 │   │   ├── repository-structure.md
 │   │   └── workflows-overview.md
 │   ├── getting-started/
@@ -283,12 +283,11 @@ Market-Data-Collector/
 │   │   ├── interactive-brokers-setup.md
 │   │   └── provider-comparison.md
 │   ├── reference/
+│   │   ├── api-reference.md
 │   │   ├── data-dictionary.md
 │   │   ├── data-uniformity.md
 │   │   ├── design-review-memo.md
-│   │   ├── DUPLICATE_CODE_ANALYSIS.md
-│   │   ├── open-source-references.md
-│   │   └── sandcastle.md
+│   │   └── open-source-references.md
 │   ├── status/
 │   │   ├── CHANGELOG.md
 │   │   ├── production-status.md
@@ -323,8 +322,6 @@ Market-Data-Collector/
 │   │   ├── timing-diagram.puml
 │   │   ├── use-case-diagram.png
 │   │   └── use-case-diagram.puml
-│   ├── ARTIFACT_ACTIONS_DOWNGRADE.md
-│   ├── build-observability.md
 │   ├── DEPENDENCIES.md
 │   ├── HELP.md
 │   ├── README.md
@@ -990,6 +987,7 @@ Market-Data-Collector/
 │   │   │       ...
 │   │   ├── Integration/
 │   │   │   ├── ConnectionRetryIntegrationTests.cs
+│   │   │   ├── EndpointStubDetectionTests.cs
 │   │   │   └── UwpCoreIntegrationTests.cs
 │   │   ├── Serialization/
 │   │   │   └── HighPerformanceJsonTests.cs
