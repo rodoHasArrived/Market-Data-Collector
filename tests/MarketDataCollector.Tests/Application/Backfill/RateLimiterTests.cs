@@ -340,7 +340,7 @@ public class RateLimiterTests : IDisposable
         // Arrange - Use a much shorter window (200ms) to make test fast
         // With limit of 3 and 6 concurrent requests, the second batch must wait
         _rateLimiter = new RateLimiter(maxRequestsPerWindow: 3, window: TimeSpan.FromMilliseconds(200));
-        
+
         // Act - Launch 6 concurrent requests (2x limit)
         var tasks = Enumerable.Range(0, 6)
             .Select(_ => _rateLimiter.WaitForSlotAsync())
@@ -352,10 +352,10 @@ public class RateLimiterTests : IDisposable
         // First 3 requests should complete immediately (or near-zero wait)
         var immediateRequests = waitTimes.Count(t => t.TotalMilliseconds < 50);
         var delayedRequests = waitTimes.Count(t => t.TotalMilliseconds >= 50);
-        
+
         immediateRequests.Should().BeGreaterOrEqualTo(3, "at least 3 requests should proceed immediately");
         delayedRequests.Should().BeGreaterOrEqualTo(3, "at least 3 requests should be delayed by rate limiting");
-        
+
         // At least some requests should have waited a non-trivial duration (>= window/2)
         waitTimes.Should().Contain(t => t.TotalMilliseconds >= 100, "some requests should wait for rate limit window");
     }

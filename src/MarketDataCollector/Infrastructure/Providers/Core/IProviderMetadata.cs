@@ -233,13 +233,13 @@ public sealed record ProviderCapabilities
         bool quotes = true,
         bool depth = false,
         int? maxDepthLevels = null) => new()
-    {
-        SupportsStreaming = true,
-        SupportsRealtimeTrades = trades,
-        SupportsRealtimeQuotes = quotes,
-        SupportsMarketDepth = depth,
-        MaxDepthLevels = maxDepthLevels
-    };
+        {
+            SupportsStreaming = true,
+            SupportsRealtimeTrades = trades,
+            SupportsRealtimeQuotes = quotes,
+            SupportsMarketDepth = depth,
+            MaxDepthLevels = maxDepthLevels
+        };
 
     /// <summary>Basic backfill provider with daily bars only.</summary>
     public static ProviderCapabilities BackfillBarsOnly { get; } = new()
@@ -273,13 +273,13 @@ public sealed record ProviderCapabilities
     public static ProviderCapabilities SymbolSearchFilterable(
         IReadOnlyList<string>? assetTypes = null,
         IReadOnlyList<string>? exchanges = null) => new()
-    {
-        SupportsSymbolSearch = true,
-        SupportsAssetTypeFilter = assetTypes is { Count: > 0 },
-        SupportsExchangeFilter = exchanges is { Count: > 0 },
-        SupportedAssetTypes = assetTypes,
-        SupportedExchanges = exchanges
-    };
+        {
+            SupportsSymbolSearch = true,
+            SupportsAssetTypeFilter = assetTypes is { Count: > 0 },
+            SupportsExchangeFilter = exchanges is { Count: > 0 },
+            SupportedAssetTypes = assetTypes,
+            SupportedExchanges = exchanges
+        };
 
     /// <summary>Hybrid provider supporting both streaming and backfill.</summary>
     public static ProviderCapabilities Hybrid(
@@ -288,17 +288,17 @@ public sealed record ProviderCapabilities
         bool depth = false,
         bool adjustedPrices = true,
         bool intraday = true) => new()
-    {
-        SupportsStreaming = true,
-        SupportsBackfill = true,
-        SupportsRealtimeTrades = trades,
-        SupportsRealtimeQuotes = quotes,
-        SupportsMarketDepth = depth,
-        SupportsAdjustedPrices = adjustedPrices,
-        SupportsIntraday = intraday,
-        SupportsDividends = true,
-        SupportsSplits = true
-    };
+        {
+            SupportsStreaming = true,
+            SupportsBackfill = true,
+            SupportsRealtimeTrades = trades,
+            SupportsRealtimeQuotes = quotes,
+            SupportsMarketDepth = depth,
+            SupportsAdjustedPrices = adjustedPrices,
+            SupportsIntraday = intraday,
+            SupportsDividends = true,
+            SupportsSplits = true
+        };
 
     #endregion
 
@@ -312,20 +312,20 @@ public sealed record ProviderCapabilities
         int? maxRequestsPerWindow = null,
         TimeSpan? rateLimitWindow = null,
         TimeSpan? minDelay = null) => new()
-    {
-        SupportsBackfill = true,
-        SupportsAdjustedPrices = caps.AdjustedPrices,
-        SupportsIntraday = caps.Intraday,
-        SupportsDividends = caps.Dividends,
-        SupportsSplits = caps.Splits,
-        SupportsHistoricalQuotes = caps.Quotes,
-        SupportsHistoricalTrades = caps.Trades,
-        SupportsHistoricalAuctions = caps.Auctions,
-        SupportedMarkets = caps.SupportedMarkets,
-        MaxRequestsPerWindow = maxRequestsPerWindow,
-        RateLimitWindow = rateLimitWindow,
-        MinRequestDelay = minDelay
-    };
+        {
+            SupportsBackfill = true,
+            SupportsAdjustedPrices = caps.AdjustedPrices,
+            SupportsIntraday = caps.Intraday,
+            SupportsDividends = caps.Dividends,
+            SupportsSplits = caps.Splits,
+            SupportsHistoricalQuotes = caps.Quotes,
+            SupportsHistoricalTrades = caps.Trades,
+            SupportsHistoricalAuctions = caps.Auctions,
+            SupportedMarkets = caps.SupportedMarkets,
+            MaxRequestsPerWindow = maxRequestsPerWindow,
+            RateLimitWindow = rateLimitWindow,
+            MinRequestDelay = minDelay
+        };
 
     /// <summary>
     /// Converts to dictionary for JSON serialization and UI consumption.
