@@ -366,6 +366,10 @@ Market-Data-Collector/
 │   │   ├── realtime-streaming-architecture-evaluation.md
 │   │   └── storage-architecture-evaluation.md
 │   ├── generated/
+│   │   ├── project-context.md
+│   │   ├── provider-registry.md
+│   │   ├── repository-structure.md
+│   │   └── workflows-overview.md
 │   ├── getting-started/
 │   │   └── README.md
 │   ├── integrations/
@@ -1073,6 +1077,8 @@ Market-Data-Collector/
 │   │   │   └── Models/
 │   │   │       ...
 │   │   ├── Infrastructure/
+│   │   │   ├── DataSources/
+│   │   │   │   ...
 │   │   │   ├── Providers/
 │   │   │   │   ...
 │   │   │   ├── Resilience/
