@@ -73,7 +73,7 @@ jobs:
     name: AI Known Errors Intake
     if: |
       (github.event_name == 'issues' && contains(github.event.issue.labels.*.name, 'ai-known-error')) ||
-      (github.event_name == 'workflow_dispatch' && github.event.inputs.issue_number != '')
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.issue_number != '' && github.event.inputs.issue_number != null)
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
