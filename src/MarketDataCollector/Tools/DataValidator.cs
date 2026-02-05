@@ -10,10 +10,22 @@ namespace MarketDataCollector.Tools;
 /// <summary>
 /// Validates JSONL data files for integrity and completeness.
 /// Can be run as a standalone tool to check stored data quality.
+/// Supports both PascalCase and camelCase JSON property names.
 /// </summary>
 public sealed class DataValidator
 {
     private readonly ILogger _log = LoggingSetup.ForContext<DataValidator>();
+
+    /// <summary>
+    /// Tries to get a JSON property by name, checking both PascalCase and camelCase variants.
+    /// The storage system serializes with camelCase (e.g. "type", "symbol", "timestamp")
+    /// but external or manually created files may use PascalCase.
+    /// </summary>
+    private static bool TryGetPropertyCaseInsensitive(
+        JsonElement root, string pascalName, string camelName, out JsonElement value)
+    {
+        return root.TryGetProperty(pascalName, out value) || root.TryGetProperty(camelName, out value);
+    }
 
     public record ValidationResult(
         string FilePath,
@@ -85,22 +97,22 @@ public sealed class DataValidator
                     using var doc = JsonDocument.Parse(line);
                     var root = doc.RootElement;
 
-                    // Validate required fields
-                    if (!root.TryGetProperty("Type", out var typeEl))
+                    // Validate required fields (support both PascalCase and camelCase)
+                    if (!TryGetPropertyCaseInsensitive(root, "Type", "type", out var typeEl))
                     {
                         invalidEvents++;
                         errors.Add($"Line {totalLines}: Missing 'Type' field");
                         continue;
                     }
 
-                    if (!root.TryGetProperty("Symbol", out var symbolEl))
+                    if (!TryGetPropertyCaseInsensitive(root, "Symbol", "symbol", out var symbolEl))
                     {
                         invalidEvents++;
                         errors.Add($"Line {totalLines}: Missing 'Symbol' field");
                         continue;
                     }
 
-                    if (!root.TryGetProperty("Timestamp", out var tsEl))
+                    if (!TryGetPropertyCaseInsensitive(root, "Timestamp", "timestamp", out var tsEl))
                     {
                         invalidEvents++;
                         errors.Add($"Line {totalLines}: Missing 'Timestamp' field");
