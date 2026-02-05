@@ -1,5 +1,8 @@
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Logging;
+using MarketDataCollector.Contracts.Domain.Enums;
+using MarketDataCollector.Contracts.Domain.Models;
+using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Providers.Core;
 using Serilog;
@@ -136,10 +139,18 @@ public sealed class IBSimulationClient : IMarketDataClient
                 var price = Math.Round(basePrice + jitter, 2);
                 var size = _rng.Next(1, 500) * 100L;
 
-                var evt = Domain.Events.MarketEvent.Trade(
+                var evt = MarketEvent.Trade(
                     DateTimeOffset.UtcNow,
                     symbol,
-                    new Contracts.Domain.Models.Trade(price, size, Contracts.Domain.Enums.AggressorSide.Unknown, 0, "IB-SIM", null),
+                    new Trade(
+                        Timestamp: DateTimeOffset.UtcNow,
+                        Symbol: symbol,
+                        Price: price,
+                        Size: size,
+                        Aggressor: AggressorSide.Unknown,
+                        SequenceNumber: 0,
+                        StreamId: "IB-SIM",
+                        Venue: null),
                     0,
                     "ib-sim");
 
