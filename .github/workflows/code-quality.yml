@@ -25,6 +25,7 @@ on:
 
 permissions:
   contents: read
+  issues: write
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -62,6 +63,7 @@ jobs:
       # Single build with all analysis enabled
       - name: Build with analysis and documentation
         id: build
+        continue-on-error: true
         run: |
           set -o pipefail
           dotnet build MarketDataCollector.sln \
@@ -78,7 +80,40 @@ jobs:
 
       # Analyze build output for issues
       - name: Analyze build results
+        id: analyze
+        if: always()
         run: |
+          FORMAT_ISSUES=0
+          BUILD_ISSUES=0
+          WARNING_COUNT=0
+          ERROR_COUNT=0
+
+          if [ "${{ steps.format-check.outcome }}" != "success" ]; then
+            FORMAT_ISSUES=1
+          fi
+
+          if [ -f build-output.log ]; then
+            WARNING_COUNT=$(grep -cE "warning (CA|CS|IDE|SCS)" build-output.log || true)
+            ERROR_COUNT=$(grep -cE " error (CA|CS|IDE|SCS)" build-output.log || true)
+          fi
+
+          if [ "${{ steps.build.outcome }}" != "success" ] || [ "$WARNING_COUNT" -gt 0 ] || [ "$ERROR_COUNT" -gt 0 ]; then
+            BUILD_ISSUES=1
+          fi
+
+          HAS_ISSUES=0
+          if [ "$FORMAT_ISSUES" -eq 1 ] || [ "$BUILD_ISSUES" -eq 1 ]; then
+            HAS_ISSUES=1
+          fi
+
+          {
+            echo "format_issues=$FORMAT_ISSUES"
+            echo "build_issues=$BUILD_ISSUES"
+            echo "warning_count=$WARNING_COUNT"
+            echo "error_count=$ERROR_COUNT"
+            echo "has_issues=$HAS_ISSUES"
+          } >> "$GITHUB_OUTPUT"
+
           echo "## Code Quality Report" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Generated:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
@@ -118,9 +153,53 @@ jobs:
           echo "- Documentation files generated: $XML_COUNT" >> $GITHUB_STEP_SUMMARY
 
       - name: Upload build log
-        if: failure()
+        if: always() && steps.analyze.outputs.has_issues == '1'
         uses: actions/upload-artifact@v4
         with:
           name: build-output
           path: build-output.log
           retention-days: 7
+
+      - name: Create Copilot task for quality issues
+        if: >-
+          always() &&
+          steps.analyze.outputs.has_issues == '1' &&
+          github.event_name != 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const workflowName = context.workflow;
+            const runId = context.runId;
+            const sha = context.sha;
+            const shortSha = sha.substring(0, 7);
+
+            const title = `[Copilot Task] Resolve code quality issues (${shortSha})`;
+            const body = [
+              '## Copilot task',
+              '',
+              '@copilot please investigate and resolve the code quality issues reported by the workflow run below.',
+              '',
+              `- Workflow: ${workflowName}`,
+              `- Run: https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId}`,
+              `- Commit: ${sha}`,
+              `- Format issues: ${{ steps.analyze.outputs.format_issues }}`,
+              `- Build issues: ${{ steps.analyze.outputs.build_issues }}`,
+              `- Warnings: ${{ steps.analyze.outputs.warning_count }}`,
+              `- Errors: ${{ steps.analyze.outputs.error_count }}`,
+              '',
+              'Please submit a PR with fixes and link it to this issue.'
+            ].join('\n');
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title,
+              body,
+              labels: ['copilot', 'code-quality']
+            });
+
+      - name: Fail workflow when quality issues exist
+        if: steps.analyze.outputs.has_issues == '1'
+        run: |
+          echo "Code quality issues detected. Failing workflow after creating Copilot task."
+          exit 1
