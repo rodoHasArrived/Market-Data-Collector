@@ -84,6 +84,29 @@ dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --mod
 
 ---
 
+## AI Error Prevention (Read Before Editing)
+
+To reduce repeated mistakes across agents, always review and update:
+
+- `docs/ai-known-errors.md` — canonical log of recurring agent mistakes, root causes, and prevention checks.
+- `.github/workflows/documentation.yml (AI Known Errors Intake job)` — automation that ingests labeled GitHub issues into the known-error registry via PR.
+
+### Required workflow for AI agents
+
+1. **Before making changes**: scan `docs/ai-known-errors.md` and apply listed prevention checks.
+2. **After fixing a bug caused by agent error**: add a new entry with:
+   - symptoms
+   - root cause
+   - prevention checklist
+   - verification command(s)
+3. **Before opening PR**: confirm your change does not repeat any open/known pattern in that file.
+
+If no similar issue exists, create a concise new entry so future agents can avoid repeating it.
+
+If the issue is tracked on GitHub, label it `ai-known-error` so the intake workflow can propose an update to `docs/ai-known-errors.md`.
+
+---
+
 ## Command-Line Reference
 
 ### Symbol Management
