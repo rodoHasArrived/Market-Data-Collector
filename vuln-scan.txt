@@ -1,0 +1,34 @@
+
+The following sources were used:
+   https://api.nuget.org/v3/index.json
+
+Project `MarketDataCollector` has the following vulnerable packages
+   [net9.0]: 
+   Transitive Package      Resolved   Severity   Advisory URL                                     
+   > DotNetZip             1.16.0     High       https://github.com/advisories/GHSA-xhg6-9j5j-w4vf
+
+Project `MarketDataCollector.Ui` has the following vulnerable packages
+   [net9.0]: 
+   Transitive Package      Resolved   Severity   Advisory URL                                     
+   > DotNetZip             1.16.0     High       https://github.com/advisories/GHSA-xhg6-9j5j-w4vf
+
+The given project `MarketDataCollector.Uwp` has no vulnerable packages given the current sources.
+The given project `MarketDataCollector.Wpf` has no vulnerable packages given the current sources.
+The given project `MarketDataCollector.Contracts` has no vulnerable packages given the current sources.
+Project `MarketDataCollector.Ui.Shared` has the following vulnerable packages
+   [net9.0]: 
+   Transitive Package      Resolved   Severity   Advisory URL                                     
+   > DotNetZip             1.16.0     High       https://github.com/advisories/GHSA-xhg6-9j5j-w4vf
+
+Project `MarketDataCollector.Tests` has the following vulnerable packages
+   [net9.0]: 
+   Transitive Package      Resolved   Severity   Advisory URL                                     
+   > DotNetZip             1.16.0     High       https://github.com/advisories/GHSA-xhg6-9j5j-w4vf
+
+Project `MarketDataCollector.Benchmarks` has the following vulnerable packages
+   [net9.0]: 
+   Transitive Package      Resolved   Severity   Advisory URL                                     
+   > DotNetZip             1.16.0     High       https://github.com/advisories/GHSA-xhg6-9j5j-w4vf
+
+The given project `MarketDataCollector.FSharp` has no vulnerable packages given the current sources.
+The given project `MarketDataCollector.FSharp.Tests` has no vulnerable packages given the current sources.
