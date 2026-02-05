@@ -179,7 +179,7 @@ public sealed class StorageSearchService : IStorageSearchService
     {
         await EnsureIndexUpdatedAsync(ct);
 
-        var symbols = new Dictionary<string, SymbolCatalogEntry>();
+        var symbols = new Dictionary<string, StorageSymbolCatalogEntry>();
         var dateRange = (MinDate: DateTimeOffset.MaxValue, MaxDate: DateTimeOffset.MinValue);
         var sources = new HashSet<string>();
         var eventTypes = new HashSet<string>();
@@ -196,7 +196,7 @@ public sealed class StorageSearchService : IStorageSearchService
             // Update aggregations
             if (!symbols.ContainsKey(metadata.Symbol))
             {
-                symbols[metadata.Symbol] = new SymbolCatalogEntry(
+                symbols[metadata.Symbol] = new StorageSymbolCatalogEntry(
                     Symbol: metadata.Symbol,
                     FirstDate: metadata.Date,
                     LastDate: metadata.Date,
@@ -674,7 +674,7 @@ public sealed record FacetedSearchResult(
 public sealed record DataCatalog(
     DateTimeOffset GeneratedAt,
     string RootPath,
-    IReadOnlyList<SymbolCatalogEntry> Symbols,
+    IReadOnlyList<StorageSymbolCatalogEntry> Symbols,
     IReadOnlyList<string> Sources,
     IReadOnlyList<string> EventTypes,
     DateRange DateRange,
@@ -682,7 +682,7 @@ public sealed record DataCatalog(
     long TotalBytes
 );
 
-public sealed record SymbolCatalogEntry(
+public sealed record StorageSymbolCatalogEntry(
     string Symbol,
     DateTimeOffset FirstDate,
     DateTimeOffset LastDate,
