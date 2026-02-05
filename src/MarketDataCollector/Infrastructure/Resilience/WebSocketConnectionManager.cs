@@ -31,6 +31,7 @@ public sealed class WebSocketConnectionManager : IAsyncDisposable
 
     private ClientWebSocket? _webSocket;
     private CancellationTokenSource? _connectionCts;
+    private CancellationTokenSource? _receiveLoopCts;
     private Task? _receiveTask;
     private WebSocketHeartbeat? _heartbeat;
 
@@ -152,11 +153,15 @@ public sealed class WebSocketConnectionManager : IAsyncDisposable
         if (_webSocket == null)
             throw new InvalidOperationException("WebSocket not connected. Call ConnectAsync first.");
 
-        var linkedCts = _connectionCts != null
+        // Dispose previous receive loop CTS if any
+        _receiveLoopCts?.Dispose();
+
+        _receiveLoopCts = _connectionCts != null
             ? CancellationTokenSource.CreateLinkedTokenSource(_connectionCts.Token, ct)
             : CancellationTokenSource.CreateLinkedTokenSource(ct);
 
-        _receiveTask = Task.Run(() => ReceiveLoopAsync(messageHandler, linkedCts.Token), CancellationToken.None);
+        var token = _receiveLoopCts.Token;
+        _receiveTask = Task.Run(() => ReceiveLoopAsync(messageHandler, token), CancellationToken.None);
     }
 
     /// <summary>
@@ -236,6 +241,8 @@ public sealed class WebSocketConnectionManager : IAsyncDisposable
             _receiveTask = null;
         }
 
+        _receiveLoopCts?.Dispose();
+        _receiveLoopCts = null;
         _connectionCts?.Dispose();
         _connectionCts = null;
 
@@ -407,9 +414,11 @@ public sealed class WebSocketConnectionManager : IAsyncDisposable
         var ws = _webSocket;
         var cts = _connectionCts;
         var heartbeat = _heartbeat;
+        var receiveLoopCts = _receiveLoopCts;
 
         _webSocket = null;
         _connectionCts = null;
+        _receiveLoopCts = null;
         _heartbeat = null;
 
         if (heartbeat != null)
@@ -418,24 +427,30 @@ public sealed class WebSocketConnectionManager : IAsyncDisposable
             await heartbeat.DisposeAsync();
         }
 
+        if (receiveLoopCts != null)
+        {
+            try { receiveLoopCts.Dispose(); }
+            catch (Exception ex) { _log.Debug(ex, "{Provider} receive loop CTS dispose failed during cleanup", _providerName); }
+        }
+
         if (cts != null)
         {
             try { cts.Cancel(); }
-            catch { /* ignore */ }
+            catch (Exception ex) { _log.Debug(ex, "{Provider} CTS cancel failed during cleanup", _providerName); }
             try { cts.Dispose(); }
-            catch { /* ignore */ }
+            catch (Exception ex) { _log.Debug(ex, "{Provider} CTS dispose failed during cleanup", _providerName); }
         }
 
         if (ws != null)
         {
             try { ws.Dispose(); }
-            catch { /* ignore */ }
+            catch (Exception ex) { _log.Debug(ex, "{Provider} WebSocket dispose failed during cleanup", _providerName); }
         }
 
         if (_receiveTask != null)
         {
             try { await _receiveTask.ConfigureAwait(false); }
-            catch { /* ignore */ }
+            catch (Exception ex) { _log.Debug(ex, "{Provider} receive task failed during cleanup", _providerName); }
             _receiveTask = null;
         }
     }
@@ -443,11 +458,11 @@ public sealed class WebSocketConnectionManager : IAsyncDisposable
     private void CleanupFailedConnection()
     {
         try { _webSocket?.Dispose(); }
-        catch { /* ignore */ }
+        catch (Exception ex) { _log.Debug(ex, "{Provider} WebSocket dispose failed during connection cleanup", _providerName); }
         _webSocket = null;
 
         try { _connectionCts?.Dispose(); }
-        catch { /* ignore */ }
+        catch (Exception ex) { _log.Debug(ex, "{Provider} CTS dispose failed during connection cleanup", _providerName); }
         _connectionCts = null;
     }
 

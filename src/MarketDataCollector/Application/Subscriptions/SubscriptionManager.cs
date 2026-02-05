@@ -112,9 +112,9 @@ public sealed class SubscriptionManager
                             var id = _ib.SubscribeMarketDepth(sc);
                             if (id > 0) _depthSubs[symbol] = id;
                         }
-                        catch
+                        catch (Exception ex)
                         {
-                            // if IB isn't enabled, SubscribeMarketDepth returns -1 via NoOp
+                            _log.Warning(ex, "Failed to subscribe market depth for {Symbol}. Provider may be unavailable.", symbol);
                             _depthSubs[symbol] = -1;
                         }
                     }
@@ -140,8 +140,9 @@ public sealed class SubscriptionManager
                             var id = _ib.SubscribeTrades(sc);
                             if (id > 0) _tradeSubs[symbol] = id;
                         }
-                        catch
+                        catch (Exception ex)
                         {
+                            _log.Warning(ex, "Failed to subscribe trades for {Symbol}. Provider may be unavailable.", symbol);
                             _tradeSubs[symbol] = -1;
                         }
                     }

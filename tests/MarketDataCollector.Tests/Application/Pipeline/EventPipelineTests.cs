@@ -200,8 +200,8 @@ public class EventPipelineTests : IAsyncLifetime
     [Fact]
     public async Task PeakQueueSize_TracksHighWaterMark()
     {
-        // Arrange
-        await using var sink = new MockStorageSink { ProcessingDelay = TimeSpan.FromMilliseconds(10) };
+        // Arrange - Use a slow consumer so events queue up
+        await using var sink = new MockStorageSink { ProcessingDelay = TimeSpan.FromMilliseconds(50) };
         await using var pipeline = new EventPipeline(sink, capacity: 1000, enablePeriodicFlush: false);
 
         // Act - Publish events faster than they can be consumed
@@ -210,10 +210,14 @@ public class EventPipelineTests : IAsyncLifetime
             pipeline.TryPublish(CreateTradeEvent("SPY"));
         }
 
-        // Give some time for queue to build up
-        await Task.Delay(50);
+        // Wait until at least some events are consumed (proves pipeline ran)
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        while (pipeline.ConsumedCount < 1 && sw.ElapsedMilliseconds < 2000)
+        {
+            await Task.Delay(10);
+        }
 
-        // Assert
+        // Assert - Peak should have been recorded when events were queued
         pipeline.PeakQueueSize.Should().BeGreaterThan(0);
     }
 
@@ -264,27 +268,28 @@ public class EventPipelineTests : IAsyncLifetime
     [Fact]
     public async Task TryPublish_WhenQueueFull_DropWriteMode_ReturnsFalse()
     {
-        // Arrange - Small capacity with slow consumer
-        await using var sink = new MockStorageSink { ProcessingDelay = TimeSpan.FromMilliseconds(1000) };
+        // Arrange - Small capacity with very slow consumer to guarantee queue stays full
+        await using var sink = new MockStorageSink { ProcessingDelay = TimeSpan.FromMilliseconds(5000) };
         await using var pipeline = new EventPipeline(
             sink,
             capacity: 5,
             fullMode: BoundedChannelFullMode.DropWrite,
             enablePeriodicFlush: false);
 
-        // Fill the queue
-        for (int i = 0; i < 5; i++)
+        // Overfill the queue - publish many more than capacity
+        // With a 5-second processing delay, the consumer won't drain any during this burst
+        var dropCount = 0;
+        for (int i = 0; i < 20; i++)
         {
-            pipeline.TryPublish(CreateTradeEvent("SPY"));
+            if (!pipeline.TryPublish(CreateTradeEvent("SPY")))
+                dropCount++;
         }
 
-        // Act - Next publish should fail
-        await Task.Delay(10); // Small delay to ensure queue is full
-        var result = pipeline.TryPublish(CreateTradeEvent("SPY"));
-
-        // Assert - May or may not fail depending on timing, but DroppedCount should match
-        // If result is false, DroppedCount should be > 0
-        (result || pipeline.DroppedCount > 0).Should().BeTrue();
+        // Assert - With capacity=5 and 20 publishes against a 5s consumer,
+        // at least some should have been dropped
+        pipeline.DroppedCount.Should().BeGreaterThan(0,
+            "DropWrite mode should reject events when the channel is full");
+        await Task.CompletedTask;
     }
 
     #endregion
