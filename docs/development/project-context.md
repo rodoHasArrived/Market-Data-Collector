@@ -1,254 +1,123 @@
-# MarketDataCollector Project Context
+# Market Data Collector Project Context
 
-**Last Updated:** 2026-01-28
-**Version:** 1.6.1
+**Last Updated:** 2026-02-05
+**Version:** 1.0.0
 
 ## Overview
 
-MarketDataCollector is a high-performance market data collection system on .NET 9.0 that captures real-time and historical data from multiple providers with production-grade reliability. The system features a modular monolithic architecture (see [ADR-003](../adr/003-microservices-decomposition.md)), tiered storage with compression, and supports 10+ data providers for comprehensive market coverage.
+Market Data Collector is a .NET 9 monolithic market data platform for collecting both real-time and historical datasets from multiple providers. The repository includes a CLI-first core runtime, web UI, shared UI services, and Windows desktop clients (WPF recommended, UWP legacy).
 
 ## Critical Rules
 
 When contributing to this project, always follow these rules:
 
-- **ALWAYS** use `CancellationToken` on async methods
-- **NEVER** store secrets in code or config files - use environment variables
-- **ALWAYS** use structured logging with semantic parameters
-- **PREFER** `IAsyncEnumerable<T>` for streaming data over collections
-- **ALWAYS** mark classes as `sealed` unless designed for inheritance
+- **ALWAYS** pass `CancellationToken` to async methods where available
+- **NEVER** store secrets in source-controlled config files
+- **ALWAYS** use structured logging with named parameters
+- **PREFER** streaming (`IAsyncEnumerable<T>`) for continuous data flows
+- **ALWAYS** keep abstractions provider-agnostic where possible
 
 ## Architecture Principles
 
-1. **Provider Independence**: All data providers implement `IMarketDataClient` interface, enabling seamless swapping and concurrent multi-provider operations ([ADR-001](../adr/001-provider-abstraction.md))
-2. **No Vendor Lock-in**: Provider-agnostic interfaces with intelligent failover strategies
-3. **Security First**: Environment variable-based credential management, no plain-text secrets
-4. **Observability**: Structured logging, Prometheus metrics, health check endpoints
-5. **Modularity**: Separate projects for core logic, domain models (F#), web UI, UWP desktop app, and shared contracts
-6. **Monolithic Simplicity**: Single deployable unit with clear module boundaries for operational simplicity ([ADR-003](../adr/003-microservices-decomposition.md))
+1. **Provider independence** through shared contracts and provider abstractions ([ADR-001](../adr/001-provider-abstraction.md)).
+2. **Operational simplicity** via modular monolith architecture ([ADR-003](../adr/003-microservices-decomposition.md)).
+3. **Security-first configuration** using environment variables and centralized config policy ([ADR-011](../adr/011-centralized-configuration-and-credentials.md)).
+4. **Observability by default** with status, health, and metrics endpoints ([ADR-012](../adr/012-monitoring-and-alerting-pipeline.md)).
+5. **Tiered storage** with JSONL hot data and archive-oriented formats ([ADR-002](../adr/002-tiered-storage-architecture.md)).
 
 ## Technology Stack
 
 | Component | Technology |
 |-----------|------------|
 | Runtime | .NET 9.0 |
-| Languages | C# 11 (infrastructure), F# 8.0 (domain modeling) |
+| Languages | C# 13, F# 8.0 |
 | Serialization | System.Text.Json |
-| Metrics | OpenTelemetry, Prometheus |
-| Containerization | Docker, Docker Compose |
-| HTTP Clients | IHttpClientFactory with Polly resilience ([ADR-010](../adr/010-httpclient-factory.md)) |
-| Storage | JSONL (hot), Parquet (archive), Write-Ahead Log (durability) ([ADR-002](../adr/002-tiered-storage-architecture.md)) |
-| Compression | LZ4 (real-time), ZSTD (archive), Gzip (compatibility) |
-| Desktop UI | UWP/WinUI 3 (Windows 10/11) |
-| Web UI | ASP.NET Core with WebSocket |
+| Metrics/Monitoring | Prometheus endpoints + status/health APIs |
+| HTTP Clients | `IHttpClientFactory` patterns ([ADR-010](../adr/010-httpclient-factory.md)) |
+| Storage | JSONL + Parquet + WAL |
+| Desktop UI | WPF (primary), UWP (legacy) |
+| Web UI | ASP.NET Core |
 
-### Streaming Data Providers
-
-| Provider | Status | Notes |
-|----------|--------|-------|
-| Alpaca Markets | ✅ Production | REST + WebSocket, IEX/SIP feeds |
-| Interactive Brokers | ⚠️ Requires IBAPI | TWS API, L2 depth support |
-| StockSharp | ✅ Production | Multi-exchange support |
-| NYSE | ✅ Production | NYSE-specific feeds |
-| Polygon.io | ❌ Stub | Future implementation |
-
-### Historical Data Providers
-
-| Provider | Status | Notes |
-|----------|--------|-------|
-| Alpaca | ✅ Production | Unlimited free historical |
-| Yahoo Finance | ✅ Production | No auth, 50K+ securities |
-| Stooq | ✅ Production | Global coverage, no auth |
-| Nasdaq Data Link | ✅ Production | Alternative/economic data |
-| Tiingo | ✅ Production | Best for dividend-adjusted |
-| Finnhub | ✅ Production | Includes fundamentals |
-| Alpha Vantage | ✅ Production | Limited free tier |
-| Polygon | ✅ Production | High-quality tick data |
-| IB Historical | ⚠️ Requires IBAPI | Requires streaming subscription |
-
-## Project Structure
-
-```
-MarketDataCollector/
-├── src/
-│   ├── MarketDataCollector/           # Main application, entry point
-│   │   ├── Domain/                    # Business logic and collectors
-│   │   ├── Infrastructure/            # Provider implementations
-│   │   ├── Application/               # Services, config, pipeline
-│   │   └── Storage/                   # Data persistence
-│   ├── MarketDataCollector.FSharp/    # F# domain models, validation, calculations
-│   ├── MarketDataCollector.Contracts/ # Shared contracts and DTOs
-│   ├── MarketDataCollector.Ui/        # Web dashboard, WebSocket updates
-│   └── MarketDataCollector.Uwp/       # UWP desktop application (WinUI 3)
-├── tests/                              # Unit and integration tests (45 files)
-├── benchmarks/                         # Performance benchmarks
-├── docs/                               # Documentation
-├── deploy/                             # Docker, systemd configs
-├── scripts/                            # Build and diagnostic scripts
-└── build-system/                       # Python build tooling
-```
-
-## Key Interfaces
-
-### IMarketDataClient
-
-Core abstraction for all real-time market data providers ([ADR-001](../adr/001-provider-abstraction.md)):
-
-```csharp
-[ImplementsAdr("ADR-001", "Core streaming data provider contract")]
-public interface IMarketDataClient : IAsyncDisposable
-{
-    bool IsEnabled { get; }
-    Task ConnectAsync(CancellationToken ct = default);
-    Task DisconnectAsync(CancellationToken ct = default);
-    int SubscribeMarketDepth(SymbolConfig cfg);
-    void UnsubscribeMarketDepth(int subscriptionId);
-    int SubscribeTrades(SymbolConfig cfg);
-    void UnsubscribeTrades(int subscriptionId);
-}
-```
-
-### IHistoricalDataProvider
-
-Historical data provider abstraction ([ADR-001](../adr/001-provider-abstraction.md)):
-
-```csharp
-[ImplementsAdr("ADR-001", "Core historical data provider contract")]
-public interface IHistoricalDataProvider
-{
-    string Name { get; }
-    string DisplayName { get; }
-    string Description { get; }
-    HistoricalDataCapabilities Capabilities { get; }
-    int Priority { get; }
-
-    Task<IReadOnlyList<HistoricalBar>> GetDailyBarsAsync(
-        string symbol, DateOnly? from, DateOnly? to,
-        CancellationToken ct = default);
-}
-```
-
-## Coding Conventions
-
-### Logging
-
-Use structured logging with semantic parameters:
-
-```csharp
-_logger.LogInformation("Received {Count} bars for {Symbol}", bars.Count, symbol);
-```
-
-### Configuration
-
-Configuration uses the .NET Options pattern with environment variable overrides:
-
-```csharp
-// Environment variables use double underscore for nesting
-// ALPACA__KEYID maps to Alpaca:KeyId
-services.Configure<AlpacaOptions>(configuration.GetSection("Alpaca"));
-```
-
-### Error Handling
-
-- Log all errors with context
-- Use exponential backoff for retries
-- Throw `ArgumentException` for bad inputs, `InvalidOperationException` for state errors
-- Use `Result<T, TError>` in F# code
-
-## Anti-Patterns to Avoid
-
-| Anti-Pattern | Why It's Bad |
-|--------------|--------------|
-| Swallowing exceptions silently | Hides bugs, makes debugging impossible |
-| Hardcoding connection strings or credentials | Security risk, inflexible deployment |
-| Using `Task.Run` for I/O-bound operations | Wastes thread pool threads |
-| Blocking async code with `.Result` or `.Wait()` | Can cause deadlocks |
-| Creating new `HttpClient` instances | Socket exhaustion, DNS issues (see [ADR-010](../adr/010-httpclient-factory.md)) |
-| Missing `CancellationToken` on async methods | Prevents graceful shutdown (see [ADR-004](../adr/004-async-streaming-patterns.md)) |
-
-## Storage Architecture
-
-### Tiered Storage
-
-```
-Market Data → Event Pipeline → WAL → JSONL (hot) → Parquet (archive)
-                                        ↓
-                                 Compression Layer
-                                 ├─ LZ4 (real-time)
-                                 ├─ Gzip (compatibility)
-                                 └─ ZSTD-19 (archive)
-```
-
-### File Organization
-
-```
-{DataRoot}/
-├── live/                    # Real-time data (hot tier)
-│   ├── {provider}/
-│   │   └── {date}/
-│   │       ├── {symbol}_trades.jsonl.gz
-│   │       └── {symbol}_quotes.jsonl.gz
-├── historical/              # Backfill data
-│   └── {provider}/
-│       └── {date}/
-│           └── {symbol}_bars.jsonl
-└── _archive/                # Compressed archives (cold tier)
-    └── parquet/
-        └── bars/
-            └── {symbol}_{year}.parquet
-```
-
-### Compression Profiles
-
-| Profile | Algorithm | Level | Use Case |
-|---------|-----------|-------|----------|
-| RealTime | LZ4 | Fast | Live streaming data |
-| Standard | Gzip | 6 | General purpose |
-| Archive | ZSTD | 19 | Long-term storage |
-
-## Key File Locations
+## Provider Map
 
 ### Streaming Providers
 
 | Provider | Location |
 |----------|----------|
-| Alpaca | `Infrastructure/Providers/Alpaca/AlpacaMarketDataClient.cs` |
-| Interactive Brokers | `Infrastructure/Providers/InteractiveBrokers/IBMarketDataClient.cs` |
-| StockSharp | `Infrastructure/Providers/StockSharp/StockSharpClient.cs` |
-| NYSE | `Infrastructure/Providers/NYSE/NyseMarketDataClient.cs` |
-| Polygon | `Infrastructure/Providers/Polygon/PolygonMarketDataClient.cs` (stub) |
+| Alpaca | `src/MarketDataCollector/Infrastructure/Providers/Streaming/Alpaca/AlpacaMarketDataClient.cs` |
+| Interactive Brokers | `src/MarketDataCollector/Infrastructure/Providers/Streaming/InteractiveBrokers/IBMarketDataClient.cs` |
+| StockSharp | `src/MarketDataCollector/Infrastructure/Providers/Streaming/StockSharp/StockSharpMarketDataClient.cs` |
+| NYSE | `src/MarketDataCollector/Infrastructure/Providers/Streaming/NYSE/NYSEDataSource.cs` |
+| Polygon | `src/MarketDataCollector/Infrastructure/Providers/Streaming/Polygon/PolygonMarketDataClient.cs` |
 
 ### Historical Providers
 
 | Provider | Location |
 |----------|----------|
-| Composite | `Infrastructure/Providers/Backfill/CompositeHistoricalDataProvider.cs` |
-| Alpaca | `Infrastructure/Providers/Backfill/AlpacaHistoricalDataProvider.cs` |
-| Yahoo Finance | `Infrastructure/Providers/Backfill/YahooFinanceHistoricalDataProvider.cs` |
-| Tiingo | `Infrastructure/Providers/Backfill/TiingoHistoricalDataProvider.cs` |
-| Finnhub | `Infrastructure/Providers/Backfill/FinnhubHistoricalDataProvider.cs` |
-| Stooq | `Infrastructure/Providers/Backfill/StooqHistoricalDataProvider.cs` |
-| Nasdaq Data Link | `Infrastructure/Providers/Backfill/NasdaqDataLinkHistoricalDataProvider.cs` |
-| Alpha Vantage | `Infrastructure/Providers/Backfill/AlphaVantageHistoricalDataProvider.cs` |
-| Polygon | `Infrastructure/Providers/Backfill/PolygonHistoricalDataProvider.cs` |
+| Composite | `src/MarketDataCollector/Infrastructure/Providers/Historical/CompositeHistoricalDataProvider.cs` |
+| Alpaca | `src/MarketDataCollector/Infrastructure/Providers/Historical/Alpaca/AlpacaHistoricalDataProvider.cs` |
+| Yahoo Finance | `src/MarketDataCollector/Infrastructure/Providers/Historical/YahooFinance/YahooFinanceHistoricalDataProvider.cs` |
+| Tiingo | `src/MarketDataCollector/Infrastructure/Providers/Historical/Tiingo/TiingoHistoricalDataProvider.cs` |
+| Finnhub | `src/MarketDataCollector/Infrastructure/Providers/Historical/Finnhub/FinnhubHistoricalDataProvider.cs` |
+| Stooq | `src/MarketDataCollector/Infrastructure/Providers/Historical/Stooq/StooqHistoricalDataProvider.cs` |
+| Nasdaq Data Link | `src/MarketDataCollector/Infrastructure/Providers/Historical/NasdaqDataLink/NasdaqDataLinkHistoricalDataProvider.cs` |
+| Alpha Vantage | `src/MarketDataCollector/Infrastructure/Providers/Historical/AlphaVantage/AlphaVantageHistoricalDataProvider.cs` |
+| Polygon | `src/MarketDataCollector/Infrastructure/Providers/Historical/Polygon/PolygonHistoricalDataProvider.cs` |
+| Interactive Brokers | `src/MarketDataCollector/Infrastructure/Providers/Historical/InteractiveBrokers/IBHistoricalDataProvider.cs` |
+| StockSharp | `src/MarketDataCollector/Infrastructure/Providers/Historical/StockSharp/StockSharpHistoricalDataProvider.cs` |
 
-### Core Services
+## Project Structure
+
+```text
+Market-Data-Collector/
+├── src/
+│   ├── MarketDataCollector/            # Core runtime (CLI, domain, providers, storage, web host)
+│   ├── MarketDataCollector.Contracts/  # Shared contracts and DTOs
+│   ├── MarketDataCollector.FSharp/     # F# domain/validation/calculation modules
+│   ├── MarketDataCollector.Ui/         # Web UI host assets
+│   ├── MarketDataCollector.Ui.Shared/  # Shared UI endpoints and service abstractions
+│   ├── MarketDataCollector.Wpf/        # Windows desktop app (recommended)
+│   └── MarketDataCollector.Uwp/        # Legacy Windows desktop app
+├── tests/                              # Unit/integration tests
+├── benchmarks/                         # BenchmarkDotNet performance suites
+├── docs/                               # Architecture, ADRs, operations, provider docs
+├── deploy/                             # Docker and systemd deployment assets
+└── build/                              # Build tooling/scripts (dotnet/python/node)
+```
+
+## Core Interfaces
+
+### `IMarketDataClient`
+
+Core abstraction for real-time market data streaming:
+
+- File: `src/MarketDataCollector/Infrastructure/IMarketDataClient.cs`
+- Inherits: `IProviderMetadata`, `IAsyncDisposable`
+
+### `IHistoricalDataProvider`
+
+Core abstraction for historical bar retrieval:
+
+- File: `src/MarketDataCollector/Infrastructure/Providers/Historical/IHistoricalDataProvider.cs`
+- Inherits: `IProviderMetadata`, `IDisposable`
+
+## Core Services
 
 | Service | Location |
 |---------|----------|
-| Event Pipeline | `Application/Pipeline/EventPipeline.cs` |
-| Backfill Worker | `Infrastructure/Providers/Backfill/BackfillWorkerService.cs` |
-| Data Quality | `Application/Monitoring/DataQuality/DataQualityMonitoringService.cs` |
-| JSONL Storage | `Storage/Sinks/JsonlStorageSink.cs` |
-| Parquet Storage | `Storage/Sinks/ParquetStorageSink.cs` |
-| HTTP Clients | `Infrastructure/Http/HttpClientConfiguration.cs` |
-| Tier Migration | `Storage/Services/TierMigrationService.cs` |
+| Event Pipeline | `src/MarketDataCollector/Application/Pipeline/EventPipeline.cs` |
+| Backfill Worker | `src/MarketDataCollector/Infrastructure/Providers/Historical/Queue/BackfillWorkerService.cs` |
+| Data Quality Monitor | `src/MarketDataCollector/Infrastructure/Providers/Historical/GapAnalysis/DataQualityMonitor.cs` |
+| JSONL Storage Sink | `src/MarketDataCollector/Storage/Sinks/JsonlStorageSink.cs` |
+| Parquet Storage Sink | `src/MarketDataCollector/Storage/Sinks/ParquetStorageSink.cs` |
+| HTTP Client Configuration | `src/MarketDataCollector/Infrastructure/Http/HttpClientConfiguration.cs` |
+| Tier Migration | `src/MarketDataCollector/Storage/Services/TierMigrationService.cs` |
 
 ## Related Documentation
 
 - [Architecture Overview](../architecture/overview.md)
-- [Getting Started](getting-started.md)
-- [Configuration Guide](configuration.md)
-- [Operator Runbook](operator-runbook.md)
+- [Getting Started](../getting-started/README.md)
+- [Operator Runbook](../operations/operator-runbook.md)
 - [Provider Comparison](../providers/provider-comparison.md)
 - [Historical Backfill Guide](../providers/backfill-guide.md)
 - [Production Status](../status/production-status.md)
@@ -257,11 +126,13 @@ Market Data → Event Pipeline → WAL → JSONL (hot) → Parquet (archive)
 
 - [ADR-001: Provider Abstraction](../adr/001-provider-abstraction.md)
 - [ADR-002: Tiered Storage](../adr/002-tiered-storage-architecture.md)
-- [ADR-003: Microservices Decision](../adr/003-microservices-decomposition.md)
-- [ADR-004: Async Streaming](../adr/004-async-streaming-patterns.md)
-- [ADR-005: Attribute Discovery](../adr/005-attribute-based-discovery.md)
-- [ADR-010: HttpClientFactory](../adr/010-httpclient-factory.md)
+- [ADR-003: Monolith Decomposition Decision](../adr/003-microservices-decomposition.md)
+- [ADR-004: Async Streaming Patterns](../adr/004-async-streaming-patterns.md)
+- [ADR-005: Attribute-based Discovery](../adr/005-attribute-based-discovery.md)
+- [ADR-010: `IHttpClientFactory`](../adr/010-httpclient-factory.md)
+- [ADR-011: Centralized Configuration and Credentials](../adr/011-centralized-configuration-and-credentials.md)
+- [ADR-012: Monitoring and Alerting Pipeline](../adr/012-monitoring-and-alerting-pipeline.md)
 
 ---
 
-*Last Updated: 2026-01-28*
+*Last Updated: 2026-02-05*
