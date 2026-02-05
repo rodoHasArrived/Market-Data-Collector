@@ -1,17 +1,11 @@
 name: Validate Workflows
 
 on:
-  # pull_request trigger disabled
-  # pull_request:
-  #   paths:
-  #     - '.github/workflows/**'
-  #     - '.github/dependabot.yml'
-  #     - '.github/labeler.yml'
-  # push trigger disabled
-  # push:
-  #   branches: [ "main" ]
-  #   paths:
-  #     - '.github/workflows/**'
+  pull_request:
+    paths:
+      - '.github/workflows/**'
+      - '.github/dependabot.yml'
+      - '.github/labeler.yml'
   workflow_dispatch:
 
 permissions:
@@ -151,8 +145,11 @@ jobs:
         if [ $EXIT_CODE -eq 0 ]; then
           echo "✓ No security issues found"
         fi
-        
+
         exit $EXIT_CODE
+
+    - name: Run actionlint
+      uses: rhysd/actionlint@v1
 
   check-permissions:
     name: Check Workflow Permissions
