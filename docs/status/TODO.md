@@ -17,27 +17,6 @@
 |------|-------|-------------|
 | `NOTE` | 5 | Important notes and documentation |
 | `TODO` | 3 | General tasks to complete |
-
-### By Directory
-
-| Directory | Count |
-|-----------|-------|
-| `tests/` | 6 |
-| `src/` | 2 |
-
-## All Items
-
-### TODO (3)
-
-- [x] `tests/MarketDataCollector.Tests/Serialization/HighPerformanceJsonTests.cs:108` [#670]
-  > Track with issue #670 - Alpaca message parsing tests require dedicated JsonSerializerContext These tests are temporarily skipped due to JSON property name collision with source generator. A dedicated JsonSerializerContext for Alpaca messages is needed to properly support these parsing methods. In the meantime, the production code still works correctly using non-source-generated deserialization.
-
-- [ ] `src/MarketDataCollector.Uwp/Services/StorageOptimizationAdvisorService.cs:976`
-  > Using GZip for decompression; in production, integrate ZstdSharp for zstd compression. For now, we'll use GZip with optimal compression as a fallback.
-
-- [ ] `src/MarketDataCollector/Infrastructure/DataSources/DataSourceConfiguration.cs:597`
-  > Vault support (AWS Secrets Manager, Azure Key Vault) requires additional implementation.
-
 ### NOTE (5)
 
 - [ ] `tests/MarketDataCollector.Tests/Application/Backfill/BackfillWorkerServiceTests.cs:28`

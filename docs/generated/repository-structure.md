@@ -1,34 +1,49 @@
-# Market Data Collector - Copilot Instructions
+# Repository Structure
 
-> **Note:** For comprehensive project context, see [CLAUDE.md](../CLAUDE.md) in the repository root.
+> Auto-generated on 2026-02-05 08:56:49 UTC
 
-## Repository Overview
+This document provides an overview of the Market Data Collector repository structure.
 
-**Market Data Collector** is a high-performance, cross-platform market data collection system for real-time and historical market microstructure data. It's a production-ready .NET 9.0 solution with F# domain libraries, supporting multiple data providers (Interactive Brokers, Alpaca, NYSE, Polygon, StockSharp) and offering flexible storage options.
+## Directory Layout
 
-**Project Type:** .NET Solution (C# and F#)
-**Target Framework:** .NET 9.0
-**Languages:** C# 11, F# 8.0
-**Size:** 478 source files (466 C#, 12 F#) across 6 main projects
-**Architecture:** Event-driven, monolithic core with optional UI projects
-
-
-## AI Error Registry Workflow
-
-Before implementing changes, review `docs/ai-known-errors.md` and apply relevant prevention checks.
-When an AI-caused regression is identified in GitHub, add label `ai-known-error` so the `AI Known Errors Intake` workflow can open a PR that records it.
-
+```
+Market-Data-Collector/
+├── .claude/
+│   └── settings.local.json
+├── .github/  # GitHub configuration
+│   ├── actions/
+│   │   └── setup-dotnet-cache/
+│   │       └── action.yml
+│   ├── agents/
+│   │   └── documentation-agent.md
+│   ├── ISSUE_TEMPLATE/
+│   │   ├── .gitkeep
+│   │   ├── bug_report.yml
+│   │   ├── config.yml
+│   │   └── feature_request.yml
+│   ├── prompts/
+│   │   ├── add-data-provider.prompt.yml
+│   │   ├── add-export-format.prompt.yml
+│   │   ├── code-review.prompt.yml
+│   │   ├── configure-deployment.prompt.yml
+│   │   ├── explain-architecture.prompt.yml
+│   │   ├── optimize-performance.prompt.yml
+│   │   ├── project-context.prompt.yml
+│   │   ├── provider-implementation-guide.prompt.yml
+│   │   ├── README.md
+│   │   ├── troubleshoot-issue.prompt.yml
+│   │   ├── wpf-debug-improve.prompt.yml
+│   │   └── write-unit-tests.prompt.yml
+│   ├── workflows/
+│   │   ├── AI_SYNC_FIX_SUMMARY.md
 │   │   ├── benchmark.yml
 │   │   ├── build-observability.yml
 │   │   ├── cache-management.yml
 │   │   ├── code-quality.yml
-│   │   ├── CONSOLIDATION_SUMMARY.md
 │   │   ├── dependency-review.yml
 │   │   ├── desktop-app.yml
 │   │   ├── docker.yml
-│   │   ├── docs-auto-update.yml
 │   │   ├── docs-comprehensive.yml
-│   │   ├── docs-structure-sync.yml
 │   │   ├── dotnet-desktop.yml
 │   │   ├── labeling.yml
 │   │   ├── nightly.yml
@@ -40,6 +55,7 @@ When an AI-caused regression is identified in GitHub, add label `ai-known-error`
 │   │   ├── security.yml
 │   │   ├── stale.yml
 │   │   ├── test-matrix.yml
+│   │   ├── TESTING_AI_SYNC.md
 │   │   ├── todo-automation.yml
 │   │   ├── validate-workflows.yml
 │   │   ├── wpf-commands.yml
@@ -174,6 +190,7 @@ When an AI-caused regression is identified in GitHub, add label `ai-known-error`
 │   │   ├── REDESIGN_IMPROVEMENTS.md
 │   │   └── ui-redesign.md
 │   ├── development/
+│   │   ├── central-package-management.md
 │   │   ├── desktop-app-xaml-compiler-errors.md
 │   │   ├── github-actions-summary.md
 │   │   ├── github-actions-testing.md
@@ -218,6 +235,11 @@ When an AI-caused regression is identified in GitHub, add label `ai-known-error`
 │   │   ├── historical-data-providers-evaluation.md
 │   │   ├── realtime-streaming-architecture-evaluation.md
 │   │   └── storage-architecture-evaluation.md
+│   ├── generated/
+│   │   ├── project-context.md
+│   │   ├── provider-registry.md
+│   │   ├── repository-structure.md
+│   │   └── workflows-overview.md
 │   ├── getting-started/
 │   │   └── README.md
 │   ├── integrations/
@@ -925,6 +947,8 @@ When an AI-caused regression is identified in GitHub, add label `ai-known-error`
 │   │   │   └── Models/
 │   │   │       ...
 │   │   ├── Infrastructure/
+│   │   │   ├── DataSources/
+│   │   │   │   ...
 │   │   │   ├── Providers/
 │   │   │   │   ...
 │   │   │   ├── Resilience/
@@ -969,135 +993,45 @@ When an AI-caused regression is identified in GitHub, add label `ai-known-error`
 └── VISUAL_CODE_EXAMPLES.md
 ```
 
-## CI/CD Workflow
+## Key Directories
 
-**GitHub Actions:** 21 workflows in `.github/workflows/`
+| Directory | Purpose |
+|-----------|---------|
+| `.github/` | GitHub configuration |
+| `benchmarks/` | Performance benchmarks |
+| `build-system/` | Build tooling |
+| `config/` | Configuration files |
+| `deploy/` | Deployment configurations |
+| `docs/` | Documentation |
+| `scripts/` | Automation scripts |
+| `src/` | Source code |
+| `tests/` | Test projects |
+| `tools/` | Development tools |
 
-Key workflows include:
-- `test-matrix.yml` - Multi-platform test matrix
-- `pr-checks.yml` - PR validation checks
-- `security.yml` - Security scanning (CodeQL, Trivy)
-- `docker.yml` - Docker image building
-- `release.yml` - Release automation
+## Source Code Organization
 
-The main CI pipeline runs on pushes to `main` and pull requests:
+### Core Application (`src/MarketDataCollector/`)
 
-1. **Build Job** (ubuntu-latest):
-   - Checkout code
-   - Setup .NET 9.0.x
-   - `dotnet restore /p:EnableWindowsTargeting=true`
-   - `dotnet build -c Release --no-restore /p:EnableWindowsTargeting=true`
-   - `dotnet test -c Release --no-build --verbosity normal /p:EnableWindowsTargeting=true`
+| Directory | Purpose |
+|-----------|---------|
+| `Domain/` | Business logic, collectors, events, models |
+| `Infrastructure/` | Provider implementations, clients |
+| `Storage/` | Data persistence, sinks, archival |
+| `Application/` | Startup, configuration, HTTP endpoints |
+| `Messaging/` | MassTransit message publishers |
+| `Integrations/` | External system integrations |
 
-2. **Publish Jobs** (multi-platform):
-   - Linux x64, Windows x64, macOS x64, macOS ARM64
-   - Publishes both `MarketDataCollector` and `MarketDataCollector.Ui` as single-file executables
-   - Creates archives (.tar.gz for Unix, .zip for Windows)
+### Microservices (`src/Microservices/`)
 
-3. **Release Job** (on git tags starting with 'v'):
-   - Downloads all platform artifacts
-   - Creates GitHub release with all platform builds
+| Service | Port | Purpose |
+|---------|------|---------|
+| Gateway | 5000 | API Gateway and routing |
+| TradeIngestion | 5001 | Trade data processing |
+| QuoteIngestion | 5002 | Quote data processing |
+| OrderBookIngestion | 5003 | Order book processing |
+| HistoricalDataIngestion | 5004 | Historical backfill |
+| DataValidation | 5005 | Data validation |
 
-## Development Practices
+---
 
-### Configuration Management
-
-- **NEVER commit credentials:** `appsettings.json` is gitignored
-- **Use environment variables for secrets:** `ALPACA_KEY_ID`, `ALPACA_SECRET_KEY`, etc.
-- **Copy sample config:** Always start with `cp appsettings.sample.json appsettings.json`
-
-### Logging
-
-- **Framework:** Serilog with structured logging
-- **Initialization:** Use `LoggingSetup.ForContext<T>()` for logger instances
-- **Configuration:** Defined in `appsettings.json` under `Serilog` section
-
-### Testing Best Practices
-
-- Use xUnit for test framework
-- Use FluentAssertions for readable assertions
-- Use Moq or NSubstitute for mocking
-- Test files follow naming convention: `<ClassUnderTest>Tests.cs`
-
-### Code Style
-
-- C# 11 with nullable reference types enabled
-- Implicit usings enabled
-- Follow existing conventions in the codebase
-- Use `async`/`await` for I/O operations
-- Prefer dependency injection over static classes
-
-## Common Issues & Workarounds
-
-### Issue: Build fails with NETSDK1100 error on Linux/macOS
-**Solution:** Always use `/p:EnableWindowsTargeting=true` flag (already set in `Directory.Build.props`)
-
-### Issue: appsettings.json not found
-**Solution:** Copy `appsettings.sample.json` to `appsettings.json` and configure
-
-### Issue: Data or logs directories don't exist
-**Solution:** Run `mkdir -p data logs` or use `make setup-config`
-
-### Issue: Docker build fails
-**Solution:** Ensure `appsettings.json` exists before building: `cp appsettings.sample.json appsettings.json`
-
-### Issue: Tests fail due to missing configuration
-**Solution:** Tests should mock configuration or use in-memory configuration. Check test setup.
-
-## Important Files Reference
-
-### Root Directory Files
-- `README.md` - Main project documentation
-- `HELP.md` - Comprehensive user guide (38KB)
-- `DEPENDENCIES.md` - Complete NuGet package documentation
-- `Makefile` - Development commands
-- `Dockerfile` - Container build definition
-- `docker-compose.yml` - Multi-container orchestration
-- `install.sh` / `install.ps1` - Installation scripts
-- `publish.sh` / `publish.ps1` - Publishing scripts
-
-### Documentation
-- `docs/guides/getting-started.md` - Setup guide
-- `docs/guides/configuration.md` - Configuration reference
-- `docs/architecture/overview.md` - System architecture (detailed)
-- `docs/guides/operator-runbook.md` - Operations guide
-- `docs/status/improvements.md` - Implementation status and roadmap
-
-### Scripts
-- `scripts/diagnose-build.sh` - Build diagnostics with verbose logging
-- `scripts/validate-data.sh` - Data validation scripts
-
-## Trust These Instructions
-
-These instructions are comprehensive and accurate as of the last documentation date. Only search the codebase if:
-- You need to understand implementation details not covered here
-- Information appears outdated or contradictory
-- You need to verify behavior of a specific component
-
-When in doubt, refer to the extensive documentation in the `docs/` directory, particularly:
-- Architecture diagrams: `docs/architecture/`
-- Configuration details: `docs/guides/configuration.md`
-- Troubleshooting: `HELP.md`
-
-## Quick Decision Tree
-
-**Adding new functionality?**
-→ Add to appropriate layer in `src/MarketDataCollector/`, follow existing patterns
-
-**Fixing a bug?**
-→ Add test first in `tests/MarketDataCollector.Tests/`, then fix
-
-**Working with providers?**
-→ Look in `src/MarketDataCollector/Infrastructure/Providers/`
-
-**Storage changes?**
-→ Check `src/MarketDataCollector/Storage/`
-
-**Need to run tests?**
-→ `dotnet test tests/MarketDataCollector.Tests/` (C# tests only)
-
-**Need to build?**
-→ `dotnet restore /p:EnableWindowsTargeting=true` then `dotnet build -c Release /p:EnableWindowsTargeting=true`
-
-**Starting the app?**
-→ `dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --ui` for web dashboard
+*This file is auto-generated. Do not edit manually.*

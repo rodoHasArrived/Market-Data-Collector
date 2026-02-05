@@ -93,6 +93,10 @@
     <PackageReference Include="Microsoft.WindowsAppSDK" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" />
     <PackageReference Include="System.Text.Json" />
+<<<<<<< HEAD
+=======
+    <PackageReference Include="ZstdSharp.Port" />
+>>>>>>> origin/main
     <!-- HttpClientFactory for proper HttpClient lifecycle management (TD-10) -->
     <PackageReference Include="Microsoft.Extensions.Http" />
     <PackageReference Include="Microsoft.Extensions.Http.Polly" />

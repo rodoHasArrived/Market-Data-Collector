@@ -52,48 +52,6 @@ namespace MarketDataCollector.Application.Serialization;
 [JsonSerializable(typeof(AlpacaTradeMessage))]
 [JsonSerializable(typeof(AlpacaQuoteMessage))]
 [JsonSerializable(typeof(AlpacaMessage[]))]
-[JsonSerializable(typeof(AggregateBarPayload))]
-[JsonSerializable(typeof(Dictionary<string, object>))]
-[JsonSerializable(typeof(Dictionary<string, JsonElement>))]
-public partial class MarketDataJsonContext : JsonSerializerContext
-{
-    /// <summary>
-    /// Pre-configured options for high-performance serialization.
-    /// Use for storage, wire protocols, and any performance-critical path.
-    /// - Compact output (no indentation)
-    /// - CamelCase property naming
-    /// - Null values omitted
-    /// - Case-insensitive property matching on read
-    /// - Source-generated serializers (no reflection)
-    /// </summary>
-    public static readonly JsonSerializerOptions HighPerformanceOptions = new()
-    {
-        TypeInfoResolver = Default,
-        WriteIndented = false,
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        PropertyNameCaseInsensitive = true
-    };
-
-    /// <summary>
-    /// Pre-configured options for pretty-printed output (debugging, config files).
-    /// - Indented output for readability
-    /// - CamelCase property naming
-    /// - Null values omitted
-    /// - Case-insensitive property matching on read
-    /// - Source-generated serializers (no reflection)
-    /// </summary>
-    public static readonly JsonSerializerOptions PrettyPrintOptions = new()
-    {
-        TypeInfoResolver = Default,
-        WriteIndented = true,
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        PropertyNameCaseInsensitive = true
-    };
-}
-
-/// <summary>
 /// Alpaca trade message structure for source-generated parsing.
 /// </summary>
 public sealed record AlpacaTradeMessage

@@ -1,3 +1,4 @@
+using System.Text.Json;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Infrastructure.Providers.NYSE;
 
