@@ -1,7 +1,7 @@
 # TODO Tracking
 
 > Auto-generated TODO documentation. Do not edit manually.
-> Last updated: 2026-02-05T11:15:52.937330+00:00
+> Last updated: 2026-02-05T11:26:40.502377+00:00
 
 ## Summary
 
@@ -39,7 +39,7 @@
 - [ ] `tests/MarketDataCollector.Tests/Application/Monitoring/DataQuality/DataFreshnessSlaMonitorTests.cs:523`
   > Actual result depends on current time, so we check the logic is working
 
-- [ ] `tests/MarketDataCollector.Tests/Infrastructure/Resilience/WebSocketResiliencePolicyTests.cs:203`
+- [ ] `tests/MarketDataCollector.Tests/Infrastructure/Resilience/WebSocketResiliencePolicyTests.cs:201`
   > We can't directly invoke the event from outside the class The test validates that the subscription mechanism works
 
 - [ ] `tests/MarketDataCollector.Tests/Storage/StorageChecksumServiceTests.cs:121`
