@@ -26,6 +26,7 @@ on:
 permissions:
   contents: read
   issues: write
+  models: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -159,6 +160,58 @@ jobs:
           name: build-output
           path: build-output.log
           retention-days: 7
+
+      # ─── AI Code Quality Analysis ──────────────────────────────────
+      - name: Extract top warnings for AI
+        id: warnings
+        if: always() && steps.analyze.outputs.has_issues == '1'
+        run: |
+          TOP_WARNINGS=""
+          if [ -f build-output.log ]; then
+            TOP_WARNINGS=$(grep -E "warning (CA|CS|IDE|SCS)" build-output.log | sort | uniq -c | sort -rn | head -15)
+          fi
+          echo "top_warnings<<WARNEOF" >> $GITHUB_OUTPUT
+          echo "$TOP_WARNINGS" >> $GITHUB_OUTPUT
+          echo "WARNEOF" >> $GITHUB_OUTPUT
+
+      - name: AI code quality suggestions
+        id: ai-quality
+        if: always() && steps.analyze.outputs.has_issues == '1'
+        continue-on-error: true
+        uses: actions/ai-inference@v1
+        with:
+          model: openai/gpt-4.1-mini
+          max-tokens: 1500
+          prompt: |
+            You are a .NET code quality expert reviewing analyzer output for a market data collection application (.NET 9.0, C# 11).
+
+            Format check: ${{ steps.format-check.outcome }}
+            Build outcome: ${{ steps.build.outcome }}
+            Warning count: ${{ steps.analyze.outputs.warning_count }}
+            Error count: ${{ steps.analyze.outputs.error_count }}
+
+            Top warnings by frequency:
+            ${{ steps.warnings.outputs.top_warnings }}
+
+            Provide actionable suggestions in markdown:
+            1) **Priority Fixes** - which warnings to address first and why
+            2) **Quick Wins** - warnings that can be fixed with simple refactoring or dotnet format
+            3) **Suppression Candidates** - warnings that may be false positives or acceptable for this codebase
+            4) If format check failed, suggest a pre-commit hook setup
+
+            Keep response under 250 words.
+
+      - name: Post AI quality analysis to summary
+        if: always() && steps.ai-quality.outcome == 'success'
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### AI Code Quality Suggestions" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -n "${{ steps.ai-quality.outputs.response }}" ]; then
+            echo "${{ steps.ai-quality.outputs.response }}" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "_AI analysis was not available._" >> $GITHUB_STEP_SUMMARY
+          fi
 
       - name: Create Copilot task for quality issues
         if: >-
