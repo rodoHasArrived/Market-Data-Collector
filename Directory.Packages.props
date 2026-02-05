@@ -97,10 +97,37 @@
   </ItemGroup>
 
   <ItemGroup Label="QuantConnect Lean">
-    <PackageVersion Include="QuantConnect.Lean" Version="2.5.17414" />
-    <PackageVersion Include="QuantConnect.Lean.Engine" Version="2.5.17414" />
-    <PackageVersion Include="QuantConnect.Common" Version="2.5.17414" />
-    <PackageVersion Include="QuantConnect.Indicators" Version="2.5.17414" />
+    <!-- Updated to 2.5.17279 for .NET 9.0 support and reduced vulnerable dependencies -->
+    <PackageVersion Include="QuantConnect.Lean" Version="2.5.17279" />
+    <PackageVersion Include="QuantConnect.Lean.Engine" Version="2.5.17279" />
+    <PackageVersion Include="QuantConnect.Common" Version="2.5.17279" />
+    <PackageVersion Include="QuantConnect.Indicators" Version="2.5.17279" />
+  </ItemGroup>
+
+  <ItemGroup Label="Security Overrides - Fix Vulnerable Transitive Dependencies">
+    <!-- 
+      Override vulnerable transitive dependencies from third-party packages.
+      These overrides ensure secure versions are used throughout the dependency tree.
+      Reference: GitHub Security workflow failure - vulnerable packages from QuantConnect.Lean
+    -->
+    <!-- CVE-2021-24112: System.Drawing.Common RCE vulnerability - upgrade from 4.7.0 to 4.7.3+ -->
+    <PackageVersion Include="System.Drawing.Common" Version="9.0.0" />
+    <!-- Multiple high-severity vulnerabilities in older System.Net packages -->
+    <PackageVersion Include="System.Net.Http.WinHttpHandler" Version="9.0.0" />
+    <PackageVersion Include="System.Net.Security" Version="4.3.2" />
+    <!-- High-severity vulnerabilities in WCF/ServiceModel packages -->
+    <PackageVersion Include="System.Private.ServiceModel" Version="4.10.3" />
+    <PackageVersion Include="System.ServiceModel.Primitives" Version="4.10.3" />
+    <!-- High-severity vulnerabilities in cryptography packages -->
+    <PackageVersion Include="System.Formats.Asn1" Version="9.0.1" />
+    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="9.0.1" />
+    <!-- 
+      NOTE: DotNetZip 1.16.0 vulnerability (CVE-2024-48510) cannot be fixed via override.
+      DotNetZip is a transitive dependency from QuantConnect.Lean and has no newer version.
+      DotNetZip is unmaintained. The vulnerability is a directory traversal issue.
+      Mitigation: Ensure application does not process untrusted ZIP files from external sources.
+      Consider migrating away from QuantConnect.Lean or contributing a fix to QuantConnect to use System.IO.Compression.
+    -->
   </ItemGroup>
 
   <ItemGroup Label="Technical Analysis">

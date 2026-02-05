@@ -116,3 +116,6 @@ __pycache__/
 .Python
 *.egg-info/
 .eggs/
+
+# Security scan outputs
+vuln-scan*.txt
