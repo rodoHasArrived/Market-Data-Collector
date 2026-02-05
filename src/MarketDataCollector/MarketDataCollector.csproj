@@ -1,20 +1,20 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <!-- 1591: Missing XML comment for publicly visible type or member -->
-    <!-- CS0067: Event is never used (may be used by external consumers or future code) -->
-    <!-- CS0169: Field is never used (may be used for disposal patterns or future code) -->
-    <!-- CS0219: Variable assigned but not used (may be needed for debugging or side effects) -->
-    <!-- CS0414: Field assigned but not used (may be used for future functionality) -->
-    <!-- CS1573: Parameter has no matching param tag (record parameters handled differently) -->
-    <!-- CS1587: XML comment is not placed on a valid language element (false positive with record parameters) -->
-    <!-- CS1998: Async method lacks await (often required for interface implementation or future async work) -->
-    <!-- CS8600: Converting null literal or possible null value to non-nullable type -->
-    <!-- CS8602: Dereference of a possibly null reference -->
-    <!-- CS8629: Nullable value type may be null (false positive when HasValue is checked before .Value) -->
-    <!-- IL2026: Member has RequiresUnreferencedCodeAttribute (expected for JSON serialization with trimming) -->
-    <!-- IL2070: Dynamic access to type information (expected for JSON serialization) -->
-    <NoWarn>$(NoWarn);1591;CS0067;CS0169;CS0219;CS0414;CS1573;CS1587;CS1998;CS8600;CS8602;CS8629;IL2026;IL2070</NoWarn>
+    <!-- Suppress expected/benign warnings with documented justifications -->
+    <NoWarn>$(NoWarn);1591</NoWarn>        <!-- Missing XML comment for publicly visible type or member -->
+    <NoWarn>$(NoWarn);CS0067</NoWarn>      <!-- Event is never used (may be used by external consumers) -->
+    <NoWarn>$(NoWarn);CS0169</NoWarn>      <!-- Field is never used (disposal patterns, future code) -->
+    <NoWarn>$(NoWarn);CS0219</NoWarn>      <!-- Variable assigned but not used (debugging, side effects) -->
+    <NoWarn>$(NoWarn);CS0414</NoWarn>      <!-- Field assigned but not used (future functionality) -->
+    <NoWarn>$(NoWarn);CS1573</NoWarn>      <!-- Parameter has no matching param tag (record params) -->
+    <NoWarn>$(NoWarn);CS1587</NoWarn>      <!-- XML comment placement (false positive with records) -->
+    <NoWarn>$(NoWarn);CS1998</NoWarn>      <!-- Async method lacks await (interface implementations) -->
+    <NoWarn>$(NoWarn);CS8600</NoWarn>      <!-- Converting null to non-nullable type -->
+    <NoWarn>$(NoWarn);CS8602</NoWarn>      <!-- Dereference of possibly null reference -->
+    <NoWarn>$(NoWarn);CS8629</NoWarn>      <!-- Nullable value type may be null (HasValue checked) -->
+    <NoWarn>$(NoWarn);IL2026</NoWarn>      <!-- RequiresUnreferencedCode (JSON serialization) -->
+    <NoWarn>$(NoWarn);IL2070</NoWarn>      <!-- Dynamic type access (JSON serialization) -->
     <OutputType>Exe</OutputType>
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
