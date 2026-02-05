@@ -25,5 +25,10 @@ namespace MarketDataCollector.Contracts.Domain.Events;
 [JsonDerivedType(typeof(HistoricalTrade), "historical_trade")]
 [JsonDerivedType(typeof(HistoricalAuction), "historical_auction")]
 [JsonDerivedType(typeof(AggregateBarPayload), "aggregate_bar")]
+[JsonDerivedType(typeof(OptionQuote), "option_quote")]
+[JsonDerivedType(typeof(OptionTrade), "option_trade")]
+[JsonDerivedType(typeof(GreeksSnapshot), "greeks")]
+[JsonDerivedType(typeof(OptionChainSnapshot), "option_chain")]
+[JsonDerivedType(typeof(OpenInterestUpdate), "open_interest")]
 #endif
 public abstract record MarketEventPayload : IMarketEventPayload;

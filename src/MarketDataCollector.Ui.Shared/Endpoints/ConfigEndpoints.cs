@@ -34,7 +34,8 @@ public static class ConfigEndpoints
                 alpaca = cfg.Alpaca,
                 storage = cfg.Storage,
                 symbols = cfg.Symbols ?? Array.Empty<SymbolConfig>(),
-                backfill = cfg.Backfill
+                backfill = cfg.Backfill,
+                derivatives = cfg.Derivatives
             }, jsonOptions);
         });
 
@@ -108,6 +109,22 @@ public static class ConfigEndpoints
             var list = (cfg.Symbols ?? Array.Empty<SymbolConfig>()).ToList();
             list.RemoveAll(s => string.Equals(s.Symbol, symbol, StringComparison.OrdinalIgnoreCase));
             var next = cfg with { Symbols = list.ToArray() };
+            await store.SaveAsync(next);
+            return Results.Ok();
+        });
+
+        // Get derivatives configuration
+        app.MapGet(UiApiRoutes.ConfigDerivatives, (ConfigStore store) =>
+        {
+            var cfg = store.Load();
+            return Results.Json(cfg.Derivatives ?? new Application.Config.DerivativesConfig(), jsonOptions);
+        });
+
+        // Update derivatives configuration
+        app.MapPost(UiApiRoutes.ConfigDerivatives, async (ConfigStore store, DerivativesConfigDto derivatives) =>
+        {
+            var cfg = store.Load();
+            var next = cfg with { Derivatives = derivatives.ToDomain() };
             await store.SaveAsync(next);
             return Results.Ok();
         });

@@ -44,4 +44,31 @@ public static class DtoExtensions
         DepthLevels: dto.DepthLevels,
         TickByTick: dto.TickByTick
     );
+
+    /// <summary>
+    /// Converts DerivativesConfigDto to DerivativesConfig domain type.
+    /// </summary>
+    public static DerivativesConfig ToDomain(this DerivativesConfigDto dto) => new(
+        Enabled: dto.Enabled,
+        Underlyings: dto.Underlyings,
+        MaxDaysToExpiration: dto.MaxDaysToExpiration,
+        StrikeRange: dto.StrikeRange,
+        CaptureGreeks: dto.CaptureGreeks,
+        CaptureChainSnapshots: dto.CaptureChainSnapshots,
+        ChainSnapshotIntervalSeconds: dto.ChainSnapshotIntervalSeconds,
+        CaptureOpenInterest: dto.CaptureOpenInterest,
+        ExpirationFilter: dto.ExpirationFilter,
+        IndexOptions: dto.IndexOptions?.ToDomain()
+    );
+
+    /// <summary>
+    /// Converts IndexOptionsConfigDto to IndexOptionsConfig domain type.
+    /// </summary>
+    public static IndexOptionsConfig ToDomain(this IndexOptionsConfigDto dto) => new(
+        Enabled: dto.Enabled,
+        Indices: dto.Indices,
+        IncludeWeeklies: dto.IncludeWeeklies,
+        IncludeAmSettled: dto.IncludeAmSettled,
+        IncludePmSettled: dto.IncludePmSettled
+    );
 }

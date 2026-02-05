@@ -24,6 +24,7 @@ namespace MarketDataCollector.Application.Config;
 /// <param name="Backfill">Optional historical backfill defaults.</param>
 /// <param name="Sources">Source registry persistence path.</param>
 /// <param name="DataSources">Multiple data source configurations for real-time and historical data.</param>
+/// <param name="Derivatives">Derivatives (options) data collection configuration.</param>
 public sealed record AppConfig(
     string DataRoot = "data",
     bool? Compress = null,
@@ -36,7 +37,8 @@ public sealed record AppConfig(
     SymbolConfig[]? Symbols = null,
     BackfillConfig? Backfill = null,
     SourceRegistryConfig? Sources = null,
-    DataSourcesConfig? DataSources = null
+    DataSourcesConfig? DataSources = null,
+    DerivativesConfig? Derivatives = null
 );
 
 /// <summary>

@@ -29,6 +29,7 @@ public static class UiApiRoutes
     public const string ConfigDataSourcesById = "/api/config/datasources/{id}";
     public const string ConfigDataSourcesToggle = "/api/config/datasources/{id}/toggle";
     public const string ConfigDataSourcesFailover = "/api/config/datasources/failover";
+    public const string ConfigDerivatives = "/api/config/derivatives";
 
     // Backfill endpoints
     public const string BackfillProviders = "/api/backfill/providers";

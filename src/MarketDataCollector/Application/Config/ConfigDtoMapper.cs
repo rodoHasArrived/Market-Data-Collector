@@ -39,4 +39,29 @@ public static class ConfigDtoMapper
                 SubscribeDepth: dto.SubscribeDepth,
                 DepthLevels: dto.DepthLevels,
                 TickByTick: dto.TickByTick);
+
+    public static DerivativesConfig? ToDomain(this DerivativesConfigDto? dto)
+        => dto is null
+            ? null
+            : new DerivativesConfig(
+                Enabled: dto.Enabled,
+                Underlyings: dto.Underlyings,
+                MaxDaysToExpiration: dto.MaxDaysToExpiration,
+                StrikeRange: dto.StrikeRange,
+                CaptureGreeks: dto.CaptureGreeks,
+                CaptureChainSnapshots: dto.CaptureChainSnapshots,
+                ChainSnapshotIntervalSeconds: dto.ChainSnapshotIntervalSeconds,
+                CaptureOpenInterest: dto.CaptureOpenInterest,
+                ExpirationFilter: dto.ExpirationFilter,
+                IndexOptions: dto.IndexOptions?.ToDomain());
+
+    public static IndexOptionsConfig? ToDomain(this IndexOptionsConfigDto? dto)
+        => dto is null
+            ? null
+            : new IndexOptionsConfig(
+                Enabled: dto.Enabled,
+                Indices: dto.Indices,
+                IncludeWeeklies: dto.IncludeWeeklies,
+                IncludeAmSettled: dto.IncludeAmSettled,
+                IncludePmSettled: dto.IncludePmSettled);
 }

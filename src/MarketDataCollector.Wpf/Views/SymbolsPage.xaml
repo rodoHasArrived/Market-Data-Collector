@@ -332,6 +332,63 @@
                                          HorizontalAlignment="Left" />
                             </StackPanel>
 
+                            <StackPanel Margin="0,0,0,12">
+                                <TextBlock Text="Security Type" Style="{StaticResource FormLabelStyle}" Margin="0,0,0,4" />
+                                <ComboBox x:Name="SecurityTypeCombo"
+                                          Style="{StaticResource FormComboBoxStyle}"
+                                          SelectionChanged="SecurityType_Changed">
+                                    <ComboBoxItem Content="Stock (STK)" Tag="STK" IsSelected="True" />
+                                    <ComboBoxItem Content="Equity Option (OPT)" Tag="OPT" />
+                                    <ComboBoxItem Content="Index Option" Tag="IND_OPT" />
+                                    <ComboBoxItem Content="Future (FUT)" Tag="FUT" />
+                                </ComboBox>
+                            </StackPanel>
+
+                            <Expander x:Name="OptionsExpander"
+                                      Header="Options Contract Details"
+                                      Visibility="Collapsed"
+                                      Margin="0,0,0,16">
+                                <StackPanel Margin="0,12,0,0">
+                                    <StackPanel Margin="0,0,0,12">
+                                        <TextBlock Text="Strike Price" Style="{StaticResource FormLabelStyle}" Margin="0,0,0,4" />
+                                        <TextBox x:Name="StrikeBox"
+                                                 Style="{StaticResource FormTextBoxStyle}" />
+                                    </StackPanel>
+
+                                    <StackPanel Margin="0,0,0,12">
+                                        <TextBlock Text="Right" Style="{StaticResource FormLabelStyle}" Margin="0,0,0,4" />
+                                        <ComboBox x:Name="RightCombo"
+                                                  Style="{StaticResource FormComboBoxStyle}">
+                                            <ComboBoxItem Content="Call" Tag="Call" IsSelected="True" />
+                                            <ComboBoxItem Content="Put" Tag="Put" />
+                                        </ComboBox>
+                                    </StackPanel>
+
+                                    <StackPanel Margin="0,0,0,12">
+                                        <TextBlock Text="Expiration Date" Style="{StaticResource FormLabelStyle}" Margin="0,0,0,4" />
+                                        <DatePicker x:Name="ExpirationPicker" />
+                                    </StackPanel>
+
+                                    <StackPanel Margin="0,0,0,12">
+                                        <TextBlock Text="Option Style" Style="{StaticResource FormLabelStyle}" Margin="0,0,0,4" />
+                                        <ComboBox x:Name="OptionStyleCombo"
+                                                  Style="{StaticResource FormComboBoxStyle}">
+                                            <ComboBoxItem Content="American" Tag="American" IsSelected="True" />
+                                            <ComboBoxItem Content="European" Tag="European" />
+                                        </ComboBox>
+                                    </StackPanel>
+
+                                    <StackPanel>
+                                        <TextBlock Text="Multiplier" Style="{StaticResource FormLabelStyle}" Margin="0,0,0,4" />
+                                        <TextBox x:Name="MultiplierBox"
+                                                 Style="{StaticResource FormTextBoxStyle}"
+                                                 Text="100"
+                                                 Width="100"
+                                                 HorizontalAlignment="Left" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Expander>
+
                             <Expander Header="IB-Specific Options" Margin="0,0,0,16">
                                 <StackPanel Margin="0,12,0,0">
                                     <StackPanel Margin="0,0,0,12">

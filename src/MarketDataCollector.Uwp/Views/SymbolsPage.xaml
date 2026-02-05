@@ -258,6 +258,53 @@
                                        Maximum="50"
                                        SpinButtonPlacementMode="Inline" />
 
+                            <ComboBox x:Name="SecurityTypeCombo"
+                                      Header="Security Type"
+                                      HorizontalAlignment="Stretch"
+                                      SelectionChanged="SecurityType_Changed">
+                                <ComboBoxItem Content="Stock (STK)" Tag="STK" IsSelected="True" />
+                                <ComboBoxItem Content="Equity Option (OPT)" Tag="OPT" />
+                                <ComboBoxItem Content="Index Option" Tag="IND_OPT" />
+                                <ComboBoxItem Content="Future (FUT)" Tag="FUT" />
+                            </ComboBox>
+
+                            <Expander x:Name="OptionsExpander"
+                                      Header="Options Contract Details"
+                                      HorizontalAlignment="Stretch"
+                                      HorizontalContentAlignment="Stretch"
+                                      Visibility="Collapsed">
+                                <StackPanel Spacing="12" Padding="0,12,0,0">
+                                    <NumberBox x:Name="StrikeBox"
+                                               Header="Strike Price"
+                                               PlaceholderText="150.00"
+                                               Minimum="0"
+                                               SpinButtonPlacementMode="Inline" />
+
+                                    <ComboBox x:Name="RightCombo"
+                                              Header="Right"
+                                              HorizontalAlignment="Stretch">
+                                        <ComboBoxItem Content="Call" Tag="Call" IsSelected="True" />
+                                        <ComboBoxItem Content="Put" Tag="Put" />
+                                    </ComboBox>
+
+                                    <DatePicker x:Name="ExpirationPicker"
+                                                Header="Expiration Date" />
+
+                                    <ComboBox x:Name="OptionStyleCombo"
+                                              Header="Option Style"
+                                              HorizontalAlignment="Stretch">
+                                        <ComboBoxItem Content="American" Tag="American" IsSelected="True" />
+                                        <ComboBoxItem Content="European" Tag="European" />
+                                    </ComboBox>
+
+                                    <NumberBox x:Name="MultiplierBox"
+                                               Header="Multiplier"
+                                               Value="100"
+                                               Minimum="1"
+                                               SpinButtonPlacementMode="Inline" />
+                                </StackPanel>
+                            </Expander>
+
                             <Expander Header="IB-Specific Options" HorizontalAlignment="Stretch"
                                       HorizontalContentAlignment="Stretch">
                                 <StackPanel Spacing="12" Padding="0,12,0,0">

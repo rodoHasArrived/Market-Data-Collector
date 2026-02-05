@@ -161,11 +161,17 @@ public partial class MainViewModel : ObservableObject
 public class SymbolViewModel
 {
     public string Symbol { get; }
-    public bool SubscribeTrades { get; }
-    public bool SubscribeDepth { get; }
-    public int DepthLevels { get; }
-    public string? Exchange { get; }
-    public string? LocalSymbol { get; }
+    public bool SubscribeTrades { get; set; }
+    public bool SubscribeDepth { get; set; }
+    public int DepthLevels { get; set; }
+    public string? Exchange { get; set; }
+    public string? LocalSymbol { get; set; }
+    public string SecurityType { get; set; }
+    public decimal? Strike { get; set; }
+    public string? Right { get; set; }
+    public string? LastTradeDateOrContractMonth { get; set; }
+    public string? OptionStyle { get; set; }
+    public int? Multiplier { get; set; }
 
     public string TradesText => SubscribeTrades ? "Trades" : "-";
     public string DepthText => SubscribeDepth ? "Depth" : "-";
@@ -178,5 +184,11 @@ public class SymbolViewModel
         DepthLevels = config.DepthLevels;
         Exchange = config.Exchange;
         LocalSymbol = config.LocalSymbol;
+        SecurityType = config.SecurityType ?? "STK";
+        Strike = config.Strike;
+        Right = config.Right;
+        LastTradeDateOrContractMonth = config.LastTradeDateOrContractMonth;
+        OptionStyle = config.OptionStyle;
+        Multiplier = config.Multiplier;
     }
 }

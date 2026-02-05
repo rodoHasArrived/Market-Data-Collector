@@ -78,5 +78,30 @@ public enum MarketEventType
     /// <summary>
     /// Order book depth update.
     /// </summary>
-    Depth = 14
+    Depth = 14,
+
+    /// <summary>
+    /// Option quote with bid/ask, greeks, and implied volatility.
+    /// </summary>
+    OptionQuote = 15,
+
+    /// <summary>
+    /// Option trade execution.
+    /// </summary>
+    OptionTrade = 16,
+
+    /// <summary>
+    /// Option greeks snapshot (delta, gamma, theta, vega, rho, IV).
+    /// </summary>
+    OptionGreeks = 17,
+
+    /// <summary>
+    /// Option chain snapshot for an underlying and expiration.
+    /// </summary>
+    OptionChain = 18,
+
+    /// <summary>
+    /// Open interest update for an option contract.
+    /// </summary>
+    OpenInterest = 19
 }

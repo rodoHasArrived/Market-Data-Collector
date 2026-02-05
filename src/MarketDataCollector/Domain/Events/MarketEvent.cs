@@ -62,4 +62,19 @@ public sealed record MarketEvent(
         );
         return new(ts, symbol, MarketEventType.AggregateBar, payload, seq == 0 ? bar.SequenceNumber : seq, source);
     }
+
+    public static MarketEvent OptionQuote(DateTimeOffset ts, string symbol, Contracts.Domain.Models.OptionQuote quote, long seq = 0, string source = "IB")
+        => new(ts, symbol, MarketEventType.OptionQuote, quote, seq == 0 ? quote.SequenceNumber : seq, source);
+
+    public static MarketEvent OptionTrade(DateTimeOffset ts, string symbol, Contracts.Domain.Models.OptionTrade trade, long seq = 0, string source = "IB")
+        => new(ts, symbol, MarketEventType.OptionTrade, trade, seq == 0 ? trade.SequenceNumber : seq, source);
+
+    public static MarketEvent OptionGreeks(DateTimeOffset ts, string symbol, GreeksSnapshot greeks, long seq = 0, string source = "IB")
+        => new(ts, symbol, MarketEventType.OptionGreeks, greeks, seq == 0 ? greeks.SequenceNumber : seq, source);
+
+    public static MarketEvent OptionChain(DateTimeOffset ts, string underlyingSymbol, OptionChainSnapshot chain, long seq = 0, string source = "IB")
+        => new(ts, underlyingSymbol, MarketEventType.OptionChain, chain, seq == 0 ? chain.SequenceNumber : seq, source);
+
+    public static MarketEvent OpenInterest(DateTimeOffset ts, string symbol, OpenInterestUpdate oi, long seq = 0, string source = "IB")
+        => new(ts, symbol, MarketEventType.OpenInterest, oi, seq == 0 ? oi.SequenceNumber : seq, source);
 }

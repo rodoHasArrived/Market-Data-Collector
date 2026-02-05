@@ -932,6 +932,10 @@ public static class HtmlTemplates
           Symbols
           <span class=""nav-item-badge"" id=""symCount"">0</span>
         </div>
+        <div class=""nav-item"" onclick=""scrollToSection('derivatives')"">
+          <span class=""nav-item-icon"">&#x1F4C9;</span>
+          Derivatives
+        </div>
       </div>
 
       <div class=""nav-section"">
@@ -1290,6 +1294,91 @@ public static class HtmlTemplates
     </div>
   </div>
 
+  <div class=""row"" id=""derivatives"">
+    <!-- Derivatives Configuration Panel -->
+    <div class=""card"" style=""flex:1; min-width: 600px;"">
+      <h3>Derivatives Tracking</h3>
+      <p class=""muted"" style=""margin-bottom: 20px;"">Configure options and derivatives data collection for equity and index options.</p>
+
+      <div class=""form-group"">
+        <label><input type=""checkbox"" id=""derivEnabled"" onchange=""toggleDerivativesFields()"" /> Enable Derivatives Tracking</label>
+      </div>
+
+      <div id=""derivFields"">
+        <div class=""form-row"">
+          <div class=""form-group"" style=""flex: 2"">
+            <label>Underlying Symbols (comma separated)</label>
+            <input id=""derivUnderlyings"" placeholder=""SPY, QQQ, AAPL, MSFT"" />
+          </div>
+          <div class=""form-group"" style=""flex: 1"">
+            <label>Max Days to Expiry</label>
+            <input id=""derivMaxDte"" type=""number"" value=""90"" min=""0"" max=""730"" />
+          </div>
+          <div class=""form-group"" style=""flex: 1"">
+            <label>Strike Range (+/-)</label>
+            <input id=""derivStrikeRange"" type=""number"" value=""20"" min=""0"" max=""100"" />
+          </div>
+        </div>
+
+        <div class=""form-row"">
+          <div class=""form-group"">
+            <label><input type=""checkbox"" id=""derivGreeks"" checked /> Capture Greeks (delta, gamma, theta, vega, rho, IV)</label>
+          </div>
+          <div class=""form-group"">
+            <label><input type=""checkbox"" id=""derivOI"" checked /> Capture Open Interest (daily updates)</label>
+          </div>
+        </div>
+
+        <div class=""form-row"">
+          <div class=""form-group"">
+            <label><input type=""checkbox"" id=""derivChainSnap"" /> Capture Chain Snapshots</label>
+          </div>
+          <div class=""form-group"">
+            <label>Snapshot Interval (seconds)</label>
+            <input id=""derivChainInterval"" type=""number"" value=""300"" min=""30"" max=""3600"" />
+          </div>
+        </div>
+
+        <div class=""form-group"">
+          <label>Expiration Filter</label>
+          <div style=""display: flex; gap: 16px; flex-wrap: wrap;"">
+            <label><input type=""checkbox"" id=""derivExpWeekly"" checked /> Weekly</label>
+            <label><input type=""checkbox"" id=""derivExpMonthly"" checked /> Monthly</label>
+            <label><input type=""checkbox"" id=""derivExpQuarterly"" /> Quarterly</label>
+            <label><input type=""checkbox"" id=""derivExpLeaps"" /> LEAPS</label>
+          </div>
+        </div>
+
+        <!-- Index Options Sub-Section -->
+        <div style=""background: var(--bg-tertiary); padding: 16px; border-radius: 8px; margin-top: 16px;"">
+          <div style=""display: flex; align-items: center; gap: 8px; margin-bottom: 16px;"">
+            <span style=""color: var(--accent-purple);"">&#x1F4CA;</span>
+            <span class=""muted"">Index Options (SPX, NDX, RUT, VIX)</span>
+          </div>
+          <div class=""form-group"">
+            <label><input type=""checkbox"" id=""derivIdxEnabled"" /> Enable Index Options</label>
+          </div>
+          <div class=""form-group"">
+            <label>Index Symbols (comma separated)</label>
+            <input id=""derivIdxIndices"" placeholder=""SPX, NDX, RUT, VIX"" />
+          </div>
+          <div style=""display: flex; gap: 16px; flex-wrap: wrap;"">
+            <label><input type=""checkbox"" id=""derivIdxWeeklies"" checked /> Include Weeklies (0DTE)</label>
+            <label><input type=""checkbox"" id=""derivIdxAmSettled"" checked /> AM-Settled</label>
+            <label><input type=""checkbox"" id=""derivIdxPmSettled"" checked /> PM-Settled</label>
+          </div>
+        </div>
+      </div>
+
+      <div style=""margin-top: 20px;"">
+        <button class=""btn-primary"" onclick=""saveDerivativesConfig()"">
+          <span>&#x1F4BE;</span> Save Derivatives Settings
+        </button>
+      </div>
+      <div id=""derivMsg"" class=""muted"" style=""margin-top: 12px;""></div>
+    </div>
+  </div>
+
   <div class=""row"" id=""symbols"">
     <!-- Symbols Panel -->
     <div class=""card"" style=""flex:1; min-width: 700px;"">
@@ -1298,6 +1387,7 @@ public static class HtmlTemplates
         <thead>
           <tr>
             <th>Symbol</th>
+            <th>Type</th>
             <th>Trades</th>
             <th>Depth</th>
             <th>Levels</th>
@@ -1316,6 +1406,15 @@ public static class HtmlTemplates
           <input id=""sym"" placeholder=""AAPL"" style=""text-transform: uppercase;"" />
         </div>
         <div class=""form-group"">
+          <label>Security Type</label>
+          <select id=""secType"" onchange=""toggleOptionsFields()"">
+            <option value=""STK"" selected>Stock (STK)</option>
+            <option value=""OPT"">Equity Option (OPT)</option>
+            <option value=""IND_OPT"">Index Option</option>
+            <option value=""FUT"">Future (FUT)</option>
+          </select>
+        </div>
+        <div class=""form-group"">
           <label>Trades Stream</label>
           <select id=""trades"">
             <option value=""true"" selected>Enabled</option>
@@ -1332,6 +1431,44 @@ public static class HtmlTemplates
         <div class=""form-group"">
           <label>Depth Levels</label>
           <input id=""levels"" value=""10"" type=""number"" min=""1"" max=""50"" />
+        </div>
+      </div>
+
+      <!-- Options-specific fields -->
+      <div id=""optionFields"" class=""hidden"" style=""background: var(--bg-tertiary); padding: 16px; border-radius: 8px; margin-top: 16px;"">
+        <div style=""display: flex; align-items: center; gap: 8px; margin-bottom: 16px;"">
+          <span style=""color: var(--accent-purple);"">&#x1F4C9;</span>
+          <span class=""muted"">Options Contract Details</span>
+        </div>
+        <div class=""form-row"">
+          <div class=""form-group"">
+            <label>Strike Price</label>
+            <input id=""optStrike"" type=""number"" step=""0.01"" min=""0"" placeholder=""150.00"" />
+          </div>
+          <div class=""form-group"">
+            <label>Right</label>
+            <select id=""optRight"">
+              <option value=""Call"">Call</option>
+              <option value=""Put"">Put</option>
+            </select>
+          </div>
+          <div class=""form-group"">
+            <label>Expiration</label>
+            <input id=""optExpiry"" type=""date"" />
+          </div>
+        </div>
+        <div class=""form-row"">
+          <div class=""form-group"">
+            <label>Option Style</label>
+            <select id=""optStyle"">
+              <option value=""American"">American</option>
+              <option value=""European"">European</option>
+            </select>
+          </div>
+          <div class=""form-group"">
+            <label>Multiplier</label>
+            <input id=""optMultiplier"" type=""number"" value=""100"" min=""1"" />
+          </div>
         </div>
       </div>
 
@@ -1362,7 +1499,7 @@ public static class HtmlTemplates
         <button class=""btn-primary"" onclick=""addSymbol()"">
           <span>&#x2795;</span> Add Symbol
         </button>
-        <button class=""btn-secondary"" onclick=""document.getElementById('sym').value=''; document.getElementById('localsym').value=''; document.getElementById('pexch').value='';"">
+        <button class=""btn-secondary"" onclick=""clearSymbolForm()"">
           Clear Form
         </button>
       </div>
@@ -1454,6 +1591,7 @@ function openCommandPalette() {{
     {{ name: 'Go to Storage', action: () => scrollToSection('storage') }},
     {{ name: 'Go to Data Sources', action: () => scrollToSection('datasources') }},
     {{ name: 'Go to Symbols', action: () => scrollToSection('symbols') }},
+    {{ name: 'Go to Derivatives', action: () => scrollToSection('derivatives') }},
     {{ name: 'Go to Backfill', action: () => scrollToSection('backfill') }},
     {{ name: 'Refresh Status', action: () => loadStatus() }},
     {{ name: 'Save All Settings', action: () => {{ saveStorageSettings(); saveAlpacaSettings(); }} }},
@@ -1785,12 +1923,15 @@ async function loadConfig() {{
   tbody.innerHTML = '';
 
   if (symbols.length === 0) {{
-    tbody.innerHTML = '<tr><td colspan=""7"" class=""muted"" style=""text-align: center; padding: 24px;"">No symbols configured. Add one below.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan=""8"" class=""muted"" style=""text-align: center; padding: 24px;"">No symbols configured. Add one below.</td></tr>';
   }} else {{
     for (const s of symbols) {{
       const tr = document.createElement('tr');
+      const secType = s.securityType || 'STK';
+      const typeColor = secType === 'OPT' || secType === 'IND_OPT' ? 'var(--accent-purple)' : (secType === 'FUT' ? 'var(--accent-orange)' : 'var(--text-secondary)');
       tr.innerHTML = `
         <td><span style=""font-weight: 600; font-family: var(--font-mono); color: var(--accent-cyan);"">${{s.symbol}}</span></td>
+        <td><span style=""font-family: var(--font-mono); font-size: 11px; color: ${{typeColor}};"">${{secType}}</span></td>
         <td>${{s.subscribeTrades ? '<span class=""good"">ON</span>' : '<span class=""muted"">OFF</span>'}}</td>
         <td>${{s.subscribeDepth ? '<span class=""good"">ON</span>' : '<span class=""muted"">OFF</span>'}}</td>
         <td style=""font-family: var(--font-mono);"">${{s.depthLevels || 10}}</td>
@@ -2076,6 +2217,118 @@ async function runBackfill() {{
   }}
 }}
 
+function toggleOptionsFields() {{
+  const secType = document.getElementById('secType').value;
+  const isOption = secType === 'OPT' || secType === 'IND_OPT';
+  document.getElementById('optionFields').classList.toggle('hidden', !isOption);
+  if (isOption && secType === 'IND_OPT') {{
+    document.getElementById('optStyle').value = 'European';
+  }}
+}}
+
+function clearSymbolForm() {{
+  document.getElementById('sym').value = '';
+  document.getElementById('secType').value = 'STK';
+  document.getElementById('localsym').value = '';
+  document.getElementById('pexch').value = '';
+  document.getElementById('optStrike').value = '';
+  document.getElementById('optRight').value = 'Call';
+  document.getElementById('optExpiry').value = '';
+  document.getElementById('optStyle').value = 'American';
+  document.getElementById('optMultiplier').value = '100';
+  toggleOptionsFields();
+}}
+
+function toggleDerivativesFields() {{
+  const enabled = document.getElementById('derivEnabled').checked;
+  document.getElementById('derivFields').style.opacity = enabled ? '1' : '0.5';
+  document.getElementById('derivFields').style.pointerEvents = enabled ? 'auto' : 'none';
+}}
+
+async function loadDerivativesConfig() {{
+  try {{
+    const r = await fetch('/api/config/derivatives');
+    if (!r.ok) return;
+    const cfg = await r.json();
+
+    document.getElementById('derivEnabled').checked = cfg.enabled || false;
+    document.getElementById('derivUnderlyings').value = (cfg.underlyings || []).join(', ');
+    document.getElementById('derivMaxDte').value = cfg.maxDaysToExpiration || 90;
+    document.getElementById('derivStrikeRange').value = cfg.strikeRange || 20;
+    document.getElementById('derivGreeks').checked = cfg.captureGreeks !== false;
+    document.getElementById('derivOI').checked = cfg.captureOpenInterest !== false;
+    document.getElementById('derivChainSnap').checked = cfg.captureChainSnapshots || false;
+    document.getElementById('derivChainInterval').value = cfg.chainSnapshotIntervalSeconds || 300;
+
+    const expFilter = cfg.expirationFilter || ['Weekly', 'Monthly'];
+    document.getElementById('derivExpWeekly').checked = expFilter.includes('Weekly');
+    document.getElementById('derivExpMonthly').checked = expFilter.includes('Monthly');
+    document.getElementById('derivExpQuarterly').checked = expFilter.includes('Quarterly');
+    document.getElementById('derivExpLeaps').checked = expFilter.includes('LEAPS');
+
+    if (cfg.indexOptions) {{
+      document.getElementById('derivIdxEnabled').checked = cfg.indexOptions.enabled || false;
+      document.getElementById('derivIdxIndices').value = (cfg.indexOptions.indices || []).join(', ');
+      document.getElementById('derivIdxWeeklies').checked = cfg.indexOptions.includeWeeklies !== false;
+      document.getElementById('derivIdxAmSettled').checked = cfg.indexOptions.includeAmSettled !== false;
+      document.getElementById('derivIdxPmSettled').checked = cfg.indexOptions.includePmSettled !== false;
+    }}
+
+    toggleDerivativesFields();
+  }} catch (e) {{
+    console.warn('Unable to load derivatives config', e);
+  }}
+}}
+
+async function saveDerivativesConfig() {{
+  const expFilter = [];
+  if (document.getElementById('derivExpWeekly').checked) expFilter.push('Weekly');
+  if (document.getElementById('derivExpMonthly').checked) expFilter.push('Monthly');
+  if (document.getElementById('derivExpQuarterly').checked) expFilter.push('Quarterly');
+  if (document.getElementById('derivExpLeaps').checked) expFilter.push('LEAPS');
+
+  const underlyings = document.getElementById('derivUnderlyings').value
+    .split(',').map(s => s.trim().toUpperCase()).filter(s => s);
+
+  const indices = document.getElementById('derivIdxIndices').value
+    .split(',').map(s => s.trim().toUpperCase()).filter(s => s);
+
+  const payload = {{
+    enabled: document.getElementById('derivEnabled').checked,
+    underlyings: underlyings.length ? underlyings : null,
+    maxDaysToExpiration: parseInt(document.getElementById('derivMaxDte').value) || 90,
+    strikeRange: parseInt(document.getElementById('derivStrikeRange').value) || 20,
+    captureGreeks: document.getElementById('derivGreeks').checked,
+    captureChainSnapshots: document.getElementById('derivChainSnap').checked,
+    chainSnapshotIntervalSeconds: parseInt(document.getElementById('derivChainInterval').value) || 300,
+    captureOpenInterest: document.getElementById('derivOI').checked,
+    expirationFilter: expFilter.length ? expFilter : null,
+    indexOptions: {{
+      enabled: document.getElementById('derivIdxEnabled').checked,
+      indices: indices.length ? indices : null,
+      includeWeeklies: document.getElementById('derivIdxWeeklies').checked,
+      includeAmSettled: document.getElementById('derivIdxAmSettled').checked,
+      includePmSettled: document.getElementById('derivIdxPmSettled').checked
+    }}
+  }};
+
+  const r = await fetch('/api/config/derivatives', {{
+    method: 'POST',
+    headers: {{ 'Content-Type': 'application/json' }},
+    body: JSON.stringify(payload)
+  }});
+
+  const msg = document.getElementById('derivMsg');
+  if (r.ok) {{
+    msg.innerHTML = '<span class=""good"">Derivatives settings saved. Restart collector to apply.</span>';
+    showToast('Derivatives settings saved', 'success');
+    addLog('Derivatives configuration updated', 'success');
+  }} else {{
+    msg.innerHTML = '<span class=""bad"">Error saving derivatives settings.</span>';
+    showToast('Failed to save derivatives settings', 'error');
+  }}
+}}
+
 async function addSymbol() {{
   const symbol = document.getElementById('sym').value.trim().toUpperCase();
   if (!symbol) {{
@@ -2084,17 +2337,35 @@ async function addSymbol() {{
     return;
   }}
 
+  const secType = document.getElementById('secType').value;
+  const isOption = secType === 'OPT' || secType === 'IND_OPT';
+
   const payload = {{
     symbol: symbol,
     subscribeTrades: document.getElementById('trades').value === 'true',
     subscribeDepth: document.getElementById('depth').value === 'true',
     depthLevels: parseInt(document.getElementById('levels').value || '10', 10),
-    securityType: 'STK',
+    securityType: secType,
     exchange: document.getElementById('exch').value || 'SMART',
     currency: 'USD',
     primaryExchange: document.getElementById('pexch').value || null,
     localSymbol: document.getElementById('localsym').value || null
   }};
+
+  if (isOption) {{
+    const strike = parseFloat(document.getElementById('optStrike').value);
+    const expiry = document.getElementById('optExpiry').value;
+    if (!strike || !expiry) {{
+      document.getElementById('msg').textContent = 'Strike price and expiration are required for options.';
+      showToast('Strike and expiration required for options', 'warning');
+      return;
+    }}
+    payload.strike = strike;
+    payload.right = document.getElementById('optRight').value;
+    payload.lastTradeDateOrContractMonth = expiry;
+    payload.optionStyle = document.getElementById('optStyle').value;
+    payload.multiplier = parseInt(document.getElementById('optMultiplier').value) || 100;
+  }}
 
   const r = await fetch('/api/config/symbols', {{
     method: 'POST',
@@ -2107,9 +2378,7 @@ async function addSymbol() {{
     msg.innerHTML = `<span class=""good"">Symbol ${{symbol}} added successfully.</span>`;
     showToast(`Symbol ${{symbol}} added`, 'success');
     addLog(`Symbol added: ${{symbol}}`, 'success');
-    document.getElementById('sym').value = '';
-    document.getElementById('localsym').value = '';
-    document.getElementById('pexch').value = '';
+    clearSymbolForm();
     await loadConfig();
   }} else {{
     msg.innerHTML = '<span class=""bad"">Error adding symbol.</span>';
@@ -2134,6 +2403,7 @@ loadConfig();
 loadStatus();
 loadBackfillStatus();
 loadDataSources();
+loadDerivativesConfig();
 setInterval(loadStatus, 2000);
 setInterval(loadBackfillStatus, 5000);
 </script>
