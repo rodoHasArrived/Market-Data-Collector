@@ -145,6 +145,144 @@ public class GracefulShutdownTests
         await act.Should().NotThrowAsync();
     }
 
+    [Fact]
+    public void Constructor_NullFlushables_ThrowsArgumentNullException()
+    {
+        // Act
+        var act = () => new GracefulShutdownService(null!);
+
+        // Assert
+        act.Should().Throw<ArgumentNullException>()
+            .And.ParamName.Should().Be("flushables");
+    }
+
+    [Fact]
+    public async Task StopAsync_WithCancellationToken_PropagatesCancellation()
+    {
+        // Arrange
+        var slowFlushable = new MockFlushable("Slow", flushDelay: TimeSpan.FromSeconds(10));
+        var service = new GracefulShutdownService(
+            new[] { slowFlushable },
+            shutdownTimeout: TimeSpan.FromSeconds(30));
+
+        await service.StartAsync(CancellationToken.None);
+
+        // Act - cancel immediately
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        await service.StopAsync(cts.Token);
+        stopwatch.Stop();
+
+        // Assert - should not wait for slow flush
+        stopwatch.Elapsed.Should().BeLessThan(TimeSpan.FromSeconds(2));
+    }
+
+    [Fact]
+    public async Task StopAsync_MultipleFailingComponents_ContinuesFlushingOthers()
+    {
+        // Arrange
+        var failing1 = new MockFlushable("Failing1", shouldThrow: true);
+        var failing2 = new MockFlushable("Failing2", shouldThrow: true);
+        var success1 = new MockFlushable("Success1");
+        var success2 = new MockFlushable("Success2");
+
+        var service = new GracefulShutdownService(
+            new IFlushable[] { failing1, success1, failing2, success2 });
+
+        await service.StartAsync(CancellationToken.None);
+
+        // Act
+        await service.StopAsync(CancellationToken.None);
+
+        // Assert
+        success1.WasFlushed.Should().BeTrue();
+        success2.WasFlushed.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task StopAsync_DefaultTimeout_Is30Seconds()
+    {
+        // Arrange
+        var service = new GracefulShutdownService(Array.Empty<IFlushable>());
+        await service.StartAsync(CancellationToken.None);
+
+        // Act & Assert - should complete quickly with no flushables
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        await service.StopAsync(CancellationToken.None);
+        stopwatch.Stop();
+
+        stopwatch.Elapsed.Should().BeLessThan(TimeSpan.FromSeconds(1));
+    }
+
+    [Fact]
+    public async Task StopAsync_CustomTimeout_RespectedForHangingFlushable()
+    {
+        // Arrange
+        var hangingFlushable = new MockFlushable("Hanging", flushDelay: TimeSpan.FromSeconds(60));
+        var customTimeout = TimeSpan.FromMilliseconds(200);
+        var service = new GracefulShutdownService(
+            new[] { hangingFlushable },
+            shutdownTimeout: customTimeout);
+
+        await service.StartAsync(CancellationToken.None);
+
+        // Act
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        await service.StopAsync(CancellationToken.None);
+        stopwatch.Stop();
+
+        // Assert - should complete close to the custom timeout, not the default 30s
+        stopwatch.Elapsed.Should().BeLessThan(TimeSpan.FromSeconds(2));
+    }
+
+    [Fact]
+    public async Task StopAsync_RecordsAllComponentsFlushed()
+    {
+        // Arrange
+        var flushOrder = new List<string>();
+        var fast = new OrderTrackingFlushable("Fast", flushOrder, TimeSpan.Zero);
+        var medium = new OrderTrackingFlushable("Medium", flushOrder, TimeSpan.FromMilliseconds(50));
+        var slow = new OrderTrackingFlushable("Slow", flushOrder, TimeSpan.FromMilliseconds(100));
+
+        var service = new GracefulShutdownService(new IFlushable[] { slow, medium, fast });
+        await service.StartAsync(CancellationToken.None);
+
+        // Act
+        await service.StopAsync(CancellationToken.None);
+
+        // Assert - all should be flushed (order may vary due to parallel execution)
+        flushOrder.Should().HaveCount(3);
+        flushOrder.Should().Contain("Fast");
+        flushOrder.Should().Contain("Medium");
+        flushOrder.Should().Contain("Slow");
+    }
+
+    private sealed class OrderTrackingFlushable : IFlushable
+    {
+        private readonly string _name;
+        private readonly List<string> _order;
+        private readonly TimeSpan _delay;
+
+        public OrderTrackingFlushable(string name, List<string> order, TimeSpan delay)
+        {
+            _name = name;
+            _order = order;
+            _delay = delay;
+        }
+
+        public async Task FlushAsync(CancellationToken ct = default)
+        {
+            if (_delay > TimeSpan.Zero)
+                await Task.Delay(_delay, ct);
+            lock (_order)
+            {
+                _order.Add(_name);
+            }
+        }
+    }
+
     private class MockFlushable : IFlushable
     {
         private readonly TimeSpan _flushDelay;
