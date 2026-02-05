@@ -189,47 +189,103 @@ public sealed class ParquetStorageSink : IStorageSink
 
     private async Task WriteTradesAsync(string path, List<MarketEvent> events, CancellationToken ct)
     {
-        var trades = events
-            .Where(e => e.Payload is Trade)
-            .Select(e => (Event: e, Trade: (Trade)e.Payload))
-            .ToList();
+        // Count valid trades first to size arrays exactly
+        var count = 0;
+        for (var i = 0; i < events.Count; i++)
+        {
+            if (events[i].Payload is Trade) count++;
+        }
 
-        if (trades.Count is 0) return;
+        if (count == 0) return;
+
+        // Single-pass: build all column arrays simultaneously
+        var timestamps = new DateTimeOffset[count];
+        var symbols = new string[count];
+        var prices = new decimal[count];
+        var sizes = new long[count];
+        var aggressors = new string[count];
+        var sequences = new long[count];
+        var venues = new string[count];
+        var sources = new string[count];
+
+        var idx = 0;
+        for (var i = 0; i < events.Count; i++)
+        {
+            if (events[i].Payload is not Trade trade) continue;
+            var evt = events[i];
+            timestamps[idx] = evt.Timestamp;
+            symbols[idx] = evt.Symbol;
+            prices[idx] = trade.Price;
+            sizes[idx] = trade.Size;
+            aggressors[idx] = trade.Aggressor.ToString();
+            sequences[idx] = trade.SequenceNumber;
+            venues[idx] = trade.Venue ?? "UNKNOWN";
+            sources[idx] = evt.Source;
+            idx++;
+        }
 
         using var groupWriter = await ParquetWriter.CreateAsync(TradeSchema, File.Create(path));
         using var rowGroupWriter = groupWriter.CreateRowGroup();
 
-        await rowGroupWriter.WriteColumnAsync(new DataColumn(TradeSchema.DataFields[0], trades.Select(t => t.Event.Timestamp).ToArray()));
-        await rowGroupWriter.WriteColumnAsync(new DataColumn(TradeSchema.DataFields[1], trades.Select(t => t.Event.Symbol).ToArray()));
-        await rowGroupWriter.WriteColumnAsync(new DataColumn(TradeSchema.DataFields[2], trades.Select(t => t.Trade.Price).ToArray()));
-        await rowGroupWriter.WriteColumnAsync(new DataColumn(TradeSchema.DataFields[3], trades.Select(t => t.Trade.Size).ToArray()));
-        await rowGroupWriter.WriteColumnAsync(new DataColumn(TradeSchema.DataFields[4], trades.Select(t => t.Trade.Aggressor.ToString()).ToArray()));
-        await rowGroupWriter.WriteColumnAsync(new DataColumn(TradeSchema.DataFields[5], trades.Select(t => t.Trade.SequenceNumber).ToArray()));
-        await rowGroupWriter.WriteColumnAsync(new DataColumn(TradeSchema.DataFields[6], trades.Select(t => t.Trade.Venue ?? "UNKNOWN").ToArray()));
-        await rowGroupWriter.WriteColumnAsync(new DataColumn(TradeSchema.DataFields[7], trades.Select(t => t.Event.Source).ToArray()));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(TradeSchema.DataFields[0], timestamps));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(TradeSchema.DataFields[1], symbols));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(TradeSchema.DataFields[2], prices));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(TradeSchema.DataFields[3], sizes));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(TradeSchema.DataFields[4], aggressors));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(TradeSchema.DataFields[5], sequences));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(TradeSchema.DataFields[6], venues));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(TradeSchema.DataFields[7], sources));
     }
 
     private async Task WriteQuotesAsync(string path, List<MarketEvent> events, CancellationToken ct)
     {
-        var quotes = events
-            .Where(e => e.Payload is BboQuotePayload)
-            .Select(e => (Event: e, Quote: (BboQuotePayload)e.Payload))
-            .ToList();
+        var count = 0;
+        for (var i = 0; i < events.Count; i++)
+        {
+            if (events[i].Payload is BboQuotePayload) count++;
+        }
 
-        if (quotes.Count is 0) return;
+        if (count == 0) return;
+
+        var timestamps = new DateTimeOffset[count];
+        var symbols = new string[count];
+        var bidPrices = new decimal[count];
+        var bidSizes = new long[count];
+        var askPrices = new decimal[count];
+        var askSizes = new long[count];
+        var spreads = new decimal[count];
+        var sequences = new long[count];
+        var sources = new string[count];
+
+        var idx = 0;
+        for (var i = 0; i < events.Count; i++)
+        {
+            if (events[i].Payload is not BboQuotePayload quote) continue;
+            var evt = events[i];
+            timestamps[idx] = evt.Timestamp;
+            symbols[idx] = evt.Symbol;
+            bidPrices[idx] = quote.BidPrice;
+            bidSizes[idx] = quote.BidSize;
+            askPrices[idx] = quote.AskPrice;
+            askSizes[idx] = quote.AskSize;
+            spreads[idx] = quote.Spread ?? 0m;
+            sequences[idx] = quote.SequenceNumber;
+            sources[idx] = evt.Source;
+            idx++;
+        }
 
         using var groupWriter = await ParquetWriter.CreateAsync(QuoteSchema, File.Create(path));
         using var rowGroupWriter = groupWriter.CreateRowGroup();
 
-        await rowGroupWriter.WriteColumnAsync(new DataColumn(QuoteSchema.DataFields[0], quotes.Select(q => q.Event.Timestamp).ToArray()));
-        await rowGroupWriter.WriteColumnAsync(new DataColumn(QuoteSchema.DataFields[1], quotes.Select(q => q.Event.Symbol).ToArray()));
-        await rowGroupWriter.WriteColumnAsync(new DataColumn(QuoteSchema.DataFields[2], quotes.Select(q => q.Quote.BidPrice).ToArray()));
-        await rowGroupWriter.WriteColumnAsync(new DataColumn(QuoteSchema.DataFields[3], quotes.Select(q => q.Quote.BidSize).ToArray()));
-        await rowGroupWriter.WriteColumnAsync(new DataColumn(QuoteSchema.DataFields[4], quotes.Select(q => q.Quote.AskPrice).ToArray()));
-        await rowGroupWriter.WriteColumnAsync(new DataColumn(QuoteSchema.DataFields[5], quotes.Select(q => q.Quote.AskSize).ToArray()));
-        await rowGroupWriter.WriteColumnAsync(new DataColumn(QuoteSchema.DataFields[6], quotes.Select(q => q.Quote.Spread ?? 0m).ToArray()));
-        await rowGroupWriter.WriteColumnAsync(new DataColumn(QuoteSchema.DataFields[7], quotes.Select(q => q.Quote.SequenceNumber).ToArray()));
-        await rowGroupWriter.WriteColumnAsync(new DataColumn(QuoteSchema.DataFields[8], quotes.Select(q => q.Event.Source).ToArray()));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(QuoteSchema.DataFields[0], timestamps));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(QuoteSchema.DataFields[1], symbols));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(QuoteSchema.DataFields[2], bidPrices));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(QuoteSchema.DataFields[3], bidSizes));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(QuoteSchema.DataFields[4], askPrices));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(QuoteSchema.DataFields[5], askSizes));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(QuoteSchema.DataFields[6], spreads));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(QuoteSchema.DataFields[7], sequences));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(QuoteSchema.DataFields[8], sources));
     }
 
     private async Task WriteL2SnapshotsAsync(string path, List<MarketEvent> events, CancellationToken ct)
@@ -274,25 +330,53 @@ public sealed class ParquetStorageSink : IStorageSink
 
     private async Task WriteBarsAsync(string path, List<MarketEvent> events, CancellationToken ct)
     {
-        var bars = events
-            .Where(e => e.Payload is HistoricalBar)
-            .Select(e => (Event: e, Bar: (HistoricalBar)e.Payload))
-            .ToList();
+        var count = 0;
+        for (var i = 0; i < events.Count; i++)
+        {
+            if (events[i].Payload is HistoricalBar) count++;
+        }
 
-        if (bars.Count is 0) return;
+        if (count == 0) return;
+
+        var timestamps = new DateTimeOffset[count];
+        var symbols = new string[count];
+        var opens = new decimal[count];
+        var highs = new decimal[count];
+        var lows = new decimal[count];
+        var closes = new decimal[count];
+        var volumes = new decimal[count];
+        var sequences = new long[count];
+        var sources = new string[count];
+
+        var idx = 0;
+        for (var i = 0; i < events.Count; i++)
+        {
+            if (events[i].Payload is not HistoricalBar bar) continue;
+            var evt = events[i];
+            timestamps[idx] = evt.Timestamp;
+            symbols[idx] = evt.Symbol;
+            opens[idx] = bar.Open;
+            highs[idx] = bar.High;
+            lows[idx] = bar.Low;
+            closes[idx] = bar.Close;
+            volumes[idx] = bar.Volume;
+            sequences[idx] = bar.SequenceNumber;
+            sources[idx] = evt.Source;
+            idx++;
+        }
 
         using var groupWriter = await ParquetWriter.CreateAsync(BarSchema, File.Create(path));
         using var rowGroupWriter = groupWriter.CreateRowGroup();
 
-        await rowGroupWriter.WriteColumnAsync(new DataColumn(BarSchema.DataFields[0], bars.Select(b => b.Event.Timestamp).ToArray()));
-        await rowGroupWriter.WriteColumnAsync(new DataColumn(BarSchema.DataFields[1], bars.Select(b => b.Event.Symbol).ToArray()));
-        await rowGroupWriter.WriteColumnAsync(new DataColumn(BarSchema.DataFields[2], bars.Select(b => b.Bar.Open).ToArray()));
-        await rowGroupWriter.WriteColumnAsync(new DataColumn(BarSchema.DataFields[3], bars.Select(b => b.Bar.High).ToArray()));
-        await rowGroupWriter.WriteColumnAsync(new DataColumn(BarSchema.DataFields[4], bars.Select(b => b.Bar.Low).ToArray()));
-        await rowGroupWriter.WriteColumnAsync(new DataColumn(BarSchema.DataFields[5], bars.Select(b => b.Bar.Close).ToArray()));
-        await rowGroupWriter.WriteColumnAsync(new DataColumn(BarSchema.DataFields[6], bars.Select(b => b.Bar.Volume).ToArray()));
-        await rowGroupWriter.WriteColumnAsync(new DataColumn(BarSchema.DataFields[7], bars.Select(b => b.Bar.SequenceNumber).ToArray()));
-        await rowGroupWriter.WriteColumnAsync(new DataColumn(BarSchema.DataFields[8], bars.Select(b => b.Event.Source).ToArray()));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(BarSchema.DataFields[0], timestamps));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(BarSchema.DataFields[1], symbols));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(BarSchema.DataFields[2], opens));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(BarSchema.DataFields[3], highs));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(BarSchema.DataFields[4], lows));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(BarSchema.DataFields[5], closes));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(BarSchema.DataFields[6], volumes));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(BarSchema.DataFields[7], sequences));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(BarSchema.DataFields[8], sources));
     }
 
     private async Task WriteGenericEventsAsync(string path, List<MarketEvent> events, CancellationToken ct)

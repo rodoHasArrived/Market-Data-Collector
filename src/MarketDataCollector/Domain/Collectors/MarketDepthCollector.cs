@@ -152,9 +152,9 @@ public sealed class MarketDepthCollector : SymbolSubscriptionTracker
         }
     }
 
-    internal sealed class SymbolOrderBookBuffer
+    internal sealed class SymbolOrderBookBuffer : IDisposable
     {
-        private readonly object _sync = new();
+        private readonly ReaderWriterLockSlim _rwLock = new(LockRecursionPolicy.NoRecursion);
 
         private readonly List<OrderBookLevel> _bids = new();
         private readonly List<OrderBookLevel> _asks = new();
@@ -165,14 +165,20 @@ public sealed class MarketDepthCollector : SymbolSubscriptionTracker
 
         public bool IsStale
         {
-            get { lock (_sync) return _stale; }
+            get
+            {
+                _rwLock.EnterReadLock();
+                try { return _stale; }
+                finally { _rwLock.ExitReadLock(); }
+            }
         }
 
         public string? LastErrorDescription { get; private set; }
 
         public void Reset()
         {
-            lock (_sync)
+            _rwLock.EnterWriteLock();
+            try
             {
                 _bids.Clear();
                 _asks.Clear();
@@ -180,11 +186,20 @@ public sealed class MarketDepthCollector : SymbolSubscriptionTracker
                 _sequenceCounter = 0;
                 LastErrorDescription = null;
             }
+            finally
+            {
+                _rwLock.ExitWriteLock();
+            }
         }
 
         public DepthIntegrityKind Apply(MarketDepthUpdate upd, out LOBSnapshot? snapshot)
         {
-            lock (_sync)
+            OrderBookLevel[] bidsCopy;
+            OrderBookLevel[] asksCopy;
+            long seqNum;
+
+            _rwLock.EnterWriteLock();
+            try
             {
                 snapshot = null;
 
@@ -239,48 +254,60 @@ public sealed class MarketDepthCollector : SymbolSubscriptionTracker
 
                 // increment local sequence counter (IB depth doesn't carry explicit seq)
                 _sequenceCounter++;
+                seqNum = upd.SequenceNumber != 0 ? upd.SequenceNumber : _sequenceCounter;
 
-                // Build derived microstructure metrics
-                var bidsCopy = _bids.ToArray();
-                var asksCopy = _asks.ToArray();
-
-                decimal? mid = null;
-                if (bidsCopy.Length > 0 && asksCopy.Length > 0)
-                    mid = (bidsCopy[0].Price + asksCopy[0].Price) / 2m;
-
-                // Simple top-of-book imbalance using best level sizes
-                decimal? imb = null;
-                if (bidsCopy.Length > 0 && asksCopy.Length > 0)
-                {
-                    var b = bidsCopy[0].Size;
-                    var a = asksCopy[0].Size;
-                    var tot = b + a;
-                    if (tot > 0) imb = (b - a) / tot;
-                }
-
-                snapshot = new LOBSnapshot(
-                    Timestamp: upd.Timestamp,
-                    Symbol: upd.Symbol,
-                    Bids: bidsCopy,
-                    Asks: asksCopy,
-                    MidPrice: mid,
-                    MicroPrice: null,
-                    Imbalance: imb,
-                    MarketState: MarketState.Normal,
-                    SequenceNumber: upd.SequenceNumber != 0 ? upd.SequenceNumber : _sequenceCounter,
-                    StreamId: upd.StreamId,
-                    Venue: upd.Venue
-                );
+                // Copy arrays under write lock (fast memcpy), release lock before building snapshot
+                bidsCopy = _bids.ToArray();
+                asksCopy = _asks.ToArray();
 
                 LastErrorDescription = null;
-                return DepthIntegrityKind.Unknown; // ok
             }
+            finally
+            {
+                _rwLock.ExitWriteLock();
+            }
+
+            // Build derived microstructure metrics outside the lock
+            decimal? mid = null;
+            if (bidsCopy.Length > 0 && asksCopy.Length > 0)
+                mid = (bidsCopy[0].Price + asksCopy[0].Price) / 2m;
+
+            // Simple top-of-book imbalance using best level sizes
+            decimal? imb = null;
+            if (bidsCopy.Length > 0 && asksCopy.Length > 0)
+            {
+                var b = bidsCopy[0].Size;
+                var a = asksCopy[0].Size;
+                var tot = b + a;
+                if (tot > 0) imb = (b - a) / tot;
+            }
+
+            snapshot = new LOBSnapshot(
+                Timestamp: upd.Timestamp,
+                Symbol: upd.Symbol,
+                Bids: bidsCopy,
+                Asks: asksCopy,
+                MidPrice: mid,
+                MicroPrice: null,
+                Imbalance: imb,
+                MarketState: MarketState.Normal,
+                SequenceNumber: seqNum,
+                StreamId: upd.StreamId,
+                Venue: upd.Venue
+            );
+
+            return DepthIntegrityKind.Unknown; // ok
         }
 
         private static void Reindex(List<OrderBookLevel> levels, OrderBookSide side)
         {
             for (int i = 0; i < levels.Count; i++)
                 levels[i] = levels[i] with { Side = side, Level = i };
+        }
+
+        public void Dispose()
+        {
+            _rwLock.Dispose();
         }
     }
 }

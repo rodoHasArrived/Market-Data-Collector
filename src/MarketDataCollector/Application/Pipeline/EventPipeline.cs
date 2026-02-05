@@ -260,15 +260,26 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
         {
             var batchBuffer = new List<MarketEvent>(_batchSize);
 
-            await foreach (var evt in _channel.Reader.ReadAllAsync(_cts.Token).ConfigureAwait(false))
+            while (await _channel.Reader.WaitToReadAsync(_cts.Token).ConfigureAwait(false))
             {
                 var startTs = Stopwatch.GetTimestamp();
 
-                // Process single event
-                await _sink.AppendAsync(evt, _cts.Token).ConfigureAwait(false);
-                Interlocked.Increment(ref _consumedCount);
+                // Drain up to _batchSize events from the channel
+                batchBuffer.Clear();
+                while (batchBuffer.Count < _batchSize && _channel.Reader.TryRead(out var evt))
+                {
+                    batchBuffer.Add(evt);
+                }
 
-                // Track processing time
+                // Write the batch to the sink
+                for (var i = 0; i < batchBuffer.Count; i++)
+                {
+                    await _sink.AppendAsync(batchBuffer[i], _cts.Token).ConfigureAwait(false);
+                }
+
+                Interlocked.Add(ref _consumedCount, batchBuffer.Count);
+
+                // Track processing time amortized across the batch
                 var elapsedNs = (long)(HighResolutionTimestamp.GetElapsedNanoseconds(startTs));
                 Interlocked.Add(ref _totalProcessingTimeNs, elapsedNs);
             }
