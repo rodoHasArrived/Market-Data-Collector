@@ -207,8 +207,14 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### AI Code Quality Suggestions" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          if [ -n "${{ steps.ai-quality.outputs.response }}" ]; then
-            echo "${{ steps.ai-quality.outputs.response }}" >> $GITHUB_STEP_SUMMARY
+          
+          # Save AI response to file to avoid shell injection issues
+          cat > /tmp/ai-response.txt << 'HEREDOC_EOF'
+          ${{ steps.ai-quality.outputs.response }}
+          HEREDOC_EOF
+          
+          if [ -s /tmp/ai-response.txt ]; then
+            cat /tmp/ai-response.txt >> $GITHUB_STEP_SUMMARY
           else
             echo "_AI analysis was not available._" >> $GITHUB_STEP_SUMMARY
           fi
