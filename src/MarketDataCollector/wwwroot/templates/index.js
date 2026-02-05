@@ -47,18 +47,76 @@ window.onclick = function(event) {
   }
 };
 
-// API Functions with Error Handling
-async function apiCall(url, options = {}) {
+// Validation helpers
+const SYMBOL_PATTERN = /^[A-Z0-9][A-Z0-9.\-/]{0,19}$/;
+const API_TIMEOUT_MS = 30000;
+
+function validateSymbol(symbol) {
+  if (!symbol || !symbol.trim()) return 'Symbol must not be empty.';
+  if (!SYMBOL_PATTERN.test(symbol.trim().toUpperCase()))
+    return `Invalid symbol format: '${symbol}'. Use 1-20 alphanumeric characters, dots, hyphens, or slashes.`;
+  return null;
+}
+
+function validateDateRange(from, to) {
+  if (from && to && from > to)
+    return `'From' date (${from}) must not be after 'To' date (${to}).`;
+  return null;
+}
+
+function parseApiError(status, body) {
+  // Try to parse structured ErrorResponse
   try {
-    const response = await fetch(url, options);
+    const parsed = JSON.parse(body);
+    if (parsed.detail) return parsed.detail;
+    if (parsed.title) return parsed.title;
+    if (parsed.errors && parsed.errors.length > 0)
+      return parsed.errors.map(e => e.message).join('; ');
+  } catch { /* fall through to raw text */ }
+  return body || `HTTP ${status}`;
+}
+
+// API Functions with Error Handling, Timeout, and Error Differentiation
+async function apiCall(url, options = {}) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(url, { ...options, signal: controller.signal });
+
     if (!response.ok) {
       const text = await response.text();
-      throw new Error(text || `HTTP ${response.status}`);
+      const message = parseApiError(response.status, text);
+
+      // Create a typed error so callers can differentiate
+      const err = new Error(message);
+      if (response.status === 401 || response.status === 403) {
+        err.errorType = 'auth';
+      } else if (response.status >= 400 && response.status < 500) {
+        err.errorType = 'validation';
+      } else {
+        err.errorType = 'server';
+      }
+      err.statusCode = response.status;
+      throw err;
     }
     return response;
   } catch (error) {
-    console.error('API Error:', error);
+    if (error.name === 'AbortError') {
+      const err = new Error(`Request timed out after ${API_TIMEOUT_MS / 1000}s`);
+      err.errorType = 'timeout';
+      showToast('error', 'Request Timeout', `The request to ${url} timed out after ${API_TIMEOUT_MS / 1000}s.`);
+      throw err;
+    }
+    if (error instanceof TypeError && error.message === 'Failed to fetch') {
+      error.errorType = 'network';
+      showToast('error', 'Network Error', 'Unable to reach the server. Check your connection.');
+      throw error;
+    }
+    // Re-throw HTTP errors (callers show their own toasts for these)
     throw error;
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
 
@@ -351,6 +409,11 @@ async function addSymbol() {
       showToast('error', 'Validation Error', 'Symbol is required');
       return;
     }
+    const symbolErr = validateSymbol(symbol);
+    if (symbolErr) {
+      showToast('error', 'Validation Error', symbolErr);
+      return;
+    }
 
     const payload = {
       symbol: symbol,
@@ -510,6 +573,20 @@ async function runBackfill() {
 
     if (!symbols.length) {
       showToast('error', 'Validation Error', 'Please enter at least one symbol');
+      return;
+    }
+
+    for (const sym of symbols) {
+      const symErr = validateSymbol(sym);
+      if (symErr) {
+        showToast('error', 'Validation Error', symErr);
+        return;
+      }
+    }
+
+    const dateErr = validateDateRange(from, to);
+    if (dateErr) {
+      showToast('error', 'Validation Error', dateErr);
       return;
     }
 
@@ -716,9 +793,12 @@ function renderComparison(comparison) {
   }
 
   // Build header row
-  headerRow.innerHTML = '<th>Metric</th>' + comparison.providers.map(p =>
-    `<th style="text-align: center;">${p.providerId}<br/><small style="font-weight: normal; color: #718096;">${p.providerType}</small></th>`
-  ).join('');
+  headerRow.innerHTML = '<th>Metric</th>' + comparison.providers.map(p => {
+    const simBadge = p.isSimulated
+      ? '<br/><span style="background: #ecc94b; color: #744210; font-size: 9px; padding: 1px 6px; border-radius: 4px; font-weight: 600;" title="No real metrics available — showing placeholder data">SIMULATED</span>'
+      : '';
+    return `<th style="text-align: center;">${p.providerId}<br/><small style="font-weight: normal; color: #718096;">${p.providerType}</small>${simBadge}</th>`;
+  }).join('');
 
   // Metrics to compare
   const metrics = [

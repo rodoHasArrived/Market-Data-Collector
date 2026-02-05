@@ -361,6 +361,7 @@ public static class ProviderEndpoints
         MaxLatencyMs: 0,
         DataQualityScore: 100,
         ConnectionSuccessRate: 100,
-        Timestamp: DateTimeOffset.UtcNow
+        Timestamp: DateTimeOffset.UtcNow,
+        IsSimulated: true
     );
 }

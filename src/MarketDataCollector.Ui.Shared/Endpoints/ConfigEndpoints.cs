@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Contracts.Api;
 using MarketDataCollector.Contracts.Configuration;
@@ -17,6 +18,8 @@ namespace MarketDataCollector.Ui.Shared.Endpoints;
 /// </summary>
 public static class ConfigEndpoints
 {
+    private static readonly Regex SymbolPattern = new(@"^[A-Z0-9][A-Z0-9.\-/]{0,19}$", RegexOptions.Compiled);
+
     /// <summary>
     /// Maps all configuration-related API endpoints.
     /// </summary>
@@ -91,7 +94,22 @@ public static class ConfigEndpoints
         app.MapPost(UiApiRoutes.ConfigSymbols, async (ConfigStore store, SymbolConfig symbol) =>
         {
             if (string.IsNullOrWhiteSpace(symbol.Symbol))
-                return Results.BadRequest("Symbol is required.");
+            {
+                return Results.Json(
+                    ErrorResponse.Validation("Symbol is required.",
+                        new[] { new FieldError("symbol", "Symbol must not be empty.") }),
+                    statusCode: 400);
+            }
+
+            if (!SymbolPattern.IsMatch(symbol.Symbol.ToUpperInvariant()))
+            {
+                return Results.Json(
+                    ErrorResponse.Validation("Invalid symbol format.",
+                        new[] { new FieldError("symbol",
+                            $"Symbol '{symbol.Symbol}' must be 1-20 uppercase alphanumeric characters, dots, hyphens, or forward slashes.",
+                            AttemptedValue: symbol.Symbol) }),
+                    statusCode: 400);
+            }
 
             var cfg = store.Load();
 
@@ -109,6 +127,14 @@ public static class ConfigEndpoints
         // Delete symbol
         app.MapDelete(UiApiRoutes.ConfigSymbols + "/{symbol}", async (ConfigStore store, string symbol) =>
         {
+            if (string.IsNullOrWhiteSpace(symbol) || !SymbolPattern.IsMatch(symbol.ToUpperInvariant()))
+            {
+                return Results.Json(
+                    ErrorResponse.Validation("Invalid symbol format.",
+                        new[] { new FieldError("symbol", "Symbol must be 1-20 alphanumeric characters, dots, hyphens, or forward slashes.") }),
+                    statusCode: 400);
+            }
+
             var cfg = store.Load();
             var list = (cfg.Symbols ?? Array.Empty<SymbolConfig>()).ToList();
             list.RemoveAll(s => string.Equals(s.Symbol, symbol, StringComparison.OrdinalIgnoreCase));
