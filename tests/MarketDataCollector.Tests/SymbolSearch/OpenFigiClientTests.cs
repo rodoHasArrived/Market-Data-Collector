@@ -1,3 +1,5 @@
+using System.Net;
+using System.Text;
 using FluentAssertions;
 using MarketDataCollector.Application.Subscriptions.Models;
 using MarketDataCollector.Infrastructure.Providers.SymbolSearch;
@@ -123,7 +125,14 @@ public class OpenFigiClientTests : IDisposable
     public async Task BulkLookupByTickersAsync_DeduplicatesTickers()
     {
         // Arrange
-        _client = new OpenFigiClient();
+        using var handler = new StubHttpMessageHandler(_ =>
+            new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("[{\"data\":[{\"figi\":\"BBG000B9XRY4\",\"ticker\":\"AAPL\"}]}]", Encoding.UTF8, "application/json")
+            });
+
+        using var httpClient = new HttpClient(handler);
+        _client = new OpenFigiClient(httpClient: httpClient);
         var tickers = new[] { "AAPL", "aapl", "AAPL", "Aapl" }; // All same ticker, different cases
 
         // Act
@@ -131,6 +140,7 @@ public class OpenFigiClientTests : IDisposable
 
         // Assert - Should only have one key
         results.Keys.Should().HaveCount(1);
+        handler.CallCount.Should().Be(1, "deduplicated tickers should issue a single mapping request");
     }
 
     #endregion
@@ -243,5 +253,24 @@ public class FigiLookupRequestTests
 
         // Assert
         request.ExchCode.Should().Be("US");
+    }
+}
+
+
+internal sealed class StubHttpMessageHandler : HttpMessageHandler
+{
+    private readonly Func<HttpRequestMessage, HttpResponseMessage> _responder;
+
+    public StubHttpMessageHandler(Func<HttpRequestMessage, HttpResponseMessage> responder)
+    {
+        _responder = responder;
+    }
+
+    public int CallCount { get; private set; }
+
+    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    {
+        CallCount++;
+        return Task.FromResult(_responder(request));
     }
 }

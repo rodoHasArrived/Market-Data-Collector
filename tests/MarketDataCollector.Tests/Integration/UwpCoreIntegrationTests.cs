@@ -1,5 +1,5 @@
 using System.Net;
-using System.Net.Http.Json;
+using System.Net.Sockets;
 using System.Text.Json;
 using FluentAssertions;
 using MarketDataCollector.Application.Monitoring;
@@ -18,8 +18,7 @@ public class UwpCoreIntegrationTests : IAsyncLifetime
 {
     private StatusHttpServer? _server;
     private HttpClient? _httpClient;
-    private const int TestPort = 18080;
-    private static readonly string BaseUrl = $"http://localhost:{TestPort}";
+    private int _testPort;
 
     public Task InitializeAsync()
     {
@@ -67,14 +66,16 @@ public class UwpCoreIntegrationTests : IAsyncLifetime
 
         Func<IReadOnlyList<DepthIntegrityEvent>> integrityProvider = () => Array.Empty<DepthIntegrityEvent>();
 
+        _testPort = GetFreePort();
+
         // Start the status server
-        _server = new StatusHttpServer(TestPort, metricsProvider, pipelineProvider, integrityProvider);
+        _server = new StatusHttpServer(_testPort, metricsProvider, pipelineProvider, integrityProvider);
         _server.Start();
 
         // Create HTTP client
         _httpClient = new HttpClient
         {
-            BaseAddress = new Uri(BaseUrl),
+            BaseAddress = new Uri($"http://localhost:{_testPort}"),
             Timeout = TimeSpan.FromSeconds(5)
         };
 
@@ -89,6 +90,13 @@ public class UwpCoreIntegrationTests : IAsyncLifetime
         {
             await _server.DisposeAsync();
         }
+    }
+
+    private static int GetFreePort()
+    {
+        using var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        return ((IPEndPoint)listener.LocalEndpoint).Port;
     }
 
     /// <summary>
