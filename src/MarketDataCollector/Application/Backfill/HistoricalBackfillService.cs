@@ -38,12 +38,15 @@ public sealed class HistoricalBackfillService
         if (!_providers.TryGetValue(request.Provider.ToLowerInvariant(), out var provider))
             throw new InvalidOperationException($"Unknown backfill provider '{request.Provider}'.");
 
-        try
+        long barsWritten = 0;
+        var failedSymbols = new List<string>();
+        var errorMessages = new List<string>();
+
+        foreach (var symbol in symbols)
         {
-            long barsWritten = 0;
-            foreach (var symbol in symbols)
+            ct.ThrowIfCancellationRequested();
+            try
             {
-                ct.ThrowIfCancellationRequested();
                 _log.Information("Starting backfill for {Symbol} via {Provider}", symbol, provider.DisplayName);
                 var bars = await provider.GetDailyBarsAsync(symbol, request.From, request.To, ct).ConfigureAwait(false);
                 foreach (var bar in bars)
@@ -54,17 +57,33 @@ public sealed class HistoricalBackfillService
                     barsWritten++;
                 }
             }
+            catch (OperationCanceledException) { throw; }
+            catch (Exception ex)
+            {
+                _log.Error(ex, "Backfill failed for symbol {Symbol} via {Provider}, continuing with remaining symbols", symbol, provider.Name);
+                failedSymbols.Add(symbol);
+                errorMessages.Add($"{symbol}: {ex.Message}");
+            }
+        }
 
+        try
+        {
             await pipeline.FlushAsync(ct).ConfigureAwait(false);
-            var completed = DateTimeOffset.UtcNow;
-            _log.Information("Backfill complete: {Count} bars written across {Symbols}", barsWritten, symbols.Length);
-
-            return new BackfillResult(true, provider.Name, symbols, request.From, request.To, barsWritten, started, completed, Error: null);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _log.Error(ex, "Backfill failed for provider {Provider}", provider.Name);
-            return BackfillResult.Failed(provider.Name, symbols, request.From, request.To, started, ex);
+            _log.Error(ex, "Pipeline flush failed after backfill");
         }
+
+        var completed = DateTimeOffset.UtcNow;
+        var allSucceeded = failedSymbols.Count == 0;
+        var errorSummary = failedSymbols.Count > 0
+            ? $"Failed symbols ({failedSymbols.Count}/{symbols.Length}): {string.Join("; ", errorMessages)}"
+            : null;
+
+        _log.Information("Backfill complete: {Count} bars written across {Total} symbols ({Failed} failed)",
+            barsWritten, symbols.Length, failedSymbols.Count);
+
+        return new BackfillResult(allSucceeded, provider.Name, symbols, request.From, request.To, barsWritten, started, completed, Error: errorSummary);
     }
 }

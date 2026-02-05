@@ -408,6 +408,57 @@ public static class IBTickByTickTypes
 }
 
 /// <summary>
+/// Maps IB error codes to user-friendly descriptions, severities, and remediation advice.
+/// </summary>
+public static class IBErrorCodeMap
+{
+    private static readonly Dictionary<int, IBErrorInfo> Errors = new()
+    {
+        [100] = new("Max rate of messages exceeded", IBErrorSeverity.Warning, "Reduce request frequency. Max 50 msgs/sec."),
+        [110] = new("Price does not conform to minimum variation", IBErrorSeverity.Warning, "Adjust price to valid tick size."),
+        [162] = new("Historical market data service error / Pacing violation", IBErrorSeverity.Warning, "Wait 15 seconds before retrying. Max 60 requests per 10 minutes."),
+        [200] = new("No security definition found", IBErrorSeverity.Error, "Verify symbol, exchange, and contract details. Use reqContractDetails to validate."),
+        [300] = new("Can't find EId with tickerId", IBErrorSeverity.Error, "Subscription ID not recognized. May have been unsubscribed."),
+        [354] = new("Market data not subscribed", IBErrorSeverity.Error, "Subscribe to market data in Account Management. Free US equity data requires account >= $500."),
+        [502] = new("Couldn't connect to TWS", IBErrorSeverity.Critical, "Ensure TWS or IB Gateway is running. Check host/port (TWS=7496/7497, Gateway=4001/4002)."),
+        [504] = new("Not connected", IBErrorSeverity.Critical, "Connection lost. Automatic reconnection will be attempted with exponential backoff."),
+        [1100] = new("Connectivity lost to IB server", IBErrorSeverity.Critical, "Internet connection may be down. Data resumes when connectivity restores."),
+        [1102] = new("Connectivity restored, data lost", IBErrorSeverity.Warning, "Re-subscribe to market data. Some data may have been missed during outage."),
+        [2104] = new("Market data farm connection is OK", IBErrorSeverity.Info, "Normal operation — data feed is healthy."),
+        [2106] = new("HMDS data farm connection is OK", IBErrorSeverity.Info, "Historical data is available."),
+        [2107] = new("HMDS data farm connection is inactive", IBErrorSeverity.Warning, "Historical data may be temporarily unavailable."),
+        [2108] = new("Market data farm is inactive", IBErrorSeverity.Warning, "Real-time data may be temporarily unavailable."),
+        [2158] = new("Sec-def data farm connection is OK", IBErrorSeverity.Info, "Normal operation."),
+        [10167] = new("Delayed market data not subscribed", IBErrorSeverity.Error, "No delayed data available for US equities. Need live market data subscription."),
+        [10197] = new("No market data during competing live session", IBErrorSeverity.Warning, "Another TWS session has market data priority. Close competing sessions."),
+    };
+
+    /// <summary>Looks up user-friendly error information for an IB error code.</summary>
+    public static IBErrorInfo? GetErrorInfo(int errorCode)
+        => Errors.GetValueOrDefault(errorCode);
+
+    /// <summary>Returns all known error codes and their descriptions.</summary>
+    public static IReadOnlyDictionary<int, IBErrorInfo> GetAll() => Errors;
+
+    /// <summary>Formats an IB error for display with code, description, and remediation.</summary>
+    public static string FormatError(int errorCode, string? rawMessage = null)
+    {
+        var info = GetErrorInfo(errorCode);
+        if (info is null)
+            return $"IB Error {errorCode}: {rawMessage ?? "Unknown error"}";
+
+        return $"IB Error {errorCode} [{info.Severity}]: {info.Description}" +
+               (info.Remediation is not null ? $" — {info.Remediation}" : "");
+    }
+}
+
+/// <summary>Detailed information about an IB API error code.</summary>
+public sealed record IBErrorInfo(string Description, IBErrorSeverity Severity, string? Remediation);
+
+/// <summary>Severity level for IB API errors.</summary>
+public enum IBErrorSeverity { Info, Warning, Error, Critical }
+
+/// <summary>
 /// Represents an error from the IB API.
 /// </summary>
 public sealed record IBApiError(

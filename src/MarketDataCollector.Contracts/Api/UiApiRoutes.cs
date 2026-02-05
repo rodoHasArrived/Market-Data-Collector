@@ -68,6 +68,11 @@ public static class UiApiRoutes
     public const string ProviderFailoverThresholds = "/api/providers/failover-thresholds";
     public const string ProviderHealth = "/api/providers/health";
 
+    // Interactive Brokers specific endpoints
+    public const string IBStatus = "/api/providers/ib/status";
+    public const string IBErrorCodes = "/api/providers/ib/error-codes";
+    public const string IBLimits = "/api/providers/ib/limits";
+
     // Failover endpoints
     public const string FailoverConfig = "/api/failover/config";
     public const string FailoverRules = "/api/failover/rules";

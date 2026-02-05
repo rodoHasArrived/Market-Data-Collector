@@ -115,7 +115,8 @@ public record ProviderMetricsResponse(
     double MaxLatencyMs,
     double DataQualityScore,
     double ConnectionSuccessRate,
-    DateTimeOffset Timestamp);
+    DateTimeOffset Timestamp,
+    bool IsSimulated = false);
 
 /// <summary>Response containing failover configuration.</summary>
 public record FailoverConfigResponse(

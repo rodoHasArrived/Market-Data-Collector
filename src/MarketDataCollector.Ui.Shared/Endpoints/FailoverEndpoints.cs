@@ -139,27 +139,58 @@ public static class FailoverEndpoints
             return Results.Ok();
         });
 
-        // Force failover
+        // Force failover — not yet wired to runtime MultiProviderService
         app.MapPost(UiApiRoutes.FailoverForce.Replace("{ruleId}", "{ruleId}"), (ConfigStore store, string ruleId, ForceFailoverRequest req) =>
         {
-            // In a real implementation, this would trigger actual failover via MultiProviderService
-            return Results.Ok(new { success = true, message = $"Failover triggered for rule {ruleId} to provider {req.TargetProviderId}" });
+            // Validate the rule exists
+            var cfg = store.Load();
+            var rules = cfg.DataSources?.FailoverRules ?? Array.Empty<FailoverRuleConfig>();
+            var rule = rules.FirstOrDefault(r => string.Equals(r.Id, ruleId, StringComparison.OrdinalIgnoreCase));
+
+            if (rule is null)
+                return Results.NotFound(new { error = $"Failover rule '{ruleId}' not found." });
+
+            if (string.IsNullOrWhiteSpace(req.TargetProviderId))
+                return Results.BadRequest(new { error = "TargetProviderId is required." });
+
+            // Return honest status — failover coordination is not yet wired at runtime
+            return Results.Json(new
+            {
+                success = false,
+                implemented = false,
+                message = $"Failover rule '{ruleId}' found, but runtime failover coordination is not yet connected. " +
+                          $"Configure failover rules and enable automatic failover for production use.",
+                ruleId,
+                targetProviderId = req.TargetProviderId
+            }, jsonOptions);
         });
 
-        // Get provider health
+        // Get provider health — returns honest data when runtime metrics unavailable
         app.MapGet(UiApiRoutes.FailoverHealth, (ConfigStore store) =>
         {
             var cfg = store.Load();
             var sources = cfg.DataSources?.Sources ?? Array.Empty<DataSourceConfig>();
+            var metricsStatus = store.TryLoadProviderMetrics();
 
-            var health = sources.Select(s => new ProviderHealthResponse(
-                ProviderId: s.Id,
-                ConsecutiveFailures: 0,
-                ConsecutiveSuccesses: s.Enabled ? 10 : 0,
-                LastIssueTime: null,
-                LastSuccessTime: s.Enabled ? DateTimeOffset.UtcNow : null,
-                RecentIssues: Array.Empty<HealthIssueResponse>()
-            )).ToArray();
+            var health = sources.Select(s =>
+            {
+                // Check if we have real metrics for this provider
+                var realMetrics = metricsStatus?.Providers.FirstOrDefault(p =>
+                    string.Equals(p.ProviderId, s.Id, StringComparison.OrdinalIgnoreCase));
+
+                var hasRealData = realMetrics is not null;
+
+                return new
+                {
+                    providerId = s.Id,
+                    consecutiveFailures = hasRealData ? realMetrics!.ConnectionFailures : 0L,
+                    consecutiveSuccesses = hasRealData ? (realMetrics!.ConnectionAttempts - realMetrics.ConnectionFailures) : 0L,
+                    lastIssueTime = (DateTimeOffset?)null,
+                    lastSuccessTime = hasRealData ? realMetrics!.Timestamp : (DateTimeOffset?)null,
+                    recentIssues = Array.Empty<object>(),
+                    isSimulated = !hasRealData
+                };
+            }).ToArray();
 
             return Results.Json(health, jsonOptions);
         });

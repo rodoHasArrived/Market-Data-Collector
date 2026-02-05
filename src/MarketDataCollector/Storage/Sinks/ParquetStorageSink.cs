@@ -88,9 +88,9 @@ public sealed class ParquetStorageSink : IStorageSink
         _options = options ?? throw new ArgumentNullException(nameof(options));
         _parquetOptions = parquetOptions ?? ParquetStorageOptions.Default;
 
-        // Setup periodic flush timer
+        // Setup periodic flush timer with safe async wrapper to prevent silent data loss
         _flushTimer = new Timer(
-            async _ => await FlushAllBuffersAsync(),
+            _ => FlushAllBuffersSafelyAsync(),
             null,
             _parquetOptions.FlushInterval,
             _parquetOptions.FlushInterval);
@@ -120,6 +120,19 @@ public sealed class ParquetStorageSink : IStorageSink
     public async Task FlushAsync(CancellationToken ct = default)
     {
         await FlushAllBuffersAsync(ct);
+    }
+
+    private async void FlushAllBuffersSafelyAsync()
+    {
+        if (_disposed) return;
+        try
+        {
+            await FlushAllBuffersAsync().ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _log.Error(ex, "Periodic Parquet flush failed — {BufferCount} buffers may contain unflushed data", _buffers.Count);
+        }
     }
 
     private async Task FlushAllBuffersAsync(CancellationToken ct = default)
