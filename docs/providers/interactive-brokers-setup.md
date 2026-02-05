@@ -330,4 +330,4 @@ If IB API setup is too complex, consider:
 **Last Updated:** 2026-01-30
 **TWS API Version:** 10.19+
 **Tested With:** .NET 9.0
-**See Also:** [Getting Started](../guides/getting-started.md) | [Configuration](../guides/configuration.md) | [Operator Runbook](../guides/operator-runbook.md)
+**See Also:** [Getting Started](../getting-started/README.md) | [Configuration](../HELP.md#configuration) | [Operator Runbook](../operations/operator-runbook.md)

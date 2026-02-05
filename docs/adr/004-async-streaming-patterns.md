@@ -204,7 +204,7 @@ await foreach (var item in stream.WithCancellation(ct))
 ## References
 
 - [CLAUDE.md Critical Rules](../../CLAUDE.md#critical-rules)
-- [Async Streaming Best Practices](../guides/configuration.md#async-patterns)
+- [Async Streaming Best Practices](../HELP.md#configuration)
 - [Microsoft IAsyncEnumerable Docs](https://docs.microsoft.com/en-us/dotnet/csharp/whats-new/tutorials/generate-consume-asynchronous-stream)
 
 ---

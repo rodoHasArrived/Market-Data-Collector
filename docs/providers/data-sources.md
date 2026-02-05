@@ -319,7 +319,7 @@ For bulk backfilling with multiple free-tier APIs:
 
 ## Related Documentation
 
-- [Configuration](../guides/configuration.md) - Provider configuration options
+- [Configuration](../HELP.md#configuration) - Provider configuration options
 - [IB Setup](interactive-brokers-setup.md) - IB TWS/Gateway setup
 - [IB API Reference](interactive-brokers-free-equity-reference.md) - IB API technical reference
-- [Operator Runbook](../guides/operator-runbook.md) - Backfill operations
+- [Operator Runbook](../operations/operator-runbook.md) - Backfill operations

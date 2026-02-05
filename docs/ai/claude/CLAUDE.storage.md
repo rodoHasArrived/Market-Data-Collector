@@ -708,7 +708,7 @@ public async Task<HealthCheckResult> CheckStorageHealthAsync()
 ## Related Documentation
 
 - [docs/architecture/storage-design.md](MarketDataCollector/docs/architecture/storage-design.md) - Storage design document
-- [docs/guides/configuration.md](MarketDataCollector/docs/guides/configuration.md) - Configuration guide
+- [docs/HELP.md#configuration](MarketDataCollector/docs/HELP.md#configuration) - Configuration guide
 - [docs/integrations/lean-integration.md](MarketDataCollector/docs/integrations/lean-integration.md) - Lean export integration
 
 ---

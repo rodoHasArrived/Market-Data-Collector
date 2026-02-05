@@ -2,31 +2,60 @@
 
 This directory contains all project documentation for Market Data Collector.
 
-## Directory Index
+## Getting Started
 
-- `HELP.md` - Comprehensive user and operator guide.
-- `getting-started/` - Quick start entrypoint.
-- `architecture/` - System architecture, design rationale, and UI redesign artifacts.
-- `providers/` - Provider setup guides, comparisons, and backfill reference.
-- `operations/` - Production runbooks and packaging procedures.
-- `development/` - Contributor and implementation guides.
-- `ai/` - AI assistant guidance and known-error registry.
-- `adr/` - Architecture Decision Records.
-- `integrations/` - External integration documentation.
-- `status/` - Roadmap, changelog, and project status.
-- `reference/` - Data dictionary and additional references.
-- `evaluations/` - Architectural and technology evaluations.
-- `generated/` - Generated project metadata and indexes.
-- `archived/` - Historical/superseded documents.
-- `api/` - API index.
-- `diagrams/` - Rendered architecture diagrams.
-- `uml/` - Source and rendered UML diagrams.
-- `docfx/` - DocFX configuration.
+- **[Getting Started](getting-started/README.md)** - Quick setup guide
+- **[HELP.md](HELP.md)** - Comprehensive user and operator guide
+
+## Architecture & Design
+
+- **[architecture/](architecture/)** - System architecture, design rationale, storage design, and UI specs
+- **[adr/](adr/)** - Architecture Decision Records (ADR-001 through ADR-012)
+- **[evaluations/](evaluations/)** - Technology and architecture evaluation documents
+
+## Data Providers
+
+- **[providers/](providers/)** - Provider setup guides, comparisons, and backfill reference
+
+## Operations & Development
+
+- **[operations/](operations/)** - Production runbooks and packaging procedures
+- **[development/](development/)** - Contributor guides, CI/CD docs, implementation notes
+- **[integrations/](integrations/)** - External integration documentation (F#, Lean Engine)
+
+## Reference
+
+- **[reference/](reference/)** - Data dictionary, API reference, and design memos
+
+## Diagrams
+
+- **[diagrams/](diagrams/)** - Rendered architecture diagrams (Graphviz DOT + PNG)
+- **[uml/](uml/)** - UML diagrams (PlantUML source + PNG renders)
+
+## Project Status
+
+- **[status/](status/)** - Roadmap, changelog, and production readiness
+
+## AI Assistant Guides
+
+- **[ai/](ai/)** - Specialized guides for AI assistants (Claude, Copilot)
+- **[ai/ai-known-errors.md](ai/ai-known-errors.md)** - Registry of recurring AI mistakes
+
+## Other
+
+- **[generated/](generated/)** - Auto-generated project metadata and indexes
+- **[archived/](archived/)** - Historical/superseded documents
+- **[docfx/](docfx/)** - DocFX API documentation configuration
+- **[DEPENDENCIES.md](DEPENDENCIES.md)** - Package dependency documentation
 
 ## Frequently Used Docs
 
-- Start here: [`getting-started/README.md`](getting-started/README.md)
-- Full manual: [`HELP.md`](HELP.md)
-- Architecture overview: [`architecture/overview.md`](architecture/overview.md)
-- Operator runbook: [`operations/operator-runbook.md`](operations/operator-runbook.md)
-- AI known errors: [`ai/ai-known-errors.md`](ai/ai-known-errors.md)
+| Document | Purpose |
+|----------|---------|
+| [HELP.md](HELP.md) | Complete user guide with FAQ |
+| [architecture/overview.md](architecture/overview.md) | System architecture overview |
+| [operations/operator-runbook.md](operations/operator-runbook.md) | Production operations guide |
+| [providers/backfill-guide.md](providers/backfill-guide.md) | Historical data backfill |
+| [providers/provider-comparison.md](providers/provider-comparison.md) | Provider feature comparison |
+| [reference/api-reference.md](reference/api-reference.md) | API map and DocFX generation |
+| [development/build-observability.md](development/build-observability.md) | Build metrics and diagnostics |

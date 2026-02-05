@@ -149,7 +149,7 @@ public interface IHistoricalDataProvider
 
 ## References
 
-- [Provider Implementation Guide](../guides/provider-implementation.md)
+- [Provider Implementation Guide](../development/provider-implementation.md)
 - [Provider Comparison](../providers/provider-comparison.md)
 - [Data Sources Documentation](../providers/data-sources.md)
 

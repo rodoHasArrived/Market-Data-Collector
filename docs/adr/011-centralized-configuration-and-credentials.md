@@ -121,8 +121,8 @@ public interface ICredentialStore
 
 ## References
 
-- [Configuration Guide](../guides/configuration.md)
-- [Project Context](../development/project-context.md)
+- [Configuration Guide](../HELP.md#configuration)
+- [Project Context](../generated/project-context.md)
 
 ---
 

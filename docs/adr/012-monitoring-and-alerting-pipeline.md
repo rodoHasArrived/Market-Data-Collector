@@ -110,8 +110,8 @@ public interface IAlertDispatcher
 
 ## References
 
-- [Project Context](../development/project-context.md)
-- [Operator Runbook](../guides/operator-runbook.md)
+- [Project Context](../generated/project-context.md)
+- [Operator Runbook](../operations/operator-runbook.md)
 
 ---
 
