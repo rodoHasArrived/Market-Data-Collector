@@ -335,10 +335,10 @@ public sealed class MaintenanceTaskOptions
                 throw new ArgumentException("MarketOpenTime must be before MarketCloseTime", nameof(MarketOpenTime));
 
             if (MarketOpenTime < TimeSpan.Zero || MarketOpenTime >= TimeSpan.FromDays(1))
-                throw new ArgumentException("MarketOpenTime must be between 00:00:00 and 23:59:59", nameof(MarketOpenTime));
+                throw new ArgumentException("MarketOpenTime must be within a 24-hour period (00:00:00 to 23:59:59.999)", nameof(MarketOpenTime));
 
             if (MarketCloseTime <= TimeSpan.Zero || MarketCloseTime > TimeSpan.FromDays(1))
-                throw new ArgumentException("MarketCloseTime must be between 00:00:01 and 24:00:00", nameof(MarketCloseTime));
+                throw new ArgumentException("MarketCloseTime must be within a 24-hour period (00:00:00.001 to 24:00:00)", nameof(MarketCloseTime));
         }
     }
 }
