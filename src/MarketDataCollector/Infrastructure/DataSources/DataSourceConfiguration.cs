@@ -1,3 +1,4 @@
+using System.Text.Json;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Infrastructure.Providers.NYSE;
 
@@ -446,10 +447,26 @@ public sealed record CredentialConfig
 
     /// <summary>
     /// Vault path for credentials (if Source is Vault).
+    /// Supports logical paths like "marketdata/alpaca/prod".
     /// </summary>
     public string? VaultPath { get; init; }
 
-    // Credential Resolution Order: File > Vault > Environment > Config
+    /// <summary>
+    /// Vault provider name: AwsSecretsManager or AzureKeyVault.
+    /// </summary>
+    public string? VaultProvider { get; init; }
+
+    /// <summary>
+    /// Optional key names within the vault payload for each credential.
+    /// Defaults: apiKey, keyId, secretKey, username, password.
+    /// </summary>
+    public string ApiKeyKey { get; init; } = "apiKey";
+    public string KeyIdKey { get; init; } = "keyId";
+    public string SecretKeyKey { get; init; } = "secretKey";
+    public string UsernameKey { get; init; } = "username";
+    public string PasswordKey { get; init; } = "password";
+
+    // Credential Resolution Order: Vault > File > Environment > Config
     // - File: Reads from CredentialsPath JSON file
     // - Vault: Reserved for AWS Secrets Manager / Azure Key Vault integration
     // - Environment: Uses environment variables (ApiKeyVar, KeyIdVar, SecretKeyVar)
@@ -460,9 +477,8 @@ public sealed record CredentialConfig
     /// </summary>
     public string? ResolveApiKey()
     {
-        if (!string.IsNullOrWhiteSpace(ApiKeyVar))
-            return Environment.GetEnvironmentVariable(ApiKeyVar);
-        return null;
+        return ResolveFromVault(ApiKeyKey)
+               ?? ResolveFromEnvironment(ApiKeyVar);
     }
 
     /// <summary>
@@ -470,9 +486,8 @@ public sealed record CredentialConfig
     /// </summary>
     public string? ResolveKeyId()
     {
-        if (!string.IsNullOrWhiteSpace(KeyIdVar))
-            return Environment.GetEnvironmentVariable(KeyIdVar);
-        return null;
+        return ResolveFromVault(KeyIdKey)
+               ?? ResolveFromEnvironment(KeyIdVar);
     }
 
     /// <summary>
@@ -480,9 +495,8 @@ public sealed record CredentialConfig
     /// </summary>
     public string? ResolveSecretKey()
     {
-        if (!string.IsNullOrWhiteSpace(SecretKeyVar))
-            return Environment.GetEnvironmentVariable(SecretKeyVar);
-        return null;
+        return ResolveFromVault(SecretKeyKey)
+               ?? ResolveFromEnvironment(SecretKeyVar);
     }
 
     /// <summary>
@@ -490,9 +504,8 @@ public sealed record CredentialConfig
     /// </summary>
     public string? ResolveUsername()
     {
-        if (!string.IsNullOrWhiteSpace(UsernameVar))
-            return Environment.GetEnvironmentVariable(UsernameVar);
-        return null;
+        return ResolveFromVault(UsernameKey)
+               ?? ResolveFromEnvironment(UsernameVar);
     }
 
     /// <summary>
@@ -500,8 +513,68 @@ public sealed record CredentialConfig
     /// </summary>
     public string? ResolvePassword()
     {
-        if (!string.IsNullOrWhiteSpace(PasswordVar))
-            return Environment.GetEnvironmentVariable(PasswordVar);
+        return ResolveFromVault(PasswordKey)
+               ?? ResolveFromEnvironment(PasswordVar);
+    }
+
+    private string? ResolveFromEnvironment(string? variableName)
+    {
+        if (string.IsNullOrWhiteSpace(variableName))
+            return null;
+        return Environment.GetEnvironmentVariable(variableName);
+    }
+
+    private bool IsSupportedVaultProvider()
+    {
+        return VaultProvider is not null &&
+               (VaultProvider.Equals("AwsSecretsManager", StringComparison.OrdinalIgnoreCase) ||
+                VaultProvider.Equals("AzureKeyVault", StringComparison.OrdinalIgnoreCase));
+    }
+
+    private string? ResolveFromVault(string key)
+    {
+        if (!Source.Equals("Vault", StringComparison.OrdinalIgnoreCase) ||
+            string.IsNullOrWhiteSpace(VaultPath) ||
+            !IsSupportedVaultProvider())
+        {
+            return null;
+        }
+
+        // Stub integration contract: providers should map vault path/key to raw secret JSON.
+        // For now, use environment-backed bridge to support local/test environments:
+        // MDC_VAULT__{normalizedPath}__{key}, e.g. MDC_VAULT__marketdata__alpaca__prod__keyId.
+        var normalizedPath = VaultPath.Trim().Replace('/', '_').Replace(':', '_').Replace('-', '_').ToUpperInvariant();
+        var envName = $"MDC_VAULT__{normalizedPath}__{key.ToUpperInvariant()}";
+        var raw = Environment.GetEnvironmentVariable(envName);
+        if (!string.IsNullOrWhiteSpace(raw))
+        {
+            return raw;
+        }
+
+        // Optional JSON payload mode: env var MDC_VAULT_JSON__{normalizedPath}
+        // value like: {"keyId":"...","secretKey":"..."}
+        var jsonEnvName = $"MDC_VAULT_JSON__{normalizedPath}";
+        var payload = Environment.GetEnvironmentVariable(jsonEnvName);
+        if (string.IsNullOrWhiteSpace(payload))
+        {
+            return null;
+        }
+
+        try
+        {
+            using var doc = JsonDocument.Parse(payload);
+            if (doc.RootElement.ValueKind == JsonValueKind.Object &&
+                doc.RootElement.TryGetProperty(key, out var property) &&
+                property.ValueKind == JsonValueKind.String)
+            {
+                return property.GetString();
+            }
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+
         return null;
     }
 
@@ -519,63 +592,96 @@ public sealed record CredentialConfig
         bool requireUsernameAndPassword = false)
     {
         var errors = new List<string>();
+        var isVaultSource = Source.Equals("Vault", StringComparison.OrdinalIgnoreCase);
+        var isFileSource = Source.Equals("File", StringComparison.OrdinalIgnoreCase);
+
 
         if (requireApiKey)
         {
-            if (string.IsNullOrWhiteSpace(ApiKeyVar))
+            if (isVaultSource)
             {
-                errors.Add("ApiKeyVar is not configured");
+                if (string.IsNullOrWhiteSpace(ResolveApiKey()))
+                {
+                    errors.Add($"Vault credential '{ApiKeyKey}' could not be resolved from path '{VaultPath}'");
+                }
             }
-            else if (string.IsNullOrWhiteSpace(ResolveApiKey()))
+            else
             {
-                errors.Add($"Environment variable '{ApiKeyVar}' is not set or empty");
+                if (string.IsNullOrWhiteSpace(ApiKeyVar))
+                {
+                    errors.Add("ApiKeyVar is not configured");
+                }
+                else if (string.IsNullOrWhiteSpace(ResolveApiKey()))
+                {
+                    errors.Add($"Environment variable '{ApiKeyVar}' is not set or empty");
+                }
             }
         }
 
         if (requireKeyIdAndSecret)
         {
-            if (string.IsNullOrWhiteSpace(KeyIdVar))
+            if (isVaultSource)
             {
-                errors.Add("KeyIdVar is not configured");
+                if (string.IsNullOrWhiteSpace(ResolveKeyId()))
+                    errors.Add($"Vault credential '{KeyIdKey}' could not be resolved from path '{VaultPath}'");
+                if (string.IsNullOrWhiteSpace(ResolveSecretKey()))
+                    errors.Add($"Vault credential '{SecretKeyKey}' could not be resolved from path '{VaultPath}'");
             }
-            else if (string.IsNullOrWhiteSpace(ResolveKeyId()))
+            else
             {
-                errors.Add($"Environment variable '{KeyIdVar}' is not set or empty");
-            }
+                if (string.IsNullOrWhiteSpace(KeyIdVar))
+                {
+                    errors.Add("KeyIdVar is not configured");
+                }
+                else if (string.IsNullOrWhiteSpace(ResolveKeyId()))
+                {
+                    errors.Add($"Environment variable '{KeyIdVar}' is not set or empty");
+                }
 
-            if (string.IsNullOrWhiteSpace(SecretKeyVar))
-            {
-                errors.Add("SecretKeyVar is not configured");
-            }
-            else if (string.IsNullOrWhiteSpace(ResolveSecretKey()))
-            {
-                errors.Add($"Environment variable '{SecretKeyVar}' is not set or empty");
+                if (string.IsNullOrWhiteSpace(SecretKeyVar))
+                {
+                    errors.Add("SecretKeyVar is not configured");
+                }
+                else if (string.IsNullOrWhiteSpace(ResolveSecretKey()))
+                {
+                    errors.Add($"Environment variable '{SecretKeyVar}' is not set or empty");
+                }
             }
         }
 
         if (requireUsernameAndPassword)
         {
-            if (string.IsNullOrWhiteSpace(UsernameVar))
+            if (isVaultSource)
             {
-                errors.Add("UsernameVar is not configured");
+                if (string.IsNullOrWhiteSpace(ResolveUsername()))
+                    errors.Add($"Vault credential '{UsernameKey}' could not be resolved from path '{VaultPath}'");
+                if (string.IsNullOrWhiteSpace(ResolvePassword()))
+                    errors.Add($"Vault credential '{PasswordKey}' could not be resolved from path '{VaultPath}'");
             }
-            else if (string.IsNullOrWhiteSpace(ResolveUsername()))
+            else
             {
-                errors.Add($"Environment variable '{UsernameVar}' is not set or empty");
-            }
+                if (string.IsNullOrWhiteSpace(UsernameVar))
+                {
+                    errors.Add("UsernameVar is not configured");
+                }
+                else if (string.IsNullOrWhiteSpace(ResolveUsername()))
+                {
+                    errors.Add($"Environment variable '{UsernameVar}' is not set or empty");
+                }
 
-            if (string.IsNullOrWhiteSpace(PasswordVar))
-            {
-                errors.Add("PasswordVar is not configured");
-            }
-            else if (string.IsNullOrWhiteSpace(ResolvePassword()))
-            {
-                errors.Add($"Environment variable '{PasswordVar}' is not set or empty");
+                if (string.IsNullOrWhiteSpace(PasswordVar))
+                {
+                    errors.Add("PasswordVar is not configured");
+                }
+                else if (string.IsNullOrWhiteSpace(ResolvePassword()))
+                {
+                    errors.Add($"Environment variable '{PasswordVar}' is not set or empty");
+                }
             }
         }
 
         // Validate file source if specified
-        if (Source.Equals("File", StringComparison.OrdinalIgnoreCase))
+        if (isFileSource)
         {
             if (string.IsNullOrWhiteSpace(CredentialsPath))
             {
@@ -594,7 +700,12 @@ public sealed record CredentialConfig
             {
                 errors.Add("VaultPath is required when Source is 'Vault'");
             }
-            // TODO: Vault support (AWS Secrets Manager, Azure Key Vault) requires additional implementation.
+
+            if (!IsSupportedVaultProvider())
+            {
+                errors.Add("VaultProvider must be 'AwsSecretsManager' or 'AzureKeyVault' when Source is 'Vault'");
+            }
+
         }
 
         return new CredentialValidationResult(errors.Count == 0, errors);

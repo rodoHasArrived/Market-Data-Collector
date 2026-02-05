@@ -49,9 +49,6 @@ namespace MarketDataCollector.Application.Serialization;
 [JsonSerializable(typeof(SymbolConfig))]
 [JsonSerializable(typeof(SymbolConfig[]))]
 [JsonSerializable(typeof(List<SymbolConfig>))]
-[JsonSerializable(typeof(AlpacaTradeMessage))]
-[JsonSerializable(typeof(AlpacaQuoteMessage))]
-[JsonSerializable(typeof(AlpacaMessage[]))]
 [JsonSerializable(typeof(AggregateBarPayload))]
 [JsonSerializable(typeof(Dictionary<string, object>))]
 [JsonSerializable(typeof(Dictionary<string, JsonElement>))]
@@ -91,6 +88,24 @@ public partial class MarketDataJsonContext : JsonSerializerContext
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         PropertyNameCaseInsensitive = true
     };
+}
+
+/// <summary>
+/// Dedicated JSON context for Alpaca wire messages.
+///
+/// NOTE: Alpaca payloads use both "T" and "t" keys in the same object.
+/// They must be parsed with case-sensitive matching to avoid source-generation
+/// property collisions.
+/// </summary>
+[JsonSourceGenerationOptions(
+    WriteIndented = false,
+    PropertyNameCaseInsensitive = false,
+    GenerationMode = JsonSourceGenerationMode.Default)]
+[JsonSerializable(typeof(AlpacaTradeMessage))]
+[JsonSerializable(typeof(AlpacaQuoteMessage))]
+[JsonSerializable(typeof(AlpacaMessage[]))]
+public partial class AlpacaJsonContext : JsonSerializerContext
+{
 }
 
 /// <summary>
@@ -222,7 +237,7 @@ public static class HighPerformanceJson
     /// </summary>
     public static AlpacaTradeMessage? ParseAlpacaTrade(ReadOnlySpan<byte> utf8Json)
     {
-        return JsonSerializer.Deserialize(utf8Json, MarketDataJsonContext.Default.AlpacaTradeMessage);
+        return JsonSerializer.Deserialize(utf8Json, AlpacaJsonContext.Default.AlpacaTradeMessage);
     }
 
     /// <summary>
@@ -230,7 +245,7 @@ public static class HighPerformanceJson
     /// </summary>
     public static AlpacaQuoteMessage? ParseAlpacaQuote(ReadOnlySpan<byte> utf8Json)
     {
-        return JsonSerializer.Deserialize(utf8Json, MarketDataJsonContext.Default.AlpacaQuoteMessage);
+        return JsonSerializer.Deserialize(utf8Json, AlpacaJsonContext.Default.AlpacaQuoteMessage);
     }
 
     /// <summary>
@@ -238,7 +253,7 @@ public static class HighPerformanceJson
     /// </summary>
     public static AlpacaMessage[]? ParseAlpacaMessages(ReadOnlySpan<byte> utf8Json)
     {
-        return JsonSerializer.Deserialize(utf8Json, MarketDataJsonContext.Default.AlpacaMessageArray);
+        return JsonSerializer.Deserialize(utf8Json, AlpacaJsonContext.Default.AlpacaMessageArray);
     }
 
     /// <summary>
