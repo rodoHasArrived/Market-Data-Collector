@@ -142,17 +142,17 @@ Market-Data-Collector/
 │   │   ├── wpf-debug-improve.prompt.yml
 │   │   └── write-unit-tests.prompt.yml
 │   ├── workflows/
-│   │   ├── ai-instructions-sync.yml
 │   │   ├── benchmark.yml
 │   │   ├── build-observability.yml
 │   │   ├── cache-management.yml
 │   │   ├── code-quality.yml
+│   │   ├── CONSOLIDATION_SUMMARY.md
 │   │   ├── dependency-review.yml
 │   │   ├── desktop-app.yml
 │   │   ├── docker.yml
 │   │   ├── docs-auto-update.yml
+│   │   ├── docs-comprehensive.yml
 │   │   ├── docs-structure-sync.yml
-│   │   ├── documentation.yml
 │   │   ├── dotnet-desktop.yml
 │   │   ├── labeling.yml
 │   │   ├── nightly.yml
