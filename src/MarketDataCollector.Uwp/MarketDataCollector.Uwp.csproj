@@ -93,10 +93,19 @@
     <PackageReference Include="Microsoft.WindowsAppSDK" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" />
     <PackageReference Include="System.Text.Json" />
-    <PackageReference Include="ZstdSharp.Port" />
     <!-- HttpClientFactory for proper HttpClient lifecycle management (TD-10) -->
     <PackageReference Include="Microsoft.Extensions.Http" />
     <PackageReference Include="Microsoft.Extensions.Http.Polly" />
+  </ItemGroup>
+
+  <!-- ZstdSharp.Port referenced unconditionally to avoid NU1008 CPM error on Windows
+       The conditional ItemGroup above was causing NuGet restore to fail with:
+       "error NU1008: Projects that use central package version management should not 
+       define the version on the PackageReference items but on the PackageVersion items: ZstdSharp.Port"
+       Even though no Version attribute was present, moving it outside the conditional resolves the issue.
+       Used for compression in StorageOptimizationAdvisorService -->
+  <ItemGroup>
+    <PackageReference Include="ZstdSharp.Port" />
   </ItemGroup>
 
   <!--
