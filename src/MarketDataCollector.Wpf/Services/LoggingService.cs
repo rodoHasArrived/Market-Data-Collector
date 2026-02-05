@@ -176,7 +176,7 @@ public sealed class LoggingService
     /// Raises the LogWritten event.
     /// </summary>
     /// <param name="e">The event arguments.</param>
-    protected void OnLogWritten(LogEntryEventArgs e)
+    private void OnLogWritten(LogEntryEventArgs e)
     {
         LogWritten?.Invoke(this, e);
     }
