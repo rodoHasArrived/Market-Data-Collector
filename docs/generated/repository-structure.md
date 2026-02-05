@@ -189,9 +189,6 @@ Market-Data-Collector/
 │   │   ├── REPOSITORY_REORGANIZATION_PLAN.md
 │   │   ├── uwp-development-roadmap.md
 │   │   └── uwp-release-checklist.md
-│   ├── design/
-│   │   ├── REDESIGN_IMPROVEMENTS.md
-│   │   └── ui-redesign.md
 │   ├── development/
 │   │   ├── central-package-management.md
 │   │   ├── desktop-app-xaml-compiler-errors.md
@@ -301,10 +298,6 @@ Market-Data-Collector/
 │   │   ├── timing-diagram.puml
 │   │   ├── use-case-diagram.png
 │   │   └── use-case-diagram.puml
-│   ├── ai-known-errors.md
-│   ├── ARTIFACT_ACTIONS_DOWNGRADE.md
-│   ├── build-observability.md
-│   ├── DEPENDENCIES.md
 │   ├── HELP.md
 │   ├── README.md
 │   └── toc.yml

@@ -149,7 +149,7 @@ If this returns any results (except commented lines), those projects need to be 
 
 - [NuGet Central Package Management Docs](https://learn.microsoft.com/en-us/nuget/consume-packages/central-package-management)
 - [Directory.Packages.props](../../Directory.Packages.props) - Central version definitions
-- [Build Observability](../build-observability.md) - CI/CD pipeline monitoring
+- [Build Observability](build-observability.md) - CI/CD pipeline monitoring
 
 ## Troubleshooting
 

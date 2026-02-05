@@ -88,12 +88,12 @@ dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --mod
 
 To reduce repeated mistakes across agents, always review and update:
 
-- `docs/ai-known-errors.md` — canonical log of recurring agent mistakes, root causes, and prevention checks.
+- `docs/ai/ai-known-errors.md` — canonical log of recurring agent mistakes, root causes, and prevention checks.
 - `.github/workflows/documentation.yml (AI Known Errors Intake job)` — automation that ingests labeled GitHub issues into the known-error registry via PR.
 
 ### Required workflow for AI agents
 
-1. **Before making changes**: scan `docs/ai-known-errors.md` and apply listed prevention checks.
+1. **Before making changes**: scan `docs/ai/ai-known-errors.md` and apply listed prevention checks.
 2. **After fixing a bug caused by agent error**: add a new entry with:
    - symptoms
    - root cause
@@ -103,7 +103,7 @@ To reduce repeated mistakes across agents, always review and update:
 
 If no similar issue exists, create a concise new entry so future agents can avoid repeating it.
 
-If the issue is tracked on GitHub, label it `ai-known-error` so the intake workflow can propose an update to `docs/ai-known-errors.md`.
+If the issue is tracked on GitHub, label it `ai-known-error` so the intake workflow can propose an update to `docs/ai/ai-known-errors.md`.
 
 ---
 
@@ -321,6 +321,7 @@ Market-Data-Collector/
 │   │   │   └── CLAUDE.testing.md
 │   │   ├── copilot/
 │   │   │   └── instructions.md
+│   │   ├── ai-known-errors.md
 │   │   └── README.md
 │   ├── api/
 │   │   └── index.md
@@ -333,19 +334,20 @@ Market-Data-Collector/
 │   │   ├── domains.md
 │   │   ├── overview.md
 │   │   ├── provider-management.md
+│   │   ├── REDESIGN_IMPROVEMENTS.md
 │   │   ├── storage-design.md
+│   │   ├── ui-redesign.md
 │   │   └── why-this-architecture.md
 │   ├── archived/
+│   │   ├── ARTIFACT_ACTIONS_DOWNGRADE.md
 │   │   ├── CHANGES_SUMMARY.md
 │   │   ├── desktop-ui-alternatives-evaluation.md
 │   │   ├── README.md
 │   │   ├── REPOSITORY_REORGANIZATION_PLAN.md
 │   │   ├── uwp-development-roadmap.md
 │   │   └── uwp-release-checklist.md
-│   ├── design/
-│   │   ├── REDESIGN_IMPROVEMENTS.md
-│   │   └── ui-redesign.md
 │   ├── development/
+│   │   ├── build-observability.md
 │   │   ├── central-package-management.md
 │   │   ├── desktop-app-xaml-compiler-errors.md
 │   │   ├── github-actions-summary.md
@@ -416,6 +418,7 @@ Market-Data-Collector/
 │   ├── reference/
 │   │   ├── data-dictionary.md
 │   │   ├── data-uniformity.md
+│   │   ├── DEPENDENCIES.md
 │   │   ├── design-review-memo.md
 │   │   ├── DUPLICATE_CODE_ANALYSIS.md
 │   │   ├── open-source-references.md
@@ -454,10 +457,6 @@ Market-Data-Collector/
 │   │   ├── timing-diagram.puml
 │   │   ├── use-case-diagram.png
 │   │   └── use-case-diagram.puml
-│   ├── ai-known-errors.md
-│   ├── ARTIFACT_ACTIONS_DOWNGRADE.md
-│   ├── build-observability.md
-│   ├── DEPENDENCIES.md
 │   ├── HELP.md
 │   ├── README.md
 │   └── toc.yml
@@ -1881,7 +1880,7 @@ See `docs/development/uwp-to-wpf-migration.md` for WPF migration status.
 |------|---------|
 | `docs/reference/data-dictionary.md` | Field definitions |
 | `docs/reference/data-uniformity.md` | Consistency guidelines |
-| `docs/DEPENDENCIES.md` | Package documentation |
+| `docs/reference/DEPENDENCIES.md` | Package documentation |
 
 ---
 
@@ -1917,7 +1916,7 @@ See `docs/HELP.md#troubleshooting` for detailed solutions.
 
 - [README.md](README.md) - Project overview
 - [docs/HELP.md](docs/HELP.md) - Complete user guide with FAQ
-- [docs/DEPENDENCIES.md](docs/DEPENDENCIES.md) - Package documentation
+- [docs/reference/DEPENDENCIES.md](docs/reference/DEPENDENCIES.md) - Package documentation
 - [docs/adr/](docs/adr/) - Architecture Decision Records
 - [docs/ai/](docs/ai/) - Specialized AI guides
 - [docs/providers/provider-comparison.md](docs/providers/provider-comparison.md) - Provider comparison

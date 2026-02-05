@@ -258,12 +258,12 @@ Comprehensive documentation is available in the `docs/` directory:
 - **[docs/guides/getting-started.md](docs/guides/getting-started.md)** - End-to-end setup for local development
 - **[docs/guides/configuration.md](docs/guides/configuration.md)** - Detailed explanation of every setting including backfill
 - **[docs/architecture/overview.md](docs/architecture/overview.md)** - System architecture and design
-- **[docs/guides/operator-runbook.md](docs/guides/operator-runbook.md)** - Operations guide and production deployment
+- **[docs/operations/operator-runbook.md](docs/operations/operator-runbook.md)** - Operations guide and production deployment
 - **[docs/architecture/domains.md](docs/architecture/domains.md)** - Event contracts and domain models
 - **[docs/architecture/c4-diagrams.md](docs/architecture/c4-diagrams.md)** - System diagrams
 - **[docs/integrations/lean-integration.md](docs/integrations/lean-integration.md)** - QuantConnect Lean integration guide and examples
 - **[docs/architecture/storage-design.md](docs/architecture/storage-design.md)** - Advanced storage organization and data management strategies
-- **[docs/build-observability.md](docs/build-observability.md)** - Build observability toolkit and CLI reference
+- **[docs/development/build-observability.md](docs/development/build-observability.md)** - Build observability toolkit and CLI reference
 
 ### AI Assistant Guides
 - **[CLAUDE.md](CLAUDE.md)** - Main AI assistant guide

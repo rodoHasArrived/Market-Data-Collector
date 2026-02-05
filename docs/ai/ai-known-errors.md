@@ -50,7 +50,7 @@ If headings are missing, the workflow still creates an entry with safe defaults 
   - [ ] Cross-check your plan against existing known issues.
   - [ ] If a new AI-caused issue is fixed, add/update an entry before PR.
 - **Verification commands**:
-  - `test -f docs/ai-known-errors.md`
-  - `rg "AI-" docs/ai-known-errors.md`
+  - `test -f docs/ai/ai-known-errors.md`
+  - `rg "AI-" docs/ai/ai-known-errors.md`
 - **Source issue**: manual bootstrap
 - **Status**: mitigated

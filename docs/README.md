@@ -1,6 +1,6 @@
 # Market Data Collector Documentation
 
-**Version:** 1.6.1 | **Last Updated:** 2026-02-04 | **Status:** Production Ready
+**Version:** 1.6.1 | **Last Updated:** 2026-02-05 | **Status:** Production Ready
 
 Welcome to the Market Data Collector documentation. This guide helps you find the information you need.
 
@@ -56,6 +56,8 @@ Technical documentation about system design.
 | [crystallized-storage-format.md](architecture/crystallized-storage-format.md) | Crystallized storage format specification |
 | [consolidation.md](architecture/consolidation.md) | UI layer consolidation guide |
 | [why-this-architecture.md](architecture/why-this-architecture.md) | Design decisions and rationale |
+| [ui-redesign.md](architecture/ui-redesign.md) | WPF desktop app UI redesign proposal |
+| [REDESIGN_IMPROVEMENTS.md](architecture/REDESIGN_IMPROVEMENTS.md) | UI redesign quality improvements summary |
 
 ---
 
@@ -88,6 +90,7 @@ Guides for developers contributing to or extending the project.
 | [uwp-to-wpf-migration.md](development/uwp-to-wpf-migration.md) | WPF desktop app migration guide |
 | [wpf-implementation-notes.md](development/wpf-implementation-notes.md) | WPF implementation details |
 | [desktop-app-xaml-compiler-errors.md](development/desktop-app-xaml-compiler-errors.md) | Desktop app troubleshooting |
+| [build-observability.md](development/build-observability.md) | Build observability toolkit and CLI reference |
 
 ---
 
@@ -148,6 +151,7 @@ Additional reference documentation.
 |----------|-------------|
 | [data-dictionary.md](reference/data-dictionary.md) | Data dictionary and field definitions |
 | [data-uniformity.md](reference/data-uniformity.md) | Data consistency guidelines |
+| [DEPENDENCIES.md](reference/DEPENDENCIES.md) | Package and dependency documentation |
 | [design-review-memo.md](reference/design-review-memo.md) | Design review notes |
 | [open-source-references.md](reference/open-source-references.md) | Related open source projects |
 | [sandcastle.md](reference/sandcastle.md) | Sandcastle documentation reference |
@@ -161,6 +165,7 @@ Specialized guides for AI coding assistants working with this codebase.
 
 | Document | Description |
 |----------|-------------|
+| [ai-known-errors.md](ai/ai-known-errors.md) | AI error prevention registry |
 | [claude/CLAUDE.providers.md](ai/claude/CLAUDE.providers.md) | Provider implementation guide |
 | [claude/CLAUDE.storage.md](ai/claude/CLAUDE.storage.md) | Storage system guide |
 | [claude/CLAUDE.fsharp.md](ai/claude/CLAUDE.fsharp.md) | F# domain library guide |
@@ -195,6 +200,7 @@ Documented architectural decisions with context and rationale.
 | [diagrams/](diagrams/) | Architecture diagrams (images) |
 | [uml/](uml/) | UML diagrams (PlantUML) |
 | [docfx/](docfx/) | DocFX documentation generator config |
+| [generated/](generated/) | Auto-generated documentation |
 | [archived/](archived/) | Historical/superseded documentation |
 
 ---
@@ -230,4 +236,4 @@ Documented architectural decisions with context and rationale.
 
 ---
 
-*Last Updated: 2026-02-04*
+*Last Updated: 2026-02-05*

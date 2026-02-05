@@ -48,7 +48,7 @@ on:
         default: 'false'
         type: boolean
       issue_number:
-        description: 'Optional issue number to ingest into docs/ai-known-errors.md'
+        description: 'Optional issue number to ingest into docs/ai/ai-known-errors.md'
         required: false
         type: string
   issues:
@@ -108,7 +108,7 @@ jobs:
             core.setOutput('title', data.title || '');
             core.setOutput('body', data.body || '');
 
-      - name: Update docs/ai-known-errors.md from issue
+      - name: Update docs/ai/ai-known-errors.md from issue
         env:
           EVENT_NAME: ${{ github.event_name }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
@@ -140,7 +140,7 @@ jobs:
           if not number:
               raise SystemExit("No issue number found.")
 
-          doc = pathlib.Path("docs/ai-known-errors.md")
+          doc = pathlib.Path("docs/ai/ai-known-errors.md")
           current = doc.read_text(encoding="utf-8")
           marker = f"#${number}"
           if marker in current:
@@ -223,7 +223,7 @@ jobs:
       - name: Check for changes
         id: changes
         run: |
-          if git diff --quiet -- docs/ai-known-errors.md; then
+          if git diff --quiet -- docs/ai/ai-known-errors.md; then
             echo "has_changes=false" >> "$GITHUB_OUTPUT"
           else
             echo "has_changes=true" >> "$GITHUB_OUTPUT"
@@ -238,7 +238,7 @@ jobs:
           title: "docs: ingest ai-known-error issue into registry"
           body: |
             ## Summary
-            - ingest a labeled AI issue into `docs/ai-known-errors.md`
+            - ingest a labeled AI issue into `docs/ai/ai-known-errors.md`
             - preserve source issue reference for traceability
 
             ## Trigger

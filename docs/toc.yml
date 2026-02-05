@@ -1,42 +1,39 @@
 - name: Documentation Home
   href: README.md
 
+- name: User Guide
+  href: HELP.md
+
 - name: API Reference
   items:
     - name: API Overview
       href: api/index.md
 
-- name: User Guides
+- name: Getting Started
   items:
-    - name: Getting Started
-      href: guides/getting-started.md
-    - name: Project Context
-      href: guides/project-context.md
-    - name: Configuration
-      href: guides/configuration.md
-    - name: Provider Implementation
-      href: guides/provider-implementation.md
-    - name: Troubleshooting
-      href: guides/troubleshooting.md
-    - name: Operator Runbook
-      href: guides/operator-runbook.md
+    - name: Quick Start
+      href: getting-started/README.md
 
-    - name: Architecture
-      items:
-      - name: Overview
-        href: architecture/overview.md
-      - name: Consolidation Refactor
-        href: architecture/consolidation.md
-      - name: C4 Diagrams
-        href: architecture/c4-diagrams.md
+- name: Architecture
+  items:
+    - name: Overview
+      href: architecture/overview.md
     - name: Domain Model
       href: architecture/domains.md
     - name: Provider Management
       href: architecture/provider-management.md
     - name: Storage Design
       href: architecture/storage-design.md
+    - name: Crystallized Storage Format
+      href: architecture/crystallized-storage-format.md
+    - name: Consolidation Refactor
+      href: architecture/consolidation.md
+    - name: C4 Diagrams
+      href: architecture/c4-diagrams.md
     - name: Why This Architecture
       href: architecture/why-this-architecture.md
+    - name: UI Redesign
+      href: architecture/ui-redesign.md
 
 - name: Architecture Decision Records
   items:
@@ -59,11 +56,6 @@
     - name: ADR-012 Monitoring & Alerting
       href: adr/012-monitoring-and-alerting-pipeline.md
 
-- name: Diagrams
-  items:
-    - name: Diagrams Overview
-      href: diagrams/README.md
-
 - name: Data Providers
   items:
     - name: Data Sources
@@ -79,6 +71,36 @@
     - name: Backfill Guide
       href: providers/backfill-guide.md
 
+- name: Development
+  items:
+    - name: Central Package Management
+      href: development/central-package-management.md
+    - name: Provider Implementation
+      href: development/provider-implementation.md
+    - name: GitHub Actions Summary
+      href: development/github-actions-summary.md
+    - name: GitHub Actions Testing
+      href: development/github-actions-testing.md
+    - name: Project Context
+      href: development/project-context.md
+    - name: UWP to WPF Migration
+      href: development/uwp-to-wpf-migration.md
+    - name: WPF Implementation Notes
+      href: development/wpf-implementation-notes.md
+    - name: Desktop App XAML Errors
+      href: development/desktop-app-xaml-compiler-errors.md
+    - name: Build Observability
+      href: development/build-observability.md
+
+- name: Operations
+  items:
+    - name: Operator Runbook
+      href: operations/operator-runbook.md
+    - name: Portable Data Packager
+      href: operations/portable-data-packager.md
+    - name: MSIX Packaging
+      href: operations/msix-packaging.md
+
 - name: Integrations
   items:
     - name: Lean Integration
@@ -92,23 +114,66 @@
   items:
     - name: Production Status
       href: status/production-status.md
-    - name: Feature Backlog
-      href: status/FEATURE_BACKLOG.md
-    - name: Improvements
-      href: status/improvements.md
-    - name: UWP Feature Ideas
-      href: status/uwp-feature-ideas.md
+    - name: Roadmap
+      href: status/ROADMAP.md
+    - name: Changelog
+      href: status/CHANGELOG.md
+    - name: TODO
+      href: status/TODO.md
+
+- name: Evaluations
+  items:
+    - name: Data Quality Monitoring
+      href: evaluations/data-quality-monitoring-evaluation.md
+    - name: Historical Data Providers
+      href: evaluations/historical-data-providers-evaluation.md
+    - name: Realtime Streaming Architecture
+      href: evaluations/realtime-streaming-architecture-evaluation.md
+    - name: Storage Architecture
+      href: evaluations/storage-architecture-evaluation.md
 
 - name: Reference
   items:
-    - name: Open Source References
-      href: reference/open-source-references.md
+    - name: Data Dictionary
+      href: reference/data-dictionary.md
     - name: Data Uniformity
       href: reference/data-uniformity.md
+    - name: Dependencies
+      href: reference/DEPENDENCIES.md
     - name: Design Review Memo
       href: reference/design-review-memo.md
+    - name: Open Source References
+      href: reference/open-source-references.md
+    - name: Duplicate Code Analysis
+      href: reference/DUPLICATE_CODE_ANALYSIS.md
 
-- name: Changelogs
+- name: AI Assistant Guides
   items:
-    - name: Changes Summary
-      href: changelogs/CHANGES_SUMMARY.md
+    - name: AI Guide Overview
+      href: ai/README.md
+    - name: AI Known Errors
+      href: ai/ai-known-errors.md
+    - name: Claude - Providers
+      href: ai/claude/CLAUDE.providers.md
+    - name: Claude - Storage
+      href: ai/claude/CLAUDE.storage.md
+    - name: Claude - F#
+      href: ai/claude/CLAUDE.fsharp.md
+    - name: Claude - Testing
+      href: ai/claude/CLAUDE.testing.md
+    - name: Claude - Actions
+      href: ai/claude/CLAUDE.actions.md
+    - name: Copilot Instructions
+      href: ai/copilot/instructions.md
+
+- name: Diagrams
+  items:
+    - name: Diagrams Overview
+      href: diagrams/README.md
+    - name: UML Diagrams
+      href: uml/README.md
+
+- name: Archived
+  items:
+    - name: Archived Index
+      href: archived/README.md
