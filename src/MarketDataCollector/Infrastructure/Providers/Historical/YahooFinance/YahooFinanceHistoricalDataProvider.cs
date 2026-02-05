@@ -103,14 +103,14 @@ public sealed class YahooFinanceHistoricalDataProvider : BaseHistoricalDataProvi
             using var response = await Http.GetAsync(url, ct).ConfigureAwait(false);
 
             var httpResult = await ResponseHandler.HandleResponseAsync(response, symbol, "daily bars", ct: ct).ConfigureAwait(false);
-            
+
             // Throw on HTTP errors (non-success status codes)
             if (!httpResult.IsSuccess)
             {
                 var errorMsg = httpResult.IsNotFound
                     ? $"Symbol {symbol} not found (404)"
                     : $"HTTP error {httpResult.StatusCode}: {httpResult.ReasonPhrase}";
-                    
+
                 Log.Warning("Yahoo Finance HTTP error for {Symbol}: {Error}", symbol, errorMsg);
                 throw new InvalidOperationException($"Failed to fetch Yahoo Finance data for {symbol}: {errorMsg}");
             }

@@ -36,7 +36,7 @@ public sealed record BboQuotePayload(
     {
         var midPrice = (bidPrice + askPrice) / 2m;
         var spread = askPrice - bidPrice;
-        
+
         return new BboQuotePayload(
             Timestamp: timestamp,
             Symbol: symbol,

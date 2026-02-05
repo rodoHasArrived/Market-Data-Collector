@@ -5,6 +5,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
+using ZstdSharp;
 
 namespace MarketDataCollector.Uwp.Services;
 
@@ -972,17 +973,32 @@ public sealed class StorageOptimizationAdvisorService
                     newPath = file[..^3] + ".zst"; // Remove .gz and add .zst
                 }
 
-                // Decompress gzip and recompress with zstd.
-                // TODO: Using GZip for decompression; in production, integrate ZstdSharp for zstd compression.
-                // For now, we'll use GZip with optimal compression as a fallback.
+                // Decompress gzip and recompress using zstd via ZstdSharp.
+                // If zstd compression fails unexpectedly, fall back to gzip to preserve behavior.
                 await using (var sourceStream = File.OpenRead(file))
                 await using (var gzipDecompressStream = new System.IO.Compression.GZipStream(
                     sourceStream, System.IO.Compression.CompressionMode.Decompress))
                 await using (var destStream = File.Create(newPath))
-                await using (var recompressStream = new System.IO.Compression.GZipStream(
-                    destStream, System.IO.Compression.CompressionLevel.SmallestSize))
+                await using (var buffer = new MemoryStream())
                 {
-                    await gzipDecompressStream.CopyToAsync(recompressStream, ct);
+                    await gzipDecompressStream.CopyToAsync(buffer, ct);
+                    var rawBytes = buffer.ToArray();
+
+                    try
+                    {
+                        using var compressor = new Compressor(9);
+                        var compressed = compressor.Wrap(rawBytes);
+                        await destStream.WriteAsync(compressed, ct);
+                    }
+                    catch
+                    {
+                        destStream.SetLength(0);
+                        await using var fallbackStream = new System.IO.Compression.GZipStream(
+                            destStream,
+                            System.IO.Compression.CompressionLevel.SmallestSize,
+                            leaveOpen: true);
+                        await fallbackStream.WriteAsync(rawBytes, ct);
+                    }
                 }
 
                 // Verify recompressed file was created successfully
