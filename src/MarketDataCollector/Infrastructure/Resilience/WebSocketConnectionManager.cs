@@ -47,6 +47,12 @@ public sealed class WebSocketConnectionManager : IAsyncDisposable
     public event Func<Task>? ConnectionLost;
 
     /// <summary>
+    /// Event raised after a successful reconnection (including any onReconnected callback).
+    /// Subscribers can use this for monitoring/logging reconnection events.
+    /// </summary>
+    public event Action<int>? Reconnected;
+
+    /// <summary>
     /// Event raised when connection state changes.
     /// </summary>
     public event Action<WebSocketState>? StateChanged;
@@ -303,6 +309,7 @@ public sealed class WebSocketConnectionManager : IAsyncDisposable
 
                     _log.Information("{Provider} successfully reconnected after {Attempts} attempts",
                         _providerName, _reconnectAttempts);
+                    Reconnected?.Invoke(_reconnectAttempts);
                     return true;
                 }
                 catch (Exception ex)
