@@ -15,8 +15,8 @@
 
 ## AI Error Registry Workflow
 
-Before implementing changes, review `docs/ai-known-errors.md` and apply relevant prevention checks.
-When an AI-caused regression is identified in GitHub, add label `ai-known-error` so the `AI Known Errors Intake` job in `.github/workflows/docs-comprehensive.yml` can open a PR that records it.
+Before implementing changes, review `docs/ai/ai-known-errors.md` and apply relevant prevention checks.
+When an AI-caused regression is identified in GitHub, add label `ai-known-error` so the `AI Known Errors Intake` job in `.github/workflows/documentation.yml` can open a PR that records it.
 
 ## Build & Test Commands
 
@@ -1184,10 +1184,10 @@ The main CI pipeline runs on pushes to `main` and pull requests:
 - `publish.sh` / `publish.ps1` - Publishing scripts
 
 ### Documentation
-- `docs/guides/getting-started.md` - Setup guide
-- `docs/guides/configuration.md` - Configuration reference
+- `docs/getting-started/README.md` - Setup guide
+- `docs/HELP.md#configuration` - Configuration reference
 - `docs/architecture/overview.md` - System architecture (detailed)
-- `docs/guides/operator-runbook.md` - Operations guide
+- `docs/operations/operator-runbook.md` - Operations guide
 - `docs/status/improvements.md` - Implementation status and roadmap
 
 ### Scripts
@@ -1203,7 +1203,7 @@ These instructions are comprehensive and accurate as of the last documentation d
 
 When in doubt, refer to the extensive documentation in the `docs/` directory, particularly:
 - Architecture diagrams: `docs/architecture/`
-- Configuration details: `docs/guides/configuration.md`
+- Configuration details: `docs/HELP.md#configuration`
 - Troubleshooting: `HELP.md`
 
 ## Quick Decision Tree

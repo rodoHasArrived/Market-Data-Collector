@@ -1,114 +1,79 @@
 - name: Documentation Home
   href: README.md
 
-- name: API Reference
-  items:
-    - name: API Overview
-      href: api/index.md
+- name: User Guide
+  href: HELP.md
 
-- name: User Guides
-  items:
-    - name: Getting Started
-      href: guides/getting-started.md
-    - name: Project Context
-      href: guides/project-context.md
-    - name: Configuration
-      href: guides/configuration.md
-    - name: Provider Implementation
-      href: guides/provider-implementation.md
-    - name: Troubleshooting
-      href: guides/troubleshooting.md
-    - name: Operator Runbook
-      href: guides/operator-runbook.md
+- name: Getting Started
+  href: getting-started/README.md
 
-    - name: Architecture
-      items:
-      - name: Overview
-        href: architecture/overview.md
-      - name: Consolidation Refactor
-        href: architecture/consolidation.md
-      - name: C4 Diagrams
-        href: architecture/c4-diagrams.md
+- name: Architecture
+  items:
+    - name: Overview
+      href: architecture/overview.md
+    - name: C4 Diagrams
+      href: architecture/c4-diagrams.md
     - name: Domain Model
       href: architecture/domains.md
     - name: Provider Management
       href: architecture/provider-management.md
     - name: Storage Design
       href: architecture/storage-design.md
+    - name: Crystallized Storage Format
+      href: architecture/crystallized-storage-format.md
+    - name: Consolidation Refactor
+      href: architecture/consolidation.md
+    - name: UI Redesign
+      href: architecture/ui-redesign.md
+    - name: UI Redesign Improvements
+      href: architecture/REDESIGN_IMPROVEMENTS.md
     - name: Why This Architecture
       href: architecture/why-this-architecture.md
 
-- name: Architecture Decision Records
-  items:
-    - name: ADR Index
-      href: adr/README.md
-    - name: ADR-001 Provider Abstraction
-      href: adr/001-provider-abstraction.md
-    - name: ADR-002 Tiered Storage
-      href: adr/002-tiered-storage-architecture.md
-    - name: ADR-003 Microservices
-      href: adr/003-microservices-decomposition.md
-    - name: ADR-004 Async Streaming
-      href: adr/004-async-streaming-patterns.md
-    - name: ADR-005 Attribute Discovery
-      href: adr/005-attribute-based-discovery.md
-    - name: ADR-010 HttpClientFactory
-      href: adr/010-httpclient-factory.md
-    - name: ADR-011 Configuration & Credentials
-      href: adr/011-centralized-configuration-and-credentials.md
-    - name: ADR-012 Monitoring & Alerting
-      href: adr/012-monitoring-and-alerting-pipeline.md
-
-- name: Diagrams
-  items:
-    - name: Diagrams Overview
-      href: diagrams/README.md
-
-- name: Data Providers
+- name: Providers
   items:
     - name: Data Sources
       href: providers/data-sources.md
     - name: Provider Comparison
       href: providers/provider-comparison.md
+    - name: Backfill Guide
+      href: providers/backfill-guide.md
     - name: Alpaca Setup
       href: providers/alpaca-setup.md
     - name: Interactive Brokers Setup
       href: providers/interactive-brokers-setup.md
-    - name: IB Free Equity Reference
-      href: providers/interactive-brokers-free-equity-reference.md
-    - name: Backfill Guide
-      href: providers/backfill-guide.md
 
-- name: Integrations
+- name: Operations
   items:
-    - name: Lean Integration
-      href: integrations/lean-integration.md
-    - name: F# Integration
-      href: integrations/fsharp-integration.md
-    - name: Language Strategy
-      href: integrations/language-strategy.md
+    - name: Operator Runbook
+      href: operations/operator-runbook.md
+    - name: Portable Data Packager
+      href: operations/portable-data-packager.md
+    - name: MSIX Packaging
+      href: operations/msix-packaging.md
 
-- name: Status & Planning
+- name: Development
   items:
-    - name: Production Status
-      href: status/production-status.md
-    - name: Feature Backlog
-      href: status/FEATURE_BACKLOG.md
-    - name: Improvements
-      href: status/improvements.md
-    - name: UWP Feature Ideas
-      href: status/uwp-feature-ideas.md
+    - name: Project Context
+      href: development/project-context.md
+    - name: Provider Implementation
+      href: development/provider-implementation.md
+    - name: Central Package Management
+      href: development/central-package-management.md
+    - name: GitHub Actions Summary
+      href: development/github-actions-summary.md
+
+- name: AI Docs
+  items:
+    - name: AI Overview
+      href: ai/README.md
+    - name: AI Known Errors
+      href: ai/ai-known-errors.md
+    - name: Copilot Instructions
+      href: ai/copilot/instructions.md
+
+- name: ADR
+  href: adr/README.md
 
 - name: Reference
-  items:
-    - name: Open Source References
-      href: reference/open-source-references.md
-    - name: Data Uniformity
-      href: reference/data-uniformity.md
-    - name: Design Review Memo
-      href: reference/design-review-memo.md
-
-- name: Changelogs
-  items:
-    - name: Changes Summary
-      href: changelogs/CHANGES_SUMMARY.md
+  href: reference/data-dictionary.md
