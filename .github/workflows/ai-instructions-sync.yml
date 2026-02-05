@@ -203,11 +203,14 @@ jobs:
           echo "- Create PR mode: \
           ${{ github.event.inputs.create_pr == 'true' && 'yes' || 'no' }}" >> $GITHUB_STEP_SUMMARY
           
-          if [ "${{ steps.create-pr.outcome }}" == "success" ]; then
-            echo "- PR Creation: ✅ Success" >> $GITHUB_STEP_SUMMARY
-          elif [ "${{ steps.create-pr.outcome }}" == "failure" ]; then
-            echo "- PR Creation: ⚠️ Failed (fell back to direct commit)" >> $GITHUB_STEP_SUMMARY
-            echo "  > Enable PR creation in Settings > Actions > General" >> $GITHUB_STEP_SUMMARY
+          # Only show PR creation status if PR mode was enabled
+          if [ "${{ github.event.inputs.create_pr }}" == "true" ] && [ "${{ github.event.inputs.dry_run }}" != "true" ]; then
+            if [ "${{ steps.create-pr.outcome }}" == "success" ]; then
+              echo "- PR Creation: ✅ Success" >> $GITHUB_STEP_SUMMARY
+            elif [ "${{ steps.create-pr.outcome }}" == "failure" ]; then
+              echo "- PR Creation: ⚠️ Failed (fell back to direct commit)" >> $GITHUB_STEP_SUMMARY
+              echo "  > Enable PR creation in Settings > Actions > General" >> $GITHUB_STEP_SUMMARY
+            fi
           fi
           
           echo "" >> $GITHUB_STEP_SUMMARY
