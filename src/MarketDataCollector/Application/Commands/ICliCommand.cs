@@ -4,7 +4,7 @@ namespace MarketDataCollector.Application.Commands;
 /// Interface for CLI command handlers extracted from Program.cs.
 /// Each implementation handles one or more related CLI flags.
 /// </summary>
-internal interface ICliCommand
+public interface ICliCommand
 {
     /// <summary>
     /// Returns true if this command should handle the given args.
