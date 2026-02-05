@@ -80,6 +80,7 @@ Guides for developers contributing to or extending the project.
 
 | Document | Description |
 |----------|-------------|
+| [central-package-management.md](development/central-package-management.md) | Central Package Management (CPM) guide |
 | [provider-implementation.md](development/provider-implementation.md) | Guide for adding new providers |
 | [github-actions-summary.md](development/github-actions-summary.md) | CI/CD workflow documentation |
 | [github-actions-testing.md](development/github-actions-testing.md) | Testing GitHub Actions workflows |
