@@ -1,0 +1,9 @@
+is_global = true
+
+# Suppress trim analysis warnings for ASP.NET Core JSON serialization
+# These are safe to suppress as the application doesn't use trimming/AOT
+dotnet_diagnostic.IL2026.severity = none
+dotnet_diagnostic.IL2070.severity = none
+
+# Suppress XML documentation warnings that are already handled by NoWarn=1591
+dotnet_diagnostic.CS1587.severity = none

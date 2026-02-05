@@ -2,5 +2,8 @@
   <PropertyGroup>
     <!-- Allow resolving Windows-targeted TFMs on non-Windows CI runners to avoid NETSDK1100 -->
     <EnableWindowsTargeting Condition="'$([MSBuild]::IsOSPlatform(&quot;Windows&quot;))' != 'true'">true</EnableWindowsTargeting>
+    
+    <!-- Suppress warnings globally -->
+    <NoWarn>$(NoWarn);IL2026;IL2070;CS1587</NoWarn>
   </PropertyGroup>
 </Project>
