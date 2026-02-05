@@ -552,6 +552,27 @@
                         </StackPanel>
                     </Grid>
 
+                    <!-- Header Grid (WPF doesn't support ListView.HeaderTemplate) -->
+                    <Grid Padding="8,4" Background="{StaticResource ConsoleBackgroundLightBrush}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="80" />
+                            <ColumnDefinition Width="80" />
+                            <ColumnDefinition Width="80" />
+                            <ColumnDefinition Width="100" />
+                            <ColumnDefinition Width="100" />
+                            <ColumnDefinition Width="80" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Column="0" Text="Symbol" FontWeight="SemiBold" />
+                        <TextBlock Grid.Column="1" Text="Status" FontWeight="SemiBold" />
+                        <TextBlock Grid.Column="2" Text="Rate" FontWeight="SemiBold" />
+                        <TextBlock Grid.Column="3" Text="Events" FontWeight="SemiBold" />
+                        <TextBlock Grid.Column="4" Text="Last Event" FontWeight="SemiBold" />
+                        <TextBlock Grid.Column="5" Text="Health" FontWeight="SemiBold" />
+                        <TextBlock Grid.Column="6" Text="Trend" FontWeight="SemiBold" />
+                    </Grid>
+
                     <ListView x:Name="SymbolPerformanceList"
                               ItemsSource="{Binding SymbolPerformanceItems}"
                               SelectionMode="Single"
@@ -561,29 +582,6 @@
                                 <VirtualizingStackPanel Orientation="Vertical" />
                             </ItemsPanelTemplate>
                         </ListView.ItemsPanel>
-                        <ListView.HeaderTemplate>
-                            <DataTemplate>
-                                <Grid Padding="8,4" Background="{StaticResource ConsoleBackgroundLightBrush}">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="80" />
-                                        <ColumnDefinition Width="80" />
-                                        <ColumnDefinition Width="80" />
-                                        <ColumnDefinition Width="100" />
-                                        <ColumnDefinition Width="100" />
-                                        <ColumnDefinition Width="80" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-
-                                    <TextBlock Grid.Column="0" Text="Symbol" FontWeight="SemiBold" />
-                                    <TextBlock Grid.Column="1" Text="Status" FontWeight="SemiBold" />
-                                    <TextBlock Grid.Column="2" Text="Rate" FontWeight="SemiBold" />
-                                    <TextBlock Grid.Column="3" Text="Events" FontWeight="SemiBold" />
-                                    <TextBlock Grid.Column="4" Text="Last Event" FontWeight="SemiBold" />
-                                    <TextBlock Grid.Column="5" Text="Health" FontWeight="SemiBold" />
-                                    <TextBlock Grid.Column="6" Text="Trend" FontWeight="SemiBold" />
-                                </Grid>
-                            </DataTemplate>
-                        </ListView.HeaderTemplate>
                         <ListView.ItemTemplate>
                             <DataTemplate>
                                 <Grid Padding="8,8">
