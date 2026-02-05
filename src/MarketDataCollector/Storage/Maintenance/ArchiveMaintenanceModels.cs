@@ -250,11 +250,41 @@ public sealed class MaintenanceTaskOptions
     public bool DryRun { get; set; } = false;
     public bool DeleteSourceAfterMigration { get; set; } = false;
     public bool VerifyAfterMigration { get; set; } = true;
+    
+    /// <summary>
+    /// Maximum number of files to migrate in a single maintenance run for incremental processing.
+    /// Default is 250 files to limit the duration of each run.
+    /// </summary>
     public int MaxMigrationsPerRun { get; set; } = 250;
+    
+    /// <summary>
+    /// Maximum total bytes to migrate in a single run for incremental processing.
+    /// Default is 2 GB to prevent excessive I/O during a single maintenance window.
+    /// </summary>
     public long? MaxMigrationBytesPerRun { get; set; } = 2L * 1024 * 1024 * 1024;
+    
+    /// <summary>
+    /// Whether to skip tier migration when market hours are open to avoid I/O interference.
+    /// Default is true for US equity markets.
+    /// </summary>
     public bool RunOnlyDuringMarketClosedHours { get; set; } = true;
+    
+    /// <summary>
+    /// IANA time zone identifier for market hours checking (e.g., "America/New_York").
+    /// Default is "America/New_York" for US equity markets.
+    /// </summary>
     public string MarketTimeZoneId { get; set; } = "America/New_York";
+    
+    /// <summary>
+    /// Market opening time for market-hours checking.
+    /// Default is 09:30:00 (US equity market open).
+    /// </summary>
     public TimeSpan MarketOpenTime { get; set; } = new(9, 30, 0);
+    
+    /// <summary>
+    /// Market closing time for market-hours checking.
+    /// Default is 16:00:00 (US equity market close).
+    /// </summary>
     public TimeSpan MarketCloseTime { get; set; } = new(16, 0, 0);
 
     // Compression options
@@ -270,6 +300,47 @@ public sealed class MaintenanceTaskOptions
     // Retention options
     public int? OverrideRetentionDays { get; set; }
     public bool SkipCriticalData { get; set; } = true;
+
+    /// <summary>
+    /// Validates the maintenance task options configuration.
+    /// </summary>
+    /// <exception cref="ArgumentException">Thrown when configuration is invalid.</exception>
+    public void Validate()
+    {
+        if (MaxMigrationsPerRun < 1)
+            throw new ArgumentException("MaxMigrationsPerRun must be at least 1", nameof(MaxMigrationsPerRun));
+
+        if (MaxMigrationBytesPerRun.HasValue && MaxMigrationBytesPerRun.Value < 0)
+            throw new ArgumentException("MaxMigrationBytesPerRun must be non-negative", nameof(MaxMigrationBytesPerRun));
+
+        if (ParallelOperations < 1)
+            throw new ArgumentException("ParallelOperations must be at least 1", nameof(ParallelOperations));
+
+        if (RunOnlyDuringMarketClosedHours)
+        {
+            if (string.IsNullOrWhiteSpace(MarketTimeZoneId))
+                throw new ArgumentException("MarketTimeZoneId is required when RunOnlyDuringMarketClosedHours is true", nameof(MarketTimeZoneId));
+
+            // Validate time zone ID
+            try
+            {
+                _ = TimeZoneInfo.FindSystemTimeZoneById(MarketTimeZoneId);
+            }
+            catch (TimeZoneNotFoundException ex)
+            {
+                throw new ArgumentException($"Invalid MarketTimeZoneId: {MarketTimeZoneId}", nameof(MarketTimeZoneId), ex);
+            }
+
+            if (MarketOpenTime >= MarketCloseTime)
+                throw new ArgumentException("MarketOpenTime must be before MarketCloseTime", nameof(MarketOpenTime));
+
+            if (MarketOpenTime < TimeSpan.Zero || MarketOpenTime >= TimeSpan.FromDays(1))
+                throw new ArgumentException("MarketOpenTime must be within a 24-hour period (00:00:00 to 23:59:59.999)", nameof(MarketOpenTime));
+
+            if (MarketCloseTime <= TimeSpan.Zero || MarketCloseTime > TimeSpan.FromDays(1))
+                throw new ArgumentException("MarketCloseTime must be within a 24-hour period (00:00:00.001 to 24:00:00)", nameof(MarketCloseTime));
+        }
+    }
 }
 
 /// <summary>
