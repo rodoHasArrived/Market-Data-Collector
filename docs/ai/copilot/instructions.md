@@ -16,7 +16,7 @@
 ## AI Error Registry Workflow
 
 Before implementing changes, review `docs/ai-known-errors.md` and apply relevant prevention checks.
-When an AI-caused regression is identified in GitHub, add label `ai-known-error` so the `AI Known Errors Intake` job in `.github/workflows/documentation.yml` can open a PR that records it.
+When an AI-caused regression is identified in GitHub, add label `ai-known-error` so the `AI Known Errors Intake` job in `.github/workflows/docs-comprehensive.yml` can open a PR that records it.
 
 ## Build & Test Commands
 

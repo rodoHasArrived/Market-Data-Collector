@@ -89,7 +89,7 @@ dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --mod
 To reduce repeated mistakes across agents, always review and update:
 
 - `docs/ai-known-errors.md` — canonical log of recurring agent mistakes, root causes, and prevention checks.
-- `.github/workflows/documentation.yml (AI Known Errors Intake job)` — automation that ingests labeled GitHub issues into the known-error registry via PR.
+- `.github/workflows/docs-comprehensive.yml (AI Known Errors Intake job)` — automation that ingests labeled GitHub issues into the known-error registry via PR.
 
 ### Required workflow for AI agents
 
