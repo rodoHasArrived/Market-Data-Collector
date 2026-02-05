@@ -52,9 +52,6 @@ namespace MarketDataCollector.Application.Serialization;
 [JsonSerializable(typeof(AlpacaTradeMessage))]
 [JsonSerializable(typeof(AlpacaQuoteMessage))]
 [JsonSerializable(typeof(AlpacaMessage[]))]
-[JsonSerializable(typeof(AggregateBarPayload))]
-[JsonSerializable(typeof(Dictionary<string, object>))]
-[JsonSerializable(typeof(Dictionary<string, JsonElement>))]
 public partial class MarketDataJsonContext : JsonSerializerContext
 {
     /// <summary>

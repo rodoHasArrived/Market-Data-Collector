@@ -3,56 +3,6 @@ name: Documentation & Workflow Automation
 on:
   issues:
     types: [opened, edited, labeled, reopened]
-  push:
-    branches: ["main"]
-    paths:
-      - 'docs/**'
-      - '*.md'
-      - 'CLAUDE.md'
-      - '.github/workflows/**'
-      - '.github/agents/**'
-      - 'build/scripts/docs/**'
-      - 'build/dotnet/DocGenerator/**'
-      - 'src/**'
-  pull_request:
-    branches: ["main"]
-    paths:
-      - 'docs/**'
-      - '*.md'
-      - 'CLAUDE.md'
-      - '.github/workflows/**'
-      - '.github/agents/**'
-      - 'build/scripts/docs/**'
-      - 'build/dotnet/DocGenerator/**'
-      - 'src/**'
-  schedule:
-    - cron: '0 3 * * 1'
-  workflow_dispatch:
-    inputs:
-      regenerate:
-        description: 'Force regenerate generated docs and AI instruction files'
-        required: false
-        default: 'false'
-        type: boolean
-      dry_run:
-        description: 'Show changes without committing'
-        required: false
-        default: 'true'
-        type: boolean
-      create_pr:
-        description: 'Create PR for generated updates (manual runs only)'
-        required: false
-        default: 'false'
-        type: boolean
-      ingest_issue_number:
-        description: 'Issue number to ingest into docs/ai-known-errors.md'
-        required: false
-        default: ''
-        type: string
-
-permissions:
-  contents: write
-  issues: read
   pull-requests: write
 
 concurrency:

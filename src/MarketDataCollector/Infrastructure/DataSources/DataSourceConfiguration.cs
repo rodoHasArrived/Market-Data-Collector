@@ -1,3 +1,4 @@
+using System.Text.Json;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Infrastructure.Providers.NYSE;
 
@@ -449,6 +450,18 @@ public sealed record CredentialConfig
     /// </summary>
     public string? VaultPath { get; init; }
 
+    /// <summary>
+    /// Vault provider name: AwsSecretsManager or AzureKeyVault.
+    /// </summary>
+    public string? VaultProvider { get; init; }
+
+    // Key names for vault JSON payloads
+    public string ApiKeyKey { get; init; } = "apiKey";
+    public string KeyIdKey { get; init; } = "keyId";
+    public string SecretKeyKey { get; init; } = "secretKey";
+    public string UsernameKey { get; init; } = "username";
+    public string PasswordKey { get; init; } = "password";
+
     // Credential Resolution Order: File > Vault > Environment > Config
     // - File: Reads from CredentialsPath JSON file
     // - Vault: Reserved for AWS Secrets Manager / Azure Key Vault integration
@@ -460,9 +473,8 @@ public sealed record CredentialConfig
     /// </summary>
     public string? ResolveApiKey()
     {
-        if (!string.IsNullOrWhiteSpace(ApiKeyVar))
-            return Environment.GetEnvironmentVariable(ApiKeyVar);
-        return null;
+        return ResolveFromVault(ApiKeyKey)
+               ?? ResolveFromEnvironment(ApiKeyVar);
     }
 
     /// <summary>
@@ -470,9 +482,8 @@ public sealed record CredentialConfig
     /// </summary>
     public string? ResolveKeyId()
     {
-        if (!string.IsNullOrWhiteSpace(KeyIdVar))
-            return Environment.GetEnvironmentVariable(KeyIdVar);
-        return null;
+        return ResolveFromVault(KeyIdKey)
+               ?? ResolveFromEnvironment(KeyIdVar);
     }
 
     /// <summary>
@@ -480,9 +491,8 @@ public sealed record CredentialConfig
     /// </summary>
     public string? ResolveSecretKey()
     {
-        if (!string.IsNullOrWhiteSpace(SecretKeyVar))
-            return Environment.GetEnvironmentVariable(SecretKeyVar);
-        return null;
+        return ResolveFromVault(SecretKeyKey)
+               ?? ResolveFromEnvironment(SecretKeyVar);
     }
 
     /// <summary>
@@ -490,9 +500,8 @@ public sealed record CredentialConfig
     /// </summary>
     public string? ResolveUsername()
     {
-        if (!string.IsNullOrWhiteSpace(UsernameVar))
-            return Environment.GetEnvironmentVariable(UsernameVar);
-        return null;
+        return ResolveFromVault(UsernameKey)
+               ?? ResolveFromEnvironment(UsernameVar);
     }
 
     /// <summary>
@@ -500,8 +509,68 @@ public sealed record CredentialConfig
     /// </summary>
     public string? ResolvePassword()
     {
-        if (!string.IsNullOrWhiteSpace(PasswordVar))
-            return Environment.GetEnvironmentVariable(PasswordVar);
+        return ResolveFromVault(PasswordKey)
+               ?? ResolveFromEnvironment(PasswordVar);
+    }
+
+    private string? ResolveFromEnvironment(string? variableName)
+    {
+        if (string.IsNullOrWhiteSpace(variableName))
+            return null;
+        return Environment.GetEnvironmentVariable(variableName);
+    }
+
+    private bool IsSupportedVaultProvider()
+    {
+        return VaultProvider is not null &&
+               (VaultProvider.Equals("AwsSecretsManager", StringComparison.OrdinalIgnoreCase) ||
+                VaultProvider.Equals("AzureKeyVault", StringComparison.OrdinalIgnoreCase));
+    }
+
+    private string? ResolveFromVault(string key)
+    {
+        if (!Source.Equals("Vault", StringComparison.OrdinalIgnoreCase) ||
+            string.IsNullOrWhiteSpace(VaultPath) ||
+            !IsSupportedVaultProvider())
+        {
+            return null;
+        }
+
+        // Stub integration contract: providers should map vault path/key to raw secret JSON.
+        // For now, use environment-backed bridge to support local/test environments:
+        // MDC_VAULT__{normalizedPath}__{key}, e.g. MDC_VAULT__marketdata__alpaca__prod__keyId.
+        var normalizedPath = VaultPath.Trim().Replace('/', '_').Replace(':', '_').Replace('-', '_').ToUpperInvariant();
+        var envName = $"MDC_VAULT__{normalizedPath}__{key.ToUpperInvariant()}";
+        var raw = Environment.GetEnvironmentVariable(envName);
+        if (!string.IsNullOrWhiteSpace(raw))
+        {
+            return raw;
+        }
+
+        // Optional JSON payload mode: env var MDC_VAULT_JSON__{normalizedPath}
+        // value like: {"keyId":"...","secretKey":"..."}
+        var jsonEnvName = $"MDC_VAULT_JSON__{normalizedPath}";
+        var payload = Environment.GetEnvironmentVariable(jsonEnvName);
+        if (string.IsNullOrWhiteSpace(payload))
+        {
+            return null;
+        }
+
+        try
+        {
+            using var doc = JsonDocument.Parse(payload);
+            if (doc.RootElement.ValueKind == JsonValueKind.Object &&
+                doc.RootElement.TryGetProperty(key, out var property) &&
+                property.ValueKind == JsonValueKind.String)
+            {
+                return property.GetString();
+            }
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+
         return null;
     }
 
@@ -594,7 +663,11 @@ public sealed record CredentialConfig
             {
                 errors.Add("VaultPath is required when Source is 'Vault'");
             }
-            // TODO: Vault support (AWS Secrets Manager, Azure Key Vault) requires additional implementation.
+
+            if (!IsSupportedVaultProvider())
+            {
+                errors.Add("VaultProvider must be 'AwsSecretsManager' or 'AzureKeyVault' when Source is 'Vault'");
+            }
         }
 
         return new CredentialValidationResult(errors.Count == 0, errors);
