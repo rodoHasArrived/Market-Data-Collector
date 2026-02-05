@@ -339,6 +339,7 @@ Market-Data-Collector/
 │   │   └── storage-architecture-evaluation.md
 │   ├── generated/
 │   │   ├── adr-index.md
+│   │   ├── configuration-schema.md
 │   │   ├── project-context.md
 │   │   ├── provider-registry.md
 │   │   ├── README.md
