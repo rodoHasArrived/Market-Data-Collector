@@ -362,8 +362,9 @@ public sealed class JsonlStorageSink : IStorageSink
                 {
                     await _writer.WriteLineAsync(line).ConfigureAwait(false);
                 }
-                // Flush after batch to ensure durability
+                // Flush writer and underlying stream after batch to ensure durability
                 await _writer.FlushAsync().ConfigureAwait(false);
+                await _stream.FlushAsync(ct).ConfigureAwait(false);
             }
             finally
             {

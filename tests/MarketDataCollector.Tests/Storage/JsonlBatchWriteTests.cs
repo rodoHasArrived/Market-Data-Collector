@@ -156,12 +156,20 @@ public class JsonlBatchWriteTests : IDisposable
             await sink.AppendAsync(CreateTestEvent("AAPL", i));
         }
 
+        // Verify events are buffered before disposal
+        sink.EventsBuffered.Should().Be(5, "events should be buffered before disposal");
+        sink.EventsWritten.Should().Be(0, "no events should be written yet");
+
         // Act
         await sink.DisposeAsync();
 
+        // Verify events were written during disposal
+        sink.EventsWritten.Should().Be(5, "all events should be written after disposal");
+        sink.EventsBuffered.Should().Be(0, "no events should be buffered after disposal");
+
         // Assert - File should contain all events
         var files = Directory.GetFiles(_testRoot, "*.jsonl", SearchOption.AllDirectories);
-        files.Should().HaveCount(1);
+        files.Should().HaveCount(1, $"should find 1 file in {_testRoot}");
 
         var lines = await File.ReadAllLinesAsync(files[0]);
         lines.Should().HaveCount(5);

@@ -435,7 +435,8 @@ public class EventPipelineTests : IAsyncLifetime
     {
         // Arrange - Use very slow consumer and fill queue completely
         await using var sink = new MockStorageSink { ProcessingDelay = TimeSpan.FromSeconds(10) };
-        await using var pipeline = new EventPipeline(sink, capacity: 1, enablePeriodicFlush: false);
+        // Use Wait mode so WriteAsync actually blocks when queue is full
+        await using var pipeline = new EventPipeline(sink, capacity: 1, fullMode: BoundedChannelFullMode.Wait, enablePeriodicFlush: false);
 
         // Fill the queue - wait for consumer to start processing (longer delay for CI reliability)
         pipeline.TryPublish(CreateTradeEvent("SPY"));
