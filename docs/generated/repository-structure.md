@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-05 09:17:46 UTC
+> Auto-generated on 2026-02-05 09:30:12 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -47,7 +47,6 @@ Market-Data-Collector/
 │   │   ├── docs-auto-update.yml
 │   │   ├── docs-comprehensive.yml
 │   │   ├── docs-structure-sync.yml
-│   │   ├── documentation.yml
 │   │   ├── dotnet-desktop.yml
 │   │   ├── labeling.yml
 │   │   ├── nightly.yml

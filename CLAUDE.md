@@ -200,7 +200,6 @@ Market-Data-Collector/
 │   │   ├── docs-auto-update.yml
 │   │   ├── docs-comprehensive.yml
 │   │   ├── docs-structure-sync.yml
-│   │   ├── documentation.yml
 │   │   ├── dotnet-desktop.yml
 │   │   ├── labeling.yml
 │   │   ├── nightly.yml
