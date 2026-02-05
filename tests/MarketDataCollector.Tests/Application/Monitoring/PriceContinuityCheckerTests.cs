@@ -148,9 +148,9 @@ public sealed class PriceContinuityCheckerTests : IDisposable
     {
         // Arrange
         _checker.CheckPrice("AAPL", 100.00m, DateTimeOffset.UtcNow);
-        _checker.CheckPrice("AAPL", 110.00m, DateTimeOffset.UtcNow); // Gap
+        _checker.CheckPrice("AAPL", 110.00m, DateTimeOffset.UtcNow); // 10% gap - exceeds 5% threshold
         _checker.CheckPrice("MSFT", 200.00m, DateTimeOffset.UtcNow);
-        _checker.CheckPrice("MSFT", 206.00m, DateTimeOffset.UtcNow); // Gap
+        _checker.CheckPrice("MSFT", 212.00m, DateTimeOffset.UtcNow); // 6% gap - exceeds 5% threshold
 
         // Act
         var stats = _checker.GetStatistics();

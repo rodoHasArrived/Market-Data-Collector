@@ -141,7 +141,8 @@ public sealed class SpreadMonitorTests : IDisposable
         smallCapMonitor.OnWideSpread += alert => capturedAlert = alert;
 
         // Act - 3% spread (300 bps) is below 500 bps threshold
-        var detected = smallCapMonitor.ProcessQuote("PENNY", 0.97m, 1.03m, "Provider1");
+        // Bid: 0.985, Ask: 1.015, Spread: 0.03, Mid: 1.00, SpreadBps: 300
+        var detected = smallCapMonitor.ProcessQuote("PENNY", 0.985m, 1.015m, "Provider1");
 
         // Assert
         detected.Should().BeFalse();
