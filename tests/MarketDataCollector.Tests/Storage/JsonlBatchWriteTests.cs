@@ -1,3 +1,4 @@
+using System.Threading;
 using FluentAssertions;
 using MarketDataCollector.Contracts.Domain.Enums;
 using MarketDataCollector.Contracts.Domain.Models;
@@ -22,8 +23,25 @@ public class JsonlBatchWriteTests : IDisposable
 
     public void Dispose()
     {
-        if (Directory.Exists(_testRoot))
-            Directory.Delete(_testRoot, recursive: true);
+        if (!Directory.Exists(_testRoot))
+            return;
+
+        for (var attempt = 0; attempt < 5; attempt++)
+        {
+            try
+            {
+                Directory.Delete(_testRoot, recursive: true);
+                return;
+            }
+            catch (IOException) when (attempt < 4)
+            {
+                Thread.Sleep(50);
+            }
+            catch (UnauthorizedAccessException) when (attempt < 4)
+            {
+                Thread.Sleep(50);
+            }
+        }
     }
 
     [Fact]

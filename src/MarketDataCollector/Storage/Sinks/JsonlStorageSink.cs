@@ -279,7 +279,6 @@ public sealed class JsonlStorageSink : IStorageSink
     public async ValueTask DisposeAsync()
     {
         if (_disposed) return;
-        _disposed = true;
 
         // Stop the timer first
         if (_flushTimer != null)
@@ -307,6 +306,8 @@ public sealed class JsonlStorageSink : IStorageSink
 
         // Dispose retention manager
         _retention?.Dispose();
+
+        _disposed = true;
     }
 
     private sealed class WriterState : IAsyncDisposable
