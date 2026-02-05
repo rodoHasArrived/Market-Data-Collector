@@ -67,6 +67,8 @@ public sealed class DataValidator
 
         try
         {
+            ct.ThrowIfCancellationRequested();
+
             if (!File.Exists(filePath))
             {
                 errors.Add($"File not found: {filePath}");
@@ -87,6 +89,7 @@ public sealed class DataValidator
             string? line;
             while ((line = await reader.ReadLineAsync(ct)) != null)
             {
+                ct.ThrowIfCancellationRequested();
                 totalLines++;
 
                 if (string.IsNullOrWhiteSpace(line))
@@ -145,12 +148,31 @@ public sealed class DataValidator
                     }
                     lastTimestampBySymbol[symbol] = timestamp;
 
-                    // Validate event type
-                    var typeStr = typeEl.GetString();
-                    if (!Enum.TryParse<MarketEventType>(typeStr, true, out _))
+                    // Validate event type (support both string and numeric representations)
+                    MarketEventType eventType;
+                    if (typeEl.ValueKind == JsonValueKind.String)
+                    {
+                        var typeStr = typeEl.GetString();
+                        if (!Enum.TryParse<MarketEventType>(typeStr, true, out eventType))
+                        {
+                            invalidEvents++;
+                            errors.Add($"Line {totalLines}: Unknown event type: {typeStr}");
+                            continue;
+                        }
+                    }
+                    else if (typeEl.ValueKind == JsonValueKind.Number)
+                    {
+                        if (!typeEl.TryGetInt32(out var typeInt) || !Enum.IsDefined(typeof(MarketEventType), typeInt))
+                        {
+                            invalidEvents++;
+                            errors.Add($"Line {totalLines}: Unknown event type: {typeInt}");
+                            continue;
+                        }
+                    }
+                    else
                     {
                         invalidEvents++;
-                        errors.Add($"Line {totalLines}: Unknown event type: {typeStr}");
+                        errors.Add($"Line {totalLines}: Invalid event type format");
                         continue;
                     }
 
@@ -162,6 +184,11 @@ public sealed class DataValidator
                     errors.Add($"Line {totalLines}: JSON parse error - {ex.Message}");
                 }
             }
+        }
+        catch (OperationCanceledException)
+        {
+            // Let cancellation exceptions propagate
+            throw;
         }
         catch (Exception ex)
         {
