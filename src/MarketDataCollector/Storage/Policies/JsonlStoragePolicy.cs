@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using MarketDataCollector.Contracts.Domain.Enums;
 using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Storage.Interfaces;
 
@@ -31,7 +32,7 @@ public sealed class JsonlStoragePolicy : IStoragePolicy
         var ext = GetExtension();
         var prefix = string.IsNullOrWhiteSpace(_options.FilePrefix) ? "" : $"{_options.FilePrefix}_";
         var source = Sanitize(evt.Source);
-        var assetClass = GetAssetClass(evt.Symbol);
+        var assetClass = GetAssetClass(evt.Symbol, evt.Type);
 
         // Build path based on naming convention
         return _options.NamingConvention switch
@@ -106,8 +107,18 @@ public sealed class JsonlStoragePolicy : IStoragePolicy
         };
     }
 
-    private string GetAssetClass(string symbol)
+    private string GetAssetClass(string symbol, MarketEventType eventType = MarketEventType.Unknown)
     {
+        // Infer asset class from event type for derivatives events
+        if (eventType is MarketEventType.OptionQuote
+            or MarketEventType.OptionTrade
+            or MarketEventType.OptionGreeks
+            or MarketEventType.OptionChain
+            or MarketEventType.OpenInterest)
+        {
+            return "option";
+        }
+
         // Try to get asset class from source registry
         if (_sourceRegistry != null)
         {

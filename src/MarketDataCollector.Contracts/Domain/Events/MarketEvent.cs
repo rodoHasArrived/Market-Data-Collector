@@ -88,4 +88,34 @@ public sealed record MarketEvent(
     /// </summary>
     public static MarketEvent CreateHistoricalAuction(DateTimeOffset ts, string symbol, HistoricalAuction auction, long seq = 0, string source = "alpaca")
         => new(ts, symbol, MarketEventType.HistoricalAuction, auction, seq == 0 ? auction.SequenceNumber : seq, source);
+
+    /// <summary>
+    /// Creates an option quote market event.
+    /// </summary>
+    public static MarketEvent CreateOptionQuote(DateTimeOffset ts, string symbol, OptionQuote quote, long seq = 0, string source = "IB")
+        => new(ts, symbol, MarketEventType.OptionQuote, quote, seq == 0 ? quote.SequenceNumber : seq, source);
+
+    /// <summary>
+    /// Creates an option trade market event.
+    /// </summary>
+    public static MarketEvent CreateOptionTrade(DateTimeOffset ts, string symbol, OptionTrade trade, long seq = 0, string source = "IB")
+        => new(ts, symbol, MarketEventType.OptionTrade, trade, seq == 0 ? trade.SequenceNumber : seq, source);
+
+    /// <summary>
+    /// Creates an option greeks snapshot market event.
+    /// </summary>
+    public static MarketEvent CreateOptionGreeks(DateTimeOffset ts, string symbol, GreeksSnapshot greeks, long seq = 0, string source = "IB")
+        => new(ts, symbol, MarketEventType.OptionGreeks, greeks, seq == 0 ? greeks.SequenceNumber : seq, source);
+
+    /// <summary>
+    /// Creates an option chain snapshot market event.
+    /// </summary>
+    public static MarketEvent CreateOptionChain(DateTimeOffset ts, string underlyingSymbol, OptionChainSnapshot chain, long seq = 0, string source = "IB")
+        => new(ts, underlyingSymbol, MarketEventType.OptionChain, chain, seq == 0 ? chain.SequenceNumber : seq, source);
+
+    /// <summary>
+    /// Creates an open interest update market event.
+    /// </summary>
+    public static MarketEvent CreateOpenInterest(DateTimeOffset ts, string symbol, OpenInterestUpdate oi, long seq = 0, string source = "IB")
+        => new(ts, symbol, MarketEventType.OpenInterest, oi, seq == 0 ? oi.SequenceNumber : seq, source);
 }

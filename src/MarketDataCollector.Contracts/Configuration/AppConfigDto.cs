@@ -39,6 +39,9 @@ public class AppConfigDto
 
     [JsonPropertyName("settings")]
     public AppSettingsDto? Settings { get; set; }
+
+    [JsonPropertyName("derivatives")]
+    public DerivativesConfigDto? Derivatives { get; set; }
 }
 
 /// <summary>
@@ -228,6 +231,27 @@ public class SymbolConfigDto
 
     [JsonPropertyName("localSymbol")]
     public string? LocalSymbol { get; set; }
+
+    [JsonPropertyName("instrumentType")]
+    public string? InstrumentType { get; set; }
+
+    [JsonPropertyName("strike")]
+    public decimal? Strike { get; set; }
+
+    [JsonPropertyName("right")]
+    public string? Right { get; set; }
+
+    [JsonPropertyName("lastTradeDateOrContractMonth")]
+    public string? LastTradeDateOrContractMonth { get; set; }
+
+    [JsonPropertyName("optionStyle")]
+    public string? OptionStyle { get; set; }
+
+    [JsonPropertyName("multiplier")]
+    public int? Multiplier { get; set; }
+
+    [JsonPropertyName("underlyingSymbol")]
+    public string? UnderlyingSymbol { get; set; }
 }
 
 /// <summary>
