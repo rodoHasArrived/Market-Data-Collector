@@ -258,7 +258,7 @@ public sealed class StatusService
     /// Raises the StatusChanged event.
     /// </summary>
     /// <param name="e">The event arguments.</param>
-    protected void OnStatusChanged(StatusChangedEventArgs e)
+    private void OnStatusChanged(StatusChangedEventArgs e)
     {
         StatusChanged?.Invoke(this, e);
     }

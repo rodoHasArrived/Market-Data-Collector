@@ -15,7 +15,6 @@ public partial class BackfillPage : Page
 {
     private readonly ObservableCollection<SymbolProgressInfo> _symbolProgress = new();
     private readonly ObservableCollection<ScheduledJobInfo> _scheduledJobs = new();
-    private bool _isRunning;
 
     public BackfillPage()
     {
@@ -164,7 +163,6 @@ public partial class BackfillPage : Page
         }
 
         SymbolsValidationError.Visibility = Visibility.Collapsed;
-        _isRunning = true;
 
         StartBackfillButton.Visibility = Visibility.Collapsed;
         PauseBackfillButton.Visibility = Visibility.Visible;
@@ -219,8 +217,6 @@ public partial class BackfillPage : Page
 
         if (result == MessageBoxResult.Yes)
         {
-            _isRunning = false;
-
             StartBackfillButton.Visibility = Visibility.Visible;
             PauseBackfillButton.Visibility = Visibility.Collapsed;
             CancelBackfillButton.Visibility = Visibility.Collapsed;
