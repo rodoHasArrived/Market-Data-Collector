@@ -361,38 +361,40 @@
                         <ListView x:Name="AlertsList" MaxHeight="400" SelectionMode="None">
                             <ListView.ItemTemplate>
                                 <DataTemplate>
-                                    <Grid Padding="8,12">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
+                                    <Border Padding="8,12">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
 
-                                        <Border Grid.Column="0" Width="4" CornerRadius="2" VerticalAlignment="Stretch"
-                                                Background="{Binding SeverityBrush}" Margin="0,0,12,0" />
+                                            <Border Grid.Column="0" Width="4" CornerRadius="2" VerticalAlignment="Stretch"
+                                                    Background="{Binding SeverityBrush}" Margin="0,0,12,0" />
 
-                                        <StackPanel Grid.Column="1" Margin="0,0,12,0">
-                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                                                <TextBlock Text="{Binding Symbol}" FontWeight="SemiBold" />
-                                                <Border Background="{StaticResource ConsoleBackgroundLightBrush}"
-                                                        CornerRadius="4" Padding="6,2" Margin="8,0,0,0">
-                                                    <TextBlock Text="{Binding AlertType}" FontSize="11" />
-                                                </Border>
+                                            <StackPanel Grid.Column="1" Margin="0,0,12,0">
+                                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                                    <TextBlock Text="{Binding Symbol}" FontWeight="SemiBold" />
+                                                    <Border Background="{StaticResource ConsoleBackgroundLightBrush}"
+                                                            CornerRadius="4" Padding="6,2" Margin="8,0,0,0">
+                                                        <TextBlock Text="{Binding AlertType}" FontSize="11" />
+                                                    </Border>
+                                                </StackPanel>
+                                                <TextBlock Text="{Binding Message}" TextWrapping="Wrap"
+                                                           Foreground="{StaticResource ConsoleTextSecondaryBrush}" />
                                             </StackPanel>
-                                            <TextBlock Text="{Binding Message}" TextWrapping="Wrap"
-                                                       Foreground="{StaticResource ConsoleTextSecondaryBrush}" />
-                                        </StackPanel>
 
-                                        <StackPanel Grid.Column="2" VerticalAlignment="Center">
-                                            <Button Click="AcknowledgeAlert_Click" Tag="{Binding Id}"
-                                                    Padding="8,4" ToolTip="Acknowledge alert"
-                                                    Background="{DynamicResource ConsoleBackgroundMediumBrush}"
-                                                    Foreground="{DynamicResource ConsoleTextBrush}"
-                                                    BorderThickness="0">
-                                                <TextBlock Text="Ack" FontSize="11" />
-                                            </Button>
-                                        </StackPanel>
-                                    </Grid>
+                                            <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                                                <Button Click="AcknowledgeAlert_Click" Tag="{Binding Id}"
+                                                        Padding="8,4" ToolTip="Acknowledge alert"
+                                                        Background="{DynamicResource ConsoleBackgroundMediumBrush}"
+                                                        Foreground="{DynamicResource ConsoleTextBrush}"
+                                                        BorderThickness="0">
+                                                    <TextBlock Text="Ack" FontSize="11" />
+                                                </Button>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
                                 </DataTemplate>
                             </ListView.ItemTemplate>
                         </ListView>
@@ -549,28 +551,30 @@
                     <ListView x:Name="AnomaliesList" MaxHeight="250" SelectionMode="None">
                         <ListView.ItemTemplate>
                             <DataTemplate>
-                                <Grid Padding="8,10">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="80" />
-                                        <ColumnDefinition Width="120" />
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="100" />
-                                    </Grid.ColumnDefinitions>
+                                <Border Padding="8,10">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="80" />
+                                            <ColumnDefinition Width="120" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="100" />
+                                        </Grid.ColumnDefinitions>
 
-                                    <Border Grid.Column="0" Width="4" CornerRadius="2" VerticalAlignment="Stretch"
-                                            Background="{Binding SeverityColor}" Margin="0,0,12,0" />
-                                    <TextBlock Grid.Column="1" Text="{Binding Symbol}" FontWeight="SemiBold"
-                                               VerticalAlignment="Center" Margin="0,0,12,0" />
-                                    <Border Grid.Column="2" Background="{StaticResource ConsoleBackgroundLightBrush}"
-                                            CornerRadius="4" Padding="8,4" VerticalAlignment="Center" Margin="0,0,12,0">
-                                        <TextBlock Text="{Binding Type}" FontSize="11" />
-                                    </Border>
-                                    <TextBlock Grid.Column="3" Text="{Binding Description}" TextTrimming="CharacterEllipsis"
-                                               VerticalAlignment="Center" Foreground="{StaticResource ConsoleTextSecondaryBrush}" Margin="0,0,12,0" />
-                                    <TextBlock Grid.Column="4" Text="{Binding Timestamp}" FontSize="11"
-                                               Foreground="{StaticResource ConsoleTextMutedBrush}" VerticalAlignment="Center" />
-                                </Grid>
+                                        <Border Grid.Column="0" Width="4" CornerRadius="2" VerticalAlignment="Stretch"
+                                                Background="{Binding SeverityColor}" Margin="0,0,12,0" />
+                                        <TextBlock Grid.Column="1" Text="{Binding Symbol}" FontWeight="SemiBold"
+                                                   VerticalAlignment="Center" Margin="0,0,12,0" />
+                                        <Border Grid.Column="2" Background="{StaticResource ConsoleBackgroundLightBrush}"
+                                                CornerRadius="4" Padding="8,4" VerticalAlignment="Center" Margin="0,0,12,0">
+                                            <TextBlock Text="{Binding Type}" FontSize="11" />
+                                        </Border>
+                                        <TextBlock Grid.Column="3" Text="{Binding Description}" TextTrimming="CharacterEllipsis"
+                                                   VerticalAlignment="Center" Foreground="{StaticResource ConsoleTextSecondaryBrush}" Margin="0,0,12,0" />
+                                        <TextBlock Grid.Column="4" Text="{Binding Timestamp}" FontSize="11"
+                                                   Foreground="{StaticResource ConsoleTextMutedBrush}" VerticalAlignment="Center" />
+                                    </Grid>
+                                </Border>
                             </DataTemplate>
                         </ListView.ItemTemplate>
                     </ListView>
