@@ -40,9 +40,10 @@ public sealed class JsonlBatchOptions
 
     /// <summary>
     /// Pre-serialize events in parallel when batch size exceeds this threshold.
-    /// Default is 100 events.
+    /// Default is 5000 events — below this, the context-switching overhead of
+    /// Parallel.For exceeds the serialization savings.
     /// </summary>
-    public int ParallelSerializationThreshold { get; init; } = 100;
+    public int ParallelSerializationThreshold { get; init; } = 5000;
 
     /// <summary>
     /// Default options with batching enabled.
@@ -56,7 +57,7 @@ public sealed class JsonlBatchOptions
     {
         BatchSize = 5000,
         FlushInterval = TimeSpan.FromSeconds(10),
-        ParallelSerializationThreshold = 200
+        ParallelSerializationThreshold = 5000
     };
 
     /// <summary>
@@ -66,7 +67,7 @@ public sealed class JsonlBatchOptions
     {
         BatchSize = 100,
         FlushInterval = TimeSpan.FromSeconds(1),
-        ParallelSerializationThreshold = 50
+        ParallelSerializationThreshold = 5000
     };
 
     /// <summary>
@@ -198,11 +199,11 @@ public sealed class JsonlStorageSink : IStorageSink
 
         var writer = _writers.GetOrAdd(path, p => WriterState.Create(p, _options.Compress));
 
-        // Serialize events - use parallel serialization for larger batches
-        string[] lines;
+        // Serialize events - use parallel serialization only for very large batches
+        // where the parallelism savings outweigh context-switching overhead
+        var lines = new string[events.Count];
         if (events.Count >= _batchOptions.ParallelSerializationThreshold)
         {
-            lines = new string[events.Count];
             Parallel.For(0, events.Count, i =>
             {
                 lines[i] = JsonSerializer.Serialize(events[i], MarketDataJsonContext.HighPerformanceOptions);
@@ -210,7 +211,10 @@ public sealed class JsonlStorageSink : IStorageSink
         }
         else
         {
-            lines = events.Select(e => JsonSerializer.Serialize(e, MarketDataJsonContext.HighPerformanceOptions)).ToArray();
+            for (var i = 0; i < events.Count; i++)
+            {
+                lines[i] = JsonSerializer.Serialize(events[i], MarketDataJsonContext.HighPerformanceOptions);
+            }
         }
 
         // Write all lines in a single batch
