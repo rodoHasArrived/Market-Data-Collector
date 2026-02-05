@@ -246,7 +246,8 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
             QueueUtilization: QueueUtilization,
             AverageProcessingTimeUs: AverageProcessingTimeUs,
             TimeSinceLastFlush: TimeSinceLastFlush,
-            Timestamp: DateTimeOffset.UtcNow
+            Timestamp: DateTimeOffset.UtcNow,
+            HighWaterMarkWarned: _highWaterMarkWarned
         );
     }
 
@@ -360,5 +361,6 @@ public readonly record struct PipelineStatistics(
     double QueueUtilization,
     double AverageProcessingTimeUs,
     TimeSpan TimeSinceLastFlush,
-    DateTimeOffset Timestamp
+    DateTimeOffset Timestamp,
+    bool HighWaterMarkWarned = false
 );

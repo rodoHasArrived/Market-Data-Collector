@@ -395,6 +395,8 @@ public sealed class StatusEndpointHandlers
     /// </summary>
     public BackpressureStatusDto GetBackpressure()
     {
+        var pipeline = _pipelineProvider();
+
         if (_backpressureProvider != null)
         {
             var status = _backpressureProvider();
@@ -406,12 +408,12 @@ public sealed class StatusEndpointHandlers
                 DroppedEvents = status.DroppedEvents,
                 DropRate = Math.Round(status.DropRate, 2),
                 DurationSeconds = status.Duration.TotalSeconds,
-                Message = status.Message
+                Message = status.Message,
+                QueueDepthWarning = pipeline.HighWaterMarkWarned
             };
         }
 
         // Return basic backpressure info from pipeline stats
-        var pipeline = _pipelineProvider();
         var dropRate = pipeline.PublishedCount > 0
             ? (double)pipeline.DroppedCount / pipeline.PublishedCount * 100
             : 0;
@@ -427,7 +429,8 @@ public sealed class StatusEndpointHandlers
             QueueUtilization = Math.Round(pipeline.QueueUtilization, 2),
             DroppedEvents = pipeline.DroppedCount,
             DropRate = Math.Round(dropRate, 2),
-            Message = $"Queue: {pipeline.QueueUtilization:F1}%, Drop rate: {dropRate:F2}%"
+            Message = $"Queue: {pipeline.QueueUtilization:F1}%, Drop rate: {dropRate:F2}%",
+            QueueDepthWarning = pipeline.HighWaterMarkWarned
         };
     }
 
