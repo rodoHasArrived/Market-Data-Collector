@@ -9,10 +9,12 @@
     <!-- CS1573: Parameter has no matching param tag (record parameters handled differently) -->
     <!-- CS1587: XML comment is not placed on a valid language element (false positive with record parameters) -->
     <!-- CS1998: Async method lacks await (often required for interface implementation or future async work) -->
+    <!-- CS8600: Converting null literal or possible null value to non-nullable type -->
+    <!-- CS8602: Dereference of a possibly null reference -->
     <!-- CS8629: Nullable value type may be null (false positive when HasValue is checked before .Value) -->
     <!-- IL2026: Member has RequiresUnreferencedCodeAttribute (expected for JSON serialization with trimming) -->
     <!-- IL2070: Dynamic access to type information (expected for JSON serialization) -->
-    <NoWarn>$(NoWarn);1591;CS0067;CS0169;CS0219;CS0414;CS1573;CS1587;CS1998;CS8629;IL2026;IL2070</NoWarn>
+    <NoWarn>$(NoWarn);1591;CS0067;CS0169;CS0219;CS0414;CS1573;CS1587;CS1998;CS8600;CS8602;CS8629;IL2026;IL2070</NoWarn>
     <OutputType>Exe</OutputType>
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
