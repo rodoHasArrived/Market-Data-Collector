@@ -573,7 +573,8 @@ Market-Data-Collector/
 │   │   │   ├── StorageCatalog.cs
 │   │   │   └── SymbolRegistry.cs
 │   │   ├── Configuration/
-│   │   │   └── AppConfigDto.cs
+│   │   │   ├── AppConfigDto.cs
+│   │   │   └── DerivativesConfigDto.cs
 │   │   ├── Credentials/
 │   │   │   └── CredentialModels.cs
 │   │   ├── Domain/

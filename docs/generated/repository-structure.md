@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-05 11:26:21 UTC
+> Auto-generated on 2026-02-05 18:14:21 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -420,7 +420,8 @@ Market-Data-Collector/
 │   │   │   ├── StorageCatalog.cs
 │   │   │   └── SymbolRegistry.cs
 │   │   ├── Configuration/
-│   │   │   └── AppConfigDto.cs
+│   │   │   ├── AppConfigDto.cs
+│   │   │   └── DerivativesConfigDto.cs
 │   │   ├── Credentials/
 │   │   │   └── CredentialModels.cs
 │   │   ├── Domain/
