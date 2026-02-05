@@ -1,6 +1,6 @@
 # GitHub Workflows Overview
 
-> Auto-generated on 2026-02-05 08:56:49 UTC
+> Auto-generated on 2026-02-05 09:17:46 UTC
 
 This document provides an overview of all GitHub Actions workflows in the repository.
 
@@ -8,6 +8,7 @@ This document provides an overview of all GitHub Actions workflows in the reposi
 
 | Workflow | File | Triggers |
 |----------|------|----------|
+| AI Instructions Sync | `ai-instructions-sync.yml` | manual, scheduled |
 | Benchmark Performance | `benchmark.yml` | push, PR, manual |
 | Build Observability | `build-observability.yml` | push, PR, manual |
 | Build and Release | `dotnet-desktop.yml` | push, PR, manual |
@@ -16,6 +17,9 @@ This document provides an overview of all GitHub Actions workflows in the reposi
 | Dependency Review | `dependency-review.yml` | PR, manual |
 | Desktop App Build | `desktop-app.yml` | push, PR, manual |
 | Docker | `docker.yml` | push, PR, manual |
+| Docs Auto-Update | `docs-auto-update.yml` | push, PR, manual |
+| Docs Structure Sync | `docs-structure-sync.yml` | push, PR, manual |
+| Documentation | `documentation.yml` | push, PR, manual |
 | Documentation & Workflow Automation | `docs-comprehensive.yml` | push, PR, manual, scheduled |
 | Labeling | `labeling.yml` | PR, manual |
 | Mark Stale Issues and PRs | `stale.yml` | manual, scheduled |
@@ -52,7 +56,7 @@ This document provides an overview of all GitHub Actions workflows in the reposi
 
 ## Workflow Count
 
-- **Total workflows:** 22
+- **Total workflows:** 26
 
 ---
 

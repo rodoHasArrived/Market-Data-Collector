@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-05 08:56:49 UTC
+> Auto-generated on 2026-02-05 09:17:46 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -35,6 +35,7 @@ Market-Data-Collector/
 │   │   ├── wpf-debug-improve.prompt.yml
 │   │   └── write-unit-tests.prompt.yml
 │   ├── workflows/
+│   │   ├── ai-instructions-sync.yml
 │   │   ├── AI_SYNC_FIX_SUMMARY.md
 │   │   ├── benchmark.yml
 │   │   ├── build-observability.yml
@@ -43,7 +44,10 @@ Market-Data-Collector/
 │   │   ├── dependency-review.yml
 │   │   ├── desktop-app.yml
 │   │   ├── docker.yml
+│   │   ├── docs-auto-update.yml
 │   │   ├── docs-comprehensive.yml
+│   │   ├── docs-structure-sync.yml
+│   │   ├── documentation.yml
 │   │   ├── dotnet-desktop.yml
 │   │   ├── labeling.yml
 │   │   ├── nightly.yml
@@ -298,6 +302,7 @@ Market-Data-Collector/
 │   │   ├── timing-diagram.puml
 │   │   ├── use-case-diagram.png
 │   │   └── use-case-diagram.puml
+│   ├── ai-known-errors.md
 │   ├── ARTIFACT_ACTIONS_DOWNGRADE.md
 │   ├── build-observability.md
 │   ├── DEPENDENCIES.md
