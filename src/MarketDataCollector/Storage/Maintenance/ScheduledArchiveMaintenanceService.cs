@@ -426,6 +426,20 @@ public sealed class ScheduledArchiveMaintenanceService : BackgroundService, IArc
         MaintenanceExecution execution,
         CancellationToken ct)
     {
+        if (options.RunOnlyDuringMarketClosedHours && !IsMarketClosed(options))
+        {
+            execution.LogMessages.Add("Tier migration skipped because market is currently open for configured hours");
+            return new MaintenanceResult
+            {
+                Success = true,
+                Summary = "Tier migration skipped during market hours",
+                TotalFiles = 0,
+                FilesProcessed = 0,
+                IssuesFound = 0,
+                IssuesResolved = 0
+            };
+        }
+
         // Get migration plan
         var plan = await _tierMigrationService.PlanMigrationAsync(TimeSpan.FromDays(365), ct);
 
@@ -443,53 +457,93 @@ public sealed class ScheduledArchiveMaintenanceService : BackgroundService, IArc
             };
         }
 
+        var maxFiles = Math.Max(1, options.MaxMigrationsPerRun);
+        var maxBytes = options.MaxMigrationBytesPerRun ?? long.MaxValue;
+        var selectedActions = plan.Actions
+            .OrderByDescending(a => a.FileAge)
+            .Take(maxFiles)
+            .ToList();
+
+        var incrementalActions = new List<PlannedMigrationAction>(selectedActions.Count);
+        long selectedBytes = 0;
+
+        foreach (var action in selectedActions)
+        {
+            if (incrementalActions.Count > 0 && selectedBytes + action.SizeBytes > maxBytes)
+                break;
+
+            incrementalActions.Add(action);
+            selectedBytes += action.SizeBytes;
+        }
+
         var totalMigrated = 0;
         var totalFailed = 0;
         long bytesSaved = 0;
         long bytesProcessed = 0;
 
-        foreach (var action in plan.Actions)
+        var failureErrors = new ConcurrentBag<string>();
+
+        var migrationOptions = new MigrationOptions(
+            DeleteSource: options.DeleteSourceAfterMigration,
+            VerifyChecksum: options.VerifyAfterMigration,
+            ParallelFiles: options.ParallelOperations
+        );
+
+        await Parallel.ForEachAsync(
+            incrementalActions,
+            new ParallelOptions
+            {
+                MaxDegreeOfParallelism = Math.Max(1, options.ParallelOperations),
+                CancellationToken = ct
+            },
+            async (action, token) =>
+            {
+                if (options.DryRun)
+                {
+                    lock (execution.LogMessages)
+                    {
+                        execution.LogMessages.Add($"[DRY RUN] Would migrate {action.SourcePath} to {action.TargetTier}");
+                    }
+                    Interlocked.Increment(ref totalMigrated);
+                    return;
+                }
+
+                var result = await _tierMigrationService.MigrateAsync(
+                    action.SourcePath,
+                    action.TargetTier,
+                    migrationOptions,
+                    token);
+
+                Interlocked.Add(ref bytesProcessed, result.BytesProcessed);
+
+                if (result.Success)
+                {
+                    Interlocked.Increment(ref totalMigrated);
+                    Interlocked.Add(ref bytesSaved, result.BytesSaved);
+                    return;
+                }
+
+                Interlocked.Increment(ref totalFailed);
+                foreach (var error in result.Errors)
+                {
+                    failureErrors.Add(error);
+                }
+            });
+
+        execution.LogMessages.Add(
+            $"Incremental tier migration processed {incrementalActions.Count} of {plan.Actions.Count} planned actions " +
+            $"(limit: {maxFiles} files, {maxBytes / 1024.0 / 1024.0:F0} MB)");
+
+        if (!failureErrors.IsEmpty)
         {
-            ct.ThrowIfCancellationRequested();
-
-            if (options.DryRun)
-            {
-                execution.LogMessages.Add($"[DRY RUN] Would migrate {action.SourcePath} to {action.TargetTier}");
-                totalMigrated++;
-                continue;
-            }
-
-            var migrationOptions = new MigrationOptions(
-                DeleteSource: options.DeleteSourceAfterMigration,
-                VerifyChecksum: options.VerifyAfterMigration,
-                ParallelFiles: options.ParallelOperations
-            );
-
-            var result = await _tierMigrationService.MigrateAsync(
-                action.SourcePath,
-                action.TargetTier,
-                migrationOptions,
-                ct);
-
-            if (result.Success)
-            {
-                totalMigrated++;
-                bytesSaved += result.BytesSaved;
-            }
-            else
-            {
-                totalFailed++;
-                execution.LogMessages.AddRange(result.Errors);
-            }
-
-            bytesProcessed += result.BytesProcessed;
+            execution.LogMessages.AddRange(failureErrors.Take(100));
         }
 
         return new MaintenanceResult
         {
             Success = totalFailed == 0,
             Summary = $"Tier migration: migrated {totalMigrated} files, saved {bytesSaved / 1024.0 / 1024.0:F2} MB",
-            TotalFiles = plan.Actions.Count,
+            TotalFiles = incrementalActions.Count,
             FilesProcessed = totalMigrated,
             FilesSkipped = 0,
             FilesFailed = totalFailed,
@@ -498,6 +552,20 @@ public sealed class ScheduledArchiveMaintenanceService : BackgroundService, IArc
             IssuesFound = totalFailed,
             IssuesResolved = 0
         };
+    }
+
+    private static bool IsMarketClosed(MaintenanceTaskOptions options)
+    {
+        var nowUtc = DateTimeOffset.UtcNow;
+        var tz = TimeZoneInfo.FindSystemTimeZoneById(options.MarketTimeZoneId);
+        var marketNow = TimeZoneInfo.ConvertTime(nowUtc, tz);
+
+        if (marketNow.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday)
+            return true;
+
+        var tod = marketNow.TimeOfDay;
+        var isOpen = tod >= options.MarketOpenTime && tod < options.MarketCloseTime;
+        return !isOpen;
     }
 
     private async Task<MaintenanceResult> RunCompressionAsync(

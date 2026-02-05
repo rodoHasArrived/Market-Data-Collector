@@ -250,6 +250,12 @@ public sealed class MaintenanceTaskOptions
     public bool DryRun { get; set; } = false;
     public bool DeleteSourceAfterMigration { get; set; } = false;
     public bool VerifyAfterMigration { get; set; } = true;
+    public int MaxMigrationsPerRun { get; set; } = 250;
+    public long? MaxMigrationBytesPerRun { get; set; } = 2L * 1024 * 1024 * 1024;
+    public bool RunOnlyDuringMarketClosedHours { get; set; } = true;
+    public string MarketTimeZoneId { get; set; } = "America/New_York";
+    public TimeSpan MarketOpenTime { get; set; } = new(9, 30, 0);
+    public TimeSpan MarketCloseTime { get; set; } = new(16, 0, 0);
 
     // Compression options
     public string? TargetCompressionCodec { get; set; }
@@ -459,20 +465,25 @@ public static class MaintenanceSchedulePresets
     };
 
     /// <summary>
-    /// Daily tier migration at 4 AM UTC.
+    /// Daily tier migration during US market-closed hours.
     /// </summary>
     public static ArchiveMaintenanceSchedule DailyTierMigration(string name) => new()
     {
         Name = name,
-        Description = "Daily tier migration to move aging data to colder storage",
-        CronExpression = "0 4 * * *",
+        Description = "Daily incremental tier migration to move aging data to colder storage",
+        CronExpression = "0 1 * * 1-5",
+        TimeZoneId = "America/New_York",
         TaskType = MaintenanceTaskType.TierMigration,
         Priority = MaintenancePriority.Normal,
         Options = new MaintenanceTaskOptions
         {
             DeleteSourceAfterMigration = true,
             VerifyAfterMigration = true,
-            ParallelOperations = 4
+            ParallelOperations = 4,
+            MaxMigrationsPerRun = 250,
+            MaxMigrationBytesPerRun = 2L * 1024 * 1024 * 1024,
+            RunOnlyDuringMarketClosedHours = true,
+            MarketTimeZoneId = "America/New_York"
         }
     };
 
