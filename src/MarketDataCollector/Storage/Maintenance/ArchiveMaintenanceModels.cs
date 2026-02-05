@@ -300,6 +300,47 @@ public sealed class MaintenanceTaskOptions
     // Retention options
     public int? OverrideRetentionDays { get; set; }
     public bool SkipCriticalData { get; set; } = true;
+
+    /// <summary>
+    /// Validates the maintenance task options configuration.
+    /// </summary>
+    /// <exception cref="ArgumentException">Thrown when configuration is invalid.</exception>
+    public void Validate()
+    {
+        if (MaxMigrationsPerRun < 1)
+            throw new ArgumentException("MaxMigrationsPerRun must be at least 1", nameof(MaxMigrationsPerRun));
+
+        if (MaxMigrationBytesPerRun.HasValue && MaxMigrationBytesPerRun.Value < 0)
+            throw new ArgumentException("MaxMigrationBytesPerRun must be non-negative", nameof(MaxMigrationBytesPerRun));
+
+        if (ParallelOperations < 1)
+            throw new ArgumentException("ParallelOperations must be at least 1", nameof(ParallelOperations));
+
+        if (RunOnlyDuringMarketClosedHours)
+        {
+            if (string.IsNullOrWhiteSpace(MarketTimeZoneId))
+                throw new ArgumentException("MarketTimeZoneId is required when RunOnlyDuringMarketClosedHours is true", nameof(MarketTimeZoneId));
+
+            // Validate time zone ID
+            try
+            {
+                _ = TimeZoneInfo.FindSystemTimeZoneById(MarketTimeZoneId);
+            }
+            catch (TimeZoneNotFoundException ex)
+            {
+                throw new ArgumentException($"Invalid MarketTimeZoneId: {MarketTimeZoneId}", nameof(MarketTimeZoneId), ex);
+            }
+
+            if (MarketOpenTime >= MarketCloseTime)
+                throw new ArgumentException("MarketOpenTime must be before MarketCloseTime", nameof(MarketOpenTime));
+
+            if (MarketOpenTime < TimeSpan.Zero || MarketOpenTime >= TimeSpan.FromDays(1))
+                throw new ArgumentException("MarketOpenTime must be between 00:00:00 and 23:59:59", nameof(MarketOpenTime));
+
+            if (MarketCloseTime <= TimeSpan.Zero || MarketCloseTime > TimeSpan.FromDays(1))
+                throw new ArgumentException("MarketCloseTime must be between 00:00:01 and 24:00:00", nameof(MarketCloseTime));
+        }
+    }
 }
 
 /// <summary>

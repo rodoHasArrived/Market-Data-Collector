@@ -208,4 +208,148 @@ public sealed class MaintenanceTaskOptionsTests
         options.MarketCloseTime.Hours.Should().Be(hours);
         options.MarketCloseTime.Minutes.Should().Be(minutes);
     }
+
+    [Fact]
+    public void MaintenanceTaskOptions_Validate_ShouldSucceedForDefaultOptions()
+    {
+        // Arrange
+        var options = new MaintenanceTaskOptions();
+
+        // Act & Assert
+        options.Invoking(o => o.Validate()).Should().NotThrow(
+            "default options should be valid");
+    }
+
+    [Fact]
+    public void MaintenanceTaskOptions_Validate_ShouldThrowForInvalidMaxMigrationsPerRun()
+    {
+        // Arrange
+        var options = new MaintenanceTaskOptions
+        {
+            MaxMigrationsPerRun = 0
+        };
+
+        // Act & Assert
+        options.Invoking(o => o.Validate())
+            .Should().Throw<ArgumentException>()
+            .WithMessage("*MaxMigrationsPerRun*must be at least 1*");
+    }
+
+    [Fact]
+    public void MaintenanceTaskOptions_Validate_ShouldThrowForNegativeMaxMigrationBytesPerRun()
+    {
+        // Arrange
+        var options = new MaintenanceTaskOptions
+        {
+            MaxMigrationBytesPerRun = -100
+        };
+
+        // Act & Assert
+        options.Invoking(o => o.Validate())
+            .Should().Throw<ArgumentException>()
+            .WithMessage("*MaxMigrationBytesPerRun*must be non-negative*");
+    }
+
+    [Fact]
+    public void MaintenanceTaskOptions_Validate_ShouldThrowForInvalidTimeZoneId()
+    {
+        // Arrange
+        var options = new MaintenanceTaskOptions
+        {
+            RunOnlyDuringMarketClosedHours = true,
+            MarketTimeZoneId = "Invalid/TimeZone"
+        };
+
+        // Act & Assert
+        options.Invoking(o => o.Validate())
+            .Should().Throw<ArgumentException>()
+            .WithMessage("*Invalid MarketTimeZoneId*")
+            .WithInnerException<TimeZoneNotFoundException>();
+    }
+
+    [Fact]
+    public void MaintenanceTaskOptions_Validate_ShouldThrowWhenMarketOpenTimeAfterCloseTime()
+    {
+        // Arrange
+        var options = new MaintenanceTaskOptions
+        {
+            RunOnlyDuringMarketClosedHours = true,
+            MarketOpenTime = new TimeSpan(16, 0, 0),
+            MarketCloseTime = new TimeSpan(9, 30, 0)
+        };
+
+        // Act & Assert
+        options.Invoking(o => o.Validate())
+            .Should().Throw<ArgumentException>()
+            .WithMessage("*MarketOpenTime*must be before*MarketCloseTime*");
+    }
+
+    [Fact]
+    public void MaintenanceTaskOptions_Validate_ShouldThrowWhenMarketOpenTimeEqualsCloseTime()
+    {
+        // Arrange
+        var options = new MaintenanceTaskOptions
+        {
+            RunOnlyDuringMarketClosedHours = true,
+            MarketOpenTime = new TimeSpan(9, 30, 0),
+            MarketCloseTime = new TimeSpan(9, 30, 0)
+        };
+
+        // Act & Assert
+        options.Invoking(o => o.Validate())
+            .Should().Throw<ArgumentException>()
+            .WithMessage("*MarketOpenTime*must be before*MarketCloseTime*");
+    }
+
+    [Fact]
+    public void MaintenanceTaskOptions_Validate_ShouldThrowForEmptyTimeZoneId()
+    {
+        // Arrange
+        var options = new MaintenanceTaskOptions
+        {
+            RunOnlyDuringMarketClosedHours = true,
+            MarketTimeZoneId = ""
+        };
+
+        // Act & Assert
+        options.Invoking(o => o.Validate())
+            .Should().Throw<ArgumentException>()
+            .WithMessage("*MarketTimeZoneId*is required*");
+    }
+
+    [Fact]
+    public void MaintenanceTaskOptions_Validate_ShouldNotThrowWhenRunOnlyDuringMarketClosedHoursIsFalse()
+    {
+        // Arrange
+        var options = new MaintenanceTaskOptions
+        {
+            RunOnlyDuringMarketClosedHours = false,
+            MarketTimeZoneId = "Invalid/TimeZone", // Invalid but should be ignored
+            MarketOpenTime = new TimeSpan(16, 0, 0),
+            MarketCloseTime = new TimeSpan(9, 30, 0) // Invalid but should be ignored
+        };
+
+        // Act & Assert
+        options.Invoking(o => o.Validate()).Should().NotThrow(
+            "validation should be skipped when RunOnlyDuringMarketClosedHours is false");
+    }
+
+    [Theory]
+    [InlineData("America/New_York")]
+    [InlineData("Europe/London")]
+    [InlineData("Asia/Tokyo")]
+    [InlineData("UTC")]
+    public void MaintenanceTaskOptions_Validate_ShouldAcceptValidTimeZones(string timeZoneId)
+    {
+        // Arrange
+        var options = new MaintenanceTaskOptions
+        {
+            RunOnlyDuringMarketClosedHours = true,
+            MarketTimeZoneId = timeZoneId
+        };
+
+        // Act & Assert
+        options.Invoking(o => o.Validate()).Should().NotThrow(
+            $"{timeZoneId} should be a valid time zone");
+    }
 }
