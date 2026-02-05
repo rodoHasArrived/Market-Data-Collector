@@ -594,7 +594,7 @@ public partial class DashboardPage : Page
         QuickAddSymbolBox.Text = string.Empty;
     }
 
-    private sealed class DashboardActivityItem
+    public sealed class DashboardActivityItem
     {
         public string Title { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
@@ -603,7 +603,7 @@ public partial class DashboardPage : Page
         public Brush IconBackground { get; set; } = Brushes.Transparent;
     }
 
-    private sealed class SymbolPerformanceItem
+    public sealed class SymbolPerformanceItem
     {
         public string Symbol { get; set; } = string.Empty;
         public string StatusText { get; set; } = string.Empty;
@@ -618,7 +618,7 @@ public partial class DashboardPage : Page
         public Brush TrendColor { get; set; } = Brushes.Transparent;
     }
 
-    private sealed class SymbolFreshnessItem
+    public sealed class SymbolFreshnessItem
     {
         public string Symbol { get; set; } = string.Empty;
         public double Progress { get; set; }
@@ -626,7 +626,7 @@ public partial class DashboardPage : Page
         public Brush StatusBrush { get; set; } = Brushes.Transparent;
     }
 
-    private sealed class IntegrityEventItem : INotifyPropertyChanged
+    public sealed class IntegrityEventItem : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler? PropertyChanged;
 
