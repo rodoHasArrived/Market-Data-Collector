@@ -191,7 +191,7 @@ public interface IDataSource { }
 ## References
 
 - [DataSourceAttribute Source](../../src/MarketDataCollector/Infrastructure/DataSources/DataSourceAttribute.cs)
-- [Provider Implementation Guide](../guides/provider-implementation.md)
+- [Provider Implementation Guide](../development/provider-implementation.md)
 - [Microsoft Attribute Guidelines](https://docs.microsoft.com/en-us/dotnet/standard/design-guidelines/attributes)
 
 ---

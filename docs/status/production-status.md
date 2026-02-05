@@ -255,9 +255,9 @@ Automated test coverage is evolving. Refer to the `tests/` directory for the cur
 
 - [Roadmap](ROADMAP.md) - Feature backlog and development priorities
 - [Changelog](CHANGELOG.md) - Recent changes and improvements
-- [Configuration](../guides/configuration.md) - Detailed configuration reference
-- [Troubleshooting](../guides/troubleshooting.md) - Common issues and solutions
-- [Operator Runbook](../guides/operator-runbook.md) - Operations guide
+- [Configuration](../HELP.md#configuration) - Detailed configuration reference
+- [Troubleshooting](../HELP.md#troubleshooting) - Common issues and solutions
+- [Operator Runbook](../operations/operator-runbook.md) - Operations guide
 - [Architecture](../architecture/overview.md) - System architecture overview
 
 ---

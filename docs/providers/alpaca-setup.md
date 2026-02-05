@@ -378,9 +378,9 @@ src/MarketDataCollector/Infrastructure/Providers/
 - [Data Sources Reference](data-sources.md)
 - [Provider Comparison](provider-comparison.md)
 - [Historical Backfill Guide](backfill-guide.md)
-- [Configuration Guide](../guides/configuration.md)
-- [Troubleshooting](../guides/troubleshooting.md)
+- [Configuration Guide](../HELP.md#configuration)
+- [Troubleshooting](../HELP.md#troubleshooting)
 
 ---
 
-*See Also:* [Interactive Brokers Setup](interactive-brokers-setup.md) | [Getting Started](../guides/getting-started.md)
+*See Also:* [Interactive Brokers Setup](interactive-brokers-setup.md) | [Getting Started](../getting-started/README.md)

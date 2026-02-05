@@ -475,7 +475,7 @@ var bars = await composite.GetBarsAsync("AAPL", from, to);
 - [Interactive Brokers Setup](interactive-brokers-setup.md)
 - [Historical Backfill Guide](backfill-guide.md)
 - [Data Sources Reference](data-sources.md)
-- [Configuration Guide](../guides/configuration.md)
+- [Configuration Guide](../HELP.md#configuration)
 
 ---
 

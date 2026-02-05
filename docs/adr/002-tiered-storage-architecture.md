@@ -152,8 +152,8 @@ public sealed record CompressionProfile(
 ## References
 
 - [Storage Design](../architecture/storage-design.md)
-- [Compression Guide](../guides/configuration.md#compression)
-- [Data Lifecycle](../guides/operator-runbook.md#storage-management)
+- [Compression Guide](../HELP.md#configuration)
+- [Data Lifecycle](../operations/operator-runbook.md#storage-management)
 
 ---
 

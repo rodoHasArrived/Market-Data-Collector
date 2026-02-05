@@ -12,10 +12,12 @@ Documents are moved here when they:
 
 ## Contents
 
-- `ARTIFACT_ACTIONS_DOWNGRADE.md` - Legacy notes for downgraded artifact actions compatibility.
-
 | Document | Original Location | Reason Archived | Date |
 |----------|-------------------|-----------------|------|
+| `ARTIFACT_ACTIONS_DOWNGRADE.md` | `docs/` | GitHub Actions version history; decision implemented | 2026-02-05 |
+| `REDESIGN_IMPROVEMENTS.md` | `architecture/` | Meta-document about ui-redesign.md improvements; content merged | 2026-02-05 |
+| `consolidation.md` | `architecture/` | Completed refactor guide; changes implemented | 2026-02-05 |
+| `DUPLICATE_CODE_ANALYSIS.md` | `reference/` | Completed analysis; most items resolved | 2026-02-05 |
 | `desktop-ui-alternatives-evaluation.md` | `evaluations/` | Recommended WinUI 3; project migrated to WPF | 2026-02-04 |
 | `CHANGES_SUMMARY.md` | `status/` | Explicitly marked as historical; superseded by CHANGELOG.md | 2026-02-04 |
 | `REPOSITORY_REORGANIZATION_PLAN.md` | `structure/` | Proposed reorganization not implemented | 2026-02-04 |
@@ -35,4 +37,4 @@ These documents may contain outdated information. If you need to understand hist
 
 ---
 
-*Last Updated: 2026-02-04*
+*Last Updated: 2026-02-05*

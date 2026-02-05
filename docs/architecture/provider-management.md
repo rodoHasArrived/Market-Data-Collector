@@ -545,9 +545,9 @@ See the XML documentation in each source file for detailed API documentation.
 ## Related Documentation
 
 - [Architecture Overview](overview.md)
-- [Configuration Guide](../guides/configuration.md)
+- [Configuration Guide](../HELP.md#configuration)
 - [Storage Organization](storage-design.md)
-- [Operator Runbook](../guides/operator-runbook.md)
+- [Operator Runbook](../operations/operator-runbook.md)
 - [ADR-001: Provider Abstraction](../adr/001-provider-abstraction.md)
 - [ADR-005: Attribute-Based Discovery](../adr/005-attribute-based-discovery.md)
 - [ADR-010: HttpClientFactory](../adr/010-httpclient-factory.md)

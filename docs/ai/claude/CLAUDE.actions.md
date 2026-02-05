@@ -1,31 +1,101 @@
-# CLAUDE.actions.md - GitHub Actions Guide
+# CLAUDE.actions.md - GitHub Actions & CI/CD Guide
 
-This guide summarizes how GitHub Actions are organized in the Market Data Collector repo and where to look for CI/CD context.
+This guide covers the CI/CD pipeline for the Market Data Collector, including workflow structure, common tasks, and troubleshooting.
+
+## Workflow Inventory
+
+The project uses 15 consolidated GitHub Actions workflows in `.github/workflows/`:
+
+| Workflow | File | Trigger | Purpose |
+|----------|------|---------|---------|
+| PR Checks | `pr-checks.yml` | PRs to main/develop | Format, build, test, coverage, AI review |
+| Test Matrix | `test-matrix.yml` | Push/PRs (source changes) | Multi-platform test matrix (Windows, Linux, macOS) |
+| Code Quality | `code-quality.yml` | Push/PRs (source changes) | Formatting, analyzers, doc checks |
+| Security | `security.yml` | Push/PRs, weekly | CodeQL analysis, dependency review |
+| Desktop Builds | `desktop-builds.yml` | Push/PRs (desktop paths) | UWP + WPF builds, MSIX packaging |
+| Build & Release | `dotnet-desktop.yml` | Manual dispatch | Multi-platform publish (Linux/Windows/macOS) |
+| Docker | `docker.yml` | Manual dispatch | Multi-arch Docker images, GHCR push |
+| Release | `release.yml` | Manual dispatch | Semver validation, changelog, GitHub release |
+| Benchmark | `benchmark.yml` | Source/benchmark changes | BenchmarkDotNet performance tracking |
+| Nightly | `nightly.yml` | Scheduled (nightly) | Full build + test + AI failure diagnosis |
+| Documentation | `documentation.yml` | Push/PRs (docs paths) | Doc generation, structure sync, TODO scan |
+| Labeling | `labeling.yml` | Issues/PRs created | Auto-label based on paths and content |
+| Stale | `stale.yml` | Scheduled (daily) | Stale issue/PR management |
+| Build Observability | `build-observability.yml` | Push/PRs, manual | Build metrics, graphs, fingerprints |
+| Scheduled Maintenance | `scheduled-maintenance.yml` | Scheduled, manual | Cache cleanup, dependency updates |
 
 ## Key Locations
 
-- Workflows live in `.github/workflows/`.
-- Composite and custom actions live in `.github/actions/`.
-- Documentation for CI/CD is in:
-  - `docs/development/github-actions-summary.md`
-  - `docs/development/github-actions-testing.md`
+| Item | Path |
+|------|------|
+| Workflows | `.github/workflows/` |
+| Composite actions | `.github/actions/` |
+| Shared .NET build | `.github/workflows/reusable-dotnet-build.yml` |
+| Workflow docs | `.github/workflows/README.md` |
+| Labels config | `.github/labeler.yml`, `.github/labels.yml` |
+| Dependabot | `.github/dependabot.yml` |
+| PR template | `.github/PULL_REQUEST_TEMPLATE.md` |
 
-## Typical Workflow Responsibilities
+## Reusable Build Workflow
 
-- **Build/Test**: multi-platform build + test matrix.
-- **Quality/Security**: code quality checks, dependency review, CodeQL.
-- **Release/Packaging**: desktop app builds, Docker image builds, release automation.
-- **Docs Automation**: documentation generation and structure synchronization.
+`reusable-dotnet-build.yml` is the shared foundation used by multiple workflows. It handles:
+- .NET SDK setup with caching (via `.github/actions/setup-dotnet-cache/`)
+- Restore, build, and test steps
+- Coverage collection and artifact upload
 
-## Common Tasks
+When modifying build logic, change the reusable workflow rather than individual callers.
 
-- Review workflow definitions and associated reusable workflows in `.github/workflows/`.
-- Use the summary and testing docs above for CI/CD intent and local testing tips.
-- When updating workflows, verify related documentation and ensure naming consistency.
+## Common CI/CD Tasks
 
-## Related References
+### Adding a new workflow
+1. Create the YAML file in `.github/workflows/`
+2. Use the `setup-dotnet-cache` composite action for .NET setup
+3. Add entries to `.github/workflows/README.md`
+4. Consider whether it should call `reusable-dotnet-build.yml`
 
-- `docs/development/github-actions-summary.md`
-- `docs/development/github-actions-testing.md`
-- `.github/workflows/README.md`
+### Updating artifact actions
+The project standardizes on `actions/upload-artifact@v4` and `actions/download-artifact@v4` for compatibility. See `docs/archived/ARTIFACT_ACTIONS_DOWNGRADE.md` for rationale.
 
+### Desktop build targets
+The consolidated `desktop-builds.yml` supports selective builds via workflow dispatch:
+- `all` - Build both UWP and WPF
+- `uwp` - UWP only (x64/arm64, MSIX)
+- `wpf` - WPF only (self-contained + framework-dependent)
+- `wpf-smoke-test` - WPF startup validation only
+
+### Build observability
+The `build-observability.yml` workflow captures structured build events, dependency graphs, and metrics. Artifacts are written to `.build-system/`. See `docs/development/build-observability.md`.
+
+## AI-Powered Features
+
+Several workflows include AI-powered analysis steps:
+- **PR Checks** - AI review summary with risk assessment
+- **Desktop Builds** - AI build failure diagnosis
+- **Nightly** - AI failure diagnosis
+- **Security** - AI vulnerability assessment
+- **Code Quality** - AI code quality suggestions
+- **Documentation** - AI documentation quality review, AI TODO triage
+- **Scheduled Maintenance** - AI dependency upgrade recommendations
+
+## Troubleshooting
+
+### Common CI failures
+- **NETSDK1100**: Ensure `EnableWindowsTargeting=true` is set in `Directory.Build.props`
+- **NU1008**: Version specified on `PackageReference` - remove it (CPM is active)
+- **Format check fails**: Run `dotnet format` locally before pushing
+- **Coverage upload fails**: Check Codecov token in repository secrets
+
+### Validating workflows locally
+```bash
+# Syntax-check all workflow YAML files
+for f in .github/workflows/*.yml; do
+  python3 -c "import yaml; yaml.safe_load(open('$f'))"
+done
+```
+
+## Related Documentation
+
+- [`.github/workflows/README.md`](../../../.github/workflows/README.md) - Full workflow details
+- [`docs/development/github-actions-summary.md`](../../development/github-actions-summary.md) - Workflow summary
+- [`docs/development/github-actions-testing.md`](../../development/github-actions-testing.md) - CI testing tips
+- [`docs/development/build-observability.md`](../../development/build-observability.md) - Build metrics system

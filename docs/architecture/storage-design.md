@@ -3091,4 +3091,4 @@ The modular design allows incremental adoption—start with basic naming convent
 **Version:** 2.0.0
 **Last Updated:** 2026-01-28
 **Focus:** Data Collection, Archival & External Analysis Export
-**See Also:** [MarketDataCollector README](../../README.md) | [Architecture Overview](overview.md) | [Configuration Guide](../guides/configuration.md) | [ADR-002: Tiered Storage](../adr/002-tiered-storage-architecture.md)
+**See Also:** [MarketDataCollector README](../../README.md) | [Architecture Overview](overview.md) | [Configuration Guide](../HELP.md#configuration) | [ADR-002: Tiered Storage](../adr/002-tiered-storage-architecture.md)

@@ -535,7 +535,7 @@ GET  /api/backfill/quality/{symbol}
 - [Alpaca Setup](alpaca-setup.md)
 - [Interactive Brokers Setup](interactive-brokers-setup.md)
 - [Storage Architecture](../architecture/storage-design.md)
-- [Operator Runbook](../guides/operator-runbook.md)
+- [Operator Runbook](../operations/operator-runbook.md)
 
 ---
 

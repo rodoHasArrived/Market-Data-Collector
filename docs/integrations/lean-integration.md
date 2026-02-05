@@ -503,4 +503,4 @@ src/MarketDataCollector/Integrations/Lean/
 
 ---
 
-**See Also:** [Architecture](../architecture/overview.md) | [Configuration](../guides/configuration.md) | [Lean Integration README](../../src/MarketDataCollector/Integrations/Lean/README.md)
+**See Also:** [Architecture](../architecture/overview.md) | [Configuration](../HELP.md#configuration) | [Lean Integration README](../../src/MarketDataCollector/Integrations/Lean/README.md)
