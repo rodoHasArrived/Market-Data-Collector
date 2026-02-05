@@ -89,7 +89,7 @@ dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --mod
 To reduce repeated mistakes across agents, always review and update:
 
 - `docs/ai-known-errors.md` — canonical log of recurring agent mistakes, root causes, and prevention checks.
-- `.github/workflows/documentation.yml` (AI Known Errors Intake job) — automation that ingests labeled GitHub issues into the known-error registry via PR.
+- `.github/workflows/docs-comprehensive.yml (AI Known Errors Intake job)` — automation that ingests labeled GitHub issues into the known-error registry via PR.
 
 ### Required workflow for AI agents
 
@@ -189,6 +189,7 @@ Market-Data-Collector/
 │   │   └── write-unit-tests.prompt.yml
 │   ├── workflows/
 │   │   ├── ai-instructions-sync.yml
+│   │   ├── AI_SYNC_FIX_SUMMARY.md
 │   │   ├── benchmark.yml
 │   │   ├── build-observability.yml
 │   │   ├── cache-management.yml
@@ -197,8 +198,8 @@ Market-Data-Collector/
 │   │   ├── desktop-app.yml
 │   │   ├── docker.yml
 │   │   ├── docs-auto-update.yml
+│   │   ├── docs-comprehensive.yml
 │   │   ├── docs-structure-sync.yml
-│   │   ├── documentation.yml
 │   │   ├── dotnet-desktop.yml
 │   │   ├── labeling.yml
 │   │   ├── nightly.yml
@@ -210,6 +211,7 @@ Market-Data-Collector/
 │   │   ├── security.yml
 │   │   ├── stale.yml
 │   │   ├── test-matrix.yml
+│   │   ├── TESTING_AI_SYNC.md
 │   │   ├── todo-automation.yml
 │   │   ├── validate-workflows.yml
 │   │   ├── wpf-commands.yml
@@ -389,6 +391,11 @@ Market-Data-Collector/
 │   │   ├── historical-data-providers-evaluation.md
 │   │   ├── realtime-streaming-architecture-evaluation.md
 │   │   └── storage-architecture-evaluation.md
+│   ├── generated/
+│   │   ├── project-context.md
+│   │   ├── provider-registry.md
+│   │   ├── repository-structure.md
+│   │   └── workflows-overview.md
 │   ├── getting-started/
 │   │   └── README.md
 │   ├── integrations/
@@ -447,6 +454,7 @@ Market-Data-Collector/
 │   │   ├── timing-diagram.puml
 │   │   ├── use-case-diagram.png
 │   │   └── use-case-diagram.puml
+│   ├── ai-known-errors.md
 │   ├── ARTIFACT_ACTIONS_DOWNGRADE.md
 │   ├── build-observability.md
 │   ├── DEPENDENCIES.md
@@ -1096,6 +1104,8 @@ Market-Data-Collector/
 │   │   │   └── Models/
 │   │   │       ...
 │   │   ├── Infrastructure/
+│   │   │   ├── DataSources/
+│   │   │   │   ...
 │   │   │   ├── Providers/
 │   │   │   │   ...
 │   │   │   ├── Resilience/
