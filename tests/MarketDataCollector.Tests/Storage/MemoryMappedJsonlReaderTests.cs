@@ -260,7 +260,7 @@ public class MemoryMappedJsonlReaderTests : IDisposable
         // Act
         var events = new List<MarketEvent>();
         bool exceptionWasThrown = false;
-        
+
         try
         {
             await foreach (var evt in reader.ReadEventsAsync(cts.Token))
@@ -283,7 +283,7 @@ public class MemoryMappedJsonlReaderTests : IDisposable
         // In both cases, should have read significantly fewer than 2000 events
         events.Should().NotBeEmpty("should have read some events before cancellation");
         events.Should().HaveCountLessThan(2000, "should stop reading after cancellation was requested");
-        
+
         // The test is valid whether exception was thrown or iterator just stopped
         // Both behaviors correctly respond to cancellation
         var cancellationWasObserved = exceptionWasThrown || events.Count < 2000;

@@ -442,10 +442,10 @@ public sealed class StatusEndpointHandlers
         }
 
         var summary = _providerLatencyProvider();
-        var globalAvgMs = summary.Providers.Any() 
-            ? summary.Providers.Average(p => p.MeanMs) 
+        var globalAvgMs = summary.Providers.Any()
+            ? summary.Providers.Average(p => p.MeanMs)
             : 0.0;
-        
+
         return (new ProviderLatencySummaryDto
         {
             Timestamp = summary.CalculatedAt,

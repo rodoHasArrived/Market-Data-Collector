@@ -220,11 +220,11 @@ public class TechnicalIndicatorServiceTests
         {
             var dayChange = (decimal)(random.NextDouble() - 0.5) * 2m;
             var close = basePrice + dayChange;
-            
+
             // Ensure high is the maximum and low is the minimum of open and close
             var potentialHigh = basePrice + (decimal)random.NextDouble() * 1m;
             var potentialLow = basePrice - (decimal)random.NextDouble() * 1m;
-            
+
             var high = Math.Max(basePrice, Math.Max(close, potentialHigh));
             var low = Math.Min(basePrice, Math.Min(close, potentialLow));
 

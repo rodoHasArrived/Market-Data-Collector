@@ -67,11 +67,11 @@ public class IndicatorBenchmarks
             var dayChange = (decimal)(random.NextDouble() - 0.5) * 5m;
             var open = basePrice;
             var close = basePrice + dayChange;
-            
+
             // Ensure high is always >= max(open, close)
             var maxPrice = Math.Max(open, close);
             var high = maxPrice + (decimal)random.NextDouble() * 2m;
-            
+
             // Ensure low is always <= min(open, close)
             var minPrice = Math.Min(open, close);
             var low = minPrice - (decimal)random.NextDouble() * 2m;
@@ -151,11 +151,11 @@ public class SingleIndicatorBenchmarks
             var dayChange = (decimal)(random.NextDouble() - 0.5) * 2m;
             var open = basePrice;
             var close = basePrice + dayChange;
-            
+
             // Ensure high is always >= max(open, close)
             var maxPrice = Math.Max(open, close);
             var high = maxPrice + (decimal)random.NextDouble() * 1m;
-            
+
             // Ensure low is always <= min(open, close)
             var minPrice = Math.Min(open, close);
             var low = minPrice - (decimal)random.NextDouble() * 1m;

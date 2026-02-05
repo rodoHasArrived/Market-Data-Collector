@@ -109,7 +109,7 @@ public class HighPerformanceJsonTests
     // These tests are temporarily skipped due to JSON property name collision with source generator.
     // A dedicated JsonSerializerContext for Alpaca messages is needed to properly support these parsing methods.
     // In the meantime, the production code still works correctly using non-source-generated deserialization.
-    
+
     [Fact(Skip = "Tracking issue #670 - AlpacaTradeMessage needs separate JsonContext for source generator")]
     public void ParseAlpacaTrade_ShouldParseCorrectly()
     {
@@ -153,27 +153,27 @@ public class HighPerformanceJsonTests
         quote.BidExchange.Should().Be("NYSE");
         quote.AskExchange.Should().Be("ARCA");
     }
-    
+
     [Fact]
     public void AlpacaMessageParsing_WithStandardJsonOptions_WorksInProduction()
     {
         // This test validates that the production behavior still works correctly
         // using System.Text.Json without source generators, ensuring parsing
         // functionality is not broken even though the source-generated tests are skipped.
-        
+
         // Arrange - Simplified Alpaca-like message structure
         var tradeJson = """{"T":"t","S":"SPY","p":450.25}""";
         var quoteJson = """{"T":"q","S":"AAPL","bp":150.00,"ap":150.05}""";
-        
+
         // Act - Parse using standard System.Text.Json
         var tradeDoc = JsonDocument.Parse(tradeJson);
         var quoteDoc = JsonDocument.Parse(quoteJson);
-        
+
         // Assert - Verify basic deserialization works
         tradeDoc.RootElement.GetProperty("T").GetString().Should().Be("t");
         tradeDoc.RootElement.GetProperty("S").GetString().Should().Be("SPY");
         tradeDoc.RootElement.GetProperty("p").GetDecimal().Should().Be(450.25m);
-        
+
         quoteDoc.RootElement.GetProperty("T").GetString().Should().Be("q");
         quoteDoc.RootElement.GetProperty("S").GetString().Should().Be("AAPL");
         quoteDoc.RootElement.GetProperty("bp").GetDecimal().Should().Be(150.00m);
