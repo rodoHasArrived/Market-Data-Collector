@@ -28,6 +28,7 @@ public sealed class ParquetStorageSink : IStorageSink
     private readonly ParquetStorageOptions _parquetOptions;
     private readonly ConcurrentDictionary<string, MarketEventBuffer> _buffers = new(StringComparer.OrdinalIgnoreCase);
     private readonly Timer _flushTimer;
+    private readonly CancellationTokenSource _disposalCts = new();
     private bool _disposed;
 
     // Trade event schema
@@ -88,9 +89,9 @@ public sealed class ParquetStorageSink : IStorageSink
         _options = options ?? throw new ArgumentNullException(nameof(options));
         _parquetOptions = parquetOptions ?? ParquetStorageOptions.Default;
 
-        // Setup periodic flush timer
+        // Setup periodic flush timer with safe wrapper to prevent silent exceptions
         _flushTimer = new Timer(
-            async _ => await FlushAllBuffersAsync(),
+            _ => _ = FlushAllBuffersSafelyAsync(),
             null,
             _parquetOptions.FlushInterval,
             _parquetOptions.FlushInterval);
@@ -124,12 +125,30 @@ public sealed class ParquetStorageSink : IStorageSink
 
     private async Task FlushAllBuffersAsync(CancellationToken ct = default)
     {
+        if (_disposed) return;
+
         foreach (var kvp in _buffers)
         {
             if (kvp.Value.Count > 0)
             {
                 await FlushBufferAsync(kvp.Key, kvp.Value, ct);
             }
+        }
+    }
+
+    private async Task FlushAllBuffersSafelyAsync()
+    {
+        try
+        {
+            await FlushAllBuffersAsync(_disposalCts.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (_disposalCts.IsCancellationRequested)
+        {
+            // Disposal in progress, stop flushing
+        }
+        catch (Exception ex)
+        {
+            _log.Warning(ex, "Periodic Parquet flush failed");
         }
     }
 
@@ -337,9 +356,16 @@ public sealed class ParquetStorageSink : IStorageSink
         if (_disposed) return;
         _disposed = true;
 
+        // Signal disposal to timer callbacks
+        _disposalCts.Cancel();
+
         await _flushTimer.DisposeAsync();
+
+        // Final flush (not timer-driven, so use default token)
         await FlushAllBuffersAsync();
         _buffers.Clear();
+
+        _disposalCts.Dispose();
 
         _log.Information("ParquetStorageSink disposed");
     }

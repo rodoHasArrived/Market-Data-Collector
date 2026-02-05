@@ -13,6 +13,7 @@ using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.DataSources;
+using MarketDataCollector.Infrastructure.Http;
 using MarketDataCollector.Infrastructure.Providers.Backfill;
 using Serilog;
 using DataSourceType = MarketDataCollector.Infrastructure.DataSources.DataSourceType;
@@ -143,11 +144,9 @@ public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHisto
     {
         _options = options ?? throw new ArgumentNullException(nameof(options));
 
-        _httpClient = new HttpClient
-        {
-            BaseAddress = new Uri(_options.EffectiveBaseUrl),
-            Timeout = TimeSpan.FromSeconds(_options.ConnectionTimeoutSeconds)
-        };
+        _httpClient = HttpClientFactoryProvider.CreateClient(HttpClientNames.NYSE);
+        _httpClient.BaseAddress = new Uri(_options.EffectiveBaseUrl);
+        _httpClient.Timeout = TimeSpan.FromSeconds(_options.ConnectionTimeoutSeconds);
         _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
     }
 

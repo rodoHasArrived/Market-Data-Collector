@@ -139,29 +139,22 @@ public static class FailoverEndpoints
             return Results.Ok();
         });
 
-        // Force failover
+        // Force failover — not yet wired to MultiProviderService
         app.MapPost(UiApiRoutes.FailoverForce.Replace("{ruleId}", "{ruleId}"), (ConfigStore store, string ruleId, ForceFailoverRequest req) =>
         {
-            // In a real implementation, this would trigger actual failover via MultiProviderService
-            return Results.Ok(new { success = true, message = $"Failover triggered for rule {ruleId} to provider {req.TargetProviderId}" });
+            return Results.Json(
+                new { success = false, message = "Force failover is not yet implemented. Wire this endpoint to MultiProviderService / ConnectionHealthMonitor." },
+                jsonOptions,
+                statusCode: 501);
         });
 
-        // Get provider health
+        // Get provider health — not yet wired to ConnectionHealthMonitor
         app.MapGet(UiApiRoutes.FailoverHealth, (ConfigStore store) =>
         {
-            var cfg = store.Load();
-            var sources = cfg.DataSources?.Sources ?? Array.Empty<DataSourceConfig>();
-
-            var health = sources.Select(s => new ProviderHealthResponse(
-                ProviderId: s.Id,
-                ConsecutiveFailures: 0,
-                ConsecutiveSuccesses: s.Enabled ? 10 : 0,
-                LastIssueTime: null,
-                LastSuccessTime: s.Enabled ? DateTimeOffset.UtcNow : null,
-                RecentIssues: Array.Empty<HealthIssueResponse>()
-            )).ToArray();
-
-            return Results.Json(health, jsonOptions);
+            return Results.Json(
+                new { success = false, message = "Provider health endpoint is not yet implemented. Wire this endpoint to ConnectionHealthMonitor for live data." },
+                jsonOptions,
+                statusCode: 501);
         });
     }
 }
