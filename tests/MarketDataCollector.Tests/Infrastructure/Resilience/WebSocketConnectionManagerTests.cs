@@ -13,8 +13,7 @@ public class WebSocketConnectionManagerTests
     public void Constructor_WithValidArgs_CreatesInstance()
     {
         var manager = new WebSocketConnectionManager(
-            providerName: "test-provider",
-            uri: new Uri("wss://example.com"));
+            providerName: "test-provider");
 
         manager.Should().NotBeNull();
         manager.IsConnected.Should().BeFalse();
@@ -24,8 +23,7 @@ public class WebSocketConnectionManagerTests
     public void StartReceiveLoop_WithoutConnect_ThrowsInvalidOperationException()
     {
         var manager = new WebSocketConnectionManager(
-            providerName: "test-provider",
-            uri: new Uri("wss://example.com"));
+            providerName: "test-provider");
 
         var act = () => manager.StartReceiveLoop(msg => Task.CompletedTask);
         act.Should().Throw<InvalidOperationException>()
@@ -36,8 +34,7 @@ public class WebSocketConnectionManagerTests
     public async Task DisposeAsync_WithoutConnect_DoesNotThrow()
     {
         var manager = new WebSocketConnectionManager(
-            providerName: "test-provider",
-            uri: new Uri("wss://example.com"));
+            providerName: "test-provider");
 
         // Should not throw even if never connected
         await manager.DisposeAsync();
