@@ -404,6 +404,34 @@ public sealed class PortableDataPackager
 
     private void ExtractMetadataFromPath(SourceFileInfo info, string[] pathParts, string fileName)
     {
+        // First, check path parts for symbol and event type (prioritize directory structure)
+        // Common patterns: SYMBOL/EventType/date.jsonl or Provider/SYMBOL/EventType/date.jsonl
+        for (var i = 0; i < pathParts.Length - 1; i++) // Exclude filename itself
+        {
+            var part = pathParts[i];
+            
+            // Skip common provider/root directories
+            if (i == 0 && (part.Equals("live", StringComparison.OrdinalIgnoreCase) ||
+                           part.Equals("historical", StringComparison.OrdinalIgnoreCase) ||
+                           part.Equals("data", StringComparison.OrdinalIgnoreCase)))
+            {
+                continue;
+            }
+            
+            // Check for known event types in path
+            if (IsKnownEventType(part))
+            {
+                info.EventType ??= part;
+                continue;
+            }
+            
+            // If we haven't found symbol yet and this isn't a date, it's likely the symbol
+            if (info.Symbol == null && !DateTime.TryParse(part, out _))
+            {
+                info.Symbol = part.ToUpperInvariant();
+            }
+        }
+        
         // Remove extensions to get base name
         var baseName = fileName;
         foreach (var ext in new[] { ".gz", ".zst", ".jsonl", ".parquet", ".csv" })
@@ -414,21 +442,21 @@ public sealed class PortableDataPackager
             }
         }
 
-        // Try different naming conventions
+        // Try different naming conventions from filename if we still don't have metadata
         // Pattern: SYMBOL.EventType.Date or SYMBOL_EventType_Date
         var parts = baseName.Split('.', '_');
 
-        if (parts.Length >= 1)
+        if (parts.Length >= 1 && info.Symbol == null)
         {
             info.Symbol = parts[0].ToUpperInvariant();
         }
 
-        if (parts.Length >= 2)
+        if (parts.Length >= 2 && info.EventType == null)
         {
             info.EventType = parts[1];
         }
 
-        // Try to parse date from parts
+        // Try to parse date from filename parts
         foreach (var part in parts)
         {
             if (DateTime.TryParse(part, out var date))
@@ -446,18 +474,16 @@ public sealed class PortableDataPackager
             }
         }
 
-        // Also check path parts for additional context
-        foreach (var pathPart in pathParts)
+        // Also check path parts for date if not found yet
+        if (info.Date == null)
         {
-            if (DateTime.TryParse(pathPart, out var date))
+            foreach (var pathPart in pathParts)
             {
-                info.Date ??= date;
-            }
-
-            // Check for known event types
-            if (IsKnownEventType(pathPart))
-            {
-                info.EventType ??= pathPart;
+                if (DateTime.TryParse(pathPart, out var date))
+                {
+                    info.Date = date;
+                    break;
+                }
             }
         }
 

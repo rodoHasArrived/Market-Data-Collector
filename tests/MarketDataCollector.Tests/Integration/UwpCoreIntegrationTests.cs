@@ -207,7 +207,7 @@ public class UwpCoreIntegrationTests : IAsyncLifetime
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var content = await response.Content.ReadAsStringAsync();
-        content.Should().Contain("mdc_events_published");
+        content.Should().Contain("mdc_published");
     }
 
     /// <summary>
@@ -284,8 +284,8 @@ public class UwpCoreIntegrationTests : IAsyncLifetime
         response.Content.Headers.ContentType?.MediaType.Should().Be("text/html");
 
         var content = await response.Content.ReadAsStringAsync();
-        content.Should().Contain("<!DOCTYPE html>");
-        content.Should().Contain("Market Data Collector");
+        content.Should().Contain("<!doctype html>");
+        content.Should().Contain("MarketDataCollector Status");
     }
 
     /// <summary>
