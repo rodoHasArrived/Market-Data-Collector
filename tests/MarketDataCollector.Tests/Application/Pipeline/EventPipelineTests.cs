@@ -433,19 +433,28 @@ public class EventPipelineTests : IAsyncLifetime
     [Fact]
     public async Task PublishAsync_WithCancellation_ThrowsWhenCancelled()
     {
-        // Arrange - Use very slow consumer and fill queue completely
-        await using var sink = new MockStorageSink { ProcessingDelay = TimeSpan.FromSeconds(10) };
-        await using var pipeline = new EventPipeline(sink, capacity: 1, enablePeriodicFlush: false);
+        // Arrange - Create a sink with infinite processing delay and use very small capacity
+        await using var sink = new MockStorageSink { ProcessingDelay = TimeSpan.FromHours(10) };
+        await using var pipeline = new EventPipeline(sink, capacity: 1, fullMode: BoundedChannelFullMode.Wait, enablePeriodicFlush: false);
 
-        // Fill the queue - wait for consumer to start processing (longer delay for CI reliability)
-        pipeline.TryPublish(CreateTradeEvent("SPY"));
-        await Task.Delay(50); // Conservative delay to ensure consumer has started on slower CI systems
+        // Fill the channel with one event using PublishAsync in background
+        var backgroundTask = Task.Run(async () => await pipeline.PublishAsync(CreateTradeEvent("FILL")));
+        
+        // Wait for the consumer to pick up the event and start the long processing
+        await Task.Delay(100);
+        
+        // Now the queue is empty (0/1) but consumer is blocked for 10 hours processing
+        // Try to publish another event - it should write successfully to the queue
+        var secondTask = Task.Run(async () => await pipeline.PublishAsync(CreateTradeEvent("SECOND")));
+        await Task.Delay(100);
+        
+        // Now queue is full (1/1) with SECOND waiting, consumer still processing FILL
+        // This third write should block waiting for space
+        using var cts = new CancellationTokenSource(100);
 
-        using var cts = new CancellationTokenSource(100); // Cancellation timeout
-
-        // Act & Assert - Second publish should block since queue is full and consumer is slow
+        // Act & Assert - This should block and then throw when cancelled
         await Assert.ThrowsAnyAsync<OperationCanceledException>(
-            async () => await pipeline.PublishAsync(CreateTradeEvent("AAPL"), cts.Token));
+            async () => await pipeline.PublishAsync(CreateTradeEvent("THIRD"), cts.Token));
     }
 
     #endregion

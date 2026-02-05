@@ -285,9 +285,9 @@ public sealed class StatusEndpointHandlers
         var m = _metricsProvider();
         var sb = new StringBuilder();
 
-        sb.AppendLine("# HELP mdc_published Total events published");
-        sb.AppendLine("# TYPE mdc_published counter");
-        sb.AppendLine($"mdc_published {m.Published}");
+        sb.AppendLine("# HELP mdc_events_published Total events published");
+        sb.AppendLine("# TYPE mdc_events_published counter");
+        sb.AppendLine($"mdc_events_published {m.Published}");
 
         sb.AppendLine("# HELP mdc_dropped Total events dropped");
         sb.AppendLine("# TYPE mdc_dropped counter");

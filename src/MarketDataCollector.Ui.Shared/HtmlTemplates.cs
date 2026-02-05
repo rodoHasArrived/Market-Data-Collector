@@ -7,7 +7,7 @@ namespace MarketDataCollector.Ui.Shared;
 public static class HtmlTemplates
 {
     public static string Index(string configPath, string statusPath, string backfillPath) => $@"
-<!doctype html>
+<!DOCTYPE html>
 <html>
 <head>
   <meta charset=""utf-8"" />
