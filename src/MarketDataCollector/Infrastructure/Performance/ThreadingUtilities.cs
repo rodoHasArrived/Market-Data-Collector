@@ -78,13 +78,6 @@ public static class ThreadingUtilities
     /// <param name="affinityMask">Bitmask of allowed CPUs (e.g., 0x3 = CPUs 0 and 1)</param>
     public static bool TrySetProcessAffinity(nint affinityMask)
     {
-        // ProcessorAffinity is only supported on Windows and Linux
-        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && 
-            !RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-        {
-            return false;
-        }
-
         try
         {
             using var process = Process.GetCurrentProcess();

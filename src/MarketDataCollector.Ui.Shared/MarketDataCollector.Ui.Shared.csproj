@@ -13,12 +13,6 @@
     <Product>Market Data Collector UI Shared</Product>
     <Copyright>Copyright 2024 MarketDataCollector Team</Copyright>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    
-    <!-- Suppress expected warnings -->
-    <!-- 1591: Missing XML comment for publicly visible type or member -->
-    <!-- CS1998: Async method lacks await (often required for interface implementation or future async work) -->
-    <!-- IL2026: Member has RequiresUnreferencedCodeAttribute (expected for JSON serialization with trimming) -->
-    <NoWarn>$(NoWarn);1591;CS1998;IL2026</NoWarn>
   </PropertyGroup>
 
   <!-- Web/ASP.NET Core dependencies for endpoint mapping -->
