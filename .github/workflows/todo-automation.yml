@@ -189,7 +189,7 @@ jobs:
           EOF
 
       - name: Append Copilot triage output to report
-        if: always() && steps.copilot.outputs.response != ''
+        if: always() && steps.copilot.outcome == 'success' && steps.copilot.outputs.response != ''
         run: |
           {
             echo ""

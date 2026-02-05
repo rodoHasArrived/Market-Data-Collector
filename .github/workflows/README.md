@@ -355,6 +355,14 @@ graph TD
 4. **Security first**: All code changes go through multiple security scans
 5. **Automated maintenance**: Let workflows handle routine tasks
 6. **Documentation**: Keep this README updated with workflow changes
+7. **Safe conditionals**: When using `always()` with step outputs, always check step outcome first:
+   ```yaml
+   # ❌ Unsafe - can fail if step was skipped or failed
+   if: always() && steps.foo.outputs.bar != ''
+   
+   # ✅ Safe - checks outcome before accessing outputs
+   if: always() && steps.foo.outcome == 'success' && steps.foo.outputs.bar != ''
+   ```
 
 ## 🛠️ Maintenance
 
@@ -393,5 +401,5 @@ graph TD
 
 ---
 
-**Last Updated**: 2026-01-31
+**Last Updated**: 2026-02-05
 **Maintained By**: Market Data Collector Team
