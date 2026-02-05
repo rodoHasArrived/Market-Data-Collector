@@ -444,7 +444,7 @@ public class EventPipelineTests : IAsyncLifetime
         // Fill the channel completely (2 items)
         pipeline.TryPublish(CreateTradeEvent("SPY"));
         pipeline.TryPublish(CreateTradeEvent("MSFT"));
-        
+
         // Wait a bit for consumer to start processing (but not finish due to delay)
         await Task.Delay(20);
 
