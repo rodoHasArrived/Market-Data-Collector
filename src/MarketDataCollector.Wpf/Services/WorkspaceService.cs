@@ -1,0 +1,415 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text.Json;
+using System.Threading.Tasks;
+
+namespace MarketDataCollector.Wpf.Services;
+
+/// <summary>
+/// Service for managing workspace templates and session restore.
+/// Uses file-based JSON storage (WPF replacement for ApplicationData.LocalSettings).
+/// </summary>
+public sealed class WorkspaceService
+{
+    private static WorkspaceService? _instance;
+    private static readonly object _lock = new();
+
+    private const string WorkspacesFileName = "workspace-data.json";
+
+    private WorkspaceTemplate? _activeWorkspace;
+    private SessionState? _lastSession;
+    private readonly List<WorkspaceTemplate> _workspaces = new();
+
+    public static WorkspaceService Instance
+    {
+        get
+        {
+            if (_instance == null)
+            {
+                lock (_lock)
+                {
+                    _instance ??= new WorkspaceService();
+                }
+            }
+            return _instance;
+        }
+    }
+
+    private WorkspaceService()
+    {
+        _ = LoadWorkspacesAsync();
+    }
+
+    public WorkspaceTemplate? ActiveWorkspace => _activeWorkspace;
+    public SessionState? LastSession => _lastSession;
+    public IReadOnlyList<WorkspaceTemplate> Workspaces => _workspaces.AsReadOnly();
+
+    private static string GetSettingsFilePath()
+    {
+        var dir = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "MarketDataCollector");
+        Directory.CreateDirectory(dir);
+        return Path.Combine(dir, WorkspacesFileName);
+    }
+
+    /// <summary>
+    /// Persisted workspace data container.
+    /// </summary>
+    private sealed class WorkspaceData
+    {
+        public List<WorkspaceTemplate> Workspaces { get; set; } = new();
+        public string? ActiveWorkspaceId { get; set; }
+        public SessionState? LastSession { get; set; }
+    }
+
+    public async Task LoadWorkspacesAsync()
+    {
+        try
+        {
+            var filePath = GetSettingsFilePath();
+            if (File.Exists(filePath))
+            {
+                var json = await File.ReadAllTextAsync(filePath);
+                var data = JsonSerializer.Deserialize<WorkspaceData>(json);
+
+                if (data != null)
+                {
+                    if (data.Workspaces.Count > 0)
+                    {
+                        _workspaces.Clear();
+                        _workspaces.AddRange(data.Workspaces);
+                    }
+
+                    if (data.ActiveWorkspaceId != null)
+                    {
+                        _activeWorkspace = _workspaces.FirstOrDefault(w => w.Id == data.ActiveWorkspaceId);
+                    }
+
+                    _lastSession = data.LastSession;
+                }
+            }
+
+            if (_workspaces.Count == 0)
+            {
+                _workspaces.AddRange(GetDefaultWorkspaces());
+                await SaveWorkspacesAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[WorkspaceService] Error loading workspaces: {ex.Message}");
+        }
+    }
+
+    public async Task SaveWorkspacesAsync()
+    {
+        try
+        {
+            var data = new WorkspaceData
+            {
+                Workspaces = _workspaces.ToList(),
+                ActiveWorkspaceId = _activeWorkspace?.Id,
+                LastSession = _lastSession
+            };
+
+            var json = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
+            await File.WriteAllTextAsync(GetSettingsFilePath(), json);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[WorkspaceService] Error saving workspaces: {ex.Message}");
+        }
+    }
+
+    public async Task<WorkspaceTemplate> CreateWorkspaceAsync(string name, string description, WorkspaceCategory category)
+    {
+        var workspace = new WorkspaceTemplate
+        {
+            Id = Guid.NewGuid().ToString(),
+            Name = name,
+            Description = description,
+            Category = category,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+            Pages = new List<WorkspacePage>(),
+            WidgetLayout = new Dictionary<string, WidgetPosition>(),
+            Filters = new Dictionary<string, string>()
+        };
+
+        _workspaces.Add(workspace);
+        await SaveWorkspacesAsync();
+
+        WorkspaceCreated?.Invoke(this, new WorkspaceEventArgs { Workspace = workspace });
+        return workspace;
+    }
+
+    public async Task UpdateWorkspaceAsync(WorkspaceTemplate workspace)
+    {
+        var existing = _workspaces.FirstOrDefault(w => w.Id == workspace.Id);
+        if (existing != null)
+        {
+            var index = _workspaces.IndexOf(existing);
+            workspace.UpdatedAt = DateTime.UtcNow;
+            _workspaces[index] = workspace;
+            await SaveWorkspacesAsync();
+
+            WorkspaceUpdated?.Invoke(this, new WorkspaceEventArgs { Workspace = workspace });
+        }
+    }
+
+    public async Task DeleteWorkspaceAsync(string workspaceId)
+    {
+        var workspace = _workspaces.FirstOrDefault(w => w.Id == workspaceId);
+        if (workspace != null && !workspace.IsBuiltIn)
+        {
+            _workspaces.Remove(workspace);
+            await SaveWorkspacesAsync();
+
+            WorkspaceDeleted?.Invoke(this, new WorkspaceEventArgs { Workspace = workspace });
+        }
+    }
+
+    public async Task ActivateWorkspaceAsync(string workspaceId)
+    {
+        var workspace = _workspaces.FirstOrDefault(w => w.Id == workspaceId);
+        if (workspace != null)
+        {
+            _activeWorkspace = workspace;
+            await SaveWorkspacesAsync();
+
+            WorkspaceActivated?.Invoke(this, new WorkspaceEventArgs { Workspace = workspace });
+        }
+    }
+
+    public async Task<WorkspaceTemplate> CaptureCurrentStateAsync(string name, string description)
+    {
+        var workspace = new WorkspaceTemplate
+        {
+            Id = Guid.NewGuid().ToString(),
+            Name = name,
+            Description = description,
+            Category = WorkspaceCategory.Custom,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+            Pages = _lastSession?.OpenPages ?? new List<WorkspacePage>(),
+            WidgetLayout = _lastSession?.WidgetLayout ?? new Dictionary<string, WidgetPosition>(),
+            Filters = _lastSession?.ActiveFilters ?? new Dictionary<string, string>(),
+            WindowBounds = _lastSession?.WindowBounds
+        };
+
+        _workspaces.Add(workspace);
+        await SaveWorkspacesAsync();
+
+        return workspace;
+    }
+
+    public async Task SaveSessionStateAsync(SessionState state)
+    {
+        try
+        {
+            _lastSession = state;
+            state.SavedAt = DateTime.UtcNow;
+            await SaveWorkspacesAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[WorkspaceService] Error saving session state: {ex.Message}");
+        }
+    }
+
+    public SessionState? GetLastSessionState()
+    {
+        return _lastSession;
+    }
+
+    public async Task<string> ExportWorkspaceAsync(string workspaceId)
+    {
+        var workspace = _workspaces.FirstOrDefault(w => w.Id == workspaceId);
+        if (workspace != null)
+        {
+            return JsonSerializer.Serialize(workspace, new JsonSerializerOptions { WriteIndented = true });
+        }
+        return string.Empty;
+    }
+
+    public async Task<WorkspaceTemplate?> ImportWorkspaceAsync(string json)
+    {
+        try
+        {
+            var workspace = JsonSerializer.Deserialize<WorkspaceTemplate>(json);
+            if (workspace != null)
+            {
+                workspace.Id = Guid.NewGuid().ToString();
+                workspace.IsBuiltIn = false;
+                workspace.CreatedAt = DateTime.UtcNow;
+                workspace.UpdatedAt = DateTime.UtcNow;
+
+                _workspaces.Add(workspace);
+                await SaveWorkspacesAsync();
+
+                return workspace;
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[WorkspaceService] Error importing workspace: {ex.Message}");
+        }
+        return null;
+    }
+
+    private static List<WorkspaceTemplate> GetDefaultWorkspaces()
+    {
+        return new List<WorkspaceTemplate>
+        {
+            new WorkspaceTemplate
+            {
+                Id = "monitoring",
+                Name = "Monitoring",
+                Description = "Real-time monitoring and data quality overview",
+                Category = WorkspaceCategory.Monitoring,
+                IsBuiltIn = true,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+                Pages = new List<WorkspacePage>
+                {
+                    new WorkspacePage { PageTag = "Dashboard", Title = "Dashboard", IsDefault = true },
+                    new WorkspacePage { PageTag = "DataQuality", Title = "Data Quality" },
+                    new WorkspacePage { PageTag = "SystemHealth", Title = "System Health" },
+                    new WorkspacePage { PageTag = "LiveData", Title = "Live Data" }
+                }
+            },
+            new WorkspaceTemplate
+            {
+                Id = "backfill-ops",
+                Name = "Backfill Operations",
+                Description = "Historical data backfill and gap filling",
+                Category = WorkspaceCategory.Backfill,
+                IsBuiltIn = true,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+                Pages = new List<WorkspacePage>
+                {
+                    new WorkspacePage { PageTag = "Backfill", Title = "Backfill", IsDefault = true },
+                    new WorkspacePage { PageTag = "DataCalendar", Title = "Data Calendar" },
+                    new WorkspacePage { PageTag = "ArchiveHealth", Title = "Archive Health" },
+                    new WorkspacePage { PageTag = "Schedules", Title = "Schedules" }
+                }
+            },
+            new WorkspaceTemplate
+            {
+                Id = "storage-admin",
+                Name = "Storage Admin",
+                Description = "Storage management and maintenance",
+                Category = WorkspaceCategory.Storage,
+                IsBuiltIn = true,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+                Pages = new List<WorkspacePage>
+                {
+                    new WorkspacePage { PageTag = "Storage", Title = "Storage", IsDefault = true },
+                    new WorkspacePage { PageTag = "AdminMaintenance", Title = "Maintenance" },
+                    new WorkspacePage { PageTag = "PackageManager", Title = "Packages" },
+                    new WorkspacePage { PageTag = "DataBrowser", Title = "Data Browser" }
+                }
+            },
+            new WorkspaceTemplate
+            {
+                Id = "analysis-export",
+                Name = "Analysis & Export",
+                Description = "Data analysis and export workflows",
+                Category = WorkspaceCategory.Analysis,
+                IsBuiltIn = true,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+                Pages = new List<WorkspacePage>
+                {
+                    new WorkspacePage { PageTag = "AdvancedAnalytics", Title = "Analytics", IsDefault = true },
+                    new WorkspacePage { PageTag = "AnalysisExportWizard", Title = "Export Wizard" },
+                    new WorkspacePage { PageTag = "DataExport", Title = "Data Export" },
+                    new WorkspacePage { PageTag = "LeanIntegration", Title = "Lean Integration" }
+                }
+            }
+        };
+    }
+
+    public event EventHandler<WorkspaceEventArgs>? WorkspaceCreated;
+    public event EventHandler<WorkspaceEventArgs>? WorkspaceUpdated;
+    public event EventHandler<WorkspaceEventArgs>? WorkspaceDeleted;
+    public event EventHandler<WorkspaceEventArgs>? WorkspaceActivated;
+}
+
+#region Models
+
+public sealed class WorkspaceTemplate
+{
+    public string Id { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public WorkspaceCategory Category { get; set; }
+    public bool IsBuiltIn { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
+    public List<WorkspacePage> Pages { get; set; } = new();
+    public Dictionary<string, WidgetPosition> WidgetLayout { get; set; } = new();
+    public Dictionary<string, string> Filters { get; set; } = new();
+    public WindowBounds? WindowBounds { get; set; }
+}
+
+public enum WorkspaceCategory
+{
+    Monitoring,
+    Backfill,
+    Storage,
+    Analysis,
+    Custom
+}
+
+public sealed class WorkspacePage
+{
+    public string PageTag { get; set; } = string.Empty;
+    public string Title { get; set; } = string.Empty;
+    public bool IsDefault { get; set; }
+    public double ScrollPosition { get; set; }
+    public Dictionary<string, object> PageState { get; set; } = new();
+}
+
+public sealed class WidgetPosition
+{
+    public int Row { get; set; }
+    public int Column { get; set; }
+    public int RowSpan { get; set; } = 1;
+    public int ColumnSpan { get; set; } = 1;
+    public bool IsVisible { get; set; } = true;
+    public bool IsExpanded { get; set; } = true;
+}
+
+public sealed class WindowBounds
+{
+    public double X { get; set; }
+    public double Y { get; set; }
+    public double Width { get; set; }
+    public double Height { get; set; }
+    public string? MonitorId { get; set; }
+    public bool IsMaximized { get; set; }
+}
+
+public sealed class SessionState
+{
+    public string ActivePageTag { get; set; } = "Dashboard";
+    public List<WorkspacePage> OpenPages { get; set; } = new();
+    public Dictionary<string, WidgetPosition> WidgetLayout { get; set; } = new();
+    public Dictionary<string, string> ActiveFilters { get; set; } = new();
+    public WindowBounds? WindowBounds { get; set; }
+    public DateTime SavedAt { get; set; }
+    public string? ActiveWorkspaceId { get; set; }
+}
+
+public sealed class WorkspaceEventArgs : EventArgs
+{
+    public WorkspaceTemplate? Workspace { get; set; }
+}
+
+#endregion

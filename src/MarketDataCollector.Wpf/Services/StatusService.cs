@@ -115,7 +115,7 @@ public sealed class StatusService
     /// </summary>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>A task containing the provider information.</returns>
-    public async Task<ProviderStatusInfo?> GetProviderStatusAsync(CancellationToken ct = default)
+    public async Task<StatusProviderInfo?> GetProviderStatusAsync(CancellationToken ct = default)
     {
         try
         {
@@ -130,7 +130,7 @@ public sealed class StatusService
 
                 if (providerStatus != null)
                 {
-                    return new ProviderStatusInfo
+                    return new StatusProviderInfo
                     {
                         ActiveProvider = providerStatus.ActiveProvider,
                         IsConnected = providerStatus.IsConnected,
@@ -315,13 +315,13 @@ public sealed class SimpleStatus
     public long Historical { get; set; }
 
     /// <summary>Current provider status information.</summary>
-    public ProviderStatusInfo? Provider { get; set; }
+    public StatusProviderInfo? Provider { get; set; }
 }
 
 /// <summary>
 /// Provider status information.
 /// </summary>
-public sealed class ProviderStatusInfo
+public sealed class StatusProviderInfo
 {
     /// <summary>Name of the currently active provider.</summary>
     public string? ActiveProvider { get; set; }

@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace MarketDataCollector.Wpf.Services;
 
-public interface IConfigService
+public interface IConfigSettingsService
 {
     T? GetValue<T>(string key);
     string? GetString(string key);
