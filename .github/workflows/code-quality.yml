@@ -209,12 +209,13 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           
           # Save AI response to file to avoid shell injection issues
-          cat > /tmp/ai-response.txt << 'HEREDOC_EOF'
+          # Use $RUNNER_TEMP for isolation per workflow run
+          cat > "$RUNNER_TEMP/ai-response.txt" << 'HEREDOC_EOF'
           ${{ steps.ai-quality.outputs.response }}
           HEREDOC_EOF
           
-          if [ -s /tmp/ai-response.txt ]; then
-            cat /tmp/ai-response.txt >> $GITHUB_STEP_SUMMARY
+          if [ -s "$RUNNER_TEMP/ai-response.txt" ]; then
+            cat "$RUNNER_TEMP/ai-response.txt" >> $GITHUB_STEP_SUMMARY
           else
             echo "_AI analysis was not available._" >> $GITHUB_STEP_SUMMARY
           fi
