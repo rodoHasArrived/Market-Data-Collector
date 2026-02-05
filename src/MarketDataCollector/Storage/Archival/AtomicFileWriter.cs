@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
@@ -10,7 +11,7 @@ namespace MarketDataCollector.Storage.Archival;
 /// Provides atomic file write operations using write-to-temp-then-rename pattern.
 /// Ensures files are never partially written even on crash or power loss.
 /// </summary>
-public static class AtomicFileWriter
+public static partial class AtomicFileWriter
 {
     private static readonly ILogger Log = LoggingSetup.ForContext(typeof(AtomicFileWriter));
 
@@ -321,14 +322,55 @@ public static class AtomicFileWriter
 
     private static Task SyncDirectoryAsync(string directory, CancellationToken ct)
     {
-        // On Windows, directory sync is automatic
-        // On Linux, we'd need to fsync the directory file descriptor
-        // For simplicity, we just ensure the directory exists
         if (!Directory.Exists(directory))
         {
             Directory.CreateDirectory(directory);
         }
+
+        if (!OperatingSystem.IsLinux() && !OperatingSystem.IsMacOS())
+        {
+            // On Windows, NTFS journals directory metadata changes automatically.
+            return Task.CompletedTask;
+        }
+
+        // On POSIX systems, fsync the directory file descriptor to ensure
+        // that rename/link operations are durable after a crash or power loss.
+        int fd = PosixInterop.open(directory, PosixInterop.O_RDONLY);
+        if (fd < 0)
+        {
+            Log.Warning("Unable to open directory for fsync: {Directory} (errno {Errno})",
+                directory, Marshal.GetLastPInvokeError());
+            return Task.CompletedTask;
+        }
+
+        try
+        {
+            if (PosixInterop.fsync(fd) < 0)
+            {
+                Log.Warning("Directory fsync failed: {Directory} (errno {Errno})",
+                    directory, Marshal.GetLastPInvokeError());
+            }
+        }
+        finally
+        {
+            PosixInterop.close(fd);
+        }
+
         return Task.CompletedTask;
+    }
+
+    private static partial class PosixInterop
+    {
+        internal const int O_RDONLY = 0;
+
+        [LibraryImport("libc", SetLastError = true, StringMarshalling = StringMarshalling.Utf8)]
+        internal static partial int open(string path, int flags);
+
+        [LibraryImport("libc", SetLastError = true)]
+        internal static partial int fsync(int fd);
+
+        [LibraryImport("libc", SetLastError = true)]
+        internal static partial int close(int fd);
     }
 
     private static void TryDeleteFile(string path)
