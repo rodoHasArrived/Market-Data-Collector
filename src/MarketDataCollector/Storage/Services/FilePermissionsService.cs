@@ -179,6 +179,7 @@ public sealed class FilePermissionsService
     /// Sets Windows NTFS permissions using ACLs.
     /// Configures access for current user and administrators only.
     /// </summary>
+    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
     private FilePermissionsResult SetWindowsPermissions(string directoryPath)
     {
         try

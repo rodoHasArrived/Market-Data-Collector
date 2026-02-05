@@ -2,5 +2,9 @@
   <PropertyGroup>
     <!-- Allow resolving Windows-targeted TFMs on non-Windows CI runners to avoid NETSDK1100 -->
     <EnableWindowsTargeting Condition="'$([MSBuild]::IsOSPlatform(&quot;Windows&quot;))' != 'true'">true</EnableWindowsTargeting>
+    
+    <!-- Suppress common benign warnings across all projects -->
+    <!-- NU1608: Package version outside of dependency constraint (transitive dependencies) -->
+    <NoWarn>$(NoWarn);NU1608</NoWarn>
   </PropertyGroup>
 </Project>

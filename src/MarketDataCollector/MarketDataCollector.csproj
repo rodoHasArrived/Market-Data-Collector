@@ -1,7 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <NoWarn>$(NoWarn);1591</NoWarn>
+    <!-- 1591: Missing XML comment for publicly visible type or member -->
+    <!-- CS1587: XML comment is not placed on a valid language element (false positive with record parameters) -->
+    <!-- CS1998: Async method lacks await (often required for interface implementation or future async work) -->
+    <!-- IL2026: Member has RequiresUnreferencedCodeAttribute (expected for JSON serialization with trimming) -->
+    <!-- IL2070: Dynamic access to type information (expected for JSON serialization) -->
+    <NoWarn>$(NoWarn);1591;CS1587;CS1998;IL2026;IL2070</NoWarn>
     <OutputType>Exe</OutputType>
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
