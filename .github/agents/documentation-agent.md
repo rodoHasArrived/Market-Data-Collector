@@ -334,6 +334,8 @@ Market-Data-Collector/
 │   │   ├── Application/
 │   │   │   ├── Backfill/
 │   │   │   │   ...
+│   │   │   ├── Commands/
+│   │   │   │   ...
 │   │   │   ├── Composition/
 │   │   │   │   ...
 │   │   │   ├── Config/
@@ -500,9 +502,11 @@ Market-Data-Collector/
 │   │   └── Program.cs
 │   ├── MarketDataCollector.Ui.Shared/
 │   │   ├── Endpoints/
+│   │   │   ├── ApiKeyMiddleware.cs
 │   │   │   ├── BackfillEndpoints.cs
 │   │   │   ├── ConfigEndpoints.cs
 │   │   │   ├── FailoverEndpoints.cs
+│   │   │   ├── PathValidation.cs
 │   │   │   ├── ProviderEndpoints.cs
 │   │   │   ├── StatusEndpoints.cs
 │   │   │   ├── SymbolMappingEndpoints.cs
@@ -954,6 +958,8 @@ Market-Data-Collector/
 │   ├── MarketDataCollector.Tests/
 │   │   ├── Application/
 │   │   │   ├── Backfill/
+│   │   │   │   ...
+│   │   │   ├── Commands/
 │   │   │   │   ...
 │   │   │   ├── Config/
 │   │   │   │   ...

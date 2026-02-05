@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-05 18:14:21 UTC
+> Auto-generated on 2026-02-05 20:11:48 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -306,6 +306,8 @@ Market-Data-Collector/
 │   │   ├── Application/
 │   │   │   ├── Backfill/
 │   │   │   │   ...
+│   │   │   ├── Commands/
+│   │   │   │   ...
 │   │   │   ├── Composition/
 │   │   │   │   ...
 │   │   │   ├── Config/
@@ -472,9 +474,11 @@ Market-Data-Collector/
 │   │   └── Program.cs
 │   ├── MarketDataCollector.Ui.Shared/
 │   │   ├── Endpoints/
+│   │   │   ├── ApiKeyMiddleware.cs
 │   │   │   ├── BackfillEndpoints.cs
 │   │   │   ├── ConfigEndpoints.cs
 │   │   │   ├── FailoverEndpoints.cs
+│   │   │   ├── PathValidation.cs
 │   │   │   ├── ProviderEndpoints.cs
 │   │   │   ├── StatusEndpoints.cs
 │   │   │   ├── SymbolMappingEndpoints.cs
@@ -926,6 +930,8 @@ Market-Data-Collector/
 │   ├── MarketDataCollector.Tests/
 │   │   ├── Application/
 │   │   │   ├── Backfill/
+│   │   │   │   ...
+│   │   │   ├── Commands/
 │   │   │   │   ...
 │   │   │   ├── Config/
 │   │   │   │   ...
