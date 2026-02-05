@@ -155,6 +155,21 @@ public partial class SymbolsPage : Page
         ApplyFilters();
     }
 
+    private void SecurityType_Changed(object sender, SelectionChangedEventArgs e)
+    {
+        if (SecurityTypeCombo?.SelectedItem is ComboBoxItem item)
+        {
+            var tag = item.Tag?.ToString() ?? "STK";
+            var isOption = tag == "OPT" || tag == "IND_OPT";
+
+            if (OptionsExpander != null)
+                OptionsExpander.Visibility = isOption ? Visibility.Visible : Visibility.Collapsed;
+
+            if (isOption && tag == "IND_OPT" && OptionStyleCombo != null)
+                SelectComboItemByTag(OptionStyleCombo, "European");
+        }
+    }
+
     private void SelectAll_Changed(object sender, RoutedEventArgs e)
     {
         var isChecked = SelectAllCheck.IsChecked ?? false;
@@ -293,6 +308,22 @@ public partial class SymbolsPage : Page
             PrimaryExchangeBox.Text = string.Empty;
             LocalSymbolBox.Text = symbol.LocalSymbol ?? string.Empty;
 
+            // SecurityType and options fields
+            SelectComboItemByTag(SecurityTypeCombo, symbol.SecurityType ?? "STK");
+            var isOption = symbol.SecurityType == "OPT" || symbol.SecurityType == "IND_OPT";
+            OptionsExpander.Visibility = isOption ? Visibility.Visible : Visibility.Collapsed;
+
+            if (isOption)
+            {
+                StrikeBox.Text = symbol.Strike?.ToString() ?? string.Empty;
+                SelectComboItemByTag(RightCombo, symbol.Right ?? "Call");
+                SelectComboItemByTag(OptionStyleCombo, symbol.OptionStyle ?? "American");
+                MultiplierBox.Text = (symbol.Multiplier ?? 100).ToString();
+
+                if (DateTime.TryParse(symbol.LastTradeDateOrContractMonth, out var expDate))
+                    ExpirationPicker.SelectedDate = expDate;
+            }
+
             FormTitle.Text = "Edit Symbol";
             SaveSymbolButton.Content = "Update Symbol";
             DeleteSymbolButton.Visibility = Visibility.Visible;
@@ -311,6 +342,29 @@ public partial class SymbolsPage : Page
             return;
         }
 
+        var securityType = GetComboSelectedTag(SecurityTypeCombo) ?? "STK";
+        var isOption = securityType == "OPT" || securityType == "IND_OPT";
+
+        decimal? strike = null;
+        string? right = null;
+        string? lastTradeDateOrContractMonth = null;
+        string? optionStyle = null;
+        int? multiplier = null;
+
+        if (isOption)
+        {
+            if (decimal.TryParse(StrikeBox.Text, out var s) && s > 0)
+                strike = s;
+            right = GetComboSelectedTag(RightCombo) ?? "Call";
+            if (ExpirationPicker.SelectedDate is DateTime expDate)
+                lastTradeDateOrContractMonth = expDate.ToString("yyyyMMdd");
+            optionStyle = GetComboSelectedTag(OptionStyleCombo) ?? "American";
+            if (int.TryParse(MultiplierBox.Text, out var m) && m > 0)
+                multiplier = m;
+            else
+                multiplier = 100;
+        }
+
         if (_isEditMode && _selectedSymbol != null)
         {
             _selectedSymbol.Symbol = symbolName;
@@ -319,6 +373,12 @@ public partial class SymbolsPage : Page
             _selectedSymbol.DepthLevels = int.TryParse(DepthLevelsBox.Text, out var levels) ? levels : 10;
             _selectedSymbol.Exchange = ExchangeBox.Text ?? "SMART";
             _selectedSymbol.LocalSymbol = LocalSymbolBox.Text;
+            _selectedSymbol.SecurityType = securityType;
+            _selectedSymbol.Strike = strike;
+            _selectedSymbol.Right = right;
+            _selectedSymbol.LastTradeDateOrContractMonth = lastTradeDateOrContractMonth;
+            _selectedSymbol.OptionStyle = optionStyle;
+            _selectedSymbol.Multiplier = multiplier;
         }
         else
         {
@@ -338,7 +398,13 @@ public partial class SymbolsPage : Page
                 SubscribeDepth = SubscribeDepthToggle.IsChecked ?? false,
                 DepthLevels = int.TryParse(DepthLevelsBox.Text, out var levels) ? levels : 10,
                 Exchange = ExchangeBox.Text ?? "SMART",
-                LocalSymbol = LocalSymbolBox.Text
+                LocalSymbol = LocalSymbolBox.Text,
+                SecurityType = securityType,
+                Strike = strike,
+                Right = right,
+                LastTradeDateOrContractMonth = lastTradeDateOrContractMonth,
+                OptionStyle = optionStyle,
+                Multiplier = multiplier
             });
         }
 
@@ -394,6 +460,16 @@ public partial class SymbolsPage : Page
         ExchangeBox.Text = "SMART";
         PrimaryExchangeBox.Text = string.Empty;
         LocalSymbolBox.Text = string.Empty;
+
+        // Reset options fields
+        SelectComboItemByTag(SecurityTypeCombo, "STK");
+        OptionsExpander.Visibility = Visibility.Collapsed;
+        OptionsExpander.IsExpanded = false;
+        StrikeBox.Text = string.Empty;
+        SelectComboItemByTag(RightCombo, "Call");
+        ExpirationPicker.SelectedDate = null;
+        SelectComboItemByTag(OptionStyleCombo, "American");
+        MultiplierBox.Text = "100";
 
         FormTitle.Text = "Add Symbol";
         SaveSymbolButton.Content = "Add Symbol";
@@ -602,6 +678,12 @@ public class SymbolViewModel
     public int DepthLevels { get; set; } = 10;
     public string Exchange { get; set; } = "SMART";
     public string? LocalSymbol { get; set; }
+    public string SecurityType { get; set; } = "STK";
+    public decimal? Strike { get; set; }
+    public string? Right { get; set; }
+    public string? LastTradeDateOrContractMonth { get; set; }
+    public string? OptionStyle { get; set; }
+    public int? Multiplier { get; set; }
 
     public string TradesText => SubscribeTrades ? "On" : "Off";
     public string DepthText => SubscribeDepth ? "On" : "Off";

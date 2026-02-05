@@ -42,3 +42,5 @@ global using SymbolGroup = MarketDataCollector.Contracts.Configuration.SymbolGro
 global using SmartGroupCriteria = MarketDataCollector.Contracts.Configuration.SmartGroupCriteriaDto;
 global using ExtendedSymbolConfig = MarketDataCollector.Contracts.Configuration.ExtendedSymbolConfigDto;
 global using AppSettings = MarketDataCollector.Contracts.Configuration.AppSettingsDto;
+global using DerivativesConfig = MarketDataCollector.Contracts.Configuration.DerivativesConfigDto;
+global using IndexOptionsConfig = MarketDataCollector.Contracts.Configuration.IndexOptionsConfigDto;

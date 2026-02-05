@@ -205,6 +205,22 @@ public sealed partial class SymbolsPage : Page
         ApplyFilters();
     }
 
+    private void SecurityType_Changed(object sender, SelectionChangedEventArgs e)
+    {
+        if (SecurityTypeCombo?.SelectedItem is ComboBoxItem item)
+        {
+            var tag = item.Tag?.ToString() ?? "STK";
+            var isOption = tag == "OPT" || tag == "IND_OPT";
+
+            if (OptionsExpander != null)
+                OptionsExpander.Visibility = isOption ? Visibility.Visible : Visibility.Collapsed;
+
+            // Auto-select European style for index options
+            if (isOption && tag == "IND_OPT" && OptionStyleCombo != null)
+                SelectComboItemByTag(OptionStyleCombo, "European");
+        }
+    }
+
     private void SelectAll_Changed(object sender, RoutedEventArgs e)
     {
         var isChecked = SelectAllCheck.IsChecked ?? false;
@@ -492,6 +508,22 @@ public sealed partial class SymbolsPage : Page
             PrimaryExchangeBox.Text = string.Empty;
             LocalSymbolBox.Text = symbol.LocalSymbol ?? string.Empty;
 
+            // SecurityType and options fields
+            SelectComboItemByTag(SecurityTypeCombo, symbol.SecurityType ?? "STK");
+            var isOption = symbol.SecurityType == "OPT" || symbol.SecurityType == "IND_OPT";
+            OptionsExpander.Visibility = isOption ? Visibility.Visible : Visibility.Collapsed;
+
+            if (isOption)
+            {
+                StrikeBox.Value = (double)(symbol.Strike ?? 0m);
+                SelectComboItemByTag(RightCombo, symbol.Right ?? "Call");
+                SelectComboItemByTag(OptionStyleCombo, symbol.OptionStyle ?? "American");
+                MultiplierBox.Value = symbol.Multiplier ?? 100;
+
+                if (DateOnly.TryParse(symbol.LastTradeDateOrContractMonth, out var expDate))
+                    ExpirationPicker.Date = new DateTimeOffset(expDate.ToDateTime(TimeOnly.MinValue));
+            }
+
             // Update UI
             FormTitle.Text = "Edit Symbol";
             SaveSymbolButton.Content = "Update Symbol";
@@ -514,6 +546,9 @@ public sealed partial class SymbolsPage : Page
         SaveProgress.IsActive = true;
         try
         {
+            var secType = GetComboSelectedTag(SecurityTypeCombo) ?? "STK";
+            var isOption = secType == "OPT" || secType == "IND_OPT";
+
             var symbolConfig = new SymbolConfig
             {
                 Symbol = symbolName,
@@ -523,8 +558,13 @@ public sealed partial class SymbolsPage : Page
                 Exchange = string.IsNullOrWhiteSpace(ExchangeBox.Text) ? "SMART" : ExchangeBox.Text,
                 PrimaryExchange = string.IsNullOrWhiteSpace(PrimaryExchangeBox.Text) ? null : PrimaryExchangeBox.Text,
                 LocalSymbol = string.IsNullOrWhiteSpace(LocalSymbolBox.Text) ? null : LocalSymbolBox.Text,
-                SecurityType = "STK",
-                Currency = "USD"
+                SecurityType = secType,
+                Currency = "USD",
+                Strike = isOption && !double.IsNaN(StrikeBox.Value) ? (decimal)StrikeBox.Value : null,
+                Right = isOption ? GetComboSelectedTag(RightCombo) : null,
+                LastTradeDateOrContractMonth = isOption ? ExpirationPicker.Date.ToString("yyyy-MM-dd") : null,
+                OptionStyle = isOption ? GetComboSelectedTag(OptionStyleCombo) : null,
+                Multiplier = isOption && !double.IsNaN(MultiplierBox.Value) ? (int)MultiplierBox.Value : null
             };
 
             await _configService.AddOrUpdateSymbolAsync(symbolConfig);
@@ -612,6 +652,14 @@ public sealed partial class SymbolsPage : Page
         ExchangeBox.Text = "SMART";
         PrimaryExchangeBox.Text = string.Empty;
         LocalSymbolBox.Text = string.Empty;
+
+        // Reset options fields
+        SelectComboItemByTag(SecurityTypeCombo, "STK");
+        OptionsExpander.Visibility = Visibility.Collapsed;
+        StrikeBox.Value = double.NaN;
+        SelectComboItemByTag(RightCombo, "Call");
+        SelectComboItemByTag(OptionStyleCombo, "American");
+        MultiplierBox.Value = 100;
 
         FormTitle.Text = "Add Symbol";
         SaveSymbolButton.Content = "Add Symbol";
@@ -788,8 +836,13 @@ public class EnhancedSymbolViewModel : SymbolViewModel
             DepthLevels = DepthLevels,
             Exchange = Exchange,
             LocalSymbol = LocalSymbol,
-            SecurityType = "STK",
-            Currency = "USD"
+            SecurityType = SecurityType ?? "STK",
+            Currency = "USD",
+            Strike = Strike,
+            Right = Right,
+            LastTradeDateOrContractMonth = LastTradeDateOrContractMonth,
+            OptionStyle = OptionStyle,
+            Multiplier = Multiplier
         };
     }
 }
