@@ -105,12 +105,7 @@ public class HighPerformanceJsonTests
         deserializedEvent!.Symbol.Should().Be("QQQ");
     }
 
-    // TODO: Track with issue #670 - Alpaca message parsing tests require dedicated JsonSerializerContext
-    // These tests are temporarily skipped due to JSON property name collision with source generator.
-    // A dedicated JsonSerializerContext for Alpaca messages is needed to properly support these parsing methods.
-    // In the meantime, the production code still works correctly using non-source-generated deserialization.
-
-    [Fact(Skip = "Tracking issue #670 - AlpacaTradeMessage needs separate JsonContext for source generator")]
+    [Fact]
     public void ParseAlpacaTrade_ShouldParseCorrectly()
     {
         // Arrange
@@ -131,7 +126,7 @@ public class HighPerformanceJsonTests
         trade.TradeId.Should().Be(12345);
     }
 
-    [Fact(Skip = "Tracking issue #670 - AlpacaQuoteMessage needs separate JsonContext for source generator")]
+    [Fact]
     public void ParseAlpacaQuote_ShouldParseCorrectly()
     {
         // Arrange

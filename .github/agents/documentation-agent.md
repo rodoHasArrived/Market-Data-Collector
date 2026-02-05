@@ -61,7 +61,7 @@ Market-Data-Collector/
 │   │   ├── wpf-debug-improve.prompt.yml
 │   │   └── write-unit-tests.prompt.yml
 │   ├── workflows/
-│   │   ├── ai-instructions-sync.yml
+│   │   ├── AI_SYNC_FIX_SUMMARY.md
 │   │   ├── benchmark.yml
 │   │   ├── build-observability.yml
 │   │   ├── cache-management.yml
@@ -69,9 +69,7 @@ Market-Data-Collector/
 │   │   ├── dependency-review.yml
 │   │   ├── desktop-app.yml
 │   │   ├── docker.yml
-│   │   ├── docs-auto-update.yml
-│   │   ├── docs-structure-sync.yml
-│   │   ├── documentation.yml
+│   │   ├── docs-comprehensive.yml
 │   │   ├── dotnet-desktop.yml
 │   │   ├── labeling.yml
 │   │   ├── nightly.yml
@@ -83,6 +81,7 @@ Market-Data-Collector/
 │   │   ├── security.yml
 │   │   ├── stale.yml
 │   │   ├── test-matrix.yml
+│   │   ├── TESTING_AI_SYNC.md
 │   │   ├── todo-automation.yml
 │   │   ├── validate-workflows.yml
 │   │   ├── wpf-commands.yml
@@ -217,6 +216,7 @@ Market-Data-Collector/
 │   │   ├── REDESIGN_IMPROVEMENTS.md
 │   │   └── ui-redesign.md
 │   ├── development/
+│   │   ├── central-package-management.md
 │   │   ├── desktop-app-xaml-compiler-errors.md
 │   │   ├── github-actions-summary.md
 │   │   ├── github-actions-testing.md
@@ -261,6 +261,11 @@ Market-Data-Collector/
 │   │   ├── historical-data-providers-evaluation.md
 │   │   ├── realtime-streaming-architecture-evaluation.md
 │   │   └── storage-architecture-evaluation.md
+│   ├── generated/
+│   │   ├── project-context.md
+│   │   ├── provider-registry.md
+│   │   ├── repository-structure.md
+│   │   └── workflows-overview.md
 │   ├── getting-started/
 │   │   └── README.md
 │   ├── integrations/
@@ -968,6 +973,8 @@ Market-Data-Collector/
 │   │   │   └── Models/
 │   │   │       ...
 │   │   ├── Infrastructure/
+│   │   │   ├── DataSources/
+│   │   │   │   ...
 │   │   │   ├── Providers/
 │   │   │   │   ...
 │   │   │   ├── Resilience/
