@@ -1,31 +1,31 @@
 # TODO Tracking
 
 > Auto-generated TODO documentation. Do not edit manually.
-> Last updated: 2026-02-05T10:52:53.052781+00:00
+> Last updated: 2026-02-05T11:15:52.937330+00:00
 
 ## Summary
 
 | Metric | Count |
 |--------|-------|
-| **Total Items** | 5 |
+| **Total Items** | 6 |
 | **Linked to Issues** | 0 |
-| **Untracked** | 5 |
+| **Untracked** | 6 |
 
 ### By Type
 
 | Type | Count | Description |
 |------|-------|-------------|
-| `NOTE` | 5 | Important notes and documentation |
+| `NOTE` | 6 | Important notes and documentation |
 
 ### By Directory
 
 | Directory | Count |
 |-----------|-------|
-| `tests/` | 5 |
+| `tests/` | 6 |
 
 ## All Items
 
-### NOTE (5)
+### NOTE (6)
 
 - [ ] `tests/MarketDataCollector.Tests/Application/Backfill/BackfillWorkerServiceTests.cs:28`
   > Using null! because validation throws before dependencies are accessed
@@ -41,6 +41,9 @@
 
 - [ ] `tests/MarketDataCollector.Tests/Infrastructure/Resilience/WebSocketResiliencePolicyTests.cs:203`
   > We can't directly invoke the event from outside the class The test validates that the subscription mechanism works
+
+- [ ] `tests/MarketDataCollector.Tests/Storage/StorageChecksumServiceTests.cs:121`
+  > File.WriteAllTextAsync uses UTF-8 with BOM by default on some platforms, so we compute expected from the actual file bytes
 
 ---
 
