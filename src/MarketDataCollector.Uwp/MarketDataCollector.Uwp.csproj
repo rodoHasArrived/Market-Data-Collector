@@ -178,7 +178,7 @@
 
   <!-- Copy sample configuration to output -->
   <ItemGroup Condition="'$(IsWindows)' == 'true'">
-    <None Include="..\..\appsettings.sample.json" Condition="Exists('..\..\appsettings.sample.json')">
+    <None Include="..\..\config\appsettings.sample.json" Condition="Exists('..\..\config\appsettings.sample.json')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
