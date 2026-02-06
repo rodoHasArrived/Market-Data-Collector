@@ -707,15 +707,6 @@ Market-Data-Collector/
 │   │   ├── DtoExtensions.cs
 │   │   ├── HtmlTemplates.cs
 │   │   └── MarketDataCollector.Ui.Shared.csproj
-│   ├── MarketDataCollector.Ui.Services/
-│   │   ├── Collections/
-│   │   │   ...
-│   │   ├── Contracts/
-│   │   │   ...
-│   │   ├── Services/
-│   │   │   ...
-│   │   ├── GlobalUsings.cs
-│   │   └── MarketDataCollector.Ui.Services.csproj
 │   ├── MarketDataCollector.Uwp/
 │   │   ├── Assets/
 │   │   │   ├── Icons/
