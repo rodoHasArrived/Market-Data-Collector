@@ -161,6 +161,7 @@ jobs:
           DISPATCH_ISSUE_NUMBER: ${{ steps.fetch_issue.outputs.number }}
           DISPATCH_ISSUE_TITLE: ${{ steps.fetch_issue.outputs.title }}
           DISPATCH_ISSUE_BODY: ${{ steps.fetch_issue.outputs.body }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
           python3 - <<'PY'
           import datetime
@@ -240,7 +241,8 @@ jobs:
           root = normalize_lines(section("Root cause", "Root cause not yet documented."))
           prevention = checkbox_lines(section("Prevention checklist", ""))
           verification = command_lines(section("Verification commands", ""))
-          references = normalize_lines(section("References", f"- https://github.com/${{ github.repository }}/issues/{number}"))
+          repo = text("GITHUB_REPOSITORY")
+          references = normalize_lines(section("References", f"- https://github.com/{repo}/issues/{number}"))
 
           today = datetime.datetime.utcnow().date().isoformat()
 
