@@ -513,6 +513,55 @@ Market-Data-Collector/
 │   │   ├── app.manifest
 │   │   ├── MarketDataCollector.Ui.csproj
 │   │   └── Program.cs
+│   ├── MarketDataCollector.Ui.Services/
+│   │   ├── Collections/
+│   │   │   ├── BoundedObservableCollection.cs
+│   │   │   └── CircularBuffer.cs
+│   │   ├── Contracts/
+│   │   │   ├── IConfigService.cs
+│   │   │   └── IStatusService.cs
+│   │   ├── Services/
+│   │   │   ├── ActivityFeedService.cs
+│   │   │   ├── AnalysisExportWizardService.cs
+│   │   │   ├── ApiClientService.cs
+│   │   │   ├── ArchiveBrowserService.cs
+│   │   │   ├── BackfillService.cs
+│   │   │   ├── BatchExportSchedulerService.cs
+│   │   │   ├── ChartingService.cs
+│   │   │   ├── CollectionSessionService.cs
+│   │   │   ├── DataCalendarService.cs
+│   │   │   ├── DataCompletenessService.cs
+│   │   │   ├── DataSamplingService.cs
+│   │   │   ├── DesktopJsonOptions.cs
+│   │   │   ├── DiagnosticsService.cs
+│   │   │   ├── ErrorHandlingService.cs
+│   │   │   ├── ErrorMessages.cs
+│   │   │   ├── EventReplayService.cs
+│   │   │   ├── HttpClientConfiguration.cs
+│   │   │   ├── IntegrityEventsService.cs
+│   │   │   ├── LeanIntegrationService.cs
+│   │   │   ├── LiveDataService.cs
+│   │   │   ├── ManifestService.cs
+│   │   │   ├── OAuthRefreshService.cs
+│   │   │   ├── OrderBookVisualizationService.cs
+│   │   │   ├── PortablePackagerService.cs
+│   │   │   ├── PortfolioImportService.cs
+│   │   │   ├── ProviderHealthService.cs
+│   │   │   ├── ProviderManagementService.cs
+│   │   │   ├── ScheduledMaintenanceService.cs
+│   │   │   ├── ScheduleManagerService.cs
+│   │   │   ├── SearchService.cs
+│   │   │   ├── SetupWizardService.cs
+│   │   │   ├── SmartRecommendationsService.cs
+│   │   │   ├── StorageAnalyticsService.cs
+│   │   │   ├── StorageOptimizationAdvisorService.cs
+│   │   │   ├── SymbolGroupService.cs
+│   │   │   ├── SymbolManagementService.cs
+│   │   │   ├── SymbolMappingService.cs
+│   │   │   ├── SystemHealthService.cs
+│   │   │   └── TimeSeriesAlignmentService.cs
+│   │   ├── GlobalUsings.cs
+│   │   └── MarketDataCollector.Ui.Services.csproj
 │   ├── MarketDataCollector.Ui.Shared/
 │   │   ├── Endpoints/
 │   │   │   ├── ApiKeyMiddleware.cs
@@ -588,14 +637,9 @@ Market-Data-Collector/
 │   │   │   ├── Wide310x150Logo.scale-125.png
 │   │   │   ├── Wide310x150Logo.scale-150.png
 │   │   │   └── Wide310x150Logo.scale-200.png
-│   │   ├── Collections/
-│   │   │   ├── BoundedObservableCollection.cs
-│   │   │   └── CircularBuffer.cs
 │   │   ├── Contracts/
-│   │   │   ├── IConfigService.cs
 │   │   │   ├── IConnectionService.cs
-│   │   │   ├── INavigationService.cs
-│   │   │   └── IStatusService.cs
+│   │   │   └── INavigationService.cs
 │   │   ├── Controls/
 │   │   │   ├── AlertBanner.xaml
 │   │   │   ├── AlertBanner.xaml.cs
@@ -634,76 +678,36 @@ Market-Data-Collector/
 │   │   │   └── ResponsiveLayoutHelper.cs
 │   │   ├── Models/
 │   │   │   ├── AppConfig.cs
-│   │   │   ├── OfflineTrackingModels.cs
-│   │   │   └── SharedModelAliases.cs
+│   │   │   └── OfflineTrackingModels.cs
 │   │   ├── Services/
-│   │   │   ├── ActivityFeedService.cs
 │   │   │   ├── AdminMaintenanceService.cs
 │   │   │   ├── AdvancedAnalyticsService.cs
-│   │   │   ├── AnalysisExportWizardService.cs
-│   │   │   ├── ApiClientService.cs
-│   │   │   ├── ArchiveBrowserService.cs
 │   │   │   ├── ArchiveHealthService.cs
-│   │   │   ├── BackfillService.cs
 │   │   │   ├── BackgroundTaskSchedulerService.cs
-│   │   │   ├── BatchExportSchedulerService.cs
 │   │   │   ├── BrushRegistry.cs
-│   │   │   ├── ChartingService.cs
-│   │   │   ├── CollectionSessionService.cs
 │   │   │   ├── ConfigService.cs
 │   │   │   ├── ConnectionService.cs
 │   │   │   ├── ContextMenuService.cs
 │   │   │   ├── CredentialService.cs
-│   │   │   ├── DataCalendarService.cs
-│   │   │   ├── DataCompletenessService.cs
-│   │   │   ├── DataSamplingService.cs
-│   │   │   ├── DiagnosticsService.cs
-│   │   │   ├── ErrorHandlingService.cs
-│   │   │   ├── ErrorMessages.cs
-│   │   │   ├── EventReplayService.cs
 │   │   │   ├── ExportPresetService.cs
 │   │   │   ├── FirstRunService.cs
 │   │   │   ├── FormValidationService.cs
-│   │   │   ├── HttpClientConfiguration.cs
 │   │   │   ├── InfoBarService.cs
-│   │   │   ├── IntegrityEventsService.cs
 │   │   │   ├── KeyboardShortcutService.cs
-│   │   │   ├── LeanIntegrationService.cs
-│   │   │   ├── LiveDataService.cs
 │   │   │   ├── LoggingService.cs
-│   │   │   ├── ManifestService.cs
 │   │   │   ├── MessagingService.cs
 │   │   │   ├── NavigationService.cs
 │   │   │   ├── NotificationService.cs
-│   │   │   ├── OAuthRefreshService.cs
 │   │   │   ├── OfflineTrackingPersistenceService.cs
-│   │   │   ├── OrderBookVisualizationService.cs
 │   │   │   ├── PendingOperationsQueueService.cs
-│   │   │   ├── PortablePackagerService.cs
-│   │   │   ├── PortfolioImportService.cs
-│   │   │   ├── ProviderHealthService.cs
-│   │   │   ├── ProviderManagementService.cs
 │   │   │   ├── RetentionAssuranceService.cs
-│   │   │   ├── ScheduledMaintenanceService.cs
-│   │   │   ├── ScheduleManagerService.cs
 │   │   │   ├── SchemaService.cs
-│   │   │   ├── SearchService.cs
-│   │   │   ├── SetupWizardService.cs
-│   │   │   ├── SmartRecommendationsService.cs
 │   │   │   ├── StatusService.cs
-│   │   │   ├── StorageAnalyticsService.cs
-│   │   │   ├── StorageOptimizationAdvisorService.cs
 │   │   │   ├── StorageService.cs
-│   │   │   ├── SymbolGroupService.cs
-│   │   │   ├── SymbolManagementService.cs
-│   │   │   ├── SymbolMappingService.cs
-│   │   │   ├── SystemHealthService.cs
 │   │   │   ├── ThemeService.cs
-│   │   │   ├── TimeSeriesAlignmentService.cs
 │   │   │   ├── TooltipService.cs
 │   │   │   ├── UwpAnalysisExportService.cs
 │   │   │   ├── UwpDataQualityService.cs
-│   │   │   ├── UwpJsonOptions.cs
 │   │   │   ├── WatchlistService.cs
 │   │   │   └── WorkspaceService.cs
 │   │   ├── Styles/
@@ -816,53 +820,32 @@ Market-Data-Collector/
 │   │   ├── App.xaml.cs
 │   │   ├── Build.Notifications.targets
 │   │   ├── FEATURE_REFINEMENTS.md
+│   │   ├── GlobalUsings.cs
 │   │   ├── MainWindow.xaml
 │   │   ├── MainWindow.xaml.cs
 │   │   ├── MarketDataCollector.Uwp.csproj
 │   │   └── Package.appxmanifest
 │   └── MarketDataCollector.Wpf/
-│       ├── Collections/
-│       │   ├── BoundedObservableCollection.cs
-│       │   └── CircularBuffer.cs
 │       ├── Contracts/
-│       │   ├── IConfigService.cs
 │       │   ├── IConnectionService.cs
-│       │   ├── INavigationService.cs
-│       │   └── IStatusService.cs
+│       │   └── INavigationService.cs
 │       ├── Models/
-│       │   ├── AppConfig.cs
-│       │   └── SharedModelAliases.cs
+│       │   └── AppConfig.cs
 │       ├── Services/
-│       │   ├── ActivityFeedService.cs
 │       │   ├── AdminMaintenanceService.cs
 │       │   ├── AdvancedAnalyticsService.cs
-│       │   ├── AnalysisExportWizardService.cs
-│       │   ├── ApiClientService.cs
-│       │   ├── ArchiveBrowserService.cs
 │       │   ├── ArchiveHealthService.cs
 │       │   ├── BackfillApiService.cs
-│       │   ├── BackfillService.cs
 │       │   ├── BackgroundTaskSchedulerService.cs
-│       │   ├── BatchExportSchedulerService.cs
 │       │   ├── BrushRegistry.cs
-│       │   ├── ChartingService.cs
-│       │   ├── CollectionSessionService.cs
 │       │   ├── ConfigService.cs
 │       │   ├── ConnectionService.cs
 │       │   ├── ContextMenuService.cs
 │       │   ├── CredentialService.cs
-│       │   ├── DataCalendarService.cs
-│       │   ├── DataCompletenessService.cs
-│       │   ├── DataSamplingService.cs
-│       │   ├── DiagnosticsService.cs
-│       │   ├── ErrorHandlingService.cs
-│       │   ├── ErrorMessages.cs
-│       │   ├── EventReplayService.cs
 │       │   ├── ExportFormat.cs
 │       │   ├── ExportPresetService.cs
 │       │   ├── FirstRunService.cs
 │       │   ├── FormValidationService.cs
-│       │   ├── HttpClientConfiguration.cs
 │       │   ├── IBackgroundTaskSchedulerService.cs
 │       │   ├── IConfigService.cs
 │       │   ├── IKeyboardShortcutService.cs
@@ -870,49 +853,26 @@ Market-Data-Collector/
 │       │   ├── IMessagingService.cs
 │       │   ├── InfoBarService.cs
 │       │   ├── INotificationService.cs
-│       │   ├── IntegrityEventsService.cs
 │       │   ├── IOfflineTrackingPersistenceService.cs
 │       │   ├── IPendingOperationsQueueService.cs
 │       │   ├── IThemeService.cs
 │       │   ├── KeyboardShortcutService.cs
-│       │   ├── LeanIntegrationService.cs
-│       │   ├── LiveDataService.cs
 │       │   ├── LoggingService.cs
-│       │   ├── ManifestService.cs
 │       │   ├── MessagingService.cs
 │       │   ├── NavigationService.cs
 │       │   ├── NotificationService.cs
-│       │   ├── OAuthRefreshService.cs
 │       │   ├── OfflineTrackingPersistenceService.cs
-│       │   ├── OrderBookVisualizationService.cs
 │       │   ├── PendingOperationsQueueService.cs
-│       │   ├── PortablePackagerService.cs
-│       │   ├── PortfolioImportService.cs
-│       │   ├── ProviderHealthService.cs
-│       │   ├── ProviderManagementService.cs
 │       │   ├── RetentionAssuranceService.cs
-│       │   ├── ScheduledMaintenanceService.cs
-│       │   ├── ScheduleManagerService.cs
 │       │   ├── SchemaService.cs
-│       │   ├── SearchService.cs
-│       │   ├── SetupWizardService.cs
-│       │   ├── SmartRecommendationsService.cs
 │       │   ├── StatusService.cs
-│       │   ├── StorageAnalyticsService.cs
-│       │   ├── StorageOptimizationAdvisorService.cs
 │       │   ├── StorageService.cs
-│       │   ├── SymbolGroupService.cs
-│       │   ├── SymbolManagementService.cs
-│       │   ├── SymbolMappingService.cs
-│       │   ├── SystemHealthService.cs
 │       │   ├── ThemeService.cs
-│       │   ├── TimeSeriesAlignmentService.cs
 │       │   ├── TooltipService.cs
 │       │   ├── WatchlistService.cs
 │       │   ├── WorkspaceService.cs
 │       │   ├── WpfAnalysisExportService.cs
-│       │   ├── WpfDataQualityService.cs
-│       │   └── WpfJsonOptions.cs
+│       │   └── WpfDataQualityService.cs
 │       ├── Styles/
 │       │   ├── Animations.xaml
 │       │   ├── AppStyles.xaml
@@ -1019,6 +979,7 @@ Market-Data-Collector/
 │       │   └── WorkspacePage.xaml.cs
 │       ├── App.xaml
 │       ├── App.xaml.cs
+│       ├── GlobalUsings.cs
 │       ├── MainWindow.xaml
 │       ├── MainWindow.xaml.cs
 │       ├── MarketDataCollector.Wpf.csproj
