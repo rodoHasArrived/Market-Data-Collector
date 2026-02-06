@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using System.Security.AccessControl;
 using System.Security.Principal;
 using MarketDataCollector.Application.Logging;
@@ -179,6 +180,7 @@ public sealed class FilePermissionsService
     /// Sets Windows NTFS permissions using ACLs.
     /// Configures access for current user and administrators only.
     /// </summary>
+    [SupportedOSPlatform("windows")]
     private FilePermissionsResult SetWindowsPermissions(string directoryPath)
     {
         try

@@ -725,7 +725,7 @@ public sealed class ScheduledArchiveMaintenanceService : BackgroundService, IArc
         return RunTierMigrationAsync(options, execution, ct);
     }
 
-    private async Task<MaintenanceResult> RunRetentionEnforcementAsync(
+    private Task<MaintenanceResult> RunRetentionEnforcementAsync(
         MaintenanceTaskOptions options,
         MaintenanceExecution execution,
         CancellationToken ct)
@@ -771,7 +771,7 @@ public sealed class ScheduledArchiveMaintenanceService : BackgroundService, IArc
             }
         }
 
-        return new MaintenanceResult
+        return Task.FromResult(new MaintenanceResult
         {
             Success = true,
             Summary = $"Retention enforcement: deleted {deletedFiles} files older than {retentionDays} days, recovered {bytesRecovered / 1024.0 / 1024.0:F2} MB",
@@ -783,7 +783,7 @@ public sealed class ScheduledArchiveMaintenanceService : BackgroundService, IArc
             BytesSaved = bytesRecovered,
             IssuesFound = 0,
             IssuesResolved = 0
-        };
+        });
     }
 
     // IArchiveMaintenanceService implementation
