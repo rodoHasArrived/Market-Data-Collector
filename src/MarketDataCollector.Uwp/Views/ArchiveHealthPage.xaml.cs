@@ -6,7 +6,6 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using Windows.UI;
-using MarketDataCollector.Uwp.Models;
 using MarketDataCollector.Uwp.Services;
 
 namespace MarketDataCollector.Uwp.Views;

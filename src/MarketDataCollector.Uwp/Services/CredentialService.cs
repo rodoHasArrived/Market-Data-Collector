@@ -7,7 +7,6 @@ using System.Text.Json;
 using Windows.Security.Credentials;
 using Windows.Security.Credentials.UI;
 using Windows.Storage;
-using MarketDataCollector.Uwp.Models;
 
 namespace MarketDataCollector.Uwp.Services;
 

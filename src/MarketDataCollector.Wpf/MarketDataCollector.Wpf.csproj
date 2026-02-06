@@ -81,59 +81,18 @@
   </ItemGroup>
 
   <!--
-    Include shared source files from Contracts (Windows only)
-    This approach avoids assembly reference issues and ensures type compatibility.
+    Shared desktop UI services library provides:
+    - All platform-agnostic services (ApiClientService, BackfillService, etc.)
+    - Contracts types (AppConfigDto, SymbolConfig, etc.) compiled from source
+    - Shared collections (BoundedObservableCollection, CircularBuffer)
+    - Shared contract interfaces (IConfigService, IStatusService)
+    - DesktopJsonOptions and HttpClientConfiguration
+
+    Platform-specific services (ThemeService, NavigationService, NotificationService, etc.)
+    remain in this project.
   -->
   <ItemGroup Condition="'$(IsWindows)' == 'true'">
-    <!-- Configuration DTOs -->
-    <Compile Include="..\MarketDataCollector.Contracts\Configuration\*.cs"
-             Link="SharedModels\Configuration\%(Filename)%(Extension)" />
-
-    <!-- API models (StatusResponse, BackfillResult, etc.) -->
-    <Compile Include="..\MarketDataCollector.Contracts\Api\*.cs"
-             Link="SharedModels\Api\%(Filename)%(Extension)" />
-
-    <!-- Credential models -->
-    <Compile Include="..\MarketDataCollector.Contracts\Credentials\*.cs"
-             Link="SharedModels\Credentials\%(Filename)%(Extension)" />
-
-    <!-- Backfill progress models -->
-    <Compile Include="..\MarketDataCollector.Contracts\Backfill\*.cs"
-             Link="SharedModels\Backfill\%(Filename)%(Extension)" />
-
-    <!-- Session models -->
-    <Compile Include="..\MarketDataCollector.Contracts\Session\*.cs"
-             Link="SharedModels\Session\%(Filename)%(Extension)" />
-
-    <!-- Manifest models -->
-    <Compile Include="..\MarketDataCollector.Contracts\Manifest\*.cs"
-             Link="SharedModels\Manifest\%(Filename)%(Extension)" />
-
-    <!-- Archive health models -->
-    <Compile Include="..\MarketDataCollector.Contracts\Archive\*.cs"
-             Link="SharedModels\Archive\%(Filename)%(Extension)" />
-
-    <!-- Schema models -->
-    <Compile Include="..\MarketDataCollector.Contracts\Schema\*.cs"
-             Link="SharedModels\Schema\%(Filename)%(Extension)" />
-
-    <!-- Export models -->
-    <Compile Include="..\MarketDataCollector.Contracts\Export\*.cs"
-             Link="SharedModels\Export\%(Filename)%(Extension)" />
-
-    <!-- Pipeline policy constants -->
-    <Compile Include="..\MarketDataCollector.Contracts\Pipeline\*.cs"
-             Link="SharedModels\Pipeline\%(Filename)%(Extension)" />
-
-    <!-- Domain models, events, and enums -->
-    <Compile Include="..\MarketDataCollector.Contracts\Domain\*.cs"
-             Link="SharedModels\Domain\%(Filename)%(Extension)" />
-    <Compile Include="..\MarketDataCollector.Contracts\Domain\Models\*.cs"
-             Link="SharedModels\Domain\Models\%(Filename)%(Extension)" />
-    <Compile Include="..\MarketDataCollector.Contracts\Domain\Events\*.cs"
-             Link="SharedModels\Domain\Events\%(Filename)%(Extension)" />
-    <Compile Include="..\MarketDataCollector.Contracts\Domain\Enums\*.cs"
-             Link="SharedModels\Domain\Enums\%(Filename)%(Extension)" />
+    <ProjectReference Include="..\MarketDataCollector.Ui.Services\MarketDataCollector.Ui.Services.csproj" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(IsWindows)' == 'true' AND Exists('Assets')">

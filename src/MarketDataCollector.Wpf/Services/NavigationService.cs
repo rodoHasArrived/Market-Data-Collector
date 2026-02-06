@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Windows.Controls;
-using MarketDataCollector.Wpf.Contracts;
 using MarketDataCollector.Wpf.Views;
 
 namespace MarketDataCollector.Wpf.Services;

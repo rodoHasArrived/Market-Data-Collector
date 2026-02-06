@@ -8,7 +8,6 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
-using MarketDataCollector.Uwp.Models;
 using MarketDataCollector.Uwp.Services;
 using MarketDataCollector.Uwp.ViewModels;
 using Windows.ApplicationModel.DataTransfer;

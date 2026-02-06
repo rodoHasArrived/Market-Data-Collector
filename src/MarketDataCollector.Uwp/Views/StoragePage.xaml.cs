@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
-using MarketDataCollector.Uwp.Models;
 using MarketDataCollector.Uwp.Services;
 using Windows.Storage.Pickers;
 using Windows.UI;

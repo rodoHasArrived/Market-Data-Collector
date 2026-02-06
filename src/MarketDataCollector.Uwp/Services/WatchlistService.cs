@@ -1,5 +1,4 @@
 using System.Text.Json;
-using MarketDataCollector.Uwp.Models;
 
 namespace MarketDataCollector.Uwp.Services;
 
@@ -11,7 +10,7 @@ public sealed class WatchlistService
 {
     private const string WatchlistFileName = "watchlist.json";
     // Use centralized JSON options to avoid duplication across services
-    private static JsonSerializerOptions JsonOptions => UwpJsonOptions.PrettyPrint;
+    private static JsonSerializerOptions JsonOptions => DesktopJsonOptions.PrettyPrint;
 
     private static WatchlistService? _instance;
     private static readonly object _lock = new();
