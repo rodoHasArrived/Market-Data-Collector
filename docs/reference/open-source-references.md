@@ -635,4 +635,4 @@ Recent optimizations and patterns:
 **Version:** 1.6.1
 **Last Updated:** 2026-01-30
 **Maintainer:** Market Data Collector Team
-**See Also:** [DEPENDENCIES.md](../../DEPENDENCIES.md) | [Architecture](../architecture/overview.md)
+**See Also:** [DEPENDENCIES.md](../DEPENDENCIES.md) | [Architecture](../architecture/overview.md)

@@ -138,7 +138,7 @@ This occurs because MSBuild automatically appends these to intermediate paths, a
 - [WindowsAppSDK Downloads](https://learn.microsoft.com/en-us/windows/apps/windows-app-sdk/downloads)
 - [WindowsAppSDK GitHub Issues](https://github.com/microsoft/WindowsAppSDK/issues)
 - [.NET 9 Version Requirements](https://learn.microsoft.com/en-us/dotnet/core/compatibility/sdk/9.0/version-requirements)
-- [UWP Development Roadmap](../development/uwp-development-roadmap.md)
+- [UWP Development Roadmap](../archived/uwp-development-roadmap.md)
 
 ### Prevention
 

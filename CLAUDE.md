@@ -1983,7 +1983,7 @@ See `docs/HELP.md#troubleshooting` for detailed solutions.
 - [docs/adr/](docs/adr/) - Architecture Decision Records
 - [docs/ai/](docs/ai/) - Specialized AI guides
 - [docs/providers/provider-comparison.md](docs/providers/provider-comparison.md) - Provider comparison
-- [.github/copilot-instructions.md](.github/copilot-instructions.md) - Copilot instructions
+- [docs/ai/copilot/instructions.md](docs/ai/copilot/instructions.md) - Copilot instructions
 - [.github/agents/documentation-agent.md](.github/agents/documentation-agent.md) - Documentation agent
 
 ---

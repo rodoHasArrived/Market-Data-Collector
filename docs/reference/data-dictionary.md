@@ -986,7 +986,7 @@ Key F# types:
 - `TradeEvent`, `QuoteEvent`, `DepthEvent`, `BarEvent` (records)
 - `IntegrityEvent` with `IntegrityEventType` (discriminated union for detailed error types)
 
-See `docs/ai-assistants/CLAUDE.fsharp.md` for F# domain model details.
+See `docs/ai/claude/CLAUDE.fsharp.md` for F# domain model details.
 
 ---
 

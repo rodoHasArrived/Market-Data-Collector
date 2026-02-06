@@ -364,7 +364,7 @@ The system integrates with QuantConnect's Lean algorithmic trading engine for ba
 * **Sample Algorithms** – Spread arbitrage, order flow strategies
 * **JSONL Reader** – Automatic decompression and parsing of collected data
 
-See [lean-integration.md](lean-integration.md) for detailed integration guide.
+See [lean-integration.md](../integrations/lean-integration.md) for detailed integration guide.
 
 ---
 

@@ -557,7 +557,7 @@ docker compose -f docker-compose.microservices.yml --profile monitoring up -d
 | Historical | 5004 | Backfill management |
 | Validation | 5005 | Data quality |
 
-See [Microservices README](../src/Microservices/README.md) for detailed instructions.
+See [ADR-003: Microservices Decomposition](../adr/003-microservices-decomposition.md) for architecture and trade-offs.
 
 ---
 
@@ -585,4 +585,4 @@ This ensures `ContractFactory` resolves to the correct IB contract.
 
 **Version:** 1.6.1
 **Last Updated:** 2026-01-30
-**See Also:** [Configuration](configuration.md) | [Troubleshooting](troubleshooting.md) | [Architecture](../architecture/overview.md) | [Lean Integration](../integrations/lean-integration.md)
+**See Also:** [Configuration](../HELP.md#configuration) | [Troubleshooting](../HELP.md#troubleshooting) | [Architecture](../architecture/overview.md) | [Lean Integration](../integrations/lean-integration.md)

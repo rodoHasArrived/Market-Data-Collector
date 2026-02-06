@@ -482,7 +482,7 @@ The format uses schema versioning for forward compatibility:
 
 ## Related Documentation
 
-- [Storage Architecture Overview](./storage-architecture.md)
+- [Storage Architecture Overview](./storage-design.md)
 - [Data Providers Guide](../providers/backfill-guide.md)
-- [AI Assistant Storage Guide](../ai-assistants/CLAUDE.storage.md)
-- [API Reference: CrystallizedStorageFormat](../api/storage.md)
+- [AI Assistant Storage Guide](../ai/claude/CLAUDE.storage.md)
+- [API Reference](../reference/api-reference.md)
