@@ -79,6 +79,7 @@ Market-Data-Collector/
 │   │   ├── reusable-dotnet-build.yml
 │   │   ├── scheduled-maintenance.yml
 │   │   ├── security.yml
+│   │   ├── SKIPPED_JOBS_EXPLAINED.md
 │   │   ├── stale.yml
 │   │   ├── test-matrix.yml
 │   │   ├── TESTING_AI_SYNC.md

@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-06 23:53:39 UTC
+> Auto-generated on 2026-02-06 23:55:14 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -51,6 +51,7 @@ Market-Data-Collector/
 │   │   ├── reusable-dotnet-build.yml
 │   │   ├── scheduled-maintenance.yml
 │   │   ├── security.yml
+│   │   ├── SKIPPED_JOBS_EXPLAINED.md
 │   │   ├── stale.yml
 │   │   ├── test-matrix.yml
 │   │   ├── TESTING_AI_SYNC.md
