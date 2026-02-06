@@ -1,6 +1,7 @@
 using System.Text.Json;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Contracts.Api;
+using MarketDataCollector.Infrastructure.Providers.Streaming.Failover;
 using MarketDataCollector.Ui.Shared.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -11,6 +12,11 @@ namespace MarketDataCollector.Ui.Shared.Endpoints;
 /// Extension methods for registering failover-related API endpoints.
 /// Shared between web dashboard and desktop application hosts.
 /// </summary>
+/// <remarks>
+/// When a <see cref="StreamingFailoverRegistry"/> is registered in DI, endpoints
+/// return live runtime data (real failover state, actual health metrics).
+/// Otherwise, they fall back to configuration-only responses.
+/// </remarks>
 public static class FailoverEndpoints
 {
     /// <summary>
@@ -18,11 +24,12 @@ public static class FailoverEndpoints
     /// </summary>
     public static void MapFailoverEndpoints(this WebApplication app, JsonSerializerOptions jsonOptions)
     {
-        // Get failover configuration
-        app.MapGet(UiApiRoutes.FailoverConfig, (ConfigStore store) =>
+        // Get failover configuration (enriched with live state when available)
+        app.MapGet(UiApiRoutes.FailoverConfig, (ConfigStore store, StreamingFailoverRegistry? registry) =>
         {
             var cfg = store.Load();
             var dataSources = cfg.DataSources ?? new DataSourcesConfig();
+            var ruleSnapshots = registry?.Service?.GetRuleSnapshots();
 
             var response = new FailoverConfigResponse(
                 EnableFailover: dataSources.EnableFailover,
@@ -30,17 +37,23 @@ public static class FailoverEndpoints
                 AutoRecover: dataSources.AutoRecover,
                 FailoverTimeoutSeconds: dataSources.FailoverTimeoutSeconds,
                 Rules: (dataSources.FailoverRules ?? Array.Empty<FailoverRuleConfig>())
-                    .Select(r => new FailoverRuleResponse(
-                        Id: r.Id,
-                        PrimaryProviderId: r.PrimaryProviderId,
-                        BackupProviderIds: r.BackupProviderIds,
-                        FailoverThreshold: r.FailoverThreshold,
-                        RecoveryThreshold: r.RecoveryThreshold,
-                        DataQualityThreshold: r.DataQualityThreshold,
-                        MaxLatencyMs: r.MaxLatencyMs,
-                        IsInFailoverState: false,
-                        CurrentActiveProviderId: r.PrimaryProviderId
-                    )).ToArray()
+                    .Select(r =>
+                    {
+                        var liveState = ruleSnapshots?.FirstOrDefault(s =>
+                            string.Equals(s.RuleId, r.Id, StringComparison.OrdinalIgnoreCase));
+
+                        return new FailoverRuleResponse(
+                            Id: r.Id,
+                            PrimaryProviderId: r.PrimaryProviderId,
+                            BackupProviderIds: r.BackupProviderIds,
+                            FailoverThreshold: r.FailoverThreshold,
+                            RecoveryThreshold: r.RecoveryThreshold,
+                            DataQualityThreshold: r.DataQualityThreshold,
+                            MaxLatencyMs: r.MaxLatencyMs,
+                            IsInFailoverState: liveState?.IsInFailoverState ?? false,
+                            CurrentActiveProviderId: liveState?.CurrentActiveProviderId ?? r.PrimaryProviderId
+                        );
+                    }).ToArray()
             );
 
             return Results.Json(response, jsonOptions);
@@ -67,23 +80,30 @@ public static class FailoverEndpoints
             return Results.Ok();
         });
 
-        // Get all failover rules
-        app.MapGet(UiApiRoutes.FailoverRules, (ConfigStore store) =>
+        // Get all failover rules (enriched with live state)
+        app.MapGet(UiApiRoutes.FailoverRules, (ConfigStore store, StreamingFailoverRegistry? registry) =>
         {
             var cfg = store.Load();
             var rules = cfg.DataSources?.FailoverRules ?? Array.Empty<FailoverRuleConfig>();
+            var ruleSnapshots = registry?.Service?.GetRuleSnapshots();
 
-            var response = rules.Select(r => new FailoverRuleResponse(
-                Id: r.Id,
-                PrimaryProviderId: r.PrimaryProviderId,
-                BackupProviderIds: r.BackupProviderIds,
-                FailoverThreshold: r.FailoverThreshold,
-                RecoveryThreshold: r.RecoveryThreshold,
-                DataQualityThreshold: r.DataQualityThreshold,
-                MaxLatencyMs: r.MaxLatencyMs,
-                IsInFailoverState: false,
-                CurrentActiveProviderId: r.PrimaryProviderId
-            )).ToArray();
+            var response = rules.Select(r =>
+            {
+                var liveState = ruleSnapshots?.FirstOrDefault(s =>
+                    string.Equals(s.RuleId, r.Id, StringComparison.OrdinalIgnoreCase));
+
+                return new FailoverRuleResponse(
+                    Id: r.Id,
+                    PrimaryProviderId: r.PrimaryProviderId,
+                    BackupProviderIds: r.BackupProviderIds,
+                    FailoverThreshold: r.FailoverThreshold,
+                    RecoveryThreshold: r.RecoveryThreshold,
+                    DataQualityThreshold: r.DataQualityThreshold,
+                    MaxLatencyMs: r.MaxLatencyMs,
+                    IsInFailoverState: liveState?.IsInFailoverState ?? false,
+                    CurrentActiveProviderId: liveState?.CurrentActiveProviderId ?? r.PrimaryProviderId
+                );
+            }).ToArray();
 
             return Results.Json(response, jsonOptions);
         });
@@ -139,10 +159,9 @@ public static class FailoverEndpoints
             return Results.Ok();
         });
 
-        // Force failover — not yet wired to runtime MultiProviderService
-        app.MapPost(UiApiRoutes.FailoverForce.Replace("{ruleId}", "{ruleId}"), (ConfigStore store, string ruleId, ForceFailoverRequest req) =>
+        // Force failover — wired to runtime StreamingFailoverService
+        app.MapPost(UiApiRoutes.FailoverForce.Replace("{ruleId}", "{ruleId}"), (ConfigStore store, StreamingFailoverRegistry? registry, string ruleId, ForceFailoverRequest req) =>
         {
-            // Validate the rule exists
             var cfg = store.Load();
             var rules = cfg.DataSources?.FailoverRules ?? Array.Empty<FailoverRuleConfig>();
             var rule = rules.FirstOrDefault(r => string.Equals(r.Id, ruleId, StringComparison.OrdinalIgnoreCase));
@@ -153,28 +172,59 @@ public static class FailoverEndpoints
             if (string.IsNullOrWhiteSpace(req.TargetProviderId))
                 return Results.BadRequest(new { error = "TargetProviderId is required." });
 
-            // Return honest status — failover coordination is not yet wired at runtime
+            if (registry?.Service is { } svc)
+            {
+                var success = svc.ForceFailover(ruleId, req.TargetProviderId);
+                return Results.Json(new
+                {
+                    success,
+                    implemented = true,
+                    message = success
+                        ? $"Failover executed: rule '{ruleId}' switched to provider '{req.TargetProviderId}'."
+                        : $"Failover failed: rule '{ruleId}' could not switch to provider '{req.TargetProviderId}'. Check provider availability.",
+                    ruleId,
+                    targetProviderId = req.TargetProviderId
+                }, jsonOptions);
+            }
+
             return Results.Json(new
             {
                 success = false,
                 implemented = false,
-                message = $"Failover rule '{ruleId}' found, but runtime failover coordination is not yet connected. " +
-                          $"Configure failover rules and enable automatic failover for production use.",
+                message = $"Failover rule '{ruleId}' found, but streaming failover is not active in the current session. " +
+                          $"Enable failover in configuration and restart with failover rules to use runtime failover.",
                 ruleId,
                 targetProviderId = req.TargetProviderId
             }, jsonOptions);
         });
 
-        // Get provider health — returns honest data when runtime metrics unavailable
-        app.MapGet(UiApiRoutes.FailoverHealth, (ConfigStore store) =>
+        // Get provider health — returns live data from StreamingFailoverService when available
+        app.MapGet(UiApiRoutes.FailoverHealth, (ConfigStore store, StreamingFailoverRegistry? registry) =>
         {
+            if (registry?.Service is { } svc)
+            {
+                var healthSnapshots = svc.GetProviderHealthSnapshots();
+                var health = healthSnapshots.Select(h => new
+                {
+                    providerId = h.ProviderId,
+                    consecutiveFailures = h.ConsecutiveFailures,
+                    consecutiveSuccesses = h.ConsecutiveSuccesses,
+                    lastIssueTime = h.LastFailureTime,
+                    lastSuccessTime = h.LastSuccessTime,
+                    averageLatencyMs = h.AverageLatencyMs,
+                    recentIssues = h.RecentIssues,
+                    isSimulated = false
+                }).ToArray();
+
+                return Results.Json(health, jsonOptions);
+            }
+
             var cfg = store.Load();
             var sources = cfg.DataSources?.Sources ?? Array.Empty<DataSourceConfig>();
             var metricsStatus = store.TryLoadProviderMetrics();
 
-            var health = sources.Select(s =>
+            var fallbackHealth = sources.Select(s =>
             {
-                // Check if we have real metrics for this provider
                 var realMetrics = metricsStatus?.Providers.FirstOrDefault(p =>
                     string.Equals(p.ProviderId, s.Id, StringComparison.OrdinalIgnoreCase));
 
@@ -187,12 +237,13 @@ public static class FailoverEndpoints
                     consecutiveSuccesses = hasRealData ? (realMetrics!.ConnectionAttempts - realMetrics.ConnectionFailures) : 0L,
                     lastIssueTime = (DateTimeOffset?)null,
                     lastSuccessTime = hasRealData ? realMetrics!.Timestamp : (DateTimeOffset?)null,
-                    recentIssues = Array.Empty<object>(),
+                    averageLatencyMs = 0.0,
+                    recentIssues = Array.Empty<string>(),
                     isSimulated = !hasRealData
                 };
             }).ToArray();
 
-            return Results.Json(health, jsonOptions);
+            return Results.Json(fallbackHealth, jsonOptions);
         });
     }
 }
