@@ -67,7 +67,7 @@ public partial class ActivityLogPage : Page
         _refreshTimer.Start();
     }
 
-    private void OnLogEntryAdded(object? sender, Services.ActivityLogEntryEventArgs e)
+    private void OnLogEntryAdded(object? sender, ActivityLogEntryEventArgs e)
     {
         Dispatcher.Invoke(() =>
         {

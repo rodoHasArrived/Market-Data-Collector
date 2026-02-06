@@ -75,6 +75,9 @@
 
     <!-- Credential encryption (DPAPI) -->
     <PackageReference Include="System.Security.Cryptography.ProtectedData" />
+
+    <!-- ZSTD compression -->
+    <PackageReference Include="ZstdSharp.Port" />
   </ItemGroup>
 
   <!--
