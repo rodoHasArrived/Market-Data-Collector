@@ -6,6 +6,7 @@ using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Application.Services;
 using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Infrastructure.Performance;
+using MarketDataCollector.Infrastructure.Shared;
 using MarketDataCollector.Storage.Interfaces;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -220,7 +221,8 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
             // Record dropped event to audit trail for gap-aware consumers
             if (_auditTrail != null)
             {
-                _ = _auditTrail.RecordDroppedEventAsync(evt, "backpressure_queue_full");
+                _auditTrail.RecordDroppedEventAsync(evt, "backpressure_queue_full")
+                    .ObserveException(operation: "audit trail recording dropped event");
             }
         }
 

@@ -475,14 +475,20 @@ public sealed class ProviderRegistry : IDisposable
                 switch (registered.Provider)
                 {
                     case IAsyncDisposable asyncDisposable:
-                        _ = asyncDisposable.DisposeAsync().AsTask();
+                        asyncDisposable.DisposeAsync().AsTask().ContinueWith(
+                            t => _log.Warning(t.Exception!.InnerException ?? t.Exception,
+                                "Failed to async-dispose provider {ProviderName}", registered.Name),
+                            TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously);
                         break;
                     case IDisposable disposable:
                         disposable.Dispose();
                         break;
                 }
             }
-            catch { /* ignore disposal errors */ }
+            catch (Exception ex)
+            {
+                _log.Warning(ex, "Failed to dispose provider {ProviderName}", registered.Name);
+            }
         }
 
         _allProviders.Clear();

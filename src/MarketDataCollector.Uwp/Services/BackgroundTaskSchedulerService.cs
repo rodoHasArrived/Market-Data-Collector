@@ -473,8 +473,9 @@ public sealed class BackgroundTaskSchedulerService
 
                 // Safety net for any unexpected errors that slip through
                 _ = taskExecution.ContinueWith(
-                    t => System.Diagnostics.Debug.WriteLine($"Unexpected task execution error: {t.Exception?.InnerException?.Message}"),
-                    TaskContinuationOptions.OnlyOnFaulted);
+                    t => System.Diagnostics.Trace.TraceError(
+                        $"Unexpected task execution error in background scheduler: {t.Exception?.InnerException?.Message}"),
+                    TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously);
             }
         }
         catch (Exception ex)
