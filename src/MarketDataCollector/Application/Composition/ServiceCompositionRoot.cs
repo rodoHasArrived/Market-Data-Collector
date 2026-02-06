@@ -14,6 +14,7 @@ using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Http;
 using MarketDataCollector.Infrastructure.Providers.Backfill.Scheduling;
 using MarketDataCollector.Infrastructure.Providers.Core;
+using MarketDataCollector.Infrastructure.Providers.PluginAdapters;
 using MarketDataCollector.Infrastructure.Providers.SymbolSearch;
 using MarketDataCollector.Storage;
 using MarketDataCollector.Storage.Interfaces;
@@ -462,6 +463,7 @@ public static class ServiceCompositionRoot
     /// <summary>
     /// Registers provider factory and registry services.
     /// Uses the unified ProviderFactory for creating all provider types.
+    /// Optionally loads provider plugins from external assemblies.
     /// </summary>
     private static IServiceCollection AddProviderServices(
         this IServiceCollection services,
@@ -491,6 +493,24 @@ public static class ServiceCompositionRoot
             var logger = LoggingSetup.ForContext<ProviderFactory>();
             return new ProviderFactory(config, credentialResolver, logger);
         });
+
+        // Load and register provider plugins from external assemblies
+        if (options.EnablePluginProviders)
+        {
+            var pluginHost = new ProviderPluginHost(services);
+
+            // Discover plugins from compiled-in assemblies (ProjectReference'd provider packages)
+            pluginHost.DiscoverAndLoadPlugins();
+
+            // Optionally load plugins from a drop-in directory
+            if (!string.IsNullOrEmpty(options.PluginDirectory))
+            {
+                pluginHost.LoadPluginsFromDirectory(options.PluginDirectory);
+            }
+
+            // Register plugin provider types in DI
+            pluginHost.RegisterProviderServices();
+        }
 
         return services;
     }
@@ -632,7 +652,8 @@ public sealed record CompositionOptions
         EnableProviderServices = true,
         EnablePipelineServices = true,
         EnableCollectorServices = true,
-        EnableHttpClientFactory = true
+        EnableHttpClientFactory = true,
+        EnablePluginProviders = true
     };
 
     /// <summary>
@@ -753,4 +774,17 @@ public sealed record CompositionOptions
     /// Whether to enable HttpClientFactory for HTTP client lifecycle management.
     /// </summary>
     public bool EnableHttpClientFactory { get; init; }
+
+    /// <summary>
+    /// Whether to discover and load provider plugins from external assemblies.
+    /// When enabled, the composition root scans for IProviderPlugin implementations
+    /// in loaded assemblies and optionally from a plugin directory.
+    /// </summary>
+    public bool EnablePluginProviders { get; init; }
+
+    /// <summary>
+    /// Directory to scan for provider plugin DLLs (e.g., "plugins/").
+    /// Only used when <see cref="EnablePluginProviders"/> is true.
+    /// </summary>
+    public string? PluginDirectory { get; init; }
 }
