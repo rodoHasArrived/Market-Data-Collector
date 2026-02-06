@@ -506,8 +506,7 @@ Market-Data-Collector/
 │   │   ├── IProviderModule.cs
 │   │   ├── IRealtimeDataSource.cs
 │   │   ├── MarketDataCollector.ProviderSdk.csproj
-│   │   ├── ProviderHttpUtilities.cs
-│   │   └── ProviderType.cs
+│   │   └── ProviderHttpUtilities.cs
 │   ├── MarketDataCollector.Ui/
 │   │   ├── wwwroot/
 │   │   │   └── static/
