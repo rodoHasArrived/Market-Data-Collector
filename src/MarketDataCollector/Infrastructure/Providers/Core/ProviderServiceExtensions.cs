@@ -1,6 +1,7 @@
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Monitoring.Core;
 using MarketDataCollector.Infrastructure.Contracts;
+using MarketDataCollector.Infrastructure.DataSources;
 using MarketDataCollector.Infrastructure.Providers.Backfill;
 using MarketDataCollector.Infrastructure.Providers.SymbolSearch;
 using Microsoft.Extensions.DependencyInjection;
@@ -40,6 +41,17 @@ public static class ProviderServiceExtensions
         {
             var alertDispatcher = sp.GetService<IAlertDispatcher>();
             return new ProviderRegistry(alertDispatcher, log);
+        });
+
+        // Register data source registry and module-driven provider registration
+        services.AddSingleton(sp =>
+        {
+            var registry = new DataSourceRegistry();
+            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+            registry.DiscoverFromAssemblies(assemblies);
+            registry.RegisterModules(services, assemblies);
+            registry.RegisterServices(services);
+            return registry;
         });
 
         // Register provider factory

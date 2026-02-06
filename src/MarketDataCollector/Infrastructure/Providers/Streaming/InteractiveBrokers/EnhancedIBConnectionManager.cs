@@ -37,10 +37,10 @@ public sealed partial class EnhancedIBConnectionManager
 
     public int SubscribeMarketDepth(string symbol, int depthLevels = 10) => throw new NotSupportedException("Build with IBAPI defined.");
 
-    public int SubscribeMarketDepth(MarketDataCollector.Application.Config.SymbolConfig cfg, bool smartDepth = true)
+    public int SubscribeMarketDepth(SymbolConfig cfg, bool smartDepth = true)
         => throw new NotSupportedException("Build with IBAPI defined.");
 
-    public int SubscribeTrades(MarketDataCollector.Application.Config.SymbolConfig cfg)
+    public int SubscribeTrades(SymbolConfig cfg)
         => throw new NotSupportedException("Build with IBAPI defined.");
 
     public void UnsubscribeTrades(int tickerId)

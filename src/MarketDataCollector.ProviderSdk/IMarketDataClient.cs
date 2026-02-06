@@ -1,4 +1,4 @@
-using MarketDataCollector.Application.Config;
+using MarketDataCollector.Contracts.Configuration;
 using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Providers.Core;
 using System.Threading;
