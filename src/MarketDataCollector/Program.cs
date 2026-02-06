@@ -28,6 +28,7 @@ using MarketDataCollector.Infrastructure.Providers.Polygon;
 using MarketDataCollector.Infrastructure.Providers.StockSharp;
 using MarketDataCollector.Infrastructure.Providers.Backfill;
 using MarketDataCollector.Infrastructure.Providers.Streaming.Failover;
+using MarketDataCollector.Infrastructure.Providers;
 using SymbolResolution = MarketDataCollector.Infrastructure.Providers.Backfill.SymbolResolution;
 using BackfillRequest = MarketDataCollector.Application.Backfill.BackfillRequest;
 using MarketDataCollector.Storage;
@@ -591,11 +592,11 @@ internal static class Program
             throw;
         }
 
-        var subscriptionManager = new SubscriptionManager(
+        var subscriptionManager = new Application.Subscriptions.SubscriptionManager(
             depthCollector,
             tradeCollector,
             dataClient,
-            LoggingSetup.ForContext<SubscriptionManager>());
+            LoggingSetup.ForContext<Application.Subscriptions.SubscriptionManager>());
 
         var runtimeCfg = EnsureDefaultSymbols(cfg);
         subscriptionManager.Apply(runtimeCfg);
