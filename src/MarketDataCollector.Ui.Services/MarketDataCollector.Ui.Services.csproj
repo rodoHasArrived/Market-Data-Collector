@@ -1,0 +1,86 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Detect Windows platform -->
+    <IsWindows Condition="'$(OS)' == 'Windows_NT' OR $([MSBuild]::IsOSPlatform('Windows'))">true</IsWindows>
+  </PropertyGroup>
+
+  <!-- Non-Windows: Create a minimal stub that compiles but produces nothing -->
+  <PropertyGroup Condition="'$(IsWindows)' != 'true'">
+    <TargetFramework>net9.0</TargetFramework>
+    <OutputType>Library</OutputType>
+    <RootNamespace>MarketDataCollector.Ui.Services</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Exclude all source files on non-Windows -->
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <!-- Windows: Full shared services library -->
+  <PropertyGroup Condition="'$(IsWindows)' == 'true'">
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <OutputType>Library</OutputType>
+    <RootNamespace>MarketDataCollector.Ui.Services</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <!-- Assembly Information -->
+    <AssemblyName>MarketDataCollector.Ui.Services</AssemblyName>
+    <Version>1.0.0</Version>
+    <Authors>MarketDataCollector Team</Authors>
+    <Description>Shared desktop UI services for Market Data Collector UWP and WPF applications</Description>
+    <Product>Market Data Collector UI Services</Product>
+    <Copyright>Copyright 2024-2026 MarketDataCollector Team</Copyright>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <!-- Windows-only package references -->
+  <ItemGroup Condition="'$(IsWindows)' == 'true'">
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+    <PackageReference Include="System.Text.Json" />
+    <PackageReference Include="ZstdSharp.Port" />
+    <PackageReference Include="Microsoft.Extensions.Http" />
+    <PackageReference Include="Microsoft.Extensions.Http.Polly" />
+  </ItemGroup>
+
+  <!--
+    Include shared source files from Contracts (Windows only).
+    Same pattern used by UWP/WPF projects to avoid XAML compiler issues.
+    Consumer projects get Contracts types transitively through this library.
+  -->
+  <ItemGroup Condition="'$(IsWindows)' == 'true'">
+    <Compile Include="..\MarketDataCollector.Contracts\Configuration\*.cs"
+             Link="SharedModels\Configuration\%(Filename)%(Extension)" />
+    <Compile Include="..\MarketDataCollector.Contracts\Api\*.cs"
+             Link="SharedModels\Api\%(Filename)%(Extension)" />
+    <Compile Include="..\MarketDataCollector.Contracts\Credentials\*.cs"
+             Link="SharedModels\Credentials\%(Filename)%(Extension)" />
+    <Compile Include="..\MarketDataCollector.Contracts\Backfill\*.cs"
+             Link="SharedModels\Backfill\%(Filename)%(Extension)" />
+    <Compile Include="..\MarketDataCollector.Contracts\Session\*.cs"
+             Link="SharedModels\Session\%(Filename)%(Extension)" />
+    <Compile Include="..\MarketDataCollector.Contracts\Manifest\*.cs"
+             Link="SharedModels\Manifest\%(Filename)%(Extension)" />
+    <Compile Include="..\MarketDataCollector.Contracts\Archive\*.cs"
+             Link="SharedModels\Archive\%(Filename)%(Extension)" />
+    <Compile Include="..\MarketDataCollector.Contracts\Schema\*.cs"
+             Link="SharedModels\Schema\%(Filename)%(Extension)" />
+    <Compile Include="..\MarketDataCollector.Contracts\Export\*.cs"
+             Link="SharedModels\Export\%(Filename)%(Extension)" />
+    <Compile Include="..\MarketDataCollector.Contracts\Pipeline\*.cs"
+             Link="SharedModels\Pipeline\%(Filename)%(Extension)" />
+    <Compile Include="..\MarketDataCollector.Contracts\Domain\*.cs"
+             Link="SharedModels\Domain\%(Filename)%(Extension)" />
+    <Compile Include="..\MarketDataCollector.Contracts\Domain\Models\*.cs"
+             Link="SharedModels\Domain\Models\%(Filename)%(Extension)" />
+    <Compile Include="..\MarketDataCollector.Contracts\Domain\Events\*.cs"
+             Link="SharedModels\Domain\Events\%(Filename)%(Extension)" />
+    <Compile Include="..\MarketDataCollector.Contracts\Domain\Enums\*.cs"
+             Link="SharedModels\Domain\Enums\%(Filename)%(Extension)" />
+
+    <!-- Catalog models -->
+    <Compile Include="..\MarketDataCollector.Contracts\Catalog\*.cs"
+             Link="SharedModels\Catalog\%(Filename)%(Extension)" />
+  </ItemGroup>
+
+</Project>

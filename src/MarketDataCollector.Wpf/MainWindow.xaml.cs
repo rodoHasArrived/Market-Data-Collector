@@ -3,7 +3,6 @@ using System.ComponentModel;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
-using MarketDataCollector.Wpf.Contracts;
 using MarketDataCollector.Wpf.Services;
 using MarketDataCollector.Wpf.Views;
 using SysNavigation = System.Windows.Navigation;

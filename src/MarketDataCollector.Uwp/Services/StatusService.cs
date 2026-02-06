@@ -5,8 +5,6 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using MarketDataCollector.Contracts.Api;
-using MarketDataCollector.Uwp.Contracts;
-using MarketDataCollector.Uwp.Models;
 
 // Type aliases for backwards compatibility with renamed Contracts types
 using ProviderHealth = MarketDataCollector.Contracts.Api.BackfillProviderHealth;

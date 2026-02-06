@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.UI.Xaml.Controls;
-using MarketDataCollector.Uwp.Contracts;
 using MarketDataCollector.Uwp.Views;
 
 namespace MarketDataCollector.Uwp.Services;

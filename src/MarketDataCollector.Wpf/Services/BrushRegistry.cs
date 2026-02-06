@@ -1,5 +1,4 @@
 using System.Windows.Media;
-using MarketDataCollector.Wpf.Contracts;
 
 namespace MarketDataCollector.Wpf.Services;
 

@@ -2,7 +2,6 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Navigation;
-using MarketDataCollector.Uwp.Contracts;
 using MarketDataCollector.Uwp.Services;
 using MarketDataCollector.Uwp.Views;
 

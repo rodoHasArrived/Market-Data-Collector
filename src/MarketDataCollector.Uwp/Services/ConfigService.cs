@@ -1,7 +1,5 @@
 using System.Text.Json;
 using System.Threading;
-using MarketDataCollector.Uwp.Contracts;
-using MarketDataCollector.Uwp.Models;
 
 namespace MarketDataCollector.Uwp.Services;
 
@@ -15,7 +13,7 @@ public sealed class ConfigService : IConfigService
     private static readonly object _lock = new();
 
     // Use centralized JSON options to avoid duplication across services
-    private static JsonSerializerOptions JsonOptions => UwpJsonOptions.PrettyPrint;
+    private static JsonSerializerOptions JsonOptions => DesktopJsonOptions.PrettyPrint;
 
     public static ConfigService Instance
     {

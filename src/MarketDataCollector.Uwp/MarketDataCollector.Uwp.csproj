@@ -100,74 +100,18 @@
   </ItemGroup>
 
   <!--
-    NOTE: MarketDataCollector.Contracts project reference was removed because
-    the WinUI 3 XAML compiler rejects assemblies not designed for its type system
-    with error "Assembly is not allowed in type universe".
+    Shared desktop UI services library provides:
+    - All platform-agnostic services (ApiClientService, BackfillService, etc.)
+    - Contracts types (AppConfigDto, SymbolConfig, etc.) compiled from source
+    - Shared collections (BoundedObservableCollection, CircularBuffer)
+    - Shared contract interfaces (IConfigService, IStatusService)
+    - DesktopJsonOptions and HttpClientConfiguration
 
-    SOLUTION: Include Contracts source files directly during compilation (no assembly reference needed).
-    This eliminates ~1,300 lines of duplicated DTOs while avoiding the XAML compiler issue.
-    Type aliases in Models/SharedModelAliases.cs provide backwards compatibility.
+    Platform-specific services (ThemeService, NavigationService, NotificationService, etc.)
+    remain in this project.
   -->
-
-  <!-- Include shared source files from Contracts (Windows only) -->
   <ItemGroup Condition="'$(IsWindows)' == 'true'">
-    <!-- Configuration DTOs -->
-    <Compile Include="..\MarketDataCollector.Contracts\Configuration\*.cs"
-             Link="SharedModels\Configuration\%(Filename)%(Extension)" />
-
-    <!-- API models (StatusResponse, BackfillResult, etc.) -->
-    <Compile Include="..\MarketDataCollector.Contracts\Api\*.cs"
-             Link="SharedModels\Api\%(Filename)%(Extension)" />
-
-    <!-- Credential models -->
-    <Compile Include="..\MarketDataCollector.Contracts\Credentials\*.cs"
-             Link="SharedModels\Credentials\%(Filename)%(Extension)" />
-
-    <!-- Backfill progress models -->
-    <Compile Include="..\MarketDataCollector.Contracts\Backfill\*.cs"
-             Link="SharedModels\Backfill\%(Filename)%(Extension)" />
-
-    <!-- Session models -->
-    <Compile Include="..\MarketDataCollector.Contracts\Session\*.cs"
-             Link="SharedModels\Session\%(Filename)%(Extension)" />
-
-    <!-- Manifest models -->
-    <Compile Include="..\MarketDataCollector.Contracts\Manifest\*.cs"
-             Link="SharedModels\Manifest\%(Filename)%(Extension)" />
-
-    <!-- Archive health models -->
-    <Compile Include="..\MarketDataCollector.Contracts\Archive\*.cs"
-             Link="SharedModels\Archive\%(Filename)%(Extension)" />
-
-    <!-- Schema models -->
-    <Compile Include="..\MarketDataCollector.Contracts\Schema\*.cs"
-             Link="SharedModels\Schema\%(Filename)%(Extension)" />
-
-    <!-- Export models -->
-    <Compile Include="..\MarketDataCollector.Contracts\Export\*.cs"
-             Link="SharedModels\Export\%(Filename)%(Extension)" />
-
-    <!-- Pipeline policy constants -->
-    <Compile Include="..\MarketDataCollector.Contracts\Pipeline\*.cs"
-             Link="SharedModels\Pipeline\%(Filename)%(Extension)" />
-
-    <!-- Domain root files (DTOs) -->
-    <Compile Include="..\MarketDataCollector.Contracts\Domain\*.cs"
-             Link="SharedModels\Domain\%(Filename)%(Extension)" />
-
-    <!-- Domain models (Trade, LOBSnapshot, IntegrityEvent, etc.) -->
-    <Compile Include="..\MarketDataCollector.Contracts\Domain\Models\*.cs"
-             Link="SharedModels\Domain\Models\%(Filename)%(Extension)" />
-
-    <!-- Domain events (MarketEvent, MarketEventPayload, IMarketEventPayload) -->
-    <!-- Note: MarketEventPayload.cs uses conditional compilation (#if !UWP_BUILD) to exclude
-         [JsonPolymorphic] attributes that the WinUI 3 XAML compiler (net472-based) cannot process -->
-    <Compile Include="..\MarketDataCollector.Contracts\Domain\Events\*.cs"
-             Link="SharedModels\Domain\Events\%(Filename)%(Extension)" />
-
-    <!-- Domain enums (AggressorSide, MarketEventType, etc.) -->
-    <Compile Include="..\MarketDataCollector.Contracts\Domain\Enums\*.cs"
-             Link="SharedModels\Domain\Enums\%(Filename)%(Extension)" />
+    <ProjectReference Include="..\MarketDataCollector.Ui.Services\MarketDataCollector.Ui.Services.csproj" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(IsWindows)' == 'true' AND Exists('Assets')">

@@ -5,7 +5,6 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using MarketDataCollector.Uwp.Models;
 
 namespace MarketDataCollector.Uwp.Services;
 

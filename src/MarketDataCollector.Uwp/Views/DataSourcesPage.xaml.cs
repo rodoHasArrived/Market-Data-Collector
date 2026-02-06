@@ -1,6 +1,5 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using MarketDataCollector.Uwp.Models;
 using MarketDataCollector.Uwp.Services;
 using System.Collections.ObjectModel;
 

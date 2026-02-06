@@ -5,7 +5,6 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
-using MarketDataCollector.Wpf.Contracts;
 using Timer = System.Timers.Timer;
 
 namespace MarketDataCollector.Wpf.Services;

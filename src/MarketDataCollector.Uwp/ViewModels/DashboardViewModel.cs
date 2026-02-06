@@ -1,9 +1,6 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using MarketDataCollector.Uwp.Collections;
-using MarketDataCollector.Uwp.Contracts;
-using MarketDataCollector.Uwp.Models;
 using MarketDataCollector.Uwp.Services;
 
 namespace MarketDataCollector.Uwp.ViewModels;
