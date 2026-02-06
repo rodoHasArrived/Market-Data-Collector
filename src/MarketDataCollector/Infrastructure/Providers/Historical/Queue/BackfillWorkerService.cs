@@ -204,12 +204,43 @@ public sealed class BackfillWorkerService : IDisposable
 
                     if (bars.Count > 0)
                     {
-                        // Write to storage
-                        await WriteBarsToStorageAsync(request, bars, ct).ConfigureAwait(false);
-                        request.BarsRetrieved = bars.Count;
+                        // Validate bars before storage
+                        var validationResult = BackfillBarValidator.ValidateBars(bars);
 
-                        // Record progress
-                        _progressTracker.RecordProgress(request.Symbol, bars.Count);
+                        if (validationResult.RejectedBars.Count > 0)
+                        {
+                            _log.Warning(
+                                "Rejected {RejectedCount}/{TotalCount} bars for {Symbol}: {Errors}",
+                                validationResult.RejectedBars.Count,
+                                bars.Count,
+                                request.Symbol,
+                                string.Join("; ", validationResult.Errors.Take(5).Select(e => e.Code)));
+                        }
+
+                        foreach (var warning in validationResult.Warnings.Take(10))
+                        {
+                            _log.Debug(
+                                "Backfill validation warning for {Symbol} on {Date}: [{Code}] {Message}",
+                                warning.Symbol, warning.SessionDate, warning.Code, warning.Message);
+                        }
+
+                        var validBars = validationResult.ValidBars;
+
+                        if (validBars.Count > 0)
+                        {
+                            // Write only validated bars to storage
+                            await WriteBarsToStorageAsync(request, validBars, ct).ConfigureAwait(false);
+                            request.BarsRetrieved = validBars.Count;
+
+                            // Record progress
+                            _progressTracker.RecordProgress(request.Symbol, validBars.Count);
+                        }
+                        else
+                        {
+                            _log.Warning(
+                                "All {Count} bars rejected for {Symbol}, nothing written to storage",
+                                bars.Count, request.Symbol);
+                        }
                     }
 
                     // Mark as complete

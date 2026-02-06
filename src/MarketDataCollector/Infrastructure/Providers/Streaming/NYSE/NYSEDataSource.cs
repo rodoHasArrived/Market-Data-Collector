@@ -52,6 +52,7 @@ public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHisto
     private ClientWebSocket? _webSocket;
     private CancellationTokenSource? _connectionCts;
     private Task? _receiveTask;
+    private Task? _heartbeatMonitorTask;
 
     private readonly Subject<RealtimeTrade> _trades = new();
     private readonly Subject<RealtimeQuote> _quotes = new();
@@ -64,6 +65,21 @@ public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHisto
     private string? _accessToken;
     private DateTimeOffset _tokenExpiry = DateTimeOffset.MinValue;
     private readonly SemaphoreSlim _authLock = new(1, 1);
+
+    // Reconnection state
+    private readonly SemaphoreSlim _reconnectLock = new(1, 1);
+    private int _reconnectAttempt;
+    private bool _isReconnecting;
+    private DateTimeOffset _lastHeartbeat = DateTimeOffset.UtcNow;
+    private DateTimeOffset _lastConnectedAt = DateTimeOffset.MinValue;
+    private static readonly TimeSpan HeartbeatTimeout = TimeSpan.FromSeconds(90);
+    private static readonly TimeSpan HeartbeatCheckInterval = TimeSpan.FromSeconds(15);
+    private const double BackoffJitterFactor = 0.25;
+
+    /// <summary>
+    /// Event raised when connection state changes (connected, disconnected, reconnecting).
+    /// </summary>
+    public event Action<string, DataSourceStatus>? OnConnectionStateChanged;
 
     private static readonly HashSet<string> SupportedMarketsSet = new(StringComparer.OrdinalIgnoreCase) { "US" };
     private static readonly HashSet<AssetClass> SupportedAssetClassesSet = new()
@@ -212,6 +228,7 @@ public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHisto
         _depthUpdates.Dispose();
 
         _authLock.Dispose();
+        _reconnectLock.Dispose();
         _httpClient.Dispose();
     }
 
@@ -245,10 +262,18 @@ public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHisto
                 .ConfigureAwait(false);
 
             Status = DataSourceStatus.Connected;
+            _lastConnectedAt = DateTimeOffset.UtcNow;
+            _lastHeartbeat = DateTimeOffset.UtcNow;
+            _reconnectAttempt = 0;
+            _isReconnecting = false;
             Log.Information("Connected to NYSE WebSocket");
+            OnConnectionStateChanged?.Invoke(Id, DataSourceStatus.Connected);
 
             // Start receiving messages
             _receiveTask = ReceiveMessagesAsync(_connectionCts.Token);
+
+            // Start heartbeat monitor for detecting silent disconnections
+            _heartbeatMonitorTask = MonitorHeartbeatAsync(_connectionCts.Token);
 
             // Re-subscribe to any existing subscriptions
             await ResubscribeAllAsync(_connectionCts.Token).ConfigureAwait(false);
@@ -256,6 +281,7 @@ public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHisto
         catch (Exception ex)
         {
             Status = DataSourceStatus.Disconnected;
+            OnConnectionStateChanged?.Invoke(Id, DataSourceStatus.Disconnected);
             Log.Error(ex, "Failed to connect to NYSE WebSocket");
             throw;
         }
@@ -750,10 +776,17 @@ public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHisto
         }
         catch (WebSocketException ex)
         {
-            Log.Error(ex, "NYSE WebSocket error");
+            Log.Error(ex, "NYSE WebSocket error: {Status}", _webSocket?.State);
             Status = DataSourceStatus.Disconnected;
-            TryReconnectAsync()
-                .ObserveException(Log, "NYSE WebSocket reconnection after error");
+            OnConnectionStateChanged?.Invoke(Id, DataSourceStatus.Disconnected);
+            _ = TryReconnectAsync(ct);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            Log.Error(ex, "Unexpected error in NYSE WebSocket receive loop");
+            Status = DataSourceStatus.Disconnected;
+            OnConnectionStateChanged?.Invoke(Id, DataSourceStatus.Disconnected);
+            _ = TryReconnectAsync(ct);
         }
     }
 
@@ -778,6 +811,7 @@ public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHisto
                     ProcessDepthMessage(root);
                     break;
                 case "heartbeat":
+                    _lastHeartbeat = DateTimeOffset.UtcNow;
                     Log.Verbose("NYSE heartbeat received");
                     break;
                 case "error":
@@ -898,29 +932,182 @@ public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHisto
         }
     }
 
-    private async Task TryReconnectAsync()
+    /// <summary>
+    /// Monitors heartbeat messages to detect silent disconnections.
+    /// If no heartbeat is received within the timeout, triggers reconnection.
+    /// </summary>
+    private async Task MonitorHeartbeatAsync(CancellationToken ct)
     {
-        for (int attempt = 1; attempt <= _options.MaxReconnectAttempts; attempt++)
+        try
         {
-            Log.Information("NYSE reconnection attempt {Attempt}/{Max}", attempt, _options.MaxReconnectAttempts);
-
-            await Task.Delay(TimeSpan.FromSeconds(_options.ReconnectDelaySeconds * attempt))
-                .ConfigureAwait(false);
-
-            try
+            while (!ct.IsCancellationRequested)
             {
-                await ConnectAsync().ConfigureAwait(false);
-                return;
-            }
-            catch (Exception ex)
-            {
-                Log.Warning(ex, "NYSE reconnection attempt {Attempt} failed", attempt);
+                await Task.Delay(HeartbeatCheckInterval, ct).ConfigureAwait(false);
+
+                if (_webSocket?.State != WebSocketState.Open)
+                    continue;
+
+                var timeSinceLastHeartbeat = DateTimeOffset.UtcNow - _lastHeartbeat;
+                if (timeSinceLastHeartbeat > HeartbeatTimeout)
+                {
+                    Log.Warning(
+                        "NYSE heartbeat timeout: no heartbeat for {Seconds}s (threshold: {Threshold}s). Triggering reconnect",
+                        (int)timeSinceLastHeartbeat.TotalSeconds,
+                        (int)HeartbeatTimeout.TotalSeconds);
+
+                    _ = TryReconnectAsync(ct);
+                    break; // Exit this monitor; a new one will start after reconnection
+                }
             }
         }
-
-        Log.Error("NYSE failed to reconnect after {Max} attempts", _options.MaxReconnectAttempts);
-        Status = DataSourceStatus.Unavailable;
+        catch (OperationCanceledException)
+        {
+            // Expected on disconnect
+        }
     }
+
+    /// <summary>
+    /// Attempts to reconnect to the NYSE WebSocket with exponential backoff and jitter.
+    /// Uses a lock to prevent concurrent reconnection attempts.
+    /// </summary>
+    private async Task TryReconnectAsync(CancellationToken ct = default)
+    {
+        if (!await _reconnectLock.WaitAsync(0, ct).ConfigureAwait(false))
+        {
+            Log.Debug("NYSE reconnection already in progress, skipping duplicate attempt");
+            return;
+        }
+
+        try
+        {
+            if (_isReconnecting) return;
+            _isReconnecting = true;
+            Status = DataSourceStatus.Reconnecting;
+            OnConnectionStateChanged?.Invoke(Id, DataSourceStatus.Reconnecting);
+
+            // Clean up existing connection
+            try
+            {
+                if (_webSocket?.State == WebSocketState.Open)
+                {
+                    await _webSocket.CloseAsync(
+                        WebSocketCloseStatus.NormalClosure,
+                        "Reconnecting",
+                        CancellationToken.None).ConfigureAwait(false);
+                }
+            }
+            catch
+            {
+                // Ignore close errors during reconnection
+            }
+            finally
+            {
+                _webSocket?.Dispose();
+                _webSocket = null;
+            }
+
+            for (_reconnectAttempt = 1; _reconnectAttempt <= _options.MaxReconnectAttempts; _reconnectAttempt++)
+            {
+                ct.ThrowIfCancellationRequested();
+
+                var delay = CalculateReconnectBackoff(_reconnectAttempt);
+                Log.Information(
+                    "NYSE reconnection attempt {Attempt}/{Max} in {Delay}ms",
+                    _reconnectAttempt, _options.MaxReconnectAttempts, (int)delay.TotalMilliseconds);
+
+                await Task.Delay(delay, ct).ConfigureAwait(false);
+
+                try
+                {
+                    // Re-authenticate if token is expired
+                    await EnsureAuthenticatedAsync(ct).ConfigureAwait(false);
+
+                    _connectionCts?.Cancel();
+                    _connectionCts?.Dispose();
+                    _connectionCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+
+                    _webSocket = new ClientWebSocket();
+                    _webSocket.Options.SetRequestHeader("Authorization", $"Bearer {_accessToken}");
+
+                    await _webSocket.ConnectAsync(
+                        new Uri(_options.EffectiveWebSocketUrl),
+                        _connectionCts.Token).ConfigureAwait(false);
+
+                    // Successfully reconnected
+                    Status = DataSourceStatus.Connected;
+                    _lastConnectedAt = DateTimeOffset.UtcNow;
+                    _lastHeartbeat = DateTimeOffset.UtcNow;
+                    _reconnectAttempt = 0;
+                    _isReconnecting = false;
+
+                    Log.Information("NYSE WebSocket reconnected successfully after {Attempt} attempt(s)", _reconnectAttempt);
+                    OnConnectionStateChanged?.Invoke(Id, DataSourceStatus.Connected);
+
+                    // Restart message receiver and heartbeat monitor
+                    _receiveTask = ReceiveMessagesAsync(_connectionCts.Token);
+                    _heartbeatMonitorTask = MonitorHeartbeatAsync(_connectionCts.Token);
+
+                    // Resubscribe to all existing subscriptions
+                    await ResubscribeAllAsync(_connectionCts.Token).ConfigureAwait(false);
+                    return;
+                }
+                catch (OperationCanceledException) when (ct.IsCancellationRequested)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning(ex, "NYSE reconnection attempt {Attempt}/{Max} failed: {Error}",
+                        _reconnectAttempt, _options.MaxReconnectAttempts, ex.Message);
+
+                    _webSocket?.Dispose();
+                    _webSocket = null;
+                }
+            }
+
+            // All attempts exhausted
+            _isReconnecting = false;
+            Status = DataSourceStatus.Unavailable;
+            OnConnectionStateChanged?.Invoke(Id, DataSourceStatus.Unavailable);
+            Log.Error(
+                "NYSE failed to reconnect after {Max} attempts. Provider marked as unavailable",
+                _options.MaxReconnectAttempts);
+        }
+        finally
+        {
+            _reconnectLock.Release();
+        }
+    }
+
+    /// <summary>
+    /// Calculates exponential backoff with jitter for reconnection attempts.
+    /// Base delay doubles each attempt: 5s, 10s, 20s, 40s... capped at 5 minutes.
+    /// </summary>
+    private TimeSpan CalculateReconnectBackoff(int attempt)
+    {
+        var baseDelayMs = _options.ReconnectDelaySeconds * 1000.0;
+        var maxDelayMs = 300_000.0; // 5 minutes cap
+        var delayMs = Math.Min(baseDelayMs * Math.Pow(2, attempt - 1), maxDelayMs);
+
+        // Add jitter (±25%) to prevent thundering herd
+        var jitter = delayMs * BackoffJitterFactor * (Random.Shared.NextDouble() * 2 - 1);
+        return TimeSpan.FromMilliseconds(Math.Max(delayMs + jitter, 1000));
+    }
+
+    /// <summary>
+    /// Gets the current reconnection state for diagnostics.
+    /// </summary>
+    public NYSEConnectionHealth GetConnectionHealth() => new(
+        IsConnected: IsConnected,
+        IsReconnecting: _isReconnecting,
+        ReconnectAttempt: _reconnectAttempt,
+        MaxReconnectAttempts: _options.MaxReconnectAttempts,
+        LastConnectedAt: _lastConnectedAt,
+        LastHeartbeatAt: _lastHeartbeat,
+        TimeSinceLastHeartbeat: DateTimeOffset.UtcNow - _lastHeartbeat,
+        ActiveSubscriptionCount: _subscriptions.Count,
+        SubscribedSymbols: _subscriptions.Values.Select(s => s.Symbol).Distinct().ToArray()
+    );
 
     #endregion
 
@@ -1120,5 +1307,20 @@ internal sealed class NYSESplit
     [JsonPropertyName("splitTo")]
     public decimal SplitTo { get; set; }
 }
+
+/// <summary>
+/// Connection health snapshot for NYSE WebSocket, used for diagnostics and monitoring.
+/// </summary>
+public sealed record NYSEConnectionHealth(
+    bool IsConnected,
+    bool IsReconnecting,
+    int ReconnectAttempt,
+    int MaxReconnectAttempts,
+    DateTimeOffset LastConnectedAt,
+    DateTimeOffset LastHeartbeatAt,
+    TimeSpan TimeSinceLastHeartbeat,
+    int ActiveSubscriptionCount,
+    string[] SubscribedSymbols
+);
 
 #endregion

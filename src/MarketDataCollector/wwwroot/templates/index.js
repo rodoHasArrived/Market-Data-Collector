@@ -1071,6 +1071,216 @@ document.getElementById('newProviderType').addEventListener('change', function()
   alpacaFields.style.display = this.value === 'Alpaca' ? 'block' : 'none';
 });
 
+// ==========================================
+// Server-Sent Events (SSE) for real-time updates
+// ==========================================
+
+let sseConnection = null;
+let sseRetryCount = 0;
+const SSE_MAX_RETRIES = 10;
+const SSE_BASE_DELAY = 2000;
+
+function connectSSE() {
+  if (sseConnection) {
+    sseConnection.close();
+  }
+
+  try {
+    sseConnection = new EventSource('/api/events/stream');
+
+    sseConnection.onopen = function() {
+      sseRetryCount = 0;
+      console.log('SSE connected');
+      updateSSEIndicator(true);
+    };
+
+    // Handle status update events
+    sseConnection.addEventListener('status', function(event) {
+      try {
+        const s = JSON.parse(event.data);
+        updateStatusFromSSE(s);
+      } catch (e) {
+        console.warn('Failed to parse SSE status event:', e);
+      }
+    });
+
+    // Handle provider health events
+    sseConnection.addEventListener('provider-health', function(event) {
+      try {
+        const health = JSON.parse(event.data);
+        updateProviderHealthFromSSE(health);
+      } catch (e) {
+        console.warn('Failed to parse SSE provider-health event:', e);
+      }
+    });
+
+    // Handle backfill progress events
+    sseConnection.addEventListener('backfill-progress', function(event) {
+      try {
+        const progress = JSON.parse(event.data);
+        updateBackfillProgressFromSSE(progress);
+      } catch (e) {
+        console.warn('Failed to parse SSE backfill-progress event:', e);
+      }
+    });
+
+    // Handle error events
+    sseConnection.addEventListener('error-alert', function(event) {
+      try {
+        const err = JSON.parse(event.data);
+        showToast('error', err.source || 'Error', err.message || 'An error occurred');
+      } catch (e) {
+        console.warn('Failed to parse SSE error-alert event:', e);
+      }
+    });
+
+    // Generic message handler for untyped events
+    sseConnection.onmessage = function(event) {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'status') updateStatusFromSSE(data);
+      } catch (e) {
+        // Ignore parse errors for heartbeat/ping messages
+      }
+    };
+
+    sseConnection.onerror = function() {
+      updateSSEIndicator(false);
+      sseConnection.close();
+      sseConnection = null;
+
+      // Exponential backoff reconnection
+      if (sseRetryCount < SSE_MAX_RETRIES) {
+        const delay = Math.min(SSE_BASE_DELAY * Math.pow(2, sseRetryCount), 60000);
+        sseRetryCount++;
+        console.log(`SSE reconnecting in ${delay}ms (attempt ${sseRetryCount}/${SSE_MAX_RETRIES})`);
+        setTimeout(connectSSE, delay);
+      } else {
+        console.warn('SSE max retries reached, falling back to polling');
+        startPollingFallback();
+      }
+    };
+  } catch (e) {
+    console.warn('SSE not supported, using polling fallback');
+    startPollingFallback();
+  }
+}
+
+function updateSSEIndicator(connected) {
+  const indicator = document.getElementById('sseIndicator');
+  if (indicator) {
+    indicator.style.background = connected ? '#48bb78' : '#f56565';
+    indicator.title = connected ? 'Live updates connected' : 'Live updates disconnected';
+  }
+}
+
+function updateStatusFromSSE(s) {
+  const box = document.getElementById('statusBox');
+  const isConnected = s.isConnected !== false;
+
+  box.innerHTML = `
+    <div class="status-badge ${isConnected ? 'status-connected' : 'status-disconnected'}">
+      <span class="status-dot"></span>
+      ${isConnected ? 'Connected' : 'Disconnected'}
+    </div>
+    <div style="margin-top: 8px; font-size: 12px; color: #718096;">
+      Last update: ${s.timestampUtc || new Date().toISOString()}
+    </div>
+  `;
+
+  document.getElementById('metricPublished').textContent = (s.metrics && s.metrics.published) || 0;
+  document.getElementById('metricDropped').textContent = (s.metrics && s.metrics.dropped) || 0;
+  document.getElementById('metricIntegrity').textContent = (s.metrics && s.metrics.integrity) || 0;
+  document.getElementById('metricBars').textContent = (s.metrics && s.metrics.historicalBars) || 0;
+}
+
+function updateProviderHealthFromSSE(health) {
+  renderStreamingProviderHealth(health);
+}
+
+function updateBackfillProgressFromSSE(progress) {
+  if (!progress) return;
+  const progressDiv = document.getElementById('backfillProgress');
+  const bar = document.getElementById('progressBar');
+  const percent = document.getElementById('progressPercent');
+  const label = document.getElementById('progressLabel');
+
+  if (progress.percentComplete != null) {
+    progressDiv.classList.remove('hidden');
+    bar.style.width = progress.percentComplete + '%';
+    percent.textContent = Math.round(progress.percentComplete) + '%';
+    label.textContent = progress.currentSymbol
+      ? `Processing ${progress.currentSymbol}...`
+      : 'Processing...';
+
+    if (progress.percentComplete >= 100) {
+      label.textContent = 'Complete';
+      setTimeout(() => progressDiv.classList.add('hidden'), 3000);
+    }
+  }
+}
+
+// Fallback polling when SSE is unavailable
+let pollingIntervals = [];
+function startPollingFallback() {
+  pollingIntervals.push(setInterval(loadStatus, 3000));
+  pollingIntervals.push(setInterval(loadBackfillStatus, 5000));
+  pollingIntervals.push(setInterval(loadMultiProviderStatus, 5000));
+  pollingIntervals.push(setInterval(loadStreamingProviderHealth, 10000));
+}
+
+// ==========================================
+// Streaming Provider Health Panel
+// ==========================================
+
+async function loadStreamingProviderHealth() {
+  try {
+    const r = await apiCall('/api/providers/status');
+    const providers = await r.json();
+    renderStreamingProviderHealth(providers);
+  } catch (e) {
+    console.log('Streaming provider health not available:', e);
+  }
+}
+
+function renderStreamingProviderHealth(providers) {
+  const panel = document.getElementById('streamingProviderHealthGrid');
+  if (!panel) return;
+
+  if (!providers || !Array.isArray(providers) || providers.length === 0) {
+    panel.innerHTML = '<div style="text-align: center; color: #718096; padding: 16px;">No streaming providers configured</div>';
+    return;
+  }
+
+  panel.innerHTML = providers.map(p => {
+    const isHealthy = p.isConnected || p.isEnabled;
+    const statusColor = p.isConnected ? '#48bb78' : p.isEnabled ? '#ecc94b' : '#f56565';
+    const statusText = p.isConnected ? 'Connected' : p.isEnabled ? 'Enabled' : 'Disabled';
+    const icon = p.isConnected ? '&#9679;' : '&#9675;';
+    const latency = p.lastHeartbeat
+      ? `Last seen: ${new Date(p.lastHeartbeat).toLocaleTimeString()}`
+      : '';
+
+    return `
+      <div class="provider-health-card" style="padding: 14px; background: white; border-radius: 8px; border-left: 4px solid ${statusColor}; box-shadow: 0 1px 3px rgba(0,0,0,0.08); transition: all 0.3s;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <span style="font-weight: 600; font-size: 14px;">${p.name || p.providerId}</span>
+            <span style="font-size: 11px; color: #718096; margin-left: 6px;">${p.providerType || ''}</span>
+          </div>
+          <span style="color: ${statusColor}; font-size: 18px;" title="${statusText}">${icon}</span>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 10px; font-size: 12px;">
+          <div><span style="color: #718096;">Status:</span> <strong style="color: ${statusColor};">${statusText}</strong></div>
+          <div><span style="color: #718096;">Priority:</span> ${p.priority || '-'}</div>
+          <div><span style="color: #718096;">Subscriptions:</span> ${p.activeSubscriptions || 0}</div>
+          <div style="color: #a0aec0; font-size: 11px;">${latency}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
 // Initial load
 loadConfig();
 loadStatus();
@@ -1079,6 +1289,11 @@ loadProviderHealth();
 loadMultiProviderStatus();
 loadFailoverRules();
 loadSymbolMappings();
-setInterval(loadStatus, 2000);
-setInterval(loadBackfillStatus, 5000);
-setInterval(loadMultiProviderStatus, 5000);
+loadStreamingProviderHealth();
+
+// Try SSE first, fall back to polling
+connectSSE();
+
+// These still poll since SSE may not cover all data
+setInterval(loadBackfillStatus, 10000);
+setInterval(loadMultiProviderStatus, 10000);

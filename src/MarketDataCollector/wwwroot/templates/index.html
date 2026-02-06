@@ -681,6 +681,7 @@
   <div class="header">
     <h1>📊 Market Data Collector</h1>
     <div class="header-actions">
+      <span id="sseIndicator" style="width: 10px; height: 10px; border-radius: 50%; background: #a0aec0; display: inline-block; margin-right: 4px;" title="Live updates status"></span>
       <button class="btn-help" onclick="openHelp()">
         <span>❓</span> Help
       </button>
@@ -779,6 +780,19 @@
           <button class="btn-primary" onclick="saveAlpacaSettings()">
             💾 Save Alpaca Settings
           </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Streaming Provider Health Panel -->
+    <div class="row">
+      <div class="card" style="grid-column: 1 / -1;">
+        <h2>🏥 Provider Health</h2>
+        <p style="color: #718096; font-size: 13px; margin: 0 0 16px 0;">
+          Real-time connection status and health metrics for all streaming data providers.
+        </p>
+        <div id="streamingProviderHealthGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px;">
+          <div style="text-align: center; color: #718096; padding: 16px;">Loading provider health...</div>
         </div>
       </div>
     </div>

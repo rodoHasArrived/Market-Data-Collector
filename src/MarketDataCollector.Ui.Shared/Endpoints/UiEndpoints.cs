@@ -167,6 +167,7 @@ public static class UiEndpoints
         app.MapIBEndpoints(jsonOptions);
         app.MapSymbolMappingEndpoints(jsonOptions);
         app.MapLiveDataEndpoints(jsonOptions);
+        app.MapDiagnosticsEndpoints(jsonOptions);
         app.MapStubEndpoints();
 
         return app;
@@ -196,6 +197,7 @@ public static class UiEndpoints
         app.MapIBEndpoints(jsonOptions);
         app.MapSymbolMappingEndpoints(jsonOptions);
         app.MapLiveDataEndpoints(jsonOptions);
+        app.MapDiagnosticsEndpoints(jsonOptions);
         app.MapStubEndpoints();
 
         return app;

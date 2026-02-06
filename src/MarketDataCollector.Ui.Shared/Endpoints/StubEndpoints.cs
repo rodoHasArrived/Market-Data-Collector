@@ -101,22 +101,7 @@ public static class StubEndpoints
         MapStub(app, "GET", UiApiRoutes.StorageQualityAnomalies);
         MapStub(app, "POST", UiApiRoutes.StorageQualityCheck);
 
-        // Diagnostics endpoints
-        MapStub(app, "POST", UiApiRoutes.DiagnosticsDryRun);
-        MapStub(app, "GET", UiApiRoutes.DiagnosticsProviders);
-        MapStub(app, "GET", UiApiRoutes.DiagnosticsStorage);
-        MapStub(app, "GET", UiApiRoutes.DiagnosticsConfig);
-        MapStub(app, "GET", UiApiRoutes.DiagnosticsBundle);
-        MapStub(app, "GET", UiApiRoutes.DiagnosticsMetrics);
-        MapStub(app, "POST", UiApiRoutes.DiagnosticsValidate);
-        MapStub(app, "POST", UiApiRoutes.DiagnosticsProviderTest);
-        MapStub(app, "GET", UiApiRoutes.DiagnosticsQuickCheck);
-        MapStub(app, "GET", UiApiRoutes.DiagnosticsShowConfig);
-        MapStub(app, "GET", UiApiRoutes.DiagnosticsErrorCodes);
-        MapStub(app, "POST", UiApiRoutes.DiagnosticsSelftest);
-        MapStub(app, "POST", UiApiRoutes.DiagnosticsValidateCredentials);
-        MapStub(app, "POST", UiApiRoutes.DiagnosticsTestConnectivity);
-        MapStub(app, "POST", UiApiRoutes.DiagnosticsValidateConfig);
+        // Diagnostics endpoints — now implemented in DiagnosticsEndpoints.cs
 
         // Admin/Maintenance endpoints
         MapStub(app, "GET", UiApiRoutes.AdminMaintenanceSchedule);
