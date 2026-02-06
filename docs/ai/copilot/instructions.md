@@ -1108,7 +1108,8 @@ Market-Data-Collector/
 │   │   ├── Integration/
 │   │   │   ├── ConnectionRetryIntegrationTests.cs
 │   │   │   ├── EndpointStubDetectionTests.cs
-│   │   │   └── UwpCoreIntegrationTests.cs
+│   │   │   ├── UwpCoreIntegrationTests.cs
+│   │   │   └── YahooFinancePcgPreferredIntegrationTests.cs
 │   │   ├── Serialization/
 │   │   │   └── HighPerformanceJsonTests.cs
 │   │   ├── Storage/

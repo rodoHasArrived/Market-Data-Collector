@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-06 22:22:00 UTC
+> Auto-generated on 2026-02-06 22:37:28 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -1001,7 +1001,8 @@ Market-Data-Collector/
 │   │   ├── Integration/
 │   │   │   ├── ConnectionRetryIntegrationTests.cs
 │   │   │   ├── EndpointStubDetectionTests.cs
-│   │   │   └── UwpCoreIntegrationTests.cs
+│   │   │   ├── UwpCoreIntegrationTests.cs
+│   │   │   └── YahooFinancePcgPreferredIntegrationTests.cs
 │   │   ├── Serialization/
 │   │   │   └── HighPerformanceJsonTests.cs
 │   │   ├── Storage/
