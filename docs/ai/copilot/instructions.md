@@ -1106,6 +1106,8 @@ Market-Data-Collector/
 │   │   │   └── Shared/
 │   │   │       ...
 │   │   ├── Integration/
+│   │   │   ├── EndpointTests/
+│   │   │   │   ...
 │   │   │   ├── ConnectionRetryIntegrationTests.cs
 │   │   │   ├── EndpointStubDetectionTests.cs
 │   │   │   ├── UwpCoreIntegrationTests.cs
