@@ -27,7 +27,7 @@ public sealed class ProviderDataNormalizer
 
         // Return original if nothing changed (avoid allocation)
         if (normalizedSymbol == update.Symbol
-            && normalizedTimestamp == update.Timestamp
+            && normalizedTimestamp.Equals(update.Timestamp) && normalizedTimestamp.Offset == update.Timestamp.Offset
             && normalizedAggressor == update.Aggressor)
         {
             return update;
@@ -52,7 +52,7 @@ public sealed class ProviderDataNormalizer
         var normalizedTimestamp = NormalizeTimestamp(update.Timestamp);
 
         if (normalizedSymbol == update.Symbol
-            && normalizedTimestamp == update.Timestamp)
+            && normalizedTimestamp.Equals(update.Timestamp) && normalizedTimestamp.Offset == update.Timestamp.Offset)
         {
             return update;
         }
@@ -75,7 +75,7 @@ public sealed class ProviderDataNormalizer
         var normalizedTimestamp = NormalizeTimestamp(update.Timestamp);
 
         if (normalizedSymbol == update.Symbol
-            && normalizedTimestamp == update.Timestamp)
+            && normalizedTimestamp.Equals(update.Timestamp) && normalizedTimestamp.Offset == update.Timestamp.Offset)
         {
             return update;
         }
@@ -101,7 +101,7 @@ public sealed class ProviderDataNormalizer
     internal static string NormalizeSymbol(string? symbol)
     {
         if (string.IsNullOrWhiteSpace(symbol))
-            return symbol ?? string.Empty;
+            return string.Empty;
 
         var trimmed = symbol.AsSpan().Trim();
 
@@ -144,7 +144,7 @@ public sealed class ProviderDataNormalizer
             return timestamp;
 
         // Convert to UTC, preserving the actual instant in time
-        return timestamp.ToUniversalTime();
+        return new DateTimeOffset(timestamp.UtcDateTime, TimeSpan.Zero);
     }
 
     /// <summary>
@@ -158,7 +158,7 @@ public sealed class ProviderDataNormalizer
     /// - IB: Provides aggressor via tickType in some callbacks, Unknown in others
     /// - StockSharp: Full Buy/Sell/Unknown via Sides enum conversion
     ///
-    /// Note: The actual BBO-based inference (price >= ask => Buy, price <= bid => Sell)
+    /// Note: The actual BBO-based inference (price &gt;= ask =&gt; Buy, price &lt;= bid =&gt; Sell)
     /// is handled downstream in TradeDataCollector when aggressor is Unknown and BBO is available.
     /// </remarks>
     internal static AggressorSide NormalizeAggressor(AggressorSide side)
