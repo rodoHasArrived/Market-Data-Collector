@@ -26,7 +26,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\src\MarketDataCollector\MarketDataCollector.csproj" />
+    <ProjectReference Include="..\..\src\MarketDataCollector.Ui.Shared\MarketDataCollector.Ui.Shared.csproj" />
   </ItemGroup>
 
 </Project>
