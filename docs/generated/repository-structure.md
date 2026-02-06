@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-06 07:48:45 UTC
+> Auto-generated on 2026-02-06 08:22:31 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -365,7 +365,6 @@ Market-Data-Collector/
 │   │   │   │   ...
 │   │   │   ├── Utilities/
 │   │   │   │   ...
-│   │   │   ├── IMarketDataClient.cs
 │   │   │   └── NoOpMarketDataClient.cs
 │   │   ├── Integrations/
 │   │   │   └── Lean/
@@ -423,7 +422,8 @@ Market-Data-Collector/
 │   │   │   └── SymbolRegistry.cs
 │   │   ├── Configuration/
 │   │   │   ├── AppConfigDto.cs
-│   │   │   └── DerivativesConfigDto.cs
+│   │   │   ├── DerivativesConfigDto.cs
+│   │   │   └── SymbolConfig.cs
 │   │   ├── Credentials/
 │   │   │   └── CredentialModels.cs
 │   │   ├── Domain/
@@ -465,6 +465,19 @@ Market-Data-Collector/
 │   │   │   └── ValidationTypes.fs
 │   │   ├── Interop.fs
 │   │   └── MarketDataCollector.FSharp.fsproj
+│   ├── MarketDataCollector.ProviderSdk/
+│   │   ├── CredentialValidator.cs
+│   │   ├── DataSourceAttribute.cs
+│   │   ├── DataSourceRegistry.cs
+│   │   ├── IDataSource.cs
+│   │   ├── IHistoricalDataSource.cs
+│   │   ├── IMarketDataClient.cs
+│   │   ├── ImplementsAdrAttribute.cs
+│   │   ├── IProviderMetadata.cs
+│   │   ├── IProviderModule.cs
+│   │   ├── IRealtimeDataSource.cs
+│   │   ├── MarketDataCollector.ProviderSdk.csproj
+│   │   └── ProviderHttpUtilities.cs
 │   ├── MarketDataCollector.Ui/
 │   │   ├── wwwroot/
 │   │   │   └── static/
@@ -799,6 +812,7 @@ Market-Data-Collector/
 │       │   ├── ApiClientService.cs
 │       │   ├── ArchiveBrowserService.cs
 │       │   ├── ArchiveHealthService.cs
+│       │   ├── BackfillApiService.cs
 │       │   ├── BackfillService.cs
 │       │   ├── BackgroundTaskSchedulerService.cs
 │       │   ├── BatchExportSchedulerService.cs
@@ -816,6 +830,7 @@ Market-Data-Collector/
 │       │   ├── ErrorHandlingService.cs
 │       │   ├── ErrorMessages.cs
 │       │   ├── EventReplayService.cs
+│       │   ├── ExportFormat.cs
 │       │   ├── ExportPresetService.cs
 │       │   ├── FirstRunService.cs
 │       │   ├── FormValidationService.cs
@@ -1044,10 +1059,12 @@ Market-Data-Collector/
 │   │   │   └── SymbolSearchServiceTests.cs
 │   │   ├── TestHelpers/
 │   │   │   └── TestMarketEventPublisher.cs
+│   │   ├── GlobalUsings.cs
 │   │   └── MarketDataCollector.Tests.csproj
 │   └── coverlet.runsettings
 ├── .gitignore
 ├── .globalconfig
+├── build-output.log
 ├── CLAUDE.md
 ├── Directory.Build.props
 ├── Directory.Packages.props

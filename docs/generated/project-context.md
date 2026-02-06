@@ -1,6 +1,6 @@
 # MarketDataCollector Project Context
 
-**Generated:** 2026-02-06 07:48:49 UTC
+**Generated:** 2026-02-06 08:22:35 UTC
 **Source:** Auto-generated from code annotations
 
 ## Key Interfaces
@@ -87,18 +87,6 @@ Centralized credential store providing unified access to API credentials across 
 | `void RegisterCredential(CredentialMetadata metadata)` | Registers credential metadata for a provider. |
 | `void ClearCache(string? provider = null)` | Clears cached credentials (forces reload on next access). |
 
-### IDataSource
-
-**Location:** `MarketDataCollector/Infrastructure/DataSources/IDataSource.cs`
-
-Unified base interface for all data sources (real-time and historical). Provides a common abstraction for provider discovery, health monitoring, and lifecycle management.
-
-| Method | Description |
-|--------|-------------|
-| `Task InitializeAsync(CancellationToken ct = default)` | Initializes the data source, validates credentials, and tests connectivity. |
-| `Task<bool> ValidateCredentialsAsync(CancellationToken ct = default)` | Validates that credentials are properly configured. Returns true if no credentials are required or if they are valid. |
-| `Task<bool> TestConnectivityAsync(CancellationToken ct = default)` | Tests connectivity to the data source. |
-
 ### IHealthCheckProvider
 
 **Location:** `MarketDataCollector/Application/Monitoring/Core/IHealthCheckProvider.cs`
@@ -126,77 +114,6 @@ Unified contract for fetching historical data from vendors. Consolidates previou
         DateOnly? to,
         CancellationToken ct = default)` | Fetch daily OHLCV bars for a symbol within the specified date range. |
 
-### IHistoricalDataSource
-
-**Location:** `MarketDataCollector/Infrastructure/DataSources/IHistoricalDataSource.cs`
-
-Interface for historical data sources providing bar data, dividends, splits, and other historical market information.
-
-| Method | Description |
-|--------|-------------|
-| `Task<IReadOnlyList<HistoricalBar>> GetDailyBarsAsync(
-        string symbol,
-        DateOnly? from = null,
-        DateOnly? to = null,
-        CancellationToken ct = default)` | Gets historical daily OHLCV bars for a symbol. |
-| `Task<IReadOnlyList<AdjustedHistoricalBar>> GetAdjustedDailyBarsAsync(
-        string symbol,
-        DateOnly? from = null,
-        DateOnly? to = null,
-        CancellationToken ct = default)` | Gets historical daily bars with adjustment information. |
-| `Task<IReadOnlyList<IntradayBar>> GetIntradayBarsAsync(
-        string symbol,
-        string interval,
-        DateTimeOffset? from = null,
-        DateTimeOffset? to = null,
-        CancellationToken ct = default)` | Gets historical intraday bars for a symbol. |
-| `Task<IReadOnlyList<DividendInfo>> GetDividendsAsync(
-        string symbol,
-        DateOnly? from = null,
-        DateOnly? to = null,
-        CancellationToken ct = default)` | Gets dividend history for a symbol. |
-| `Task<IReadOnlyList<SplitInfo>> GetSplitsAsync(
-        string symbol,
-        DateOnly? from = null,
-        DateOnly? to = null,
-        CancellationToken ct = default)` | Gets stock split history for a symbol. |
-| `Task<IReadOnlyList<HistoricalBar>> GetDailyBarsAsync(
-        string symbol,
-        DateOnly? from = null,
-        DateOnly? to = null,
-        CancellationToken ct = default)` | Gets historical daily OHLCV bars for a symbol. |
-| `Task<IReadOnlyList<IntradayBar>> GetIntradayBarsAsync(
-        string symbol,
-        string interval,
-        DateTimeOffset? from = null,
-        DateTimeOffset? to = null,
-        CancellationToken ct = default)` | Gets historical intraday bars for a symbol. |
-| `Task<IReadOnlyList<DividendInfo>> GetDividendsAsync(
-        string symbol,
-        DateOnly? from = null,
-        DateOnly? to = null,
-        CancellationToken ct = default)` | Gets dividend history for a symbol. |
-| `Task<IReadOnlyList<SplitInfo>> GetSplitsAsync(
-        string symbol,
-        DateOnly? from = null,
-        DateOnly? to = null,
-        CancellationToken ct = default)` | Gets stock split history for a symbol. |
-
-### IMarketDataClient
-
-**Location:** `MarketDataCollector/Infrastructure/IMarketDataClient.cs`
-
-Market data client abstraction for provider-agnostic market data ingestion. Implementations must be non-blocking on publish paths.
-
-| Method | Description |
-|--------|-------------|
-| `Task ConnectAsync(CancellationToken ct = default)` | Market data client abstraction for provider-agnostic market data ingestion. Implementations must be non-blocking on publish paths. |
-| `Task DisconnectAsync(CancellationToken ct = default)` | Market data client abstraction for provider-agnostic market data ingestion. Implementations must be non-blocking on publish paths. |
-| `int SubscribeMarketDepth(SymbolConfig cfg)` | <remarks> This interface is the core contract for ADR-001 (Provider Abstraction Pattern). All streaming data providers must implement this interface. Implements <see cref="IProviderMetadata"/> for unified provider discovery and capability reporting across all provider types. </remarks> [ImplementsAdr("ADR-001", "Core streaming data provider contract")] [ImplementsAdr("ADR-004", "All async methods support CancellationToken")] public interface IMarketDataClient : IProviderMetadata, IAsyncDisposable { bool IsEnabled { get; } Task ConnectAsync(CancellationToken ct = default); Task DisconnectAsync(CancellationToken ct = default); |
-| `void UnsubscribeMarketDepth(int subscriptionId)` | All streaming data providers must implement this interface. Implements <see cref="IProviderMetadata"/> for unified provider discovery and capability reporting across all provider types. </remarks> [ImplementsAdr("ADR-001", "Core streaming data provider contract")] [ImplementsAdr("ADR-004", "All async methods support CancellationToken")] public interface IMarketDataClient : IProviderMetadata, IAsyncDisposable { bool IsEnabled { get; } Task ConnectAsync(CancellationToken ct = default); Task DisconnectAsync(CancellationToken ct = default); int SubscribeMarketDepth(SymbolConfig cfg); |
-| `int SubscribeTrades(SymbolConfig cfg)` | and capability reporting across all provider types. </remarks> [ImplementsAdr("ADR-001", "Core streaming data provider contract")] [ImplementsAdr("ADR-004", "All async methods support CancellationToken")] public interface IMarketDataClient : IProviderMetadata, IAsyncDisposable { bool IsEnabled { get; } Task ConnectAsync(CancellationToken ct = default); Task DisconnectAsync(CancellationToken ct = default); int SubscribeMarketDepth(SymbolConfig cfg); void UnsubscribeMarketDepth(int subscriptionId); |
-| `void UnsubscribeTrades(int subscriptionId)` | [ImplementsAdr("ADR-004", "All async methods support CancellationToken")] public interface IMarketDataClient : IProviderMetadata, IAsyncDisposable { bool IsEnabled { get; } Task ConnectAsync(CancellationToken ct = default); Task DisconnectAsync(CancellationToken ct = default); int SubscribeMarketDepth(SymbolConfig cfg); void UnsubscribeMarketDepth(int subscriptionId); int SubscribeTrades(SymbolConfig cfg); |
-
 ### IMarketEventPublisher
 
 **Location:** `MarketDataCollector/Domain/Events/IMarketEventPublisher.cs`
@@ -223,12 +140,6 @@ Centralized operational scheduler for coordinating maintenance tasks, backfill o
 | `void RemoveMaintenanceWindow(string windowName)` | Removes a maintenance window. |
 | `bool IsTradingDay(DateOnly date, string market = "US")` | Checks if a specific date is a trading day. |
 
-### IProviderMetadata
-
-**Location:** `MarketDataCollector/Infrastructure/Providers/Core/IProviderMetadata.cs`
-
-Unified metadata interface that all provider types implement. Enables consistent discovery, routing, and UI presentation across streaming, backfill, and symbol search providers.
-
 ### IQualityAnalyzer
 
 **Location:** `MarketDataCollector/Application/Monitoring/DataQuality/IQualityAnalyzer.cs`
@@ -254,30 +165,6 @@ Provides access to the latest Best-Bid/Offer quote per symbol for downstream inf
 | `bool TryGet(string symbol, out BboQuotePayload? quote)` | Provides access to the latest Best-Bid/Offer quote per symbol for downstream inference (e.g., aggressor side). public interface IQuoteStateStore { |
 | `bool TryRemove(string symbol, out BboQuotePayload? removed)` | Remove cached state for a symbol. Returns <c>true</c> if the symbol existed. |
 | `string, BboQuotePayload> Snapshot()` | Snapshot the current cache for inspection/monitoring without exposing internal mutability. |
-
-### IRealtimeDataSource
-
-**Location:** `MarketDataCollector/Infrastructure/DataSources/IRealtimeDataSource.cs`
-
-Interface for real-time data sources providing streaming market data. Extends IDataSource with real-time specific functionality for trades, quotes, and market depth.
-
-| Method | Description |
-|--------|-------------|
-| `Task ConnectAsync(CancellationToken ct = default)` | Connects to the real-time data stream. |
-| `Task DisconnectAsync(CancellationToken ct = default)` | Disconnects from the real-time data stream. |
-| `int SubscribeTrades(SymbolConfig config)` | Subscribes to real-time trade prints for the specified symbol. |
-| `void UnsubscribeTrades(int subscriptionId)` | Unsubscribes from a trade subscription. |
-| `int SubscribeQuotes(SymbolConfig config)` | Subscribes to real-time BBO quotes for the specified symbol. |
-| `void UnsubscribeQuotes(int subscriptionId)` | Unsubscribes from a quote subscription. |
-| `int SubscribeMarketDepth(SymbolConfig config)` | Subscribes to market depth for the specified symbol. |
-| `void UnsubscribeMarketDepth(int subscriptionId)` | Unsubscribes from a depth subscription. |
-| `void UnsubscribeAll()` | Unsubscribes from all active subscriptions. |
-| `int SubscribeTrades(SymbolConfig config)` | Subscribes to trade prints for the given symbol. |
-| `void UnsubscribeTrades(int subscriptionId)` | Unsubscribes from a trade subscription. |
-| `int SubscribeQuotes(SymbolConfig config)` | Subscribes to BBO quotes for the given symbol. |
-| `void UnsubscribeQuotes(int subscriptionId)` | Unsubscribes from a quote subscription. |
-| `int SubscribeMarketDepth(SymbolConfig config)` | Subscribes to market depth for the given symbol. |
-| `void UnsubscribeMarketDepth(int subscriptionId)` | Unsubscribes from a depth subscription. |
 
 ### ISourceRegistry
 
@@ -391,12 +278,6 @@ Generic interface for thread-safe symbol-keyed state storage. Abstracts the 35+ 
 | `void ForEach(Action<string, T> action)` | Applies an action to all states. |
 | `int RemoveStale(Func<string, T, bool> isStale)` | Removes stale entries based on a predicate. |
 
-## Data Sources
-
-| Name | Type | Category | Location |
-|------|------|----------|----------|
-| Alpaca Markets | Hybrid | Broker | `MarketDataCollector/Infrastructure/DataSources/DataSourceAttribute.cs` |
-
 ## ADR Implementations
 
 ### ADR-001
@@ -405,7 +286,6 @@ Generic interface for thread-safe symbol-keyed state storage. Abstracts the 35+ 
 |------|----------|-------------|
 | `AlertDispatcher` | `MarketDataCollector/Application/Monitoring/Core/AlertDispatcher.cs` | Alert dispatcher implementation |
 | `AlpacaHistoricalDataProvider` | `MarketDataCollector/Infrastructure/Providers/Historical/Alpaca/AlpacaHistoricalDataProvider.cs` | Alpaca historical data provider implementation |
-| `AlpacaMarketDataClient` | `MarketDataCollector/Infrastructure/Contracts/ImplementsAdrAttribute.cs` | Provider Abstraction Pattern |
 | `AlpacaMarketDataClient` | `MarketDataCollector/Infrastructure/Providers/Streaming/Alpaca/AlpacaMarketDataClient.cs` | Alpaca streaming data provider implementation |
 | `AlpacaSymbolSearchProviderRefactored` | `MarketDataCollector/Infrastructure/Providers/SymbolSearch/AlpacaSymbolSearchProviderRefactored.cs` | Alpaca symbol search provider implementation |
 | `AlphaVantageHistoricalDataProvider` | `MarketDataCollector/Infrastructure/Providers/Historical/AlphaVantage/AlphaVantageHistoricalDataProvider.cs` | Alpha Vantage historical data provider implementation |
@@ -487,12 +367,6 @@ Generic interface for thread-safe symbol-keyed state storage. Abstracts the 35+ 
 | `TiingoHistoricalDataProvider` | `MarketDataCollector/Infrastructure/Providers/Historical/Tiingo/TiingoHistoricalDataProvider.cs` | All async methods support CancellationToken |
 | `WebSocketProviderBase` | `MarketDataCollector/Infrastructure/Shared/WebSocketProviderBase.cs` | All async methods support CancellationToken |
 | `YahooFinanceHistoricalDataProvider` | `MarketDataCollector/Infrastructure/Providers/Historical/YahooFinance/YahooFinanceHistoricalDataProvider.cs` | All async methods support CancellationToken |
-
-### ADR-005
-
-| Type | Location | Description |
-|------|----------|-------------|
-| `DataSourceAttribute` | `MarketDataCollector/Infrastructure/DataSources/DataSourceAttribute.cs` | Core attribute for provider discovery |
 
 ### ADR-010
 
