@@ -118,6 +118,10 @@ env:
 
 jobs:
   # ─── AI Known Errors Intake ──────────────────────────────────────────
+  # This job only runs when triggered by:
+  #   1. An issue with the 'ai-known-error' label is opened/edited/labeled/reopened
+  #   2. Manual workflow_dispatch with an issue_number parameter
+  # It will SKIP on push/pull_request/schedule events (this is expected behavior)
   ai-known-errors-intake:
     name: AI Known Errors Intake
     if: |
@@ -296,6 +300,8 @@ jobs:
             automation
 
   # ─── Change Detection ────────────────────────────────────────────────
+  # This job runs for push/pull_request/schedule/workflow_dispatch events.
+  # It SKIPS on 'issues' events since issue events only trigger ai-known-errors-intake.
   detect-changes:
     name: Detect Documentation & Structure Changes
     if: github.event_name != 'issues'

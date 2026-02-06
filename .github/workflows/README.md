@@ -129,6 +129,10 @@ Workflows have been consolidated from 25 to 17 files, reducing duplication and a
 - **Trigger**: Push/PRs touching docs/workflows/source, weekly schedule (Mondays 3 AM UTC), issues with `ai-known-error` label, manual dispatch
 - **Purpose**: Centralized documentation quality checks, generation, AI instruction sync, and TODO tracking
 - **Replaces**: `docs-comprehensive.yml`, `docs-auto-update.yml`, `docs-structure-sync.yml`, `ai-instructions-sync.yml`, `todo-automation.yml`
+- **Multi-trigger Design**: This workflow uses multiple triggers and conditionals to handle different automation tasks:
+  - **Issues trigger**: Only runs `ai-known-errors-intake` job when an issue is labeled with `ai-known-error`
+  - **Push/PR/Schedule triggers**: Runs documentation generation, validation, and TODO scanning jobs
+  - Jobs show as "skipped" when their trigger conditions aren't met (this is expected GitHub Actions behavior)
 - **Features**:
   - AI known errors intake from labeled GitHub issues
   - Change detection across 10 categories (source, providers, docs, workflows, etc.)
