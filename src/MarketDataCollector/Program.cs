@@ -428,7 +428,20 @@ internal static class Program
 
         var policy = new JsonlStoragePolicy(storageOpt);
         await using var sink = new JsonlStorageSink(storageOpt, policy);
-        await using var pipeline = new EventPipeline(sink, EventPipelinePolicy.HighThroughput);
+
+        // Create WAL for crash-safe durability
+        var walDir = Path.Combine(storageOpt.RootPath, "_wal");
+        var wal = new Storage.Archival.WriteAheadLog(walDir, new Storage.Archival.WalOptions
+        {
+            SyncMode = Storage.Archival.WalSyncMode.BatchedSync,
+            SyncBatchSize = 1000,
+            MaxFlushDelay = TimeSpan.FromSeconds(1)
+        });
+        await using var pipeline = new EventPipeline(sink, EventPipelinePolicy.HighThroughput, wal: wal);
+
+        // Recover any uncommitted events from prior crash
+        await pipeline.RecoverAsync();
+        log.Information("WAL enabled for pipeline durability at {WalDirectory}", walDir);
 
         // Log storage configuration
         log.Information("Storage path: {RootPath}", storageOpt.RootPath);

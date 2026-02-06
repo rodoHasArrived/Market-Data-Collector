@@ -6,6 +6,7 @@ using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Application.Services;
 using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Infrastructure.Performance;
+using MarketDataCollector.Storage.Archival;
 using MarketDataCollector.Storage.Interfaces;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -14,12 +15,22 @@ namespace MarketDataCollector.Application.Pipeline;
 
 /// <summary>
 /// High-throughput, backpressured pipeline that decouples producers from storage sinks.
-/// Includes periodic flushing, capacity monitoring, and performance metrics.
+/// Includes periodic flushing, capacity monitoring, performance metrics, and optional
+/// Write-Ahead Log (WAL) integration for crash-safe durability.
 /// </summary>
+/// <remarks>
+/// When a <see cref="WriteAheadLog"/> is provided, the pipeline ensures events are
+/// persisted to the WAL before being written to the primary storage sink. On startup,
+/// <see cref="RecoverAsync"/> replays any uncommitted WAL records to the sink, preventing
+/// data loss from crashes. The consumer writes each event to the WAL, then to the sink,
+/// and commits the WAL after each batch is flushed. For callers using
+/// <see cref="PublishAsync"/>, the WAL write occurs at publish time for full durability.
+/// </remarks>
 public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFlushable
 {
     private readonly Channel<MarketEvent> _channel;
     private readonly IStorageSink _sink;
+    private readonly WriteAheadLog? _wal;
     private readonly ILogger<EventPipeline> _logger;
     private readonly CancellationTokenSource _cts = new();
     private readonly Task _consumer;
@@ -32,10 +43,14 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
     private long _publishedCount;
     private long _droppedCount;
     private long _consumedCount;
+    private long _recoveredCount;
     private long _peakQueueSize;
     private long _totalProcessingTimeNs;
     private long _lastFlushTimestamp;
     private bool _highWaterMarkWarned;
+
+    // WAL tracking: last sequence committed to primary storage
+    private long _lastCommittedWalSequence;
 
     // Configuration
     private readonly TimeSpan _flushInterval;
@@ -52,6 +67,10 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
     /// <param name="batchSize">Number of events to batch before writing. Default is 100.</param>
     /// <param name="enablePeriodicFlush">Whether to enable periodic flushing. Default is true.</param>
     /// <param name="logger">Optional logger for error reporting. When provided, enables logging for flush failures and disposal errors.</param>
+    /// <param name="auditTrail">Optional audit trail for tracking dropped events.</param>
+    /// <param name="wal">Optional Write-Ahead Log for crash-safe durability. When provided, events
+    /// are written to the WAL before the primary sink. Call <see cref="RecoverAsync"/> on startup
+    /// to replay any uncommitted records from a prior crash.</param>
     public EventPipeline(
         IStorageSink sink,
         int capacity = 100_000,
@@ -60,7 +79,8 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
         int batchSize = 100,
         bool enablePeriodicFlush = true,
         ILogger<EventPipeline>? logger = null,
-        DroppedEventAuditTrail? auditTrail = null)
+        DroppedEventAuditTrail? auditTrail = null,
+        WriteAheadLog? wal = null)
         : this(
             sink,
             new EventPipelinePolicy(capacity, fullMode),
@@ -68,7 +88,8 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
             batchSize,
             enablePeriodicFlush,
             logger,
-            auditTrail)
+            auditTrail,
+            wal)
     {
     }
 
@@ -82,11 +103,13 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
         int batchSize = 100,
         bool enablePeriodicFlush = true,
         ILogger<EventPipeline>? logger = null,
-        DroppedEventAuditTrail? auditTrail = null)
+        DroppedEventAuditTrail? auditTrail = null,
+        WriteAheadLog? wal = null)
     {
         _sink = sink ?? throw new ArgumentNullException(nameof(sink));
         _logger = logger ?? NullLogger<EventPipeline>.Instance;
         _auditTrail = auditTrail;
+        _wal = wal;
         if (policy is null)
             throw new ArgumentNullException(nameof(policy));
         _capacity = policy.Capacity;
@@ -124,6 +147,9 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
     /// <summary>Gets the total number of events consumed and written to storage.</summary>
     public long ConsumedCount => Interlocked.Read(ref _consumedCount);
 
+    /// <summary>Gets the total number of events recovered from WAL on startup.</summary>
+    public long RecoveredCount => Interlocked.Read(ref _recoveredCount);
+
     /// <summary>Gets the peak queue size observed during operation.</summary>
     public long PeakQueueSize => Interlocked.Read(ref _peakQueueSize);
 
@@ -156,12 +182,80 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
         }
     }
 
+    /// <summary>Gets whether a WAL is configured for this pipeline.</summary>
+    public bool IsWalEnabled => _wal != null;
+
     #endregion
+
+    /// <summary>
+    /// Recovers uncommitted events from the WAL and replays them to the storage sink.
+    /// Call this method once on startup, before publishing new events, to ensure
+    /// data from a prior crash is not lost.
+    /// </summary>
+    /// <remarks>
+    /// This method initializes the WAL and reads any records that were written
+    /// but not committed (i.e., not yet confirmed persisted to the primary sink).
+    /// Each recovered event is written to the sink and then the WAL is committed.
+    /// If no WAL is configured, this method is a no-op.
+    /// </remarks>
+    public async Task RecoverAsync(CancellationToken ct = default)
+    {
+        if (_wal == null) return;
+
+        _logger.LogInformation("Initializing WAL for pipeline recovery");
+        await _wal.InitializeAsync(ct).ConfigureAwait(false);
+
+        var recovered = 0;
+        long maxRecoveredSequence = 0;
+
+        await foreach (var walRecord in _wal.GetUncommittedRecordsAsync(ct).ConfigureAwait(false))
+        {
+            if (walRecord.RecordType == "COMMIT") continue;
+
+            try
+            {
+                var evt = walRecord.DeserializePayload<MarketEvent>();
+                if (evt != null)
+                {
+                    await _sink.AppendAsync(evt, ct).ConfigureAwait(false);
+                    maxRecoveredSequence = Math.Max(maxRecoveredSequence, walRecord.Sequence);
+                    recovered++;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to deserialize WAL record {Sequence} during recovery", walRecord.Sequence);
+            }
+        }
+
+        if (recovered > 0)
+        {
+            await _sink.FlushAsync(ct).ConfigureAwait(false);
+            await _wal.CommitAsync(maxRecoveredSequence, ct).ConfigureAwait(false);
+            await _wal.TruncateAsync(maxRecoveredSequence, ct).ConfigureAwait(false);
+
+            Interlocked.Add(ref _recoveredCount, recovered);
+
+            _logger.LogInformation(
+                "Recovered {RecoveredCount} uncommitted events from WAL through sequence {MaxSequence}",
+                recovered, maxRecoveredSequence);
+        }
+        else
+        {
+            _logger.LogInformation("WAL recovery complete, no uncommitted events found");
+        }
+    }
 
     /// <summary>
     /// Attempts to publish an event to the pipeline without blocking.
     /// Returns false if the queue is full (event will be dropped based on FullMode).
     /// </summary>
+    /// <remarks>
+    /// When WAL is enabled, the WAL write occurs in the consumer task (not at publish time)
+    /// to preserve the non-blocking contract of this method. Events are WAL-protected
+    /// once they reach the consumer. For full publish-time WAL protection, use
+    /// <see cref="PublishAsync"/> instead.
+    /// </remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool TryPublish(in MarketEvent evt)
     {
@@ -217,9 +311,16 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
 
     /// <summary>
     /// Publishes an event to the pipeline, waiting if necessary.
+    /// When WAL is enabled, the event is written to the WAL before being queued,
+    /// providing full durability for the async publish path.
     /// </summary>
     public async ValueTask PublishAsync(MarketEvent evt, CancellationToken ct = default)
     {
+        if (_wal != null)
+        {
+            await _wal.AppendAsync(evt, evt.Type.ToString(), ct).ConfigureAwait(false);
+        }
+
         await _channel.Writer.WriteAsync(evt, ct).ConfigureAwait(false);
         Interlocked.Increment(ref _publishedCount);
         if (_metricsEnabled)
@@ -282,10 +383,28 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
                     batchBuffer.Add(evt);
                 }
 
-                // Write the batch to the sink
+                long maxWalSequence = _lastCommittedWalSequence;
+
+                // Write each event: WAL first (if enabled), then sink
                 for (var i = 0; i < batchBuffer.Count; i++)
                 {
-                    await _sink.AppendAsync(batchBuffer[i], _cts.Token).ConfigureAwait(false);
+                    var evt = batchBuffer[i];
+
+                    if (_wal != null)
+                    {
+                        var walRecord = await _wal.AppendAsync(evt, evt.Type.ToString(), _cts.Token).ConfigureAwait(false);
+                        maxWalSequence = Math.Max(maxWalSequence, walRecord.Sequence);
+                    }
+
+                    await _sink.AppendAsync(evt, _cts.Token).ConfigureAwait(false);
+                }
+
+                // Commit the WAL batch after all events are written to the sink
+                if (_wal != null && maxWalSequence > _lastCommittedWalSequence)
+                {
+                    await _sink.FlushAsync(_cts.Token).ConfigureAwait(false);
+                    await _wal.CommitAsync(maxWalSequence, _cts.Token).ConfigureAwait(false);
+                    _lastCommittedWalSequence = maxWalSequence;
                 }
 
                 Interlocked.Add(ref _consumedCount, batchBuffer.Count);
@@ -302,6 +421,12 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
             try
             {
                 await _sink.FlushAsync(CancellationToken.None).ConfigureAwait(false);
+
+                // Final WAL commit for any remaining uncommitted records
+                if (_wal != null && _lastCommittedWalSequence > 0)
+                {
+                    await _wal.CommitAsync(_lastCommittedWalSequence, CancellationToken.None).ConfigureAwait(false);
+                }
             }
             catch (Exception ex)
             {
@@ -322,6 +447,12 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
                 {
                     await _sink.FlushAsync(_cts.Token).ConfigureAwait(false);
                     Interlocked.Exchange(ref _lastFlushTimestamp, Stopwatch.GetTimestamp());
+
+                    // Periodically truncate committed WAL files to reclaim disk space
+                    if (_wal != null && _lastCommittedWalSequence > 0)
+                    {
+                        await _wal.TruncateAsync(_lastCommittedWalSequence, _cts.Token).ConfigureAwait(false);
+                    }
                 }
                 catch (OperationCanceledException)
                 {
@@ -368,6 +499,11 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
         _cts.Dispose();
         await _sink.DisposeAsync().ConfigureAwait(false);
 
+        if (_wal != null)
+        {
+            await _wal.DisposeAsync().ConfigureAwait(false);
+        }
+
         if (_auditTrail != null)
         {
             await _auditTrail.DisposeAsync().ConfigureAwait(false);
@@ -378,6 +514,11 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
     /// Gets the dropped event audit trail, if configured.
     /// </summary>
     public DroppedEventAuditTrail? AuditTrail => _auditTrail;
+
+    /// <summary>
+    /// Gets the queue capacity.
+    /// </summary>
+    public int QueueCapacity => _capacity;
 }
 
 /// <summary>
