@@ -459,11 +459,11 @@ public class BacktestResults
     public int TotalTrades { get; set; }
     public decimal WinRate { get; set; }
     public decimal ProfitFactor { get; set; }
-    public List<TradeRecord>? Trades { get; set; }
+    public List<BacktestTradeRecord>? Trades { get; set; }
     public List<EquityPoint>? EquityCurve { get; set; }
 }
 
-public class TradeRecord
+public class BacktestTradeRecord
 {
     public string Symbol { get; set; } = string.Empty;
     public DateTime EntryTime { get; set; }

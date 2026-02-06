@@ -303,7 +303,7 @@ public sealed class DataSamplingService
     /// </summary>
     public async Task<bool> DeleteSampleAsync(string sampleId, CancellationToken ct = default)
     {
-        var response = await _apiClient.DeleteWithResponseAsync<DeleteResponse>(
+        var response = await _apiClient.DeleteWithResponseAsync<SamplingDeleteResponse>(
             $"/api/sampling/{sampleId}",
             ct);
 
@@ -546,7 +546,7 @@ public sealed class SavedSamplesResponse
     public List<SavedSample>? Samples { get; set; }
 }
 
-public sealed class DeleteResponse
+public sealed class SamplingDeleteResponse
 {
     public bool Success { get; set; }
 }
