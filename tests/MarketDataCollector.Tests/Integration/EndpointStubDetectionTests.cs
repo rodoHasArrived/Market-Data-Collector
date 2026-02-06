@@ -210,7 +210,11 @@ public sealed class EndpointStubDetectionTests : IAsyncLifetime
         "/api/providers/ib/status", "/api/providers/ib/error-codes",
         "/api/providers/ib/limits",
         // SymbolMappingEndpoints.cs
-        "/api/symbols/mappings"
+        "/api/symbols/mappings",
+        // LiveDataEndpoints.cs
+        "/api/data/trades/{symbol}", "/api/data/quotes/{symbol}",
+        "/api/data/orderbook/{symbol}", "/api/data/bbo/{symbol}",
+        "/api/data/orderflow/{symbol}", "/api/data/health"
     };
 
     [Fact]
