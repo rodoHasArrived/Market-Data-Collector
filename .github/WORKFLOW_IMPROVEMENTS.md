@@ -1,13 +1,18 @@
 # Workflow Improvements Summary
 
-> **Note:** For comprehensive workflow documentation, see [workflows/README.md](workflows/README.md).
-> This document serves as a historical summary of workflow additions.
+> **Note:** This document is a **historical snapshot** from 2026-01-08 describing initial workflow additions.
+> Workflows have since been **consolidated from 25 to 17 files** (2026-02-05) with AI-powered analysis added throughout.
+>
+> **For current documentation, see:**
+> - [workflows/README.md](workflows/README.md) - Authoritative workflow reference (17 workflows)
+> - [../docs/development/github-actions-summary.md](../docs/development/github-actions-summary.md) - Quick reference
+> - [../docs/ai/claude/CLAUDE.actions.md](../docs/ai/claude/CLAUDE.actions.md) - AI assistant CI/CD guide
 
-This document summarizes the GitHub workflow improvements added to the Market Data Collector repository.
+This document summarizes the initial GitHub workflow improvements added to the Market Data Collector repository (2026-01-08). Many filenames below have since been renamed or consolidated.
 
 ## Overview
 
-We've added **12 new workflows** plus comprehensive automation infrastructure to improve code quality, security, and development efficiency.
+We initially added **12 new workflows** plus comprehensive automation infrastructure. These have since been consolidated into 17 total workflows with AI-powered features.
 
 ## What's New
 
@@ -77,7 +82,9 @@ We've added **12 new workflows** plus comprehensive automation infrastructure to
 - Dependency updates
 - Performance tracking
 
-## Workflow Triggers
+## Workflow Triggers (Historical)
+
+> **Note:** Triggers have changed since consolidation. See [workflows/README.md](workflows/README.md) for current triggers.
 
 | Workflow | Push | PR | Schedule | Manual |
 |----------|------|-----|----------|--------|
@@ -186,7 +193,10 @@ Automatic labels based on:
    - Manual triggers available in Actions tab
    - Check workflow documentation in `.github/workflows/README.md`
 
-## File Structure
+## File Structure (Historical - 2026-01-08)
+
+> **Note:** These filenames are from the initial setup. Current filenames differ due to consolidation.
+> See [workflows/README.md](workflows/README.md) for the current 17 workflow files.
 
 ```
 .github/
@@ -198,16 +208,16 @@ Automatic labels based on:
 │   ├── README.md (detailed documentation)
 │   ├── pr-checks.yml
 │   ├── dotnet-desktop.yml (existing, kept as-is)
-│   ├── codeql.yml
-│   ├── security-scan.yml
-│   ├── docker-publish.yml
+│   ├── codeql.yml              → now part of security.yml
+│   ├── security-scan.yml       → now security.yml
+│   ├── docker-publish.yml      → now docker.yml
 │   ├── nightly.yml
-│   ├── auto-label.yml
+│   ├── auto-label.yml          → now labeling.yml
 │   ├── stale.yml
-│   ├── cache-management.yml
+│   ├── cache-management.yml    → absorbed into scheduled-maintenance.yml
 │   ├── release.yml
 │   ├── benchmark.yml
-│   └── docs-check.yml
+│   └── docs-check.yml          → now documentation.yml
 ├── PULL_REQUEST_TEMPLATE.md
 ├── dependabot.yml
 ├── labeler.yml
@@ -271,6 +281,6 @@ If you encounter issues with workflows:
 
 ---
 
-**Created**: 2026-01-08  
-**Author**: GitHub Copilot  
-**Status**: Ready for production use
+**Created**: 2026-01-08
+**Author**: GitHub Copilot
+**Status**: Historical (see workflows/README.md for current state)

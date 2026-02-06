@@ -4,25 +4,27 @@ This guide covers the CI/CD pipeline for the Market Data Collector, including wo
 
 ## Workflow Inventory
 
-The project uses 15 consolidated GitHub Actions workflows in `.github/workflows/`:
+The project uses 17 GitHub Actions workflows in `.github/workflows/`:
 
 | Workflow | File | Trigger | Purpose |
 |----------|------|---------|---------|
 | PR Checks | `pr-checks.yml` | PRs to main/develop | Format, build, test, coverage, AI review |
 | Test Matrix | `test-matrix.yml` | Push/PRs (source changes) | Multi-platform test matrix (Windows, Linux, macOS) |
-| Code Quality | `code-quality.yml` | Push/PRs (source changes) | Formatting, analyzers, doc checks |
-| Security | `security.yml` | Push/PRs, weekly | CodeQL analysis, dependency review |
-| Desktop Builds | `desktop-builds.yml` | Push/PRs (desktop paths) | UWP + WPF builds, MSIX packaging |
+| Code Quality | `code-quality.yml` | Push/PRs (source changes) | Formatting, analyzers, AI quality suggestions |
+| Security | `security.yml` | PRs to main, weekly (Mon), manual | CodeQL, dependency review, secret detection, SAST |
+| Validate Workflows | `validate-workflows.yml` | PRs (workflow changes), manual | YAML validation, action ref checks, permission audit |
+| Desktop Builds | `desktop-builds.yml` | Push/PRs (desktop paths), manual | UWP + WPF builds, MSIX packaging |
 | Build & Release | `dotnet-desktop.yml` | Manual dispatch | Multi-platform publish (Linux/Windows/macOS) |
 | Docker | `docker.yml` | Manual dispatch | Multi-arch Docker images, GHCR push |
 | Release | `release.yml` | Manual dispatch | Semver validation, changelog, GitHub release |
-| Benchmark | `benchmark.yml` | Source/benchmark changes | BenchmarkDotNet performance tracking |
-| Nightly | `nightly.yml` | Scheduled (nightly) | Full build + test + AI failure diagnosis |
-| Documentation | `documentation.yml` | Push/PRs (docs paths) | Doc generation, structure sync, TODO scan |
-| Labeling | `labeling.yml` | Issues/PRs created | Auto-label based on paths and content |
-| Stale | `stale.yml` | Scheduled (daily) | Stale issue/PR management |
-| Build Observability | `build-observability.yml` | Push/PRs, manual | Build metrics, graphs, fingerprints |
-| Scheduled Maintenance | `scheduled-maintenance.yml` | Scheduled, manual | Cache cleanup, dependency updates |
+| Benchmark | `benchmark.yml` | Manual dispatch | BenchmarkDotNet performance tracking |
+| Nightly | `nightly.yml` | Daily (1 AM UTC), manual | Full build + test + AI failure diagnosis |
+| Documentation | `documentation.yml` | Push/PRs (docs/source), weekly, issues, manual | Doc generation, structure sync, TODO scan |
+| Labeling | `labeling.yml` | PR opened/edited/reopened, manual | Auto-label based on paths and PR size |
+| Stale | `stale.yml` | Daily (midnight UTC), manual | Stale issue/PR management |
+| Build Observability | `build-observability.yml` | Manual dispatch | Build diagnostics, metrics, fingerprints |
+| Scheduled Maintenance | `scheduled-maintenance.yml` | Weekly (Sun), manual | Tests, cache cleanup, dependency health, AI recommendations |
+| Reusable .NET Build | `reusable-dotnet-build.yml` | Called by other workflows | Shared build/test steps |
 
 ## Key Locations
 
