@@ -124,7 +124,7 @@ public sealed class BackfillCoordinator : IDisposable
     /// Previews a backfill operation without actually fetching data.
     /// Returns information about what would be backfilled.
     /// </summary>
-    public async Task<BackfillPreviewResult> PreviewAsync(BackfillRequest request, CancellationToken ct = default)
+    public Task<BackfillPreviewResult> PreviewAsync(BackfillRequest request, CancellationToken ct = default)
     {
         var service = CreateService();
         var cfg = _store.Load();
@@ -153,7 +153,7 @@ public sealed class BackfillCoordinator : IDisposable
             ));
         }
 
-        return new BackfillPreviewResult(
+        return Task.FromResult(new BackfillPreviewResult(
             Provider: providerInfo?.Name ?? request.Provider,
             ProviderDisplayName: providerInfo?.DisplayName ?? request.Provider,
             From: from,
@@ -163,7 +163,7 @@ public sealed class BackfillCoordinator : IDisposable
             Symbols: symbolPreviews.ToArray(),
             EstimatedDurationSeconds: EstimateBackfillDuration(request.Symbols.Count, tradingDays),
             Notes: GetProviderNotes(providerInfo)
-        );
+        ));
     }
 
     private static int EstimateTradingDays(DateOnly from, DateOnly to)

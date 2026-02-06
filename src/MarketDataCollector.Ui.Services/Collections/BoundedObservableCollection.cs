@@ -15,7 +15,6 @@ public sealed class BoundedObservableCollection<T> : INotifyCollectionChanged, I
 {
     private readonly List<T> _items;
     private readonly int _maxCapacity;
-    private readonly object _syncRoot = new();
 
     /// <summary>
     /// Occurs when the collection changes.

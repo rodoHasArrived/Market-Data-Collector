@@ -74,10 +74,17 @@ public static class ThreadingUtilities
 
     /// <summary>
     /// Attempts to set process affinity to specific CPU cores.
+    /// Only supported on Windows and Linux.
     /// </summary>
     /// <param name="affinityMask">Bitmask of allowed CPUs (e.g., 0x3 = CPUs 0 and 1)</param>
     public static bool TrySetProcessAffinity(nint affinityMask)
     {
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows) &&
+            !RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        {
+            return false;
+        }
+
         try
         {
             using var process = Process.GetCurrentProcess();
@@ -92,10 +99,17 @@ public static class ThreadingUtilities
 
     /// <summary>
     /// Attempts to set the process to high priority class.
+    /// Only supported on Windows and Linux.
     /// Use sparingly - this affects all threads and can starve other processes.
     /// </summary>
     public static bool TrySetProcessHighPriority()
     {
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows) &&
+            !RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        {
+            return false;
+        }
+
         try
         {
             using var process = Process.GetCurrentProcess();
