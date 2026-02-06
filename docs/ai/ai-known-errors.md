@@ -101,3 +101,23 @@ If headings are missing, the workflow still creates an entry with safe defaults 
   - `dotnet build MarketDataCollector.sln -c Release --no-restore /p:EnableWindowsTargeting=true`
 - **Source issue**: PR #860 (incomplete fix)
 - **Status**: fixed
+
+### AI-20260206-missing-aspnetcore-mvc-testing
+- **Area**: tests/dependencies
+- **Symptoms**: Test project fails to compile with errors:
+  - `error CS0234: The type or namespace name 'TestHost' does not exist in the namespace 'Microsoft.AspNetCore'`
+  - `error CS0246: The type or namespace name 'IAsyncLifetime' could not be found`
+- **Root cause**: The test project `MarketDataCollector.Tests` uses ASP.NET Core integration testing infrastructure (`TestServer`, `WebApplicationFactory`) but was missing the required `Microsoft.AspNetCore.Mvc.Testing` package. Additionally, the test file `EndpointTestFixture.cs` was missing the `using Xunit;` directive needed for `IAsyncLifetime`.
+- **Prevention checklist**:
+  - [ ] When adding integration tests that use ASP.NET Core `TestServer`, ensure `Microsoft.AspNetCore.Mvc.Testing` package is referenced
+  - [ ] Add package version to `Directory.Packages.props` in the "ASP.NET Core" section matching existing ASP.NET package versions
+  - [ ] Add package reference to test project without version number (CPM)
+  - [ ] Ensure test files using xUnit fixtures include `using Xunit;` directive
+  - [ ] Build and run tests after adding new test infrastructure: `dotnet test tests/MarketDataCollector.Tests`
+- **Verification commands**:
+  - `dotnet build tests/MarketDataCollector.Tests/MarketDataCollector.Tests.csproj -c Release`
+  - `dotnet test tests/MarketDataCollector.Tests/MarketDataCollector.Tests.csproj -c Release`
+  - `grep "Microsoft.AspNetCore.Mvc.Testing" Directory.Packages.props`
+  - `grep "Microsoft.AspNetCore.Mvc.Testing" tests/MarketDataCollector.Tests/MarketDataCollector.Tests.csproj`
+- **Source issue**: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/21769809198/job/62814640086
+- **Status**: fixed
