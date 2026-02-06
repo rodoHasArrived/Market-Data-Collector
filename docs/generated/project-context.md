@@ -1,6 +1,6 @@
 # MarketDataCollector Project Context
 
-**Generated:** 2026-02-06 23:14:18 UTC
+**Generated:** 2026-02-06 23:37:52 UTC
 **Source:** Auto-generated from code annotations
 
 ## Key Interfaces
@@ -296,6 +296,7 @@ Generic interface for thread-safe symbol-keyed state storage. Abstracts the 35+ 
 | `ConfigStore` | `MarketDataCollector/Application/Http/ConfigStore.cs` | Consolidated configuration store shared by all hosts |
 | `ConfigurationProviderExtensions` | `MarketDataCollector/Application/Config/IConfigurationProvider.cs` | Unified configuration provider |
 | `CredentialStoreExtensions` | `MarketDataCollector/Application/Credentials/ICredentialStore.cs` | Centralized credential management |
+| `DataQualityScoringService` | `MarketDataCollector/Storage/Services/DataQualityScoringService.cs` | Data quality scoring for multi-source environments |
 | `ExpiringSymbolStateStore` | `MarketDataCollector/Infrastructure/Shared/ISymbolStateStore.cs` | Time-based expiring symbol state store |
 | `FailoverAwareMarketDataClient` | `MarketDataCollector/Infrastructure/Providers/Streaming/Failover/FailoverAwareMarketDataClient.cs` | Failover-aware composite streaming client |
 | `FinnhubHistoricalDataProvider` | `MarketDataCollector/Infrastructure/Providers/Historical/Finnhub/FinnhubHistoricalDataProvider.cs` | Finnhub historical data provider implementation |
@@ -312,6 +313,7 @@ Generic interface for thread-safe symbol-keyed state storage. Abstracts the 35+ 
 | `NasdaqDataLinkHistoricalDataProvider` | `MarketDataCollector/Infrastructure/Providers/Historical/NasdaqDataLink/NasdaqDataLinkHistoricalDataProvider.cs` | Nasdaq Data Link historical data provider implementation |
 | `NoOpMarketDataClient` | `MarketDataCollector/Infrastructure/NoOpMarketDataClient.cs` | No-op data provider for disabled/unconfigured scenarios |
 | `NYSEDataSource` | `MarketDataCollector/Infrastructure/Providers/Streaming/NYSE/NYSEDataSource.cs` | NYSE streaming and historical data provider implementation |
+| `OperationalScheduler` | `MarketDataCollector/Application/Scheduling/OperationalScheduler.cs` | Trading-hours-aware operational scheduling |
 | `PolygonHistoricalDataProvider` | `MarketDataCollector/Infrastructure/Providers/Historical/Polygon/PolygonHistoricalDataProvider.cs` | Polygon.io historical data provider implementation |
 | `PolygonMarketDataClient` | `MarketDataCollector/Infrastructure/Providers/Streaming/Polygon/PolygonMarketDataClient.cs` | Polygon.io streaming data provider implementation |
 | `ProviderFactory` | `MarketDataCollector/Infrastructure/Providers/Core/ProviderFactory.cs` | Unified provider factory for capability-driven registration |
@@ -337,7 +339,10 @@ Generic interface for thread-safe symbol-keyed state storage. Abstracts the 35+ 
 
 | Type | Location | Description |
 |------|----------|-------------|
+| `DataLineageService` | `MarketDataCollector/Storage/Services/DataLineageService.cs` | Data lineage tracking for storage operations |
+| `LifecyclePolicyEngine` | `MarketDataCollector/Storage/Services/LifecyclePolicyEngine.cs` | Tiered storage lifecycle enforcement |
 | `PortableDataPackager` | `MarketDataCollector/Storage/Packaging/PortableDataPackager.cs` | Portable packaging for tiered storage export |
+| `QuotaEnforcementService` | `MarketDataCollector/Storage/Services/QuotaEnforcementService.cs` | Capacity management with quota enforcement |
 
 ### ADR-004
 

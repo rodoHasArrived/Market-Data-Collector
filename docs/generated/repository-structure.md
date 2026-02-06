@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-06 23:14:14 UTC
+> Auto-generated on 2026-02-06 23:37:48 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -1011,11 +1011,16 @@ Market-Data-Collector/
 │   │   │   ├── AnalysisExportServiceTests.cs
 │   │   │   ├── AtomicFileWriterTests.cs
 │   │   │   ├── CanonicalSymbolRegistryTests.cs
+│   │   │   ├── DataLineageServiceTests.cs
+│   │   │   ├── DataQualityScoringServiceTests.cs
 │   │   │   ├── DataValidatorTests.cs
 │   │   │   ├── FilePermissionsServiceTests.cs
 │   │   │   ├── JsonlBatchWriteTests.cs
+│   │   │   ├── LifecyclePolicyEngineTests.cs
 │   │   │   ├── MemoryMappedJsonlReaderTests.cs
+│   │   │   ├── MetadataTagServiceTests.cs
 │   │   │   ├── PortableDataPackagerTests.cs
+│   │   │   ├── QuotaEnforcementServiceTests.cs
 │   │   │   ├── StorageCatalogServiceTests.cs
 │   │   │   ├── StorageChecksumServiceTests.cs
 │   │   │   ├── StorageOptionsDefaultsTests.cs
