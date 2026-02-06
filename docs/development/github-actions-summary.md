@@ -2,123 +2,126 @@
 
 This document provides a quick reference for all GitHub Actions workflows in the Market Data Collector repository.
 
-## New Workflows Added (2026-01-08)
+**Last Updated:** 2026-02-06
+**Total Workflows:** 17 (consolidated from 25 original files)
+**Authoritative Reference:** [`.github/workflows/README.md`](../../.github/workflows/README.md)
 
-### 1. CodeQL Security Analysis
-- **File:** `.github/workflows/codeql-analysis.yml`
-- **Purpose:** Automated security vulnerability detection
-- **Runs:** On push, PRs, and weekly (Mondays)
-- **Benefits:** Early detection of security issues, compliance
+---
 
-### 2. Dependency Review
-- **File:** `.github/workflows/dependency-review.yml`
-- **Purpose:** Review dependencies in PRs for vulnerabilities
-- **Runs:** On pull requests
-- **Benefits:** Prevents vulnerable dependencies from being merged
+## Workflow Inventory
 
-### 3. Docker Build and Push
-- **File:** `.github/workflows/docker-build.yml`
-- **Purpose:** Automated Docker image builds
-- **Runs:** On push to main, PRs, and tags
-- **Registry:** GitHub Container Registry (ghcr.io)
-- **Benefits:** Consistent container images, automated deployment
+### Build & Release (6 workflows)
 
-### 4. Benchmark Performance
-- **File:** `.github/workflows/benchmark.yml`
-- **Purpose:** Track performance metrics over time
-- **Runs:** When source or benchmark code changes
-- **Benefits:** Detect performance regressions early
+| Workflow | File | Trigger | Purpose |
+|----------|------|---------|---------|
+| Build and Release | `dotnet-desktop.yml` | Manual dispatch | Multi-platform publish (Linux, Windows, macOS x64/ARM64) |
+| Pull Request Checks | `pr-checks.yml` | PRs to main/develop | Format, build, test, coverage, AI review |
+| Docker | `docker.yml` | Manual dispatch | Multi-arch Docker images, optional GHCR push |
+| Release Management | `release.yml` | Manual dispatch | Semver validation, changelog, tag, GitHub release |
+| Desktop Builds | `desktop-builds.yml` | Push/PRs (desktop paths), manual | Consolidated UWP + WPF builds with selective targeting |
+| Reusable .NET Build | `reusable-dotnet-build.yml` | Called by other workflows | Shared build/test steps |
 
-### 5. Code Quality
-- **File:** `.github/workflows/code-quality.yml`
-- **Purpose:** Enforce code quality standards
-- **Checks:** Code formatting, markdown linting, link validation
-- **Runs:** On push and PRs
-- **Benefits:** Consistent code style, valid documentation
+### Code Quality & Security (3 workflows)
 
-### 6. Stale Issue Management
-- **File:** `.github/workflows/stale.yml`
-- **Purpose:** Automatic lifecycle management
-- **Runs:** Daily
-- **Benefits:** Keeps issue tracker clean and organized
+| Workflow | File | Trigger | Purpose |
+|----------|------|---------|---------|
+| Code Quality | `code-quality.yml` | Push/PRs (source changes) | Formatting, analyzers, AI quality suggestions |
+| Security | `security.yml` | PRs to main, weekly (Mon 5 AM UTC), manual | CodeQL, dependency review, secret detection, SAST, AI assessment |
+| Validate Workflows | `validate-workflows.yml` | PRs (workflow changes), manual | YAML validation, action ref checks, permission audit |
 
-### 7. Build Observability
-- **File:** `.github/workflows/build-observability.yml`
-- **Purpose:** Capture build observability artifacts in CI
-- **Runs:** On push, PRs, and manual dispatch
-- **Benefits:** Debuggable builds with metrics, graphs, and fingerprints
+### Testing (3 workflows)
 
-### 8. Label Management
-- **File:** `.github/workflows/label-management.yml`
-- **Purpose:** Auto-label issues and PRs
-- **Runs:** When issues/PRs are created or updated
-- **Benefits:** Better organization, easier filtering
+| Workflow | File | Trigger | Purpose |
+|----------|------|---------|---------|
+| Test Matrix | `test-matrix.yml` | Push/PRs (source changes) | Cross-platform tests (Linux on PRs, Win/Mac on main) |
+| Nightly Testing | `nightly.yml` | Daily (1 AM UTC), manual | Full cross-platform tests, benchmarks, AI failure diagnosis |
+| Benchmark | `benchmark.yml` | Manual dispatch | BenchmarkDotNet performance tracking |
+
+### Documentation & Maintenance (5 workflows)
+
+| Workflow | File | Trigger | Purpose |
+|----------|------|---------|---------|
+| Documentation | `documentation.yml` | Push/PRs (docs/source), weekly (Mon 3 AM UTC), `ai-known-error` issues, manual | Doc generation, linting, link checks, AI instruction sync, TODO scan |
+| Labeling | `labeling.yml` | PR opened/edited/reopened, manual | Auto-label by file paths and PR size |
+| Stale Management | `stale.yml` | Daily (midnight UTC), manual | Mark/close stale issues (60d) and PRs (30d) |
+| Scheduled Maintenance | `scheduled-maintenance.yml` | Weekly (Sun 8 AM UTC), manual | Tests, dependency health, cache cleanup, AI recommendations |
+| Build Observability | `build-observability.yml` | Manual dispatch | Build diagnostics, metrics, fingerprint collection |
+
+---
+
+## Consolidation History
+
+Workflows were consolidated from 25 to 17 files on 2026-02-05:
+
+| Consolidated Workflow | Replaced |
+|----------------------|----------|
+| `documentation.yml` | `docs-comprehensive.yml`, `docs-auto-update.yml`, `docs-structure-sync.yml`, `ai-instructions-sync.yml`, `todo-automation.yml` |
+| `desktop-builds.yml` | `desktop-app.yml`, `wpf-desktop.yml`, `wpf-commands.yml` |
+| `security.yml` | absorbed `dependency-review.yml` |
+| `scheduled-maintenance.yml` | absorbed `cache-management.yml` |
+
+---
+
+## AI-Powered Features
+
+All AI features use `actions/ai-inference@v1` with `continue-on-error: true` (never blocks workflows):
+
+| Workflow | AI Feature |
+|----------|-----------|
+| `pr-checks.yml` | PR review with risk assessment |
+| `code-quality.yml` | Quality suggestions with priority fixes |
+| `security.yml` | Vulnerability assessment and remediation |
+| `nightly.yml` | Failure diagnosis with root cause analysis |
+| `desktop-builds.yml` | Build failure diagnosis |
+| `documentation.yml` | Doc quality review, TODO triage |
+| `scheduled-maintenance.yml` | Dependency upgrade recommendations |
+
+---
+
+## Custom Action
+
+### Setup .NET with Cache (`.github/actions/setup-dotnet-cache/`)
+- Composite action for .NET SDK setup with NuGet caching
+- Inputs: `dotnet-version` (default: 9.0.x), `cache-suffix`
+- Cache key based on project file hashes
+
+---
 
 ## Configuration Files
 
-- **`.github/labeler.yml`** - Label definitions and path patterns
-- **`.github/markdown-link-check-config.json`** - Link checker settings
+| File | Purpose |
+|------|---------|
+| `.github/dependabot.yml` | Weekly dependency updates (NuGet, Actions, Docker) |
+| `.github/labeler.yml` | Auto-label path patterns |
+| `.github/labels.yml` | Label definitions |
+| `.github/markdown-link-check-config.json` | Link checker settings |
+| `.github/spellcheck-config.yml` | Spell-check configuration |
+
+---
 
 ## Quick Commands
 
 ```bash
 # View all workflows
-ls -la .github/workflows/
+ls .github/workflows/*.yml
 
 # Validate YAML syntax
-yamllint .github/workflows/*.yml
+for f in .github/workflows/*.yml; do
+  python3 -c "import yaml; yaml.safe_load(open('$f'))"
+done
 
-# Test locally with act
-act pull_request -W .github/workflows/code-quality.yml
-
-# Check workflow status
+# Check recent workflow runs
 gh run list --limit 10
+
+# Trigger a workflow manually
+gh workflow run benchmark.yml
 ```
-
-## Workflow Status Badges
-
-The following badges have been added to README.md:
-
-```markdown
-[![Build and Release](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/dotnet-desktop.yml/badge.svg)](...)
-[![CodeQL](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/codeql-analysis.yml/badge.svg)](...)
-[![Docker Build](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/docker-build.yml/badge.svg)](...)
-[![Code Quality](https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/code-quality.yml/badge.svg)](...)
-```
-
-## Impact
-
-These workflows provide:
-- ✅ Automated security scanning
-- ✅ Dependency vulnerability checks
-- ✅ Consistent Docker images
-- ✅ Performance regression detection
-- ✅ Code quality enforcement
-- ✅ Build observability artifacts in CI
-- ✅ Better issue/PR organization
-- ✅ Reduced manual maintenance
-
-## Next Steps
-
-1. Monitor first runs of each workflow
-2. Adjust thresholds and settings as needed
-3. Consider adding:
-   - SonarCloud integration for deeper code analysis
-   - Release notes automation
-   - Automated changelog generation
-   - Integration testing workflow
-   - Load testing workflow
-
-## Resources
-
-- [GitHub Actions Documentation](https://docs.github.com/en/actions)
-- [CodeQL for C#](https://codeql.github.com/docs/codeql-language-guides/codeql-for-csharp/)
-- [Docker Build Action](https://github.com/docker/build-push-action)
-- [BenchmarkDotNet](https://benchmarkdotnet.org/)
 
 ---
 
-**Created:** 2026-01-08  
-**Total Workflows:** 9 (1 existing + 8 new)  
-**Total Configuration Files:** 2  
-**Documentation Files:** 2
+## Related Documentation
+
+- [`.github/workflows/README.md`](../../.github/workflows/README.md) - Full workflow details and dependency diagram
+- [`docs/ai/claude/CLAUDE.actions.md`](../ai/claude/CLAUDE.actions.md) - AI assistant CI/CD guide
+- [`docs/development/build-observability.md`](build-observability.md) - Build metrics system
+- [`docs/development/github-actions-testing.md`](github-actions-testing.md) - CI testing tips

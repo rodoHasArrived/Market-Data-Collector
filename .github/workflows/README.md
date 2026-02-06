@@ -4,7 +4,7 @@ This directory contains automated workflows that help maintain code quality, sec
 
 ## Consolidation Summary
 
-Workflows have been consolidated from 25 to 15 files, reducing duplication and adding AI-powered analysis throughout. The following merges were performed:
+Workflows have been consolidated from 25 to 17 files, reducing duplication and adding AI-powered analysis throughout. The following merges were performed:
 
 | Consolidated Workflow | Replaces | AI Features |
 |----------------------|----------|-------------|
@@ -116,12 +116,11 @@ Workflows have been consolidated from 25 to 15 files, reducing duplication and a
   - **AI**: Failure diagnosis with root cause analysis and triage priority
 
 #### 10. **Benchmark Performance** (`benchmark.yml`)
-- **Trigger**: Pull requests changing code, Manual dispatch
+- **Trigger**: Manual workflow dispatch (with optional benchmark filter)
 - **Purpose**: Performance regression detection
 - **Features**:
   - Runs BenchmarkDotNet benchmarks
-  - Compares PR vs base branch
-  - Posts results as PR comment
+  - Optional filter for specific benchmark classes
   - Uploads detailed results as artifacts
 
 ### Documentation Workflows
@@ -157,7 +156,7 @@ Workflows have been consolidated from 25 to 15 files, reducing duplication and a
 - **Features**:
   - Marks issues stale after 60 days
   - Closes stale issues after 7 more days
-  - Marks PRs stale after 45 days
+  - Marks PRs stale after 30 days
   - Closes stale PRs after 14 more days
   - Exempts pinned, security, and WIP items
 
@@ -385,5 +384,5 @@ graph TD
 
 ---
 
-**Last Updated**: 2026-02-05
+**Last Updated**: 2026-02-06
 **Maintained By**: Market Data Collector Team

@@ -1,6 +1,6 @@
 # Market Data Collector - Production Status
 
-**Last Updated:** 2026-01-30
+**Last Updated:** 2026-02-06
 **Version:** 1.6.1
 **Status:** Production Ready
 
@@ -25,8 +25,10 @@ The Market Data Collector is a feature-rich system with a working CLI, backfill 
 | Polygon Provider | ⚠️ Partial | Stub mode unless configured; WebSocket parsing in progress |
 | StockSharp Provider | ⚠️ Integration scaffold | Requires StockSharp setup |
 | Monitoring | ✅ Implemented | HTTP server + Prometheus metrics |
-| UWP Desktop App | ✅ Implemented | Windows-only companion UI |
+| WPF Desktop App | ✅ Implemented | Recommended Windows desktop UI |
+| UWP Desktop App | ✅ Implemented | Legacy Windows 10+ companion UI |
 | QuantConnect Lean | ✅ Implemented | Custom data types + IDataProvider |
+| Symbol Search Providers | ✅ Implemented | 5 providers (Alpaca, Finnhub, Polygon, OpenFIGI, StockSharp) |
 | Architecture | ✅ Monolithic | Single-process runtime |
 
 ---
@@ -72,7 +74,7 @@ Multiple storage strategies:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                     UWP DESKTOP APPLICATION                         │
+│              DESKTOP APPLICATIONS (WPF / UWP)                       │
 │  ┌─────────────┐  ┌──────────────┐  ┌──────────────────────────┐   │
 │  │ ConfigService│  │StatusService │  │ BackfillService          │   │
 │  └─────────────┘  └──────────────┘  └──────────────────────────┘   │
@@ -247,7 +249,7 @@ When `IBAPI` is NOT defined:
 
 ## Testing Notes
 
-Automated test coverage is evolving. Refer to the `tests/` directory for the current suite and to the CI pipelines for test execution coverage.
+The project has 85 test files (80 C#, 5 F#) across `tests/MarketDataCollector.Tests/` and `tests/MarketDataCollector.FSharp.Tests/`. Coverage spans backfill, storage, pipeline, monitoring, providers, credentials, serialization, integration, and domain model tests. Refer to the `tests/` directory for the current suite and to the CI pipelines for test execution coverage.
 
 ---
 
@@ -262,4 +264,4 @@ Automated test coverage is evolving. Refer to the `tests/` directory for the cur
 
 ---
 
-*Last Updated: 2026-01-30*
+*Last Updated: 2026-02-06*
