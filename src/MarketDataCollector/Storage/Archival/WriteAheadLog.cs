@@ -28,6 +28,7 @@ public sealed class WriteAheadLog : IAsyncDisposable
     private long _currentFileSize;
     private int _uncommittedRecords;
     private DateTime _lastFlushTime = DateTime.UtcNow;
+    private bool _disposed;
 
     // WAL file header constants
     private const string WalMagic = "MDCWAL01";
@@ -315,12 +316,9 @@ public sealed class WriteAheadLog : IAsyncDisposable
         {
             await _currentWriter.FlushAsync();
             await _currentWriter.DisposeAsync();
-        }
-
-        if (_currentWalFile != null)
-        {
-            await _currentWalFile.FlushAsync(ct);
-            await _currentWalFile.DisposeAsync();
+            // _currentWriter.DisposeAsync() already closes the underlying _currentWalFile stream
+            _currentWriter = null;
+            _currentWalFile = null;
         }
 
         await StartNewWalFileAsync(ct);
@@ -439,19 +437,23 @@ public sealed class WriteAheadLog : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
+        if (_disposed)
+            return;
+
         await _writeLock.WaitAsync();
         try
         {
+            if (_disposed)
+                return;
+
+            _disposed = true;
+
             if (_currentWriter != null)
             {
                 await _currentWriter.FlushAsync();
                 await _currentWriter.DisposeAsync();
-            }
-
-            if (_currentWalFile != null)
-            {
-                await _currentWalFile.FlushAsync();
-                await _currentWalFile.DisposeAsync();
+                // _currentWriter.DisposeAsync() already closes the underlying _currentWalFile stream
+                // so we should not attempt to flush or dispose it again
             }
 
             _log.Information("WAL disposed, last sequence: {Sequence}", _currentSequence);
