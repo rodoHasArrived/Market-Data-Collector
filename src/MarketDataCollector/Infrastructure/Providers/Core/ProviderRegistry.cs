@@ -27,21 +27,6 @@ public sealed record ProviderInfo(
     IReadOnlyDictionary<string, object>? Capabilities = null);
 
 /// <summary>
-/// Types of market data providers.
-/// </summary>
-public enum ProviderType
-{
-    /// <summary>Real-time streaming data provider.</summary>
-    Streaming,
-
-    /// <summary>Historical backfill data provider.</summary>
-    Backfill,
-
-    /// <summary>Symbol search/lookup provider.</summary>
-    SymbolSearch
-}
-
-/// <summary>
 /// Centralized registry for all market data providers enabling plugin-style
 /// provider management with discovery, routing, and health monitoring.
 /// </summary>
