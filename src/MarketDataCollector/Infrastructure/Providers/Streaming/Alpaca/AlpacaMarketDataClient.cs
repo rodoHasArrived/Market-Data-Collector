@@ -174,7 +174,8 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
         var id = _subscriptionManager.Subscribe(cfg.Symbol, "trades");
         if (id == -1) return -1;
 
-        _ = SendSubscribeWithLoggingAsync("SubscribeTrades", cfg.Symbol);
+        SendSubscribeWithLoggingAsync("SubscribeTrades", cfg.Symbol)
+            .ObserveException(_log, $"Alpaca subscribe trades for {cfg.Symbol}");
         return id;
     }
 
@@ -183,7 +184,8 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
         var subscription = _subscriptionManager.Unsubscribe(subscriptionId);
         if (subscription != null)
         {
-            _ = SendSubscribeWithLoggingAsync("UnsubscribeTrades", subscription.Symbol);
+            SendSubscribeWithLoggingAsync("UnsubscribeTrades", subscription.Symbol)
+                .ObserveException(_log, $"Alpaca unsubscribe trades for {subscription.Symbol}");
         }
     }
 
@@ -197,7 +199,8 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
         var id = _subscriptionManager.Subscribe(cfg.Symbol, "quotes");
         if (id == -1) return -1;
 
-        _ = SendSubscribeWithLoggingAsync("SubscribeMarketDepth", cfg.Symbol);
+        SendSubscribeWithLoggingAsync("SubscribeMarketDepth", cfg.Symbol)
+            .ObserveException(_log, $"Alpaca subscribe depth for {cfg.Symbol}");
         return id;
     }
 
@@ -206,7 +209,8 @@ public sealed class AlpacaMarketDataClient : IMarketDataClient
         var subscription = _subscriptionManager.Unsubscribe(subscriptionId);
         if (subscription != null)
         {
-            _ = SendSubscribeWithLoggingAsync("UnsubscribeMarketDepth", subscription.Symbol);
+            SendSubscribeWithLoggingAsync("UnsubscribeMarketDepth", subscription.Symbol)
+                .ObserveException(_log, $"Alpaca unsubscribe depth for {subscription.Symbol}");
         }
     }
 

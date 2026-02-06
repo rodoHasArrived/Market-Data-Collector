@@ -133,6 +133,8 @@ public sealed class ApiKeyRateLimitMiddleware
 
         var now = DateTime.UtcNow;
         int remaining;
+        bool rateLimited = false;
+        int retryAfter = 0;
 
         lock (entry)
         {
@@ -148,19 +150,22 @@ public sealed class ApiKeyRateLimitMiddleware
 
             if (entry.RequestCount > MaxRequestsPerMinute)
             {
-                var retryAfter = (int)(Window - (now - entry.WindowStart)).TotalSeconds + 1;
-
-                context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
-                context.Response.ContentType = "application/json";
-                context.Response.Headers["Retry-After"] = retryAfter.ToString();
-                context.Response.Headers["X-RateLimit-Limit"] = MaxRequestsPerMinute.ToString();
-                context.Response.Headers["X-RateLimit-Remaining"] = "0";
-
-                // Fire-and-forget write (response already has status code)
-                _ = context.Response.WriteAsync(
-                    $$$"""{"error":"Rate limit exceeded. Maximum {{{MaxRequestsPerMinute}}} requests per minute.","retry_after":{{{retryAfter}}}}""");
-                return;
+                retryAfter = (int)(Window - (now - entry.WindowStart)).TotalSeconds + 1;
+                rateLimited = true;
             }
+        }
+
+        if (rateLimited)
+        {
+            context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+            context.Response.ContentType = "application/json";
+            context.Response.Headers["Retry-After"] = retryAfter.ToString();
+            context.Response.Headers["X-RateLimit-Limit"] = MaxRequestsPerMinute.ToString();
+            context.Response.Headers["X-RateLimit-Remaining"] = "0";
+
+            await context.Response.WriteAsync(
+                $$$"""{"error":"Rate limit exceeded. Maximum {{{MaxRequestsPerMinute}}} requests per minute.","retry_after":{{{retryAfter}}}}""");
+            return;
         }
 
         // Add rate limit headers to successful responses
