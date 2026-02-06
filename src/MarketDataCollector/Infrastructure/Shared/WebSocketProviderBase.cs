@@ -247,7 +247,8 @@ public abstract class WebSocketProviderBase : IMarketDataClient
         var id = Subscriptions.Subscribe(cfg.Symbol, "trades");
         if (id >= 0)
         {
-            _ = TrySendSubscriptionUpdateAsync();
+            TrySendSubscriptionUpdateAsync()
+                .ObserveException(Log, $"{ProviderName} subscription update after trades subscribe");
         }
         return id;
     }
@@ -257,7 +258,8 @@ public abstract class WebSocketProviderBase : IMarketDataClient
         var removed = Subscriptions.Unsubscribe(subscriptionId);
         if (removed != null && removed.Kind == "trades")
         {
-            _ = TrySendSubscriptionUpdateAsync();
+            TrySendSubscriptionUpdateAsync()
+                .ObserveException(Log, $"{ProviderName} subscription update after trades unsubscribe");
         }
     }
 
@@ -268,7 +270,8 @@ public abstract class WebSocketProviderBase : IMarketDataClient
         var id = Subscriptions.Subscribe(cfg.Symbol, "depth");
         if (id >= 0)
         {
-            _ = TrySendSubscriptionUpdateAsync();
+            TrySendSubscriptionUpdateAsync()
+                .ObserveException(Log, $"{ProviderName} subscription update after depth subscribe");
         }
         return id;
     }
@@ -278,7 +281,8 @@ public abstract class WebSocketProviderBase : IMarketDataClient
         var removed = Subscriptions.Unsubscribe(subscriptionId);
         if (removed != null && removed.Kind == "depth")
         {
-            _ = TrySendSubscriptionUpdateAsync();
+            TrySendSubscriptionUpdateAsync()
+                .ObserveException(Log, $"{ProviderName} subscription update after depth unsubscribe");
         }
     }
 

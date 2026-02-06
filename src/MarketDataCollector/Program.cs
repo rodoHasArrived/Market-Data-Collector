@@ -27,6 +27,8 @@ using MarketDataCollector.Infrastructure.Providers.Alpaca;
 using MarketDataCollector.Infrastructure.Providers.Polygon;
 using MarketDataCollector.Infrastructure.Providers.StockSharp;
 using MarketDataCollector.Infrastructure.Providers.Backfill;
+using MarketDataCollector.Infrastructure.Providers.Streaming.Failover;
+using MarketDataCollector.Infrastructure.Providers;
 using SymbolResolution = MarketDataCollector.Infrastructure.Providers.Backfill.SymbolResolution;
 using BackfillRequest = MarketDataCollector.Application.Backfill.BackfillRequest;
 using MarketDataCollector.Storage;
@@ -514,8 +516,71 @@ internal static class Program
             alpacaCredentialResolver: (_, appCfg) => configService.ResolveAlpacaCredentials(appCfg.Alpaca?.KeyId, appCfg.Alpaca?.SecretKey),
             log: LoggingSetup.ForContext<MarketDataClientFactory>());
 
-        await using IMarketDataClient dataClient = clientFactory.Create(
-            cfg.DataSource, cfg, publisher, tradeCollector, depthCollector, quoteCollector);
+        // Check if streaming failover is configured
+        var failoverCfg = cfg.DataSources;
+        var failoverRules = failoverCfg?.FailoverRules ?? Array.Empty<FailoverRuleConfig>();
+        var useFailover = failoverCfg?.EnableFailover == true && failoverRules.Length > 0;
+
+        ConnectionHealthMonitor? healthMonitor = null;
+        StreamingFailoverService? failoverService = null;
+        IMarketDataClient dataClient;
+
+        if (useFailover)
+        {
+            log.Information("Streaming failover enabled with {RuleCount} rules", failoverRules.Length);
+
+            healthMonitor = new ConnectionHealthMonitor();
+            failoverService = new StreamingFailoverService(healthMonitor);
+
+            // Use the first failover rule (primary use case)
+            var rule = failoverRules[0];
+            var providerMap = new Dictionary<string, IMarketDataClient>(StringComparer.OrdinalIgnoreCase);
+
+            // Create a client for each provider in the failover chain
+            var allProviderIds = new[] { rule.PrimaryProviderId }
+                .Concat(rule.BackupProviderIds)
+                .Distinct(StringComparer.OrdinalIgnoreCase);
+
+            var sources = failoverCfg!.Sources ?? Array.Empty<DataSourceConfig>();
+            foreach (var providerId in allProviderIds)
+            {
+                var source = sources.FirstOrDefault(s => string.Equals(s.Id, providerId, StringComparison.OrdinalIgnoreCase));
+                var providerKind = source?.Provider ?? cfg.DataSource;
+
+                try
+                {
+                    var client = clientFactory.Create(providerKind, cfg, publisher, tradeCollector, depthCollector, quoteCollector);
+                    providerMap[providerId] = client;
+                    failoverService.RegisterProvider(providerId);
+                    log.Information("Created streaming client for failover provider {ProviderId} ({Kind})", providerId, providerKind);
+                }
+                catch (Exception ex)
+                {
+                    log.Warning(ex, "Failed to create streaming client for provider {ProviderId}; skipping", providerId);
+                }
+            }
+
+            if (providerMap.Count == 0)
+            {
+                log.Error("No streaming providers could be created for failover; falling back to single provider");
+                dataClient = clientFactory.Create(cfg.DataSource, cfg, publisher, tradeCollector, depthCollector, quoteCollector);
+            }
+            else
+            {
+                var initialProvider = providerMap.ContainsKey(rule.PrimaryProviderId)
+                    ? rule.PrimaryProviderId
+                    : providerMap.Keys.First();
+
+                dataClient = new FailoverAwareMarketDataClient(providerMap, failoverService, rule.Id, initialProvider);
+                failoverService.Start(failoverCfg!);
+            }
+        }
+        else
+        {
+            dataClient = clientFactory.Create(cfg.DataSource, cfg, publisher, tradeCollector, depthCollector, quoteCollector);
+        }
+
+        await using var dataClientDisposable = dataClient;
 
         try
         {
@@ -527,11 +592,11 @@ internal static class Program
             throw;
         }
 
-        var subscriptionManager = new SubscriptionManager(
+        var subscriptionManager = new Application.Subscriptions.SubscriptionManager(
             depthCollector,
             tradeCollector,
             dataClient,
-            LoggingSetup.ForContext<SubscriptionManager>());
+            LoggingSetup.ForContext<Application.Subscriptions.SubscriptionManager>());
 
         var runtimeCfg = EnsureDefaultSymbols(cfg);
         subscriptionManager.Apply(runtimeCfg);
@@ -583,6 +648,9 @@ internal static class Program
 
         log.Information("Disconnecting from data provider...");
         await dataClient.DisconnectAsync();
+
+        failoverService?.Dispose();
+        healthMonitor?.Dispose();
 
         log.Information("Shutdown complete");
 

@@ -19,10 +19,19 @@ public sealed class TradeDataCollector
     private readonly ConcurrentDictionary<string, SymbolTradeState> _stateBySymbol =
         new(StringComparer.OrdinalIgnoreCase);
 
+    // Per-symbol recent trade ring buffer (capped at MaxRecentTrades)
+    private readonly ConcurrentDictionary<string, RecentTradeRing> _recentTrades =
+        new(StringComparer.OrdinalIgnoreCase);
+
     /// <summary>
     /// Maximum allowed length for a symbol. Covers most instrument types including options and futures.
     /// </summary>
     private const int MaxSymbolLength = 50;
+
+    /// <summary>
+    /// Maximum number of recent trades to retain per symbol for API access.
+    /// </summary>
+    private const int MaxRecentTrades = 200;
 
     public TradeDataCollector(IMarketEventPublisher publisher, IQuoteStateStore? quotes = null)
     {
@@ -176,6 +185,10 @@ public sealed class TradeDataCollector
 
         state.RegisterTrade(trade);
 
+        // Buffer for API access
+        var ring = _recentTrades.GetOrAdd(symbol, _ => new RecentTradeRing(MaxRecentTrades));
+        ring.Add(trade);
+
         _publisher.TryPublish(MarketEvent.Trade(trade.Timestamp, trade.Symbol, trade));
 
         // -------- OrderFlow statistics --------
@@ -188,6 +201,39 @@ public sealed class TradeDataCollector
 
         _publisher.TryPublish(MarketEvent.OrderFlow(update.Timestamp, symbol, stats));
     }
+
+    /// <summary>
+    /// Returns the most recent trades for a symbol (newest first), up to <paramref name="limit"/>.
+    /// Returns an empty list if no trades have been recorded for the symbol.
+    /// </summary>
+    public IReadOnlyList<Trade> GetRecentTrades(string symbol, int limit = 50)
+    {
+        if (string.IsNullOrWhiteSpace(symbol)) return Array.Empty<Trade>();
+        if (!_recentTrades.TryGetValue(symbol, out var ring)) return Array.Empty<Trade>();
+        return ring.GetRecent(Math.Min(limit, MaxRecentTrades));
+    }
+
+    /// <summary>
+    /// Returns the current rolling order-flow statistics for a symbol, or null if no trades recorded.
+    /// </summary>
+    public OrderFlowStatistics? GetOrderFlowSnapshot(string symbol)
+    {
+        if (string.IsNullOrWhiteSpace(symbol)) return null;
+        if (!_stateBySymbol.TryGetValue(symbol, out var state)) return null;
+
+        return state.BuildOrderFlowStats(
+            timestamp: DateTimeOffset.UtcNow,
+            symbol: symbol,
+            seq: state.LastSequenceNumber ?? 0,
+            streamId: null,
+            venue: null);
+    }
+
+    /// <summary>
+    /// Returns all symbols that currently have trade data.
+    /// </summary>
+    public IReadOnlyList<string> GetTrackedSymbols()
+        => _stateBySymbol.Keys.ToList();
 
     // =========================
     // Per-symbol state
@@ -263,6 +309,52 @@ public sealed class TradeDataCollector
                 SequenceNumber: seq,
                 StreamId: streamId,
                 Venue: venue);
+        }
+    }
+
+    // =========================
+    // Recent trade ring buffer
+    // =========================
+
+    /// <summary>
+    /// Thread-safe fixed-capacity ring buffer for recent trades.
+    /// </summary>
+    private sealed class RecentTradeRing
+    {
+        private readonly Trade[] _buffer;
+        private readonly object _sync = new();
+        private int _head;
+        private int _count;
+
+        public RecentTradeRing(int capacity) => _buffer = new Trade[capacity];
+
+        public void Add(Trade trade)
+        {
+            lock (_sync)
+            {
+                _buffer[_head] = trade;
+                _head = (_head + 1) % _buffer.Length;
+                if (_count < _buffer.Length) _count++;
+            }
+        }
+
+        /// <summary>
+        /// Returns up to <paramref name="limit"/> recent trades, newest first.
+        /// </summary>
+        public IReadOnlyList<Trade> GetRecent(int limit)
+        {
+            lock (_sync)
+            {
+                var take = Math.Min(limit, _count);
+                var result = new Trade[take];
+                for (int i = 0; i < take; i++)
+                {
+                    // Walk backwards from head
+                    var idx = (_head - 1 - i + _buffer.Length) % _buffer.Length;
+                    result[i] = _buffer[idx];
+                }
+                return result;
+            }
         }
     }
 }

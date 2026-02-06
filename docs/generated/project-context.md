@@ -1,6 +1,6 @@
 # MarketDataCollector Project Context
 
-**Generated:** 2026-02-06 04:33:29 UTC
+**Generated:** 2026-02-06 05:50:29 UTC
 **Source:** Auto-generated from code annotations
 
 ## Key Interfaces
@@ -417,6 +417,7 @@ Generic interface for thread-safe symbol-keyed state storage. Abstracts the 35+ 
 | `ConfigurationProviderExtensions` | `MarketDataCollector/Application/Config/IConfigurationProvider.cs` | Unified configuration provider |
 | `CredentialStoreExtensions` | `MarketDataCollector/Application/Credentials/ICredentialStore.cs` | Centralized credential management |
 | `ExpiringSymbolStateStore` | `MarketDataCollector/Infrastructure/Shared/ISymbolStateStore.cs` | Time-based expiring symbol state store |
+| `FailoverAwareMarketDataClient` | `MarketDataCollector/Infrastructure/Providers/Streaming/Failover/FailoverAwareMarketDataClient.cs` | Failover-aware composite streaming client |
 | `FinnhubHistoricalDataProvider` | `MarketDataCollector/Infrastructure/Providers/Historical/Finnhub/FinnhubHistoricalDataProvider.cs` | Finnhub historical data provider implementation |
 | `FinnhubSymbolSearchProviderRefactored` | `MarketDataCollector/Infrastructure/Providers/SymbolSearch/FinnhubSymbolSearchProviderRefactored.cs` | Finnhub symbol search provider implementation |
 | `for` | `MarketDataCollector/Application/Config/IConfigurationProvider.cs` | Base configuration section |
@@ -442,6 +443,7 @@ Generic interface for thread-safe symbol-keyed state storage. Abstracts the 35+ 
 | `StockSharpMarketDataClient` | `MarketDataCollector/Infrastructure/Providers/Streaming/StockSharp/StockSharpMarketDataClient.cs` | StockSharp streaming data provider implementation |
 | `StockSharpSymbolSearchProvider` | `MarketDataCollector/Infrastructure/Providers/Streaming/StockSharp/StockSharpSymbolSearchProvider.cs` | StockSharp symbol search provider implementation |
 | `StooqHistoricalDataProvider` | `MarketDataCollector/Infrastructure/Providers/Historical/Stooq/StooqHistoricalDataProvider.cs` | Stooq historical data provider implementation |
+| `StreamingFailoverService` | `MarketDataCollector/Infrastructure/Providers/Streaming/Failover/StreamingFailoverService.cs` | Runtime streaming provider failover orchestration |
 | `SubscriptionManager` | `MarketDataCollector/Infrastructure/Shared/SubscriptionManager.cs` | Centralized subscription management for providers |
 | `SymbolStateStore` | `MarketDataCollector/Infrastructure/Shared/ISymbolStateStore.cs` | Centralized symbol state management |
 | `SymbolStateStore` | `MarketDataCollector/Infrastructure/Shared/ISymbolStateStore.cs` | ConcurrentDictionary-based symbol state store |
@@ -467,6 +469,7 @@ Generic interface for thread-safe symbol-keyed state storage. Abstracts the 35+ 
 | `BaseHistoricalDataProvider` | `MarketDataCollector/Infrastructure/Providers/Historical/BaseHistoricalDataProvider.cs` | All async methods support CancellationToken |
 | `BaseSymbolSearchProvider` | `MarketDataCollector/Infrastructure/Providers/SymbolSearch/BaseSymbolSearchProvider.cs` | All async methods support CancellationToken |
 | `CompositeHistoricalDataProvider` | `MarketDataCollector/Infrastructure/Providers/Historical/CompositeHistoricalDataProvider.cs` | All async methods support CancellationToken |
+| `FailoverAwareMarketDataClient` | `MarketDataCollector/Infrastructure/Providers/Streaming/Failover/FailoverAwareMarketDataClient.cs` | All async methods support CancellationToken |
 | `FinnhubHistoricalDataProvider` | `MarketDataCollector/Infrastructure/Providers/Historical/Finnhub/FinnhubHistoricalDataProvider.cs` | All async methods support CancellationToken |
 | `IBHistoricalDataProvider` | `MarketDataCollector/Infrastructure/Providers/Historical/InteractiveBrokers/IBHistoricalDataProvider.cs` | All async methods support CancellationToken |
 | `IBMarketDataClient` | `MarketDataCollector/Infrastructure/Providers/Streaming/InteractiveBrokers/IBMarketDataClient.cs` | All async methods support CancellationToken |
@@ -480,6 +483,7 @@ Generic interface for thread-safe symbol-keyed state storage. Abstracts the 35+ 
 | `StockSharpMarketDataClient` | `MarketDataCollector/Infrastructure/Providers/Streaming/StockSharp/StockSharpMarketDataClient.cs` | All async methods support CancellationToken |
 | `StockSharpSymbolSearchProvider` | `MarketDataCollector/Infrastructure/Providers/Streaming/StockSharp/StockSharpSymbolSearchProvider.cs` | All async methods support CancellationToken |
 | `StooqHistoricalDataProvider` | `MarketDataCollector/Infrastructure/Providers/Historical/Stooq/StooqHistoricalDataProvider.cs` | All async methods support CancellationToken |
+| `StreamingFailoverService` | `MarketDataCollector/Infrastructure/Providers/Streaming/Failover/StreamingFailoverService.cs` | All async methods support CancellationToken |
 | `TiingoHistoricalDataProvider` | `MarketDataCollector/Infrastructure/Providers/Historical/Tiingo/TiingoHistoricalDataProvider.cs` | All async methods support CancellationToken |
 | `WebSocketProviderBase` | `MarketDataCollector/Infrastructure/Shared/WebSocketProviderBase.cs` | All async methods support CancellationToken |
 | `YahooFinanceHistoricalDataProvider` | `MarketDataCollector/Infrastructure/Providers/Historical/YahooFinance/YahooFinanceHistoricalDataProvider.cs` | All async methods support CancellationToken |

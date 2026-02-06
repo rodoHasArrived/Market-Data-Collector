@@ -454,7 +454,8 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
             // Trigger automatic reconnection on WebSocket errors
             if (!_isDisposing && !ct.IsCancellationRequested)
             {
-                _ = TryReconnectAsync();
+                TryReconnectAsync()
+                    .ObserveException(_log, "Polygon reconnection after WebSocket error");
             }
         }
         catch (Exception ex)
@@ -465,7 +466,8 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
             // Trigger automatic reconnection on unexpected errors
             if (!_isDisposing && !ct.IsCancellationRequested)
             {
-                _ = TryReconnectAsync();
+                TryReconnectAsync()
+                    .ObserveException(_log, "Polygon reconnection after unexpected error");
             }
         }
         finally
@@ -475,7 +477,8 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
             // Handle server-initiated close (CloseReceived) with reconnection
             if (!_isDisposing && !ct.IsCancellationRequested && !_isConnected)
             {
-                _ = TryReconnectAsync();
+                TryReconnectAsync()
+                    .ObserveException(_log, "Polygon reconnection after server-initiated close");
             }
         }
     }
@@ -939,7 +942,8 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
         // In live mode, send subscribe message to WebSocket
         if (!IsStubMode && _isConnected && _isAuthenticated && isNewSymbol)
         {
-            _ = SendSubscribeAsync($"Q.{symbol}");
+            SendSubscribeAsync($"Q.{symbol}")
+                .ObserveException(_log, $"Polygon subscribe quotes for {symbol}");
         }
 
         return id;
@@ -959,7 +963,8 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
             _log.Debug("Unsubscribed from Polygon quotes for {Symbol}", subscription.Symbol);
             if (!IsStubMode && _isConnected)
             {
-                _ = SendUnsubscribeAsync($"Q.{subscription.Symbol}");
+                SendUnsubscribeAsync($"Q.{subscription.Symbol}")
+                    .ObserveException(_log, $"Polygon unsubscribe quotes for {subscription.Symbol}");
             }
         }
     }
@@ -1003,7 +1008,8 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
         else if (_isConnected && _isAuthenticated && isNewSymbol)
         {
             // In live mode, send subscribe message to WebSocket
-            _ = SendSubscribeAsync($"T.{symbol}");
+            SendSubscribeAsync($"T.{symbol}")
+                .ObserveException(_log, $"Polygon subscribe trades for {symbol}");
         }
 
         return id;
@@ -1023,7 +1029,8 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
             _log.Debug("Unsubscribed from Polygon trades for {Symbol}", subscription.Symbol);
             if (!IsStubMode && _isConnected)
             {
-                _ = SendUnsubscribeAsync($"T.{subscription.Symbol}");
+                SendUnsubscribeAsync($"T.{subscription.Symbol}")
+                    .ObserveException(_log, $"Polygon unsubscribe trades for {subscription.Symbol}");
             }
         }
     }
@@ -1055,7 +1062,8 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
         // In live mode, send subscribe message for both A (second) and AM (minute) channels
         if (!IsStubMode && _isConnected && _isAuthenticated && isNewSymbol)
         {
-            _ = SendSubscribeAsync($"A.{symbol},AM.{symbol}");
+            SendSubscribeAsync($"A.{symbol},AM.{symbol}")
+                .ObserveException(_log, $"Polygon subscribe aggregates for {symbol}");
         }
 
         return id;
@@ -1076,7 +1084,8 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
             _log.Debug("Unsubscribed from Polygon aggregates for {Symbol}", subscription.Symbol);
             if (!IsStubMode && _isConnected)
             {
-                _ = SendUnsubscribeAsync($"A.{subscription.Symbol},AM.{subscription.Symbol}");
+                SendUnsubscribeAsync($"A.{subscription.Symbol},AM.{subscription.Symbol}")
+                    .ObserveException(_log, $"Polygon unsubscribe aggregates for {subscription.Symbol}");
             }
         }
     }
