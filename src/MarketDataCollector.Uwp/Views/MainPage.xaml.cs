@@ -3,14 +3,15 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 using MarketDataCollector.Uwp.ViewModels;
 using MarketDataCollector.Uwp.Services;
 
 namespace MarketDataCollector.Uwp.Views;
 
 /// <summary>
-/// Main dashboard page with navigation to different sections.
-/// Uses NavigationService for centralized page routing.
+/// Main dashboard page with workspace-based navigation (Monitor, Collect, Storage, Quality, Settings).
+/// Uses NavigationService for centralized page routing and supports a command palette (Ctrl+K).
 /// </summary>
 public sealed partial class MainPage : Page
 {
@@ -22,6 +23,7 @@ public sealed partial class MainPage : Page
     private readonly NavigationService _navigationService;
     private readonly DispatcherTimer _notificationDismissTimer;
     private string? _currentNotificationAction;
+    private bool _commandPaletteOpen;
 
     public MainPage()
     {
@@ -44,6 +46,16 @@ public sealed partial class MainPage : Page
         // Subscribe to notification events
         _notificationService.NotificationReceived += NotificationService_NotificationReceived;
         _connectionService.StateChanged += ConnectionService_StateChanged;
+
+        // Register Ctrl+K keyboard accelerator for command palette
+        var ctrlK = new KeyboardAccelerator { Key = Windows.System.VirtualKey.K, Modifiers = Windows.System.VirtualKeyModifiers.Control };
+        ctrlK.Invoked += CommandPaletteAccelerator_Invoked;
+        this.KeyboardAccelerators.Add(ctrlK);
+
+        // Register Escape to close command palette
+        var escape = new KeyboardAccelerator { Key = Windows.System.VirtualKey.Escape };
+        escape.Invoked += EscapeAccelerator_Invoked;
+        this.KeyboardAccelerators.Add(escape);
 
         Loaded += MainPage_Loaded;
         Unloaded += MainPage_Unloaded;
@@ -84,6 +96,111 @@ public sealed partial class MainPage : Page
         _connectionService.StateChanged -= ConnectionService_StateChanged;
         _notificationDismissTimer.Stop();
     }
+
+    #region Command Palette
+
+    private void CommandPaletteAccelerator_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+    {
+        args.Handled = true;
+        ToggleCommandPalette();
+    }
+
+    private void EscapeAccelerator_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+    {
+        if (_commandPaletteOpen)
+        {
+            args.Handled = true;
+            CloseCommandPalette();
+        }
+    }
+
+    private void ToggleCommandPalette()
+    {
+        if (_commandPaletteOpen)
+        {
+            CloseCommandPalette();
+        }
+        else
+        {
+            OpenCommandPalette();
+        }
+    }
+
+    private void OpenCommandPalette()
+    {
+        _commandPaletteOpen = true;
+        CommandPaletteOverlay.Visibility = Visibility.Visible;
+        CommandPaletteBox.Text = string.Empty;
+        CommandPaletteBox.Focus(FocusState.Programmatic);
+    }
+
+    private void CloseCommandPalette()
+    {
+        _commandPaletteOpen = false;
+        CommandPaletteOverlay.Visibility = Visibility.Collapsed;
+        CommandPaletteBox.Text = string.Empty;
+    }
+
+    private void CommandPalette_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
+    {
+        if (args.Reason == AutoSuggestionBoxTextChangeReason.UserInput)
+        {
+            _ = SafeCommandPaletteSearchAsync(sender);
+        }
+    }
+
+    private async Task SafeCommandPaletteSearchAsync(AutoSuggestBox sender)
+    {
+        try
+        {
+            var suggestions = await _searchService.GetSuggestionsAsync(sender.Text);
+            sender.ItemsSource = suggestions.Select(s => new SearchSuggestionDisplay
+            {
+                Text = s.Text,
+                Category = s.Category,
+                Icon = s.Icon,
+                NavigationTarget = s.NavigationTarget
+            }).ToList();
+        }
+        catch (Exception ex)
+        {
+            LoggingService.Instance.LogWarning($"Command palette search error: {ex.Message}");
+            sender.ItemsSource = null;
+        }
+    }
+
+    private void CommandPalette_QuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
+    {
+        if (args.ChosenSuggestion is SearchSuggestionDisplay suggestion)
+        {
+            HandleSearchNavigation(suggestion.NavigationTarget);
+        }
+        else if (!string.IsNullOrWhiteSpace(args.QueryText))
+        {
+            var query = args.QueryText.Trim().ToUpperInvariant();
+            HandleSearchNavigation($"symbol:{query}");
+        }
+        CloseCommandPalette();
+    }
+
+    private void CommandPalette_SuggestionChosen(AutoSuggestBox sender, AutoSuggestBoxSuggestionChosenEventArgs args)
+    {
+        if (args.SelectedItem is SearchSuggestionDisplay suggestion)
+        {
+            sender.Text = suggestion.Text;
+        }
+    }
+
+    private void CommandPalette_GotFocus(object sender, RoutedEventArgs e)
+    {
+        // Show all pages when command palette first opens with no text
+        if (sender is AutoSuggestBox box && string.IsNullOrEmpty(box.Text))
+        {
+            _ = SafeCommandPaletteSearchAsync(box);
+        }
+    }
+
+    #endregion
 
     #region In-App Notification Banner
 
