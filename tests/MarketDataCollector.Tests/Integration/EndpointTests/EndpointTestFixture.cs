@@ -7,6 +7,7 @@ using MarketDataCollector.Ui.Shared.Endpoints;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
+using Xunit;
 
 namespace MarketDataCollector.Tests.Integration.EndpointTests;
 

@@ -78,6 +78,7 @@ Thumbs.db
 *.tmp
 *.temp
 *.swp
+*.log
 *~
 
 # Build output logs and debug artifacts
