@@ -1,5 +1,5 @@
-using MarketDataCollector.Application.Logging;
-using Serilog;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace MarketDataCollector.Infrastructure.Utilities;
 
@@ -16,8 +16,8 @@ public static class CredentialValidator
     {
         if (string.IsNullOrEmpty(apiKey))
         {
-            var logger = log ?? LoggingSetup.ForContext(typeof(CredentialValidator));
-            logger.Debug("{Provider} API key not configured", providerName);
+            var logger = log ?? NullLogger.Instance;
+            logger.LogDebug("{Provider} API key not configured", providerName);
             return false;
         }
         return true;
@@ -34,8 +34,8 @@ public static class CredentialValidator
     {
         if (string.IsNullOrEmpty(keyId) || string.IsNullOrEmpty(secretKey))
         {
-            var logger = log ?? LoggingSetup.ForContext(typeof(CredentialValidator));
-            logger.Debug("{Provider} API credentials not configured (missing key or secret)", providerName);
+            var logger = log ?? NullLogger.Instance;
+            logger.LogDebug("{Provider} API credentials not configured (missing key or secret)", providerName);
             return false;
         }
         return true;

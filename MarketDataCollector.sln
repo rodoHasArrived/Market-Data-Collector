@@ -4,6 +4,8 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MarketDataCollector", "src\MarketDataCollector\MarketDataCollector.csproj", "{A1111111-B222-C333-D444-E55555555555}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MarketDataCollector.ProviderSdk", "src\MarketDataCollector.ProviderSdk\MarketDataCollector.ProviderSdk.csproj", "{2B8677F1-6BE8-4CEB-88BC-0D2C2A45B37D}"
+EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MarketDataCollector.Ui", "src\MarketDataCollector.Ui\MarketDataCollector.Ui.csproj", "{7756DAD5-0AAF-45D9-A300-F28239C23078}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MarketDataCollector.Uwp", "src\MarketDataCollector.Uwp\MarketDataCollector.Uwp.csproj", "{D8888888-E999-F000-A111-B22222222222}"
@@ -38,6 +40,10 @@ Global
         {A1111111-B222-C333-D444-E55555555555}.Debug|Any CPU.Build.0 = Debug|Any CPU
         {A1111111-B222-C333-D444-E55555555555}.Release|Any CPU.ActiveCfg = Release|Any CPU
         {A1111111-B222-C333-D444-E55555555555}.Release|Any CPU.Build.0 = Release|Any CPU
+        {2B8677F1-6BE8-4CEB-88BC-0D2C2A45B37D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+        {2B8677F1-6BE8-4CEB-88BC-0D2C2A45B37D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+        {2B8677F1-6BE8-4CEB-88BC-0D2C2A45B37D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+        {2B8677F1-6BE8-4CEB-88BC-0D2C2A45B37D}.Release|Any CPU.Build.0 = Release|Any CPU
         {7756DAD5-0AAF-45D9-A300-F28239C23078}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
         {7756DAD5-0AAF-45D9-A300-F28239C23078}.Debug|Any CPU.Build.0 = Debug|Any CPU
         {7756DAD5-0AAF-45D9-A300-F28239C23078}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -77,6 +83,7 @@ Global
     EndGlobalSection
     GlobalSection(NestedProjects) = preSolution
         {A1111111-B222-C333-D444-E55555555555} = {E1111111-F222-0333-1444-255555555555}
+        {2B8677F1-6BE8-4CEB-88BC-0D2C2A45B37D} = {E1111111-F222-0333-1444-255555555555}
         {7756DAD5-0AAF-45D9-A300-F28239C23078} = {E1111111-F222-0333-1444-255555555555}
         {D8888888-E999-F000-A111-B22222222222} = {E1111111-F222-0333-1444-255555555555}
         {6F8D3A55-3E95-4F9D-9C8F-DBA9A6230B1E} = {E1111111-F222-0333-1444-255555555555}

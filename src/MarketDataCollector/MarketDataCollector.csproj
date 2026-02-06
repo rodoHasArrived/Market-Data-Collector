@@ -189,6 +189,7 @@
   <!-- Project References -->
   <ItemGroup>
     <ProjectReference Include="..\MarketDataCollector.Contracts\MarketDataCollector.Contracts.csproj" />
+    <ProjectReference Include="..\MarketDataCollector.ProviderSdk\MarketDataCollector.ProviderSdk.csproj" />
   </ItemGroup>
 
   <!-- Web Dashboard Templates -->

@@ -1,6 +1,6 @@
 using MarketDataCollector.Contracts.Domain.Enums;
 
-namespace MarketDataCollector.Application.Config;
+namespace MarketDataCollector.Contracts.Configuration;
 
 /// <summary>
 /// Configuration for a subscribed symbol and how to build its IB contract.
