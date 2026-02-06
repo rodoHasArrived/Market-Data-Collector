@@ -1,0 +1,19 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  Generated C# interop wrappers at /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.FSharp/Generated/MarketDataCollector.FSharp.Interop.g.cs
+  MarketDataCollector.FSharp -> /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.FSharp/bin/Release/net9.0/MarketDataCollector.FSharp.dll
+  MarketDataCollector.Contracts -> /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Contracts/bin/Release/net9.0/MarketDataCollector.Contracts.dll
+  MarketDataCollector.ProviderSdk -> /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.ProviderSdk/bin/Release/net9.0/MarketDataCollector.ProviderSdk.dll
+  MarketDataCollector.FSharp.Tests -> /home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.FSharp.Tests/bin/Release/net9.0/MarketDataCollector.FSharp.Tests.dll
+Test run for /home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.FSharp.Tests/bin/Release/net9.0/MarketDataCollector.FSharp.Tests.dll (.NETCoreApp,Version=v9.0)
+VSTest version 17.14.1 (x64)
+
+Starting test execution, please wait...
+A total of 1 test files matched the specified pattern.
+No test is available in /home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.FSharp.Tests/bin/Release/net9.0/MarketDataCollector.FSharp.Tests.dll. Make sure that test discoverer & executors are registered and platform & framework version settings are appropriate and try again.
+
+Additionally, path to test adapters can be specified using /TestAdapterPath command. Example  /TestAdapterPath:<pathToCustomAdapters>.
+  MarketDataCollector -> /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector/bin/Release/net9.0/MarketDataCollector.dll
+  MarketDataCollector.Ui.Shared -> /home/runner/work/Market-Data-Collector/Market-Data-Collector/src/MarketDataCollector.Ui.Shared/bin/Release/net9.0/MarketDataCollector.Ui.Shared.dll
+/home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/Integration/EndpointTests/EndpointTestFixture.cs(8,28): error CS0234: The type or namespace name 'TestHost' does not exist in the namespace 'Microsoft.AspNetCore' (are you missing an assembly reference?) [/home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/MarketDataCollector.Tests.csproj]
+/home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/Integration/EndpointTests/EndpointTestFixture.cs(18,43): error CS0246: The type or namespace name 'IAsyncLifetime' could not be found (are you missing a using directive or an assembly reference?) [/home/runner/work/Market-Data-Collector/Market-Data-Collector/tests/MarketDataCollector.Tests/MarketDataCollector.Tests.csproj]
