@@ -322,7 +322,7 @@ public sealed class ProviderManagementService
     /// <summary>
     /// Tests connection to a specific provider.
     /// </summary>
-    public async Task<ProviderTestResult> TestProviderAsync(string providerName, CancellationToken ct = default)
+    public async Task<ProviderManagementTestResult> TestProviderAsync(string providerName, CancellationToken ct = default)
     {
         var response = await _apiClient.PostWithResponseAsync<ProviderTestResponse>(
             $"/api/providers/{Uri.EscapeDataString(providerName)}/test",
@@ -331,7 +331,7 @@ public sealed class ProviderManagementService
 
         if (response.Success && response.Data != null)
         {
-            return new ProviderTestResult
+            return new ProviderManagementTestResult
             {
                 Success = response.Data.Success,
                 Provider = providerName,
@@ -341,7 +341,7 @@ public sealed class ProviderManagementService
             };
         }
 
-        return new ProviderTestResult
+        return new ProviderManagementTestResult
         {
             Success = false,
             Provider = providerName,
@@ -559,7 +559,7 @@ public class SwitchProviderResponse
     public string? Message { get; set; }
 }
 
-public class ProviderTestResult
+public class ProviderManagementTestResult
 {
     public bool Success { get; set; }
     public string Provider { get; set; } = string.Empty;

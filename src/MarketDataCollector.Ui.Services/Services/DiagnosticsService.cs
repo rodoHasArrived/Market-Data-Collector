@@ -229,13 +229,13 @@ public sealed class DiagnosticsService
     /// <summary>
     /// Gets the current system metrics.
     /// </summary>
-    public async Task<SystemMetrics> GetSystemMetricsAsync(CancellationToken ct = default)
+    public async Task<DiagnosticSystemMetrics> GetDiagnosticSystemMetricsAsync(CancellationToken ct = default)
     {
-        var response = await _apiClient.GetWithResponseAsync<SystemMetrics>(
+        var response = await _apiClient.GetWithResponseAsync<DiagnosticSystemMetrics>(
             UiApiRoutes.DiagnosticsMetrics,
             ct);
 
-        return response.Data ?? new SystemMetrics();
+        return response.Data ?? new DiagnosticSystemMetrics();
     }
 
     /// <summary>
@@ -257,14 +257,14 @@ public sealed class DiagnosticsService
     /// <summary>
     /// Tests connectivity to a specific provider.
     /// </summary>
-    public async Task<ProviderTestResult> TestProviderAsync(string providerName, CancellationToken ct = default)
+    public async Task<DiagnosticProviderTestResult> TestProviderAsync(string providerName, CancellationToken ct = default)
     {
-        var response = await _apiClient.PostWithResponseAsync<ProviderTestResult>(
+        var response = await _apiClient.PostWithResponseAsync<DiagnosticProviderTestResult>(
             UiApiRoutes.WithParam(UiApiRoutes.DiagnosticsProviderTest, "providerName", providerName),
             null,
             ct);
 
-        return response.Data ?? new ProviderTestResult
+        return response.Data ?? new DiagnosticProviderTestResult
         {
             Success = false,
             Error = response.ErrorMessage ?? "Failed to test provider"
@@ -523,7 +523,7 @@ public class DiagnosticBundleResult
     public List<string> IncludedFiles { get; set; } = new();
 }
 
-public class SystemMetrics
+public class DiagnosticSystemMetrics
 {
     public double CpuUsagePercent { get; set; }
     public long MemoryUsedBytes { get; set; }
@@ -543,7 +543,7 @@ public class ValidationResult
     public string? Suggestion { get; set; }
 }
 
-public class ProviderTestResult
+public class DiagnosticProviderTestResult
 {
     public bool Success { get; set; }
     public string? Error { get; set; }
