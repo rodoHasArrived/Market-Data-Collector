@@ -195,6 +195,22 @@ public static class ServiceCompositionRoot
         services.AddSingleton<IStorageSearchService, StorageSearchService>();
         services.AddSingleton<ITierMigrationService, TierMigrationService>();
 
+        // Catalog and registry services
+        services.AddSingleton<IStorageCatalogService>(sp =>
+        {
+            var storageOptions = sp.GetRequiredService<StorageOptions>();
+            return new StorageCatalogService(storageOptions.RootPath, storageOptions);
+        });
+
+        services.AddSingleton<ISymbolRegistryService>(sp =>
+        {
+            var storageOptions = sp.GetRequiredService<StorageOptions>();
+            return new SymbolRegistryService(storageOptions.RootPath);
+        });
+
+        // File permissions service
+        services.AddSingleton<FilePermissionsService>();
+
         return services;
     }
 

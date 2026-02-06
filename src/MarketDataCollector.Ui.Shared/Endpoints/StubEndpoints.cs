@@ -69,42 +69,14 @@ public static class StubEndpoints
         MapStub(app, "GET", UiApiRoutes.ProviderFailoverThresholds);
         MapStub(app, "GET", UiApiRoutes.ProviderHealth);
 
-        // Storage endpoints
-        MapStub(app, "GET", UiApiRoutes.StorageProfiles);
-        MapStub(app, "GET", UiApiRoutes.StorageStats);
-        MapStub(app, "GET", UiApiRoutes.StorageBreakdown);
-        MapStub(app, "GET", UiApiRoutes.StorageSymbolInfo);
-        MapStub(app, "GET", UiApiRoutes.StorageSymbolStats);
-        MapStub(app, "GET", UiApiRoutes.StorageSymbolFiles);
-        MapStub(app, "GET", UiApiRoutes.StorageSymbolPath);
-        MapStub(app, "GET", UiApiRoutes.StorageHealth);
-        MapStub(app, "GET", UiApiRoutes.StorageCleanupCandidates);
-        MapStub(app, "POST", UiApiRoutes.StorageCleanup);
-        MapStub(app, "GET", UiApiRoutes.StorageArchiveStats);
-        MapStub(app, "GET", UiApiRoutes.StorageCatalog);
-        MapStub(app, "GET", UiApiRoutes.StorageSearchFiles);
-        MapStub(app, "GET", UiApiRoutes.StorageHealthCheck);
-        MapStub(app, "GET", UiApiRoutes.StorageHealthOrphans);
-        MapStub(app, "POST", UiApiRoutes.StorageTiersMigrate);
-        MapStub(app, "GET", UiApiRoutes.StorageTiersStatistics);
-        MapStub(app, "GET", UiApiRoutes.StorageTiersPlan);
-        MapStub(app, "POST", UiApiRoutes.StorageMaintenanceDefrag);
+        // Storage endpoints — implemented in StorageEndpoints.cs
 
-        // Storage quality endpoints
-        MapStub(app, "GET", UiApiRoutes.StorageQualitySummary);
-        MapStub(app, "GET", UiApiRoutes.StorageQualityScores);
-        MapStub(app, "GET", UiApiRoutes.StorageQualitySymbol);
-        MapStub(app, "GET", UiApiRoutes.StorageQualityAlerts);
-        MapStub(app, "POST", UiApiRoutes.StorageQualityAlertAcknowledge);
-        MapStub(app, "GET", UiApiRoutes.StorageQualityRankings);
-        MapStub(app, "GET", UiApiRoutes.StorageQualityTrends);
-        MapStub(app, "GET", UiApiRoutes.StorageQualityAnomalies);
-        MapStub(app, "POST", UiApiRoutes.StorageQualityCheck);
+        // Storage quality endpoints — implemented in StorageEndpoints.cs
 
         // Diagnostics endpoints
         MapStub(app, "POST", UiApiRoutes.DiagnosticsDryRun);
         MapStub(app, "GET", UiApiRoutes.DiagnosticsProviders);
-        MapStub(app, "GET", UiApiRoutes.DiagnosticsStorage);
+        // DiagnosticsStorage — implemented in StorageEndpoints.cs
         MapStub(app, "GET", UiApiRoutes.DiagnosticsConfig);
         MapStub(app, "GET", UiApiRoutes.DiagnosticsBundle);
         MapStub(app, "GET", UiApiRoutes.DiagnosticsMetrics);
@@ -123,15 +95,7 @@ public static class StubEndpoints
         MapStub(app, "POST", UiApiRoutes.AdminMaintenanceRun);
         MapStub(app, "GET", UiApiRoutes.AdminMaintenanceRunById);
         MapStub(app, "GET", UiApiRoutes.AdminMaintenanceHistory);
-        MapStub(app, "GET", UiApiRoutes.AdminStorageTiers);
-        MapStub(app, "POST", UiApiRoutes.AdminStorageMigrate);
-        MapStub(app, "GET", UiApiRoutes.AdminStorageUsage);
-        MapStub(app, "GET", UiApiRoutes.AdminRetention);
-        MapStub(app, "DELETE", UiApiRoutes.AdminRetentionDelete);
-        MapStub(app, "POST", UiApiRoutes.AdminRetentionApply);
-        MapStub(app, "GET", UiApiRoutes.AdminCleanupPreview);
-        MapStub(app, "POST", UiApiRoutes.AdminCleanupExecute);
-        MapStub(app, "GET", UiApiRoutes.AdminStoragePermissions);
+        // Admin storage/retention/cleanup/permissions — implemented in StorageEndpoints.cs
         MapStub(app, "POST", UiApiRoutes.AdminSelftest);
         MapStub(app, "GET", UiApiRoutes.AdminErrorCodes);
         MapStub(app, "GET", UiApiRoutes.AdminShowConfig);
