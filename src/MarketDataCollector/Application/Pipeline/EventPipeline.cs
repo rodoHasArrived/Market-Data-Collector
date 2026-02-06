@@ -43,6 +43,18 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
     private readonly bool _enablePeriodicFlush;
 
     /// <summary>
+    /// Maximum time to wait for the final flush during shutdown before giving up.
+    /// Prevents the consumer task from hanging indefinitely if the sink is unresponsive.
+    /// </summary>
+    private static readonly TimeSpan FinalFlushTimeout = TimeSpan.FromSeconds(30);
+
+    /// <summary>
+    /// Maximum time to wait for the consumer/flusher tasks to complete during disposal.
+    /// Should be slightly longer than FinalFlushTimeout to allow the flush to timeout first.
+    /// </summary>
+    private static readonly TimeSpan DisposeTaskTimeout = TimeSpan.FromSeconds(35);
+
+    /// <summary>
     /// Creates a new EventPipeline with configurable capacity and flush behavior.
     /// </summary>
     /// <param name="sink">The storage sink for persisting events.</param>
@@ -298,10 +310,17 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
         catch (OperationCanceledException) { }
         finally
         {
-            // Final flush on shutdown
+            // Final flush on shutdown with timeout to prevent indefinite hang
             try
             {
-                await _sink.FlushAsync(CancellationToken.None).ConfigureAwait(false);
+                using var flushTimeoutCts = new CancellationTokenSource(FinalFlushTimeout);
+                await _sink.FlushAsync(flushTimeoutCts.Token).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                _logger.LogWarning(
+                    "Final flush timed out after {TimeoutSeconds}s during pipeline shutdown. Consumed {ConsumedCount} events before timeout - some buffered data may be lost",
+                    FinalFlushTimeout.TotalSeconds, _consumedCount);
             }
             catch (Exception ex)
             {
@@ -344,9 +363,26 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
         _cts.Cancel();
         _channel.Writer.TryComplete();
 
+        // Wait for consumer with timeout to prevent indefinite hang
+        // (the consumer's finally block has its own FinalFlushTimeout, but this
+        // acts as a defense-in-depth safeguard)
         try
         {
-            await _consumer.ConfigureAwait(false);
+            var completed = await Task.WhenAny(
+                _consumer,
+                Task.Delay(DisposeTaskTimeout)).ConfigureAwait(false);
+
+            if (completed != _consumer)
+            {
+                _logger.LogWarning(
+                    "Consumer task did not complete within {TimeoutSeconds}s during disposal. " +
+                    "Published: {PublishedCount}, consumed: {ConsumedCount}. Proceeding with disposal",
+                    DisposeTaskTimeout.TotalSeconds, _publishedCount, _consumedCount);
+            }
+            else
+            {
+                await _consumer.ConfigureAwait(false); // Observe any exception
+            }
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
@@ -357,7 +393,18 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
         {
             try
             {
-                await _flusher.ConfigureAwait(false);
+                var completed = await Task.WhenAny(
+                    _flusher,
+                    Task.Delay(TimeSpan.FromSeconds(5))).ConfigureAwait(false);
+
+                if (completed != _flusher)
+                {
+                    _logger.LogWarning("Flusher task did not complete within 5s during disposal. Proceeding with disposal");
+                }
+                else
+                {
+                    await _flusher.ConfigureAwait(false); // Observe any exception
+                }
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
