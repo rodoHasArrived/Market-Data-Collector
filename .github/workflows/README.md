@@ -277,9 +277,8 @@ All AI-powered features use `actions/ai-inference@v1` with `openai/gpt-4.1-mini`
 | `security.yml` | Vulnerability Assessment | Risk analysis and remediation priorities |
 | `nightly.yml` | Failure Diagnosis | Root cause analysis and triage priority |
 | `scheduled-maintenance.yml` | Dependency Analysis | Upgrade recommendations with risk assessment |
-| `documentation.yml` | Doc Quality Review | Completeness and accuracy assessment |
+| `documentation.yml` | Doc Quality Review, TODO Triage | Completeness/accuracy assessment, AI TODO triage recommendations |
 | `desktop-builds.yml` | Build Analysis | Common failure pattern diagnosis |
-| `todo-automation.yml` | Issue Generation | AI-powered issue body creation |
 
 ## Workflow Dependencies
 
