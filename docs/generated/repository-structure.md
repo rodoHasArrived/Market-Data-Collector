@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-06 18:47:48 UTC
+> Auto-generated on 2026-02-06 22:13:05 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -469,6 +469,7 @@ Market-Data-Collector/
 │   │   ├── CredentialValidator.cs
 │   │   ├── DataSourceAttribute.cs
 │   │   ├── DataSourceRegistry.cs
+│   │   ├── HistoricalDataCapabilities.cs
 │   │   ├── IDataSource.cs
 │   │   ├── IHistoricalDataSource.cs
 │   │   ├── IMarketDataClient.cs
@@ -477,7 +478,8 @@ Market-Data-Collector/
 │   │   ├── IProviderModule.cs
 │   │   ├── IRealtimeDataSource.cs
 │   │   ├── MarketDataCollector.ProviderSdk.csproj
-│   │   └── ProviderHttpUtilities.cs
+│   │   ├── ProviderHttpUtilities.cs
+│   │   └── ProviderType.cs
 │   ├── MarketDataCollector.Ui/
 │   │   ├── wwwroot/
 │   │   │   └── static/

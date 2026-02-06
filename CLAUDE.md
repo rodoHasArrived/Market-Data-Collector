@@ -622,6 +622,7 @@ Market-Data-Collector/
 │   │   ├── CredentialValidator.cs
 │   │   ├── DataSourceAttribute.cs
 │   │   ├── DataSourceRegistry.cs
+│   │   ├── HistoricalDataCapabilities.cs
 │   │   ├── IDataSource.cs
 │   │   ├── IHistoricalDataSource.cs
 │   │   ├── IMarketDataClient.cs
@@ -630,7 +631,8 @@ Market-Data-Collector/
 │   │   ├── IProviderModule.cs
 │   │   ├── IRealtimeDataSource.cs
 │   │   ├── MarketDataCollector.ProviderSdk.csproj
-│   │   └── ProviderHttpUtilities.cs
+│   │   ├── ProviderHttpUtilities.cs
+│   │   └── ProviderType.cs
 │   ├── MarketDataCollector.Ui/
 │   │   ├── wwwroot/
 │   │   │   └── static/
