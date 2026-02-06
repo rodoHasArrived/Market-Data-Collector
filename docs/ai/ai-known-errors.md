@@ -86,3 +86,18 @@ If headings are missing, the workflow still creates an entry with safe defaults 
   - `grep -r 'PackageReference Include=".*" Version=' --include="*.csproj" --include="*.fsproj" src/ | grep -v '<!--'` (should return no results)
 - **Source issue**: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/21707148084/job/62601061503
 - **Status**: fixed
+
+### AI-20260206-provider-sdk-cross-file-type-resolution
+- **Area**: build/ProviderSdk
+- **Symptoms**: Build fails with CS0246 errors in `IProviderMetadata.cs`: "The type or namespace name 'ProviderType' could not be found" and "The type or namespace name 'Backfill' could not be found", even though the types exist in the same project and namespace.
+- **Root cause**: When `IProviderMetadata.cs` was moved from the main MarketDataCollector project to the ProviderSdk project, it lost access to `ProviderType` (previously in `ProviderRegistry.cs`) and `HistoricalDataCapabilities` (previously in `IHistoricalDataProvider.cs`). A prior fix moved those types into standalone files in ProviderSdk but the cross-file namespace resolution for the relative `Backfill.HistoricalDataCapabilities` reference failed. The fix is to co-locate the `ProviderType` enum in the same file as its consumer and use an explicit `using` directive for the Backfill namespace.
+- **Prevention checklist**:
+  - [ ] When moving types between projects, verify all type references in the destination project resolve correctly
+  - [ ] Use explicit `using` directives for sibling namespaces instead of relative namespace prefixes (e.g., `using X.Y.Backfill;` + `HistoricalDataCapabilities` instead of `Backfill.HistoricalDataCapabilities`)
+  - [ ] Co-locate small types (enums, records) with their primary consumer when they are tightly coupled
+  - [ ] After moving types, build the specific project in isolation: `dotnet build src/MarketDataCollector.ProviderSdk`
+- **Verification commands**:
+  - `dotnet build src/MarketDataCollector.ProviderSdk/MarketDataCollector.ProviderSdk.csproj -c Release`
+  - `dotnet build MarketDataCollector.sln -c Release --no-restore /p:EnableWindowsTargeting=true`
+- **Source issue**: PR #860 (incomplete fix)
+- **Status**: fixed
