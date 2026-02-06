@@ -496,21 +496,13 @@ internal static class Program
             return;
         }
 
-        // Market data client (provider selected by config) - credentials resolved via ConfigurationService
-        var (alpacaKeyId, alpacaSecretKey) = configService.ResolveAlpacaCredentials(cfg.Alpaca?.KeyId, cfg.Alpaca?.SecretKey);
+        // Market data client (provider selected by config) via factory for runtime switching
+        var clientFactory = new MarketDataClientFactory(
+            alpacaCredentialResolver: (_, appCfg) => configService.ResolveAlpacaCredentials(appCfg.Alpaca?.KeyId, appCfg.Alpaca?.SecretKey),
+            log: LoggingSetup.ForContext<MarketDataClientFactory>());
 
-        await using IMarketDataClient dataClient = cfg.DataSource switch
-        {
-            DataSourceKind.Alpaca => new AlpacaMarketDataClient(tradeCollector, quoteCollector,
-                cfg.Alpaca! with { KeyId = alpacaKeyId ?? "", SecretKey = alpacaSecretKey ?? "" }),
-            DataSourceKind.Polygon => new PolygonMarketDataClient(publisher, tradeCollector, quoteCollector),
-            DataSourceKind.StockSharp => new StockSharpMarketDataClient(
-                tradeCollector,
-                depthCollector,
-                quoteCollector,
-                cfg.StockSharp ?? new StockSharpConfig()),
-            _ => new IBMarketDataClient(publisher, tradeCollector, depthCollector)
-        };
+        await using IMarketDataClient dataClient = clientFactory.Create(
+            cfg.DataSource, cfg, publisher, tradeCollector, depthCollector, quoteCollector);
 
         try
         {

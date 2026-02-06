@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace MarketDataCollector.Ui.Shared.Endpoints;
 
@@ -30,9 +31,28 @@ public static class UiEndpoints
     public static WebApplication BuildUiHost(this WebApplicationBuilder builder, string? configPath = null)
     {
         builder.Services.AddUiSharedServices(configPath);
+        builder.Services.AddEndpointsApiExplorer();
+        builder.Services.AddSwaggerGen(c =>
+        {
+            c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+            {
+                Title = "Market Data Collector API",
+                Version = "v1",
+                Description = "REST API for the Market Data Collector system"
+            });
+        });
+
         var app = builder.Build();
         app.UseApiKeyAuthentication();
         app.UseRateLimiter();
+
+        // Enable Swagger UI in development mode
+        if (app.Environment.IsDevelopment())
+        {
+            app.UseSwagger();
+            app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Market Data Collector API v1"));
+        }
+
         app.MapAllUiEndpoints();
         return app;
     }
@@ -146,6 +166,7 @@ public static class UiEndpoints
         app.MapFailoverEndpoints(jsonOptions);
         app.MapIBEndpoints(jsonOptions);
         app.MapSymbolMappingEndpoints(jsonOptions);
+        app.MapStubEndpoints();
 
         return app;
     }
@@ -173,6 +194,7 @@ public static class UiEndpoints
         app.MapFailoverEndpoints(jsonOptions);
         app.MapIBEndpoints(jsonOptions);
         app.MapSymbolMappingEndpoints(jsonOptions);
+        app.MapStubEndpoints();
 
         return app;
     }

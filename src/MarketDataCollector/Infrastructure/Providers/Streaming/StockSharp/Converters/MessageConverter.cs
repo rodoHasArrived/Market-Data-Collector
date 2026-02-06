@@ -1,8 +1,10 @@
 #if STOCKSHARP
 using StockSharp.Messages;
 #endif
+using System.Buffers;
 using MarketDataCollector.Contracts.Domain.Enums;
 using MarketDataCollector.Domain.Models;
+using Microsoft.Extensions.ObjectPool;
 
 namespace MarketDataCollector.Infrastructure.Providers.StockSharp.Converters;
 
@@ -12,6 +14,20 @@ namespace MarketDataCollector.Infrastructure.Providers.StockSharp.Converters;
 /// </summary>
 public static class MessageConverter
 {
+    // Object pool for reducing GC pressure in hot message paths
+    private static readonly ObjectPool<List<OrderBookLevel>> s_levelListPool =
+        new DefaultObjectPoolProvider().Create(new ListPoolPolicy<OrderBookLevel>());
+
+    private sealed class ListPoolPolicy<T> : PooledObjectPolicy<List<T>>
+    {
+        public override List<T> Create() => new(32);
+        public override bool Return(List<T> obj)
+        {
+            obj.Clear();
+            return true;
+        }
+    }
+
 #if STOCKSHARP
     /// <summary>
     /// Convert StockSharp ExecutionMessage (trade tick) to MDC Trade.
@@ -41,35 +57,60 @@ public static class MessageConverter
     /// <returns>Immutable LOBSnapshot domain model.</returns>
     public static LOBSnapshot ToLOBSnapshot(QuoteChangeMessage msg, string symbol)
     {
-        var bids = msg.Bids?
-            .Select((q, i) => new OrderBookLevel(
-                Side: OrderBookSide.Bid,
-                Level: i,
-                Price: q.Price,
-                Size: q.Volume))
-            .ToList() ?? new List<OrderBookLevel>();
+        // Use pooled lists to reduce GC pressure in hot path
+        var bids = s_levelListPool.Get();
+        var asks = s_levelListPool.Get();
 
-        var asks = msg.Asks?
-            .Select((q, i) => new OrderBookLevel(
-                Side: OrderBookSide.Ask,
-                Level: i,
-                Price: q.Price,
-                Size: q.Volume))
-            .ToList() ?? new List<OrderBookLevel>();
+        try
+        {
+            if (msg.Bids != null)
+            {
+                var i = 0;
+                foreach (var q in msg.Bids)
+                {
+                    bids.Add(new OrderBookLevel(
+                        Side: OrderBookSide.Bid,
+                        Level: i++,
+                        Price: q.Price,
+                        Size: q.Volume));
+                }
+            }
 
-        var bestBid = bids.FirstOrDefault()?.Price ?? 0;
-        var bestAsk = asks.FirstOrDefault()?.Price ?? 0;
-        var midPrice = bestBid > 0 && bestAsk > 0 ? (bestBid + bestAsk) / 2 : (decimal?)null;
+            if (msg.Asks != null)
+            {
+                var i = 0;
+                foreach (var q in msg.Asks)
+                {
+                    asks.Add(new OrderBookLevel(
+                        Side: OrderBookSide.Ask,
+                        Level: i++,
+                        Price: q.Price,
+                        Size: q.Volume));
+                }
+            }
 
-        return new LOBSnapshot(
-            Timestamp: msg.ServerTime,
-            Symbol: symbol,
-            Bids: bids,
-            Asks: asks,
-            MidPrice: midPrice,
-            SequenceNumber: msg.SeqNum ?? 0,
-            Venue: msg.SecurityId.BoardCode
-        );
+            var bestBid = bids.Count > 0 ? bids[0].Price : 0;
+            var bestAsk = asks.Count > 0 ? asks[0].Price : 0;
+            var midPrice = bestBid > 0 && bestAsk > 0 ? (bestBid + bestAsk) / 2 : (decimal?)null;
+
+            // Copy to immutable lists for the snapshot, then return pooled lists
+            var snapshot = new LOBSnapshot(
+                Timestamp: msg.ServerTime,
+                Symbol: symbol,
+                Bids: new List<OrderBookLevel>(bids),
+                Asks: new List<OrderBookLevel>(asks),
+                MidPrice: midPrice,
+                SequenceNumber: msg.SeqNum ?? 0,
+                Venue: msg.SecurityId.BoardCode
+            );
+
+            return snapshot;
+        }
+        finally
+        {
+            s_levelListPool.Return(bids);
+            s_levelListPool.Return(asks);
+        }
     }
 
     /// <summary>

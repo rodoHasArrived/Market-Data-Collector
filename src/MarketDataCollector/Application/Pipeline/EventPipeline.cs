@@ -26,6 +26,7 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
     private readonly Task? _flusher;
     private readonly int _capacity;
     private readonly bool _metricsEnabled;
+    private readonly DroppedEventAuditTrail? _auditTrail;
 
     // Performance metrics
     private long _publishedCount;
@@ -58,14 +59,16 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
         TimeSpan? flushInterval = null,
         int batchSize = 100,
         bool enablePeriodicFlush = true,
-        ILogger<EventPipeline>? logger = null)
+        ILogger<EventPipeline>? logger = null,
+        DroppedEventAuditTrail? auditTrail = null)
         : this(
             sink,
             new EventPipelinePolicy(capacity, fullMode),
             flushInterval,
             batchSize,
             enablePeriodicFlush,
-            logger)
+            logger,
+            auditTrail)
     {
     }
 
@@ -78,10 +81,12 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
         TimeSpan? flushInterval = null,
         int batchSize = 100,
         bool enablePeriodicFlush = true,
-        ILogger<EventPipeline>? logger = null)
+        ILogger<EventPipeline>? logger = null,
+        DroppedEventAuditTrail? auditTrail = null)
     {
         _sink = sink ?? throw new ArgumentNullException(nameof(sink));
         _logger = logger ?? NullLogger<EventPipeline>.Instance;
+        _auditTrail = auditTrail;
         if (policy is null)
             throw new ArgumentNullException(nameof(policy));
         _capacity = policy.Capacity;
@@ -198,6 +203,12 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
             if (_metricsEnabled)
             {
                 Metrics.IncDropped();
+            }
+
+            // Record dropped event to audit trail for gap-aware consumers
+            if (_auditTrail != null)
+            {
+                _ = _auditTrail.RecordDroppedEventAsync(evt, "backpressure_queue_full");
             }
         }
 
@@ -356,7 +367,17 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
 
         _cts.Dispose();
         await _sink.DisposeAsync().ConfigureAwait(false);
+
+        if (_auditTrail != null)
+        {
+            await _auditTrail.DisposeAsync().ConfigureAwait(false);
+        }
     }
+
+    /// <summary>
+    /// Gets the dropped event audit trail, if configured.
+    /// </summary>
+    public DroppedEventAuditTrail? AuditTrail => _auditTrail;
 }
 
 /// <summary>

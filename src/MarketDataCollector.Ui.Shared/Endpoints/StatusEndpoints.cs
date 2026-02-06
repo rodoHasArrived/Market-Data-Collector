@@ -4,6 +4,7 @@ using MarketDataCollector.Application.UI;
 using MarketDataCollector.Contracts.Api;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 
 namespace MarketDataCollector.Ui.Shared.Endpoints;
 
@@ -114,6 +115,48 @@ public static class StatusEndpoints
                 _ => 200
             };
             return Results.Json(report, jsonOptions, statusCode: statusCode);
+        });
+
+        // Server-Sent Events endpoint for real-time dashboard updates
+        app.MapGet("/api/events/stream", async (HttpContext ctx, CancellationToken ct) =>
+        {
+            ctx.Response.ContentType = "text/event-stream";
+            ctx.Response.Headers.CacheControl = "no-cache";
+            ctx.Response.Headers.Connection = "keep-alive";
+
+            var sseJsonOptions = new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            };
+
+            try
+            {
+                while (!ct.IsCancellationRequested)
+                {
+                    var status = handlers.GetStatus();
+                    var backpressure = handlers.GetBackpressure();
+                    var (latency, _) = handlers.GetProviderLatency();
+                    var errors = handlers.GetErrors(5, null, null);
+
+                    var ssePayload = new
+                    {
+                        timestamp = DateTimeOffset.UtcNow,
+                        status,
+                        backpressure,
+                        providerLatency = latency,
+                        recentErrors = errors
+                    };
+
+                    var json = JsonSerializer.Serialize(ssePayload, sseJsonOptions);
+                    await ctx.Response.WriteAsync($"data: {json}\n\n", ct).ConfigureAwait(false);
+                    await ctx.Response.Body.FlushAsync(ct).ConfigureAwait(false);
+                    await Task.Delay(2000, ct).ConfigureAwait(false);
+                }
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                // Client disconnected
+            }
         });
     }
 }

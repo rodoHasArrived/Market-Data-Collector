@@ -2398,13 +2398,109 @@ async function deleteSymbol(symbol) {{
   }}
 }}
 
+// SSE real-time updates with polling fallback
+let sseConnection = null;
+let pollingInterval = null;
+
+function startSSE() {{
+  if (typeof EventSource === 'undefined') {{
+    startPolling();
+    return;
+  }}
+
+  sseConnection = new EventSource('/api/events/stream');
+
+  sseConnection.onmessage = function(event) {{
+    try {{
+      const data = JSON.parse(event.data);
+      if (data.status) updateStatusFromSSE(data.status);
+      if (data.backpressure) updateBackpressureFromSSE(data.backpressure);
+    }} catch (e) {{
+      console.warn('SSE parse error', e);
+    }}
+  }};
+
+  sseConnection.onerror = function() {{
+    sseConnection.close();
+    sseConnection = null;
+    addLog('SSE connection lost, falling back to polling', 'warning');
+    startPolling();
+    // Try to reconnect SSE after 10 seconds
+    setTimeout(() => {{
+      if (!sseConnection) {{
+        stopPolling();
+        startSSE();
+      }}
+    }}, 10000);
+  }};
+
+  sseConnection.onopen = function() {{
+    stopPolling();
+    addLog('SSE connection established', 'success');
+  }};
+}}
+
+function updateStatusFromSSE(s) {{
+  const isConnected = s.isConnected !== false;
+  const topDot = document.getElementById('topStatusDot');
+  const topText = document.getElementById('topStatusText');
+  const liveIndicator = document.getElementById('liveIndicator');
+
+  topDot.className = isConnected ? 'status-dot connected' : 'status-dot disconnected';
+  topText.textContent = isConnected ? 'Connected' : 'Disconnected';
+  liveIndicator.style.display = isConnected ? 'flex' : 'none';
+
+  const metrics = s.metrics || {{}};
+  const published = metrics.published || 0;
+  const dropped = metrics.dropped || 0;
+  const integrity = metrics.integrity || 0;
+  const bars = metrics.historicalBars || 0;
+
+  document.getElementById('publishedValue').textContent = formatNumber(published);
+  document.getElementById('droppedValue').textContent = formatNumber(dropped);
+  document.getElementById('integrityValue').textContent = formatNumber(integrity);
+  document.getElementById('barsValue').textContent = formatNumber(bars);
+
+  if (published > prevMetrics.published) {{
+    document.getElementById('publishedTrend').innerHTML = `<span>&#x2191;</span> +${{formatNumber(published - prevMetrics.published)}}`;
+    document.getElementById('publishedTrend').className = 'metric-trend up';
+  }}
+
+  if (dropped > prevMetrics.dropped) {{
+    document.getElementById('droppedTrend').innerHTML = `<span>&#x2191;</span> +${{dropped - prevMetrics.dropped}}`;
+    document.getElementById('droppedTrend').className = 'metric-trend down';
+    addLog(`Dropped events increased: +${{dropped - prevMetrics.dropped}}`, 'warning');
+  }}
+
+  prevMetrics = {{ published, dropped, integrity, bars }};
+}}
+
+function updateBackpressureFromSSE(bp) {{
+  // Backpressure data available for monitoring
+  if (bp && bp.level && bp.level !== 'None') {{
+    addLog(`Backpressure: ${{bp.level}}`, bp.level === 'High' ? 'error' : 'warning');
+  }}
+}}
+
+function startPolling() {{
+  if (pollingInterval) return;
+  pollingInterval = setInterval(loadStatus, 2000);
+}}
+
+function stopPolling() {{
+  if (pollingInterval) {{
+    clearInterval(pollingInterval);
+    pollingInterval = null;
+  }}
+}}
+
 // Initial load
 loadConfig();
 loadStatus();
 loadBackfillStatus();
 loadDataSources();
 loadDerivativesConfig();
-setInterval(loadStatus, 2000);
+startSSE();
 setInterval(loadBackfillStatus, 5000);
 </script>
 </body>

@@ -93,7 +93,8 @@ public sealed class JsonlStorageSink : IStorageSink
     private readonly Timer? _flushTimer;
     private readonly Timer? _retentionTimer;
     private readonly CancellationTokenSource _disposalCts = new();
-    private bool _disposed;
+    private readonly SemaphoreSlim _flushGate = new(1, 1);
+    private int _disposed;
 
     private readonly ConcurrentDictionary<string, WriterState> _writers = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<string, MarketEventBuffer> _buffers = new(StringComparer.OrdinalIgnoreCase);
@@ -160,7 +161,7 @@ public sealed class JsonlStorageSink : IStorageSink
 
     public async ValueTask AppendAsync(MarketEvent evt, CancellationToken ct = default)
     {
-        if (_disposed) throw new ObjectDisposedException(nameof(JsonlStorageSink));
+        if (Volatile.Read(ref _disposed) != 0) throw new ObjectDisposedException(nameof(JsonlStorageSink));
 
         EventSchemaValidator.Validate(evt);
         var path = _policy.GetPath(evt);
@@ -227,20 +228,28 @@ public sealed class JsonlStorageSink : IStorageSink
 
     private async Task FlushAllBuffersAsync(CancellationToken ct = default)
     {
-        if (_disposed) return;
+        if (Volatile.Read(ref _disposed) != 0 && _disposalCts.IsCancellationRequested) return;
 
-        var tasks = new List<Task>();
-        foreach (var kvp in _buffers)
+        await _flushGate.WaitAsync(ct).ConfigureAwait(false);
+        try
         {
-            if (kvp.Value.Count > 0)
+            var tasks = new List<Task>();
+            foreach (var kvp in _buffers)
             {
-                tasks.Add(FlushBufferAsync(kvp.Key, kvp.Value, ct));
+                if (kvp.Value.Count > 0)
+                {
+                    tasks.Add(FlushBufferAsync(kvp.Key, kvp.Value, ct));
+                }
+            }
+
+            if (tasks.Count > 0)
+            {
+                await Task.WhenAll(tasks).ConfigureAwait(false);
             }
         }
-
-        if (tasks.Count > 0)
+        finally
         {
-            await Task.WhenAll(tasks).ConfigureAwait(false);
+            _flushGate.Release();
         }
     }
 
@@ -287,12 +296,12 @@ public sealed class JsonlStorageSink : IStorageSink
 
     public async ValueTask DisposeAsync()
     {
-        if (_disposed) return;
+        if (Interlocked.Exchange(ref _disposed, 1) != 0) return;
 
-        // Signal disposal to timer callbacks
+        // 1. Signal disposal to timer callbacks
         _disposalCts.Cancel();
 
-        // Stop the timer first
+        // 2. Dispose timers first — waits for any in-flight callback to complete
         if (_flushTimer != null)
         {
             await _flushTimer.DisposeAsync().ConfigureAwait(false);
@@ -303,24 +312,49 @@ public sealed class JsonlStorageSink : IStorageSink
             await _retentionTimer.DisposeAsync().ConfigureAwait(false);
         }
 
-        // Flush remaining buffered events (final flush, not timer-driven)
+        // 3. Final flush — guaranteed no concurrent timer flushes after timer disposal
         if (_batchOptions.Enabled)
         {
-            await FlushAllBuffersAsync().ConfigureAwait(false);
+            try
+            {
+                await _flushGate.WaitAsync().ConfigureAwait(false);
+                try
+                {
+                    var tasks = new List<Task>();
+                    foreach (var kvp in _buffers)
+                    {
+                        if (kvp.Value.Count > 0)
+                        {
+                            tasks.Add(FlushBufferAsync(kvp.Key, kvp.Value, CancellationToken.None));
+                        }
+                    }
+                    if (tasks.Count > 0)
+                    {
+                        await Task.WhenAll(tasks).ConfigureAwait(false);
+                    }
+                }
+                finally
+                {
+                    _flushGate.Release();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Final buffer flush during disposal failed");
+            }
         }
 
-        // Dispose all writers
+        // 4. Dispose all writers
         foreach (var kv in _writers)
             await kv.Value.DisposeAsync().ConfigureAwait(false);
 
         _writers.Clear();
         _buffers.Clear();
 
-        // Dispose retention manager
+        // 5. Dispose remaining resources
         _retention?.Dispose();
+        _flushGate.Dispose();
         _disposalCts.Dispose();
-
-        _disposed = true;
     }
 
     private sealed class WriterState : IAsyncDisposable

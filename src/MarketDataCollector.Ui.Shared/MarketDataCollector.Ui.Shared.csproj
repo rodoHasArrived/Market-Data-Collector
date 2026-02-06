@@ -23,6 +23,8 @@
   <!-- Package dependencies -->
   <ItemGroup>
     <PackageReference Include="Serilog" />
+    <PackageReference Include="Swashbuckle.AspNetCore" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
   </ItemGroup>
 
   <!-- Project references -->

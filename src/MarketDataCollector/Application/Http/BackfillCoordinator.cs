@@ -79,6 +79,20 @@ public sealed class BackfillCoordinator : IDisposable
     public BackfillResult? TryReadLast() => _lastRun ?? _store.TryLoadBackfillStatus();
 
     /// <summary>
+    /// Gets current backfill progress. Returns null if no active backfill.
+    /// </summary>
+    public object? GetProgress()
+    {
+        if (_lastRun is null) return null;
+        return new
+        {
+            lastRun = _lastRun,
+            isActive = _gate.CurrentCount == 0,
+            timestamp = DateTimeOffset.UtcNow
+        };
+    }
+
+    /// <summary>
     /// Get health status of all providers.
     /// </summary>
     public async Task<IReadOnlyDictionary<string, ProviderHealthStatus>> CheckProviderHealthAsync(CancellationToken ct = default)

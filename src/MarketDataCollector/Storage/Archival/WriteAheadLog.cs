@@ -174,43 +174,68 @@ public sealed class WriteAheadLog : IAsyncDisposable
     }
 
     /// <summary>
-    /// Get uncommitted records for replay/recovery.
+    /// Get uncommitted records for replay/recovery using streaming reads.
+    /// Processes records in batches to avoid loading entire WAL into memory.
     /// </summary>
     public async IAsyncEnumerable<WalRecord> GetUncommittedRecordsAsync(
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct = default)
     {
+        // First pass: find the last committed sequence across all WAL files
         long lastCommittedSequence = 0;
-        var uncommittedRecords = new List<WalRecord>();
 
-        // Read all WAL files
         var walFiles = Directory.GetFiles(_walDirectory, "*.wal")
             .OrderBy(f => f)
             .ToList();
+
+        // Warn if total uncommitted WAL size is large
+        var totalSize = walFiles.Sum(f => new FileInfo(f).Length);
+        if (totalSize > _options.UncommittedSizeWarningThreshold)
+        {
+            _log.Warning(
+                "WAL uncommitted data size is {SizeMB:F1}MB (threshold: {ThresholdMB:F1}MB). Recovery may be slow",
+                totalSize / (1024.0 * 1024.0),
+                _options.UncommittedSizeWarningThreshold / (1024.0 * 1024.0));
+        }
 
         foreach (var walFile in walFiles)
         {
             await foreach (var record in ReadWalFileAsync(walFile, ct))
             {
-                if (record.RecordType == "COMMIT")
+                if (record.RecordType == "COMMIT" && long.TryParse(record.Payload, out var seq))
                 {
-                    if (long.TryParse(record.Payload, out var seq))
-                    {
-                        lastCommittedSequence = seq;
-                        // Clear uncommitted up to this point
-                        uncommittedRecords.RemoveAll(r => r.Sequence <= lastCommittedSequence);
-                    }
-                }
-                else
-                {
-                    uncommittedRecords.Add(record);
+                    lastCommittedSequence = Math.Max(lastCommittedSequence, seq);
                 }
             }
         }
 
-        // Return only uncommitted records
-        foreach (var record in uncommittedRecords.Where(r => r.Sequence > lastCommittedSequence))
+        // Second pass: stream uncommitted records without loading all into memory
+        const int batchSize = 10_000;
+        var batch = new List<WalRecord>(batchSize);
+
+        foreach (var walFile in walFiles)
         {
-            yield return record;
+            await foreach (var record in ReadWalFileAsync(walFile, ct))
+            {
+                if (record.RecordType == "COMMIT") continue;
+                if (record.Sequence <= lastCommittedSequence) continue;
+
+                batch.Add(record);
+
+                if (batch.Count >= batchSize)
+                {
+                    foreach (var r in batch)
+                    {
+                        yield return r;
+                    }
+                    batch.Clear();
+                }
+            }
+        }
+
+        // Yield remaining records in the last batch
+        foreach (var r in batch)
+        {
+            yield return r;
         }
     }
 
@@ -409,7 +434,7 @@ public sealed class WriteAheadLog : IAsyncDisposable
         var data = $"{sequence}|{timestamp:O}|{recordType}|{payload}";
         var bytes = Encoding.UTF8.GetBytes(data);
         var hash = SHA256.HashData(bytes);
-        return Convert.ToHexString(hash[..8]).ToLowerInvariant();
+        return Convert.ToHexString(hash).ToLowerInvariant();
     }
 
     public async ValueTask DisposeAsync()
@@ -490,6 +515,12 @@ public sealed class WalOptions
     /// Whether to archive WAL files after truncation.
     /// </summary>
     public bool ArchiveAfterTruncate { get; set; } = true;
+
+    /// <summary>
+    /// Size threshold (bytes) at which a warning is logged about uncommitted WAL data.
+    /// Default is 50MB.
+    /// </summary>
+    public long UncommittedSizeWarningThreshold { get; set; } = 50 * 1024 * 1024;
 }
 
 /// <summary>
