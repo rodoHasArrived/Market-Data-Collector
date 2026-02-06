@@ -162,7 +162,7 @@ When modifying system architecture:
 - [Architecture Overview](../architecture/overview.md)
 - [Domain Contracts](../architecture/domains.md)
 - [Provider Setup Guides](../providers/)
-- [AI Assistant Guides](../ai-assistants/)
+- [AI Assistant Guides](../ai/)
 
 ---
 

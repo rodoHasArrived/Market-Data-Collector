@@ -1716,7 +1716,7 @@ The UWP project uses **shared source files** instead of assembly references for 
 - [Project Roadmap](../status/ROADMAP.md) - Overall feature backlog
 - [Production Status](../status/production-status.md) - Deployment readiness
 - [Architecture Overview](../architecture/overview.md) - System design
-- [Getting Started](getting-started.md) - Setup guide
+- [Getting Started](../getting-started/README.md) - Setup guide
 
 ---
 

@@ -671,11 +671,11 @@ export TIINGO__APIKEY=your-key
 
 ## Related Documentation
 
-- [docs/providers/provider-comparison.md](MarketDataCollector/docs/providers/provider-comparison.md) - Provider feature matrix
-- [docs/providers/backfill-guide.md](MarketDataCollector/docs/providers/backfill-guide.md) - Historical backfill guide
-- [docs/providers/interactive-brokers-setup.md](MarketDataCollector/docs/providers/interactive-brokers-setup.md) - IB setup
-- [docs/providers/alpaca-setup.md](MarketDataCollector/docs/providers/alpaca-setup.md) - Alpaca setup
-- [docs/architecture/provider-management.md](MarketDataCollector/docs/architecture/provider-management.md) - Provider architecture
+- [docs/providers/provider-comparison.md](../../providers/provider-comparison.md) - Provider feature matrix
+- [docs/providers/backfill-guide.md](../../providers/backfill-guide.md) - Historical backfill guide
+- [docs/providers/interactive-brokers-setup.md](../../providers/interactive-brokers-setup.md) - IB setup
+- [docs/providers/alpaca-setup.md](../../providers/alpaca-setup.md) - Alpaca setup
+- [docs/architecture/provider-management.md](../../architecture/provider-management.md) - Provider architecture
 
 ---
 

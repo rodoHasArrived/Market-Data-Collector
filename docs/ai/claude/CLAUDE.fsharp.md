@@ -852,8 +852,8 @@ let validate trade =
 
 ## Related Documentation
 
-- [docs/integrations/fsharp-integration.md](MarketDataCollector/docs/integrations/fsharp-integration.md) - Full integration guide
-- [docs/integrations/language-strategy.md](MarketDataCollector/docs/integrations/language-strategy.md) - Language strategy
+- [docs/integrations/fsharp-integration.md](../../integrations/fsharp-integration.md) - Full integration guide
+- [docs/integrations/language-strategy.md](../../integrations/language-strategy.md) - Language strategy
 - [F# for Fun and Profit](https://fsharpforfunandprofit.com/) - F# learning resource
 - [Railway-Oriented Programming](https://fsharpforfunandprofit.com/rop/) - Error handling pattern
 

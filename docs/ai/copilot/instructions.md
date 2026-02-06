@@ -1,6 +1,6 @@
 # Market Data Collector - Copilot Instructions
 
-> **Note:** For comprehensive project context, see [CLAUDE.md](../CLAUDE.md) in the repository root.
+> **Note:** For comprehensive project context, see [CLAUDE.md](../../../CLAUDE.md) in the repository root.
 
 ## Repository Overview
 

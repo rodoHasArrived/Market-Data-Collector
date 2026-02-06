@@ -2087,7 +2087,7 @@ docker-compose up -d
 |----------|-------------|
 | [README.md](../README.md) | Project overview and quick start |
 | [HELP.md](HELP.md) | This comprehensive user guide |
-| [USAGE.md](USAGE.md) | Detailed usage guide |
+| [getting-started/README.md](getting-started/README.md) | Detailed usage guide |
 | [getting-started/README.md](getting-started/README.md) | Step-by-step setup guide |
 | [HELP.md#configuration](HELP.md#configuration) | Configuration reference |
 | [HELP.md#troubleshooting](HELP.md#troubleshooting) | Troubleshooting guide |
