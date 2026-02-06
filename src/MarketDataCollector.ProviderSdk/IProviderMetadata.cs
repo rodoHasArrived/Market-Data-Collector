@@ -1,6 +1,22 @@
 using MarketDataCollector.Infrastructure.Contracts;
+using MarketDataCollector.Infrastructure.Providers.Backfill;
 
 namespace MarketDataCollector.Infrastructure.Providers.Core;
+
+/// <summary>
+/// Types of market data providers.
+/// </summary>
+public enum ProviderType
+{
+    /// <summary>Real-time streaming data provider.</summary>
+    Streaming,
+
+    /// <summary>Historical backfill data provider.</summary>
+    Backfill,
+
+    /// <summary>Symbol search/lookup provider.</summary>
+    SymbolSearch
+}
 
 /// <summary>
 /// Unified metadata interface that all provider types implement.
@@ -308,7 +324,7 @@ public sealed record ProviderCapabilities
     /// Creates capabilities from legacy HistoricalDataCapabilities.
     /// </summary>
     public static ProviderCapabilities FromHistoricalCapabilities(
-        Backfill.HistoricalDataCapabilities caps,
+        HistoricalDataCapabilities caps,
         int? maxRequestsPerWindow = null,
         TimeSpan? rateLimitWindow = null,
         TimeSpan? minDelay = null) => new()
