@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-05 23:08:45 UTC
+> Auto-generated on 2026-02-06 01:50:07 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -297,6 +297,7 @@ Market-Data-Collector/
 │   │   └── use-case-diagram.puml
 │   ├── DEPENDENCIES.md
 │   ├── HELP.md
+│   ├── IMPROVEMENTS.md
 │   ├── README.md
 │   └── toc.yml
 ├── src/  # Source code
@@ -776,38 +777,96 @@ Market-Data-Collector/
 │   │   ├── MarketDataCollector.Uwp.csproj
 │   │   └── Package.appxmanifest
 │   └── MarketDataCollector.Wpf/
+│       ├── Collections/
+│       │   ├── BoundedObservableCollection.cs
+│       │   └── CircularBuffer.cs
 │       ├── Contracts/
+│       │   ├── IConfigService.cs
 │       │   ├── IConnectionService.cs
-│       │   └── INavigationService.cs
+│       │   ├── INavigationService.cs
+│       │   └── IStatusService.cs
+│       ├── Models/
+│       │   ├── AppConfig.cs
+│       │   └── SharedModelAliases.cs
 │       ├── Services/
+│       │   ├── ActivityFeedService.cs
 │       │   ├── AdminMaintenanceService.cs
 │       │   ├── AdvancedAnalyticsService.cs
+│       │   ├── AnalysisExportWizardService.cs
+│       │   ├── ApiClientService.cs
+│       │   ├── ArchiveBrowserService.cs
 │       │   ├── ArchiveHealthService.cs
+│       │   ├── BackfillService.cs
 │       │   ├── BackgroundTaskSchedulerService.cs
+│       │   ├── BatchExportSchedulerService.cs
+│       │   ├── BrushRegistry.cs
+│       │   ├── ChartingService.cs
+│       │   ├── CollectionSessionService.cs
 │       │   ├── ConfigService.cs
 │       │   ├── ConnectionService.cs
+│       │   ├── ContextMenuService.cs
+│       │   ├── CredentialService.cs
+│       │   ├── DataCalendarService.cs
+│       │   ├── DataCompletenessService.cs
+│       │   ├── DataSamplingService.cs
+│       │   ├── DiagnosticsService.cs
+│       │   ├── ErrorHandlingService.cs
+│       │   ├── ErrorMessages.cs
+│       │   ├── EventReplayService.cs
+│       │   ├── ExportPresetService.cs
 │       │   ├── FirstRunService.cs
-│       │   ├── HttpClientFactoryProvider.cs
+│       │   ├── FormValidationService.cs
+│       │   ├── HttpClientConfiguration.cs
 │       │   ├── IBackgroundTaskSchedulerService.cs
 │       │   ├── IConfigService.cs
 │       │   ├── IKeyboardShortcutService.cs
 │       │   ├── ILoggingService.cs
 │       │   ├── IMessagingService.cs
+│       │   ├── InfoBarService.cs
 │       │   ├── INotificationService.cs
+│       │   ├── IntegrityEventsService.cs
 │       │   ├── IOfflineTrackingPersistenceService.cs
 │       │   ├── IPendingOperationsQueueService.cs
 │       │   ├── IThemeService.cs
 │       │   ├── KeyboardShortcutService.cs
+│       │   ├── LeanIntegrationService.cs
+│       │   ├── LiveDataService.cs
 │       │   ├── LoggingService.cs
+│       │   ├── ManifestService.cs
 │       │   ├── MessagingService.cs
 │       │   ├── NavigationService.cs
 │       │   ├── NotificationService.cs
+│       │   ├── OAuthRefreshService.cs
 │       │   ├── OfflineTrackingPersistenceService.cs
+│       │   ├── OrderBookVisualizationService.cs
 │       │   ├── PendingOperationsQueueService.cs
+│       │   ├── PortablePackagerService.cs
+│       │   ├── PortfolioImportService.cs
+│       │   ├── ProviderHealthService.cs
+│       │   ├── ProviderManagementService.cs
+│       │   ├── RetentionAssuranceService.cs
+│       │   ├── ScheduledMaintenanceService.cs
+│       │   ├── ScheduleManagerService.cs
 │       │   ├── SchemaService.cs
+│       │   ├── SearchService.cs
+│       │   ├── SetupWizardService.cs
+│       │   ├── SmartRecommendationsService.cs
 │       │   ├── StatusService.cs
+│       │   ├── StorageAnalyticsService.cs
+│       │   ├── StorageOptimizationAdvisorService.cs
+│       │   ├── StorageService.cs
+│       │   ├── SymbolGroupService.cs
+│       │   ├── SymbolManagementService.cs
+│       │   ├── SymbolMappingService.cs
+│       │   ├── SystemHealthService.cs
 │       │   ├── ThemeService.cs
-│       │   └── WatchlistService.cs
+│       │   ├── TimeSeriesAlignmentService.cs
+│       │   ├── TooltipService.cs
+│       │   ├── WatchlistService.cs
+│       │   ├── WorkspaceService.cs
+│       │   ├── WpfAnalysisExportService.cs
+│       │   ├── WpfDataQualityService.cs
+│       │   └── WpfJsonOptions.cs
 │       ├── Styles/
 │       │   ├── Animations.xaml
 │       │   ├── AppStyles.xaml
