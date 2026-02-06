@@ -186,7 +186,7 @@ jobs:
 
           doc = pathlib.Path("docs/ai/ai-known-errors.md")
           current = doc.read_text(encoding="utf-8")
-          marker = f"#${number}"
+          marker = f"#{number}"
           if marker in current:
               print(f"Entry already exists for issue {number}; skipping")
               raise SystemExit(0)
