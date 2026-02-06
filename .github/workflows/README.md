@@ -8,7 +8,7 @@ Workflows have been consolidated from 25 to 16 files, reducing duplication and a
 
 | Consolidated Workflow | Replaces | AI Features |
 |----------------------|----------|-------------|
-| `documentation.yml` | `docs-comprehensive.yml`, `docs-auto-update.yml`, `docs-structure-sync.yml`, `ai-instructions-sync.yml` | AI documentation quality review |
+| `documentation.yml` | `docs-comprehensive.yml`, `docs-auto-update.yml`, `docs-structure-sync.yml`, `ai-instructions-sync.yml`, `todo-automation.yml` | AI documentation quality review, AI TODO triage |
 | `desktop-builds.yml` | `desktop-app.yml`, `wpf-desktop.yml`, `wpf-commands.yml` | AI build failure diagnosis |
 | `security.yml` | absorbed `dependency-review.yml` | AI vulnerability assessment |
 | `scheduled-maintenance.yml` | absorbed `cache-management.yml` | AI dependency upgrade recommendations |
@@ -199,7 +199,7 @@ Workflows have been consolidated from 25 to 16 files, reducing duplication and a
 
 ### Special Workflows
 
-#### **TODO Automation** (`todo-automation.yml`)
+#### **TODO Automation** (integrated in `documentation.yml`)
 - **Trigger**: Push to main, Pull requests to main, Weekly schedule, Manual dispatch
 - **Purpose**: Comprehensive TODO lifecycle management with scanning, analysis, and tracking
 - **Features**:
