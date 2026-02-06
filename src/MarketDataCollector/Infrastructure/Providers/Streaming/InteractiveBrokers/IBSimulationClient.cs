@@ -29,9 +29,17 @@ public sealed class IBSimulationClient : IMarketDataClient
     // Simulated base prices for well-known symbols
     private static readonly Dictionary<string, decimal> BasePrices = new(StringComparer.OrdinalIgnoreCase)
     {
-        ["SPY"] = 520m, ["AAPL"] = 230m, ["MSFT"] = 420m, ["GOOGL"] = 170m,
-        ["AMZN"] = 190m, ["NVDA"] = 850m, ["TSLA"] = 250m, ["META"] = 530m,
-        ["QQQ"] = 440m, ["IWM"] = 210m, ["DIA"] = 390m
+        ["SPY"] = 520m,
+        ["AAPL"] = 230m,
+        ["MSFT"] = 420m,
+        ["GOOGL"] = 170m,
+        ["AMZN"] = 190m,
+        ["NVDA"] = 850m,
+        ["TSLA"] = 250m,
+        ["META"] = 530m,
+        ["QQQ"] = 440m,
+        ["IWM"] = 210m,
+        ["DIA"] = 390m
     };
 
     public IBSimulationClient(IMarketEventPublisher publisher, bool enableAutoTicks = true)
