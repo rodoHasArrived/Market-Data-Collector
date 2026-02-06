@@ -62,12 +62,6 @@ public sealed class SubscriptionManager : IDisposable
     }
 
     /// <summary>
-    /// Gets the total number of active subscriptions.
-    /// Alias for <see cref="Count"/> for monitoring clarity.
-    /// </summary>
-    public int ActiveSubscriptionCount => Count;
-
-    /// <summary>
     /// Creates a new subscription for a symbol with the specified kind.
     /// </summary>
     /// <param name="symbol">Symbol to subscribe to.</param>
