@@ -18,3 +18,7 @@ global using ContractsOrderBookLevel = MarketDataCollector.Contracts.Domain.Mode
 global using ContractsOrderFlowStatistics = MarketDataCollector.Contracts.Domain.Models.OrderFlowStatistics;
 global using ContractsBboQuotePayload = MarketDataCollector.Contracts.Domain.Models.BboQuotePayload;
 global using ContractsIntegrityEvent = MarketDataCollector.Contracts.Domain.Models.IntegrityEvent;
+
+// Allow test project to access internal types
+using System.Runtime.CompilerServices;
+[assembly: InternalsVisibleTo("MarketDataCollector.Tests")]
