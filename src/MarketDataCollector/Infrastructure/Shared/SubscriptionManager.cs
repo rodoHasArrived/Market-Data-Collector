@@ -45,11 +45,6 @@ public sealed class SubscriptionManager : IDisposable
     /// <summary>
     /// Gets the total number of active subscriptions.
     /// </summary>
-    public int ActiveSubscriptionCount => Count;
-
-    /// <summary>
-    /// Gets the total number of active subscriptions.
-    /// </summary>
     public int Count
     {
         get
