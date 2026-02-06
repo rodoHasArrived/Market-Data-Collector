@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Domain.Models;
+using MarketDataCollector.Infrastructure.Utilities;
 
 namespace MarketDataCollector.Domain.Collectors;
 
@@ -12,13 +13,15 @@ namespace MarketDataCollector.Domain.Collectors;
 public sealed class QuoteCollector : IQuoteStateStore
 {
     private readonly IMarketEventPublisher _publisher;
+    private readonly ProviderDataNormalizer? _normalizer;
 
     private readonly ConcurrentDictionary<string, BboQuotePayload> _latest = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<string, long> _seq = new(StringComparer.OrdinalIgnoreCase);
 
-    public QuoteCollector(IMarketEventPublisher publisher)
+    public QuoteCollector(IMarketEventPublisher publisher, ProviderDataNormalizer? normalizer = null)
     {
         _publisher = publisher ?? throw new ArgumentNullException(nameof(publisher));
+        _normalizer = normalizer;
     }
 
     /// <summary>
@@ -28,6 +31,10 @@ public sealed class QuoteCollector : IQuoteStateStore
     {
         if (update is null) throw new ArgumentNullException(nameof(update));
         if (string.IsNullOrWhiteSpace(update.Symbol)) return;
+
+        // Normalize symbol casing and timestamps to UTC
+        if (_normalizer is not null)
+            update = _normalizer.NormalizeQuote(update);
 
         var payload = Upsert(update);
         _publisher.TryPublish(MarketEvent.BboQuote(payload.Timestamp, payload.Symbol, payload));

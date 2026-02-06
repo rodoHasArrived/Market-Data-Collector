@@ -3,6 +3,7 @@ using MarketDataCollector.Contracts.Domain.Enums;
 using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Domain.Models;
+using MarketDataCollector.Infrastructure.Utilities;
 
 namespace MarketDataCollector.Domain.Collectors;
 
@@ -14,6 +15,7 @@ public sealed class TradeDataCollector
 {
     private readonly IMarketEventPublisher _publisher;
     private readonly IQuoteStateStore? _quotes;
+    private readonly ProviderDataNormalizer? _normalizer;
 
     // Per-symbol rolling state
     private readonly ConcurrentDictionary<string, SymbolTradeState> _stateBySymbol =
@@ -24,10 +26,11 @@ public sealed class TradeDataCollector
     /// </summary>
     private const int MaxSymbolLength = 50;
 
-    public TradeDataCollector(IMarketEventPublisher publisher, IQuoteStateStore? quotes = null)
+    public TradeDataCollector(IMarketEventPublisher publisher, IQuoteStateStore? quotes = null, ProviderDataNormalizer? normalizer = null)
     {
         _publisher = publisher ?? throw new ArgumentNullException(nameof(publisher));
         _quotes = quotes;
+        _normalizer = normalizer;
     }
 
     /// <summary>
@@ -68,6 +71,10 @@ public sealed class TradeDataCollector
     {
         if (update is null) throw new ArgumentNullException(nameof(update));
         if (string.IsNullOrWhiteSpace(update.Symbol)) return;
+
+        // Normalize symbol casing, timestamps to UTC, and aggressor side
+        if (_normalizer is not null)
+            update = _normalizer.NormalizeTrade(update);
 
         var symbol = update.Symbol;
 

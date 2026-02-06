@@ -15,6 +15,7 @@ using MarketDataCollector.Infrastructure.Http;
 using MarketDataCollector.Infrastructure.Providers.Backfill.Scheduling;
 using MarketDataCollector.Infrastructure.Providers.Core;
 using MarketDataCollector.Infrastructure.Providers.SymbolSearch;
+using MarketDataCollector.Infrastructure.Utilities;
 using MarketDataCollector.Storage;
 using MarketDataCollector.Storage.Interfaces;
 using MarketDataCollector.Storage.Maintenance;
@@ -549,11 +550,15 @@ public static class ServiceCompositionRoot
         this IServiceCollection services,
         CompositionOptions options)
     {
+        // ProviderDataNormalizer - cross-provider symbol/timestamp/aggressor normalization
+        services.AddSingleton<ProviderDataNormalizer>();
+
         // QuoteCollector - BBO state tracking
         services.AddSingleton<QuoteCollector>(sp =>
         {
             var publisher = sp.GetRequiredService<IMarketEventPublisher>();
-            return new QuoteCollector(publisher);
+            var normalizer = sp.GetRequiredService<ProviderDataNormalizer>();
+            return new QuoteCollector(publisher, normalizer);
         });
 
         // TradeDataCollector - tick-by-tick trade processing
@@ -561,14 +566,16 @@ public static class ServiceCompositionRoot
         {
             var publisher = sp.GetRequiredService<IMarketEventPublisher>();
             var quoteCollector = sp.GetRequiredService<QuoteCollector>();
-            return new TradeDataCollector(publisher, quoteCollector);
+            var normalizer = sp.GetRequiredService<ProviderDataNormalizer>();
+            return new TradeDataCollector(publisher, quoteCollector, normalizer);
         });
 
         // MarketDepthCollector - L2 order book maintenance
         services.AddSingleton<MarketDepthCollector>(sp =>
         {
             var publisher = sp.GetRequiredService<IMarketEventPublisher>();
-            return new MarketDepthCollector(publisher, requireExplicitSubscription: true);
+            var normalizer = sp.GetRequiredService<ProviderDataNormalizer>();
+            return new MarketDepthCollector(publisher, requireExplicitSubscription: true, normalizer: normalizer);
         });
 
         return services;

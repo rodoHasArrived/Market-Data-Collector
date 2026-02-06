@@ -27,6 +27,7 @@ using MarketDataCollector.Infrastructure.Providers.Alpaca;
 using MarketDataCollector.Infrastructure.Providers.Polygon;
 using MarketDataCollector.Infrastructure.Providers.StockSharp;
 using MarketDataCollector.Infrastructure.Providers.Backfill;
+using MarketDataCollector.Infrastructure.Utilities;
 using SymbolResolution = MarketDataCollector.Infrastructure.Providers.Backfill.SymbolResolution;
 using BackfillRequest = MarketDataCollector.Application.Backfill.BackfillRequest;
 using MarketDataCollector.Storage;
@@ -479,10 +480,11 @@ internal static class Program
             return;
         }
 
-        // Collectors
-        var quoteCollector = new QuoteCollector(publisher);
-        var tradeCollector = new TradeDataCollector(publisher, quoteCollector);
-        var depthCollector = new MarketDepthCollector(publisher, requireExplicitSubscription: true);
+        // Collectors (with cross-provider data normalization)
+        var normalizer = new ProviderDataNormalizer();
+        var quoteCollector = new QuoteCollector(publisher, normalizer);
+        var tradeCollector = new TradeDataCollector(publisher, quoteCollector, normalizer);
+        var depthCollector = new MarketDepthCollector(publisher, requireExplicitSubscription: true, normalizer: normalizer);
 
         if (!string.IsNullOrWhiteSpace(replayPath))
         {

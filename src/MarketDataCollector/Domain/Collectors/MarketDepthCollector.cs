@@ -3,6 +3,7 @@ using MarketDataCollector.Contracts.Domain.Enums;
 using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Domain.Models;
+using MarketDataCollector.Infrastructure.Utilities;
 
 namespace MarketDataCollector.Domain.Collectors;
 
@@ -12,6 +13,7 @@ namespace MarketDataCollector.Domain.Collectors;
 public sealed class MarketDepthCollector : SymbolSubscriptionTracker
 {
     private readonly IMarketEventPublisher _publisher;
+    private readonly ProviderDataNormalizer? _normalizer;
 
     private readonly ConcurrentDictionary<string, SymbolOrderBookBuffer> _books = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentQueue<DepthIntegrityEvent> _recentIntegrity = new();
@@ -20,10 +22,11 @@ public sealed class MarketDepthCollector : SymbolSubscriptionTracker
     private const int AutoResetThreshold = 3;
     private static readonly TimeSpan AutoResetWindow = TimeSpan.FromSeconds(15);
 
-    public MarketDepthCollector(IMarketEventPublisher publisher, bool requireExplicitSubscription = true)
+    public MarketDepthCollector(IMarketEventPublisher publisher, bool requireExplicitSubscription = true, ProviderDataNormalizer? normalizer = null)
         : base(requireExplicitSubscription)
     {
         _publisher = publisher ?? throw new ArgumentNullException(nameof(publisher));
+        _normalizer = normalizer;
     }
 
     public void ResetSymbolStream(string symbol)
@@ -52,6 +55,10 @@ public sealed class MarketDepthCollector : SymbolSubscriptionTracker
     {
         if (update is null) throw new ArgumentNullException(nameof(update));
         if (string.IsNullOrWhiteSpace(update.Symbol)) return;
+
+        // Normalize symbol casing and timestamps to UTC
+        if (_normalizer is not null)
+            update = _normalizer.NormalizeDepth(update);
 
         var symbol = update.Symbol.Trim();
 
