@@ -113,6 +113,11 @@ public sealed class BackfillCoordinator : IDisposable
     public Task<MarketDataCollector.Infrastructure.Providers.Backfill.SymbolResolution.SymbolResolution?> ResolveSymbolAsync(string symbol, CancellationToken ct = default)
         => _core.ResolveSymbolAsync(symbol, ct);
 
+    /// <summary>
+    /// Gets backfill progress snapshot from the core coordinator, if available.
+    /// </summary>
+    public object? GetProgress() => _core.GetProgress();
+
     public void Dispose() => _core.Dispose();
 
     /// <summary>

@@ -92,6 +92,15 @@ public static class BackfillEndpoints
                 return Results.BadRequest(new { error = "Backfill execution failed. Check provider name and symbol format." });
             }
         }).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
+
+        // Backfill progress endpoint
+        app.MapGet("/api/backfill/progress", (BackfillCoordinator backfill) =>
+        {
+            var progress = backfill.GetProgress();
+            return progress is not null
+                ? Results.Json(progress, jsonOptions)
+                : Results.Json(new { message = "No active backfill operation", symbols = Array.Empty<object>() }, jsonOptions);
+        });
     }
 
     private static IResult? ValidateBackfillRequest(BackfillRequestDto req)

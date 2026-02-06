@@ -29,7 +29,8 @@ public sealed class ParquetStorageSink : IStorageSink
     private readonly ConcurrentDictionary<string, MarketEventBuffer> _buffers = new(StringComparer.OrdinalIgnoreCase);
     private readonly Timer _flushTimer;
     private readonly CancellationTokenSource _disposalCts = new();
-    private bool _disposed;
+    private readonly SemaphoreSlim _flushGate = new(1, 1);
+    private int _disposed;
 
     // Trade event schema
     private static readonly ParquetSchema TradeSchema = new(
@@ -102,7 +103,7 @@ public sealed class ParquetStorageSink : IStorageSink
 
     public async ValueTask AppendAsync(MarketEvent evt, CancellationToken ct = default)
     {
-        if (_disposed) throw new ObjectDisposedException(nameof(ParquetStorageSink));
+        if (Volatile.Read(ref _disposed) != 0) throw new ObjectDisposedException(nameof(ParquetStorageSink));
 
         EventSchemaValidator.Validate(evt);
 
@@ -141,12 +142,20 @@ public sealed class ParquetStorageSink : IStorageSink
 
     private async Task FlushAllBuffersAsync(CancellationToken ct = default)
     {
-        foreach (var kvp in _buffers)
+        await _flushGate.WaitAsync(ct).ConfigureAwait(false);
+        try
         {
-            if (kvp.Value.Count > 0)
+            foreach (var kvp in _buffers)
             {
-                await FlushBufferAsync(kvp.Key, kvp.Value, ct);
+                if (kvp.Value.Count > 0)
+                {
+                    await FlushBufferAsync(kvp.Key, kvp.Value, ct);
+                }
             }
+        }
+        finally
+        {
+            _flushGate.Release();
         }
     }
 
@@ -435,21 +444,41 @@ public sealed class ParquetStorageSink : IStorageSink
 
     public async ValueTask DisposeAsync()
     {
-        if (_disposed) return;
+        if (Interlocked.Exchange(ref _disposed, 1) != 0) return;
 
         // 1. Signal cancellation to stop any in-flight timer callbacks
         _disposalCts.Cancel();
 
-        // 2. Dispose timer (waits for any pending callback to complete)
+        // 2. Dispose timer — waits for any pending callback to complete
         await _flushTimer.DisposeAsync().ConfigureAwait(false);
 
-        // 3. Final flush — guaranteed to run without concurrent timer flushes
-        await FlushAllBuffersAsync().ConfigureAwait(false);
+        // 3. Final flush — guaranteed no concurrent timer flushes after timer disposal
+        try
+        {
+            await _flushGate.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                foreach (var kvp in _buffers)
+                {
+                    if (kvp.Value.Count > 0)
+                    {
+                        await FlushBufferAsync(kvp.Key, kvp.Value, CancellationToken.None);
+                    }
+                }
+            }
+            finally
+            {
+                _flushGate.Release();
+            }
+        }
+        catch (Exception ex)
+        {
+            _log.Error(ex, "Final buffer flush during disposal failed");
+        }
 
         _buffers.Clear();
+        _flushGate.Dispose();
         _disposalCts.Dispose();
-
-        _disposed = true;
 
         _log.Information("ParquetStorageSink disposed");
     }

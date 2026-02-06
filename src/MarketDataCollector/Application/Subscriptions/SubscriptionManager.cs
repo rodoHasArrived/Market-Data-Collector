@@ -45,6 +45,11 @@ public sealed class SubscriptionManager
     public IReadOnlyDictionary<string, int> DepthSubscriptions => _depthSubs;
     public IReadOnlyDictionary<string, int> TradeSubscriptions => _tradeSubs;
 
+    /// <summary>
+    /// Gets the total number of active subscriptions (trades + depth).
+    /// </summary>
+    public int ActiveSubscriptionCount => _tradeSubs.Count + _depthSubs.Count;
+
     public void Apply(AppConfig cfg)
     {
         if (cfg is null) throw new ArgumentNullException(nameof(cfg));

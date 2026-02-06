@@ -975,9 +975,16 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
         var timestamp = depth.LastChangeTime;
         var venue = depth.Security.Board?.Code ?? _config.ConnectorType;
 
-        // Capture values for the lambda closure
-        var bids = depth.Bids.ToArray();
-        var asks = depth.Asks.ToArray();
+        // Capture lightweight price/volume snapshots instead of full Quote objects
+        // to reduce per-message GC pressure in this hot path
+        var bidCount = depth.Bids.Count;
+        var askCount = depth.Asks.Count;
+        var bidData = System.Buffers.ArrayPool<(decimal Price, decimal Volume)>.Shared.Rent(bidCount);
+        var askData = System.Buffers.ArrayPool<(decimal Price, decimal Volume)>.Shared.Rent(askCount);
+        var bc = 0;
+        foreach (var q in depth.Bids) { bidData[bc++] = (q.Price, q.Volume); }
+        var ac = 0;
+        foreach (var q in depth.Asks) { askData[ac++] = (q.Price, q.Volume); }
 
         // Buffer the message for processing (Hydra pattern)
         if (!_messageChannel.Writer.TryWrite(() =>
@@ -985,17 +992,17 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
             try
             {
                 // Process bids
-                for (int i = 0; i < bids.Length; i++)
+                for (int i = 0; i < bidCount; i++)
                 {
-                    var quote = bids[i];
+                    var (price, volume) = bidData[i];
                     var update = new MarketDepthUpdate(
                         Timestamp: timestamp,
                         Symbol: symbol,
                         Position: i,
                         Operation: DepthOperation.Update,
                         Side: OrderBookSide.Bid,
-                        Price: quote.Price,
-                        Size: quote.Volume,
+                        Price: price,
+                        Size: volume,
                         MarketMaker: null,
                         SequenceNumber: 0,
                         StreamId: "STOCKSHARP",
@@ -1005,17 +1012,17 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
                 }
 
                 // Process asks
-                for (int i = 0; i < asks.Length; i++)
+                for (int i = 0; i < askCount; i++)
                 {
-                    var quote = asks[i];
+                    var (price, volume) = askData[i];
                     var update = new MarketDepthUpdate(
                         Timestamp: timestamp,
                         Symbol: symbol,
                         Position: i,
                         Operation: DepthOperation.Update,
                         Side: OrderBookSide.Ask,
-                        Price: quote.Price,
-                        Size: quote.Volume,
+                        Price: price,
+                        Size: volume,
                         MarketMaker: null,
                         SequenceNumber: 0,
                         StreamId: "STOCKSHARP",
@@ -1027,6 +1034,11 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
             catch (Exception ex)
             {
                 _log.Warning(ex, "Error processing StockSharp depth for {Symbol}", symbol);
+            }
+            finally
+            {
+                System.Buffers.ArrayPool<(decimal Price, decimal Volume)>.Shared.Return(bidData);
+                System.Buffers.ArrayPool<(decimal Price, decimal Volume)>.Shared.Return(askData);
             }
         }))
         {

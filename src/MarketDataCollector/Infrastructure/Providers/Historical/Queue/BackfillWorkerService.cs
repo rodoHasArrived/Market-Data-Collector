@@ -23,6 +23,7 @@ public sealed class BackfillWorkerService : IDisposable
     private readonly ILogger _log;
     private readonly CancellationTokenSource _cts = new();
     private readonly SemaphoreSlim _concurrencySemaphore;
+    private readonly BackfillProgressTracker _progressTracker = new();
     private Task? _workerTask;
     private Task? _completionTask;
     private bool _disposed;
@@ -47,6 +48,11 @@ public sealed class BackfillWorkerService : IDisposable
     public event Action<bool>? OnRunningStateChanged;
 
     public bool IsRunning => _isRunning;
+
+    /// <summary>
+    /// Gets the progress tracker for monitoring backfill progress per symbol.
+    /// </summary>
+    public BackfillProgressTracker ProgressTracker => _progressTracker;
 
     private const int MinConcurrentRequests = 1;
     private const int MaxConcurrentRequests = 100;
@@ -201,11 +207,15 @@ public sealed class BackfillWorkerService : IDisposable
                         // Write to storage
                         await WriteBarsToStorageAsync(request, bars, ct).ConfigureAwait(false);
                         request.BarsRetrieved = bars.Count;
+
+                        // Record progress
+                        _progressTracker.RecordProgress(request.Symbol, bars.Count);
                     }
 
                     // Mark as complete
                     await _requestQueue.CompleteRequestAsync(request, true, ct: ct).ConfigureAwait(false);
                     await _jobManager.UpdateJobProgressAsync(request, ct).ConfigureAwait(false);
+                    _progressTracker.MarkCompleted(request.Symbol);
                     return;
                 }
                 catch (OperationCanceledException) when (ct.IsCancellationRequested)
@@ -241,6 +251,7 @@ public sealed class BackfillWorkerService : IDisposable
 
                     await _requestQueue.CompleteRequestAsync(request, false, ex.Message, ct).ConfigureAwait(false);
                     await _jobManager.UpdateJobProgressAsync(request, ct).ConfigureAwait(false);
+                    _progressTracker.MarkFailed(request.Symbol, ex.Message);
                     return;
                 }
             }
