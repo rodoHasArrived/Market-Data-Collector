@@ -509,6 +509,7 @@ Market-Data-Collector/
 │   │   │   ├── PathValidation.cs
 │   │   │   ├── ProviderEndpoints.cs
 │   │   │   ├── StatusEndpoints.cs
+│   │   │   ├── StubEndpoints.cs
 │   │   │   ├── SymbolMappingEndpoints.cs
 │   │   │   └── UiEndpoints.cs
 │   │   ├── Services/

@@ -1,6 +1,6 @@
 # MarketDataCollector Project Context
 
-**Generated:** 2026-02-06 02:12:35 UTC
+**Generated:** 2026-02-06 04:33:29 UTC
 **Source:** Auto-generated from code annotations
 
 ## Key Interfaces
@@ -426,6 +426,8 @@ Generic interface for thread-safe symbol-keyed state storage. Abstracts the 35+ 
 | `IBHistoricalDataProvider` | `MarketDataCollector/Infrastructure/Providers/Historical/InteractiveBrokers/IBHistoricalDataProvider.cs` | Interactive Brokers historical data provider stub |
 | `IBMarketDataClient` | `MarketDataCollector/Infrastructure/Providers/Streaming/InteractiveBrokers/IBMarketDataClient.cs` | Interactive Brokers streaming data provider implementation |
 | `IBMarketDataClientIBApi` | `MarketDataCollector/Infrastructure/Providers/Streaming/InteractiveBrokers/IBMarketDataClient.cs` | Interactive Brokers API streaming data provider |
+| `MarketDataClientFactory` | `MarketDataCollector/Infrastructure/Providers/MarketDataClientFactory.cs` | Factory-based provider creation for runtime switching |
+| `MarketDataClientFactory` | `MarketDataCollector/Infrastructure/Providers/MarketDataClientFactory.cs` | Unified factory replacing scattered provider creation |
 | `NasdaqDataLinkHistoricalDataProvider` | `MarketDataCollector/Infrastructure/Providers/Historical/NasdaqDataLink/NasdaqDataLinkHistoricalDataProvider.cs` | Nasdaq Data Link historical data provider implementation |
 | `NoOpMarketDataClient` | `MarketDataCollector/Infrastructure/NoOpMarketDataClient.cs` | No-op data provider for disabled/unconfigured scenarios |
 | `NYSEDataSource` | `MarketDataCollector/Infrastructure/Providers/Streaming/NYSE/NYSEDataSource.cs` | NYSE streaming and historical data provider implementation |
