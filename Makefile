@@ -20,7 +20,7 @@
         doctor doctor-quick doctor-fix diagnose diagnose-build \
         collect-debug collect-debug-minimal build-profile build-binlog validate-data analyze-errors \
         build-graph fingerprint env-capture env-diff impact bisect metrics history app-metrics \
-        icons desktop desktop-publish
+        icons desktop desktop-publish install-hooks
 
 # Default target
 .DEFAULT_GOAL := help
@@ -206,6 +206,9 @@ lint: ## Check code formatting
 
 format: ## Format code
 	dotnet format $(PROJECT)
+
+install-hooks: ## Install git pre-commit hooks (enforces dotnet format)
+	@./build/scripts/hooks/install-hooks.sh
 
 clean: ## Clean build artifacts
 	@echo "$(BLUE)Cleaning...$(NC)"

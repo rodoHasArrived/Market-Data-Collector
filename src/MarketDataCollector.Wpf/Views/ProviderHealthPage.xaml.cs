@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Net.Http;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -20,7 +19,6 @@ namespace MarketDataCollector.Wpf.Views;
 /// </summary>
 public partial class ProviderHealthPage : Page
 {
-    private readonly HttpClient _httpClient = new();
     private readonly ObservableCollection<ProviderStatusModel> _streamingProviders = new();
     private readonly ObservableCollection<BackfillProviderModel> _backfillProviders = new();
     private readonly ObservableCollection<ConnectionEventModel> _connectionHistory = new();

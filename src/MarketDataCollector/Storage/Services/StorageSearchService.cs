@@ -20,7 +20,6 @@ public sealed class StorageSearchService : IStorageSearchService
     private readonly ConcurrentDictionary<string, SymbolIndex> _symbolIndex = new();
     private readonly ConcurrentDictionary<string, DateIndex> _dateIndex = new();
     private readonly ConcurrentDictionary<string, FileMetadata> _fileMetadata = new();
-    private readonly object _indexLock = new();
     private DateTime _lastIndexUpdate = DateTime.MinValue;
 
     private static readonly string[] DataExtensions = { ".jsonl", ".jsonl.gz", ".jsonl.zst", ".parquet" };

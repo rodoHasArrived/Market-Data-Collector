@@ -12,7 +12,6 @@ public sealed class WatchlistService
 {
     private readonly ConfigStore _configStore;
     private readonly string _watchlistsPath;
-    private readonly object _lock = new();
 
     public WatchlistService(ConfigStore configStore, string? watchlistsPath = null)
     {
