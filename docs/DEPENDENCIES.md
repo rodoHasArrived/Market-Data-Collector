@@ -2,12 +2,12 @@
 
 This document lists the primary dependencies used by the Market Data Collector solution.
 
-**Source of truth:** package versions are defined in project files (for example, `src/MarketDataCollector/MarketDataCollector.csproj`). The central package file (`Directory.Packages.props`) is present but not enforced yet.
+**Source of truth:** package versions are centrally managed in `Directory.Packages.props` via Central Package Management (CPM). Individual project files reference packages without version numbers. See [Central Package Management Guide](development/central-package-management.md) for details.
 
 ## Core Framework
 
 - **.NET 9.0** - Target framework (`net9.0`)
-- **C# 11** - Language version with nullable reference types and records
+- **C# 13** - Language version (default for .NET 9.0) with nullable reference types and records
 
 ---
 
@@ -65,7 +65,7 @@ This document lists the primary dependencies used by the Market Data Collector s
 | System.Text.Json | 10.0.2 | JSON serialization |
 | Newtonsoft.Json | 13.0.4 | JSON compatibility |
 | System.IO.Compression | 4.3.0 | Gzip compression |
-| Parquet.Net | 5.4.0 | Parquet storage |
+| Parquet.Net | 5.5.0 | Parquet storage |
 | System.Threading.Channels | 10.0.2 | High-throughput pipelines |
 | System.IO.Pipelines | 10.0.2 | High-performance I/O |
 

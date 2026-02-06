@@ -19,10 +19,11 @@ provider failover, and data quality monitoring.
 
 The architecture supports multiple deployment modes:
 - **Standalone Console Application** – Single-process data collection with local storage
-- **UWP Desktop Application** – Native Windows app for configuration and monitoring
+- **WPF Desktop Application** – Recommended Windows desktop app for configuration and monitoring
+- **UWP Desktop Application** – Legacy Windows 10+ companion app (WinUI 3)
 - **Web Dashboard** – Browser-based monitoring and management interface
 
-See [Consolidation Refactor Guide](consolidation.md) for shared UI contracts, storage profiles, pipeline policy, and configuration-service details.
+See [Consolidation Refactor Guide](../archived/consolidation.md) for shared UI contracts, storage profiles, pipeline policy, and configuration-service details.
 
 ---
 
@@ -31,12 +32,12 @@ See [Consolidation Refactor Guide](consolidation.md) for shared UI contracts, st
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
 │                           Presentation Layer                              │
-│  ┌─────────────────┐  ┌─────────────────┐                               │
-│  │  Web Dashboard  │  │  UWP Desktop    │                               │
-│  │  (ASP.NET)      │  │  (WinUI 3)      │                               │
-│  └────────┬────────┘  └────────┬────────┘                               │
-└───────────┼────────────────────┼────────────────────────────────────────┘
-            │ JSON/FS            │ Config/Status
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐          │
+│  │  Web Dashboard  │  │  WPF Desktop   │  │  UWP Desktop    │          │
+│  │  (ASP.NET)      │  │  (Recommended) │  │  (Legacy)       │          │
+│  └────────┬────────┘  └────────┬────────┘  └────────┬────────┘          │
+└───────────┼────────────────────┼────────────────────┼────────────────────┘
+            │ JSON/FS            │ Config/Status      │ Config/Status
 ┌───────────┼────────────────────┼────────────────────────────────────────┐
 │           ▼                    ▼                                        │
 │                       Application Layer                                  │
@@ -98,9 +99,12 @@ See [Consolidation Refactor Guide](consolidation.md) for shared UI contracts, st
   - `DataSourceRegistry` – Attribute-based automatic discovery via `[DataSource]`
 * **Streaming Provider implementations** in `Infrastructure/Providers/`:
   - `InteractiveBrokers/IBMarketDataClient` – IB TWS/Gateway connectivity with free equity data support
+  - `InteractiveBrokers/IBSimulationClient` – IB simulation mode for testing without live connection
   - `Alpaca/AlpacaMarketDataClient` – Alpaca WebSocket client with IEX/SIP feeds
   - `NYSE/NYSEDataSource` – NYSE Direct connection for real-time and historical US equity data
   - `Polygon/PolygonMarketDataClient` – Polygon adapter (stub implementation)
+  - `StockSharp/StockSharpMarketDataClient` – Multi-exchange streaming via StockSharp connectors
+  - `Failover/FailoverAwareMarketDataClient` – Automatic provider failover wrapper
 * **Historical Data Providers** for backfill operations:
   - `AlpacaHistoricalDataProvider` – Historical OHLCV bars, trades, quotes, and auctions
   - `YahooFinanceHistoricalDataProvider` – Free EOD data for 50K+ global securities
@@ -111,6 +115,7 @@ See [Consolidation Refactor Guide](consolidation.md) for shared UI contracts, st
   - `PolygonHistoricalDataProvider` – US equities historical data
   - `NasdaqDataLinkHistoricalDataProvider` – Alternative datasets via Quandl API
   - `IBHistoricalDataProvider` – Historical data via Interactive Brokers API
+  - `StockSharpHistoricalDataProvider` – Historical data via StockSharp connectors
   - `CompositeHistoricalDataProvider` – Automatic failover with rate-limit rotation
   - `BaseHistoricalDataProvider` – Shared base class with common HTTP handling
 * **Symbol Search Providers** for symbol resolution:
@@ -118,6 +123,7 @@ See [Consolidation Refactor Guide](consolidation.md) for shared UI contracts, st
   - `FinnhubSymbolSearchProvider` – Global symbol search
   - `PolygonSymbolSearchProvider` – US equities symbol search
   - `OpenFigiSymbolResolver` – Cross-provider symbol normalization via OpenFIGI
+  - `StockSharpSymbolSearchProvider` – Symbol search via StockSharp connectors
 * **Resilience Layer**:
   - `CircuitBreaker` – Open/Closed/HalfOpen states with automatic recovery
   - `ConcurrentProviderExecutor` – Parallel operations with configurable strategies
@@ -439,5 +445,5 @@ The system includes several high-performance features:
 ---
 
 **Version:** 1.6.1
-**Last Updated:** 2026-01-30
+**Last Updated:** 2026-02-06
 **See Also:** [c4-diagrams.md](c4-diagrams.md) | [domains.md](domains.md) | [why-this-architecture.md](why-this-architecture.md) | [provider-management.md](provider-management.md) | [F# Integration](../integrations/fsharp-integration.md) | [ADR Index](../adr/README.md)

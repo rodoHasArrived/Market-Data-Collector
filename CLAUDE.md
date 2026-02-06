@@ -4,34 +4,34 @@ This document provides essential context for AI assistants (Claude, Copilot, etc
 
 ## Project Overview
 
-Market Data Collector is a high-performance, cross-platform market data collection system built on **.NET 9.0** using **C# 11** and **F# 8.0**. It captures real-time and historical market microstructure data from multiple providers and persists it for downstream research, backtesting, and algorithmic trading.
+Market Data Collector is a high-performance, cross-platform market data collection system built on **.NET 9.0** using **C# 13** and **F# 8.0**. It captures real-time and historical market microstructure data from multiple providers and persists it for downstream research, backtesting, and algorithmic trading.
 
-**Version:** 1.6.1 | **Status:** Production Ready | **Files:** 501 source files
+**Version:** 1.6.1 | **Status:** Development / Pilot Ready | **Files:** 734 source files
 
 ### Key Capabilities
 - Real-time streaming from Interactive Brokers, Alpaca, NYSE, Polygon, StockSharp (90+ data sources)
 - Historical backfill from 10+ providers with automatic fallback chain
-- Symbol search from multiple providers (Alpaca, Finnhub, Polygon, OpenFIGI)
+- Symbol search from 5 providers (Alpaca, Finnhub, Polygon, OpenFIGI, StockSharp)
 - Comprehensive data quality monitoring with SLA enforcement
 - Archival-first storage with Write-Ahead Logging (WAL) and tiered storage
 - Portable data packaging for sharing and archival
-- Web dashboard and native UWP Windows desktop application
+- Web dashboard, WPF desktop app (recommended), and legacy UWP Windows desktop application
 - QuantConnect Lean Engine integration for backtesting
 - Scheduled maintenance and archive management
 
 ### Project Statistics
 | Metric | Count |
 |--------|-------|
-| Total Source Files | 501 |
-| C# Files | 489 |
-| F# Files | 12 |
-| Test Files | 48 |
-| Documentation Files | 66 |
-| Main Projects | 6 (+ 3 test/benchmark) |
+| Total Source Files | 734 |
+| C# Files | 717 |
+| F# Files | 17 |
+| Test Files | 85 |
+| Documentation Files | 104 |
+| Main Projects | 9 (+ 2 test + 1 benchmark) |
 | Provider Implementations | 5 streaming, 10 historical |
-| Symbol Search Providers | 4 |
-| CI/CD Workflows | 20 |
-| Makefile Targets | 65 |
+| Symbol Search Providers | 5 |
+| CI/CD Workflows | 17 |
+| Makefile Targets | 66 |
 
 ---
 
@@ -658,6 +658,15 @@ Market-Data-Collector/
 │   │   ├── DtoExtensions.cs
 │   │   ├── HtmlTemplates.cs
 │   │   └── MarketDataCollector.Ui.Shared.csproj
+│   ├── MarketDataCollector.Ui.Services/
+│   │   ├── Collections/
+│   │   │   ...
+│   │   ├── Contracts/
+│   │   │   ...
+│   │   ├── Services/
+│   │   │   ...
+│   │   ├── GlobalUsings.cs
+│   │   └── MarketDataCollector.Ui.Services.csproj
 │   ├── MarketDataCollector.Uwp/
 │   │   ├── Assets/
 │   │   │   ├── Icons/
@@ -1269,6 +1278,8 @@ When contributing to this project, **always follow these rules**:
 | Interactive Brokers | `IBMarketDataClient` | Yes | Yes | Yes | TWS/Gateway, conditional |
 | StockSharp | `StockSharpMarketDataClient` | Yes | Yes | Yes | 90+ data sources |
 | NYSE | `NYSEDataSource` | Yes | Yes | L1/L2 | Hybrid streaming + historical |
+| Failover | `FailoverAwareMarketDataClient` | - | - | - | Automatic provider switching |
+| IB Simulation | `IBSimulationClient` | - | - | - | IB testing without live connection |
 | NoOp | `NoOpMarketDataClient` | - | - | - | Placeholder |
 
 ### Historical Providers (IHistoricalDataProvider)
@@ -1280,6 +1291,7 @@ When contributing to this project, **always follow these rules**:
 | Tiingo | Yes | Daily bars | 500/hour |
 | Yahoo Finance | Yes | Daily bars | Unofficial |
 | Stooq | Yes | Daily bars | Low |
+| StockSharp | Yes (with account) | Various | Varies |
 | Finnhub | Yes | Daily bars | 60/min |
 | Alpha Vantage | Yes | Daily bars | 5/min |
 | Nasdaq Data Link | Limited | Various | Varies |
@@ -1299,6 +1311,7 @@ When contributing to this project, **always follow these rules**:
 | Finnhub | `FinnhubSymbolSearchProviderRefactored` | US, International | 60/min |
 | Polygon | `PolygonSymbolSearchProvider` | US | 5/min (free) |
 | OpenFIGI | `OpenFigiClient` | Global (ID mapping) | - |
+| StockSharp | `StockSharpSymbolSearchProvider` | Multi-exchange | - |
 
 ---
 
@@ -1552,20 +1565,26 @@ dotnet test --collect:"XPlat Code Coverage"
 dotnet test tests/MarketDataCollector.FSharp.Tests
 ```
 
-### Test Organization (53 test files total)
+### Test Organization (85 test files total)
 | Directory | Purpose | Files |
 |-----------|---------|-------|
-| `tests/MarketDataCollector.Tests/Backfill/` | Backfill provider tests | 4 |
-| `tests/MarketDataCollector.Tests/Credentials/` | Credential provider tests | 3 |
-| `tests/MarketDataCollector.Tests/Indicators/` | Technical indicator tests | 1 |
-| `tests/MarketDataCollector.Tests/Infrastructure/` | Infrastructure tests | 2 |
-| `tests/MarketDataCollector.Tests/Integration/` | End-to-end tests | 1 |
-| `tests/MarketDataCollector.Tests/Models/` | Domain model tests | 2 |
-| `tests/MarketDataCollector.Tests/Monitoring/` | Monitoring/quality tests | 9 |
-| `tests/MarketDataCollector.Tests/Pipeline/` | Event pipeline tests | 1 |
-| `tests/MarketDataCollector.Tests/Providers/` | Provider-specific tests | 1 |
+| `tests/MarketDataCollector.Tests/Application/Backfill/` | Backfill provider tests | 7 |
+| `tests/MarketDataCollector.Tests/Application/Commands/` | Command tests | 2 |
+| `tests/MarketDataCollector.Tests/Application/Config/` | Configuration tests | 2 |
+| `tests/MarketDataCollector.Tests/Application/Credentials/` | Credential provider tests | 3 |
+| `tests/MarketDataCollector.Tests/Application/Indicators/` | Technical indicator tests | 1 |
+| `tests/MarketDataCollector.Tests/Application/Monitoring/` | Monitoring/quality tests | 9 |
+| `tests/MarketDataCollector.Tests/Application/Pipeline/` | Event pipeline tests | 6 |
+| `tests/MarketDataCollector.Tests/Application/Services/` | Application service tests | 4 |
+| `tests/MarketDataCollector.Tests/Domain/Collectors/` | Domain collector tests | 4 |
+| `tests/MarketDataCollector.Tests/Domain/Models/` | Domain model tests | 11 |
+| `tests/MarketDataCollector.Tests/Infrastructure/DataSources/` | Data source tests | 1 |
+| `tests/MarketDataCollector.Tests/Infrastructure/Providers/` | Provider-specific tests | 4 |
+| `tests/MarketDataCollector.Tests/Infrastructure/Resilience/` | Resilience tests | 2 |
+| `tests/MarketDataCollector.Tests/Infrastructure/Shared/` | Shared infra tests | 2 |
+| `tests/MarketDataCollector.Tests/Integration/` | End-to-end tests | 3 |
 | `tests/MarketDataCollector.Tests/Serialization/` | JSON serialization tests | 1 |
-| `tests/MarketDataCollector.Tests/Storage/` | Storage and archival tests | 4 |
+| `tests/MarketDataCollector.Tests/Storage/` | Storage and archival tests | 12 |
 | `tests/MarketDataCollector.Tests/SymbolSearch/` | Symbol resolution tests | 2 |
 | `tests/MarketDataCollector.FSharp.Tests/` | F# domain tests | 5 |
 
@@ -1782,7 +1801,7 @@ See `docs/operations/portable-data-packager.md` for details.
 
 ## CI/CD Pipelines
 
-The project uses GitHub Actions with 20 workflows in `.github/workflows/`:
+The project uses GitHub Actions with 17 workflows in `.github/workflows/`:
 
 | Workflow | Purpose |
 |----------|---------|
@@ -1792,16 +1811,14 @@ The project uses GitHub Actions with 20 workflows in `.github/workflows/`:
 | `benchmark.yml` | Performance benchmarks |
 | `docker.yml` | Docker image building and publishing |
 | `dotnet-desktop.yml` | Desktop application builds |
-| `desktop-app.yml` | UWP app builds |
+| `desktop-builds.yml` | Desktop app builds (WPF/UWP) |
 | `documentation.yml` | Documentation generation, AI instruction sync, TODO scanning |
 | `release.yml` | Release automation |
 | `pr-checks.yml` | PR validation checks |
-| `dependency-review.yml` | Dependency review |
 | `labeling.yml` | PR auto-labeling |
 | `nightly.yml` | Nightly builds |
 | `scheduled-maintenance.yml` | Scheduled maintenance tasks |
 | `stale.yml` | Stale issue management |
-| `cache-management.yml` | Build cache management |
 | `validate-workflows.yml` | Workflow validation |
 | `build-observability.yml` | Build metrics collection |
 | `reusable-dotnet-build.yml` | Reusable .NET build workflow |
@@ -1812,7 +1829,7 @@ The project uses GitHub Actions with 20 workflows in `.github/workflows/`:
 
 - .NET 9.0 SDK
 - `EnableWindowsTargeting=true` for cross-platform builds (set in `Directory.Build.props`)
-- Python 3 for build tooling (`build-system/`)
+- Python 3 for build tooling (`build/python/`)
 - Node.js for diagram generation (optional)
 
 ---
@@ -1878,11 +1895,23 @@ See [Central Package Management Guide](docs/development/central-package-manageme
 
 ---
 
-## UWP Desktop Application Architecture
+## Desktop Application Architecture
+
+### WPF Desktop App (Recommended)
+
+The WPF desktop application (`MarketDataCollector.Wpf`) is the recommended Windows desktop client:
+- Works on Windows 7+ with standard .exe deployment
+- Direct assembly references (no WinRT limitations)
+- Uses standard WPF XAML with full .NET 9.0 support
+- Shares UI services via `MarketDataCollector.Ui.Services` project
+
+See `src/MarketDataCollector.Wpf/README.md` for details.
+
+### UWP Desktop App (Legacy)
 
 The UWP desktop application (`MarketDataCollector.Uwp`) uses **WinUI 3** and has a special architecture requirement:
 
-### Shared Source Files (Not Assembly Reference)
+#### Shared Source Files (Not Assembly Reference)
 
 The WinUI 3 XAML compiler rejects assemblies without WinRT metadata with the error:
 > "Assembly is not allowed in type universe"

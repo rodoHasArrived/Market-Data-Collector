@@ -146,7 +146,7 @@ dotnet run --project src/MarketDataCollector.Wpf/MarketDataCollector.Wpf.csproj
 
 ## Technical Overview
 
-Market Data Collector is built on **.NET 9.0** using **C# 13** and **F# 8.0**. It uses a modular, event-driven architecture with bounded channels for high-throughput data processing. The system supports deployment as a single self-contained executable, a Docker container, or a systemd service.
+Market Data Collector is built on **.NET 9.0** using **C# 13** and **F# 8.0** across 734 source files. It uses a modular, event-driven architecture with bounded channels for high-throughput data processing. The system supports deployment as a single self-contained executable, a Docker container, or a systemd service.
 
 ## Key Features
 
@@ -374,7 +374,7 @@ export ALPACA__SECRETKEY=your-secret-key
 
 ## CI/CD and Automation
 
-The repository includes 21 comprehensive GitHub Actions workflows for automated testing, security, and deployment:
+The repository includes 17 GitHub Actions workflows for automated testing, security, and deployment:
 
 - **🔨 Build & Release** - Automated builds and cross-platform releases
 - **🔒 CodeQL Analysis** - Security vulnerability scanning (weekly + on changes)
@@ -450,31 +450,33 @@ docker run -d -p 8080:8080 \
 
 ## Repository Structure
 
-**501 source files** | **489 C#** | **12 F#** | **48 test files** | **66 documentation files**
+**734 source files** | **717 C#** | **17 F#** | **85 test files** | **104 documentation files**
 
 ```
 Market-Data-Collector/
-├── .github/              # CI/CD workflows (21), AI prompts, Dependabot
-├── docs/                 # Documentation (61 files), ADRs, AI assistant guides
-├── scripts/              # Install, publish, run, and diagnostic scripts
+├── .github/              # CI/CD workflows (17), AI prompts, Dependabot
+├── docs/                 # Documentation (104 files), ADRs, AI assistant guides
+├── build/                # Build tooling (Python, Node.js, .NET generators, scripts)
 ├── deploy/               # Docker, systemd, and monitoring configs
 ├── config/               # Configuration files (appsettings.json)
-├── build-system/         # Python build tooling and diagnostics
-├── tools/                # Development tools (DocGenerator)
 ├── src/
-│   ├── MarketDataCollector/        # Core application (entry point)
-│   │   ├── Domain/                 # Business logic, collectors, events, models
-│   │   ├── Infrastructure/         # Provider implementations (~50 files)
-│   │   ├── Storage/                # Data persistence (~35 files)
-│   │   └── Application/            # Startup, config, services (~90 files)
-│   ├── MarketDataCollector.FSharp/ # F# domain models (12 files)
+│   ├── MarketDataCollector/           # Core application (entry point)
+│   │   ├── Domain/                    # Business logic, collectors, events, models
+│   │   ├── Infrastructure/            # Provider implementations
+│   │   ├── Storage/                   # Data persistence
+│   │   └── Application/              # Startup, config, services
+│   ├── MarketDataCollector.FSharp/    # F# domain models (12 files)
 │   ├── MarketDataCollector.Contracts/ # Shared DTOs and contracts
-│   ├── MarketDataCollector.Ui/     # Web dashboard (10 files)
-│   └── MarketDataCollector.Uwp/    # Windows desktop app (WinUI 3)
-├── tests/                # C# and F# test projects (50 files)
+│   ├── MarketDataCollector.ProviderSdk/ # Provider SDK interfaces
+│   ├── MarketDataCollector.Ui/        # Web dashboard
+│   ├── MarketDataCollector.Ui.Shared/ # Shared UI endpoint handlers
+│   ├── MarketDataCollector.Ui.Services/ # Shared UI service abstractions
+│   ├── MarketDataCollector.Wpf/       # WPF desktop app (recommended)
+│   └── MarketDataCollector.Uwp/       # UWP desktop app (legacy, WinUI 3)
+├── tests/                # C# and F# test projects (85 files)
 ├── benchmarks/           # Performance benchmarks (BenchmarkDotNet)
 ├── MarketDataCollector.sln
-├── Makefile              # Build automation (65 targets)
+├── Makefile              # Build automation (66 targets)
 └── CLAUDE.md             # AI assistant guide
 ```
 
