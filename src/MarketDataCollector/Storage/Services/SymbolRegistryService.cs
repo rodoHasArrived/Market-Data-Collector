@@ -467,48 +467,167 @@ public sealed class SymbolRegistryService : ISymbolRegistryService
 
     private void InitializeDefaultSymbols()
     {
-        // Add some common US equity symbols as defaults
-        var defaultSymbols = new[]
+        var defaultSymbols = BuildDefaultSymbolEntries();
+
+        foreach (var entry in defaultSymbols)
         {
-            ("AAPL", "Apple Inc.", "NASDAQ", "US0378331005"),
-            ("MSFT", "Microsoft Corporation", "NASDAQ", "US5949181045"),
-            ("GOOGL", "Alphabet Inc.", "NASDAQ", "US02079K3059"),
-            ("AMZN", "Amazon.com Inc.", "NASDAQ", "US0231351067"),
-            ("TSLA", "Tesla Inc.", "NASDAQ", "US88160R1014"),
-            ("SPY", "SPDR S&P 500 ETF Trust", "NYSE", "US78462F1030"),
-            ("QQQ", "Invesco QQQ Trust", "NASDAQ", "US46090E1038"),
-            ("IWM", "iShares Russell 2000 ETF", "NYSE", "US4642876555"),
-            ("META", "Meta Platforms Inc.", "NASDAQ", "US30303M1027"),
-            ("NVDA", "NVIDIA Corporation", "NASDAQ", "US67066G1040")
-        };
+            _registry.Symbols[entry.Canonical] = entry;
+            _symbolCache[entry.Canonical] = entry;
 
-        foreach (var (symbol, name, exchange, isin) in defaultSymbols)
-        {
-            var entry = new SymbolRegistryEntry
+            // Index all identifiers
+            UpdateIdentifierIndex(entry);
+
+            // Index aliases
+            foreach (var alias in entry.Aliases)
             {
-                Canonical = symbol,
-                DisplayName = name,
-                AssetClass = symbol is "SPY" or "QQQ" or "IWM" ? "etf" : "equity",
-                Exchange = exchange,
-                Currency = "USD",
-                Country = "US",
-                Identifiers = new SymbolIdentifiers { Isin = isin },
-                IsActive = true,
-                CreatedAt = DateTime.UtcNow,
-                LastUpdatedAt = DateTime.UtcNow
-            };
-
-            _registry.Symbols[symbol] = entry;
-            _symbolCache[symbol] = entry;
-
-            if (!string.IsNullOrEmpty(isin))
-            {
-                _registry.IdentifierIndex.IsinToSymbol[isin] = symbol;
+                _registry.AliasIndex[alias.Alias] = entry.Canonical;
+                _aliasCache[alias.Alias] = entry.Canonical;
             }
         }
 
         UpdateStatistics();
-        _log.Information("Initialized default symbol registry with {Count} symbols", defaultSymbols.Length);
+        _log.Information("Initialized default symbol registry with {Count} symbols", defaultSymbols.Count);
+    }
+
+    /// <summary>
+    /// Builds the default symbol entries with canonical identifiers (ISIN, FIGI, SEDOL, CUSIP)
+    /// and standard provider aliases.
+    /// </summary>
+    private static List<SymbolRegistryEntry> BuildDefaultSymbolEntries()
+    {
+        return
+        [
+            CreateDefaultEntry("AAPL", "Apple Inc.", "equity", "NASDAQ", new SymbolIdentifiers
+            {
+                Isin = "US0378331005",
+                Figi = "BBG000B9XRY4",
+                CompositeFigi = "BBG000B9XRY4",
+                Sedol = "2046251",
+                Cusip = "037833100"
+            },
+            ["AAPL.US", "AAPL.O", "AAPL.NASDAQ"]),
+
+            CreateDefaultEntry("MSFT", "Microsoft Corporation", "equity", "NASDAQ", new SymbolIdentifiers
+            {
+                Isin = "US5949181045",
+                Figi = "BBG000BPH459",
+                CompositeFigi = "BBG000BPH459",
+                Sedol = "2588173",
+                Cusip = "594918104"
+            },
+            ["MSFT.US", "MSFT.O", "MSFT.NASDAQ"]),
+
+            CreateDefaultEntry("GOOGL", "Alphabet Inc.", "equity", "NASDAQ", new SymbolIdentifiers
+            {
+                Isin = "US02079K3059",
+                Figi = "BBG009S39JX6",
+                CompositeFigi = "BBG009S39JX6",
+                Sedol = "BYVY8G0",
+                Cusip = "02079K305"
+            },
+            ["GOOGL.US", "GOOGL.O", "GOOGL.NASDAQ"]),
+
+            CreateDefaultEntry("AMZN", "Amazon.com Inc.", "equity", "NASDAQ", new SymbolIdentifiers
+            {
+                Isin = "US0231351067",
+                Figi = "BBG000BVPV84",
+                CompositeFigi = "BBG000BVPV84",
+                Sedol = "2000019",
+                Cusip = "023135106"
+            },
+            ["AMZN.US", "AMZN.O", "AMZN.NASDAQ"]),
+
+            CreateDefaultEntry("TSLA", "Tesla Inc.", "equity", "NASDAQ", new SymbolIdentifiers
+            {
+                Isin = "US88160R1014",
+                Figi = "BBG000N9MNX3",
+                CompositeFigi = "BBG000N9MNX3",
+                Sedol = "B616C79",
+                Cusip = "88160R101"
+            },
+            ["TSLA.US", "TSLA.O", "TSLA.NASDAQ"]),
+
+            CreateDefaultEntry("META", "Meta Platforms Inc.", "equity", "NASDAQ", new SymbolIdentifiers
+            {
+                Isin = "US30303M1027",
+                Figi = "BBG000MM2P62",
+                CompositeFigi = "BBG000MM2P62",
+                Sedol = "B7TL820",
+                Cusip = "30303M102"
+            },
+            ["META.US", "META.O", "META.NASDAQ", "FB"]),
+
+            CreateDefaultEntry("NVDA", "NVIDIA Corporation", "equity", "NASDAQ", new SymbolIdentifiers
+            {
+                Isin = "US67066G1040",
+                Figi = "BBG000BBJQV0",
+                CompositeFigi = "BBG000BBJQV0",
+                Sedol = "2379504",
+                Cusip = "67066G104"
+            },
+            ["NVDA.US", "NVDA.O", "NVDA.NASDAQ"]),
+
+            CreateDefaultEntry("SPY", "SPDR S&P 500 ETF Trust", "etf", "NYSE", new SymbolIdentifiers
+            {
+                Isin = "US78462F1030",
+                Figi = "BBG000BDTBL9",
+                CompositeFigi = "BBG000BDTBL9",
+                Sedol = "2840215",
+                Cusip = "78462F103"
+            },
+            ["SPY.US", "SPY.P", "SPY.NYSE"]),
+
+            CreateDefaultEntry("QQQ", "Invesco QQQ Trust", "etf", "NASDAQ", new SymbolIdentifiers
+            {
+                Isin = "US46090E1038",
+                Figi = "BBG000BSWKH7",
+                CompositeFigi = "BBG000BSWKH7",
+                Sedol = "2591786",
+                Cusip = "46090E103"
+            },
+            ["QQQ.US", "QQQ.O", "QQQ.NASDAQ"]),
+
+            CreateDefaultEntry("IWM", "iShares Russell 2000 ETF", "etf", "NYSE", new SymbolIdentifiers
+            {
+                Isin = "US4642876555",
+                Figi = "BBG000CGC9C3",
+                CompositeFigi = "BBG000CGC9C3",
+                Sedol = "2763479",
+                Cusip = "464287655"
+            },
+            ["IWM.US", "IWM.P", "IWM.NYSE"])
+        ];
+    }
+
+    private static SymbolRegistryEntry CreateDefaultEntry(
+        string symbol,
+        string displayName,
+        string assetClass,
+        string exchange,
+        SymbolIdentifiers identifiers,
+        string[] aliases)
+    {
+        var now = DateTime.UtcNow;
+        return new SymbolRegistryEntry
+        {
+            Canonical = symbol,
+            DisplayName = displayName,
+            AssetClass = assetClass,
+            Exchange = exchange,
+            Currency = "USD",
+            Country = "US",
+            Identifiers = identifiers,
+            Aliases = aliases.Select(a => new SymbolAlias
+            {
+                Alias = a,
+                Source = a.Contains('.') ? "exchange-suffix" : "historical",
+                Type = "ticker",
+                IsActive = true
+            }).ToList(),
+            IsActive = true,
+            CreatedAt = now,
+            LastUpdatedAt = now
+        };
     }
 
     private static int LevenshteinDistance(string s1, string s2)
