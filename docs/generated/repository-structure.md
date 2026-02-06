@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-06 23:37:48 UTC
+> Auto-generated on 2026-02-06 23:41:58 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -114,6 +114,9 @@ Market-Data-Collector/
 │       │   ├── generate-structure-docs.py
 │       │   ├── scan-todos.py
 │       │   └── update-claude-md.py
+│       ├── hooks/
+│       │   ├── install-hooks.sh
+│       │   └── pre-commit
 │       ├── install/
 │       │   ├── install.ps1
 │       │   └── install.sh

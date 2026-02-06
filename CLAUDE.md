@@ -267,6 +267,9 @@ Market-Data-Collector/
 │       │   ├── generate-structure-docs.py
 │       │   ├── scan-todos.py
 │       │   └── update-claude-md.py
+│       ├── hooks/
+│       │   ├── install-hooks.sh
+│       │   └── pre-commit
 │       ├── install/
 │       │   ├── install.ps1
 │       │   └── install.sh
