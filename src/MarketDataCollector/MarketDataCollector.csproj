@@ -53,6 +53,9 @@
     <!-- Optimize for size -->
     <DebugType>embedded</DebugType>
     <DebugSymbols>true</DebugSymbols>
+
+    <!-- Allow unsafe code for Linux directory fsync operations in AtomicFileWriter.cs -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <PropertyGroup>

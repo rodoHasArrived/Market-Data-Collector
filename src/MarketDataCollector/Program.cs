@@ -28,6 +28,7 @@ using MarketDataCollector.Infrastructure.Providers.Polygon;
 using MarketDataCollector.Infrastructure.Providers.StockSharp;
 using MarketDataCollector.Infrastructure.Providers.Backfill;
 using MarketDataCollector.Infrastructure.Providers.Streaming.Failover;
+using MarketDataCollector.Infrastructure.Providers;
 using SymbolResolution = MarketDataCollector.Infrastructure.Providers.Backfill.SymbolResolution;
 using BackfillRequest = MarketDataCollector.Application.Backfill.BackfillRequest;
 using MarketDataCollector.Storage;
@@ -429,7 +430,20 @@ internal static class Program
 
         var policy = new JsonlStoragePolicy(storageOpt);
         await using var sink = new JsonlStorageSink(storageOpt, policy);
-        await using var pipeline = new EventPipeline(sink, EventPipelinePolicy.HighThroughput);
+
+        // Create WAL for crash-safe durability
+        var walDir = Path.Combine(storageOpt.RootPath, "_wal");
+        var wal = new Storage.Archival.WriteAheadLog(walDir, new Storage.Archival.WalOptions
+        {
+            SyncMode = Storage.Archival.WalSyncMode.BatchedSync,
+            SyncBatchSize = 1000,
+            MaxFlushDelay = TimeSpan.FromSeconds(1)
+        });
+        await using var pipeline = new EventPipeline(sink, EventPipelinePolicy.HighThroughput, wal: wal);
+
+        // Recover any uncommitted events from prior crash
+        await pipeline.RecoverAsync();
+        log.Information("WAL enabled for pipeline durability at {WalDirectory}", walDir);
 
         // Log storage configuration
         log.Information("Storage path: {RootPath}", storageOpt.RootPath);
@@ -578,11 +592,11 @@ internal static class Program
             throw;
         }
 
-        var subscriptionManager = new SubscriptionManager(
+        var subscriptionManager = new Application.Subscriptions.SubscriptionManager(
             depthCollector,
             tradeCollector,
             dataClient,
-            LoggingSetup.ForContext<SubscriptionManager>());
+            LoggingSetup.ForContext<Application.Subscriptions.SubscriptionManager>());
 
         var runtimeCfg = EnsureDefaultSymbols(cfg);
         subscriptionManager.Apply(runtimeCfg);

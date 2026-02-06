@@ -62,7 +62,7 @@ public sealed class MarketDataClientFactoryTests
         var factory = new MarketDataClientFactory(
             alpacaCredentialResolver: (_, _) => ("test-key", "test-secret"));
         var (config, publisher, trade, depth, quote) = CreateDependencies();
-        config.Alpaca = new AlpacaConfig { KeyId = "k", SecretKey = "s" };
+        config = config with { Alpaca = new AlpacaOptions { KeyId = "k", SecretKey = "s" } };
 
         // Act
         var client = factory.Create(DataSourceKind.Alpaca, config, publisher, trade, depth, quote);
@@ -125,7 +125,7 @@ public sealed class MarketDataClientFactoryTests
                 return ("custom-key", "custom-secret");
             });
         var (config, publisher, trade, depth, quote) = CreateDependencies();
-        config.Alpaca = new AlpacaConfig();
+        // config already has Alpaca set from CreateDependencies()
 
         // Act
         factory.Create(DataSourceKind.Alpaca, config, publisher, trade, depth, quote);
@@ -136,7 +136,7 @@ public sealed class MarketDataClientFactoryTests
 
     private static (AppConfig config, IMarketEventPublisher publisher, TradeDataCollector trade, MarketDepthCollector depth, QuoteCollector quote) CreateDependencies()
     {
-        var config = new AppConfig();
+        var config = new AppConfig { Alpaca = new AlpacaOptions() };
         IMarketEventPublisher publisher = new TestMarketEventPublisher();
         var trade = new TradeDataCollector(publisher);
         var depth = new MarketDepthCollector(publisher);
