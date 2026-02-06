@@ -256,7 +256,7 @@ public class ConfigurationServiceTests : IAsyncDisposable
         var (fixedConfig, fixes, _) = _sut.ApplySelfHealingFixes(config);
 
         // Assert
-        fixedConfig.Backfill!.To.Should().BeLessThanOrEqualTo(DateOnly.FromDateTime(DateTime.UtcNow));
+        (fixedConfig.Backfill!.To <= DateOnly.FromDateTime(DateTime.UtcNow)).Should().BeTrue();
         fixes.Should().Contain(f => f.Contains("future"));
     }
 
@@ -341,7 +341,7 @@ public class ConfigurationServiceTests : IAsyncDisposable
         fixedConfig.Symbols.Should().NotBeNullOrEmpty();
         fixedConfig.Storage!.NamingConvention.Should().Be("BySymbol");
         fixedConfig.Storage.DatePartition.Should().Be("Daily");
-        fixedConfig.Backfill!.From.Should().BeLessThanOrEqualTo(fixedConfig.Backfill.To!.Value);
+        (fixedConfig.Backfill!.From <= fixedConfig.Backfill.To!.Value).Should().BeTrue();
     }
 
     #endregion

@@ -22,6 +22,7 @@ using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Infrastructure;
 using MarketDataCollector.Infrastructure.Http;
+using MarketDataCollector.Infrastructure.Providers;
 using MarketDataCollector.Infrastructure.Providers.InteractiveBrokers;
 using MarketDataCollector.Infrastructure.Providers.Alpaca;
 using MarketDataCollector.Infrastructure.Providers.Polygon;
@@ -514,11 +515,11 @@ internal static class Program
             throw;
         }
 
-        var subscriptionManager = new SubscriptionManager(
+        var subscriptionManager = new Application.Subscriptions.SubscriptionManager(
             depthCollector,
             tradeCollector,
             dataClient,
-            LoggingSetup.ForContext<SubscriptionManager>());
+            LoggingSetup.ForContext<Application.Subscriptions.SubscriptionManager>());
 
         var runtimeCfg = EnsureDefaultSymbols(cfg);
         subscriptionManager.Apply(runtimeCfg);
