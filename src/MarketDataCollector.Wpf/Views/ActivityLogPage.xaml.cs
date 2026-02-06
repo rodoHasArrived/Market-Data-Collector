@@ -67,19 +67,30 @@ public partial class ActivityLogPage : Page
         _refreshTimer.Start();
     }
 
-    private void OnLogEntryAdded(object? sender, Services.ActivityLogEntryEventArgs e)
+    private void OnLogEntryAdded(object? sender, LogEntryEventArgs e)
     {
         Dispatcher.Invoke(() =>
         {
+            var category = "System";
+            foreach (var (key, value) in e.Properties)
+            {
+                if (string.Equals(key, "category", StringComparison.OrdinalIgnoreCase))
+                {
+                    category = value;
+                    break;
+                }
+            }
+
+            var level = e.Level.ToString();
             var entry = new LogEntryModel
             {
                 RawTimestamp = e.Timestamp,
                 Timestamp = e.Timestamp.ToString("HH:mm:ss"),
-                Level = e.Level.ToString(),
-                Category = "System",
+                Level = level,
+                Category = category,
                 Message = e.Message,
-                LevelBackground = GetLevelBackground(e.Level.ToString()),
-                LevelForeground = GetLevelForeground(e.Level.ToString())
+                LevelBackground = GetLevelBackground(level),
+                LevelForeground = GetLevelForeground(level)
             };
 
             _allLogs.Insert(0, entry);
@@ -383,10 +394,3 @@ public class LogEntryModel
 /// <summary>
 /// Event args for log entry added events.
 /// </summary>
-public class ActivityLogEntryEventArgs : EventArgs
-{
-    public DateTime Timestamp { get; set; }
-    public string Level { get; set; } = string.Empty;
-    public string? Category { get; set; }
-    public string Message { get; set; } = string.Empty;
-}
