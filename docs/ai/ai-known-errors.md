@@ -86,3 +86,24 @@ If headings are missing, the workflow still creates an entry with safe defaults 
   - `grep -r 'PackageReference Include=".*" Version=' --include="*.csproj" --include="*.fsproj" src/ | grep -v '<!--'` (should return no results)
 - **Source issue**: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/21707148084/job/62601061503
 - **Status**: fixed
+
+### AI-20260206-wpf-missing-using-directives
+- **Area**: build/WPF/C#
+- **Symptoms**: WPF build fails with CS0246 errors: "The type or namespace name 'X' could not be found (are you missing a using directive or an assembly reference?)". Common missing types: `HttpClient`, `HttpResponseMessage`, `ConnectionState`, `BackfillApiService`, `ExportFormat`, `ZstdSharp`.
+- **Root cause**: When adding new code to the WPF project, agents forget that WPF doesn't share assemblies with the main project or UWP project. Types must either be imported via `using` directives, defined locally, or included via shared source files from Contracts. Key patterns:
+  - `System.Net.Http` namespace must be explicitly imported (not just `System.Net.Http.Headers`)
+  - Types from `MarketDataCollector.Wpf.Contracts` (e.g., `ConnectionState`) need explicit `using` directives
+  - Types from UWP (e.g., `BackfillApiService`) don't exist in WPF and must be recreated
+  - Types from the main project (e.g., `ExportFormat`) aren't accessible and must be defined locally
+  - NuGet packages used in code (e.g., `ZstdSharp`) must be added to the WPF `.csproj`
+- **Prevention checklist**:
+  - [ ] When adding `using System.Net.Http.Headers;`, also add `using System.Net.Http;` if `HttpClient` or `HttpResponseMessage` are used
+  - [ ] When referencing types from `Contracts/` interfaces, add the appropriate `using MarketDataCollector.Wpf.Contracts;`
+  - [ ] When porting code from UWP to WPF, verify all service classes exist in the WPF project
+  - [ ] When using types from the main `MarketDataCollector` project, define local equivalents since WPF cannot reference the main project directly
+  - [ ] When adding `using` for a NuGet package, ensure the package is in the WPF `.csproj` (without `Version` attribute per CPM)
+  - [ ] Avoid namespace-qualifying types that are in the same file (e.g., use `MyType` not `Services.MyType` when `MyType` is defined in the current namespace)
+- **Verification commands**:
+  - `dotnet build src/MarketDataCollector.Wpf/MarketDataCollector.Wpf.csproj -c Release`
+- **Source issue**: CI desktop-builds workflow failure
+- **Status**: fixed
