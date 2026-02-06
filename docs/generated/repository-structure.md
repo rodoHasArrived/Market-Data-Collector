@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-06 23:05:53 UTC
+> Auto-generated on 2026-02-06 23:14:14 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -418,6 +418,7 @@ Market-Data-Collector/
 │   │   │   └── BackfillProgress.cs
 │   │   ├── Catalog/
 │   │   │   ├── DirectoryIndex.cs
+│   │   │   ├── ICanonicalSymbolRegistry.cs
 │   │   │   ├── StorageCatalog.cs
 │   │   │   └── SymbolRegistry.cs
 │   │   ├── Configuration/
@@ -1009,6 +1010,7 @@ Market-Data-Collector/
 │   │   ├── Storage/
 │   │   │   ├── AnalysisExportServiceTests.cs
 │   │   │   ├── AtomicFileWriterTests.cs
+│   │   │   ├── CanonicalSymbolRegistryTests.cs
 │   │   │   ├── DataValidatorTests.cs
 │   │   │   ├── FilePermissionsServiceTests.cs
 │   │   │   ├── JsonlBatchWriteTests.cs

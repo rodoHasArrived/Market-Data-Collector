@@ -446,6 +446,7 @@ Market-Data-Collector/
 │   │   │   └── BackfillProgress.cs
 │   │   ├── Catalog/
 │   │   │   ├── DirectoryIndex.cs
+│   │   │   ├── ICanonicalSymbolRegistry.cs
 │   │   │   ├── StorageCatalog.cs
 │   │   │   └── SymbolRegistry.cs
 │   │   ├── Configuration/
@@ -1037,6 +1038,7 @@ Market-Data-Collector/
 │   │   ├── Storage/
 │   │   │   ├── AnalysisExportServiceTests.cs
 │   │   │   ├── AtomicFileWriterTests.cs
+│   │   │   ├── CanonicalSymbolRegistryTests.cs
 │   │   │   ├── DataValidatorTests.cs
 │   │   │   ├── FilePermissionsServiceTests.cs
 │   │   │   ├── JsonlBatchWriteTests.cs
