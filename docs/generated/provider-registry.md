@@ -1,6 +1,6 @@
 # Provider Registry
 
-> Auto-generated on 2026-02-06 04:33:25 UTC
+> Auto-generated on 2026-02-06 05:20:15 UTC
 
 This document lists all data providers available in the Market Data Collector.
 
