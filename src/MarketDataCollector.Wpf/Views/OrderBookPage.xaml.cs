@@ -22,8 +22,8 @@ namespace MarketDataCollector.Wpf.Views;
 public partial class OrderBookPage : Page
 {
     private readonly HttpClient _httpClient = new();
-    private readonly ObservableCollection<OrderBookLevel> _bids = new();
-    private readonly ObservableCollection<OrderBookLevel> _asks = new();
+    private readonly ObservableCollection<OrderBookDisplayLevel> _bids = new();
+    private readonly ObservableCollection<OrderBookDisplayLevel> _asks = new();
     private readonly ObservableCollection<RecentTradeModel> _recentTrades = new();
     private readonly List<string> _availableSymbols = new();
     private Timer? _refreshTimer;
@@ -179,7 +179,7 @@ public partial class OrderBookPage : Page
         decimal maxSize = 0;
 
         // Process bids
-        var newBids = new List<OrderBookLevel>();
+        var newBids = new List<OrderBookDisplayLevel>();
         if (data.TryGetProperty("bids", out var bids) && bids.ValueKind == JsonValueKind.Array)
         {
             decimal runningTotal = 0;
@@ -189,7 +189,7 @@ public partial class OrderBookPage : Page
                 var size = bid.TryGetProperty("size", out var s) ? s.GetInt32() : 0;
                 runningTotal += size;
 
-                newBids.Add(new OrderBookLevel
+                newBids.Add(new OrderBookDisplayLevel
                 {
                     RawPrice = price,
                     Price = price.ToString("F2"),
@@ -204,7 +204,7 @@ public partial class OrderBookPage : Page
         }
 
         // Process asks
-        var newAsks = new List<OrderBookLevel>();
+        var newAsks = new List<OrderBookDisplayLevel>();
         if (data.TryGetProperty("asks", out var asks) && asks.ValueKind == JsonValueKind.Array)
         {
             decimal runningTotal = 0;
@@ -214,7 +214,7 @@ public partial class OrderBookPage : Page
                 var size = ask.TryGetProperty("size", out var s) ? s.GetInt32() : 0;
                 runningTotal += size;
 
-                newAsks.Add(new OrderBookLevel
+                newAsks.Add(new OrderBookDisplayLevel
                 {
                     RawPrice = price,
                     Price = price.ToString("F2"),
@@ -265,8 +265,8 @@ public partial class OrderBookPage : Page
         };
 
         var random = new Random();
-        var bids = new List<OrderBookLevel>();
-        var asks = new List<OrderBookLevel>();
+        var bids = new List<OrderBookDisplayLevel>();
+        var asks = new List<OrderBookDisplayLevel>();
 
         decimal bidTotal = 0;
         decimal askTotal = 0;
@@ -282,7 +282,7 @@ public partial class OrderBookPage : Page
             if (bidSize > maxSize) maxSize = bidSize;
             if (askSize > maxSize) maxSize = askSize;
 
-            bids.Add(new OrderBookLevel
+            bids.Add(new OrderBookDisplayLevel
             {
                 RawPrice = basePrice - (i * 0.01m),
                 Price = (basePrice - (i * 0.01m)).ToString("F2"),
@@ -292,7 +292,7 @@ public partial class OrderBookPage : Page
                 Total = FormatSize((int)bidTotal)
             });
 
-            asks.Add(new OrderBookLevel
+            asks.Add(new OrderBookDisplayLevel
             {
                 RawPrice = basePrice + 0.01m + (i * 0.01m),
                 Price = (basePrice + 0.01m + (i * 0.01m)).ToString("F2"),
@@ -352,7 +352,7 @@ public partial class OrderBookPage : Page
         NoTradesText.Visibility = Visibility.Collapsed;
     }
 
-    private void UpdateStatistics(List<OrderBookLevel> bids, List<OrderBookLevel> asks)
+    private void UpdateStatistics(List<OrderBookDisplayLevel> bids, List<OrderBookDisplayLevel> asks)
     {
         if (bids.Count == 0 || asks.Count == 0)
         {
@@ -474,7 +474,7 @@ public partial class OrderBookPage : Page
 /// <summary>
 /// Model for order book level display.
 /// </summary>
-public class OrderBookLevel
+public class OrderBookDisplayLevel
 {
     public decimal RawPrice { get; set; }
     public string Price { get; set; } = string.Empty;

@@ -74,7 +74,7 @@ public sealed class AdminMaintenanceService
     /// Updates the archive maintenance schedule.
     /// </summary>
     public async Task<OperationResult> UpdateMaintenanceScheduleAsync(
-        MaintenanceScheduleConfig schedule,
+        AdminMaintenanceScheduleConfig schedule,
         CancellationToken ct = default)
     {
         try
@@ -330,7 +330,7 @@ public sealed class AdminMaintenanceService
                 return new RetentionPoliciesResult
                 {
                     Success = true,
-                    Policies = data?.Policies?.ToList() ?? new List<RetentionPolicy>(),
+                    Policies = data?.Policies?.ToList() ?? new List<AdminRetentionPolicy>(),
                     DefaultPolicy = data?.DefaultPolicy
                 };
             }
@@ -350,7 +350,7 @@ public sealed class AdminMaintenanceService
     /// Creates or updates a retention policy.
     /// </summary>
     public async Task<OperationResult> SaveRetentionPolicyAsync(
-        RetentionPolicy policy,
+        AdminRetentionPolicy policy,
         CancellationToken ct = default)
     {
         try
@@ -487,7 +487,7 @@ public sealed class AdminMaintenanceService
     /// <summary>
     /// Executes file cleanup.
     /// </summary>
-    public async Task<CleanupResult> ExecuteCleanupAsync(
+    public async Task<MaintenanceCleanupResult> ExecuteCleanupAsync(
         CleanupOptions options,
         CancellationToken ct = default)
     {
@@ -502,7 +502,7 @@ public sealed class AdminMaintenanceService
             if (response.IsSuccessStatusCode)
             {
                 var data = await response.Content.ReadFromJsonAsync<CleanupResultResponse>(_jsonOptions, ct);
-                return new CleanupResult
+                return new MaintenanceCleanupResult
                 {
                     Success = true,
                     FilesDeleted = data?.FilesDeleted ?? 0,
@@ -510,7 +510,7 @@ public sealed class AdminMaintenanceService
                     Errors = data?.Errors?.ToList() ?? new List<string>()
                 };
             }
-            return new CleanupResult
+            return new MaintenanceCleanupResult
             {
                 Success = false,
                 Error = $"HTTP {(int)response.StatusCode}: {response.ReasonPhrase}"
@@ -518,7 +518,7 @@ public sealed class AdminMaintenanceService
         }
         catch (Exception ex)
         {
-            return new CleanupResult { Success = false, Error = ex.Message };
+            return new MaintenanceCleanupResult { Success = false, Error = ex.Message };
         }
     }
 
@@ -529,22 +529,22 @@ public sealed class AdminMaintenanceService
     /// <summary>
     /// Runs quick health check.
     /// </summary>
-    public async Task<QuickCheckResult> RunQuickCheckAsync(CancellationToken ct = default)
+    public async Task<MaintenanceQuickCheckResult> RunQuickCheckAsync(CancellationToken ct = default)
     {
         try
         {
             var response = await _httpClient.GetAsync($"{_baseUrl}/api/admin/quick-check", ct);
             if (response.IsSuccessStatusCode)
             {
-                var data = await response.Content.ReadFromJsonAsync<QuickCheckResponse>(_jsonOptions, ct);
-                return new QuickCheckResult
+                var data = await response.Content.ReadFromJsonAsync<MaintenanceQuickCheckResponse>(_jsonOptions, ct);
+                return new MaintenanceQuickCheckResult
                 {
                     Success = true,
                     Overall = data?.Overall ?? "Unknown",
-                    Checks = data?.Checks?.ToList() ?? new List<QuickCheckItem>()
+                    Checks = data?.Checks?.ToList() ?? new List<MaintenanceQuickCheckItem>()
                 };
             }
-            return new QuickCheckResult
+            return new MaintenanceQuickCheckResult
             {
                 Success = false,
                 Error = $"HTTP {(int)response.StatusCode}: {response.ReasonPhrase}"
@@ -552,7 +552,7 @@ public sealed class AdminMaintenanceService
         }
         catch (Exception ex)
         {
-            return new QuickCheckResult { Success = false, Error = ex.Message };
+            return new MaintenanceQuickCheckResult { Success = false, Error = ex.Message };
         }
     }
 
@@ -585,7 +585,7 @@ public class MaintenanceScheduleResponse
     public List<string> EnabledOperations { get; set; } = new();
 }
 
-public class MaintenanceScheduleConfig
+public class AdminMaintenanceScheduleConfig
 {
     public bool Enabled { get; set; }
     public string? CronExpression { get; set; }
@@ -739,17 +739,17 @@ public class RetentionPoliciesResult
 {
     public bool Success { get; set; }
     public string? Error { get; set; }
-    public List<RetentionPolicy> Policies { get; set; } = new();
-    public RetentionPolicy? DefaultPolicy { get; set; }
+    public List<AdminRetentionPolicy> Policies { get; set; } = new();
+    public AdminRetentionPolicy? DefaultPolicy { get; set; }
 }
 
 public class RetentionPoliciesResponse
 {
-    public List<RetentionPolicy>? Policies { get; set; }
-    public RetentionPolicy? DefaultPolicy { get; set; }
+    public List<AdminRetentionPolicy>? Policies { get; set; }
+    public AdminRetentionPolicy? DefaultPolicy { get; set; }
 }
 
-public class RetentionPolicy
+public class AdminRetentionPolicy
 {
     public string Id { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
@@ -810,7 +810,7 @@ public class CleanupFileInfo
     public DateTime LastModified { get; set; }
 }
 
-public class CleanupResult
+public class MaintenanceCleanupResult
 {
     public bool Success { get; set; }
     public string? Error { get; set; }
@@ -826,21 +826,21 @@ public class CleanupResultResponse
     public string[]? Errors { get; set; }
 }
 
-public class QuickCheckResult
+public class MaintenanceQuickCheckResult
 {
     public bool Success { get; set; }
     public string? Error { get; set; }
     public string Overall { get; set; } = string.Empty;
-    public List<QuickCheckItem> Checks { get; set; } = new();
+    public List<MaintenanceQuickCheckItem> Checks { get; set; } = new();
 }
 
-public class QuickCheckResponse
+public class MaintenanceQuickCheckResponse
 {
     public string Overall { get; set; } = string.Empty;
-    public List<QuickCheckItem>? Checks { get; set; }
+    public List<MaintenanceQuickCheckItem>? Checks { get; set; }
 }
 
-public class QuickCheckItem
+public class MaintenanceQuickCheckItem
 {
     public string Name { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;

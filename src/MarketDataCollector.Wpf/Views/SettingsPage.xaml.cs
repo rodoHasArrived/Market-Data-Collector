@@ -16,7 +16,7 @@ public partial class SettingsPage : Page
 {
     private readonly ConfigService _configService;
     private readonly ObservableCollection<CredentialDisplayInfo> _storedCredentials = new();
-    private readonly ObservableCollection<ActivityItem> _recentActivity = new();
+    private readonly ObservableCollection<SettingsActivityItem> _recentActivity = new();
 
     public SettingsPage()
     {
@@ -74,21 +74,21 @@ public partial class SettingsPage : Page
     private void LoadRecentActivity()
     {
         _recentActivity.Clear();
-        _recentActivity.Add(new ActivityItem
+        _recentActivity.Add(new SettingsActivityItem
         {
             Icon = "\uE73E",
             IconColor = new SolidColorBrush(Color.FromRgb(63, 185, 80)),
             Message = "Configuration saved",
             Time = "2 min ago"
         });
-        _recentActivity.Add(new ActivityItem
+        _recentActivity.Add(new SettingsActivityItem
         {
             Icon = "\uE753",
             IconColor = new SolidColorBrush(Color.FromRgb(88, 166, 255)),
             Message = "Cloud sync completed",
             Time = "15 min ago"
         });
-        _recentActivity.Add(new ActivityItem
+        _recentActivity.Add(new SettingsActivityItem
         {
             Icon = "\uE787",
             IconColor = new SolidColorBrush(Color.FromRgb(210, 153, 34)),
@@ -324,7 +324,7 @@ public class CredentialDisplayInfo
 /// <summary>
 /// Activity item for recent activity list.
 /// </summary>
-public class ActivityItem
+public class SettingsActivityItem
 {
     public string Icon { get; set; } = string.Empty;
     public SolidColorBrush IconColor { get; set; } = new(Color.FromRgb(139, 148, 158));

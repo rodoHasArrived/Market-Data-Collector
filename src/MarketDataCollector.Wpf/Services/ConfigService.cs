@@ -9,7 +9,7 @@ namespace MarketDataCollector.Wpf.Services;
 /// <summary>
 /// Result of configuration validation.
 /// </summary>
-public sealed class ConfigValidationResult
+public sealed class ConfigServiceValidationResult
 {
     /// <summary>
     /// Gets or sets whether the configuration is valid.
@@ -29,12 +29,12 @@ public sealed class ConfigValidationResult
     /// <summary>
     /// Creates a successful validation result.
     /// </summary>
-    public static ConfigValidationResult Success() => new() { IsValid = true };
+    public static ConfigServiceValidationResult Success() => new() { IsValid = true };
 
     /// <summary>
     /// Creates a failed validation result with errors.
     /// </summary>
-    public static ConfigValidationResult Failure(params string[] errors) => new()
+    public static ConfigServiceValidationResult Failure(params string[] errors) => new()
     {
         IsValid = false,
         Errors = errors
@@ -91,9 +91,9 @@ public sealed class ConfigService
     /// Validates the current configuration.
     /// </summary>
     /// <returns>A task containing the validation result.</returns>
-    public Task<ConfigValidationResult> ValidateConfigAsync()
+    public Task<ConfigServiceValidationResult> ValidateConfigAsync()
     {
-        return Task.FromResult(ConfigValidationResult.Success());
+        return Task.FromResult(ConfigServiceValidationResult.Success());
     }
 
     /// <summary>

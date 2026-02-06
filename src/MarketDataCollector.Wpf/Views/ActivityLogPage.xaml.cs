@@ -67,7 +67,7 @@ public partial class ActivityLogPage : Page
         _refreshTimer.Start();
     }
 
-    private void OnLogEntryAdded(object? sender, Services.LogEntryEventArgs e)
+    private void OnLogEntryAdded(object? sender, Services.ActivityLogEntryEventArgs e)
     {
         Dispatcher.Invoke(() =>
         {
@@ -383,7 +383,7 @@ public class LogEntryModel
 /// <summary>
 /// Event args for log entry added events.
 /// </summary>
-public class LogEntryEventArgs : EventArgs
+public class ActivityLogEntryEventArgs : EventArgs
 {
     public DateTime Timestamp { get; set; }
     public string Level { get; set; } = string.Empty;

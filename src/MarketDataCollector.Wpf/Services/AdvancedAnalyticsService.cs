@@ -51,7 +51,7 @@ public sealed class AdvancedAnalyticsService
                     AnalysisTime = data?.AnalysisTime ?? DateTime.UtcNow,
                     TotalGaps = data?.TotalGaps ?? 0,
                     TotalGapDuration = data?.TotalGapDuration ?? TimeSpan.Zero,
-                    Gaps = data?.Gaps?.ToList() ?? new List<DataGap>()
+                    Gaps = data?.Gaps?.ToList() ?? new List<AnalyticsDataGap>()
                 };
             }
             return new GapAnalysisResult { Success = false, Error = $"HTTP {(int)response.StatusCode}" };
@@ -62,7 +62,7 @@ public sealed class AdvancedAnalyticsService
         }
     }
 
-    public async Task<GapRepairResult> RepairGapsAsync(GapRepairOptions options, CancellationToken ct = default)
+    public async Task<AnalyticsGapRepairResult> RepairGapsAsync(GapRepairOptions options, CancellationToken ct = default)
     {
         try
         {
@@ -70,7 +70,7 @@ public sealed class AdvancedAnalyticsService
             if (response.IsSuccessStatusCode)
             {
                 var data = await response.Content.ReadFromJsonAsync<GapRepairResponse>(_jsonOptions, ct);
-                return new GapRepairResult
+                return new AnalyticsGapRepairResult
                 {
                     Success = true,
                     GapsAttempted = data?.GapsAttempted ?? 0,
@@ -78,11 +78,11 @@ public sealed class AdvancedAnalyticsService
                     RecordsRecovered = data?.RecordsRecovered ?? 0
                 };
             }
-            return new GapRepairResult { Success = false, Error = $"HTTP {(int)response.StatusCode}" };
+            return new AnalyticsGapRepairResult { Success = false, Error = $"HTTP {(int)response.StatusCode}" };
         }
         catch (Exception ex)
         {
-            return new GapRepairResult { Success = false, Error = ex.Message };
+            return new AnalyticsGapRepairResult { Success = false, Error = ex.Message };
         }
     }
 
@@ -157,7 +157,7 @@ public sealed class AdvancedAnalyticsService
                     OverallScore = data?.OverallScore ?? 0,
                     Grade = data?.Grade ?? "N/A",
                     Metrics = data?.Metrics,
-                    SymbolReports = data?.SymbolReports?.ToList() ?? new List<SymbolQualityReport>(),
+                    SymbolReports = data?.SymbolReports?.ToList() ?? new List<AnalyticsSymbolQualityReport>(),
                     Recommendations = data?.Recommendations?.ToList() ?? new List<string>()
                 };
             }
@@ -210,7 +210,7 @@ public sealed class AdvancedAnalyticsService
                 return new SymbolsResult
                 {
                     Success = true,
-                    Symbols = data?.Symbols?.ToList() ?? new List<SymbolInfo>()
+                    Symbols = data?.Symbols?.ToList() ?? new List<AnalyticsSymbolInfo>()
                 };
             }
             return new SymbolsResult { Success = false, Error = $"HTTP {(int)response.StatusCode}" };
@@ -241,7 +241,7 @@ public class GapAnalysisResult
     public DateTime AnalysisTime { get; set; }
     public int TotalGaps { get; set; }
     public TimeSpan TotalGapDuration { get; set; }
-    public List<DataGap> Gaps { get; set; } = new();
+    public List<AnalyticsDataGap> Gaps { get; set; } = new();
 }
 
 public class GapAnalysisResponse
@@ -249,10 +249,10 @@ public class GapAnalysisResponse
     public DateTime AnalysisTime { get; set; }
     public int TotalGaps { get; set; }
     public TimeSpan TotalGapDuration { get; set; }
-    public List<DataGap>? Gaps { get; set; }
+    public List<AnalyticsDataGap>? Gaps { get; set; }
 }
 
-public class DataGap
+public class AnalyticsDataGap
 {
     public string Symbol { get; set; } = string.Empty;
     public string EventType { get; set; } = string.Empty;
@@ -267,7 +267,7 @@ public class GapRepairOptions
     public bool UseAlternativeProviders { get; set; } = true;
 }
 
-public class GapRepairResult
+public class AnalyticsGapRepairResult
 {
     public bool Success { get; set; }
     public string? Error { get; set; }
@@ -358,7 +358,7 @@ public class DataQualityReportResult
     public double OverallScore { get; set; }
     public string Grade { get; set; } = string.Empty;
     public QualityMetrics? Metrics { get; set; }
-    public List<SymbolQualityReport> SymbolReports { get; set; } = new();
+    public List<AnalyticsSymbolQualityReport> SymbolReports { get; set; } = new();
     public List<string> Recommendations { get; set; } = new();
 }
 
@@ -367,7 +367,7 @@ public class DataQualityReportResponse
     public double OverallScore { get; set; }
     public string Grade { get; set; } = string.Empty;
     public QualityMetrics? Metrics { get; set; }
-    public List<SymbolQualityReport>? SymbolReports { get; set; }
+    public List<AnalyticsSymbolQualityReport>? SymbolReports { get; set; }
     public List<string>? Recommendations { get; set; }
 }
 
@@ -377,7 +377,7 @@ public class QualityMetrics
     public double IntegrityScore { get; set; }
 }
 
-public class SymbolQualityReport
+public class AnalyticsSymbolQualityReport
 {
     public string Symbol { get; set; } = string.Empty;
     public double OverallScore { get; set; }
@@ -420,15 +420,15 @@ public class SymbolsResult
 {
     public bool Success { get; set; }
     public string? Error { get; set; }
-    public List<SymbolInfo> Symbols { get; set; } = new();
+    public List<AnalyticsSymbolInfo> Symbols { get; set; } = new();
 }
 
 public class SymbolsResponse
 {
-    public List<SymbolInfo>? Symbols { get; set; }
+    public List<AnalyticsSymbolInfo>? Symbols { get; set; }
 }
 
-public class SymbolInfo
+public class AnalyticsSymbolInfo
 {
     public string Symbol { get; set; } = string.Empty;
     public string? Name { get; set; }

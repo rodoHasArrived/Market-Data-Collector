@@ -72,6 +72,9 @@
     <!-- Logging -->
     <PackageReference Include="Microsoft.Extensions.Logging" />
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" />
+
+    <!-- Credential encryption (DPAPI) -->
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" />
   </ItemGroup>
 
   <!--
@@ -118,6 +121,16 @@
     <!-- Pipeline policy constants -->
     <Compile Include="..\MarketDataCollector.Contracts\Pipeline\*.cs"
              Link="SharedModels\Pipeline\%(Filename)%(Extension)" />
+
+    <!-- Domain models, events, and enums -->
+    <Compile Include="..\MarketDataCollector.Contracts\Domain\*.cs"
+             Link="SharedModels\Domain\%(Filename)%(Extension)" />
+    <Compile Include="..\MarketDataCollector.Contracts\Domain\Models\*.cs"
+             Link="SharedModels\Domain\Models\%(Filename)%(Extension)" />
+    <Compile Include="..\MarketDataCollector.Contracts\Domain\Events\*.cs"
+             Link="SharedModels\Domain\Events\%(Filename)%(Extension)" />
+    <Compile Include="..\MarketDataCollector.Contracts\Domain\Enums\*.cs"
+             Link="SharedModels\Domain\Enums\%(Filename)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(IsWindows)' == 'true' AND Exists('Assets')">
