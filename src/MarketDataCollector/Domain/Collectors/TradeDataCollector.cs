@@ -166,7 +166,7 @@ public sealed class TradeDataCollector
         //  - Price <= Bid => Sell
         //  - Otherwise Unknown
         var aggressor = update.Aggressor;
-        if (aggressor == AggressorSide.Unknown && _quotes != null && _quotes.TryGet(symbol, out var bbo))
+        if (aggressor == AggressorSide.Unknown && _quotes != null && _quotes.TryGet(symbol, out var bbo) && bbo != null)
         {
             if (bbo.AskPrice > 0m && update.Price >= bbo.AskPrice) aggressor = AggressorSide.Buy;
             else if (bbo.BidPrice > 0m && update.Price <= bbo.BidPrice) aggressor = AggressorSide.Sell;

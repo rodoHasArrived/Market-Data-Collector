@@ -338,13 +338,13 @@ public sealed class PortableDataPackager
         };
     }
 
-    private async Task<List<SourceFileInfo>> ScanSourceFilesAsync(PackageOptions options, CancellationToken ct)
+    private Task<List<SourceFileInfo>> ScanSourceFilesAsync(PackageOptions options, CancellationToken ct)
     {
         var files = new List<SourceFileInfo>();
 
         if (!Directory.Exists(_dataRoot))
         {
-            return files;
+            return Task.FromResult(files);
         }
 
         var patterns = new[] { "*.jsonl", "*.jsonl.gz", "*.jsonl.zst", "*.parquet", "*.csv" };
@@ -365,7 +365,7 @@ public sealed class PortableDataPackager
             }
         }
 
-        return files.OrderBy(f => f.Symbol).ThenBy(f => f.Date).ToList();
+        return Task.FromResult(files.OrderBy(f => f.Symbol).ThenBy(f => f.Date).ToList());
     }
 
     private SourceFileInfo? ParseSourceFile(string path)
@@ -961,7 +961,7 @@ public sealed class PortableDataPackager
         return JsonSerializer.Deserialize<PackageManifest>(jsonBuilder.ToString());
     }
 
-    private async Task<List<string>> VerifyFilesInPackageAsync(
+    private Task<List<string>> VerifyFilesInPackageAsync(
         string packagePath,
         PackageManifest manifest,
         PackageFormat format,
@@ -985,7 +985,7 @@ public sealed class PortableDataPackager
             }
         }
 
-        return missingFiles;
+        return Task.FromResult(missingFiles);
     }
 
     private async Task<ExtractionResult> ExtractPackageAsync(

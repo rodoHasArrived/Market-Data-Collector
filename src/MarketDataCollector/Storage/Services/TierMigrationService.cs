@@ -92,20 +92,20 @@ public sealed class TierMigrationService : ITierMigrationService
         );
     }
 
-    public async Task<MigrationPlan> PlanMigrationAsync(TimeSpan horizon, CancellationToken ct = default)
+    public Task<MigrationPlan> PlanMigrationAsync(TimeSpan horizon, CancellationToken ct = default)
     {
         var actions = new List<PlannedMigrationAction>();
         var now = DateTime.UtcNow;
 
         if (_options.Tiering?.Enabled != true || _options.Tiering.Tiers.Count == 0)
         {
-            return new MigrationPlan(
+            return Task.FromResult(new MigrationPlan(
                 GeneratedAt: DateTimeOffset.UtcNow,
                 Horizon: horizon,
                 Actions: actions,
                 EstimatedBytesToMigrate: 0,
                 EstimatedDuration: TimeSpan.Zero
-            );
+            ));
         }
 
         // Sort tiers by age threshold
@@ -143,13 +143,13 @@ public sealed class TierMigrationService : ITierMigrationService
         var totalBytes = actions.Sum(a => a.SizeBytes);
         var estimatedDuration = TimeSpan.FromSeconds(totalBytes / (50 * 1024 * 1024)); // ~50MB/s estimate
 
-        return new MigrationPlan(
+        return Task.FromResult(new MigrationPlan(
             GeneratedAt: DateTimeOffset.UtcNow,
             Horizon: horizon,
             Actions: actions,
             EstimatedBytesToMigrate: totalBytes,
             EstimatedDuration: estimatedDuration
-        );
+        ));
     }
 
     public StorageTier DetermineTargetTier(string filePath)
@@ -171,7 +171,7 @@ public sealed class TierMigrationService : ITierMigrationService
         return StorageTier.Archive;
     }
 
-    public async Task<TierStatistics> GetTierStatisticsAsync(CancellationToken ct = default)
+    public Task<TierStatistics> GetTierStatisticsAsync(CancellationToken ct = default)
     {
         var tierStats = new Dictionary<StorageTier, TierInfo>();
 
@@ -207,10 +207,10 @@ public sealed class TierMigrationService : ITierMigrationService
             }
         }
 
-        return new TierStatistics(
+        return Task.FromResult(new TierStatistics(
             GeneratedAt: DateTimeOffset.UtcNow,
             TierInfo: tierStats
-        );
+        ));
     }
 
     private TierConfig? GetTierConfig(StorageTier tier)

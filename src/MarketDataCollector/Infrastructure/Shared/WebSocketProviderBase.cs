@@ -457,13 +457,14 @@ public abstract class WebSocketProviderBase : IMarketDataClient
 
     #region Private Methods
 
-    private async Task CleanupWebSocketAsync()
+    private Task CleanupWebSocketAsync()
     {
         try { _ws?.Dispose(); }
         catch (Exception ex) { Log.Debug(ex, "WebSocket disposal failed during connection cleanup"); }
         _ws = null;
         _cts?.Dispose();
         _cts = null;
+        return Task.CompletedTask;
     }
 
     private async Task ReceiveLoopAsync(CancellationToken ct)

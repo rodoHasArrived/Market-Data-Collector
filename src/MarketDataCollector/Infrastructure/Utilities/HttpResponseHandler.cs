@@ -61,7 +61,7 @@ public sealed class HttpResponseHandler
     /// Use this method when you need to handle errors in the calling code
     /// rather than letting exceptions propagate.
     /// </remarks>
-    public async Task<HttpHandleResult> TryHandleResponseAsync(
+    public Task<HttpHandleResult> TryHandleResponseAsync(
         HttpResponseMessage response,
         string symbol,
         string dataType,
@@ -70,7 +70,7 @@ public sealed class HttpResponseHandler
     {
         if (response.IsSuccessStatusCode)
         {
-            return HttpHandleResult.Success;
+            return Task.FromResult(HttpHandleResult.Success);
         }
 
         var statusCode = (int)response.StatusCode;
@@ -80,17 +80,17 @@ public sealed class HttpResponseHandler
             case 401:
                 _log.Error("{Provider} API returned 401 for {Symbol} {DataType}: Unauthorized. Check API credentials.",
                     _providerName, symbol, dataType);
-                return HttpHandleResult.AuthFailure;
+                return Task.FromResult(HttpHandleResult.AuthFailure);
 
             case 403:
                 _log.Error("{Provider} API returned 403 for {Symbol} {DataType}: Forbidden. Verify API permissions.",
                     _providerName, symbol, dataType);
-                return HttpHandleResult.AuthFailure;
+                return Task.FromResult(HttpHandleResult.AuthFailure);
 
             case 404:
                 _log.Debug("{Provider} API returned 404 for {Symbol} {DataType}: Not found",
                     _providerName, symbol, dataType);
-                return HttpHandleResult.NotFound;
+                return Task.FromResult(HttpHandleResult.NotFound);
 
             case 429:
                 var retryAfter = HttpResiliencePolicy.ExtractRetryAfter(response) ?? TimeSpan.FromSeconds(60);
@@ -104,17 +104,17 @@ public sealed class HttpResponseHandler
 
                 _log.Warning("{Provider} API returned 429 for {Symbol} {DataType}: Rate limit exceeded. Retry-After: {RetryAfter}s",
                     _providerName, symbol, dataType, retryAfter.TotalSeconds);
-                return HttpHandleResult.RateLimited(retryAfter);
+                return Task.FromResult(HttpHandleResult.RateLimited(retryAfter));
 
             case >= 500:
                 _log.Error("{Provider} API returned {StatusCode} for {Symbol} {DataType}: Server error",
                     _providerName, statusCode, symbol, dataType);
-                return HttpHandleResult.Error($"Server error: {statusCode}");
+                return Task.FromResult(HttpHandleResult.Error($"Server error: {statusCode}"));
 
             default:
                 _log.Warning("{Provider} API returned {StatusCode} for {Symbol} {DataType}",
                     _providerName, statusCode, symbol, dataType);
-                return HttpHandleResult.Error($"HTTP {statusCode}");
+                return Task.FromResult(HttpHandleResult.Error($"HTTP {statusCode}"));
         }
     }
 
