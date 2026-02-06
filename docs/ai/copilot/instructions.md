@@ -166,7 +166,6 @@ Market-Data-Collector/
 │   │   ├── stale.yml
 │   │   ├── test-matrix.yml
 │   │   ├── TESTING_AI_SYNC.md
-│   │   ├── todo-automation.yml
 │   │   ├── validate-workflows.yml
 │   │   ├── wpf-commands.yml
 │   │   └── wpf-desktop.yml
