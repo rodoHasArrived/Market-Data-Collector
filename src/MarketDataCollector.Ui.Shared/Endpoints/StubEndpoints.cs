@@ -196,13 +196,7 @@ public static class StubEndpoints
         MapStub(app, "GET", UiApiRoutes.SamplingSaved);
         MapStub(app, "GET", UiApiRoutes.SamplingById);
 
-        // Live data endpoints
-        MapStub(app, "GET", UiApiRoutes.DataTrades);
-        MapStub(app, "GET", UiApiRoutes.DataQuotes);
-        MapStub(app, "GET", UiApiRoutes.DataOrderbook);
-        MapStub(app, "GET", UiApiRoutes.DataBbo);
-        MapStub(app, "GET", UiApiRoutes.DataOrderflow);
-        MapStub(app, "GET", UiApiRoutes.DataHealth);
+        // Live data endpoints — now implemented in LiveDataEndpoints.cs
 
         // Subscription endpoints
         MapStub(app, "GET", UiApiRoutes.SubscriptionsActive);

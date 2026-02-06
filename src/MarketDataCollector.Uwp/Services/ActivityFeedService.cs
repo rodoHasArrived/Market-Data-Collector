@@ -62,8 +62,9 @@ public sealed class ActivityFeedService
 
         // Load initial activities with proper exception handling
         _ = LoadActivitiesAsync().ContinueWith(
-            t => System.Diagnostics.Debug.WriteLine($"Failed to load activities: {t.Exception?.InnerException?.Message}"),
-            TaskContinuationOptions.OnlyOnFaulted);
+            t => System.Diagnostics.Trace.TraceError(
+                $"Failed to load activities from {_activityLogPath}: {t.Exception?.InnerException?.Message}"),
+            TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously);
     }
 
     /// <summary>
@@ -86,8 +87,9 @@ public sealed class ActivityFeedService
 
         // Persist to disk asynchronously with proper exception handling
         _ = SaveActivitiesAsync().ContinueWith(
-            t => System.Diagnostics.Debug.WriteLine($"Failed to save activities: {t.Exception?.InnerException?.Message}"),
-            TaskContinuationOptions.OnlyOnFaulted);
+            t => System.Diagnostics.Trace.TraceError(
+                $"Failed to save activities to {_activityLogPath}: {t.Exception?.InnerException?.Message}"),
+            TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously);
     }
 
     /// <summary>

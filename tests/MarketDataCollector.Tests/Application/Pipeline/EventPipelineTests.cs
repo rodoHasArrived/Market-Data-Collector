@@ -436,6 +436,51 @@ public class EventPipelineTests : IAsyncLifetime
 
     #endregion
 
+    #region Shutdown Timeout Tests
+
+    [Fact]
+    public async Task DisposeAsync_WhenSinkFlushBlocks_CompletesWithinTimeout()
+    {
+        // Arrange - Use a sink whose flush blocks until its CancellationToken is cancelled.
+        // Before the fix, the pipeline passed CancellationToken.None to the final flush,
+        // meaning it would hang indefinitely. After the fix, a timeout token is used.
+        await using var sink = new CancellationAwareSlowFlushSink();
+        var pipeline = new EventPipeline(sink, capacity: 100, enablePeriodicFlush: false);
+
+        pipeline.TryPublish(CreateTradeEvent("SPY"));
+        await Task.Delay(50); // Let consumer process the event
+
+        // Act - Dispose should not hang; the final flush will be cancelled by FinalFlushTimeout
+        var disposeTask = pipeline.DisposeAsync().AsTask();
+        var completed = await Task.WhenAny(disposeTask, Task.Delay(TimeSpan.FromSeconds(45)));
+
+        // Assert - Disposal must complete (not hang indefinitely)
+        completed.Should().Be(disposeTask,
+            "DisposeAsync should complete within the timeout, not hang indefinitely");
+    }
+
+    [Fact]
+    public async Task DisposeAsync_FinalFlush_ReceivesCancellableToken()
+    {
+        // Arrange - Sink that captures the CancellationToken passed to FlushAsync
+        var sink = new TokenCapturingSink();
+        var pipeline = new EventPipeline(sink, capacity: 100, enablePeriodicFlush: false);
+
+        pipeline.TryPublish(CreateTradeEvent("SPY"));
+        await Task.Delay(50); // Let consumer process
+
+        // Act
+        await pipeline.DisposeAsync();
+
+        // Assert - The final flush should receive a cancellable token (not CancellationToken.None)
+        sink.LastFlushToken.Should().NotBe(default(CancellationToken),
+            "Final flush should receive a timeout-based CancellationToken, not CancellationToken.None");
+        sink.LastFlushToken.CanBeCanceled.Should().BeTrue(
+            "The CancellationToken passed to the final flush should be cancellable (tied to a timeout)");
+    }
+
+    #endregion
+
     #region Cancellation Tests
 
     [Fact(Skip = "Timing-sensitive test that is flaky in CI - the consumer drains the channel too quickly")]
@@ -624,4 +669,43 @@ internal sealed class MockStorageSink : IStorageSink
     {
         return ValueTask.CompletedTask;
     }
+}
+
+/// <summary>
+/// Mock sink whose FlushAsync blocks until the provided CancellationToken is cancelled.
+/// Used to verify that the pipeline's final flush uses a cancellable token (not CancellationToken.None).
+/// </summary>
+internal sealed class CancellationAwareSlowFlushSink : IStorageSink
+{
+    public async ValueTask AppendAsync(MarketEvent evt, CancellationToken ct = default)
+    {
+        await Task.CompletedTask;
+    }
+
+    public async Task FlushAsync(CancellationToken ct = default)
+    {
+        // Block until cancelled - simulates a hung I/O operation that respects cancellation
+        await Task.Delay(Timeout.InfiniteTimeSpan, ct);
+    }
+
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+}
+
+/// <summary>
+/// Mock sink that captures the CancellationToken passed to FlushAsync
+/// for assertion in tests.
+/// </summary>
+internal sealed class TokenCapturingSink : IStorageSink
+{
+    public CancellationToken LastFlushToken { get; private set; }
+
+    public ValueTask AppendAsync(MarketEvent evt, CancellationToken ct = default) => ValueTask.CompletedTask;
+
+    public Task FlushAsync(CancellationToken ct = default)
+    {
+        LastFlushToken = ct;
+        return Task.CompletedTask;
+    }
+
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 }

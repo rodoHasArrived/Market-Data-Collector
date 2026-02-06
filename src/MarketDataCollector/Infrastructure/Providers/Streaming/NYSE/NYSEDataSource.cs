@@ -15,6 +15,7 @@ using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.DataSources;
 using MarketDataCollector.Infrastructure.Providers.Backfill;
 using Serilog;
+using MarketDataCollector.Infrastructure.Shared;
 using DataSourceType = MarketDataCollector.Infrastructure.DataSources.DataSourceType;
 
 namespace MarketDataCollector.Infrastructure.Providers.NYSE;
@@ -308,7 +309,8 @@ public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHisto
 
         if (IsConnected)
         {
-            _ = SendSubscriptionMessageAsync(config.Symbol, "trades", "subscribe");
+            SendSubscriptionMessageAsync(config.Symbol, "trades", "subscribe")
+                .ObserveException(Log, $"NYSE subscribe trades for {config.Symbol}");
         }
 
         return subId;
@@ -322,7 +324,8 @@ public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHisto
 
             if (IsConnected)
             {
-                _ = SendSubscriptionMessageAsync(info.Symbol, "trades", "unsubscribe");
+                SendSubscriptionMessageAsync(info.Symbol, "trades", "unsubscribe")
+                    .ObserveException(Log, $"NYSE unsubscribe trades for {info.Symbol}");
             }
         }
     }
@@ -339,7 +342,8 @@ public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHisto
 
         if (IsConnected)
         {
-            _ = SendSubscriptionMessageAsync(config.Symbol, "quotes", "subscribe");
+            SendSubscriptionMessageAsync(config.Symbol, "quotes", "subscribe")
+                .ObserveException(Log, $"NYSE subscribe quotes for {config.Symbol}");
         }
 
         return subId;
@@ -353,7 +357,8 @@ public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHisto
 
             if (IsConnected)
             {
-                _ = SendSubscriptionMessageAsync(info.Symbol, "quotes", "unsubscribe");
+                SendSubscriptionMessageAsync(info.Symbol, "quotes", "unsubscribe")
+                    .ObserveException(Log, $"NYSE unsubscribe quotes for {info.Symbol}");
             }
         }
     }
@@ -375,7 +380,8 @@ public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHisto
 
         if (IsConnected)
         {
-            _ = SendSubscriptionMessageAsync(config.Symbol, "depth", "subscribe");
+            SendSubscriptionMessageAsync(config.Symbol, "depth", "subscribe")
+                .ObserveException(Log, $"NYSE subscribe depth for {config.Symbol}");
         }
 
         return subId;
@@ -389,7 +395,8 @@ public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHisto
 
             if (IsConnected)
             {
-                _ = SendSubscriptionMessageAsync(info.Symbol, "depth", "unsubscribe");
+                SendSubscriptionMessageAsync(info.Symbol, "depth", "unsubscribe")
+                    .ObserveException(Log, $"NYSE unsubscribe depth for {info.Symbol}");
             }
         }
     }
@@ -417,7 +424,8 @@ public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHisto
 
         if (IsConnected)
         {
-            _ = SendUnsubscribeAllMessageAsync();
+            SendUnsubscribeAllMessageAsync()
+                .ObserveException(Log, "NYSE unsubscribe all");
         }
     }
 
@@ -744,7 +752,8 @@ public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHisto
         {
             Log.Error(ex, "NYSE WebSocket error");
             Status = DataSourceStatus.Disconnected;
-            _ = TryReconnectAsync();
+            TryReconnectAsync()
+                .ObserveException(Log, "NYSE WebSocket reconnection after error");
         }
     }
 
@@ -839,30 +848,45 @@ public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHisto
 
     private async Task SendSubscriptionMessageAsync(string symbol, string channel, string action)
     {
-        if (_webSocket?.State != WebSocketState.Open) return;
-
-        var message = JsonSerializer.Serialize(new
+        try
         {
-            action,
-            channel,
-            symbol
-        });
+            if (_webSocket?.State != WebSocketState.Open) return;
 
-        var bytes = Encoding.UTF8.GetBytes(message);
-        await _webSocket.SendAsync(bytes, WebSocketMessageType.Text, true, CancellationToken.None)
-            .ConfigureAwait(false);
+            var message = JsonSerializer.Serialize(new
+            {
+                action,
+                channel,
+                symbol
+            });
 
-        Log.Debug("NYSE {Action} {Channel} for {Symbol}", action, channel, symbol);
+            var bytes = Encoding.UTF8.GetBytes(message);
+            await _webSocket.SendAsync(bytes, WebSocketMessageType.Text, true, CancellationToken.None)
+                .ConfigureAwait(false);
+
+            Log.Debug("NYSE {Action} {Channel} for {Symbol}", action, channel, symbol);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Failed to send NYSE {Action} {Channel} for {Symbol}. " +
+                "Subscription state may be inconsistent.", action, channel, symbol);
+        }
     }
 
     private async Task SendUnsubscribeAllMessageAsync()
     {
-        if (_webSocket?.State != WebSocketState.Open) return;
+        try
+        {
+            if (_webSocket?.State != WebSocketState.Open) return;
 
-        var message = JsonSerializer.Serialize(new { action = "unsubscribe_all" });
-        var bytes = Encoding.UTF8.GetBytes(message);
-        await _webSocket.SendAsync(bytes, WebSocketMessageType.Text, true, CancellationToken.None)
-            .ConfigureAwait(false);
+            var message = JsonSerializer.Serialize(new { action = "unsubscribe_all" });
+            var bytes = Encoding.UTF8.GetBytes(message);
+            await _webSocket.SendAsync(bytes, WebSocketMessageType.Text, true, CancellationToken.None)
+                .ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Failed to send NYSE unsubscribe_all message");
+        }
     }
 
     private async Task ResubscribeAllAsync(CancellationToken ct)

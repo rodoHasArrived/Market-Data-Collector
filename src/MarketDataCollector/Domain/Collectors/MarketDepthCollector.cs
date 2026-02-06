@@ -46,6 +46,23 @@ public sealed class MarketDepthCollector : SymbolSubscriptionTracker
     }
 
     /// <summary>
+    /// Returns the current L2 order book snapshot for a symbol, or null if no book exists.
+    /// Thread-safe: acquires a read lock on the internal buffer.
+    /// </summary>
+    public LOBSnapshot? GetCurrentSnapshot(string symbol)
+    {
+        if (string.IsNullOrWhiteSpace(symbol)) return null;
+        if (!_books.TryGetValue(symbol.Trim(), out var book)) return null;
+        return book.GetSnapshot(symbol.Trim());
+    }
+
+    /// <summary>
+    /// Returns all symbols that currently have order book data.
+    /// </summary>
+    public IReadOnlyList<string> GetTrackedSymbols()
+        => _books.Keys.ToList();
+
+    /// <summary>
     /// Apply a single depth delta update.
     /// </summary>
     public void OnDepth(MarketDepthUpdate update)
@@ -189,6 +206,53 @@ public sealed class MarketDepthCollector : SymbolSubscriptionTracker
             finally
             {
                 _rwLock.ExitWriteLock();
+            }
+        }
+
+        /// <summary>
+        /// Returns a read-only snapshot of the current order book state.
+        /// Returns null if the book is empty.
+        /// </summary>
+        public LOBSnapshot? GetSnapshot(string symbol)
+        {
+            _rwLock.EnterReadLock();
+            try
+            {
+                if (_bids.Count == 0 && _asks.Count == 0) return null;
+
+                var bidsCopy = _bids.ToArray();
+                var asksCopy = _asks.ToArray();
+                var stale = _stale;
+                var seqNum = _sequenceCounter;
+
+                decimal? mid = null;
+                if (bidsCopy.Length > 0 && asksCopy.Length > 0)
+                    mid = (bidsCopy[0].Price + asksCopy[0].Price) / 2m;
+
+                decimal? imb = null;
+                if (bidsCopy.Length > 0 && asksCopy.Length > 0)
+                {
+                    var b = bidsCopy[0].Size;
+                    var a = asksCopy[0].Size;
+                    var tot = b + a;
+                    if (tot > 0) imb = (b - a) / tot;
+                }
+
+                return new LOBSnapshot(
+                    Timestamp: DateTimeOffset.UtcNow,
+                    Symbol: symbol,
+                    Bids: bidsCopy,
+                    Asks: asksCopy,
+                    MidPrice: mid,
+                    MicroPrice: null,
+                    Imbalance: imb,
+                    MarketState: stale ? MarketState.Unknown : MarketState.Normal,
+                    SequenceNumber: seqNum
+                );
+            }
+            finally
+            {
+                _rwLock.ExitReadLock();
             }
         }
 
