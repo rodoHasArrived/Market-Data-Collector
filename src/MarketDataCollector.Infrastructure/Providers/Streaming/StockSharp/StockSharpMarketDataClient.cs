@@ -36,7 +36,7 @@ namespace MarketDataCollector.Infrastructure.Providers.StockSharp;
 ///
 /// See StockSharpConnectorFactory for available connector types.
 /// </summary>
-[DataSource("stocksharp", "StockSharp", DataSourceType.Realtime, DataSourceCategory.Aggregator,
+[DataSource("stocksharp", "StockSharp", Infrastructure.DataSources.DataSourceType.Realtime, DataSourceCategory.Aggregator,
     Priority = 20, Description = "StockSharp connector providing access to 90+ data sources")]
 [ImplementsAdr("ADR-001", "StockSharp streaming data provider implementation")]
 [ImplementsAdr("ADR-004", "All async methods support CancellationToken")]

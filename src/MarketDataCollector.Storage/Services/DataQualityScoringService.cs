@@ -159,12 +159,12 @@ public sealed class DataQualityScoringService : IDataQualityScoringService
     }
 
     /// <inheritdoc />
-    public async Task<QualityReport> GenerateReportAsync(CancellationToken ct = default)
+    public async Task<DataQualityScoringReport> GenerateReportAsync(CancellationToken ct = default)
     {
         var assessments = new List<QualityAssessment>();
 
         if (!Directory.Exists(_options.RootPath))
-            return new QualityReport(DateTime.UtcNow, assessments, new QualityReportSummary());
+            return new DataQualityScoringReport(DateTime.UtcNow, assessments, new QualityReportSummary());
 
         var allFiles = Directory.EnumerateFiles(_options.RootPath, "*", SearchOption.AllDirectories)
             .Where(f => DataExtensions.Any(ext => f.EndsWith(ext, StringComparison.OrdinalIgnoreCase)))
@@ -197,7 +197,7 @@ public sealed class DataQualityScoringService : IDataQualityScoringService
                 .ToDictionary(g => g.Key, g => g.Average(a => a.CompositeScore))
         };
 
-        return new QualityReport(DateTime.UtcNow, assessments, summary);
+        return new DataQualityScoringReport(DateTime.UtcNow, assessments, summary);
     }
 
     private async Task<double> ComputeCompletenessScoreAsync(string filePath, CancellationToken ct)
@@ -382,7 +382,7 @@ public interface IDataQualityScoringService
 {
     Task<QualityAssessment> ScoreFileAsync(string filePath, CancellationToken ct = default);
     Task<BestOfBreedResult> SelectBestSourceAsync(string symbol, string eventType, DateTimeOffset? date = null, CancellationToken ct = default);
-    Task<QualityReport> GenerateReportAsync(CancellationToken ct = default);
+    Task<DataQualityScoringReport> GenerateReportAsync(CancellationToken ct = default);
 }
 
 // Quality scoring types
@@ -422,7 +422,7 @@ public sealed record SourceCandidate(
     long FileSize,
     QualityAssessment Assessment);
 
-public sealed record QualityReport(
+public sealed record DataQualityScoringReport(
     DateTime GeneratedAtUtc,
     IReadOnlyList<QualityAssessment> Assessments,
     QualityReportSummary Summary);

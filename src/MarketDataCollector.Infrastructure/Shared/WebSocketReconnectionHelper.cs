@@ -28,7 +28,7 @@ namespace MarketDataCollector.Infrastructure.Shared;
 ///    as internal detail within <c>HandleMessageAsync</c>.
 /// </para>
 /// </remarks>
-[ImplementsAdr("ADR-004", "All async methods support CancellationToken")]
+// TODO: Add [ImplementsAdr("ADR-004", "All async methods support CancellationToken")] after fixing references
 public sealed class WebSocketReconnectionHelper
 {
     private readonly SemaphoreSlim _reconnectGate = new(1, 1);

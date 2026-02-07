@@ -31,6 +31,7 @@
     <PackageVersion Include="Microsoft.Extensions.Logging" Version="9.0.12" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.12" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Debug" Version="9.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.ObjectPool" Version="9.0.12" />
   </ItemGroup>
 
   <ItemGroup Label="ASP.NET Core">
