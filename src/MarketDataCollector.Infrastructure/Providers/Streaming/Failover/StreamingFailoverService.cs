@@ -24,7 +24,7 @@ public sealed class StreamingFailoverService : IDisposable
     private readonly ILogger _log = LoggingSetup.ForContext<StreamingFailoverService>();
     private readonly ConcurrentDictionary<string, ProviderHealthState> _providerHealth = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<string, FailoverRuleState> _ruleStates = new(StringComparer.OrdinalIgnoreCase);
-    private readonly ConnectionHealthMonitor _healthMonitor;
+    private readonly IConnectionHealthMonitor _healthMonitor;
     private readonly object _failoverGate = new();
     private Timer? _evaluationTimer;
     private volatile bool _isDisposed;
@@ -39,7 +39,7 @@ public sealed class StreamingFailoverService : IDisposable
     /// </summary>
     public event Action<FailoverRecoveredEvent>? OnFailoverRecovered;
 
-    public StreamingFailoverService(ConnectionHealthMonitor healthMonitor)
+    public StreamingFailoverService(IConnectionHealthMonitor healthMonitor)
     {
         _healthMonitor = healthMonitor ?? throw new ArgumentNullException(nameof(healthMonitor));
 

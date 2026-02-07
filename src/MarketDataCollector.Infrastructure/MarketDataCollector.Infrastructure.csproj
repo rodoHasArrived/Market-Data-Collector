@@ -1,0 +1,69 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>MarketDataCollector.Infrastructure</RootNamespace>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- StockSharp integration is optional -->
+    <EnableStockSharp Condition="'$(EnableStockSharp)' == ''">false</EnableStockSharp>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(EnableStockSharp)' == 'true'">
+    <DefineConstants>$(DefineConstants);STOCKSHARP;STOCKSHARP_RITHMIC;STOCKSHARP_IQFEED;STOCKSHARP_CQG;STOCKSHARP_INTERACTIVEBROKERS</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Resilience and Retry -->
+    <PackageReference Include="Polly" />
+    <PackageReference Include="Polly.Extensions" />
+
+    <!-- HttpClientFactory -->
+    <PackageReference Include="Microsoft.Extensions.Http" />
+    <PackageReference Include="Microsoft.Extensions.Http.Polly" />
+
+    <!-- WebSocket -->
+    <PackageReference Include="System.Net.WebSockets.Client" />
+    <PackageReference Include="Websocket.Client" />
+
+    <!-- Reactive Extensions -->
+    <PackageReference Include="System.Reactive" />
+
+    <!-- HTTP -->
+    <PackageReference Include="System.Net.Http.Json" />
+
+    <!-- DI -->
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+
+    <!-- Logging -->
+    <PackageReference Include="Serilog" />
+
+    <!-- Validation -->
+    <PackageReference Include="FluentValidation" />
+
+    <!-- Performance -->
+    <PackageReference Include="System.Text.Json" />
+    <PackageReference Include="System.Threading.Channels" />
+
+    <!-- StockSharp (optional) -->
+    <PackageReference Include="StockSharp.Algo" Condition="'$(EnableStockSharp)' == 'true'" />
+    <PackageReference Include="StockSharp.Messages" Condition="'$(EnableStockSharp)' == 'true'" />
+    <PackageReference Include="StockSharp.BusinessEntities" Condition="'$(EnableStockSharp)' == 'true'" />
+    <PackageReference Include="StockSharp.Rithmic" Condition="'$(EnableStockSharp)' == 'true'" />
+    <PackageReference Include="StockSharp.IQFeed" Condition="'$(EnableStockSharp)' == 'true'" />
+    <PackageReference Include="StockSharp.Cqg.Com" Condition="'$(EnableStockSharp)' == 'true'" />
+    <PackageReference Include="StockSharp.InteractiveBrokers" Condition="'$(EnableStockSharp)' == 'true'" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MarketDataCollector.Core\MarketDataCollector.Core.csproj" />
+    <ProjectReference Include="..\MarketDataCollector.Domain\MarketDataCollector.Domain.csproj" />
+    <ProjectReference Include="..\MarketDataCollector.Contracts\MarketDataCollector.Contracts.csproj" />
+    <ProjectReference Include="..\MarketDataCollector.ProviderSdk\MarketDataCollector.ProviderSdk.csproj" />
+  </ItemGroup>
+</Project>
