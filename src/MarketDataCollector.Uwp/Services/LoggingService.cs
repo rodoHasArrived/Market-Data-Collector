@@ -95,6 +95,24 @@ public sealed class LoggingService : ILoggingService, IDisposable
     }
 
     /// <summary>
+    /// Logs a message (required by ILoggingService).
+    /// </summary>
+    /// <param name="message">The log message.</param>
+    void ILoggingService.Log(string message)
+    {
+        LogInfo(message);
+    }
+
+    /// <summary>
+    /// Logs a debug message (required by ILoggingService).
+    /// </summary>
+    /// <param name="message">The log message.</param>
+    void ILoggingService.LogDebug(string message)
+    {
+        LogDebug(message);
+    }
+
+    /// <summary>
     /// Logs a debug message.
     /// </summary>
     public void LogDebug(string message, params (string Key, string Value)[] properties)
@@ -107,10 +125,36 @@ public sealed class LoggingService : ILoggingService, IDisposable
         => Log(LogLevel.Info, message, properties);
 
     /// <summary>
+    /// Logs a warning message (required by ILoggingService).
+    /// </summary>
+    /// <param name="message">The log message.</param>
+    void ILoggingService.LogWarning(string message)
+    {
+        LogWarning(message);
+    }
+
+    /// <summary>
     /// Logs a warning message.
     /// </summary>
     public void LogWarning(string message, params (string Key, string Value)[] properties)
         => Log(LogLevel.Warning, message, properties);
+
+    /// <summary>
+    /// Logs an error message (required by ILoggingService).
+    /// </summary>
+    /// <param name="message">The log message.</param>
+    /// <param name="exception">Optional exception associated with the error.</param>
+    void ILoggingService.LogError(string message, Exception? exception)
+    {
+        if (exception != null)
+        {
+            LogError(message, exception);
+        }
+        else
+        {
+            LogError(message);
+        }
+    }
 
     /// <summary>
     /// Logs an error message.
