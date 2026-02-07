@@ -27,7 +27,7 @@ namespace MarketDataCollector.Infrastructure.Providers.Alpaca;
 /// - Alpaca typically limits to 1 active stream connection per user per endpoint.
 /// - Authentication is performed by sending an "auth" message immediately after connect.
 /// </summary>
-[DataSource("alpaca", "Alpaca Markets", DataSourceType.Realtime, DataSourceCategory.Broker,
+[DataSource("alpaca", "Alpaca Markets", Infrastructure.DataSources.DataSourceType.Realtime, DataSourceCategory.Broker,
     Priority = 10, Description = "WebSocket streaming from Alpaca Markets")]
 [ImplementsAdr("ADR-001", "Alpaca streaming data provider implementation")]
 [ImplementsAdr("ADR-004", "All async methods support CancellationToken")]

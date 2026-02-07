@@ -41,7 +41,7 @@ namespace MarketDataCollector.Infrastructure.Providers.Polygon;
 /// - Subscribe: {"action":"subscribe","params":"T.AAPL,Q.AAPL"}
 /// - Message types: T=trade, Q=quote, A=aggregate, AM=minute aggregate
 /// </summary>
-[DataSource("polygon", "Polygon.io", DataSourceType.Realtime, DataSourceCategory.Aggregator,
+[DataSource("polygon", "Polygon.io", Infrastructure.DataSources.DataSourceType.Realtime, DataSourceCategory.Aggregator,
     Priority = 15, Description = "WebSocket streaming from Polygon.io for trades, quotes, and aggregates")]
 [ImplementsAdr("ADR-001", "Polygon.io streaming data provider implementation")]
 [ImplementsAdr("ADR-004", "All async methods support CancellationToken")]

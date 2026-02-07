@@ -16,6 +16,7 @@ global using ContractsOrderFlowStatistics = MarketDataCollector.Contracts.Domain
 global using ContractsBboQuotePayload = MarketDataCollector.Contracts.Domain.Models.BboQuotePayload;
 global using ContractsIntegrityEvent = MarketDataCollector.Contracts.Domain.Models.IntegrityEvent;
 
-// Expose internal classes to test assembly for unit testing
+// Expose internal classes to test assembly and main entry point for unit testing
 using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("MarketDataCollector.Tests")]
+[assembly: InternalsVisibleTo("MarketDataCollector")]

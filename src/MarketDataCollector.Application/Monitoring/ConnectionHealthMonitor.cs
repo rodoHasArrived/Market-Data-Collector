@@ -91,7 +91,16 @@ public sealed class ConnectionHealthMonitor : IConnectionHealthMonitor, IDisposa
     /// Records a heartbeat response (pong) for a connection.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void RecordHeartbeat(string connectionId, long? roundTripTicks = null)
+    public void RecordHeartbeat(string connectionId)
+    {
+        RecordHeartbeat(connectionId, null);
+    }
+
+    /// <summary>
+    /// Records a heartbeat response (pong) for a connection with optional round-trip time.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void RecordHeartbeat(string connectionId, long? roundTripTicks)
     {
         if (_connections.TryGetValue(connectionId, out var state))
         {
@@ -126,7 +135,17 @@ public sealed class ConnectionHealthMonitor : IConnectionHealthMonitor, IDisposa
     }
 
     /// <summary>
-    /// Records latency for a connection.
+    /// Records latency for a connection (interface implementation - latency in milliseconds).
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void RecordLatency(string connectionId, double latencyMs)
+    {
+        var latencyTicks = (long)(latencyMs * Stopwatch.Frequency / 1000);
+        RecordLatency(connectionId, latencyTicks);
+    }
+
+    /// <summary>
+    /// Records latency for a connection (in ticks).
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void RecordLatency(string connectionId, long latencyTicks)
