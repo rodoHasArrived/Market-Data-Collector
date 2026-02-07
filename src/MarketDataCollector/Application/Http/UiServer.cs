@@ -534,7 +534,7 @@ public sealed class UiServer : IAsyncDisposable
         {
             try
             {
-                var options = new QualityReportOptions(
+                var options = new DataQualityReportOptions(
                     Paths: req.Paths ?? Array.Empty<string>(),
                     From: req.From,
                     To: req.To,

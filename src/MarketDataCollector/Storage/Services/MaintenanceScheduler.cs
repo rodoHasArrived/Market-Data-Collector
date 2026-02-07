@@ -366,7 +366,7 @@ public sealed class MaintenanceScheduler : IMaintenanceScheduler, IAsyncDisposab
 
     private async Task<(bool success, string message)> ExecuteQualityScoringAsync(MaintenanceJob job, CancellationToken ct)
     {
-        var report = await _dataQualityService.GenerateReportAsync(new QualityReportOptions(
+        var report = await _dataQualityService.GenerateReportAsync(new DataQualityReportOptions(
             Paths: job.TargetPaths,
             MinScoreThreshold: 1.0,
             IncludeRecommendations: true
