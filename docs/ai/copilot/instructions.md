@@ -279,6 +279,7 @@ Market-Data-Collector/
 │   │   ├── c4-diagrams.md
 │   │   ├── crystallized-storage-format.md
 │   │   ├── domains.md
+│   │   ├── layer-boundaries.md
 │   │   ├── overview.md
 │   │   ├── provider-management.md
 │   │   ├── storage-design.md
@@ -413,94 +414,9 @@ Market-Data-Collector/
 │   └── toc.yml
 ├── src/  # Source code
 │   ├── MarketDataCollector/
-│   │   ├── Application/
-│   │   │   ├── Backfill/
-│   │   │   │   ...
-│   │   │   ├── Commands/
-│   │   │   │   ...
-│   │   │   ├── Composition/
-│   │   │   │   ...
-│   │   │   ├── Config/
-│   │   │   │   ...
-│   │   │   ├── Credentials/
-│   │   │   │   ...
-│   │   │   ├── Exceptions/
-│   │   │   │   ...
-│   │   │   ├── Filters/
-│   │   │   │   ...
-│   │   │   ├── Http/
-│   │   │   │   ...
-│   │   │   ├── Indicators/
-│   │   │   │   ...
-│   │   │   ├── Logging/
-│   │   │   │   ...
-│   │   │   ├── Monitoring/
-│   │   │   │   ...
-│   │   │   ├── Pipeline/
-│   │   │   │   ...
-│   │   │   ├── Results/
-│   │   │   │   ...
-│   │   │   ├── Scheduling/
-│   │   │   │   ...
-│   │   │   ├── Serialization/
-│   │   │   │   ...
-│   │   │   ├── Services/
-│   │   │   │   ...
-│   │   │   ├── Subscriptions/
-│   │   │   │   ...
-│   │   │   ├── Testing/
-│   │   │   │   ...
-│   │   │   └── Tracing/
-│   │   │       ...
-│   │   ├── Domain/
-│   │   │   ├── Collectors/
-│   │   │   │   ...
-│   │   │   ├── Events/
-│   │   │   │   ...
-│   │   │   └── Models/
-│   │   │       ...
-│   │   ├── Infrastructure/
-│   │   │   ├── Contracts/
-│   │   │   │   ...
-│   │   │   ├── DataSources/
-│   │   │   │   ...
-│   │   │   ├── Http/
-│   │   │   │   ...
-│   │   │   ├── Performance/
-│   │   │   │   ...
-│   │   │   ├── Providers/
-│   │   │   │   ...
-│   │   │   ├── Resilience/
-│   │   │   │   ...
-│   │   │   ├── Shared/
-│   │   │   │   ...
-│   │   │   ├── Utilities/
-│   │   │   │   ...
-│   │   │   └── NoOpMarketDataClient.cs
 │   │   ├── Integrations/
 │   │   │   └── Lean/
 │   │   │       ...
-│   │   ├── Storage/
-│   │   │   ├── Archival/
-│   │   │   │   ...
-│   │   │   ├── Export/
-│   │   │   │   ...
-│   │   │   ├── Interfaces/
-│   │   │   │   ...
-│   │   │   ├── Maintenance/
-│   │   │   │   ...
-│   │   │   ├── Packaging/
-│   │   │   │   ...
-│   │   │   ├── Policies/
-│   │   │   │   ...
-│   │   │   ├── Replay/
-│   │   │   │   ...
-│   │   │   ├── Services/
-│   │   │   │   ...
-│   │   │   ├── Sinks/
-│   │   │   │   ...
-│   │   │   ├── StorageOptions.cs
-│   │   │   └── StorageProfiles.cs
 │   │   ├── Tools/
 │   │   │   └── DataValidator.cs
 │   │   ├── wwwroot/
@@ -511,6 +427,129 @@ Market-Data-Collector/
 │   │   ├── MarketDataCollector.csproj
 │   │   ├── Program.cs
 │   │   └── runtimeconfig.template.json
+│   ├── MarketDataCollector.Application/
+│   │   ├── Backfill/
+│   │   │   ├── BackfillRequest.cs
+│   │   │   ├── BackfillResult.cs
+│   │   │   ├── BackfillStatusStore.cs
+│   │   │   └── HistoricalBackfillService.cs
+│   │   ├── Commands/
+│   │   │   ├── CliArguments.cs
+│   │   │   ├── CommandDispatcher.cs
+│   │   │   ├── ConfigCommands.cs
+│   │   │   ├── DiagnosticsCommands.cs
+│   │   │   ├── DryRunCommand.cs
+│   │   │   ├── HelpCommand.cs
+│   │   │   ├── ICliCommand.cs
+│   │   │   ├── PackageCommands.cs
+│   │   │   ├── SchemaCheckCommand.cs
+│   │   │   ├── SelfTestCommand.cs
+│   │   │   ├── SymbolCommands.cs
+│   │   │   └── ValidateConfigCommand.cs
+│   │   ├── Composition/
+│   │   │   ├── HostAdapters.cs
+│   │   │   ├── HostStartup.cs
+│   │   │   └── ServiceCompositionRoot.cs
+│   │   ├── Config/
+│   │   │   ├── Credentials/
+│   │   │   │   ...
+│   │   │   ├── AppConfigJsonOptions.cs
+│   │   │   ├── ConfigDtoMapper.cs
+│   │   │   ├── ConfigurationPipeline.cs
+│   │   │   ├── ConfigValidationHelper.cs
+│   │   │   ├── ConfigValidatorCli.cs
+│   │   │   ├── ConfigWatcher.cs
+│   │   │   ├── DeploymentContext.cs
+│   │   │   ├── SensitiveValueMasker.cs
+│   │   │   └── StorageConfigExtensions.cs
+│   │   ├── Credentials/
+│   │   │   └── ICredentialStore.cs
+│   │   ├── Filters/
+│   │   │   └── MarketEventFilter.cs
+│   │   ├── Http/
+│   │   │   ├── Endpoints/
+│   │   │   │   ...
+│   │   │   ├── BackfillCoordinator.cs
+│   │   │   ├── ConfigStore.cs
+│   │   │   ├── HtmlTemplateLoader.cs
+│   │   │   ├── HtmlTemplates.cs
+│   │   │   └── UiServer.cs
+│   │   ├── Indicators/
+│   │   │   └── TechnicalIndicatorService.cs
+│   │   ├── Monitoring/
+│   │   │   ├── Core/
+│   │   │   │   ...
+│   │   │   ├── DataQuality/
+│   │   │   │   ...
+│   │   │   ├── BackpressureAlertService.cs
+│   │   │   ├── BadTickFilter.cs
+│   │   │   ├── ConnectionHealthMonitor.cs
+│   │   │   ├── ConnectionStatusWebhook.cs
+│   │   │   ├── DetailedHealthCheck.cs
+│   │   │   ├── ErrorRingBuffer.cs
+│   │   │   ├── Metrics.cs
+│   │   │   ├── PrometheusMetrics.cs
+│   │   │   ├── ProviderLatencyService.cs
+│   │   │   ├── ProviderMetricsStatus.cs
+│   │   │   ├── SchemaValidationService.cs
+│   │   │   ├── SpreadMonitor.cs
+│   │   │   ├── StatusHttpServer.cs
+│   │   │   ├── StatusSnapshot.cs
+│   │   │   ├── StatusWriter.cs
+│   │   │   ├── SystemHealthChecker.cs
+│   │   │   ├── TickSizeValidator.cs
+│   │   │   └── TimestampMonotonicityChecker.cs
+│   │   ├── Pipeline/
+│   │   │   ├── DroppedEventAuditTrail.cs
+│   │   │   └── EventPipeline.cs
+│   │   ├── Results/
+│   │   │   ├── ErrorCode.cs
+│   │   │   ├── OperationError.cs
+│   │   │   └── Result.cs
+│   │   ├── Scheduling/
+│   │   │   ├── BackfillExecutionLog.cs
+│   │   │   ├── BackfillSchedule.cs
+│   │   │   ├── BackfillScheduleManager.cs
+│   │   │   ├── CronExpressionParser.cs
+│   │   │   ├── IOperationalScheduler.cs
+│   │   │   ├── OperationalScheduler.cs
+│   │   │   └── ScheduledBackfillService.cs
+│   │   ├── Services/
+│   │   │   ├── ApiDocumentationService.cs
+│   │   │   ├── AutoConfigurationService.cs
+│   │   │   ├── CanonicalSymbolRegistry.cs
+│   │   │   ├── CliModeResolver.cs
+│   │   │   ├── ConfigEnvironmentOverride.cs
+│   │   │   ├── ConfigTemplateGenerator.cs
+│   │   │   ├── ConfigurationService.cs
+│   │   │   ├── ConfigurationServiceCredentialAdapter.cs
+│   │   │   ├── ConfigurationWizard.cs
+│   │   │   ├── ConnectivityTestService.cs
+│   │   │   ├── CredentialValidationService.cs
+│   │   │   ├── DailySummaryWebhook.cs
+│   │   │   ├── DiagnosticBundleService.cs
+│   │   │   ├── DryRunService.cs
+│   │   │   ├── ErrorTracker.cs
+│   │   │   ├── FriendlyErrorFormatter.cs
+│   │   │   ├── GracefulShutdownHandler.cs
+│   │   │   ├── GracefulShutdownService.cs
+│   │   │   ├── HistoricalDataQueryService.cs
+│   │   │   ├── PreflightChecker.cs
+│   │   │   ├── ProgressDisplayService.cs
+│   │   │   ├── SampleDataGenerator.cs
+│   │   │   ├── ServiceRegistry.cs
+│   │   │   ├── StartupSummary.cs
+│   │   │   └── TradingCalendar.cs
+│   │   ├── Subscriptions/
+│   │   │   ├── Services/
+│   │   │   │   ...
+│   │   │   └── SubscriptionManager.cs
+│   │   ├── Testing/
+│   │   │   └── DepthBufferSelfTests.cs
+│   │   ├── Tracing/
+│   │   │   └── OpenTelemetrySetup.cs
+│   │   ├── GlobalUsings.cs
+│   │   └── MarketDataCollector.Application.csproj
 │   ├── MarketDataCollector.Contracts/
 │   │   ├── Api/
 │   │   │   ├── BackfillApiModels.cs
@@ -557,6 +596,69 @@ Market-Data-Collector/
 │   │   ├── Session/
 │   │   │   └── CollectionSession.cs
 │   │   └── MarketDataCollector.Contracts.csproj
+│   ├── MarketDataCollector.Core/
+│   │   ├── Config/
+│   │   │   ├── AlpacaOptions.cs
+│   │   │   ├── AppConfig.cs
+│   │   │   ├── BackfillConfig.cs
+│   │   │   ├── DataSourceConfig.cs
+│   │   │   ├── DataSourceKind.cs
+│   │   │   ├── DataSourceKindConverter.cs
+│   │   │   ├── DerivativesConfig.cs
+│   │   │   ├── IConfigurationProvider.cs
+│   │   │   ├── StockSharpConfig.cs
+│   │   │   └── ValidatedConfig.cs
+│   │   ├── Exceptions/
+│   │   │   ├── ConfigurationException.cs
+│   │   │   ├── ConnectionException.cs
+│   │   │   ├── DataProviderException.cs
+│   │   │   ├── MarketDataCollectorException.cs
+│   │   │   ├── OperationTimeoutException.cs
+│   │   │   ├── RateLimitException.cs
+│   │   │   ├── SequenceValidationException.cs
+│   │   │   ├── StorageException.cs
+│   │   │   └── ValidationException.cs
+│   │   ├── Logging/
+│   │   │   └── LoggingSetup.cs
+│   │   ├── Monitoring/
+│   │   │   ├── Core/
+│   │   │   │   ...
+│   │   │   ├── EventSchemaValidator.cs
+│   │   │   └── IConnectionHealthMonitor.cs
+│   │   ├── Performance/
+│   │   │   └── Performance/
+│   │   │       ...
+│   │   ├── Pipeline/
+│   │   │   └── EventPipelinePolicy.cs
+│   │   ├── Serialization/
+│   │   │   └── MarketDataJsonContext.cs
+│   │   ├── Services/
+│   │   │   └── IFlushable.cs
+│   │   ├── Subscriptions/
+│   │   │   └── Models/
+│   │   │       ...
+│   │   ├── GlobalUsings.cs
+│   │   └── MarketDataCollector.Core.csproj
+│   ├── MarketDataCollector.Domain/
+│   │   ├── Collectors/
+│   │   │   ├── IQuoteStateStore.cs
+│   │   │   ├── MarketDepthCollector.cs
+│   │   │   ├── QuoteCollector.cs
+│   │   │   ├── SymbolSubscriptionTracker.cs
+│   │   │   └── TradeDataCollector.cs
+│   │   ├── Events/
+│   │   │   ├── Publishers/
+│   │   │   │   ...
+│   │   │   ├── IMarketEventPublisher.cs
+│   │   │   ├── MarketEvent.cs
+│   │   │   └── MarketEventPayload.cs
+│   │   ├── Models/
+│   │   │   ├── AggregateBar.cs
+│   │   │   ├── MarketDepthUpdate.cs
+│   │   │   └── MarketTradeUpdate.cs
+│   │   ├── BannedReferences.txt
+│   │   ├── GlobalUsings.cs
+│   │   └── MarketDataCollector.Domain.csproj
 │   ├── MarketDataCollector.FSharp/
 │   │   ├── Calculations/
 │   │   │   ├── Aggregations.fs
@@ -577,6 +679,47 @@ Market-Data-Collector/
 │   │   │   └── ValidationTypes.fs
 │   │   ├── Interop.fs
 │   │   └── MarketDataCollector.FSharp.fsproj
+│   ├── MarketDataCollector.Infrastructure/
+│   │   ├── Contracts/
+│   │   │   ├── ContractVerificationExtensions.cs
+│   │   │   └── ContractVerificationService.cs
+│   │   ├── DataSources/
+│   │   │   ├── DataSourceBase.cs
+│   │   │   └── DataSourceConfiguration.cs
+│   │   ├── Http/
+│   │   │   ├── HttpClientConfiguration.cs
+│   │   │   └── SharedResiliencePolicies.cs
+│   │   ├── Providers/
+│   │   │   ├── Backfill/
+│   │   │   │   ...
+│   │   │   ├── Core/
+│   │   │   │   ...
+│   │   │   ├── Historical/
+│   │   │   │   ...
+│   │   │   ├── Streaming/
+│   │   │   │   ...
+│   │   │   ├── SymbolSearch/
+│   │   │   │   ...
+│   │   │   ├── MarketDataClientFactory.cs
+│   │   │   └── SubscriptionManager.cs
+│   │   ├── Resilience/
+│   │   │   ├── HttpResiliencePolicy.cs
+│   │   │   ├── WebSocketConnectionConfig.cs
+│   │   │   ├── WebSocketConnectionManager.cs
+│   │   │   └── WebSocketResiliencePolicy.cs
+│   │   ├── Shared/
+│   │   │   ├── ISymbolStateStore.cs
+│   │   │   ├── SubscriptionManager.cs
+│   │   │   ├── TaskSafetyExtensions.cs
+│   │   │   └── WebSocketProviderBase.cs
+│   │   ├── Utilities/
+│   │   │   ├── HttpResponseHandler.cs
+│   │   │   ├── JsonElementExtensions.cs
+│   │   │   ├── SymbolNormalization.cs
+│   │   │   └── SymbolNormalizer.cs
+│   │   ├── GlobalUsings.cs
+│   │   ├── MarketDataCollector.Infrastructure.csproj
+│   │   └── NoOpMarketDataClient.cs
 │   ├── MarketDataCollector.ProviderSdk/
 │   │   ├── CredentialValidator.cs
 │   │   ├── DataSourceAttribute.cs
@@ -591,6 +734,63 @@ Market-Data-Collector/
 │   │   ├── IRealtimeDataSource.cs
 │   │   ├── MarketDataCollector.ProviderSdk.csproj
 │   │   └── ProviderHttpUtilities.cs
+│   ├── MarketDataCollector.Storage/
+│   │   ├── Archival/
+│   │   │   ├── ArchivalStorageService.cs
+│   │   │   ├── AtomicFileWriter.cs
+│   │   │   ├── CompressionProfileManager.cs
+│   │   │   ├── SchemaVersionManager.cs
+│   │   │   └── WriteAheadLog.cs
+│   │   ├── Export/
+│   │   │   ├── AnalysisExportService.cs
+│   │   │   ├── AnalysisQualityReport.cs
+│   │   │   ├── ExportProfile.cs
+│   │   │   ├── ExportRequest.cs
+│   │   │   └── ExportResult.cs
+│   │   ├── Interfaces/
+│   │   │   ├── ISourceRegistry.cs
+│   │   │   ├── IStorageCatalogService.cs
+│   │   │   ├── IStoragePolicy.cs
+│   │   │   └── IStorageSink.cs
+│   │   ├── Maintenance/
+│   │   │   ├── ArchiveMaintenanceModels.cs
+│   │   │   ├── ArchiveMaintenanceScheduleManager.cs
+│   │   │   ├── IArchiveMaintenanceService.cs
+│   │   │   └── ScheduledArchiveMaintenanceService.cs
+│   │   ├── Packaging/
+│   │   │   ├── PackageManifest.cs
+│   │   │   ├── PackageOptions.cs
+│   │   │   ├── PackageResult.cs
+│   │   │   └── PortableDataPackager.cs
+│   │   ├── Policies/
+│   │   │   └── JsonlStoragePolicy.cs
+│   │   ├── Replay/
+│   │   │   ├── JsonlReplayer.cs
+│   │   │   └── MemoryMappedJsonlReader.cs
+│   │   ├── Services/
+│   │   │   ├── DataLineageService.cs
+│   │   │   ├── DataQualityScoringService.cs
+│   │   │   ├── DataQualityService.cs
+│   │   │   ├── EventBuffer.cs
+│   │   │   ├── FileMaintenanceService.cs
+│   │   │   ├── FilePermissionsService.cs
+│   │   │   ├── LifecyclePolicyEngine.cs
+│   │   │   ├── MaintenanceScheduler.cs
+│   │   │   ├── MetadataTagService.cs
+│   │   │   ├── QuotaEnforcementService.cs
+│   │   │   ├── SourceRegistry.cs
+│   │   │   ├── StorageCatalogService.cs
+│   │   │   ├── StorageChecksumService.cs
+│   │   │   ├── StorageSearchService.cs
+│   │   │   ├── SymbolRegistryService.cs
+│   │   │   └── TierMigrationService.cs
+│   │   ├── Sinks/
+│   │   │   ├── JsonlStorageSink.cs
+│   │   │   └── ParquetStorageSink.cs
+│   │   ├── GlobalUsings.cs
+│   │   ├── MarketDataCollector.Storage.csproj
+│   │   ├── StorageOptions.cs
+│   │   └── StorageProfiles.cs
 │   ├── MarketDataCollector.Ui/
 │   │   ├── wwwroot/
 │   │   │   └── static/
