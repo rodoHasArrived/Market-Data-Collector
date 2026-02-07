@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using MarketDataCollector.Ui.Services.Contracts;
 
 namespace MarketDataCollector.Ui.Services;
 
@@ -12,36 +13,18 @@ namespace MarketDataCollector.Ui.Services;
 /// </summary>
 public sealed class SmartRecommendationsService
 {
-    private static SmartRecommendationsService? _instance;
-    private static readonly object _lock = new();
-
     private readonly DataCompletenessService _completenessService;
     private readonly StorageAnalyticsService _storageService;
-    private readonly ConfigService _configService;
+    private readonly IConfigService _configService;
 
-    /// <summary>
-    /// Gets the singleton instance.
-    /// </summary>
-    public static SmartRecommendationsService Instance
+    public SmartRecommendationsService(
+        DataCompletenessService completenessService,
+        StorageAnalyticsService storageService,
+        IConfigService configService)
     {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new SmartRecommendationsService();
-                }
-            }
-            return _instance;
-        }
-    }
-
-    private SmartRecommendationsService()
-    {
-        _completenessService = new DataCompletenessService();
-        _storageService = new StorageAnalyticsService();
-        _configService = new ConfigService();
+        _completenessService = completenessService ?? throw new ArgumentNullException(nameof(completenessService));
+        _storageService = storageService ?? throw new ArgumentNullException(nameof(storageService));
+        _configService = configService ?? throw new ArgumentNullException(nameof(configService));
     }
 
     /// <summary>

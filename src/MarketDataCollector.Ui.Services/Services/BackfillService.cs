@@ -2,6 +2,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.Threading;
 using System.Threading.Tasks;
+using MarketDataCollector.Ui.Services.Contracts;
 
 namespace MarketDataCollector.Ui.Services;
 
@@ -11,10 +12,7 @@ namespace MarketDataCollector.Ui.Services;
 /// </summary>
 public sealed class BackfillService
 {
-    private static BackfillService? _instance;
-    private static readonly object _lock = new();
-
-    private readonly NotificationService _notificationService;
+    private readonly INotificationService _notificationService;
     private readonly BackfillApiService _backfillApiService;
     private BackfillProgress? _currentProgress;
     private CancellationTokenSource? _cancellationTokenSource;
@@ -26,37 +24,10 @@ public sealed class BackfillService
     private const int ProgressPollIntervalMs = 1000;
     private const int MaxPollAttempts = 3600; // 1 hour max at 1 second intervals
 
-    public static BackfillService Instance
+    public BackfillService(INotificationService notificationService, BackfillApiService backfillApiService)
     {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new BackfillService();
-                }
-            }
-            return _instance;
-        }
-    }
-
-    private BackfillService()
-    {
-        _notificationService = NotificationService.Instance;
-        _backfillApiService = new BackfillApiService();
-    }
-
-    /// <summary>
-    /// Public constructor for direct instantiation.
-    /// </summary>
-    public BackfillService(bool useInstance = false)
-    {
-        if (useInstance)
-        {
-            throw new InvalidOperationException("Use BackfillService.Instance for singleton access");
-        }
-        _notificationService = NotificationService.Instance;
+        _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
+        _backfillApiService = backfillApiService ?? throw new ArgumentNullException(nameof(backfillApiService));
     }
 
     /// <summary>

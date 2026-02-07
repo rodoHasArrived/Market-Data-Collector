@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using MarketDataCollector.Ui.Services.Contracts;
 
 namespace MarketDataCollector.Ui.Services;
 
@@ -11,34 +12,16 @@ namespace MarketDataCollector.Ui.Services;
 /// </summary>
 public sealed class StorageAnalyticsService
 {
-    private static StorageAnalyticsService? _instance;
-    private static readonly object _lock = new();
-
-    private readonly ConfigService _configService;
-    private readonly NotificationService _notificationService;
+    private readonly IConfigService _configService;
+    private readonly INotificationService _notificationService;
     private StorageAnalytics? _cachedAnalytics;
     private DateTime _lastAnalysisTime;
     private readonly TimeSpan _cacheExpiration = TimeSpan.FromMinutes(5);
 
-    public static StorageAnalyticsService Instance
+    public StorageAnalyticsService(IConfigService configService, INotificationService notificationService)
     {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new StorageAnalyticsService();
-                }
-            }
-            return _instance;
-        }
-    }
-
-    private StorageAnalyticsService()
-    {
-        _configService = new ConfigService();
-        _notificationService = NotificationService.Instance;
+        _configService = configService ?? throw new ArgumentNullException(nameof(configService));
+        _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
     }
 
     /// <summary>

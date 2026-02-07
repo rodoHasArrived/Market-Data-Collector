@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using MarketDataCollector.Ui.Services.Contracts;
 
 namespace MarketDataCollector.Ui.Services;
 
@@ -11,13 +12,16 @@ public sealed class AnalysisExportWizardService
 {
     private readonly DataCompletenessService _completenessService;
     private readonly StorageAnalyticsService _storageService;
-    private readonly ConfigService _configService;
+    private readonly IConfigService _configService;
 
-    public AnalysisExportWizardService()
+    public AnalysisExportWizardService(
+        DataCompletenessService completenessService,
+        StorageAnalyticsService storageService,
+        IConfigService configService)
     {
-        _completenessService = new DataCompletenessService();
-        _storageService = new StorageAnalyticsService();
-        _configService = new ConfigService();
+        _completenessService = completenessService ?? throw new ArgumentNullException(nameof(completenessService));
+        _storageService = storageService ?? throw new ArgumentNullException(nameof(storageService));
+        _configService = configService ?? throw new ArgumentNullException(nameof(configService));
     }
 
     /// <summary>

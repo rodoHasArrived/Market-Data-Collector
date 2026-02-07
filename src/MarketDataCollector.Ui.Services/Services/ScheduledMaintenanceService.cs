@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using MarketDataCollector.Ui.Services.Contracts;
 
 namespace MarketDataCollector.Ui.Services;
 
@@ -12,34 +13,16 @@ namespace MarketDataCollector.Ui.Services;
 /// </summary>
 public sealed class ScheduledMaintenanceService
 {
-    private static ScheduledMaintenanceService? _instance;
-    private static readonly object _lock = new();
-
-    private readonly NotificationService _notificationService;
+    private readonly INotificationService _notificationService;
     private readonly List<MaintenanceTask> _tasks = new();
     private readonly List<MaintenanceExecutionLog> _executionLog = new();
     private readonly Dictionary<string, CancellationTokenSource> _runningTasks = new();
     private Timer? _schedulerTimer;
     private const int MaxLogEntries = 100;
 
-    public static ScheduledMaintenanceService Instance
+    public ScheduledMaintenanceService(INotificationService notificationService)
     {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new ScheduledMaintenanceService();
-                }
-            }
-            return _instance;
-        }
-    }
-
-    private ScheduledMaintenanceService()
-    {
-        _notificationService = NotificationService.Instance;
+        _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
         InitializeDefaultTasks();
     }
 

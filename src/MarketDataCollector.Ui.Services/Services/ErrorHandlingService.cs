@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using MarketDataCollector.Ui.Services.Collections;
+using MarketDataCollector.Ui.Services.Contracts;
 
 namespace MarketDataCollector.Ui.Services;
 
@@ -12,33 +13,15 @@ namespace MarketDataCollector.Ui.Services;
 /// </summary>
 public sealed class ErrorHandlingService : IDisposable
 {
-    private static ErrorHandlingService? _instance;
-    private static readonly object _lock = new();
-
     private readonly BoundedObservableCollection<ErrorRecord> _recentErrors = new(50);
-    private readonly NotificationService _notificationService;
-    private readonly LoggingService _loggingService;
+    private readonly INotificationService _notificationService;
+    private readonly ILoggingService _loggingService;
     private bool _disposed;
 
-    public static ErrorHandlingService Instance
+    public ErrorHandlingService(INotificationService notificationService, ILoggingService loggingService)
     {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new ErrorHandlingService();
-                }
-            }
-            return _instance;
-        }
-    }
-
-    private ErrorHandlingService()
-    {
-        _notificationService = NotificationService.Instance;
-        _loggingService = LoggingService.Instance;
+        _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
+        _loggingService = loggingService ?? throw new ArgumentNullException(nameof(loggingService));
     }
 
     /// <summary>

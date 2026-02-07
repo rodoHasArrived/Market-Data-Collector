@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using MarketDataCollector.Ui.Services.Contracts;
 
 namespace MarketDataCollector.Ui.Services;
 
@@ -13,30 +14,13 @@ namespace MarketDataCollector.Ui.Services;
 /// </summary>
 public sealed class SymbolManagementService
 {
-    private static SymbolManagementService? _instance;
-    private static readonly object _lock = new();
     private readonly ApiClientService _apiClient;
-    private readonly ConfigService _configService;
+    private readonly IConfigService _configService;
 
-    public static SymbolManagementService Instance
+    public SymbolManagementService(ApiClientService apiClient, IConfigService configService)
     {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new SymbolManagementService();
-                }
-            }
-            return _instance;
-        }
-    }
-
-    private SymbolManagementService()
-    {
-        _apiClient = ApiClientService.Instance;
-        _configService = new ConfigService();
+        _apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
+        _configService = configService ?? throw new ArgumentNullException(nameof(configService));
     }
 
     /// <summary>

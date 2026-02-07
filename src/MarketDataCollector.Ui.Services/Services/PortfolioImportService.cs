@@ -14,28 +14,13 @@ namespace MarketDataCollector.Ui.Services;
 /// </summary>
 public sealed class PortfolioImportService
 {
-    private static PortfolioImportService? _instance;
-    private static readonly object _lock = new();
     private readonly ApiClientService _apiClient;
+    private readonly WatchlistService _watchlistService;
 
-    public static PortfolioImportService Instance
+    public PortfolioImportService(ApiClientService apiClient, WatchlistService watchlistService)
     {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new PortfolioImportService();
-                }
-            }
-            return _instance;
-        }
-    }
-
-    private PortfolioImportService()
-    {
-        _apiClient = ApiClientService.Instance;
+        _apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
+        _watchlistService = watchlistService ?? throw new ArgumentNullException(nameof(watchlistService));
     }
 
     /// <summary>
@@ -220,8 +205,7 @@ public sealed class PortfolioImportService
 
         try
         {
-            var watchlistService = WatchlistService.Instance;
-            await watchlistService.CreateOrUpdateWatchlistAsync(watchlistName, symbols, ct);
+            await _watchlistService.CreateOrUpdateWatchlistAsync(watchlistName, symbols, ct);
             result.Success = true;
             result.ImportedCount = symbols.Count;
         }

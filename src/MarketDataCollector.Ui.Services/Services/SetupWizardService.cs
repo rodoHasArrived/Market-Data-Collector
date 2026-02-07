@@ -1,6 +1,7 @@
 using System.Net.Http;
 using System.Text.Json;
 using MarketDataCollector.Contracts.Configuration;
+using MarketDataCollector.Ui.Services.Contracts;
 
 namespace MarketDataCollector.Ui.Services;
 
@@ -11,15 +12,14 @@ namespace MarketDataCollector.Ui.Services;
 public sealed class SetupWizardService
 {
     private readonly HttpClient _httpClient;
-    private readonly ConfigService _configService;
+    private readonly IConfigService _configService;
     private readonly CredentialService _credentialService;
 
-    public SetupWizardService()
+    public SetupWizardService(HttpClient httpClient, IConfigService configService, CredentialService credentialService)
     {
-        // TD-10: Use HttpClientFactory instead of creating new HttpClient instances
-        _httpClient = HttpClientFactoryProvider.CreateClient(HttpClientNames.SetupWizard);
-        _configService = new ConfigService();
-        _credentialService = new CredentialService();
+        _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+        _configService = configService ?? throw new ArgumentNullException(nameof(configService));
+        _credentialService = credentialService ?? throw new ArgumentNullException(nameof(credentialService));
     }
 
     /// <summary>

@@ -1,3 +1,4 @@
+using MarketDataCollector.Ui.Services.Contracts;
 
 namespace MarketDataCollector.Ui.Services;
 
@@ -7,34 +8,13 @@ namespace MarketDataCollector.Ui.Services;
 /// </summary>
 public sealed class SearchService
 {
-    private static SearchService? _instance;
-    private static readonly object _lock = new();
-
-    private readonly ConfigService _configService;
+    private readonly IConfigService _configService;
     private readonly WatchlistService _watchlistService;
 
-    /// <summary>
-    /// Gets the singleton instance of the SearchService.
-    /// </summary>
-    public static SearchService Instance
+    public SearchService(IConfigService configService, WatchlistService watchlistService)
     {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new SearchService();
-                }
-            }
-            return _instance;
-        }
-    }
-
-    private SearchService()
-    {
-        _configService = new ConfigService();
-        _watchlistService = WatchlistService.Instance;
+        _configService = configService ?? throw new ArgumentNullException(nameof(configService));
+        _watchlistService = watchlistService ?? throw new ArgumentNullException(nameof(watchlistService));
     }
 
     /// <summary>

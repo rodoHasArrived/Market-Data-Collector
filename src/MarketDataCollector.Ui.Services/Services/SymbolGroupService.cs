@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using MarketDataCollector.Ui.Services.Contracts;
 
 namespace MarketDataCollector.Ui.Services;
 
@@ -10,10 +11,7 @@ namespace MarketDataCollector.Ui.Services;
 /// </summary>
 public sealed class SymbolGroupService
 {
-    private static SymbolGroupService? _instance;
-    private static readonly object _lock = new();
-
-    private readonly ConfigService _configService;
+    private readonly IConfigService _configService;
     private SymbolGroupsConfig? _groupsConfig;
 
     // Predefined templates
@@ -29,24 +27,9 @@ public sealed class SymbolGroupService
         ["Energy"] = ("Energy", new[] { "XOM", "CVX", "COP", "SLB", "EOG", "PSX" }, "#FF5722", "\uE945")
     };
 
-    public static SymbolGroupService Instance
+    public SymbolGroupService(IConfigService configService)
     {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new SymbolGroupService();
-                }
-            }
-            return _instance;
-        }
-    }
-
-    private SymbolGroupService()
-    {
-        _configService = new ConfigService();
+        _configService = configService ?? throw new ArgumentNullException(nameof(configService));
     }
 
     /// <summary>

@@ -9,27 +9,6 @@ namespace MarketDataCollector.Ui.Services;
 /// </summary>
 public sealed class OAuthRefreshService : IDisposable
 {
-    private static OAuthRefreshService? _instance;
-    private static readonly object _lock = new();
-
-    /// <summary>
-    /// Gets the singleton instance of the OAuth refresh service.
-    /// </summary>
-    public static OAuthRefreshService Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new OAuthRefreshService();
-                }
-            }
-            return _instance;
-        }
-    }
-
     private readonly CredentialService _credentialService;
     private readonly System.Timers.Timer _refreshTimer;
     private readonly System.Timers.Timer _expirationCheckTimer;
@@ -61,9 +40,9 @@ public sealed class OAuthRefreshService : IDisposable
     /// </summary>
     public event EventHandler<TokenExpirationWarningEventArgs>? TokenExpirationWarning;
 
-    private OAuthRefreshService()
+    public OAuthRefreshService(CredentialService credentialService)
     {
-        _credentialService = new CredentialService();
+        _credentialService = credentialService ?? throw new ArgumentNullException(nameof(credentialService));
 
         _refreshTimer = new System.Timers.Timer(CheckIntervalMs);
         _refreshTimer.Elapsed += OnRefreshTimerElapsed;

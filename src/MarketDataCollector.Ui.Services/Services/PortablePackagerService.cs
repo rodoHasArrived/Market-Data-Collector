@@ -17,28 +17,20 @@ namespace MarketDataCollector.Ui.Services;
 /// </summary>
 public sealed class PortablePackagerService
 {
-    private static readonly Lazy<PortablePackagerService> _instance = new(() => new PortablePackagerService());
-    public static PortablePackagerService Instance => _instance.Value;
-
-    private readonly ManifestService? _manifestService;
-    private readonly ArchiveHealthService? _archiveHealthService;
-    private readonly SchemaService? _schemaService;
+    private readonly ManifestService _manifestService;
+    private readonly ArchiveHealthService _archiveHealthService;
+    private readonly SchemaService _schemaService;
     private readonly List<RecentPackageInfo> _recentPackages = new();
     private const int MaxRecentPackages = 50;
-
-    private PortablePackagerService()
-    {
-        // Default constructor for singleton
-    }
 
     public PortablePackagerService(
         ManifestService manifestService,
         ArchiveHealthService archiveHealthService,
         SchemaService schemaService)
     {
-        _manifestService = manifestService;
-        _archiveHealthService = archiveHealthService;
-        _schemaService = schemaService;
+        _manifestService = manifestService ?? throw new ArgumentNullException(nameof(manifestService));
+        _archiveHealthService = archiveHealthService ?? throw new ArgumentNullException(nameof(archiveHealthService));
+        _schemaService = schemaService ?? throw new ArgumentNullException(nameof(schemaService));
     }
 
     /// <summary>

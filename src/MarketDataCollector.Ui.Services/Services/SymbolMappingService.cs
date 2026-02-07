@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Text.Json;
+using MarketDataCollector.Ui.Services.Contracts;
 
 namespace MarketDataCollector.Ui.Services;
 
@@ -9,9 +10,7 @@ namespace MarketDataCollector.Ui.Services;
 /// </summary>
 public sealed class SymbolMappingService
 {
-    private static readonly Lazy<SymbolMappingService> _instance = new(() => new SymbolMappingService());
-    public static SymbolMappingService Instance => _instance.Value;
-
+    private readonly ILoggingService _loggingService;
     private readonly string _mappingsFilePath;
     private SymbolMappingsConfig _config = new();
 
@@ -37,8 +36,9 @@ public sealed class SymbolMappingService
 
     public event EventHandler? MappingsChanged;
 
-    private SymbolMappingService()
+    public SymbolMappingService(ILoggingService loggingService)
     {
+        _loggingService = loggingService ?? throw new ArgumentNullException(nameof(loggingService));
         var baseDir = AppContext.BaseDirectory;
         _mappingsFilePath = Path.Combine(baseDir, "data", "_config", "symbol-mappings.json");
     }
@@ -64,7 +64,7 @@ public sealed class SymbolMappingService
         catch (Exception ex)
         {
             // Log the error but gracefully degrade to empty config
-            LoggingService.Instance.LogWarning("Failed to load symbol mappings, using defaults", ex);
+            _loggingService.LogWarning("Failed to load symbol mappings, using defaults", ex);
             _config = new SymbolMappingsConfig();
         }
     }
@@ -89,7 +89,7 @@ public sealed class SymbolMappingService
         catch (Exception ex)
         {
             // Log the error but don't crash - mappings are recoverable
-            LoggingService.Instance.LogWarning("Failed to save symbol mappings", ex);
+            _loggingService.LogWarning("Failed to save symbol mappings", ex);
         }
     }
 

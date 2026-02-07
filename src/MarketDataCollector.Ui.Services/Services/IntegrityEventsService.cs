@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using MarketDataCollector.Ui.Services.Collections;
+using MarketDataCollector.Ui.Services.Contracts;
 
 namespace MarketDataCollector.Ui.Services;
 
@@ -12,32 +13,14 @@ namespace MarketDataCollector.Ui.Services;
 /// </summary>
 public sealed class IntegrityEventsService
 {
-    private static IntegrityEventsService? _instance;
-    private static readonly object _lock = new();
-
     private readonly BoundedObservableCollection<IntegrityEvent> _events;
-    private readonly NotificationService _notificationService;
+    private readonly INotificationService _notificationService;
     private const int MaxEvents = 100;
     private const int MaxRecentEvents = 10;
 
-    public static IntegrityEventsService Instance
+    public IntegrityEventsService(INotificationService notificationService)
     {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new IntegrityEventsService();
-                }
-            }
-            return _instance;
-        }
-    }
-
-    private IntegrityEventsService()
-    {
-        _notificationService = NotificationService.Instance;
+        _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
         _events = new BoundedObservableCollection<IntegrityEvent>(MaxEvents);
     }
 

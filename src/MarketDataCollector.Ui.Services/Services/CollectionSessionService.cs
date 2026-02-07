@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using MarketDataCollector.Ui.Services.Contracts;
 
 namespace MarketDataCollector.Ui.Services;
 
@@ -13,34 +14,16 @@ namespace MarketDataCollector.Ui.Services;
 /// </summary>
 public sealed class CollectionSessionService
 {
-    private static CollectionSessionService? _instance;
-    private static readonly object _lock = new();
-
-    private readonly ConfigService _configService;
-    private readonly NotificationService _notificationService;
+    private readonly IConfigService _configService;
+    private readonly INotificationService _notificationService;
     private readonly string _sessionsFilePath;
     private CollectionSessionsConfig? _sessionsConfig;
     private CollectionSession? _activeSession;
 
-    public static CollectionSessionService Instance
+    public CollectionSessionService(IConfigService configService, INotificationService notificationService)
     {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    _instance ??= new CollectionSessionService();
-                }
-            }
-            return _instance;
-        }
-    }
-
-    private CollectionSessionService()
-    {
-        _configService = new ConfigService();
-        _notificationService = NotificationService.Instance;
+        _configService = configService ?? throw new ArgumentNullException(nameof(configService));
+        _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
         _sessionsFilePath = Path.Combine(AppContext.BaseDirectory, "sessions.json");
     }
 
