@@ -15,51 +15,28 @@
     <Product>Market Data Collector</Product>
     <Copyright>Copyright © 2024 MarketDataCollector Team</Copyright>
 
-    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
-    <!-- SINGLE-EXE DESKTOP DEPLOYMENT CONFIGURATION                                  -->
-    <!-- This configuration ensures the app runs as a single portable executable      -->
-    <!-- Note: SelfContained is only enabled during publish to allow project refs     -->
-    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
-
-    <!-- Single-file publishing - bundles everything into one EXE -->
+    <!-- Single-file publishing -->
     <PublishSingleFile>true</PublishSingleFile>
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
-
-    <!-- Include ALL content in single file - no extraction needed -->
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
-
-    <!-- Trimming for smaller executable (only during publish) -->
     <PublishTrimmed>true</PublishTrimmed>
     <TrimMode>partial</TrimMode>
-
-    <!-- Ready-to-run for faster startup -->
     <PublishReadyToRun>true</PublishReadyToRun>
 
-    <!-- SelfContained only during publish to avoid NETSDK1151 when referenced by other projects -->
+    <!-- SelfContained only during publish -->
     <SelfContained Condition="'$(PublishProtocol)' != ''">true</SelfContained>
     <SelfContained Condition="'$(PublishProtocol)' == ''">false</SelfContained>
 
-    <!-- Globalization settings -->
     <InvariantGlobalization>false</InvariantGlobalization>
-
-    <!-- Windows Desktop Integration -->
     <ApplicationIcon Condition="Exists('app.ico')">app.ico</ApplicationIcon>
     <ApplicationManifest Condition="Exists('app.manifest')">app.manifest</ApplicationManifest>
-
-    <!-- Deterministic builds for reproducibility -->
     <Deterministic>true</Deterministic>
-
-    <!-- Optimize for size -->
     <DebugType>embedded</DebugType>
     <DebugSymbols>true</DebugSymbols>
-
-    <!-- Allow unsafe code for Linux directory fsync operations in AtomicFileWriter.cs -->
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <PropertyGroup>
-    <!-- StockSharp integration is optional because packages may require a separate feed/license. -->
     <EnableStockSharp Condition="'$(EnableStockSharp)' == ''">false</EnableStockSharp>
   </PropertyGroup>
 
@@ -67,127 +44,44 @@
     <DefineConstants>$(DefineConstants);STOCKSHARP;STOCKSHARP_RITHMIC;STOCKSHARP_IQFEED;STOCKSHARP_CQG;STOCKSHARP_INTERACTIVEBROKERS</DefineConstants>
   </PropertyGroup>
 
-  <!-- Platform-specific runtime identifiers -->
   <PropertyGroup Condition="'$(RuntimeIdentifier)' == ''">
     <RuntimeIdentifiers>win-x64;win-arm64;linux-x64;linux-arm64;osx-x64;osx-arm64</RuntimeIdentifiers>
   </PropertyGroup>
 
-  <!-- Windows-specific settings for desktop experience -->
   <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Windows')) Or '$(RuntimeIdentifier.StartsWith(`win`))' == 'true'">
     <UseWindowsForms>false</UseWindowsForms>
   </PropertyGroup>
 
-  <!-- Trimmer root assemblies to preserve reflection-based serialization -->
   <ItemGroup>
     <TrimmerRootAssembly Include="System.Text.Json" />
   </ItemGroup>
 
-  <!-- Core Dependencies -->
+  <!-- Host-level dependencies (entry point, Lean integration, benchmarking) -->
   <ItemGroup>
-    <!-- Configuration Management -->
-    <PackageReference Include="Microsoft.Extensions.Configuration" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" />
-
-    <!-- Dependency Injection -->
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
-
-    <!-- Logging -->
-    <PackageReference Include="Serilog" />
-    <PackageReference Include="Serilog.Sinks.Console" />
-    <PackageReference Include="Serilog.Sinks.File" />
-    <PackageReference Include="Serilog.Extensions.Logging" />
-    <PackageReference Include="Serilog.Settings.Configuration" />
-
-    <!-- Monitoring and Metrics -->
-    <PackageReference Include="prometheus-net" />
-    <PackageReference Include="prometheus-net.AspNetCore" />
-
-    <!-- Resilience and Retry -->
-    <PackageReference Include="Polly" />
-    <PackageReference Include="Polly.Extensions" />
-
-    <!-- HttpClientFactory for proper HttpClient lifecycle management (TD-10) -->
-    <PackageReference Include="Microsoft.Extensions.Http" />
-    <PackageReference Include="Microsoft.Extensions.Http.Polly" />
-
-    <!-- WebSocket Client (explicit for clarity) -->
-    <PackageReference Include="System.Net.WebSockets.Client" />
-
-    <!-- Performance -->
-    <PackageReference Include="System.Text.Json" />
-    <PackageReference Include="System.Threading.Channels" />
-    <PackageReference Include="System.IO.Pipelines" />
-
-    <!-- Validation -->
-    <PackageReference Include="FluentValidation" />
-
-    <!-- Compression -->
-    <PackageReference Include="System.IO.Compression" />
-
-    <!-- Interactive Brokers API - Note: May need to install manually or from local source -->
-    <!-- See: https://interactivebrokers.github.io/ for installation instructions -->
-    <!-- <PackageReference Include="IBApi" Version="10.19.1" Condition="Exists('path/to/IBApi.dll')" /> -->
-
-    <!-- HTTP Client for REST APIs (Polygon, etc.) -->
-    <PackageReference Include="System.Net.Http.Json" />
-
-    <!-- Hosting support -->
     <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="Serilog" />
+    <PackageReference Include="Serilog.Extensions.Logging" />
 
     <!-- ASP.NET Core - Web Dashboard Support -->
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
 
-    <!-- QuantConnect Lean Engine Integration -->
+    <!-- QuantConnect Lean Engine Integration (host-level) -->
     <PackageReference Include="QuantConnect.Lean" />
     <PackageReference Include="QuantConnect.Lean.Engine" />
     <PackageReference Include="QuantConnect.Common" />
     <PackageReference Include="QuantConnect.Indicators" />
 
-    <!-- Technical Indicators (Skender.Stock.Indicators) -->
-    <!-- 200+ technical indicators with streaming support -->
-    <PackageReference Include="Skender.Stock.Indicators" />
-
-    <!-- OpenTelemetry for Distributed Tracing -->
-    <!-- Trace events from provider → collector → storage -->
-    <PackageReference Include="OpenTelemetry" />
-    <PackageReference Include="OpenTelemetry.Api" />
-    <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
-    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" />
-    <PackageReference Include="OpenTelemetry.Instrumentation.Http" />
-    <PackageReference Include="OpenTelemetry.Exporter.Console" />
-    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
-    <PackageReference Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" />
-
-    <!-- Apache Parquet for Archival Storage -->
-    <!-- Columnar storage with 10-20x better compression -->
-    <PackageReference Include="Parquet.Net" />
-
-    <!-- BenchmarkDotNet for Performance Profiling -->
-    <!-- Micro-benchmarking and memory allocation analysis -->
+    <!-- BenchmarkDotNet (host-level) -->
     <PackageReference Include="BenchmarkDotNet" />
-
-    <!-- High-Performance WebSocket Client (Marfusios pattern) -->
-    <PackageReference Include="Websocket.Client" />
-
-    <!-- Reactive Extensions for Observable patterns -->
-    <PackageReference Include="System.Reactive" />
-
-    <!-- StockSharp core + connectors (optional) -->
-    <PackageReference Include="StockSharp.Algo" Condition="'$(EnableStockSharp)' == 'true'" />
-    <PackageReference Include="StockSharp.Messages" Condition="'$(EnableStockSharp)' == 'true'" />
-    <PackageReference Include="StockSharp.BusinessEntities" Condition="'$(EnableStockSharp)' == 'true'" />
-    <PackageReference Include="StockSharp.Rithmic" Condition="'$(EnableStockSharp)' == 'true'" />
-    <PackageReference Include="StockSharp.IQFeed" Condition="'$(EnableStockSharp)' == 'true'" />
-    <PackageReference Include="StockSharp.Cqg.Com" Condition="'$(EnableStockSharp)' == 'true'" />
-    <PackageReference Include="StockSharp.InteractiveBrokers" Condition="'$(EnableStockSharp)' == 'true'" />
   </ItemGroup>
 
-  <!-- Project References -->
+  <!-- Layer Assembly References -->
   <ItemGroup>
+    <ProjectReference Include="..\MarketDataCollector.Application\MarketDataCollector.Application.csproj" />
+    <ProjectReference Include="..\MarketDataCollector.Infrastructure\MarketDataCollector.Infrastructure.csproj" />
+    <ProjectReference Include="..\MarketDataCollector.Storage\MarketDataCollector.Storage.csproj" />
+    <ProjectReference Include="..\MarketDataCollector.Core\MarketDataCollector.Core.csproj" />
+    <ProjectReference Include="..\MarketDataCollector.Domain\MarketDataCollector.Domain.csproj" />
     <ProjectReference Include="..\MarketDataCollector.Contracts\MarketDataCollector.Contracts.csproj" />
     <ProjectReference Include="..\MarketDataCollector.ProviderSdk\MarketDataCollector.ProviderSdk.csproj" />
   </ItemGroup>

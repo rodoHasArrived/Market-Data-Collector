@@ -1,0 +1,13 @@
+# Domain layer MUST NOT reference Application, Infrastructure, or Storage assemblies.
+# This file documents the architectural constraint enforced by project references.
+#
+# Allowed references:
+#   - MarketDataCollector.Contracts
+#   - MarketDataCollector.ProviderSdk
+#   - System / BCL packages
+#
+# Forbidden:
+#   - MarketDataCollector.Application
+#   - MarketDataCollector.Infrastructure
+#   - MarketDataCollector.Storage
+#   - MarketDataCollector.Core (Domain has no cross-cutting dependency)

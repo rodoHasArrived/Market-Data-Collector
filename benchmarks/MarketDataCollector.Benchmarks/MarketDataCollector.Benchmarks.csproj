@@ -25,8 +25,11 @@
     <PackageReference Include="System.Text.Json" />
     <PackageReference Include="Newtonsoft.Json" />
 
-    <!-- Reference main project -->
+    <!-- Reference layer projects -->
     <ProjectReference Include="..\..\src\MarketDataCollector\MarketDataCollector.csproj" />
+    <ProjectReference Include="..\..\src\MarketDataCollector.Application\MarketDataCollector.Application.csproj" />
+    <ProjectReference Include="..\..\src\MarketDataCollector.Core\MarketDataCollector.Core.csproj" />
+    <ProjectReference Include="..\..\src\MarketDataCollector.Domain\MarketDataCollector.Domain.csproj" />
   </ItemGroup>
 
 </Project>

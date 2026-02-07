@@ -1,5 +1,4 @@
 using System.Text.Json.Serialization;
-using MarketDataCollector.Storage;
 
 namespace MarketDataCollector.Application.Config;
 
@@ -43,6 +42,7 @@ public sealed record AppConfig(
 
 /// <summary>
 /// Storage configuration for file naming and organization.
+/// Conversion to StorageOptions is available via extension methods in the Application layer.
 /// </summary>
 public sealed record StorageConfig(
     /// <summary>
@@ -80,60 +80,7 @@ public sealed record StorageConfig(
     /// Value is expressed in megabytes for readability.
     /// </summary>
     long? MaxTotalMegabytes = null
-)
-{
-    /// <summary>
-    /// Converts to StorageOptions for use by storage components.
-    /// </summary>
-    public StorageOptions ToStorageOptions(string rootPath, bool compress)
-    {
-        var options = new StorageOptions
-        {
-            RootPath = rootPath,
-            Compress = compress,
-            NamingConvention = ParseNamingConvention(NamingConvention),
-            DatePartition = ParseDatePartition(DatePartition),
-            IncludeProvider = IncludeProvider,
-            FilePrefix = FilePrefix,
-            RetentionDays = RetentionDays,
-            MaxTotalBytes = MaxTotalMegabytes is null ? null : MaxTotalMegabytes * 1024L * 1024L
-        };
-
-        return StorageProfilePresets.ApplyProfile(Profile, options);
-    }
-
-    private static FileNamingConvention ParseNamingConvention(string? value)
-    {
-        if (string.IsNullOrWhiteSpace(value)) return FileNamingConvention.BySymbol;
-
-        return value.ToLowerInvariant() switch
-        {
-            "flat" => FileNamingConvention.Flat,
-            "bysymbol" => FileNamingConvention.BySymbol,
-            "bydate" => FileNamingConvention.ByDate,
-            "bytype" => FileNamingConvention.ByType,
-            "bysource" => FileNamingConvention.BySource,
-            "byassetclass" => FileNamingConvention.ByAssetClass,
-            "hierarchical" => FileNamingConvention.Hierarchical,
-            "canonical" => FileNamingConvention.Canonical,
-            _ => FileNamingConvention.BySymbol
-        };
-    }
-
-    private static DatePartition ParseDatePartition(string? value)
-    {
-        if (string.IsNullOrWhiteSpace(value)) return Storage.DatePartition.Daily;
-
-        return value.ToLowerInvariant() switch
-        {
-            "none" => Storage.DatePartition.None,
-            "daily" => Storage.DatePartition.Daily,
-            "hourly" => Storage.DatePartition.Hourly,
-            "monthly" => Storage.DatePartition.Monthly,
-            _ => Storage.DatePartition.Daily
-        };
-    }
-}
+);
 
 /// <summary>
 /// Source registry configuration - only PersistencePath is used.

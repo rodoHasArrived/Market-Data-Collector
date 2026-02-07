@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>MarketDataCollector.Storage</RootNamespace>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591</NoWarn>
+    <!-- Allow unsafe code for Linux directory fsync operations in AtomicFileWriter.cs -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Storage -->
+    <PackageReference Include="Parquet.Net" />
+
+    <!-- Logging -->
+    <PackageReference Include="Serilog" />
+
+    <!-- Serialization -->
+    <PackageReference Include="System.Text.Json" />
+
+    <!-- DI -->
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+
+    <!-- Compression -->
+    <PackageReference Include="System.IO.Compression" />
+
+    <!-- Monitoring -->
+    <PackageReference Include="prometheus-net" />
+
+    <!-- Threading -->
+    <PackageReference Include="System.Threading.Channels" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MarketDataCollector.Core\MarketDataCollector.Core.csproj" />
+    <ProjectReference Include="..\MarketDataCollector.Domain\MarketDataCollector.Domain.csproj" />
+    <ProjectReference Include="..\MarketDataCollector.Contracts\MarketDataCollector.Contracts.csproj" />
+    <ProjectReference Include="..\MarketDataCollector.ProviderSdk\MarketDataCollector.ProviderSdk.csproj" />
+  </ItemGroup>
+</Project>

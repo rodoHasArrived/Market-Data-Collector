@@ -1,7 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
-using MarketDataCollector.Application.Config;
 using MarketDataCollector.Contracts.Domain.Enums;
 using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Events;
@@ -44,8 +43,6 @@ namespace MarketDataCollector.Application.Serialization;
 [JsonSerializable(typeof(MarketTradeUpdate))]
 [JsonSerializable(typeof(MarketQuoteUpdate))]
 [JsonSerializable(typeof(MarketDepthUpdate))]
-[JsonSerializable(typeof(AppConfig))]
-[JsonSerializable(typeof(AlpacaOptions))]
 [JsonSerializable(typeof(SymbolConfig))]
 [JsonSerializable(typeof(SymbolConfig[]))]
 [JsonSerializable(typeof(List<SymbolConfig>))]
