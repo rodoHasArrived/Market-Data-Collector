@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Monitoring.Core;
 using MarketDataCollector.Contracts.Api;
@@ -45,6 +46,14 @@ public sealed class ProviderRegistry : IDisposable
     /// Single unified registry of all providers. Type-specific queries filter by ProviderCapabilities.
     /// </summary>
     private readonly ConcurrentDictionary<string, RegisteredProvider> _allProviders = new();
+
+    /// <summary>
+    /// Dictionary of streaming client factory functions keyed by <see cref="DataSourceKind"/>.
+    /// Populated during DI setup via <see cref="RegisterStreamingFactory"/> to replace
+    /// the switch-statement-based creation in the old MarketDataClientFactory.
+    /// </summary>
+    private readonly ConcurrentDictionary<DataSourceKind, Func<IMarketDataClient>> _streamingFactories = new();
+
     private readonly ILogger _log;
     private readonly IAlertDispatcher? _alertDispatcher;
     private bool _disposed;
@@ -83,6 +92,64 @@ public sealed class ProviderRegistry : IDisposable
             _log.Warning("Provider already registered: {Name}", id);
         }
     }
+
+    /// <summary>
+    /// Registers a factory function for creating a streaming client for the specified data source kind.
+    /// This replaces the switch-statement approach previously used in MarketDataClientFactory.
+    /// </summary>
+    /// <param name="kind">The data source kind to register.</param>
+    /// <param name="factory">Factory function that creates the streaming client.</param>
+    public void RegisterStreamingFactory(DataSourceKind kind, Func<IMarketDataClient> factory)
+    {
+        ArgumentNullException.ThrowIfNull(factory);
+
+        if (_streamingFactories.TryAdd(kind, factory))
+        {
+            _log.Information("Registered streaming factory for {DataSource}", kind);
+        }
+        else
+        {
+            _streamingFactories[kind] = factory;
+            _log.Information("Replaced streaming factory for {DataSource}", kind);
+        }
+    }
+
+    /// <summary>
+    /// Creates a streaming client for the specified data source kind using the registered factory.
+    /// Falls back to <see cref="DataSourceKind.IB"/> if the requested kind has no registered factory.
+    /// </summary>
+    /// <param name="kind">The data source kind to create a client for.</param>
+    /// <returns>A new streaming client instance.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when no factory is registered for the kind and no fallback is available.</exception>
+    public IMarketDataClient CreateStreamingClient(DataSourceKind kind)
+    {
+        if (_streamingFactories.TryGetValue(kind, out var factory))
+        {
+            _log.Information("Creating streaming client for {DataSource}", kind);
+            return factory();
+        }
+
+        // Fallback to IB (default provider)
+        if (kind != DataSourceKind.IB && _streamingFactories.TryGetValue(DataSourceKind.IB, out var ibFactory))
+        {
+            _log.Warning("No factory registered for {DataSource}, falling back to IB", kind);
+            return ibFactory();
+        }
+
+        throw new InvalidOperationException(
+            $"No streaming factory registered for {kind} and no IB fallback available. " +
+            "Register factories via RegisterStreamingFactory() during startup.");
+    }
+
+    /// <summary>
+    /// Gets all data source kinds that have a registered streaming factory.
+    /// </summary>
+    public IReadOnlyList<DataSourceKind> SupportedStreamingSources =>
+        _streamingFactories.Keys.OrderBy(k => k).ToList();
+
+    #endregion
+
+    #region Provider Metadata Queries
 
     /// <summary>
     /// Gets all registered providers as unified metadata.

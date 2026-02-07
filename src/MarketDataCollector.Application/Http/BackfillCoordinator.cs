@@ -18,15 +18,8 @@ namespace MarketDataCollector.Application.UI;
 
 /// <summary>
 /// Coordinates backfill operations using providers from <see cref="ProviderRegistry"/>.
+/// All providers are resolved through the registry, which is populated during DI setup.
 /// </summary>
-/// <remarks>
-/// <para>Provider discovery follows a priority order:</para>
-/// <list type="number">
-/// <item><description>ProviderRegistry.GetBackfillProviders() - unified registry</description></item>
-/// <item><description>ProviderFactory.CreateBackfillProviders() - factory creation with credential resolution</description></item>
-/// <item><description>Manual instantiation - backwards compatibility fallback</description></item>
-/// </list>
-/// </remarks>
 [ImplementsAdr("ADR-001", "Uses ProviderRegistry for unified provider discovery")]
 public sealed class BackfillCoordinator : IDisposable
 {
@@ -44,7 +37,7 @@ public sealed class BackfillCoordinator : IDisposable
     /// </summary>
     /// <param name="store">Configuration store.</param>
     /// <param name="registry">Provider registry for unified provider discovery.</param>
-    /// <param name="factory">Provider factory for creating providers if registry is empty.</param>
+    /// <param name="factory">Provider factory as fallback for creating providers if registry is empty.</param>
     public BackfillCoordinator(ConfigStore store, ProviderRegistry? registry = null, ProviderFactory? factory = null)
     {
         _store = store;
