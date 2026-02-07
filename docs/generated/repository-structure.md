@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-07 22:06:25 UTC
+> Auto-generated on 2026-02-07 23:21:37 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -699,17 +699,27 @@ Market-Data-Collector/
 │   │   │   ├── BoundedObservableCollection.cs
 │   │   │   └── CircularBuffer.cs
 │   │   ├── Contracts/
+│   │   │   ├── IArchiveHealthService.cs
 │   │   │   ├── IConfigService.cs
-│   │   │   └── IStatusService.cs
+│   │   │   ├── ICredentialService.cs
+│   │   │   ├── ILoggingService.cs
+│   │   │   ├── INotificationService.cs
+│   │   │   ├── ISchemaService.cs
+│   │   │   ├── IStatusService.cs
+│   │   │   └── IWatchlistService.cs
 │   │   ├── Services/
 │   │   │   ├── ActivityFeedService.cs
 │   │   │   ├── AnalysisExportWizardService.cs
 │   │   │   ├── ApiClientService.cs
 │   │   │   ├── ArchiveBrowserService.cs
+│   │   │   ├── ArchiveHealthService.cs
+│   │   │   ├── BackfillApiService.cs
 │   │   │   ├── BackfillService.cs
 │   │   │   ├── BatchExportSchedulerService.cs
 │   │   │   ├── ChartingService.cs
 │   │   │   ├── CollectionSessionService.cs
+│   │   │   ├── ConfigService.cs
+│   │   │   ├── CredentialService.cs
 │   │   │   ├── DataCalendarService.cs
 │   │   │   ├── DataCompletenessService.cs
 │   │   │   ├── DataSamplingService.cs
@@ -722,8 +732,11 @@ Market-Data-Collector/
 │   │   │   ├── IntegrityEventsService.cs
 │   │   │   ├── LeanIntegrationService.cs
 │   │   │   ├── LiveDataService.cs
+│   │   │   ├── LoggingService.cs
 │   │   │   ├── ManifestService.cs
+│   │   │   ├── NotificationService.cs
 │   │   │   ├── OAuthRefreshService.cs
+│   │   │   ├── OperationResult.cs
 │   │   │   ├── OrderBookVisualizationService.cs
 │   │   │   ├── PortablePackagerService.cs
 │   │   │   ├── PortfolioImportService.cs
@@ -731,6 +744,7 @@ Market-Data-Collector/
 │   │   │   ├── ProviderManagementService.cs
 │   │   │   ├── ScheduledMaintenanceService.cs
 │   │   │   ├── ScheduleManagerService.cs
+│   │   │   ├── SchemaService.cs
 │   │   │   ├── SearchService.cs
 │   │   │   ├── SetupWizardService.cs
 │   │   │   ├── SmartRecommendationsService.cs
@@ -740,7 +754,8 @@ Market-Data-Collector/
 │   │   │   ├── SymbolManagementService.cs
 │   │   │   ├── SymbolMappingService.cs
 │   │   │   ├── SystemHealthService.cs
-│   │   │   └── TimeSeriesAlignmentService.cs
+│   │   │   ├── TimeSeriesAlignmentService.cs
+│   │   │   └── WatchlistService.cs
 │   │   ├── GlobalUsings.cs
 │   │   └── MarketDataCollector.Ui.Services.csproj
 │   ├── MarketDataCollector.Ui.Shared/
