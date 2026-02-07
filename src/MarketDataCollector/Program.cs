@@ -29,6 +29,7 @@ using MarketDataCollector.Infrastructure.Providers.StockSharp;
 using MarketDataCollector.Infrastructure.Providers.Backfill;
 using MarketDataCollector.Infrastructure.Providers.Streaming.Failover;
 using MarketDataCollector.Infrastructure.Providers;
+using MarketDataCollector.Infrastructure.Providers.Core;
 using SymbolResolution = MarketDataCollector.Infrastructure.Providers.Backfill.SymbolResolution;
 using BackfillRequest = MarketDataCollector.Application.Backfill.BackfillRequest;
 using MarketDataCollector.Storage;
@@ -292,10 +293,9 @@ internal static class Program
             return;
         }
 
-        // Market data client (provider selected by config) via factory for runtime switching
-        var clientFactory = new MarketDataClientFactory(
-            alpacaCredentialResolver: (_, appCfg) => configService.ResolveAlpacaCredentials(appCfg.Alpaca?.KeyId, appCfg.Alpaca?.SecretKey),
-            log: LoggingSetup.ForContext<MarketDataClientFactory>());
+        // Create the ProviderRegistry with streaming factories for DI-based provider resolution.
+        // This replaces the old MarketDataClientFactory switch-statement approach.
+        var providerRegistry = CreateProviderRegistry(cfg, configService, publisher, tradeCollector, depthCollector, quoteCollector);
 
         // Check if streaming failover is configured
         var failoverCfg = cfg.DataSources;
@@ -330,7 +330,7 @@ internal static class Program
 
                 try
                 {
-                    var client = clientFactory.Create(providerKind, cfg, publisher, tradeCollector, depthCollector, quoteCollector);
+                    var client = providerRegistry.CreateStreamingClient(providerKind);
                     providerMap[providerId] = client;
                     failoverService.RegisterProvider(providerId);
                     log.Information("Created streaming client for failover provider {ProviderId} ({Kind})", providerId, providerKind);
@@ -344,7 +344,7 @@ internal static class Program
             if (providerMap.Count == 0)
             {
                 log.Error("No streaming providers could be created for failover; falling back to single provider");
-                dataClient = clientFactory.Create(cfg.DataSource, cfg, publisher, tradeCollector, depthCollector, quoteCollector);
+                dataClient = providerRegistry.CreateStreamingClient(cfg.DataSource);
             }
             else
             {
@@ -358,7 +358,7 @@ internal static class Program
         }
         else
         {
-            dataClient = clientFactory.Create(cfg.DataSource, cfg, publisher, tradeCollector, depthCollector, quoteCollector);
+            dataClient = providerRegistry.CreateStreamingClient(cfg.DataSource);
         }
 
         await using var dataClientDisposable = dataClient;
@@ -535,6 +535,45 @@ internal static class Program
 
         var fallback = new[] { new SymbolConfig("SPY", SubscribeTrades: true, SubscribeDepth: true, DepthLevels: 10) };
         return cfg with { Symbols = fallback };
+    }
+
+    /// <summary>
+    /// Creates a <see cref="ProviderRegistry"/> populated with streaming factory functions
+    /// for the direct startup path (bypasses full DI composition root).
+    /// Each <see cref="DataSourceKind"/> maps to a factory that creates the appropriate client.
+    /// </summary>
+    private static ProviderRegistry CreateProviderRegistry(
+        AppConfig cfg,
+        ConfigurationService configService,
+        IMarketEventPublisher publisher,
+        TradeDataCollector tradeCollector,
+        MarketDepthCollector depthCollector,
+        QuoteCollector quoteCollector)
+    {
+        var registry = new ProviderRegistry(log: LoggingSetup.ForContext<ProviderRegistry>());
+
+        registry.RegisterStreamingFactory(DataSourceKind.IB, () =>
+            new IBMarketDataClient(publisher, tradeCollector, depthCollector));
+
+        registry.RegisterStreamingFactory(DataSourceKind.Alpaca, () =>
+        {
+            var (keyId, secretKey) = configService.ResolveAlpacaCredentials(
+                cfg.Alpaca?.KeyId, cfg.Alpaca?.SecretKey);
+            return new AlpacaMarketDataClient(tradeCollector, quoteCollector,
+                cfg.Alpaca! with { KeyId = keyId ?? "", SecretKey = secretKey ?? "" });
+        });
+
+        registry.RegisterStreamingFactory(DataSourceKind.Polygon, () =>
+            new PolygonMarketDataClient(publisher, tradeCollector, quoteCollector));
+
+        registry.RegisterStreamingFactory(DataSourceKind.StockSharp, () =>
+            new StockSharpMarketDataClient(tradeCollector, depthCollector, quoteCollector,
+                cfg.StockSharp ?? new StockSharpConfig()));
+
+        registry.RegisterStreamingFactory(DataSourceKind.NYSE, () =>
+            new IBMarketDataClient(publisher, tradeCollector, depthCollector));
+
+        return registry;
     }
 
     /// <summary>

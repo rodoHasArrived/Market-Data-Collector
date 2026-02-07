@@ -10,12 +10,8 @@ using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Infrastructure;
 using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Http;
-using MarketDataCollector.Infrastructure.Providers.Alpaca;
 using MarketDataCollector.Infrastructure.Providers.Backfill;
 using MarketDataCollector.Infrastructure.Providers.Core;
-using MarketDataCollector.Infrastructure.Providers.InteractiveBrokers;
-using MarketDataCollector.Infrastructure.Providers.Polygon;
-using MarketDataCollector.Infrastructure.Providers.StockSharp;
 using MarketDataCollector.Storage;
 using MarketDataCollector.Storage.Policies;
 using MarketDataCollector.Storage.Sinks;
@@ -157,32 +153,15 @@ public sealed class HostStartup : IAsyncDisposable
 
     /// <summary>
     /// Creates the streaming market data client based on configuration.
+    /// Delegates to <see cref="ProviderRegistry.CreateStreamingClient"/> which uses
+    /// dictionary-based factory lookup instead of switch statements.
     /// </summary>
     /// <param name="config">Application configuration.</param>
     /// <returns>Configured market data client.</returns>
     public IMarketDataClient CreateStreamingClient(AppConfig config)
     {
-        var tradeCollector = GetRequiredService<TradeDataCollector>();
-        var quoteCollector = GetRequiredService<QuoteCollector>();
-        var depthCollector = GetRequiredService<MarketDepthCollector>();
-        var publisher = GetRequiredService<IMarketEventPublisher>();
-        var configService = GetRequiredService<ConfigurationService>();
-
-        var (alpacaKeyId, alpacaSecretKey) = configService.ResolveAlpacaCredentials(
-            config.Alpaca?.KeyId, config.Alpaca?.SecretKey);
-
-        return config.DataSource switch
-        {
-            DataSourceKind.Alpaca => new AlpacaMarketDataClient(tradeCollector, quoteCollector,
-                config.Alpaca! with { KeyId = alpacaKeyId ?? "", SecretKey = alpacaSecretKey ?? "" }),
-            DataSourceKind.Polygon => new PolygonMarketDataClient(publisher, tradeCollector, quoteCollector),
-            DataSourceKind.StockSharp => new StockSharpMarketDataClient(
-                tradeCollector,
-                depthCollector,
-                quoteCollector,
-                config.StockSharp ?? new StockSharpConfig()),
-            _ => new IBMarketDataClient(publisher, tradeCollector, depthCollector)
-        };
+        var registry = GetRequiredService<ProviderRegistry>();
+        return registry.CreateStreamingClient(config.DataSource);
     }
 
     /// <summary>

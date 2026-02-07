@@ -10,6 +10,7 @@ using MarketDataCollector.Application.Subscriptions.Services;
 using MarketDataCollector.Application.UI;
 using MarketDataCollector.Domain.Collectors;
 using MarketDataCollector.Domain.Events;
+using MarketDataCollector.Infrastructure;
 using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Http;
 using MarketDataCollector.Infrastructure.Providers.Backfill.Scheduling;
@@ -460,9 +461,16 @@ public static class ServiceCompositionRoot
     #region Provider Services
 
     /// <summary>
-    /// Registers provider factory and registry services.
-    /// Uses the unified ProviderFactory for creating all provider types.
+    /// Registers the unified <see cref="ProviderRegistry"/> and populates it with
+    /// streaming factory functions (keyed by <see cref="DataSourceKind"/>), backfill providers,
+    /// and symbol search providers. All providers are resolved through DI.
     /// </summary>
+    /// <remarks>
+    /// Streaming factories are registered as <c>Dictionary&lt;DataSourceKind, Func&lt;IMarketDataClient&gt;&gt;</c>
+    /// entries inside <see cref="ProviderRegistry.RegisterStreamingFactory"/>. The old
+    /// <c>MarketDataClientFactory</c> switch statement and <c>ProviderFactory</c> streaming
+    /// creation are replaced by this dictionary-based approach.
+    /// </remarks>
     private static IServiceCollection AddProviderServices(
         this IServiceCollection services,
         CompositionOptions options)
@@ -474,15 +482,31 @@ public static class ServiceCompositionRoot
             return new ConfigurationServiceCredentialAdapter(configService);
         });
 
-        // Register provider registry as singleton
+        // Register the unified ProviderRegistry as singleton - this is the single source of truth
+        // for all provider types (streaming, backfill, symbol search).
         services.AddSingleton<ProviderRegistry>(sp =>
         {
-            var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
-            var logger = LoggingSetup.ForContext<ProviderRegistry>();
-            return new ProviderRegistry(alertDispatcher: null, logger);
+            var registry = new ProviderRegistry(alertDispatcher: null, LoggingSetup.ForContext<ProviderRegistry>());
+
+            var configStore = sp.GetRequiredService<ConfigStore>();
+            var config = configStore.Load();
+            var credentialResolver = sp.GetRequiredService<ICredentialResolver>();
+            var log = LoggingSetup.ForContext("ProviderRegistration");
+
+            // --- Streaming factories (dictionary-based, replaces switch statements) ---
+            RegisterStreamingFactories(registry, config, credentialResolver, sp, log);
+
+            // --- Backfill providers ---
+            RegisterBackfillProviders(registry, config, credentialResolver, log);
+
+            // --- Symbol search providers ---
+            RegisterSymbolSearchProviders(registry, config, credentialResolver, log);
+
+            return registry;
         });
 
-        // Register provider factory
+        // Keep ProviderFactory registered for backward compatibility with consumers
+        // that still depend on it (BackfillCoordinators, HostStartup).
         services.AddSingleton<ProviderFactory>(sp =>
         {
             var configStore = sp.GetRequiredService<ConfigStore>();
@@ -493,6 +517,109 @@ public static class ServiceCompositionRoot
         });
 
         return services;
+    }
+
+    /// <summary>
+    /// Registers streaming client factory functions with the provider registry.
+    /// Each <see cref="DataSourceKind"/> maps to a factory that creates the appropriate
+    /// <see cref="IMarketDataClient"/> implementation, replacing the old switch-based approach.
+    /// </summary>
+    private static void RegisterStreamingFactories(
+        ProviderRegistry registry,
+        AppConfig config,
+        ICredentialResolver credentialResolver,
+        IServiceProvider sp,
+        Serilog.ILogger log)
+    {
+        // IB (default)
+        registry.RegisterStreamingFactory(DataSourceKind.IB, () =>
+        {
+            var publisher = sp.GetRequiredService<IMarketEventPublisher>();
+            var tradeCollector = sp.GetRequiredService<TradeDataCollector>();
+            var depthCollector = sp.GetRequiredService<MarketDepthCollector>();
+            return new Infrastructure.Providers.InteractiveBrokers.IBMarketDataClient(
+                publisher, tradeCollector, depthCollector);
+        });
+
+        // Alpaca
+        registry.RegisterStreamingFactory(DataSourceKind.Alpaca, () =>
+        {
+            var tradeCollector = sp.GetRequiredService<TradeDataCollector>();
+            var quoteCollector = sp.GetRequiredService<QuoteCollector>();
+            var (keyId, secretKey) = credentialResolver.ResolveAlpacaCredentials(
+                config.Alpaca?.KeyId, config.Alpaca?.SecretKey);
+            return new Infrastructure.Providers.Alpaca.AlpacaMarketDataClient(
+                tradeCollector, quoteCollector,
+                config.Alpaca! with { KeyId = keyId ?? "", SecretKey = secretKey ?? "" });
+        });
+
+        // Polygon
+        registry.RegisterStreamingFactory(DataSourceKind.Polygon, () =>
+        {
+            var publisher = sp.GetRequiredService<IMarketEventPublisher>();
+            var tradeCollector = sp.GetRequiredService<TradeDataCollector>();
+            var quoteCollector = sp.GetRequiredService<QuoteCollector>();
+            return new Infrastructure.Providers.Polygon.PolygonMarketDataClient(
+                publisher, tradeCollector, quoteCollector);
+        });
+
+        // StockSharp
+        registry.RegisterStreamingFactory(DataSourceKind.StockSharp, () =>
+        {
+            var tradeCollector = sp.GetRequiredService<TradeDataCollector>();
+            var depthCollector = sp.GetRequiredService<MarketDepthCollector>();
+            var quoteCollector = sp.GetRequiredService<QuoteCollector>();
+            return new Infrastructure.Providers.StockSharp.StockSharpMarketDataClient(
+                tradeCollector, depthCollector, quoteCollector,
+                config.StockSharp ?? new StockSharpConfig());
+        });
+
+        // NYSE (uses IB as underlying implementation per existing behavior)
+        registry.RegisterStreamingFactory(DataSourceKind.NYSE, () =>
+        {
+            var publisher = sp.GetRequiredService<IMarketEventPublisher>();
+            var tradeCollector = sp.GetRequiredService<TradeDataCollector>();
+            var depthCollector = sp.GetRequiredService<MarketDepthCollector>();
+            return new Infrastructure.Providers.InteractiveBrokers.IBMarketDataClient(
+                publisher, tradeCollector, depthCollector);
+        });
+
+        log.Information("Registered streaming factories for {Count} data sources",
+            registry.SupportedStreamingSources.Count);
+    }
+
+    /// <summary>
+    /// Creates and registers backfill providers with the registry using credential resolution.
+    /// </summary>
+    private static void RegisterBackfillProviders(
+        ProviderRegistry registry,
+        AppConfig config,
+        ICredentialResolver credentialResolver,
+        Serilog.ILogger log)
+    {
+        var factory = new ProviderFactory(config, credentialResolver, log);
+        var providers = factory.CreateBackfillProviders();
+        foreach (var provider in providers)
+        {
+            registry.Register(provider);
+        }
+    }
+
+    /// <summary>
+    /// Creates and registers symbol search providers with the registry using credential resolution.
+    /// </summary>
+    private static void RegisterSymbolSearchProviders(
+        ProviderRegistry registry,
+        AppConfig config,
+        ICredentialResolver credentialResolver,
+        Serilog.ILogger log)
+    {
+        var factory = new ProviderFactory(config, credentialResolver, log);
+        var providers = factory.CreateSymbolSearchProviders();
+        foreach (var provider in providers)
+        {
+            registry.Register(provider);
+        }
     }
 
     #endregion
