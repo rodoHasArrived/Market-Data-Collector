@@ -13,6 +13,7 @@ using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.DataSources;
 using MarketDataCollector.Infrastructure.Providers.Core;
+using DataSourceType = MarketDataCollector.Infrastructure.DataSources.DataSourceType;
 using MarketDataCollector.Infrastructure.Providers.StockSharp.Converters;
 using MarketDataCollector.Infrastructure.Resilience;
 using Serilog;
