@@ -26,6 +26,7 @@ public sealed class BackfillCoordinator : IDisposable
     private readonly ConfigStore _store;
     private readonly ProviderRegistry? _registry;
     private readonly ProviderFactory? _factory;
+    private readonly IEventMetrics _metrics;
     private readonly ILogger _log = LoggingSetup.ForContext<BackfillCoordinator>();
     private readonly SemaphoreSlim _gate = new(1, 1);
     private readonly OpenFigiSymbolResolver? _symbolResolver;
@@ -38,11 +39,12 @@ public sealed class BackfillCoordinator : IDisposable
     /// <param name="store">Configuration store.</param>
     /// <param name="registry">Provider registry for unified provider discovery.</param>
     /// <param name="factory">Provider factory as fallback for creating providers if registry is empty.</param>
-    public BackfillCoordinator(ConfigStore store, ProviderRegistry? registry = null, ProviderFactory? factory = null)
+    public BackfillCoordinator(ConfigStore store, ProviderRegistry? registry = null, ProviderFactory? factory = null, IEventMetrics? metrics = null)
     {
         _store = store;
         _registry = registry;
         _factory = factory;
+        _metrics = metrics ?? new DefaultEventMetrics();
         _lastRun = store.TryLoadBackfillStatus();
 
         // Initialize symbol resolver
@@ -153,7 +155,7 @@ public sealed class BackfillCoordinator : IDisposable
             await using var pipeline = new EventPipeline(sink, capacity: 20_000, enablePeriodicFlush: false);
 
             // Keep pipeline counters scoped per run
-            Metrics.Reset();
+            _metrics.Reset();
 
             var service = CreateService();
             var result = await service.RunAsync(request, pipeline, ct).ConfigureAwait(false);

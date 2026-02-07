@@ -1,5 +1,6 @@
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Infrastructure.Contracts;
+using MarketDataCollector.Infrastructure.DataSources;
 using MarketDataCollector.Infrastructure.Providers.Core;
 using System.Threading;
 using MarketDataCollector.Domain.Collectors;
@@ -13,8 +14,11 @@ namespace MarketDataCollector.Infrastructure.Providers.InteractiveBrokers;
 /// - Without IBAPI defined, delegates to IBSimulationClient (generates synthetic data for testing).
 /// - With IBAPI defined, uses EnhancedIBConnectionManager + IBCallbackRouter for real TWS/Gateway.
 /// </summary>
+[DataSource("ib", "Interactive Brokers", DataSourceType.Realtime, DataSourceCategory.Broker,
+    Priority = 1, Description = "Interactive Brokers TWS/Gateway for real-time market data")]
 [ImplementsAdr("ADR-001", "Interactive Brokers streaming data provider implementation")]
 [ImplementsAdr("ADR-004", "All async methods support CancellationToken")]
+[ImplementsAdr("ADR-005", "Attribute-based provider discovery")]
 public sealed class IBMarketDataClient : IMarketDataClient
 {
     private readonly IMarketDataClient _inner;

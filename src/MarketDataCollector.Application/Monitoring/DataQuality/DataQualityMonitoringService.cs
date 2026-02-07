@@ -20,6 +20,7 @@ public sealed class DataQualityMonitoringService : IAsyncDisposable
     public CrossProviderComparisonService CrossProvider { get; }
     public DataQualityReportGenerator ReportGenerator { get; }
 
+    private readonly IEventMetrics _eventMetrics;
     private readonly Timer _metricsUpdateTimer;
     private readonly ConcurrentDictionary<string, SymbolHealthStatus> _healthStatus = new();
     private volatile bool _isDisposed;
@@ -29,9 +30,10 @@ public sealed class DataQualityMonitoringService : IAsyncDisposable
     /// </summary>
     public event Action<RealTimeQualityMetrics>? OnMetricsUpdated;
 
-    public DataQualityMonitoringService(DataQualityMonitoringConfig? config = null)
+    public DataQualityMonitoringService(DataQualityMonitoringConfig? config = null, IEventMetrics? eventMetrics = null)
     {
         config ??= DataQualityMonitoringConfig.Default;
+        _eventMetrics = eventMetrics ?? new DefaultEventMetrics();
 
         Completeness = new CompletenessScoreCalculator(config.CompletenessConfig);
         GapAnalyzer = new GapAnalyzer(config.GapAnalyzerConfig);
@@ -170,7 +172,7 @@ public sealed class DataQualityMonitoringService : IAsyncDisposable
             Timestamp: now,
             ActiveSymbols: _healthStatus.Count,
             OverallHealthScore: Math.Round(healthScore, 4),
-            EventsPerSecond: (long)Metrics.EventsPerSecond,
+            EventsPerSecond: (long)_eventMetrics.EventsPerSecond,
             GapsLast5Minutes: recentGaps,
             SequenceErrorsLast5Minutes: recentErrors,
             AnomaliesLast5Minutes: recentAnomalies,

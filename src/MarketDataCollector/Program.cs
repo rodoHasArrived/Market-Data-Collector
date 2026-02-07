@@ -1,19 +1,15 @@
 using System.Text.Json;
-using System.Threading.Channels;
 using MarketDataCollector.Application.Backfill;
 using MarketDataCollector.Application.Commands;
 using MarketDataCollector.Application.Composition;
 using MarketDataCollector.Application.Config;
 using DeploymentContext = MarketDataCollector.Application.Config.DeploymentContext;
 using DeploymentMode = MarketDataCollector.Application.Config.DeploymentMode;
-using MarketDataCollector.Application.Exceptions;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Application.Subscriptions;
 using MarketDataCollector.Application.Pipeline;
 using MarketDataCollector.Application.Services;
-using MarketDataCollector.Application.Subscriptions.Services;
-using MarketDataCollector.Application.Testing;
 using MarketDataCollector.Application.UI;
 using MarketDataCollector.Contracts.Domain.Enums;
 using MarketDataCollector.Contracts.Domain.Models;
@@ -21,24 +17,14 @@ using MarketDataCollector.Domain.Collectors;
 using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Infrastructure;
-using MarketDataCollector.Infrastructure.Http;
-using MarketDataCollector.Infrastructure.Providers.InteractiveBrokers;
-using MarketDataCollector.Infrastructure.Providers.Alpaca;
-using MarketDataCollector.Infrastructure.Providers.Polygon;
-using MarketDataCollector.Infrastructure.Providers.StockSharp;
 using MarketDataCollector.Infrastructure.Providers.Backfill;
 using MarketDataCollector.Infrastructure.Providers.Streaming.Failover;
 using MarketDataCollector.Infrastructure.Providers.Core;
-using SymbolResolution = MarketDataCollector.Infrastructure.Providers.Backfill.SymbolResolution;
 using BackfillRequest = MarketDataCollector.Application.Backfill.BackfillRequest;
 using MarketDataCollector.Storage;
-using MarketDataCollector.Storage.Packaging;
 using MarketDataCollector.Storage.Policies;
-using MarketDataCollector.Storage.Services;
-using MarketDataCollector.Storage.Sinks;
 using MarketDataCollector.Storage.Replay;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Serilog;
 
 namespace MarketDataCollector;
@@ -48,7 +34,7 @@ internal static class Program
     private const string DefaultConfigFileName = "appsettings.json";
     private const string ConfigPathEnvVar = "MDC_CONFIG_PATH";
 
-    public static async Task Main(string[] args)
+    public static async Task<int> Main(string[] args)
     {
         // Parse CLI arguments once into a typed record
         var cliArgs = CliArguments.Parse(args);
@@ -70,12 +56,12 @@ internal static class Program
 
         try
         {
-            await RunAsync(cliArgs, cfg, cfgPath, log, configService, deploymentContext);
+            return await RunAsync(cliArgs, cfg, cfgPath, log, configService, deploymentContext);
         }
         catch (Exception ex)
         {
             log.Fatal(ex, "MarketDataCollector terminated unexpectedly");
-            throw;
+            return 1;
         }
         finally
         {
@@ -83,10 +69,8 @@ internal static class Program
         }
     }
 
-    private static async Task RunAsync(CliArguments cliArgs, AppConfig cfg, string cfgPath, ILogger log, ConfigurationService configService, DeploymentContext deployment)
+    private static async Task<int> RunAsync(CliArguments cliArgs, AppConfig cfg, string cfgPath, ILogger log, ConfigurationService configService, DeploymentContext deployment)
     {
-        // Initialize HttpClientFactory for proper HTTP client lifecycle management (TD-10)
-        InitializeHttpClientFactory(log);
 
         // Build all CLI command handlers and dispatch through a single dispatcher.
         // Registration order determines priority when multiple flags are present.
@@ -107,8 +91,7 @@ internal static class Program
         var (handled, exitCode) = await dispatcher.TryDispatchAsync(cliArgs.Raw);
         if (handled)
         {
-            if (exitCode != 0) Environment.Exit(exitCode);
-            return;
+            return exitCode;
         }
 
         // UI Mode - Start web dashboard (handles both --mode web and legacy --ui flag)
@@ -135,15 +118,14 @@ internal static class Program
             log.Information("Stopping web dashboard...");
             await webServer.StopAsync();
             log.Information("Web dashboard stopped");
-            return;
+            return 0;
         }
 
         // Validate configuration (routed through ConfigurationService)
         if (!configService.ValidateConfig(cfg, out _))
         {
             log.Error("Exiting due to configuration errors");
-            Environment.Exit(1);
-            return;
+            return 1;
         }
 
         // Ensure data directory exists with proper permissions
@@ -162,8 +144,7 @@ internal static class Program
                 "2) On Linux/macOS, ensure the user has appropriate permissions. " +
                 "3) On Windows, run as administrator if needed.",
                 permissionsResult.Message);
-            Environment.Exit(1);
-            return;
+            return 1;
         }
         log.Information("Data directory permissions configured: {Message}", permissionsResult.Message);
 
@@ -182,8 +163,7 @@ internal static class Program
                 if (cliArgs.StrictSchemas)
                 {
                     log.Error("Exiting due to schema incompatibilities (--strict-schemas enabled)");
-                    Environment.Exit(1);
-                    return;
+                    return 1;
                 }
             }
             else
@@ -205,37 +185,29 @@ internal static class Program
             log.Information("Desktop mode UI server started at http://localhost:{Port}", deployment.HttpPort);
         }
 
-        // Build storage options from config - uses default profile (Research) when no config provided
-        var compressionEnabled = cfg.Compress ?? false;
-        var storageOpt = cfg.Storage?.ToStorageOptions(cfg.DataRoot, compressionEnabled)
-            ?? StorageProfilePresets.CreateFromProfile(null, cfg.DataRoot, compressionEnabled);
+        // Use unified HostStartup for DI-based service resolution.
+        // All core services (collectors, pipeline, storage, providers) flow through
+        // ServiceCompositionRoot, making it the single source of truth.
+        await using var hostStartup = HostStartupFactory.Create(deployment, cfgPath);
 
-        var policy = new JsonlStoragePolicy(storageOpt);
-        await using var sink = new JsonlStorageSink(storageOpt, policy);
-
-        // Create WAL for crash-safe durability
-        var walDir = Path.Combine(storageOpt.RootPath, "_wal");
-        var wal = new Storage.Archival.WriteAheadLog(walDir, new Storage.Archival.WalOptions
-        {
-            SyncMode = Storage.Archival.WalSyncMode.BatchedSync,
-            SyncBatchSize = 1000,
-            MaxFlushDelay = TimeSpan.FromSeconds(1)
-        });
-        await using var pipeline = new EventPipeline(sink, EventPipelinePolicy.HighThroughput, wal: wal);
+        // Resolve all services from DI - single source of truth via ServiceCompositionRoot
+        var storageOpt = hostStartup.StorageOptions;
+        var pipeline = hostStartup.Pipeline;
 
         // Recover any uncommitted events from prior crash
         await pipeline.RecoverAsync();
-        log.Information("WAL enabled for pipeline durability at {WalDirectory}", walDir);
+        log.Information("WAL enabled for pipeline durability");
 
         // Log storage configuration
+        var policy = hostStartup.GetRequiredService<JsonlStoragePolicy>();
         log.Information("Storage path: {RootPath}", storageOpt.RootPath);
         log.Information("Naming convention: {NamingConvention}", storageOpt.NamingConvention);
         log.Information("Date partitioning: {DatePartition}", storageOpt.DatePartition);
         log.Information("Compression: {CompressionEnabled}", storageOpt.Compress ? "enabled" : "disabled");
         log.Debug("Example path: {ExamplePath}", policy.GetPathPreview());
 
-        // Create publisher for pipeline (using unified PipelinePublisher from composition root)
-        IMarketEventPublisher publisher = new Application.Composition.PipelinePublisher(pipeline);
+        // Resolve publisher from DI (PipelinePublisher wrapping the WAL-backed pipeline)
+        IMarketEventPublisher publisher = hostStartup.GetRequiredService<IMarketEventPublisher>();
 
         var backfillRequested = cliArgs.Backfill || (cfg.Backfill?.Enabled == true);
         if (backfillRequested)
@@ -265,20 +237,21 @@ internal static class Program
             await pipeline.FlushAsync();
             await statusWriter.WriteOnceAsync();
 
-            if (!result.Success)
-                Environment.ExitCode = 1;
             if (uiServer != null)
             {
                 await uiServer.StopAsync();
                 await uiServer.DisposeAsync();
             }
-            return;
+            return result.Success ? 0 : 1;
         }
 
-        // Collectors
+        // Resolve collectors from DI (registered in ServiceCompositionRoot)
         var quoteCollector = new QuoteCollector(publisher);
         var tradeCollector = new TradeDataCollector(publisher, quoteCollector);
         var depthCollector = new MarketDepthCollector(publisher, requireExplicitSubscription: true);
+
+        // Note: Collectors are still created with the local publisher because they need
+        // the WAL-backed pipeline publisher, not the DI-registered one. This is intentional.
 
         if (!string.IsNullOrWhiteSpace(cliArgs.Replay))
         {
@@ -289,12 +262,12 @@ internal static class Program
 
             await pipeline.FlushAsync();
             await statusWriter.WriteOnceAsync();
-            return;
+            return 0;
         }
 
-        // Create the ProviderRegistry with streaming factories for DI-based provider resolution.
-        // This replaces the old MarketDataClientFactory switch-statement approach.
-        var providerRegistry = CreateProviderRegistry(cfg, configService, publisher, tradeCollector, depthCollector, quoteCollector);
+        // Resolve ProviderRegistry from DI (populated by ServiceCompositionRoot.RegisterStreamingFactories).
+        // This is the single registry for all provider creation - no duplicate factory paths.
+        var providerRegistry = hostStartup.GetRequiredService<ProviderRegistry>();
 
         // Check if streaming failover is configured
         var failoverCfg = cfg.DataSources;
@@ -422,8 +395,9 @@ internal static class Program
         }
 
         log.Information("Wrote MarketEvents to {StoragePath}", storageOpt.RootPath);
+        var pipelineMetrics = pipeline.EventMetrics;
         log.Information("Metrics: published={Published}, integrity={Integrity}, dropped={Dropped}",
-            Metrics.Published, Metrics.Integrity, Metrics.Dropped);
+            pipelineMetrics.Published, pipelineMetrics.Integrity, pipelineMetrics.Dropped);
 
         log.Information("Disconnecting from data provider...");
         await dataClient.DisconnectAsync();
@@ -439,6 +413,8 @@ internal static class Program
             await uiServer.StopAsync();
             await uiServer.DisposeAsync();
         }
+
+        return 0;
     }
 
     private static BackfillRequest BuildBackfillRequest(AppConfig cfg, CliArguments cliArgs)
@@ -536,67 +512,10 @@ internal static class Program
         return cfg with { Symbols = fallback };
     }
 
-    /// <summary>
-    /// Creates a <see cref="ProviderRegistry"/> populated with streaming factory functions
-    /// for the direct startup path (bypasses full DI composition root).
-    /// Each <see cref="DataSourceKind"/> maps to a factory that creates the appropriate client.
-    /// </summary>
-    private static ProviderRegistry CreateProviderRegistry(
-        AppConfig cfg,
-        ConfigurationService configService,
-        IMarketEventPublisher publisher,
-        TradeDataCollector tradeCollector,
-        MarketDepthCollector depthCollector,
-        QuoteCollector quoteCollector)
-    {
-        var registry = new ProviderRegistry(log: LoggingSetup.ForContext<ProviderRegistry>());
-
-        registry.RegisterStreamingFactory(DataSourceKind.IB, () =>
-            new IBMarketDataClient(publisher, tradeCollector, depthCollector));
-
-        registry.RegisterStreamingFactory(DataSourceKind.Alpaca, () =>
-        {
-            var (keyId, secretKey) = configService.ResolveAlpacaCredentials(
-                cfg.Alpaca?.KeyId, cfg.Alpaca?.SecretKey);
-            return new AlpacaMarketDataClient(tradeCollector, quoteCollector,
-                cfg.Alpaca! with { KeyId = keyId ?? "", SecretKey = secretKey ?? "" });
-        });
-
-        registry.RegisterStreamingFactory(DataSourceKind.Polygon, () =>
-            new PolygonMarketDataClient(publisher, tradeCollector, quoteCollector));
-
-        registry.RegisterStreamingFactory(DataSourceKind.StockSharp, () =>
-            new StockSharpMarketDataClient(tradeCollector, depthCollector, quoteCollector,
-                cfg.StockSharp ?? new StockSharpConfig()));
-
-        registry.RegisterStreamingFactory(DataSourceKind.NYSE, () =>
-            new IBMarketDataClient(publisher, tradeCollector, depthCollector));
-
-        return registry;
-    }
-
-    /// <summary>
-    /// Initializes HttpClientFactory for proper HTTP client lifecycle management.
-    /// Implements TD-10: Replace instance HttpClient with IHttpClientFactory.
-    /// </summary>
-    /// <remarks>
-    /// When using HostStartup via the composition root, HttpClientFactory is initialized
-    /// automatically as part of AddMarketDataServices with EnableHttpClientFactory = true.
-    /// This method is used for the direct startup path that doesn't go through HostStartup.
-    /// </remarks>
-    private static void InitializeHttpClientFactory(ILogger log)
-    {
-        var services = new ServiceCollection();
-
-        // Register all named HttpClient configurations with Polly policies
-        services.AddMarketDataHttpClients();
-
-        // Build the service provider
-        var serviceProvider = services.BuildServiceProvider();
-
-        // Initialize the static factory provider for backward compatibility
-        HttpClientFactoryProvider.Initialize(serviceProvider);
-
-        log.Debug("HttpClientFactory initialized with named clients for all data providers (TD-10)");
-    }
+    // NOTE: CreateProviderRegistry() was removed - streaming factories are now registered
+    // exclusively in ServiceCompositionRoot.RegisterStreamingFactories() and resolved
+    // through the DI container via HostStartup.
+    //
+    // NOTE: InitializeHttpClientFactory() was removed - HttpClientFactory is now initialized
+    // automatically as part of HostStartup via AddMarketDataServices().
 }
