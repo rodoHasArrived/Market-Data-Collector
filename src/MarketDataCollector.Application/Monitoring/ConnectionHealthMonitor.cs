@@ -11,7 +11,7 @@ namespace MarketDataCollector.Application.Monitoring;
 /// Monitors connection health for market data providers.
 /// Tracks heartbeats, latency, and connection state with auto-reconnect support.
 /// </summary>
-public sealed class ConnectionHealthMonitor : IDisposable
+public sealed class ConnectionHealthMonitor : IConnectionHealthMonitor, IDisposable
 {
     private readonly ILogger _log = LoggingSetup.ForContext<ConnectionHealthMonitor>();
     private readonly ConcurrentDictionary<string, ConnectionState> _connections = new();
@@ -591,44 +591,5 @@ public readonly record struct ConnectionStatus(
     double RecentAverageLatencyMs
 );
 
-/// <summary>
-/// Event raised when a connection is lost.
-/// </summary>
-public readonly record struct ConnectionLostEvent(
-    string ConnectionId,
-    string ProviderName,
-    string? Reason,
-    DateTimeOffset Timestamp,
-    TimeSpan UptimeDuration
-);
-
-/// <summary>
-/// Event raised when a connection is recovered.
-/// </summary>
-public readonly record struct ConnectionRecoveredEvent(
-    string ConnectionId,
-    string ProviderName,
-    DateTimeOffset Timestamp,
-    TimeSpan DowntimeDuration
-);
-
-/// <summary>
-/// Event raised when a heartbeat is missed.
-/// </summary>
-public readonly record struct HeartbeatMissedEvent(
-    string ConnectionId,
-    string ProviderName,
-    int MissedCount,
-    TimeSpan TimeSinceLastActivity,
-    DateTimeOffset Timestamp
-);
-
-/// <summary>
-/// Event raised when high latency is detected.
-/// </summary>
-public readonly record struct HighLatencyEvent(
-    string ConnectionId,
-    string ProviderName,
-    double LatencyMs,
-    DateTimeOffset Timestamp
-);
+// Event record structs (ConnectionLostEvent, ConnectionRecoveredEvent, HeartbeatMissedEvent, HighLatencyEvent)
+// are defined in MarketDataCollector.Core/Monitoring/IConnectionHealthMonitor.cs
