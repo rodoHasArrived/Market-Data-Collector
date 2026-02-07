@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-07 09:30:40 UTC
+> Auto-generated on 2026-02-07 18:43:06 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -381,6 +381,7 @@ Market-Data-Collector/
 │   │   │   ├── ConnectionStatusWebhook.cs
 │   │   │   ├── DetailedHealthCheck.cs
 │   │   │   ├── ErrorRingBuffer.cs
+│   │   │   ├── IEventMetrics.cs
 │   │   │   ├── Metrics.cs
 │   │   │   ├── PrometheusMetrics.cs
 │   │   │   ├── ProviderLatencyService.cs
@@ -604,7 +605,8 @@ Market-Data-Collector/
 │   │   │   ├── ISymbolStateStore.cs
 │   │   │   ├── SubscriptionManager.cs
 │   │   │   ├── TaskSafetyExtensions.cs
-│   │   │   └── WebSocketProviderBase.cs
+│   │   │   ├── WebSocketProviderBase.cs
+│   │   │   └── WebSocketReconnectionHelper.cs
 │   │   ├── Utilities/
 │   │   │   ├── HttpResponseHandler.cs
 │   │   │   ├── JsonElementExtensions.cs

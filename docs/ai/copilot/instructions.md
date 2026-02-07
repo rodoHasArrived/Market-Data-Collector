@@ -488,6 +488,7 @@ Market-Data-Collector/
 │   │   │   ├── ConnectionStatusWebhook.cs
 │   │   │   ├── DetailedHealthCheck.cs
 │   │   │   ├── ErrorRingBuffer.cs
+│   │   │   ├── IEventMetrics.cs
 │   │   │   ├── Metrics.cs
 │   │   │   ├── PrometheusMetrics.cs
 │   │   │   ├── ProviderLatencyService.cs
@@ -711,7 +712,8 @@ Market-Data-Collector/
 │   │   │   ├── ISymbolStateStore.cs
 │   │   │   ├── SubscriptionManager.cs
 │   │   │   ├── TaskSafetyExtensions.cs
-│   │   │   └── WebSocketProviderBase.cs
+│   │   │   ├── WebSocketProviderBase.cs
+│   │   │   └── WebSocketReconnectionHelper.cs
 │   │   ├── Utilities/
 │   │   │   ├── HttpResponseHandler.cs
 │   │   │   ├── JsonElementExtensions.cs
