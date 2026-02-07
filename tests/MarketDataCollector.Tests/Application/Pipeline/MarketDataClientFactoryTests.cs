@@ -2,8 +2,6 @@ using FluentAssertions;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Domain.Collectors;
 using MarketDataCollector.Domain.Events;
-using MarketDataCollector.Infrastructure;
-using MarketDataCollector.Infrastructure.Providers;
 using MarketDataCollector.Infrastructure.Providers.Alpaca;
 using MarketDataCollector.Infrastructure.Providers.Core;
 using MarketDataCollector.Infrastructure.Providers.InteractiveBrokers;
