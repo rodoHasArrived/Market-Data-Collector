@@ -1,31 +1,31 @@
 # TODO Tracking
 
 > Auto-generated TODO documentation. Do not edit manually.
-> Last updated: 2026-02-06T23:53:58.262329+00:00
+> Last updated: 2026-02-07T04:52:14.620368+00:00
 
 ## Summary
 
 | Metric | Count |
 |--------|-------|
-| **Total Items** | 6 |
+| **Total Items** | 7 |
 | **Linked to Issues** | 0 |
-| **Untracked** | 6 |
+| **Untracked** | 7 |
 
 ### By Type
 
 | Type | Count | Description |
 |------|-------|-------------|
-| `NOTE` | 6 | Important notes and documentation |
+| `NOTE` | 7 | Important notes and documentation |
 
 ### By Directory
 
 | Directory | Count |
 |-----------|-------|
-| `tests/` | 6 |
+| `tests/` | 7 |
 
 ## All Items
 
-### NOTE (6)
+### NOTE (7)
 
 - [ ] `tests/MarketDataCollector.Tests/Application/Backfill/BackfillWorkerServiceTests.cs:28`
   > Using null! because validation throws before dependencies are accessed
@@ -35,6 +35,9 @@
 
 - [ ] `tests/MarketDataCollector.Tests/Application/Backfill/BackfillWorkerServiceTests.cs:84`
   > Using null! dependencies - we only verify that ArgumentOutOfRangeException is not thrown The constructor may throw other exceptions (e.g., NullReferenceException) when accessing null dependencies
+
+- [ ] `tests/MarketDataCollector.Tests/Application/Commands/SymbolCommandsTests.cs:19`
+  > SymbolCommands requires a SymbolManagementService which needs a ConfigStore. For CanHandle tests we can use a stub since CanHandle doesn't touch the service. For ExecuteAsync tests that require validation (missing value), we need the real command.
 
 - [ ] `tests/MarketDataCollector.Tests/Application/Monitoring/DataQuality/DataFreshnessSlaMonitorTests.cs:523`
   > Actual result depends on current time, so we check the logic is working
