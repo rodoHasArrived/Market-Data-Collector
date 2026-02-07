@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-07 20:21:48 UTC
+> Auto-generated on 2026-02-07 21:28:28 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -405,7 +405,6 @@ Market-Data-Collector/
 │   │   │   ├── BackfillExecutionLog.cs
 │   │   │   ├── BackfillSchedule.cs
 │   │   │   ├── BackfillScheduleManager.cs
-│   │   │   ├── CronExpressionParser.cs
 │   │   │   ├── IOperationalScheduler.cs
 │   │   │   ├── OperationalScheduler.cs
 │   │   │   └── ScheduledBackfillService.cs
@@ -525,6 +524,8 @@ Market-Data-Collector/
 │   │   │       ...
 │   │   ├── Pipeline/
 │   │   │   └── EventPipelinePolicy.cs
+│   │   ├── Scheduling/
+│   │   │   └── CronExpressionParser.cs
 │   │   ├── Serialization/
 │   │   │   └── MarketDataJsonContext.cs
 │   │   ├── Services/
