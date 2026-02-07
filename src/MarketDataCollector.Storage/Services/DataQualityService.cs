@@ -67,7 +67,7 @@ public sealed class DataQualityService : IDataQualityService
         return score;
     }
 
-    public async Task<QualityReport> GenerateReportAsync(QualityReportOptions options, CancellationToken ct = default)
+    public async Task<DataQualityReport> GenerateReportAsync(QualityReportOptions options, CancellationToken ct = default)
     {
         var scores = new List<DataQualityScore>();
         var recommendations = new List<string>();
@@ -133,7 +133,7 @@ public sealed class DataQualityService : IDataQualityService
                 byDimension[dim] = dimScores.Average();
         }
 
-        return new QualityReport(
+        return new DataQualityReport(
             GeneratedAt: DateTimeOffset.UtcNow,
             FilesAnalyzed: scores.Count,
             AverageScore: avgScore,
@@ -577,7 +577,7 @@ public sealed class DataQualityService : IDataQualityService
 public interface IDataQualityService
 {
     Task<DataQualityScore> ScoreAsync(string path, CancellationToken ct = default);
-    Task<QualityReport> GenerateReportAsync(QualityReportOptions options, CancellationToken ct = default);
+    Task<DataQualityReport> GenerateReportAsync(QualityReportOptions options, CancellationToken ct = default);
     Task<DataQualityScore[]> GetHistoricalScoresAsync(string path, TimeSpan window, CancellationToken ct = default);
     Task<SourceRanking[]> RankSourcesAsync(string symbol, DateTimeOffset date, MarketEventType type, CancellationToken ct = default);
     Task<ConsolidatedDataset> CreateGoldenRecordAsync(string symbol, DateTimeOffset date, ConsolidationOptions options, CancellationToken ct = default);
@@ -600,7 +600,7 @@ public sealed record QualityDimension(
     string[] Issues
 );
 
-public sealed record QualityReport(
+public sealed record DataQualityReport(
     DateTimeOffset GeneratedAt,
     int FilesAnalyzed,
     double AverageScore,

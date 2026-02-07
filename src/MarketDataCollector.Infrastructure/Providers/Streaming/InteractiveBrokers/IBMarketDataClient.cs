@@ -1,8 +1,6 @@
-using MarketDataCollector.Application.Config;
 using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.DataSources;
 using MarketDataCollector.Infrastructure.Providers.Core;
-using DataSourceType = MarketDataCollector.Infrastructure.DataSources.DataSourceType;
 using System.Threading;
 using MarketDataCollector.Domain.Collectors;
 using MarketDataCollector.Domain.Events;
