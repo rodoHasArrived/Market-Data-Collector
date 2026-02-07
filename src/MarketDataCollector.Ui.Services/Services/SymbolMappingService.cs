@@ -21,7 +21,7 @@ public sealed class SymbolMappingService
     /// <summary>
     /// Known data providers with their display names and default transformations.
     /// </summary>
-    public static readonly IReadOnlyList<ProviderInfo> KnownProviders = new List<ProviderInfo>
+    public static readonly IReadOnlyList<MappingProviderInfo> KnownProviders = new List<MappingProviderInfo>
     {
         new("IB", "Interactive Brokers", "Dots to spaces (BRK.B → BRK B)", SymbolTransform.DotsToSpaces),
         new("Alpaca", "Alpaca Markets", "Uppercase (identity)", SymbolTransform.Uppercase),
@@ -467,9 +467,9 @@ public class SymbolMapping
 }
 
 /// <summary>
-/// Information about a data provider.
+/// Information about a data provider for symbol mapping.
 /// </summary>
-public record ProviderInfo(
+public record MappingProviderInfo(
     string Id,
     string DisplayName,
     string TransformDescription,

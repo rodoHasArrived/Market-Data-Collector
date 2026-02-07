@@ -10,7 +10,7 @@ public sealed class OrderBookVisualizationService : IDisposable
 {
     private readonly LiveDataService _liveDataService;
     private readonly ConcurrentDictionary<string, OrderBookState> _orderBooks = new();
-    private readonly ConcurrentDictionary<string, List<OrderBookSnapshot>> _snapshotHistory = new();
+    private readonly ConcurrentDictionary<string, List<OrderBookHistorySnapshot>> _snapshotHistory = new();
     private readonly Timer _aggregationTimer;
     private readonly int _maxHistorySize = 1000;
 
@@ -31,7 +31,7 @@ public sealed class OrderBookVisualizationService : IDisposable
         if (!_orderBooks.ContainsKey(symbol))
         {
             _orderBooks[symbol] = new OrderBookState { Symbol = symbol, DepthLevels = depthLevels };
-            _snapshotHistory[symbol] = new List<OrderBookSnapshot>();
+            _snapshotHistory[symbol] = new List<OrderBookHistorySnapshot>();
         }
 
         await _liveDataService.SubscribeToDepthAsync(symbol, depthLevels, ct);
@@ -168,9 +168,9 @@ public sealed class OrderBookVisualizationService : IDisposable
     /// <summary>
     /// Gets order flow statistics.
     /// </summary>
-    public OrderFlowStats GetOrderFlowStats(string symbol)
+    public OrderBookFlowStats GetOrderFlowStats(string symbol)
     {
-        var stats = new OrderFlowStats { Symbol = symbol };
+        var stats = new OrderBookFlowStats { Symbol = symbol };
 
         if (!_orderBooks.TryGetValue(symbol, out var state))
             return stats;
@@ -304,7 +304,7 @@ public sealed class OrderBookVisualizationService : IDisposable
             if (!_snapshotHistory.TryGetValue(symbol, out var history))
                 continue;
 
-            var snapshot = new OrderBookSnapshot
+            var snapshot = new OrderBookHistorySnapshot
             {
                 Timestamp = DateTime.UtcNow,
                 BestBid = orderBook.BestBid,
@@ -389,7 +389,7 @@ public class OrderBookState
 /// <summary>
 /// Order book snapshot for history.
 /// </summary>
-public class OrderBookSnapshot
+public class OrderBookHistorySnapshot
 {
     public DateTime Timestamp { get; set; }
     public decimal BestBid { get; set; }
@@ -487,9 +487,9 @@ public enum TradeSide
 }
 
 /// <summary>
-/// Order flow statistics.
+/// Order flow statistics for order book visualization.
 /// </summary>
-public class OrderFlowStats
+public class OrderBookFlowStats
 {
     public string Symbol { get; set; } = string.Empty;
     public decimal BidAskRatio { get; set; }

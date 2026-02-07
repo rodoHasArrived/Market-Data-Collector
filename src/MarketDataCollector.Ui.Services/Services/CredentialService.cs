@@ -1,0 +1,114 @@
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
+namespace MarketDataCollector.Ui.Services;
+
+/// <summary>
+/// Default credential service for the shared UI services layer.
+/// Platform-specific projects (WPF, UWP) override this with their own implementations
+/// by setting the Instance property during app startup.
+/// </summary>
+public class CredentialService
+{
+    private static CredentialService? _instance;
+    private static readonly object _lock = new();
+
+    /// <summary>
+    /// Resource key prefix for OAuth tokens.
+    /// </summary>
+    public const string OAuthTokenResource = "oauth_token";
+
+    public static CredentialService Instance
+    {
+        get
+        {
+            if (_instance == null)
+            {
+                lock (_lock)
+                {
+                    _instance ??= new CredentialService();
+                }
+            }
+            return _instance;
+        }
+        set
+        {
+            lock (_lock)
+            {
+                _instance = value;
+            }
+        }
+    }
+
+    public event EventHandler<CredentialExpirationEventArgs>? CredentialExpiring;
+
+    public virtual IReadOnlyList<CredentialWithMetadata> GetAllCredentialsWithMetadata()
+        => Array.Empty<CredentialWithMetadata>();
+
+    public virtual Task<OAuthRefreshResult> RefreshOAuthTokenAsync(string providerId)
+        => Task.FromResult(new OAuthRefreshResult { Success = false, ErrorMessage = "Not implemented" });
+
+    public virtual Task UpdateMetadataAsync(string resource, Action<CredentialMetadataUpdate> updateAction)
+        => Task.CompletedTask;
+
+    public virtual CredentialMetadataInfo? GetMetadata(string resource)
+        => null;
+
+    protected void OnCredentialExpiring(CredentialExpirationEventArgs e)
+        => CredentialExpiring?.Invoke(this, e);
+}
+
+/// <summary>
+/// Event args for credential expiration notifications.
+/// </summary>
+public sealed class CredentialExpirationEventArgs : EventArgs
+{
+    public string Resource { get; }
+    public DateTime ExpiresAt { get; }
+
+    public CredentialExpirationEventArgs(string resource, DateTime expiresAt)
+    {
+        Resource = resource;
+        ExpiresAt = expiresAt;
+    }
+}
+
+/// <summary>
+/// Credential with associated metadata.
+/// </summary>
+public sealed class CredentialWithMetadata
+{
+    public string Resource { get; set; } = string.Empty;
+    public bool IsOAuthToken { get; set; }
+    public DateTime? ExpiresAt { get; set; }
+    public bool CanAutoRefresh { get; set; }
+    public bool AutoRefreshEnabled { get; set; }
+}
+
+/// <summary>
+/// Result of an OAuth token refresh operation.
+/// </summary>
+public sealed class OAuthRefreshResult
+{
+    public bool Success { get; set; }
+    public string? ErrorMessage { get; set; }
+    public DateTime? NewExpiration { get; set; }
+}
+
+/// <summary>
+/// Mutable metadata for credential updates.
+/// </summary>
+public sealed class CredentialMetadataUpdate
+{
+    public bool AutoRefreshEnabled { get; set; }
+}
+
+/// <summary>
+/// Read-only metadata about a credential.
+/// </summary>
+public sealed class CredentialMetadataInfo
+{
+    public bool AutoRefreshEnabled { get; set; }
+    public DateTime? ExpiresAt { get; set; }
+}

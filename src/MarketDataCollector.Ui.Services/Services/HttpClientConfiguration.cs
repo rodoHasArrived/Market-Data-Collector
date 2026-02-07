@@ -48,8 +48,7 @@ public static class HttpClientNames
 /// - Prevents socket exhaustion
 /// - Centralized configuration for timeouts, headers, retry policies
 /// - Better testability through DI
-/// </summary>
-/// <remarks>
+///
 /// This intentionally duplicates resilience policies from
 /// MarketDataCollector.Infrastructure.Http.SharedResiliencePolicies because desktop apps
 /// cannot reference the main project (XAML compiler error: "Assembly is not allowed in type universe").

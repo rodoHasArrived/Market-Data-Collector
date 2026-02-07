@@ -1,0 +1,52 @@
+using System;
+using System.Diagnostics;
+
+namespace MarketDataCollector.Ui.Services;
+
+/// <summary>
+/// Default logging service for the shared UI services layer.
+/// Platform-specific projects (WPF, UWP) override this with their own implementations
+/// by setting the Instance property during app startup.
+/// </summary>
+public class LoggingService
+{
+    private static LoggingService? _instance;
+    private static readonly object _lock = new();
+
+    public static LoggingService Instance
+    {
+        get
+        {
+            if (_instance == null)
+            {
+                lock (_lock)
+                {
+                    _instance ??= new LoggingService();
+                }
+            }
+            return _instance;
+        }
+        set
+        {
+            lock (_lock)
+            {
+                _instance = value;
+            }
+        }
+    }
+
+    public virtual void LogError(string message, Exception? exception = null, params (string key, string value)[] properties)
+    {
+        Debug.WriteLine($"[ERROR] {message} {exception?.Message}");
+    }
+
+    public virtual void LogWarning(string message, Exception? exception = null)
+    {
+        Debug.WriteLine($"[WARN] {message} {exception?.Message}");
+    }
+
+    public virtual void LogInfo(string message, params (string key, string value)[] properties)
+    {
+        Debug.WriteLine($"[INFO] {message}");
+    }
+}

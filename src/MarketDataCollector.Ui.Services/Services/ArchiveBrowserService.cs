@@ -12,7 +12,7 @@ namespace MarketDataCollector.Ui.Services;
 
 /// <summary>
 /// Service for browsing and inspecting archived data.
-/// Implements Feature #30: Archive Browser & Inspector
+/// Implements Feature #30: Archive Browser and Inspector
 /// </summary>
 public sealed class ArchiveBrowserService
 {
@@ -79,7 +79,7 @@ public sealed class ArchiveBrowserService
                 dayNode.Symbols.Add(symbolNode);
             }
 
-            symbolNode.Files.Add(new ArchiveFileInfo
+            symbolNode.Files.Add(new BrowserArchiveFileInfo
             {
                 FullPath = file,
                 RelativePath = Path.GetRelativePath(rootPath, file),
@@ -287,11 +287,11 @@ public sealed class ArchiveBrowserService
     /// <summary>
     /// Exports selected files to a destination.
     /// </summary>
-    public async Task<ExportResult> ExportFilesAsync(
+    public async Task<ArchiveExportResult> ExportFilesAsync(
         IEnumerable<string> files,
         string destinationPath,
         ExportOptions options,
-        IProgress<ExportProgress>? progress = null,
+        IProgress<ArchiveExportProgress>? progress = null,
         CancellationToken ct = default)
     {
         var fileList = files.ToList();
@@ -319,7 +319,7 @@ public sealed class ArchiveBrowserService
             totalSize += new FileInfo(destFile).Length;
             exported++;
 
-            progress?.Report(new ExportProgress
+            progress?.Report(new ArchiveExportProgress
             {
                 FilesExported = exported,
                 TotalFiles = fileList.Count,
@@ -328,7 +328,7 @@ public sealed class ArchiveBrowserService
             });
         }
 
-        return new ExportResult
+        return new ArchiveExportResult
         {
             Success = true,
             FilesExported = exported,
@@ -632,10 +632,10 @@ public sealed record DayNode
 public sealed record SymbolNode
 {
     public string Symbol { get; init; } = "";
-    public List<ArchiveFileInfo> Files { get; init; } = new();
+    public List<BrowserArchiveFileInfo> Files { get; init; } = new();
 }
 
-public sealed record ArchiveFileInfo
+public sealed record BrowserArchiveFileInfo
 {
     public string FullPath { get; init; } = "";
     public string RelativePath { get; init; } = "";
@@ -717,7 +717,7 @@ public sealed record ExportOptions
     public bool PreserveStructure { get; init; }
 }
 
-public sealed record ExportProgress
+public sealed record ArchiveExportProgress
 {
     public int FilesExported { get; init; }
     public int TotalFiles { get; init; }
@@ -725,7 +725,7 @@ public sealed record ExportProgress
     public int PercentComplete { get; init; }
 }
 
-public sealed record ExportResult
+public sealed record ArchiveExportResult
 {
     public bool Success { get; init; }
     public int FilesExported { get; init; }
