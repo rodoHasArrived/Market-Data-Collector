@@ -50,8 +50,11 @@ internal static class Program
 
     public static async Task Main(string[] args)
     {
+        // Parse CLI arguments once into a typed record
+        var cliArgs = CliArguments.Parse(args);
+
         // Initialize logging early - use minimal config load just for DataRoot
-        var cfgPath = ResolveConfigPath(args);
+        var cfgPath = ResolveConfigPath(cliArgs);
         var initialCfg = LoadConfigMinimal(cfgPath);
         LoggingSetup.Initialize(dataRoot: initialCfg.DataRoot);
         var log = LoggingSetup.ForContext("Program");
@@ -67,7 +70,7 @@ internal static class Program
 
         try
         {
-            await RunAsync(args, cfg, cfgPath, log, configService, deploymentContext);
+            await RunAsync(cliArgs, cfg, cfgPath, log, configService, deploymentContext);
         }
         catch (Exception ex)
         {
@@ -80,231 +83,31 @@ internal static class Program
         }
     }
 
-    private static async Task RunAsync(string[] args, AppConfig cfg, string cfgPath, ILogger log, ConfigurationService configService, DeploymentContext deployment)
+    private static async Task RunAsync(CliArguments cliArgs, AppConfig cfg, string cfgPath, ILogger log, ConfigurationService configService, DeploymentContext deployment)
     {
         // Initialize HttpClientFactory for proper HTTP client lifecycle management (TD-10)
         InitializeHttpClientFactory(log);
 
-        // Use deployment context for mode resolution (replaces scattered conditional logic)
-        var runMode = deployment.Mode switch
-        {
-            DeploymentMode.Web => CliModeResolver.RunMode.Web,
-            DeploymentMode.Desktop => CliModeResolver.RunMode.Desktop,
-            _ => CliModeResolver.RunMode.Headless
-        };
+        // Build all CLI command handlers and dispatch through a single dispatcher.
+        // Registration order determines priority when multiple flags are present.
+        var symbolService = new SymbolManagementService(new ConfigStore(cfgPath), cfg.DataRoot, log);
 
-        // Help Mode - Display usage information
-        if (args.Any(a => a.Equals("--help", StringComparison.OrdinalIgnoreCase) || a.Equals("-h", StringComparison.OrdinalIgnoreCase)))
-        {
-            ShowHelp();
-            return;
-        }
-
-        // Configuration setup commands (--wizard, --auto-config, --detect-providers, --generate-config)
-        // Extracted to Application/Commands/ConfigCommands.cs
-        var configCommands = new ConfigCommands(configService, log);
-        if (configCommands.CanHandle(args))
-        {
-            var exitCode = await configCommands.ExecuteAsync(args);
-            if (exitCode != 0) Environment.Exit(exitCode);
-            return;
-        }
-
-        // Diagnostics commands (--quick-check, --test-connectivity, --error-codes, --show-config, --validate-credentials)
-        // Extracted to Application/Commands/DiagnosticsCommands.cs
-        var diagCommands = new DiagnosticsCommands(cfg, cfgPath, configService, log);
-        if (diagCommands.CanHandle(args))
-        {
-            var exitCode = await diagCommands.ExecuteAsync(args);
-            if (exitCode != 0) Environment.Exit(exitCode);
-            return;
-        }
-
-        // Schema check command (--check-schemas)
-        // Extracted to Application/Commands/SchemaCheckCommand.cs
-        var schemaCheck = new SchemaCheckCommand(cfg, log);
-        if (schemaCheck.CanHandle(args))
-        {
-            var exitCode = await schemaCheck.ExecuteAsync(args);
-            if (exitCode != 0) Environment.Exit(exitCode);
-            return;
-        }
-
-        // Symbol Management Commands
-        var symbolManagementService = new SymbolManagementService(
-            new ConfigStore(cfgPath),
-            cfg.DataRoot,
-            log
+        var dispatcher = new CommandDispatcher(
+            new HelpCommand(),
+            new ConfigCommands(configService, log),
+            new DiagnosticsCommands(cfg, cfgPath, configService, log),
+            new SchemaCheckCommand(cfg, log),
+            new SymbolCommands(symbolService, log),
+            new ValidateConfigCommand(configService, cfgPath, log),
+            new DryRunCommand(cfg, configService, log),
+            new SelfTestCommand(log),
+            new PackageCommands(cfg, log)
         );
 
-        // List all symbols (monitored + archived)
-        if (args.Any(a => a.Equals("--symbols", StringComparison.OrdinalIgnoreCase)))
+        var (handled, exitCode) = await dispatcher.TryDispatchAsync(cliArgs.Raw);
+        if (handled)
         {
-            await symbolManagementService.DisplayAllSymbolsAsync();
-            return;
-        }
-
-        // List monitored symbols only
-        if (args.Any(a => a.Equals("--symbols-monitored", StringComparison.OrdinalIgnoreCase)))
-        {
-            var result = symbolManagementService.GetMonitoredSymbols();
-            symbolManagementService.DisplayMonitoredSymbols(result);
-            return;
-        }
-
-        // List archived symbols only
-        if (args.Any(a => a.Equals("--symbols-archived", StringComparison.OrdinalIgnoreCase)))
-        {
-            var result = await symbolManagementService.GetArchivedSymbolsAsync();
-            symbolManagementService.DisplayArchivedSymbols(result);
-            return;
-        }
-
-        // Add symbols
-        if (args.Any(a => a.Equals("--symbols-add", StringComparison.OrdinalIgnoreCase)))
-        {
-            var symbolsArg = GetArgValue(args, "--symbols-add");
-            if (string.IsNullOrWhiteSpace(symbolsArg))
-            {
-                Console.Error.WriteLine("Error: --symbols-add requires a comma-separated list of symbols");
-                Console.Error.WriteLine("Example: --symbols-add AAPL,MSFT,GOOGL");
-                Environment.Exit(1);
-                return;
-            }
-
-            var symbolsToAdd = symbolsArg.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-            var options = new SymbolAddOptions(
-                SubscribeTrades: !args.Any(a => a.Equals("--no-trades", StringComparison.OrdinalIgnoreCase)),
-                SubscribeDepth: !args.Any(a => a.Equals("--no-depth", StringComparison.OrdinalIgnoreCase)),
-                DepthLevels: int.TryParse(GetArgValue(args, "--depth-levels"), out var levels) ? levels : 10,
-                UpdateExisting: args.Any(a => a.Equals("--update", StringComparison.OrdinalIgnoreCase))
-            );
-
-            var result = await symbolManagementService.AddSymbolsAsync(symbolsToAdd, options);
-            Console.WriteLine();
-            Console.WriteLine(result.Success ? "Symbol Addition Result" : "Symbol Addition Failed");
-            Console.WriteLine(new string('=', 50));
-            Console.WriteLine($"  {result.Message}");
-            if (result.AffectedSymbols.Length > 0)
-            {
-                Console.WriteLine($"  Symbols: {string.Join(", ", result.AffectedSymbols)}");
-            }
-            Console.WriteLine();
-
-            Environment.Exit(result.Success ? 0 : 1);
-            return;
-        }
-
-        // Remove symbols
-        if (args.Any(a => a.Equals("--symbols-remove", StringComparison.OrdinalIgnoreCase)))
-        {
-            var symbolsArg = GetArgValue(args, "--symbols-remove");
-            if (string.IsNullOrWhiteSpace(symbolsArg))
-            {
-                Console.Error.WriteLine("Error: --symbols-remove requires a comma-separated list of symbols");
-                Console.Error.WriteLine("Example: --symbols-remove AAPL,MSFT");
-                Environment.Exit(1);
-                return;
-            }
-
-            var symbolsToRemove = symbolsArg.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-            var result = await symbolManagementService.RemoveSymbolsAsync(symbolsToRemove);
-
-            Console.WriteLine();
-            Console.WriteLine(result.Success ? "Symbol Removal Result" : "Symbol Removal Failed");
-            Console.WriteLine(new string('=', 50));
-            Console.WriteLine($"  {result.Message}");
-            if (result.AffectedSymbols.Length > 0)
-            {
-                Console.WriteLine($"  Removed: {string.Join(", ", result.AffectedSymbols)}");
-            }
-            Console.WriteLine();
-
-            Environment.Exit(result.Success ? 0 : 1);
-            return;
-        }
-
-        // Check status of a specific symbol
-        if (args.Any(a => a.Equals("--symbol-status", StringComparison.OrdinalIgnoreCase)))
-        {
-            var symbolArg = GetArgValue(args, "--symbol-status");
-            if (string.IsNullOrWhiteSpace(symbolArg))
-            {
-                Console.Error.WriteLine("Error: --symbol-status requires a symbol");
-                Console.Error.WriteLine("Example: --symbol-status AAPL");
-                Environment.Exit(1);
-                return;
-            }
-
-            var status = await symbolManagementService.GetSymbolStatusAsync(symbolArg);
-
-            Console.WriteLine();
-            Console.WriteLine($"Symbol Status: {status.Symbol}");
-            Console.WriteLine(new string('=', 50));
-            Console.WriteLine($"  Monitored: {(status.IsMonitored ? "Yes" : "No")}");
-            Console.WriteLine($"  Has Archived Data: {(status.HasArchivedData ? "Yes" : "No")}");
-
-            if (status.MonitoredConfig != null)
-            {
-                Console.WriteLine();
-                Console.WriteLine("  Monitoring Configuration:");
-                Console.WriteLine($"    Subscribe Trades: {status.MonitoredConfig.SubscribeTrades}");
-                Console.WriteLine($"    Subscribe Depth: {status.MonitoredConfig.SubscribeDepth}");
-                Console.WriteLine($"    Depth Levels: {status.MonitoredConfig.DepthLevels}");
-                Console.WriteLine($"    Security Type: {status.MonitoredConfig.SecurityType}");
-                Console.WriteLine($"    Exchange: {status.MonitoredConfig.Exchange}");
-            }
-
-            if (status.ArchivedInfo != null)
-            {
-                Console.WriteLine();
-                Console.WriteLine("  Archived Data:");
-                Console.WriteLine($"    Files: {status.ArchivedInfo.FileCount}");
-                Console.WriteLine($"    Size: {FormatBytes(status.ArchivedInfo.TotalSizeBytes)}");
-                if (status.ArchivedInfo.OldestData.HasValue && status.ArchivedInfo.NewestData.HasValue)
-                {
-                    Console.WriteLine($"    Date Range: {status.ArchivedInfo.OldestData:yyyy-MM-dd} to {status.ArchivedInfo.NewestData:yyyy-MM-dd}");
-                }
-                if (status.ArchivedInfo.DataTypes.Length > 0)
-                {
-                    Console.WriteLine($"    Data Types: {string.Join(", ", status.ArchivedInfo.DataTypes)}");
-                }
-            }
-
-            Console.WriteLine();
-            return;
-        }
-
-        // Validate Config Mode - Check configuration without starting
-        if (args.Any(a => a.Equals("--validate-config", StringComparison.OrdinalIgnoreCase)))
-        {
-            var configPathArg = GetArgValue(args, "--config") ?? cfgPath;
-            var exitCode = configService.ValidateConfig(configPathArg);
-            Environment.Exit(exitCode);
-            return;
-        }
-
-        // Dry Run Mode - Validate everything without starting (QW-93) (routed through ConfigurationService)
-        if (args.Any(a => a.Equals("--dry-run", StringComparison.OrdinalIgnoreCase)))
-        {
-            log.Information("Running in dry-run mode...");
-            Application.Services.DryRunService.EnableDryRunMode();
-
-            var options = new Application.Services.DryRunOptions(
-                ValidateConfiguration: true,
-                ValidateFileSystem: true,
-                ValidateConnectivity: !args.Any(a => a.Equals("--offline", StringComparison.OrdinalIgnoreCase)),
-                ValidateProviders: true,
-                ValidateSymbols: true,
-                ValidateResources: true
-            );
-
-            var result = await configService.DryRunValidationAsync(cfg, options);
-            var dryRunService = new Application.Services.DryRunService();
-            var report = dryRunService.GenerateReport(result);
-            Console.WriteLine(report);
-
-            Environment.Exit(result.OverallSuccess ? 0 : 1);
+            if (exitCode != 0) Environment.Exit(exitCode);
             return;
         }
 
@@ -332,25 +135,6 @@ internal static class Program
             log.Information("Stopping web dashboard...");
             await webServer.StopAsync();
             log.Information("Web dashboard stopped");
-            return;
-        }
-
-        if (args.Any(a => a.Equals("--selftest", StringComparison.OrdinalIgnoreCase)))
-        {
-            log.Information("Running self-tests...");
-            DepthBufferSelfTests.Run();
-            log.Information("Self-tests passed");
-            Console.WriteLine("Self-tests passed.");
-            return;
-        }
-
-        // Package commands (--package, --import-package, --list-package, --validate-package)
-        // Extracted to Application/Commands/PackageCommands.cs for testability
-        var packageCommands = new PackageCommands(cfg, log);
-        if (packageCommands.CanHandle(args))
-        {
-            var exitCode = await packageCommands.ExecuteAsync(args);
-            if (exitCode != 0) Environment.Exit(exitCode);
             return;
         }
 
@@ -384,7 +168,7 @@ internal static class Program
         log.Information("Data directory permissions configured: {Message}", permissionsResult.Message);
 
         // Optional startup schema compatibility check
-        if (args.Any(a => a.Equals("--validate-schemas", StringComparison.OrdinalIgnoreCase)))
+        if (cliArgs.ValidateSchemas)
         {
             log.Information("Running startup schema compatibility check...");
             await using var schemaService = new SchemaValidationService(
@@ -395,7 +179,7 @@ internal static class Program
             if (!schemaCheckResult.Success)
             {
                 log.Warning("Schema compatibility check found issues: {Message}", schemaCheckResult.Message);
-                if (args.Any(a => a.Equals("--strict-schemas", StringComparison.OrdinalIgnoreCase)))
+                if (cliArgs.StrictSchemas)
                 {
                     log.Error("Exiting due to schema incompatibilities (--strict-schemas enabled)");
                     Environment.Exit(1);
@@ -407,8 +191,6 @@ internal static class Program
                 log.Information("Schema compatibility check passed: {Message}", schemaCheckResult.Message);
             }
         }
-
-        var replayPath = GetArgValue(args, "--replay");
 
         var statusPath = Path.Combine(cfg.DataRoot, "_status", "status.json");
         await using var statusWriter = new StatusWriter(statusPath, () => configService.LoadAndPrepareConfig(cfgPath));
@@ -455,11 +237,10 @@ internal static class Program
         // Create publisher for pipeline (using unified PipelinePublisher from composition root)
         IMarketEventPublisher publisher = new Application.Composition.PipelinePublisher(pipeline);
 
-        var backfillRequested = args.Any(a => a.Equals("--backfill", StringComparison.OrdinalIgnoreCase))
-            || (cfg.Backfill?.Enabled == true);
+        var backfillRequested = cliArgs.Backfill || (cfg.Backfill?.Enabled == true);
         if (backfillRequested)
         {
-            var backfillRequest = BuildBackfillRequest(cfg, args);
+            var backfillRequest = BuildBackfillRequest(cfg, cliArgs);
 
             // Use HostStartup for unified service creation via composition root
             await using var hostStartup = HostStartupFactory.CreateForBackfill(cfgPath);
@@ -499,10 +280,10 @@ internal static class Program
         var tradeCollector = new TradeDataCollector(publisher, quoteCollector);
         var depthCollector = new MarketDepthCollector(publisher, requireExplicitSubscription: true);
 
-        if (!string.IsNullOrWhiteSpace(replayPath))
+        if (!string.IsNullOrWhiteSpace(cliArgs.Replay))
         {
-            log.Information("Replaying events from {ReplayPath}...", replayPath);
-            var replayer = new JsonlReplayer(replayPath);
+            log.Information("Replaying events from {ReplayPath}...", cliArgs.Replay);
+            var replayer = new JsonlReplayer(cliArgs.Replay);
             await foreach (var evt in replayer.ReadEventsAsync())
                 await pipeline.PublishAsync(evt);
 
@@ -622,9 +403,8 @@ internal static class Program
         }
 
         // --- Simulated feed smoke test (depth + trade) ---
-
         // Leave this as a sanity check in non-IB builds. In IBAPI builds, live data should flow too.
-        if (args.Any(a => a.Equals("--simulate-feed", StringComparison.OrdinalIgnoreCase)))
+        if (cliArgs.SimulateFeed)
         {
             var now = DateTimeOffset.UtcNow;
             var sym = symbols[0].Symbol;
@@ -662,268 +442,15 @@ internal static class Program
         }
     }
 
-    // Use CliModeResolver.RunMode for run mode handling
-    private static CliModeResolver.RunMode ResolveRunMode(string[] args, ILogger log)
-    {
-        var (mode, error) = CliModeResolver.ResolveWithError(args);
-        if (error != null)
-        {
-            log.Error(error);
-            Environment.Exit(1);
-        }
-        return mode;
-    }
-
-    private static void ShowHelp()
-    {
-        Console.WriteLine(@"
-╔══════════════════════════════════════════════════════════════════════╗
-║                    Market Data Collector v1.0                        ║
-║          Real-time and historical market data collection             ║
-╚══════════════════════════════════════════════════════════════════════╝
-
-USAGE:
-    MarketDataCollector [OPTIONS]
-
-MODES:
-    --mode <web|desktop|headless> Unified deployment mode selector
-    --ui                    Start web dashboard (http://localhost:8080) [legacy]
-    --backfill              Run historical data backfill
-    --replay <path>         Replay events from JSONL file
-    --package               Create a portable data package
-    --import-package <path> Import a package into storage
-    --list-package <path>   List contents of a package
-    --validate-package <path> Validate a package
-    --selftest              Run system self-tests
-    --validate-config       Validate configuration without starting
-    --dry-run               Comprehensive validation without starting (QW-93)
-    --help, -h              Show this help message
-
-AUTO-CONFIGURATION (First-time setup):
-    --wizard                Interactive configuration wizard (recommended for new users)
-    --auto-config           Quick auto-configuration based on environment variables
-    --detect-providers      Show available data providers and their status
-    --validate-credentials  Validate configured API credentials
-    --generate-config       Generate a configuration template
-
-DIAGNOSTICS & TROUBLESHOOTING:
-    --quick-check           Fast configuration health check
-    --test-connectivity     Test connectivity to all configured providers
-    --show-config           Display current configuration summary
-    --error-codes           Show error code reference guide
-    --check-schemas         Check stored data schema compatibility
-    --simulate-feed         Emit a synthetic depth/trade event for smoke testing
-
-SCHEMA VALIDATION OPTIONS:
-    --validate-schemas      Run schema check during startup
-    --strict-schemas        Exit if schema incompatibilities found (use with --validate-schemas)
-    --max-files <n>         Max files to check (default: 100, use with --check-schemas)
-    --fail-fast             Stop on first incompatibility (use with --check-schemas)
-
-SYMBOL MANAGEMENT:
-    --symbols               Show all symbols (monitored + archived)
-    --symbols-monitored     List symbols currently configured for monitoring
-    --symbols-archived      List symbols with archived data files
-    --symbols-add <list>    Add symbols to configuration (comma-separated)
-    --symbols-remove <list> Remove symbols from configuration
-    --symbol-status <sym>   Show detailed status for a specific symbol
-
-SYMBOL OPTIONS (use with --symbols-add):
-    --no-trades             Don't subscribe to trade data
-    --no-depth              Don't subscribe to depth/L2 data
-    --depth-levels <n>      Number of depth levels (default: 10)
-    --update                Update existing symbols instead of skipping
-
-OPTIONS:
-    --config <path>         Path to configuration file (default: appsettings.json)
-    --http-port <port>      HTTP server port (default: 8080)
-    --watch-config          Enable hot-reload of configuration
-
-ENVIRONMENT VARIABLES:
-    MDC_CONFIG_PATH         Alternative to --config argument for specifying config path
-    MDC_ENVIRONMENT         Environment name (e.g., Development, Production)
-                            Loads appsettings.{Environment}.json as overlay
-    DOTNET_ENVIRONMENT      Standard .NET environment variable (fallback for MDC_ENVIRONMENT)
-
-BACKFILL OPTIONS:
-    --backfill-provider <name>      Provider to use (default: stooq)
-    --backfill-symbols <list>       Comma-separated symbols (e.g., AAPL,MSFT)
-    --backfill-from <date>          Start date (YYYY-MM-DD)
-    --backfill-to <date>            End date (YYYY-MM-DD)
-
-PACKAGING OPTIONS:
-    --package-name <name>           Package name (default: market-data-YYYYMMDD)
-    --package-description <text>    Package description
-    --package-output <path>         Output directory (default: packages)
-    --package-symbols <list>        Comma-separated symbols to include
-    --package-events <list>         Event types (Trade,BboQuote,L2Snapshot)
-    --package-from <date>           Start date (YYYY-MM-DD)
-    --package-to <date>             End date (YYYY-MM-DD)
-    --package-format <fmt>          Format: zip, tar.gz (default: zip)
-    --package-compression <level>   Compression: none, fast, balanced, max
-    --no-quality-report             Exclude quality report from package
-    --no-data-dictionary            Exclude data dictionary
-    --no-loader-scripts             Exclude loader scripts
-    --skip-checksums                Skip checksum verification
-
-IMPORT OPTIONS:
-    --import-destination <path>     Destination directory (default: data root)
-    --skip-validation               Skip checksum validation during import
-    --merge                         Merge with existing data (don't overwrite)
-
-AUTO-CONFIGURATION OPTIONS:
-    --template <name>       Template for --generate-config: minimal, full, alpaca,
-                            stocksharp, backfill, production, docker (default: minimal)
-    --output <path>         Output path for generated config (default: config/appsettings.generated.json)
-
-EXAMPLES:
-    # Start web dashboard on default port
-    MarketDataCollector --mode web
-
-    # Start web dashboard on custom port
-    MarketDataCollector --mode web --http-port 9000
-
-    # Desktop mode (collector + UI server) with hot-reload
-    MarketDataCollector --mode desktop --watch-config
-
-    # Run historical backfill
-    MarketDataCollector --backfill --backfill-symbols AAPL,MSFT,GOOGL \\
-        --backfill-from 2024-01-01 --backfill-to 2024-12-31
-
-    # Run self-tests
-    MarketDataCollector --selftest
-
-    # Validate configuration without starting
-    MarketDataCollector --validate-config
-
-    # Validate a specific configuration file
-    MarketDataCollector --validate-config --config /path/to/config.json
-
-    # Create a portable data package
-    MarketDataCollector --package --package-name my-data \\
-        --package-symbols AAPL,MSFT --package-from 2024-01-01
-
-    # Create package with maximum compression
-    MarketDataCollector --package --package-compression max
-
-    # Import a package
-    MarketDataCollector --import-package ./packages/my-data.zip
-
-    # List package contents
-    MarketDataCollector --list-package ./packages/my-data.zip
-
-    # Validate a package
-    MarketDataCollector --validate-package ./packages/my-data.zip
-
-    # Run interactive configuration wizard (recommended for new users)
-    MarketDataCollector --wizard
-
-    # Quick auto-configuration based on environment variables
-    MarketDataCollector --auto-config
-
-    # Detect available data providers
-    MarketDataCollector --detect-providers
-
-    # Validate configured API credentials
-    MarketDataCollector --validate-credentials
-
-    # Generate a configuration template
-    MarketDataCollector --generate-config --template alpaca --output config/appsettings.json
-
-    # Quick configuration health check
-    MarketDataCollector --quick-check
-
-    # Test connectivity to all providers
-    MarketDataCollector --test-connectivity
-
-    # Show current configuration summary
-    MarketDataCollector --show-config
-
-    # View all error codes and their meanings
-    MarketDataCollector --error-codes
-
-    # Show all symbols (both monitored and archived)
-    MarketDataCollector --symbols
-
-    # Show only symbols currently being monitored
-    MarketDataCollector --symbols-monitored
-
-    # Show symbols that have archived data
-    MarketDataCollector --symbols-archived
-
-    # Add new symbols for monitoring
-    MarketDataCollector --symbols-add AAPL,MSFT,GOOGL
-
-    # Add symbols with custom options
-    MarketDataCollector --symbols-add SPY,QQQ --no-depth --depth-levels 5
-
-    # Remove symbols from monitoring
-    MarketDataCollector --symbols-remove AAPL,MSFT
-
-    # Check status of a specific symbol
-    MarketDataCollector --symbol-status AAPL
-
-CONFIGURATION:
-    Configuration is loaded from appsettings.json by default, but can be customized:
-
-    Priority for config file path:
-      1. --config argument (highest priority)
-      2. MDC_CONFIG_PATH environment variable
-      3. appsettings.json (default)
-
-    Environment-specific overlays:
-      Set MDC_ENVIRONMENT=Production to automatically load appsettings.Production.json
-      as an overlay on top of the base configuration.
-
-    To get started:
-      Copy appsettings.sample.json to appsettings.json and customize.
-
-DATA PROVIDERS:
-    - Interactive Brokers (IB): Level 2 market depth + trades
-    - Alpaca: Real-time trades and quotes via WebSocket
-    - Polygon: Real-time and historical data (coming soon)
-
-DOCUMENTATION:
-    For detailed documentation, see:
-    - HELP.md                    - Complete user guide
-    - README.md                  - Project overview
-    - docs/CONFIGURATION.md      - Configuration reference
-    - docs/GETTING_STARTED.md    - Setup guide
-    - docs/TROUBLESHOOTING.md    - Common issues
-
-SUPPORT:
-    Report issues: https://github.com/rodoHasArrived/Test/issues
-    Documentation: ./HELP.md
-
-╔══════════════════════════════════════════════════════════════════════╗
-║  NEW USER?     Run: ./MarketDataCollector --wizard                   ║
-║  QUICK CHECK:  Run: ./MarketDataCollector --quick-check              ║
-║  START UI:     Run: ./MarketDataCollector --ui                       ║
-║  Then open http://localhost:8080 in your browser                     ║
-╚══════════════════════════════════════════════════════════════════════╝
-");
-    }
-
-    private static string? GetArgValue(string[] args, string key)
-    {
-        for (var i = 0; i < args.Length - 1; i++)
-        {
-            if (args[i].Equals(key, StringComparison.OrdinalIgnoreCase))
-                return args[i + 1];
-        }
-        return null;
-    }
-
-    private static BackfillRequest BuildBackfillRequest(AppConfig cfg, string[] args)
+    private static BackfillRequest BuildBackfillRequest(AppConfig cfg, CliArguments cliArgs)
     {
         var baseRequest = BackfillRequest.FromConfig(cfg);
-        var provider = GetArgValue(args, "--backfill-provider") ?? baseRequest.Provider;
-        var symbolsArg = GetArgValue(args, "--backfill-symbols");
-        var symbols = !string.IsNullOrWhiteSpace(symbolsArg)
-            ? symbolsArg.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        var provider = cliArgs.BackfillProvider ?? baseRequest.Provider;
+        var symbols = !string.IsNullOrWhiteSpace(cliArgs.BackfillSymbols)
+            ? cliArgs.BackfillSymbols.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             : baseRequest.Symbols;
-        var from = ParseDate(GetArgValue(args, "--backfill-from")) ?? baseRequest.From;
-        var to = ParseDate(GetArgValue(args, "--backfill-to")) ?? baseRequest.To;
+        var from = ParseDate(cliArgs.BackfillFrom) ?? baseRequest.From;
+        var to = ParseDate(cliArgs.BackfillTo) ?? baseRequest.To;
 
         return new BackfillRequest(provider, symbols.ToArray(), from, to);
     }
@@ -984,15 +511,14 @@ SUPPORT:
     }
 
     /// <summary>
-    /// Resolves the configuration file path from command line arguments, environment variables, or defaults.
+    /// Resolves the configuration file path from CLI arguments, environment variables, or defaults.
     /// Priority: --config argument > MDC_CONFIG_PATH env var > appsettings.json
     /// </summary>
-    private static string ResolveConfigPath(string[] args)
+    private static string ResolveConfigPath(CliArguments cliArgs)
     {
-        // 1. Check command line argument (highest priority)
-        var argValue = GetArgValue(args, "--config");
-        if (!string.IsNullOrWhiteSpace(argValue))
-            return argValue;
+        // 1. Check typed CLI argument (highest priority)
+        if (!string.IsNullOrWhiteSpace(cliArgs.ConfigPath))
+            return cliArgs.ConfigPath;
 
         // 2. Check environment variable
         var envValue = Environment.GetEnvironmentVariable(ConfigPathEnvVar);
@@ -1003,37 +529,12 @@ SUPPORT:
         return DefaultConfigFileName;
     }
 
-    // GetEnvironmentName(), LoadConfigWithEnvironmentOverlay(), and MergeConfigs()
-    // have been removed to consolidate configuration logic through ConfigurationService.
-    // Use ConfigurationService.LoadAndPrepareConfig() for full configuration processing.
-
-    // PipelinePublisher has been consolidated into ServiceCompositionRoot
-    // and is accessed via DI through the composition root.
-
     private static AppConfig EnsureDefaultSymbols(AppConfig cfg)
     {
         if (cfg.Symbols is { Length: > 0 }) return cfg;
 
         var fallback = new[] { new SymbolConfig("SPY", SubscribeTrades: true, SubscribeDepth: true, DepthLevels: 10) };
         return cfg with { Symbols = fallback };
-    }
-
-    // Package commands now handled by Application/Commands/PackageCommands.cs
-
-    /// <summary>
-    /// Format bytes as human-readable string.
-    /// </summary>
-    private static string FormatBytes(long bytes)
-    {
-        string[] sizes = { "B", "KB", "MB", "GB", "TB" };
-        var order = 0;
-        double size = bytes;
-        while (size >= 1024 && order < sizes.Length - 1)
-        {
-            order++;
-            size /= 1024;
-        }
-        return $"{size:0.##} {sizes[order]}";
     }
 
     /// <summary>
