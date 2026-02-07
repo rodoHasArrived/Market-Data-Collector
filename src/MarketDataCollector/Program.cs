@@ -8,6 +8,7 @@ using DeploymentMode = MarketDataCollector.Application.Config.DeploymentMode;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Application.Subscriptions;
+using MarketDataCollector.Application.Subscriptions.Services;
 using MarketDataCollector.Application.Pipeline;
 using MarketDataCollector.Application.Services;
 using MarketDataCollector.Application.UI;
@@ -24,6 +25,7 @@ using BackfillRequest = MarketDataCollector.Application.Backfill.BackfillRequest
 using MarketDataCollector.Storage;
 using MarketDataCollector.Storage.Policies;
 using MarketDataCollector.Storage.Replay;
+using MarketDataCollector.Storage.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 
