@@ -768,9 +768,9 @@ public sealed class PipelinePublisher : IMarketEventPublisher
     public bool TryPublish(in MarketEvent evt)
     {
         var ok = _pipeline.TryPublish(evt);
-        if (ok) _metrics.IncPublished();
-        else _metrics.IncDropped();
 
+        // Integrity tracking lives here because EventPipeline is type-agnostic.
+        // Published/Dropped are tracked inside EventPipeline.TryPublish() already.
         if (evt.Type == MarketEventType.Integrity) _metrics.IncIntegrity();
         return ok;
     }

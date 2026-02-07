@@ -1,11 +1,7 @@
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Infrastructure.Contracts;
-using MarketDataCollector.Infrastructure.Providers.Alpaca;
 using MarketDataCollector.Infrastructure.Providers.Backfill;
-using MarketDataCollector.Infrastructure.Providers.InteractiveBrokers;
-using MarketDataCollector.Infrastructure.Providers.Polygon;
-using MarketDataCollector.Infrastructure.Providers.StockSharp;
 using MarketDataCollector.Infrastructure.Providers.SymbolSearch;
 using Serilog;
 
@@ -47,16 +43,12 @@ public sealed class ProviderFactory
     }
 
     /// <summary>
-    /// Creates all configured providers and registers them with the provided registry.
-    /// This is the main entry point for provider initialization.
+    /// Creates backfill and symbol search providers and registers them with the provided registry.
+    /// Streaming providers are registered separately via ProviderRegistry factory functions.
     /// </summary>
     /// <param name="registry">The registry to register providers with.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>Summary of created providers.</returns>
-    /// <summary>
-    /// Creates backfill and symbol search providers and registers them with the provided registry.
-    /// Streaming providers are registered separately via ProviderRegistry factory functions.
-    /// </summary>
     public Task<ProviderCreationResult> CreateAndRegisterAllAsync(
         ProviderRegistry registry,
         CancellationToken ct = default)
@@ -91,12 +83,6 @@ public sealed class ProviderFactory
 
         return Task.FromResult(result);
     }
-
-    // NOTE: Streaming provider creation methods were removed because they passed null!
-    // for all collector dependencies (dead code that would crash if invoked).
-    // Streaming providers are now created exclusively through ProviderRegistry factory
-    // functions registered in ServiceCompositionRoot.RegisterStreamingFactories(),
-    // which properly resolve all dependencies through DI.
 
     /// <summary>
     /// Creates all configured backfill providers.
@@ -337,14 +323,12 @@ public sealed class ProviderFactory
 /// </summary>
 public sealed class ProviderCreationResult
 {
-    public List<string> StreamingProviders { get; } = new();
     public List<string> BackfillProviders { get; } = new();
     public List<string> SymbolSearchProviders { get; } = new();
 
     public int TotalProviders =>
-        StreamingProviders.Count + BackfillProviders.Count + SymbolSearchProviders.Count;
+        BackfillProviders.Count + SymbolSearchProviders.Count;
 
-    public bool HasStreamingProviders => StreamingProviders.Count > 0;
     public bool HasBackfillProviders => BackfillProviders.Count > 0;
     public bool HasSymbolSearchProviders => SymbolSearchProviders.Count > 0;
 }

@@ -214,15 +214,15 @@ internal static class Program
         {
             var backfillRequest = BuildBackfillRequest(cfg, cliArgs);
 
-            // Use HostStartup for unified service creation via composition root
-            await using var hostStartup = HostStartupFactory.CreateForBackfill(cfgPath);
-            var backfillProviders = hostStartup.CreateBackfillProviders();
+            // Use a separate backfill-mode host for provider creation
+            await using var backfillHost = HostStartupFactory.CreateForBackfill(cfgPath);
+            var backfillProviders = backfillHost.CreateBackfillProviders();
 
             // Wrap in composite provider if fallback enabled
             IHistoricalDataProvider[] providersArray;
             if (cfg.Backfill?.EnableFallback ?? true)
             {
-                var composite = hostStartup.CreateCompositeBackfillProvider(backfillProviders);
+                var composite = backfillHost.CreateCompositeBackfillProvider(backfillProviders);
                 providersArray = new IHistoricalDataProvider[] { composite };
             }
             else
@@ -245,13 +245,9 @@ internal static class Program
             return result.Success ? 0 : 1;
         }
 
-        // Resolve collectors from DI (registered in ServiceCompositionRoot)
         var quoteCollector = new QuoteCollector(publisher);
         var tradeCollector = new TradeDataCollector(publisher, quoteCollector);
         var depthCollector = new MarketDepthCollector(publisher, requireExplicitSubscription: true);
-
-        // Note: Collectors are still created with the local publisher because they need
-        // the WAL-backed pipeline publisher, not the DI-registered one. This is intentional.
 
         if (!string.IsNullOrWhiteSpace(cliArgs.Replay))
         {
@@ -512,10 +508,4 @@ internal static class Program
         return cfg with { Symbols = fallback };
     }
 
-    // NOTE: CreateProviderRegistry() was removed - streaming factories are now registered
-    // exclusively in ServiceCompositionRoot.RegisterStreamingFactories() and resolved
-    // through the DI container via HostStartup.
-    //
-    // NOTE: InitializeHttpClientFactory() was removed - HttpClientFactory is now initialized
-    // automatically as part of HostStartup via AddMarketDataServices().
 }
