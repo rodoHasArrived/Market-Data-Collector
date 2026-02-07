@@ -46,6 +46,15 @@ public sealed class LoggingService : ILoggingService
     }
 
     /// <summary>
+    /// Logs a message (required by ILoggingService).
+    /// </summary>
+    /// <param name="message">The log message.</param>
+    public void Log(string message)
+    {
+        LogInfo(message);
+    }
+
+    /// <summary>
     /// Logs an informational message with optional structured properties.
     /// </summary>
     /// <param name="message">The log message.</param>
@@ -53,6 +62,15 @@ public sealed class LoggingService : ILoggingService
     public void LogInfo(string message, params (string key, string value)[] properties)
     {
         Log(LogLevel.Info, message, null, properties);
+    }
+
+    /// <summary>
+    /// Logs a warning message (required by ILoggingService).
+    /// </summary>
+    /// <param name="message">The log message.</param>
+    void ILoggingService.LogWarning(string message)
+    {
+        LogWarning(message);
     }
 
     /// <summary>
@@ -66,6 +84,16 @@ public sealed class LoggingService : ILoggingService
     }
 
     /// <summary>
+    /// Logs an error message (required by ILoggingService).
+    /// </summary>
+    /// <param name="message">The log message.</param>
+    /// <param name="exception">Optional exception associated with the error.</param>
+    void ILoggingService.LogError(string message, Exception? exception)
+    {
+        LogError(message, exception);
+    }
+
+    /// <summary>
     /// Logs an error message with optional exception details.
     /// </summary>
     /// <param name="message">The log message.</param>
@@ -73,6 +101,15 @@ public sealed class LoggingService : ILoggingService
     public void LogError(string message, Exception? ex = null)
     {
         Log(LogLevel.Error, message, ex, []);
+    }
+
+    /// <summary>
+    /// Logs a debug message (required by ILoggingService).
+    /// </summary>
+    /// <param name="message">The log message.</param>
+    void ILoggingService.LogDebug(string message)
+    {
+        LogDebug(message);
     }
 
     /// <summary>
