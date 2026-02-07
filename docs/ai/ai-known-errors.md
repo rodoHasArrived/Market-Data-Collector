@@ -101,3 +101,18 @@ If headings are missing, the workflow still creates an entry with safe defaults 
   - `dotnet build MarketDataCollector.sln -c Release --no-restore /p:EnableWindowsTargeting=true`
 - **Source issue**: PR #860 (incomplete fix)
 - **Status**: fixed
+
+### AI-20260207-storage-namespace-circular-dependency
+- **Area**: build/Infrastructure
+- **Symptoms**: Build fails with CS0234: "The type or namespace name 'Storage' does not exist in the namespace 'MarketDataCollector'" in `DataGapRepair.cs`. Three errors on the `using MarketDataCollector.Storage` lines.
+- **Root cause**: During the layer assembly split (commit `ac7bd35`), `DataGapRepair.cs` was placed in the Infrastructure project but retained `using` statements for `MarketDataCollector.Storage`. The Infrastructure project does not (and should not) reference the Storage project to avoid circular dependencies. A prior fix only commented out the lines rather than removing them.
+- **Prevention checklist**:
+  - [ ] When splitting code into separate assemblies, verify all `using` directives resolve against the project's actual references
+  - [ ] Infrastructure layer must never reference Storage layer directly; use abstractions (e.g., `IStorageSink`) injected via DI
+  - [ ] Remove dead commented-out code entirely rather than leaving `// using` statements that obscure the issue
+  - [ ] After moving files between projects, build the specific project: `dotnet build src/MarketDataCollector.Infrastructure`
+- **Verification commands**:
+  - `dotnet build src/MarketDataCollector.Infrastructure/MarketDataCollector.Infrastructure.csproj -c Release`
+  - `grep -rn 'MarketDataCollector\.Storage' src/MarketDataCollector.Infrastructure --include="*.cs"` (should return no results)
+- **Source issue**: CI build failure on main branch
+- **Status**: fixed
