@@ -214,7 +214,7 @@ public sealed class ScheduledMaintenanceService
             Name = "Daily Verification",
             Description = "Verify integrity of recent data files (last 7 days)",
             TaskType = MaintenanceTaskType.Verification,
-            Schedule = new MaintenanceSchedule
+            Schedule = new MaintenanceTimingConfig
             {
                 ScheduleType = ScheduleType.Daily,
                 TimeOfDay = new TimeSpan(3, 0, 0) // 3 AM
@@ -229,7 +229,7 @@ public sealed class ScheduledMaintenanceService
             Name = "Weekly Optimization",
             Description = "Optimize storage by compressing warm tier files",
             TaskType = MaintenanceTaskType.Optimization,
-            Schedule = new MaintenanceSchedule
+            Schedule = new MaintenanceTimingConfig
             {
                 ScheduleType = ScheduleType.Weekly,
                 DayOfWeek = DayOfWeek.Sunday,
@@ -245,7 +245,7 @@ public sealed class ScheduledMaintenanceService
             Name = "Monthly Full Audit",
             Description = "Complete archive verification and integrity audit",
             TaskType = MaintenanceTaskType.FullAudit,
-            Schedule = new MaintenanceSchedule
+            Schedule = new MaintenanceTimingConfig
             {
                 ScheduleType = ScheduleType.Monthly,
                 DayOfMonth = 1,
@@ -261,7 +261,7 @@ public sealed class ScheduledMaintenanceService
             Name = "Daily Cleanup",
             Description = "Remove expired files according to retention policy",
             TaskType = MaintenanceTaskType.Cleanup,
-            Schedule = new MaintenanceSchedule
+            Schedule = new MaintenanceTimingConfig
             {
                 ScheduleType = ScheduleType.Daily,
                 TimeOfDay = new TimeSpan(5, 0, 0) // 5 AM
@@ -570,7 +570,7 @@ public class MaintenanceTask
     public string Name { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public MaintenanceTaskType TaskType { get; set; }
-    public MaintenanceSchedule Schedule { get; set; } = new();
+    public MaintenanceTimingConfig Schedule { get; set; } = new();
     public MaintenanceScope Scope { get; set; }
     public bool IsEnabled { get; set; }
     public bool IsRunning { get; set; }
@@ -654,7 +654,7 @@ public class MaintenanceTask
 /// <summary>
 /// Maintenance task schedule configuration.
 /// </summary>
-public class MaintenanceSchedule
+public class MaintenanceTimingConfig
 {
     public ScheduleType ScheduleType { get; set; }
     public TimeSpan TimeOfDay { get; set; }
