@@ -12,6 +12,7 @@ using MarketDataCollector.Domain.Collectors;
 using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Infrastructure;
 using MarketDataCollector.Infrastructure.Contracts;
+using MarketDataCollector.Infrastructure.DataSources;
 using MarketDataCollector.Infrastructure.Http;
 using MarketDataCollector.Infrastructure.Providers.Backfill.Scheduling;
 using MarketDataCollector.Infrastructure.Providers.Core;
@@ -475,6 +476,16 @@ public static class ServiceCompositionRoot
         this IServiceCollection services,
         CompositionOptions options)
     {
+        // DataSourceRegistry - discovers providers decorated with [DataSource] (ADR-005).
+        // This allows new providers to be registered by adding the attribute and implementing
+        // the interface, without modifying factory methods or switch statements.
+        services.AddSingleton<DataSourceRegistry>(sp =>
+        {
+            var registry = new DataSourceRegistry();
+            registry.DiscoverFromAssemblies(typeof(MarketDataCollector.Infrastructure.NoOpMarketDataClient).Assembly);
+            return registry;
+        });
+
         // Register credential resolver - wraps ConfigurationService for provider credential resolution
         services.AddSingleton<ICredentialResolver>(sp =>
         {
@@ -633,6 +644,9 @@ public static class ServiceCompositionRoot
         this IServiceCollection services,
         CompositionOptions options)
     {
+        // IEventMetrics - injectable metrics for pipeline and publisher
+        services.AddSingleton<IEventMetrics, DefaultEventMetrics>();
+
         // JsonlStoragePolicy - controls file path generation
         services.AddSingleton<JsonlStoragePolicy>(sp =>
         {
@@ -648,18 +662,34 @@ public static class ServiceCompositionRoot
             return new JsonlStorageSink(storageOptions, policy);
         });
 
-        // EventPipeline - bounded channel event routing
+        // WriteAheadLog - crash-safe durability for the event pipeline
+        services.AddSingleton<Storage.Archival.WriteAheadLog>(sp =>
+        {
+            var storageOptions = sp.GetRequiredService<StorageOptions>();
+            var walDir = Path.Combine(storageOptions.RootPath, "_wal");
+            return new Storage.Archival.WriteAheadLog(walDir, new Storage.Archival.WalOptions
+            {
+                SyncMode = Storage.Archival.WalSyncMode.BatchedSync,
+                SyncBatchSize = 1000,
+                MaxFlushDelay = TimeSpan.FromSeconds(1)
+            });
+        });
+
+        // EventPipeline - bounded channel event routing with WAL for durability
         services.AddSingleton<EventPipeline>(sp =>
         {
             var sink = sp.GetRequiredService<JsonlStorageSink>();
-            return new EventPipeline(sink, EventPipelinePolicy.HighThroughput);
+            var metrics = sp.GetRequiredService<IEventMetrics>();
+            var wal = sp.GetService<Storage.Archival.WriteAheadLog>();
+            return new EventPipeline(sink, EventPipelinePolicy.HighThroughput, metrics: metrics, wal: wal);
         });
 
         // IMarketEventPublisher - facade for publishing events
         services.AddSingleton<IMarketEventPublisher>(sp =>
         {
             var pipeline = sp.GetRequiredService<EventPipeline>();
-            return new PipelinePublisher(pipeline);
+            var metrics = sp.GetRequiredService<IEventMetrics>();
+            return new PipelinePublisher(pipeline, metrics);
         });
 
         return services;
@@ -727,16 +757,21 @@ public static class ServiceCompositionRoot
 public sealed class PipelinePublisher : IMarketEventPublisher
 {
     private readonly EventPipeline _pipeline;
+    private readonly IEventMetrics _metrics;
 
-    public PipelinePublisher(EventPipeline pipeline) => _pipeline = pipeline;
+    public PipelinePublisher(EventPipeline pipeline, IEventMetrics? metrics = null)
+    {
+        _pipeline = pipeline;
+        _metrics = metrics ?? new DefaultEventMetrics();
+    }
 
     public bool TryPublish(in MarketEvent evt)
     {
         var ok = _pipeline.TryPublish(evt);
-        if (ok) Metrics.IncPublished();
-        else Metrics.IncDropped();
 
-        if (evt.Type == MarketEventType.Integrity) Metrics.IncIntegrity();
+        // Integrity tracking lives here because EventPipeline is type-agnostic.
+        // Published/Dropped are tracked inside EventPipeline.TryPublish() already.
+        if (evt.Type == MarketEventType.Integrity) _metrics.IncIntegrity();
         return ok;
     }
 }

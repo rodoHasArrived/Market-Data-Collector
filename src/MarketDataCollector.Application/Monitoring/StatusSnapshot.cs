@@ -15,15 +15,18 @@ public sealed record StatusSnapshot(
     IReadOnlyDictionary<string, int> TradeSubscriptions
 )
 {
-    public static StatusSnapshot FromRuntime(AppConfig cfg, IMarketDataClient ib, SubscriptionManager subs)
-        => new(
+    public static StatusSnapshot FromRuntime(AppConfig cfg, IMarketDataClient ib, SubscriptionManager subs, IEventMetrics? metrics = null)
+    {
+        var m = metrics ?? new DefaultEventMetrics();
+        return new(
             TimestampUtc: DateTimeOffset.UtcNow,
-            Published: Metrics.Published,
-            Dropped: Metrics.Dropped,
-            Integrity: Metrics.Integrity,
+            Published: m.Published,
+            Dropped: m.Dropped,
+            Integrity: m.Integrity,
             IbEnabled: ib.IsEnabled,
             SymbolCount: cfg.Symbols?.Length ?? 0,
             DepthSubscriptions: new Dictionary<string, int>(subs.DepthSubscriptions, StringComparer.OrdinalIgnoreCase),
             TradeSubscriptions: new Dictionary<string, int>(subs.TradeSubscriptions, StringComparer.OrdinalIgnoreCase)
         );
+    }
 }

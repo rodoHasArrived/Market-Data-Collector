@@ -13,14 +13,16 @@ public sealed class StatusWriter : IAsyncDisposable
 {
     private readonly string _path;
     private readonly Func<AppConfig> _configProvider;
+    private readonly IEventMetrics _metrics;
     private readonly CancellationTokenSource _cts = new();
     private readonly Serilog.ILogger _log = LoggingSetup.ForContext<StatusWriter>();
     private Task? _loop;
 
-    public StatusWriter(string path, Func<AppConfig> configProvider)
+    public StatusWriter(string path, Func<AppConfig> configProvider, IEventMetrics? metrics = null)
     {
         _path = path;
         _configProvider = configProvider;
+        _metrics = metrics ?? new DefaultEventMetrics();
     }
 
     public void Start(TimeSpan interval)
@@ -45,10 +47,10 @@ public sealed class StatusWriter : IAsyncDisposable
             timestampUtc = DateTimeOffset.UtcNow.ToString("O"),
             metrics = new
             {
-                published = Metrics.Published,
-                dropped = Metrics.Dropped,
-                integrity = Metrics.Integrity,
-                historicalBars = Metrics.HistoricalBars
+                published = _metrics.Published,
+                dropped = _metrics.Dropped,
+                integrity = _metrics.Integrity,
+                historicalBars = _metrics.HistoricalBars
             },
             symbols = cfg.Symbols ?? Array.Empty<SymbolConfig>()
         };

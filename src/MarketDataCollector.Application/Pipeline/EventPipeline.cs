@@ -39,6 +39,7 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
     private readonly int _capacity;
     private readonly bool _metricsEnabled;
     private readonly DroppedEventAuditTrail? _auditTrail;
+    private readonly IEventMetrics _metrics;
 
     // Performance metrics
     private long _publishedCount;
@@ -93,7 +94,8 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
         bool enablePeriodicFlush = true,
         ILogger<EventPipeline>? logger = null,
         DroppedEventAuditTrail? auditTrail = null,
-        WriteAheadLog? wal = null)
+        WriteAheadLog? wal = null,
+        IEventMetrics? metrics = null)
         : this(
             sink,
             new EventPipelinePolicy(capacity, fullMode),
@@ -102,7 +104,8 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
             enablePeriodicFlush,
             logger,
             auditTrail,
-            wal)
+            wal,
+            metrics)
     {
     }
 
@@ -117,12 +120,14 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
         bool enablePeriodicFlush = true,
         ILogger<EventPipeline>? logger = null,
         DroppedEventAuditTrail? auditTrail = null,
-        WriteAheadLog? wal = null)
+        WriteAheadLog? wal = null,
+        IEventMetrics? metrics = null)
     {
         _sink = sink ?? throw new ArgumentNullException(nameof(sink));
         _logger = logger ?? NullLogger<EventPipeline>.Instance;
         _auditTrail = auditTrail;
         _wal = wal;
+        _metrics = metrics ?? new DefaultEventMetrics();
         if (policy is null)
             throw new ArgumentNullException(nameof(policy));
         _capacity = policy.Capacity;
@@ -279,7 +284,7 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
             Interlocked.Increment(ref _publishedCount);
             if (_metricsEnabled)
             {
-                Metrics.IncPublished();
+                _metrics.IncPublished();
             }
 
             // Track peak queue size and warn on high utilization
@@ -309,7 +314,7 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
             Interlocked.Increment(ref _droppedCount);
             if (_metricsEnabled)
             {
-                Metrics.IncDropped();
+                _metrics.IncDropped();
             }
 
             // Record dropped event to audit trail for gap-aware consumers
@@ -339,7 +344,7 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
         Interlocked.Increment(ref _publishedCount);
         if (_metricsEnabled)
         {
-            Metrics.IncPublished();
+            _metrics.IncPublished();
         }
     }
 
@@ -568,6 +573,11 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
     /// Gets the queue capacity.
     /// </summary>
     public int QueueCapacity => _capacity;
+
+    /// <summary>
+    /// Gets the injected event metrics instance.
+    /// </summary>
+    public IEventMetrics EventMetrics => _metrics;
 }
 
 /// <summary>

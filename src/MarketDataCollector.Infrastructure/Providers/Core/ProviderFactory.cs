@@ -1,11 +1,7 @@
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Infrastructure.Contracts;
-using MarketDataCollector.Infrastructure.Providers.Alpaca;
 using MarketDataCollector.Infrastructure.Providers.Backfill;
-using MarketDataCollector.Infrastructure.Providers.InteractiveBrokers;
-using MarketDataCollector.Infrastructure.Providers.Polygon;
-using MarketDataCollector.Infrastructure.Providers.StockSharp;
 using MarketDataCollector.Infrastructure.Providers.SymbolSearch;
 using Serilog;
 
@@ -47,13 +43,13 @@ public sealed class ProviderFactory
     }
 
     /// <summary>
-    /// Creates all configured providers and registers them with the provided registry.
-    /// This is the main entry point for provider initialization.
+    /// Creates backfill and symbol search providers and registers them with the provided registry.
+    /// Streaming providers are registered separately via ProviderRegistry factory functions.
     /// </summary>
     /// <param name="registry">The registry to register providers with.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>Summary of created providers.</returns>
-    public async Task<ProviderCreationResult> CreateAndRegisterAllAsync(
+    public Task<ProviderCreationResult> CreateAndRegisterAllAsync(
         ProviderRegistry registry,
         CancellationToken ct = default)
     {
@@ -61,13 +57,8 @@ public sealed class ProviderFactory
 
         var result = new ProviderCreationResult();
 
-        // Create and register streaming providers
-        var streamingProviders = await CreateStreamingProvidersAsync(ct);
-        foreach (var provider in streamingProviders)
-        {
-            registry.Register(provider);
-            result.StreamingProviders.Add(provider.ProviderId);
-        }
+        // Streaming providers are registered via ProviderRegistry factory functions
+        // (see ServiceCompositionRoot.RegisterStreamingFactories) - not created here.
 
         // Create and register backfill providers
         var backfillProviders = CreateBackfillProviders();
@@ -86,89 +77,11 @@ public sealed class ProviderFactory
         }
 
         _log.Information(
-            "Provider factory created {StreamingCount} streaming, {BackfillCount} backfill, {SearchCount} search providers",
-            result.StreamingProviders.Count,
+            "Provider factory created {BackfillCount} backfill, {SearchCount} search providers",
             result.BackfillProviders.Count,
             result.SymbolSearchProviders.Count);
 
-        return result;
-    }
-
-    /// <summary>
-    /// Creates streaming provider based on the configured data source.
-    /// </summary>
-    public async Task<IReadOnlyList<IMarketDataClient>> CreateStreamingProvidersAsync(CancellationToken ct = default)
-    {
-        var providers = new List<IMarketDataClient>();
-
-        // Create primary streaming provider based on configuration
-        var primaryProvider = await CreatePrimaryStreamingProviderAsync(ct);
-        if (primaryProvider != null)
-        {
-            providers.Add(primaryProvider);
-        }
-
-        return providers;
-    }
-
-    /// <summary>
-    /// Creates the primary streaming provider based on DataSource configuration.
-    /// </summary>
-    private Task<IMarketDataClient?> CreatePrimaryStreamingProviderAsync(CancellationToken ct)
-    {
-        IMarketDataClient? client = _config.DataSource switch
-        {
-            DataSourceKind.Alpaca => CreateAlpacaStreamingClient(),
-            DataSourceKind.Polygon => CreatePolygonStreamingClient(),
-            DataSourceKind.StockSharp => CreateStockSharpStreamingClient(),
-            DataSourceKind.IB => CreateIBStreamingClient(),
-            _ => CreateIBStreamingClient()
-        };
-
-        return Task.FromResult(client);
-    }
-
-    private IMarketDataClient? CreateAlpacaStreamingClient()
-    {
-        var (keyId, secretKey) = _credentialResolver.ResolveAlpacaCredentials(
-            _config.Alpaca?.KeyId,
-            _config.Alpaca?.SecretKey);
-
-        if (string.IsNullOrEmpty(keyId) || string.IsNullOrEmpty(secretKey))
-        {
-            _log.Warning("Alpaca credentials not configured, skipping Alpaca streaming provider");
-            return null;
-        }
-
-        return new AlpacaMarketDataClient(
-            tradeCollector: null!, // Will be set during initialization
-            quoteCollector: null!, // Will be set during initialization
-            opt: _config.Alpaca! with { KeyId = keyId, SecretKey = secretKey });
-    }
-
-    private IMarketDataClient CreatePolygonStreamingClient()
-    {
-        return new PolygonMarketDataClient(
-            publisher: null!, // Will be set during initialization
-            tradeCollector: null!,
-            quoteCollector: null!);
-    }
-
-    private IMarketDataClient CreateStockSharpStreamingClient()
-    {
-        return new StockSharpMarketDataClient(
-            tradeCollector: null!,
-            depthCollector: null!,
-            quoteCollector: null!,
-            config: _config.StockSharp ?? new StockSharpConfig());
-    }
-
-    private IMarketDataClient CreateIBStreamingClient()
-    {
-        return new IBMarketDataClient(
-            publisher: null!,
-            tradeCollector: null!,
-            depthCollector: null!);
+        return Task.FromResult(result);
     }
 
     /// <summary>
@@ -410,14 +323,12 @@ public sealed class ProviderFactory
 /// </summary>
 public sealed class ProviderCreationResult
 {
-    public List<string> StreamingProviders { get; } = new();
     public List<string> BackfillProviders { get; } = new();
     public List<string> SymbolSearchProviders { get; } = new();
 
     public int TotalProviders =>
-        StreamingProviders.Count + BackfillProviders.Count + SymbolSearchProviders.Count;
+        BackfillProviders.Count + SymbolSearchProviders.Count;
 
-    public bool HasStreamingProviders => StreamingProviders.Count > 0;
     public bool HasBackfillProviders => BackfillProviders.Count > 0;
     public bool HasSymbolSearchProviders => SymbolSearchProviders.Count > 0;
 }

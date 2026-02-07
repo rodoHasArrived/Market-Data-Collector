@@ -16,11 +16,16 @@ public sealed class HistoricalBackfillService
 {
     private readonly IReadOnlyDictionary<string, IHistoricalDataProvider> _providers;
     private readonly ILogger _log;
+    private readonly IEventMetrics _metrics;
 
-    public HistoricalBackfillService(IEnumerable<IHistoricalDataProvider> providers, ILogger? logger = null)
+    public HistoricalBackfillService(
+        IEnumerable<IHistoricalDataProvider> providers,
+        ILogger? logger = null,
+        IEventMetrics? metrics = null)
     {
         _providers = providers.ToDictionary(p => p.Name.ToLowerInvariant());
         _log = logger ?? LoggingSetup.ForContext<HistoricalBackfillService>();
+        _metrics = metrics ?? new DefaultEventMetrics();
     }
 
     public IReadOnlyCollection<IHistoricalDataProvider> Providers => _providers.Values.ToList();
@@ -53,7 +58,7 @@ public sealed class HistoricalBackfillService
                 {
                     var evt = MarketEvent.HistoricalBar(bar.ToTimestampUtc(), bar.Symbol, bar, bar.SequenceNumber, provider.Name);
                     await pipeline.PublishAsync(evt, ct).ConfigureAwait(false);
-                    Metrics.IncHistoricalBars();
+                    _metrics.IncHistoricalBars();
                     barsWritten++;
                 }
             }
