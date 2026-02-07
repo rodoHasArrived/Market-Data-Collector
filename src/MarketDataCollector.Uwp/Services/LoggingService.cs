@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using MarketDataCollector.Contracts.Pipeline;
+using MarketDataCollector.Ui.Services.Contracts;
 
 namespace MarketDataCollector.Uwp.Services;
 
@@ -13,7 +14,7 @@ namespace MarketDataCollector.Uwp.Services;
 /// Centralized logging service that provides structured logging with
 /// support for multiple outputs and log levels.
 /// </summary>
-public sealed class LoggingService : IDisposable
+public sealed class LoggingService : ILoggingService, IDisposable
 {
     private static LoggingService? _instance;
     private static readonly object _lock = new();

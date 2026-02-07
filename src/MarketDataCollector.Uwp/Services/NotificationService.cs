@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Windows.AppNotifications;
 using Microsoft.Windows.AppNotifications.Builder;
+using MarketDataCollector.Ui.Services.Contracts;
 
 namespace MarketDataCollector.Uwp.Services;
 
 /// <summary>
 /// Service for managing Windows toast notifications.
 /// </summary>
-public sealed class NotificationService
+public sealed class NotificationService : INotificationService
 {
     private static NotificationService? _instance;
     private static readonly object _lock = new();

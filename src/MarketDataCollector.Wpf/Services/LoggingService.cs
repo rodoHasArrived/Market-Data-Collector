@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.Text;
+using MarketDataCollector.Ui.Services.Contracts;
 
 namespace MarketDataCollector.Wpf.Services;
 
@@ -19,7 +20,7 @@ public enum LogLevel
 /// Structured logging service for WPF applications.
 /// Implements singleton pattern for application-wide logging.
 /// </summary>
-public sealed class LoggingService
+public sealed class LoggingService : ILoggingService
 {
     private static readonly Lazy<LoggingService> _instance = new(() => new LoggingService());
 

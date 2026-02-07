@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using MarketDataCollector.Ui.Services.Contracts;
 
 namespace MarketDataCollector.Wpf.Services;
 
@@ -8,7 +9,7 @@ namespace MarketDataCollector.Wpf.Services;
 /// Service for managing in-app notifications.
 /// Provides notification display, history tracking, and settings management.
 /// </summary>
-public sealed class NotificationService
+public sealed class NotificationService : INotificationService
 {
     private static NotificationService? _instance;
     private static readonly object _lock = new();
