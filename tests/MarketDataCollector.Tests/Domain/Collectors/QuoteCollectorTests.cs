@@ -93,7 +93,7 @@ public class QuoteCollectorTests
 
         // Assert
         found.Should().BeTrue();
-        quote.Symbol.Should().Be("SPY");
+        quote!.Symbol.Should().Be("SPY");
         quote.BidPrice.Should().Be(450.00m);
         quote.AskPrice.Should().Be(450.05m);
     }
@@ -189,7 +189,7 @@ public class QuoteCollectorTests
 
         // Assert
         removed.Should().BeTrue();
-        quote.Symbol.Should().Be("SPY");
+        quote!.Symbol.Should().Be("SPY");
 
         // Verify it's really gone
         _collector.TryGet("SPY", out _).Should().BeFalse();

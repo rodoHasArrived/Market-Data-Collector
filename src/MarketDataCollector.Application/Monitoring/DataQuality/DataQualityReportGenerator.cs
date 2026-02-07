@@ -49,7 +49,7 @@ public sealed class DataQualityReportGenerator
     /// <summary>
     /// Generates a daily quality report.
     /// </summary>
-    public async Task<DailyQualityReport> GenerateDailyReportAsync(
+    public Task<DailyQualityReport> GenerateDailyReportAsync(
         DateOnly date,
         ReportGenerationOptions? options = null,
         CancellationToken ct = default)
@@ -159,7 +159,7 @@ public sealed class DataQualityReportGenerator
         _log.Information("Daily report generated: {SymbolCount} symbols, score: {Score:F2}",
             report.SymbolsAnalyzed, report.OverallScore);
 
-        return report;
+        return Task.FromResult(report);
     }
 
     /// <summary>

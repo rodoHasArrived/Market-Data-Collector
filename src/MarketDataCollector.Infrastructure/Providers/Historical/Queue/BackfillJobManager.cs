@@ -410,10 +410,10 @@ public sealed class BackfillJobManager : IDisposable
     /// <summary>
     /// Delete a job (must be completed or cancelled).
     /// </summary>
-    public async Task DeleteJobAsync(string jobId, CancellationToken ct = default)
+    public Task DeleteJobAsync(string jobId, CancellationToken ct = default)
     {
         if (!_jobs.TryGetValue(jobId, out var job))
-            return;
+            return Task.CompletedTask;
 
         if (!job.IsComplete)
             throw new InvalidOperationException($"Cannot delete job {jobId} while it is {job.Status}");
@@ -427,6 +427,7 @@ public sealed class BackfillJobManager : IDisposable
         }
 
         _log.Information("Deleted job {JobId}", jobId);
+        return Task.CompletedTask;
     }
 
     /// <summary>

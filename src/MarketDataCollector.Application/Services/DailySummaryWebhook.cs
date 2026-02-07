@@ -505,12 +505,13 @@ public sealed class DailySummaryWebhook : IAsyncDisposable
         }
     }
 
-    public async ValueTask DisposeAsync()
+    public ValueTask DisposeAsync()
     {
         _cts.Cancel();
         _scheduledTimer?.Dispose();
         _httpClient.Dispose();
         _cts.Dispose();
+        return ValueTask.CompletedTask;
     }
 }
 

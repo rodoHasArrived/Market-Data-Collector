@@ -268,13 +268,13 @@ public sealed class DataQualityService : IDataQualityService
         );
     }
 
-    public async Task<QualityTrend> GetTrendAsync(string symbol, TimeSpan window, CancellationToken ct = default)
+    public Task<QualityTrend> GetTrendAsync(string symbol, TimeSpan window, CancellationToken ct = default)
     {
         // In production, this would analyze historical scores
         var cacheKey = $"{symbol}_{window.TotalDays}d";
 
         if (_trendCache.TryGetValue(cacheKey, out var cached))
-            return cached;
+            return Task.FromResult(cached);
 
         var trend = new QualityTrend(
             Symbol: symbol,
@@ -288,7 +288,7 @@ public sealed class DataQualityService : IDataQualityService
         );
 
         _trendCache[cacheKey] = trend;
-        return trend;
+        return Task.FromResult(trend);
     }
 
     public Task<QualityAlert[]> GetQualityAlertsAsync(CancellationToken ct = default)
@@ -340,7 +340,7 @@ public sealed class DataQualityService : IDataQualityService
         return Task.FromResult((0.95, Array.Empty<string>()));
     }
 
-    private async Task<(double Score, string[] Issues)> CalculateTimelinessAsync(string path, CancellationToken ct)
+    private Task<(double Score, string[] Issues)> CalculateTimelinessAsync(string path, CancellationToken ct)
     {
         var issues = new List<string>();
         var fileInfo = new FileInfo(path);
@@ -360,7 +360,7 @@ public sealed class DataQualityService : IDataQualityService
             issues.Add($"Data is {age.TotalDays:F0} days old");
         }
 
-        return (score, issues.ToArray());
+        return Task.FromResult((score, issues.ToArray()));
     }
 
     private async Task<(double Score, string[] Issues)> CalculateConsistencyAsync(string path, CancellationToken ct)

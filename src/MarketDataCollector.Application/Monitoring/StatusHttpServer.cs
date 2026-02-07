@@ -116,7 +116,7 @@ public sealed class StatusHttpServer : IAsyncDisposable
                 break;
             }
 
-            Task.Run(async () =>
+            _ = Task.Run(async () =>
             {
                 try
                 {

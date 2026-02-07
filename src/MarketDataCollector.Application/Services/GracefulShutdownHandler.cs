@@ -403,9 +403,9 @@ public sealed class GracefulShutdownHandler : IAsyncDisposable
         return (double)(Stopwatch.GetTimestamp() - startTimestamp) / Stopwatch.Frequency * 1000;
     }
 
-    public async ValueTask DisposeAsync()
+    public ValueTask DisposeAsync()
     {
-        if (_isDisposed) return;
+        if (_isDisposed) return ValueTask.CompletedTask;
         _isDisposed = true;
 
         Console.CancelKeyPress -= OnCancelKeyPress;
@@ -417,6 +417,7 @@ public sealed class GracefulShutdownHandler : IAsyncDisposable
         }
 
         _shutdownCts.Dispose();
+        return ValueTask.CompletedTask;
     }
 
     private readonly record struct FlushResult(long TotalEventsFlushed, bool TimeoutOccurred, List<string> Warnings);

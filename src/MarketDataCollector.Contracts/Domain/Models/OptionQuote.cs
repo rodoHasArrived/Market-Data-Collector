@@ -185,7 +185,7 @@ public sealed record OptionQuote : MarketEventPayload
 
     /// <summary>
     /// Gets the moneyness ratio (underlying / strike).
-    /// Values &gt; 1 indicate in-the-money for calls; &lt; 1 for puts.
+    /// Values greater than 1 indicate in-the-money for calls; less than 1 for puts.
     /// </summary>
     public decimal Moneyness => Contract.Strike > 0 ? UnderlyingPrice / Contract.Strike : 0m;
 }

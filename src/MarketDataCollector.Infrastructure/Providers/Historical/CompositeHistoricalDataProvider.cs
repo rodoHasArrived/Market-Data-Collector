@@ -34,7 +34,9 @@ public sealed class CompositeHistoricalDataProvider : IHistoricalDataProvider, I
     /// <summary>
     /// Event raised when progress is updated during backfill.
     /// </summary>
+#pragma warning disable CS0067 // Event is never used
     public event Action<ProviderBackfillProgress>? OnProgressUpdate;
+#pragma warning restore CS0067
 
     public string Name => "composite";
     public string DisplayName => "Multi-Source (Auto-Failover)";

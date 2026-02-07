@@ -6,6 +6,8 @@ using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Tests.TestHelpers;
 using Xunit;
 
+#pragma warning disable CS8600, CS8602
+
 namespace MarketDataCollector.Tests;
 
 /// <summary>

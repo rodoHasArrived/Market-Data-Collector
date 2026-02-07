@@ -198,6 +198,7 @@ public sealed class FilePermissionsService
                 return FilePermissionsResult.CreateSuccess("Windows permissions verified (inherited from parent)");
             }
 
+#pragma warning disable CA1416 // Platform compatibility - method is marked [SupportedOSPlatform("windows")]
             // Restrictive mode: limit access to current user and administrators
             var security = directoryInfo.GetAccessControl();
 
@@ -233,6 +234,7 @@ public sealed class FilePermissionsService
                 AccessControlType.Allow));
 
             directoryInfo.SetAccessControl(security);
+#pragma warning restore CA1416
 
             _log.Information("Configured restrictive Windows ACLs for {DirectoryPath}: " +
                 "Access limited to current user, administrators, and SYSTEM", directoryPath);

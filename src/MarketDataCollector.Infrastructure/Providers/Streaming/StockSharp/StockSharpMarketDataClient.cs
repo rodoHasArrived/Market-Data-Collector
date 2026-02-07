@@ -72,14 +72,18 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
 #endif
 
     // Use centralized subscription ID range to avoid collisions with other providers
+#pragma warning disable CS0169, CS0414
     private int _nextSubId = ProviderSubscriptionRanges.StockSharpStart;
     private bool _disposed;
+#pragma warning restore CS0169, CS0414
     private readonly object _gate = new();
 
     /// <summary>
     /// Event raised when connection state changes.
     /// </summary>
+#pragma warning disable CS0067
     public event Action<ConnectionState>? ConnectionStateChanged;
+#pragma warning restore CS0067
 
     /// <summary>
     /// Current connection state.

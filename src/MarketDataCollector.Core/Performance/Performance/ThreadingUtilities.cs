@@ -88,7 +88,9 @@ public static class ThreadingUtilities
         try
         {
             using var process = Process.GetCurrentProcess();
+#pragma warning disable CA1416 // Platform compatibility - guarded by RuntimeInformation check above
             process.ProcessorAffinity = affinityMask;
+#pragma warning restore CA1416
             return true;
         }
         catch

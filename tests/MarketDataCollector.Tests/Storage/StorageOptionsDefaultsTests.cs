@@ -37,7 +37,7 @@ public sealed class StorageOptionsDefaultsTests
     public void StorageConfig_ToStorageOptions_ShouldUseBySymbolWhenNull()
     {
         // Arrange
-        var config = new StorageConfig(NamingConvention: null);
+        var config = new StorageConfig(NamingConvention: null!);
 
         // Act
         var options = config.ToStorageOptions("data", false);
