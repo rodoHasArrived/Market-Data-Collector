@@ -457,6 +457,7 @@ Market-Data-Collector/
 │   ├── HELP.md
 │   ├── IMPROVEMENTS.md
 │   ├── README.md
+│   ├── STRUCTURAL_IMPROVEMENTS.md
 │   └── toc.yml
 ├── src/  # Source code
 │   ├── MarketDataCollector/
