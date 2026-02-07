@@ -16,14 +16,16 @@ public sealed class CollectionSessionService
 {
     private readonly IConfigService _configService;
     private readonly INotificationService _notificationService;
+    private readonly ManifestService _manifestService;
     private readonly string _sessionsFilePath;
     private CollectionSessionsConfig? _sessionsConfig;
     private CollectionSession? _activeSession;
 
-    public CollectionSessionService(IConfigService configService, INotificationService notificationService)
+    public CollectionSessionService(IConfigService configService, INotificationService notificationService, ManifestService manifestService)
     {
         _configService = configService ?? throw new ArgumentNullException(nameof(configService));
         _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
+        _manifestService = manifestService ?? throw new ArgumentNullException(nameof(manifestService));
         _sessionsFilePath = Path.Combine(AppContext.BaseDirectory, "sessions.json");
     }
 
@@ -227,8 +229,7 @@ public sealed class CollectionSessionService
         {
             try
             {
-                var manifestService = ManifestService.Instance;
-                var manifest = await manifestService.GenerateManifestForSessionAsync(session);
+                var manifest = await _manifestService.GenerateManifestForSessionAsync(session);
                 session.ManifestPath = manifest.Item2;
                 await SaveSessionsAsync();
             }
