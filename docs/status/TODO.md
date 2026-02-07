@@ -1,29 +1,54 @@
 # TODO Tracking
 
 > Auto-generated TODO documentation. Do not edit manually.
-> Last updated: 2026-02-07T21:28:58.716264+00:00
+> Last updated: 2026-02-07T21:57:42.336631+00:00
 
 ## Summary
 
 | Metric | Count |
 |--------|-------|
-| **Total Items** | 7 |
+| **Total Items** | 14 |
 | **Linked to Issues** | 0 |
-| **Untracked** | 7 |
+| **Untracked** | 14 |
 
 ### By Type
 
 | Type | Count | Description |
 |------|-------|-------------|
 | `NOTE` | 7 | Important notes and documentation |
+| `TODO` | 7 | General tasks to complete |
 
 ### By Directory
 
 | Directory | Count |
 |-----------|-------|
 | `tests/` | 7 |
+| `src/` | 7 |
 
 ## All Items
+
+### TODO (7)
+
+- [ ] `src/MarketDataCollector.Infrastructure/Providers/Historical/GapAnalysis/DataGapRepair.cs:413`
+  > Fix circular dependency - Infrastructure should not depend on Storage This method needs to be refactored to use dependency injection instead of directly instantiating Storage types here. For now, this is disabled to allow compilation.
+
+- [ ] `src/MarketDataCollector.Infrastructure/Shared/WebSocketReconnectionHelper.cs:32`
+  > Add [ImplementsAdr("ADR-004", "All async methods support CancellationToken")] after fixing references
+
+- [ ] `src/MarketDataCollector.Storage/Maintenance/ArchiveMaintenanceModels.cs:2`
+  > Fix circular dependency - Storage should not depend on Application.Scheduling Temporarily commented out to allow compilation using MarketDataCollector.Application.Scheduling;
+
+- [ ] `src/MarketDataCollector.Storage/Maintenance/ArchiveMaintenanceModels.cs:146`
+  > Implement proper cron parsing or move this to Application layer Temporarily returning null to allow compilation
+
+- [ ] `src/MarketDataCollector.Storage/Maintenance/ArchiveMaintenanceScheduleManager.cs:3`
+  > Fix circular dependency - Storage should not depend on Application.Scheduling using MarketDataCollector.Application.Scheduling;
+
+- [ ] `src/MarketDataCollector.Storage/Maintenance/ArchiveMaintenanceScheduleManager.cs:67`
+  > Implement proper cron validation - temporarily skipped due to circular dependency if (!CronExpressionParser.IsValid(schedule.CronExpression)) throw new ArgumentException($"Invalid cron expression: {schedule.CronExpression}", nameof(schedule));
+
+- [ ] `src/MarketDataCollector.Storage/Maintenance/ArchiveMaintenanceScheduleManager.cs:114`
+  > Implement proper cron validation - temporarily skipped due to circular dependency if (!CronExpressionParser.IsValid(schedule.CronExpression)) throw new ArgumentException($"Invalid cron expression: {schedule.CronExpression}", nameof(schedule));
 
 ### NOTE (7)
 
