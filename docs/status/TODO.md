@@ -1,7 +1,7 @@
 # TODO Tracking
 
 > Auto-generated TODO documentation. Do not edit manually.
-> Last updated: 2026-02-07T21:57:42.336631+00:00
+> Last updated: 2026-02-07T22:06:45.125075+00:00
 
 ## Summary
 
@@ -29,8 +29,8 @@
 
 ### TODO (7)
 
-- [ ] `src/MarketDataCollector.Infrastructure/Providers/Historical/GapAnalysis/DataGapRepair.cs:413`
-  > Fix circular dependency - Infrastructure should not depend on Storage This method needs to be refactored to use dependency injection instead of directly instantiating Storage types here. For now, this is disabled to allow compilation.
+- [ ] `src/MarketDataCollector.Infrastructure/Providers/Historical/GapAnalysis/DataGapRepair.cs:410`
+  > Implement via dependency injection - Infrastructure cannot reference Storage directly (circular dependency). Inject an IStorageSink or similar abstraction instead.
 
 - [ ] `src/MarketDataCollector.Infrastructure/Shared/WebSocketReconnectionHelper.cs:32`
   > Add [ImplementsAdr("ADR-004", "All async methods support CancellationToken")] after fixing references
