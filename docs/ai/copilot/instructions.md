@@ -701,7 +701,6 @@ Market-Data-Collector/
 │   │   │   │   ...
 │   │   │   ├── SymbolSearch/
 │   │   │   │   ...
-│   │   │   ├── MarketDataClientFactory.cs
 │   │   │   └── SubscriptionManager.cs
 │   │   ├── Resilience/
 │   │   │   ├── HttpResiliencePolicy.cs

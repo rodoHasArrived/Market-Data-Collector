@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-07 09:07:52 UTC
+> Auto-generated on 2026-02-07 09:30:40 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -594,7 +594,6 @@ Market-Data-Collector/
 │   │   │   │   ...
 │   │   │   ├── SymbolSearch/
 │   │   │   │   ...
-│   │   │   ├── MarketDataClientFactory.cs
 │   │   │   └── SubscriptionManager.cs
 │   │   ├── Resilience/
 │   │   │   ├── HttpResiliencePolicy.cs
