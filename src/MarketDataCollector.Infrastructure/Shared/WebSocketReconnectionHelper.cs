@@ -1,5 +1,6 @@
 using System.Net.WebSockets;
 using MarketDataCollector.Application.Logging;
+using MarketDataCollector.Infrastructure.Contracts;
 using Serilog;
 
 namespace MarketDataCollector.Infrastructure.Shared;
