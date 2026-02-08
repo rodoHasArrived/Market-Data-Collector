@@ -1,7 +1,7 @@
 # TODO Tracking
 
 > Auto-generated TODO documentation. Do not edit manually.
-> Last updated: 2026-02-07T23:21:53.181803+00:00
+> Last updated: 2026-02-08T00:57:05.061972+00:00
 
 ## Summary
 
@@ -29,7 +29,7 @@
 
 ### TODO (7)
 
-- [ ] `src/MarketDataCollector.Infrastructure/Providers/Historical/GapAnalysis/DataGapRepair.cs:410`
+- [ ] `src/MarketDataCollector.Infrastructure/Providers/Historical/GapAnalysis/DataGapRepair.cs:412`
   > Implement via dependency injection - Infrastructure cannot reference Storage directly (circular dependency). Inject an IStorageSink or similar abstraction instead.
 
 - [ ] `src/MarketDataCollector.Infrastructure/Shared/WebSocketReconnectionHelper.cs:32`
