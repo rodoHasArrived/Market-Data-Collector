@@ -141,7 +141,7 @@ public sealed class ScheduledBackfillService : IAsyncDisposable
     /// <summary>
     /// Manually trigger a schedule execution.
     /// </summary>
-    public async Task<BackfillExecutionLog> TriggerManualExecutionAsync(
+    public Task<BackfillExecutionLog> TriggerManualExecutionAsync(
         string scheduleId,
         CancellationToken ct = default)
     {
@@ -156,13 +156,13 @@ public sealed class ScheduledBackfillService : IAsyncDisposable
 
         EnqueueExecution(schedule, execution, BackfillPriority.High);
 
-        return execution;
+        return Task.FromResult(execution);
     }
 
     /// <summary>
     /// Run an immediate gap-fill for specific symbols.
     /// </summary>
-    public async Task<BackfillExecutionLog> RunImmediateGapFillAsync(
+    public Task<BackfillExecutionLog> RunImmediateGapFillAsync(
         IEnumerable<string> symbols,
         int lookbackDays = 30,
         BackfillPriority priority = BackfillPriority.High,
@@ -194,7 +194,7 @@ public sealed class ScheduledBackfillService : IAsyncDisposable
 
         EnqueueExecution(schedule, execution, priority);
 
-        return execution;
+        return Task.FromResult(execution);
     }
 
     private async Task RunSchedulerLoopAsync(CancellationToken ct)
@@ -482,7 +482,7 @@ public sealed class ScheduledBackfillService : IAsyncDisposable
         return false;
     }
 
-    private async Task CatchUpMissedSchedulesAsync(CancellationToken ct)
+    private Task CatchUpMissedSchedulesAsync(CancellationToken ct)
     {
         var schedules = _scheduleManager.GetEnabledSchedules();
         var now = DateTimeOffset.UtcNow;
@@ -532,6 +532,8 @@ public sealed class ScheduledBackfillService : IAsyncDisposable
                 EnqueueExecution(schedule, execution, BackfillPriority.Normal);
             }
         }
+
+        return Task.CompletedTask;
     }
 
     public async ValueTask DisposeAsync()

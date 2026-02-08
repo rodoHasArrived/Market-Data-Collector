@@ -191,10 +191,10 @@ public sealed class BackfillScheduleManager
     /// <summary>
     /// Delete a schedule.
     /// </summary>
-    public async Task<bool> DeleteScheduleAsync(string scheduleId, CancellationToken ct = default)
+    public Task<bool> DeleteScheduleAsync(string scheduleId, CancellationToken ct = default)
     {
         if (!_schedules.TryRemove(scheduleId, out var removed))
-            return false;
+            return Task.FromResult(false);
 
         var filePath = GetScheduleFilePath(scheduleId);
         if (File.Exists(filePath))
@@ -211,7 +211,7 @@ public sealed class BackfillScheduleManager
 
         _logger.LogInformation("Deleted schedule {ScheduleId}: {Name}", scheduleId, removed.Name);
         ScheduleDeleted?.Invoke(this, scheduleId);
-        return true;
+        return Task.FromResult(true);
     }
 
     /// <summary>

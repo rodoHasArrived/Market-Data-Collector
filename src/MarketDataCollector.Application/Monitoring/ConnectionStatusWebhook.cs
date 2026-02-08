@@ -256,9 +256,9 @@ public sealed class ConnectionStatusWebhook : IAsyncDisposable
         return string.Join("\n", lines);
     }
 
-    public async ValueTask DisposeAsync()
+    public ValueTask DisposeAsync()
     {
-        if (_isDisposed) return;
+        if (_isDisposed) return default;
         _isDisposed = true;
 
         _connectionMonitor.OnConnectionLost -= HandleConnectionLost;
@@ -268,6 +268,7 @@ public sealed class ConnectionStatusWebhook : IAsyncDisposable
 
         _cts.Cancel();
         _cts.Dispose();
+        return default;
     }
 }
 

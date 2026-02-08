@@ -263,7 +263,7 @@ public sealed class FileMaintenanceService : IFileMaintenanceService
         );
     }
 
-    public async Task<OrphanReport> FindOrphansAsync(CancellationToken ct = default)
+    public Task<OrphanReport> FindOrphansAsync(CancellationToken ct = default)
     {
         var orphans = new List<OrphanedFile>();
 
@@ -287,11 +287,11 @@ public sealed class FileMaintenanceService : IFileMaintenanceService
             }
         }
 
-        return new OrphanReport(
+        return Task.FromResult(new OrphanReport(
             GeneratedAt: DateTime.UtcNow,
             OrphanedFiles: orphans,
             TotalOrphanedBytes: orphans.Sum(o => o.SizeBytes)
-        );
+        ));
     }
 
     private async Task CheckFileHealthAsync(FileInfo file, HealthCheckOptions options, ConcurrentBag<HealthIssue> issues, CancellationToken ct)

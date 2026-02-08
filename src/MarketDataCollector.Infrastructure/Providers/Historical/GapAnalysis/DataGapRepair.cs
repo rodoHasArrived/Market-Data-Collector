@@ -323,7 +323,7 @@ public sealed class DataGapRepairService
     /// <summary>
     /// Check which providers might have data for the given gaps.
     /// </summary>
-    private async Task EnrichGapsWithAlternateSourcesAsync(
+    private Task EnrichGapsWithAlternateSourcesAsync(
         List<DataGap> gaps,
         string symbol,
         CancellationToken ct)
@@ -339,6 +339,8 @@ public sealed class DataGapRepairService
         {
             gaps[i] = gaps[i] with { AvailableAlternateSources = availableProviders };
         }
+
+        return Task.CompletedTask;
     }
 
     private async Task<GapRepairItemResult> RepairSingleGapAsync(
