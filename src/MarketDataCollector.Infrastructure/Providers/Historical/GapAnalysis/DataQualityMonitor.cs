@@ -259,7 +259,7 @@ public sealed class DataQualityMonitor
     /// <summary>
     /// Get quality alerts for symbols below threshold.
     /// </summary>
-    public async Task<IReadOnlyList<QualityAlert>> GetAlertsAsync(
+    public Task<IReadOnlyList<QualityAlert>> GetAlertsAsync(
         double? minScoreThreshold = null,
         CancellationToken ct = default)
     {
@@ -291,7 +291,7 @@ public sealed class DataQualityMonitor
             }
         }
 
-        return alerts.OrderBy(a => a.Score).ToList();
+        return Task.FromResult<IReadOnlyList<QualityAlert>>(alerts.OrderBy(a => a.Score).ToList());
     }
 
     /// <summary>

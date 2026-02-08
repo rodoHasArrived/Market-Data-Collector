@@ -202,7 +202,7 @@ public sealed class BackfillRequestQueue : IDisposable
     /// <summary>
     /// Check if a request can be processed (rate limits, cooldowns, concurrency).
     /// </summary>
-    private async Task<bool> CanProcessRequestAsync(BackfillRequest request, CancellationToken ct)
+    private Task<bool> CanProcessRequestAsync(BackfillRequest request, CancellationToken ct)
     {
         // Get available providers for this request
         var providers = request.PreferredProviders.Count > 0
@@ -233,10 +233,10 @@ public sealed class BackfillRequestQueue : IDisposable
 
             // This provider can handle the request
             request.AssignedProvider = provider;
-            return true;
+            return Task.FromResult(true);
         }
 
-        return false;
+        return Task.FromResult(false);
     }
 
     /// <summary>

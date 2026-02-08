@@ -39,7 +39,7 @@ public sealed class MaintenanceScheduler : IMaintenanceScheduler, IAsyncDisposab
         _schedulerTask = RunSchedulerLoopAsync(_cts.Token);
     }
 
-    public async Task<ScheduleDecision> CanRunNowAsync(
+    public Task<ScheduleDecision> CanRunNowAsync(
         MaintenanceType operation,
         ResourceRequirements requirements,
         CancellationToken ct = default)
@@ -50,13 +50,13 @@ public sealed class MaintenanceScheduler : IMaintenanceScheduler, IAsyncDisposab
         if (window == null)
         {
             var nextWindow = FindNextMaintenanceWindow(now);
-            return new ScheduleDecision(
+            return Task.FromResult(new ScheduleDecision(
                 Allowed: false,
                 Reason: "No active maintenance window",
                 CurrentWindow: null,
                 WaitTime: nextWindow != null ? GetTimeUntilWindow(now, nextWindow) : null,
                 ApplicableLimits: null
-            );
+            ));
         }
 
         // Check if operation is allowed in this window
@@ -64,35 +64,35 @@ public sealed class MaintenanceScheduler : IMaintenanceScheduler, IAsyncDisposab
             !window.AllowedOperations.Contains(operation) &&
             !window.AllowedOperations.Contains(MaintenanceType.All))
         {
-            return new ScheduleDecision(
+            return Task.FromResult(new ScheduleDecision(
                 Allowed: false,
                 Reason: $"Operation {operation} not allowed in {window.Name} window",
                 CurrentWindow: window,
                 WaitTime: null,
                 ApplicableLimits: window.Limits
-            );
+            ));
         }
 
         // Check resource availability
         var runningCount = _runningJobs.Count;
         if (runningCount >= window.MaxConcurrentJobs)
         {
-            return new ScheduleDecision(
+            return Task.FromResult(new ScheduleDecision(
                 Allowed: false,
                 Reason: $"Max concurrent jobs ({window.MaxConcurrentJobs}) reached",
                 CurrentWindow: window,
                 WaitTime: TimeSpan.FromMinutes(5),
                 ApplicableLimits: window.Limits
-            );
+            ));
         }
 
-        return new ScheduleDecision(
+        return Task.FromResult(new ScheduleDecision(
             Allowed: true,
             Reason: "Allowed",
             CurrentWindow: window,
             WaitTime: null,
             ApplicableLimits: window.Limits
-        );
+        ));
     }
 
     public Task<ScheduleSlot?> FindNextWindowAsync(

@@ -52,18 +52,18 @@ public sealed class IndexSubscriptionService
     /// Currently returns built-in static data. For production use, this method is the extension
     /// point for integrating external index constituent APIs (e.g., S&amp;P Global, IEX Cloud).
     /// </remarks>
-    public async Task<IndexComponents?> GetIndexComponentsAsync(
+    public Task<IndexComponents?> GetIndexComponentsAsync(
         string indexId,
         CancellationToken ct = default)
     {
         if (BuiltInIndices.TryGetValue(indexId, out var components))
         {
-            return components;
+            return Task.FromResult<IndexComponents?>(components);
         }
 
         // Extension point: integrate external API for live index constituents.
         // Example providers: S&P Global Market Intelligence, IEX Cloud, Polygon.io
-        return null;
+        return Task.FromResult<IndexComponents?>(null);
     }
 
     /// <summary>
