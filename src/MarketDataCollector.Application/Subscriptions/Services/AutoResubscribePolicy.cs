@@ -89,7 +89,8 @@ public sealed class AutoResubscribePolicy : IAsyncDisposable
     public async Task<bool> OnIntegrityEventAsync(
         string symbol,
         IntegritySeverity severity,
-        AppConfig config)
+        AppConfig config,
+        CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(symbol))
             return false;
@@ -174,7 +175,8 @@ public sealed class AutoResubscribePolicy : IAsyncDisposable
     /// </summary>
     public Task<bool> OnDepthIntegrityEventAsync(
         DepthIntegrityEvent evt,
-        AppConfig config)
+        AppConfig config,
+        CancellationToken ct = default)
     {
         // Map DepthIntegrityKind to a severity-like decision
         var shouldResubscribe = evt.Kind switch
@@ -189,7 +191,7 @@ public sealed class AutoResubscribePolicy : IAsyncDisposable
         if (!shouldResubscribe)
             return Task.FromResult(false);
 
-        return OnIntegrityEventAsync(evt.Symbol, IntegritySeverity.Error, config);
+        return OnIntegrityEventAsync(evt.Symbol, IntegritySeverity.Error, config, ct);
     }
 
     /// <summary>
@@ -197,9 +199,10 @@ public sealed class AutoResubscribePolicy : IAsyncDisposable
     /// </summary>
     public Task<bool> OnTradeIntegrityEventAsync(
         IntegrityEvent evt,
-        AppConfig config)
+        AppConfig config,
+        CancellationToken ct = default)
     {
-        return OnIntegrityEventAsync(evt.Symbol, evt.Severity, config);
+        return OnIntegrityEventAsync(evt.Symbol, evt.Severity, config, ct);
     }
 
     /// <summary>

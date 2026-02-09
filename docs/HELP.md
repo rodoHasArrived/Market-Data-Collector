@@ -77,7 +77,7 @@ This guide covers everything from installation to advanced configuration.
 
 ### Technical Stack
 
-Built on **.NET 9.0** using **C# 11** and **F# 8.0**. Supports deployment as a self-contained executable, Docker container, or systemd service. Includes a web dashboard and native Windows desktop app (UWP).
+Built on **.NET 9.0** using **C# 13** and **F# 8.0**. Supports deployment as a self-contained executable, Docker container, or systemd service. Includes a web dashboard, WPF desktop app (recommended), and legacy UWP Windows desktop application.
 
 ---
 
@@ -2087,10 +2087,9 @@ docker-compose up -d
 |----------|-------------|
 | [README.md](../README.md) | Project overview and quick start |
 | [HELP.md](HELP.md) | This comprehensive user guide |
-| [getting-started/README.md](getting-started/README.md) | Detailed usage guide |
 | [getting-started/README.md](getting-started/README.md) | Step-by-step setup guide |
-| [HELP.md#configuration](HELP.md#configuration) | Configuration reference |
-| [HELP.md#troubleshooting](HELP.md#troubleshooting) | Troubleshooting guide |
+| [Configuration](#configuration) | Configuration reference |
+| [Troubleshooting](#troubleshooting) | Troubleshooting guide |
 | [operations/operator-runbook.md](operations/operator-runbook.md) | Operations and deployment |
 | [architecture/overview.md](architecture/overview.md) | System architecture |
 | [architecture/storage-design.md](architecture/storage-design.md) | Storage design details |
