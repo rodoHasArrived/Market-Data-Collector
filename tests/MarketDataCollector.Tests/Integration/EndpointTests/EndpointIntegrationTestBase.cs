@@ -50,7 +50,8 @@ public abstract class EndpointIntegrationTestBase : IClassFixture<WebApplication
     {
         var response = await GetAsync(url);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains("application/json", response.Content.Headers.ContentType?.ToString());
+        var contentType = response.Content.Headers.ContentType?.ToString() ?? string.Empty;
+        Assert.Contains("application/json", contentType);
     }
 
     protected async Task AssertEndpointReturnsNotImplemented(string url)
