@@ -7,10 +7,6 @@ global using MarketDataCollector.Contracts.Configuration;
 global using MarketEvent = MarketDataCollector.Domain.Events.MarketEvent;
 global using MarketEventPayload = MarketDataCollector.Domain.Events.MarketEventPayload;
 
-// Backwards compatibility aliases
-global using ContractsTrade = MarketDataCollector.Contracts.Domain.Models.Trade;
-global using ContractsHistoricalBar = MarketDataCollector.Contracts.Domain.Models.HistoricalBar;
-
 // Expose internal classes to test assembly for unit testing
 using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("MarketDataCollector.Tests")]

@@ -393,43 +393,40 @@ public sealed class ArchiveHealthService
     {
         var info = new StorageHealthInfo();
 
-        await Task.Run(() =>
+        try
         {
-            try
+            var root = Path.GetPathRoot(basePath);
+            if (string.IsNullOrEmpty(root))
             {
-                var root = Path.GetPathRoot(basePath);
-                if (string.IsNullOrEmpty(root))
-                {
-                    root = Path.GetPathRoot(AppContext.BaseDirectory) ?? "C:\\";
-                }
-
-                var driveInfo = new DriveInfo(root);
-                info.TotalCapacity = driveInfo.TotalSize;
-                info.FreeSpace = driveInfo.AvailableFreeSpace;
-                info.UsedPercent = (1.0 - (double)driveInfo.AvailableFreeSpace / driveInfo.TotalSize) * 100;
-                info.DriveType = driveInfo.DriveType.ToString();
-
-                // Estimate health status based on drive type
-                info.HealthStatus = driveInfo.DriveType switch
-                {
-                    DriveType.Fixed or DriveType.Removable => "Good",
-                    DriveType.Network => "Unknown",
-                    _ => "Unknown"
-                };
-
-                // Estimate days until full based on recent growth
-                var analyticsService = StorageAnalyticsService.Instance;
-                var analytics = analyticsService.GetAnalyticsAsync(false).GetAwaiter().GetResult();
-                if (analytics.DailyGrowthBytes > 0)
-                {
-                    info.DaysUntilFull = (int)(driveInfo.AvailableFreeSpace * 0.9 / analytics.DailyGrowthBytes);
-                }
+                root = Path.GetPathRoot(AppContext.BaseDirectory) ?? "C:\\";
             }
-            catch (Exception ex)
+
+            var driveInfo = new DriveInfo(root);
+            info.TotalCapacity = driveInfo.TotalSize;
+            info.FreeSpace = driveInfo.AvailableFreeSpace;
+            info.UsedPercent = (1.0 - (double)driveInfo.AvailableFreeSpace / driveInfo.TotalSize) * 100;
+            info.DriveType = driveInfo.DriveType.ToString();
+
+            // Estimate health status based on drive type
+            info.HealthStatus = driveInfo.DriveType switch
             {
-                System.Diagnostics.Debug.WriteLine($"Failed to get drive info: {ex.Message}");
+                DriveType.Fixed or DriveType.Removable => "Good",
+                DriveType.Network => "Unknown",
+                _ => "Unknown"
+            };
+
+            // Estimate days until full based on recent growth
+            var analyticsService = StorageAnalyticsService.Instance;
+            var analytics = await analyticsService.GetAnalyticsAsync(false);
+            if (analytics.DailyGrowthBytes > 0)
+            {
+                info.DaysUntilFull = (int)(driveInfo.AvailableFreeSpace * 0.9 / analytics.DailyGrowthBytes);
             }
-        });
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to get drive info: {ex.Message}");
+        }
 
         return info;
     }

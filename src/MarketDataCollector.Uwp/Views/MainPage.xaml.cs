@@ -164,7 +164,7 @@ public sealed partial class MainPage : Page
         }
         catch (Exception ex)
         {
-            LoggingService.Instance.LogWarning($"Command palette search error: {ex.Message}");
+            LoggingService.Instance.LogWarning("Command palette search error", ("error", ex.Message));
             sender.ItemsSource = null;
         }
     }
@@ -328,7 +328,7 @@ public sealed partial class MainPage : Page
         // Use NavigationService for centralized page routing
         if (!_navigationService.NavigateTo(tag))
         {
-            LoggingService.Instance.LogWarning($"Unknown navigation tag: {tag}");
+            LoggingService.Instance.LogWarning("Unknown navigation tag", ("tag", tag));
         }
     }
 
@@ -356,7 +356,7 @@ public sealed partial class MainPage : Page
         }
         catch (Exception ex)
         {
-            LoggingService.Instance.LogWarning($"Search error: {ex.Message}");
+            LoggingService.Instance.LogWarning("Search error", ("error", ex.Message));
             sender.ItemsSource = null;
         }
     }

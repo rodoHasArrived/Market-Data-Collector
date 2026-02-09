@@ -321,7 +321,7 @@ public partial class App : Application
 
             foreach (var warning in validationResult.Warnings)
             {
-                LoggingService.Instance.LogWarning($"Configuration warning: {warning}");
+                LoggingService.Instance.LogWarning("Configuration warning", ("warning", warning));
             }
 
             LoggingService.Instance.LogInfo("Configuration initialized",

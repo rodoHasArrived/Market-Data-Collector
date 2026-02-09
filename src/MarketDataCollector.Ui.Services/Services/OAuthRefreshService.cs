@@ -88,8 +88,8 @@ public sealed class OAuthRefreshService : IDisposable
         _refreshTimer.Start();
         _expirationCheckTimer.Start();
 
-        // Perform initial check
-        Task.Run(CheckAndRefreshTokensAsync);
+        // Perform initial check (fire-and-forget with exception handling)
+        _ = SafeCheckAndRefreshTokensAsync();
     }
 
     /// <summary>

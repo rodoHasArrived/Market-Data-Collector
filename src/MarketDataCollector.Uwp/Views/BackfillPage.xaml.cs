@@ -98,7 +98,7 @@ public sealed partial class BackfillPage : Page
         catch (Exception ex)
         {
             // Log the error but don't interrupt page load for non-critical recommendations
-            LoggingService.Instance.LogWarning($"Failed to load backfill recommendations: {ex.Message}");
+            LoggingService.Instance.LogWarning("Failed to load backfill recommendations", ("error", ex.Message));
             RecommendationBadge.Visibility = Visibility.Collapsed;
         }
     }

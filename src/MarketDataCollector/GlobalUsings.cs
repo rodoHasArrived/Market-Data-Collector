@@ -10,16 +10,6 @@ global using MarketDataCollector.Contracts.Configuration;
 global using MarketEvent = MarketDataCollector.Domain.Events.MarketEvent;
 global using MarketEventPayload = MarketDataCollector.Domain.Events.MarketEventPayload;
 
-// Type aliases for backwards compatibility during migration
-// These allow existing code using Domain.Models to continue working
-global using ContractsTrade = MarketDataCollector.Contracts.Domain.Models.Trade;
-global using ContractsHistoricalBar = MarketDataCollector.Contracts.Domain.Models.HistoricalBar;
-global using ContractsLOBSnapshot = MarketDataCollector.Contracts.Domain.Models.LOBSnapshot;
-global using ContractsOrderBookLevel = MarketDataCollector.Contracts.Domain.Models.OrderBookLevel;
-global using ContractsOrderFlowStatistics = MarketDataCollector.Contracts.Domain.Models.OrderFlowStatistics;
-global using ContractsBboQuotePayload = MarketDataCollector.Contracts.Domain.Models.BboQuotePayload;
-global using ContractsIntegrityEvent = MarketDataCollector.Contracts.Domain.Models.IntegrityEvent;
-
 // Expose internal classes to test assembly for unit testing
 using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("MarketDataCollector.Tests")]

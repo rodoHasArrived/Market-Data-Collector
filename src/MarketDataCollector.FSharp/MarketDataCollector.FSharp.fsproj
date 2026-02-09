@@ -37,14 +37,5 @@
     <Compile Include="Interop.fs" />
   </ItemGroup>
 
-  <Target Name="GenerateCSharpInterop" BeforeTargets="BeforeCompile">
-    <PropertyGroup>
-      <InteropOutput>$(MSBuildProjectDirectory)/Generated/MarketDataCollector.FSharp.Interop.g.cs</InteropOutput>
-    </PropertyGroup>
-    <Exec Command="dotnet run --project &quot;$(MSBuildProjectDirectory)/../../build/dotnet/FSharpInteropGenerator/FSharpInteropGenerator.csproj&quot; -- --output &quot;$(InteropOutput)&quot;" />
-    <ItemGroup>
-      <None Include="$(InteropOutput)" Pack="true" PackagePath="contentFiles/any/any/Generated/" />
-    </ItemGroup>
-  </Target>
 
 </Project>
