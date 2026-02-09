@@ -217,6 +217,8 @@ Market-Data-Collector/
 │   │   ├── REPOSITORY_REORGANIZATION_PLAN.md
 │   │   ├── uwp-development-roadmap.md
 │   │   └── uwp-release-checklist.md
+│   ├── audits/
+│   │   └── UWP_COMPREHENSIVE_AUDIT.md
 │   ├── development/
 │   │   ├── build-observability.md
 │   │   ├── central-package-management.md
@@ -1293,6 +1295,7 @@ Market-Data-Collector/
 │   │   ├── GlobalUsings.cs
 │   │   └── MarketDataCollector.Tests.csproj
 │   └── coverlet.runsettings
+├── ...
 ├── .gitignore
 ├── .globalconfig
 ├── build-output.log
