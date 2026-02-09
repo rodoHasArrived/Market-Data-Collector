@@ -57,7 +57,8 @@ public static class QualityDropsEndpoints
             }
 
             var stats = auditTrail.GetStatistics();
-            var symbolDrops = stats.DropsBySymbol.TryGetValue(symbol, out var count) ? count : 0;
+            var normalizedSymbol = symbol.ToUpperInvariant();
+            var symbolDrops = stats.DropsBySymbol.TryGetValue(normalizedSymbol, out var count) ? count : 0;
 
             return Results.Json(new
             {
