@@ -507,6 +507,7 @@ Market-Data-Collector/
 │   │   │   ├── ConfigValidatorCli.cs
 │   │   │   ├── ConfigWatcher.cs
 │   │   │   ├── DeploymentContext.cs
+│   │   │   ├── IConfigValidator.cs
 │   │   │   ├── SensitiveValueMasker.cs
 │   │   │   └── StorageConfigExtensions.cs
 │   │   ├── Credentials/
@@ -834,6 +835,7 @@ Market-Data-Collector/
 │   │   │   ├── SymbolRegistryService.cs
 │   │   │   └── TierMigrationService.cs
 │   │   ├── Sinks/
+│   │   │   ├── CompositeSink.cs
 │   │   │   ├── JsonlStorageSink.cs
 │   │   │   └── ParquetStorageSink.cs
 │   │   ├── GlobalUsings.cs
@@ -853,12 +855,17 @@ Market-Data-Collector/
 │   │   │   └── CircularBuffer.cs
 │   │   ├── Contracts/
 │   │   │   ├── IArchiveHealthService.cs
+│   │   │   ├── IBackgroundTaskSchedulerService.cs
 │   │   │   ├── IConfigService.cs
 │   │   │   ├── ICredentialService.cs
 │   │   │   ├── ILoggingService.cs
+│   │   │   ├── IMessagingService.cs
 │   │   │   ├── INotificationService.cs
+│   │   │   ├── IOfflineTrackingPersistenceService.cs
+│   │   │   ├── IPendingOperationsQueueService.cs
 │   │   │   ├── ISchemaService.cs
 │   │   │   ├── IStatusService.cs
+│   │   │   ├── IThemeService.cs
 │   │   │   └── IWatchlistService.cs
 │   │   ├── Services/
 │   │   │   ├── ActivityFeedService.cs
@@ -921,6 +928,7 @@ Market-Data-Collector/
 │   │   │   ├── LiveDataEndpoints.cs
 │   │   │   ├── PathValidation.cs
 │   │   │   ├── ProviderEndpoints.cs
+│   │   │   ├── QualityDropsEndpoints.cs
 │   │   │   ├── StatusEndpoints.cs
 │   │   │   ├── StubEndpoints.cs
 │   │   │   ├── SymbolMappingEndpoints.cs
@@ -1386,6 +1394,7 @@ Market-Data-Collector/
 │   │   │   ├── AnalysisExportServiceTests.cs
 │   │   │   ├── AtomicFileWriterTests.cs
 │   │   │   ├── CanonicalSymbolRegistryTests.cs
+│   │   │   ├── CompositeSinkTests.cs
 │   │   │   ├── DataLineageServiceTests.cs
 │   │   │   ├── DataQualityScoringServiceTests.cs
 │   │   │   ├── DataValidatorTests.cs
