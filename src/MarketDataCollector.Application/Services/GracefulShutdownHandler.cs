@@ -222,9 +222,19 @@ public sealed class GracefulShutdownHandler : IAsyncDisposable
     /// Waits for shutdown to be requested, then performs graceful shutdown.
     /// Use this in your main loop.
     /// </summary>
-    public async Task WaitForShutdownAsync()
+    public async Task WaitForShutdownAsync(CancellationToken ct = default)
     {
-        await _shutdownRequested.Task;
+        var tcs = _shutdownRequested.Task;
+        if (ct.CanBeCanceled)
+        {
+            var cancel = Task.Delay(Timeout.Infinite, ct);
+            await Task.WhenAny(tcs, cancel);
+            ct.ThrowIfCancellationRequested();
+        }
+        else
+        {
+            await tcs;
+        }
     }
 
     private async Task ExecuteShutdownCallbacksAsync(ShutdownContext context, CancellationToken ct)

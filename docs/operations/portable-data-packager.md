@@ -349,5 +349,5 @@ See the full API documentation at `/api/docs` when running with `--ui`.
 ## Related Documentation
 
 - [Storage Architecture](../architecture/storage-design.md)
-- [Data Export Guide](../HELP.md#analysis-ready-exports-v15)
+- [Data Export Guide](../HELP.md#analysis-ready-exports)
 - [CLI Reference](../HELP.md#command-line-usage)

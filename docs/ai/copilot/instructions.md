@@ -8,8 +8,8 @@
 
 **Project Type:** .NET Solution (C# and F#)
 **Target Framework:** .NET 9.0
-**Languages:** C# 11, F# 8.0
-**Size:** 478 source files (466 C#, 12 F#) across 6 main projects
+**Languages:** C# 13, F# 8.0
+**Size:** 807 source files (790 C#, 17 F#) across 14 main projects
 **Architecture:** Event-driven, monolithic core with optional UI projects
 
 
@@ -1442,7 +1442,7 @@ The main CI pipeline runs on pushes to `main` and pull requests:
 
 ### Code Style
 
-- C# 11 with nullable reference types enabled
+- C# 13 with nullable reference types enabled
 - Implicit usings enabled
 - Follow existing conventions in the codebase
 - Use `async`/`await` for I/O operations

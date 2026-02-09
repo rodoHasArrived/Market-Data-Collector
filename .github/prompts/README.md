@@ -87,7 +87,7 @@ messages:
 ## Related Resources
 
 - [CLAUDE.md](../../CLAUDE.md) - Main project instructions for AI assistants
-- [copilot-instructions.md](../copilot-instructions.md) - GitHub Copilot configuration
+- [copilot-instructions.md](../../docs/ai/copilot/instructions.md) - GitHub Copilot configuration
 - [agents/](../agents/) - AI agent configurations
 
 ---

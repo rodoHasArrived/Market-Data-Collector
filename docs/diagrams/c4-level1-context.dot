@@ -34,7 +34,7 @@ digraph C4_Context {
 
   // Main System
   MDC [shape=box, style="rounded,filled", fillcolor="#438dd5", fontcolor="white", width=4,
-       label="Market Data Collector\n[Software System]\n\n.NET 9.0 | C# 11 | F# 8\n\nCollects, validates, stores, and exports\nreal-time and historical market data\nfrom multiple providers with\narchival-first persistence"];
+       label="Market Data Collector\n[Software System]\n\n.NET 9.0 | C# 13 | F# 8\n\nCollects, validates, stores, and exports\nreal-time and historical market data\nfrom multiple providers with\narchival-first persistence"];
 
   // External Systems - Streaming Data Providers
   subgraph cluster_streaming {

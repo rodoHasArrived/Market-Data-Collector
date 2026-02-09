@@ -39,7 +39,7 @@ public sealed class StatusWriter : IAsyncDisposable
         });
     }
 
-    public async Task WriteOnceAsync()
+    public async Task WriteOnceAsync(CancellationToken ct = default)
     {
         var cfg = _configProvider();
         var payload = new
@@ -57,7 +57,7 @@ public sealed class StatusWriter : IAsyncDisposable
 
         var json = JsonSerializer.Serialize(payload, MarketDataJsonContext.PrettyPrintOptions);
 
-        await File.WriteAllTextAsync(_path, json);
+        await File.WriteAllTextAsync(_path, json, ct);
     }
 
     public async ValueTask DisposeAsync()

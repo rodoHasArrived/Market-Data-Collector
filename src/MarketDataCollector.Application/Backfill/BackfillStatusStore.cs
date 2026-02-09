@@ -23,11 +23,11 @@ public sealed class BackfillStatusStore
 
     public static BackfillStatusStore FromConfig(AppConfig cfg) => new(cfg.DataRoot);
 
-    public async Task WriteAsync(BackfillResult result)
+    public async Task WriteAsync(BackfillResult result, CancellationToken ct = default)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(_path)!);
         var json = JsonSerializer.Serialize(result, JsonOptions);
-        await File.WriteAllTextAsync(_path, json);
+        await File.WriteAllTextAsync(_path, json, ct);
     }
 
     public BackfillResult? TryRead()
@@ -38,7 +38,7 @@ public sealed class BackfillStatusStore
             var json = File.ReadAllText(_path);
             return JsonSerializer.Deserialize<BackfillResult>(json, JsonOptions);
         }
-        catch
+        catch (Exception ex) when (ex is JsonException or IOException)
         {
             return null;
         }

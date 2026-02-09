@@ -87,7 +87,7 @@ digraph C4_Containers {
 
     // Core Collector Service
     CORE [shape=box, style="rounded,filled", fillcolor="#438dd5", fontcolor="white", width=3.5,
-          label="Market Data Collector Core\n[.NET 9 Console App | C# 11]\n\nEvent pipeline with 100K bounded channel\nCollectors: Trade, Quote, OrderBook\nStreaming + Historical data processing\nPrometheus metrics, health endpoints"];
+          label="Market Data Collector Core\n[.NET 9 Console App | C# 13]\n\nEvent pipeline with 100K bounded channel\nCollectors: Trade, Quote, OrderBook\nStreaming + Historical data processing\nPrometheus metrics, health endpoints"];
 
     // F# Domain Library
     FSHARP [shape=box, style="rounded,filled", fillcolor="#2c7a7b", fontcolor="white",
