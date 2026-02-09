@@ -431,7 +431,7 @@ public sealed class DiagnosticsService
     /// <summary>
     /// Validates the full configuration file.
     /// </summary>
-    public async Task<ConfigValidationResult> ValidateFullConfigAsync(CancellationToken ct = default)
+    public async Task<DiagnosticConfigValidationResult> ValidateFullConfigAsync(CancellationToken ct = default)
     {
         var response = await _apiClient.PostWithResponseAsync<ConfigValidationResponse>(
             UiApiRoutes.DiagnosticsValidateConfig,
@@ -440,7 +440,7 @@ public sealed class DiagnosticsService
 
         if (response.Success && response.Data != null)
         {
-            return new ConfigValidationResult
+            return new DiagnosticConfigValidationResult
             {
                 Success = true,
                 IsValid = response.Data.IsValid,
@@ -449,7 +449,7 @@ public sealed class DiagnosticsService
             };
         }
 
-        return new ConfigValidationResult
+        return new DiagnosticConfigValidationResult
         {
             Success = false,
             Error = response.ErrorMessage
@@ -759,7 +759,7 @@ public class ProviderConnectivityResult
 }
 
 // Config Validation
-public class ConfigValidationResult
+public class DiagnosticConfigValidationResult
 {
     public bool Success { get; set; }
     public string? Error { get; set; }
