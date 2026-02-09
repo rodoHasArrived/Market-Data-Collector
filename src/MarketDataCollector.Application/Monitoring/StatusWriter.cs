@@ -34,7 +34,7 @@ public sealed class StatusWriter : IAsyncDisposable
             {
                 await WriteOnceAsync();
                 try { await Task.Delay(interval, _cts.Token); }
-                catch (TaskCanceledException) { }
+                catch (TaskCanceledException) { /* Expected during shutdown */ }
             }
         });
     }

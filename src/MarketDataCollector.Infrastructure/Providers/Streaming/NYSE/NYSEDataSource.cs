@@ -280,7 +280,7 @@ public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHisto
             if (_receiveTask != null)
             {
                 try { await _receiveTask.ConfigureAwait(false); }
-                catch (OperationCanceledException) { }
+                catch (OperationCanceledException) { /* Expected during disconnect */ }
             }
         }
         catch (Exception ex)

@@ -112,7 +112,7 @@ public sealed class InfoBarService
                 await Task.Delay(durationMs, cancellationToken);
                 NotificationRequested?.Invoke(this, new InfoBarNotificationEventArgs { IsOpen = false });
             }
-            catch (OperationCanceledException) { }
+            catch (OperationCanceledException) { /* Expected during shutdown or dismissal */ }
         }
     }
 

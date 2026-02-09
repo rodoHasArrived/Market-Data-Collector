@@ -73,7 +73,7 @@ public sealed class OAuthTokenRefreshService : IAsyncDisposable
         if (_refreshLoop != null)
         {
             try { await _refreshLoop; }
-            catch (OperationCanceledException) { }
+            catch (OperationCanceledException) { /* Expected during shutdown */ }
         }
 
         _cts.Dispose();

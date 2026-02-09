@@ -433,7 +433,7 @@ public sealed class EventPipeline : IMarketEventPublisher, IAsyncDisposable, IFl
                 Interlocked.Add(ref _totalProcessingTimeNs, elapsedNs);
             }
         }
-        catch (OperationCanceledException) { }
+        catch (OperationCanceledException) { /* Expected during shutdown */ }
         finally
         {
             // Final flush on shutdown with timeout to prevent indefinite hang

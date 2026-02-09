@@ -3,12 +3,11 @@ using System.Text.Json.Serialization;
 namespace MarketDataCollector.Wpf.Models;
 
 // =============================================================================
-// UWP-Specific Models
+// WPF-Specific Models
 // =============================================================================
-// Most data models are now provided by MarketDataCollector.Contracts via shared
-// source files (see SharedModelAliases.cs for type mappings).
+// Most data models are now provided by MarketDataCollector.Contracts.
 //
-// This file only contains UWP-specific types that don't exist in Contracts.
+// This file only contains WPF-specific types that don't exist in Contracts.
 // =============================================================================
 
 /// <summary>

@@ -496,7 +496,7 @@ public sealed class MaintenanceScheduler : IMaintenanceScheduler, IAsyncDisposab
             {
                 await _schedulerTask;
             }
-            catch (OperationCanceledException) { }
+            catch (OperationCanceledException) { /* Expected during shutdown */ }
         }
         _cts.Dispose();
     }

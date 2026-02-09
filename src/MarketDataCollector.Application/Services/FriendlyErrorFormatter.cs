@@ -18,25 +18,25 @@ public static class FriendlyErrorFormatter
             Code: "MDC-CFG-001",
             Title: "Configuration file not found",
             Suggestion: "Run 'MarketDataCollector --wizard' to create a configuration file, or copy appsettings.sample.json to appsettings.json",
-            DocsLink: "docs/guides/getting-started.md"
+            DocsLink: "docs/getting-started/README.md"
         ),
         ["CONFIG_INVALID_JSON"] = new ErrorInfo(
             Code: "MDC-CFG-002",
             Title: "Invalid JSON in configuration file",
             Suggestion: "Check for syntax errors such as trailing commas, missing quotes, or unescaped characters. Use a JSON validator.",
-            DocsLink: "docs/guides/configuration.md"
+            DocsLink: "docs/HELP.md"
         ),
         ["CONFIG_VALIDATION_FAILED"] = new ErrorInfo(
             Code: "MDC-CFG-003",
             Title: "Configuration validation failed",
             Suggestion: "Run 'MarketDataCollector --validate-config' for detailed validation errors",
-            DocsLink: "docs/guides/configuration.md"
+            DocsLink: "docs/HELP.md"
         ),
         ["CONFIG_MISSING_CREDENTIALS"] = new ErrorInfo(
             Code: "MDC-CFG-004",
             Title: "Missing API credentials",
             Suggestion: "Set the required environment variables (e.g., ALPACA_KEY_ID, ALPACA_SECRET_KEY) or configure them in appsettings.json",
-            DocsLink: "docs/guides/credentials.md"
+            DocsLink: "docs/HELP.md"
         ),
 
         // Connection errors
@@ -44,19 +44,19 @@ public static class FriendlyErrorFormatter
             Code: "MDC-CON-001",
             Title: "Connection timeout",
             Suggestion: "Check your internet connection and firewall settings. The provider may be experiencing issues.",
-            DocsLink: "docs/troubleshooting.md"
+            DocsLink: "docs/HELP.md#troubleshooting"
         ),
         ["CONN_REFUSED"] = new ErrorInfo(
             Code: "MDC-CON-002",
             Title: "Connection refused",
             Suggestion: "Ensure the service is running and accepting connections on the specified host/port",
-            DocsLink: "docs/troubleshooting.md"
+            DocsLink: "docs/HELP.md#troubleshooting"
         ),
         ["CONN_SSL_ERROR"] = new ErrorInfo(
             Code: "MDC-CON-003",
             Title: "SSL/TLS error",
             Suggestion: "Check your system's SSL certificates are up to date. Try updating your .NET runtime.",
-            DocsLink: "docs/troubleshooting.md"
+            DocsLink: "docs/HELP.md#troubleshooting"
         ),
 
         // Authentication errors
@@ -64,13 +64,13 @@ public static class FriendlyErrorFormatter
             Code: "MDC-AUTH-001",
             Title: "Invalid API key",
             Suggestion: "Verify your API key is correct. Check for extra whitespace or copy/paste errors.",
-            DocsLink: "docs/guides/credentials.md"
+            DocsLink: "docs/HELP.md"
         ),
         ["AUTH_EXPIRED"] = new ErrorInfo(
             Code: "MDC-AUTH-002",
             Title: "API key expired",
             Suggestion: "Generate a new API key from the provider's dashboard",
-            DocsLink: "docs/guides/credentials.md"
+            DocsLink: "docs/HELP.md"
         ),
         ["AUTH_INSUFFICIENT_PERMISSIONS"] = new ErrorInfo(
             Code: "MDC-AUTH-003",
@@ -84,7 +84,7 @@ public static class FriendlyErrorFormatter
             Code: "MDC-RATE-001",
             Title: "Rate limit exceeded",
             Suggestion: "Wait before retrying. Consider reducing request frequency or upgrading your API plan.",
-            DocsLink: "docs/providers/rate-limits.md"
+            DocsLink: "docs/providers/provider-comparison.md"
         ),
         ["RATE_LIMIT_QUOTA"] = new ErrorInfo(
             Code: "MDC-RATE-002",
@@ -98,7 +98,7 @@ public static class FriendlyErrorFormatter
             Code: "MDC-DATA-001",
             Title: "Symbol not found",
             Suggestion: "Verify the symbol is correct. Check if it's supported by the provider.",
-            DocsLink: "docs/guides/symbols.md"
+            DocsLink: "docs/HELP.md"
         ),
         ["DATA_NO_DATA_AVAILABLE"] = new ErrorInfo(
             Code: "MDC-DATA-002",
@@ -118,13 +118,13 @@ public static class FriendlyErrorFormatter
             Code: "MDC-STOR-001",
             Title: "Storage permission denied",
             Suggestion: "Check that the application has write permission to the data directory",
-            DocsLink: "docs/troubleshooting.md"
+            DocsLink: "docs/HELP.md#troubleshooting"
         ),
         ["STORAGE_DISK_FULL"] = new ErrorInfo(
             Code: "MDC-STOR-002",
             Title: "Disk space exhausted",
             Suggestion: "Free up disk space, enable compression, or configure a storage limit",
-            DocsLink: "docs/guides/storage.md"
+            DocsLink: "docs/architecture/storage-design.md"
         ),
         ["STORAGE_FILE_LOCKED"] = new ErrorInfo(
             Code: "MDC-STOR-003",
@@ -138,7 +138,7 @@ public static class FriendlyErrorFormatter
             Code: "MDC-IB-001",
             Title: "IB Gateway/TWS not running",
             Suggestion: "Start Interactive Brokers TWS or IB Gateway and enable API connections in the settings",
-            DocsLink: "docs/providers/interactive-brokers.md"
+            DocsLink: "docs/providers/interactive-brokers-setup.md"
         ),
         ["ALPACA_MARKET_CLOSED"] = new ErrorInfo(
             Code: "MDC-ALP-001",
@@ -158,7 +158,7 @@ public static class FriendlyErrorFormatter
             Code: "MDC-GEN-001",
             Title: "An error occurred",
             Suggestion: "Check the logs for more details",
-            DocsLink: "docs/troubleshooting.md"
+            DocsLink: "docs/HELP.md#troubleshooting"
         );
 
         return new FormattedError(

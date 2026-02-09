@@ -1503,7 +1503,7 @@ When contributing to this project, **always follow these rules**:
 ## Key Interfaces
 
 ### IMarketDataClient (Streaming)
-Location: `src/MarketDataCollector/Infrastructure/IMarketDataClient.cs`
+Location: `src/MarketDataCollector.ProviderSdk/IMarketDataClient.cs`
 
 ```csharp
 [ImplementsAdr("ADR-001", "Core streaming data provider contract")]
@@ -1521,7 +1521,7 @@ public interface IMarketDataClient : IAsyncDisposable
 ```
 
 ### IHistoricalDataProvider (Backfill)
-Location: `src/MarketDataCollector/Infrastructure/Providers/Backfill/IHistoricalDataProvider.cs`
+Location: `src/MarketDataCollector.Infrastructure/Providers/Historical/IHistoricalDataProvider.cs`
 
 ```csharp
 [ImplementsAdr("ADR-001", "Core historical data provider contract")]
@@ -1877,8 +1877,8 @@ _logger.LogInformation($"Received {bars.Count} bars for {symbol}");
 | `JsonlStorageSink` | `Storage/Sinks/` | JSONL file persistence |
 | `ParquetStorageSink` | `Storage/Sinks/` | Parquet file persistence |
 | `AlpacaMarketDataClient` | `Infrastructure/Providers/Alpaca/` | Alpaca WebSocket client |
-| `CompositeHistoricalDataProvider` | `Infrastructure/Providers/Backfill/` | Multi-provider backfill with fallback |
-| `BackfillWorkerService` | `Infrastructure/Providers/Backfill/` | Background backfill service |
+| `CompositeHistoricalDataProvider` | `Infrastructure/Providers/Historical/` | Multi-provider backfill with fallback |
+| `BackfillWorkerService` | `Infrastructure/Providers/Historical/Queue/` | Background backfill service |
 | `DataQualityMonitoringService` | `Application/Monitoring/DataQuality/` | Data quality monitoring |
 | `GracefulShutdownService` | `Application/Services/` | Graceful shutdown handling |
 | `ConfigurationWizard` | `Application/Services/` | Interactive configuration setup |
@@ -1946,7 +1946,7 @@ data/
 See `docs/development/provider-implementation.md` for detailed patterns.
 
 ### Adding a New Historical Provider
-1. Create provider in `src/MarketDataCollector/Infrastructure/Providers/Backfill/`
+1. Create provider in `src/MarketDataCollector.Infrastructure/Providers/Historical/`
 2. Implement `IHistoricalDataProvider`
 3. Add `[ImplementsAdr]` attributes
 4. Register in `CompositeHistoricalDataProvider`

@@ -230,7 +230,7 @@ public sealed partial class EnhancedIBConnectionManager : EWrapper, IDisposable
                 {
                     await _readerLoop.ConfigureAwait(false);
                 }
-                catch (OperationCanceledException) { }
+                catch (OperationCanceledException) { /* Expected during disconnect */ }
             }
         }
         catch { /* ignore */ }

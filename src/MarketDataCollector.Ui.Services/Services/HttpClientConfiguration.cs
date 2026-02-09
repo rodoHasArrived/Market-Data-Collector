@@ -53,7 +53,7 @@ public static class HttpClientNames
 /// MarketDataCollector.Infrastructure.Http.SharedResiliencePolicies because desktop apps
 /// cannot reference the main project (XAML compiler error: "Assembly is not allowed in type universe").
 /// When updating retry/circuit breaker policies, keep both implementations in sync.
-/// See: docs/analysis/DUPLICATE_CODE_ANALYSIS.md for details.
+/// See: docs/archived/DUPLICATE_CODE_ANALYSIS.md for details.
 /// </remarks>
 public static class HttpClientConfiguration
 {

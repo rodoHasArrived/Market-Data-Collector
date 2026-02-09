@@ -526,7 +526,7 @@ setInterval(refresh,2000);refresh();
         if (_loop is not null)
         {
             try { await _loop.ConfigureAwait(false); }
-            catch (OperationCanceledException) { }
+            catch (OperationCanceledException) { /* Expected during shutdown */ }
         }
         _cts.Dispose();
         _requestLimiter.Dispose();
