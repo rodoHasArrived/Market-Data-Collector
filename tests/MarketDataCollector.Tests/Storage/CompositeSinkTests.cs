@@ -97,11 +97,10 @@ public sealed class CompositeSinkTests
 
     private static MarketEvent CreateTestEvent()
     {
-        return new MarketEvent
-        {
-            Symbol = "AAPL",
-            EventType = "Trade",
-            Timestamp = DateTimeOffset.UtcNow
-        };
+        return new MarketEvent(
+            "AAPL",
+            MarketEventType.Trade,
+            DateTimeOffset.UtcNow
+        );
     }
 }
