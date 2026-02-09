@@ -1,54 +1,36 @@
 # TODO Tracking
 
 > Auto-generated TODO documentation. Do not edit manually.
-> Last updated: 2026-02-09T15:15:43.564120+00:00
+> Last updated: 2026-02-09T15:35:55.263160+00:00
 
 ## Summary
 
 | Metric | Count |
 |--------|-------|
-| **Total Items** | 14 |
+| **Total Items** | 8 |
 | **Linked to Issues** | 0 |
-| **Untracked** | 14 |
+| **Untracked** | 8 |
 
 ### By Type
 
 | Type | Count | Description |
 |------|-------|-------------|
 | `NOTE` | 7 | Important notes and documentation |
-| `TODO` | 7 | General tasks to complete |
+| `TODO` | 1 | General tasks to complete |
 
 ### By Directory
 
 | Directory | Count |
 |-----------|-------|
 | `tests/` | 7 |
-| `src/` | 7 |
+| `src/` | 1 |
 
 ## All Items
 
-### TODO (7)
+### TODO (1)
 
 - [ ] `src/MarketDataCollector.Infrastructure/Providers/Historical/GapAnalysis/DataGapRepair.cs:412`
   > Implement via dependency injection - Infrastructure cannot reference Storage directly (circular dependency). Inject an IStorageSink or similar abstraction instead.
-
-- [ ] `src/MarketDataCollector.Infrastructure/Shared/WebSocketReconnectionHelper.cs:32`
-  > Add [ImplementsAdr("ADR-004", "All async methods support CancellationToken")] after fixing references
-
-- [ ] `src/MarketDataCollector.Storage/Maintenance/ArchiveMaintenanceModels.cs:2`
-  > Fix circular dependency - Storage should not depend on Application.Scheduling Temporarily commented out to allow compilation using MarketDataCollector.Application.Scheduling;
-
-- [x] `src/MarketDataCollector.Storage/Maintenance/ArchiveMaintenanceModels.cs:146`
-  > ~~Implement proper cron parsing~~ Resolved: Storage references Core which contains CronExpressionParser.
-
-- [x] `src/MarketDataCollector.Storage/Maintenance/ArchiveMaintenanceScheduleManager.cs:3`
-  > ~~Fix circular dependency~~ Resolved: No circular dependency - CronExpressionParser is in Core, which Storage already references.
-
-- [x] `src/MarketDataCollector.Storage/Maintenance/ArchiveMaintenanceScheduleManager.cs:67`
-  > ~~Implement proper cron validation~~ Resolved: Enabled CronExpressionParser.IsValid() validation.
-
-- [x] `src/MarketDataCollector.Storage/Maintenance/ArchiveMaintenanceScheduleManager.cs:114`
-  > ~~Implement proper cron validation~~ Resolved: Enabled CronExpressionParser.IsValid() validation.
 
 ### NOTE (7)
 
