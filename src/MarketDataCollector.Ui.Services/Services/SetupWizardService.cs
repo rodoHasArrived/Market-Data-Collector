@@ -663,7 +663,7 @@ public sealed class SetupWizardService
 /// <summary>
 /// Result of preflight checks.
 /// </summary>
-public class PreflightCheckResult
+public sealed class PreflightCheckResult
 {
     public CheckResult NetworkCheck { get; set; } = new();
     public CheckResult DiskSpaceCheck { get; set; } = new();
@@ -686,7 +686,7 @@ public class PreflightCheckResult
 /// <summary>
 /// Individual check result.
 /// </summary>
-public class CheckResult
+public sealed class CheckResult
 {
     public string Name { get; set; } = string.Empty;
     public bool Success { get; set; }
@@ -696,7 +696,7 @@ public class CheckResult
 /// <summary>
 /// Result of provider connectivity test.
 /// </summary>
-public class ProviderTestResult
+public sealed class ProviderTestResult
 {
     public string Provider { get; set; } = string.Empty;
     public bool Success { get; set; }
@@ -711,7 +711,7 @@ public class ProviderTestResult
 /// <summary>
 /// Setup preset for quick configuration.
 /// </summary>
-public class SetupPreset
+public sealed class SetupPreset
 {
     public string Id { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;

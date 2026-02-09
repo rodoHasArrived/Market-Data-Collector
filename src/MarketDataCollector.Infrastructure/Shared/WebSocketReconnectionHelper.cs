@@ -1,6 +1,6 @@
-using System.Net.WebSockets;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Infrastructure.Contracts;
+using MarketDataCollector.ProviderSdk;
 using Serilog;
 
 namespace MarketDataCollector.Infrastructure.Shared;
@@ -29,7 +29,7 @@ namespace MarketDataCollector.Infrastructure.Shared;
 ///    as internal detail within <c>HandleMessageAsync</c>.
 /// </para>
 /// </remarks>
-// TODO: Add [ImplementsAdr("ADR-004", "All async methods support CancellationToken")] after fixing references
+[ImplementsAdr("ADR-004", "All async methods support CancellationToken")]
 public sealed class WebSocketReconnectionHelper
 {
     private readonly SemaphoreSlim _reconnectGate = new(1, 1);
