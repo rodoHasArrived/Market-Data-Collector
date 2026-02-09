@@ -1,11 +1,4 @@
-using System.Threading;
-using System.Threading.Tasks;
-
-namespace MarketDataCollector.Wpf.Services;
-
-public interface IBackgroundTaskSchedulerService
-{
-    Task ScheduleTaskAsync(string taskName, Func<CancellationToken, Task> task, TimeSpan interval, CancellationToken cancellationToken = default);
-    Task CancelTaskAsync(string taskName);
-    bool IsTaskRunning(string taskName);
-}
+// C1: Interface promoted to MarketDataCollector.Ui.Services.Contracts.IBackgroundTaskSchedulerService.
+// This file re-exports the shared definition for backwards compatibility.
+// The canonical interface is in the shared Ui.Services project.
+using SharedContract = MarketDataCollector.Ui.Services.Contracts.IBackgroundTaskSchedulerService;

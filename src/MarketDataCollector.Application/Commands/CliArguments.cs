@@ -119,4 +119,38 @@ internal sealed record CliArguments
         }
         return null;
     }
+
+    /// <summary>
+    /// Requires a value for the given flag. Writes an error and returns null if missing.
+    /// Eliminates repeated null-check + error boilerplate across commands (B1).
+    /// </summary>
+    internal static string? RequireValue(string[] args, string flag, string example)
+    {
+        var value = GetValue(args, flag);
+        if (!string.IsNullOrWhiteSpace(value))
+            return value;
+
+        Console.Error.WriteLine($"Error: {flag} requires a value");
+        Console.Error.WriteLine($"Example: {example}");
+        return null;
+    }
+
+    /// <summary>
+    /// Requires a comma-separated list for the given flag.
+    /// Returns null and writes an error if the value is missing.
+    /// </summary>
+    internal static string[]? RequireList(string[] args, string flag, string example)
+    {
+        var value = RequireValue(args, flag, example);
+        return value?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+    }
+
+    /// <summary>
+    /// Gets an integer value for the given flag, or the default if missing/invalid.
+    /// </summary>
+    internal static int GetInt(string[] args, string flag, int defaultValue)
+    {
+        var raw = GetValue(args, flag);
+        return int.TryParse(raw, out var parsed) ? parsed : defaultValue;
+    }
 }

@@ -20,61 +20,90 @@ public static class StatusEndpoints
     /// </summary>
     public static void MapStatusEndpoints(this WebApplication app, StatusEndpointHandlers handlers, JsonSerializerOptions jsonOptions)
     {
-        // Health check endpoint - comprehensive health status
+        // Health check endpoint - comprehensive health status (#19: OpenAPI annotations)
         app.MapGet(UiApiRoutes.Health, () =>
         {
             var response = handlers.GetHealthCheck();
             var statusCode = handlers.GetHealthStatusCode(response);
             return Results.Json(response, jsonOptions, statusCode: statusCode);
-        });
+        })
+        .WithName("GetHealth")
+        .WithTags("Health")
+        .Produces(200)
+        .Produces(503);
 
         // Kubernetes-style health endpoints
-        app.MapGet("/healthz", () => Results.Ok("healthy"));
+        app.MapGet("/healthz", () => Results.Ok("healthy"))
+            .WithName("GetHealthz")
+            .WithTags("Health")
+            .Produces(200);
 
         // Readiness probe
         app.MapGet(UiApiRoutes.Ready, () =>
         {
             var (isReady, message) = handlers.CheckReadiness();
             return isReady ? Results.Ok(message) : Results.StatusCode(503);
-        });
+        })
+        .WithName("GetReady")
+        .WithTags("Health")
+        .Produces(200)
+        .Produces(503);
 
         app.MapGet("/readyz", () =>
         {
             var (isReady, message) = handlers.CheckReadiness();
             return isReady ? Results.Ok(message) : Results.StatusCode(503);
-        });
+        })
+        .WithName("GetReadyz")
+        .WithTags("Health")
+        .Produces(200)
+        .Produces(503);
 
         // Liveness probe
-        app.MapGet(UiApiRoutes.Live, () => Results.Ok("alive"));
-        app.MapGet("/livez", () => Results.Ok("alive"));
+        app.MapGet(UiApiRoutes.Live, () => Results.Ok("alive"))
+            .WithName("GetLive").WithTags("Health").Produces(200);
+        app.MapGet("/livez", () => Results.Ok("alive"))
+            .WithName("GetLivez").WithTags("Health").Produces(200);
 
         // Prometheus metrics
         app.MapGet(UiApiRoutes.Metrics, () =>
         {
             var content = handlers.GetPrometheusMetrics();
             return Results.Content(content, "text/plain; version=0.0.4");
-        });
+        })
+        .WithName("GetMetrics")
+        .WithTags("Monitoring")
+        .Produces(200);
 
         // Full status endpoint
         app.MapGet(UiApiRoutes.Status, () =>
         {
             var response = handlers.GetStatus();
             return Results.Json(response, jsonOptions);
-        });
+        })
+        .WithName("GetStatus")
+        .WithTags("Status")
+        .Produces(200);
 
         // Errors endpoint with optional filtering
         app.MapGet(UiApiRoutes.Errors, (int? count, string? level, string? symbol) =>
         {
             var response = handlers.GetErrors(count ?? 10, level, symbol);
             return Results.Json(response, jsonOptions);
-        });
+        })
+        .WithName("GetErrors")
+        .WithTags("Status")
+        .Produces(200);
 
         // Backpressure status
         app.MapGet(UiApiRoutes.Backpressure, () =>
         {
             var response = handlers.GetBackpressure();
             return Results.Json(response, jsonOptions);
-        });
+        })
+        .WithName("GetBackpressure")
+        .WithTags("Status")
+        .Produces(200);
 
         // Provider latency
         app.MapGet(UiApiRoutes.ProvidersLatency, () =>

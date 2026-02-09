@@ -1,3 +1,4 @@
+using System.Net.Http;
 using System.Text.Json;
 using System.Threading;
 using MarketDataCollector.Application.Config;
@@ -231,14 +232,19 @@ public sealed class BackfillWorkerService : IDisposable
                     {
                         _requestQueue.RecordProviderRateLimitHit(request.AssignedProvider);
 
-                        // Retry with exponential backoff if within retry budget
+                        // Retry with Retry-After or exponential backoff if within retry budget
                         if (retryAttempt < MaxRetryAttemptsPerRequest)
                         {
                             retryAttempt++;
-                            var delay = CalculateBackoff(retryAttempt, RateLimitBaseDelay, RateLimitMaxDelay);
+
+                            // Honor provider Retry-After header when available (#17)
+                            var retryAfter = TryExtractRetryAfter(ex);
+                            var delay = retryAfter ?? CalculateBackoff(retryAttempt, RateLimitBaseDelay, RateLimitMaxDelay);
+
                             _log.Information(
-                                "Rate limited for {Symbol} via {Provider}, retrying in {Delay}ms (attempt {Attempt}/{Max})",
+                                "Rate limited for {Symbol} via {Provider}, retrying in {Delay}ms via {DelaySource} (attempt {Attempt}/{Max})",
                                 request.Symbol, request.AssignedProvider, delay.TotalMilliseconds,
+                                retryAfter.HasValue ? "Retry-After header" : "exponential backoff",
                                 retryAttempt, MaxRetryAttemptsPerRequest);
                             await Task.Delay(delay, ct).ConfigureAwait(false);
                             continue;
@@ -273,6 +279,78 @@ public sealed class BackfillWorkerService : IDisposable
         // Add jitter (±25%) to prevent thundering herd
         var jitter = delay * 0.25 * (Random.Shared.NextDouble() * 2 - 1);
         return TimeSpan.FromMilliseconds(delay + jitter);
+    }
+
+    /// <summary>
+    /// Extracts Retry-After delay from an exception chain.
+    /// Supports both delta-seconds ("120") and HTTP-date ("Thu, 01 Dec 2024 16:00:00 GMT") formats
+    /// as defined in RFC 7231 Section 7.1.3.
+    /// </summary>
+    internal static TimeSpan? TryExtractRetryAfter(Exception ex)
+    {
+        // Walk the exception chain looking for HttpRequestException with Retry-After info
+        var current = ex;
+        while (current != null)
+        {
+            if (current is HttpRequestException httpEx)
+            {
+                // .NET 7+ exposes HttpRequestError; check InnerException for HttpResponseMessage
+                // Some providers embed the header value in the message
+                var retryAfter = TryParseRetryAfterFromMessage(httpEx.Message);
+                if (retryAfter.HasValue)
+                    return retryAfter;
+            }
+
+            // Also check if message contains "Retry-After: <value>" pattern
+            if (current.Message.Contains("Retry-After", StringComparison.OrdinalIgnoreCase))
+            {
+                var retryAfter = TryParseRetryAfterFromMessage(current.Message);
+                if (retryAfter.HasValue)
+                    return retryAfter;
+            }
+
+            current = current.InnerException;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Attempts to parse a Retry-After value from a message string.
+    /// Supports delta-seconds and HTTP-date formats.
+    /// </summary>
+    private static TimeSpan? TryParseRetryAfterFromMessage(string message)
+    {
+        // Look for "Retry-After: <value>" or "retry-after: <value>" pattern
+        const string prefix = "Retry-After:";
+        var idx = message.IndexOf(prefix, StringComparison.OrdinalIgnoreCase);
+        if (idx < 0) return null;
+
+        var valueStart = idx + prefix.Length;
+        var valueEnd = message.IndexOf('\n', valueStart);
+        if (valueEnd < 0) valueEnd = message.Length;
+
+        var value = message[valueStart..valueEnd].Trim().TrimEnd('\r');
+
+        // Try delta-seconds first (e.g., "120")
+        if (int.TryParse(value, out var seconds) && seconds > 0)
+        {
+            // Cap at 5 minutes to avoid very long waits
+            return TimeSpan.FromSeconds(Math.Min(seconds, 300));
+        }
+
+        // Try HTTP-date format (e.g., "Thu, 01 Dec 2024 16:00:00 GMT")
+        if (DateTimeOffset.TryParse(value, out var retryDate))
+        {
+            var delay = retryDate - DateTimeOffset.UtcNow;
+            if (delay > TimeSpan.Zero)
+            {
+                // Cap at 5 minutes
+                return delay > TimeSpan.FromMinutes(5) ? TimeSpan.FromMinutes(5) : delay;
+            }
+        }
+
+        return null;
     }
 
     /// <summary>

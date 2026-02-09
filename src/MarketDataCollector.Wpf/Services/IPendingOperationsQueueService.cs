@@ -1,12 +1,4 @@
-using System.Threading;
-using System.Threading.Tasks;
-
-namespace MarketDataCollector.Wpf.Services;
-
-public interface IPendingOperationsQueueService
-{
-    Task EnqueueAsync<T>(T operation, CancellationToken cancellationToken = default);
-    Task<T?> DequeueAsync<T>(CancellationToken cancellationToken = default);
-    Task<int> GetQueueLengthAsync(CancellationToken cancellationToken = default);
-    Task ClearQueueAsync(CancellationToken cancellationToken = default);
-}
+// C1: Interface promoted to MarketDataCollector.Ui.Services.Contracts.IPendingOperationsQueueService.
+// This file re-exports the shared definition for backwards compatibility.
+// The canonical interface is in the shared Ui.Services project.
+using SharedContract = MarketDataCollector.Ui.Services.Contracts.IPendingOperationsQueueService;

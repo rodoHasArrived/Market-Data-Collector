@@ -1,8 +1,4 @@
-namespace MarketDataCollector.Wpf.Services;
-
-public interface IMessagingService
-{
-    void Subscribe<TMessage>(Action<TMessage> handler) where TMessage : class;
-    void Unsubscribe<TMessage>(Action<TMessage> handler) where TMessage : class;
-    void Publish<TMessage>(TMessage message) where TMessage : class;
-}
+// C1: Interface promoted to MarketDataCollector.Ui.Services.Contracts.IMessagingService.
+// This file re-exports the shared definition for backwards compatibility.
+// The canonical interface is in the shared Ui.Services project.
+using SharedContract = MarketDataCollector.Ui.Services.Contracts.IMessagingService;
