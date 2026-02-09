@@ -675,13 +675,22 @@ public static class ServiceCompositionRoot
             });
         });
 
+        // DroppedEventAuditTrail - records events dropped due to backpressure
+        services.AddSingleton<Pipeline.DroppedEventAuditTrail>(sp =>
+        {
+            var storageOptions = sp.GetRequiredService<StorageOptions>();
+            var logger = sp.GetService<Microsoft.Extensions.Logging.ILogger<Pipeline.DroppedEventAuditTrail>>();
+            return new Pipeline.DroppedEventAuditTrail(storageOptions.RootPath, logger);
+        });
+
         // EventPipeline - bounded channel event routing with WAL for durability
         services.AddSingleton<EventPipeline>(sp =>
         {
             var sink = sp.GetRequiredService<JsonlStorageSink>();
             var metrics = sp.GetRequiredService<IEventMetrics>();
             var wal = sp.GetService<Storage.Archival.WriteAheadLog>();
-            return new EventPipeline(sink, EventPipelinePolicy.HighThroughput, metrics: metrics, wal: wal);
+            var auditTrail = sp.GetService<Pipeline.DroppedEventAuditTrail>();
+            return new EventPipeline(sink, EventPipelinePolicy.HighThroughput, metrics: metrics, wal: wal, auditTrail: auditTrail);
         });
 
         // IMarketEventPublisher - facade for publishing events

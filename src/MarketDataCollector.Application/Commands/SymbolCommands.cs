@@ -65,15 +65,8 @@ internal sealed class SymbolCommands : ICliCommand
 
     private async Task<int> RunAddAsync(string[] args, CancellationToken ct)
     {
-        var symbolsArg = CliArguments.GetValue(args, "--symbols-add");
-        if (string.IsNullOrWhiteSpace(symbolsArg))
-        {
-            Console.Error.WriteLine("Error: --symbols-add requires a comma-separated list of symbols");
-            Console.Error.WriteLine("Example: --symbols-add AAPL,MSFT,GOOGL");
-            return 1;
-        }
-
-        var symbolsToAdd = symbolsArg.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var symbolsToAdd = CliArguments.RequireList(args, "--symbols-add", "--symbols-add AAPL,MSFT,GOOGL");
+        if (symbolsToAdd is null) return 1;
         var options = new SymbolAddOptions(
             SubscribeTrades: !CliArguments.HasFlag(args, "--no-trades"),
             SubscribeDepth: !CliArguments.HasFlag(args, "--no-depth"),
@@ -97,15 +90,8 @@ internal sealed class SymbolCommands : ICliCommand
 
     private async Task<int> RunRemoveAsync(string[] args, CancellationToken ct)
     {
-        var symbolsArg = CliArguments.GetValue(args, "--symbols-remove");
-        if (string.IsNullOrWhiteSpace(symbolsArg))
-        {
-            Console.Error.WriteLine("Error: --symbols-remove requires a comma-separated list of symbols");
-            Console.Error.WriteLine("Example: --symbols-remove AAPL,MSFT");
-            return 1;
-        }
-
-        var symbolsToRemove = symbolsArg.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var symbolsToRemove = CliArguments.RequireList(args, "--symbols-remove", "--symbols-remove AAPL,MSFT");
+        if (symbolsToRemove is null) return 1;
         var result = await _symbolService.RemoveSymbolsAsync(symbolsToRemove, ct);
 
         Console.WriteLine();
@@ -123,13 +109,8 @@ internal sealed class SymbolCommands : ICliCommand
 
     private async Task<int> RunStatusAsync(string[] args, CancellationToken ct)
     {
-        var symbolArg = CliArguments.GetValue(args, "--symbol-status");
-        if (string.IsNullOrWhiteSpace(symbolArg))
-        {
-            Console.Error.WriteLine("Error: --symbol-status requires a symbol");
-            Console.Error.WriteLine("Example: --symbol-status AAPL");
-            return 1;
-        }
+        var symbolArg = CliArguments.RequireValue(args, "--symbol-status", "--symbol-status AAPL");
+        if (symbolArg is null) return 1;
 
         var status = await _symbolService.GetSymbolStatusAsync(symbolArg, ct);
 

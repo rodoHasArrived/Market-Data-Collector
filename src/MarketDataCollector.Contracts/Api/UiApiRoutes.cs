@@ -118,6 +118,10 @@ public static class UiApiRoutes
     public const string StorageTiersPlan = "/api/storage/tiers/plan";
     public const string StorageMaintenanceDefrag = "/api/storage/maintenance/defrag";
 
+    // Quality/drops endpoints
+    public const string QualityDrops = "/api/quality/drops";
+    public const string QualityDropsBySymbol = "/api/quality/drops/{symbol}";
+
     // Storage quality endpoints
     public const string StorageQualitySummary = "/api/storage/quality/summary";
     public const string StorageQualityScores = "/api/storage/quality/scores";

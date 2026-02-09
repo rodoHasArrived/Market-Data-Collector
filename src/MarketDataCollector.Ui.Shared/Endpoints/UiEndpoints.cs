@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Threading.RateLimiting;
 using MarketDataCollector.Application.Composition;
+using MarketDataCollector.Application.Pipeline;
 using MarketDataCollector.Application.UI;
 using MarketDataCollector.Ui.Shared.Services;
 using Microsoft.AspNetCore.Builder;
@@ -169,6 +170,10 @@ public static class UiEndpoints
         app.MapLiveDataEndpoints(jsonOptions);
         app.MapStubEndpoints();
 
+        // Map quality drops endpoints (C3/#16)
+        var auditTrail = app.Services.GetService<DroppedEventAuditTrail>();
+        app.MapQualityDropsEndpoints(auditTrail, jsonOptions);
+
         return app;
     }
 
@@ -197,6 +202,10 @@ public static class UiEndpoints
         app.MapSymbolMappingEndpoints(jsonOptions);
         app.MapLiveDataEndpoints(jsonOptions);
         app.MapStubEndpoints();
+
+        // Map quality drops endpoints (C3/#16 - DroppedEventAuditTrail exposure)
+        var auditTrail = app.Services.GetService<DroppedEventAuditTrail>();
+        app.MapQualityDropsEndpoints(auditTrail, jsonOptions);
 
         return app;
     }

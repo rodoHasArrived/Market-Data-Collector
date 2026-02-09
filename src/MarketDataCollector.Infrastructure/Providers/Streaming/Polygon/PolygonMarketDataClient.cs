@@ -441,8 +441,9 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
 
                 if (result.MessageType == WebSocketMessageType.Text && messageBuilder.Count > 0)
                 {
-                    var message = Encoding.UTF8.GetString(messageBuilder.ToArray());
-                    ProcessMessage(message);
+                    // Zero-allocation fast path: parse directly from UTF-8 bytes (#18)
+                    var bytes = messageBuilder.ToArray();
+                    ProcessMessageUtf8(bytes);
                 }
             }
         }
@@ -488,17 +489,18 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
     }
 
     /// <summary>
-    /// Processes an incoming WebSocket message.
+    /// Processes an incoming WebSocket message from UTF-8 bytes.
+    /// Uses JsonDocument.Parse(ReadOnlyMemory&lt;byte&gt;) to skip the UTF-16 string conversion (#18).
     /// </summary>
-    private void ProcessMessage(string message)
+    private void ProcessMessageUtf8(byte[] utf8Bytes)
     {
         try
         {
-            using var doc = JsonDocument.Parse(message);
+            using var doc = JsonDocument.Parse(utf8Bytes.AsMemory());
 
             if (doc.RootElement.ValueKind != JsonValueKind.Array)
             {
-                _log.Warning("Unexpected message format (not array): {Message}", message.Length > 200 ? message[..200] : message);
+                _log.Warning("Unexpected message format (not array), length: {Length}", utf8Bytes.Length);
                 return;
             }
 
@@ -538,8 +540,16 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
         }
         catch (JsonException ex)
         {
-            _log.Warning(ex, "Failed to parse Polygon message: {Message}", message.Length > 200 ? message[..200] : message);
+            _log.Warning(ex, "Failed to parse Polygon message, length: {Length}", utf8Bytes.Length);
         }
+    }
+
+    /// <summary>
+    /// Processes an incoming WebSocket message (string overload, kept for backward compatibility).
+    /// </summary>
+    private void ProcessMessage(string message)
+    {
+        ProcessMessageUtf8(Encoding.UTF8.GetBytes(message));
     }
 
     /// <summary>

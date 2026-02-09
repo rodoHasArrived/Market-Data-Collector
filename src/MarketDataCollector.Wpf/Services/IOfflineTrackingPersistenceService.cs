@@ -1,12 +1,4 @@
-using System.Threading;
-using System.Threading.Tasks;
-
-namespace MarketDataCollector.Wpf.Services;
-
-public interface IOfflineTrackingPersistenceService
-{
-    Task SaveOfflineDataAsync<T>(string key, T data, CancellationToken cancellationToken = default);
-    Task<T?> LoadOfflineDataAsync<T>(string key, CancellationToken cancellationToken = default);
-    Task DeleteOfflineDataAsync(string key, CancellationToken cancellationToken = default);
-    Task<bool> HasOfflineDataAsync(string key, CancellationToken cancellationToken = default);
-}
+// C1: Interface promoted to MarketDataCollector.Ui.Services.Contracts.IOfflineTrackingPersistenceService.
+// This file re-exports the shared definition for backwards compatibility.
+// The canonical interface is in the shared Ui.Services project.
+using SharedContract = MarketDataCollector.Ui.Services.Contracts.IOfflineTrackingPersistenceService;
