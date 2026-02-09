@@ -97,7 +97,7 @@ public sealed class SystemHealthService
 
 // DTO classes for system health
 
-public class SystemHealthSummary
+public sealed class SystemHealthSummary
 {
     public string OverallStatus { get; set; } = "Unknown";
     public bool IsHealthy { get; set; }
@@ -113,7 +113,7 @@ public class SystemHealthSummary
     public TimeSpan Uptime { get; set; }
 }
 
-public class ProviderHealth
+public sealed class ProviderHealth
 {
     public string Provider { get; set; } = string.Empty;
     public string DisplayName { get; set; } = string.Empty;
@@ -129,7 +129,7 @@ public class ProviderHealth
     public List<string> Issues { get; set; } = new();
 }
 
-public class ProviderDiagnostics
+public sealed class ProviderDiagnostics
 {
     public string Provider { get; set; } = string.Empty;
     public bool IsConnected { get; set; }
@@ -143,7 +143,7 @@ public class ProviderDiagnostics
     public Dictionary<string, object> Configuration { get; set; } = new();
 }
 
-public class DiagnosticIssue
+public sealed class DiagnosticIssue
 {
     public string Type { get; set; } = string.Empty;
     public string Severity { get; set; } = string.Empty;
@@ -151,7 +151,7 @@ public class DiagnosticIssue
     public string? Recommendation { get; set; }
 }
 
-public class StorageHealth
+public sealed class StorageHealth
 {
     public bool IsHealthy { get; set; }
     public long TotalBytes { get; set; }
@@ -165,7 +165,7 @@ public class StorageHealth
     public List<string> Issues { get; set; } = new();
 }
 
-public class SystemEvent
+public sealed class SystemEvent
 {
     public string Id { get; set; } = string.Empty;
     public string EventType { get; set; } = string.Empty;
@@ -176,7 +176,7 @@ public class SystemEvent
     public Dictionary<string, object>? Details { get; set; }
 }
 
-public class SystemMetrics
+public sealed class SystemMetrics
 {
     public double CpuUsagePercent { get; set; }
     public long MemoryUsedBytes { get; set; }
@@ -191,7 +191,7 @@ public class SystemMetrics
     public DateTime Timestamp { get; set; }
 }
 
-public class ConnectionTestResult
+public sealed class ConnectionTestResult
 {
     public bool Success { get; set; }
     public double LatencyMs { get; set; }
@@ -199,7 +199,7 @@ public class ConnectionTestResult
     public List<string> Warnings { get; set; } = new();
 }
 
-public class DiagnosticBundle
+public sealed class DiagnosticBundle
 {
     public string BundleId { get; set; } = string.Empty;
     public string FilePath { get; set; } = string.Empty;

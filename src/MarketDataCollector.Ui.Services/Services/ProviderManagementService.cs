@@ -354,7 +354,7 @@ public sealed class ProviderManagementService
 
 #region Result Classes
 
-public class AllProvidersStatusResult
+public sealed class AllProvidersStatusResult
 {
     public bool Success { get; set; }
     public string? Error { get; set; }
@@ -362,13 +362,13 @@ public class AllProvidersStatusResult
     public List<ProviderStatusInfo> Providers { get; set; } = new();
 }
 
-public class AllProvidersStatusResponse
+public sealed class AllProvidersStatusResponse
 {
     public string? ActiveProvider { get; set; }
     public List<ProviderStatusInfo>? Providers { get; set; }
 }
 
-public class ProviderStatusInfo
+public sealed class ProviderStatusInfo
 {
     public string Name { get; set; } = string.Empty;
     public string DisplayName { get; set; } = string.Empty;
@@ -384,14 +384,14 @@ public class ProviderStatusInfo
     public long EventsReceived { get; set; }
 }
 
-public class ProviderDetailResult
+public sealed class ProviderDetailResult
 {
     public bool Success { get; set; }
     public string? Error { get; set; }
     public ProviderDetailResponse? Provider { get; set; }
 }
 
-public class ProviderDetailResponse
+public sealed class ProviderDetailResponse
 {
     public string Name { get; set; } = string.Empty;
     public string DisplayName { get; set; } = string.Empty;
@@ -404,7 +404,7 @@ public class ProviderDetailResponse
     public ProviderStatistics? Statistics { get; set; }
 }
 
-public class ProviderStatistics
+public sealed class ProviderStatistics
 {
     public long TotalEventsReceived { get; set; }
     public long TotalTradesReceived { get; set; }
@@ -415,7 +415,7 @@ public class ProviderStatistics
     public int ReconnectCount { get; set; }
 }
 
-public class FailoverConfigResult
+public sealed class FailoverConfigResult
 {
     public bool Success { get; set; }
     public string? Error { get; set; }
@@ -427,7 +427,7 @@ public class FailoverConfigResult
     public List<FailoverEvent> FailoverHistory { get; set; } = new();
 }
 
-public class FailoverConfigResponse
+public sealed class FailoverConfigResponse
 {
     public bool Enabled { get; set; }
     public int TimeoutSeconds { get; set; }
@@ -437,7 +437,7 @@ public class FailoverConfigResponse
     public List<FailoverEvent>? FailoverHistory { get; set; }
 }
 
-public class FailoverEvent
+public sealed class FailoverEvent
 {
     public DateTime Timestamp { get; set; }
     public string FromProvider { get; set; } = string.Empty;
@@ -446,7 +446,7 @@ public class FailoverEvent
     public bool Success { get; set; }
 }
 
-public class FailoverResult
+public sealed class FailoverResult
 {
     public bool Success { get; set; }
     public string? Error { get; set; }
@@ -455,7 +455,7 @@ public class FailoverResult
     public string? Message { get; set; }
 }
 
-public class FailoverResponse
+public sealed class FailoverResponse
 {
     public bool Success { get; set; }
     public string? PreviousProvider { get; set; }
@@ -463,19 +463,19 @@ public class FailoverResponse
     public string? Message { get; set; }
 }
 
-public class RateLimitsResult
+public sealed class RateLimitsResult
 {
     public bool Success { get; set; }
     public string? Error { get; set; }
     public List<ProviderRateLimit> Providers { get; set; } = new();
 }
 
-public class RateLimitsResponse
+public sealed class RateLimitsResponse
 {
     public List<ProviderRateLimit>? Providers { get; set; }
 }
 
-public class ProviderRateLimit
+public sealed class ProviderRateLimit
 {
     public string Provider { get; set; } = string.Empty;
     public int RequestsPerMinute { get; set; }
@@ -492,19 +492,19 @@ public class ProviderRateLimit
     public string Status { get; set; } = string.Empty;
 }
 
-public class RateLimitHistoryResult
+public sealed class RateLimitHistoryResult
 {
     public bool Success { get; set; }
     public string? Error { get; set; }
     public List<RateLimitDataPoint> History { get; set; } = new();
 }
 
-public class RateLimitHistoryResponse
+public sealed class RateLimitHistoryResponse
 {
     public List<RateLimitDataPoint>? History { get; set; }
 }
 
-public class RateLimitDataPoint
+public sealed class RateLimitDataPoint
 {
     public DateTime Timestamp { get; set; }
     public int RequestsUsed { get; set; }
@@ -512,19 +512,19 @@ public class RateLimitDataPoint
     public bool WasThrottled { get; set; }
 }
 
-public class ProviderCapabilitiesResult
+public sealed class ProviderCapabilitiesResult
 {
     public bool Success { get; set; }
     public string? Error { get; set; }
     public List<ProviderCapabilities> Providers { get; set; } = new();
 }
 
-public class ProviderCapabilitiesResponse
+public sealed class ProviderCapabilitiesResponse
 {
     public List<ProviderCapabilities>? Providers { get; set; }
 }
 
-public class ProviderCapabilities
+public sealed class ProviderCapabilities
 {
     public string Provider { get; set; } = string.Empty;
     public bool SupportsRealTime { get; set; }
@@ -542,7 +542,7 @@ public class ProviderCapabilities
     public int MaxDepthLevels { get; set; }
 }
 
-public class SwitchProviderResult
+public sealed class SwitchProviderResult
 {
     public bool Success { get; set; }
     public string? Error { get; set; }
@@ -551,7 +551,7 @@ public class SwitchProviderResult
     public string? Message { get; set; }
 }
 
-public class SwitchProviderResponse
+public sealed class SwitchProviderResponse
 {
     public bool Success { get; set; }
     public string? PreviousProvider { get; set; }
@@ -559,7 +559,7 @@ public class SwitchProviderResponse
     public string? Message { get; set; }
 }
 
-public class ProviderManagementTestResult
+public sealed class ProviderManagementTestResult
 {
     public bool Success { get; set; }
     public string Provider { get; set; } = string.Empty;
@@ -568,7 +568,7 @@ public class ProviderManagementTestResult
     public string? Error { get; set; }
 }
 
-public class ProviderTestResponse
+public sealed class ProviderTestResponse
 {
     public bool Success { get; set; }
     public double LatencyMs { get; set; }

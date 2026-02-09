@@ -539,7 +539,7 @@ public partial class AdminMaintenancePage : Page
 
 #region Display Items
 
-public class QuickCheckDisplayItem
+public sealed class QuickCheckDisplayItem
 {
     public string Name { get; set; } = string.Empty;
     public string Details { get; set; } = string.Empty;
@@ -547,7 +547,7 @@ public class QuickCheckDisplayItem
     public SolidColorBrush? StatusColor { get; set; }
 }
 
-public class TierDisplayItem
+public sealed class TierDisplayItem
 {
     public string Name { get; set; } = string.Empty;
     public string Path { get; set; } = string.Empty;
@@ -556,7 +556,7 @@ public class TierDisplayItem
     public string RetentionText { get; set; } = string.Empty;
 }
 
-public class RetentionPolicyDisplayItem
+public sealed class RetentionPolicyDisplayItem
 {
     public string Id { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
@@ -565,14 +565,14 @@ public class RetentionPolicyDisplayItem
     public bool Enabled { get; set; }
 }
 
-public class CleanupFileDisplayItem
+public sealed class CleanupFileDisplayItem
 {
     public string Path { get; set; } = string.Empty;
     public string SizeText { get; set; } = string.Empty;
     public string Reason { get; set; } = string.Empty;
 }
 
-public class MaintenanceHistoryItem
+public sealed class MaintenanceHistoryItem
 {
     public string RunId { get; set; } = string.Empty;
     public string TimeText { get; set; } = string.Empty;

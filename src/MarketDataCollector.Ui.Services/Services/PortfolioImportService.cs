@@ -380,7 +380,7 @@ public sealed class PortfolioImportService
 /// <summary>
 /// Result of parsing a portfolio file.
 /// </summary>
-public class PortfolioParseResult
+public sealed class PortfolioParseResult
 {
     public bool Success { get; set; }
     public string? Error { get; set; }
@@ -391,7 +391,7 @@ public class PortfolioParseResult
 /// <summary>
 /// A single portfolio entry.
 /// </summary>
-public class PortfolioEntry
+public sealed class PortfolioEntry
 {
     public string Symbol { get; set; } = string.Empty;
     public decimal? Quantity { get; set; }
@@ -402,7 +402,7 @@ public class PortfolioEntry
 /// <summary>
 /// Result of importing portfolio entries.
 /// </summary>
-public class PortfolioImportResult
+public sealed class PortfolioImportResult
 {
     public bool Success { get; set; }
     public string? Error { get; set; }
@@ -415,7 +415,7 @@ public class PortfolioImportResult
 /// <summary>
 /// Result of fetching index constituents.
 /// </summary>
-public class IndexConstituentsResult
+public sealed class IndexConstituentsResult
 {
     public bool Success { get; set; }
     public string? Error { get; set; }
@@ -426,7 +426,7 @@ public class IndexConstituentsResult
 /// <summary>
 /// Response from batch operation API.
 /// </summary>
-public class BatchOperationResponse
+public sealed class BatchOperationResponse
 {
     public int SuccessCount { get; set; }
     public int SkippedCount { get; set; }
@@ -437,7 +437,7 @@ public class BatchOperationResponse
 /// <summary>
 /// Response from index constituents API.
 /// </summary>
-public class IndexConstituentsResponse
+public sealed class IndexConstituentsResponse
 {
     public string IndexName { get; set; } = string.Empty;
     public string[]? Symbols { get; set; }

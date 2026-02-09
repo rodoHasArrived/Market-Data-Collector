@@ -270,7 +270,7 @@ public sealed partial class HelpPage : Page
 /// <summary>
 /// Represents a tutorial step.
 /// </summary>
-public class TutorialStep
+public sealed class TutorialStep
 {
     public string StepNumber { get; set; } = string.Empty;
     public string Title { get; set; } = string.Empty;
@@ -296,7 +296,7 @@ public class TutorialStep
 /// <summary>
 /// Represents a feature discovery card.
 /// </summary>
-public class FeatureCard
+public sealed class FeatureCard
 {
     public string Icon { get; set; } = string.Empty;
     public string Title { get; set; } = string.Empty;

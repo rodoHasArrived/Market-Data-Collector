@@ -38,17 +38,17 @@
 - [ ] `src/MarketDataCollector.Storage/Maintenance/ArchiveMaintenanceModels.cs:2`
   > Fix circular dependency - Storage should not depend on Application.Scheduling Temporarily commented out to allow compilation using MarketDataCollector.Application.Scheduling;
 
-- [ ] `src/MarketDataCollector.Storage/Maintenance/ArchiveMaintenanceModels.cs:146`
-  > Implement proper cron parsing or move this to Application layer Temporarily returning null to allow compilation
+- [x] `src/MarketDataCollector.Storage/Maintenance/ArchiveMaintenanceModels.cs:146`
+  > ~~Implement proper cron parsing~~ Resolved: Storage references Core which contains CronExpressionParser.
 
-- [ ] `src/MarketDataCollector.Storage/Maintenance/ArchiveMaintenanceScheduleManager.cs:3`
-  > Fix circular dependency - Storage should not depend on Application.Scheduling using MarketDataCollector.Application.Scheduling;
+- [x] `src/MarketDataCollector.Storage/Maintenance/ArchiveMaintenanceScheduleManager.cs:3`
+  > ~~Fix circular dependency~~ Resolved: No circular dependency - CronExpressionParser is in Core, which Storage already references.
 
-- [ ] `src/MarketDataCollector.Storage/Maintenance/ArchiveMaintenanceScheduleManager.cs:67`
-  > Implement proper cron validation - temporarily skipped due to circular dependency if (!CronExpressionParser.IsValid(schedule.CronExpression)) throw new ArgumentException($"Invalid cron expression: {schedule.CronExpression}", nameof(schedule));
+- [x] `src/MarketDataCollector.Storage/Maintenance/ArchiveMaintenanceScheduleManager.cs:67`
+  > ~~Implement proper cron validation~~ Resolved: Enabled CronExpressionParser.IsValid() validation.
 
-- [ ] `src/MarketDataCollector.Storage/Maintenance/ArchiveMaintenanceScheduleManager.cs:114`
-  > Implement proper cron validation - temporarily skipped due to circular dependency if (!CronExpressionParser.IsValid(schedule.CronExpression)) throw new ArgumentException($"Invalid cron expression: {schedule.CronExpression}", nameof(schedule));
+- [x] `src/MarketDataCollector.Storage/Maintenance/ArchiveMaintenanceScheduleManager.cs:114`
+  > ~~Implement proper cron validation~~ Resolved: Enabled CronExpressionParser.IsValid() validation.
 
 ### NOTE (7)
 
