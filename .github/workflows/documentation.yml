@@ -890,12 +890,25 @@ jobs:
 
           # Extract metrics for workflow outputs
           if [ -f todo-scan-results.json ]; then
-            TOTAL=$(python3 -c "import json; data=json.load(open('todo-scan-results.json')); print(data.get('total_count', 0))")
-            NEW=$(python3 -c "import json; data=json.load(open('todo-scan-results.json')); print(len([t for t in data.get('todos', []) if not t.get('has_issue', False)]))")
-            SCAN_JSON=$(python3 -c "import json; data=json.load(open('todo-scan-results.json')); print(json.dumps(data, separators=(',', ':')))")
-            echo "total_count=$TOTAL" >> $GITHUB_OUTPUT
-            echo "new_todos=$NEW" >> $GITHUB_OUTPUT
-            echo "scan_json=$SCAN_JSON" >> $GITHUB_OUTPUT
+            python3 << 'PYEOF'
+          import json
+          import os
+          
+          with open('todo-scan-results.json', 'r') as f:
+              data = json.load(f)
+          
+          total_count = data.get('total_count', 0)
+          untracked = [t for t in data.get('todos', []) if not t.get('has_issue', False)]
+          new_todos = len(untracked)
+          scan_json = json.dumps(data, separators=(',', ':'))
+          
+          # Write to GITHUB_OUTPUT
+          output_file = os.environ.get('GITHUB_OUTPUT', '/dev/null')
+          with open(output_file, 'a') as f:
+              f.write(f'total_count={total_count}\n')
+              f.write(f'new_todos={new_todos}\n')
+              f.write(f'scan_json={scan_json}\n')
+          PYEOF
           else
             echo "total_count=0" >> $GITHUB_OUTPUT
             echo "new_todos=0" >> $GITHUB_OUTPUT
