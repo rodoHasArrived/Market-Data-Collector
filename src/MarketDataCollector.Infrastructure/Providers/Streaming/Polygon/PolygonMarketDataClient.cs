@@ -415,14 +415,17 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
     private async Task ReceiveLoopAsync(CancellationToken ct)
     {
         var buffer = ArrayPool<byte>.Shared.Rent(65536);
-        var messageBuilder = new List<byte>();
+        // Pooled message assembly buffer to avoid List<byte>.ToArray() allocations per message.
+        // Start at 64KB; grows only if a single message exceeds that size.
+        var messageBuf = ArrayPool<byte>.Shared.Rent(65536);
+        var messageLen = 0;
 
         try
         {
             while (!ct.IsCancellationRequested && _ws?.State == WebSocketState.Open)
             {
                 ValueWebSocketReceiveResult result;
-                messageBuilder.Clear();
+                messageLen = 0;
 
                 do
                 {
@@ -436,15 +439,25 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
                         return;
                     }
 
-                    messageBuilder.AddRange(buffer.Take(result.Count));
+                    // Grow the message buffer if needed
+                    if (messageLen + result.Count > messageBuf.Length)
+                    {
+                        var newSize = Math.Max(messageBuf.Length * 2, messageLen + result.Count);
+                        var newBuf = ArrayPool<byte>.Shared.Rent(newSize);
+                        Buffer.BlockCopy(messageBuf, 0, newBuf, 0, messageLen);
+                        ArrayPool<byte>.Shared.Return(messageBuf);
+                        messageBuf = newBuf;
+                    }
+
+                    Buffer.BlockCopy(buffer, 0, messageBuf, messageLen, result.Count);
+                    messageLen += result.Count;
                 }
                 while (!result.EndOfMessage);
 
-                if (result.MessageType == WebSocketMessageType.Text && messageBuilder.Count > 0)
+                if (result.MessageType == WebSocketMessageType.Text && messageLen > 0)
                 {
-                    // Zero-allocation fast path: parse directly from UTF-8 bytes (#18)
-                    var bytes = messageBuilder.ToArray();
-                    ProcessMessageUtf8(bytes);
+                    // Zero-allocation fast path: parse directly from pooled UTF-8 bytes
+                    ProcessMessageUtf8(messageBuf.AsMemory(0, messageLen));
                 }
             }
         }
@@ -479,6 +492,7 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
         finally
         {
             ArrayPool<byte>.Shared.Return(buffer);
+            ArrayPool<byte>.Shared.Return(messageBuf);
 
             // Handle server-initiated close (CloseReceived) with reconnection
             if (!_isDisposing && !ct.IsCancellationRequested && !_isConnected)
@@ -491,13 +505,14 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
 
     /// <summary>
     /// Processes an incoming WebSocket message from UTF-8 bytes.
-    /// Uses JsonDocument.Parse(ReadOnlyMemory&lt;byte&gt;) to skip the UTF-16 string conversion (#18).
+    /// Uses JsonDocument.Parse(ReadOnlyMemory&lt;byte&gt;) to skip the UTF-16 string conversion.
+    /// Accepts ReadOnlyMemory to avoid allocating a new byte[] per message.
     /// </summary>
-    private void ProcessMessageUtf8(byte[] utf8Bytes)
+    private void ProcessMessageUtf8(ReadOnlyMemory<byte> utf8Bytes)
     {
         try
         {
-            using var doc = JsonDocument.Parse(utf8Bytes.AsMemory());
+            using var doc = JsonDocument.Parse(utf8Bytes);
 
             if (doc.RootElement.ValueKind != JsonValueKind.Array)
             {

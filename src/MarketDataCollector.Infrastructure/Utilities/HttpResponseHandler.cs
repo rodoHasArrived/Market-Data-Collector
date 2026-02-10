@@ -1,4 +1,5 @@
 using System.Net;
+using MarketDataCollector.Application.Exceptions;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Infrastructure.Providers.Backfill;
 using MarketDataCollector.Infrastructure.Resilience;
@@ -164,8 +165,11 @@ public sealed class HttpResponseHandler
         _log.Warning("{Provider} API returned 429 for {Symbol} {DataType}: Rate limit exceeded. Resets at {ResetsAt}",
             _providerName, symbol, dataType, resetsAt);
 
-        throw new InvalidOperationException(
-            $"{_providerName} API returned 429: Rate limit exceeded for {symbol}. Retry after {retryAfter?.TotalSeconds ?? 60}s");
+        throw new RateLimitException(
+            $"{_providerName} API returned 429: Rate limit exceeded for {symbol}. Retry after {retryAfter?.TotalSeconds ?? 60}s",
+            provider: _providerName,
+            symbol: symbol,
+            retryAfter: retryAfter ?? TimeSpan.FromSeconds(60));
     }
 
     private HttpResponseResult HandleNotFound(string symbol, string dataType)
