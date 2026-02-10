@@ -241,17 +241,17 @@ public sealed class DiagnosticsService
     /// <summary>
     /// Validates a specific configuration setting.
     /// </summary>
-    public async Task<ValidationResult> ValidateConfigurationAsync(
+    public async Task<ConfigValidationResult> ValidateConfigurationAsync(
         string settingName,
         string value,
         CancellationToken ct = default)
     {
-        var response = await _apiClient.PostWithResponseAsync<ValidationResult>(
+        var response = await _apiClient.PostWithResponseAsync<ConfigValidationResult>(
             UiApiRoutes.DiagnosticsValidate,
             new { setting = settingName, value },
             ct);
 
-        return response.Data ?? new ValidationResult { Valid = false, Error = response.ErrorMessage };
+        return response.Data ?? new ConfigValidationResult { Valid = false, Error = response.ErrorMessage };
     }
 
     /// <summary>
@@ -536,7 +536,7 @@ public class DiagnosticSystemMetrics
     public TimeSpan Uptime { get; set; }
 }
 
-public class ValidationResult
+public class ConfigValidationResult
 {
     public bool Valid { get; set; }
     public string? Error { get; set; }
