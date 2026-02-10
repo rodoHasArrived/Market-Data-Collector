@@ -654,12 +654,36 @@ public static class ServiceCompositionRoot
             return new JsonlStoragePolicy(storageOptions);
         });
 
-        // JsonlStorageSink - writes events to JSONL files
+        // JsonlStorageSink - writes events to JSONL files (always registered)
         services.AddSingleton<JsonlStorageSink>(sp =>
         {
             var storageOptions = sp.GetRequiredService<StorageOptions>();
             var policy = sp.GetRequiredService<JsonlStoragePolicy>();
             return new JsonlStorageSink(storageOptions, policy);
+        });
+
+        // ParquetStorageSink - writes events to Parquet files (optional)
+        services.AddSingleton<ParquetStorageSink>(sp =>
+        {
+            var storageOptions = sp.GetRequiredService<StorageOptions>();
+            return new ParquetStorageSink(storageOptions);
+        });
+
+        // IStorageSink - resolved as CompositeSink when Parquet is enabled,
+        // otherwise falls back to JsonlStorageSink alone.
+        services.AddSingleton<IStorageSink>(sp =>
+        {
+            var storageOptions = sp.GetRequiredService<StorageOptions>();
+            var jsonlSink = sp.GetRequiredService<JsonlStorageSink>();
+
+            if (storageOptions.EnableParquetSink)
+            {
+                var parquetSink = sp.GetRequiredService<ParquetStorageSink>();
+                var logger = sp.GetService<Microsoft.Extensions.Logging.ILogger<CompositeSink>>();
+                return new CompositeSink(new IStorageSink[] { jsonlSink, parquetSink }, logger);
+            }
+
+            return jsonlSink;
         });
 
         // WriteAheadLog - crash-safe durability for the event pipeline
@@ -684,9 +708,10 @@ public static class ServiceCompositionRoot
         });
 
         // EventPipeline - bounded channel event routing with WAL for durability
+        // Uses IStorageSink which may be a CompositeSink wrapping JSONL + Parquet
         services.AddSingleton<EventPipeline>(sp =>
         {
-            var sink = sp.GetRequiredService<JsonlStorageSink>();
+            var sink = sp.GetRequiredService<IStorageSink>();
             var metrics = sp.GetRequiredService<IEventMetrics>();
             var wal = sp.GetService<Storage.Archival.WriteAheadLog>();
             var auditTrail = sp.GetService<Pipeline.DroppedEventAuditTrail>();

@@ -77,6 +77,12 @@ public sealed class StorageOptions
     public bool EmbedChecksum { get; init; } = false;
 
     /// <summary>
+    /// Whether to enable Parquet storage as an additional sink alongside JSONL.
+    /// When enabled, events are written to both JSONL and Parquet via CompositeSink.
+    /// </summary>
+    public bool EnableParquetSink { get; init; } = false;
+
+    /// <summary>
     /// Partition strategy for multi-dimensional partitioning.
     /// </summary>
     public PartitionStrategy? PartitionStrategy { get; init; }

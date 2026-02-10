@@ -79,7 +79,13 @@ public sealed record StorageConfig(
     /// Optional cap on total bytes (across all files). Oldest files are removed first when exceeded.
     /// Value is expressed in megabytes for readability.
     /// </summary>
-    long? MaxTotalMegabytes = null
+    long? MaxTotalMegabytes = null,
+
+    /// <summary>
+    /// Whether to enable Parquet storage as an additional sink alongside JSONL.
+    /// When enabled, events are written to both JSONL and Parquet via CompositeSink.
+    /// </summary>
+    bool EnableParquetSink = false
 );
 
 /// <summary>

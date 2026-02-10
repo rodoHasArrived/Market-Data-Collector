@@ -22,7 +22,8 @@ public static class StorageConfigExtensions
             IncludeProvider = config.IncludeProvider,
             FilePrefix = config.FilePrefix,
             RetentionDays = config.RetentionDays,
-            MaxTotalBytes = config.MaxTotalMegabytes is null ? null : config.MaxTotalMegabytes * 1024L * 1024L
+            MaxTotalBytes = config.MaxTotalMegabytes is null ? null : config.MaxTotalMegabytes * 1024L * 1024L,
+            EnableParquetSink = config.EnableParquetSink
         };
 
         return StorageProfilePresets.ApplyProfile(config.Profile, options);
