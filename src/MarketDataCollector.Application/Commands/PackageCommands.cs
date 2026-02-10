@@ -22,48 +22,35 @@ internal sealed class PackageCommands : ICliCommand
 
     public bool CanHandle(string[] args)
     {
-        return args.Any(a =>
-            a.Equals("--package", StringComparison.OrdinalIgnoreCase) ||
-            a.Equals("--import-package", StringComparison.OrdinalIgnoreCase) ||
-            a.Equals("--list-package", StringComparison.OrdinalIgnoreCase) ||
-            a.Equals("--validate-package", StringComparison.OrdinalIgnoreCase));
+        return CliArguments.HasFlag(args, "--package") ||
+            CliArguments.HasFlag(args, "--import-package") ||
+            CliArguments.HasFlag(args, "--list-package") ||
+            CliArguments.HasFlag(args, "--validate-package");
     }
 
     public async Task<CliResult> ExecuteAsync(string[] args, CancellationToken ct = default)
     {
-        if (args.Any(a => a.Equals("--package", StringComparison.OrdinalIgnoreCase)))
+        if (CliArguments.HasFlag(args, "--package"))
             return await RunCreateAsync(args, ct);
 
-        if (args.Any(a => a.Equals("--import-package", StringComparison.OrdinalIgnoreCase)))
+        if (CliArguments.HasFlag(args, "--import-package"))
         {
-            var path = GetArgValue(args, "--import-package");
-            if (string.IsNullOrWhiteSpace(path))
-            {
-                Console.Error.WriteLine("Error: --import-package requires a path to the package file");
-                return CliResult.Fail(ErrorCode.RequiredFieldMissing);
-            }
+            var path = CliArguments.RequireValue(args, "--import-package", "--import-package ./packages/data.zip");
+            if (path is null) return CliResult.Fail(ErrorCode.RequiredFieldMissing);
             return await RunImportAsync(path, args, ct);
         }
 
-        if (args.Any(a => a.Equals("--list-package", StringComparison.OrdinalIgnoreCase)))
+        if (CliArguments.HasFlag(args, "--list-package"))
         {
-            var path = GetArgValue(args, "--list-package");
-            if (string.IsNullOrWhiteSpace(path))
-            {
-                Console.Error.WriteLine("Error: --list-package requires a path to the package file");
-                return CliResult.Fail(ErrorCode.RequiredFieldMissing);
-            }
+            var path = CliArguments.RequireValue(args, "--list-package", "--list-package ./packages/data.zip");
+            if (path is null) return CliResult.Fail(ErrorCode.RequiredFieldMissing);
             return await RunListAsync(path, ct);
         }
 
-        if (args.Any(a => a.Equals("--validate-package", StringComparison.OrdinalIgnoreCase)))
+        if (CliArguments.HasFlag(args, "--validate-package"))
         {
-            var path = GetArgValue(args, "--validate-package");
-            if (string.IsNullOrWhiteSpace(path))
-            {
-                Console.Error.WriteLine("Error: --validate-package requires a path to the package file");
-                return CliResult.Fail(ErrorCode.RequiredFieldMissing);
-            }
+            var path = CliArguments.RequireValue(args, "--validate-package", "--validate-package ./packages/data.zip");
+            if (path is null) return CliResult.Fail(ErrorCode.RequiredFieldMissing);
             return await RunValidateAsync(path, ct);
         }
 
@@ -76,32 +63,32 @@ internal sealed class PackageCommands : ICliCommand
 
         var options = new PackageOptions
         {
-            Name = GetArgValue(args, "--package-name") ?? $"market-data-{DateTime.UtcNow:yyyyMMdd}",
-            Description = GetArgValue(args, "--package-description"),
-            OutputDirectory = GetArgValue(args, "--package-output") ?? "packages",
-            IncludeQualityReport = !args.Any(a => a.Equals("--no-quality-report", StringComparison.OrdinalIgnoreCase)),
-            IncludeDataDictionary = !args.Any(a => a.Equals("--no-data-dictionary", StringComparison.OrdinalIgnoreCase)),
-            IncludeLoaderScripts = !args.Any(a => a.Equals("--no-loader-scripts", StringComparison.OrdinalIgnoreCase)),
-            VerifyChecksums = !args.Any(a => a.Equals("--skip-checksums", StringComparison.OrdinalIgnoreCase))
+            Name = CliArguments.GetValue(args, "--package-name") ?? $"market-data-{DateTime.UtcNow:yyyyMMdd}",
+            Description = CliArguments.GetValue(args, "--package-description"),
+            OutputDirectory = CliArguments.GetValue(args, "--package-output") ?? "packages",
+            IncludeQualityReport = !CliArguments.HasFlag(args, "--no-quality-report"),
+            IncludeDataDictionary = !CliArguments.HasFlag(args, "--no-data-dictionary"),
+            IncludeLoaderScripts = !CliArguments.HasFlag(args, "--no-loader-scripts"),
+            VerifyChecksums = !CliArguments.HasFlag(args, "--skip-checksums")
         };
 
-        var symbolsArg = GetArgValue(args, "--package-symbols");
+        var symbolsArg = CliArguments.GetValue(args, "--package-symbols");
         if (!string.IsNullOrWhiteSpace(symbolsArg))
             options.Symbols = symbolsArg.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
-        var eventTypesArg = GetArgValue(args, "--package-events");
+        var eventTypesArg = CliArguments.GetValue(args, "--package-events");
         if (!string.IsNullOrWhiteSpace(eventTypesArg))
             options.EventTypes = eventTypesArg.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
-        var fromArg = GetArgValue(args, "--package-from");
+        var fromArg = CliArguments.GetValue(args, "--package-from");
         if (DateTime.TryParse(fromArg, out var from))
             options.StartDate = from;
 
-        var toArg = GetArgValue(args, "--package-to");
+        var toArg = CliArguments.GetValue(args, "--package-to");
         if (DateTime.TryParse(toArg, out var to))
             options.EndDate = to;
 
-        var formatArg = GetArgValue(args, "--package-format");
+        var formatArg = CliArguments.GetValue(args, "--package-format");
         if (!string.IsNullOrWhiteSpace(formatArg))
         {
             options.Format = formatArg.ToLowerInvariant() switch
@@ -113,7 +100,7 @@ internal sealed class PackageCommands : ICliCommand
             };
         }
 
-        var compressionArg = GetArgValue(args, "--package-compression");
+        var compressionArg = CliArguments.GetValue(args, "--package-compression");
         if (!string.IsNullOrWhiteSpace(compressionArg))
         {
             options.CompressionLevel = compressionArg.ToLowerInvariant() switch
@@ -168,9 +155,9 @@ internal sealed class PackageCommands : ICliCommand
     {
         _log.Information("Importing package: {PackagePath}", packagePath);
 
-        var destinationDir = GetArgValue(args, "--import-destination") ?? _cfg.DataRoot;
-        var validateChecksums = !args.Any(a => a.Equals("--skip-validation", StringComparison.OrdinalIgnoreCase));
-        var mergeWithExisting = args.Any(a => a.Equals("--merge", StringComparison.OrdinalIgnoreCase));
+        var destinationDir = CliArguments.GetValue(args, "--import-destination") ?? _cfg.DataRoot;
+        var validateChecksums = !CliArguments.HasFlag(args, "--skip-validation");
+        var mergeWithExisting = CliArguments.HasFlag(args, "--merge");
 
         var packager = new PortableDataPackager(_cfg.DataRoot);
         packager.ProgressChanged += (_, progress) =>
@@ -293,11 +280,5 @@ internal sealed class PackageCommands : ICliCommand
 
         _log.Warning("Package validation failed: {PackagePath}", packagePath);
         return CliResult.Fail(ErrorCode.ValidationFailed);
-    }
-
-    private static string? GetArgValue(string[] args, string flag)
-    {
-        var idx = Array.FindIndex(args, a => a.Equals(flag, StringComparison.OrdinalIgnoreCase));
-        return idx >= 0 && idx + 1 < args.Length ? args[idx + 1] : null;
     }
 }

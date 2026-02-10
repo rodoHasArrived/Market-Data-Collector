@@ -23,7 +23,7 @@ internal sealed class SchemaCheckCommand : ICliCommand
 
     public bool CanHandle(string[] args)
     {
-        return args.Any(a => a.Equals("--check-schemas", StringComparison.OrdinalIgnoreCase));
+        return CliArguments.HasFlag(args, "--check-schemas");
     }
 
     public async Task<CliResult> ExecuteAsync(string[] args, CancellationToken ct = default)
@@ -33,8 +33,8 @@ internal sealed class SchemaCheckCommand : ICliCommand
         var schemaOptions = new SchemaValidationOptions
         {
             EnableVersionTracking = true,
-            MaxFilesToCheck = int.TryParse(GetArgValue(args, "--max-files"), out var maxFiles) ? maxFiles : 100,
-            FailOnFirstIncompatibility = args.Any(a => a.Equals("--fail-fast", StringComparison.OrdinalIgnoreCase))
+            MaxFilesToCheck = CliArguments.GetInt(args, "--max-files", 100),
+            FailOnFirstIncompatibility = CliArguments.HasFlag(args, "--fail-fast")
         };
 
         await using var schemaService = new SchemaValidationService(schemaOptions, _cfg.DataRoot);
@@ -71,9 +71,4 @@ internal sealed class SchemaCheckCommand : ICliCommand
         return CliResult.FromBool(result.Success, ErrorCode.SchemaMismatch);
     }
 
-    private static string? GetArgValue(string[] args, string flag)
-    {
-        var idx = Array.FindIndex(args, a => a.Equals(flag, StringComparison.OrdinalIgnoreCase));
-        return idx >= 0 && idx + 1 < args.Length ? args[idx + 1] : null;
-    }
 }
