@@ -131,9 +131,9 @@ public static class ProviderExtendedEndpoints
             var catalog = registry?.GetProviderCatalog()
                 .Select(p => new
                 {
-                    id = p.Id,
+                    id = p.ProviderId,
                     name = p.DisplayName,
-                    type = p.Type.ToString(),
+                    type = p.ProviderType.ToString(),
                     capabilities = p.Capabilities
                 })
                 .ToArray() ?? Array.Empty<object>();
