@@ -310,6 +310,13 @@ public static class HttpClientConfiguration
 /// </summary>
 /// <remarks>
 /// This is a transitional pattern. New code should inject IHttpClientFactory directly.
+/// 
+/// Thread Safety: This class uses static fields and is designed to be thread-safe for the
+/// common initialization pattern where Initialize() is called once during startup.
+/// 
+/// Disposal Handling: If the underlying IServiceProvider is disposed (e.g., during test cleanup),
+/// CreateClient() will catch ObjectDisposedException and fall back to creating a new HttpClient.
+/// This ensures graceful degradation and test isolation.
 /// </remarks>
 public static class HttpClientFactoryProvider
 {
@@ -328,13 +335,23 @@ public static class HttpClientFactoryProvider
 
     /// <summary>
     /// Gets an HttpClient for the specified named client.
-    /// Falls back to creating a new HttpClient if factory is not initialized.
+    /// Falls back to creating a new HttpClient if factory is not initialized or disposed.
     /// </summary>
     public static HttpClient CreateClient(string name)
     {
         if (_factory != null)
         {
-            return _factory.CreateClient(name);
+            try
+            {
+                return _factory.CreateClient(name);
+            }
+            catch (ObjectDisposedException)
+            {
+                // Service provider was disposed (e.g., during test cleanup)
+                // Reset and fall back to creating a new HttpClient
+                _factory = null;
+                _serviceProvider = null;
+            }
         }
 
         // Fallback for non-DI scenarios (e.g., CLI tools, tests)
@@ -356,4 +373,14 @@ public static class HttpClientFactoryProvider
     /// Checks if the factory has been initialized.
     /// </summary>
     public static bool IsInitialized => _factory != null;
+
+    /// <summary>
+    /// Resets the provider, clearing any cached factory or service provider references.
+    /// Primarily for test scenarios where the service provider gets disposed between tests.
+    /// </summary>
+    public static void Reset()
+    {
+        _factory = null;
+        _serviceProvider = null;
+    }
 }
