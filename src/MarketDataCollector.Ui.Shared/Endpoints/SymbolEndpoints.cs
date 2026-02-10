@@ -21,8 +21,10 @@ public static class SymbolEndpoints
 
     public static void MapSymbolEndpoints(this WebApplication app, JsonSerializerOptions jsonOptions)
     {
+        var group = app.MapGroup("").WithTags("Symbols");
+
         // GET /api/symbols — all configured symbols
-        app.MapGet(UiApiRoutes.Symbols, (ConfigStore store) =>
+        group.MapGet(UiApiRoutes.Symbols, (ConfigStore store) =>
         {
             var cfg = store.Load();
             var symbols = cfg.Symbols ?? Array.Empty<SymbolConfig>();
@@ -34,7 +36,7 @@ public static class SymbolEndpoints
         });
 
         // GET /api/symbols/monitored — symbols configured for monitoring
-        app.MapGet(UiApiRoutes.SymbolsMonitored, (ConfigStore store) =>
+        group.MapGet(UiApiRoutes.SymbolsMonitored, (ConfigStore store) =>
         {
             var cfg = store.Load();
             var symbols = cfg.Symbols ?? Array.Empty<SymbolConfig>();
@@ -55,7 +57,7 @@ public static class SymbolEndpoints
         });
 
         // GET /api/symbols/archived — symbols that have stored data files
-        app.MapGet(UiApiRoutes.SymbolsArchived, async (
+        group.MapGet(UiApiRoutes.SymbolsArchived, async (
             IStorageSearchService? searchService,
             StorageOptions storageOptions,
             CancellationToken ct) =>
@@ -76,7 +78,7 @@ public static class SymbolEndpoints
         });
 
         // GET /api/symbols/{symbol}/status — detailed status for one symbol
-        app.MapGet(UiApiRoutes.SymbolStatus, async (
+        group.MapGet(UiApiRoutes.SymbolStatus, async (
             string symbol,
             ConfigStore store,
             IStorageSearchService? searchService,
@@ -113,7 +115,7 @@ public static class SymbolEndpoints
         });
 
         // POST /api/symbols/add — add one or more symbols
-        app.MapPost(UiApiRoutes.SymbolsAdd, async (ConfigStore store, SymbolAddRequest req) =>
+        group.MapPost(UiApiRoutes.SymbolsAdd, async (ConfigStore store, SymbolAddRequest req) =>
         {
             if (req.Symbols is null || req.Symbols.Length == 0)
                 return Results.BadRequest(new { error = "At least one symbol is required" });
@@ -153,7 +155,7 @@ public static class SymbolEndpoints
         }).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
         // POST /api/symbols/{symbol}/remove — remove a symbol
-        app.MapPost(UiApiRoutes.SymbolRemove, async (string symbol, ConfigStore store) =>
+        group.MapPost(UiApiRoutes.SymbolRemove, async (string symbol, ConfigStore store) =>
         {
             var cfg = store.Load();
             var list = (cfg.Symbols ?? Array.Empty<SymbolConfig>()).ToList();
@@ -168,7 +170,7 @@ public static class SymbolEndpoints
         }).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
         // GET /api/symbols/{symbol}/trades — recent trade files for a symbol
-        app.MapGet(UiApiRoutes.SymbolTrades, async (
+        group.MapGet(UiApiRoutes.SymbolTrades, async (
             string symbol,
             IStorageSearchService? searchService,
             CancellationToken ct) =>
@@ -191,7 +193,7 @@ public static class SymbolEndpoints
         });
 
         // GET /api/symbols/{symbol}/depth — recent depth files for a symbol
-        app.MapGet(UiApiRoutes.SymbolDepth, async (
+        group.MapGet(UiApiRoutes.SymbolDepth, async (
             string symbol,
             IStorageSearchService? searchService,
             CancellationToken ct) =>
@@ -214,7 +216,7 @@ public static class SymbolEndpoints
         });
 
         // GET /api/symbols/statistics — aggregate stats across all symbols
-        app.MapGet(UiApiRoutes.SymbolsStatistics, async (
+        group.MapGet(UiApiRoutes.SymbolsStatistics, async (
             ConfigStore store,
             IStorageSearchService? searchService,
             CancellationToken ct) =>
@@ -253,7 +255,7 @@ public static class SymbolEndpoints
         });
 
         // POST /api/symbols/validate — validate symbol identifiers
-        app.MapPost(UiApiRoutes.SymbolsValidate, (SymbolValidateRequest req) =>
+        group.MapPost(UiApiRoutes.SymbolsValidate, (SymbolValidateRequest req) =>
         {
             if (req.Symbols is null || req.Symbols.Length == 0)
                 return Results.BadRequest(new { error = "At least one symbol is required" });
@@ -269,7 +271,7 @@ public static class SymbolEndpoints
         });
 
         // POST /api/symbols/{symbol}/archive — archive a symbol (remove from monitoring, keep data)
-        app.MapPost(UiApiRoutes.SymbolArchive, async (string symbol, ConfigStore store) =>
+        group.MapPost(UiApiRoutes.SymbolArchive, async (string symbol, ConfigStore store) =>
         {
             var cfg = store.Load();
             var list = (cfg.Symbols ?? Array.Empty<SymbolConfig>()).ToList();
@@ -284,7 +286,7 @@ public static class SymbolEndpoints
         }).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
         // POST /api/symbols/bulk-add — add multiple symbols at once
-        app.MapPost(UiApiRoutes.SymbolsBulkAdd, async (ConfigStore store, SymbolBulkAddRequest req) =>
+        group.MapPost(UiApiRoutes.SymbolsBulkAdd, async (ConfigStore store, SymbolBulkAddRequest req) =>
         {
             if (req.Symbols is null || req.Symbols.Length == 0)
                 return Results.BadRequest(new { error = "At least one symbol configuration is required" });
@@ -323,7 +325,7 @@ public static class SymbolEndpoints
         }).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
         // POST /api/symbols/bulk-remove — remove multiple symbols
-        app.MapPost(UiApiRoutes.SymbolsBulkRemove, async (ConfigStore store, SymbolBulkRemoveRequest req) =>
+        group.MapPost(UiApiRoutes.SymbolsBulkRemove, async (ConfigStore store, SymbolBulkRemoveRequest req) =>
         {
             if (req.Symbols is null || req.Symbols.Length == 0)
                 return Results.BadRequest(new { error = "At least one symbol is required" });
@@ -340,7 +342,7 @@ public static class SymbolEndpoints
         }).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
         // GET /api/symbols/search — search symbols by query string
-        app.MapGet(UiApiRoutes.SymbolsSearch, (
+        group.MapGet(UiApiRoutes.SymbolsSearch, (
             HttpContext ctx,
             ConfigStore store) =>
         {
@@ -362,7 +364,7 @@ public static class SymbolEndpoints
         });
 
         // POST /api/symbols/batch — batch operations (add/remove/update)
-        app.MapPost(UiApiRoutes.SymbolsBatch, async (ConfigStore store, SymbolBatchRequest req) =>
+        group.MapPost(UiApiRoutes.SymbolsBatch, async (ConfigStore store, SymbolBatchRequest req) =>
         {
             if (req.Operations is null || req.Operations.Length == 0)
                 return Results.BadRequest(new { error = "At least one operation is required" });

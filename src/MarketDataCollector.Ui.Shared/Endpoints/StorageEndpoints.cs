@@ -16,8 +16,10 @@ public static class StorageEndpoints
 {
     public static void MapStorageEndpoints(this WebApplication app, JsonSerializerOptions jsonOptions)
     {
+        var group = app.MapGroup("").WithTags("Storage");
+
         // GET /api/storage/profiles — available storage profile presets
-        app.MapGet(UiApiRoutes.StorageProfiles, () =>
+        group.MapGet(UiApiRoutes.StorageProfiles, () =>
         {
             var presets = StorageProfilePresets.GetPresets();
             return Results.Json(new
@@ -28,7 +30,7 @@ public static class StorageEndpoints
         });
 
         // GET /api/storage/stats — overall storage statistics
-        app.MapGet(UiApiRoutes.StorageStats, (StorageOptions opts) =>
+        group.MapGet(UiApiRoutes.StorageStats, (StorageOptions opts) =>
         {
             var rootPath = Path.GetFullPath(opts.RootPath);
             long totalSize = 0;
@@ -69,7 +71,7 @@ public static class StorageEndpoints
         });
 
         // GET /api/storage/breakdown — breakdown by symbol
-        app.MapGet(UiApiRoutes.StorageBreakdown, async (
+        group.MapGet(UiApiRoutes.StorageBreakdown, async (
             IStorageSearchService? searchService,
             StorageOptions opts,
             CancellationToken ct) =>
@@ -98,7 +100,7 @@ public static class StorageEndpoints
         });
 
         // GET /api/storage/symbol/{symbol}/info — storage info for a symbol
-        app.MapGet(UiApiRoutes.StorageSymbolInfo, async (
+        group.MapGet(UiApiRoutes.StorageSymbolInfo, async (
             string symbol,
             IStorageSearchService? searchService,
             CancellationToken ct) =>
@@ -122,7 +124,7 @@ public static class StorageEndpoints
         });
 
         // GET /api/storage/symbol/{symbol}/stats — detailed stats for a symbol
-        app.MapGet(UiApiRoutes.StorageSymbolStats, async (
+        group.MapGet(UiApiRoutes.StorageSymbolStats, async (
             string symbol,
             IStorageSearchService? searchService,
             CancellationToken ct) =>
@@ -148,7 +150,7 @@ public static class StorageEndpoints
         });
 
         // GET /api/storage/symbol/{symbol}/files — list files for a symbol
-        app.MapGet(UiApiRoutes.StorageSymbolFiles, async (
+        group.MapGet(UiApiRoutes.StorageSymbolFiles, async (
             string symbol,
             HttpContext ctx,
             IStorageSearchService? searchService,
@@ -174,7 +176,7 @@ public static class StorageEndpoints
         });
 
         // GET /api/storage/symbol/{symbol}/path — storage path for a symbol
-        app.MapGet(UiApiRoutes.StorageSymbolPath, (string symbol, StorageOptions opts) =>
+        group.MapGet(UiApiRoutes.StorageSymbolPath, (string symbol, StorageOptions opts) =>
         {
             var root = Path.GetFullPath(opts.RootPath);
             var symbolPath = opts.NamingConvention switch
@@ -196,7 +198,7 @@ public static class StorageEndpoints
         });
 
         // GET /api/storage/health — storage health summary
-        app.MapGet(UiApiRoutes.StorageHealth, (StorageOptions opts) =>
+        group.MapGet(UiApiRoutes.StorageHealth, (StorageOptions opts) =>
         {
             var rootPath = Path.GetFullPath(opts.RootPath);
             var exists = Directory.Exists(rootPath);
@@ -226,7 +228,7 @@ public static class StorageEndpoints
         });
 
         // GET /api/storage/cleanup/candidates — files eligible for cleanup
-        app.MapGet(UiApiRoutes.StorageCleanupCandidates, (StorageOptions opts) =>
+        group.MapGet(UiApiRoutes.StorageCleanupCandidates, (StorageOptions opts) =>
         {
             var rootPath = Path.GetFullPath(opts.RootPath);
             var candidates = new List<object>();
@@ -258,7 +260,7 @@ public static class StorageEndpoints
         });
 
         // POST /api/storage/cleanup — run storage cleanup
-        app.MapPost(UiApiRoutes.StorageCleanup, async (
+        group.MapPost(UiApiRoutes.StorageCleanup, async (
             IFileMaintenanceService? maintenanceService,
             CancellationToken ct) =>
         {
@@ -295,7 +297,7 @@ public static class StorageEndpoints
         }).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
         // GET /api/storage/archive/stats — archive tier statistics
-        app.MapGet(UiApiRoutes.StorageArchiveStats, (StorageOptions opts) =>
+        group.MapGet(UiApiRoutes.StorageArchiveStats, (StorageOptions opts) =>
         {
             var rootPath = Path.GetFullPath(opts.RootPath);
             var archivePath = Path.Combine(rootPath, "_archive");
@@ -327,7 +329,7 @@ public static class StorageEndpoints
         });
 
         // GET /api/storage/catalog — storage catalog summary
-        app.MapGet(UiApiRoutes.StorageCatalog, async (
+        group.MapGet(UiApiRoutes.StorageCatalog, async (
             IStorageSearchService? searchService,
             StorageOptions opts,
             CancellationToken ct) =>
@@ -347,7 +349,7 @@ public static class StorageEndpoints
         });
 
         // GET /api/storage/search/files — search for files
-        app.MapGet(UiApiRoutes.StorageSearchFiles, async (
+        group.MapGet(UiApiRoutes.StorageSearchFiles, async (
             HttpContext ctx,
             IStorageSearchService? searchService,
             CancellationToken ct) =>
@@ -387,7 +389,7 @@ public static class StorageEndpoints
         });
 
         // GET /api/storage/health/check — detailed health check
-        app.MapGet(UiApiRoutes.StorageHealthCheck, async (
+        group.MapGet(UiApiRoutes.StorageHealthCheck, async (
             IFileMaintenanceService? maintenanceService,
             CancellationToken ct) =>
         {
@@ -407,7 +409,7 @@ public static class StorageEndpoints
         });
 
         // GET /api/storage/health/orphans — find orphaned files
-        app.MapGet(UiApiRoutes.StorageHealthOrphans, async (
+        group.MapGet(UiApiRoutes.StorageHealthOrphans, async (
             IFileMaintenanceService? maintenanceService,
             CancellationToken ct) =>
         {
@@ -426,7 +428,7 @@ public static class StorageEndpoints
         });
 
         // POST /api/storage/tiers/migrate — trigger tier migration
-        app.MapPost(UiApiRoutes.StorageTiersMigrate, async (
+        group.MapPost(UiApiRoutes.StorageTiersMigrate, async (
             ITierMigrationService? tierService,
             StorageOptions opts,
             TierMigrateRequest req,
@@ -454,7 +456,7 @@ public static class StorageEndpoints
         }).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
         // GET /api/storage/tiers/statistics — tier statistics
-        app.MapGet(UiApiRoutes.StorageTiersStatistics, async (
+        group.MapGet(UiApiRoutes.StorageTiersStatistics, async (
             ITierMigrationService? tierService,
             CancellationToken ct) =>
         {
@@ -473,7 +475,7 @@ public static class StorageEndpoints
         });
 
         // GET /api/storage/tiers/plan — generate tier migration plan
-        app.MapGet(UiApiRoutes.StorageTiersPlan, async (
+        group.MapGet(UiApiRoutes.StorageTiersPlan, async (
             HttpContext ctx,
             ITierMigrationService? tierService,
             CancellationToken ct) =>
@@ -495,7 +497,7 @@ public static class StorageEndpoints
         });
 
         // POST /api/storage/maintenance/defrag — run defragmentation
-        app.MapPost(UiApiRoutes.StorageMaintenanceDefrag, async (
+        group.MapPost(UiApiRoutes.StorageMaintenanceDefrag, async (
             IFileMaintenanceService? maintenanceService,
             CancellationToken ct) =>
         {

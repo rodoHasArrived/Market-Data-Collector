@@ -16,8 +16,10 @@ public static class StorageQualityEndpoints
 {
     public static void MapStorageQualityEndpoints(this WebApplication app, JsonSerializerOptions jsonOptions)
     {
+        var group = app.MapGroup("").WithTags("Storage Quality");
+
         // GET /api/storage/quality/summary — overall quality summary
-        app.MapGet(UiApiRoutes.StorageQualitySummary, async (
+        group.MapGet(UiApiRoutes.StorageQualitySummary, async (
             IDataQualityService? qualityService,
             StorageOptions opts,
             CancellationToken ct) =>
@@ -49,7 +51,7 @@ public static class StorageQualityEndpoints
         });
 
         // GET /api/storage/quality/scores — quality scores for all scored files
-        app.MapGet(UiApiRoutes.StorageQualityScores, async (
+        group.MapGet(UiApiRoutes.StorageQualityScores, async (
             IDataQualityService? qualityService,
             StorageOptions opts,
             CancellationToken ct) =>
@@ -79,7 +81,7 @@ public static class StorageQualityEndpoints
         });
 
         // GET /api/storage/quality/symbol/{symbol} — quality for a specific symbol
-        app.MapGet(UiApiRoutes.StorageQualitySymbol, async (
+        group.MapGet(UiApiRoutes.StorageQualitySymbol, async (
             string symbol,
             IDataQualityService? qualityService,
             StorageOptions opts,
@@ -104,7 +106,7 @@ public static class StorageQualityEndpoints
         });
 
         // GET /api/storage/quality/alerts — active quality alerts
-        app.MapGet(UiApiRoutes.StorageQualityAlerts, async (
+        group.MapGet(UiApiRoutes.StorageQualityAlerts, async (
             IDataQualityService? qualityService,
             CancellationToken ct) =>
         {
@@ -127,7 +129,7 @@ public static class StorageQualityEndpoints
         });
 
         // POST /api/storage/quality/alerts/{alertId}/acknowledge — acknowledge an alert
-        app.MapPost(UiApiRoutes.StorageQualityAlertAcknowledge, (string alertId) =>
+        group.MapPost(UiApiRoutes.StorageQualityAlertAcknowledge, (string alertId) =>
         {
             // Alert acknowledgment state is not persisted by IDataQualityService,
             // so we accept the request and return success.
@@ -135,7 +137,7 @@ public static class StorageQualityEndpoints
         }).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
         // GET /api/storage/quality/rankings/{symbol} — source rankings for a symbol
-        app.MapGet(UiApiRoutes.StorageQualityRankings, async (
+        group.MapGet(UiApiRoutes.StorageQualityRankings, async (
             string symbol,
             IDataQualityService? qualityService,
             CancellationToken ct) =>
@@ -165,7 +167,7 @@ public static class StorageQualityEndpoints
         });
 
         // GET /api/storage/quality/trends — quality trends across all data
-        app.MapGet(UiApiRoutes.StorageQualityTrends, async (
+        group.MapGet(UiApiRoutes.StorageQualityTrends, async (
             HttpContext ctx,
             IDataQualityService? qualityService,
             StorageOptions opts,
@@ -199,7 +201,7 @@ public static class StorageQualityEndpoints
         });
 
         // GET /api/storage/quality/anomalies — detected quality anomalies
-        app.MapGet(UiApiRoutes.StorageQualityAnomalies, async (
+        group.MapGet(UiApiRoutes.StorageQualityAnomalies, async (
             IDataQualityService? qualityService,
             StorageOptions opts,
             CancellationToken ct) =>
@@ -233,7 +235,7 @@ public static class StorageQualityEndpoints
         });
 
         // POST /api/storage/quality/check — run a quality check on specified path
-        app.MapPost(UiApiRoutes.StorageQualityCheck, async (
+        group.MapPost(UiApiRoutes.StorageQualityCheck, async (
             IDataQualityService? qualityService,
             StorageQualityCheckRequest req,
             CancellationToken ct) =>

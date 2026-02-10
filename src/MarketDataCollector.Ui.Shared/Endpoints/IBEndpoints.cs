@@ -17,8 +17,10 @@ public static class IBEndpoints
     /// </summary>
     public static void MapIBEndpoints(this WebApplication app, JsonSerializerOptions jsonOptions)
     {
+        var group = app.MapGroup("").WithTags("Interactive Brokers");
+
         // IB provider status - shows connection mode, capabilities, and simulation state
-        app.MapGet(UiApiRoutes.IBStatus, () =>
+        group.MapGet(UiApiRoutes.IBStatus, () =>
         {
             var isIBApiAvailable =
 #if IBAPI
@@ -64,7 +66,7 @@ public static class IBEndpoints
         });
 
         // IB error code reference - returns all known error codes with descriptions
-        app.MapGet(UiApiRoutes.IBErrorCodes, () =>
+        group.MapGet(UiApiRoutes.IBErrorCodes, () =>
         {
             var errors = IBErrorCodeMap.GetAll();
             var errorList = errors.Select(kvp => new
@@ -84,7 +86,7 @@ public static class IBEndpoints
         });
 
         // IB API limits reference - returns rate limits and constraints
-        app.MapGet(UiApiRoutes.IBLimits, () =>
+        group.MapGet(UiApiRoutes.IBLimits, () =>
         {
             return Results.Json(new
             {
