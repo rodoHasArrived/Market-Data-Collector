@@ -116,3 +116,16 @@ If headings are missing, the workflow still creates an entry with safe defaults 
   - `grep -rn 'MarketDataCollector\.Storage' src/MarketDataCollector.Infrastructure --include="*.cs"` (should return no results)
 - **Source issue**: CI build failure on main branch
 - **Status**: fixed
+
+## [2026-02-10] #10 Update documentation with known issues and TODOs
+- Area: process
+- Symptoms:
+  Update documentation with known issues and TODOs
+- Root cause:
+  Root cause not yet documented.
+- Prevention checklist:
+  - [ ] Add prevention checks from the linked issue.
+- Verification commands:
+  - `# add verification commands`
+- References:
+  - https://github.com/rodoHasArrived/Market-Data-Collector/issues/10
