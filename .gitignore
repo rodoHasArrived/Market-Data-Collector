@@ -1,28 +1,34 @@
 # .NET build output
+# Framework-generated directories for compiled assemblies and intermediates
 bin/
 obj/
 out/
 
 # NuGet packages
+# Binary packages that should be restored on build, not committed
 *.nupkg
 packages/
 !.nuget/packages
 
 # User-specific files
+# IDE and user preferences that vary by machine
 *.user
 *.suo
 *.userosscache
 *.sln.docstates
 
 # Visual Studio
+# IDE cache and user-specific settings
 .vs/
 *.sln.DotSettings.user
 
 # JetBrains Rider
+# IDE project files and cache
 .idea/
 *.sln.iml
 
 # Build results
+# Configuration-specific build outputs
 [Dd]ebug/
 [Rr]elease/
 x64/
@@ -75,14 +81,18 @@ ehthumbs.db
 Thumbs.db
 
 # Temporary files
+# Scratch files created during development or by editors
 *.tmp
 *.temp
 *.swp
 *~
 
 # Build output logs and debug artifacts
+# Local build logs - regenerated on each build, cause noise in version control
+*.log
 build_output.txt
 build-output*.txt
+build-output.log
 build-final*.txt
 *_stderr.txt
 *_stdout.txt
@@ -116,3 +126,9 @@ __pycache__/
 .Python
 *.egg-info/
 .eggs/
+
+# Accidental artifact files (scratch output from scripts/tools)
+# Files with unusual names like '...' are likely script errors
+...
+*-scratch.*
+scratch-*
