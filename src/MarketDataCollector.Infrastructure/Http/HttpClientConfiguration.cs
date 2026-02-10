@@ -328,13 +328,21 @@ public static class HttpClientFactoryProvider
 
     /// <summary>
     /// Gets an HttpClient for the specified named client.
-    /// Falls back to creating a new HttpClient if factory is not initialized.
+    /// Falls back to creating a new HttpClient if factory is not initialized or disposed.
     /// </summary>
     public static HttpClient CreateClient(string name)
     {
         if (_factory != null)
         {
-            return _factory.CreateClient(name);
+            try
+            {
+                return _factory.CreateClient(name);
+            }
+            catch (ObjectDisposedException)
+            {
+                // Factory's service provider was disposed (e.g., in tests)
+                // Fall back to creating a new HttpClient
+            }
         }
 
         // Fallback for non-DI scenarios (e.g., CLI tools, tests)
