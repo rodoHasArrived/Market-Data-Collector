@@ -1,50 +1,31 @@
 # TODO Tracking
 
 > Auto-generated TODO documentation. Do not edit manually.
-> Last updated: 2026-02-10T08:42:38.759053+00:00
+> Last updated: 2026-02-10T16:51:54.558345+00:00
 
 ## Summary
 
 | Metric | Count |
 |--------|-------|
-| **Total Items** | 12 |
+| **Total Items** | 7 |
 | **Linked to Issues** | 0 |
-| **Untracked** | 12 |
+| **Untracked** | 7 |
 
 ### By Type
 
 | Type | Count | Description |
 |------|-------|-------------|
-| `NOTE` | 9 | Important notes and documentation |
-| `TODO` | 3 | General tasks to complete |
+| `NOTE` | 7 | Important notes and documentation |
 
 ### By Directory
 
 | Directory | Count |
 |-----------|-------|
 | `tests/` | 7 |
-| `src/` | 5 |
 
 ## All Items
 
-### TODO (3)
-
-- [ ] `src/MarketDataCollector.Infrastructure/Providers/Historical/GapAnalysis/DataGapRepair.cs:412`
-  > Implement via dependency injection - Infrastructure cannot reference Storage directly (circular dependency). Inject an IStorageSink or similar abstraction instead.
-
-- [ ] `src/MarketDataCollector.Ui.Services/Services/DataCalendarService.cs:16`
-  > Refactor to use dependency injection instead of manual instantiation
-
-- [ ] `src/MarketDataCollector.Ui.Services/Services/SmartRecommendationsService.cs:44`
-  > Refactor to use dependency injection instead of manual instantiation
-
-### NOTE (9)
-
-- [ ] `src/MarketDataCollector.Ui.Services/Services/DataCalendarService.cs:14`
-  > DataCompletenessService requires ManifestService and TradingCalendarService parameters which we don't have access to in this parameterless constructor.
-
-- [ ] `src/MarketDataCollector.Ui.Services/Services/SmartRecommendationsService.cs:42`
-  > DataCompletenessService requires ManifestService and TradingCalendarService parameters which we don't have access to in this parameterless constructor.
+### NOTE (7)
 
 - [ ] `tests/MarketDataCollector.Tests/Application/Backfill/BackfillWorkerServiceTests.cs:28`
   > Using null! because validation throws before dependencies are accessed
