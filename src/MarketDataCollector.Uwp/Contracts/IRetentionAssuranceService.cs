@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using MarketDataCollector.Uwp.Services;
+using MarketDataCollector.Ui.Services;
 
 namespace MarketDataCollector.Uwp.Contracts;
 

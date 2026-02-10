@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using MarketDataCollector.Ui.Services;
 using MarketDataCollector.Uwp.Services;
 using MarketDataCollector.Uwp.Models;
 using Windows.Storage;

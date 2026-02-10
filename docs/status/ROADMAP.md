@@ -205,7 +205,7 @@ From `docs/IMPROVEMENTS.md` — 6 items not started, 3 partially done.
 
 | # | Item | Priority | Notes |
 |---|------|----------|-------|
-| 4C.1 | Extract common logic from WPF and UWP services into `Ui.Services` | P2 | ~10,000 lines of near-identical code across 25–30 services |
+| 4C.1 | Extract common logic from WPF and UWP services into `Ui.Services` | P2 | ✅ Done (Phase 1) — extracted StorageService (DTOs + base class), RetentionAssuranceService (24 DTOs), WorkspaceService (7 DTOs) into shared `Ui.Services`; eliminated ~1,040 lines of duplication |
 | 4C.2 | Add unit tests for `Ui.Services` (60+ services, zero tests) | P2 | Most critical: `LiveDataService`, `BackfillService`, `SymbolManagementService`, `SystemHealthService` |
 
 ---
