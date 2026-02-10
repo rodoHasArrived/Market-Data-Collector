@@ -310,6 +310,13 @@ public static class HttpClientConfiguration
 /// </summary>
 /// <remarks>
 /// This is a transitional pattern. New code should inject IHttpClientFactory directly.
+/// 
+/// Thread Safety: This class uses static fields and is designed to be thread-safe for the
+/// common initialization pattern where Initialize() is called once during startup.
+/// 
+/// Disposal Handling: If the underlying IServiceProvider is disposed (e.g., during test cleanup),
+/// CreateClient() will catch ObjectDisposedException and fall back to creating a new HttpClient.
+/// This ensures graceful degradation and test isolation.
 /// </remarks>
 public static class HttpClientFactoryProvider
 {
