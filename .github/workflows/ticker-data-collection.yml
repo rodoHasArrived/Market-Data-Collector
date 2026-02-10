@@ -6,6 +6,9 @@
 
 name: Ticker Data Collection
 
+run-name: >-
+  Ticker Collection (${{ github.event.inputs.symbols || 'SPY,AAPL' }})
+
 on:
   workflow_dispatch:
     inputs:
@@ -52,6 +55,9 @@ jobs:
     name: Fetch Yahoo Finance Data
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
 
     steps:
       - name: Checkout repository
@@ -63,11 +69,65 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
           cache-suffix: ticker-data
 
+      - name: Validate and normalize workflow inputs
+        id: normalize-inputs
+        run: |
+          set -euo pipefail
+
+          symbols_input='${{ github.event.inputs.symbols }}'
+          date_from='${{ github.event.inputs.date_from }}'
+          date_to='${{ github.event.inputs.date_to }}'
+
+          # Normalize symbols: uppercase, trim, dedupe, and keep comma-separated format.
+          normalized_symbols=$(printf '%s' "$symbols_input" \
+            | tr ',' '\n' \
+            | sed 's/^\s*//;s/\s*$//' \
+            | awk 'NF { print toupper($0) }' \
+            | awk '!seen[$0]++' \
+            | paste -sd, -)
+
+          if [ -z "$normalized_symbols" ]; then
+            echo "Input validation failed: symbols list is empty after normalization."
+            exit 1
+          fi
+
+          if printf '%s' "$normalized_symbols" | tr ',' '\n' | grep -qEv '^[A-Z0-9.\-^=]+$'; then
+            echo "Input validation failed: one or more symbols contain unsupported characters."
+            echo "Allowed pattern per symbol: [A-Z0-9.\-^=]+"
+            exit 1
+          fi
+
+          validate_date() {
+            local label=$1
+            local value=$2
+            if [ -n "$value" ] && ! date -d "$value" '+%Y-%m-%d' >/dev/null 2>&1; then
+              echo "Input validation failed: $label must be YYYY-MM-DD (received '$value')."
+              exit 1
+            fi
+          }
+
+          validate_date "date_from" "$date_from"
+          validate_date "date_to" "$date_to"
+
+          if [ -n "$date_from" ] && [ -n "$date_to" ]; then
+            if [ "$(date -d "$date_from" '+%s')" -gt "$(date -d "$date_to" '+%s')" ]; then
+              echo "Input validation failed: date_from must be less than or equal to date_to."
+              exit 1
+            fi
+          fi
+
+          echo "normalized_symbols=$normalized_symbols" >> "$GITHUB_OUTPUT"
+          echo "validated_date_from=$date_from" >> "$GITHUB_OUTPUT"
+          echo "validated_date_to=$date_to" >> "$GITHUB_OUTPUT"
+
+          echo "Normalized symbols: $normalized_symbols"
+          echo "date_from: ${date_from:-<empty>}"
+          echo "date_to: ${date_to:-<empty>}"
+
       - name: Restore dependencies
         run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
 
       - name: Build
-        shell: bash
         run: |
           dotnet build MarketDataCollector.sln \
             -c Release \
@@ -75,9 +135,10 @@ jobs:
             /p:EnableWindowsTargeting=true
 
       - name: Fetch ticker data
-        shell: bash
         env:
-          YAHOO_TICKER_SYMBOLS: ${{ github.event.inputs.symbols }}
+          YAHOO_TICKER_SYMBOLS: ${{ steps.normalize-inputs.outputs.normalized_symbols }}
+          YAHOO_TICKER_DATE_FROM: ${{ steps.normalize-inputs.outputs.validated_date_from }}
+          YAHOO_TICKER_DATE_TO: ${{ steps.normalize-inputs.outputs.validated_date_to }}
         run: |
           echo "Fetching data for symbols: $YAHOO_TICKER_SYMBOLS"
           echo ""
@@ -93,7 +154,6 @@ jobs:
       - name: Locate artifact output
         if: always()
         id: find-output
-        shell: bash
         run: |
           # The test writes to ArtifactOutput relative to the test binary output dir
           OUTPUT_DIR=$(find . -type d -name "ArtifactOutput" 2>/dev/null | head -1)
@@ -121,6 +181,7 @@ jobs:
           name: ticker-data-${{ github.run_number }}-${{ github.sha }}
           path: ${{ steps.find-output.outputs.output_dir }}/
           retention-days: ${{ github.event.inputs.retention_days || '30' }}
+          if-no-files-found: error
 
       - name: Upload test results
         if: always()
@@ -129,14 +190,15 @@ jobs:
           name: ticker-test-results-${{ github.run_number }}
           path: ./TestResults/
           retention-days: 7
+          if-no-files-found: warn
 
       - name: Generate job summary
         if: always()
-        shell: bash
         run: |
           echo "## Ticker Data Collection Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Symbols:** \`${{ github.event.inputs.symbols }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Symbols:** \`${{ steps.normalize-inputs.outputs.normalized_symbols }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Date range:** \`${{ steps.normalize-inputs.outputs.validated_date_from || 'all history' }} → ${{ steps.normalize-inputs.outputs.validated_date_to || 'latest' }}\`" >> $GITHUB_STEP_SUMMARY
           echo "**Run:** #${{ github.run_number }} | **Commit:** \`${GITHUB_SHA::7}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
