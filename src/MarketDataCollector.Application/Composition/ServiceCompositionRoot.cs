@@ -3,6 +3,7 @@ using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Config.Credentials;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Application.Monitoring;
+using MarketDataCollector.Application.Monitoring.DataQuality;
 using MarketDataCollector.Application.Pipeline;
 using MarketDataCollector.Application.Services;
 using MarketDataCollector.Application.Subscriptions.Models;
@@ -646,6 +647,16 @@ public static class ServiceCompositionRoot
     {
         // IEventMetrics - injectable metrics for pipeline and publisher
         services.AddSingleton<IEventMetrics, DefaultEventMetrics>();
+
+        // DataQualityMonitoringService - orchestrates all quality monitoring components
+        services.AddSingleton<DataQualityMonitoringService>(sp =>
+        {
+            var eventMetrics = sp.GetRequiredService<IEventMetrics>();
+            return new DataQualityMonitoringService(eventMetrics: eventMetrics);
+        });
+
+        // DataFreshnessSlaMonitor - monitors data freshness SLA compliance
+        services.AddSingleton<DataFreshnessSlaMonitor>();
 
         // JsonlStoragePolicy - controls file path generation
         services.AddSingleton<JsonlStoragePolicy>(sp =>
