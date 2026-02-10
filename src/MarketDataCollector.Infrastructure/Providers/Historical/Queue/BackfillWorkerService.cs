@@ -2,6 +2,7 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Threading;
 using MarketDataCollector.Application.Config;
+using MarketDataCollector.Application.Exceptions;
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Models;
@@ -223,6 +224,36 @@ public sealed class BackfillWorkerService : IDisposable
                 {
                     throw;
                 }
+                catch (RateLimitException rle) when (request.AssignedProvider != null)
+                {
+                    // Typed rate limit exception with RetryAfter from HTTP headers
+                    _requestQueue.RecordProviderRateLimitHit(request.AssignedProvider);
+
+                    if (retryAttempt < MaxRetryAttemptsPerRequest)
+                    {
+                        retryAttempt++;
+
+                        // Prefer typed RetryAfter from the exception, fall back to backoff
+                        var delay = rle.RetryAfter ?? CalculateBackoff(retryAttempt, RateLimitBaseDelay, RateLimitMaxDelay);
+
+                        _log.Information(
+                            "Rate limited for {Symbol} via {Provider}, retrying in {Delay}ms via {DelaySource} (attempt {Attempt}/{Max})",
+                            request.Symbol, request.AssignedProvider, delay.TotalMilliseconds,
+                            rle.RetryAfter.HasValue ? "Retry-After header" : "exponential backoff",
+                            retryAttempt, MaxRetryAttemptsPerRequest);
+                        await Task.Delay(delay, ct).ConfigureAwait(false);
+                        continue;
+                    }
+
+                    _log.Warning(
+                        "Rate limit retry budget exhausted for {Symbol} via {Provider} after {Attempts} attempts",
+                        request.Symbol, request.AssignedProvider, retryAttempt);
+
+                    await _requestQueue.CompleteRequestAsync(request, false, rle.Message, ct).ConfigureAwait(false);
+                    await _jobManager.UpdateJobProgressAsync(request, ct).ConfigureAwait(false);
+                    _progressTracker.MarkFailed(request.Symbol, rle.Message);
+                    return;
+                }
                 catch (Exception ex)
                 {
                     var isRateLimited = ex.Message.Contains("429") ||
@@ -237,7 +268,7 @@ public sealed class BackfillWorkerService : IDisposable
                         {
                             retryAttempt++;
 
-                            // Honor provider Retry-After header when available (#17)
+                            // Legacy: extract Retry-After from exception message text
                             var retryAfter = TryExtractRetryAfter(ex);
                             var delay = retryAfter ?? CalculateBackoff(retryAttempt, RateLimitBaseDelay, RateLimitMaxDelay);
 
