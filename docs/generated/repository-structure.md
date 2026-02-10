@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-09 19:26:51 UTC
+> Auto-generated on 2026-02-10 01:26:26 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -844,8 +844,16 @@ Market-Data-Collector/
 │   │   │   ├── Wide310x150Logo.scale-150.png
 │   │   │   └── Wide310x150Logo.scale-200.png
 │   │   ├── Contracts/
+│   │   │   ├── IAdminMaintenanceService.cs
+│   │   │   ├── IAdvancedAnalyticsService.cs
 │   │   │   ├── IConnectionService.cs
-│   │   │   └── INavigationService.cs
+│   │   │   ├── IExportPresetService.cs
+│   │   │   ├── IFormValidationService.cs
+│   │   │   ├── IKeyboardShortcutService.cs
+│   │   │   ├── INavigationService.cs
+│   │   │   ├── IRetentionAssuranceService.cs
+│   │   │   ├── IStorageService.cs
+│   │   │   └── IWorkspaceService.cs
 │   │   ├── Controls/
 │   │   │   ├── AlertBanner.xaml
 │   │   │   ├── AlertBanner.xaml.cs
@@ -883,8 +891,43 @@ Market-Data-Collector/
 │   │   │   ├── AccessibilityHelper.cs
 │   │   │   └── ResponsiveLayoutHelper.cs
 │   │   ├── Models/
+│   │   │   ├── AdminMaintenanceDisplayModels.cs
+│   │   │   ├── AdvancedAnalyticsDisplayModels.cs
+│   │   │   ├── AnalysisExportDisplayModels.cs
 │   │   │   ├── AppConfig.cs
-│   │   │   └── OfflineTrackingModels.cs
+│   │   │   ├── BackfillDisplayModels.cs
+│   │   │   ├── ChartingDisplayModels.cs
+│   │   │   ├── DashboardDisplayModels.cs
+│   │   │   ├── DataBrowserDisplayModels.cs
+│   │   │   ├── DataCalendarDisplayModels.cs
+│   │   │   ├── DataExportDisplayModels.cs
+│   │   │   ├── DataSamplingDisplayModels.cs
+│   │   │   ├── DiagnosticsDisplayModels.cs
+│   │   │   ├── EventReplayDisplayModels.cs
+│   │   │   ├── HelpDisplayModels.cs
+│   │   │   ├── IndexSubscriptionDisplayModels.cs
+│   │   │   ├── LeanIntegrationDisplayModels.cs
+│   │   │   ├── LiveDataDisplayModels.cs
+│   │   │   ├── MainDisplayModels.cs
+│   │   │   ├── MessagingHubDisplayModels.cs
+│   │   │   ├── NotificationCenterDisplayModels.cs
+│   │   │   ├── OfflineTrackingModels.cs
+│   │   │   ├── OrderBookDisplayModels.cs
+│   │   │   ├── PackageManagerDisplayModels.cs
+│   │   │   ├── PortfolioImportDisplayModels.cs
+│   │   │   ├── ProviderHealthDisplayModels.cs
+│   │   │   ├── RetentionAssuranceDisplayModels.cs
+│   │   │   ├── ServiceManagerDisplayModels.cs
+│   │   │   ├── SettingsDisplayModels.cs
+│   │   │   ├── StorageDisplayModels.cs
+│   │   │   ├── StorageOptimizationDisplayModels.cs
+│   │   │   ├── SymbolMappingDisplayModels.cs
+│   │   │   ├── SymbolsDisplayModels.cs
+│   │   │   ├── SymbolStorageDisplayModels.cs
+│   │   │   ├── SystemHealthDisplayModels.cs
+│   │   │   ├── TradingHoursDisplayModels.cs
+│   │   │   ├── WatchlistDisplayModels.cs
+│   │   │   └── WelcomeDisplayModels.cs
 │   │   ├── Services/
 │   │   │   ├── AdminMaintenanceService.cs
 │   │   │   ├── AdvancedAnalyticsService.cs
@@ -908,6 +951,7 @@ Market-Data-Collector/
 │   │   │   ├── PendingOperationsQueueService.cs
 │   │   │   ├── RetentionAssuranceService.cs
 │   │   │   ├── SchemaService.cs
+│   │   │   ├── ServiceLocator.cs
 │   │   │   ├── StatusService.cs
 │   │   │   ├── StorageService.cs
 │   │   │   ├── ThemeService.cs
@@ -983,6 +1027,7 @@ Market-Data-Collector/
 │   │   │   ├── OrderBookPage.xaml.cs
 │   │   │   ├── PackageManagerPage.xaml
 │   │   │   ├── PackageManagerPage.xaml.cs
+│   │   │   ├── PageBase.cs
 │   │   │   ├── PortfolioImportPage.xaml
 │   │   │   ├── PortfolioImportPage.xaml.cs
 │   │   │   ├── ProviderHealthPage.xaml
