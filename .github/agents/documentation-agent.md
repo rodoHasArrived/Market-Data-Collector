@@ -14,7 +14,7 @@ The Market Data Collector has extensive documentation organized across multiple 
 
 ### Documentation Structure
 
-```
+```text
 MarketDataCollector/docs/
 ├── README.md                    # Main documentation index
 ├── api/                         # API documentation
@@ -34,7 +34,7 @@ MarketDataCollector/docs/
 
 ## Repository Structure
 
-```
+```text
 Market-Data-Collector/
 ├── .claude/
 │   └── settings.local.json
@@ -1375,6 +1375,7 @@ Market-Data-Collector/
 User-facing documentation for operating the system.
 
 **Files:**
+
 - `getting-started.md` - Quick start guide for new users
 - `configuration.md` - Complete configuration reference
 - `troubleshooting.md` - Common issues and solutions
@@ -1383,6 +1384,7 @@ User-facing documentation for operating the system.
 - `project-context.md` - Project background and context
 
 **When to Update:**
+
 - New features that affect user workflows
 - Configuration option changes
 - New troubleshooting scenarios
@@ -1393,6 +1395,7 @@ User-facing documentation for operating the system.
 Technical documentation about system design.
 
 **Files:**
+
 - `overview.md` - High-level architecture overview
 - `c4-diagrams.md` - C4 model visualizations
 - `domains.md` - Domain model and event contracts
@@ -1401,6 +1404,7 @@ Technical documentation about system design.
 - `why-this-architecture.md` - Design decisions and rationale
 
 **When to Update:**
+
 - Architectural changes or refactoring
 - New design patterns introduced
 - Component interactions modified
@@ -1411,6 +1415,7 @@ Technical documentation about system design.
 Documentation for market data providers.
 
 **Files:**
+
 - `data-sources.md` - Available data sources with status
 - `interactive-brokers-setup.md` - IB TWS/Gateway configuration
 - `interactive-brokers-free-equity-reference.md` - IB API technical reference
@@ -1419,6 +1424,7 @@ Documentation for market data providers.
 - `provider-comparison.md` - Provider feature comparison
 
 **When to Update:**
+
 - New provider integrations
 - Provider API changes
 - Setup procedure modifications
@@ -1429,12 +1435,14 @@ Documentation for market data providers.
 Project status, roadmap, and planning.
 
 **Files:**
+
 - `production-status.md` - Production readiness assessment
 - `improvements.md` - Implemented and planned improvements
 - `FEATURE_BACKLOG.md` - Feature backlog and roadmap
 - `uwp-feature-ideas.md` - Windows desktop app feature ideas
 
 **When to Update:**
+
 - Feature implementations completed
 - New features planned
 - Production readiness changes
@@ -1445,11 +1453,13 @@ Project status, roadmap, and planning.
 Documentation for external integrations.
 
 **Files:**
+
 - `lean-integration.md` - QuantConnect Lean Engine integration
 - `fsharp-integration.md` - F# domain library guide
 - `language-strategy.md` - Polyglot architecture strategy
 
 **When to Update:**
+
 - New integration capabilities
 - Integration API changes
 - Language interop modifications
@@ -1459,12 +1469,14 @@ Documentation for external integrations.
 Additional reference documentation.
 
 **Files:**
+
 - `open-source-references.md` - Related open source projects
 - `data-uniformity.md` - Data consistency guidelines
 - `design-review-memo.md` - Design review notes
 - `sandcastle.md` - Documentation generation notes
 
 **When to Update:**
+
 - New reference material
 - Standards updates
 - Design decisions documented
@@ -1474,6 +1486,7 @@ Additional reference documentation.
 Visual documentation in multiple formats.
 
 **Diagram Types:**
+
 - C4 Context, Container, Component diagrams (DOT, PNG, SVG)
 - Data flow diagrams
 - Microservices architecture
@@ -1481,6 +1494,7 @@ Visual documentation in multiple formats.
 - Storage architecture
 
 **When to Update:**
+
 - System architecture changes
 - New components added
 - Component relationships modified
@@ -1499,7 +1513,7 @@ Visual documentation in multiple formats.
    - Use `---` for horizontal rules between major sections
 
 2. **Code Blocks:**
-   - Always specify language: ````bash`, ````csharp`, ````json`, ````fsharp`
+   - Always specify language: `` `bash` ``, `` `csharp` ``, `` `json` ``, `` `fsharp` ``
    - Include descriptive comments for complex commands
    - Use `# Example:` or `// Example:` for inline examples
 
@@ -1542,6 +1556,7 @@ Maintain consistency across documentation:
 ### Task 1: Document a New Feature
 
 **Checklist:**
+
 - [ ] Update `docs/getting-started.md` if user-facing
 - [ ] Update `docs/configuration.md` if configurable
 - [ ] Update `docs/architecture/overview.md` if architectural impact
@@ -1555,6 +1570,7 @@ Maintain consistency across documentation:
 ### Task 2: Document a Configuration Change
 
 **Checklist:**
+
 - [ ] Update `docs/configuration.md` with new options
 - [ ] Update `appsettings.sample.json` with examples
 - [ ] Document default values and valid ranges
@@ -1565,6 +1581,7 @@ Maintain consistency across documentation:
 ### Task 3: Update Architecture Documentation
 
 **Checklist:**
+
 - [ ] Update `docs/architecture/overview.md` with changes
 - [ ] Update relevant component documentation
 - [ ] Regenerate diagrams from source files (`.dot`, `.puml`)
@@ -1575,6 +1592,7 @@ Maintain consistency across documentation:
 ### Task 4: Document a Provider Integration
 
 **Checklist:**
+
 - [ ] Create or update setup guide in `docs/providers/`
 - [ ] Update `docs/providers/data-sources.md` with provider status
 - [ ] Update `docs/providers/provider-comparison.md`
@@ -1587,6 +1605,7 @@ Maintain consistency across documentation:
 ### Task 5: Update Status Documentation
 
 **Checklist:**
+
 - [ ] Update `docs/status/production-status.md` for readiness
 - [ ] Update `docs/status/improvements.md` for implemented features
 - [ ] Update `docs/status/FEATURE_BACKLOG.md` for roadmap
@@ -1600,6 +1619,7 @@ Maintain consistency across documentation:
 ### Verification Steps
 
 1. **Link Validation:**
+
    ```bash
    # Check for broken internal links
    find docs -name "*.md" -exec grep -H "\[.*\](.*\.md)" {} \; | grep -v "http"
@@ -1616,6 +1636,7 @@ Maintain consistency across documentation:
    - Check version numbers are current
 
 4. **Build Documentation:**
+
    ```bash
    # If DocFX is configured
    cd docs/docfx
@@ -1640,6 +1661,7 @@ The project uses DocFX for generating API documentation:
 **Configuration:** `docs/docfx/docfx.json`
 
 **To Build:**
+
 ```bash
 cd MarketDataCollector/docs/docfx
 docfx build docfx.json
@@ -1652,6 +1674,7 @@ docfx build docfx.json
 Diagrams are stored as source files and rendered images:
 
 **DOT Graphs (Graphviz):**
+
 ```bash
 cd MarketDataCollector/docs/diagrams
 dot -Tpng c4-level1-context.dot -o c4-level1-context.png
@@ -1659,6 +1682,7 @@ dot -Tsvg c4-level1-context.dot -o c4-level1-context.svg
 ```
 
 **PlantUML:**
+
 ```bash
 cd MarketDataCollector/docs/architecture
 plantuml c4-context.puml
@@ -1815,23 +1839,24 @@ markdown-link-check docs/**/*.md
 **Files to Update:**
 
 1. `docs/providers/new-provider-setup.md` (create new)
-   ```markdown
+
+   ````markdown
    # New Provider Setup Guide
-   
+
    ## Overview
-   
+
    Brief description of the provider...
-   
+
    ## Prerequisites
-   
+
    - List requirements
-   
+
    ## Installation
-   
+
    Step-by-step setup...
-   
+
    ## Configuration
-   
+
    ```json
    {
      "Providers": {
@@ -1841,11 +1866,11 @@ markdown-link-check docs/**/*.md
      }
    }
    ```
-   
+
    ## Troubleshooting
-   
+
    Common issues...
-   ```
+   ````
 
 2. `docs/providers/data-sources.md` - Add entry to provider table
 3. `docs/providers/provider-comparison.md` - Add comparison row
@@ -1857,7 +1882,7 @@ markdown-link-check docs/**/*.md
 
 **In `docs/configuration.md`:**
 
-```markdown
+````markdown
 ### StorageBufferSize
 
 **Type:** `int`  
@@ -1867,6 +1892,7 @@ markdown-link-check docs/**/*.md
 Controls the size of the in-memory buffer before flushing to disk.
 
 **Example:**
+
 ```json
 {
   "Storage": {
@@ -1876,11 +1902,12 @@ Controls the size of the in-memory buffer before flushing to disk.
 ```
 
 **Impact:**
+
 - Higher values = better performance, more memory usage
 - Lower values = lower memory usage, more frequent disk writes
 
 **Related Settings:** `FlushIntervalSeconds`, `MaxMemoryMB`
-```
+````
 
 ### Example 3: Updating Architecture Documentation
 
