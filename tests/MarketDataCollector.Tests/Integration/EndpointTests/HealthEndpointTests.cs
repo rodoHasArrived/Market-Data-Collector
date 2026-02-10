@@ -1,6 +1,5 @@
 using System.Net;
 using System.Net.Http.Json;
-using Microsoft.AspNetCore.Mvc.Testing;
 using Xunit;
 
 namespace MarketDataCollector.Tests.Integration.EndpointTests;
@@ -12,7 +11,7 @@ namespace MarketDataCollector.Tests.Integration.EndpointTests;
 /// </summary>
 public sealed class HealthEndpointTests : EndpointIntegrationTestBase
 {
-    public HealthEndpointTests(WebApplicationFactory<Program> factory) : base(factory)
+    public HealthEndpointTests(EndpointTestFixture fixture) : base(fixture)
     {
     }
 
