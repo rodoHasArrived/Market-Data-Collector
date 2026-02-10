@@ -1,5 +1,6 @@
 using System.Text.Json;
 using MarketDataCollector.Application.Config;
+using MarketDataCollector.Application.Credentials;
 using MarketDataCollector.Infrastructure.Providers.NYSE;
 
 namespace MarketDataCollector.Infrastructure.DataSources;
@@ -468,9 +469,17 @@ public sealed record CredentialConfig
 
     // Credential Resolution Order: Vault > File > Environment > Config
     // - File: Reads from CredentialsPath JSON file
-    // - Vault: Reserved for AWS Secrets Manager / Azure Key Vault integration
+    // - Vault: Uses ISecretProvider (AWS Secrets Manager, Azure Key Vault, or env-var bridge)
     // - Environment: Uses environment variables (ApiKeyVar, KeyIdVar, SecretKeyVar)
     // - Config: Direct values in configuration (not recommended for production)
+
+    /// <summary>
+    /// Secret provider used for vault-backed credential resolution.
+    /// Set at application startup via DI. Defaults to <see cref="EnvironmentSecretProvider"/>
+    /// which uses MDC_VAULT__* environment variables as a bridge for local/test environments.
+    /// Replace with a real vault provider (AWS Secrets Manager, Azure Key Vault) for production.
+    /// </summary>
+    public static ISecretProvider SecretProvider { get; set; } = new EnvironmentSecretProvider();
 
     /// <summary>
     /// Resolves the API key from configured source.
@@ -540,42 +549,21 @@ public sealed record CredentialConfig
             return null;
         }
 
-        // Stub integration contract: providers should map vault path/key to raw secret JSON.
-        // For now, use environment-backed bridge to support local/test environments:
-        // MDC_VAULT__{normalizedPath}__{key}, e.g. MDC_VAULT__marketdata__alpaca__prod__keyId.
-        var normalizedPath = VaultPath.Trim().Replace('/', '_').Replace(':', '_').Replace('-', '_').ToUpperInvariant();
-        var envName = $"MDC_VAULT__{normalizedPath}__{key.ToUpperInvariant()}";
-        var raw = Environment.GetEnvironmentVariable(envName);
-        if (!string.IsNullOrWhiteSpace(raw))
-        {
-            return raw;
-        }
-
-        // Optional JSON payload mode: env var MDC_VAULT_JSON__{normalizedPath}
-        // value like: {"keyId":"...","secretKey":"..."}
-        var jsonEnvName = $"MDC_VAULT_JSON__{normalizedPath}";
-        var payload = Environment.GetEnvironmentVariable(jsonEnvName);
-        if (string.IsNullOrWhiteSpace(payload))
-        {
-            return null;
-        }
-
+        // Delegate to the pluggable ISecretProvider.
+        // The default EnvironmentSecretProvider uses MDC_VAULT__* env vars as a bridge.
+        // In production, replace with AWS Secrets Manager or Azure Key Vault provider.
         try
         {
-            using var doc = JsonDocument.Parse(payload);
-            if (doc.RootElement.ValueKind == JsonValueKind.Object &&
-                doc.RootElement.TryGetProperty(key, out var property) &&
-                property.ValueKind == JsonValueKind.String)
-            {
-                return property.GetString();
-            }
+            return SecretProvider
+                .GetSecretAsync(VaultPath, key, CancellationToken.None)
+                .ConfigureAwait(false)
+                .GetAwaiter()
+                .GetResult();
         }
-        catch (JsonException)
+        catch
         {
             return null;
         }
-
-        return null;
     }
 
     /// <summary>

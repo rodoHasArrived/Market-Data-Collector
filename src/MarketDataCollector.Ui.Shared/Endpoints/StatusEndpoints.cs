@@ -114,7 +114,10 @@ public static class StatusEndpoints
                 return Results.Json(new { error, providers = Array.Empty<object>() }, jsonOptions);
             }
             return Results.Json(summary, jsonOptions);
-        });
+        })
+        .WithName("GetProviderLatency")
+        .WithTags("Monitoring")
+        .Produces(200);
 
         // Connection health
         app.MapGet(UiApiRoutes.Connections, () =>
@@ -125,7 +128,10 @@ public static class StatusEndpoints
                 return Results.Json(new { error, connections = Array.Empty<object>() }, jsonOptions);
             }
             return Results.Json(snapshot, jsonOptions);
-        });
+        })
+        .WithName("GetConnections")
+        .WithTags("Monitoring")
+        .Produces(200);
 
         // Detailed health (async)
         app.MapGet(UiApiRoutes.HealthDetailed, async () =>
@@ -144,7 +150,11 @@ public static class StatusEndpoints
                 _ => 200
             };
             return Results.Json(report, jsonOptions, statusCode: statusCode);
-        });
+        })
+        .WithName("GetDetailedHealth")
+        .WithTags("Health")
+        .Produces(200)
+        .Produces(503);
 
         // Server-Sent Events endpoint for real-time dashboard updates
         app.MapGet("/api/events/stream", async (HttpContext ctx, CancellationToken ct) =>

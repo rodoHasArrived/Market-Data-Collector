@@ -63,7 +63,9 @@ public static class IBEndpoints
                     $"Account minimum: ${IBApiLimits.MinAccountBalanceForMarketData}"
                 }
             }, jsonOptions);
-        });
+        })
+        .WithName("GetIBStatus")
+        .Produces(200);
 
         // IB error code reference - returns all known error codes with descriptions
         group.MapGet(UiApiRoutes.IBErrorCodes, () =>
@@ -83,7 +85,9 @@ public static class IBEndpoints
                 totalCount = errorList.Length,
                 documentation = "https://interactivebrokers.github.io/tws-api/message_codes.html"
             }, jsonOptions);
-        });
+        })
+        .WithName("GetIBErrorCodes")
+        .Produces(200);
 
         // IB API limits reference - returns rate limits and constraints
         group.MapGet(UiApiRoutes.IBLimits, () =>
@@ -118,6 +122,8 @@ public static class IBEndpoints
                     snapshotCostUSD = IBApiLimits.SnapshotCostUSD
                 }
             }, jsonOptions);
-        });
+        })
+        .WithName("GetIBLimits")
+        .Produces(200);
     }
 }

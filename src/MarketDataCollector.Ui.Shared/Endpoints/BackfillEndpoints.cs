@@ -30,7 +30,9 @@ public static class BackfillEndpoints
         {
             var providers = backfill.DescribeProviders();
             return Results.Json(providers, jsonOptions);
-        });
+        })
+        .WithName("GetBackfillProviders")
+        .Produces(200);
 
         // Get last backfill status
         group.MapGet(UiApiRoutes.BackfillStatus, (BackfillCoordinator backfill) =>
@@ -39,7 +41,10 @@ public static class BackfillEndpoints
             return status is null
                 ? Results.NotFound()
                 : Results.Json(status, jsonOptionsIndented);
-        });
+        })
+        .WithName("GetBackfillStatus")
+        .Produces(200)
+        .Produces(404);
 
         // Preview backfill (dry run - shows what would be fetched)
         group.MapPost(UiApiRoutes.BackfillRun + "/preview", async (BackfillCoordinator backfill, BackfillRequestDto req) =>
@@ -66,7 +71,11 @@ public static class BackfillEndpoints
             {
                 return Results.BadRequest(new { error = "Backfill preview failed. Check provider name and symbol format." });
             }
-        }).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
+        })
+        .WithName("PreviewBackfill")
+        .Produces(200)
+        .Produces(400)
+        .RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
         // Run backfill
         group.MapPost(UiApiRoutes.BackfillRun, async (BackfillCoordinator backfill, BackfillRequestDto req) =>
@@ -93,7 +102,11 @@ public static class BackfillEndpoints
             {
                 return Results.BadRequest(new { error = "Backfill execution failed. Check provider name and symbol format." });
             }
-        }).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
+        })
+        .WithName("RunBackfill")
+        .Produces(200)
+        .Produces(400)
+        .RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
         // Backfill progress endpoint
         group.MapGet("/api/backfill/progress", (BackfillCoordinator backfill) =>
@@ -102,7 +115,9 @@ public static class BackfillEndpoints
             return progress is not null
                 ? Results.Json(progress, jsonOptions)
                 : Results.Json(new { message = "No active backfill operation", symbols = Array.Empty<object>() }, jsonOptions);
-        });
+        })
+        .WithName("GetBackfillProgress")
+        .Produces(200);
     }
 
     private static IResult? ValidateBackfillRequest(BackfillRequestDto req)

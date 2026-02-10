@@ -52,6 +52,7 @@ public sealed class PendingOperationsQueueService
         new(() => new PendingOperationsQueueService());
 
     private readonly ConcurrentQueue<PendingOperation> _queue = new();
+    private readonly ConcurrentDictionary<string, Func<object?, Task>> _handlers = new();
     private bool _initialized;
 
     /// <summary>
@@ -92,6 +93,27 @@ public sealed class PendingOperationsQueueService
         _initialized = false;
         _queue.Clear();
         return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Registers a handler for a specific operation type.
+    /// </summary>
+    /// <param name="operationType">The operation type to handle.</param>
+    /// <param name="handler">The async handler that processes the operation payload.</param>
+    public void RegisterHandler(string operationType, Func<object?, Task> handler)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(operationType);
+        ArgumentNullException.ThrowIfNull(handler);
+        _handlers[operationType] = handler;
+    }
+
+    /// <summary>
+    /// Removes a handler for a specific operation type.
+    /// </summary>
+    /// <param name="operationType">The operation type to unregister.</param>
+    public void UnregisterHandler(string operationType)
+    {
+        _handlers.TryRemove(operationType, out _);
     }
 
     /// <summary>
@@ -145,11 +167,12 @@ public sealed class PendingOperationsQueueService
     }
 
     /// <summary>
-    /// Processes all pending operations by dequeuing and executing them sequentially.
+    /// Processes all pending operations by dequeuing and executing their registered handlers.
     /// Operations that fail and have retries remaining are re-enqueued.
+    /// Operations with no registered handler are silently discarded.
     /// </summary>
     /// <returns>A task representing the async operation.</returns>
-    public Task ProcessAllAsync()
+    public async Task ProcessAllAsync()
     {
         var count = _queue.Count;
         for (var i = 0; i < count; i++)
@@ -157,12 +180,21 @@ public sealed class PendingOperationsQueueService
             if (!_queue.TryDequeue(out var op))
                 break;
 
-            // Operations are dequeued and considered processed.
-            // In a full implementation, the operation's Action/handler would be invoked here.
-            // Failed operations with retries remaining would be re-enqueued:
-            // if (failed && op.RetryCount < op.MaxRetries) { op.RetryCount++; _queue.Enqueue(op); }
-        }
+            if (!_handlers.TryGetValue(op.OperationType, out var handler))
+                continue;
 
-        return Task.CompletedTask;
+            try
+            {
+                await handler(op.Payload).ConfigureAwait(false);
+            }
+            catch
+            {
+                if (op.RetryCount < op.MaxRetries)
+                {
+                    op.RetryCount++;
+                    _queue.Enqueue(op);
+                }
+            }
+        }
     }
 }
