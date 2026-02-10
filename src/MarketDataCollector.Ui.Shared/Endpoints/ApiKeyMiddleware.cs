@@ -194,7 +194,7 @@ public sealed class ApiKeyRateLimitMiddleware
         {
             lock (entry)
             {
-                if (DateTime.UtcNow - entry.WindowStart >= cutoff)
+                if (entry.WindowStart <= cutoff)
                 {
                     _clients.TryRemove(key, out _);
                 }

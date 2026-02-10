@@ -16,10 +16,10 @@ public class CommandDispatcherTests
         var command = new TestCommand("--test", exitCode: 0);
         var dispatcher = new CommandDispatcher(command);
 
-        var (handled, exitCode) = await dispatcher.TryDispatchAsync(new[] { "--test" });
+        var (handled, result) = await dispatcher.TryDispatchAsync(new[] { "--test" });
 
         handled.Should().BeTrue();
-        exitCode.Should().Be(0);
+        result.ExitCode.Should().Be(0);
     }
 
     [Fact]
@@ -28,10 +28,10 @@ public class CommandDispatcherTests
         var command = new TestCommand("--test", exitCode: 0);
         var dispatcher = new CommandDispatcher(command);
 
-        var (handled, exitCode) = await dispatcher.TryDispatchAsync(new[] { "--other" });
+        var (handled, result) = await dispatcher.TryDispatchAsync(new[] { "--other" });
 
         handled.Should().BeFalse();
-        exitCode.Should().Be(0);
+        result.ExitCode.Should().Be(0);
     }
 
     [Fact]
@@ -40,10 +40,10 @@ public class CommandDispatcherTests
         var command = new TestCommand("--fail", exitCode: 1);
         var dispatcher = new CommandDispatcher(command);
 
-        var (handled, exitCode) = await dispatcher.TryDispatchAsync(new[] { "--fail" });
+        var (handled, result) = await dispatcher.TryDispatchAsync(new[] { "--fail" });
 
         handled.Should().BeTrue();
-        exitCode.Should().Be(1);
+        result.ExitCode.Should().Be(1);
     }
 
     [Fact]
@@ -53,10 +53,10 @@ public class CommandDispatcherTests
         var cmd2 = new TestCommand("--second", exitCode: 20);
         var dispatcher = new CommandDispatcher(cmd1, cmd2);
 
-        var (handled, exitCode) = await dispatcher.TryDispatchAsync(new[] { "--second" });
+        var (handled, result) = await dispatcher.TryDispatchAsync(new[] { "--second" });
 
         handled.Should().BeTrue();
-        exitCode.Should().Be(20);
+        result.ExitCode.Should().Be(20);
     }
 
     [Fact]
@@ -83,7 +83,7 @@ public class CommandDispatcherTests
 
         public bool CanHandle(string[] args) => args.Contains(_flag);
 
-        public Task<int> ExecuteAsync(string[] args, CancellationToken ct = default)
-            => Task.FromResult(_exitCode);
+        public Task<CliResult> ExecuteAsync(string[] args, CancellationToken ct = default)
+            => Task.FromResult(_exitCode == 0 ? CliResult.Ok() : CliResult.Fail(_exitCode));
     }
 }
