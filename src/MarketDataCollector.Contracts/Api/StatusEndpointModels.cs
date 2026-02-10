@@ -7,27 +7,51 @@ namespace MarketDataCollector.Contracts.Api;
 /// </summary>
 public sealed record BackpressureStatusDto
 {
+    /// <summary>
+    /// Gets a value indicating whether backpressure is currently active.
+    /// </summary>
     [JsonPropertyName("isActive")]
     public bool IsActive { get; init; }
 
+    /// <summary>
+    /// Gets the current backpressure level (none, low, medium, high, critical).
+    /// </summary>
     [JsonPropertyName("level")]
     public string Level { get; init; } = "none";
 
+    /// <summary>
+    /// Gets the queue utilization percentage (0.0 to 1.0).
+    /// </summary>
     [JsonPropertyName("queueUtilization")]
     public double QueueUtilization { get; init; }
 
+    /// <summary>
+    /// Gets the total number of dropped events due to backpressure.
+    /// </summary>
     [JsonPropertyName("droppedEvents")]
     public long DroppedEvents { get; init; }
 
+    /// <summary>
+    /// Gets the rate of dropped events per second.
+    /// </summary>
     [JsonPropertyName("dropRate")]
     public double DropRate { get; init; }
 
+    /// <summary>
+    /// Gets the duration in seconds that backpressure has been active.
+    /// </summary>
     [JsonPropertyName("durationSeconds")]
     public double DurationSeconds { get; init; }
 
+    /// <summary>
+    /// Gets an optional human-readable message about the backpressure condition.
+    /// </summary>
     [JsonPropertyName("message")]
     public string? Message { get; init; }
 
+    /// <summary>
+    /// Gets a value indicating whether the queue depth has reached a warning threshold.
+    /// </summary>
     [JsonPropertyName("queueDepthWarning")]
     public bool QueueDepthWarning { get; init; }
 }
@@ -37,9 +61,15 @@ public sealed record BackpressureStatusDto
 /// </summary>
 public sealed record ProviderLatencyStatsDto
 {
+    /// <summary>
+    /// Gets the name of the provider.
+    /// </summary>
     [JsonPropertyName("provider")]
     public string Provider { get; init; } = string.Empty;
 
+    /// <summary>
+    /// Gets the average latency in milliseconds.
+    /// </summary>
     [JsonPropertyName("averageMs")]
     public double AverageMs { get; init; }
 
