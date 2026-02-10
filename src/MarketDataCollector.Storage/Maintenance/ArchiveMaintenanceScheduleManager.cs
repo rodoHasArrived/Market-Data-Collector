@@ -198,6 +198,43 @@ public sealed class ArchiveMaintenanceScheduleManager : IArchiveMaintenanceSched
         );
     }
 
+    /// <summary>
+    /// Gets a summary of execution history for a specific schedule.
+    /// </summary>
+    public object? GetScheduleSummary(string scheduleId)
+    {
+        if (!_schedules.TryGetValue(scheduleId, out var schedule))
+            return null;
+
+        var executions = _executionHistory.GetExecutionsForSchedule(scheduleId, 10);
+        var successRate = schedule.ExecutionCount > 0
+            ? (double)schedule.SuccessfulExecutions / schedule.ExecutionCount * 100
+            : 0;
+
+        return new
+        {
+            scheduleId = schedule.ScheduleId,
+            name = schedule.Name,
+            enabled = schedule.Enabled,
+            lastExecutedAt = schedule.LastExecutedAt,
+            lastExecutionStatus = schedule.LastExecutionStatus?.ToString(),
+            nextExecutionAt = schedule.NextExecutionAt,
+            totalExecutions = schedule.ExecutionCount,
+            successfulExecutions = schedule.SuccessfulExecutions,
+            failedExecutions = schedule.FailedExecutions,
+            successRate = Math.Round(successRate, 2),
+            recentExecutions = executions.Take(5).Select(e => new
+            {
+                executionId = e.ExecutionId,
+                startedAt = e.StartedAt,
+                completedAt = e.CompletedAt,
+                status = e.Status.ToString(),
+                duration = e.Duration,
+                filesProcessed = e.FilesProcessed
+            }).ToArray()
+        };
+    }
+
     public void UpdateScheduleAfterExecution(string scheduleId, MaintenanceExecution execution)
     {
         if (!_schedules.TryGetValue(scheduleId, out var schedule))

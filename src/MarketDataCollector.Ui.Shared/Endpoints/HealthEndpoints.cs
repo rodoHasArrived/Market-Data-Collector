@@ -131,7 +131,7 @@ public static class HealthEndpoints
                 totalBytes,
                 fileCount,
                 namingConvention = storageOptions?.NamingConvention.ToString() ?? "BySymbol",
-                compressionEnabled = storageOptions?.CompressEnabled ?? false,
+                compressionEnabled = storageOptions?.Compress ?? false,
                 timestamp = DateTimeOffset.UtcNow
             }, jsonOptions);
         })
