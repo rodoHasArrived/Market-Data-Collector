@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
+using MarketDataCollector.Application.Config;
 using MarketDataCollector.Contracts.Domain.Enums;
 using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Events;
@@ -49,6 +50,50 @@ namespace MarketDataCollector.Application.Serialization;
 [JsonSerializable(typeof(AggregateBarPayload))]
 [JsonSerializable(typeof(Dictionary<string, object>))]
 [JsonSerializable(typeof(Dictionary<string, JsonElement>))]
+// Configuration types
+[JsonSerializable(typeof(AppConfig))]
+[JsonSerializable(typeof(StorageConfig))]
+[JsonSerializable(typeof(SourceRegistryConfig))]
+[JsonSerializable(typeof(AlpacaOptions))]
+[JsonSerializable(typeof(PolygonOptions))]
+[JsonSerializable(typeof(IBOptions))]
+[JsonSerializable(typeof(DataSourceConfig))]
+[JsonSerializable(typeof(DataSourceConfig[]))]
+[JsonSerializable(typeof(List<DataSourceConfig>))]
+[JsonSerializable(typeof(DataSourcesConfig))]
+[JsonSerializable(typeof(FailoverRuleConfig))]
+[JsonSerializable(typeof(FailoverRuleConfig[]))]
+[JsonSerializable(typeof(List<FailoverRuleConfig>))]
+[JsonSerializable(typeof(SymbolMappingsConfig))]
+[JsonSerializable(typeof(SymbolMappingConfig))]
+[JsonSerializable(typeof(SymbolMappingConfig[]))]
+[JsonSerializable(typeof(List<SymbolMappingConfig>))]
+[JsonSerializable(typeof(BackfillConfig))]
+[JsonSerializable(typeof(BackfillJobsConfig))]
+[JsonSerializable(typeof(ScheduledBackfillConfig))]
+[JsonSerializable(typeof(DefaultScheduleConfig))]
+[JsonSerializable(typeof(DefaultScheduleConfig[]))]
+[JsonSerializable(typeof(List<DefaultScheduleConfig>))]
+[JsonSerializable(typeof(BackfillProvidersConfig))]
+[JsonSerializable(typeof(YahooFinanceConfig))]
+[JsonSerializable(typeof(NasdaqDataLinkConfig))]
+[JsonSerializable(typeof(StooqConfig))]
+[JsonSerializable(typeof(OpenFigiConfig))]
+[JsonSerializable(typeof(AlpacaBackfillConfig))]
+[JsonSerializable(typeof(TiingoConfig))]
+[JsonSerializable(typeof(PolygonConfig))]
+[JsonSerializable(typeof(AlphaVantageConfig))]
+[JsonSerializable(typeof(FinnhubConfig))]
+[JsonSerializable(typeof(DerivativesConfig))]
+[JsonSerializable(typeof(IndexOptionsConfig))]
+[JsonSerializable(typeof(StockSharpConfig))]
+[JsonSerializable(typeof(RithmicConfig))]
+[JsonSerializable(typeof(IQFeedConfig))]
+[JsonSerializable(typeof(CQGConfig))]
+[JsonSerializable(typeof(StockSharpIBConfig))]
+[JsonSerializable(typeof(BinanceConfig))]
+[JsonSerializable(typeof(CoinbaseConfig))]
+[JsonSerializable(typeof(KrakenConfig))]
 public partial class MarketDataJsonContext : JsonSerializerContext
 {
     /// <summary>
