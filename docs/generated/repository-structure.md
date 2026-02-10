@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-10 02:31:48 UTC
+> Auto-generated on 2026-02-10 02:56:14 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -522,7 +522,8 @@ Market-Data-Collector/
 │   │   │   ├── Core/
 │   │   │   │   ...
 │   │   │   ├── EventSchemaValidator.cs
-│   │   │   └── IConnectionHealthMonitor.cs
+│   │   │   ├── IConnectionHealthMonitor.cs
+│   │   │   └── MigrationDiagnostics.cs
 │   │   ├── Performance/
 │   │   │   └── Performance/
 │   │   │       ...
@@ -848,12 +849,18 @@ Market-Data-Collector/
 │   │   │   ├── IAdminMaintenanceService.cs
 │   │   │   ├── IAdvancedAnalyticsService.cs
 │   │   │   ├── IConnectionService.cs
+│   │   │   ├── IContextMenuService.cs
 │   │   │   ├── IExportPresetService.cs
+│   │   │   ├── IFirstRunService.cs
 │   │   │   ├── IFormValidationService.cs
+│   │   │   ├── IInfoBarService.cs
 │   │   │   ├── IKeyboardShortcutService.cs
 │   │   │   ├── INavigationService.cs
 │   │   │   ├── IRetentionAssuranceService.cs
 │   │   │   ├── IStorageService.cs
+│   │   │   ├── ITooltipService.cs
+│   │   │   ├── IUwpAnalysisExportService.cs
+│   │   │   ├── IUwpDataQualityService.cs
 │   │   │   └── IWorkspaceService.cs
 │   │   ├── Controls/
 │   │   │   ├── AlertBanner.xaml

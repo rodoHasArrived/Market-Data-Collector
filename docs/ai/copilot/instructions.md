@@ -629,7 +629,8 @@ Market-Data-Collector/
 │   │   │   ├── Core/
 │   │   │   │   ...
 │   │   │   ├── EventSchemaValidator.cs
-│   │   │   └── IConnectionHealthMonitor.cs
+│   │   │   ├── IConnectionHealthMonitor.cs
+│   │   │   └── MigrationDiagnostics.cs
 │   │   ├── Performance/
 │   │   │   └── Performance/
 │   │   │       ...
@@ -955,12 +956,18 @@ Market-Data-Collector/
 │   │   │   ├── IAdminMaintenanceService.cs
 │   │   │   ├── IAdvancedAnalyticsService.cs
 │   │   │   ├── IConnectionService.cs
+│   │   │   ├── IContextMenuService.cs
 │   │   │   ├── IExportPresetService.cs
+│   │   │   ├── IFirstRunService.cs
 │   │   │   ├── IFormValidationService.cs
+│   │   │   ├── IInfoBarService.cs
 │   │   │   ├── IKeyboardShortcutService.cs
 │   │   │   ├── INavigationService.cs
 │   │   │   ├── IRetentionAssuranceService.cs
 │   │   │   ├── IStorageService.cs
+│   │   │   ├── ITooltipService.cs
+│   │   │   ├── IUwpAnalysisExportService.cs
+│   │   │   ├── IUwpDataQualityService.cs
 │   │   │   └── IWorkspaceService.cs
 │   │   ├── Controls/
 │   │   │   ├── AlertBanner.xaml
