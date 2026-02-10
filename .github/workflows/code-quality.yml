@@ -155,7 +155,7 @@ jobs:
 
       - name: Upload build log
         if: always() && steps.analyze.outputs.has_issues == '1'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: build-output
           path: build-output.log

@@ -70,7 +70,7 @@ jobs:
 
     - name: Upload test results on failure
       if: failure()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: test-failure-logs-${{ matrix.os }}
         path: |
@@ -102,7 +102,7 @@ jobs:
           -- --exporters json
 
     - name: Upload benchmark results
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: benchmark-results
         path: BenchmarkDotNet.Artifacts/results/

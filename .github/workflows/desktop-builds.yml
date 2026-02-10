@@ -96,7 +96,7 @@ jobs:
         run: node build/node/generate-icons.mjs
 
       - name: Upload generated assets
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: generated-assets
           path: src/MarketDataCollector.Uwp/Assets/*.png
@@ -286,7 +286,7 @@ jobs:
         shell: pwsh
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: MarketDataCollector.Desktop-${{ matrix.rid }}
           path: MarketDataCollector.Desktop-${{ matrix.rid }}.zip
@@ -294,7 +294,7 @@ jobs:
 
       - name: Upload build logs
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: uwp-build-logs-${{ matrix.rid }}
           path: |
@@ -344,7 +344,7 @@ jobs:
             -DestinationPath MarketDataCollector.Desktop-msix-x64.zip
 
       - name: Upload MSIX artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: MarketDataCollector.Desktop-msix-x64
           path: MarketDataCollector.Desktop-msix-x64.zip
@@ -440,7 +440,7 @@ jobs:
         run: dotnet build ${{ env.WPF_PROJECT }} -c ${{ env.BUILD_CONFIG }} --no-restore -p:TargetFramework=net9.0-windows
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: wpf-build-output
           path: src/MarketDataCollector.Wpf/bin/${{ env.BUILD_CONFIG }}/
@@ -514,14 +514,14 @@ jobs:
           Compress-Archive -Path "./publish/${{ matrix.rid }}-fdd/*" -DestinationPath "MarketDataCollector.Desktop-${{ matrix.rid }}-fdd.zip"
 
       - name: Upload self-contained artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: MarketDataCollector.Desktop-${{ matrix.rid }}-selfcontained
           path: MarketDataCollector.Desktop-${{ matrix.rid }}-selfcontained.zip
           retention-days: 30
 
       - name: Upload framework-dependent artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: MarketDataCollector.Desktop-${{ matrix.rid }}-fdd
           path: MarketDataCollector.Desktop-${{ matrix.rid }}-fdd.zip

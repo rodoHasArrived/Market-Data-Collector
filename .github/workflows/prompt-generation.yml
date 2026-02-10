@@ -236,7 +236,7 @@ jobs:
 
       - name: Upload generation results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: prompt-generation-results
           path: |
