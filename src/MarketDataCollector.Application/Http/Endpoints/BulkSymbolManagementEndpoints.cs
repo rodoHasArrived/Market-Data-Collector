@@ -1,4 +1,5 @@
 using System.Text.Json;
+using MarketDataCollector.Application.Subscriptions.Models;
 using MarketDataCollector.Application.Subscriptions.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
