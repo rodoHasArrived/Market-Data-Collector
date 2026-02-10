@@ -99,7 +99,7 @@ jobs:
         dotnet run \
           --project benchmarks/MarketDataCollector.Benchmarks/MarketDataCollector.Benchmarks.csproj \
           -c Release \
-          -- --filter * --exporters json
+          -- --exporters json
 
     - name: Upload benchmark results
       uses: actions/upload-artifact@v4
