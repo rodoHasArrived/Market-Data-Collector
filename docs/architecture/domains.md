@@ -1,62 +1,109 @@
 # Domain Model
 
-## MarketEvent
+This document describes the **runtime domain contracts** used by the collectors and event pipeline.
+Primary source of truth lives in:
 
-All domain activity is normalized into a single event type:
+- `src/MarketDataCollector.Contracts/Domain/Events/`
+- `src/MarketDataCollector.Contracts/Domain/Models/`
+- `src/MarketDataCollector.Domain/Collectors/`
+
+## MarketEvent Envelope
+
+All emitted domain activity is wrapped in `MarketEvent`:
 
 ```csharp
-record MarketEvent(
+public sealed record MarketEvent(
     DateTimeOffset Timestamp,
     string Symbol,
     MarketEventType Type,
-    MarketEventPayload Payload
+    MarketEventPayload? Payload,
+    long Sequence = 0,
+    string Source = "IB",
+    int SchemaVersion = 1,
+    MarketEventTier Tier = MarketEventTier.Raw
 );
 ```
 
-Each payload is a strongly-typed record derived from `MarketEventPayload`; the `Type` field disambiguates serialization. Supported event types include:
-- `Trade` – tick-by-tick trade prints with sequence validation
-- `L2Snapshot` – full order book state after each depth update
-- `BboQuote` – best bid/offer snapshots with spread and mid-price
-- `OrderFlow` – rolling order-flow statistics (VWAP, imbalance)
-- `Integrity` – trade sequence anomalies (gaps, out-of-order)
-- `DepthIntegrity` – order book integrity failures
-- `HistoricalBar` – OHLCV bars from historical backfill providers
-- `Heartbeat` – connection health and keep-alive signals
+### Envelope fields
+
+- `Timestamp` – canonical event timestamp used by the pipeline.
+- `Symbol` – instrument identifier (or `SYSTEM` for platform events like heartbeat).
+- `Type` – discriminator for payload parsing and downstream routing.
+- `Payload` – strongly typed `MarketEventPayload` instance (nullable for heartbeat/system events).
+- `Sequence` – monotonic sequence when available from source or collector.
+- `Source` – provider/source identifier (examples: `IB`, `ALPACA`, `stooq`).
+- `SchemaVersion` – payload schema compatibility marker.
+- `Tier` – event tier classification (raw/derived/normalized workflows).
+
+### Current `MarketEventType` values
+
+- `Unknown`
+- `L2Snapshot`
+- `BboQuote`
+- `Trade`
+- `OrderFlow`
+- `Heartbeat`
+- `ConnectionStatus`
+- `Integrity`
+- `HistoricalBar`
+- `HistoricalQuote`
+- `HistoricalTrade`
+- `HistoricalAuction`
+- `AggregateBar`
+- `Quote`
+- `Depth`
+- `OptionQuote`
+- `OptionTrade`
+- `OptionGreeks`
+- `OptionChain`
+- `OpenInterest`
+
+> Note: not every enum member is currently emitted by the three core collectors (`TradeDataCollector`, `MarketDepthCollector`, `QuoteCollector`); several are used by adapters/backfill paths.
+
+---
+
+## Collector Responsibilities
 
 ## TradeDataCollector
-* Ingests tick-by-tick trades via `OnTrade(MarketTradeUpdate)`
-* Validates sequence continuity per symbol/stream
-* Infers aggressor side using `IQuoteStateStore` (BBO context) when upstream provides `Unknown`
-* Maintains rolling order-flow statistics (VWAP, buy/sell volume splits, imbalance)
-* Emits:
-  - `Trade`
-  - `OrderFlowStatistics`
-  - `IntegrityEvent` (on sequence gaps or out-of-order)
 
-### Trade payload
+Processes `MarketTradeUpdate` and emits:
+
+- `Trade` events
+- `OrderFlow` events (payload: `OrderFlowStatistics`)
+- `Integrity` events (payload: `IntegrityEvent`) for sequence anomalies
+
+Behavioral notes:
+
+- Validates sequence continuity per symbol/stream.
+- Infers aggressor side from quote context (`IQuoteStateStore`) when feed-side aggressor is unknown.
+- Maintains rolling order-flow stats (VWAP + buy/sell/unknown volume splits).
+
+### `Trade` payload
 
 ```csharp
-record Trade(
-    DateTimeOffset Timestamp,
-    string Symbol,
-    decimal Price,
-    long Size,
-    AggressorSide Aggressor,
-    long? SequenceNumber,
-    string? StreamId,
-    string? Venue
-);
+public sealed record Trade : MarketEventPayload
+{
+    DateTimeOffset Timestamp;
+    string Symbol;
+    decimal Price;
+    long Size;
+    AggressorSide Aggressor;
+    long SequenceNumber;
+    string? StreamId;
+    string? Venue;
+}
 ```
 
-* **Timestamp** – exchange timestamp if available; otherwise when the update was observed.
-* **Price / Size** – raw print values from the feed.
-* **Aggressor** – derived when quote context is available (`Buy` if price >= ask, `Sell` if price <= bid, otherwise `Unknown`).
-* **SequenceNumber / StreamId / Venue** – passed through for downstream filtering, TCA, and reconciliation.
+Validation highlights:
 
-### OrderFlowStatistics payload
+- `Price > 0`
+- `Size >= 0`
+- non-empty `Symbol`
+
+### `OrderFlowStatistics` payload
 
 ```csharp
-record OrderFlowStatistics(
+public sealed record OrderFlowStatistics(
     DateTimeOffset Timestamp,
     string Symbol,
     long BuyVolume,
@@ -66,67 +113,64 @@ record OrderFlowStatistics(
     decimal Imbalance,
     int TradeCount,
     long SequenceNumber,
-    string? StreamId,
-    string? Venue
-);
+    string? StreamId = null,
+    string? Venue = null
+) : MarketEventPayload;
 ```
 
-Rolling statistics emitted after each trade to support lightweight monitoring without replaying the full tape:
+Derived values include:
 
-* Trade count and cumulative volume (buy / sell / unknown)
-* Volume-weighted average price (VWAP)
-* Imbalance ratio: `(BuyVolume - SellVolume) / TotalVolume`
+- VWAP over the collector window/state
+- imbalance ratio from directional volume
+- cumulative directional volume and trade count
 
-### IntegrityEvent
+### `IntegrityEvent` payload
 
-Emitted when trade sequence validation fails:
+Represents data continuity/quality issues (for example sequence gaps and out-of-order updates), including severity, description, error code, and sequence context.
 
-* **OutOfOrder** – received sequence <= last sequence (trade is rejected)
-* **SequenceGap** – received sequence > expected next (trade is accepted but stats marked stale)
+---
 
 ## MarketDepthCollector
-* Extends `SymbolSubscriptionTracker` for thread-safe subscription management
-* Maintains L2 order books per symbol via `OnDepth(MarketDepthUpdate)`
-* Applies incremental updates (insert/update/delete)
-* Freezes symbol stream on integrity violations
-* Emits:
-  - `LOBSnapshot`
-  - `DepthIntegrityEvent`
 
-### Integrity Guarantees
-If an invalid update is detected:
-* Symbol is frozen (`IsSymbolStreamStale` returns true)
-* `DepthIntegrityEvent` is emitted with detailed context
-* Operator must call `ResetSymbolStream(symbol)` to resume
+Processes `MarketDepthUpdate` and emits:
 
-### LOBSnapshot payload
+- `L2Snapshot` events (payload: `LOBSnapshot`)
+- `Integrity` events (payload: `DepthIntegrityEvent`) for depth stream violations
+
+Behavioral notes:
+
+- Tracks per-symbol order book buffers.
+- Applies insert/update/delete operations by side and position.
+- Freezes symbol streams on integrity failures until reset.
+
+### `LOBSnapshot` payload
 
 ```csharp
-record LOBSnapshot(
+public sealed record LOBSnapshot(
     DateTimeOffset Timestamp,
     string Symbol,
-    OrderBookLevel[] Bids,
-    OrderBookLevel[] Asks,
-    double? MidPrice,
-    double? MicroPrice,
-    double? Imbalance,
-    MarketState MarketState,
-    long SequenceNumber,
-    string? StreamId,
-    string? Venue
-);
+    IReadOnlyList<OrderBookLevel> Bids,
+    IReadOnlyList<OrderBookLevel> Asks,
+    decimal? MidPrice = null,
+    decimal? MicroPrice = null,
+    decimal? Imbalance = null,
+    MarketState MarketState = MarketState.Normal,
+    long SequenceNumber = 0,
+    string? StreamId = null,
+    string? Venue = null
+) : MarketEventPayload;
 ```
 
-* Sorted bid/ask ladders with `OrderBookLevel(Side, Level, Price, Size, MarketMaker)`
-* Derived mid-price: `(BestBid + BestAsk) / 2`
-* Top-of-book imbalance: `(BidSize - AskSize) / (BidSize + AskSize)`
-* Sequence numbers for replay continuity detection
-* Optional `StreamId` / `Venue` for multi-source reconciliation
+Common derived metrics:
 
-### DepthIntegrityEvent payload
+- `MidPrice = (BestBid + BestAsk) / 2` when both sides are present
+- top-of-book imbalance
+- optional micro-price when available
+
+### `DepthIntegrityEvent` payload
 
 ```csharp
-record DepthIntegrityEvent(
+public sealed record DepthIntegrityEvent(
     DateTimeOffset Timestamp,
     string Symbol,
     DepthIntegrityKind Kind,
@@ -135,30 +179,31 @@ record DepthIntegrityEvent(
     DepthOperation Operation,
     OrderBookSide Side,
     long SequenceNumber,
-    string? StreamId,
-    string? Venue
-);
+    string? StreamId = null,
+    string? Venue = null
+) : MarketEventPayload;
 ```
 
-Provides operators with enough context to respond quickly:
+Provides actionable context for operators and automated recovery logic.
 
-* **Kind** – `Gap`, `OutOfOrder`, `InvalidPosition`, `Stale`, or `Unknown`
-* **Position / Operation / Side** – the offending update details
-* **Description** – human-readable error message
-* Suggested action: resubscribe the symbol or call `ResetSymbolStream`
+---
 
 ## QuoteCollector (BBO)
 
-* Tracks the latest best-bid/offer snapshot per symbol via `OnQuote(MarketQuoteUpdate)`
-* Implements `IQuoteStateStore` interface for lookup by other collectors
-* Maintains monotonically increasing per-symbol sequence numbers
-* Emits:
-  - `BboQuote`
+Processes `MarketQuoteUpdate` and emits:
 
-### BboQuote payload
+- `BboQuote` events (payload: `BboQuotePayload`)
+
+Behavioral notes:
+
+- Maintains latest per-symbol BBO snapshot cache.
+- Maintains collector-local monotonically increasing quote sequence per symbol.
+- Implements `IQuoteStateStore` for downstream consumers.
+
+### `BboQuotePayload`
 
 ```csharp
-record BboQuotePayload(
+public sealed record BboQuotePayload(
     DateTimeOffset Timestamp,
     string Symbol,
     decimal BidPrice,
@@ -168,89 +213,58 @@ record BboQuotePayload(
     decimal? MidPrice,
     decimal? Spread,
     long SequenceNumber,
-    string? StreamId,
-    string? Venue
-);
+    string? StreamId = null,
+    string? Venue = null
+) : MarketEventPayload;
 ```
 
-* Bid/ask price and size with sequence numbers and stream identifiers.
-* Derived mid-price and spread fields are populated only when both sides are positive and `AskPrice >= BidPrice`.
-* Optional venue and stream IDs help downstream consumers reconcile overlapping IB/Alpaca feeds.
+`TradeDataCollector` uses quote state to improve aggressor classification when prints do not explicitly include side.
 
-### IQuoteStateStore Interface
+### `IQuoteStateStore`
 
 ```csharp
-interface IQuoteStateStore
+public interface IQuoteStateStore
 {
-    bool TryGet(string symbol, out BboQuotePayload quote);
+    bool TryGet(string symbol, out BboQuotePayload? quote);
 }
 ```
 
-* `TradeDataCollector` uses this to classify trade aggressor side.
-* `QuoteCollector.Snapshot()` returns all current BBO states for UI/API access.
+---
 
-### Consumers
+## Historical Domain Payloads
 
-* `TradeDataCollector` uses the current BBO when classifying trade aggressor side.
-* `OrderFlowStatistics` includes buy/sell splits when BBO context is available.
-* Operators can snapshot current quotes through the API/UI without replaying stored events.
+## `HistoricalBar`
 
-## HistoricalBar
-
-Historical OHLCV bars from backfill providers (Alpaca, Yahoo, Stooq, etc.).
-
-### HistoricalBar payload
+Current backfill bar model is daily-session focused:
 
 ```csharp
-record HistoricalBar(
-    DateTimeOffset Timestamp,
-    string Symbol,
-    decimal Open,
-    decimal High,
-    decimal Low,
-    decimal Close,
-    long Volume,
-    decimal? VWAP,
-    long? TradeCount,
-    string BarSize,
-    string Provider,
-    string? Adjustment
-);
+public sealed record HistoricalBar : MarketEventPayload
+{
+    string Symbol;
+    DateOnly SessionDate;
+    decimal Open;
+    decimal High;
+    decimal Low;
+    decimal Close;
+    long Volume;
+    string Source;
+    long SequenceNumber;
+}
 ```
 
-* **Open/High/Low/Close** – OHLCV price data
-* **Volume** – Total shares traded in the bar
-* **VWAP** – Volume-weighted average price (when available)
-* **TradeCount** – Number of trades in the bar (when available)
-* **BarSize** – Resolution: `1min`, `5min`, `1hour`, `1day`, etc.
-* **Provider** – Source provider (alpaca, yahoo, stooq, nasdaq)
-* **Adjustment** – Price adjustment applied: `raw`, `split`, `dividend`, `all`
+Key points:
 
-## Heartbeat
-
-Connection health and keep-alive signals emitted periodically.
-
-### Heartbeat payload
-
-```csharp
-record Heartbeat(
-    DateTimeOffset Timestamp,
-    string Provider,
-    string Status,
-    long UptimeSeconds,
-    int ActiveSubscriptions,
-    long EventsProcessed
-);
-```
-
-* **Provider** – Data provider name (IB, Alpaca, etc.)
-* **Status** – Connection status: `Connected`, `Disconnected`, `Reconnecting`
-* **UptimeSeconds** – Time since connection established
-* **ActiveSubscriptions** – Number of active symbol subscriptions
-* **EventsProcessed** – Total events since startup
+- Includes strict OHLC validation (`Low <= Open/Close <= High`, all positive).
+- Stores `SessionDate` rather than arbitrary timestamp.
+- `ToTimestampUtc()` maps session date to midnight UTC when timestamp normalization is required.
 
 ---
 
-**Version:** 1.6.1
-**Last Updated:** 2026-01-30
-**See Also:** [Architecture Overview](overview.md) | [C4 Diagrams](c4-diagrams.md) | [Why This Architecture](why-this-architecture.md) | [ADR Index](../adr/README.md)
+## Practical Mapping Summary
+
+- **Trade tape + order-flow** → `TradeDataCollector`
+- **Order book (L2)** → `MarketDepthCollector`
+- **Best bid/offer cache + events** → `QuoteCollector`
+- **Backfill bars** → `HistoricalBar` payloads on `MarketEventType.HistoricalBar`
+
+This split keeps domain logic deterministic, testable, and independent from provider adapter implementation details.
