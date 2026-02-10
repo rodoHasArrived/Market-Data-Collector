@@ -169,6 +169,9 @@ public static class UiEndpoints
         app.MapIBEndpoints(jsonOptions);
         app.MapSymbolMappingEndpoints(jsonOptions);
         app.MapLiveDataEndpoints(jsonOptions);
+        app.MapSymbolEndpoints(jsonOptions);
+        app.MapStorageEndpoints(jsonOptions);
+        app.MapStorageQualityEndpoints(jsonOptions);
         app.MapStubEndpoints();
 
         // Map quality drops endpoints (C3/#16)
@@ -216,6 +219,9 @@ public static class UiEndpoints
         app.MapIBEndpoints(jsonOptions);
         app.MapSymbolMappingEndpoints(jsonOptions);
         app.MapLiveDataEndpoints(jsonOptions);
+        app.MapSymbolEndpoints(jsonOptions);
+        app.MapStorageEndpoints(jsonOptions);
+        app.MapStorageQualityEndpoints(jsonOptions);
         app.MapStubEndpoints();
 
         // Map quality drops endpoints (C3/#16 - DroppedEventAuditTrail exposure)
