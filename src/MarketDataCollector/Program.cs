@@ -31,7 +31,7 @@ using Serilog;
 
 namespace MarketDataCollector;
 
-internal static class Program
+public partial class Program
 {
     private const string DefaultConfigFileName = "appsettings.json";
     private const string ConfigPathEnvVar = "MDC_CONFIG_PATH";
