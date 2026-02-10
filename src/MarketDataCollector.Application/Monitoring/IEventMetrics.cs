@@ -13,13 +13,21 @@ public interface IEventMetrics
     long Published { get; }
     long Dropped { get; }
     long Integrity { get; }
+    long Trades { get; }
+    long DepthUpdates { get; }
+    long Quotes { get; }
     long HistoricalBars { get; }
     double EventsPerSecond { get; }
+    double DropRate { get; }
 
     void IncPublished();
     void IncDropped();
     void IncIntegrity();
+    void IncTrades();
+    void IncDepthUpdates();
+    void IncQuotes();
     void IncHistoricalBars();
+    void RecordLatency(long startTimestamp);
 
     void Reset();
     MetricsSnapshot GetSnapshot();
@@ -34,8 +42,12 @@ public sealed class DefaultEventMetrics : IEventMetrics
     public long Published => Metrics.Published;
     public long Dropped => Metrics.Dropped;
     public long Integrity => Metrics.Integrity;
+    public long Trades => Metrics.Trades;
+    public long DepthUpdates => Metrics.DepthUpdates;
+    public long Quotes => Metrics.Quotes;
     public long HistoricalBars => Metrics.HistoricalBars;
     public double EventsPerSecond => Metrics.EventsPerSecond;
+    public double DropRate => Metrics.DropRate;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void IncPublished() => Metrics.IncPublished();
@@ -47,7 +59,19 @@ public sealed class DefaultEventMetrics : IEventMetrics
     public void IncIntegrity() => Metrics.IncIntegrity();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void IncTrades() => Metrics.IncTrades();
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void IncDepthUpdates() => Metrics.IncDepthUpdates();
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void IncQuotes() => Metrics.IncQuotes();
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void IncHistoricalBars() => Metrics.IncHistoricalBars();
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void RecordLatency(long startTimestamp) => Metrics.RecordLatency(startTimestamp);
 
     public void Reset() => Metrics.Reset();
 
