@@ -23,6 +23,9 @@ Documents are moved here when they:
 | `REPOSITORY_REORGANIZATION_PLAN.md` | `structure/` | Proposed reorganization not implemented | 2026-02-04 |
 | `uwp-development-roadmap.md` | `development/` | UWP superseded by WPF migration | 2026-02-04 |
 | `uwp-release-checklist.md` | `development/` | UWP superseded by WPF migration | 2026-02-04 |
+| `2026-02_PR_SUMMARY.md` | Root | Historical PR #701 summary; UI improvements completed | 2026-02-10 |
+| `2026-02_UI_IMPROVEMENTS_SUMMARY.md` | Root | Historical UI improvements documentation snapshot | 2026-02-10 |
+| `2026-02_VISUAL_CODE_EXAMPLES.md` | Root | Historical code examples for UI improvements | 2026-02-10 |
 
 ## Current Documentation
 
@@ -37,4 +40,4 @@ These documents may contain outdated information. If you need to understand hist
 
 ---
 
-*Last Updated: 2026-02-05*
+*Last Updated: 2026-02-10*
