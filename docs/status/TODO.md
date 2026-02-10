@@ -1,38 +1,50 @@
 # TODO Tracking
 
 > Auto-generated TODO documentation. Do not edit manually.
-> Last updated: 2026-02-10T04:39:27.381011+00:00
+> Last updated: 2026-02-10T04:59:20.907933+00:00
 
 ## Summary
 
 | Metric | Count |
 |--------|-------|
-| **Total Items** | 8 |
+| **Total Items** | 12 |
 | **Linked to Issues** | 0 |
-| **Untracked** | 8 |
+| **Untracked** | 12 |
 
 ### By Type
 
 | Type | Count | Description |
 |------|-------|-------------|
-| `NOTE` | 7 | Important notes and documentation |
-| `TODO` | 1 | General tasks to complete |
+| `NOTE` | 9 | Important notes and documentation |
+| `TODO` | 3 | General tasks to complete |
 
 ### By Directory
 
 | Directory | Count |
 |-----------|-------|
 | `tests/` | 7 |
-| `src/` | 1 |
+| `src/` | 5 |
 
 ## All Items
 
-### TODO (1)
+### TODO (3)
 
 - [ ] `src/MarketDataCollector.Infrastructure/Providers/Historical/GapAnalysis/DataGapRepair.cs:412`
   > Implement via dependency injection - Infrastructure cannot reference Storage directly (circular dependency). Inject an IStorageSink or similar abstraction instead.
 
-### NOTE (7)
+- [ ] `src/MarketDataCollector.Ui.Services/Services/DataCalendarService.cs:16`
+  > Refactor to use dependency injection instead of manual instantiation
+
+- [ ] `src/MarketDataCollector.Ui.Services/Services/SmartRecommendationsService.cs:44`
+  > Refactor to use dependency injection instead of manual instantiation
+
+### NOTE (9)
+
+- [ ] `src/MarketDataCollector.Ui.Services/Services/DataCalendarService.cs:14`
+  > DataCompletenessService requires ManifestService and TradingCalendarService parameters which we don't have access to in this parameterless constructor.
+
+- [ ] `src/MarketDataCollector.Ui.Services/Services/SmartRecommendationsService.cs:42`
+  > DataCompletenessService requires ManifestService and TradingCalendarService parameters which we don't have access to in this parameterless constructor.
 
 - [ ] `tests/MarketDataCollector.Tests/Application/Backfill/BackfillWorkerServiceTests.cs:28`
   > Using null! because validation throws before dependencies are accessed
