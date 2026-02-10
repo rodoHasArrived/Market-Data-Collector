@@ -227,7 +227,7 @@ jobs:
           always() &&
           steps.analyze.outputs.has_issues == '1' &&
           github.event_name != 'pull_request'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const workflowName = context.workflow;
