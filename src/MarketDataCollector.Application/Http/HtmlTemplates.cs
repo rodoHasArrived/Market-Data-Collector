@@ -8,7 +8,7 @@ namespace MarketDataCollector.Application.UI;
 /// Templates are loaded from external files in wwwroot/templates/ when available,
 /// with fallback to legacy inline templates for backwards compatibility.
 /// </summary>
-public static class HtmlTemplates
+public static class HtmlTemplateManager
 {
     private static readonly Lazy<HtmlTemplateLoader> _loader = new(() =>
     {

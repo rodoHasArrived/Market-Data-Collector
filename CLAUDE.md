@@ -6,7 +6,7 @@ This document provides essential context for AI assistants (Claude, Copilot, etc
 
 Market Data Collector is a high-performance, cross-platform market data collection system built on **.NET 9.0** using **C# 13** and **F# 8.0**. It captures real-time and historical market microstructure data from multiple providers and persists it for downstream research, backtesting, and algorithmic trading.
 
-**Version:** 1.6.1 | **Status:** Development / Pilot Ready | **Files:** 807 source files
+**Version:** 1.6.1 | **Status:** Development / Pilot Ready | **Files:** 799 source files
 
 ### Key Capabilities
 - Real-time streaming from Interactive Brokers, Alpaca, NYSE, Polygon, StockSharp (90+ data sources)
@@ -22,8 +22,8 @@ Market Data Collector is a high-performance, cross-platform market data collecti
 ### Project Statistics
 | Metric | Count |
 |--------|-------|
-| Total Source Files | 807 |
-| C# Files | 790 |
+| Total Source Files | 799 |
+| C# Files | 782 |
 | F# Files | 17 |
 | Test Files | 105 |
 | Documentation Files | 87 |
@@ -758,9 +758,8 @@ Market-Data-Collector/
 │   │   │   │   ...
 │   │   │   ├── Streaming/
 │   │   │   │   ...
-│   │   │   ├── SymbolSearch/
-│   │   │   │   ...
-│   │   │   └── SubscriptionManager.cs
+│   │   │   └── SymbolSearch/
+│   │   │       ...
 │   │   ├── Resilience/
 │   │   │   ├── HttpResiliencePolicy.cs
 │   │   │   ├── WebSocketConnectionConfig.cs
@@ -775,8 +774,7 @@ Market-Data-Collector/
 │   │   ├── Utilities/
 │   │   │   ├── HttpResponseHandler.cs
 │   │   │   ├── JsonElementExtensions.cs
-│   │   │   ├── SymbolNormalization.cs
-│   │   │   └── SymbolNormalizer.cs
+│   │   │   └── SymbolNormalization.cs
 │   │   ├── GlobalUsings.cs
 │   │   ├── MarketDataCollector.Infrastructure.csproj
 │   │   └── NoOpMarketDataClient.cs
@@ -1264,16 +1262,10 @@ Market-Data-Collector/
 │       │   ├── ExportPresetService.cs
 │       │   ├── FirstRunService.cs
 │       │   ├── FormValidationService.cs
-│       │   ├── IBackgroundTaskSchedulerService.cs
 │       │   ├── IConfigService.cs
 │       │   ├── IKeyboardShortcutService.cs
-│       │   ├── ILoggingService.cs
-│       │   ├── IMessagingService.cs
 │       │   ├── InfoBarService.cs
 │       │   ├── INotificationService.cs
-│       │   ├── IOfflineTrackingPersistenceService.cs
-│       │   ├── IPendingOperationsQueueService.cs
-│       │   ├── IThemeService.cs
 │       │   ├── KeyboardShortcutService.cs
 │       │   ├── LoggingService.cs
 │       │   ├── MessagingService.cs
