@@ -85,7 +85,7 @@ public sealed partial class WatchlistPage : Page
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error in WatchlistService_WatchlistChanged: {ex.Message}");
+            LoggingService.Instance.LogError("Error in WatchlistService_WatchlistChanged", ex);
         }
     }
 

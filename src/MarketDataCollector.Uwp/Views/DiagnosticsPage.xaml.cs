@@ -202,7 +202,7 @@ public sealed partial class DiagnosticsPage : Page
         catch (Exception ex)
         {
             // Handle error
-            System.Diagnostics.Debug.WriteLine($"Bundle generation failed: {ex.Message}");
+            LoggingService.Instance.LogError("Bundle generation failed", ex);
         }
         finally
         {

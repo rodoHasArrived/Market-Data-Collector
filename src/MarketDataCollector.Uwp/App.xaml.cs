@@ -28,6 +28,9 @@ public partial class App : Application
 
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
+        // C1: Initialize DI container before any service resolution
+        ServiceLocator.Initialize();
+
         // Fire-and-forget async initialization with proper exception handling
         _ = SafeOnLaunchedAsync();
     }
@@ -68,7 +71,7 @@ public partial class App : Application
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[App] Error during application launch: {ex.Message}");
+            LoggingService.Instance.LogError("Error during application launch", ex);
             // Try to show a basic window even if initialization fails
             try
             {
@@ -91,11 +94,11 @@ public partial class App : Application
         try
         {
             await OfflineTrackingPersistenceService.Instance.InitializeAsync();
-            System.Diagnostics.Debug.WriteLine("Offline tracking persistence initialized");
+            LoggingService.Instance.LogInfo("Offline tracking persistence initialized");
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to initialize offline tracking: {ex.Message}");
+            LoggingService.Instance.LogError("Failed to initialize offline tracking", ex);
             // Continue - app should still work without persistence
         }
     }
@@ -109,15 +112,15 @@ public partial class App : Application
         {
             // Initialize pending operations queue
             await PendingOperationsQueueService.Instance.InitializeAsync();
-            System.Diagnostics.Debug.WriteLine("Pending operations queue initialized");
+            LoggingService.Instance.LogInfo("Pending operations queue initialized");
 
             // Start background task scheduler
             await BackgroundTaskSchedulerService.Instance.StartAsync();
-            System.Diagnostics.Debug.WriteLine("Background task scheduler started");
+            LoggingService.Instance.LogInfo("Background task scheduler started");
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to initialize background services: {ex.Message}");
+            LoggingService.Instance.LogError("Failed to initialize background services", ex);
             // Continue - app should still work without background services
         }
     }
@@ -141,7 +144,7 @@ public partial class App : Application
 
         try
         {
-            System.Diagnostics.Debug.WriteLine("App exiting, shutting down services...");
+            LoggingService.Instance.LogInfo("App exiting, shutting down services...");
 
             using var cts = new System.Threading.CancellationTokenSource(ShutdownTimeoutMs);
 
@@ -156,15 +159,15 @@ public partial class App : Application
 
             await Task.WhenAll(shutdownTasks);
 
-            System.Diagnostics.Debug.WriteLine("Services shut down cleanly");
+            LoggingService.Instance.LogInfo("Services shut down cleanly");
         }
         catch (OperationCanceledException)
         {
-            System.Diagnostics.Debug.WriteLine("App shutdown timed out - forcing exit");
+            LoggingService.Instance.LogWarning("App shutdown timed out - forcing exit");
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[App] Error during app exit: {ex.Message}");
+            LoggingService.Instance.LogError("Error during app exit", ex);
         }
     }
 
@@ -176,15 +179,15 @@ public partial class App : Application
         try
         {
             await shutdownAction().WaitAsync(ct);
-            System.Diagnostics.Debug.WriteLine($"{serviceName} shut down successfully");
+            LoggingService.Instance.LogInfo("Service shut down successfully", ("service", serviceName));
         }
         catch (OperationCanceledException)
         {
-            System.Diagnostics.Debug.WriteLine($"{serviceName} shutdown timed out");
+            LoggingService.Instance.LogWarning("Service shutdown timed out", ("service", serviceName));
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"{serviceName} shutdown failed: {ex.Message}");
+            LoggingService.Instance.LogError("Service shutdown failed", ("service", serviceName), ("error", ex.Message));
         }
     }
 
@@ -199,15 +202,15 @@ public partial class App : Application
             {
                 ct.ThrowIfCancellationRequested();
                 shutdownAction();
-                System.Diagnostics.Debug.WriteLine($"{serviceName} shut down successfully");
+                LoggingService.Instance.LogInfo("Service shut down successfully", ("service", serviceName));
             }
             catch (OperationCanceledException)
             {
-                System.Diagnostics.Debug.WriteLine($"{serviceName} shutdown timed out");
+                LoggingService.Instance.LogWarning("Service shutdown timed out", ("service", serviceName));
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"{serviceName} shutdown failed: {ex.Message}");
+                LoggingService.Instance.LogError("Service shutdown failed", ("service", serviceName), ("error", ex.Message));
             }
         }, ct);
     }
@@ -227,9 +230,10 @@ public partial class App : Application
                 await firstRunService.InitializeAsync();
             }
         }
-        catch
+        catch (Exception ex)
         {
             // Continue even if first-run setup fails - app should still work
+            LoggingService.Instance.LogWarning("First-run setup failed", ("error", ex.Message));
         }
     }
 
@@ -277,7 +281,7 @@ public partial class App : Application
     private void OnUnhandledException(object sender, Microsoft.UI.Xaml.UnhandledExceptionEventArgs e)
     {
         // Log the exception but don't crash
-        System.Diagnostics.Debug.WriteLine($"Unhandled exception: {e.Exception}");
+        LoggingService.Instance.LogError("Unhandled exception", e.Exception);
         e.Handled = true;
 
         // Notify user of the error
@@ -290,6 +294,7 @@ public partial class App : Application
         catch
         {
             // Ignore notification failures
+            LoggingService.Instance.LogWarning("Notification failure during startup");
         }
     }
 

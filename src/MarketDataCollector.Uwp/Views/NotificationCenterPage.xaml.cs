@@ -84,7 +84,7 @@ public sealed partial class NotificationCenterPage : Page
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[NotificationCenterPage] Error loading data: {ex.Message}");
+            LoggingService.Instance.LogError("NotificationCenterPage error loading data", ex);
         }
     }
 
@@ -122,7 +122,7 @@ public sealed partial class NotificationCenterPage : Page
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[NotificationCenterPage] Error loading active incidents: {ex.Message}");
+            LoggingService.Instance.LogError("NotificationCenterPage error loading active incidents", ex);
         }
     }
 
@@ -234,7 +234,7 @@ public sealed partial class NotificationCenterPage : Page
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[NotificationCenterPage] Error loading snooze rules: {ex.Message}");
+            LoggingService.Instance.LogError("NotificationCenterPage error loading snooze rules", ex);
         }
     }
 
@@ -248,7 +248,7 @@ public sealed partial class NotificationCenterPage : Page
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[NotificationCenterPage] Error saving snooze rules: {ex.Message}");
+            LoggingService.Instance.LogError("NotificationCenterPage error saving snooze rules", ex);
         }
     }
 
@@ -292,7 +292,7 @@ public sealed partial class NotificationCenterPage : Page
         if (sender is Button button && button.Tag is string incidentId)
         {
             // Navigate to incident details or expand inline
-            System.Diagnostics.Debug.WriteLine($"View incident: {incidentId}");
+            LoggingService.Instance.LogDebug("View incident", ("incidentId", incidentId));
         }
     }
 
@@ -319,7 +319,7 @@ public sealed partial class NotificationCenterPage : Page
         if (sender is Button button && button.Tag is string navigationTarget)
         {
             // Use NavigationService or Frame to navigate
-            System.Diagnostics.Debug.WriteLine($"Navigate to: {navigationTarget}");
+            LoggingService.Instance.LogDebug("Navigate to source", ("navigationTarget", navigationTarget));
         }
     }
 

@@ -48,7 +48,7 @@ public sealed partial class OrderBookPage : Page
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error loading symbols: {ex.Message}");
+            LoggingService.Instance.LogError("Error loading symbols", ex);
         }
     }
 
@@ -133,7 +133,7 @@ public sealed partial class OrderBookPage : Page
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error stopping stream: {ex.Message}");
+            LoggingService.Instance.LogError("Error stopping stream", ex);
         }
     }
 

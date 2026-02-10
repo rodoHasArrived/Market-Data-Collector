@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using MarketDataCollector.Contracts.Export;
 using Windows.Storage;
@@ -13,7 +14,7 @@ namespace MarketDataCollector.Uwp.Services;
 /// Service for managing export presets.
 /// Implements Feature Refinement #69 - Archive Export Presets.
 /// </summary>
-public sealed class ExportPresetService
+public sealed class ExportPresetService : IExportPresetService
 {
     private static ExportPresetService? _instance;
     private static readonly object _lock = new();
@@ -56,19 +57,21 @@ public sealed class ExportPresetService
     /// <summary>
     /// Initializes the service and loads presets.
     /// </summary>
-    public async Task InitializeAsync()
+    public async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
         if (_initialized) return;
 
-        await LoadPresetsAsync();
+        await LoadPresetsAsync(cancellationToken);
         _initialized = true;
     }
 
     /// <summary>
     /// Loads presets from storage.
     /// </summary>
-    public async Task LoadPresetsAsync()
+    public async Task LoadPresetsAsync(CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+
         try
         {
             var localFolder = ApplicationData.Current.LocalFolder;
@@ -89,15 +92,19 @@ public sealed class ExportPresetService
             if (_presets.Count == 0)
             {
                 _presets.AddRange(GetBuiltInPresets());
-                await SavePresetsAsync();
+                await SavePresetsAsync(cancellationToken);
             }
 
             // Ensure built-in presets are always present
             EnsureBuiltInPresets();
         }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[ExportPresetService] Error loading presets: {ex.Message}");
+            LoggingService.Instance.LogError("Error loading export presets", ex);
 
             // Fallback to built-in presets
             if (_presets.Count == 0)
@@ -110,8 +117,10 @@ public sealed class ExportPresetService
     /// <summary>
     /// Saves presets to storage.
     /// </summary>
-    public async Task SavePresetsAsync()
+    public async Task SavePresetsAsync(CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+
         try
         {
             var localFolder = ApplicationData.Current.LocalFolder;
@@ -125,9 +134,13 @@ public sealed class ExportPresetService
             var json = JsonSerializer.Serialize(_presets, options);
             await FileIO.WriteTextAsync(file, json);
         }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[ExportPresetService] Error saving presets: {ex.Message}");
+            LoggingService.Instance.LogError("Error saving export presets", ex);
         }
     }
 
@@ -138,7 +151,8 @@ public sealed class ExportPresetService
         string name,
         string? description = null,
         ExportPresetFormat format = ExportPresetFormat.Parquet,
-        string? destination = null)
+        string? destination = null,
+        CancellationToken cancellationToken = default)
     {
         var preset = new ExportPreset
         {
@@ -153,7 +167,7 @@ public sealed class ExportPresetService
         };
 
         _presets.Add(preset);
-        await SavePresetsAsync();
+        await SavePresetsAsync(cancellationToken);
         PresetsChanged?.Invoke(this, EventArgs.Empty);
 
         return preset;
@@ -162,7 +176,7 @@ public sealed class ExportPresetService
     /// <summary>
     /// Updates an existing preset.
     /// </summary>
-    public async Task<bool> UpdatePresetAsync(ExportPreset preset)
+    public async Task<bool> UpdatePresetAsync(ExportPreset preset, CancellationToken cancellationToken = default)
     {
         var index = _presets.FindIndex(p => p.Id == preset.Id);
         if (index == -1 || _presets[index].IsBuiltIn)
@@ -172,7 +186,7 @@ public sealed class ExportPresetService
 
         preset.UpdatedAt = DateTime.UtcNow;
         _presets[index] = preset;
-        await SavePresetsAsync();
+        await SavePresetsAsync(cancellationToken);
         PresetsChanged?.Invoke(this, EventArgs.Empty);
 
         return true;
@@ -181,7 +195,7 @@ public sealed class ExportPresetService
     /// <summary>
     /// Deletes a preset by ID.
     /// </summary>
-    public async Task<bool> DeletePresetAsync(string presetId)
+    public async Task<bool> DeletePresetAsync(string presetId, CancellationToken cancellationToken = default)
     {
         var preset = _presets.FirstOrDefault(p => p.Id == presetId);
         if (preset == null || preset.IsBuiltIn)
@@ -190,7 +204,7 @@ public sealed class ExportPresetService
         }
 
         _presets.Remove(preset);
-        await SavePresetsAsync();
+        await SavePresetsAsync(cancellationToken);
         PresetsChanged?.Invoke(this, EventArgs.Empty);
 
         return true;
@@ -215,7 +229,7 @@ public sealed class ExportPresetService
     /// <summary>
     /// Duplicates an existing preset with a new name.
     /// </summary>
-    public async Task<ExportPreset> DuplicatePresetAsync(string presetId, string newName)
+    public async Task<ExportPreset> DuplicatePresetAsync(string presetId, string newName, CancellationToken cancellationToken = default)
     {
         var source = _presets.FirstOrDefault(p => p.Id == presetId);
         if (source == null)
@@ -255,7 +269,7 @@ public sealed class ExportPresetService
         };
 
         _presets.Add(duplicate);
-        await SavePresetsAsync();
+        await SavePresetsAsync(cancellationToken);
         PresetsChanged?.Invoke(this, EventArgs.Empty);
 
         return duplicate;
@@ -264,22 +278,24 @@ public sealed class ExportPresetService
     /// <summary>
     /// Records that a preset was used for an export.
     /// </summary>
-    public async Task RecordPresetUsageAsync(string presetId)
+    public async Task RecordPresetUsageAsync(string presetId, CancellationToken cancellationToken = default)
     {
         var preset = _presets.FirstOrDefault(p => p.Id == presetId);
         if (preset != null)
         {
             preset.LastUsedAt = DateTime.UtcNow;
             preset.UseCount++;
-            await SavePresetsAsync();
+            await SavePresetsAsync(cancellationToken);
         }
     }
 
     /// <summary>
     /// Exports presets to a JSON file for sharing.
     /// </summary>
-    public async Task<string> ExportPresetsAsync(string[] presetIds, string destinationPath)
+    public async Task<string> ExportPresetsAsync(string[] presetIds, string destinationPath, CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+
         var presetsToExport = _presets.Where(p => presetIds.Contains(p.Id)).ToList();
 
         // Remove IDs and reset usage stats for export
@@ -298,7 +314,7 @@ public sealed class ExportPresetService
 
         var json = JsonSerializer.Serialize(presetsToExport, options);
         var filePath = Path.Combine(destinationPath, $"export_presets_{DateTime.Now:yyyyMMdd_HHmmss}.json");
-        await File.WriteAllTextAsync(filePath, json);
+        await File.WriteAllTextAsync(filePath, json, cancellationToken);
 
         return filePath;
     }
@@ -306,9 +322,11 @@ public sealed class ExportPresetService
     /// <summary>
     /// Imports presets from a JSON file.
     /// </summary>
-    public async Task<int> ImportPresetsAsync(string filePath)
+    public async Task<int> ImportPresetsAsync(string filePath, CancellationToken cancellationToken = default)
     {
-        var json = await File.ReadAllTextAsync(filePath);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var json = await File.ReadAllTextAsync(filePath, cancellationToken);
         var importedPresets = JsonSerializer.Deserialize<List<ExportPreset>>(json);
 
         if (importedPresets == null || importedPresets.Count == 0)
@@ -336,7 +354,7 @@ public sealed class ExportPresetService
             importedCount++;
         }
 
-        await SavePresetsAsync();
+        await SavePresetsAsync(cancellationToken);
         PresetsChanged?.Invoke(this, EventArgs.Empty);
 
         return importedCount;

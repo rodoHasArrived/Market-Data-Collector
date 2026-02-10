@@ -6,6 +6,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Windows.Storage.Pickers;
 using MarketDataCollector.Uwp.Services;
+using MarketDataCollector.Uwp.Models;
 
 namespace MarketDataCollector.Uwp.Views;
 
@@ -295,19 +296,4 @@ public sealed partial class PackageManagerPage : Page
         if (bytes < 1024 * 1024 * 1024) return $"{bytes / (1024.0 * 1024):F1} MB";
         return $"{bytes / (1024.0 * 1024 * 1024):F1} GB";
     }
-}
-
-public class PackageDisplayInfo
-{
-    public string Name { get; set; } = string.Empty;
-    public string Path { get; set; } = string.Empty;
-    public string SizeText { get; set; } = string.Empty;
-    public string DateText { get; set; } = string.Empty;
-}
-
-public class ValidationIssueDisplay
-{
-    public string Message { get; set; } = string.Empty;
-    public string Icon { get; set; } = string.Empty;
-    public SolidColorBrush? IconColor { get; set; }
 }

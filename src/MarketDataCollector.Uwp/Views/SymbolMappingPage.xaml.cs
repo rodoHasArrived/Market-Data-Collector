@@ -3,6 +3,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using MarketDataCollector.Uwp.Services;
+using MarketDataCollector.Uwp.Models;
 using Windows.Storage.Pickers;
 using Windows.Storage;
 
@@ -47,7 +48,7 @@ public sealed partial class SymbolMappingPage : Page
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[SymbolMappingPage] Error during page load: {ex.Message}");
+            LoggingService.Instance.LogError("SymbolMappingPage error during page load", ex);
         }
     }
 
@@ -260,7 +261,7 @@ public sealed partial class SymbolMappingPage : Page
         catch (Exception ex)
         {
             ShowInfoBar($"Failed to save mapping: {ex.Message}", InfoBarSeverity.Error);
-            System.Diagnostics.Debug.WriteLine($"[SymbolMappingPage] Error saving mapping: {ex.Message}");
+            LoggingService.Instance.LogError("SymbolMappingPage error saving mapping", ex);
         }
     }
 
@@ -298,7 +299,7 @@ public sealed partial class SymbolMappingPage : Page
         catch (Exception ex)
         {
             ShowInfoBar($"Failed to delete mapping: {ex.Message}", InfoBarSeverity.Error);
-            System.Diagnostics.Debug.WriteLine($"[SymbolMappingPage] Error deleting mapping: {ex.Message}");
+            LoggingService.Instance.LogError("SymbolMappingPage error deleting mapping", ex);
         }
     }
 
@@ -399,7 +400,7 @@ public sealed partial class SymbolMappingPage : Page
         catch (Exception ex)
         {
             ShowInfoBar($"Failed to import CSV: {ex.Message}", InfoBarSeverity.Error);
-            System.Diagnostics.Debug.WriteLine($"[SymbolMappingPage] Error importing CSV: {ex.Message}");
+            LoggingService.Instance.LogError("SymbolMappingPage error importing CSV", ex);
         }
     }
 
@@ -431,7 +432,7 @@ public sealed partial class SymbolMappingPage : Page
         catch (Exception ex)
         {
             ShowInfoBar($"Failed to export CSV: {ex.Message}", InfoBarSeverity.Error);
-            System.Diagnostics.Debug.WriteLine($"[SymbolMappingPage] Error exporting CSV: {ex.Message}");
+            LoggingService.Instance.LogError("SymbolMappingPage error exporting CSV", ex);
         }
     }
 
@@ -450,48 +451,4 @@ public sealed partial class SymbolMappingPage : Page
         };
         timer.Start();
     }
-}
-
-/// <summary>
-/// View model for displaying symbol mappings in the list.
-/// </summary>
-public class SymbolMappingViewModel
-{
-    private readonly SymbolMapping _mapping;
-
-    public SymbolMappingViewModel(SymbolMapping mapping)
-    {
-        _mapping = mapping;
-    }
-
-    public string CanonicalSymbol => _mapping.CanonicalSymbol;
-    public string? DisplayName => _mapping.DisplayName;
-    public string SecurityType => _mapping.SecurityType;
-    public string? PrimaryExchange => _mapping.PrimaryExchange;
-    public string? Figi => _mapping.Figi;
-    public string? Isin => _mapping.Isin;
-    public string? Cusip => _mapping.Cusip;
-    public string? Notes => _mapping.Notes;
-    public bool IsCustomMapping => _mapping.IsCustomMapping;
-    public Dictionary<string, string>? ProviderSymbols => _mapping.ProviderSymbols;
-
-    public string ProviderCountText
-    {
-        get
-        {
-            var count = _mapping.ProviderSymbols?.Count(kv => !string.IsNullOrWhiteSpace(kv.Value)) ?? 0;
-            return count > 0 ? $"{count} provider(s) configured" : "Using defaults";
-        }
-    }
-}
-
-/// <summary>
-/// Entry for a provider-specific symbol in the details panel.
-/// </summary>
-public class ProviderSymbolEntry
-{
-    public string ProviderId { get; set; } = string.Empty;
-    public string ProviderName { get; set; } = string.Empty;
-    public string Symbol { get; set; } = string.Empty;
-    public string DefaultSymbol { get; set; } = string.Empty;
 }

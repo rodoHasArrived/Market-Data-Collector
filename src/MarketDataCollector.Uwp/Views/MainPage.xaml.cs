@@ -7,6 +7,8 @@ using Microsoft.UI.Xaml.Input;
 using MarketDataCollector.Uwp.ViewModels;
 using MarketDataCollector.Uwp.Services;
 
+using MarketDataCollector.Uwp.Models;
+
 namespace MarketDataCollector.Uwp.Views;
 
 /// <summary>
@@ -446,17 +448,4 @@ public sealed partial class MainPage : Page
                 break;
         }
     }
-}
-
-/// <summary>
-/// Display model for search suggestions in the UI.
-/// </summary>
-public sealed class SearchSuggestionDisplay
-{
-    public string Text { get; set; } = string.Empty;
-    public string Category { get; set; } = string.Empty;
-    public string Icon { get; set; } = string.Empty;
-    public string NavigationTarget { get; set; } = string.Empty;
-
-    public override string ToString() => $"{Text} ({Category})";
 }

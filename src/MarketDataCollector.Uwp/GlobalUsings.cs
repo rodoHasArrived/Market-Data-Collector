@@ -11,6 +11,9 @@ global using MarketDataCollector.Ui.Services;
 global using MarketDataCollector.Ui.Services.Collections;
 global using MarketDataCollector.Ui.Services.Contracts;
 
+// UWP-specific contracts
+global using MarketDataCollector.Uwp.Contracts;
+
 // Import all Contracts namespaces globally so types are available throughout UWP project
 global using MarketDataCollector.Contracts.Api;
 global using MarketDataCollector.Contracts.Archive;

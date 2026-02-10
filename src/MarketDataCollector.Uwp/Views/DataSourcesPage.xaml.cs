@@ -18,7 +18,7 @@ public sealed partial class DataSourcesPage : Page
     public DataSourcesPage()
     {
         this.InitializeComponent();
-        _configService = new ConfigService();
+        _configService = ConfigService.Instance;
 
         Loaded += DataSourcesPage_Loaded;
     }

@@ -97,6 +97,8 @@
     <!-- HttpClientFactory for proper HttpClient lifecycle management (TD-10) -->
     <PackageReference Include="Microsoft.Extensions.Http" />
     <PackageReference Include="Microsoft.Extensions.Http.Polly" />
+    <!-- C1: DI container for service resolution -->
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
   </ItemGroup>
 
   <!--

@@ -81,6 +81,7 @@ public sealed partial class LeanIntegrationPage : Page
         catch
         {
             // Use defaults
+            LoggingService.Instance.LogDebug("Failed to load Lean integration config, using defaults");
         }
     }
 
@@ -101,6 +102,7 @@ public sealed partial class LeanIntegrationPage : Page
         catch
         {
             // Algorithms not available
+            LoggingService.Instance.LogDebug("Lean algorithms not available");
         }
     }
 
@@ -326,6 +328,7 @@ public sealed partial class LeanIntegrationPage : Page
         catch
         {
             // Ignore status errors
+            LoggingService.Instance.LogDebug("Lean integration status check failed");
         }
     }
 

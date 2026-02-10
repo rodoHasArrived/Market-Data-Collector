@@ -81,7 +81,7 @@ public sealed partial class ChartingPage : Page
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error loading symbols: {ex.Message}");
+            LoggingService.Instance.LogError("ChartingPage error loading symbols", ex);
         }
     }
 
@@ -394,7 +394,7 @@ public sealed partial class ChartingPage : Page
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error loading chart: {ex.Message}");
+            LoggingService.Instance.LogError("ChartingPage error loading chart", ex);
             NoChartDataText.Text = $"Error loading data: {ex.Message}";
             NoChartDataText.Visibility = Visibility.Visible;
         }

@@ -251,7 +251,7 @@ public sealed partial class SymbolStoragePage : Page
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[SymbolStoragePage] UpdateTimeline error: {ex.Message}");
+            LoggingService.Instance.LogError("SymbolStoragePage UpdateTimeline error", ex);
 
             // Fall back to placeholder on error
             TimelineStartText.Text = "--";

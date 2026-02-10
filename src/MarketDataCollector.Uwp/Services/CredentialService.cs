@@ -4,6 +4,7 @@ using System.Net.Http.Headers;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
 using Windows.Security.Credentials;
 using Windows.Security.Credentials.UI;
 using Windows.Storage;
@@ -53,7 +54,7 @@ public class CredentialErrorEventArgs : EventArgs
 /// and CredentialPicker UI. Enhanced with OAuth support, expiration tracking,
 /// and credential testing capabilities.
 /// </summary>
-public sealed class CredentialService : IDisposable
+public sealed class CredentialService : IDisposable, ICredentialService
 {
     private const string ResourcePrefix = "MarketDataCollector";
     private const string MetadataFileName = "credential_metadata.json";
@@ -885,7 +886,7 @@ public sealed class CredentialService : IDisposable
     /// <summary>
     /// Tests Alpaca credentials by making an authenticated API call.
     /// </summary>
-    public async Task<CredentialTestResult> TestAlpacaCredentialsAsync(bool useSandbox = false)
+    public async Task<CredentialTestResult> TestAlpacaCredentialsAsync(bool useSandbox = false, CancellationToken cancellationToken = default)
     {
         var credentials = GetAlpacaCredentials();
         if (credentials == null)
@@ -893,13 +894,13 @@ public sealed class CredentialService : IDisposable
             return CredentialTestResult.CreateFailure("No Alpaca credentials stored");
         }
 
-        return await TestAlpacaCredentialsAsync(credentials.Value.KeyId, credentials.Value.SecretKey, useSandbox);
+        return await TestAlpacaCredentialsAsync(credentials.Value.KeyId, credentials.Value.SecretKey, useSandbox, cancellationToken);
     }
 
     /// <summary>
     /// Tests specific Alpaca credentials by making an authenticated API call.
     /// </summary>
-    public async Task<CredentialTestResult> TestAlpacaCredentialsAsync(string keyId, string secretKey, bool useSandbox = false)
+    public async Task<CredentialTestResult> TestAlpacaCredentialsAsync(string keyId, string secretKey, bool useSandbox = false, CancellationToken cancellationToken = default)
     {
         var sw = Stopwatch.StartNew();
 
@@ -910,12 +911,12 @@ public sealed class CredentialService : IDisposable
             request.Headers.Add("APCA-API-KEY-ID", keyId);
             request.Headers.Add("APCA-API-SECRET-KEY", secretKey);
 
-            var response = await _httpClient.SendAsync(request);
+            var response = await _httpClient.SendAsync(request, cancellationToken);
             sw.Stop();
 
             if (response.IsSuccessStatusCode)
             {
-                var content = await response.Content.ReadAsStringAsync();
+                var content = await response.Content.ReadAsStringAsync(cancellationToken);
                 var account = JsonSerializer.Deserialize<JsonElement>(content);
 
                 await UpdateMetadataAsync(AlpacaCredentialResource, m =>
@@ -952,6 +953,10 @@ public sealed class CredentialService : IDisposable
 
             return CredentialTestResult.CreateFailure(errorMessage);
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
         catch (TaskCanceledException)
         {
             return CredentialTestResult.CreateFailure("Connection timed out");
@@ -969,7 +974,7 @@ public sealed class CredentialService : IDisposable
     /// <summary>
     /// Tests Nasdaq Data Link API key.
     /// </summary>
-    public async Task<CredentialTestResult> TestNasdaqApiKeyAsync()
+    public async Task<CredentialTestResult> TestNasdaqApiKeyAsync(CancellationToken cancellationToken = default)
     {
         var apiKey = GetNasdaqApiKey();
         if (string.IsNullOrEmpty(apiKey))
@@ -983,7 +988,7 @@ public sealed class CredentialService : IDisposable
         {
             // Test with a simple dataset query
             var testUrl = $"https://data.nasdaq.com/api/v3/datasets.json?api_key={apiKey}&per_page=1";
-            var response = await _httpClient.GetAsync(testUrl);
+            var response = await _httpClient.GetAsync(testUrl, cancellationToken);
             sw.Stop();
 
             if (response.IsSuccessStatusCode)
@@ -1022,6 +1027,10 @@ public sealed class CredentialService : IDisposable
 
             return CredentialTestResult.CreateFailure(errorMessage);
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
         catch (Exception ex)
         {
             return CredentialTestResult.CreateFailure($"Error: {ex.Message}");
@@ -1031,7 +1040,7 @@ public sealed class CredentialService : IDisposable
     /// <summary>
     /// Tests OpenFIGI API key.
     /// </summary>
-    public async Task<CredentialTestResult> TestOpenFigiApiKeyAsync()
+    public async Task<CredentialTestResult> TestOpenFigiApiKeyAsync(CancellationToken cancellationToken = default)
     {
         var apiKey = GetOpenFigiApiKey();
         if (string.IsNullOrEmpty(apiKey))
@@ -1050,7 +1059,7 @@ public sealed class CredentialService : IDisposable
                 Encoding.UTF8,
                 "application/json");
 
-            var response = await _httpClient.SendAsync(request);
+            var response = await _httpClient.SendAsync(request, cancellationToken);
             sw.Stop();
 
             if (response.IsSuccessStatusCode)
@@ -1081,6 +1090,10 @@ public sealed class CredentialService : IDisposable
 
             return CredentialTestResult.CreateFailure($"API returned {(int)response.StatusCode}");
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
         catch (Exception ex)
         {
             return CredentialTestResult.CreateFailure($"Error: {ex.Message}");
@@ -1090,13 +1103,13 @@ public sealed class CredentialService : IDisposable
     /// <summary>
     /// Tests a credential by its resource name.
     /// </summary>
-    public async Task<CredentialTestResult> TestCredentialAsync(string resource)
+    public async Task<CredentialTestResult> TestCredentialAsync(string resource, CancellationToken cancellationToken = default)
     {
         return resource switch
         {
-            var r when r.Contains("Alpaca") => await TestAlpacaCredentialsAsync(),
-            var r when r.Contains("NasdaqDataLink") => await TestNasdaqApiKeyAsync(),
-            var r when r.Contains("OpenFigi") => await TestOpenFigiApiKeyAsync(),
+            var r when r.Contains("Alpaca") => await TestAlpacaCredentialsAsync(cancellationToken: cancellationToken),
+            var r when r.Contains("NasdaqDataLink") => await TestNasdaqApiKeyAsync(cancellationToken),
+            var r when r.Contains("OpenFigi") => await TestOpenFigiApiKeyAsync(cancellationToken),
             _ => CredentialTestResult.CreateFailure($"No test available for {resource}")
         };
     }
@@ -1104,14 +1117,17 @@ public sealed class CredentialService : IDisposable
     /// <summary>
     /// Tests all stored credentials and returns results.
     /// </summary>
-    public async Task<Dictionary<string, CredentialTestResult>> TestAllCredentialsAsync()
+    public async Task<Dictionary<string, CredentialTestResult>> TestAllCredentialsAsync(CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+
         var results = new Dictionary<string, CredentialTestResult>();
         var resources = GetAllStoredResources();
 
         foreach (var resource in resources)
         {
-            results[resource] = await TestCredentialAsync(resource);
+            cancellationToken.ThrowIfCancellationRequested();
+            results[resource] = await TestCredentialAsync(resource, cancellationToken);
         }
 
         return results;

@@ -9,7 +9,7 @@ namespace MarketDataCollector.Uwp.Services;
 /// <summary>
 /// Service for managing Windows toast notifications.
 /// </summary>
-public sealed class NotificationService
+public sealed class NotificationService : INotificationService
 {
     private static NotificationService? _instance;
     private static readonly object _lock = new();
@@ -46,7 +46,7 @@ public sealed class NotificationService
         catch (Exception ex)
         {
             // Notifications may not be available in all environments (e.g., headless, containers)
-            System.Diagnostics.Debug.WriteLine($"[NotificationService] Failed to register for notifications: {ex.GetType().Name} - {ex.Message}");
+            LoggingService.Instance.LogWarning("Failed to register for notifications", ("exceptionType", ex.GetType().Name), ("error", ex.Message));
         }
     }
 
@@ -316,7 +316,7 @@ public sealed class NotificationService
         catch (Exception ex)
         {
             // Notification display failed - already logged to history, log for diagnostics
-            System.Diagnostics.Debug.WriteLine($"[NotificationService] Failed to display notification '{title}': {ex.GetType().Name} - {ex.Message}");
+            LoggingService.Instance.LogWarning("Failed to display notification", ("title", title), ("exceptionType", ex.GetType().Name), ("error", ex.Message));
         }
     }
 

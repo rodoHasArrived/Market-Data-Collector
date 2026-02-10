@@ -13,7 +13,7 @@ namespace MarketDataCollector.Uwp.Services;
 /// Service for monitoring archive health and verification (#26/57 - P0 Critical).
 /// Provides comprehensive archive integrity monitoring and verification.
 /// </summary>
-public sealed class ArchiveHealthService
+public sealed class ArchiveHealthService : IArchiveHealthService
 {
     private static ArchiveHealthService? _instance;
     private static readonly object _lock = new();
@@ -52,20 +52,22 @@ public sealed class ArchiveHealthService
     /// <summary>
     /// Gets the current archive health status.
     /// </summary>
-    public async Task<ArchiveHealthStatus> GetHealthStatusAsync(bool forceRefresh = false)
+    public async Task<ArchiveHealthStatus> GetHealthStatusAsync(bool forceRefresh = false, CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+
         if (!forceRefresh && _cachedHealthStatus != null &&
             DateTime.UtcNow - _lastHealthCheck < _cacheExpiration)
         {
             return _cachedHealthStatus;
         }
 
-        var status = await CalculateHealthStatusAsync();
+        var status = await CalculateHealthStatusAsync(cancellationToken);
         _cachedHealthStatus = status;
         _lastHealthCheck = DateTime.UtcNow;
 
         // Save status
-        await SaveHealthStatusAsync(status);
+        await SaveHealthStatusAsync(status, cancellationToken);
 
         HealthStatusUpdated?.Invoke(this, new ArchiveHealthEventArgs { Status = status });
 
@@ -75,14 +77,14 @@ public sealed class ArchiveHealthService
     /// <summary>
     /// Starts a full archive verification job.
     /// </summary>
-    public async Task<VerificationJob> StartFullVerificationAsync(IProgress<VerificationProgress>? progress = null)
+    public async Task<VerificationJob> StartFullVerificationAsync(IProgress<VerificationProgress>? progress = null, CancellationToken cancellationToken = default)
     {
         if (_currentVerificationJob?.Status == "Running")
         {
             throw new InvalidOperationException("A verification job is already running.");
         }
 
-        _verificationCts = new CancellationTokenSource();
+        _verificationCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         _currentVerificationJob = new VerificationJob
         {
             Type = "Full",
@@ -115,7 +117,7 @@ public sealed class ArchiveHealthService
         VerificationCompleted?.Invoke(this, new VerificationJobEventArgs { Job = _currentVerificationJob });
 
         // Refresh health status
-        await GetHealthStatusAsync(true);
+        await GetHealthStatusAsync(true, cancellationToken);
 
         return _currentVerificationJob;
     }
@@ -123,14 +125,14 @@ public sealed class ArchiveHealthService
     /// <summary>
     /// Starts an incremental verification (only new/modified files).
     /// </summary>
-    public async Task<VerificationJob> StartIncrementalVerificationAsync(DateTime since, IProgress<VerificationProgress>? progress = null)
+    public async Task<VerificationJob> StartIncrementalVerificationAsync(DateTime since, IProgress<VerificationProgress>? progress = null, CancellationToken cancellationToken = default)
     {
         if (_currentVerificationJob?.Status == "Running")
         {
             throw new InvalidOperationException("A verification job is already running.");
         }
 
-        _verificationCts = new CancellationTokenSource();
+        _verificationCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         _currentVerificationJob = new VerificationJob
         {
             Type = "Incremental",
@@ -184,8 +186,10 @@ public sealed class ArchiveHealthService
     /// <summary>
     /// Attempts to repair a failed file by re-validating or restoring from backup.
     /// </summary>
-    public async Task<bool> TryRepairFileAsync(string filePath)
+    public async Task<bool> TryRepairFileAsync(string filePath, CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+
         try
         {
             if (!File.Exists(filePath))
@@ -207,7 +211,8 @@ public sealed class ArchiveHealthService
                 var lineCount = 0;
                 while (!reader.EndOfStream && lineCount < 10)
                 {
-                    var line = await reader.ReadLineAsync();
+                    cancellationToken.ThrowIfCancellationRequested();
+                    var line = await reader.ReadLineAsync(cancellationToken);
                     if (!string.IsNullOrWhiteSpace(line))
                     {
                         // Try to parse as JSON
@@ -221,6 +226,10 @@ public sealed class ArchiveHealthService
 
             return fileInfo.Length > 0;
         }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
         catch
         {
             return false;
@@ -230,9 +239,9 @@ public sealed class ArchiveHealthService
     /// <summary>
     /// Gets issues affecting a specific symbol.
     /// </summary>
-    public async Task<ArchiveIssue[]> GetIssuesForSymbolAsync(string symbol)
+    public async Task<ArchiveIssue[]> GetIssuesForSymbolAsync(string symbol, CancellationToken cancellationToken = default)
     {
-        var status = await GetHealthStatusAsync();
+        var status = await GetHealthStatusAsync(cancellationToken: cancellationToken);
         return status.Issues?.Where(i =>
             i.AffectedSymbols?.Contains(symbol, StringComparer.OrdinalIgnoreCase) == true
         ).ToArray() ?? Array.Empty<ArchiveIssue>();
@@ -241,22 +250,22 @@ public sealed class ArchiveHealthService
     /// <summary>
     /// Acknowledges/resolves an issue.
     /// </summary>
-    public async Task ResolveIssueAsync(string issueId)
+    public async Task ResolveIssueAsync(string issueId, CancellationToken cancellationToken = default)
     {
-        var status = await GetHealthStatusAsync();
+        var status = await GetHealthStatusAsync(cancellationToken: cancellationToken);
         var issue = status.Issues?.FirstOrDefault(i => i.Id == issueId);
 
         if (issue != null)
         {
             issue.ResolvedAt = DateTime.UtcNow;
-            await SaveHealthStatusAsync(status);
+            await SaveHealthStatusAsync(status, cancellationToken);
             IssueResolved?.Invoke(this, new ArchiveIssueEventArgs { Issue = issue });
         }
     }
 
-    private async Task<ArchiveHealthStatus> CalculateHealthStatusAsync()
+    private async Task<ArchiveHealthStatus> CalculateHealthStatusAsync(CancellationToken cancellationToken)
     {
-        var config = await _configService.LoadConfigAsync();
+        var config = await _configService.LoadConfigAsync(cancellationToken);
         var dataRoot = config?.DataRoot ?? "data";
         var basePath = Path.IsPathRooted(dataRoot)
             ? dataRoot
@@ -270,7 +279,7 @@ public sealed class ArchiveHealthService
         var issues = new List<ArchiveIssue>();
 
         // Get storage health info
-        status.StorageHealthInfo = await GetStorageHealthInfoAsync(basePath);
+        status.StorageHealthInfo = await GetStorageHealthInfoAsync(basePath, cancellationToken);
 
         // Check storage capacity
         if (status.StorageHealthInfo.UsedPercent >= 95)
@@ -389,7 +398,7 @@ public sealed class ArchiveHealthService
         return status;
     }
 
-    private async Task<StorageHealthInfo> GetStorageHealthInfoAsync(string basePath)
+    private async Task<StorageHealthInfo> GetStorageHealthInfoAsync(string basePath, CancellationToken cancellationToken)
     {
         var info = new StorageHealthInfo();
 
@@ -416,20 +425,27 @@ public sealed class ArchiveHealthService
                     DriveType.Network => "Unknown",
                     _ => "Unknown"
                 };
-
-                // Estimate days until full based on recent growth
-                var analyticsService = StorageAnalyticsService.Instance;
-                var analytics = analyticsService.GetAnalyticsAsync(false).GetAwaiter().GetResult();
-                if (analytics.DailyGrowthBytes > 0)
-                {
-                    info.DaysUntilFull = (int)(driveInfo.AvailableFreeSpace * 0.9 / analytics.DailyGrowthBytes);
-                }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Failed to get drive info: {ex.Message}");
+                LoggingService.Instance.LogWarning("Failed to get drive info", ("error", ex.Message));
             }
         });
+
+        // C2: Estimate days until full using proper async call (was .GetAwaiter().GetResult())
+        try
+        {
+            var analyticsService = StorageAnalyticsService.Instance;
+            var analytics = await analyticsService.GetAnalyticsAsync(false);
+            if (analytics.DailyGrowthBytes > 0 && info.FreeSpace > 0)
+            {
+                info.DaysUntilFull = (int)(info.FreeSpace * 0.9 / analytics.DailyGrowthBytes);
+            }
+        }
+        catch (Exception ex)
+        {
+            LoggingService.Instance.LogWarning("Failed to estimate storage growth", ("error", ex.Message));
+        }
 
         return info;
     }
@@ -437,7 +453,7 @@ public sealed class ArchiveHealthService
     private async Task RunVerificationAsync(VerificationJob job, DateTime? since,
         IProgress<VerificationProgress>? progress, CancellationToken cancellationToken)
     {
-        var config = await _configService.LoadConfigAsync();
+        var config = await _configService.LoadConfigAsync(cancellationToken);
         var dataRoot = config?.DataRoot ?? "data";
         var basePath = Path.IsPathRooted(dataRoot)
             ? dataRoot
@@ -601,7 +617,7 @@ public sealed class ArchiveHealthService
         return Math.Max(0, Math.Min(100, score));
     }
 
-    private async Task SaveHealthStatusAsync(ArchiveHealthStatus status)
+    private async Task SaveHealthStatusAsync(ArchiveHealthStatus status, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -617,11 +633,15 @@ public sealed class ArchiveHealthService
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             });
 
-            await File.WriteAllTextAsync(_healthStatusPath, json);
+            await File.WriteAllTextAsync(_healthStatusPath, json, cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to save health status: {ex.Message}");
+            LoggingService.Instance.LogError("Failed to save health status", ex);
         }
     }
 
@@ -635,7 +655,7 @@ public sealed class ArchiveHealthService
 /// <summary>
 /// Event args for archive health events.
 /// </summary>
-public class ArchiveHealthEventArgs : EventArgs
+public sealed class ArchiveHealthEventArgs : EventArgs
 {
     public ArchiveHealthStatus? Status { get; set; }
 }
@@ -643,7 +663,7 @@ public class ArchiveHealthEventArgs : EventArgs
 /// <summary>
 /// Event args for verification job events.
 /// </summary>
-public class VerificationJobEventArgs : EventArgs
+public sealed class VerificationJobEventArgs : EventArgs
 {
     public VerificationJob? Job { get; set; }
 }
@@ -651,7 +671,7 @@ public class VerificationJobEventArgs : EventArgs
 /// <summary>
 /// Event args for issue resolution.
 /// </summary>
-public class ArchiveIssueEventArgs : EventArgs
+public sealed class ArchiveIssueEventArgs : EventArgs
 {
     public ArchiveIssue? Issue { get; set; }
 }
@@ -659,7 +679,7 @@ public class ArchiveIssueEventArgs : EventArgs
 /// <summary>
 /// Progress information for verification.
 /// </summary>
-public class VerificationProgress
+public sealed class VerificationProgress
 {
     public int ProcessedFiles { get; set; }
     public int TotalFiles { get; set; }

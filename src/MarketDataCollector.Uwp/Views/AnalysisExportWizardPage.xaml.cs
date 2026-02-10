@@ -54,6 +54,7 @@ public sealed partial class AnalysisExportWizardPage : Page
         catch
         {
             // Use default symbols if service fails
+            LoggingService.Instance.LogWarning("Failed to load symbols for export wizard");
             var defaultSymbols = new[]
             {
                 new { Symbol = "SPY", Description = "S&P 500 ETF" },
@@ -354,7 +355,7 @@ public sealed partial class AnalysisExportWizardPage : Page
             {
                 await Windows.System.Launcher.LaunchFolderPathAsync(OutputPathBox.Text);
             }
-            catch { }
+            catch { LoggingService.Instance.LogWarning("Analysis export wizard operation failed"); }
         }
     }
 

@@ -9,7 +9,7 @@ namespace MarketDataCollector.Uwp.Services;
 /// Service for managing MassTransit message bus integration.
 /// Provides visibility into message publishing, consumption, and bus health.
 /// </summary>
-public sealed class MessagingService
+public sealed class MessagingService : IMessagingService
 {
     private static MessagingService? _instance;
     private static readonly object _lock = new();

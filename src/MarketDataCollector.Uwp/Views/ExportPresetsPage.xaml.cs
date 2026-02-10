@@ -75,7 +75,7 @@ public sealed partial class ExportPresetsPage : Page
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[ExportPresetsPage] Error loading data: {ex.Message}");
+            LoggingService.Instance.LogError("ExportPresetsPage error loading data", ex);
         }
     }
 

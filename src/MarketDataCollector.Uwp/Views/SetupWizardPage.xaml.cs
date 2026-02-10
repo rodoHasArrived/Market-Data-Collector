@@ -204,7 +204,7 @@ public sealed partial class SetupWizardPage : Page
             ConnectionTestInfoBar.Title = "Connection Test Error";
             ConnectionTestInfoBar.Message = ex.Message;
             ConnectionTestInfoBar.IsOpen = true;
-            System.Diagnostics.Debug.WriteLine($"[SetupWizardPage] Error testing connection: {ex.Message}");
+            LoggingService.Instance.LogError("SetupWizardPage error testing connection", ex);
         }
         finally
         {
@@ -331,7 +331,7 @@ public sealed partial class SetupWizardPage : Page
             PreflightInfoBar.Title = "Preflight Check Error";
             PreflightInfoBar.Message = ex.Message;
             PreflightInfoBar.IsOpen = true;
-            System.Diagnostics.Debug.WriteLine($"[SetupWizardPage] Error during preflight: {ex.Message}");
+            LoggingService.Instance.LogError("SetupWizardPage error during preflight", ex);
         }
         finally
         {
@@ -418,7 +418,7 @@ public sealed partial class SetupWizardPage : Page
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[SetupWizardPage] Error during next click: {ex.Message}");
+            LoggingService.Instance.LogError("SetupWizardPage error during next click", ex);
         }
     }
 

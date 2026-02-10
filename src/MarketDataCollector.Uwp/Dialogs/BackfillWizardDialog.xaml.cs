@@ -68,7 +68,7 @@ public sealed partial class BackfillWizardDialog : ContentDialog
     public BackfillWizardDialog()
     {
         this.InitializeComponent();
-        _configService = new ConfigService();
+        _configService = ConfigService.Instance;
 
         SelectedSymbolsPanel.ItemsSource = _selectedSymbols;
         PopularSymbolsList.ItemsSource = PopularSymbols;

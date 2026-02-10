@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace MarketDataCollector.Uwp.Services;
@@ -12,7 +13,7 @@ namespace MarketDataCollector.Uwp.Services;
 /// Service for generating schemas and data dictionaries (#37/72 - P0 High).
 /// Auto-generates comprehensive documentation for all event types.
 /// </summary>
-public sealed class SchemaService
+public sealed class SchemaService : ISchemaService
 {
     private static SchemaService? _instance;
     private static readonly object _lock = new();
@@ -43,31 +44,33 @@ public sealed class SchemaService
     /// <summary>
     /// Gets the complete data dictionary with all schemas.
     /// </summary>
-    public async Task<DataDictionary> GetDataDictionaryAsync()
+    public async Task<DataDictionary> GetDataDictionaryAsync(CancellationToken cancellationToken = default)
     {
         if (_dataDictionary != null)
         {
             return _dataDictionary;
         }
 
-        _dataDictionary = await LoadOrCreateDataDictionaryAsync();
+        _dataDictionary = await LoadOrCreateDataDictionaryAsync(cancellationToken);
         return _dataDictionary;
     }
 
     /// <summary>
     /// Gets schema for a specific event type.
     /// </summary>
-    public async Task<EventSchema?> GetSchemaAsync(string eventType)
+    public async Task<EventSchema?> GetSchemaAsync(string eventType, CancellationToken cancellationToken = default)
     {
-        var dictionary = await GetDataDictionaryAsync();
+        var dictionary = await GetDataDictionaryAsync(cancellationToken);
         return dictionary.Schemas.TryGetValue(eventType, out var schema) ? schema : null;
     }
 
     /// <summary>
     /// Generates the data dictionary and saves it to disk.
     /// </summary>
-    public async Task<DataDictionary> GenerateDataDictionaryAsync()
+    public async Task<DataDictionary> GenerateDataDictionaryAsync(CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+
         var dictionary = new DataDictionary
         {
             Version = "2.0",
@@ -86,7 +89,7 @@ public sealed class SchemaService
         };
 
         _dataDictionary = dictionary;
-        await SaveDataDictionaryAsync(dictionary);
+        await SaveDataDictionaryAsync(dictionary, cancellationToken);
 
         DictionaryGenerated?.Invoke(this, new DataDictionaryEventArgs { Dictionary = dictionary });
 
@@ -96,9 +99,9 @@ public sealed class SchemaService
     /// <summary>
     /// Exports the data dictionary in different formats.
     /// </summary>
-    public async Task<string> ExportDataDictionaryAsync(string format, string? outputPath = null)
+    public async Task<string> ExportDataDictionaryAsync(string format, string? outputPath = null, CancellationToken cancellationToken = default)
     {
-        var dictionary = await GetDataDictionaryAsync();
+        var dictionary = await GetDataDictionaryAsync(cancellationToken);
         var output = format.ToLower() switch
         {
             "json" => ExportAsJson(dictionary),
@@ -109,7 +112,7 @@ public sealed class SchemaService
 
         if (!string.IsNullOrEmpty(outputPath))
         {
-            await File.WriteAllTextAsync(outputPath, output);
+            await File.WriteAllTextAsync(outputPath, output, cancellationToken);
         }
 
         return output;
@@ -118,13 +121,13 @@ public sealed class SchemaService
     /// <summary>
     /// Generates a markdown data dictionary document.
     /// </summary>
-    public async Task<string> GenerateMarkdownDocumentationAsync()
+    public async Task<string> GenerateMarkdownDocumentationAsync(CancellationToken cancellationToken = default)
     {
-        var dictionary = await GetDataDictionaryAsync();
+        var dictionary = await GetDataDictionaryAsync(cancellationToken);
         return ExportAsMarkdown(dictionary);
     }
 
-    private async Task<DataDictionary> LoadOrCreateDataDictionaryAsync()
+    private async Task<DataDictionary> LoadOrCreateDataDictionaryAsync(CancellationToken cancellationToken)
     {
         EnsureSchemasPathExists();
         var dictionaryPath = Path.Combine(_schemasPath, "data_dictionary.json");
@@ -133,7 +136,7 @@ public sealed class SchemaService
         {
             try
             {
-                var json = await File.ReadAllTextAsync(dictionaryPath);
+                var json = await File.ReadAllTextAsync(dictionaryPath, cancellationToken);
                 var dictionary = JsonSerializer.Deserialize<DataDictionary>(json, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
@@ -143,16 +146,20 @@ public sealed class SchemaService
                     return dictionary;
                 }
             }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Failed to load data dictionary: {ex.Message}");
+                LoggingService.Instance.LogError("Failed to load data dictionary", ex);
             }
         }
 
-        return await GenerateDataDictionaryAsync();
+        return await GenerateDataDictionaryAsync(cancellationToken);
     }
 
-    private async Task SaveDataDictionaryAsync(DataDictionary dictionary)
+    private async Task SaveDataDictionaryAsync(DataDictionary dictionary, CancellationToken cancellationToken)
     {
         EnsureSchemasPathExists();
         var dictionaryPath = Path.Combine(_schemasPath, "data_dictionary.json");
@@ -163,11 +170,11 @@ public sealed class SchemaService
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         });
 
-        await File.WriteAllTextAsync(dictionaryPath, json);
+        await File.WriteAllTextAsync(dictionaryPath, json, cancellationToken);
 
         // Also save markdown version
         var markdownPath = Path.Combine(_schemasPath, "DATA_DICTIONARY.md");
-        await File.WriteAllTextAsync(markdownPath, ExportAsMarkdown(dictionary));
+        await File.WriteAllTextAsync(markdownPath, ExportAsMarkdown(dictionary), cancellationToken);
     }
 
     private void EnsureSchemasPathExists()

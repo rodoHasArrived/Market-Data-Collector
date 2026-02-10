@@ -21,7 +21,7 @@ public sealed partial class WelcomePage : Page
     public WelcomePage()
     {
         this.InitializeComponent();
-        _configService = new ConfigService();
+        _configService = ConfigService.Instance;
         _selectedSymbols = new ObservableCollection<WelcomeSymbolItem>();
         SelectedSymbolsList.ItemsSource = _selectedSymbols;
 
@@ -368,6 +368,7 @@ public sealed partial class WelcomePage : Page
         catch
         {
             // Ignore errors during save - don't block navigation
+            LoggingService.Instance.LogWarning("Failed to save welcome page configuration");
         }
 
         NavigateToDashboard();

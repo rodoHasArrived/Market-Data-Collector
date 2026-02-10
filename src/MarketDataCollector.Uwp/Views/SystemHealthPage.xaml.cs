@@ -7,6 +7,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
 using MarketDataCollector.Uwp.Services;
+using MarketDataCollector.Uwp.Models;
 using Windows.UI;
 
 namespace MarketDataCollector.Uwp.Views;
@@ -54,7 +55,7 @@ public sealed partial class SystemHealthPage : Page
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error in RefreshTimer_Tick: {ex.Message}");
+            LoggingService.Instance.LogError("Error in RefreshTimer_Tick", ex);
         }
     }
 
@@ -367,30 +368,4 @@ public sealed partial class SystemHealthPage : Page
         PageInfoBar.Severity = InfoBarSeverity.Error;
         PageInfoBar.IsOpen = true;
     }
-}
-
-/// <summary>
-/// Display model for provider health.
-/// </summary>
-public class ProviderHealthDisplay
-{
-    public string Provider { get; set; } = string.Empty;
-    public string DisplayName { get; set; } = string.Empty;
-    public string Status { get; set; } = string.Empty;
-    public Color StatusColor { get; set; }
-    public string LatencyText { get; set; } = string.Empty;
-    public string EventsPerSecond { get; set; } = string.Empty;
-    public string LastEventText { get; set; } = string.Empty;
-}
-
-/// <summary>
-/// Display model for system events.
-/// </summary>
-public class SystemEventDisplay
-{
-    public string EventType { get; set; } = string.Empty;
-    public string Source { get; set; } = string.Empty;
-    public string Message { get; set; } = string.Empty;
-    public string Timestamp { get; set; } = string.Empty;
-    public Color SeverityColor { get; set; }
 }
