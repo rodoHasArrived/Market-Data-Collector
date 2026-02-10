@@ -51,6 +51,7 @@ jobs:
         uses: ./.github/actions/setup-dotnet-cache
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
+          cache-suffix: quality
 
       - name: Restore dependencies
         run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
@@ -203,21 +204,15 @@ jobs:
 
       - name: Post AI quality analysis to summary
         if: always() && steps.ai-quality.outcome == 'success'
+        env:
+          AI_RESPONSE: ${{ steps.ai-quality.outputs.response }}
         run: |
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### AI Code Quality Suggestions" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
-          # Save AI response to file to avoid shell injection issues
-          # Use $RUNNER_TEMP for isolation per workflow run
-          cat > "$RUNNER_TEMP/ai-response.txt" << 'HEREDOC_EOF'
-          ${{ steps.ai-quality.outputs.response }}
-          HEREDOC_EOF
-          
-          # Check if file has content (-s checks for non-zero size)
-          # This handles both empty responses and missing content
-          if [ -f "$RUNNER_TEMP/ai-response.txt" ] && [ -s "$RUNNER_TEMP/ai-response.txt" ]; then
-            cat "$RUNNER_TEMP/ai-response.txt" >> $GITHUB_STEP_SUMMARY
+
+          if [ -n "$AI_RESPONSE" ]; then
+            echo "$AI_RESPONSE" >> $GITHUB_STEP_SUMMARY
           else
             echo "_AI analysis was not available or returned empty._" >> $GITHUB_STEP_SUMMARY
           fi

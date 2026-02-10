@@ -109,7 +109,7 @@ jobs:
             --verbosity normal \
             --logger "trx;LogFileName=test-results.trx" \
             --results-directory ./artifacts/test-results \
-            ${{ inputs.collect-coverage && '--collect:"XPlat Code Coverage" --results-directory ./coverage' || '' }}
+            ${{ inputs.collect-coverage && '--collect:"XPlat Code Coverage"' || '' }}
 
       - name: Summarize diagnostics
         if: always()
@@ -121,14 +121,14 @@ jobs:
             echo "- MSBuild restore binary log: ./artifacts/restore.binlog"
             echo "- MSBuild build binary log: ./artifacts/build.binlog"
             echo "- Test results (TRX): ./artifacts/test-results"
-            echo "- Coverage directory: ./coverage (if enabled)"
+            echo "- Coverage data: ./artifacts/test-results (if enabled)"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload coverage
         if: inputs.collect-coverage && success()
         uses: codecov/codecov-action@v5.5.2
         with:
-          directory: ./coverage
+          directory: ./artifacts/test-results
           fail_ci_if_error: false
           token: ${{ secrets.CODECOV_TOKEN }}
 
@@ -150,7 +150,7 @@ jobs:
           path: |
             ./artifacts/*.binlog
             ./artifacts/test-results/**/*.trx
-            ./coverage/
+            ./artifacts/test-results/**/coverage.cobertura.xml
           retention-days: 14
 
       - name: Upload test results on failure
@@ -159,6 +159,5 @@ jobs:
         with:
           name: test-failure-${{ inputs.cache-suffix || 'default' }}
           path: |
-            **/*.trx
-            ./coverage/
+            ./artifacts/test-results/**/*.trx
           retention-days: 7

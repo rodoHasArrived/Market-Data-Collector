@@ -104,8 +104,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Log PR context
         run: |
@@ -133,21 +131,21 @@ jobs:
           base-ref: ${{ github.event.pull_request.base.sha }}
           head-ref: ${{ github.event.pull_request.head.sha }}
 
-      - name: Log review outcome
+      - name: Post review outcome to summary
         if: always()
         run: |
-          echo "=== Dependency Review Complete ==="
-          echo "Job Status: ${{ job.status }}"
-          echo "Review Step Outcome: ${{ steps.dependency-review.outcome }}"
-          echo "Review Step Conclusion: ${{ steps.dependency-review.conclusion }}"
+          echo "## Dependency Review" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
           if [ "${{ steps.dependency-review.outcome }}" == "failure" ]; then
-            echo ""
-            echo "Review failed. Common causes:"
-            echo "  - Dependencies with high severity vulnerabilities"
-            echo "  - Dependencies with denied licenses (GPL-2.0, GPL-3.0)"
-            echo "  - Unable to resolve dependency graph"
-            echo ""
-            echo "Check the PR comment for detailed vulnerability information."
+            echo "**Status:** Failed" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Common causes:" >> $GITHUB_STEP_SUMMARY
+            echo "- Dependencies with high severity vulnerabilities" >> $GITHUB_STEP_SUMMARY
+            echo "- Dependencies with denied licenses (GPL-2.0, GPL-3.0)" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Check the PR comment for detailed vulnerability information." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "**Status:** Passed" >> $GITHUB_STEP_SUMMARY
           fi
 
   secret-detection:
@@ -233,10 +231,11 @@ jobs:
           languages: csharp
           queries: security-and-quality
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v5.1.0
+      - name: Setup .NET with Cache
+        uses: ./.github/actions/setup-dotnet-cache
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
+          cache-suffix: codeql
 
       - name: Restore dependencies
         run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
