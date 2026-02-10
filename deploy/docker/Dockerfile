@@ -10,16 +10,24 @@
 # -----------------------------------------------------------------------------
 # Stage 1: Build
 # -----------------------------------------------------------------------------
-FROM mcr.microsoft.com/dotnet/sdk:10.0-alpine AS build
+FROM mcr.microsoft.com/dotnet/sdk:9.0-alpine AS build
 
 WORKDIR /src
 
 # Note: Build context should be the repo root (docker build -f deploy/docker/Dockerfile .)
 # Copy solution and project files first for layer caching
-COPY MarketDataCollector.sln Directory.Build.props ./
+COPY MarketDataCollector.sln Directory.Build.props Directory.Packages.props global.json ./
 COPY src/MarketDataCollector/MarketDataCollector.csproj src/MarketDataCollector/
+COPY src/MarketDataCollector.Application/MarketDataCollector.Application.csproj src/MarketDataCollector.Application/
 COPY src/MarketDataCollector.Contracts/MarketDataCollector.Contracts.csproj src/MarketDataCollector.Contracts/
+COPY src/MarketDataCollector.Core/MarketDataCollector.Core.csproj src/MarketDataCollector.Core/
+COPY src/MarketDataCollector.Domain/MarketDataCollector.Domain.csproj src/MarketDataCollector.Domain/
+COPY src/MarketDataCollector.Infrastructure/MarketDataCollector.Infrastructure.csproj src/MarketDataCollector.Infrastructure/
+COPY src/MarketDataCollector.ProviderSdk/MarketDataCollector.ProviderSdk.csproj src/MarketDataCollector.ProviderSdk/
+COPY src/MarketDataCollector.Storage/MarketDataCollector.Storage.csproj src/MarketDataCollector.Storage/
 COPY src/MarketDataCollector.Ui/MarketDataCollector.Ui.csproj src/MarketDataCollector.Ui/
+COPY src/MarketDataCollector.Ui.Services/MarketDataCollector.Ui.Services.csproj src/MarketDataCollector.Ui.Services/
+COPY src/MarketDataCollector.Ui.Shared/MarketDataCollector.Ui.Shared.csproj src/MarketDataCollector.Ui.Shared/
 COPY src/MarketDataCollector.FSharp/MarketDataCollector.FSharp.fsproj src/MarketDataCollector.FSharp/
 COPY tests/MarketDataCollector.Tests/MarketDataCollector.Tests.csproj tests/MarketDataCollector.Tests/
 COPY tests/MarketDataCollector.FSharp.Tests/MarketDataCollector.FSharp.Tests.fsproj tests/MarketDataCollector.FSharp.Tests/
@@ -45,7 +53,7 @@ RUN dotnet publish src/MarketDataCollector/MarketDataCollector.csproj \
 # -----------------------------------------------------------------------------
 # Stage 2: Runtime
 # -----------------------------------------------------------------------------
-FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:9.0-alpine AS runtime
 
 # Install required packages
 RUN apk add --no-cache \

@@ -1,0 +1,106 @@
+# =============================================================================
+# Prometheus Alert Rules for Market Data Collector
+# =============================================================================
+# Add to prometheus.yml under rule_files:
+#   rule_files:
+#     - /etc/prometheus/alert-rules.yml
+# =============================================================================
+
+groups:
+  - name: mdc_health
+    rules:
+      # Application is down or unreachable
+      - alert: MdcDown
+        expr: up{job="marketdatacollector"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Market Data Collector is down"
+          description: "The MDC instance has been unreachable for more than 1 minute."
+
+      # Health endpoint returning unhealthy
+      - alert: MdcUnhealthy
+        expr: mdc_health_status == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Market Data Collector reports unhealthy"
+          description: "The health endpoint has been returning unhealthy for 2 minutes."
+
+  - name: mdc_pipeline
+    rules:
+      # Pipeline drop rate exceeds threshold
+      - alert: MdcHighDropRate
+        expr: rate(mdc_pipeline_events_dropped_total[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High pipeline event drop rate"
+          description: "More than 10 events/sec are being dropped over the last 5 minutes."
+
+      # Pipeline queue near capacity
+      - alert: MdcPipelineBackpressure
+        expr: mdc_pipeline_queue_utilization > 0.9
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Pipeline queue near capacity ({{ $value | humanizePercentage }})"
+          description: "The event pipeline queue utilization has exceeded 90% for 2 minutes."
+
+      # No events published in 5 minutes during market hours
+      - alert: MdcNoEventsPublished
+        expr: rate(mdc_pipeline_events_published_total[5m]) == 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "No events published in 10 minutes"
+          description: "The event pipeline has not published any events for 10 minutes."
+
+  - name: mdc_providers
+    rules:
+      # Provider disconnected
+      - alert: MdcProviderDisconnected
+        expr: mdc_provider_connected == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Provider {{ $labels.provider }} disconnected"
+          description: "Data provider {{ $labels.provider }} has been disconnected for 2 minutes."
+
+      # High provider latency
+      - alert: MdcHighProviderLatency
+        expr: mdc_provider_latency_seconds{quantile="0.99"} > 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High latency on provider {{ $labels.provider }}"
+          description: "P99 latency for {{ $labels.provider }} exceeds 5 seconds."
+
+  - name: mdc_storage
+    rules:
+      # Storage write errors
+      - alert: MdcStorageWriteErrors
+        expr: rate(mdc_storage_write_errors_total[5m]) > 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Storage write errors detected"
+          description: "Storage write errors occurring at {{ $value }} errors/sec."
+
+      # Data quality score below threshold
+      - alert: MdcLowDataQuality
+        expr: mdc_data_quality_score < 0.8
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low data quality score for {{ $labels.symbol }}"
+          description: "Data quality score for {{ $labels.symbol }} is {{ $value }}, below 0.8 threshold."

@@ -1,0 +1,17 @@
+# =============================================================================
+# Grafana Dashboard Provisioning for Market Data Collector
+# =============================================================================
+
+apiVersion: 1
+
+providers:
+  - name: 'Market Data Collector'
+    orgId: 1
+    folder: 'MDC'
+    type: file
+    disableDeletion: false
+    editable: true
+    updateIntervalSeconds: 30
+    options:
+      path: /etc/grafana/provisioning/dashboards/json
+      foldersFromFilesStructure: false
