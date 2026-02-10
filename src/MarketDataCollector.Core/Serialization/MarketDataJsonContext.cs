@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
+using MarketDataCollector.Application.Config;
 using MarketDataCollector.Contracts.Domain.Enums;
 using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Events;
@@ -49,6 +50,16 @@ namespace MarketDataCollector.Application.Serialization;
 [JsonSerializable(typeof(AggregateBarPayload))]
 [JsonSerializable(typeof(Dictionary<string, object>))]
 [JsonSerializable(typeof(Dictionary<string, JsonElement>))]
+[JsonSerializable(typeof(AppConfig))]
+[JsonSerializable(typeof(AlpacaOptions))]
+[JsonSerializable(typeof(IBOptions))]
+[JsonSerializable(typeof(PolygonOptions))]
+[JsonSerializable(typeof(StockSharpConfig))]
+[JsonSerializable(typeof(StorageConfig))]
+[JsonSerializable(typeof(BackfillConfig))]
+[JsonSerializable(typeof(SourceRegistryConfig))]
+[JsonSerializable(typeof(DataSourcesConfig))]
+[JsonSerializable(typeof(DerivativesConfig))]
 public partial class MarketDataJsonContext : JsonSerializerContext
 {
     /// <summary>
