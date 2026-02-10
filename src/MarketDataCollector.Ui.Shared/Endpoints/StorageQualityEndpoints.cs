@@ -48,7 +48,8 @@ public static class StorageQualityEndpoints
             {
                 return Results.Problem($"Failed to generate quality summary: {ex.Message}");
             }
-        });
+        })
+        .WithName("GetQualitySummary").Produces(200);
 
         // GET /api/storage/quality/scores — quality scores for all scored files
         group.MapGet(UiApiRoutes.StorageQualityScores, async (
@@ -78,7 +79,8 @@ public static class StorageQualityEndpoints
             {
                 return Results.Problem($"Failed to retrieve quality scores: {ex.Message}");
             }
-        });
+        })
+        .WithName("GetQualityScores").Produces(200);
 
         // GET /api/storage/quality/symbol/{symbol} — quality for a specific symbol
         group.MapGet(UiApiRoutes.StorageQualitySymbol, async (
@@ -103,7 +105,8 @@ public static class StorageQualityEndpoints
             {
                 return Results.Problem($"Failed to get quality for {symbol}: {ex.Message}");
             }
-        });
+        })
+        .WithName("GetSymbolQuality").Produces(200);
 
         // GET /api/storage/quality/alerts — active quality alerts
         group.MapGet(UiApiRoutes.StorageQualityAlerts, async (
@@ -126,7 +129,8 @@ public static class StorageQualityEndpoints
             {
                 return Results.Problem($"Failed to retrieve quality alerts: {ex.Message}");
             }
-        });
+        })
+        .WithName("GetQualityAlerts").Produces(200);
 
         // POST /api/storage/quality/alerts/{alertId}/acknowledge — acknowledge an alert
         group.MapPost(UiApiRoutes.StorageQualityAlertAcknowledge, (string alertId) =>
@@ -134,7 +138,9 @@ public static class StorageQualityEndpoints
             // Alert acknowledgment state is not persisted by IDataQualityService,
             // so we accept the request and return success.
             return Results.Ok(new { acknowledged = alertId, timestamp = DateTimeOffset.UtcNow });
-        }).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
+        })
+        .WithName("AcknowledgeAlert").Produces(200)
+        .RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
         // GET /api/storage/quality/rankings/{symbol} — source rankings for a symbol
         group.MapGet(UiApiRoutes.StorageQualityRankings, async (
@@ -164,7 +170,8 @@ public static class StorageQualityEndpoints
             {
                 return Results.Problem($"Failed to rank sources for {symbol}: {ex.Message}");
             }
-        });
+        })
+        .WithName("GetSourceRankings").Produces(200);
 
         // GET /api/storage/quality/trends — quality trends across all data
         group.MapGet(UiApiRoutes.StorageQualityTrends, async (
@@ -198,7 +205,8 @@ public static class StorageQualityEndpoints
             {
                 return Results.Problem($"Failed to compute trends: {ex.Message}");
             }
-        });
+        })
+        .WithName("GetQualityTrends").Produces(200);
 
         // GET /api/storage/quality/anomalies — detected quality anomalies
         group.MapGet(UiApiRoutes.StorageQualityAnomalies, async (
@@ -232,7 +240,8 @@ public static class StorageQualityEndpoints
             {
                 return Results.Problem($"Failed to detect anomalies: {ex.Message}");
             }
-        });
+        })
+        .WithName("GetQualityAnomalies").Produces(200);
 
         // POST /api/storage/quality/check — run a quality check on specified path
         group.MapPost(UiApiRoutes.StorageQualityCheck, async (
@@ -260,7 +269,9 @@ public static class StorageQualityEndpoints
             {
                 return Results.Problem($"Quality check failed: {ex.Message}");
             }
-        }).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
+        })
+        .WithName("RunQualityCheck").Produces(200).Produces(400).Produces(404)
+        .RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
     }
 }
 

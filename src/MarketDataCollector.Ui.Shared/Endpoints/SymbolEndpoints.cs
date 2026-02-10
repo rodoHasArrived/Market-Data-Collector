@@ -33,7 +33,9 @@ public static class SymbolEndpoints
                 count = symbols.Length,
                 symbols
             }, jsonOptions);
-        });
+        })
+        .WithName("GetSymbols")
+        .Produces(200);
 
         // GET /api/symbols/monitored — symbols configured for monitoring
         group.MapGet(UiApiRoutes.SymbolsMonitored, (ConfigStore store) =>
@@ -54,7 +56,9 @@ public static class SymbolEndpoints
                     s.InstrumentType
                 })
             }, jsonOptions);
-        });
+        })
+        .WithName("GetMonitoredSymbols")
+        .Produces(200);
 
         // GET /api/symbols/archived — symbols that have stored data files
         group.MapGet(UiApiRoutes.SymbolsArchived, async (
@@ -75,7 +79,9 @@ public static class SymbolEndpoints
             {
                 return Results.Problem($"Failed to discover archived symbols: {ex.Message}");
             }
-        });
+        })
+        .WithName("GetArchivedSymbols")
+        .Produces(200);
 
         // GET /api/symbols/{symbol}/status — detailed status for one symbol
         group.MapGet(UiApiRoutes.SymbolStatus, async (
@@ -112,7 +118,9 @@ public static class SymbolEndpoints
                 config = symbolCfg,
                 storage = storageInfo
             }, jsonOptions);
-        });
+        })
+        .WithName("GetSymbolStatus")
+        .Produces(200);
 
         // POST /api/symbols/add — add one or more symbols
         group.MapPost(UiApiRoutes.SymbolsAdd, async (ConfigStore store, SymbolAddRequest req) =>
@@ -152,7 +160,11 @@ public static class SymbolEndpoints
             await store.SaveAsync(next);
 
             return Results.Json(new { added, skipped }, jsonOptions);
-        }).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
+        })
+        .WithName("AddSymbols")
+        .Produces(200)
+        .Produces(400)
+        .RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
         // POST /api/symbols/{symbol}/remove — remove a symbol
         group.MapPost(UiApiRoutes.SymbolRemove, async (string symbol, ConfigStore store) =>
@@ -167,7 +179,11 @@ public static class SymbolEndpoints
             var next = cfg with { Symbols = list.ToArray() };
             await store.SaveAsync(next);
             return Results.Ok(new { removed = symbol });
-        }).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
+        })
+        .WithName("RemoveSymbol")
+        .Produces(200)
+        .Produces(404)
+        .RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
         // GET /api/symbols/{symbol}/trades — recent trade files for a symbol
         group.MapGet(UiApiRoutes.SymbolTrades, async (
@@ -190,7 +206,9 @@ public static class SymbolEndpoints
                 totalFiles = result.TotalMatches,
                 files = result.Results?.Select(f => new { f.Path, f.SizeBytes, f.EventCount, f.Date })
             }, jsonOptions);
-        });
+        })
+        .WithName("GetSymbolTrades")
+        .Produces(200);
 
         // GET /api/symbols/{symbol}/depth — recent depth files for a symbol
         group.MapGet(UiApiRoutes.SymbolDepth, async (
@@ -213,7 +231,9 @@ public static class SymbolEndpoints
                 totalFiles = result.TotalMatches,
                 files = result.Results?.Select(f => new { f.Path, f.SizeBytes, f.EventCount, f.Date })
             }, jsonOptions);
-        });
+        })
+        .WithName("GetSymbolDepth")
+        .Produces(200);
 
         // GET /api/symbols/statistics — aggregate stats across all symbols
         group.MapGet(UiApiRoutes.SymbolsStatistics, async (
@@ -252,7 +272,9 @@ public static class SymbolEndpoints
                 depthEnabled = symbols.Count(s => s.SubscribeDepth),
                 storage = storageStats
             }, jsonOptions);
-        });
+        })
+        .WithName("GetSymbolStatistics")
+        .Produces(200);
 
         // POST /api/symbols/validate — validate symbol identifiers
         group.MapPost(UiApiRoutes.SymbolsValidate, (SymbolValidateRequest req) =>
@@ -268,7 +290,10 @@ public static class SymbolEndpoints
             });
 
             return Results.Json(new { results }, jsonOptions);
-        });
+        })
+        .WithName("ValidateSymbols")
+        .Produces(200)
+        .Produces(400);
 
         // POST /api/symbols/{symbol}/archive — archive a symbol (remove from monitoring, keep data)
         group.MapPost(UiApiRoutes.SymbolArchive, async (string symbol, ConfigStore store) =>
@@ -283,7 +308,11 @@ public static class SymbolEndpoints
             var next = cfg with { Symbols = list.ToArray() };
             await store.SaveAsync(next);
             return Results.Ok(new { archived = symbol, message = "Symbol removed from monitoring. Historical data is preserved." });
-        }).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
+        })
+        .WithName("ArchiveSymbol")
+        .Produces(200)
+        .Produces(404)
+        .RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
         // POST /api/symbols/bulk-add — add multiple symbols at once
         group.MapPost(UiApiRoutes.SymbolsBulkAdd, async (ConfigStore store, SymbolBulkAddRequest req) =>
@@ -322,7 +351,11 @@ public static class SymbolEndpoints
             var next = cfg with { Symbols = list.ToArray() };
             await store.SaveAsync(next);
             return Results.Json(new { added, skipped }, jsonOptions);
-        }).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
+        })
+        .WithName("BulkAddSymbols")
+        .Produces(200)
+        .Produces(400)
+        .RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
         // POST /api/symbols/bulk-remove — remove multiple symbols
         group.MapPost(UiApiRoutes.SymbolsBulkRemove, async (ConfigStore store, SymbolBulkRemoveRequest req) =>
@@ -339,7 +372,11 @@ public static class SymbolEndpoints
             var next = cfg with { Symbols = list.ToArray() };
             await store.SaveAsync(next);
             return Results.Json(new { removed, count = removed.Count }, jsonOptions);
-        }).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
+        })
+        .WithName("BulkRemoveSymbols")
+        .Produces(200)
+        .Produces(400)
+        .RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
         // GET /api/symbols/search — search symbols by query string
         group.MapGet(UiApiRoutes.SymbolsSearch, (
@@ -361,7 +398,9 @@ public static class SymbolEndpoints
                 query,
                 results = matches.Select(s => new { s.Symbol, s.Exchange, s.Currency, s.InstrumentType })
             }, jsonOptions);
-        });
+        })
+        .WithName("SearchSymbols")
+        .Produces(200);
 
         // POST /api/symbols/batch — batch operations (add/remove/update)
         group.MapPost(UiApiRoutes.SymbolsBatch, async (ConfigStore store, SymbolBatchRequest req) =>
@@ -405,7 +444,11 @@ public static class SymbolEndpoints
             var next = cfg with { Symbols = list.ToArray() };
             await store.SaveAsync(next);
             return Results.Json(new { results }, jsonOptions);
-        }).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
+        })
+        .WithName("BatchSymbolOperations")
+        .Produces(200)
+        .Produces(400)
+        .RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
     }
 }
 

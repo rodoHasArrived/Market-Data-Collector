@@ -56,7 +56,10 @@ public static class LiveDataEndpoints
                 Timestamp: DateTimeOffset.UtcNow);
 
             return Results.Json(response, jsonOptions);
-        });
+        })
+        .WithName("GetTrades")
+        .Produces(200)
+        .Produces(503);
 
         // GET /api/data/quotes/{symbol} — latest quote for a symbol
         group.MapGet(UiApiRoutes.DataQuotes, (string symbol, HttpContext ctx) =>
@@ -93,7 +96,10 @@ public static class LiveDataEndpoints
                 Timestamp: DateTimeOffset.UtcNow);
 
             return Results.Json(response, jsonOptions);
-        });
+        })
+        .WithName("GetQuotes")
+        .Produces(200)
+        .Produces(503);
 
         // GET /api/data/orderbook/{symbol} — full order book snapshot
         group.MapGet(UiApiRoutes.DataOrderbook, (string symbol, int? levels, HttpContext ctx) =>
@@ -162,7 +168,10 @@ public static class LiveDataEndpoints
                 Venue: snapshot.Venue);
 
             return Results.Json(response, jsonOptions);
-        });
+        })
+        .WithName("GetOrderBook")
+        .Produces(200)
+        .Produces(503);
 
         // GET /api/data/bbo/{symbol} — best bid/offer
         group.MapGet(UiApiRoutes.DataBbo, (string symbol, HttpContext ctx) =>
@@ -198,7 +207,11 @@ public static class LiveDataEndpoints
                 Venue: bbo.Venue);
 
             return Results.Json(response, jsonOptions);
-        });
+        })
+        .WithName("GetBbo")
+        .Produces(200)
+        .Produces(404)
+        .Produces(503);
 
         // GET /api/data/orderflow/{symbol} — order flow statistics
         group.MapGet(UiApiRoutes.DataOrderflow, (string symbol, HttpContext ctx) =>
@@ -235,7 +248,11 @@ public static class LiveDataEndpoints
                 Venue: stats.Venue);
 
             return Results.Json(response, jsonOptions);
-        });
+        })
+        .WithName("GetOrderFlow")
+        .Produces(200)
+        .Produces(404)
+        .Produces(503);
 
         // GET /api/data/health — live data health overview
         group.MapGet(UiApiRoutes.DataHealth, (HttpContext ctx) =>
@@ -305,6 +322,8 @@ public static class LiveDataEndpoints
                 Symbols: symbolHealth);
 
             return Results.Json(response, jsonOptions);
-        });
+        })
+        .WithName("GetDataHealth")
+        .Produces(200);
     }
 }

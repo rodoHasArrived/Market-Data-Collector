@@ -27,7 +27,8 @@ public static class StorageEndpoints
                 defaultProfile = StorageProfilePresets.DefaultProfile,
                 profiles = presets.Select(p => new { p.Id, p.Label, p.Description })
             }, jsonOptions);
-        });
+        })
+        .WithName("GetStorageProfiles").Produces(200);
 
         // GET /api/storage/stats — overall storage statistics
         group.MapGet(UiApiRoutes.StorageStats, (StorageOptions opts) =>
@@ -68,7 +69,8 @@ public static class StorageEndpoints
                 parquetEnabled = opts.EnableParquetSink,
                 retentionDays = opts.RetentionDays
             }, jsonOptions);
-        });
+        })
+        .WithName("GetStorageStats").Produces(200);
 
         // GET /api/storage/breakdown — breakdown by symbol
         group.MapGet(UiApiRoutes.StorageBreakdown, async (
@@ -97,7 +99,8 @@ public static class StorageEndpoints
             {
                 return Results.Problem($"Failed to compute breakdown: {ex.Message}");
             }
-        });
+        })
+        .WithName("GetStorageBreakdown").Produces(200);
 
         // GET /api/storage/symbol/{symbol}/info — storage info for a symbol
         group.MapGet(UiApiRoutes.StorageSymbolInfo, async (
@@ -121,7 +124,8 @@ public static class StorageEndpoints
                     ? new { from = result.Results.Min(f => f.Date), to = result.Results.Max(f => f.Date) }
                     : null
             }, jsonOptions);
-        });
+        })
+        .WithName("GetStorageSymbolInfo").Produces(200);
 
         // GET /api/storage/symbol/{symbol}/stats — detailed stats for a symbol
         group.MapGet(UiApiRoutes.StorageSymbolStats, async (
@@ -147,7 +151,8 @@ public static class StorageEndpoints
                 totalEvents = files.Sum(f => f.EventCount),
                 byEventType = byType
             }, jsonOptions);
-        });
+        })
+        .WithName("GetStorageSymbolStats").Produces(200);
 
         // GET /api/storage/symbol/{symbol}/files — list files for a symbol
         group.MapGet(UiApiRoutes.StorageSymbolFiles, async (
@@ -173,7 +178,8 @@ public static class StorageEndpoints
                 take,
                 files = result.Results?.Select(f => new { f.Path, f.SizeBytes, f.EventCount, f.Date, f.EventType })
             }, jsonOptions);
-        });
+        })
+        .WithName("GetStorageSymbolFiles").Produces(200);
 
         // GET /api/storage/symbol/{symbol}/path — storage path for a symbol
         group.MapGet(UiApiRoutes.StorageSymbolPath, (string symbol, StorageOptions opts) =>
@@ -195,7 +201,8 @@ public static class StorageEndpoints
                 exists = Directory.Exists(symbolPath),
                 namingConvention = opts.NamingConvention.ToString()
             }, jsonOptions);
-        });
+        })
+        .WithName("GetStorageSymbolPath").Produces(200);
 
         // GET /api/storage/health — storage health summary
         group.MapGet(UiApiRoutes.StorageHealth, (StorageOptions opts) =>
@@ -225,7 +232,8 @@ public static class StorageEndpoints
                 namingConvention = opts.NamingConvention.ToString(),
                 compress = opts.Compress
             }, jsonOptions);
-        });
+        })
+        .WithName("GetStorageHealth").Produces(200);
 
         // GET /api/storage/cleanup/candidates — files eligible for cleanup
         group.MapGet(UiApiRoutes.StorageCleanupCandidates, (StorageOptions opts) =>
@@ -257,7 +265,8 @@ public static class StorageEndpoints
                 candidateCount = candidates.Count,
                 candidates
             }, jsonOptions);
-        });
+        })
+        .WithName("GetCleanupCandidates").Produces(200);
 
         // POST /api/storage/cleanup — run storage cleanup
         group.MapPost(UiApiRoutes.StorageCleanup, async (
@@ -294,7 +303,9 @@ public static class StorageEndpoints
             {
                 return Results.Problem($"Cleanup failed: {ex.Message}");
             }
-        }).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
+        })
+        .WithName("RunStorageCleanup").Produces(200).Produces(500)
+        .RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
         // GET /api/storage/archive/stats — archive tier statistics
         group.MapGet(UiApiRoutes.StorageArchiveStats, (StorageOptions opts) =>
@@ -326,7 +337,8 @@ public static class StorageEndpoints
                 totalSizeMb = Math.Round(archiveSize / (1024.0 * 1024.0), 2),
                 tiering = opts.Tiering is not null ? new { opts.Tiering.Enabled, tiers = opts.Tiering.Tiers?.Count ?? 0 } : null
             }, jsonOptions);
-        });
+        })
+        .WithName("GetArchiveStats").Produces(200);
 
         // GET /api/storage/catalog — storage catalog summary
         group.MapGet(UiApiRoutes.StorageCatalog, async (
@@ -346,7 +358,8 @@ public static class StorageEndpoints
             {
                 return Results.Problem($"Failed to load catalog: {ex.Message}");
             }
-        });
+        })
+        .WithName("GetStorageCatalog").Produces(200);
 
         // GET /api/storage/search/files — search for files
         group.MapGet(UiApiRoutes.StorageSearchFiles, async (
@@ -386,7 +399,8 @@ public static class StorageEndpoints
                 take,
                 files = result.Results?.Select(f => new { f.Path, f.SizeBytes, f.EventCount, f.Date, f.EventType })
             }, jsonOptions);
-        });
+        })
+        .WithName("SearchStorageFiles").Produces(200);
 
         // GET /api/storage/health/check — detailed health check
         group.MapGet(UiApiRoutes.StorageHealthCheck, async (
@@ -406,7 +420,8 @@ public static class StorageEndpoints
             {
                 return Results.Problem($"Health check failed: {ex.Message}");
             }
-        });
+        })
+        .WithName("RunStorageHealthCheck").Produces(200);
 
         // GET /api/storage/health/orphans — find orphaned files
         group.MapGet(UiApiRoutes.StorageHealthOrphans, async (
@@ -425,7 +440,8 @@ public static class StorageEndpoints
             {
                 return Results.Problem($"Orphan scan failed: {ex.Message}");
             }
-        });
+        })
+        .WithName("FindOrphanedFiles").Produces(200);
 
         // POST /api/storage/tiers/migrate — trigger tier migration
         group.MapPost(UiApiRoutes.StorageTiersMigrate, async (
@@ -453,7 +469,9 @@ public static class StorageEndpoints
             {
                 return Results.Problem($"Migration failed: {ex.Message}");
             }
-        }).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
+        })
+        .WithName("MigrateTier").Produces(200).Produces(400)
+        .RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
         // GET /api/storage/tiers/statistics — tier statistics
         group.MapGet(UiApiRoutes.StorageTiersStatistics, async (
@@ -472,7 +490,8 @@ public static class StorageEndpoints
             {
                 return Results.Problem($"Failed to get tier statistics: {ex.Message}");
             }
-        });
+        })
+        .WithName("GetTierStatistics").Produces(200);
 
         // GET /api/storage/tiers/plan — generate tier migration plan
         group.MapGet(UiApiRoutes.StorageTiersPlan, async (
@@ -494,7 +513,8 @@ public static class StorageEndpoints
             {
                 return Results.Problem($"Failed to generate migration plan: {ex.Message}");
             }
-        });
+        })
+        .WithName("GetTierMigrationPlan").Produces(200);
 
         // POST /api/storage/maintenance/defrag — run defragmentation
         group.MapPost(UiApiRoutes.StorageMaintenanceDefrag, async (
@@ -513,7 +533,9 @@ public static class StorageEndpoints
             {
                 return Results.Problem($"Defragmentation failed: {ex.Message}");
             }
-        }).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
+        })
+        .WithName("RunDefragmentation").Produces(200)
+        .RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
     }
 }
 

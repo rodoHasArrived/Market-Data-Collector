@@ -39,7 +39,7 @@ public static class ConfigEndpoints
                 backfill = cfg.Backfill,
                 derivatives = cfg.Derivatives
             }, jsonOptions);
-        });
+        }).WithName("GetConfig").Produces(200);
 
         // Update data source
         group.MapPost(UiApiRoutes.ConfigDataSource, async (ConfigStore store, DataSourceRequest req) =>
@@ -53,7 +53,7 @@ public static class ConfigEndpoints
             await store.SaveAsync(next);
 
             return Results.Ok();
-        }).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
+        }).WithName("UpdateDataSource").Produces(200).Produces(400).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
         // Update Alpaca settings
         group.MapPost(UiApiRoutes.ConfigAlpaca, async (ConfigStore store, AlpacaOptionsDto alpaca) =>
@@ -62,7 +62,7 @@ public static class ConfigEndpoints
             var next = cfg with { Alpaca = alpaca.ToDomain() };
             await store.SaveAsync(next);
             return Results.Ok();
-        }).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
+        }).WithName("UpdateAlpaca").Produces(200).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
         // Update storage settings
         group.MapPost(UiApiRoutes.ConfigStorage, async (ConfigStore store, StorageSettingsRequest req) =>
@@ -87,7 +87,7 @@ public static class ConfigEndpoints
             };
             await store.SaveAsync(next);
             return Results.Ok();
-        }).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
+        }).WithName("UpdateStorage").Produces(200).Produces(400).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
         // Add or update symbol
         group.MapPost(UiApiRoutes.ConfigSymbols, async (ConfigStore store, SymbolConfig symbol) =>
@@ -106,7 +106,7 @@ public static class ConfigEndpoints
             await store.SaveAsync(next);
 
             return Results.Ok();
-        }).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
+        }).WithName("UpsertSymbol").Produces(200).Produces(400).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
         // Delete symbol
         group.MapDelete(UiApiRoutes.ConfigSymbols + "/{symbol}", async (ConfigStore store, string symbol) =>
@@ -117,14 +117,14 @@ public static class ConfigEndpoints
             var next = cfg with { Symbols = list.ToArray() };
             await store.SaveAsync(next);
             return Results.Ok();
-        }).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
+        }).WithName("DeleteSymbol").Produces(200).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
         // Get derivatives configuration
         group.MapGet(UiApiRoutes.ConfigDerivatives, (ConfigStore store) =>
         {
             var cfg = store.Load();
             return Results.Json(cfg.Derivatives ?? new Application.Config.DerivativesConfig(), jsonOptions);
-        });
+        }).WithName("GetDerivatives").Produces(200);
 
         // Update derivatives configuration
         group.MapPost(UiApiRoutes.ConfigDerivatives, async (ConfigStore store, DerivativesConfigDto derivatives) =>
@@ -133,13 +133,13 @@ public static class ConfigEndpoints
             var next = cfg with { Derivatives = derivatives.ToDomain() };
             await store.SaveAsync(next);
             return Results.Ok();
-        }).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
+        }).WithName("UpdateDerivatives").Produces(200).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
         // Get status
         group.MapGet(UiApiRoutes.Status, (ConfigStore store) =>
         {
             var status = store.TryLoadStatusJson();
             return status is null ? Results.NotFound() : Results.Content(status, "application/json");
-        });
+        }).WithName("GetConfigStatus").Produces(200).Produces(404);
     }
 }

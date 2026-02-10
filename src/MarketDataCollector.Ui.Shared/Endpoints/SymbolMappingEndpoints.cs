@@ -37,7 +37,7 @@ public static class SymbolMappingEndpoints
             )).ToArray();
 
             return Results.Json(response, jsonOptions);
-        });
+        }).WithName("GetSymbolMappings").Produces(200);
 
         // Create or update symbol mapping
         group.MapPost(UiApiRoutes.SymbolMappings, async (ConfigStore store, SymbolMappingRequest req) =>
@@ -75,7 +75,7 @@ public static class SymbolMappingEndpoints
             await store.SaveAsync(next);
 
             return Results.Ok();
-        });
+        }).WithName("UpsertSymbolMapping").Produces(200).Produces(400);
 
         // Delete symbol mapping
         group.MapDelete(UiApiRoutes.SymbolMappings + "/{symbol}", async (ConfigStore store, string symbol) =>
@@ -100,7 +100,7 @@ public static class SymbolMappingEndpoints
             await store.SaveAsync(next);
 
             return Results.Ok();
-        });
+        }).WithName("DeleteSymbolMapping").Produces(200).Produces(404);
 
         // Get single symbol mapping
         group.MapGet(UiApiRoutes.SymbolMappings + "/{symbol}", (ConfigStore store, string symbol) =>
@@ -123,7 +123,7 @@ public static class SymbolMappingEndpoints
             );
 
             return Results.Json(response, jsonOptions);
-        });
+        }).WithName("GetSymbolMapping").Produces(200).Produces(404);
 
         // Import symbol mappings from CSV
         group.MapPost(UiApiRoutes.SymbolMappings + "/import", async (ConfigStore store, HttpRequest request) =>
@@ -224,6 +224,6 @@ public static class SymbolMappingEndpoints
             await store.SaveAsync(next);
 
             return Results.Ok(new { imported = mappings.Count });
-        });
+        }).WithName("ImportSymbolMappings").Produces(200).Produces(400);
     }
 }

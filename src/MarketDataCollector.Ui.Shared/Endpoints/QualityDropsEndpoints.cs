@@ -43,7 +43,9 @@ public static class QualityDropsEndpoints
                 auditFilePath = stats.AuditFilePath,
                 timestamp = stats.Timestamp
             }, jsonOptions);
-        });
+        })
+        .WithName("GetQualityDrops")
+        .Produces(200);
 
         group.MapGet(UiApiRoutes.QualityDropsBySymbol, (string symbol) =>
         {
@@ -69,6 +71,8 @@ public static class QualityDropsEndpoints
                 totalDropped = stats.TotalDropped,
                 timestamp = stats.Timestamp
             }, jsonOptions);
-        });
+        })
+        .WithName("GetQualityDropsBySymbol")
+        .Produces(200);
     }
 }

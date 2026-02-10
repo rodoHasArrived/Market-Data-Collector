@@ -137,13 +137,13 @@ From `docs/IMPROVEMENTS.md` — 6 items not started, 3 partially done.
 
 | # | Item | Priority | Source | Status |
 |---|------|----------|--------|--------|
-| 3A.1 | `/api/quality/drops` endpoint for drop statistics | P1 | IMPROVEMENTS #16 | Not started |
+| 3A.1 | `/api/quality/drops` endpoint for drop statistics | P1 | IMPROVEMENTS #16 | ✅ Done — `QualityDropsEndpoints.cs` with aggregate and per-symbol routes |
 | 3A.2 | `Retry-After` header parsing in backfill worker | P1 | IMPROVEMENTS #17 | ✅ Done — `HttpResponseHandler.HandleRateLimited` now throws typed `RateLimitException` with `RetryAfter` from HTTP headers |
-| 3A.3 | HTTP endpoint integration tests | P2 | IMPROVEMENTS #7 | Not started (covered in Phase 1A above) |
+| 3A.3 | HTTP endpoint integration tests | P2 | IMPROVEMENTS #7 | ✅ Done — added integration tests for `/api/data/*`, `/api/ib/*`, `/api/symbols/*`, `/api/storage/*`, `/api/storage/quality/*`, and `/api/symbol-mappings` endpoints |
 | 3A.4 | Polygon WebSocket zero-allocation message parsing | P2 | IMPROVEMENTS #18 | ✅ Done — replaced `List<byte>.ToArray()` with pooled `ArrayPool<byte>` buffers and `ReadOnlyMemory<byte>` parsing |
-| 3A.5 | OpenAPI `[ProducesResponseType]` annotations | P3 | IMPROVEMENTS #19 | Not started |
+| 3A.5 | OpenAPI `[ProducesResponseType]` annotations | P3 | IMPROVEMENTS #19 | ✅ Done — added `.WithName()` and `.Produces()` annotations to all implemented endpoints across 11 endpoint files (~89 endpoints) |
 | 3A.6 | UWP navigation consolidation | P3 | IMPROVEMENTS #15 | Not started (40+ flat items vs WPF's 5 workspaces) |
-| 3A.7 | Dropped event audit trail HTTP endpoint | P1 | IMPROVEMENTS #8 | Partial — core service exists, needs `/api/quality/drops` endpoint |
+| 3A.7 | Dropped event audit trail HTTP endpoint | P1 | IMPROVEMENTS #8 | ✅ Done — `DroppedEventAuditTrail` wired via DI, exposed at `/api/quality/drops` |
 | 3A.8 | Backfill rate limit `Retry-After` parsing | P1 | IMPROVEMENTS #2 | ✅ Done — `HttpResponseHandler` throws `RateLimitException` with header-parsed `RetryAfter` |
 | 3A.9 | GC pressure reduction in Polygon hot path | P3 | IMPROVEMENTS #13 | ✅ Done — pooled `ArrayPool<byte>` message buffer eliminates per-message allocations |
 
@@ -177,7 +177,7 @@ From `docs/IMPROVEMENTS.md` — 6 items not started, 3 partially done.
 | # | Item | Priority | Notes |
 |---|------|----------|-------|
 | 3C.1 | Complete OpenAPI/Swagger specification for implemented endpoints | P2 | OpenAPI integration exists (IMPROVEMENTS #11 completed) but annotations are sparse |
-| 3C.2 | Add `[ProducesResponseType]` to all endpoint handlers | P3 | Ensures accurate API documentation |
+| 3C.2 | Add `[ProducesResponseType]` to all endpoint handlers | P3 | ✅ Done — `.WithName()` and `.Produces()` annotations added to all ~89 implemented endpoints |
 | 3C.3 | Document HTTP endpoint response schemas in `docs/` | P2 | Currently undocumented |
 | 3C.4 | Publish API reference to `docs/reference/api-reference.md` | P3 | Existing file may be incomplete |
 

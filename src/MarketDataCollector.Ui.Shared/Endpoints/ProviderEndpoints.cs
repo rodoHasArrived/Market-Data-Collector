@@ -36,7 +36,9 @@ public static class ProviderEndpoints
                 enableFailover = cfg.DataSources?.EnableFailover ?? true,
                 failoverTimeoutSeconds = cfg.DataSources?.FailoverTimeoutSeconds ?? 30
             }, jsonOptions);
-        });
+        })
+        .WithName("GetDataSources")
+        .Produces(200);
 
         // Create or update data source
         group.MapPost(UiApiRoutes.ConfigDataSources, async (ConfigStore store, DataSourceConfigRequest req) =>
@@ -72,7 +74,10 @@ public static class ProviderEndpoints
             await store.SaveAsync(next);
 
             return Results.Ok(new { id });
-        });
+        })
+        .WithName("UpsertDataSource")
+        .Produces(200)
+        .Produces(400);
 
         // Delete data source
         group.MapDelete(UiApiRoutes.ConfigDataSources + "/{id}", async (ConfigStore store, string id) =>
@@ -87,7 +92,9 @@ public static class ProviderEndpoints
             await store.SaveAsync(next);
 
             return Results.Ok();
-        });
+        })
+        .WithName("DeleteDataSource")
+        .Produces(200);
 
         // Toggle data source enabled status
         group.MapPost(UiApiRoutes.ConfigDataSources + "/{id}/toggle", async (ConfigStore store, string id, ToggleRequest req) =>
@@ -107,7 +114,10 @@ public static class ProviderEndpoints
             await store.SaveAsync(next);
 
             return Results.Ok();
-        });
+        })
+        .WithName("ToggleDataSource")
+        .Produces(200)
+        .Produces(404);
 
         // Set default data sources
         group.MapPost(UiApiRoutes.ConfigDataSourcesDefaults, async (ConfigStore store, DefaultSourcesRequest req) =>
@@ -126,7 +136,9 @@ public static class ProviderEndpoints
             await store.SaveAsync(next);
 
             return Results.Ok();
-        });
+        })
+        .WithName("SetDefaultSources")
+        .Produces(200);
 
         // Update failover settings
         group.MapPost(UiApiRoutes.ConfigDataSourcesFailover, async (ConfigStore store, FailoverSettingsRequest req) =>
@@ -145,7 +157,9 @@ public static class ProviderEndpoints
             await store.SaveAsync(next);
 
             return Results.Ok();
-        });
+        })
+        .WithName("UpdateFailoverSettings")
+        .Produces(200);
 
         // Provider comparison view
         group.MapGet(UiApiRoutes.ProviderComparison, (ConfigStore store) =>
@@ -193,7 +207,9 @@ public static class ProviderEndpoints
                 HealthyProviders: sources.Count(s => s.Enabled)
             );
             return Results.Json(fallbackComparison, jsonOptions);
-        });
+        })
+        .WithName("GetProviderComparison")
+        .Produces(200);
 
         // Provider status
         group.MapGet(UiApiRoutes.ProviderStatus, (ConfigStore store) =>
@@ -220,7 +236,9 @@ public static class ProviderEndpoints
             }).ToArray();
 
             return Results.Json(status, jsonOptions);
-        });
+        })
+        .WithName("GetProviderStatus")
+        .Produces(200);
 
         // Provider metrics
         group.MapGet(UiApiRoutes.ProviderMetrics, (ConfigStore store) =>
@@ -255,7 +273,9 @@ public static class ProviderEndpoints
             var fallbackMetrics = sources.Select(s => CreateFallbackMetrics(s)).ToArray();
 
             return Results.Json(fallbackMetrics, jsonOptions);
-        });
+        })
+        .WithName("GetProviderMetrics")
+        .Produces(200);
 
         // Single provider metrics
         group.MapGet(UiApiRoutes.ProviderMetrics + "/{providerId}", (ConfigStore store, string providerId) =>
@@ -295,7 +315,10 @@ public static class ProviderEndpoints
                 return Results.NotFound();
 
             return Results.Json(CreateFallbackMetrics(source), jsonOptions);
-        });
+        })
+        .WithName("GetProviderMetricsById")
+        .Produces(200)
+        .Produces(404);
 
         // Provider catalog endpoint - centralized metadata for UI consumption
         // Uses ProviderRegistry when available for runtime-derived catalog data,
@@ -332,7 +355,9 @@ public static class ProviderEndpoints
                 timestamp = DateTimeOffset.UtcNow,
                 source = registry != null ? "registry" : "static"
             }, jsonOptions);
-        });
+        })
+        .WithName("GetProviderCatalog")
+        .Produces(200);
 
         // Single provider catalog entry
         // Uses ProviderRegistry when available for runtime-derived catalog data
@@ -346,7 +371,10 @@ public static class ProviderEndpoints
                 return Results.NotFound(new { error = $"Provider '{providerId}' not found in catalog" });
 
             return Results.Json(entry, jsonOptions);
-        });
+        })
+        .WithName("GetProviderCatalogById")
+        .Produces(200)
+        .Produces(404);
     }
 
     private static ProviderMetricsResponse CreateFallbackMetrics(DataSourceConfig source) => new(
