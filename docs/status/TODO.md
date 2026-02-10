@@ -1,31 +1,35 @@
 # TODO Tracking
 
 > Auto-generated TODO documentation. Do not edit manually.
-> Last updated: 2026-02-10T20:47:29.283196+00:00
+> Last updated: 2026-02-10T20:50:51.558109+00:00
 
 ## Summary
 
 | Metric | Count |
 |--------|-------|
-| **Total Items** | 7 |
+| **Total Items** | 8 |
 | **Linked to Issues** | 0 |
-| **Untracked** | 7 |
+| **Untracked** | 8 |
 
 ### By Type
 
 | Type | Count | Description |
 |------|-------|-------------|
-| `NOTE` | 7 | Important notes and documentation |
+| `NOTE` | 8 | Important notes and documentation |
 
 ### By Directory
 
 | Directory | Count |
 |-----------|-------|
 | `tests/` | 7 |
+| `src/` | 1 |
 
 ## All Items
 
-### NOTE (7)
+### NOTE (8)
+
+- [ ] `src/MarketDataCollector.Ui.Shared/Endpoints/ConfigEndpoints.cs:138`
+  > Status endpoint is handled by StatusEndpoints.MapStatusEndpoints() which provides live status via StatusEndpointHandlers rather than loading from file
 
 - [ ] `tests/MarketDataCollector.Tests/Application/Backfill/BackfillWorkerServiceTests.cs:28`
   > Using null! because validation throws before dependencies are accessed
