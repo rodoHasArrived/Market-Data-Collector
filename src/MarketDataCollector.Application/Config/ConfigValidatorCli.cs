@@ -71,8 +71,8 @@ public sealed class ConfigValidatorCli
             return 1;
         }
 
-        // Step 3: Validate schema
-        var validator = new ExtendedAppConfigValidator();
+        // Step 3: Validate schema (unified AppConfigValidator covers all checks)
+        var validator = new AppConfigValidator();
         var result = validator.Validate(config);
 
         Console.WriteLine();
@@ -144,7 +144,7 @@ public sealed class ConfigValidatorCli
                 });
             }
 
-            var validator = new ExtendedAppConfigValidator();
+            var validator = new AppConfigValidator();
             return validator.Validate(config);
         }
         catch (JsonException ex)
@@ -332,55 +332,5 @@ public sealed class ConfigValidatorCli
             var p when p.Contains("Currency") => "Valid currencies: USD, EUR, GBP, JPY, CHF, CAD, AUD",
             _ => null
         };
-    }
-}
-
-/// <summary>
-/// Extended validator with additional checks beyond the basic validator.
-/// </summary>
-public sealed class ExtendedAppConfigValidator : AbstractValidator<AppConfig>
-{
-    public ExtendedAppConfigValidator()
-    {
-        // Include all base validation rules
-        Include(new AppConfigValidator());
-
-        // Additional extended checks
-
-        // Check DataRoot is a valid path
-        RuleFor(x => x.DataRoot)
-            .Must(path => !string.IsNullOrWhiteSpace(path))
-            .WithMessage("DataRoot cannot be empty")
-            .Must(path => !Path.GetInvalidPathChars().Any(c => path?.Contains(c) ?? false))
-            .WithMessage("DataRoot contains invalid characters");
-
-        // Check for duplicate symbols
-        RuleFor(x => x.Symbols)
-            .Must(symbols =>
-            {
-                if (symbols == null) return true;
-                var distinctCount = symbols.Select(s => s.Symbol).Distinct().Count();
-                return distinctCount == symbols.Length;
-            })
-            .WithMessage("Duplicate symbols found in configuration");
-
-        // Check storage config consistency
-        When(x => x.Storage != null, () =>
-        {
-            RuleFor(x => x.Storage!.RetentionDays)
-                .GreaterThan(0)
-                .When(x => x.Storage!.RetentionDays.HasValue)
-                .WithMessage("RetentionDays must be positive");
-        });
-
-        // Warn about common configuration issues
-        RuleFor(x => x)
-            .Must(cfg =>
-            {
-                // At least one symbol should have subscriptions
-                if (cfg.Symbols == null || cfg.Symbols.Length == 0) return true;
-                return cfg.Symbols.Any(s => s.SubscribeTrades || s.SubscribeDepth);
-            })
-            .WithMessage("Warning: No symbols have trades or depth subscriptions enabled");
     }
 }
