@@ -33,18 +33,18 @@ public sealed class LifecyclePolicyEngine : ILifecyclePolicyEngine
     }
 
     /// <inheritdoc />
-    public async Task<LifecycleEvaluationResult> EvaluateAsync(CancellationToken ct = default)
+    public Task<LifecycleEvaluationResult> EvaluateAsync(CancellationToken ct = default)
     {
         var actions = new List<LifecycleAction>();
         var now = DateTime.UtcNow;
 
         if (!Directory.Exists(_options.RootPath))
         {
-            return new LifecycleEvaluationResult(
+            return Task.FromResult(new LifecycleEvaluationResult(
                 EvaluatedAtUtc: now,
                 FilesEvaluated: 0,
                 Actions: actions,
-                Errors: new List<string>());
+                Errors: new List<string>()));
         }
 
         var files = Directory.EnumerateFiles(_options.RootPath, "*", SearchOption.AllDirectories)
@@ -117,11 +117,11 @@ public sealed class LifecyclePolicyEngine : ILifecyclePolicyEngine
         _logger.LogInformation("Lifecycle evaluation complete: {FileCount} files, {ActionCount} actions pending",
             files.Count, actions.Count);
 
-        return new LifecycleEvaluationResult(
+        return Task.FromResult(new LifecycleEvaluationResult(
             EvaluatedAtUtc: now,
             FilesEvaluated: files.Count,
             Actions: actions,
-            Errors: errors);
+            Errors: errors));
     }
 
     /// <inheritdoc />

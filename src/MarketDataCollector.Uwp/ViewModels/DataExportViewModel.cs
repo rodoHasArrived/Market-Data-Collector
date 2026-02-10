@@ -174,9 +174,9 @@ public sealed partial class DataExportViewModel : ObservableObject, IAsyncDispos
     }
 
     [RelayCommand]
-    private async Task ExportDataAsync()
+    private Task ExportDataAsync()
     {
-        if (IsExporting) return;
+        if (IsExporting) return Task.CompletedTask;
 
         IsExporting = true;
         ExportProgress = 0;
@@ -228,6 +228,8 @@ public sealed partial class DataExportViewModel : ObservableObject, IAsyncDispos
             StatusText = $"Export failed: {ex.Message}";
             IsExporting = false;
         }
+
+        return Task.CompletedTask;
     }
 
     [RelayCommand]
@@ -254,12 +256,12 @@ public sealed partial class DataExportViewModel : ObservableObject, IAsyncDispos
     }
 
     [RelayCommand]
-    private async Task ExportToLeanFormatAsync()
+    private Task ExportToLeanFormatAsync()
     {
         if (string.IsNullOrEmpty(LeanDataPath))
         {
             StatusText = "Please specify Lean data path";
-            return;
+            return Task.CompletedTask;
         }
 
         IsExporting = true;
@@ -288,6 +290,8 @@ public sealed partial class DataExportViewModel : ObservableObject, IAsyncDispos
             StatusText = $"Lean export failed: {ex.Message}";
             IsExporting = false;
         }
+
+        return Task.CompletedTask;
     }
 
     [RelayCommand]

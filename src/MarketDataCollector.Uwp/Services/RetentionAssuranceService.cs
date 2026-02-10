@@ -679,10 +679,10 @@ public sealed class RetentionAssuranceService : IRetentionAssuranceService
     /// <summary>
     /// Exports audit report to file.
     /// </summary>
-    public async Task<string> ExportAuditReportAsync(RetentionAuditReport report, string format = "json")
+    public Task<string> ExportAuditReportAsync(RetentionAuditReport report, string format = "json")
     {
         var json = JsonSerializer.Serialize(report, new JsonSerializerOptions { WriteIndented = true });
-        return json;
+        return Task.FromResult(json);
     }
 
     private async Task SaveAuditReportAsync(RetentionAuditReport report)

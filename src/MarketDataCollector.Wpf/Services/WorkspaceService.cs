@@ -225,14 +225,14 @@ public sealed class WorkspaceService
         return _lastSession;
     }
 
-    public async Task<string> ExportWorkspaceAsync(string workspaceId)
+    public Task<string> ExportWorkspaceAsync(string workspaceId)
     {
         var workspace = _workspaces.FirstOrDefault(w => w.Id == workspaceId);
         if (workspace != null)
         {
-            return JsonSerializer.Serialize(workspace, new JsonSerializerOptions { WriteIndented = true });
+            return Task.FromResult(JsonSerializer.Serialize(workspace, new JsonSerializerOptions { WriteIndented = true }));
         }
-        return string.Empty;
+        return Task.FromResult(string.Empty);
     }
 
     public async Task<WorkspaceTemplate?> ImportWorkspaceAsync(string json)
