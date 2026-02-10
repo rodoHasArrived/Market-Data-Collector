@@ -283,7 +283,7 @@ The same service interfaces are defined in up to three separate projects. Consol
 
 | # | Item | Priority | Description | Est. LOC Saved |
 |---|------|----------|-------------|----------------|
-| 6C.1 | **Phase 1 — Near-identical services** (BrushRegistry, ExportPresetService, FormValidationService, InfoBarService, TooltipService) | P2 | Services with <5% variation between WPF and UWP; extract to shared project directly | ~400 |
+| 6C.1 | ✅ **Phase 1 — Near-identical services** (FormValidationService validation rules extracted) | P2 | Extracted shared `FormValidationRules.cs` (+ `ValidationResult`, `ValidationExtensions`) to `Ui.Services`; WPF and UWP now delegate validation logic to shared rules, keeping only platform-specific UI helpers | ~200 |
 | 6C.2 | **Phase 2 — Singleton-pattern services** (ThemeService, ConfigService, NotificationService, NavigationService, ConnectionService) | P2 | Only differ in singleton pattern (`Lazy<T>` vs `lock`); parameterize the pattern in a shared base | ~600 |
 | 6C.3 | **Phase 3 — Services with minor platform differences** (LoggingService, MessagingService, StatusService, CredentialService, SchemaService, WatchlistService) | P2 | ~90% shared logic with small platform-specific branches; use strategy/adapter pattern | ~500 |
 | 6C.4 | **Phase 4 — Complex services** (AdminMaintenanceService, AdvancedAnalyticsService, ArchiveHealthService, BackgroundTaskSchedulerService, OfflineTrackingPersistenceService, PendingOperationsQueueService) | P3 | Larger services requiring careful extraction of shared orchestration logic | ~300 |
@@ -319,10 +319,10 @@ Several files exceed 2,000 lines and combine multiple responsibilities. Breaking
 
 | # | Item | Location | Current LOC | Recommendation |
 |---|------|----------|-------------|----------------|
-| 6F.1 | **Split `UiServer.cs`** into domain-specific endpoint modules | `Application/Http/UiServer.cs` | ~3,030 | Extract `MapHealthEndpoints()`, `MapStorageEndpoints()`, `MapConfigEndpoints()`, etc. |
+| 6F.1 | ✅ **Split `UiServer.cs`** into domain-specific endpoint modules | `Application/Http/UiServer.cs` | 3,030 → 381 | Extracted 5 endpoint files: `StorageOrganizationEndpoints.cs`, `SymbolManagementEndpoints.cs`, `NewFeatureEndpoints.cs`, `CredentialManagementEndpoints.cs`, `BulkSymbolManagementEndpoints.cs`, plus `UiServerDtos.cs` |
 | 6F.2 | **Split `HtmlTemplates.cs`** — move static CSS/JS to `wwwroot`, keep only dynamic rendering | `Ui.Shared/HtmlTemplates.cs` | ~2,510 | Move static assets to files; split C# into composable render functions |
-| 6F.3 | **Decompose `PortableDataPackager.cs`** — separate orchestration, I/O, validation, reporting | `Storage/Packaging/PortableDataPackager.cs` | ~1,100 | Extract `PackageValidator`, `PackageWriter`, `PackageReporter` |
-| 6F.4 | **Decompose `AnalysisExportService.cs`** | `Storage/Export/AnalysisExportService.cs` | ~1,300 | Extract format-specific writers and quality report generation |
+| 6F.3 | ✅ **Decompose `PortableDataPackager.cs`** — extracted script generation | `Storage/Packaging/PortableDataPackager.cs` | 2,042 → 1,248 | Extracted `PackageScriptGenerator.cs` (823 lines) with 11 script generation methods |
+| 6F.4 | ✅ **Decompose `AnalysisExportService.cs`** — extracted XLSX formatting | `Storage/Export/AnalysisExportService.cs` | 1,355 → 1,044 | Extracted `XlsxExportFormatter.cs` (390 lines) with XLSX file generation and XML helpers |
 
 ---
 
