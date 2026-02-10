@@ -116,3 +116,20 @@ If headings are missing, the workflow still creates an entry with safe defaults 
   - `grep -rn 'MarketDataCollector\.Storage' src/MarketDataCollector.Infrastructure --include="*.cs"` (should return no results)
 - **Source issue**: CI build failure on main branch
 - **Status**: fixed
+
+### AI-20260210-cs0738-type-collision
+- **Area**: build/namespaces
+- **Symptoms**: Build fails with error CS0738: "'ConfigService' does not implement interface member 'IConfigService.ValidateConfigAsync(CancellationToken)' because it does not have the matching return type of 'Task<ConfigValidationResult>'". The interface method clearly returns `Task<ConfigValidationResult>` and the implementation returns the same type, yet the compiler rejects it.
+- **Root cause**: Two classes with the same name (`ConfigValidationResult`) exist in parent and child namespaces: `MarketDataCollector.Ui.Services.ConfigValidationResult` (in DiagnosticsService.cs) and `MarketDataCollector.Ui.Services.Contracts.ConfigValidationResult` (in IConfigService.cs). When `ConfigService` (in the parent namespace) implements `IConfigService`, the compiler cannot disambiguate which `ConfigValidationResult` to use, even though the interface requires the one from the child namespace.
+- **Prevention checklist**:
+  - [ ] When creating new types, search for existing types with the same name in both parent and child namespaces
+  - [ ] Use fully qualified type names in return types when ambiguity is possible: `Task<Contracts.ConfigValidationResult>`
+  - [ ] When naming collision is detected, rename the type in the parent namespace with a descriptive prefix (e.g., `DiagnosticConfigValidationResult`)
+  - [ ] After refactoring, verify no CS0738 errors: `dotnet build src/MarketDataCollector.Ui.Services -c Release`
+  - [ ] Check for similar patterns: `grep -rn "class ConfigValidationResult" src --include="*.cs"` should show only one result per type
+- **Verification commands**:
+  - `dotnet build src/MarketDataCollector.Ui.Services/MarketDataCollector.Ui.Services.csproj -c Release`
+  - `dotnet build src/MarketDataCollector.Wpf/MarketDataCollector.Wpf.csproj -c Release -p:TargetFramework=net9.0-windows` (on Windows)
+  - `dotnet build src/MarketDataCollector.Uwp/MarketDataCollector.Uwp.csproj -c Release -r win-x64 -p:Platform=x64` (on Windows)
+- **Source issue**: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/21851485930/job/63058846153
+- **Status**: fixed (commit cec548e)
