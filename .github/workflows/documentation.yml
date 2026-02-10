@@ -669,7 +669,7 @@ jobs:
         continue-on-error: true
         uses: actions/ai-inference@v1
         with:
-          model: openai/gpt-4.1-mini
+          model: openai/gpt-4o-mini
           max-tokens: 1500
           prompt: |
             You are a documentation quality reviewer for a .NET market data collection project.
@@ -920,7 +920,7 @@ jobs:
         continue-on-error: true
         uses: actions/ai-inference@v1
         with:
-          model: openai/gpt-4.1-mini
+          model: openai/gpt-4o-mini
           max-tokens: 1800
           prompt: |
             You are an engineering assistant helping triage TODO comments in a repository.
