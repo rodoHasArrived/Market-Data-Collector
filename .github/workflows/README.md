@@ -4,7 +4,7 @@ This directory contains automated workflows that help maintain code quality, sec
 
 ## Consolidation Summary
 
-Workflows have been consolidated from 25 to 17 files, reducing duplication and adding AI-powered analysis throughout. The following merges were performed:
+Workflows have been consolidated from 25 to 19 files, reducing duplication and adding AI-powered analysis throughout. The following merges were performed:
 
 | Consolidated Workflow | Replaces | AI Features |
 |----------------------|----------|-------------|
@@ -143,9 +143,18 @@ Workflows have been consolidated from 25 to 17 files, reducing duplication and a
   - Optional GitHub issue creation for untracked TODOs
   - **AI**: Documentation quality review, TODO triage recommendations
 
+#### 12. **Update Diagram Artifacts** (`update-diagrams.yml`)
+- **Trigger**: Push to `main` touching `docs/diagrams/*.dot` files, manual dispatch
+- **Purpose**: Automatically regenerates PNG and SVG diagram artifacts from DOT source files
+- **Features**:
+  - Installs Graphviz for diagram generation
+  - Converts all DOT files to PNG and SVG formats
+  - Auto-commits regenerated artifacts to keep them in sync with sources
+  - Prevents manual diagram artifact editing drift
+
 ### Automation and Maintenance Workflows
 
-#### 12. **Auto Label PRs** (`labeling.yml`)
+#### 13. **Auto Label PRs** (`labeling.yml`)
 - **Trigger**: PR opened, edited, synchronized, reopened
 - **Purpose**: Automatically categorizes pull requests
 - **Features**:
@@ -154,7 +163,7 @@ Workflows have been consolidated from 25 to 17 files, reducing duplication and a
   - Warns about large PRs
   - Uses `.github/labeler.yml` configuration
 
-#### 13. **Manage Stale Issues and PRs** (`stale.yml`)
+#### 14. **Manage Stale Issues and PRs** (`stale.yml`)
 - **Trigger**: Daily at midnight UTC, Manual dispatch
 - **Purpose**: Keeps issue tracker clean
 - **Features**:
@@ -164,7 +173,7 @@ Workflows have been consolidated from 25 to 17 files, reducing duplication and a
   - Closes stale PRs after 14 more days
   - Exempts pinned, security, and WIP items
 
-#### 14. **Scheduled Maintenance** (`scheduled-maintenance.yml`) *(consolidated)*
+#### 15. **Scheduled Maintenance** (`scheduled-maintenance.yml`) *(consolidated)*
 - **Trigger**: Weekly schedule, Manual dispatch
 - **Purpose**: Runs periodic tests, dependency health checks, and cache management
 - **Absorbed**: `cache-management.yml`
@@ -175,7 +184,7 @@ Workflows have been consolidated from 25 to 17 files, reducing duplication and a
   - Manual cache management options (list/clean-old/clean-all)
   - **AI**: Dependency upgrade recommendations with risk assessment
 
-#### 15. **Build Observability** (`build-observability.yml`)
+#### 16. **Build Observability** (`build-observability.yml`)
 - **Trigger**: Manual workflow dispatch
 - **Purpose**: Generates build diagnostics and observability bundles
 - **Features**:
@@ -183,7 +192,7 @@ Workflows have been consolidated from 25 to 17 files, reducing duplication and a
   - Collects build fingerprints and metrics
   - Uploads debug artifacts
 
-#### 16. **Workflow Validation** (`validate-workflows.yml`)
+#### 17. **Workflow Validation** (`validate-workflows.yml`)
 - **Trigger**: Pull requests touching workflows or manual dispatch
 - **Purpose**: Validates workflow syntax and checks reusable references
 - **Features**:
@@ -193,9 +202,20 @@ Workflows have been consolidated from 25 to 17 files, reducing duplication and a
   - Catches invalid reusable workflow usage
   - Fast feedback for workflow edits
 
+#### 18. **Prompt Generation** (`prompt-generation.yml`)
+- **Trigger**: Manual dispatch with workflow name input, automatic after workflow failures
+- **Purpose**: Auto-generates AI assistant prompts from CI/CD workflow run analysis
+- **Features**:
+  - Analyzes workflow run failures and patterns
+  - Generates targeted `.prompt.yml` files in `.github/prompts/`
+  - Supports dry-run mode for preview
+  - Creates PR with generated prompts or commits directly
+  - Monitors Test Matrix, Code Quality, Security Scanning, Performance Benchmarks, and Docker Build workflows
+  - **AI**: Prompt quality review and improvement suggestions
+
 ### Shared Workflows
 
-#### **Reusable Build Helpers** (`reusable-dotnet-build.yml`)
+#### 19. **Reusable Build Helpers** (`reusable-dotnet-build.yml`)
 - **Trigger**: Reusable workflow (called by other workflows)
 - **Purpose**: Standardizes build/test steps for .NET jobs
 - **Features**:
@@ -266,6 +286,7 @@ All AI-powered features use `actions/ai-inference@v1` with `openai/gpt-4.1-mini`
 | `scheduled-maintenance.yml` | Dependency Analysis | Upgrade recommendations with risk assessment |
 | `documentation.yml` | Doc Quality Review, TODO Triage | Completeness/accuracy assessment, TODO prioritization |
 | `desktop-builds.yml` | Build Analysis | Common failure pattern diagnosis |
+| `prompt-generation.yml` | Prompt Quality Review | Improvement suggestions for auto-generated prompts |
 
 ## Workflow Dependencies
 
