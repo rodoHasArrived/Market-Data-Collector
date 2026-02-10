@@ -85,6 +85,25 @@ Built on **.NET 9.0** using **C# 13** and **F# 8.0**. Supports deployment as a s
 
 ### 1. Start the Application
 
+If this is your first run, use the installer orchestrator first so dependencies and runtime mode are configured consistently:
+
+```bash
+# Interactive installer (Docker or Native)
+./scripts/install/install.sh
+
+# Or choose a mode explicitly
+./scripts/install/install.sh --docker
+./scripts/install/install.sh --native
+```
+
+On Windows, use the equivalent PowerShell installer:
+
+```powershell
+.\scripts\install\install.ps1
+.\scripts\install\install.ps1 -Mode Docker
+.\scripts\install\install.ps1 -Mode Native
+```
+
 **Option A: Web Dashboard (Cross-platform)**
 
 The easiest way to get started is with the web dashboard:
@@ -237,14 +256,54 @@ This creates a `config/appsettings.json` template with all available options com
 
 ## Installation
 
-### Prerequisites
+### Golden Path (Recommended)
+
+Use the installation orchestrator script for all setups. It keeps Docker and native installs consistent across platforms.
+
+```bash
+# Interactive installer (Docker or Native)
+./scripts/install/install.sh
+
+# Or choose a mode explicitly
+./scripts/install/install.sh --docker
+./scripts/install/install.sh --native
+```
+
+Access the dashboard at `http://localhost:8080`.
+
+### Windows Installation
+
+The PowerShell installer mirrors the same workflow on Windows.
+
+```powershell
+# Interactive installation
+.\scripts\install\install.ps1
+
+# Or specify mode directly
+.\scripts\install\install.ps1 -Mode Docker
+.\scripts\install\install.ps1 -Mode Native
+```
+
+### Optional Make Wrappers
+
+Make targets are available as thin wrappers around installation and runtime commands:
+
+```bash
+make help
+make docker
+make run-ui
+make test
+make doctor
+```
+
+### Manual Prerequisites (if not using installer)
 
 - **Operating System**: Windows, Linux, or macOS
 - **.NET Runtime**: .NET 9.0 (included in self-contained builds)
 - **Disk Space**: Depends on the number of symbols and data retention
 - **Network**: Internet connection for data providers
 
-### Download and Install
+### Download and Install (Manual)
 
 1. Download the appropriate executable for your platform:
    - Windows: `MarketDataCollector-win-x64.exe`
@@ -267,7 +326,7 @@ This creates a `config/appsettings.json` template with all available options com
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/Market-Data-Collector.git
+git clone https://github.com/rodoHasArrived/Market-Data-Collector.git
 cd Market-Data-Collector
 
 # Build in Release mode
