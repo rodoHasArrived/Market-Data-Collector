@@ -1,6 +1,5 @@
 using MarketDataCollector.Application.Logging;
 using MarketDataCollector.Infrastructure.Contracts;
-using MarketDataCollector.ProviderSdk;
 using Serilog;
 
 namespace MarketDataCollector.Infrastructure.Shared;
