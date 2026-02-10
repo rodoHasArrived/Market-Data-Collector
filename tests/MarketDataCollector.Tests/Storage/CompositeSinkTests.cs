@@ -1,4 +1,5 @@
 using System.Threading;
+using MarketDataCollector.Contracts.Domain.Enums;
 using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Storage.Interfaces;
 using MarketDataCollector.Storage.Sinks;
@@ -98,9 +99,10 @@ public sealed class CompositeSinkTests
     private static MarketEvent CreateTestEvent()
     {
         return new MarketEvent(
+            DateTimeOffset.UtcNow,
             "AAPL",
             MarketEventType.Trade,
-            DateTimeOffset.UtcNow
+            Payload: null
         );
     }
 }

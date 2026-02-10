@@ -229,6 +229,15 @@ public class StorageAnalytics
     [JsonPropertyName("totalFileCount")]
     public int TotalFileCount { get; set; }
 
+    [JsonPropertyName("tradeFileCount")]
+    public int TradeFileCount { get; set; }
+
+    [JsonPropertyName("depthFileCount")]
+    public int DepthFileCount { get; set; }
+
+    [JsonPropertyName("historicalFileCount")]
+    public int HistoricalFileCount { get; set; }
+
     [JsonPropertyName("lastUpdated")]
     public DateTimeOffset LastUpdated { get; set; }
 

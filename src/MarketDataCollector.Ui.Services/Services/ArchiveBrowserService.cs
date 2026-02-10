@@ -348,7 +348,8 @@ public sealed class ArchiveBrowserService
         var result = new FileVerificationResult
         {
             FilePath = filePath,
-            VerifiedAt = DateTime.UtcNow
+            VerifiedAt = DateTime.UtcNow,
+            ExpectedChecksum = expectedChecksum
         };
 
         if (!File.Exists(filePath))
@@ -365,7 +366,6 @@ public sealed class ArchiveBrowserService
 
             if (!string.IsNullOrEmpty(expectedChecksum))
             {
-                result.ExpectedChecksum = expectedChecksum;
                 result.ChecksumMatch = string.Equals(
                     result.ActualChecksum, expectedChecksum, StringComparison.OrdinalIgnoreCase);
 
