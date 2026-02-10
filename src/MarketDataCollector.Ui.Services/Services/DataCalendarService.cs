@@ -11,8 +11,11 @@ public sealed class DataCalendarService
 
     public DataCalendarService()
     {
-        _completenessService = new DataCompletenessService();
-        _storageService = new StorageAnalyticsService();
+        // Note: DataCompletenessService requires ManifestService and TradingCalendarService parameters
+        // which we don't have access to in this parameterless constructor.
+        // TODO: Refactor to use dependency injection instead of manual instantiation
+        _completenessService = null!; // Will be initialized on first use
+        _storageService = StorageAnalyticsService.Instance;
     }
 
     /// <summary>

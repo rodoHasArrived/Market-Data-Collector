@@ -342,26 +342,29 @@ public sealed class DataCompletenessService
 
         while (currentDate <= end)
         {
+            var isTradingDay = tradingDays.Contains(currentDate);
+            var symbolsWithData = isTradingDay 
+                ? symbols.Count(s => !s.MissingDays.Contains(currentDate))
+                : 0;
+            var totalSymbols = isTradingDay ? symbols.Count : 0;
+            var completenessPercent = totalSymbols > 0 
+                ? (double)symbolsWithData / totalSymbols * 100 
+                : (isTradingDay ? 100 : 0);
+            var status = isTradingDay 
+                ? GetDayStatus(completenessPercent)
+                : CompletenessStatus.NonTradingDay;
+
             var day = new CalendarDay
             {
                 Date = currentDate,
                 IsWeekend = currentDate.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday,
                 IsHoliday = _tradingCalendar.IsHoliday(currentDate),
-                IsTradingDay = tradingDays.Contains(currentDate)
+                IsTradingDay = isTradingDay,
+                SymbolsWithData = symbolsWithData,
+                TotalSymbols = totalSymbols,
+                CompletenessPercent = completenessPercent,
+                Status = status
             };
-
-            if (day.IsTradingDay)
-            {
-                var symbolsWithData = symbols.Count(s => !s.MissingDays.Contains(currentDate));
-                day.SymbolsWithData = symbolsWithData;
-                day.TotalSymbols = symbols.Count;
-                day.CompletenessPercent = symbols.Count > 0 ? (double)symbolsWithData / symbols.Count * 100 : 100;
-                day.Status = GetDayStatus(day.CompletenessPercent);
-            }
-            else
-            {
-                day.Status = CompletenessStatus.NonTradingDay;
-            }
 
             calendar.Add(day);
             currentDate = currentDate.AddDays(1);
