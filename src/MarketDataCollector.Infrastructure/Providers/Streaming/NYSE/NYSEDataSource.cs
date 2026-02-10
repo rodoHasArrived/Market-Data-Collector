@@ -9,6 +9,7 @@ using System.Text.Json.Serialization;
 using System.Threading;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Logging;
+using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Infrastructure.Contracts;
@@ -902,6 +903,7 @@ public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHisto
     {
         for (int attempt = 1; attempt <= _options.MaxReconnectAttempts; attempt++)
         {
+            MigrationDiagnostics.IncReconnectAttempt("nyse");
             Log.Information("NYSE reconnection attempt {Attempt}/{Max}", attempt, _options.MaxReconnectAttempts);
 
             await Task.Delay(TimeSpan.FromSeconds(_options.ReconnectDelaySeconds * attempt))
@@ -910,10 +912,12 @@ public sealed class NYSEDataSource : DataSourceBase, IRealtimeDataSource, IHisto
             try
             {
                 await ConnectAsync().ConfigureAwait(false);
+                MigrationDiagnostics.IncReconnectSuccess("nyse");
                 return;
             }
             catch (Exception ex)
             {
+                MigrationDiagnostics.IncReconnectFailure("nyse");
                 Log.Warning(ex, "NYSE reconnection attempt {Attempt} failed", attempt);
             }
         }

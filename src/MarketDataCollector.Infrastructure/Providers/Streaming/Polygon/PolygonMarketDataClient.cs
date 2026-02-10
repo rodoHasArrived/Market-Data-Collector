@@ -6,6 +6,7 @@ using System.Threading;
 using PolygonOptions = MarketDataCollector.Application.Config.PolygonOptions;
 using MarketDataCollector.Application.Exceptions;
 using MarketDataCollector.Application.Logging;
+using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Domain.Collectors;
 using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Contracts.Domain.Models;
@@ -826,6 +827,7 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
             while (_reconnectAttempts < MaxReconnectAttempts && !_isDisposing)
             {
                 _reconnectAttempts++;
+                MigrationDiagnostics.IncReconnectAttempt("polygon");
                 var delay = CalculateReconnectDelay(_reconnectAttempts);
 
                 _log.Information("Polygon reconnection attempt {Attempt}/{Max} in {Delay}ms",
@@ -841,6 +843,7 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
 
                     if (_isConnected)
                     {
+                        MigrationDiagnostics.IncReconnectSuccess("polygon");
                         _log.Information("Polygon successfully reconnected after {Attempts} attempts. " +
                             "Resubscribed to {SubCount} active subscriptions.",
                             _reconnectAttempts, _subscriptionManager.Count);
@@ -850,6 +853,7 @@ public sealed class PolygonMarketDataClient : IMarketDataClient
                 }
                 catch (Exception ex)
                 {
+                    MigrationDiagnostics.IncReconnectFailure("polygon");
                     _log.Warning(ex, "Polygon reconnection attempt {Attempt} failed", _reconnectAttempts);
                 }
             }

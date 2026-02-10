@@ -189,6 +189,35 @@ public static class PrometheusMetrics
             Buckets = new double[] { 100, 500, 1000, 5000, 10000, 30000, 60000, 120000, 300000 }
         });
 
+    // Migration diagnostics counters (Phase 0 — temporary observability for migration)
+    private static readonly Counter MigrationStreamingFactoryHits = Prometheus.Metrics.CreateCounter(
+        "mdc_migration_streaming_factory_hits_total",
+        "Total streaming client factory invocations (migration diagnostics)");
+
+    private static readonly Counter MigrationBackfillFactoryHits = Prometheus.Metrics.CreateCounter(
+        "mdc_migration_backfill_factory_hits_total",
+        "Total backfill provider creation calls (migration diagnostics)");
+
+    private static readonly Counter MigrationReconnectAttempts = Prometheus.Metrics.CreateCounter(
+        "mdc_migration_reconnect_attempts_total",
+        "Total reconnect attempts across all providers (migration diagnostics)");
+
+    private static readonly Counter MigrationReconnectSuccesses = Prometheus.Metrics.CreateCounter(
+        "mdc_migration_reconnect_successes_total",
+        "Total successful reconnections (migration diagnostics)");
+
+    private static readonly Counter MigrationReconnectFailures = Prometheus.Metrics.CreateCounter(
+        "mdc_migration_reconnect_failures_total",
+        "Total failed reconnections (migration diagnostics)");
+
+    private static readonly Gauge MigrationProvidersRegistered = Prometheus.Metrics.CreateGauge(
+        "mdc_migration_providers_registered",
+        "Total providers registered in the registry (migration diagnostics)");
+
+    private static readonly Gauge MigrationStreamingFactoriesRegistered = Prometheus.Metrics.CreateGauge(
+        "mdc_migration_streaming_factories_registered",
+        "Total streaming factories registered (migration diagnostics)");
+
     // Symbol-level metrics (with labels)
     private static readonly Counter TradesBySymbol = Prometheus.Metrics.CreateCounter(
         "mdc_trades_by_symbol_total",
@@ -268,6 +297,16 @@ public static class PrometheusMetrics
         SymbolsCircuitOpen.Set(resubSnapshot.SymbolsCircuitOpen);
         ResubscribeSuccessRate.Set(resubSnapshot.SuccessRate);
         AverageResubscribeTimeMs.Set(resubSnapshot.AverageResubscribeTimeMs);
+
+        // Update migration diagnostics counters (Phase 0 observability)
+        var migrationSnapshot = MigrationDiagnostics.GetSnapshot();
+        MigrationStreamingFactoryHits.IncTo(migrationSnapshot.StreamingFactoryHits);
+        MigrationBackfillFactoryHits.IncTo(migrationSnapshot.BackfillFactoryHits);
+        MigrationReconnectAttempts.IncTo(migrationSnapshot.ReconnectAttempts);
+        MigrationReconnectSuccesses.IncTo(migrationSnapshot.ReconnectSuccesses);
+        MigrationReconnectFailures.IncTo(migrationSnapshot.ReconnectFailures);
+        MigrationProvidersRegistered.Set(migrationSnapshot.ProvidersRegistered);
+        MigrationStreamingFactoriesRegistered.Set(migrationSnapshot.StreamingFactoriesRegistered);
     }
 
     /// <summary>

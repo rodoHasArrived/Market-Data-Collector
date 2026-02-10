@@ -1,5 +1,6 @@
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Logging;
+using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Providers.Backfill;
 using MarketDataCollector.Infrastructure.Providers.SymbolSearch;
@@ -61,6 +62,7 @@ public sealed class ProviderFactory
         // (see ServiceCompositionRoot.RegisterStreamingFactories) - not created here.
 
         // Create and register backfill providers
+        MigrationDiagnostics.IncBackfillFactoryHit();
         var backfillProviders = CreateBackfillProviders();
         foreach (var provider in backfillProviders)
         {
@@ -69,6 +71,7 @@ public sealed class ProviderFactory
         }
 
         // Create and register symbol search providers
+        MigrationDiagnostics.IncSymbolSearchFactoryHit();
         var searchProviders = CreateSymbolSearchProviders();
         foreach (var provider in searchProviders)
         {

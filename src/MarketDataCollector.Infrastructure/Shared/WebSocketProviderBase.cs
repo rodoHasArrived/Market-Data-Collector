@@ -2,6 +2,7 @@ using System.Net.WebSockets;
 using System.Text;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Logging;
+using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Infrastructure.Resilience;
 using Polly;
@@ -347,6 +348,7 @@ public abstract class WebSocketProviderBase : IMarketDataClient
         try
         {
             _isReconnecting = true;
+            MigrationDiagnostics.IncReconnectAttempt(ProviderName);
             Log.Warning("{Provider} WebSocket connection lost, initiating automatic reconnection", ProviderName);
 
             await CleanupConnectionAsync();
@@ -355,11 +357,13 @@ public abstract class WebSocketProviderBase : IMarketDataClient
             if (_ws?.State == System.Net.WebSockets.WebSocketState.Open)
             {
                 await TrySendSubscriptionUpdateAsync();
+                MigrationDiagnostics.IncReconnectSuccess(ProviderName);
                 Log.Information("Successfully reconnected and resubscribed to {Provider} WebSocket", ProviderName);
             }
         }
         catch (Exception ex)
         {
+            MigrationDiagnostics.IncReconnectFailure(ProviderName);
             Log.Error(ex, "Failed to reconnect to {Provider} WebSocket after connection loss. " +
                 "Manual intervention may be required.", ProviderName);
         }
