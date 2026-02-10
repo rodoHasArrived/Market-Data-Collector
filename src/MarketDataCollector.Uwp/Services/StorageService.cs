@@ -13,7 +13,7 @@ namespace MarketDataCollector.Uwp.Services;
 /// Service for managing data storage, file operations, and storage statistics.
 /// Provides access to storage paths, file listings, and space usage.
 /// </summary>
-public sealed class StorageService
+public sealed class StorageService : IStorageService
 {
     private static StorageService? _instance;
     private static readonly object _lock = new();

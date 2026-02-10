@@ -5,6 +5,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using MarketDataCollector.Uwp.Services;
+using MarketDataCollector.Uwp.Models;
 
 namespace MarketDataCollector.Uwp.Views;
 
@@ -567,50 +568,3 @@ public sealed partial class AdminMaintenancePage : Page
 
     #endregion
 }
-
-#region Display Items
-
-public sealed class QuickCheckDisplayItem
-{
-    public string Name { get; set; } = string.Empty;
-    public string Details { get; set; } = string.Empty;
-    public string StatusIcon { get; set; } = string.Empty;
-    public SolidColorBrush? StatusColor { get; set; }
-}
-
-public sealed class TierDisplayItem
-{
-    public string Name { get; set; } = string.Empty;
-    public string Path { get; set; } = string.Empty;
-    public string SizeText { get; set; } = string.Empty;
-    public string FileCountText { get; set; } = string.Empty;
-    public string RetentionText { get; set; } = string.Empty;
-}
-
-public sealed class RetentionPolicyDisplayItem
-{
-    public string Id { get; set; } = string.Empty;
-    public string Name { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
-    public string RetentionText { get; set; } = string.Empty;
-    public bool Enabled { get; set; }
-}
-
-public sealed class CleanupFileDisplayItem
-{
-    public string Path { get; set; } = string.Empty;
-    public string SizeText { get; set; } = string.Empty;
-    public string Reason { get; set; } = string.Empty;
-}
-
-public sealed class MaintenanceHistoryItem
-{
-    public string RunId { get; set; } = string.Empty;
-    public string TimeText { get; set; } = string.Empty;
-    public string OperationsText { get; set; } = string.Empty;
-    public string DurationText { get; set; } = string.Empty;
-    public string StatusIcon { get; set; } = string.Empty;
-    public SolidColorBrush? StatusColor { get; set; }
-}
-
-#endregion

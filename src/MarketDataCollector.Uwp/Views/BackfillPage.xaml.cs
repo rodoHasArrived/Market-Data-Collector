@@ -8,6 +8,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using MarketDataCollector.Uwp.Services;
+using MarketDataCollector.Uwp.Models;
 using MarketDataCollector.Uwp.Dialogs;
 
 namespace MarketDataCollector.Uwp.Views;
@@ -36,7 +37,7 @@ public sealed partial class BackfillPage : Page
         this.InitializeComponent();
         _backfillService = new BackfillService();
         _credentialService = new CredentialService();
-        _configService = new ConfigService();
+        _configService = ConfigService.Instance;
         _recommendationsService = SmartRecommendationsService.Instance;
 
         _elapsedTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
@@ -690,47 +691,4 @@ public sealed partial class BackfillPage : Page
             this.Frame.Navigate(typeof(DataBrowserPage));
         }
     }
-}
-
-/// <summary>
-/// Per-symbol progress information.
-/// </summary>
-public class SymbolProgressInfo
-{
-    public string Symbol { get; set; } = string.Empty;
-    public double Progress { get; set; }
-    public string BarsText { get; set; } = "0 bars";
-    public string StatusText { get; set; } = "Pending";
-    public string TimeText { get; set; } = "--";
-    public SolidColorBrush StatusBackground { get; set; } = new(Color.FromArgb(40, 160, 160, 160));
-}
-
-/// <summary>
-/// Data validation issue.
-/// </summary>
-public class ValidationIssue
-{
-    public string Symbol { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
-    public string DateRange { get; set; } = string.Empty;
-}
-
-/// <summary>
-/// Scheduled backfill job.
-/// </summary>
-public class ScheduledJob
-{
-    public string Name { get; set; } = string.Empty;
-    public string NextRun { get; set; } = string.Empty;
-}
-
-/// <summary>
-/// Backfill history item.
-/// </summary>
-public class BackfillHistoryItem
-{
-    public string Date { get; set; } = string.Empty;
-    public string Summary { get; set; } = string.Empty;
-    public string Duration { get; set; } = string.Empty;
-    public SolidColorBrush StatusColor { get; set; } = new(Color.FromArgb(255, 72, 187, 120));
 }

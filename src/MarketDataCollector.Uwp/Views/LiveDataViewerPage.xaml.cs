@@ -6,6 +6,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 using MarketDataCollector.Uwp.Services;
+using MarketDataCollector.Uwp.Models;
 
 namespace MarketDataCollector.Uwp.Views;
 
@@ -58,7 +59,7 @@ public sealed partial class LiveDataViewerPage : Page
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error in RefreshTimer_Tick: {ex.Message}");
+            LoggingService.Instance.LogError("Error in RefreshTimer_Tick", ex);
         }
     }
 
@@ -299,26 +300,4 @@ public sealed partial class LiveDataViewerPage : Page
         PageInfoBar.Severity = InfoBarSeverity.Error;
         PageInfoBar.IsOpen = true;
     }
-}
-
-/// <summary>
-/// Display item for order book levels.
-/// </summary>
-public class OrderBookDisplayItem
-{
-    public string Price { get; set; } = string.Empty;
-    public string Size { get; set; } = string.Empty;
-    public double VolumePercent { get; set; }
-}
-
-/// <summary>
-/// Display item for trades.
-/// </summary>
-public class TradeDisplayItem
-{
-    public string Timestamp { get; set; } = string.Empty;
-    public string Price { get; set; } = string.Empty;
-    public string Size { get; set; } = string.Empty;
-    public string Side { get; set; } = string.Empty;
-    public string SideColor { get; set; } = string.Empty;
 }

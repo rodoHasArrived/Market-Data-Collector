@@ -50,7 +50,7 @@ public sealed partial class CollectionSessionPage : Page
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[CollectionSessionPage] Error loading page: {ex.Message}");
+            LoggingService.Instance.LogError("CollectionSessionPage error loading page", ex);
         }
     }
 
@@ -132,7 +132,7 @@ public sealed partial class CollectionSessionPage : Page
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error refreshing session: {ex.Message}");
+                LoggingService.Instance.LogError("Error refreshing session", ex);
             }
         };
         _refreshTimer.Tick += _refreshTimer_Tick;
@@ -169,7 +169,7 @@ public sealed partial class CollectionSessionPage : Page
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[CollectionSessionPage] Error showing new session dialog: {ex.Message}");
+            LoggingService.Instance.LogError("CollectionSessionPage error showing new session dialog", ex);
         }
     }
 
@@ -189,7 +189,7 @@ public sealed partial class CollectionSessionPage : Page
         catch (Exception ex)
         {
             await ShowErrorAsync("Failed to create daily session", ex.Message);
-            System.Diagnostics.Debug.WriteLine($"[CollectionSessionPage] Error creating daily session: {ex.Message}");
+            LoggingService.Instance.LogError("CollectionSessionPage error creating daily session", ex);
         }
     }
 
@@ -206,7 +206,7 @@ public sealed partial class CollectionSessionPage : Page
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[CollectionSessionPage] Error refreshing sessions: {ex.Message}");
+            LoggingService.Instance.LogError("CollectionSessionPage error refreshing sessions", ex);
         }
     }
 
@@ -244,7 +244,7 @@ public sealed partial class CollectionSessionPage : Page
         catch (Exception ex)
         {
             await ShowErrorAsync("Failed to create session", ex.Message);
-            System.Diagnostics.Debug.WriteLine($"[CollectionSessionPage] Error creating session: {ex.Message}");
+            LoggingService.Instance.LogError("CollectionSessionPage error creating session", ex);
         }
     }
 
@@ -276,7 +276,7 @@ public sealed partial class CollectionSessionPage : Page
         catch (Exception ex)
         {
             await ShowErrorAsync("Failed to pause/resume session", ex.Message);
-            System.Diagnostics.Debug.WriteLine($"[CollectionSessionPage] Error pausing/resuming session: {ex.Message}");
+            LoggingService.Instance.LogError("CollectionSessionPage error pausing/resuming session", ex);
         }
     }
 
@@ -310,7 +310,7 @@ public sealed partial class CollectionSessionPage : Page
         catch (Exception ex)
         {
             await ShowErrorAsync("Failed to stop session", ex.Message);
-            System.Diagnostics.Debug.WriteLine($"[CollectionSessionPage] Error stopping session: {ex.Message}");
+            LoggingService.Instance.LogError("CollectionSessionPage error stopping session", ex);
         }
     }
 
@@ -333,7 +333,7 @@ public sealed partial class CollectionSessionPage : Page
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[CollectionSessionPage] Error viewing session details: {ex.Message}");
+            LoggingService.Instance.LogError("CollectionSessionPage error viewing session details", ex);
         }
     }
 
@@ -357,7 +357,7 @@ public sealed partial class CollectionSessionPage : Page
         catch (Exception ex)
         {
             await ShowErrorAsync("Failed to export manifest", ex.Message);
-            System.Diagnostics.Debug.WriteLine($"[CollectionSessionPage] Error exporting session: {ex.Message}");
+            LoggingService.Instance.LogError("CollectionSessionPage error exporting session", ex);
         }
     }
 
@@ -376,7 +376,7 @@ public sealed partial class CollectionSessionPage : Page
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[CollectionSessionPage] Error toggling auto-create daily: {ex.Message}");
+            LoggingService.Instance.LogError("CollectionSessionPage error toggling auto-create daily", ex);
         }
     }
 

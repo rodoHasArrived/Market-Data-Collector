@@ -12,7 +12,7 @@ namespace MarketDataCollector.Uwp.Services;
 /// Service for managing a queue of pending operations that can be executed when connectivity is restored.
 /// Supports offline queuing with automatic retry and dependency management.
 /// </summary>
-public sealed class PendingOperationsQueueService
+public sealed class PendingOperationsQueueService : IPendingOperationsQueueService
 {
     private static PendingOperationsQueueService? _instance;
     private static readonly object _lock = new();
@@ -101,11 +101,11 @@ public sealed class PendingOperationsQueueService
                 StartProcessingTimer();
             }
 
-            System.Diagnostics.Debug.WriteLine($"PendingOperationsQueueService initialized with {_operations.Count} operations");
+            LoggingService.Instance.LogInfo("PendingOperationsQueueService initialized", ("operationCount", _operations.Count.ToString()));
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to initialize PendingOperationsQueueService: {ex.Message}");
+            LoggingService.Instance.LogError("Failed to initialize PendingOperationsQueueService", ex);
             throw;
         }
     }
@@ -123,11 +123,11 @@ public sealed class PendingOperationsQueueService
 
             await SaveQueueAsync();
 
-            System.Diagnostics.Debug.WriteLine("PendingOperationsQueueService shut down");
+            LoggingService.Instance.LogInfo("PendingOperationsQueueService shut down");
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error during shutdown: {ex.Message}");
+            LoggingService.Instance.LogError("Error during PendingOperationsQueueService shutdown", ex);
         }
     }
 
@@ -167,7 +167,7 @@ public sealed class PendingOperationsQueueService
 
         OperationQueued?.Invoke(this, new OperationEventArgs { Operation = operation });
 
-        System.Diagnostics.Debug.WriteLine($"Enqueued operation: {operationType} (ID: {operation.Id})");
+        LoggingService.Instance.LogInfo("Enqueued operation", ("operationType", operationType.ToString()), ("operationId", operation.Id));
         return operation;
     }
 
@@ -295,7 +295,7 @@ public sealed class PendingOperationsQueueService
 
             if (readyOperations.Count == 0) return;
 
-            System.Diagnostics.Debug.WriteLine($"Processing {readyOperations.Count} pending operations");
+            LoggingService.Instance.LogInfo("Processing pending operations", ("count", readyOperations.Count.ToString()));
 
             foreach (var operation in readyOperations)
             {
@@ -356,7 +356,7 @@ public sealed class PendingOperationsQueueService
 
         try
         {
-            System.Diagnostics.Debug.WriteLine($"Processing operation: {operation.OperationType} (ID: {operation.Id})");
+            LoggingService.Instance.LogDebug("Processing operation", ("operationType", operation.OperationType.ToString()), ("operationId", operation.Id));
 
             switch (operation.OperationType)
             {
@@ -389,7 +389,7 @@ public sealed class PendingOperationsQueueService
                     break;
 
                 default:
-                    System.Diagnostics.Debug.WriteLine($"Unknown operation type: {operation.OperationType}");
+                    LoggingService.Instance.LogWarning("Unknown operation type", ("operationType", operation.OperationType.ToString()));
                     break;
             }
 
@@ -415,7 +415,7 @@ public sealed class PendingOperationsQueueService
             else
             {
                 operation.Status = PendingOperationStatus.Queued;
-                System.Diagnostics.Debug.WriteLine($"Operation {operation.Id} failed, will retry ({operation.RetryCount}/{operation.MaxRetries})");
+                LoggingService.Instance.LogWarning("Operation failed, will retry", ("operationId", operation.Id), ("retryCount", operation.RetryCount.ToString()), ("maxRetries", operation.MaxRetries.ToString()));
             }
         }
 
@@ -432,7 +432,7 @@ public sealed class PendingOperationsQueueService
         await persistenceService.PersistSubscriptionAsync(payload);
 
         // The actual subscription would be handled by the connection manager
-        System.Diagnostics.Debug.WriteLine($"Subscription queued for {payload.Symbol} via {payload.Provider}");
+        LoggingService.Instance.LogDebug("Subscription queued", ("symbol", payload.Symbol), ("provider", payload.Provider));
     }
 
     private async Task ProcessUnsubscribeOperationAsync(PendingOperation operation, CancellationToken cancellationToken)
@@ -457,7 +457,7 @@ public sealed class PendingOperationsQueueService
             payload.ToDate,
             cancellationToken);
 
-        System.Diagnostics.Debug.WriteLine($"Backfill completed: {result?.BarsWritten ?? 0} bars");
+        LoggingService.Instance.LogInfo("Backfill completed", ("barsWritten", (result?.BarsWritten ?? 0).ToString()));
     }
 
     private async Task ProcessStartSessionOperationAsync(PendingOperation operation, CancellationToken cancellationToken)
@@ -523,7 +523,7 @@ public sealed class PendingOperationsQueueService
         if (expiredOperations.Count > 0)
         {
             await SaveQueueAsync();
-            System.Diagnostics.Debug.WriteLine($"Expired {expiredOperations.Count} operations");
+            LoggingService.Instance.LogInfo("Expired operations", ("count", expiredOperations.Count.ToString()));
         }
     }
 
@@ -545,7 +545,7 @@ public sealed class PendingOperationsQueueService
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[PendingOperationsQueueService] Error handling connection state change: {ex.Message}");
+            LoggingService.Instance.LogError("Error handling connection state change", ex);
         }
     }
 
@@ -592,7 +592,7 @@ public sealed class PendingOperationsQueueService
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Error in queue processing timer: {ex.Message}");
+                    LoggingService.Instance.LogError("Error in queue processing timer", ex);
                 }
             },
             null,
@@ -622,7 +622,7 @@ public sealed class PendingOperationsQueueService
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to load queue: {ex.Message}");
+            LoggingService.Instance.LogError("Failed to load queue", ex);
             _config = new OfflineQueueConfig();
         }
     }
@@ -637,7 +637,7 @@ public sealed class PendingOperationsQueueService
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to save queue: {ex.Message}");
+            LoggingService.Instance.LogError("Failed to save queue", ex);
         }
     }
 

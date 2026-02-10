@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Threading;
 
 namespace MarketDataCollector.Uwp.Services;
 
@@ -6,7 +7,7 @@ namespace MarketDataCollector.Uwp.Services;
 /// Service for managing user's watchlist of favorite symbols.
 /// Provides quick access to frequently monitored securities with real-time status.
 /// </summary>
-public sealed class WatchlistService
+public sealed class WatchlistService : IWatchlistService
 {
     private const string WatchlistFileName = "watchlist.json";
     // Use centralized JSON options to avoid duplication across services
@@ -79,7 +80,7 @@ public sealed class WatchlistService
     /// <summary>
     /// Saves the watchlist to disk.
     /// </summary>
-    public async Task SaveWatchlistAsync(WatchlistData data)
+    public async Task SaveWatchlistAsync(WatchlistData data, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -90,8 +91,12 @@ public sealed class WatchlistService
             }
 
             var json = JsonSerializer.Serialize(data, JsonOptions);
-            await File.WriteAllTextAsync(_watchlistPath, json);
+            await File.WriteAllTextAsync(_watchlistPath, json, cancellationToken);
             _cachedData = data;
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
         }
         catch (Exception ex)
         {
@@ -103,7 +108,7 @@ public sealed class WatchlistService
     /// <summary>
     /// Adds a symbol to the watchlist.
     /// </summary>
-    public async Task<bool> AddSymbolAsync(string symbol, string? notes = null)
+    public async Task<bool> AddSymbolAsync(string symbol, string? notes = null, CancellationToken cancellationToken = default)
     {
         var data = await LoadWatchlistAsync();
         var normalizedSymbol = symbol.ToUpperInvariant().Trim();
@@ -124,7 +129,7 @@ public sealed class WatchlistService
         data.Symbols.Add(newItem);
         data.UpdatedAt = DateTime.UtcNow;
 
-        await SaveWatchlistAsync(data);
+        await SaveWatchlistAsync(data, cancellationToken);
         OnWatchlistChanged(WatchlistChangeType.Added, newItem);
 
         return true;
@@ -133,7 +138,7 @@ public sealed class WatchlistService
     /// <summary>
     /// Removes a symbol from the watchlist.
     /// </summary>
-    public async Task<bool> RemoveSymbolAsync(string symbol)
+    public async Task<bool> RemoveSymbolAsync(string symbol, CancellationToken cancellationToken = default)
     {
         var data = await LoadWatchlistAsync();
         var normalizedSymbol = symbol.ToUpperInvariant().Trim();
@@ -147,7 +152,7 @@ public sealed class WatchlistService
         data.Symbols.Remove(item);
         data.UpdatedAt = DateTime.UtcNow;
 
-        await SaveWatchlistAsync(data);
+        await SaveWatchlistAsync(data, cancellationToken);
         OnWatchlistChanged(WatchlistChangeType.Removed, item);
 
         return true;
@@ -156,7 +161,7 @@ public sealed class WatchlistService
     /// <summary>
     /// Updates a watchlist item.
     /// </summary>
-    public async Task<bool> UpdateItemAsync(WatchlistItem item)
+    public async Task<bool> UpdateItemAsync(WatchlistItem item, CancellationToken cancellationToken = default)
     {
         var data = await LoadWatchlistAsync();
         var existingIndex = data.Symbols.FindIndex(s => s.Symbol == item.Symbol);
@@ -170,7 +175,7 @@ public sealed class WatchlistService
         data.Symbols[existingIndex] = item;
         data.UpdatedAt = DateTime.UtcNow;
 
-        await SaveWatchlistAsync(data);
+        await SaveWatchlistAsync(data, cancellationToken);
         OnWatchlistChanged(WatchlistChangeType.Updated, item);
 
         return true;
@@ -179,7 +184,7 @@ public sealed class WatchlistService
     /// <summary>
     /// Toggles favorite status for a symbol.
     /// </summary>
-    public async Task<bool> ToggleFavoriteAsync(string symbol)
+    public async Task<bool> ToggleFavoriteAsync(string symbol, CancellationToken cancellationToken = default)
     {
         var data = await LoadWatchlistAsync();
         var normalizedSymbol = symbol.ToUpperInvariant().Trim();
@@ -194,7 +199,7 @@ public sealed class WatchlistService
         item.UpdatedAt = DateTime.UtcNow;
         data.UpdatedAt = DateTime.UtcNow;
 
-        await SaveWatchlistAsync(data);
+        await SaveWatchlistAsync(data, cancellationToken);
         OnWatchlistChanged(WatchlistChangeType.Updated, item);
 
         return true;
@@ -203,7 +208,7 @@ public sealed class WatchlistService
     /// <summary>
     /// Reorders the watchlist.
     /// </summary>
-    public async Task ReorderAsync(List<string> symbolOrder)
+    public async Task ReorderAsync(List<string> symbolOrder, CancellationToken cancellationToken = default)
     {
         var data = await LoadWatchlistAsync();
 
@@ -219,15 +224,16 @@ public sealed class WatchlistService
         data.Symbols = data.Symbols.OrderBy(s => s.SortOrder).ToList();
         data.UpdatedAt = DateTime.UtcNow;
 
-        await SaveWatchlistAsync(data);
+        await SaveWatchlistAsync(data, cancellationToken);
         OnWatchlistChanged(WatchlistChangeType.Reordered, null);
     }
 
     /// <summary>
     /// Gets symbols sorted by favorites first, then by sort order.
     /// </summary>
-    public async Task<List<WatchlistItem>> GetSortedSymbolsAsync()
+    public async Task<List<WatchlistItem>> GetSortedSymbolsAsync(CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var data = await LoadWatchlistAsync();
         return data.Symbols
             .OrderByDescending(s => s.IsFavorite)
@@ -238,8 +244,9 @@ public sealed class WatchlistService
     /// <summary>
     /// Checks if a symbol is in the watchlist.
     /// </summary>
-    public async Task<bool> ContainsSymbolAsync(string symbol)
+    public async Task<bool> ContainsSymbolAsync(string symbol, CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var data = await LoadWatchlistAsync();
         return data.Symbols.Any(s => s.Symbol == symbol.ToUpperInvariant().Trim());
     }
@@ -247,8 +254,9 @@ public sealed class WatchlistService
     /// <summary>
     /// Updates real-time status for a symbol.
     /// </summary>
-    public async Task UpdateSymbolStatusAsync(string symbol, WatchlistItemStatus status)
+    public async Task UpdateSymbolStatusAsync(string symbol, WatchlistItemStatus status, CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var data = await LoadWatchlistAsync();
         var item = data.Symbols.FirstOrDefault(s => s.Symbol == symbol.ToUpperInvariant().Trim());
 

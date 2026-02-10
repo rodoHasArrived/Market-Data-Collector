@@ -319,7 +319,7 @@ public sealed partial class DataQualityViewModel : ObservableObject, IDisposable
 /// <summary>
 /// View model item for symbol quality display.
 /// </summary>
-public class SymbolQualityItem
+public sealed class SymbolQualityItem
 {
     public string Symbol { get; }
     public double QualityScore { get; }

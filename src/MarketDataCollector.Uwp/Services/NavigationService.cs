@@ -88,7 +88,7 @@ public sealed class NavigationService : INavigationService
             return result;
         }
 
-        System.Diagnostics.Debug.WriteLine($"[NavigationService] Unknown page tag: {pageTag}");
+        LoggingService.Instance.LogWarning("Unknown page tag", ("pageTag", pageTag));
         return false;
     }
 

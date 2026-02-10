@@ -395,7 +395,7 @@ public sealed partial class DataExportViewModel : ObservableObject, IAsyncDispos
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[DataExportViewModel] Error during disposal: {ex.Message}");
+            LoggingService.Instance.LogError("DataExportViewModel error during disposal", ex);
         }
 
         _disposed = true;
@@ -405,7 +405,7 @@ public sealed partial class DataExportViewModel : ObservableObject, IAsyncDispos
 /// <summary>
 /// Export history entry for display.
 /// </summary>
-public class ExportHistoryEntry
+public sealed class ExportHistoryEntry
 {
     public string JobId { get; set; } = string.Empty;
     public string Timestamp { get; set; } = string.Empty;

@@ -6,6 +6,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using MarketDataCollector.Uwp.Services;
+using MarketDataCollector.Uwp.Models;
 
 namespace MarketDataCollector.Uwp.Views;
 
@@ -353,31 +354,4 @@ public sealed partial class TradingHoursPage : Page
         ActionInfoBar.Message = "Settings have been reset to US market defaults.";
         ActionInfoBar.IsOpen = true;
     }
-}
-
-/// <summary>
-/// Represents an exchange trading session.
-/// </summary>
-public class ExchangeSession
-{
-    public string Name { get; set; } = string.Empty;
-    public string Status { get; set; } = string.Empty;
-    public SolidColorBrush StatusColor { get; set; } = new SolidColorBrush(Colors.Gray);
-    public string PreMarket { get; set; } = string.Empty;
-    public string RegularHours { get; set; } = string.Empty;
-    public string PostMarket { get; set; } = string.Empty;
-    public string Timezone { get; set; } = string.Empty;
-    public bool CollectData { get; set; }
-}
-
-/// <summary>
-/// Represents a holiday entry.
-/// </summary>
-public class HolidayEntry
-{
-    public string Date { get; set; } = string.Empty;
-    public string Name { get; set; } = string.Empty;
-    public string Exchange { get; set; } = string.Empty;
-    public string Type { get; set; } = string.Empty;
-    public SolidColorBrush TypeColor { get; set; } = new SolidColorBrush(Colors.Gray);
 }

@@ -13,7 +13,7 @@ namespace MarketDataCollector.Uwp.Services;
 /// Service for form validation with inline error display.
 /// Provides consistent validation across all forms in the application.
 /// </summary>
-public sealed class FormValidationService
+public sealed class FormValidationService : IFormValidationService
 {
     private static FormValidationService? _instance;
     private static readonly object _lock = new();

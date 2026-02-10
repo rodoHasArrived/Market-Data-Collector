@@ -8,7 +8,7 @@ namespace MarketDataCollector.Uwp.Converters;
 /// <summary>
 /// Converts a boolean to Visibility.
 /// </summary>
-public class BoolToVisibilityConverter : IValueConverter
+public sealed class BoolToVisibilityConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, string language)
     {
@@ -32,7 +32,7 @@ public class BoolToVisibilityConverter : IValueConverter
 /// <summary>
 /// Converts a boolean to inverse Visibility.
 /// </summary>
-public class InverseBoolToVisibilityConverter : IValueConverter
+public sealed class InverseBoolToVisibilityConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, string language)
     {
@@ -56,7 +56,7 @@ public class InverseBoolToVisibilityConverter : IValueConverter
 /// <summary>
 /// Converts a boolean connection status to a colored brush.
 /// </summary>
-public class BoolToConnectionStatusConverter : IValueConverter
+public sealed class BoolToConnectionStatusConverter : IValueConverter
 {
     private static readonly SolidColorBrush ConnectedBrush = new(Colors.LimeGreen);
     private static readonly SolidColorBrush DisconnectedBrush = new(Colors.Red);
@@ -81,7 +81,7 @@ public class BoolToConnectionStatusConverter : IValueConverter
 /// <summary>
 /// Converts a boolean to Yes/No text.
 /// </summary>
-public class BoolToYesNoConverter : IValueConverter
+public sealed class BoolToYesNoConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, string language)
     {
@@ -105,7 +105,7 @@ public class BoolToYesNoConverter : IValueConverter
 /// <summary>
 /// Inverts a boolean value.
 /// </summary>
-public class InverseBoolConverter : IValueConverter
+public sealed class InverseBoolConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, string language)
     {

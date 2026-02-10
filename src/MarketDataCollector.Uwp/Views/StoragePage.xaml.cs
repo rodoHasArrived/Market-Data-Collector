@@ -22,7 +22,7 @@ public sealed partial class StoragePage : Page
     public StoragePage()
     {
         this.InitializeComponent();
-        _configService = new ConfigService();
+        _configService = ConfigService.Instance;
 
         Loaded += StoragePage_Loaded;
     }
@@ -124,7 +124,7 @@ public sealed partial class StoragePage : Page
 
             LoadSampleTopSymbols();
 
-            System.Diagnostics.Debug.WriteLine($"Storage analytics error: {ex.Message}");
+            LoggingService.Instance.LogError("Storage analytics error", ex);
         }
     }
 

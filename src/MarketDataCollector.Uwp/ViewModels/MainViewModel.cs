@@ -55,8 +55,8 @@ public partial class MainViewModel : ObservableObject
 
     public MainViewModel()
     {
-        _configService = new ConfigService();
-        _statusService = new StatusService();
+        _configService = ConfigService.Instance;
+        _statusService = StatusService.Instance;
     }
 
     public async Task LoadAsync()
@@ -157,7 +157,7 @@ public partial class MainViewModel : ObservableObject
 /// <summary>
 /// ViewModel for displaying symbol information.
 /// </summary>
-public class SymbolViewModel
+public sealed class SymbolViewModel
 {
     public string Symbol { get; }
     public bool SubscribeTrades { get; set; }

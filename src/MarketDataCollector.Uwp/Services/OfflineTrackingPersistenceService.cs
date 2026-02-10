@@ -12,7 +12,7 @@ namespace MarketDataCollector.Uwp.Services;
 /// Service for managing offline tracking persistence with Write-Ahead Logging (WAL).
 /// Ensures symbol tracking survives logout, app restart, and system restart.
 /// </summary>
-public sealed class OfflineTrackingPersistenceService
+public sealed class OfflineTrackingPersistenceService : IOfflineTrackingPersistenceService
 {
     private static OfflineTrackingPersistenceService? _instance;
     private static readonly object _lock = new();
@@ -96,12 +96,12 @@ public sealed class OfflineTrackingPersistenceService
             // Check if we need to recover from a non-clean shutdown
             if (!_state.CleanShutdown && _state.IsServiceRunning)
             {
-                System.Diagnostics.Debug.WriteLine("Detected non-clean shutdown, initiating recovery...");
+                LoggingService.Instance.LogWarning("Detected non-clean shutdown, initiating recovery...");
                 await PerformRecoveryAsync(RecoveryReason.CrashRecovery, cancellationToken);
             }
             else if (_state.ActiveSubscriptionCount > 0 && _subscriptionsConfig.AutoRecoveryEnabled)
             {
-                System.Diagnostics.Debug.WriteLine("Initiating subscription recovery on startup...");
+                LoggingService.Instance.LogInfo("Initiating subscription recovery on startup...");
                 await PerformRecoveryAsync(RecoveryReason.AppRestart, cancellationToken);
             }
 
@@ -126,11 +126,11 @@ public sealed class OfflineTrackingPersistenceService
                 TimeSpan.FromMinutes(5));
 
             _isInitialized = true;
-            System.Diagnostics.Debug.WriteLine("OfflineTrackingPersistenceService initialized successfully");
+            LoggingService.Instance.LogInfo("OfflineTrackingPersistenceService initialized successfully");
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to initialize OfflineTrackingPersistenceService: {ex.Message}");
+            LoggingService.Instance.LogError("Failed to initialize OfflineTrackingPersistenceService", ex);
             throw;
         }
     }
@@ -161,11 +161,11 @@ public sealed class OfflineTrackingPersistenceService
             await SaveStateAsync();
 
             _isInitialized = false;
-            System.Diagnostics.Debug.WriteLine("OfflineTrackingPersistenceService shut down cleanly");
+            LoggingService.Instance.LogInfo("OfflineTrackingPersistenceService shut down cleanly");
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error during shutdown: {ex.Message}");
+            LoggingService.Instance.LogError("Error during OfflineTrackingPersistenceService shutdown", ex);
         }
     }
 
@@ -389,7 +389,7 @@ public sealed class OfflineTrackingPersistenceService
 
         try
         {
-            System.Diagnostics.Debug.WriteLine($"Starting recovery: {reason}");
+            LoggingService.Instance.LogInfo("Starting recovery", ("reason", reason.ToString()));
 
             // 1. Process pending WAL entries
             var pendingEntries = GetPendingWalEntries();
@@ -404,7 +404,7 @@ public sealed class OfflineTrackingPersistenceService
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Failed to process WAL entry {entry.Id}: {ex.Message}");
+                    LoggingService.Instance.LogError("Failed to process WAL entry", ("entryId", entry.Id), ("error", ex.Message));
                     attempt.OperationsFailed++;
                     var errors = attempt.Errors?.ToList() ?? new List<string>();
                     errors.Add($"WAL {entry.Id}: {ex.Message}");
@@ -435,7 +435,7 @@ public sealed class OfflineTrackingPersistenceService
                     }
                     catch (Exception ex)
                     {
-                        System.Diagnostics.Debug.WriteLine($"Failed to recover subscription {sub.Symbol}: {ex.Message}");
+                        LoggingService.Instance.LogError("Failed to recover subscription", ("symbol", sub.Symbol), ("error", ex.Message));
                         Interlocked.Increment(ref attempt.SubscriptionsFailed);
                     }
                     finally
@@ -459,7 +459,7 @@ public sealed class OfflineTrackingPersistenceService
                     NotificationType.Info);
             }
 
-            System.Diagnostics.Debug.WriteLine($"Recovery completed: {attempt.SubscriptionsRecovered} subscriptions, {attempt.OperationsProcessed} operations");
+            LoggingService.Instance.LogInfo("Recovery completed", ("subscriptionsRecovered", attempt.SubscriptionsRecovered.ToString()), ("operationsProcessed", attempt.OperationsProcessed.ToString()));
         }
         catch (Exception ex)
         {
@@ -467,7 +467,7 @@ public sealed class OfflineTrackingPersistenceService
             var errors = attempt.Errors?.ToList() ?? new List<string>();
             errors.Add(ex.Message);
             attempt.Errors = errors.ToArray();
-            System.Diagnostics.Debug.WriteLine($"Recovery failed: {ex.Message}");
+            LoggingService.Instance.LogError("Recovery failed", ex);
         }
         finally
         {
@@ -495,7 +495,7 @@ public sealed class OfflineTrackingPersistenceService
                     if (subPayload != null)
                     {
                         // Subscription recovery is handled separately
-                        System.Diagnostics.Debug.WriteLine($"WAL Subscribe entry for {subPayload.Symbol} will be recovered via subscription recovery");
+                        LoggingService.Instance.LogDebug("WAL Subscribe entry will be recovered via subscription recovery", ("symbol", subPayload.Symbol));
                     }
                     break;
 
@@ -504,7 +504,7 @@ public sealed class OfflineTrackingPersistenceService
                     if (backfillPayload != null)
                     {
                         // Queue for scheduled task processing
-                        System.Diagnostics.Debug.WriteLine($"WAL StartBackfill entry queued for processing: {string.Join(", ", backfillPayload.Symbols)}");
+                        LoggingService.Instance.LogDebug("WAL StartBackfill entry queued for processing", ("symbols", string.Join(", ", backfillPayload.Symbols)));
                     }
                     break;
 
@@ -512,12 +512,12 @@ public sealed class OfflineTrackingPersistenceService
                     var sessionPayload = JsonSerializer.Deserialize<CollectionTaskPayload>(entry.Payload, JsonOptions);
                     if (sessionPayload != null)
                     {
-                        System.Diagnostics.Debug.WriteLine($"WAL StartSession entry queued for processing: {sessionPayload.SessionName}");
+                        LoggingService.Instance.LogDebug("WAL StartSession entry queued for processing", ("sessionName", sessionPayload.SessionName));
                     }
                     break;
 
                 default:
-                    System.Diagnostics.Debug.WriteLine($"Unknown WAL operation type: {entry.OperationType}");
+                    LoggingService.Instance.LogWarning("Unknown WAL operation type", ("operationType", entry.OperationType));
                     break;
             }
 
@@ -538,7 +538,7 @@ public sealed class OfflineTrackingPersistenceService
         subscription.LastActiveAt = DateTime.UtcNow;
         await SaveSubscriptionsAsync();
 
-        System.Diagnostics.Debug.WriteLine($"Marked subscription {subscription.Symbol} ({subscription.SubscriptionType}) for recovery via {subscription.Provider}");
+        LoggingService.Instance.LogDebug("Marked subscription for recovery", ("symbol", subscription.Symbol), ("subscriptionType", subscription.SubscriptionType), ("provider", subscription.Provider));
 
         // Raise event for the connection service to pick up
         SubscriptionRecoveryRequested?.Invoke(this, new SubscriptionRecoveryEventArgs
@@ -580,7 +580,7 @@ public sealed class OfflineTrackingPersistenceService
             await SaveSubscriptionsAsync();
             await SaveStateAsync();
 
-            System.Diagnostics.Debug.WriteLine($"Checkpoint created at {_state.LastCheckpointAt}");
+            LoggingService.Instance.LogDebug("Checkpoint created", ("checkpointAt", _state.LastCheckpointAt.ToString("o")));
         }
         finally
         {
@@ -597,7 +597,7 @@ public sealed class OfflineTrackingPersistenceService
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to update heartbeat: {ex.Message}");
+            LoggingService.Instance.LogError("Failed to update heartbeat", ex);
         }
     }
 
@@ -617,7 +617,7 @@ public sealed class OfflineTrackingPersistenceService
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to load state: {ex.Message}");
+            LoggingService.Instance.LogError("Failed to load state", ex);
             _state = new OfflineTrackingState();
         }
     }
@@ -631,7 +631,7 @@ public sealed class OfflineTrackingPersistenceService
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to save state: {ex.Message}");
+            LoggingService.Instance.LogError("Failed to save state", ex);
         }
     }
 
@@ -652,7 +652,7 @@ public sealed class OfflineTrackingPersistenceService
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to load WAL: {ex.Message}");
+            LoggingService.Instance.LogError("Failed to load WAL", ex);
         }
     }
 
@@ -665,7 +665,7 @@ public sealed class OfflineTrackingPersistenceService
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to save WAL: {ex.Message}");
+            LoggingService.Instance.LogError("Failed to save WAL", ex);
         }
     }
 
@@ -682,7 +682,7 @@ public sealed class OfflineTrackingPersistenceService
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to load subscriptions: {ex.Message}");
+            LoggingService.Instance.LogError("Failed to load subscriptions", ex);
             _subscriptionsConfig = new SubscriptionPersistenceConfig();
         }
     }
@@ -696,7 +696,7 @@ public sealed class OfflineTrackingPersistenceService
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to save subscriptions: {ex.Message}");
+            LoggingService.Instance.LogError("Failed to save subscriptions", ex);
         }
     }
 

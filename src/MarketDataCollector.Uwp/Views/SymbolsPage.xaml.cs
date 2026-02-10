@@ -53,7 +53,7 @@ public sealed partial class SymbolsPage : Page
     public SymbolsPage()
     {
         this.InitializeComponent();
-        _configService = new ConfigService();
+        _configService = ConfigService.Instance;
         _contextMenuService = ContextMenuService.Instance;
         SymbolsListView.ItemsSource = _filteredSymbols;
 

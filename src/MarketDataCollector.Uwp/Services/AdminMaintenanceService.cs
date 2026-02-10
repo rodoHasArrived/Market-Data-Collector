@@ -10,7 +10,7 @@ namespace MarketDataCollector.Uwp.Services;
 /// Service for administrative and maintenance operations including
 /// archive scheduling, tier migration, retention policies, and file cleanup.
 /// </summary>
-public sealed class AdminMaintenanceService
+public sealed class AdminMaintenanceService : IAdminMaintenanceService
 {
     private static AdminMaintenanceService? _instance;
     private static readonly object _lock = new();

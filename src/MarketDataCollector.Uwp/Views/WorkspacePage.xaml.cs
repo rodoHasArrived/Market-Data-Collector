@@ -91,7 +91,7 @@ public sealed partial class WorkspacePage : Page
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[WorkspacePage] Error loading data: {ex.Message}");
+            LoggingService.Instance.LogError("WorkspacePage error loading data", ex);
         }
     }
 
@@ -159,7 +159,7 @@ public sealed partial class WorkspacePage : Page
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[WorkspacePage] Error saving auto-restore setting: {ex.Message}");
+            LoggingService.Instance.LogError("WorkspacePage error saving auto-restore setting", ex);
         }
     }
 

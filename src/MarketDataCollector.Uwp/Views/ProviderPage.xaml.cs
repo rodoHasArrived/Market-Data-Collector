@@ -35,7 +35,7 @@ public sealed partial class ProviderPage : Page
     public ProviderPage()
     {
         this.InitializeComponent();
-        _configService = new ConfigService();
+        _configService = ConfigService.Instance;
         _credentialService = new CredentialService();
         _connectionStartTime = DateTime.UtcNow;
 

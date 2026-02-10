@@ -13,6 +13,8 @@ using MarketDataCollector.Uwp.Services;
 using Windows.UI;
 using Windows.Foundation;
 
+using MarketDataCollector.Uwp.Models;
+
 namespace MarketDataCollector.Uwp.Views;
 
 /// <summary>
@@ -33,7 +35,8 @@ public sealed partial class DashboardPage : Page
 
     #endregion
 
-    public MainViewModel ViewModel { get; }
+    // H3: Use DashboardViewModel instead of MainViewModel to consolidate duplicate state
+    public DashboardViewModel ViewModel { get; }
 
     // Consolidated single timer for all updates (performance optimization)
     private readonly DispatcherTimer _unifiedTimer;
@@ -82,12 +85,14 @@ public sealed partial class DashboardPage : Page
     public DashboardPage()
     {
         this.InitializeComponent();
-        ViewModel = new MainViewModel();
+        // H3: Use DashboardViewModel instead of MainViewModel to avoid duplicate state
+        ViewModel = new DashboardViewModel();
         DataContext = ViewModel;
         _startTime = DateTime.UtcNow;
         _collectorStartTime = DateTime.UtcNow;
 
-        _configService = new ConfigService();
+        // C3: Use singleton instance
+        _configService = ConfigService.Instance;
         _activityFeedService = ActivityFeedService.Instance;
         _integrityEventsService = IntegrityEventsService.Instance;
         _activityItems = new ObservableCollection<ActivityDisplayItem>();
@@ -112,7 +117,8 @@ public sealed partial class DashboardPage : Page
 
     private async void DashboardPage_Loaded(object sender, RoutedEventArgs e)
     {
-        await ViewModel.LoadAsync();
+        // H3: Use DashboardViewModel.InitializeAsync instead of MainViewModel.LoadAsync
+        await ViewModel.InitializeAsync();
         InitializeSparklineData();
         LoadActivityFeed();
         LoadIntegrityEvents();
@@ -142,6 +148,9 @@ public sealed partial class DashboardPage : Page
         _activityFeedService.ActivityAdded -= ActivityFeedService_ActivityAdded;
         _integrityEventsService.EventRecorded -= IntegrityEventsService_EventRecorded;
         _integrityEventsService.EventsCleared -= IntegrityEventsService_EventsCleared;
+
+        // Q1: Dispose ViewModel to clean up timer and event subscriptions
+        (DataContext as IDisposable)?.Dispose();
     }
 
     /// <summary>
@@ -504,7 +513,7 @@ public sealed partial class DashboardPage : Page
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error starting collector: {ex.Message}");
+            LoggingService.Instance.LogError("Error starting collector", ex);
         }
     }
 
@@ -565,7 +574,7 @@ public sealed partial class DashboardPage : Page
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error pausing collector: {ex.Message}");
+            LoggingService.Instance.LogError("Error pausing collector", ex);
         }
     }
 
@@ -585,7 +594,7 @@ public sealed partial class DashboardPage : Page
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error starting collector: {ex.Message}");
+            LoggingService.Instance.LogError("Error starting collector", ex);
         }
     }
 
@@ -931,7 +940,7 @@ public sealed partial class DashboardPage : Page
             TotalEventsToday.Text = eventsToday.ToString("N0");
         }
 
-        ActiveSymbolsCount.Text = ViewModel.Symbols?.Count.ToString() ?? "0";
+        ActiveSymbolsCount.Text = ViewModel.Symbols.Count.ToString();
 
         // Simulated values for demo
         StorageUsedText.Text = "2.4 GB";
@@ -1198,31 +1207,4 @@ public sealed partial class DashboardPage : Page
     }
 
     #endregion
-}
-
-/// <summary>
-/// Display model for activity items in the dashboard feed.
-/// </summary>
-public class ActivityDisplayItem
-{
-    public string Title { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
-    public string Icon { get; set; } = "\uE946";
-    public SolidColorBrush IconBackground { get; set; } = new(Microsoft.UI.Colors.Gray);
-    public string RelativeTime { get; set; } = string.Empty;
-}
-
-/// <summary>
-/// Display model for integrity events in the dashboard.
-/// </summary>
-public class IntegrityEventDisplayItem
-{
-    public string Id { get; set; } = string.Empty;
-    public string Symbol { get; set; } = string.Empty;
-    public string EventTypeName { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
-    public IntegritySeverity Severity { get; set; }
-    public Color SeverityColor { get; set; }
-    public string RelativeTime { get; set; } = string.Empty;
-    public Visibility IsNotAcknowledged { get; set; } = Visibility.Visible;
 }

@@ -20,7 +20,7 @@ namespace MarketDataCollector.Uwp.Services;
 /// - /api/storage/catalog - Storage catalog for file discovery
 /// - /api/storage/search/files - Search files by criteria
 /// </summary>
-public sealed class RetentionAssuranceService
+public sealed class RetentionAssuranceService : IRetentionAssuranceService
 {
     private static RetentionAssuranceService? _instance;
     private static readonly object _lock = new();
@@ -73,8 +73,10 @@ public sealed class RetentionAssuranceService
     /// <summary>
     /// Loads configuration from storage.
     /// </summary>
-    public async Task LoadConfigurationAsync()
+    public async Task LoadConfigurationAsync(CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+
         try
         {
             var localSettings = ApplicationData.Current.LocalSettings;
@@ -106,7 +108,7 @@ public sealed class RetentionAssuranceService
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[RetentionAssuranceService] Error loading config: {ex.Message}");
+            LoggingService.Instance.LogError("RetentionAssuranceService error loading config", ex);
         }
     }
 
@@ -125,7 +127,7 @@ public sealed class RetentionAssuranceService
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[RetentionAssuranceService] Error saving config: {ex.Message}");
+            LoggingService.Instance.LogError("RetentionAssuranceService error saving config", ex);
         }
     }
 
@@ -333,7 +335,7 @@ public sealed class RetentionAssuranceService
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[RetentionAssuranceService] API dry run failed: {ex.Message}");
+            LoggingService.Instance.LogError("RetentionAssuranceService API dry run failed", ex);
             return null; // Fall back to local scanning
         }
     }
@@ -359,7 +361,7 @@ public sealed class RetentionAssuranceService
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[RetentionAssuranceService] Health check failed: {ex.Message}");
+            LoggingService.Instance.LogError("RetentionAssuranceService health check failed", ex);
             return null;
         }
     }
@@ -378,7 +380,7 @@ public sealed class RetentionAssuranceService
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[RetentionAssuranceService] Find orphans failed: {ex.Message}");
+            LoggingService.Instance.LogError("RetentionAssuranceService find orphans failed", ex);
             return null;
         }
     }
@@ -696,7 +698,7 @@ public sealed class RetentionAssuranceService
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[RetentionAssuranceService] Error saving audit report: {ex.Message}");
+            LoggingService.Instance.LogError("RetentionAssuranceService error saving audit report", ex);
         }
     }
 

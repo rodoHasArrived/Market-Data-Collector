@@ -424,7 +424,7 @@ public enum SymbolBackfillStatus
 /// <summary>
 /// Backfill history entry.
 /// </summary>
-public class BackfillHistoryEntry
+public sealed class BackfillHistoryEntry
 {
     public string Date { get; set; } = string.Empty;
     public string Summary { get; set; } = string.Empty;
@@ -435,7 +435,7 @@ public class BackfillHistoryEntry
 /// <summary>
 /// Scheduled backfill job.
 /// </summary>
-public class ScheduledBackfillJob
+public sealed class ScheduledBackfillJob
 {
     public string Id { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
@@ -446,7 +446,7 @@ public class ScheduledBackfillJob
 /// <summary>
 /// Data validation issue found during verification.
 /// </summary>
-public class DataValidationIssue
+public sealed class DataValidationIssue
 {
     public string Symbol { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;

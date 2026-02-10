@@ -13,7 +13,7 @@ namespace MarketDataCollector.Uwp.Services;
 /// Manages scheduled backfill, collection, verification, and other recurring operations.
 /// Tasks persist across app restarts and can run on schedule regardless of user presence.
 /// </summary>
-public sealed class BackgroundTaskSchedulerService
+public sealed class BackgroundTaskSchedulerService : IBackgroundTaskSchedulerService
 {
     private static BackgroundTaskSchedulerService? _instance;
     private static readonly object _lock = new();
@@ -103,7 +103,7 @@ public sealed class BackgroundTaskSchedulerService
 
             if (!_config.IsEnabled)
             {
-                System.Diagnostics.Debug.WriteLine("Scheduler is disabled in configuration");
+                LoggingService.Instance.LogInfo("Scheduler is disabled in configuration");
                 return;
             }
 
@@ -131,11 +131,11 @@ public sealed class BackgroundTaskSchedulerService
                 checkInterval);
 
             _isRunning = true;
-            System.Diagnostics.Debug.WriteLine($"BackgroundTaskSchedulerService started with {_config.Tasks.Length} tasks");
+            LoggingService.Instance.LogInfo("BackgroundTaskSchedulerService started", ("taskCount", _config.Tasks.Length.ToString()));
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to start scheduler: {ex.Message}");
+            LoggingService.Instance.LogError("Failed to start scheduler", ex);
             throw;
         }
     }
@@ -165,11 +165,11 @@ public sealed class BackgroundTaskSchedulerService
             await SaveLogsAsync();
 
             _isRunning = false;
-            System.Diagnostics.Debug.WriteLine("BackgroundTaskSchedulerService stopped");
+            LoggingService.Instance.LogInfo("BackgroundTaskSchedulerService stopped");
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error stopping scheduler: {ex.Message}");
+            LoggingService.Instance.LogError("Error stopping scheduler", ex);
         }
     }
 
@@ -194,7 +194,7 @@ public sealed class BackgroundTaskSchedulerService
 
         TaskCreated?.Invoke(this, new TaskEventArgs { Task = task });
 
-        System.Diagnostics.Debug.WriteLine($"Created scheduled task: {task.Name} (ID: {task.Id})");
+        LoggingService.Instance.LogInfo("Created scheduled task", ("taskName", task.Name), ("taskId", task.Id));
         return task;
     }
 
@@ -235,7 +235,7 @@ public sealed class BackgroundTaskSchedulerService
         // Cancel if running
         if (_runningTasks.ContainsKey(taskId))
         {
-            System.Diagnostics.Debug.WriteLine($"Cannot delete running task: {taskId}");
+            LoggingService.Instance.LogWarning("Cannot delete running task", ("taskId", taskId));
             return false;
         }
 
@@ -245,7 +245,7 @@ public sealed class BackgroundTaskSchedulerService
 
         TaskDeleted?.Invoke(this, new TaskEventArgs { Task = task });
 
-        System.Diagnostics.Debug.WriteLine($"Deleted scheduled task: {task.Name}");
+        LoggingService.Instance.LogInfo("Deleted scheduled task", ("taskName", task.Name));
         return true;
     }
 
@@ -278,7 +278,7 @@ public sealed class BackgroundTaskSchedulerService
 
         if (_runningTasks.ContainsKey(taskId) && !task.AllowConcurrent)
         {
-            System.Diagnostics.Debug.WriteLine($"Task {task.Name} is already running");
+            LoggingService.Instance.LogWarning("Task is already running", ("taskName", task.Name));
             return null;
         }
 
@@ -466,7 +466,7 @@ public sealed class BackgroundTaskSchedulerService
                     }
                     catch (Exception ex)
                     {
-                        System.Diagnostics.Debug.WriteLine($"Error executing task {task.Name}: {ex.Message}");
+                        LoggingService.Instance.LogError("Error executing task", ("taskName", task.Name), ("error", ex.Message));
                     }
                 });
 
@@ -479,7 +479,7 @@ public sealed class BackgroundTaskSchedulerService
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error in scheduler check: {ex.Message}");
+            LoggingService.Instance.LogError("Error in scheduler check", ex);
         }
     }
 
@@ -552,7 +552,7 @@ public sealed class BackgroundTaskSchedulerService
                 await _notificationService.NotifyErrorAsync("Task Failed", $"{task.Name}: {ex.Message}");
             }
 
-            System.Diagnostics.Debug.WriteLine($"Task {task.Name} failed: {ex.Message}");
+            LoggingService.Instance.LogError("Task failed", ("taskName", task.Name), ("error", ex.Message));
         }
         finally
         {
@@ -623,7 +623,7 @@ public sealed class BackgroundTaskSchedulerService
 
             default:
                 log.Output = $"Unknown task type: {task.TaskType}";
-                System.Diagnostics.Debug.WriteLine(log.Output);
+                LoggingService.Instance.LogWarning(log.Output);
                 break;
         }
     }
@@ -1226,7 +1226,7 @@ public sealed class BackgroundTaskSchedulerService
                 // Check if task was missed
                 if (task.NextRunAt.Value < now && task.LastRunAt.Value < task.NextRunAt.Value)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Running missed task: {task.Name}");
+                    LoggingService.Instance.LogInfo("Running missed task", ("taskName", task.Name));
                     await ExecuteTaskAsync(task, "Startup", cancellationToken);
                 }
             }
@@ -1362,7 +1362,7 @@ public sealed class BackgroundTaskSchedulerService
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to load scheduler config: {ex.Message}");
+            LoggingService.Instance.LogError("Failed to load scheduler config", ex);
             _config = new SchedulerConfig();
         }
     }
@@ -1376,7 +1376,7 @@ public sealed class BackgroundTaskSchedulerService
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to save scheduler config: {ex.Message}");
+            LoggingService.Instance.LogError("Failed to save scheduler config", ex);
         }
     }
 
@@ -1396,7 +1396,7 @@ public sealed class BackgroundTaskSchedulerService
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to load execution logs: {ex.Message}");
+            LoggingService.Instance.LogError("Failed to load execution logs", ex);
         }
     }
 
@@ -1409,7 +1409,7 @@ public sealed class BackgroundTaskSchedulerService
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to save execution logs: {ex.Message}");
+            LoggingService.Instance.LogError("Failed to save execution logs", ex);
         }
     }
 

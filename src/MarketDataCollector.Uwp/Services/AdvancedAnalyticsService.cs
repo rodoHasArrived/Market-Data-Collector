@@ -10,7 +10,7 @@ namespace MarketDataCollector.Uwp.Services;
 /// Service for advanced analytics including gap analysis, cross-provider comparison,
 /// latency histograms, anomaly detection, and detailed quality reports.
 /// </summary>
-public sealed class AdvancedAnalyticsService
+public sealed class AdvancedAnalyticsService : IAdvancedAnalyticsService
 {
     private static AdvancedAnalyticsService? _instance;
     private static readonly object _lock = new();

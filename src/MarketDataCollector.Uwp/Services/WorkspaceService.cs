@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using Windows.Storage;
 
@@ -12,7 +13,7 @@ namespace MarketDataCollector.Uwp.Services;
 /// Service for managing workspace templates and session restore.
 /// Implements Feature Refinement #51 - Workspace Templates & Session Restore.
 /// </summary>
-public sealed class WorkspaceService
+public sealed class WorkspaceService : IWorkspaceService
 {
     private static WorkspaceService? _instance;
     private static readonly object _lock = new();
@@ -64,8 +65,10 @@ public sealed class WorkspaceService
     /// <summary>
     /// Loads workspaces from storage.
     /// </summary>
-    public async Task LoadWorkspacesAsync()
+    public async Task LoadWorkspacesAsync(CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+
         try
         {
             var localSettings = ApplicationData.Current.LocalSettings;
@@ -85,7 +88,7 @@ public sealed class WorkspaceService
             if (_workspaces.Count == 0)
             {
                 _workspaces.AddRange(GetDefaultWorkspaces());
-                await SaveWorkspacesAsync();
+                await SaveWorkspacesAsync(cancellationToken);
             }
 
             // Load active workspace
@@ -100,17 +103,23 @@ public sealed class WorkspaceService
                 _lastSession = JsonSerializer.Deserialize<SessionState>(sessionJson?.ToString() ?? "{}");
             }
         }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[WorkspaceService] Error loading workspaces: {ex.Message}");
+            LoggingService.Instance.LogError("Error loading workspaces", ex);
         }
     }
 
     /// <summary>
     /// Saves workspaces to storage.
     /// </summary>
-    public async Task SaveWorkspacesAsync()
+    public async Task SaveWorkspacesAsync(CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+
         try
         {
             var localSettings = ApplicationData.Current.LocalSettings;
@@ -126,14 +135,14 @@ public sealed class WorkspaceService
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[WorkspaceService] Error saving workspaces: {ex.Message}");
+            LoggingService.Instance.LogError("Error saving workspaces", ex);
         }
     }
 
     /// <summary>
     /// Creates a new workspace template.
     /// </summary>
-    public async Task<WorkspaceTemplate> CreateWorkspaceAsync(string name, string description, WorkspaceCategory category)
+    public async Task<WorkspaceTemplate> CreateWorkspaceAsync(string name, string description, WorkspaceCategory category, CancellationToken cancellationToken = default)
     {
         var workspace = new WorkspaceTemplate
         {
@@ -149,7 +158,7 @@ public sealed class WorkspaceService
         };
 
         _workspaces.Add(workspace);
-        await SaveWorkspacesAsync();
+        await SaveWorkspacesAsync(cancellationToken);
 
         WorkspaceCreated?.Invoke(this, new WorkspaceEventArgs { Workspace = workspace });
         return workspace;
@@ -158,7 +167,7 @@ public sealed class WorkspaceService
     /// <summary>
     /// Updates an existing workspace template.
     /// </summary>
-    public async Task UpdateWorkspaceAsync(WorkspaceTemplate workspace)
+    public async Task UpdateWorkspaceAsync(WorkspaceTemplate workspace, CancellationToken cancellationToken = default)
     {
         var existing = _workspaces.FirstOrDefault(w => w.Id == workspace.Id);
         if (existing != null)
@@ -166,7 +175,7 @@ public sealed class WorkspaceService
             var index = _workspaces.IndexOf(existing);
             workspace.UpdatedAt = DateTime.UtcNow;
             _workspaces[index] = workspace;
-            await SaveWorkspacesAsync();
+            await SaveWorkspacesAsync(cancellationToken);
 
             WorkspaceUpdated?.Invoke(this, new WorkspaceEventArgs { Workspace = workspace });
         }
@@ -175,13 +184,13 @@ public sealed class WorkspaceService
     /// <summary>
     /// Deletes a workspace template.
     /// </summary>
-    public async Task DeleteWorkspaceAsync(string workspaceId)
+    public async Task DeleteWorkspaceAsync(string workspaceId, CancellationToken cancellationToken = default)
     {
         var workspace = _workspaces.FirstOrDefault(w => w.Id == workspaceId);
         if (workspace != null && !workspace.IsBuiltIn)
         {
             _workspaces.Remove(workspace);
-            await SaveWorkspacesAsync();
+            await SaveWorkspacesAsync(cancellationToken);
 
             WorkspaceDeleted?.Invoke(this, new WorkspaceEventArgs { Workspace = workspace });
         }
@@ -190,13 +199,13 @@ public sealed class WorkspaceService
     /// <summary>
     /// Activates a workspace template.
     /// </summary>
-    public async Task ActivateWorkspaceAsync(string workspaceId)
+    public async Task ActivateWorkspaceAsync(string workspaceId, CancellationToken cancellationToken = default)
     {
         var workspace = _workspaces.FirstOrDefault(w => w.Id == workspaceId);
         if (workspace != null)
         {
             _activeWorkspace = workspace;
-            await SaveWorkspacesAsync();
+            await SaveWorkspacesAsync(cancellationToken);
 
             WorkspaceActivated?.Invoke(this, new WorkspaceEventArgs { Workspace = workspace });
         }
@@ -205,7 +214,7 @@ public sealed class WorkspaceService
     /// <summary>
     /// Captures the current state as a workspace template.
     /// </summary>
-    public async Task<WorkspaceTemplate> CaptureCurrentStateAsync(string name, string description)
+    public async Task<WorkspaceTemplate> CaptureCurrentStateAsync(string name, string description, CancellationToken cancellationToken = default)
     {
         var workspace = new WorkspaceTemplate
         {
@@ -222,7 +231,7 @@ public sealed class WorkspaceService
         };
 
         _workspaces.Add(workspace);
-        await SaveWorkspacesAsync();
+        await SaveWorkspacesAsync(cancellationToken);
 
         return workspace;
     }
@@ -230,8 +239,10 @@ public sealed class WorkspaceService
     /// <summary>
     /// Saves the current session state for restore on next launch.
     /// </summary>
-    public async Task SaveSessionStateAsync(SessionState state)
+    public async Task SaveSessionStateAsync(SessionState state, CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+
         try
         {
             _lastSession = state;
@@ -245,7 +256,7 @@ public sealed class WorkspaceService
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[WorkspaceService] Error saving session state: {ex.Message}");
+            LoggingService.Instance.LogError("Error saving session state", ex);
         }
     }
 
@@ -260,8 +271,10 @@ public sealed class WorkspaceService
     /// <summary>
     /// Exports a workspace to a file.
     /// </summary>
-    public async Task<string> ExportWorkspaceAsync(string workspaceId)
+    public async Task<string> ExportWorkspaceAsync(string workspaceId, CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+
         var workspace = _workspaces.FirstOrDefault(w => w.Id == workspaceId);
         if (workspace != null)
         {
@@ -273,7 +286,7 @@ public sealed class WorkspaceService
     /// <summary>
     /// Imports a workspace from JSON.
     /// </summary>
-    public async Task<WorkspaceTemplate?> ImportWorkspaceAsync(string json)
+    public async Task<WorkspaceTemplate?> ImportWorkspaceAsync(string json, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -286,14 +299,18 @@ public sealed class WorkspaceService
                 workspace.UpdatedAt = DateTime.UtcNow;
 
                 _workspaces.Add(workspace);
-                await SaveWorkspacesAsync();
+                await SaveWorkspacesAsync(cancellationToken);
 
                 return workspace;
             }
         }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[WorkspaceService] Error importing workspace: {ex.Message}");
+            LoggingService.Instance.LogError("Error importing workspace", ex);
         }
         return null;
     }

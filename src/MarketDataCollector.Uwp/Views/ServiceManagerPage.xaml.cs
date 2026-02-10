@@ -6,6 +6,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using MarketDataCollector.Uwp.Services;
+using MarketDataCollector.Uwp.Models;
 
 namespace MarketDataCollector.Uwp.Views;
 
@@ -25,7 +26,7 @@ public sealed partial class ServiceManagerPage : Page
     {
         this.InitializeComponent();
 
-        _statusService = new StatusService();
+        _statusService = StatusService.Instance;
         _logEntries = new ObservableCollection<LogEntry>();
         _recoveryHistory = new ObservableCollection<RecoveryEvent>();
 
@@ -63,7 +64,7 @@ public sealed partial class ServiceManagerPage : Page
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error in RefreshTimer_Tick: {ex.Message}");
+            LoggingService.Instance.LogError("Error in RefreshTimer_Tick", ex);
         }
     }
 
@@ -232,40 +233,4 @@ public sealed partial class ServiceManagerPage : Page
         ActionInfoBar.Message = "Service configuration has been saved successfully.";
         ActionInfoBar.IsOpen = true;
     }
-}
-
-/// <summary>
-/// Represents a log entry in the log viewer.
-/// </summary>
-public class LogEntry
-{
-    public string Timestamp { get; }
-    public string Level { get; }
-    public string Message { get; }
-    public SolidColorBrush LevelColor { get; }
-
-    public LogEntry(string timestamp, string level, string message)
-    {
-        Timestamp = timestamp;
-        Level = level;
-        Message = message;
-        LevelColor = level switch
-        {
-            "ERR" => BrushRegistry.Error,
-            "WRN" => BrushRegistry.Warning,
-            "DBG" => BrushRegistry.Inactive,
-            _ => BrushRegistry.Success
-        };
-    }
-}
-
-/// <summary>
-/// Represents a recovery event in the history.
-/// </summary>
-public class RecoveryEvent
-{
-    public string Timestamp { get; set; } = string.Empty;
-    public string Type { get; set; } = string.Empty;
-    public string Reason { get; set; } = string.Empty;
-    public SolidColorBrush TypeColor { get; set; } = new SolidColorBrush(Colors.Gray);
 }

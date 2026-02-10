@@ -4,6 +4,7 @@ using System.Linq;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using MarketDataCollector.Uwp.Services;
+using MarketDataCollector.Uwp.Models;
 
 namespace MarketDataCollector.Uwp.Views;
 
@@ -198,25 +199,4 @@ public sealed partial class IndexSubscriptionPage : Page
         // Remove index subscriptions
         LoadActiveIndices();
     }
-}
-
-public class SectorETFDisplay
-{
-    public string Symbol { get; set; } = string.Empty;
-    public string Name { get; set; } = string.Empty;
-    public string HoldingsText { get; set; } = string.Empty;
-}
-
-public class ConstituentDisplay
-{
-    public string Symbol { get; set; } = string.Empty;
-    public string Name { get; set; } = string.Empty;
-    public string WeightText { get; set; } = string.Empty;
-}
-
-public class ActiveIndexDisplay
-{
-    public string Name { get; set; } = string.Empty;
-    public string SymbolCount { get; set; } = string.Empty;
-    public int SymbolCountValue { get; set; }
 }

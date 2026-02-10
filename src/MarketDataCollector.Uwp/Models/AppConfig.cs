@@ -14,7 +14,7 @@ namespace MarketDataCollector.Uwp.Models;
 /// <summary>
 /// Keyboard shortcut configuration for the UWP application.
 /// </summary>
-public class KeyboardShortcut
+public sealed class KeyboardShortcut
 {
     [JsonPropertyName("action")]
     public string Action { get; set; } = string.Empty;

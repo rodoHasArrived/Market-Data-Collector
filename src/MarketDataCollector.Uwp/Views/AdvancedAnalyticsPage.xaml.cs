@@ -5,6 +5,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using MarketDataCollector.Uwp.Services;
+using MarketDataCollector.Uwp.Models;
 
 namespace MarketDataCollector.Uwp.Views;
 
@@ -430,55 +431,3 @@ public sealed partial class AdvancedAnalyticsPage : Page
 
     #endregion
 }
-
-#region Display Items
-
-public class SymbolQualityDisplayItem
-{
-    public string Symbol { get; set; } = string.Empty;
-    public string Grade { get; set; } = string.Empty;
-    public SolidColorBrush? GradeBackground { get; set; }
-    public double OverallScore { get; set; }
-    public string CompletenessText { get; set; } = string.Empty;
-    public string IntegrityText { get; set; } = string.Empty;
-    public string IssueCount { get; set; } = string.Empty;
-}
-
-public class GapDisplayItem
-{
-    public string Symbol { get; set; } = string.Empty;
-    public string EventType { get; set; } = string.Empty;
-    public string TimeRange { get; set; } = string.Empty;
-    public string DurationText { get; set; } = string.Empty;
-    public string RepairableText { get; set; } = string.Empty;
-    public SolidColorBrush? RepairableBackground { get; set; }
-}
-
-public class DiscrepancyDisplayItem
-{
-    public string TimestampText { get; set; } = string.Empty;
-    public string DiscrepancyType { get; set; } = string.Empty;
-    public string Values { get; set; } = string.Empty;
-    public string DifferenceText { get; set; } = string.Empty;
-}
-
-public class LatencyDisplayItem
-{
-    public string Provider { get; set; } = string.Empty;
-    public string P50Text { get; set; } = string.Empty;
-    public string P95Text { get; set; } = string.Empty;
-    public string P99Text { get; set; } = string.Empty;
-    public double LatencyPercent { get; set; }
-}
-
-public class RateLimitDisplayItem
-{
-    public string Provider { get; set; } = string.Empty;
-    public double UsagePercent { get; set; }
-    public string UsageText { get; set; } = string.Empty;
-    public string StatusText { get; set; } = string.Empty;
-    public SolidColorBrush? UsageColor { get; set; }
-    public SolidColorBrush? StatusBackground { get; set; }
-}
-
-#endregion

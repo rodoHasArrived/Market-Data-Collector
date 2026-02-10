@@ -109,6 +109,16 @@ public sealed partial class DashboardViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     private string _providerDescription = "Interactive Brokers";
 
+    // H3: Properties consolidated from MainViewModel for DashboardPage XAML bindings
+    [ObservableProperty]
+    private string _lastUpdateText = "No status available";
+
+    [ObservableProperty]
+    private bool _isLoading;
+
+    [ObservableProperty]
+    private string _symbolCount = "(0 symbols)";
+
     // Running tasks
     [ObservableProperty]
     private int _runningTasksCount;
@@ -156,11 +166,19 @@ public sealed partial class DashboardViewModel : ObservableObject, IDisposable
 
     public async Task InitializeAsync()
     {
-        await LoadConfigAsync();
-        await RefreshStatusAsync();
-        UpdateSchedulerInfo();
-        LoadRecentActivities();
-        _refreshTimer.Start();
+        IsLoading = true;
+        try
+        {
+            await LoadConfigAsync();
+            await RefreshStatusAsync();
+            UpdateSchedulerInfo();
+            LoadRecentActivities();
+            _refreshTimer.Start();
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 
     private async Task LoadConfigAsync()
@@ -180,6 +198,7 @@ public sealed partial class DashboardViewModel : ObservableObject, IDisposable
                 }
             }
             ActiveSymbolsCount = Symbols.Count.ToString();
+            SymbolCount = $"({Symbols.Count} symbols)";
         }
     }
 
@@ -202,6 +221,7 @@ public sealed partial class DashboardViewModel : ObservableObject, IDisposable
         {
             IsConnected = status.IsConnected;
             ConnectionStatusText = status.IsConnected ? "Connected" : "Disconnected";
+            LastUpdateText = $"Last update: {status.TimestampUtc:yyyy-MM-dd HH:mm:ss} UTC";
 
             if (status.Metrics != null)
             {
@@ -246,6 +266,7 @@ public sealed partial class DashboardViewModel : ObservableObject, IDisposable
         {
             IsConnected = false;
             ConnectionStatusText = "No Status";
+            LastUpdateText = "Start collector with --http-port 8080";
         }
     }
 
@@ -277,7 +298,7 @@ public sealed partial class DashboardViewModel : ObservableObject, IDisposable
     }
 
     [RelayCommand]
-    private async Task StartCollectorAsync()
+    private Task StartCollectorAsync()
     {
         IsCollectorRunning = true;
         IsCollectorPaused = false;
@@ -295,11 +316,11 @@ public sealed partial class DashboardViewModel : ObservableObject, IDisposable
             ColorCategory = "Success"
         });
 
-        await Task.CompletedTask;
+        return Task.CompletedTask;
     }
 
     [RelayCommand]
-    private async Task StopCollectorAsync()
+    private Task StopCollectorAsync()
     {
         IsCollectorRunning = false;
         IsCollectorPaused = false;
@@ -317,13 +338,13 @@ public sealed partial class DashboardViewModel : ObservableObject, IDisposable
             ColorCategory = "Warning"
         });
 
-        await Task.CompletedTask;
+        return Task.CompletedTask;
     }
 
     [RelayCommand]
-    private async Task PauseCollectorAsync()
+    private Task PauseCollectorAsync()
     {
-        if (!IsCollectorRunning) return;
+        if (!IsCollectorRunning) return Task.CompletedTask;
 
         IsCollectorPaused = !IsCollectorPaused;
         CollectorStatusText = IsCollectorPaused ? "Paused" : "Running";
@@ -338,7 +359,7 @@ public sealed partial class DashboardViewModel : ObservableObject, IDisposable
             ColorCategory = "Info"
         });
 
-        await Task.CompletedTask;
+        return Task.CompletedTask;
     }
 
     [RelayCommand]
@@ -427,12 +448,17 @@ public sealed partial class DashboardViewModel : ObservableObject, IDisposable
 
     private void OnRefreshTimerElapsed(object? sender, System.Timers.ElapsedEventArgs e)
     {
-        // Fire-and-forget the async work, with proper exception handling in the async method
+        // M4: Guard against re-entrant timer ticks while async work is in progress
+        if (_isRefreshing) return;
         _ = SafeRefreshTimerWorkAsync();
     }
 
+    private volatile bool _isRefreshing;
+
     private async Task SafeRefreshTimerWorkAsync()
     {
+        if (_isRefreshing) return;
+        _isRefreshing = true;
         try
         {
             await RefreshStatusAsync();
@@ -452,7 +478,11 @@ public sealed partial class DashboardViewModel : ObservableObject, IDisposable
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] Error in refresh timer: {ex.Message}");
+            LoggingService.Instance.LogWarning("DashboardViewModel refresh timer error", ("error", ex.Message));
+        }
+        finally
+        {
+            _isRefreshing = false;
         }
     }
 
@@ -476,7 +506,7 @@ public sealed partial class DashboardViewModel : ObservableObject, IDisposable
 /// <summary>
 /// Information about a currently running task.
 /// </summary>
-public class RunningTaskInfo
+public sealed class RunningTaskInfo
 {
     public string TaskId { get; set; } = string.Empty;
     public string TaskName { get; set; } = string.Empty;

@@ -52,7 +52,7 @@ public sealed partial class MessagingHubPage : Page
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error in RefreshTimer_Tick: {ex.Message}");
+            LoggingService.Instance.LogError("Error in RefreshTimer_Tick", ex);
         }
     }
 
@@ -122,6 +122,7 @@ public sealed partial class MessagingHubPage : Page
         catch
         {
             // Ignore stats errors
+            LoggingService.Instance.LogDebug("Failed to load messaging stats");
         }
     }
 
@@ -240,6 +241,7 @@ public sealed partial class MessagingHubPage : Page
         catch
         {
             // Ignore activity errors
+            LoggingService.Instance.LogDebug("Failed to log messaging activity");
         }
     }
 

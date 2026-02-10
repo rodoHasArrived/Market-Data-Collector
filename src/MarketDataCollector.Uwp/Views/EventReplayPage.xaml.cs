@@ -284,6 +284,7 @@ public sealed partial class EventReplayPage : Page
         catch
         {
             // Ignore status update errors
+            LoggingService.Instance.LogDebug("Event replay status update failed");
         }
     }
 

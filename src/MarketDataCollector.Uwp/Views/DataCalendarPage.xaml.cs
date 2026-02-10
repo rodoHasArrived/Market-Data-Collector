@@ -121,7 +121,7 @@ public sealed partial class DataCalendarPage : Page
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error loading calendar: {ex.Message}");
+            LoggingService.Instance.LogError("Error loading calendar", ex);
         }
         finally
         {
