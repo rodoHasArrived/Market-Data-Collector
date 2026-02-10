@@ -47,7 +47,7 @@ public sealed class SelfTestCommandTests
     public async Task ExecuteAsync_RunsSelfTests_ReturnsZero()
     {
         var cmd = new SelfTestCommand(Logger);
-        var exitCode = await cmd.ExecuteAsync(new[] { "--selftest" });
-        exitCode.Should().Be(0);
+        var result = await cmd.ExecuteAsync(new[] { "--selftest" });
+        result.ExitCode.Should().Be(0);
     }
 }
