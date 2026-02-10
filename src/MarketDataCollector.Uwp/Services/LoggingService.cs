@@ -13,7 +13,7 @@ namespace MarketDataCollector.Uwp.Services;
 /// Centralized logging service that provides structured logging with
 /// support for multiple outputs and log levels.
 /// </summary>
-public sealed class LoggingService : IDisposable
+public sealed class LoggingService : ILoggingService, IDisposable
 {
     private static LoggingService? _instance;
     private static readonly object _lock = new();
@@ -141,6 +141,23 @@ public sealed class LoggingService : IDisposable
     /// </summary>
     public void LogCritical(string message, params (string Key, string Value)[] properties)
         => Log(LogLevel.Critical, message, properties);
+
+    // Explicit ILoggingService implementations for signature compatibility
+    void ILoggingService.LogWarning(string message, Exception? exception)
+    {
+        if (exception != null)
+            LogWarning(message, ("exception", exception.GetType().Name), ("exceptionMessage", exception.Message));
+        else
+            LogWarning(message);
+    }
+
+    void ILoggingService.LogError(string message, Exception? exception, params (string key, string value)[] properties)
+    {
+        if (exception != null)
+            LogError(message, exception, properties);
+        else
+            LogError(message, properties);
+    }
 
     private async Task ProcessLogsAsync(CancellationToken ct)
     {

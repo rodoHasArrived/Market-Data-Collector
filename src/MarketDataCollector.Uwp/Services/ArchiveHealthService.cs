@@ -44,7 +44,8 @@ public sealed class ArchiveHealthService : IArchiveHealthService
 
     private ArchiveHealthService()
     {
-        _configService = new ConfigService();
+        // C3: Use registered singleton instead of direct instantiation
+        _configService = ConfigService.Instance;
         _notificationService = NotificationService.Instance;
         _healthStatusPath = Path.Combine(AppContext.BaseDirectory, "_catalog", "archive_health.json");
     }

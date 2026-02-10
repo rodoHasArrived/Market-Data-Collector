@@ -10,7 +10,7 @@ namespace MarketDataCollector.Uwp.Services;
 /// Service for creating and managing context menus (right-click menus) throughout the application.
 /// Provides reusable menu patterns with keyboard accelerators for common actions.
 /// </summary>
-public sealed class ContextMenuService
+public sealed class ContextMenuService : IContextMenuService
 {
     private static readonly Lazy<ContextMenuService> _instance = new(() => new ContextMenuService());
     public static ContextMenuService Instance => _instance.Value;

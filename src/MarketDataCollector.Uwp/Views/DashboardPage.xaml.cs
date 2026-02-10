@@ -60,7 +60,8 @@ public sealed partial class DashboardPage : Page
     private readonly PointCollection _integrityPoints = new();
 
     private readonly Random _random = new();
-    private readonly ConfigService _configService;
+    // C1: Use interface types for DI-first resolution
+    private readonly IConfigService _configService;
     private readonly ActivityFeedService _activityFeedService;
     private readonly IntegrityEventsService _integrityEventsService;
     private readonly ObservableCollection<ActivityDisplayItem> _activityItems;
@@ -91,8 +92,10 @@ public sealed partial class DashboardPage : Page
         _startTime = DateTime.UtcNow;
         _collectorStartTime = DateTime.UtcNow;
 
-        // C3: Use singleton instance
-        _configService = ConfigService.Instance;
+        // C1: Resolve via ServiceLocator (DI-first) with .Instance fallback
+        _configService = ServiceLocator.IsInitialized
+            ? ServiceLocator.GetService<IConfigService>()
+            : ConfigService.Instance;
         _activityFeedService = ActivityFeedService.Instance;
         _integrityEventsService = IntegrityEventsService.Instance;
         _activityItems = new ObservableCollection<ActivityDisplayItem>();

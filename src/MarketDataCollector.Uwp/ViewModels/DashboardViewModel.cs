@@ -10,12 +10,13 @@ namespace MarketDataCollector.Uwp.ViewModels;
 /// </summary>
 public sealed partial class DashboardViewModel : ObservableObject, IDisposable
 {
-    private readonly ConnectionService _connectionService;
-    private readonly StatusService _statusService;
-    private readonly BackgroundTaskSchedulerService _schedulerService;
+    // C1: Use interface types for DI-first resolution
+    private readonly IConnectionService _connectionService;
+    private readonly IStatusService _statusService;
+    private readonly IBackgroundTaskSchedulerService _schedulerService;
     private readonly ActivityFeedService _activityFeedService;
     private readonly CollectionSessionService _sessionService;
-    private readonly ConfigService _configService;
+    private readonly IConfigService _configService;
     private readonly System.Timers.Timer _refreshTimer;
     private bool _disposed;
 
@@ -138,14 +139,22 @@ public sealed partial class DashboardViewModel : ObservableObject, IDisposable
 
     public DashboardViewModel()
     {
-        _connectionService = ConnectionService.Instance;
-        _statusService = StatusService.Instance;
-        _schedulerService = BackgroundTaskSchedulerService.Instance;
+        // C1: Resolve services via ServiceLocator (DI-first) with .Instance fallback
+        _connectionService = ServiceLocator.IsInitialized
+            ? ServiceLocator.GetService<IConnectionService>()
+            : ConnectionService.Instance;
+        _statusService = ServiceLocator.IsInitialized
+            ? ServiceLocator.GetService<IStatusService>()
+            : StatusService.Instance;
+        _schedulerService = ServiceLocator.IsInitialized
+            ? ServiceLocator.GetService<IBackgroundTaskSchedulerService>()
+            : BackgroundTaskSchedulerService.Instance;
         _activityFeedService = ActivityFeedService.Instance;
         _sessionService = CollectionSessionService.Instance;
-        _configService = ConfigService.Instance;
+        _configService = ServiceLocator.IsInitialized
+            ? ServiceLocator.GetService<IConfigService>()
+            : ConfigService.Instance;
 
-        // Initialize logging service
         LoggingService.Instance.LogInfo("DashboardViewModel created");
 
         // Subscribe to connection events

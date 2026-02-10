@@ -89,27 +89,33 @@ public partial class App : Application
 
     /// <summary>
     /// Configures services for dependency injection.
+    /// C1: Register services by interface where possible, using singleton instances.
     /// </summary>
     private static void ConfigureServices(IServiceCollection services)
     {
         // Register HttpClient factory
         services.AddHttpClient();
 
-        // Register singleton services
-        services.AddSingleton<NavigationService>();
-        services.AddSingleton<ConfigService>();
-        services.AddSingleton<ConnectionService>();
-        services.AddSingleton<ThemeService>();
-        services.AddSingleton<NotificationService>();
-        services.AddSingleton<LoggingService>();
-        services.AddSingleton<KeyboardShortcutService>();
-        services.AddSingleton<MessagingService>();
-        services.AddSingleton<StatusService>();
+        // C1: Register shared UI service interfaces (from MarketDataCollector.Ui.Services.Contracts)
+        // Uses singleton Instance properties to ensure DI resolves the same instance as static access.
+        services.AddSingleton<MarketDataCollector.Ui.Services.Contracts.ILoggingService>(_ => LoggingService.Instance);
+        services.AddSingleton<MarketDataCollector.Wpf.Contracts.IConnectionService>(_ => ConnectionService.Instance);
 
-        // Register background services
-        services.AddSingleton<BackgroundTaskSchedulerService>();
-        services.AddSingleton<OfflineTrackingPersistenceService>();
-        services.AddSingleton<PendingOperationsQueueService>();
+        // Register singleton services via their Instance properties
+        services.AddSingleton(_ => NavigationService.Instance);
+        services.AddSingleton(_ => ConfigService.Instance);
+        services.AddSingleton(_ => ConnectionService.Instance);
+        services.AddSingleton(_ => ThemeService.Instance);
+        services.AddSingleton(_ => NotificationService.Instance);
+        services.AddSingleton(_ => LoggingService.Instance);
+        services.AddSingleton(_ => KeyboardShortcutService.Instance);
+        services.AddSingleton(_ => MessagingService.Instance);
+        services.AddSingleton(_ => StatusService.Instance);
+
+        // Register background services via their Instance properties
+        services.AddSingleton(_ => BackgroundTaskSchedulerService.Instance);
+        services.AddSingleton(_ => OfflineTrackingPersistenceService.Instance);
+        services.AddSingleton(_ => PendingOperationsQueueService.Instance);
     }
 
     /// <summary>
@@ -292,9 +298,10 @@ public partial class App : Application
                 await firstRunService.InitializeAsync();
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // Continue even if first-run setup fails - app should still work
+            // Q2: Log first-run setup failures instead of silently swallowing
+            System.Diagnostics.Debug.WriteLine($"[App] First-run setup failed: {ex.Message}");
         }
     }
 
@@ -352,9 +359,10 @@ public partial class App : Application
                 "Application Error",
                 e.Exception.Message);
         }
-        catch
+        catch (Exception ex)
         {
-            // Ignore notification failures
+            // Q2: Log notification failures instead of silently swallowing
+            System.Diagnostics.Debug.WriteLine($"[App] Notification failure during error handling: {ex.Message}");
         }
     }
 
