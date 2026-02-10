@@ -39,7 +39,7 @@ jobs:
       uses: ./.github/actions/setup-dotnet-cache
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
-        cache-suffix: pr-lint
+        cache-suffix: pr
 
     - name: Restore dependencies
       run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true /bl:./artifacts/lint-restore.binlog
@@ -72,7 +72,7 @@ jobs:
       uses: ./.github/actions/setup-dotnet-cache
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
-        cache-suffix: pr-build-test
+        cache-suffix: pr
 
     - name: Restore dependencies
       run: |
@@ -97,7 +97,7 @@ jobs:
       if: success()
       uses: codecov/codecov-action@v5.5.2
       with:
-        directory: ./coverage
+        directory: ./artifacts/test-results
         fail_ci_if_error: false
         token: ${{ secrets.CODECOV_TOKEN }}
 

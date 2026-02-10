@@ -83,6 +83,7 @@ jobs:
             --verbosity normal \
             --logger "trx;LogFileName=test-results-fsharp-Linux.trx" \
             --results-directory ./TestResults \
+            --collect:"XPlat Code Coverage" \
             /p:EnableWindowsTargeting=true
 
       - name: Upload test results on failure
