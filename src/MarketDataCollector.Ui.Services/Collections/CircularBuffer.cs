@@ -268,7 +268,7 @@ public static class CircularBufferExtensions
         if (buffer.TryGetFromNewest(0, out var newest) &&
             buffer.TryGetFromNewest(1, out var previous))
         {
-            return (newest!.Value - previous!.Value) / intervalSeconds;
+            return (newest!.GetValueOrDefault() - previous!.GetValueOrDefault()) / intervalSeconds;
         }
 
         return 0.0;

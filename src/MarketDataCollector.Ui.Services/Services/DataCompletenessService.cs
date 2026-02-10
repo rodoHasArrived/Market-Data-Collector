@@ -23,6 +23,19 @@ public sealed class DataCompletenessService
     }
 
     /// <summary>
+    /// Generates a completeness report for a date range (overload using default data path).
+    /// </summary>
+    public Task<CompletenessReport> GetCompletenessReportAsync(
+        string[] symbols,
+        DateOnly startDate,
+        DateOnly endDate,
+        CancellationToken ct = default)
+    {
+        var dataPath = GetDefaultDataPath();
+        return GetCompletenessReportAsync(dataPath, startDate, endDate, symbols, ct);
+    }
+
+    /// <summary>
     /// Generates a completeness report for a date range.
     /// </summary>
     public async Task<CompletenessReport> GetCompletenessReportAsync(
@@ -549,11 +562,14 @@ public sealed record CompletenessReport
     public DateOnly StartDate { get; init; }
     public DateOnly EndDate { get; init; }
     public DateTime GeneratedAt { get; init; }
-    public int ExpectedTradingDays { get; init; }
-    public double OverallScore { get; init; }
-    public List<SymbolCompleteness> Symbols { get; init; } = new();
-    public List<CalendarDay> CalendarData { get; init; } = new();
-    public List<BackfillableGap> Gaps { get; init; } = new();
+    public int ExpectedTradingDays { get; set; }
+    public double OverallScore { get; set; }
+    public List<SymbolCompleteness> Symbols { get; set; } = new();
+    public List<CalendarDay> CalendarData { get; set; } = new();
+    public List<BackfillableGap> Gaps { get; set; } = new();
+    public long TotalExpectedEvents { get; set; }
+    public long TotalActualEvents { get; set; }
+    public double OverallCompleteness { get; set; }
 }
 
 public sealed record SymbolCompleteness
