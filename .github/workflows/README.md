@@ -275,7 +275,7 @@ Standard template requiring:
 
 ## AI Integration
 
-All AI-powered features use `actions/ai-inference@v1` with `openai/gpt-4.1-mini` and are configured with `continue-on-error: true` so AI failures never block workflows. AI features include:
+All AI-powered features use `actions/ai-inference@v1` with `gpt-4o-mini` and are configured with `continue-on-error: true` so AI failures never block workflows. AI features include:
 
 | Workflow | AI Feature | Purpose |
 |----------|-----------|---------|
