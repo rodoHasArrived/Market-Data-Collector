@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-10 03:25:06 UTC
+> Auto-generated on 2026-02-10 03:31:54 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -179,6 +179,9 @@ Market-Data-Collector/
 │   │   ├── ui-redesign.md
 │   │   └── why-this-architecture.md
 │   ├── archived/
+│   │   ├── 2026-02_PR_SUMMARY.md
+│   │   ├── 2026-02_UI_IMPROVEMENTS_SUMMARY.md
+│   │   ├── 2026-02_VISUAL_CODE_EXAMPLES.md
 │   │   ├── ARTIFACT_ACTIONS_DOWNGRADE.md
 │   │   ├── CHANGES_SUMMARY.md
 │   │   ├── consolidation.md
@@ -1334,10 +1337,7 @@ Market-Data-Collector/
 ├── MarketDataCollector.sln
 ├── package-lock.json
 ├── package.json
-├── PR_SUMMARY.md
-├── README.md
-├── UI_IMPROVEMENTS_SUMMARY.md
-└── VISUAL_CODE_EXAMPLES.md
+└── README.md
 ```
 
 ## Key Directories
