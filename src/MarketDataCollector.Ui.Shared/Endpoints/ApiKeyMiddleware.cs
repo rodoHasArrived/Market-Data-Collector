@@ -1,4 +1,6 @@
 using System.Collections.Concurrent;
+using System.Security.Cryptography;
+using System.Text;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 
@@ -81,18 +83,14 @@ public sealed class ApiKeyMiddleware
 
     /// <summary>
     /// Constant-time string comparison to prevent timing attacks on API key validation.
+    /// Uses CryptographicOperations.FixedTimeEquals which handles differing lengths
+    /// without leaking length information through timing.
     /// </summary>
     private static bool CryptographicEquals(string a, string b)
     {
-        if (a.Length != b.Length)
-            return false;
-
-        var result = 0;
-        for (var i = 0; i < a.Length; i++)
-        {
-            result |= a[i] ^ b[i];
-        }
-        return result == 0;
+        return CryptographicOperations.FixedTimeEquals(
+            Encoding.UTF8.GetBytes(a),
+            Encoding.UTF8.GetBytes(b));
     }
 }
 
@@ -105,8 +103,11 @@ public sealed class ApiKeyRateLimitMiddleware
     private const int MaxRequestsPerMinute = 120;
     private static readonly TimeSpan Window = TimeSpan.FromMinutes(1);
 
+    private const int CleanupThreshold = 1000;
+
     private readonly RequestDelegate _next;
     private readonly ConcurrentDictionary<string, RateLimitEntry> _clients = new();
+    private int _requestsSinceCleanup;
 
     public ApiKeyRateLimitMiddleware(RequestDelegate next)
     {
@@ -176,7 +177,29 @@ public sealed class ApiKeyRateLimitMiddleware
             return Task.CompletedTask;
         });
 
+        // Periodically clean up stale entries to prevent unbounded memory growth
+        if (Interlocked.Increment(ref _requestsSinceCleanup) >= CleanupThreshold)
+        {
+            Interlocked.Exchange(ref _requestsSinceCleanup, 0);
+            CleanupStaleEntries();
+        }
+
         await _next(context);
+    }
+
+    private void CleanupStaleEntries()
+    {
+        var cutoff = DateTime.UtcNow - Window - Window; // 2x window for safety margin
+        foreach (var (key, entry) in _clients)
+        {
+            lock (entry)
+            {
+                if (DateTime.UtcNow - entry.WindowStart >= cutoff)
+                {
+                    _clients.TryRemove(key, out _);
+                }
+            }
+        }
     }
 
     private sealed class RateLimitEntry

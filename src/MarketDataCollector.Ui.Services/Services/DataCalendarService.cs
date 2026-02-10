@@ -11,10 +11,15 @@ public sealed class DataCalendarService
 
     public DataCalendarService()
     {
-        // Note: DataCompletenessService requires ManifestService and TradingCalendarService parameters
-        // which we don't have access to in this parameterless constructor.
-        // TODO: Refactor to use dependency injection instead of manual instantiation
-        _completenessService = null!; // Will be initialized on first use
+        var tradingCalendar = new TradingCalendarService();
+        var manifestService = ManifestService.Instance;
+        _completenessService = new DataCompletenessService(manifestService, tradingCalendar);
+        _storageService = StorageAnalyticsService.Instance;
+    }
+
+    public DataCalendarService(DataCompletenessService completenessService)
+    {
+        _completenessService = completenessService ?? throw new ArgumentNullException(nameof(completenessService));
         _storageService = StorageAnalyticsService.Instance;
     }
 
@@ -241,7 +246,7 @@ public sealed class DataCalendarService
                 Symbol = gap.Symbol,
                 StartDate = gap.StartDate,
                 EndDate = gap.EndDate,
-                GapType = gap.GapType,
+                GapType = gap.GapType.ToString(),
                 ExpectedEvents = gap.ExpectedEvents,
                 ActualEvents = gap.ActualEvents,
                 CanRepair = gap.CanRepair
@@ -351,7 +356,7 @@ public sealed class DataCalendarService
             {
                 PeriodStart = currentDate,
                 PeriodEnd = periodEnd,
-                Completeness = report.OverallCompleteness,
+                Completeness = report.OverallScore,
                 EventCount = report.TotalActualEvents,
                 GapCount = report.GapCount
             });

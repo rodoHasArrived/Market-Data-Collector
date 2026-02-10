@@ -25,8 +25,10 @@ public static class FailoverEndpoints
     /// </summary>
     public static void MapFailoverEndpoints(this WebApplication app, JsonSerializerOptions jsonOptions)
     {
+        var group = app.MapGroup("").WithTags("Failover");
+
         // Get failover configuration (enriched with live state when available)
-        app.MapGet(UiApiRoutes.FailoverConfig, (ConfigStore store, [FromServices] StreamingFailoverRegistry? registry) =>
+        group.MapGet(UiApiRoutes.FailoverConfig, (ConfigStore store, [FromServices] StreamingFailoverRegistry? registry) =>
         {
             var cfg = store.Load();
             var dataSources = cfg.DataSources ?? new DataSourcesConfig();
@@ -61,7 +63,7 @@ public static class FailoverEndpoints
         });
 
         // Update failover configuration
-        app.MapPost(UiApiRoutes.FailoverConfig, async (ConfigStore store, FailoverConfigRequest req) =>
+        group.MapPost(UiApiRoutes.FailoverConfig, async (ConfigStore store, FailoverConfigRequest req) =>
         {
             var cfg = store.Load();
             var dataSources = cfg.DataSources ?? new DataSourcesConfig();
@@ -82,7 +84,7 @@ public static class FailoverEndpoints
         });
 
         // Get all failover rules (enriched with live state)
-        app.MapGet(UiApiRoutes.FailoverRules, (ConfigStore store, [FromServices] StreamingFailoverRegistry? registry) =>
+        group.MapGet(UiApiRoutes.FailoverRules, (ConfigStore store, [FromServices] StreamingFailoverRegistry? registry) =>
         {
             var cfg = store.Load();
             var rules = cfg.DataSources?.FailoverRules ?? Array.Empty<FailoverRuleConfig>();
@@ -110,7 +112,7 @@ public static class FailoverEndpoints
         });
 
         // Create or update failover rule
-        app.MapPost(UiApiRoutes.FailoverRules, async (ConfigStore store, FailoverRuleRequest req) =>
+        group.MapPost(UiApiRoutes.FailoverRules, async (ConfigStore store, FailoverRuleRequest req) =>
         {
             if (string.IsNullOrWhiteSpace(req.PrimaryProviderId))
                 return Results.BadRequest("PrimaryProviderId is required.");
@@ -144,7 +146,7 @@ public static class FailoverEndpoints
         });
 
         // Delete failover rule
-        app.MapDelete(UiApiRoutes.FailoverRules + "/{id}", async (ConfigStore store, string id) =>
+        group.MapDelete(UiApiRoutes.FailoverRules + "/{id}", async (ConfigStore store, string id) =>
         {
             var cfg = store.Load();
             var dataSources = cfg.DataSources ?? new DataSourcesConfig();
@@ -161,7 +163,7 @@ public static class FailoverEndpoints
         });
 
         // Force failover — wired to runtime StreamingFailoverService
-        app.MapPost(UiApiRoutes.FailoverForce.Replace("{ruleId}", "{ruleId}"), (ConfigStore store, [FromServices] StreamingFailoverRegistry? registry, string ruleId, ForceFailoverRequest req) =>
+        group.MapPost(UiApiRoutes.FailoverForce.Replace("{ruleId}", "{ruleId}"), (ConfigStore store, [FromServices] StreamingFailoverRegistry? registry, string ruleId, ForceFailoverRequest req) =>
         {
             var cfg = store.Load();
             var rules = cfg.DataSources?.FailoverRules ?? Array.Empty<FailoverRuleConfig>();
@@ -200,7 +202,7 @@ public static class FailoverEndpoints
         });
 
         // Get provider health — returns live data from StreamingFailoverService when available
-        app.MapGet(UiApiRoutes.FailoverHealth, (ConfigStore store, [FromServices] StreamingFailoverRegistry? registry) =>
+        group.MapGet(UiApiRoutes.FailoverHealth, (ConfigStore store, [FromServices] StreamingFailoverRegistry? registry) =>
         {
             if (registry?.Service is { } svc)
             {

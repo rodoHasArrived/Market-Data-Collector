@@ -23,15 +23,17 @@ public static class BackfillEndpoints
     /// </summary>
     public static void MapBackfillEndpoints(this WebApplication app, JsonSerializerOptions jsonOptions, JsonSerializerOptions jsonOptionsIndented)
     {
+        var group = app.MapGroup("").WithTags("Backfill");
+
         // Get available providers
-        app.MapGet(UiApiRoutes.BackfillProviders, (BackfillCoordinator backfill) =>
+        group.MapGet(UiApiRoutes.BackfillProviders, (BackfillCoordinator backfill) =>
         {
             var providers = backfill.DescribeProviders();
             return Results.Json(providers, jsonOptions);
         });
 
         // Get last backfill status
-        app.MapGet(UiApiRoutes.BackfillStatus, (BackfillCoordinator backfill) =>
+        group.MapGet(UiApiRoutes.BackfillStatus, (BackfillCoordinator backfill) =>
         {
             var status = backfill.TryReadLast();
             return status is null
@@ -40,7 +42,7 @@ public static class BackfillEndpoints
         });
 
         // Preview backfill (dry run - shows what would be fetched)
-        app.MapPost(UiApiRoutes.BackfillRun + "/preview", async (BackfillCoordinator backfill, BackfillRequestDto req) =>
+        group.MapPost(UiApiRoutes.BackfillRun + "/preview", async (BackfillCoordinator backfill, BackfillRequestDto req) =>
         {
             var validation = ValidateBackfillRequest(req);
             if (validation is not null) return validation;
@@ -67,7 +69,7 @@ public static class BackfillEndpoints
         }).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
         // Run backfill
-        app.MapPost(UiApiRoutes.BackfillRun, async (BackfillCoordinator backfill, BackfillRequestDto req) =>
+        group.MapPost(UiApiRoutes.BackfillRun, async (BackfillCoordinator backfill, BackfillRequestDto req) =>
         {
             var validation = ValidateBackfillRequest(req);
             if (validation is not null) return validation;
@@ -94,7 +96,7 @@ public static class BackfillEndpoints
         }).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
         // Backfill progress endpoint
-        app.MapGet("/api/backfill/progress", (BackfillCoordinator backfill) =>
+        group.MapGet("/api/backfill/progress", (BackfillCoordinator backfill) =>
         {
             var progress = backfill.GetProgress();
             return progress is not null

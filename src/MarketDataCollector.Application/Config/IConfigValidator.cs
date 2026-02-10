@@ -127,6 +127,9 @@ public sealed class FieldValidationStage : IConfigValidationStage
 
 /// <summary>
 /// Semantic validation that checks cross-property constraints and configuration consistency.
+/// Duplicate-symbol and retention-days checks are now handled by <see cref="AppConfigValidator"/>
+/// in the field validation stage. This stage handles warning-level checks that should not
+/// affect <see cref="FluentValidation.Results.ValidationResult.IsValid"/>.
 /// </summary>
 public sealed class SemanticValidationStage : IConfigValidationStage
 {
@@ -134,43 +137,15 @@ public sealed class SemanticValidationStage : IConfigValidationStage
     {
         var results = new List<ConfigValidationResult>();
 
-        // Check for duplicate symbols
-        if (config.Symbols is { Length: > 0 })
-        {
-            var duplicates = config.Symbols
-                .GroupBy(s => s.Symbol, StringComparer.OrdinalIgnoreCase)
-                .Where(g => g.Count() > 1)
-                .Select(g => g.Key)
-                .ToList();
-
-            if (duplicates.Count > 0)
-            {
-                results.Add(new ConfigValidationResult(
-                    ConfigValidationSeverity.Error,
-                    "Symbols",
-                    $"Duplicate symbols found: {string.Join(", ", duplicates)}",
-                    "Remove duplicate symbol entries from configuration"));
-            }
-
-            // Warn if no symbols have subscriptions
-            if (!config.Symbols.Any(s => s.SubscribeTrades || s.SubscribeDepth))
-            {
-                results.Add(new ConfigValidationResult(
-                    ConfigValidationSeverity.Warning,
-                    "Symbols",
-                    "No symbols have trades or depth subscriptions enabled",
-                    "Enable SubscribeTrades or SubscribeDepth for at least one symbol"));
-            }
-        }
-
-        // Storage consistency checks
-        if (config.Storage is { RetentionDays: <= 0 })
+        // Warn if symbols are configured but none have subscriptions enabled
+        if (config.Symbols is { Length: > 0 } &&
+            !config.Symbols.Any(s => s.SubscribeTrades || s.SubscribeDepth))
         {
             results.Add(new ConfigValidationResult(
-                ConfigValidationSeverity.Error,
-                "Storage.RetentionDays",
-                "RetentionDays must be positive when set",
-                "Set RetentionDays to a positive integer or remove it"));
+                ConfigValidationSeverity.Warning,
+                "Symbols",
+                "No symbols have trades or depth subscriptions enabled",
+                "Enable SubscribeTrades or SubscribeDepth for at least one symbol"));
         }
 
         return results;

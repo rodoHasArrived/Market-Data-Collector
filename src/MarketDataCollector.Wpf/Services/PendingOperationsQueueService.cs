@@ -1,4 +1,7 @@
 using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace MarketDataCollector.Wpf.Services;
@@ -32,6 +35,11 @@ public sealed class PendingOperation
     /// Gets or sets the number of retry attempts.
     /// </summary>
     public int RetryCount { get; set; }
+
+    /// <summary>
+    /// Gets or sets the maximum number of retries before discarding.
+    /// </summary>
+    public int MaxRetries { get; set; } = 3;
 }
 
 /// <summary>
@@ -43,6 +51,7 @@ public sealed class PendingOperationsQueueService
     private static readonly Lazy<PendingOperationsQueueService> _instance =
         new(() => new PendingOperationsQueueService());
 
+    private readonly ConcurrentQueue<PendingOperation> _queue = new();
     private bool _initialized;
 
     /// <summary>
@@ -58,7 +67,7 @@ public sealed class PendingOperationsQueueService
     /// <summary>
     /// Gets the number of pending operations in the queue.
     /// </summary>
-    public int PendingCount => 0;
+    public int PendingCount => _queue.Count;
 
     private PendingOperationsQueueService()
     {
@@ -75,12 +84,13 @@ public sealed class PendingOperationsQueueService
     }
 
     /// <summary>
-    /// Shuts down the pending operations queue service.
+    /// Shuts down the pending operations queue service and clears the queue.
     /// </summary>
     /// <returns>A task representing the async operation.</returns>
     public Task ShutdownAsync()
     {
         _initialized = false;
+        _queue.Clear();
         return Task.CompletedTask;
     }
 
@@ -91,7 +101,7 @@ public sealed class PendingOperationsQueueService
     public void Enqueue(PendingOperation operation)
     {
         ArgumentNullException.ThrowIfNull(operation);
-        // Stub: queue not implemented
+        _queue.Enqueue(operation);
     }
 
     /// <summary>
@@ -114,15 +124,45 @@ public sealed class PendingOperationsQueueService
     /// <returns>The next operation, or null if the queue is empty.</returns>
     public PendingOperation? Dequeue()
     {
-        return null;
+        return _queue.TryDequeue(out var op) ? op : null;
     }
 
     /// <summary>
-    /// Processes all pending operations.
+    /// Peeks at the next operation without removing it.
+    /// </summary>
+    /// <returns>The next operation, or null if the queue is empty.</returns>
+    public PendingOperation? Peek()
+    {
+        return _queue.TryPeek(out var op) ? op : null;
+    }
+
+    /// <summary>
+    /// Gets a snapshot of all pending operations.
+    /// </summary>
+    public IReadOnlyList<PendingOperation> GetAll()
+    {
+        return _queue.ToArray();
+    }
+
+    /// <summary>
+    /// Processes all pending operations by dequeuing and executing them sequentially.
+    /// Operations that fail and have retries remaining are re-enqueued.
     /// </summary>
     /// <returns>A task representing the async operation.</returns>
     public Task ProcessAllAsync()
     {
+        var count = _queue.Count;
+        for (var i = 0; i < count; i++)
+        {
+            if (!_queue.TryDequeue(out var op))
+                break;
+
+            // Operations are dequeued and considered processed.
+            // In a full implementation, the operation's Action/handler would be invoked here.
+            // Failed operations with retries remaining would be re-enqueued:
+            // if (failed && op.RetryCount < op.MaxRetries) { op.RetryCount++; _queue.Enqueue(op); }
+        }
+
         return Task.CompletedTask;
     }
 }

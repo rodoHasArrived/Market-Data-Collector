@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using MarketDataCollector.Application.Exceptions;
 using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Models;
 using MarketDataCollector.Infrastructure.Contracts;
@@ -138,8 +139,13 @@ public sealed class TiingoHistoricalDataProvider : BaseHistoricalDataProvider
 
                 if ((int)response.StatusCode == 429)
                 {
-                    RecordRateLimitHit(TimeSpan.FromMinutes(1));
-                    throw new HttpRequestException($"Tiingo rate limit exceeded (429) for {symbol}. Retry-After: 60");
+                    var retryAfter = HttpResponseHandler.ExtractRetryAfter(response) ?? TimeSpan.FromMinutes(1);
+                    RecordRateLimitHit(retryAfter);
+                    throw new RateLimitException(
+                        $"Tiingo rate limit exceeded (429) for {symbol}",
+                        provider: Name,
+                        symbol: symbol,
+                        retryAfter: retryAfter);
                 }
 
                 throw new InvalidOperationException($"Tiingo returned {(int)response.StatusCode} for symbol {symbol}");

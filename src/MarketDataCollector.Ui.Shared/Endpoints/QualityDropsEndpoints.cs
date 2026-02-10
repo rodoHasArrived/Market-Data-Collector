@@ -20,7 +20,9 @@ public static class QualityDropsEndpoints
         DroppedEventAuditTrail? auditTrail,
         JsonSerializerOptions jsonOptions)
     {
-        app.MapGet(UiApiRoutes.QualityDrops, () =>
+        var group = app.MapGroup("").WithTags("Quality Drops");
+
+        group.MapGet(UiApiRoutes.QualityDrops, () =>
         {
             if (auditTrail is null)
             {
@@ -43,7 +45,7 @@ public static class QualityDropsEndpoints
             }, jsonOptions);
         });
 
-        app.MapGet(UiApiRoutes.QualityDropsBySymbol, (string symbol) =>
+        group.MapGet(UiApiRoutes.QualityDropsBySymbol, (string symbol) =>
         {
             if (auditTrail is null)
             {

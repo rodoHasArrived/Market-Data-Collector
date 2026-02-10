@@ -90,10 +90,10 @@ public partial class Program
             new PackageCommands(cfg, log)
         );
 
-        var (handled, exitCode) = await dispatcher.TryDispatchAsync(cliArgs.Raw);
+        var (handled, cliResult) = await dispatcher.TryDispatchAsync(cliArgs.Raw);
         if (handled)
         {
-            return exitCode;
+            return cliResult.ExitCode;
         }
 
         // UI Mode - Start web dashboard (handles both --mode web and legacy --ui flag)
@@ -247,9 +247,11 @@ public partial class Program
             return result.Success ? 0 : 1;
         }
 
-        var quoteCollector = new QuoteCollector(publisher);
-        var tradeCollector = new TradeDataCollector(publisher, quoteCollector);
-        var depthCollector = new MarketDepthCollector(publisher, requireExplicitSubscription: true);
+        // Resolve collectors from DI - ensures same instances used by streaming providers
+        // (registered via ServiceCompositionRoot.AddCollectorServices)
+        var quoteCollector = hostStartup.GetRequiredService<QuoteCollector>();
+        var tradeCollector = hostStartup.GetRequiredService<TradeDataCollector>();
+        var depthCollector = hostStartup.GetRequiredService<MarketDepthCollector>();
 
         if (!string.IsNullOrWhiteSpace(cliArgs.Replay))
         {
@@ -343,11 +345,8 @@ public partial class Program
             throw;
         }
 
-        var subscriptionManager = new Application.Subscriptions.SubscriptionManager(
-            depthCollector,
-            tradeCollector,
-            dataClient,
-            LoggingSetup.ForContext<Application.Subscriptions.SubscriptionManager>());
+        // Use HostStartup's factory method to create SubscriptionManager from DI-resolved collectors
+        var subscriptionManager = hostStartup.CreateSubscriptionManager(dataClient);
 
         var runtimeCfg = EnsureDefaultSymbols(cfg);
         subscriptionManager.Apply(runtimeCfg);

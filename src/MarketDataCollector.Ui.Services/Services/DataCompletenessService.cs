@@ -115,7 +115,20 @@ public sealed class DataCompletenessService
         DateOnly endDate,
         CancellationToken ct = default)
     {
-        var report = await GetCompletenessReportAsync(dataPath, startDate, endDate, null, ct);
+        return await GetBackfillableGapsAsync(dataPath, startDate, endDate, null, ct);
+    }
+
+    /// <summary>
+    /// Identifies and returns all gaps that can be backfilled, optionally filtered by symbols.
+    /// </summary>
+    public async Task<List<BackfillableGap>> GetBackfillableGapsAsync(
+        string dataPath,
+        DateOnly startDate,
+        DateOnly endDate,
+        string[]? symbols,
+        CancellationToken ct = default)
+    {
+        var report = await GetCompletenessReportAsync(dataPath, startDate, endDate, symbols, ct);
         return report.Gaps
             .Where(g => g.CanBackfill)
             .OrderBy(g => g.Symbol)
@@ -435,25 +448,18 @@ public sealed class DataCompletenessService
         string[]? symbols = null,
         CancellationToken ct = default)
     {
-        // This is a compatibility alias
-        return GetDailyCompletenessAsync("./data", date, symbols, ct);
+        return GetDailyCompletenessAsync("./data", date, ct);
     }
 
     /// <summary>
-    /// Gets completeness for a specific symbol on a specific day (stub).
+    /// Gets completeness for a specific symbol on a specific day.
     /// </summary>
     public Task<DailySymbolDetail> GetSymbolDayCompletenessAsync(
         string symbol,
         DateOnly date,
         CancellationToken ct = default)
     {
-        // Stub implementation
-        return Task.FromResult(new DailySymbolDetail
-        {
-            Symbol = symbol,
-            Date = date,
-            HasData = false
-        });
+        return GetDailySymbolDetailAsync("./data", symbol, date, ct);
     }
 
     /// <summary>
@@ -469,7 +475,7 @@ public sealed class DataCompletenessService
     }
 
     /// <summary>
-    /// Gets symbol completeness for a date range (stub).
+    /// Gets symbol completeness for a date range.
     /// </summary>
     public async Task<SymbolCompleteness> GetSymbolCompletenessAsync(
         string dataPath,
@@ -483,15 +489,66 @@ public sealed class DataCompletenessService
     }
 
     /// <summary>
-    /// Repairs a gap by triggering backfill (stub).
+    /// Gets symbol completeness for a date range using default data path.
+    /// </summary>
+    public Task<SymbolCompleteness> GetSymbolCompletenessAsync(
+        string symbol,
+        DateOnly fromDate,
+        DateOnly toDate,
+        CancellationToken ct = default)
+    {
+        return GetSymbolCompletenessAsync("./data", symbol, fromDate, toDate, ct);
+    }
+
+    /// <summary>
+    /// Gets a completeness report for a set of symbols using default data path.
+    /// </summary>
+    public Task<CompletenessReport> GetCompletenessReportAsync(
+        string[] symbols,
+        DateOnly startDate,
+        DateOnly endDate,
+        CancellationToken ct = default)
+    {
+        return GetCompletenessReportAsync("./data", startDate, endDate, symbols, ct);
+    }
+
+    /// <summary>
+    /// Repairs a gap by triggering backfill for a single date.
     /// </summary>
     public Task<bool> RepairGapAsync(
         string symbol,
         DateOnly date,
         CancellationToken ct = default)
     {
-        // Stub - would trigger actual backfill in real implementation
-        return Task.FromResult(false);
+        return RepairGapAsync(symbol, date, date, ct);
+    }
+
+    /// <summary>
+    /// Repairs a gap by triggering backfill for a date range.
+    /// Delegates to BackfillApiService for actual data retrieval.
+    /// </summary>
+    public async Task<bool> RepairGapAsync(
+        string symbol,
+        DateOnly startDate,
+        DateOnly endDate,
+        CancellationToken ct = default)
+    {
+        try
+        {
+            var backfillApi = new BackfillApiService();
+            var result = await backfillApi.RunBackfillAsync(
+                "composite",
+                new[] { symbol },
+                startDate.ToString("yyyy-MM-dd"),
+                endDate.ToString("yyyy-MM-dd"),
+                ct);
+
+            return result?.Success == true;
+        }
+        catch
+        {
+            return false;
+        }
     }
 }
 
@@ -554,6 +611,21 @@ public sealed record CompletenessReport
     public List<SymbolCompleteness> Symbols { get; set; } = new();
     public List<CalendarDay> CalendarData { get; set; } = new();
     public List<BackfillableGap> Gaps { get; set; } = new();
+
+    /// <summary>Overall completeness percentage (alias for OverallScore).</summary>
+    public double OverallCompleteness => OverallScore;
+
+    /// <summary>Number of detected gaps.</summary>
+    public int GapCount => Gaps.Count;
+
+    /// <summary>Total trading days in the range (alias for ExpectedTradingDays).</summary>
+    public int TotalTradingDays => ExpectedTradingDays;
+
+    /// <summary>Number of trading days that have gaps.</summary>
+    public int DaysWithGaps => CalendarData.Count(d => d.IsTradingDay && d.Status != CompletenessStatus.Complete);
+
+    /// <summary>Total actual events across all symbols.</summary>
+    public long TotalActualEvents => Symbols.Sum(s => s.TotalEvents);
 }
 
 public sealed record SymbolCompleteness
@@ -565,6 +637,9 @@ public sealed record SymbolCompleteness
     public long TotalEvents { get; set; }
     public List<DateOnly> MissingDays { get; set; } = new();
     public List<DayEventCount> DayDetails { get; set; } = new();
+
+    /// <summary>Total record/event count (alias for TotalEvents).</summary>
+    public long RecordCount => TotalEvents;
 }
 
 public sealed class DayEventCount
@@ -612,6 +687,25 @@ public sealed record DailyCompleteness
     public int SymbolsMissingData { get; set; }
     public long TotalEvents { get; set; }
     public List<DailySymbolDetail> Symbols { get; set; } = new();
+
+    /// <summary>Whether any symbol has data for this day.</summary>
+    public bool HasData => SymbolsWithData > 0;
+
+    /// <summary>Completeness percentage (0-100).</summary>
+    public double Completeness => (SymbolsWithData + SymbolsMissingData) > 0
+        ? (double)SymbolsWithData / (SymbolsWithData + SymbolsMissingData) * 100
+        : 0;
+
+    /// <summary>Total event count (alias for TotalEvents).</summary>
+    public long EventCount => TotalEvents;
+
+    /// <summary>Estimated expected events based on available data.</summary>
+    public long ExpectedEvents => SymbolsMissingData > 0 && SymbolsWithData > 0
+        ? TotalEvents / SymbolsWithData * (SymbolsWithData + SymbolsMissingData)
+        : TotalEvents;
+
+    /// <summary>Number of symbols with missing data.</summary>
+    public int GapCount => SymbolsMissingData;
 }
 
 public sealed record DailySymbolDetail
@@ -624,6 +718,12 @@ public sealed record DailySymbolDetail
     public DateTime? FirstTimestamp { get; set; }
     public DateTime? LastTimestamp { get; set; }
     public List<string> EventTypes { get; set; } = new();
+
+    /// <summary>Completeness percentage (100% if data exists, 0% otherwise).</summary>
+    public double Completeness => HasData ? 100.0 : 0.0;
+
+    /// <summary>Number of data gaps (0 if data exists, 1 if missing).</summary>
+    public int GapCount => HasData ? 0 : 1;
 }
 
 public sealed record BackfillableGap
@@ -633,6 +733,21 @@ public sealed record BackfillableGap
     public GapType GapType { get; init; }
     public bool CanBackfill { get; init; }
     public int EstimatedEvents { get; init; }
+
+    /// <summary>Start date of this gap (alias for Date).</summary>
+    public DateOnly StartDate => Date;
+
+    /// <summary>End date of this gap (alias for Date for single-day gaps).</summary>
+    public DateOnly EndDate => Date;
+
+    /// <summary>Expected events (alias for EstimatedEvents).</summary>
+    public long ExpectedEvents => EstimatedEvents;
+
+    /// <summary>Actual events collected (0 for a gap).</summary>
+    public long ActualEvents => 0;
+
+    /// <summary>Whether this gap can be repaired (alias for CanBackfill).</summary>
+    public bool CanRepair => CanBackfill;
 }
 
 public enum CompletenessStatus

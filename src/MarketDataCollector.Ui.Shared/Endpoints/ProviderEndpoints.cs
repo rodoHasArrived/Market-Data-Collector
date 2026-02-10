@@ -22,8 +22,10 @@ public static class ProviderEndpoints
     /// </summary>
     public static void MapProviderEndpoints(this WebApplication app, JsonSerializerOptions jsonOptions)
     {
+        var group = app.MapGroup("").WithTags("Providers");
+
         // Get all data sources
-        app.MapGet(UiApiRoutes.ConfigDataSources, (ConfigStore store) =>
+        group.MapGet(UiApiRoutes.ConfigDataSources, (ConfigStore store) =>
         {
             var cfg = store.Load();
             return Results.Json(new
@@ -37,7 +39,7 @@ public static class ProviderEndpoints
         });
 
         // Create or update data source
-        app.MapPost(UiApiRoutes.ConfigDataSources, async (ConfigStore store, DataSourceConfigRequest req) =>
+        group.MapPost(UiApiRoutes.ConfigDataSources, async (ConfigStore store, DataSourceConfigRequest req) =>
         {
             if (string.IsNullOrWhiteSpace(req.Name))
                 return Results.BadRequest("Name is required.");
@@ -73,7 +75,7 @@ public static class ProviderEndpoints
         });
 
         // Delete data source
-        app.MapDelete(UiApiRoutes.ConfigDataSources + "/{id}", async (ConfigStore store, string id) =>
+        group.MapDelete(UiApiRoutes.ConfigDataSources + "/{id}", async (ConfigStore store, string id) =>
         {
             var cfg = store.Load();
             var dataSources = cfg.DataSources ?? new DataSourcesConfig();
@@ -88,7 +90,7 @@ public static class ProviderEndpoints
         });
 
         // Toggle data source enabled status
-        app.MapPost(UiApiRoutes.ConfigDataSources + "/{id}/toggle", async (ConfigStore store, string id, ToggleRequest req) =>
+        group.MapPost(UiApiRoutes.ConfigDataSources + "/{id}/toggle", async (ConfigStore store, string id, ToggleRequest req) =>
         {
             var cfg = store.Load();
             var dataSources = cfg.DataSources ?? new DataSourcesConfig();
@@ -108,7 +110,7 @@ public static class ProviderEndpoints
         });
 
         // Set default data sources
-        app.MapPost(UiApiRoutes.ConfigDataSourcesDefaults, async (ConfigStore store, DefaultSourcesRequest req) =>
+        group.MapPost(UiApiRoutes.ConfigDataSourcesDefaults, async (ConfigStore store, DefaultSourcesRequest req) =>
         {
             var cfg = store.Load();
             var dataSources = cfg.DataSources ?? new DataSourcesConfig();
@@ -127,7 +129,7 @@ public static class ProviderEndpoints
         });
 
         // Update failover settings
-        app.MapPost(UiApiRoutes.ConfigDataSourcesFailover, async (ConfigStore store, FailoverSettingsRequest req) =>
+        group.MapPost(UiApiRoutes.ConfigDataSourcesFailover, async (ConfigStore store, FailoverSettingsRequest req) =>
         {
             var cfg = store.Load();
             var dataSources = cfg.DataSources ?? new DataSourcesConfig();
@@ -146,7 +148,7 @@ public static class ProviderEndpoints
         });
 
         // Provider comparison view
-        app.MapGet(UiApiRoutes.ProviderComparison, (ConfigStore store) =>
+        group.MapGet(UiApiRoutes.ProviderComparison, (ConfigStore store) =>
         {
             var metricsStatus = store.TryLoadProviderMetrics();
 
@@ -194,7 +196,7 @@ public static class ProviderEndpoints
         });
 
         // Provider status
-        app.MapGet(UiApiRoutes.ProviderStatus, (ConfigStore store) =>
+        group.MapGet(UiApiRoutes.ProviderStatus, (ConfigStore store) =>
         {
             var cfg = store.Load();
             var sources = cfg.DataSources?.Sources ?? Array.Empty<DataSourceConfig>();
@@ -221,7 +223,7 @@ public static class ProviderEndpoints
         });
 
         // Provider metrics
-        app.MapGet(UiApiRoutes.ProviderMetrics, (ConfigStore store) =>
+        group.MapGet(UiApiRoutes.ProviderMetrics, (ConfigStore store) =>
         {
             var metricsStatus = store.TryLoadProviderMetrics();
 
@@ -256,7 +258,7 @@ public static class ProviderEndpoints
         });
 
         // Single provider metrics
-        app.MapGet(UiApiRoutes.ProviderMetrics + "/{providerId}", (ConfigStore store, string providerId) =>
+        group.MapGet(UiApiRoutes.ProviderMetrics + "/{providerId}", (ConfigStore store, string providerId) =>
         {
             var metricsStatus = store.TryLoadProviderMetrics();
             var providerMetrics = metricsStatus?.Providers.FirstOrDefault(p =>
@@ -298,7 +300,7 @@ public static class ProviderEndpoints
         // Provider catalog endpoint - centralized metadata for UI consumption
         // Uses ProviderRegistry when available for runtime-derived catalog data,
         // otherwise falls back to static ProviderCatalog
-        app.MapGet(UiApiRoutes.ProviderCatalog, (HttpContext ctx, string? type, [FromServices] ProviderRegistry? registry) =>
+        group.MapGet(UiApiRoutes.ProviderCatalog, (HttpContext ctx, string? type, [FromServices] ProviderRegistry? registry) =>
         {
             IReadOnlyList<ProviderCatalogEntry> catalogEntries;
 
@@ -334,7 +336,7 @@ public static class ProviderEndpoints
 
         // Single provider catalog entry
         // Uses ProviderRegistry when available for runtime-derived catalog data
-        app.MapGet(UiApiRoutes.ProviderCatalogById, (string providerId, [FromServices] ProviderRegistry? registry) =>
+        group.MapGet(UiApiRoutes.ProviderCatalogById, (string providerId, [FromServices] ProviderRegistry? registry) =>
         {
             ProviderCatalogEntry? entry = registry != null
                 ? registry.GetProviderCatalogEntry(providerId)

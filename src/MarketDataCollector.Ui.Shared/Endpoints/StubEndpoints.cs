@@ -22,22 +22,7 @@ public static class StubEndpoints
     /// </summary>
     public static WebApplication MapStubEndpoints(this WebApplication app)
     {
-        // Symbol management endpoints
-        MapStub(app, "GET", UiApiRoutes.Symbols);
-        MapStub(app, "GET", UiApiRoutes.SymbolsMonitored);
-        MapStub(app, "GET", UiApiRoutes.SymbolsArchived);
-        MapStub(app, "GET", UiApiRoutes.SymbolStatus);
-        MapStub(app, "POST", UiApiRoutes.SymbolsAdd);
-        MapStub(app, "POST", UiApiRoutes.SymbolRemove);
-        MapStub(app, "GET", UiApiRoutes.SymbolTrades);
-        MapStub(app, "GET", UiApiRoutes.SymbolDepth);
-        MapStub(app, "GET", UiApiRoutes.SymbolsStatistics);
-        MapStub(app, "POST", UiApiRoutes.SymbolsValidate);
-        MapStub(app, "POST", UiApiRoutes.SymbolArchive);
-        MapStub(app, "POST", UiApiRoutes.SymbolsBulkAdd);
-        MapStub(app, "POST", UiApiRoutes.SymbolsBulkRemove);
-        MapStub(app, "GET", UiApiRoutes.SymbolsSearch);
-        MapStub(app, "POST", UiApiRoutes.SymbolsBatch);
+        // Symbol management endpoints — now implemented in SymbolEndpoints.cs
 
         // Backfill endpoints (unimplemented subset)
         MapStub(app, "GET", UiApiRoutes.BackfillHealth);
@@ -69,37 +54,9 @@ public static class StubEndpoints
         MapStub(app, "GET", UiApiRoutes.ProviderFailoverThresholds);
         MapStub(app, "GET", UiApiRoutes.ProviderHealth);
 
-        // Storage endpoints
-        MapStub(app, "GET", UiApiRoutes.StorageProfiles);
-        MapStub(app, "GET", UiApiRoutes.StorageStats);
-        MapStub(app, "GET", UiApiRoutes.StorageBreakdown);
-        MapStub(app, "GET", UiApiRoutes.StorageSymbolInfo);
-        MapStub(app, "GET", UiApiRoutes.StorageSymbolStats);
-        MapStub(app, "GET", UiApiRoutes.StorageSymbolFiles);
-        MapStub(app, "GET", UiApiRoutes.StorageSymbolPath);
-        MapStub(app, "GET", UiApiRoutes.StorageHealth);
-        MapStub(app, "GET", UiApiRoutes.StorageCleanupCandidates);
-        MapStub(app, "POST", UiApiRoutes.StorageCleanup);
-        MapStub(app, "GET", UiApiRoutes.StorageArchiveStats);
-        MapStub(app, "GET", UiApiRoutes.StorageCatalog);
-        MapStub(app, "GET", UiApiRoutes.StorageSearchFiles);
-        MapStub(app, "GET", UiApiRoutes.StorageHealthCheck);
-        MapStub(app, "GET", UiApiRoutes.StorageHealthOrphans);
-        MapStub(app, "POST", UiApiRoutes.StorageTiersMigrate);
-        MapStub(app, "GET", UiApiRoutes.StorageTiersStatistics);
-        MapStub(app, "GET", UiApiRoutes.StorageTiersPlan);
-        MapStub(app, "POST", UiApiRoutes.StorageMaintenanceDefrag);
+        // Storage endpoints — now implemented in StorageEndpoints.cs
 
-        // Storage quality endpoints
-        MapStub(app, "GET", UiApiRoutes.StorageQualitySummary);
-        MapStub(app, "GET", UiApiRoutes.StorageQualityScores);
-        MapStub(app, "GET", UiApiRoutes.StorageQualitySymbol);
-        MapStub(app, "GET", UiApiRoutes.StorageQualityAlerts);
-        MapStub(app, "POST", UiApiRoutes.StorageQualityAlertAcknowledge);
-        MapStub(app, "GET", UiApiRoutes.StorageQualityRankings);
-        MapStub(app, "GET", UiApiRoutes.StorageQualityTrends);
-        MapStub(app, "GET", UiApiRoutes.StorageQualityAnomalies);
-        MapStub(app, "POST", UiApiRoutes.StorageQualityCheck);
+        // Storage quality endpoints — now implemented in StorageQualityEndpoints.cs
 
         // Diagnostics endpoints
         MapStub(app, "POST", UiApiRoutes.DiagnosticsDryRun);

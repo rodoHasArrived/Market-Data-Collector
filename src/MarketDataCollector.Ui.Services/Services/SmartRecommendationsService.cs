@@ -39,10 +39,9 @@ public sealed class SmartRecommendationsService
 
     private SmartRecommendationsService()
     {
-        // Note: DataCompletenessService requires ManifestService and TradingCalendarService parameters
-        // which we don't have access to in this parameterless constructor.
-        // TODO: Refactor to use dependency injection instead of manual instantiation
-        _completenessService = null!; // Will be initialized on first use
+        var tradingCalendar = new TradingCalendarService();
+        var manifestService = ManifestService.Instance;
+        _completenessService = new DataCompletenessService(manifestService, tradingCalendar);
         _storageService = StorageAnalyticsService.Instance;
         _configService = new ConfigService();
     }
@@ -60,7 +59,7 @@ public sealed class SmartRecommendationsService
             var config = await _configService.LoadConfigAsync();
 
             // Analyze existing data coverage
-            var analytics = await _storageService.GetStorageAnalyticsAsync();
+            var analytics = await _storageService.GetAnalyticsAsync();
 
             // Generate recommendations
             recommendations.QuickActions = await GetQuickActionsAsync(config, analytics, ct);
@@ -264,21 +263,26 @@ public sealed class SmartRecommendationsService
             // Check completeness for configured symbols
             if (config?.Symbols != null)
             {
+                var symbolNames = config.Symbols
+                    .Where(s => !string.IsNullOrEmpty(s.Symbol))
+                    .Select(s => s.Symbol!)
+                    .ToArray();
+
                 var completeness = await _completenessService.GetCompletenessReportAsync(
-                    config.Symbols.Where(s => !string.IsNullOrEmpty(s.Symbol)).Select(s => s.Symbol!).ToArray(),
+                    symbolNames,
                     DateOnly.FromDateTime(DateTime.Now.AddDays(-30)),
                     DateOnly.FromDateTime(DateTime.Now),
                     ct);
 
-                if (completeness.OverallCompleteness < 95)
+                if (completeness.OverallScore < 95)
                 {
                     issues.Add(new DataQualityIssue
                     {
                         Id = "low-completeness",
-                        Severity = completeness.OverallCompleteness < 80 ? IssueSeverity.Error : IssueSeverity.Warning,
+                        Severity = completeness.OverallScore < 80 ? IssueSeverity.Error : IssueSeverity.Warning,
                         Title = "Low Data Completeness",
-                        Description = $"Overall data completeness is {completeness.OverallCompleteness:F1}%",
-                        AffectedCount = (int)(100 - completeness.OverallCompleteness),
+                        Description = $"Overall data completeness is {completeness.OverallScore:F1}%",
+                        AffectedCount = (int)(100 - completeness.OverallScore),
                         SuggestedAction = "Run backfill to improve data coverage"
                     });
                 }
@@ -430,7 +434,7 @@ public sealed class SmartRecommendationsService
                 DateOnly.FromDateTime(DateTime.Now),
                 ct);
 
-            return completeness.GapCount;
+            return completeness.Gaps.Count;
         }
         catch (Exception ex)
         {
@@ -461,7 +465,7 @@ public sealed class SmartRecommendationsService
                     ct);
 
                 // If less than 200 trading days of data (roughly 1 year), consider it short
-                if (completeness.RecordCount < 200 * 390) // 200 days * ~390 minutes per trading day
+                if (completeness.TotalEvents < 200 * 390) // 200 days * ~390 minutes per trading day
                 {
                     shortCoverageSymbols.Add(symbol);
                 }

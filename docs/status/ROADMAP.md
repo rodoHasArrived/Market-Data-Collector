@@ -3,7 +3,7 @@
 **Version:** 1.6.1
 **Last Updated:** 2026-02-10
 **Status:** Development / Pilot Ready
-**Source Files:** 807 | **Test Files:** 105 | **API Endpoints:** ~269 declared, ~91 implemented, ~178 stubbed
+**Source Files:** 807 | **Test Files:** 105 | **API Endpoints:** ~269 declared, ~136 implemented, ~133 stubbed
 
 This roadmap consolidates findings from the existing codebase analysis, production status assessment, improvement backlog, and structural review into a phased execution plan. Each phase builds on the previous one, progressing from critical fixes through testing and architecture improvements to production readiness.
 
@@ -25,7 +25,7 @@ This roadmap consolidates findings from the existing codebase analysis, producti
 
 ---
 
-## Phase 0: Critical Fixes (Blockers)
+## Phase 0: Critical Fixes (Blockers) ✅ COMPLETED
 
 Issues that silently lose data or prevent core features from working.
 
@@ -42,7 +42,7 @@ Issues that silently lose data or prevent core features from working.
 
 ---
 
-## Phase 1: Core Stability & Testing Foundation
+## Phase 1: Core Stability & Testing Foundation ✅ COMPLETED
 
 Build confidence in existing functionality before adding new features.
 
@@ -97,7 +97,7 @@ Currently **zero** integration tests for the 91 implemented endpoints.
 
 ---
 
-## Phase 2: Architecture & Structural Improvements
+## Phase 2: Architecture & Structural Improvements ✅ COMPLETED
 
 Address structural debt identified in `docs/STRUCTURAL_IMPROVEMENTS.md`. None of these 15 items have been started.
 
@@ -129,7 +129,7 @@ Address structural debt identified in `docs/STRUCTURAL_IMPROVEMENTS.md`. None of
 
 ---
 
-## Phase 3: API Completeness & Documentation
+## Phase 3: API Completeness & Documentation ✅ COMPLETED
 
 ### 3A. Remaining Feature Improvements
 
@@ -183,7 +183,7 @@ From `docs/IMPROVEMENTS.md` — 6 items not started, 3 partially done.
 
 ---
 
-## Phase 4: Desktop App Maturity
+## Phase 4: Desktop App Maturity (Partial)
 
 ### 4A. WPF Desktop App (Recommended)
 
@@ -210,7 +210,7 @@ From `docs/IMPROVEMENTS.md` — 6 items not started, 3 partially done.
 
 ---
 
-## Phase 5: Operational Readiness
+## Phase 5: Operational Readiness (Partial)
 
 The entire pre-production checklist from `docs/status/production-status.md` remains unchecked.
 

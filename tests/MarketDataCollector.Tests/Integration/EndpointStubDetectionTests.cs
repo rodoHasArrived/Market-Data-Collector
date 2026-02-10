@@ -214,7 +214,29 @@ public sealed class EndpointStubDetectionTests : IAsyncLifetime
         // LiveDataEndpoints.cs
         "/api/data/trades/{symbol}", "/api/data/quotes/{symbol}",
         "/api/data/orderbook/{symbol}", "/api/data/bbo/{symbol}",
-        "/api/data/orderflow/{symbol}", "/api/data/health"
+        "/api/data/orderflow/{symbol}", "/api/data/health",
+        // SymbolEndpoints.cs
+        "/api/symbols", "/api/symbols/monitored", "/api/symbols/archived",
+        "/api/symbols/{symbol}/status", "/api/symbols/add", "/api/symbols/{symbol}/remove",
+        "/api/symbols/{symbol}/trades", "/api/symbols/{symbol}/depth",
+        "/api/symbols/statistics", "/api/symbols/validate", "/api/symbols/{symbol}/archive",
+        "/api/symbols/bulk-add", "/api/symbols/bulk-remove", "/api/symbols/search",
+        "/api/symbols/batch",
+        // StorageEndpoints.cs
+        "/api/storage/profiles", "/api/storage/stats", "/api/storage/breakdown",
+        "/api/storage/symbol/{symbol}/info", "/api/storage/symbol/{symbol}/stats",
+        "/api/storage/symbol/{symbol}/files", "/api/storage/symbol/{symbol}/path",
+        "/api/storage/health", "/api/storage/cleanup/candidates", "/api/storage/cleanup",
+        "/api/storage/archive/stats", "/api/storage/catalog", "/api/storage/search/files",
+        "/api/storage/health/check", "/api/storage/health/orphans",
+        "/api/storage/tiers/migrate", "/api/storage/tiers/statistics",
+        "/api/storage/tiers/plan", "/api/storage/maintenance/defrag",
+        // StorageQualityEndpoints.cs
+        "/api/storage/quality/summary", "/api/storage/quality/scores",
+        "/api/storage/quality/symbol/{symbol}", "/api/storage/quality/alerts",
+        "/api/storage/quality/alerts/{alertId}/acknowledge",
+        "/api/storage/quality/rankings/{symbol}", "/api/storage/quality/trends",
+        "/api/storage/quality/anomalies", "/api/storage/quality/check"
     };
 
     [Fact]

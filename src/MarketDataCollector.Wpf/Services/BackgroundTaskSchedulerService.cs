@@ -1,4 +1,7 @@
 using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -44,6 +47,7 @@ public sealed class BackgroundTaskSchedulerService
     private static readonly Lazy<BackgroundTaskSchedulerService> _instance =
         new(() => new BackgroundTaskSchedulerService());
 
+    private readonly ConcurrentDictionary<string, (ScheduledTask Task, CancellationTokenSource Cts)> _scheduledTasks = new();
     private CancellationTokenSource? _cts;
     private bool _isRunning;
 
@@ -56,6 +60,16 @@ public sealed class BackgroundTaskSchedulerService
     /// Gets whether the scheduler is running.
     /// </summary>
     public bool IsRunning => _isRunning;
+
+    /// <summary>
+    /// Gets the number of scheduled tasks.
+    /// </summary>
+    public int TaskCount => _scheduledTasks.Count;
+
+    /// <summary>
+    /// Gets a snapshot of all scheduled task IDs.
+    /// </summary>
+    public IReadOnlyList<string> ScheduledTaskIds => _scheduledTasks.Keys.ToList();
 
     private BackgroundTaskSchedulerService()
     {
@@ -78,7 +92,7 @@ public sealed class BackgroundTaskSchedulerService
     }
 
     /// <summary>
-    /// Stops the background task scheduler.
+    /// Stops the background task scheduler and cancels all running tasks.
     /// </summary>
     /// <returns>A task representing the async operation.</returns>
     public Task StopAsync()
@@ -88,6 +102,14 @@ public sealed class BackgroundTaskSchedulerService
             return Task.CompletedTask;
         }
 
+        // Cancel all individual task tokens
+        foreach (var (_, (_, taskCts)) in _scheduledTasks)
+        {
+            taskCts.Cancel();
+            taskCts.Dispose();
+        }
+        _scheduledTasks.Clear();
+
         _cts?.Cancel();
         _cts?.Dispose();
         _cts = null;
@@ -96,13 +118,27 @@ public sealed class BackgroundTaskSchedulerService
     }
 
     /// <summary>
-    /// Schedules a task for execution.
+    /// Schedules a task for periodic execution. If a task with the same ID already exists, it is replaced.
     /// </summary>
     /// <param name="task">The task to schedule.</param>
     public void ScheduleTask(ScheduledTask task)
     {
         ArgumentNullException.ThrowIfNull(task);
-        // Stub: task scheduling not implemented
+
+        if (task.Action is null)
+            throw new ArgumentException("Task action must not be null.", nameof(task));
+
+        // Cancel existing task with same ID if present
+        CancelTask(task.Id);
+
+        if (!_isRunning || !task.IsEnabled)
+            return;
+
+        var taskCts = CancellationTokenSource.CreateLinkedTokenSource(_cts?.Token ?? CancellationToken.None);
+        _scheduledTasks[task.Id] = (task, taskCts);
+
+        // Fire and forget the background loop
+        _ = RunTaskLoopAsync(task, taskCts.Token);
     }
 
     /// <summary>
@@ -127,6 +163,42 @@ public sealed class BackgroundTaskSchedulerService
     /// <param name="taskId">The task identifier to cancel.</param>
     public void CancelTask(string taskId)
     {
-        // Stub: task cancellation not implemented
+        if (_scheduledTasks.TryRemove(taskId, out var entry))
+        {
+            entry.Cts.Cancel();
+            entry.Cts.Dispose();
+        }
+    }
+
+    private static async Task RunTaskLoopAsync(ScheduledTask task, CancellationToken ct)
+    {
+        try
+        {
+            while (!ct.IsCancellationRequested)
+            {
+                await Task.Delay(task.Interval, ct).ConfigureAwait(false);
+
+                if (ct.IsCancellationRequested || !task.IsEnabled)
+                    break;
+
+                try
+                {
+                    await task.Action!(ct).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException) when (ct.IsCancellationRequested)
+                {
+                    break;
+                }
+                catch
+                {
+                    // Individual task failures don't stop the scheduler.
+                    // In a production system, log this via Serilog.
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Normal cancellation
+        }
     }
 }

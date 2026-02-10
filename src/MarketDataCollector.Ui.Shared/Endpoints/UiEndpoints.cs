@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Threading.RateLimiting;
 using MarketDataCollector.Application.Composition;
+using MarketDataCollector.Application.Monitoring.DataQuality;
 using MarketDataCollector.Application.Pipeline;
 using MarketDataCollector.Application.UI;
 using MarketDataCollector.Ui.Shared.Services;
@@ -168,11 +169,28 @@ public static class UiEndpoints
         app.MapIBEndpoints(jsonOptions);
         app.MapSymbolMappingEndpoints(jsonOptions);
         app.MapLiveDataEndpoints(jsonOptions);
+        app.MapSymbolEndpoints(jsonOptions);
+        app.MapStorageEndpoints(jsonOptions);
+        app.MapStorageQualityEndpoints(jsonOptions);
         app.MapStubEndpoints();
 
         // Map quality drops endpoints (C3/#16)
         var auditTrail = app.Services.GetService<DroppedEventAuditTrail>();
         app.MapQualityDropsEndpoints(auditTrail, jsonOptions);
+
+        // Map data quality monitoring endpoints (C3 - quality metrics exposure)
+        var qualityService = app.Services.GetService<DataQualityMonitoringService>();
+        if (qualityService is not null)
+        {
+            app.MapDataQualityEndpoints(qualityService);
+        }
+
+        // Map SLA monitoring endpoints
+        var slaMonitor = app.Services.GetService<DataFreshnessSlaMonitor>();
+        if (slaMonitor is not null)
+        {
+            app.MapSlaEndpoints(slaMonitor);
+        }
 
         return app;
     }
@@ -201,11 +219,28 @@ public static class UiEndpoints
         app.MapIBEndpoints(jsonOptions);
         app.MapSymbolMappingEndpoints(jsonOptions);
         app.MapLiveDataEndpoints(jsonOptions);
+        app.MapSymbolEndpoints(jsonOptions);
+        app.MapStorageEndpoints(jsonOptions);
+        app.MapStorageQualityEndpoints(jsonOptions);
         app.MapStubEndpoints();
 
         // Map quality drops endpoints (C3/#16 - DroppedEventAuditTrail exposure)
         var auditTrail = app.Services.GetService<DroppedEventAuditTrail>();
         app.MapQualityDropsEndpoints(auditTrail, jsonOptions);
+
+        // Map data quality monitoring endpoints (C3 - quality metrics exposure)
+        var qualityService = app.Services.GetService<DataQualityMonitoringService>();
+        if (qualityService is not null)
+        {
+            app.MapDataQualityEndpoints(qualityService);
+        }
+
+        // Map SLA monitoring endpoints
+        var slaMonitor = app.Services.GetService<DataFreshnessSlaMonitor>();
+        if (slaMonitor is not null)
+        {
+            app.MapSlaEndpoints(slaMonitor);
+        }
 
         return app;
     }

@@ -122,6 +122,49 @@ public static class UiApiRoutes
     public const string QualityDrops = "/api/quality/drops";
     public const string QualityDropsBySymbol = "/api/quality/drops/{symbol}";
 
+    // Quality monitoring endpoints (DataQualityMonitoringService)
+    public const string QualityDashboard = "/api/quality/dashboard";
+    public const string QualityMetrics = "/api/quality/metrics";
+    public const string QualityCompleteness = "/api/quality/completeness";
+    public const string QualityCompletenessBySymbol = "/api/quality/completeness/{symbol}";
+    public const string QualityCompletenessSummary = "/api/quality/completeness/summary";
+    public const string QualityCompletenessLow = "/api/quality/completeness/low";
+    public const string QualityGaps = "/api/quality/gaps";
+    public const string QualityGapsBySymbol = "/api/quality/gaps/{symbol}";
+    public const string QualityGapsTimeline = "/api/quality/gaps/timeline/{symbol}";
+    public const string QualityGapsStatistics = "/api/quality/gaps/statistics";
+    public const string QualityErrors = "/api/quality/errors";
+    public const string QualityErrorsBySymbol = "/api/quality/errors/{symbol}";
+    public const string QualityErrorsStatistics = "/api/quality/errors/statistics";
+    public const string QualityErrorsTopSymbols = "/api/quality/errors/top-symbols";
+    public const string QualityAnomalies = "/api/quality/anomalies";
+    public const string QualityAnomaliesBySymbol = "/api/quality/anomalies/{symbol}";
+    public const string QualityAnomaliesUnacknowledged = "/api/quality/anomalies/unacknowledged";
+    public const string QualityAnomaliesAcknowledge = "/api/quality/anomalies/{anomalyId}/acknowledge";
+    public const string QualityAnomaliesStatistics = "/api/quality/anomalies/statistics";
+    public const string QualityAnomaliesStale = "/api/quality/anomalies/stale";
+    public const string QualityLatency = "/api/quality/latency";
+    public const string QualityLatencyBySymbol = "/api/quality/latency/{symbol}";
+    public const string QualityLatencyHistogram = "/api/quality/latency/{symbol}/histogram";
+    public const string QualityLatencyStatistics = "/api/quality/latency/statistics";
+    public const string QualityLatencyHigh = "/api/quality/latency/high";
+    public const string QualityComparison = "/api/quality/comparison/{symbol}";
+    public const string QualityComparisonDiscrepancies = "/api/quality/comparison/discrepancies";
+    public const string QualityComparisonStatistics = "/api/quality/comparison/statistics";
+    public const string QualityReportsDaily = "/api/quality/reports/daily";
+    public const string QualityReportsWeekly = "/api/quality/reports/weekly";
+    public const string QualityReportsExport = "/api/quality/reports/export";
+    public const string QualityHealth = "/api/quality/health";
+    public const string QualityHealthBySymbol = "/api/quality/health/{symbol}";
+    public const string QualityHealthUnhealthy = "/api/quality/health/unhealthy";
+
+    // SLA monitoring endpoints
+    public const string SlaStatus = "/api/sla/status";
+    public const string SlaStatusBySymbol = "/api/sla/status/{symbol}";
+    public const string SlaViolations = "/api/sla/violations";
+    public const string SlaHealth = "/api/sla/health";
+    public const string SlaMetrics = "/api/sla/metrics";
+
     // Storage quality endpoints
     public const string StorageQualitySummary = "/api/storage/quality/summary";
     public const string StorageQualityScores = "/api/storage/quality/scores";

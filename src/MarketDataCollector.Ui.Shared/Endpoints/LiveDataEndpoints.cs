@@ -19,8 +19,10 @@ public static class LiveDataEndpoints
     /// </summary>
     public static void MapLiveDataEndpoints(this WebApplication app, JsonSerializerOptions jsonOptions)
     {
+        var group = app.MapGroup("").WithTags("Live Data");
+
         // GET /api/data/trades/{symbol} — recent trades for a symbol
-        app.MapGet(UiApiRoutes.DataTrades, (string symbol, int? limit, HttpContext ctx) =>
+        group.MapGet(UiApiRoutes.DataTrades, (string symbol, int? limit, HttpContext ctx) =>
         {
             var tradeCollector = ctx.RequestServices.GetService<TradeDataCollector>();
             if (tradeCollector is null)
@@ -57,7 +59,7 @@ public static class LiveDataEndpoints
         });
 
         // GET /api/data/quotes/{symbol} — latest quote for a symbol
-        app.MapGet(UiApiRoutes.DataQuotes, (string symbol, HttpContext ctx) =>
+        group.MapGet(UiApiRoutes.DataQuotes, (string symbol, HttpContext ctx) =>
         {
             var quoteCollector = ctx.RequestServices.GetService<QuoteCollector>();
             if (quoteCollector is null)
@@ -94,7 +96,7 @@ public static class LiveDataEndpoints
         });
 
         // GET /api/data/orderbook/{symbol} — full order book snapshot
-        app.MapGet(UiApiRoutes.DataOrderbook, (string symbol, int? levels, HttpContext ctx) =>
+        group.MapGet(UiApiRoutes.DataOrderbook, (string symbol, int? levels, HttpContext ctx) =>
         {
             var depthCollector = ctx.RequestServices.GetService<MarketDepthCollector>();
             if (depthCollector is null)
@@ -163,7 +165,7 @@ public static class LiveDataEndpoints
         });
 
         // GET /api/data/bbo/{symbol} — best bid/offer
-        app.MapGet(UiApiRoutes.DataBbo, (string symbol, HttpContext ctx) =>
+        group.MapGet(UiApiRoutes.DataBbo, (string symbol, HttpContext ctx) =>
         {
             var quoteCollector = ctx.RequestServices.GetService<QuoteCollector>();
             if (quoteCollector is null)
@@ -199,7 +201,7 @@ public static class LiveDataEndpoints
         });
 
         // GET /api/data/orderflow/{symbol} — order flow statistics
-        app.MapGet(UiApiRoutes.DataOrderflow, (string symbol, HttpContext ctx) =>
+        group.MapGet(UiApiRoutes.DataOrderflow, (string symbol, HttpContext ctx) =>
         {
             var tradeCollector = ctx.RequestServices.GetService<TradeDataCollector>();
             if (tradeCollector is null)
@@ -236,7 +238,7 @@ public static class LiveDataEndpoints
         });
 
         // GET /api/data/health — live data health overview
-        app.MapGet(UiApiRoutes.DataHealth, (HttpContext ctx) =>
+        group.MapGet(UiApiRoutes.DataHealth, (HttpContext ctx) =>
         {
             var quoteCollector = ctx.RequestServices.GetService<QuoteCollector>();
             var depthCollector = ctx.RequestServices.GetService<MarketDepthCollector>();

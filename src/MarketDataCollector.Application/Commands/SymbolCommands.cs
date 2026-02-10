@@ -1,3 +1,4 @@
+using MarketDataCollector.Application.ResultTypes;
 using MarketDataCollector.Application.Subscriptions.Services;
 using Serilog;
 
@@ -29,26 +30,26 @@ internal sealed class SymbolCommands : ICliCommand
             a.Equals("--symbol-status", StringComparison.OrdinalIgnoreCase));
     }
 
-    public async Task<int> ExecuteAsync(string[] args, CancellationToken ct = default)
+    public async Task<CliResult> ExecuteAsync(string[] args, CancellationToken ct = default)
     {
         if (CliArguments.HasFlag(args, "--symbols"))
         {
             await _symbolService.DisplayAllSymbolsAsync(ct);
-            return 0;
+            return CliResult.Ok();
         }
 
         if (CliArguments.HasFlag(args, "--symbols-monitored"))
         {
             var result = _symbolService.GetMonitoredSymbols();
             _symbolService.DisplayMonitoredSymbols(result);
-            return 0;
+            return CliResult.Ok();
         }
 
         if (CliArguments.HasFlag(args, "--symbols-archived"))
         {
             var result = await _symbolService.GetArchivedSymbolsAsync(ct: ct);
             _symbolService.DisplayArchivedSymbols(result);
-            return 0;
+            return CliResult.Ok();
         }
 
         if (CliArguments.HasFlag(args, "--symbols-add"))
@@ -60,13 +61,13 @@ internal sealed class SymbolCommands : ICliCommand
         if (CliArguments.HasFlag(args, "--symbol-status"))
             return await RunStatusAsync(args, ct);
 
-        return 1;
+        return CliResult.Fail(ErrorCode.Unknown);
     }
 
-    private async Task<int> RunAddAsync(string[] args, CancellationToken ct)
+    private async Task<CliResult> RunAddAsync(string[] args, CancellationToken ct)
     {
         var symbolsToAdd = CliArguments.RequireList(args, "--symbols-add", "--symbols-add AAPL,MSFT,GOOGL");
-        if (symbolsToAdd is null) return 1;
+        if (symbolsToAdd is null) return CliResult.Fail(ErrorCode.RequiredFieldMissing);
         var options = new SymbolAddOptions(
             SubscribeTrades: !CliArguments.HasFlag(args, "--no-trades"),
             SubscribeDepth: !CliArguments.HasFlag(args, "--no-depth"),
@@ -85,13 +86,13 @@ internal sealed class SymbolCommands : ICliCommand
         }
         Console.WriteLine();
 
-        return result.Success ? 0 : 1;
+        return CliResult.FromBool(result.Success, ErrorCode.ValidationFailed);
     }
 
-    private async Task<int> RunRemoveAsync(string[] args, CancellationToken ct)
+    private async Task<CliResult> RunRemoveAsync(string[] args, CancellationToken ct)
     {
         var symbolsToRemove = CliArguments.RequireList(args, "--symbols-remove", "--symbols-remove AAPL,MSFT");
-        if (symbolsToRemove is null) return 1;
+        if (symbolsToRemove is null) return CliResult.Fail(ErrorCode.RequiredFieldMissing);
         var result = await _symbolService.RemoveSymbolsAsync(symbolsToRemove, ct);
 
         Console.WriteLine();
@@ -104,13 +105,13 @@ internal sealed class SymbolCommands : ICliCommand
         }
         Console.WriteLine();
 
-        return result.Success ? 0 : 1;
+        return CliResult.FromBool(result.Success, ErrorCode.ValidationFailed);
     }
 
-    private async Task<int> RunStatusAsync(string[] args, CancellationToken ct)
+    private async Task<CliResult> RunStatusAsync(string[] args, CancellationToken ct)
     {
         var symbolArg = CliArguments.RequireValue(args, "--symbol-status", "--symbol-status AAPL");
-        if (symbolArg is null) return 1;
+        if (symbolArg is null) return CliResult.Fail(ErrorCode.RequiredFieldMissing);
 
         var status = await _symbolService.GetSymbolStatusAsync(symbolArg, ct);
 
@@ -148,7 +149,7 @@ internal sealed class SymbolCommands : ICliCommand
         }
 
         Console.WriteLine();
-        return 0;
+        return CliResult.Ok();
     }
 
     internal static string FormatBytes(long bytes)

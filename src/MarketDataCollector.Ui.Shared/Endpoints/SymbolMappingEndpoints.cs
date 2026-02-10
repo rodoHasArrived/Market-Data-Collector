@@ -18,8 +18,10 @@ public static class SymbolMappingEndpoints
     /// </summary>
     public static void MapSymbolMappingEndpoints(this WebApplication app, JsonSerializerOptions jsonOptions)
     {
+        var group = app.MapGroup("").WithTags("Symbol Mapping");
+
         // Get all symbol mappings
-        app.MapGet(UiApiRoutes.SymbolMappings, (ConfigStore store) =>
+        group.MapGet(UiApiRoutes.SymbolMappings, (ConfigStore store) =>
         {
             var cfg = store.Load();
             var mappings = cfg.DataSources?.SymbolMappings?.Mappings ?? Array.Empty<SymbolMappingConfig>();
@@ -38,7 +40,7 @@ public static class SymbolMappingEndpoints
         });
 
         // Create or update symbol mapping
-        app.MapPost(UiApiRoutes.SymbolMappings, async (ConfigStore store, SymbolMappingRequest req) =>
+        group.MapPost(UiApiRoutes.SymbolMappings, async (ConfigStore store, SymbolMappingRequest req) =>
         {
             if (string.IsNullOrWhiteSpace(req.CanonicalSymbol))
                 return Results.BadRequest("CanonicalSymbol is required.");
@@ -76,7 +78,7 @@ public static class SymbolMappingEndpoints
         });
 
         // Delete symbol mapping
-        app.MapDelete(UiApiRoutes.SymbolMappings + "/{symbol}", async (ConfigStore store, string symbol) =>
+        group.MapDelete(UiApiRoutes.SymbolMappings + "/{symbol}", async (ConfigStore store, string symbol) =>
         {
             var cfg = store.Load();
             var dataSources = cfg.DataSources ?? new DataSourcesConfig();
@@ -101,7 +103,7 @@ public static class SymbolMappingEndpoints
         });
 
         // Get single symbol mapping
-        app.MapGet(UiApiRoutes.SymbolMappings + "/{symbol}", (ConfigStore store, string symbol) =>
+        group.MapGet(UiApiRoutes.SymbolMappings + "/{symbol}", (ConfigStore store, string symbol) =>
         {
             var cfg = store.Load();
             var mapping = cfg.DataSources?.SymbolMappings?.Mappings?
@@ -124,7 +126,7 @@ public static class SymbolMappingEndpoints
         });
 
         // Import symbol mappings from CSV
-        app.MapPost(UiApiRoutes.SymbolMappings + "/import", async (ConfigStore store, HttpRequest request) =>
+        group.MapPost(UiApiRoutes.SymbolMappings + "/import", async (ConfigStore store, HttpRequest request) =>
         {
             if (!request.HasFormContentType)
                 return Results.BadRequest("Content must be multipart/form-data");

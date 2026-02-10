@@ -24,7 +24,7 @@ internal sealed class HelpCommand : ICliCommand
             a.Equals("-h", StringComparison.OrdinalIgnoreCase));
     }
 
-    public Task<int> ExecuteAsync(string[] args, CancellationToken ct = default)
+    public Task<CliResult> ExecuteAsync(string[] args, CancellationToken ct = default)
     {
         // Check for --help <topic>
         var topic = CliArguments.GetValue(args, "--help")
@@ -45,7 +45,7 @@ internal sealed class HelpCommand : ICliCommand
             ShowHelp();
         }
 
-        return Task.FromResult(0);
+        return Task.FromResult(CliResult.Ok());
     }
 
     private static void ShowTopicList()

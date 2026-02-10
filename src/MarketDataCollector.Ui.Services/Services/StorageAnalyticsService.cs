@@ -71,7 +71,7 @@ public sealed class StorageAnalyticsService
 
         var analytics = new StorageAnalytics
         {
-            LastUpdated = DateTime.UtcNow
+            LastUpdated = (DateTime?)DateTime.UtcNow
         };
 
         // Resolve data root path
@@ -334,6 +334,83 @@ public sealed class StorageAnalyticsService
     }
 
     /// <summary>
+    /// Checks if any data files exist for a given symbol.
+    /// </summary>
+    public Task<bool> SymbolHasDataAsync(string symbol, string dataRoot)
+    {
+        var basePath = Path.IsPathRooted(dataRoot)
+            ? dataRoot
+            : Path.Combine(AppContext.BaseDirectory, dataRoot);
+
+        if (!Directory.Exists(basePath))
+            return Task.FromResult(false);
+
+        // Check common storage layouts
+        var symbolDir = Path.Combine(basePath, symbol);
+        if (Directory.Exists(symbolDir) && Directory.GetFiles(symbolDir, "*.jsonl*", SearchOption.AllDirectories).Length > 0)
+            return Task.FromResult(true);
+
+        // Check if any files mention this symbol
+        var hasFiles = Directory.GetFiles(basePath, $"*{symbol}*", SearchOption.AllDirectories)
+            .Any(f => f.EndsWith(".jsonl", StringComparison.OrdinalIgnoreCase) ||
+                      f.EndsWith(".jsonl.gz", StringComparison.OrdinalIgnoreCase));
+
+        return Task.FromResult(hasFiles);
+    }
+
+    /// <summary>
+    /// Gets the last update time for a symbol's data files.
+    /// </summary>
+    public Task<DateTime?> GetLastUpdateTimeAsync(string symbol, string dataRoot)
+    {
+        var basePath = Path.IsPathRooted(dataRoot)
+            ? dataRoot
+            : Path.Combine(AppContext.BaseDirectory, dataRoot);
+
+        if (!Directory.Exists(basePath))
+            return Task.FromResult<DateTime?>(null);
+
+        DateTime? lastUpdate = null;
+
+        // Check symbol directory
+        var symbolDir = Path.Combine(basePath, symbol);
+        if (Directory.Exists(symbolDir))
+        {
+            var files = Directory.GetFiles(symbolDir, "*.jsonl*", SearchOption.AllDirectories);
+            foreach (var file in files)
+            {
+                var writeTime = File.GetLastWriteTimeUtc(file);
+                if (lastUpdate == null || writeTime > lastUpdate)
+                    lastUpdate = writeTime;
+            }
+        }
+
+        // Also check for files matching symbol name in other paths
+        if (lastUpdate == null)
+        {
+            try
+            {
+                var files = Directory.GetFiles(basePath, $"*{symbol}*", SearchOption.AllDirectories)
+                    .Where(f => f.EndsWith(".jsonl", StringComparison.OrdinalIgnoreCase) ||
+                               f.EndsWith(".jsonl.gz", StringComparison.OrdinalIgnoreCase));
+
+                foreach (var file in files)
+                {
+                    var writeTime = File.GetLastWriteTimeUtc(file);
+                    if (lastUpdate == null || writeTime > lastUpdate)
+                        lastUpdate = writeTime;
+                }
+            }
+            catch
+            {
+                // Ignore search errors
+            }
+        }
+
+        return Task.FromResult(lastUpdate);
+    }
+
+    /// <summary>
     /// Formats bytes into human-readable string.
     /// </summary>
     public static string FormatBytes(long bytes)
@@ -360,7 +437,7 @@ public sealed class StorageAnalyticsService
 /// </summary>
 public class StorageAnalytics
 {
-    public DateTime LastUpdated { get; set; }
+    public DateTime? LastUpdated { get; set; }
     public long TotalSizeBytes { get; set; }
     public int TotalFileCount { get; set; }
     public long TradeSizeBytes { get; set; }
@@ -372,6 +449,9 @@ public class StorageAnalytics
     public SymbolStorageInfo[] SymbolBreakdown { get; set; } = Array.Empty<SymbolStorageInfo>();
     public long DailyGrowthBytes { get; set; }
     public int? ProjectedDaysUntilFull { get; set; }
+
+    /// <summary>Total file count (alias for TotalFileCount).</summary>
+    public int TotalFiles => TotalFileCount;
 }
 
 /// <summary>

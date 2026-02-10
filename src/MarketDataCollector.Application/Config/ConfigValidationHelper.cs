@@ -41,7 +41,7 @@ public static class ConfigValidationHelper
     /// <returns>True if valid, false otherwise.</returns>
     public static bool ValidateAndLog(AppConfig config, ICollection<string> errors)
     {
-        var validator = new ExtendedAppConfigValidator();
+        var validator = new AppConfigValidator();
         var result = validator.Validate(config);
 
         if (result.IsValid)
@@ -122,6 +122,17 @@ public sealed class AppConfigValidator : AbstractValidator<AppConfig>
         {
             RuleForEach(x => x.Symbols)
                 .SetValidator(new SymbolConfigValidator());
+
+            // Check for duplicate symbols (case-insensitive)
+            RuleFor(x => x.Symbols)
+                .Must(symbols =>
+                {
+                    if (symbols == null) return true;
+                    var distinctCount = symbols.Select(s => s.Symbol)
+                        .Distinct(StringComparer.OrdinalIgnoreCase).Count();
+                    return distinctCount == symbols.Length;
+                })
+                .WithMessage("Duplicate symbols found in configuration");
         });
     }
 

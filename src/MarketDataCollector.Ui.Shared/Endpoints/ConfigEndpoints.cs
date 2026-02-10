@@ -22,8 +22,10 @@ public static class ConfigEndpoints
     /// </summary>
     public static void MapConfigEndpoints(this WebApplication app, JsonSerializerOptions jsonOptions)
     {
+        var group = app.MapGroup("").WithTags("Configuration");
+
         // Get full configuration
-        app.MapGet(UiApiRoutes.Config, (ConfigStore store) =>
+        group.MapGet(UiApiRoutes.Config, (ConfigStore store) =>
         {
             var cfg = store.Load();
             return Results.Json(new
@@ -40,7 +42,7 @@ public static class ConfigEndpoints
         });
 
         // Update data source
-        app.MapPost(UiApiRoutes.ConfigDataSource, async (ConfigStore store, DataSourceRequest req) =>
+        group.MapPost(UiApiRoutes.ConfigDataSource, async (ConfigStore store, DataSourceRequest req) =>
         {
             var cfg = store.Load();
 
@@ -54,7 +56,7 @@ public static class ConfigEndpoints
         }).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
         // Update Alpaca settings
-        app.MapPost(UiApiRoutes.ConfigAlpaca, async (ConfigStore store, AlpacaOptionsDto alpaca) =>
+        group.MapPost(UiApiRoutes.ConfigAlpaca, async (ConfigStore store, AlpacaOptionsDto alpaca) =>
         {
             var cfg = store.Load();
             var next = cfg with { Alpaca = alpaca.ToDomain() };
@@ -63,7 +65,7 @@ public static class ConfigEndpoints
         }).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
         // Update storage settings
-        app.MapPost(UiApiRoutes.ConfigStorage, async (ConfigStore store, StorageSettingsRequest req) =>
+        group.MapPost(UiApiRoutes.ConfigStorage, async (ConfigStore store, StorageSettingsRequest req) =>
         {
             var cfg = store.Load();
             var storage = new StorageConfig(
@@ -88,7 +90,7 @@ public static class ConfigEndpoints
         }).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
         // Add or update symbol
-        app.MapPost(UiApiRoutes.ConfigSymbols, async (ConfigStore store, SymbolConfig symbol) =>
+        group.MapPost(UiApiRoutes.ConfigSymbols, async (ConfigStore store, SymbolConfig symbol) =>
         {
             if (string.IsNullOrWhiteSpace(symbol.Symbol))
                 return Results.BadRequest("Symbol is required.");
@@ -107,7 +109,7 @@ public static class ConfigEndpoints
         }).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
         // Delete symbol
-        app.MapDelete(UiApiRoutes.ConfigSymbols + "/{symbol}", async (ConfigStore store, string symbol) =>
+        group.MapDelete(UiApiRoutes.ConfigSymbols + "/{symbol}", async (ConfigStore store, string symbol) =>
         {
             var cfg = store.Load();
             var list = (cfg.Symbols ?? Array.Empty<SymbolConfig>()).ToList();
@@ -118,14 +120,14 @@ public static class ConfigEndpoints
         }).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
         // Get derivatives configuration
-        app.MapGet(UiApiRoutes.ConfigDerivatives, (ConfigStore store) =>
+        group.MapGet(UiApiRoutes.ConfigDerivatives, (ConfigStore store) =>
         {
             var cfg = store.Load();
             return Results.Json(cfg.Derivatives ?? new Application.Config.DerivativesConfig(), jsonOptions);
         });
 
         // Update derivatives configuration
-        app.MapPost(UiApiRoutes.ConfigDerivatives, async (ConfigStore store, DerivativesConfigDto derivatives) =>
+        group.MapPost(UiApiRoutes.ConfigDerivatives, async (ConfigStore store, DerivativesConfigDto derivatives) =>
         {
             var cfg = store.Load();
             var next = cfg with { Derivatives = derivatives.ToDomain() };
@@ -134,7 +136,7 @@ public static class ConfigEndpoints
         }).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
         // Get status
-        app.MapGet(UiApiRoutes.Status, (ConfigStore store) =>
+        group.MapGet(UiApiRoutes.Status, (ConfigStore store) =>
         {
             var status = store.TryLoadStatusJson();
             return status is null ? Results.NotFound() : Results.Content(status, "application/json");
