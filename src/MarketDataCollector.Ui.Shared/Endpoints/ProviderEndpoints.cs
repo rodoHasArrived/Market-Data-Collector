@@ -7,6 +7,7 @@ using MarketDataCollector.Ui.Shared;
 using MarketDataCollector.Ui.Shared.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 
 namespace MarketDataCollector.Ui.Shared.Endpoints;
 
@@ -297,7 +298,7 @@ public static class ProviderEndpoints
         // Provider catalog endpoint - centralized metadata for UI consumption
         // Uses ProviderRegistry when available for runtime-derived catalog data,
         // otherwise falls back to static ProviderCatalog
-        app.MapGet(UiApiRoutes.ProviderCatalog, (HttpContext ctx, string? type, ProviderRegistry? registry) =>
+        app.MapGet(UiApiRoutes.ProviderCatalog, (HttpContext ctx, string? type, [FromServices] ProviderRegistry? registry) =>
         {
             IReadOnlyList<ProviderCatalogEntry> catalogEntries;
 
@@ -333,7 +334,7 @@ public static class ProviderEndpoints
 
         // Single provider catalog entry
         // Uses ProviderRegistry when available for runtime-derived catalog data
-        app.MapGet(UiApiRoutes.ProviderCatalogById, (string providerId, ProviderRegistry? registry) =>
+        app.MapGet(UiApiRoutes.ProviderCatalogById, (string providerId, [FromServices] ProviderRegistry? registry) =>
         {
             ProviderCatalogEntry? entry = registry != null
                 ? registry.GetProviderCatalogEntry(providerId)
