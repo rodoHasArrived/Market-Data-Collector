@@ -15,9 +15,9 @@ public sealed class AnalysisExportWizardService
 
     public AnalysisExportWizardService()
     {
-        _completenessService = new DataCompletenessService();
-        _storageService = new StorageAnalyticsService();
-        _configService = new ConfigService();
+        _completenessService = new DataCompletenessService(ManifestService.Instance, new TradingCalendarService());
+        _storageService = StorageAnalyticsService.Instance;
+        _configService = ConfigService.Instance;
     }
 
     /// <summary>

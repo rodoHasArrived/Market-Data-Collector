@@ -11,8 +11,8 @@ public sealed class ChartingService
 
     public ChartingService()
     {
-        _backfillService = new BackfillService();
-        _liveDataService = new LiveDataService();
+        _backfillService = BackfillService.Instance;
+        _liveDataService = LiveDataService.Instance;
     }
 
     /// <summary>

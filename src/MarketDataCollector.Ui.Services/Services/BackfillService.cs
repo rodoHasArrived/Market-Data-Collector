@@ -2,6 +2,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.Threading;
 using System.Threading.Tasks;
+using MarketDataCollector.Contracts.Domain.Models;
 
 namespace MarketDataCollector.Ui.Services;
 
@@ -248,7 +249,7 @@ public sealed class BackfillService
                     {
                         symbolProgress.Status = "Completed";
                         symbolProgress.Progress = 100;
-                        symbolProgress.CompletedAt = result.CompletedUtc;
+                        symbolProgress.CompletedAt = result.CompletedUtc.DateTime;
                         symbolProgress.BarsDownloaded = result.BarsWritten / Math.Max(1, completedSymbols.Length);
                         symbolProgress.Provider = result.Provider;
                     }
@@ -522,6 +523,20 @@ public sealed class BackfillService
 
         _lastResult = result;
         return result;
+    }
+
+    /// <summary>
+    /// Gets historical bars for a symbol (stub for charting compatibility).
+    /// </summary>
+    public async Task<List<HistoricalBar>> GetHistoricalBarsAsync(
+        string symbol,
+        DateOnly fromDate,
+        DateOnly toDate,
+        CancellationToken ct = default)
+    {
+        // Stub implementation - in a real implementation, this would fetch from storage or API
+        await Task.Delay(10, ct);
+        return new List<HistoricalBar>();
     }
 
     /// <summary>
