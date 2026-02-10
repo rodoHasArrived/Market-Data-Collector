@@ -1,4 +1,5 @@
 using MarketDataCollector.Application.Config;
+using MarketDataCollector.Application.ResultTypes;
 using MarketDataCollector.Storage.Packaging;
 using Serilog;
 
@@ -28,7 +29,7 @@ internal sealed class PackageCommands : ICliCommand
             a.Equals("--validate-package", StringComparison.OrdinalIgnoreCase));
     }
 
-    public async Task<int> ExecuteAsync(string[] args, CancellationToken ct = default)
+    public async Task<CliResult> ExecuteAsync(string[] args, CancellationToken ct = default)
     {
         if (args.Any(a => a.Equals("--package", StringComparison.OrdinalIgnoreCase)))
             return await RunCreateAsync(args, ct);
@@ -39,7 +40,7 @@ internal sealed class PackageCommands : ICliCommand
             if (string.IsNullOrWhiteSpace(path))
             {
                 Console.Error.WriteLine("Error: --import-package requires a path to the package file");
-                return 1;
+                return CliResult.Fail(ErrorCode.RequiredFieldMissing);
             }
             return await RunImportAsync(path, args, ct);
         }
@@ -50,7 +51,7 @@ internal sealed class PackageCommands : ICliCommand
             if (string.IsNullOrWhiteSpace(path))
             {
                 Console.Error.WriteLine("Error: --list-package requires a path to the package file");
-                return 1;
+                return CliResult.Fail(ErrorCode.RequiredFieldMissing);
             }
             return await RunListAsync(path, ct);
         }
@@ -61,15 +62,15 @@ internal sealed class PackageCommands : ICliCommand
             if (string.IsNullOrWhiteSpace(path))
             {
                 Console.Error.WriteLine("Error: --validate-package requires a path to the package file");
-                return 1;
+                return CliResult.Fail(ErrorCode.RequiredFieldMissing);
             }
             return await RunValidateAsync(path, ct);
         }
 
-        return 1;
+        return CliResult.Fail(ErrorCode.Unknown);
     }
 
-    private async Task<int> RunCreateAsync(string[] args, CancellationToken ct)
+    private async Task<CliResult> RunCreateAsync(string[] args, CancellationToken ct)
     {
         _log.Information("Creating portable data package...");
 
@@ -155,15 +156,15 @@ internal sealed class PackageCommands : ICliCommand
 
             _log.Information("Package created: {PackagePath} ({SizeBytes:N0} bytes)",
                 result.PackagePath, result.PackageSizeBytes);
-            return 0;
+            return CliResult.Ok();
         }
 
         Console.Error.WriteLine($"Error: {result.Error}");
         _log.Error("Package creation failed: {Error}", result.Error);
-        return 1;
+        return CliResult.Fail(ErrorCode.WriteFailed);
     }
 
-    private async Task<int> RunImportAsync(string packagePath, string[] args, CancellationToken ct)
+    private async Task<CliResult> RunImportAsync(string packagePath, string[] args, CancellationToken ct)
     {
         _log.Information("Importing package: {PackagePath}", packagePath);
 
@@ -197,7 +198,7 @@ internal sealed class PackageCommands : ICliCommand
             }
 
             _log.Information("Package imported: {FilesExtracted} files", result.FilesExtracted);
-            return 0;
+            return CliResult.Ok();
         }
 
         Console.Error.WriteLine($"Error: {result.Error}");
@@ -209,10 +210,10 @@ internal sealed class PackageCommands : ICliCommand
         }
 
         _log.Error("Package import failed: {Error}", result.Error);
-        return 1;
+        return CliResult.Fail(ErrorCode.WriteFailed);
     }
 
-    private async Task<int> RunListAsync(string packagePath, CancellationToken ct)
+    private async Task<CliResult> RunListAsync(string packagePath, CancellationToken ct)
     {
         _log.Information("Listing package contents: {PackagePath}", packagePath);
 
@@ -243,17 +244,17 @@ internal sealed class PackageCommands : ICliCommand
             if (contents.Files.Length > 20)
                 Console.WriteLine($"    ... and {contents.Files.Length - 20} more files");
 
-            return 0;
+            return CliResult.Ok();
         }
         catch (Exception ex)
         {
             Console.Error.WriteLine($"Error reading package: {ex.Message}");
             _log.Error(ex, "Failed to list package contents");
-            return 1;
+            return CliResult.Fail(ErrorCode.ReadFailed);
         }
     }
 
-    private async Task<int> RunValidateAsync(string packagePath, CancellationToken ct)
+    private async Task<CliResult> RunValidateAsync(string packagePath, CancellationToken ct)
     {
         _log.Information("Validating package: {PackagePath}", packagePath);
 
@@ -269,7 +270,7 @@ internal sealed class PackageCommands : ICliCommand
                 Console.WriteLine($"  Files: {result.Manifest.TotalFiles:N0}");
             }
             _log.Information("Package validation passed: {PackagePath}", packagePath);
-            return 0;
+            return CliResult.Ok();
         }
 
         Console.WriteLine($"  Package: {packagePath} - INVALID");
@@ -291,7 +292,7 @@ internal sealed class PackageCommands : ICliCommand
         }
 
         _log.Warning("Package validation failed: {PackagePath}", packagePath);
-        return 1;
+        return CliResult.Fail(ErrorCode.ValidationFailed);
     }
 
     private static string? GetArgValue(string[] args, string flag)

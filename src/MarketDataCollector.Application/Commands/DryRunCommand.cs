@@ -1,4 +1,5 @@
 using MarketDataCollector.Application.Config;
+using MarketDataCollector.Application.ResultTypes;
 using MarketDataCollector.Application.Services;
 using Serilog;
 
@@ -26,7 +27,7 @@ internal sealed class DryRunCommand : ICliCommand
         return CliArguments.HasFlag(args, "--dry-run");
     }
 
-    public async Task<int> ExecuteAsync(string[] args, CancellationToken ct = default)
+    public async Task<CliResult> ExecuteAsync(string[] args, CancellationToken ct = default)
     {
         _log.Information("Running in dry-run mode...");
         DryRunService.EnableDryRunMode();
@@ -45,6 +46,6 @@ internal sealed class DryRunCommand : ICliCommand
         var report = dryRunService.GenerateReport(result);
         Console.WriteLine(report);
 
-        return result.OverallSuccess ? 0 : 1;
+        return CliResult.FromBool(result.OverallSuccess, ErrorCode.ValidationFailed);
     }
 }

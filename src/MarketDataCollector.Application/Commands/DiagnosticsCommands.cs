@@ -1,5 +1,6 @@
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Logging;
+using MarketDataCollector.Application.ResultTypes;
 using MarketDataCollector.Application.Services;
 using Serilog;
 
@@ -34,7 +35,7 @@ internal sealed class DiagnosticsCommands : ICliCommand
             a.Equals("--validate-credentials", StringComparison.OrdinalIgnoreCase));
     }
 
-    public async Task<int> ExecuteAsync(string[] args, CancellationToken ct = default)
+    public async Task<CliResult> ExecuteAsync(string[] args, CancellationToken ct = default)
     {
         if (args.Any(a => a.Equals("--quick-check", StringComparison.OrdinalIgnoreCase)))
         {
@@ -42,7 +43,7 @@ internal sealed class DiagnosticsCommands : ICliCommand
             var result = _configService.PerformQuickCheck(_cfg);
             var summary = new StartupSummary();
             summary.DisplayQuickCheck(result);
-            return result.Success ? 0 : 1;
+            return CliResult.FromBool(result.Success, ErrorCode.ConfigurationInvalid);
         }
 
         if (args.Any(a => a.Equals("--test-connectivity", StringComparison.OrdinalIgnoreCase)))
@@ -51,19 +52,19 @@ internal sealed class DiagnosticsCommands : ICliCommand
             var result = await _configService.TestConnectivityAsync(_cfg, ct);
             await using var tester = new ConnectivityTestService();
             tester.DisplaySummary(result);
-            return result.AllReachable ? 0 : 1;
+            return CliResult.FromBool(result.AllReachable, ErrorCode.ConnectionFailed);
         }
 
         if (args.Any(a => a.Equals("--error-codes", StringComparison.OrdinalIgnoreCase)))
         {
             FriendlyErrorFormatter.DisplayErrorCodeReference();
-            return 0;
+            return CliResult.Ok();
         }
 
         if (args.Any(a => a.Equals("--show-config", StringComparison.OrdinalIgnoreCase)))
         {
             _configService.DisplayConfigSummary(_cfg, _cfgPath, args);
-            return 0;
+            return CliResult.Ok();
         }
 
         if (args.Any(a => a.Equals("--validate-credentials", StringComparison.OrdinalIgnoreCase)))
@@ -72,9 +73,9 @@ internal sealed class DiagnosticsCommands : ICliCommand
             var validationResult = await _configService.ValidateCredentialsAsync(_cfg, ct);
             await using var validationService = new CredentialValidationService();
             validationService.PrintSummary(validationResult);
-            return validationResult.AllValid ? 0 : 1;
+            return CliResult.FromBool(validationResult.AllValid, ErrorCode.CredentialsInvalid);
         }
 
-        return 1;
+        return CliResult.Fail(ErrorCode.Unknown);
     }
 }

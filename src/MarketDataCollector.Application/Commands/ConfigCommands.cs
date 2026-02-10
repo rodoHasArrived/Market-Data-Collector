@@ -1,4 +1,5 @@
 using MarketDataCollector.Application.Config;
+using MarketDataCollector.Application.ResultTypes;
 using MarketDataCollector.Application.Services;
 using Serilog;
 
@@ -28,26 +29,26 @@ internal sealed class ConfigCommands : ICliCommand
             a.Equals("--generate-config", StringComparison.OrdinalIgnoreCase));
     }
 
-    public async Task<int> ExecuteAsync(string[] args, CancellationToken ct = default)
+    public async Task<CliResult> ExecuteAsync(string[] args, CancellationToken ct = default)
     {
         if (args.Any(a => a.Equals("--wizard", StringComparison.OrdinalIgnoreCase)))
         {
             _log.Information("Starting configuration wizard...");
             var result = await _configService.RunWizardAsync(ct);
-            return result.Success ? 0 : 1;
+            return CliResult.FromBool(result.Success, ErrorCode.ConfigurationInvalid);
         }
 
         if (args.Any(a => a.Equals("--auto-config", StringComparison.OrdinalIgnoreCase)))
         {
             _log.Information("Running auto-configuration...");
             var result = _configService.RunAutoConfig();
-            return result.Success ? 0 : 1;
+            return CliResult.FromBool(result.Success, ErrorCode.ConfigurationInvalid);
         }
 
         if (args.Any(a => a.Equals("--detect-providers", StringComparison.OrdinalIgnoreCase)))
         {
             _configService.PrintProviderDetection();
-            return 0;
+            return CliResult.Ok();
         }
 
         if (args.Any(a => a.Equals("--generate-config", StringComparison.OrdinalIgnoreCase)))
@@ -55,10 +56,10 @@ internal sealed class ConfigCommands : ICliCommand
             return RunGenerateConfig(args);
         }
 
-        return 1;
+        return CliResult.Fail(ErrorCode.Unknown);
     }
 
-    private int RunGenerateConfig(string[] args)
+    private CliResult RunGenerateConfig(string[] args)
     {
         var templateName = GetArgValue(args, "--template") ?? "minimal";
         var outputPath = GetArgValue(args, "--output") ?? "config/appsettings.generated.json";
@@ -70,7 +71,7 @@ internal sealed class ConfigCommands : ICliCommand
         {
             Console.Error.WriteLine($"Unknown template: {templateName}");
             Console.Error.WriteLine("Available templates: minimal, full, alpaca, stocksharp, backfill, production, docker");
-            return 1;
+            return CliResult.Fail(ErrorCode.NotFound);
         }
 
         var dir = Path.GetDirectoryName(outputPath);
@@ -88,7 +89,7 @@ internal sealed class ConfigCommands : ICliCommand
                 Console.WriteLine($"  {key}: {desc}");
         }
 
-        return 0;
+        return CliResult.Ok();
     }
 
     private static string? GetArgValue(string[] args, string flag)

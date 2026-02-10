@@ -242,6 +242,26 @@ public static class ErrorCodeExtensions
     }
 
     /// <summary>
+    /// Maps an error code to a process exit code (1-8) based on category.
+    /// Exit code 0 is reserved for success (not produced by this method).
+    /// </summary>
+    public static int ToExitCode(this ErrorCode code)
+    {
+        return (int)code switch
+        {
+            >= 1000 and < 2000 => 1,  // General
+            >= 2000 and < 3000 => 2,  // Validation
+            >= 3000 and < 4000 => 3,  // Configuration
+            >= 4000 and < 5000 => 4,  // Connection
+            >= 5000 and < 6000 => 5,  // Provider
+            >= 6000 and < 7000 => 6,  // Data Integrity
+            >= 7000 and < 8000 => 7,  // Storage
+            >= 8000 and < 9000 => 8,  // Messaging
+            _ => 1
+        };
+    }
+
+    /// <summary>
     /// Gets the suggested HTTP status code for an error code
     /// </summary>
     public static int ToHttpStatusCode(this ErrorCode code)

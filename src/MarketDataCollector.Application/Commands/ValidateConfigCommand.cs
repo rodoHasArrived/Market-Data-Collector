@@ -1,3 +1,4 @@
+using MarketDataCollector.Application.ResultTypes;
 using MarketDataCollector.Application.Services;
 using Serilog;
 
@@ -25,10 +26,11 @@ internal sealed class ValidateConfigCommand : ICliCommand
         return CliArguments.HasFlag(args, "--validate-config");
     }
 
-    public Task<int> ExecuteAsync(string[] args, CancellationToken ct = default)
+    public Task<CliResult> ExecuteAsync(string[] args, CancellationToken ct = default)
     {
         var configPathArg = CliArguments.GetValue(args, "--config") ?? _defaultConfigPath;
         var exitCode = _configService.ValidateConfig(configPathArg);
-        return Task.FromResult(exitCode);
+        var result = exitCode == 0 ? CliResult.Ok() : CliResult.Fail(ErrorCode.ConfigurationInvalid);
+        return Task.FromResult(result);
     }
 }

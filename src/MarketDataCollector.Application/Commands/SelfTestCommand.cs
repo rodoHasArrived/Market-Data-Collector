@@ -1,3 +1,4 @@
+using MarketDataCollector.Application.ResultTypes;
 using MarketDataCollector.Application.Testing;
 using Serilog;
 
@@ -21,7 +22,7 @@ internal sealed class SelfTestCommand : ICliCommand
         return CliArguments.HasFlag(args, "--selftest");
     }
 
-    public Task<int> ExecuteAsync(string[] args, CancellationToken ct = default)
+    public Task<CliResult> ExecuteAsync(string[] args, CancellationToken ct = default)
     {
         _log.Information("Running self-tests...");
 
@@ -30,13 +31,13 @@ internal sealed class SelfTestCommand : ICliCommand
             DepthBufferSelfTests.Run();
             _log.Information("Self-tests passed");
             Console.WriteLine("Self-tests passed.");
-            return Task.FromResult(0);
+            return Task.FromResult(CliResult.Ok());
         }
         catch (Exception ex)
         {
             _log.Error(ex, "Self-tests failed");
             Console.Error.WriteLine($"Self-tests failed: {ex.Message}");
-            return Task.FromResult(1);
+            return Task.FromResult(CliResult.Fail(ErrorCode.InternalError));
         }
     }
 }

@@ -90,10 +90,10 @@ public partial class Program
             new PackageCommands(cfg, log)
         );
 
-        var (handled, exitCode) = await dispatcher.TryDispatchAsync(cliArgs.Raw);
+        var (handled, cliResult) = await dispatcher.TryDispatchAsync(cliArgs.Raw);
         if (handled)
         {
-            return exitCode;
+            return cliResult.ExitCode;
         }
 
         // UI Mode - Start web dashboard (handles both --mode web and legacy --ui flag)

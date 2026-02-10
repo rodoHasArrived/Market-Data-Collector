@@ -1,5 +1,6 @@
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Monitoring;
+using MarketDataCollector.Application.ResultTypes;
 using MarketDataCollector.Application.Services;
 using Serilog;
 
@@ -25,7 +26,7 @@ internal sealed class SchemaCheckCommand : ICliCommand
         return args.Any(a => a.Equals("--check-schemas", StringComparison.OrdinalIgnoreCase));
     }
 
-    public async Task<int> ExecuteAsync(string[] args, CancellationToken ct = default)
+    public async Task<CliResult> ExecuteAsync(string[] args, CancellationToken ct = default)
     {
         _log.Information("Checking stored data schema compatibility...");
 
@@ -67,7 +68,7 @@ internal sealed class SchemaCheckCommand : ICliCommand
         }
         Console.WriteLine();
 
-        return result.Success ? 0 : 1;
+        return CliResult.FromBool(result.Success, ErrorCode.SchemaMismatch);
     }
 
     private static string? GetArgValue(string[] args, string flag)

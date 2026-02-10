@@ -15,20 +15,20 @@ internal sealed class CommandDispatcher
 
     /// <summary>
     /// Tries to dispatch the args to a registered command.
-    /// Returns true if a command handled the args (caller should exit).
-    /// Returns false if no command matched (caller should continue normal startup).
+    /// Returns a <see cref="CliResult"/> with <c>Handled=true</c> if a command matched.
+    /// Returns <c>Handled=false</c> if no command matched (caller should continue normal startup).
     /// </summary>
-    public async Task<(bool Handled, int ExitCode)> TryDispatchAsync(string[] args, CancellationToken ct = default)
+    public async Task<(bool Handled, CliResult Result)> TryDispatchAsync(string[] args, CancellationToken ct = default)
     {
         foreach (var command in _commands)
         {
             if (command.CanHandle(args))
             {
-                var exitCode = await command.ExecuteAsync(args, ct);
-                return (true, exitCode);
+                var result = await command.ExecuteAsync(args, ct);
+                return (true, result);
             }
         }
 
-        return (false, 0);
+        return (false, CliResult.Ok());
     }
 }
