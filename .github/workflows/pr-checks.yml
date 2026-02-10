@@ -22,6 +22,8 @@ env:
   DOTNET_VERSION: '9.0.x'
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
   DOTNET_NOLOGO: true
+  ACTIONS_STEP_DEBUG: ${{ vars.ACTIONS_STEP_DEBUG || 'false' }}
+  ACTIONS_RUNNER_DEBUG: ${{ vars.ACTIONS_RUNNER_DEBUG || 'false' }}
 
 jobs:
   lint:
@@ -40,10 +42,20 @@ jobs:
         cache-suffix: pr-lint
 
     - name: Restore dependencies
-      run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
+      run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true /bl:./artifacts/lint-restore.binlog
 
     - name: Check formatting
-      run: dotnet format MarketDataCollector.sln --verify-no-changes --verbosity diagnostic
+      run: dotnet format MarketDataCollector.sln --verify-no-changes --verbosity diagnostic --report ./artifacts/dotnet-format-report.json
+
+    - name: Upload lint diagnostics
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: lint-diagnostics
+        path: |
+          ./artifacts/lint-restore.binlog
+          ./artifacts/dotnet-format-report.json
+        retention-days: 14
 
   build-and-test:
     name: Build & Test
@@ -63,10 +75,12 @@ jobs:
         cache-suffix: pr-build-test
 
     - name: Restore dependencies
-      run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
+      run: |
+        dotnet --info
+        dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true /bl:./artifacts/restore.binlog
 
     - name: Build
-      run: dotnet build MarketDataCollector.sln -c Release --no-restore /p:EnableWindowsTargeting=true
+      run: dotnet build MarketDataCollector.sln -c Release --no-restore /p:EnableWindowsTargeting=true /bl:./artifacts/build.binlog
 
     - name: Run tests
       run: |
@@ -75,8 +89,9 @@ jobs:
           --no-build \
           /p:EnableWindowsTargeting=true \
           --logger "console;verbosity=detailed" \
+          --logger "trx;LogFileName=pr-test-results.trx" \
           --collect:"XPlat Code Coverage" \
-          --results-directory ./coverage
+          --results-directory ./artifacts/test-results
 
     - name: Upload coverage reports
       if: success()
@@ -86,13 +101,16 @@ jobs:
         fail_ci_if_error: false
         token: ${{ secrets.CODECOV_TOKEN }}
 
-    - name: Upload test results on failure
-      if: failure()
+    - name: Upload diagnostics artifacts
+      if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: test-results
-        path: ./coverage/
-        retention-days: 7
+        name: build-test-diagnostics
+        path: |
+          ./artifacts/*.binlog
+          ./artifacts/test-results/**/*.trx
+          ./artifacts/test-results/**/coverage.cobertura.xml
+        retention-days: 14
 
   # ─── AI PR Review ──────────────────────────────────────────────────────
 
@@ -175,6 +193,11 @@ jobs:
         echo "| Code Formatting | ${{ needs.lint.result == 'success' && '✅ Passed' || (needs.lint.result == 'skipped' && '⏭️ Skipped' || '❌ Failed') }} |" >> $GITHUB_STEP_SUMMARY
         echo "| Build & Test | ${{ needs.build-and-test.result == 'success' && '✅ Passed' || (needs.build-and-test.result == 'skipped' && '⏭️ Skipped' || '❌ Failed') }} |" >> $GITHUB_STEP_SUMMARY
         echo "| AI PR Review | ${{ needs.ai-pr-review.result == 'success' && '✅ Completed' || (needs.ai-pr-review.result == 'skipped' && '⏭️ Skipped' || '⚠️ Unavailable') }} |" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Debugging Tips" >> $GITHUB_STEP_SUMMARY
+        echo "- Download artifacts **lint-diagnostics** and **build-test-diagnostics** for binlogs/TRX." >> $GITHUB_STEP_SUMMARY
+        echo "- To enable verbose runner logs, set repository variable \\`ACTIONS_RUNNER_DEBUG=true\\`." >> $GITHUB_STEP_SUMMARY
+        echo "- To enable step debug logs, set repository variable \\`ACTIONS_STEP_DEBUG=true\\`." >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
 
         if [[ "${{ needs.lint.result }}" == "failure" ]] || \

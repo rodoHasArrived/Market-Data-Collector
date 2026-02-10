@@ -59,6 +59,26 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Emit run context
+        shell: bash
+        run: |
+          {
+            echo "## Reusable Build Run Context"
+            echo ""
+            echo "- Workflow: ${{ github.workflow }}"
+            echo "- Job: ${{ github.job }}"
+            echo "- Run ID: ${{ github.run_id }}"
+            echo "- Run attempt: ${{ github.run_attempt }}"
+            echo "- Ref: ${{ github.ref }}"
+            echo "- SHA: ${{ github.sha }}"
+            echo "- Actor: ${{ github.actor }}"
+            echo "- Runner OS: ${{ runner.os }}"
+            echo "- .NET version input: ${{ inputs.dotnet-version }}"
+            echo "- Configuration input: ${{ inputs.configuration }}"
+            echo "- Run tests: ${{ inputs.run-tests }}"
+            echo "- Collect coverage: ${{ inputs.collect-coverage }}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Setup .NET with Cache
         uses: ./.github/actions/setup-dotnet-cache
         with:
@@ -66,7 +86,9 @@ jobs:
           cache-suffix: ${{ inputs.cache-suffix }}
 
       - name: Restore dependencies
-        run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
+        run: |
+          dotnet --info
+          dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true /bl:./artifacts/restore.binlog
 
       - name: Build
         id: build
@@ -74,7 +96,8 @@ jobs:
           dotnet build MarketDataCollector.sln \
             -c ${{ inputs.configuration }} \
             --no-restore \
-            /p:EnableWindowsTargeting=true
+            /p:EnableWindowsTargeting=true \
+            /bl:./artifacts/build.binlog
 
       - name: Run tests
         if: inputs.run-tests
@@ -84,7 +107,22 @@ jobs:
             --no-build \
             /p:EnableWindowsTargeting=true \
             --verbosity normal \
+            --logger "trx;LogFileName=test-results.trx" \
+            --results-directory ./artifacts/test-results \
             ${{ inputs.collect-coverage && '--collect:"XPlat Code Coverage" --results-directory ./coverage' || '' }}
+
+      - name: Summarize diagnostics
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo ""
+            echo "## Diagnostics Artifacts"
+            echo "- MSBuild restore binary log: ./artifacts/restore.binlog"
+            echo "- MSBuild build binary log: ./artifacts/build.binlog"
+            echo "- Test results (TRX): ./artifacts/test-results"
+            echo "- Coverage directory: ./coverage (if enabled)"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload coverage
         if: inputs.collect-coverage && success()
@@ -103,6 +141,17 @@ jobs:
             src/**/bin/${{ inputs.configuration }}/
             !src/**/bin/${{ inputs.configuration }}/**/ref/
           retention-days: 7
+
+      - name: Upload diagnostics artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: diagnostics-${{ inputs.cache-suffix || 'default' }}
+          path: |
+            ./artifacts/*.binlog
+            ./artifacts/test-results/**/*.trx
+            ./coverage/
+          retention-days: 14
 
       - name: Upload test results on failure
         if: failure() && inputs.run-tests
