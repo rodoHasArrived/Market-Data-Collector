@@ -1,0 +1,55 @@
+name: Update Diagram Artifacts
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'docs/diagrams/*.dot'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-diagrams-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  regenerate-diagrams:
+    name: Regenerate PNG and SVG diagrams
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Graphviz
+        run: sudo apt-get update && sudo apt-get install -y graphviz
+
+      - name: Regenerate diagram artifacts
+        run: |
+          set -euo pipefail
+
+          shopt -s nullglob
+          dot_files=(docs/diagrams/*.dot)
+
+          if [ ${#dot_files[@]} -eq 0 ]; then
+            echo "No DOT files found in docs/diagrams"
+            exit 0
+          fi
+
+          for file in "${dot_files[@]}"; do
+            base="${file%.dot}"
+            dot -Tpng "$file" -o "${base}.png"
+            dot -Tsvg "$file" -o "${base}.svg"
+            echo "Generated ${base}.png and ${base}.svg"
+          done
+
+      - name: Commit regenerated diagrams
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'docs(diagrams): regenerate PNG/SVG from DOT sources'
+          file_pattern: docs/diagrams/*.png docs/diagrams/*.svg
