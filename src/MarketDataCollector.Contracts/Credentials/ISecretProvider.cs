@@ -1,10 +1,10 @@
-namespace MarketDataCollector.Application.Credentials;
+namespace MarketDataCollector.Contracts.Credentials;
 
 /// <summary>
 /// Abstraction for retrieving secrets from external stores such as
 /// AWS Secrets Manager, Azure Key Vault, HashiCorp Vault, or environment variables.
 /// Implementations are plugged in via DI to replace the environment-variable bridge
-/// in <see cref="MarketDataCollector.Infrastructure.DataSources.DataSourceConfiguration"/>.
+/// in <see cref="MarketDataCollector.Infrastructure.DataSources.CredentialConfig"/>.
 /// </summary>
 public interface ISecretProvider
 {
