@@ -1,9 +1,9 @@
 # MarketDataCollector.UWP — Comprehensive Code Audit Report
 
-**Date:** 2026-02-09
+**Date:** 2026-02-10
 **Auditor:** Claude (Automated Architecture & Code Quality Audit)
-**Scope:** `src/MarketDataCollector.Uwp/` — 47 Views, 5 ViewModels, 30 Services, 7 Controls, 5 Helpers/Converters
-**Total UWP LOC:** ~40,000+ (22,815 in code-behind alone)
+**Scope:** `src/MarketDataCollector.Uwp/` — 47 Views, 5 ViewModels, 31 Services, 8 Controls, 3 Helpers/Converters
+**Total UWP LOC:** ~40,000+ (22,169 in code-behind alone)
 
 ---
 
@@ -11,11 +11,11 @@
 
 The MarketDataCollector.UWP application demonstrates solid functionality and thoughtful feature design, but suffers from **systemic architectural issues** that impair testability, maintainability, and scalability. The core problems are:
 
-1. **No Dependency Injection** — All 28 services use the Singleton/Service Locator anti-pattern
+1. **Hybrid DI Transition (Partial Adoption)** — `ServiceLocator` + `Microsoft.Extensions.DependencyInjection` are now present, but most call sites still use static `.Instance`
 2. **Massive MVVM Violations** — 47 View code-behind files contain business logic; only 5 ViewModels exist
-3. **Inconsistent Service Instantiation** — Services are created both via `new` and `.Instance` in the same codebase
-4. **22,815 lines of code-behind** that should be in ViewModels
-5. **295 `async void` methods** across 43 files
+3. **Legacy Singleton Coupling** — 27 services still expose static singleton access and are consumed directly from Views/ViewModels
+4. **22,169 lines of code-behind** that should be in ViewModels
+5. **296 `async void` methods** across 44 files
 6. **1 blocking async call** (`.GetAwaiter().GetResult()`) that can cause deadlocks
 
 These issues don't block the application from working, but they create compounding technical debt that makes the codebase increasingly difficult to maintain, test, and extend.
@@ -32,18 +32,18 @@ The application has the right directory structure (Views, ViewModels, Services, 
 
 #### Finding 1.1.1: Code-Behind Contains Business Logic (CRITICAL)
 
-**47 View code-behind files** average 485 lines each. The top offenders:
+**47 View code-behind files** average 472 lines each. The top offenders:
 
 | File | Lines | Issue |
 |------|-------|-------|
-| `DashboardPage.xaml.cs` | 1,228 | Data collection control, sparkline management, symbol management, activity feed, integrity events — all in code-behind |
-| `SettingsPage.xaml.cs` | 905 | Config reading/writing, credential management, validation logic |
+| `DashboardPage.xaml.cs` | 1,210 | Data collection control, sparkline management, symbol management, activity feed, integrity events — all in code-behind |
+| `SettingsPage.xaml.cs` | 826 | Config reading/writing, credential management, validation logic |
 | `SymbolsPage.xaml.cs` | 856 | Symbol CRUD, search, filtering, batch operations |
-| `RetentionAssurancePage.xaml.cs` | 812 | Data retention policy logic, file scanning, reporting |
+| `RetentionAssurancePage.xaml.cs` | 733 | Data retention policy logic, file scanning, reporting |
 | `ScheduleManagerPage.xaml.cs` | 808 | CRON schedule creation, validation, execution management |
 | `ChartingPage.xaml.cs` | 769 | Chart rendering, data transformation, indicator calculations |
-| `StorageOptimizationPage.xaml.cs` | 738 | Storage analysis, compression, optimization logic |
-| `BackfillPage.xaml.cs` | 736 | Backfill orchestration, provider selection, progress tracking |
+| `StorageOptimizationPage.xaml.cs` | 641 | Storage analysis, compression, optimization logic |
+| `BackfillPage.xaml.cs` | 694 | Backfill orchestration, provider selection, progress tracking |
 
 **Example violation** (`DashboardPage.xaml.cs:491-509`):
 ```csharp
@@ -76,14 +76,14 @@ The page has a `ViewModel` property of type `MainViewModel`, but most of the act
 
 ### 1.2 Dependency Injection & Service Composition
 
-**Rating: CRITICAL FAILURE**
+**Rating: CONCERNING (IMPROVED FROM CRITICAL)**
 
-#### Finding 1.2.1: No DI Container — Pure Service Locator Anti-Pattern
+#### Finding 1.2.1: DI Container Exists, But Mostly Wraps Legacy Singletons
 
-There is **no DI container** in the entire UWP project. All 28 services use hand-rolled singletons:
+The project now initializes `ServiceLocator` in `App.xaml.cs` and registers services using `Microsoft.Extensions.DependencyInjection`. However, registrations primarily return existing singleton instances, so runtime behavior is still mostly service-locator driven:
 
 ```csharp
-// Pattern repeated 28 times across the codebase
+// Pattern still repeated across much of the codebase
 private static ConnectionService? _instance;
 private static readonly object _lock = new();
 
@@ -103,48 +103,34 @@ public static ConnectionService Instance
 }
 ```
 
-**Services using this pattern (28 total):**
-`ConnectionService`, `ConfigService`, `StatusService`, `NotificationService`, `ThemeService`, `NavigationService`, `LoggingService`, `MessagingService`, `WatchlistService`, `ArchiveHealthService`, `RetentionAssuranceService`, `PendingOperationsQueueService`, `OfflineTrackingPersistenceService`, `BackgroundTaskSchedulerService`, `StorageService`, `AdvancedAnalyticsService`, `UwpAnalysisExportService`, `AdminMaintenanceService`, `FormValidationService`, `ExportPresetService`, `KeyboardShortcutService`, `SchemaService`, `TooltipService`, `WorkspaceService`, `UwpDataQualityService`, `CredentialService`, `ContextMenuService`, `InfoBarService`
+**Services using this pattern (27 total in `Services/`):**
+`ConnectionService`, `ConfigService`, `StatusService`, `NotificationService`, `ThemeService`, `NavigationService`, `LoggingService`, `MessagingService`, `WatchlistService`, `ArchiveHealthService`, `RetentionAssuranceService`, `PendingOperationsQueueService`, `OfflineTrackingPersistenceService`, `BackgroundTaskSchedulerService`, `StorageService`, `AdvancedAnalyticsService`, `UwpAnalysisExportService`, `AdminMaintenanceService`, `FormValidationService`, `ExportPresetService`, `KeyboardShortcutService`, `SchemaService`, `TooltipService`, `WorkspaceService`, `UwpDataQualityService`, `ContextMenuService`, `InfoBarService`
 
 **Impact:**
-- Services cannot be mocked for unit testing
-- Service lifetimes cannot be managed
-- Circular dependencies are possible and undetectable
-- Service initialization order is implicit and fragile
+- DI composition is available but not the default usage path in most Views/ViewModels
+- Service lifetimes are centrally registered, but static access bypasses constructor injection benefits
+- Circular dependencies remain harder to detect because of mixed access patterns
+- Initialization order is improved at startup but still coupled to singleton initialization
 
 #### Finding 1.2.2: Inconsistent Service Resolution
 
-Some services are accessed via `.Instance` singleton, while others are created via `new`:
+Service construction is now mostly standardized; only limited direct `new` service construction remains:
 
 ```csharp
-// Same file (DashboardPage.xaml.cs) uses BOTH patterns:
-_configService = new ConfigService();              // Line 90 — creates NEW instance
-_activityFeedService = ActivityFeedService.Instance; // Line 91 — uses singleton
+// Remaining direct construction path (ArchiveHealthService.cs)
+_configService = new ConfigService();
+
 ```
 
-**15 locations** create `new ConfigService()` or `new StatusService()` instead of using `.Instance`:
-- `BackfillWizardDialog.xaml.cs:71`
-- `MainViewModel.cs:58-59`
-- `ServiceManagerPage.xaml.cs:28`
-- `SymbolsPage.xaml.cs:56`
-- `WelcomePage.xaml.cs:24`
-- `ArchiveHealthService.cs:47`
-- `DashboardPage.xaml.cs:90`
-- `BackfillPage.xaml.cs:39`
-- `SettingsPage.xaml.cs:48`
-- `StoragePage.xaml.cs:25`
-- `ProviderPage.xaml.cs:38`
-- `DataSourcesPage.xaml.cs:21`
+**1 known location** still creates `new ConfigService()` instead of using the registered singleton (`ArchiveHealthService.cs:47`).
 
-This means ConfigService state (loaded config, file path) differs between singleton users and `new` instance users.
+This remaining inconsistency can still diverge config state in edge cases and should be normalized.
 
-#### Finding 1.2.3: Interfaces Exist But Are Never Used for DI
+#### Finding 1.2.3: Interface Coverage Improved, But Injection Usage Is Limited
 
-Two interfaces exist in `Contracts/`:
-- `IConnectionService`
-- `INavigationService`
+There are now **10 service interfaces** in `Contracts/`, and `ServiceLocator` registers abstractions such as `IConfigService`, `IConnectionService`, and `INavigationService`.
 
-But they are **never consumed through abstraction**. All code references `ConnectionService.Instance` directly:
+However, many call sites still reference concrete singletons directly:
 ```csharp
 // App.xaml.cs:56
 ConnectionService.Instance.StartMonitoring();
@@ -153,7 +139,7 @@ ConnectionService.Instance.StartMonitoring();
 _connectionService = ConnectionService.Instance;
 ```
 
-No code ever references `IConnectionService` for injection.
+Interface-first constructor injection is available, but not yet the dominant pattern across pages.
 
 ### 1.3 MVVM Pattern Consistency
 
@@ -292,7 +278,7 @@ var analytics = analyticsService.GetAnalyticsAsync(false).GetAwaiter().GetResult
 
 This violates the project's own rules and can deadlock the UI thread.
 
-#### Finding 2.3.2: 295 `async void` Methods
+#### Finding 2.3.2: 296 `async void` Methods
 
 While most are UI event handlers (where `async void` is acceptable), the sheer volume indicates over-reliance on event-driven patterns rather than command-driven MVVM patterns. Notable non-event-handler `async void` methods exist in `TaskExtensions.cs`.
 
@@ -328,7 +314,7 @@ private void OnRefreshTimerElapsed(object? sender, System.Timers.ElapsedEventArg
 
 **Rating: POOR**
 
-#### Finding 3.1.1: Repeated Page Initialization Pattern (~44 files)
+#### Finding 3.1.1: Repeated Page Initialization Pattern (~40+ files)
 
 Nearly every page follows this identical pattern:
 
@@ -336,7 +322,7 @@ Nearly every page follows this identical pattern:
 public SomePage()
 {
     InitializeComponent();
-    _configService = new ConfigService();          // or .Instance
+    _configService = ConfigService.Instance;        // mostly standardized now
     _someOtherService = SomeService.Instance;
     Loaded += SomePage_Loaded;
     Unloaded += SomePage_Unloaded;
@@ -477,7 +463,7 @@ API credentials are **not** stored in config files — they use environment vari
 
 ### 4.3 Testing & Testability
 
-**Rating: CRITICAL FAILURE**
+**Rating: CONCERNING (IMPROVED FROM CRITICAL)**
 
 #### Finding 4.3.1: ViewModels Are Untestable Due to Singleton Dependencies
 
@@ -501,11 +487,9 @@ No ViewModel accepts interfaces via constructor injection. All depend on concret
 
 #### Finding 4.3.3: Interface Coverage Is Minimal
 
-Only 2 of 28 services have interfaces:
-- `IConnectionService`
-- `INavigationService`
+There are now 10 UWP service interfaces in `Contracts/` (for example: `IAdminMaintenanceService`, `IAdvancedAnalyticsService`, `IConnectionService`, `INavigationService`, `IStorageService`).
 
-The remaining 26 services have no abstraction. The `Ui.Services` shared library defines additional interfaces (`IConfigService`, `IStatusService`, etc.) but they're for the shared services, not the UWP implementations.
+Coverage has improved, but interface-driven constructor injection is still limited in page/viewmodel call sites.
 
 ---
 
@@ -518,7 +502,7 @@ The remaining 26 services have no abstraction. The `Ui.Services` shared library 
 #### Finding 5.1.1: Good Visual Design Infrastructure
 
 The application includes:
-- 7 custom controls (`AlertBanner`, `DataCoverageCalendar`, `DataTable`, `LoadingOverlay`, `MetricCard`, `ProgressCard`, `SectionHeader`, `StatusBadge`)
+- 8 custom controls (`AlertBanner`, `DataCoverageCalendar`, `DataTable`, `LoadingOverlay`, `MetricCard`, `ProgressCard`, `SectionHeader`, `StatusBadge`)
 - 3 XAML style files (`AppStyles.xaml`, `Animations.xaml`, `IconResources.xaml`)
 - `BrushRegistry` for consistent theming
 - `ThemeService` for dark/light mode
@@ -642,15 +626,15 @@ Services are shut down in parallel with a 5-second timeout. This is well-designe
 
 ### CRITICAL ISSUES (Block testability, pose reliability risks)
 
-#### C1: Introduce Dependency Injection Container
+#### C1: Complete DI-First Migration
 
-- **Finding:** No DI container; 28 singleton services with Service Locator pattern
-- **Location:** All 28 service files, `App.xaml.cs`, all ViewModels
+- **Finding:** DI container now exists (`ServiceLocator` + `Microsoft.Extensions.DependencyInjection`), but usage is still dominated by static singleton access
+- **Location:** `App.xaml.cs`, `Services/ServiceLocator.cs`, all ViewModels/pages still using `.Instance`
 - **Current Pattern:**
   ```csharp
   _connectionService = ConnectionService.Instance;
   ```
-- **Recommended Fix:** Introduce `Microsoft.Extensions.DependencyInjection`:
+- **Recommended Fix:** Move from compatibility registrations to constructor-injected interfaces as the primary path:
   ```csharp
   // App.xaml.cs
   var services = new ServiceCollection();
@@ -662,9 +646,9 @@ Services are shut down in parallel with a 5-second timeout. This is well-designe
   // ViewModels receive dependencies via constructor
   public DashboardViewModel(IConnectionService connection, IConfigService config) { }
   ```
-- **Effort:** 3-5 days
-- **Risk:** Medium — requires touching every service and ViewModel. Mitigate with incremental rollout.
-- **Dependency:** Should be done first; all other improvements depend on this.
+- **Effort:** 2-3 days
+- **Risk:** Medium — requires touching many constructors and navigation paths. Mitigate with incremental rollout.
+- **Dependency:** Should continue in parallel with H1/H2.
 
 #### C2: Fix Blocking Async Call
 
@@ -683,10 +667,10 @@ Services are shut down in parallel with a 5-second timeout. This is well-designe
 
 #### C3: Fix Inconsistent Service Instantiation
 
-- **Finding:** 15 locations create `new ConfigService()` instead of using `.Instance`
-- **Location:** See Section 1.2.2 for full list
-- **Recommended Fix:** Until DI is implemented, standardize on `.Instance` pattern everywhere
-- **Effort:** 1 hour
+- **Finding:** 1 remaining location creates `new ConfigService()` instead of using the registered singleton
+- **Location:** `src/MarketDataCollector.Uwp/Services/ArchiveHealthService.cs:47`
+- **Recommended Fix:** Replace direct construction with DI/service-locator resolution for consistency
+- **Effort:** 30 minutes
 - **Risk:** Low — direct replacement
 
 ---
@@ -696,7 +680,7 @@ Services are shut down in parallel with a 5-second timeout. This is well-designe
 #### H1: Extract ViewModels for Top 10 Code-Behind Files
 
 - **Category:** Modularity, Testability
-- **Finding:** 22,815 LOC in code-behind; top 10 files average 800+ lines
+- **Finding:** 22,169 LOC in code-behind; top 10 files still remain very large
 - **Location:** `DashboardPage`, `SettingsPage`, `SymbolsPage`, `RetentionAssurancePage`, `ScheduleManagerPage`, `ChartingPage`, `StorageOptimizationPage`, `BackfillPage`, `NotificationCenterPage`, `WatchlistPage`
 - **Recommended Pattern:** Extract all business logic, state, and service interactions into ViewModels using CommunityToolkit.Mvvm (already a dependency). Code-behind should only contain:
   - `InitializeComponent()`
@@ -704,12 +688,12 @@ Services are shut down in parallel with a 5-second timeout. This is well-designe
   - Purely visual event handlers (animations, layout)
 - **Expected Benefit:** ~8,000 LOC moved to testable ViewModels. Estimated 70% reduction in code-behind for these files.
 - **Effort:** 8-12 days
-- **Dependencies:** C1 (DI Container) should be done first
+- **Dependencies:** C1 migration should continue in parallel
 
 #### H2: Define Interfaces for All Services
 
 - **Category:** Testability, Extensibility
-- **Finding:** Only 2 of 28 services have interfaces
+- **Finding:** Interface coverage has improved to 10 UWP service interfaces, but many services/pages still bypass interface injection
 - **Location:** `src/MarketDataCollector.Uwp/Contracts/`
 - **Recommended Pattern:** Create `I{ServiceName}` interface for each service, extracting the public API. Move to `Contracts/` directory.
 - **Expected Benefit:** Enables unit testing with mocks; enables DI registration by interface
@@ -829,9 +813,9 @@ Services are shut down in parallel with a 5-second timeout. This is well-designe
 **Sequence:**
 1. Q1-Q4: Quick wins (1 hour total)
 2. C2: Fix blocking async call (30 minutes)
-3. C3: Fix inconsistent service instantiation (1 hour)
-4. H2: Define interfaces for all services (3-4 days)
-5. C1: Introduce DI container (3-5 days)
+3. C3: Eliminate final direct `new ConfigService()` call site (30 minutes)
+4. H2: Expand interface + constructor injection adoption for remaining pages (3-4 days)
+5. C1: Continue migration from singleton access to DI-first resolution (2-3 days)
 
 ### Phase 2: MVVM Extraction (High-Impact)
 **Sequence:**
@@ -860,10 +844,10 @@ Services are shut down in parallel with a 5-second timeout. This is well-designe
 |--------|---------|--------|
 | Code-behind LOC (top 10 pages) | 8,500+ | < 2,500 |
 | ViewModel count | 5 | 20+ |
-| Services with interfaces | 2 | 28 |
+| Services with interfaces | 10 | 28+ |
 | Unit tests for ViewModels | 0 | 40+ |
 | Blocking async calls | 1 | 0 |
-| `new ServiceName()` in Views/VMs | 15 | 0 |
+| `new ServiceName()` in Views/VMs | 1 | 0 |
 | Silent catch blocks | 3+ | 0 |
 
 ---
@@ -882,4 +866,4 @@ Services are shut down in parallel with a 5-second timeout. This is well-designe
 
 ---
 
-*Report generated by automated codebase audit. All line numbers and code snippets reference the codebase as of 2026-02-09.*
+*Report updated to reflect the current codebase state as of 2026-02-10.*
