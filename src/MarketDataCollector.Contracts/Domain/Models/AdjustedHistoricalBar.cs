@@ -26,18 +26,42 @@ public sealed record AdjustedHistoricalBar(
 {
     /// <summary>
     /// Convert to standard HistoricalBar (uses adjusted values if available).
+    /// When using adjusted values, ensures OHLC relationships are maintained by clamping
+    /// values to valid ranges. This handles rounding errors in split/dividend adjustments.
     /// </summary>
     public HistoricalBar ToHistoricalBar(bool preferAdjusted = true)
     {
         if (preferAdjusted && AdjustedClose.HasValue)
         {
+            // Use adjusted values, but ensure they maintain valid OHLC relationships
+            var adjOpen = AdjustedOpen ?? Open;
+            var adjHigh = AdjustedHigh ?? High;
+            var adjLow = AdjustedLow ?? Low;
+            var adjClose = AdjustedClose ?? Close;
+
+            // Clamp values to ensure valid OHLC relationships
+            // High must be >= max(Open, Close, Low)
+            // Low must be <= min(Open, Close, High)
+            var maxPrice = Math.Max(Math.Max(adjOpen, adjClose), adjLow);
+            var minPrice = Math.Min(Math.Min(adjOpen, adjClose), adjHigh);
+
+            if (adjHigh < maxPrice)
+                adjHigh = maxPrice;
+
+            if (adjLow > minPrice)
+                adjLow = minPrice;
+
+            // Final clamp to ensure Open and Close are within [Low, High]
+            adjOpen = Math.Max(adjLow, Math.Min(adjHigh, adjOpen));
+            adjClose = Math.Max(adjLow, Math.Min(adjHigh, adjClose));
+
             return new HistoricalBar(
                 Symbol,
                 SessionDate,
-                AdjustedOpen ?? Open,
-                AdjustedHigh ?? High,
-                AdjustedLow ?? Low,
-                AdjustedClose ?? Close,
+                adjOpen,
+                adjHigh,
+                adjLow,
+                adjClose,
                 AdjustedVolume ?? Volume,
                 Source,
                 SequenceNumber
