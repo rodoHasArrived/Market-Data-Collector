@@ -17,7 +17,8 @@ This roadmap consolidates findings from the existing codebase analysis, producti
 - [Phase 3: API Completeness & Documentation](#phase-3-api-completeness--documentation)
 - [Phase 4: Desktop App Maturity](#phase-4-desktop-app-maturity)
 - [Phase 5: Operational Readiness](#phase-5-operational-readiness)
-- [Phase 6: Extended Capabilities](#phase-6-extended-capabilities)
+- [Phase 6: Duplicate & Unused Code Cleanup](#phase-6-duplicate--unused-code-cleanup)
+- [Phase 7: Extended Capabilities](#phase-7-extended-capabilities)
 - [Provider Status Summary](#provider-status-summary)
 - [Test Coverage Summary](#test-coverage-summary)
 - [Stub Endpoint Inventory](#stub-endpoint-inventory)
@@ -242,19 +243,102 @@ From `docs/IMPROVEMENTS.md` — 6 items not started, 3 partially done.
 
 ---
 
-## Phase 6: Extended Capabilities
+## Phase 6: Duplicate & Unused Code Cleanup
+
+Reduce maintenance burden by eliminating dead code, consolidating duplicate implementations, and resolving ambiguous ownership across projects. Informed by `docs/archived/DUPLICATE_CODE_ANALYSIS.md`, `docs/STRUCTURAL_IMPROVEMENTS.md`, and `docs/audits/CLEANUP_OPPORTUNITIES.md`.
+
+**Estimated savings:** ~2,500–3,000 lines of duplicate code removed, ~300 KB of dead assets deleted, and clearer project boundaries.
+
+### 6A. Dead Code Removal (P1 — Zero Risk)
+
+Items that are completely unused and can be deleted immediately with no downstream impact.
+
+| # | Item | Location | Evidence | Est. LOC |
+|---|------|----------|----------|----------|
+| 6A.1 | **Delete unused `SymbolNormalizer.cs`** — complete duplicate of `SymbolNormalization.cs` with identical methods; 0 references in codebase | `Infrastructure/Utilities/SymbolNormalizer.cs` | `SymbolNormalization.cs` has 7 active references; `SymbolNormalizer.cs` has 0 | ~80 |
+| 6A.2 | **Delete UWP Examples folder** — 6 XAML example files + 2 markdown docs never referenced from any code or navigation | `src/MarketDataCollector.Uwp/Examples/` (6 XAML files, ~260 KB) | Zero C# references to any example file | ~260 KB |
+| 6A.3 | **Remove tracked build artifacts** — `build-output.log` and scratch files tracked in git | Root directory | Already addressed in `docs/audits/CLEANUP_SUMMARY.md`; verify removal is merged | N/A |
+
+### 6B. Duplicate Interface Consolidation (P2 — Low Risk)
+
+The same service interfaces are defined in up to three separate projects. Consolidate to a single canonical location in `MarketDataCollector.Ui.Services/Contracts/`.
+
+| # | Item | Canonical Location | Duplicate Locations | Est. LOC |
+|---|------|--------------------|---------------------|----------|
+| 6B.1 | **`IConfigService`** (127 lines canonical vs 15-line stubs) | `Ui.Services/Contracts/` | `Wpf/Services/IConfigService.cs`, `Uwp/Contracts/` | ~30 |
+| 6B.2 | **`IThemeService`** | `Ui.Services/Contracts/` | `Wpf/Services/IThemeService.cs`, `Uwp/Contracts/` | ~20 |
+| 6B.3 | **`INotificationService`** | `Ui.Services/Contracts/` | `Wpf/Services/INotificationService.cs`, `Uwp/Contracts/` | ~20 |
+| 6B.4 | **`ILoggingService`** | `Ui.Services/Contracts/` | `Wpf/Services/ILoggingService.cs`, `Uwp/Contracts/` | ~15 |
+| 6B.5 | **`IMessagingService`** | `Ui.Services/Contracts/` | `Wpf/Services/IMessagingService.cs`, `Uwp/Contracts/` | ~15 |
+| 6B.6 | **`IKeyboardShortcutService`** | `Ui.Services/Contracts/` | `Wpf/Services/IKeyboardShortcutService.cs`, `Uwp/Contracts/` | ~15 |
+| 6B.7 | **`IBackgroundTaskSchedulerService`** | `Ui.Services/Contracts/` | `Wpf/Services/IBackgroundTaskSchedulerService.cs`, `Uwp/Contracts/` | ~15 |
+| 6B.8 | **`IPendingOperationsQueueService`** | `Ui.Services/Contracts/` | `Wpf/Services/IPendingOperationsQueueService.cs`, `Uwp/Contracts/` | ~15 |
+| 6B.9 | **`IOfflineTrackingPersistenceService`** | `Ui.Services/Contracts/` | `Wpf/Services/IOfflineTrackingPersistenceService.cs`, `Uwp/Contracts/` | ~15 |
+
+**Approach:** Delete WPF and UWP duplicate interface files. Update `using` directives to reference `Ui.Services.Contracts`. Verify build.
+
+### 6C. WPF/UWP Service Deduplication (P2 — Medium Risk)
+
+25+ services are nearly identical (95%+ copy-paste) between WPF and UWP. Extract shared logic into `MarketDataCollector.Ui.Services` and keep only platform-specific adapters in each desktop project. Cross-references: STRUCTURAL_IMPROVEMENTS C1, DUPLICATE_CODE_ANALYSIS §5.
+
+| # | Item | Priority | Description | Est. LOC Saved |
+|---|------|----------|-------------|----------------|
+| 6C.1 | **Phase 1 — Near-identical services** (BrushRegistry, ExportPresetService, FormValidationService, InfoBarService, TooltipService) | P2 | Services with <5% variation between WPF and UWP; extract to shared project directly | ~400 |
+| 6C.2 | **Phase 2 — Singleton-pattern services** (ThemeService, ConfigService, NotificationService, NavigationService, ConnectionService) | P2 | Only differ in singleton pattern (`Lazy<T>` vs `lock`); parameterize the pattern in a shared base | ~600 |
+| 6C.3 | **Phase 3 — Services with minor platform differences** (LoggingService, MessagingService, StatusService, CredentialService, SchemaService, WatchlistService) | P2 | ~90% shared logic with small platform-specific branches; use strategy/adapter pattern | ~500 |
+| 6C.4 | **Phase 4 — Complex services** (AdminMaintenanceService, AdvancedAnalyticsService, ArchiveHealthService, BackgroundTaskSchedulerService, OfflineTrackingPersistenceService, PendingOperationsQueueService) | P3 | Larger services requiring careful extraction of shared orchestration logic | ~300 |
+
+**Validation:** Full solution build + existing test suite green after each phase.
+
+### 6D. Ambiguous Class Name Resolution (P2 — Low Risk)
+
+Same-named classes in different namespaces create confusion and maintenance risk.
+
+| # | Item | Locations | Recommendation |
+|---|------|-----------|----------------|
+| 6D.1 | **`SubscriptionManager`** — 3 classes with same name across layers | `Application/Subscriptions/`, `Infrastructure/Providers/`, `Infrastructure/Shared/` | Rename to role-specific names: `SubscriptionCoordinator`, `ProviderSubscriptionManager`, `SubscriptionHelper` |
+| 6D.2 | **`ConfigStore`** — 2 classes with same name | `Application/Http/ConfigStore.cs`, `Ui.Shared/Services/ConfigStore.cs` | Rename UI variant to `UiConfigStore` or merge functionality |
+| 6D.3 | **`BackfillCoordinator`** — 2 classes with same name | `Application/Http/BackfillCoordinator.cs`, `Ui.Shared/Services/BackfillCoordinator.cs` | Rename UI variant to `UiBackfillCoordinator` or merge |
+| 6D.4 | **`HtmlTemplates`** — 2 classes with same name | `Application/Http/HtmlTemplates.cs`, `Ui.Shared/HtmlTemplates.cs` | Determine canonical owner; delete or rename the other |
+
+### 6E. UWP Platform Decoupling (P3 — Higher Risk, Gated on UWP Deprecation Decision)
+
+If the team decides to deprecate UWP in favor of WPF-only (per Phase 4B.2 decision), execute the full removal sequence. See `docs/audits/CLEANUP_OPPORTUNITIES.md` §3 for detailed file-level plan.
+
+| # | Item | Priority | Description |
+|---|------|----------|-------------|
+| 6E.1 | **Port UWP-only behavior to shared services** | P3 | Identify any logic in UWP services not present in WPF; port to `Ui.Services` |
+| 6E.2 | **Remove UWP from solution and CI** | P3 | Remove project from `.sln`, delete UWP jobs from `desktop-builds.yml`, update labeler and quickstart |
+| 6E.3 | **Delete `src/MarketDataCollector.Uwp/`** | P3 | ~100 source files, ~16,500 lines; only after 6E.1 and 6E.2 are complete |
+| 6E.4 | **Remove UWP integration tests** | P3 | `tests/MarketDataCollector.Tests/Integration/UwpCoreIntegrationTests.cs` and related coverage exclusions |
+| 6E.5 | **Update documentation** | P3 | Remove dual-platform wording from docs, move UWP docs to `docs/archived/`, regenerate `docs/generated/repository-structure.md` |
+
+### 6F. Structural Decomposition of Large Files (P3)
+
+Several files exceed 2,000 lines and combine multiple responsibilities. Breaking them apart improves navigability and testability. Cross-reference: CLEANUP_OPPORTUNITIES §4.
+
+| # | Item | Location | Current LOC | Recommendation |
+|---|------|----------|-------------|----------------|
+| 6F.1 | **Split `UiServer.cs`** into domain-specific endpoint modules | `Application/Http/UiServer.cs` | ~3,030 | Extract `MapHealthEndpoints()`, `MapStorageEndpoints()`, `MapConfigEndpoints()`, etc. |
+| 6F.2 | **Split `HtmlTemplates.cs`** — move static CSS/JS to `wwwroot`, keep only dynamic rendering | `Ui.Shared/HtmlTemplates.cs` | ~2,510 | Move static assets to files; split C# into composable render functions |
+| 6F.3 | **Decompose `PortableDataPackager.cs`** — separate orchestration, I/O, validation, reporting | `Storage/Packaging/PortableDataPackager.cs` | ~1,100 | Extract `PackageValidator`, `PackageWriter`, `PackageReporter` |
+| 6F.4 | **Decompose `AnalysisExportService.cs`** | `Storage/Export/AnalysisExportService.cs` | ~1,300 | Extract format-specific writers and quality report generation |
+
+---
+
+## Phase 7: Extended Capabilities
 
 Longer-term goals for expanding the system.
 
 | # | Item | Priority | Notes |
 |---|------|----------|-------|
-| 6.1 | Cloud/object storage sinks (S3, Azure Blob, GCS) | P3 | Currently only local filesystem |
-| 6.2 | Extended export formats (CSV, Arrow/Feather, HDF5) | P3 | JSONL and Parquet exist |
-| 6.3 | Additional pipeline transforms | P3 | |
-| 6.4 | Formal OpenAPI/Swagger specification | P3 | Basic integration exists |
-| 6.5 | Event-driven architecture (message bus for downstream consumers) | P3 | |
-| 6.6 | Multi-tenancy support | P3 | |
-| 6.7 | Web dashboard enhancements (real-time charts, interactive controls) | P3 | SSE exists (IMPROVEMENTS #4) |
+| 7.1 | Cloud/object storage sinks (S3, Azure Blob, GCS) | P3 | Currently only local filesystem |
+| 7.2 | Extended export formats (CSV, Arrow/Feather, HDF5) | P3 | JSONL and Parquet exist |
+| 7.3 | Additional pipeline transforms | P3 | |
+| 7.4 | Formal OpenAPI/Swagger specification | P3 | Basic integration exists |
+| 7.5 | Event-driven architecture (message bus for downstream consumers) | P3 | |
+| 7.6 | Multi-tenancy support | P3 | |
+| 7.7 | Web dashboard enhancements (real-time charts, interactive controls) | P3 | SSE exists (IMPROVEMENTS #4) |
 
 ---
 
@@ -360,6 +444,9 @@ Longer-term goals for expanding the system.
 | `docs/architecture/overview.md` | System architecture |
 | `docs/development/uwp-to-wpf-migration.md` | WPF migration status |
 | `docs/ai/ai-known-errors.md` | Recurring AI agent error patterns |
+| `docs/archived/DUPLICATE_CODE_ANALYSIS.md` | Duplicate code analysis with implementation progress |
+| `docs/audits/CLEANUP_OPPORTUNITIES.md` | WPF-only cleanup plan with file-level detail |
+| `docs/audits/CLEANUP_SUMMARY.md` | Repository hygiene cleanup results |
 
 ---
 
@@ -370,6 +457,7 @@ Longer-term goals for expanding the system.
 - Provider implementations are functionally complete — the conditional compilation pattern (`#if IBAPI`, `#if STOCKSHARP`) is intentional to avoid hard dependencies on commercial SDKs.
 - The 178 stub endpoints are intentional placeholders that return 501 to prevent confusing 404 errors for declared routes.
 - Test coverage (~17% by file count) is the largest gap in the project's production readiness.
+- Phase 6 (Duplicate & Unused Code Cleanup) is informed by three prior audits. Many quick-win items from the duplicate code analysis have already been completed (domain models, provider base classes, shared utilities). The remaining work focuses on desktop service deduplication and UWP platform decoupling.
 
 ---
 
