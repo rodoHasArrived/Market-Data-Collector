@@ -103,6 +103,206 @@ Use this map as a starting point before diving into generated type/member pages.
 - `Spread`/`Imbalance`/`Aggregations` - Pure calculation modules.
 - `Transforms` - Functional stream transformation pipeline.
 
+## REST API Endpoints
+
+The application exposes a REST API when running with `--ui` or `--mode web`. All `/api/*` endpoints require an API key when `MDC_API_KEY` is set. Swagger UI is available at `/swagger` in development mode.
+
+### Authentication
+
+Set the `MDC_API_KEY` environment variable to enable authentication. Pass the key via:
+- `X-Api-Key` header (recommended)
+- `api_key` query parameter
+
+Health probes (`/healthz`, `/readyz`, `/livez`) are always exempt.
+
+### Rate Limiting
+
+- **Global**: 120 requests/minute per API key or IP address
+- **Mutations**: POST/PUT/DELETE endpoints have an additional 10 requests/minute limit
+- Rate limit headers: `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `Retry-After`
+
+### Endpoint Groups
+
+| Tag | Count | Description |
+|-----|-------|-------------|
+| Configuration | 14 | Config CRUD, data source management, derivatives |
+| Backfill | 5 | Historical data backfill execution, preview, progress |
+| Providers | 8 | Provider status, metrics, catalog, comparison, latency |
+| Failover | 7 | Failover rules, health, force failover |
+| Interactive Brokers | 3 | IB-specific status, error codes, API limits |
+| Symbol Mapping | 5 | Cross-provider symbol mappings, CSV import |
+| Live Data | 6 | Real-time trades, quotes, order book, order flow |
+| Symbols | 15 | Symbol CRUD, bulk operations, search, statistics |
+| Storage | 19 | Storage stats, health, tiers, search, catalog |
+| Storage Quality | 9 | Data quality scores, alerts, trends, anomalies |
+| Quality Drops | 2 | Pipeline dropped event audit statistics |
+| Health | 12 | System health, Kubernetes probes, Prometheus metrics, SSE |
+
+### Symbols (`/api/symbols/*`)
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | `/api/symbols` | All configured symbols |
+| GET | `/api/symbols/monitored` | Symbols with monitoring config |
+| GET | `/api/symbols/archived` | Symbols with stored data |
+| GET | `/api/symbols/{symbol}/status` | Detailed status for one symbol |
+| POST | `/api/symbols/add` | Add symbols to configuration |
+| POST | `/api/symbols/{symbol}/remove` | Remove symbol from monitoring |
+| POST | `/api/symbols/{symbol}/archive` | Archive symbol (keep data) |
+| POST | `/api/symbols/bulk-add` | Add multiple symbols at once |
+| POST | `/api/symbols/bulk-remove` | Remove multiple symbols |
+| GET | `/api/symbols/search?q=` | Search configured symbols |
+| POST | `/api/symbols/validate` | Validate symbol identifiers |
+| GET | `/api/symbols/statistics` | Aggregate symbol statistics |
+| GET | `/api/symbols/{symbol}/trades` | Recent trade files |
+| GET | `/api/symbols/{symbol}/depth` | Recent depth files |
+| POST | `/api/symbols/batch` | Batch add/remove operations |
+
+### Storage (`/api/storage/*`)
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | `/api/storage/profiles` | Available storage profile presets |
+| GET | `/api/storage/stats` | Overall storage statistics |
+| GET | `/api/storage/breakdown` | Breakdown by symbol/type |
+| GET | `/api/storage/health` | Storage health summary |
+| GET | `/api/storage/catalog` | Full storage catalog |
+| GET | `/api/storage/search/files?symbol=&q=` | Search stored files |
+| GET | `/api/storage/symbol/{symbol}/info` | Storage info for a symbol |
+| GET | `/api/storage/symbol/{symbol}/stats` | Detailed symbol stats |
+| GET | `/api/storage/symbol/{symbol}/files` | List symbol data files |
+| GET | `/api/storage/symbol/{symbol}/path` | Storage path for symbol |
+| GET | `/api/storage/cleanup/candidates` | Files eligible for cleanup |
+| POST | `/api/storage/cleanup` | Run storage cleanup |
+| GET | `/api/storage/archive/stats` | Archive tier statistics |
+| GET | `/api/storage/health/check` | Detailed health check |
+| GET | `/api/storage/health/orphans` | Find orphaned files |
+| GET | `/api/storage/tiers/statistics` | Tier statistics |
+| GET | `/api/storage/tiers/plan?days=` | Migration plan preview |
+| POST | `/api/storage/tiers/migrate` | Execute tier migration |
+| POST | `/api/storage/maintenance/defrag` | Run defragmentation |
+
+### Storage Quality (`/api/storage/quality/*`)
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | `/api/storage/quality/summary` | Overall quality summary |
+| GET | `/api/storage/quality/scores` | Quality scores for all files |
+| GET | `/api/storage/quality/symbol/{symbol}` | Quality for a specific symbol |
+| GET | `/api/storage/quality/alerts` | Active quality alerts |
+| POST | `/api/storage/quality/alerts/{alertId}/acknowledge` | Acknowledge alert |
+| GET | `/api/storage/quality/rankings/{symbol}` | Source rankings |
+| GET | `/api/storage/quality/trends?days=` | Quality trends over time |
+| GET | `/api/storage/quality/anomalies` | Detected quality anomalies |
+| POST | `/api/storage/quality/check` | Run quality check on path |
+
+### Configuration (`/api/config/*`)
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | `/api/config` | Full configuration |
+| POST | `/api/config/datasource` | Update active data source |
+| POST | `/api/config/alpaca` | Update Alpaca configuration |
+| POST | `/api/config/storage` | Update storage settings |
+| POST | `/api/config/symbols` | Add or update symbol |
+| DELETE | `/api/config/symbols/{symbol}` | Remove symbol |
+| GET | `/api/config/derivatives` | Get derivatives configuration |
+| POST | `/api/config/derivatives` | Update derivatives configuration |
+| GET | `/api/config/datasources` | List all data sources |
+| POST | `/api/config/datasources` | Create or update data source |
+| DELETE | `/api/config/datasources/{id}` | Delete data source |
+| POST | `/api/config/datasources/{id}/toggle` | Toggle source enabled |
+| POST | `/api/config/datasources/defaults` | Set default sources |
+| POST | `/api/config/datasources/failover` | Update failover settings |
+
+### Backfill (`/api/backfill/*`)
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | `/api/backfill/providers` | List available providers |
+| GET | `/api/backfill/status` | Last backfill status |
+| POST | `/api/backfill/run` | Execute backfill |
+| POST | `/api/backfill/run/preview` | Preview backfill (dry run) |
+| GET | `/api/backfill/progress` | Current operation progress |
+
+### Providers (`/api/providers/*`)
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | `/api/providers/status` | All provider status |
+| GET | `/api/providers/metrics` | Provider metrics |
+| GET | `/api/providers/metrics/{providerId}` | Single provider metrics |
+| GET | `/api/providers/comparison` | Feature comparison |
+| GET | `/api/providers/catalog` | Provider catalog with metadata |
+| GET | `/api/providers/catalog/{providerId}` | Single provider catalog entry |
+| GET | `/api/providers/latency` | Latency statistics |
+| GET | `/api/connections` | Connection health summary |
+
+### Failover (`/api/failover/*`)
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | `/api/failover/config` | Failover configuration |
+| POST | `/api/failover/config` | Update failover settings |
+| GET | `/api/failover/rules` | All failover rules |
+| POST | `/api/failover/rules` | Create or update rule |
+| DELETE | `/api/failover/rules/{id}` | Delete failover rule |
+| POST | `/api/failover/force/{ruleId}` | Force failover to provider |
+| GET | `/api/failover/health` | Provider health snapshots |
+
+### Interactive Brokers (`/api/providers/ib/*`)
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | `/api/providers/ib/status` | IB connection status and capabilities |
+| GET | `/api/providers/ib/error-codes` | IB error code reference |
+| GET | `/api/providers/ib/limits` | IB API limits |
+
+### Symbol Mapping (`/api/symbols/mappings/*`)
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | `/api/symbols/mappings` | All symbol mappings |
+| POST | `/api/symbols/mappings` | Create or update mapping |
+| GET | `/api/symbols/mappings/{symbol}` | Single symbol mapping |
+| DELETE | `/api/symbols/mappings/{symbol}` | Delete symbol mapping |
+| POST | `/api/symbols/mappings/import` | Import mappings from CSV |
+
+### Live Data (`/api/data/*`)
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | `/api/data/trades/{symbol}` | Recent trades for symbol |
+| GET | `/api/data/quotes/{symbol}` | Latest quote for symbol |
+| GET | `/api/data/orderbook/{symbol}` | Order book snapshot |
+| GET | `/api/data/bbo/{symbol}` | Best bid/offer |
+| GET | `/api/data/orderflow/{symbol}` | Order flow statistics |
+| GET | `/api/data/health` | Live data health overview |
+
+### Quality Drops (`/api/quality/drops/*`)
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | `/api/quality/drops` | Dropped event statistics |
+| GET | `/api/quality/drops/{symbol}` | Drops for specific symbol |
+
+### Health (`/healthz`, `/api/*`)
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | `/healthz` | Kubernetes health probe |
+| GET | `/readyz` | Kubernetes readiness probe |
+| GET | `/livez` | Kubernetes liveness probe |
+| GET | `/health` | Comprehensive health status |
+| GET | `/ready` | Readiness check |
+| GET | `/live` | Liveness check |
+| GET | `/metrics` | Prometheus metrics |
+| GET | `/api/status` | Full system status |
+| GET | `/api/health/detailed` | Detailed health check |
+| GET | `/api/errors` | Error log with filtering |
+| GET | `/api/backpressure` | Backpressure status |
+| GET | `/api/events/stream` | Server-Sent Events stream |
+
 ## Maintenance checklist
 
 When adding or changing public APIs:
