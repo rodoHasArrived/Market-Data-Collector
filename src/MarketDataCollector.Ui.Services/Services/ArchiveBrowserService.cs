@@ -599,9 +599,9 @@ public sealed record ArchiveTree
 {
     public string RootPath { get; init; } = "";
     public DateTime GeneratedAt { get; init; }
-    public int TotalFiles { get; init; }
-    public long TotalSize { get; init; }
-    public List<YearNode> Years { get; init; } = new();
+    public int TotalFiles { get; set; }
+    public long TotalSize { get; set; }
+    public List<YearNode> Years { get; set; } = new();
 }
 
 public sealed record YearNode
@@ -667,11 +667,11 @@ public sealed record FilePreview
     public string FullPath { get; init; } = "";
     public int HeadCount { get; init; }
     public int TailCount { get; init; }
-    public int TotalLines { get; init; }
-    public List<string> HeadLines { get; init; } = new();
-    public List<string> TailLines { get; init; } = new();
-    public List<JsonDocument> HeadEvents { get; init; } = new();
-    public List<JsonDocument> TailEvents { get; init; } = new();
+    public int TotalLines { get; set; }
+    public List<string> HeadLines { get; set; } = new();
+    public List<string> TailLines { get; set; } = new();
+    public List<JsonDocument> HeadEvents { get; set; } = new();
+    public List<JsonDocument> TailEvents { get; set; } = new();
 }
 
 public sealed record FileSearchQuery

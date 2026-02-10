@@ -349,6 +349,63 @@ public sealed class ApiClientService : IDisposable
     }
 
     /// <summary>
+    /// Sends a DELETE request and returns the API response.
+    /// </summary>
+    public async Task<ApiResponse<T>> DeleteWithResponseAsync<T>(
+        string endpoint,
+        CancellationToken ct = default) where T : class
+    {
+        var url = BuildUrl(endpoint);
+
+        try
+        {
+            var response = await _httpClient.DeleteAsync(url, ct);
+            var json = await response.Content.ReadAsStringAsync(ct);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return new ApiResponse<T>
+                {
+                    Success = false,
+                    StatusCode = (int)response.StatusCode,
+                    ErrorMessage = json
+                };
+            }
+
+            var data = JsonSerializer.Deserialize<T>(json, JsonOptions);
+            return new ApiResponse<T>
+            {
+                Success = true,
+                StatusCode = (int)response.StatusCode,
+                Data = data
+            };
+        }
+        catch (TaskCanceledException) when (ct.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (HttpRequestException ex)
+        {
+            return new ApiResponse<T>
+            {
+                Success = false,
+                StatusCode = 0,
+                ErrorMessage = $"Connection failed: {ex.Message}",
+                IsConnectionError = true
+            };
+        }
+        catch (Exception ex)
+        {
+            return new ApiResponse<T>
+            {
+                Success = false,
+                StatusCode = 0,
+                ErrorMessage = ex.Message
+            };
+        }
+    }
+
+    /// <summary>
     /// Checks if the service is reachable.
     /// </summary>
     public async Task<ServiceHealthResult> CheckHealthAsync(CancellationToken ct = default)
@@ -402,6 +459,16 @@ public sealed class ApiClientService : IDisposable
             _disposed = true;
         }
     }
+}
+
+/// <summary>
+/// Settings for API client configuration.
+/// </summary>
+public sealed record AppSettings
+{
+    public string? ServiceUrl { get; init; }
+    public int ServiceTimeoutSeconds { get; init; } = 30;
+    public int BackfillTimeoutMinutes { get; init; } = 60;
 }
 
 /// <summary>

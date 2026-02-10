@@ -426,7 +426,75 @@ public sealed class DataCompletenessService
         var pct = day.Symbols.Count > 0 ? (double)day.SymbolsWithData / day.Symbols.Count * 100 : 100;
         return GetDayStatus(pct);
     }
+
+    /// <summary>
+    /// Gets completeness for a specific day (alias for GetDailyCompletenessAsync).
+    /// </summary>
+    public Task<DailyCompleteness> GetDayCompletenessAsync(
+        DateOnly date,
+        string[]? symbols = null,
+        CancellationToken ct = default)
+    {
+        // This is a compatibility alias
+        return GetDailyCompletenessAsync("./data", date, symbols, ct);
+    }
+
+    /// <summary>
+    /// Gets completeness for a specific symbol on a specific day (stub).
+    /// </summary>
+    public Task<DailySymbolDetail> GetSymbolDayCompletenessAsync(
+        string symbol,
+        DateOnly date,
+        CancellationToken ct = default)
+    {
+        // Stub implementation
+        return Task.FromResult(new DailySymbolDetail
+        {
+            Symbol = symbol,
+            Date = date,
+            HasData = false
+        });
+    }
+
+    /// <summary>
+    /// Gets all gaps (alias for GetBackfillableGapsAsync).
+    /// </summary>
+    public Task<List<BackfillableGap>> GetGapsAsync(
+        string[]? symbols,
+        DateOnly fromDate,
+        DateOnly toDate,
+        CancellationToken ct = default)
+    {
+        return GetBackfillableGapsAsync("./data", fromDate, toDate, symbols, ct);
+    }
+
+    /// <summary>
+    /// Gets symbol completeness for a date range (stub).
+    /// </summary>
+    public async Task<SymbolCompleteness> GetSymbolCompletenessAsync(
+        string dataPath,
+        string symbol,
+        DateOnly fromDate,
+        DateOnly toDate,
+        CancellationToken ct = default)
+    {
+        var tradingDays = _tradingCalendar.GetTradingDays(fromDate, toDate);
+        return await AnalyzeSymbolCompletenessAsync(dataPath, symbol, tradingDays, ct);
+    }
+
+    /// <summary>
+    /// Repairs a gap by triggering backfill (stub).
+    /// </summary>
+    public Task<bool> RepairGapAsync(
+        string symbol,
+        DateOnly date,
+        CancellationToken ct = default)
+    {
+        // Stub - would trigger actual backfill in real implementation
+        return Task.FromResult(false);
+    }
 }
+
 
 /// <summary>
 /// Service for trading calendar information.
@@ -492,11 +560,11 @@ public sealed record SymbolCompleteness
 {
     public string Symbol { get; init; } = "";
     public int ExpectedDays { get; init; }
-    public int DaysWithData { get; init; }
-    public double Score { get; init; }
-    public long TotalEvents { get; init; }
-    public List<DateOnly> MissingDays { get; init; } = new();
-    public List<DayEventCount> DayDetails { get; init; } = new();
+    public int DaysWithData { get; set; }
+    public double Score { get; set; }
+    public long TotalEvents { get; set; }
+    public List<DateOnly> MissingDays { get; set; } = new();
+    public List<DayEventCount> DayDetails { get; set; } = new();
 }
 
 public sealed class DayEventCount
@@ -539,23 +607,23 @@ public sealed record DailyCompleteness
     public DateOnly Date { get; init; }
     public bool IsWeekend { get; init; }
     public bool IsHoliday { get; init; }
-    public CompletenessStatus Status { get; init; }
-    public int SymbolsWithData { get; init; }
-    public int SymbolsMissingData { get; init; }
-    public long TotalEvents { get; init; }
-    public List<DailySymbolDetail> Symbols { get; init; } = new();
+    public CompletenessStatus Status { get; set; }
+    public int SymbolsWithData { get; set; }
+    public int SymbolsMissingData { get; set; }
+    public long TotalEvents { get; set; }
+    public List<DailySymbolDetail> Symbols { get; set; } = new();
 }
 
 public sealed record DailySymbolDetail
 {
     public string Symbol { get; init; } = "";
     public DateOnly Date { get; init; }
-    public bool HasData { get; init; }
-    public int EventCount { get; init; }
-    public long FileSize { get; init; }
-    public DateTime? FirstTimestamp { get; init; }
-    public DateTime? LastTimestamp { get; init; }
-    public List<string> EventTypes { get; init; } = new();
+    public bool HasData { get; set; }
+    public int EventCount { get; set; }
+    public long FileSize { get; set; }
+    public DateTime? FirstTimestamp { get; set; }
+    public DateTime? LastTimestamp { get; set; }
+    public List<string> EventTypes { get; set; } = new();
 }
 
 public sealed record BackfillableGap
