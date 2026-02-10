@@ -3,6 +3,7 @@ using System.Threading;
 using MarketDataCollector.Contracts.Domain.Models;
 using MarketDataCollector.Domain.Events;
 using MarketDataCollector.Domain.Models;
+using MarketDataCollector.ProviderSdk;
 using Serilog;
 
 namespace MarketDataCollector.Infrastructure.Providers.Backfill;
@@ -164,17 +165,20 @@ public sealed class DataGapRepairService
     private readonly DataGapAnalyzer _analyzer;
     private readonly IEnumerable<IHistoricalDataProvider> _providers;
     private readonly string _dataRoot;
+    private readonly IHistoricalBarWriter? _barWriter;
     private readonly ILogger _log;
 
     public DataGapRepairService(
         DataGapAnalyzer analyzer,
         IEnumerable<IHistoricalDataProvider> providers,
         string dataRoot,
+        IHistoricalBarWriter? barWriter = null,
         ILogger? log = null)
     {
         _analyzer = analyzer ?? throw new ArgumentNullException(nameof(analyzer));
         _providers = providers ?? throw new ArgumentNullException(nameof(providers));
         _dataRoot = dataRoot ?? throw new ArgumentNullException(nameof(dataRoot));
+        _barWriter = barWriter;
         _log = log ?? LoggingSetup.ForContext<DataGapRepairService>();
     }
 
@@ -409,8 +413,12 @@ public sealed class DataGapRepairService
 
     private async Task StoreBarsAsync(IReadOnlyList<HistoricalBar> bars, CancellationToken ct)
     {
-        // TODO: Implement via dependency injection - Infrastructure cannot reference Storage
-        // directly (circular dependency). Inject an IStorageSink or similar abstraction instead.
-        await Task.CompletedTask;
+        if (_barWriter == null)
+        {
+            _log.Warning("No IHistoricalBarWriter configured — {Count} bars will not be persisted", bars.Count);
+            return;
+        }
+
+        await _barWriter.WriteBarsAsync(bars, ct).ConfigureAwait(false);
     }
 }

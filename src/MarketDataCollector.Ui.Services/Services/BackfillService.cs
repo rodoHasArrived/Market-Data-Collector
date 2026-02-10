@@ -1,5 +1,8 @@
 using System;
 using System.Collections.ObjectModel;
+using System.IO;
+using System.IO.Compression;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MarketDataCollector.Contracts.Domain.Models;
@@ -526,7 +529,8 @@ public sealed class BackfillService
     }
 
     /// <summary>
-    /// Gets historical bars for a symbol (stub for charting compatibility).
+    /// Gets historical bars for a symbol by reading from local storage.
+    /// Falls back to triggering a backfill if no stored data is found.
     /// </summary>
     public async Task<List<HistoricalBar>> GetHistoricalBarsAsync(
         string symbol,
@@ -534,9 +538,191 @@ public sealed class BackfillService
         DateOnly toDate,
         CancellationToken ct = default)
     {
-        // Stub implementation - in a real implementation, this would fetch from storage or API
-        await Task.Delay(10, ct);
-        return new List<HistoricalBar>();
+        var configService = new ConfigService();
+        var config = await configService.LoadConfigAsync(ct);
+        var dataRoot = config?.DataRoot ?? "data";
+
+        // Try reading from local storage first
+        var bars = await ReadStoredBarsAsync(dataRoot, symbol, fromDate, toDate, ct);
+        if (bars.Count > 0)
+            return bars;
+
+        // No stored data found — attempt a backfill via the API
+        try
+        {
+            var result = await _backfillApiService.RunBackfillAsync(
+                "composite",
+                new[] { symbol },
+                fromDate.ToString("yyyy-MM-dd"),
+                toDate.ToString("yyyy-MM-dd"),
+                ct);
+
+            if (result?.Success == true && result.BarsWritten > 0)
+            {
+                // Re-read from storage after backfill
+                bars = await ReadStoredBarsAsync(dataRoot, symbol, fromDate, toDate, ct);
+            }
+        }
+        catch
+        {
+            // API unavailable — return whatever we have
+        }
+
+        return bars;
+    }
+
+    private static async Task<List<HistoricalBar>> ReadStoredBarsAsync(
+        string dataRoot,
+        string symbol,
+        DateOnly fromDate,
+        DateOnly toDate,
+        CancellationToken ct)
+    {
+        var bars = new List<HistoricalBar>();
+
+        // Scan common storage layouts for bar data files
+        var searchPaths = new[]
+        {
+            Path.Combine(dataRoot, "historical"),
+            Path.Combine(dataRoot, symbol),
+            Path.Combine(dataRoot, "live"),
+            dataRoot
+        };
+
+        foreach (var basePath in searchPaths)
+        {
+            if (!Directory.Exists(basePath))
+                continue;
+
+            var files = Directory.GetFiles(basePath, "*.jsonl*", SearchOption.AllDirectories)
+                .Where(f =>
+                {
+                    var name = f.ToLowerInvariant();
+                    return name.Contains(symbol.ToLowerInvariant()) &&
+                           (name.Contains("bar") || name.Contains("historical") || name.Contains("ohlc"));
+                })
+                .ToArray();
+
+            foreach (var file in files)
+            {
+                ct.ThrowIfCancellationRequested();
+                bars.AddRange(await ParseBarsFromFileAsync(file, symbol, fromDate, toDate, ct));
+            }
+
+            if (bars.Count > 0)
+                break;
+        }
+
+        return bars.OrderBy(b => b.SessionDate).ToList();
+    }
+
+    private static async Task<List<HistoricalBar>> ParseBarsFromFileAsync(
+        string filePath,
+        string symbol,
+        DateOnly fromDate,
+        DateOnly toDate,
+        CancellationToken ct)
+    {
+        var bars = new List<HistoricalBar>();
+
+        try
+        {
+            using var stream = File.OpenRead(filePath);
+            Stream readStream = filePath.EndsWith(".gz")
+                ? new System.IO.Compression.GZipStream(stream, System.IO.Compression.CompressionMode.Decompress)
+                : stream;
+
+            using var reader = new StreamReader(readStream);
+            string? line;
+            long seq = 0;
+
+            while ((line = await reader.ReadLineAsync(ct)) != null)
+            {
+                ct.ThrowIfCancellationRequested();
+
+                if (string.IsNullOrWhiteSpace(line))
+                    continue;
+
+                try
+                {
+                    using var doc = System.Text.Json.JsonDocument.Parse(line);
+                    var root = doc.RootElement;
+
+                    if (!TryGetDecimal(root, "Open", out var open) ||
+                        !TryGetDecimal(root, "High", out var high) ||
+                        !TryGetDecimal(root, "Low", out var low) ||
+                        !TryGetDecimal(root, "Close", out var close))
+                        continue;
+
+                    DateOnly sessionDate;
+                    if (root.TryGetProperty("SessionDate", out var sd) && sd.ValueKind == System.Text.Json.JsonValueKind.String)
+                    {
+                        if (!DateOnly.TryParse(sd.GetString(), out sessionDate))
+                            continue;
+                    }
+                    else if (root.TryGetProperty("Timestamp", out var ts) && ts.ValueKind == System.Text.Json.JsonValueKind.String)
+                    {
+                        if (!DateTime.TryParse(ts.GetString(), out var dt))
+                            continue;
+                        sessionDate = DateOnly.FromDateTime(dt);
+                    }
+                    else
+                    {
+                        continue;
+                    }
+
+                    if (sessionDate < fromDate || sessionDate > toDate)
+                        continue;
+
+                    var volume = root.TryGetProperty("Volume", out var v) && v.TryGetInt64(out var vol) ? vol : 0L;
+                    var source = root.TryGetProperty("Source", out var src) ? src.GetString() ?? "storage" : "storage";
+
+                    bars.Add(new HistoricalBar(
+                        Symbol: symbol,
+                        SessionDate: sessionDate,
+                        Open: open,
+                        High: high,
+                        Low: low,
+                        Close: close,
+                        Volume: volume,
+                        Source: source,
+                        SequenceNumber: seq++));
+                }
+                catch
+                {
+                    // Skip malformed lines
+                }
+            }
+        }
+        catch
+        {
+            // File read error — return whatever we've parsed so far
+        }
+
+        return bars;
+    }
+
+    private static bool TryGetDecimal(System.Text.Json.JsonElement root, string propertyName, out decimal value)
+    {
+        value = 0;
+        if (!root.TryGetProperty(propertyName, out var prop))
+        {
+            // Try lowercase variant
+            var lower = char.ToLowerInvariant(propertyName[0]) + propertyName[1..];
+            if (!root.TryGetProperty(lower, out prop))
+                return false;
+        }
+
+        if (prop.TryGetDecimal(out value))
+            return true;
+
+        if (prop.ValueKind == System.Text.Json.JsonValueKind.Number && prop.TryGetDouble(out var d))
+        {
+            value = (decimal)d;
+            return true;
+        }
+
+        return false;
     }
 
     /// <summary>
