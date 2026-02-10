@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-10 02:06:35 UTC
+> Auto-generated on 2026-02-10 02:31:48 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -198,6 +198,7 @@ Market-Data-Collector/
 │   │   ├── github-actions-summary.md
 │   │   ├── github-actions-testing.md
 │   │   ├── provider-implementation.md
+│   │   ├── refactor-map.md
 │   │   ├── uwp-to-wpf-migration.md
 │   │   └── wpf-implementation-notes.md
 │   ├── diagrams/

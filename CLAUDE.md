@@ -351,6 +351,7 @@ Market-Data-Collector/
 │   │   ├── github-actions-summary.md
 │   │   ├── github-actions-testing.md
 │   │   ├── provider-implementation.md
+│   │   ├── refactor-map.md
 │   │   ├── uwp-to-wpf-migration.md
 │   │   └── wpf-implementation-notes.md
 │   ├── diagrams/
