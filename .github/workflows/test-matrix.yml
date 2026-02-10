@@ -79,8 +79,8 @@ jobs:
         run: |
           dotnet test tests/MarketDataCollector.FSharp.Tests/MarketDataCollector.FSharp.Tests.fsproj \
             -c Release \
-            --no-build \
             --verbosity normal \
+            --collect:"XPlat Code Coverage" \
             --logger "trx;LogFileName=test-results-fsharp-Linux.trx" \
             --results-directory ./TestResults \
             /p:EnableWindowsTargeting=true
@@ -159,8 +159,8 @@ jobs:
         run: |
           dotnet test tests/MarketDataCollector.FSharp.Tests/MarketDataCollector.FSharp.Tests.fsproj \
             -c Release \
-            --no-build \
             --verbosity normal \
+            --collect:"XPlat Code Coverage" \
             --logger "trx;LogFileName=test-results-fsharp-${{ matrix.os_name }}.trx" \
             --results-directory ./TestResults \
             /p:EnableWindowsTargeting=true

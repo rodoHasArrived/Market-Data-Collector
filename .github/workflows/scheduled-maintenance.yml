@@ -133,8 +133,8 @@ jobs:
         run: |
           dotnet test tests/MarketDataCollector.FSharp.Tests/MarketDataCollector.FSharp.Tests.fsproj \
             -c Release \
-            --no-build \
             --verbosity normal \
+            --collect:"XPlat Code Coverage" \
             --results-directory ./TestResults \
             /p:EnableWindowsTargeting=true
         continue-on-error: true
