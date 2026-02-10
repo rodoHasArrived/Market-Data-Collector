@@ -17,7 +17,6 @@
 #   - New expansion jobs: health-dashboard, link-repair, validate-examples,
 #     rules-engine, generate-changelog, coverage-report
 #   - Improved error diagnostics and GITHUB_STEP_SUMMARY
-#   - Python dependency caching
 
 name: Documentation Automation
 
@@ -467,11 +466,10 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Setup Python with cache
+      - name: Setup Python
         uses: actions/setup-python@v6.2.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-          cache: 'pip'
 
       - name: Setup .NET with Cache
         uses: ./.github/actions/setup-dotnet-cache
