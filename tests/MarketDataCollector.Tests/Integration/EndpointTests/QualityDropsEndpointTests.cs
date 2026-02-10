@@ -1,5 +1,4 @@
 using System.Net;
-using Microsoft.AspNetCore.Mvc.Testing;
 using Xunit;
 
 namespace MarketDataCollector.Tests.Integration.EndpointTests;
@@ -10,7 +9,7 @@ namespace MarketDataCollector.Tests.Integration.EndpointTests;
 /// </summary>
 public sealed class QualityDropsEndpointTests : EndpointIntegrationTestBase
 {
-    public QualityDropsEndpointTests(WebApplicationFactory<Program> factory) : base(factory)
+    public QualityDropsEndpointTests(EndpointTestFixture fixture) : base(fixture)
     {
     }
 

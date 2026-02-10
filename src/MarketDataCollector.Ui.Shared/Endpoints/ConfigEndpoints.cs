@@ -135,11 +135,7 @@ public static class ConfigEndpoints
             return Results.Ok();
         }).WithName("UpdateDerivatives").Produces(200).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
-        // Get status
-        group.MapGet(UiApiRoutes.Status, (ConfigStore store) =>
-        {
-            var status = store.TryLoadStatusJson();
-            return status is null ? Results.NotFound() : Results.Content(status, "application/json");
-        }).WithName("GetConfigStatus").Produces(200).Produces(404);
+        // Note: Status endpoint is handled by StatusEndpoints.MapStatusEndpoints()
+        // which provides live status via StatusEndpointHandlers rather than loading from file
     }
 }

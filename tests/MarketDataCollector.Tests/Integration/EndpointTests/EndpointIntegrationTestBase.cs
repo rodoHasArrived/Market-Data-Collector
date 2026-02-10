@@ -1,20 +1,19 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
-using Microsoft.AspNetCore.Mvc.Testing;
 using Xunit;
 
 namespace MarketDataCollector.Tests.Integration.EndpointTests;
 
 /// <summary>
 /// Base class for HTTP endpoint integration tests.
-/// Uses WebApplicationFactory for in-process testing without real network calls.
+/// Uses EndpointTestFixture for in-process testing without real network calls.
 /// Implements improvement B2/#7 from the structural improvements analysis.
 /// </summary>
-public abstract class EndpointIntegrationTestBase : IClassFixture<WebApplicationFactory<Program>>
+public abstract class EndpointIntegrationTestBase : IClassFixture<EndpointTestFixture>
 {
     protected readonly HttpClient Client;
-    protected readonly WebApplicationFactory<Program> Factory;
+    protected readonly EndpointTestFixture Fixture;
 
     protected static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -22,10 +21,10 @@ public abstract class EndpointIntegrationTestBase : IClassFixture<WebApplication
         PropertyNameCaseInsensitive = true
     };
 
-    protected EndpointIntegrationTestBase(WebApplicationFactory<Program> factory)
+    protected EndpointIntegrationTestBase(EndpointTestFixture fixture)
     {
-        Factory = factory;
-        Client = factory.CreateClient();
+        Fixture = fixture;
+        Client = fixture.Client;
     }
 
     protected async Task<HttpResponseMessage> GetAsync(string url, CancellationToken ct = default)
