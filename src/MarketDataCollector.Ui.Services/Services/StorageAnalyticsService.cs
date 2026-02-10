@@ -356,6 +356,38 @@ public sealed class StorageAnalyticsService
 }
 
 /// <summary>
+/// Storage analytics data.
+/// </summary>
+public class StorageAnalytics
+{
+    public DateTime LastUpdated { get; set; }
+    public long TotalSizeBytes { get; set; }
+    public int TotalFileCount { get; set; }
+    public long TradeSizeBytes { get; set; }
+    public int TradeFileCount { get; set; }
+    public long DepthSizeBytes { get; set; }
+    public int DepthFileCount { get; set; }
+    public long HistoricalSizeBytes { get; set; }
+    public int HistoricalFileCount { get; set; }
+    public SymbolStorageInfo[] SymbolBreakdown { get; set; } = Array.Empty<SymbolStorageInfo>();
+    public long DailyGrowthBytes { get; set; }
+    public int? ProjectedDaysUntilFull { get; set; }
+}
+
+/// <summary>
+/// Per-symbol storage information.
+/// </summary>
+public class SymbolStorageInfo
+{
+    public string Symbol { get; set; } = string.Empty;
+    public long SizeBytes { get; set; }
+    public int FileCount { get; set; }
+    public DateTime OldestData { get; set; }
+    public DateTime NewestData { get; set; }
+    public double PercentOfTotal { get; set; }
+}
+
+/// <summary>
 /// Storage analytics event args.
 /// </summary>
 public class StorageAnalyticsEventArgs : EventArgs

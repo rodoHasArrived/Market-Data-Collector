@@ -549,11 +549,11 @@ public sealed record CompletenessReport
     public DateOnly StartDate { get; init; }
     public DateOnly EndDate { get; init; }
     public DateTime GeneratedAt { get; init; }
-    public int ExpectedTradingDays { get; init; }
-    public double OverallScore { get; init; }
-    public List<SymbolCompleteness> Symbols { get; init; } = new();
-    public List<CalendarDay> CalendarData { get; init; } = new();
-    public List<BackfillableGap> Gaps { get; init; } = new();
+    public int ExpectedTradingDays { get; set; }
+    public double OverallScore { get; set; }
+    public List<SymbolCompleteness> Symbols { get; set; } = new();
+    public List<CalendarDay> CalendarData { get; set; } = new();
+    public List<BackfillableGap> Gaps { get; set; } = new();
 }
 
 public sealed record SymbolCompleteness
