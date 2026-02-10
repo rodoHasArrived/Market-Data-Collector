@@ -68,6 +68,27 @@ public sealed class ConfigurableTickerDataCollectionTests : IDisposable
             _output.WriteLine("  2. DNS can resolve query1.finance.yahoo.com");
             _output.WriteLine("  3. HTTPS access to Yahoo Finance is not blocked");
             
+            // Write a summary file even when skipping, so the workflow can report it
+            var skipSummary = new List<string>
+            {
+                "# Yahoo Finance Data Collection Report",
+                $"Run Date: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC",
+                "",
+                "Status: SKIPPED",
+                "Reason: Yahoo Finance is not available (network connectivity issue)",
+                "",
+                "This is expected in restricted network environments where:",
+                "  - DNS resolution for query1.finance.yahoo.com may fail",
+                "  - External API access may be blocked",
+                "  - Internet connectivity is not available",
+                "",
+                "To collect data successfully, ensure network connectivity and DNS resolution work properly.",
+            };
+            
+            var skipSummaryPath = Path.Combine(_outputDir, "collection_summary.txt");
+            await File.WriteAllTextAsync(skipSummaryPath, string.Join("\n", skipSummary));
+            _output.WriteLine($"Summary written to: {skipSummaryPath}");
+            
             // Skip the test instead of failing
             return;
         }
