@@ -599,9 +599,9 @@ public sealed record ArchiveTree
 {
     public string RootPath { get; init; } = "";
     public DateTime GeneratedAt { get; init; }
-    public int TotalFiles { get; init; }
-    public long TotalSize { get; init; }
-    public List<YearNode> Years { get; init; } = new();
+    public int TotalFiles { get; set; }
+    public long TotalSize { get; set; }
+    public List<YearNode> Years { get; set; } = new();
 }
 
 public sealed record YearNode

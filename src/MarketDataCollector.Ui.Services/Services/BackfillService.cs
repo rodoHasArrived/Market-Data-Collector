@@ -248,7 +248,7 @@ public sealed class BackfillService
                     {
                         symbolProgress.Status = "Completed";
                         symbolProgress.Progress = 100;
-                        symbolProgress.CompletedAt = result.CompletedUtc;
+                        symbolProgress.CompletedAt = result.CompletedUtc.DateTime;
                         symbolProgress.BarsDownloaded = result.BarsWritten / Math.Max(1, completedSymbols.Length);
                         symbolProgress.Provider = result.Provider;
                     }

@@ -12,7 +12,7 @@ public sealed class ChartingService
     public ChartingService()
     {
         _backfillService = new BackfillService();
-        _liveDataService = new LiveDataService();
+        _liveDataService = LiveDataService.Instance;
     }
 
     /// <summary>
@@ -31,9 +31,9 @@ public sealed class ChartingService
             Timeframe = timeframe
         };
 
-        // Get historical bars from backfill service
-        var bars = await _backfillService.GetHistoricalBarsAsync(
-            symbol, fromDate, toDate, ct);
+        // TODO: Implement historical bars endpoint in API or use storage service
+        // For now, return empty data as the GetHistoricalBarsAsync method doesn't exist
+        var bars = new List<HistoricalBar>();
 
         foreach (var bar in bars)
         {

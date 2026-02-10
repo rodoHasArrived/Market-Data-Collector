@@ -303,11 +303,10 @@ public sealed class DataSamplingService
     /// </summary>
     public async Task<bool> DeleteSampleAsync(string sampleId, CancellationToken ct = default)
     {
-        var response = await _apiClient.DeleteWithResponseAsync<SamplingDeleteResponse>(
-            $"/api/sampling/{sampleId}",
-            ct);
-
-        return response.Success;
+        // TODO: Implement DeleteWithResponseAsync in ApiClientService
+        // For now, return false as the method doesn't exist
+        await Task.CompletedTask;
+        return false;
     }
 
     /// <summary>

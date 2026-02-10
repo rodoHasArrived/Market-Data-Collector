@@ -478,22 +478,22 @@ public sealed record CompletenessReport
     public DateOnly StartDate { get; init; }
     public DateOnly EndDate { get; init; }
     public DateTime GeneratedAt { get; init; }
-    public int ExpectedTradingDays { get; init; }
-    public double OverallScore { get; init; }
-    public List<SymbolCompleteness> Symbols { get; init; } = new();
-    public List<CalendarDay> CalendarData { get; init; } = new();
-    public List<BackfillableGap> Gaps { get; init; } = new();
+    public int ExpectedTradingDays { get; set; }
+    public double OverallScore { get; set; }
+    public List<SymbolCompleteness> Symbols { get; set; } = new();
+    public List<CalendarDay> CalendarData { get; set; } = new();
+    public List<BackfillableGap> Gaps { get; set; } = new();
 }
 
 public sealed record SymbolCompleteness
 {
     public string Symbol { get; init; } = "";
     public int ExpectedDays { get; init; }
-    public int DaysWithData { get; init; }
-    public double Score { get; init; }
-    public long TotalEvents { get; init; }
-    public List<DateOnly> MissingDays { get; init; } = new();
-    public List<DayEventCount> DayDetails { get; init; } = new();
+    public int DaysWithData { get; set; }
+    public double Score { get; set; }
+    public long TotalEvents { get; set; }
+    public List<DateOnly> MissingDays { get; set; } = new();
+    public List<DayEventCount> DayDetails { get; set; } = new();
 }
 
 public sealed class DayEventCount
@@ -536,11 +536,11 @@ public sealed record DailyCompleteness
     public DateOnly Date { get; init; }
     public bool IsWeekend { get; init; }
     public bool IsHoliday { get; init; }
-    public CompletenessStatus Status { get; init; }
-    public int SymbolsWithData { get; init; }
-    public int SymbolsMissingData { get; init; }
-    public long TotalEvents { get; init; }
-    public List<DailySymbolDetail> Symbols { get; init; } = new();
+    public CompletenessStatus Status { get; set; }
+    public int SymbolsWithData { get; set; }
+    public int SymbolsMissingData { get; set; }
+    public long TotalEvents { get; set; }
+    public List<DailySymbolDetail> Symbols { get; set; } = new();
 }
 
 public sealed record DailySymbolDetail

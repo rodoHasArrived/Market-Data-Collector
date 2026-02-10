@@ -8,11 +8,13 @@ public sealed class DataCalendarService
 {
     private readonly DataCompletenessService _completenessService;
     private readonly StorageAnalyticsService _storageService;
+    private readonly ConfigService _configService;
 
     public DataCalendarService()
     {
-        _completenessService = new DataCompletenessService();
-        _storageService = new StorageAnalyticsService();
+        _completenessService = new DataCompletenessService(ManifestService.Instance, new TradingCalendarService());
+        _storageService = StorageAnalyticsService.Instance;
+        _configService = ConfigService.Instance;
     }
 
     /// <summary>
@@ -108,14 +110,17 @@ public sealed class DataCalendarService
         }
 
         // Get completeness data for this day
-        var report = await _completenessService.GetDayCompletenessAsync(date, symbols, ct);
+        var appConfig = await _configService.LoadConfigAsync(ct);
+        var dataPath = appConfig?.DataRoot ?? "data";
+        var report = await _completenessService.GetDailyCompletenessAsync(dataPath, date, ct);
 
-        dayData.HasData = report.HasData;
-        dayData.Completeness = report.Completeness;
-        dayData.EventCount = report.EventCount;
-        dayData.ExpectedEvents = report.ExpectedEvents;
-        dayData.HasGaps = report.GapCount > 0;
-        dayData.GapCount = report.GapCount;
+        dayData.HasData = report.Symbols.Any(s => s.HasData);
+        var totalExpected = report.SymbolsWithData + report.SymbolsMissingData;
+        dayData.Completeness = totalExpected > 0 ? (double)report.SymbolsWithData / totalExpected * 100 : 0;
+        dayData.EventCount = (int)report.TotalEvents;
+        dayData.ExpectedEvents = totalExpected;
+        dayData.HasGaps = report.SymbolsMissingData > 0;
+        dayData.GapCount = report.SymbolsMissingData;
 
         // Determine completeness level for heatmap coloring
         dayData.CompletenessLevel = dayData.Completeness switch
@@ -133,16 +138,16 @@ public sealed class DataCalendarService
         {
             foreach (var symbol in symbols)
             {
-                var symbolReport = await _completenessService.GetSymbolDayCompletenessAsync(
-                    symbol, date, ct);
+                var symbolDetail = report.Symbols.FirstOrDefault(s => s.Symbol == symbol);
+                if (symbolDetail == null) continue;
 
                 dayData.SymbolBreakdown.Add(new SymbolDayData
                 {
                     Symbol = symbol,
-                    HasData = symbolReport.HasData,
-                    Completeness = symbolReport.Completeness,
-                    EventCount = symbolReport.EventCount,
-                    HasGaps = symbolReport.GapCount > 0
+                    HasData = symbolDetail.HasData,
+                    Completeness = symbolDetail.HasData ? 100.0 : 0.0,
+                    EventCount = symbolDetail.EventCount,
+                    HasGaps = !symbolDetail.HasData
                 });
             }
         }
@@ -175,6 +180,9 @@ public sealed class DataCalendarService
 
         matrix.Dates = dates;
 
+        var appConfig = await _configService.LoadConfigAsync(ct);
+        var dataPath = appConfig?.DataRoot ?? "data";
+
         // Get coverage for each symbol
         foreach (var symbol in symbols)
         {
@@ -182,14 +190,14 @@ public sealed class DataCalendarService
 
             foreach (var date in dates)
             {
-                var dayReport = await _completenessService.GetSymbolDayCompletenessAsync(
-                    symbol, date, ct);
+                var dayReport = await _completenessService.GetDailyCompletenessAsync(dataPath, date, ct);
+                var symbolDetail = dayReport.Symbols.FirstOrDefault(s => s.Symbol == symbol);
 
                 symbolCoverage.DayCoverage.Add(new DayCoverageInfo
                 {
                     Date = date,
-                    HasData = dayReport.HasData,
-                    Completeness = dayReport.Completeness
+                    HasData = symbolDetail?.HasData ?? false,
+                    Completeness = symbolDetail?.HasData == true ? 100.0 : 0.0
                 });
             }
 
@@ -220,28 +228,29 @@ public sealed class DataCalendarService
             ToDate = toDate
         };
 
+        var appConfig = await _configService.LoadConfigAsync(ct);
+        var dataPath = appConfig?.DataRoot ?? "data";
+
         var report = await _completenessService.GetCompletenessReportAsync(
-            symbols ?? Array.Empty<string>(), fromDate, toDate, ct);
+            dataPath, fromDate, toDate, symbols ?? Array.Empty<string>(), ct);
 
-        summary.TotalGaps = report.GapCount;
-        summary.TotalTradingDays = report.TotalTradingDays;
-        summary.DaysWithGaps = report.DaysWithGaps;
-        summary.OverallCompleteness = report.OverallCompleteness;
+        summary.TotalGaps = report.Gaps.Count;
+        summary.TotalTradingDays = report.ExpectedTradingDays;
+        summary.DaysWithGaps = report.Gaps.Select(g => g.Date).Distinct().Count();
+        summary.OverallCompleteness = report.OverallScore;
 
-        // Get individual gaps
-        var gaps = await _completenessService.GetGapsAsync(symbols, fromDate, toDate, ct);
-
-        foreach (var gap in gaps)
+        // Map gaps from report
+        foreach (var gap in report.Gaps)
         {
             summary.Gaps.Add(new GapInfo
             {
                 Symbol = gap.Symbol,
-                StartDate = gap.StartDate,
-                EndDate = gap.EndDate,
-                GapType = gap.GapType,
-                ExpectedEvents = gap.ExpectedEvents,
-                ActualEvents = gap.ActualEvents,
-                CanRepair = gap.CanRepair
+                StartDate = gap.Date,
+                EndDate = gap.Date, // Single day gap
+                GapType = gap.GapType.ToString(),
+                ExpectedEvents = gap.EstimatedEvents,
+                ActualEvents = 0, // Gap means 0 actual events
+                CanRepair = gap.CanBackfill
             });
         }
 
@@ -341,16 +350,19 @@ public sealed class DataCalendarService
             if (periodEnd > toDate)
                 periodEnd = toDate;
 
+            var appConfigForTrend = await _configService.LoadConfigAsync(ct);
+            var dataPathForTrend = appConfigForTrend?.DataRoot ?? "data";
+
             var report = await _completenessService.GetCompletenessReportAsync(
-                symbols ?? Array.Empty<string>(), currentDate, periodEnd, ct);
+                dataPathForTrend, currentDate, periodEnd, symbols ?? Array.Empty<string>(), ct);
 
             trend.Points.Add(new CompletenessTrendPoint
             {
                 PeriodStart = currentDate,
                 PeriodEnd = periodEnd,
-                Completeness = report.OverallCompleteness,
-                EventCount = report.TotalActualEvents,
-                GapCount = report.GapCount
+                Completeness = report.OverallScore,
+                EventCount = report.Symbols.Sum(s => s.TotalEvents),
+                GapCount = report.Gaps.Count
             });
 
             currentDate = periodEnd.AddDays(1);

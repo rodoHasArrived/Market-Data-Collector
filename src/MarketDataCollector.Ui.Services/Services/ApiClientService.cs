@@ -416,3 +416,13 @@ public sealed class ServiceUrlChangedEventArgs : EventArgs
     public string OldUrl { get; init; } = string.Empty;
     public string NewUrl { get; init; } = string.Empty;
 }
+
+/// <summary>
+/// Simple configuration model for API client settings.
+/// </summary>
+public sealed class AppSettings
+{
+    public string? ServiceUrl { get; set; }
+    public int ServiceTimeoutSeconds { get; set; }
+    public int BackfillTimeoutMinutes { get; set; }
+}

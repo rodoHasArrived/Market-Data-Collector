@@ -15,9 +15,9 @@ public sealed class AnalysisExportWizardService
 
     public AnalysisExportWizardService()
     {
-        _completenessService = new DataCompletenessService();
-        _storageService = new StorageAnalyticsService();
-        _configService = new ConfigService();
+        _completenessService = new DataCompletenessService(ManifestService.Instance, new TradingCalendarService());
+        _storageService = StorageAnalyticsService.Instance;
+        _configService = ConfigService.Instance;
     }
 
     /// <summary>
@@ -160,16 +160,22 @@ public sealed class AnalysisExportWizardService
     {
         var estimate = new ExportEstimate();
 
+        // Get data path from config
+        var appConfig = await _configService.LoadConfigAsync(ct);
+        var dataPath = appConfig?.DataRoot ?? "data";
+
         // Get data availability info
         var completeness = await _completenessService.GetCompletenessReportAsync(
-            config.Symbols,
+            dataPath,
             config.FromDate,
             config.ToDate,
+            config.Symbols,
             ct);
 
-        estimate.TotalRecords = completeness.TotalExpectedEvents;
-        estimate.AvailableRecords = completeness.TotalActualEvents;
-        estimate.CompletenessPercent = completeness.OverallCompleteness;
+        // Calculate totals from symbol reports
+        estimate.TotalRecords = completeness.Symbols.Sum(s => s.TotalEvents);
+        estimate.AvailableRecords = estimate.TotalRecords; // All stored events are available
+        estimate.CompletenessPercent = completeness.OverallScore * 100;
 
         // Estimate file size based on format
         var bytesPerRecord = config.Profile.OutputFormat switch
@@ -234,31 +240,36 @@ public sealed class AnalysisExportWizardService
             ToDate = config.ToDate
         };
 
+        // Get data path from config
+        var appConfig = await _configService.LoadConfigAsync(ct);
+        var dataPath = appConfig?.DataRoot ?? "data";
+
         // Get completeness data
         var completeness = await _completenessService.GetCompletenessReportAsync(
-            config.Symbols,
+            dataPath,
             config.FromDate,
             config.ToDate,
+            config.Symbols,
             ct);
 
-        report.OverallCompleteness = completeness.OverallCompleteness;
-        report.TotalTradingDays = completeness.TotalTradingDays;
-        report.DaysWithData = completeness.DaysWithData;
-        report.GapCount = completeness.GapCount;
+        report.OverallCompleteness = completeness.OverallScore;
+        report.TotalTradingDays = completeness.ExpectedTradingDays;
+        report.DaysWithData = completeness.Symbols.SelectMany(s => s.DayDetails).Select(d => d.Date).Distinct().Count();
+        report.GapCount = completeness.Gaps.Count;
 
         // Per-symbol quality
         foreach (var symbol in config.Symbols)
         {
-            var symbolReport = await _completenessService.GetSymbolCompletenessAsync(
-                symbol, config.FromDate, config.ToDate, ct);
+            var symbolData = completeness.Symbols.FirstOrDefault(s => s.Symbol == symbol);
+            if (symbolData == null) continue;
 
             report.SymbolQuality.Add(new SymbolQualityInfo
             {
                 Symbol = symbol,
-                Completeness = symbolReport.Completeness,
-                RecordCount = symbolReport.RecordCount,
-                HasGaps = symbolReport.GapCount > 0,
-                QualityGrade = GetQualityGrade(symbolReport.Completeness)
+                Completeness = symbolData.Score,
+                RecordCount = symbolData.TotalEvents,
+                HasGaps = symbolData.MissingDays.Count > 0,
+                QualityGrade = GetQualityGrade(symbolData.Score)
             });
         }
 
