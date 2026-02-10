@@ -271,16 +271,16 @@ public sealed class WorkspaceService : IWorkspaceService
     /// <summary>
     /// Exports a workspace to a file.
     /// </summary>
-    public async Task<string> ExportWorkspaceAsync(string workspaceId, CancellationToken cancellationToken = default)
+    public Task<string> ExportWorkspaceAsync(string workspaceId, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
         var workspace = _workspaces.FirstOrDefault(w => w.Id == workspaceId);
         if (workspace != null)
         {
-            return JsonSerializer.Serialize(workspace, new JsonSerializerOptions { WriteIndented = true });
+            return Task.FromResult(JsonSerializer.Serialize(workspace, new JsonSerializerOptions { WriteIndented = true }));
         }
-        return string.Empty;
+        return Task.FromResult(string.Empty);
     }
 
     /// <summary>

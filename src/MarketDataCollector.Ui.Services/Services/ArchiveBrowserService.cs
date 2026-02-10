@@ -26,7 +26,7 @@ public sealed class ArchiveBrowserService
     /// <summary>
     /// Gets the hierarchical tree structure of the archive.
     /// </summary>
-    public async Task<ArchiveTree> GetArchiveTreeAsync(
+    public Task<ArchiveTree> GetArchiveTreeAsync(
         string rootPath,
         CancellationToken ct = default)
     {
@@ -38,7 +38,7 @@ public sealed class ArchiveBrowserService
 
         if (!Directory.Exists(rootPath))
         {
-            return tree;
+            return Task.FromResult(tree);
         }
 
         // Build year -> month -> day -> symbol -> type hierarchy
@@ -115,7 +115,7 @@ public sealed class ArchiveBrowserService
         tree.TotalFiles = tree.Years.Sum(y => y.TotalFiles);
         tree.TotalSize = tree.Years.Sum(y => y.TotalSize);
 
-        return tree;
+        return Task.FromResult(tree);
     }
 
     /// <summary>

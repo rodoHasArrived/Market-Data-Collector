@@ -326,7 +326,7 @@ public sealed partial class AdminMaintenancePage : Page
         }
     }
 
-    private async void EditPolicy_Click(object sender, RoutedEventArgs e)
+    private void EditPolicy_Click(object sender, RoutedEventArgs e)
     {
         if (sender is Button btn && btn.Tag is string policyId)
         {
