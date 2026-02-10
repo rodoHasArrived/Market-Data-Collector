@@ -1,3 +1,16 @@
+<!--
+  ============================================================================
+  Market Data Collector - MSBuild Properties
+  ============================================================================
+  This file defines shared MSBuild properties for all projects in the solution.
+  Automatically imported by all .csproj files.
+  
+  Related Configuration Files:
+  - Directory.Packages.props  : Central Package Management (CPM) version definitions
+  - .globalconfig             : Roslyn analyzer and code style rules
+  - src/MarketDataCollector.Uwp/Build.Notifications.targets : UWP-specific build events
+  ============================================================================
+-->
 <Project>
   <PropertyGroup>
     <!-- Allow resolving Windows-targeted TFMs on non-Windows CI runners to avoid NETSDK1100 -->
@@ -7,8 +20,8 @@
     <!-- MSB3277: Assembly binding conflict (typically transitive dependencies, resolved automatically) -->
     <!-- NETSDK1206: Version-specific or distribution-specific RID (legacy RIDs, handled by newer .NET) -->
     <!-- NU1608: Package version outside of dependency constraint (transitive dependencies) -->
-    <!-- IL2026: RequiresUnreferencedCode (JSON serialization) -->
-    <!-- IL2070: Dynamic type access (JSON serialization) -->
+    <!-- IL2026: RequiresUnreferencedCode (JSON serialization, app doesn't use trimming/AOT) -->
+    <!-- IL2070: Dynamic type access (JSON serialization, app doesn't use trimming/AOT) -->
     <!-- CS1587: XML comment placement (false positive with records) -->
     <NoWarn>$(NoWarn);MSB3277;NETSDK1206;NU1608;IL2026;IL2070;CS1587</NoWarn>
   </PropertyGroup>

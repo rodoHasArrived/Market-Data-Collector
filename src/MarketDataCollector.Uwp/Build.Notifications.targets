@@ -1,19 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
+  ============================================================================
   Market Data Collector - Build Notifications MSBuild Targets
-
-  This file provides build event logging and notifications for the Windows Desktop Application.
-  It hooks into MSBuild events to provide detailed progress information during compilation.
-
+  ============================================================================
+  PROJECT-SPECIFIC: This file is imported ONLY by MarketDataCollector.Uwp.csproj
+                    to provide enhanced build feedback for the Windows Desktop app.
+  
+  Related Configuration Files:
+  - Directory.Build.props  : Global MSBuild properties (applies to all projects)
+  - Directory.Packages.props : Central Package Management (applies to all projects)
+  
   Features:
   - Pre-build environment validation
   - Build step timing and progress
   - Post-build summary with statistics
   - Error analysis and suggestions
   - Optional Windows toast notifications
-
-  To enable verbose output, build with: dotnet build -p:BuildNotificationsVerbose=true
-  To disable notifications, build with: dotnet build -p:DisableBuildNotifications=true
+  
+  Usage:
+    dotnet build -p:BuildNotificationsVerbose=true   # Enable verbose output
+    dotnet build -p:DisableBuildNotifications=true   # Disable notifications
+  ============================================================================
 -->
 <Project>
 

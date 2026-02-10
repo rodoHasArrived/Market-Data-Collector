@@ -1,9 +1,12 @@
 is_global = true
 
-# Suppress trim analysis warnings for ASP.NET Core JSON serialization
-# These are safe to suppress as the application doesn't use trimming/AOT
-dotnet_diagnostic.IL2026.severity = none
-dotnet_diagnostic.IL2070.severity = none
-
-# Suppress XML documentation warnings that are already handled by NoWarn=1591
-dotnet_diagnostic.CS1587.severity = none
+# ============================================================================
+# Market Data Collector - Global Analyzer Configuration
+# ============================================================================
+# This file configures Roslyn analyzers and code style rules globally.
+# It works alongside Directory.Build.props which handles MSBuild warnings.
+#
+# NOTE: Diagnostic suppressions (IL2026, IL2070, CS1587) are handled in
+#       Directory.Build.props via NoWarn property for better MSBuild integration.
+#       See Directory.Build.props lines 10-13 for the canonical suppressions.
+# ============================================================================
