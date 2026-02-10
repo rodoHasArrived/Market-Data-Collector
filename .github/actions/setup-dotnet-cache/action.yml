@@ -7,6 +7,10 @@ inputs:
     description: '.NET SDK version to install'
     required: false
     default: '9.0.x'
+  use-global-json:
+    description: 'When true, install SDK version from global.json for deterministic CI'
+    required: false
+    default: 'true'
   cache-suffix:
     description: 'Optional suffix for cache key to isolate caches between workflows'
     required: false
@@ -20,10 +24,24 @@ outputs:
 runs:
   using: 'composite'
   steps:
-    - name: Setup .NET
+    - name: Setup .NET (global.json)
+      if: inputs.use-global-json == 'true'
+      uses: actions/setup-dotnet@v5.1.0
+      with:
+        global-json-file: global.json
+
+    - name: Setup .NET (version input fallback)
+      if: inputs.use-global-json != 'true'
       uses: actions/setup-dotnet@v5.1.0
       with:
         dotnet-version: ${{ inputs.dotnet-version }}
+
+    - name: Print installed SDKs
+      shell: bash
+      run: |
+        dotnet --version
+        dotnet --list-sdks
+        dotnet --info
 
     - name: Cache NuGet packages
       id: nuget-cache
@@ -32,7 +50,7 @@ runs:
         path: |
           ~/.nuget/packages
           !~/.nuget/packages/unwanted
-        key: ${{ runner.os }}-nuget-${{ inputs.cache-suffix }}${{ inputs.cache-suffix && '-' || '' }}${{ hashFiles('**/*.csproj', '**/*.fsproj', 'Directory.Build.props') }}
+        key: ${{ runner.os }}-nuget-${{ inputs.cache-suffix }}${{ inputs.cache-suffix && '-' || '' }}${{ hashFiles('**/*.csproj', '**/*.fsproj', 'Directory.Build.props', 'global.json', 'NuGet.config', 'packages.lock.json', '**/packages.lock.json') }}
         restore-keys: |
           ${{ runner.os }}-nuget-${{ inputs.cache-suffix }}${{ inputs.cache-suffix && '-' || '' }}
           ${{ runner.os }}-nuget-
