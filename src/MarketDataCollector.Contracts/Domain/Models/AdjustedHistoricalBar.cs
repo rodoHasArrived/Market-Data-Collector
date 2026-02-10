@@ -31,13 +31,20 @@ public sealed record AdjustedHistoricalBar(
     {
         if (preferAdjusted && AdjustedClose.HasValue)
         {
-            return new HistoricalBar(
-                Symbol,
-                SessionDate,
+            var (open, high, low, close) = NormalizeOHLC(
                 AdjustedOpen ?? Open,
                 AdjustedHigh ?? High,
                 AdjustedLow ?? Low,
-                AdjustedClose ?? Close,
+                AdjustedClose ?? Close
+            );
+
+            return new HistoricalBar(
+                Symbol,
+                SessionDate,
+                open,
+                high,
+                low,
+                close,
                 AdjustedVolume ?? Volume,
                 Source,
                 SequenceNumber
@@ -45,5 +52,22 @@ public sealed record AdjustedHistoricalBar(
         }
 
         return new HistoricalBar(Symbol, SessionDate, Open, High, Low, Close, Volume, Source, SequenceNumber);
+    }
+
+    /// <summary>
+    /// Normalizes OHLC values to satisfy HistoricalBar constraints.
+    /// Yahoo Finance adjusted prices can violate constraints due to rounding during adjustment factor application.
+    /// This method expands High/Low to accommodate Open/Close when needed.
+    /// </summary>
+    private static (decimal Open, decimal High, decimal Low, decimal Close) NormalizeOHLC(
+        decimal open, decimal high, decimal low, decimal close)
+    {
+        // Ensure High is at least as high as Open and Close
+        var normalizedHigh = Math.Max(high, Math.Max(open, close));
+
+        // Ensure Low is at most as low as Open and Close
+        var normalizedLow = Math.Min(low, Math.Min(open, close));
+
+        return (open, normalizedHigh, normalizedLow, close);
     }
 }
