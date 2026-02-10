@@ -1,15 +1,23 @@
 <Project>
   <!--
-    Central Package Version Management
-
+    ============================================================================
+    Market Data Collector - Central Package Version Management
+    ============================================================================
     All package versions are defined here to ensure consistency across the solution.
     Individual projects reference packages WITHOUT version numbers.
-
+    
+    Related Configuration Files:
+    - Directory.Build.props : Global MSBuild properties and warning suppressions
+    - .globalconfig        : Roslyn analyzer and code style rules
+    
     Example in .csproj:
       <PackageReference Include="Serilog" />
-
+    
     Instead of:
       <PackageReference Include="Serilog" Version="4.3.0" />
+    
+    See: https://learn.microsoft.com/en-us/nuget/consume-packages/central-package-management
+    ============================================================================
   -->
 
   <PropertyGroup>
