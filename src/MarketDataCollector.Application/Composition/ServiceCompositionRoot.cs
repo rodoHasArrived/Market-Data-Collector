@@ -209,13 +209,9 @@ public static class ServiceCompositionRoot
     /// Registers symbol management and search services.
     /// </summary>
     /// <remarks>
-    /// <para>Symbol search providers are discovered using a priority-based approach:</para>
-    /// <list type="number">
-    /// <item><description><see cref="ProviderRegistry.GetSymbolSearchProviders()"/> - unified registry</description></item>
-    /// <item><description><see cref="ProviderFactory.CreateSymbolSearchProviders()"/> - factory with credential resolution</description></item>
-    /// <item><description>Direct instantiation - backwards compatibility fallback</description></item>
-    /// </list>
-    /// <para>This ensures all symbol search operations go through <see cref="SymbolSearchService"/>.</para>
+    /// Symbol search providers are resolved from <see cref="ProviderRegistry"/> which is populated
+    /// by <see cref="RegisterSymbolSearchProviders"/> during startup.
+    /// All symbol search operations go through <see cref="SymbolSearchService"/>.
     /// </remarks>
     private static IServiceCollection AddSymbolManagementServices(this IServiceCollection services)
     {
@@ -246,54 +242,26 @@ public static class ServiceCompositionRoot
     }
 
     /// <summary>
-    /// Gets symbol search providers using a priority-based discovery approach.
+    /// Gets symbol search providers from the unified ProviderRegistry.
+    /// Providers are populated by <see cref="RegisterSymbolSearchProviders"/> during startup.
     /// </summary>
     private static IEnumerable<ISymbolSearchProvider> GetSymbolSearchProviders(
         IServiceProvider sp,
         Serilog.ILogger log)
     {
-        // Priority 1: Use ProviderRegistry if available and populated
         var registry = sp.GetService<ProviderRegistry>();
         if (registry != null)
         {
-            var registryProviders = registry.GetSymbolSearchProviders();
-            if (registryProviders.Count > 0)
+            var providers = registry.GetSymbolSearchProviders();
+            if (providers.Count > 0)
             {
-                log.Information("Using {Count} symbol search providers from ProviderRegistry", registryProviders.Count);
-                return registryProviders;
+                log.Information("Using {Count} symbol search providers from ProviderRegistry", providers.Count);
+                return providers;
             }
         }
 
-        // Priority 2: Use ProviderFactory if available
-        var factory = sp.GetService<ProviderFactory>();
-        if (factory != null)
-        {
-            var factoryProviders = factory.CreateSymbolSearchProviders();
-            if (factoryProviders.Count > 0)
-            {
-                log.Information("Using {Count} symbol search providers from ProviderFactory", factoryProviders.Count);
-
-                // Register with registry if available (populate for future use)
-                if (registry != null)
-                {
-                    foreach (var provider in factoryProviders)
-                    {
-                        registry.Register(provider);
-                    }
-                }
-
-                return factoryProviders;
-            }
-        }
-
-        // Priority 3: Fallback to direct instantiation (backwards compatibility)
-        log.Debug("Using fallback symbol search provider instantiation");
-        return new ISymbolSearchProvider[]
-        {
-            new AlpacaSymbolSearchProviderRefactored(),
-            new FinnhubSymbolSearchProviderRefactored(),
-            new PolygonSymbolSearchProvider()
-        };
+        log.Warning("No symbol search providers available from ProviderRegistry");
+        return Array.Empty<ISymbolSearchProvider>();
     }
 
     #endregion
