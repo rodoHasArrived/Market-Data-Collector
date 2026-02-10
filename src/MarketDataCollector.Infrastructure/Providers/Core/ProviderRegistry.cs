@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Logging;
+using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Application.Monitoring.Core;
 using MarketDataCollector.Contracts.Api;
 using MarketDataCollector.Infrastructure.Contracts;
@@ -84,6 +85,7 @@ public sealed class ProviderRegistry : IDisposable
         var registered = new RegisteredProvider(id, provider, priority, true);
         if (_allProviders.TryAdd(id, registered))
         {
+            MigrationDiagnostics.IncProviderRegistered();
             _log.Information("Registered provider: {Name} (type: {Type}, priority: {Priority})",
                 id, provider.ProviderCapabilities.PrimaryType, priority);
         }
@@ -105,6 +107,7 @@ public sealed class ProviderRegistry : IDisposable
 
         if (_streamingFactories.TryAdd(kind, factory))
         {
+            MigrationDiagnostics.IncStreamingFactoryRegistered();
             _log.Information("Registered streaming factory for {DataSource}", kind);
         }
         else
@@ -125,6 +128,7 @@ public sealed class ProviderRegistry : IDisposable
     {
         if (_streamingFactories.TryGetValue(kind, out var factory))
         {
+            MigrationDiagnostics.IncStreamingFactoryHit(kind.ToString());
             _log.Information("Creating streaming client for {DataSource}", kind);
             return factory();
         }
