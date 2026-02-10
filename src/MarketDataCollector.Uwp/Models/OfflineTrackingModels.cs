@@ -12,7 +12,7 @@ namespace MarketDataCollector.Uwp.Models;
 /// Write-Ahead Log entry for tracking operations.
 /// Ensures operations are persisted before execution and can be recovered.
 /// </summary>
-public class WalEntry
+public sealed class WalEntry
 {
     [JsonPropertyName("id")]
     public string Id { get; set; } = Guid.NewGuid().ToString();
@@ -70,7 +70,7 @@ public enum WalEntryStatus
 /// <summary>
 /// Persisted subscription state for recovery after app restart.
 /// </summary>
-public class PersistedSubscription
+public sealed class PersistedSubscription
 {
     [JsonPropertyName("id")]
     public string Id { get; set; } = Guid.NewGuid().ToString();
@@ -109,7 +109,7 @@ public class PersistedSubscription
 /// <summary>
 /// Configuration for persisted subscriptions.
 /// </summary>
-public class SubscriptionPersistenceConfig
+public sealed class SubscriptionPersistenceConfig
 {
     [JsonPropertyName("subscriptions")]
     public PersistedSubscription[] Subscriptions { get; set; } = Array.Empty<PersistedSubscription>();
@@ -130,7 +130,7 @@ public class SubscriptionPersistenceConfig
 /// <summary>
 /// Scheduled background task definition.
 /// </summary>
-public class ScheduledTask
+public sealed class ScheduledTask
 {
     [JsonPropertyName("id")]
     public string Id { get; set; } = Guid.NewGuid().ToString();
@@ -235,7 +235,7 @@ public enum ScheduledTaskType
 /// <summary>
 /// Schedule configuration for a task.
 /// </summary>
-public class TaskSchedule
+public sealed class TaskSchedule
 {
     [JsonPropertyName("scheduleType")]
     public ScheduleType ScheduleType { get; set; } = ScheduleType.Daily;
@@ -293,7 +293,7 @@ public enum ScheduleType
 /// <summary>
 /// Configuration for the background task scheduler.
 /// </summary>
-public class SchedulerConfig
+public sealed class SchedulerConfig
 {
     [JsonPropertyName("tasks")]
     public ScheduledTask[] Tasks { get; set; } = Array.Empty<ScheduledTask>();
@@ -326,7 +326,7 @@ public class SchedulerConfig
 /// <summary>
 /// Task execution log entry.
 /// </summary>
-public class TaskExecutionLog
+public sealed class TaskExecutionLog
 {
     [JsonPropertyName("id")]
     public string Id { get; set; } = Guid.NewGuid().ToString();
@@ -368,7 +368,7 @@ public class TaskExecutionLog
 /// <summary>
 /// Pending operation for offline queue.
 /// </summary>
-public class PendingOperation
+public sealed class PendingOperation
 {
     [JsonPropertyName("id")]
     public string Id { get; set; } = Guid.NewGuid().ToString();
@@ -443,7 +443,7 @@ public enum PendingOperationStatus
 /// <summary>
 /// Configuration for the offline operations queue.
 /// </summary>
-public class OfflineQueueConfig
+public sealed class OfflineQueueConfig
 {
     [JsonPropertyName("operations")]
     public PendingOperation[] Operations { get; set; } = Array.Empty<PendingOperation>();
@@ -473,7 +473,7 @@ public class OfflineQueueConfig
 /// <summary>
 /// State of the offline tracking persistence system.
 /// </summary>
-public class OfflineTrackingState
+public sealed class OfflineTrackingState
 {
     [JsonPropertyName("walSequenceNumber")]
     public long WalSequenceNumber { get; set; }
@@ -515,7 +515,7 @@ public class OfflineTrackingState
 /// <summary>
 /// Backfill task payload for scheduled backfill operations.
 /// </summary>
-public class BackfillTaskPayload
+public sealed class BackfillTaskPayload
 {
     [JsonPropertyName("symbols")]
     public string[] Symbols { get; set; } = Array.Empty<string>();
@@ -545,7 +545,7 @@ public class BackfillTaskPayload
 /// <summary>
 /// Collection task payload for scheduled collection operations.
 /// </summary>
-public class CollectionTaskPayload
+public sealed class CollectionTaskPayload
 {
     [JsonPropertyName("sessionName")]
     public string? SessionName { get; set; }
@@ -572,7 +572,7 @@ public class CollectionTaskPayload
 /// <summary>
 /// Export task payload for scheduled export operations.
 /// </summary>
-public class ExportTaskPayload
+public sealed class ExportTaskPayload
 {
     [JsonPropertyName("exportFormat")]
     public string ExportFormat { get; set; } = "Parquet"; // Parquet, CSV, JSON
@@ -599,7 +599,7 @@ public class ExportTaskPayload
 /// <remarks>
 /// Named TaskDateRange to avoid conflict with MarketDataCollector.Contracts.Manifest.DateRangeInfo
 /// </remarks>
-public class TaskDateRange
+public sealed class TaskDateRange
 {
     [JsonPropertyName("from")]
     public DateTime? From { get; set; }
@@ -611,7 +611,7 @@ public class TaskDateRange
 /// <summary>
 /// Sync to remote storage task payload.
 /// </summary>
-public class SyncToRemotePayload
+public sealed class SyncToRemotePayload
 {
     [JsonPropertyName("remoteType")]
     public string? RemoteType { get; set; } // s3, azure, network, smb
@@ -644,7 +644,7 @@ public class SyncToRemotePayload
 /// <summary>
 /// Custom task payload for user-defined operations.
 /// </summary>
-public class CustomTaskPayload
+public sealed class CustomTaskPayload
 {
     [JsonPropertyName("actionType")]
     public string? ActionType { get; set; } // http, webhook, script, command, notification
@@ -702,7 +702,7 @@ public class CustomTaskPayload
 /// <summary>
 /// Represents a recovery attempt after system restart.
 /// </summary>
-public class RecoveryAttempt
+public sealed class RecoveryAttempt
 {
     [JsonPropertyName("id")]
     public string Id { get; set; } = Guid.NewGuid().ToString();

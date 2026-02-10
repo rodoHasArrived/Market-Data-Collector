@@ -9,7 +9,7 @@ namespace MarketDataCollector.Uwp.Services;
 /// Service for displaying InfoBar notifications with appropriate durations
 /// based on severity. Errors stay visible longer to ensure users notice them.
 /// </summary>
-public sealed class InfoBarService
+public sealed class InfoBarService : IInfoBarService
 {
     private static InfoBarService? _instance;
     private static readonly object _lock = new();

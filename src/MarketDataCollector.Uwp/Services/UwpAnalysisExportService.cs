@@ -9,7 +9,7 @@ namespace MarketDataCollector.Uwp.Services;
 /// Service for advanced data analysis and export functionality.
 /// Supports analysis-focused exports, aggregations, and research-friendly formats.
 /// </summary>
-public sealed class UwpAnalysisExportService
+public sealed class UwpAnalysisExportService : IUwpAnalysisExportService
 {
     private static UwpAnalysisExportService? _instance;
     private static readonly object _lock = new();

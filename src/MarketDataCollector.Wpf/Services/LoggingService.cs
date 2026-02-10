@@ -19,7 +19,7 @@ public enum LogLevel
 /// Structured logging service for WPF applications.
 /// Implements singleton pattern for application-wide logging.
 /// </summary>
-public sealed class LoggingService
+public sealed class LoggingService : MarketDataCollector.Ui.Services.Contracts.ILoggingService
 {
     private static readonly Lazy<LoggingService> _instance = new(() => new LoggingService());
 
@@ -82,6 +82,24 @@ public sealed class LoggingService
     public void LogDebug(string message, params (string key, string value)[] properties)
     {
         Log(LogLevel.Debug, message, null, properties);
+    }
+
+    // C1: Explicit interface implementations for shared ILoggingService contract
+    // The shared interface has different overloads than our existing public methods.
+    void MarketDataCollector.Ui.Services.Contracts.ILoggingService.LogWarning(string message, Exception? exception)
+    {
+        if (exception != null)
+            LogWarning(message, ("exception", exception.GetType().Name), ("exceptionMessage", exception.Message));
+        else
+            LogWarning(message);
+    }
+
+    void MarketDataCollector.Ui.Services.Contracts.ILoggingService.LogError(string message, Exception? exception, params (string key, string value)[] properties)
+    {
+        if (exception != null)
+            Log(LogLevel.Error, message, exception, properties);
+        else
+            Log(LogLevel.Error, message, null, properties);
     }
 
     private void Log(LogLevel level, string message, Exception? exception, (string key, string value)[] properties)

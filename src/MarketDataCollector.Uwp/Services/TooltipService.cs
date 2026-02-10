@@ -10,7 +10,7 @@ namespace MarketDataCollector.Uwp.Services;
 /// Service for managing contextual tooltips, onboarding tips, and feature discovery.
 /// Tracks which tips have been shown to avoid repetition.
 /// </summary>
-public sealed class TooltipService
+public sealed class TooltipService : ITooltipService
 {
     private static TooltipService? _instance;
     private static readonly object _lock = new();

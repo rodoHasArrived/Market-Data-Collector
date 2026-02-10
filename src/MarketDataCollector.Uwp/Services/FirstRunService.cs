@@ -5,7 +5,7 @@ namespace MarketDataCollector.Uwp.Services;
 /// <summary>
 /// Service for handling first-run initialization and setup.
 /// </summary>
-public sealed class FirstRunService
+public sealed class FirstRunService : IFirstRunService
 {
     private const string FirstRunMarkerFile = ".firstrun_complete";
     private const string DefaultConfigFileName = "appsettings.json";

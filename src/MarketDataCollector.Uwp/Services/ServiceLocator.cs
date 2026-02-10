@@ -60,41 +60,56 @@ public static class ServiceLocator
 
     private static void ConfigureServices(IServiceCollection services)
     {
-        // Register singleton services - uses existing Instance properties
-        // to maintain backwards compatibility while enabling DI
+        // C1: Register services by interface for DI-first resolution.
+        // Uses existing singleton instances for backwards compatibility.
+
+        // Shared UI service interfaces (from MarketDataCollector.Ui.Services.Contracts)
         services.AddSingleton<IConfigService>(_ => ConfigService.Instance);
-        services.AddSingleton(_ => StatusService.Instance);
         services.AddSingleton<IConnectionService>(_ => ConnectionService.Instance);
         services.AddSingleton<INavigationService>(_ => NavigationService.Instance);
-        services.AddSingleton(_ => LoggingService.Instance);
-        services.AddSingleton(_ => NotificationService.Instance);
-        services.AddSingleton(_ => ThemeService.Instance);
-        services.AddSingleton(_ => BackgroundTaskSchedulerService.Instance);
-        services.AddSingleton(_ => MessagingService.Instance);
-        services.AddSingleton(_ => WatchlistService.Instance);
-        services.AddSingleton(_ => SchemaService.Instance);
-        services.AddSingleton(_ => ArchiveHealthService.Instance);
-        services.AddSingleton(_ => PendingOperationsQueueService.Instance);
-        services.AddSingleton(_ => OfflineTrackingPersistenceService.Instance);
-        services.AddSingleton(_ => AdminMaintenanceService.Instance);
-        services.AddSingleton(_ => AdvancedAnalyticsService.Instance);
-        services.AddSingleton(_ => StorageService.Instance);
-        services.AddSingleton(_ => ExportPresetService.Instance);
-        services.AddSingleton(_ => FormValidationService.Instance);
-        services.AddSingleton(_ => KeyboardShortcutService.Instance);
-        services.AddSingleton(_ => WorkspaceService.Instance);
-        services.AddSingleton(_ => RetentionAssuranceService.Instance);
-        services.AddSingleton(_ => InfoBarService.Instance);
-        services.AddSingleton(_ => TooltipService.Instance);
-        services.AddSingleton(_ => ContextMenuService.Instance);
-        services.AddSingleton(_ => UwpDataQualityService.Instance);
-        services.AddSingleton(_ => UwpAnalysisExportService.Instance);
+        services.AddSingleton<ILoggingService>(_ => LoggingService.Instance);
+        services.AddSingleton<IStatusService>(_ => StatusService.Instance);
+        services.AddSingleton<INotificationService>(_ => NotificationService.Instance);
+        services.AddSingleton<IThemeService>(_ => ThemeService.Instance);
+        services.AddSingleton<IBackgroundTaskSchedulerService>(_ => BackgroundTaskSchedulerService.Instance);
+        services.AddSingleton<IMessagingService>(_ => MessagingService.Instance);
+        services.AddSingleton<IWatchlistService>(_ => WatchlistService.Instance);
+        services.AddSingleton<ISchemaService>(_ => SchemaService.Instance);
+        services.AddSingleton<IArchiveHealthService>(_ => ArchiveHealthService.Instance);
+        services.AddSingleton<IPendingOperationsQueueService>(_ => PendingOperationsQueueService.Instance);
+        services.AddSingleton<IOfflineTrackingPersistenceService>(_ => OfflineTrackingPersistenceService.Instance);
+
+        // UWP-specific service interfaces (from MarketDataCollector.Uwp.Contracts)
+        services.AddSingleton<IAdminMaintenanceService>(_ => AdminMaintenanceService.Instance);
+        services.AddSingleton<IAdvancedAnalyticsService>(_ => AdvancedAnalyticsService.Instance);
+        services.AddSingleton<IStorageService>(_ => StorageService.Instance);
+        services.AddSingleton<IExportPresetService>(_ => ExportPresetService.Instance);
+        services.AddSingleton<IFormValidationService>(_ => FormValidationService.Instance);
+        services.AddSingleton<IKeyboardShortcutService>(_ => KeyboardShortcutService.Instance);
+        services.AddSingleton<IWorkspaceService>(_ => WorkspaceService.Instance);
+        services.AddSingleton<IRetentionAssuranceService>(_ => RetentionAssuranceService.Instance);
+        services.AddSingleton<IInfoBarService>(_ => InfoBarService.Instance);
+        services.AddSingleton<ITooltipService>(_ => TooltipService.Instance);
+        services.AddSingleton<IContextMenuService>(_ => ContextMenuService.Instance);
+        services.AddSingleton<IUwpDataQualityService>(_ => UwpDataQualityService.Instance);
+        services.AddSingleton<IUwpAnalysisExportService>(_ => UwpAnalysisExportService.Instance);
+        services.AddSingleton<IFirstRunService>(_ => new FirstRunService());
+
+        // Services without interfaces (concrete-type registration)
         services.AddSingleton(_ => ActivityFeedService.Instance);
         services.AddSingleton(_ => ApiClientService.Instance);
         services.AddSingleton(_ => CollectionSessionService.Instance);
         services.AddSingleton(_ => SmartRecommendationsService.Instance);
         services.AddSingleton(_ => OAuthRefreshService.Instance);
         services.AddSingleton(_ => IntegrityEventsService.Instance);
+
+        // Also register concrete types for backwards compatibility during migration
+        services.AddSingleton(_ => ConfigService.Instance);
+        services.AddSingleton(_ => ConnectionService.Instance);
+        services.AddSingleton(_ => NavigationService.Instance);
+        services.AddSingleton(_ => LoggingService.Instance);
+        services.AddSingleton(_ => StatusService.Instance);
+        services.AddSingleton(_ => NotificationService.Instance);
 
         // Register transient services (created per-request, no singleton)
         services.AddTransient<CredentialService>();

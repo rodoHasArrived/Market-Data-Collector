@@ -79,9 +79,10 @@ public partial class App : Application
                 MainWindow = _window;
                 _window.Activate();
             }
-            catch
+            catch (Exception innerEx)
             {
-                // If we can't even create the window, there's nothing we can do
+                // Q2: Log window creation failures instead of silently swallowing
+                System.Diagnostics.Debug.WriteLine($"[App] Failed to create fallback window: {innerEx.Message}");
             }
         }
     }
@@ -222,7 +223,10 @@ public partial class App : Application
     {
         try
         {
-            var firstRunService = new FirstRunService();
+            // C1: Resolve via DI instead of direct construction
+            var firstRunService = ServiceLocator.IsInitialized
+                ? ServiceLocator.GetService<IFirstRunService>()
+                : new FirstRunService();
             _isFirstRun = await firstRunService.IsFirstRunAsync();
 
             if (_isFirstRun)
