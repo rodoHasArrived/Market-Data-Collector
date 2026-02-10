@@ -6,8 +6,10 @@ using Microsoft.AspNetCore.Http;
 namespace MarketDataCollector.Ui.Shared.Endpoints;
 
 /// <summary>
-/// Registers all unimplemented API routes with a 501 Not Implemented response.
+/// Registers any remaining unimplemented API routes with a 501 Not Implemented response.
 /// Prevents clients from receiving unexplained 404/405 errors for declared routes.
+/// As of Phase 3B completion, all declared routes have been implemented.
+/// This class is retained for future route declarations that are not yet backed by handlers.
 /// </summary>
 public static class StubEndpoints
 {
@@ -17,185 +19,32 @@ public static class StubEndpoints
     };
 
     /// <summary>
-    /// Maps all unimplemented routes declared in <see cref="UiApiRoutes"/> with 501 responses.
-    /// Only registers routes that have not already been mapped by other endpoint groups.
+    /// Maps any remaining unimplemented routes with 501 responses.
+    /// Currently empty — all declared routes have been implemented.
     /// </summary>
     public static WebApplication MapStubEndpoints(this WebApplication app)
     {
-        // Symbol management endpoints — now implemented in SymbolEndpoints.cs
-
-        // Backfill endpoints (unimplemented subset)
-        MapStub(app, "GET", UiApiRoutes.BackfillHealth);
-        MapStub(app, "GET", UiApiRoutes.BackfillResolve);
-        MapStub(app, "POST", UiApiRoutes.BackfillGapFill);
-        MapStub(app, "GET", UiApiRoutes.BackfillPresets);
-        MapStub(app, "GET", UiApiRoutes.BackfillExecutions);
-        MapStub(app, "GET", UiApiRoutes.BackfillStatistics);
-        MapStub(app, "GET", UiApiRoutes.BackfillSchedules);
-        MapStub(app, "POST", UiApiRoutes.BackfillSchedules);
-        MapStub(app, "GET", UiApiRoutes.BackfillSchedulesById);
-        MapStub(app, "DELETE", UiApiRoutes.BackfillSchedulesDelete);
-        MapStub(app, "POST", UiApiRoutes.BackfillSchedulesEnable);
-        MapStub(app, "POST", UiApiRoutes.BackfillSchedulesDisable);
-        MapStub(app, "POST", UiApiRoutes.BackfillSchedulesRun);
-        MapStub(app, "GET", UiApiRoutes.BackfillSchedulesHistory);
-        MapStub(app, "GET", UiApiRoutes.BackfillSchedulesTemplates);
-
-        // Provider endpoints (unimplemented subset)
-        MapStub(app, "GET", UiApiRoutes.ProviderById);
-        MapStub(app, "GET", UiApiRoutes.ProviderFailover);
-        MapStub(app, "POST", UiApiRoutes.ProviderFailoverTrigger);
-        MapStub(app, "POST", UiApiRoutes.ProviderFailoverReset);
-        MapStub(app, "GET", UiApiRoutes.ProviderRateLimits);
-        MapStub(app, "GET", UiApiRoutes.ProviderRateLimitHistory);
-        MapStub(app, "GET", UiApiRoutes.ProviderCapabilities);
-        MapStub(app, "POST", UiApiRoutes.ProviderSwitch);
-        MapStub(app, "POST", UiApiRoutes.ProviderTest);
-        MapStub(app, "GET", UiApiRoutes.ProviderFailoverThresholds);
-        MapStub(app, "GET", UiApiRoutes.ProviderHealth);
-
-        // Storage endpoints — now implemented in StorageEndpoints.cs
-
-        // Storage quality endpoints — now implemented in StorageQualityEndpoints.cs
-
-        // Diagnostics endpoints
-        MapStub(app, "POST", UiApiRoutes.DiagnosticsDryRun);
-        MapStub(app, "GET", UiApiRoutes.DiagnosticsProviders);
-        MapStub(app, "GET", UiApiRoutes.DiagnosticsStorage);
-        MapStub(app, "GET", UiApiRoutes.DiagnosticsConfig);
-        MapStub(app, "GET", UiApiRoutes.DiagnosticsBundle);
-        MapStub(app, "GET", UiApiRoutes.DiagnosticsMetrics);
-        MapStub(app, "POST", UiApiRoutes.DiagnosticsValidate);
-        MapStub(app, "POST", UiApiRoutes.DiagnosticsProviderTest);
-        MapStub(app, "GET", UiApiRoutes.DiagnosticsQuickCheck);
-        MapStub(app, "GET", UiApiRoutes.DiagnosticsShowConfig);
-        MapStub(app, "GET", UiApiRoutes.DiagnosticsErrorCodes);
-        MapStub(app, "POST", UiApiRoutes.DiagnosticsSelftest);
-        MapStub(app, "POST", UiApiRoutes.DiagnosticsValidateCredentials);
-        MapStub(app, "POST", UiApiRoutes.DiagnosticsTestConnectivity);
-        MapStub(app, "POST", UiApiRoutes.DiagnosticsValidateConfig);
-
-        // Admin/Maintenance endpoints
-        MapStub(app, "GET", UiApiRoutes.AdminMaintenanceSchedule);
-        MapStub(app, "POST", UiApiRoutes.AdminMaintenanceRun);
-        MapStub(app, "GET", UiApiRoutes.AdminMaintenanceRunById);
-        MapStub(app, "GET", UiApiRoutes.AdminMaintenanceHistory);
-        MapStub(app, "GET", UiApiRoutes.AdminStorageTiers);
-        MapStub(app, "POST", UiApiRoutes.AdminStorageMigrate);
-        MapStub(app, "GET", UiApiRoutes.AdminStorageUsage);
-        MapStub(app, "GET", UiApiRoutes.AdminRetention);
-        MapStub(app, "DELETE", UiApiRoutes.AdminRetentionDelete);
-        MapStub(app, "POST", UiApiRoutes.AdminRetentionApply);
-        MapStub(app, "GET", UiApiRoutes.AdminCleanupPreview);
-        MapStub(app, "POST", UiApiRoutes.AdminCleanupExecute);
-        MapStub(app, "GET", UiApiRoutes.AdminStoragePermissions);
-        MapStub(app, "POST", UiApiRoutes.AdminSelftest);
-        MapStub(app, "GET", UiApiRoutes.AdminErrorCodes);
-        MapStub(app, "GET", UiApiRoutes.AdminShowConfig);
-        MapStub(app, "GET", UiApiRoutes.AdminQuickCheck);
-
-        // Maintenance schedules
-        MapStub(app, "GET", UiApiRoutes.MaintenanceSchedules);
-        MapStub(app, "POST", UiApiRoutes.MaintenanceSchedules);
-        MapStub(app, "GET", UiApiRoutes.MaintenanceSchedulesById);
-        MapStub(app, "DELETE", UiApiRoutes.MaintenanceSchedulesDelete);
-        MapStub(app, "POST", UiApiRoutes.MaintenanceSchedulesEnable);
-        MapStub(app, "POST", UiApiRoutes.MaintenanceSchedulesDisable);
-        MapStub(app, "POST", UiApiRoutes.MaintenanceSchedulesRun);
-        MapStub(app, "GET", UiApiRoutes.MaintenanceSchedulesHistory);
-
-        // Cron validation
-        MapStub(app, "POST", UiApiRoutes.SchedulesCronValidate);
-        MapStub(app, "POST", UiApiRoutes.SchedulesCronNextRuns);
-
-        // Analytics endpoints
-        MapStub(app, "GET", UiApiRoutes.AnalyticsGaps);
-        MapStub(app, "POST", UiApiRoutes.AnalyticsGapsRepair);
-        MapStub(app, "GET", UiApiRoutes.AnalyticsCompare);
-        MapStub(app, "GET", UiApiRoutes.AnalyticsLatency);
-        MapStub(app, "GET", UiApiRoutes.AnalyticsLatencyStats);
-        MapStub(app, "GET", UiApiRoutes.AnalyticsAnomalies);
-        MapStub(app, "GET", UiApiRoutes.AnalyticsQualityReport);
-        MapStub(app, "GET", UiApiRoutes.AnalyticsCompleteness);
-        MapStub(app, "GET", UiApiRoutes.AnalyticsThroughput);
-        MapStub(app, "GET", UiApiRoutes.AnalyticsRateLimits);
-
-        // System health endpoints
-        MapStub(app, "GET", UiApiRoutes.HealthSummary);
-        MapStub(app, "GET", UiApiRoutes.HealthProviders);
-        MapStub(app, "GET", UiApiRoutes.HealthProviderDiagnostics);
-        MapStub(app, "GET", UiApiRoutes.HealthStorage);
-        MapStub(app, "GET", UiApiRoutes.HealthEvents);
-        MapStub(app, "GET", UiApiRoutes.HealthMetrics);
-        MapStub(app, "POST", UiApiRoutes.HealthProviderTest);
-        MapStub(app, "GET", UiApiRoutes.HealthDiagnosticsBundle);
-
-        // Messaging endpoints
-        MapStub(app, "GET", UiApiRoutes.MessagingConfig);
-        MapStub(app, "GET", UiApiRoutes.MessagingStatus);
-        MapStub(app, "GET", UiApiRoutes.MessagingStats);
-        MapStub(app, "GET", UiApiRoutes.MessagingActivity);
-        MapStub(app, "GET", UiApiRoutes.MessagingConsumers);
-        MapStub(app, "GET", UiApiRoutes.MessagingEndpoints);
-        MapStub(app, "POST", UiApiRoutes.MessagingTest);
-        MapStub(app, "GET", UiApiRoutes.MessagingPublishing);
-        MapStub(app, "POST", UiApiRoutes.MessagingQueuePurge);
-        MapStub(app, "GET", UiApiRoutes.MessagingErrors);
-        MapStub(app, "POST", UiApiRoutes.MessagingErrorRetry);
-
-        // Time series alignment
-        MapStub(app, "POST", UiApiRoutes.AlignmentCreate);
-        MapStub(app, "POST", UiApiRoutes.AlignmentPreview);
-
-        // Sampling endpoints
-        MapStub(app, "POST", UiApiRoutes.SamplingCreate);
-        MapStub(app, "GET", UiApiRoutes.SamplingEstimate);
-        MapStub(app, "GET", UiApiRoutes.SamplingSaved);
-        MapStub(app, "GET", UiApiRoutes.SamplingById);
-
-        // Live data endpoints — now implemented in LiveDataEndpoints.cs
-
-        // Subscription endpoints
-        MapStub(app, "GET", UiApiRoutes.SubscriptionsActive);
-        MapStub(app, "POST", UiApiRoutes.SubscriptionsSubscribe);
-        MapStub(app, "POST", UiApiRoutes.SubscriptionsUnsubscribe);
-
-        // Replay endpoints
-        MapStub(app, "GET", UiApiRoutes.ReplayFiles);
-        MapStub(app, "POST", UiApiRoutes.ReplayStart);
-        MapStub(app, "POST", UiApiRoutes.ReplayPause);
-        MapStub(app, "POST", UiApiRoutes.ReplayResume);
-        MapStub(app, "POST", UiApiRoutes.ReplayStop);
-        MapStub(app, "POST", UiApiRoutes.ReplaySeek);
-        MapStub(app, "POST", UiApiRoutes.ReplaySpeed);
-        MapStub(app, "GET", UiApiRoutes.ReplayStatus);
-        MapStub(app, "GET", UiApiRoutes.ReplayPreview);
-        MapStub(app, "GET", UiApiRoutes.ReplayStats);
-
-        // Export endpoints
-        MapStub(app, "POST", UiApiRoutes.ExportAnalysis);
-        MapStub(app, "GET", UiApiRoutes.ExportFormats);
-        MapStub(app, "POST", UiApiRoutes.ExportQualityReport);
-        MapStub(app, "POST", UiApiRoutes.ExportOrderflow);
-        MapStub(app, "POST", UiApiRoutes.ExportIntegrity);
-        MapStub(app, "POST", UiApiRoutes.ExportResearchPackage);
-
-        // Lean integration endpoints
-        MapStub(app, "GET", UiApiRoutes.LeanStatus);
-        MapStub(app, "GET", UiApiRoutes.LeanConfig);
-        MapStub(app, "POST", UiApiRoutes.LeanVerify);
-        MapStub(app, "GET", UiApiRoutes.LeanAlgorithms);
-        MapStub(app, "POST", UiApiRoutes.LeanSync);
-        MapStub(app, "GET", UiApiRoutes.LeanSyncStatus);
-        MapStub(app, "POST", UiApiRoutes.LeanBacktestStart);
-        MapStub(app, "GET", UiApiRoutes.LeanBacktestStatus);
-        MapStub(app, "GET", UiApiRoutes.LeanBacktestResults);
-        MapStub(app, "POST", UiApiRoutes.LeanBacktestStop);
-        MapStub(app, "GET", UiApiRoutes.LeanBacktestHistory);
-        MapStub(app, "DELETE", UiApiRoutes.LeanBacktestDelete);
-
-        // Index endpoints
-        MapStub(app, "GET", UiApiRoutes.IndicesConstituents);
+        // All previously stubbed routes are now implemented:
+        // - Backfill schedule/utility endpoints → BackfillScheduleEndpoints.cs
+        // - Provider extended endpoints → ProviderExtendedEndpoints.cs
+        // - Diagnostics endpoints → DiagnosticsEndpoints.cs
+        // - Admin/Maintenance endpoints → AdminEndpoints.cs
+        // - Maintenance schedule endpoints → MaintenanceScheduleEndpoints.cs
+        // - Cron validation endpoints → CronEndpoints.cs
+        // - Analytics endpoints → AnalyticsEndpoints.cs
+        // - System health endpoints → HealthEndpoints.cs
+        // - Messaging endpoints → MessagingEndpoints.cs
+        // - Time series alignment endpoints → AlignmentEndpoints.cs
+        // - Sampling endpoints → SamplingEndpoints.cs
+        // - Subscription endpoints → SubscriptionEndpoints.cs
+        // - Replay endpoints → ReplayEndpoints.cs
+        // - Export endpoints → ExportEndpoints.cs
+        // - Lean integration endpoints → LeanEndpoints.cs
+        // - Index endpoints → IndexEndpoints.cs
+        // - Symbol endpoints → SymbolEndpoints.cs
+        // - Storage endpoints → StorageEndpoints.cs
+        // - Storage quality endpoints → StorageQualityEndpoints.cs
+        // - Live data endpoints → LiveDataEndpoints.cs
 
         return app;
     }

@@ -172,6 +172,25 @@ public static class UiEndpoints
         app.MapSymbolEndpoints(jsonOptions);
         app.MapStorageEndpoints(jsonOptions);
         app.MapStorageQualityEndpoints(jsonOptions);
+
+        // Phase 3B endpoint groups
+        app.MapHealthEndpoints(jsonOptions);
+        app.MapDiagnosticsEndpoints(jsonOptions);
+        app.MapBackfillScheduleEndpoints(jsonOptions);
+        app.MapAdminEndpoints(jsonOptions);
+        app.MapMaintenanceScheduleEndpoints(jsonOptions);
+        app.MapAnalyticsEndpoints(jsonOptions);
+        app.MapReplayEndpoints(jsonOptions);
+        app.MapExportEndpoints(jsonOptions);
+        app.MapSubscriptionEndpoints(jsonOptions);
+        app.MapSamplingEndpoints(jsonOptions);
+        app.MapAlignmentEndpoints(jsonOptions);
+        app.MapCronEndpoints(jsonOptions);
+        app.MapLeanEndpoints(jsonOptions);
+        app.MapMessagingEndpoints(jsonOptions);
+        app.MapProviderExtendedEndpoints(jsonOptions);
+        app.MapIndexEndpoints(jsonOptions);
+
         app.MapStubEndpoints();
 
         // Map quality drops endpoints (C3/#16)
@@ -222,6 +241,25 @@ public static class UiEndpoints
         app.MapSymbolEndpoints(jsonOptions);
         app.MapStorageEndpoints(jsonOptions);
         app.MapStorageQualityEndpoints(jsonOptions);
+
+        // Phase 3B endpoint groups
+        app.MapHealthEndpoints(jsonOptions);
+        app.MapDiagnosticsEndpoints(jsonOptions);
+        app.MapBackfillScheduleEndpoints(jsonOptions);
+        app.MapAdminEndpoints(jsonOptions);
+        app.MapMaintenanceScheduleEndpoints(jsonOptions);
+        app.MapAnalyticsEndpoints(jsonOptions);
+        app.MapReplayEndpoints(jsonOptions);
+        app.MapExportEndpoints(jsonOptions);
+        app.MapSubscriptionEndpoints(jsonOptions);
+        app.MapSamplingEndpoints(jsonOptions);
+        app.MapAlignmentEndpoints(jsonOptions);
+        app.MapCronEndpoints(jsonOptions);
+        app.MapLeanEndpoints(jsonOptions);
+        app.MapMessagingEndpoints(jsonOptions);
+        app.MapProviderExtendedEndpoints(jsonOptions);
+        app.MapIndexEndpoints(jsonOptions);
+
         app.MapStubEndpoints();
 
         // Map quality drops endpoints (C3/#16 - DroppedEventAuditTrail exposure)
