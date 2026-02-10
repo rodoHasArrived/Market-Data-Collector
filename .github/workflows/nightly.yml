@@ -192,7 +192,7 @@ jobs:
         continue-on-error: true
         uses: actions/ai-inference@v1
         with:
-          model: openai/gpt-4.1-mini
+          model: openai/gpt-4o-mini
           max-tokens: 1500
           prompt: |
             You are a .NET build/test infrastructure engineer analyzing nightly test failures for a market data collection application (.NET 9.0).

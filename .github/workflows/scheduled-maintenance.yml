@@ -1099,7 +1099,7 @@ jobs:
         continue-on-error: true
         uses: actions/ai-inference@v1
         with:
-          model: openai/gpt-4.1-mini
+          model: openai/gpt-4o-mini
           max-tokens: 2000
           prompt: |
             You are a senior .NET DevOps engineer reviewing a comprehensive weekly maintenance

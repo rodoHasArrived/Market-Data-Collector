@@ -595,7 +595,7 @@ jobs:
         continue-on-error: true
         uses: actions/ai-inference@v1
         with:
-          model: openai/gpt-4.1-mini
+          model: openai/gpt-4o-mini
           max-tokens: 1500
           prompt: |
             A desktop application build has failed in a CI/CD pipeline.
