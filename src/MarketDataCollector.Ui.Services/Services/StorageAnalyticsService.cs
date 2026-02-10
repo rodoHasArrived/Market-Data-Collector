@@ -84,7 +84,7 @@ public sealed class StorageAnalyticsService
             return analytics;
         }
 
-        var symbolStats = new Dictionary<string, SymbolStorageInfo>();
+        var symbolStats = new Dictionary<string, SymbolStorageAnalytics>();
 
         try
         {
@@ -144,7 +144,7 @@ public sealed class StorageAnalyticsService
                     {
                         if (!symbolStats.ContainsKey(symbol))
                         {
-                            symbolStats[symbol] = new SymbolStorageInfo
+                            symbolStats[symbol] = new SymbolStorageAnalytics
                             {
                                 Symbol = symbol,
                                 OldestData = fileInfo.CreationTimeUtc,
@@ -446,7 +446,7 @@ public class StorageAnalytics
     public int DepthFileCount { get; set; }
     public long HistoricalSizeBytes { get; set; }
     public int HistoricalFileCount { get; set; }
-    public SymbolStorageInfo[] SymbolBreakdown { get; set; } = Array.Empty<SymbolStorageInfo>();
+    public SymbolStorageAnalytics[] SymbolBreakdown { get; set; } = Array.Empty<SymbolStorageAnalytics>();
     public long DailyGrowthBytes { get; set; }
     public int? ProjectedDaysUntilFull { get; set; }
 
@@ -455,9 +455,9 @@ public class StorageAnalytics
 }
 
 /// <summary>
-/// Per-symbol storage information.
+/// Per-symbol storage analytics information.
 /// </summary>
-public class SymbolStorageInfo
+public class SymbolStorageAnalytics
 {
     public string Symbol { get; set; } = string.Empty;
     public long SizeBytes { get; set; }
