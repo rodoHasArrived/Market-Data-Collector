@@ -2,6 +2,13 @@
 
 This document outlines storage organization improvements for the Market Data Collector, covering naming conventions, date partitioning, policies, capacity limits, and perpetual data management strategies.
 
+
+> **Document status:** Draft architecture blueprint for storage evolution.
+>
+> **Last updated:** 2026-02-10
+>
+> **Audience:** Platform engineers, storage/infrastructure owners, and data operations.
+
 > ## Primary Mission: Data Collection & Archival
 >
 > The Market Data Collector is designed as a **collection and archival system**. Its primary purpose is:
@@ -44,6 +51,8 @@ This document outlines storage organization improvements for the Market Data Col
 14. [External Analysis Export Architecture](#external-analysis-export-architecture)
 15. [Collection Session Management](#collection-session-management)
 16. [Implementation Roadmap](#implementation-roadmap)
+17. [Decision Log](#decision-log)
+18. [Open Questions](#open-questions)
 
 ---
 
@@ -2890,56 +2899,102 @@ interface ISessionOrganizer
 
 ## Implementation Roadmap
 
+The roadmap is intentionally sequenced to preserve ingestion reliability while layering in stronger lifecycle controls, observability, and archival capabilities.
+
 ### Phase 1: Foundation & Core Infrastructure
+**Objective:** Establish canonical layout and metadata primitives without disrupting current collectors.
+
 - [ ] Implement source registry configuration
 - [ ] Add hierarchical naming convention option
 - [ ] Create file manifest generation
 - [ ] Implement per-source quota tracking
 - [ ] Build basic file health check service
 
+**Exit criteria:**
+- At least one production collection path writes manifests and source identifiers consistently
+- Existing naming modes continue to function with zero migration requirement
+
 ### Phase 2: Storage Policies & Lifecycle
+**Objective:** Move from static retention settings to policy-driven lifecycle behavior.
+
 - [ ] Define policy configuration schema
 - [ ] Implement policy evaluation engine
 - [ ] Add compression policy matrix
 - [ ] Create backup policy executor
 - [ ] Implement scheduled maintenance tasks
 
+**Exit criteria:**
+- Dry-run mode can explain every policy decision for a representative 30-day data set
+- Operators can apply policy updates without restart
+
 ### Phase 3: Tiered Storage
+**Objective:** Introduce deterministic hot/warm/cold movement while preserving queryability and auditability.
+
 - [ ] Define tier configuration schema
 - [ ] Implement tier migration service
 - [ ] Add Parquet conversion pipeline
 - [ ] Create unified query interface
 - [ ] Build file compaction service
 
+**Exit criteria:**
+- Tier transitions are idempotent and resumable
+- Query interface can discover files regardless of active tier
+
 ### Phase 4: Perpetual Storage & Compliance
+**Objective:** Provide compliance-grade archival guarantees and lineage transparency.
+
 - [ ] Implement archive tier with WORM support
 - [ ] Add data catalog service
 - [ ] Create compliance reporting
 - [ ] Implement immutability guarantees
 - [ ] Build data lineage tracking
 
+**Exit criteria:**
+- Retention lock and legal-hold workflows are testable in non-production
+- End-to-end lineage from ingest source to archive object is queryable
+
 ### Phase 5: Data Quality & Robustness
+**Objective:** Quantify data trust and automate remediation of common defects.
+
 - [ ] Implement quality scoring engine
 - [ ] Add quality dimension evaluators (completeness, accuracy, etc.)
 - [ ] Build best-of-breed data selector
 - [ ] Create quality trend monitoring
 - [ ] Implement auto-backfill for gaps
 
+**Exit criteria:**
+- Quality score computation is reproducible for a fixed input corpus
+- Gap detection and backfill produce a measurable reduction in missing intervals
+
 ### Phase 6: Search & Discovery
+**Objective:** Reduce time-to-discovery for datasets and support analyst self-service workflows.
+
 - [ ] Build multi-level index architecture
 - [ ] Implement file and event search APIs
 - [ ] Add faceted search support
 - [ ] Create natural language query parser
 - [ ] Build real-time index maintenance
 
+**Exit criteria:**
+- Common metadata queries return within agreed SLO bounds
+- Index rebuild procedures are documented and recoverable
+
 ### Phase 7: Metadata & Insights
+**Objective:** Turn passive metadata into actionable operational insight.
+
 - [ ] Implement rich file metadata schema
 - [ ] Build automated insight generator
 - [ ] Create usage analytics tracking
 - [ ] Implement metadata-driven automation rules
 - [ ] Build actionable dashboards
 
+**Exit criteria:**
+- Metadata lineage supports both engineering and audit reporting needs
+- At least one automated optimization action can be safely replayed from metadata
+
 ### Phase 8: Operational Scheduling
+**Objective:** Align maintenance and heavy processing with market-aware idle windows.
+
 - [ ] Implement trading hours awareness service
 - [ ] Build maintenance window configuration
 - [ ] Create maintenance scheduler with job queuing
@@ -2947,13 +3002,40 @@ interface ISessionOrganizer
 - [ ] Add job priority and resource management
 - [ ] Build adaptive scheduling with duration prediction
 
+**Exit criteria:**
+- Maintenance workload consistently avoids peak ingestion windows
+- Scheduler can preempt non-critical jobs under collection pressure
+
 ### Phase 9: Self-Healing & Advanced Features
+**Objective:** Improve resilience with autonomous correction and forecasting.
+
 - [ ] Implement self-healing repair capabilities
 - [ ] Add orphan detection and cleanup
 - [ ] Build cross-source reconciliation
 - [ ] Create capacity forecasting
 - [ ] Add adaptive partitioning
 - [ ] Implement emergency override system
+
+**Exit criteria:**
+- Self-healing actions are logged, reversible where possible, and policy-governed
+- Forecasting models provide capacity early-warning signals with operational lead time
+
+## Decision Log
+
+| ID | Decision | Rationale | Review Trigger |
+|----|----------|-----------|----------------|
+| D-001 | Keep JSONL as the default hot-tier ingest format | Append-only writes are simple, robust, and easy to validate | Sustained ingest bottlenecks or downstream compatibility constraints |
+| D-002 | Treat Parquet as a derived archival/export representation | Separates ingest reliability concerns from analytics optimization | Need for direct-query SLA on archival data |
+| D-003 | Prefer metadata sidecars/manifests over filename-only semantics | Improves schema evolution and machine-readable discovery | Significant storage overhead from sidecar proliferation |
+| D-004 | Enforce policy-driven lifecycle before introducing autonomous self-healing | Prevents opaque automation and improves operator trust | Proven low-risk automation and rollback maturity |
+
+## Open Questions
+
+1. Should per-source quotas support hard-stop mode, soft warning mode, or both?
+2. What is the authoritative clock for partition boundaries in multi-region deployments?
+3. Which compliance profiles require immutable retention locks at write time versus post-ingest sealing?
+4. Should the first unified query interface be file-centric (metadata + paths) or record-centric (predicate pushdown)?
+5. What minimum recovery point objective (RPO) is required for manifest/catalog data versus raw files?
 
 ---
 
