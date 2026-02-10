@@ -120,7 +120,7 @@ public static class MaintenanceScheduleEndpoints
                 scheduleId = id,
                 executions,
                 total = executions.Count,
-                summary = schedMgrForHistory?.GetScheduleSummary(id)
+                summary = schedMgrForHistory?.ExecutionHistory.GetScheduleSummary(id)
             }, jsonOptions);
         })
         .WithName("GetMaintenanceScheduleHistory")

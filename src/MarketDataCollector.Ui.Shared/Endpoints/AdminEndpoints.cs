@@ -155,10 +155,13 @@ public static class AdminEndpoints
         group.MapGet(UiApiRoutes.AdminRetention, ([FromServices] ConfigStore store) =>
         {
             var config = store.Load();
+            var maxSizeGb = config.Storage?.MaxTotalMegabytes.HasValue == true 
+                ? (double)config.Storage.MaxTotalMegabytes.Value / 1024 
+                : 100.0;
             return Results.Json(new
             {
                 retentionDays = config.Storage?.RetentionDays ?? 365,
-                maxStorageSizeGb = config.Storage?.MaxStorageSizeGb ?? 100,
+                maxStorageSizeGb = maxSizeGb,
                 timestamp = DateTimeOffset.UtcNow
             }, jsonOptions);
         })

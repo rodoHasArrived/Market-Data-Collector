@@ -99,7 +99,7 @@ public static class DiagnosticsEndpoints
                 options = new
                 {
                     namingConvention = storageOptions?.NamingConvention.ToString(),
-                    compressionEnabled = storageOptions?.CompressEnabled,
+                    compressionEnabled = storageOptions?.Compress,
                     enableParquetSink = storageOptions?.EnableParquetSink
                 },
                 timestamp = DateTimeOffset.UtcNow
@@ -246,7 +246,9 @@ public static class DiagnosticsEndpoints
                 {
                     naming = config.Storage.NamingConvention,
                     retention = config.Storage.RetentionDays,
-                    maxSizeGb = config.Storage.MaxStorageSizeGb
+                    maxSizeGb = config.Storage.MaxTotalMegabytes.HasValue 
+                        ? (double)config.Storage.MaxTotalMegabytes.Value / 1024 
+                        : 100.0
                 } : null,
                 timestamp = DateTimeOffset.UtcNow
             }, jsonOptions);
