@@ -1,28 +1,28 @@
 # TODO Tracking
 
 > Auto-generated TODO documentation. Do not edit manually.
-> Last updated: 2026-02-11T18:37:44.138132+00:00
+> Last updated: 2026-02-11T23:40:44.158282+00:00
 
 ## Summary
 
 | Metric | Count |
 |--------|-------|
-| **Total Items** | 14 |
+| **Total Items** | 16 |
 | **Linked to Issues** | 0 |
-| **Untracked** | 14 |
+| **Untracked** | 16 |
 
 ### By Type
 
 | Type | Count | Description |
 |------|-------|-------------|
-| `NOTE` | 10 | Important notes and documentation |
+| `NOTE` | 12 | Important notes and documentation |
 | `TODO` | 4 | General tasks to complete |
 
 ### By Directory
 
 | Directory | Count |
 |-----------|-------|
-| `tests/` | 7 |
+| `tests/` | 9 |
 | `src/` | 7 |
 
 ## All Items
@@ -41,7 +41,7 @@
 - [ ] `src/MarketDataCollector.Ui.Services/Services/PortfolioImportService.cs:223`
   > Implement once WatchlistService supports CreateOrUpdateWatchlistAsync var watchlistService = WatchlistService.Instance; await watchlistService.CreateOrUpdateWatchlistAsync(watchlistName, symbols, ct);
 
-### NOTE (10)
+### NOTE (12)
 
 - [ ] `src/MarketDataCollector.Ui.Shared/Endpoints/ConfigEndpoints.cs:138`
   > Status endpoint is handled by StatusEndpoints.MapStatusEndpoints() which provides live status via StatusEndpointHandlers rather than loading from file
@@ -72,6 +72,12 @@
 
 - [ ] `tests/MarketDataCollector.Tests/Storage/StorageChecksumServiceTests.cs:121`
   > File.WriteAllTextAsync uses UTF-8 with BOM by default on some platforms, so we compute expected from the actual file bytes
+
+- [ ] `tests/MarketDataCollector.Wpf.Tests/Services/ConnectionServiceTests.cs:286`
+  > This test may need to wait briefly for async operation
+
+- [ ] `tests/MarketDataCollector.Wpf.Tests/Services/NavigationServiceTests.cs:57`
+  > This test assumes NavigationService might not be initialized In production, Initialize should be called during app startup
 
 ---
 
