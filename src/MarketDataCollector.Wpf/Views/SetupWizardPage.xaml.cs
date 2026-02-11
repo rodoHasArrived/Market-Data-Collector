@@ -25,6 +25,7 @@ public partial class SetupWizardPage : Page
 
     private readonly ConnectionService _connectionService;
     private readonly FirstRunService _firstRunService;
+    private readonly BackendServiceManager _backendServiceManager;
     private readonly HttpClient _httpClient;
 
     public SetupWizardPage()
@@ -32,6 +33,7 @@ public partial class SetupWizardPage : Page
         InitializeComponent();
         _connectionService = ConnectionService.Instance;
         _firstRunService = FirstRunService.Instance;
+        _backendServiceManager = BackendServiceManager.Instance;
         _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(8) };
     }
 
@@ -43,7 +45,7 @@ public partial class SetupWizardPage : Page
         LoadExistingConfiguration();
         LoadStoredApiKeys();
 
-        await RefreshBackendStatusAsync();
+        await EnsureBackendAvailableAsync();
     }
 
     private void LoadExistingConfiguration()
@@ -104,6 +106,8 @@ public partial class SetupWizardPage : Page
 
     private async Task RefreshBackendStatusAsync()
     {
+        var serviceStatus = await _backendServiceManager.GetStatusAsync();
+
         BackendStatusText.Text = "Checking backend status...";
         BackendStatusDetailText.Text = $"Testing {_connectionService.ServiceUrl}/healthz";
         BackendStatusDot.Fill = (System.Windows.Media.Brush)FindResource("WarningColorBrush");
@@ -114,14 +118,32 @@ public partial class SetupWizardPage : Page
         {
             BackendStatusDot.Fill = (System.Windows.Media.Brush)FindResource("SuccessColorBrush");
             BackendStatusText.Text = "Backend is running.";
-            BackendStatusDetailText.Text = $"Latency: {result.latencyMs} ms";
+            BackendStatusDetailText.Text = $"Latency: {result.latencyMs} ms · {serviceStatus.StatusMessage}";
         }
         else
         {
             BackendStatusDot.Fill = (System.Windows.Media.Brush)FindResource("ErrorColorBrush");
             BackendStatusText.Text = "Backend not reachable.";
-            BackendStatusDetailText.Text = result.message;
+            BackendStatusDetailText.Text = $"{result.message} · {serviceStatus.StatusMessage}";
         }
+    }
+
+    private async Task EnsureBackendAvailableAsync()
+    {
+        var status = await _backendServiceManager.GetStatusAsync();
+        if (!status.IsRunning)
+        {
+            BackendStatusText.Text = "Starting backend service...";
+            BackendStatusDetailText.Text = "First run now auto-starts the backend service.";
+
+            var startResult = await _backendServiceManager.StartAsync();
+            if (!startResult.Success)
+            {
+                NotificationService.Instance.NotifyWarning("Backend", startResult.Message);
+            }
+        }
+
+        await RefreshBackendStatusAsync();
     }
 
     private async Task<(bool isHealthy, string message, int latencyMs)> CheckBackendAsync()
@@ -146,46 +168,19 @@ public partial class SetupWizardPage : Page
         }
     }
 
-    private void StartBackend_Click(object sender, RoutedEventArgs e)
+    private async void StartBackend_Click(object sender, RoutedEventArgs e)
     {
-        var baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
-        var candidates = new[]
+        var result = await _backendServiceManager.StartAsync();
+        if (result.Success)
         {
-            Path.Combine(baseDirectory, "MarketDataCollector.exe"),
-            Path.Combine(baseDirectory, "MarketDataCollector", "MarketDataCollector.exe"),
-            Path.GetFullPath(Path.Combine(baseDirectory, "..", "MarketDataCollector", "MarketDataCollector.exe"))
-        };
-
-        foreach (var path in candidates)
+            NotificationService.Instance.NotifyInfo("Backend", result.Message);
+        }
+        else
         {
-            if (!File.Exists(path))
-            {
-                continue;
-            }
-
-            try
-            {
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = path,
-                    WorkingDirectory = Path.GetDirectoryName(path) ?? baseDirectory,
-                    UseShellExecute = true
-                });
-
-                NotificationService.Instance.NotifyInfo("Backend", "Attempted to start the backend service.");
-                _ = RefreshBackendStatusAsync();
-                return;
-            }
-            catch (Exception ex)
-            {
-                NotificationService.Instance.NotifyWarning("Backend", $"Unable to start backend: {ex.Message}");
-                return;
-            }
+            NotificationService.Instance.NotifyWarning("Backend", result.Message);
         }
 
-        NotificationService.Instance.NotifyWarning(
-            "Backend",
-            "Backend executable was not found. Use the instructions link to start it manually.");
+        await RefreshBackendStatusAsync();
     }
 
     private void OpenInstructions_Click(object sender, RoutedEventArgs e)
@@ -214,6 +209,14 @@ public partial class SetupWizardPage : Page
         }
 
         SaveApiKeys();
+
+        var startResult = await _backendServiceManager.StartAsync();
+        if (!startResult.Success)
+        {
+            ValidationStatusText.Text = $"Saved config, but backend start failed: {startResult.Message}";
+            NotificationService.Instance.NotifyWarning("Setup Wizard", "Configuration saved, but backend is offline.");
+            return;
+        }
 
         var backendResult = await CheckBackendAsync();
         if (!backendResult.isHealthy)
