@@ -97,10 +97,11 @@ make doctor
 Desktop-focused helpers:
 
 ```bash
-make desktop-dev-bootstrap
-make build-wpf
-make test-desktop-services
-make uwp-xaml-diagnose
+make desktop-dev-bootstrap   # Validate desktop development environment (PowerShell)
+make build-wpf               # Build WPF desktop app (Windows only)
+make build-uwp               # Build UWP desktop app (legacy, Windows only)
+make test-desktop-services   # Run desktop-focused tests (includes WPF service tests on Windows)
+make uwp-xaml-diagnose       # Run UWP XAML diagnostics (Windows only)
 ```
 
 ### Windows Desktop App Install
@@ -146,6 +147,69 @@ dotnet run --project src/MarketDataCollector.Wpf/MarketDataCollector.Wpf.csproj
 
 **Uninstall**
 - Open **Settings → Apps → Installed apps**, select **Market Data Collector Desktop**, and choose **Uninstall**.
+
+---
+
+## Desktop Development
+
+### Setting Up Desktop Development Environment
+
+For contributors working on WPF or UWP desktop applications, use the desktop development bootstrap script to validate your environment:
+
+```bash
+make desktop-dev-bootstrap
+```
+
+This script validates:
+- ✅ .NET 9 SDK installation
+- ✅ Windows SDK presence (Windows only)
+- ✅ Visual Studio Build Tools
+- ✅ XAML tooling support
+- ✅ Desktop project restore and smoke build
+
+The script provides actionable fix messages for any missing components.
+
+### Desktop Testing
+
+The repository includes comprehensive tests for desktop services:
+
+```bash
+# Run all desktop-focused tests (platform-aware)
+make test-desktop-services
+
+# On Windows, this runs:
+# - WPF service tests (NavigationService, ConfigService, StatusService, ConnectionService)
+# - Desktop UI service tests (ApiClientService, BackfillService, FixtureDataService, etc.)
+# - Integration tests for desktop-specific functionality
+
+# On non-Windows platforms, runs available integration tests only
+```
+
+**Test Projects:**
+- `tests/MarketDataCollector.Wpf.Tests` - 58 tests for WPF singleton services
+  - NavigationServiceTests (14 tests)
+  - ConfigServiceTests (13 tests)
+  - StatusServiceTests (13 tests)
+  - ConnectionServiceTests (18 tests)
+- `tests/MarketDataCollector.Ui.Tests` - 71 tests for desktop UI services
+  - ApiClientServiceTests, BackfillServiceTests, FixtureDataServiceTests
+  - FormValidationServiceTests, SystemHealthServiceTests, WatchlistServiceTests
+  - BoundedObservableCollectionTests, CircularBufferTests
+
+### Desktop Build Commands
+
+```bash
+# Build WPF application (Windows only)
+make build-wpf
+
+# Build UWP application (legacy, Windows only)
+make build-uwp
+
+# Diagnose UWP XAML issues
+make uwp-xaml-diagnose
+```
+
+---
 
 **Troubleshooting install**
 - **Missing signing certificate**: Install the signing cert or use a release-signed package; unsigned MSIX packages cannot be installed.

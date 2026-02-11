@@ -25,9 +25,9 @@ Market Data Collector is a high-performance, cross-platform market data collecti
 | Total Source Files | 767 |
 | C# Files | 755 |
 | F# Files | 12 |
-| Test Files | 122 |
+| Test Files | 135 |
 | Documentation Files | 87 |
-| Main Projects | 14 (+ 3 test + 1 benchmark) |
+| Main Projects | 14 (+ 4 test + 1 benchmark) |
 | Provider Implementations | 5 streaming, 10 historical |
 | Symbol Search Providers | 5 |
 | CI/CD Workflows | 17 |
@@ -47,6 +47,9 @@ dotnet test tests/MarketDataCollector.Tests
 # Run F# tests
 dotnet test tests/MarketDataCollector.FSharp.Tests
 
+# Run WPF desktop service tests (Windows only)
+dotnet test tests/MarketDataCollector.Wpf.Tests
+
 # Run desktop UI service tests (Windows only)
 dotnet test tests/MarketDataCollector.Ui.Tests
 
@@ -60,12 +63,19 @@ dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --ui 
 dotnet run --project benchmarks/MarketDataCollector.Benchmarks -c Release
 
 # Using Makefile (from repo root)
-make build       # Build the project
-make test        # Run tests
-make run-ui      # Run with web dashboard
-make docker      # Build and run Docker container
-make docs        # Generate documentation
-make help        # Show all available commands
+make build                   # Build the project
+make test                    # Run tests
+make run-ui                  # Run with web dashboard
+make docker                  # Build and run Docker container
+make docs                    # Generate documentation
+make help                    # Show all available commands
+
+# Desktop Development (via Makefile)
+make desktop-dev-bootstrap   # Validate desktop development environment
+make build-wpf               # Build WPF desktop app (Windows only)
+make build-uwp               # Build UWP desktop app (legacy, Windows only)
+make test-desktop-services   # Run desktop-focused tests
+make uwp-xaml-diagnose       # Run UWP XAML diagnostics
 
 # Diagnostics (via Makefile)
 make doctor      # Run full diagnostic check
@@ -1822,7 +1832,7 @@ dotnet test --collect:"XPlat Code Coverage"
 dotnet test tests/MarketDataCollector.FSharp.Tests
 ```
 
-### Test Organization (85 test files total)
+### Test Organization (98 test files total)
 | Directory | Purpose | Files |
 |-----------|---------|-------|
 | `tests/MarketDataCollector.Tests/Application/Backfill/` | Backfill provider tests | 7 |
@@ -1844,6 +1854,25 @@ dotnet test tests/MarketDataCollector.FSharp.Tests
 | `tests/MarketDataCollector.Tests/Storage/` | Storage and archival tests | 12 |
 | `tests/MarketDataCollector.Tests/SymbolSearch/` | Symbol resolution tests | 2 |
 | `tests/MarketDataCollector.FSharp.Tests/` | F# domain tests | 5 |
+| `tests/MarketDataCollector.Wpf.Tests/Services/` | WPF desktop service tests | 4 |
+| `tests/MarketDataCollector.Ui.Tests/Services/` | Desktop UI service tests | 6 |
+| `tests/MarketDataCollector.Ui.Tests/Collections/` | UI collection tests | 2 |
+
+**WPF Desktop Service Tests (58 tests, Windows only):**
+- `NavigationServiceTests` - 14 tests for page navigation, registration, history
+- `ConfigServiceTests` - 13 tests for configuration management, validation
+- `StatusServiceTests` - 13 tests for status tracking, events, HTTP client mocking
+- `ConnectionServiceTests` - 18 tests for connection management, monitoring, auto-reconnect
+
+**Desktop UI Service Tests (71 tests, Windows only):**
+- `ApiClientServiceTests` - API client configuration and HTTP interactions
+- `BackfillServiceTests` - Backfill coordination and scheduling
+- `FixtureDataServiceTests` - Mock data generation for offline development
+- `FormValidationServiceTests` - Form validation rules and helpers
+- `SystemHealthServiceTests` - System health monitoring
+- `WatchlistServiceTests` - Watchlist management
+- `BoundedObservableCollectionTests` - Bounded collection behavior
+- `CircularBufferTests` - Circular buffer operations
 
 ### Benchmarks
 Located in `benchmarks/MarketDataCollector.Benchmarks/` using BenchmarkDotNet.
