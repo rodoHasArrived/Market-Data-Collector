@@ -204,8 +204,8 @@ public sealed class CompositeHistoricalDataProviderTests : IDisposable
 
         await composite.GetDailyBarsAsync("SPY", null, null);
 
-        callOrder.Should().Equal("fast", "slow",
-            "providers should be tried in priority order (lower number first)");
+        callOrder.Should().Equal("fast", "slow");
+        // Providers should be tried in priority order (lower number first)
     }
 
     [Fact]

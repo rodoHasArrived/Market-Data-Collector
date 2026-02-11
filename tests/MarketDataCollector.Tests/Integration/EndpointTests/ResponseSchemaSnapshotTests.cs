@@ -27,11 +27,15 @@ public sealed class ResponseSchemaSnapshotTests : IClassFixture<EndpointTestFixt
     #region /api/status
 
     [Fact]
-    public async Task Status_Schema_ContainsUptimeField()
+    public async Task Status_Schema_ContainsRequiredFields()
     {
         var json = await GetJsonObjectAsync("/api/status");
 
-        json.Should().ContainKey("uptime");
+        // Verify the core fields defined in StatusResponse
+        json.Should().ContainKey("isConnected");
+        json.Should().ContainKey("timestampUtc");
+        json.Should().ContainKey("metrics");
+        json.Should().ContainKey("pipeline");
     }
 
     [Fact]
@@ -188,9 +192,9 @@ public sealed class ResponseSchemaSnapshotTests : IClassFixture<EndpointTestFixt
         if (providers.GetArrayLength() > 0)
         {
             var entry = providers[0];
-            // Every catalog entry must have an id and a name
-            entry.TryGetProperty("id", out _).Should().BeTrue("catalog entry must have 'id'");
-            entry.TryGetProperty("name", out _).Should().BeTrue("catalog entry must have 'name'");
+            // Every catalog entry must have a providerId and displayName
+            entry.TryGetProperty("providerId", out _).Should().BeTrue("catalog entry must have 'providerId'");
+            entry.TryGetProperty("displayName", out _).Should().BeTrue("catalog entry must have 'displayName'");
         }
     }
 
