@@ -655,7 +655,9 @@ public sealed class SetupWizardService
     {
         foreach (var (key, value) in credentials)
         {
-            await _credentialService.SaveCredentialAsync($"{provider}_{key}", value);
+            // TODO: Implement SaveCredentialAsync in CredentialService
+            // await _credentialService.SaveCredentialAsync($"{provider}_{key}", value);
+            await Task.CompletedTask;
         }
     }
 }

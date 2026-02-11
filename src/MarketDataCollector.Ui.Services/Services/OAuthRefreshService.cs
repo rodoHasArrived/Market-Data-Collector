@@ -110,17 +110,17 @@ public sealed class OAuthRefreshService : IDisposable
         var statuses = new List<OAuthTokenStatus>();
         var credentials = _credentialService.GetAllCredentialsWithMetadata();
 
-        foreach (var cred in credentials.Where(c => c.CredentialType == CredentialType.OAuth2Token))
+        foreach (var cred in credentials.Where(c => c.IsOAuthToken))
         {
             var status = new OAuthTokenStatus
             {
                 ProviderId = cred.Resource.Replace($"{CredentialService.OAuthTokenResource}.", ""),
-                DisplayName = cred.Name,
+                DisplayName = cred.Resource,
                 ExpiresAt = cred.ExpiresAt,
-                LastRefreshedAt = cred.LastAuthenticatedAt,
+                LastRefreshedAt = null,
                 CanAutoRefresh = cred.CanAutoRefresh,
-                IsExpired = cred.IsExpired,
-                IsExpiringSoon = cred.IsExpiringSoon
+                IsExpired = cred.ExpiresAt.HasValue && cred.ExpiresAt.Value < DateTime.UtcNow,
+                IsExpiringSoon = cred.ExpiresAt.HasValue && (cred.ExpiresAt.Value - DateTime.UtcNow).TotalMinutes <= 30
             };
 
             if (cred.ExpiresAt.HasValue)
@@ -142,15 +142,15 @@ public sealed class OAuthRefreshService : IDisposable
         try
         {
             var result = await _credentialService.RefreshOAuthTokenAsync(providerId);
-            if (result)
+            if (result.Success)
             {
                 TokenRefreshed?.Invoke(this, new TokenRefreshEventArgs(providerId, DateTime.UtcNow));
             }
             else
             {
-                TokenRefreshFailed?.Invoke(this, new TokenRefreshFailedEventArgs(providerId, "Refresh failed"));
+                TokenRefreshFailed?.Invoke(this, new TokenRefreshFailedEventArgs(providerId, result.ErrorMessage ?? "Refresh failed"));
             }
-            return result;
+            return result.Success;
         }
         catch (Exception ex)
         {
@@ -207,7 +207,7 @@ public sealed class OAuthRefreshService : IDisposable
     private async Task CheckAndRefreshTokensAsync()
     {
         var credentials = _credentialService.GetAllCredentialsWithMetadata();
-        var oauthTokens = credentials.Where(c => c.CredentialType == CredentialType.OAuth2Token);
+        var oauthTokens = credentials.Where(c => c.IsOAuthToken);
 
         foreach (var token in oauthTokens)
         {
@@ -221,13 +221,13 @@ public sealed class OAuthRefreshService : IDisposable
                 try
                 {
                     var result = await _credentialService.RefreshOAuthTokenAsync(providerId);
-                    if (result)
+                    if (result.Success)
                     {
                         TokenRefreshed?.Invoke(this, new TokenRefreshEventArgs(providerId, DateTime.UtcNow));
                     }
                     else
                     {
-                        TokenRefreshFailed?.Invoke(this, new TokenRefreshFailedEventArgs(providerId, "Refresh request failed"));
+                        TokenRefreshFailed?.Invoke(this, new TokenRefreshFailedEventArgs(providerId, result.ErrorMessage ?? "Refresh request failed"));
                     }
                 }
                 catch (Exception ex)
@@ -241,7 +241,7 @@ public sealed class OAuthRefreshService : IDisposable
     private Task CheckExpiringTokensAsync()
     {
         var credentials = _credentialService.GetAllCredentialsWithMetadata();
-        var oauthTokens = credentials.Where(c => c.CredentialType == CredentialType.OAuth2Token);
+        var oauthTokens = credentials.Where(c => c.IsOAuthToken);
 
         foreach (var token in oauthTokens)
         {
