@@ -1,6 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <!-- Detect Windows platform -->
+    <IsWindows Condition="'$(OS)' == 'Windows_NT'">true</IsWindows>
+    <IsWindows Condition="'$(IsWindows)' != 'true' AND $([MSBuild]::IsOSPlatform('Windows'))">true</IsWindows>
+    <IsWindows Condition="'$(IsWindows)' != 'true' AND '$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' == 'True'">true</IsWindows>
+    <IsWindows Condition="'$(IsWindows)' == ''">false</IsWindows>
+  </PropertyGroup>
+
+  <!-- Windows-only: Full test project -->
+  <PropertyGroup Condition="'$(IsWindows)' == 'true'">
     <TargetFramework>net9.0-windows</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
@@ -10,7 +19,21 @@
     <OutputType>Library</OutputType>
   </PropertyGroup>
 
-  <ItemGroup>
+  <!-- Non-Windows: Create empty stub library to allow solution build -->
+  <PropertyGroup Condition="'$(IsWindows)' != 'true'">
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <OutputType>Library</OutputType>
+    <!-- Exclude all test files on non-Windows -->
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <EnableDefaultItems>false</EnableDefaultItems>
+  </PropertyGroup>
+
+  <!-- Windows-only test packages -->
+  <ItemGroup Condition="'$(IsWindows)' == 'true'">
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio">
@@ -26,7 +49,8 @@
     <PackageReference Include="NSubstitute" />
   </ItemGroup>
 
-  <ItemGroup>
+  <!-- Windows-only project references -->
+  <ItemGroup Condition="'$(IsWindows)' == 'true'">
     <ProjectReference Include="..\..\src\MarketDataCollector.Wpf\MarketDataCollector.Wpf.csproj" />
     <ProjectReference Include="..\..\src\MarketDataCollector.Ui.Services\MarketDataCollector.Ui.Services.csproj" />
     <ProjectReference Include="..\..\src\MarketDataCollector.Contracts\MarketDataCollector.Contracts.csproj" />
