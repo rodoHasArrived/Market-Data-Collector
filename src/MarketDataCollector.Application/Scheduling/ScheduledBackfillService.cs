@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
+using MarketDataCollector.Infrastructure.Providers.Backfill;
 
-namespace MarketDataCollector.Infrastructure.Providers.Backfill.Scheduling;
+namespace MarketDataCollector.Application.Scheduling;
 
 /// <summary>
 /// Background service that monitors backfill schedules and triggers executions at scheduled times.

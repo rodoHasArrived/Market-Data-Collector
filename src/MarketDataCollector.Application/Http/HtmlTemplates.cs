@@ -4,11 +4,11 @@ using Microsoft.Extensions.Logging.Abstractions;
 namespace MarketDataCollector.Application.UI;
 
 /// <summary>
-/// Provides HTML templates for the web dashboard.
-/// Templates are loaded from external files in wwwroot/templates/ when available,
-/// with fallback to legacy inline templates for backwards compatibility.
+/// Manages HTML templates for the web dashboard.
+/// Coordinates template loading from external files with fallback to legacy inline templates.
+/// Renamed from HtmlTemplates for clarity - manages template lifecycle, not just generation.
 /// </summary>
-public static class HtmlTemplates
+public static class HtmlTemplateManager
 {
     private static readonly Lazy<HtmlTemplateLoader> _loader = new(() =>
     {

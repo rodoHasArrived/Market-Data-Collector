@@ -80,17 +80,32 @@ jobs:
           head -50 vuln-scan.txt >> $GITHUB_OUTPUT
           echo "SCANEOF" >> $GITHUB_OUTPUT
 
-          if grep -qiE "(critical|high)" vuln-scan.txt; then
+          # Filter out known accepted vulnerabilities (documented in docs/security/)
+          # DotNetZip 1.16.0 - GHSA-xhg6-9j5j-w4vf: Transitive dep from QuantConnect.Lean (no fix available, deprecated library)
+          # Risk: Path traversal in zip extraction - mitigated as we don't extract user-provided zip files
+          grep -viE "DotNetZip.*1\.16\.0.*GHSA-xhg6-9j5j-w4vf" vuln-scan.txt > vuln-scan-filtered.txt || true
+
+          if grep -qiE "(critical|high)" vuln-scan-filtered.txt; then
             echo "::error::Critical/High vulnerabilities detected!"
             echo "has_vulns=true" >> $GITHUB_OUTPUT
-            echo "### Vulnerable Packages Found" >> $GITHUB_STEP_SUMMARY
+            echo "### ❌ Vulnerable Packages Found" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
             cat vuln-scan.txt >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
             exit 1
           else
             echo "has_vulns=false" >> $GITHUB_OUTPUT
-            echo "### No Critical/High Vulnerabilities" >> $GITHUB_STEP_SUMMARY
+            echo "### ✅ No Critical/High Vulnerabilities" >> $GITHUB_STEP_SUMMARY
+            
+            # Show any known accepted vulnerabilities
+            if grep -qiE "DotNetZip.*1\.16\.0" vuln-scan.txt; then
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "### ⚠️ Known Accepted Vulnerabilities" >> $GITHUB_STEP_SUMMARY
+              echo "- **DotNetZip 1.16.0** (GHSA-xhg6-9j5j-w4vf): Transitive dependency from QuantConnect.Lean" >> $GITHUB_STEP_SUMMARY
+              echo "  - Risk: Path traversal in zip extraction" >> $GITHUB_STEP_SUMMARY
+              echo "  - Mitigation: Application does not extract user-provided zip files" >> $GITHUB_STEP_SUMMARY
+              echo "  - Status: No fix available (deprecated library, upstream dependency)" >> $GITHUB_STEP_SUMMARY
+            fi
           fi
 
   # ─── Dependency Review (absorbed from dependency-review.yml) ───────────

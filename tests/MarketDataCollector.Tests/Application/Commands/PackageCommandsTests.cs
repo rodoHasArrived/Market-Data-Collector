@@ -68,23 +68,23 @@ public class PackageCommandsTests
     public async Task ExecuteAsync_ImportWithoutPath_ReturnsErrorCode()
     {
         var cmd = new PackageCommands(TestConfig, Logger);
-        var exitCode = await cmd.ExecuteAsync(new[] { "--import-package" });
-        exitCode.Should().Be(1);
+        var result = await cmd.ExecuteAsync(new[] { "--import-package" });
+        result.ExitCode.Should().Be(2);
     }
 
     [Fact]
     public async Task ExecuteAsync_ListWithoutPath_ReturnsErrorCode()
     {
         var cmd = new PackageCommands(TestConfig, Logger);
-        var exitCode = await cmd.ExecuteAsync(new[] { "--list-package" });
-        exitCode.Should().Be(1);
+        var result = await cmd.ExecuteAsync(new[] { "--list-package" });
+        result.ExitCode.Should().Be(2);
     }
 
     [Fact]
     public async Task ExecuteAsync_ValidateWithoutPath_ReturnsErrorCode()
     {
         var cmd = new PackageCommands(TestConfig, Logger);
-        var exitCode = await cmd.ExecuteAsync(new[] { "--validate-package" });
-        exitCode.Should().Be(1);
+        var result = await cmd.ExecuteAsync(new[] { "--validate-package" });
+        result.ExitCode.Should().Be(2);
     }
 }

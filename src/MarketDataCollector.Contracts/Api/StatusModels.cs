@@ -13,6 +13,9 @@ public class StatusResponse
     [JsonPropertyName("timestampUtc")]
     public DateTimeOffset TimestampUtc { get; set; }
 
+    [JsonPropertyName("uptime")]
+    public TimeSpan Uptime { get; set; }
+
     [JsonPropertyName("metrics")]
     public MetricsData? Metrics { get; set; }
 
@@ -242,7 +245,7 @@ public class StorageAnalytics
     public DateTimeOffset LastUpdated { get; set; }
 
     [JsonPropertyName("symbolBreakdown")]
-    public SymbolStorageInfo[]? SymbolBreakdown { get; set; }
+    public StorageSymbolBreakdown[]? SymbolBreakdown { get; set; }
 
     [JsonPropertyName("dailyGrowthBytes")]
     public long DailyGrowthBytes { get; set; }
@@ -252,9 +255,9 @@ public class StorageAnalytics
 }
 
 /// <summary>
-/// Per-symbol storage information.
+/// Per-symbol storage information for analytics breakdown.
 /// </summary>
-public class SymbolStorageInfo
+public class StorageSymbolBreakdown
 {
     [JsonPropertyName("symbol")]
     public string Symbol { get; set; } = string.Empty;

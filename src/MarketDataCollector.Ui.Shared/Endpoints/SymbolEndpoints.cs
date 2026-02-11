@@ -28,11 +28,7 @@ public static class SymbolEndpoints
         {
             var cfg = store.Load();
             var symbols = cfg.Symbols ?? Array.Empty<SymbolConfig>();
-            return Results.Json(new
-            {
-                count = symbols.Length,
-                symbols
-            }, jsonOptions);
+            return Results.Json(symbols, jsonOptions);
         })
         .WithName("GetSymbols")
         .Produces(200);
@@ -315,10 +311,10 @@ public static class SymbolEndpoints
         .RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
         // POST /api/symbols/bulk-add — add multiple symbols at once
-        group.MapPost(UiApiRoutes.SymbolsBulkAdd, async (ConfigStore store, SymbolBulkAddRequest req) =>
+        group.MapPost(UiApiRoutes.SymbolsBulkAdd, async (ConfigStore store, SymbolAddRequest req) =>
         {
             if (req.Symbols is null || req.Symbols.Length == 0)
-                return Results.BadRequest(new { error = "At least one symbol configuration is required" });
+                return Results.BadRequest(new { error = "At least one symbol is required" });
 
             var cfg = store.Load();
             var list = (cfg.Symbols ?? Array.Empty<SymbolConfig>()).ToList();
@@ -327,24 +323,24 @@ public static class SymbolEndpoints
 
             foreach (var sym in req.Symbols)
             {
-                var upper = sym.Symbol?.Trim().ToUpperInvariant() ?? "";
+                var upper = sym.Trim().ToUpperInvariant();
                 if (string.IsNullOrWhiteSpace(upper) || !s_symbolPattern.IsMatch(upper))
                 {
-                    skipped.Add(sym.Symbol ?? "(empty)");
+                    skipped.Add(sym);
                     continue;
                 }
 
-                var existing = list.FindIndex(s => string.Equals(s.Symbol, upper, StringComparison.OrdinalIgnoreCase));
-                if (existing >= 0)
+                if (list.Any(s => string.Equals(s.Symbol, upper, StringComparison.OrdinalIgnoreCase)))
                 {
-                    if (req.UpdateExisting)
-                        list[existing] = sym with { Symbol = upper };
-                    else
-                        skipped.Add(upper);
+                    skipped.Add(upper);
                     continue;
                 }
 
-                list.Add(sym with { Symbol = upper });
+                list.Add(new SymbolConfig(
+                    Symbol: upper,
+                    SubscribeTrades: req.SubscribeTrades ?? true,
+                    SubscribeDepth: req.SubscribeDepth ?? true,
+                    DepthLevels: req.DepthLevels ?? 10));
                 added.Add(upper);
             }
 
@@ -461,8 +457,6 @@ internal sealed record SymbolAddRequest(
     int? DepthLevels = null);
 
 internal sealed record SymbolValidateRequest(string[] Symbols);
-
-internal sealed record SymbolBulkAddRequest(SymbolConfig[] Symbols, bool UpdateExisting = false);
 
 internal sealed record SymbolBulkRemoveRequest(string[] Symbols);
 

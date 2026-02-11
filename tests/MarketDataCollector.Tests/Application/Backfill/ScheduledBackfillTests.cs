@@ -1,6 +1,7 @@
 using FluentAssertions;
+using MarketDataCollector.Application.Scheduling;
+using MarketDataCollector.Core.Scheduling;
 using MarketDataCollector.Infrastructure.Providers.Backfill;
-using MarketDataCollector.Infrastructure.Providers.Backfill.Scheduling;
 using Xunit;
 
 namespace MarketDataCollector.Tests.Backfill;

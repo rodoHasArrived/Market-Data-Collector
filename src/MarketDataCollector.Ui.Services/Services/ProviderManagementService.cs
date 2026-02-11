@@ -133,7 +133,7 @@ public sealed class ProviderManagementService
         List<string> providerPriority,
         CancellationToken ct = default)
     {
-        var response = await _apiClient.PostWithResponseAsync<OperationResponse>(
+        var response = await _apiClient.PostWithResponseAsync<OperationResult>(
             "/api/providers/failover",
             new
             {
@@ -185,7 +185,7 @@ public sealed class ProviderManagementService
     /// </summary>
     public async Task<OperationResult> ResetFailoverAsync(CancellationToken ct = default)
     {
-        var response = await _apiClient.PostWithResponseAsync<OperationResponse>(
+        var response = await _apiClient.PostWithResponseAsync<OperationResult>(
             "/api/providers/failover/reset",
             null,
             ct);

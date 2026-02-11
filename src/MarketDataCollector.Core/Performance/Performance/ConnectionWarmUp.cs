@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
-namespace MarketDataCollector.Infrastructure.Performance;
+namespace MarketDataCollector.Core.Performance;
 
 /// <summary>
 /// Connection warm-up utilities for establishing and priming network connections

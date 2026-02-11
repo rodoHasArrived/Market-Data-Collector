@@ -71,6 +71,7 @@ public sealed record DataSourceConfig(
 /// <summary>
 /// Type of data source.
 /// </summary>
+[System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
 public enum DataSourceType
 {
     /// <summary>

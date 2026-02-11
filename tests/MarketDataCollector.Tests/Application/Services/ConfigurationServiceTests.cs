@@ -308,12 +308,17 @@ public class ConfigurationServiceTests : IAsyncDisposable
             Symbols: new[] { new SymbolConfig("SPY") });
 
         // Act
-        var (_, _, warnings) = _sut.ApplySelfHealingFixes(config);
+        var (_, appliedFixes, warnings) = _sut.ApplySelfHealingFixes(config);
 
-        // Assert - Either switched to alternative or warning generated
-        // In CI, no IB gateway is available and no Alpaca creds exist
-        // so we expect a warning about IB Gateway not detected
-        warnings.Should().Contain(w => w.Contains("IB Gateway") || w.Contains("alternative"));
+        // Assert - Either switched to alternative OR warning generated
+        // In CI, no IB gateway is available. If alternative credentials exist,
+        // it will switch (appliedFixes). If not, it will warn.
+        var hasFixOrWarning = 
+            appliedFixes.Any(f => f.Contains("IB") || f.Contains("alternative")) ||
+            warnings.Any(w => w.Contains("IB Gateway") || w.Contains("alternative"));
+        
+        hasFixOrWarning.Should().BeTrue(
+            "Should either apply fix to switch providers OR generate warning about IB Gateway");
     }
 
     #endregion

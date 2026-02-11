@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
-using MarketDataCollector.Infrastructure.Providers.Backfill.Scheduling;
+using MarketDataCollector.Core.Scheduling;
 using Microsoft.Extensions.Logging;
 
 namespace MarketDataCollector.Storage.Maintenance;

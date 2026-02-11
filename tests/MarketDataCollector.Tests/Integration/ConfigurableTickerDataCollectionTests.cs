@@ -67,7 +67,7 @@ public sealed class ConfigurableTickerDataCollectionTests : IDisposable
             _output.WriteLine("  1. Internet connectivity is available");
             _output.WriteLine("  2. DNS can resolve query1.finance.yahoo.com");
             _output.WriteLine("  3. HTTPS access to Yahoo Finance is not blocked");
-            
+
             // Write a summary file even when skipping, so the workflow can report it
             var skipSummary = new List<string>
             {
@@ -84,11 +84,11 @@ public sealed class ConfigurableTickerDataCollectionTests : IDisposable
                 "",
                 "To collect data successfully, ensure network connectivity and DNS resolution work properly.",
             };
-            
+
             var skipSummaryPath = Path.Combine(_outputDir, "collection_summary.txt");
             await File.WriteAllTextAsync(skipSummaryPath, string.Join("\n", skipSummary));
             _output.WriteLine($"Summary written to: {skipSummaryPath}");
-            
+
             // Skip the test instead of failing
             return;
         }

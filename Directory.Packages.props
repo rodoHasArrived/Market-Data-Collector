@@ -163,4 +163,35 @@
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.0.0" />
     <PackageVersion Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
   </ItemGroup>
+
+  <ItemGroup Label="Security - Transitive Dependency Version Overrides">
+    <!-- Override vulnerable transitive dependencies from StockSharp/QuantConnect.Lean -->
+    
+    <!-- System.Drawing.Common: Fix GHSA-rxg9-xrhp-64gj (Critical) - CVE-2021-24112 RCE 
+         Fixed in 4.7.2+ and 5.0.3+ -->
+    <PackageVersion Include="System.Drawing.Common" Version="8.0.11" />
+    
+    <!-- System.Net.Http.WinHttpHandler: Fix GHSA-6xh7-4v2w-36q6 (High) - CVE-2017-0247 -->
+    <PackageVersion Include="System.Net.Http.WinHttpHandler" Version="8.0.0" />
+    
+    <!-- System.Net.Security: Fix GHSA-ch6p-4jcm-h8vh, GHSA-6xh7-4v2w-36q6, GHSA-qhqf-ghgh-x2m4, GHSA-j8f4-2w4p-mhjc
+         Multiple CVEs fixed in 4.3.1+. Using 4.3.2 for compatibility with .NET Framework dependencies -->
+    <PackageVersion Include="System.Net.Security" Version="4.3.2" />
+    
+    <!-- System.Private.ServiceModel: Fix GHSA-jc8g-xhw5-6x46 (High) - CVE-2018-0786, GHSA-p9wx-v264-q34p (Moderate)
+         Fixed in 4.4.1+ -->
+    <PackageVersion Include="System.Private.ServiceModel" Version="4.10.3" />
+    
+    <!-- System.ServiceModel.Primitives: Fix GHSA-jc8g-xhw5-6x46 (High) - CVE-2018-0786, GHSA-p9wx-v264-q34p (Moderate)
+         Fixed in 4.4.1+ -->
+    <PackageVersion Include="System.ServiceModel.Primitives" Version="4.10.3" />
+    
+    <!-- System.Formats.Asn1: Fix GHSA-447r-wph3-92pm (High) - CVE-2024-38095
+         Fixed in 6.0.1+ for .NET 6, 8.0.1+ for .NET 8 -->
+    <PackageVersion Include="System.Formats.Asn1" Version="8.0.1" />
+    
+    <!-- System.Security.Cryptography.Pkcs: Fix GHSA-555c-2p6r-68mm (High) - CVE-2023-29331 DoS
+         Fixed in 6.0.3+ for .NET 6, 7.0.2+ for .NET 7 -->
+    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="8.0.1" />
+  </ItemGroup>
 </Project>
