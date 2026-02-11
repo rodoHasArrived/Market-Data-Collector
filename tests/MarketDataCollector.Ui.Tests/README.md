@@ -26,9 +26,19 @@ Tests are automatically skipped (project compiles empty).
 
 ## Test Coverage
 
-- **Collections**: `BoundedObservableCollection`, `CircularBuffer`
-- **Services**: Form validation, API clients
-- More tests to be added...
+**Current: 58 tests**
+
+- **Collections**: 
+  - `BoundedObservableCollection` (8 tests)
+  - `CircularBuffer` (11 tests)
+- **Services**: 
+  - `FormValidationRules` (4 tests)
+  - `ApiClientService` (7 tests)
+  - `BackfillService` (9 tests)
+  - `WatchlistService` (9 tests)
+  - `SystemHealthService` (10 tests)
+
+More tests to be added...
 
 ## Adding New Tests
 
@@ -41,9 +51,12 @@ Tests are automatically skipped (project compiles empty).
 
 ```
 Collections/
-  BoundedObservableCollectionTests.cs
-  CircularBufferTests.cs
+  BoundedObservableCollectionTests.cs (8 tests)
+  CircularBufferTests.cs (11 tests)
 Services/
-  FormValidationServiceTests.cs
-  (more to be added)
+  FormValidationServiceTests.cs (4 tests)
+  ApiClientServiceTests.cs (7 tests)
+  BackfillServiceTests.cs (9 tests)
+  WatchlistServiceTests.cs (9 tests)
+  SystemHealthServiceTests.cs (10 tests)
 ```
