@@ -34,6 +34,7 @@ public sealed class ResponseSchemaSnapshotTests : IClassFixture<EndpointTestFixt
         // Verify the core fields defined in StatusResponse
         json.Should().ContainKey("isConnected");
         json.Should().ContainKey("timestampUtc");
+        json.Should().ContainKey("uptime");
         json.Should().ContainKey("metrics");
         json.Should().ContainKey("pipeline");
     }
@@ -192,9 +193,11 @@ public sealed class ResponseSchemaSnapshotTests : IClassFixture<EndpointTestFixt
         if (providers.GetArrayLength() > 0)
         {
             var entry = providers[0];
-            // Every catalog entry must have a providerId and displayName
+            // Every catalog entry must have a providerId/displayName and id/name aliases for backward compatibility
             entry.TryGetProperty("providerId", out _).Should().BeTrue("catalog entry must have 'providerId'");
             entry.TryGetProperty("displayName", out _).Should().BeTrue("catalog entry must have 'displayName'");
+            entry.TryGetProperty("id", out _).Should().BeTrue("catalog entry must expose 'id' alias for backward compatibility");
+            entry.TryGetProperty("name", out _).Should().BeTrue("catalog entry must expose 'name' alias for backward compatibility");
         }
     }
 
