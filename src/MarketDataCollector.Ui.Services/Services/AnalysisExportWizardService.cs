@@ -167,7 +167,7 @@ public sealed class AnalysisExportWizardService
             config.ToDate,
             ct);
 
-        estimate.TotalRecords = completeness.TotalExpectedEvents;
+        estimate.TotalRecords = completeness.TotalActualEvents;
         estimate.AvailableRecords = completeness.TotalActualEvents;
         estimate.CompletenessPercent = completeness.OverallCompleteness;
 
@@ -243,7 +243,7 @@ public sealed class AnalysisExportWizardService
 
         report.OverallCompleteness = completeness.OverallCompleteness;
         report.TotalTradingDays = completeness.TotalTradingDays;
-        report.DaysWithData = completeness.DaysWithData;
+        report.DaysWithGaps = completeness.DaysWithGaps;
         report.GapCount = completeness.GapCount;
 
         // Per-symbol quality
@@ -255,10 +255,10 @@ public sealed class AnalysisExportWizardService
             report.SymbolQuality.Add(new SymbolQualityInfo
             {
                 Symbol = symbol,
-                Completeness = symbolReport.Completeness,
+                Completeness = symbolReport.Score,
                 RecordCount = symbolReport.RecordCount,
-                HasGaps = symbolReport.GapCount > 0,
-                QualityGrade = GetQualityGrade(symbolReport.Completeness)
+                HasGaps = symbolReport.MissingDays.Count > 0,
+                QualityGrade = GetQualityGrade(symbolReport.Score)
             });
         }
 
