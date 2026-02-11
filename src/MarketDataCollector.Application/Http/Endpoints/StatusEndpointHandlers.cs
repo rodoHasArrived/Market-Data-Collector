@@ -251,6 +251,7 @@ public sealed class StatusEndpointHandlers
         {
             IsConnected = true,
             TimestampUtc = DateTimeOffset.UtcNow,
+            Uptime = Uptime,
             Metrics = new MetricsData
             {
                 Published = metrics.Published,
