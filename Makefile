@@ -449,6 +449,12 @@ endif
 test-desktop-services: ## Run desktop-focused regression tests
 	@echo "$(BLUE)Running desktop-focused tests...$(NC)"
 	dotnet test $(TEST_PROJECT) -c Release --filter "FullyQualifiedName~UwpCoreIntegrationTests|FullyQualifiedName~ConfigurationUnificationTests|FullyQualifiedName~CliModeResolverTests"
+	@if [ "$$OS" = "Windows_NT" ]; then \
+		echo "$(BLUE)Running UI service tests (Windows only)...$(NC)"; \
+		dotnet test tests/MarketDataCollector.Ui.Tests -c Release; \
+	else \
+		echo "$(YELLOW)Skipping UI service tests (Windows only)$(NC)"; \
+	fi
 
 desktop-dev-bootstrap: ## Run desktop development bootstrap checks (PowerShell)
 	@echo "$(BLUE)Running desktop development bootstrap checks...$(NC)"

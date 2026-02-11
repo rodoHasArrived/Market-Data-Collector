@@ -27,7 +27,7 @@ Market Data Collector is a high-performance, cross-platform market data collecti
 | F# Files | 12 |
 | Test Files | 122 |
 | Documentation Files | 87 |
-| Main Projects | 14 (+ 2 test + 1 benchmark) |
+| Main Projects | 14 (+ 3 test + 1 benchmark) |
 | Provider Implementations | 5 streaming, 10 historical |
 | Symbol Search Providers | 5 |
 | CI/CD Workflows | 17 |
@@ -46,6 +46,12 @@ dotnet test tests/MarketDataCollector.Tests
 
 # Run F# tests
 dotnet test tests/MarketDataCollector.FSharp.Tests
+
+# Run desktop UI service tests (Windows only)
+dotnet test tests/MarketDataCollector.Ui.Tests
+
+# Run all desktop tests
+make test-desktop-services
 
 # Run with web dashboard
 dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --ui --http-port 8080
