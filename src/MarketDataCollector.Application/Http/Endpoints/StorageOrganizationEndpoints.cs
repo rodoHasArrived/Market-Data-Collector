@@ -84,9 +84,24 @@ public static class StorageOrganizationEndpoints
         {
             try
             {
+                MarketEventType[]? types = null;
+                if (req.Types is not null)
+                {
+                    var parsedTypes = new List<MarketEventType>();
+                    foreach (var t in req.Types)
+                    {
+                        if (!Enum.TryParse<MarketEventType>(t, true, out var parsed))
+                        {
+                            return Results.BadRequest(new { error = $"Invalid market event type: '{t}'" });
+                        }
+                        parsedTypes.Add(parsed);
+                    }
+                    types = parsedTypes.ToArray();
+                }
+
                 var query = new FacetedSearchQuery(
                     Symbols: req.Symbols,
-                    Types: req.Types?.Select(t => Enum.Parse<MarketEventType>(t, true)).ToArray(),
+                    Types: types,
                     Sources: req.Sources,
                     From: req.From,
                     To: req.To,

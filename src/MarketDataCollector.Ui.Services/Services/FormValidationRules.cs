@@ -194,13 +194,11 @@ public static class ValidationExtensions
     /// </summary>
     public static ValidationResult Combine(params ValidationResult[] results)
     {
-        foreach (var result in results)
-            if (!result.IsValid && !result.IsWarning)
-                return result;
+        foreach (var result in results.Where(r => !r.IsValid && !r.IsWarning))
+            return result;
 
-        foreach (var result in results)
-            if (result.IsWarning)
-                return result;
+        foreach (var result in results.Where(r => r.IsWarning))
+            return result;
 
         return ValidationResult.Success();
     }
