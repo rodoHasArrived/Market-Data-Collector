@@ -38,7 +38,7 @@ This changelog summarizes the current repository snapshot. Historical release no
 
 ### UI & Integrations
 - Web dashboard for status/metrics and API-backed backfill actions
-- WPF desktop application (recommended for Windows)
+- WPF desktop application (recommended for Windows; workspace/navigation is implemented but some pages remain placeholder-only)
 - UWP desktop application (legacy, Windows 10+)
 - Shared UI services project (`MarketDataCollector.Ui.Services`)
 - QuantConnect Lean integration types and data provider

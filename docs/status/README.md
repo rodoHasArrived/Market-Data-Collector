@@ -14,11 +14,11 @@ This folder contains project status, roadmap, and changelog documentation for th
 
 ### Current Status
 - **Version:** 1.6.1
-- **Status:** Production Ready
+- **Status:** Production Ready (desktop UX parity still in progress)
 - **Last Updated:** 2026-01-30
 
 ### Key Metrics
-- See [production-status.md](production-status.md) for provider readiness and build-time requirements.
+- See [production-status.md](production-status.md) for provider readiness, build-time requirements, and current desktop UX parity caveats.
 - See [ROADMAP.md](ROADMAP.md) for planned work and backlog tracking.
 
 ## Related Documentation

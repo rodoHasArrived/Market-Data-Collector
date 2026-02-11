@@ -184,7 +184,7 @@ From `docs/IMPROVEMENTS.md` — 6 items not started, 3 partially done.
 
 ---
 
-## Phase 4: Desktop App Maturity ✅ COMPLETED (core items)
+## Phase 4: Desktop App Maturity ⚠️ IN PROGRESS (navigation parity complete, UX parity pending)
 
 ### 4A. WPF Desktop App (Recommended)
 
@@ -192,8 +192,12 @@ From `docs/IMPROVEMENTS.md` — 6 items not started, 3 partially done.
 |---|------|----------|-------|
 | 4A.1 | Implement `BackgroundTaskSchedulerService.ScheduleTask()` and `CancelTask()` | P1 | ✅ Done — full async background loop with linked cancellation tokens |
 | 4A.2 | Implement `PendingOperationsQueueService.ProcessAllAsync()` | P1 | ✅ Done — handler registry with retry support for failed operations |
-| 4A.3 | Complete WPF feature parity with UWP | P2 | ✅ Done — workspace-organized UI with 70+ source files |
+| 4A.3 | Complete WPF feature parity with UWP | P2 | ⚠️ Partial — navigation/workspace shell is in place, but many destination pages are still placeholders ("Coming Soon") and do not yet provide equivalent workflows |
 | 4A.4 | Fix desktop charting (depends on Phase 0.3 fix) | P1 | ✅ Done — resolved in Phase 0.3 |
+| 4A.5 | Replace placeholder WPF pages with functional screens for end-user workflows | P1 | New acceptance gate: roadmap/release notes can claim "parity complete" only when placeholder pages are removed from primary navigation paths and core tasks are executable end-to-end |
+| 4A.6 | Publish a user-visible WPF implementation matrix (functional vs placeholder pages) | P2 | Keep roadmap messaging aligned with actual click-through UX reality for each release |
+
+**Reality check (current repo state):** `src/MarketDataCollector.Wpf/Views` contains 48 page XAML files, of which 22 still render a `"Coming Soon"` placeholder shell.
 
 ### 4B. UWP Desktop App (Legacy)
 
