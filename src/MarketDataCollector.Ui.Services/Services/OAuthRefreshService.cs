@@ -112,15 +112,20 @@ public sealed class OAuthRefreshService : IDisposable
 
         foreach (var cred in credentials.Where(c => c.IsOAuthToken))
         {
+            var now = DateTime.UtcNow;
+            var isExpired = cred.ExpiresAt.HasValue && cred.ExpiresAt.Value <= now;
+            var isExpiringSoon = cred.ExpiresAt.HasValue && !isExpired && 
+                                 cred.ExpiresAt.Value <= now.AddHours(24);
+            
             var status = new OAuthTokenStatus
             {
                 ProviderId = cred.Resource.Replace($"{CredentialService.OAuthTokenResource}.", ""),
-                DisplayName = cred.Name,
+                DisplayName = cred.Resource.Replace($"{CredentialService.OAuthTokenResource}.", ""),
                 ExpiresAt = cred.ExpiresAt,
-                LastRefreshedAt = cred.LastAuthenticatedAt,
+                LastRefreshedAt = null, // Not tracked in CredentialWithMetadata
                 CanAutoRefresh = cred.CanAutoRefresh,
-                IsExpired = cred.IsExpired,
-                IsExpiringSoon = cred.IsExpiringSoon
+                IsExpired = isExpired,
+                IsExpiringSoon = isExpiringSoon
             };
 
             if (cred.ExpiresAt.HasValue)
