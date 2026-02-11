@@ -1,33 +1,33 @@
 # TODO Tracking
 
 > Auto-generated TODO documentation. Do not edit manually.
-> Last updated: 2026-02-11T18:34:19.998255+00:00
+> Last updated: 2026-02-11T18:35:59.905037+00:00
 
 ## Summary
 
 | Metric | Count |
 |--------|-------|
-| **Total Items** | 15 |
+| **Total Items** | 14 |
 | **Linked to Issues** | 0 |
-| **Untracked** | 15 |
+| **Untracked** | 14 |
 
 ### By Type
 
 | Type | Count | Description |
 |------|-------|-------------|
 | `NOTE` | 10 | Important notes and documentation |
-| `TODO` | 5 | General tasks to complete |
+| `TODO` | 4 | General tasks to complete |
 
 ### By Directory
 
 | Directory | Count |
 |-----------|-------|
-| `src/` | 8 |
 | `tests/` | 7 |
+| `src/` | 7 |
 
 ## All Items
 
-### TODO (5)
+### TODO (4)
 
 - [ ] `src/MarketDataCollector.Ui.Services/Services/OrderBookVisualizationService.cs:37`
   > Implement once LiveDataService supports SubscribeToDepthAsync
@@ -40,9 +40,6 @@
 
 - [ ] `src/MarketDataCollector.Ui.Services/Services/PortfolioImportService.cs:223`
   > Implement once WatchlistService supports CreateOrUpdateWatchlistAsync var watchlistService = WatchlistService.Instance; await watchlistService.CreateOrUpdateWatchlistAsync(watchlistName, symbols, ct);
-
-- [ ] `src/MarketDataCollector.Ui.Services/Services/SetupWizardService.cs:656`
-  > Implement credential storage once CredentialService supports SaveCredentialAsync
 
 ### NOTE (10)
 
