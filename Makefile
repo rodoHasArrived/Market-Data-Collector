@@ -448,7 +448,16 @@ endif
 
 test-desktop-services: ## Run desktop-focused regression tests
 	@echo "$(BLUE)Running desktop-focused tests...$(NC)"
+ifeq ($(OS),Windows_NT)
+	@echo "Running WPF service tests..."
+	dotnet test tests/MarketDataCollector.Wpf.Tests/MarketDataCollector.Wpf.Tests.csproj -c Release
+	@echo "Running integration tests..."
 	dotnet test $(TEST_PROJECT) -c Release --filter "FullyQualifiedName~UwpCoreIntegrationTests|FullyQualifiedName~ConfigurationUnificationTests|FullyQualifiedName~CliModeResolverTests"
+else
+	@echo "$(YELLOW)Desktop service tests require Windows. Skipping WPF tests.$(NC)"
+	@echo "Running available integration tests..."
+	dotnet test $(TEST_PROJECT) -c Release --filter "FullyQualifiedName~ConfigurationUnificationTests|FullyQualifiedName~CliModeResolverTests"
+endif
 
 desktop-dev-bootstrap: ## Run desktop development bootstrap checks (PowerShell)
 	@echo "$(BLUE)Running desktop development bootstrap checks...$(NC)"
