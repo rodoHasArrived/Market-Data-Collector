@@ -6,7 +6,7 @@ using Xunit;
 namespace MarketDataCollector.Tests.Integration.EndpointTests;
 
 /// <summary>
-/// Integration tests for Interactive Brokers endpoints (/api/ib/*).
+/// Integration tests for Interactive Brokers endpoints (/api/providers/ib/*).
 /// </summary>
 public sealed class IBEndpointTests : IClassFixture<EndpointTestFixture>
 {
@@ -20,7 +20,7 @@ public sealed class IBEndpointTests : IClassFixture<EndpointTestFixture>
     [Fact]
     public async Task IBStatus_ReturnsJson()
     {
-        var response = await _client.GetAsync("/api/ib/status");
+        var response = await _client.GetAsync("/api/providers/ib/status");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         response.Content.Headers.ContentType!.MediaType.Should().Be("application/json");
@@ -29,7 +29,7 @@ public sealed class IBEndpointTests : IClassFixture<EndpointTestFixture>
     [Fact]
     public async Task IBErrorCodes_ReturnsJson()
     {
-        var response = await _client.GetAsync("/api/ib/error-codes");
+        var response = await _client.GetAsync("/api/providers/ib/error-codes");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         response.Content.Headers.ContentType!.MediaType.Should().Be("application/json");
@@ -38,7 +38,7 @@ public sealed class IBEndpointTests : IClassFixture<EndpointTestFixture>
     [Fact]
     public async Task IBLimits_ReturnsJson()
     {
-        var response = await _client.GetAsync("/api/ib/limits");
+        var response = await _client.GetAsync("/api/providers/ib/limits");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         response.Content.Headers.ContentType!.MediaType.Should().Be("application/json");

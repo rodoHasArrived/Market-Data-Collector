@@ -377,7 +377,8 @@ public sealed class EndpointStubDetectionTests : IAsyncLifetime
             ["Health/Status"] = routes.Count(r =>
                 r.Route.StartsWith("/health") || r.Route.StartsWith("/ready") ||
                 r.Route.StartsWith("/live") || r.Route.StartsWith("/metrics") ||
-                r.Route == "/api/status"),
+                r.Route == "/api/status" || r.Route == "/api/errors" ||
+                r.Route == "/api/connections" || r.Route == "/api/backpressure"),
             ["Config"] = routes.Count(r => r.Route.StartsWith("/api/config")),
             ["Backfill"] = routes.Count(r => r.Route.StartsWith("/api/backfill")),
             ["Provider"] = routes.Count(r => r.Route.StartsWith("/api/providers")),
@@ -390,6 +391,16 @@ public sealed class EndpointStubDetectionTests : IAsyncLifetime
             ["Data"] = routes.Count(r => r.Route.StartsWith("/api/data")),
             ["Export"] = routes.Count(r => r.Route.StartsWith("/api/export")),
             ["Lean"] = routes.Count(r => r.Route.StartsWith("/api/lean")),
+            ["Quality"] = routes.Count(r => r.Route.StartsWith("/api/quality")),
+            ["SLA"] = routes.Count(r => r.Route.StartsWith("/api/sla")),
+            ["Maintenance"] = routes.Count(r => r.Route.StartsWith("/api/maintenance")),
+            ["Messaging"] = routes.Count(r => r.Route.StartsWith("/api/messaging")),
+            ["Replay"] = routes.Count(r => r.Route.StartsWith("/api/replay")),
+            ["Sampling"] = routes.Count(r => r.Route.StartsWith("/api/sampling")),
+            ["Subscriptions"] = routes.Count(r => r.Route.StartsWith("/api/subscriptions")),
+            ["Schedules"] = routes.Count(r => r.Route.StartsWith("/api/schedules")),
+            ["Alignment"] = routes.Count(r => r.Route.StartsWith("/api/alignment")),
+            ["Indices"] = routes.Count(r => r.Route.StartsWith("/api/indices")),
             ["Other"] = 0
         };
 
@@ -397,7 +408,7 @@ public sealed class EndpointStubDetectionTests : IAsyncLifetime
         categories["Other"] = routes.Count - categorizedCount;
 
         // Assert - all routes should fall into known categories
-        categories["Other"].Should().BeLessThanOrEqualTo(60,
+        categories["Other"].Should().BeLessThanOrEqualTo(10,
             "Too many uncategorized routes - add new categories as needed");
 
         // Each major category should have routes defined
