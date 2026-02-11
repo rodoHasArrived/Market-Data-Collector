@@ -243,7 +243,7 @@ public sealed class AnalysisExportWizardService
 
         report.OverallCompleteness = completeness.OverallCompleteness;
         report.TotalTradingDays = completeness.TotalTradingDays;
-        report.DaysWithGaps = completeness.DaysWithGaps;
+        report.DaysWithData = completeness.TotalTradingDays - completeness.DaysWithGaps;
         report.GapCount = completeness.GapCount;
 
         // Per-symbol quality
