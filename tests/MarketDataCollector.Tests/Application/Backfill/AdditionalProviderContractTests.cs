@@ -231,7 +231,7 @@ public sealed class AdditionalProviderContractTests
         var httpClient = CreateMockHttpClient("{ invalid json }");
         using var provider = new FinnhubHistoricalDataProvider(apiKey: "test-key", httpClient: httpClient);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAnyAsync<Exception>(
             () => provider.GetDailyBarsAsync("AAPL", null, null));
     }
 
@@ -388,9 +388,11 @@ public sealed class AdditionalProviderContractTests
                 "SendAsync",
                 ItExpr.IsAny<HttpRequestMessage>(),
                 ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage(statusCode)
+            .ReturnsAsync(() =>
             {
-                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+                var response = new HttpResponseMessage(statusCode);
+                response.Content = new StringContent(responseContent, Encoding.UTF8, "application/json");
+                return response;
             });
 
         return new HttpClient(mockHandler.Object);

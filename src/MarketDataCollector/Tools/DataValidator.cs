@@ -145,12 +145,32 @@ public sealed class DataValidator
                     }
                     lastTimestampBySymbol[symbol] = timestamp;
 
-                    // Validate event type
-                    var typeStr = typeEl.GetString();
-                    if (!Enum.TryParse<MarketEventType>(typeStr, true, out _))
+                    // Validate event type (can be either string or number)
+                    MarketEventType eventType;
+                    if (typeEl.ValueKind == JsonValueKind.Number)
+                    {
+                        if (!typeEl.TryGetInt32(out var typeInt) || !Enum.IsDefined(typeof(MarketEventType), typeInt))
+                        {
+                            invalidEvents++;
+                            errors.Add($"Line {totalLines}: Unknown event type: {typeInt}");
+                            continue;
+                        }
+                        eventType = (MarketEventType)typeInt;
+                    }
+                    else if (typeEl.ValueKind == JsonValueKind.String)
+                    {
+                        var typeStr = typeEl.GetString();
+                        if (!Enum.TryParse<MarketEventType>(typeStr, true, out eventType))
+                        {
+                            invalidEvents++;
+                            errors.Add($"Line {totalLines}: Unknown event type: {typeStr}");
+                            continue;
+                        }
+                    }
+                    else
                     {
                         invalidEvents++;
-                        errors.Add($"Line {totalLines}: Unknown event type: {typeStr}");
+                        errors.Add($"Line {totalLines}: Event type must be a string or number");
                         continue;
                     }
 

@@ -486,9 +486,11 @@ public class HistoricalProviderContractTests
                 "SendAsync",
                 ItExpr.IsAny<HttpRequestMessage>(),
                 ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage(statusCode)
+            .ReturnsAsync(() =>
             {
-                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+                var response = new HttpResponseMessage(statusCode);
+                response.Content = new StringContent(responseContent, Encoding.UTF8, "application/json");
+                return response;
             });
 
         return new HttpClient(mockHandler.Object);
