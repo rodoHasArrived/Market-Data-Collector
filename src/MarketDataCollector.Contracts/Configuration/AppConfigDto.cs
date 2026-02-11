@@ -19,6 +19,9 @@ public class AppConfigDto
     [JsonPropertyName("alpaca")]
     public AlpacaOptionsDto? Alpaca { get; set; }
 
+    [JsonPropertyName("polygon")]
+    public PolygonOptionsDto? Polygon { get; set; }
+
     [JsonPropertyName("stockSharp")]
     public StockSharpOptionsDto? StockSharp { get; set; }
 
