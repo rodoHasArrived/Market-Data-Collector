@@ -988,7 +988,7 @@ public sealed class StorageOptimizationAdvisorService
                     {
                         using var compressor = new Compressor(9);
                         var compressed = compressor.Wrap(rawBytes);
-                        await destStream.WriteAsync(new ReadOnlyMemory<byte>(compressed.ToArray()), ct);
+                        await destStream.WriteAsync(compressed, ct);
                     }
                     catch
                     {

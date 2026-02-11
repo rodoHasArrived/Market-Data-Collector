@@ -243,39 +243,39 @@ From `docs/IMPROVEMENTS.md` — 6 items not started, 3 partially done.
 
 ---
 
-## Phase 6: Duplicate & Unused Code Cleanup (In Progress)
+## Phase 6: Duplicate & Unused Code Cleanup
 
 Reduce maintenance burden by eliminating dead code, consolidating duplicate implementations, and resolving ambiguous ownership across projects. Informed by `docs/archived/DUPLICATE_CODE_ANALYSIS.md`, `docs/STRUCTURAL_IMPROVEMENTS.md`, and `docs/audits/CLEANUP_OPPORTUNITIES.md`.
 
 **Estimated savings:** ~2,500–3,000 lines of duplicate code removed, ~300 KB of dead assets deleted, and clearer project boundaries.
 
-### 6A. Dead Code Removal (P1 — Zero Risk) ✅ COMPLETED
+### 6A. Dead Code Removal (P1 — Zero Risk)
 
 Items that are completely unused and can be deleted immediately with no downstream impact.
 
 | # | Item | Location | Evidence | Est. LOC |
 |---|------|----------|----------|----------|
-| 6A.1 | ✅ **Delete unused `SymbolNormalizer.cs`** — complete duplicate of `SymbolNormalization.cs` with identical methods; 0 references in codebase | `Infrastructure/Utilities/SymbolNormalizer.cs` | `SymbolNormalization.cs` has 7 active references; `SymbolNormalizer.cs` has 0 | ~80 |
-| 6A.2 | **Delete UWP Examples folder** — 6 XAML example files + 2 markdown docs never referenced from any code or navigation | `src/MarketDataCollector.Uwp/Examples/` (6 XAML files, ~260 KB) | Retained as active design documentation — referenced in README | ~260 KB |
-| 6A.3 | **Remove tracked build artifacts** — `build-output.log` and scratch files tracked in git | Root directory | Already addressed — no build artifacts found in repo root | N/A |
+| 6A.1 | **Delete unused `SymbolNormalizer.cs`** — complete duplicate of `SymbolNormalization.cs` with identical methods; 0 references in codebase | `Infrastructure/Utilities/SymbolNormalizer.cs` | `SymbolNormalization.cs` has 7 active references; `SymbolNormalizer.cs` has 0 | ~80 |
+| 6A.2 | **Delete UWP Examples folder** — 6 XAML example files + 2 markdown docs never referenced from any code or navigation | `src/MarketDataCollector.Uwp/Examples/` (6 XAML files, ~260 KB) | Zero C# references to any example file | ~260 KB |
+| 6A.3 | **Remove tracked build artifacts** — `build-output.log` and scratch files tracked in git | Root directory | Already addressed in `docs/audits/CLEANUP_SUMMARY.md`; verify removal is merged | N/A |
 
-### 6B. Duplicate Interface Consolidation (P2 — Low Risk) — Partially Complete
+### 6B. Duplicate Interface Consolidation (P2 — Low Risk)
 
 The same service interfaces are defined in up to three separate projects. Consolidate to a single canonical location in `MarketDataCollector.Ui.Services/Contracts/`.
 
 | # | Item | Canonical Location | Duplicate Locations | Est. LOC |
 |---|------|--------------------|---------------------|----------|
-| 6B.1 | **`IConfigService`** (127 lines canonical vs 15-line stubs) | `Ui.Services/Contracts/` | `Wpf/Services/IConfigService.cs` (different interface: `IConfigSettingsService`), `Uwp/Contracts/` | ~30 |
-| 6B.2 | ✅ **`IThemeService`** | `Ui.Services/Contracts/` | ~~`Wpf/Services/IThemeService.cs`~~ (deleted — was empty shim), `Uwp/Contracts/` | ~20 |
-| 6B.3 | **`INotificationService`** | `Ui.Services/Contracts/` | `Wpf/Services/INotificationService.cs` (different signatures: sync vs async), `Uwp/Contracts/` | ~20 |
-| 6B.4 | ✅ **`ILoggingService`** | `Ui.Services/Contracts/` | ~~`Wpf/Services/ILoggingService.cs`~~ (deleted — was empty shim), `Uwp/Contracts/` | ~15 |
-| 6B.5 | ✅ **`IMessagingService`** | `Ui.Services/Contracts/` | ~~`Wpf/Services/IMessagingService.cs`~~ (deleted — was empty shim), `Uwp/Contracts/` | ~15 |
-| 6B.6 | **`IKeyboardShortcutService`** | `Ui.Services/Contracts/` | `Wpf/Services/IKeyboardShortcutService.cs` (platform-specific APIs), `Uwp/Contracts/` | ~15 |
-| 6B.7 | ✅ **`IBackgroundTaskSchedulerService`** | `Ui.Services/Contracts/` | ~~`Wpf/Services/IBackgroundTaskSchedulerService.cs`~~ (deleted — was empty shim), `Uwp/Contracts/` | ~15 |
-| 6B.8 | ✅ **`IPendingOperationsQueueService`** | `Ui.Services/Contracts/` | ~~`Wpf/Services/IPendingOperationsQueueService.cs`~~ (deleted — was empty shim), `Uwp/Contracts/` | ~15 |
-| 6B.9 | ✅ **`IOfflineTrackingPersistenceService`** | `Ui.Services/Contracts/` | ~~`Wpf/Services/IOfflineTrackingPersistenceService.cs`~~ (deleted — was empty shim), `Uwp/Contracts/` | ~15 |
+| 6B.1 | **`IConfigService`** (127 lines canonical vs 15-line stubs) | `Ui.Services/Contracts/` | `Wpf/Services/IConfigService.cs`, `Uwp/Contracts/` | ~30 |
+| 6B.2 | **`IThemeService`** | `Ui.Services/Contracts/` | `Wpf/Services/IThemeService.cs`, `Uwp/Contracts/` | ~20 |
+| 6B.3 | **`INotificationService`** | `Ui.Services/Contracts/` | `Wpf/Services/INotificationService.cs`, `Uwp/Contracts/` | ~20 |
+| 6B.4 | **`ILoggingService`** | `Ui.Services/Contracts/` | `Wpf/Services/ILoggingService.cs`, `Uwp/Contracts/` | ~15 |
+| 6B.5 | **`IMessagingService`** | `Ui.Services/Contracts/` | `Wpf/Services/IMessagingService.cs`, `Uwp/Contracts/` | ~15 |
+| 6B.6 | **`IKeyboardShortcutService`** | `Ui.Services/Contracts/` | `Wpf/Services/IKeyboardShortcutService.cs`, `Uwp/Contracts/` | ~15 |
+| 6B.7 | **`IBackgroundTaskSchedulerService`** | `Ui.Services/Contracts/` | `Wpf/Services/IBackgroundTaskSchedulerService.cs`, `Uwp/Contracts/` | ~15 |
+| 6B.8 | **`IPendingOperationsQueueService`** | `Ui.Services/Contracts/` | `Wpf/Services/IPendingOperationsQueueService.cs`, `Uwp/Contracts/` | ~15 |
+| 6B.9 | **`IOfflineTrackingPersistenceService`** | `Ui.Services/Contracts/` | `Wpf/Services/IOfflineTrackingPersistenceService.cs`, `Uwp/Contracts/` | ~15 |
 
-**Approach:** Deleted 6 WPF shim interface files (IThemeService, ILoggingService, IMessagingService, IBackgroundTaskSchedulerService, IPendingOperationsQueueService, IOfflineTrackingPersistenceService) that were empty backwards-compatibility wrappers forwarding to canonical `Ui.Services.Contracts`. Remaining 3 items (IConfigService, INotificationService, IKeyboardShortcutService) have genuine signature differences requiring further work.
+**Approach:** Delete WPF and UWP duplicate interface files. Update `using` directives to reference `Ui.Services.Contracts`. Verify build.
 
 ### 6C. WPF/UWP Service Deduplication (P2 — Medium Risk)
 
@@ -283,23 +283,23 @@ The same service interfaces are defined in up to three separate projects. Consol
 
 | # | Item | Priority | Description | Est. LOC Saved |
 |---|------|----------|-------------|----------------|
-| 6C.1 | ✅ **Phase 1 — Near-identical services** (FormValidationService validation rules extracted) | P2 | Extracted shared `FormValidationRules.cs` (+ `ValidationResult`, `ValidationExtensions`) to `Ui.Services`; WPF and UWP now delegate validation logic to shared rules, keeping only platform-specific UI helpers | ~200 |
+| 6C.1 | **Phase 1 — Near-identical services** (BrushRegistry, ExportPresetService, FormValidationService, InfoBarService, TooltipService) | P2 | Services with <5% variation between WPF and UWP; extract to shared project directly | ~400 |
 | 6C.2 | **Phase 2 — Singleton-pattern services** (ThemeService, ConfigService, NotificationService, NavigationService, ConnectionService) | P2 | Only differ in singleton pattern (`Lazy<T>` vs `lock`); parameterize the pattern in a shared base | ~600 |
 | 6C.3 | **Phase 3 — Services with minor platform differences** (LoggingService, MessagingService, StatusService, CredentialService, SchemaService, WatchlistService) | P2 | ~90% shared logic with small platform-specific branches; use strategy/adapter pattern | ~500 |
 | 6C.4 | **Phase 4 — Complex services** (AdminMaintenanceService, AdvancedAnalyticsService, ArchiveHealthService, BackgroundTaskSchedulerService, OfflineTrackingPersistenceService, PendingOperationsQueueService) | P3 | Larger services requiring careful extraction of shared orchestration logic | ~300 |
 
 **Validation:** Full solution build + existing test suite green after each phase.
 
-### 6D. Ambiguous Class Name Resolution (P2 — Low Risk) — Partially Complete
+### 6D. Ambiguous Class Name Resolution (P2 — Low Risk)
 
 Same-named classes in different namespaces create confusion and maintenance risk.
 
 | # | Item | Locations | Recommendation |
 |---|------|-----------|----------------|
-| 6D.1 | ✅ **`SubscriptionManager`** — reduced from 3 to 2 classes | ~~`Infrastructure/Providers/`~~ (deleted — unused duplicate), `Application/Subscriptions/`, `Infrastructure/Shared/` | Deleted unused `Infrastructure/Providers/SubscriptionManager.cs`; two remaining serve distinct purposes (app-level subscription lifecycle vs provider-level subscription tracking) |
-| 6D.2 | **`ConfigStore`** — 2 classes with same name | `Application/Http/ConfigStore.cs`, `Ui.Shared/Services/ConfigStore.cs` | Intentional wrapper pattern with `using` alias — no rename needed |
-| 6D.3 | **`BackfillCoordinator`** — 2 classes with same name | `Application/Http/BackfillCoordinator.cs`, `Ui.Shared/Services/BackfillCoordinator.cs` | Intentional wrapper pattern with `using` alias — no rename needed |
-| 6D.4 | ✅ **`HtmlTemplates`** — renamed both classes for clarity | `Application/Http/HtmlTemplates.cs` → `HtmlTemplateManager`, `Ui.Shared/HtmlTemplates.cs` → `HtmlTemplateGenerator` | Renamed: `HtmlTemplateManager` (template loader with file fallback) and `HtmlTemplateGenerator` (inline template generator) |
+| 6D.1 | **`SubscriptionManager`** — 3 classes with same name across layers | `Application/Subscriptions/`, `Infrastructure/Providers/`, `Infrastructure/Shared/` | Rename to role-specific names: `SubscriptionCoordinator`, `ProviderSubscriptionManager`, `SubscriptionHelper` |
+| 6D.2 | **`ConfigStore`** — 2 classes with same name | `Application/Http/ConfigStore.cs`, `Ui.Shared/Services/ConfigStore.cs` | Rename UI variant to `UiConfigStore` or merge functionality |
+| 6D.3 | **`BackfillCoordinator`** — 2 classes with same name | `Application/Http/BackfillCoordinator.cs`, `Ui.Shared/Services/BackfillCoordinator.cs` | Rename UI variant to `UiBackfillCoordinator` or merge |
+| 6D.4 | **`HtmlTemplates`** — 2 classes with same name | `Application/Http/HtmlTemplates.cs`, `Ui.Shared/HtmlTemplates.cs` | Determine canonical owner; delete or rename the other |
 
 ### 6E. UWP Platform Decoupling (P3 — Higher Risk, Gated on UWP Deprecation Decision)
 
@@ -319,10 +319,10 @@ Several files exceed 2,000 lines and combine multiple responsibilities. Breaking
 
 | # | Item | Location | Current LOC | Recommendation |
 |---|------|----------|-------------|----------------|
-| 6F.1 | ✅ **Split `UiServer.cs`** into domain-specific endpoint modules | `Application/Http/UiServer.cs` | 3,030 → 381 | Extracted 5 endpoint files: `StorageOrganizationEndpoints.cs`, `SymbolManagementEndpoints.cs`, `NewFeatureEndpoints.cs`, `CredentialManagementEndpoints.cs`, `BulkSymbolManagementEndpoints.cs`, plus `UiServerDtos.cs` |
+| 6F.1 | **Split `UiServer.cs`** into domain-specific endpoint modules | `Application/Http/UiServer.cs` | ~3,030 | Extract `MapHealthEndpoints()`, `MapStorageEndpoints()`, `MapConfigEndpoints()`, etc. |
 | 6F.2 | **Split `HtmlTemplates.cs`** — move static CSS/JS to `wwwroot`, keep only dynamic rendering | `Ui.Shared/HtmlTemplates.cs` | ~2,510 | Move static assets to files; split C# into composable render functions |
-| 6F.3 | ✅ **Decompose `PortableDataPackager.cs`** — extracted script generation | `Storage/Packaging/PortableDataPackager.cs` | 2,042 → 1,248 | Extracted `PackageScriptGenerator.cs` (823 lines) with 11 script generation methods |
-| 6F.4 | ✅ **Decompose `AnalysisExportService.cs`** — extracted XLSX formatting | `Storage/Export/AnalysisExportService.cs` | 1,355 → 1,044 | Extracted `XlsxExportFormatter.cs` (390 lines) with XLSX file generation and XML helpers |
+| 6F.3 | **Decompose `PortableDataPackager.cs`** — separate orchestration, I/O, validation, reporting | `Storage/Packaging/PortableDataPackager.cs` | ~1,100 | Extract `PackageValidator`, `PackageWriter`, `PackageReporter` |
+| 6F.4 | **Decompose `AnalysisExportService.cs`** | `Storage/Export/AnalysisExportService.cs` | ~1,300 | Extract format-specific writers and quality report generation |
 
 ---
 

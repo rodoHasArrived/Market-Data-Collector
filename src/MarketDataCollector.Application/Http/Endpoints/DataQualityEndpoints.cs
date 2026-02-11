@@ -1,9 +1,8 @@
 using System.Text.Json;
-using MarketDataCollector.Application.Monitoring.DataQuality;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 
-namespace MarketDataCollector.Application.UI;
+namespace MarketDataCollector.Application.Monitoring.DataQuality;
 
 /// <summary>
 /// HTTP endpoint extensions for data quality monitoring dashboard.

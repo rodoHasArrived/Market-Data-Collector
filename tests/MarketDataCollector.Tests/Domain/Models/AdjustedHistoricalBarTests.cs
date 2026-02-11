@@ -91,7 +91,7 @@ public class AdjustedHistoricalBarTests
         bar.High.Should().BeGreaterThanOrEqualTo(bar.Close);
         bar.Low.Should().Be(12.00m);
         bar.Close.Should().Be(12.75m);
-
+        
         // Verify valid OHLC relationships
         bar.High.Should().BeGreaterThanOrEqualTo(bar.Low);
         bar.Open.Should().BeInRange(bar.Low, bar.High);
@@ -125,7 +125,7 @@ public class AdjustedHistoricalBarTests
         bar.High.Should().BeGreaterThanOrEqualTo(bar.Close);
         bar.Low.Should().Be(12.00m);
         bar.Close.Should().Be(12.75m);
-
+        
         // Verify valid OHLC relationships
         bar.High.Should().BeGreaterThanOrEqualTo(bar.Low);
         bar.Open.Should().BeInRange(bar.Low, bar.High);
@@ -158,7 +158,7 @@ public class AdjustedHistoricalBarTests
         bar.Open.Should().BeGreaterThanOrEqualTo(bar.Low);
         bar.High.Should().Be(13.00m);
         bar.Close.Should().Be(12.75m);
-
+        
         // Verify valid OHLC relationships
         bar.High.Should().BeGreaterThanOrEqualTo(bar.Low);
         bar.Open.Should().BeInRange(bar.Low, bar.High);
@@ -192,7 +192,7 @@ public class AdjustedHistoricalBarTests
         bar.Low.Should().BeLessThanOrEqualTo(bar.Open);
         bar.Low.Should().BeLessThanOrEqualTo(bar.Close);
         bar.Close.Should().Be(12.00m);
-
+        
         // Verify valid OHLC relationships
         bar.High.Should().BeGreaterThanOrEqualTo(bar.Low);
         bar.Open.Should().BeInRange(bar.Low, bar.High);

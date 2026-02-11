@@ -94,7 +94,7 @@ public sealed class WebHostAdapter : IHostAdapter
     {
         app.MapGet("/", (ConfigStore store) =>
         {
-            var html = HtmlTemplateManager.Index(
+            var html = HtmlTemplates.Index(
                 store.ConfigPath,
                 store.GetStatusPath(),
                 store.GetBackfillStatusPath());
@@ -188,7 +188,7 @@ public sealed class DesktopHostAdapter : IHostAdapter
         // Dashboard for embedded browser
         app.MapGet("/", (ConfigStore store) =>
         {
-            var html = HtmlTemplateManager.Index(
+            var html = HtmlTemplates.Index(
                 store.ConfigPath,
                 store.GetStatusPath(),
                 store.GetBackfillStatusPath());

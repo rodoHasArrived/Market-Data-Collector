@@ -1,5 +1,5 @@
 using System;
-using MarketDataCollector.Ui.Services;
+using MarketDataCollector.Uwp.Services;
 using Microsoft.UI.Xaml.Controls;
 
 namespace MarketDataCollector.Uwp.Contracts;

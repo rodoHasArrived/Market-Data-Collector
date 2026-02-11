@@ -196,7 +196,7 @@ public sealed class SearchService
                     {
                         Title = item.Symbol,
                         Description = item.Notes ?? "Watchlist symbol",
-                        Icon = "\uE728",
+                        Icon = item.IsFavorite ? "\uE735" : "\uE728",
                         NavigationTarget = $"symbol:{item.Symbol}",
                         Category = "Watchlist"
                     });
