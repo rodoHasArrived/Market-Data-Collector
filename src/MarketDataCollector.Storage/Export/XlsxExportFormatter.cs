@@ -95,6 +95,9 @@ internal static class XlsxExportFormatter
         var sharedStringIndex = new Dictionary<string, int>();
 
         // Collect all records first
+        // NOTE: All records are buffered in memory before writing to XLSX.
+        // For large exports (>100K rows), consider using maxRecordsPerFile to limit memory usage
+        // or split into multiple files. Default Excel row limit is 1,048,576 rows.
         var allRecords = new List<Dictionary<string, object?>>();
         foreach (var sourceFile in sourceFiles)
         {
@@ -138,13 +141,10 @@ internal static class XlsxExportFormatter
 
         // Build shared strings and sheet content
         var headers = allRecords[0].Keys.ToList();
-        foreach (var header in headers)
+        foreach (var header in headers.Where(h => !sharedStringIndex.ContainsKey(h)))
         {
-            if (!sharedStringIndex.ContainsKey(header))
-            {
-                sharedStringIndex[header] = sharedStrings.Count;
-                sharedStrings.Add(header);
-            }
+            sharedStringIndex[header] = sharedStrings.Count;
+            sharedStrings.Add(header);
         }
 
         var sheetXml = new StringBuilder();

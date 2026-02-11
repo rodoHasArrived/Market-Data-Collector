@@ -3,6 +3,7 @@ using MarketDataCollector.Application.Config.Credentials;
 using MarketDataCollector.Application.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Serilog;
 
 namespace MarketDataCollector.Application.UI;
 
@@ -203,7 +204,10 @@ public static class CredentialManagementEndpoints
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to store token: {ex.Message}");
+                // Log full exception server-side but return generic error to client
+                // to avoid leaking sensitive details (token fragments, paths, etc.)
+                Log.Error(ex, "Failed to store OAuth token for provider {Provider}", req.Provider);
+                return Results.Problem("Failed to store OAuth token. Check server logs for details.");
             }
         });
 
@@ -219,7 +223,9 @@ public static class CredentialManagementEndpoints
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Failed to remove token: {ex.Message}");
+                // Log full exception server-side but return generic error to client
+                Log.Error(ex, "Failed to remove OAuth token for provider {Provider}", provider);
+                return Results.Problem("Failed to remove OAuth token. Check server logs for details.");
             }
         });
 
@@ -291,7 +297,7 @@ public static class CredentialManagementEndpoints
             try
             {
                 var config = configService.LoadAndPrepareConfig(store.ConfigPath, applySelfHealing: false);
-                var (fixedConfig, appliedFixes, warnings) = configService.ApplySelfHealingFixes(config);
+                var (_, appliedFixes, warnings) = configService.ApplySelfHealingFixes(config);
 
                 return Results.Json(new
                 {
