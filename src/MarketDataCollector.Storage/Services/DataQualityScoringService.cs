@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
-using Microsoft.Extensions.Logging;
 using MarketDataCollector.Infrastructure.Contracts;
+using Microsoft.Extensions.Logging;
 using MarketDataCollector.Storage.Interfaces;
 using MarketDataCollector.Storage.Policies;
 

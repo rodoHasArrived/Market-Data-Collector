@@ -1,6 +1,8 @@
 using System.Text.Json.Serialization;
+using MarketDataCollector.Core.Scheduling;
+using MarketDataCollector.Infrastructure.Providers.Backfill;
 
-namespace MarketDataCollector.Infrastructure.Providers.Backfill.Scheduling;
+namespace MarketDataCollector.Application.Scheduling;
 
 /// <summary>
 /// Represents a scheduled backfill configuration with cron-like scheduling.

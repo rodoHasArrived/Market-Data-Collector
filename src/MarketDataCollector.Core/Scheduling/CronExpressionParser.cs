@@ -1,4 +1,4 @@
-namespace MarketDataCollector.Infrastructure.Providers.Backfill.Scheduling;
+namespace MarketDataCollector.Core.Scheduling;
 
 /// <summary>
 /// Lightweight cron expression parser supporting standard 5-field format.

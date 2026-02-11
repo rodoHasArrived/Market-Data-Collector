@@ -1,8 +1,9 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
+using MarketDataCollector.Core.Scheduling;
 using Microsoft.Extensions.Logging;
 
-namespace MarketDataCollector.Infrastructure.Providers.Backfill.Scheduling;
+namespace MarketDataCollector.Application.Scheduling;
 
 /// <summary>
 /// Manages backfill schedules including CRUD operations, persistence, and status tracking.
