@@ -94,6 +94,15 @@ make test
 make doctor
 ```
 
+Desktop-focused helpers:
+
+```bash
+make desktop-dev-bootstrap
+make build-wpf
+make test-desktop-services
+make uwp-xaml-diagnose
+```
+
 ### Windows Desktop App Install
 
 **Two Options Available:**

@@ -20,7 +20,8 @@
         doctor doctor-quick doctor-fix diagnose diagnose-build \
         collect-debug collect-debug-minimal build-profile build-binlog validate-data analyze-errors \
         build-graph fingerprint env-capture env-diff impact bisect metrics history app-metrics \
-        icons desktop desktop-publish install-hooks
+        icons desktop desktop-publish install-hooks \
+        build-wpf build-uwp test-desktop-services desktop-dev-bootstrap uwp-xaml-diagnose
 
 # Default target
 .DEFAULT_GOAL := help
@@ -29,6 +30,7 @@
 PROJECT := src/MarketDataCollector/MarketDataCollector.csproj
 UI_PROJECT := src/MarketDataCollector.Ui/MarketDataCollector.Ui.csproj
 DESKTOP_PROJECT := src/MarketDataCollector.Uwp/MarketDataCollector.Uwp.csproj
+WPF_PROJECT := src/MarketDataCollector.Wpf/MarketDataCollector.Wpf.csproj
 TEST_PROJECT := tests/MarketDataCollector.Tests/MarketDataCollector.Tests.csproj
 BENCHMARK_PROJECT := benchmarks/MarketDataCollector.Benchmarks/MarketDataCollector.Benchmarks.csproj
 DOCGEN_PROJECT := build/dotnet/DocGenerator/DocGenerator.csproj
@@ -425,3 +427,33 @@ else
 	@echo "$(YELLOW)Desktop app publish requires Windows.$(NC)"
 	@echo "Use GitHub Actions workflow 'Desktop App Build' for CI builds."
 endif
+
+build-wpf: ## Build WPF desktop app (Windows only)
+	@echo "$(BLUE)Building WPF desktop app...$(NC)"
+ifeq ($(OS),Windows_NT)
+	dotnet build $(WPF_PROJECT) -c Release -r win-x64
+else
+	@echo "$(YELLOW)WPF build requires Windows. Use GitHub Actions for CI builds.$(NC)"
+	@echo "Run on Windows: dotnet build $(WPF_PROJECT) -c Release -r win-x64"
+endif
+
+build-uwp: ## Build UWP desktop app (legacy, Windows only)
+	@echo "$(BLUE)Building UWP desktop app...$(NC)"
+ifeq ($(OS),Windows_NT)
+	dotnet build $(DESKTOP_PROJECT) -c Release -r win-x64
+else
+	@echo "$(YELLOW)UWP build requires Windows. Use GitHub Actions for CI builds.$(NC)"
+	@echo "Run on Windows: dotnet build $(DESKTOP_PROJECT) -c Release -r win-x64"
+endif
+
+test-desktop-services: ## Run desktop-focused regression tests
+	@echo "$(BLUE)Running desktop-focused tests...$(NC)"
+	dotnet test $(TEST_PROJECT) -c Release --filter "FullyQualifiedName~UwpCoreIntegrationTests|FullyQualifiedName~ConfigurationUnificationTests|FullyQualifiedName~CliModeResolverTests"
+
+desktop-dev-bootstrap: ## Run desktop development bootstrap checks (PowerShell)
+	@echo "$(BLUE)Running desktop development bootstrap checks...$(NC)"
+	pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/dev/desktop-dev.ps1
+
+uwp-xaml-diagnose: ## Run UWP XAML preflight diagnostics (PowerShell)
+	@echo "$(BLUE)Running UWP XAML diagnostics...$(NC)"
+	pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/dev/diagnose-uwp-xaml.ps1
