@@ -87,7 +87,7 @@ public sealed class StorageEndpointTests : IClassFixture<EndpointTestFixture>
     [Fact]
     public async Task SymbolMappings_ReturnsJson()
     {
-        var response = await _client.GetAsync("/api/symbol-mappings");
+        var response = await _client.GetAsync("/api/symbols/mappings");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         response.Content.Headers.ContentType!.MediaType.Should().Be("application/json");
@@ -98,14 +98,12 @@ public sealed class StorageEndpointTests : IClassFixture<EndpointTestFixture>
     {
         var payload = new
         {
-            sourceSymbol = "BRK.B",
-            targetSymbol = "BRK-B",
-            provider = "alpaca"
+            canonicalSymbol = "BRK.B"
         };
         var content = new StringContent(
             JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
 
-        var response = await _client.PostAsync("/api/symbol-mappings", content);
+        var response = await _client.PostAsync("/api/symbols/mappings", content);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
@@ -113,7 +111,7 @@ public sealed class StorageEndpointTests : IClassFixture<EndpointTestFixture>
     [Fact]
     public async Task DeleteSymbolMapping_ForUnknown_Returns404()
     {
-        var response = await _client.DeleteAsync("/api/symbol-mappings/DOESNOTEXIST999");
+        var response = await _client.DeleteAsync("/api/symbols/mappings/DOESNOTEXIST999");
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }

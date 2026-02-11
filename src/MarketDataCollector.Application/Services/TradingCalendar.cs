@@ -296,6 +296,16 @@ public sealed class TradingCalendar
     /// </summary>
     public IReadOnlyList<MarketHoliday> GetHolidays(int year)
     {
+        // Check if we have holidays for this year, if not, generate them
+        if (!_holidays.Any(d => d.Year == year))
+        {
+            var yearHolidays = GenerateHolidays(year, year);
+            foreach (var h in yearHolidays)
+            {
+                _holidays.Add(h);
+            }
+        }
+
         return _holidays
             .Where(d => d.Year == year)
             .Select(d => new MarketHoliday(d, GetHolidayName(d)))
@@ -506,11 +516,15 @@ public sealed class TradingCalendar
         // Check by month and weekday patterns
         if (month == 1 && date.DayOfWeek == DayOfWeek.Monday) return "Martin Luther King Jr. Day";
         if (month == 2 && date.DayOfWeek == DayOfWeek.Monday) return "Presidents' Day";
-        if (month == 3 || month == 4) // Good Friday moves around
+        
+        // Good Friday - calculate precisely for the year
+        if ((month == 3 || month == 4) && date.DayOfWeek == DayOfWeek.Friday)
         {
-            if (date.DayOfWeek == DayOfWeek.Friday)
+            var goodFriday = GetGoodFriday(date.Year);
+            if (date == goodFriday)
                 return "Good Friday";
         }
+        
         if (month == 5 && date.DayOfWeek == DayOfWeek.Monday) return "Memorial Day";
         if (month == 9 && date.DayOfWeek == DayOfWeek.Monday) return "Labor Day";
         if (month == 11 && date.DayOfWeek == DayOfWeek.Thursday) return "Thanksgiving Day";
