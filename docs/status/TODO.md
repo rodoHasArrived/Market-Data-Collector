@@ -1,35 +1,59 @@
 # TODO Tracking
 
 > Auto-generated TODO documentation. Do not edit manually.
-> Last updated: 2026-02-10T22:30:15.912525+00:00
+> Last updated: 2026-02-11T08:25:14.945221+00:00
 
 ## Summary
 
 | Metric | Count |
 |--------|-------|
-| **Total Items** | 8 |
+| **Total Items** | 15 |
 | **Linked to Issues** | 0 |
-| **Untracked** | 8 |
+| **Untracked** | 15 |
 
 ### By Type
 
 | Type | Count | Description |
 |------|-------|-------------|
-| `NOTE` | 8 | Important notes and documentation |
+| `NOTE` | 10 | Important notes and documentation |
+| `TODO` | 5 | General tasks to complete |
 
 ### By Directory
 
 | Directory | Count |
 |-----------|-------|
+| `src/` | 8 |
 | `tests/` | 7 |
-| `src/` | 1 |
 
 ## All Items
 
-### NOTE (8)
+### TODO (5)
+
+- [ ] `src/MarketDataCollector.Ui.Services/Services/OrderBookVisualizationService.cs:37`
+  > Implement once LiveDataService supports SubscribeToDepthAsync
+
+- [ ] `src/MarketDataCollector.Ui.Services/Services/OrderBookVisualizationService.cs:49`
+  > Implement once LiveDataService supports UnsubscribeFromDepthAsync
+
+- [ ] `src/MarketDataCollector.Ui.Services/Services/PortablePackagerService.cs:479`
+  > Implement once SchemaService supports GetJsonSchema var schema = _schemaService.GetJsonSchema(type); if (!string.IsNullOrEmpty(schema)) { await File.WriteAllTextAsync( Path.Combine(schemasDir, $"{type}_schema.json"), schema, ct); }
+
+- [ ] `src/MarketDataCollector.Ui.Services/Services/PortfolioImportService.cs:223`
+  > Implement once WatchlistService supports CreateOrUpdateWatchlistAsync var watchlistService = WatchlistService.Instance; await watchlistService.CreateOrUpdateWatchlistAsync(watchlistName, symbols, ct);
+
+- [ ] `src/MarketDataCollector.Ui.Services/Services/SetupWizardService.cs:656`
+  > Implement credential storage once CredentialService supports SaveCredentialAsync
+
+### NOTE (10)
 
 - [ ] `src/MarketDataCollector.Ui.Shared/Endpoints/ConfigEndpoints.cs:138`
   > Status endpoint is handled by StatusEndpoints.MapStatusEndpoints() which provides live status via StatusEndpointHandlers rather than loading from file
+
+- [ ] `src/MarketDataCollector.Uwp/GlobalUsings.cs:7`
+  > Type aliases and Contracts namespaces are NOT re-defined here because they are already provided by the referenced MarketDataCollector.Ui.Services project (via its GlobalUsings.cs). Re-defining them would cause CS0101 duplicate type definition errors. =============================================================================
+
+- [ ] `src/MarketDataCollector.Wpf/GlobalUsings.cs:7`
+  > Type aliases and Contracts namespaces are NOT re-defined here because they are already provided by the referenced MarketDataCollector.Ui.Services project (via its GlobalUsings.cs). Re-defining them would cause CS0101 duplicate type definition errors. =============================================================================
 
 - [ ] `tests/MarketDataCollector.Tests/Application/Backfill/BackfillWorkerServiceTests.cs:28`
   > Using null! because validation throws before dependencies are accessed
