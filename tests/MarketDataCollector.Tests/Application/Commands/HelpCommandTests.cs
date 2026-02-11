@@ -48,15 +48,15 @@ public sealed class HelpCommandTests
     public async Task ExecuteAsync_ReturnsZero()
     {
         var cmd = new HelpCommand();
-        var result = await cmd.ExecuteAsync(new[] { "--help" });
-        result.ExitCode.Should().Be(0);
+        var exitCode = await cmd.ExecuteAsync(new[] { "--help" });
+        exitCode.Should().Be(0);
     }
 
     [Fact]
     public async Task ExecuteAsync_WithMixedArgs_ReturnsZero()
     {
         var cmd = new HelpCommand();
-        var result = await cmd.ExecuteAsync(new[] { "--help", "--verbose" });
-        result.ExitCode.Should().Be(0);
+        var exitCode = await cmd.ExecuteAsync(new[] { "--help", "--verbose" });
+        exitCode.Should().Be(0);
     }
 }

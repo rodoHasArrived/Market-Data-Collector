@@ -39,7 +39,7 @@ public sealed class ChartingService
         {
             data.Candles.Add(new Candlestick
             {
-                Timestamp = bar.ToTimestampUtc().DateTime,
+                Timestamp = bar.Timestamp,
                 Open = bar.Open,
                 High = bar.High,
                 Low = bar.Low,

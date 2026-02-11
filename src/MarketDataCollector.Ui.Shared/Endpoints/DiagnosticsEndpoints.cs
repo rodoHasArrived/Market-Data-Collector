@@ -246,8 +246,8 @@ public static class DiagnosticsEndpoints
                 {
                     naming = config.Storage.NamingConvention,
                     retention = config.Storage.RetentionDays,
-                    maxSizeGb = config.Storage.MaxTotalMegabytes.HasValue
-                        ? (double)config.Storage.MaxTotalMegabytes.Value / 1024
+                    maxSizeGb = config.Storage.MaxTotalMegabytes.HasValue 
+                        ? (double)config.Storage.MaxTotalMegabytes.Value / 1024 
                         : (double?)null
                 } : null,
                 timestamp = DateTimeOffset.UtcNow

@@ -1,15 +1,16 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using MarketDataCollector.Ui.Services;
 
 namespace MarketDataCollector.Wpf.Services;
 
 /// <summary>
-/// WPF-specific form validation service with inline error display.
-/// Validation rules are shared via <see cref="FormValidationRules"/>;
-/// this class adds WPF UI helpers only.
+/// Service for form validation with inline error display.
+/// Provides consistent validation across all forms in the WPF application.
 /// </summary>
 public sealed class FormValidationService
 {
@@ -33,34 +34,126 @@ public sealed class FormValidationService
 
     private FormValidationService() { }
 
-    #region Validation Rules (delegates to shared FormValidationRules)
+    #region Validation Rules
 
     public static ValidationResult ValidateRequired(string? value, string fieldName = "This field")
-        => FormValidationRules.ValidateRequired(value, fieldName);
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return ValidationResult.Error($"{fieldName} is required.");
+        return ValidationResult.Success();
+    }
 
     public static ValidationResult ValidateSymbol(string? value)
-        => FormValidationRules.ValidateSymbol(value);
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return ValidationResult.Error("Symbol is required.");
+
+        var trimmed = value.Trim();
+        if (trimmed.Length < 1 || trimmed.Length > 10)
+            return ValidationResult.Error("Symbol must be between 1 and 10 characters.");
+
+        if (!Regex.IsMatch(trimmed, @"^[A-Za-z0-9./-]+$"))
+            return ValidationResult.Error("Symbol can only contain letters, numbers, dots, dashes, and slashes.");
+
+        return ValidationResult.Success();
+    }
 
     public static ValidationResult ValidateSymbolList(string? value, int maxSymbols = 100)
-        => FormValidationRules.ValidateSymbolList(value, maxSymbols);
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return ValidationResult.Error("At least one symbol is required.");
+
+        var symbols = value.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (symbols.Length == 0)
+            return ValidationResult.Error("At least one symbol is required.");
+        if (symbols.Length > maxSymbols)
+            return ValidationResult.Error($"Maximum {maxSymbols} symbols allowed.");
+
+        var invalidSymbols = new List<string>();
+        foreach (var symbol in symbols)
+        {
+            var result = ValidateSymbol(symbol);
+            if (!result.IsValid) invalidSymbols.Add(symbol);
+        }
+
+        if (invalidSymbols.Count > 0)
+            return ValidationResult.Error($"Invalid symbol(s): {string.Join(", ", invalidSymbols.Take(5))}{(invalidSymbols.Count > 5 ? "..." : "")}");
+
+        return ValidationResult.Success();
+    }
 
     public static ValidationResult ValidateDateRange(DateTimeOffset? fromDate, DateTimeOffset? toDate)
-        => FormValidationRules.ValidateDateRange(fromDate, toDate);
+    {
+        if (!fromDate.HasValue || !toDate.HasValue)
+            return ValidationResult.Error("Both start and end dates are required.");
+        if (fromDate.Value > toDate.Value)
+            return ValidationResult.Error("Start date must be before or equal to end date.");
+        if (fromDate.Value > DateTimeOffset.Now)
+            return ValidationResult.Error("Start date cannot be in the future.");
+
+        var daysDiff = (toDate.Value - fromDate.Value).TotalDays;
+        if (daysDiff > 365 * 10)
+            return ValidationResult.Warning("Date range spans more than 10 years. This may take a long time.");
+
+        return ValidationResult.Success();
+    }
 
     public static ValidationResult ValidateApiKey(string? value)
-        => FormValidationRules.ValidateApiKey(value);
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return ValidationResult.Error("API key is required.");
+        if (value.Length < 8)
+            return ValidationResult.Error("API key seems too short. Please check the key.");
+        if (value.Contains(' '))
+            return ValidationResult.Error("API key should not contain spaces.");
+        return ValidationResult.Success();
+    }
 
     public static ValidationResult ValidateUrl(string? value, string fieldName = "URL")
-        => FormValidationRules.ValidateUrl(value, fieldName);
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return ValidationResult.Error($"{fieldName} is required.");
+        if (!Uri.TryCreate(value, UriKind.Absolute, out var uri))
+            return ValidationResult.Error($"Invalid {fieldName} format. Example: http://localhost:8080");
+        if (uri.Scheme != "http" && uri.Scheme != "https")
+            return ValidationResult.Error($"{fieldName} must start with http:// or https://");
+        return ValidationResult.Success();
+    }
 
     public static ValidationResult ValidatePort(int? value)
-        => FormValidationRules.ValidatePort(value);
+    {
+        if (!value.HasValue)
+            return ValidationResult.Error("Port is required.");
+        if (value < 1 || value > 65535)
+            return ValidationResult.Error("Port must be between 1 and 65535.");
+        if (value < 1024)
+            return ValidationResult.Warning("Port below 1024 may require administrator privileges.");
+        return ValidationResult.Success();
+    }
 
     public static ValidationResult ValidateFilePath(string? value)
-        => FormValidationRules.ValidateFilePath(value);
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return ValidationResult.Error("File path is required.");
+        try
+        {
+            _ = System.IO.Path.GetFullPath(value);
+            return ValidationResult.Success();
+        }
+        catch
+        {
+            return ValidationResult.Error("Invalid file path format.");
+        }
+    }
 
     public static ValidationResult ValidateNumericRange(double? value, double min, double max, string fieldName = "Value")
-        => FormValidationRules.ValidateNumericRange(value, min, max, fieldName);
+    {
+        if (!value.HasValue)
+            return ValidationResult.Error($"{fieldName} is required.");
+        if (value < min || value > max)
+            return ValidationResult.Error($"{fieldName} must be between {min} and {max}.");
+        return ValidationResult.Success();
+    }
 
     #endregion
 
@@ -128,4 +221,35 @@ public sealed class FormValidationService
     }
 
     #endregion
+}
+
+public class ValidationResult
+{
+    public bool IsValid { get; private init; }
+    public bool IsWarning { get; private init; }
+    public string Message { get; private init; } = string.Empty;
+
+    private ValidationResult() { }
+
+    public static ValidationResult Success() => new() { IsValid = true };
+    public static ValidationResult Error(string message) => new() { IsValid = false, Message = message };
+    public static ValidationResult Warning(string message) => new() { IsValid = true, IsWarning = true, Message = message };
+
+    public static implicit operator bool(ValidationResult result) => result.IsValid;
+}
+
+public static class ValidationExtensions
+{
+    public static ValidationResult Combine(params ValidationResult[] results)
+    {
+        foreach (var result in results)
+            if (!result.IsValid && !result.IsWarning)
+                return result;
+
+        foreach (var result in results)
+            if (result.IsWarning)
+                return result;
+
+        return ValidationResult.Success();
+    }
 }

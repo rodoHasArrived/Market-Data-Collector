@@ -290,7 +290,7 @@ public static class UiEndpoints
     {
         app.MapGet("/", (MarketDataCollector.Ui.Shared.Services.ConfigStore store) =>
         {
-            var html = HtmlTemplateGenerator.Index(store.ConfigPath, store.GetStatusPath(), store.GetBackfillStatusPath());
+            var html = HtmlTemplates.Index(store.ConfigPath, store.GetStatusPath(), store.GetBackfillStatusPath());
             return Results.Content(html, "text/html");
         });
 

@@ -19,7 +19,7 @@ public sealed class OrderBookVisualizationService : IDisposable
 
     public OrderBookVisualizationService()
     {
-        _liveDataService = LiveDataService.Instance;
+        _liveDataService = new LiveDataService();
         _aggregationTimer = new Timer(AggregateSnapshots, null, 1000, 1000);
     }
 
@@ -34,9 +34,7 @@ public sealed class OrderBookVisualizationService : IDisposable
             _snapshotHistory[symbol] = new List<OrderBookHistorySnapshot>();
         }
 
-        // TODO: Update to use LiveDataService.SubscribeAsync with SubscribeRequest
-        // await _liveDataService.SubscribeAsync(new SubscribeRequest { Symbol = symbol }, ct);
-        await Task.CompletedTask;
+        await _liveDataService.SubscribeToDepthAsync(symbol, depthLevels, ct);
     }
 
     /// <summary>
@@ -46,7 +44,7 @@ public sealed class OrderBookVisualizationService : IDisposable
     {
         _orderBooks.TryRemove(symbol, out _);
         _snapshotHistory.TryRemove(symbol, out _);
-        await _liveDataService.UnsubscribeAsync(symbol, ct);
+        await _liveDataService.UnsubscribeFromDepthAsync(symbol, ct);
     }
 
     /// <summary>

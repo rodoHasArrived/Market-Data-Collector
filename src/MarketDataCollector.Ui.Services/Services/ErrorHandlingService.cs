@@ -119,7 +119,7 @@ public sealed class ErrorHandlingService : IDisposable
         };
 
         // Log the error
-        _loggingService.LogError(context, null, ("errorMessage", errorMessage));
+        _loggingService.LogError(context, ("errorMessage", errorMessage));
 
         // Add to recent errors
         _recentErrors.Prepend(record);

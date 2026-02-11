@@ -221,8 +221,7 @@ public sealed class PortfolioImportService
         try
         {
             var watchlistService = WatchlistService.Instance;
-            // TODO: Implement CreateOrUpdateWatchlistAsync method in WatchlistService
-            // await watchlistService.CreateOrUpdateWatchlistAsync(watchlistName, symbols, ct);
+            await watchlistService.CreateOrUpdateWatchlistAsync(watchlistName, symbols, ct);
             result.Success = true;
             result.ImportedCount = symbols.Count;
         }

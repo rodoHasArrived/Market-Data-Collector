@@ -476,9 +476,7 @@ public sealed class PortablePackagerService
         var types = eventTypes ?? new[] { "Trade", "BboQuote", "LOBSnapshot", "HistoricalBar" };
         foreach (var type in types)
         {
-            // TODO: Implement GetJsonSchema in SchemaService
-            // var schema = _schemaService.GetJsonSchema(type);
-            var schema = $"{{\"type\": \"{type}\"}}"; // Placeholder schema
+            var schema = _schemaService.GetJsonSchema(type);
             if (!string.IsNullOrEmpty(schema))
             {
                 await File.WriteAllTextAsync(
