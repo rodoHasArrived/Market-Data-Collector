@@ -1,6 +1,7 @@
 using System.Text.Json;
+using MarketDataCollector.Application.Scheduling;
 using MarketDataCollector.Contracts.Api;
-using MarketDataCollector.Infrastructure.Providers.Backfill.Scheduling;
+using MarketDataCollector.Core.Scheduling;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 

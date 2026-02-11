@@ -1,5 +1,5 @@
 using System.Text.Json;
-using MarketDataCollector.Infrastructure.Providers.Backfill.Scheduling;
+using MarketDataCollector.Application.Scheduling;
 using MarketDataCollector.Contracts.Api;
 using MarketDataCollector.Infrastructure.Providers.Core;
 using MarketDataCollector.Ui.Shared.Services;

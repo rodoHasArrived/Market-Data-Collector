@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 
-namespace MarketDataCollector.Infrastructure.Performance;
+namespace MarketDataCollector.Core.Performance;
 
 /// <summary>
 /// Low-level threading utilities for high-performance scenarios.

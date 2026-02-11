@@ -1,5 +1,5 @@
 using System.Text.Json.Serialization;
-using MarketDataCollector.Infrastructure.Providers.Backfill.Scheduling;
+using MarketDataCollector.Core.Scheduling;
 
 namespace MarketDataCollector.Storage.Maintenance;
 
