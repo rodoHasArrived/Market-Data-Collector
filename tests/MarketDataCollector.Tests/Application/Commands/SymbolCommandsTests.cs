@@ -62,9 +62,9 @@ public sealed class SymbolCommandsTests
     public async Task ExecuteAsync_AddWithoutValue_ReturnsError()
     {
         var cmd = CreateCommandWithStubService();
-        // --symbols-add without a value should return 1
+        // --symbols-add without a value should return 2 (validation error)
         var result = await cmd.ExecuteAsync(new[] { "--symbols-add" });
-        result.ExitCode.Should().Be(1);
+        result.ExitCode.Should().Be(2);
     }
 
     [Fact]
@@ -72,7 +72,7 @@ public sealed class SymbolCommandsTests
     {
         var cmd = CreateCommandWithStubService();
         var result = await cmd.ExecuteAsync(new[] { "--symbols-remove" });
-        result.ExitCode.Should().Be(1);
+        result.ExitCode.Should().Be(2);
     }
 
     [Fact]
@@ -80,7 +80,7 @@ public sealed class SymbolCommandsTests
     {
         var cmd = CreateCommandWithStubService();
         var result = await cmd.ExecuteAsync(new[] { "--symbol-status" });
-        result.ExitCode.Should().Be(1);
+        result.ExitCode.Should().Be(2);
     }
 
     [Fact]

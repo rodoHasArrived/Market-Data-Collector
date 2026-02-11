@@ -69,7 +69,7 @@ public class PackageCommandsTests
     {
         var cmd = new PackageCommands(TestConfig, Logger);
         var result = await cmd.ExecuteAsync(new[] { "--import-package" });
-        result.ExitCode.Should().Be(1);
+        result.ExitCode.Should().Be(2);
     }
 
     [Fact]
@@ -77,7 +77,7 @@ public class PackageCommandsTests
     {
         var cmd = new PackageCommands(TestConfig, Logger);
         var result = await cmd.ExecuteAsync(new[] { "--list-package" });
-        result.ExitCode.Should().Be(1);
+        result.ExitCode.Should().Be(2);
     }
 
     [Fact]
@@ -85,6 +85,6 @@ public class PackageCommandsTests
     {
         var cmd = new PackageCommands(TestConfig, Logger);
         var result = await cmd.ExecuteAsync(new[] { "--validate-package" });
-        result.ExitCode.Should().Be(1);
+        result.ExitCode.Should().Be(2);
     }
 }
