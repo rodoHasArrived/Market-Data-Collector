@@ -55,9 +55,9 @@ public sealed class TiingoHistoricalDataProvider : BaseHistoricalDataProvider
     {
         _apiToken = apiToken ?? Environment.GetEnvironmentVariable("TIINGO_API_TOKEN");
 
-        // Configure HTTP headers for Tiingo API
-        Http.DefaultRequestHeaders.Add("Content-Type", "application/json");
-
+        // Content-Type is a content header, not a request header - it's set per-request on the Content object
+        // No need to set it globally since each request will set it on its StringContent
+        
         if (!string.IsNullOrEmpty(_apiToken))
         {
             Http.DefaultRequestHeaders.Add("Authorization", $"Token {_apiToken}");
