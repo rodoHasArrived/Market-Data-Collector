@@ -13,6 +13,9 @@ public class StatusResponse
     [JsonPropertyName("timestampUtc")]
     public DateTimeOffset TimestampUtc { get; set; }
 
+    [JsonPropertyName("uptime")]
+    public TimeSpan Uptime { get; set; }
+
     [JsonPropertyName("metrics")]
     public MetricsData? Metrics { get; set; }
 

@@ -606,10 +606,24 @@ public sealed class ProviderCatalogEntry
     public string ProviderId { get; init; } = string.Empty;
 
     /// <summary>
+    /// Gets the unique provider identifier (alias for ProviderId).
+    /// Provided for backward compatibility with APIs expecting "id" field.
+    /// </summary>
+    [JsonPropertyName("id")]
+    public string Id => ProviderId;
+
+    /// <summary>
     /// Gets the human-friendly display name for the provider.
     /// </summary>
     [JsonPropertyName("displayName")]
     public string DisplayName { get; init; } = string.Empty;
+
+    /// <summary>
+    /// Gets the human-friendly display name (alias for DisplayName).
+    /// Provided for backward compatibility with APIs expecting "name" field.
+    /// </summary>
+    [JsonPropertyName("name")]
+    public string Name => DisplayName;
 
     /// <summary>
     /// Gets a short description of the provider.
