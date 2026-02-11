@@ -161,6 +161,36 @@ Improve day-to-day development velocity and confidence for desktop contributors 
 - Service-level regression bugs caught pre-merge (increasing test-detected vs. manual-detected issues).
 - Fewer “cannot reproduce” desktop issues due to fixture mode adoption.
 
+## High-value improvements snapshot (desktop ease-of-development)
+
+For contributors focused on improving day-to-day desktop development speed, the highest-value opportunities are:
+
+1. **One-command local desktop loop (`make desktop-loop`)**
+   - Chain restore → targeted desktop build → service tests → optional app launch with fixture mode.
+   - Keep this command under ~90 seconds for no-op and small-change scenarios.
+
+2. **Deterministic fixture-first UI development by default**
+   - Make fixture mode a first-class option in WPF startup profiles.
+   - Include canned scenarios for disconnected backend, stale config, throttled provider, and partial data states.
+
+3. **Desktop-focused architecture and dependency guardrails**
+   - Add a simple dependency linter/check to prevent platform layers from leaking into shared `Ui.Services`.
+   - Pair with architecture tests that fail fast when boundary violations occur.
+
+4. **Fast-path CI tuned for desktop contributors**
+   - Run only impacted desktop projects and service tests in PR workflows.
+   - Gate expensive packaging/signing jobs behind labels, tags, or main branch merges.
+
+5. **Golden-path diagnostics for historical desktop failures**
+   - Keep expanding automated checks for the most common UWP/XAML and configuration drift failures.
+   - Emit fix suggestions that map directly to docs and exact project files.
+
+### Why these are the highest leverage now
+
+- They reduce context switching and setup overhead for every contributor, every day.
+- They improve confidence without requiring full application/manual validation cycles.
+- They preserve support for legacy UWP while optimizing the main WPF workflow.
+
 ## Evidence in current repository
 
 - WPF is the recommended desktop path, with UWP legacy support and explicit migration rationale.
