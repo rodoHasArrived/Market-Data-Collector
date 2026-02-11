@@ -249,57 +249,57 @@ Reduce maintenance burden by eliminating dead code, consolidating duplicate impl
 
 **Estimated savings:** ~2,500–3,000 lines of duplicate code removed, ~300 KB of dead assets deleted, and clearer project boundaries.
 
-### 6A. Dead Code Removal (P1 — Zero Risk)
+### 6A. Dead Code Removal (P1 — Zero Risk) — PARTIALLY COMPLETED
 
 Items that are completely unused and can be deleted immediately with no downstream impact.
 
-| # | Item | Location | Evidence | Est. LOC |
-|---|------|----------|----------|----------|
-| 6A.1 | **Delete unused `SymbolNormalizer.cs`** — complete duplicate of `SymbolNormalization.cs` with identical methods; 0 references in codebase | `Infrastructure/Utilities/SymbolNormalizer.cs` | `SymbolNormalization.cs` has 7 active references; `SymbolNormalizer.cs` has 0 | ~80 |
-| 6A.2 | **Delete UWP Examples folder** — 6 XAML example files + 2 markdown docs never referenced from any code or navigation | `src/MarketDataCollector.Uwp/Examples/` (6 XAML files, ~260 KB) | Zero C# references to any example file | ~260 KB |
-| 6A.3 | **Remove tracked build artifacts** — `build-output.log` and scratch files tracked in git | Root directory | Already addressed in `docs/audits/CLEANUP_SUMMARY.md`; verify removal is merged | N/A |
+| # | Item | Location | Evidence | Est. LOC | Status |
+|---|------|----------|----------|----------|--------|
+| 6A.1 | **Delete unused `SymbolNormalizer.cs`** — complete duplicate of `SymbolNormalization.cs` with identical methods; 0 references in codebase | `Infrastructure/Utilities/SymbolNormalizer.cs` | `SymbolNormalization.cs` has 7 active references; `SymbolNormalizer.cs` has 0 | ~80 | ✅ Done (PR #1028) |
+| 6A.2 | **Delete UWP Examples folder** — 6 XAML example files + 2 markdown docs never referenced from any code or navigation | `src/MarketDataCollector.Uwp/Examples/` (6 XAML files, ~260 KB) | Zero C# references to any example file | ~260 KB | |
+| 6A.3 | **Remove tracked build artifacts** — `build-output.log` and scratch files tracked in git | Root directory | Already addressed in `docs/audits/CLEANUP_SUMMARY.md`; verify removal is merged | N/A | |
 
-### 6B. Duplicate Interface Consolidation (P2 — Low Risk)
+### 6B. Duplicate Interface Consolidation (P2 — Low Risk) — COMPLETED ✅
 
 The same service interfaces are defined in up to three separate projects. Consolidate to a single canonical location in `MarketDataCollector.Ui.Services/Contracts/`.
 
-| # | Item | Canonical Location | Duplicate Locations | Est. LOC |
-|---|------|--------------------|---------------------|----------|
-| 6B.1 | **`IConfigService`** (127 lines canonical vs 15-line stubs) | `Ui.Services/Contracts/` | `Wpf/Services/IConfigService.cs`, `Uwp/Contracts/` | ~30 |
-| 6B.2 | **`IThemeService`** | `Ui.Services/Contracts/` | `Wpf/Services/IThemeService.cs`, `Uwp/Contracts/` | ~20 |
-| 6B.3 | **`INotificationService`** | `Ui.Services/Contracts/` | `Wpf/Services/INotificationService.cs`, `Uwp/Contracts/` | ~20 |
-| 6B.4 | **`ILoggingService`** | `Ui.Services/Contracts/` | `Wpf/Services/ILoggingService.cs`, `Uwp/Contracts/` | ~15 |
-| 6B.5 | **`IMessagingService`** | `Ui.Services/Contracts/` | `Wpf/Services/IMessagingService.cs`, `Uwp/Contracts/` | ~15 |
-| 6B.6 | **`IKeyboardShortcutService`** | `Ui.Services/Contracts/` | `Wpf/Services/IKeyboardShortcutService.cs`, `Uwp/Contracts/` | ~15 |
-| 6B.7 | **`IBackgroundTaskSchedulerService`** | `Ui.Services/Contracts/` | `Wpf/Services/IBackgroundTaskSchedulerService.cs`, `Uwp/Contracts/` | ~15 |
-| 6B.8 | **`IPendingOperationsQueueService`** | `Ui.Services/Contracts/` | `Wpf/Services/IPendingOperationsQueueService.cs`, `Uwp/Contracts/` | ~15 |
-| 6B.9 | **`IOfflineTrackingPersistenceService`** | `Ui.Services/Contracts/` | `Wpf/Services/IOfflineTrackingPersistenceService.cs`, `Uwp/Contracts/` | ~15 |
+| # | Item | Canonical Location | Duplicate Locations | Est. LOC | Status |
+|---|------|--------------------|---------------------|----------|--------|
+| 6B.1 | **`IConfigService`** (127 lines canonical vs 15-line stubs) | `Ui.Services/Contracts/` | `Wpf/Services/IConfigService.cs`, `Uwp/Contracts/` | ~30 | |
+| 6B.2 | **`IThemeService`** | `Ui.Services/Contracts/` | `Wpf/Services/IThemeService.cs`, `Uwp/Contracts/` | ~20 | ✅ Done (PR #1028) |
+| 6B.3 | **`INotificationService`** | `Ui.Services/Contracts/` | `Wpf/Services/INotificationService.cs`, `Uwp/Contracts/` | ~20 | |
+| 6B.4 | **`ILoggingService`** | `Ui.Services/Contracts/` | `Wpf/Services/ILoggingService.cs`, `Uwp/Contracts/` | ~15 | ✅ Done (PR #1028) |
+| 6B.5 | **`IMessagingService`** | `Ui.Services/Contracts/` | `Wpf/Services/IMessagingService.cs`, `Uwp/Contracts/` | ~15 | ✅ Done (PR #1028) |
+| 6B.6 | **`IKeyboardShortcutService`** | `Ui.Services/Contracts/` | `Wpf/Services/IKeyboardShortcutService.cs`, `Uwp/Contracts/` | ~15 | |
+| 6B.7 | **`IBackgroundTaskSchedulerService`** | `Ui.Services/Contracts/` | `Wpf/Services/IBackgroundTaskSchedulerService.cs`, `Uwp/Contracts/` | ~15 | ✅ Done (PR #1028) |
+| 6B.8 | **`IPendingOperationsQueueService`** | `Ui.Services/Contracts/` | `Wpf/Services/IPendingOperationsQueueService.cs`, `Uwp/Contracts/` | ~15 | ✅ Done (PR #1028) |
+| 6B.9 | **`IOfflineTrackingPersistenceService`** | `Ui.Services/Contracts/` | `Wpf/Services/IOfflineTrackingPersistenceService.cs`, `Uwp/Contracts/` | ~15 | ✅ Done (PR #1028) |
 
 **Approach:** Delete WPF and UWP duplicate interface files. Update `using` directives to reference `Ui.Services.Contracts`. Verify build.
 
-### 6C. WPF/UWP Service Deduplication (P2 — Medium Risk)
+### 6C. WPF/UWP Service Deduplication (P2 — Medium Risk) — PARTIALLY COMPLETED
 
 25+ services are nearly identical (95%+ copy-paste) between WPF and UWP. Extract shared logic into `MarketDataCollector.Ui.Services` and keep only platform-specific adapters in each desktop project. Cross-references: STRUCTURAL_IMPROVEMENTS C1, DUPLICATE_CODE_ANALYSIS §5.
 
-| # | Item | Priority | Description | Est. LOC Saved |
-|---|------|----------|-------------|----------------|
-| 6C.1 | **Phase 1 — Near-identical services** (BrushRegistry, ExportPresetService, FormValidationService, InfoBarService, TooltipService) | P2 | Services with <5% variation between WPF and UWP; extract to shared project directly | ~400 |
-| 6C.2 | **Phase 2 — Singleton-pattern services** (ThemeService, ConfigService, NotificationService, NavigationService, ConnectionService) | P2 | Only differ in singleton pattern (`Lazy<T>` vs `lock`); parameterize the pattern in a shared base | ~600 |
-| 6C.3 | **Phase 3 — Services with minor platform differences** (LoggingService, MessagingService, StatusService, CredentialService, SchemaService, WatchlistService) | P2 | ~90% shared logic with small platform-specific branches; use strategy/adapter pattern | ~500 |
-| 6C.4 | **Phase 4 — Complex services** (AdminMaintenanceService, AdvancedAnalyticsService, ArchiveHealthService, BackgroundTaskSchedulerService, OfflineTrackingPersistenceService, PendingOperationsQueueService) | P3 | Larger services requiring careful extraction of shared orchestration logic | ~300 |
+| # | Item | Priority | Description | Est. LOC Saved | Status |
+|---|------|----------|-------------|----------------|--------|
+| 6C.1 | **Phase 1 — Near-identical services** (BrushRegistry, ExportPresetService, FormValidationService, InfoBarService, TooltipService) | P2 | Services with <5% variation between WPF and UWP; extract to shared project directly | ~400 | ✅ FormValidationService done (PR #1028) |
+| 6C.2 | **Phase 2 — Singleton-pattern services** (ThemeService, ConfigService, NotificationService, NavigationService, ConnectionService) | P2 | Only differ in singleton pattern (`Lazy<T>` vs `lock`); parameterize the pattern in a shared base | ~600 | |
+| 6C.3 | **Phase 3 — Services with minor platform differences** (LoggingService, MessagingService, StatusService, CredentialService, SchemaService, WatchlistService) | P2 | ~90% shared logic with small platform-specific branches; use strategy/adapter pattern | ~500 | |
+| 6C.4 | **Phase 4 — Complex services** (AdminMaintenanceService, AdvancedAnalyticsService, ArchiveHealthService, BackgroundTaskSchedulerService, OfflineTrackingPersistenceService, PendingOperationsQueueService) | P3 | Larger services requiring careful extraction of shared orchestration logic | ~300 | |
 
 **Validation:** Full solution build + existing test suite green after each phase.
 
-### 6D. Ambiguous Class Name Resolution (P2 — Low Risk)
+### 6D. Ambiguous Class Name Resolution (P2 — Low Risk) — PARTIALLY COMPLETED
 
 Same-named classes in different namespaces create confusion and maintenance risk.
 
-| # | Item | Locations | Recommendation |
-|---|------|-----------|----------------|
-| 6D.1 | **`SubscriptionManager`** — 3 classes with same name across layers | `Application/Subscriptions/`, `Infrastructure/Providers/`, `Infrastructure/Shared/` | Rename to role-specific names: `SubscriptionCoordinator`, `ProviderSubscriptionManager`, `SubscriptionHelper` |
-| 6D.2 | **`ConfigStore`** — 2 classes with same name | `Application/Http/ConfigStore.cs`, `Ui.Shared/Services/ConfigStore.cs` | Rename UI variant to `UiConfigStore` or merge functionality |
-| 6D.3 | **`BackfillCoordinator`** — 2 classes with same name | `Application/Http/BackfillCoordinator.cs`, `Ui.Shared/Services/BackfillCoordinator.cs` | Rename UI variant to `UiBackfillCoordinator` or merge |
-| 6D.4 | **`HtmlTemplates`** — 2 classes with same name | `Application/Http/HtmlTemplates.cs`, `Ui.Shared/HtmlTemplates.cs` | Determine canonical owner; delete or rename the other |
+| # | Item | Locations | Recommendation | Status |
+|---|------|-----------|----------------|--------|
+| 6D.1 | **`SubscriptionManager`** — 3 classes with same name across layers | `Application/Subscriptions/`, `Infrastructure/Providers/`, `Infrastructure/Shared/` | Rename to role-specific names: `SubscriptionCoordinator`, `ProviderSubscriptionManager`, `SubscriptionHelper` | ✅ Deleted Infrastructure/Providers duplicate (PR #1028) |
+| 6D.2 | **`ConfigStore`** — 2 classes with same name | `Application/Http/ConfigStore.cs`, `Ui.Shared/Services/ConfigStore.cs` | Rename UI variant to `UiConfigStore` or merge functionality | |
+| 6D.3 | **`BackfillCoordinator`** — 2 classes with same name | `Application/Http/BackfillCoordinator.cs`, `Ui.Shared/Services/BackfillCoordinator.cs` | Rename UI variant to `UiBackfillCoordinator` or merge | |
+| 6D.4 | **`HtmlTemplates`** — 2 classes with same name | `Application/Http/HtmlTemplates.cs`, `Ui.Shared/HtmlTemplates.cs` | Determine canonical owner; delete or rename the other | ✅ Renamed: HtmlTemplateManager (Application) & HtmlTemplateGenerator (Ui.Shared) (PR #1028) |
 
 ### 6E. UWP Platform Decoupling (P3 — Higher Risk, Gated on UWP Deprecation Decision)
 
