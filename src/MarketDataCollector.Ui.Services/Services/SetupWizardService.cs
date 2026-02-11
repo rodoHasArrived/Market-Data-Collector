@@ -653,10 +653,12 @@ public sealed class SetupWizardService
     /// </summary>
     public async Task SaveCredentialsAsync(string provider, Dictionary<string, string> credentials)
     {
-        foreach (var (key, value) in credentials)
-        {
-            await _credentialService.SaveCredentialAsync($"{provider}_{key}", value);
-        }
+        // TODO: Implement credential storage once CredentialService supports SaveCredentialAsync
+        await Task.CompletedTask;
+        // foreach (var (key, value) in credentials)
+        // {
+        //     await _credentialService.SaveCredentialAsync($"{provider}_{key}", value);
+        // }
     }
 }
 
