@@ -1,10 +1,11 @@
 namespace MarketDataCollector.Ui.Shared;
 
 /// <summary>
-/// HTML template generators for the web dashboard.
+/// Generates HTML templates for the web dashboard.
 /// Shared between web dashboard and desktop application hosts.
+/// Renamed from HtmlTemplates for clarity - generates template strings, not managing them.
 /// </summary>
-public static class HtmlTemplates
+public static class HtmlTemplateGenerator
 {
     public static string Index(string configPath, string statusPath, string backfillPath) => $@"
 <!doctype html>

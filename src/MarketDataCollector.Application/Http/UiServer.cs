@@ -98,7 +98,7 @@ public sealed class UiServer : IAsyncDisposable
 
         _app.MapGet("/", (ConfigStore store) =>
         {
-            var html = HtmlTemplates.Index(
+            var html = HtmlTemplateManager.Index(
                 store.ConfigPath,
                 store.GetStatusPath(),
                 store.GetBackfillStatusPath());
@@ -2256,7 +2256,7 @@ public sealed class UiServer : IAsyncDisposable
             {
                 var config = store.Load();
                 var statuses = credentialService.GetAllCachedStatuses();
-                var html = HtmlTemplates.CredentialsDashboard(config, statuses);
+                var html = HtmlTemplateManager.CredentialsDashboard(config, statuses);
                 return Results.Content(html, "text/html");
             }
             catch (Exception ex)
