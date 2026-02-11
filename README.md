@@ -179,6 +179,7 @@ make test-desktop-services
 
 # On Windows, this runs:
 # - WPF service tests (NavigationService, ConfigService, StatusService, ConnectionService)
+# - Desktop UI service tests (ApiClientService, BackfillService, FixtureDataService, etc.)
 # - Integration tests for desktop-specific functionality
 
 # On non-Windows platforms, runs available integration tests only
@@ -190,6 +191,10 @@ make test-desktop-services
   - ConfigServiceTests (13 tests)
   - StatusServiceTests (13 tests)
   - ConnectionServiceTests (18 tests)
+- `tests/MarketDataCollector.Ui.Tests` - 71 tests for desktop UI services
+  - ApiClientServiceTests, BackfillServiceTests, FixtureDataServiceTests
+  - FormValidationServiceTests, SystemHealthServiceTests, WatchlistServiceTests
+  - BoundedObservableCollectionTests, CircularBufferTests
 
 ### Desktop Build Commands
 
