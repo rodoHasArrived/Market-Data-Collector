@@ -26,7 +26,7 @@ Tests are automatically skipped (project compiles empty).
 
 ## Test Coverage
 
-**Current: 58 tests**
+**Current: 71 tests**
 
 - **Collections**: 
   - `BoundedObservableCollection` (8 tests)
@@ -37,6 +37,7 @@ Tests are automatically skipped (project compiles empty).
   - `BackfillService` (9 tests)
   - `WatchlistService` (9 tests)
   - `SystemHealthService` (10 tests)
+  - `FixtureDataService` (13 tests)
 
 More tests to be added...
 
@@ -59,4 +60,5 @@ Services/
   BackfillServiceTests.cs (9 tests)
   WatchlistServiceTests.cs (9 tests)
   SystemHealthServiceTests.cs (10 tests)
+  FixtureDataServiceTests.cs (13 tests)
 ```
