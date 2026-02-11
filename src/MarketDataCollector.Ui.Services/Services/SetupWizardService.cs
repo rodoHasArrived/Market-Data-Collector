@@ -653,12 +653,56 @@ public sealed class SetupWizardService
     /// </summary>
     public async Task SaveCredentialsAsync(string provider, Dictionary<string, string> credentials)
     {
-        // TODO: Implement credential storage once CredentialService supports SaveCredentialAsync
-        await Task.CompletedTask;
-        // foreach (var (key, value) in credentials)
-        // {
-        //     await _credentialService.SaveCredentialAsync($"{provider}_{key}", value);
-        // }
+        if (string.IsNullOrWhiteSpace(provider) || credentials.Count == 0)
+        {
+            return;
+        }
+
+        var normalizedProvider = provider.Trim().ToUpperInvariant();
+        var config = await _configService.LoadConfigAsync() ?? new AppConfig();
+
+        switch (normalizedProvider)
+        {
+            case "ALPACA":
+                SaveEnvironmentVariable("ALPACA__KEYID", credentials.GetValueOrDefault("keyId"));
+                SaveEnvironmentVariable("ALPACA__SECRETKEY", credentials.GetValueOrDefault("secretKey"));
+
+                config.Alpaca ??= new AlpacaOptions();
+                config.Alpaca.KeyId = credentials.GetValueOrDefault("keyId");
+                config.Alpaca.SecretKey = credentials.GetValueOrDefault("secretKey");
+                config.Alpaca.UseSandbox = bool.TryParse(credentials.GetValueOrDefault("useSandbox"), out var useSandbox) && useSandbox;
+                break;
+
+            case "POLYGON":
+                SaveEnvironmentVariable("POLYGON__APIKEY", credentials.GetValueOrDefault("apiKey"));
+
+                config.Polygon ??= new PolygonOptions();
+                config.Polygon.ApiKey = credentials.GetValueOrDefault("apiKey");
+                break;
+
+            case "TIINGO":
+                SaveEnvironmentVariable("TIINGO__TOKEN", credentials.GetValueOrDefault("token"));
+                break;
+
+            case "FINNHUB":
+                SaveEnvironmentVariable("FINNHUB__APIKEY", credentials.GetValueOrDefault("apiKey"));
+                break;
+
+            case "ALPHAVANTAGE":
+            case "ALPHA VANTAGE":
+                SaveEnvironmentVariable("ALPHAVANTAGE__APIKEY", credentials.GetValueOrDefault("apiKey"));
+                break;
+        }
+
+        await _configService.SaveConfigAsync(config);
+    }
+
+    private static void SaveEnvironmentVariable(string variableName, string? value)
+    {
+        var normalizedValue = string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+        Environment.SetEnvironmentVariable(variableName, normalizedValue);
+        Environment.SetEnvironmentVariable(variableName, normalizedValue, EnvironmentVariableTarget.User);
     }
 }
 
