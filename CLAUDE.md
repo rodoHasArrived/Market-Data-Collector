@@ -25,9 +25,9 @@ Market Data Collector is a high-performance, cross-platform market data collecti
 | Total Source Files | 767 |
 | C# Files | 755 |
 | F# Files | 12 |
-| Test Files | 126 |
+| Test Files | 135 |
 | Documentation Files | 87 |
-| Main Projects | 14 (+ 3 test + 1 benchmark) |
+| Main Projects | 14 (+ 4 test + 1 benchmark) |
 | Provider Implementations | 5 streaming, 10 historical |
 | Symbol Search Providers | 5 |
 | CI/CD Workflows | 17 |
@@ -49,6 +49,12 @@ dotnet test tests/MarketDataCollector.FSharp.Tests
 
 # Run WPF desktop service tests (Windows only)
 dotnet test tests/MarketDataCollector.Wpf.Tests
+
+# Run desktop UI service tests (Windows only)
+dotnet test tests/MarketDataCollector.Ui.Tests
+
+# Run all desktop tests
+make test-desktop-services
 
 # Run with web dashboard
 dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --ui --http-port 8080
@@ -1826,7 +1832,7 @@ dotnet test --collect:"XPlat Code Coverage"
 dotnet test tests/MarketDataCollector.FSharp.Tests
 ```
 
-### Test Organization (89 test files total)
+### Test Organization (98 test files total)
 | Directory | Purpose | Files |
 |-----------|---------|-------|
 | `tests/MarketDataCollector.Tests/Application/Backfill/` | Backfill provider tests | 7 |
@@ -1849,12 +1855,24 @@ dotnet test tests/MarketDataCollector.FSharp.Tests
 | `tests/MarketDataCollector.Tests/SymbolSearch/` | Symbol resolution tests | 2 |
 | `tests/MarketDataCollector.FSharp.Tests/` | F# domain tests | 5 |
 | `tests/MarketDataCollector.Wpf.Tests/Services/` | WPF desktop service tests | 4 |
+| `tests/MarketDataCollector.Ui.Tests/Services/` | Desktop UI service tests | 6 |
+| `tests/MarketDataCollector.Ui.Tests/Collections/` | UI collection tests | 2 |
 
 **WPF Desktop Service Tests (58 tests, Windows only):**
 - `NavigationServiceTests` - 14 tests for page navigation, registration, history
 - `ConfigServiceTests` - 13 tests for configuration management, validation
 - `StatusServiceTests` - 13 tests for status tracking, events, HTTP client mocking
 - `ConnectionServiceTests` - 18 tests for connection management, monitoring, auto-reconnect
+
+**Desktop UI Service Tests (71 tests, Windows only):**
+- `ApiClientServiceTests` - API client configuration and HTTP interactions
+- `BackfillServiceTests` - Backfill coordination and scheduling
+- `FixtureDataServiceTests` - Mock data generation for offline development
+- `FormValidationServiceTests` - Form validation rules and helpers
+- `SystemHealthServiceTests` - System health monitoring
+- `WatchlistServiceTests` - Watchlist management
+- `BoundedObservableCollectionTests` - Bounded collection behavior
+- `CircularBufferTests` - Circular buffer operations
 
 ### Benchmarks
 Located in `benchmarks/MarketDataCollector.Benchmarks/` using BenchmarkDotNet.
