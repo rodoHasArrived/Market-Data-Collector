@@ -29,7 +29,7 @@
 
   <!-- Project references -->
   <ItemGroup>
-    <ProjectReference Include="..\MarketDataCollector\MarketDataCollector.csproj" />
     <ProjectReference Include="..\MarketDataCollector.Contracts\MarketDataCollector.Contracts.csproj" />
+    <ProjectReference Include="..\MarketDataCollector.Application\MarketDataCollector.Application.csproj" />
   </ItemGroup>
 </Project>
