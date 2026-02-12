@@ -1,7 +1,7 @@
 # TODO Tracking
 
 > Auto-generated TODO documentation. Do not edit manually.
-> Last updated: 2026-02-12T12:53:04.307144+00:00
+> Last updated: 2026-02-12T13:18:18.977384+00:00
 
 ## Summary
 
@@ -23,6 +23,12 @@
 |-----------|-------|
 | `tests/` | 11 |
 | `src/` | 3 |
+
+## Unassigned & Untracked
+
+14 items have no assignee and no issue tracking:
+
+Consider assigning ownership or creating tracking issues for these items.
 
 ## All Items
 
