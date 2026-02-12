@@ -197,10 +197,10 @@ From `docs/IMPROVEMENTS.md` — 6 items not started, 3 partially done.
 | 4A.2 | Implement `PendingOperationsQueueService.ProcessAllAsync()` | P1 | ✅ Done — handler registry with retry support for failed operations |
 | 4A.3 | Complete WPF feature parity with UWP | P2 | ⚠️ Partial — navigation/workspace shell is in place, but many destination pages are still placeholders ("Coming Soon") and do not yet provide equivalent workflows |
 | 4A.4 | Fix desktop charting (depends on Phase 0.3 fix) | P1 | ✅ Done — resolved in Phase 0.3 |
-| 4A.5 | Replace placeholder WPF pages with functional screens for end-user workflows | P1 | ⚠️ Partial — 6 of 22 placeholder pages replaced with functional implementations (WelcomePage, KeyboardShortcutsPage, DiagnosticsPage, TradingHoursPage, NotificationCenterPage, ProviderPage); 16 pages remain |
+| 4A.5 | Replace placeholder WPF pages with functional screens for end-user workflows | P1 | ⚠️ Partial — 11 of 22 placeholder pages replaced with functional implementations (WelcomePage, KeyboardShortcutsPage, DiagnosticsPage, TradingHoursPage, NotificationCenterPage, ProviderPage, ScheduleManagerPage, StorageOptimizationPage, CollectionSessionPage, DataCalendarPage, PackageManagerPage); 11 pages remain |
 | 4A.6 | Publish a user-visible WPF implementation matrix (functional vs placeholder pages) | P2 | Keep roadmap messaging aligned with actual click-through UX reality for each release |
 
-**Reality check (current repo state):** `src/MarketDataCollector.Wpf/Views` contains 48 page XAML files, of which 16 still render a `"Coming Soon"` placeholder shell (down from 22 — WelcomePage, KeyboardShortcutsPage, DiagnosticsPage, TradingHoursPage, NotificationCenterPage, and ProviderPage now have functional implementations).
+**Reality check (current repo state):** `src/MarketDataCollector.Wpf/Views` contains 48 page XAML files, of which 11 still render a `"Coming Soon"` placeholder shell (down from 22 — WelcomePage, KeyboardShortcutsPage, DiagnosticsPage, TradingHoursPage, NotificationCenterPage, ProviderPage, ScheduleManagerPage, StorageOptimizationPage, CollectionSessionPage, DataCalendarPage, and PackageManagerPage now have functional implementations).
 
 ### 4B. UWP Desktop App (Legacy)
 
@@ -292,7 +292,7 @@ The same service interfaces are defined in up to three separate projects. Consol
 |---|------|----------|-------------|----------------|--------|
 | 6C.1 | **Phase 1 — Near-identical services** (BrushRegistry, ExportPresetService, FormValidationService, InfoBarService, TooltipService) | P2 | Services with <5% variation between WPF and UWP; extract to shared project directly | ~400 | ✅ FormValidationService done (PR #1028) |
 | 6C.2 | **Phase 2 — Singleton-pattern services** (ThemeService, ConfigService, NotificationService, NavigationService, ConnectionService) | P2 | Only differ in singleton pattern (`Lazy<T>` vs `lock`); parameterize the pattern in a shared base | ~600 | ✅ Done (ThemeServiceBase, ConnectionServiceBase, NavigationServiceBase extracted to Ui.Services; WPF services refactored to extend base classes) |
-| 6C.3 | **Phase 3 — Services with minor platform differences** (LoggingService, MessagingService, StatusService, CredentialService, SchemaService, WatchlistService) | P2 | ~90% shared logic with small platform-specific branches; use strategy/adapter pattern | ~500 | |
+| 6C.3 | **Phase 3 — Services with minor platform differences** (LoggingService, MessagingService, StatusService, CredentialService, SchemaService, WatchlistService) | P2 | ~90% shared logic with small platform-specific branches; use strategy/adapter pattern | ~500 | ✅ SchemaService done (SchemaServiceBase extracted to Ui.Services; WPF SchemaService refactored to extend base, ~300 LOC saved) |
 | 6C.4 | **Phase 4 — Complex services** (AdminMaintenanceService, AdvancedAnalyticsService, ArchiveHealthService, BackgroundTaskSchedulerService, OfflineTrackingPersistenceService, PendingOperationsQueueService) | P3 | Larger services requiring careful extraction of shared orchestration logic | ~300 | |
 
 **Validation:** Full solution build + existing test suite green after each phase.
@@ -438,7 +438,7 @@ Finish implementing stubbed-out functionality.
 | # | Item | Priority | Description | Est. Hours |
 |---|------|----------|-------------|-----------|
 | 9A.1 | **Implement critical stub endpoints** — Symbol management (15), Storage operations (20), Storage quality (9) | P1 | Highest priority stub endpoints (Phase 3B) | 60 |
-| 9A.2 | **Complete desktop app placeholders** — Remove "Coming Soon" pages and implement core workflows | P1 | 16 WPF pages are still placeholders (Phase 4A.5, 6 done) | 60 |
+| 9A.2 | **Complete desktop app placeholders** — Remove "Coming Soon" pages and implement core workflows | P1 | 11 WPF pages are still placeholders (Phase 4A.5, 11 done) | 40 |
 | 9A.3 | **Implement remaining data quality features** — Complete all quality monitoring endpoints and UI | P1 | Quality monitoring is key selling point | 40 |
 | 9A.4 | **Finish backfill automation** — Complete scheduled backfill and gap-fill features | P1 | Critical for unattended operation | 24 |
 | 9A.5 | **Complete provider integrations** — Validate all 10 historical and 5 streaming providers work end-to-end | P1 | Core functionality validation | 32 |
@@ -533,7 +533,7 @@ Phase 0 (DONE) ──┬─→ Phase 1 (DONE) ──┬─→ Phase 2 (DONE) ─
 | Phase 1 | ✅ COMPLETED | — | Completed |
 | Phase 2 | ✅ COMPLETED | — | Completed |
 | Phase 3 | ✅ COMPLETED | — | Completed |
-| Phase 4 | ⚠️ PARTIAL | ~80 hours remaining | 2 weeks |
+| Phase 4 | ⚠️ PARTIAL | ~50 hours remaining | 1-2 weeks |
 | Phase 5 | ✅ COMPLETED | — | Completed |
 | Phase 6 | ⚠️ PARTIAL | ~100 hours remaining | 2-3 weeks |
 | Phase 7 | ⏸️ OPTIONAL | ~200+ hours | Post-release |
@@ -549,7 +549,7 @@ If time is constrained, this minimum scope achieves production readiness:
 
 | Phase | Required Items | Effort |
 |-------|----------------|--------|
-| Phase 4 | Complete 10 critical WPF pages only (not all 22) | 40 hours |
+| Phase 4 | Complete remaining 11 WPF placeholder pages (11 of 22 already done) | 30 hours |
 | Phase 6 | Complete service interface consolidation only (Phase 6B) | 20 hours |
 | Phase 8 | Items 8A.1, 8A.2, 8B.1, 8D.1, 8D.2 (critical docs only) | 30 hours |
 | Phase 9 | Items 9A.1, 9B.1-9B.5, 9C.1-9C.5, 9D.1-9D.4 (core production readiness) | 450 hours |
@@ -691,7 +691,7 @@ To track progress toward v2.0.0 production release:
 |--------|---------|--------|--------|
 | **Test Coverage** | ~17% | >80% | 🔴 Critical Gap |
 | **Implemented Endpoints** | 136/269 (51%) | >230/269 (85%) | 🟡 In Progress |
-| **Functional Desktop Pages** | 32/48 (67%) | 46/48 (96%) | 🟡 In Progress |
+| **Functional Desktop Pages** | 37/48 (77%) | 46/48 (96%) | 🟡 In Progress |
 | **Provider Test Coverage** | 8/55 files | >40/55 files | 🔴 Critical Gap |
 | **Documentation Completeness** | ~75% | >95% | 🟡 In Progress |
 | **Production Readiness Score** | 6.5/10 | 9/10 | 🟡 In Progress |
