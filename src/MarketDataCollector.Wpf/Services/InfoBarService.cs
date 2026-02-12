@@ -1,12 +1,13 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using MarketDataCollector.Ui.Services.Services;
 
 namespace MarketDataCollector.Wpf.Services;
 
 /// <summary>
 /// Severity levels for info bar notifications.
-/// Replaces WinUI InfoBarSeverity for WPF compatibility.
+/// Maps to the shared <see cref="InfoBarSeverityLevel"/> for WPF compatibility.
 /// </summary>
 public enum InfoBarSeverity
 {
@@ -18,8 +19,8 @@ public enum InfoBarSeverity
 
 /// <summary>
 /// Service for managing notification bar display with appropriate durations
-/// based on severity. Errors stay visible longer to ensure users notice them.
-/// In WPF, this uses an event-based approach instead of directly manipulating WinUI InfoBar controls.
+/// based on severity. In WPF, this uses an event-based approach.
+/// Delegates shared logic to <see cref="InfoBarConstants"/> and <see cref="ErrorDetailsModel"/> in Ui.Services.
 /// </summary>
 public sealed class InfoBarService
 {
@@ -45,11 +46,11 @@ public sealed class InfoBarService
 
     public static class Durations
     {
-        public const int Info = 4000;
-        public const int Success = 3000;
-        public const int Warning = 6000;
-        public const int Error = 10000;
-        public const int Critical = 0;
+        public const int Info = InfoBarConstants.InfoDurationMs;
+        public const int Success = InfoBarConstants.SuccessDurationMs;
+        public const int Warning = InfoBarConstants.WarningDurationMs;
+        public const int Error = InfoBarConstants.ErrorDurationMs;
+        public const int Critical = InfoBarConstants.CriticalDurationMs;
     }
 
     /// <summary>
@@ -134,85 +135,20 @@ public sealed class InfoBarService
 
     public static ErrorDetails CreateErrorDetails(Exception ex, string operation)
     {
-        return ex switch
+        var shared = ErrorDetailsModel.CreateFromException(ex, operation);
+        return new ErrorDetails
         {
-            OperationCanceledException => new ErrorDetails
-            {
-                Title = "Operation Cancelled",
-                Message = $"The {operation} was cancelled.",
-                Context = "User cancelled the operation or the request timed out.",
-                Remedy = "If this was unexpected, try the operation again.",
-                Severity = InfoBarSeverity.Warning
-            },
-            TimeoutException => new ErrorDetails
-            {
-                Title = "Request Timeout",
-                Message = $"The {operation} took too long to complete.",
-                Context = "The server may be busy or unresponsive.",
-                Remedy = "Wait a moment and try again. If the problem persists, check your connection.",
-                Severity = InfoBarSeverity.Error
-            },
-            UnauthorizedAccessException => new ErrorDetails
-            {
-                Title = "Access Denied",
-                Message = $"Permission denied for {operation}.",
-                Context = "You may not have the required permissions.",
-                Remedy = "Check your credentials or contact your administrator.",
-                Severity = InfoBarSeverity.Error
-            },
-            System.Net.Http.HttpRequestException httpEx => new ErrorDetails
-            {
-                Title = "Connection Error",
-                Message = $"Failed to connect while {operation}.",
-                Context = httpEx.Message,
-                Remedy = "Check your internet connection and ensure the collector service is running.",
-                Severity = InfoBarSeverity.Error
-            },
-            System.IO.IOException ioEx => new ErrorDetails
-            {
-                Title = "File System Error",
-                Message = $"Error accessing files during {operation}.",
-                Context = ioEx.Message,
-                Remedy = "Ensure you have proper permissions and sufficient disk space.",
-                Severity = InfoBarSeverity.Error
-            },
-            ArgumentException argEx => new ErrorDetails
-            {
-                Title = "Invalid Input",
-                Message = $"Invalid data provided for {operation}.",
-                Context = argEx.Message,
-                Remedy = "Check your input values and try again.",
-                Severity = InfoBarSeverity.Warning
-            },
-            InvalidOperationException invEx => new ErrorDetails
-            {
-                Title = "Invalid Operation",
-                Message = $"Cannot perform {operation} in the current state.",
-                Context = invEx.Message,
-                Remedy = "Ensure the application is in the correct state before retrying.",
-                Severity = InfoBarSeverity.Warning
-            },
-            _ => new ErrorDetails
-            {
-                Title = "Unexpected Error",
-                Message = $"An error occurred during {operation}.",
-                Context = ex.Message,
-                Remedy = "Try the operation again. If the problem persists, check the logs or restart the application.",
-                Severity = InfoBarSeverity.Error
-            }
+            Title = shared.Title,
+            Message = shared.Message,
+            Context = shared.Context,
+            Remedy = shared.Remedy,
+            Severity = (InfoBarSeverity)shared.Severity
         };
     }
 
     public static int GetDurationForSeverity(InfoBarSeverity severity)
     {
-        return severity switch
-        {
-            InfoBarSeverity.Informational => Durations.Info,
-            InfoBarSeverity.Success => Durations.Success,
-            InfoBarSeverity.Warning => Durations.Warning,
-            InfoBarSeverity.Error => Durations.Error,
-            _ => Durations.Info
-        };
+        return InfoBarConstants.GetDurationForSeverity((InfoBarSeverityLevel)severity);
     }
 }
 
@@ -225,7 +161,7 @@ public sealed class InfoBarNotificationEventArgs : EventArgs
     public bool IsOpen { get; init; }
 }
 
-public class ErrorDetails
+public sealed class ErrorDetails
 {
     public string Title { get; set; } = "Error";
     public string Message { get; set; } = string.Empty;

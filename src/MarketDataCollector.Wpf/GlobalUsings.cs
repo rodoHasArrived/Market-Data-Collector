@@ -14,3 +14,4 @@
 global using MarketDataCollector.Ui.Services;
 global using MarketDataCollector.Ui.Services.Collections;
 global using MarketDataCollector.Ui.Services.Contracts;
+global using MarketDataCollector.Ui.Services.Services;
