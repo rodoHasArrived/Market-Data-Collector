@@ -1,61 +1,171 @@
-# Documentation Index
+# Market Data Collector Documentation
 
-This directory contains all project documentation for Market Data Collector.
+**Version:** 1.6.1  
+**Last Updated:** 2026-02-12
 
-## Getting Started
+Welcome to the Market Data Collector documentation. This guide will help you find the information you need, whether you're a developer, operator, or user.
 
-- **[Getting Started](getting-started/README.md)** - Quick setup guide
-- **[HELP.md](HELP.md)** - Comprehensive user and operator guide
+---
 
-## Architecture & Design
+## 🚀 Quick Start
 
-- **[architecture/](architecture/)** - System architecture, design rationale, storage design, and UI specs
-- **[adr/](adr/)** - Architecture Decision Records (ADR-001 through ADR-012)
-- **[evaluations/](evaluations/)** - Technology and architecture evaluation documents
+- **New Users** → [Getting Started Guide](getting-started/README.md)
+- **Developers** → [Repository Organization Guide](development/repository-organization-guide.md)
+- **Operators** → [Operator Runbook](operations/operator-runbook.md)
+- **Contributors** → See [Contributing](#contributing) section below
 
-## Data Providers
+---
 
-- **[providers/](providers/)** - Provider setup guides, comparisons, and backfill reference
+## 📖 Documentation by Audience
 
-## Operations & Development
+### For Users
 
-- **[operations/](operations/)** - Production runbooks and packaging procedures
-- **[development/](development/)** - Contributor guides, CI/CD docs, implementation notes
-- **[integrations/](integrations/)** - External integration documentation (F#, Lean Engine)
+Getting the system running and using its features.
 
-## Reference
+- [Getting Started](getting-started/README.md) - Quick start guide
+- [Help & FAQ](HELP.md) - Comprehensive user and operator guide
+- [Provider Setup Guides](providers/) - Setup instructions for each data provider
+  - [Alpaca Setup](providers/alpaca-setup.md)
+  - [Interactive Brokers Setup](providers/interactive-brokers-setup.md)
+- [Provider Comparison](providers/provider-comparison.md) - Compare features and costs
+- [Backfill Guide](providers/backfill-guide.md) - Historical data backfill procedures
+- [Data Dictionary](reference/data-dictionary.md) - Explanation of data fields
 
-- **[reference/](reference/)** - Data dictionary, API reference, and design memos
+### For Developers
 
-## Diagrams
+Building, extending, and testing the system.
 
-- **[diagrams/](diagrams/)** - Rendered architecture diagrams (Graphviz DOT + PNG)
-- **[uml/](uml/)** - UML diagrams (PlantUML source + PNG renders)
+- [Repository Organization Guide](development/repository-organization-guide.md) - **START HERE**
+- [Repository Cleanup Action Plan](development/repository-cleanup-action-plan.md) - Cleanup procedures
+- [Provider Implementation Guide](development/provider-implementation.md) - Add new providers
+- [Desktop Development Guide](development/wpf-implementation-notes.md) - WPF/UWP development
+- [Build Observability](development/build-observability.md) - Build metrics
+- [GitHub Actions Summary](development/github-actions-summary.md) - CI/CD overview
 
-## Project Status
+### For Operators
 
-- **[status/](status/)** - Roadmap, changelog, and production readiness
+Deploying, monitoring, and maintaining the system.
 
-## AI Assistant Guides
+- [Operator Runbook](operations/operator-runbook.md) - Day-to-day operations
+- [Portable Data Packager](operations/portable-data-packager.md) - Data packages
+- [MSIX Packaging](operations/msix-packaging.md) - Desktop app packaging
 
-- **[ai/](ai/)** - Specialized guides for AI assistants (Claude, Copilot)
-- **[ai/ai-known-errors.md](ai/ai-known-errors.md)** - Registry of recurring AI mistakes
+### For Architecture & Design
 
-## Other
+Understanding system design.
 
-- **[generated/](generated/)** - Auto-generated project metadata and indexes
-- **[archived/](archived/)** - Historical/superseded documents
-- **[docfx/](docfx/)** - DocFX API documentation configuration
-- **[DEPENDENCIES.md](DEPENDENCIES.md)** - Package dependency documentation
+- [Architecture Overview](architecture/overview.md) - High-level system architecture
+- [Layer Boundaries](architecture/layer-boundaries.md) - Project dependency rules
+- [Storage Design](architecture/storage-design.md) - Storage architecture
+- [ADRs](adr/) - Architecture Decision Records
 
-## Frequently Used Docs
+---
 
-| Document | Purpose |
-|----------|---------|
-| [HELP.md](HELP.md) | Complete user guide with FAQ |
-| [architecture/overview.md](architecture/overview.md) | System architecture overview |
-| [operations/operator-runbook.md](operations/operator-runbook.md) | Production operations guide |
-| [providers/backfill-guide.md](providers/backfill-guide.md) | Historical data backfill |
-| [providers/provider-comparison.md](providers/provider-comparison.md) | Provider feature comparison |
-| [reference/api-reference.md](reference/api-reference.md) | API map and DocFX generation |
-| [development/build-observability.md](development/build-observability.md) | Build metrics and diagnostics |
+## 📊 Project Status & Planning
+
+- [**Project Roadmap**](status/ROADMAP.md) - **Primary planning document**
+- [TODO Tracking](status/TODO.md) - Auto-scanned TODO comments
+- [Changelog](status/CHANGELOG.md) - Version history
+- [Production Status](status/production-status.md) - Production readiness
+- [Improvements](IMPROVEMENTS.md) - High-impact improvements
+- [Structural Improvements](STRUCTURAL_IMPROVEMENTS.md) - Architecture improvements
+
+---
+
+## 🔍 Reference Documentation
+
+- [API Reference](reference/api-reference.md) - HTTP API endpoints
+- [Data Dictionary](reference/data-dictionary.md) - Data model definitions
+- [Generated Documentation](generated/) - Auto-generated docs
+- [Diagrams](diagrams/) - System diagrams (DOT, PNG, SVG)
+- [UML Diagrams](uml/) - UML diagrams
+
+---
+
+## 🔧 Integration & Evaluations
+
+- [QuantConnect Lean Integration](integrations/lean-integration.md) - Backtesting
+- [F# Integration](integrations/fsharp-integration.md) - F# domain logic
+- [Technology Evaluations](evaluations/) - Provider and architecture evaluations
+- [Code Audits](audits/) - Code quality audits
+
+---
+
+## 🤖 AI Assistant Guides
+
+- [Claude Instructions](ai/claude/) - Claude-specific guides
+- [GitHub Copilot Instructions](ai/copilot/instructions.md) - Copilot config
+- [AI Known Errors](ai/ai-known-errors.md) - Common AI mistakes
+
+---
+
+## 📦 Archived Documentation
+
+Historical documentation superseded by newer guides.
+
+- [Archived Documentation Index](archived/INDEX.md) - Complete list with context
+
+---
+
+## 🚧 Contributing
+
+### How to Contribute
+
+1. **Read the guides:**
+   - [Repository Organization Guide](development/repository-organization-guide.md)
+   - [Repository Cleanup Action Plan](development/repository-cleanup-action-plan.md)
+
+2. **Follow conventions:**
+   - File naming: PascalCase for C# files
+   - Project structure: See organization guide
+   - Testing: `dotnet test` must pass
+
+3. **Submit PR:**
+   - Small, focused changes
+   - Clear commit messages
+   - Reference issues
+
+### Documentation Standards
+
+- **Audience:** State who the doc is for
+- **Date:** Include "Last Updated" date
+- **Examples:** Include code examples
+- **Links:** Use relative paths
+
+---
+
+## 📞 Getting Help
+
+1. **Search documentation** - Use GitHub search or Ctrl+F
+2. **Check FAQ** - See [HELP.md](HELP.md)
+3. **Ask the community** - Open a Discussion
+4. **Report bugs** - Open an Issue
+
+---
+
+## Directory Structure
+
+```
+docs/
+├── adr/                    # Architecture Decision Records
+├── ai/                     # AI assistant instructions
+├── architecture/           # Architecture documentation
+├── archived/               # Historical/superseded docs
+├── audits/                 # Code audits
+├── development/            # Developer guides
+├── diagrams/               # Generated diagrams
+├── evaluations/            # Technology evaluations
+├── generated/              # Auto-generated docs
+├── getting-started/        # User onboarding
+├── integrations/           # Integration guides
+├── operations/             # Operational guides
+├── providers/              # Provider-specific docs
+├── reference/              # API and data references
+├── status/                 # Project status tracking
+├── uml/                    # UML diagrams
+└── README.md              # This file
+```
+
+---
+
+*Documentation maintained by core team. Last update: 2026-02-12*
