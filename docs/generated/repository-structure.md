@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-12 18:31:21 UTC
+> Auto-generated on 2026-02-12 18:39:12 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -394,7 +394,8 @@ Market-Data-Collector/
 │   │   ├── GlobalUsings.cs
 │   │   ├── MarketDataCollector.csproj
 │   │   ├── Program.cs
-│   │   └── runtimeconfig.template.json
+│   │   ├── runtimeconfig.template.json
+│   │   └── UiServer.cs
 │   ├── MarketDataCollector.Application/
 │   │   ├── Backfill/
 │   │   │   ├── BackfillRequest.cs
@@ -441,8 +442,7 @@ Market-Data-Collector/
 │   │   │   ├── BackfillCoordinator.cs
 │   │   │   ├── ConfigStore.cs
 │   │   │   ├── HtmlTemplateLoader.cs
-│   │   │   ├── HtmlTemplates.cs
-│   │   │   └── UiServer.cs
+│   │   │   └── HtmlTemplates.cs
 │   │   ├── Indicators/
 │   │   │   └── TechnicalIndicatorService.cs
 │   │   ├── Monitoring/

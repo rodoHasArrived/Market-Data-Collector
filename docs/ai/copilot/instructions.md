@@ -501,7 +501,8 @@ Market-Data-Collector/
 │   │   ├── GlobalUsings.cs
 │   │   ├── MarketDataCollector.csproj
 │   │   ├── Program.cs
-│   │   └── runtimeconfig.template.json
+│   │   ├── runtimeconfig.template.json
+│   │   └── UiServer.cs
 │   ├── MarketDataCollector.Application/
 │   │   ├── Backfill/
 │   │   │   ├── BackfillRequest.cs
@@ -548,8 +549,7 @@ Market-Data-Collector/
 │   │   │   ├── BackfillCoordinator.cs
 │   │   │   ├── ConfigStore.cs
 │   │   │   ├── HtmlTemplateLoader.cs
-│   │   │   ├── HtmlTemplates.cs
-│   │   │   └── UiServer.cs
+│   │   │   └── HtmlTemplates.cs
 │   │   ├── Indicators/
 │   │   │   └── TechnicalIndicatorService.cs
 │   │   ├── Monitoring/
