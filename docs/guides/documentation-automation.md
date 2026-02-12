@@ -21,6 +21,8 @@ The documentation automation system keeps project documentation accurate and up-
 | **Documentation Coverage** | Measures what percentage of code is documented |
 | **Changelog Generation** | Generates changelogs from conventional commit messages |
 | **Custom Rules Engine** | Enforces project-specific documentation rules |
+| **Automatic TODO Issue Creation** | Converts untracked TODO/FIXME items into GitHub issues automatically |
+| **Local Orchestration Runner** | Runs documentation automation profiles from one command with JSON/Markdown summaries |
 
 ## Workflow Triggers
 
@@ -173,6 +175,67 @@ python3 build/scripts/docs/rules-engine.py \
   --output docs/status/rules-report.md
 ```
 
+#### `create-todo-issues.py` *(new)*
+
+Creates GitHub issues for untracked TODO items discovered by `scan-todos.py`.
+
+```bash
+# 1) Generate scan JSON
+python3 build/scripts/docs/scan-todos.py \
+  --output docs/status/TODO.md \
+  --json-output docs/status/todo-scan-results.json
+
+# 2) Create issues for untracked TODOs (dry run)
+python3 build/scripts/docs/create-todo-issues.py \
+  --scan-json docs/status/todo-scan-results.json \
+  --repo owner/repo \
+  --dry-run
+
+# 3) Create real issues (requires GITHUB_TOKEN or --token)
+python3 build/scripts/docs/create-todo-issues.py \
+  --scan-json docs/status/todo-scan-results.json \
+  --repo owner/repo \
+  --max-issues 25
+```
+
+#### `run-docs-automation.py` *(new)*
+
+Runs documentation tooling as a single orchestrated command with profile support.
+
+```bash
+# Plan what would run for quick profile
+python3 build/scripts/docs/run-docs-automation.py --profile quick --dry-run
+
+# Run full automation and write machine + human summaries
+python3 build/scripts/docs/run-docs-automation.py \
+  --profile full \
+  --json-output docs/status/docs-automation-summary.json \
+  --summary-output docs/status/docs-automation-summary.md
+
+# Run an explicit subset of scripts
+python3 build/scripts/docs/run-docs-automation.py \
+  --scripts scan-todos,validate-examples,repair-links
+
+# Run core checks and automatically create GitHub issues for untracked TODOs
+python3 build/scripts/docs/run-docs-automation.py \
+  --profile core \
+  --auto-create-todos \
+  --todo-repo owner/repo \
+  --todo-max-issues 25
+```
+
+### Orchestration Profiles
+
+| Profile | Included Scripts | Best For |
+|--------|------------------|----------|
+| `quick` | `scan-todos`, `validate-examples`, `repair-links` | Fast local verification before commits |
+| `core` *(default)* | `scan-todos`, `generate-structure-docs`, `generate-health-dashboard`, `validate-examples`, `generate-coverage` | Day-to-day documentation maintenance |
+| `full` | All documented scripts, including changelog + rules engine | Scheduled runs and release prep |
+
+The runner exits non-zero if any script fails (unless `--continue-on-error` is set), making it CI-friendly for preflight checks and local automation.
+
+When `--auto-create-todos` is enabled, the runner automatically asks `scan-todos.py` for JSON output and then calls `create-todo-issues.py` to open GitHub issues for untracked TODOs.
+
 ## Custom Rules
 
 Documentation rules are defined in `build/rules/doc-rules.yaml`. See [Adding Custom Rules](adding-custom-rules.md) for details.
@@ -193,6 +256,9 @@ Documentation rules are defined in `build/rules/doc-rules.yaml`. See [Adding Cus
 | `docs/status/example-validation.md` | validate-examples.py | Code example validation |
 | `docs/status/coverage-report.md` | generate-coverage.py | Documentation coverage |
 | `docs/status/rules-report.md` | rules-engine.py | Rule validation results |
+| `docs/status/todo-scan-results.json` | scan-todos.py | Machine-readable TODO scan results used for auto issue creation |
+| `docs/status/docs-automation-summary.md` | run-docs-automation.py | Human-readable automation run summary |
+| `docs/status/docs-automation-summary.json` | run-docs-automation.py | Machine-readable automation run summary |
 
 All generated files include an "auto-generated" notice and should not be edited manually.
 
@@ -213,6 +279,30 @@ The workflow only commits when actual content changes are detected. Timestamp-on
 ### Link repair reports false positives
 
 The link repair script only checks internal (relative) links. Links to anchors require the target heading to exist exactly as referenced. Case-sensitive heading IDs may cause false positives.
+
+### Need to run multiple doc checks locally like CI
+
+Use the orchestrator:
+
+```bash
+python3 build/scripts/docs/run-docs-automation.py --profile core --summary-output docs/status/docs-automation-summary.md
+```
+
+If one script is flaky but you still want aggregate output, add `--continue-on-error` and inspect the Failures section in the summary markdown.
+
+### Want TODOs automatically added to the project tracker
+
+Use automatic TODO issue creation with the orchestrator:
+
+```bash
+python3 build/scripts/docs/run-docs-automation.py \
+  --profile core \
+  --auto-create-todos \
+  --todo-repo owner/repo \
+  --todo-max-issues 25
+```
+
+This creates GitHub issues (label: `auto-todo`) for TODO items that do not already reference an existing issue.
 
 ---
 
