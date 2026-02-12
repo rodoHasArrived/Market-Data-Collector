@@ -128,6 +128,117 @@ public sealed class ApiClientServiceTests
         // We can't directly check timeout, but we verify configuration doesn't throw
         service.BaseUrl.Should().NotBeNullOrEmpty();
     }
+
+    [Fact]
+    public void GetBackfillClient_FirstCall_CreatesClient()
+    {
+        // Arrange
+        var service = ApiClientService.Instance;
+
+        // Act
+        var client = service.GetBackfillClient();
+
+        // Assert
+        client.Should().NotBeNull();
+        client.Timeout.Should().BeGreaterThan(TimeSpan.FromMinutes(1));
+    }
+
+    [Fact]
+    public void GetBackfillClient_MultipleCalls_ReturnsSameInstance()
+    {
+        // Arrange
+        var service = ApiClientService.Instance;
+
+        // Act
+        var client1 = service.GetBackfillClient();
+        var client2 = service.GetBackfillClient();
+
+        // Assert
+        client1.Should().BeSameAs(client2, "backfill client should be reused");
+    }
+
+    [Theory]
+    [InlineData("http://localhost:8080")]
+    [InlineData("https://api.example.com")]
+    public void Configure_WithDifferentUrls_UpdatesBaseUrl(string newUrl)
+    {
+        // Arrange
+        var service = ApiClientService.Instance;
+        var settings = new AppSettings { ServiceUrl = newUrl };
+
+        // Act
+        service.Configure(settings);
+
+        // Assert
+        service.BaseUrl.Should().Be(newUrl.TrimEnd('/'));
+    }
+
+    [Fact]
+    public void Configure_WithEmptySettingsUrl_UsesDefaultUrl()
+    {
+        // Arrange
+        var service = ApiClientService.Instance;
+        var settings = new AppSettings { ServiceUrl = null };
+
+        // Act
+        service.Configure(settings);
+
+        // Assert
+        service.BaseUrl.Should().NotBeNullOrEmpty();
+        service.BaseUrl.Should().Contain("localhost");
+    }
+
+    [Theory]
+    [InlineData(15)]
+    [InlineData(30)]
+    [InlineData(120)]
+    public void Configure_WithStringOverload_UpdatesUrlAndTimeout(int timeoutSeconds)
+    {
+        // Arrange
+        var service = ApiClientService.Instance;
+        var newUrl = "http://test.example.com:9090";
+
+        // Act
+        service.Configure(newUrl, timeoutSeconds);
+
+        // Assert
+        service.BaseUrl.Should().Be(newUrl);
+        // Timeout is applied internally, verify no exceptions
+    }
+
+    [Theory]
+    [InlineData(30)]
+    [InlineData(60)]
+    [InlineData(180)]
+    public void Configure_WithBackfillTimeout_AcceptsValidValues(int backfillTimeoutMinutes)
+    {
+        // Arrange
+        var service = ApiClientService.Instance;
+        var settings = new AppSettings 
+        { 
+            ServiceUrl = "http://localhost:8080",
+            BackfillTimeoutMinutes = backfillTimeoutMinutes
+        };
+
+        // Act
+        var act = () => service.Configure(settings);
+
+        // Assert
+        act.Should().NotThrow();
+    }
+
+    [Fact]
+    public void UiApi_Property_ReturnsNonNullClient()
+    {
+        // Arrange
+        var service = ApiClientService.Instance;
+
+        // Act
+        var uiApiClient = service.UiApi;
+
+        // Assert
+        uiApiClient.Should().NotBeNull();
+    }
 }
 
 /// <summary>
