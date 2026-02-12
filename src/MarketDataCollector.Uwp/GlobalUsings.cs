@@ -14,6 +14,7 @@
 global using MarketDataCollector.Ui.Services;
 global using MarketDataCollector.Ui.Services.Collections;
 global using MarketDataCollector.Ui.Services.Contracts;
+global using MarketDataCollector.Ui.Services.Services;
 
 // UWP-specific contracts
 global using MarketDataCollector.Uwp.Contracts;

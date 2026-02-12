@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using MarketDataCollector.Ui.Services.Services;
 
 namespace MarketDataCollector.Uwp.Contracts;
 
@@ -11,11 +12,11 @@ namespace MarketDataCollector.Uwp.Contracts;
 /// </summary>
 public interface ITooltipService
 {
-    Services.FeatureHelp GetFeatureHelp(string featureKey);
+    FeatureHelp GetFeatureHelp(string featureKey);
     bool ShouldShowTip(string tipKey);
     void DismissTip(string tipKey);
     void ResetAllTips();
-    IReadOnlyList<Services.OnboardingTip> GetOnboardingTips(string pageKey);
+    IReadOnlyList<OnboardingTip> GetOnboardingTips(string pageKey);
     TeachingTip CreateTeachingTip(
         FrameworkElement target,
         string title,
