@@ -1,45 +1,30 @@
 # TODO Tracking
 
 > Auto-generated TODO documentation. Do not edit manually.
-> Last updated: 2026-02-12T08:53:02.855071+00:00
+> Last updated: 2026-02-12T09:08:16.071033+00:00
 
 ## Summary
 
 | Metric | Count |
 |--------|-------|
-| **Total Items** | 16 |
+| **Total Items** | 12 |
 | **Linked to Issues** | 0 |
-| **Untracked** | 16 |
+| **Untracked** | 12 |
 
 ### By Type
 
 | Type | Count | Description |
 |------|-------|-------------|
 | `NOTE` | 12 | Important notes and documentation |
-| `TODO` | 4 | General tasks to complete |
 
 ### By Directory
 
 | Directory | Count |
 |-----------|-------|
 | `tests/` | 9 |
-| `src/` | 7 |
+| `src/` | 3 |
 
 ## All Items
-
-### TODO (4)
-
-- [ ] `src/MarketDataCollector.Ui.Services/Services/OrderBookVisualizationService.cs:37`
-  > Implement once LiveDataService supports SubscribeToDepthAsync
-
-- [ ] `src/MarketDataCollector.Ui.Services/Services/OrderBookVisualizationService.cs:49`
-  > Implement once LiveDataService supports UnsubscribeFromDepthAsync
-
-- [ ] `src/MarketDataCollector.Ui.Services/Services/PortablePackagerService.cs:479`
-  > Implement once SchemaService supports GetJsonSchema var schema = _schemaService.GetJsonSchema(type); if (!string.IsNullOrEmpty(schema)) { await File.WriteAllTextAsync( Path.Combine(schemasDir, $"{type}_schema.json"), schema, ct); }
-
-- [ ] `src/MarketDataCollector.Ui.Services/Services/PortfolioImportService.cs:223`
-  > Implement once WatchlistService supports CreateOrUpdateWatchlistAsync var watchlistService = WatchlistService.Instance; await watchlistService.CreateOrUpdateWatchlistAsync(watchlistName, symbols, ct);
 
 ### NOTE (12)
 
