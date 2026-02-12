@@ -133,3 +133,20 @@ If headings are missing, the workflow still creates an entry with safe defaults 
   - `dotnet build src/MarketDataCollector.Uwp/MarketDataCollector.Uwp.csproj -c Release -r win-x64 -p:Platform=x64` (on Windows)
 - **Source issue**: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/21851485930/job/63058846153
 - **Status**: fixed (commit cec548e)
+
+### AI-20260212-codecov-directory-mismatch
+- **Area**: CI/GitHub Actions/codecov
+- **Symptoms**: GitHub Actions step "Upload coverage reports" fails silently or reports no coverage found. The workflow completes but Codecov doesn't receive coverage data. In pr-checks.yml, step 5 (Upload coverage reports) fails to find coverage files.
+- **Root cause**: The `dotnet test` command outputs coverage files to a directory specified by `--results-directory` parameter, but the `codecov-action` configuration uses a different directory path. For example, pr-checks.yml had `--results-directory ./artifacts/test-results` but codecov was configured with `directory: ./coverage`.
+- **Prevention checklist**:
+  - [ ] When modifying test commands with `--results-directory`, also update the codecov upload step
+  - [ ] Use the `files:` parameter with glob pattern instead of `directory:` for codecov-action: `files: ./artifacts/test-results/**/coverage.cobertura.xml`
+  - [ ] Verify consistency: the path in `files:` must match the path in `--results-directory`
+  - [ ] Check that diagnostics artifact upload also references the correct coverage path
+  - [ ] Search for all codecov-action usages: `grep -rn "codecov-action" .github/workflows/`
+- **Verification commands**:
+  - `grep -A10 "dotnet test" .github/workflows/pr-checks.yml | grep "results-directory"`
+  - `grep -A3 "codecov-action" .github/workflows/pr-checks.yml | grep -E "(directory|files)"`
+  - `dotnet test MarketDataCollector.sln --collect:"XPlat Code Coverage" --results-directory ./test-results && ls -la ./test-results/**/coverage.cobertura.xml`
+- **Source issue**: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/21938525658/job/63358083776#step:5:1
+- **Status**: fixed (commit ad97ee2)
