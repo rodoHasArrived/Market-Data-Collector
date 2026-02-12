@@ -1,6 +1,9 @@
 using System.Text.Json;
 using MarketDataCollector.Application.Composition;
 using MarketDataCollector.Application.Config;
+using MarketDataCollector.Application.Monitoring.DataQuality;
+using MarketDataCollector.Application.UI;
+using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Ui.Shared.Endpoints;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -8,7 +11,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-namespace MarketDataCollector.Application.UI;
+namespace MarketDataCollector;
 
 /// <summary>
 /// Embedded HTTP server for the web dashboard UI.
