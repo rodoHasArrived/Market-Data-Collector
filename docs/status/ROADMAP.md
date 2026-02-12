@@ -1,11 +1,11 @@
 # Market Data Collector - Project Roadmap
 
 **Version:** 1.6.1
-**Last Updated:** 2026-02-10
+**Last Updated:** 2026-02-12
 **Status:** Development / Pilot Ready
 **Source Files:** 807 | **Test Files:** 105 | **API Endpoints:** ~269 declared, ~136 implemented, ~133 stubbed
 
-This roadmap consolidates findings from the existing codebase analysis, production status assessment, improvement backlog, and structural review into a phased execution plan. Each phase builds on the previous one, progressing from critical fixes through testing and architecture improvements to production readiness.
+This roadmap consolidates findings from the existing codebase analysis, production status assessment, improvement backlog, and structural review into a phased execution plan. Each phase builds on the previous one, progressing from critical fixes through testing and architecture improvements to production readiness and final optimization.
 
 ---
 
@@ -19,6 +19,9 @@ This roadmap consolidates findings from the existing codebase analysis, producti
 - [Phase 5: Operational Readiness](#phase-5-operational-readiness)
 - [Phase 6: Duplicate & Unused Code Cleanup](#phase-6-duplicate--unused-code-cleanup)
 - [Phase 7: Extended Capabilities](#phase-7-extended-capabilities)
+- [Phase 8: Repository Organization & Optimization](#phase-8-repository-organization--optimization)
+- [Phase 9: Final Production Release](#phase-9-final-production-release)
+- [Execution Timeline & Dependencies](#execution-timeline--dependencies)
 - [Provider Status Summary](#provider-status-summary)
 - [Test Coverage Summary](#test-coverage-summary)
 - [Stub Endpoint Inventory](#stub-endpoint-inventory)
@@ -346,6 +349,214 @@ Longer-term goals for expanding the system.
 
 ---
 
+## Phase 8: Repository Organization & Optimization
+
+Systematically organize and optimize the repository structure to improve maintainability, reduce clutter, and establish clear patterns for future development. This phase focuses on repository-level improvements that don't change functionality but significantly improve developer experience.
+
+**Estimated Effort:** 2-3 weeks | **Dependencies:** Phase 6 completion recommended
+
+### 8A. Documentation Organization (P1 — High Impact)
+
+Consolidate and organize scattered documentation into a clear, navigable structure.
+
+| # | Item | Priority | Description | Est. Hours |
+|---|------|----------|-------------|-----------|
+| 8A.1 | **Create master documentation index** — Unified `docs/README.md` with categorized links to all documentation | P1 | Single entry point for all documentation; organize by audience (developers, operators, users) | 4 |
+| 8A.2 | **Consolidate archived documentation** — Create `docs/archived/INDEX.md` summarizing 13 historical documents with context | P1 | Currently 13 files in `/docs/archived/` with no index or explanation | 3 |
+| 8A.3 | **Organize status documents** — Ensure `TODO.md`, `ROADMAP.md`, `CHANGELOG.md`, and `production-status.md` have consistent structure and cross-references | P1 | All status docs should reference each other and explain their purpose | 2 |
+| 8A.4 | **Consolidate improvement tracking** — Merge `IMPROVEMENTS.md` and `STRUCTURAL_IMPROVEMENTS.md` into single tracking document with clear status | P2 | Currently two separate improvement tracking documents with overlapping scope | 4 |
+| 8A.5 | **Update API documentation** — Complete `docs/reference/api-reference.md` with all 136 implemented endpoints and their schemas | P2 | Current API docs may be incomplete or outdated | 8 |
+| 8A.6 | **Create documentation contribution guide** — Document standards for writing, organizing, and updating documentation | P2 | Prevent future documentation debt | 3 |
+| 8A.7 | **Audit and fix broken cross-references** — Scan all markdown files for broken internal links and fix them | P2 | Many docs reference moved or renamed files | 4 |
+
+### 8B. Project Structure Optimization (P1 — Critical for Maintenance)
+
+Establish clear patterns and remove ambiguity in project organization.
+
+| # | Item | Priority | Description | Est. Hours |
+|---|------|----------|-------------|-----------|
+| 8B.1 | **Create repository organization guide** — Document file naming conventions, project structure patterns, and where new code should go | P1 | See `docs/development/repository-organization-guide.md` (to be created) | 6 |
+| 8B.2 | **Resolve remaining ambiguous class names** — Fix `ConfigStore` and `BackfillCoordinator` duplicates (Phase 6D.2, 6D.3) | P1 | Two classes with same name in different projects cause confusion | 3 |
+| 8B.3 | **Standardize service interfaces** — Ensure all `IXxxService` interfaces follow consistent naming and are in appropriate projects | P1 | Mix of `IConfigService`, `ConfigurationService`, and `IConfigurationService` patterns | 4 |
+| 8B.4 | **Organize test files to mirror source structure** — Ensure test file locations exactly match source file locations | P2 | Some test files don't mirror their source counterparts | 6 |
+| 8B.5 | **Create project dependency diagram** — Visual diagram showing allowed and forbidden dependencies between projects | P2 | Helps prevent architectural violations | 4 |
+| 8B.6 | **Document assembly boundaries** — Clear guide on which types belong in each project (Contracts, Core, Application, Infrastructure) | P2 | Prevent future namespace confusion | 4 |
+
+### 8C. Code Organization Cleanup (P2 — Quality of Life)
+
+Remove clutter and organize code within projects.
+
+| # | Item | Priority | Description | Est. Hours |
+|---|------|----------|-------------|-----------|
+| 8C.1 | **Delete UWP Examples folder** — Remove 6 unused XAML example files (~260 KB) (Phase 6A.2) | P1 | Zero references, pure clutter | 1 |
+| 8C.2 | **Clean up build artifacts and temp files** — Audit `.gitignore` and ensure no build outputs are tracked | P1 | `build-output.log` and other artifacts may be tracked | 2 |
+| 8C.3 | **Organize shared utilities** — Move common utilities to `Core/Utilities/` with clear naming | P2 | `SymbolNormalization`, `JsonElementExtensions`, etc. scattered across projects | 6 |
+| 8C.4 | **Split large files** — Break apart `UiServer.cs` (3,030 LOC), `HtmlTemplates.cs` (2,510 LOC), and others (Phase 6F) | P2 | Files >2,000 lines are hard to navigate and maintain | 16 |
+| 8C.5 | **Organize HTTP endpoints** — Ensure all endpoint handlers are in `Endpoints/` folders with consistent naming | P2 | Some endpoint code mixed with other concerns | 4 |
+| 8C.6 | **Standardize configuration files** — Ensure all config files follow consistent naming (`appsettings.*.json` pattern) | P3 | Mix of config file naming patterns | 2 |
+
+### 8D. Developer Experience Improvements (P2 — Productivity)
+
+Make the repository easier to work with for new and existing developers.
+
+| # | Item | Priority | Description | Est. Hours |
+|---|------|----------|-------------|-----------|
+| 8D.1 | **Create comprehensive README.md** — Update root README with getting started, architecture overview, and key links | P1 | Current README may not reflect latest state | 6 |
+| 8D.2 | **Update CLAUDE.md and Copilot instructions** — Ensure AI instructions reflect Phase 8 organization changes | P1 | Keep AI assistance effective | 4 |
+| 8D.3 | **Create contribution guide** — Document how to add providers, features, tests, and documentation | P2 | Lower barrier for new contributors | 8 |
+| 8D.4 | **Add architecture decision records** — Document remaining architectural decisions in ADRs | P2 | Only 6 ADRs exist, many decisions undocumented | 12 |
+| 8D.5 | **Create troubleshooting guide** — Common errors, solutions, and diagnostic procedures | P2 | Reduce repetitive support questions | 8 |
+| 8D.6 | **Improve Makefile documentation** — Add help text and examples for all targets | P3 | 67 targets but minimal documentation | 4 |
+| 8D.7 | **Create development environment setup guide** — One-command setup for new developers | P3 | Reduce onboarding friction | 6 |
+
+### 8E. CI/CD & Automation (P2 — Infrastructure)
+
+Optimize build and deployment automation.
+
+| # | Item | Priority | Description | Est. Hours |
+|---|------|----------|-------------|-----------|
+| 8E.1 | **Consolidate GitHub Actions workflows** — Review 17 workflows for redundancy and optimize for performance | P2 | Some workflows may have overlapping responsibilities | 8 |
+| 8E.2 | **Improve build observability** — Enhance build metrics collection and reporting | P2 | Current build-observability.yml may need expansion | 4 |
+| 8E.3 | **Add caching to workflows** — Optimize CI/CD speed with NuGet and build caching | P2 | Reduce build times | 4 |
+| 8E.4 | **Create deployment checklists** — Automated checklists for releases and deployments | P3 | Prevent forgotten steps | 4 |
+| 8E.5 | **Document workflow triggers and dependencies** — Clear explanation of when each workflow runs | P3 | See `.github/workflows/README.md` updates | 3 |
+
+**Total Estimated Effort for Phase 8:** ~170 hours (~4 weeks for one developer, ~2 weeks for two)
+
+---
+
+## Phase 9: Final Production Release
+
+Complete remaining features, perform comprehensive validation, and prepare for production deployment. This phase represents the final push to v2.0.0 production release.
+
+**Estimated Effort:** 4-6 weeks | **Dependencies:** Phases 0-8 completion
+
+### 9A. Complete Remaining Features (P1 — Required for Production)
+
+Finish implementing stubbed-out functionality.
+
+| # | Item | Priority | Description | Est. Hours |
+|---|------|----------|-------------|-----------|
+| 9A.1 | **Implement critical stub endpoints** — Symbol management (15), Storage operations (20), Storage quality (9) | P1 | Highest priority stub endpoints (Phase 3B) | 60 |
+| 9A.2 | **Complete desktop app placeholders** — Remove "Coming Soon" pages and implement core workflows | P1 | 22 WPF pages are still placeholders (Phase 4A.5) | 80 |
+| 9A.3 | **Implement remaining data quality features** — Complete all quality monitoring endpoints and UI | P1 | Quality monitoring is key selling point | 40 |
+| 9A.4 | **Finish backfill automation** — Complete scheduled backfill and gap-fill features | P1 | Critical for unattended operation | 24 |
+| 9A.5 | **Complete provider integrations** — Validate all 10 historical and 5 streaming providers work end-to-end | P1 | Core functionality validation | 32 |
+
+### 9B. Production Validation (P1 — Cannot Ship Without)
+
+Comprehensive testing and validation for production readiness.
+
+| # | Item | Priority | Description | Est. Hours |
+|---|------|----------|-------------|-----------|
+| 9B.1 | **Achieve 80% test coverage** — Write tests for critical paths in all projects | P1 | Current: ~17% coverage (Phase 1, Test Coverage Summary) | 120 |
+| 9B.2 | **End-to-end integration tests** — Validate complete workflows from subscription to storage to export | P1 | Ensure system works as a whole | 40 |
+| 9B.3 | **Performance testing and benchmarking** — Validate system meets performance requirements under load | P1 | Establish baselines and identify bottlenecks | 32 |
+| 9B.4 | **Security audit** — Review authentication, authorization, secret handling, and data protection | P1 | Cannot ship with security vulnerabilities | 24 |
+| 9B.5 | **Load testing** — Validate system handles target throughput (1M+ events/second) | P1 | Identify scalability limits | 24 |
+| 9B.6 | **Disaster recovery testing** — Validate backup, restore, and failure recovery procedures | P2 | Ensure data durability guarantees | 16 |
+| 9B.7 | **Documentation review** — Ensure all docs are accurate, complete, and up-to-date | P1 | Documentation is part of the product | 24 |
+
+### 9C. Production Deployment Preparation (P1 — Operational Readiness)
+
+Prepare systems and processes for production operation.
+
+| # | Item | Priority | Description | Est. Hours |
+|---|------|----------|-------------|-----------|
+| 9C.1 | **Create deployment runbooks** — Step-by-step procedures for all deployment scenarios | P1 | Operators need clear instructions | 16 |
+| 9C.2 | **Setup monitoring and alerting** — Configure Prometheus, Grafana, and alert routing for production | P1 | Must monitor production health | 24 |
+| 9C.3 | **Create incident response procedures** — Playbooks for common failures and escalation paths | P1 | Minimize downtime when issues occur | 16 |
+| 9C.4 | **Prepare backup and disaster recovery** — Automated backup procedures and recovery testing | P1 | Protect against data loss | 24 |
+| 9C.5 | **Setup log aggregation** — Centralized logging for all components | P1 | Essential for troubleshooting | 16 |
+| 9C.6 | **Create capacity planning guide** — Resource requirements for different usage levels | P2 | Help users plan infrastructure | 12 |
+| 9C.7 | **Prepare upgrade procedures** — How to upgrade from v1.x to v2.0.0 | P2 | Support existing users | 12 |
+
+### 9D. Release Engineering (P1 — Ship It!)
+
+Package and release the production version.
+
+| # | Item | Priority | Description | Est. Hours |
+|---|------|----------|-------------|-----------|
+| 9D.1 | **Complete changelog for v2.0.0** — Comprehensive list of changes, fixes, and new features | P1 | Users need to know what changed | 8 |
+| 9D.2 | **Create release notes** — User-friendly summary of v2.0.0 highlights and upgrade guide | P1 | Marketing and communication | 8 |
+| 9D.3 | **Build release artifacts** — Docker images, desktop installers, source archives | P1 | Deliver software to users | 8 |
+| 9D.4 | **Create getting started guide** — Quick start for new users (15-minute setup) | P1 | First impression matters | 12 |
+| 9D.5 | **Prepare demo videos and screenshots** — Visual demonstrations of key features | P2 | Help users understand capabilities | 16 |
+| 9D.6 | **Create migration guide** — Detailed guide for upgrading from v1.x | P2 | Support existing deployments | 12 |
+| 9D.7 | **Setup release automation** — Automated builds, testing, and publishing | P2 | Streamline future releases | 16 |
+
+### 9E. Post-Release Support Preparation (P2 — Sustainability)
+
+Prepare for ongoing maintenance and support.
+
+| # | Item | Priority | Description | Est. Hours |
+|---|------|----------|-------------|-----------|
+| 9E.1 | **Create support documentation** — FAQs, common issues, contact information | P1 | Reduce support burden | 12 |
+| 9E.2 | **Setup issue triage workflow** — Labels, templates, and triage procedures for GitHub issues | P2 | Organize community feedback | 8 |
+| 9E.3 | **Create roadmap for v2.1.0** — Plan for post-release enhancements and fixes | P2 | Communicate future direction | 8 |
+| 9E.4 | **Document technical debt** — Known issues and areas for future improvement | P2 | Track what we couldn't fix in v2.0.0 | 8 |
+| 9E.5 | **Create contributor onboarding guide** — How new contributors can get started | P2 | Build community | 12 |
+| 9E.6 | **Setup community channels** — Discord/Slack/Discussions for user community | P3 | Foster user engagement | 8 |
+
+**Total Estimated Effort for Phase 9:** ~808 hours (~20 weeks for one developer, ~10 weeks for two, ~5 weeks for four)
+
+---
+
+## Execution Timeline & Dependencies
+
+### Phase Dependencies (Critical Path)
+
+```
+Phase 0 (DONE) ──┬─→ Phase 1 (DONE) ──┬─→ Phase 2 (DONE) ──┬─→ Phase 3 (DONE) ──┬─→ Phase 8 ──→ Phase 9
+                 │                      │                    │                    │
+                 ├─→ Phase 5 (DONE) ────┘                    │                    │
+                 │                                            │                    │
+                 └─→ Phase 6 ─────────────────────────────┬──┘                    │
+                                                           │                       │
+                                                           └─→ Phase 4 ────────────┘
+                                                                    │
+                                                                    └─→ Phase 7 (Optional)
+```
+
+### Recommended Execution Order
+
+1. **Immediate (Critical)** — Complete any remaining Phase 6 items (duplicate code cleanup)
+2. **Next Sprint (2-3 weeks)** — Execute Phase 8 (Repository Organization)
+3. **Major Release (4-6 weeks)** — Execute Phase 9 (Final Production Release)
+4. **Ongoing** — Phase 7 (Extended Capabilities) as post-release enhancements
+
+### Effort Summary
+
+| Phase | Status | Estimated Effort | Timeline |
+|-------|--------|------------------|----------|
+| Phase 0 | ✅ COMPLETED | — | Completed |
+| Phase 1 | ✅ COMPLETED | — | Completed |
+| Phase 2 | ✅ COMPLETED | — | Completed |
+| Phase 3 | ✅ COMPLETED | — | Completed |
+| Phase 4 | ⚠️ PARTIAL | ~80 hours remaining | 2 weeks |
+| Phase 5 | ✅ COMPLETED | — | Completed |
+| Phase 6 | ⚠️ PARTIAL | ~100 hours remaining | 2-3 weeks |
+| Phase 7 | ⏸️ OPTIONAL | ~200+ hours | Post-release |
+| Phase 8 | 🆕 NEW | ~170 hours | 2-4 weeks |
+| Phase 9 | 🆕 NEW | ~808 hours | 4-10 weeks |
+| **Total Remaining** | — | **~1,158 hours** | **10-19 weeks** |
+
+**Note:** Timeline assumes 40 hours/week. With multiple developers working in parallel, timeline can be reduced by 40-60%.
+
+### Minimum Viable Production Release (MVP)
+
+If time is constrained, this minimum scope achieves production readiness:
+
+| Phase | Required Items | Effort |
+|-------|----------------|--------|
+| Phase 4 | Complete 10 critical WPF pages only (not all 22) | 40 hours |
+| Phase 6 | Complete service interface consolidation only (Phase 6B) | 20 hours |
+| Phase 8 | Items 8A.1, 8A.2, 8B.1, 8D.1, 8D.2 (critical docs only) | 30 hours |
+| Phase 9 | Items 9A.1, 9B.1-9B.5, 9C.1-9C.5, 9D.1-9D.4 (core production readiness) | 450 hours |
+| **Total MVP** | — | **~540 hours (~13-14 weeks for one dev)** |
+
+---
+
 ## Provider Status Summary
 
 ### Streaming Providers
@@ -456,13 +667,36 @@ Longer-term goals for expanding the system.
 
 ## Notes
 
-- Phases are ordered by dependency and risk. Phase 0 should be addressed immediately as it involves silent data loss.
-- Within each phase, items are ordered by priority (P1 > P2 > P3).
-- Provider implementations are functionally complete — the conditional compilation pattern (`#if IBAPI`, `#if STOCKSHARP`) is intentional to avoid hard dependencies on commercial SDKs.
-- The 178 stub endpoints are intentional placeholders that return 501 to prevent confusing 404 errors for declared routes.
-- Test coverage (~17% by file count) is the largest gap in the project's production readiness.
-- Phase 6 (Duplicate & Unused Code Cleanup) is informed by three prior audits. Many quick-win items from the duplicate code analysis have already been completed (domain models, provider base classes, shared utilities). The remaining work focuses on desktop service deduplication and UWP platform decoupling.
+- **Phase 0-7** represent foundational work, with Phases 0-5 now complete
+- **Phase 8** focuses on repository organization, documentation, and developer experience
+- **Phase 9** represents the final push to v2.0.0 production release
+- Phases are ordered by dependency and risk. Cross-phase dependencies are shown in the Execution Timeline
+- Within each phase, items are ordered by priority (P1 > P2 > P3)
+- Provider implementations are functionally complete — the conditional compilation pattern (`#if IBAPI`, `#if STOCKSHARP`) is intentional to avoid hard dependencies on commercial SDKs
+- The 178 stub endpoints are intentional placeholders that return 501 to prevent confusing 404 errors for declared routes
+- Test coverage (~17% by file count) is the largest gap in the project's production readiness
+- Phase 6 (Duplicate & Unused Code Cleanup) is informed by three prior audits. Many quick-win items have been completed
+- Phase 8 (Repository Organization) addresses long-standing organizational debt and establishes patterns for sustainable development
+- Phase 9 (Final Production Release) represents estimated ~808 hours of work but can be reduced to ~540 hours for minimum viable production release
+- **Total remaining effort to v2.0.0:** ~1,158 hours (19 weeks for one developer, 10 weeks for two)
+- **MVP path to production:** ~540 hours (13-14 weeks for one developer, 6-7 weeks for two)
 
 ---
 
-*Last Updated: 2026-02-10*
+## Success Metrics
+
+To track progress toward v2.0.0 production release:
+
+| Metric | Current | Target | Status |
+|--------|---------|--------|--------|
+| **Test Coverage** | ~17% | >80% | 🔴 Critical Gap |
+| **Implemented Endpoints** | 136/269 (51%) | >230/269 (85%) | 🟡 In Progress |
+| **Functional Desktop Pages** | 26/48 (54%) | 46/48 (96%) | 🟡 In Progress |
+| **Provider Test Coverage** | 8/55 files | >40/55 files | 🔴 Critical Gap |
+| **Documentation Completeness** | ~75% | >95% | 🟡 In Progress |
+| **Production Readiness Score** | 6.5/10 | 9/10 | 🟡 In Progress |
+| **Technical Debt Items** | ~45 known | <15 acceptable | 🟡 In Progress |
+
+---
+
+*Last Updated: 2026-02-12*
