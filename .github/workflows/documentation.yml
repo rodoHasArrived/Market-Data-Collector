@@ -822,7 +822,7 @@ jobs:
           github.event.inputs.dry_run != 'true' &&
           steps.create-pr.outcome == 'failure'
         run: |
-          echo "::warning::PR creation failed. Falling back to direct commit."
+          echo "::warning::PR creation failed. Checking if direct commit is needed."
           echo "::notice::To enable PR creation, go to Settings > Actions > General and enable 'Allow GitHub Actions to create and approve pull requests'"
 
           git config user.name "github-actions[bot]"
@@ -831,6 +831,13 @@ jobs:
           git add docs/generated/ docs/status/health-dashboard.md \
                   CLAUDE.md docs/ai/copilot/instructions.md \
                   .github/agents/documentation-agent.md
+
+          # Only commit if there are staged changes
+          if git diff --staged --quiet; then
+            echo "::notice::No changes to commit on main branch. Changes may have been pushed to a branch already."
+            exit 0
+          fi
+
           git commit -m "docs: consolidated documentation automation updates
 
           Note: Committed directly because PR creation is disabled in repository settings.
