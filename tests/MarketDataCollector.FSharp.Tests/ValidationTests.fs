@@ -37,7 +37,9 @@ let createValidQuote () : QuoteEvent = {
 [<Fact>]
 let ``Validate.price accepts valid positive price`` () =
     let result = Validate.priceDefault 100.00m
-    result |> should equal (Ok 100.00m)
+    match result with
+    | Ok value -> value |> should equal 100.00m
+    | Error _ -> failwith "Expected Ok result"
 
 [<Fact>]
 let ``Validate.price rejects zero price`` () =
@@ -64,7 +66,9 @@ let ``Validate.price rejects price above maximum`` () =
 [<Fact>]
 let ``Validate.quantity accepts valid quantity`` () =
     let result = Validate.quantityDefault 100L
-    result |> should equal (Ok 100L)
+    match result with
+    | Ok value -> value |> should equal 100L
+    | Error _ -> failwith "Expected Ok result"
 
 [<Fact>]
 let ``Validate.quantity rejects negative quantity`` () =
@@ -76,7 +80,9 @@ let ``Validate.quantity rejects negative quantity`` () =
 [<Fact>]
 let ``Validate.symbol accepts valid symbol`` () =
     let result = Validate.symbolDefault "AAPL"
-    result |> should equal (Ok "AAPL")
+    match result with
+    | Ok value -> value |> should equal "AAPL"
+    | Error _ -> failwith "Expected Ok result"
 
 [<Fact>]
 let ``Validate.symbol rejects empty symbol`` () =
@@ -95,7 +101,11 @@ let ``Validate.symbol rejects symbol exceeding max length`` () =
 [<Fact>]
 let ``Validate.spread accepts positive spread`` () =
     let result = Validate.spread 100.00m 100.10m
-    result |> should equal (Ok (100.00m, 100.10m))
+    match result with
+    | Ok (bid, ask) ->
+        bid |> should equal 100.00m
+        ask |> should equal 100.10m
+    | Error _ -> failwith "Expected Ok result"
 
 [<Fact>]
 let ``Validate.spread rejects crossed quotes`` () =
