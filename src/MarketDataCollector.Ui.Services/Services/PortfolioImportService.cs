@@ -220,12 +220,14 @@ public sealed class PortfolioImportService
 
         try
         {
-            // TODO: Implement once WatchlistService supports CreateOrUpdateWatchlistAsync
-            // var watchlistService = WatchlistService.Instance;
-            // await watchlistService.CreateOrUpdateWatchlistAsync(watchlistName, symbols, ct);
-            await Task.CompletedTask;
-            result.Success = true;
-            result.ImportedCount = symbols.Count;
+            var watchlistService = WatchlistService.Instance;
+            var success = await watchlistService.CreateOrUpdateWatchlistAsync(watchlistName, symbols, ct);
+            result.Success = success;
+            result.ImportedCount = success ? symbols.Count : 0;
+            if (!success)
+            {
+                result.Error = "Failed to create or update watchlist. The WatchlistService may not be initialized.";
+            }
         }
         catch (Exception ex)
         {

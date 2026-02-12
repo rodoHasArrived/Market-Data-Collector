@@ -34,9 +34,13 @@ public sealed class OrderBookVisualizationService : IDisposable
             _snapshotHistory[symbol] = new List<OrderBookHistorySnapshot>();
         }
 
-        // TODO: Implement once LiveDataService supports SubscribeToDepthAsync
-        await Task.CompletedTask;
-        // await _liveDataService.SubscribeToDepthAsync(symbol, depthLevels, ct);
+        var request = new SubscribeRequest
+        {
+            Symbol = symbol,
+            SubscribeDepth = true,
+            DepthLevels = depthLevels
+        };
+        await _liveDataService.SubscribeAsync(request, ct);
     }
 
     /// <summary>
@@ -46,9 +50,7 @@ public sealed class OrderBookVisualizationService : IDisposable
     {
         _orderBooks.TryRemove(symbol, out _);
         _snapshotHistory.TryRemove(symbol, out _);
-        // TODO: Implement once LiveDataService supports UnsubscribeFromDepthAsync
-        await Task.CompletedTask;
-        // await _liveDataService.UnsubscribeFromDepthAsync(symbol, ct);
+        await _liveDataService.UnsubscribeAsync(symbol, ct);
     }
 
     /// <summary>

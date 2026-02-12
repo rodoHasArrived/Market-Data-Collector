@@ -268,6 +268,31 @@ public sealed class WatchlistService : IWatchlistService
         }
     }
 
+    /// <summary>
+    /// Creates a new watchlist or updates an existing one.
+    /// Since UWP uses a single watchlist model, this adds symbols to the main watchlist.
+    /// </summary>
+    /// <param name="name">The watchlist name (unused in UWP single-list model).</param>
+    /// <param name="symbols">The symbols to add.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>True if successful, false otherwise.</returns>
+    public async Task<bool> CreateOrUpdateWatchlistAsync(string name, IEnumerable<string> symbols, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            // Add all symbols to the watchlist
+            foreach (var symbol in symbols)
+            {
+                await AddSymbolAsync(symbol, null, cancellationToken);
+            }
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     private static WatchlistData CreateDefaultWatchlist()
     {
         return new WatchlistData
