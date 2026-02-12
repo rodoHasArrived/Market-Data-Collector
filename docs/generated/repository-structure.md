@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-12 13:57:33 UTC
+> Auto-generated on 2026-02-12 15:55:29 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -775,6 +775,7 @@ Market-Data-Collector/
 │   │   │   ├── BoundedObservableCollection.cs
 │   │   │   └── CircularBuffer.cs
 │   │   ├── Contracts/
+│   │   │   ├── ConnectionTypes.cs
 │   │   │   ├── IArchiveHealthService.cs
 │   │   │   ├── IBackgroundTaskSchedulerService.cs
 │   │   │   ├── IConfigService.cs
@@ -787,7 +788,8 @@ Market-Data-Collector/
 │   │   │   ├── ISchemaService.cs
 │   │   │   ├── IStatusService.cs
 │   │   │   ├── IThemeService.cs
-│   │   │   └── IWatchlistService.cs
+│   │   │   ├── IWatchlistService.cs
+│   │   │   └── NavigationTypes.cs
 │   │   ├── Services/
 │   │   │   ├── ActivityFeedService.cs
 │   │   │   ├── AnalysisExportWizardService.cs
@@ -801,6 +803,7 @@ Market-Data-Collector/
 │   │   │   ├── CollectionSessionService.cs
 │   │   │   ├── ColorPalette.cs
 │   │   │   ├── ConfigService.cs
+│   │   │   ├── ConnectionServiceBase.cs
 │   │   │   ├── CredentialService.cs
 │   │   │   ├── DataCalendarService.cs
 │   │   │   ├── DataCompletenessService.cs
@@ -820,6 +823,7 @@ Market-Data-Collector/
 │   │   │   ├── LiveDataService.cs
 │   │   │   ├── LoggingService.cs
 │   │   │   ├── ManifestService.cs
+│   │   │   ├── NavigationServiceBase.cs
 │   │   │   ├── NotificationService.cs
 │   │   │   ├── OAuthRefreshService.cs
 │   │   │   ├── OperationResult.cs
@@ -843,6 +847,7 @@ Market-Data-Collector/
 │   │   │   ├── SymbolManagementService.cs
 │   │   │   ├── SymbolMappingService.cs
 │   │   │   ├── SystemHealthService.cs
+│   │   │   ├── ThemeServiceBase.cs
 │   │   │   ├── TimeSeriesAlignmentService.cs
 │   │   │   ├── TooltipContent.cs
 │   │   │   ├── WatchlistService.cs
