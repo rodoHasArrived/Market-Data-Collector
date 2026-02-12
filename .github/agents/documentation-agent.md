@@ -254,6 +254,7 @@ Market-Data-Collector/
 │   │   ├── desktop-improvements-quick-reference.md
 │   │   ├── desktop-platform-improvements-implementation-guide.md
 │   │   ├── desktop-testing-guide.md
+│   │   ├── documentation-contribution-guide.md
 │   │   ├── github-actions-summary.md
 │   │   ├── github-actions-testing.md
 │   │   ├── provider-implementation.md
@@ -350,6 +351,7 @@ Market-Data-Collector/
 │   │   └── known-vulnerabilities.md
 │   ├── status/
 │   │   ├── CHANGELOG.md
+│   │   ├── health-dashboard.md
 │   │   ├── production-status.md
 │   │   ├── README.md
 │   │   ├── ROADMAP.md
@@ -962,7 +964,6 @@ Market-Data-Collector/
 │   │   │   ├── IFirstRunService.cs
 │   │   │   ├── IFormValidationService.cs
 │   │   │   ├── IInfoBarService.cs
-│   │   │   ├── IKeyboardShortcutService.cs
 │   │   │   ├── INavigationService.cs
 │   │   │   ├── IRetentionAssuranceService.cs
 │   │   │   ├── IStorageService.cs
@@ -992,15 +993,6 @@ Market-Data-Collector/
 │   │   ├── Dialogs/
 │   │   │   ├── BackfillWizardDialog.xaml
 │   │   │   └── BackfillWizardDialog.xaml.cs
-│   │   ├── Examples/
-│   │   │   ├── CardLayoutExamples.xaml
-│   │   │   ├── ChartExamples.xaml
-│   │   │   ├── ComponentExamples.xaml
-│   │   │   ├── DataGridExamples.xaml
-│   │   │   ├── NotificationExamples.xaml
-│   │   │   ├── README.md
-│   │   │   ├── StatusIndicatorExamples.xaml
-│   │   │   └── VisualDesignGuide.md
 │   │   ├── Extensions/
 │   │   │   └── TaskExtensions.cs
 │   │   ├── Helpers/
@@ -1216,9 +1208,7 @@ Market-Data-Collector/
 │       │   ├── FirstRunService.cs
 │       │   ├── FormValidationService.cs
 │       │   ├── IConfigService.cs
-│       │   ├── IKeyboardShortcutService.cs
 │       │   ├── InfoBarService.cs
-│       │   ├── INotificationService.cs
 │       │   ├── KeyboardShortcutService.cs
 │       │   ├── LoggingService.cs
 │       │   ├── MessagingService.cs
