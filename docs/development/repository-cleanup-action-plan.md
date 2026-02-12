@@ -350,12 +350,14 @@ Break apart files >2,000 LOC into focused, maintainable modules.
 
 ### 4.1 Target Files
 
-| File | Current LOC | Target | Strategy |
-|------|-------------|--------|----------|
-| `UiServer.cs` | 3,030 | <500 per file | Extract endpoints to Endpoints/ folder |
-| `HtmlTemplates.cs` (Ui.Shared) | 2,510 | <300 + static files | Move CSS/JS to wwwroot, split rendering |
-| `PortableDataPackager.cs` | 1,100 | <400 per file | Extract validator, writer, reporter |
-| `AnalysisExportService.cs` | 1,300 | <400 per file | Extract format writers |
+| File | Current LOC | Target | Strategy | Status |
+|------|-------------|--------|----------|--------|
+| `UiServer.cs` | ~~3,030~~ → **191** | <500 per file | Extract endpoints to Endpoints/ folder | ✅ **COMPLETED** (2026-02-12) |
+| `HtmlTemplates.cs` (Ui.Shared) | 2,510 | <300 + static files | Move CSS/JS to wwwroot, split rendering | Pending |
+| `PortableDataPackager.cs` | 2,042 | <400 per file | Extract validator, writer, reporter | Pending |
+| `AnalysisExportService.cs` | 1,352 | <400 per file | Extract format writers | Pending |
+
+**UiServer.cs Achievement**: Reduced from 3,030 to 191 lines (93.7% reduction, -2,839 lines) by delegating to 30+ extracted endpoint modules in `Ui.Shared/Endpoints/`. Removed 5 legacy Configure*Routes() methods and all inline endpoint definitions.
 
 ### 4.2 Example: Decompose `UiServer.cs`
 
@@ -751,36 +753,38 @@ Add rollback verification to CI:
 Use this checklist to track progress:
 
 ### Phase 1: Immediate Wins
-- [ ] Delete UWP Examples folder
-- [ ] Remove tracked build artifacts
-- [ ] Audit and delete orphaned test files
-- [ ] Clean up .gitignore
+- [x] Delete UWP Examples folder ✅ (Already completed before this session)
+- [x] Remove tracked build artifacts ✅ (None found - .gitignore comprehensive)
+- [x] Audit and delete orphaned test files ✅ (Checked - all test files valid)
+- [x] Clean up .gitignore ✅ (Already comprehensive)
 
 ### Phase 2: Interface Consolidation
-- [ ] `IConfigService`
-- [ ] `INotificationService`
-- [ ] `IKeyboardShortcutService`
+- [x] `IConfigService` ✅ (Already consolidated)
+- [x] `INotificationService` ✅ (Already consolidated)
+- [x] `IKeyboardShortcutService` ✅ (Already consolidated)
 
 ### Phase 3: Service Deduplication
-- [ ] `BrushRegistry`
-- [ ] `ExportPresetService`
-- [ ] `InfoBarService`
-- [ ] `TooltipService`
-- [ ] `ThemeService`
-- [ ] `ConfigService`
-- [ ] `NavigationService`
-- [ ] `LoggingService`
+- [ ] `BrushRegistry` (Platform-specific: WPF/UWP use different brush types)
+- [ ] `ExportPresetService` (Platform-specific: Different storage APIs)
+- [ ] `InfoBarService` (Platform-specific)
+- [ ] `TooltipService` (Platform-specific)
+- [ ] `ThemeService` (Platform-specific)
+- [ ] `ConfigService` (Platform-specific)
+- [ ] `NavigationService` (Platform-specific)
+- [ ] `LoggingService` (Platform-specific)
+
+*Note: Phase 3 services have platform-specific differences (WPF vs UWP APIs) that prevent simple consolidation.*
 
 ### Phase 4: Large File Decomposition
-- [ ] `UiServer.cs`
-- [ ] `HtmlTemplates.cs`
-- [ ] `PortableDataPackager.cs`
-- [ ] `AnalysisExportService.cs`
+- [x] `UiServer.cs` ✅ **COMPLETED** (3,030 → 191 LOC, 93.7% reduction, 2026-02-12)
+- [ ] `HtmlTemplates.cs` (2,511 LOC remaining)
+- [ ] `PortableDataPackager.cs` (2,042 LOC remaining)
+- [ ] `AnalysisExportService.cs` (1,352 LOC remaining)
 
 ### Phase 5: Documentation Consolidation
-- [ ] Create `docs/README.md`
-- [ ] Create `docs/archived/INDEX.md`
-- [ ] Consolidate improvement tracking
+- [x] Create `docs/README.md` ✅ (Already exists)
+- [x] Create `docs/archived/INDEX.md` ✅ (Already exists)
+- [ ] Consolidate improvement tracking (IMPROVEMENTS.md + STRUCTURAL_IMPROVEMENTS.md)
 - [ ] Audit and fix broken links
 
 ### Phase 6: Build Optimization
