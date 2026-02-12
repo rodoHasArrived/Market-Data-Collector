@@ -395,6 +395,38 @@ graph TD
 3. Update documentation if behavior changes
 4. Consider backward compatibility
 
+### PR Creation Fallback Pattern
+
+When using `peter-evans/create-pull-request` action with a fallback commit step:
+
+1. **The Action's Behavior**:
+   - Creates a temporary branch and commits changes
+   - Pushes to the target branch (e.g., `automation/*`)
+   - Tries to create a PR (may fail if repo settings don't allow it)
+   - Resets to the base branch (no staged changes remain)
+
+2. **Fallback Step Requirements**:
+   ```yaml
+   - name: Fallback commit
+     if: steps.create-pr.outcome == 'failure'
+     run: |
+       git add <files>
+       
+       # Check if there are staged changes before committing
+       if git diff --staged --quiet; then
+         echo "::notice::No changes to commit. Changes were already pushed to branch."
+         exit 0
+       fi
+       
+       git commit -m "message"
+       git push
+   ```
+
+3. **Why This Matters**:
+   - Without the check, `git commit` fails with exit code 1 when nothing to commit
+   - The changes are already on a branch, so the workflow should succeed
+   - Used in: `prompt-generation.yml`, `documentation.yml`
+
 ### Debugging Workflows
 
 1. Enable debug logging:
