@@ -19,10 +19,10 @@ public partial class DataSourcesPage : Page
 
     public ObservableCollection<DataSourceConfigDto> DataSources { get; } = new();
 
-    public DataSourcesPage()
+    public DataSourcesPage(WpfServices.ConfigService configService)
     {
         InitializeComponent();
-        _configService = WpfServices.ConfigService.Instance;
+        _configService = configService;
         DataContext = this;
     }
 

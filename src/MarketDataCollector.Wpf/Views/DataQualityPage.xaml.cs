@@ -34,16 +34,27 @@ public partial class DataQualityPage : Page
     private string _timeRange = "7d";
     private double _lastOverallScore = 98.5;
 
-    public DataQualityPage()
+    private readonly StatusService _statusService;
+    private readonly LoggingService _loggingService;
+    private readonly NotificationService _notificationService;
+
+    public DataQualityPage(
+        StatusService statusService,
+        LoggingService loggingService,
+        NotificationService notificationService)
     {
         InitializeComponent();
+
+        _statusService = statusService;
+        _loggingService = loggingService;
+        _notificationService = notificationService;
 
         SymbolQualityList.ItemsSource = _filteredSymbols;
         GapsControl.ItemsSource = _gaps;
         AlertsList.ItemsSource = _alerts;
         AnomaliesList.ItemsSource = _anomalies;
 
-        _baseUrl = StatusService.Instance.BaseUrl;
+        _baseUrl = _statusService.BaseUrl;
 
         Unloaded += OnPageUnloaded;
     }
@@ -86,7 +97,7 @@ public partial class DataQualityPage : Page
         }
         catch (Exception ex)
         {
-            LoggingService.Instance.LogError("Failed to refresh data quality", ex);
+            _loggingService.LogError("Failed to refresh data quality", ex);
         }
     }
 
@@ -516,7 +527,7 @@ public partial class DataQualityPage : Page
     private void Refresh_Click(object sender, RoutedEventArgs e)
     {
         _ = RefreshDataAsync();
-        NotificationService.Instance.ShowNotification(
+        _notificationService.ShowNotification(
             "Refreshed",
             "Data quality metrics have been refreshed.",
             NotificationType.Info);
@@ -538,7 +549,7 @@ public partial class DataQualityPage : Page
 
             if (response.IsSuccessStatusCode)
             {
-                NotificationService.Instance.ShowNotification(
+                _notificationService.ShowNotification(
                     "Quality Check Complete",
                     "Quality check completed successfully.",
                     NotificationType.Success);
@@ -546,7 +557,7 @@ public partial class DataQualityPage : Page
             }
             else
             {
-                NotificationService.Instance.ShowNotification(
+                _notificationService.ShowNotification(
                     "Quality Check Failed",
                     "Failed to run quality check. Please verify the path or symbol.",
                     NotificationType.Warning);
@@ -554,8 +565,8 @@ public partial class DataQualityPage : Page
         }
         catch (Exception ex)
         {
-            LoggingService.Instance.LogError("Failed to run quality check", ex);
-            NotificationService.Instance.ShowNotification(
+            _loggingService.LogError("Failed to run quality check", ex);
+            _notificationService.ShowNotification(
                 "Quality Check Failed",
                 "An error occurred while running the quality check.",
                 NotificationType.Error);
@@ -581,14 +592,14 @@ public partial class DataQualityPage : Page
                 _gaps.Remove(gap);
                 NoGapsText.Visibility = _gaps.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
 
-                NotificationService.Instance.ShowNotification(
+                _notificationService.ShowNotification(
                     "Gap Repair Started",
                     $"Repair for {gap.Symbol} gap has been initiated.",
                     NotificationType.Success);
             }
             else
             {
-                NotificationService.Instance.ShowNotification(
+                _notificationService.ShowNotification(
                     "Repair Failed",
                     "Failed to initiate gap repair. Please try again.",
                     NotificationType.Warning);
@@ -596,8 +607,8 @@ public partial class DataQualityPage : Page
         }
         catch (Exception ex)
         {
-            LoggingService.Instance.LogError("Failed to repair gap", ex);
-            NotificationService.Instance.ShowNotification(
+            _loggingService.LogError("Failed to repair gap", ex);
+            _notificationService.ShowNotification(
                 "Repair Failed",
                 "An error occurred while initiating gap repair.",
                 NotificationType.Error);
@@ -608,7 +619,7 @@ public partial class DataQualityPage : Page
     {
         if (_gaps.Count == 0)
         {
-            NotificationService.Instance.ShowNotification(
+            _notificationService.ShowNotification(
                 "No Gaps",
                 "There are no gaps to repair.",
                 NotificationType.Info);
@@ -628,14 +639,14 @@ public partial class DataQualityPage : Page
                 _gaps.Clear();
                 NoGapsText.Visibility = Visibility.Visible;
 
-                NotificationService.Instance.ShowNotification(
+                _notificationService.ShowNotification(
                     "Repair Started",
                     $"Initiated repair for {count} gap(s).",
                     NotificationType.Success);
             }
             else
             {
-                NotificationService.Instance.ShowNotification(
+                _notificationService.ShowNotification(
                     "Repair Failed",
                     "Failed to initiate gap repairs. Please try again.",
                     NotificationType.Warning);
@@ -643,8 +654,8 @@ public partial class DataQualityPage : Page
         }
         catch (Exception ex)
         {
-            LoggingService.Instance.LogError("Failed to repair all gaps", ex);
-            NotificationService.Instance.ShowNotification(
+            _loggingService.LogError("Failed to repair all gaps", ex);
+            _notificationService.ShowNotification(
                 "Repair Failed",
                 "An error occurred while initiating gap repairs.",
                 NotificationType.Error);
@@ -660,7 +671,7 @@ public partial class DataQualityPage : Page
     {
         if (SymbolQualityList.SelectedItem is SymbolQualityModel selected)
         {
-            NotificationService.Instance.ShowNotification(
+            _notificationService.ShowNotification(
                 "Symbol Selected",
                 $"Viewing data quality details for {selected.Symbol}.",
                 NotificationType.Info);
@@ -690,7 +701,7 @@ public partial class DataQualityPage : Page
                 }
                 else
                 {
-                    NotificationService.Instance.ShowNotification(
+                    _notificationService.ShowNotification(
                         "Acknowledge Failed",
                         "Failed to acknowledge alert.",
                         NotificationType.Warning);
@@ -698,8 +709,8 @@ public partial class DataQualityPage : Page
             }
             catch (Exception ex)
             {
-                LoggingService.Instance.LogError("Failed to acknowledge alert", ex);
-                NotificationService.Instance.ShowNotification(
+                _loggingService.LogError("Failed to acknowledge alert", ex);
+                _notificationService.ShowNotification(
                     "Acknowledge Failed",
                     "An error occurred while acknowledging the alert.",
                     NotificationType.Error);
@@ -719,7 +730,7 @@ public partial class DataQualityPage : Page
             }
             catch (Exception ex)
             {
-                LoggingService.Instance.LogError("Failed to acknowledge alert", ex);
+                _loggingService.LogError("Failed to acknowledge alert", ex);
             }
         }
 
@@ -727,7 +738,7 @@ public partial class DataQualityPage : Page
         ApplyAlertFilter();
         await RefreshDataAsync();
 
-        NotificationService.Instance.ShowNotification(
+        _notificationService.ShowNotification(
             "All Alerts Acknowledged",
             "All alerts have been acknowledged.",
             NotificationType.Success);

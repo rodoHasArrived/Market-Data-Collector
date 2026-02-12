@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
+using Microsoft.Extensions.DependencyInjection;
 using MarketDataCollector.Wpf.Services;
 using MarketDataCollector.Wpf.Views;
 using SysNavigation = System.Windows.Navigation;
@@ -17,20 +18,33 @@ public partial class MainWindow : Window
 {
     private readonly IConnectionService _connectionService;
     private readonly NavigationService _navigationService;
+    private readonly KeyboardShortcutService _keyboardShortcutService;
+    private readonly NotificationService _notificationService;
+    private readonly MessagingService _messagingService;
+    private readonly ThemeService _themeService;
 
-    public MainWindow()
+    public MainWindow(
+        NavigationService navigationService,
+        ConnectionService connectionService,
+        KeyboardShortcutService keyboardShortcutService,
+        NotificationService notificationService,
+        MessagingService messagingService,
+        ThemeService themeService)
     {
         InitializeComponent();
 
-        // Get service instances
-        _connectionService = ConnectionService.Instance;
-        _navigationService = NavigationService.Instance;
+        _navigationService = navigationService;
+        _connectionService = connectionService;
+        _keyboardShortcutService = keyboardShortcutService;
+        _notificationService = notificationService;
+        _messagingService = messagingService;
+        _themeService = themeService;
 
         // Subscribe to keyboard shortcuts
-        KeyboardShortcutService.Instance.ShortcutInvoked += OnShortcutInvoked;
+        _keyboardShortcutService.ShortcutInvoked += OnShortcutInvoked;
 
         // Subscribe to notifications for in-app display
-        NotificationService.Instance.NotificationReceived += OnNotificationReceived;
+        _notificationService.NotificationReceived += OnNotificationReceived;
     }
 
     private void OnWindowLoaded(object sender, RoutedEventArgs e)
@@ -39,17 +53,17 @@ public partial class MainWindow : Window
         _navigationService.Initialize(RootFrame);
 
         // Initialize keyboard shortcuts
-        KeyboardShortcutService.Instance.Initialize(this);
+        _keyboardShortcutService.Initialize(this);
 
-        // Navigate to the main page
-        RootFrame.Navigate(new MainPage());
+        // Navigate to the main page via DI
+        RootFrame.Navigate(App.Services.GetRequiredService<MainPage>());
     }
 
     private void OnWindowClosing(object? sender, CancelEventArgs e)
     {
         // Unsubscribe from all events to prevent memory leaks
-        KeyboardShortcutService.Instance.ShortcutInvoked -= OnShortcutInvoked;
-        NotificationService.Instance.NotificationReceived -= OnNotificationReceived;
+        _keyboardShortcutService.ShortcutInvoked -= OnShortcutInvoked;
+        _notificationService.NotificationReceived -= OnNotificationReceived;
     }
 
     private void OnRootFrameNavigated(object sender, SysNavigation.NavigationEventArgs e)
@@ -57,14 +71,14 @@ public partial class MainWindow : Window
         // In WPF, get content from the Frame (sender), not from event args
         if (sender is System.Windows.Controls.Frame frame && frame.Content is FrameworkElement element)
         {
-            KeyboardShortcutService.Instance.Initialize(element);
+            _keyboardShortcutService.Initialize(element);
         }
     }
 
     private void OnWindowKeyDown(object sender, KeyEventArgs e)
     {
         // Route key events to keyboard shortcut service
-        KeyboardShortcutService.Instance.HandleKeyDown(e);
+        _keyboardShortcutService.HandleKeyDown(e);
     }
 
     private void OnShortcutInvoked(object? sender, ShortcutInvokedEventArgs e)
@@ -100,60 +114,60 @@ public partial class MainWindow : Window
                 break;
             case "PauseBackfill":
                 // Send message to BackfillPage when active
-                MessagingService.Instance.Send("PauseBackfill");
+                _messagingService.Send("PauseBackfill");
                 break;
             case "CancelBackfill":
                 // Send message to BackfillPage when active
-                MessagingService.Instance.Send("CancelBackfill");
+                _messagingService.Send("CancelBackfill");
                 break;
 
             // Symbol shortcuts
             case "AddSymbol":
                 _navigationService.NavigateTo("Symbols");
-                MessagingService.Instance.Send("AddSymbol");
+                _messagingService.Send("AddSymbol");
                 break;
             case "SearchSymbols":
                 // Focus search box in current page
-                MessagingService.Instance.Send("FocusSearch");
+                _messagingService.Send("FocusSearch");
                 break;
             case "DeleteSelected":
                 // Send delete message to current page
-                MessagingService.Instance.Send("DeleteSelected");
+                _messagingService.Send("DeleteSelected");
                 break;
             case "SelectAll":
                 // Send select all message to current page
-                MessagingService.Instance.Send("SelectAll");
+                _messagingService.Send("SelectAll");
                 break;
 
             // View shortcuts
             case "ToggleTheme":
-                ThemeService.Instance.ToggleTheme();
+                _themeService.ToggleTheme();
                 break;
             case "ViewLogs":
                 _navigationService.NavigateTo("ServiceManager");
                 break;
             case "RefreshStatus":
                 // Send refresh message to current page
-                MessagingService.Instance.Send("RefreshStatus");
+                _messagingService.Send("RefreshStatus");
                 break;
             case "ZoomIn":
-                MessagingService.Instance.Send("ZoomIn");
+                _messagingService.Send("ZoomIn");
                 break;
             case "ZoomOut":
-                MessagingService.Instance.Send("ZoomOut");
+                _messagingService.Send("ZoomOut");
                 break;
 
             // General shortcuts
             case "Save":
                 // Send save message to current page
-                MessagingService.Instance.Send("Save");
+                _messagingService.Send("Save");
                 break;
             case "Help":
                 _navigationService.NavigateTo("Help");
                 break;
             case "QuickCommand":
                 // Focus the search box for quick command entry
-                MessagingService.Instance.Send("QuickCommand");
+                _messagingService.Send("QuickCommand");
                 break;
         }
     }
@@ -174,7 +188,7 @@ public partial class MainWindow : Window
             var success = await _connectionService.ConnectAsync(provider);
             if (success)
             {
-                NotificationService.Instance.ShowNotification(
+                _notificationService.ShowNotification(
                     "Collector Started",
                     "Data collection has started successfully.",
                     NotificationType.Success,
@@ -182,7 +196,7 @@ public partial class MainWindow : Window
             }
             else
             {
-                NotificationService.Instance.ShowNotification(
+                _notificationService.ShowNotification(
                     "Start Failed",
                     "Failed to start the data collector. Check service connection.",
                     NotificationType.Error,
@@ -191,7 +205,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            NotificationService.Instance.ShowNotification(
+            _notificationService.ShowNotification(
                 "Start Error",
                 $"Error starting collector: {ex.Message}",
                 NotificationType.Error,
@@ -207,7 +221,7 @@ public partial class MainWindow : Window
         try
         {
             await _connectionService.DisconnectAsync();
-            NotificationService.Instance.ShowNotification(
+            _notificationService.ShowNotification(
                 "Collector Stopped",
                 "Data collection has been stopped.",
                 NotificationType.Warning,
@@ -215,7 +229,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            NotificationService.Instance.ShowNotification(
+            _notificationService.ShowNotification(
                 "Stop Error",
                 $"Error stopping collector: {ex.Message}",
                 NotificationType.Error,

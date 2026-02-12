@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Windows.Controls;
+using Microsoft.Extensions.DependencyInjection;
 using MarketDataCollector.Wpf.Contracts;
 using MarketDataCollector.Wpf.Views;
 
@@ -18,6 +19,7 @@ public sealed class NavigationService : INavigationService
     private static readonly object _lock = new();
 
     private Frame? _frame;
+    private IServiceProvider? _serviceProvider;
     private readonly Stack<NavigationEntry> _navigationHistory = new();
     private readonly Dictionary<string, Type> _pageRegistry = new();
 
@@ -42,6 +44,15 @@ public sealed class NavigationService : INavigationService
     private NavigationService()
     {
         RegisterPages();
+    }
+
+    /// <summary>
+    /// Sets the DI service provider used to resolve page instances.
+    /// Called once during application startup after the DI container is built.
+    /// </summary>
+    public void SetServiceProvider(IServiceProvider serviceProvider)
+    {
+        _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
     }
 
     /// <summary>
@@ -74,8 +85,8 @@ public sealed class NavigationService : INavigationService
             bool result;
             if (parameter != null)
             {
-                // Create page instance and pass parameter
-                var page = Activator.CreateInstance(pageType);
+                // Create page instance via DI and pass parameter
+                var page = CreatePage(pageType);
                 if (page is Page wpfPage && wpfPage.DataContext != null)
                 {
                     // If the page has a ViewModel with a Parameter property, set it
@@ -86,7 +97,7 @@ public sealed class NavigationService : INavigationService
             }
             else
             {
-                result = _frame.Navigate(Activator.CreateInstance(pageType));
+                result = _frame.Navigate(CreatePage(pageType));
             }
 
             if (result)
@@ -121,8 +132,21 @@ public sealed class NavigationService : INavigationService
     {
         if (_frame == null) return false;
 
-        var page = Activator.CreateInstance(pageType);
+        var page = CreatePage(pageType);
         return _frame.Navigate(page);
+    }
+
+    /// <summary>
+    /// Creates a page instance using the DI container if available, falling back to Activator.
+    /// </summary>
+    private object? CreatePage(Type pageType)
+    {
+        if (_serviceProvider != null)
+        {
+            return _serviceProvider.GetService(pageType) ?? ActivatorUtilities.CreateInstance(_serviceProvider, pageType);
+        }
+
+        return Activator.CreateInstance(pageType);
     }
 
     /// <summary>

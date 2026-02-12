@@ -20,12 +20,14 @@ public sealed partial class ArchiveHealthPage : Page
     private readonly ObservableCollection<IssueDisplayItem> _issues;
     private readonly ObservableCollection<string> _recommendations;
 
-    public ArchiveHealthPage()
+    public ArchiveHealthPage(
+        ArchiveHealthService healthService,
+        SchemaService schemaService)
     {
         InitializeComponent();
 
-        _healthService = ArchiveHealthService.Instance;
-        _schemaService = SchemaService.Instance;
+        _healthService = healthService;
+        _schemaService = schemaService;
         _issues = new ObservableCollection<IssueDisplayItem>();
         _recommendations = new ObservableCollection<string>();
 

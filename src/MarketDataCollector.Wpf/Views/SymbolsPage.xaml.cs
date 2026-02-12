@@ -34,12 +34,24 @@ public partial class SymbolsPage : Page
         ["Financials"] = new[] { "JPM", "BAC", "WFC", "GS", "MS", "C" }
     };
 
-    public SymbolsPage()
+    private readonly WpfServices.LoggingService _loggingService;
+    private readonly WpfServices.NotificationService _notificationService;
+    private readonly WpfServices.NavigationService _navigationService;
+
+    public SymbolsPage(
+        WpfServices.ConfigService configService,
+        WpfServices.WatchlistService watchlistService,
+        WpfServices.LoggingService loggingService,
+        WpfServices.NotificationService notificationService,
+        WpfServices.NavigationService navigationService)
     {
         InitializeComponent();
 
-        _configService = WpfServices.ConfigService.Instance;
-        _watchlistService = WpfServices.WatchlistService.Instance;
+        _configService = configService;
+        _watchlistService = watchlistService;
+        _loggingService = loggingService;
+        _notificationService = notificationService;
+        _navigationService = navigationService;
         SymbolsListView.ItemsSource = _filteredSymbols;
         WatchlistsView.ItemsSource = _watchlists;
 
@@ -107,7 +119,7 @@ public partial class SymbolsPage : Page
         }
         catch (Exception ex)
         {
-            LoggingService.Instance.LogError("Failed to load watchlists", ex);
+            _loggingService.LogError("Failed to load watchlists", ex);
         }
     }
 
@@ -208,7 +220,7 @@ public partial class SymbolsPage : Page
             symbol.SubscribeTrades = true;
         }
 
-        NotificationService.Instance.ShowNotification(
+        _notificationService.ShowNotification(
             "Bulk Update",
             $"Enabled trades for {selected.Count} symbols.",
             NotificationType.Success);
@@ -224,7 +236,7 @@ public partial class SymbolsPage : Page
             symbol.SubscribeDepth = true;
         }
 
-        NotificationService.Instance.ShowNotification(
+        _notificationService.ShowNotification(
             "Bulk Update",
             $"Enabled depth for {selected.Count} symbols.",
             NotificationType.Success);
@@ -252,7 +264,7 @@ public partial class SymbolsPage : Page
         ApplyFilters();
         SymbolCountText.Text = $"{_symbols.Count} symbols";
 
-        NotificationService.Instance.ShowNotification(
+        _notificationService.ShowNotification(
             "Bulk Delete",
             $"Deleted {selected.Count} symbols.",
             NotificationType.Success);
@@ -268,7 +280,7 @@ public partial class SymbolsPage : Page
 
         if (dialog.ShowDialog() == true)
         {
-            NotificationService.Instance.ShowNotification(
+            _notificationService.ShowNotification(
                 "Import Started",
                 $"Importing symbols from {System.IO.Path.GetFileName(dialog.FileName)}",
                 NotificationType.Info);
@@ -286,7 +298,7 @@ public partial class SymbolsPage : Page
 
         if (dialog.ShowDialog() == true)
         {
-            NotificationService.Instance.ShowNotification(
+            _notificationService.ShowNotification(
                 "Export Complete",
                 $"Exported {_symbols.Count} symbols to {System.IO.Path.GetFileName(dialog.FileName)}",
                 NotificationType.Success);
@@ -335,7 +347,7 @@ public partial class SymbolsPage : Page
         var symbolName = SymbolBox.Text?.Trim().ToUpper();
         if (string.IsNullOrEmpty(symbolName))
         {
-            NotificationService.Instance.ShowNotification(
+            _notificationService.ShowNotification(
                 "Validation Error",
                 "Symbol is required.",
                 NotificationType.Error);
@@ -384,7 +396,7 @@ public partial class SymbolsPage : Page
         {
             if (_symbols.Any(s => s.Symbol == symbolName))
             {
-                NotificationService.Instance.ShowNotification(
+                _notificationService.ShowNotification(
                     "Duplicate Symbol",
                     $"{symbolName} already exists.",
                     NotificationType.Warning);
@@ -408,7 +420,7 @@ public partial class SymbolsPage : Page
             });
         }
 
-        NotificationService.Instance.ShowNotification(
+        _notificationService.ShowNotification(
             "Success",
             _isEditMode ? $"Symbol {symbolName} updated successfully." : $"Symbol {symbolName} added successfully.",
             NotificationType.Success);
@@ -432,7 +444,7 @@ public partial class SymbolsPage : Page
         {
             _symbols.Remove(_selectedSymbol);
 
-            NotificationService.Instance.ShowNotification(
+            _notificationService.ShowNotification(
                 "Success",
                 $"Symbol {_selectedSymbol.Symbol} deleted.",
                 NotificationType.Success);
@@ -504,7 +516,7 @@ public partial class SymbolsPage : Page
                 ApplyFilters();
                 SymbolCountText.Text = $"{_symbols.Count} symbols";
 
-                NotificationService.Instance.ShowNotification(
+                _notificationService.ShowNotification(
                     "Template Added",
                     $"Added {added} new symbols from {templateName} template.",
                     NotificationType.Success);
@@ -519,7 +531,7 @@ public partial class SymbolsPage : Page
             // If no specific watchlist, show selection dialog
             if (_watchlists.Count == 0)
             {
-                NotificationService.Instance.ShowNotification(
+                _notificationService.ShowNotification(
                     "No Watchlists",
                     "No watchlists available. Create a watchlist first.",
                     NotificationType.Warning);
@@ -537,7 +549,7 @@ public partial class SymbolsPage : Page
             var watchlist = await _watchlistService.GetWatchlistAsync(watchlistId);
             if (watchlist == null)
             {
-                NotificationService.Instance.ShowNotification(
+                _notificationService.ShowNotification(
                     "Watchlist Not Found",
                     "The selected watchlist could not be found.",
                     NotificationType.Error);
@@ -561,15 +573,15 @@ public partial class SymbolsPage : Page
             ApplyFilters();
             SymbolCountText.Text = $"{_symbols.Count} symbols";
 
-            NotificationService.Instance.ShowNotification(
+            _notificationService.ShowNotification(
                 "Watchlist Loaded",
                 $"Loaded {watchlist.Symbols.Count} symbols from '{watchlist.Name}'.",
                 NotificationType.Success);
         }
         catch (Exception ex)
         {
-            LoggingService.Instance.LogError("Failed to load watchlist", ex);
-            NotificationService.Instance.ShowNotification(
+            _loggingService.LogError("Failed to load watchlist", ex);
+            _notificationService.ShowNotification(
                 "Error",
                 "Failed to load watchlist. Please try again.",
                 NotificationType.Error);
@@ -580,7 +592,7 @@ public partial class SymbolsPage : Page
     {
         if (_symbols.Count == 0)
         {
-            NotificationService.Instance.ShowNotification(
+            _notificationService.ShowNotification(
                 "No Symbols",
                 "Add some symbols before saving a watchlist.",
                 NotificationType.Warning);
@@ -603,7 +615,7 @@ public partial class SymbolsPage : Page
             {
                 // Create new watchlist
                 var watchlist = await _watchlistService.CreateWatchlistAsync(name, symbols);
-                NotificationService.Instance.ShowNotification(
+                _notificationService.ShowNotification(
                     "Watchlist Created",
                     $"Created watchlist '{watchlist.Name}' with {symbols.Length} symbols.",
                     NotificationType.Success);
@@ -616,7 +628,7 @@ public partial class SymbolsPage : Page
                 {
                     await _watchlistService.RemoveSymbolsAsync(selectedWatchlistId, existing.Symbols);
                     await _watchlistService.AddSymbolsAsync(selectedWatchlistId, symbols);
-                    NotificationService.Instance.ShowNotification(
+                    _notificationService.ShowNotification(
                         "Watchlist Updated",
                         $"Updated watchlist '{existing.Name}' with {symbols.Length} symbols.",
                         NotificationType.Success);
@@ -627,8 +639,8 @@ public partial class SymbolsPage : Page
         }
         catch (Exception ex)
         {
-            LoggingService.Instance.LogError("Failed to save watchlist", ex);
-            NotificationService.Instance.ShowNotification(
+            _loggingService.LogError("Failed to save watchlist", ex);
+            _notificationService.ShowNotification(
                 "Error",
                 "Failed to save watchlist. Please try again.",
                 NotificationType.Error);
@@ -638,8 +650,7 @@ public partial class SymbolsPage : Page
     private void ManageWatchlists_Click(object sender, RoutedEventArgs e)
     {
         // Navigate to the Watchlist management page
-        var navigationService = MarketDataCollector.Wpf.Services.NavigationService.Instance;
-        navigationService.NavigateTo(typeof(WatchlistPage));
+        _navigationService.NavigateTo(typeof(WatchlistPage));
     }
 
     private void RefreshList_Click(object sender, RoutedEventArgs e)

@@ -33,24 +33,35 @@ public partial class ActivityLogPage : Page
     private string _categoryFilter = "All";
     private string _searchText = string.Empty;
 
-    public ActivityLogPage()
+    private readonly StatusService _statusService;
+    private readonly LoggingService _loggingService;
+    private readonly NotificationService _notificationService;
+
+    public ActivityLogPage(
+        StatusService statusService,
+        LoggingService loggingService,
+        NotificationService notificationService)
     {
         InitializeComponent();
+
+        _statusService = statusService;
+        _loggingService = loggingService;
+        _notificationService = notificationService;
 
         LogList.ItemsSource = _filteredLogs;
 
         // Get base URL from StatusService
-        _baseUrl = StatusService.Instance.BaseUrl;
+        _baseUrl = _statusService.BaseUrl;
 
         // Subscribe to logging service events
-        LoggingService.Instance.LogWritten += OnLogEntryAdded;
+        _loggingService.LogWritten += OnLogEntryAdded;
 
         Unloaded += OnPageUnloaded;
     }
 
     private void OnPageUnloaded(object sender, RoutedEventArgs e)
     {
-        LoggingService.Instance.LogWritten -= OnLogEntryAdded;
+        _loggingService.LogWritten -= OnLogEntryAdded;
         _refreshTimer?.Stop();
         _refreshTimer?.Dispose();
         _cts?.Cancel();
@@ -178,7 +189,7 @@ public partial class ActivityLogPage : Page
         }
         catch (Exception ex)
         {
-            LoggingService.Instance.LogError("Failed to load activity logs", ex);
+            _loggingService.LogError("Failed to load activity logs", ex);
         }
     }
 
@@ -338,15 +349,15 @@ public partial class ActivityLogPage : Page
 
                 File.WriteAllText(dialog.FileName, sb.ToString());
 
-                NotificationService.Instance.ShowNotification(
+                _notificationService.ShowNotification(
                     "Export Complete",
                     $"Exported {_filteredLogs.Count} log entries to {Path.GetFileName(dialog.FileName)}",
                     NotificationType.Success);
             }
             catch (Exception ex)
             {
-                LoggingService.Instance.LogError("Failed to export activity log", ex);
-                NotificationService.Instance.ShowNotification(
+                _loggingService.LogError("Failed to export activity log", ex);
+                _notificationService.ShowNotification(
                     "Export Failed",
                     "An error occurred while exporting the activity log.",
                     NotificationType.Error);
@@ -369,7 +380,7 @@ public partial class ActivityLogPage : Page
             NoLogsText.Visibility = Visibility.Visible;
             LogCountText.Text = "0 entries";
 
-            NotificationService.Instance.ShowNotification(
+            _notificationService.ShowNotification(
                 "Cleared",
                 "Activity log has been cleared.",
                 NotificationType.Info);

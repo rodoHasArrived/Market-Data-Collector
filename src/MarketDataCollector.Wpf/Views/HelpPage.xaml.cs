@@ -10,15 +10,22 @@ namespace MarketDataCollector.Wpf.Views;
 /// </summary>
 public partial class HelpPage : Page
 {
-    public HelpPage()
+    private readonly NavigationService _navigationService;
+    private readonly NotificationService _notificationService;
+
+    public HelpPage(
+        NavigationService navigationService,
+        NotificationService notificationService)
     {
         InitializeComponent();
+        _navigationService = navigationService;
+        _notificationService = notificationService;
     }
 
     private void StartTutorial_Click(object sender, RoutedEventArgs e)
     {
         // Navigate to setup wizard
-        MarketDataCollector.Wpf.Services.NavigationService.Instance.NavigateTo("SetupWizard");
+        _navigationService.NavigateTo("SetupWizard");
     }
 
     private void OpenArchitectureDoc_Click(object sender, RoutedEventArgs e)
@@ -66,7 +73,7 @@ public partial class HelpPage : Page
         OpenUrl("mailto:support@example.com");
     }
 
-    private static void OpenUrl(string url)
+    private void OpenUrl(string url)
     {
         try
         {
@@ -78,7 +85,7 @@ public partial class HelpPage : Page
         }
         catch
         {
-            NotificationService.Instance.ShowNotification(
+            _notificationService.ShowNotification(
                 "Error",
                 "Could not open the link. Please try again.",
                 NotificationType.Error);

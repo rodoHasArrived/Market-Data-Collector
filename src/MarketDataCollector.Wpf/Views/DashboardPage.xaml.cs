@@ -8,6 +8,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
+using MarketDataCollector.Wpf.Contracts;
 using MarketDataCollector.Wpf.Services;
 
 namespace MarketDataCollector.Wpf.Views;
@@ -19,20 +20,29 @@ public partial class DashboardPage : Page
 {
     private const int MaxActivityItems = 25;
     private readonly NavigationService _navigationService;
-    private readonly IConnectionService _connectionService;
+    private readonly ConnectionService _connectionService;
     private readonly StatusService _statusService;
+    private readonly MessagingService _messagingService;
+    private readonly NotificationService _notificationService;
     private readonly DispatcherTimer _refreshTimer;
     private readonly Random _random = new();
     private bool _isCollectorPaused;
 
-    public DashboardPage()
+    public DashboardPage(
+        NavigationService navigationService,
+        ConnectionService connectionService,
+        StatusService statusService,
+        MessagingService messagingService,
+        NotificationService notificationService)
     {
         InitializeComponent();
         DataContext = this;
 
-        _navigationService = MarketDataCollector.Wpf.Services.NavigationService.Instance;
-        _connectionService = ConnectionService.Instance;
-        _statusService = StatusService.Instance;
+        _navigationService = navigationService;
+        _connectionService = connectionService;
+        _statusService = statusService;
+        _messagingService = messagingService;
+        _notificationService = notificationService;
 
         ActivityItems = new ObservableCollection<DashboardActivityItem>();
         SymbolPerformanceItems = new ObservableCollection<SymbolPerformanceItem>();
@@ -47,7 +57,7 @@ public partial class DashboardPage : Page
         };
         _refreshTimer.Tick += OnRefreshTimerTick;
 
-        MessagingService.Instance.MessageReceived += OnMessageReceived;
+        _messagingService.MessageReceived += OnMessageReceived;
         _connectionService.ConnectionStateChanged += OnConnectionStateChanged;
         _connectionService.LatencyUpdated += OnLatencyUpdated;
     }
@@ -69,7 +79,7 @@ public partial class DashboardPage : Page
     private void OnPageUnloaded(object sender, RoutedEventArgs e)
     {
         _refreshTimer.Stop();
-        MessagingService.Instance.MessageReceived -= OnMessageReceived;
+        _messagingService.MessageReceived -= OnMessageReceived;
         _connectionService.ConnectionStateChanged -= OnConnectionStateChanged;
         _connectionService.LatencyUpdated -= OnLatencyUpdated;
     }
@@ -443,12 +453,12 @@ public partial class DashboardPage : Page
             if (success)
             {
                 AddActivityItem("Collector started", $"Provider: {provider}");
-                NotificationService.Instance.NotifySuccess("Collector Started", "Data collection has started.");
+                _notificationService.NotifySuccess("Collector Started", "Data collection has started.");
             }
             else
             {
                 AddActivityItem("Collector start failed", "Unable to connect to provider");
-                NotificationService.Instance.ShowNotification(
+                _notificationService.ShowNotification(
                     "Start Failed",
                     "Failed to start the data collector.",
                     NotificationType.Error);
@@ -457,7 +467,7 @@ public partial class DashboardPage : Page
         catch (Exception ex)
         {
             AddActivityItem("Collector error", ex.Message);
-            NotificationService.Instance.ShowNotification(
+            _notificationService.ShowNotification(
                 "Error",
                 ex.Message,
                 NotificationType.Error);
@@ -470,12 +480,12 @@ public partial class DashboardPage : Page
         {
             await _connectionService.DisconnectAsync();
             AddActivityItem("Collector stopped", "Streaming paused");
-            NotificationService.Instance.NotifyInfo("Collector Stopped", "Data collection has stopped.");
+            _notificationService.NotifyInfo("Collector Stopped", "Data collection has stopped.");
         }
         catch (Exception ex)
         {
             AddActivityItem("Stop failed", ex.Message);
-            NotificationService.Instance.ShowNotification(
+            _notificationService.ShowNotification(
                 "Error",
                 ex.Message,
                 NotificationType.Error);
@@ -579,7 +589,7 @@ public partial class DashboardPage : Page
 
     private void ExportIntegrityReport_Click(object sender, RoutedEventArgs e)
     {
-        NotificationService.Instance.NotifyInfo("Report queued", "Integrity report export started.");
+        _notificationService.NotifyInfo("Report queued", "Integrity report export started.");
     }
 
     private void QuickAddSymbol_Click(object sender, RoutedEventArgs e)

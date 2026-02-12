@@ -15,14 +15,21 @@ namespace MarketDataCollector.Wpf.Views;
 public partial class SettingsPage : Page
 {
     private readonly WpfServices.ConfigService _configService;
+    private readonly WpfServices.NotificationService _notificationService;
+    private readonly WpfServices.StatusService _statusService;
     private readonly ObservableCollection<CredentialDisplayInfo> _storedCredentials = new();
     private readonly ObservableCollection<SettingsActivityItem> _recentActivity = new();
 
-    public SettingsPage()
+    public SettingsPage(
+        WpfServices.ConfigService configService,
+        WpfServices.NotificationService notificationService,
+        WpfServices.StatusService statusService)
     {
         InitializeComponent();
 
-        _configService = WpfServices.ConfigService.Instance;
+        _configService = configService;
+        _notificationService = notificationService;
+        _statusService = statusService;
         StoredCredentialsList.ItemsSource = _storedCredentials;
         RecentActivityList.ItemsSource = _recentActivity;
     }
@@ -128,7 +135,7 @@ public partial class SettingsPage : Page
 
     private void SendTestNotification_Click(object sender, RoutedEventArgs e)
     {
-        NotificationService.Instance.ShowNotification(
+        _notificationService.ShowNotification(
             "Test Notification",
             "This is a test notification from Market Data Collector.",
             NotificationType.Info);
@@ -141,8 +148,7 @@ public partial class SettingsPage : Page
 
         try
         {
-            var statusService = StatusService.Instance;
-            var status = await statusService.GetStatusAsync();
+            var status = await _statusService.GetStatusAsync();
 
             if (status != null)
             {
@@ -166,7 +172,7 @@ public partial class SettingsPage : Page
     {
         if (sender is Button button && button.Tag is string resource)
         {
-            NotificationService.Instance.ShowNotification(
+            _notificationService.ShowNotification(
                 "Credential Test",
                 $"Testing {resource} credentials...",
                 NotificationType.Info);
@@ -193,7 +199,7 @@ public partial class SettingsPage : Page
 
     private void TestAllCredentials_Click(object sender, RoutedEventArgs e)
     {
-        NotificationService.Instance.ShowNotification(
+        _notificationService.ShowNotification(
             "Testing Credentials",
             "Testing all stored credentials...",
             NotificationType.Info);
@@ -241,7 +247,7 @@ public partial class SettingsPage : Page
             ConfigStatusText.Text = "Valid";
             ConfigStatusDot.Fill = new SolidColorBrush(Color.FromRgb(63, 185, 80));
 
-            NotificationService.Instance.ShowNotification(
+            _notificationService.ShowNotification(
                 "Configuration Reloaded",
                 "Configuration has been reloaded successfully.",
                 NotificationType.Success);
@@ -251,7 +257,7 @@ public partial class SettingsPage : Page
             ConfigStatusText.Text = "Error";
             ConfigStatusDot.Fill = new SolidColorBrush(Color.FromRgb(248, 81, 73));
 
-            NotificationService.Instance.ShowNotification(
+            _notificationService.ShowNotification(
                 "Reload Failed",
                 ex.Message,
                 NotificationType.Error);
@@ -279,7 +285,7 @@ public partial class SettingsPage : Page
             ApiBaseUrlBox.Text = "http://localhost:8080";
             StatusRefreshIntervalBox.Text = "2";
 
-            NotificationService.Instance.ShowNotification(
+            _notificationService.ShowNotification(
                 "Reset Complete",
                 "Settings have been reset to defaults.",
                 NotificationType.Success);
