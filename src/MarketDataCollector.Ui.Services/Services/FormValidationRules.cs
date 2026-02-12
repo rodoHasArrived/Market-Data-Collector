@@ -96,6 +96,23 @@ public static class FormValidationRules
     }
 
     /// <summary>
+    /// Validates a date string in ISO format (YYYY-MM-DD).
+    /// </summary>
+    /// <param name="dateStr">The date string to validate.</param>
+    /// <returns>Validation result.</returns>
+    public static ValidationResult ValidateDateRange(string? dateStr)
+    {
+        if (string.IsNullOrWhiteSpace(dateStr))
+            return ValidationResult.Error("Date is required.");
+
+        // Try to parse as DateOnly (ISO format: YYYY-MM-DD)
+        if (!DateOnly.TryParse(dateStr, out _))
+            return ValidationResult.Error("Invalid date format. Use YYYY-MM-DD format.");
+
+        return ValidationResult.Success();
+    }
+
+    /// <summary>
     /// Validates an API key format.
     /// </summary>
     /// <param name="value">The API key to validate.</param>

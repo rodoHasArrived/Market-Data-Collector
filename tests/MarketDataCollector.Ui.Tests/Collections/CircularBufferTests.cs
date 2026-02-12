@@ -160,35 +160,33 @@ public sealed class CircularBufferTests
         array.Should().ContainInOrder(1, 2, 3);
     }
 
-    // TODO: Implement CalculatePercentageChange method in CircularBuffer<T> extension methods
-    // [Fact]
-    // public void CalculatePercentageChange_ReturnsCorrectValue()
-    // {
-    //     // Arrange
-    //     var buffer = new CircularBuffer<double>(capacity: 5);
-    //     buffer.Add(100.0);
-    //     buffer.Add(110.0);
-    //
-    //     // Act
-    //     var change = buffer.CalculatePercentageChange(fromOffset: 1, toOffset: 0);
-    //
-    //     // Assert
-    //     change.Should().BeApproximately(10.0, 0.01, "110 is 10% higher than 100");
-    // }
+    [Fact]
+    public void CalculatePercentageChange_ReturnsCorrectValue()
+    {
+        // Arrange
+        var buffer = new CircularBuffer<double>(capacity: 5);
+        buffer.Add(100.0);
+        buffer.Add(110.0);
 
-    // TODO: Implement CalculatePercentageChange method in CircularBuffer<T> extension methods
-    // [Fact]
-    // public void CalculatePercentageChange_WhenDivisionByZero_ReturnsNull()
-    // {
-    //     // Arrange
-    //     var buffer = new CircularBuffer<double>(capacity: 5);
-    //     buffer.Add(0.0);
-    //     buffer.Add(10.0);
-    //
-    //     // Act
-    //     var change = buffer.CalculatePercentageChange(fromOffset: 1, toOffset: 0);
-    //
-    //     // Assert
-    //     change.Should().BeNull("Cannot calculate percentage change from 0");
-    // }
+        // Act
+        var change = buffer.CalculatePercentageChange(fromOffset: 1, toOffset: 0);
+
+        // Assert
+        change.Should().BeApproximately(10.0, 0.01, "110 is 10% higher than 100");
+    }
+
+    [Fact]
+    public void CalculatePercentageChange_WhenDivisionByZero_ReturnsNull()
+    {
+        // Arrange
+        var buffer = new CircularBuffer<double>(capacity: 5);
+        buffer.Add(0.0);
+        buffer.Add(10.0);
+
+        // Act
+        var change = buffer.CalculatePercentageChange(fromOffset: 1, toOffset: 0);
+
+        // Assert
+        change.Should().BeNull("Cannot calculate percentage change from 0");
+    }
 }

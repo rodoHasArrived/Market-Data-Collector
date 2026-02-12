@@ -269,4 +269,32 @@ public static class CircularBufferExtensions
         var previous = buffer[buffer.Count - 2];
         return (newest - previous) / intervalSeconds;
     }
+
+    /// <summary>
+    /// Calculates the percentage change between two values at specified offsets from the newest element.
+    /// </summary>
+    /// <param name="buffer">The buffer to calculate percentage change for.</param>
+    /// <param name="fromOffset">Offset of the base value from newest (1 = second newest).</param>
+    /// <param name="toOffset">Offset of the comparison value from newest (0 = newest).</param>
+    /// <returns>The percentage change, or null if division by zero or insufficient data.</returns>
+    /// <remarks>
+    /// Formula: ((toValue - fromValue) / fromValue) * 100
+    /// Returns null if fromValue is zero to avoid division by zero.
+    /// </remarks>
+    public static double? CalculatePercentageChange(this CircularBuffer<double> buffer, int fromOffset, int toOffset)
+    {
+        if (!buffer.TryGetFromNewest(fromOffset, out var fromValue) || 
+            !buffer.TryGetFromNewest(toOffset, out var toValue))
+        {
+            return null;
+        }
+
+        // Avoid division by zero
+        if (Math.Abs(fromValue!.Value) < double.Epsilon)
+        {
+            return null;
+        }
+
+        return ((toValue!.Value - fromValue.Value) / fromValue.Value) * 100.0;
+    }
 }
