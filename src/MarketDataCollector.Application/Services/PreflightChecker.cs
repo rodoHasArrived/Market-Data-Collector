@@ -41,7 +41,13 @@ public sealed class PreflightChecker
         // Run all checks
         checks.Add(CheckDiskSpace(dataRoot));
         checks.Add(CheckFilePermissions(dataRoot));
-        checks.Add(await CheckNetworkConnectivityAsync(ct));
+        
+        // Run network connectivity check if configured
+        if (_config.CheckNetworkConnectivity)
+        {
+            checks.Add(await CheckNetworkConnectivityAsync(ct));
+        }
+        
         checks.Add(CheckMemoryAvailability());
         checks.Add(CheckSystemTime());
         checks.Add(CheckEnvironmentVariables());
@@ -613,6 +619,9 @@ public sealed record PreflightConfig
 
     /// <summary>Network connectivity check timeout in milliseconds.</summary>
     public int NetworkTimeoutMs { get; init; } = 5000;
+
+    /// <summary>Whether to check basic network connectivity (DNS, HTTP endpoints).</summary>
+    public bool CheckNetworkConnectivity { get; init; } = true;
 
     /// <summary>Whether to check provider endpoint connectivity.</summary>
     public bool CheckProviderConnectivity { get; init; } = true;
