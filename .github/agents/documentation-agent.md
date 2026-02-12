@@ -147,6 +147,7 @@ Market-Data-Collector/
 │   └── scripts/  # Automation scripts
 │       ├── docs/  # Documentation
 │       │   ├── add-todos.py
+│       │   ├── create-todo-issues.py
 │       │   ├── generate-changelog.py
 │       │   ├── generate-coverage.py
 │       │   ├── generate-dependency-graph.py
@@ -157,6 +158,7 @@ Market-Data-Collector/
 │       │   ├── README.md
 │       │   ├── repair-links.py
 │       │   ├── rules-engine.py
+│       │   ├── run-docs-automation.py
 │       │   ├── scan-todos.py
 │       │   ├── sync-readme-badges.py
 │       │   ├── test-scripts.py
