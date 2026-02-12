@@ -133,3 +133,22 @@ If headings are missing, the workflow still creates an entry with safe defaults 
   - `dotnet build src/MarketDataCollector.Uwp/MarketDataCollector.Uwp.csproj -c Release -r win-x64 -p:Platform=x64` (on Windows)
 - **Source issue**: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/21851485930/job/63058846153
 - **Status**: fixed (commit cec548e)
+
+### AI-20260212-direct-httpclient-instantiation
+- **Area**: architecture/ADR-010
+- **Symptoms**: Services create `HttpClient` instances directly in constructors (e.g., `_httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(5) }`), violating ADR-010.
+- **Root cause**: AI agents implement HTTP functionality without reviewing ADR-010, which mandates using `IHttpClientFactory` or `HttpClientFactoryProvider` for all HTTP client creation. Direct instantiation causes socket exhaustion, DNS caching issues, and inconsistent configuration.
+- **Prevention checklist**:
+  - [ ] Before adding HTTP functionality, read `docs/adr/010-httpclient-factory.md`
+  - [ ] Never create HttpClient with `new HttpClient()` - always use HttpClientFactoryProvider or inject IHttpClientFactory
+  - [ ] For singleton services in desktop apps (WPF/UWP), use `HttpClientFactoryProvider.CreateClient(HttpClientNames.NamedClient)`
+  - [ ] Add a named client constant in `HttpClientNames` class (both Infrastructure and Ui.Services versions if needed)
+  - [ ] Configure the named client in `HttpClientConfiguration.AddDesktopHttpClients()` or `HttpClientConfiguration.AddMarketDataHttpClients()`
+  - [ ] Use `using var httpClient = HttpClientFactoryProvider.CreateClient(...)` to ensure proper disposal
+  - [ ] Search codebase for `new HttpClient` to verify no violations: `grep -rn "new HttpClient" src --include="*.cs"`
+- **Verification commands**:
+  - `grep -rn "new HttpClient" src/MarketDataCollector.Wpf --include="*.cs"`
+  - `grep -rn "new HttpClient" src/MarketDataCollector.Uwp --include="*.cs"`
+  - `dotnet build src/MarketDataCollector.Wpf -c Release`
+- **Source issue**: Commit 05b326a475c628073cc230af2bff88ffd88feb67 (BackendServiceManager)
+- **Status**: fixed (commit bdf5fd1c)

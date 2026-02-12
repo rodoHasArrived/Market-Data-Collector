@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using MarketDataCollector.Ui.Services;
 
 namespace MarketDataCollector.Wpf.Services;
 
@@ -18,7 +19,6 @@ public sealed class BackendServiceManager
     private readonly string _stateDirectory;
     private readonly string _installationFilePath;
     private readonly string _runtimeFilePath;
-    private readonly HttpClient _httpClient;
     private readonly SemaphoreSlim _operationLock = new(1, 1);
 
     public static BackendServiceManager Instance => _instance.Value;
@@ -31,11 +31,6 @@ public sealed class BackendServiceManager
         _runtimeFilePath = Path.Combine(_stateDirectory, "backend-runtime.json");
 
         Directory.CreateDirectory(_stateDirectory);
-
-        _httpClient = new HttpClient
-        {
-            Timeout = TimeSpan.FromSeconds(5)
-        };
     }
 
     public async Task<BackendServiceOperationResult> InstallAsync(string? executablePath = null, CancellationToken ct = default)
@@ -288,7 +283,9 @@ public sealed class BackendServiceManager
     {
         try
         {
-            var response = await _httpClient.GetAsync($"{ConnectionService.Instance.ServiceUrl}/healthz", ct);
+            // ADR-010: Use IHttpClientFactory for proper connection pooling and DNS refresh
+            using var httpClient = HttpClientFactoryProvider.CreateClient(HttpClientNames.BackendHealth);
+            var response = await httpClient.GetAsync($"{ConnectionService.Instance.ServiceUrl}/healthz", ct);
             return response.IsSuccessStatusCode;
         }
         catch
