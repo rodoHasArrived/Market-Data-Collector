@@ -1,57 +1,42 @@
 # TODO Tracking
 
 > Auto-generated TODO documentation. Do not edit manually.
-> Last updated: 2026-02-12T18:25:44.090485+00:00
+> Last updated: 2026-02-12T18:38:10.172409+00:00
 
 ## Summary
 
 | Metric | Count |
 |--------|-------|
-| **Total Items** | 21 |
+| **Total Items** | 16 |
 | **Linked to Issues** | 0 |
-| **Untracked** | 21 |
+| **Untracked** | 16 |
 
 ### By Type
 
 | Type | Count | Description |
 |------|-------|-------------|
 | `NOTE` | 15 | Important notes and documentation |
-| `TODO` | 6 | General tasks to complete |
+| `TODO` | 1 | General tasks to complete |
 
 ### By Directory
 
 | Directory | Count |
 |-----------|-------|
-| `tests/` | 18 |
-| `src/` | 3 |
+| `tests/` | 12 |
+| `src/` | 4 |
 
 ## Unassigned & Untracked
 
-21 items have no assignee and no issue tracking:
+16 items have no assignee and no issue tracking:
 
 Consider assigning ownership or creating tracking issues for these items.
 
 ## All Items
 
-### TODO (6)
+### TODO (1)
 
-- [ ] `tests/MarketDataCollector.Ui.Tests/Collections/CircularBufferTests.cs:163`
-  > Implement CalculatePercentageChange method in CircularBuffer<T> extension methods [Fact] public void CalculatePercentageChange_ReturnsCorrectValue() { // Arrange var buffer = new CircularBuffer<double>(capacity: 5); buffer.Add(100.0); buffer.Add(110.0);
-
-- [ ] `tests/MarketDataCollector.Ui.Tests/Collections/CircularBufferTests.cs:179`
-  > Implement CalculatePercentageChange method in CircularBuffer<T> extension methods [Fact] public void CalculatePercentageChange_WhenDivisionByZero_ReturnsNull() { // Arrange var buffer = new CircularBuffer<double>(capacity: 5); buffer.Add(0.0); buffer.Add(10.0);
-
-- [ ] `tests/MarketDataCollector.Ui.Tests/Services/FormValidationServiceTests.cs:13`
-  > Implement ValidateSymbol tests when FormValidationRules is fully implemented [Theory] [InlineData("SPY", true)] [InlineData("AAPL", true)] [InlineData("MSFT", true)] [InlineData("TSLA", true)] [InlineData("", false)] [InlineData(null, false)] [InlineData("SP Y", false)] [InlineData("123", false)] [InlineData("A", true)] // Single letter symbols are valid (e.g., X, F) public void ValidateSymbol_ValidatesSymbolFormat(string? symbol, bool expectedValid) { // Act var result = FormValidationRules.ValidateSymbol(symbol);
-
-- [ ] `tests/MarketDataCollector.Ui.Tests/Services/FormValidationServiceTests.cs:37`
-  > Implement ValidateDateRange tests - ValidateDate method doesn't exist yet [Theory] [InlineData("2024-01-01", true)] [InlineData("2024-12-31", true)] [InlineData("invalid", false)] [InlineData("", false)] [InlineData(null, false)] [InlineData("2024/01/01", false)] // Wrong format public void ValidateDateRange_ValidatesDateFormat(string? dateStr, bool expectedValid) { // Act var result = FormValidationRules.ValidateDateRange(dateStr);
-
-- [ ] `tests/MarketDataCollector.Ui.Tests/Services/FormValidationServiceTests.cs:58`
-  > Implement ValidateFilePath tests when fully ready [Theory] [InlineData("config.json", true)] [InlineData("C:\\data\\config.json", true)] [InlineData("/var/data/config.json", true)] [InlineData("", false)] [InlineData(null, false)] public void ValidateFilePath_ValidatesPathFormat(string? path, bool expectedValid) { // Act var result = FormValidationRules.ValidateFilePath(path);
-
-- [ ] `tests/MarketDataCollector.Ui.Tests/Services/FormValidationServiceTests.cs:78`
-  > Update to use int? instead of string parameter [Theory] [InlineData(8080, true)] [InlineData(80, true)] [InlineData(443, true)] [InlineData(65535, true)] [InlineData(0, false)] // Port 0 is reserved [InlineData(65536, false)] // Above max port [InlineData(-1, false)] [InlineData(null, false)] public void ValidatePort_ValidatesPortNumber(int? port, bool expectedValid) { // Act var result = FormValidationRules.ValidatePort(port);
+- [ ] `src/MarketDataCollector/UiServer.cs:132`
+  > MapHistoricalEndpoints needs to be implemented _app.MapHistoricalEndpoints(s_jsonOptions);
 
 ### NOTE (15)
 
