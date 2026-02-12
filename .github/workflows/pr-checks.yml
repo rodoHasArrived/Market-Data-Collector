@@ -59,58 +59,12 @@ jobs:
 
   build-and-test:
     name: Build & Test
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-
-    - name: Setup .NET with Cache
-      uses: ./.github/actions/setup-dotnet-cache
-      with:
-        dotnet-version: ${{ env.DOTNET_VERSION }}
-        cache-suffix: pr-build-test
-
-    - name: Restore dependencies
-      run: |
-        dotnet --info
-        dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true /bl:./artifacts/restore.binlog
-
-    - name: Build
-      run: dotnet build MarketDataCollector.sln -c Release --no-restore /p:EnableWindowsTargeting=true /bl:./artifacts/build.binlog
-
-    - name: Run tests
-      run: |
-        dotnet test MarketDataCollector.sln \
-          -c Release \
-          --no-build \
-          /p:EnableWindowsTargeting=true \
-          --logger "console;verbosity=detailed" \
-          --logger "trx;LogFileName=pr-test-results.trx" \
-          --collect:"XPlat Code Coverage" \
-          --results-directory ./artifacts/test-results
-
-    - name: Upload coverage reports
-      if: success()
-      uses: codecov/codecov-action@v5.5.2
-      with:
-        files: ./artifacts/test-results/**/coverage.cobertura.xml
-        fail_ci_if_error: false
-        token: ${{ secrets.CODECOV_TOKEN }}
-
-    - name: Upload diagnostics artifacts
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: build-test-diagnostics
-        path: |
-          ./artifacts/*.binlog
-          ./artifacts/test-results/**/*.trx
-          ./artifacts/test-results/**/coverage.cobertura.xml
-        retention-days: 14
+    uses: ./.github/workflows/reusable-dotnet-build.yml
+    with:
+      fetch-depth: 0
+      collect-coverage: true
+      cache-suffix: pr-build-test
+    secrets: inherit
 
   # ─── AI PR Review ──────────────────────────────────────────────────────
 

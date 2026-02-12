@@ -1,12 +1,26 @@
 # Reusable .NET Build and Test Workflow
 # Called by other workflows to perform standard build/test operations
 # Reduces duplication and ensures consistent build configuration
+#
+# Usage:
+#   jobs:
+#     build:
+#       uses: ./.github/workflows/reusable-dotnet-build.yml
+#       with:
+#         collect-coverage: true
+#         cache-suffix: my-workflow
+#       secrets: inherit
 
 name: Reusable .NET Build
 
 on:
   workflow_call:
     inputs:
+      runs-on:
+        description: 'Runner OS (e.g. ubuntu-latest, windows-latest, macos-latest)'
+        required: false
+        type: string
+        default: 'ubuntu-latest'
       dotnet-version:
         description: '.NET SDK version'
         required: false
@@ -27,6 +41,11 @@ on:
         required: false
         type: boolean
         default: false
+      fetch-depth:
+        description: 'Git fetch depth (0 for full history)'
+        required: false
+        type: number
+        default: 1
       cache-suffix:
         description: 'Cache key suffix for isolation'
         required: false
@@ -42,6 +61,11 @@ on:
         required: false
         type: string
         default: 'build-output'
+      timeout-minutes:
+        description: 'Job timeout in minutes'
+        required: false
+        type: number
+        default: 20
     outputs:
       build-result:
         description: 'Build result (success/failure)'
@@ -50,14 +74,16 @@ on:
 jobs:
   build:
     name: Build & Test
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
+    runs-on: ${{ inputs.runs-on }}
+    timeout-minutes: ${{ inputs.timeout-minutes }}
     outputs:
       result: ${{ steps.build.outcome }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: ${{ inputs.fetch-depth }}
 
       - name: Emit run context
         shell: bash
@@ -101,6 +127,9 @@ jobs:
 
       - name: Run tests
         if: inputs.run-tests
+        shell: bash
+        env:
+          MSYS_NO_PATHCONV: 1
         run: |
           dotnet test MarketDataCollector.sln \
             -c ${{ inputs.configuration }} \
