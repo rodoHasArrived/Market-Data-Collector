@@ -23,7 +23,7 @@ public static class FormValidationRules
 
     /// <summary>
     /// Validates a stock symbol format.
-    /// Symbols must be 1-10 characters and contain only letters, numbers, dots, dashes, and slashes.
+    /// Symbols must be 1-10 characters, start with a letter, and contain only letters, numbers, dots, dashes, and slashes.
     /// </summary>
     /// <param name="value">The symbol to validate.</param>
     /// <returns>Validation result.</returns>
@@ -36,8 +36,9 @@ public static class FormValidationRules
         if (trimmed.Length < 1 || trimmed.Length > 10)
             return ValidationResult.Error("Symbol must be between 1 and 10 characters.");
 
-        if (!Regex.IsMatch(trimmed, @"^[A-Za-z0-9./-]+$"))
-            return ValidationResult.Error("Symbol can only contain letters, numbers, dots, dashes, and slashes.");
+        // Symbol must start with a letter and contain only letters, numbers, dots, dashes, and slashes
+        if (!Regex.IsMatch(trimmed, @"^[A-Za-z][A-Za-z0-9./-]*$"))
+            return ValidationResult.Error("Symbol must start with a letter and can only contain letters, numbers, dots, dashes, and slashes.");
 
         return ValidationResult.Success();
     }
