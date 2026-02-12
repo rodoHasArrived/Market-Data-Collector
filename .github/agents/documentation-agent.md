@@ -146,15 +146,22 @@ Market-Data-Collector/
 │   │   └── doc-rules.yaml
 │   └── scripts/  # Automation scripts
 │       ├── docs/  # Documentation
+│       │   ├── add-todos.py
 │       │   ├── generate-changelog.py
 │       │   ├── generate-coverage.py
+│       │   ├── generate-dependency-graph.py
 │       │   ├── generate-health-dashboard.py
+│       │   ├── generate-metrics-dashboard.py
 │       │   ├── generate-prompts.py
 │       │   ├── generate-structure-docs.py
+│       │   ├── README.md
 │       │   ├── repair-links.py
 │       │   ├── rules-engine.py
 │       │   ├── scan-todos.py
+│       │   ├── sync-readme-badges.py
+│       │   ├── test-scripts.py
 │       │   ├── update-claude-md.py
+│       │   ├── validate-api-docs.py
 │       │   └── validate-examples.py
 │       ├── hooks/
 │       │   ├── install-hooks.sh
@@ -192,9 +199,15 @@ Market-Data-Collector/
 │   │   ├── 003-microservices-decomposition.md
 │   │   ├── 004-async-streaming-patterns.md
 │   │   ├── 005-attribute-based-discovery.md
+│   │   ├── 006-domain-events-polymorphic-payload.md
+│   │   ├── 007-write-ahead-log-durability.md
+│   │   ├── 008-multi-format-composite-storage.md
+│   │   ├── 009-fsharp-interop.md
 │   │   ├── 010-httpclient-factory.md
 │   │   ├── 011-centralized-configuration-and-credentials.md
 │   │   ├── 012-monitoring-and-alerting-pipeline.md
+│   │   ├── 013-bounded-channel-policy.md
+│   │   ├── 014-json-source-generators.md
 │   │   ├── _template.md
 │   │   └── README.md
 │   ├── ai/
