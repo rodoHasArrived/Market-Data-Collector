@@ -775,6 +775,13 @@ jobs:
           git add docs/generated/ docs/status/health-dashboard.md \
                   CLAUDE.md docs/ai/copilot/instructions.md \
                   .github/agents/documentation-agent.md
+          
+          # Only commit if there are staged changes
+          if git diff --staged --quiet; then
+            echo "No changes to commit (files already committed or unchanged)."
+            exit 0
+          fi
+          
           git commit -m "docs: consolidated documentation automation updates
 
           - Regenerated docs/generated artifacts
@@ -831,6 +838,13 @@ jobs:
           git add docs/generated/ docs/status/health-dashboard.md \
                   CLAUDE.md docs/ai/copilot/instructions.md \
                   .github/agents/documentation-agent.md
+          
+          # Only commit if there are staged changes
+          if git diff --staged --quiet; then
+            echo "No changes to commit (files already committed or unchanged)."
+            exit 0
+          fi
+          
           git commit -m "docs: consolidated documentation automation updates
 
           Note: Committed directly because PR creation is disabled in repository settings.
@@ -1100,6 +1114,13 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
           git add docs/status/TODO.md
+          
+          # Only commit if there are staged changes
+          if git diff --staged --quiet; then
+            echo "No changes to commit (files already committed or unchanged)."
+            exit 0
+          fi
+          
           git commit -m "docs: update TODO documentation [skip ci]
 
           Auto-generated TODO tracking documentation.
