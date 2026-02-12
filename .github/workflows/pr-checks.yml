@@ -97,7 +97,7 @@ jobs:
       if: success()
       uses: codecov/codecov-action@v5.5.2
       with:
-        directory: ./coverage
+        files: ./artifacts/test-results/**/coverage.cobertura.xml
         fail_ci_if_error: false
         token: ${{ secrets.CODECOV_TOKEN }}
 
