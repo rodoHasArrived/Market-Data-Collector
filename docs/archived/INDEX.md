@@ -26,6 +26,8 @@ Documents are archived when:
 | **REPOSITORY_REORGANIZATION_PLAN.md** | 2026-02-12 | Superseded by new organization guide | [Repository Organization Guide](../development/repository-organization-guide.md) |
 | **consolidation.md** | 2026-02-12 | Consolidation work completed | — |
 | **desktop-ui-alternatives-evaluation.md** | 2026-02-12 | Decision made: WPF is primary desktop platform | [UI Redesign](../architecture/ui-redesign.md) |
+| **IMPROVEMENTS_2026-02.md** | 2026-02-12 | Consolidated into unified tracker | [IMPROVEMENTS.md](../status/IMPROVEMENTS.md) |
+| **STRUCTURAL_IMPROVEMENTS_2026-02.md** | 2026-02-12 | Consolidated into unified tracker | [IMPROVEMENTS.md](../status/IMPROVEMENTS.md) |
 
 ### UWP-Related Documents
 
@@ -39,7 +41,7 @@ Documents are archived when:
 | Document | Date Archived | Reason | Current Reference |
 |----------|---------------|--------|-------------------|
 | **2026-02_PR_SUMMARY.md** | 2026-02-12 | Historical PR summary from Feb 2026 | [CHANGELOG.md](../status/CHANGELOG.md) |
-| **2026-02_UI_IMPROVEMENTS_SUMMARY.md** | 2026-02-12 | UI improvements completed | [IMPROVEMENTS.md](../IMPROVEMENTS.md) |
+| **2026-02_UI_IMPROVEMENTS_SUMMARY.md** | 2026-02-12 | UI improvements completed | [IMPROVEMENTS.md](../status/IMPROVEMENTS.md) |
 | **2026-02_VISUAL_CODE_EXAMPLES.md** | 2026-02-12 | Examples incorporated into dev guides | — |
 | **CHANGES_SUMMARY.md** | 2026-02-12 | Change summary superseded by changelog | [CHANGELOG.md](../status/CHANGELOG.md) |
 
@@ -156,6 +158,32 @@ Documents are archived when:
 **Current Reference:**
 - [UI Redesign](../architecture/ui-redesign.md) - Current design spec
 - [Desktop Layers](../architecture/desktop-layers.md) - Architecture
+
+---
+
+### IMPROVEMENTS_2026-02.md & STRUCTURAL_IMPROVEMENTS_2026-02.md
+
+**Status:** Consolidated into unified improvement tracker
+
+**Background:**
+- Two separate improvement tracking documents existed (functional and structural)
+- Content overlapped with different organization schemes
+- Made tracking progress difficult
+
+**Consolidation:**
+- Combined into single [IMPROVEMENTS.md](../status/IMPROVEMENTS.md)
+- Organized by theme (Reliability, Testing, Architecture, API, Performance, UX, Operations)
+- Cross-referenced to ROADMAP.md phases
+- Tracks 33 items (14 completed, 4 partial, 15 open)
+
+**Original Content:**
+- IMPROVEMENTS: 10 completed, 3 partial, 2 open, 4 new items (19 total)
+- STRUCTURAL_IMPROVEMENTS: 15 architectural/code improvements
+
+**Archived Files Preserve:**
+- Historical status snapshots from Feb 2026
+- Original priority matrices
+- Implementation notes and findings
 
 ---
 

@@ -103,7 +103,7 @@ Currently **zero** integration tests for the 91 implemented endpoints.
 
 ## Phase 2: Architecture & Structural Improvements ✅ COMPLETED
 
-Address structural debt identified in `docs/STRUCTURAL_IMPROVEMENTS.md`. None of these 15 items have been started.
+Address structural debt identified in consolidated [IMPROVEMENTS.md](IMPROVEMENTS.md) themes C (Architecture & Modularity) and E (Performance). None of these 15 items were started at the beginning of Phase 2.
 
 ### 2A. Quick Wins (Phase 1 of structural work)
 
@@ -137,7 +137,7 @@ Address structural debt identified in `docs/STRUCTURAL_IMPROVEMENTS.md`. None of
 
 ### 3A. Remaining Feature Improvements
 
-From `docs/IMPROVEMENTS.md` — 6 items not started, 3 partially done.
+From consolidated [IMPROVEMENTS.md](IMPROVEMENTS.md) — items from themes A (Reliability), D (API), and F (UX).
 
 | # | Item | Priority | Source | Status |
 |---|------|----------|--------|--------|
@@ -252,7 +252,7 @@ From `docs/IMPROVEMENTS.md` — 6 items not started, 3 partially done.
 
 ## Phase 6: Duplicate & Unused Code Cleanup
 
-Reduce maintenance burden by eliminating dead code, consolidating duplicate implementations, and resolving ambiguous ownership across projects. Informed by `docs/archived/DUPLICATE_CODE_ANALYSIS.md`, `docs/STRUCTURAL_IMPROVEMENTS.md`, and `docs/audits/CLEANUP_OPPORTUNITIES.md`.
+Reduce maintenance burden by eliminating dead code, consolidating duplicate implementations, and resolving ambiguous ownership across projects. Informed by `docs/archived/DUPLICATE_CODE_ANALYSIS.md`, consolidated [IMPROVEMENTS.md](IMPROVEMENTS.md) Theme C items, and `docs/audits/CLEANUP_OPPORTUNITIES.md`.
 
 **Estimated savings:** ~2,500–3,000 lines of duplicate code removed, ~300 KB of dead assets deleted, and clearer project boundaries.
 
@@ -364,7 +364,7 @@ Consolidate and organize scattered documentation into a clear, navigable structu
 | 8A.1 | **Create master documentation index** — Unified `docs/README.md` with categorized links to all documentation | P1 | Single entry point for all documentation; organize by audience (developers, operators, users) | 4 | ✅ Done |
 | 8A.2 | **Consolidate archived documentation** — Create `docs/archived/INDEX.md` summarizing 13 historical documents with context | P1 | Currently 13 files in `/docs/archived/` with no index or explanation | 3 | ✅ Done |
 | 8A.3 | **Organize status documents** — Ensure `TODO.md`, `ROADMAP.md`, `CHANGELOG.md`, and `production-status.md` have consistent structure and cross-references | P1 | All status docs should reference each other and explain their purpose | 2 | ✅ Done |
-| 8A.4 | **Consolidate improvement tracking** — Merge `IMPROVEMENTS.md` and `STRUCTURAL_IMPROVEMENTS.md` into single tracking document with clear status | P2 | Currently two separate improvement tracking documents with overlapping scope | 4 | N/A (kept separate by design - different focuses) |
+| 8A.4 | **Consolidate improvement tracking** — Merge `IMPROVEMENTS.md` and `STRUCTURAL_IMPROVEMENTS.md` into single tracking document with clear status | P2 | Two separate tracking documents consolidated into `docs/status/IMPROVEMENTS.md` with 33 items organized by theme | 4 | ✅ Done |
 | 8A.5 | **Update API documentation** — Complete `docs/reference/api-reference.md` with all 136 implemented endpoints and their schemas | P2 | Current API docs may be incomplete or outdated | 8 | |
 | 8A.6 | **Create documentation contribution guide** — Document standards for writing, organizing, and updating documentation | P2 | Prevent future documentation debt | 3 | ✅ Done |
 | 8A.7 | **Audit and fix broken cross-references** — Scan all markdown files for broken internal links and fix them | P2 | Many docs reference moved or renamed files | 4 | |
@@ -654,12 +654,13 @@ If time is constrained, this minimum scope achieves production readiness:
 | `docs/status/production-status.md` | Current production readiness assessment |
 | `docs/status/CHANGELOG.md` | Snapshot-based change history |
 | `docs/status/TODO.md` | Auto-scanned TODO/NOTE comments |
-| `docs/IMPROVEMENTS.md` | Prioritized feature/reliability improvements (10 done, 3 partial, 6 open) |
-| `docs/STRUCTURAL_IMPROVEMENTS.md` | 15 structural improvements (all open) |
+| `docs/status/IMPROVEMENTS.md` | **Consolidated improvement tracker** (33 items: 14 done, 4 partial, 15 open) |
 | `docs/architecture/overview.md` | System architecture |
 | `docs/development/uwp-to-wpf-migration.md` | WPF migration status |
 | `docs/ai/ai-known-errors.md` | Recurring AI agent error patterns |
 | `docs/archived/DUPLICATE_CODE_ANALYSIS.md` | Duplicate code analysis with implementation progress |
+| `docs/archived/IMPROVEMENTS_2026-02.md` | Archived functional improvements (historical) |
+| `docs/archived/STRUCTURAL_IMPROVEMENTS_2026-02.md` | Archived structural improvements (historical) |
 | `docs/audits/CLEANUP_OPPORTUNITIES.md` | WPF-only cleanup plan with file-level detail |
 | `docs/audits/CLEANUP_SUMMARY.md` | Repository hygiene cleanup results |
 

@@ -64,11 +64,10 @@ Understanding system design.
 ## 📊 Project Status & Planning
 
 - [**Project Roadmap**](status/ROADMAP.md) - **Primary planning document**
+- [**Improvements Tracker**](status/IMPROVEMENTS.md) - **Consolidated improvement tracking**
 - [TODO Tracking](status/TODO.md) - Auto-scanned TODO comments
 - [Changelog](status/CHANGELOG.md) - Version history
 - [Production Status](status/production-status.md) - Production readiness
-- [Improvements](IMPROVEMENTS.md) - High-impact improvements
-- [Structural Improvements](STRUCTURAL_IMPROVEMENTS.md) - Architecture improvements
 
 ---
 
