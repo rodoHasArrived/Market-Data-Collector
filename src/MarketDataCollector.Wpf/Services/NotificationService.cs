@@ -7,8 +7,9 @@ namespace MarketDataCollector.Wpf.Services;
 /// <summary>
 /// Service for managing in-app notifications.
 /// Provides notification display, history tracking, and settings management.
+/// Implements <see cref="INotificationService"/> for testability and consistency across platforms.
 /// </summary>
-public sealed class NotificationService
+public sealed class NotificationService : INotificationService
 {
     private static NotificationService? _instance;
     private static readonly object _lock = new();
@@ -131,6 +132,29 @@ public sealed class NotificationService
     }
 
     /// <summary>
+    /// Shows a warning notification asynchronously (INotificationService implementation).
+    /// </summary>
+    /// <param name="title">The warning title.</param>
+    /// <param name="message">The warning message.</param>
+    /// <returns>A task representing the async operation.</returns>
+    public async Task NotifyWarningAsync(string title, string message)
+    {
+        await Task.Run(() => NotifyWarning(title, message));
+    }
+
+    /// <summary>
+    /// Shows a general notification asynchronously (INotificationService implementation).
+    /// </summary>
+    /// <param name="title">The notification title.</param>
+    /// <param name="message">The notification message.</param>
+    /// <param name="type">The notification type.</param>
+    /// <returns>A task representing the async operation.</returns>
+    public async Task NotifyAsync(string title, string message, NotificationType type = NotificationType.Info)
+    {
+        await Task.Run(() => ShowNotification(title, message, type));
+    }
+
+    /// <summary>
     /// Shows an info notification.
     /// </summary>
     public void NotifyInfo(string title, string message)
@@ -182,6 +206,28 @@ public sealed class NotificationService
         await Task.Run(() =>
         {
             ShowNotification(title, message, success ? NotificationType.Success : NotificationType.Error);
+        });
+    }
+
+    /// <summary>
+    /// Shows a scheduled job notification (INotificationService implementation).
+    /// </summary>
+    /// <param name="jobName">The name of the scheduled job.</param>
+    /// <param name="started">Whether the job started (true) or completed (false).</param>
+    /// <param name="success">Whether the job completed successfully (only relevant when started=false).</param>
+    /// <returns>A task representing the async operation.</returns>
+    public async Task NotifyScheduledJobAsync(string jobName, bool started, bool success = true)
+    {
+        if (!_settings.Enabled) return;
+        if (IsQuietHours()) return;
+
+        var title = started ? "Scheduled Job Started" : (success ? "Scheduled Job Complete" : "Scheduled Job Failed");
+        var message = started ? $"Job '{jobName}' is now running" : $"Job '{jobName}' has completed";
+        var type = started ? NotificationType.Info : (success ? NotificationType.Success : NotificationType.Error);
+
+        await Task.Run(() =>
+        {
+            ShowNotification(title, message, type, started ? 3000 : 5000);
         });
     }
 
