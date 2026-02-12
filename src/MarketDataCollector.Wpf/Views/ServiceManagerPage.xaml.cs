@@ -2,19 +2,19 @@ using System;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using MarketDataCollector.Wpf.Services;
+using WpfServices = MarketDataCollector.Wpf.Services;
 
 namespace MarketDataCollector.Wpf.Views;
 
 public partial class ServiceManagerPage : Page
 {
     private readonly BackendServiceManager _serviceManager;
-    private readonly LoggingService _loggingService;
+    private readonly WpfServices.LoggingService _loggingService;
     private bool _busy;
 
     public ServiceManagerPage(
         BackendServiceManager serviceManager,
-        LoggingService loggingService)
+        WpfServices.LoggingService loggingService)
     {
         InitializeComponent();
         _serviceManager = serviceManager;

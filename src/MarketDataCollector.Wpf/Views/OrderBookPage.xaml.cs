@@ -11,7 +11,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using MarketDataCollector.Wpf.Contracts;
-using MarketDataCollector.Wpf.Services;
+using WpfServices = MarketDataCollector.Wpf.Services;
 using Timer = System.Timers.Timer;
 
 namespace MarketDataCollector.Wpf.Views;
@@ -34,12 +34,12 @@ public partial class OrderBookPage : Page
 
     private readonly StatusService _statusService;
     private readonly ConnectionService _connectionService;
-    private readonly LoggingService _loggingService;
+    private readonly WpfServices.LoggingService _loggingService;
 
     public OrderBookPage(
         StatusService statusService,
         ConnectionService connectionService,
-        LoggingService loggingService)
+        WpfServices.LoggingService loggingService)
     {
         InitializeComponent();
 

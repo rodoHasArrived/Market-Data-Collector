@@ -307,7 +307,7 @@ public sealed class WatchlistServiceTests
 
     private class CustomWatchlistService : WatchlistService
     {
-        public override Task<WatchlistData> LoadWatchlistAsync(CancellationToken ct = default)
+        public override Task<WatchlistData> LoadWatchlistAsync()
         {
             return Task.FromResult(new WatchlistData
             {

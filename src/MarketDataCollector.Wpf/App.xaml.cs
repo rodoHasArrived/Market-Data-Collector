@@ -6,7 +6,7 @@ using System.Windows.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using MarketDataCollector.Wpf.Contracts;
-using MarketDataCollector.Wpf.Services;
+using WpfServices = MarketDataCollector.Wpf.Services;
 using MarketDataCollector.Wpf.Views;
 using MarketDataCollector.Ui.Services;
 
@@ -39,32 +39,32 @@ public partial class App : Application
     /// <summary>
     /// Gets the notification service instance.
     /// </summary>
-    public static NotificationService Notifications => NotificationService.Instance;
+    public static WpfServices.NotificationService Notifications => WpfServices.NotificationService.Instance;
 
     /// <summary>
     /// Gets the connection service instance.
     /// </summary>
-    public static ConnectionService Connection => ConnectionService.Instance;
+    public static WpfServices.ConnectionService Connection => WpfServices.ConnectionService.Instance;
 
     /// <summary>
     /// Gets the theme service instance.
     /// </summary>
-    public static ThemeService Theme => ThemeService.Instance;
+    public static WpfServices.ThemeService Theme => WpfServices.ThemeService.Instance;
 
     /// <summary>
     /// Gets the offline tracking persistence service instance.
     /// </summary>
-    public static OfflineTrackingPersistenceService OfflineTracking => OfflineTrackingPersistenceService.Instance;
+    public static WpfServices.OfflineTrackingPersistenceService OfflineTracking => WpfServices.OfflineTrackingPersistenceService.Instance;
 
     /// <summary>
     /// Gets the background task scheduler service instance.
     /// </summary>
-    public static BackgroundTaskSchedulerService Scheduler => BackgroundTaskSchedulerService.Instance;
+    public static WpfServices.BackgroundTaskSchedulerService Scheduler => WpfServices.BackgroundTaskSchedulerService.Instance;
 
     /// <summary>
     /// Gets the pending operations queue service instance.
     /// </summary>
-    public static PendingOperationsQueueService OperationsQueue => PendingOperationsQueueService.Instance;
+    public static WpfServices.PendingOperationsQueueService OperationsQueue => WpfServices.PendingOperationsQueueService.Instance;
 
     private async void OnStartup(object sender, StartupEventArgs e)
     {
@@ -109,36 +109,36 @@ public partial class App : Application
         services.AddHttpClient();
 
         // ── Core services (by interface + concrete type) ────────────────────
-        services.AddSingleton<IConnectionService>(_ => ConnectionService.Instance);
-        services.AddSingleton(_ => ConnectionService.Instance);
+        services.AddSingleton<IConnectionService>(_ => WpfServices.ConnectionService.Instance);
+        services.AddSingleton(_ => WpfServices.ConnectionService.Instance);
 
-        services.AddSingleton<INavigationService>(_ => NavigationService.Instance);
-        services.AddSingleton(_ => NavigationService.Instance);
+        services.AddSingleton<INavigationService>(_ => WpfServices.NavigationService.Instance);
+        services.AddSingleton(_ => WpfServices.NavigationService.Instance);
 
-        services.AddSingleton<MarketDataCollector.Ui.Services.Contracts.ILoggingService>(_ => LoggingService.Instance);
-        services.AddSingleton(_ => LoggingService.Instance);
+        services.AddSingleton<MarketDataCollector.Ui.Services.Contracts.ILoggingService>(_ => WpfServices.LoggingService.Instance);
+        services.AddSingleton(_ => WpfServices.LoggingService.Instance);
 
-        services.AddSingleton(_ => ConfigService.Instance);
-        services.AddSingleton(_ => ThemeService.Instance);
-        services.AddSingleton(_ => NotificationService.Instance);
-        services.AddSingleton(_ => KeyboardShortcutService.Instance);
-        services.AddSingleton(_ => MessagingService.Instance);
-        services.AddSingleton(_ => StatusService.Instance);
-        services.AddSingleton(_ => FirstRunService.Instance);
+        services.AddSingleton(_ => WpfServices.ConfigService.Instance);
+        services.AddSingleton(_ => WpfServices.ThemeService.Instance);
+        services.AddSingleton(_ => WpfServices.NotificationService.Instance);
+        services.AddSingleton(_ => WpfServices.KeyboardShortcutService.Instance);
+        services.AddSingleton(_ => WpfServices.MessagingService.Instance);
+        services.AddSingleton(_ => WpfServices.StatusService.Instance);
+        services.AddSingleton(_ => WpfServices.FirstRunService.Instance);
 
         // ── Domain / feature services ───────────────────────────────────────
-        services.AddSingleton(_ => BackendServiceManager.Instance);
-        services.AddSingleton(_ => WatchlistService.Instance);
-        services.AddSingleton(_ => ArchiveHealthService.Instance);
-        services.AddSingleton(_ => SchemaService.Instance);
-        services.AddSingleton(_ => AdminMaintenanceService.Instance);
-        services.AddSingleton(_ => AdvancedAnalyticsService.Instance);
-        services.AddSingleton(_ => SearchService.Instance);
+        services.AddSingleton(_ => WpfServices.BackendServiceManager.Instance);
+        services.AddSingleton(_ => WpfServices.WatchlistService.Instance);
+        services.AddSingleton(_ => WpfServices.ArchiveHealthService.Instance);
+        services.AddSingleton(_ => WpfServices.SchemaService.Instance);
+        services.AddSingleton(_ => WpfServices.AdminMaintenanceService.Instance);
+        services.AddSingleton(_ => WpfServices.AdvancedAnalyticsService.Instance);
+        services.AddSingleton(_ => WpfServices.SearchService.Instance);
 
         // ── Background / infrastructure services ────────────────────────────
-        services.AddSingleton(_ => BackgroundTaskSchedulerService.Instance);
-        services.AddSingleton(_ => OfflineTrackingPersistenceService.Instance);
-        services.AddSingleton(_ => PendingOperationsQueueService.Instance);
+        services.AddSingleton(_ => WpfServices.BackgroundTaskSchedulerService.Instance);
+        services.AddSingleton(_ => WpfServices.OfflineTrackingPersistenceService.Instance);
+        services.AddSingleton(_ => WpfServices.PendingOperationsQueueService.Instance);
 
         // ── MainWindow ──────────────────────────────────────────────────────
         services.AddSingleton<MainWindow>();
@@ -210,11 +210,11 @@ public partial class App : Application
             // Initialize theme service
             if (Current.MainWindow is MainWindow mainWindow)
             {
-                ThemeService.Instance.Initialize(mainWindow);
+                WpfServices.ThemeService.Instance.Initialize(mainWindow);
             }
 
             // Start connection monitoring
-            ConnectionService.Instance.StartMonitoring();
+            WpfServices.ConnectionService.Instance.StartMonitoring();
 
             // Initialize offline tracking persistence (handles recovery from crashes/restarts)
             await InitializeOfflineTrackingAsync();
@@ -223,7 +223,7 @@ public partial class App : Application
             await InitializeBackgroundServicesAsync();
 
             // Log successful startup
-            LoggingService.Instance.LogInfo("Application started successfully");
+            WpfServices.LoggingService.Instance.LogInfo("Application started successfully");
         }
         catch (Exception ex)
         {
@@ -238,7 +238,7 @@ public partial class App : Application
     {
         try
         {
-            await OfflineTrackingPersistenceService.Instance.InitializeAsync();
+            await WpfServices.OfflineTrackingPersistenceService.Instance.InitializeAsync();
             System.Diagnostics.Debug.WriteLine("Offline tracking persistence initialized");
         }
         catch (Exception ex)
@@ -256,11 +256,11 @@ public partial class App : Application
         try
         {
             // Initialize pending operations queue
-            await PendingOperationsQueueService.Instance.InitializeAsync();
+            await WpfServices.PendingOperationsQueueService.Instance.InitializeAsync();
             System.Diagnostics.Debug.WriteLine("Pending operations queue initialized");
 
             // Start background task scheduler
-            await BackgroundTaskSchedulerService.Instance.StartAsync();
+            await WpfServices.BackgroundTaskSchedulerService.Instance.StartAsync();
             System.Diagnostics.Debug.WriteLine("Background task scheduler started");
         }
         catch (Exception ex)
@@ -295,10 +295,10 @@ public partial class App : Application
             // Shutdown services in parallel with timeout for better performance
             var shutdownTasks = new[]
             {
-                ShutdownServiceAsync(() => BackgroundTaskSchedulerService.Instance.StopAsync(), "BackgroundTaskScheduler", cts.Token),
-                ShutdownServiceAsync(() => PendingOperationsQueueService.Instance.ShutdownAsync(), "PendingOperationsQueue", cts.Token),
-                ShutdownServiceAsync(() => OfflineTrackingPersistenceService.Instance.ShutdownAsync(), "OfflineTrackingPersistence", cts.Token),
-                ShutdownServiceAsync(() => ConnectionService.Instance.StopMonitoring(), "ConnectionService", cts.Token)
+                ShutdownServiceAsync(() => WpfServices.BackgroundTaskSchedulerService.Instance.StopAsync(), "BackgroundTaskScheduler", cts.Token),
+                ShutdownServiceAsync(() => WpfServices.PendingOperationsQueueService.Instance.ShutdownAsync(), "PendingOperationsQueue", cts.Token),
+                ShutdownServiceAsync(() => WpfServices.OfflineTrackingPersistenceService.Instance.ShutdownAsync(), "OfflineTrackingPersistence", cts.Token),
+                ShutdownServiceAsync(() => WpfServices.ConnectionService.Instance.StopMonitoring(), "ConnectionService", cts.Token)
             };
 
             await Task.WhenAll(shutdownTasks);
@@ -366,7 +366,7 @@ public partial class App : Application
     {
         try
         {
-            var firstRunService = FirstRunService.Instance;
+            var firstRunService = WpfServices.FirstRunService.Instance;
             _isFirstRun = await firstRunService.IsFirstRunAsync();
 
             if (_isFirstRun)
@@ -389,32 +389,32 @@ public partial class App : Application
         try
         {
             // Initialize the config service
-            await ConfigService.Instance.InitializeAsync();
+            await WpfServices.ConfigService.Instance.InitializeAsync();
 
             // Validate configuration
-            var validationResult = await ConfigService.Instance.ValidateConfigAsync();
+            var validationResult = await WpfServices.ConfigService.Instance.ValidateConfigAsync();
 
             if (!validationResult.IsValid)
             {
                 foreach (var error in validationResult.Errors)
                 {
-                    LoggingService.Instance.LogError($"Configuration error: {error}");
+                    WpfServices.LoggingService.Instance.LogError($"Configuration error: {error}");
                 }
             }
 
             foreach (var warning in validationResult.Warnings)
             {
-                LoggingService.Instance.LogWarning($"Configuration warning: {warning}");
+                WpfServices.LoggingService.Instance.LogWarning($"Configuration warning: {warning}");
             }
 
-            LoggingService.Instance.LogInfo("Configuration initialized",
+            WpfServices.LoggingService.Instance.LogInfo("Configuration initialized",
                 ("isValid", validationResult.IsValid.ToString()),
                 ("errors", validationResult.Errors.Length.ToString()),
                 ("warnings", validationResult.Warnings.Length.ToString()));
         }
         catch (Exception ex)
         {
-            LoggingService.Instance.LogError("Failed to initialize configuration", ex);
+            WpfServices.LoggingService.Instance.LogError("Failed to initialize configuration", ex);
             // Continue - app should still work with defaults
         }
     }
@@ -431,7 +431,7 @@ public partial class App : Application
         // Notify user of the error
         try
         {
-            _ = NotificationService.Instance.NotifyErrorAsync(
+            _ = WpfServices.NotificationService.Instance.NotifyErrorAsync(
                 "Application Error",
                 e.Exception.Message);
         }

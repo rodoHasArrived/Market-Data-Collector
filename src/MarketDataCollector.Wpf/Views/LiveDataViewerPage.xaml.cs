@@ -11,7 +11,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using MarketDataCollector.Wpf.Contracts;
-using MarketDataCollector.Wpf.Services;
+using WpfServices = MarketDataCollector.Wpf.Services;
 using Timer = System.Timers.Timer;
 
 namespace MarketDataCollector.Wpf.Views;
@@ -48,14 +48,14 @@ public partial class LiveDataViewerPage : Page
 
     private readonly StatusService _statusService;
     private readonly ConnectionService _connectionService;
-    private readonly LoggingService _loggingService;
-    private readonly NotificationService _notificationService;
+    private readonly WpfServices.LoggingService _loggingService;
+    private readonly WpfServices.NotificationService _notificationService;
 
     public LiveDataViewerPage(
         StatusService statusService,
         ConnectionService connectionService,
-        LoggingService loggingService,
-        NotificationService notificationService)
+        WpfServices.LoggingService loggingService,
+        WpfServices.NotificationService notificationService)
     {
         InitializeComponent();
 

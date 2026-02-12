@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using MarketDataCollector.Wpf.Contracts;
 using WpfServices = MarketDataCollector.Wpf.Services;
 
 namespace MarketDataCollector.Wpf.Views;
@@ -66,7 +67,7 @@ public partial class SymbolsPage : Page
         _loadCts?.Dispose();
     }
 
-    private void OnWatchlistsChanged(object? sender, WatchlistsChangedEventArgs e)
+    private void OnWatchlistsChanged(object? sender, WpfServices.WatchlistsChangedEventArgs e)
     {
         Dispatcher.Invoke(() => LoadWatchlistsAsync());
     }
@@ -649,7 +650,7 @@ public partial class SymbolsPage : Page
 
     private void ManageWatchlists_Click(object sender, RoutedEventArgs e)
     {
-        // Navigate to the Watchlist management page
+        // Navigate to the WpfServices.Watchlist management page
         _navigationService.NavigateTo(typeof(WatchlistPage));
     }
 
@@ -714,7 +715,7 @@ public class SymbolViewModel
 }
 
 /// <summary>
-/// Watchlist information model for display.
+/// WpfServices.Watchlist information model for display.
 /// </summary>
 public class WatchlistInfo
 {

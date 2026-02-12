@@ -10,7 +10,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using MarketDataCollector.Wpf.Contracts;
-using MarketDataCollector.Wpf.Services;
+using WpfServices = MarketDataCollector.Wpf.Services;
 using Timer = System.Timers.Timer;
 
 namespace MarketDataCollector.Wpf.Views;
@@ -22,8 +22,8 @@ public partial class ProviderHealthPage : Page
 {
     private readonly StatusService _statusService;
     private readonly ConnectionService _connectionService;
-    private readonly LoggingService _loggingService;
-    private readonly NotificationService _notificationService;
+    private readonly WpfServices.LoggingService _loggingService;
+    private readonly WpfServices.NotificationService _notificationService;
     private readonly ObservableCollection<ProviderStatusModel> _streamingProviders = new();
     private readonly ObservableCollection<BackfillProviderModel> _backfillProviders = new();
     private readonly ObservableCollection<ConnectionEventModel> _connectionHistory = new();
@@ -34,8 +34,8 @@ public partial class ProviderHealthPage : Page
     public ProviderHealthPage(
         StatusService statusService,
         ConnectionService connectionService,
-        LoggingService loggingService,
-        NotificationService notificationService)
+        WpfServices.LoggingService loggingService,
+        WpfServices.NotificationService notificationService)
     {
         InitializeComponent();
 

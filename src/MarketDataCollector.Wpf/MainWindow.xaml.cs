@@ -4,7 +4,8 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using Microsoft.Extensions.DependencyInjection;
-using MarketDataCollector.Wpf.Services;
+using MarketDataCollector.Wpf.Contracts;
+using WpfServices = MarketDataCollector.Wpf.Services;
 using MarketDataCollector.Wpf.Views;
 using SysNavigation = System.Windows.Navigation;
 
@@ -17,19 +18,19 @@ namespace MarketDataCollector.Wpf;
 public partial class MainWindow : Window
 {
     private readonly IConnectionService _connectionService;
-    private readonly NavigationService _navigationService;
-    private readonly KeyboardShortcutService _keyboardShortcutService;
-    private readonly NotificationService _notificationService;
-    private readonly MessagingService _messagingService;
-    private readonly ThemeService _themeService;
+    private readonly WpfServices.NavigationService _navigationService;
+    private readonly WpfServices.KeyboardShortcutService _keyboardShortcutService;
+    private readonly WpfServices.NotificationService _notificationService;
+    private readonly WpfServices.MessagingService _messagingService;
+    private readonly WpfServices.ThemeService _themeService;
 
     public MainWindow(
-        NavigationService navigationService,
-        ConnectionService connectionService,
-        KeyboardShortcutService keyboardShortcutService,
-        NotificationService notificationService,
-        MessagingService messagingService,
-        ThemeService themeService)
+        WpfServices.NavigationService navigationService,
+        WpfServices.ConnectionService connectionService,
+        WpfServices.KeyboardShortcutService keyboardShortcutService,
+        WpfServices.NotificationService notificationService,
+        WpfServices.MessagingService messagingService,
+        WpfServices.ThemeService themeService)
     {
         InitializeComponent();
 

@@ -6,7 +6,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using MarketDataCollector.Contracts.Archive;
-using MarketDataCollector.Wpf.Services;
+using WpfServices = MarketDataCollector.Wpf.Services;
 
 namespace MarketDataCollector.Wpf.Views;
 
@@ -15,14 +15,14 @@ namespace MarketDataCollector.Wpf.Views;
 /// </summary>
 public sealed partial class ArchiveHealthPage : Page
 {
-    private readonly ArchiveHealthService _healthService;
-    private readonly SchemaService _schemaService;
+    private readonly WpfServices.ArchiveHealthService _healthService;
+    private readonly WpfServices.SchemaService _schemaService;
     private readonly ObservableCollection<IssueDisplayItem> _issues;
     private readonly ObservableCollection<string> _recommendations;
 
     public ArchiveHealthPage(
-        ArchiveHealthService healthService,
-        SchemaService schemaService)
+        WpfServices.ArchiveHealthService healthService,
+        WpfServices.SchemaService schemaService)
     {
         InitializeComponent();
 
