@@ -1,16 +1,7 @@
 using System.Text.Json;
 using MarketDataCollector.Application.Composition;
 using MarketDataCollector.Application.Config;
-using MarketDataCollector.Application.Config.Credentials;
-using MarketDataCollector.Application.Services;
-using MarketDataCollector.Application.Subscriptions.Models;
-using MarketDataCollector.Application.Subscriptions.Services;
-using MarketDataCollector.Contracts.Api;
-using MarketDataCollector.Contracts.Domain.Enums;
-using MarketDataCollector.Infrastructure.Contracts;
-using MarketDataCollector.Storage;
-using MarketDataCollector.Storage.Interfaces;
-using MarketDataCollector.Storage.Services;
+using MarketDataCollector.Ui.Shared.Endpoints;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -73,7 +64,7 @@ public sealed class UiServer : IAsyncDisposable
     {
         // ==================== HEALTH CHECK ENDPOINTS ====================
         // These endpoints support container orchestration (Docker, Kubernetes)
-
+        // Basic health endpoints kept inline for simplicity
         _app.MapGet("/health", () =>
         {
             var uptime = DateTimeOffset.UtcNow - _startTime;
@@ -87,265 +78,122 @@ public sealed class UiServer : IAsyncDisposable
         });
 
         _app.MapGet("/healthz", () => Results.Ok("healthy"));
-
         _app.MapGet("/ready", () => Results.Ok("ready"));
-
         _app.MapGet("/readyz", () => Results.Ok("ready"));
-
         _app.MapGet("/live", () => Results.Ok("alive"));
-
         _app.MapGet("/livez", () => Results.Ok("alive"));
 
-        _app.MapGet("/", (ConfigStore store) =>
-        {
-            var html = HtmlTemplateManager.Index(
-                store.ConfigPath,
-                store.GetStatusPath(),
-                store.GetBackfillStatusPath());
-            return Results.Content(html, "text/html");
-        });
+        // ==================== EXTRACTED ENDPOINT MODULES ====================
+        // All API endpoints are now organized in dedicated endpoint classes
+        // in MarketDataCollector.Ui.Shared/Endpoints/ for maintainability
 
-        _app.MapGet("/api/config", (ConfigStore store) =>
-        {
-            var cfg = store.Load();
-            return Results.Json(new
-            {
-                dataRoot = cfg.DataRoot,
-                compress = cfg.Compress ?? false,
-                dataSource = cfg.DataSource.ToString(),
-                alpaca = cfg.Alpaca,
-                storage = cfg.Storage,
-                symbols = cfg.Symbols ?? Array.Empty<SymbolConfig>(),
-                backfill = cfg.Backfill
-            }, s_jsonOptions);
-        });
+        // Index page (HTML dashboard)
+        _app.MapIndexEndpoints(s_jsonOptions);
 
-        _app.MapPost("/api/config/datasource", async (ConfigStore store, DataSourceRequest req) =>
-        {
-            try
-            {
-                var cfg = store.Load();
+        // Configuration API
+        _app.MapConfigEndpoints(s_jsonOptions);
 
-                if (!Enum.TryParse<DataSourceKind>(req.DataSource, ignoreCase: true, out var ds))
-                    return Results.BadRequest("Invalid DataSource. Use 'IB', 'Alpaca', or 'Polygon'.");
+        // Symbol Management API
+        _app.MapSymbolEndpoints(s_jsonOptions);
 
-                var next = cfg with { DataSource = ds };
-                await store.SaveAsync(next);
+        // Status and Health API
+        _app.MapStatusEndpoints(s_jsonOptions);
+        _app.MapHealthEndpoints(s_jsonOptions);
 
-                return Results.Ok();
-            }
-            catch (Exception ex)
-            {
-                return LogAndProblem(ex, "Failed to update data source", $"DataSource={req.DataSource}");
-            }
-        });
+        // Backfill API
+        _app.MapBackfillEndpoints(s_jsonOptions);
+        _app.MapScheduledBackfillEndpoints();
 
-        _app.MapPost("/api/config/alpaca", async (ConfigStore store, AlpacaOptions alpaca) =>
-        {
-            try
-            {
-                var cfg = store.Load();
-                var next = cfg with { Alpaca = alpaca };
-                await store.SaveAsync(next);
-                return Results.Ok();
-            }
-            catch (Exception ex)
-            {
-                return LogAndProblem(ex, "Failed to save Alpaca settings");
-            }
-        });
+        // Storage API
+        _app.MapStorageEndpoints(s_jsonOptions);
+        _app.MapStorageQualityEndpoints(s_jsonOptions);
 
-        _app.MapPost("/api/config/storage", async (ConfigStore store, StorageSettingsRequest req) =>
-        {
-            try
-            {
-                var cfg = store.Load();
-                var storage = new StorageConfig(
-                    NamingConvention: req.NamingConvention ?? "BySymbol",
-                    DatePartition: req.DatePartition ?? "Daily",
-                    IncludeProvider: req.IncludeProvider,
-                    FilePrefix: string.IsNullOrWhiteSpace(req.FilePrefix) ? null : req.FilePrefix,
-                    Profile: string.IsNullOrWhiteSpace(req.Profile) ? null : req.Profile
-                );
-                var next = cfg with
-                {
-                    DataRoot = string.IsNullOrWhiteSpace(req.DataRoot) ? "data" : req.DataRoot,
-                    Compress = req.Compress,
-                    Storage = storage
-                };
-                await store.SaveAsync(next);
-                return Results.Ok();
-            }
-            catch (Exception ex)
-            {
-                return LogAndProblem(ex, "Failed to save storage settings");
-            }
-        });
+        // Provider API
+        _app.MapProviderEndpoints(s_jsonOptions);
+        _app.MapProviderExtendedEndpoints(s_jsonOptions);
 
-        _app.MapGet("/api/storage/profiles", () =>
-        {
-            var profiles = StorageProfilePresets.GetPresets()
-                .Select(p => new StorageProfileResponse(p.Id, p.Label, p.Description))
-                .ToArray();
-            return Results.Json(profiles, s_jsonOptions);
-        });
+        // Data Quality API
+        _app.MapQualityDropsEndpoints(s_jsonOptions);
 
-        _app.MapPost("/api/config/symbols", async (ConfigStore store, SymbolConfig symbol) =>
-        {
-            try
-            {
-                if (string.IsNullOrWhiteSpace(symbol.Symbol))
-                    return Results.BadRequest("Symbol is required.");
+        // Subscription API
+        _app.MapSubscriptionEndpoints(s_jsonOptions);
 
-                var cfg = store.Load();
+        // Credentials API
+        _app.MapCredentialsEndpoints(s_jsonOptions);
 
-                var list = (cfg.Symbols ?? Array.Empty<SymbolConfig>()).ToList();
-                var idx = list.FindIndex(s => string.Equals(s.Symbol, symbol.Symbol, StringComparison.OrdinalIgnoreCase));
-                if (idx >= 0) list[idx] = symbol;
-                else list.Add(symbol);
+        // Watchlist API
+        _app.MapWatchlistEndpoints(s_jsonOptions);
 
-                var next = cfg with { Symbols = list.ToArray() };
-                await store.SaveAsync(next);
+        // Diagnostics API
+        _app.MapDiagnosticsEndpoints(s_jsonOptions);
 
-                return Results.Ok();
-            }
-            catch (Exception ex)
-            {
-                return LogAndProblem(ex, "Failed to add symbol", $"Symbol={symbol.Symbol}");
-            }
-        });
+        // Tools API
+        _app.MapToolsEndpoints(s_jsonOptions);
 
-        _app.MapDelete("/api/config/symbols/{symbol}", async (ConfigStore store, string symbol) =>
-        {
-            try
-            {
-                var cfg = store.Load();
-                var list = (cfg.Symbols ?? Array.Empty<SymbolConfig>()).ToList();
-                list.RemoveAll(s => string.Equals(s.Symbol, symbol, StringComparison.OrdinalIgnoreCase));
-                var next = cfg with { Symbols = list.ToArray() };
-                await store.SaveAsync(next);
-                return Results.Ok();
-            }
-            catch (Exception ex)
-            {
-                return LogAndProblem(ex, "Failed to delete symbol", $"Symbol={symbol}");
-            }
-        });
+        // Historical Data API
+        _app.MapHistoricalEndpoints(s_jsonOptions);
 
-        _app.MapGet("/api/status", (ConfigStore store) =>
-        {
-            try
-            {
-                var status = store.TryLoadStatusJson();
-                return status is null ? Results.NotFound() : Results.Content(status, "application/json");
-            }
-            catch (Exception ex)
-            {
-                return LogAndProblem(ex, "Failed to load status");
-            }
-        });
+        // Portfolio Import API
+        _app.MapPortfolioEndpoints(s_jsonOptions);
 
-        _app.MapGet("/api/backfill/providers", (BackfillCoordinator backfill) =>
-        {
-            try
-            {
-                var providers = backfill.DescribeProviders();
-                return Results.Json(providers, s_jsonOptions);
-            }
-            catch (Exception ex)
-            {
-                return LogAndProblem(ex, "Failed to get providers");
-            }
-        });
+        // Data Packaging API
+        var config = _app.Services.GetRequiredService<ConfigStore>().Load();
+        _app.MapPackagingEndpoints(config.DataRoot);
 
-        _app.MapGet("/api/backfill/status", (BackfillCoordinator backfill) =>
-        {
-            try
-            {
-                var status = backfill.TryReadLast();
-                return status is null
-                    ? Results.NotFound()
-                    : Results.Json(status, s_jsonOptions);
-            }
-            catch (Exception ex)
-            {
-                return LogAndProblem(ex, "Failed to load backfill status");
-            }
-        });
+        // Archive Maintenance API
+        _app.MapArchiveMaintenanceEndpoints();
 
-        _app.MapPost("/api/backfill/run", async (BackfillCoordinator backfill, BackfillRequestDto req, CancellationToken ct) =>
-        {
-            try
-            {
-                if (req.Symbols is null || req.Symbols.Length == 0)
-                    return Results.BadRequest("At least one symbol is required.");
+        // Maintenance Schedule API
+        _app.MapMaintenanceScheduleEndpoints(s_jsonOptions);
 
-                var request = new Application.Backfill.BackfillRequest(
-                    string.IsNullOrWhiteSpace(req.Provider) ? "composite" : req.Provider!,
-                    req.Symbols,
-                    req.From,
-                    req.To);
+        // Failover API
+        _app.MapFailoverEndpoints(s_jsonOptions);
 
-                var result = await backfill.RunAsync(request, ct);
-                return Results.Json(result, s_jsonOptions);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return Results.BadRequest(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return LogAndProblem(ex, "Backfill failed");
-            }
-        });
+        // Lean Integration API
+        _app.MapLeanEndpoints(s_jsonOptions);
 
-        _app.MapGet("/api/backfill/health", async (BackfillCoordinator backfill, CancellationToken ct) =>
-        {
-            try
-            {
-                var health = await backfill.CheckProviderHealthAsync(ct);
-                return Results.Json(health, s_jsonOptions);
-            }
-            catch (Exception ex)
-            {
-                return LogAndProblem(ex, "Health check failed");
-            }
-        });
+        // IB-specific API
+        _app.MapIBEndpoints(s_jsonOptions);
 
-        _app.MapGet("/api/backfill/resolve/{symbol}", async (BackfillCoordinator backfill, string symbol, CancellationToken ct) =>
-        {
-            try
-            {
-                if (string.IsNullOrWhiteSpace(symbol))
-                    return Results.BadRequest("Symbol is required.");
+        // Live Data API
+        _app.MapLiveDataEndpoints(s_jsonOptions);
 
-                var resolution = await backfill.ResolveSymbolAsync(symbol, ct);
-                if (resolution is null)
-                    return Results.NotFound($"Symbol '{symbol}' not found.");
+        // Messaging Hub API
+        _app.MapMessagingEndpoints(s_jsonOptions);
 
-                return Results.Json(resolution, s_jsonOptions);
-            }
-            catch (Exception ex)
-            {
-                return LogAndProblem(ex, "Symbol resolution failed");
-            }
-        });
+        // Replay API
+        _app.MapReplayEndpoints(s_jsonOptions);
 
+        // Sampling API
+        _app.MapSamplingEndpoints(s_jsonOptions);
+
+        // Symbol Mapping API
+        _app.MapSymbolMappingEndpoints(s_jsonOptions);
+
+        // Time Series Alignment API
+        _app.MapAlignmentEndpoints(s_jsonOptions);
+
+        // Analytics API
+        _app.MapAnalyticsEndpoints(s_jsonOptions);
+
+        // Admin API
+        _app.MapAdminEndpoints(s_jsonOptions);
+
+        // Cron API
+        _app.MapCronEndpoints(s_jsonOptions);
+
+        // Export API
+        _app.MapExportEndpoints(s_jsonOptions);
+
+        // UI API
+        _app.MapUiEndpoints(s_jsonOptions);
+
+        // Legacy endpoint methods (to be removed when all are extracted)
         ConfigureSymbolManagementRoutes();
         ConfigureStorageOrganizationRoutes();
         ConfigureNewFeatureRoutes();
         ConfigureCredentialManagementRoutes();
-
-        // Configure scheduled backfill endpoints
-        _app.MapScheduledBackfillEndpoints();
         ConfigureBulkSymbolManagementRoutes();
-
-        // Configure packaging endpoints
-        var config = _app.Services.GetRequiredService<ConfigStore>().Load();
-        _app.MapPackagingEndpoints(config.DataRoot);
-
-        // Configure archive maintenance endpoints
-        _app.MapArchiveMaintenanceEndpoints();
     }
 
     private void ConfigureStorageOrganizationRoutes()
