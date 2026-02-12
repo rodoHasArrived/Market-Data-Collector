@@ -150,3 +150,23 @@ If headings are missing, the workflow still creates an entry with safe defaults 
   - `dotnet test MarketDataCollector.sln --collect:"XPlat Code Coverage" --results-directory ./test-results && ls -la ./test-results/**/coverage.cobertura.xml`
 - **Source issue**: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/21938525658/job/63358083776#step:5:1
 - **Status**: fixed (commit ad97ee2)
+
+---
+
+### AI-20260212-workflow-commit-no-changes
+- **Area**: GitHub Actions workflows
+- **Symptoms**: Workflow fails with `nothing to commit, working tree clean` error and exit code 1, even though this is not an actual failure. The "Direct commit fallback" step in prompt-generation.yml failed after PR creation was denied.
+- **Root cause**: Workflow uses `git commit` without checking if there are staged changes first. When `git commit` is called with no changes to commit, it exits with code 1, causing the workflow to fail. This can happen when: (1) PR creation fails but files were already committed by another process, (2) concurrent workflow runs commit the same files, or (3) files are committed between the check-changes step and the commit attempt.
+- **Prevention checklist**:
+  - [ ] Always add `git diff --staged --quiet` check before `git commit` in workflows
+  - [ ] Pattern: `if git diff --staged --quiet; then echo "No changes to commit"; exit 0; fi`
+  - [ ] Apply this pattern to ALL workflow commit steps, not just fallback scenarios
+  - [ ] Review all workflows that commit generated files: prompts, docs, coverage, metrics
+  - [ ] Test the workflow with both "changes" and "no changes" scenarios
+  - [ ] Search for all git commit usages: `grep -rn "git commit" .github/workflows/`
+- **Verification commands**:
+  - `grep -B5 -A5 "git commit" .github/workflows/prompt-generation.yml | grep "diff --staged"`
+  - `grep -B5 -A5 "git commit" .github/workflows/documentation.yml | grep "diff --staged"`
+  - Test locally: `git add <file> && git diff --staged --quiet && echo "No changes" || echo "Has changes"`
+- **Source issue**: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/21955944001/job/63419848729#step:8:1
+- **Status**: fixed (commit c46e7dc)
