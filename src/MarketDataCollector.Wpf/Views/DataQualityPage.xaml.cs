@@ -13,6 +13,7 @@ using System.Windows.Media;
 using WpfServices = MarketDataCollector.Wpf.Services;
 using Timer = System.Timers.Timer;
 
+using MarketDataCollector.Wpf.Services;
 namespace MarketDataCollector.Wpf.Views;
 
 /// <summary>

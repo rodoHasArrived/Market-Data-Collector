@@ -8,6 +8,7 @@ using System.Windows.Media;
 using MarketDataCollector.Contracts.Archive;
 using WpfServices = MarketDataCollector.Wpf.Services;
 
+using MarketDataCollector.Wpf.Services;
 namespace MarketDataCollector.Wpf.Views;
 
 /// <summary>

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using ContractNotificationType = MarketDataCollector.Ui.Services.Services.NotificationType;
 
 namespace MarketDataCollector.Wpf.Services;
 
@@ -149,9 +150,17 @@ public sealed class NotificationService : INotificationService
     /// <param name="message">The notification message.</param>
     /// <param name="type">The notification type.</param>
     /// <returns>A task representing the async operation.</returns>
-    public async Task NotifyAsync(string title, string message, NotificationType type = NotificationType.Info)
+    public async Task NotifyAsync(string title, string message, ContractNotificationType type = ContractNotificationType.Info)
     {
-        await Task.Run(() => ShowNotification(title, message, type));
+        // Convert contract type to local type
+        var localType = type switch
+        {
+            ContractNotificationType.Success => NotificationType.Success,
+            ContractNotificationType.Warning => NotificationType.Warning,
+            ContractNotificationType.Error => NotificationType.Error,
+            _ => NotificationType.Info
+        };
+        await Task.Run(() => ShowNotification(title, message, localType));
     }
 
     /// <summary>
