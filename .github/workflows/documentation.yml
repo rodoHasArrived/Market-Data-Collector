@@ -923,7 +923,7 @@ jobs:
           prompt: |
             You are an engineering assistant helping triage TODO comments in a repository.
             Produce a concise markdown report with these sections:
-            1) Highest-priority TODOs (max 5)
+            1) Highest-priority TODOs
             2) Recommended issue labels
             3) Immediate risk items
             4) Suggested batching plan
@@ -964,7 +964,7 @@ jobs:
               ''
           ]
 
-          for i, todo in enumerate(untracked[:5], 1):
+          for i, todo in enumerate(untracked, 1):
               todo_type = todo.get('type', 'TODO')
               text = todo.get('text', 'No description')
               file_path = todo.get('file', 'unknown')
@@ -1151,12 +1151,8 @@ jobs:
               data = json.load(f)
 
           created_count = 0
-          max_issues = 5  # Limit to prevent spam
 
           for todo in data.get('todos', []):
-              if created_count >= max_issues:
-                  print(f"Reached maximum issue limit ({max_issues})")
-                  break
 
               if todo.get('has_issue', False):
                   continue
