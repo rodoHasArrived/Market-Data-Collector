@@ -448,6 +448,47 @@ public sealed class WatchlistService
         OnWatchlistsChanged(WatchlistChangeType.Reordered, null);
     }
 
+    /// <summary>
+    /// Creates a new watchlist or updates an existing one with the given name.
+    /// If a watchlist with the name exists, symbols are added to it.
+    /// Otherwise, a new watchlist is created.
+    /// </summary>
+    /// <param name="name">The watchlist name.</param>
+    /// <param name="symbols">The symbols to add.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>True if successful, false otherwise.</returns>
+    public async Task<bool> CreateOrUpdateWatchlistAsync(string name, IEnumerable<string> symbols, CancellationToken ct = default)
+    {
+        try
+        {
+            await EnsureLoadedAsync(ct);
+
+            // Check if watchlist with this name exists
+            Watchlist? existing = null;
+            lock (_lock)
+            {
+                existing = _watchlists.FirstOrDefault(w => w.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (existing != null)
+            {
+                // Update existing watchlist by adding symbols
+                await AddSymbolsAsync(existing.Id, symbols, ct);
+            }
+            else
+            {
+                // Create new watchlist
+                await CreateWatchlistAsync(name, symbols, null, ct);
+            }
+
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     private async Task EnsureLoadedAsync(CancellationToken ct)
     {
         if (_isLoaded) return;

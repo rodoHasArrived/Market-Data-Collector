@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace MarketDataCollector.Ui.Services;
@@ -37,6 +38,20 @@ public class WatchlistService
 
     public virtual Task<WatchlistData> LoadWatchlistAsync()
         => Task.FromResult(new WatchlistData());
+
+    /// <summary>
+    /// Creates a new watchlist or updates an existing one.
+    /// Platform-specific implementations should override this method.
+    /// </summary>
+    /// <param name="name">The watchlist name.</param>
+    /// <param name="symbols">The symbols to add.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>True if successful, false otherwise.</returns>
+    public virtual Task<bool> CreateOrUpdateWatchlistAsync(string name, IEnumerable<string> symbols, CancellationToken ct = default)
+    {
+        // Default implementation - platform-specific implementations should override
+        return Task.FromResult(false);
+    }
 }
 
 /// <summary>

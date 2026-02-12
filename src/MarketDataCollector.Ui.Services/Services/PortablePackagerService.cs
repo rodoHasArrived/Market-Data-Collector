@@ -476,15 +476,13 @@ public sealed class PortablePackagerService
         var types = eventTypes ?? new[] { "Trade", "BboQuote", "LOBSnapshot", "HistoricalBar" };
         foreach (var type in types)
         {
-            // TODO: Implement once SchemaService supports GetJsonSchema
-            // var schema = _schemaService.GetJsonSchema(type);
-            // if (!string.IsNullOrEmpty(schema))
-            // {
-            //     await File.WriteAllTextAsync(
-            //         Path.Combine(schemasDir, $"{type}_schema.json"),
-            //         schema, ct);
-            // }
-            await Task.CompletedTask;
+            var schema = _schemaService.GetJsonSchema(type);
+            if (!string.IsNullOrEmpty(schema))
+            {
+                await File.WriteAllTextAsync(
+                    Path.Combine(schemasDir, $"{type}_schema.json"),
+                    schema, ct);
+            }
         }
     }
 
