@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-12 12:50:06 UTC
+> Auto-generated on 2026-02-12 12:54:11 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -786,6 +786,7 @@ Market-Data-Collector/
 │   │   │   ├── BatchExportSchedulerService.cs
 │   │   │   ├── ChartingService.cs
 │   │   │   ├── CollectionSessionService.cs
+│   │   │   ├── ColorPalette.cs
 │   │   │   ├── ConfigService.cs
 │   │   │   ├── CredentialService.cs
 │   │   │   ├── DataCalendarService.cs
@@ -796,9 +797,11 @@ Market-Data-Collector/
 │   │   │   ├── ErrorHandlingService.cs
 │   │   │   ├── ErrorMessages.cs
 │   │   │   ├── EventReplayService.cs
+│   │   │   ├── ExportPresetServiceBase.cs
 │   │   │   ├── FixtureDataService.cs
 │   │   │   ├── FormValidationRules.cs
 │   │   │   ├── HttpClientConfiguration.cs
+│   │   │   ├── InfoBarConstants.cs
 │   │   │   ├── IntegrityEventsService.cs
 │   │   │   ├── LeanIntegrationService.cs
 │   │   │   ├── LiveDataService.cs
@@ -828,6 +831,7 @@ Market-Data-Collector/
 │   │   │   ├── SymbolMappingService.cs
 │   │   │   ├── SystemHealthService.cs
 │   │   │   ├── TimeSeriesAlignmentService.cs
+│   │   │   ├── TooltipContent.cs
 │   │   │   ├── WatchlistService.cs
 │   │   │   └── WorkspaceModels.cs
 │   │   ├── GlobalUsings.cs
@@ -1179,7 +1183,6 @@ Market-Data-Collector/
 │       │   ├── ExportPresetService.cs
 │       │   ├── FirstRunService.cs
 │       │   ├── FormValidationService.cs
-│       │   ├── IConfigService.cs
 │       │   ├── InfoBarService.cs
 │       │   ├── KeyboardShortcutService.cs
 │       │   ├── LoggingService.cs

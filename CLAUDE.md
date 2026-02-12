@@ -955,6 +955,7 @@ Market-Data-Collector/
 │   │   │   ├── BatchExportSchedulerService.cs
 │   │   │   ├── ChartingService.cs
 │   │   │   ├── CollectionSessionService.cs
+│   │   │   ├── ColorPalette.cs
 │   │   │   ├── ConfigService.cs
 │   │   │   ├── CredentialService.cs
 │   │   │   ├── DataCalendarService.cs
@@ -965,9 +966,11 @@ Market-Data-Collector/
 │   │   │   ├── ErrorHandlingService.cs
 │   │   │   ├── ErrorMessages.cs
 │   │   │   ├── EventReplayService.cs
+│   │   │   ├── ExportPresetServiceBase.cs
 │   │   │   ├── FixtureDataService.cs
 │   │   │   ├── FormValidationRules.cs
 │   │   │   ├── HttpClientConfiguration.cs
+│   │   │   ├── InfoBarConstants.cs
 │   │   │   ├── IntegrityEventsService.cs
 │   │   │   ├── LeanIntegrationService.cs
 │   │   │   ├── LiveDataService.cs
@@ -997,6 +1000,7 @@ Market-Data-Collector/
 │   │   │   ├── SymbolMappingService.cs
 │   │   │   ├── SystemHealthService.cs
 │   │   │   ├── TimeSeriesAlignmentService.cs
+│   │   │   ├── TooltipContent.cs
 │   │   │   ├── WatchlistService.cs
 │   │   │   └── WorkspaceModels.cs
 │   │   ├── GlobalUsings.cs
@@ -1348,7 +1352,6 @@ Market-Data-Collector/
 │       │   ├── ExportPresetService.cs
 │       │   ├── FirstRunService.cs
 │       │   ├── FormValidationService.cs
-│       │   ├── IConfigService.cs
 │       │   ├── InfoBarService.cs
 │       │   ├── KeyboardShortcutService.cs
 │       │   ├── LoggingService.cs
