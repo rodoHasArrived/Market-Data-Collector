@@ -167,3 +167,24 @@ If headings are missing, the workflow still creates an entry with safe defaults 
   - `python3 -c "import yaml; yaml.safe_load(open('.github/workflows/desktop-builds.yml'))"`
 - **Source issue**: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/21958711610/job/63429967664
 - **Status**: fixed (commit 4f6088f)
+
+---
+
+### AI-20260212-wpf-globalusings-missing-directives
+- **Area**: build/desktop-ui
+- **Symptoms**: WPF project fails to compile with 80 CS0246 errors like "The type or namespace name 'ShortcutInvokedEventArgs' could not be found", "The type or namespace name 'ApiClientService' could not be found". NotificationService fails with CS0535 "does not implement interface member".
+- **Root cause**: GlobalUsings.cs was updated (commit d9b43dc) to remove `global using MarketDataCollector.Ui.Services.Services;` to avoid namespace conflicts with WPF-specific services. Files that reference types from this namespace now need explicit using directives.
+- **Prevention checklist**:
+  - [ ] After modifying GlobalUsings.cs, verify all files in the project still compile
+  - [ ] When removing global usings, search for all usages of types from that namespace
+  - [ ] Add explicit using directives to files that need removed global types
+  - [ ] For WPF files: add `using MarketDataCollector.Wpf.Services;` for WPF services
+  - [ ] For shared types: add `using UiServices = MarketDataCollector.Ui.Services.Services;` and type aliases
+  - [ ] Handle type ambiguities (e.g., NotificationType) with explicit aliases
+  - [ ] Test both local and CI builds after GlobalUsings changes
+- **Verification commands**:
+  - `dotnet build src/MarketDataCollector.Wpf/MarketDataCollector.Wpf.csproj`
+  - `grep -r "using MarketDataCollector.Wpf.Services;" src/MarketDataCollector.Wpf/Views/`
+  - `grep -r "using UiServices" src/MarketDataCollector.Wpf/Services/`
+- **Source issue**: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/21959216554/job/63431802067
+- **Status**: fixed (commit 5ea62c8)
