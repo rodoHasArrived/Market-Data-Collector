@@ -79,9 +79,9 @@ let ``IntegrityEvent.getDescription returns correct text`` () =
     let event = IntegrityEvent.negativeSpread "SPY" ts 100.50m 100.40m 1L
 
     let desc = IntegrityEvent.getDescription event
-    desc |> should contain "Negative spread"
-    desc |> should contain "100.50"
-    desc |> should contain "100.40"
+    desc.Contains("Negative spread") |> should equal true
+    desc.Contains("100.50") |> should equal true
+    desc.Contains("100.40") |> should equal true
 
 [<Fact>]
 let ``MarketEvent.getSymbol returns symbol for trade`` () =
