@@ -164,7 +164,7 @@ This section explicitly lists all key files currently coupling the repo to UWP a
   3. Regenerate generated repository structure docs after code removal.
 - **Validation:** platform docs consistently describe WPF-only desktop support.
 
-### P6. Detailed migration checklist for overlapping services — ⚠️ PARTIALLY COMPLETE
+### P6. Detailed migration checklist for overlapping services
 
 Near-duplicate same-name service pairs already detected (high similarity):
 
@@ -173,25 +173,21 @@ Near-duplicate same-name service pairs already detected (high similarity):
 - `src/MarketDataCollector.Uwp/Services/RetentionAssuranceService.cs` ↔ `src/MarketDataCollector.Wpf/Services/RetentionAssuranceService.cs`
 - `src/MarketDataCollector.Uwp/Services/ExportPresetService.cs` ↔ `src/MarketDataCollector.Wpf/Services/ExportPresetService.cs`
 
-Triple-implementation candidates for ownership decisions (UWP/WPF/shared):
+Also review triple-implementation candidates for ownership decisions (UWP/WPF/shared):
 
-- ✅ `FormValidationService.cs` — extracted to shared (ROADMAP Phase 6C.1)
-- ✅ `ThemeService.cs` — base class in shared, platform adapters in WPF/UWP (ROADMAP Phase 6C.2)
-- ✅ `SchemaService.cs` — base class in shared, WPF extends base (ROADMAP Phase 6C.3)
-- 🔴 `CredentialService.cs` — pending Phase 6C.3
-- 🔴 `ConfigService.cs` — pending Phase 6C.2 (WPF uses different interface)
-- 🔴 `LoggingService.cs` — pending Phase 6C.3
-- 🔴 `NotificationService.cs` — pending Phase 6C.3
-- 🔴 `ArchiveHealthService.cs` — pending Phase 6C.4
-- 🔴 `WatchlistService.cs` — pending Phase 6C.3
+- `CredentialService.cs`
+- `ConfigService.cs`
+- `LoggingService.cs`
+- `NotificationService.cs`
+- `SchemaService.cs`
+- `ArchiveHealthService.cs`
+- `WatchlistService.cs`
 
 **Migration rule:**
 
 1. Canonical behavior target is WPF + shared services.
 2. If UWP contains unique behavior, port to shared/WPF before deletion.
 3. Delete UWP counterpart only after regression checks pass.
-
-**Progress:** See ROADMAP.md Phase 6C for detailed status and remaining work (~6 complex services).
 
 ---
 
