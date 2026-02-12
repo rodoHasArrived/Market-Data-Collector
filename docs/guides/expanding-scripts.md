@@ -8,6 +8,7 @@ All documentation scripts live in `build/scripts/docs/` and follow a consistent 
 
 ```
 build/scripts/docs/
+  add-todos.py                  # TODO item creator (NEW)
   scan-todos.py                 # TODO scanning (enhanced)
   generate-structure-docs.py    # Repo structure generation
   update-claude-md.py           # AI instruction sync
@@ -17,6 +18,7 @@ build/scripts/docs/
   generate-metrics-dashboard.py # Build metrics tracking (NEW)
   validate-api-docs.py          # API documentation validation (NEW)
   sync-readme-badges.py         # README badge synchronization (NEW)
+  generate-dependency-graph.py  # Project dependency visualization (NEW)
   repair-links.py               # Link validation/repair
   validate-examples.py          # Code example validation
   rules-engine.py               # Custom rules validation
@@ -24,6 +26,35 @@ build/scripts/docs/
 ```
 
 ## New Scripts Overview
+
+### TODO Item Creator (`add-todos.py`)
+
+Interactive tool to help developers add well-formatted TODO comments with proper metadata.
+
+```bash
+# Interactive mode (recommended)
+python3 build/scripts/docs/add-todos.py --interactive
+
+# Command-line mode
+python3 build/scripts/docs/add-todos.py \
+  --file src/MyProject/MyFile.cs \
+  --description "Implement retry logic" \
+  --issue 123 \
+  --assignee alice
+
+# Show templates
+python3 build/scripts/docs/add-todos.py --template
+```
+
+**Features:**
+- Interactive prompts for TODO details
+- Automatic comment style detection (C#, Python, etc.)
+- GitHub issue integration
+- Assignee tagging (@username)
+- Priority classification
+- Line number insertion or append mode
+- Dry-run preview
+- Template reference guide
 
 ### Build Metrics Dashboard (`generate-metrics-dashboard.py`)
 

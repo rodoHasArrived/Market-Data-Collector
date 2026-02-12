@@ -12,6 +12,39 @@ This directory contains Python scripts for automating documentation tasks in the
 
 ## Core Scripts
 
+### add-todos.py (NEW)
+
+Interactive tool to help developers add well-formatted TODO comments to the codebase.
+
+**Features:**
+- Interactive prompts for TODO details
+- Automatic comment style detection
+- GitHub issue integration
+- Assignee tagging
+- Priority classification
+- Template generation
+
+```bash
+# Interactive mode (recommended)
+python3 add-todos.py --interactive
+
+# Command-line mode
+python3 add-todos.py \
+  --file src/MyProject/MyFile.cs \
+  --description "Implement retry logic" \
+  --issue 123 \
+  --assignee alice
+
+# Show templates
+python3 add-todos.py --template
+
+# Dry run
+python3 add-todos.py \
+  --file src/MyProject/MyFile.cs \
+  --description "Add validation" \
+  --dry-run
+```
+
 ### scan-todos.py (Enhanced)
 
 Scans codebase for TODO/FIXME/HACK/NOTE comments with enhanced tracking.
