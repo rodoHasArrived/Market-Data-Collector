@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-12 09:09:33 UTC
+> Auto-generated on 2026-02-12 12:50:06 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -1406,7 +1406,8 @@ Market-Data-Collector/
 │   │   │   ├── ConfigServiceTests.cs
 │   │   │   ├── ConnectionServiceTests.cs
 │   │   │   ├── NavigationServiceTests.cs
-│   │   │   └── StatusServiceTests.cs
+│   │   │   ├── StatusServiceTests.cs
+│   │   │   └── WpfDataQualityServiceTests.cs
 │   │   ├── GlobalUsings.cs
 │   │   └── MarketDataCollector.Wpf.Tests.csproj
 │   └── coverlet.runsettings

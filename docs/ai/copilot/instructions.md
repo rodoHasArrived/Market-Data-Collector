@@ -1513,7 +1513,8 @@ Market-Data-Collector/
 │   │   │   ├── ConfigServiceTests.cs
 │   │   │   ├── ConnectionServiceTests.cs
 │   │   │   ├── NavigationServiceTests.cs
-│   │   │   └── StatusServiceTests.cs
+│   │   │   ├── StatusServiceTests.cs
+│   │   │   └── WpfDataQualityServiceTests.cs
 │   │   ├── GlobalUsings.cs
 │   │   └── MarketDataCollector.Wpf.Tests.csproj
 │   └── coverlet.runsettings
