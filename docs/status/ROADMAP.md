@@ -249,33 +249,33 @@ Reduce maintenance burden by eliminating dead code, consolidating duplicate impl
 
 **Estimated savings:** ~2,500–3,000 lines of duplicate code removed, ~300 KB of dead assets deleted, and clearer project boundaries.
 
-### 6A. Dead Code Removal (P1 — Zero Risk)
+### 6A. Dead Code Removal (P1 — Zero Risk) ✅ COMPLETED
 
 Items that are completely unused and can be deleted immediately with no downstream impact.
 
 | # | Item | Location | Evidence | Est. LOC |
 |---|------|----------|----------|----------|
-| 6A.1 | **Delete unused `SymbolNormalizer.cs`** — complete duplicate of `SymbolNormalization.cs` with identical methods; 0 references in codebase | `Infrastructure/Utilities/SymbolNormalizer.cs` | `SymbolNormalization.cs` has 7 active references; `SymbolNormalizer.cs` has 0 | ~80 |
-| 6A.2 | **Delete UWP Examples folder** — 6 XAML example files + 2 markdown docs never referenced from any code or navigation | `src/MarketDataCollector.Uwp/Examples/` (6 XAML files, ~260 KB) | Zero C# references to any example file | ~260 KB |
+| 6A.1 | ✅ **Delete unused `SymbolNormalizer.cs`** — complete duplicate of `SymbolNormalization.cs` with identical methods; 0 references in codebase | `Infrastructure/Utilities/SymbolNormalizer.cs` | `SymbolNormalization.cs` has 9 active references; `SymbolNormalizer.cs` had 0 | ~98 |
+| 6A.2 | ✅ **Delete UWP Examples folder** — 8 files (6 XAML + 2 markdown docs) never referenced from any code or navigation | `src/MarketDataCollector.Uwp/Examples/` (8 files, ~268 KB) | Zero C# references to any example file | ~268 KB |
 | 6A.3 | **Remove tracked build artifacts** — `build-output.log` and scratch files tracked in git | Root directory | Already addressed in `docs/audits/CLEANUP_SUMMARY.md`; verify removal is merged | N/A |
 
-### 6B. Duplicate Interface Consolidation (P2 — Low Risk)
+### 6B. Duplicate Interface Consolidation (P2 — Low Risk) ✅ COMPLETED (WPF shims)
 
-The same service interfaces are defined in up to three separate projects. Consolidate to a single canonical location in `MarketDataCollector.Ui.Services/Contracts/`.
+The same service interfaces were defined in up to three separate projects. WPF backward-compatibility shims that merely re-exported canonical `Ui.Services.Contracts` interfaces have been deleted. WPF `GlobalUsings.cs` already imports the canonical namespace globally.
 
-| # | Item | Canonical Location | Duplicate Locations | Est. LOC |
-|---|------|--------------------|---------------------|----------|
-| 6B.1 | **`IConfigService`** (127 lines canonical vs 15-line stubs) | `Ui.Services/Contracts/` | `Wpf/Services/IConfigService.cs`, `Uwp/Contracts/` | ~30 |
-| 6B.2 | **`IThemeService`** | `Ui.Services/Contracts/` | `Wpf/Services/IThemeService.cs`, `Uwp/Contracts/` | ~20 |
-| 6B.3 | **`INotificationService`** | `Ui.Services/Contracts/` | `Wpf/Services/INotificationService.cs`, `Uwp/Contracts/` | ~20 |
-| 6B.4 | **`ILoggingService`** | `Ui.Services/Contracts/` | `Wpf/Services/ILoggingService.cs`, `Uwp/Contracts/` | ~15 |
-| 6B.5 | **`IMessagingService`** | `Ui.Services/Contracts/` | `Wpf/Services/IMessagingService.cs`, `Uwp/Contracts/` | ~15 |
-| 6B.6 | **`IKeyboardShortcutService`** | `Ui.Services/Contracts/` | `Wpf/Services/IKeyboardShortcutService.cs`, `Uwp/Contracts/` | ~15 |
-| 6B.7 | **`IBackgroundTaskSchedulerService`** | `Ui.Services/Contracts/` | `Wpf/Services/IBackgroundTaskSchedulerService.cs`, `Uwp/Contracts/` | ~15 |
-| 6B.8 | **`IPendingOperationsQueueService`** | `Ui.Services/Contracts/` | `Wpf/Services/IPendingOperationsQueueService.cs`, `Uwp/Contracts/` | ~15 |
-| 6B.9 | **`IOfflineTrackingPersistenceService`** | `Ui.Services/Contracts/` | `Wpf/Services/IOfflineTrackingPersistenceService.cs`, `Uwp/Contracts/` | ~15 |
+| # | Item | Canonical Location | Status | Notes |
+|---|------|--------------------|--------|-------|
+| 6B.1 | **`IConfigService`** | `Ui.Services/Contracts/` | ✅ Kept — WPF version declares a distinct `IConfigSettingsService` interface (not a duplicate) | WPF-specific simple settings accessor vs canonical full config manager |
+| 6B.2 | **`IThemeService`** | `Ui.Services/Contracts/` | ✅ Deleted WPF shim — was `[Obsolete]` forwarder + empty `AppTheme` enum that shadowed canonical | Canonical `AppTheme` now resolves correctly via global using |
+| 6B.3 | **`INotificationService`** | `Ui.Services/Contracts/` | ✅ Kept — WPF version is sync (void/bool) vs canonical async (Task/Task<T>); incompatible | Platform-specific sync notification UI |
+| 6B.4 | **`ILoggingService`** | `Ui.Services/Contracts/` | ✅ Deleted WPF shim — was pure re-export alias; `LoggingService` already implements canonical | 0 downstream references |
+| 6B.5 | **`IMessagingService`** | `Ui.Services/Contracts/` | ✅ Deleted WPF shim — was pure re-export alias | 0 downstream references |
+| 6B.6 | **`IKeyboardShortcutService`** | N/A | ✅ Kept — WPF-specific, uses `System.Windows.Input.Key`; no canonical version exists | Platform-specific WPF types |
+| 6B.7 | **`IBackgroundTaskSchedulerService`** | `Ui.Services/Contracts/` | ✅ Deleted WPF shim — was pure re-export alias | 0 downstream references |
+| 6B.8 | **`IPendingOperationsQueueService`** | `Ui.Services/Contracts/` | ✅ Deleted WPF shim — was pure re-export alias | 0 downstream references |
+| 6B.9 | **`IOfflineTrackingPersistenceService`** | `Ui.Services/Contracts/` | ✅ Deleted WPF shim — was pure re-export alias | 0 downstream references |
 
-**Approach:** Delete WPF and UWP duplicate interface files. Update `using` directives to reference `Ui.Services.Contracts`. Verify build.
+**Result:** 6 WPF shim files deleted; 3 WPF-specific interfaces kept (distinct APIs, not duplicates). UWP interfaces are platform-specific and were left intact.
 
 ### 6C. WPF/UWP Service Deduplication (P2 — Medium Risk)
 
@@ -290,16 +290,16 @@ The same service interfaces are defined in up to three separate projects. Consol
 
 **Validation:** Full solution build + existing test suite green after each phase.
 
-### 6D. Ambiguous Class Name Resolution (P2 — Low Risk)
+### 6D. Ambiguous Class Name Resolution (P2 — Low Risk) ✅ COMPLETED
 
 Same-named classes in different namespaces create confusion and maintenance risk.
 
-| # | Item | Locations | Recommendation |
-|---|------|-----------|----------------|
-| 6D.1 | **`SubscriptionManager`** — 3 classes with same name across layers | `Application/Subscriptions/`, `Infrastructure/Providers/`, `Infrastructure/Shared/` | Rename to role-specific names: `SubscriptionCoordinator`, `ProviderSubscriptionManager`, `SubscriptionHelper` |
-| 6D.2 | **`ConfigStore`** — 2 classes with same name | `Application/Http/ConfigStore.cs`, `Ui.Shared/Services/ConfigStore.cs` | Rename UI variant to `UiConfigStore` or merge functionality |
-| 6D.3 | **`BackfillCoordinator`** — 2 classes with same name | `Application/Http/BackfillCoordinator.cs`, `Ui.Shared/Services/BackfillCoordinator.cs` | Rename UI variant to `UiBackfillCoordinator` or merge |
-| 6D.4 | **`HtmlTemplates`** — 2 classes with same name | `Application/Http/HtmlTemplates.cs`, `Ui.Shared/HtmlTemplates.cs` | Determine canonical owner; delete or rename the other |
+| # | Item | Locations | Status |
+|---|------|-----------|--------|
+| 6D.1 | **`SubscriptionManager`** — was 3 classes with same name across layers | `Application/Subscriptions/`, `Infrastructure/Providers/`, `Infrastructure/Shared/` | ✅ Done — Application version renamed to `SubscriptionCoordinator`; Infrastructure/Providers version deleted (0 external references, dead code); Infrastructure/Shared version kept as canonical shared implementation |
+| 6D.2 | **`ConfigStore`** — 2 classes with same name | `Application/Http/ConfigStore.cs`, `Ui.Shared/Services/ConfigStore.cs` | ✅ No action needed — Ui.Shared version is an intentional backward-compatible wrapper that delegates to core; clean delegation pattern |
+| 6D.3 | **`BackfillCoordinator`** — 2 classes with same name | `Application/Http/BackfillCoordinator.cs`, `Ui.Shared/Services/BackfillCoordinator.cs` | ✅ No action needed — Ui.Shared version extends core with preview/API methods; clean extension pattern |
+| 6D.4 | **`HtmlTemplates`** — 2 classes with same name | `Application/Http/HtmlTemplates.cs`, `Ui.Shared/HtmlTemplates.cs` | ✅ No action needed — different architectures (template loader vs inline generator) serving complementary roles |
 
 ### 6E. UWP Platform Decoupling (P3 — Higher Risk, Gated on UWP Deprecation Decision)
 
@@ -461,4 +461,4 @@ Longer-term goals for expanding the system.
 
 ---
 
-*Last Updated: 2026-02-10*
+*Last Updated: 2026-02-12*

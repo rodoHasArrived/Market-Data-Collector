@@ -21,7 +21,7 @@ namespace MarketDataCollector.Application.Subscriptions.Services;
 /// </summary>
 public sealed class AutoResubscribePolicy : IAsyncDisposable
 {
-    private readonly SubscriptionManager _subscriptionManager;
+    private readonly SubscriptionCoordinator _subscriptionManager;
     private readonly ILogger _log;
     private readonly AutoResubscribeOptions _options;
 
@@ -40,7 +40,7 @@ public sealed class AutoResubscribePolicy : IAsyncDisposable
     private readonly Task _cleanupTask;
 
     public AutoResubscribePolicy(
-        SubscriptionManager subscriptionManager,
+        SubscriptionCoordinator subscriptionManager,
         AutoResubscribeOptions? options = null,
         ILogger? log = null)
     {

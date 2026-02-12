@@ -165,17 +165,17 @@ public sealed class HostStartup : IAsyncDisposable
     }
 
     /// <summary>
-    /// Creates a subscription manager for managing symbol subscriptions.
+    /// Creates a subscription coordinator for managing symbol subscriptions.
     /// </summary>
     /// <param name="dataClient">The market data client.</param>
-    /// <returns>Configured subscription manager.</returns>
-    public SubscriptionManager CreateSubscriptionManager(IMarketDataClient dataClient)
+    /// <returns>Configured subscription coordinator.</returns>
+    public SubscriptionCoordinator CreateSubscriptionCoordinator(IMarketDataClient dataClient)
     {
         var depthCollector = GetRequiredService<MarketDepthCollector>();
         var tradeCollector = GetRequiredService<TradeDataCollector>();
-        var log = LoggingSetup.ForContext<SubscriptionManager>();
+        var log = LoggingSetup.ForContext<SubscriptionCoordinator>();
 
-        return new SubscriptionManager(
+        return new SubscriptionCoordinator(
             depthCollector,
             tradeCollector,
             dataClient,

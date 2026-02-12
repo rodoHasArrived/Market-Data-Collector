@@ -16,7 +16,7 @@ namespace MarketDataCollector.Application.Subscriptions;
 /// Trades are currently always accepted by TradeDataCollector, but this class is future-proofed to support
 /// explicit per-symbol trade subscriptions once you wire them in (tick-by-tick reqs).
 /// </summary>
-public sealed class SubscriptionManager
+public sealed class SubscriptionCoordinator
 {
     private readonly MarketDepthCollector _depthCollector;
     private readonly TradeDataCollector _tradeCollector;
@@ -30,7 +30,7 @@ public sealed class SubscriptionManager
     private readonly ConcurrentDictionary<string, int> _depthSubs = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, SymbolConfig> _lastConfig = new(StringComparer.OrdinalIgnoreCase);
 
-    public SubscriptionManager(
+    public SubscriptionCoordinator(
         MarketDepthCollector depthCollector,
         TradeDataCollector tradeCollector,
         IMarketDataClient ibClient,
@@ -39,7 +39,7 @@ public sealed class SubscriptionManager
         _depthCollector = depthCollector ?? throw new ArgumentNullException(nameof(depthCollector));
         _tradeCollector = tradeCollector ?? throw new ArgumentNullException(nameof(tradeCollector));
         _ib = ibClient ?? throw new ArgumentNullException(nameof(ibClient));
-        _log = log ?? LoggingSetup.ForContext<SubscriptionManager>();
+        _log = log ?? LoggingSetup.ForContext<SubscriptionCoordinator>();
     }
 
     public IReadOnlyDictionary<string, int> DepthSubscriptions => _depthSubs;
