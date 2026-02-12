@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-10 03:31:54 UTC
+> Auto-generated on 2026-02-12 08:47:22 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -46,6 +46,7 @@ Market-Data-Collector/
 │   │   ├── labeling.yml
 │   │   ├── nightly.yml
 │   │   ├── pr-checks.yml
+│   │   ├── prompt-generation.yml
 │   │   ├── README.md
 │   │   ├── release.yml
 │   │   ├── reusable-dotnet-build.yml
@@ -55,12 +56,15 @@ Market-Data-Collector/
 │   │   ├── stale.yml
 │   │   ├── test-matrix.yml
 │   │   ├── TESTING_AI_SYNC.md
+│   │   ├── ticker-data-collection.yml
+│   │   ├── update-diagrams.yml
 │   │   └── validate-workflows.yml
 │   ├── dependabot.yml
 │   ├── labeler.yml
 │   ├── labels.yml
 │   ├── markdown-link-check-config.json
 │   ├── PULL_REQUEST_TEMPLATE.md
+│   ├── pull_request_template_desktop.md
 │   ├── QUICKSTART.md
 │   ├── spellcheck-config.yml
 │   └── WORKFLOW_IMPROVEMENTS.md
@@ -110,11 +114,20 @@ Market-Data-Collector/
 │   │   │   └── errors/
 │   │   │       ...
 │   │   └── __init__.py
+│   ├── rules/
+│   │   └── doc-rules.yaml
 │   └── scripts/  # Automation scripts
 │       ├── docs/  # Documentation
+│       │   ├── generate-changelog.py
+│       │   ├── generate-coverage.py
+│       │   ├── generate-health-dashboard.py
+│       │   ├── generate-prompts.py
 │       │   ├── generate-structure-docs.py
+│       │   ├── repair-links.py
+│       │   ├── rules-engine.py
 │       │   ├── scan-todos.py
-│       │   └── update-claude-md.py
+│       │   ├── update-claude-md.py
+│       │   └── validate-examples.py
 │       ├── hooks/
 │       │   ├── install-hooks.sh
 │       │   └── pre-commit
@@ -140,6 +153,7 @@ Market-Data-Collector/
 │   │   ├── grafana/
 │   │   │   └── provisioning/
 │   │   │       ...
+│   │   ├── alert-rules.yml
 │   │   └── prometheus.yml
 │   └── systemd/
 │       └── marketdatacollector.service
@@ -171,6 +185,7 @@ Market-Data-Collector/
 │   │   ├── c4-context.puml
 │   │   ├── c4-diagrams.md
 │   │   ├── crystallized-storage-format.md
+│   │   ├── desktop-layers.md
 │   │   ├── domains.md
 │   │   ├── layer-boundaries.md
 │   │   ├── overview.md
@@ -187,24 +202,38 @@ Market-Data-Collector/
 │   │   ├── consolidation.md
 │   │   ├── desktop-ui-alternatives-evaluation.md
 │   │   ├── DUPLICATE_CODE_ANALYSIS.md
+│   │   ├── INDEX.md
 │   │   ├── README.md
 │   │   ├── REDESIGN_IMPROVEMENTS.md
 │   │   ├── REPOSITORY_REORGANIZATION_PLAN.md
 │   │   ├── uwp-development-roadmap.md
 │   │   └── uwp-release-checklist.md
 │   ├── audits/
+│   │   ├── CLEANUP_OPPORTUNITIES.md
 │   │   ├── CLEANUP_SUMMARY.md
 │   │   ├── H3_DEBUG_CODE_ANALYSIS.md
 │   │   ├── README.md
 │   │   └── UWP_COMPREHENSIVE_AUDIT.md
 │   ├── development/
+│   │   ├── policies/
+│   │   │   └── desktop-support-policy.md
 │   │   ├── build-observability.md
 │   │   ├── central-package-management.md
 │   │   ├── desktop-app-xaml-compiler-errors.md
+│   │   ├── desktop-dev-workflow.md
+│   │   ├── desktop-devex-high-value-improvements.md
+│   │   ├── desktop-improvements-executive-summary.md
+│   │   ├── desktop-improvements-quick-reference.md
+│   │   ├── desktop-platform-improvements-implementation-guide.md
+│   │   ├── desktop-testing-guide.md
 │   │   ├── github-actions-summary.md
 │   │   ├── github-actions-testing.md
 │   │   ├── provider-implementation.md
 │   │   ├── refactor-map.md
+│   │   ├── repository-cleanup-action-plan.md
+│   │   ├── repository-organization-guide.md
+│   │   ├── ROADMAP_UPDATE_SUMMARY.md
+│   │   ├── ui-fixture-mode-guide.md
 │   │   ├── uwp-to-wpf-migration.md
 │   │   └── wpf-implementation-notes.md
 │   ├── diagrams/
@@ -222,25 +251,32 @@ Market-Data-Collector/
 │   │   ├── cli-commands.svg
 │   │   ├── data-flow.dot
 │   │   ├── data-flow.png
+│   │   ├── data-flow.svg
 │   │   ├── deployment-options.dot
 │   │   ├── deployment-options.png
+│   │   ├── deployment-options.svg
 │   │   ├── event-pipeline-sequence.dot
 │   │   ├── event-pipeline-sequence.png
+│   │   ├── event-pipeline-sequence.svg
 │   │   ├── onboarding-flow.dot
 │   │   ├── onboarding-flow.png
 │   │   ├── onboarding-flow.svg
 │   │   ├── provider-architecture.dot
 │   │   ├── provider-architecture.png
+│   │   ├── provider-architecture.svg
 │   │   ├── README.md
 │   │   ├── resilience-patterns.dot
 │   │   ├── resilience-patterns.png
+│   │   ├── resilience-patterns.svg
 │   │   ├── storage-architecture.dot
-│   │   └── storage-architecture.png
+│   │   ├── storage-architecture.png
+│   │   └── storage-architecture.svg
 │   ├── docfx/
 │   │   ├── docfx.json
 │   │   └── README.md
 │   ├── evaluations/
 │   │   ├── data-quality-monitoring-evaluation.md
+│   │   ├── desktop-end-user-improvements.md
 │   │   ├── historical-data-providers-evaluation.md
 │   │   ├── realtime-streaming-architecture-evaluation.md
 │   │   └── storage-architecture-evaluation.md
@@ -254,13 +290,20 @@ Market-Data-Collector/
 │   │   └── workflows-overview.md
 │   ├── getting-started/
 │   │   └── README.md
+│   ├── guides/
+│   │   ├── adding-custom-rules.md
+│   │   ├── documentation-automation.md
+│   │   └── expanding-scripts.md
 │   ├── integrations/
 │   │   ├── fsharp-integration.md
 │   │   ├── language-strategy.md
 │   │   └── lean-integration.md
 │   ├── operations/
+│   │   ├── deployment.md
+│   │   ├── high-availability.md
 │   │   ├── msix-packaging.md
 │   │   ├── operator-runbook.md
+│   │   ├── performance-tuning.md
 │   │   └── portable-data-packager.md
 │   ├── providers/
 │   │   ├── alpaca-setup.md
@@ -275,6 +318,8 @@ Market-Data-Collector/
 │   │   ├── data-uniformity.md
 │   │   ├── design-review-memo.md
 │   │   └── open-source-references.md
+│   ├── security/
+│   │   └── known-vulnerabilities.md
 │   ├── status/
 │   │   ├── CHANGELOG.md
 │   │   ├── production-status.md
@@ -315,6 +360,10 @@ Market-Data-Collector/
 │   ├── README.md
 │   ├── STRUCTURAL_IMPROVEMENTS.md
 │   └── toc.yml
+├── scripts/  # Automation scripts
+│   └── dev/
+│       ├── desktop-dev.ps1
+│       └── diagnose-uwp-xaml.ps1
 ├── src/  # Source code
 │   ├── MarketDataCollector/
 │   │   ├── Integrations/
@@ -480,7 +529,8 @@ Market-Data-Collector/
 │   │   │   ├── DerivativesConfigDto.cs
 │   │   │   └── SymbolConfig.cs
 │   │   ├── Credentials/
-│   │   │   └── CredentialModels.cs
+│   │   │   ├── CredentialModels.cs
+│   │   │   └── ISecretProvider.cs
 │   │   ├── Domain/
 │   │   │   ├── Enums/
 │   │   │   │   ...
@@ -605,9 +655,8 @@ Market-Data-Collector/
 │   │   │   │   ...
 │   │   │   ├── Streaming/
 │   │   │   │   ...
-│   │   │   ├── SymbolSearch/
-│   │   │   │   ...
-│   │   │   └── SubscriptionManager.cs
+│   │   │   └── SymbolSearch/
+│   │   │       ...
 │   │   ├── Resilience/
 │   │   │   ├── HttpResiliencePolicy.cs
 │   │   │   ├── WebSocketConnectionConfig.cs
@@ -622,8 +671,7 @@ Market-Data-Collector/
 │   │   ├── Utilities/
 │   │   │   ├── HttpResponseHandler.cs
 │   │   │   ├── JsonElementExtensions.cs
-│   │   │   ├── SymbolNormalization.cs
-│   │   │   └── SymbolNormalizer.cs
+│   │   │   └── SymbolNormalization.cs
 │   │   ├── GlobalUsings.cs
 │   │   ├── MarketDataCollector.Infrastructure.csproj
 │   │   └── NoOpMarketDataClient.cs
@@ -633,6 +681,7 @@ Market-Data-Collector/
 │   │   ├── DataSourceRegistry.cs
 │   │   ├── HistoricalDataCapabilities.cs
 │   │   ├── IDataSource.cs
+│   │   ├── IHistoricalBarWriter.cs
 │   │   ├── IHistoricalDataSource.cs
 │   │   ├── IMarketDataClient.cs
 │   │   ├── ImplementsAdrAttribute.cs
@@ -745,6 +794,8 @@ Market-Data-Collector/
 │   │   │   ├── ErrorHandlingService.cs
 │   │   │   ├── ErrorMessages.cs
 │   │   │   ├── EventReplayService.cs
+│   │   │   ├── FixtureDataService.cs
+│   │   │   ├── FormValidationRules.cs
 │   │   │   ├── HttpClientConfiguration.cs
 │   │   │   ├── IntegrityEventsService.cs
 │   │   │   ├── LeanIntegrationService.cs
@@ -759,6 +810,7 @@ Market-Data-Collector/
 │   │   │   ├── PortfolioImportService.cs
 │   │   │   ├── ProviderHealthService.cs
 │   │   │   ├── ProviderManagementService.cs
+│   │   │   ├── RetentionAssuranceModels.cs
 │   │   │   ├── ScheduledMaintenanceService.cs
 │   │   │   ├── ScheduleManagerService.cs
 │   │   │   ├── SchemaService.cs
@@ -766,28 +818,50 @@ Market-Data-Collector/
 │   │   │   ├── SetupWizardService.cs
 │   │   │   ├── SmartRecommendationsService.cs
 │   │   │   ├── StorageAnalyticsService.cs
+│   │   │   ├── StorageModels.cs
 │   │   │   ├── StorageOptimizationAdvisorService.cs
+│   │   │   ├── StorageServiceBase.cs
 │   │   │   ├── SymbolGroupService.cs
 │   │   │   ├── SymbolManagementService.cs
 │   │   │   ├── SymbolMappingService.cs
 │   │   │   ├── SystemHealthService.cs
 │   │   │   ├── TimeSeriesAlignmentService.cs
-│   │   │   └── WatchlistService.cs
+│   │   │   ├── WatchlistService.cs
+│   │   │   └── WorkspaceModels.cs
 │   │   ├── GlobalUsings.cs
 │   │   └── MarketDataCollector.Ui.Services.csproj
 │   ├── MarketDataCollector.Ui.Shared/
 │   │   ├── Endpoints/
+│   │   │   ├── AdminEndpoints.cs
+│   │   │   ├── AlignmentEndpoints.cs
+│   │   │   ├── AnalyticsEndpoints.cs
 │   │   │   ├── ApiKeyMiddleware.cs
 │   │   │   ├── BackfillEndpoints.cs
+│   │   │   ├── BackfillScheduleEndpoints.cs
 │   │   │   ├── ConfigEndpoints.cs
+│   │   │   ├── CronEndpoints.cs
+│   │   │   ├── DiagnosticsEndpoints.cs
+│   │   │   ├── ExportEndpoints.cs
 │   │   │   ├── FailoverEndpoints.cs
+│   │   │   ├── HealthEndpoints.cs
 │   │   │   ├── IBEndpoints.cs
+│   │   │   ├── IndexEndpoints.cs
+│   │   │   ├── LeanEndpoints.cs
 │   │   │   ├── LiveDataEndpoints.cs
+│   │   │   ├── MaintenanceScheduleEndpoints.cs
+│   │   │   ├── MessagingEndpoints.cs
 │   │   │   ├── PathValidation.cs
 │   │   │   ├── ProviderEndpoints.cs
+│   │   │   ├── ProviderExtendedEndpoints.cs
 │   │   │   ├── QualityDropsEndpoints.cs
+│   │   │   ├── ReplayEndpoints.cs
+│   │   │   ├── SamplingEndpoints.cs
 │   │   │   ├── StatusEndpoints.cs
+│   │   │   ├── StorageEndpoints.cs
+│   │   │   ├── StorageQualityEndpoints.cs
 │   │   │   ├── StubEndpoints.cs
+│   │   │   ├── SubscriptionEndpoints.cs
+│   │   │   ├── SymbolEndpoints.cs
 │   │   │   ├── SymbolMappingEndpoints.cs
 │   │   │   └── UiEndpoints.cs
 │   │   ├── Services/
@@ -1095,11 +1169,13 @@ Market-Data-Collector/
 │       │   ├── IConnectionService.cs
 │       │   └── INavigationService.cs
 │       ├── Models/
-│       │   └── AppConfig.cs
+│       │   ├── AppConfig.cs
+│       │   └── StorageDisplayModels.cs
 │       ├── Services/
 │       │   ├── AdminMaintenanceService.cs
 │       │   ├── AdvancedAnalyticsService.cs
 │       │   ├── ArchiveHealthService.cs
+│       │   ├── BackendServiceManager.cs
 │       │   ├── BackfillApiService.cs
 │       │   ├── BackgroundTaskSchedulerService.cs
 │       │   ├── BrushRegistry.cs
@@ -1111,16 +1187,10 @@ Market-Data-Collector/
 │       │   ├── ExportPresetService.cs
 │       │   ├── FirstRunService.cs
 │       │   ├── FormValidationService.cs
-│       │   ├── IBackgroundTaskSchedulerService.cs
 │       │   ├── IConfigService.cs
 │       │   ├── IKeyboardShortcutService.cs
-│       │   ├── ILoggingService.cs
-│       │   ├── IMessagingService.cs
 │       │   ├── InfoBarService.cs
 │       │   ├── INotificationService.cs
-│       │   ├── IOfflineTrackingPersistenceService.cs
-│       │   ├── IPendingOperationsQueueService.cs
-│       │   ├── IThemeService.cs
 │       │   ├── KeyboardShortcutService.cs
 │       │   ├── LoggingService.cs
 │       │   ├── MessagingService.cs
@@ -1255,7 +1325,6 @@ Market-Data-Collector/
 │   │   ├── DomainTests.fs
 │   │   ├── MarketDataCollector.FSharp.Tests.fsproj
 │   │   ├── PipelineTests.fs
-│   │   ├── Program.fs
 │   │   └── ValidationTests.fs
 │   ├── MarketDataCollector.Tests/
 │   │   ├── Application/
@@ -1292,6 +1361,7 @@ Market-Data-Collector/
 │   │   ├── Integration/
 │   │   │   ├── EndpointTests/
 │   │   │   │   ...
+│   │   │   ├── ConfigurableTickerDataCollectionTests.cs
 │   │   │   ├── ConnectionRetryIntegrationTests.cs
 │   │   │   ├── EndpointStubDetectionTests.cs
 │   │   │   ├── UwpCoreIntegrationTests.cs
@@ -1325,10 +1395,33 @@ Market-Data-Collector/
 │   │   │   └── TestMarketEventPublisher.cs
 │   │   ├── GlobalUsings.cs
 │   │   └── MarketDataCollector.Tests.csproj
+│   ├── MarketDataCollector.Ui.Tests/
+│   │   ├── Collections/
+│   │   │   ├── BoundedObservableCollectionTests.cs
+│   │   │   └── CircularBufferTests.cs
+│   │   ├── Services/
+│   │   │   ├── ApiClientServiceTests.cs
+│   │   │   ├── BackfillServiceTests.cs
+│   │   │   ├── FixtureDataServiceTests.cs
+│   │   │   ├── FormValidationServiceTests.cs
+│   │   │   ├── SystemHealthServiceTests.cs
+│   │   │   └── WatchlistServiceTests.cs
+│   │   ├── MarketDataCollector.Ui.Tests.csproj
+│   │   └── README.md
+│   ├── MarketDataCollector.Wpf.Tests/
+│   │   ├── Services/
+│   │   │   ├── ConfigServiceTests.cs
+│   │   │   ├── ConnectionServiceTests.cs
+│   │   │   ├── NavigationServiceTests.cs
+│   │   │   └── StatusServiceTests.cs
+│   │   ├── GlobalUsings.cs
+│   │   └── MarketDataCollector.Wpf.Tests.csproj
 │   └── coverlet.runsettings
 ├── .gitignore
 ├── .globalconfig
+├── .markdownlint.json
 ├── CLAUDE.md
+├── CONFIG_CONSOLIDATION_REPORT.md
 ├── Directory.Build.props
 ├── Directory.Packages.props
 ├── global.json
