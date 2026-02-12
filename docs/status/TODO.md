@@ -1,32 +1,32 @@
 # TODO Tracking
 
 > Auto-generated TODO documentation. Do not edit manually.
-> Last updated: 2026-02-12T09:08:16.071033+00:00
+> Last updated: 2026-02-12T12:49:00.409825+00:00
 
 ## Summary
 
 | Metric | Count |
 |--------|-------|
-| **Total Items** | 12 |
+| **Total Items** | 14 |
 | **Linked to Issues** | 0 |
-| **Untracked** | 12 |
+| **Untracked** | 14 |
 
 ### By Type
 
 | Type | Count | Description |
 |------|-------|-------------|
-| `NOTE` | 12 | Important notes and documentation |
+| `NOTE` | 14 | Important notes and documentation |
 
 ### By Directory
 
 | Directory | Count |
 |-----------|-------|
-| `tests/` | 9 |
+| `tests/` | 11 |
 | `src/` | 3 |
 
 ## All Items
 
-### NOTE (12)
+### NOTE (14)
 
 - [ ] `src/MarketDataCollector.Ui.Shared/Endpoints/ConfigEndpoints.cs:138`
   > Status endpoint is handled by StatusEndpoints.MapStatusEndpoints() which provides live status via StatusEndpointHandlers rather than loading from file
@@ -57,6 +57,12 @@
 
 - [ ] `tests/MarketDataCollector.Tests/Storage/StorageChecksumServiceTests.cs:121`
   > File.WriteAllTextAsync uses UTF-8 with BOM by default on some platforms, so we compute expected from the actual file bytes
+
+- [ ] `tests/MarketDataCollector.Ui.Tests/Services/BackfillServiceTests.cs:181`
+  > This test verifies the IsRunning property logic In actual usage, CurrentProgress would be set during a backfill operation We're testing the property getter logic here
+
+- [ ] `tests/MarketDataCollector.Ui.Tests/Services/BackfillServiceTests.cs:198`
+  > Similar to IsRunning test, this verifies the property logic
 
 - [ ] `tests/MarketDataCollector.Wpf.Tests/Services/ConnectionServiceTests.cs:286`
   > This test may need to wait briefly for async operation
