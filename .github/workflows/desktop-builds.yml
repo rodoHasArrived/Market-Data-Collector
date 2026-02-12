@@ -632,7 +632,7 @@ jobs:
 
   cleanup:
     name: Cleanup Intermediate Artifacts
-    needs: [uwp-build, uwp-release, wpf-build]
+    needs: [uwp-build, wpf-build]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     if: always()
