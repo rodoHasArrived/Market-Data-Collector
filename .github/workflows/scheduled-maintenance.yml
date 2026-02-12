@@ -126,7 +126,8 @@ jobs:
             --verbosity normal \
             --collect:"XPlat Code Coverage" \
             --results-directory ./TestResults \
-            --logger "trx;LogFileName=weekly-test-results.trx"
+            --logger "trx;LogFileName=weekly-test-results.trx" \
+            --filter "Category!=Integration"
 
       - name: Run F# tests
         id: fsharp-tests

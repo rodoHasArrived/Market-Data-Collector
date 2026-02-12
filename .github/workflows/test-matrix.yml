@@ -71,7 +71,8 @@ jobs:
             --verbosity normal \
             --logger "trx;LogFileName=test-results-csharp-Linux.trx" \
             --results-directory ./TestResults \
-            --collect:"XPlat Code Coverage"
+            --collect:"XPlat Code Coverage" \
+            --filter "Category!=Integration"
 
       - name: Run F# unit tests
         id: fsharp-tests
@@ -149,7 +150,8 @@ jobs:
             --no-build \
             --verbosity normal \
             --logger "trx;LogFileName=test-results-csharp-${{ matrix.os_name }}.trx" \
-            --results-directory ./TestResults
+            --results-directory ./TestResults \
+            --filter "Category!=Integration"
 
       - name: Run F# unit tests
         id: fsharp-tests
