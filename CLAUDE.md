@@ -384,10 +384,12 @@ Market-Data-Collector/
 │   │   ├── consolidation.md
 │   │   ├── desktop-ui-alternatives-evaluation.md
 │   │   ├── DUPLICATE_CODE_ANALYSIS.md
+│   │   ├── IMPROVEMENTS_2026-02.md
 │   │   ├── INDEX.md
 │   │   ├── README.md
 │   │   ├── REDESIGN_IMPROVEMENTS.md
 │   │   ├── REPOSITORY_REORGANIZATION_PLAN.md
+│   │   ├── STRUCTURAL_IMPROVEMENTS_2026-02.md
 │   │   ├── uwp-development-roadmap.md
 │   │   └── uwp-release-checklist.md
 │   ├── audits/
@@ -506,6 +508,7 @@ Market-Data-Collector/
 │   ├── status/
 │   │   ├── CHANGELOG.md
 │   │   ├── health-dashboard.md
+│   │   ├── IMPROVEMENTS.md
 │   │   ├── production-status.md
 │   │   ├── README.md
 │   │   ├── ROADMAP.md
@@ -540,9 +543,7 @@ Market-Data-Collector/
 │   │   └── use-case-diagram.puml
 │   ├── DEPENDENCIES.md
 │   ├── HELP.md
-│   ├── IMPROVEMENTS.md
 │   ├── README.md
-│   ├── STRUCTURAL_IMPROVEMENTS.md
 │   └── toc.yml
 ├── scripts/  # Automation scripts
 │   └── dev/

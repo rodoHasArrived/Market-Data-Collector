@@ -1,12 +1,12 @@
 # Documentation Health Dashboard
 
 > Auto-generated documentation health report. Do not edit manually.
-> Last updated: 2026-02-12T17:27:21.950477+00:00
+> Last updated: 2026-02-12T18:26:48.515085+00:00
 
 ## Overall Health Score
 
 ```
-  [##########################----] 87/100
+  [##########################----] 86/100
   Rating: Good
 ```
 
@@ -14,14 +14,14 @@
 
 | Metric | Value |
 |--------|-------|
-| Total documentation files | 144 |
-| Total lines | 57,183 |
-| Average file size (lines) | 397.1 |
-| Orphaned files | 50 |
+| Total documentation files | 145 |
+| Total lines | 58,263 |
+| Average file size (lines) | 401.8 |
+| Orphaned files | 52 |
 | Files without headings | 1 |
 | Stale files (>90 days) | 0 |
-| TODO/FIXME markers | 104 |
-| **Health score** | **87/100** |
+| TODO/FIXME markers | 108 |
+| **Health score** | **86/100** |
 
 ### Score Breakdown
 
@@ -60,12 +60,12 @@ These files are not linked from any other Markdown file in the repository:
 - `docs/archived/ARTIFACT_ACTIONS_DOWNGRADE.md`
 - `docs/archived/CHANGES_SUMMARY.md`
 - `docs/archived/DUPLICATE_CODE_ANALYSIS.md`
+- `docs/archived/IMPROVEMENTS_2026-02.md`
 - `docs/archived/REDESIGN_IMPROVEMENTS.md`
 - `docs/archived/REPOSITORY_REORGANIZATION_PLAN.md`
+- `docs/archived/STRUCTURAL_IMPROVEMENTS_2026-02.md`
 - `docs/archived/desktop-ui-alternatives-evaluation.md`
-- `docs/audits/CLEANUP_OPPORTUNITIES.md`
-- `docs/audits/CLEANUP_SUMMARY.md`
-- ... and 30 more
+- ... and 32 more
 
 ## Trend
 
@@ -73,7 +73,7 @@ These files are not linked from any other Markdown file in the repository:
 
 | Date | Score | Files | Orphans | Stale |
 |------|-------|-------|---------|-------|
-| 2026-02-12 | 87 | 144 | 50 | 0 |
+| 2026-02-12 | 86 | 145 | 52 | 0 |
 
 ---
 
