@@ -150,3 +150,20 @@ If headings are missing, the workflow still creates an entry with safe defaults 
   - `dotnet test MarketDataCollector.sln --collect:"XPlat Code Coverage" --results-directory ./test-results && ls -la ./test-results/**/coverage.cobertura.xml`
 - **Source issue**: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/21938525658/job/63358083776#step:5:1
 - **Status**: fixed (commit ad97ee2)
+
+### AI-20260212-conditional-job-dependency
+- **Area**: workflows/GitHub Actions
+- **Symptoms**: Workflow jobs with `if: always()` fail to run when depending on jobs with conditional execution (`if: startsWith(...)`). The dependent job is skipped even though `always()` is specified, because GitHub Actions treats unmet dependencies (skipped jobs) as a blocking condition.
+- **Root cause**: GitHub Actions job dependencies (`needs:`) require all listed jobs to complete successfully or be explicitly handled. When a job is conditionally skipped (e.g., `if: startsWith(github.ref, 'refs/tags/v')`), any job depending on it will also be skipped unless proper conditional logic is used. The `if: always()` condition means "run regardless of previous job failures" but not "run even if dependencies are skipped."
+- **Prevention checklist**:
+  - [ ] When a job has `needs:` dependencies, verify all dependent jobs run in the same conditions or have proper handling
+  - [ ] Never depend on conditionally-executed jobs (with `if:` conditions) from jobs that always run
+  - [ ] If cleanup jobs need to run `always()`, only depend on jobs that also run unconditionally
+  - [ ] Use conditional expressions in dependencies: `if: always() && needs.job-name.result != 'skipped'`
+  - [ ] Document job dependencies with comments explaining conditional logic
+  - [ ] Test workflows on both tag and non-tag branches to verify all jobs execute as expected
+- **Verification commands**:
+  - `grep -A5 "needs:" .github/workflows/*.yml | grep -B5 "if:"`
+  - `python3 -c "import yaml; yaml.safe_load(open('.github/workflows/desktop-builds.yml'))"`
+- **Source issue**: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/21958711610/job/63429967664
+- **Status**: fixed (commit 4f6088f)
