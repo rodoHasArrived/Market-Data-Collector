@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using MarketDataCollector.Wpf.Models;
 
 namespace MarketDataCollector.Wpf.Services;
 
@@ -120,15 +121,15 @@ public sealed class WpfDataQualityService
     /// <summary>
     /// Gets data gaps for a specific symbol.
     /// </summary>
-    public async Task<List<Views.DataGapInfo>> GetDataGapsAsync(string symbol, CancellationToken ct = default)
+    public async Task<List<DataGapInfo>> GetDataGapsAsync(string symbol, CancellationToken ct = default)
     {
         var report = await GetSymbolQualityAsync(symbol, ct);
-        if (report?.Gaps == null) return new List<Views.DataGapInfo>();
+        if (report?.Gaps == null) return new List<DataGapInfo>();
 
-        var gaps = new List<Views.DataGapInfo>();
+        var gaps = new List<DataGapInfo>();
         foreach (var gap in report.Gaps)
         {
-            gaps.Add(new Views.DataGapInfo
+            gaps.Add(new DataGapInfo
             {
                 StartDate = gap.Start,
                 EndDate = gap.End,

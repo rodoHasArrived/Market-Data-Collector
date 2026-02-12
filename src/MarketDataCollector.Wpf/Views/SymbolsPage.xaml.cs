@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using MarketDataCollector.Wpf.Services;
+using WpfServices = MarketDataCollector.Wpf.Services;
 
 namespace MarketDataCollector.Wpf.Views;
 
@@ -16,8 +16,8 @@ namespace MarketDataCollector.Wpf.Views;
 /// </summary>
 public partial class SymbolsPage : Page
 {
-    private readonly ConfigService _configService;
-    private readonly WatchlistService _watchlistService;
+    private readonly WpfServices.ConfigService _configService;
+    private readonly WpfServices.WatchlistService _watchlistService;
     private readonly ObservableCollection<SymbolViewModel> _symbols = new();
     private readonly ObservableCollection<SymbolViewModel> _filteredSymbols = new();
     private readonly ObservableCollection<WatchlistInfo> _watchlists = new();
@@ -38,8 +38,8 @@ public partial class SymbolsPage : Page
     {
         InitializeComponent();
 
-        _configService = ConfigService.Instance;
-        _watchlistService = WatchlistService.Instance;
+        _configService = WpfServices.ConfigService.Instance;
+        _watchlistService = WpfServices.WatchlistService.Instance;
         SymbolsListView.ItemsSource = _filteredSymbols;
         WatchlistsView.ItemsSource = _watchlists;
 

@@ -7,8 +7,8 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using MarketDataCollector.Wpf.Services;
 using Microsoft.Win32;
+using WpfServices = MarketDataCollector.Wpf.Services;
 
 namespace MarketDataCollector.Wpf.Views;
 
@@ -17,7 +17,7 @@ namespace MarketDataCollector.Wpf.Views;
 /// </summary>
 public partial class WatchlistPage : Page
 {
-    private readonly WatchlistService _watchlistService;
+    private readonly WpfServices.WatchlistService _watchlistService;
     private readonly ObservableCollection<WatchlistDisplayModel> _watchlists = new();
     private readonly ObservableCollection<WatchlistDisplayModel> _filteredWatchlists = new();
     private CancellationTokenSource? _loadCts;
@@ -25,7 +25,7 @@ public partial class WatchlistPage : Page
     public WatchlistPage()
     {
         InitializeComponent();
-        _watchlistService = WatchlistService.Instance;
+        _watchlistService = WpfServices.WatchlistService.Instance;
         WatchlistsContainer.ItemsSource = _filteredWatchlists;
 
         _watchlistService.WatchlistsChanged += OnWatchlistsChanged;

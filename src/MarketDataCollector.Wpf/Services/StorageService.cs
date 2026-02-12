@@ -1,9 +1,10 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Media;
 using MarketDataCollector.Contracts.Api;
 using MarketDataCollector.Ui.Services;
-using System.Windows.Media;
+using MarketDataCollector.Wpf.Models;
 
 namespace MarketDataCollector.Wpf.Services;
 

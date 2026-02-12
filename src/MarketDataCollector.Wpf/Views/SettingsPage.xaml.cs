@@ -5,7 +5,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using MarketDataCollector.Wpf.Services;
+using WpfServices = MarketDataCollector.Wpf.Services;
 
 namespace MarketDataCollector.Wpf.Views;
 
@@ -14,7 +14,7 @@ namespace MarketDataCollector.Wpf.Views;
 /// </summary>
 public partial class SettingsPage : Page
 {
-    private readonly ConfigService _configService;
+    private readonly WpfServices.ConfigService _configService;
     private readonly ObservableCollection<CredentialDisplayInfo> _storedCredentials = new();
     private readonly ObservableCollection<SettingsActivityItem> _recentActivity = new();
 
@@ -22,7 +22,7 @@ public partial class SettingsPage : Page
     {
         InitializeComponent();
 
-        _configService = ConfigService.Instance;
+        _configService = WpfServices.ConfigService.Instance;
         StoredCredentialsList.ItemsSource = _storedCredentials;
         RecentActivityList.ItemsSource = _recentActivity;
     }
