@@ -34,6 +34,7 @@ public sealed class PreflightCheckerTests : IDisposable
         // Arrange
         var checker = new PreflightChecker(new PreflightConfig
         {
+            CheckNetworkConnectivity = false,
             CheckProviderConnectivity = false,
             MinDiskSpaceGb = 0.001,
             WarnDiskSpaceGb = 0.01,
@@ -57,6 +58,7 @@ public sealed class PreflightCheckerTests : IDisposable
         // Arrange
         var checker = new PreflightChecker(new PreflightConfig
         {
+            CheckNetworkConnectivity = false,
             CheckProviderConnectivity = false,
             MinDiskSpaceGb = 0.001,
             WarnDiskSpaceGb = 0.01,
@@ -78,6 +80,7 @@ public sealed class PreflightCheckerTests : IDisposable
         // Arrange
         var checker = new PreflightChecker(new PreflightConfig
         {
+            CheckNetworkConnectivity = false,
             CheckProviderConnectivity = false,
             MinDiskSpaceGb = 0.001,
             WarnDiskSpaceGb = 0.01,
@@ -100,6 +103,7 @@ public sealed class PreflightCheckerTests : IDisposable
         // Arrange
         var checker = new PreflightChecker(new PreflightConfig
         {
+            CheckNetworkConnectivity = false,
             CheckProviderConnectivity = false,
             MinDiskSpaceGb = 0.001,
             WarnDiskSpaceGb = 0.01,
@@ -121,6 +125,7 @@ public sealed class PreflightCheckerTests : IDisposable
         // Arrange
         var checker = new PreflightChecker(new PreflightConfig
         {
+            CheckNetworkConnectivity = false,
             CheckProviderConnectivity = false,
             MinDiskSpaceGb = 0.001,
             WarnDiskSpaceGb = 0.01,
@@ -142,6 +147,7 @@ public sealed class PreflightCheckerTests : IDisposable
         // Arrange - PATH is always set
         var checker = new PreflightChecker(new PreflightConfig
         {
+            CheckNetworkConnectivity = false,
             CheckProviderConnectivity = false,
             MinDiskSpaceGb = 0.001,
             WarnDiskSpaceGb = 0.01,
@@ -167,6 +173,7 @@ public sealed class PreflightCheckerTests : IDisposable
         // Arrange
         var checker = new PreflightChecker(new PreflightConfig
         {
+            CheckNetworkConnectivity = false,
             CheckProviderConnectivity = false,
             MinDiskSpaceGb = 0.001,
             WarnDiskSpaceGb = 0.01,
@@ -212,6 +219,7 @@ public sealed class PreflightCheckerTests : IDisposable
         // Arrange - require 999999 GB free, which no disk has
         var checker = new PreflightChecker(new PreflightConfig
         {
+            CheckNetworkConnectivity = false,
             CheckProviderConnectivity = false,
             MinDiskSpaceGb = 999999,
             WarnDiskSpaceGb = 999999,
@@ -234,6 +242,7 @@ public sealed class PreflightCheckerTests : IDisposable
         // Arrange - set warning threshold very high to trigger warning
         var checker = new PreflightChecker(new PreflightConfig
         {
+            CheckNetworkConnectivity = false,
             CheckProviderConnectivity = false,
             MinDiskSpaceGb = 0.001,
             WarnDiskSpaceGb = 999999,
@@ -259,6 +268,7 @@ public sealed class PreflightCheckerTests : IDisposable
         // Arrange - require 999999 MB, which will fail
         var checker = new PreflightChecker(new PreflightConfig
         {
+            CheckNetworkConnectivity = false,
             CheckProviderConnectivity = false,
             MinDiskSpaceGb = 0.001,
             WarnDiskSpaceGb = 0.01,
@@ -287,6 +297,7 @@ public sealed class PreflightCheckerTests : IDisposable
 
         var checker = new PreflightChecker(new PreflightConfig
         {
+            CheckNetworkConnectivity = false,
             CheckProviderConnectivity = false,
             MinDiskSpaceGb = 0.001,
             WarnDiskSpaceGb = 0.01,
@@ -313,6 +324,7 @@ public sealed class PreflightCheckerTests : IDisposable
         // Arrange
         var checker = new PreflightChecker(new PreflightConfig
         {
+            CheckNetworkConnectivity = false,
             CheckProviderConnectivity = false,
             MinDiskSpaceGb = 0.001,
             WarnDiskSpaceGb = 0.01,
@@ -333,6 +345,7 @@ public sealed class PreflightCheckerTests : IDisposable
         // Arrange - set impossible disk space requirement
         var checker = new PreflightChecker(new PreflightConfig
         {
+            CheckNetworkConnectivity = false,
             CheckProviderConnectivity = false,
             MinDiskSpaceGb = 999999,
             MinMemoryMb = 1,
@@ -354,6 +367,7 @@ public sealed class PreflightCheckerTests : IDisposable
         // Arrange
         var checker = new PreflightChecker(new PreflightConfig
         {
+            CheckNetworkConnectivity = false,
             CheckProviderConnectivity = false,
             MinDiskSpaceGb = 999999,
             MinMemoryMb = 1,
