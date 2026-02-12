@@ -127,10 +127,15 @@ Historical documentation superseded by newer guides.
 
 ### Documentation Standards
 
-- **Audience:** State who the doc is for
-- **Date:** Include "Last Updated" date
-- **Examples:** Include code examples
-- **Links:** Use relative paths
+See [Documentation Contribution Guide](development/documentation-contribution-guide.md) for complete standards.
+
+Quick rules:
+- **Audience:** State who the doc is for (Users, Developers, Operators)
+- **Date:** Include "Last Updated" date in front matter
+- **Format:** Use GitHub Flavored Markdown
+- **Examples:** Include runnable code examples
+- **Links:** Use relative paths for internal links
+- **Naming:** Use kebab-case (lowercase with hyphens)
 
 ---
 

@@ -263,7 +263,7 @@ Items that are completely unused and can be deleted immediately with no downstre
 | # | Item | Location | Evidence | Est. LOC | Status |
 |---|------|----------|----------|----------|--------|
 | 6A.1 | **Delete unused `SymbolNormalizer.cs`** — complete duplicate of `SymbolNormalization.cs` with identical methods; 0 references in codebase | `Infrastructure/Utilities/SymbolNormalizer.cs` | `SymbolNormalization.cs` has 7 active references; `SymbolNormalizer.cs` has 0 | ~80 | ✅ Done (PR #1028) |
-| 6A.2 | **Delete UWP Examples folder** — 6 XAML example files + 2 markdown docs never referenced from any code or navigation | `src/MarketDataCollector.Uwp/Examples/` (6 XAML files, ~260 KB) | Zero C# references to any example file | ~260 KB | |
+| 6A.2 | **Delete UWP Examples folder** — 6 XAML example files + 2 markdown docs never referenced from any code or navigation | `src/MarketDataCollector.Uwp/Examples/` (6 XAML files, ~260 KB) | Zero C# references to any example file | ~260 KB | ✅ Done |
 | 6A.3 | **Remove tracked build artifacts** — `build-output.log` and scratch files tracked in git | Root directory | Already addressed in `docs/audits/CLEANUP_SUMMARY.md`; verify removal is merged | N/A | |
 
 ### 6B. Duplicate Interface Consolidation (P2 — Low Risk) — COMPLETED ✅
@@ -272,12 +272,12 @@ The same service interfaces are defined in up to three separate projects. Consol
 
 | # | Item | Canonical Location | Duplicate Locations | Est. LOC | Status |
 |---|------|--------------------|---------------------|----------|--------|
-| 6B.1 | **`IConfigService`** (127 lines canonical vs 15-line stubs) | `Ui.Services/Contracts/` | `Wpf/Services/IConfigService.cs`, `Uwp/Contracts/` | ~30 | |
+| 6B.1 | **`IConfigService`** (127 lines canonical vs 15-line stubs) | `Ui.Services/Contracts/` | `Wpf/Services/IConfigService.cs`, `Uwp/Contracts/` | ~30 | N/A (WPF has IConfigSettingsService, different interface) |
 | 6B.2 | **`IThemeService`** | `Ui.Services/Contracts/` | `Wpf/Services/IThemeService.cs`, `Uwp/Contracts/` | ~20 | ✅ Done (PR #1028) |
-| 6B.3 | **`INotificationService`** | `Ui.Services/Contracts/` | `Wpf/Services/INotificationService.cs`, `Uwp/Contracts/` | ~20 | |
+| 6B.3 | **`INotificationService`** | `Ui.Services/Contracts/` | `Wpf/Services/INotificationService.cs`, `Uwp/Contracts/` | ~20 | ✅ Done |
 | 6B.4 | **`ILoggingService`** | `Ui.Services/Contracts/` | `Wpf/Services/ILoggingService.cs`, `Uwp/Contracts/` | ~15 | ✅ Done (PR #1028) |
 | 6B.5 | **`IMessagingService`** | `Ui.Services/Contracts/` | `Wpf/Services/IMessagingService.cs`, `Uwp/Contracts/` | ~15 | ✅ Done (PR #1028) |
-| 6B.6 | **`IKeyboardShortcutService`** | `Ui.Services/Contracts/` | `Wpf/Services/IKeyboardShortcutService.cs`, `Uwp/Contracts/` | ~15 | |
+| 6B.6 | **`IKeyboardShortcutService`** | `Ui.Services/Contracts/` | `Wpf/Services/IKeyboardShortcutService.cs`, `Uwp/Contracts/` | ~15 | ✅ Done (unused duplicates deleted) |
 | 6B.7 | **`IBackgroundTaskSchedulerService`** | `Ui.Services/Contracts/` | `Wpf/Services/IBackgroundTaskSchedulerService.cs`, `Uwp/Contracts/` | ~15 | ✅ Done (PR #1028) |
 | 6B.8 | **`IPendingOperationsQueueService`** | `Ui.Services/Contracts/` | `Wpf/Services/IPendingOperationsQueueService.cs`, `Uwp/Contracts/` | ~15 | ✅ Done (PR #1028) |
 | 6B.9 | **`IOfflineTrackingPersistenceService`** | `Ui.Services/Contracts/` | `Wpf/Services/IOfflineTrackingPersistenceService.cs`, `Uwp/Contracts/` | ~15 | ✅ Done (PR #1028) |
@@ -304,8 +304,8 @@ Same-named classes in different namespaces create confusion and maintenance risk
 | # | Item | Locations | Recommendation | Status |
 |---|------|-----------|----------------|--------|
 | 6D.1 | **`SubscriptionManager`** — 3 classes with same name across layers | `Application/Subscriptions/`, `Infrastructure/Providers/`, `Infrastructure/Shared/` | Rename to role-specific names: `SubscriptionCoordinator`, `ProviderSubscriptionManager`, `SubscriptionHelper` | ✅ Deleted Infrastructure/Providers duplicate (PR #1028) |
-| 6D.2 | **`ConfigStore`** — 2 classes with same name | `Application/Http/ConfigStore.cs`, `Ui.Shared/Services/ConfigStore.cs` | Rename UI variant to `UiConfigStore` or merge functionality | |
-| 6D.3 | **`BackfillCoordinator`** — 2 classes with same name | `Application/Http/BackfillCoordinator.cs`, `Ui.Shared/Services/BackfillCoordinator.cs` | Rename UI variant to `UiBackfillCoordinator` or merge | |
+| 6D.2 | **`ConfigStore`** — 2 classes with same name | `Application/Http/ConfigStore.cs`, `Ui.Shared/Services/ConfigStore.cs` | Rename UI variant to `UiConfigStore` or merge functionality | ✅ Done (Ui.Shared is wrapper) |
+| 6D.3 | **`BackfillCoordinator`** — 2 classes with same name | `Application/Http/BackfillCoordinator.cs`, `Ui.Shared/Services/BackfillCoordinator.cs` | Rename UI variant to `UiBackfillCoordinator` or merge | ✅ Done (Ui.Shared is wrapper) |
 | 6D.4 | **`HtmlTemplates`** — 2 classes with same name | `Application/Http/HtmlTemplates.cs`, `Ui.Shared/HtmlTemplates.cs` | Determine canonical owner; delete or rename the other | ✅ Renamed: HtmlTemplateManager (Application) & HtmlTemplateGenerator (Ui.Shared) (PR #1028) |
 
 ### 6E. UWP Platform Decoupling (P3 — Higher Risk, Gated on UWP Deprecation Decision)
@@ -359,41 +359,41 @@ Systematically organize and optimize the repository structure to improve maintai
 
 Consolidate and organize scattered documentation into a clear, navigable structure.
 
-| # | Item | Priority | Description | Est. Hours |
-|---|------|----------|-------------|-----------|
-| 8A.1 | **Create master documentation index** — Unified `docs/README.md` with categorized links to all documentation | P1 | Single entry point for all documentation; organize by audience (developers, operators, users) | 4 |
-| 8A.2 | **Consolidate archived documentation** — Create `docs/archived/INDEX.md` summarizing 13 historical documents with context | P1 | Currently 13 files in `/docs/archived/` with no index or explanation | 3 |
-| 8A.3 | **Organize status documents** — Ensure `TODO.md`, `ROADMAP.md`, `CHANGELOG.md`, and `production-status.md` have consistent structure and cross-references | P1 | All status docs should reference each other and explain their purpose | 2 |
-| 8A.4 | **Consolidate improvement tracking** — Merge `IMPROVEMENTS.md` and `STRUCTURAL_IMPROVEMENTS.md` into single tracking document with clear status | P2 | Currently two separate improvement tracking documents with overlapping scope | 4 |
-| 8A.5 | **Update API documentation** — Complete `docs/reference/api-reference.md` with all 136 implemented endpoints and their schemas | P2 | Current API docs may be incomplete or outdated | 8 |
-| 8A.6 | **Create documentation contribution guide** — Document standards for writing, organizing, and updating documentation | P2 | Prevent future documentation debt | 3 |
-| 8A.7 | **Audit and fix broken cross-references** — Scan all markdown files for broken internal links and fix them | P2 | Many docs reference moved or renamed files | 4 |
+| # | Item | Priority | Description | Est. Hours | Status |
+|---|------|----------|-------------|-----------|--------|
+| 8A.1 | **Create master documentation index** — Unified `docs/README.md` with categorized links to all documentation | P1 | Single entry point for all documentation; organize by audience (developers, operators, users) | 4 | ✅ Done |
+| 8A.2 | **Consolidate archived documentation** — Create `docs/archived/INDEX.md` summarizing 13 historical documents with context | P1 | Currently 13 files in `/docs/archived/` with no index or explanation | 3 | ✅ Done |
+| 8A.3 | **Organize status documents** — Ensure `TODO.md`, `ROADMAP.md`, `CHANGELOG.md`, and `production-status.md` have consistent structure and cross-references | P1 | All status docs should reference each other and explain their purpose | 2 | ✅ Done |
+| 8A.4 | **Consolidate improvement tracking** — Merge `IMPROVEMENTS.md` and `STRUCTURAL_IMPROVEMENTS.md` into single tracking document with clear status | P2 | Currently two separate improvement tracking documents with overlapping scope | 4 | N/A (kept separate by design - different focuses) |
+| 8A.5 | **Update API documentation** — Complete `docs/reference/api-reference.md` with all 136 implemented endpoints and their schemas | P2 | Current API docs may be incomplete or outdated | 8 | |
+| 8A.6 | **Create documentation contribution guide** — Document standards for writing, organizing, and updating documentation | P2 | Prevent future documentation debt | 3 | ✅ Done |
+| 8A.7 | **Audit and fix broken cross-references** — Scan all markdown files for broken internal links and fix them | P2 | Many docs reference moved or renamed files | 4 | |
 
 ### 8B. Project Structure Optimization (P1 — Critical for Maintenance)
 
 Establish clear patterns and remove ambiguity in project organization.
 
-| # | Item | Priority | Description | Est. Hours |
-|---|------|----------|-------------|-----------|
-| 8B.1 | **Create repository organization guide** — Document file naming conventions, project structure patterns, and where new code should go | P1 | See `docs/development/repository-organization-guide.md` (to be created) | 6 |
-| 8B.2 | **Resolve remaining ambiguous class names** — Fix `ConfigStore` and `BackfillCoordinator` duplicates (Phase 6D.2, 6D.3) | P1 | Two classes with same name in different projects cause confusion | 3 |
-| 8B.3 | **Standardize service interfaces** — Ensure all `IXxxService` interfaces follow consistent naming and are in appropriate projects | P1 | Mix of `IConfigService`, `ConfigurationService`, and `IConfigurationService` patterns | 4 |
-| 8B.4 | **Organize test files to mirror source structure** — Ensure test file locations exactly match source file locations | P2 | Some test files don't mirror their source counterparts | 6 |
-| 8B.5 | **Create project dependency diagram** — Visual diagram showing allowed and forbidden dependencies between projects | P2 | Helps prevent architectural violations | 4 |
-| 8B.6 | **Document assembly boundaries** — Clear guide on which types belong in each project (Contracts, Core, Application, Infrastructure) | P2 | Prevent future namespace confusion | 4 |
+| # | Item | Priority | Description | Est. Hours | Status |
+|---|------|----------|-------------|-----------|--------|
+| 8B.1 | **Create repository organization guide** — Document file naming conventions, project structure patterns, and where new code should go | P1 | See `docs/development/repository-organization-guide.md` (to be created) | 6 | ✅ Done |
+| 8B.2 | **Resolve remaining ambiguous class names** — Fix `ConfigStore` and `BackfillCoordinator` duplicates (Phase 6D.2, 6D.3) | P1 | Two classes with same name in different projects cause confusion | 3 | ✅ Done (wrappers verified) |
+| 8B.3 | **Standardize service interfaces** — Ensure all `IXxxService` interfaces follow consistent naming and are in appropriate projects | P1 | Mix of `IConfigService`, `ConfigurationService`, and `IConfigurationService` patterns | 4 | |
+| 8B.4 | **Organize test files to mirror source structure** — Ensure test file locations exactly match source file locations | P2 | Some test files don't mirror their source counterparts | 6 | |
+| 8B.5 | **Create project dependency diagram** — Visual diagram showing allowed and forbidden dependencies between projects | P2 | Helps prevent architectural violations | 4 | |
+| 8B.6 | **Document assembly boundaries** — Clear guide on which types belong in each project (Contracts, Core, Application, Infrastructure) | P2 | Prevent future namespace confusion | 4 | |
 
 ### 8C. Code Organization Cleanup (P2 — Quality of Life)
 
 Remove clutter and organize code within projects.
 
-| # | Item | Priority | Description | Est. Hours |
-|---|------|----------|-------------|-----------|
-| 8C.1 | **Delete UWP Examples folder** — Remove 6 unused XAML example files (~260 KB) (Phase 6A.2) | P1 | Zero references, pure clutter | 1 |
-| 8C.2 | **Clean up build artifacts and temp files** — Audit `.gitignore` and ensure no build outputs are tracked | P1 | `build-output.log` and other artifacts may be tracked | 2 |
-| 8C.3 | **Organize shared utilities** — Move common utilities to `Core/Utilities/` with clear naming | P2 | `SymbolNormalization`, `JsonElementExtensions`, etc. scattered across projects | 6 |
-| 8C.4 | **Split large files** — Break apart `UiServer.cs` (3,030 LOC), `HtmlTemplates.cs` (2,510 LOC), and others (Phase 6F) | P2 | Files >2,000 lines are hard to navigate and maintain | 16 |
-| 8C.5 | **Organize HTTP endpoints** — Ensure all endpoint handlers are in `Endpoints/` folders with consistent naming | P2 | Some endpoint code mixed with other concerns | 4 |
-| 8C.6 | **Standardize configuration files** — Ensure all config files follow consistent naming (`appsettings.*.json` pattern) | P3 | Mix of config file naming patterns | 2 |
+| # | Item | Priority | Description | Est. Hours | Status |
+|---|------|----------|-------------|-----------|--------|
+| 8C.1 | **Delete UWP Examples folder** — Remove 6 unused XAML example files (~260 KB) (Phase 6A.2) | P1 | Zero references, pure clutter | 1 | ✅ Done |
+| 8C.2 | **Clean up build artifacts and temp files** — Audit `.gitignore` and ensure no build outputs are tracked | P1 | `build-output.log` and other artifacts may be tracked | 2 | |
+| 8C.3 | **Organize shared utilities** — Move common utilities to `Core/Utilities/` with clear naming | P2 | `SymbolNormalization`, `JsonElementExtensions`, etc. scattered across projects | 6 | |
+| 8C.4 | **Split large files** — Break apart `UiServer.cs` (3,030 LOC), `HtmlTemplates.cs` (2,510 LOC), and others (Phase 6F) | P2 | Files >2,000 lines are hard to navigate and maintain | 16 | |
+| 8C.5 | **Organize HTTP endpoints** — Ensure all endpoint handlers are in `Endpoints/` folders with consistent naming | P2 | Some endpoint code mixed with other concerns | 4 | |
+| 8C.6 | **Standardize configuration files** — Ensure all config files follow consistent naming (`appsettings.*.json` pattern) | P3 | Mix of config file naming patterns | 2 | |
 
 ### 8D. Developer Experience Improvements (P2 — Productivity)
 
