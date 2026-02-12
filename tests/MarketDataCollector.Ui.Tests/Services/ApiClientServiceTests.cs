@@ -131,13 +131,13 @@ public sealed class ApiClientServiceTests
 }
 
 /// <summary>
-/// Test DTO for AppSettings.
+/// Test DTO for AppSettings (matching the record in ApiClientService).
 /// </summary>
-public sealed class AppSettings
+public sealed record AppSettings
 {
-    public string? ServiceUrl { get; set; }
-    public int ServiceTimeoutSeconds { get; set; }
-    public int BackfillTimeoutMinutes { get; set; }
+    public string? ServiceUrl { get; init; }
+    public int ServiceTimeoutSeconds { get; init; }
+    public int BackfillTimeoutMinutes { get; init; }
 }
 
 /// <summary>
