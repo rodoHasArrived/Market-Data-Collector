@@ -8,15 +8,132 @@ All documentation scripts live in `build/scripts/docs/` and follow a consistent 
 
 ```
 build/scripts/docs/
-  scan-todos.py                 # TODO scanning
+  add-todos.py                  # TODO item creator (NEW)
+  scan-todos.py                 # TODO scanning (enhanced)
   generate-structure-docs.py    # Repo structure generation
   update-claude-md.py           # AI instruction sync
   generate-health-dashboard.py  # Health metrics
-  repair-links.py               # Link validation/repair
-  validate-examples.py          # Code example validation
   generate-coverage.py          # Doc coverage analysis
   generate-changelog.py         # Changelog from commits
+  generate-metrics-dashboard.py # Build metrics tracking (NEW)
+  validate-api-docs.py          # API documentation validation (NEW)
+  sync-readme-badges.py         # README badge synchronization (NEW)
+  generate-dependency-graph.py  # Project dependency visualization (NEW)
+  repair-links.py               # Link validation/repair
+  validate-examples.py          # Code example validation
   rules-engine.py               # Custom rules validation
+  generate-prompts.py           # AI prompt generation
+```
+
+## New Scripts Overview
+
+### TODO Item Creator (`add-todos.py`)
+
+Interactive tool to help developers add well-formatted TODO comments with proper metadata.
+
+```bash
+# Interactive mode (recommended)
+python3 build/scripts/docs/add-todos.py --interactive
+
+# Command-line mode
+python3 build/scripts/docs/add-todos.py \
+  --file src/MyProject/MyFile.cs \
+  --description "Implement retry logic" \
+  --issue 123 \
+  --assignee alice
+
+# Show templates
+python3 build/scripts/docs/add-todos.py --template
+```
+
+**Features:**
+- Interactive prompts for TODO details
+- Automatic comment style detection (C#, Python, etc.)
+- GitHub issue integration
+- Assignee tagging (@username)
+- Priority classification
+- Line number insertion or append mode
+- Dry-run preview
+- Template reference guide
+
+### Build Metrics Dashboard (`generate-metrics-dashboard.py`)
+
+Tracks workflow execution, test runs, and build performance over time.
+
+```bash
+# Generate metrics for last 30 days
+python3 build/scripts/docs/generate-metrics-dashboard.py \
+  --output docs/status/metrics-dashboard.md --days 30
+
+# With JSON output
+python3 build/scripts/docs/generate-metrics-dashboard.py \
+  --json-output metrics.json --summary
+```
+
+**Features:**
+- Workflow success/failure rates
+- Test execution statistics
+- Build timing trends
+- Historical performance tracking
+- Regression detection
+
+### API Documentation Validator (`validate-api-docs.py`)
+
+Validates that API documentation matches actual endpoint implementations.
+
+```bash
+# Validate API docs
+python3 build/scripts/docs/validate-api-docs.py \
+  --output docs/status/api-validation.md
+
+# Check coverage
+python3 build/scripts/docs/validate-api-docs.py --summary
+```
+
+**Features:**
+- Extracts endpoints from C# source
+- Cross-references with documentation
+- Identifies undocumented endpoints
+- Finds deprecated docs
+- Validates HTTP methods
+
+### README Badge Sync (`sync-readme-badges.py`)
+
+Updates README.md badges with current project metrics.
+
+```bash
+# Dry run to preview changes
+python3 build/scripts/docs/sync-readme-badges.py --dry-run
+
+# Update badges
+python3 build/scripts/docs/sync-readme-badges.py --readme README.md
+```
+
+**Features:**
+- Version badges from Directory.Build.props
+- Test count from test files
+- Coverage from reports
+- Build status from workflows
+- Automatic color coding
+
+## Enhanced TODO Scanner
+
+The `scan-todos.py` script has been enhanced with new features:
+
+**New capabilities:**
+- **Assignee detection** - Recognizes @username in TODO comments
+- **Age tracking** - Shows how long TODOs have been in codebase (via git)
+- **Stale item detection** - Highlights TODOs older than 90 days
+- **Unassigned tracking** - Identifies items with no owner or issue
+
+```bash
+# Scan with enhanced features
+python3 build/scripts/docs/scan-todos.py --output docs/status/TODO.md
+
+# The output now includes:
+# - High Priority section
+# - Stale Items (>90 days) section
+# - Unassigned & Untracked section
 ```
 
 ## Script Template

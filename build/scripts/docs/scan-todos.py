@@ -21,6 +21,7 @@ import argparse
 import json
 import os
 import re
+import subprocess
 import sys
 from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone
@@ -106,6 +107,9 @@ class TodoItem:
     issue_refs: list = field(default_factory=list)
     has_issue: bool = False
     priority: str = "normal"
+    assignee: str = ""
+    age_days: int = 0
+    last_modified: str = ""
 
     def to_dict(self):
         return asdict(self)
@@ -157,6 +161,37 @@ def extract_issue_refs(text: str) -> list:
     return list(set(refs))
 
 
+def extract_assignee(text: str) -> str:
+    """Extract assignee from TODO comment (e.g., @username)."""
+    match = re.search(r'@([a-zA-Z0-9_-]+)', text)
+    if match:
+        return match.group(1)
+    return ""
+
+
+def get_file_last_modified_date(file_path: Path, root: Path) -> tuple[str, int]:
+    """Get last modified date of file using git."""
+    try:
+        result = subprocess.run(
+            ['git', 'log', '-1', '--format=%aI', '--', str(file_path)],
+            capture_output=True,
+            text=True,
+            cwd=str(root),
+            timeout=5
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            date_str = result.stdout.strip()
+            # Parse ISO date and calculate age
+            from datetime import datetime
+            date = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+            age_days = (datetime.now(date.astimezone().tzinfo) - date).days
+            return date_str[:10], age_days
+    except Exception:
+        pass
+    
+    return "", 0
+
+
 def determine_priority(text: str, todo_type: str) -> str:
     """Determine priority based on content and type."""
     text_lower = text.lower()
@@ -187,12 +222,15 @@ def extract_context(lines: list, line_num: int, context_lines: int = 2) -> str:
     return "\n".join(context_parts)
 
 
-def scan_file(file_path: Path, include_notes: bool) -> Generator[TodoItem, None, None]:
+def scan_file(file_path: Path, include_notes: bool, root: Path) -> Generator[TodoItem, None, None]:
     """Scan a single file for TODO items."""
     ext = file_path.suffix.lower()
     comment_patterns = get_comment_patterns(ext)
 
     types_to_find = TODO_TYPES + ([NOTE_TYPE] if include_notes else [])
+    
+    # Get file modification info once for all TODOs in this file
+    last_modified, age_days = get_file_last_modified_date(file_path, root)
 
     # Build regex pattern
     types_pattern = '|'.join(types_to_find)
@@ -243,8 +281,9 @@ def scan_file(file_path: Path, include_notes: bool) -> Generator[TodoItem, None,
                         break
                     next_line += 1
 
-                # Extract issue references
+                # Extract issue references and assignee
                 issue_refs = extract_issue_refs(full_text)
+                assignee = extract_assignee(full_text)
 
                 # Get context
                 context = extract_context(lines, line_num)
@@ -263,7 +302,10 @@ def scan_file(file_path: Path, include_notes: bool) -> Generator[TodoItem, None,
                     context=context,
                     issue_refs=issue_refs,
                     has_issue=len(issue_refs) > 0,
-                    priority=determine_priority(full_text, todo_type)
+                    priority=determine_priority(full_text, todo_type),
+                    assignee=assignee,
+                    age_days=age_days,
+                    last_modified=last_modified
                 )
                 break  # Don't match same line with multiple patterns
 
@@ -277,7 +319,7 @@ def scan_directory(root: Path, include_notes: bool) -> ScanResults:
             if should_skip_path(file_path):
                 continue
 
-            for todo in scan_file(file_path, include_notes):
+            for todo in scan_file(file_path, include_notes, root):
                 todos.append(todo)
 
     # Calculate statistics
@@ -365,8 +407,36 @@ def generate_markdown(results: ScanResults) -> str:
         lines.append("")
         for todo in high_priority:
             issue_link = f" (#{todo.issue_refs[0]})" if todo.issue_refs else ""
-            lines.append(f"- **[{todo.type}]** `{todo.file}:{todo.line}`{issue_link}")
+            assignee_str = f" @{todo.assignee}" if todo.assignee else ""
+            age_str = f" ({todo.age_days}d old)" if todo.age_days > 0 else ""
+            lines.append(f"- **[{todo.type}]** `{todo.file}:{todo.line}`{issue_link}{assignee_str}{age_str}")
             lines.append(f"  - {todo.text}")
+        lines.append("")
+    
+    # Stale TODOs (older than 90 days)
+    stale_todos = [t for t in results.todos if t.age_days > 90]
+    if stale_todos:
+        lines.append("## Stale Items (>90 days)")
+        lines.append("")
+        lines.append("These items have been in the codebase for over 90 days:")
+        lines.append("")
+        for todo in sorted(stale_todos, key=lambda x: -x.age_days)[:20]:
+            issue_link = f" (#{todo.issue_refs[0]})" if todo.issue_refs else ""
+            assignee_str = f" @{todo.assignee}" if todo.assignee else ""
+            lines.append(f"- **[{todo.type}]** `{todo.file}:{todo.line}` - {todo.age_days} days old{issue_link}{assignee_str}")
+            lines.append(f"  - {todo.text[:100]}{'...' if len(todo.text) > 100 else ''}")
+        if len(stale_todos) > 20:
+            lines.append(f"- ... and {len(stale_todos) - 20} more stale items")
+        lines.append("")
+    
+    # Unassigned TODOs
+    unassigned = [t for t in results.todos if not t.assignee and not t.has_issue]
+    if unassigned and len(unassigned) > 10:
+        lines.append("## Unassigned & Untracked")
+        lines.append("")
+        lines.append(f"{len(unassigned)} items have no assignee and no issue tracking:")
+        lines.append("")
+        lines.append("Consider assigning ownership or creating tracking issues for these items.")
         lines.append("")
 
     # Detailed listing by type
