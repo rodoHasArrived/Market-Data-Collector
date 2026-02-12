@@ -703,8 +703,6 @@ jobs:
             "docs/generated/adr-index.md"
             "docs/generated/configuration-schema.md"
             "docs/status/health-dashboard.md"
-            "docs/status/rules-report.md"
-            "docs/status/coverage-report.md"
             "CLAUDE.md"
             "docs/ai/copilot/instructions.md"
             ".github/agents/documentation-agent.md"
@@ -774,8 +772,8 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          git add docs/generated/ docs/status/health-dashboard.md docs/status/rules-report.md \
-                  docs/status/coverage-report.md CLAUDE.md docs/ai/copilot/instructions.md \
+          git add docs/generated/ docs/status/health-dashboard.md \
+                  CLAUDE.md docs/ai/copilot/instructions.md \
                   .github/agents/documentation-agent.md
           git commit -m "docs: consolidated documentation automation updates
 
@@ -830,8 +828,8 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          git add docs/generated/ docs/status/health-dashboard.md docs/status/rules-report.md \
-                  docs/status/coverage-report.md CLAUDE.md docs/ai/copilot/instructions.md \
+          git add docs/generated/ docs/status/health-dashboard.md \
+                  CLAUDE.md docs/ai/copilot/instructions.md \
                   .github/agents/documentation-agent.md
           git commit -m "docs: consolidated documentation automation updates
 
