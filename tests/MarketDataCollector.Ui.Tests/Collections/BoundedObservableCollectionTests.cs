@@ -13,18 +13,18 @@ public sealed class BoundedObservableCollectionTests
     public void Constructor_WithCapacity_CreatesEmptyCollection()
     {
         // Act
-        var collection = new BoundedObservableCollection<int>(capacity: 5);
+        var collection = new BoundedObservableCollection<int>(maxCapacity: 5);
 
         // Assert
         collection.Should().BeEmpty();
-        collection.Capacity.Should().Be(5);
+        collection.MaxCapacity.Should().Be(5);
     }
 
     [Fact]
     public void Add_WhenUnderCapacity_AddsItem()
     {
         // Arrange
-        var collection = new BoundedObservableCollection<int>(capacity: 5);
+        var collection = new BoundedObservableCollection<int>(maxCapacity: 5);
 
         // Act
         collection.Add(1);
@@ -40,7 +40,7 @@ public sealed class BoundedObservableCollectionTests
     public void Add_WhenAtCapacity_RemovesOldestAndAddsNew()
     {
         // Arrange
-        var collection = new BoundedObservableCollection<int>(capacity: 3);
+        var collection = new BoundedObservableCollection<int>(maxCapacity: 3);
         collection.Add(1);
         collection.Add(2);
         collection.Add(3);
@@ -58,7 +58,7 @@ public sealed class BoundedObservableCollectionTests
     public void Add_WhenAtCapacity_RemovesMultipleOldestItems()
     {
         // Arrange
-        var collection = new BoundedObservableCollection<int>(capacity: 3);
+        var collection = new BoundedObservableCollection<int>(maxCapacity: 3);
         collection.Add(1);
         collection.Add(2);
         collection.Add(3);
@@ -77,7 +77,7 @@ public sealed class BoundedObservableCollectionTests
     public void CollectionChanged_FiresWhenItemAdded()
     {
         // Arrange
-        var collection = new BoundedObservableCollection<int>(capacity: 5);
+        var collection = new BoundedObservableCollection<int>(maxCapacity: 5);
         var eventFired = false;
         NotifyCollectionChangedEventArgs? eventArgs = null;
         
@@ -100,7 +100,7 @@ public sealed class BoundedObservableCollectionTests
     public void CollectionChanged_FiresWhenItemRemovedDueToCapacity()
     {
         // Arrange
-        var collection = new BoundedObservableCollection<int>(capacity: 2);
+        var collection = new BoundedObservableCollection<int>(maxCapacity: 2);
         collection.Add(1);
         collection.Add(2);
         
@@ -127,7 +127,7 @@ public sealed class BoundedObservableCollectionTests
     public void Clear_RemovesAllItems()
     {
         // Arrange
-        var collection = new BoundedObservableCollection<int>(capacity: 5);
+        var collection = new BoundedObservableCollection<int>(maxCapacity: 5);
         collection.Add(1);
         collection.Add(2);
         collection.Add(3);
@@ -143,7 +143,7 @@ public sealed class BoundedObservableCollectionTests
     public void ThreadSafety_ConcurrentAdds_DoesNotExceedCapacity()
     {
         // Arrange
-        var collection = new BoundedObservableCollection<int>(capacity: 100);
+        var collection = new BoundedObservableCollection<int>(maxCapacity: 100);
         var tasks = new List<Task>();
 
         // Act - Add 1000 items concurrently from 10 threads

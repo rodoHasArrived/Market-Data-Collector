@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using MarketDataCollector.Contracts.Configuration;
-using MarketDataCollector.Wpf.Services;
+using WpfServices = MarketDataCollector.Wpf.Services;
 
 namespace MarketDataCollector.Wpf.Views;
 
@@ -14,7 +14,7 @@ namespace MarketDataCollector.Wpf.Views;
 /// </summary>
 public partial class DataSourcesPage : Page
 {
-    private readonly ConfigService _configService;
+    private readonly WpfServices.ConfigService _configService;
     private string? _editingSourceId;
 
     public ObservableCollection<DataSourceConfigDto> DataSources { get; } = new();
@@ -22,7 +22,7 @@ public partial class DataSourcesPage : Page
     public DataSourcesPage()
     {
         InitializeComponent();
-        _configService = ConfigService.Instance;
+        _configService = WpfServices.ConfigService.Instance;
         DataContext = this;
     }
 
