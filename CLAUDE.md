@@ -465,6 +465,8 @@ Market-Data-Collector/
 │   │   ├── data-quality-monitoring-evaluation.md
 │   │   ├── desktop-end-user-improvements.md
 │   │   ├── historical-data-providers-evaluation.md
+│   │   ├── ingestion-orchestration-evaluation.md
+│   │   ├── operational-readiness-evaluation.md
 │   │   ├── realtime-streaming-architecture-evaluation.md
 │   │   └── storage-architecture-evaluation.md
 │   ├── generated/
