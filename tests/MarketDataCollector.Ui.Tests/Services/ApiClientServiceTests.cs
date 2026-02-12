@@ -5,6 +5,7 @@ using Moq.Protected;
 using System.Net;
 using System.Net.Http;
 using System.Text.Json;
+using UiAppSettings = MarketDataCollector.Ui.Services.AppSettings;
 
 namespace MarketDataCollector.Ui.Tests.Services;
 
@@ -54,7 +55,7 @@ public sealed class ApiClientServiceTests
     {
         // Arrange
         var service = ApiClientService.Instance;
-        var settings = new AppSettings { ServiceUrl = serviceUrl };
+        var settings = new UiAppSettings { ServiceUrl = serviceUrl };
 
         // Act
         service.Configure(settings);
@@ -214,7 +215,7 @@ public sealed class ApiClientServiceTests
     {
         // Arrange
         var service = ApiClientService.Instance;
-        var settings = new AppSettings 
+        var settings = new UiAppSettings 
         { 
             ServiceUrl = "http://localhost:8080",
             BackfillTimeoutMinutes = backfillTimeoutMinutes
@@ -239,16 +240,6 @@ public sealed class ApiClientServiceTests
         // Assert
         uiApiClient.Should().NotBeNull();
     }
-}
-
-/// <summary>
-/// Test DTO for AppSettings (matching the record in ApiClientService).
-/// </summary>
-public sealed record AppSettings
-{
-    public string? ServiceUrl { get; init; }
-    public int ServiceTimeoutSeconds { get; init; }
-    public int BackfillTimeoutMinutes { get; init; }
 }
 
 /// <summary>

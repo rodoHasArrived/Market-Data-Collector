@@ -9,7 +9,7 @@ public class PortfolioImportServiceTests
     public async Task ImportToWatchlistAsync_WithValidEntries_CreatesOrUpdatesWatchlist()
     {
         // Arrange
-        var service = new PortfolioImportService();
+        var service = PortfolioImportService.Instance; // Use singleton instance
         var mockWatchlistService = new MockWatchlistService();
         WatchlistService.Instance = mockWatchlistService;
 
@@ -35,7 +35,7 @@ public class PortfolioImportServiceTests
     public async Task ImportToWatchlistAsync_WithDuplicateSymbols_ImportsDistinctSymbols()
     {
         // Arrange
-        var service = new PortfolioImportService();
+        var service = PortfolioImportService.Instance; // Use singleton instance
         var mockWatchlistService = new MockWatchlistService();
         WatchlistService.Instance = mockWatchlistService;
 
