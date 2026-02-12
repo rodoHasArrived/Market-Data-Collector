@@ -23,7 +23,7 @@ public static class FormValidationRules
 
     /// <summary>
     /// Validates a stock symbol format.
-    /// Symbols must be 1-10 characters and contain only letters, numbers, dots, dashes, and slashes.
+    /// Symbols must be 1-10 characters, start with a letter, and contain only letters, numbers, dots, dashes, and slashes.
     /// </summary>
     /// <param name="value">The symbol to validate.</param>
     /// <returns>Validation result.</returns>
@@ -36,8 +36,9 @@ public static class FormValidationRules
         if (trimmed.Length < 1 || trimmed.Length > 10)
             return ValidationResult.Error("Symbol must be between 1 and 10 characters.");
 
-        if (!Regex.IsMatch(trimmed, @"^[A-Za-z0-9./-]+$"))
-            return ValidationResult.Error("Symbol can only contain letters, numbers, dots, dashes, and slashes.");
+        // Symbol must start with a letter and contain only letters, numbers, dots, dashes, and slashes
+        if (!Regex.IsMatch(trimmed, @"^[A-Za-z][A-Za-z0-9./-]*$"))
+            return ValidationResult.Error("Symbol must start with a letter and can only contain letters, numbers, dots, dashes, and slashes.");
 
         return ValidationResult.Success();
     }
@@ -91,6 +92,23 @@ public static class FormValidationRules
         var daysDiff = (toDate.Value - fromDate.Value).TotalDays;
         if (daysDiff > 365 * 10)
             return ValidationResult.Warning("Date range spans more than 10 years. This may take a long time.");
+
+        return ValidationResult.Success();
+    }
+
+    /// <summary>
+    /// Validates a date string in ISO format (YYYY-MM-DD).
+    /// </summary>
+    /// <param name="dateStr">The date string to validate.</param>
+    /// <returns>Validation result.</returns>
+    public static ValidationResult ValidateDateRange(string? dateStr)
+    {
+        if (string.IsNullOrWhiteSpace(dateStr))
+            return ValidationResult.Error("Date is required.");
+
+        // Try to parse as DateOnly (ISO format: YYYY-MM-DD)
+        if (!DateOnly.TryParse(dateStr, out _))
+            return ValidationResult.Error("Invalid date format. Use YYYY-MM-DD format.");
 
         return ValidationResult.Success();
     }
