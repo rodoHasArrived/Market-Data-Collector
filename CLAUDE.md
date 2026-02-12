@@ -1893,7 +1893,15 @@ ADRs document significant architectural decisions. Located in `docs/adr/`:
 | ADR-003 | Microservices Decomposition | Rejected in favor of monolith |
 | ADR-004 | Async Streaming Patterns | CancellationToken, IAsyncEnumerable |
 | ADR-005 | Attribute-Based Discovery | `[DataSource]`, `[ImplementsAdr]` attributes |
+| ADR-006 | Domain Events Polymorphic Payload | Sealed record wrapper with static factories |
+| ADR-007 | WAL + Event Pipeline Durability | Write-Ahead Log for crash-safe persistence |
+| ADR-008 | Multi-Format Composite Storage | JSONL + Parquet simultaneous writes |
+| ADR-009 | F# Type-Safe Domain | F# discriminated unions with C# interop |
 | ADR-010 | HttpClient Factory | HttpClientFactory lifecycle management |
+| ADR-011 | Centralized Configuration | Configuration and credentials management |
+| ADR-012 | Monitoring & Alerting Pipeline | Unified health checks and alerts |
+| ADR-013 | Bounded Channel Pipeline Policy | Consistent backpressure with static presets |
+| ADR-014 | JSON Source Generators | High-performance serialization without reflection |
 
 Use `[ImplementsAdr("ADR-XXX", "reason")]` attribute when implementing ADR contracts.
 
