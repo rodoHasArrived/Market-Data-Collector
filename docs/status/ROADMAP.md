@@ -197,10 +197,10 @@ From `docs/IMPROVEMENTS.md` — 6 items not started, 3 partially done.
 | 4A.2 | Implement `PendingOperationsQueueService.ProcessAllAsync()` | P1 | ✅ Done — handler registry with retry support for failed operations |
 | 4A.3 | Complete WPF feature parity with UWP | P2 | ⚠️ Partial — navigation/workspace shell is in place, but many destination pages are still placeholders ("Coming Soon") and do not yet provide equivalent workflows |
 | 4A.4 | Fix desktop charting (depends on Phase 0.3 fix) | P1 | ✅ Done — resolved in Phase 0.3 |
-| 4A.5 | Replace placeholder WPF pages with functional screens for end-user workflows | P1 | New acceptance gate: roadmap/release notes can claim "parity complete" only when placeholder pages are removed from primary navigation paths and core tasks are executable end-to-end |
+| 4A.5 | Replace placeholder WPF pages with functional screens for end-user workflows | P1 | ⚠️ Partial — 6 of 22 placeholder pages replaced with functional implementations (WelcomePage, KeyboardShortcutsPage, DiagnosticsPage, TradingHoursPage, NotificationCenterPage, ProviderPage); 16 pages remain |
 | 4A.6 | Publish a user-visible WPF implementation matrix (functional vs placeholder pages) | P2 | Keep roadmap messaging aligned with actual click-through UX reality for each release |
 
-**Reality check (current repo state):** `src/MarketDataCollector.Wpf/Views` contains 48 page XAML files, of which 22 still render a `"Coming Soon"` placeholder shell.
+**Reality check (current repo state):** `src/MarketDataCollector.Wpf/Views` contains 48 page XAML files, of which 16 still render a `"Coming Soon"` placeholder shell (down from 22 — WelcomePage, KeyboardShortcutsPage, DiagnosticsPage, TradingHoursPage, NotificationCenterPage, and ProviderPage now have functional implementations).
 
 ### 4B. UWP Desktop App (Legacy)
 
@@ -291,7 +291,7 @@ The same service interfaces are defined in up to three separate projects. Consol
 | # | Item | Priority | Description | Est. LOC Saved | Status |
 |---|------|----------|-------------|----------------|--------|
 | 6C.1 | **Phase 1 — Near-identical services** (BrushRegistry, ExportPresetService, FormValidationService, InfoBarService, TooltipService) | P2 | Services with <5% variation between WPF and UWP; extract to shared project directly | ~400 | ✅ FormValidationService done (PR #1028) |
-| 6C.2 | **Phase 2 — Singleton-pattern services** (ThemeService, ConfigService, NotificationService, NavigationService, ConnectionService) | P2 | Only differ in singleton pattern (`Lazy<T>` vs `lock`); parameterize the pattern in a shared base | ~600 | |
+| 6C.2 | **Phase 2 — Singleton-pattern services** (ThemeService, ConfigService, NotificationService, NavigationService, ConnectionService) | P2 | Only differ in singleton pattern (`Lazy<T>` vs `lock`); parameterize the pattern in a shared base | ~600 | ✅ Done (ThemeServiceBase, ConnectionServiceBase, NavigationServiceBase extracted to Ui.Services; WPF services refactored to extend base classes) |
 | 6C.3 | **Phase 3 — Services with minor platform differences** (LoggingService, MessagingService, StatusService, CredentialService, SchemaService, WatchlistService) | P2 | ~90% shared logic with small platform-specific branches; use strategy/adapter pattern | ~500 | |
 | 6C.4 | **Phase 4 — Complex services** (AdminMaintenanceService, AdvancedAnalyticsService, ArchiveHealthService, BackgroundTaskSchedulerService, OfflineTrackingPersistenceService, PendingOperationsQueueService) | P3 | Larger services requiring careful extraction of shared orchestration logic | ~300 | |
 
@@ -438,7 +438,7 @@ Finish implementing stubbed-out functionality.
 | # | Item | Priority | Description | Est. Hours |
 |---|------|----------|-------------|-----------|
 | 9A.1 | **Implement critical stub endpoints** — Symbol management (15), Storage operations (20), Storage quality (9) | P1 | Highest priority stub endpoints (Phase 3B) | 60 |
-| 9A.2 | **Complete desktop app placeholders** — Remove "Coming Soon" pages and implement core workflows | P1 | 22 WPF pages are still placeholders (Phase 4A.5) | 80 |
+| 9A.2 | **Complete desktop app placeholders** — Remove "Coming Soon" pages and implement core workflows | P1 | 16 WPF pages are still placeholders (Phase 4A.5, 6 done) | 60 |
 | 9A.3 | **Implement remaining data quality features** — Complete all quality monitoring endpoints and UI | P1 | Quality monitoring is key selling point | 40 |
 | 9A.4 | **Finish backfill automation** — Complete scheduled backfill and gap-fill features | P1 | Critical for unattended operation | 24 |
 | 9A.5 | **Complete provider integrations** — Validate all 10 historical and 5 streaming providers work end-to-end | P1 | Core functionality validation | 32 |
@@ -691,7 +691,7 @@ To track progress toward v2.0.0 production release:
 |--------|---------|--------|--------|
 | **Test Coverage** | ~17% | >80% | 🔴 Critical Gap |
 | **Implemented Endpoints** | 136/269 (51%) | >230/269 (85%) | 🟡 In Progress |
-| **Functional Desktop Pages** | 26/48 (54%) | 46/48 (96%) | 🟡 In Progress |
+| **Functional Desktop Pages** | 32/48 (67%) | 46/48 (96%) | 🟡 In Progress |
 | **Provider Test Coverage** | 8/55 files | >40/55 files | 🔴 Critical Gap |
 | **Documentation Completeness** | ~75% | >95% | 🟡 In Progress |
 | **Production Readiness Score** | 6.5/10 | 9/10 | 🟡 In Progress |

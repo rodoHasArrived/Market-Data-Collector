@@ -1,18 +1,21 @@
 using System;
 using System.Windows;
+using MarketDataCollector.Ui.Services.Contracts;
+using MarketDataCollector.Ui.Services.Services;
 
 namespace MarketDataCollector.Wpf.Services;
 
 /// <summary>
-/// Service for handling light/dark theme switching in WPF applications.
+/// WPF-specific theme service that extends <see cref="ThemeServiceBase"/> with
+/// ResourceDictionary management and window chrome updates.
 /// Implements singleton pattern for application-wide theme management.
+/// Phase 6C.2: Shared base class extracts state management and toggle logic.
 /// </summary>
-public sealed class ThemeService
+public sealed class ThemeService : ThemeServiceBase
 {
     private static readonly Lazy<ThemeService> _instance = new(() => new ThemeService());
 
     private Window? _mainWindow;
-    private AppTheme _currentTheme = AppTheme.Light;
 
     private const string LightThemeUri = "pack://application:,,,/Themes/LightTheme.xaml";
     private const string DarkThemeUri = "pack://application:,,,/Themes/DarkTheme.xaml";
@@ -23,16 +26,11 @@ public sealed class ThemeService
     public static ThemeService Instance => _instance.Value;
 
     /// <summary>
-    /// Gets the current application theme.
-    /// </summary>
-    public AppTheme CurrentTheme => _currentTheme;
-
-    /// <summary>
-    /// Occurs when the theme is changed.
+    /// Occurs when the theme is changed. Provides detailed event args with previous/new theme.
     /// </summary>
     public event EventHandler<ThemeChangedEventArgs>? ThemeChanged;
 
-    private ThemeService()
+    private ThemeService() : base(AppTheme.Light)
     {
     }
 
@@ -46,37 +44,11 @@ public sealed class ThemeService
         ArgumentNullException.ThrowIfNull(window);
 
         _mainWindow = window;
-        ApplyTheme(_currentTheme);
+        ApplyThemeCore(CurrentTheme);
     }
 
-    /// <summary>
-    /// Toggles between light and dark themes.
-    /// </summary>
-    public void ToggleTheme()
-    {
-        var newTheme = _currentTheme == AppTheme.Light ? AppTheme.Dark : AppTheme.Light;
-        SetTheme(newTheme);
-    }
-
-    /// <summary>
-    /// Sets the application theme to the specified value.
-    /// </summary>
-    /// <param name="theme">The theme to apply.</param>
-    public void SetTheme(AppTheme theme)
-    {
-        if (_currentTheme == theme)
-        {
-            return;
-        }
-
-        var previousTheme = _currentTheme;
-        _currentTheme = theme;
-        ApplyTheme(theme);
-
-        OnThemeChanged(new ThemeChangedEventArgs(previousTheme, theme));
-    }
-
-    private void ApplyTheme(AppTheme theme)
+    /// <inheritdoc />
+    protected override void ApplyThemeCore(AppTheme theme)
     {
         if (_mainWindow is null)
         {
@@ -120,6 +92,12 @@ public sealed class ThemeService
         }
     }
 
+    /// <inheritdoc />
+    protected override void OnThemeChanged(AppTheme previousTheme, AppTheme newTheme)
+    {
+        ThemeChanged?.Invoke(this, new ThemeChangedEventArgs(previousTheme, newTheme));
+    }
+
     private void ApplyProgrammaticTheme(AppTheme theme)
     {
         if (_mainWindow is null)
@@ -149,20 +127,10 @@ public sealed class ThemeService
             return;
         }
 
-        // Update window background based on theme
         var isDark = theme == AppTheme.Dark;
         _mainWindow.Background = isDark
             ? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(30, 30, 30))
             : new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White);
-    }
-
-    /// <summary>
-    /// Raises the ThemeChanged event.
-    /// </summary>
-    /// <param name="e">The event arguments.</param>
-    private void OnThemeChanged(ThemeChangedEventArgs e)
-    {
-        ThemeChanged?.Invoke(this, e);
     }
 }
 
@@ -171,21 +139,15 @@ public sealed class ThemeService
 /// </summary>
 public sealed class ThemeChangedEventArgs : EventArgs
 {
-    /// <summary>
-    /// Gets the previous theme.
-    /// </summary>
+    /// <summary>Gets the previous theme.</summary>
     public AppTheme PreviousTheme { get; }
 
-    /// <summary>
-    /// Gets the new theme.
-    /// </summary>
+    /// <summary>Gets the new theme.</summary>
     public AppTheme NewTheme { get; }
 
     /// <summary>
     /// Initializes a new instance of the ThemeChangedEventArgs class.
     /// </summary>
-    /// <param name="previousTheme">The previous theme.</param>
-    /// <param name="newTheme">The new theme.</param>
     public ThemeChangedEventArgs(AppTheme previousTheme, AppTheme newTheme)
     {
         PreviousTheme = previousTheme;
