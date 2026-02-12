@@ -9,7 +9,7 @@ namespace MarketDataCollector.Infrastructure.Providers.Streaming.Failover;
 
 /// <summary>
 /// Orchestrates automatic failover between streaming market data providers.
-/// Monitors provider health via <see cref="ConnectionHealthMonitor"/>, evaluates
+/// Monitors provider health via <see cref="IConnectionHealthMonitor"/>, evaluates
 /// configured <see cref="FailoverRuleConfig"/> rules, and triggers switchover
 /// when consecutive failures exceed the threshold.
 /// </summary>

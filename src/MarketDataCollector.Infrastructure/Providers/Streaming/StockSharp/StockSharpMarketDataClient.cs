@@ -73,11 +73,11 @@ public sealed class StockSharpMarketDataClient : IMarketDataClient
 
     // Channel overflow statistics for monitoring
     private long _messageDropCount;
-#endif
 
     // Use centralized subscription ID range to avoid collisions with other providers
     private int _nextSubId = ProviderSubscriptionRanges.StockSharpStart;
     private bool _disposed;
+#endif
     private readonly object _gate = new();
 
     /// <summary>

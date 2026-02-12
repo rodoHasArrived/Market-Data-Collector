@@ -36,7 +36,9 @@ public sealed class BackfillRequestQueue : IDisposable
     /// <summary>
     /// Event raised when a request is ready to be processed.
     /// </summary>
+#pragma warning disable CS0067 // Event is never used - Reserved for future extensibility
     public event Func<BackfillRequest, Task>? OnRequestReady;
+#pragma warning restore CS0067
 
     /// <summary>
     /// Event raised when queue state changes.
