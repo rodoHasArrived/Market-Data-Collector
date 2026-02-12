@@ -5,7 +5,10 @@ using System.Windows;
 using System.Windows.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using MarketDataCollector.Wpf.Contracts;
 using MarketDataCollector.Wpf.Services;
+using MarketDataCollector.Wpf.Views;
+using MarketDataCollector.Ui.Services;
 
 namespace MarketDataCollector.Wpf;
 
@@ -78,10 +81,18 @@ public partial class App : Application
         // TD-10: Initialize HttpClientFactory early for proper HTTP client lifecycle management
         HttpClientFactoryProvider.Initialize();
 
+        // Provide the DI container to NavigationService so it can resolve pages
+        NavigationService.Instance.SetServiceProvider(Services);
+
         // Handle unhandled exceptions gracefully
         DispatcherUnhandledException += OnDispatcherUnhandledException;
         AppDomain.CurrentDomain.UnhandledException += OnDomainUnhandledException;
         TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
+
+        // Create and show MainWindow from DI (replaces StartupUri)
+        var mainWindow = Services.GetRequiredService<MainWindow>();
+        Current.MainWindow = mainWindow;
+        mainWindow.Show();
 
         // Fire-and-forget async initialization with proper exception handling
         await SafeOnStartupAsync();
@@ -89,33 +100,98 @@ public partial class App : Application
 
     /// <summary>
     /// Configures services for dependency injection.
-    /// C1: Register services by interface where possible, using singleton instances.
+    /// C1: DI-first registration — services registered by interface where possible.
+    /// Pages registered as transient for constructor injection via NavigationService.
     /// </summary>
     private static void ConfigureServices(IServiceCollection services)
     {
         // Register HttpClient factory
         services.AddHttpClient();
 
-        // C1: Register shared UI service interfaces (from MarketDataCollector.Ui.Services.Contracts)
-        // Uses singleton Instance properties to ensure DI resolves the same instance as static access.
-        services.AddSingleton<MarketDataCollector.Ui.Services.Contracts.ILoggingService>(_ => LoggingService.Instance);
-        services.AddSingleton<MarketDataCollector.Wpf.Contracts.IConnectionService>(_ => ConnectionService.Instance);
-
-        // Register singleton services via their Instance properties
-        services.AddSingleton(_ => NavigationService.Instance);
-        services.AddSingleton(_ => ConfigService.Instance);
+        // ── Core services (by interface + concrete type) ────────────────────
+        services.AddSingleton<IConnectionService>(_ => ConnectionService.Instance);
         services.AddSingleton(_ => ConnectionService.Instance);
+
+        services.AddSingleton<INavigationService>(_ => NavigationService.Instance);
+        services.AddSingleton(_ => NavigationService.Instance);
+
+        services.AddSingleton<MarketDataCollector.Ui.Services.Contracts.ILoggingService>(_ => LoggingService.Instance);
+        services.AddSingleton(_ => LoggingService.Instance);
+
+        services.AddSingleton(_ => ConfigService.Instance);
         services.AddSingleton(_ => ThemeService.Instance);
         services.AddSingleton(_ => NotificationService.Instance);
-        services.AddSingleton(_ => LoggingService.Instance);
         services.AddSingleton(_ => KeyboardShortcutService.Instance);
         services.AddSingleton(_ => MessagingService.Instance);
         services.AddSingleton(_ => StatusService.Instance);
+        services.AddSingleton(_ => FirstRunService.Instance);
 
-        // Register background services via their Instance properties
+        // ── Domain / feature services ───────────────────────────────────────
+        services.AddSingleton(_ => BackendServiceManager.Instance);
+        services.AddSingleton(_ => WatchlistService.Instance);
+        services.AddSingleton(_ => ArchiveHealthService.Instance);
+        services.AddSingleton(_ => SchemaService.Instance);
+        services.AddSingleton(_ => AdminMaintenanceService.Instance);
+        services.AddSingleton(_ => AdvancedAnalyticsService.Instance);
+        services.AddSingleton(_ => SearchService.Instance);
+
+        // ── Background / infrastructure services ────────────────────────────
         services.AddSingleton(_ => BackgroundTaskSchedulerService.Instance);
         services.AddSingleton(_ => OfflineTrackingPersistenceService.Instance);
         services.AddSingleton(_ => PendingOperationsQueueService.Instance);
+
+        // ── MainWindow ──────────────────────────────────────────────────────
+        services.AddSingleton<MainWindow>();
+
+        // ── Pages (transient — created per navigation) ──────────────────────
+        services.AddTransient<MainPage>();
+        services.AddTransient<DashboardPage>();
+        services.AddTransient<WatchlistPage>();
+        services.AddTransient<ProviderPage>();
+        services.AddTransient<ProviderHealthPage>();
+        services.AddTransient<DataSourcesPage>();
+        services.AddTransient<LiveDataViewerPage>();
+        services.AddTransient<SymbolsPage>();
+        services.AddTransient<SymbolMappingPage>();
+        services.AddTransient<SymbolStoragePage>();
+        services.AddTransient<StoragePage>();
+        services.AddTransient<BackfillPage>();
+        services.AddTransient<PortfolioImportPage>();
+        services.AddTransient<IndexSubscriptionPage>();
+        services.AddTransient<ScheduleManagerPage>();
+        services.AddTransient<DataQualityPage>();
+        services.AddTransient<CollectionSessionPage>();
+        services.AddTransient<ArchiveHealthPage>();
+        services.AddTransient<ServiceManagerPage>();
+        services.AddTransient<SystemHealthPage>();
+        services.AddTransient<DiagnosticsPage>();
+        services.AddTransient<DataExportPage>();
+        services.AddTransient<DataSamplingPage>();
+        services.AddTransient<TimeSeriesAlignmentPage>();
+        services.AddTransient<ExportPresetsPage>();
+        services.AddTransient<AnalysisExportPage>();
+        services.AddTransient<AnalysisExportWizardPage>();
+        services.AddTransient<EventReplayPage>();
+        services.AddTransient<PackageManagerPage>();
+        services.AddTransient<TradingHoursPage>();
+        services.AddTransient<AdvancedAnalyticsPage>();
+        services.AddTransient<ChartingPage>();
+        services.AddTransient<OrderBookPage>();
+        services.AddTransient<DataCalendarPage>();
+        services.AddTransient<StorageOptimizationPage>();
+        services.AddTransient<RetentionAssurancePage>();
+        services.AddTransient<AdminMaintenancePage>();
+        services.AddTransient<LeanIntegrationPage>();
+        services.AddTransient<MessagingHubPage>();
+        services.AddTransient<WorkspacePage>();
+        services.AddTransient<NotificationCenterPage>();
+        services.AddTransient<HelpPage>();
+        services.AddTransient<WelcomePage>();
+        services.AddTransient<SettingsPage>();
+        services.AddTransient<KeyboardShortcutsPage>();
+        services.AddTransient<SetupWizardPage>();
+        services.AddTransient<ActivityLogPage>();
+        services.AddTransient<DataBrowserPage>();
     }
 
     /// <summary>

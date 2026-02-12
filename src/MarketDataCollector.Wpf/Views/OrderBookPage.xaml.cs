@@ -32,26 +32,37 @@ public partial class OrderBookPage : Page
     private string _selectedSymbol = string.Empty;
     private int _depthLevels = 10;
 
-    public OrderBookPage()
+    private readonly StatusService _statusService;
+    private readonly ConnectionService _connectionService;
+    private readonly LoggingService _loggingService;
+
+    public OrderBookPage(
+        StatusService statusService,
+        ConnectionService connectionService,
+        LoggingService loggingService)
     {
         InitializeComponent();
+
+        _statusService = statusService;
+        _connectionService = connectionService;
+        _loggingService = loggingService;
 
         BidsControl.ItemsSource = _bids;
         AsksControl.ItemsSource = _asks;
         RecentTradesControl.ItemsSource = _recentTrades;
 
         // Get base URL from StatusService
-        _baseUrl = StatusService.Instance.BaseUrl;
+        _baseUrl = _statusService.BaseUrl;
 
         // Subscribe to connection events
-        ConnectionService.Instance.StateChanged += OnConnectionStateChanged;
+        _connectionService.StateChanged += OnConnectionStateChanged;
 
         Unloaded += OnPageUnloaded;
     }
 
     private void OnPageUnloaded(object sender, RoutedEventArgs e)
     {
-        ConnectionService.Instance.StateChanged -= OnConnectionStateChanged;
+        _connectionService.StateChanged -= OnConnectionStateChanged;
         _refreshTimer?.Stop();
         _refreshTimer?.Dispose();
         _cts?.Cancel();
@@ -76,7 +87,7 @@ public partial class OrderBookPage : Page
 
     private void UpdateConnectionStatus()
     {
-        var state = ConnectionService.Instance.State;
+        var state = _connectionService.State;
 
         ConnectionStatusText.Text = state switch
         {
@@ -100,7 +111,7 @@ public partial class OrderBookPage : Page
             _cts?.Cancel();
             _cts = new CancellationTokenSource();
 
-            var status = await StatusService.Instance.GetStatusAsync(_cts.Token);
+            var status = await _statusService.GetStatusAsync(_cts.Token);
             if (status != null)
             {
                 _availableSymbols.Clear();
@@ -118,7 +129,7 @@ public partial class OrderBookPage : Page
         }
         catch (Exception ex)
         {
-            LoggingService.Instance.LogError("Failed to load symbols", ex);
+            _loggingService.LogError("Failed to load symbols", ex);
         }
     }
 
@@ -170,7 +181,7 @@ public partial class OrderBookPage : Page
         }
         catch (Exception ex)
         {
-            LoggingService.Instance.LogError("Failed to refresh order book", ex);
+            _loggingService.LogError("Failed to refresh order book", ex);
         }
     }
 

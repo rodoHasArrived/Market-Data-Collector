@@ -20,6 +20,10 @@ namespace MarketDataCollector.Wpf.Views;
 /// </summary>
 public partial class ProviderHealthPage : Page
 {
+    private readonly StatusService _statusService;
+    private readonly ConnectionService _connectionService;
+    private readonly LoggingService _loggingService;
+    private readonly NotificationService _notificationService;
     private readonly ObservableCollection<ProviderStatusModel> _streamingProviders = new();
     private readonly ObservableCollection<BackfillProviderModel> _backfillProviders = new();
     private readonly ObservableCollection<ConnectionEventModel> _connectionHistory = new();
@@ -27,28 +31,37 @@ public partial class ProviderHealthPage : Page
     private CancellationTokenSource? _cts;
     private string _baseUrl = "http://localhost:8080";
 
-    public ProviderHealthPage()
+    public ProviderHealthPage(
+        StatusService statusService,
+        ConnectionService connectionService,
+        LoggingService loggingService,
+        NotificationService notificationService)
     {
         InitializeComponent();
+
+        _statusService = statusService;
+        _connectionService = connectionService;
+        _loggingService = loggingService;
+        _notificationService = notificationService;
 
         StreamingProvidersControl.ItemsSource = _streamingProviders;
         BackfillProvidersControl.ItemsSource = _backfillProviders;
         ConnectionHistoryControl.ItemsSource = _connectionHistory;
 
         // Get base URL from StatusService
-        _baseUrl = StatusService.Instance.BaseUrl;
+        _baseUrl = _statusService.BaseUrl;
 
         // Subscribe to connection events
-        ConnectionService.Instance.StateChanged += OnConnectionStateChanged;
-        ConnectionService.Instance.ConnectionHealthUpdated += OnConnectionHealthUpdated;
+        _connectionService.StateChanged += OnConnectionStateChanged;
+        _connectionService.ConnectionHealthUpdated += OnConnectionHealthUpdated;
 
         Unloaded += OnPageUnloaded;
     }
 
     private void OnPageUnloaded(object sender, RoutedEventArgs e)
     {
-        ConnectionService.Instance.StateChanged -= OnConnectionStateChanged;
-        ConnectionService.Instance.ConnectionHealthUpdated -= OnConnectionHealthUpdated;
+        _connectionService.StateChanged -= OnConnectionStateChanged;
+        _connectionService.ConnectionHealthUpdated -= OnConnectionHealthUpdated;
         _refreshTimer?.Stop();
         _refreshTimer?.Dispose();
         _cts?.Cancel();
@@ -87,7 +100,7 @@ public partial class ProviderHealthPage : Page
             {
                 AddConnectionEvent(
                     $"Health check failed: {e.ErrorMessage}",
-                    ConnectionService.Instance.CurrentProvider,
+                    _connectionService.CurrentProvider,
                     EventType.Warning);
             });
         }
@@ -118,7 +131,7 @@ public partial class ProviderHealthPage : Page
         }
         catch (Exception ex)
         {
-            LoggingService.Instance.LogError("Failed to refresh provider health", ex);
+            _loggingService.LogError("Failed to refresh provider health", ex);
         }
     }
 
@@ -127,15 +140,15 @@ public partial class ProviderHealthPage : Page
         _streamingProviders.Clear();
 
         // Get provider catalog
-        var providers = await StatusService.Instance.GetAvailableProvidersAsync(ct);
+        var providers = await _statusService.GetAvailableProvidersAsync(ct);
         var streamingProviders = providers.Where(p =>
             p.ProviderType == "Streaming" || p.ProviderType == "Hybrid").ToList();
 
         // Get current connection status
-        var connectionState = ConnectionService.Instance.State;
-        var currentProvider = ConnectionService.Instance.CurrentProvider;
-        var latency = ConnectionService.Instance.LastLatencyMs;
-        var uptime = ConnectionService.Instance.Uptime;
+        var connectionState = _connectionService.State;
+        var currentProvider = _connectionService.CurrentProvider;
+        var latency = _connectionService.LastLatencyMs;
+        var uptime = _connectionService.Uptime;
 
         foreach (var provider in streamingProviders)
         {
@@ -188,7 +201,7 @@ public partial class ProviderHealthPage : Page
         _backfillProviders.Clear();
 
         // Get provider catalog
-        var providers = await StatusService.Instance.GetAvailableProvidersAsync(ct);
+        var providers = await _statusService.GetAvailableProvidersAsync(ct);
         var backfillProviders = providers.Where(p =>
             p.ProviderType == "Backfill" || p.ProviderType == "Hybrid").ToList();
 
@@ -274,9 +287,9 @@ public partial class ProviderHealthPage : Page
         DisconnectedCountText.Text = disconnected.ToString();
         TotalProvidersText.Text = totalProviders.ToString();
 
-        if (ConnectionService.Instance.State == ConnectionState.Connected)
+        if (_connectionService.State == ConnectionState.Connected)
         {
-            AvgLatencyText.Text = $"{ConnectionService.Instance.LastLatencyMs:F0}";
+            AvgLatencyText.Text = $"{_connectionService.LastLatencyMs:F0}";
         }
         else
         {
@@ -336,7 +349,7 @@ public partial class ProviderHealthPage : Page
     private async void Refresh_Click(object sender, RoutedEventArgs e)
     {
         await RefreshDataAsync();
-        NotificationService.Instance.ShowNotification(
+        _notificationService.ShowNotification(
             "Refreshed",
             "Provider health data has been refreshed.",
             NotificationType.Info);
@@ -352,9 +365,9 @@ public partial class ProviderHealthPage : Page
         if (provider.IsConnected)
         {
             // Disconnect
-            await ConnectionService.Instance.DisconnectAsync();
+            await _connectionService.DisconnectAsync();
             AddConnectionEvent("Disconnected by user", provider.Name, EventType.Info);
-            NotificationService.Instance.ShowNotification(
+            _notificationService.ShowNotification(
                 "Disconnected",
                 $"Disconnected from {provider.Name}.",
                 NotificationType.Info);
@@ -362,9 +375,9 @@ public partial class ProviderHealthPage : Page
         else
         {
             // Connect
-            await ConnectionService.Instance.ConnectAsync(providerId);
+            await _connectionService.ConnectAsync(providerId);
             AddConnectionEvent("Connected by user", provider.Name, EventType.Success);
-            NotificationService.Instance.ShowNotification(
+            _notificationService.ShowNotification(
                 "Connected",
                 $"Connected to {provider.Name}.",
                 NotificationType.Success);
@@ -384,7 +397,7 @@ public partial class ProviderHealthPage : Page
                      $"Status: {provider.StatusText}\n" +
                      $"{provider.LatencyText}\n" +
                      $"{provider.UptimeText}\n" +
-                     $"Reconnects: {ConnectionService.Instance.TotalReconnects}";
+                     $"Reconnects: {_connectionService.TotalReconnects}";
 
         MessageBox.Show(details, $"{provider.Name} Details", MessageBoxButton.OK, MessageBoxImage.Information);
     }
@@ -394,7 +407,7 @@ public partial class ProviderHealthPage : Page
         _connectionHistory.Clear();
         NoHistoryText.Visibility = Visibility.Visible;
 
-        NotificationService.Instance.ShowNotification(
+        _notificationService.ShowNotification(
             "History Cleared",
             "Connection history has been cleared.",
             NotificationType.Info);

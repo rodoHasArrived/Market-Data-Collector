@@ -17,8 +17,9 @@ namespace MarketDataCollector.Wpf.Views;
 public partial class MainPage : Page
 {
     private readonly NavigationService _navigationService;
-    private readonly IConnectionService _connectionService;
+    private readonly ConnectionService _connectionService;
     private readonly SearchService _searchService;
+    private readonly MessagingService _messagingService;
     private bool _commandPaletteOpen;
 
     /// <summary>
@@ -29,19 +30,24 @@ public partial class MainPage : Page
         MonitorNavList, CollectNavList, StorageNavList, QualityNavList, SettingsNavList
     };
 
-    public MainPage()
+    public MainPage(
+        NavigationService navigationService,
+        ConnectionService connectionService,
+        SearchService searchService,
+        MessagingService messagingService)
     {
         InitializeComponent();
 
-        _navigationService = MarketDataCollector.Wpf.Services.NavigationService.Instance;
-        _connectionService = MarketDataCollector.Wpf.Services.ConnectionService.Instance;
-        _searchService = SearchService.Instance;
+        _navigationService = navigationService;
+        _connectionService = connectionService;
+        _searchService = searchService;
+        _messagingService = messagingService;
 
         // Subscribe to connection state changes
         _connectionService.ConnectionStateChanged += OnConnectionStateChanged;
 
         // Subscribe to messaging for page updates
-        MessagingService.Instance.MessageReceived += OnMessageReceived;
+        _messagingService.MessageReceived += OnMessageReceived;
 
         // Register Ctrl+K for command palette via PreviewKeyDown
         PreviewKeyDown += OnPreviewKeyDown;
@@ -346,7 +352,7 @@ public partial class MainPage : Page
                 // Collector control
                 break;
             case "refresh":
-                MessagingService.Instance.Send("RefreshStatus");
+                _messagingService.Send("RefreshStatus");
                 break;
         }
     }
@@ -424,7 +430,7 @@ public partial class MainPage : Page
 
     private void OnRefreshButtonClick(object sender, RoutedEventArgs e)
     {
-        MessagingService.Instance.Send("RefreshStatus");
+        _messagingService.Send("RefreshStatus");
     }
 
     private void OnNotificationsButtonClick(object sender, RoutedEventArgs e)

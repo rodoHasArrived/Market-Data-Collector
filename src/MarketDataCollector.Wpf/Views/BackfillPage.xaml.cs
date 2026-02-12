@@ -13,12 +13,19 @@ namespace MarketDataCollector.Wpf.Views;
 /// </summary>
 public partial class BackfillPage : Page
 {
+    private readonly NotificationService _notificationService;
+    private readonly NavigationService _navigationService;
     private readonly ObservableCollection<SymbolProgressInfo> _symbolProgress = new();
     private readonly ObservableCollection<ScheduledJobInfo> _scheduledJobs = new();
 
-    public BackfillPage()
+    public BackfillPage(
+        NotificationService notificationService,
+        NavigationService navigationService)
     {
         InitializeComponent();
+
+        _notificationService = notificationService;
+        _navigationService = navigationService;
 
         SymbolProgressList.ItemsSource = _symbolProgress;
         ScheduledJobsList.ItemsSource = _scheduledJobs;
@@ -66,7 +73,7 @@ public partial class BackfillPage : Page
 
     private void ValidateData_Click(object sender, RoutedEventArgs e)
     {
-        NotificationService.Instance.ShowNotification(
+        _notificationService.ShowNotification(
             "Data Validation",
             "Starting data validation...",
             NotificationType.Info);
@@ -74,7 +81,7 @@ public partial class BackfillPage : Page
 
     private void RepairGaps_Click(object sender, RoutedEventArgs e)
     {
-        NotificationService.Instance.ShowNotification(
+        _notificationService.ShowNotification(
             "Gap Repair",
             "Checking for data gaps...",
             NotificationType.Info);
@@ -82,12 +89,12 @@ public partial class BackfillPage : Page
 
     private void OpenWizard_Click(object sender, RoutedEventArgs e)
     {
-        MarketDataCollector.Wpf.Services.NavigationService.Instance.NavigateTo("AnalysisExportWizard");
+        _navigationService.NavigateTo("AnalysisExportWizard");
     }
 
     private void FillAllGaps_Click(object sender, RoutedEventArgs e)
     {
-        NotificationService.Instance.ShowNotification(
+        _notificationService.ShowNotification(
             "Fill Gaps",
             "Analyzing all symbols for gaps...",
             NotificationType.Info);
@@ -100,7 +107,7 @@ public partial class BackfillPage : Page
         ToDatePicker.SelectedDate = DateTime.Today;
         AddAllSubscribed_Click(sender, e);
 
-        NotificationService.Instance.ShowNotification(
+        _notificationService.ShowNotification(
             "Update to Latest",
             "Configured to update all subscribed symbols to latest data.",
             NotificationType.Info);
@@ -108,7 +115,7 @@ public partial class BackfillPage : Page
 
     private void BrowseData_Click(object sender, RoutedEventArgs e)
     {
-        MarketDataCollector.Wpf.Services.NavigationService.Instance.NavigateTo("DataBrowser");
+        _navigationService.NavigateTo("DataBrowser");
     }
 
     private void AddAllSubscribed_Click(object sender, RoutedEventArgs e)
@@ -190,7 +197,7 @@ public partial class BackfillPage : Page
 
         OverallProgressText.Text = $"Overall: 0 / {symbols.Length} symbols complete";
 
-        NotificationService.Instance.ShowNotification(
+        _notificationService.ShowNotification(
             "Backfill Started",
             $"Downloading data for {symbols.Length} symbols...",
             NotificationType.Info);
@@ -201,7 +208,7 @@ public partial class BackfillPage : Page
         BackfillStatusText.Text = "Paused";
         PauseBackfillButton.Content = "Resume";
 
-        NotificationService.Instance.ShowNotification(
+        _notificationService.ShowNotification(
             "Backfill Paused",
             "Backfill operation has been paused.",
             NotificationType.Warning);
@@ -224,7 +231,7 @@ public partial class BackfillPage : Page
 
             BackfillStatusText.Text = "Cancelled";
 
-            NotificationService.Instance.ShowNotification(
+            _notificationService.ShowNotification(
                 "Backfill Cancelled",
                 "The backfill operation was cancelled.",
                 NotificationType.Warning);
@@ -235,7 +242,7 @@ public partial class BackfillPage : Page
     {
         RefreshStatus();
 
-        NotificationService.Instance.ShowNotification(
+        _notificationService.ShowNotification(
             "Status Refreshed",
             "Backfill status has been refreshed.",
             NotificationType.Info);
@@ -252,7 +259,7 @@ public partial class BackfillPage : Page
             NasdaqKeyStatusText.Text = "API key configured";
             ClearNasdaqKeyButton.Visibility = Visibility.Visible;
 
-            NotificationService.Instance.ShowNotification(
+            _notificationService.ShowNotification(
                 "API Key Saved",
                 "Nasdaq Data Link API key has been configured.",
                 NotificationType.Success);
@@ -276,7 +283,7 @@ public partial class BackfillPage : Page
             OpenFigiKeyStatusText.Text = "API key configured (optional)";
             ClearOpenFigiKeyButton.Visibility = Visibility.Visible;
 
-            NotificationService.Instance.ShowNotification(
+            _notificationService.ShowNotification(
                 "API Key Saved",
                 "OpenFIGI API key has been configured.",
                 NotificationType.Success);
@@ -299,7 +306,7 @@ public partial class BackfillPage : Page
 
     private void SaveSchedule_Click(object sender, RoutedEventArgs e)
     {
-        NotificationService.Instance.ShowNotification(
+        _notificationService.ShowNotification(
             "Schedule Saved",
             "Backfill schedule has been saved.",
             NotificationType.Success);
@@ -309,7 +316,7 @@ public partial class BackfillPage : Page
     {
         if (sender is Button btn && btn.Tag is ScheduledJobInfo job)
         {
-            NotificationService.Instance.ShowNotification(
+            _notificationService.ShowNotification(
                 "Running Job",
                 $"Starting scheduled job: {job.Name}",
                 NotificationType.Info);
@@ -328,7 +335,7 @@ public partial class BackfillPage : Page
                     _scheduledJobs.Remove(job);
                     NoScheduledJobsText.Visibility = _scheduledJobs.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
 
-                    NotificationService.Instance.ShowNotification(
+                    _notificationService.ShowNotification(
                         "Job Deleted",
                         $"Scheduled job '{job.Name}' has been deleted.",
                         NotificationType.Success);
@@ -346,7 +353,7 @@ public partial class BackfillPage : Page
                         };
                     }
 
-                    NotificationService.Instance.ShowNotification(
+                    _notificationService.ShowNotification(
                         "Job Updated",
                         $"Scheduled job '{dialog.JobName}' has been updated.",
                         NotificationType.Success);

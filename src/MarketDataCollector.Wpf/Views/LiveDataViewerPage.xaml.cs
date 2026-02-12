@@ -10,6 +10,7 @@ using System.Timers;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using MarketDataCollector.Wpf.Contracts;
 using MarketDataCollector.Wpf.Services;
 using Timer = System.Timers.Timer;
 
@@ -45,24 +46,38 @@ public partial class LiveDataViewerPage : Page
     private int _bidSize;
     private int _askSize;
 
-    public LiveDataViewerPage()
+    private readonly StatusService _statusService;
+    private readonly ConnectionService _connectionService;
+    private readonly LoggingService _loggingService;
+    private readonly NotificationService _notificationService;
+
+    public LiveDataViewerPage(
+        StatusService statusService,
+        ConnectionService connectionService,
+        LoggingService loggingService,
+        NotificationService notificationService)
     {
         InitializeComponent();
+
+        _statusService = statusService;
+        _connectionService = connectionService;
+        _loggingService = loggingService;
+        _notificationService = notificationService;
 
         LiveFeedList.ItemsSource = _liveEvents;
 
         // Get base URL from StatusService
-        _baseUrl = StatusService.Instance.BaseUrl;
+        _baseUrl = _statusService.BaseUrl;
 
         // Subscribe to connection events
-        ConnectionService.Instance.StateChanged += OnConnectionStateChanged;
+        _connectionService.StateChanged += OnConnectionStateChanged;
 
         Unloaded += OnPageUnloaded;
     }
 
     private void OnPageUnloaded(object sender, RoutedEventArgs e)
     {
-        ConnectionService.Instance.StateChanged -= OnConnectionStateChanged;
+        _connectionService.StateChanged -= OnConnectionStateChanged;
         _refreshTimer?.Stop();
         _refreshTimer?.Dispose();
         _statsTimer?.Stop();
@@ -94,7 +109,7 @@ public partial class LiveDataViewerPage : Page
 
     private void UpdateConnectionStatus()
     {
-        var state = ConnectionService.Instance.State;
+        var state = _connectionService.State;
         var isConnected = state == ConnectionState.Connected;
 
         ConnectionStatusText.Text = state switch
@@ -122,7 +137,7 @@ public partial class LiveDataViewerPage : Page
             _cts = new CancellationTokenSource();
 
             // Get symbols from status service
-            var status = await StatusService.Instance.GetStatusAsync(_cts.Token);
+            var status = await _statusService.GetStatusAsync(_cts.Token);
             if (status != null)
             {
                 _availableSymbols.Clear();
@@ -140,7 +155,7 @@ public partial class LiveDataViewerPage : Page
         }
         catch (Exception ex)
         {
-            LoggingService.Instance.LogError("Failed to load symbols", ex);
+            _loggingService.LogError("Failed to load symbols", ex);
         }
     }
 
@@ -219,7 +234,7 @@ public partial class LiveDataViewerPage : Page
         }
         catch (Exception ex)
         {
-            LoggingService.Instance.LogError("Failed to refresh live data", ex);
+            _loggingService.LogError("Failed to refresh live data", ex);
         }
     }
 
@@ -435,7 +450,7 @@ public partial class LiveDataViewerPage : Page
             }
             SymbolComboBox.SelectedItem = symbol;
 
-            NotificationService.Instance.ShowNotification(
+            _notificationService.ShowNotification(
                 "Symbol Added",
                 $"Added {symbol} to the symbol list.",
                 NotificationType.Success);
@@ -447,7 +462,7 @@ public partial class LiveDataViewerPage : Page
         _isPaused = !_isPaused;
         PauseResumeButton.Content = _isPaused ? "Resume" : "Pause";
 
-        NotificationService.Instance.ShowNotification(
+        _notificationService.ShowNotification(
             _isPaused ? "Paused" : "Resumed",
             _isPaused ? "Live data feed has been paused." : "Live data feed has been resumed.",
             NotificationType.Info);
@@ -459,7 +474,7 @@ public partial class LiveDataViewerPage : Page
         ResetSessionStats();
         NoDataText.Visibility = Visibility.Visible;
 
-        NotificationService.Instance.ShowNotification(
+        _notificationService.ShowNotification(
             "Cleared",
             "Live data feed has been cleared.",
             NotificationType.Info);

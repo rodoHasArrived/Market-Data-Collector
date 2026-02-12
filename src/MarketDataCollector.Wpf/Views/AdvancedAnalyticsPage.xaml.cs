@@ -17,10 +17,10 @@ public partial class AdvancedAnalyticsPage : Page
     private readonly AdvancedAnalyticsService _analyticsService;
     private GapAnalysisResult? _lastGapAnalysis;
 
-    public AdvancedAnalyticsPage()
+    public AdvancedAnalyticsPage(AdvancedAnalyticsService analyticsService)
     {
         InitializeComponent();
-        _analyticsService = AdvancedAnalyticsService.Instance;
+        _analyticsService = analyticsService;
 
         CompareDatePicker.SelectedDate = DateTime.Today;
         Loaded += AdvancedAnalyticsPage_Loaded;

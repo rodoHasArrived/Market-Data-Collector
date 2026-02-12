@@ -17,10 +17,10 @@ public partial class AdminMaintenancePage : Page
     private readonly AdminMaintenanceService _adminService;
     private bool _isLoaded;
 
-    public AdminMaintenancePage()
+    public AdminMaintenancePage(AdminMaintenanceService adminService)
     {
         InitializeComponent();
-        _adminService = AdminMaintenanceService.Instance;
+        _adminService = adminService;
 
         Loaded += AdminMaintenancePage_Loaded;
     }

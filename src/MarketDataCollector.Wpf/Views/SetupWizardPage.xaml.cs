@@ -26,14 +26,23 @@ public partial class SetupWizardPage : Page
     private readonly ConnectionService _connectionService;
     private readonly FirstRunService _firstRunService;
     private readonly BackendServiceManager _backendServiceManager;
+    private readonly NotificationService _notificationService;
+    private readonly NavigationService _navigationService;
     private readonly HttpClient _httpClient;
 
-    public SetupWizardPage()
+    public SetupWizardPage(
+        ConnectionService connectionService,
+        FirstRunService firstRunService,
+        BackendServiceManager backendServiceManager,
+        NotificationService notificationService,
+        NavigationService navigationService)
     {
         InitializeComponent();
-        _connectionService = ConnectionService.Instance;
-        _firstRunService = FirstRunService.Instance;
-        _backendServiceManager = BackendServiceManager.Instance;
+        _connectionService = connectionService;
+        _firstRunService = firstRunService;
+        _backendServiceManager = backendServiceManager;
+        _notificationService = notificationService;
+        _navigationService = navigationService;
         _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(8) };
     }
 
@@ -139,7 +148,7 @@ public partial class SetupWizardPage : Page
             var startResult = await _backendServiceManager.StartAsync();
             if (!startResult.Success)
             {
-                NotificationService.Instance.NotifyWarning("Backend", startResult.Message);
+                _notificationService.NotifyWarning("Backend", startResult.Message);
             }
         }
 
@@ -173,11 +182,11 @@ public partial class SetupWizardPage : Page
         var result = await _backendServiceManager.StartAsync();
         if (result.Success)
         {
-            NotificationService.Instance.NotifyInfo("Backend", result.Message);
+            _notificationService.NotifyInfo("Backend", result.Message);
         }
         else
         {
-            NotificationService.Instance.NotifyWarning("Backend", result.Message);
+            _notificationService.NotifyWarning("Backend", result.Message);
         }
 
         await RefreshBackendStatusAsync();
@@ -214,7 +223,7 @@ public partial class SetupWizardPage : Page
         if (!startResult.Success)
         {
             ValidationStatusText.Text = $"Saved config, but backend start failed: {startResult.Message}";
-            NotificationService.Instance.NotifyWarning("Setup Wizard", "Configuration saved, but backend is offline.");
+            _notificationService.NotifyWarning("Setup Wizard", "Configuration saved, but backend is offline.");
             return;
         }
 
@@ -222,14 +231,14 @@ public partial class SetupWizardPage : Page
         if (!backendResult.isHealthy)
         {
             ValidationStatusText.Text = $"Saved config, but backend is unreachable: {backendResult.message}";
-            NotificationService.Instance.NotifyWarning("Setup Wizard", "Configuration saved, but backend is offline.");
+            _notificationService.NotifyWarning("Setup Wizard", "Configuration saved, but backend is offline.");
             return;
         }
 
         ValidationStatusText.Text = "Configuration saved and backend verified. Redirecting to dashboard...";
-        NotificationService.Instance.NotifySuccess("Setup Wizard", "Setup complete. Welcome!");
+        _notificationService.NotifySuccess("Setup Wizard", "Setup complete. Welcome!");
 
-        MarketDataCollector.Wpf.Services.NavigationService.Instance.NavigateTo("Dashboard");
+        _navigationService.NavigateTo("Dashboard");
     }
 
     private bool TryGetWizardInputs(out string provider, out string storageLocation)
@@ -301,7 +310,7 @@ public partial class SetupWizardPage : Page
         catch (Exception ex)
         {
             ValidationStatusText.Text = $"Failed to save configuration: {ex.Message}";
-            _ = NotificationService.Instance.NotifyErrorAsync("Setup Wizard", "Failed to save configuration.");
+            _ = _notificationService.NotifyErrorAsync("Setup Wizard", "Failed to save configuration.");
             return false;
         }
     }
@@ -323,7 +332,7 @@ public partial class SetupWizardPage : Page
         Environment.SetEnvironmentVariable(variableName, value.Trim(), EnvironmentVariableTarget.User);
     }
 
-    private static void OpenUrl(string url)
+    private void OpenUrl(string url)
     {
         try
         {
@@ -335,7 +344,7 @@ public partial class SetupWizardPage : Page
         }
         catch
         {
-            NotificationService.Instance.ShowNotification(
+            _notificationService.ShowNotification(
                 "Error",
                 "Could not open the link. Please try again.",
                 NotificationType.Error);

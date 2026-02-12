@@ -9,12 +9,16 @@ namespace MarketDataCollector.Wpf.Views;
 public partial class ServiceManagerPage : Page
 {
     private readonly BackendServiceManager _serviceManager;
+    private readonly LoggingService _loggingService;
     private bool _busy;
 
-    public ServiceManagerPage()
+    public ServiceManagerPage(
+        BackendServiceManager serviceManager,
+        LoggingService loggingService)
     {
         InitializeComponent();
-        _serviceManager = BackendServiceManager.Instance;
+        _serviceManager = serviceManager;
+        _loggingService = loggingService;
     }
 
     private async void OnPageLoaded(object sender, RoutedEventArgs e)
@@ -63,7 +67,7 @@ public partial class ServiceManagerPage : Page
         catch (Exception ex)
         {
             OperationResultText.Text = $"Operation failed: {ex.Message}";
-            LoggingService.Instance.LogError("Service manager operation failed", ex);
+            _loggingService.LogError("Service manager operation failed", ex);
         }
         finally
         {
