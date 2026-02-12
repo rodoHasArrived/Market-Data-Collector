@@ -8,12 +8,13 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using Microsoft.Win32;
+using MarketDataCollector.Wpf.Contracts;
 using WpfServices = MarketDataCollector.Wpf.Services;
 
 namespace MarketDataCollector.Wpf.Views;
 
 /// <summary>
-/// Watchlist management page for creating, editing, and organizing symbol watchlists.
+/// WpfServices.Watchlist management page for creating, editing, and organizing symbol watchlists.
 /// </summary>
 public partial class WatchlistPage : Page
 {
@@ -49,7 +50,7 @@ public partial class WatchlistPage : Page
         _loadCts?.Dispose();
     }
 
-    private void OnWatchlistsChanged(object? sender, WatchlistsChangedEventArgs e)
+    private void OnWatchlistsChanged(object? sender, WpfServices.WatchlistsChangedEventArgs e)
     {
         Dispatcher.Invoke(() => LoadWatchlistsAsync());
     }

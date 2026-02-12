@@ -5,7 +5,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using MarketDataCollector.Wpf.Contracts;
-using MarketDataCollector.Wpf.Services;
+using WpfServices = MarketDataCollector.Wpf.Services;
 using SysNavigation = System.Windows.Navigation;
 
 namespace MarketDataCollector.Wpf.Views;

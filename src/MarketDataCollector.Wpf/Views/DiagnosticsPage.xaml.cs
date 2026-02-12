@@ -3,9 +3,10 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Windows;
+using System.Windows.Shapes;
 using System.Windows.Controls;
 using System.Windows.Media;
-using MarketDataCollector.Wpf.Services;
+using WpfServices = MarketDataCollector.Wpf.Services;
 
 namespace MarketDataCollector.Wpf.Views;
 
@@ -20,12 +21,12 @@ public partial class DiagnosticsPage : Page
     private const string DefaultStoragePath = "data";
     private const string DefaultLogsPath = "logs";
 
-    private readonly NavigationService _navigationService;
-    private readonly NotificationService _notificationService;
+    private readonly WpfServices.NavigationService _navigationService;
+    private readonly WpfServices.NotificationService _notificationService;
 
     public DiagnosticsPage(
-        NavigationService navigationService,
-        NotificationService notificationService)
+        WpfServices.NavigationService navigationService,
+        WpfServices.NotificationService notificationService)
     {
         InitializeComponent();
 

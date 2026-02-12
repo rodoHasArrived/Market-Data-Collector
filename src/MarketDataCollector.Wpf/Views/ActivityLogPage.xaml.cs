@@ -12,7 +12,7 @@ using System.Timers;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using MarketDataCollector.Wpf.Services;
+using WpfServices = MarketDataCollector.Wpf.Services;
 using Microsoft.Win32;
 using Timer = System.Timers.Timer;
 
@@ -33,14 +33,14 @@ public partial class ActivityLogPage : Page
     private string _categoryFilter = "All";
     private string _searchText = string.Empty;
 
-    private readonly StatusService _statusService;
-    private readonly LoggingService _loggingService;
-    private readonly NotificationService _notificationService;
+    private readonly WpfServices.StatusService _statusService;
+    private readonly WpfServices.LoggingService _loggingService;
+    private readonly WpfServices.NotificationService _notificationService;
 
     public ActivityLogPage(
-        StatusService statusService,
-        LoggingService loggingService,
-        NotificationService notificationService)
+        WpfServices.StatusService statusService,
+        WpfServices.LoggingService loggingService,
+        WpfServices.NotificationService notificationService)
     {
         InitializeComponent();
 

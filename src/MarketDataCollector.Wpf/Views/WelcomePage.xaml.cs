@@ -3,7 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using MarketDataCollector.Wpf.Services;
+using WpfServices = MarketDataCollector.Wpf.Services;
 
 namespace MarketDataCollector.Wpf.Views;
 
@@ -12,12 +12,12 @@ namespace MarketDataCollector.Wpf.Views;
 /// </summary>
 public partial class WelcomePage : Page
 {
-    private readonly NavigationService _navigationService;
-    private readonly NotificationService _notificationService;
+    private readonly WpfServices.NavigationService _navigationService;
+    private readonly WpfServices.NotificationService _notificationService;
 
     public WelcomePage(
-        NavigationService navigationService,
-        NotificationService notificationService)
+        WpfServices.NavigationService navigationService,
+        WpfServices.NotificationService notificationService)
     {
         InitializeComponent();
         _navigationService = navigationService;

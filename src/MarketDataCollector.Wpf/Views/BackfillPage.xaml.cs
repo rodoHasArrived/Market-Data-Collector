@@ -4,7 +4,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using MarketDataCollector.Wpf.Services;
+using WpfServices = MarketDataCollector.Wpf.Services;
 
 namespace MarketDataCollector.Wpf.Views;
 
@@ -13,14 +13,14 @@ namespace MarketDataCollector.Wpf.Views;
 /// </summary>
 public partial class BackfillPage : Page
 {
-    private readonly NotificationService _notificationService;
-    private readonly NavigationService _navigationService;
+    private readonly WpfServices.NotificationService _notificationService;
+    private readonly WpfServices.NavigationService _navigationService;
     private readonly ObservableCollection<SymbolProgressInfo> _symbolProgress = new();
     private readonly ObservableCollection<ScheduledJobInfo> _scheduledJobs = new();
 
     public BackfillPage(
-        NotificationService notificationService,
-        NavigationService navigationService)
+        WpfServices.NotificationService notificationService,
+        WpfServices.NavigationService navigationService)
     {
         InitializeComponent();
 

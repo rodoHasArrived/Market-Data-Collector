@@ -9,7 +9,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
 using MarketDataCollector.Wpf.Contracts;
-using MarketDataCollector.Wpf.Services;
+using WpfServices = MarketDataCollector.Wpf.Services;
 
 namespace MarketDataCollector.Wpf.Views;
 
@@ -19,21 +19,21 @@ namespace MarketDataCollector.Wpf.Views;
 public partial class DashboardPage : Page
 {
     private const int MaxActivityItems = 25;
-    private readonly NavigationService _navigationService;
+    private readonly WpfServices.NavigationService _navigationService;
     private readonly ConnectionService _connectionService;
     private readonly StatusService _statusService;
     private readonly MessagingService _messagingService;
-    private readonly NotificationService _notificationService;
+    private readonly WpfServices.NotificationService _notificationService;
     private readonly DispatcherTimer _refreshTimer;
     private readonly Random _random = new();
     private bool _isCollectorPaused;
 
     public DashboardPage(
-        NavigationService navigationService,
+        WpfServices.NavigationService navigationService,
         ConnectionService connectionService,
         StatusService statusService,
         MessagingService messagingService,
-        NotificationService notificationService)
+        WpfServices.NotificationService notificationService)
     {
         InitializeComponent();
         DataContext = this;

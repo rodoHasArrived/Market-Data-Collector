@@ -8,7 +8,7 @@ using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using MarketDataCollector.Wpf.Services;
+using WpfServices = MarketDataCollector.Wpf.Services;
 
 namespace MarketDataCollector.Wpf.Views;
 
@@ -26,16 +26,16 @@ public partial class SetupWizardPage : Page
     private readonly ConnectionService _connectionService;
     private readonly FirstRunService _firstRunService;
     private readonly BackendServiceManager _backendServiceManager;
-    private readonly NotificationService _notificationService;
-    private readonly NavigationService _navigationService;
+    private readonly WpfServices.NotificationService _notificationService;
+    private readonly WpfServices.NavigationService _navigationService;
     private readonly HttpClient _httpClient;
 
     public SetupWizardPage(
         ConnectionService connectionService,
         FirstRunService firstRunService,
         BackendServiceManager backendServiceManager,
-        NotificationService notificationService,
-        NavigationService navigationService)
+        WpfServices.NotificationService notificationService,
+        WpfServices.NavigationService navigationService)
     {
         InitializeComponent();
         _connectionService = connectionService;
