@@ -24,28 +24,11 @@ env:
 jobs:
   build:
     name: Build and Test
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup .NET with Cache
-        uses: ./.github/actions/setup-dotnet-cache
-        with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
-
-      - name: Restore dependencies
-        run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
-
-      - name: Build
-        run: dotnet build MarketDataCollector.sln -c Release --no-restore /p:EnableWindowsTargeting=true
-
-      - name: Test
-        run: dotnet test MarketDataCollector.sln -c Release --no-build --verbosity normal /p:EnableWindowsTargeting=true --logger "console;verbosity=detailed"
+    uses: ./.github/workflows/reusable-dotnet-build.yml
+    with:
+      fetch-depth: 0
+      cache-suffix: desktop-build
+    secrets: inherit
 
   publish:
     name: Publish ${{ matrix.rid }}

@@ -23,60 +23,17 @@ env:
 jobs:
   test-matrix:
     name: Test on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-
-    - name: Setup .NET with Cache
-      uses: ./.github/actions/setup-dotnet-cache
-      with:
-        dotnet-version: ${{ env.DOTNET_VERSION }}
-        cache-suffix: nightly-${{ matrix.os }}
-
-    - name: Restore dependencies
-      run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
-
-    - name: Build
-      run: dotnet build MarketDataCollector.sln -c Release --no-restore /p:EnableWindowsTargeting=true
-
-    - name: Run tests
-      shell: bash
-      env:
-        MSYS_NO_PATHCONV: 1
-      run: |
-        dotnet test MarketDataCollector.sln \
-          -c Release \
-          --no-build \
-          /p:EnableWindowsTargeting=true \
-          --logger "console;verbosity=detailed" \
-          --collect:"XPlat Code Coverage" \
-          --results-directory ./coverage
-
-    - name: Upload coverage
-      if: success()
-      uses: codecov/codecov-action@v5.5.2
-      with:
-        directory: ./coverage
-        flags: ${{ matrix.os }}
-        fail_ci_if_error: false
-        token: ${{ secrets.CODECOV_TOKEN }}
-
-    - name: Upload test results on failure
-      if: failure()
-      uses: actions/upload-artifact@v4
-      with:
-        name: test-failure-logs-${{ matrix.os }}
-        path: |
-          **/*.trx
-          **/coverage/**
-        retention-days: 7
+    uses: ./.github/workflows/reusable-dotnet-build.yml
+    with:
+      runs-on: ${{ matrix.os }}
+      collect-coverage: true
+      cache-suffix: nightly-${{ matrix.os }}
+      timeout-minutes: 30
+    secrets: inherit
 
   benchmark:
     name: Run Benchmarks

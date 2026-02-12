@@ -218,9 +218,16 @@ Workflows have been consolidated from 25 to 19 files, reducing duplication and a
 #### 19. **Reusable Build Helpers** (`reusable-dotnet-build.yml`)
 - **Trigger**: Reusable workflow (called by other workflows)
 - **Purpose**: Standardizes build/test steps for .NET jobs
+- **Called by**: `pr-checks.yml`, `dotnet-desktop.yml`, `nightly.yml`
 - **Features**:
-  - Shared build/test steps
-  - Consistent caching and restore behavior
+  - Shared build/test steps with consistent configuration
+  - Cross-platform support via `runs-on` input (ubuntu, windows, macos)
+  - Configurable git fetch depth for full history when needed
+  - Optional code coverage collection and Codecov upload
+  - Optional build artifact upload
+  - Automatic diagnostics artifact upload (binlogs, TRX results)
+  - Consistent NuGet caching via `setup-dotnet-cache` composite action
+  - Configurable job timeout
 
 ## Configuration Files
 
@@ -409,5 +416,5 @@ graph TD
 
 ---
 
-**Last Updated**: 2026-02-06
+**Last Updated**: 2026-02-12
 **Maintained By**: Market Data Collector Team
