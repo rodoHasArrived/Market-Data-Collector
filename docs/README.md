@@ -39,6 +39,7 @@ Building, extending, and testing the system.
 - [Repository Cleanup Action Plan](development/repository-cleanup-action-plan.md) - Cleanup procedures
 - [Provider Implementation Guide](development/provider-implementation.md) - Add new providers
 - [Desktop Development Guide](development/wpf-implementation-notes.md) - WPF/UWP development
+- [TODO Tracking Automation](development/todo-tracking-automation.md) - Automated TODO tracking
 - [Build Observability](development/build-observability.md) - Build metrics
 - [GitHub Actions Summary](development/github-actions-summary.md) - CI/CD overview
 
