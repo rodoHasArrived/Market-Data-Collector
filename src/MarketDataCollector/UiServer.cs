@@ -2,6 +2,7 @@ using System.Text.Json;
 using MarketDataCollector.Application.Composition;
 using MarketDataCollector.Application.Config;
 using MarketDataCollector.Application.Monitoring.DataQuality;
+using MarketDataCollector.Application.Pipeline;
 using MarketDataCollector.Application.UI;
 using MarketDataCollector.Infrastructure.Contracts;
 using MarketDataCollector.Ui.Shared.Endpoints;
@@ -26,6 +27,12 @@ public sealed class UiServer : IAsyncDisposable
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         WriteIndented = true
+    };
+    
+    private static readonly JsonSerializerOptions s_jsonOptionsCompact = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        WriteIndented = false
     };
 
     private readonly WebApplication _app;
@@ -93,11 +100,12 @@ public sealed class UiServer : IAsyncDisposable
         _app.MapSymbolEndpoints(s_jsonOptions);
 
         // Status and Health API
-        _app.MapStatusEndpoints(s_jsonOptions);
+        var statusHandlers = _app.Services.GetRequiredService<StatusEndpointHandlers>();
+        _app.MapStatusEndpoints(statusHandlers, s_jsonOptions);
         _app.MapHealthEndpoints(s_jsonOptions);
 
         // Backfill API
-        _app.MapBackfillEndpoints(s_jsonOptions);
+        _app.MapBackfillEndpoints(s_jsonOptions, s_jsonOptionsCompact);
         _app.MapScheduledBackfillEndpoints();
 
         // Storage API
@@ -109,7 +117,8 @@ public sealed class UiServer : IAsyncDisposable
         _app.MapProviderExtendedEndpoints(s_jsonOptions);
 
         // Data Quality API
-        _app.MapQualityDropsEndpoints(s_jsonOptions);
+        var auditTrail = _app.Services.GetService<DroppedEventAuditTrail>();
+        _app.MapQualityDropsEndpoints(auditTrail, s_jsonOptions);
 
         // Subscription API
         _app.MapSubscriptionEndpoints(s_jsonOptions);
@@ -120,7 +129,8 @@ public sealed class UiServer : IAsyncDisposable
         _app.MapDiagnosticsEndpoints(s_jsonOptions);
 
         // Historical Data API
-        _app.MapHistoricalEndpoints(s_jsonOptions);
+        // TODO: MapHistoricalEndpoints needs to be implemented
+        // _app.MapHistoricalEndpoints(s_jsonOptions);
 
         // Data Packaging API
         var config = _app.Services.GetRequiredService<ConfigStore>().Load();
