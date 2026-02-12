@@ -1,18 +1,362 @@
 <Page x:Class="MarketDataCollector.Wpf.Views.KeyboardShortcutsPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      mc:Ignorable="d"
+      d:DesignHeight="900" d:DesignWidth="1200"
       Background="{DynamicResource ConsoleBackgroundDarkBrush}">
+
+    <Page.Resources>
+        <Style x:Key="KeyboardShortcutStyle" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource ConsoleBackgroundLightBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource ConsoleBorderHoverBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Padding" Value="8,4" />
+            <Setter Property="MinWidth" Value="24" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="Margin" Value="0,4" />
+        </Style>
+
+        <Style x:Key="ShortcutKeyTextStyle" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Cascadia Code, Consolas" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{StaticResource ConsoleTextPrimaryBrush}" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+        </Style>
+
+        <Style x:Key="ShortcutDescriptionStyle" TargetType="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Foreground" Value="{StaticResource ConsoleTextSecondaryBrush}" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Margin" Value="12,0,0,0" />
+        </Style>
+
+        <Style x:Key="SectionLabelStyle" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Foreground" Value="{StaticResource InfoColorBrush}" />
+            <Setter Property="Margin" Value="0,0,0,12" />
+        </Style>
+    </Page.Resources>
+
     <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="24">
         <StackPanel MaxWidth="1200">
-            <StackPanel Orientation="Horizontal" Margin="0,0,0,24">
+            <!-- Header -->
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                 <TextBlock Text="&#xE765;" FontFamily="{StaticResource SymbolThemeFontFamily}"
                            FontSize="28" Foreground="{StaticResource InfoColorBrush}" VerticalAlignment="Center" />
                 <TextBlock Text="Keyboard Shortcuts" Style="{StaticResource PageTitleStyle}" Margin="12,0,0,0" VerticalAlignment="Center" />
             </StackPanel>
-            <Border Style="{StaticResource CardStyle}">
-                <StackPanel>
-                    <TextBlock Text="Coming Soon" Style="{StaticResource CardHeaderStyle}" Margin="0,0,0,16" />
-                    <TextBlock Text="This feature is under development." Foreground="{StaticResource ConsoleTextMutedBrush}" />
+
+            <TextBlock Text="Quick reference for all keyboard shortcuts available in Market Data Collector."
+                       Foreground="{StaticResource ConsoleTextSecondaryBrush}"
+                       Margin="0,0,0,24" />
+
+            <!-- Two-column layout for shortcut sections -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="24" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="24" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- ===================== -->
+                <!-- Navigation Section -->
+                <!-- ===================== -->
+                <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource CardStyle}">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                            <TextBlock Text="{StaticResource IconHome}"
+                                       FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                       FontSize="18"
+                                       Foreground="{StaticResource InfoColorBrush}"
+                                       VerticalAlignment="Center" />
+                            <TextBlock Text="Navigation"
+                                       Style="{StaticResource CardHeaderStyle}"
+                                       Margin="8,0,0,0" />
+                        </StackPanel>
+
+                        <TextBlock Text="Move between pages and sections of the application."
+                                   Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                   FontSize="12" Margin="0,0,0,16" TextWrapping="Wrap" />
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <!-- Ctrl+1 Dashboard -->
+                            <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource KeyboardShortcutStyle}">
+                                <TextBlock Text="Ctrl + 1" Style="{StaticResource ShortcutKeyTextStyle}" />
+                            </Border>
+                            <TextBlock Grid.Row="0" Grid.Column="1" Text="Dashboard" Style="{StaticResource ShortcutDescriptionStyle}" />
+
+                            <!-- Ctrl+2 Symbols -->
+                            <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource KeyboardShortcutStyle}">
+                                <TextBlock Text="Ctrl + 2" Style="{StaticResource ShortcutKeyTextStyle}" />
+                            </Border>
+                            <TextBlock Grid.Row="1" Grid.Column="1" Text="Symbols" Style="{StaticResource ShortcutDescriptionStyle}" />
+
+                            <!-- Ctrl+3 Storage -->
+                            <Border Grid.Row="2" Grid.Column="0" Style="{StaticResource KeyboardShortcutStyle}">
+                                <TextBlock Text="Ctrl + 3" Style="{StaticResource ShortcutKeyTextStyle}" />
+                            </Border>
+                            <TextBlock Grid.Row="2" Grid.Column="1" Text="Storage" Style="{StaticResource ShortcutDescriptionStyle}" />
+
+                            <!-- Ctrl+, Settings -->
+                            <Border Grid.Row="3" Grid.Column="0" Style="{StaticResource KeyboardShortcutStyle}">
+                                <TextBlock Text="Ctrl + ," Style="{StaticResource ShortcutKeyTextStyle}" />
+                            </Border>
+                            <TextBlock Grid.Row="3" Grid.Column="1" Text="Settings" Style="{StaticResource ShortcutDescriptionStyle}" />
+
+                            <!-- F1 Help -->
+                            <Border Grid.Row="4" Grid.Column="0" Style="{StaticResource KeyboardShortcutStyle}">
+                                <TextBlock Text="F1" Style="{StaticResource ShortcutKeyTextStyle}" />
+                            </Border>
+                            <TextBlock Grid.Row="4" Grid.Column="1" Text="Help" Style="{StaticResource ShortcutDescriptionStyle}" />
+
+                            <!-- Alt+Left Back -->
+                            <Border Grid.Row="5" Grid.Column="0" Style="{StaticResource KeyboardShortcutStyle}">
+                                <TextBlock Text="Alt + Left" Style="{StaticResource ShortcutKeyTextStyle}" />
+                            </Border>
+                            <TextBlock Grid.Row="5" Grid.Column="1" Text="Back" Style="{StaticResource ShortcutDescriptionStyle}" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- ======================== -->
+                <!-- Data Operations Section -->
+                <!-- ======================== -->
+                <Border Grid.Row="0" Grid.Column="2" Style="{StaticResource CardStyle}">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                            <TextBlock Text="{StaticResource IconDatabase}"
+                                       FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                       FontSize="18"
+                                       Foreground="{StaticResource InfoColorBrush}"
+                                       VerticalAlignment="Center" />
+                            <TextBlock Text="Data Operations"
+                                       Style="{StaticResource CardHeaderStyle}"
+                                       Margin="8,0,0,0" />
+                        </StackPanel>
+
+                        <TextBlock Text="Control data collection, backfill, and export workflows."
+                                   Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                   FontSize="12" Margin="0,0,0,16" TextWrapping="Wrap" />
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <!-- Ctrl+S Start Collector -->
+                            <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource KeyboardShortcutStyle}">
+                                <TextBlock Text="Ctrl + S" Style="{StaticResource ShortcutKeyTextStyle}" />
+                            </Border>
+                            <TextBlock Grid.Row="0" Grid.Column="1" Text="Start Collector" Style="{StaticResource ShortcutDescriptionStyle}" />
+
+                            <!-- Ctrl+Shift+S Stop Collector -->
+                            <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource KeyboardShortcutStyle}">
+                                <TextBlock Text="Ctrl + Shift + S" Style="{StaticResource ShortcutKeyTextStyle}" />
+                            </Border>
+                            <TextBlock Grid.Row="1" Grid.Column="1" Text="Stop Collector" Style="{StaticResource ShortcutDescriptionStyle}" />
+
+                            <!-- Ctrl+R Refresh Status -->
+                            <Border Grid.Row="2" Grid.Column="0" Style="{StaticResource KeyboardShortcutStyle}">
+                                <TextBlock Text="Ctrl + R" Style="{StaticResource ShortcutKeyTextStyle}" />
+                            </Border>
+                            <TextBlock Grid.Row="2" Grid.Column="1" Text="Refresh Status" Style="{StaticResource ShortcutDescriptionStyle}" />
+
+                            <!-- Ctrl+N Add Symbol -->
+                            <Border Grid.Row="3" Grid.Column="0" Style="{StaticResource KeyboardShortcutStyle}">
+                                <TextBlock Text="Ctrl + N" Style="{StaticResource ShortcutKeyTextStyle}" />
+                            </Border>
+                            <TextBlock Grid.Row="3" Grid.Column="1" Text="Add Symbol" Style="{StaticResource ShortcutDescriptionStyle}" />
+
+                            <!-- Ctrl+E Export Data -->
+                            <Border Grid.Row="4" Grid.Column="0" Style="{StaticResource KeyboardShortcutStyle}">
+                                <TextBlock Text="Ctrl + E" Style="{StaticResource ShortcutKeyTextStyle}" />
+                            </Border>
+                            <TextBlock Grid.Row="4" Grid.Column="1" Text="Export Data" Style="{StaticResource ShortcutDescriptionStyle}" />
+
+                            <!-- Ctrl+B Run Backfill -->
+                            <Border Grid.Row="5" Grid.Column="0" Style="{StaticResource KeyboardShortcutStyle}">
+                                <TextBlock Text="Ctrl + B" Style="{StaticResource ShortcutKeyTextStyle}" />
+                            </Border>
+                            <TextBlock Grid.Row="5" Grid.Column="1" Text="Run Backfill" Style="{StaticResource ShortcutDescriptionStyle}" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- ====================== -->
+                <!-- View Controls Section -->
+                <!-- ====================== -->
+                <Border Grid.Row="2" Grid.Column="0" Style="{StaticResource CardStyle}">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                            <TextBlock Text="{StaticResource IconEye}"
+                                       FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                       FontSize="18"
+                                       Foreground="{StaticResource InfoColorBrush}"
+                                       VerticalAlignment="Center" />
+                            <TextBlock Text="View Controls"
+                                       Style="{StaticResource CardHeaderStyle}"
+                                       Margin="8,0,0,0" />
+                        </StackPanel>
+
+                        <TextBlock Text="Adjust the interface, search content, and access tools."
+                                   Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                   FontSize="12" Margin="0,0,0,16" TextWrapping="Wrap" />
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <!-- F5 Refresh -->
+                            <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource KeyboardShortcutStyle}">
+                                <TextBlock Text="F5" Style="{StaticResource ShortcutKeyTextStyle}" />
+                            </Border>
+                            <TextBlock Grid.Row="0" Grid.Column="1" Text="Refresh" Style="{StaticResource ShortcutDescriptionStyle}" />
+
+                            <!-- F11 Fullscreen -->
+                            <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource KeyboardShortcutStyle}">
+                                <TextBlock Text="F11" Style="{StaticResource ShortcutKeyTextStyle}" />
+                            </Border>
+                            <TextBlock Grid.Row="1" Grid.Column="1" Text="Fullscreen" Style="{StaticResource ShortcutDescriptionStyle}" />
+
+                            <!-- Ctrl+F Search -->
+                            <Border Grid.Row="2" Grid.Column="0" Style="{StaticResource KeyboardShortcutStyle}">
+                                <TextBlock Text="Ctrl + F" Style="{StaticResource ShortcutKeyTextStyle}" />
+                            </Border>
+                            <TextBlock Grid.Row="2" Grid.Column="1" Text="Search" Style="{StaticResource ShortcutDescriptionStyle}" />
+
+                            <!-- Ctrl+L Activity Log -->
+                            <Border Grid.Row="3" Grid.Column="0" Style="{StaticResource KeyboardShortcutStyle}">
+                                <TextBlock Text="Ctrl + L" Style="{StaticResource ShortcutKeyTextStyle}" />
+                            </Border>
+                            <TextBlock Grid.Row="3" Grid.Column="1" Text="Activity Log" Style="{StaticResource ShortcutDescriptionStyle}" />
+
+                            <!-- Ctrl+D Diagnostics -->
+                            <Border Grid.Row="4" Grid.Column="0" Style="{StaticResource KeyboardShortcutStyle}">
+                                <TextBlock Text="Ctrl + D" Style="{StaticResource ShortcutKeyTextStyle}" />
+                            </Border>
+                            <TextBlock Grid.Row="4" Grid.Column="1" Text="Diagnostics" Style="{StaticResource ShortcutDescriptionStyle}" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- ================= -->
+                <!-- General Section -->
+                <!-- ================= -->
+                <Border Grid.Row="2" Grid.Column="2" Style="{StaticResource CardStyle}">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                            <TextBlock Text="{StaticResource IconSettings}"
+                                       FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                       FontSize="18"
+                                       Foreground="{StaticResource InfoColorBrush}"
+                                       VerticalAlignment="Center" />
+                            <TextBlock Text="General"
+                                       Style="{StaticResource CardHeaderStyle}"
+                                       Margin="8,0,0,0" />
+                        </StackPanel>
+
+                        <TextBlock Text="Application-wide actions and common operations."
+                                   Foreground="{StaticResource ConsoleTextMutedBrush}"
+                                   FontSize="12" Margin="0,0,0,16" TextWrapping="Wrap" />
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <!-- Ctrl+T Toggle Theme -->
+                            <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource KeyboardShortcutStyle}">
+                                <TextBlock Text="Ctrl + T" Style="{StaticResource ShortcutKeyTextStyle}" />
+                            </Border>
+                            <TextBlock Grid.Row="0" Grid.Column="1" Text="Toggle Theme" Style="{StaticResource ShortcutDescriptionStyle}" />
+
+                            <!-- Ctrl+Q Quit -->
+                            <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource KeyboardShortcutStyle}">
+                                <TextBlock Text="Ctrl + Q" Style="{StaticResource ShortcutKeyTextStyle}" />
+                            </Border>
+                            <TextBlock Grid.Row="1" Grid.Column="1" Text="Quit" Style="{StaticResource ShortcutDescriptionStyle}" />
+
+                            <!-- Ctrl+? Keyboard Shortcuts -->
+                            <Border Grid.Row="2" Grid.Column="0" Style="{StaticResource KeyboardShortcutStyle}">
+                                <TextBlock Text="Ctrl + ?" Style="{StaticResource ShortcutKeyTextStyle}" />
+                            </Border>
+                            <TextBlock Grid.Row="2" Grid.Column="1" Text="Keyboard Shortcuts" Style="{StaticResource ShortcutDescriptionStyle}" />
+
+                            <!-- Esc Close Dialog -->
+                            <Border Grid.Row="3" Grid.Column="0" Style="{StaticResource KeyboardShortcutStyle}">
+                                <TextBlock Text="Esc" Style="{StaticResource ShortcutKeyTextStyle}" />
+                            </Border>
+                            <TextBlock Grid.Row="3" Grid.Column="1" Text="Close Dialog" Style="{StaticResource ShortcutDescriptionStyle}" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- Tip footer -->
+            <Border Style="{StaticResource CardStyle}" Margin="0,24,0,0">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="{StaticResource IconInfo}"
+                               FontFamily="{StaticResource SymbolThemeFontFamily}"
+                               FontSize="16"
+                               Foreground="{StaticResource InfoColorBrush}"
+                               VerticalAlignment="Center" />
+                    <TextBlock Foreground="{StaticResource ConsoleTextSecondaryBrush}"
+                               VerticalAlignment="Center"
+                               Margin="10,0,0,0"
+                               TextWrapping="Wrap">
+                        <Run FontWeight="SemiBold" Text="Tip:" />
+                        <Run Text=" Press" />
+                        <Run FontFamily="Cascadia Code, Consolas" FontWeight="SemiBold" Text=" Ctrl + ? " />
+                        <Run Text="from any page to open this shortcut reference." />
+                    </TextBlock>
                 </StackPanel>
             </Border>
         </StackPanel>
