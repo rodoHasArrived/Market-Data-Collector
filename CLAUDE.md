@@ -1563,6 +1563,9 @@ Market-Data-Collector/
 │   │   │   ├── BackfillServiceTests.cs
 │   │   │   ├── FixtureDataServiceTests.cs
 │   │   │   ├── FormValidationServiceTests.cs
+│   │   │   ├── OrderBookVisualizationServiceTests.cs
+│   │   │   ├── PortfolioImportServiceTests.cs
+│   │   │   ├── SchemaServiceTests.cs
 │   │   │   ├── SystemHealthServiceTests.cs
 │   │   │   └── WatchlistServiceTests.cs
 │   │   ├── MarketDataCollector.Ui.Tests.csproj
