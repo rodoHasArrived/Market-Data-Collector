@@ -1005,6 +1005,7 @@ Market-Data-Collector/
 │   │   │   ├── ScheduledMaintenanceService.cs
 │   │   │   ├── ScheduleManagerService.cs
 │   │   │   ├── SchemaService.cs
+│   │   │   ├── SchemaServiceBase.cs
 │   │   │   ├── SearchService.cs
 │   │   │   ├── SetupWizardService.cs
 │   │   │   ├── SmartRecommendationsService.cs
