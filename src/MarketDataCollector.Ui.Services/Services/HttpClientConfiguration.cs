@@ -24,6 +24,9 @@ public static class HttpClientNames
 
     // Setup wizard connectivity checks
     public const string SetupWizard = "setup-wizard";
+    
+    // Backend service health checks
+    public const string BackendHealth = "backend-health";
 
     // Provider-specific clients
     public const string Alpaca = "alpaca";
@@ -106,6 +109,14 @@ public static class HttpClientConfiguration
             .ConfigureHttpClient(client =>
             {
                 client.Timeout = ShortTimeout;
+            })
+            .AddStandardResiliencePolicy();
+
+        // Backend service health check client
+        services.AddHttpClient(HttpClientNames.BackendHealth)
+            .ConfigureHttpClient(client =>
+            {
+                client.Timeout = TimeSpan.FromSeconds(5);
             })
             .AddStandardResiliencePolicy();
 
