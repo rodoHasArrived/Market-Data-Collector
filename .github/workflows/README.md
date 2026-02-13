@@ -61,13 +61,12 @@ Workflows have been consolidated from 25 to 19 files, reducing duplication and a
 
 #### 5. **Desktop Builds** (`desktop-builds.yml`) *(consolidated)*
 - **Trigger**: Push/PRs touching desktop app paths, Manual dispatch with build target selector
-- **Purpose**: Builds UWP and WPF desktop applications
+- **Purpose**: Builds WPF desktop application
 - **Replaces**: `desktop-app.yml`, `wpf-desktop.yml`, `wpf-commands.yml`
 - **Features**:
-  - UWP: Icon generation, x64/arm64 builds, MSIX packaging, testing, release
   - WPF: Self-contained and framework-dependent publishing for x64/arm64
   - WPF smoke test for startup validation
-  - Selective build targeting (all/uwp/wpf/wpf-smoke-test)
+  - Selective build targeting (wpf/wpf-smoke-test)
   - **AI**: Build failure diagnosis on failure
 
 ### Code Quality and Security Workflows

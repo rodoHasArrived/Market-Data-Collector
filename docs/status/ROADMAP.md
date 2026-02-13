@@ -250,13 +250,13 @@ From consolidated [IMPROVEMENTS.md](IMPROVEMENTS.md) — items from themes A (Re
 
 ---
 
-## Phase 6: Duplicate & Unused Code Cleanup
+## Phase 6: Duplicate & Unused Code Cleanup — COMPLETED ✅
 
 Reduce maintenance burden by eliminating dead code, consolidating duplicate implementations, and resolving ambiguous ownership across projects. Informed by `docs/archived/DUPLICATE_CODE_ANALYSIS.md`, consolidated [IMPROVEMENTS.md](IMPROVEMENTS.md) Theme C items, and `docs/audits/CLEANUP_OPPORTUNITIES.md`.
 
-**Estimated savings:** ~2,500–3,000 lines of duplicate code removed, ~300 KB of dead assets deleted, and clearer project boundaries.
+**Actual results:** ~16,500+ lines of UWP code removed, ~5,900 lines of large files decomposed into manageable partial classes, duplicate interfaces consolidated, ambiguous class names resolved, and CI workflows cleaned up.
 
-### 6A. Dead Code Removal (P1 — Zero Risk) — PARTIALLY COMPLETED
+### 6A. Dead Code Removal (P1 — Zero Risk) — COMPLETED ✅
 
 Items that are completely unused and can be deleted immediately with no downstream impact.
 
@@ -264,7 +264,7 @@ Items that are completely unused and can be deleted immediately with no downstre
 |---|------|----------|----------|----------|--------|
 | 6A.1 | **Delete unused `SymbolNormalizer.cs`** — complete duplicate of `SymbolNormalization.cs` with identical methods; 0 references in codebase | `Infrastructure/Utilities/SymbolNormalizer.cs` | `SymbolNormalization.cs` has 7 active references; `SymbolNormalizer.cs` has 0 | ~80 | ✅ Done (PR #1028) |
 | 6A.2 | **Delete UWP Examples folder** — 6 XAML example files + 2 markdown docs never referenced from any code or navigation | `src/MarketDataCollector.Uwp/Examples/` (6 XAML files, ~260 KB) | Zero C# references to any example file | ~260 KB | ✅ Done |
-| 6A.3 | **Remove tracked build artifacts** — `build-output.log` and scratch files tracked in git | Root directory | Already addressed in `docs/audits/CLEANUP_SUMMARY.md`; verify removal is merged | N/A | |
+| 6A.3 | **Remove tracked build artifacts** — `build-output.log` and scratch files tracked in git | Root directory | Already addressed in `docs/audits/CLEANUP_SUMMARY.md`; verify removal is merged | N/A | ✅ Done |
 
 ### 6B. Duplicate Interface Consolidation (P2 — Low Risk) — COMPLETED ✅
 
@@ -284,52 +284,52 @@ The same service interfaces are defined in up to three separate projects. Consol
 
 **Approach:** Delete WPF and UWP duplicate interface files. Update `using` directives to reference `Ui.Services.Contracts`. Verify build.
 
-### 6C. WPF/UWP Service Deduplication (P2 — Medium Risk) — PARTIALLY COMPLETED
+### 6C. WPF/UWP Service Deduplication (P2 — Medium Risk) — COMPLETED ✅
 
 25+ services are nearly identical (95%+ copy-paste) between WPF and UWP. Extract shared logic into `MarketDataCollector.Ui.Services` and keep only platform-specific adapters in each desktop project. Cross-references: STRUCTURAL_IMPROVEMENTS C1, DUPLICATE_CODE_ANALYSIS §5.
 
 | # | Item | Priority | Description | Est. LOC Saved | Status |
 |---|------|----------|-------------|----------------|--------|
-| 6C.1 | **Phase 1 — Near-identical services** (BrushRegistry, ExportPresetService, FormValidationService, InfoBarService, TooltipService) | P2 | Services with <5% variation between WPF and UWP; extract to shared project directly | ~400 | ✅ FormValidationService done (PR #1028) |
+| 6C.1 | **Phase 1 — Near-identical services** (BrushRegistry, ExportPresetService, FormValidationService, InfoBarService, TooltipService) | P2 | Services with <5% variation between WPF and UWP; extract to shared project directly | ~400 | ✅ FormValidationService done (PR #1028). Remaining UWP duplicates resolved by UWP deletion (6E.3) |
 | 6C.2 | **Phase 2 — Singleton-pattern services** (ThemeService, ConfigService, NotificationService, NavigationService, ConnectionService) | P2 | Only differ in singleton pattern (`Lazy<T>` vs `lock`); parameterize the pattern in a shared base | ~600 | ✅ Done (ThemeServiceBase, ConnectionServiceBase, NavigationServiceBase extracted to Ui.Services; WPF services refactored to extend base classes) |
 | 6C.3 | **Phase 3 — Services with minor platform differences** (LoggingService, MessagingService, StatusService, CredentialService, SchemaService, WatchlistService) | P2 | ~90% shared logic with small platform-specific branches; use strategy/adapter pattern | ~500 | ✅ SchemaService done (SchemaServiceBase extracted to Ui.Services; WPF SchemaService refactored to extend base, ~300 LOC saved) |
-| 6C.4 | **Phase 4 — Complex services** (AdminMaintenanceService, AdvancedAnalyticsService, ArchiveHealthService, BackgroundTaskSchedulerService, OfflineTrackingPersistenceService, PendingOperationsQueueService) | P3 | Larger services requiring careful extraction of shared orchestration logic | ~300 | ✅ AdminMaintenanceService done (shared DTOs, interface, base class in Ui.Services; WPF/UWP reduced to ~15/30 lines). ✅ AdvancedAnalyticsService done (shared DTOs + base class). ✅ ArchiveHealthService DTOs already shared via Contracts. Remaining 3 services deferred — UWP deprecated, deduplication no longer cost-effective |
+| 6C.4 | **Phase 4 — Complex services** (AdminMaintenanceService, AdvancedAnalyticsService, ArchiveHealthService, BackgroundTaskSchedulerService, OfflineTrackingPersistenceService, PendingOperationsQueueService) | P3 | Larger services requiring careful extraction of shared orchestration logic | ~300 | ✅ AdminMaintenanceService done (shared DTOs, interface, base class in Ui.Services; WPF/UWP reduced to ~15/30 lines). ✅ AdvancedAnalyticsService done (shared DTOs + base class). ✅ ArchiveHealthService DTOs already shared via Contracts. Remaining UWP duplicates resolved by UWP deletion (6E.3) |
 
 **Validation:** Full solution build + existing test suite green after each phase.
 
-### 6D. Ambiguous Class Name Resolution (P2 — Low Risk) — PARTIALLY COMPLETED
+### 6D. Ambiguous Class Name Resolution (P2 — Low Risk) — COMPLETED ✅
 
 Same-named classes in different namespaces create confusion and maintenance risk.
 
 | # | Item | Locations | Recommendation | Status |
 |---|------|-----------|----------------|--------|
-| 6D.1 | **`SubscriptionManager`** — 3 classes with same name across layers | `Application/Subscriptions/`, `Infrastructure/Providers/`, `Infrastructure/Shared/` | Rename to role-specific names: `SubscriptionCoordinator`, `ProviderSubscriptionManager`, `SubscriptionHelper` | ✅ Deleted Infrastructure/Providers duplicate (PR #1028) |
+| 6D.1 | **`SubscriptionManager`** — 3 classes with same name across layers | `Application/Subscriptions/`, `Infrastructure/Providers/`, `Infrastructure/Shared/` | Rename to role-specific names: `SubscriptionCoordinator`, `ProviderSubscriptionManager`, `SubscriptionHelper` | ✅ Deleted Infrastructure/Providers duplicate (PR #1028). ✅ Application layer renamed to `SubscriptionOrchestrator` to disambiguate from Infrastructure/Shared |
 | 6D.2 | **`ConfigStore`** — 2 classes with same name | `Application/Http/ConfigStore.cs`, `Ui.Shared/Services/ConfigStore.cs` | Rename UI variant to `UiConfigStore` or merge functionality | ✅ Done (Ui.Shared is wrapper) |
 | 6D.3 | **`BackfillCoordinator`** — 2 classes with same name | `Application/Http/BackfillCoordinator.cs`, `Ui.Shared/Services/BackfillCoordinator.cs` | Rename UI variant to `UiBackfillCoordinator` or merge | ✅ Done (Ui.Shared is wrapper) |
 | 6D.4 | **`HtmlTemplates`** — 2 classes with same name | `Application/Http/HtmlTemplates.cs`, `Ui.Shared/HtmlTemplates.cs` | Determine canonical owner; delete or rename the other | ✅ Renamed: HtmlTemplateManager (Application) & HtmlTemplateGenerator (Ui.Shared) (PR #1028) |
 
-### 6E. UWP Platform Decoupling (P3 — ACTIVATED, UWP Deprecated)
+### 6E. UWP Platform Decoupling (P3 — ACTIVATED, UWP Deprecated) — COMPLETED ✅
 
-**Decision made (Phase 4B.2): UWP is formally deprecated.** WPF is the sole actively maintained desktop client. Execute the full removal sequence. See `docs/audits/CLEANUP_OPPORTUNITIES.md` §3 for detailed file-level plan.
+**Decision made (Phase 4B.2): UWP is formally deprecated.** WPF is the sole actively maintained desktop client. Full removal sequence executed.
 
 | # | Item | Priority | Description | Status |
 |---|------|----------|-------------|--------|
-| 6E.1 | **Port UWP-only behavior to shared services** | P3 | Identify any logic in UWP services not present in WPF; port to `Ui.Services` | ⚠️ Partial — AdminMaintenanceService and AdvancedAnalyticsService logic extracted to shared base classes |
-| 6E.2 | **Remove UWP from active CI** | P3 | ~~Remove project from `.sln`~~, delete UWP jobs from `desktop-builds.yml`, update labeler and quickstart | ⚠️ Partial — UWP CI jobs now manual-dispatch-only (`workflow_dispatch`); removed from push/PR triggers. `.csproj` marked deprecated. `App.xaml.cs` annotated with `[Obsolete]` |
-| 6E.3 | **Delete `src/MarketDataCollector.Uwp/`** | P3 | ~100 source files, ~16,500 lines; only after 6E.1 and 6E.2 are complete | |
-| 6E.4 | **Remove UWP integration tests** | P3 | `tests/MarketDataCollector.Tests/Integration/UwpCoreIntegrationTests.cs` and related coverage exclusions | |
-| 6E.5 | **Update documentation** | P3 | Remove dual-platform wording from docs, move UWP docs to `docs/archived/`, regenerate `docs/generated/repository-structure.md` | |
+| 6E.1 | **Port UWP-only behavior to shared services** | P3 | Identify any logic in UWP services not present in WPF; port to `Ui.Services` | ✅ Done — AdminMaintenanceService and AdvancedAnalyticsService logic extracted to shared base classes. No remaining UWP-only logic identified |
+| 6E.2 | **Remove UWP from active CI** | P3 | Remove project from `.sln`, delete UWP jobs from `desktop-builds.yml`, update labeler and quickstart | ✅ Done — UWP project removed from `.sln`, all UWP jobs deleted from `desktop-builds.yml`, UWP removed from `scheduled-maintenance.yml` project iteration |
+| 6E.3 | **Delete `src/MarketDataCollector.Uwp/`** | P3 | ~299 files, ~16,500 lines | ✅ Done — entire directory deleted |
+| 6E.4 | **Remove UWP integration tests** | P3 | `tests/MarketDataCollector.Tests/Integration/UwpCoreIntegrationTests.cs` and related coverage exclusions | ✅ Done — test file deleted |
+| 6E.5 | **Update documentation** | P3 | Remove dual-platform wording from docs, move UWP docs to `docs/archived/`, update CI workflow README | ✅ Done — UWP docs already in `docs/archived/`, CI README updated |
 
-### 6F. Structural Decomposition of Large Files (P3)
+### 6F. Structural Decomposition of Large Files (P3) — COMPLETED ✅
 
 Several files exceed 2,000 lines and combine multiple responsibilities. Breaking them apart improves navigability and testability. Cross-reference: CLEANUP_OPPORTUNITIES §4.
 
-| # | Item | Location | Current LOC | Recommendation |
-|---|------|----------|-------------|----------------|
-| 6F.1 | **Split `UiServer.cs`** into domain-specific endpoint modules | `Application/Http/UiServer.cs` | ~3,030 | Extract `MapHealthEndpoints()`, `MapStorageEndpoints()`, `MapConfigEndpoints()`, etc. |
-| 6F.2 | **Split `HtmlTemplates.cs`** — move static CSS/JS to `wwwroot`, keep only dynamic rendering | `Ui.Shared/HtmlTemplates.cs` | ~2,510 | Move static assets to files; split C# into composable render functions |
-| 6F.3 | **Decompose `PortableDataPackager.cs`** — separate orchestration, I/O, validation, reporting | `Storage/Packaging/PortableDataPackager.cs` | ~1,100 | Extract `PackageValidator`, `PackageWriter`, `PackageReporter` |
-| 6F.4 | **Decompose `AnalysisExportService.cs`** | `Storage/Export/AnalysisExportService.cs` | ~1,300 | Extract format-specific writers and quality report generation |
+| # | Item | Location | Current LOC | Recommendation | Status |
+|---|------|----------|-------------|----------------|--------|
+| 6F.1 | **Split `UiServer.cs`** into domain-specific endpoint modules | `Application/Http/UiServer.cs` | ~3,030 | Extract `MapHealthEndpoints()`, `MapStorageEndpoints()`, `MapConfigEndpoints()`, etc. | ✅ Done (previously completed) |
+| 6F.2 | **Split `HtmlTemplateGenerator.cs`** — extract CSS/JS into partial class files | `Ui.Shared/HtmlTemplateGenerator.cs` | ~2,510 | Split into 3 partial class files: core HTML (670 LOC), `.Styles.cs` (866 LOC), `.Scripts.cs` (997 LOC) | ✅ Done |
+| 6F.3 | **Decompose `PortableDataPackager.cs`** — separate orchestration, I/O, validation, scripts | `Storage/Packaging/PortableDataPackager.cs` | ~2,042 | Split into 4 partial class files: core API (412 LOC), `.Creation.cs` (602 LOC), `.Validation.cs` (243 LOC), `.Scripts.cs` (822 LOC) | ✅ Done |
+| 6F.4 | **Decompose `AnalysisExportService.cs`** — extract format-specific writers and I/O | `Storage/Export/AnalysisExportService.cs` | ~1,352 | Split into 3 partial class files: core API (238 LOC), `.Formats.cs` (844 LOC), `.IO.cs` (296 LOC) | ✅ Done |
 
 ---
 

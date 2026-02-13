@@ -169,13 +169,13 @@ public sealed class HostStartup : IAsyncDisposable
     /// </summary>
     /// <param name="dataClient">The market data client.</param>
     /// <returns>Configured subscription manager.</returns>
-    public SubscriptionManager CreateSubscriptionManager(IMarketDataClient dataClient)
+    public SubscriptionOrchestrator CreateSubscriptionOrchestrator(IMarketDataClient dataClient)
     {
         var depthCollector = GetRequiredService<MarketDepthCollector>();
         var tradeCollector = GetRequiredService<TradeDataCollector>();
-        var log = LoggingSetup.ForContext<SubscriptionManager>();
+        var log = LoggingSetup.ForContext<SubscriptionOrchestrator>();
 
-        return new SubscriptionManager(
+        return new SubscriptionOrchestrator(
             depthCollector,
             tradeCollector,
             dataClient,

@@ -915,7 +915,7 @@ jobs:
           TOTAL_SIZE=0
           MAIN_DLL_KB=0
 
-          for projdir in src/MarketDataCollector src/MarketDataCollector.Contracts src/MarketDataCollector.FSharp src/MarketDataCollector.Ui src/MarketDataCollector.Ui.Shared src/MarketDataCollector.Uwp src/MarketDataCollector.Wpf; do
+          for projdir in src/MarketDataCollector src/MarketDataCollector.Contracts src/MarketDataCollector.FSharp src/MarketDataCollector.Ui src/MarketDataCollector.Ui.Shared src/MarketDataCollector.Wpf; do
             PROJNAME=$(basename "$projdir")
             BINDIR="$projdir/bin/Release"
 
