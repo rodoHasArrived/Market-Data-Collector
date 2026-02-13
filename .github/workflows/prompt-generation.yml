@@ -52,7 +52,7 @@ permissions:
   actions: read
 
 concurrency:
-  group: prompt-generation-${{ github.ref }}
+  group: prompt-generation-${{ github.workflow }}-${{ github.event_name == 'workflow_run' && github.event.workflow_run.id || github.ref }}
   cancel-in-progress: true
 
 defaults:
@@ -118,22 +118,36 @@ jobs:
           echo "run_id=${RUN_ID:-0}" >> "$GITHUB_OUTPUT"
           echo "Resolved workflow: $WORKFLOW (run: ${RUN_ID:-0})"
 
+      - name: Validate workflow target
+        run: |
+          set -euo pipefail
+
+          WORKFLOW_FILE=".github/workflows/${{ steps.resolve.outputs.workflow }}"
+          if [ ! -f "$WORKFLOW_FILE" ]; then
+            echo "::error::Workflow file '$WORKFLOW_FILE' does not exist."
+            exit 1
+          fi
+
+          echo "Validated target workflow file: $WORKFLOW_FILE"
+
       - name: Read existing prompts
         id: existing
         run: |
           set -euo pipefail
-          COUNT=$(ls -1 .github/prompts/*.prompt.yml 2>/dev/null | wc -l)
+
+          shopt -s nullglob
+          PROMPT_FILES=(.github/prompts/*.prompt.yml)
+          COUNT=${#PROMPT_FILES[@]}
+
           echo "count=$COUNT" >> "$GITHUB_OUTPUT"
           echo "Found $COUNT existing prompts"
 
           # List them for context
           echo "### Existing Prompts" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
-          for f in .github/prompts/*.prompt.yml; do
-            if [ -f "$f" ]; then
-              name=$(head -1 "$f" | sed 's/^name:\s*//')
-              echo "- \`$(basename "$f")\`: $name" >> "$GITHUB_STEP_SUMMARY"
-            fi
+          for f in "${PROMPT_FILES[@]}"; do
+            name=$(awk -F': ' '$1 == "name" {print $2; exit}' "$f")
+            echo "- \`$(basename "$f")\`: ${name:-unknown}" >> "$GITHUB_STEP_SUMMARY"
           done
           echo "" >> "$GITHUB_STEP_SUMMARY"
 
@@ -166,6 +180,30 @@ jobs:
           else
             echo "total_generated=0" >> "$GITHUB_OUTPUT"
           fi
+
+      - name: Build changed prompt summary
+        id: changed-prompts
+        if: always()
+        run: |
+          set -euo pipefail
+
+          {
+            echo "table<<EOF"
+            echo "| File | Purpose |"
+            echo "|------|---------|"
+
+            if [ -d .github/prompts ]; then
+              shopt -s nullglob
+              for f in .github/prompts/*.prompt.yml; do
+                if git diff --name-only -- "$f" | grep -q .; then
+                  name=$(awk -F': ' '$1 == "name" {print $2; exit}' "$f")
+                  echo "| \`$(basename "$f")\` | ${name:-unknown} |"
+                fi
+              done
+            fi
+
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Append generation log to summary
         if: always()
@@ -249,6 +287,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: prompt-generation-results
+          if-no-files-found: warn
           path: |
             prompt-generation-results.json
             prompt-generation.log
@@ -301,10 +340,7 @@ jobs:
 
             | File | Purpose |
             |------|---------|
-            $(git diff --staged --name-only -- .github/prompts/ | while read f; do
-              name=$(head -1 "$f" 2>/dev/null | sed 's/^name:\s*//' || echo "unknown")
-              echo "| \`$(basename "$f")\` | $name |"
-            done)
+            ${{ steps.changed-prompts.outputs.table }}
 
             ### How to Use
 
