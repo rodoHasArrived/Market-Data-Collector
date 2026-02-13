@@ -1,0 +1,94 @@
+{
+  "generated_at": "2026-02-13T18:45:00.092419+00:00",
+  "workflow": "test-matrix.yml",
+  "run_id": 21998525647,
+  "run_url": "https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/21998525647",
+  "run_conclusion": "unknown",
+  "repository": "rodoHasArrived/Market-Data-Collector",
+  "failed_jobs": [
+    "Test (Windows)",
+    "Test (Linux)"
+  ],
+  "findings_by_category": {
+    "build": 5,
+    "test": 1,
+    "code-quality": 10
+  },
+  "total_error_codes": 12,
+  "total_failed_tests": 0,
+  "existing_prompts": 11,
+  "generated_prompts": [
+    {
+      "file": "fix-build-errors.prompt.yml",
+      "category": "build",
+      "action": "create",
+      "findings_count": 5,
+      "error_codes": [
+        "CS0067",
+        "CS0105",
+        "CS0219",
+        "CS1061",
+        "CS1573",
+        "CS1574",
+        "CS1591",
+        "CS4014",
+        "CS8600",
+        "CS8602",
+        "CS8625",
+        "CS8629"
+      ],
+      "failed_tests": []
+    },
+    {
+      "file": "fix-test-failures.prompt.yml",
+      "category": "test",
+      "action": "create",
+      "findings_count": 1,
+      "error_codes": [
+        "CS0067",
+        "CS0105",
+        "CS0219",
+        "CS1061",
+        "CS1573",
+        "CS1574",
+        "CS1591",
+        "CS4014",
+        "CS8600",
+        "CS8602",
+        "CS8625",
+        "CS8629"
+      ],
+      "failed_tests": []
+    },
+    {
+      "file": "fix-code-quality.prompt.yml",
+      "category": "code-quality",
+      "action": "create",
+      "findings_count": 10,
+      "error_codes": [],
+      "failed_tests": []
+    },
+    {
+      "file": "workflow-results-test-matrix.prompt.yml",
+      "category": "summary",
+      "action": "create",
+      "findings_count": 16,
+      "error_codes": [
+        "CS0067",
+        "CS0105",
+        "CS0219",
+        "CS1061",
+        "CS1573",
+        "CS1574",
+        "CS1591",
+        "CS4014",
+        "CS8600",
+        "CS8602",
+        "CS8625",
+        "CS8629"
+      ],
+      "failed_tests": []
+    }
+  ],
+  "total_generated": 4
+}
