@@ -1,5 +1,8 @@
 # Desktop Development Improvements - Quick Reference Card
 
+**Last Updated**: 2026-02-13  
+**Status**: Phase 1 Complete (129 tests), Active Development
+
 ## 🎯 Problem Statement
 **Identify high-value improvements for desktop platform development ease**
 
@@ -37,15 +40,27 @@
 ### 1. Test Infrastructure ⚡
 
 ```bash
-tests/MarketDataCollector.Ui.Tests/
+tests/MarketDataCollector.Ui.Tests/     # 71 tests (shared services)
 ├── Services/
-│   └── FormValidationServiceTests.cs     # 10 tests ✅
+│   ├── FormValidationServiceTests.cs      # 4 tests ✅
+│   ├── ApiClientServiceTests.cs           # 7 tests ✅
+│   ├── BackfillServiceTests.cs            # 9 tests ✅
+│   ├── WatchlistServiceTests.cs           # 9 tests ✅
+│   ├── SystemHealthServiceTests.cs        # 10 tests ✅
+│   └── FixtureDataServiceTests.cs         # 13 tests ✅
 ├── Collections/
 │   ├── BoundedObservableCollectionTests.cs  # 8 tests ✅
 │   └── CircularBufferTests.cs               # 11 tests ✅
 └── README.md
 
-Total: 29 tests, Windows-only, CI-integrated
+tests/MarketDataCollector.Wpf.Tests/    # 58 tests (WPF services)
+├── Services/
+│   ├── NavigationServiceTests.cs          # 14 tests ✅
+│   ├── ConfigServiceTests.cs              # 13 tests ✅
+│   ├── StatusServiceTests.cs              # 13 tests ✅
+│   └── ConnectionServiceTests.cs          # 18 tests ✅
+
+Total: 129 tests, Windows-only, CI-integrated
 ```
 
 **Run tests:**
@@ -53,23 +68,35 @@ Total: 29 tests, Windows-only, CI-integrated
 make test-desktop-services
 # or
 dotnet test tests/MarketDataCollector.Ui.Tests
+dotnet test tests/MarketDataCollector.Wpf.Tests  # Windows only
 ```
 
 ### 2. Comprehensive Implementation Guide 📖
 
-**File:** `docs/development/desktop-platform-improvements-implementation-guide.md` (820 lines)
+**File:** `docs/development/desktop-platform-improvements-implementation-guide.md` (984 lines)
 
 **Contents:**
-- ✅ **Priority 1: Test Infrastructure** (COMPLETE)
+- ✅ **Priority 1: Test Infrastructure** (COMPLETE - 129 tests)
 - 📝 Priority 2: UI Fixture Mode (8 hours, code examples)
 - 📝 Priority 3: Architecture Diagram (4 hours, C4 model)
 - 📝 Priority 4: DI Modernization (40 hours, migration)
 - 📝 Priority 5: Service Consolidation (80 hours, 5-week plan)
 - 📝 Priority 6: Enhanced Documentation
 
-### 3. Executive Summary 📊
+### 3. Expanded Testing Documentation ✅
 
-**File:** `docs/development/desktop-improvements-executive-summary.md`
+**Files:**
+- `docs/development/desktop-testing-guide.md` - Comprehensive testing procedures
+- `tests/MarketDataCollector.Ui.Tests/README.md` - Ui.Tests coverage details
+
+**Highlights:**
+- Quick commands reference
+- Complete test coverage breakdown (129 tests)
+- Fixture mode usage guide
+- Platform-specific instructions
+- Troubleshooting procedures
+
+### 4. Executive Summary 📊
 
 **Highlights:**
 - Impact analysis (before/after)
@@ -81,14 +108,15 @@ dotnet test tests/MarketDataCollector.Ui.Tests
 
 ### Immediate (Weeks 1-2)
 ```
-[ ] Add 20+ more tests
-    ├── ApiClientService
-    ├── BackfillService
-    ├── WatchlistService
-    └── SystemHealthService
+[ ] Add 20+ more tests (targeting 150+ total)
+    ├── OrderBookVisualizationService
+    ├── PortfolioImportService
+    ├── SchemaService
+    └── Additional WPF services
     
-Target: 50+ tests, 30% coverage
+Target: 150+ tests, 30% coverage
 Time: ~16 hours
+Current: 129 tests complete
 ```
 
 ### Short-term (Week 3)
@@ -133,6 +161,11 @@ Before → After (6 months)
 ├── Time to add service:    2 hrs → 30 min
 ├── Time to fix bug:        4 hrs → 1 hr
 └── Onboarding time:        2 days → 4 hrs
+
+Current Status (Phase 1):
+├── Test baseline: 129 tests ✅
+├── Test coverage: ~15% (from 0%)
+└── CI integration: Complete ✅
 ```
 
 ### Code Quality
@@ -142,6 +175,11 @@ Before → After (6 months)
 ├── Duplicate code:         100% → <30%
 ├── Bugs caught pre-merge:  0% → 80%+
 └── "Cannot reproduce":     50% → <10%
+
+Current Status (Phase 1):
+├── Test coverage: 15% ✅ (baseline: 129 tests)
+├── Test quality: High (xUnit + FluentAssertions + Moq)
+└── CI validation: Active ✅
 ```
 
 ### CI Performance
@@ -169,19 +207,23 @@ Current → Target
 
 ## 🎓 Key Documents
 
-| Document | Purpose | Lines |
-|----------|---------|-------|
-| `desktop-platform-improvements-implementation-guide.md` | Complete how-to with code examples | 820 |
-| `desktop-improvements-executive-summary.md` | Impact analysis and roadmap | 270 |
-| `desktop-devex-high-value-improvements.md` | Original improvement plan | 170 |
-| `desktop-dev-workflow.md` | Daily development commands | 30 |
-| `tests/MarketDataCollector.Ui.Tests/README.md` | Test project usage | 40 |
+| Document | Purpose | Lines | Status |
+|----------|---------|-------|--------|
+| `desktop-platform-improvements-implementation-guide.md` | Complete how-to with code examples | 984 | ✅ Active |
+| `desktop-improvements-executive-summary.md` | Impact analysis and roadmap | 290 | ✅ Updated |
+| `desktop-improvements-quick-reference.md` | This document - one-page summary | 250+ | ✅ Updated |
+| `desktop-testing-guide.md` | Comprehensive testing procedures | 280+ | ✅ Expanded |
+| `desktop-devex-high-value-improvements.md` | Original improvement plan | 170 | 📋 Historical |
+| `desktop-dev-workflow.md` | Daily development commands | 40 | 📋 Consolidated |
+| `tests/MarketDataCollector.Ui.Tests/README.md` | Ui.Tests project usage | 65 | ✅ Active |
+| `tests/MarketDataCollector.Wpf.Tests/README.md` | WPF tests usage | TBD | 📝 Planned |
 
 ## 🏆 Success Criteria
 
 Track these to measure progress:
 
-- [ ] 50+ unit tests for desktop services
+- [x] Test infrastructure established (129 tests complete)
+- [ ] 150+ unit tests for desktop services (targeting Week 1-2)
 - [ ] 60%+ test coverage on UI services
 - [ ] UI fixture mode implemented
 - [ ] Architecture diagram in docs
@@ -189,15 +231,33 @@ Track these to measure progress:
 - [ ] <20 minute first successful build
 - [ ] 80%+ bugs caught by tests pre-merge
 
+**Phase 1 Complete**: Test baseline established ✅
+
 ## 🔗 Quick Links
 
-- **Test Project**: `tests/MarketDataCollector.Ui.Tests/`
+- **Test Projects**: 
+  - `tests/MarketDataCollector.Ui.Tests/` (71 tests)
+  - `tests/MarketDataCollector.Wpf.Tests/` (58 tests)
 - **Run Tests**: `make test-desktop-services`
-- **Implementation Guide**: `docs/development/desktop-platform-improvements-implementation-guide.md`
-- **Executive Summary**: `docs/development/desktop-improvements-executive-summary.md`
+- **Implementation Guide**: [desktop-platform-improvements-implementation-guide.md](./desktop-platform-improvements-implementation-guide.md)
+- **Executive Summary**: [desktop-improvements-executive-summary.md](./desktop-improvements-executive-summary.md)
+- **Testing Guide**: [desktop-testing-guide.md](./desktop-testing-guide.md)
+- **Fixture Mode**: [ui-fixture-mode-guide.md](./ui-fixture-mode-guide.md)
+- **Support Policy**: [policies/desktop-support-policy.md](./policies/desktop-support-policy.md)
+
+## Related Documentation
+
+- **Development Workflow:**
+  - [Desktop Development Workflow](./desktop-dev-workflow.md) - Quick command reference
+  - [WPF Implementation Notes](./wpf-implementation-notes.md) - WPF architecture details
+  - [Repository Organization Guide](./repository-organization-guide.md) - Code structure
+  
+- **Planning and Roadmap:**
+  - [Project Roadmap](../status/ROADMAP.md) - Overall project timeline
+  - [Repository Cleanup Action Plan](./repository-cleanup-action-plan.md) - Technical debt
 
 ---
 
-**Status**: Phase 1 Complete ✅ | Ready for Phase 2
+**Status**: Phase 1 Complete ✅ (129 tests) | Ready for Phase 2
 
-**Next Action**: Expand test coverage to 50+ tests (Weeks 1-2)
+**Next Action**: Expand test coverage to 150+ tests (Weeks 1-2)
