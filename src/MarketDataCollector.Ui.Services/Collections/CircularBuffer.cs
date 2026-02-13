@@ -290,11 +290,11 @@ public static class CircularBufferExtensions
         }
 
         // Avoid division by zero
-        if (Math.Abs(fromValue!.Value) < double.Epsilon)
+        if (Math.Abs(fromValue.Value) < double.Epsilon)
         {
             return null;
         }
 
-        return ((toValue!.Value - fromValue.Value) / fromValue.Value) * 100.0;
+        return ((toValue.Value - fromValue.Value) / fromValue.Value) * 100.0;
     }
 }
