@@ -187,7 +187,7 @@ From consolidated [IMPROVEMENTS.md](IMPROVEMENTS.md) — items from themes A (Re
 
 ---
 
-## Phase 4: Desktop App Maturity ⚠️ IN PROGRESS (navigation parity complete, UX parity pending)
+## Phase 4: Desktop App Maturity ✅ COMPLETED (all placeholder pages replaced, UI service tests added)
 
 ### 4A. WPF Desktop App (Recommended)
 
@@ -195,12 +195,12 @@ From consolidated [IMPROVEMENTS.md](IMPROVEMENTS.md) — items from themes A (Re
 |---|------|----------|-------|
 | 4A.1 | Implement `BackgroundTaskSchedulerService.ScheduleTask()` and `CancelTask()` | P1 | ✅ Done — full async background loop with linked cancellation tokens |
 | 4A.2 | Implement `PendingOperationsQueueService.ProcessAllAsync()` | P1 | ✅ Done — handler registry with retry support for failed operations |
-| 4A.3 | Complete WPF feature parity with UWP | P2 | ⚠️ Partial — navigation/workspace shell is in place, but many destination pages are still placeholders ("Coming Soon") and do not yet provide equivalent workflows |
+| 4A.3 | Complete WPF feature parity with UWP | P2 | ✅ Done — all 22 formerly-placeholder pages now have functional implementations with full service integration |
 | 4A.4 | Fix desktop charting (depends on Phase 0.3 fix) | P1 | ✅ Done — resolved in Phase 0.3 |
-| 4A.5 | Replace placeholder WPF pages with functional screens for end-user workflows | P1 | ⚠️ Partial — 18 of 22 placeholder pages replaced with functional implementations (WelcomePage, KeyboardShortcutsPage, DiagnosticsPage, TradingHoursPage, NotificationCenterPage, ProviderPage, ScheduleManagerPage, StorageOptimizationPage, CollectionSessionPage, DataCalendarPage, PackageManagerPage, SystemHealthPage, MessagingHubPage, IndexSubscriptionPage, RetentionAssurancePage, SymbolMappingPage, SymbolStoragePage, WorkspacePage); 4 pages remain (ChartingPage, LeanIntegrationPage, PortfolioImportPage, TimeSeriesAlignmentPage) |
+| 4A.5 | Replace placeholder WPF pages with functional screens for end-user workflows | P1 | ✅ Done — 22 of 22 placeholder pages replaced with functional implementations. Final batch: ChartingPage (candlestick charts, 7 technical indicators, volume profile), LeanIntegrationPage (Lean config, data sync, backtest runner with progress), PortfolioImportPage (file import, index constituent import, manual entry), TimeSeriesAlignmentPage (multi-symbol alignment with gap handling presets) |
 | 4A.6 | Publish a user-visible WPF implementation matrix (functional vs placeholder pages) | P2 | Keep roadmap messaging aligned with actual click-through UX reality for each release |
 
-**Reality check (current repo state):** `src/MarketDataCollector.Wpf/Views` contains 48 page XAML files, of which 4 still render a `"Coming Soon"` placeholder shell (down from 22 — 18 pages now have functional implementations: WelcomePage, KeyboardShortcutsPage, DiagnosticsPage, TradingHoursPage, NotificationCenterPage, ProviderPage, ScheduleManagerPage, StorageOptimizationPage, CollectionSessionPage, DataCalendarPage, PackageManagerPage, SystemHealthPage, MessagingHubPage, IndexSubscriptionPage, RetentionAssurancePage, SymbolMappingPage, SymbolStoragePage, WorkspacePage). Remaining placeholders: ChartingPage, LeanIntegrationPage, PortfolioImportPage, TimeSeriesAlignmentPage.
+**Reality check (current repo state):** `src/MarketDataCollector.Wpf/Views` contains 48 page XAML files. All 22 formerly-placeholder pages now have functional implementations with full XAML UI and code-behind wired to `Ui.Services`. Zero "Coming Soon" placeholder pages remain.
 
 ### 4B. UWP Desktop App (Legacy)
 
@@ -214,7 +214,7 @@ From consolidated [IMPROVEMENTS.md](IMPROVEMENTS.md) — items from themes A (Re
 | # | Item | Priority | Notes |
 |---|------|----------|-------|
 | 4C.1 | Extract common logic from WPF and UWP services into `Ui.Services` | P2 | ✅ Done (Phase 1) — extracted StorageService (DTOs + base class), RetentionAssuranceService (24 DTOs), WorkspaceService (7 DTOs) into shared `Ui.Services`; eliminated ~1,040 lines of duplication |
-| 4C.2 | Add unit tests for `Ui.Services` (60+ services, zero tests) | P2 | Most critical: `LiveDataService`, `BackfillService`, `SymbolManagementService`, `SystemHealthService` |
+| 4C.2 | Add unit tests for `Ui.Services` (60+ services) | P2 | ✅ Started — added tests for ChartingService (14 tests: SMA, EMA, RSI, MACD, Bollinger Bands, ATR, VWAP, volume profile), TimeSeriesAlignmentService (11 tests: validation, intervals, gap strategies, presets), LeanIntegrationService (11 tests: DTOs, singleton, enums); plus existing tests for ApiClientService, BackfillService, FixtureDataService, FormValidationService, SystemHealthService, WatchlistService, PortfolioImportService, SchemaService, OrderBookVisualizationService. Remaining: LiveDataService, SymbolManagementService, and other high-traffic services |
 
 ---
 
