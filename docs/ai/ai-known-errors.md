@@ -195,14 +195,26 @@ If headings are missing, the workflow still creates an entry with safe defaults 
 - **Root cause**: When `TryGetFromNewest` is called on a `CircularBuffer<double>`, the `out T? value` parameter becomes `out double? value`, making `fromValue` and `toValue` of type `double?` (nullable double). Two variants of this issue:
   1. **Original (commit 1e2ea1d)**: Code incorrectly used `fromValue!.Value` where the null-forgiving operator `!` suppresses nullable warnings but doesn't change the type. The compiler then sees `.Value` being accessed on what it thinks is a `double` (due to `!`), causing the error since `double` doesn't have a `.Value` property.
   2. **Variant (commit 5756479)**: Code used `out var fromValue` and the Windows C# compiler failed to properly infer the nullable type from generic `out T?` parameter, treating it as `double` instead of `double?`. Using explicit `out double?` ensures consistent type inference across compiler versions.
+  3. **Robust solution (commit 1802ea9)**: Best practice is to use explicit nullable types, add defensive `HasValue` checks for compile-time safety, and extract `.Value` into local variables to avoid repeated accessor calls.
 - **Prevention checklist**:
   - [ ] Understand that `T?` on value types creates a nullable wrapper (e.g., `double?` is `Nullable<double>`)
   - [ ] When using `out var` with generic methods that return `T?`, use explicit type `out double?` instead of `var` to ensure cross-platform compiler consistency
+  - [ ] Add defensive `HasValue` checks even when Try pattern guarantees non-null for compile-time safety
+  - [ ] Extract `.Value` into local variables to avoid repeated accessor calls and improve readability
   - [ ] Never combine null-forgiving operator `!` with `.Value` accessor on nullable value types
-  - [ ] Access `.Value` on nullable value types directly (e.g., `nullableDouble.Value`) without null-forgiving operator
   - [ ] Use null-forgiving operator (`!`) only on reference types or when you want to suppress nullable warnings, not to change types
-  - [ ] After Try* pattern methods that return bool, the out parameter is guaranteed non-null, so `.Value` access is safe
   - [ ] Test builds on both Linux and Windows after any changes to nullable type handling
+- **Best practice pattern**:
+  ```csharp
+  if (!buffer.TryGetFromNewest(offset, out double? nullableValue))
+      return null;
+  
+  if (!nullableValue.HasValue)  // Defensive check
+      return null;
+  
+  var value = nullableValue.Value;  // Extract once
+  // Use 'value' in calculations
+  ```
 - **Verification commands**:
   - `dotnet build src/MarketDataCollector.Ui.Services/MarketDataCollector.Ui.Services.csproj -c Release`
   - `dotnet build src/MarketDataCollector.Wpf/MarketDataCollector.Wpf.csproj -c Release --no-restore -p:TargetFramework=net9.0-windows`
@@ -211,4 +223,4 @@ If headings are missing, the workflow still creates an entry with safe defaults 
 - **Source issues**: 
   - https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/21988186038/job/63527798918#step:5:1 (original)
   - https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/21996212289/job/63556782046 (variant)
-- **Status**: fixed (commits 1e2ea1d, 5756479)
+- **Status**: fixed (commits 1e2ea1d, 5756479, 1802ea9 - robust solution)
