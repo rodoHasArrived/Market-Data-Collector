@@ -1,44 +1,38 @@
 # TODO Tracking
 
 > Auto-generated TODO documentation. Do not edit manually.
-> Last updated: 2026-02-13T01:00:55.261869+00:00
+> Last updated: 2026-02-13T13:15:51.337099+00:00
 
 ## Summary
 
 | Metric | Count |
 |--------|-------|
-| **Total Items** | 16 |
+| **Total Items** | 17 |
 | **Linked to Issues** | 0 |
-| **Untracked** | 16 |
+| **Untracked** | 17 |
 
 ### By Type
 
 | Type | Count | Description |
 |------|-------|-------------|
-| `NOTE` | 15 | Important notes and documentation |
-| `TODO` | 1 | General tasks to complete |
+| `NOTE` | 17 | Important notes and documentation |
 
 ### By Directory
 
 | Directory | Count |
 |-----------|-------|
-| `tests/` | 12 |
-| `src/` | 4 |
+| `tests/` | 14 |
+| `src/` | 3 |
 
 ## Unassigned & Untracked
 
-16 items have no assignee and no issue tracking:
+17 items have no assignee and no issue tracking:
 
 Consider assigning ownership or creating tracking issues for these items.
 
 ## All Items
 
-### TODO (1)
-
-- [ ] `src/MarketDataCollector/UiServer.cs:132`
-  > MapHistoricalEndpoints needs to be implemented _app.MapHistoricalEndpoints(s_jsonOptions);
-
-### NOTE (15)
+### NOTE (17)
 
 - [ ] `src/MarketDataCollector.Ui.Shared/Endpoints/ConfigEndpoints.cs:138`
   > Status endpoint is handled by StatusEndpoints.MapStatusEndpoints() which provides live status via StatusEndpointHandlers rather than loading from file
@@ -66,6 +60,12 @@ Consider assigning ownership or creating tracking issues for these items.
 
 - [ ] `tests/MarketDataCollector.Tests/Infrastructure/Resilience/WebSocketResiliencePolicyTests.cs:201`
   > We can't directly invoke the event from outside the class The test validates that the subscription mechanism works
+
+- [ ] `tests/MarketDataCollector.Tests/Integration/EndpointTests/MaintenanceEndpointTests.cs:132`
+  > Currently returns 500 for non-existent schedule (implementation behavior)
+
+- [ ] `tests/MarketDataCollector.Tests/Integration/EndpointTests/MaintenanceEndpointTests.cs:383`
+  > Currently returns 500 (implementation behavior)
 
 - [ ] `tests/MarketDataCollector.Tests/Storage/StorageChecksumServiceTests.cs:121`
   > File.WriteAllTextAsync uses UTF-8 with BOM by default on some platforms, so we compute expected from the actual file bytes
