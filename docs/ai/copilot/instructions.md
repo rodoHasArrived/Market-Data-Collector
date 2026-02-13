@@ -1,5 +1,7 @@
 # Market Data Collector - Copilot Instructions
 
+**Last Updated:** 2026-02-13
+
 > **Note:** For comprehensive project context, see [CLAUDE.md](../../../CLAUDE.md) in the repository root.
 
 ## Repository Overview
@@ -9,8 +11,9 @@
 **Project Type:** .NET Solution (C# and F#)
 **Target Framework:** .NET 9.0
 **Languages:** C# 13, F# 8.0
-**Size:** 807 source files (790 C#, 17 F#) across 14 main projects
+**Size:** 770 C# source files, 144 test files across 14 main projects + 4 test projects
 **Architecture:** Event-driven, monolithic core with optional UI projects
+**Desktop Apps:** WPF (recommended), UWP (legacy)
 
 
 ## AI Error Registry Workflow
@@ -38,8 +41,20 @@ dotnet restore /p:EnableWindowsTargeting=true
 # Build
 dotnet build -c Release --no-restore /p:EnableWindowsTargeting=true
 
-# Run tests
+# Run core tests
 dotnet test tests/MarketDataCollector.Tests/MarketDataCollector.Tests.csproj -c Release --verbosity normal /p:EnableWindowsTargeting=true
+
+# Run F# tests
+dotnet test tests/MarketDataCollector.FSharp.Tests/MarketDataCollector.FSharp.Tests.fsproj -c Release /p:EnableWindowsTargeting=true
+
+# Run WPF tests (Windows only)
+dotnet test tests/MarketDataCollector.Wpf.Tests/MarketDataCollector.Wpf.Tests.csproj -c Release /p:EnableWindowsTargeting=true
+
+# Run UI service tests (Windows only)
+dotnet test tests/MarketDataCollector.Ui.Tests/MarketDataCollector.Ui.Tests.csproj -c Release /p:EnableWindowsTargeting=true
+
+# Run all tests
+dotnet test -c Release /p:EnableWindowsTargeting=true
 
 # Clean build artifacts
 dotnet clean
@@ -49,10 +64,14 @@ rm -rf bin/ obj/ publish/
 ### Test Framework
 - **Framework:** xUnit
 - **Test Projects:**
-  - `tests/MarketDataCollector.Tests/` (C#)
-  - `tests/MarketDataCollector.FSharp.Tests/` (F#)
+  - `tests/MarketDataCollector.Tests/` (98+ C# test files)
+  - `tests/MarketDataCollector.FSharp.Tests/` (5 F# test files)
+  - `tests/MarketDataCollector.Wpf.Tests/` (58 WPF tests, Windows only)
+  - `tests/MarketDataCollector.Ui.Tests/` (71 UI service tests, Windows only)
+- **Total Test Coverage:** 129 desktop tests + extensive core tests
 - **Mocking:** Moq, NSubstitute, MassTransit.TestFramework
 - **Assertions:** FluentAssertions
+- **Coverage:** coverlet for code coverage reporting
 
 ### Running the Application
 
@@ -94,21 +113,31 @@ make clean          # Clean build artifacts
 ```
 MarketDataCollector/
 ├── src/
-│   ├── MarketDataCollector/              # Main console application (C#)
-│   ├── MarketDataCollector.Ui/           # Web dashboard UI (C#)
-│   ├── MarketDataCollector.Ui.Shared/    # Shared UI services & endpoints
-│   ├── MarketDataCollector.Uwp/          # Windows UWP desktop app (WinUI 3)
-│   ├── MarketDataCollector.Contracts/    # Shared contracts and DTOs
-│   └── MarketDataCollector.FSharp/       # F# domain library (12 files)
+│   ├── MarketDataCollector/              # Main console application & entry point
+│   ├── MarketDataCollector.Application/  # Application services, commands, pipelines
+│   ├── MarketDataCollector.Core/         # Core domain models, exceptions, config
+│   ├── MarketDataCollector.Domain/       # Domain collectors, events, models
+│   ├── MarketDataCollector.Contracts/    # Shared contracts, DTOs, API models
+│   ├── MarketDataCollector.Infrastructure/ # Provider implementations, data sources
+│   ├── MarketDataCollector.ProviderSdk/  # Provider SDK interfaces & attributes
+│   ├── MarketDataCollector.Storage/      # Storage sinks, archival, packaging
+│   ├── MarketDataCollector.FSharp/       # F# domain library (12 files)
+│   ├── MarketDataCollector.Ui/           # Web dashboard UI (Blazor/Razor)
+│   ├── MarketDataCollector.Ui.Services/  # Shared UI services (cross-platform)
+│   ├── MarketDataCollector.Ui.Shared/    # Shared UI endpoints & contracts
+│   ├── MarketDataCollector.Wpf/          # WPF desktop app (recommended, Windows)
+│   └── MarketDataCollector.Uwp/          # UWP desktop app (legacy, Windows)
 ├── tests/
-│   ├── MarketDataCollector.Tests/        # C# unit tests (50 files)
-│   └── MarketDataCollector.FSharp.Tests/ # F# unit tests
+│   ├── MarketDataCollector.Tests/        # Core C# unit tests (98+ test files)
+│   ├── MarketDataCollector.FSharp.Tests/ # F# unit tests (5 files)
+│   ├── MarketDataCollector.Wpf.Tests/    # WPF service tests (58 tests, Windows)
+│   └── MarketDataCollector.Ui.Tests/     # UI service tests (71 tests, Windows)
 ├── benchmarks/
 │   └── MarketDataCollector.Benchmarks/   # BenchmarkDotNet performance tests
-├── docs/                                 # Comprehensive documentation (61 files)
-├── scripts/                              # Build and diagnostic scripts
-├── build-system/                         # Python build tooling
-└── deploy/                               # Deployment configurations
+├── build/                                # Build tooling (Python, Node.js, .NET)
+├── docs/                                 # Comprehensive documentation (87+ files)
+├── scripts/                              # Automation & diagnostic scripts
+└── deploy/                               # Deployment configs (Docker, systemd)
 ```
 
 ## Repository Structure
