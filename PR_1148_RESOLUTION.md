@@ -84,3 +84,42 @@ fatal: refusing to merge unrelated histories
 ```
 
 This is expected behavior - Git correctly refuses to merge branches with no common ancestor.
+
+## Verification Tests
+
+All improvements have been tested and verified working:
+
+### ✅ Script Compilation
+```bash
+python3 -m py_compile build/scripts/docs/create-todo-issues.py
+python3 -m py_compile build/scripts/docs/run-docs-automation.py
+# Both compile successfully
+```
+
+### ✅ Validation Logic
+```bash
+# Test: --auto-create-todos requires scan-todos
+python3 build/scripts/docs/run-docs-automation.py --scripts validate-examples --auto-create-todos --dry-run
+# Output: Error: --auto-create-todos requires scan-todos to be selected.
+# Exit code: 2 ✅
+```
+
+### ✅ JSON Output Feature
+```bash
+# Test: --output-json parameter
+python3 build/scripts/docs/create-todo-issues.py --scan-json test.json --dry-run --output-json /tmp/out.json
+# Creates JSON summary with: created, existing, failed, skipped_limit, total_untracked, dry_run, repo, label, generated_at ✅
+```
+
+### ✅ Error Handling
+```bash
+# Test: Invalid JSON structure
+# Input: {"todos": "not a list"}
+# Output: Error: Scan JSON field 'todos' must be a list ✅
+
+# Test: Malformed JSON
+# Input: { invalid JSON
+# Output: Error: Invalid JSON in scan file: /tmp/malformed.json ✅
+```
+
+All tests pass. The improvements are stable and working correctly on main.
