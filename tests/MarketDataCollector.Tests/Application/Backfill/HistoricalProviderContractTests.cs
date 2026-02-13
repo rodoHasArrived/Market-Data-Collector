@@ -456,6 +456,7 @@ public class HistoricalProviderContractTests
         // Assert
         provider.Name.Should().Be("yahoo");
         provider.DisplayName.Should().Contain("Yahoo");
+        provider.Priority.Should().Be(22);
         provider.SupportsAdjustedPrices.Should().BeTrue();
         provider.SupportsDividends.Should().BeTrue();
         provider.SupportsSplits.Should().BeTrue();

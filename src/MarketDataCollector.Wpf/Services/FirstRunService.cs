@@ -203,7 +203,19 @@ public sealed class FirstRunService
               },
               "Backfill": {
                 "Enabled": false,
-                "DefaultProvider": "Stooq"
+                "Provider": "stooq",
+                "EnableFallback": true,
+                "EnableSymbolResolution": true,
+                "Providers": {
+                  "Alpaca": { "Enabled": true, "Priority": 5, "RateLimitPerMinute": 200 },
+                  "Polygon": { "Enabled": true, "Priority": 12, "RateLimitPerMinute": 5 },
+                  "Tiingo": { "Enabled": true, "Priority": 15, "RateLimitPerHour": 50 },
+                  "Finnhub": { "Enabled": true, "Priority": 18, "RateLimitPerMinute": 60 },
+                  "Stooq": { "Enabled": true, "Priority": 20 },
+                  "Yahoo": { "Enabled": true, "Priority": 22, "RateLimitPerHour": 2000 },
+                  "AlphaVantage": { "Enabled": false, "Priority": 25, "RateLimitPerMinute": 5 },
+                  "NasdaqDataLink": { "Enabled": true, "Priority": 30 }
+                }
               },
               "Logging": {
                 "Level": "Information"

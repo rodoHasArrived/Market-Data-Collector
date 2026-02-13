@@ -282,6 +282,60 @@ public class BackfillConfigDto
 
     [JsonPropertyName("enableSymbolResolution")]
     public bool EnableSymbolResolution { get; set; } = true;
+
+    /// <summary>
+    /// Optional per-provider backfill settings used by desktop configuration workflows.
+    /// </summary>
+    [JsonPropertyName("providers")]
+    public BackfillProvidersConfigDto? Providers { get; set; }
+}
+
+/// <summary>
+/// Backfill provider configuration container.
+/// </summary>
+public class BackfillProvidersConfigDto
+{
+    [JsonPropertyName("alpaca")]
+    public BackfillProviderOptionsDto? Alpaca { get; set; }
+
+    [JsonPropertyName("polygon")]
+    public BackfillProviderOptionsDto? Polygon { get; set; }
+
+    [JsonPropertyName("tiingo")]
+    public BackfillProviderOptionsDto? Tiingo { get; set; }
+
+    [JsonPropertyName("finnhub")]
+    public BackfillProviderOptionsDto? Finnhub { get; set; }
+
+    [JsonPropertyName("stooq")]
+    public BackfillProviderOptionsDto? Stooq { get; set; }
+
+    [JsonPropertyName("yahoo")]
+    public BackfillProviderOptionsDto? Yahoo { get; set; }
+
+    [JsonPropertyName("alphaVantage")]
+    public BackfillProviderOptionsDto? AlphaVantage { get; set; }
+
+    [JsonPropertyName("nasdaqDataLink")]
+    public BackfillProviderOptionsDto? NasdaqDataLink { get; set; }
+}
+
+/// <summary>
+/// Generic backfill provider runtime options.
+/// </summary>
+public class BackfillProviderOptionsDto
+{
+    [JsonPropertyName("enabled")]
+    public bool Enabled { get; set; } = true;
+
+    [JsonPropertyName("priority")]
+    public int? Priority { get; set; }
+
+    [JsonPropertyName("rateLimitPerMinute")]
+    public int? RateLimitPerMinute { get; set; }
+
+    [JsonPropertyName("rateLimitPerHour")]
+    public int? RateLimitPerHour { get; set; }
 }
 
 /// <summary>
