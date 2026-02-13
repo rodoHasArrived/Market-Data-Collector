@@ -270,3 +270,21 @@
 - Migrate one provider at a time with fixture parity tests.
 - Preserve old implementations behind adapters during UI service extraction.
 - Do not delete legacy path until integration, replay, and smoke tests pass in CI for two consecutive runs.
+
+---
+
+## Related Documentation
+
+- **Architecture and Planning:**
+  - [Repository Cleanup Action Plan](./repository-cleanup-action-plan.md) - Prioritized technical debt reduction
+  - [Repository Organization Guide](./repository-organization-guide.md) - Code structure conventions
+  - [ADR Index](../adr/README.md) - Architectural decision records
+
+- **Implementation Guides:**
+  - [Provider Implementation Guide](./provider-implementation.md) - Adding new data providers
+  - [Desktop Platform Improvements](./desktop-platform-improvements-implementation-guide.md) - Desktop development
+  - [WPF Implementation Notes](./wpf-implementation-notes.md) - WPF architecture
+
+- **Status and Tracking:**
+  - [Project Roadmap](../status/ROADMAP.md) - Overall project timeline
+  - [CHANGELOG](../status/CHANGELOG.md) - Version history
