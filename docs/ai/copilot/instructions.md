@@ -919,6 +919,7 @@ Market-Data-Collector/
 │   │   │   └── CircularBuffer.cs
 │   │   ├── Contracts/
 │   │   │   ├── ConnectionTypes.cs
+│   │   │   ├── IAdminMaintenanceService.cs
 │   │   │   ├── IArchiveHealthService.cs
 │   │   │   ├── IBackgroundTaskSchedulerService.cs
 │   │   │   ├── IConfigService.cs
@@ -935,6 +936,10 @@ Market-Data-Collector/
 │   │   │   └── NavigationTypes.cs
 │   │   ├── Services/
 │   │   │   ├── ActivityFeedService.cs
+│   │   │   ├── AdminMaintenanceModels.cs
+│   │   │   ├── AdminMaintenanceServiceBase.cs
+│   │   │   ├── AdvancedAnalyticsModels.cs
+│   │   │   ├── AdvancedAnalyticsServiceBase.cs
 │   │   │   ├── AnalysisExportWizardService.cs
 │   │   │   ├── ApiClientService.cs
 │   │   │   ├── ArchiveBrowserService.cs
