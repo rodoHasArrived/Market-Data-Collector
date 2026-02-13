@@ -184,6 +184,22 @@ public sealed class ExportProfile
     };
 
     /// <summary>
+    /// Pre-built profile for Apache Arrow/Feather.
+    /// </summary>
+    public static ExportProfile ArrowFeather => new()
+    {
+        Id = "arrow-feather",
+        Name = "Apache Arrow (Feather)",
+        Description = "Arrow IPC format for zero-copy interop with Python (PyArrow), R, Julia, and Spark",
+        TargetTool = "PyArrow",
+        Format = ExportFormat.Arrow,
+        Compression = new() { Type = CompressionType.None },
+        TimestampSettings = new() { Format = TimestampFormat.UnixNanoseconds, Timezone = "UTC" },
+        IncludeLoaderScript = true,
+        IncludeDataDictionary = true
+    };
+
+    /// <summary>
     /// Get all pre-built profiles.
     /// </summary>
     public static IReadOnlyList<ExportProfile> GetBuiltInProfiles() => new[]
@@ -192,7 +208,8 @@ public sealed class ExportProfile
         RStats,
         QuantConnectLean,
         Excel,
-        PostgreSql
+        PostgreSql,
+        ArrowFeather
     };
 }
 
@@ -212,7 +229,9 @@ public enum ExportFormat
     /// <summary>Microsoft Excel XLSX format.</summary>
     Xlsx,
     /// <summary>SQL statements (INSERT or COPY).</summary>
-    Sql
+    Sql,
+    /// <summary>Apache Arrow IPC format (Feather v2).</summary>
+    Arrow
 }
 
 /// <summary>

@@ -101,6 +101,9 @@ public sealed partial class AnalysisExportService
                 case ExportFormat.Xlsx:
                     exportedFiles = await ExportToXlsxAsync(sourceFiles, request, profile, ct);
                     break;
+                case ExportFormat.Arrow:
+                    exportedFiles = await ExportToArrowAsync(sourceFiles, request, profile, ct);
+                    break;
                 default:
                     throw new NotSupportedException($"Format {profile.Format} is not supported");
             }
@@ -234,5 +237,4 @@ public sealed partial class AnalysisExportService
         public DateTime? Date { get; set; }
         public bool IsCompressed { get; set; }
     }
-}
 }
