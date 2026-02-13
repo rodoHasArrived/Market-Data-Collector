@@ -1,5 +1,7 @@
 # UWP Desktop App - Feature Refinements
 
+> **DEPRECATED:** The UWP/WinUI 3 desktop application is deprecated. Use the WPF desktop app (`MarketDataCollector.Wpf`) instead. This project receives only critical security fixes. See [UWP to WPF Migration Guide](../../docs/development/uwp-to-wpf-migration.md) for details.
+
 This document outlines proposed feature refinements to enhance the Market Data Collector UWP Desktop Application. Refinements are organized by priority and category.
 
 > **Primary Focus: Data Collection & Archival**

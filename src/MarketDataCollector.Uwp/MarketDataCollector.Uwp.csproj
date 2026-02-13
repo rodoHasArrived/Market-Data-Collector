@@ -1,7 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    ╔══════════════════════════════════════════════════════════════════════╗
+    ║  DEPRECATED: This UWP/WinUI 3 application is deprecated.           ║
+    ║  Use MarketDataCollector.Wpf (WPF desktop app) instead.            ║
+    ║  This project receives only critical security fixes.               ║
+    ║  See docs/development/uwp-to-wpf-migration.md for migration guide.║
+    ╚══════════════════════════════════════════════════════════════════════╝
+  -->
   <PropertyGroup>
     <!-- Detect Windows platform -->
     <IsWindows Condition="'$(OS)' == 'Windows_NT' OR $([MSBuild]::IsOSPlatform('Windows'))">true</IsWindows>
+    <IsDeprecated>true</IsDeprecated>
   </PropertyGroup>
 
   <!-- Non-Windows: Create a minimal stub that compiles but produces nothing -->
