@@ -282,7 +282,7 @@ Standard template requiring:
 
 ## AI Integration
 
-All AI-powered features use `actions/ai-inference@v1` with `gpt-4o-mini` and are configured with `continue-on-error: true` so AI failures never block workflows. AI features include:
+AI-powered features use `actions/ai-inference@v1` with `gpt-4o-mini` and are configured with `continue-on-error: true` so AI failures never block workflows. The `prompt-generation.yml` review step additionally requires a `MODELS_GITHUB_TOKEN` secret to avoid model-access failures from the default workflow token. AI features include:
 
 | Workflow | AI Feature | Purpose |
 |----------|-----------|---------|
