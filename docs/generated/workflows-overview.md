@@ -1,6 +1,6 @@
 # GitHub Workflows Overview
 
-> Auto-generated on 2026-02-13 16:01:54 UTC
+> Auto-generated on 2026-02-13 17:13:03 UTC
 
 This document provides an overview of all GitHub Actions workflows in the repository.
 
@@ -27,6 +27,7 @@ This document provides an overview of all GitHub Actions workflows in the reposi
 | Test Matrix | `test-matrix.yml` | push, PR, manual |
 | Ticker Data Collection | `ticker-data-collection.yml` | manual |
 | Update Diagram Artifacts | `update-diagrams.yml` | push, manual |
+| Update UML Diagram Artifacts | `update-uml-diagrams.yml` | push, manual |
 | Validate Workflows | `validate-workflows.yml` | PR, manual |
 
 ## Workflow Categories
@@ -50,7 +51,7 @@ This document provides an overview of all GitHub Actions workflows in the reposi
 
 ## Workflow Count
 
-- **Total workflows:** 20
+- **Total workflows:** 21
 
 ---
 

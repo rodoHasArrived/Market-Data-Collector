@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-13 16:01:54 UTC
+> Auto-generated on 2026-02-13 17:13:03 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -58,6 +58,7 @@ Market-Data-Collector/
 │   │   ├── TESTING_AI_SYNC.md
 │   │   ├── ticker-data-collection.yml
 │   │   ├── update-diagrams.yml
+│   │   ├── update-uml-diagrams.yml
 │   │   └── validate-workflows.yml
 │   ├── dependabot.yml
 │   ├── labeler.yml

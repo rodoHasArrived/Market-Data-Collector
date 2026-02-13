@@ -227,6 +227,7 @@ Market-Data-Collector/
 │   │   ├── TESTING_AI_SYNC.md
 │   │   ├── ticker-data-collection.yml
 │   │   ├── update-diagrams.yml
+│   │   ├── update-uml-diagrams.yml
 │   │   └── validate-workflows.yml
 │   ├── dependabot.yml
 │   ├── labeler.yml
