@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace MarketDataCollector.Ui.Services.Collections;
 
@@ -145,13 +146,13 @@ public sealed class CircularBuffer<T> : IEnumerable<T>
     /// Offset 0 returns the newest, offset 1 returns the second newest, etc.
     /// </summary>
     /// <param name="offsetFromNewest">Offset from the newest element (0 = newest).</param>
-    /// <param name="value">When this method returns, contains the element if successful.</param>
+    /// <param name="value">When this method returns, contains the element if successful; otherwise, the default value for the type.</param>
     /// <returns>True if the element exists at the specified offset; otherwise, false.</returns>
-    public bool TryGetFromNewest(int offsetFromNewest, out T? value)
+    public bool TryGetFromNewest(int offsetFromNewest, [MaybeNullWhen(false)] out T value)
     {
         if (offsetFromNewest < 0 || offsetFromNewest >= _count)
         {
-            value = default;
+            value = default!;
             return false;
         }
 
@@ -280,34 +281,15 @@ public static class CircularBufferExtensions
     /// <remarks>
     /// Formula: ((toValue - fromValue) / fromValue) * 100
     /// Returns null if fromValue is zero to avoid division by zero.
-    /// This method uses 'out var' for cross-platform compiler compatibility with generic nullable types.
     /// </remarks>
     public static double? CalculatePercentageChange(this CircularBuffer<double> buffer, int fromOffset, int toOffset)
     {
-        // Use 'out var' to ensure cross-platform compiler compatibility with generic 'out T?' parameters.
-        // Windows and Linux C# compilers handle nullable generic constraints differently.
-        if (!buffer.TryGetFromNewest(fromOffset, out var fromValueNullable) || 
-            !buffer.TryGetFromNewest(toOffset, out var toValueNullable))
+        // Using standard Try pattern with out var - no nullable inference issues
+        if (!buffer.TryGetFromNewest(fromOffset, out var fromValue) || 
+            !buffer.TryGetFromNewest(toOffset, out var toValue))
         {
             return null;
         }
-
-        // Defensive null checks for compile-time safety, even though TryGetFromNewest success guarantees non-null.
-        // This pattern provides type safety and clarity.
-        if (!fromValueNullable.HasValue)
-        {
-            return null;
-        }
-
-        if (!toValueNullable.HasValue)
-        {
-            return null;
-        }
-
-        // Extract values into local variables to avoid repeated .Value accessor calls.
-        // This improves readability and follows best practices for nullable value types.
-        var fromValue = fromValueNullable.Value;
-        var toValue = toValueNullable.Value;
 
         // Avoid division by zero
         if (Math.Abs(fromValue) < double.Epsilon)
