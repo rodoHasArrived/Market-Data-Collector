@@ -1,0 +1,55 @@
+name: Update UML Diagram Artifacts
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'docs/uml/*.puml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-uml-diagrams-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  regenerate-uml-diagrams:
+    name: Regenerate PNG diagrams from PlantUML sources
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install PlantUML
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y plantuml
+
+      - name: Regenerate UML PNG artifacts
+        run: |
+          set -euo pipefail
+
+          shopt -s nullglob
+          puml_files=(docs/uml/*.puml)
+
+          if [ ${#puml_files[@]} -eq 0 ]; then
+            echo "No PlantUML files found in docs/uml"
+            exit 0
+          fi
+
+          for file in "${puml_files[@]}"; do
+            echo "Rendering ${file}"
+            plantuml -tpng "$file"
+          done
+
+      - name: Commit regenerated UML diagrams
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'docs(uml): regenerate PNG diagrams from PlantUML sources'
+          file_pattern: docs/uml/*.png
