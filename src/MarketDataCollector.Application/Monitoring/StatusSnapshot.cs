@@ -15,7 +15,7 @@ public sealed record StatusSnapshot(
     IReadOnlyDictionary<string, int> TradeSubscriptions
 )
 {
-    public static StatusSnapshot FromRuntime(AppConfig cfg, IMarketDataClient ib, SubscriptionManager subs, IEventMetrics? metrics = null)
+    public static StatusSnapshot FromRuntime(AppConfig cfg, IMarketDataClient ib, SubscriptionOrchestrator subs, IEventMetrics? metrics = null)
     {
         var m = metrics ?? new DefaultEventMetrics();
         return new(

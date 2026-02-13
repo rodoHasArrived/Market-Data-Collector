@@ -345,8 +345,8 @@ public partial class Program
             throw;
         }
 
-        // Use HostStartup's factory method to create SubscriptionManager from DI-resolved collectors
-        var subscriptionManager = hostStartup.CreateSubscriptionManager(dataClient);
+        // Use HostStartup's factory method to create SubscriptionOrchestrator from DI-resolved collectors
+        var subscriptionManager = hostStartup.CreateSubscriptionOrchestrator(dataClient);
 
         var runtimeCfg = EnsureDefaultSymbols(cfg);
         subscriptionManager.Apply(runtimeCfg);
