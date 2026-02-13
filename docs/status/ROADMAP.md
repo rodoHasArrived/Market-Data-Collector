@@ -86,7 +86,7 @@ Currently **zero** integration tests for the 91 implemented endpoints.
 |---|------|----------|-------|
 | 1C.1 | `TradingCalendar` — market hours and holiday logic | P1 | Affects backfill scheduling and data gap detection |
 | 1C.2 | `ConfigurationWizard` and `AutoConfigurationService` | P2 | First-run experience |
-| 1C.3 | `ConnectivityTestService` and `CredentialValidationService` | P2 | Used by `--test-connectivity` and `--validate-credentials` |
+| 1C.3 | `ConnectivityTestService` and `CredentialValidationService` | P2 | ✅ ConnectivityTestService tests done (record types, DisplaySummary, Dispose). Used by `--test-connectivity` and `--validate-credentials` |
 | 1C.4 | Data quality services: `GapAnalyzer`, `AnomalyDetector`, `CompletenessScoreCalculator`, `SequenceErrorTracker` | P2 | Quality monitoring is a key feature |
 | 1C.5 | `SubscriptionManager` and subscription services (10 files) | P2 | Symbol management subsystem |
 | 1C.6 | `CronExpressionParser` and scheduling logic | P3 | Used by backfill and maintenance scheduling |
@@ -96,7 +96,7 @@ Currently **zero** integration tests for the 91 implemented endpoints.
 | # | Item | Priority | Notes |
 |---|------|----------|-------|
 | 1D.1 | `AppConfig` and `ValidatedConfig` model tests | P2 | Central configuration models |
-| 1D.2 | `DataSourceRegistry` and `CredentialValidator` tests | P2 | Provider SDK used by all providers |
+| 1D.2 | `DataSourceRegistry` and `CredentialValidator` tests | P2 | ✅ Done — CredentialValidatorTests (17 tests) and DataSourceRegistryTests (19 tests) covering discovery, registration, metadata, and extension methods |
 | 1D.3 | Exception type tests (9 custom exceptions) | P3 | Ensure proper serialization and message formatting |
 
 ---
@@ -328,8 +328,8 @@ Several files exceed 2,000 lines and combine multiple responsibilities. Breaking
 |---|------|----------|-------------|----------------|
 | 6F.1 | **Split `UiServer.cs`** into domain-specific endpoint modules | `Application/Http/UiServer.cs` | ~3,030 | Extract `MapHealthEndpoints()`, `MapStorageEndpoints()`, `MapConfigEndpoints()`, etc. |
 | 6F.2 | **Split `HtmlTemplates.cs`** — move static CSS/JS to `wwwroot`, keep only dynamic rendering | `Ui.Shared/HtmlTemplates.cs` | ~2,510 | Move static assets to files; split C# into composable render functions |
-| 6F.3 | **Decompose `PortableDataPackager.cs`** — separate orchestration, I/O, validation, reporting | `Storage/Packaging/PortableDataPackager.cs` | ~1,100 | Extract `PackageValidator`, `PackageWriter`, `PackageReporter` |
-| 6F.4 | **Decompose `AnalysisExportService.cs`** | `Storage/Export/AnalysisExportService.cs` | ~1,300 | Extract format-specific writers and quality report generation |
+| 6F.3 | **Decompose `PortableDataPackager.cs`** — separate orchestration, I/O, validation, reporting | `Storage/Packaging/PortableDataPackager.cs` | ~~2,042~~ → 1,236 | ✅ Done — Extracted `PackageScriptGenerator` (~850 lines) with README, data dictionary, Python/R loader, and 6 import script generators (PostgreSQL, ClickHouse, DuckDB, Python, R, Spark) |
+| 6F.4 | **Decompose `AnalysisExportService.cs`** | `Storage/Export/AnalysisExportService.cs` | ~~1,352~~ → 904 | ✅ Done — Extracted `XlsxExportWriter` (~280 lines, XLSX Open XML generation) and `ExportScriptGenerator` (~155 lines, Python/R/PostgreSQL loader scripts) |
 
 ---
 
@@ -611,7 +611,7 @@ If time is constrained, this minimum scope achieves production readiness:
 | `MarketDataCollector.Infrastructure` | ~85 | ~12 | Low (~14%) | P1 |
 | `MarketDataCollector.Core` | ~40 | ~2 | Very Low | P2 |
 | `MarketDataCollector.Contracts` | ~60 | ~11 (indirect) | Low | P3 |
-| `MarketDataCollector.ProviderSdk` | 12 | 0 | None | P2 |
+| `MarketDataCollector.ProviderSdk` | 12 | 2 | Partial (CredentialValidator, DataSourceRegistry) | P2 |
 | `MarketDataCollector.Ui.Services` | ~60 | 0 | None | P2 |
 | `MarketDataCollector.Ui.Shared` | ~17 | ~8 (integration) | Moderate | P2 |
 | `MarketDataCollector.Wpf` | ~70 | 0 | None | P3 |
