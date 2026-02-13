@@ -908,8 +908,8 @@ Market-Data-Collector/
 │   │   │   ├── PackageManifest.cs
 │   │   │   ├── PackageOptions.cs
 │   │   │   ├── PackageResult.cs
-│   │   │   ├── PortableDataPackager.cs
 │   │   │   ├── PortableDataPackager.Creation.cs
+│   │   │   ├── PortableDataPackager.cs
 │   │   │   ├── PortableDataPackager.Scripts.cs
 │   │   │   └── PortableDataPackager.Validation.cs
 │   │   ├── Policies/

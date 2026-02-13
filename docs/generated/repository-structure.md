@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-13 22:24:45 UTC
+> Auto-generated on 2026-02-13 22:55:29 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -518,7 +518,7 @@ Market-Data-Collector/
 │   │   ├── Subscriptions/
 │   │   │   ├── Services/
 │   │   │   │   ...
-│   │   │   └── SubscriptionManager.cs
+│   │   │   └── SubscriptionOrchestrator.cs
 │   │   ├── Testing/
 │   │   │   └── DepthBufferSelfTests.cs
 │   │   ├── Tracing/
@@ -721,6 +721,8 @@ Market-Data-Collector/
 │   │   │   └── WriteAheadLog.cs
 │   │   ├── Export/
 │   │   │   ├── AnalysisExportService.cs
+│   │   │   ├── AnalysisExportService.Formats.cs
+│   │   │   ├── AnalysisExportService.IO.cs
 │   │   │   ├── AnalysisQualityReport.cs
 │   │   │   ├── ExportProfile.cs
 │   │   │   ├── ExportRequest.cs
@@ -739,7 +741,10 @@ Market-Data-Collector/
 │   │   │   ├── PackageManifest.cs
 │   │   │   ├── PackageOptions.cs
 │   │   │   ├── PackageResult.cs
-│   │   │   └── PortableDataPackager.cs
+│   │   │   ├── PortableDataPackager.Creation.cs
+│   │   │   ├── PortableDataPackager.cs
+│   │   │   ├── PortableDataPackager.Scripts.cs
+│   │   │   └── PortableDataPackager.Validation.cs
 │   │   ├── Policies/
 │   │   │   └── JsonlStoragePolicy.cs
 │   │   ├── Replay/
@@ -906,292 +911,10 @@ Market-Data-Collector/
 │   │   │   ├── BackfillCoordinator.cs
 │   │   │   └── ConfigStore.cs
 │   │   ├── DtoExtensions.cs
-│   │   ├── HtmlTemplates.cs
+│   │   ├── HtmlTemplateGenerator.cs
+│   │   ├── HtmlTemplateGenerator.Scripts.cs
+│   │   ├── HtmlTemplateGenerator.Styles.cs
 │   │   └── MarketDataCollector.Ui.Shared.csproj
-│   ├── MarketDataCollector.Uwp/
-│   │   ├── Assets/
-│   │   │   ├── Icons/
-│   │   │   │   ...
-│   │   │   ├── Source/
-│   │   │   │   ...
-│   │   │   ├── AppIcon.svg
-│   │   │   ├── BadgeLogo.png
-│   │   │   ├── BadgeLogo.scale-100.png
-│   │   │   ├── BadgeLogo.scale-125.png
-│   │   │   ├── BadgeLogo.scale-150.png
-│   │   │   ├── BadgeLogo.scale-200.png
-│   │   │   ├── BadgeLogo.scale-400.png
-│   │   │   ├── generate-assets.ps1
-│   │   │   ├── generate-assets.sh
-│   │   │   ├── LargeTile.scale-100.png
-│   │   │   ├── LargeTile.scale-125.png
-│   │   │   ├── LargeTile.scale-150.png
-│   │   │   ├── LargeTile.scale-200.png
-│   │   │   ├── README.md
-│   │   │   ├── SmallTile.scale-100.png
-│   │   │   ├── SmallTile.scale-125.png
-│   │   │   ├── SmallTile.scale-150.png
-│   │   │   ├── SmallTile.scale-200.png
-│   │   │   ├── SplashScreen.scale-100.png
-│   │   │   ├── SplashScreen.scale-125.png
-│   │   │   ├── SplashScreen.scale-150.png
-│   │   │   ├── SplashScreen.scale-200.png
-│   │   │   ├── Square150x150Logo.png
-│   │   │   ├── Square150x150Logo.scale-100.png
-│   │   │   ├── Square150x150Logo.scale-125.png
-│   │   │   ├── Square150x150Logo.scale-150.png
-│   │   │   ├── Square150x150Logo.scale-200.png
-│   │   │   ├── Square150x150Logo.scale-400.png
-│   │   │   ├── Square44x44Logo.png
-│   │   │   ├── Square44x44Logo.scale-100.png
-│   │   │   ├── Square44x44Logo.scale-125.png
-│   │   │   ├── Square44x44Logo.scale-150.png
-│   │   │   ├── Square44x44Logo.scale-200.png
-│   │   │   ├── Square44x44Logo.scale-400.png
-│   │   │   ├── Square44x44Logo.targetsize-16.png
-│   │   │   ├── Square44x44Logo.targetsize-24.png
-│   │   │   ├── Square44x44Logo.targetsize-256.png
-│   │   │   ├── Square44x44Logo.targetsize-32.png
-│   │   │   ├── Square44x44Logo.targetsize-48.png
-│   │   │   ├── StoreLogo.png
-│   │   │   ├── StoreLogo.scale-100.png
-│   │   │   ├── StoreLogo.scale-125.png
-│   │   │   ├── StoreLogo.scale-150.png
-│   │   │   ├── StoreLogo.scale-200.png
-│   │   │   ├── StoreLogo.scale-400.png
-│   │   │   ├── Wide310x150Logo.scale-100.png
-│   │   │   ├── Wide310x150Logo.scale-125.png
-│   │   │   ├── Wide310x150Logo.scale-150.png
-│   │   │   └── Wide310x150Logo.scale-200.png
-│   │   ├── Contracts/
-│   │   │   ├── IAdminMaintenanceService.cs
-│   │   │   ├── IAdvancedAnalyticsService.cs
-│   │   │   ├── IConnectionService.cs
-│   │   │   ├── IContextMenuService.cs
-│   │   │   ├── IExportPresetService.cs
-│   │   │   ├── IFirstRunService.cs
-│   │   │   ├── IFormValidationService.cs
-│   │   │   ├── IInfoBarService.cs
-│   │   │   ├── INavigationService.cs
-│   │   │   ├── IRetentionAssuranceService.cs
-│   │   │   ├── IStorageService.cs
-│   │   │   ├── ITooltipService.cs
-│   │   │   ├── IUwpAnalysisExportService.cs
-│   │   │   ├── IUwpDataQualityService.cs
-│   │   │   └── IWorkspaceService.cs
-│   │   ├── Controls/
-│   │   │   ├── AlertBanner.xaml
-│   │   │   ├── AlertBanner.xaml.cs
-│   │   │   ├── DataCoverageCalendar.xaml
-│   │   │   ├── DataCoverageCalendar.xaml.cs
-│   │   │   ├── DataTable.xaml
-│   │   │   ├── DataTable.xaml.cs
-│   │   │   ├── LoadingOverlay.xaml
-│   │   │   ├── LoadingOverlay.xaml.cs
-│   │   │   ├── MetricCard.xaml
-│   │   │   ├── MetricCard.xaml.cs
-│   │   │   ├── ProgressCard.xaml
-│   │   │   ├── ProgressCard.xaml.cs
-│   │   │   ├── SectionHeader.xaml
-│   │   │   ├── SectionHeader.xaml.cs
-│   │   │   ├── StatusBadge.xaml
-│   │   │   └── StatusBadge.xaml.cs
-│   │   ├── Converters/
-│   │   │   └── BoolConverters.cs
-│   │   ├── Dialogs/
-│   │   │   ├── BackfillWizardDialog.xaml
-│   │   │   └── BackfillWizardDialog.xaml.cs
-│   │   ├── Extensions/
-│   │   │   └── TaskExtensions.cs
-│   │   ├── Helpers/
-│   │   │   ├── AccessibilityHelper.cs
-│   │   │   └── ResponsiveLayoutHelper.cs
-│   │   ├── Models/
-│   │   │   ├── AdminMaintenanceDisplayModels.cs
-│   │   │   ├── AdvancedAnalyticsDisplayModels.cs
-│   │   │   ├── AnalysisExportDisplayModels.cs
-│   │   │   ├── AppConfig.cs
-│   │   │   ├── BackfillDisplayModels.cs
-│   │   │   ├── ChartingDisplayModels.cs
-│   │   │   ├── DashboardDisplayModels.cs
-│   │   │   ├── DataBrowserDisplayModels.cs
-│   │   │   ├── DataCalendarDisplayModels.cs
-│   │   │   ├── DataExportDisplayModels.cs
-│   │   │   ├── DataSamplingDisplayModels.cs
-│   │   │   ├── DiagnosticsDisplayModels.cs
-│   │   │   ├── EventReplayDisplayModels.cs
-│   │   │   ├── HelpDisplayModels.cs
-│   │   │   ├── IndexSubscriptionDisplayModels.cs
-│   │   │   ├── LeanIntegrationDisplayModels.cs
-│   │   │   ├── LiveDataDisplayModels.cs
-│   │   │   ├── MainDisplayModels.cs
-│   │   │   ├── MessagingHubDisplayModels.cs
-│   │   │   ├── NotificationCenterDisplayModels.cs
-│   │   │   ├── OfflineTrackingModels.cs
-│   │   │   ├── OrderBookDisplayModels.cs
-│   │   │   ├── PackageManagerDisplayModels.cs
-│   │   │   ├── PortfolioImportDisplayModels.cs
-│   │   │   ├── ProviderHealthDisplayModels.cs
-│   │   │   ├── RetentionAssuranceDisplayModels.cs
-│   │   │   ├── ServiceManagerDisplayModels.cs
-│   │   │   ├── SettingsDisplayModels.cs
-│   │   │   ├── StorageDisplayModels.cs
-│   │   │   ├── StorageOptimizationDisplayModels.cs
-│   │   │   ├── SymbolMappingDisplayModels.cs
-│   │   │   ├── SymbolsDisplayModels.cs
-│   │   │   ├── SymbolStorageDisplayModels.cs
-│   │   │   ├── SystemHealthDisplayModels.cs
-│   │   │   ├── TradingHoursDisplayModels.cs
-│   │   │   ├── WatchlistDisplayModels.cs
-│   │   │   └── WelcomeDisplayModels.cs
-│   │   ├── Services/
-│   │   │   ├── AdminMaintenanceService.cs
-│   │   │   ├── AdvancedAnalyticsService.cs
-│   │   │   ├── ArchiveHealthService.cs
-│   │   │   ├── BackgroundTaskSchedulerService.cs
-│   │   │   ├── BrushRegistry.cs
-│   │   │   ├── ConfigService.cs
-│   │   │   ├── ConnectionService.cs
-│   │   │   ├── ContextMenuService.cs
-│   │   │   ├── CredentialService.cs
-│   │   │   ├── ExportPresetService.cs
-│   │   │   ├── FirstRunService.cs
-│   │   │   ├── FormValidationService.cs
-│   │   │   ├── InfoBarService.cs
-│   │   │   ├── KeyboardShortcutService.cs
-│   │   │   ├── LoggingService.cs
-│   │   │   ├── MessagingService.cs
-│   │   │   ├── NavigationService.cs
-│   │   │   ├── NotificationService.cs
-│   │   │   ├── OfflineTrackingPersistenceService.cs
-│   │   │   ├── PendingOperationsQueueService.cs
-│   │   │   ├── RetentionAssuranceService.cs
-│   │   │   ├── SchemaService.cs
-│   │   │   ├── ServiceLocator.cs
-│   │   │   ├── StatusService.cs
-│   │   │   ├── StorageService.cs
-│   │   │   ├── ThemeService.cs
-│   │   │   ├── TooltipService.cs
-│   │   │   ├── UwpAnalysisExportService.cs
-│   │   │   ├── UwpDataQualityService.cs
-│   │   │   ├── WatchlistService.cs
-│   │   │   └── WorkspaceService.cs
-│   │   ├── Styles/
-│   │   │   ├── Animations.xaml
-│   │   │   ├── AppStyles.xaml
-│   │   │   └── IconResources.xaml
-│   │   ├── ViewModels/
-│   │   │   ├── BackfillViewModel.cs
-│   │   │   ├── DashboardViewModel.cs
-│   │   │   ├── DataExportViewModel.cs
-│   │   │   ├── DataQualityViewModel.cs
-│   │   │   └── MainViewModel.cs
-│   │   ├── Views/
-│   │   │   ├── AdminMaintenancePage.xaml
-│   │   │   ├── AdminMaintenancePage.xaml.cs
-│   │   │   ├── AdvancedAnalyticsPage.xaml
-│   │   │   ├── AdvancedAnalyticsPage.xaml.cs
-│   │   │   ├── AnalysisExportPage.xaml
-│   │   │   ├── AnalysisExportPage.xaml.cs
-│   │   │   ├── AnalysisExportWizardPage.xaml
-│   │   │   ├── AnalysisExportWizardPage.xaml.cs
-│   │   │   ├── ArchiveHealthPage.xaml
-│   │   │   ├── ArchiveHealthPage.xaml.cs
-│   │   │   ├── BackfillPage.xaml
-│   │   │   ├── BackfillPage.xaml.cs
-│   │   │   ├── ChartingPage.xaml
-│   │   │   ├── ChartingPage.xaml.cs
-│   │   │   ├── CollectionSessionPage.xaml
-│   │   │   ├── CollectionSessionPage.xaml.cs
-│   │   │   ├── DashboardPage.xaml
-│   │   │   ├── DashboardPage.xaml.cs
-│   │   │   ├── DataBrowserPage.xaml
-│   │   │   ├── DataBrowserPage.xaml.cs
-│   │   │   ├── DataCalendarPage.xaml
-│   │   │   ├── DataCalendarPage.xaml.cs
-│   │   │   ├── DataExportPage.xaml
-│   │   │   ├── DataExportPage.xaml.cs
-│   │   │   ├── DataQualityPage.xaml
-│   │   │   ├── DataQualityPage.xaml.cs
-│   │   │   ├── DataSamplingPage.xaml
-│   │   │   ├── DataSamplingPage.xaml.cs
-│   │   │   ├── DataSourcesPage.xaml
-│   │   │   ├── DataSourcesPage.xaml.cs
-│   │   │   ├── DiagnosticsPage.xaml
-│   │   │   ├── DiagnosticsPage.xaml.cs
-│   │   │   ├── EventReplayPage.xaml
-│   │   │   ├── EventReplayPage.xaml.cs
-│   │   │   ├── ExportPresetsPage.xaml
-│   │   │   ├── ExportPresetsPage.xaml.cs
-│   │   │   ├── HelpPage.xaml
-│   │   │   ├── HelpPage.xaml.cs
-│   │   │   ├── IndexSubscriptionPage.xaml
-│   │   │   ├── IndexSubscriptionPage.xaml.cs
-│   │   │   ├── KeyboardShortcutsPage.xaml
-│   │   │   ├── KeyboardShortcutsPage.xaml.cs
-│   │   │   ├── LeanIntegrationPage.xaml
-│   │   │   ├── LeanIntegrationPage.xaml.cs
-│   │   │   ├── LiveDataViewerPage.xaml
-│   │   │   ├── LiveDataViewerPage.xaml.cs
-│   │   │   ├── MainPage.xaml
-│   │   │   ├── MainPage.xaml.cs
-│   │   │   ├── MessagingHubPage.xaml
-│   │   │   ├── MessagingHubPage.xaml.cs
-│   │   │   ├── NotificationCenterPage.xaml
-│   │   │   ├── NotificationCenterPage.xaml.cs
-│   │   │   ├── OrderBookPage.xaml
-│   │   │   ├── OrderBookPage.xaml.cs
-│   │   │   ├── PackageManagerPage.xaml
-│   │   │   ├── PackageManagerPage.xaml.cs
-│   │   │   ├── PageBase.cs
-│   │   │   ├── PortfolioImportPage.xaml
-│   │   │   ├── PortfolioImportPage.xaml.cs
-│   │   │   ├── ProviderHealthPage.xaml
-│   │   │   ├── ProviderHealthPage.xaml.cs
-│   │   │   ├── ProviderPage.xaml
-│   │   │   ├── ProviderPage.xaml.cs
-│   │   │   ├── RetentionAssurancePage.xaml
-│   │   │   ├── RetentionAssurancePage.xaml.cs
-│   │   │   ├── ScheduleManagerPage.xaml
-│   │   │   ├── ScheduleManagerPage.xaml.cs
-│   │   │   ├── ServiceManagerPage.xaml
-│   │   │   ├── ServiceManagerPage.xaml.cs
-│   │   │   ├── SettingsPage.xaml
-│   │   │   ├── SettingsPage.xaml.cs
-│   │   │   ├── SetupWizardPage.xaml
-│   │   │   ├── SetupWizardPage.xaml.cs
-│   │   │   ├── StorageOptimizationPage.xaml
-│   │   │   ├── StorageOptimizationPage.xaml.cs
-│   │   │   ├── StoragePage.xaml
-│   │   │   ├── StoragePage.xaml.cs
-│   │   │   ├── SymbolMappingPage.xaml
-│   │   │   ├── SymbolMappingPage.xaml.cs
-│   │   │   ├── SymbolsPage.xaml
-│   │   │   ├── SymbolsPage.xaml.cs
-│   │   │   ├── SymbolStoragePage.xaml
-│   │   │   ├── SymbolStoragePage.xaml.cs
-│   │   │   ├── SystemHealthPage.xaml
-│   │   │   ├── SystemHealthPage.xaml.cs
-│   │   │   ├── TimeSeriesAlignmentPage.xaml
-│   │   │   ├── TimeSeriesAlignmentPage.xaml.cs
-│   │   │   ├── TradingHoursPage.xaml
-│   │   │   ├── TradingHoursPage.xaml.cs
-│   │   │   ├── WatchlistPage.xaml
-│   │   │   ├── WatchlistPage.xaml.cs
-│   │   │   ├── WelcomePage.xaml
-│   │   │   ├── WelcomePage.xaml.cs
-│   │   │   ├── WorkspacePage.xaml
-│   │   │   └── WorkspacePage.xaml.cs
-│   │   ├── app.manifest
-│   │   ├── App.xaml
-│   │   ├── App.xaml.cs
-│   │   ├── Build.Notifications.targets
-│   │   ├── FEATURE_REFINEMENTS.md
-│   │   ├── GlobalUsings.cs
-│   │   ├── MainWindow.xaml
-│   │   ├── MainWindow.xaml.cs
-│   │   ├── MarketDataCollector.Uwp.csproj
-│   │   └── Package.appxmanifest
 │   └── MarketDataCollector.Wpf/
 │       ├── Contracts/
 │       │   ├── IConnectionService.cs
@@ -1389,7 +1112,6 @@ Market-Data-Collector/
 │   │   │   ├── ConfigurableTickerDataCollectionTests.cs
 │   │   │   ├── ConnectionRetryIntegrationTests.cs
 │   │   │   ├── EndpointStubDetectionTests.cs
-│   │   │   ├── UwpCoreIntegrationTests.cs
 │   │   │   └── YahooFinancePcgPreferredIntegrationTests.cs
 │   │   ├── Serialization/
 │   │   │   └── HighPerformanceJsonTests.cs
