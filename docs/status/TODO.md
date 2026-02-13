@@ -1,48 +1,45 @@
 # TODO Tracking
 
 > Auto-generated TODO documentation. Do not edit manually.
-> Last updated: 2026-02-13T20:59:48.576871+00:00
+> Last updated: 2026-02-13T22:54:26.434176+00:00
 
 ## Summary
 
 | Metric | Count |
 |--------|-------|
-| **Total Items** | 18 |
+| **Total Items** | 17 |
 | **Linked to Issues** | 0 |
-| **Untracked** | 18 |
+| **Untracked** | 17 |
 
 ### By Type
 
 | Type | Count | Description |
 |------|-------|-------------|
-| `NOTE` | 18 | Important notes and documentation |
+| `NOTE` | 17 | Important notes and documentation |
 
 ### By Directory
 
 | Directory | Count |
 |-----------|-------|
 | `tests/` | 14 |
-| `src/` | 3 |
+| `src/` | 2 |
 | `.github/` | 1 |
 
 ## Unassigned & Untracked
 
-18 items have no assignee and no issue tracking:
+17 items have no assignee and no issue tracking:
 
 Consider assigning ownership or creating tracking issues for these items.
 
 ## All Items
 
-### NOTE (18)
+### NOTE (17)
 
-- [ ] `.github/workflows/desktop-builds.yml:10`
-  > UWP/WinUI 3 application is DEPRECATED. Use WPF instead. UWP jobs only run on manual dispatch with build_target=uwp or build_target=all. See docs/development/uwp-to-wpf-migration.md for migration guide.
+- [ ] `.github/workflows/desktop-builds.yml:9`
+  > UWP/WinUI 3 application has been removed. WPF is the sole desktop client.
 
 - [ ] `src/MarketDataCollector.Ui.Shared/Endpoints/ConfigEndpoints.cs:138`
   > Status endpoint is handled by StatusEndpoints.MapStatusEndpoints() which provides live status via StatusEndpointHandlers rather than loading from file
-
-- [ ] `src/MarketDataCollector.Uwp/GlobalUsings.cs:7`
-  > Type aliases and Contracts namespaces are NOT re-defined here because they are already provided by the referenced MarketDataCollector.Ui.Services project (via its GlobalUsings.cs). Re-defining them would cause CS0101 duplicate type definition errors. =============================================================================
 
 - [ ] `src/MarketDataCollector.Wpf/GlobalUsings.cs:7`
   > Type aliases and Contracts namespaces are NOT re-defined here because they are already provided by the referenced MarketDataCollector.Ui.Services project (via its GlobalUsings.cs). Re-defining them would cause CS0101 duplicate type definition errors.
