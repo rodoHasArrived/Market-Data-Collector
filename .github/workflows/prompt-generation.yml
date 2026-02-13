@@ -185,10 +185,12 @@ jobs:
         id: ai-refine
         if: |
           steps.generate.outputs.total_generated > 0 &&
-          (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'failure')
+          (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'failure') &&
+          secrets.MODELS_GITHUB_TOKEN != ''
         continue-on-error: true
         uses: actions/ai-inference@v1
         with:
+          token: ${{ secrets.MODELS_GITHUB_TOKEN }}
           model: gpt-4o-mini
           max-tokens: 2000
           prompt: |
@@ -205,6 +207,14 @@ jobs:
             Generation results:
             ${{ steps.generate.outputs.total_generated }} prompts generated
             for workflow: ${{ steps.resolve.outputs.workflow }}
+
+
+      - name: Note skipped AI review
+        if: always() && steps.generate.outputs.total_generated > 0 && secrets.MODELS_GITHUB_TOKEN == ''
+        run: |
+          echo "### AI Prompt Quality Review" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Skipped: set \`MODELS_GITHUB_TOKEN\` to enable \`actions/ai-inference\` prompt-quality analysis without using the default workflow token." >> "$GITHUB_STEP_SUMMARY"
 
       - name: Append AI review to summary
         if: always() && steps.ai-refine.outputs.response != ''
