@@ -683,12 +683,13 @@ The current `CompositeHistoricalDataProvider` implementation is well-designed:
 
 **Current Configuration (from codebase):**
 ```csharp
-// Priority order in registration
-services.AddHistoricalDataProvider<AlpacaHistoricalDataProvider>(priority: 1);
-services.AddHistoricalDataProvider<PolygonHistoricalDataProvider>(priority: 2);
-services.AddHistoricalDataProvider<TiingoHistoricalDataProvider>(priority: 3);
-services.AddHistoricalDataProvider<StooqHistoricalDataProvider>(priority: 4);
-services.AddHistoricalDataProvider<YahooFinanceHistoricalDataProvider>(priority: 5);
+// Backfill providers are created in ProviderFactory and ordered by provider.Priority
+AlpacaHistoricalDataProvider       // default priority: 5
+PolygonHistoricalDataProvider      // default priority: 12
+TiingoHistoricalDataProvider       // default priority: 15
+FinnhubHistoricalDataProvider      // default priority: 18
+StooqHistoricalDataProvider        // default priority: 20
+YahooFinanceHistoricalDataProvider // default priority: 22 (last-resort fallback)
 ```
 
 ### Gap Analysis Integration

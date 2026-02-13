@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using MarketDataCollector.Contracts.Configuration;
 
@@ -91,9 +92,72 @@ public sealed class ConfigService
     /// Validates the current configuration.
     /// </summary>
     /// <returns>A task containing the validation result.</returns>
-    public Task<ConfigServiceValidationResult> ValidateConfigAsync()
+    public async Task<ConfigServiceValidationResult> ValidateConfigAsync()
     {
-        return Task.FromResult(ConfigServiceValidationResult.Success());
+        var config = await LoadConfigAsync() ?? new AppConfigDto();
+        var errors = new List<string>();
+        var warnings = new List<string>();
+
+        var backfill = config.Backfill;
+        var providers = backfill?.Providers;
+
+        if (backfill?.Enabled == true && providers == null)
+        {
+            warnings.Add("Backfill is enabled but no per-provider settings are configured. Defaults will be used.");
+        }
+
+        if (providers != null)
+        {
+            var providerEntries = EnumerateProviders(providers).ToList();
+            var enabledEntries = providerEntries.Where(p => p.Options?.Enabled ?? false).ToList();
+
+            if (backfill?.Enabled == true && enabledEntries.Count == 0)
+            {
+                errors.Add("Backfill is enabled but all historical providers are disabled.");
+            }
+
+            foreach (var (providerId, options) in providerEntries)
+            {
+                if (options == null)
+                {
+                    continue;
+                }
+
+                if (options.Priority is < 0)
+                {
+                    errors.Add($"Provider '{providerId}' has invalid priority {options.Priority}. Priority must be >= 0.");
+                }
+
+                if (options.RateLimitPerMinute is <= 0)
+                {
+                    errors.Add($"Provider '{providerId}' has invalid rateLimitPerMinute {options.RateLimitPerMinute}. Value must be > 0.");
+                }
+
+                if (options.RateLimitPerHour is <= 0)
+                {
+                    errors.Add($"Provider '{providerId}' has invalid rateLimitPerHour {options.RateLimitPerHour}. Value must be > 0.");
+                }
+            }
+
+            var duplicatePriorityGroups = enabledEntries
+                .Where(p => p.Options?.Priority != null)
+                .GroupBy(p => p.Options!.Priority!.Value)
+                .Where(g => g.Count() > 1)
+                .ToList();
+
+            foreach (var group in duplicatePriorityGroups)
+            {
+                var providerList = string.Join(", ", group.Select(g => g.ProviderId));
+                warnings.Add($"Enabled providers share priority {group.Key}: {providerList}. Fallback order may be ambiguous.");
+            }
+        }
+
+        return new ConfigServiceValidationResult
+        {
+            IsValid = errors.Count == 0,
+            Errors = errors.ToArray(),
+            Warnings = warnings.ToArray()
+        };
     }
 
     /// <summary>
@@ -182,6 +246,146 @@ public sealed class ConfigService
 
         config.DataSources = dataSources;
         await SaveConfigAsync(config);
+    }
+
+
+    /// <summary>
+    /// Gets backfill provider configuration, creating defaults when missing.
+    /// </summary>
+    public async Task<BackfillProvidersConfigDto> GetBackfillProvidersConfigAsync()
+    {
+        var config = await LoadConfigAsync() ?? new AppConfigDto();
+        config.Backfill ??= new BackfillConfigDto();
+        config.Backfill.Providers ??= new BackfillProvidersConfigDto();
+        return config.Backfill.Providers;
+    }
+
+    /// <summary>
+    /// Adds or updates a single backfill provider configuration entry.
+    /// </summary>
+    /// <param name="providerId">Known provider identifier (e.g., alpaca, polygon, yahoo).</param>
+    /// <param name="options">Provider options to persist.</param>
+    public async Task SetBackfillProviderOptionsAsync(string providerId, BackfillProviderOptionsDto options)
+    {
+        if (string.IsNullOrWhiteSpace(providerId))
+        {
+            throw new ArgumentException("Provider id is required", nameof(providerId));
+        }
+
+        ArgumentNullException.ThrowIfNull(options);
+        ValidateProviderOptions(providerId, options);
+
+        var config = await LoadConfigAsync() ?? new AppConfigDto();
+        config.Backfill ??= new BackfillConfigDto();
+        config.Backfill.Providers ??= new BackfillProvidersConfigDto();
+
+        SetProviderOptions(config.Backfill.Providers, providerId, options);
+
+        await SaveConfigAsync(config);
+    }
+
+    /// <summary>
+    /// Gets options for a single historical backfill provider.
+    /// </summary>
+    public async Task<BackfillProviderOptionsDto?> GetBackfillProviderOptionsAsync(string providerId)
+    {
+        if (string.IsNullOrWhiteSpace(providerId))
+        {
+            throw new ArgumentException("Provider id is required", nameof(providerId));
+        }
+
+        var providers = await GetBackfillProvidersConfigAsync();
+        return GetProviderOptions(providers, providerId);
+    }
+
+    private static IEnumerable<(string ProviderId, BackfillProviderOptionsDto? Options)> EnumerateProviders(BackfillProvidersConfigDto providers)
+    {
+        yield return ("alpaca", providers.Alpaca);
+        yield return ("polygon", providers.Polygon);
+        yield return ("tiingo", providers.Tiingo);
+        yield return ("finnhub", providers.Finnhub);
+        yield return ("stooq", providers.Stooq);
+        yield return ("yahoo", providers.Yahoo);
+        yield return ("alphavantage", providers.AlphaVantage);
+        yield return ("nasdaqdatalink", providers.NasdaqDataLink);
+    }
+
+    private static BackfillProviderOptionsDto? GetProviderOptions(BackfillProvidersConfigDto providers, string providerId)
+    {
+        return NormalizeProviderId(providerId) switch
+        {
+            "alpaca" => providers.Alpaca,
+            "polygon" => providers.Polygon,
+            "tiingo" => providers.Tiingo,
+            "finnhub" => providers.Finnhub,
+            "stooq" => providers.Stooq,
+            "yahoo" => providers.Yahoo,
+            "alphavantage" => providers.AlphaVantage,
+            "nasdaqdatalink" => providers.NasdaqDataLink,
+            _ => throw new ArgumentOutOfRangeException(nameof(providerId), providerId, "Unknown backfill provider id")
+        };
+    }
+
+    private static void SetProviderOptions(BackfillProvidersConfigDto providers, string providerId, BackfillProviderOptionsDto options)
+    {
+        switch (NormalizeProviderId(providerId))
+        {
+            case "alpaca":
+                providers.Alpaca = options;
+                break;
+            case "polygon":
+                providers.Polygon = options;
+                break;
+            case "tiingo":
+                providers.Tiingo = options;
+                break;
+            case "finnhub":
+                providers.Finnhub = options;
+                break;
+            case "stooq":
+                providers.Stooq = options;
+                break;
+            case "yahoo":
+                providers.Yahoo = options;
+                break;
+            case "alphavantage":
+                providers.AlphaVantage = options;
+                break;
+            case "nasdaqdatalink":
+                providers.NasdaqDataLink = options;
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(providerId), providerId, "Unknown backfill provider id");
+        }
+    }
+
+    private static string NormalizeProviderId(string providerId)
+    {
+        var normalized = providerId.Trim().ToLowerInvariant();
+        return normalized switch
+        {
+            "yahoofinance" => "yahoo",
+            "nasdaq" => "nasdaqdatalink",
+            _ => normalized
+        };
+    }
+
+    private static void ValidateProviderOptions(string providerId, BackfillProviderOptionsDto options)
+    {
+        if (options.Priority is < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(options), options.Priority, $"Priority for provider '{providerId}' must be >= 0.");
+        }
+
+        if (options.RateLimitPerMinute is <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(options), options.RateLimitPerMinute, $"RateLimitPerMinute for provider '{providerId}' must be > 0.");
+        }
+
+        if (options.RateLimitPerHour is <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(options), options.RateLimitPerHour, $"RateLimitPerHour for provider '{providerId}' must be > 0.");
+        }
     }
 
     /// <summary>

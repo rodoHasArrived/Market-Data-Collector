@@ -28,7 +28,8 @@ public sealed class YahooFinanceHistoricalDataProvider : BaseHistoricalDataProvi
     public override string Description => "Free daily OHLCV with adjusted prices for global equities, ETFs, indices.";
     protected override string HttpClientName => HttpClientNames.YahooFinanceHistorical;
 
-    public override int Priority => 10;
+    // Keep Yahoo as a resilience fallback; prefer API-backed providers first.
+    public override int Priority => 22;
     public override TimeSpan RateLimitDelay => TimeSpan.FromSeconds(0.5);
     public override int MaxRequestsPerWindow => 2000;
     public override TimeSpan RateLimitWindow => TimeSpan.FromHours(1);
