@@ -9,7 +9,7 @@ namespace MarketDataCollector.Wpf.Services;
 /// Service for managing global keyboard shortcuts.
 /// Handles keyboard input and maps key combinations to action identifiers.
 /// </summary>
-public sealed class KeyboardShortcutService
+public sealed class KeyboardShortcutService : IKeyboardShortcutService
 {
     private static KeyboardShortcutService? _instance;
     private static readonly object _lock = new();

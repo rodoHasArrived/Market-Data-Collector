@@ -3,7 +3,16 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Threading;
 using MarketDataCollector.Contracts.Configuration;
+using MarketDataCollector.Ui.Services.Contracts;
+using AlpacaOptions = MarketDataCollector.Contracts.Configuration.AlpacaOptionsDto;
+using AppConfig = MarketDataCollector.Contracts.Configuration.AppConfigDto;
+using AppSettings = MarketDataCollector.Contracts.Configuration.AppSettingsDto;
+using DataSourceConfig = MarketDataCollector.Contracts.Configuration.DataSourceConfigDto;
+using DataSourcesConfig = MarketDataCollector.Contracts.Configuration.DataSourcesConfigDto;
+using StorageConfig = MarketDataCollector.Contracts.Configuration.StorageConfigDto;
+using SymbolConfig = MarketDataCollector.Contracts.Configuration.SymbolConfigDto;
 
 namespace MarketDataCollector.Wpf.Services;
 
@@ -46,7 +55,7 @@ public sealed class ConfigServiceValidationResult
 /// Service for managing application configuration.
 /// Implements singleton pattern for application-wide configuration management.
 /// </summary>
-public sealed class ConfigService
+public sealed class ConfigService : IConfigService
 {
     private static readonly Lazy<ConfigService> _instance = new(() => new ConfigService());
     private static readonly JsonSerializerOptions _jsonOptions = new()
@@ -94,7 +103,7 @@ public sealed class ConfigService
     /// <returns>A task containing the validation result.</returns>
     public async Task<ConfigServiceValidationResult> ValidateConfigAsync()
     {
-        var config = await LoadConfigAsync() ?? new AppConfigDto();
+        var config = await LoadConfigCoreAsync(CancellationToken.None) ?? new AppConfigDto();
         var errors = new List<string>();
         var warnings = new List<string>();
 
@@ -163,90 +172,33 @@ public sealed class ConfigService
     /// <summary>
     /// Gets the data sources configuration.
     /// </summary>
-    public async Task<DataSourcesConfigDto> GetDataSourcesConfigAsync()
-    {
-        var config = await LoadConfigAsync() ?? new AppConfigDto();
-        return config.DataSources ?? new DataSourcesConfigDto();
-    }
+    public Task<DataSourcesConfigDto> GetDataSourcesConfigAsync()
+        => GetDataSourcesConfigAsync(CancellationToken.None);
 
     /// <summary>
     /// Adds or updates a data source configuration.
     /// </summary>
-    public async Task AddOrUpdateDataSourceAsync(DataSourceConfigDto dataSource)
-    {
-        var config = await LoadConfigAsync() ?? new AppConfigDto();
-        var dataSources = config.DataSources ?? new DataSourcesConfigDto();
-        var sources = dataSources.Sources?.ToList() ?? new List<DataSourceConfigDto>();
-
-        var existingIndex = sources.FindIndex(s =>
-            string.Equals(s.Id, dataSource.Id, StringComparison.OrdinalIgnoreCase));
-
-        if (existingIndex >= 0)
-        {
-            sources[existingIndex] = dataSource;
-        }
-        else
-        {
-            sources.Add(dataSource);
-        }
-
-        dataSources.Sources = sources.ToArray();
-        config.DataSources = dataSources;
-        await SaveConfigAsync(config);
-    }
+    public Task AddOrUpdateDataSourceAsync(DataSourceConfigDto dataSource)
+        => AddOrUpdateDataSourceAsync(dataSource, CancellationToken.None);
 
     /// <summary>
     /// Deletes a data source by ID.
     /// </summary>
-    public async Task DeleteDataSourceAsync(string id)
-    {
-        var config = await LoadConfigAsync() ?? new AppConfigDto();
-        var dataSources = config.DataSources ?? new DataSourcesConfigDto();
-        var sources = dataSources.Sources?.ToList() ?? new List<DataSourceConfigDto>();
-
-        sources.RemoveAll(s =>
-            string.Equals(s.Id, id, StringComparison.OrdinalIgnoreCase));
-
-        dataSources.Sources = sources.ToArray();
-        config.DataSources = dataSources;
-        await SaveConfigAsync(config);
-    }
+    public Task DeleteDataSourceAsync(string id)
+        => DeleteDataSourceAsync(id, CancellationToken.None);
 
     /// <summary>
     /// Sets the default data source for real-time or historical data.
     /// </summary>
-    public async Task SetDefaultDataSourceAsync(string id, bool isHistorical)
-    {
-        var config = await LoadConfigAsync() ?? new AppConfigDto();
-        var dataSources = config.DataSources ?? new DataSourcesConfigDto();
-
-        if (isHistorical)
-        {
-            dataSources.DefaultHistoricalSourceId = id;
-        }
-        else
-        {
-            dataSources.DefaultRealTimeSourceId = id;
-        }
-
-        config.DataSources = dataSources;
-        await SaveConfigAsync(config);
-    }
+    public Task SetDefaultDataSourceAsync(string id, bool isHistorical)
+        => SetDefaultDataSourceAsync(id, isHistorical, CancellationToken.None);
 
     /// <summary>
     /// Updates failover settings for data sources.
     /// </summary>
-    public async Task UpdateFailoverSettingsAsync(bool enableFailover, int failoverTimeoutSeconds)
-    {
-        var config = await LoadConfigAsync() ?? new AppConfigDto();
-        var dataSources = config.DataSources ?? new DataSourcesConfigDto();
+    public Task UpdateFailoverSettingsAsync(bool enableFailover, int failoverTimeoutSeconds)
+        => UpdateFailoverSettingsAsync(enableFailover, failoverTimeoutSeconds, CancellationToken.None);
 
-        dataSources.EnableFailover = enableFailover;
-        dataSources.FailoverTimeoutSeconds = failoverTimeoutSeconds;
-
-        config.DataSources = dataSources;
-        await SaveConfigAsync(config);
-    }
 
 
     /// <summary>
@@ -254,7 +206,7 @@ public sealed class ConfigService
     /// </summary>
     public async Task<BackfillProvidersConfigDto> GetBackfillProvidersConfigAsync()
     {
-        var config = await LoadConfigAsync() ?? new AppConfigDto();
+        var config = await LoadConfigCoreAsync(CancellationToken.None) ?? new AppConfigDto();
         config.Backfill ??= new BackfillConfigDto();
         config.Backfill.Providers ??= new BackfillProvidersConfigDto();
         return config.Backfill.Providers;
@@ -275,13 +227,13 @@ public sealed class ConfigService
         ArgumentNullException.ThrowIfNull(options);
         ValidateProviderOptions(providerId, options);
 
-        var config = await LoadConfigAsync() ?? new AppConfigDto();
+        var config = await LoadConfigCoreAsync(CancellationToken.None) ?? new AppConfigDto();
         config.Backfill ??= new BackfillConfigDto();
         config.Backfill.Providers ??= new BackfillProvidersConfigDto();
 
         SetProviderOptions(config.Backfill.Providers, providerId, options);
 
-        await SaveConfigAsync(config);
+        await SaveConfigCoreAsync(config, CancellationToken.None);
     }
 
     /// <summary>
@@ -388,6 +340,218 @@ public sealed class ConfigService
         }
     }
 
+    public async Task<AppConfig?> LoadConfigAsync(CancellationToken ct = default)
+    {
+        ct.ThrowIfCancellationRequested();
+        return await LoadConfigCoreAsync(ct);
+    }
+
+    public async Task SaveConfigAsync(AppConfig config, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(config);
+        ct.ThrowIfCancellationRequested();
+        await SaveConfigCoreAsync(config, ct);
+    }
+
+    public async Task SaveDataSourceAsync(string dataSource, CancellationToken ct = default)
+    {
+        var config = await LoadConfigAsync(ct) ?? new AppConfigDto();
+        config.DataSource = dataSource;
+        await SaveConfigAsync(config, ct);
+    }
+
+    public async Task SaveAlpacaOptionsAsync(AlpacaOptions options, CancellationToken ct = default)
+    {
+        var config = await LoadConfigAsync(ct) ?? new AppConfigDto();
+        config.Alpaca = options;
+        await SaveConfigAsync(config, ct);
+    }
+
+    public async Task SaveStorageConfigAsync(string dataRoot, bool compress, StorageConfig storage, CancellationToken ct = default)
+    {
+        var config = await LoadConfigAsync(ct) ?? new AppConfigDto();
+        config.DataRoot = dataRoot;
+        config.Compress = compress;
+        config.Storage = storage;
+        await SaveConfigAsync(config, ct);
+    }
+
+    public async Task AddOrUpdateSymbolAsync(SymbolConfig symbol, CancellationToken ct = default)
+    {
+        var config = await LoadConfigAsync(ct) ?? new AppConfigDto();
+        var symbols = config.Symbols?.ToList() ?? new List<SymbolConfigDto>();
+        var idx = symbols.FindIndex(s => string.Equals(s.Symbol, symbol.Symbol, StringComparison.OrdinalIgnoreCase));
+        if (idx >= 0) symbols[idx] = symbol; else symbols.Add(symbol);
+        config.Symbols = symbols.ToArray();
+        await SaveConfigAsync(config, ct);
+    }
+
+    public Task AddSymbolAsync(SymbolConfig symbol, CancellationToken ct = default)
+        => AddOrUpdateSymbolAsync(symbol, ct);
+
+    public async Task DeleteSymbolAsync(string symbol, CancellationToken ct = default)
+    {
+        var config = await LoadConfigAsync(ct) ?? new AppConfigDto();
+        var symbols = config.Symbols?.ToList() ?? new List<SymbolConfigDto>();
+        symbols.RemoveAll(s => string.Equals(s.Symbol, symbol, StringComparison.OrdinalIgnoreCase));
+        config.Symbols = symbols.ToArray();
+        await SaveConfigAsync(config, ct);
+    }
+
+    public async Task<DataSourceConfig[]> GetDataSourcesAsync(CancellationToken ct = default)
+    {
+        var cfg = await GetDataSourcesConfigAsync(ct);
+        return cfg.Sources ?? Array.Empty<DataSourceConfigDto>();
+    }
+
+    public async Task<DataSourcesConfig> GetDataSourcesConfigAsync(CancellationToken ct = default)
+    {
+        ct.ThrowIfCancellationRequested();
+        var config = await LoadConfigCoreAsync(ct) ?? new AppConfigDto();
+        return config.DataSources ?? new DataSourcesConfigDto();
+    }
+
+    public async Task AddOrUpdateDataSourceAsync(DataSourceConfig dataSource, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(dataSource);
+        ct.ThrowIfCancellationRequested();
+
+        var config = await LoadConfigCoreAsync(ct) ?? new AppConfigDto();
+        var dataSources = config.DataSources ?? new DataSourcesConfigDto();
+        var sources = dataSources.Sources?.ToList() ?? new List<DataSourceConfigDto>();
+
+        var existingIndex = sources.FindIndex(s =>
+            string.Equals(s.Id, dataSource.Id, StringComparison.OrdinalIgnoreCase));
+
+        if (existingIndex >= 0)
+        {
+            sources[existingIndex] = dataSource;
+        }
+        else
+        {
+            sources.Add(dataSource);
+        }
+
+        dataSources.Sources = sources.ToArray();
+        config.DataSources = dataSources;
+        await SaveConfigCoreAsync(config, ct);
+    }
+
+    public async Task DeleteDataSourceAsync(string id, CancellationToken ct = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(id);
+        ct.ThrowIfCancellationRequested();
+
+        var config = await LoadConfigCoreAsync(ct) ?? new AppConfigDto();
+        var dataSources = config.DataSources ?? new DataSourcesConfigDto();
+        var sources = dataSources.Sources?.ToList() ?? new List<DataSourceConfigDto>();
+
+        sources.RemoveAll(s => string.Equals(s.Id, id, StringComparison.OrdinalIgnoreCase));
+
+        dataSources.Sources = sources.ToArray();
+        config.DataSources = dataSources;
+        await SaveConfigCoreAsync(config, ct);
+    }
+
+    public async Task SetDefaultDataSourceAsync(string id, bool isHistorical, CancellationToken ct = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(id);
+        ct.ThrowIfCancellationRequested();
+
+        var config = await LoadConfigCoreAsync(ct) ?? new AppConfigDto();
+        var dataSources = config.DataSources ?? new DataSourcesConfigDto();
+
+        if (isHistorical)
+        {
+            dataSources.DefaultHistoricalSourceId = id;
+        }
+        else
+        {
+            dataSources.DefaultRealTimeSourceId = id;
+        }
+
+        config.DataSources = dataSources;
+        await SaveConfigCoreAsync(config, ct);
+    }
+
+    public async Task ToggleDataSourceAsync(string id, bool enabled, CancellationToken ct = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(id);
+        ct.ThrowIfCancellationRequested();
+
+        var config = await LoadConfigCoreAsync(ct) ?? new AppConfigDto();
+        var dataSources = config.DataSources ?? new DataSourcesConfigDto();
+        var sources = dataSources.Sources?.ToList() ?? new List<DataSourceConfigDto>();
+
+        var source = sources.FirstOrDefault(s =>
+            string.Equals(s.Id, id, StringComparison.OrdinalIgnoreCase));
+
+        if (source == null)
+        {
+            return;
+        }
+
+        source.Enabled = enabled;
+        dataSources.Sources = sources.ToArray();
+        config.DataSources = dataSources;
+        await SaveConfigCoreAsync(config, ct);
+    }
+
+    public async Task UpdateFailoverSettingsAsync(bool enableFailover, int failoverTimeoutSeconds, CancellationToken ct = default)
+    {
+        ct.ThrowIfCancellationRequested();
+
+        var config = await LoadConfigCoreAsync(ct) ?? new AppConfigDto();
+        var dataSources = config.DataSources ?? new DataSourcesConfigDto();
+        dataSources.EnableFailover = enableFailover;
+        dataSources.FailoverTimeoutSeconds = failoverTimeoutSeconds;
+
+        config.DataSources = dataSources;
+        await SaveConfigCoreAsync(config, ct);
+    }
+
+    public async Task<AppSettings> GetAppSettingsAsync(CancellationToken ct = default)
+    {
+        var cfg = await LoadConfigAsync(ct) ?? new AppConfigDto();
+        return cfg.Settings ?? new AppSettingsDto();
+    }
+
+    public async Task SaveAppSettingsAsync(AppSettings settings, CancellationToken ct = default)
+    {
+        var cfg = await LoadConfigAsync(ct) ?? new AppConfigDto();
+        cfg.Settings = settings;
+        await SaveConfigAsync(cfg, ct);
+    }
+
+    public async Task UpdateServiceUrlAsync(string serviceUrl, int timeoutSeconds = 30, int backfillTimeoutMinutes = 60, CancellationToken ct = default)
+    {
+        var cfg = await LoadConfigAsync(ct) ?? new AppConfigDto();
+        var settings = cfg.Settings ?? new AppSettingsDto();
+        settings.ServiceUrl = serviceUrl;
+        settings.ServiceTimeoutSeconds = timeoutSeconds;
+        settings.BackfillTimeoutMinutes = backfillTimeoutMinutes;
+        cfg.Settings = settings;
+        await SaveConfigAsync(cfg, ct);
+    }
+
+    public Task InitializeAsync(CancellationToken ct = default)
+    {
+        ct.ThrowIfCancellationRequested();
+        return InitializeAsync();
+    }
+
+    public async Task<ConfigValidationResult> ValidateConfigAsync(CancellationToken ct = default)
+    {
+        ct.ThrowIfCancellationRequested();
+        var result = await ValidateConfigAsync();
+        return new ConfigValidationResult
+        {
+            IsValid = result.IsValid,
+            Errors = result.Errors,
+            Warnings = result.Warnings
+        };
+    }
+
     /// <summary>
     /// Gets configuration of the specified type.
     /// </summary>
@@ -418,7 +582,7 @@ public sealed class ConfigService
         return Task.CompletedTask;
     }
 
-    private async Task<AppConfigDto?> LoadConfigAsync()
+    private async Task<AppConfigDto?> LoadConfigCoreAsync(CancellationToken ct)
     {
         try
         {
@@ -427,13 +591,17 @@ public sealed class ConfigService
                 return new AppConfigDto();
             }
 
-            var json = await File.ReadAllTextAsync(ConfigPath);
+            var json = await File.ReadAllTextAsync(ConfigPath, ct);
             if (string.IsNullOrWhiteSpace(json))
             {
                 return new AppConfigDto();
             }
 
             return JsonSerializer.Deserialize<AppConfigDto>(json, _jsonOptions) ?? new AppConfigDto();
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
         }
         catch (Exception ex)
         {
@@ -442,7 +610,7 @@ public sealed class ConfigService
         }
     }
 
-    private async Task SaveConfigAsync(AppConfigDto config)
+    private async Task SaveConfigCoreAsync(AppConfigDto config, CancellationToken ct)
     {
         try
         {
@@ -453,7 +621,11 @@ public sealed class ConfigService
             }
 
             var json = JsonSerializer.Serialize(config, _jsonOptions);
-            await File.WriteAllTextAsync(ConfigPath, json);
+            await File.WriteAllTextAsync(ConfigPath, json, ct);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
         }
         catch (Exception ex)
         {

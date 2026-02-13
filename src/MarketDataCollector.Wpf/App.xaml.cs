@@ -118,9 +118,12 @@ public partial class App : Application
         services.AddSingleton<MarketDataCollector.Ui.Services.Contracts.ILoggingService>(_ => WpfServices.LoggingService.Instance);
         services.AddSingleton(_ => WpfServices.LoggingService.Instance);
 
+        services.AddSingleton<IConfigService>(_ => WpfServices.ConfigService.Instance);
         services.AddSingleton(_ => WpfServices.ConfigService.Instance);
         services.AddSingleton(_ => WpfServices.ThemeService.Instance);
+        services.AddSingleton<INotificationService>(_ => WpfServices.NotificationService.Instance);
         services.AddSingleton(_ => WpfServices.NotificationService.Instance);
+        services.AddSingleton<IKeyboardShortcutService>(_ => WpfServices.KeyboardShortcutService.Instance);
         services.AddSingleton(_ => WpfServices.KeyboardShortcutService.Instance);
         services.AddSingleton(_ => WpfServices.MessagingService.Instance);
         services.AddSingleton(_ => WpfServices.StatusService.Instance);
