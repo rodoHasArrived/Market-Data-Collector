@@ -179,6 +179,14 @@ python3 build/scripts/docs/rules-engine.py \
 
 Creates GitHub issues for untracked TODO items discovered by `scan-todos.py`.
 
+**Features:**
+- Validates scan-todos JSON structure with clear error messages
+- Handles network failures and HTTP errors gracefully
+- Caps issue titles at 120 characters for better readability
+- Returns structured outcome (created/existing/dry-run)
+- Optional `--output-json` for machine-readable summaries
+- Prevents duplicate issues by searching for existing markers
+
 ```bash
 # 1) Generate scan JSON
 python3 build/scripts/docs/scan-todos.py \
@@ -191,16 +199,39 @@ python3 build/scripts/docs/create-todo-issues.py \
   --repo owner/repo \
   --dry-run
 
-# 3) Create real issues (requires GITHUB_TOKEN or --token)
+# 3) Create real issues with JSON summary
 python3 build/scripts/docs/create-todo-issues.py \
   --scan-json docs/status/todo-scan-results.json \
   --repo owner/repo \
-  --max-issues 25
+  --max-issues 25 \
+  --output-json docs/status/todo-issue-creation-summary.json
+```
+
+**Output JSON Structure:**
+```json
+{
+  "created": 5,
+  "existing": 3,
+  "dry_run": 0,
+  "skipped": 2,
+  "total_untracked": 10,
+  "issues": [
+    {"status": "created", "number": 123, "file": "src/Example.cs", "line": 45},
+    {"status": "existing", "number": 100, "file": "src/Other.cs", "line": 22}
+  ]
+}
 ```
 
 #### `run-docs-automation.py` *(new)*
 
 Runs documentation tooling as a single orchestrated command with profile support.
+
+**Features:**
+- Orchestrates multiple documentation scripts in sequence
+- Validates prerequisites (e.g., scan-todos required for --auto-create-todos)
+- Coordinates JSON output paths for downstream automation
+- Skips issue creation if scan-todos fails
+- Produces machine-readable JSON and human-readable Markdown summaries
 
 ```bash
 # Plan what would run for quick profile
@@ -224,6 +255,8 @@ python3 build/scripts/docs/run-docs-automation.py \
   --todo-max-issues 25
 ```
 
+**Important:** When using `--auto-create-todos`, the runner requires `scan-todos` in the selected scripts. It automatically adds `--json-output` to scan-todos and skips issue creation if the scan fails.
+
 ### Orchestration Profiles
 
 | Profile | Included Scripts | Best For |
@@ -234,7 +267,11 @@ python3 build/scripts/docs/run-docs-automation.py \
 
 The runner exits non-zero if any script fails (unless `--continue-on-error` is set), making it CI-friendly for preflight checks and local automation.
 
-When `--auto-create-todos` is enabled, the runner automatically asks `scan-todos.py` for JSON output and then calls `create-todo-issues.py` to open GitHub issues for untracked TODOs.
+When `--auto-create-todos` is enabled:
+1. The runner validates that `scan-todos` is in the selected scripts
+2. It automatically adds `--json-output docs/status/todo-scan-results.json` to scan-todos
+3. If scan-todos fails, issue creation is skipped with a clear error message
+4. On success, it calls `create-todo-issues.py` with `--output-json docs/status/todo-issue-creation-summary.json`
 
 ## Custom Rules
 
@@ -251,14 +288,15 @@ Documentation rules are defined in `build/rules/doc-rules.yaml`. See [Adding Cus
 | `docs/generated/configuration-schema.md` | workflow inline | Config options from appsettings |
 | `docs/generated/project-context.md` | DocGenerator (C#) | Key interfaces and services |
 | `docs/status/TODO.md` | scan-todos.py | TODO tracking |
+| `docs/status/todo-scan-results.json` | scan-todos.py | Machine-readable TODO scan results used for auto issue creation |
+| `docs/status/todo-issue-creation-summary.json` | create-todo-issues.py | Machine-readable issue creation summary with status counts and issue numbers |
 | `docs/status/health-dashboard.md` | generate-health-dashboard.py | Health metrics |
 | `docs/status/link-repair-report.md` | repair-links.py | Broken link report |
 | `docs/status/example-validation.md` | validate-examples.py | Code example validation |
 | `docs/status/coverage-report.md` | generate-coverage.py | Documentation coverage |
 | `docs/status/rules-report.md` | rules-engine.py | Rule validation results |
-| `docs/status/todo-scan-results.json` | scan-todos.py | Machine-readable TODO scan results used for auto issue creation |
-| `docs/status/docs-automation-summary.md` | run-docs-automation.py | Human-readable automation run summary |
-| `docs/status/docs-automation-summary.json` | run-docs-automation.py | Machine-readable automation run summary |
+| `docs/status/docs-automation-summary.md` | run-docs-automation.py | Human-readable automation run summary with status table and failure details |
+| `docs/status/docs-automation-summary.json` | run-docs-automation.py | Machine-readable automation run summary with script execution metadata |
 
 All generated files include an "auto-generated" notice and should not be edited manually.
 
