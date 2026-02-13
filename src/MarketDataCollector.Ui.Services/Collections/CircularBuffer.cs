@@ -289,12 +289,21 @@ public static class CircularBufferExtensions
             return null;
         }
 
-        // Avoid division by zero
-        if (Math.Abs(fromValue.Value) < double.Epsilon)
+        // Defensive null check (should not occur after successful TryGet, but provides compile-time safety)
+        if (!fromValue.HasValue || !toValue.HasValue)
         {
             return null;
         }
 
-        return ((toValue.Value - fromValue.Value) / fromValue.Value) * 100.0;
+        var from = fromValue.Value;
+        var to = toValue.Value;
+
+        // Avoid division by zero
+        if (Math.Abs(from) < double.Epsilon)
+        {
+            return null;
+        }
+
+        return ((to - from) / from) * 100.0;
     }
 }
