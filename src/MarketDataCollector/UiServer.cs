@@ -129,8 +129,7 @@ public sealed class UiServer : IAsyncDisposable
         _app.MapDiagnosticsEndpoints(s_jsonOptions);
 
         // Historical Data API
-        // TODO: MapHistoricalEndpoints needs to be implemented
-        // _app.MapHistoricalEndpoints(s_jsonOptions);
+        _app.MapHistoricalEndpoints(s_jsonOptions);
 
         // Data Packaging API
         var config = _app.Services.GetRequiredService<ConfigStore>().Load();
