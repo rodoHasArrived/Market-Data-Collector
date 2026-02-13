@@ -283,8 +283,8 @@ public static class CircularBufferExtensions
     /// </remarks>
     public static double? CalculatePercentageChange(this CircularBuffer<double> buffer, int fromOffset, int toOffset)
     {
-        if (!buffer.TryGetFromNewest(fromOffset, out var fromValue) || 
-            !buffer.TryGetFromNewest(toOffset, out var toValue))
+        if (!buffer.TryGetFromNewest(fromOffset, out double? fromValue) || 
+            !buffer.TryGetFromNewest(toOffset, out double? toValue))
         {
             return null;
         }
