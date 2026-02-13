@@ -284,10 +284,11 @@ public static class CircularBufferExtensions
     /// </remarks>
     public static double? CalculatePercentageChange(this CircularBuffer<double> buffer, int fromOffset, int toOffset)
     {
-        // Use 'out var' to ensure cross-platform compiler compatibility with generic 'out T?' parameters.
-        // Windows and Linux C# compilers handle nullable generic constraints differently.
-        if (!buffer.TryGetFromNewest(fromOffset, out var fromValueNullable) || 
-            !buffer.TryGetFromNewest(toOffset, out var toValueNullable))
+        // Explicit type annotation required for Windows C# compiler compatibility.
+        // Windows compiler incorrectly infers 'out var' as 'double' instead of 'double?' 
+        // when calling generic methods with 'out T?' parameters where T is a value type.
+        if (!buffer.TryGetFromNewest(fromOffset, out double? fromValueNullable) || 
+            !buffer.TryGetFromNewest(toOffset, out double? toValueNullable))
         {
             return null;
         }
