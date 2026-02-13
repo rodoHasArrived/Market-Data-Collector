@@ -118,6 +118,9 @@ public static class UiApiRoutes
     public const string StorageTiersPlan = "/api/storage/tiers/plan";
     public const string StorageMaintenanceDefrag = "/api/storage/maintenance/defrag";
 
+    // Historical data query endpoints
+    public const string HistoricalData = "/api/historical";
+
     // Quality/drops endpoints
     public const string QualityDrops = "/api/quality/drops";
     public const string QualityDropsBySymbol = "/api/quality/drops/{symbol}";

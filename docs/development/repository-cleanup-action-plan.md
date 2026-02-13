@@ -480,14 +480,14 @@ Organize scattered documentation into clear, navigable structure.
 # Market Data Collector Documentation
 
 ## Quick Links
-- [Getting Started](getting-started/README.md)
-- [Architecture Overview](architecture/overview.md)
-- [API Reference](reference/api-reference.md)
-- [Roadmap](status/ROADMAP.md)
+- [Getting Started](../getting-started/README.md)
+- [Architecture Overview](../architecture/overview.md)
+- [API Reference](../reference/api-reference.md)
+- [Roadmap](../status/ROADMAP.md)
 
 ## For Developers
-- [Repository Organization Guide](development/repository-organization-guide.md)
-- [Provider Implementation Guide](development/provider-implementation.md)
+- [Repository Organization Guide](./repository-organization-guide.md)
+- [Provider Implementation Guide](./provider-implementation.md)
 - [Testing Guide](development/testing-guide.md)
 - [Architecture Decision Records](adr/)
 
