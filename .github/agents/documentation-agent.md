@@ -1450,12 +1450,15 @@ Market-Data-Collector/
 │   │   ├── Services/
 │   │   │   ├── ApiClientServiceTests.cs
 │   │   │   ├── BackfillServiceTests.cs
+│   │   │   ├── ChartingServiceTests.cs
 │   │   │   ├── FixtureDataServiceTests.cs
 │   │   │   ├── FormValidationServiceTests.cs
+│   │   │   ├── LeanIntegrationServiceTests.cs
 │   │   │   ├── OrderBookVisualizationServiceTests.cs
 │   │   │   ├── PortfolioImportServiceTests.cs
 │   │   │   ├── SchemaServiceTests.cs
 │   │   │   ├── SystemHealthServiceTests.cs
+│   │   │   ├── TimeSeriesAlignmentServiceTests.cs
 │   │   │   └── WatchlistServiceTests.cs
 │   │   ├── MarketDataCollector.Ui.Tests.csproj
 │   │   └── README.md

@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-13 17:13:03 UTC
+> Auto-generated on 2026-02-13 18:41:43 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -1422,12 +1422,15 @@ Market-Data-Collector/
 │   │   ├── Services/
 │   │   │   ├── ApiClientServiceTests.cs
 │   │   │   ├── BackfillServiceTests.cs
+│   │   │   ├── ChartingServiceTests.cs
 │   │   │   ├── FixtureDataServiceTests.cs
 │   │   │   ├── FormValidationServiceTests.cs
+│   │   │   ├── LeanIntegrationServiceTests.cs
 │   │   │   ├── OrderBookVisualizationServiceTests.cs
 │   │   │   ├── PortfolioImportServiceTests.cs
 │   │   │   ├── SchemaServiceTests.cs
 │   │   │   ├── SystemHealthServiceTests.cs
+│   │   │   ├── TimeSeriesAlignmentServiceTests.cs
 │   │   │   └── WatchlistServiceTests.cs
 │   │   ├── MarketDataCollector.Ui.Tests.csproj
 │   │   └── README.md
