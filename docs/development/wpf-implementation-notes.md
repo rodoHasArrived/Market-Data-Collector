@@ -235,5 +235,25 @@ MIT License - Same as parent project
 
 ---
 
-**Last Updated**: 2026-02-02
-**Status**: Implementation Complete, Ready for Testing
+**Last Updated**: 2026-02-13
+**Status**: Implementation Complete, Documentation Expanded
+
+---
+
+## Related Documentation
+
+- **Desktop Development:**
+  - [Desktop Testing Guide](./desktop-testing-guide.md) - Comprehensive testing procedures
+  - [Desktop Development Workflow](./desktop-dev-workflow.md) - Quick commands
+  - [Desktop Platform Improvements](./desktop-platform-improvements-implementation-guide.md) - Full improvement roadmap
+  - [Desktop Improvements - Executive Summary](./desktop-improvements-executive-summary.md) - Impact analysis
+  - [Desktop Support Policy](./policies/desktop-support-policy.md) - Contribution requirements
+
+- **Architecture:**
+  - [Desktop Architecture Layers](../architecture/desktop-layers.md) - Layer boundaries
+  - [UI Fixture Mode Guide](./ui-fixture-mode-guide.md) - Offline development
+  - [Repository Organization Guide](./repository-organization-guide.md) - Code structure
+
+- **Migration and Planning:**
+  - [UWP to WPF Migration](./uwp-to-wpf-migration.md) - Migration strategy
+  - [Project Roadmap](../status/ROADMAP.md) - Desktop roadmap items

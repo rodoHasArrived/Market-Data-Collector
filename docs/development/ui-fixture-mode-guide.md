@@ -423,4 +423,22 @@ After implementing basic fixture mode:
 
 **Status**: ✅ Implemented  
 **Version**: 1.0  
-**Last Updated**: 2026-02-11
+**Last Updated**: 2026-02-13
+
+---
+
+## Related Documentation
+
+- **Desktop Development:**
+  - [Desktop Testing Guide](./desktop-testing-guide.md) - Complete testing procedures and fixture usage
+  - [Desktop Development Workflow](./desktop-dev-workflow.md) - Quick commands
+  - [WPF Implementation Notes](./wpf-implementation-notes.md) - WPF architecture and patterns
+  - [Desktop Platform Improvements](./desktop-platform-improvements-implementation-guide.md) - Improvement roadmap
+
+- **Testing and Quality:**
+  - [Test Project README](../../tests/MarketDataCollector.Ui.Tests/README.md) - Test coverage details
+  - [Desktop Support Policy](./policies/desktop-support-policy.md) - Required validation checks
+
+- **Architecture:**
+  - [Desktop Architecture Layers](../architecture/desktop-layers.md) - Layer boundaries and dependencies
+  - [Repository Organization Guide](./repository-organization-guide.md) - Code structure conventions

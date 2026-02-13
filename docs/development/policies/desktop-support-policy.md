@@ -49,3 +49,23 @@ Expected for UWP-affecting changes:
 - New desktop investment should prioritize WPF path quality and iteration speed.
 - UWP fixes should focus on stability, compatibility, and release safety.
 - Avoid introducing new coupling from shared services into platform-specific UI layers.
+
+---
+
+## Related Documentation
+
+- **Desktop Development:**
+  - [Desktop Testing Guide](../desktop-testing-guide.md) - Testing procedures and requirements
+  - [Desktop Development Workflow](../desktop-dev-workflow.md) - Quick commands
+  - [WPF Implementation Notes](../wpf-implementation-notes.md) - WPF architecture details
+  - [UWP to WPF Migration](../uwp-to-wpf-migration.md) - Migration strategy
+  - [Desktop Platform Improvements](../desktop-platform-improvements-implementation-guide.md) - Improvement roadmap
+
+- **Architecture and Quality:**
+  - [Desktop Architecture Layers](../../architecture/desktop-layers.md) - Layer boundaries
+  - [UI Fixture Mode Guide](../ui-fixture-mode-guide.md) - Offline development
+  - [Repository Organization Guide](../repository-organization-guide.md) - Code structure
+
+- **Workflows:**
+  - [Desktop Builds Workflow](../../../.github/workflows/desktop-builds.yml) - CI configuration
+  - [GitHub Actions Summary](../github-actions-summary.md) - CI/CD overview

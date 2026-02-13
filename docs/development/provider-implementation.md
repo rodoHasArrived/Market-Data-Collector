@@ -197,3 +197,21 @@ public sealed class Mock{Provider}Client : IMarketDataClient
 | Creating unbounded channels for high-frequency data | Memory exhaustion |
 | Swallowing exceptions in event handlers | Silent data loss |
 | Not disposing resources in `DisposeAsync()` | Resource leaks |
+
+## Related Documentation
+
+- **Architecture and Design:**
+  - [ADR-001: Provider Abstraction](../adr/001-provider-abstraction.md) - Interface contracts for data providers
+  - [ADR-010: HttpClient Factory](../adr/010-httpclient-factory.md) - HTTP client lifecycle management
+  - [Provider Comparison](../providers/provider-comparison.md) - Feature comparison matrix
+  - [Data Sources Overview](../providers/data-sources.md) - Complete provider catalog
+
+- **Implementation Guides:**
+  - [Refactor Map](./refactor-map.md) - Safe refactoring procedures
+  - [Repository Organization Guide](./repository-organization-guide.md) - Code structure conventions
+  - [WPF Implementation Notes](./wpf-implementation-notes.md) - Desktop integration patterns
+
+- **Operations and Testing:**
+  - [Backfill Guide](../providers/backfill-guide.md) - Historical data procedures
+  - [Performance Tuning](../operations/performance-tuning.md) - Optimization strategies
+  - [Provider-Specific Setup Guides](../providers/) - Interactive Brokers, Alpaca, etc.

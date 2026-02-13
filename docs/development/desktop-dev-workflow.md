@@ -1,5 +1,16 @@
 # Desktop Development Workflow
 
+> **⚠️ REDIRECT NOTICE**
+>
+> This document's content has been consolidated into the comprehensive **[Desktop Testing Guide](./desktop-testing-guide.md)**, which includes:
+> - Environment validation procedures
+> - Complete test coverage information
+> - Build commands and diagnostics
+> - Troubleshooting guides
+> - Fixture mode usage
+>
+> The content below is preserved for quick reference, but see the Desktop Testing Guide for the complete developer workflow.
+
 Use these commands for fast desktop-focused iteration.
 
 ## Bootstrap

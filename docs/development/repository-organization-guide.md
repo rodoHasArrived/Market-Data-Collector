@@ -1,7 +1,7 @@
 # Repository Organization Guide
 
 **Version:** 1.0  
-**Last Updated:** 2026-02-12  
+**Last Updated:** 2026-02-13  
 **Audience:** Developers, Contributors, Maintainers
 
 This guide establishes conventions for organizing code, documentation, and assets in the Market Data Collector repository. Following these patterns ensures consistency, maintainability, and ease of navigation.
@@ -727,3 +727,26 @@ This guide should evolve as the repository grows. To suggest improvements:
 ---
 
 *This guide is maintained by the core team and updated with each significant repository reorganization.*
+
+---
+
+## Related Documentation
+
+- **Planning and Cleanup:**
+  - [Repository Cleanup Action Plan](./repository-cleanup-action-plan.md) - Technical debt reduction plan
+  - [Refactor Map](./refactor-map.md) - Safe refactoring procedures
+  - [ROADMAP Update Summary](./ROADMAP_UPDATE_SUMMARY.md) - Recent organizational changes
+
+- **Implementation Guides:**
+  - [Provider Implementation Guide](./provider-implementation.md) - Adding data providers
+  - [Desktop Platform Improvements](./desktop-platform-improvements-implementation-guide.md) - Desktop development
+  - [WPF Implementation Notes](./wpf-implementation-notes.md) - WPF architecture
+
+- **Architecture:**
+  - [Architecture Overview](../architecture/overview.md) - System architecture
+  - [ADR Index](../adr/README.md) - Architectural decisions
+  - [Project Boundaries](../architecture/layer-boundaries.md) - Layer dependencies
+
+- **Contributing:**
+  - [Documentation Contribution Guide](./documentation-contribution-guide.md) - Contributing to docs
+  - [Central Package Management](./central-package-management.md) - NuGet conventions
