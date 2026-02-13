@@ -188,3 +188,21 @@ If headings are missing, the workflow still creates an entry with safe defaults 
   - `grep -r "using UiServices" src/MarketDataCollector.Wpf/Services/`
 - **Source issue**: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/21959216554/job/63431802067
 - **Status**: fixed (commit 5ea62c8)
+
+### AI-20260213-nullable-value-property-misuse
+- **Area**: build/C#/nullable types
+- **Symptoms**: Build fails with CS1061 errors: "'double' does not contain a definition for 'Value' and no accessible extension method 'Value' accepting a first argument of type 'double' could be found". This occurs when accessing `.Value` on nullable value types after using the null-forgiving operator (`!`).
+- **Root cause**: When `TryGetFromNewest` is called on a `CircularBuffer<double>`, the `out T? value` parameter becomes `out double? value`, making `fromValue` and `toValue` of type `double?` (nullable double). The code incorrectly used `fromValue!.Value` where the null-forgiving operator `!` suppresses nullable warnings but doesn't change the type. The compiler then sees `.Value` being accessed on what it thinks is a `double` (due to `!`), causing the error since `double` doesn't have a `.Value` property. The correct approach is to use `fromValue.Value` directly without `!`, as `.Value` extracts the underlying `double` from the nullable `double?`.
+- **Prevention checklist**:
+  - [ ] Understand that `T?` on value types creates a nullable wrapper (e.g., `double?` is `Nullable<double>`)
+  - [ ] When using `out var` with generic methods that return `T?`, infer the correct type
+  - [ ] Access `.Value` on nullable value types directly (e.g., `nullableDouble.Value`) without null-forgiving operator
+  - [ ] Use null-forgiving operator (`!`) only on reference types or when you want to suppress nullable warnings, not to change types
+  - [ ] After Try* pattern methods that return bool, the out parameter is guaranteed non-null, so `.Value` access is safe
+  - [ ] Test builds after any changes to nullable type handling
+- **Verification commands**:
+  - `dotnet build src/MarketDataCollector.Ui.Services/MarketDataCollector.Ui.Services.csproj -c Release`
+  - `dotnet build src/MarketDataCollector.Wpf/MarketDataCollector.Wpf.csproj -c Release --no-restore -p:TargetFramework=net9.0-windows`
+  - `grep -n '\!\.Value' src/MarketDataCollector.Ui.Services/Collections/CircularBuffer.cs` (should return no matches)
+- **Source issue**: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/21988186038/job/63527798918#step:5:1
+- **Status**: fixed (commit 1e2ea1d)
