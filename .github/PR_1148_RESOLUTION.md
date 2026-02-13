@@ -97,15 +97,41 @@ Three files were updated with important hardening improvements:
 - ✅ New features are opt-in (--output-json)
 - ✅ Backward compatible with existing workflows
 
+## Current Situation
+
+Two branches now exist with these changes:
+
+### Branch 1: `copilot/update-market-data-collector-5bb650c2-2a95-4220-8786-616898c14e65` (this branch)
+- **Status**: Based on grafted commit (unrelated history)
+- **Content**: ✅ Has all improvements from PR #1148
+- **Issue**: Will also have unrelated history when creating PR
+- **Contains**: This resolution document
+
+### Branch 2: `fix/pr-1148-documentation-automation-hardening`
+- **Status**: ✅ Properly based on main (commit 9c5d1377)
+- **Content**: ✅ Has identical improvements (verified byte-for-byte)
+- **Commit**: 0db8e26f - clean history that can merge to main
+- **Does NOT contain**: This resolution document
+
 ## Recommendation
 
-1. **Merge this branch** (`fix/pr-1148-documentation-automation-hardening`) to `main`
-2. **Close PR #1148** with comment:
+### Option A: Use the Fix Branch (Recommended)
+1. **Push** `fix/pr-1148-documentation-automation-hardening` to GitHub
+2. **Create PR** from that branch to main
+3. **Merge** that PR to apply changes to main
+4. **Close PR #1148** with comment:
    > This PR contained important improvements but had unrelated history that prevented direct merge.
-   > The changes have been successfully applied via #XXXX (this PR) which maintains proper git lineage.
+   > The changes have been successfully applied via #XXXX (new PR) which maintains proper git lineage.
    > Thank you for the contribution!
+5. **Close** this copilot PR (if created) as superseded
 
-3. **Archive grafted branch** after verification
+### Option B: Accept Unrelated History Merge
+1. Allow this copilot PR to merge with `--allow-unrelated-histories`
+2. Accept the grafted history in the repo permanently
+3. Close PR #1148 as incorporated
+4. Delete `fix/pr-1148-documentation-automation-hardening` branch
+
+**Recommendation**: Use Option A to maintain clean git history.
 
 ## Related Issues
 
