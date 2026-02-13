@@ -1,169 +1,71 @@
 # UML Diagrams - Market Data Collector
 
-This directory contains UML diagrams documenting the Market Data Collector system architecture, workflows, and interactions.
+This directory contains PlantUML source files (`.puml`) and committed PNG artifacts (`.png`) for architecture and workflow documentation.
 
-## Diagram Types
+## Diagram Inventory
 
-### 1. Use Case Diagram
-**File:** `use-case-diagram.puml`
+| Diagram Type | Source (`.puml`) | Artifact (`.png`) | Description |
+|---|---|---|---|
+| Use Case | `use-case-diagram.puml` | `use-case-diagram.png` | System actors and high-level use cases |
+| Sequence | `sequence-diagram.puml` | `sequence-diagram.png` | Real-time data collection flow |
+| Sequence | `sequence-diagram-backfill.puml` | `sequence-diagram-backfill.png` | Historical backfill with provider fallback |
+| Activity | `activity-diagram.puml` | `activity-diagram.png` | Main data collection process |
+| Activity | `activity-diagram-backfill.puml` | `activity-diagram-backfill.png` | CLI/scheduled/gap-repair backfill process |
+| State | `state-diagram.puml` | `state-diagram.png` | Provider connection lifecycle |
+| State | `state-diagram-orderbook.puml` | `state-diagram-orderbook.png` | Order book freshness lifecycle |
+| State | `state-diagram-trade-sequence.puml` | `state-diagram-trade-sequence.png` | Trade sequence validation lifecycle |
+| State | `state-diagram-backfill.puml` | `state-diagram-backfill.png` | Backfill request lifecycle |
+| Communication | `communication-diagram.puml` | `communication-diagram.png` | Component-level message exchange |
+| Interaction Overview | `interaction-overview-diagram.puml` | `interaction-overview-diagram.png` | High-level workflow orchestration |
+| Timing | `timing-diagram.puml` | `timing-diagram.png` | Real-time event timing |
+| Timing | `timing-diagram-backfill.puml` | `timing-diagram-backfill.png` | Backfill operation timing |
 
-Defines user interactions with the system, showing:
-- **Actors:** CLI User, Web Dashboard User, API Client, System Operator, Desktop App User
-- **External Systems:** Data Providers (IB, Alpaca, NYSE, Polygon, StockSharp), Message Broker, Kubernetes
-- **Use Cases:** Real-time collection, backfill, scheduled backfill, configuration, monitoring, data quality, export/packaging, microservices API
+**Totals:** 13 PlantUML sources + 13 PNG artifacts.
 
-### 2. Sequence Diagrams
-Shows step-by-step interactions between objects:
+## How to Render Locally
 
-| File | Description |
-|------|-------------|
-| `sequence-diagram.puml` | Real-time data collection flow from provider to storage |
-| `sequence-diagram-backfill.puml` | Historical backfill process with fallback |
-| `sequence-diagram-microservices.puml` | Microservices API ingestion and routing |
-
-### 3. Activity Diagrams
-Represents processes, decision flows, and dynamic system behavior:
-
-| File | Description |
-|------|-------------|
-| `activity-diagram.puml` | Main data collection process with parallel tasks and data quality monitoring |
-| `activity-diagram-backfill.puml` | Historical backfill workflow with CLI, scheduled, and gap repair modes |
-
-### 4. State Diagrams
-Tracks object states and transitions:
-
-| File | Description |
-|------|-------------|
-| `state-diagram.puml` | Provider connection lifecycle (Disconnected → Connected → Failed) |
-| `state-diagram-orderbook.puml` | Order book stream states (Fresh → Stale → AutoReset) |
-| `state-diagram-trade-sequence.puml` | Trade sequence validation states (Normal → Gap → OutOfOrder) |
-| `state-diagram-backfill.puml` | Backfill request lifecycle (Pending → InProgress → Completed) |
-
-### 5. Communication Diagram
-**File:** `communication-diagram.puml`
-
-Shows message exchange between components:
-- Provider to Collector data flow (5 streaming providers)
-- Pipeline to Storage communication (JSONL, Parquet, WAL)
-- Data Quality Monitoring service
-- Scheduled Backfill service
-- Export and Packaging services
-- Microservices routing
-- MassTransit message publishing
-
-### 6. Interaction Overview Diagram
-**File:** `interaction-overview-diagram.puml`
-
-Combines multiple interactions into a high-level view:
-- Initialization sequence
-- Mode selection (Real-Time, Backfill, Scheduled Backfill, Microservices)
-- Parallel task execution (including data quality monitoring)
-- Graceful shutdown
-
-### 7. Timing Diagrams
-Visualizes event timing and synchronization:
-
-| File | Description |
-|------|-------------|
-| `timing-diagram.puml` | Real-time event processing timeline (~ms scale) |
-| `timing-diagram-backfill.puml` | Backfill operation timeline (~seconds scale) |
-
-## Rendering the Diagrams
-
-### Option 1: PlantUML Online Server
-Visit [PlantUML Web Server](http://www.plantuml.com/plantuml/uml/) and paste the diagram content.
-
-### Option 2: VS Code Extension
-Install the [PlantUML extension](https://marketplace.visualstudio.com/items?itemName=jebbs.plantuml) for VS Code:
+### Option 1: PlantUML CLI
 ```bash
-code --install-extension jebbs.plantuml
-```
-Then use `Alt+D` to preview diagrams.
+# Install PlantUML (Java required)
+brew install plantuml   # macOS
+sudo apt-get install -y plantuml  # Ubuntu/Debian
 
-### Option 3: Command Line
-Install PlantUML and generate images:
+# Render all diagrams to PNG in place
+plantuml -tpng docs/uml/*.puml
+```
+
+### Option 2: Docker
 ```bash
-# Install PlantUML (requires Java)
-brew install plantuml  # macOS
-apt install plantuml   # Ubuntu/Debian
-
-# Generate PNG images
-plantuml docs/uml/*.puml
-
-# Generate SVG images
-plantuml -tsvg docs/uml/*.puml
+docker run --rm -v "$(pwd)/docs/uml:/data" plantuml/plantuml -tpng /data/*.puml
 ```
 
-### Option 4: Docker
-```bash
-docker run -v $(pwd)/docs/uml:/data plantuml/plantuml -tsvg /data/*.puml
-```
+### Option 3: VS Code Preview
+Install the PlantUML extension (`jebbs.plantuml`) and preview with `Alt+D`.
 
-### Option 5: GitHub/GitLab Rendering
-Many Git platforms render PlantUML diagrams automatically in markdown:
-```markdown
-![Use Case Diagram](http://www.plantuml.com/plantuml/proxy?src=https://raw.githubusercontent.com/user/repo/main/docs/uml/use-case-diagram.puml)
-```
+## Automated Maintenance Workflow (GitHub Actions)
 
-## Diagram Summary
+The repository includes `.github/workflows/update-uml-diagrams.yml` to keep committed PNG artifacts in sync:
 
-| Diagram Type | Count | Files |
-|--------------|-------|-------|
-| Use Case | 1 | `use-case-diagram.puml` |
-| Sequence | 3 | `sequence-diagram*.puml` |
-| Activity | 2 | `activity-diagram*.puml` |
-| State | 4 | `state-diagram*.puml` |
-| Communication | 1 | `communication-diagram.puml` |
-| Interaction Overview | 1 | `interaction-overview-diagram.puml` |
-| Timing | 2 | `timing-diagram*.puml` |
-| **Total** | **14** | |
+- Triggered on pushes to `main` that modify `docs/uml/*.puml`
+- Triggered manually via **Actions → Update UML Diagram Artifacts**
+- Installs PlantUML and re-renders `docs/uml/*.png`
+- Auto-commits changed PNG files back to the branch
 
-## Key System Components Documented
+## Recommended Update Process
 
-### Actors
-- CLI User, Web Dashboard User, API Client, Operator, Desktop User
-- External Streaming: Interactive Brokers, Alpaca, NYSE Direct, Polygon, StockSharp
-- External Historical: Yahoo Finance, Stooq, Tiingo, Alpha Vantage, Finnhub, Nasdaq Data Link, Alpaca, Polygon, IB
-- Symbol Search: OpenFIGI, Alpaca, Finnhub, Polygon
+When editing UML docs:
 
-### Core Components
-- **Collectors:** QuoteCollector, TradeDataCollector, MarketDepthCollector
-- **Pipeline:** EventPipeline (bounded channel, 50K capacity)
-- **Storage:** JsonlStorageSink, ParquetStorageSink, WriteAheadLog
-- **Streaming Providers:** AlpacaMarketDataClient, IBMarketDataClient, NYSEDataSource, PolygonMarketDataClient, StockSharpMarketDataClient
-- **Historical Providers:** CompositeHistoricalDataProvider (9 providers with failover)
-- **Data Quality:** DataQualityMonitoringService, AnomalyDetector, GapAnalyzer, PriceContinuityChecker
-- **Export:** AnalysisExportService, PortableDataPackager, ExportProfile
-
-### Microservices
-- Gateway (5000), TradeIngestion (5001), QuoteIngestion (5002)
-- OrderBookIngestion (5003), HistoricalDataIngestion (5004), DataValidation (5005)
-
-### Key Workflows
-1. Real-time streaming data collection with data quality monitoring
-2. Historical backfill with provider fallback (9 providers)
-3. Scheduled backfill with cron expressions
-4. Data gap detection and repair
-5. Microservices API ingestion and routing
-6. Configuration hot-reload
-7. Integrity detection and recovery
-8. Data export and packaging
-
-## Updating Diagrams
-
-When modifying system architecture:
-1. Update relevant `.puml` files
-2. Regenerate images if stored in repo
-3. Verify diagrams render correctly
-4. Update this README if adding new diagrams
+1. Update the relevant `docs/uml/*.puml` source files.
+2. Re-render PNGs locally (`plantuml -tpng docs/uml/*.puml`) **or** use the Actions workflow.
+3. Verify each changed diagram is readable and semantically correct.
+4. If files are added/renamed, update this README inventory table.
 
 ## Related Documentation
 
 - [Architecture Overview](../architecture/overview.md)
 - [Domain Contracts](../architecture/domains.md)
-- [Provider Setup Guides](../providers/)
-- [AI Assistant Guides](../ai/)
+- [Diagrams Folder](../diagrams/README.md)
 
 ---
 
-*Last Updated: 2026-01-29*
+*Last Updated: 2026-02-13*
