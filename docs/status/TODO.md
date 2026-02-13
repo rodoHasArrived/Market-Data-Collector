@@ -1,21 +1,21 @@
 # TODO Tracking
 
 > Auto-generated TODO documentation. Do not edit manually.
-> Last updated: 2026-02-13T20:30:46.240824+00:00
+> Last updated: 2026-02-13T20:59:48.576871+00:00
 
 ## Summary
 
 | Metric | Count |
 |--------|-------|
-| **Total Items** | 17 |
+| **Total Items** | 18 |
 | **Linked to Issues** | 0 |
-| **Untracked** | 17 |
+| **Untracked** | 18 |
 
 ### By Type
 
 | Type | Count | Description |
 |------|-------|-------------|
-| `NOTE` | 17 | Important notes and documentation |
+| `NOTE` | 18 | Important notes and documentation |
 
 ### By Directory
 
@@ -23,16 +23,20 @@
 |-----------|-------|
 | `tests/` | 14 |
 | `src/` | 3 |
+| `.github/` | 1 |
 
 ## Unassigned & Untracked
 
-17 items have no assignee and no issue tracking:
+18 items have no assignee and no issue tracking:
 
 Consider assigning ownership or creating tracking issues for these items.
 
 ## All Items
 
-### NOTE (17)
+### NOTE (18)
+
+- [ ] `.github/workflows/desktop-builds.yml:10`
+  > UWP/WinUI 3 application is DEPRECATED. Use WPF instead. UWP jobs only run on manual dispatch with build_target=uwp or build_target=all. See docs/development/uwp-to-wpf-migration.md for migration guide.
 
 - [ ] `src/MarketDataCollector.Ui.Shared/Endpoints/ConfigEndpoints.cs:138`
   > Status endpoint is handled by StatusEndpoints.MapStatusEndpoints() which provides live status via StatusEndpointHandlers rather than loading from file
