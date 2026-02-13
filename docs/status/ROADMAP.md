@@ -187,7 +187,7 @@ From consolidated [IMPROVEMENTS.md](IMPROVEMENTS.md) — items from themes A (Re
 
 ---
 
-## Phase 4: Desktop App Maturity ✅ COMPLETED (all placeholder pages replaced, UI service tests added)
+## Phase 4: Desktop App Maturity ✅ COMPLETED (all placeholder pages replaced, UI service tests added, UWP deprecated)
 
 ### 4A. WPF Desktop App (Recommended)
 
@@ -206,8 +206,8 @@ From consolidated [IMPROVEMENTS.md](IMPROVEMENTS.md) — items from themes A (Re
 
 | # | Item | Priority | Notes |
 |---|------|----------|-------|
-| 4B.1 | Navigation consolidation (40+ flat items → organized workspaces) | P3 | STRUCTURAL D1 |
-| 4B.2 | Decide on UWP maintenance strategy (active maintenance vs. deprecation) | P2 | WPF is recommended; UWP may be legacy-only |
+| 4B.1 | Navigation consolidation (40+ flat items → organized workspaces) | P3 | ~~STRUCTURAL D1~~ Cancelled — UWP deprecated |
+| 4B.2 | ~~Decide on UWP maintenance strategy~~ | P2 | ✅ Done — **UWP formally deprecated** in favor of WPF. Deprecation markers added to `.csproj`, `App.xaml.cs`, CI/CD workflows, and documentation. UWP receives only critical security fixes. See `docs/development/uwp-to-wpf-migration.md` |
 
 ### 4C. UI Service Deduplication
 
@@ -293,7 +293,7 @@ The same service interfaces are defined in up to three separate projects. Consol
 | 6C.1 | **Phase 1 — Near-identical services** (BrushRegistry, ExportPresetService, FormValidationService, InfoBarService, TooltipService) | P2 | Services with <5% variation between WPF and UWP; extract to shared project directly | ~400 | ✅ FormValidationService done (PR #1028) |
 | 6C.2 | **Phase 2 — Singleton-pattern services** (ThemeService, ConfigService, NotificationService, NavigationService, ConnectionService) | P2 | Only differ in singleton pattern (`Lazy<T>` vs `lock`); parameterize the pattern in a shared base | ~600 | ✅ Done (ThemeServiceBase, ConnectionServiceBase, NavigationServiceBase extracted to Ui.Services; WPF services refactored to extend base classes) |
 | 6C.3 | **Phase 3 — Services with minor platform differences** (LoggingService, MessagingService, StatusService, CredentialService, SchemaService, WatchlistService) | P2 | ~90% shared logic with small platform-specific branches; use strategy/adapter pattern | ~500 | ✅ SchemaService done (SchemaServiceBase extracted to Ui.Services; WPF SchemaService refactored to extend base, ~300 LOC saved) |
-| 6C.4 | **Phase 4 — Complex services** (AdminMaintenanceService, AdvancedAnalyticsService, ArchiveHealthService, BackgroundTaskSchedulerService, OfflineTrackingPersistenceService, PendingOperationsQueueService) | P3 | Larger services requiring careful extraction of shared orchestration logic | ~300 | |
+| 6C.4 | **Phase 4 — Complex services** (AdminMaintenanceService, AdvancedAnalyticsService, ArchiveHealthService, BackgroundTaskSchedulerService, OfflineTrackingPersistenceService, PendingOperationsQueueService) | P3 | Larger services requiring careful extraction of shared orchestration logic | ~300 | ✅ AdminMaintenanceService done (shared DTOs, interface, base class in Ui.Services; WPF/UWP reduced to ~15/30 lines). ✅ AdvancedAnalyticsService done (shared DTOs + base class). ✅ ArchiveHealthService DTOs already shared via Contracts. Remaining 3 services deferred — UWP deprecated, deduplication no longer cost-effective |
 
 **Validation:** Full solution build + existing test suite green after each phase.
 
@@ -308,17 +308,17 @@ Same-named classes in different namespaces create confusion and maintenance risk
 | 6D.3 | **`BackfillCoordinator`** — 2 classes with same name | `Application/Http/BackfillCoordinator.cs`, `Ui.Shared/Services/BackfillCoordinator.cs` | Rename UI variant to `UiBackfillCoordinator` or merge | ✅ Done (Ui.Shared is wrapper) |
 | 6D.4 | **`HtmlTemplates`** — 2 classes with same name | `Application/Http/HtmlTemplates.cs`, `Ui.Shared/HtmlTemplates.cs` | Determine canonical owner; delete or rename the other | ✅ Renamed: HtmlTemplateManager (Application) & HtmlTemplateGenerator (Ui.Shared) (PR #1028) |
 
-### 6E. UWP Platform Decoupling (P3 — Higher Risk, Gated on UWP Deprecation Decision)
+### 6E. UWP Platform Decoupling (P3 — ACTIVATED, UWP Deprecated)
 
-If the team decides to deprecate UWP in favor of WPF-only (per Phase 4B.2 decision), execute the full removal sequence. See `docs/audits/CLEANUP_OPPORTUNITIES.md` §3 for detailed file-level plan.
+**Decision made (Phase 4B.2): UWP is formally deprecated.** WPF is the sole actively maintained desktop client. Execute the full removal sequence. See `docs/audits/CLEANUP_OPPORTUNITIES.md` §3 for detailed file-level plan.
 
-| # | Item | Priority | Description |
-|---|------|----------|-------------|
-| 6E.1 | **Port UWP-only behavior to shared services** | P3 | Identify any logic in UWP services not present in WPF; port to `Ui.Services` |
-| 6E.2 | **Remove UWP from solution and CI** | P3 | Remove project from `.sln`, delete UWP jobs from `desktop-builds.yml`, update labeler and quickstart |
-| 6E.3 | **Delete `src/MarketDataCollector.Uwp/`** | P3 | ~100 source files, ~16,500 lines; only after 6E.1 and 6E.2 are complete |
-| 6E.4 | **Remove UWP integration tests** | P3 | `tests/MarketDataCollector.Tests/Integration/UwpCoreIntegrationTests.cs` and related coverage exclusions |
-| 6E.5 | **Update documentation** | P3 | Remove dual-platform wording from docs, move UWP docs to `docs/archived/`, regenerate `docs/generated/repository-structure.md` |
+| # | Item | Priority | Description | Status |
+|---|------|----------|-------------|--------|
+| 6E.1 | **Port UWP-only behavior to shared services** | P3 | Identify any logic in UWP services not present in WPF; port to `Ui.Services` | ⚠️ Partial — AdminMaintenanceService and AdvancedAnalyticsService logic extracted to shared base classes |
+| 6E.2 | **Remove UWP from active CI** | P3 | ~~Remove project from `.sln`~~, delete UWP jobs from `desktop-builds.yml`, update labeler and quickstart | ⚠️ Partial — UWP CI jobs now manual-dispatch-only (`workflow_dispatch`); removed from push/PR triggers. `.csproj` marked deprecated. `App.xaml.cs` annotated with `[Obsolete]` |
+| 6E.3 | **Delete `src/MarketDataCollector.Uwp/`** | P3 | ~100 source files, ~16,500 lines; only after 6E.1 and 6E.2 are complete | |
+| 6E.4 | **Remove UWP integration tests** | P3 | `tests/MarketDataCollector.Tests/Integration/UwpCoreIntegrationTests.cs` and related coverage exclusions | |
+| 6E.5 | **Update documentation** | P3 | Remove dual-platform wording from docs, move UWP docs to `docs/archived/`, regenerate `docs/generated/repository-structure.md` | |
 
 ### 6F. Structural Decomposition of Large Files (P3)
 
@@ -533,9 +533,9 @@ Phase 0 (DONE) ──┬─→ Phase 1 (DONE) ──┬─→ Phase 2 (DONE) ─
 | Phase 1 | ✅ COMPLETED | — | Completed |
 | Phase 2 | ✅ COMPLETED | — | Completed |
 | Phase 3 | ✅ COMPLETED | — | Completed |
-| Phase 4 | ⚠️ PARTIAL | ~20 hours remaining | <1 week |
+| Phase 4 | ✅ COMPLETED | — | Completed (UWP deprecated per 4B.2) |
 | Phase 5 | ✅ COMPLETED | — | Completed |
-| Phase 6 | ⚠️ PARTIAL | ~100 hours remaining | 2-3 weeks |
+| Phase 6 | ⚠️ PARTIAL | ~80 hours remaining | 2-3 weeks (6E gated on full UWP removal decision) |
 | Phase 7 | ⏸️ OPTIONAL | ~200+ hours | Post-release |
 | Phase 8 | 🆕 NEW | ~170 hours | 2-4 weeks |
 | Phase 9 | 🆕 NEW | ~808 hours | 4-10 weeks |
@@ -615,7 +615,7 @@ If time is constrained, this minimum scope achieves production readiness:
 | `MarketDataCollector.Ui.Services` | ~60 | 0 | None | P2 |
 | `MarketDataCollector.Ui.Shared` | ~17 | ~8 (integration) | Moderate | P2 |
 | `MarketDataCollector.Wpf` | ~70 | 0 | None | P3 |
-| `MarketDataCollector.Uwp` | ~100 | 0 | None | P3 |
+| `MarketDataCollector.Uwp` | ~100 | 0 | None | ~~P3~~ Deprecated |
 | **Total** | **~616** | **~103** | **~17%** | |
 
 ---
@@ -676,7 +676,7 @@ If time is constrained, this minimum scope achieves production readiness:
 - Provider implementations are functionally complete — the conditional compilation pattern (`#if IBAPI`, `#if STOCKSHARP`) is intentional to avoid hard dependencies on commercial SDKs
 - The 178 stub endpoints are intentional placeholders that return 501 to prevent confusing 404 errors for declared routes
 - Test coverage (~17% by file count) is the largest gap in the project's production readiness
-- Phase 6 (Duplicate & Unused Code Cleanup) is informed by three prior audits. Many quick-win items have been completed
+- Phase 6 (Duplicate & Unused Code Cleanup) is informed by three prior audits. Many quick-win items have been completed. **UWP formally deprecated** — remaining WPF/UWP deduplication items (BackgroundTaskSchedulerService, OfflineTrackingPersistenceService, PendingOperationsQueueService) are deferred since UWP will eventually be removed entirely (Phase 6E)
 - Phase 8 (Repository Organization) addresses long-standing organizational debt and establishes patterns for sustainable development
 - Phase 9 (Final Production Release) represents estimated ~808 hours of work but can be reduced to ~540 hours for minimum viable production release
 - **Total remaining effort to v2.0.0:** ~1,158 hours (19 weeks for one developer, 10 weeks for two)

@@ -1,11 +1,19 @@
+using System;
 using Microsoft.UI.Xaml;
 using MarketDataCollector.Uwp.Services;
 
 namespace MarketDataCollector.Uwp;
 
 /// <summary>
-/// Market Data Collector UWP Application
+/// Market Data Collector UWP Application.
+/// <para>
+/// <b>DEPRECATED:</b> This UWP/WinUI 3 application is deprecated.
+/// Use <see cref="MarketDataCollector.Wpf"/> (WPF desktop app) instead.
+/// This project receives only critical security fixes.
+/// See docs/development/uwp-to-wpf-migration.md for the migration guide.
+/// </para>
 /// </summary>
+[Obsolete("UWP app is deprecated. Use MarketDataCollector.Wpf instead. See docs/development/uwp-to-wpf-migration.md.")]
 public partial class App : Application
 {
     private Window? _window;
