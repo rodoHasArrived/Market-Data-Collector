@@ -1,5 +1,7 @@
 # Desktop Support Policy
 
+**Last Updated:** 2026-02-13
+
 ## Scope
 
 This policy defines contribution and validation expectations for desktop surfaces:
@@ -49,3 +51,9 @@ Expected for UWP-affecting changes:
 - New desktop investment should prioritize WPF path quality and iteration speed.
 - UWP fixes should focus on stability, compatibility, and release safety.
 - Avoid introducing new coupling from shared services into platform-specific UI layers.
+
+## Related
+
+- [Desktop Testing Guide](../desktop-testing-guide.md) — Build, test, and troubleshoot desktop apps
+- [UWP-to-WPF Migration](../uwp-to-wpf-migration.md) — Migration rationale and progress
+- [WPF Implementation Notes](../wpf-implementation-notes.md) — Architecture and patterns

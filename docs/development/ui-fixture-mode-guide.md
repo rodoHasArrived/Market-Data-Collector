@@ -1,5 +1,7 @@
 # UI Fixture Mode for Offline Development
 
+**Last Updated:** 2026-02-12
+
 ## Overview
 
 The UI Fixture Mode enables desktop developers to work on the WPF and UWP applications without requiring a running backend service. This significantly improves the development experience by:
@@ -409,18 +411,18 @@ Ensure:
 - **Service**: `src/MarketDataCollector.Ui.Services/Services/FixtureDataService.cs`
 - **Tests**: `tests/MarketDataCollector.Ui.Tests/Services/FixtureDataServiceTests.cs`
 - **Contracts**: `src/MarketDataCollector.Contracts/Api/`
-- **Implementation Guide**: `docs/development/desktop-platform-improvements-implementation-guide.md`
 
-## Next Steps
+## Future Work
 
-After implementing basic fixture mode:
+- Fixture mode for more complex scenarios (streaming, backfill progress)
+- Service consolidation to reduce duplication between fixture and real paths
 
-1. **Week 4**: Add architecture diagram
-2. **Months 2-3**: Service consolidation to reduce duplication
-3. **Future**: Fixture mode for more complex scenarios (streaming, backfill progress)
+## Related Documentation
+
+- [Desktop Testing Guide](desktop-testing-guide.md) — Running fixture mode and desktop tests
+- [Desktop Platform Improvements](desktop-platform-improvements-implementation-guide.md) — Implementation roadmap
+- [WPF Implementation Notes](wpf-implementation-notes.md) — WPF architecture and services
 
 ---
 
-**Status**: ✅ Implemented  
-**Version**: 1.0  
-**Last Updated**: 2026-02-11
+**Status:** Implemented

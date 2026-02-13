@@ -1,7 +1,6 @@
 # Repository Organization Guide
 
-**Version:** 1.0  
-**Last Updated:** 2026-02-12  
+**Last Updated:** 2026-02-13
 **Audience:** Developers, Contributors, Maintainers
 
 This guide establishes conventions for organizing code, documentation, and assets in the Market Data Collector repository. Following these patterns ensures consistency, maintainability, and ease of navigation.
@@ -726,4 +725,10 @@ This guide should evolve as the repository grows. To suggest improvements:
 
 ---
 
-*This guide is maintained by the core team and updated with each significant repository reorganization.*
+## Related Documentation
+
+- [Repository Cleanup Action Plan](repository-cleanup-action-plan.md) — Tactical cleanup tasks and tracking
+- [Refactor Map](refactor-map.md) — Dependency-safe refactoring roadmap
+- [Documentation Contribution Guide](documentation-contribution-guide.md) — Docs style and process
+- [Provider Implementation Guide](provider-implementation.md) — Provider-specific code patterns
+- [Central Package Management](central-package-management.md) — NuGet version management

@@ -1,8 +1,10 @@
 # WPF Desktop Application Implementation Notes
 
+**Last Updated:** 2026-02-12
+
 ## Overview
 
-This document describes the WPF desktop application implementation added as part of PR #598, which provides an alternative desktop UI alongside the existing UWP application.
+This document describes the WPF desktop application implementation, which is the **recommended** desktop UI (replacing UWP as the primary surface).
 
 ## Implementation Scope
 
@@ -172,14 +174,20 @@ All critical issues identified in the code review have been addressed:
 | Cross-Platform | Windows-only | Windows-only |
 | Maturity | Newer (2020+) | Mature (2006+) |
 
-### Documentation
-
-Related documentation:
-- **Evaluation**: `docs/evaluations/desktop-ui-alternatives-evaluation.md`
-- **UWP Roadmap**: `docs/guides/uwp-development-roadmap.md`
-- **UWP Checklist**: `docs/guides/uwp-release-checklist.md`
-
 ### Testing
+
+#### Unit Tests (Implemented)
+
+58 WPF service tests are in `tests/MarketDataCollector.Wpf.Tests/`:
+
+- **NavigationServiceTests** (14 tests) — page navigation, history, events
+- **ConfigServiceTests** (13 tests) — configuration management, validation
+- **StatusServiceTests** (13 tests) — status tracking, HTTP mocking
+- **ConnectionServiceTests** (18 tests) — connection management, auto-reconnect
+
+Run with: `make test-desktop-services` or `dotnet test tests/MarketDataCollector.Wpf.Tests`
+
+See the [Desktop Testing Guide](desktop-testing-guide.md) for full details.
 
 #### Manual Testing Checklist
 - [ ] Application launches successfully
@@ -191,49 +199,21 @@ Related documentation:
 - [ ] Graceful shutdown completes within timeout
 - [ ] Background services start and stop correctly
 
-#### Unit Testing (Planned)
-- [ ] NavigationService tests
-- [ ] ConfigService tests
-- [ ] StatusService tests
-- [ ] ConnectionService tests
-- [ ] KeyboardShortcutService tests
-
 ### Contributing
 
 When modifying the WPF application:
 
-1. **Follow Existing Patterns**
-   - Use singleton pattern for services
-   - Implement OnPageLoaded and OnPageUnloaded handlers
-   - Use async/await for I/O operations
-   - Add proper exception handling
+1. **Follow Existing Patterns** — Use singleton pattern for services, implement OnPageLoaded/OnPageUnloaded handlers, use async/await for I/O, add proper exception handling
+2. **Event Management** — Always unsubscribe in OnPageUnloaded, use weak references for long-lived subscriptions
+3. **Navigation** — Register new pages in NavigationService.RegisterPages(), use tag-based navigation
+4. **Testing** — Add tests matching `ServiceName_Scenario_ExpectedBehavior` convention
 
-2. **Event Management**
-   - Always unsubscribe in OnPageUnloaded
-   - Use weak references for long-lived subscriptions
-   - Avoid circular references
+### Related Documentation
 
-3. **Navigation**
-   - Register new pages in NavigationService.RegisterPages()
-   - Use tag-based navigation (e.g., "Dashboard")
-   - Handle navigation parameters correctly
-
-4. **Testing**
-   - Test keyboard shortcuts
-   - Verify memory cleanup (no leaks)
-   - Check graceful shutdown
-   - Validate configuration persistence
-
-### License
-
-MIT License - Same as parent project
-
-### Authors
-
-- Architecture Review Team
-- Market Data Collector Contributors
-
----
-
-**Last Updated**: 2026-02-02
-**Status**: Implementation Complete, Ready for Testing
+- [UWP-to-WPF Migration](uwp-to-wpf-migration.md) — Migration rationale, comparison, and remaining work
+- [Desktop Testing Guide](desktop-testing-guide.md) — Build, test, and troubleshoot
+- [Desktop Support Policy](policies/desktop-support-policy.md) — WPF primary / UWP legacy
+- [Desktop Improvements Executive Summary](desktop-improvements-executive-summary.md) — Phase 1 results
+- [UI Fixture Mode Guide](ui-fixture-mode-guide.md) — Offline development with mock data
+- [Desktop Architecture](../architecture/desktop-layers.md) — Layer boundaries diagram
+- [Evaluation: Desktop Alternatives](../evaluations/desktop-end-user-improvements.md) — Framework comparison

@@ -2,9 +2,11 @@
 
 This document provides a quick reference for all GitHub Actions workflows in the Market Data Collector repository.
 
-**Last Updated:** 2026-02-06
+**Last Updated:** 2026-02-13
 **Total Workflows:** 17 (consolidated from 25 original files)
 **Authoritative Reference:** [`.github/workflows/README.md`](../../.github/workflows/README.md)
+
+> See also: [GitHub Actions Testing Checklist](github-actions-testing.md) for validation steps.
 
 ---
 

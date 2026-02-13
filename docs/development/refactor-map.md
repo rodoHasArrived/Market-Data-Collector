@@ -1,5 +1,12 @@
 # Concrete Refactor Map (Dependency-Safe)
 
+**Last Updated:** 2026-02-12
+**Status:** Planning — Phase 0 not yet started
+
+> See also: [Repository Cleanup Action Plan](repository-cleanup-action-plan.md) for complementary
+> tactical cleanup work, and [Repository Organization Guide](repository-organization-guide.md) for
+> the target structure these refactors should converge toward.
+
 **Goal:** Reduce implementation complexity while preserving runtime behavior and public functionality.
 
 **Scope constraints:**
@@ -270,3 +277,12 @@
 - Migrate one provider at a time with fixture parity tests.
 - Preserve old implementations behind adapters during UI service extraction.
 - Do not delete legacy path until integration, replay, and smoke tests pass in CI for two consecutive runs.
+
+---
+
+## Related Documentation
+
+- [Repository Cleanup Action Plan](repository-cleanup-action-plan.md) — Complementary tactical cleanup (unused files, interface consolidation, service dedup)
+- [Repository Organization Guide](repository-organization-guide.md) — Target structure and conventions
+- [Provider Implementation Guide](provider-implementation.md) — Current provider patterns
+- [Desktop Platform Improvements](desktop-platform-improvements-implementation-guide.md) — Desktop-specific refactoring (Phase 5 overlap)

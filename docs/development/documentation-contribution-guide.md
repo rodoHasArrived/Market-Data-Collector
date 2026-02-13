@@ -1,10 +1,11 @@
 # Documentation Contribution Guide
 
-**Version:** 1.0  
-**Last Updated:** 2026-02-12  
+**Last Updated:** 2026-02-13
 **Status:** Active
 
 This guide provides standards and best practices for creating, organizing, and maintaining documentation in the Market Data Collector project.
+
+> See also: [Repository Organization Guide](repository-organization-guide.md) for code-side conventions.
 
 ---
 

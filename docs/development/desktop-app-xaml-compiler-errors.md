@@ -1,5 +1,10 @@
 # Desktop App XAML Compiler Errors
 
+**Last Updated:** 2026-02-12
+
+> See also: [UWP-to-WPF Migration](uwp-to-wpf-migration.md) for context on why WPF is preferred,
+> and [Desktop Testing Guide](desktop-testing-guide.md) for diagnostic commands.
+
 ## Issue: XamlCompiler.exe exits with code 1
 
 ### Symptoms

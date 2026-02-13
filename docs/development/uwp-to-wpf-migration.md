@@ -1,13 +1,14 @@
 # UWP to WPF Migration Guide
 
+**Last Updated:** 2026-02-12
+
 This document outlines the migration from UWP/WinUI 3 to WPF (.NET 9) for the Market Data Collector desktop application.
 
 ## Executive Summary
 
-**Status**: Initial implementation complete  
-**Date**: January 31, 2026  
-**Framework**: WPF (.NET 9.0)  
-**Reason**: Maximum Windows stability, broader compatibility, simpler deployment
+**Status:** Phase 1-5 complete; remaining work is incremental page migration
+**Framework:** WPF (.NET 9.0)
+**Reason:** Maximum Windows stability, broader compatibility, simpler deployment
 
 ## Migration Rationale
 
@@ -395,12 +396,14 @@ The remaining work primarily involves migrating the extensive page collection fr
 
 ## Version History
 
-- **v1.0.0** (2026-01-31) - Initial WPF implementation
-  - Core infrastructure complete
-  - 4 pages implemented (Dashboard, Symbols, Backfill, Settings)
-  - 23 services implemented
-  - Build system configured
+- **v1.1.0** (2026-02-12) — 40+ pages implemented, 58 WPF tests, 71 UI service tests, desktop CI workflows
+- **v1.0.0** (2026-01-31) — Initial WPF implementation: core infrastructure, 4 pages, 23 services
 
----
+## Related Documentation
 
-*Last Updated: 2026-02-01*
+- [WPF Implementation Notes](wpf-implementation-notes.md) — Architecture patterns and service details
+- [Desktop Testing Guide](desktop-testing-guide.md) — Build, test, and troubleshoot desktop apps
+- [Desktop Support Policy](policies/desktop-support-policy.md) — WPF primary / UWP legacy expectations
+- [Desktop Improvements Executive Summary](desktop-improvements-executive-summary.md) — Phase 1 completion report
+- [UI Fixture Mode Guide](ui-fixture-mode-guide.md) — Offline development with mock data
+- [XAML Compiler Errors](desktop-app-xaml-compiler-errors.md) — Known UWP XAML issues

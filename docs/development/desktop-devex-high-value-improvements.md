@@ -1,8 +1,16 @@
 # Desktop Platform Developer Experience: High-Value Improvements
 
+> **Status: Superseded** — This original proposal has been largely implemented. See the
+> [Implementation Guide](desktop-platform-improvements-implementation-guide.md) for current details
+> and the [Executive Summary](desktop-improvements-executive-summary.md) for progress tracking.
+
+**Last Updated:** 2026-02-12
+
 ## Goal
 
-## Implementation status (current)
+Improve day-to-day development velocity and confidence for desktop contributors (WPF primary, UWP legacy) by reducing build friction, tightening feedback loops, and standardizing local workflows.
+
+## Implementation Status (Current)
 
 - ✅ Desktop dev bootstrap script: `scripts/dev/desktop-dev.ps1`
 - ✅ Focused desktop Make targets: `build-wpf`, `build-uwp`, `test-desktop-services`, `desktop-dev-bootstrap`, `uwp-xaml-diagnose`
@@ -161,9 +169,16 @@ Improve day-to-day development velocity and confidence for desktop contributors 
 - Service-level regression bugs caught pre-merge (increasing test-detected vs. manual-detected issues).
 - Fewer “cannot reproduce” desktop issues due to fixture mode adoption.
 
-## Evidence in current repository
+## Evidence in Current Repository
 
 - WPF is the recommended desktop path, with UWP legacy support and explicit migration rationale.
 - WPF implementation notes identify unit testing and persistence work as future enhancements.
 - Desktop CI is consolidated and feature-rich, indicating opportunity for fast-path separation.
 - UWP/XAML compiler failures are documented with recurring diagnostics and mitigation steps.
+
+## See Also
+
+- [Desktop Platform Improvements — Implementation Guide](desktop-platform-improvements-implementation-guide.md) (supersedes this document with concrete code examples)
+- [Desktop Improvements — Executive Summary](desktop-improvements-executive-summary.md) (Phase 1 completion report)
+- [Desktop Testing Guide](desktop-testing-guide.md) (test infrastructure and patterns)
+- [UI Fixture Mode Guide](ui-fixture-mode-guide.md) (offline development)

@@ -1,6 +1,10 @@
 # GitHub Actions Testing Checklist
 
-This document provides a checklist for testing the newly created GitHub Actions workflows.
+**Last Updated:** 2026-02-13
+
+This document provides a checklist for validating GitHub Actions workflows.
+
+> See also: [GitHub Actions Summary](github-actions-summary.md) for the full workflow inventory.
 
 ## Pre-merge Checklist
 

@@ -1,5 +1,7 @@
 # Data Provider Implementation Guide
 
+**Last Updated:** 2026-02-12
+
 ## Overview
 
 This guide covers patterns for implementing market data providers in MarketDataCollector. Follow these patterns for consistency and reliability.
@@ -197,3 +199,12 @@ public sealed class Mock{Provider}Client : IMarketDataClient
 | Creating unbounded channels for high-frequency data | Memory exhaustion |
 | Swallowing exceptions in event handlers | Silent data loss |
 | Not disposing resources in `DisposeAsync()` | Resource leaks |
+
+## Related Documentation
+
+- [Repository Organization Guide](repository-organization-guide.md) — Project boundaries and where provider code belongs
+- [Refactor Map](refactor-map.md) — Phase 1 (provider registry) and Phase 3 (WebSocket consolidation)
+- [ADR-001: Provider Abstraction](../adr/001-provider-abstraction.md) — Interface contracts
+- [ADR-004: Async Streaming Patterns](../adr/004-async-streaming-patterns.md) — CancellationToken, IAsyncEnumerable
+- [ADR-005: Attribute-Based Discovery](../adr/005-attribute-based-discovery.md) — `[DataSource]` attribute
+- [Provider Comparison](../providers/provider-comparison.md) — Feature matrix across providers

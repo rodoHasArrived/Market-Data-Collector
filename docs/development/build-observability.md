@@ -1,5 +1,7 @@
 # Build Observability System
 
+**Last Updated:** 2026-02-12
+
 This repository includes a build observability toolkit that turns local and CI builds into structured, diagnosable workflows.
 
 ## Quick Start

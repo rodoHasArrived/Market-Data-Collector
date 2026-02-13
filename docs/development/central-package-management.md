@@ -1,5 +1,7 @@
 # Central Package Management (CPM) Guide
 
+**Last Updated:** 2026-02-12
+
 ## Overview
 
 This repository uses **Central Package Management (CPM)** to ensure consistent package versions across all projects in the solution. All package versions are defined centrally in `Directory.Packages.props`.
