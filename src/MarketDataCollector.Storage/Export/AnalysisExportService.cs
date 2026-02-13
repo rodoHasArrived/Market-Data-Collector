@@ -671,7 +671,7 @@ public sealed class AnalysisExportService
             }
 
             var recordCount = await _xlsxWriter.WriteAsync(
-                outputPath, StreamRecords(ct), profile.MaxRecordsPerFile, ct);
+                outputPath, StreamRecords(ct), profile.MaxRecordsPerFile.HasValue ? (int?)profile.MaxRecordsPerFile.Value : null, ct);
 
             var fileInfo = new FileInfo(outputPath);
             exportedFiles.Add(new ExportedFile

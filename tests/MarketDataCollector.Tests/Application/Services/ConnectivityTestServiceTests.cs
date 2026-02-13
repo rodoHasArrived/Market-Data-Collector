@@ -138,9 +138,9 @@ public sealed class ConnectivityTestServiceTests
     #region DisplaySummary
 
     [Fact]
-    public void DisplaySummary_WithAllReachable_DoesNotThrow()
+    public async Task DisplaySummary_WithAllReachable_DoesNotThrow()
     {
-        using var service = CreateService();
+        await using var service = CreateService();
         var summary = new ConnectivityTestService.ConnectivitySummary(
             Results: new[]
             {
@@ -156,9 +156,9 @@ public sealed class ConnectivityTestServiceTests
     }
 
     [Fact]
-    public void DisplaySummary_WithFailures_ShowsTroubleshootingTips()
+    public async Task DisplaySummary_WithFailures_ShowsTroubleshootingTips()
     {
-        using var service = CreateService();
+        await using var service = CreateService();
         var summary = new ConnectivityTestService.ConnectivitySummary(
             Results: new[]
             {
@@ -175,9 +175,9 @@ public sealed class ConnectivityTestServiceTests
     }
 
     [Fact]
-    public void DisplaySummary_WithNetworkIssues_ShowsIssues()
+    public async Task DisplaySummary_WithNetworkIssues_ShowsIssues()
     {
-        using var service = CreateService();
+        await using var service = CreateService();
         var summary = new ConnectivityTestService.ConnectivitySummary(
             Results: Array.Empty<ConnectivityTestService.ConnectivityTestResult>(),
             AllReachable: false,
