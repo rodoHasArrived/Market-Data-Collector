@@ -1,7 +1,7 @@
 # Market Data Collector - Project Roadmap
 
 **Version:** 1.6.1
-**Last Updated:** 2026-02-12
+**Last Updated:** 2026-02-13
 **Status:** Development / Pilot Ready
 **Source Files:** 807 | **Test Files:** 105 | **API Endpoints:** ~269 declared, ~136 implemented, ~133 stubbed
 
@@ -197,10 +197,10 @@ From consolidated [IMPROVEMENTS.md](IMPROVEMENTS.md) — items from themes A (Re
 | 4A.2 | Implement `PendingOperationsQueueService.ProcessAllAsync()` | P1 | ✅ Done — handler registry with retry support for failed operations |
 | 4A.3 | Complete WPF feature parity with UWP | P2 | ⚠️ Partial — navigation/workspace shell is in place, but many destination pages are still placeholders ("Coming Soon") and do not yet provide equivalent workflows |
 | 4A.4 | Fix desktop charting (depends on Phase 0.3 fix) | P1 | ✅ Done — resolved in Phase 0.3 |
-| 4A.5 | Replace placeholder WPF pages with functional screens for end-user workflows | P1 | ⚠️ Partial — 11 of 22 placeholder pages replaced with functional implementations (WelcomePage, KeyboardShortcutsPage, DiagnosticsPage, TradingHoursPage, NotificationCenterPage, ProviderPage, ScheduleManagerPage, StorageOptimizationPage, CollectionSessionPage, DataCalendarPage, PackageManagerPage); 11 pages remain |
+| 4A.5 | Replace placeholder WPF pages with functional screens for end-user workflows | P1 | ⚠️ Partial — 18 of 22 placeholder pages replaced with functional implementations (WelcomePage, KeyboardShortcutsPage, DiagnosticsPage, TradingHoursPage, NotificationCenterPage, ProviderPage, ScheduleManagerPage, StorageOptimizationPage, CollectionSessionPage, DataCalendarPage, PackageManagerPage, SystemHealthPage, MessagingHubPage, IndexSubscriptionPage, RetentionAssurancePage, SymbolMappingPage, SymbolStoragePage, WorkspacePage); 4 pages remain (ChartingPage, LeanIntegrationPage, PortfolioImportPage, TimeSeriesAlignmentPage) |
 | 4A.6 | Publish a user-visible WPF implementation matrix (functional vs placeholder pages) | P2 | Keep roadmap messaging aligned with actual click-through UX reality for each release |
 
-**Reality check (current repo state):** `src/MarketDataCollector.Wpf/Views` contains 48 page XAML files, of which 11 still render a `"Coming Soon"` placeholder shell (down from 22 — WelcomePage, KeyboardShortcutsPage, DiagnosticsPage, TradingHoursPage, NotificationCenterPage, ProviderPage, ScheduleManagerPage, StorageOptimizationPage, CollectionSessionPage, DataCalendarPage, and PackageManagerPage now have functional implementations).
+**Reality check (current repo state):** `src/MarketDataCollector.Wpf/Views` contains 48 page XAML files, of which 4 still render a `"Coming Soon"` placeholder shell (down from 22 — 18 pages now have functional implementations: WelcomePage, KeyboardShortcutsPage, DiagnosticsPage, TradingHoursPage, NotificationCenterPage, ProviderPage, ScheduleManagerPage, StorageOptimizationPage, CollectionSessionPage, DataCalendarPage, PackageManagerPage, SystemHealthPage, MessagingHubPage, IndexSubscriptionPage, RetentionAssurancePage, SymbolMappingPage, SymbolStoragePage, WorkspacePage). Remaining placeholders: ChartingPage, LeanIntegrationPage, PortfolioImportPage, TimeSeriesAlignmentPage.
 
 ### 4B. UWP Desktop App (Legacy)
 
@@ -438,7 +438,7 @@ Finish implementing stubbed-out functionality.
 | # | Item | Priority | Description | Est. Hours |
 |---|------|----------|-------------|-----------|
 | 9A.1 | **Implement critical stub endpoints** — Symbol management (15), Storage operations (20), Storage quality (9) | P1 | Highest priority stub endpoints (Phase 3B) | 60 |
-| 9A.2 | **Complete desktop app placeholders** — Remove "Coming Soon" pages and implement core workflows | P1 | 11 WPF pages are still placeholders (Phase 4A.5, 11 done) | 40 |
+| 9A.2 | **Complete desktop app placeholders** — Remove "Coming Soon" pages and implement core workflows | P1 | 4 WPF pages are still placeholders (Phase 4A.5, 18 done) | 16 |
 | 9A.3 | **Implement remaining data quality features** — Complete all quality monitoring endpoints and UI | P1 | Quality monitoring is key selling point | 40 |
 | 9A.4 | **Finish backfill automation** — Complete scheduled backfill and gap-fill features | P1 | Critical for unattended operation | 24 |
 | 9A.5 | **Complete provider integrations** — Validate all 10 historical and 5 streaming providers work end-to-end | P1 | Core functionality validation | 32 |
@@ -533,7 +533,7 @@ Phase 0 (DONE) ──┬─→ Phase 1 (DONE) ──┬─→ Phase 2 (DONE) ─
 | Phase 1 | ✅ COMPLETED | — | Completed |
 | Phase 2 | ✅ COMPLETED | — | Completed |
 | Phase 3 | ✅ COMPLETED | — | Completed |
-| Phase 4 | ⚠️ PARTIAL | ~50 hours remaining | 1-2 weeks |
+| Phase 4 | ⚠️ PARTIAL | ~20 hours remaining | <1 week |
 | Phase 5 | ✅ COMPLETED | — | Completed |
 | Phase 6 | ⚠️ PARTIAL | ~100 hours remaining | 2-3 weeks |
 | Phase 7 | ⏸️ OPTIONAL | ~200+ hours | Post-release |
@@ -549,7 +549,7 @@ If time is constrained, this minimum scope achieves production readiness:
 
 | Phase | Required Items | Effort |
 |-------|----------------|--------|
-| Phase 4 | Complete remaining 11 WPF placeholder pages (11 of 22 already done) | 30 hours |
+| Phase 4 | Complete remaining 4 WPF placeholder pages (18 of 22 already done) | 12 hours |
 | Phase 6 | Complete service interface consolidation only (Phase 6B) | 20 hours |
 | Phase 8 | Items 8A.1, 8A.2, 8B.1, 8D.1, 8D.2 (critical docs only) | 30 hours |
 | Phase 9 | Items 9A.1, 9B.1-9B.5, 9C.1-9C.5, 9D.1-9D.4 (core production readiness) | 450 hours |
@@ -692,7 +692,7 @@ To track progress toward v2.0.0 production release:
 |--------|---------|--------|--------|
 | **Test Coverage** | ~17% | >80% | 🔴 Critical Gap |
 | **Implemented Endpoints** | 136/269 (51%) | >230/269 (85%) | 🟡 In Progress |
-| **Functional Desktop Pages** | 37/48 (77%) | 46/48 (96%) | 🟡 In Progress |
+| **Functional Desktop Pages** | 44/48 (92%) | 46/48 (96%) | 🟡 In Progress |
 | **Provider Test Coverage** | 8/55 files | >40/55 files | 🔴 Critical Gap |
 | **Documentation Completeness** | ~75% | >95% | 🟡 In Progress |
 | **Production Readiness Score** | 6.5/10 | 9/10 | 🟡 In Progress |
@@ -700,4 +700,4 @@ To track progress toward v2.0.0 production release:
 
 ---
 
-*Last Updated: 2026-02-12*
+*Last Updated: 2026-02-13*
