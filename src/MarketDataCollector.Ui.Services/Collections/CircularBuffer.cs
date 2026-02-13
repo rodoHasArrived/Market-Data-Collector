@@ -280,30 +280,41 @@ public static class CircularBufferExtensions
     /// <remarks>
     /// Formula: ((toValue - fromValue) / fromValue) * 100
     /// Returns null if fromValue is zero to avoid division by zero.
+    /// This method uses 'out var' for cross-platform compiler compatibility with generic nullable types.
     /// </remarks>
     public static double? CalculatePercentageChange(this CircularBuffer<double> buffer, int fromOffset, int toOffset)
     {
-        if (!buffer.TryGetFromNewest(fromOffset, out double? fromValue) || 
-            !buffer.TryGetFromNewest(toOffset, out double? toValue))
+        // Use 'out var' to ensure cross-platform compiler compatibility with generic 'out T?' parameters.
+        // Windows and Linux C# compilers handle nullable generic constraints differently.
+        if (!buffer.TryGetFromNewest(fromOffset, out var fromValueNullable) || 
+            !buffer.TryGetFromNewest(toOffset, out var toValueNullable))
         {
             return null;
         }
 
-        // Defensive null check (should not occur after successful TryGet, but provides compile-time safety)
-        if (!fromValue.HasValue || !toValue.HasValue)
+        // Defensive null checks for compile-time safety, even though TryGetFromNewest success guarantees non-null.
+        // This pattern provides type safety and clarity.
+        if (!fromValueNullable.HasValue)
         {
             return null;
         }
 
-        var from = fromValue.Value;
-        var to = toValue.Value;
+        if (!toValueNullable.HasValue)
+        {
+            return null;
+        }
+
+        // Extract values into local variables to avoid repeated .Value accessor calls.
+        // This improves readability and follows best practices for nullable value types.
+        var fromValue = fromValueNullable.Value;
+        var toValue = toValueNullable.Value;
 
         // Avoid division by zero
-        if (Math.Abs(from) < double.Epsilon)
+        if (Math.Abs(fromValue) < double.Epsilon)
         {
             return null;
         }
 
-        return ((to - from) / from) * 100.0;
+        return ((toValue - fromValue) / fromValue) * 100.0;
     }
 }
