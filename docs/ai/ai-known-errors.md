@@ -223,4 +223,6 @@ If headings are missing, the workflow still creates an entry with safe defaults 
 - **Source issues**: 
   - https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/21988186038/job/63527798918#step:5:1 (original)
   - https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/21996212289/job/63556782046 (variant)
-- **Status**: fixed (commits 1e2ea1d, 5756479, 1802ea9 - robust solution)
+  - https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/21998525615/job/63564824033#step:5:1 (regression - reintroduced `out var` causing same issue)
+- **Status**: fixed (commits 1e2ea1d, 5756479, 1802ea9, e920c34 - robust solution with explicit type annotation)
+- **Note**: This issue has regressed multiple times. **ALWAYS use explicit `out double?` type annotation instead of `out var` when working with nullable value types from generic methods on Windows builds.**
