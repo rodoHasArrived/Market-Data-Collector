@@ -280,21 +280,41 @@ public static class CircularBufferExtensions
     /// <remarks>
     /// Formula: ((toValue - fromValue) / fromValue) * 100
     /// Returns null if fromValue is zero to avoid division by zero.
+    /// This method uses 'out var' for cross-platform compiler compatibility with generic nullable types.
     /// </remarks>
     public static double? CalculatePercentageChange(this CircularBuffer<double> buffer, int fromOffset, int toOffset)
     {
-        if (!buffer.TryGetFromNewest(fromOffset, out var fromValue) || 
-            !buffer.TryGetFromNewest(toOffset, out var toValue))
+        // Use 'out var' to ensure cross-platform compiler compatibility with generic 'out T?' parameters.
+        // Windows and Linux C# compilers handle nullable generic constraints differently.
+        if (!buffer.TryGetFromNewest(fromOffset, out var fromValueNullable) || 
+            !buffer.TryGetFromNewest(toOffset, out var toValueNullable))
         {
             return null;
         }
+
+        // Defensive null checks for compile-time safety, even though TryGetFromNewest success guarantees non-null.
+        // This pattern provides type safety and clarity.
+        if (!fromValueNullable.HasValue)
+        {
+            return null;
+        }
+
+        if (!toValueNullable.HasValue)
+        {
+            return null;
+        }
+
+        // Extract values into local variables to avoid repeated .Value accessor calls.
+        // This improves readability and follows best practices for nullable value types.
+        var fromValue = fromValueNullable.Value;
+        var toValue = toValueNullable.Value;
 
         // Avoid division by zero
-        if (Math.Abs(fromValue.Value) < double.Epsilon)
+        if (Math.Abs(fromValue) < double.Epsilon)
         {
             return null;
         }
 
-        return ((toValue.Value - fromValue.Value) / fromValue.Value) * 100.0;
+        return ((toValue - fromValue) / fromValue) * 100.0;
     }
 }
