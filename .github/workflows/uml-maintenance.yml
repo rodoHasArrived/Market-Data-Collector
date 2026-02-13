@@ -1,0 +1,76 @@
+name: Maintain UML Artifacts
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'docs/uml/*.puml'
+      - 'docs/uml/README.md'
+      - '.github/workflows/uml-maintenance.yml'
+  pull_request:
+    paths:
+      - 'docs/uml/*.puml'
+      - 'docs/uml/README.md'
+      - '.github/workflows/uml-maintenance.yml'
+  workflow_dispatch:
+  schedule:
+    - cron: '0 4 * * 1'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: uml-maintenance-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  render-uml:
+    name: Render PlantUML diagrams
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install PlantUML dependencies
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y graphviz default-jre-headless plantuml
+
+      - name: Render all UML diagrams to PNG
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+
+          puml_files=(docs/uml/*.puml)
+          if [ ${#puml_files[@]} -eq 0 ]; then
+            echo "No .puml files found in docs/uml"
+            exit 0
+          fi
+
+          for file in "${puml_files[@]}"; do
+            echo "Rendering ${file}"
+            plantuml -tpng "$file"
+          done
+
+      - name: Verify generated artifacts are up to date (PR)
+        if: github.event_name == 'pull_request'
+        run: |
+          set -euo pipefail
+          if ! git diff --quiet -- docs/uml/*.png; then
+            echo "Generated PNG artifacts are out of date."
+            echo "Please regenerate with: plantuml -tpng docs/uml/*.puml"
+            git --no-pager diff -- docs/uml/*.png
+            exit 1
+          fi
+
+      - name: Commit refreshed UML artifacts (push / schedule / manual)
+        if: github.event_name != 'pull_request'
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'docs(uml): refresh generated PNG artifacts'
+          file_pattern: docs/uml/*.png

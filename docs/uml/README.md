@@ -105,6 +105,13 @@ Many Git platforms render PlantUML diagrams automatically in markdown:
 ![Use Case Diagram](http://www.plantuml.com/plantuml/proxy?src=https://raw.githubusercontent.com/user/repo/main/docs/uml/use-case-diagram.puml)
 ```
 
+## Automation
+
+UML artifacts are maintained by GitHub Actions in `.github/workflows/uml-maintenance.yml`:
+
+- On pull requests, the workflow renders `docs/uml/*.puml` and fails if checked-in PNG files are stale.
+- On pushes to `main` (and on a weekly schedule), the workflow auto-regenerates and commits refreshed PNG files.
+
 ## Diagram Summary
 
 | Diagram Type | Count | Files |
