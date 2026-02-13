@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-13 01:02:10 UTC
+> Auto-generated on 2026-02-13 13:16:58 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -299,7 +299,8 @@ Market-Data-Collector/
 │   │   ├── ingestion-orchestration-evaluation.md
 │   │   ├── operational-readiness-evaluation.md
 │   │   ├── realtime-streaming-architecture-evaluation.md
-│   │   └── storage-architecture-evaluation.md
+│   │   ├── storage-architecture-evaluation.md
+│   │   └── windows-desktop-provider-configurability-assessment.md
 │   ├── generated/
 │   │   ├── adr-index.md
 │   │   ├── configuration-schema.md
@@ -874,6 +875,7 @@ Market-Data-Collector/
 │   │   │   ├── ExportEndpoints.cs
 │   │   │   ├── FailoverEndpoints.cs
 │   │   │   ├── HealthEndpoints.cs
+│   │   │   ├── HistoricalEndpoints.cs
 │   │   │   ├── IBEndpoints.cs
 │   │   │   ├── IndexEndpoints.cs
 │   │   │   ├── LeanEndpoints.cs
