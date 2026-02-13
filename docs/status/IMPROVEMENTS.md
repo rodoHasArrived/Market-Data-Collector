@@ -1,7 +1,7 @@
 # Market Data Collector - Improvement Tracking
 
 **Version:** 1.6.1  
-**Last Updated:** 2026-02-12  
+**Last Updated:** 2026-02-13  
 **Status:** Active tracking document
 
 This document consolidates **functional improvements** (features, reliability, UX) and **structural improvements** (architecture, modularity, code quality) into a single source of truth for tracking. For phased execution timeline, see [`ROADMAP.md`](ROADMAP.md).
@@ -20,6 +20,10 @@ This document consolidates **functional improvements** (features, reliability, U
 - [Theme G: Operations & Monitoring](#theme-g-operations--monitoring)
 - [Priority Matrix](#priority-matrix)
 - [Execution Strategy](#execution-strategy)
+- [Delivery Operating Model](#delivery-operating-model)
+- [Dependency Map](#dependency-map)
+- [Definition of Done Checklist](#definition-of-done-checklist)
+- [Review Cadence & Reporting](#review-cadence--reporting)
 
 ---
 
@@ -45,6 +49,24 @@ This document consolidates **functional improvements** (features, reliability, U
 | E: Performance & Scalability | 2 | 1 | 0 | 3 |
 | F: User Experience | 0 | 1 | 2 | 3 |
 | G: Operations & Monitoring | 2 | 0 | 1 | 3 |
+
+### Portfolio Health Snapshot
+
+- **Completion ratio:** 42.4% complete (14/33), 12.1% partial (4/33), 45.5% open (15/33).
+- **Highest delivery risk:** Theme C (0/7 completed) because architecture debt blocks testability and provider evolution.
+- **Fastest near-term value:** Finish D4 + B1 remainder to expose quality metrics in API and dashboard.
+- **Recommended sprint split:** 40% architecture debt (C1/C2/C4/C5), 35% test foundation (B2/B3), 25% API/UX polish (D4/F2).
+
+### Next 6 Sprint Backlog (Recommended)
+
+| Sprint | Primary Goals | Exit Criteria |
+|--------|---------------|---------------|
+| 1 | C4, C5 | `EventPipeline` no longer depends on static metrics; config validation pipeline in place |
+| 2 | D4, B1 remainder | `/api/quality/drops` and `/api/quality/drops/{symbol}` are live and documented |
+| 3 | C6, A7 | Multi-sink fan-out merged; error handling convention documented and enforced in startup path |
+| 4 | B2 tranche 1 | Integration tests cover health/status/config endpoints and negative cases |
+| 5 | C1/C2 spike | Provider registration and runtime composition unified under DI |
+| 6 | B3 tranche 1 | Provider tests added for Polygon + StockSharp parsing/subscription workflows |
 
 ---
 
@@ -922,6 +944,84 @@ No clear contract for what each validates or when it runs.
 
 ---
 
+## Delivery Operating Model
+
+### Workstream Ownership
+
+| Workstream | Scope | Suggested Owner | Supporting Roles |
+|------------|-------|-----------------|------------------|
+| Reliability | A1-A7 | Platform/Core lead | Provider maintainers, SRE |
+| Test Foundation | B1-B5 | QA automation lead | Service owners, API maintainers |
+| Architecture | C1-C7 | Principal engineer | App architecture guild |
+| API & UX | D1-D7, F1-F3 | Full-stack lead | Frontend + API contributors |
+| Ops/Observability | G1-G3 | DevOps lead | Infra + on-call engineers |
+
+### PR Sizing Guidance
+
+- **Small PR (preferred):** 1 improvement item or one coherent subset (<500 LOC net change).
+- **Medium PR:** 1 item with migration shims + tests (<1,200 LOC net).
+- **Large PR (exception):** C3/C7-level refactors; require design note and staged rollout plan.
+
+### Quality Gates per Improvement Item
+
+Each item should not be marked complete until all gates are met:
+1. Code merged behind existing CI checks.
+2. Test coverage added or updated for touched behavior.
+3. Operational visibility updated (logs/metrics/traces where applicable).
+4. Documentation updated in `ROADMAP.md`, this file, and endpoint docs (if API-facing).
+
+---
+
+## Dependency Map
+
+| Item | Depends On | Why Dependency Exists |
+|------|------------|-----------------------|
+| B2 | C2 | Stable DI composition needed to host test server predictably |
+| C1 | C2 | Registry unification should land after single composition path |
+| D4 | B1 | Drop statistics model from audit trail is prerequisite for API exposure |
+| B3 | C3 (optional) | Tests can start now, but base-class refactor will reduce fixture duplication |
+| D7 | D4 | Response annotations are easier once quality endpoints are concrete |
+| G2 | C4 | Injectable metrics/tracing abstractions reduce instrumentation coupling |
+
+### Critical Path (Shortest Path to Production Readiness Lift)
+
+1. C4 → C5 → D4/B1 completion
+2. B2 → B3 (provider confidence)
+3. C1/C2 (composition + provider extensibility)
+
+---
+
+## Definition of Done Checklist
+
+Use this checklist before changing any item status from 📝/🔄 to ✅:
+
+- [ ] Acceptance criteria met for the item’s “Proposed Solution.”
+- [ ] Unit/integration tests included and passing in CI.
+- [ ] No new TODO/FIXME left without linked backlog issue.
+- [ ] Telemetry impact evaluated (log/metric/trace).
+- [ ] Backward compatibility validated (config, endpoints, file formats).
+- [ ] Documentation and status tables updated in this file.
+
+---
+
+## Review Cadence & Reporting
+
+- **Weekly (engineering sync):** Update item-level status and blockers.
+- **Bi-weekly (architecture review):** Re-score priorities P0-P3 based on new risk and customer impact.
+- **Per release:** Recompute completion metrics and validate roadmap phase alignment.
+
+### Suggested Reporting Snippet (for release notes / standups)
+
+```md
+Improvements Tracker Update
+- Completed this period: <items>
+- Partially complete: <items>
+- Newly opened risks: <items>
+- Next period focus: <top 3 items>
+```
+
+---
+
 ## Reference Documents
 
 - **[ROADMAP.md](ROADMAP.md)** — Phased execution timeline (Phases 0-9)
@@ -945,7 +1045,7 @@ See [`archived/INDEX.md`](../archived/INDEX.md) for context on archived document
 
 ---
 
-**Last Updated:** 2026-02-12  
-**Maintainer:** GitHub Copilot / Project Team  
+**Last Updated:** 2026-02-13  
+**Maintainer:** Project Team  
 **Status:** ✅ Active tracking document  
-**Next Review:** When completing each phase milestone
+**Next Review:** Weekly engineering sync (or immediately after any status change)
