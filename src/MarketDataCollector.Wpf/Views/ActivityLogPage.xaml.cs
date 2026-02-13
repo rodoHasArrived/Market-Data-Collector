@@ -16,6 +16,7 @@ using WpfServices = MarketDataCollector.Wpf.Services;
 using Microsoft.Win32;
 using Timer = System.Timers.Timer;
 
+using MarketDataCollector.Wpf.Services;
 namespace MarketDataCollector.Wpf.Views;
 
 /// <summary>

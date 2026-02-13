@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Input;
 using Microsoft.Extensions.DependencyInjection;
 using MarketDataCollector.Wpf.Contracts;
+using MarketDataCollector.Wpf.Services;
 using WpfServices = MarketDataCollector.Wpf.Services;
 using MarketDataCollector.Wpf.Views;
 using SysNavigation = System.Windows.Navigation;

@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using MarketDataCollector.Contracts.Api;
+using UiServices = MarketDataCollector.Ui.Services.Services;
 
 // Type aliases for backwards compatibility with renamed Contracts types
 using ProviderHealth = MarketDataCollector.Contracts.Api.BackfillProviderHealth;
@@ -15,11 +16,11 @@ namespace MarketDataCollector.Wpf.Services;
 /// </summary>
 public sealed class BackfillApiService
 {
-    private readonly ApiClientService _apiClient;
+    private readonly UiServices.ApiClientService _apiClient;
 
     public BackfillApiService()
     {
-        _apiClient = ApiClientService.Instance;
+        _apiClient = UiServices.ApiClientService.Instance;
     }
 
     /// <summary>

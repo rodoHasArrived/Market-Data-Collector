@@ -1,6 +1,7 @@
 using System.Windows.Media;
 using MarketDataCollector.Ui.Services.Services;
 using Palette = MarketDataCollector.Ui.Services.Services.ColorPalette;
+using IntegritySeverity = MarketDataCollector.Ui.Services.Services.IntegritySeverity;
 
 namespace MarketDataCollector.Wpf.Services;
 

@@ -4,6 +4,10 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using UiServices = MarketDataCollector.Ui.Services.Services;
+using WorkspaceTemplate = MarketDataCollector.Ui.Services.Services.WorkspaceTemplate;
+using SessionState = MarketDataCollector.Ui.Services.Services.SessionState;
+using WorkspaceCategory = MarketDataCollector.Ui.Services.Services.WorkspaceCategory;
 
 namespace MarketDataCollector.Wpf.Services;
 

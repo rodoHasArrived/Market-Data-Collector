@@ -10,6 +10,7 @@ using System.Windows;
 using System.Windows.Controls;
 using WpfServices = MarketDataCollector.Wpf.Services;
 
+using MarketDataCollector.Wpf.Services;
 namespace MarketDataCollector.Wpf.Views;
 
 public partial class SetupWizardPage : Page
