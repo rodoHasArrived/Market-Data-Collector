@@ -426,6 +426,7 @@ public abstract class BaseHistoricalDataProvider : IHistoricalDataProvider, IRat
             Log.Error(ex, "Failed to parse {Provider} response for {Symbol}", Name, symbol);
             throw new DataProviderException(
                 $"Failed to parse {Name} data for {symbol}",
+                ex,
                 provider: Name,
                 symbol: symbol);
         }

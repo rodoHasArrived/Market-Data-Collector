@@ -461,17 +461,17 @@ public partial class Program
             Console.Error.WriteLine("    4. Run: dotnet user-secrets init (for sensitive data)");
             return new AppConfig();
         }
-        catch (UnauthorizedAccessException)
+        catch (UnauthorizedAccessException ex)
         {
             throw new Application.Exceptions.ConfigurationException(
                 $"Access denied reading configuration file: {path}. Check file permissions.",
-                path, null);
+                ex, configPath: path);
         }
         catch (IOException ex)
         {
             throw new Application.Exceptions.ConfigurationException(
                 $"I/O error reading configuration file: {path}. {ex.Message}",
-                path, null);
+                ex, configPath: path);
         }
         catch (Exception ex)
         {

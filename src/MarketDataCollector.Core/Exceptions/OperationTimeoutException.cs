@@ -29,4 +29,17 @@ public sealed class OperationTimeoutException : MarketDataCollectorException
         : base(message, innerException)
     {
     }
+
+    public OperationTimeoutException(
+        string message,
+        Exception innerException,
+        string? operationName = null,
+        TimeSpan? timeout = null,
+        string? provider = null)
+        : base(message, innerException)
+    {
+        OperationName = operationName;
+        Timeout = timeout;
+        Provider = provider;
+    }
 }

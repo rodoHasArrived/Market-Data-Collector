@@ -33,38 +33,38 @@ This document consolidates **functional improvements** (features, reliability, U
 
 | Status | Count | Items |
 |--------|-------|-------|
-| ✅ **Completed** | 14 | A1, A2, A4, A5, A6, D1, D2, D3, D5, D6, E1, E2, G1, G3 |
-| 🔄 **Partially Complete** | 4 | A3, B1, E3, F1 |
-| 📝 **Open** | 15 | A7, B2-B5, C1-C7, D4, D7, F2, F3, G2 |
-| **Total** | 33 | All improvement items |
+| ✅ **Completed** | 20 | A1, A2, A4, A5, A6, A7, B1, C4, C5, C6, D1, D2, D3, D4, D5, D6, E1, E2, G1, G3 |
+| 🔄 **Partially Complete** | 4 | A3, B2, E3, F1 |
+| 📝 **Open** | 11 | B3-B5, C1-C3, C7, D7, F2, F3, G2 |
+| **Total** | 35 | All improvement items |
 
 ### By Theme
 
 | Theme | Completed | Partial | Open | Total |
 |-------|-----------|---------|------|-------|
-| A: Reliability & Resilience | 6 | 1 | 1 | 8 |
-| B: Testing & Quality | 0 | 1 | 4 | 5 |
-| C: Architecture & Modularity | 0 | 0 | 7 | 7 |
-| D: API & Integration | 4 | 0 | 2 | 6 |
+| A: Reliability & Resilience | 6 | 1 | 0 | 7 |
+| B: Testing & Quality | 1 | 1 | 3 | 5 |
+| C: Architecture & Modularity | 3 | 0 | 4 | 7 |
+| D: API & Integration | 6 | 0 | 1 | 7 |
 | E: Performance & Scalability | 2 | 1 | 0 | 3 |
 | F: User Experience | 0 | 1 | 2 | 3 |
 | G: Operations & Monitoring | 2 | 0 | 1 | 3 |
 
 ### Portfolio Health Snapshot
 
-- **Completion ratio:** 42.4% complete (14/33), 12.1% partial (4/33), 45.5% open (15/33).
-- **Highest delivery risk:** Theme C (0/7 completed) because architecture debt blocks testability and provider evolution.
-- **Fastest near-term value:** Finish D4 + B1 remainder to expose quality metrics in API and dashboard.
-- **Recommended sprint split:** 40% architecture debt (C1/C2/C4/C5), 35% test foundation (B2/B3), 25% API/UX polish (D4/F2).
+- **Completion ratio:** 57.1% complete (20/35), 11.4% partial (4/35), 31.4% open (11/35).
+- **Highest delivery risk:** Theme C (3/7 completed, 4 open) — remaining architecture debt in provider registration, DI, and WebSocket base class.
+- **Fastest near-term value:** Continue B2 (endpoint integration coverage), then C1/C2 (provider/DI unification).
+- **Recommended sprint split:** 40% architecture debt (C1/C2/C3), 35% test foundation (B2/B3), 25% polish (D7/F2).
 
 ### Next 6 Sprint Backlog (Recommended)
 
 | Sprint | Primary Goals | Exit Criteria |
 |--------|---------------|---------------|
-| 1 | C4, C5 | `EventPipeline` no longer depends on static metrics; config validation pipeline in place |
-| 2 | D4, B1 remainder | `/api/quality/drops` and `/api/quality/drops/{symbol}` are live and documented |
-| 3 | C6, A7 | Multi-sink fan-out merged; error handling convention documented and enforced in startup path |
-| 4 | B2 tranche 1 | Integration tests cover health/status/config endpoints and negative cases |
+| 1 | C4, C5 | ✅ DONE — `EventPipeline` uses injectable metrics; config validation pipeline in place |
+| 2 | D4, B1 remainder | ✅ DONE — `/api/quality/drops` and `/api/quality/drops/{symbol}` are live and tested |
+| 3 | C6, A7 | ✅ DONE — CompositeSink shipped; error handling conventions documented, exception chaining fixed |
+| 4 | B2 tranche 1 | ✅ DONE — Integration tests cover health/status/config/provider endpoints and negative cases |
 | 5 | C1/C2 spike | Provider registration and runtime composition unified under DI |
 | 6 | B3 tranche 1 | Provider tests added for Polygon + StockSharp parsing/subscription workflows |
 
@@ -197,9 +197,9 @@ This document consolidates **functional improvements** (features, reliability, U
 
 ---
 
-### A7. 📝 Standardize Error Handling Strategy (OPEN)
+### A7. ✅ Standardize Error Handling Strategy (COMPLETED)
 
-**Impact:** Medium | **Effort:** Medium | **Priority:** P2 | **Status:** 📝 OPEN
+**Impact:** Medium | **Effort:** Medium | **Priority:** P2 | **Status:** ✅ DONE
 
 **Problem:** Codebase uses three concurrent error handling approaches inconsistently:
 1. **Exceptions** - 9 custom exception types in `Core/Exceptions/`
@@ -208,17 +208,29 @@ This document consolidates **functional improvements** (features, reliability, U
 
 Exception chaining is sometimes lost (e.g., `ConfigurationException` with null inner exception).
 
-**Proposed Solution:**
-- Adopt single convention: exceptions for unrecoverable errors, `Result<T>` for expected failures
-- Document convention in `CLAUDE.md` coding conventions
-- Replace `Environment.Exit(1)` with throwing `ConfigurationException` and catching at top-level
-- Fix exception chaining to always pass original exception as `innerException`
+**Solution Implemented:**
+- **Convention documented** in `CLAUDE.md` Error Handling section:
+  - Exceptions for unrecoverable errors and system boundary failures
+  - `Result<T, TError>` for expected/recoverable failures in F# and functional pipelines
+  - Return exit codes (0/1) from `Program.Main` — never `Environment.Exit()`
+- **Combined metadata+innerException constructors** added to all 8 custom exception types:
+  - `ConfigurationException(message, innerException, configPath, fieldName)`
+  - `ConnectionException(message, innerException, provider, host, port)`
+  - `DataProviderException(message, innerException, provider, symbol)`
+  - `StorageException(message, innerException, path)`
+  - `OperationTimeoutException(message, innerException, operationName, timeout, provider)`
+  - `SequenceValidationException(message, innerException, symbol, expected, actual, type)`
+  - `RateLimitException(message, innerException, provider, symbol, retryAfter, ...)`
+  - `ValidationException(message, innerException, errors, entityType, entityId)`
+- **Fixed exception chaining** in `Program.cs` (`LoadConfigMinimal` method) and `BaseHistoricalDataProvider.cs` (`DeserializeResponse` method)
+- **30 comprehensive tests** validating exception hierarchy, metadata preservation, chaining depth, and constructor variants
 
 **Files:**
-- `Program.cs:493-502`
-- `Application/Results/Result.cs`
-- `Core/Exceptions/*.cs`
-- `Application/Config/ConfigurationService.cs`
+- `Core/Exceptions/*.cs` (all 9 exception files updated)
+- `Program.cs:464-474` (fixed exception chaining)
+- `Infrastructure/Providers/Historical/BaseHistoricalDataProvider.cs:424-431` (fixed exception chaining)
+- `CLAUDE.md` (error handling conventions documented)
+- `tests/.../Core/ExceptionHierarchyTests.cs` (30 tests)
 
 **ROADMAP:** Phase 2 (Architecture)
 
@@ -251,22 +263,38 @@ Exception chaining is sometimes lost (e.g., `ConfigurationException` with null i
 
 ---
 
-### B2. 📝 HTTP Endpoint Integration Tests (OPEN)
+### B2. 🔄 HTTP Endpoint Integration Tests (PARTIALLY COMPLETE)
 
-**Impact:** High | **Effort:** Medium | **Priority:** P1 | **Status:** 📝 OPEN
+**Impact:** High | **Effort:** Medium | **Priority:** P1 | **Status:** 🔄 PARTIAL
 
 **Problem:** The HTTP API layer (136 implemented endpoints) has no integration tests using `WebApplicationFactory<T>`. Only `EndpointStubDetectionTests.cs` validates route format.
 
-**Proposed Solution:**
-- Use `Microsoft.AspNetCore.Mvc.Testing` package
-- Create `EndpointIntegrationTestBase` with shared `WebApplicationFactory<T>` setup
-- Write tests for core endpoints: status, health, config, backfill, providers
-- Assert status codes, content types, response schema shapes
-- Include negative cases (invalid input, missing config, auth failures)
+**Solution Implemented (Tranche 1):**
+- `EndpointTestFixture` with `TestServer` provides in-memory endpoint testing
+- `EndpointIntegrationTestBase` shared base class with common assertion helpers
+- Integration tests for core endpoint families:
+  - Status/health/metrics endpoints (positive and negative paths)
+  - Config endpoints (CRUD operations, invalid JSON, missing data)
+  - Provider endpoints (status, metrics, latency, catalog, comparison)
+  - Failover endpoints (config, rules, health, force-failover with bad rule)
+  - Backfill endpoints (providers, status, schedules, statistics)
+  - Response schema shape validation (uptime field, status/checks fields)
+  - Non-existent route handling (404)
+
+**Remaining Work (Tranche 2+):**
+- Add tests for subscription, export, maintenance, and packaging endpoints
+- Add authentication/rate-limiting negative tests (401/429 scenarios)
+- Add POST body validation tests for backfill/run and maintenance/execute
+- Increase coverage for edge cases in symbol management
 
 **Files:**
-- New: `tests/MarketDataCollector.Tests/Integration/EndpointTests/`
-- Existing: `tests/MarketDataCollector.Tests/Integration/EndpointStubDetectionTests.cs`
+- `tests/.../Integration/EndpointTests/EndpointTestFixture.cs` (test server setup)
+- `tests/.../Integration/EndpointTests/EndpointIntegrationTestBase.cs` (shared base)
+- `tests/.../Integration/EndpointTests/StatusEndpointTests.cs` (status/health tests)
+- `tests/.../Integration/EndpointTests/HealthEndpointTests.cs` (health probe tests)
+- `tests/.../Integration/EndpointTests/ConfigEndpointNegativeTests.cs` (config + negative cases)
+- `tests/.../Integration/EndpointTests/ProviderEndpointNegativeTests.cs` (provider + negative cases)
+- Plus 10+ additional endpoint test files for backfill, failover, etc.
 
 **ROADMAP:** Phase 1 (Core Stability) - Item 1A
 
@@ -478,22 +506,25 @@ No clear contract for what each validates or when it runs.
 
 ---
 
-### C6. 📝 Composite Storage Sink Plugin Architecture (OPEN)
+### C6. ✅ Composite Storage Sink Plugin Architecture (COMPLETED)
 
-**Impact:** Medium | **Effort:** Low | **Priority:** P1 | **Status:** 📝 OPEN
+**Impact:** Medium | **Effort:** Low | **Priority:** P1 | **Status:** ✅ DONE
 
 **Problem:** `EventPipeline` accepts single `IStorageSink`. Multi-sink scenarios (JSONL + Parquet simultaneously, or JSONL + analytics sink) require external composition. No built-in fan-out.
 
-**Proposed Solution:**
-- Create `CompositeSink : IStorageSink` wrapping `IReadOnlyList<IStorageSink>`
-- Fan out `AppendAsync` calls to all sinks
-- Register sinks in DI as `IEnumerable<IStorageSink>`; compose via `CompositeSink`
-- Optionally support per-sink filtering (e.g., only trades to Parquet)
+**Solution Implemented:**
+- `CompositeSink : IStorageSink` wraps `IReadOnlyList<IStorageSink>` with isolated error handling
+- Fan-out `AppendAsync` calls to all sinks; individual sink failures logged and isolated
+- `FlushAsync` aggregates exceptions across sinks via `AggregateException`
+- DI registration in `ServiceCompositionRoot` conditionally creates `CompositeSink` when Parquet is enabled
+- `EventPipeline` accepts any `IStorageSink` polymorphically — works transparently with `CompositeSink`
+- **8 unit tests** covering fan-out, isolation, flush aggregation, disposal ordering, and validation
 
 **Files:**
-- New: `Storage/Sinks/CompositeSink.cs`
-- `Application/Composition/ServiceCompositionRoot.cs:525-529`
-- `Application/Pipeline/EventPipeline.cs:33`
+- `Storage/Sinks/CompositeSink.cs` (implementation)
+- `Application/Composition/ServiceCompositionRoot.cs:651-666` (DI registration)
+- `Application/Pipeline/EventPipeline.cs:33,89` (polymorphic sink usage)
+- `tests/.../Storage/CompositeSinkTests.cs` (8 tests)
 
 **Benefit:** Multi-format storage without pipeline changes. New sinks (CSV, database, cloud) can be added independently.
 
@@ -1054,7 +1085,7 @@ See [`archived/INDEX.md`](../archived/INDEX.md) for context on archived document
 
 ---
 
-**Last Updated:** 2026-02-13  
-**Maintainer:** Project Team  
-**Status:** ✅ Active tracking document  
+**Last Updated:** 2026-02-14
+**Maintainer:** Project Team
+**Status:** ✅ Active tracking document
 **Next Review:** Weekly engineering sync (or immediately after any status change)

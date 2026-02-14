@@ -32,6 +32,21 @@ public sealed class SequenceValidationException : MarketDataCollectorException
         : base(message, innerException)
     {
     }
+
+    public SequenceValidationException(
+        string message,
+        Exception innerException,
+        string? symbol = null,
+        long? expectedSequence = null,
+        long? actualSequence = null,
+        SequenceValidationType validationType = SequenceValidationType.Unknown)
+        : base(message, innerException)
+    {
+        Symbol = symbol;
+        ExpectedSequence = expectedSequence;
+        ActualSequence = actualSequence;
+        ValidationType = validationType;
+    }
 }
 
 /// <summary>

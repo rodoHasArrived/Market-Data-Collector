@@ -25,4 +25,12 @@ public sealed class ConnectionException : MarketDataCollectorException
         : base(message, innerException)
     {
     }
+
+    public ConnectionException(string message, Exception innerException, string? provider = null, string? host = null, int? port = null)
+        : base(message, innerException)
+    {
+        Provider = provider;
+        Host = host;
+        Port = port;
+    }
 }

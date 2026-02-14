@@ -1791,23 +1791,50 @@ _logger.LogInformation($"Received {bars.Count} bars for {symbol}");
 ```
 
 ### Error Handling
+
+#### Conventions
+- **Exceptions** for unrecoverable errors and system boundary failures (I/O, network, auth)
+- **`Result<T, TError>`** for expected/recoverable failures in F# code and functional pipelines
+- **Return exit codes** (0 = success, 1 = failure) from `Program.Main` — never call `Environment.Exit()`
 - Log all errors with context (symbol, provider, timestamp)
 - Use exponential backoff for retries
 - Throw `ArgumentException` for bad inputs
 - Throw `InvalidOperationException` for state errors
-- Use `Result<T, TError>` in F# code
 
-#### Custom Exception Types (in `Application/Exceptions/`)
-| Exception | Purpose |
-|-----------|---------|
-| `ConfigurationException` | Invalid configuration |
-| `ConnectionException` | Connection failures |
-| `DataProviderException` | Provider errors |
-| `RateLimitException` | Rate limit exceeded |
-| `SequenceValidationException` | Data sequence issues |
-| `StorageException` | Storage/persistence errors |
-| `ValidationException` | Data validation failures |
-| `OperationTimeoutException` | Operation timeouts |
+#### Exception Chaining Rules
+- **ALWAYS** pass the original exception as `innerException` when wrapping in a custom exception
+- Use the combined metadata+innerException constructors when both context and chain are needed:
+  ```csharp
+  // Good - preserves original exception AND context
+  catch (JsonException ex)
+  {
+      throw new DataProviderException("Failed to parse response", ex, provider: Name, symbol: symbol);
+  }
+
+  // Bad - loses original exception context
+  catch (JsonException ex)
+  {
+      throw new DataProviderException("Failed to parse response", provider: Name, symbol: symbol);
+  }
+  ```
+
+#### Custom Exception Types (in `Core/Exceptions/`)
+
+All custom exceptions extend `MarketDataCollectorException` and support three constructor patterns:
+1. `(string message)` — simple message
+2. `(string message, metadata...)` — message with domain-specific context
+3. `(string message, Exception innerException, metadata...)` — message with chain and context
+
+| Exception | Purpose | Metadata Properties |
+|-----------|---------|---------------------|
+| `ConfigurationException` | Invalid configuration | `ConfigPath`, `FieldName` |
+| `ConnectionException` | Connection failures | `Provider`, `Host`, `Port` |
+| `DataProviderException` | Provider errors | `Provider`, `Symbol` |
+| `RateLimitException` | Rate limit exceeded | `RetryAfter`, `RemainingRequests`, `RequestLimit` |
+| `SequenceValidationException` | Data sequence issues | `Symbol`, `ExpectedSequence`, `ActualSequence`, `ValidationType` |
+| `StorageException` | Storage/persistence errors | `Path` |
+| `ValidationException` | Data validation failures | `Errors`, `EntityType`, `EntityId` |
+| `OperationTimeoutException` | Operation timeouts | `OperationName`, `Timeout`, `Provider` |
 
 ### Naming Conventions
 - Async methods end with `Async`

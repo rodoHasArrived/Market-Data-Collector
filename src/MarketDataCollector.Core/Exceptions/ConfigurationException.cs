@@ -23,4 +23,11 @@ public sealed class ConfigurationException : MarketDataCollectorException
         : base(message, innerException)
     {
     }
+
+    public ConfigurationException(string message, Exception innerException, string? configPath = null, string? fieldName = null)
+        : base(message, innerException)
+    {
+        ConfigPath = configPath;
+        FieldName = fieldName;
+    }
 }

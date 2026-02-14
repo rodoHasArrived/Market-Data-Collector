@@ -31,4 +31,19 @@ public sealed class RateLimitException : DataProviderException
         : base(message, innerException)
     {
     }
+
+    public RateLimitException(
+        string message,
+        Exception innerException,
+        string? provider = null,
+        string? symbol = null,
+        TimeSpan? retryAfter = null,
+        int? remainingRequests = null,
+        int? requestLimit = null)
+        : base(message, innerException, provider, symbol)
+    {
+        RetryAfter = retryAfter;
+        RemainingRequests = remainingRequests;
+        RequestLimit = requestLimit;
+    }
 }

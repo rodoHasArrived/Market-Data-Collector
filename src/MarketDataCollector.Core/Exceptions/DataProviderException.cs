@@ -23,4 +23,11 @@ public class DataProviderException : MarketDataCollectorException
         : base(message, innerException)
     {
     }
+
+    public DataProviderException(string message, Exception innerException, string? provider = null, string? symbol = null)
+        : base(message, innerException)
+    {
+        Provider = provider;
+        Symbol = symbol;
+    }
 }

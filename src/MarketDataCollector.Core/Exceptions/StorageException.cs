@@ -21,4 +21,10 @@ public sealed class StorageException : MarketDataCollectorException
         : base(message, innerException)
     {
     }
+
+    public StorageException(string message, Exception innerException, string? path = null)
+        : base(message, innerException)
+    {
+        Path = path;
+    }
 }

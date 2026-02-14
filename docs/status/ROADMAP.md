@@ -22,11 +22,11 @@ This roadmap is refreshed to match the current repository state and focuses on t
 
 Remaining work is primarily quality and architecture hardening, as tracked in `docs/status/IMPROVEMENTS.md`:
 
-- **33 tracked improvement items total**
-  - ✅ Completed: 14
+- **35 tracked improvement items total**
+  - ✅ Completed: 20
   - 🔄 Partial: 4
-  - 📝 Open: 15
-- Biggest risk concentration remains in **Theme C (Architecture & Modularity)** and **Theme B (Testing & Quality)**.
+  - 📝 Open: 11
+- Biggest risk concentration remains in **Theme C (Architecture & Modularity)** (4 open) and **Theme B (Testing & Quality)** (3 open).
 
 ---
 
@@ -51,24 +51,24 @@ Remaining work is primarily quality and architecture hardening, as tracked in `d
 
 This section supersedes the prior effort model and aligns with the current active backlog.
 
-### Sprint 1
+### Sprint 1 ✅
 
-- **C4**: Remove static metrics dependency from `EventPipeline` via DI-friendly metrics abstraction.
-- **C5**: Consolidate configuration validation path into one canonical pipeline.
+- **C4**: ✅ Remove static metrics dependency from `EventPipeline` via DI-friendly metrics abstraction.
+- **C5**: ✅ Consolidate configuration validation path into one canonical pipeline.
 
-### Sprint 2
+### Sprint 2 ✅
 
-- **D4**: Implement quality metrics API surface (`/api/quality/drops`, symbol-specific variants).
-- **B1 (remainder)**: Expand endpoint integration checks around newly implemented quality endpoints.
+- **D4**: ✅ Implement quality metrics API surface (`/api/quality/drops`, symbol-specific variants).
+- **B1 (remainder)**: ✅ Expand endpoint integration checks around newly implemented quality endpoints.
 
-### Sprint 3
+### Sprint 3 ✅
 
-- **C6**: Complete multi-sink fan-out hardening for storage writes.
-- **A7**: Standardize startup/runtime error handling conventions and diagnostics.
+- **C6**: ✅ Complete multi-sink fan-out hardening for storage writes.
+- **A7**: ✅ Standardize startup/runtime error handling conventions and diagnostics.
 
-### Sprint 4
+### Sprint 4 ✅
 
-- **B2 (tranche 1)**: Increase endpoint integration coverage for health/status/config + negative-path behavior.
+- **B2 (tranche 1)**: ✅ Increase endpoint integration coverage for health/status/config + negative-path behavior.
 
 ### Sprint 5
 
@@ -109,10 +109,10 @@ This section supersedes the prior effort model and aligns with the current activ
 | Metric | Current Baseline | 2026 Target |
 |---|---:|---:|
 | Stub endpoints remaining | 0 | 0 |
-| Improvement items completed | 14 / 33 | 24+ / 33 |
-| Improvement items still open | 15 / 33 | <6 / 33 |
-| Endpoint integration suite breadth | Baseline established | Critical endpoint families fully covered |
-| Architecture debt (Theme C completed) | 0 / 7 | 5+ / 7 |
+| Improvement items completed | 20 / 35 | 28+ / 35 |
+| Improvement items still open | 11 / 35 | <6 / 35 |
+| Endpoint integration suite breadth | Config, provider, health, status covered | Critical endpoint families fully covered |
+| Architecture debt (Theme C completed) | 3 / 7 | 5+ / 7 |
 
 ---
 

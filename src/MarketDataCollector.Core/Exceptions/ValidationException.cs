@@ -31,6 +31,19 @@ public sealed class ValidationException : MarketDataCollectorException
     {
         Errors = Array.Empty<ValidationError>();
     }
+
+    public ValidationException(
+        string message,
+        Exception innerException,
+        IEnumerable<ValidationError>? errors = null,
+        string? entityType = null,
+        string? entityId = null)
+        : base(message, innerException)
+    {
+        Errors = errors?.ToList().AsReadOnly() ?? (IReadOnlyList<ValidationError>)Array.Empty<ValidationError>();
+        EntityType = entityType;
+        EntityId = entityId;
+    }
 }
 
 /// <summary>
