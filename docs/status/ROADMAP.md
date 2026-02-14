@@ -3,7 +3,7 @@
 **Version:** 1.6.1
 **Last Updated:** 2026-02-14
 **Status:** Development / Pilot Ready
-**Source Files:** 807 | **Test Files:** 105 | **API Endpoints:** ~269 declared, ~136 implemented, ~133 stubbed
+**Source Files:** 807 | **Test Files:** 141 | **API Endpoints:** ~269 declared, ~136 implemented, ~133 stubbed
 
 This roadmap consolidates findings from the existing codebase analysis, production status assessment, improvement backlog, and structural review into a phased execution plan. Each phase builds on the previous one, progressing from critical fixes through testing and architecture improvements to production readiness and final optimization.
 
