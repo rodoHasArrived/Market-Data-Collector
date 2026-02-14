@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-14 03:05:54 UTC
+> Auto-generated on 2026-02-14 07:08:46 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -281,6 +281,8 @@ Market-Data-Collector/
 │   │   ├── onboarding-flow.png
 │   │   ├── onboarding-flow.svg
 │   │   ├── project-dependencies.dot
+│   │   ├── project-dependencies.png
+│   │   ├── project-dependencies.svg
 │   │   ├── provider-architecture.dot
 │   │   ├── provider-architecture.png
 │   │   ├── provider-architecture.svg
