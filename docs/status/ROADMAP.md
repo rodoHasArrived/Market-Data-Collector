@@ -51,32 +51,39 @@ Remaining work is primarily quality and architecture hardening, as tracked in `d
 
 This section supersedes the prior effort model and aligns with the current active backlog.
 
-### Sprint 1
+### Sprint 1 ✅ COMPLETED
 
-- **C4**: Remove static metrics dependency from `EventPipeline` via DI-friendly metrics abstraction.
-- **C5**: Consolidate configuration validation path into one canonical pipeline.
+- ✅ **C4**: Remove static metrics dependency from `EventPipeline` via DI-friendly metrics abstraction.
+  - `IEventMetrics` interface with injectable implementation
+  - Tests: `EventPipelineMetricsTests.cs` (5 tests)
+- ✅ **C5**: Consolidate configuration validation path into one canonical pipeline.
+  - `ConfigValidationPipeline` with composable stages
+  - Tests: `ConfigValidationPipelineTests.cs` (13 tests)
 
-### Sprint 2
+### Sprint 2 ✅ COMPLETED
 
-- **D4**: Implement quality metrics API surface (`/api/quality/drops`, symbol-specific variants).
-- **B1 (remainder)**: Expand endpoint integration checks around newly implemented quality endpoints.
+- ✅ **D4**: Implement quality metrics API surface (`/api/quality/drops`, symbol-specific variants).
+  - Endpoints: `/api/quality/drops` and `/api/quality/drops/{symbol}`
+  - Full implementation in `QualityDropsEndpoints.cs`
+- ✅ **B1 (remainder)**: Expand endpoint integration checks around newly implemented quality endpoints.
+  - Tests: `QualityDropsEndpointTests.cs` (10 tests)
 
-### Sprint 3
+### Sprint 3 📝 ACTIVE
 
-- **C6**: Complete multi-sink fan-out hardening for storage writes.
-- **A7**: Standardize startup/runtime error handling conventions and diagnostics.
+- 📝 **C6**: Complete multi-sink fan-out hardening for storage writes.
+- 📝 **A7**: Standardize startup/runtime error handling conventions and diagnostics.
 
-### Sprint 4
+### Sprint 4 📋 PLANNED
 
-- **B2 (tranche 1)**: Increase endpoint integration coverage for health/status/config + negative-path behavior.
+- 📋 **B2 (tranche 1)**: Increase endpoint integration coverage for health/status/config + negative-path behavior.
 
-### Sprint 5
+### Sprint 5 📋 PLANNED
 
-- **C1/C2**: Provider registration and runtime composition unification under DI.
+- 📋 **C1/C2**: Provider registration and runtime composition unification under DI.
 
-### Sprint 6
+### Sprint 6 📋 PLANNED
 
-- **B3 (tranche 1)**: Provider-focused tests for parsing/subscription/reconnect behavior (starting with highest-risk providers).
+- 📋 **B3 (tranche 1)**: Provider-focused tests for parsing/subscription/reconnect behavior (starting with highest-risk providers).
 
 ---
 
@@ -106,13 +113,14 @@ This section supersedes the prior effort model and aligns with the current activ
 
 ## Success Metrics (Updated Baseline)
 
-| Metric | Current Baseline | 2026 Target |
-|---|---:|---:|
-| Stub endpoints remaining | 0 | 0 |
-| Improvement items completed | 14 / 33 | 24+ / 33 |
-| Improvement items still open | 15 / 33 | <6 / 33 |
-| Endpoint integration suite breadth | Baseline established | Critical endpoint families fully covered |
-| Architecture debt (Theme C completed) | 0 / 7 | 5+ / 7 |
+| Metric | Current Baseline | 2026 Target | Sprint 1-2 Progress |
+|---|---:|---:|---:|
+| Stub endpoints remaining | 0 | 0 | ✅ Maintained |
+| Improvement items completed | 18 / 33 | 24+ / 33 | ✅ +4 items (C4, C5, D4, B1) |
+| Improvement items still open | 12 / 33 | <6 / 33 | ✅ -4 items |
+| Endpoint integration suite breadth | Baseline established | Critical endpoint families fully covered | ✅ Quality drops endpoints covered (10 tests) |
+| Architecture debt (Theme C completed) | 2 / 7 | 5+ / 7 | ✅ +2 (C4, C5) |
+| Sprint completion rate | 2 / 6 sprints | 6 / 6 sprints | ✅ 33% complete |
 
 ---
 

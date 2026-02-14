@@ -33,9 +33,9 @@ This document consolidates **functional improvements** (features, reliability, U
 
 | Status | Count | Items |
 |--------|-------|-------|
-| ✅ **Completed** | 14 | A1, A2, A4, A5, A6, D1, D2, D3, D5, D6, E1, E2, G1, G3 |
-| 🔄 **Partially Complete** | 4 | A3, B1, E3, F1 |
-| 📝 **Open** | 15 | A7, B2-B5, C1-C7, D4, D7, F2, F3, G2 |
+| ✅ **Completed** | 18 | A1, A2, A4, A5, A6, B1, C4, C5, D1, D2, D3, D4, D5, D6, E1, E2, G1, G3 |
+| 🔄 **Partially Complete** | 3 | A3, E3, F1 |
+| 📝 **Open** | 12 | A7, B2-B5, C1-C3, C6-C7, D7, F2, F3, G2 |
 | **Total** | 33 | All improvement items |
 
 ### By Theme
@@ -43,30 +43,31 @@ This document consolidates **functional improvements** (features, reliability, U
 | Theme | Completed | Partial | Open | Total |
 |-------|-----------|---------|------|-------|
 | A: Reliability & Resilience | 6 | 1 | 1 | 8 |
-| B: Testing & Quality | 0 | 1 | 4 | 5 |
-| C: Architecture & Modularity | 0 | 0 | 7 | 7 |
-| D: API & Integration | 4 | 0 | 2 | 6 |
+| B: Testing & Quality | 1 | 0 | 4 | 5 |
+| C: Architecture & Modularity | 2 | 0 | 5 | 7 |
+| D: API & Integration | 5 | 0 | 1 | 6 |
 | E: Performance & Scalability | 2 | 1 | 0 | 3 |
 | F: User Experience | 0 | 1 | 2 | 3 |
 | G: Operations & Monitoring | 2 | 0 | 1 | 3 |
 
 ### Portfolio Health Snapshot
 
-- **Completion ratio:** 42.4% complete (14/33), 12.1% partial (4/33), 45.5% open (15/33).
-- **Highest delivery risk:** Theme C (0/7 completed) because architecture debt blocks testability and provider evolution.
-- **Fastest near-term value:** Finish D4 + B1 remainder to expose quality metrics in API and dashboard.
-- **Recommended sprint split:** 40% architecture debt (C1/C2/C4/C5), 35% test foundation (B2/B3), 25% API/UX polish (D4/F2).
+- **Completion ratio:** 54.5% complete (18/33), 9.1% partial (3/33), 36.4% open (12/33).
+- **Sprint 1-2 achievement:** C4 (injectable metrics), C5 (config validation pipeline), D4 (quality drops API), B1 (quality endpoint tests) all completed.
+- **Highest delivery risk:** Theme C (2/7 completed) because remaining architecture debt blocks easier testability and provider evolution.
+- **Fastest near-term value:** Focus on Sprint 3-4 items (C6 multi-sink, A7 error handling, B2 endpoint coverage).
+- **Recommended sprint split:** 40% architecture debt (C1/C2/C3/C6/C7), 35% test foundation (B2/B3), 25% operations (A7/G2).
 
-### Next 6 Sprint Backlog (Recommended)
+### Next 6 Sprint Backlog (Updated)
 
-| Sprint | Primary Goals | Exit Criteria |
-|--------|---------------|---------------|
-| 1 | C4, C5 | `EventPipeline` no longer depends on static metrics; config validation pipeline in place |
-| 2 | D4, B1 remainder | `/api/quality/drops` and `/api/quality/drops/{symbol}` are live and documented |
-| 3 | C6, A7 | Multi-sink fan-out merged; error handling convention documented and enforced in startup path |
-| 4 | B2 tranche 1 | Integration tests cover health/status/config endpoints and negative cases |
-| 5 | C1/C2 spike | Provider registration and runtime composition unified under DI |
-| 6 | B3 tranche 1 | Provider tests added for Polygon + StockSharp parsing/subscription workflows |
+| Sprint | Primary Goals | Exit Criteria | Status |
+|--------|---------------|---------------|--------|
+| 1 | C4, C5 | `EventPipeline` no longer depends on static metrics; config validation pipeline in place | ✅ DONE |
+| 2 | D4, B1 remainder | `/api/quality/drops` and `/api/quality/drops/{symbol}` are live and documented; 10 integration tests passing | ✅ DONE |
+| 3 | C6, A7 | Multi-sink fan-out merged; error handling convention documented and enforced in startup path | 📝 ACTIVE |
+| 4 | B2 tranche 1 | Integration tests cover health/status/config endpoints and negative cases | 📋 PLANNED |
+| 5 | C1/C2 spike | Provider registration and runtime composition unified under DI | 📋 PLANNED |
+| 6 | B3 tranche 1 | Provider tests added for Polygon + StockSharp parsing/subscription workflows | 📋 PLANNED |
 
 ---
 
