@@ -191,7 +191,7 @@ public sealed partial class AnalysisExportService
         await using var fileStream = File.Create(path);
         using var parquetWriter = await ParquetWriter.CreateAsync(schema, fileStream);
         using var rowGroupWriter = parquetWriter.CreateRowGroup();
-        await rowGroupWriter.WriteColumnAsync(new DataColumn(schema.DataFields[0], Array.Empty<string>()));
+        await rowGroupWriter.WriteColumnAsync(new DataColumn(schema.DataFields[0], System.Array.Empty<string>()));
     }
 
     /// <summary>
