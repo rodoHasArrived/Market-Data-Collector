@@ -377,7 +377,6 @@ public sealed partial class PortableDataPackager
         public List<ValidationError> ValidationErrors { get; set; } = new();
     }
 }
-}
 
 /// <summary>
 /// Result of package validation.
