@@ -16,6 +16,7 @@ namespace MarketDataCollector.Wpf.Views;
 
 /// <summary>
 /// Dashboard page showing real-time metrics and system status.
+/// Wired to live backend API data with stale data indicators.
 /// </summary>
 public partial class DashboardPage : Page
 {
@@ -26,8 +27,10 @@ public partial class DashboardPage : Page
     private readonly MessagingService _messagingService;
     private readonly WpfServices.NotificationService _notificationService;
     private readonly DispatcherTimer _refreshTimer;
-    private readonly Random _random = new();
+    private readonly DispatcherTimer _staleCheckTimer;
     private bool _isCollectorPaused;
+    private long _previousPublished;
+    private DateTime _lastRateCalcTime = DateTime.UtcNow;
 
     public DashboardPage(
         WpfServices.NavigationService navigationService,
@@ -50,7 +53,7 @@ public partial class DashboardPage : Page
         SymbolFreshnessItems = new ObservableCollection<SymbolFreshnessItem>();
         IntegrityEventItems = new ObservableCollection<IntegrityEventItem>();
 
-        SeedDashboardData();
+        InitializeEmptyState();
 
         _refreshTimer = new DispatcherTimer
         {
@@ -58,9 +61,17 @@ public partial class DashboardPage : Page
         };
         _refreshTimer.Tick += OnRefreshTimerTick;
 
+        _staleCheckTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromSeconds(1)
+        };
+        _staleCheckTimer.Tick += OnStaleCheckTimerTick;
+
         _messagingService.MessageReceived += OnMessageReceived;
         _connectionService.ConnectionStateChanged += OnConnectionStateChanged;
         _connectionService.LatencyUpdated += OnLatencyUpdated;
+        _statusService.LiveStatusReceived += OnLiveStatusReceived;
+        _statusService.BackendReachabilityChanged += OnBackendReachabilityChanged;
     }
 
     public ObservableCollection<DashboardActivityItem> ActivityItems { get; }
@@ -73,140 +84,132 @@ public partial class DashboardPage : Page
 
     private void OnPageLoaded(object sender, RoutedEventArgs e)
     {
+        _statusService.StartLiveMonitoring(intervalSeconds: 2);
         _refreshTimer.Start();
+        _staleCheckTimer.Start();
         RefreshStatus();
     }
 
     private void OnPageUnloaded(object sender, RoutedEventArgs e)
     {
         _refreshTimer.Stop();
+        _staleCheckTimer.Stop();
+        _statusService.StopLiveMonitoring();
         _messagingService.MessageReceived -= OnMessageReceived;
         _connectionService.ConnectionStateChanged -= OnConnectionStateChanged;
         _connectionService.LatencyUpdated -= OnLatencyUpdated;
+        _statusService.LiveStatusReceived -= OnLiveStatusReceived;
+        _statusService.BackendReachabilityChanged -= OnBackendReachabilityChanged;
     }
 
-    private void SeedDashboardData()
+    private void InitializeEmptyState()
     {
-        var successBrush = (Brush)FindResource("SuccessColorBrush");
-        var warningBrush = (Brush)FindResource("WarningColorBrush");
-        var errorBrush = (Brush)FindResource("ErrorColorBrush");
-        var infoBrush = (Brush)FindResource("InfoColorBrush");
-
-        ActivityItems.Add(new DashboardActivityItem
-        {
-            Title = "Collector started",
-            Description = "Streaming trades from 3 providers",
-            RelativeTime = "Just now",
-            IconGlyph = (string)FindResource("IconPlay"),
-            IconBackground = successBrush
-        });
-        ActivityItems.Add(new DashboardActivityItem
-        {
-            Title = "Backfill completed",
-            Description = "Imported 12,450 bars for AAPL",
-            RelativeTime = "5m ago",
-            IconGlyph = (string)FindResource("IconDownload"),
-            IconBackground = infoBrush
-        });
-        ActivityItems.Add(new DashboardActivityItem
-        {
-            Title = "Latency spike",
-            Description = "Average latency increased to 24ms",
-            RelativeTime = "12m ago",
-            IconGlyph = (string)FindResource("IconWarning"),
-            IconBackground = warningBrush
-        });
-
-        SymbolPerformanceItems.Add(new SymbolPerformanceItem
-        {
-            Symbol = "SPY",
-            StatusText = "Live",
-            StatusColor = successBrush,
-            EventRate = "420/s",
-            TotalEvents = "128K",
-            LastEventTime = "2s ago",
-            HealthScore = "99%",
-            HealthColor = successBrush,
-            HealthIcon = (string)FindResource("IconSuccess"),
-            TrendPoints = CreateTrendPoints(0.6, 0.75, 0.7, 0.8, 0.9),
-            TrendColor = successBrush
-        });
-        SymbolPerformanceItems.Add(new SymbolPerformanceItem
-        {
-            Symbol = "QQQ",
-            StatusText = "Live",
-            StatusColor = successBrush,
-            EventRate = "310/s",
-            TotalEvents = "98K",
-            LastEventTime = "4s ago",
-            HealthScore = "97%",
-            HealthColor = successBrush,
-            HealthIcon = (string)FindResource("IconSuccess"),
-            TrendPoints = CreateTrendPoints(0.4, 0.55, 0.6, 0.5, 0.7),
-            TrendColor = successBrush
-        });
-        SymbolPerformanceItems.Add(new SymbolPerformanceItem
-        {
-            Symbol = "AAPL",
-            StatusText = "Warning",
-            StatusColor = warningBrush,
-            EventRate = "85/s",
-            TotalEvents = "44K",
-            LastEventTime = "8s ago",
-            HealthScore = "92%",
-            HealthColor = warningBrush,
-            HealthIcon = (string)FindResource("IconWarning"),
-            TrendPoints = CreateTrendPoints(0.3, 0.35, 0.2, 0.3, 0.25),
-            TrendColor = warningBrush
-        });
-
-        SymbolFreshnessItems.Add(new SymbolFreshnessItem
-        {
-            Symbol = "SPY",
-            Progress = 100,
-            StatusText = "Live",
-            StatusBrush = successBrush
-        });
-        SymbolFreshnessItems.Add(new SymbolFreshnessItem
-        {
-            Symbol = "QQQ",
-            Progress = 100,
-            StatusText = "Live",
-            StatusBrush = successBrush
-        });
-        SymbolFreshnessItems.Add(new SymbolFreshnessItem
-        {
-            Symbol = "AAPL",
-            Progress = 85,
-            StatusText = "5s ago",
-            StatusBrush = warningBrush
-        });
-
-        IntegrityEventItems.Add(new IntegrityEventItem
-        {
-            Id = 1,
-            Symbol = "AAPL",
-            EventTypeName = "Gap",
-            Description = "Missing 4 bars between 10:22 and 10:24",
-            RelativeTime = "10m ago",
-            SeverityColor = warningBrush,
-            IsNotAcknowledged = true
-        });
-        IntegrityEventItems.Add(new IntegrityEventItem
-        {
-            Id = 2,
-            Symbol = "TSLA",
-            EventTypeName = "Sequence",
-            Description = "Out-of-order trade events detected",
-            RelativeTime = "32m ago",
-            SeverityColor = errorBrush,
-            IsNotAcknowledged = true
-        });
-
         UpdateEmptyStateIndicators();
         UpdateIntegrityBadges();
-        SymbolCountText.Text = SymbolPerformanceItems.Count.ToString("N0");
-        IntegrityMostAffectedText.Text = SymbolPerformanceItems.FirstOrDefault()?.Symbol ?? "N/A";
+        SymbolCountText.Text = "0";
+        IntegrityMostAffectedText.Text = "N/A";
+    }
+
+    private void OnLiveStatusReceived(object? sender, LiveStatusEventArgs e)
+    {
+        Dispatcher.Invoke(() =>
+        {
+            if (e.Status != null)
+            {
+                ApplyLiveStatus(e.Status);
+            }
+
+            UpdateStaleIndicator(e.IsStale);
+        });
+    }
+
+    private void OnBackendReachabilityChanged(object? sender, bool isReachable)
+    {
+        Dispatcher.Invoke(() =>
+        {
+            if (!isReachable)
+            {
+                AddActivityItem("Backend unreachable", "Cannot connect to the Market Data Collector service");
+            }
+            else
+            {
+                AddActivityItem("Backend connected", "Successfully connected to the Market Data Collector service");
+            }
+        });
+    }
+
+    private void ApplyLiveStatus(SimpleStatus status)
+    {
+        // Calculate event rate from delta
+        var now = DateTime.UtcNow;
+        var elapsed = (now - _lastRateCalcTime).TotalSeconds;
+        if (elapsed > 0 && _previousPublished > 0)
+        {
+            var rate = (status.Published - _previousPublished) / elapsed;
+            PublishedRateText.Text = rate >= 0 ? $"+{rate:N0}/s" : "0/s";
+        }
+        _previousPublished = status.Published;
+        _lastRateCalcTime = now;
+
+        PublishedCount.Text = FormatNumber(status.Published);
+        DroppedCount.Text = FormatNumber(status.Dropped);
+        IntegrityCount.Text = FormatNumber(status.Integrity);
+        HistoricalCount.Text = FormatNumber(status.Historical);
+
+        TotalEventsToday.Text = FormatNumber(status.Published);
+        ActiveSymbolsCount.Text = SymbolPerformanceItems.Count.ToString("N0");
+
+        if (status.Dropped > 0 && status.Published > 0)
+        {
+            var dropRate = (double)status.Dropped / status.Published * 100;
+            DroppedRateText.Text = $"{dropRate:0.00}%";
+        }
+        else
+        {
+            DroppedRateText.Text = "0.00%";
+        }
+
+        IntegrityRateText.Text = $"{status.Integrity} gaps";
+        HistoricalTrendText.Text = status.Historical > 0 ? $"{FormatNumber(status.Historical)} bars" : "No data";
+
+        if (status.Provider != null)
+        {
+            SelectedDataSourceText.Text = status.Provider.ActiveProvider ?? "Not Connected";
+            ProviderDescriptionText.Text = status.Provider.DisplayStatus;
+            ConnectionStatusText.Text = status.Provider.DisplayStatus;
+            ConnectionStatusIndicator.Fill = status.Provider.IsConnected
+                ? (Brush)FindResource("SuccessColorBrush")
+                : (Brush)FindResource("ErrorColorBrush");
+        }
+
+        LastUpdateText.Text = $"Last update: {DateTime.Now:HH:mm:ss}";
+        LastDataUpdateText.Text = $"Last update: {DateTime.Now:HH:mm:ss}";
+    }
+
+    private void UpdateStaleIndicator(bool isStale)
+    {
+        var staleBrush = (Brush)FindResource("WarningColorBrush");
+        var normalBrush = (Brush)FindResource("ConsoleTextSecondaryBrush");
+
+        if (_statusService.SecondsSinceLastUpdate is { } seconds)
+        {
+            var staleText = seconds < 5 ? "Just now" : $"{seconds:F0}s ago";
+            LastUpdateText.Text = $"Last update: {staleText}";
+        }
+
+        if (isStale)
+        {
+            LastUpdateText.Foreground = staleBrush;
+        }
+        else
+        {
+            LastUpdateText.Foreground = normalBrush;
+        }
+    }
+
+    private void OnStaleCheckTimerTick(object? sender, EventArgs e)
+    {
+        UpdateStaleIndicator(_statusService.IsDataStale);
     }
 
     private async void RefreshStatus()
@@ -217,33 +220,10 @@ public partial class DashboardPage : Page
 
             if (status != null)
             {
-                PublishedCount.Text = FormatNumber(status.Published);
-                DroppedCount.Text = FormatNumber(status.Dropped);
-                IntegrityCount.Text = FormatNumber(status.Integrity);
-                HistoricalCount.Text = FormatNumber(status.Historical);
-
-                TotalEventsToday.Text = FormatNumber(status.Published);
-                ActiveSymbolsCount.Text = SymbolPerformanceItems.Count.ToString("N0");
-                StorageUsedText.Text = "2.4 GB";
-                DataQualityText.Text = "99.8%";
-
-                if (status.Provider != null)
-                {
-                    SelectedDataSourceText.Text = status.Provider.ActiveProvider ?? "Not Connected";
-                    ProviderDescriptionText.Text = status.Provider.DisplayStatus;
-                    ConnectionStatusText.Text = status.Provider.DisplayStatus;
-                    ConnectionStatusIndicator.Fill = status.Provider.IsConnected
-                        ? (Brush)FindResource("SuccessColorBrush")
-                        : (Brush)FindResource("ErrorColorBrush");
-                }
+                ApplyLiveStatus(status);
             }
 
-            LastUpdateText.Text = $"Last update: {DateTime.Now:HH:mm:ss}";
-            LastDataUpdateText.Text = $"Last update: {DateTime.Now:HH:mm:ss}";
-
             UpdateConnectionInfo();
-            UpdateSparklines();
-            UpdateThroughputChart();
             UpdateCollectorBadge();
         }
         catch (Exception ex)
@@ -271,57 +251,33 @@ public partial class DashboardPage : Page
         }
     }
 
-    private void UpdateSparklines()
+    private void UpdateThroughputFromMetrics(SimpleStatus status)
     {
-        PublishedSparklinePath.Points = CreateTrendPoints(0.4, 0.5, 0.6, 0.55, 0.7);
-        DroppedSparklinePath.Points = CreateTrendPoints(0.1, 0.12, 0.08, 0.1, 0.09);
-        IntegritySparklinePath.Points = CreateTrendPoints(0.2, 0.18, 0.25, 0.2, 0.22);
-        HistoricalSparklinePath.Points = CreateTrendPoints(0.3, 0.35, 0.4, 0.45, 0.38);
-
-        PublishedRateText.Text = $"+{_random.Next(800, 1400):N0}/s";
-        DroppedRateText.Text = $"{_random.NextDouble() * 0.05:0.00}%";
-        IntegrityRateText.Text = $"{_random.Next(0, 4)} gaps";
-        HistoricalTrendText.Text = $"Last: {_random.Next(1, 4)}h ago";
-    }
-
-    private void UpdateThroughputChart()
-    {
-        var values = Enumerable.Range(0, 6).Select(_ => _random.Next(400, 2000)).ToArray();
-        var points = new PointCollection();
-        var fillPoints = new PointCollection();
-        const double width = 240;
-        const double height = 120;
-
-        for (var i = 0; i < values.Length; i++)
+        // Derive throughput from published event count rate
+        var now = DateTime.UtcNow;
+        var elapsed = (now - _lastRateCalcTime).TotalSeconds;
+        if (elapsed > 0 && _previousPublished > 0)
         {
-            var x = i * (width / (values.Length - 1));
-            var y = height - (values[i] / 2000.0 * height);
-            points.Add(new Point(x, y));
+            var currentRate = (int)((status.Published - _previousPublished) / elapsed);
+            CurrentThroughputText.Text = $"{currentRate:N0}/s";
         }
 
-        fillPoints.Add(new Point(points.First().X, height));
-        foreach (var point in points)
+        // Calculate data health from drop rate
+        if (status.Published > 0)
         {
-            fillPoints.Add(point);
+            var dropPercent = (double)status.Dropped / status.Published * 100;
+            var dataHealth = Math.Max(0, 100 - dropPercent);
+            DataHealthText.Text = $"{dataHealth:F1}%";
+            DataHealthText.Foreground = dataHealth > 97
+                ? (Brush)FindResource("SuccessColorBrush")
+                : (Brush)FindResource("WarningColorBrush");
+            DataHealthIcon.Text = dataHealth > 97
+                ? (string)FindResource("IconSuccess")
+                : (string)FindResource("IconWarning");
+            DataHealthIcon.Foreground = DataHealthText.Foreground;
+
+            DataQualityText.Text = $"{dataHealth:F1}%";
         }
-        fillPoints.Add(new Point(points.Last().X, height));
-
-        ThroughputChartPath.Points = points;
-        ThroughputChartFill.Points = fillPoints;
-
-        CurrentThroughputText.Text = $"{values.Last():N0}/s";
-        AvgThroughputText.Text = $"{values.Average():N0}/s";
-        PeakThroughputText.Text = $"{values.Max():N0}/s";
-
-        var dataHealth = 100 - _random.Next(0, 3);
-        DataHealthText.Text = $"{dataHealth}%";
-        DataHealthText.Foreground = dataHealth > 97
-            ? (Brush)FindResource("SuccessColorBrush")
-            : (Brush)FindResource("WarningColorBrush");
-        DataHealthIcon.Text = dataHealth > 97
-            ? (string)FindResource("IconSuccess")
-            : (string)FindResource("IconWarning");
-        DataHealthIcon.Foreground = DataHealthText.Foreground;
     }
 
     private void UpdateCollectorBadge()

@@ -1,22 +1,34 @@
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Threading;
+using MarketDataCollector.Contracts.Backfill;
+using UiBackfillService = MarketDataCollector.Ui.Services.BackfillService;
+using UiBackfillProgressEventArgs = MarketDataCollector.Ui.Services.BackfillProgressEventArgs;
+using UiBackfillCompletedEventArgs = MarketDataCollector.Ui.Services.BackfillCompletedEventArgs;
 using WpfServices = MarketDataCollector.Wpf.Services;
 
 namespace MarketDataCollector.Wpf.Views;
 
 /// <summary>
 /// Historical data backfill page with provider selection, date ranges, and scheduling.
+/// Wired to real BackfillApiService for live execution and progress tracking.
 /// </summary>
 public partial class BackfillPage : Page
 {
     private readonly WpfServices.NotificationService _notificationService;
     private readonly WpfServices.NavigationService _navigationService;
+    private readonly WpfServices.BackfillApiService _backfillApiService;
+    private readonly UiBackfillService _backfillService;
     private readonly ObservableCollection<SymbolProgressInfo> _symbolProgress = new();
     private readonly ObservableCollection<ScheduledJobInfo> _scheduledJobs = new();
+    private readonly DispatcherTimer _progressPollTimer;
+    private CancellationTokenSource? _backfillCts;
 
     public BackfillPage(
         WpfServices.NotificationService notificationService,
@@ -26,43 +38,177 @@ public partial class BackfillPage : Page
 
         _notificationService = notificationService;
         _navigationService = navigationService;
+        _backfillApiService = new WpfServices.BackfillApiService();
+        _backfillService = UiBackfillService.Instance;
 
         SymbolProgressList.ItemsSource = _symbolProgress;
         ScheduledJobsList.ItemsSource = _scheduledJobs;
+
+        _progressPollTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromSeconds(5)
+        };
+        _progressPollTimer.Tick += OnProgressPollTimerTick;
+
+        _backfillService.ProgressUpdated += OnBackfillProgressUpdated;
+        _backfillService.BackfillCompleted += OnBackfillCompleted;
     }
 
-    private void OnPageLoaded(object sender, RoutedEventArgs e)
+    private async void OnPageLoaded(object sender, RoutedEventArgs e)
     {
         // Set default dates
         ToDatePicker.SelectedDate = DateTime.Today;
         FromDatePicker.SelectedDate = DateTime.Today.AddDays(-30);
 
-        LoadScheduledJobs();
-        RefreshStatus();
+        await LoadScheduledJobsAsync();
+        await RefreshStatusFromApiAsync();
     }
 
-    private void LoadScheduledJobs()
+    private void OnPageUnloaded(object sender, RoutedEventArgs e)
+    {
+        _progressPollTimer.Stop();
+        _backfillCts?.Cancel();
+        _backfillService.ProgressUpdated -= OnBackfillProgressUpdated;
+        _backfillService.BackfillCompleted -= OnBackfillCompleted;
+    }
+
+    private async Task LoadScheduledJobsAsync()
     {
         _scheduledJobs.Clear();
-        _scheduledJobs.Add(new ScheduledJobInfo { Name = "Daily EOD Update", NextRun = "Tomorrow 6:00 AM" });
-        _scheduledJobs.Add(new ScheduledJobInfo { Name = "Weekly Full Sync", NextRun = "Sunday 2:00 AM" });
+
+        try
+        {
+            var executions = await _backfillApiService.GetExecutionHistoryAsync(limit: 10);
+            foreach (var exec in executions)
+            {
+                _scheduledJobs.Add(new ScheduledJobInfo
+                {
+                    Name = $"{exec.Status}: {exec.SymbolsProcessed} symbols",
+                    NextRun = exec.CompletedAt?.ToString("g") ?? exec.StartedAt?.ToString("g") ?? "Unknown"
+                });
+            }
+        }
+        catch
+        {
+            // Fallback if API unavailable
+        }
 
         NoScheduledJobsText.Visibility = _scheduledJobs.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
     }
 
-    private void RefreshStatus()
+    private async Task RefreshStatusFromApiAsync()
     {
-        // Show sample status for demonstration
-        StatusGrid.Visibility = Visibility.Visible;
-        NoStatusText.Visibility = Visibility.Collapsed;
+        try
+        {
+            var lastStatus = await _backfillApiService.GetLastStatusAsync();
 
-        StatusText.Text = "Completed";
-        StatusText.Foreground = new SolidColorBrush(Color.FromRgb(63, 185, 80));
-        ProviderText.Text = "Multi-Source";
-        SymbolsText.Text = "SPY, QQQ, AAPL, MSFT, GOOGL";
-        BarsWrittenText.Text = "12,456";
-        StartedText.Text = "2 hours ago";
-        CompletedText.Text = "1 hour ago";
+            if (lastStatus != null)
+            {
+                StatusGrid.Visibility = Visibility.Visible;
+                NoStatusText.Visibility = Visibility.Collapsed;
+
+                var isSuccess = lastStatus.Success;
+                StatusText.Text = isSuccess ? "Completed" : "Failed";
+                StatusText.Foreground = isSuccess
+                    ? new SolidColorBrush(Color.FromRgb(63, 185, 80))
+                    : new SolidColorBrush(Color.FromRgb(244, 67, 54));
+                ProviderText.Text = lastStatus.Provider ?? "Unknown";
+                SymbolsText.Text = lastStatus.Symbols != null
+                    ? string.Join(", ", lastStatus.Symbols)
+                    : "N/A";
+                BarsWrittenText.Text = lastStatus.BarsWritten.ToString("N0");
+                StartedText.Text = lastStatus.StartedUtc?.LocalDateTime.ToString("g") ?? "Unknown";
+                CompletedText.Text = lastStatus.CompletedUtc?.LocalDateTime.ToString("g") ?? "N/A";
+            }
+            else
+            {
+                StatusGrid.Visibility = Visibility.Collapsed;
+                NoStatusText.Visibility = Visibility.Visible;
+            }
+        }
+        catch
+        {
+            StatusGrid.Visibility = Visibility.Collapsed;
+            NoStatusText.Visibility = Visibility.Visible;
+        }
+    }
+
+    private void OnBackfillProgressUpdated(object? sender, UiBackfillProgressEventArgs e)
+    {
+        if (e.Progress == null) return;
+
+        Dispatcher.Invoke(() =>
+        {
+            UpdateProgressDisplay(e.Progress);
+        });
+    }
+
+    private void OnBackfillCompleted(object? sender, UiBackfillCompletedEventArgs e)
+    {
+        Dispatcher.Invoke(async () =>
+        {
+            _progressPollTimer.Stop();
+
+            StartBackfillButton.Visibility = Visibility.Visible;
+            PauseBackfillButton.Visibility = Visibility.Collapsed;
+            CancelBackfillButton.Visibility = Visibility.Collapsed;
+
+            if (e.Success)
+            {
+                BackfillStatusText.Text = "Completed";
+                _notificationService.ShowNotification(
+                    "Backfill Complete",
+                    $"Successfully downloaded data for {e.Progress?.CompletedSymbols ?? 0} symbols.",
+                    NotificationType.Success);
+            }
+            else if (e.WasCancelled)
+            {
+                BackfillStatusText.Text = "Cancelled";
+            }
+            else
+            {
+                BackfillStatusText.Text = "Failed";
+                _notificationService.ShowNotification(
+                    "Backfill Failed",
+                    e.Error?.Message ?? "Unknown error occurred.",
+                    NotificationType.Error);
+            }
+
+            await RefreshStatusFromApiAsync();
+        });
+    }
+
+    private void UpdateProgressDisplay(MarketDataCollector.Contracts.Backfill.BackfillProgress progress)
+    {
+        BackfillStatusText.Text = progress.Status;
+
+        var completedCount = progress.CompletedSymbols;
+        OverallProgressText.Text = $"Overall: {completedCount} / {progress.TotalSymbols} symbols complete";
+
+        if (progress.SymbolProgress != null)
+        {
+            for (var i = 0; i < progress.SymbolProgress.Length && i < _symbolProgress.Count; i++)
+            {
+                var sp = progress.SymbolProgress[i];
+                var item = _symbolProgress[i];
+                item.Progress = sp.CalculatedProgress;
+                item.BarsText = $"{sp.BarsDownloaded:N0} bars";
+                item.StatusText = sp.Status;
+                item.TimeText = sp.Duration?.ToString(@"mm\:ss") ?? "--";
+                item.StatusBackground = sp.Status switch
+                {
+                    "Completed" => new SolidColorBrush(Color.FromArgb(40, 63, 185, 80)),
+                    "Failed" => new SolidColorBrush(Color.FromArgb(40, 244, 67, 54)),
+                    "Downloading" => new SolidColorBrush(Color.FromArgb(40, 33, 150, 243)),
+                    _ => new SolidColorBrush(Color.FromArgb(40, 139, 148, 158))
+                };
+            }
+        }
+    }
+
+    private async void OnProgressPollTimerTick(object? sender, EventArgs e)
+    {
+        await RefreshStatusFromApiAsync();
     }
 
     private void SymbolsBox_TextChanged(object sender, TextChangedEventArgs e)
@@ -160,7 +306,7 @@ public partial class BackfillPage : Page
         ToDatePicker.SelectedDate = DateTime.Today;
     }
 
-    private void StartBackfill_Click(object sender, RoutedEventArgs e)
+    private async void StartBackfill_Click(object sender, RoutedEventArgs e)
     {
         if (string.IsNullOrWhiteSpace(SymbolsBox.Text))
         {
@@ -179,7 +325,6 @@ public partial class BackfillPage : Page
 
         BackfillStatusText.Text = "Running...";
 
-        // Simulate progress with sample symbols
         var symbols = SymbolsBox.Text.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         _symbolProgress.Clear();
         foreach (var symbol in symbols)
@@ -201,17 +346,62 @@ public partial class BackfillPage : Page
             "Backfill Started",
             $"Downloading data for {symbols.Length} symbols...",
             NotificationType.Info);
+
+        // Get provider from combo or default to "composite"
+        var provider = (ProviderCombo?.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "composite";
+        var fromDate = FromDatePicker.SelectedDate ?? DateTime.Today.AddDays(-30);
+        var toDate = ToDatePicker.SelectedDate ?? DateTime.Today;
+
+        // Start progress polling
+        _progressPollTimer.Start();
+
+        // Execute backfill via real API
+        _backfillCts = new CancellationTokenSource();
+        try
+        {
+            await _backfillService.StartBackfillAsync(
+                symbols.Select(s => s.Trim().ToUpper()).ToArray(),
+                provider,
+                fromDate,
+                toDate);
+        }
+        catch (Exception ex)
+        {
+            _progressPollTimer.Stop();
+            BackfillStatusText.Text = "Failed";
+            StartBackfillButton.Visibility = Visibility.Visible;
+            PauseBackfillButton.Visibility = Visibility.Collapsed;
+            CancelBackfillButton.Visibility = Visibility.Collapsed;
+
+            _notificationService.ShowNotification(
+                "Backfill Failed",
+                ex.Message,
+                NotificationType.Error);
+        }
     }
 
     private void PauseBackfill_Click(object sender, RoutedEventArgs e)
     {
-        BackfillStatusText.Text = "Paused";
-        PauseBackfillButton.Content = "Resume";
-
-        _notificationService.ShowNotification(
-            "Backfill Paused",
-            "Backfill operation has been paused.",
-            NotificationType.Warning);
+        if (_backfillService.IsPaused)
+        {
+            _backfillService.Resume();
+            BackfillStatusText.Text = "Running...";
+            PauseBackfillButton.Content = "Pause";
+            _notificationService.ShowNotification(
+                "Backfill Resumed",
+                "Backfill operation has been resumed.",
+                NotificationType.Info);
+        }
+        else
+        {
+            _backfillService.Pause();
+            BackfillStatusText.Text = "Paused";
+            PauseBackfillButton.Content = "Resume";
+            _notificationService.ShowNotification(
+                "Backfill Paused",
+                "Backfill operation has been paused.",
+                NotificationType.Warning);
+        }
     }
 
     private void CancelBackfill_Click(object sender, RoutedEventArgs e)
@@ -224,6 +414,10 @@ public partial class BackfillPage : Page
 
         if (result == MessageBoxResult.Yes)
         {
+            _backfillService.Cancel();
+            _backfillCts?.Cancel();
+            _progressPollTimer.Stop();
+
             StartBackfillButton.Visibility = Visibility.Visible;
             PauseBackfillButton.Visibility = Visibility.Collapsed;
             CancelBackfillButton.Visibility = Visibility.Collapsed;
@@ -238,9 +432,9 @@ public partial class BackfillPage : Page
         }
     }
 
-    private void RefreshStatus_Click(object sender, RoutedEventArgs e)
+    private async void RefreshStatus_Click(object sender, RoutedEventArgs e)
     {
-        RefreshStatus();
+        await RefreshStatusFromApiAsync();
 
         _notificationService.ShowNotification(
             "Status Refreshed",

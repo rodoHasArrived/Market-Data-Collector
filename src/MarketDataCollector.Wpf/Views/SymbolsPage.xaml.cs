@@ -74,20 +74,44 @@ public partial class SymbolsPage : Page
 
     private async void OnPageLoaded(object sender, RoutedEventArgs e)
     {
-        LoadSymbols();
+        await LoadSymbolsFromConfigAsync();
         await LoadWatchlistsAsync();
     }
 
-    private void LoadSymbols()
+    private async Task LoadSymbolsFromConfigAsync()
     {
         _symbols.Clear();
 
-        // Sample symbols for demonstration
-        _symbols.Add(new SymbolViewModel { Symbol = "AAPL", SubscribeTrades = true, SubscribeDepth = true, DepthLevels = 10, Exchange = "SMART" });
-        _symbols.Add(new SymbolViewModel { Symbol = "MSFT", SubscribeTrades = true, SubscribeDepth = false, DepthLevels = 10, Exchange = "SMART" });
-        _symbols.Add(new SymbolViewModel { Symbol = "GOOGL", SubscribeTrades = true, SubscribeDepth = true, DepthLevels = 5, Exchange = "SMART" });
-        _symbols.Add(new SymbolViewModel { Symbol = "SPY", SubscribeTrades = true, SubscribeDepth = true, DepthLevels = 10, Exchange = "ARCA" });
-        _symbols.Add(new SymbolViewModel { Symbol = "QQQ", SubscribeTrades = true, SubscribeDepth = false, DepthLevels = 10, Exchange = "NASDAQ" });
+        try
+        {
+            var configuredSymbols = await _configService.GetConfiguredSymbolsAsync();
+
+            if (configuredSymbols.Length > 0)
+            {
+                foreach (var cfg in configuredSymbols)
+                {
+                    _symbols.Add(new SymbolViewModel
+                    {
+                        Symbol = cfg.Symbol,
+                        SubscribeTrades = cfg.SubscribeTrades,
+                        SubscribeDepth = cfg.SubscribeDepth,
+                        DepthLevels = cfg.DepthLevels,
+                        Exchange = cfg.Exchange,
+                        LocalSymbol = cfg.LocalSymbol,
+                        SecurityType = cfg.SecurityType,
+                        Strike = cfg.Strike,
+                        Right = cfg.Right,
+                        LastTradeDateOrContractMonth = cfg.LastTradeDateOrContractMonth,
+                        OptionStyle = cfg.OptionStyle,
+                        Multiplier = cfg.Multiplier
+                    });
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _loggingService.LogError("Failed to load symbols from configuration", ex);
+        }
 
         ApplyFilters();
         SymbolCountText.Text = $"{_symbols.Count} symbols";
@@ -343,7 +367,7 @@ public partial class SymbolsPage : Page
         }
     }
 
-    private void SaveSymbol_Click(object sender, RoutedEventArgs e)
+    private async void SaveSymbol_Click(object sender, RoutedEventArgs e)
     {
         var symbolName = SymbolBox.Text?.Trim().ToUpper();
         if (string.IsNullOrEmpty(symbolName))
@@ -426,12 +450,15 @@ public partial class SymbolsPage : Page
             _isEditMode ? $"Symbol {symbolName} updated successfully." : $"Symbol {symbolName} added successfully.",
             NotificationType.Success);
 
+        // Persist to configuration file
+        await PersistSymbolsToConfigAsync();
+
         ClearForm();
         ApplyFilters();
         SymbolCountText.Text = $"{_symbols.Count} symbols";
     }
 
-    private void DeleteSymbol_Click(object sender, RoutedEventArgs e)
+    private async void DeleteSymbol_Click(object sender, RoutedEventArgs e)
     {
         if (_selectedSymbol == null) return;
 
@@ -449,6 +476,9 @@ public partial class SymbolsPage : Page
                 "Success",
                 $"Symbol {_selectedSymbol.Symbol} deleted.",
                 NotificationType.Success);
+
+            // Persist to configuration file
+            await PersistSymbolsToConfigAsync();
 
             ClearForm();
             ApplyFilters();
@@ -654,10 +684,38 @@ public partial class SymbolsPage : Page
         _navigationService.NavigateTo(typeof(WatchlistPage));
     }
 
-    private void RefreshList_Click(object sender, RoutedEventArgs e)
+    private async void RefreshList_Click(object sender, RoutedEventArgs e)
     {
-        LoadSymbols();
+        await LoadSymbolsFromConfigAsync();
         LastRefreshText.Text = "Last refreshed: just now";
+    }
+
+    private async Task PersistSymbolsToConfigAsync()
+    {
+        try
+        {
+            var symbolDtos = _symbols.Select(s => new MarketDataCollector.Contracts.Configuration.SymbolConfigDto
+            {
+                Symbol = s.Symbol,
+                SubscribeTrades = s.SubscribeTrades,
+                SubscribeDepth = s.SubscribeDepth,
+                DepthLevels = s.DepthLevels,
+                Exchange = s.Exchange,
+                LocalSymbol = s.LocalSymbol,
+                SecurityType = s.SecurityType,
+                Strike = s.Strike,
+                Right = s.Right,
+                LastTradeDateOrContractMonth = s.LastTradeDateOrContractMonth,
+                OptionStyle = s.OptionStyle,
+                Multiplier = s.Multiplier
+            }).ToArray();
+
+            await _configService.SaveSymbolsAsync(symbolDtos);
+        }
+        catch (Exception ex)
+        {
+            _loggingService.LogError("Failed to persist symbols to config", ex);
+        }
     }
 
     private static void SelectComboItemByTag(ComboBox combo, string tag)

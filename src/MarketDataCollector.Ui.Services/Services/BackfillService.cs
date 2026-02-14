@@ -20,11 +20,13 @@ public sealed class BackfillService
 
     private readonly NotificationService _notificationService;
     private readonly BackfillApiService _backfillApiService;
+    private readonly BackfillCheckpointService _checkpointService;
     private BackfillProgress? _currentProgress;
     private CancellationTokenSource? _cancellationTokenSource;
     private DateTime _startTime;
     private int _totalBarsDownloaded;
     private readonly object _progressLock = new();
+    private string? _currentCheckpointJobId;
 
     // Polling configuration for progress updates
     private const int ProgressPollIntervalMs = 1000;
@@ -49,6 +51,7 @@ public sealed class BackfillService
     {
         _notificationService = NotificationService.Instance;
         _backfillApiService = new BackfillApiService();
+        _checkpointService = BackfillCheckpointService.Instance;
     }
 
     /// <summary>
@@ -144,12 +147,30 @@ public sealed class BackfillService
 
         ProgressUpdated?.Invoke(this, new BackfillProgressEventArgs { Progress = _currentProgress });
 
+        // Create checkpoint for resumability
+        var checkpoint = await _checkpointService.CreateCheckpointAsync(
+            _currentProgress.JobId,
+            provider,
+            symbols,
+            fromDate,
+            toDate);
+        _currentCheckpointJobId = checkpoint.JobId;
+
         try
         {
             await RunBackfillAsync(symbols, provider, fromDate, toDate, progressCallback, _cancellationTokenSource.Token);
 
             _currentProgress.Status = "Completed";
             _currentProgress.CompletedAt = DateTime.UtcNow;
+
+            // Update checkpoint: mark all symbols completed
+            foreach (var sym in symbols)
+            {
+                await _checkpointService.UpdateSymbolProgressAsync(
+                    _currentCheckpointJobId, sym,
+                    SymbolCheckpointStatus.Completed,
+                    (int)(_currentProgress.DownloadedBars / Math.Max(1, symbols.Length)));
+            }
 
             await _notificationService.NotifyBackfillCompleteAsync(
                 true,
@@ -168,6 +189,12 @@ public sealed class BackfillService
             _currentProgress.Status = "Cancelled";
             _currentProgress.CompletedAt = DateTime.UtcNow;
 
+            if (_currentCheckpointJobId != null)
+            {
+                await _checkpointService.MarkJobFailedAsync(
+                    _currentCheckpointJobId, "Cancelled by user");
+            }
+
             BackfillCompleted?.Invoke(this, new BackfillCompletedEventArgs
             {
                 Success = false,
@@ -180,6 +207,12 @@ public sealed class BackfillService
             _currentProgress.Status = "Failed";
             _currentProgress.ErrorMessage = ex.Message;
             _currentProgress.CompletedAt = DateTime.UtcNow;
+
+            if (_currentCheckpointJobId != null)
+            {
+                await _checkpointService.MarkJobFailedAsync(
+                    _currentCheckpointJobId, ex.Message);
+            }
 
             await _notificationService.NotifyBackfillCompleteAsync(
                 false,
@@ -723,6 +756,53 @@ public sealed class BackfillService
         }
 
         return false;
+    }
+
+    /// <summary>
+    /// Resumes a previously interrupted backfill job from its checkpoint.
+    /// Only processes symbols that were pending or failed.
+    /// </summary>
+    public async Task ResumeBackfillAsync(
+        string checkpointJobId,
+        Action<BackfillProgress>? progressCallback = null)
+    {
+        var checkpoint = await _checkpointService.LoadCheckpointAsync(checkpointJobId);
+        if (checkpoint == null)
+        {
+            throw new InvalidOperationException($"No checkpoint found for job {checkpointJobId}");
+        }
+
+        var pendingSymbols = await _checkpointService.GetPendingSymbolsAsync(checkpointJobId);
+        if (pendingSymbols.Length == 0)
+        {
+            throw new InvalidOperationException("All symbols in this job are already completed");
+        }
+
+        await StartBackfillAsync(
+            pendingSymbols,
+            checkpoint.Provider,
+            checkpoint.FromDate,
+            checkpoint.ToDate,
+            progressCallback);
+    }
+
+    /// <summary>
+    /// Gets resumable jobs from the checkpoint store.
+    /// </summary>
+    public async Task<IReadOnlyList<BackfillCheckpoint>> GetResumableJobsAsync(
+        CancellationToken ct = default)
+    {
+        return await _checkpointService.GetResumableJobsAsync(ct);
+    }
+
+    /// <summary>
+    /// Gets job history from checkpoints.
+    /// </summary>
+    public async Task<IReadOnlyList<BackfillCheckpoint>> GetCheckpointHistoryAsync(
+        int limit = 20,
+        CancellationToken ct = default)
+    {
+        return await _checkpointService.GetHistoryAsync(limit, ct);
     }
 
     /// <summary>
