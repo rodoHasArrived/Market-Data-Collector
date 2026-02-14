@@ -4,6 +4,24 @@
 
 > **Note:** For comprehensive project context, see [CLAUDE.md](../../../CLAUDE.md) in the repository root.
 
+
+## Coding Agent Optimization (GitHub Best Practices)
+
+This repository now uses native Copilot instruction files to improve agent output quality:
+
+- Repository-wide guidance: `.github/copilot-instructions.md`
+- Path-specific guidance: `.github/instructions/*.instructions.md`
+- Environment bootstrap workflow: `.github/workflows/copilot-setup-steps.yml`
+
+When assigning work to AI coding agents, prefer issues/prompts that include:
+
+1. Clear problem statement.
+2. Explicit acceptance criteria (including required tests).
+3. Expected files/areas to change.
+4. Any risk boundaries (security, prod critical paths, sensitive logic).
+
+Use PR review comments to iterate in batches so the agent can address full feedback in one pass.
+
 ## Repository Overview
 
 **Market Data Collector** is a high-performance, cross-platform market data collection system for real-time and historical market microstructure data. It's a production-ready .NET 9.0 solution with F# domain libraries, supporting multiple data providers (Interactive Brokers, Alpaca, NYSE, Polygon, StockSharp) and offering flexible storage options.
