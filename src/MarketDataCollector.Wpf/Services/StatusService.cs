@@ -10,6 +10,7 @@ namespace MarketDataCollector.Wpf.Services;
 /// <summary>
 /// Service for tracking and broadcasting application status.
 /// Implements singleton pattern for application-wide status management.
+/// Supports continuous live monitoring with stale data detection.
 /// </summary>
 public sealed class StatusService
 {
@@ -19,6 +20,9 @@ public sealed class StatusService
     private string _currentStatus = "Ready";
     private readonly object _lock = new();
     private string _baseUrl = "http://localhost:8080";
+    private CancellationTokenSource? _monitoringCts;
+    private DateTime? _lastSuccessfulUpdate;
+    private bool _isBackendReachable = true;
 
     /// <summary>
     /// Gets the singleton instance of the StatusService.
@@ -49,12 +53,132 @@ public sealed class StatusService
     }
 
     /// <summary>
+    /// Gets the timestamp of the last successful API status fetch.
+    /// </summary>
+    public DateTime? LastSuccessfulUpdate => _lastSuccessfulUpdate;
+
+    /// <summary>
+    /// Gets whether the backend service is currently reachable.
+    /// </summary>
+    public bool IsBackendReachable => _isBackendReachable;
+
+    /// <summary>
+    /// Gets how many seconds since the last successful update, or null if never updated.
+    /// </summary>
+    public double? SecondsSinceLastUpdate =>
+        _lastSuccessfulUpdate.HasValue
+            ? (DateTime.UtcNow - _lastSuccessfulUpdate.Value).TotalSeconds
+            : null;
+
+    /// <summary>
+    /// Gets whether the current data is considered stale (older than 10 seconds).
+    /// </summary>
+    public bool IsDataStale =>
+        !_lastSuccessfulUpdate.HasValue || (DateTime.UtcNow - _lastSuccessfulUpdate.Value).TotalSeconds > 10;
+
+    /// <summary>
+    /// Whether live monitoring is currently active.
+    /// </summary>
+    public bool IsMonitoring => _monitoringCts != null && !_monitoringCts.IsCancellationRequested;
+
+    /// <summary>
     /// Occurs when the status is changed.
     /// </summary>
     public event EventHandler<StatusChangedEventArgs>? StatusChanged;
 
+    /// <summary>
+    /// Occurs when a live status snapshot is received from the API.
+    /// </summary>
+    public event EventHandler<LiveStatusEventArgs>? LiveStatusReceived;
+
+    /// <summary>
+    /// Occurs when backend reachability changes.
+    /// </summary>
+    public event EventHandler<bool>? BackendReachabilityChanged;
+
     private StatusService()
     {
+    }
+
+    /// <summary>
+    /// Starts continuous live monitoring that polls /api/status every 2 seconds.
+    /// Raises LiveStatusReceived on each successful poll.
+    /// </summary>
+    /// <param name="intervalSeconds">Polling interval in seconds (default 2).</param>
+    public void StartLiveMonitoring(int intervalSeconds = 2)
+    {
+        StopLiveMonitoring();
+        _monitoringCts = new CancellationTokenSource();
+        _ = RunLiveMonitoringLoopAsync(intervalSeconds, _monitoringCts.Token);
+    }
+
+    /// <summary>
+    /// Stops live monitoring if currently active.
+    /// </summary>
+    public void StopLiveMonitoring()
+    {
+        _monitoringCts?.Cancel();
+        _monitoringCts?.Dispose();
+        _monitoringCts = null;
+    }
+
+    private async Task RunLiveMonitoringLoopAsync(int intervalSeconds, CancellationToken ct)
+    {
+        while (!ct.IsCancellationRequested)
+        {
+            try
+            {
+                var status = await GetStatusAsync(ct);
+
+                if (status != null)
+                {
+                    _lastSuccessfulUpdate = DateTime.UtcNow;
+                    SetBackendReachable(true);
+                    LiveStatusReceived?.Invoke(this, new LiveStatusEventArgs
+                    {
+                        Status = status,
+                        Timestamp = DateTime.UtcNow,
+                        IsStale = false
+                    });
+                }
+                else
+                {
+                    SetBackendReachable(false);
+                    LiveStatusReceived?.Invoke(this, new LiveStatusEventArgs
+                    {
+                        Status = null,
+                        Timestamp = DateTime.UtcNow,
+                        IsStale = IsDataStale
+                    });
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                break;
+            }
+            catch
+            {
+                SetBackendReachable(false);
+            }
+
+            try
+            {
+                await Task.Delay(TimeSpan.FromSeconds(intervalSeconds), ct);
+            }
+            catch (OperationCanceledException)
+            {
+                break;
+            }
+        }
+    }
+
+    private void SetBackendReachable(bool reachable)
+    {
+        if (_isBackendReachable != reachable)
+        {
+            _isBackendReachable = reachable;
+            BackendReachabilityChanged?.Invoke(this, reachable);
+        }
     }
 
     /// <summary>
@@ -396,4 +520,19 @@ internal sealed class ProviderStatusResponse
     public int ConnectionCount { get; set; }
     public DateTimeOffset? LastHeartbeat { get; set; }
     public List<string>? AvailableProviders { get; set; }
+}
+
+/// <summary>
+/// Event arguments for live status monitoring updates.
+/// </summary>
+public sealed class LiveStatusEventArgs : EventArgs
+{
+    /// <summary>The status snapshot (null if backend unreachable).</summary>
+    public SimpleStatus? Status { get; init; }
+
+    /// <summary>When this update was received.</summary>
+    public DateTime Timestamp { get; init; }
+
+    /// <summary>Whether the data is considered stale.</summary>
+    public bool IsStale { get; init; }
 }

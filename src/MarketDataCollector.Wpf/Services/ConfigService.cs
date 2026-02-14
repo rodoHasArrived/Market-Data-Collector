@@ -418,6 +418,56 @@ public sealed class ConfigService
         return Task.CompletedTask;
     }
 
+    /// <summary>
+    /// Gets the configured symbols from appsettings.json.
+    /// </summary>
+    /// <returns>Array of configured symbols, or empty array if none configured.</returns>
+    public async Task<SymbolConfigDto[]> GetConfiguredSymbolsAsync()
+    {
+        var config = await LoadConfigAsync() ?? new AppConfigDto();
+        return config.Symbols ?? Array.Empty<SymbolConfigDto>();
+    }
+
+    /// <summary>
+    /// Saves symbols to the configuration file.
+    /// </summary>
+    /// <param name="symbols">The symbols to save.</param>
+    public async Task SaveSymbolsAsync(SymbolConfigDto[] symbols)
+    {
+        var config = await LoadConfigAsync() ?? new AppConfigDto();
+        config.Symbols = symbols;
+        await SaveConfigAsync(config);
+    }
+
+    /// <summary>
+    /// Adds a symbol to the configuration.
+    /// </summary>
+    /// <param name="symbol">The symbol configuration to add.</param>
+    public async Task AddSymbolAsync(SymbolConfigDto symbol)
+    {
+        var config = await LoadConfigAsync() ?? new AppConfigDto();
+        var existing = config.Symbols?.ToList() ?? new List<SymbolConfigDto>();
+        if (existing.All(s => !string.Equals(s.Symbol, symbol.Symbol, StringComparison.OrdinalIgnoreCase)))
+        {
+            existing.Add(symbol);
+            config.Symbols = existing.ToArray();
+            await SaveConfigAsync(config);
+        }
+    }
+
+    /// <summary>
+    /// Removes a symbol from the configuration.
+    /// </summary>
+    /// <param name="symbolName">The symbol name to remove.</param>
+    public async Task RemoveSymbolAsync(string symbolName)
+    {
+        var config = await LoadConfigAsync() ?? new AppConfigDto();
+        var existing = config.Symbols?.ToList() ?? new List<SymbolConfigDto>();
+        existing.RemoveAll(s => string.Equals(s.Symbol, symbolName, StringComparison.OrdinalIgnoreCase));
+        config.Symbols = existing.ToArray();
+        await SaveConfigAsync(config);
+    }
+
     private async Task<AppConfigDto?> LoadConfigAsync()
     {
         try
