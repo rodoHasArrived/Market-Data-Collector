@@ -235,3 +235,22 @@ If headings are missing, the workflow still creates an entry with safe defaults 
   - https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/21998525615/job/63564824033#step:5:1 (regression)
 - **Status**: fixed structurally (commit TBD - changed API to eliminate nullable generic out parameter)
 - **Note**: This issue regressed multiple times (1e2ea1d, 5756479, 1802ea9, bf67ed5, e920c34) when using workarounds. The structural fix eliminates the problem at the API design level.
+
+---
+
+### AI-20260214-preflight-config-check-ci-failure
+- **ID**: AI-20260214-preflight-config-check-ci-failure
+- **Area**: CI/build/preflight
+- **Symptoms**: Build Observability workflow fails with error "FAILED preflight :: config/appsettings.json missing (run make setup-config)" even though the file is tracked in git. The preflight check fails in CI environments where the config file isn't needed.
+- **Root cause**: The preflight check in `build/python/diagnostics/preflight.py` unconditionally requires `config/appsettings.json` to exist. This is appropriate for local development (where the file is needed for running the application) but not for CI environments where only building is required. The config file is gitignored but was previously committed, causing confusion.
+- **Prevention checklist**:
+  - [ ] When adding preflight checks that validate local development setup, make them CI-aware
+  - [ ] Check for `CI=true` or `GITHUB_ACTIONS=true` environment variables to skip runtime-only checks
+  - [ ] Distinguish between build-time requirements (tools, SDKs) and runtime requirements (config, secrets)
+  - [ ] Test preflight checks both locally and in CI-like environments (with CI=true)
+- **Verification commands**:
+  - `CI=true python3 build/python/cli/buildctl.py build --configuration Release` (should pass preflight even without config file)
+  - `python3 -c "import os; os.environ['CI']='true'; from pathlib import Path; import sys; sys.path.insert(0,'build/python'); from diagnostics.preflight import run_preflight; print(run_preflight(Path('.')))"` (should return (True, []))
+- **Source issue**: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22014850305/job/63614949528#step:5:1
+- **Status**: fixed (commit 55d2827)
+- **Fixed in**: build/python/diagnostics/preflight.py - Added CI detection to skip config check when CI=true or GITHUB_ACTIONS=true
