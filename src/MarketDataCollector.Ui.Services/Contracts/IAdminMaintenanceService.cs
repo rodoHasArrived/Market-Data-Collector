@@ -28,7 +28,7 @@ public interface IAdminMaintenanceService
 
     // Retention policies
     Task<RetentionPoliciesResult> GetRetentionPoliciesAsync(CancellationToken ct = default);
-    Task<OperationResult> SaveRetentionPolicyAsync(RetentionPolicy policy, CancellationToken ct = default);
+    Task<OperationResult> SaveRetentionPolicyAsync(StorageRetentionPolicy policy, CancellationToken ct = default);
     Task<OperationResult> DeleteRetentionPolicyAsync(string policyId, CancellationToken ct = default);
     Task<RetentionApplyResult> ApplyRetentionPoliciesAsync(bool dryRun = false, CancellationToken ct = default);
 
