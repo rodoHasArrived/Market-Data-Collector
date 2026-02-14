@@ -1293,6 +1293,11 @@ Market-Data-Collector/
 │   │   │   ├── ConnectionRetryIntegrationTests.cs
 │   │   │   ├── EndpointStubDetectionTests.cs
 │   │   │   └── YahooFinancePcgPreferredIntegrationTests.cs
+│   │   ├── ProviderSdk/
+│   │   │   ├── CredentialValidatorTests.cs
+│   │   │   ├── DataSourceAttributeTests.cs
+│   │   │   ├── DataSourceRegistryTests.cs
+│   │   │   └── ExceptionTypeTests.cs
 │   │   ├── Serialization/
 │   │   │   └── HighPerformanceJsonTests.cs
 │   │   ├── Storage/
