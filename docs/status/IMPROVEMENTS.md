@@ -226,9 +226,9 @@ Exception chaining is sometimes lost (e.g., `ConfigurationException` with null i
 
 ## Theme B: Testing & Quality
 
-### B1. 🔄 Dropped Event Audit Trail (PARTIALLY COMPLETE)
+### B1. ✅ Dropped Event Audit Trail (COMPLETED)
 
-**Impact:** Medium-High | **Effort:** Low | **Priority:** P1 | **Status:** 🔄 PARTIAL
+**Impact:** Medium-High | **Effort:** Low | **Priority:** P1 | **Status:** ✅ DONE
 
 **Problem:** Events dropped due to backpressure were not tracked, making data quality assessment impossible.
 
@@ -237,16 +237,15 @@ Exception chaining is sometimes lost (e.g., `ConfigurationException` with null i
 - JSONL format with timestamp, event type, symbol, sequence, source, drop reason
 - Integrated with `EventPipeline`
 - Tracks drop counts per symbol via `ConcurrentDictionary`
-
-**Remaining Work:**
-- Add `/api/quality/drops` HTTP endpoint exposing `DroppedEventStatistics`
-- Add `/api/quality/drops/{symbol}` for per-symbol drill-down
-- Optionally trigger backfill for symbols with significant drops
+- **NEW**: `/api/quality/drops` HTTP endpoint exposing `DroppedEventStatistics`
+- **NEW**: `/api/quality/drops/{symbol}` for per-symbol drill-down
+- **NEW**: 10 comprehensive integration tests covering all scenarios
 
 **Files:**
 - `Application/Pipeline/DroppedEventAuditTrail.cs`
 - `Application/Pipeline/EventPipeline.cs`
-- `Ui.Shared/Endpoints/` (new endpoint needed)
+- `Ui.Shared/Endpoints/QualityDropsEndpoints.cs` (implemented)
+- `tests/.../EndpointTests/QualityDropsEndpointTests.cs` (10 tests)
 
 **ROADMAP:** Phase 3 (API Completeness)
 
@@ -420,22 +419,26 @@ DI registrations in `ServiceCompositionRoot.cs` (lines 525-529, 440-460) are dea
 
 ---
 
-### C4. 📝 Injectable Metrics Interface (OPEN)
+### C4. ✅ Injectable Metrics Interface (COMPLETED)
 
-**Impact:** Medium | **Effort:** Low | **Priority:** P1 | **Status:** 📝 OPEN
+**Impact:** Medium | **Effort:** Low | **Priority:** P1 | **Status:** ✅ DONE
 
-**Problem:** `EventPipeline` calls `Metrics.IncPublished()` and `Metrics.IncDropped()` via static methods. This prevents substitution in tests and couples pipeline to specific metrics backend.
+**Problem:** `EventPipeline` called `Metrics.IncPublished()` and `Metrics.IncDropped()` via static methods. This prevented substitution in tests and coupled pipeline to specific metrics backend.
 
-**Proposed Solution:**
-- Extract `IEventMetrics` interface: `IncPublished()`, `IncDropped()`, `IncConsumed()`, `IncRecovered()`
-- Inject `IEventMetrics` into `EventPipeline` via constructor
-- Default implementation delegates to existing `Metrics`/`PrometheusMetrics` static classes
-- Tests can supply no-op or counting implementation
+**Solution Implemented:**
+- Extracted `IEventMetrics` interface: `IncPublished()`, `IncDropped()`, `IncConsumed()`, `IncRecovered()`, etc.
+- Injected `IEventMetrics` into `EventPipeline` via constructor parameter
+- `DefaultEventMetrics` implementation delegates to existing `Metrics`/`PrometheusMetrics` static classes
+- ServiceCompositionRoot registers `IEventMetrics` as singleton
+- BackfillCoordinator now accepts and passes IEventMetrics to EventPipeline
+- **NEW**: 7 comprehensive tests for injectable metrics behavior
 
 **Files:**
-- `Application/Pipeline/EventPipeline.cs:32-34, 282, 312`
-- `Application/Monitoring/Metrics.cs`
-- `Application/Monitoring/PrometheusMetrics.cs`
+- `Application/Monitoring/IEventMetrics.cs` (interface + DefaultEventMetrics)
+- `Application/Pipeline/EventPipeline.cs:98` (accepts metrics parameter)
+- `Application/Http/BackfillCoordinator.cs:42, 155` (injection)
+- `Application/Composition/ServiceCompositionRoot.cs` (DI registration)
+- `tests/.../Pipeline/EventPipelineMetricsTests.cs` (7 tests)
 
 **Benefit:** Pipeline testable without side effects. Opens door to alternative metrics backends.
 
@@ -443,29 +446,33 @@ DI registrations in `ServiceCompositionRoot.cs` (lines 525-529, 440-460) are dea
 
 ---
 
-### C5. 📝 Consolidated Configuration Validation (OPEN)
+### C5. ✅ Consolidated Configuration Validation (COMPLETED)
 
-**Impact:** Medium | **Effort:** Low | **Priority:** P1 | **Status:** 📝 OPEN
+**Impact:** Medium | **Effort:** Low | **Priority:** P1 | **Status:** ✅ DONE
 
-**Problem:** Configuration validation spread across three classes with overlapping responsibilities:
+**Problem:** Configuration validation was spread across three classes with overlapping responsibilities:
 1. `ConfigValidationHelper` - field-level validation
 2. `ConfigValidatorCli` - CLI-oriented validation with output formatting
 3. `PreflightChecker` - pre-startup validation including connectivity
 
 No clear contract for what each validates or when it runs.
 
-**Proposed Solution:**
-- Define `IConfigValidator` with `Validate(AppConfig) -> ValidationResult[]`
-- Implement as pipeline: `FieldValidator` → `SemanticValidator` → `ConnectivityValidator`
-- `ConfigValidatorCli` becomes formatter over `IConfigValidator` results
-- `PreflightChecker` delegates to validator pipeline
+**Solution Implemented:**
+- Defined `IConfigValidator` with `Validate(AppConfig) -> ConfigValidationResult[]`
+- Implemented `ConfigValidationPipeline` with composable stages: FieldValidationStage → SemanticValidationStage
+- ConfigurationPipeline migrated to use ConfigValidationPipeline
+- ConfigurationService.ValidateConfig migrated to use ConfigValidationPipeline
+- ConfigValidationHelper methods marked obsolete with migration guidance
+- **NEW**: 11 comprehensive tests for validation pipeline including error cases, warnings, and edge conditions
 
 **Files:**
-- `Application/Config/ConfigValidationHelper.cs`
-- `Application/Config/ConfigValidatorCli.cs`
-- `Application/Services/PreflightChecker.cs`
+- `Application/Config/IConfigValidator.cs` (interface + pipeline + stages)
+- `Application/Config/ConfigurationPipeline.cs:224-231` (migrated)
+- `Application/Services/ConfigurationService.cs:327-346` (migrated)
+- `Application/Config/ConfigValidationHelper.cs` (marked obsolete)
+- `tests/.../Config/ConfigValidationPipelineTests.cs` (11 tests)
 
-**Benefit:** Single validation pipeline. Clear ordering. Easy to add new rules.
+**Benefit:** Single validation pipeline. Clear ordering. Easy to add new rules. Better testability.
 
 **ROADMAP:** Phase 2 (Architecture) - Item 2E
 
@@ -580,24 +587,26 @@ No clear contract for what each validates or when it runs.
 
 ---
 
-### D4. 📝 Quality Metrics API Endpoints (OPEN)
+### D4. ✅ Quality Metrics API Endpoints (COMPLETED)
 
-**Impact:** Medium | **Effort:** Low | **Priority:** P1 | **Status:** 📝 OPEN
+**Impact:** Medium | **Effort:** Low | **Priority:** P1 | **Status:** ✅ DONE
 
-**Problem:** `DataQualityMonitoringService` computes completeness, gap, anomaly metrics internally but quality endpoints remain stubs. `DroppedEventAuditTrail` has no HTTP exposure.
+**Problem:** `DataQualityMonitoringService` computes completeness, gap, anomaly metrics internally but quality endpoints remained stubs. `DroppedEventAuditTrail` had no HTTP exposure.
 
-**Proposed Solution:**
-- Implement `GET /api/quality/drops` returning `DroppedEventStatistics`
-- Implement `GET /api/quality/drops/{symbol}` for per-symbol drill-down
-- Wire `DataQualityMonitoringService` into existing quality endpoint stubs
-- Include drop rate in `/api/status` response
+**Solution Implemented:**
+- Implemented `GET /api/quality/drops` returning `DroppedEventStatistics`
+- Implemented `GET /api/quality/drops/{symbol}` for per-symbol drill-down
+- Endpoints handle case normalization (symbols converted to uppercase)
+- Graceful handling when audit trail is not configured
+- Wired into UiServer and UiEndpoints
+- **NEW**: Expanded from 2 baseline tests to 10 comprehensive integration tests
 
 **Files:**
-- `Ui.Shared/Endpoints/StubEndpoints.cs` (move routes to real handlers)
-- `Application/Pipeline/DroppedEventAuditTrail.cs`
-- `Application/Monitoring/DataQuality/DataQualityMonitoringService.cs`
+- `Ui.Shared/Endpoints/QualityDropsEndpoints.cs` (fully implemented)
+- `Application/Pipeline/DroppedEventAuditTrail.cs` (provides statistics)
+- `tests/.../EndpointTests/QualityDropsEndpointTests.cs` (10 tests)
 
-**Benefit:** Completes observability story. Dashboards can display data quality in real time.
+**Benefit:** Completes observability story. Dashboards can display data quality in real time. Endpoints tested for edge cases (case handling, special characters, empty symbols, missing audit trail).
 
 **ROADMAP:** Phase 3 (API Completeness)
 
