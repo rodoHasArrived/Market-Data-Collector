@@ -222,7 +222,25 @@ public sealed class ConfigurationPipeline : IAsyncDisposable
 
             if (options.ValidateConfig)
             {
-                isValid = ConfigValidationHelper.ValidateAndLog(config, validationErrors);
+                var validator = ConfigValidationPipeline.CreateDefault();
+                var results = validator.Validate(config);
+
+                foreach (var result in results)
+                {
+                    var message = $"{result.Property}: {result.Message}";
+                    if (result.IsError)
+                    {
+                        validationErrors.Add(message);
+                        _log.Error("Configuration validation error: {Message}", message);
+                    }
+                    else if (result.Severity == ConfigValidationSeverity.Warning)
+                    {
+                        warnings.Add(message);
+                        _log.Warning("Configuration validation warning: {Message}", message);
+                    }
+                }
+
+                isValid = !results.Any(r => r.IsError);
 
                 if (!isValid)
                 {

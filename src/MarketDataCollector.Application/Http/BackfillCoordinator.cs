@@ -152,7 +152,7 @@ public sealed class BackfillCoordinator : IDisposable
 
             var policy = new JsonlStoragePolicy(storageOpt);
             await using var sink = new JsonlStorageSink(storageOpt, policy);
-            await using var pipeline = new EventPipeline(sink, capacity: 20_000, enablePeriodicFlush: false);
+            await using var pipeline = new EventPipeline(sink, capacity: 20_000, enablePeriodicFlush: false, metrics: _metrics);
 
             // Keep pipeline counters scoped per run
             _metrics.Reset();
