@@ -1,42 +1,51 @@
 # TODO Tracking
 
 > Auto-generated TODO documentation. Do not edit manually.
-> Last updated: 2026-02-14T09:32:06.480890+00:00
+> Last updated: 2026-02-14T09:37:14.000066+00:00
 
 ## Summary
 
 | Metric | Count |
 |--------|-------|
-| **Total Items** | 17 |
+| **Total Items** | 20 |
 | **Linked to Issues** | 0 |
-| **Untracked** | 17 |
+| **Untracked** | 20 |
 
 ### By Type
 
 | Type | Count | Description |
 |------|-------|-------------|
-| `NOTE` | 17 | Important notes and documentation |
+| `NOTE` | 20 | Important notes and documentation |
 
 ### By Directory
 
 | Directory | Count |
 |-----------|-------|
 | `tests/` | 14 |
-| `src/` | 2 |
+| `src/` | 5 |
 | `.github/` | 1 |
 
 ## Unassigned & Untracked
 
-17 items have no assignee and no issue tracking:
+20 items have no assignee and no issue tracking:
 
 Consider assigning ownership or creating tracking issues for these items.
 
 ## All Items
 
-### NOTE (17)
+### NOTE (20)
 
 - [ ] `.github/workflows/desktop-builds.yml:9`
   > UWP/WinUI 3 application has been removed. WPF is the sole desktop client.
+
+- [ ] `src/MarketDataCollector.Ui.Services/Services/AdminMaintenanceModels.cs:411`
+  > SelfTest*, ErrorCodes*, ShowConfig*, QuickCheck* models are defined in DiagnosticsService.cs to avoid duplication and maintain single source of truth
+
+- [ ] `src/MarketDataCollector.Ui.Services/Services/DataCompletenessService.cs:631`
+  > SymbolCompleteness is defined in AdvancedAnalyticsModels.cs to avoid duplication
+
+- [ ] `src/MarketDataCollector.Ui.Services/Services/ProviderHealthService.cs:519`
+  > ProviderComparison is defined in AdvancedAnalyticsModels.cs to avoid duplication
 
 - [ ] `src/MarketDataCollector.Ui.Shared/Endpoints/ConfigEndpoints.cs:138`
   > Status endpoint is handled by StatusEndpoints.MapStatusEndpoints() which provides live status via StatusEndpointHandlers rather than loading from file
