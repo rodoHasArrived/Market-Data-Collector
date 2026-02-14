@@ -1,6 +1,7 @@
 using MarketDataCollector.Application.Exceptions;
 using MarketDataCollector.Application.ResultTypes;
 using FluentAssertions;
+using Xunit;
 
 namespace MarketDataCollector.Tests.Application.Services;
 
