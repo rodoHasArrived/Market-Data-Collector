@@ -232,14 +232,13 @@ public sealed class BackfillWorkerService : IDisposable
                     if (retryAttempt < MaxRetryAttemptsPerRequest)
                     {
                         retryAttempt++;
-
-                        // Prefer typed RetryAfter from the exception, fall back to backoff
-                        var delay = rle.RetryAfter ?? CalculateBackoff(retryAttempt, RateLimitBaseDelay, RateLimitMaxDelay);
+                        var providerDelay = rle.RetryAfter;
+                        var delay = providerDelay ?? CalculateBackoff(retryAttempt, RateLimitBaseDelay, RateLimitMaxDelay);
 
                         _log.Information(
                             "Rate limited for {Symbol} via {Provider}, retrying in {Delay}ms via {DelaySource} (attempt {Attempt}/{Max})",
                             request.Symbol, request.AssignedProvider, delay.TotalMilliseconds,
-                            rle.RetryAfter.HasValue ? "Retry-After header" : "exponential backoff",
+                            providerDelay.HasValue ? "provider-specified cooldown" : "calculated exponential backoff",
                             retryAttempt, MaxRetryAttemptsPerRequest);
                         await Task.Delay(delay, ct).ConfigureAwait(false);
                         continue;
@@ -256,7 +255,10 @@ public sealed class BackfillWorkerService : IDisposable
                 }
                 catch (Exception ex)
                 {
-                    var isRateLimited = ex.Message.Contains("429") ||
+                    var retryAfter = TryExtractRetryAfter(ex);
+                    var isRateLimited = retryAfter.HasValue ||
+                                        IsHttp429(ex) ||
+                                        ex.Message.Contains("429") ||
                                         ex.Message.Contains("rate limit", StringComparison.OrdinalIgnoreCase);
 
                     if (isRateLimited && request.AssignedProvider != null)
@@ -267,15 +269,12 @@ public sealed class BackfillWorkerService : IDisposable
                         if (retryAttempt < MaxRetryAttemptsPerRequest)
                         {
                             retryAttempt++;
-
-                            // Legacy: extract Retry-After from exception message text
-                            var retryAfter = TryExtractRetryAfter(ex);
                             var delay = retryAfter ?? CalculateBackoff(retryAttempt, RateLimitBaseDelay, RateLimitMaxDelay);
 
                             _log.Information(
                                 "Rate limited for {Symbol} via {Provider}, retrying in {Delay}ms via {DelaySource} (attempt {Attempt}/{Max})",
                                 request.Symbol, request.AssignedProvider, delay.TotalMilliseconds,
-                                retryAfter.HasValue ? "Retry-After header" : "exponential backoff",
+                                retryAfter.HasValue ? "provider-specified cooldown" : "calculated exponential backoff",
                                 retryAttempt, MaxRetryAttemptsPerRequest);
                             await Task.Delay(delay, ct).ConfigureAwait(false);
                             continue;
@@ -323,9 +322,14 @@ public sealed class BackfillWorkerService : IDisposable
         var current = ex;
         while (current != null)
         {
+            if (TryExtractRetryAfterFromExceptionData(current) is { } retryAfterFromData)
+                return retryAfterFromData;
+
             if (current is HttpRequestException httpEx)
             {
-                // .NET 7+ exposes HttpRequestError; check InnerException for HttpResponseMessage
+                if (TryExtractRetryAfterFromExceptionData(httpEx) is { } retryAfterFromHttpData)
+                    return retryAfterFromHttpData;
+
                 // Some providers embed the header value in the message
                 var retryAfter = TryParseRetryAfterFromMessage(httpEx.Message);
                 if (retryAfter.HasValue)
@@ -346,6 +350,97 @@ public sealed class BackfillWorkerService : IDisposable
         return null;
     }
 
+    private static TimeSpan? TryExtractRetryAfterFromExceptionData(Exception ex)
+    {
+        if (ex.Data.Count == 0)
+            return null;
+
+        foreach (System.Collections.DictionaryEntry entry in ex.Data)
+        {
+            if (entry.Key is string key &&
+                (key.Equals("Retry-After", StringComparison.OrdinalIgnoreCase) ||
+                 key.Equals("RetryAfter", StringComparison.OrdinalIgnoreCase)) &&
+                entry.Value is not null)
+            {
+                var parsed = TryParseRetryAfterValue(entry.Value.ToString());
+                if (parsed.HasValue)
+                    return parsed;
+            }
+
+            if (entry.Value is HttpResponseMessage response)
+            {
+                var parsed = TryParseRetryAfterFromResponse(response);
+                if (parsed.HasValue)
+                    return parsed;
+            }
+        }
+
+        return null;
+    }
+
+    private static TimeSpan? TryParseRetryAfterFromResponse(HttpResponseMessage response)
+    {
+        if (response.Headers.RetryAfter?.Delta is { } delta)
+            return CapRetryAfter(delta);
+
+        if (response.Headers.RetryAfter?.Date is { } date)
+        {
+            var delay = date - DateTimeOffset.UtcNow;
+            if (delay > TimeSpan.Zero)
+                return CapRetryAfter(delay);
+        }
+
+        if (response.Headers.TryGetValues("Retry-After", out var values))
+        {
+            var headerValue = values.FirstOrDefault();
+            if (!string.IsNullOrWhiteSpace(headerValue))
+                return TryParseRetryAfterValue(headerValue);
+        }
+
+        return null;
+    }
+
+    private static TimeSpan? TryParseRetryAfterValue(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return null;
+
+        if (int.TryParse(value, out var seconds) && seconds > 0)
+            return CapRetryAfter(TimeSpan.FromSeconds(seconds));
+
+        if (DateTimeOffset.TryParse(value, out var retryDate))
+        {
+            var delay = retryDate - DateTimeOffset.UtcNow;
+            if (delay > TimeSpan.Zero)
+                return CapRetryAfter(delay);
+        }
+
+        return null;
+    }
+
+    private static TimeSpan CapRetryAfter(TimeSpan delay)
+    {
+        var cap = TimeSpan.FromMinutes(5);
+        return delay > cap ? cap : delay;
+    }
+
+    private static bool IsHttp429(Exception ex)
+    {
+        var current = ex;
+        while (current != null)
+        {
+            if (current is HttpRequestException httpRequestException &&
+                httpRequestException.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+            {
+                return true;
+            }
+
+            current = current.InnerException;
+        }
+
+        return false;
+    }
+
     /// <summary>
     /// Attempts to parse a Retry-After value from a message string.
     /// Supports delta-seconds and HTTP-date formats.
@@ -363,25 +458,7 @@ public sealed class BackfillWorkerService : IDisposable
 
         var value = message[valueStart..valueEnd].Trim().TrimEnd('\r');
 
-        // Try delta-seconds first (e.g., "120")
-        if (int.TryParse(value, out var seconds) && seconds > 0)
-        {
-            // Cap at 5 minutes to avoid very long waits
-            return TimeSpan.FromSeconds(Math.Min(seconds, 300));
-        }
-
-        // Try HTTP-date format (e.g., "Thu, 01 Dec 2024 16:00:00 GMT")
-        if (DateTimeOffset.TryParse(value, out var retryDate))
-        {
-            var delay = retryDate - DateTimeOffset.UtcNow;
-            if (delay > TimeSpan.Zero)
-            {
-                // Cap at 5 minutes
-                return delay > TimeSpan.FromMinutes(5) ? TimeSpan.FromMinutes(5) : delay;
-            }
-        }
-
-        return null;
+        return TryParseRetryAfterValue(value);
     }
 
     /// <summary>
