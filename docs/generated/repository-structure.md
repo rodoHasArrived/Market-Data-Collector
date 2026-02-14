@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-14 07:12:13 UTC
+> Auto-generated on 2026-02-14 09:08:18 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -16,6 +16,9 @@ Market-Data-Collector/
 │   │       └── action.yml
 │   ├── agents/
 │   │   └── documentation-agent.md
+│   ├── instructions/
+│   │   ├── docs.instructions.md
+│   │   └── dotnet-tests.instructions.md
 │   ├── ISSUE_TEMPLATE/
 │   │   ├── .gitkeep
 │   │   ├── bug_report.yml
@@ -39,6 +42,7 @@ Market-Data-Collector/
 │   │   ├── benchmark.yml
 │   │   ├── build-observability.yml
 │   │   ├── code-quality.yml
+│   │   ├── copilot-setup-steps.yml
 │   │   ├── desktop-builds.yml
 │   │   ├── docker.yml
 │   │   ├── documentation.yml
@@ -60,6 +64,7 @@ Market-Data-Collector/
 │   │   ├── update-diagrams.yml
 │   │   ├── update-uml-diagrams.yml
 │   │   └── validate-workflows.yml
+│   ├── copilot-instructions.md
 │   ├── dependabot.yml
 │   ├── labeler.yml
 │   ├── labels.yml

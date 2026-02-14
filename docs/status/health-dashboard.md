@@ -1,7 +1,7 @@
 # Documentation Health Dashboard
 
 > Auto-generated documentation health report. Do not edit manually.
-> Last updated: 2026-02-14T07:12:18.213958+00:00
+> Last updated: 2026-02-14T09:08:22.766947+00:00
 
 ## Overall Health Score
 
@@ -14,10 +14,10 @@
 
 | Metric | Value |
 |--------|-------|
-| Total documentation files | 146 |
-| Total lines | 58,535 |
-| Average file size (lines) | 400.9 |
-| Orphaned files | 45 |
+| Total documentation files | 149 |
+| Total lines | 58,671 |
+| Average file size (lines) | 393.8 |
+| Orphaned files | 47 |
 | Files without headings | 1 |
 | Stale files (>90 days) | 0 |
 | TODO/FIXME markers | 138 |
@@ -48,6 +48,8 @@ These files are not linked from any other Markdown file in the repository:
 - `.github/PULL_REQUEST_TEMPLATE.md`
 - `.github/QUICKSTART.md`
 - `.github/WORKFLOW_IMPROVEMENTS.md`
+- `.github/instructions/docs.instructions.md`
+- `.github/instructions/dotnet-tests.instructions.md`
 - `.github/pull_request_template_desktop.md`
 - `.github/workflows/AI_SYNC_FIX_SUMMARY.md`
 - `.github/workflows/SKIPPED_JOBS_EXPLAINED.md`
@@ -63,9 +65,7 @@ These files are not linked from any other Markdown file in the repository:
 - `docs/archived/IMPROVEMENTS_2026-02.md`
 - `docs/archived/REDESIGN_IMPROVEMENTS.md`
 - `docs/archived/REPOSITORY_REORGANIZATION_PLAN.md`
-- `docs/archived/STRUCTURAL_IMPROVEMENTS_2026-02.md`
-- `docs/archived/desktop-ui-alternatives-evaluation.md`
-- ... and 25 more
+- ... and 27 more
 
 ## Trend
 
@@ -73,7 +73,7 @@ These files are not linked from any other Markdown file in the repository:
 
 | Date | Score | Files | Orphans | Stale |
 |------|-------|-------|---------|-------|
-| 2026-02-14 | 87 | 146 | 45 | 0 |
+| 2026-02-14 | 87 | 149 | 47 | 0 |
 
 ---
 

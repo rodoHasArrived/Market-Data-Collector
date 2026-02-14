@@ -170,6 +170,9 @@ Market-Data-Collector/
 │   │       └── action.yml
 │   ├── agents/
 │   │   └── documentation-agent.md
+│   ├── instructions/
+│   │   ├── docs.instructions.md
+│   │   └── dotnet-tests.instructions.md
 │   ├── ISSUE_TEMPLATE/
 │   │   ├── .gitkeep
 │   │   ├── bug_report.yml
@@ -193,6 +196,7 @@ Market-Data-Collector/
 │   │   ├── benchmark.yml
 │   │   ├── build-observability.yml
 │   │   ├── code-quality.yml
+│   │   ├── copilot-setup-steps.yml
 │   │   ├── desktop-builds.yml
 │   │   ├── docker.yml
 │   │   ├── documentation.yml
@@ -214,6 +218,7 @@ Market-Data-Collector/
 │   │   ├── update-diagrams.yml
 │   │   ├── update-uml-diagrams.yml
 │   │   └── validate-workflows.yml
+│   ├── copilot-instructions.md
 │   ├── dependabot.yml
 │   ├── labeler.yml
 │   ├── labels.yml

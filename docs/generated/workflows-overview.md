@@ -1,6 +1,6 @@
 # GitHub Workflows Overview
 
-> Auto-generated on 2026-02-14 07:12:13 UTC
+> Auto-generated on 2026-02-14 09:08:18 UTC
 
 This document provides an overview of all GitHub Actions workflows in the repository.
 
@@ -12,6 +12,7 @@ This document provides an overview of all GitHub Actions workflows in the reposi
 | Build Observability | `build-observability.yml` | push, PR, manual |
 | Build and Release | `dotnet-desktop.yml` | push, PR, manual |
 | Code Quality | `code-quality.yml` | push, PR, manual |
+| Copilot Setup Steps | `copilot-setup-steps.yml` | manual |
 | Desktop Builds | `desktop-builds.yml` | push, PR, manual |
 | Docker | `docker.yml` | push, PR, manual |
 | Documentation Automation | `documentation.yml` | push, PR, manual, scheduled |
@@ -51,7 +52,7 @@ This document provides an overview of all GitHub Actions workflows in the reposi
 
 ## Workflow Count
 
-- **Total workflows:** 21
+- **Total workflows:** 22
 
 ---
 
