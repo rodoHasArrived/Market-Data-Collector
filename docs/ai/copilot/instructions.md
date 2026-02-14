@@ -416,6 +416,7 @@ Market-Data-Collector/
 │   │   ├── onboarding-flow.dot
 │   │   ├── onboarding-flow.png
 │   │   ├── onboarding-flow.svg
+│   │   ├── project-dependencies.dot
 │   │   ├── provider-architecture.dot
 │   │   ├── provider-architecture.png
 │   │   ├── provider-architecture.svg
@@ -867,11 +868,14 @@ Market-Data-Collector/
 │   │   │   ├── ISourceRegistry.cs
 │   │   │   ├── IStorageCatalogService.cs
 │   │   │   ├── IStoragePolicy.cs
-│   │   │   └── IStorageSink.cs
+│   │   │   ├── IStorageSink.cs
+│   │   │   └── ISymbolRegistryService.cs
 │   │   ├── Maintenance/
 │   │   │   ├── ArchiveMaintenanceModels.cs
 │   │   │   ├── ArchiveMaintenanceScheduleManager.cs
+│   │   │   ├── IArchiveMaintenanceScheduleManager.cs
 │   │   │   ├── IArchiveMaintenanceService.cs
+│   │   │   ├── IMaintenanceExecutionHistory.cs
 │   │   │   └── ScheduledArchiveMaintenanceService.cs
 │   │   ├── Packaging/
 │   │   │   ├── PackageManifest.cs

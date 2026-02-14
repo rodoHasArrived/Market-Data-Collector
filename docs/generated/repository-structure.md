@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-13 22:55:29 UTC
+> Auto-generated on 2026-02-14 03:05:54 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -280,6 +280,7 @@ Market-Data-Collector/
 │   │   ├── onboarding-flow.dot
 │   │   ├── onboarding-flow.png
 │   │   ├── onboarding-flow.svg
+│   │   ├── project-dependencies.dot
 │   │   ├── provider-architecture.dot
 │   │   ├── provider-architecture.png
 │   │   ├── provider-architecture.svg
@@ -731,11 +732,14 @@ Market-Data-Collector/
 │   │   │   ├── ISourceRegistry.cs
 │   │   │   ├── IStorageCatalogService.cs
 │   │   │   ├── IStoragePolicy.cs
-│   │   │   └── IStorageSink.cs
+│   │   │   ├── IStorageSink.cs
+│   │   │   └── ISymbolRegistryService.cs
 │   │   ├── Maintenance/
 │   │   │   ├── ArchiveMaintenanceModels.cs
 │   │   │   ├── ArchiveMaintenanceScheduleManager.cs
+│   │   │   ├── IArchiveMaintenanceScheduleManager.cs
 │   │   │   ├── IArchiveMaintenanceService.cs
+│   │   │   ├── IMaintenanceExecutionHistory.cs
 │   │   │   └── ScheduledArchiveMaintenanceService.cs
 │   │   ├── Packaging/
 │   │   │   ├── PackageManifest.cs
