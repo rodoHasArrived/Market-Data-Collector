@@ -1,7 +1,7 @@
 # Market Data Collector - Improvement Tracking
 
-**Version:** 1.6.1  
-**Last Updated:** 2026-02-13  
+**Version:** 1.6.1
+**Last Updated:** 2026-02-14
 **Status:** Active tracking document
 
 This document consolidates **functional improvements** (features, reliability, UX) and **structural improvements** (architecture, modularity, code quality) into a single source of truth for tracking. For phased execution timeline, see [`ROADMAP.md`](ROADMAP.md).
@@ -33,18 +33,18 @@ This document consolidates **functional improvements** (features, reliability, U
 
 | Status | Count | Items |
 |--------|-------|-------|
-| ✅ **Completed** | 14 | A1, A2, A4, A5, A6, D1, D2, D3, D5, D6, E1, E2, G1, G3 |
+| ✅ **Completed** | 16 | A1, A2, A4, A5, A6, A7, C6, D1, D2, D3, D5, D6, E1, E2, G1, G3 |
 | 🔄 **Partially Complete** | 4 | A3, B1, E3, F1 |
-| 📝 **Open** | 15 | A7, B2-B5, C1-C7, D4, D7, F2, F3, G2 |
+| 📝 **Open** | 13 | B2-B5, C1-C5, C7, D4, D7, F2, F3, G2 |
 | **Total** | 33 | All improvement items |
 
 ### By Theme
 
 | Theme | Completed | Partial | Open | Total |
 |-------|-----------|---------|------|-------|
-| A: Reliability & Resilience | 6 | 1 | 1 | 8 |
+| A: Reliability & Resilience | 7 | 1 | 0 | 8 |
 | B: Testing & Quality | 0 | 1 | 4 | 5 |
-| C: Architecture & Modularity | 0 | 0 | 7 | 7 |
+| C: Architecture & Modularity | 1 | 0 | 6 | 7 |
 | D: API & Integration | 4 | 0 | 2 | 6 |
 | E: Performance & Scalability | 2 | 1 | 0 | 3 |
 | F: User Experience | 0 | 1 | 2 | 3 |
@@ -52,21 +52,21 @@ This document consolidates **functional improvements** (features, reliability, U
 
 ### Portfolio Health Snapshot
 
-- **Completion ratio:** 42.4% complete (14/33), 12.1% partial (4/33), 45.5% open (15/33).
-- **Highest delivery risk:** Theme C (0/7 completed) because architecture debt blocks testability and provider evolution.
-- **Fastest near-term value:** Finish D4 + B1 remainder to expose quality metrics in API and dashboard.
-- **Recommended sprint split:** 40% architecture debt (C1/C2/C4/C5), 35% test foundation (B2/B3), 25% API/UX polish (D4/F2).
+- **Completion ratio:** 48.5% complete (16/33), 12.1% partial (4/33), 39.4% open (13/33).
+- **Highest delivery risk:** Theme C (1/7 completed) because architecture debt blocks testability and provider evolution.
+- **Fastest near-term value:** B2 endpoint integration tests to increase API confidence.
+- **Recommended sprint split:** 45% architecture debt (C1/C2/C3), 35% test foundation (B2/B3), 20% API/UX polish (D7/F2).
 
-### Next 6 Sprint Backlog (Recommended)
+### Next Sprint Backlog (Recommended)
 
-| Sprint | Primary Goals | Exit Criteria |
-|--------|---------------|---------------|
-| 1 | C4, C5 | `EventPipeline` no longer depends on static metrics; config validation pipeline in place |
-| 2 | D4, B1 remainder | `/api/quality/drops` and `/api/quality/drops/{symbol}` are live and documented |
-| 3 | C6, A7 | Multi-sink fan-out merged; error handling convention documented and enforced in startup path |
-| 4 | B2 tranche 1 | Integration tests cover health/status/config endpoints and negative cases |
-| 5 | C1/C2 spike | Provider registration and runtime composition unified under DI |
-| 6 | B3 tranche 1 | Provider tests added for Polygon + StockSharp parsing/subscription workflows |
+| Sprint | Primary Goals | Exit Criteria | Status |
+|--------|---------------|---------------|--------|
+| 1 | C4, C5 | `EventPipeline` no longer depends on static metrics; config validation pipeline in place | ✅ Done |
+| 2 | D4, B1 remainder | `/api/quality/drops` and `/api/quality/drops/{symbol}` are live and documented | ✅ Done |
+| 3 | C6, A7 | Multi-sink fan-out merged; error handling convention documented and enforced in startup path | ✅ Done |
+| 4 | B2 tranche 1 | Integration tests cover health/status/config endpoints and negative cases | 📝 Next |
+| 5 | C1/C2 spike | Provider registration and runtime composition unified under DI | 📝 Pending |
+| 6 | B3 tranche 1 | Provider tests added for Polygon + StockSharp parsing/subscription workflows | 📝 Pending |
 
 ---
 
@@ -197,28 +197,34 @@ This document consolidates **functional improvements** (features, reliability, U
 
 ---
 
-### A7. 📝 Standardize Error Handling Strategy (OPEN)
+### A7. ✅ Standardize Error Handling Strategy (COMPLETED)
 
-**Impact:** Medium | **Effort:** Medium | **Priority:** P2 | **Status:** 📝 OPEN
+**Impact:** Medium | **Effort:** Medium | **Priority:** P2 | **Status:** ✅ DONE
 
 **Problem:** Codebase uses three concurrent error handling approaches inconsistently:
 1. **Exceptions** - 9 custom exception types in `Core/Exceptions/`
 2. **Result<T, TError>** - functional result type in `Application/Results/Result.cs`
-3. **Environment.Exit(1)** - hard exits in `Program.cs` (lines 493-502)
+3. **Hard-coded `return 1`** - all error paths in `Program.cs` returned exit code 1 regardless of error category
 
-Exception chaining is sometimes lost (e.g., `ConfigurationException` with null inner exception).
-
-**Proposed Solution:**
-- Adopt single convention: exceptions for unrecoverable errors, `Result<T>` for expected failures
-- Document convention in `CLAUDE.md` coding conventions
-- Replace `Environment.Exit(1)` with throwing `ConfigurationException` and catching at top-level
-- Fix exception chaining to always pass original exception as `innerException`
+**Solution Implemented:**
+- Added `ErrorCodeExtensions.FromException(Exception)` method that maps domain exceptions and standard .NET exceptions to the correct `ErrorCode` enum value
+- Replaced all hard-coded `return 1` in `Program.cs` with category-accurate exit codes via `ErrorCode.ToExitCode()`:
+  - Configuration errors → exit code 3 (via `ErrorCode.ConfigurationInvalid`)
+  - File permission errors → exit code 7 (via `ErrorCode.FileAccessDenied`)
+  - Schema validation errors → exit code 6 (via `ErrorCode.SchemaMismatch`)
+  - Backfill failures → exit code 5 (via `ErrorCode.ProviderError`)
+  - Connection failures → exit code 4 (via `ErrorCode.ConnectionFailed`)
+  - Fatal catch-all → dynamically mapped from exception type
+- Connection failure handler now returns error code instead of re-throwing
+- All error log messages include `ErrorCode` and `ExitCode` for diagnostics
+- **NEW**: 22 comprehensive tests covering exception-to-ErrorCode mapping, exit code ranges, category names, and transient error identification
 
 **Files:**
-- `Program.cs:493-502`
-- `Application/Results/Result.cs`
-- `Core/Exceptions/*.cs`
-- `Application/Config/ConfigurationService.cs`
+- `Application/Results/ErrorCode.cs` (`FromException` method added)
+- `Program.cs` (6 exit code locations updated)
+- `tests/.../Application/Services/ErrorCodeMappingTests.cs` (22 tests)
+
+**Benefit:** Process exit codes now reflect the actual error category, enabling operators and CI/CD to distinguish configuration errors (3), connection failures (4), provider errors (5), schema issues (6), and storage problems (7) from generic failures.
 
 **ROADMAP:** Phase 2 (Architecture)
 
@@ -478,24 +484,27 @@ No clear contract for what each validates or when it runs.
 
 ---
 
-### C6. 📝 Composite Storage Sink Plugin Architecture (OPEN)
+### C6. ✅ Composite Storage Sink Plugin Architecture (COMPLETED)
 
-**Impact:** Medium | **Effort:** Low | **Priority:** P1 | **Status:** 📝 OPEN
+**Impact:** Medium | **Effort:** Low | **Priority:** P1 | **Status:** ✅ DONE
 
 **Problem:** `EventPipeline` accepts single `IStorageSink`. Multi-sink scenarios (JSONL + Parquet simultaneously, or JSONL + analytics sink) require external composition. No built-in fan-out.
 
-**Proposed Solution:**
-- Create `CompositeSink : IStorageSink` wrapping `IReadOnlyList<IStorageSink>`
-- Fan out `AppendAsync` calls to all sinks
-- Register sinks in DI as `IEnumerable<IStorageSink>`; compose via `CompositeSink`
-- Optionally support per-sink filtering (e.g., only trades to Parquet)
+**Solution Implemented:**
+- `CompositeSink : IStorageSink` wraps `IReadOnlyList<IStorageSink>` with per-sink fault isolation
+- `AppendAsync` fans out to all sinks; individual sink failures are logged but don't block other sinks
+- `FlushAsync` collects exceptions and throws `AggregateException` for visibility
+- `DisposeAsync` gracefully disposes all sinks, logging per-sink failures
+- `ServiceCompositionRoot` conditionally creates `CompositeSink` when `EnableParquetSink` is enabled
+- Default mode uses single `JsonlStorageSink`; Parquet mode creates `CompositeSink` wrapping both
+- **8 comprehensive tests** covering fan-out, fault isolation, flush aggregation, disposal, and constructor guards
 
 **Files:**
-- New: `Storage/Sinks/CompositeSink.cs`
-- `Application/Composition/ServiceCompositionRoot.cs:525-529`
-- `Application/Pipeline/EventPipeline.cs:33`
+- `Storage/Sinks/CompositeSink.cs` (87 lines)
+- `Application/Composition/ServiceCompositionRoot.cs:636-666` (conditional composition)
+- `tests/.../Storage/CompositeSinkTests.cs` (8 tests)
 
-**Benefit:** Multi-format storage without pipeline changes. New sinks (CSV, database, cloud) can be added independently.
+**Benefit:** Multi-format storage without pipeline changes. New sinks (CSV, database, cloud) can be added independently. Per-sink fault isolation prevents one failing sink from blocking others.
 
 **ROADMAP:** Phase 2 (Architecture) - Item 2F
 
@@ -938,7 +947,7 @@ No clear contract for what each validates or when it runs.
 
 | Metric | Current | Target | Phase |
 |--------|---------|--------|-------|
-| Completed Improvements | 14/33 | 33/33 | All |
+| Completed Improvements | 16/33 | 33/33 | All |
 | Test Coverage | ~40% | 80% | Phase 1-3 |
 | API Implementation | 136/269 | 269/269 | Phase 3 |
 | Duplicate Code LOC | ~10,000 | <1,000 | Phase 4 |
@@ -994,9 +1003,10 @@ Each item should not be marked complete until all gates are met:
 
 ### Critical Path (Shortest Path to Production Readiness Lift)
 
-1. C4 → C5 → D4/B1 completion
-2. B2 → B3 (provider confidence)
-3. C1/C2 (composition + provider extensibility)
+1. ~~C4 → C5 → D4/B1 completion~~ ✅ Done
+2. ~~C6, A7~~ ✅ Done
+3. B2 → B3 (provider confidence)
+4. C1/C2 (composition + provider extensibility)
 
 ---
 
@@ -1054,7 +1064,7 @@ See [`archived/INDEX.md`](../archived/INDEX.md) for context on archived document
 
 ---
 
-**Last Updated:** 2026-02-13  
-**Maintainer:** Project Team  
-**Status:** ✅ Active tracking document  
+**Last Updated:** 2026-02-14
+**Maintainer:** Project Team
+**Status:** ✅ Active tracking document
 **Next Review:** Weekly engineering sync (or immediately after any status change)
