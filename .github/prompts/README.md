@@ -142,7 +142,8 @@ Auto-generated prompts are created via the Prompt Generation workflow. To add su
 ## Related Resources
 
 - [CLAUDE.md](../../CLAUDE.md) - Main project instructions for AI assistants
-- [copilot-instructions.md](../../docs/ai/copilot/instructions.md) - GitHub Copilot configuration
+- [copilot instructions (extended)](../../docs/ai/copilot/instructions.md) - Detailed GitHub Copilot guidance
+- [repository copilot-instructions](../copilot-instructions.md) - Native repository-wide Copilot coding-agent instructions
 - [agents/](../agents/) - AI agent configurations
 
 ---
