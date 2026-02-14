@@ -40,14 +40,17 @@ public sealed class AnomalyDetectorTests : IDisposable
     {
         var baseTime = DateTimeOffset.UtcNow;
 
-        // Build up sample history
-        for (int i = 0; i < 10; i++)
+        // Build up sample history with natural price variation
+        // Varying prices between 449.80 and 450.20 (0.40 range)
+        var prices = new[] { 449.90m, 450.05m, 449.95m, 450.10m, 450.00m, 
+                            449.85m, 450.15m, 449.92m, 450.08m, 450.02m };
+        for (int i = 0; i < prices.Length; i++)
         {
-            _sut.ProcessTrade("SPY", baseTime.AddSeconds(i), 450.00m + i * 0.01m, 1000m);
+            _sut.ProcessTrade("SPY", baseTime.AddSeconds(i), prices[i], 1000m);
         }
 
-        // Small price change - should not be an anomaly
-        var anomaly = _sut.ProcessTrade("SPY", baseTime.AddSeconds(11), 450.15m, 1000m);
+        // Price within normal range - should not be an anomaly
+        var anomaly = _sut.ProcessTrade("SPY", baseTime.AddSeconds(11), 450.05m, 1000m);
 
         anomaly.Should().BeNull();
     }

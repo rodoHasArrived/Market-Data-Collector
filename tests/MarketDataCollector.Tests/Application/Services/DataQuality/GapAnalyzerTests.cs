@@ -170,7 +170,7 @@ public sealed class GapAnalyzerTests : IDisposable
         _sut.RecordEvent("SPY", "trade", baseTime.AddSeconds(90)); // ~1.5 min gap
 
         detected.Should().NotBeNull();
-        detected!.Severity.Should().Be(GapSeverity.Minor); // < 1 minute
+        detected!.Severity.Should().Be(GapSeverity.Moderate); // 1.5 minutes is Moderate (< 5 minutes)
     }
 
     [Fact]
