@@ -33,29 +33,29 @@ This document consolidates **functional improvements** (features, reliability, U
 
 | Status | Count | Items |
 |--------|-------|-------|
-| ✅ **Completed** | 16 | A1, A2, A4, A5, A6, A7, C6, D1, D2, D3, D5, D6, E1, E2, G1, G3 |
-| 🔄 **Partially Complete** | 4 | A3, B1, E3, F1 |
-| 📝 **Open** | 13 | B2-B5, C1-C5, C7, D4, D7, F2, F3, G2 |
+| ✅ **Completed** | 21 | A1, A2, A3, A4, A5, A6, A7, B1, B2, B5, C6, D1, D2, D3, D5, D6, E1, E2, F2, G1, G3 |
+| 🔄 **Partially Complete** | 3 | B4, E3, F1 |
+| 📝 **Open** | 9 | B3, C1-C5, C7, D7, F3, G2 |
 | **Total** | 33 | All improvement items |
 
 ### By Theme
 
 | Theme | Completed | Partial | Open | Total |
 |-------|-----------|---------|------|-------|
-| A: Reliability & Resilience | 7 | 1 | 0 | 8 |
-| B: Testing & Quality | 0 | 1 | 4 | 5 |
+| A: Reliability & Resilience | 8 | 0 | 0 | 8 |
+| B: Testing & Quality | 3 | 1 | 1 | 5 |
 | C: Architecture & Modularity | 1 | 0 | 6 | 7 |
 | D: API & Integration | 4 | 0 | 2 | 6 |
 | E: Performance & Scalability | 2 | 1 | 0 | 3 |
-| F: User Experience | 0 | 1 | 2 | 3 |
+| F: User Experience | 1 | 1 | 1 | 3 |
 | G: Operations & Monitoring | 2 | 0 | 1 | 3 |
 
 ### Portfolio Health Snapshot
 
-- **Completion ratio:** 48.5% complete (16/33), 12.1% partial (4/33), 39.4% open (13/33).
+- **Completion ratio:** 63.6% complete (21/33), 9.1% partial (3/33), 27.3% open (9/33).
 - **Highest delivery risk:** Theme C (1/7 completed) because architecture debt blocks testability and provider evolution.
-- **Fastest near-term value:** B2 endpoint integration tests to increase API confidence.
-- **Recommended sprint split:** 45% architecture debt (C1/C2/C3), 35% test foundation (B2/B3), 20% API/UX polish (D7/F2).
+- **Fastest near-term value:** B3 infrastructure provider tests to increase provider confidence.
+- **Recommended sprint split:** 55% architecture debt (C1/C2/C3), 30% test foundation (B3), 15% API/UX polish (D7/F3).
 
 ### Next Sprint Backlog (Recommended)
 
@@ -64,7 +64,7 @@ This document consolidates **functional improvements** (features, reliability, U
 | 1 | C4, C5 | `EventPipeline` no longer depends on static metrics; config validation pipeline in place | ✅ Done |
 | 2 | D4, B1 remainder | `/api/quality/drops` and `/api/quality/drops/{symbol}` are live and documented | ✅ Done |
 | 3 | C6, A7 | Multi-sink fan-out merged; error handling convention documented and enforced in startup path | ✅ Done |
-| 4 | B2 tranche 1 | Integration tests cover health/status/config endpoints and negative cases | 📝 Next |
+| 4 | B2 tranche 1 | Integration tests cover health/status/config endpoints and negative cases | ✅ Done |
 | 5 | C1/C2 spike | Provider registration and runtime composition unified under DI | 📝 Pending |
 | 6 | B3 tranche 1 | Provider tests added for Polygon + StockSharp parsing/subscription workflows | 📝 Pending |
 
@@ -116,24 +116,26 @@ This document consolidates **functional improvements** (features, reliability, U
 
 ---
 
-### A3. 🔄 Backfill Rate Limit Exponential Backoff (PARTIALLY COMPLETE)
+### A3. ✅ Backfill Rate Limit Exponential Backoff (COMPLETED)
 
-**Impact:** High | **Effort:** Low | **Priority:** P0 | **Status:** 🔄 PARTIAL
+**Impact:** High | **Effort:** Low | **Priority:** P0 | **Status:** ✅ DONE
 
 **Problem:** Backfill workers retry rate-limited requests without proper backoff, wasting time and API quota.
 
 **Solution Implemented:**
 - Exponential backoff (2s base, 60s cap) with jitter in `BackfillWorkerService`
 - Retry budget enforced at 3 attempts per request
-- Currently detects rate limits from exception messages
-
-**Remaining Work:**
-- Parse `Retry-After` response header from HTTP 429 responses
-- Honor provider-specified cooldown periods instead of calculated backoff
-- Log the source of delay decision (provider-specified vs. calculated)
+- `RateLimitException` includes `RetryAfter` property for provider-specified cooldown periods
+- `Retry-After` response header parsing implemented in `ProviderHttpUtilities` and `SharedResiliencePolicies`
+- `ProviderRateLimitTracker` tracks per-provider rate limit state with sliding window `RateLimiter`
+- Providers honor `Retry-After` values from HTTP 429 responses
 
 **Files:**
 - `Infrastructure/Providers/Historical/Queue/BackfillWorkerService.cs`
+- `Core/Exceptions/RateLimitException.cs`
+- `ProviderSdk/ProviderHttpUtilities.cs`
+- `Infrastructure/Http/SharedResiliencePolicies.cs`
+- `Infrastructure/Providers/Core/ProviderRateLimitTracker.cs`
 
 **ROADMAP:** Phase 1 (Core Stability)
 
@@ -257,22 +259,36 @@ This document consolidates **functional improvements** (features, reliability, U
 
 ---
 
-### B2. 📝 HTTP Endpoint Integration Tests (OPEN)
+### B2. ✅ HTTP Endpoint Integration Tests (COMPLETED)
 
-**Impact:** High | **Effort:** Medium | **Priority:** P1 | **Status:** 📝 OPEN
+**Impact:** High | **Effort:** Medium | **Priority:** P1 | **Status:** ✅ DONE
 
-**Problem:** The HTTP API layer (136 implemented endpoints) has no integration tests using `WebApplicationFactory<T>`. Only `EndpointStubDetectionTests.cs` validates route format.
+**Problem:** The HTTP API layer (136 implemented endpoints) had no integration tests using `WebApplicationFactory<T>`. Only `EndpointStubDetectionTests.cs` validated route format.
 
-**Proposed Solution:**
-- Use `Microsoft.AspNetCore.Mvc.Testing` package
-- Create `EndpointIntegrationTestBase` with shared `WebApplicationFactory<T>` setup
-- Write tests for core endpoints: status, health, config, backfill, providers
-- Assert status codes, content types, response schema shapes
-- Include negative cases (invalid input, missing config, auth failures)
+**Solution Implemented:**
+- `EndpointTestFixture` base class with shared `WebApplicationFactory<T>` setup
+- 16 endpoint test files covering core API surface
+- Tests assert status codes, content types, response schema shapes
+- Negative cases (invalid input, missing config, auth failures) included
+- Coverage spans status, health, config, backfill, providers, quality, SLA, maintenance, packaging, and more
 
 **Files:**
-- New: `tests/MarketDataCollector.Tests/Integration/EndpointTests/`
-- Existing: `tests/MarketDataCollector.Tests/Integration/EndpointStubDetectionTests.cs`
+- `tests/MarketDataCollector.Tests/Integration/EndpointTests/EndpointTestFixture.cs`
+- `tests/MarketDataCollector.Tests/Integration/EndpointTests/StatusEndpointTests.cs`
+- `tests/MarketDataCollector.Tests/Integration/EndpointTests/HealthEndpointTests.cs`
+- `tests/MarketDataCollector.Tests/Integration/EndpointTests/ConfigEndpointTests.cs`
+- `tests/MarketDataCollector.Tests/Integration/EndpointTests/BackfillEndpointTests.cs`
+- `tests/MarketDataCollector.Tests/Integration/EndpointTests/ProviderEndpointTests.cs`
+- `tests/MarketDataCollector.Tests/Integration/EndpointTests/QualityEndpointTests.cs`
+- `tests/MarketDataCollector.Tests/Integration/EndpointTests/QualityDropsEndpointTests.cs`
+- `tests/MarketDataCollector.Tests/Integration/EndpointTests/SlaEndpointTests.cs`
+- `tests/MarketDataCollector.Tests/Integration/EndpointTests/MaintenanceEndpointTests.cs`
+- `tests/MarketDataCollector.Tests/Integration/EndpointTests/PackagingEndpointTests.cs`
+- `tests/MarketDataCollector.Tests/Integration/EndpointTests/FailoverEndpointTests.cs`
+- `tests/MarketDataCollector.Tests/Integration/EndpointTests/SymbolEndpointTests.cs`
+- `tests/MarketDataCollector.Tests/Integration/EndpointTests/SubscriptionEndpointTests.cs`
+- `tests/MarketDataCollector.Tests/Integration/EndpointTests/LiveDataEndpointTests.cs`
+- `tests/MarketDataCollector.Tests/Integration/EndpointTests/DiagnosticsEndpointTests.cs`
 
 **ROADMAP:** Phase 1 (Core Stability) - Item 1A
 
@@ -298,39 +314,52 @@ This document consolidates **functional improvements** (features, reliability, U
 
 ---
 
-### B4. 📝 Application Service Tests (OPEN)
+### B4. 🔄 Application Service Tests (PARTIALLY COMPLETE)
 
-**Impact:** Medium-High | **Effort:** Medium | **Priority:** P2 | **Status:** 📝 OPEN
+**Impact:** Medium-High | **Effort:** Medium | **Priority:** P2 | **Status:** 🔄 PARTIAL
 
-**Problem:** 19 application services have zero test coverage, including critical ones like `TradingCalendar` and data quality services.
+**Problem:** 19 application services had zero test coverage, including critical ones like `TradingCalendar` and data quality services.
 
-**Proposed Solution:**
-- Priority 1: `TradingCalendar` (affects backfill scheduling, gap detection)
-- Priority 2: Data quality services (`GapAnalyzer`, `AnomalyDetector`, `CompletenessScoreCalculator`, `SequenceErrorTracker`)
+**Solution Implemented:**
+- Priority 1: `TradingCalendar` — 50+ comprehensive tests covering US market hours, holidays, half-days, pre/post market sessions
+- Priority 2: Data quality services — 62 tests across 4 services:
+  - `GapAnalyzerTests` (14 tests): gap detection, severity classification, independent tracking, config
+  - `AnomalyDetectorTests` (14 tests): price spikes, crossed markets, volume anomalies, multi-symbol
+  - `CompletenessScoreCalculatorTests` (14 tests): event recording, scoring, date/symbol filtering
+  - `SequenceErrorTrackerTests` (20 tests): gap/duplicate/out-of-order detection, summaries, statistics
+
+**Remaining Work:**
 - Priority 3: Configuration services (`ConfigurationWizard`, `AutoConfigurationService`, `ConnectivityTestService`)
 - Priority 4: Subscription services (10 files)
 
 **Files:**
-- New: `tests/MarketDataCollector.Tests/Application/Services/`
+- `tests/MarketDataCollector.Tests/Application/Services/TradingCalendarTests.cs` (50+ tests)
+- `tests/MarketDataCollector.Tests/Application/Services/DataQuality/GapAnalyzerTests.cs` (14 tests)
+- `tests/MarketDataCollector.Tests/Application/Services/DataQuality/AnomalyDetectorTests.cs` (14 tests)
+- `tests/MarketDataCollector.Tests/Application/Services/DataQuality/CompletenessScoreCalculatorTests.cs` (14 tests)
+- `tests/MarketDataCollector.Tests/Application/Services/DataQuality/SequenceErrorTrackerTests.cs` (20 tests)
 
 **ROADMAP:** Phase 1 (Core Stability) - Item 1C
 
 ---
 
-### B5. 📝 Provider SDK Tests (OPEN)
+### B5. ✅ Provider SDK Tests (COMPLETED)
 
-**Impact:** Medium | **Effort:** Low | **Priority:** P2 | **Status:** 📝 OPEN
+**Impact:** Medium | **Effort:** Low | **Priority:** P2 | **Status:** ✅ DONE
 
-**Problem:** Provider SDK classes (`DataSourceRegistry`, `CredentialValidator`) used by all providers have minimal test coverage.
+**Problem:** Provider SDK classes (`DataSourceRegistry`, `CredentialValidator`) used by all providers had minimal test coverage.
 
-**Proposed Solution:**
-- Test `AppConfig` and `ValidatedConfig` models
-- Test `DataSourceRegistry` and `CredentialValidator`
-- Test exception types (9 custom exceptions) for proper serialization
+**Solution Implemented:**
+- `DataSourceRegistryTests` (14 tests): assembly discovery, deduplication, metadata validation, service registration
+- `CredentialValidatorTests` (16 tests): API key validation, key-secret pairs, throw helpers, env var retrieval
+- `ExceptionTypeTests` (24 tests): all 8 custom exception types tested for properties, hierarchy, sealed checks
+- `DataSourceAttributeTests` (14 tests): attribute construction, metadata mapping, IsRealtime/IsHistorical properties
 
 **Files:**
-- New: `tests/MarketDataCollector.Tests/Core/`
-- New: `tests/MarketDataCollector.Tests/ProviderSdk/`
+- `tests/MarketDataCollector.Tests/ProviderSdk/DataSourceRegistryTests.cs` (14 tests)
+- `tests/MarketDataCollector.Tests/ProviderSdk/CredentialValidatorTests.cs` (16 tests)
+- `tests/MarketDataCollector.Tests/ProviderSdk/ExceptionTypeTests.cs` (24 tests)
+- `tests/MarketDataCollector.Tests/ProviderSdk/DataSourceAttributeTests.cs` (14 tests)
 
 **ROADMAP:** Phase 1 (Core Stability) - Item 1D
 
@@ -779,17 +808,18 @@ No clear contract for what each validates or when it runs.
 
 ---
 
-### F2. 📝 Contextual CLI Help System (OPEN)
+### F2. ✅ Contextual CLI Help System (COMPLETED)
 
-**Impact:** Low-Medium | **Effort:** Low | **Priority:** P2 | **Status:** 📝 OPEN
+**Impact:** Low-Medium | **Effort:** Low | **Priority:** P2 | **Status:** ✅ DONE
 
-**Problem:** `HelpCommand` (249 lines) displays wall of flags. Users must read full output to find what they need. No contextual help, no `--help backfill` sub-command support.
+**Problem:** `HelpCommand` displayed wall of flags. Users had to read full output to find what they need. No contextual help, no `--help backfill` sub-command support.
 
-**Proposed Solution:**
-- Support `--help <topic>` for focused help: `--help backfill`, `--help symbols`, `--help config`, `--help storage`
-- Each topic shows 2-3 line description, available flags, 1-2 copy-paste examples
+**Solution Implemented:**
+- `--help <topic>` support for focused help across 7 topics
+- Available topics: `backfill`, `symbols`, `config`, `storage`, `providers`, `packaging`, `diagnostics`
+- Each topic shows description, available flags, and copy-paste examples
 - Default `--help` (no topic) shows summary with topic list
-- Draw from existing comprehensive documentation in `docs/HELP.md`
+- Topic content drawn from existing `docs/HELP.md` documentation
 
 **Files:**
 - `Application/Commands/HelpCommand.cs`
@@ -892,8 +922,8 @@ No clear contract for what each validates or when it runs.
 | Priority | Items | Description |
 |----------|-------|-------------|
 | **P0** | A1-A4 | Critical reliability fixes - ALL DONE ✅ |
-| **P1** | A3, A5, B1-B2, C1-C2, C4-C6, D4, G1 | High impact, low-medium effort |
-| **P2** | A6-A7, B3-B5, C3, D5-D6, E1, F2-F3, G2-G3 | Medium impact or higher effort |
+| **P1** | A3, A5, B1-B2, C1-C2, C4-C6, D4, G1 | High impact, low-medium effort - A3, B2 DONE ✅ |
+| **P2** | A6-A7, B3-B5, C3, D5-D6, E1, F2-F3, G2-G3 | Medium impact or higher effort - B5, F2 DONE ✅ |
 | **P3** | C7, D7, E3, F1 | Lower priority or high effort |
 
 ### Recommended Execution Order
@@ -947,7 +977,7 @@ No clear contract for what each validates or when it runs.
 
 | Metric | Current | Target | Phase |
 |--------|---------|--------|-------|
-| Completed Improvements | 16/33 | 33/33 | All |
+| Completed Improvements | 21/33 | 33/33 | All |
 | Test Coverage | ~40% | 80% | Phase 1-3 |
 | API Implementation | 136/269 | 269/269 | Phase 3 |
 | Duplicate Code LOC | ~10,000 | <1,000 | Phase 4 |
