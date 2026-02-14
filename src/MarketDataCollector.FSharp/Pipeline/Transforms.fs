@@ -213,6 +213,161 @@ let bufferByTime (windowMs: int) (events: MarketEvent seq) : MarketEvent list se
         ts.ToUnixTimeMilliseconds() / int64 windowMs)
     |> Seq.map (fun (_, group) -> Seq.toList group)
 
+// ==================== Advanced Transforms ====================
+
+/// Result of computing a simple moving average over trade prices.
+type MovingAveragePoint = {
+    Timestamp: DateTimeOffset
+    Symbol: string
+    Price: decimal
+    Sma: decimal
+}
+
+/// Compute Simple Moving Average (SMA) over trade prices.
+[<CompiledName("SimpleMovingAverage")>]
+let simpleMovingAverage (windowSize: int) (trades: TradeEvent seq) : MovingAveragePoint seq =
+    trades
+    |> Seq.windowed windowSize
+    |> Seq.map (fun window ->
+        let latest = Array.last window
+        let avg = window |> Array.averageBy (fun t -> float t.Price) |> decimal
+        { Timestamp = latest.Timestamp
+          Symbol = latest.Symbol
+          Price = latest.Price
+          Sma = avg })
+
+/// Compute Exponential Moving Average (EMA) over trade prices.
+[<CompiledName("ExponentialMovingAverage")>]
+let exponentialMovingAverage (period: int) (trades: TradeEvent seq) : MovingAveragePoint seq =
+    let multiplier = 2.0m / (decimal period + 1.0m)
+    let tradeList = trades |> Seq.toArray
+
+    if tradeList.Length < period then Seq.empty
+    else
+        let seedAvg =
+            tradeList.[0..period-1]
+            |> Array.averageBy (fun t -> float t.Price)
+            |> decimal
+
+        tradeList.[period..]
+        |> Array.scan (fun ema trade ->
+            (trade.Price - ema) * multiplier + ema
+        ) seedAvg
+        |> Array.skip 1
+        |> Array.mapi (fun i ema ->
+            let trade = tradeList.[period + i]
+            { Timestamp = trade.Timestamp
+              Symbol = trade.Symbol
+              Price = trade.Price
+              Sma = ema })
+        |> Array.toSeq
+
+/// Rate of change result.
+type RateOfChangePoint = {
+    Timestamp: DateTimeOffset
+    Symbol: string
+    Price: decimal
+    RateOfChange: decimal
+}
+
+/// Compute Rate of Change (ROC) as percentage change over N periods.
+[<CompiledName("RateOfChange")>]
+let rateOfChange (periods: int) (trades: TradeEvent seq) : RateOfChangePoint seq =
+    let tradeArr = trades |> Seq.toArray
+
+    if tradeArr.Length <= periods then Seq.empty
+    else
+        tradeArr
+        |> Array.mapi (fun i trade ->
+            if i < periods then None
+            else
+                let prevPrice = tradeArr.[i - periods].Price
+                if prevPrice = 0m then None
+                else
+                    Some { Timestamp = trade.Timestamp
+                           Symbol = trade.Symbol
+                           Price = trade.Price
+                           RateOfChange = (trade.Price - prevPrice) / prevPrice * 100m })
+        |> Array.choose id
+        |> Array.toSeq
+
+/// Gap detection result.
+type TimeGap = {
+    Symbol: string option
+    GapStart: DateTimeOffset
+    GapEnd: DateTimeOffset
+    DurationMs: float
+}
+
+/// Detect time gaps in the event stream exceeding a threshold.
+[<CompiledName("DetectGaps")>]
+let detectGaps (thresholdMs: float) (events: MarketEvent seq) : TimeGap seq =
+    events
+    |> Seq.pairwise
+    |> Seq.choose (fun (prev, curr) ->
+        let prevTs = MarketEvent.getTimestamp prev
+        let currTs = MarketEvent.getTimestamp curr
+        let gap = (currTs - prevTs).TotalMilliseconds
+
+        if gap > thresholdMs then
+            Some { Symbol = MarketEvent.getSymbol curr
+                   GapStart = prevTs
+                   GapEnd = currTs
+                   DurationMs = gap }
+        else
+            None)
+
+/// Throttle events to at most one per specified millisecond interval per symbol.
+[<CompiledName("ThrottleBySymbol")>]
+let throttleBySymbol (intervalMs: int) (events: MarketEvent seq) : MarketEvent seq =
+    let lastEmitted = System.Collections.Generic.Dictionary<string, DateTimeOffset>()
+
+    events
+    |> Seq.filter (fun event ->
+        let symbol =
+            match MarketEvent.getSymbol event with
+            | Some s -> s
+            | None -> "__heartbeat__"
+        let ts = MarketEvent.getTimestamp event
+
+        match lastEmitted.TryGetValue(symbol) with
+        | true, lastTs when (ts - lastTs).TotalMilliseconds < float intervalMs ->
+            false
+        | _ ->
+            lastEmitted.[symbol] <- ts
+            true)
+
+/// Normalize trade prices to percentage returns from the first trade.
+[<CompiledName("NormalizePrices")>]
+let normalizePrices (trades: TradeEvent seq) : (TradeEvent * decimal) seq =
+    let mutable firstPrice = None
+
+    trades
+    |> Seq.map (fun trade ->
+        match firstPrice with
+        | None ->
+            firstPrice <- Some trade.Price
+            (trade, 0m)
+        | Some fp when fp > 0m ->
+            let pctReturn = (trade.Price - fp) / fp * 100m
+            (trade, pctReturn)
+        | _ ->
+            (trade, 0m))
+
+/// Lag events by a specified number of positions (useful for lead/lag analysis).
+[<CompiledName("Lag")>]
+let lag (n: int) (events: MarketEvent seq) : (MarketEvent * MarketEvent option) seq =
+    let buffer = System.Collections.Generic.Queue<MarketEvent>()
+
+    events
+    |> Seq.map (fun event ->
+        buffer.Enqueue(event)
+        if buffer.Count > n then
+            let lagged = buffer.Dequeue()
+            (event, Some lagged)
+        else
+            (event, None))
+
 /// Pipeline composition operator.
 let (|>>) (events: MarketEvent seq) (transform: MarketEvent seq -> MarketEvent seq) : MarketEvent seq =
     transform events
@@ -258,3 +413,32 @@ module TransformPipeline =
     [<CompiledName("Dedupe")>]
     let dedupe (pipeline: TransformPipeline) =
         add deduplicate pipeline
+
+    /// Add throttling per symbol.
+    [<CompiledName("Throttle")>]
+    let throttle (intervalMs: int) (pipeline: TransformPipeline) =
+        add (throttleBySymbol intervalMs) pipeline
+
+    /// Add gap detection filter (keeps events, detects gaps as side effect).
+    [<CompiledName("FilterGaps")>]
+    let filterGaps (thresholdMs: float) (onGap: TimeGap -> unit) (pipeline: TransformPipeline) =
+        let transform (events: MarketEvent seq) =
+            events
+            |> Seq.pairwise
+            |> Seq.collect (fun (prev, curr) ->
+                let prevTs = MarketEvent.getTimestamp prev
+                let currTs = MarketEvent.getTimestamp curr
+                let gap = (currTs - prevTs).TotalMilliseconds
+
+                if gap > thresholdMs then
+                    onGap { Symbol = MarketEvent.getSymbol curr
+                            GapStart = prevTs
+                            GapEnd = currTs
+                            DurationMs = gap }
+                seq { curr })
+        add transform pipeline
+
+    /// Add sampling transform.
+    [<CompiledName("Sample")>]
+    let sample (intervalMs: int) (pipeline: TransformPipeline) =
+        add (sampleAtInterval intervalMs) pipeline

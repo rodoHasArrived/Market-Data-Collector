@@ -340,9 +340,9 @@ Longer-term goals for expanding the system.
 | # | Item | Priority | Notes |
 |---|------|----------|-------|
 | 7.1 | Cloud/object storage sinks (S3, Azure Blob, GCS) | P3 | Currently only local filesystem |
-| 7.2 | Extended export formats (CSV, Arrow/Feather, HDF5) | P3 | JSONL and Parquet exist |
-| 7.3 | Additional pipeline transforms | P3 | |
-| 7.4 | Formal OpenAPI/Swagger specification | P3 | Basic integration exists |
+| 7.2 | Extended export formats (CSV, Arrow/Feather, HDF5) | P3 | ✅ CSV, Arrow/Feather implemented; HDF5 pending |
+| 7.3 | Additional pipeline transforms | P3 | ✅ SMA, EMA, ROC, gap detection, throttling, normalization, lag |
+| 7.4 | Formal OpenAPI/Swagger specification | P3 | ✅ Swagger UI at /swagger with tagged endpoint groups |
 | 7.5 | Event-driven architecture (message bus for downstream consumers) | P3 | |
 | 7.6 | Multi-tenancy support | P3 | |
 | 7.7 | Web dashboard enhancements (real-time charts, interactive controls) | P3 | SSE exists (IMPROVEMENTS #4) |
@@ -377,9 +377,9 @@ Establish clear patterns and remove ambiguity in project organization.
 |---|------|----------|-------------|-----------|--------|
 | 8B.1 | **Create repository organization guide** — Document file naming conventions, project structure patterns, and where new code should go | P1 | See `docs/development/repository-organization-guide.md` (to be created) | 6 | ✅ Done |
 | 8B.2 | **Resolve remaining ambiguous class names** — Fix `ConfigStore` and `BackfillCoordinator` duplicates (Phase 6D.2, 6D.3) | P1 | Two classes with same name in different projects cause confusion | 3 | ✅ Done (wrappers verified) |
-| 8B.3 | **Standardize service interfaces** — Ensure all `IXxxService` interfaces follow consistent naming and are in appropriate projects | P1 | Mix of `IConfigService`, `ConfigurationService`, and `IConfigurationService` patterns | 4 | |
+| 8B.3 | **Standardize service interfaces** — Ensure all `IXxxService` interfaces follow consistent naming and are in appropriate projects | P1 | Mix of `IConfigService`, `ConfigurationService`, and `IConfigurationService` patterns | 4 | ✅ Extracted embedded interfaces to dedicated files |
 | 8B.4 | **Organize test files to mirror source structure** — Ensure test file locations exactly match source file locations | P2 | Some test files don't mirror their source counterparts | 6 | |
-| 8B.5 | **Create project dependency diagram** — Visual diagram showing allowed and forbidden dependencies between projects | P2 | Helps prevent architectural violations | 4 | |
+| 8B.5 | **Create project dependency diagram** — Visual diagram showing allowed and forbidden dependencies between projects | P2 | Helps prevent architectural violations | 4 | ✅ DOT diagram at docs/diagrams/project-dependencies.dot |
 | 8B.6 | **Document assembly boundaries** — Clear guide on which types belong in each project (Contracts, Core, Application, Infrastructure) | P2 | Prevent future namespace confusion | 4 | |
 
 ### 8C. Code Organization Cleanup (P2 — Quality of Life)

@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.OpenApi.Models;
 
 namespace MarketDataCollector;
 
@@ -56,8 +57,64 @@ public sealed class UiServer : IAsyncDisposable
         var compositionOptions = CompositionOptions.WebDashboard with { ConfigPath = configPath };
         builder.Services.AddMarketDataServices(compositionOptions);
 
+        // Register OpenAPI/Swagger services
+        builder.Services.AddEndpointsApiExplorer();
+        builder.Services.AddSwaggerGen(options =>
+        {
+            options.SwaggerDoc("v1", new OpenApiInfo
+            {
+                Title = "Market Data Collector API",
+                Version = "v1",
+                Description = "REST API for the Market Data Collector system. Provides endpoints for real-time data streaming, " +
+                              "historical backfill, storage management, provider configuration, and data quality monitoring.",
+                Contact = new OpenApiContact
+                {
+                    Name = "MarketDataCollector Team"
+                },
+                License = new OpenApiLicense
+                {
+                    Name = "MIT"
+                }
+            });
+
+            options.TagActionsBy(api =>
+            {
+                var path = api.RelativePath ?? string.Empty;
+                if (path.StartsWith("api/symbols")) return ["Symbols"];
+                if (path.StartsWith("api/storage/quality")) return ["Storage Quality"];
+                if (path.StartsWith("api/storage")) return ["Storage"];
+                if (path.StartsWith("api/config")) return ["Configuration"];
+                if (path.StartsWith("api/backfill")) return ["Backfill"];
+                if (path.StartsWith("api/providers")) return ["Providers"];
+                if (path.StartsWith("api/quality")) return ["Data Quality"];
+                if (path.StartsWith("api/sla")) return ["SLA"];
+                if (path.StartsWith("api/maintenance")) return ["Maintenance"];
+                if (path.StartsWith("api/packaging")) return ["Packaging"];
+                if (path.StartsWith("api/failover")) return ["Failover"];
+                if (path.StartsWith("api/export")) return ["Export"];
+                if (path.StartsWith("api/diagnostics")) return ["Diagnostics"];
+                if (path.StartsWith("api/admin")) return ["Admin"];
+                if (path.StartsWith("api/live")) return ["Live Data"];
+                if (path.StartsWith("api/replay")) return ["Replay"];
+                if (path.StartsWith("api/lean")) return ["Lean Integration"];
+                if (path.StartsWith("api/messaging")) return ["Messaging"];
+                if (path.StartsWith("api/analytics")) return ["Analytics"];
+                if (path.StartsWith("api/historical")) return ["Historical"];
+                return ["General"];
+            });
+        });
+
         _app = builder.Build();
         _logger = _app.Services.GetRequiredService<ILoggerFactory>().CreateLogger<UiServer>();
+
+        // Enable Swagger middleware
+        _app.UseSwagger();
+        _app.UseSwaggerUI(options =>
+        {
+            options.SwaggerEndpoint("/swagger/v1/swagger.json", "Market Data Collector API v1");
+            options.RoutePrefix = "swagger";
+            options.DocumentTitle = "Market Data Collector - API Documentation";
+        });
 
         ConfigureRoutes();
     }

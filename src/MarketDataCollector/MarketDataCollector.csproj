@@ -64,6 +64,8 @@
 
     <!-- ASP.NET Core - Web Dashboard Support -->
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Swashbuckle.AspNetCore" />
 
     <!-- QuantConnect Lean Engine Integration (host-level) -->
     <PackageReference Include="QuantConnect.Lean" />
