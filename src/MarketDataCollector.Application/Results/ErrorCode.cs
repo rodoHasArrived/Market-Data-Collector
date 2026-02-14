@@ -262,6 +262,40 @@ public static class ErrorCodeExtensions
     }
 
     /// <summary>
+    /// Maps a domain exception to the most appropriate <see cref="ErrorCode"/>.
+    /// Uses the exception type hierarchy from <c>MarketDataCollector.Application.Exceptions</c>
+    /// to produce category-accurate exit codes via <see cref="ToExitCode"/>.
+    /// </summary>
+    public static ErrorCode FromException(Exception ex)
+    {
+        return ex switch
+        {
+            OperationCanceledException => ErrorCode.Cancelled,
+            TimeoutException => ErrorCode.Timeout,
+
+            // Domain exception types (MarketDataCollector.Application.Exceptions namespace)
+            _ when ex.GetType().Name == "RateLimitException" => ErrorCode.RateLimitExceeded,
+            _ when ex.GetType().Name == "ConfigurationException" => ErrorCode.ConfigurationInvalid,
+            _ when ex.GetType().Name == "ValidationException" => ErrorCode.ValidationFailed,
+            _ when ex.GetType().Name == "ConnectionException" => ErrorCode.ConnectionFailed,
+            _ when ex.GetType().Name == "StorageException" => ErrorCode.StorageError,
+            _ when ex.GetType().Name == "DataProviderException" => ErrorCode.ProviderError,
+            _ when ex.GetType().Name == "SequenceValidationException" => ErrorCode.SequenceGap,
+            _ when ex.GetType().Name == "OperationTimeoutException" => ErrorCode.Timeout,
+
+            // Standard .NET exceptions
+            UnauthorizedAccessException => ErrorCode.FileAccessDenied,
+            IOException => ErrorCode.StorageError,
+            System.Text.Json.JsonException => ErrorCode.ConfigurationInvalid,
+            ArgumentException => ErrorCode.ValidationFailed,
+            NotSupportedException => ErrorCode.NotSupported,
+            InvalidOperationException => ErrorCode.InvalidOperation,
+
+            _ => ErrorCode.Unknown
+        };
+    }
+
+    /// <summary>
     /// Gets the suggested HTTP status code for an error code
     /// </summary>
     public static int ToHttpStatusCode(this ErrorCode code)
