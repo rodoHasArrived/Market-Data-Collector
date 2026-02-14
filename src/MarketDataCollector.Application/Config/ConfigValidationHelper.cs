@@ -7,8 +7,20 @@ namespace MarketDataCollector.Application.Config;
 /// FluentValidation-based configuration validator.
 /// Inspired by best practices from StockSharp and QuantConnect LEAN projects.
 /// </summary>
+/// <remarks>
+/// This class is being phased out in favor of <see cref="ConfigValidationPipeline"/>.
+/// Use ConfigValidationPipeline.CreateDefault() for new code.
+/// </remarks>
 public static class ConfigValidationHelper
 {
+    /// <summary>
+    /// Validates configuration and logs results.
+    /// </summary>
+    /// <remarks>
+    /// This method is being replaced by ConfigValidationPipeline.
+    /// Use ConfigValidationPipeline.CreateDefault().Validate(config) instead.
+    /// </remarks>
+    [Obsolete("Use ConfigValidationPipeline.CreateDefault().Validate() instead. This method will be removed in a future version.")]
     public static bool ValidateAndLog(AppConfig config)
     {
         var validator = new AppConfigValidator();
@@ -39,6 +51,11 @@ public static class ConfigValidationHelper
     /// <param name="config">Configuration to validate.</param>
     /// <param name="errors">List to collect error messages.</param>
     /// <returns>True if valid, false otherwise.</returns>
+    /// <remarks>
+    /// This method is being replaced by ConfigValidationPipeline.
+    /// Use ConfigValidationPipeline.CreateDefault().Validate(config) instead.
+    /// </remarks>
+    [Obsolete("Use ConfigValidationPipeline.CreateDefault().Validate() instead. This method will be removed in a future version.")]
     public static bool ValidateAndLog(AppConfig config, ICollection<string> errors)
     {
         var validator = new AppConfigValidator();
@@ -65,6 +82,11 @@ public static class ConfigValidationHelper
     /// <summary>
     /// Validates and throws if configuration is invalid.
     /// </summary>
+    /// <remarks>
+    /// This method is being replaced by ConfigValidationPipeline.
+    /// Use ConfigValidationPipeline.CreateDefault().Validate(config) instead and check for errors.
+    /// </remarks>
+    [Obsolete("Use ConfigValidationPipeline.CreateDefault().Validate() instead. This method will be removed in a future version.")]
     public static void ValidateOrThrow(AppConfig config)
     {
         if (!ValidateAndLog(config))

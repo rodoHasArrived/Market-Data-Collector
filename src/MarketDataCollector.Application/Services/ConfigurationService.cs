@@ -321,15 +321,26 @@ public sealed class ConfigurationService : IAsyncDisposable
     }
 
     /// <summary>
-    /// Validates an AppConfig object using FluentValidation.
+    /// Validates an AppConfig object using the unified validation pipeline.
     /// Returns true if valid, false otherwise.
     /// </summary>
     public bool ValidateConfig(AppConfig config, out IReadOnlyList<string> errors)
     {
+        var validator = ConfigValidationPipeline.CreateDefault();
+        var results = validator.Validate(config);
+
         var errorList = new List<string>();
-        var isValid = ConfigValidationHelper.ValidateAndLog(config, errorList);
+        foreach (var result in results)
+        {
+            if (result.IsError)
+            {
+                errorList.Add($"{result.Property}: {result.Message}");
+                _log.Error("Configuration validation error: {Property}: {Message}", result.Property, result.Message);
+            }
+        }
+
         errors = errorList;
-        return isValid;
+        return !results.Any(r => r.IsError);
     }
 
     /// <summary>
