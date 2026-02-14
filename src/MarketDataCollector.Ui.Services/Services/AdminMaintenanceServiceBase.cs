@@ -245,7 +245,7 @@ public class AdminMaintenanceServiceBase : IAdminMaintenanceService
             return new RetentionPoliciesResult
             {
                 Success = true,
-                Policies = response.Data.Policies?.ToList() ?? new List<RetentionPolicy>(),
+                Policies = response.Data.Policies?.ToList() ?? new List<StorageRetentionPolicy>(),
                 DefaultPolicy = response.Data.DefaultPolicy
             };
         }
@@ -259,7 +259,7 @@ public class AdminMaintenanceServiceBase : IAdminMaintenanceService
 
     /// <inheritdoc />
     public async Task<OperationResult> SaveRetentionPolicyAsync(
-        RetentionPolicy policy,
+        StorageRetentionPolicy policy,
         CancellationToken ct = default)
     {
         var response = await ApiClientService.Instance.PostWithResponseAsync<OperationResponse>(

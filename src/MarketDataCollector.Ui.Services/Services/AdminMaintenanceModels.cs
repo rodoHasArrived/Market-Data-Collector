@@ -257,8 +257,8 @@ public class RetentionPoliciesResult
 {
     public bool Success { get; set; }
     public string? Error { get; set; }
-    public List<RetentionPolicy> Policies { get; set; } = new();
-    public RetentionPolicy? DefaultPolicy { get; set; }
+    public List<StorageRetentionPolicy> Policies { get; set; } = new();
+    public StorageRetentionPolicy? DefaultPolicy { get; set; }
 }
 
 /// <summary>
@@ -266,14 +266,16 @@ public class RetentionPoliciesResult
 /// </summary>
 public class RetentionPoliciesResponse
 {
-    public List<RetentionPolicy>? Policies { get; set; }
-    public RetentionPolicy? DefaultPolicy { get; set; }
+    public List<StorageRetentionPolicy>? Policies { get; set; }
+    public StorageRetentionPolicy? DefaultPolicy { get; set; }
 }
 
 /// <summary>
-/// A retention policy definition.
+/// A storage retention policy definition for administrative operations.
+/// Note: Renamed from RetentionPolicy to avoid conflict with MarketDataCollector.Ui.Services.RetentionPolicy
+/// in RetentionAssuranceModels.cs which handles data retention periods.
 /// </summary>
-public class RetentionPolicy
+public class StorageRetentionPolicy
 {
     public string Id { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
@@ -380,7 +382,7 @@ public class CleanupResultResponse
 
 #endregion
 
-#region Permission & Self-Test Models
+#region Permission Models (Non-Diagnostics)
 
 /// <summary>
 /// Result of permission validation.
@@ -406,159 +408,12 @@ public class PermissionValidationResponse
     public string[]? Issues { get; set; }
 }
 
-/// <summary>
-/// Options for self-test operations.
-/// </summary>
-public class SelfTestOptions
-{
-    public bool TestStorage { get; set; } = true;
-    public bool TestProviders { get; set; } = true;
-    public bool TestConfiguration { get; set; } = true;
-    public bool TestNetwork { get; set; } = true;
-}
-
-/// <summary>
-/// Result of self-test operations.
-/// </summary>
-public class SelfTestResult
-{
-    public bool Success { get; set; }
-    public string? Error { get; set; }
-    public List<SelfTestItem> Tests { get; set; } = new();
-    public int PassedCount { get; set; }
-    public int FailedCount { get; set; }
-    public int SkippedCount { get; set; }
-}
-
-/// <summary>
-/// HTTP response payload for self-test.
-/// </summary>
-public class SelfTestResponse
-{
-    public bool AllPassed { get; set; }
-    public List<SelfTestItem>? Tests { get; set; }
-    public int PassedCount { get; set; }
-    public int FailedCount { get; set; }
-    public int SkippedCount { get; set; }
-}
-
-/// <summary>
-/// Individual self-test item.
-/// </summary>
-public class SelfTestItem
-{
-    public string Name { get; set; } = string.Empty;
-    public string Category { get; set; } = string.Empty;
-    public string Status { get; set; } = string.Empty;
-    public string? Message { get; set; }
-    public double DurationMs { get; set; }
-}
+// NOTE: SelfTest*, ErrorCodes*, ShowConfig*, QuickCheck* models are defined in DiagnosticsService.cs
+// to avoid duplication and maintain single source of truth
 
 #endregion
 
-#region Error Codes & Config Models
-
-/// <summary>
-/// Result of getting error codes.
-/// </summary>
-public class ErrorCodesResult
-{
-    public bool Success { get; set; }
-    public string? Error { get; set; }
-    public List<ErrorCodeInfo> ErrorCodes { get; set; } = new();
-}
-
-/// <summary>
-/// HTTP response payload for error codes.
-/// </summary>
-public class ErrorCodesResponse
-{
-    public List<ErrorCodeInfo>? ErrorCodes { get; set; }
-}
-
-/// <summary>
-/// Error code with category, description, and resolution.
-/// </summary>
-public class ErrorCodeInfo
-{
-    public string Code { get; set; } = string.Empty;
-    public string Category { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
-    public string? Resolution { get; set; }
-    public string Severity { get; set; } = string.Empty;
-}
-
-/// <summary>
-/// Result of showing configuration.
-/// </summary>
-public class ShowConfigResult
-{
-    public bool Success { get; set; }
-    public string? Error { get; set; }
-    public List<ConfigSection> Sections { get; set; } = new();
-}
-
-/// <summary>
-/// HTTP response payload for show config.
-/// </summary>
-public class ShowConfigResponse
-{
-    public List<ConfigSection>? Sections { get; set; }
-}
-
-/// <summary>
-/// A named configuration section.
-/// </summary>
-public class ConfigSection
-{
-    public string Name { get; set; } = string.Empty;
-    public List<ConfigItem> Items { get; set; } = new();
-}
-
-/// <summary>
-/// Individual configuration key-value entry.
-/// </summary>
-public class ConfigItem
-{
-    public string Key { get; set; } = string.Empty;
-    public string? Value { get; set; }
-    public string? Source { get; set; }
-    public bool IsSensitive { get; set; }
-}
-
-#endregion
-
-#region Quick Check Models
-
-/// <summary>
-/// Result of a quick health check.
-/// </summary>
-public class QuickCheckResult
-{
-    public bool Success { get; set; }
-    public string? Error { get; set; }
-    public string Overall { get; set; } = string.Empty;
-    public List<QuickCheckItem> Checks { get; set; } = new();
-}
-
-/// <summary>
-/// HTTP response payload for quick check.
-/// </summary>
-public class QuickCheckResponse
-{
-    public string Overall { get; set; } = string.Empty;
-    public List<QuickCheckItem>? Checks { get; set; }
-}
-
-/// <summary>
-/// Individual quick check item.
-/// </summary>
-public class QuickCheckItem
-{
-    public string Name { get; set; } = string.Empty;
-    public string Status { get; set; } = string.Empty;
-    public string? Details { get; set; }
-}
+#region Shared Models
 
 /// <summary>
 /// HTTP operation response used for POST mutations.

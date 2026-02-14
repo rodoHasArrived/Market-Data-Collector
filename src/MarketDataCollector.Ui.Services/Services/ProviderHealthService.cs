@@ -516,14 +516,7 @@ public sealed class FailoverThresholds
     public bool AutoFailoverEnabled { get; set; } = true;
 }
 
-public sealed class ProviderComparison
-{
-    public List<ProviderHealthData> Providers { get; set; } = new();
-    public string? BestOverall { get; set; }
-    public string? BestLatency { get; set; }
-    public string? BestCompleteness { get; set; }
-    public string? BestStability { get; set; }
-}
+// Note: ProviderComparison is defined in AdvancedAnalyticsModels.cs to avoid duplication
 
 #endregion
 

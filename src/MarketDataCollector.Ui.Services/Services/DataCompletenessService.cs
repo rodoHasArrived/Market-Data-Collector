@@ -628,19 +628,7 @@ public sealed record CompletenessReport
     public long TotalActualEvents => Symbols.Sum(s => s.TotalEvents);
 }
 
-public sealed record SymbolCompleteness
-{
-    public string Symbol { get; init; } = "";
-    public int ExpectedDays { get; init; }
-    public int DaysWithData { get; set; }
-    public double Score { get; set; }
-    public long TotalEvents { get; set; }
-    public List<DateOnly> MissingDays { get; set; } = new();
-    public List<DayEventCount> DayDetails { get; set; } = new();
-
-    /// <summary>Total record/event count (alias for TotalEvents).</summary>
-    public long RecordCount => TotalEvents;
-}
+// Note: SymbolCompleteness is defined in AdvancedAnalyticsModels.cs to avoid duplication
 
 public sealed class DayEventCount
 {
