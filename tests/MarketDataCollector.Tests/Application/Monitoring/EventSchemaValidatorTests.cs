@@ -1,10 +1,10 @@
 using FluentAssertions;
 using MarketDataCollector.Application.Monitoring;
 using MarketDataCollector.Contracts.Domain.Enums;
-using MarketDataCollector.Contracts.Domain.Events;
 using MarketDataCollector.Contracts.Domain.Models;
-using MarketDataCollector.Domain.Events;
 using Xunit;
+using DomainEvents = MarketDataCollector.Domain.Events;
+using ContractEvents = MarketDataCollector.Contracts.Domain.Events;
 
 namespace MarketDataCollector.Tests.Application.Monitoring;
 
@@ -23,7 +23,7 @@ public sealed class EventSchemaValidatorTests
     [Fact]
     public void Validate_WithValidHeartbeatAndNullPayload_DoesNotThrow()
     {
-        var evt = new MarketEvent(
+        var evt = new DomainEvents.MarketEvent(
             Timestamp: DateTimeOffset.UtcNow,
             Symbol: "SYSTEM",
             Type: MarketEventType.Heartbeat,
@@ -42,7 +42,7 @@ public sealed class EventSchemaValidatorTests
     [Fact]
     public void Validate_WithDefaultTimestamp_ThrowsInvalidOperation()
     {
-        var evt = new MarketEvent(
+        var evt = new DomainEvents.MarketEvent(
             Timestamp: default,
             Symbol: "SPY",
             Type: MarketEventType.Trade,
@@ -65,7 +65,7 @@ public sealed class EventSchemaValidatorTests
     [InlineData("   ")]
     public void Validate_WithInvalidSymbol_ThrowsInvalidOperation(string? symbol)
     {
-        var evt = new MarketEvent(
+        var evt = new DomainEvents.MarketEvent(
             Timestamp: DateTimeOffset.UtcNow,
             Symbol: symbol!,
             Type: MarketEventType.Trade,
@@ -85,7 +85,7 @@ public sealed class EventSchemaValidatorTests
     [Fact]
     public void Validate_WithUnknownEventType_ThrowsInvalidOperation()
     {
-        var evt = new MarketEvent(
+        var evt = new DomainEvents.MarketEvent(
             Timestamp: DateTimeOffset.UtcNow,
             Symbol: "SPY",
             Type: MarketEventType.Unknown,
@@ -108,7 +108,7 @@ public sealed class EventSchemaValidatorTests
     [InlineData(99)]
     public void Validate_WithWrongSchemaVersion_ThrowsInvalidOperation(int schemaVersion)
     {
-        var evt = new MarketEvent(
+        var evt = new DomainEvents.MarketEvent(
             Timestamp: DateTimeOffset.UtcNow,
             Symbol: "SPY",
             Type: MarketEventType.Trade,
@@ -137,7 +137,7 @@ public sealed class EventSchemaValidatorTests
     [InlineData(MarketEventType.L2Snapshot)]
     public void Validate_WithNullPayloadOnNonHeartbeat_ThrowsInvalidOperation(MarketEventType eventType)
     {
-        var evt = new MarketEvent(
+        var evt = new DomainEvents.MarketEvent(
             Timestamp: DateTimeOffset.UtcNow,
             Symbol: "SPY",
             Type: eventType,
@@ -154,9 +154,9 @@ public sealed class EventSchemaValidatorTests
 
     // ── Helpers ─────────────────────────────────────────────────────
 
-    private static MarketEvent CreateValidEvent(MarketEventType type)
+    private static DomainEvents.MarketEvent CreateValidEvent(MarketEventType type)
     {
-        return new MarketEvent(
+        return new DomainEvents.MarketEvent(
             Timestamp: DateTimeOffset.UtcNow,
             Symbol: "SPY",
             Type: type,
@@ -167,7 +167,7 @@ public sealed class EventSchemaValidatorTests
         );
     }
 
-    private static MarketEventPayload CreatePayload()
+    private static ContractEvents.MarketEventPayload CreatePayload()
     {
         return new Trade(
             Timestamp: DateTimeOffset.UtcNow,
