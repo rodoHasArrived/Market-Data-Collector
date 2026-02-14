@@ -1,7 +1,7 @@
 # Market Data Collector - Project Roadmap
 
 **Version:** 1.6.1
-**Last Updated:** 2026-02-13
+**Last Updated:** 2026-02-14
 **Status:** Development / Pilot Ready
 **Source Files:** 807 | **Test Files:** 105 | **API Endpoints:** ~269 declared, ~136 implemented, ~133 stubbed
 
@@ -380,7 +380,7 @@ Establish clear patterns and remove ambiguity in project organization.
 | 8B.3 | **Standardize service interfaces** — Ensure all `IXxxService` interfaces follow consistent naming and are in appropriate projects | P1 | Mix of `IConfigService`, `ConfigurationService`, and `IConfigurationService` patterns | 4 | ✅ Extracted embedded interfaces to dedicated files |
 | 8B.4 | **Organize test files to mirror source structure** — Ensure test file locations exactly match source file locations | P2 | Some test files don't mirror their source counterparts | 6 | |
 | 8B.5 | **Create project dependency diagram** — Visual diagram showing allowed and forbidden dependencies between projects | P2 | Helps prevent architectural violations | 4 | ✅ DOT diagram at docs/diagrams/project-dependencies.dot |
-| 8B.6 | **Document assembly boundaries** — Clear guide on which types belong in each project (Contracts, Core, Application, Infrastructure) | P2 | Prevent future namespace confusion | 4 | |
+| 8B.6 | **Document assembly boundaries** — Clear guide on which types belong in each project (Contracts, Core, Application, Infrastructure) | P2 | Prevent future namespace confusion | 4 | ✅ Done (`docs/architecture/assembly-boundaries.md`) |
 
 ### 8C. Code Organization Cleanup (P2 — Quality of Life)
 
