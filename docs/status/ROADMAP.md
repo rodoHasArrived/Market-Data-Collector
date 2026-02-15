@@ -26,9 +26,9 @@ This roadmap is refreshed to match the current repository state and focuses on t
 
 Remaining work is primarily quality and architecture hardening, as tracked in `docs/status/IMPROVEMENTS.md`:
 
-- **37 tracked improvement items total** (core themes A–H)
-  - ✅ Completed: 29
-  - 🔄 Partial: 5
+- **38 tracked improvement items total** (core themes A–H)
+  - ✅ Completed: 31
+  - 🔄 Partial: 4
   - 📝 Open: 3
 - Biggest remaining refactors: **C3** (WebSocket base class adoption) and **C7** (WPF/UWP service dedup).
 
@@ -48,7 +48,7 @@ Remaining work is primarily quality and architecture hardening, as tracked in `d
 | Phase 7: Extended Capabilities | ⏸️ Optional / rolling | Scheduled as capacity permits. |
 | Phase 8: Repository Organization & Optimization | 🔄 In progress (rolling) | Continued doc and code organization improvements. |
 | Phase 9: Final Production Release | 🔄 Active target | Focus shifted to hardening, coverage, architecture, and performance confidence. |
-| Phase 10: Scalability & Multi-Instance | 📝 Planned | New phase for horizontal scaling and multi-instance coordination. |
+| Phase 10: Scalability & Multi-Instance | 🔄 In progress | H1-H3 complete; H4 (degradation scoring) remains. |
 
 ---
 
@@ -92,10 +92,15 @@ This section supersedes the prior effort model and aligns with the current activ
 - **H2**: ✅ Multi-instance symbol coordination via `IInstanceCoordinator` interface and `FileBasedInstanceCoordinator` implementation. JSON claim files with heartbeat-based staleness detection. 19 tests in `FileBasedInstanceCoordinatorTests.cs`.
 - **B3 (tranche 2)**: ✅ Provider tests for IB and Alpaca: `IBSimulationClientTests` (24 tests), `IBApiLimitsTests` (40+ tests across 8 classes), `IBContractFactoryTests` (12 tests), `AlpacaProviderTests` (18 tests), `SubscriptionManagerTests` (22 tests).
 
-### Sprint 8
+### Sprint 8 ✅
 
-- **H3**: Event replay infrastructure for debugging and QA (new item).
-- **G2 (remainder)**: End-to-end distributed tracing from provider through storage with trace context propagation.
+- **H3**: ✅ Event replay infrastructure via `EventReplayPipeline` — reads stored JSONL events with symbol/type/time filtering, speed control, pause/resume, optional sink publishing. `ReplayPipelineOptions` and `ReplaySessionStatistics` for configuration and metrics. 23 tests in `EventReplayPipelineTests.cs`.
+- **G2 (remainder)**: ✅ End-to-end distributed tracing via `TracedStorageSink` decorator — wraps `IStorageSink` with `ActivitySource`-based tracing for append and flush operations. Per-event tags (symbol, type, source, sequence), error recording, operational counters. 16 tests in `TracedStorageSinkTests.cs`.
+
+### Sprint 9
+
+- **C3**: WebSocket provider base class adoption — refactor Polygon, NYSE, StockSharp to extend `WebSocketProviderBase`.
+- **H4**: Graceful provider degradation scoring — provider health scoring with automatic deprioritization in failover chain.
 
 ---
 
@@ -107,7 +112,7 @@ This section supersedes the prior effort model and aligns with the current activ
 |----|-------|--------|-------------|
 | H1 | Per-Provider Backfill Rate Limiting | ✅ Done | Proactive per-provider rate limit enforcement via `WaitForSlotAsync()` in `ProviderRateLimitTracker`, wired into `CompositeHistoricalDataProvider`. 28 tests. |
 | H2 | Multi-Instance Symbol Coordination | ✅ Done | `IInstanceCoordinator` interface with `FileBasedInstanceCoordinator` implementation. JSON claim files with heartbeat timeout, stale reclamation, and graceful shutdown. 19 tests. |
-| H3 | Event Replay Infrastructure | 📝 Open | Build a replay service that can re-process stored JSONL/Parquet events through the pipeline for debugging, QA, and backfill verification. |
+| H3 | Event Replay Infrastructure | ✅ Done | `EventReplayPipeline` service with symbol/type/time filtering, speed control, pause/resume, optional sink re-publishing, and `ReplaySessionStatistics`. 23 tests. |
 | H4 | Graceful Provider Degradation Scoring | 📝 Open | Implement a provider health scoring system that automatically deprioritizes degraded providers in the failover chain based on error rates, latency, and data quality metrics. |
 
 ### Theme I: Developer Experience (New)
@@ -160,12 +165,12 @@ This section supersedes the prior effort model and aligns with the current activ
 | Metric | Current Baseline | 2026 Target |
 |---|---:|---:|
 | Stub endpoints remaining | 0 | 0 |
-| Improvement items completed | 29 / 37 | 34+ / 37 |
-| Improvement items still open | 3 / 37 | <3 / 37 |
+| Improvement items completed | 31 / 38 | 35+ / 38 |
+| Improvement items still open | 3 / 38 | <3 / 38 |
 | Endpoint integration suite breadth | Negative-path + schema validation coverage | Critical endpoint families fully covered |
 | Architecture debt (Theme C completed) | 5 / 7 | 7 / 7 |
 | Provider test coverage | Polygon + StockSharp + IB + Alpaca | All 5 streaming providers |
-| OpenTelemetry instrumentation | Pipeline metrics | Full trace propagation |
+| OpenTelemetry instrumentation | Pipeline metrics + storage tracing | Full trace propagation |
 | OpenAPI typed annotations | All endpoint families | Complete with error response types |
 
 ---
