@@ -613,8 +613,18 @@ public static class ServiceCompositionRoot
         this IServiceCollection services,
         CompositionOptions options)
     {
-        // IEventMetrics - injectable metrics for pipeline and publisher
-        services.AddSingleton<IEventMetrics, DefaultEventMetrics>();
+        // IEventMetrics - injectable metrics for pipeline and publisher.
+        // When OpenTelemetry tracing is enabled, wraps DefaultEventMetrics with
+        // TracedEventMetrics to export pipeline counters via System.Diagnostics.Metrics.
+        if (options.EnableOpenTelemetry)
+        {
+            services.AddSingleton<IEventMetrics>(sp =>
+                new Tracing.TracedEventMetrics(new DefaultEventMetrics()));
+        }
+        else
+        {
+            services.AddSingleton<IEventMetrics, DefaultEventMetrics>();
+        }
 
         // DataQualityMonitoringService - orchestrates all quality monitoring components
         services.AddSingleton<DataQualityMonitoringService>(sp =>
@@ -928,4 +938,12 @@ public sealed record CompositionOptions
     /// Whether to enable HttpClientFactory for HTTP client lifecycle management.
     /// </summary>
     public bool EnableHttpClientFactory { get; init; }
+
+    /// <summary>
+    /// Whether to enable OpenTelemetry tracing and metrics instrumentation.
+    /// When enabled, wraps IEventMetrics with TracedEventMetrics for OTLP-compatible
+    /// pipeline counter export. Controlled via MDC_OTEL_ENABLED environment variable
+    /// or explicit configuration.
+    /// </summary>
+    public bool EnableOpenTelemetry { get; init; }
 }

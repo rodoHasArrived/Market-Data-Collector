@@ -23,38 +23,32 @@ public static class HealthEndpoints
     {
         var group = app.MapGroup("").WithTags("Health");
 
-        // Health summary
+        // Health summary (D7: OpenAPI typed annotations)
         group.MapGet(UiApiRoutes.HealthSummary, (
             [FromServices] StorageOptions? storageOptions,
             [FromServices] ProviderRegistry? registry,
             [FromServices] EventPipeline? pipeline) =>
         {
             var registrySummary = registry?.GetSummary();
-            var summary = new
+            var summary = new HealthSummaryResponse
             {
-                timestamp = DateTimeOffset.UtcNow,
-                status = "operational",
-                providers = new
+                Timestamp = DateTimeOffset.UtcNow,
+                Status = "operational",
+                Providers = new HealthSummaryProviders
                 {
-                    streaming = registrySummary?.StreamingCount ?? 0,
-                    backfill = registrySummary?.BackfillCount ?? 0,
-                    symbolSearch = registrySummary?.SymbolSearchCount ?? 0,
-                    totalEnabled = registrySummary?.TotalEnabled ?? 0
+                    Streaming = registrySummary?.StreamingCount ?? 0,
+                    Backfill = registrySummary?.BackfillCount ?? 0,
+                    SymbolSearch = registrySummary?.SymbolSearchCount ?? 0,
+                    TotalEnabled = registrySummary?.TotalEnabled ?? 0
                 },
-                storage = new
-                {
-                    rootPath = storageOptions?.RootPath ?? "unknown",
-                    healthy = storageOptions != null
-                },
-                pipeline = new
-                {
-                    active = pipeline != null
-                }
+                StorageHealthy = storageOptions != null,
+                PipelineActive = pipeline != null
             };
             return Results.Json(summary, jsonOptions);
         })
         .WithName("GetHealthSummary")
-        .Produces(200);
+        .WithDescription("Returns a summary of system health including provider counts, storage status, and pipeline state.")
+        .Produces<HealthSummaryResponse>(200);
 
         // Provider health
         group.MapGet(UiApiRoutes.HealthProviders, ([FromServices] ProviderRegistry? registry) =>

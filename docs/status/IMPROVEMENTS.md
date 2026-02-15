@@ -1,7 +1,7 @@
 # Market Data Collector - Improvement Tracking
 
-**Version:** 1.6.1
-**Last Updated:** 2026-02-14
+**Version:** 1.6.2
+**Last Updated:** 2026-02-15
 **Status:** Active tracking document
 
 This document consolidates **functional improvements** (features, reliability, UX) and **structural improvements** (architecture, modularity, code quality) into a single source of truth for tracking. For phased execution timeline, see [`ROADMAP.md`](ROADMAP.md).
@@ -34,28 +34,28 @@ This document consolidates **functional improvements** (features, reliability, U
 | Status | Count | Items |
 |--------|-------|-------|
 | ✅ **Completed** | 21 | A1, A2, A3, A4, A5, A6, A7, B1, B2, B5, C6, D1, D2, D3, D5, D6, E1, E2, F2, G1, G3 |
-| 🔄 **Partially Complete** | 3 | B4, E3, F1 |
-| 📝 **Open** | 9 | B3, C1-C5, C7, D7, F3, G2 |
-| **Total** | 33 | All improvement items |
+| 🔄 **Partially Complete** | 6 | B3, B4, D7, E3, F1, G2 |
+| 📝 **Open** | 6 | C1, C2, C3, C5, C7, F3 |
+| **Total** | 33 | All improvement items (core) |
 
 ### By Theme
 
 | Theme | Completed | Partial | Open | Total |
 |-------|-----------|---------|------|-------|
 | A: Reliability & Resilience | 8 | 0 | 0 | 8 |
-| B: Testing & Quality | 3 | 1 | 1 | 5 |
+| B: Testing & Quality | 3 | 2 | 0 | 5 |
 | C: Architecture & Modularity | 1 | 0 | 6 | 7 |
-| D: API & Integration | 4 | 0 | 2 | 6 |
+| D: API & Integration | 4 | 1 | 1 | 6 |
 | E: Performance & Scalability | 2 | 1 | 0 | 3 |
 | F: User Experience | 1 | 1 | 1 | 3 |
-| G: Operations & Monitoring | 2 | 0 | 1 | 3 |
+| G: Operations & Monitoring | 2 | 1 | 0 | 3 |
 
 ### Portfolio Health Snapshot
 
-- **Completion ratio:** 63.6% complete (21/33), 9.1% partial (3/33), 27.3% open (9/33).
+- **Completion ratio:** 63.6% complete (21/33), 18.2% partial (6/33), 18.2% open (6/33).
 - **Highest delivery risk:** Theme C (1/7 completed) because architecture debt blocks testability and provider evolution.
-- **Fastest near-term value:** B3 infrastructure provider tests to increase provider confidence.
-- **Recommended sprint split:** 55% architecture debt (C1/C2/C3), 30% test foundation (B3), 15% API/UX polish (D7/F3).
+- **Fastest near-term value:** Complete B3 tranche 2 for remaining provider test coverage.
+- **Recommended sprint split:** 60% architecture debt (C1/C2/C3), 25% test foundation (B3 tranche 2), 15% API/scalability (D7/H1).
 
 ### Next Sprint Backlog (Recommended)
 
@@ -64,9 +64,11 @@ This document consolidates **functional improvements** (features, reliability, U
 | 1 | C4, C5 | `EventPipeline` no longer depends on static metrics; config validation pipeline in place | ✅ Done |
 | 2 | D4, B1 remainder | `/api/quality/drops` and `/api/quality/drops/{symbol}` are live and documented | ✅ Done |
 | 3 | C6, A7 | Multi-sink fan-out merged; error handling convention documented and enforced in startup path | ✅ Done |
-| 4 | B2 tranche 1 | Integration tests cover health/status/config endpoints and negative cases | ✅ Done |
-| 5 | C1/C2 spike | Provider registration and runtime composition unified under DI | 📝 Pending |
-| 6 | B3 tranche 1 | Provider tests added for Polygon + StockSharp parsing/subscription workflows | 📝 Pending |
+| 4 | B3 tranche 1, G2 partial, D7 partial | Provider tests for Polygon + StockSharp; OTel pipeline metrics; typed OpenAPI annotations | ✅ Done |
+| 5 | B2 tranche 1, D7 remainder | Integration tests for health/status/config; typed annotations across all endpoint families | 📝 Next |
+| 6 | C1/C2, H1 | Provider registration unified under DI; per-provider backfill rate limiting | 📝 Pending |
+| 7 | H2, B3 tranche 2 | Multi-instance coordination; IB + Alpaca provider tests | 📝 Pending |
+| 8 | H3, G2 remainder | Event replay infrastructure; full trace propagation | 📝 Pending |
 
 ---
 
@@ -294,23 +296,28 @@ This document consolidates **functional improvements** (features, reliability, U
 
 ---
 
-### B3. 📝 Infrastructure Provider Unit Tests (OPEN)
+### B3. 🔄 Infrastructure Provider Unit Tests (PARTIALLY COMPLETE)
 
-**Impact:** High | **Effort:** High | **Priority:** P2 | **Status:** 📝 OPEN
+**Impact:** High | **Effort:** High | **Priority:** P2 | **Status:** 🔄 PARTIAL
 
 **Problem:** 55 provider implementation files but only 8 test files (ratio ~369 LOC per test). Major streaming providers (Alpaca core, NYSE, StockSharp) have no dedicated unit tests.
 
-**Proposed Solution:**
-- Prioritize tests for largest providers: StockSharp (1,325 lines), Polygon (1,263 lines)
-- Test message parsing (deserialize sample WebSocket frame, verify domain event)
-- Test subscription management (subscribe, unsubscribe, resubscribe-on-reconnect)
-- Test error handling (connection failure, malformed message, rate limit)
-- Use recorded WebSocket message fixtures to avoid live API dependencies
+**Solution Implemented (Tranche 1):**
+- Polygon subscription tests: multi-symbol subscribe/unsubscribe, aggregate lifecycle, connection lifecycle, options configuration, provider metadata — `PolygonSubscriptionTests.cs`
+- StockSharp subscription tests: constructor validation, trade/depth subscription management, connection lifecycle, disposal, domain model integration — `StockSharpSubscriptionTests.cs`
+
+**Remaining Work (Tranche 2):**
+- IB and Alpaca reconnect/credential-refresh behavior tests
+- NYSE hybrid streaming + historical test coverage
+- Recorded WebSocket message fixture tests for all providers
 
 **Files:**
-- New: `tests/MarketDataCollector.Tests/Infrastructure/Providers/`
+- `tests/MarketDataCollector.Tests/Infrastructure/Providers/PolygonSubscriptionTests.cs` (new)
+- `tests/MarketDataCollector.Tests/Infrastructure/Providers/StockSharpSubscriptionTests.cs` (new)
+- `tests/MarketDataCollector.Tests/Infrastructure/Providers/PolygonMessageParsingTests.cs` (existing)
+- `tests/MarketDataCollector.Tests/Infrastructure/Providers/StockSharpMessageConversionTests.cs` (existing)
 
-**ROADMAP:** Phase 1 (Core Stability) - Item 1B
+**ROADMAP:** Sprint 4 (tranche 1 done), Sprint 7 (tranche 2)
 
 ---
 
@@ -695,23 +702,31 @@ No clear contract for what each validates or when it runs.
 
 ---
 
-### D7. 📝 OpenAPI Response Type Annotations (OPEN)
+### D7. 🔄 OpenAPI Response Type Annotations (PARTIALLY COMPLETE)
 
-**Impact:** Low-Medium | **Effort:** Medium | **Priority:** P3 | **Status:** 📝 OPEN
+**Impact:** Low-Medium | **Effort:** Medium | **Priority:** P3 | **Status:** 🔄 PARTIAL
 
 **Problem:** Swagger infrastructure exists but generated OpenAPI spec lacks response type documentation. Shows generic `200 OK` for all endpoints with no schema information.
 
-**Proposed Solution:**
-- Add `[ProducesResponseType]` attributes to all implemented endpoint handlers
-- Include error response types (400, 401, 404, 429, 500, 501)
-- Add XML documentation comments for request/response models
+**Solution Implemented (Partial):**
+- Added typed `Produces<T>()` annotations to core health and status endpoints (`StatusEndpoints.cs`, `HealthEndpoints.cs`)
+- Added `WithDescription()` metadata for endpoint documentation
+- Created typed `HealthSummaryResponse` and `HealthSummaryProviders` models in `StatusModels.cs`
+- Typed annotations for `HealthCheckResponse`, `StatusResponse` on corresponding endpoints
+
+**Remaining Work:**
+- Extend typed annotations to backfill, config, provider, and storage endpoint families
+- Add error response types (400, 401, 404, 429, 500, 501)
+- Add XML documentation comments for remaining request/response models
 - Generate and publish OpenAPI spec as CI build artifact
 
 **Files:**
-- `Ui.Shared/Endpoints/*.cs`
-- `Contracts/Api/*.cs`
+- `Ui.Shared/Endpoints/StatusEndpoints.cs` (updated)
+- `Ui.Shared/Endpoints/HealthEndpoints.cs` (updated)
+- `Contracts/Api/StatusModels.cs` (updated with new response types)
+- Remaining: `Ui.Shared/Endpoints/BackfillEndpoints.cs`, `ConfigEndpoints.cs`, `ProviderEndpoints.cs`
 
-**ROADMAP:** Phase 3 (API Completeness)
+**ROADMAP:** Sprint 4 (partial), Sprint 5 (remainder)
 
 ---
 
@@ -874,23 +889,33 @@ No clear contract for what each validates or when it runs.
 
 ---
 
-### G2. 📝 Observability Tracing with OpenTelemetry (OPEN)
+### G2. 🔄 Observability Tracing with OpenTelemetry (PARTIALLY COMPLETE)
 
-**Impact:** Medium | **Effort:** Medium | **Priority:** P2 | **Status:** 📝 OPEN
+**Impact:** Medium | **Effort:** Medium | **Priority:** P2 | **Status:** 🔄 PARTIAL
 
 **Problem:** No distributed tracing for request flows across services. Hard to diagnose latency issues.
 
-**Proposed Solution:**
-- Integrate OpenTelemetry .NET SDK
-- Add trace spans for event pipeline, provider calls, storage writes
-- Export traces to Jaeger or Zipkin for visualization
-- Add correlation IDs to log messages
+**Solution Implemented (Partial):**
+- `TracedEventMetrics` decorator wraps `IEventMetrics` with `System.Diagnostics.Metrics` counters and histograms
+- Pipeline meter (`MarketDataCollector.Pipeline`) exports published/dropped/trade/depth/quote/integrity/historical counters via OTLP
+- Latency histogram (`mdc.pipeline.latency`) tracks event processing time in milliseconds
+- `OpenTelemetrySetup` updated to register pipeline meter alongside existing application meters
+- `CompositionOptions.EnableOpenTelemetry` flag gates decorator registration in DI
+- `MarketDataTracing` extended with `StartBatchConsumeActivity`, `StartBackfillActivity`, `StartWalRecoveryActivity`
+
+**Remaining Work:**
+- Wire trace context propagation from provider receive through pipeline to storage write
+- Add correlation IDs to structured log messages
+- Integrate distributed tracing for backfill worker service
+- Export traces to Jaeger/Zipkin for visualization
 
 **Files:**
-- `Application/Tracing/OpenTelemetrySetup.cs` (partially exists)
-- All major service classes (add instrumentation)
+- `Application/Tracing/TracedEventMetrics.cs` (new)
+- `Application/Tracing/OpenTelemetrySetup.cs` (updated)
+- `Application/Composition/ServiceCompositionRoot.cs` (updated)
+- `tests/MarketDataCollector.Tests/Application/Monitoring/TracedEventMetricsTests.cs` (new)
 
-**ROADMAP:** Phase 7 (Extended Capabilities)
+**ROADMAP:** Sprint 4 (partial), Sprint 8 (full trace propagation)
 
 ---
 

@@ -20,7 +20,7 @@ public static class StatusEndpoints
     /// </summary>
     public static void MapStatusEndpoints(this WebApplication app, StatusEndpointHandlers handlers, JsonSerializerOptions jsonOptions)
     {
-        // Health check endpoint - comprehensive health status (#19: OpenAPI annotations)
+        // Health check endpoint - comprehensive health status (D7: OpenAPI typed annotations)
         app.MapGet(UiApiRoutes.Health, () =>
         {
             var response = handlers.GetHealthCheck();
@@ -29,7 +29,8 @@ public static class StatusEndpoints
         })
         .WithName("GetHealth")
         .WithTags("Health")
-        .Produces(200)
+        .WithDescription("Returns comprehensive health status including provider connectivity and storage health.")
+        .Produces<HealthCheckResponse>(200)
         .Produces(503);
 
         // Kubernetes-style health endpoints
@@ -75,7 +76,7 @@ public static class StatusEndpoints
         .WithTags("Monitoring")
         .Produces(200);
 
-        // Full status endpoint
+        // Full status endpoint (D7: OpenAPI typed annotations)
         app.MapGet(UiApiRoutes.Status, () =>
         {
             var response = handlers.GetStatus();
@@ -83,7 +84,8 @@ public static class StatusEndpoints
         })
         .WithName("GetStatus")
         .WithTags("Status")
-        .Produces(200);
+        .WithDescription("Returns full system status including connection state, metrics, and symbol information.")
+        .Produces<StatusResponse>(200);
 
         // Errors endpoint with optional filtering
         app.MapGet(UiApiRoutes.Errors, (int? count, string? level, string? symbol) =>
