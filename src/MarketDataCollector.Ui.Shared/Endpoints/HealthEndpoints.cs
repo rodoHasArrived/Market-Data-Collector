@@ -23,38 +23,32 @@ public static class HealthEndpoints
     {
         var group = app.MapGroup("").WithTags("Health");
 
-        // Health summary
+        // Health summary (D7: OpenAPI typed annotations)
         group.MapGet(UiApiRoutes.HealthSummary, (
             [FromServices] StorageOptions? storageOptions,
             [FromServices] ProviderRegistry? registry,
             [FromServices] EventPipeline? pipeline) =>
         {
             var registrySummary = registry?.GetSummary();
-            var summary = new
+            var summary = new HealthSummaryResponse
             {
-                timestamp = DateTimeOffset.UtcNow,
-                status = "operational",
-                providers = new
+                Timestamp = DateTimeOffset.UtcNow,
+                Status = "operational",
+                Providers = new HealthSummaryProviders
                 {
-                    streaming = registrySummary?.StreamingCount ?? 0,
-                    backfill = registrySummary?.BackfillCount ?? 0,
-                    symbolSearch = registrySummary?.SymbolSearchCount ?? 0,
-                    totalEnabled = registrySummary?.TotalEnabled ?? 0
+                    Streaming = registrySummary?.StreamingCount ?? 0,
+                    Backfill = registrySummary?.BackfillCount ?? 0,
+                    SymbolSearch = registrySummary?.SymbolSearchCount ?? 0,
+                    TotalEnabled = registrySummary?.TotalEnabled ?? 0
                 },
-                storage = new
-                {
-                    rootPath = storageOptions?.RootPath ?? "unknown",
-                    healthy = storageOptions != null
-                },
-                pipeline = new
-                {
-                    active = pipeline != null
-                }
+                StorageHealthy = storageOptions != null,
+                PipelineActive = pipeline != null
             };
             return Results.Json(summary, jsonOptions);
         })
         .WithName("GetHealthSummary")
-        .Produces(200);
+        .WithDescription("Returns a summary of system health including provider counts, storage status, and pipeline state.")
+        .Produces<HealthSummaryResponse>(200);
 
         // Provider health
         group.MapGet(UiApiRoutes.HealthProviders, ([FromServices] ProviderRegistry? registry) =>
@@ -75,6 +69,7 @@ public static class HealthEndpoints
             return Results.Json(new { providers, timestamp = DateTimeOffset.UtcNow }, jsonOptions);
         })
         .WithName("GetHealthProviders")
+        .WithDescription("Returns health details for all registered providers including capabilities and status.")
         .Produces(200);
 
         // Provider diagnostics
@@ -101,6 +96,7 @@ public static class HealthEndpoints
             }, jsonOptions);
         })
         .WithName("GetHealthProviderDiagnostics")
+        .WithDescription("Returns diagnostic details for a specific provider including capabilities and configuration.")
         .Produces(200)
         .Produces(404);
 
@@ -136,6 +132,7 @@ public static class HealthEndpoints
             }, jsonOptions);
         })
         .WithName("GetHealthStorage")
+        .WithDescription("Returns storage health including root path existence, total size, and file count.")
         .Produces(200);
 
         // Event stream health
@@ -148,6 +145,7 @@ public static class HealthEndpoints
             }, jsonOptions);
         })
         .WithName("GetHealthEvents")
+        .WithDescription("Returns event stream health status and metrics availability.")
         .Produces(200);
 
         // Health metrics
@@ -166,6 +164,7 @@ public static class HealthEndpoints
             }, jsonOptions);
         })
         .WithName("GetHealthMetrics")
+        .WithDescription("Returns health-related metrics including error statistics and tracking data.")
         .Produces(200);
 
         // Test provider connection
@@ -189,6 +188,7 @@ public static class HealthEndpoints
             }, jsonOptions);
         })
         .WithName("TestHealthProvider")
+        .WithDescription("Tests connectivity to a specific provider and returns reachability status.")
         .Produces(200)
         .Produces(404)
         .RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
@@ -211,6 +211,7 @@ public static class HealthEndpoints
             }, jsonOptions);
         })
         .WithName("GetHealthDiagnosticsBundle")
+        .WithDescription("Generates and returns a comprehensive diagnostics bundle for troubleshooting.")
         .Produces(200)
         .Produces(503);
     }

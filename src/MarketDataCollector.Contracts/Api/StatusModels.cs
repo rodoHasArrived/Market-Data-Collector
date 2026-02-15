@@ -120,6 +120,45 @@ public class HealthCheckItem
 }
 
 /// <summary>
+/// Health summary response for the /api/health/summary endpoint (D7).
+/// </summary>
+public class HealthSummaryResponse
+{
+    [JsonPropertyName("timestamp")]
+    public DateTimeOffset Timestamp { get; set; }
+
+    [JsonPropertyName("status")]
+    public string Status { get; set; } = "unknown";
+
+    [JsonPropertyName("providers")]
+    public HealthSummaryProviders? Providers { get; set; }
+
+    [JsonPropertyName("storageHealthy")]
+    public bool StorageHealthy { get; set; }
+
+    [JsonPropertyName("pipelineActive")]
+    public bool PipelineActive { get; set; }
+}
+
+/// <summary>
+/// Provider counts for health summary response (D7).
+/// </summary>
+public class HealthSummaryProviders
+{
+    [JsonPropertyName("streaming")]
+    public int Streaming { get; set; }
+
+    [JsonPropertyName("backfill")]
+    public int Backfill { get; set; }
+
+    [JsonPropertyName("symbolSearch")]
+    public int SymbolSearch { get; set; }
+
+    [JsonPropertyName("totalEnabled")]
+    public int TotalEnabled { get; set; }
+}
+
+/// <summary>
 /// Backfill provider information.
 /// </summary>
 public class BackfillProviderInfo

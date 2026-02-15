@@ -86,10 +86,11 @@ public static class OpenTelemetrySetup
 
         _tracerProvider = tracerBuilder.Build();
 
-        // Configure metrics
+        // Configure metrics (includes pipeline meter from TracedEventMetrics)
         var meterBuilder = Sdk.CreateMeterProviderBuilder()
             .SetResourceBuilder(resourceBuilder)
-            .AddMeter("MarketDataCollector.Metrics");
+            .AddMeter("MarketDataCollector.Metrics")
+            .AddMeter("MarketDataCollector.Pipeline");
 
         if (config.EnableConsoleExporter)
         {
@@ -145,6 +146,7 @@ public static class OpenTelemetrySetup
             {
                 metrics
                     .AddMeter("MarketDataCollector.Metrics")
+                    .AddMeter("MarketDataCollector.Pipeline")
                     .AddAspNetCoreInstrumentation()
                     .AddHttpClientInstrumentation();
 
@@ -275,6 +277,53 @@ public static class MarketDataTracing
         activity?.SetTag("indicator.name", indicatorName);
         activity?.SetTag("market.symbol", symbol);
         activity?.SetTag("operation.type", "calculate");
+
+        return activity;
+    }
+
+    /// <summary>
+    /// Start a trace for a pipeline batch consume operation.
+    /// </summary>
+    public static Activity? StartBatchConsumeActivity(int batchSize)
+    {
+        var activity = Source.StartActivity(
+            "Pipeline.ConsumeBatch",
+            ActivityKind.Internal);
+
+        activity?.SetTag("pipeline.batch_size", batchSize);
+        activity?.SetTag("operation.type", "consume_batch");
+
+        return activity;
+    }
+
+    /// <summary>
+    /// Start a trace for a backfill operation.
+    /// </summary>
+    public static Activity? StartBackfillActivity(string provider, string symbol, string? from, string? to)
+    {
+        var activity = Source.StartActivity(
+            $"Backfill.{provider}",
+            ActivityKind.Client);
+
+        activity?.SetTag("backfill.provider", provider);
+        activity?.SetTag("market.symbol", symbol);
+        activity?.SetTag("backfill.from", from ?? "unspecified");
+        activity?.SetTag("backfill.to", to ?? "unspecified");
+        activity?.SetTag("operation.type", "backfill");
+
+        return activity;
+    }
+
+    /// <summary>
+    /// Start a trace for a WAL recovery operation.
+    /// </summary>
+    public static Activity? StartWalRecoveryActivity()
+    {
+        var activity = Source.StartActivity(
+            "Pipeline.WalRecovery",
+            ActivityKind.Internal);
+
+        activity?.SetTag("operation.type", "wal_recovery");
 
         return activity;
     }

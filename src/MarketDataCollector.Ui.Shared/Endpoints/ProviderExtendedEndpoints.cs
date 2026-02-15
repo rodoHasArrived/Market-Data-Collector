@@ -44,7 +44,8 @@ public static class ProviderExtendedEndpoints
             }, jsonOptions);
         })
         .WithName("GetProviderByName")
-        .Produces(200)
+        .WithDescription("Returns configuration and catalog details for a specific provider by name or ID.")
+        .Produces<ProviderCatalogEntry>(200)
         .Produces(404);
 
         // Failover configuration
@@ -62,6 +63,7 @@ public static class ProviderExtendedEndpoints
             }, jsonOptions);
         })
         .WithName("GetProviderFailover")
+        .WithDescription("Returns current failover configuration including priority chain and timeout settings.")
         .Produces(200);
 
         // Trigger failover
@@ -76,6 +78,7 @@ public static class ProviderExtendedEndpoints
             }, jsonOptions);
         })
         .WithName("TriggerProviderFailover")
+        .WithDescription("Manually triggers a failover to a specified target provider.")
         .Produces(200)
         .RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
@@ -90,6 +93,7 @@ public static class ProviderExtendedEndpoints
             }, jsonOptions);
         })
         .WithName("ResetProviderFailover")
+        .WithDescription("Resets the failover state to defaults, clearing any manual overrides.")
         .Produces(200)
         .RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
@@ -109,6 +113,7 @@ public static class ProviderExtendedEndpoints
             return Results.Json(new { providers, timestamp = DateTimeOffset.UtcNow }, jsonOptions);
         })
         .WithName("GetProviderRateLimits")
+        .WithDescription("Returns rate limit configuration and current state for all backfill providers.")
         .Produces(200);
 
         // Rate limit history
@@ -123,6 +128,7 @@ public static class ProviderExtendedEndpoints
             }, jsonOptions);
         })
         .WithName("GetProviderRateLimitHistory")
+        .WithDescription("Returns rate limit event history for a specific provider over the given time window.")
         .Produces(200);
 
         // Provider capabilities
@@ -141,6 +147,7 @@ public static class ProviderExtendedEndpoints
             return Results.Json(new { providers = catalog, timestamp = DateTimeOffset.UtcNow }, jsonOptions);
         })
         .WithName("GetProviderCapabilities")
+        .WithDescription("Returns capability declarations for all registered providers.")
         .Produces(200);
 
         // Switch provider
@@ -165,6 +172,7 @@ public static class ProviderExtendedEndpoints
             }, jsonOptions);
         })
         .WithName("SwitchProvider")
+        .WithDescription("Switches the active streaming data source to the specified provider.")
         .Produces(200)
         .Produces(400)
         .RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
@@ -185,6 +193,7 @@ public static class ProviderExtendedEndpoints
             }, jsonOptions);
         })
         .WithName("TestProvider")
+        .WithDescription("Tests connectivity to a specific provider and returns reachability status.")
         .Produces(200)
         .RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
@@ -202,6 +211,7 @@ public static class ProviderExtendedEndpoints
             }, jsonOptions);
         })
         .WithName("GetProviderFailoverThresholds")
+        .WithDescription("Returns failover threshold values including max failures, cooldown, and health check intervals.")
         .Produces(200);
 
         // Provider health
@@ -219,6 +229,7 @@ public static class ProviderExtendedEndpoints
             return Results.Json(new { providers, timestamp = DateTimeOffset.UtcNow }, jsonOptions);
         })
         .WithName("GetProviderHealthStatus")
+        .WithDescription("Returns health status for all registered providers.")
         .Produces(200);
     }
 

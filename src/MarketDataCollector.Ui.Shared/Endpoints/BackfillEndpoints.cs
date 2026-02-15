@@ -32,7 +32,8 @@ public static class BackfillEndpoints
             return Results.Json(providers, jsonOptions);
         })
         .WithName("GetBackfillProviders")
-        .Produces(200);
+        .WithDescription("Returns list of available historical data providers for backfill operations.")
+        .Produces<BackfillProviderInfo[]>(200);
 
         // Get last backfill status
         group.MapGet(UiApiRoutes.BackfillStatus, (BackfillCoordinator backfill) =>
@@ -43,7 +44,8 @@ public static class BackfillEndpoints
                 : Results.Json(status, jsonOptionsIndented);
         })
         .WithName("GetBackfillStatus")
-        .Produces(200)
+        .WithDescription("Returns the result of the most recent backfill operation, or 404 if none has been run.")
+        .Produces<BackfillResult>(200)
         .Produces(404);
 
         // Preview backfill (dry run - shows what would be fetched)
@@ -73,7 +75,8 @@ public static class BackfillEndpoints
             }
         })
         .WithName("PreviewBackfill")
-        .Produces(200)
+        .WithDescription("Dry-run preview of a backfill operation showing what data would be fetched.")
+        .Produces<BackfillResult>(200)
         .Produces(400)
         .RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
@@ -104,7 +107,8 @@ public static class BackfillEndpoints
             }
         })
         .WithName("RunBackfill")
-        .Produces(200)
+        .WithDescription("Executes a backfill operation for the specified symbols and date range.")
+        .Produces<BackfillResult>(200)
         .Produces(400)
         .RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
@@ -117,6 +121,7 @@ public static class BackfillEndpoints
                 : Results.Json(new { message = "No active backfill operation", symbols = Array.Empty<object>() }, jsonOptions);
         })
         .WithName("GetBackfillProgress")
+        .WithDescription("Returns progress of the currently active backfill operation, if any.")
         .Produces(200);
     }
 
