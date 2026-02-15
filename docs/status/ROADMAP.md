@@ -26,11 +26,11 @@ This roadmap is refreshed to match the current repository state and focuses on t
 
 Remaining work is primarily quality and architecture hardening, as tracked in `docs/status/IMPROVEMENTS.md`:
 
-- **38 tracked improvement items total** (core themes A–H)
-  - ✅ Completed: 31
+- **39 tracked improvement items total** (core themes A–H)
+  - ✅ Completed: 32
   - 🔄 Partial: 4
   - 📝 Open: 3
-- Biggest remaining refactors: **C3** (WebSocket base class adoption) and **C7** (WPF/UWP service dedup).
+- Biggest remaining refactors: **C3** (WebSocket base class adoption — deferred, high effort/low ROI) and **C7** (WPF/UWP service dedup).
 
 ---
 
@@ -48,7 +48,7 @@ Remaining work is primarily quality and architecture hardening, as tracked in `d
 | Phase 7: Extended Capabilities | ⏸️ Optional / rolling | Scheduled as capacity permits. |
 | Phase 8: Repository Organization & Optimization | 🔄 In progress (rolling) | Continued doc and code organization improvements. |
 | Phase 9: Final Production Release | 🔄 Active target | Focus shifted to hardening, coverage, architecture, and performance confidence. |
-| Phase 10: Scalability & Multi-Instance | 🔄 In progress | H1-H3 complete; H4 (degradation scoring) remains. |
+| Phase 10: Scalability & Multi-Instance | ✅ Completed | H1-H4 complete. Per-provider rate limiting, multi-instance coordination, event replay, and degradation scoring all shipped. |
 
 ---
 
@@ -97,10 +97,16 @@ This section supersedes the prior effort model and aligns with the current activ
 - **H3**: ✅ Event replay infrastructure via `EventReplayPipeline` — reads stored JSONL events with symbol/type/time filtering, speed control, pause/resume, optional sink publishing. `ReplayPipelineOptions` and `ReplaySessionStatistics` for configuration and metrics. 23 tests in `EventReplayPipelineTests.cs`.
 - **G2 (remainder)**: ✅ End-to-end distributed tracing via `TracedStorageSink` decorator — wraps `IStorageSink` with `ActivitySource`-based tracing for append and flush operations. Per-event tags (symbol, type, source, sequence), error recording, operational counters. 16 tests in `TracedStorageSinkTests.cs`.
 
-### Sprint 9
+### Sprint 9 ✅
 
-- **C3**: WebSocket provider base class adoption — refactor Polygon, NYSE, StockSharp to extend `WebSocketProviderBase`.
-- **H4**: Graceful provider degradation scoring — provider health scoring with automatic deprioritization in failover chain.
+- **H4**: ✅ Graceful provider degradation scoring via `ProviderDegradationScorer` — multi-factor health scoring engine with configurable weights (latency 25%, stability 30%, completeness 25%, consistency 20%). Continuous 0-100 scores with `ProviderHealthRecommendation` enum (Healthy/Caution/Degraded/FailoverRecommended/Unavailable). Provider ranking, best-provider selection with exclusion, degradation detection, and failover decision support. 35+ tests in `ProviderDegradationScorerTests.cs`.
+- **C3**: Deferred — analysis showed HIGH effort (~300 LOC savings) with significant risk refactoring 3 production WebSocket providers. ROI insufficient for current sprint capacity.
+
+### Sprint 10
+
+- **B3 (tranche 3)**: NYSE provider test coverage — hybrid streaming + historical scenarios.
+- **I1**: Integration test harness with fixture providers — full pipeline end-to-end testing without live API connections.
+- **Theme I exploration**: Evaluate I2 (CLI progress reporting) and I3 (configuration schema validation) for quick wins.
 
 ---
 
@@ -113,7 +119,7 @@ This section supersedes the prior effort model and aligns with the current activ
 | H1 | Per-Provider Backfill Rate Limiting | ✅ Done | Proactive per-provider rate limit enforcement via `WaitForSlotAsync()` in `ProviderRateLimitTracker`, wired into `CompositeHistoricalDataProvider`. 28 tests. |
 | H2 | Multi-Instance Symbol Coordination | ✅ Done | `IInstanceCoordinator` interface with `FileBasedInstanceCoordinator` implementation. JSON claim files with heartbeat timeout, stale reclamation, and graceful shutdown. 19 tests. |
 | H3 | Event Replay Infrastructure | ✅ Done | `EventReplayPipeline` service with symbol/type/time filtering, speed control, pause/resume, optional sink re-publishing, and `ReplaySessionStatistics`. 23 tests. |
-| H4 | Graceful Provider Degradation Scoring | 📝 Open | Implement a provider health scoring system that automatically deprioritizes degraded providers in the failover chain based on error rates, latency, and data quality metrics. |
+| H4 | Graceful Provider Degradation Scoring | ✅ Done | `ProviderDegradationScorer` with multi-factor scoring (latency/stability/completeness/consistency), configurable weights, continuous 0-100 scores, provider ranking, and failover recommendations. 35+ tests. |
 
 ### Theme I: Developer Experience (New)
 
@@ -165,8 +171,8 @@ This section supersedes the prior effort model and aligns with the current activ
 | Metric | Current Baseline | 2026 Target |
 |---|---:|---:|
 | Stub endpoints remaining | 0 | 0 |
-| Improvement items completed | 31 / 38 | 35+ / 38 |
-| Improvement items still open | 3 / 38 | <3 / 38 |
+| Improvement items completed | 32 / 39 | 36+ / 39 |
+| Improvement items still open | 3 / 39 | <3 / 39 |
 | Endpoint integration suite breadth | Negative-path + schema validation coverage | Critical endpoint families fully covered |
 | Architecture debt (Theme C completed) | 5 / 7 | 7 / 7 |
 | Provider test coverage | Polygon + StockSharp + IB + Alpaca | All 5 streaming providers |

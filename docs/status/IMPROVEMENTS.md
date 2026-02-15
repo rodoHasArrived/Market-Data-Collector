@@ -33,10 +33,10 @@ This document consolidates **functional improvements** (features, reliability, U
 
 | Status | Count | Items |
 |--------|-------|-------|
-| ✅ **Completed** | 31 | A1, A2, A3, A4, A5, A6, A7, B1, B2, B5, C1, C2, C4, C5, C6, D1, D2, D3, D4, D5, D6, D7, E1, E2, F2, G1, G2, G3, H1, H2, H3 |
+| ✅ **Completed** | 32 | A1, A2, A3, A4, A5, A6, A7, B1, B2, B5, C1, C2, C4, C5, C6, D1, D2, D3, D4, D5, D6, D7, E1, E2, F2, G1, G2, G3, H1, H2, H3, H4 |
 | 🔄 **Partially Complete** | 4 | B3, B4, E3, F1 |
 | 📝 **Open** | 3 | C3, C7, F3 |
-| **Total** | 38 | All improvement items (core + scalability + replay) |
+| **Total** | 39 | All improvement items (core + scalability + coordination + degradation) |
 
 ### By Theme
 
@@ -49,14 +49,14 @@ This document consolidates **functional improvements** (features, reliability, U
 | E: Performance & Scalability | 2 | 1 | 0 | 3 |
 | F: User Experience | 1 | 1 | 1 | 3 |
 | G: Operations & Monitoring | 3 | 0 | 0 | 3 |
-| H: Scalability & Coordination | 3 | 0 | 0 | 3 |
+| H: Scalability & Coordination | 4 | 0 | 0 | 4 |
 
 ### Portfolio Health Snapshot
 
-- **Completion ratio:** 81.6% complete (31/38), 10.5% partial (4/38), 7.9% open (3/38).
-- **Highest delivery risk:** Theme C (5/7 completed) — C3 (WebSocket base class) and C7 (WPF/UWP dedup) remain as the largest open refactors.
-- **Fastest near-term value:** Close out B3 tranche 3 (NYSE provider tests) and tackle C3 (WebSocket base class adoption).
-- **Recommended sprint split:** 40% WebSocket base class adoption (C3), 30% remaining provider tests (B3 NYSE), 30% GC pressure reduction (E3).
+- **Completion ratio:** 82.1% complete (32/39), 10.3% partial (4/39), 7.7% open (3/39).
+- **Highest delivery risk:** Theme C (5/7 completed) — C3 (WebSocket base class) and C7 (WPF/UWP dedup) remain as the largest open refactors. C3 deferred due to high effort (~300 LOC savings vs significant risk).
+- **Fastest near-term value:** Close out B3 tranche 3 (NYSE provider tests), F3 (first-run onboarding), and Theme I developer experience items.
+- **Recommended sprint split:** 40% remaining provider tests (B3 NYSE), 30% developer experience (Theme I), 30% GC pressure reduction (E3).
 
 ### Next Sprint Backlog (Recommended)
 
@@ -70,6 +70,7 @@ This document consolidates **functional improvements** (features, reliability, U
 | 6 | C1/C2, H1 | Provider registration unified under DI; per-provider backfill rate limiting enforcement; 28 new tests | ✅ Done |
 | 7 | H2, B3 tranche 2 | Multi-instance coordination; IB + Alpaca provider tests | ✅ Done |
 | 8 | H3, G2 remainder | Event replay infrastructure; full trace propagation | ✅ Done |
+| 9 | H4 | Provider degradation scoring with multi-factor health scoring and failover recommendations; 35+ tests | ✅ Done |
 
 ---
 
@@ -1053,6 +1054,36 @@ No clear contract for what each validates or when it runs.
 
 ---
 
+### H4. ✅ Graceful Provider Degradation Scoring (COMPLETED)
+
+**Impact:** High | **Effort:** Medium | **Priority:** P1 | **Status:** ✅ DONE
+
+**Problem:** The existing failover mechanism (`FailoverAwareMarketDataClient`) used binary health status — a provider was either "healthy" or "unhealthy" based on consecutive failure count exceeding a threshold. This led to abrupt failover decisions with no nuance: a provider experiencing minor latency spikes was treated the same as a completely disconnected provider. No continuous scoring, no weighted multi-factor assessment, and no intelligent provider ranking.
+
+**Solution Implemented:**
+- `ProviderDegradationScorer` in `Application/Monitoring/` — multi-factor health scoring engine:
+  - **Latency scoring (25% weight):** P95 latency bands (good <150ms → 90-100, fair <300ms → 65-90, poor <500ms → 30-65, beyond → exponential decay), P99/P95 ratio penalty for tail latency
+  - **Stability scoring (30% weight):** Uptime fraction component (0-50) + reconnect frequency component (0-50), heavily penalizes frequent reconnections
+  - **Completeness scoring (25% weight):** Effective completeness calculated as min(reported completeness, actual drop rate), events dropped vs received ratio
+  - **Consistency scoring (20% weight):** Total error rate from gap rate + duplicate rate + out-of-order rate, graduated penalty bands
+- `DegradationScoringConfig` — configurable weights (must sum to 1.0 ± 0.01), latency thresholds, stability thresholds, completeness thresholds
+- `ProviderHealthInput` — input record with all metrics (P95/P99/mean latency, reconnects, uptime, completeness, gap/duplicate/out-of-order rates, events received/dropped)
+- `DegradationScore` — output record with OverallScore (0-100), component scores, `ProviderHealthRecommendation` enum, timestamp
+- `ProviderHealthRecommendation` enum: Healthy (≥80), Caution (≥60), Degraded (≥40), FailoverRecommended (<40), Unavailable (disconnected)
+- `ProviderScoreRanking` and `RankedProvider` records for provider ranking
+- Provider management: `CalculateAndUpdateScore()`, `GetScore()`, `GetAllScores()`, `RankProviders()`, `SelectBestProvider()`, `HasDegraded()`, `ShouldFailover()`, `RemoveProvider()`, `Clear()`
+- **35+ comprehensive tests** covering constructor validation, scoring components (latency/stability/completeness/consistency), overall scoring, provider ranking, best provider selection with exclusion, degradation detection, failover decisions, score management, recommendation classification, disposal
+
+**Files:**
+- `Application/Monitoring/ProviderDegradationScorer.cs` (new)
+- `tests/MarketDataCollector.Tests/Application/Monitoring/ProviderDegradationScorerTests.cs` (35+ tests, new)
+
+**Benefit:** Continuous 0-100 health scoring replaces binary healthy/unhealthy. Multi-factor assessment provides nuanced degradation detection. Configurable weights allow tuning per deployment. Provider ranking enables intelligent failover to the best available provider rather than just the next one in a static chain.
+
+**ROADMAP:** Sprint 9
+
+---
+
 ## Priority Matrix
 
 ### By Impact and Effort
@@ -1115,7 +1146,7 @@ No clear contract for what each validates or when it runs.
 
 | Metric | Current | Target | Phase |
 |--------|---------|--------|-------|
-| Completed Improvements | 31/38 | 38/38 | All |
+| Completed Improvements | 32/39 | 39/39 | All |
 | Test Coverage | ~40% | 80% | Phase 1-3 |
 | API Implementation | 136/269 | 269/269 | Phase 3 |
 | Duplicate Code LOC | ~10,000 | <1,000 | Phase 4 |
