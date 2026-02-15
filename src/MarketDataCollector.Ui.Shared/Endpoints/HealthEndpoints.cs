@@ -69,6 +69,7 @@ public static class HealthEndpoints
             return Results.Json(new { providers, timestamp = DateTimeOffset.UtcNow }, jsonOptions);
         })
         .WithName("GetHealthProviders")
+        .WithDescription("Returns health details for all registered providers including capabilities and status.")
         .Produces(200);
 
         // Provider diagnostics
@@ -95,6 +96,7 @@ public static class HealthEndpoints
             }, jsonOptions);
         })
         .WithName("GetHealthProviderDiagnostics")
+        .WithDescription("Returns diagnostic details for a specific provider including capabilities and configuration.")
         .Produces(200)
         .Produces(404);
 
@@ -130,6 +132,7 @@ public static class HealthEndpoints
             }, jsonOptions);
         })
         .WithName("GetHealthStorage")
+        .WithDescription("Returns storage health including root path existence, total size, and file count.")
         .Produces(200);
 
         // Event stream health
@@ -142,6 +145,7 @@ public static class HealthEndpoints
             }, jsonOptions);
         })
         .WithName("GetHealthEvents")
+        .WithDescription("Returns event stream health status and metrics availability.")
         .Produces(200);
 
         // Health metrics
@@ -160,6 +164,7 @@ public static class HealthEndpoints
             }, jsonOptions);
         })
         .WithName("GetHealthMetrics")
+        .WithDescription("Returns health-related metrics including error statistics and tracking data.")
         .Produces(200);
 
         // Test provider connection
@@ -183,6 +188,7 @@ public static class HealthEndpoints
             }, jsonOptions);
         })
         .WithName("TestHealthProvider")
+        .WithDescription("Tests connectivity to a specific provider and returns reachability status.")
         .Produces(200)
         .Produces(404)
         .RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
@@ -205,6 +211,7 @@ public static class HealthEndpoints
             }, jsonOptions);
         })
         .WithName("GetHealthDiagnosticsBundle")
+        .WithDescription("Generates and returns a comprehensive diagnostics bundle for troubleshooting.")
         .Produces(200)
         .Produces(503);
     }

@@ -39,7 +39,9 @@ public static class ConfigEndpoints
                 backfill = cfg.Backfill,
                 derivatives = cfg.Derivatives
             }, jsonOptions);
-        }).WithName("GetConfig").Produces(200);
+        }).WithName("GetConfig")
+        .WithDescription("Returns the full application configuration including symbols, storage settings, and provider options.")
+        .Produces(200);
 
         // Update data source
         group.MapPost(UiApiRoutes.ConfigDataSource, async (ConfigStore store, DataSourceRequest req) =>
@@ -53,7 +55,9 @@ public static class ConfigEndpoints
             await store.SaveAsync(next);
 
             return Results.Ok();
-        }).WithName("UpdateDataSource").Produces(200).Produces(400).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
+        }).WithName("UpdateDataSource")
+        .WithDescription("Updates the active streaming data source (e.g., IB, Alpaca, Polygon).")
+        .Produces(200).Produces(400).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
         // Update Alpaca settings
         group.MapPost(UiApiRoutes.ConfigAlpaca, async (ConfigStore store, AlpacaOptionsDto alpaca) =>
@@ -62,7 +66,9 @@ public static class ConfigEndpoints
             var next = cfg with { Alpaca = alpaca.ToDomain() };
             await store.SaveAsync(next);
             return Results.Ok();
-        }).WithName("UpdateAlpaca").Produces(200).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
+        }).WithName("UpdateAlpaca")
+        .WithDescription("Updates Alpaca provider connection settings.")
+        .Produces(200).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
         // Update storage settings
         group.MapPost(UiApiRoutes.ConfigStorage, async (ConfigStore store, StorageSettingsRequest req) =>
@@ -87,7 +93,9 @@ public static class ConfigEndpoints
             };
             await store.SaveAsync(next);
             return Results.Ok();
-        }).WithName("UpdateStorage").Produces(200).Produces(400).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
+        }).WithName("UpdateStorage")
+        .WithDescription("Updates storage settings including root path, naming convention, and compression.")
+        .Produces(200).Produces(400).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
         // Add or update symbol
         group.MapPost(UiApiRoutes.ConfigSymbols, async (ConfigStore store, SymbolConfig symbol) =>
@@ -106,7 +114,9 @@ public static class ConfigEndpoints
             await store.SaveAsync(next);
 
             return Results.Ok();
-        }).WithName("UpsertSymbol").Produces(200).Produces(400).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
+        }).WithName("UpsertSymbol")
+        .WithDescription("Adds or updates a symbol in the monitoring configuration.")
+        .Produces(200).Produces(400).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
         // Delete symbol
         group.MapDelete(UiApiRoutes.ConfigSymbols + "/{symbol}", async (ConfigStore store, string symbol) =>
@@ -117,14 +127,18 @@ public static class ConfigEndpoints
             var next = cfg with { Symbols = list.ToArray() };
             await store.SaveAsync(next);
             return Results.Ok();
-        }).WithName("DeleteSymbol").Produces(200).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
+        }).WithName("DeleteSymbol")
+        .WithDescription("Removes a symbol from the monitoring configuration.")
+        .Produces(200).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
         // Get derivatives configuration
         group.MapGet(UiApiRoutes.ConfigDerivatives, (ConfigStore store) =>
         {
             var cfg = store.Load();
             return Results.Json(cfg.Derivatives ?? new Application.Config.DerivativesConfig(), jsonOptions);
-        }).WithName("GetDerivatives").Produces(200);
+        }).WithName("GetDerivatives")
+        .WithDescription("Returns the current derivatives trading configuration.")
+        .Produces(200);
 
         // Update derivatives configuration
         group.MapPost(UiApiRoutes.ConfigDerivatives, async (ConfigStore store, DerivativesConfigDto derivatives) =>
@@ -133,7 +147,9 @@ public static class ConfigEndpoints
             var next = cfg with { Derivatives = derivatives.ToDomain() };
             await store.SaveAsync(next);
             return Results.Ok();
-        }).WithName("UpdateDerivatives").Produces(200).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
+        }).WithName("UpdateDerivatives")
+        .WithDescription("Updates the derivatives trading configuration.")
+        .Produces(200).RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
         // Note: Status endpoint is handled by StatusEndpoints.MapStatusEndpoints()
         // which provides live status via StatusEndpointHandlers rather than loading from file

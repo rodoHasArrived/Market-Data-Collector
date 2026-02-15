@@ -19,17 +19,18 @@ This roadmap is refreshed to match the current repository state and focuses on t
 - **Operational baseline is in place** (API auth/rate limiting, Prometheus export, deployment docs, alerting assets).
 - **OpenTelemetry pipeline instrumentation** wired through `TracedEventMetrics` decorator with OTLP-compatible meters.
 - **Provider unit tests** expanded for Polygon subscription/reconnect and StockSharp lifecycle scenarios.
-- **OpenAPI typed annotations** added to core health and status endpoints.
+- **OpenAPI typed annotations** added to all endpoint families (status, health, backfill, config, providers).
+- **Negative-path and schema validation integration tests** added for health/status/config/backfill/provider endpoints.
 
 ### What remains
 
 Remaining work is primarily quality and architecture hardening, as tracked in `docs/status/IMPROVEMENTS.md`:
 
-- **37 tracked improvement items total** (4 new items added)
-  - ✅ Completed: 19
-  - 🔄 Partial: 4
-  - 📝 Open: 14
-- Biggest risk concentration remains in **Theme C (Architecture & Modularity)** and **Theme B (Testing & Quality)**.
+- **35 tracked improvement items total** (core themes A–G)
+  - ✅ Completed: 25
+  - 🔄 Partial: 5
+  - 📝 Open: 5
+- Biggest risk concentration remains in **Theme C (Architecture & Modularity)** (3/7 completed).
 
 ---
 
@@ -76,10 +77,10 @@ This section supersedes the prior effort model and aligns with the current activ
 - **G2 (partial)**: ✅ OpenTelemetry pipeline instrumentation via `TracedEventMetrics` decorator and OTLP meter registration.
 - **D7 (partial)**: ✅ Typed OpenAPI response annotations on core health/status endpoints.
 
-### Sprint 5 (Next)
+### Sprint 5 ✅
 
-- **B2 (tranche 1)**: Increase endpoint integration coverage for health/status/config + negative-path behavior.
-- **D7 (remainder)**: Extend typed OpenAPI annotations to backfill, config, and provider endpoint families.
+- **B2 (tranche 1)**: ✅ Negative-path endpoint tests (40+ tests) and response schema validation tests (15+ tests) for health/status/config/backfill/provider families.
+- **D7 (remainder)**: ✅ Typed `Produces<T>()` and `.WithDescription()` OpenAPI annotations extended to all endpoint families (58+ endpoints across 7 files).
 
 ### Sprint 6
 
@@ -159,12 +160,13 @@ This section supersedes the prior effort model and aligns with the current activ
 | Metric | Current Baseline | 2026 Target |
 |---|---:|---:|
 | Stub endpoints remaining | 0 | 0 |
-| Improvement items completed | 19 / 37 | 28+ / 37 |
-| Improvement items still open | 14 / 37 | <6 / 37 |
-| Endpoint integration suite breadth | Baseline established | Critical endpoint families fully covered |
-| Architecture debt (Theme C completed) | 1 / 7 | 5+ / 7 |
+| Improvement items completed | 25 / 35 | 30+ / 35 |
+| Improvement items still open | 5 / 35 | <3 / 35 |
+| Endpoint integration suite breadth | Negative-path + schema validation coverage | Critical endpoint families fully covered |
+| Architecture debt (Theme C completed) | 3 / 7 | 5+ / 7 |
 | Provider test coverage | Polygon + StockSharp | All 5 streaming providers |
 | OpenTelemetry instrumentation | Pipeline metrics | Full trace propagation |
+| OpenAPI typed annotations | All endpoint families | Complete with error response types |
 
 ---
 

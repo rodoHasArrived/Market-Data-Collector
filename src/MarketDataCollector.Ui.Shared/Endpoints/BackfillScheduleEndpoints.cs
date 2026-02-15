@@ -37,6 +37,7 @@ public static class BackfillScheduleEndpoints
             }, jsonOptions);
         })
         .WithName("GetBackfillHealth")
+        .WithDescription("Returns backfill system health including schedule status and success rates.")
         .Produces(200);
 
         // Resolve symbol for backfill
@@ -54,6 +55,7 @@ public static class BackfillScheduleEndpoints
             }, jsonOptions);
         })
         .WithName("ResolveBackfillSymbol")
+        .WithDescription("Resolves a symbol against available backfill providers and returns supported providers.")
         .Produces(200);
 
         // Gap fill
@@ -79,7 +81,8 @@ public static class BackfillScheduleEndpoints
             }
         })
         .WithName("RunBackfillGapFill")
-        .Produces(200)
+        .WithDescription("Runs an immediate gap-fill operation to repair missing data for specified symbols.")
+        .Produces<BackfillResult>(200)
         .Produces(400)
         .RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
@@ -95,6 +98,7 @@ public static class BackfillScheduleEndpoints
             return Results.Json(new { presets, timestamp = DateTimeOffset.UtcNow }, jsonOptions);
         })
         .WithName("GetBackfillPresets")
+        .WithDescription("Returns built-in backfill preset configurations for common use cases.")
         .Produces(200);
 
         // Backfill executions
@@ -112,6 +116,7 @@ public static class BackfillScheduleEndpoints
             }, jsonOptions);
         })
         .WithName("GetBackfillExecutions")
+        .WithDescription("Returns recent backfill execution history with optional limit parameter.")
         .Produces(200);
 
         // Backfill statistics
@@ -128,6 +133,7 @@ public static class BackfillScheduleEndpoints
             }, jsonOptions);
         })
         .WithName("GetBackfillStatistics")
+        .WithDescription("Returns aggregate backfill statistics including execution counts and success rates.")
         .Produces(200);
 
         // List backfill schedules
@@ -142,6 +148,7 @@ public static class BackfillScheduleEndpoints
             }, jsonOptions);
         })
         .WithName("GetBackfillSchedules")
+        .WithDescription("Lists all configured backfill schedules with their current state.")
         .Produces(200);
 
         // Create backfill schedule
@@ -154,6 +161,7 @@ public static class BackfillScheduleEndpoints
             return Results.Json(created, jsonOptions);
         })
         .WithName("CreateBackfillSchedule")
+        .WithDescription("Creates a new backfill schedule with cron expression and symbol configuration.")
         .Produces(200)
         .Produces(503)
         .RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
@@ -165,6 +173,7 @@ public static class BackfillScheduleEndpoints
             return schedule is null ? Results.NotFound() : Results.Json(schedule, jsonOptions);
         })
         .WithName("GetBackfillScheduleById")
+        .WithDescription("Returns a specific backfill schedule by ID.")
         .Produces(200)
         .Produces(404);
 
@@ -178,6 +187,7 @@ public static class BackfillScheduleEndpoints
             return deleted ? Results.Ok() : Results.NotFound();
         })
         .WithName("DeleteBackfillSchedule")
+        .WithDescription("Deletes a backfill schedule by ID.")
         .Produces(200)
         .Produces(404)
         .RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
@@ -192,6 +202,7 @@ public static class BackfillScheduleEndpoints
             return ok ? Results.Ok() : Results.NotFound();
         })
         .WithName("EnableBackfillSchedule")
+        .WithDescription("Enables a previously disabled backfill schedule.")
         .Produces(200)
         .Produces(404)
         .RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
@@ -206,6 +217,7 @@ public static class BackfillScheduleEndpoints
             return ok ? Results.Ok() : Results.NotFound();
         })
         .WithName("DisableBackfillSchedule")
+        .WithDescription("Disables a backfill schedule, preventing future automatic executions.")
         .Produces(200)
         .Produces(404)
         .RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
@@ -230,6 +242,7 @@ public static class BackfillScheduleEndpoints
             }, jsonOptions);
         })
         .WithName("RunBackfillScheduleNow")
+        .WithDescription("Triggers immediate execution of a backfill schedule, ignoring its cron timing.")
         .Produces(200)
         .Produces(404)
         .RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
@@ -244,6 +257,7 @@ public static class BackfillScheduleEndpoints
             return Results.Json(new { executions, total = executions.Count }, jsonOptions);
         })
         .WithName("GetBackfillScheduleHistory")
+        .WithDescription("Returns execution history for a specific backfill schedule.")
         .Produces(200);
 
         // Backfill schedule templates
@@ -259,6 +273,7 @@ public static class BackfillScheduleEndpoints
             return Results.Json(new { templates }, jsonOptions);
         })
         .WithName("GetBackfillScheduleTemplates")
+        .WithDescription("Returns predefined schedule templates for common backfill patterns.")
         .Produces(200);
     }
 

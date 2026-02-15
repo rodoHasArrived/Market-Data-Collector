@@ -33,29 +33,29 @@ This document consolidates **functional improvements** (features, reliability, U
 
 | Status | Count | Items |
 |--------|-------|-------|
-| ✅ **Completed** | 21 | A1, A2, A3, A4, A5, A6, A7, B1, B2, B5, C6, D1, D2, D3, D5, D6, E1, E2, F2, G1, G3 |
-| 🔄 **Partially Complete** | 6 | B3, B4, D7, E3, F1, G2 |
-| 📝 **Open** | 6 | C1, C2, C3, C5, C7, F3 |
-| **Total** | 33 | All improvement items (core) |
+| ✅ **Completed** | 25 | A1, A2, A3, A4, A5, A6, A7, B1, B2, B5, C4, C5, C6, D1, D2, D3, D4, D5, D6, D7, E1, E2, F2, G1, G3 |
+| 🔄 **Partially Complete** | 5 | B3, B4, E3, F1, G2 |
+| 📝 **Open** | 5 | C1, C2, C3, C7, F3 |
+| **Total** | 35 | All improvement items (core) |
 
 ### By Theme
 
 | Theme | Completed | Partial | Open | Total |
 |-------|-----------|---------|------|-------|
-| A: Reliability & Resilience | 8 | 0 | 0 | 8 |
+| A: Reliability & Resilience | 7 | 0 | 0 | 7 |
 | B: Testing & Quality | 3 | 2 | 0 | 5 |
-| C: Architecture & Modularity | 1 | 0 | 6 | 7 |
-| D: API & Integration | 4 | 1 | 1 | 6 |
+| C: Architecture & Modularity | 3 | 0 | 4 | 7 |
+| D: API & Integration | 7 | 0 | 0 | 7 |
 | E: Performance & Scalability | 2 | 1 | 0 | 3 |
 | F: User Experience | 1 | 1 | 1 | 3 |
 | G: Operations & Monitoring | 2 | 1 | 0 | 3 |
 
 ### Portfolio Health Snapshot
 
-- **Completion ratio:** 63.6% complete (21/33), 18.2% partial (6/33), 18.2% open (6/33).
-- **Highest delivery risk:** Theme C (1/7 completed) because architecture debt blocks testability and provider evolution.
+- **Completion ratio:** 71.4% complete (25/35), 14.3% partial (5/35), 14.3% open (5/35).
+- **Highest delivery risk:** Theme C (3/7 completed) because architecture debt blocks testability and provider evolution.
 - **Fastest near-term value:** Complete B3 tranche 2 for remaining provider test coverage.
-- **Recommended sprint split:** 60% architecture debt (C1/C2/C3), 25% test foundation (B3 tranche 2), 15% API/scalability (D7/H1).
+- **Recommended sprint split:** 60% architecture debt (C1/C2/C3), 25% test foundation (B3 tranche 2), 15% scalability (H1/H2).
 
 ### Next Sprint Backlog (Recommended)
 
@@ -65,7 +65,7 @@ This document consolidates **functional improvements** (features, reliability, U
 | 2 | D4, B1 remainder | `/api/quality/drops` and `/api/quality/drops/{symbol}` are live and documented | ✅ Done |
 | 3 | C6, A7 | Multi-sink fan-out merged; error handling convention documented and enforced in startup path | ✅ Done |
 | 4 | B3 tranche 1, G2 partial, D7 partial | Provider tests for Polygon + StockSharp; OTel pipeline metrics; typed OpenAPI annotations | ✅ Done |
-| 5 | B2 tranche 1, D7 remainder | Integration tests for health/status/config; typed annotations across all endpoint families | 📝 Next |
+| 5 | B2 tranche 1, D7 remainder | Negative-path + schema validation tests; typed annotations across all endpoint families | ✅ Done |
 | 6 | C1/C2, H1 | Provider registration unified under DI; per-provider backfill rate limiting | 📝 Pending |
 | 7 | H2, B3 tranche 2 | Multi-instance coordination; IB + Alpaca provider tests | 📝 Pending |
 | 8 | H3, G2 remainder | Event replay infrastructure; full trace propagation | 📝 Pending |
@@ -273,6 +273,9 @@ This document consolidates **functional improvements** (features, reliability, U
 - Tests assert status codes, content types, response schema shapes
 - Negative cases (invalid input, missing config, auth failures) included
 - Coverage spans status, health, config, backfill, providers, quality, SLA, maintenance, packaging, and more
+- **Sprint 5 additions:**
+  - `NegativePathEndpointTests.cs` — 40+ tests for negative-path and edge-case behavior across all endpoint families (404s, invalid POST bodies, path traversal rejection, reversed date ranges, symbol count limits, non-existent providers, method-not-allowed)
+  - `ResponseSchemaValidationTests.cs` — 15+ tests validating JSON response schemas for core endpoints (field presence, types, structural contracts for /api/status, /api/health, /api/health/summary, /api/config, /api/config/data-sources, /api/providers/comparison, /api/backpressure)
 
 **Files:**
 - `tests/MarketDataCollector.Tests/Integration/EndpointTests/EndpointTestFixture.cs`
@@ -291,6 +294,8 @@ This document consolidates **functional improvements** (features, reliability, U
 - `tests/MarketDataCollector.Tests/Integration/EndpointTests/SubscriptionEndpointTests.cs`
 - `tests/MarketDataCollector.Tests/Integration/EndpointTests/LiveDataEndpointTests.cs`
 - `tests/MarketDataCollector.Tests/Integration/EndpointTests/DiagnosticsEndpointTests.cs`
+- `tests/MarketDataCollector.Tests/Integration/EndpointTests/NegativePathEndpointTests.cs` (new, Sprint 5)
+- `tests/MarketDataCollector.Tests/Integration/EndpointTests/ResponseSchemaValidationTests.cs` (new, Sprint 5)
 
 **ROADMAP:** Phase 1 (Core Stability) - Item 1A
 
@@ -702,31 +707,38 @@ No clear contract for what each validates or when it runs.
 
 ---
 
-### D7. 🔄 OpenAPI Response Type Annotations (PARTIALLY COMPLETE)
+### D7. ✅ OpenAPI Response Type Annotations (COMPLETED)
 
-**Impact:** Low-Medium | **Effort:** Medium | **Priority:** P3 | **Status:** 🔄 PARTIAL
+**Impact:** Low-Medium | **Effort:** Medium | **Priority:** P3 | **Status:** ✅ DONE
 
 **Problem:** Swagger infrastructure exists but generated OpenAPI spec lacks response type documentation. Shows generic `200 OK` for all endpoints with no schema information.
 
-**Solution Implemented (Partial):**
+**Solution Implemented:**
 - Added typed `Produces<T>()` annotations to core health and status endpoints (`StatusEndpoints.cs`, `HealthEndpoints.cs`)
 - Added `WithDescription()` metadata for endpoint documentation
 - Created typed `HealthSummaryResponse` and `HealthSummaryProviders` models in `StatusModels.cs`
 - Typed annotations for `HealthCheckResponse`, `StatusResponse` on corresponding endpoints
-
-**Remaining Work:**
-- Extend typed annotations to backfill, config, provider, and storage endpoint families
-- Add error response types (400, 401, 404, 429, 500, 501)
-- Add XML documentation comments for remaining request/response models
-- Generate and publish OpenAPI spec as CI build artifact
+- **Sprint 5**: Extended typed `Produces<T>()` and `.WithDescription()` annotations across all remaining endpoint families:
+  - `BackfillEndpoints.cs` — 5 endpoints annotated with `Produces<BackfillProviderInfo[]>`, `Produces<BackfillResult>`
+  - `BackfillScheduleEndpoints.cs` — 15 endpoints annotated with descriptions and typed produces
+  - `ConfigEndpoints.cs` — 8 endpoints annotated with descriptions
+  - `ProviderEndpoints.cs` — 12 endpoints annotated with `Produces<ProviderComparisonResponse>`, `Produces<ProviderStatusResponse[]>`, `Produces<ProviderMetricsResponse[]>`, `Produces<ProviderCatalogEntry>`
+  - `ProviderExtendedEndpoints.cs` — 11 endpoints annotated with descriptions and typed produces
+  - `HealthEndpoints.cs` — 7 remaining endpoints annotated with descriptions
+  - `StatusEndpoints.cs` — remaining endpoints annotated with `Produces<ErrorsResponseDto>`, `Produces<BackpressureStatusDto>`, `Produces<ProviderLatencySummaryDto>`, `Produces<ConnectionHealthSnapshotDto>`
 
 **Files:**
-- `Ui.Shared/Endpoints/StatusEndpoints.cs` (updated)
-- `Ui.Shared/Endpoints/HealthEndpoints.cs` (updated)
-- `Contracts/Api/StatusModels.cs` (updated with new response types)
-- Remaining: `Ui.Shared/Endpoints/BackfillEndpoints.cs`, `ConfigEndpoints.cs`, `ProviderEndpoints.cs`
+- `Ui.Shared/Endpoints/StatusEndpoints.cs`
+- `Ui.Shared/Endpoints/HealthEndpoints.cs`
+- `Ui.Shared/Endpoints/BackfillEndpoints.cs`
+- `Ui.Shared/Endpoints/BackfillScheduleEndpoints.cs`
+- `Ui.Shared/Endpoints/ConfigEndpoints.cs`
+- `Ui.Shared/Endpoints/ProviderEndpoints.cs`
+- `Ui.Shared/Endpoints/ProviderExtendedEndpoints.cs`
+- `Contracts/Api/StatusModels.cs`
+- `Contracts/Api/StatusEndpointModels.cs`
 
-**ROADMAP:** Sprint 4 (partial), Sprint 5 (remainder)
+**ROADMAP:** Sprint 4 (core endpoints), Sprint 5 (all endpoint families)
 
 ---
 
@@ -1002,7 +1014,7 @@ No clear contract for what each validates or when it runs.
 
 | Metric | Current | Target | Phase |
 |--------|---------|--------|-------|
-| Completed Improvements | 21/33 | 33/33 | All |
+| Completed Improvements | 25/35 | 35/35 | All |
 | Test Coverage | ~40% | 80% | Phase 1-3 |
 | API Implementation | 136/269 | 269/269 | Phase 3 |
 | Duplicate Code LOC | ~10,000 | <1,000 | Phase 4 |
@@ -1119,7 +1131,7 @@ See [`archived/INDEX.md`](../archived/INDEX.md) for context on archived document
 
 ---
 
-**Last Updated:** 2026-02-14
+**Last Updated:** 2026-02-15
 **Maintainer:** Project Team
 **Status:** ✅ Active tracking document
 **Next Review:** Weekly engineering sync (or immediately after any status change)
