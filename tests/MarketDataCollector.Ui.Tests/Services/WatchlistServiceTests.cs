@@ -166,13 +166,42 @@ public sealed class WatchlistServiceTests
         var item = new WatchlistItem
         {
             Symbol = "AAPL",
-            Notes = "Apple Inc."
+            Notes = "Apple Inc.",
+            Tags = new List<string> { "tech", "mega-cap" }
         };
 
         // Assert
         item.Symbol.Should().Be("AAPL");
         item.Notes.Should().Be("Apple Inc.");
-        // Note: Tags property not yet implemented in WatchlistItem
+        item.Tags.Should().HaveCount(2);
+        item.Tags.Should().Contain(new[] { "tech", "mega-cap" });
+    }
+
+    [Fact]
+    public void WatchlistItem_Tags_DefaultsToEmptyList()
+    {
+        // Act
+        var item = new WatchlistItem { Symbol = "SPY" };
+
+        // Assert
+        item.Tags.Should().NotBeNull();
+        item.Tags.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void WatchlistItem_Tags_SupportsAddAndRemove()
+    {
+        // Arrange
+        var item = new WatchlistItem { Symbol = "SPY" };
+
+        // Act
+        item.Tags.Add("etf");
+        item.Tags.Add("index");
+        item.Tags.Remove("etf");
+
+        // Assert
+        item.Tags.Should().HaveCount(1);
+        item.Tags.Should().Contain("index");
     }
 
     [Fact]

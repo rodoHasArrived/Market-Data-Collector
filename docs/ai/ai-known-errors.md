@@ -254,3 +254,32 @@ If headings are missing, the workflow still creates an entry with safe defaults 
 - **Source issue**: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22014850305/job/63614949528#step:5:1
 - **Status**: fixed (commit 55d2827)
 - **Fixed in**: build/python/diagnostics/preflight.py - Added CI detection to skip config check when CI=true or GITHUB_ACTIONS=true
+
+### AI-20260215-maintenance-endpoint-500-for-missing-schedule
+- **ID**: AI-20260215-maintenance-endpoint-500-for-missing-schedule
+- **Area**: runtime/endpoints
+- **Symptoms**: POST `/api/maintenance/schedules/{id}/run` returns HTTP 500 Internal Server Error instead of 404 when the schedule ID doesn't exist. Integration tests masked this by accepting 500 alongside 404 with a catch-all that passed unconditionally (`true.Should().BeTrue()`).
+- **Root cause**: `ScheduledArchiveMaintenanceService.TriggerScheduleAsync()` throws `KeyNotFoundException` for non-existent schedules. The endpoint handler did not catch this exception, so it propagated as an unhandled 500 error. The test was written to tolerate this by accepting `InternalServerError` and using a tautological catch-all.
+- **Prevention checklist**:
+  - [ ] When implementing endpoints that accept entity IDs, always handle `KeyNotFoundException` and return 404
+  - [ ] Never write tests with `true.Should().BeTrue()` inside catch blocks — these are tautological and mask real failures
+  - [ ] Tighten endpoint test status code assertions: avoid accepting 4–5 different codes when only 1–2 are correct
+  - [ ] Check that all CRUD endpoints consistently return 404 for non-existent entities
+- **Verification commands**:
+  - `dotnet test tests/MarketDataCollector.Tests --filter "FullyQualifiedName~MaintenanceEndpointTests"`
+- **Status**: fixed
+- **Fixed in**: `src/MarketDataCollector.Ui.Shared/Endpoints/MaintenanceScheduleEndpoints.cs` — added `catch (KeyNotFoundException)` returning `Results.NotFound()`. Tests tightened to assert 404 instead of 500.
+
+### AI-20260215-tautological-test-assertions
+- **ID**: AI-20260215-tautological-test-assertions
+- **Area**: tests/quality
+- **Symptoms**: Several tests contained `true.Should().BeTrue()` inside catch-all blocks, making them incapable of ever failing. Other tests asserted `ThrowAsync<Exception>()` (the base type) which is trivially satisfiable by any error.
+- **Root cause**: When writing tests for endpoints or services that return implementation-dependent results, agents used overly permissive assertions to avoid test failures rather than fixing the underlying code.
+- **Prevention checklist**:
+  - [ ] Never use `true.Should().BeTrue()` or equivalent no-op assertions
+  - [ ] Never catch exceptions in test bodies without asserting on the exception type or message
+  - [ ] Assert specific exception types (`ThrowAsync<OperationCanceledException>()`) rather than `ThrowAsync<Exception>()`
+  - [ ] Tests should fail when the system behaves incorrectly — if a test can't fail, it provides no value
+  - [ ] Audit tests for bare `catch {}` blocks that silently pass
+- **Status**: fixed
+- **Fixed in**: `MaintenanceEndpointTests.cs`, `WpfDataQualityServiceTests.cs`, `ConnectionServiceTests.cs` — removed tautological assertions, tightened status code checks, added real assertions

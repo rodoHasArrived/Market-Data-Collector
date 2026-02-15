@@ -70,6 +70,7 @@ public class WatchlistItem
 {
     public string Symbol { get; set; } = string.Empty;
     public string? Notes { get; set; }
+    public List<string> Tags { get; set; } = new();
 }
 
 /// <summary>

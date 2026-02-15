@@ -82,15 +82,17 @@ This section supersedes the prior effort model and aligns with the current activ
 - **B2 (tranche 1)**: ✅ Negative-path endpoint tests (40+ tests) and response schema validation tests (15+ tests) for health/status/config/backfill/provider families.
 - **D7 (remainder)**: ✅ Typed `Produces<T>()` and `.WithDescription()` OpenAPI annotations extended to all endpoint families (58+ endpoints across 7 files).
 
-### Sprint 6
+### Sprint 6 (partial)
 
-- **C1/C2**: Provider registration and runtime composition unification under DI.
-- **H1**: Rate limiting per-provider for backfill operations (new item).
+- **C1/C2**: Provider registration and runtime composition unification under DI. *(pending)*
+- **H1**: ✅ Rate limiting per-provider for backfill operations — already implemented via `ProviderRateLimitTracker` in orchestration layer.
+- **H4**: ✅ Provider degradation scoring — `ProviderDegradationScorer` with composite health scores and 20+ unit tests.
+- **I1**: ✅ Integration test harness — `FixtureMarketDataClient` + `InMemoryStorageSink` + 9 pipeline integration tests.
 
-### Sprint 7
+### Sprint 7 (partial)
 
-- **H2**: Multi-instance coordination via distributed locking for symbol subscriptions (new item).
-- **B3 (tranche 2)**: Provider tests for IB and Alpaca reconnect/credential-refresh behavior.
+- **H2**: Multi-instance coordination via distributed locking for symbol subscriptions. *(pending)*
+- **B3 (tranche 2)**: ✅ Provider tests for IB simulation client (15 tests) and Alpaca credential/reconnect behavior (10 tests).
 
 ### Sprint 8
 
@@ -105,16 +107,16 @@ This section supersedes the prior effort model and aligns with the current activ
 
 | ID | Title | Status | Description |
 |----|-------|--------|-------------|
-| H1 | Per-Provider Backfill Rate Limiting | 📝 Open | Enforce per-provider rate limits during backfill operations to prevent API bans. Currently rate limits are tracked but not enforced at the orchestration layer. |
+| H1 | Per-Provider Backfill Rate Limiting | ✅ Complete | Rate limits are tracked and enforced via `ProviderRateLimitTracker` in the `CompositeHistoricalDataProvider` and `BackfillWorkerService`. |
 | H2 | Multi-Instance Symbol Coordination | 📝 Open | Support running multiple collector instances without duplicate subscriptions. Requires distributed locking or leader election for symbol assignment. |
 | H3 | Event Replay Infrastructure | 📝 Open | Build a replay service that can re-process stored JSONL/Parquet events through the pipeline for debugging, QA, and backfill verification. |
-| H4 | Graceful Provider Degradation Scoring | 📝 Open | Implement a provider health scoring system that automatically deprioritizes degraded providers in the failover chain based on error rates, latency, and data quality metrics. |
+| H4 | Graceful Provider Degradation Scoring | ✅ Complete | `ProviderDegradationScorer` computes composite health scores from latency, error rate, connection health, and reconnect frequency. Automatically deprioritizes degraded providers. |
 
 ### Theme I: Developer Experience (New)
 
 | ID | Title | Status | Description |
 |----|-------|--------|-------------|
-| I1 | Integration Test Harness with Fixture Providers | 📝 Open | Create a test harness that runs the full pipeline with fixture data providers, enabling end-to-end integration testing without live API connections. |
+| I1 | Integration Test Harness with Fixture Providers | ✅ Complete | `FixtureMarketDataClient` and `InMemoryStorageSink` enable full pipeline integration testing without live API connections. See `tests/.../Integration/FixtureProviderTests.cs`. |
 | I2 | CLI Progress Reporting | 📝 Open | Add structured progress reporting to long-running CLI operations (backfill, packaging, maintenance) with ETA and throughput metrics. |
 | I3 | Configuration Schema Validation at Startup | 📝 Open | Generate JSON Schema from AppConfig record types and validate appsettings.json against it during startup, providing actionable error messages for misconfigurations. |
 | I4 | Provider SDK Documentation Generator | 📝 Open | Auto-generate provider capability documentation from `[DataSource]` attributes and `HistoricalDataCapabilities`, keeping docs in sync with code. |
@@ -164,7 +166,7 @@ This section supersedes the prior effort model and aligns with the current activ
 | Improvement items still open | 5 / 35 | <3 / 35 |
 | Endpoint integration suite breadth | Negative-path + schema validation coverage | Critical endpoint families fully covered |
 | Architecture debt (Theme C completed) | 3 / 7 | 5+ / 7 |
-| Provider test coverage | Polygon + StockSharp | All 5 streaming providers |
+| Provider test coverage | Polygon + StockSharp + IB Sim + Alpaca | All 5 streaming providers |
 | OpenTelemetry instrumentation | Pipeline metrics | Full trace propagation |
 | OpenAPI typed annotations | All endpoint families | Complete with error response types |
 

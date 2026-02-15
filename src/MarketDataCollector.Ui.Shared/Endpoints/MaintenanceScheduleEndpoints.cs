@@ -103,11 +103,19 @@ public static class MaintenanceScheduleEndpoints
             if (maintService is null)
                 return Results.Json(new { error = "Maintenance service not available" }, jsonOptions, statusCode: 503);
 
-            var execution = await maintService.TriggerScheduleAsync(id, ct);
-            return Results.Json(execution, jsonOptions);
+            try
+            {
+                var execution = await maintService.TriggerScheduleAsync(id, ct);
+                return Results.Json(execution, jsonOptions);
+            }
+            catch (KeyNotFoundException)
+            {
+                return Results.NotFound(new { error = $"Schedule '{id}' not found" });
+            }
         })
         .WithName("RunMaintenanceScheduleNow")
         .Produces(200)
+        .Produces(404)
         .Produces(503)
         .RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
 
