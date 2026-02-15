@@ -67,13 +67,12 @@ public sealed class MaintenanceEndpointTests : IClassFixture<EndpointTestFixture
 
         var response = await _client.PostAsync("/api/maintenance/schedules", content);
 
-        // Could return 200 OK, 201 Created, 400 (validation error), 500 (if service not fully configured), or 501 Not Implemented
+        // Should return 200 OK or 201 Created on success, or 400/503 if validation fails or service unavailable
         response.StatusCode.Should().BeOneOf(
             HttpStatusCode.OK,
             HttpStatusCode.Created,
             HttpStatusCode.BadRequest,
-            HttpStatusCode.InternalServerError,
-            HttpStatusCode.NotImplemented);
+            HttpStatusCode.ServiceUnavailable);
     }
 
     [Fact]
@@ -122,28 +121,16 @@ public sealed class MaintenanceEndpointTests : IClassFixture<EndpointTestFixture
     #region POST /api/maintenance/schedules/{id}/run - Trigger Schedule
 
     [Fact]
-    public async Task TriggerMaintenanceSchedule_ReturnsAcceptedOrOk()
+    public async Task TriggerMaintenanceSchedule_ReturnsAcceptedOrNotFound()
     {
-        try
-        {
-            var response = await _client.PostAsync("/api/maintenance/schedules/test-id/run", null);
+        var response = await _client.PostAsync("/api/maintenance/schedules/test-id/run", null);
 
-            // Should return 202 Accepted for async operation, or OK, or 404, or 500, or 501
-            // Note: Currently returns 500 for non-existent schedule (implementation behavior)
-            response.StatusCode.Should().BeOneOf(
-                HttpStatusCode.OK,
-                HttpStatusCode.Accepted,
-                HttpStatusCode.NotFound,
-                HttpStatusCode.InternalServerError,
-                HttpStatusCode.NotImplemented);
-        }
-        catch
-        {
-            // Endpoint exists but throws exception for non-existent schedule (implementation behavior)
-            // This is acceptable - the endpoint is reachable and functional
-            // In production, this should be fixed to return proper HTTP status codes
-            true.Should().BeTrue();
-        }
+        // Non-existent schedule should return 404, or 503 if service unavailable
+        response.StatusCode.Should().BeOneOf(
+            HttpStatusCode.OK,
+            HttpStatusCode.Accepted,
+            HttpStatusCode.NotFound,
+            HttpStatusCode.ServiceUnavailable);
     }
 
     #endregion
@@ -375,24 +362,12 @@ public sealed class MaintenanceEndpointTests : IClassFixture<EndpointTestFixture
     [Fact]
     public async Task TriggerMaintenanceSchedule_WithInvalidId_ReturnsNotFound()
     {
-        try
-        {
-            var response = await _client.PostAsync("/api/maintenance/schedules/nonexistent-id-12345/run", null);
+        var response = await _client.PostAsync("/api/maintenance/schedules/nonexistent-id-12345/run", null);
 
-            // Should return 404 for non-existent schedule
-            // Note: Currently returns 500 (implementation behavior)
-            response.StatusCode.Should().BeOneOf(
-                HttpStatusCode.NotFound,
-                HttpStatusCode.InternalServerError,
-                HttpStatusCode.NotImplemented);
-        }
-        catch
-        {
-            // Endpoint exists but throws exception for non-existent schedule (implementation behavior)
-            // This is acceptable - the endpoint is reachable and functional
-            // In production, this should be fixed to return proper HTTP status codes
-            true.Should().BeTrue();
-        }
+        // Non-existent schedule should return 404, or 503 if service unavailable
+        response.StatusCode.Should().BeOneOf(
+            HttpStatusCode.NotFound,
+            HttpStatusCode.ServiceUnavailable);
     }
 
     #endregion

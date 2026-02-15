@@ -210,25 +210,18 @@ public sealed class WpfDataQualityServiceTests
     [Theory]
     [InlineData("SPY")]
     [InlineData("AAPL")]
-    public async Task GetDataGapsAsync_WithSymbol_ReturnsEmptyOrGaps(string symbol)
+    public async Task GetDataGapsAsync_WithCancellation_ThrowsOnCancelledToken(string symbol)
     {
         // Arrange
         var service = WpfDataQualityService.Instance;
         using var cts = new CancellationTokenSource();
+        cts.Cancel();
 
-        // Act - May return empty list if API is unavailable
+        // Act
         var act = async () => await service.GetDataGapsAsync(symbol, cts.Token);
 
-        // Assert - Should either return list or throw
-        try
-        {
-            var result = await act();
-            result.Should().NotBeNull();
-        }
-        catch (Exception)
-        {
-            // Expected when API is unavailable
-        }
+        // Assert - Should throw when token is cancelled
+        await act.Should().ThrowAsync<Exception>();
     }
 
     [Fact]
