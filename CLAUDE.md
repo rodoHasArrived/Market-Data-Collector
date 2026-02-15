@@ -641,6 +641,7 @@ Market-Data-Collector/
 │   │   │   ├── IEventMetrics.cs
 │   │   │   ├── Metrics.cs
 │   │   │   ├── PrometheusMetrics.cs
+│   │   │   ├── ProviderDegradationScorer.cs
 │   │   │   ├── ProviderLatencyService.cs
 │   │   │   ├── ProviderMetricsStatus.cs
 │   │   │   ├── SchemaValidationService.cs
@@ -1293,6 +1294,7 @@ Market-Data-Collector/
 │   │   │   ├── ConfigurableTickerDataCollectionTests.cs
 │   │   │   ├── ConnectionRetryIntegrationTests.cs
 │   │   │   ├── EndpointStubDetectionTests.cs
+│   │   │   ├── FixtureProviderTests.cs
 │   │   │   └── YahooFinancePcgPreferredIntegrationTests.cs
 │   │   ├── ProviderSdk/
 │   │   │   ├── CredentialValidatorTests.cs

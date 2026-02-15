@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-15 16:14:36 UTC
+> Auto-generated on 2026-02-15 23:33:06 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -474,6 +474,7 @@ Market-Data-Collector/
 │   │   │   ├── IEventMetrics.cs
 │   │   │   ├── Metrics.cs
 │   │   │   ├── PrometheusMetrics.cs
+│   │   │   ├── ProviderDegradationScorer.cs
 │   │   │   ├── ProviderLatencyService.cs
 │   │   │   ├── ProviderMetricsStatus.cs
 │   │   │   ├── SchemaValidationService.cs
@@ -1126,6 +1127,7 @@ Market-Data-Collector/
 │   │   │   ├── ConfigurableTickerDataCollectionTests.cs
 │   │   │   ├── ConnectionRetryIntegrationTests.cs
 │   │   │   ├── EndpointStubDetectionTests.cs
+│   │   │   ├── FixtureProviderTests.cs
 │   │   │   └── YahooFinancePcgPreferredIntegrationTests.cs
 │   │   ├── ProviderSdk/
 │   │   │   ├── CredentialValidatorTests.cs
