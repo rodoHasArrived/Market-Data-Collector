@@ -33,10 +33,10 @@ This document consolidates **functional improvements** (features, reliability, U
 
 | Status | Count | Items |
 |--------|-------|-------|
-| ✅ **Completed** | 28 | A1, A2, A3, A4, A5, A6, A7, B1, B2, B5, C1, C2, C4, C5, C6, D1, D2, D3, D4, D5, D6, D7, E1, E2, F2, G1, G3, H1 |
+| ✅ **Completed** | 29 | A1, A2, A3, A4, A5, A6, A7, B1, B2, B5, C1, C2, C4, C5, C6, D1, D2, D3, D4, D5, D6, D7, E1, E2, F2, G1, G3, H1, H2 |
 | 🔄 **Partially Complete** | 5 | B3, B4, E3, F1, G2 |
 | 📝 **Open** | 3 | C3, C7, F3 |
-| **Total** | 36 | All improvement items (core + scalability) |
+| **Total** | 37 | All improvement items (core + scalability) |
 
 ### By Theme
 
@@ -49,14 +49,14 @@ This document consolidates **functional improvements** (features, reliability, U
 | E: Performance & Scalability | 2 | 1 | 0 | 3 |
 | F: User Experience | 1 | 1 | 1 | 3 |
 | G: Operations & Monitoring | 2 | 1 | 0 | 3 |
-| H: Scalability & Coordination | 1 | 0 | 0 | 1 |
+| H: Scalability & Coordination | 2 | 0 | 0 | 2 |
 
 ### Portfolio Health Snapshot
 
-- **Completion ratio:** 77.8% complete (28/36), 13.9% partial (5/36), 8.3% open (3/36).
+- **Completion ratio:** 78.4% complete (29/37), 13.5% partial (5/37), 8.1% open (3/37).
 - **Highest delivery risk:** Theme C (5/7 completed) — C3 (WebSocket base class) and C7 (WPF/UWP dedup) remain as the largest open refactors.
-- **Fastest near-term value:** Complete B3 tranche 2 for remaining provider test coverage.
-- **Recommended sprint split:** 40% test foundation (B3 tranche 2), 30% scalability (H2), 30% observability (G2 remainder).
+- **Fastest near-term value:** Complete H3 (Event Replay) and G2 (trace propagation) for operational hardening.
+- **Recommended sprint split:** 40% replay infrastructure (H3), 30% observability (G2 remainder), 30% remaining provider tests (B3 NYSE).
 
 ### Next Sprint Backlog (Recommended)
 
@@ -68,7 +68,7 @@ This document consolidates **functional improvements** (features, reliability, U
 | 4 | B3 tranche 1, G2 partial, D7 partial | Provider tests for Polygon + StockSharp; OTel pipeline metrics; typed OpenAPI annotations | ✅ Done |
 | 5 | B2 tranche 1, D7 remainder | Negative-path + schema validation tests; typed annotations across all endpoint families | ✅ Done |
 | 6 | C1/C2, H1 | Provider registration unified under DI; per-provider backfill rate limiting enforcement; 28 new tests | ✅ Done |
-| 7 | H2, B3 tranche 2 | Multi-instance coordination; IB + Alpaca provider tests | 📝 Pending |
+| 7 | H2, B3 tranche 2 | Multi-instance coordination; IB + Alpaca provider tests | ✅ Done |
 | 8 | H3, G2 remainder | Event replay infrastructure; full trace propagation | 📝 Pending |
 
 ---
@@ -312,18 +312,29 @@ This document consolidates **functional improvements** (features, reliability, U
 - Polygon subscription tests: multi-symbol subscribe/unsubscribe, aggregate lifecycle, connection lifecycle, options configuration, provider metadata — `PolygonSubscriptionTests.cs`
 - StockSharp subscription tests: constructor validation, trade/depth subscription management, connection lifecycle, disposal, domain model integration — `StockSharpSubscriptionTests.cs`
 
-**Remaining Work (Tranche 2):**
-- IB and Alpaca reconnect/credential-refresh behavior tests
+**Solution Implemented (Tranche 2):**
+- IB simulation client tests: connect/disconnect lifecycle, subscription management, tick generation, disposal, metadata — `IBSimulationClientTests.cs` (24 tests)
+- IB API limits and error code tests: connection/data/historical limits, error code map, IBApiError record, IB exception types, tick types, bar sizes, duration strings — `IBApiLimitsTests.cs` (40+ tests across 8 test classes)
+- IB ContractFactory tests: preferred stock symbol inference (InferPreferredLocalSymbol), pattern matching for `-PA`/`-PB` suffixes, non-IBAPI build path — `IBContractFactoryTests.cs` (12 tests)
+- Alpaca historical provider tests: credential validation, feed/adjustment parameter validation, provider metadata, symbol validation, disposal — `AlpacaProviderTests.cs` (18 tests)
+- Subscription manager tests: thread-safe subscribe/unsubscribe, symbol tracking by kind, snapshot, concurrent access — `SubscriptionManagerTests.cs` (22 tests)
+
+**Remaining Work (Tranche 3 — optional):**
 - NYSE hybrid streaming + historical test coverage
 - Recorded WebSocket message fixture tests for all providers
 
 **Files:**
-- `tests/MarketDataCollector.Tests/Infrastructure/Providers/PolygonSubscriptionTests.cs` (new)
-- `tests/MarketDataCollector.Tests/Infrastructure/Providers/StockSharpSubscriptionTests.cs` (new)
+- `tests/MarketDataCollector.Tests/Infrastructure/Providers/PolygonSubscriptionTests.cs` (tranche 1)
+- `tests/MarketDataCollector.Tests/Infrastructure/Providers/StockSharpSubscriptionTests.cs` (tranche 1)
 - `tests/MarketDataCollector.Tests/Infrastructure/Providers/PolygonMessageParsingTests.cs` (existing)
 - `tests/MarketDataCollector.Tests/Infrastructure/Providers/StockSharpMessageConversionTests.cs` (existing)
+- `tests/MarketDataCollector.Tests/Infrastructure/Providers/IBSimulationClientTests.cs` (tranche 2, new)
+- `tests/MarketDataCollector.Tests/Infrastructure/Providers/IBApiLimitsTests.cs` (tranche 2, new)
+- `tests/MarketDataCollector.Tests/Infrastructure/Providers/IBContractFactoryTests.cs` (tranche 2, new)
+- `tests/MarketDataCollector.Tests/Infrastructure/Providers/AlpacaProviderTests.cs` (tranche 2, new)
+- `tests/MarketDataCollector.Tests/Infrastructure/Shared/SubscriptionManagerTests.cs` (tranche 2, new)
 
-**ROADMAP:** Sprint 4 (tranche 1 done), Sprint 7 (tranche 2)
+**ROADMAP:** Sprint 4 (tranche 1 done), Sprint 7 (tranche 2 done)
 
 ---
 
@@ -974,6 +985,40 @@ No clear contract for what each validates or when it runs.
 
 ---
 
+### H2. ✅ Multi-Instance Symbol Coordination (COMPLETED)
+
+**Impact:** High | **Effort:** Medium | **Priority:** P1 | **Status:** ✅ DONE
+
+**Problem:** Running multiple collector instances (e.g., horizontal scaling or redundancy) caused duplicate subscriptions because each instance independently subscribed to the full symbol list. No coordination mechanism existed to partition symbol ownership across instances.
+
+**Solution Implemented:**
+- Defined `IInstanceCoordinator` interface in `Application/Subscriptions/` with claim/release/heartbeat contract:
+  - `TryClaimSymbolAsync()` — atomically claim a symbol for this instance
+  - `ReleaseSymbolAsync()` — release a claimed symbol
+  - `RefreshHeartbeatAsync()` — keep claims alive with heartbeat
+  - `GetOwnedSymbols()` — query locally owned symbols
+  - `GetAllClaimsAsync()` — view all active claims across instances
+  - `ReclaimStaleAsync()` — reclaim symbols from dead instances
+- Implemented `FileBasedInstanceCoordinator` in `Infrastructure/Shared/` using JSON claim files:
+  - Each symbol gets a `{SYMBOL}.claim.json` file in a shared directory
+  - Claim file contains `InstanceId`, `ClaimedAt`, `LastHeartbeat`
+  - Heartbeat timeout (default 60s) enables stale claim detection
+  - Stale claims are automatically reclaimable by other instances
+  - `DisposeAsync` releases all owned symbols for graceful shutdown
+  - Thread-safe file operations via lock
+- **19 comprehensive tests** covering constructor validation, claim/release lifecycle, multi-instance conflict resolution, heartbeat refresh, stale claim reclamation, and disposal cleanup
+
+**Files:**
+- `Application/Subscriptions/IInstanceCoordinator.cs` (interface)
+- `Infrastructure/Shared/FileBasedInstanceCoordinator.cs` (file-based implementation)
+- `tests/MarketDataCollector.Tests/Infrastructure/Shared/FileBasedInstanceCoordinatorTests.cs` (19 tests)
+
+**Benefit:** Enables horizontal scaling with symbol partitioning. Multiple instances can run against a shared filesystem without duplicate subscriptions. Heartbeat-based staleness detection handles instance crashes gracefully.
+
+**ROADMAP:** Sprint 7
+
+---
+
 ## Priority Matrix
 
 ### By Impact and Effort
@@ -1036,7 +1081,7 @@ No clear contract for what each validates or when it runs.
 
 | Metric | Current | Target | Phase |
 |--------|---------|--------|-------|
-| Completed Improvements | 28/36 | 36/36 | All |
+| Completed Improvements | 29/37 | 37/37 | All |
 | Test Coverage | ~40% | 80% | Phase 1-3 |
 | API Implementation | 136/269 | 269/269 | Phase 3 |
 | Duplicate Code LOC | ~10,000 | <1,000 | Phase 4 |

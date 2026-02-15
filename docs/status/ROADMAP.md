@@ -26,8 +26,8 @@ This roadmap is refreshed to match the current repository state and focuses on t
 
 Remaining work is primarily quality and architecture hardening, as tracked in `docs/status/IMPROVEMENTS.md`:
 
-- **36 tracked improvement items total** (core themes A–H)
-  - ✅ Completed: 28
+- **37 tracked improvement items total** (core themes A–H)
+  - ✅ Completed: 29
   - 🔄 Partial: 5
   - 📝 Open: 3
 - Biggest remaining refactors: **C3** (WebSocket base class adoption) and **C7** (WPF/UWP service dedup).
@@ -87,10 +87,10 @@ This section supersedes the prior effort model and aligns with the current activ
 - **C1/C2**: ✅ Provider registration and runtime composition unified under single `ProviderFactory.CreateAndRegisterAllAsync()` call in `ServiceCompositionRoot`.
 - **H1**: ✅ Per-provider backfill rate limiting enforcement via `ProviderRateLimitTracker.WaitForSlotAsync()`. 28 new tests in `ProviderRateLimitTrackerTests.cs`.
 
-### Sprint 7
+### Sprint 7 ✅
 
-- **H2**: Multi-instance coordination via distributed locking for symbol subscriptions (new item).
-- **B3 (tranche 2)**: Provider tests for IB and Alpaca reconnect/credential-refresh behavior.
+- **H2**: ✅ Multi-instance symbol coordination via `IInstanceCoordinator` interface and `FileBasedInstanceCoordinator` implementation. JSON claim files with heartbeat-based staleness detection. 19 tests in `FileBasedInstanceCoordinatorTests.cs`.
+- **B3 (tranche 2)**: ✅ Provider tests for IB and Alpaca: `IBSimulationClientTests` (24 tests), `IBApiLimitsTests` (40+ tests across 8 classes), `IBContractFactoryTests` (12 tests), `AlpacaProviderTests` (18 tests), `SubscriptionManagerTests` (22 tests).
 
 ### Sprint 8
 
@@ -106,7 +106,7 @@ This section supersedes the prior effort model and aligns with the current activ
 | ID | Title | Status | Description |
 |----|-------|--------|-------------|
 | H1 | Per-Provider Backfill Rate Limiting | ✅ Done | Proactive per-provider rate limit enforcement via `WaitForSlotAsync()` in `ProviderRateLimitTracker`, wired into `CompositeHistoricalDataProvider`. 28 tests. |
-| H2 | Multi-Instance Symbol Coordination | 📝 Open | Support running multiple collector instances without duplicate subscriptions. Requires distributed locking or leader election for symbol assignment. |
+| H2 | Multi-Instance Symbol Coordination | ✅ Done | `IInstanceCoordinator` interface with `FileBasedInstanceCoordinator` implementation. JSON claim files with heartbeat timeout, stale reclamation, and graceful shutdown. 19 tests. |
 | H3 | Event Replay Infrastructure | 📝 Open | Build a replay service that can re-process stored JSONL/Parquet events through the pipeline for debugging, QA, and backfill verification. |
 | H4 | Graceful Provider Degradation Scoring | 📝 Open | Implement a provider health scoring system that automatically deprioritizes degraded providers in the failover chain based on error rates, latency, and data quality metrics. |
 
@@ -160,11 +160,11 @@ This section supersedes the prior effort model and aligns with the current activ
 | Metric | Current Baseline | 2026 Target |
 |---|---:|---:|
 | Stub endpoints remaining | 0 | 0 |
-| Improvement items completed | 28 / 36 | 33+ / 36 |
-| Improvement items still open | 3 / 36 | <3 / 36 |
+| Improvement items completed | 29 / 37 | 34+ / 37 |
+| Improvement items still open | 3 / 37 | <3 / 37 |
 | Endpoint integration suite breadth | Negative-path + schema validation coverage | Critical endpoint families fully covered |
 | Architecture debt (Theme C completed) | 5 / 7 | 7 / 7 |
-| Provider test coverage | Polygon + StockSharp | All 5 streaming providers |
+| Provider test coverage | Polygon + StockSharp + IB + Alpaca | All 5 streaming providers |
 | OpenTelemetry instrumentation | Pipeline metrics | Full trace propagation |
 | OpenAPI typed annotations | All endpoint families | Complete with error response types |
 
