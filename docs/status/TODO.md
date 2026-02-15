@@ -1,39 +1,39 @@
 # TODO Tracking
 
 > Auto-generated TODO documentation. Do not edit manually.
-> Last updated: 2026-02-15T16:13:22.889488+00:00
+> Last updated: 2026-02-15T23:32:00.402991+00:00
 
 ## Summary
 
 | Metric | Count |
 |--------|-------|
-| **Total Items** | 20 |
+| **Total Items** | 16 |
 | **Linked to Issues** | 0 |
-| **Untracked** | 20 |
+| **Untracked** | 16 |
 
 ### By Type
 
 | Type | Count | Description |
 |------|-------|-------------|
-| `NOTE` | 20 | Important notes and documentation |
+| `NOTE` | 16 | Important notes and documentation |
 
 ### By Directory
 
 | Directory | Count |
 |-----------|-------|
-| `tests/` | 14 |
+| `tests/` | 10 |
 | `src/` | 5 |
 | `.github/` | 1 |
 
 ## Unassigned & Untracked
 
-20 items have no assignee and no issue tracking:
+16 items have no assignee and no issue tracking:
 
 Consider assigning ownership or creating tracking issues for these items.
 
 ## All Items
 
-### NOTE (20)
+### NOTE (16)
 
 - [ ] `.github/workflows/desktop-builds.yml:9`
   > UWP/WinUI 3 application has been removed. WPF is the sole desktop client.
@@ -71,12 +71,6 @@ Consider assigning ownership or creating tracking issues for these items.
 - [ ] `tests/MarketDataCollector.Tests/Infrastructure/Resilience/WebSocketResiliencePolicyTests.cs:201`
   > We can't directly invoke the event from outside the class The test validates that the subscription mechanism works
 
-- [ ] `tests/MarketDataCollector.Tests/Integration/EndpointTests/MaintenanceEndpointTests.cs:132`
-  > Currently returns 500 for non-existent schedule (implementation behavior)
-
-- [ ] `tests/MarketDataCollector.Tests/Integration/EndpointTests/MaintenanceEndpointTests.cs:383`
-  > Currently returns 500 (implementation behavior)
-
 - [ ] `tests/MarketDataCollector.Tests/Storage/StorageChecksumServiceTests.cs:121`
   > File.WriteAllTextAsync uses UTF-8 with BOM by default on some platforms, so we compute expected from the actual file bytes
 
@@ -85,12 +79,6 @@ Consider assigning ownership or creating tracking issues for these items.
 
 - [ ] `tests/MarketDataCollector.Ui.Tests/Services/BackfillServiceTests.cs:198`
   > Similar to IsRunning test, this verifies the property logic
-
-- [ ] `tests/MarketDataCollector.Ui.Tests/Services/WatchlistServiceTests.cs:175`
-  > Tags property not yet implemented in WatchlistItem
-
-- [ ] `tests/MarketDataCollector.Wpf.Tests/Services/ConnectionServiceTests.cs:286`
-  > This test may need to wait briefly for async operation
 
 - [ ] `tests/MarketDataCollector.Wpf.Tests/Services/NavigationServiceTests.cs:57`
   > This test assumes NavigationService might not be initialized In production, Initialize should be called during app startup
