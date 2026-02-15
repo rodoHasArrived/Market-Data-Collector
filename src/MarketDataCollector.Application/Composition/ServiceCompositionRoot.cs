@@ -476,11 +476,9 @@ public static class ServiceCompositionRoot
             // --- Streaming factories (dictionary-based, replaces switch statements) ---
             RegisterStreamingFactories(registry, config, credentialResolver, sp, log);
 
-            // --- Backfill providers ---
-            RegisterBackfillProviders(registry, config, credentialResolver, log);
-
-            // --- Symbol search providers ---
-            RegisterSymbolSearchProviders(registry, config, credentialResolver, log);
+            // --- Backfill + symbol search providers (unified via ProviderFactory) ---
+            var factory = new ProviderFactory(config, credentialResolver, log);
+            factory.CreateAndRegisterAllAsync(registry).GetAwaiter().GetResult();
 
             return registry;
         });
@@ -568,39 +566,9 @@ public static class ServiceCompositionRoot
             registry.SupportedStreamingSources.Count);
     }
 
-    /// <summary>
-    /// Creates and registers backfill providers with the registry using credential resolution.
-    /// </summary>
-    private static void RegisterBackfillProviders(
-        ProviderRegistry registry,
-        AppConfig config,
-        ICredentialResolver credentialResolver,
-        Serilog.ILogger log)
-    {
-        var factory = new ProviderFactory(config, credentialResolver, log);
-        var providers = factory.CreateBackfillProviders();
-        foreach (var provider in providers)
-        {
-            registry.Register(provider);
-        }
-    }
-
-    /// <summary>
-    /// Creates and registers symbol search providers with the registry using credential resolution.
-    /// </summary>
-    private static void RegisterSymbolSearchProviders(
-        ProviderRegistry registry,
-        AppConfig config,
-        ICredentialResolver credentialResolver,
-        Serilog.ILogger log)
-    {
-        var factory = new ProviderFactory(config, credentialResolver, log);
-        var providers = factory.CreateSymbolSearchProviders();
-        foreach (var provider in providers)
-        {
-            registry.Register(provider);
-        }
-    }
+    // RegisterBackfillProviders and RegisterSymbolSearchProviders have been unified
+    // into a single ProviderFactory.CreateAndRegisterAllAsync() call above,
+    // eliminating duplicate ProviderFactory instantiation (C1/C2 improvement).
 
     #endregion
 

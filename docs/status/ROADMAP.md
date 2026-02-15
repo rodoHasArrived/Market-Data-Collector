@@ -26,11 +26,11 @@ This roadmap is refreshed to match the current repository state and focuses on t
 
 Remaining work is primarily quality and architecture hardening, as tracked in `docs/status/IMPROVEMENTS.md`:
 
-- **35 tracked improvement items total** (core themes A–G)
-  - ✅ Completed: 25
+- **36 tracked improvement items total** (core themes A–H)
+  - ✅ Completed: 28
   - 🔄 Partial: 5
-  - 📝 Open: 5
-- Biggest risk concentration remains in **Theme C (Architecture & Modularity)** (3/7 completed).
+  - 📝 Open: 3
+- Biggest remaining refactors: **C3** (WebSocket base class adoption) and **C7** (WPF/UWP service dedup).
 
 ---
 
@@ -82,10 +82,10 @@ This section supersedes the prior effort model and aligns with the current activ
 - **B2 (tranche 1)**: ✅ Negative-path endpoint tests (40+ tests) and response schema validation tests (15+ tests) for health/status/config/backfill/provider families.
 - **D7 (remainder)**: ✅ Typed `Produces<T>()` and `.WithDescription()` OpenAPI annotations extended to all endpoint families (58+ endpoints across 7 files).
 
-### Sprint 6
+### Sprint 6 ✅
 
-- **C1/C2**: Provider registration and runtime composition unification under DI.
-- **H1**: Rate limiting per-provider for backfill operations (new item).
+- **C1/C2**: ✅ Provider registration and runtime composition unified under single `ProviderFactory.CreateAndRegisterAllAsync()` call in `ServiceCompositionRoot`.
+- **H1**: ✅ Per-provider backfill rate limiting enforcement via `ProviderRateLimitTracker.WaitForSlotAsync()`. 28 new tests in `ProviderRateLimitTrackerTests.cs`.
 
 ### Sprint 7
 
@@ -105,7 +105,7 @@ This section supersedes the prior effort model and aligns with the current activ
 
 | ID | Title | Status | Description |
 |----|-------|--------|-------------|
-| H1 | Per-Provider Backfill Rate Limiting | 📝 Open | Enforce per-provider rate limits during backfill operations to prevent API bans. Currently rate limits are tracked but not enforced at the orchestration layer. |
+| H1 | Per-Provider Backfill Rate Limiting | ✅ Done | Proactive per-provider rate limit enforcement via `WaitForSlotAsync()` in `ProviderRateLimitTracker`, wired into `CompositeHistoricalDataProvider`. 28 tests. |
 | H2 | Multi-Instance Symbol Coordination | 📝 Open | Support running multiple collector instances without duplicate subscriptions. Requires distributed locking or leader election for symbol assignment. |
 | H3 | Event Replay Infrastructure | 📝 Open | Build a replay service that can re-process stored JSONL/Parquet events through the pipeline for debugging, QA, and backfill verification. |
 | H4 | Graceful Provider Degradation Scoring | 📝 Open | Implement a provider health scoring system that automatically deprioritizes degraded providers in the failover chain based on error rates, latency, and data quality metrics. |
@@ -160,10 +160,10 @@ This section supersedes the prior effort model and aligns with the current activ
 | Metric | Current Baseline | 2026 Target |
 |---|---:|---:|
 | Stub endpoints remaining | 0 | 0 |
-| Improvement items completed | 25 / 35 | 30+ / 35 |
-| Improvement items still open | 5 / 35 | <3 / 35 |
+| Improvement items completed | 28 / 36 | 33+ / 36 |
+| Improvement items still open | 3 / 36 | <3 / 36 |
 | Endpoint integration suite breadth | Negative-path + schema validation coverage | Critical endpoint families fully covered |
-| Architecture debt (Theme C completed) | 3 / 7 | 5+ / 7 |
+| Architecture debt (Theme C completed) | 5 / 7 | 7 / 7 |
 | Provider test coverage | Polygon + StockSharp | All 5 streaming providers |
 | OpenTelemetry instrumentation | Pipeline metrics | Full trace propagation |
 | OpenAPI typed annotations | All endpoint families | Complete with error response types |

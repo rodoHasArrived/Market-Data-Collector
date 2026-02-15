@@ -161,10 +161,11 @@ public sealed class CompositeHistoricalDataProvider : IHistoricalDataProvider, I
                 _log.Information("Trying {Provider} for {Symbol} (resolved: {Resolved})",
                     provider.Name, symbol, resolvedSymbol);
 
-                var startTime = DateTimeOffset.UtcNow;
+                // Enforce rate limits: wait for available slot before making the request.
+                // This proactively prevents 429 errors by respecting the provider's declared limits.
+                await _rateLimitTracker.WaitForSlotAsync(provider.Name, ct).ConfigureAwait(false);
 
-                // Record the request attempt
-                _rateLimitTracker.RecordRequest(provider.Name);
+                var startTime = DateTimeOffset.UtcNow;
 
                 var bars = await provider.GetDailyBarsAsync(resolvedSymbol, from, to, ct).ConfigureAwait(false);
                 var elapsed = DateTimeOffset.UtcNow - startTime;
@@ -346,8 +347,8 @@ public sealed class CompositeHistoricalDataProvider : IHistoricalDataProvider, I
             {
                 var resolvedSymbol = await ResolveSymbolForProviderAsync(symbol, provider.Name, ct).ConfigureAwait(false);
 
-                // Record the request attempt
-                _rateLimitTracker.RecordRequest(provider.Name);
+                // Enforce rate limits before making the request
+                await _rateLimitTracker.WaitForSlotAsync(provider.Name, ct).ConfigureAwait(false);
 
                 var bars = await provider.GetAdjustedDailyBarsAsync(resolvedSymbol, from, to, ct).ConfigureAwait(false);
 

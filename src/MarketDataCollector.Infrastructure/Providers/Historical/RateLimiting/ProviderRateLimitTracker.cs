@@ -58,6 +58,49 @@ public sealed class ProviderRateLimitTracker : IDisposable
     }
 
     /// <summary>
+    /// Waits for a rate limit slot before allowing the request to proceed.
+    /// This is the proactive enforcement method — it blocks until the provider
+    /// has capacity within its configured rate limit window, preventing 429 errors.
+    /// </summary>
+    /// <param name="providerName">The provider to enforce rate limits for.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>The total time waited.</returns>
+    public async Task<TimeSpan> WaitForSlotAsync(string providerName, CancellationToken ct = default)
+    {
+        if (!_providerStates.TryGetValue(providerName, out var state))
+        {
+            // Unknown provider — no limits to enforce
+            return TimeSpan.Zero;
+        }
+
+        var waitStart = DateTimeOffset.UtcNow;
+
+        // If explicitly rate limited (from a prior 429), wait for the reset
+        if (state.IsExplicitlyLimited)
+        {
+            var resetWait = state.GetTimeUntilReset();
+            if (resetWait.HasValue && resetWait.Value > TimeSpan.Zero)
+            {
+                _log.Debug("Provider {Provider} is explicitly rate limited, waiting {WaitMs}ms for reset",
+                    providerName, resetWait.Value.TotalMilliseconds);
+                await Task.Delay(resetWait.Value, ct).ConfigureAwait(false);
+            }
+        }
+
+        // Delegate to the internal RateLimiter for sliding window enforcement
+        await state.WaitForSlotAsync(ct).ConfigureAwait(false);
+
+        var totalWait = DateTimeOffset.UtcNow - waitStart;
+        if (totalWait > TimeSpan.FromMilliseconds(100))
+        {
+            _log.Information("Rate limit enforcement for {Provider}: waited {WaitMs:F0}ms before request",
+                providerName, totalWait.TotalMilliseconds);
+        }
+
+        return totalWait;
+    }
+
+    /// <summary>
     /// Record that a provider hit its rate limit (HTTP 429).
     /// </summary>
     public void RecordRateLimitHit(string providerName, TimeSpan? retryAfter = null)
@@ -237,9 +280,23 @@ internal sealed class ProviderRateLimitState : IDisposable
         }
     }
 
+    /// <summary>
+    /// Whether this provider was explicitly rate-limited via a 429 response.
+    /// </summary>
+    public bool IsExplicitlyLimited => _isExplicitlyRateLimited && DateTimeOffset.UtcNow < RateLimitResetsAt;
+
     public void RecordRequest()
     {
         _rateLimiter.RecordRequest();
+    }
+
+    /// <summary>
+    /// Waits for a rate limit slot via the internal sliding window limiter.
+    /// This both waits AND records the request.
+    /// </summary>
+    public Task<TimeSpan> WaitForSlotAsync(CancellationToken ct = default)
+    {
+        return _rateLimiter.WaitForSlotAsync(ct);
     }
 
     public void RecordRateLimitHit(TimeSpan? retryAfter = null)

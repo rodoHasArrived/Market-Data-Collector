@@ -33,10 +33,10 @@ This document consolidates **functional improvements** (features, reliability, U
 
 | Status | Count | Items |
 |--------|-------|-------|
-| ✅ **Completed** | 25 | A1, A2, A3, A4, A5, A6, A7, B1, B2, B5, C4, C5, C6, D1, D2, D3, D4, D5, D6, D7, E1, E2, F2, G1, G3 |
+| ✅ **Completed** | 28 | A1, A2, A3, A4, A5, A6, A7, B1, B2, B5, C1, C2, C4, C5, C6, D1, D2, D3, D4, D5, D6, D7, E1, E2, F2, G1, G3, H1 |
 | 🔄 **Partially Complete** | 5 | B3, B4, E3, F1, G2 |
-| 📝 **Open** | 5 | C1, C2, C3, C7, F3 |
-| **Total** | 35 | All improvement items (core) |
+| 📝 **Open** | 3 | C3, C7, F3 |
+| **Total** | 36 | All improvement items (core + scalability) |
 
 ### By Theme
 
@@ -44,18 +44,19 @@ This document consolidates **functional improvements** (features, reliability, U
 |-------|-----------|---------|------|-------|
 | A: Reliability & Resilience | 7 | 0 | 0 | 7 |
 | B: Testing & Quality | 3 | 2 | 0 | 5 |
-| C: Architecture & Modularity | 3 | 0 | 4 | 7 |
+| C: Architecture & Modularity | 5 | 0 | 2 | 7 |
 | D: API & Integration | 7 | 0 | 0 | 7 |
 | E: Performance & Scalability | 2 | 1 | 0 | 3 |
 | F: User Experience | 1 | 1 | 1 | 3 |
 | G: Operations & Monitoring | 2 | 1 | 0 | 3 |
+| H: Scalability & Coordination | 1 | 0 | 0 | 1 |
 
 ### Portfolio Health Snapshot
 
-- **Completion ratio:** 71.4% complete (25/35), 14.3% partial (5/35), 14.3% open (5/35).
-- **Highest delivery risk:** Theme C (3/7 completed) because architecture debt blocks testability and provider evolution.
+- **Completion ratio:** 77.8% complete (28/36), 13.9% partial (5/36), 8.3% open (3/36).
+- **Highest delivery risk:** Theme C (5/7 completed) — C3 (WebSocket base class) and C7 (WPF/UWP dedup) remain as the largest open refactors.
 - **Fastest near-term value:** Complete B3 tranche 2 for remaining provider test coverage.
-- **Recommended sprint split:** 60% architecture debt (C1/C2/C3), 25% test foundation (B3 tranche 2), 15% scalability (H1/H2).
+- **Recommended sprint split:** 40% test foundation (B3 tranche 2), 30% scalability (H2), 30% observability (G2 remainder).
 
 ### Next Sprint Backlog (Recommended)
 
@@ -66,7 +67,7 @@ This document consolidates **functional improvements** (features, reliability, U
 | 3 | C6, A7 | Multi-sink fan-out merged; error handling convention documented and enforced in startup path | ✅ Done |
 | 4 | B3 tranche 1, G2 partial, D7 partial | Provider tests for Polygon + StockSharp; OTel pipeline metrics; typed OpenAPI annotations | ✅ Done |
 | 5 | B2 tranche 1, D7 remainder | Negative-path + schema validation tests; typed annotations across all endpoint families | ✅ Done |
-| 6 | C1/C2, H1 | Provider registration unified under DI; per-provider backfill rate limiting | 📝 Pending |
+| 6 | C1/C2, H1 | Provider registration unified under DI; per-provider backfill rate limiting enforcement; 28 new tests | ✅ Done |
 | 7 | H2, B3 tranche 2 | Multi-instance coordination; IB + Alpaca provider tests | 📝 Pending |
 | 8 | H3, G2 remainder | Event replay infrastructure; full trace propagation | 📝 Pending |
 
@@ -379,9 +380,9 @@ This document consolidates **functional improvements** (features, reliability, U
 
 ## Theme C: Architecture & Modularity
 
-### C1. 📝 Unified Provider Registry (OPEN)
+### C1. ✅ Unified Provider Registry (COMPLETED)
 
-**Impact:** High | **Effort:** Medium | **Priority:** P1 | **Status:** 📝 OPEN
+**Impact:** High | **Effort:** Medium | **Priority:** P1 | **Status:** ✅ DONE
 
 **Problem:** Three separate provider creation mechanisms exist and compete:
 1. `MarketDataClientFactory` - switch-based factory
@@ -390,49 +391,42 @@ This document consolidates **functional improvements** (features, reliability, U
 
 Adding a new provider requires changes in all three locations. `[DataSource]` attribute discovery (ADR-005) exists but isn't wired into startup.
 
-**Proposed Solution:**
-- Merge `MarketDataClientFactory` and `ProviderFactory` into single `ProviderRegistry`
-- Use `[DataSource]` attribute scanning to discover providers at startup
-- Replace switch statement with `Dictionary<DataSourceKind, Func<IMarketDataClient>>`
-- Remove direct instantiation from `Program.cs`; resolve all providers through DI
+**Solution Implemented:**
+- Unified backfill and symbol search provider registration under `ProviderFactory.CreateAndRegisterAllAsync()`, which handles both provider types in a single call
+- Eliminated duplicate `ProviderFactory` instantiation in `ServiceCompositionRoot` (previously created once per registration method)
+- `ProviderRegistry` serves as single source of truth for all provider types (streaming, backfill, symbol search)
+- Registration flows through `ProviderFactory` → `ProviderRegistry` with credential resolution
 
 **Files:**
-- `Infrastructure/Providers/MarketDataClientFactory.cs`
-- `Infrastructure/Providers/Core/ProviderFactory.cs`
-- `Program.cs:278-298`
-- `ProviderSdk/DataSourceAttribute.cs`
-- `ProviderSdk/DataSourceRegistry.cs`
+- `Application/Composition/ServiceCompositionRoot.cs` (unified registration)
+- `Infrastructure/Providers/Core/ProviderFactory.cs` (`CreateAndRegisterAllAsync`)
+- `Infrastructure/Providers/Core/ProviderRegistry.cs` (unified registry)
 
-**Benefit:** Adding new provider becomes: implement interface, add attribute, done.
+**Benefit:** Single factory call registers all provider types. Provider addition requires only implementing the interface.
 
-**ROADMAP:** Phase 2 (Architecture) - Item 2A
+**ROADMAP:** Sprint 6
 
 ---
 
-### C2. 📝 Single DI Composition Path (OPEN)
+### C2. ✅ Single DI Composition Path (COMPLETED)
 
-**Impact:** High | **Effort:** Medium | **Priority:** P1 | **Status:** 📝 OPEN
+**Impact:** High | **Effort:** Medium | **Priority:** P1 | **Status:** ✅ DONE
 
-**Problem:** `ServiceCompositionRoot.cs` registers services in DI, but `Program.cs` bypasses DI for critical components:
-- Collectors created via `new` (lines 278-281)
-- Storage pipeline created via `new` (lines 213-224)
-- Configuration loaded twice (lines 57, 69)
+**Problem:** `ServiceCompositionRoot.cs` registered backfill and symbol search providers via two separate private methods (`RegisterBackfillProviders` and `RegisterSymbolSearchProviders`), each creating its own `ProviderFactory` instance. This duplication risked inconsistent initialization and made the composition path harder to follow.
 
-DI registrations in `ServiceCompositionRoot.cs` (lines 525-529, 440-460) are dead code.
-
-**Proposed Solution:**
-- Move all object creation in `Program.cs` behind `HostStartup` or `ServiceCompositionRoot`
-- Use `IServiceProvider.GetRequiredService<T>()` consistently
-- Cache loaded `AppConfig` after first load; pass to DI as singleton
+**Solution Implemented:**
+- Replaced two separate private registration methods with single `ProviderFactory.CreateAndRegisterAllAsync(registry)` call
+- Removed dead `RegisterBackfillProviders()` and `RegisterSymbolSearchProviders()` private methods from `ServiceCompositionRoot`
+- Provider registration now flows through one factory instance → one `ProviderRegistry`
+- Credential resolution happens once per factory, not once per registration method
 
 **Files:**
-- `Program.cs:57-69, 213-281`
-- `Application/Composition/ServiceCompositionRoot.cs:440-529`
-- `Application/Composition/HostStartup.cs`
+- `Application/Composition/ServiceCompositionRoot.cs` (unified provider registration path)
+- `Infrastructure/Providers/Core/ProviderFactory.cs` (single entry point)
 
-**Benefit:** One composition path. DI registrations become source of truth. Testable via service replacement.
+**Benefit:** One composition path for all provider types. DI registrations are the source of truth. Eliminates duplicate factory creation.
 
-**ROADMAP:** Phase 2 (Architecture) - Item 2B
+**ROADMAP:** Sprint 6
 
 ---
 
@@ -952,6 +946,34 @@ No clear contract for what each validates or when it runs.
 
 ---
 
+## Theme H: Scalability & Coordination
+
+### H1. ✅ Per-Provider Backfill Rate Limiting Enforcement (COMPLETED)
+
+**Impact:** High | **Effort:** Low | **Priority:** P1 | **Status:** ✅ DONE
+
+**Problem:** `ProviderRateLimitTracker` tracked per-provider rate limit state (sliding window, 429 hits) but only used passive `RecordRequest()` calls. The internal `RateLimiter.WaitForSlotAsync()` enforcement method was never exposed through the tracker, meaning `CompositeHistoricalDataProvider` recorded requests after the fact rather than waiting for available capacity beforehand. This caused unnecessary 429 errors under load.
+
+**Solution Implemented:**
+- Added `WaitForSlotAsync(string providerName, CancellationToken ct)` to `ProviderRateLimitTracker` — proactive enforcement that:
+  1. Waits for explicit rate limit reset (if provider was 429'd)
+  2. Delegates to internal `RateLimiter.WaitForSlotAsync()` for sliding window enforcement
+  3. Logs wait durations > 100ms at Information level
+- Added `IsExplicitlyLimited` property to `ProviderRateLimitState` for checking 429 status
+- Changed `CompositeHistoricalDataProvider.GetDailyBarsAsync()` and `GetAdjustedDailyBarsAsync()` from passive `RecordRequest()` to proactive `WaitForSlotAsync()`
+- **28 comprehensive tests** covering registration, status tracking, rate limit hits, approaching-limit detection, best-provider selection, WaitForSlotAsync enforcement, cancellation, multi-provider independence, and disposal
+
+**Files:**
+- `Infrastructure/Providers/Historical/RateLimiting/ProviderRateLimitTracker.cs` (WaitForSlotAsync, IsExplicitlyLimited)
+- `Infrastructure/Providers/Historical/CompositeHistoricalDataProvider.cs` (enforcement wiring)
+- `tests/MarketDataCollector.Tests/Application/Backfill/ProviderRateLimitTrackerTests.cs` (28 tests, new)
+
+**Benefit:** Prevents 429 errors proactively. Backfill operations wait for rate limit capacity before making requests. Per-provider enforcement means a rate-limited provider doesn't block others.
+
+**ROADMAP:** Sprint 6
+
+---
+
 ## Priority Matrix
 
 ### By Impact and Effort
@@ -1014,7 +1036,7 @@ No clear contract for what each validates or when it runs.
 
 | Metric | Current | Target | Phase |
 |--------|---------|--------|-------|
-| Completed Improvements | 25/35 | 35/35 | All |
+| Completed Improvements | 28/36 | 36/36 | All |
 | Test Coverage | ~40% | 80% | Phase 1-3 |
 | API Implementation | 136/269 | 269/269 | Phase 3 |
 | Duplicate Code LOC | ~10,000 | <1,000 | Phase 4 |
