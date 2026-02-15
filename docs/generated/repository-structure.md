@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-15 23:33:06 UTC
+> Auto-generated on 2026-02-15 23:59:24 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -304,6 +304,7 @@ Market-Data-Collector/
 │   │   └── README.md
 │   ├── evaluations/
 │   │   ├── data-quality-monitoring-evaluation.md
+│   │   ├── desktop-end-user-improvements-shortlist.md
 │   │   ├── desktop-end-user-improvements.md
 │   │   ├── historical-data-providers-evaluation.md
 │   │   ├── ingestion-orchestration-evaluation.md

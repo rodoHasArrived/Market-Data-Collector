@@ -458,6 +458,7 @@ Market-Data-Collector/
 │   │   └── README.md
 │   ├── evaluations/
 │   │   ├── data-quality-monitoring-evaluation.md
+│   │   ├── desktop-end-user-improvements-shortlist.md
 │   │   ├── desktop-end-user-improvements.md
 │   │   ├── historical-data-providers-evaluation.md
 │   │   ├── ingestion-orchestration-evaluation.md
