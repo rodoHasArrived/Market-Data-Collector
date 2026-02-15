@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Runtime.CompilerServices;
 using MarketDataCollector.Application.Monitoring;
+using MarketDataCollector.Infrastructure.Contracts;
 
 namespace MarketDataCollector.Application.Tracing;
 
