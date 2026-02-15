@@ -559,7 +559,8 @@ Market-Data-Collector/
 │   │   ├── Testing/
 │   │   │   └── DepthBufferSelfTests.cs
 │   │   ├── Tracing/
-│   │   │   └── OpenTelemetrySetup.cs
+│   │   │   ├── OpenTelemetrySetup.cs
+│   │   │   └── TracedEventMetrics.cs
 │   │   ├── GlobalUsings.cs
 │   │   └── MarketDataCollector.Application.csproj
 │   ├── MarketDataCollector.Contracts/

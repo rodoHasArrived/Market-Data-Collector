@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-15 16:04:19 UTC
+> Auto-generated on 2026-02-15 16:14:36 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -531,7 +531,8 @@ Market-Data-Collector/
 │   │   ├── Testing/
 │   │   │   └── DepthBufferSelfTests.cs
 │   │   ├── Tracing/
-│   │   │   └── OpenTelemetrySetup.cs
+│   │   │   ├── OpenTelemetrySetup.cs
+│   │   │   └── TracedEventMetrics.cs
 │   │   ├── GlobalUsings.cs
 │   │   └── MarketDataCollector.Application.csproj
 │   ├── MarketDataCollector.Contracts/
