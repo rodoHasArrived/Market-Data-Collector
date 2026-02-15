@@ -194,9 +194,8 @@ public sealed class CredentialValidatorTests
     [Fact]
     public void GetCredentialMultiple_EmptyParamValue_ReturnsParamValue()
     {
-        // Empty string is NOT null/empty-checked for param — it returns the param as-is
-        // Actually looking at the code: if (!string.IsNullOrEmpty(paramValue)) return paramValue;
-        // So empty string falls through to env vars
+        // Empty string is checked with string.IsNullOrEmpty(), so it falls through to env vars
+        // This matches the implementation: if (!string.IsNullOrEmpty(paramValue)) return paramValue;
         var envVarName = "MDC_TEST_MULTI_" + Guid.NewGuid().ToString("N")[..8];
         try
         {

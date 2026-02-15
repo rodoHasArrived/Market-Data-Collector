@@ -75,7 +75,9 @@ public static class CredentialValidator
     /// </summary>
     public static string? GetCredential(string? paramValue, string envVarName)
     {
-        return paramValue ?? Environment.GetEnvironmentVariable(envVarName);
+        return !string.IsNullOrEmpty(paramValue) 
+            ? paramValue 
+            : Environment.GetEnvironmentVariable(envVarName);
     }
 
     /// <summary>
