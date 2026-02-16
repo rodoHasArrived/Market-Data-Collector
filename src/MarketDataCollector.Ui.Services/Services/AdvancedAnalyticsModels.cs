@@ -387,6 +387,11 @@ public class SymbolCompleteness
     // Additional properties
     public long RecordCount { get; set; }
     public long TotalEvents { get; set; }
+    
+    /// <summary>
+    /// Per-day event breakdown showing trade, quote, depth, and bar event counts for each date.
+    /// See DayEventCount class in DataCompletenessService for structure.
+    /// </summary>
     public List<DayEventCount> DayDetails { get; set; } = new();
 }
 
