@@ -33,8 +33,7 @@ C# remains the primary language for the system's orchestration and integration c
 | **Storage Policy** | `src/MarketDataCollector/Storage/` | JSONL sinks, retention, tier migration orchestration |
 | **Web UI** | `src/MarketDataCollector/Application/StatusHttpServer.cs` | ASP.NET dashboard, REST API, Prometheus metrics |
 | **Provider Integration** | `src/MarketDataCollector/Infrastructure/Providers/` | Official SDK wrappers (IB API, Alpaca SDK) |
-| **Microservices** | `src/Microservices/` | Gateway, ingestion services, validation service |
-| **UWP Desktop App** | `src/MarketDataCollector.Uwp/` | WinUI 3 desktop application |
+| **WPF Desktop App** | `src/MarketDataCollector.Wpf/` | WPF desktop application (Windows) |
 
 ### Rationale for C#
 
@@ -576,8 +575,7 @@ MarketDataCollector/
 │   │   ├── NativeRingBuffer.cs
 │   │   └── NativeJsonParser.cs
 │   │
-│   ├── MarketDataCollector.Uwp/          # C# UWP app (existing)
-│   └── Microservices/                    # C# microservices (existing)
+│   └── MarketDataCollector.Wpf/          # C# WPF desktop app (existing)
 │
 ├── native/                               # Native build artifacts
 │   ├── win-x64/

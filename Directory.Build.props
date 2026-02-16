@@ -8,7 +8,6 @@
   Related Configuration Files:
   - Directory.Packages.props  : Central Package Management (CPM) version definitions
   - .globalconfig             : Roslyn analyzer and code style rules
-  - src/MarketDataCollector.Uwp/Build.Notifications.targets : UWP-specific build events
   ============================================================================
 -->
 <Project>

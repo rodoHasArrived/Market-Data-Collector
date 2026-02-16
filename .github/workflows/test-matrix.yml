@@ -1,6 +1,11 @@
 # Multi-Platform Test Matrix Workflow
-# Runs tests across multiple operating systems and generates coverage reports
+# Runs tests across multiple operating systems and generates coverage reports.
 # On PRs, only ubuntu tests run to reduce billing costs. Full matrix runs on pushes to main.
+#
+# Note: This workflow intentionally does NOT use reusable-dotnet-build.yml because it needs
+# separate C# / F# test runs with per-language arguments, a Category!=Integration filter,
+# platform-conditional jobs, and per-platform Codecov flags. The reusable template targets
+# simpler "build + test entire solution" scenarios.
 
 name: Test Matrix
 

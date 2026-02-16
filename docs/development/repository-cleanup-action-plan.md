@@ -1,8 +1,8 @@
 # Repository Cleanup Action Plan
 
-**Version:** 1.1
+**Version:** 1.2
 **Last Updated:** 2026-02-16
-**Status:** Phase 1-2 Complete, UWP Fully Removed
+**Status:** Phases 1-6 Complete
 **Related:** ROADMAP.md Phase 6, Phase 8
 
 This document provides a detailed, actionable plan for cleaning up the Market Data Collector repository, removing technical debt, and establishing sustainable organization patterns.
@@ -353,9 +353,13 @@ Break apart files >2,000 LOC into focused, maintainable modules.
 | File | Current LOC | Target | Strategy | Status |
 |------|-------------|--------|----------|--------|
 | `UiServer.cs` | ~~3,030~~ → **191** | <500 per file | Extract endpoints to Endpoints/ folder | ✅ **COMPLETED** (2026-02-12) |
-| `HtmlTemplates.cs` (Ui.Shared) | 2,510 | <300 + static files | Move CSS/JS to wwwroot, split rendering | Pending |
-| `PortableDataPackager.cs` | 2,042 | <400 per file | Extract validator, writer, reporter | Pending |
-| `AnalysisExportService.cs` | 1,352 | <400 per file | Extract format writers | Pending |
+| `HtmlTemplateGenerator.cs` (Ui.Shared) | 2,536 (3 partials) | <500 per file | Already decomposed: main (671), Styles (867), Scripts (998) | ✅ **Already well-structured** — no further action needed |
+| `PortableDataPackager.cs` | ~~2,042~~ → **5 partials** | <400 per file | Split Scripts.cs into Sql.cs + Import.cs | ✅ **COMPLETED** (2026-02-16) |
+| `AnalysisExportService.cs` | ~~1,657~~ → **6 partials** | <400 per file | Split Formats.cs into Parquet/Xlsx/Arrow | ✅ **COMPLETED** (2026-02-16) |
+
+**PortableDataPackager.cs Achievement**: Split `Scripts.cs` (822 LOC) into 3 focused files: `Scripts.cs` (docs/loaders, ~273 LOC), `Scripts.Sql.cs` (PostgreSQL/ClickHouse/DuckDB, ~173 LOC), `Scripts.Import.cs` (Python/R/Spark, ~230 LOC).
+
+**AnalysisExportService.cs Achievement**: Split `Formats.cs` (1,070 LOC) into 4 focused files: `Formats.cs` (CSV/JSONL/Lean/SQL, ~275 LOC), `Formats.Parquet.cs` (~234 LOC), `Formats.Xlsx.cs` (~290 LOC), `Formats.Arrow.cs` (~234 LOC).
 
 **UiServer.cs Achievement**: Reduced from 3,030 to 191 lines (93.7% reduction, -2,839 lines) by delegating to 30+ extracted endpoint modules in `Ui.Shared/Endpoints/`. Removed 5 legacy Configure*Routes() methods and all inline endpoint definitions.
 
@@ -778,20 +782,20 @@ Use this checklist to track progress:
 
 ### Phase 4: Large File Decomposition
 - [x] `UiServer.cs` ✅ **COMPLETED** (3,030 → 191 LOC, 93.7% reduction, 2026-02-12)
-- [ ] `HtmlTemplates.cs` (2,511 LOC remaining)
-- [ ] `PortableDataPackager.cs` (2,042 LOC remaining)
-- [ ] `AnalysisExportService.cs` (1,352 LOC remaining)
+- [x] `HtmlTemplateGenerator.cs` ✅ Already well-structured (3 focused partials: main/Styles/Scripts)
+- [x] `PortableDataPackager.cs` ✅ **COMPLETED** — Split Scripts.cs into Scripts.cs + Scripts.Sql.cs + Scripts.Import.cs (2026-02-16)
+- [x] `AnalysisExportService.cs` ✅ **COMPLETED** — Split Formats.cs into Formats.cs + Formats.Parquet.cs + Formats.Xlsx.cs + Formats.Arrow.cs (2026-02-16)
 
 ### Phase 5: Documentation Consolidation
 - [x] Create `docs/README.md` ✅ (Already exists)
 - [x] Create `docs/archived/INDEX.md` ✅ (Already exists)
-- [ ] Consolidate improvement tracking (IMPROVEMENTS.md + STRUCTURAL_IMPROVEMENTS.md)
-- [ ] Audit and fix broken links
+- [x] Consolidate improvement tracking ✅ (IMPROVEMENTS.md already references archived docs as superseded)
+- [x] Audit and fix broken UWP links ✅ Fixed stale UWP references in docs/HELP.md (3 occurrences), docs/integrations/language-strategy.md (2 occurrences), tests/coverlet.runsettings, and Directory.Build.props (2026-02-16)
 
 ### Phase 6: Build Optimization
-- [ ] Audit NuGet caching
-- [ ] Consolidate redundant workflows
-- [ ] Enable test parallelization
+- [x] Audit NuGet caching ✅ All .NET workflows already use `setup-dotnet-cache` composite action (2026-02-16)
+- [x] Workflow consolidation review ✅ `test-matrix.yml` intentionally diverges from `reusable-dotnet-build.yml` (documented); separate C#/F# test runs with per-language args require distinct steps (2026-02-16)
+- [x] Enable test parallelization ✅ Added `xunit.runner.json` with `parallelizeTestCollections: true` and shared via `tests/Directory.Build.props` (2026-02-16)
 
 ---
 
