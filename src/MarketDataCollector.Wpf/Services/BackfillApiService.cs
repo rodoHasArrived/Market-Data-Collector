@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using MarketDataCollector.Contracts.Api;
-using UiServices = MarketDataCollector.Ui.Services.Services;
+using UiServices = MarketDataCollector.Ui.Services;
 
 // Type aliases for backwards compatibility with renamed Contracts types
 using ProviderHealth = MarketDataCollector.Contracts.Api.BackfillProviderHealth;

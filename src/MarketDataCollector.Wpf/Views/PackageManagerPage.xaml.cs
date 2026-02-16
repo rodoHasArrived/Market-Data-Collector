@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using MarketDataCollector.Wpf.Services;
+using PortablePackagerService = MarketDataCollector.Ui.Services.PortablePackagerService;
 
 namespace MarketDataCollector.Wpf.Views;
 

@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using ContractNotificationType = MarketDataCollector.Ui.Services.Services.NotificationType;
+using ContractNotificationType = MarketDataCollector.Ui.Services.NotificationType;
 
 namespace MarketDataCollector.Wpf.Services;
 
