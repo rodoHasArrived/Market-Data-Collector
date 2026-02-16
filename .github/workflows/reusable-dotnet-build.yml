@@ -118,6 +118,7 @@ jobs:
 
       - name: Build
         id: build
+        shell: bash
         run: |
           dotnet build MarketDataCollector.sln \
             -c ${{ inputs.configuration }} \
