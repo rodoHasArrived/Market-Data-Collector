@@ -170,11 +170,11 @@ public sealed class ProviderHealthService : IDisposable
     /// <summary>
     /// Compares health metrics across providers.
     /// </summary>
-    public async Task<ProviderComparison> CompareProvidersAsync(CancellationToken ct = default)
+    public async Task<ProviderHealthComparison> CompareProvidersAsync(CancellationToken ct = default)
     {
         var healthData = await GetAllProviderHealthAsync(ct);
 
-        return new ProviderComparison
+        return new ProviderHealthComparison
         {
             Providers = healthData,
             BestOverall = healthData.OrderByDescending(p => p.OverallScore).FirstOrDefault()?.ProviderId,
@@ -516,7 +516,17 @@ public sealed class FailoverThresholds
     public bool AutoFailoverEnabled { get; set; } = true;
 }
 
-// Note: ProviderComparison is defined in AdvancedAnalyticsModels.cs to avoid duplication
+// Note: ProviderComparison is defined in AdvancedAnalyticsModels.cs for cross-provider comparison
+// ProviderHealthComparison below is for overall provider ranking
+
+public sealed class ProviderHealthComparison
+{
+    public List<ProviderHealthData> Providers { get; set; } = new();
+    public string? BestOverall { get; set; }
+    public string? BestLatency { get; set; }
+    public string? BestCompleteness { get; set; }
+    public string? BestStability { get; set; }
+}
 
 #endregion
 
