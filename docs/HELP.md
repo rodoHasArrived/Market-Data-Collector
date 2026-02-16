@@ -77,7 +77,7 @@ This guide covers everything from installation to advanced configuration.
 
 ### Technical Stack
 
-Built on **.NET 9.0** using **C# 13** and **F# 8.0**. Supports deployment as a self-contained executable, Docker container, or systemd service. Includes a web dashboard, WPF desktop app (recommended), and legacy UWP Windows desktop application.
+Built on **.NET 9.0** using **C# 13** and **F# 8.0**. Supports deployment as a self-contained executable, Docker container, or systemd service. Includes a web dashboard and a WPF desktop app for Windows.
 
 ---
 
@@ -121,12 +121,12 @@ make run-ui
 
 Then open your browser to `http://localhost:8080`
 
-**Option B: Windows Desktop App**
+**Option B: Windows Desktop App (WPF)**
 
 For secure credential management on Windows:
 
 ```bash
-dotnet run --project src/MarketDataCollector.Uwp/MarketDataCollector.Uwp.csproj
+dotnet run --project src/MarketDataCollector.Wpf/MarketDataCollector.Wpf.csproj
 ```
 
 ### 2. Configure Your Data Provider
@@ -1392,12 +1392,12 @@ The dashboard shows toast notifications for:
 
 ## Windows Desktop App
 
-The UWP/XAML desktop application provides a native Windows experience for configuring and monitoring Market Data Collector.
+The WPF desktop application provides a native Windows experience for configuring and monitoring Market Data Collector.
 
 ### Starting the Desktop App
 
 ```bash
-dotnet run --project src/MarketDataCollector.Uwp/MarketDataCollector.Uwp.csproj
+dotnet run --project src/MarketDataCollector.Wpf/MarketDataCollector.Wpf.csproj
 ```
 
 ### Desktop App Features

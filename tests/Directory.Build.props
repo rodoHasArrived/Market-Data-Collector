@@ -1,0 +1,14 @@
+<!--
+  Shared MSBuild properties for all test projects.
+  Inherits from the root Directory.Build.props automatically.
+-->
+<Project>
+  <!-- Import root-level props first (MSBuild does this automatically) -->
+
+  <ItemGroup>
+    <!-- Copy xunit.runner.json to each test project's output directory -->
+    <Content Include="$(MSBuildThisFileDirectory)xunit.runner.json"
+             Link="xunit.runner.json"
+             CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>
