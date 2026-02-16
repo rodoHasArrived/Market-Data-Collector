@@ -10,6 +10,7 @@ namespace MarketDataCollector.Tests.Integration.EndpointTests;
 /// Integration tests for provider management API endpoints.
 /// Tests provider catalog, status, metrics, comparison, and data source CRUD.
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed class ProviderEndpointTests : IClassFixture<EndpointTestFixture>
 {
     private readonly HttpClient _client;

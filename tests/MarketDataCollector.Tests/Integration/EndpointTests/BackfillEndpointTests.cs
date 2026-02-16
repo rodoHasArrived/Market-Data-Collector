@@ -10,6 +10,7 @@ namespace MarketDataCollector.Tests.Integration.EndpointTests;
 /// Integration tests for backfill API endpoints.
 /// Tests provider listing, status, and backfill execution with validation.
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed class BackfillEndpointTests : IClassFixture<EndpointTestFixture>
 {
     private readonly HttpClient _client;

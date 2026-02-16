@@ -12,6 +12,7 @@ namespace MarketDataCollector.Tests.Integration.EndpointTests;
 /// Part of B2 (tranche 1): increase endpoint integration coverage with
 /// negative-path behaviour verification.
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed class NegativePathEndpointTests : IClassFixture<EndpointTestFixture>
 {
     private readonly HttpClient _client;

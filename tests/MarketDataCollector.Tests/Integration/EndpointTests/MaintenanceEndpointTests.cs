@@ -11,6 +11,7 @@ namespace MarketDataCollector.Tests.Integration.EndpointTests;
 /// Tests schedule management, execution triggers, and maintenance history.
 /// Implements Phase 1A.7 from the roadmap.
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed class MaintenanceEndpointTests : IClassFixture<EndpointTestFixture>
 {
     private readonly HttpClient _client;

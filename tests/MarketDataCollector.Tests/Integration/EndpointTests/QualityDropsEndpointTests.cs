@@ -8,6 +8,7 @@ namespace MarketDataCollector.Tests.Integration.EndpointTests;
 /// Integration tests for the /api/quality/drops endpoint.
 /// Part of B1/#7 and D4 improvements.
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed class QualityDropsEndpointTests : EndpointIntegrationTestBase
 {
     public QualityDropsEndpointTests(EndpointTestFixture fixture) : base(fixture)

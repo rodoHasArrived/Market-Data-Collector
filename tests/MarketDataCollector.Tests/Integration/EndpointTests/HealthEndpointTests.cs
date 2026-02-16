@@ -9,6 +9,7 @@ namespace MarketDataCollector.Tests.Integration.EndpointTests;
 /// Verifies that core health probes respond correctly.
 /// Part of B2/#7 endpoint integration test suite.
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed class HealthEndpointTests : EndpointIntegrationTestBase
 {
     public HealthEndpointTests(EndpointTestFixture fixture) : base(fixture)
