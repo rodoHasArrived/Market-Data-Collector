@@ -196,7 +196,7 @@ public sealed class ResponseSchemaValidationTests : IClassFixture<EndpointTestFi
         var json = await GetJsonAsync("/api/config/data-sources");
 
         json.Should().ContainKey("enableFailover");
-        json["enableFailover"].ValueKind.Should().Be(JsonValueKind.True).Or.Be(JsonValueKind.False);
+        json["enableFailover"].ValueKind.Should().Match(k => k == JsonValueKind.True || k == JsonValueKind.False);
         json.Should().ContainKey("failoverTimeoutSeconds");
         json["failoverTimeoutSeconds"].ValueKind.Should().Be(JsonValueKind.Number);
     }
