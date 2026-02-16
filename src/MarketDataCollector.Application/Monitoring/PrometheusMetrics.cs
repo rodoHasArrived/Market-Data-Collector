@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using MarketDataCollector.Application.Subscriptions.Models;
 using System.Threading;
 using Prometheus;
@@ -14,9 +15,66 @@ namespace MarketDataCollector.Application.Monitoring;
 /// - _total suffix for counters
 /// - Descriptive help text
 /// - Appropriate metric types (Counter, Gauge, Histogram)
+///
+/// Cardinality guards: Symbol-labeled metrics are gated by a configurable
+/// allowlist. Symbols not in the allowlist are aggregated under "__other__".
+/// This prevents metric explosion with dynamic/large symbol universes.
 /// </summary>
 public static class PrometheusMetrics
 {
+    /// <summary>
+    /// Maximum number of symbols allowed as metric labels before aggregation kicks in.
+    /// </summary>
+    private static int _maxSymbolLabels = 100;
+
+    /// <summary>
+    /// Tracks which symbols have been admitted to labeled metrics.
+    /// Once the cap is reached, new symbols go to "__other__".
+    /// </summary>
+    private static readonly ConcurrentDictionary<string, byte> _admittedSymbols = new(StringComparer.OrdinalIgnoreCase);
+
+    private const string OtherSymbolLabel = "__other__";
+
+    /// <summary>
+    /// Configures the maximum number of distinct symbol labels allowed in metrics.
+    /// Symbols beyond this limit are aggregated under "__other__".
+    /// </summary>
+    public static void SetMaxSymbolLabels(int max)
+    {
+        _maxSymbolLabels = Math.Max(1, max);
+    }
+
+    /// <summary>
+    /// Pre-admits specific symbols to the metrics label set.
+    /// Call during startup for known monitored symbols.
+    /// </summary>
+    public static void AdmitSymbol(string symbol)
+    {
+        if (_admittedSymbols.Count < _maxSymbolLabels)
+        {
+            _admittedSymbols.TryAdd(symbol, 0);
+        }
+    }
+
+    /// <summary>
+    /// Returns the symbol label to use for metrics. If the symbol is admitted,
+    /// returns it directly. Otherwise returns "__other__" to prevent cardinality explosion.
+    /// </summary>
+    private static string GetSymbolLabel(string symbol)
+    {
+        if (_admittedSymbols.ContainsKey(symbol))
+            return symbol;
+
+        // Try to admit if under cap
+        if (_admittedSymbols.Count < _maxSymbolLabels)
+        {
+            _admittedSymbols.TryAdd(symbol, 0);
+            return symbol;
+        }
+
+        return OtherSymbolLabel;
+    }
+
     // Event counters
     private static readonly Counter PublishedEvents = Prometheus.Metrics.CreateCounter(
         "mdc_events_published_total",
@@ -311,12 +369,14 @@ public static class PrometheusMetrics
 
     /// <summary>
     /// Records a trade event with symbol and venue labels.
+    /// Uses cardinality guard to prevent label explosion with many symbols.
     /// </summary>
     public static void RecordTrade(string symbol, string venue, decimal price, int size)
     {
-        TradesBySymbol.WithLabels(symbol, venue).Inc();
-        LastTradePrice.WithLabels(symbol).Set((double)price);
-        TradeSizeDistribution.WithLabels(symbol).Observe(size);
+        var safeSymbol = GetSymbolLabel(symbol);
+        TradesBySymbol.WithLabels(safeSymbol, venue).Inc();
+        LastTradePrice.WithLabels(safeSymbol).Set((double)price);
+        TradeSizeDistribution.WithLabels(safeSymbol).Observe(size);
     }
 
     /// <summary>
@@ -338,12 +398,13 @@ public static class PrometheusMetrics
         SlaHealthySymbols.Set(snapshot.HealthySymbols);
         SlaViolationSymbols.Set(snapshot.ViolationSymbols);
 
-        // Record per-symbol freshness
+        // Record per-symbol freshness (with cardinality guard)
         foreach (var status in snapshot.SymbolStatuses)
         {
             if (status.FreshnessMs < double.MaxValue)
             {
-                SlaFreshnessMs.WithLabels(status.Symbol).Observe(status.FreshnessMs);
+                var safeSymbol = GetSymbolLabel(status.Symbol);
+                SlaFreshnessMs.WithLabels(safeSymbol).Observe(status.FreshnessMs);
             }
         }
     }
@@ -353,7 +414,8 @@ public static class PrometheusMetrics
     /// </summary>
     public static void RecordSlaFreshness(string symbol, double freshnessMs)
     {
-        SlaFreshnessMs.WithLabels(symbol).Observe(freshnessMs);
+        var safeSymbol = GetSymbolLabel(symbol);
+        SlaFreshnessMs.WithLabels(safeSymbol).Observe(freshnessMs);
     }
 
     /// <summary>
