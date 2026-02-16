@@ -1,12 +1,12 @@
 # Documentation Health Dashboard
 
 > Auto-generated documentation health report. Do not edit manually.
-> Last updated: 2026-02-16T16:33:21.723109+00:00
+> Last updated: 2026-02-16T19:08:45.873135+00:00
 
 ## Overall Health Score
 
 ```
-  [##########################----] 87/100
+  [##########################----] 86/100
   Rating: Good
 ```
 
@@ -14,14 +14,14 @@
 
 | Metric | Value |
 |--------|-------|
-| Total documentation files | 151 |
-| Total lines | 58,695 |
-| Average file size (lines) | 388.7 |
-| Orphaned files | 49 |
+| Total documentation files | 152 |
+| Total lines | 58,812 |
+| Average file size (lines) | 386.9 |
+| Orphaned files | 50 |
 | Files without headings | 1 |
 | Stale files (>90 days) | 0 |
 | TODO/FIXME markers | 137 |
-| **Health score** | **87/100** |
+| **Health score** | **86/100** |
 
 ### Score Breakdown
 
@@ -48,6 +48,7 @@ These files are not linked from any other Markdown file in the repository:
 - `.github/CS0101_FIX_SUMMARY.md`
 - `.github/PULL_REQUEST_TEMPLATE.md`
 - `.github/QUICKSTART.md`
+- `.github/TEST_MATRIX_FIX_SUMMARY.md`
 - `.github/WORKFLOW_IMPROVEMENTS.md`
 - `.github/instructions/docs.instructions.md`
 - `.github/instructions/dotnet-tests.instructions.md`
@@ -64,8 +65,7 @@ These files are not linked from any other Markdown file in the repository:
 - `docs/archived/CHANGES_SUMMARY.md`
 - `docs/archived/DUPLICATE_CODE_ANALYSIS.md`
 - `docs/archived/IMPROVEMENTS_2026-02.md`
-- `docs/archived/REDESIGN_IMPROVEMENTS.md`
-- ... and 29 more
+- ... and 30 more
 
 ## Trend
 
@@ -73,7 +73,7 @@ These files are not linked from any other Markdown file in the repository:
 
 | Date | Score | Files | Orphans | Stale |
 |------|-------|-------|---------|-------|
-| 2026-02-16 | 87 | 151 | 49 | 0 |
+| 2026-02-16 | 86 | 152 | 50 | 0 |
 
 ---
 

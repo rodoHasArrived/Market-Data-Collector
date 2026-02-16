@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-16 16:33:17 UTC
+> Auto-generated on 2026-02-16 19:08:41 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -74,6 +74,7 @@ Market-Data-Collector/
 │   ├── pull_request_template_desktop.md
 │   ├── QUICKSTART.md
 │   ├── spellcheck-config.yml
+│   ├── TEST_MATRIX_FIX_SUMMARY.md
 │   └── WORKFLOW_IMPROVEMENTS.md
 ├── benchmarks/  # Performance benchmarks
 │   └── MarketDataCollector.Benchmarks/

@@ -102,6 +102,7 @@ Market-Data-Collector/
 │   ├── pull_request_template_desktop.md
 │   ├── QUICKSTART.md
 │   ├── spellcheck-config.yml
+│   ├── TEST_MATRIX_FIX_SUMMARY.md
 │   └── WORKFLOW_IMPROVEMENTS.md
 ├── benchmarks/  # Performance benchmarks
 │   └── MarketDataCollector.Benchmarks/
