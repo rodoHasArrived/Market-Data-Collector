@@ -762,7 +762,10 @@ Market-Data-Collector/
 │   │   │   └── WriteAheadLog.cs
 │   │   ├── Export/
 │   │   │   ├── AnalysisExportService.cs
+│   │   │   ├── AnalysisExportService.Formats.Arrow.cs
 │   │   │   ├── AnalysisExportService.Formats.cs
+│   │   │   ├── AnalysisExportService.Formats.Parquet.cs
+│   │   │   ├── AnalysisExportService.Formats.Xlsx.cs
 │   │   │   ├── AnalysisExportService.IO.cs
 │   │   │   ├── AnalysisQualityReport.cs
 │   │   │   ├── ExportProfile.cs
@@ -788,6 +791,8 @@ Market-Data-Collector/
 │   │   │   ├── PortableDataPackager.Creation.cs
 │   │   │   ├── PortableDataPackager.cs
 │   │   │   ├── PortableDataPackager.Scripts.cs
+│   │   │   ├── PortableDataPackager.Scripts.Import.cs
+│   │   │   ├── PortableDataPackager.Scripts.Sql.cs
 │   │   │   └── PortableDataPackager.Validation.cs
 │   │   ├── Policies/
 │   │   │   └── JsonlStoragePolicy.cs
@@ -1221,7 +1226,9 @@ Market-Data-Collector/
 │   │   │   └── WpfDataQualityServiceTests.cs
 │   │   ├── GlobalUsings.cs
 │   │   └── MarketDataCollector.Wpf.Tests.csproj
-│   └── coverlet.runsettings
+│   ├── coverlet.runsettings
+│   ├── Directory.Build.props
+│   └── xunit.runner.json
 ├── .gitignore
 ├── .globalconfig
 ├── .markdownlint.json

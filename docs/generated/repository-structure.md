@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-16 20:18:41 UTC
+> Auto-generated on 2026-02-16 21:04:55 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -734,7 +734,10 @@ Market-Data-Collector/
 │   │   │   └── WriteAheadLog.cs
 │   │   ├── Export/
 │   │   │   ├── AnalysisExportService.cs
+│   │   │   ├── AnalysisExportService.Formats.Arrow.cs
 │   │   │   ├── AnalysisExportService.Formats.cs
+│   │   │   ├── AnalysisExportService.Formats.Parquet.cs
+│   │   │   ├── AnalysisExportService.Formats.Xlsx.cs
 │   │   │   ├── AnalysisExportService.IO.cs
 │   │   │   ├── AnalysisQualityReport.cs
 │   │   │   ├── ExportProfile.cs
@@ -760,6 +763,8 @@ Market-Data-Collector/
 │   │   │   ├── PortableDataPackager.Creation.cs
 │   │   │   ├── PortableDataPackager.cs
 │   │   │   ├── PortableDataPackager.Scripts.cs
+│   │   │   ├── PortableDataPackager.Scripts.Import.cs
+│   │   │   ├── PortableDataPackager.Scripts.Sql.cs
 │   │   │   └── PortableDataPackager.Validation.cs
 │   │   ├── Policies/
 │   │   │   └── JsonlStoragePolicy.cs
@@ -1193,7 +1198,9 @@ Market-Data-Collector/
 │   │   │   └── WpfDataQualityServiceTests.cs
 │   │   ├── GlobalUsings.cs
 │   │   └── MarketDataCollector.Wpf.Tests.csproj
-│   └── coverlet.runsettings
+│   ├── coverlet.runsettings
+│   ├── Directory.Build.props
+│   └── xunit.runner.json
 ├── .gitignore
 ├── .globalconfig
 ├── .markdownlint.json
