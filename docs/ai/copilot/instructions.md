@@ -623,8 +623,10 @@ Market-Data-Collector/
 │   │   │   │   ...
 │   │   │   ├── BackpressureAlertService.cs
 │   │   │   ├── BadTickFilter.cs
+│   │   │   ├── ClockSkewEstimator.cs
 │   │   │   ├── ConnectionHealthMonitor.cs
 │   │   │   ├── ConnectionStatusWebhook.cs
+│   │   │   ├── DataLossAccounting.cs
 │   │   │   ├── DetailedHealthCheck.cs
 │   │   │   ├── ErrorRingBuffer.cs
 │   │   │   ├── IEventMetrics.cs
@@ -643,7 +645,8 @@ Market-Data-Collector/
 │   │   │   └── TimestampMonotonicityChecker.cs
 │   │   ├── Pipeline/
 │   │   │   ├── DroppedEventAuditTrail.cs
-│   │   │   └── EventPipeline.cs
+│   │   │   ├── EventPipeline.cs
+│   │   │   └── PersistentDedupLedger.cs
 │   │   ├── Results/
 │   │   │   ├── ErrorCode.cs
 │   │   │   ├── OperationError.cs
@@ -943,6 +946,7 @@ Market-Data-Collector/
 │   │   │   ├── SymbolRegistryService.cs
 │   │   │   └── TierMigrationService.cs
 │   │   ├── Sinks/
+│   │   │   ├── CatalogSyncSink.cs
 │   │   │   ├── CompositeSink.cs
 │   │   │   ├── JsonlStorageSink.cs
 │   │   │   └── ParquetStorageSink.cs
