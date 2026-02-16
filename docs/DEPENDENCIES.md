@@ -17,9 +17,9 @@ This document lists the primary dependencies used by the Market Data Collector s
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| Microsoft.Extensions.Configuration | 9.0.12 | Configuration abstractions |
+| Microsoft.Extensions.Configuration | 10.0.2 | Configuration abstractions |
 | Microsoft.Extensions.Configuration.Json | 9.0.12 | JSON config provider |
-| Microsoft.Extensions.Configuration.Binder | 9.0.12 | Bind config to options |
+| Microsoft.Extensions.Configuration.Binder | 10.0.2 | Bind config to options |
 | Microsoft.Extensions.Configuration.EnvironmentVariables | 9.0.12 | Env var config provider |
 | Microsoft.Extensions.Configuration.CommandLine | 9.0.12 | CLI config provider |
 | Microsoft.Extensions.DependencyInjection | 9.0.12 | DI container |
@@ -53,8 +53,8 @@ This document lists the primary dependencies used by the Market Data Collector s
 |---------|---------|---------|
 | Polly | 8.6.5 | Resilience policies |
 | Polly.Extensions | 8.6.5 | Extensions for Polly |
-| Microsoft.Extensions.Http | 9.0.4 | HttpClientFactory |
-| Microsoft.Extensions.Http.Polly | 9.0.4 | Polly integration |
+| Microsoft.Extensions.Http | 9.0.12 | HttpClientFactory |
+| Microsoft.Extensions.Http.Polly | 9.0.12 | Polly integration |
 | System.Net.WebSockets.Client | 4.3.2 | WebSocket client |
 | System.Net.Http.Json | 10.0.2 | JSON HttpClient helpers |
 

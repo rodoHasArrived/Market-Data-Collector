@@ -6,7 +6,7 @@ This document provides essential context for AI assistants (Claude, Copilot, etc
 
 Market Data Collector is a high-performance, cross-platform market data collection system built on **.NET 9.0** using **C# 13** and **F# 8.0**. It captures real-time and historical market microstructure data from multiple providers and persists it for downstream research, backtesting, and algorithmic trading.
 
-**Version:** 1.6.1 | **Status:** Development / Pilot Ready | **Files:** 807 source files
+**Version:** 1.6.1 | **Status:** Development / Pilot Ready | **Files:** 635 source files
 
 ### Key Capabilities
 - Real-time streaming from Interactive Brokers, Alpaca, NYSE, Polygon, StockSharp (90+ data sources)
@@ -22,16 +22,16 @@ Market Data Collector is a high-performance, cross-platform market data collecti
 ### Project Statistics
 | Metric | Count |
 |--------|-------|
-| Total Source Files | 767 |
-| C# Files | 755 |
+| Total Source Files | 635 |
+| C# Files | 623 |
 | F# Files | 12 |
-| Test Files | 135 |
-| Documentation Files | 87 |
-| Main Projects | 14 (+ 4 test + 1 benchmark) |
+| Test Files | 163 |
+| Documentation Files | 130 |
+| Main Projects | 13 (+ 4 test + 1 benchmark) |
 | Provider Implementations | 5 streaming, 10 historical |
 | Symbol Search Providers | 5 |
-| CI/CD Workflows | 17 |
-| Makefile Targets | 67 |
+| CI/CD Workflows | 22 |
+| Makefile Targets | 72 |
 
 ---
 
@@ -1708,7 +1708,7 @@ dotnet test --collect:"XPlat Code Coverage"
 dotnet test tests/MarketDataCollector.FSharp.Tests
 ```
 
-### Test Organization (98 test files total)
+### Test Organization
 | Directory | Purpose | Files |
 |-----------|---------|-------|
 | `tests/MarketDataCollector.Tests/Application/Backfill/` | Backfill provider tests | 7 |
@@ -1963,27 +1963,32 @@ See `docs/operations/portable-data-packager.md` for details.
 
 ## CI/CD Pipelines
 
-The project uses GitHub Actions with 17 workflows in `.github/workflows/`:
+The project uses GitHub Actions with 22 workflows in `.github/workflows/`:
 
 | Workflow | Purpose |
 |----------|---------|
-| `test-matrix.yml` | Multi-platform test matrix (Windows, Linux, macOS) |
-| `code-quality.yml` | Code quality checks (formatting, analyzers) |
-| `security.yml` | Security scanning (CodeQL, dependency audit) |
 | `benchmark.yml` | Performance benchmarks |
-| `docker.yml` | Docker image building and publishing |
-| `dotnet-desktop.yml` | Desktop application builds |
+| `build-observability.yml` | Build metrics collection |
+| `code-quality.yml` | Code quality checks (formatting, analyzers) |
+| `copilot-setup-steps.yml` | Copilot environment setup |
 | `desktop-builds.yml` | Desktop app builds (WPF) |
+| `docker.yml` | Docker image building and publishing |
 | `documentation.yml` | Documentation generation, AI instruction sync, TODO scanning |
-| `release.yml` | Release automation |
-| `pr-checks.yml` | PR validation checks |
+| `dotnet-desktop.yml` | Desktop application builds |
 | `labeling.yml` | PR auto-labeling |
 | `nightly.yml` | Nightly builds |
-| `scheduled-maintenance.yml` | Scheduled maintenance tasks |
-| `stale.yml` | Stale issue management |
-| `validate-workflows.yml` | Workflow validation |
-| `build-observability.yml` | Build metrics collection |
+| `pr-checks.yml` | PR validation checks |
+| `prompt-generation.yml` | AI prompt generation |
+| `release.yml` | Release automation |
 | `reusable-dotnet-build.yml` | Reusable .NET build workflow |
+| `scheduled-maintenance.yml` | Scheduled maintenance tasks |
+| `security.yml` | Security scanning (CodeQL, dependency audit) |
+| `stale.yml` | Stale issue management |
+| `test-matrix.yml` | Multi-platform test matrix (Windows, Linux, macOS) |
+| `ticker-data-collection.yml` | Ticker data collection automation |
+| `update-diagrams.yml` | Architecture diagram generation |
+| `update-uml-diagrams.yml` | UML diagram generation |
+| `validate-workflows.yml` | Workflow validation |
 
 ---
 
@@ -2168,4 +2173,4 @@ See `docs/HELP.md#troubleshooting` for detailed solutions.
 
 ---
 
-*Last Updated: 2026-02-16*
+*Last Updated: 2026-02-17*

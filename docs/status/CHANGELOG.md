@@ -1,18 +1,18 @@
 # Market Data Collector - Changelog
 
-**Last Updated:** 2026-02-06
+**Last Updated:** 2026-02-17
 **Current Version:** 1.6.1
 
 This changelog summarizes the current repository snapshot. Historical release notes are not curated in this repo; use git history for detailed diffs.
 
 ---
 
-## Current Snapshot (2026-02-06)
+## Current Snapshot (2026-02-17)
 
 ### Project Scale
-- 734 source files (717 C#, 17 F#), 85 test files, 104 documentation files
-- 9 main projects, 2 test projects, 1 benchmark project, 2 build tool projects
-- 17 CI/CD workflows, 66 Makefile targets
+- 635 source files (623 C#, 12 F#), 163 test files, 130 documentation files
+- 13 main projects, 4 test projects, 1 benchmark project, 2 build tool projects
+- 22 CI/CD workflows, 72 Makefile targets
 
 ### Core Runtime
 - CLI modes for real-time collection, backfill, replay, packaging, and validation
@@ -39,7 +39,7 @@ This changelog summarizes the current repository snapshot. Historical release no
 ### UI & Integrations
 - Web dashboard for status/metrics and API-backed backfill actions
 - WPF desktop application (recommended for Windows; workspace/navigation is implemented but some pages remain placeholder-only)
-- UWP desktop application (legacy, Windows 10+)
+- UWP desktop application removed (WPF is the sole desktop client)
 - Shared UI services project (`MarketDataCollector.Ui.Services`)
 - QuantConnect Lean integration types and data provider
 

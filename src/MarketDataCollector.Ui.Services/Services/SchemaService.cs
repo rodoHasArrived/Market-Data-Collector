@@ -2,10 +2,10 @@ namespace MarketDataCollector.Ui.Services;
 
 /// <summary>
 /// Default schema service for the shared UI services layer.
-/// Platform-specific projects (WPF, UWP) override this with their own implementations
+/// Platform-specific projects (WPF) override this with their own implementations
 /// by setting the Instance property during app startup.
 /// </summary>
-public class SchemaService : SchemaServiceBase
+public sealed class SchemaService : SchemaServiceBase
 {
     private static SchemaService? _instance;
     private static readonly object _lock = new();

@@ -130,7 +130,7 @@ If headings are missing, the workflow still creates an entry with safe defaults 
 - **Verification commands**:
   - `dotnet build src/MarketDataCollector.Ui.Services/MarketDataCollector.Ui.Services.csproj -c Release`
   - `dotnet build src/MarketDataCollector.Wpf/MarketDataCollector.Wpf.csproj -c Release -p:TargetFramework=net9.0-windows` (on Windows)
-  - `dotnet build src/MarketDataCollector.Uwp/MarketDataCollector.Uwp.csproj -c Release -r win-x64 -p:Platform=x64` (on Windows)
+  - `dotnet build src/MarketDataCollector.Wpf/MarketDataCollector.Wpf.csproj -c Release -p:TargetFramework=net9.0-windows` (on Windows)
 - **Source issue**: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/21851485930/job/63058846153
 - **Status**: fixed (commit cec548e)
 
@@ -193,7 +193,7 @@ If headings are missing, the workflow still creates an entry with safe defaults 
 - **Area**: build/C#/nullable types
 - **Symptoms**: Build fails with CS1061 errors: "'double' does not contain a definition for 'Value' and no accessible extension method 'Value' accepting a first argument of type 'double' could be found". This occurs when accessing `.Value` on nullable value types after using the null-forgiving operator (`!`), or when using `out var` with generic methods that return `T?` where the compiler fails to properly infer the nullable type.
 - **Root cause**: When `TryGetFromNewest` was called on a `CircularBuffer<double>`, the `out T? value` parameter became `out double? value`, making `fromValue` and `toValue` of type `double?` (nullable double). The Windows C# compiler has a bug where it incorrectly infers `out var` as `double` instead of `double?` when the out parameter is `T?` for a value type.
-- **Structural fix (commit TBD)**: Changed API signature from `out T? value` to `out T value` with `[MaybeNullWhen(false)]` attribute. This eliminates the entire category of nullable value type inference issues because there's no longer a nullable generic out parameter. The bool return value is the presence/absence signal, following standard .NET TryX pattern. This is the recommended approach because:
+- **Structural fix (commit 49b2916)**: Changed API signature from `out T? value` to `out T value` with `[MaybeNullWhen(false)]` attribute. This eliminates the entire category of nullable value type inference issues because there's no longer a nullable generic out parameter. The bool return value is the presence/absence signal, following standard .NET TryX pattern. This is the recommended approach because:
   1. Eliminates Windows compiler inference bug entirely
   2. Follows idiomatic .NET patterns (like Dictionary.TryGetValue)
   3. Allows safe use of `out var` everywhere
@@ -233,7 +233,7 @@ If headings are missing, the workflow still creates an entry with safe defaults 
   - https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/21988186038/job/63527798918#step:5:1 (original)
   - https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/21996212289/job/63556782046 (variant)
   - https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/21998525615/job/63564824033#step:5:1 (regression)
-- **Status**: fixed structurally (commit TBD - changed API to eliminate nullable generic out parameter)
+- **Status**: fixed structurally (commit 49b2916 - changed API to eliminate nullable generic out parameter)
 - **Note**: This issue regressed multiple times (1e2ea1d, 5756479, 1802ea9, bf67ed5, e920c34) when using workarounds. The structural fix eliminates the problem at the API design level.
 
 ---
