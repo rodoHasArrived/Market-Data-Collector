@@ -59,7 +59,7 @@ public class PortfolioImportServiceTests
     public async Task ImportToWatchlistAsync_WithEmptyEntries_ReturnsSuccess()
     {
         // Arrange
-        var service = new PortfolioImportService();
+        var service = PortfolioImportService.Instance; // Use singleton instance
         var mockWatchlistService = new MockWatchlistService();
         WatchlistService.Instance = mockWatchlistService;
 
@@ -77,7 +77,7 @@ public class PortfolioImportServiceTests
     public async Task ImportToWatchlistAsync_WithFailingWatchlistService_ReturnsFailure()
     {
         // Arrange
-        var service = new PortfolioImportService();
+        var service = PortfolioImportService.Instance; // Use singleton instance
         var failingWatchlistService = new FailingWatchlistService();
         WatchlistService.Instance = failingWatchlistService;
 

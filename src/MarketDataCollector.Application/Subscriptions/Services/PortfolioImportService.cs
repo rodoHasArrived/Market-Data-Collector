@@ -268,7 +268,7 @@ public sealed class PortfolioImportService
             using var posRequest = new HttpRequestMessage(HttpMethod.Get,
                 $"{clientPortalUrl}/v1/api/portfolio/{accountId}/positions/0");
 
-            var posResponse = await client.SendAsync(posRequest, ct);
+            var posResponse = await ibClient.SendAsync(posRequest, ct);
             var ibPositions = await posResponse.Content.ReadFromJsonAsync<IbPosition[]>(
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true }, ct);
 

@@ -1,6 +1,7 @@
 using System.Windows.Media;
 using MarketDataCollector.Ui.Services;
 using Palette = MarketDataCollector.Ui.Services.Services.ColorPalette;
+using ColorPalette = MarketDataCollector.Ui.Services.Services.ColorPalette;
 using IntegritySeverity = MarketDataCollector.Ui.Services.IntegritySeverity;
 using NotificationType = MarketDataCollector.Ui.Services.NotificationType;
 

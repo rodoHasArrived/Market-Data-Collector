@@ -8,6 +8,7 @@ using UiServices = MarketDataCollector.Ui.Services;
 using WorkspaceTemplate = MarketDataCollector.Ui.Services.WorkspaceTemplate;
 using SessionState = MarketDataCollector.Ui.Services.SessionState;
 using WorkspaceCategory = MarketDataCollector.Ui.Services.WorkspaceCategory;
+using WorkspaceEventArgs = MarketDataCollector.Ui.Services.WorkspaceEventArgs;
 
 namespace MarketDataCollector.Wpf.Services;
 

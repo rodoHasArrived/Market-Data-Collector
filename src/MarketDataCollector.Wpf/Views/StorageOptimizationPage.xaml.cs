@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using MarketDataCollector.Wpf.Services;
+using MarketDataCollector.Ui.Services;
 
 namespace MarketDataCollector.Wpf.Views;
 
