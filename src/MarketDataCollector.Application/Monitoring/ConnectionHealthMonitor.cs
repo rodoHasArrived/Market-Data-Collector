@@ -259,6 +259,46 @@ public sealed class ConnectionHealthMonitor : IConnectionHealthMonitor, IDisposa
     }
 
     /// <summary>
+    /// Gets the aggregated status for all connections belonging to a provider.
+    /// If multiple connections exist for the provider, returns the worst-case status.
+    /// </summary>
+    public ConnectionStatus? GetConnectionStatusByProvider(string providerName)
+    {
+        var matchingConnections = _connections.Values
+            .Where(state => state.ProviderName == providerName)
+            .ToList();
+
+        if (matchingConnections.Count == 0)
+            return null;
+
+        // If there's only one connection, return its status
+        if (matchingConnections.Count == 1)
+            return matchingConnections[0].GetStatus();
+
+        // For multiple connections, aggregate:
+        // - IsConnected: true only if ALL are connected
+        // - Use worst-case values for other metrics
+        var statuses = matchingConnections.Select(s => s.GetStatus()).ToList();
+
+        return new ConnectionStatus(
+            ConnectionId: $"{providerName}-aggregated",
+            ProviderName: providerName,
+            IsConnected: statuses.All(s => s.IsConnected),
+            IsHealthy: statuses.All(s => s.IsHealthy),
+            LastHeartbeatTime: statuses.Max(s => s.LastHeartbeatTime),
+            LastDataReceivedTime: statuses.Max(s => s.LastDataReceivedTime),
+            MissedHeartbeats: statuses.Max(s => s.MissedHeartbeats),
+            ReconnectCount: statuses.Sum(s => s.ReconnectCount),
+            UptimeDuration: TimeSpan.FromTicks((long)statuses.Average(s => s.UptimeDuration.Ticks)),
+            TotalDataReceived: statuses.Sum(s => s.TotalDataReceived),
+            AverageLatencyMs: statuses.Average(s => s.AverageLatencyMs),
+            MinLatencyMs: statuses.Min(s => s.MinLatencyMs),
+            MaxLatencyMs: statuses.Max(s => s.MaxLatencyMs),
+            RecentAverageLatencyMs: statuses.Average(s => s.RecentAverageLatencyMs)
+        );
+    }
+
+    /// <summary>
     /// Gets the average latency in milliseconds across all connections.
     /// </summary>
     public double GetAverageLatencyMs()
