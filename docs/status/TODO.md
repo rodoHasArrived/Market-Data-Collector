@@ -1,21 +1,21 @@
 # TODO Tracking
 
 > Auto-generated TODO documentation. Do not edit manually.
-> Last updated: 2026-02-16T19:53:15.896259+00:00
+> Last updated: 2026-02-16T21:03:47.696386+00:00
 
 ## Summary
 
 | Metric | Count |
 |--------|-------|
-| **Total Items** | 16 |
+| **Total Items** | 17 |
 | **Linked to Issues** | 0 |
-| **Untracked** | 16 |
+| **Untracked** | 17 |
 
 ### By Type
 
 | Type | Count | Description |
 |------|-------|-------------|
-| `NOTE` | 16 | Important notes and documentation |
+| `NOTE` | 17 | Important notes and documentation |
 
 ### By Directory
 
@@ -23,20 +23,23 @@
 |-----------|-------|
 | `tests/` | 10 |
 | `src/` | 5 |
-| `.github/` | 1 |
+| `.github/` | 2 |
 
 ## Unassigned & Untracked
 
-16 items have no assignee and no issue tracking:
+17 items have no assignee and no issue tracking:
 
 Consider assigning ownership or creating tracking issues for these items.
 
 ## All Items
 
-### NOTE (16)
+### NOTE (17)
 
 - [ ] `.github/workflows/desktop-builds.yml:9`
   > UWP/WinUI 3 application has been removed. WPF is the sole desktop client.
+
+- [ ] `.github/workflows/test-matrix.yml:5`
+  > This workflow intentionally does NOT use reusable-dotnet-build.yml because it needs separate C# / F# test runs with per-language arguments, a Category!=Integration filter, platform-conditional jobs, and per-platform Codecov flags. The reusable template targets simpler "build + test entire solution" scenarios.
 
 - [ ] `src/MarketDataCollector.Ui.Services/Services/AdminMaintenanceModels.cs:411`
   > SelfTest*, ErrorCodes*, ShowConfig*, QuickCheck* models are defined in DiagnosticsService.cs to avoid duplication and maintain single source of truth
