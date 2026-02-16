@@ -387,6 +387,63 @@ public static class ProviderEndpoints
         .WithDescription("Returns catalog metadata for a single provider by ID.")
         .Produces<ProviderCatalogEntry>(200)
         .Produces(404);
+
+        // Alias: /api/config/data-sources → /api/config/datasources (for backward compatibility with tests)
+        group.MapGet("/api/config/data-sources", (ConfigStore store) =>
+        {
+            var cfg = store.Load();
+            return Results.Json(new
+            {
+                sources = cfg.DataSources?.Sources ?? Array.Empty<DataSourceConfig>(),
+                defaultRealTimeSourceId = cfg.DataSources?.DefaultRealTimeSourceId,
+                defaultHistoricalSourceId = cfg.DataSources?.DefaultHistoricalSourceId,
+                enableFailover = cfg.DataSources?.EnableFailover ?? true,
+                failoverTimeoutSeconds = cfg.DataSources?.FailoverTimeoutSeconds ?? 30
+            }, jsonOptions);
+        })
+        .WithName("GetDataSourcesAlias")
+        .WithDescription("Alias for /api/config/datasources for backward compatibility.")
+        .Produces(200);
+
+        group.MapPost("/api/config/data-sources", async (ConfigStore store, DataSourceConfigRequest req) =>
+        {
+            if (string.IsNullOrWhiteSpace(req.Name))
+                return Results.BadRequest("Name is required.");
+
+            var cfg = store.Load();
+            var dataSources = cfg.DataSources ?? new DataSourcesConfig();
+            var sources = (dataSources.Sources ?? Array.Empty<DataSourceConfig>()).ToList();
+
+            var id = string.IsNullOrWhiteSpace(req.Id) ? Guid.NewGuid().ToString("N") : req.Id;
+            var source = new DataSourceConfig(
+                Id: id,
+                Name: req.Name,
+                Provider: Enum.TryParse<DataSourceKind>(req.Provider, ignoreCase: true, out var p) ? p : DataSourceKind.IB,
+                Enabled: req.Enabled,
+                Type: Enum.TryParse<DataSourceType>(req.Type, ignoreCase: true, out var t) ? t : DataSourceType.RealTime,
+                Priority: req.Priority,
+                Alpaca: req.Alpaca?.ToDomain(),
+                Polygon: req.Polygon?.ToDomain(),
+                IB: req.IB?.ToDomain(),
+                Symbols: req.Symbols,
+                Description: req.Description,
+                Tags: req.Tags
+            );
+
+            var idx = sources.FindIndex(s => string.Equals(s.Id, id, StringComparison.OrdinalIgnoreCase));
+            if (idx >= 0) sources[idx] = source;
+            else sources.Add(source);
+
+            var next = cfg with { DataSources = dataSources with { Sources = sources.ToArray() } };
+            await store.SaveAsync(next);
+
+            return Results.Ok(new { id });
+        })
+        .WithName("UpsertDataSourceAlias")
+        .WithDescription("Alias for /api/config/datasources POST for backward compatibility.")
+        .Produces(200)
+        .Produces(400)
+        .RequireRateLimiting(UiEndpoints.MutationRateLimitPolicy);
     }
 
     private static ProviderMetricsResponse CreateFallbackMetrics(DataSourceConfig source) => new(
