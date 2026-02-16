@@ -1,12 +1,15 @@
 # UWP to WPF Migration Guide
 
+> **Migration Complete**: The UWP project has been fully removed from the codebase. WPF is the sole desktop client.
+> This document is retained as a historical reference for the migration rationale and technical decisions.
+
 This document outlines the migration from UWP/WinUI 3 to WPF (.NET 9) for the Market Data Collector desktop application.
 
 ## Executive Summary
 
-**Status**: Initial implementation complete  
-**Date**: January 31, 2026  
-**Framework**: WPF (.NET 9.0)  
+**Status**: Migration complete, UWP removed
+**Date**: January 31, 2026 (initial), February 2026 (UWP removed)
+**Framework**: WPF (.NET 9.0)
 **Reason**: Maximum Windows stability, broader compatibility, simpler deployment
 
 ## Migration Rationale

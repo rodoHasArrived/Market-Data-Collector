@@ -6,7 +6,7 @@
 
 ## Overview
 
-This document summarizes the analysis and initial implementation of high-value improvements for Market Data Collector desktop platform development (WPF and UWP).
+This document summarizes the analysis and initial implementation of high-value improvements for Market Data Collector desktop platform development. WPF is the sole desktop client (UWP has been fully removed).
 
 ## Current State Assessment
 
@@ -14,8 +14,8 @@ This document summarizes the analysis and initial implementation of high-value i
 
 The repository already has excellent developer experience infrastructure in place:
 
-1. **Build Infrastructure** (`make build-wpf`, `make build-uwp`, `make desktop-dev-bootstrap`)
-2. **Developer Tooling** (`scripts/dev/desktop-dev.ps1`, `scripts/dev/diagnose-uwp-xaml.ps1`)
+1. **Build Infrastructure** (`make build-wpf`, `make desktop-dev-bootstrap`)
+2. **Developer Tooling** (`scripts/dev/desktop-dev.ps1`)
 3. **Documentation** (`docs/development/desktop-dev-workflow.md`, `wpf-implementation-notes.md`)
 4. **Policies** (`docs/development/policies/desktop-support-policy.md`)
 5. **PR Templates** (`.github/pull_request_template_desktop.md`)
@@ -29,10 +29,10 @@ Despite strong infrastructure, several high-impact gaps remain:
 | Gap | Impact | Effort | Priority |
 |-----|--------|--------|----------|
 | **No unit tests** for 30+ desktop services | High regression risk, slow development | Medium | P0 |
-| **100% service duplication** between WPF/UWP | 2x maintenance burden, inconsistencies | High | P1 |
+| ~~100% service duplication between WPF/UWP~~ | ~~2x maintenance burden~~ | ~~High~~ | ~~Resolved (UWP removed)~~ |
 | **No UI fixture mode** | Requires backend for UI dev, blocks offline work | Low | P1 |
 | **No architecture diagram** | Easy to introduce unwanted coupling | Low | P2 |
-| **Manual singleton pattern** | Hard to test, tight coupling | Medium | P2 |
+| **Manual singleton pattern** in WPF | Hard to test, tight coupling | Medium | P2 |
 | **No test examples** | Developers don't know how to test services | Low | P0 |
 
 ## What We Delivered (Phase 1)
@@ -88,7 +88,7 @@ Created `desktop-platform-improvements-implementation-guide.md` with:
 🔧 Development Experience
 - Must run backend for UI work
 - Cannot test services in isolation
-- Duplicate code in WPF and UWP
+- UWP fully removed (WPF is sole desktop client)
 ```
 
 ### After This PR (Phase 1)
@@ -157,33 +157,29 @@ Add tests for additional critical services (examples provided in implementation 
 
 ## Long-Term Roadmap (Months 2-3)
 
-### Phase 2: Service Consolidation
+### Phase 2: Service Extraction to Shared Layer
 
-**Goal**: Eliminate 50% of duplicated code
+**Goal**: Extract reusable logic from WPF services into `Ui.Services`
 
-**Strategy** (5-week plan in implementation guide):
-1. Extract shared interfaces (Week 1)
-2. Create abstract base classes (Weeks 2-3)
-3. Migrate platform implementations (Week 4)
-4. Deprecate duplicates (Week 5)
+With UWP removed, the focus shifts from deduplication to clean separation of shared vs. platform-specific logic.
+
+**Strategy**:
+1. Identify WPF services with logic that isn't platform-specific
+2. Extract shared base classes into `Ui.Services`
+3. Keep WPF-specific adapters thin
 
 **Before:**
 ```csharp
-// WPF/Services/ConfigService.cs (200 lines)
-// UWP/Services/ConfigService.cs (200 lines)
-// Total: 400 lines, 100% duplication
+// WPF/Services/ConfigService.cs (200 lines, mixed platform + business logic)
 ```
 
 **After:**
 ```csharp
-// Ui.Services/Services/Base/ConfigServiceBase.cs (150 lines)
+// Ui.Services/Services/ConfigServiceBase.cs (150 lines, testable shared logic)
 // WPF/Services/ConfigService.cs (30 lines, platform-specific)
-// UWP/Services/ConfigService.cs (30 lines, platform-specific)
-// Total: 210 lines, 47% reduction
 ```
 
-**Time**: ~80 hours  
-**Impact**: Very High (halves maintenance burden)
+**Impact**: Improves testability and enables logic reuse across desktop and web
 
 ### Phase 3: DI Modernization
 
@@ -192,7 +188,7 @@ Add tests for additional critical services (examples provided in implementation 
 **Benefits:**
 - Testable services (easy mocking)
 - Automatic lifetime management
-- Consistent patterns across WPF/UWP
+- Consistent patterns across the codebase
 - Reduces boilerplate singleton code
 
 **Time**: ~40 hours  
@@ -210,7 +206,7 @@ Track these KPIs to measure improvement:
 ### Code Quality
 - [ ] Desktop service test coverage: **Target 60%+**
 - [ ] Regression bugs caught pre-merge: **Target 80%+**
-- [ ] Duplicate lines of code: **Target <30%** (from current 100%)
+- [x] UWP code duplication: **Resolved** (UWP removed)
 
 ### CI/CD
 - [ ] Desktop test execution time: **Target <2 minutes**

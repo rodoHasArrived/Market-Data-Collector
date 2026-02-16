@@ -2,7 +2,7 @@
 
 ## Overview
 
-The UI Fixture Mode enables desktop developers to work on the WPF and UWP applications without requiring a running backend service. This significantly improves the development experience by:
+The UI Fixture Mode enables desktop developers to work on the WPF application without requiring a running backend service. This significantly improves the development experience by:
 
 - **Enabling offline development** - No need for network connectivity
 - **Deterministic testing** - Same data every time for reproducible debugging
@@ -16,7 +16,7 @@ The fixture mode is built around the `FixtureDataService` singleton that provide
 ```
 ┌─────────────────────────────────────────────┐
 │          Desktop Application                │
-│         (WPF / UWP)                         │
+│              (WPF)                           │
 └─────────────────┬───────────────────────────┘
                   │
                   │ Fixture Mode: ON
@@ -204,23 +204,6 @@ private void EnableFixtureMode()
         "Fixture Mode", 
         "Running with mock data (offline mode)"
     );
-}
-```
-
-**UWP (App.xaml.cs):**
-
-```csharp
-protected override void OnLaunched(LaunchActivatedEventArgs e)
-{
-    // Check for fixture mode
-    var useFixture = Environment.GetEnvironmentVariable("MDC_FIXTURE_MODE") == "1";
-
-    if (useFixture)
-    {
-        EnableFixtureMode();
-    }
-
-    // Continue with normal initialization...
 }
 ```
 

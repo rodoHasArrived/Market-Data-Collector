@@ -1,5 +1,12 @@
 # Desktop App XAML Compiler Errors
 
+> **Note: Historical Reference**
+>
+> The UWP desktop application (`MarketDataCollector.Uwp`) has been fully removed from the codebase. WPF is the sole desktop client.
+> This document is retained as a historical reference for XAML compiler troubleshooting. The general diagnostic steps
+> and WindowsAppSDK version guidance may still be useful for WPF XAML compilation issues, but UWP-specific paths
+> and project references below no longer apply.
+
 ## Issue: XamlCompiler.exe exits with code 1
 
 ### Symptoms
@@ -35,7 +42,7 @@
 **Solution**: Add explicit `TargetPlatformVersion` property to match your `TargetFramework`.
 
 ```xml
-<!-- MarketDataCollector.Uwp.csproj -->
+<!-- Example .csproj (previously applied to MarketDataCollector.Uwp, now removed) -->
 <PropertyGroup Condition="'$(IsWindows)' == 'true'">
   <TargetFramework>net9.0-windows10.0.19041.0</TargetFramework>
   <TargetPlatformVersion>10.0.19041.0</TargetPlatformVersion>
@@ -55,7 +62,7 @@ This occurs because MSBuild automatically appends these to intermediate paths, a
 **Solution**: Disable automatic path appending in the project file.
 
 ```xml
-<!-- MarketDataCollector.Uwp.csproj -->
+<!-- Example .csproj (previously applied to MarketDataCollector.Uwp, now removed) -->
 <PropertyGroup Condition="'$(IsWindows)' == 'true'">
   <!-- Prevent MSBuild from appending RuntimeIdentifier and TargetFramework to paths -->
   <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
@@ -93,9 +100,9 @@ This occurs because MSBuild automatically appends these to intermediate paths, a
 2. **Verify Project Targeting**
    ```bash
    # Check project file for explicit platform version
-   grep -A 3 "TargetFramework" src/MarketDataCollector.Uwp/MarketDataCollector.Uwp.csproj
+   grep -A 3 "TargetFramework" src/MarketDataCollector.Wpf/MarketDataCollector.Wpf.csproj
    ```
-   
+
    Ensure both `TargetFramework` and `TargetPlatformVersion` are set.
 
 3. **Review XAML Files**
@@ -104,8 +111,8 @@ This occurs because MSBuild automatically appends these to intermediate paths, a
    python3 -c "
    import os
    import xml.etree.ElementTree as ET
-   
-   for root, dirs, files in os.walk('src/MarketDataCollector.Uwp'):
+
+   for root, dirs, files in os.walk('src/MarketDataCollector.Wpf'):
        for file in files:
            if file.endswith('.xaml'):
                filepath = os.path.join(root, file)
@@ -114,12 +121,6 @@ This occurs because MSBuild automatically appends these to intermediate paths, a
                except Exception as e:
                    print(f'Error in {filepath}: {e}')
    "
-   ```
-
-4. **Check Conditional Compilation**
-   Verify that `UWP_BUILD` symbol is defined for conditional compilation:
-   ```xml
-   <DefineConstants>$(DefineConstants);UWP_BUILD</DefineConstants>
    ```
 
 ### Quick Fix Checklist
@@ -138,7 +139,7 @@ This occurs because MSBuild automatically appends these to intermediate paths, a
 - [WindowsAppSDK Downloads](https://learn.microsoft.com/en-us/windows/apps/windows-app-sdk/downloads)
 - [WindowsAppSDK GitHub Issues](https://github.com/microsoft/WindowsAppSDK/issues)
 - [.NET 9 Version Requirements](https://learn.microsoft.com/en-us/dotnet/core/compatibility/sdk/9.0/version-requirements)
-- [UWP Development Roadmap](../archived/uwp-development-roadmap.md)
+- [UWP Development Roadmap](../archived/uwp-development-roadmap.md) (historical reference)
 
 ### Prevention
 

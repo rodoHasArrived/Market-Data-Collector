@@ -1,6 +1,6 @@
 # Desktop Development Testing Guide
 
-This guide helps contributors set up and test desktop applications (WPF and UWP) for Market Data Collector.
+This guide helps contributors set up and test the WPF desktop application for Market Data Collector.
 
 ## Quick Commands Reference
 
@@ -8,17 +8,13 @@ This guide helps contributors set up and test desktop applications (WPF and UWP)
 # Environment validation
 make desktop-dev-bootstrap
 
-# Build desktop applications
-make build-wpf                    # Build WPF (recommended)
-make build-uwp                    # Build UWP (legacy)
+# Build desktop application
+make build-wpf                    # Build WPF desktop app
 
 # Run tests
 make test-desktop-services        # Run all desktop-focused tests
 dotnet test tests/MarketDataCollector.Wpf.Tests        # WPF service tests (Windows only)
 dotnet test tests/MarketDataCollector.Ui.Tests         # Shared UI service tests (Windows only)
-
-# Diagnostics
-make uwp-xaml-diagnose           # UWP XAML diagnostics (if needed)
 ```
 
 ## Quick Start
@@ -61,7 +57,7 @@ dotnet test tests/MarketDataCollector.Tests --filter "FullyQualifiedName~Configu
 
 ### MarketDataCollector.Ui.Tests (71 tests, Windows only)
 
-Tests for shared UI services used by both WPF and UWP desktop applications.
+Tests for shared UI services used by the WPF desktop application.
 
 **Test Suites:**
 
@@ -84,7 +80,7 @@ Tests for shared UI services used by both WPF and UWP desktop applications.
 dotnet test tests/MarketDataCollector.Ui.Tests/MarketDataCollector.Ui.Tests.csproj
 ```
 
-These tests validate services used by both WPF and UWP, ensuring consistent behavior across desktop platforms.
+These tests validate shared services used by the WPF desktop application.
 
 ### MarketDataCollector.Wpf.Tests (58 tests, Windows only)
 
@@ -202,26 +198,6 @@ make build-wpf
 dotnet build src/MarketDataCollector.Wpf/MarketDataCollector.Wpf.csproj -c Release -r win-x64
 ```
 
-### UWP Application (Legacy)
-
-```bash
-make build-uwp
-
-# Or directly:
-dotnet build src/MarketDataCollector.Uwp/MarketDataCollector.Uwp.csproj -c Release -r win-x64
-```
-
-### UWP XAML Diagnostics
-
-If you encounter XAML compilation issues with UWP:
-
-```bash
-make uwp-xaml-diagnose
-
-# Or directly:
-pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/dev/diagnose-uwp-xaml.ps1
-```
-
 ## Common Issues and Solutions
 
 ### Missing .NET 9 SDK
@@ -229,12 +205,6 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/dev/diagnose-uwp-xaml.ps1
 **Symptom**: Bootstrap script reports .NET SDK not found or wrong version.
 
 **Fix**: Install .NET 9 SDK from https://dotnet.microsoft.com/download/dotnet/9.0
-
-### Missing Windows SDK
-
-**Symptom**: UWP restore/build fails, bootstrap script reports Windows SDK not found.
-
-**Fix**: Install Windows SDK via Visual Studio Installer or from https://developer.microsoft.com/windows/downloads/windows-sdk/
 
 ### Missing Visual Studio Build Tools
 
@@ -244,12 +214,12 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/dev/diagnose-uwp-xaml.ps1
 
 ### XAML Compiler Errors
 
-**Symptom**: WPF or UWP build fails with XAML syntax errors.
+**Symptom**: WPF build fails with XAML syntax errors.
 
 **Fix**:
 1. Check XAML syntax in the Views/ directory
 2. Ensure all referenced resources exist
-3. Run `make uwp-xaml-diagnose` for detailed diagnostics
+3. See [Desktop App XAML Compiler Errors](./desktop-app-xaml-compiler-errors.md) for detailed diagnostics
 
 ### Tests Not Running on Non-Windows
 
@@ -333,7 +303,6 @@ See `.github/workflows/desktop-builds.yml` for CI configuration.
   
 - **Testing and Quality:**
   - [Test Project README](../../tests/MarketDataCollector.Ui.Tests/README.md) - Ui.Tests project details
-  - [WPF Test Project README](../../tests/MarketDataCollector.Wpf.Tests/README.md) - WPF-specific tests (if exists)
   
 - **Architecture and Policies:**
   - [Repository Organization Guide](./repository-organization-guide.md) - Code structure conventions
