@@ -38,8 +38,7 @@ This guide establishes conventions for organizing code, documentation, and asset
 ```
 ┌─────────────────────────────────────────────────────┐
 │  Presentation Layer (UI Projects)                   │
-│  - MarketDataCollector.Wpf                          │
-│  - MarketDataCollector.Uwp                          │
+│  - MarketDataCollector.Wpf (Desktop)                │
 │  - MarketDataCollector.Ui (Web UI)                  │
 ├─────────────────────────────────────────────────────┤
 │  UI Services Layer                                  │
@@ -109,7 +108,6 @@ src/
 ├── MarketDataCollector.Ui/                 # Web UI entry point
 ├── MarketDataCollector.Ui.Services/        # Shared UI services (desktop + web)
 ├── MarketDataCollector.Ui.Shared/          # Web-specific UI components
-├── MarketDataCollector.Uwp/                # UWP desktop application
 └── MarketDataCollector.Wpf/                # WPF desktop application
 ```
 
@@ -179,7 +177,7 @@ Each project can reference projects below it in the layer hierarchy:
 | **Application** | Domain, Infrastructure, Storage, Core, Contracts, FSharp, ProviderSdk |
 | **Ui.Services** | Contracts, Core |
 | **Ui.Shared** | Application, Ui.Services, Contracts, Core |
-| **Wpf / Uwp** | Ui.Services, Contracts |
+| **Wpf** | Ui.Services, Contracts |
 | **Domain** | Contracts, Core |
 | **Infrastructure** | Domain, Core, Contracts, ProviderSdk, FSharp |
 | **Storage** | Domain, Core, Contracts |
@@ -506,14 +504,13 @@ src/MarketDataCollector.Wpf/
 ❌ **Problem:** Same interface defined in multiple projects
 ```
 Wpf/Services/IConfigService.cs
-Uwp/Contracts/IConfigService.cs
 Ui.Services/Contracts/IConfigService.cs
 ```
 
 ✅ **Solution:** Keep one canonical definition in shared location
 ```
 Ui.Services/Contracts/IConfigService.cs  (✓ canonical)
-Delete from Wpf and Uwp, update using directives
+Delete from Wpf, update using directives
 ```
 
 ### Pitfall 2: Ambiguous Class Names
@@ -606,7 +603,7 @@ When adding new code, ask these questions:
 | Provider implementation | `Infrastructure/Providers/` | `MarketDataCollector.Infrastructure` |
 | HTTP API endpoint | `Application/Http/Endpoints/` | `MarketDataCollector.Application` |
 | UI service (desktop+web) | `Ui.Services/Services/` | `MarketDataCollector.Ui.Services` |
-| Platform-specific UI logic | `Wpf/` or `Uwp/` | Respective projects |
+| Platform-specific UI logic | `Wpf/` | `MarketDataCollector.Wpf` |
 | Configuration model | `Core/Config/` | `MarketDataCollector.Core` |
 | Shared utility | `Core/Utilities/` | `MarketDataCollector.Core` |
 | Custom exception | `Core/Exceptions/` | `MarketDataCollector.Core` |

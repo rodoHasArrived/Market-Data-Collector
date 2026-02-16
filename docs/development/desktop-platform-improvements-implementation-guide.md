@@ -1,8 +1,8 @@
 # Desktop Platform Development Improvements - Implementation Guide
 
-**Version**: 1.0  
-**Date**: 2026-02-13  
-**Status**: Active, Phase 1 Complete (129 tests)  
+**Version**: 1.1
+**Date**: 2026-02-16
+**Status**: Active, Phase 1 Complete (129 tests), UWP Removed
 
 ## Executive Summary
 
@@ -12,26 +12,23 @@ This document provides a comprehensive implementation guide for high-value impro
 
 ✅ **Completed Infrastructure** (Priority 1 items from original plan):
 - Desktop development bootstrap script (`scripts/dev/desktop-dev.ps1`)
-- Focused desktop Make targets (`build-wpf`, `build-uwp`, `test-desktop-services`)
-- UWP XAML diagnostics helper (`scripts/dev/diagnose-uwp-xaml.ps1`)
+- Focused desktop Make targets (`build-wpf`, `test-desktop-services`)
 - Desktop support policy (`docs/development/policies/desktop-support-policy.md`)
 - Desktop PR checklist template (`.github/pull_request_template_desktop.md`)
 - Desktop workflow documentation (`docs/development/desktop-dev-workflow.md`)
+- UWP fully removed from codebase (WPF is sole desktop client)
 
-❌ **Critical Gaps Identified**:
-1. **No unit tests** for 30+ desktop services (Navigation, Config, Status, Connection, etc.)
-2. **100% code duplication** of services between WPF and UWP
-3. **No test fixtures** for UI development without backend dependency
-4. **Missing architecture diagram** for desktop layer boundaries
-5. **No DI container** in WPF (uses manual singletons)
-6. **Inconsistent patterns** between WPF and UWP implementations
+❌ **Remaining Gaps**:
+1. **No DI container** in WPF (uses manual singletons)
+2. **No test fixtures** for UI development without backend dependency
+3. **Missing architecture diagram** for desktop layer boundaries
 
 ---
 
 ## Priority 1: Desktop Services Unit Test Baseline
 
 ### Problem
-Despite having 30+ services shared between WPF and UWP, there are **zero unit tests** for desktop-specific services. Changes to services like `NavigationService`, `ConfigService`, and `StatusService` are currently validated only through manual testing, increasing regression risk.
+Prior to Phase 1, there were **zero unit tests** for desktop-specific services. Changes to services like `NavigationService`, `ConfigService`, and `StatusService` were validated only through manual testing, increasing regression risk.
 
 ### Solution: Create MarketDataCollector.Ui.Tests Project
 
@@ -482,16 +479,14 @@ Create `docs/architecture/desktop-layers.md`:
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    Platform UI Layer                        │
-│  ┌──────────────────┐              ┌──────────────────┐    │
-│  │   WPF Desktop    │              │   UWP Desktop    │    │
-│  │   (Primary)      │              │   (Legacy)       │    │
-│  │                  │              │                  │    │
-│  │ - Views/Pages    │              │ - Views/Pages    │    │
-│  │ - App.xaml       │              │ - App.xaml       │    │
-│  │ - MainWindow     │              │ - MainWindow     │    │
-│  └─────────┬────────┘              └────────┬─────────┘    │
-│            │                                 │              │
-│            └─────────────┬───────────────────┘              │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │              WPF Desktop (Primary)                   │  │
+│  │                                                       │  │
+│  │  - Views/Pages                                       │  │
+│  │  - App.xaml                                          │  │
+│  │  - MainWindow                                        │  │
+│  └───────────────────────┬──────────────────────────────┘  │
+│                           │                                  │
 └──────────────────────────┼──────────────────────────────────┘
                            │
 ┌──────────────────────────┼──────────────────────────────────┐
@@ -540,39 +535,32 @@ Create `docs/architecture/desktop-layers.md`:
 
 ### ✅ Allowed Dependencies
 
-1. **Platform UI → Platform Services**: WPF/UWP can use their own services
-2. **Platform UI → Shared Services**: Both platforms can use `Ui.Services`
+1. **Platform UI → Platform Services**: WPF can use its own services
+2. **Platform UI → Shared Services**: WPF can use `Ui.Services`
 3. **Platform Services → Shared Services**: Platform services can delegate to shared logic
 4. **Shared Services → Contracts**: All services use shared contracts
 5. **All Layers → Contracts**: Everyone can reference contracts
 
 ### ❌ Forbidden Dependencies
 
-1. **Shared Services → Platform UI**: Shared code CANNOT reference WPF/UWP
+1. **Shared Services → Platform UI**: Shared code CANNOT reference WPF
 2. **Shared Services → Platform Services**: Shared code CANNOT reference platform-specific services
-3. **WPF → UWP** or **UWP → WPF**: Platforms CANNOT reference each other
-4. **Contracts → Any other layer**: Contracts must remain pure POCOs
+3. **Contracts → Any other layer**: Contracts must remain pure POCOs
 
 ## Service Duplication Strategy
 
-### Current State (Code Duplication)
+### Current State
 
-Both WPF and UWP have nearly identical implementations of:
-- NavigationService
-- ThemeService
-- StorageService
-- ConfigService
-- LoggingService
-- and 25+ more...
+WPF services implement platform-specific logic directly. Some shared logic is already extracted into `Ui.Services`.
 
-### Target State (Shared Base with Platform Adapters)
+### Target State (Shared Base with WPF Adapters)
 
 ```csharp
 // Shared base in Ui.Services
 public abstract class NavigationServiceBase
 {
     protected abstract void NavigateCore(string pageTag);
-    
+
     public void Navigate(string pageTag)
     {
         ValidatePageTag(pageTag);
@@ -588,18 +576,9 @@ public sealed class WpfNavigationService : NavigationServiceBase
         // WPF-specific Frame navigation
     }
 }
-
-// UWP-specific implementation
-public sealed class UwpNavigationService : NavigationServiceBase
-{
-    protected override void NavigateCore(string pageTag)
-    {
-        // UWP-specific Frame navigation
-    }
-}
 ```
 
-This reduces duplication from 100% to ~20% (only platform-specific parts).
+This pattern keeps platform-specific code minimal while maximizing shared, testable logic.
 ```
 
 ---
@@ -609,7 +588,6 @@ This reduces duplication from 100% to ~20% (only platform-specific parts).
 ### Problem
 
 **WPF**: Uses manual singleton pattern everywhere, making testing difficult
-**UWP**: Has `ServiceLocator` but inconsistently used
 
 ### Solution: Standardize on Microsoft.Extensions.DependencyInjection
 
@@ -698,7 +676,7 @@ public partial class MainWindow : Window
 
 1. **Testability**: Services can be mocked in tests
 2. **Lifetime management**: Automatic disposal
-3. **Configuration**: Can inject different implementations
+3. **Configuration**: Can inject different implementations per environment
 4. **Consistency**: Same pattern as backend services
 
 ---
@@ -707,33 +685,29 @@ public partial class MainWindow : Window
 
 ### Analysis
 
-Current duplication count:
-- **31 services** duplicated between WPF and UWP
-- **~15,000 lines** of duplicated code
-- **2x maintenance burden** for every service change
+With UWP removed, the primary consolidation goal is extracting shared logic from WPF services into `Ui.Services` so it can be tested independently and potentially reused by the web UI.
 
 ### Consolidation Strategy
 
-#### Phase 1: Extract Shared Interfaces (Week 1)
+#### Phase 1: Ensure Shared Interfaces (Done)
 
-Move all service interfaces to `MarketDataCollector.Ui.Services/Contracts/`:
+All service interfaces are in `MarketDataCollector.Ui.Services/Contracts/`:
 
 ```
 Contracts/
-├── INavigationService.cs
 ├── IConfigService.cs
 ├── IStatusService.cs
 ├── IConnectionService.cs
 ├── IThemeService.cs
-└── ... (31 interfaces total)
+└── ... (shared interfaces)
 ```
 
-#### Phase 2: Extract Shared Logic (Week 2-3)
+#### Phase 2: Extract Shared Logic
 
-Create abstract base classes in `Ui.Services/Services/Base/`:
+Create abstract base classes in `Ui.Services/Services/` for services with logic that isn't WPF-specific:
 
 ```csharp
-// Base/ConfigServiceBase.cs
+// Services/ConfigServiceBase.cs
 public abstract class ConfigServiceBase : IConfigService
 {
     protected abstract Task<string> LoadConfigCoreAsync();
@@ -742,7 +716,7 @@ public abstract class ConfigServiceBase : IConfigService
     public async Task<AppConfig> LoadConfigAsync()
     {
         var json = await LoadConfigCoreAsync();
-        return JsonSerializer.Deserialize<AppConfig>(json) 
+        return JsonSerializer.Deserialize<AppConfig>(json)
             ?? throw new InvalidOperationException("Config is null");
     }
 
@@ -754,36 +728,25 @@ public abstract class ConfigServiceBase : IConfigService
 }
 ```
 
-#### Phase 3: Migrate Platform Implementations (Week 4)
+#### Phase 3: Migrate WPF Implementations
 
 ```csharp
 // WPF/Services/ConfigService.cs
 public sealed class ConfigService : ConfigServiceBase
 {
     protected override Task<string> LoadConfigCoreAsync()
-    {
-        // WPF-specific file loading
-        return File.ReadAllTextAsync(_configPath);
-    }
+        => File.ReadAllTextAsync(_configPath);
 
     protected override Task SaveConfigCoreAsync(string json)
-    {
-        // WPF-specific file saving
-        return File.WriteAllTextAsync(_configPath, json);
-    }
+        => File.WriteAllTextAsync(_configPath, json);
 }
 ```
 
-#### Phase 4: Deprecate Duplicates (Week 5)
-
-Mark old implementations as `[Obsolete]` and add migration guide.
-
 ### Expected Outcomes
 
-- **50% less code** to maintain
-- **Single source of truth** for business logic
+- **Single source of truth** for business logic in `Ui.Services`
 - **Easier testing** with shared test base classes
-- **Faster feature development** (write once, works in both platforms)
+- **Reusable logic** across desktop and web surfaces
 
 ---
 
@@ -799,7 +762,7 @@ Mark old implementations as `[Obsolete]` and add migration guide.
 ## Prerequisites
 
 - .NET 9.0 SDK
-- Windows 10+ (for WPF/UWP)
+- Windows 10+ (for WPF)
 - Visual Studio 2022+ or VS Code + C# extension
 
 ## 5-Minute Setup
@@ -900,12 +863,6 @@ dotnet run --project src/MarketDataCollector -- --ui --http-port 8080
 
 # Terminal 2: Start WPF
 dotnet run --project src/MarketDataCollector.Wpf
-```
-
-### Debug XAML Issues (UWP)
-
-```bash
-make uwp-xaml-diagnose
 ```
 
 ### Run Only Desktop Tests

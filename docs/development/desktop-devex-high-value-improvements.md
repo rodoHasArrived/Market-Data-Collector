@@ -13,13 +13,13 @@
 ## Implementation status (current)
 
 - ✅ Desktop dev bootstrap script: `scripts/dev/desktop-dev.ps1`
-- ✅ Focused desktop Make targets: `build-wpf`, `build-uwp`, `test-desktop-services`, `desktop-dev-bootstrap`, `uwp-xaml-diagnose`
-- ✅ UWP XAML diagnostics helper: `scripts/dev/diagnose-uwp-xaml.ps1`
+- ✅ Focused desktop Make targets: `build-wpf`, `test-desktop-services`, `desktop-dev-bootstrap`
+- ✅ UWP fully removed from codebase (WPF is sole desktop client)
 - ✅ Desktop support policy: `docs/development/policies/desktop-support-policy.md`
 - ✅ Desktop PR checklist template: `.github/pull_request_template_desktop.md`
 - ✅ Desktop workflow doc: `docs/development/desktop-dev-workflow.md`
 
-Improve day-to-day development velocity and confidence for desktop contributors (WPF primary, UWP legacy) by reducing build friction, tightening feedback loops, and standardizing local workflows.
+Improve day-to-day development velocity and confidence for desktop contributors (WPF) by reducing build friction, tightening feedback loops, and standardizing local workflows.
 
 ## Priority 1 — Fastest ROI
 
@@ -33,7 +33,7 @@ Improve day-to-day development velocity and confidence for desktop contributors 
   - validates .NET SDK + Windows targeting packs,
   - validates Visual Studio Build Tools/XAML tooling presence,
   - restores desktop projects,
-  - runs a smoke build for WPF (and optional UWP),
+  - runs a smoke build for WPF,
   - prints actionable fixes when checks fail.
 
 **Why high value**
@@ -48,7 +48,6 @@ Improve day-to-day development velocity and confidence for desktop contributors 
 - Add commands like:
   - `make test-desktop-services`
   - `make build-wpf`
-  - `make build-uwp` (legacy/optional)
 - Point these to narrow project/test scopes to keep cycle time low.
 
 **Why high value**
@@ -85,34 +84,18 @@ Improve day-to-day development velocity and confidence for desktop contributors 
 **Why high value**
 - Reduces CI wait time and preserves high assurance when shipping.
 
-### 5) Publish and enforce a **desktop support policy** (WPF = primary, UWP = compatibility)
+### 5) Publish and enforce a **desktop support policy**
 
 **Problem**
-- The repo documents WPF as recommended and UWP as legacy, but contribution expectations are not expressed as a concise policy.
+- Contribution expectations for desktop changes are not expressed as a concise policy.
 
 **Improvement**
 - Add a short policy document defining:
-  - required checks for WPF-only changes,
-  - when UWP must also pass,
-  - ownership/maintenance expectations for legacy UWP code.
+  - required checks for WPF changes,
+  - ownership/maintenance expectations.
 
 **Why high value**
 - Prevents over-testing or under-testing and clarifies review expectations.
-
-### 6) Add an **automated XAML diagnostics helper** for UWP failures
-
-**Problem**
-- Historical XAML compiler failures are opaque and expensive to diagnose.
-
-**Improvement**
-- Provide a script that runs preflight checks against known failure modes:
-  - WindowsAppSDK version sanity,
-  - target framework/platform settings,
-  - intermediate path pitfalls,
-  - XAML parse validation.
-
-**Why high value**
-- Converts recurring “tribal knowledge” into deterministic checks.
 
 ## Priority 3 — Productivity Quality-of-Life
 
@@ -123,7 +106,7 @@ Improve day-to-day development velocity and confidence for desktop contributors 
 
 **Improvement**
 - Add local fixture mode for `StatusService`/API services with canned payloads.
-- Provide one command to boot fixture mode for dashboards/settings pages.
+- Provide one command to boot fixture mode for WPF dashboards/settings pages.
 
 **Why high value**
 - Enables offline UI development and deterministic bug reproduction.
@@ -137,7 +120,6 @@ Improve day-to-day development velocity and confidence for desktop contributors 
 - Add one-page map showing:
   - `Ui.Services` (shared core),
   - WPF-specific layer,
-  - UWP-specific layer,
   - forbidden dependency directions.
 
 **Why high value**
@@ -160,7 +142,6 @@ Improve day-to-day development velocity and confidence for desktop contributors 
 2. WPF service test baseline (first 10–15 tests).
 3. CI split into fast and full lanes.
 4. Desktop support policy + desktop PR checklist.
-5. UWP XAML diagnostics helper.
 
 ## Success metrics
 
@@ -171,7 +152,6 @@ Improve day-to-day development velocity and confidence for desktop contributors 
 
 ## Evidence in current repository
 
-- WPF is the recommended desktop path, with UWP legacy support and explicit migration rationale.
+- WPF is the sole desktop client (UWP has been fully removed).
 - WPF implementation notes identify unit testing and persistence work as future enhancements.
 - Desktop CI is consolidated and feature-rich, indicating opportunity for fast-path separation.
-- UWP/XAML compiler failures are documented with recurring diagnostics and mitigation steps.

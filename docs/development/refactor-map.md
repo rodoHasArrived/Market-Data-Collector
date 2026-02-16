@@ -176,40 +176,32 @@
 
 ---
 
-## Phase 5 — Desktop Duplication Reduction (WPF/UWP)
+## Phase 5 — Desktop Service Consolidation (WPF-only)
+
+> **Note:** The UWP desktop application has been fully removed from the codebase. WPF is the sole desktop client.
+> This phase is now simplified to focus on promoting shared service interfaces and reducing duplication
+> between WPF-specific services and `Ui.Services`.
 
 ### Step 5.1 — Promote shared service interfaces into `Ui.Services`
 - **Changes:**
-  - Move `IThemeService`, `IConfigService`, `INotificationService`, `INavigationService`, etc. to shared project.
+  - Ensure `IThemeService`, `IConfigService`, `INotificationService`, `INavigationService`, etc. are in shared project.
 - **Files to touch:**
   - `src/MarketDataCollector.Ui.Services/*`
   - `src/MarketDataCollector.Wpf/Services/*` (interface references)
-  - `src/MarketDataCollector.Uwp/Services/*` (interface references)
 - **Dependency safety:** Interface-only move first.
-- **Risk:** **3/5**
-- **Exit criteria:** Both desktop apps compile with moved interfaces.
+- **Risk:** **2/5** (simplified with single desktop platform)
+- **Exit criteria:** WPF compiles with moved interfaces.
 
-### Step 5.2 — Move shared implementations with platform adapters
+### Step 5.2 — Move shared implementations where possible
 - **Changes:**
-  - Extract common logic into shared service implementations.
-  - Keep tiny adapters in WPF/UWP for platform-only APIs.
+  - Extract common logic into shared service implementations in `Ui.Services`.
+  - Keep WPF-specific adapters for platform-only APIs (e.g., `Frame` navigation).
 - **Files to touch:**
   - `src/MarketDataCollector.Ui.Services/*`
   - `src/MarketDataCollector.Wpf/Services/*`
-  - `src/MarketDataCollector.Uwp/Services/*`
 - **Dependency safety:** Side-by-side old/new behind registration toggles.
-- **Risk:** **4/5**
-- **Exit criteria:** Behavior parity in UI smoke tests; duplicate LOC reduced significantly.
-
-### Step 5.3 — Consolidate navigation model (optional after service move)
-- **Changes:**
-  - Align UWP nav grouping to WPF workspace model.
-- **Files to touch:**
-  - `src/MarketDataCollector.Uwp/Views/MainPage.xaml`
-  - `src/MarketDataCollector.Uwp/Services/NavigationService.cs`
-- **Dependency safety:** UX-only restructuring, no backend change.
 - **Risk:** **3/5**
-- **Exit criteria:** Task completion clicks reduced; no broken routes.
+- **Exit criteria:** Behavior parity in UI smoke tests; shared LOC increased.
 
 ---
 

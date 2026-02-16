@@ -19,7 +19,7 @@
 
 ❌ Critical Gaps
 ├── No unit tests for 30+ services
-├── 100% service duplication (WPF/UWP)
+├── UWP removed (WPF is sole desktop client)
 ├── No UI fixture mode (requires backend)
 ├── Manual singleton pattern (hard to test)
 └── No architecture diagram
