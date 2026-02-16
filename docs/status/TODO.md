@@ -1,7 +1,7 @@
 # TODO Tracking
 
 > Auto-generated TODO documentation. Do not edit manually.
-> Last updated: 2026-02-16T16:32:19.468105+00:00
+> Last updated: 2026-02-16T19:06:09.292892+00:00
 
 ## Summary
 
@@ -45,7 +45,7 @@ Consider assigning ownership or creating tracking issues for these items.
   > SymbolCompleteness is defined in AdvancedAnalyticsModels.cs to avoid duplication
 
 - [ ] `src/MarketDataCollector.Ui.Services/Services/ProviderHealthService.cs:519`
-  > ProviderComparison is defined in AdvancedAnalyticsModels.cs to avoid duplication
+  > ProviderComparison is defined in AdvancedAnalyticsModels.cs for cross-provider comparison ProviderHealthComparison below is for overall provider ranking
 
 - [ ] `src/MarketDataCollector.Ui.Shared/Endpoints/ConfigEndpoints.cs:154`
   > Status endpoint is handled by StatusEndpoints.MapStatusEndpoints() which provides live status via StatusEndpointHandlers rather than loading from file
