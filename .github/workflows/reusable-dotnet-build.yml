@@ -120,11 +120,7 @@ jobs:
         id: build
         shell: bash
         run: |
-          dotnet build MarketDataCollector.sln \
-            -c ${{ inputs.configuration }} \
-            --no-restore \
-            /p:EnableWindowsTargeting=true \
-            /bl:./artifacts/build.binlog
+          dotnet build MarketDataCollector.sln -c ${{ inputs.configuration }} --no-restore /p:EnableWindowsTargeting=true /bl:./artifacts/build.binlog
 
       - name: Run tests
         if: inputs.run-tests
@@ -132,14 +128,7 @@ jobs:
         env:
           MSYS_NO_PATHCONV: 1
         run: |
-          dotnet test MarketDataCollector.sln \
-            -c ${{ inputs.configuration }} \
-            --no-build \
-            /p:EnableWindowsTargeting=true \
-            --verbosity normal \
-            --logger "trx;LogFileName=test-results.trx" \
-            --results-directory ./artifacts/test-results \
-            ${{ inputs.collect-coverage && '--collect:"XPlat Code Coverage"' || '' }}
+          dotnet test MarketDataCollector.sln -c ${{ inputs.configuration }} --no-build /p:EnableWindowsTargeting=true --verbosity normal --logger "trx;LogFileName=test-results.trx" --results-directory ./artifacts/test-results ${{ inputs.collect-coverage && '--collect:"XPlat Code Coverage"' || '' }}
 
       - name: Summarize diagnostics
         if: always()

@@ -204,10 +204,7 @@ jobs:
       - name: Run security analysis
         id: sast
         run: |
-          dotnet build MarketDataCollector.sln \
-            -c Release \
-            /p:EnableWindowsTargeting=true \
-            /p:RunAnalyzersDuringBuild=true 2>&1 | tee sast-output.txt || true
+          dotnet build MarketDataCollector.sln -c Release /p:EnableWindowsTargeting=true /p:RunAnalyzersDuringBuild=true 2>&1 | tee sast-output.txt || true
 
           echo "## SAST Analysis Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -258,10 +255,7 @@ jobs:
 
       - name: Build for CodeQL
         run: |
-          dotnet build MarketDataCollector.sln \
-            -c Release \
-            --no-restore \
-            /p:EnableWindowsTargeting=true
+          dotnet build MarketDataCollector.sln -c Release --no-restore /p:EnableWindowsTargeting=true
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4

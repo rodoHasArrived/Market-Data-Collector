@@ -67,17 +67,7 @@ jobs:
         continue-on-error: true
         run: |
           set -o pipefail
-          dotnet build MarketDataCollector.sln \
-            -c Release \
-            --no-restore \
-            /p:EnableWindowsTargeting=true \
-            /p:TreatWarningsAsErrors=false \
-            /p:AnalysisLevel=latest \
-            /p:EnforceCodeStyleInBuild=true \
-            /p:RunAnalyzersDuringBuild=true \
-            /p:GenerateDocumentationFile=true \
-            /p:NoWarn=1591 \
-            2>&1 | tee build-output.log
+          dotnet build MarketDataCollector.sln -c Release --no-restore /p:EnableWindowsTargeting=true /p:TreatWarningsAsErrors=false /p:AnalysisLevel=latest /p:EnforceCodeStyleInBuild=true /p:RunAnalyzersDuringBuild=true /p:GenerateDocumentationFile=true /p:NoWarn=1591 2>&1 | tee build-output.log
 
       # Analyze build output for issues
       - name: Analyze build results

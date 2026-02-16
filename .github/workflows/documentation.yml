@@ -481,11 +481,7 @@ jobs:
         run: |
           set -euo pipefail
           dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
-          dotnet build src/MarketDataCollector/MarketDataCollector.csproj \
-            -c Release \
-            --no-restore \
-            /p:EnableWindowsTargeting=true \
-            /p:GenerateDocumentationFile=true
+          dotnet build src/MarketDataCollector/MarketDataCollector.csproj -c Release --no-restore /p:EnableWindowsTargeting=true /p:GenerateDocumentationFile=true
         continue-on-error: true
 
       # --- Structure docs ---

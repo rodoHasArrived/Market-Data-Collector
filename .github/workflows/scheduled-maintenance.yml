@@ -112,10 +112,7 @@ jobs:
 
       - name: Build
         run: |
-          dotnet build MarketDataCollector.sln \
-            -c Release \
-            --no-restore \
-            /p:EnableWindowsTargeting=true
+          dotnet build MarketDataCollector.sln -c Release --no-restore /p:EnableWindowsTargeting=true
 
       - name: Run all unit tests
         id: tests
@@ -132,12 +129,7 @@ jobs:
       - name: Run F# tests
         id: fsharp-tests
         run: |
-          dotnet test tests/MarketDataCollector.FSharp.Tests/MarketDataCollector.FSharp.Tests.fsproj \
-            -c Release \
-            --verbosity normal \
-            --collect:"XPlat Code Coverage" \
-            --results-directory ./TestResults \
-            /p:EnableWindowsTargeting=true
+          dotnet test tests/MarketDataCollector.FSharp.Tests/MarketDataCollector.FSharp.Tests.fsproj -c Release --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./TestResults /p:EnableWindowsTargeting=true
         continue-on-error: true
 
       - name: Parse test results
@@ -893,10 +885,7 @@ jobs:
 
           # Timed build
           START_TIME=$(date +%s)
-          dotnet build MarketDataCollector.sln \
-            -c Release \
-            --no-restore \
-            /p:EnableWindowsTargeting=true 2>&1 | tail -5
+          dotnet build MarketDataCollector.sln -c Release --no-restore /p:EnableWindowsTargeting=true 2>&1 | tail -5
           END_TIME=$(date +%s)
           BUILD_TIME=$((END_TIME - START_TIME))
           echo "build_time=$BUILD_TIME" >> $GITHUB_OUTPUT

@@ -129,10 +129,7 @@ jobs:
 
       - name: Build
         run: |
-          dotnet build MarketDataCollector.sln \
-            -c Release \
-            --no-restore \
-            /p:EnableWindowsTargeting=true
+          dotnet build MarketDataCollector.sln -c Release --no-restore /p:EnableWindowsTargeting=true
 
       - name: Fetch ticker data
         env:
