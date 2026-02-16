@@ -1,9 +1,9 @@
 # Market Data Collector - Project Roadmap
 
-**Version:** 1.6.2
-**Last Updated:** 2026-02-15
+**Version:** 1.6.1
+**Last Updated:** 2026-02-17
 **Status:** Production Ready (hardening and scale-up in progress)
-**Repository Snapshot:** `src/` files: **712** | `tests/` files: **153** | HTTP routes mapped in `Ui.Shared/Endpoints`: **244** | Remaining stub routes: **0**
+**Repository Snapshot:** `src/` files: **635** | `tests/` files: **163** | HTTP routes mapped in `Ui.Shared/Endpoints`: **244** | Remaining stub routes: **0**
 
 This roadmap is refreshed to match the current repository state and focuses on the remaining work required to move from "production-ready" to a more fully hardened v2.0 release posture.
 
@@ -15,7 +15,7 @@ This roadmap is refreshed to match the current repository state and focuses on t
 
 - **Phases 0–6 are complete** (critical bug fixes, API route implementation, desktop workflow completion, operations baseline, and duplicate-code cleanup).
 - **All previously declared stub HTTP routes have been implemented**; `StubEndpoints.MapStubEndpoints()` is intentionally empty and retained as a guardrail for future additions.
-- **WPF is the active desktop path**; UWP is deprecated and maintained only for critical fixes.
+- **WPF is the sole desktop client**; UWP has been fully removed.
 - **Operational baseline is in place** (API auth/rate limiting, Prometheus export, deployment docs, alerting assets).
 - **OpenTelemetry pipeline instrumentation** wired through `TracedEventMetrics` decorator with OTLP-compatible meters.
 - **Provider unit tests** expanded for Polygon subscription/reconnect and StockSharp lifecycle scenarios.

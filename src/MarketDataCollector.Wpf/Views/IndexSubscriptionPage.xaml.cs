@@ -140,7 +140,7 @@ public partial class IndexSubscriptionPage : Page
         }
         catch (Exception ex)
         {
-            _loggingService.LogError($"Failed to subscribe to {displayName}", ex);
+            _loggingService.LogError("Failed to subscribe to " + displayName, ex);
             ShowStatus($"Failed to load constituents: {ex.Message}", false);
         }
     }

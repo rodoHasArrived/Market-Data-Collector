@@ -99,27 +99,18 @@ Desktop-focused helpers:
 ```bash
 make desktop-dev-bootstrap   # Validate desktop development environment (PowerShell)
 make build-wpf               # Build WPF desktop app (Windows only)
-make build-uwp               # Build UWP desktop app (legacy, Windows only)
 make test-desktop-services   # Run desktop-focused tests (includes WPF service tests on Windows)
-make uwp-xaml-diagnose       # Run UWP XAML diagnostics (Windows only)
 ```
 
 ### Windows Desktop App Install
 
-**Two Options Available:**
+**WPF Desktop App (Recommended)** - Modern WPF application with maximum Windows stability
+- Works on Windows 7+
+- Simple .exe deployment
+- Direct assembly references (no WinRT limitations)
+- See [WPF README](src/MarketDataCollector.Wpf/README.md) for details
 
-1. **WPF Desktop App (Recommended)** - Modern WPF application with maximum Windows stability
-   - Works on Windows 7+
-   - Simple .exe deployment
-   - Direct assembly references (no WinRT limitations)
-   - See [WPF README](src/MarketDataCollector.Wpf/README.md) for details
-
-2. **UWP Desktop App (Legacy)** - Windows 10+ only
-   - MSIX packaging required
-   - Windows 10 build 19041+ required
-   - See instructions below
-
-**WPF Installation:**
+**Installation:**
 ```bash
 # Build from source
 dotnet build src/MarketDataCollector.Wpf/MarketDataCollector.Wpf.csproj -c Release
@@ -128,33 +119,13 @@ dotnet build src/MarketDataCollector.Wpf/MarketDataCollector.Wpf.csproj -c Relea
 dotnet run --project src/MarketDataCollector.Wpf/MarketDataCollector.Wpf.csproj
 ```
 
-**UWP Installation (AppInstaller):**
-1. Download the `.appinstaller` file from the release assets.
-2. Double-click it to launch App Installer.
-3. Select **Install** to complete setup.
-
-**Install (MSIX)**
-1. Download the MSIX bundle (`.msix`/`.msixbundle`) from the release assets.
-2. Double-click the file and follow the prompts.
-
-**CI artifacts (preview builds)**
-- GitHub Actions Desktop App Build workflow artifacts include an MSIX archive named `MarketDataCollector.Desktop-msix-x64.zip` for tag/manual runs. Download it from the workflow run artifacts and extract to get the MSIX package.  
-  https://github.com/rodoHasArrived/Market-Data-Collector/actions/workflows/desktop-app.yml
-
-**Upgrade**
-- Re-open the latest `.appinstaller` file; App Installer detects updates automatically.
-- For MSIX, install the newer package version over the existing one.
-
-**Uninstall**
-- Open **Settings → Apps → Installed apps**, select **Market Data Collector Desktop**, and choose **Uninstall**.
-
 ---
 
 ## Desktop Development
 
 ### Setting Up Desktop Development Environment
 
-For contributors working on WPF or UWP desktop applications, use the desktop development bootstrap script to validate your environment:
+For contributors working on the WPF desktop application, use the desktop development bootstrap script to validate your environment:
 
 ```bash
 make desktop-dev-bootstrap
@@ -201,12 +172,6 @@ make test-desktop-services
 ```bash
 # Build WPF application (Windows only)
 make build-wpf
-
-# Build UWP application (legacy, Windows only)
-make build-uwp
-
-# Diagnose UWP XAML issues
-make uwp-xaml-diagnose
 ```
 
 ---
@@ -219,7 +184,7 @@ make uwp-xaml-diagnose
 
 ## Technical Overview
 
-Market Data Collector is built on **.NET 9.0** using **C# 13** and **F# 8.0** across 734 source files. It uses a modular, event-driven architecture with bounded channels for high-throughput data processing. The system supports deployment as a single self-contained executable, a Docker container, or a systemd service.
+Market Data Collector is built on **.NET 9.0** using **C# 13** and **F# 8.0** across 635 source files. It uses a modular, event-driven architecture with bounded channels for high-throughput data processing. The system supports deployment as a single self-contained executable, a Docker container, or a systemd service.
 
 ## Key Features
 
@@ -242,7 +207,7 @@ Market Data Collector is built on **.NET 9.0** using **C# 13** and **F# 8.0** ac
 
 ### Monitoring and Observability
 - **Web dashboard**: Modern HTML dashboard for live monitoring, integrity event tracking, and backfill controls
-- **Native Windows apps**: WPF desktop application (recommended) and a legacy UWP app for Windows-only configuration and monitoring
+- **Native Windows app**: WPF desktop application for Windows-only configuration and monitoring
 - **Metrics and status**: Prometheus metrics at `/metrics`, JSON status at `/status`, HTML dashboard at `/`
 - **Logging**: Structured logging via Serilog with ready-to-use sinks
 
@@ -304,9 +269,6 @@ cp config/appsettings.sample.json config/appsettings.json
 
 # Option 1: Launch the web dashboard (serves HTML + Prometheus + JSON status)
 dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj -- --ui --watch-config --http-port 8080
-
-# Option 2: Launch the UWP desktop application (Windows only)
-dotnet run --project src/MarketDataCollector.Uwp/MarketDataCollector.Uwp.csproj
 
 # Run smoke test (no provider connectivity required)
 dotnet run --project src/MarketDataCollector/MarketDataCollector.csproj
@@ -523,12 +485,12 @@ docker run -d -p 8080:8080 \
 
 ## Repository Structure
 
-**734 source files** | **717 C#** | **17 F#** | **85 test files** | **104 documentation files**
+**635 source files** | **623 C#** | **12 F#** | **163 test files** | **130 documentation files**
 
 ```
 Market-Data-Collector/
-├── .github/              # CI/CD workflows (17), AI prompts, Dependabot
-├── docs/                 # Documentation (104 files), ADRs, AI assistant guides
+├── .github/              # CI/CD workflows (22), AI prompts, Dependabot
+├── docs/                 # Documentation (130 files), ADRs, AI assistant guides
 ├── build/                # Build tooling (Python, Node.js, .NET generators, scripts)
 ├── deploy/               # Docker, systemd, and monitoring configs
 ├── config/               # Configuration files (appsettings.json)
@@ -544,12 +506,11 @@ Market-Data-Collector/
 │   ├── MarketDataCollector.Ui/        # Web dashboard
 │   ├── MarketDataCollector.Ui.Shared/ # Shared UI endpoint handlers
 │   ├── MarketDataCollector.Ui.Services/ # Shared UI service abstractions
-│   ├── MarketDataCollector.Wpf/       # WPF desktop app (recommended)
-│   └── MarketDataCollector.Uwp/       # UWP desktop app (legacy, WinUI 3)
-├── tests/                # C# and F# test projects (85 files)
+│   └── MarketDataCollector.Wpf/       # WPF desktop app (recommended)
+├── tests/                # C# and F# test projects (163 files)
 ├── benchmarks/           # Performance benchmarks (BenchmarkDotNet)
 ├── MarketDataCollector.sln
-├── Makefile              # Build automation (66 targets)
+├── Makefile              # Build automation (72 targets)
 └── CLAUDE.md             # AI assistant guide
 ```
 

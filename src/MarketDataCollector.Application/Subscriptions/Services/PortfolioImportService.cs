@@ -244,13 +244,9 @@ public sealed class PortfolioImportService
         {
             using var request = new HttpRequestMessage(HttpMethod.Get, $"{clientPortalUrl}/v1/api/portfolio/accounts");
 
-            var handler = new HttpClientHandler
-            {
-                ServerCertificateCustomValidationCallback = (msg, cert, chain, errors) => true
-            };
-
-            using var client = new HttpClient(handler);
-            var response = await client.SendAsync(request, ct);
+            // Use the named IB Client Portal client configured with SSL bypass for self-signed certs
+            var ibClient = HttpClientFactoryProvider.CreateClient(HttpClientNames.IBClientPortal);
+            var response = await ibClient.SendAsync(request, ct);
 
             if (!response.IsSuccessStatusCode)
             {

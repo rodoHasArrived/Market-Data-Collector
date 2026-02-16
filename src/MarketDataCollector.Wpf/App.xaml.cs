@@ -398,13 +398,13 @@ public partial class App : Application
             {
                 foreach (var error in validationResult.Errors)
                 {
-                    WpfServices.LoggingService.Instance.LogError($"Configuration error: {error}");
+                    WpfServices.LoggingService.Instance.LogError("Configuration error: " + error);
                 }
             }
 
             foreach (var warning in validationResult.Warnings)
             {
-                WpfServices.LoggingService.Instance.LogWarning($"Configuration warning: {warning}");
+                WpfServices.LoggingService.Instance.LogWarning("Configuration warning: " + warning);
             }
 
             WpfServices.LoggingService.Instance.LogInfo("Configuration initialized",

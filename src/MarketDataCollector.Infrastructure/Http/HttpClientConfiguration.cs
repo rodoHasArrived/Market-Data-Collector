@@ -42,6 +42,7 @@ public static class HttpClientNames
     public const string OAuthTokenRefresh = "oauth-token-refresh";
     public const string CredentialTesting = "credential-testing";
     public const string PortfolioImport = "portfolio-import";
+    public const string IBClientPortal = "ib-client-portal";
     public const string DryRun = "dry-run";
     public const string PreflightChecker = "preflight-checker";
 
@@ -281,6 +282,18 @@ public static class HttpClientConfiguration
             .ConfigureHttpClient(client =>
             {
                 client.Timeout = SharedResiliencePolicies.DefaultTimeout;
+            })
+            .AddSharedResiliencePolicy();
+
+        // IB Client Portal client (uses custom SSL handler for self-signed certificates)
+        services.AddHttpClient(HttpClientNames.IBClientPortal)
+            .ConfigureHttpClient(client =>
+            {
+                client.Timeout = SharedResiliencePolicies.DefaultTimeout;
+            })
+            .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
             })
             .AddSharedResiliencePolicy();
 
