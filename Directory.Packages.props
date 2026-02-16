@@ -89,7 +89,7 @@
   </ItemGroup>
 
   <ItemGroup Label="System Libraries">
-    <PackageVersion Include="System.Threading.Channels" Version="10.0.2" />
+    <PackageVersion Include="System.Threading.Channels" Version="10.0.3" />
     <PackageVersion Include="System.IO.Pipelines" Version="10.0.2" />
     <PackageVersion Include="System.IO.Compression" Version="4.3.0" />
     <PackageVersion Include="System.Net.WebSockets.Client" Version="4.3.2" />
