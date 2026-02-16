@@ -33,6 +33,19 @@ public static class StatusEndpoints
         .Produces<HealthCheckResponse>(200)
         .Produces(503);
 
+        // Alias: /api/health → /health (for backward compatibility with tests)
+        app.MapGet("/api/health", () =>
+        {
+            var response = handlers.GetHealthCheck();
+            var statusCode = handlers.GetHealthStatusCode(response);
+            return Results.Json(response, jsonOptions, statusCode: statusCode);
+        })
+        .WithName("GetHealthApi")
+        .WithTags("Health")
+        .WithDescription("Alias for /health endpoint for backward compatibility.")
+        .Produces<HealthCheckResponse>(200)
+        .Produces(503);
+
         // Kubernetes-style health endpoints
         app.MapGet("/healthz", () => Results.Ok("healthy"))
             .WithName("GetHealthz")
@@ -162,6 +175,30 @@ public static class StatusEndpoints
         })
         .WithName("GetDetailedHealth")
         .WithTags("Health")
+        .Produces(200)
+        .Produces(503);
+
+        // Alias: /api/health/detailed → /health/detailed (for backward compatibility with tests)
+        app.MapGet("/api/health/detailed", async () =>
+        {
+            var (report, error) = await handlers.GetDetailedHealthAsync();
+            if (error != null || report is null)
+            {
+                return Results.Json(new { error = error ?? "Health report unavailable" }, jsonOptions, statusCode: 501);
+            }
+
+            var statusCode = report.Status switch
+            {
+                DetailedHealthStatus.Healthy => 200,
+                DetailedHealthStatus.Degraded => 200,
+                DetailedHealthStatus.Unhealthy => 503,
+                _ => 200
+            };
+            return Results.Json(report, jsonOptions, statusCode: statusCode);
+        })
+        .WithName("GetDetailedHealthApi")
+        .WithTags("Health")
+        .WithDescription("Alias for /health/detailed endpoint for backward compatibility.")
         .Produces(200)
         .Produces(503);
 
