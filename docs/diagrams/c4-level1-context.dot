@@ -1,6 +1,6 @@
 // C4 Level 1: System Context Diagram
 // Market Data Collector v1.6.1
-// Last Updated: 2026-01-29
+// Last Updated: 2026-02-16
 //
 // This diagram shows the Market Data Collector in context with its users
 // and external systems. It answers: "What is the system and who uses it?"
@@ -103,7 +103,7 @@ digraph C4_Context {
   }
 
   // Relationships - Users to System
-  Operator -> MDC [label="Configures via\nUWP/Web/CLI"];
+  Operator -> MDC [label="Configures via\nWPF/Web/CLI"];
   Quant -> MDC [label="Exports data\nfor analysis"];
   DevOps -> PROM [label="Monitors\ninfrastructure"];
 

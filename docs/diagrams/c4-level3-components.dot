@@ -1,6 +1,6 @@
 // C4 Level 3: Component Diagram
 // Market Data Collector v1.6.1
-// Last Updated: 2026-01-29
+// Last Updated: 2026-02-16
 //
 // This diagram shows the internal components of the Market Data Collector Core.
 // It answers: "What are the building blocks and their responsibilities?"
@@ -150,7 +150,7 @@ digraph C4_Components {
         color="#6b21a8";
 
         CONFIG [label="ConfigWatcher\n[Component]\n\nHot reload appsettings\nSymbol resubscription", fillcolor="#ddd6fe"];
-        HTTP_SERVER [label="StatusHttpServer\n[Component]\n\n/status - JSON metrics\n/metrics - Prometheus\n/health, /ready, /live", fillcolor="#ddd6fe"];
+        HTTP_SERVER [label="UiServer + Endpoints\n[30+ Endpoint Modules]\n\n/status, /api/config, /api/backfill\n/metrics - Prometheus\n/health, /ready, /live", fillcolor="#ddd6fe"];
         METRICS [label="Metrics\n[Component]\n\nPublished, Dropped\nIntegrity counters", fillcolor="#ddd6fe"];
       }
 
@@ -212,7 +212,7 @@ digraph C4_Components {
         style="dashed";
         color="#991b1b";
 
-        EXPORT [label="AnalysisExportService\n[Component]\n\nPython (Parquet)\nR (CSV), Lean (ZIP)\nExcel, PostgreSQL", fillcolor="#fecaca"];
+        EXPORT [label="AnalysisExportService\n[Multi-File Module]\n\nCSV, JSONL, Lean, SQL\nParquet, XLSX, Arrow\n6 partial class files", fillcolor="#fecaca"];
         QUALITY [label="AnalysisQualityReport\n[Component]\n\nCompleteness scoring\nOutlier detection (4s)\nA+ to F grading", fillcolor="#fecaca"];
       }
     }

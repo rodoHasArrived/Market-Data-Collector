@@ -1,6 +1,6 @@
 // Storage Architecture Diagram
 // Market Data Collector v1.6.1
-// Last Updated: 2026-01-29
+// Last Updated: 2026-02-16
 //
 // This diagram shows the archival-first storage pipeline with WAL,
 // compression profiles, tiered storage, and export capabilities.
@@ -173,7 +173,7 @@ digraph StorageArchitecture {
     bgcolor="#dbeafe";
 
     EXPORT [fillcolor="#bfdbfe",
-            label="Export Service\n[Multi-Format Output]\n\nDate range filtering\nSymbol selection\nFormat conversion"];
+            label="Export Service\n[Multi-File Module]\n\nDate range filtering\nSymbol selection\n7 format handlers"];
 
     subgraph cluster_formats {
       label="Export Formats";
@@ -194,6 +194,9 @@ digraph StorageArchitecture {
 
       PG_EXP [shape=box, fillcolor="#93c5fd",
               label="PostgreSQL\n\nCSV + DDL scripts\nCOPY command ready\nTimescaleDB hypertables\nIndexing hints"];
+
+      ARROW_EXP [shape=box, fillcolor="#93c5fd",
+                 label="Apache Arrow\n\nIPC format\nZero-copy reads\nLanguage-agnostic\npyarrow compatible"];
     }
   }
 
@@ -258,6 +261,7 @@ digraph StorageArchitecture {
   EXPORT -> LEAN_EXP [color="#2b6cb0"];
   EXPORT -> EXCEL_EXP [color="#2b6cb0"];
   EXPORT -> PG_EXP [color="#2b6cb0"];
+  EXPORT -> ARROW_EXP [color="#2b6cb0"];
 
   // Quality assessment
   EXPORT -> QUALITY [color="#e53e3e", label="assess"];

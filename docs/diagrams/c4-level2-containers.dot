@@ -1,6 +1,6 @@
 // C4 Level 2: Container Diagram
 // Market Data Collector v1.6.1
-// Last Updated: 2026-01-29
+// Last Updated: 2026-02-16
 //
 // This diagram shows the major deployable units within the system.
 // It answers: "What are the major technology choices?"
@@ -55,8 +55,8 @@ digraph C4_Containers {
       style="rounded";
       bgcolor="#faf5ff";
 
-      UWP [shape=box, style="rounded,filled", fillcolor="#805ad5", fontcolor="white",
-           label="UWP Desktop App\n[WinUI 3 / Windows App]\n\n15 pages: Dashboard, Config,\nBackfill, Export, Monitoring\nNative Windows experience"];
+      WPF [shape=box, style="rounded,filled", fillcolor="#805ad5", fontcolor="white",
+           label="WPF Desktop App\n[.NET 9 / WPF]\n\n40+ pages: Dashboard, Config,\nBackfill, Export, Monitoring\nWindows desktop experience"];
 
       WEB_UI [shape=box, style="rounded,filled", fillcolor="#805ad5", fontcolor="white",
               label="Web Dashboard\n[ASP.NET / HTML]\n\nBrowser-based monitoring\nReal-time status updates\n/status endpoint"];
@@ -175,13 +175,13 @@ digraph C4_Containers {
   }
 
   // Relationships - Users
-  Operator -> UWP [label="Configures"];
+  Operator -> WPF [label="Configures"];
   Operator -> WEB_UI [label="Monitors"];
   Operator -> CLI [label="Operates"];
   Quant -> PARQUET [label="Analyzes\ndata"];
 
   // Relationships - Presentation to Core
-  UWP -> CORE [label="HTTP/Status API"];
+  WPF -> CORE [label="HTTP/Status API"];
   WEB_UI -> HTTP [label="Status polling"];
   CLI -> CORE [label="In-process"];
 

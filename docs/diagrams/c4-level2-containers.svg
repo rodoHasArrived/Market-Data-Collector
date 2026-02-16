@@ -23,8 +23,8 @@
 </g>
 <g id="clust3" class="cluster">
 <title>cluster_presentation</title>
-<path fill="#faf5ff" stroke="#805ad5" d="M501,-1060.38C501,-1060.38 1011,-1060.38 1011,-1060.38 1017,-1060.38 1023,-1066.38 1023,-1072.38 1023,-1072.38 1023,-1160.38 1023,-1160.38 1023,-1166.38 1017,-1172.38 1011,-1172.38 1011,-1172.38 501,-1172.38 501,-1172.38 495,-1172.38 489,-1166.38 489,-1160.38 489,-1160.38 489,-1072.38 489,-1072.38 489,-1066.38 495,-1060.38 501,-1060.38"/>
-<text text-anchor="middle" x="756" y="-1158.78" font-family="Helvetica,sans-Serif" font-size="12.00">Presentation Layer</text>
+<path fill="#faf5ff" stroke="#805ad5" d="M501,-1060.38C501,-1060.38 1019,-1060.38 1019,-1060.38 1025,-1060.38 1031,-1066.38 1031,-1072.38 1031,-1072.38 1031,-1160.38 1031,-1160.38 1031,-1166.38 1025,-1172.38 1019,-1172.38 1019,-1172.38 501,-1172.38 501,-1172.38 495,-1172.38 489,-1166.38 489,-1160.38 489,-1160.38 489,-1072.38 489,-1072.38 489,-1066.38 495,-1060.38 501,-1060.38"/>
+<text text-anchor="middle" x="760" y="-1158.78" font-family="Helvetica,sans-Serif" font-size="12.00">Presentation Layer</text>
 </g>
 <g id="clust4" class="cluster">
 <title>cluster_onboarding</title>
@@ -53,32 +53,32 @@
 </g>
 <g id="clust9" class="cluster">
 <title>cluster_legend</title>
-<path fill="#fafafa" stroke="#666666" d="M1060,-1232.59C1060,-1232.59 1679,-1232.59 1679,-1232.59 1685,-1232.59 1691,-1238.59 1691,-1244.59 1691,-1244.59 1691,-1293.59 1691,-1293.59 1691,-1299.59 1685,-1305.59 1679,-1305.59 1679,-1305.59 1060,-1305.59 1060,-1305.59 1054,-1305.59 1048,-1299.59 1048,-1293.59 1048,-1293.59 1048,-1244.59 1048,-1244.59 1048,-1238.59 1054,-1232.59 1060,-1232.59"/>
-<text text-anchor="middle" x="1369.5" y="-1291.99" font-family="Helvetica,sans-Serif" font-size="12.00">Legend</text>
+<path fill="#fafafa" stroke="#666666" d="M1062,-1232.59C1062,-1232.59 1681,-1232.59 1681,-1232.59 1687,-1232.59 1693,-1238.59 1693,-1244.59 1693,-1244.59 1693,-1293.59 1693,-1293.59 1693,-1299.59 1687,-1305.59 1681,-1305.59 1681,-1305.59 1062,-1305.59 1062,-1305.59 1056,-1305.59 1050,-1299.59 1050,-1293.59 1050,-1293.59 1050,-1244.59 1050,-1244.59 1050,-1238.59 1056,-1232.59 1062,-1232.59"/>
+<text text-anchor="middle" x="1371.5" y="-1291.99" font-family="Helvetica,sans-Serif" font-size="12.00">Legend</text>
 </g>
 <!-- Operator -->
 <g id="node1" class="node">
 <title>Operator</title>
-<ellipse fill="#08427b" stroke="black" cx="741" cy="-1258.59" rx="41.94" ry="21.43"/>
-<text text-anchor="middle" x="741" y="-1261.59" font-family="Helvetica,sans-Serif" font-size="10.00" fill="white">Operator</text>
-<text text-anchor="middle" x="741" y="-1250.59" font-family="Helvetica,sans-Serif" font-size="10.00" fill="white">[Person]</text>
+<ellipse fill="#08427b" stroke="black" cx="745" cy="-1258.59" rx="41.94" ry="21.43"/>
+<text text-anchor="middle" x="745" y="-1261.59" font-family="Helvetica,sans-Serif" font-size="10.00" fill="white">Operator</text>
+<text text-anchor="middle" x="745" y="-1250.59" font-family="Helvetica,sans-Serif" font-size="10.00" fill="white">[Person]</text>
 </g>
-<!-- UWP -->
+<!-- WPF -->
 <g id="node7" class="node">
-<title>UWP</title>
-<path fill="#805ad5" stroke="black" d="M808.5,-1143.38C808.5,-1143.38 673.5,-1143.38 673.5,-1143.38 667.5,-1143.38 661.5,-1137.38 661.5,-1131.38 661.5,-1131.38 661.5,-1080.38 661.5,-1080.38 661.5,-1074.38 667.5,-1068.38 673.5,-1068.38 673.5,-1068.38 808.5,-1068.38 808.5,-1068.38 814.5,-1068.38 820.5,-1074.38 820.5,-1080.38 820.5,-1080.38 820.5,-1131.38 820.5,-1131.38 820.5,-1137.38 814.5,-1143.38 808.5,-1143.38"/>
-<text text-anchor="middle" x="741" y="-1131.38" font-family="Helvetica,sans-Serif" font-size="10.00" fill="white">UWP Desktop App</text>
-<text text-anchor="middle" x="741" y="-1120.38" font-family="Helvetica,sans-Serif" font-size="10.00" fill="white">[WinUI 3 / Windows App]</text>
-<text text-anchor="middle" x="741" y="-1097.38" font-family="Helvetica,sans-Serif" font-size="10.00" fill="white">15 pages: Dashboard, Config,</text>
-<text text-anchor="middle" x="741" y="-1086.38" font-family="Helvetica,sans-Serif" font-size="10.00" fill="white">Backfill, Export, Monitoring</text>
-<text text-anchor="middle" x="741" y="-1075.38" font-family="Helvetica,sans-Serif" font-size="10.00" fill="white">Native Windows experience</text>
+<title>WPF</title>
+<path fill="#805ad5" stroke="black" d="M816.5,-1143.38C816.5,-1143.38 673.5,-1143.38 673.5,-1143.38 667.5,-1143.38 661.5,-1137.38 661.5,-1131.38 661.5,-1131.38 661.5,-1080.38 661.5,-1080.38 661.5,-1074.38 667.5,-1068.38 673.5,-1068.38 673.5,-1068.38 816.5,-1068.38 816.5,-1068.38 822.5,-1068.38 828.5,-1074.38 828.5,-1080.38 828.5,-1080.38 828.5,-1131.38 828.5,-1131.38 828.5,-1137.38 822.5,-1143.38 816.5,-1143.38"/>
+<text text-anchor="middle" x="745" y="-1131.38" font-family="Helvetica,sans-Serif" font-size="10.00" fill="white">WPF Desktop App</text>
+<text text-anchor="middle" x="745" y="-1120.38" font-family="Helvetica,sans-Serif" font-size="10.00" fill="white">[.NET 9 / WPF]</text>
+<text text-anchor="middle" x="745" y="-1097.38" font-family="Helvetica,sans-Serif" font-size="10.00" fill="white">40+ pages: Dashboard, Config,</text>
+<text text-anchor="middle" x="745" y="-1086.38" font-family="Helvetica,sans-Serif" font-size="10.00" fill="white">Backfill, Export, Monitoring</text>
+<text text-anchor="middle" x="745" y="-1075.38" font-family="Helvetica,sans-Serif" font-size="10.00" fill="white">Windows desktop experience</text>
 </g>
-<!-- Operator&#45;&gt;UWP -->
+<!-- Operator&#45;&gt;WPF -->
 <g id="edge1" class="edge">
-<title>Operator&#45;&gt;UWP</title>
-<path fill="none" stroke="#4a5568" d="M741,-1237.26C741,-1215.94 741,-1181.68 741,-1153.64"/>
-<polygon fill="#4a5568" stroke="#4a5568" points="744.5,-1153.62 741,-1143.62 737.5,-1153.62 744.5,-1153.62"/>
-<text text-anchor="middle" x="765.5" y="-1212.17" font-family="Helvetica,sans-Serif" font-size="9.00">Configures</text>
+<title>Operator&#45;&gt;WPF</title>
+<path fill="none" stroke="#4a5568" d="M745,-1237.26C745,-1215.94 745,-1181.68 745,-1153.64"/>
+<polygon fill="#4a5568" stroke="#4a5568" points="748.5,-1153.62 745,-1143.62 741.5,-1153.62 748.5,-1153.62"/>
+<text text-anchor="middle" x="769.5" y="-1212.17" font-family="Helvetica,sans-Serif" font-size="9.00">Configures</text>
 </g>
 <!-- WEB_UI -->
 <g id="node8" class="node">
@@ -93,26 +93,26 @@
 <!-- Operator&#45;&gt;WEB_UI -->
 <g id="edge2" class="edge">
 <title>Operator&#45;&gt;WEB_UI</title>
-<path fill="none" stroke="#4a5568" d="M713.05,-1242.47C695.03,-1232.08 671.57,-1217.31 653,-1201.38 635.77,-1186.59 618.84,-1168.22 604.82,-1151.62"/>
-<polygon fill="#4a5568" stroke="#4a5568" points="607.26,-1149.09 598.17,-1143.64 601.88,-1153.57 607.26,-1149.09"/>
-<text text-anchor="middle" x="694.5" y="-1212.17" font-family="Helvetica,sans-Serif" font-size="9.00">Monitors</text>
+<path fill="none" stroke="#4a5568" d="M716.15,-1242.91C697.23,-1232.6 672.48,-1217.76 653,-1201.38 635.62,-1186.76 618.67,-1168.43 604.66,-1151.81"/>
+<polygon fill="#4a5568" stroke="#4a5568" points="607.11,-1149.27 598.03,-1143.81 601.72,-1153.74 607.11,-1149.27"/>
+<text text-anchor="middle" x="695.5" y="-1212.17" font-family="Helvetica,sans-Serif" font-size="9.00">Monitors</text>
 </g>
 <!-- CLI -->
 <g id="node9" class="node">
 <title>CLI</title>
-<path fill="#805ad5" stroke="black" d="M1003.5,-1143.38C1003.5,-1143.38 850.5,-1143.38 850.5,-1143.38 844.5,-1143.38 838.5,-1137.38 838.5,-1131.38 838.5,-1131.38 838.5,-1080.38 838.5,-1080.38 838.5,-1074.38 844.5,-1068.38 850.5,-1068.38 850.5,-1068.38 1003.5,-1068.38 1003.5,-1068.38 1009.5,-1068.38 1015.5,-1074.38 1015.5,-1080.38 1015.5,-1080.38 1015.5,-1131.38 1015.5,-1131.38 1015.5,-1137.38 1009.5,-1143.38 1003.5,-1143.38"/>
-<text text-anchor="middle" x="927" y="-1131.38" font-family="Helvetica,sans-Serif" font-size="10.00" fill="white">CLI Interface</text>
-<text text-anchor="middle" x="927" y="-1120.38" font-family="Helvetica,sans-Serif" font-size="10.00" fill="white">[.NET Console]</text>
-<text text-anchor="middle" x="927" y="-1097.38" font-family="Helvetica,sans-Serif" font-size="10.00" fill="white">Command&#45;line operation</text>
-<text text-anchor="middle" x="927" y="-1086.38" font-family="Helvetica,sans-Serif" font-size="10.00" fill="white">24+ flags: &#45;&#45;wizard, &#45;&#45;auto&#45;config</text>
-<text text-anchor="middle" x="927" y="-1075.38" font-family="Helvetica,sans-Serif" font-size="10.00" fill="white">&#45;&#45;backfill, &#45;&#45;ui, &#45;&#45;dry&#45;run</text>
+<path fill="#805ad5" stroke="black" d="M1011.5,-1143.38C1011.5,-1143.38 858.5,-1143.38 858.5,-1143.38 852.5,-1143.38 846.5,-1137.38 846.5,-1131.38 846.5,-1131.38 846.5,-1080.38 846.5,-1080.38 846.5,-1074.38 852.5,-1068.38 858.5,-1068.38 858.5,-1068.38 1011.5,-1068.38 1011.5,-1068.38 1017.5,-1068.38 1023.5,-1074.38 1023.5,-1080.38 1023.5,-1080.38 1023.5,-1131.38 1023.5,-1131.38 1023.5,-1137.38 1017.5,-1143.38 1011.5,-1143.38"/>
+<text text-anchor="middle" x="935" y="-1131.38" font-family="Helvetica,sans-Serif" font-size="10.00" fill="white">CLI Interface</text>
+<text text-anchor="middle" x="935" y="-1120.38" font-family="Helvetica,sans-Serif" font-size="10.00" fill="white">[.NET Console]</text>
+<text text-anchor="middle" x="935" y="-1097.38" font-family="Helvetica,sans-Serif" font-size="10.00" fill="white">Command&#45;line operation</text>
+<text text-anchor="middle" x="935" y="-1086.38" font-family="Helvetica,sans-Serif" font-size="10.00" fill="white">24+ flags: &#45;&#45;wizard, &#45;&#45;auto&#45;config</text>
+<text text-anchor="middle" x="935" y="-1075.38" font-family="Helvetica,sans-Serif" font-size="10.00" fill="white">&#45;&#45;backfill, &#45;&#45;ui, &#45;&#45;dry&#45;run</text>
 </g>
 <!-- Operator&#45;&gt;CLI -->
 <g id="edge3" class="edge">
 <title>Operator&#45;&gt;CLI</title>
-<path fill="none" stroke="#4a5568" d="M768.47,-1242.26C786.59,-1231.67 810.49,-1216.77 830,-1201.38 849.21,-1186.22 868.83,-1167.77 885.35,-1151.21"/>
-<polygon fill="#4a5568" stroke="#4a5568" points="888.18,-1153.33 892.71,-1143.76 883.2,-1148.41 888.18,-1153.33"/>
-<text text-anchor="middle" x="838.5" y="-1212.17" font-family="Helvetica,sans-Serif" font-size="9.00">Operates</text>
+<path fill="none" stroke="#4a5568" d="M773.35,-1242.69C792.35,-1232.17 817.55,-1217.18 838,-1201.38 857.52,-1186.29 877.33,-1167.69 893.92,-1151"/>
+<polygon fill="#4a5568" stroke="#4a5568" points="896.79,-1153.07 901.3,-1143.48 891.8,-1148.17 896.79,-1153.07"/>
+<text text-anchor="middle" x="846.5" y="-1212.17" font-family="Helvetica,sans-Serif" font-size="9.00">Operates</text>
 </g>
 <!-- Quant -->
 <g id="node2" class="node">
@@ -215,10 +215,10 @@
 <text text-anchor="middle" x="249.5" y="-753.17" font-family="Helvetica,sans-Serif" font-size="9.00">REST API</text>
 <text text-anchor="middle" x="249.5" y="-743.17" font-family="Helvetica,sans-Serif" font-size="9.00">backfill</text>
 </g>
-<!-- UWP&#45;&gt;CORE -->
+<!-- WPF&#45;&gt;CORE -->
 <g id="edge5" class="edge">
-<title>UWP&#45;&gt;CORE</title>
-<path fill="none" stroke="#4a5568" d="M674,-1068.23C666.72,-1065.2 659.3,-1062.5 652,-1060.38 630.98,-1054.27 570.61,-1064.63 554,-1050.38 501.72,-1005.52 523.74,-968.7 515,-900.38 514.44,-895.97 512.08,-893.72 515,-890.38 532.41,-870.45 554.55,-900.32 574,-882.38 621.47,-838.56 577.5,-798.83 605,-740.38 606.48,-737.23 608.15,-734.09 609.96,-731"/>
+<title>WPF&#45;&gt;CORE</title>
+<path fill="none" stroke="#4a5568" d="M675.15,-1068.35C667.48,-1065.28 659.67,-1062.53 652,-1060.38 630.93,-1054.45 570.61,-1064.63 554,-1050.38 501.72,-1005.52 523.74,-968.7 515,-900.38 514.44,-895.97 512.08,-893.72 515,-890.38 532.41,-870.45 554.55,-900.32 574,-882.38 621.47,-838.56 577.5,-798.83 605,-740.38 606.48,-737.23 608.15,-734.09 609.96,-731"/>
 <polygon fill="#4a5568" stroke="#4a5568" points="612.99,-732.76 615.38,-722.43 607.08,-729.02 612.99,-732.76"/>
 <text text-anchor="middle" x="551.5" y="-893.17" font-family="Helvetica,sans-Serif" font-size="9.00">HTTP/Status API</text>
 </g>
@@ -252,9 +252,9 @@
 <!-- CLI&#45;&gt;WIZARD -->
 <g id="edge8" class="edge">
 <title>CLI&#45;&gt;WIZARD</title>
-<path fill="none" stroke="#ed8936" stroke-dasharray="5,2" d="M957.73,-1068.09C961.82,-1062.35 965.72,-1056.34 969,-1050.38 977.05,-1035.72 983.88,-1018.78 989.25,-1003.38"/>
-<polygon fill="#ed8936" stroke="#ed8936" points="992.7,-1004.12 992.57,-993.52 986.06,-1001.88 992.7,-1004.12"/>
-<text text-anchor="middle" x="996" y="-1038.17" font-family="Helvetica,sans-Serif" font-size="9.00">&#45;&#45;wizard</text>
+<path fill="none" stroke="#ed8936" stroke-dasharray="5,2" d="M959.3,-1068.23C962.76,-1062.37 966.12,-1056.29 969,-1050.38 976.26,-1035.47 982.85,-1018.6 988.26,-1003.33"/>
+<polygon fill="#ed8936" stroke="#ed8936" points="991.68,-1004.16 991.64,-993.57 985.06,-1001.87 991.68,-1004.16"/>
+<text text-anchor="middle" x="995" y="-1038.17" font-family="Helvetica,sans-Serif" font-size="9.00">&#45;&#45;wizard</text>
 </g>
 <!-- AUTO_CONFIG -->
 <g id="node11" class="node">
@@ -269,7 +269,7 @@
 <!-- CLI&#45;&gt;AUTO_CONFIG -->
 <g id="edge9" class="edge">
 <title>CLI&#45;&gt;AUTO_CONFIG</title>
-<path fill="none" stroke="#ed8936" stroke-dasharray="5,2" d="M852.3,-1068.28C844.86,-1065.34 837.35,-1062.64 830,-1060.38 781.75,-1045.5 638.58,-1060.95 606,-1022.38 576.17,-987.06 579.19,-956.03 606,-918.38 620.19,-898.45 637.91,-914.32 658,-900.38 672.85,-890.07 686.28,-875.73 697.26,-861.83"/>
+<path fill="none" stroke="#ed8936" stroke-dasharray="5,2" d="M860.88,-1068.33C853.26,-1065.35 845.55,-1062.62 838,-1060.38 787.93,-1045.48 639.71,-1062.29 606,-1022.38 576.18,-987.06 579.19,-956.03 606,-918.38 620.19,-898.45 637.91,-914.32 658,-900.38 672.85,-890.07 686.28,-875.73 697.26,-861.83"/>
 <polygon fill="#ed8936" stroke="#ed8936" points="700.15,-863.82 703.43,-853.74 694.58,-859.57 700.15,-863.82"/>
 <text text-anchor="middle" x="635.5" y="-953.67" font-family="Helvetica,sans-Serif" font-size="9.00">&#45;&#45;auto&#45;config</text>
 </g>
@@ -286,15 +286,15 @@
 <!-- CLI&#45;&gt;DIAGNOSTICS -->
 <g id="edge10" class="edge">
 <title>CLI&#45;&gt;DIAGNOSTICS</title>
-<path fill="none" stroke="#ed8936" stroke-dasharray="5,2" d="M849.83,-1068.34C843.17,-1065.53 836.5,-1062.84 830,-1060.38 815.67,-1054.95 809.36,-1059.43 797,-1050.38 779.98,-1037.9 765.98,-1019.46 755.46,-1002.24"/>
-<polygon fill="#ed8936" stroke="#ed8936" points="758.35,-1000.25 750.28,-993.39 752.31,-1003.79 758.35,-1000.25"/>
-<text text-anchor="middle" x="844" y="-1043.17" font-family="Helvetica,sans-Serif" font-size="9.00">&#45;&#45;test&#45;connectivity</text>
-<text text-anchor="middle" x="844" y="-1033.17" font-family="Helvetica,sans-Serif" font-size="9.00">&#45;&#45;validate&#45;credentials</text>
+<path fill="none" stroke="#ed8936" stroke-dasharray="5,2" d="M859.06,-1068.34C852.01,-1065.47 844.92,-1062.76 838,-1060.38 819.86,-1054.12 811.77,-1061.3 796,-1050.38 778.6,-1038.32 764.66,-1019.76 754.36,-1002.35"/>
+<polygon fill="#ed8936" stroke="#ed8936" points="757.26,-1000.38 749.3,-993.39 751.17,-1003.82 757.26,-1000.38"/>
+<text text-anchor="middle" x="843" y="-1043.17" font-family="Helvetica,sans-Serif" font-size="9.00">&#45;&#45;test&#45;connectivity</text>
+<text text-anchor="middle" x="843" y="-1033.17" font-family="Helvetica,sans-Serif" font-size="9.00">&#45;&#45;validate&#45;credentials</text>
 </g>
 <!-- CLI&#45;&gt;CORE -->
 <g id="edge7" class="edge">
 <title>CLI&#45;&gt;CORE</title>
-<path fill="none" stroke="#4a5568" d="M855.26,-1068.33C846.9,-1065.17 838.37,-1062.41 830,-1060.38 782.65,-1048.9 656.06,-1068.9 611,-1050.38 593.83,-1043.31 587.54,-1039.34 580,-1022.38 561.23,-980.13 570.4,-963.59 580,-918.38 581.82,-909.81 584.99,-908.6 588,-900.38 608.64,-843.94 627.21,-777.5 638.96,-732.51"/>
+<path fill="none" stroke="#4a5568" d="M863.26,-1068.31C854.91,-1065.15 846.37,-1062.4 838,-1060.38 788.92,-1048.52 657.72,-1069.54 611,-1050.38 593.82,-1043.33 587.54,-1039.34 580,-1022.38 561.23,-980.13 570.4,-963.59 580,-918.38 581.82,-909.81 584.99,-908.6 588,-900.38 608.64,-843.94 627.21,-777.5 638.96,-732.51"/>
 <polygon fill="#4a5568" stroke="#4a5568" points="642.39,-733.24 641.51,-722.69 635.61,-731.49 642.39,-733.24"/>
 <text text-anchor="middle" x="614.5" y="-893.17" font-family="Helvetica,sans-Serif" font-size="9.00">In&#45;process</text>
 </g>
@@ -331,8 +331,8 @@
 <!-- ERROR_FMT&#45;&gt;CLI -->
 <g id="edge14" class="edge">
 <title>ERROR_FMT&#45;&gt;CLI</title>
-<path fill="none" stroke="#ed8936" stroke-dasharray="5,2" d="M881.15,-993.47C887.52,-1010.81 895.42,-1031.75 903,-1050.38 904.15,-1053.2 905.36,-1056.11 906.59,-1059.03"/>
-<polygon fill="#ed8936" stroke="#ed8936" points="903.43,-1060.53 910.58,-1068.35 909.86,-1057.78 903.43,-1060.53"/>
+<path fill="none" stroke="#ed8936" stroke-dasharray="5,2" d="M880.04,-993.44C886.22,-1010.96 894.28,-1032.07 903,-1050.38 904.39,-1053.3 905.89,-1056.27 907.45,-1059.24"/>
+<polygon fill="#ed8936" stroke="#ed8936" points="904.41,-1060.99 912.26,-1068.11 910.56,-1057.65 904.41,-1060.99"/>
 <text text-anchor="middle" x="936" y="-1038.17" font-family="Helvetica,sans-Serif" font-size="9.00">Formats errors</text>
 </g>
 <!-- FSHARP -->
@@ -613,45 +613,45 @@
 <!-- L1 -->
 <g id="node32" class="node">
 <title>L1</title>
-<ellipse fill="#08427b" stroke="black" cx="1654" cy="-1258.59" rx="29.37" ry="18"/>
-<text text-anchor="middle" x="1654" y="-1256.09" font-family="Helvetica,sans-Serif" font-size="10.00" fill="white">Person</text>
+<ellipse fill="#08427b" stroke="black" cx="1656" cy="-1258.59" rx="29.37" ry="18"/>
+<text text-anchor="middle" x="1656" y="-1256.09" font-family="Helvetica,sans-Serif" font-size="10.00" fill="white">Person</text>
 </g>
 <!-- L2 -->
 <g id="node33" class="node">
 <title>L2</title>
-<path fill="#438dd5" stroke="black" d="M1594.5,-1276.59C1594.5,-1276.59 1529.5,-1276.59 1529.5,-1276.59 1523.5,-1276.59 1517.5,-1270.59 1517.5,-1264.59 1517.5,-1264.59 1517.5,-1252.59 1517.5,-1252.59 1517.5,-1246.59 1523.5,-1240.59 1529.5,-1240.59 1529.5,-1240.59 1594.5,-1240.59 1594.5,-1240.59 1600.5,-1240.59 1606.5,-1246.59 1606.5,-1252.59 1606.5,-1252.59 1606.5,-1264.59 1606.5,-1264.59 1606.5,-1270.59 1600.5,-1276.59 1594.5,-1276.59"/>
-<text text-anchor="middle" x="1562" y="-1256.09" font-family="Helvetica,sans-Serif" font-size="10.00" fill="white">Core Container</text>
+<path fill="#438dd5" stroke="black" d="M1596.5,-1276.59C1596.5,-1276.59 1531.5,-1276.59 1531.5,-1276.59 1525.5,-1276.59 1519.5,-1270.59 1519.5,-1264.59 1519.5,-1264.59 1519.5,-1252.59 1519.5,-1252.59 1519.5,-1246.59 1525.5,-1240.59 1531.5,-1240.59 1531.5,-1240.59 1596.5,-1240.59 1596.5,-1240.59 1602.5,-1240.59 1608.5,-1246.59 1608.5,-1252.59 1608.5,-1252.59 1608.5,-1264.59 1608.5,-1264.59 1608.5,-1270.59 1602.5,-1276.59 1596.5,-1276.59"/>
+<text text-anchor="middle" x="1564" y="-1256.09" font-family="Helvetica,sans-Serif" font-size="10.00" fill="white">Core Container</text>
 </g>
 <!-- L3 -->
 <g id="node34" class="node">
 <title>L3</title>
-<path fill="#805ad5" stroke="black" d="M1487.5,-1276.59C1487.5,-1276.59 1434.5,-1276.59 1434.5,-1276.59 1428.5,-1276.59 1422.5,-1270.59 1422.5,-1264.59 1422.5,-1264.59 1422.5,-1252.59 1422.5,-1252.59 1422.5,-1246.59 1428.5,-1240.59 1434.5,-1240.59 1434.5,-1240.59 1487.5,-1240.59 1487.5,-1240.59 1493.5,-1240.59 1499.5,-1246.59 1499.5,-1252.59 1499.5,-1252.59 1499.5,-1264.59 1499.5,-1264.59 1499.5,-1270.59 1493.5,-1276.59 1487.5,-1276.59"/>
-<text text-anchor="middle" x="1461" y="-1256.09" font-family="Helvetica,sans-Serif" font-size="10.00" fill="white">UI Container</text>
+<path fill="#805ad5" stroke="black" d="M1489.5,-1276.59C1489.5,-1276.59 1436.5,-1276.59 1436.5,-1276.59 1430.5,-1276.59 1424.5,-1270.59 1424.5,-1264.59 1424.5,-1264.59 1424.5,-1252.59 1424.5,-1252.59 1424.5,-1246.59 1430.5,-1240.59 1436.5,-1240.59 1436.5,-1240.59 1489.5,-1240.59 1489.5,-1240.59 1495.5,-1240.59 1501.5,-1246.59 1501.5,-1252.59 1501.5,-1252.59 1501.5,-1264.59 1501.5,-1264.59 1501.5,-1270.59 1495.5,-1276.59 1489.5,-1276.59"/>
+<text text-anchor="middle" x="1463" y="-1256.09" font-family="Helvetica,sans-Serif" font-size="10.00" fill="white">UI Container</text>
 </g>
 <!-- L4 -->
 <g id="node35" class="node">
 <title>L4</title>
-<path fill="#ed8936" stroke="black" d="M1392,-1276.59C1392,-1276.59 1326,-1276.59 1326,-1276.59 1320,-1276.59 1314,-1270.59 1314,-1264.59 1314,-1264.59 1314,-1252.59 1314,-1252.59 1314,-1246.59 1320,-1240.59 1326,-1240.59 1326,-1240.59 1392,-1240.59 1392,-1240.59 1398,-1240.59 1404,-1246.59 1404,-1252.59 1404,-1252.59 1404,-1264.59 1404,-1264.59 1404,-1270.59 1398,-1276.59 1392,-1276.59"/>
-<text text-anchor="middle" x="1359" y="-1256.09" font-family="Helvetica,sans-Serif" font-size="10.00" fill="white">Onboarding/UX</text>
+<path fill="#ed8936" stroke="black" d="M1394,-1276.59C1394,-1276.59 1328,-1276.59 1328,-1276.59 1322,-1276.59 1316,-1270.59 1316,-1264.59 1316,-1264.59 1316,-1252.59 1316,-1252.59 1316,-1246.59 1322,-1240.59 1328,-1240.59 1328,-1240.59 1394,-1240.59 1394,-1240.59 1400,-1240.59 1406,-1246.59 1406,-1252.59 1406,-1252.59 1406,-1264.59 1406,-1264.59 1406,-1270.59 1400,-1276.59 1394,-1276.59"/>
+<text text-anchor="middle" x="1361" y="-1256.09" font-family="Helvetica,sans-Serif" font-size="10.00" fill="white">Onboarding/UX</text>
 </g>
 <!-- L5 -->
 <g id="node36" class="node">
 <title>L5</title>
-<path fill="#2c7a7b" stroke="black" d="M1283.5,-1276.59C1283.5,-1276.59 1228.5,-1276.59 1228.5,-1276.59 1222.5,-1276.59 1216.5,-1270.59 1216.5,-1264.59 1216.5,-1264.59 1216.5,-1252.59 1216.5,-1252.59 1216.5,-1246.59 1222.5,-1240.59 1228.5,-1240.59 1228.5,-1240.59 1283.5,-1240.59 1283.5,-1240.59 1289.5,-1240.59 1295.5,-1246.59 1295.5,-1252.59 1295.5,-1252.59 1295.5,-1264.59 1295.5,-1264.59 1295.5,-1270.59 1289.5,-1276.59 1283.5,-1276.59"/>
-<text text-anchor="middle" x="1256" y="-1256.09" font-family="Helvetica,sans-Serif" font-size="10.00" fill="white">Microservice</text>
+<path fill="#2c7a7b" stroke="black" d="M1285.5,-1276.59C1285.5,-1276.59 1230.5,-1276.59 1230.5,-1276.59 1224.5,-1276.59 1218.5,-1270.59 1218.5,-1264.59 1218.5,-1264.59 1218.5,-1252.59 1218.5,-1252.59 1218.5,-1246.59 1224.5,-1240.59 1230.5,-1240.59 1230.5,-1240.59 1285.5,-1240.59 1285.5,-1240.59 1291.5,-1240.59 1297.5,-1246.59 1297.5,-1252.59 1297.5,-1252.59 1297.5,-1264.59 1297.5,-1264.59 1297.5,-1270.59 1291.5,-1276.59 1285.5,-1276.59"/>
+<text text-anchor="middle" x="1258" y="-1256.09" font-family="Helvetica,sans-Serif" font-size="10.00" fill="white">Microservice</text>
 </g>
 <!-- L6 -->
 <g id="node37" class="node">
 <title>L6</title>
-<path fill="#fc8181" stroke="black" d="M1198,-1273.32C1198,-1275.12 1185.9,-1276.59 1171,-1276.59 1156.1,-1276.59 1144,-1275.12 1144,-1273.32 1144,-1273.32 1144,-1243.86 1144,-1243.86 1144,-1242.06 1156.1,-1240.59 1171,-1240.59 1185.9,-1240.59 1198,-1242.06 1198,-1243.86 1198,-1243.86 1198,-1273.32 1198,-1273.32"/>
-<path fill="none" stroke="black" d="M1198,-1273.32C1198,-1271.51 1185.9,-1270.04 1171,-1270.04 1156.1,-1270.04 1144,-1271.51 1144,-1273.32"/>
-<text text-anchor="middle" x="1171" y="-1256.09" font-family="Helvetica,sans-Serif" font-size="10.00" fill="white">Storage</text>
+<path fill="#fc8181" stroke="black" d="M1200,-1273.32C1200,-1275.12 1187.9,-1276.59 1173,-1276.59 1158.1,-1276.59 1146,-1275.12 1146,-1273.32 1146,-1273.32 1146,-1243.86 1146,-1243.86 1146,-1242.06 1158.1,-1240.59 1173,-1240.59 1187.9,-1240.59 1200,-1242.06 1200,-1243.86 1200,-1243.86 1200,-1273.32 1200,-1273.32"/>
+<path fill="none" stroke="black" d="M1200,-1273.32C1200,-1271.51 1187.9,-1270.04 1173,-1270.04 1158.1,-1270.04 1146,-1271.51 1146,-1273.32"/>
+<text text-anchor="middle" x="1173" y="-1256.09" font-family="Helvetica,sans-Serif" font-size="10.00" fill="white">Storage</text>
 </g>
 <!-- L7 -->
 <g id="node38" class="node">
 <title>L7</title>
-<path fill="#38a169" stroke="black" d="M1113.5,-1276.59C1113.5,-1276.59 1068.5,-1276.59 1068.5,-1276.59 1062.5,-1276.59 1056.5,-1270.59 1056.5,-1264.59 1056.5,-1264.59 1056.5,-1252.59 1056.5,-1252.59 1056.5,-1246.59 1062.5,-1240.59 1068.5,-1240.59 1068.5,-1240.59 1113.5,-1240.59 1113.5,-1240.59 1119.5,-1240.59 1125.5,-1246.59 1125.5,-1252.59 1125.5,-1252.59 1125.5,-1264.59 1125.5,-1264.59 1125.5,-1270.59 1119.5,-1276.59 1113.5,-1276.59"/>
-<text text-anchor="middle" x="1091" y="-1256.09" font-family="Helvetica,sans-Serif" font-size="10.00" fill="white">Monitoring</text>
+<path fill="#38a169" stroke="black" d="M1115.5,-1276.59C1115.5,-1276.59 1070.5,-1276.59 1070.5,-1276.59 1064.5,-1276.59 1058.5,-1270.59 1058.5,-1264.59 1058.5,-1264.59 1058.5,-1252.59 1058.5,-1252.59 1058.5,-1246.59 1064.5,-1240.59 1070.5,-1240.59 1070.5,-1240.59 1115.5,-1240.59 1115.5,-1240.59 1121.5,-1240.59 1127.5,-1246.59 1127.5,-1252.59 1127.5,-1252.59 1127.5,-1264.59 1127.5,-1264.59 1127.5,-1270.59 1121.5,-1276.59 1115.5,-1276.59"/>
+<text text-anchor="middle" x="1093" y="-1256.09" font-family="Helvetica,sans-Serif" font-size="10.00" fill="white">Monitoring</text>
 </g>
 </g>
 </svg>

@@ -43,8 +43,8 @@
 </g>
 <g id="clust7" class="cluster">
 <title>cluster_perf</title>
-<polygon fill="#dbeafe" stroke="#1e40af" stroke-dasharray="5,2" points="172,-1274 172,-1388 454,-1388 454,-1274 172,-1274"/>
-<text text-anchor="middle" x="313" y="-1375.2" font-family="Helvetica,sans-Serif" font-size="11.00">Performance Optimizations</text>
+<polygon fill="#dbeafe" stroke="#1e40af" stroke-dasharray="5,2" points="157,-1274 157,-1388 439,-1388 439,-1274 157,-1274"/>
+<text text-anchor="middle" x="298" y="-1375.2" font-family="Helvetica,sans-Serif" font-size="11.00">Performance Optimizations</text>
 </g>
 <g id="clust8" class="cluster">
 <title>cluster_domain</title>
@@ -68,8 +68,8 @@
 </g>
 <g id="clust12" class="cluster">
 <title>cluster_config</title>
-<polygon fill="#ede9fe" stroke="#6b21a8" stroke-dasharray="5,2" points="2126,-607 2126,-882 2414,-882 2414,-607 2126,-607"/>
-<text text-anchor="middle" x="2270" y="-869.2" font-family="Helvetica,sans-Serif" font-size="11.00">Configuration &amp; Monitoring</text>
+<polygon fill="#ede9fe" stroke="#6b21a8" stroke-dasharray="5,2" points="2126,-607 2126,-882 2456,-882 2456,-607 2126,-607"/>
+<text text-anchor="middle" x="2291" y="-869.2" font-family="Helvetica,sans-Serif" font-size="11.00">Configuration &amp; Monitoring</text>
 </g>
 <g id="clust13" class="cluster">
 <title>cluster_onboarding</title>
@@ -93,7 +93,7 @@
 </g>
 <g id="clust17" class="cluster">
 <title>cluster_export</title>
-<polygon fill="#fee2e2" stroke="#991b1b" stroke-dasharray="5,2" points="3074,-24 3074,-253 3206,-253 3206,-24 3074,-24"/>
+<polygon fill="#fee2e2" stroke="#991b1b" stroke-dasharray="5,2" points="3072,-24 3072,-253 3208,-253 3208,-24 3072,-24"/>
 <text text-anchor="middle" x="3140" y="-240.2" font-family="Helvetica,sans-Serif" font-size="11.00">Export &amp; Quality</text>
 </g>
 <!-- IB -->
@@ -391,26 +391,26 @@
 <!-- FAILOVER&#45;&gt;HIST_COMPOSITE -->
 <g id="edge43" class="edge">
 <title>FAILOVER&#45;&gt;HIST_COMPOSITE</title>
-<path fill="none" stroke="#4a5568" stroke-dasharray="5,2" d="M498.6,-1283C457.32,-1266.5 411.01,-1247.53 402,-1242 383.22,-1230.47 364.42,-1215.45 348.28,-1201.2"/>
+<path fill="none" stroke="#4a5568" stroke-dasharray="5,2" d="M498.8,-1287.5C468.11,-1275.99 432.1,-1260.48 402,-1242 383.22,-1230.47 364.42,-1215.45 348.28,-1201.2"/>
 <polygon fill="#4a5568" stroke="#4a5568" points="350.36,-1198.36 340.58,-1194.28 345.68,-1203.57 350.36,-1198.36"/>
 </g>
 <!-- JSON_CTX -->
 <g id="node17" class="node">
 <title>JSON_CTX</title>
-<path fill="#bfdbfe" stroke="black" d="M433.5,-1340C433.5,-1340 334.5,-1340 334.5,-1340 328.5,-1340 322.5,-1334 322.5,-1328 322.5,-1328 322.5,-1294 322.5,-1294 322.5,-1288 328.5,-1282 334.5,-1282 334.5,-1282 433.5,-1282 433.5,-1282 439.5,-1282 445.5,-1288 445.5,-1294 445.5,-1294 445.5,-1328 445.5,-1328 445.5,-1334 439.5,-1340 433.5,-1340"/>
-<text text-anchor="middle" x="384" y="-1328.8" font-family="Helvetica,sans-Serif" font-size="9.00">MarketDataJsonContext</text>
-<text text-anchor="middle" x="384" y="-1318.8" font-family="Helvetica,sans-Serif" font-size="9.00">[Component]</text>
-<text text-anchor="middle" x="384" y="-1298.8" font-family="Helvetica,sans-Serif" font-size="9.00">Source&#45;generated JSON</text>
-<text text-anchor="middle" x="384" y="-1288.8" font-family="Helvetica,sans-Serif" font-size="9.00">2&#45;3x faster serialization</text>
+<path fill="#bfdbfe" stroke="black" d="M418.5,-1340C418.5,-1340 319.5,-1340 319.5,-1340 313.5,-1340 307.5,-1334 307.5,-1328 307.5,-1328 307.5,-1294 307.5,-1294 307.5,-1288 313.5,-1282 319.5,-1282 319.5,-1282 418.5,-1282 418.5,-1282 424.5,-1282 430.5,-1288 430.5,-1294 430.5,-1294 430.5,-1328 430.5,-1328 430.5,-1334 424.5,-1340 418.5,-1340"/>
+<text text-anchor="middle" x="369" y="-1328.8" font-family="Helvetica,sans-Serif" font-size="9.00">MarketDataJsonContext</text>
+<text text-anchor="middle" x="369" y="-1318.8" font-family="Helvetica,sans-Serif" font-size="9.00">[Component]</text>
+<text text-anchor="middle" x="369" y="-1298.8" font-family="Helvetica,sans-Serif" font-size="9.00">Source&#45;generated JSON</text>
+<text text-anchor="middle" x="369" y="-1288.8" font-family="Helvetica,sans-Serif" font-size="9.00">2&#45;3x faster serialization</text>
 </g>
 <!-- CONN_WARMUP -->
 <g id="node18" class="node">
 <title>CONN_WARMUP</title>
-<path fill="#bfdbfe" stroke="black" d="M274.5,-1340C274.5,-1340 191.5,-1340 191.5,-1340 185.5,-1340 179.5,-1334 179.5,-1328 179.5,-1328 179.5,-1294 179.5,-1294 179.5,-1288 185.5,-1282 191.5,-1282 191.5,-1282 274.5,-1282 274.5,-1282 280.5,-1282 286.5,-1288 286.5,-1294 286.5,-1294 286.5,-1328 286.5,-1328 286.5,-1334 280.5,-1340 274.5,-1340"/>
-<text text-anchor="middle" x="233" y="-1328.8" font-family="Helvetica,sans-Serif" font-size="9.00">ConnectionWarmUp</text>
-<text text-anchor="middle" x="233" y="-1318.8" font-family="Helvetica,sans-Serif" font-size="9.00">[Component]</text>
-<text text-anchor="middle" x="233" y="-1298.8" font-family="Helvetica,sans-Serif" font-size="9.00">Pre&#45;JIT critical paths</text>
-<text text-anchor="middle" x="233" y="-1288.8" font-family="Helvetica,sans-Serif" font-size="9.00">Connection pooling</text>
+<path fill="#bfdbfe" stroke="black" d="M259.5,-1340C259.5,-1340 176.5,-1340 176.5,-1340 170.5,-1340 164.5,-1334 164.5,-1328 164.5,-1328 164.5,-1294 164.5,-1294 164.5,-1288 170.5,-1282 176.5,-1282 176.5,-1282 259.5,-1282 259.5,-1282 265.5,-1282 271.5,-1288 271.5,-1294 271.5,-1294 271.5,-1328 271.5,-1328 271.5,-1334 265.5,-1340 259.5,-1340"/>
+<text text-anchor="middle" x="218" y="-1328.8" font-family="Helvetica,sans-Serif" font-size="9.00">ConnectionWarmUp</text>
+<text text-anchor="middle" x="218" y="-1318.8" font-family="Helvetica,sans-Serif" font-size="9.00">[Component]</text>
+<text text-anchor="middle" x="218" y="-1298.8" font-family="Helvetica,sans-Serif" font-size="9.00">Pre&#45;JIT critical paths</text>
+<text text-anchor="middle" x="218" y="-1288.8" font-family="Helvetica,sans-Serif" font-size="9.00">Connection pooling</text>
 </g>
 <!-- MODELS -->
 <g id="node22" class="node">
@@ -431,18 +431,18 @@
 <!-- PIPELINE -->
 <g id="node25" class="node">
 <title>PIPELINE</title>
-<path fill="#ddd6fe" stroke="black" d="M1913.5,-678C1913.5,-678 1802.5,-678 1802.5,-678 1796.5,-678 1790.5,-672 1790.5,-666 1790.5,-666 1790.5,-622 1790.5,-622 1790.5,-616 1796.5,-610 1802.5,-610 1802.5,-610 1913.5,-610 1913.5,-610 1919.5,-610 1925.5,-616 1925.5,-622 1925.5,-622 1925.5,-666 1925.5,-666 1925.5,-672 1919.5,-678 1913.5,-678"/>
-<text text-anchor="middle" x="1858" y="-666.8" font-family="Helvetica,sans-Serif" font-size="9.00">EventPipeline</text>
-<text text-anchor="middle" x="1858" y="-656.8" font-family="Helvetica,sans-Serif" font-size="9.00">[Component]</text>
-<text text-anchor="middle" x="1858" y="-636.8" font-family="Helvetica,sans-Serif" font-size="9.00">Bounded Channel (100K)</text>
-<text text-anchor="middle" x="1858" y="-626.8" font-family="Helvetica,sans-Serif" font-size="9.00">DropOldest backpressure</text>
-<text text-anchor="middle" x="1858" y="-616.8" font-family="Helvetica,sans-Serif" font-size="9.00">Async producer&#45;consumer</text>
+<path fill="#ddd6fe" stroke="black" d="M1920.5,-678C1920.5,-678 1809.5,-678 1809.5,-678 1803.5,-678 1797.5,-672 1797.5,-666 1797.5,-666 1797.5,-622 1797.5,-622 1797.5,-616 1803.5,-610 1809.5,-610 1809.5,-610 1920.5,-610 1920.5,-610 1926.5,-610 1932.5,-616 1932.5,-622 1932.5,-622 1932.5,-666 1932.5,-666 1932.5,-672 1926.5,-678 1920.5,-678"/>
+<text text-anchor="middle" x="1865" y="-666.8" font-family="Helvetica,sans-Serif" font-size="9.00">EventPipeline</text>
+<text text-anchor="middle" x="1865" y="-656.8" font-family="Helvetica,sans-Serif" font-size="9.00">[Component]</text>
+<text text-anchor="middle" x="1865" y="-636.8" font-family="Helvetica,sans-Serif" font-size="9.00">Bounded Channel (100K)</text>
+<text text-anchor="middle" x="1865" y="-626.8" font-family="Helvetica,sans-Serif" font-size="9.00">DropOldest backpressure</text>
+<text text-anchor="middle" x="1865" y="-616.8" font-family="Helvetica,sans-Serif" font-size="9.00">Async producer&#45;consumer</text>
 </g>
 <!-- TRADE_COLL&#45;&gt;PIPELINE -->
 <g id="edge22" class="edge">
 <title>TRADE_COLL&#45;&gt;PIPELINE</title>
-<path fill="none" stroke="#805ad5" d="M1354.24,-778.78C1394.93,-765.4 1449.95,-747.84 1499,-734 1595.21,-706.85 1707.17,-679.81 1780.14,-662.78"/>
-<polygon fill="#805ad5" stroke="#805ad5" points="1781.22,-666.12 1790.17,-660.45 1779.64,-659.31 1781.22,-666.12"/>
+<path fill="none" stroke="#805ad5" d="M1354.22,-778.71C1394.9,-765.3 1449.92,-747.73 1499,-734 1597.84,-706.35 1713.06,-679.15 1787.42,-662.24"/>
+<polygon fill="#805ad5" stroke="#805ad5" points="1788.2,-665.65 1797.18,-660.03 1786.66,-658.82 1788.2,-665.65"/>
 </g>
 <!-- QUOTE_COLL&#45;&gt;TRADE_COLL -->
 <g id="edge21" class="edge">
@@ -461,8 +461,8 @@
 <!-- QUOTE_COLL&#45;&gt;PIPELINE -->
 <g id="edge23" class="edge">
 <title>QUOTE_COLL&#45;&gt;PIPELINE</title>
-<path fill="none" stroke="#805ad5" d="M1353.47,-926.75C1361.45,-920.61 1369.52,-914.23 1377,-908 1455.07,-842.99 1457.8,-805.12 1545,-753 1619.39,-708.54 1714.71,-678.99 1780.52,-662.21"/>
-<polygon fill="#805ad5" stroke="#805ad5" points="1781.56,-665.55 1790.41,-659.72 1779.86,-658.76 1781.56,-665.55"/>
+<path fill="none" stroke="#805ad5" d="M1353.48,-926.77C1361.47,-920.63 1369.53,-914.24 1377,-908 1454.72,-843.09 1456.95,-804.75 1544,-753 1620.96,-707.25 1719.92,-677.72 1787.5,-661.29"/>
+<polygon fill="#805ad5" stroke="#805ad5" points="1788.32,-664.7 1797.23,-658.97 1786.69,-657.89 1788.32,-664.7"/>
 </g>
 <!-- DEPTH_COLL&#45;&gt;MODELS -->
 <g id="edge18" class="edge">
@@ -473,8 +473,8 @@
 <!-- DEPTH_COLL&#45;&gt;PIPELINE -->
 <g id="edge24" class="edge">
 <title>DEPTH_COLL&#45;&gt;PIPELINE</title>
-<path fill="none" stroke="#805ad5" d="M1505.88,-926.74C1550.21,-882.77 1626.66,-809.43 1698,-753 1729.1,-728.4 1765.63,-703.47 1795.93,-683.77"/>
-<polygon fill="#805ad5" stroke="#805ad5" points="1798.21,-686.46 1804.71,-678.09 1794.41,-680.58 1798.21,-686.46"/>
+<path fill="none" stroke="#805ad5" d="M1505.29,-926.88C1549.37,-882.73 1625.89,-808.89 1698,-753 1730.18,-728.06 1768.14,-703.18 1799.74,-683.6"/>
+<polygon fill="#805ad5" stroke="#805ad5" points="1801.79,-686.45 1808.47,-678.22 1798.12,-680.48 1801.79,-686.45"/>
 </g>
 <!-- FSHARP_TYPES -->
 <g id="node23" class="node">
@@ -511,8 +511,8 @@
 <!-- VALIDATION&#45;&gt;PIPELINE -->
 <g id="edge25" class="edge">
 <title>VALIDATION&#45;&gt;PIPELINE</title>
-<path fill="none" stroke="#805ad5" d="M1501.18,-322C1612.01,-334.79 1821.47,-366.03 1866,-423 1905.42,-473.43 1889.84,-552.02 1874.35,-600.35"/>
-<polygon fill="#805ad5" stroke="#805ad5" points="1871.01,-599.3 1871.17,-609.89 1877.66,-601.51 1871.01,-599.3"/>
+<path fill="none" stroke="#805ad5" d="M1501.18,-322C1612.01,-334.79 1821.47,-366.03 1866,-423 1905.31,-473.29 1892.87,-551.67 1879.49,-600.04"/>
+<polygon fill="#805ad5" stroke="#805ad5" points="1876.06,-599.3 1876.64,-609.88 1882.79,-601.25 1876.06,-599.3"/>
 </g>
 <!-- INDICATORS -->
 <g id="node26" class="node">
@@ -527,8 +527,8 @@
 <!-- PIPELINE&#45;&gt;INDICATORS -->
 <g id="edge26" class="edge">
 <title>PIPELINE&#45;&gt;INDICATORS</title>
-<path fill="none" stroke="#4a5568" stroke-dasharray="5,2" d="M1843.7,-609.71C1831.39,-581.03 1813.55,-539.47 1800.21,-508.42"/>
-<polygon fill="#4a5568" stroke="#4a5568" points="1803.39,-506.95 1796.23,-499.14 1796.96,-509.71 1803.39,-506.95"/>
+<path fill="none" stroke="#4a5568" stroke-dasharray="5,2" d="M1849.39,-609.71C1835.94,-581.03 1816.45,-539.47 1801.89,-508.42"/>
+<polygon fill="#4a5568" stroke="#4a5568" points="1804.96,-506.71 1797.54,-499.14 1798.62,-509.68 1804.96,-506.71"/>
 </g>
 <!-- WAL -->
 <g id="node40" class="node">
@@ -543,7 +543,7 @@
 <!-- PIPELINE&#45;&gt;WAL -->
 <g id="edge27" class="edge">
 <title>PIPELINE&#45;&gt;WAL</title>
-<path fill="none" stroke="#c53030" d="M1925.7,-631.93C1977.85,-623.81 2051.8,-613.16 2117,-607 2187.22,-600.36 2688.33,-607.36 2751,-575 2779.23,-560.42 2801.19,-531.96 2815.85,-507.77"/>
+<path fill="none" stroke="#c53030" d="M1932.72,-631.61C1983.33,-623.52 2054.31,-613.05 2117,-607 2187.21,-600.23 2688.33,-607.36 2751,-575 2779.23,-560.42 2801.19,-531.96 2815.85,-507.77"/>
 <polygon fill="#c53030" stroke="#c53030" points="2818.9,-509.49 2820.92,-499.09 2812.86,-505.96 2818.9,-509.49"/>
 <text text-anchor="middle" x="2738.5" y="-585.6" font-family="Helvetica,sans-Serif" font-size="8.00">1. journal</text>
 </g>
@@ -572,34 +572,34 @@
 <!-- HTTP_SERVER -->
 <g id="node28" class="node">
 <title>HTTP_SERVER</title>
-<path fill="#ddd6fe" stroke="black" d="M2394,-834C2394,-834 2302,-834 2302,-834 2296,-834 2290,-828 2290,-822 2290,-822 2290,-778 2290,-778 2290,-772 2296,-766 2302,-766 2302,-766 2394,-766 2394,-766 2400,-766 2406,-772 2406,-778 2406,-778 2406,-822 2406,-822 2406,-828 2400,-834 2394,-834"/>
-<text text-anchor="middle" x="2348" y="-822.8" font-family="Helvetica,sans-Serif" font-size="9.00">StatusHttpServer</text>
-<text text-anchor="middle" x="2348" y="-812.8" font-family="Helvetica,sans-Serif" font-size="9.00">[Component]</text>
-<text text-anchor="middle" x="2348" y="-792.8" font-family="Helvetica,sans-Serif" font-size="9.00">/status &#45; JSON metrics</text>
-<text text-anchor="middle" x="2348" y="-782.8" font-family="Helvetica,sans-Serif" font-size="9.00">/metrics &#45; Prometheus</text>
-<text text-anchor="middle" x="2348" y="-772.8" font-family="Helvetica,sans-Serif" font-size="9.00">/health, /ready, /live</text>
+<path fill="#ddd6fe" stroke="black" d="M2436.5,-834C2436.5,-834 2301.5,-834 2301.5,-834 2295.5,-834 2289.5,-828 2289.5,-822 2289.5,-822 2289.5,-778 2289.5,-778 2289.5,-772 2295.5,-766 2301.5,-766 2301.5,-766 2436.5,-766 2436.5,-766 2442.5,-766 2448.5,-772 2448.5,-778 2448.5,-778 2448.5,-822 2448.5,-822 2448.5,-828 2442.5,-834 2436.5,-834"/>
+<text text-anchor="middle" x="2369" y="-822.8" font-family="Helvetica,sans-Serif" font-size="9.00">UiServer + Endpoints</text>
+<text text-anchor="middle" x="2369" y="-812.8" font-family="Helvetica,sans-Serif" font-size="9.00">[30+ Endpoint Modules]</text>
+<text text-anchor="middle" x="2369" y="-792.8" font-family="Helvetica,sans-Serif" font-size="9.00">/status, /api/config, /api/backfill</text>
+<text text-anchor="middle" x="2369" y="-782.8" font-family="Helvetica,sans-Serif" font-size="9.00">/metrics &#45; Prometheus</text>
+<text text-anchor="middle" x="2369" y="-772.8" font-family="Helvetica,sans-Serif" font-size="9.00">/health, /ready, /live</text>
 </g>
 <!-- HTTP_SERVER&#45;&gt;PIPELINE -->
 <g id="edge40" class="edge">
 <title>HTTP_SERVER&#45;&gt;PIPELINE</title>
-<path fill="none" stroke="#4a5568" stroke-dasharray="5,2" d="M2299.06,-765.8C2290.32,-760.92 2281.1,-756.41 2272,-753 2206.52,-728.47 2184.96,-742.47 2117,-726 2055.17,-711.01 1986.49,-689.3 1935.41,-672.12"/>
-<polygon fill="#4a5568" stroke="#4a5568" points="1936.35,-668.75 1925.76,-668.86 1934.11,-675.38 1936.35,-668.75"/>
-<text text-anchor="middle" x="2247.5" y="-736.6" font-family="Helvetica,sans-Serif" font-size="8.00">stats</text>
+<path fill="none" stroke="#4a5568" stroke-dasharray="5,2" d="M2305.55,-765.93C2294.56,-761.07 2283.1,-756.53 2272,-753 2205.36,-731.83 2184.89,-742.74 2117,-726 2057.6,-711.36 1991.83,-690.04 1942.38,-672.95"/>
+<polygon fill="#4a5568" stroke="#4a5568" points="1943.31,-669.56 1932.72,-669.59 1941.02,-676.18 1943.31,-669.56"/>
+<text text-anchor="middle" x="2240.5" y="-736.6" font-family="Helvetica,sans-Serif" font-size="8.00">stats</text>
 </g>
 <!-- METRICS -->
 <g id="node29" class="node">
 <title>METRICS</title>
-<path fill="#ddd6fe" stroke="black" d="M2388.5,-673C2388.5,-673 2307.5,-673 2307.5,-673 2301.5,-673 2295.5,-667 2295.5,-661 2295.5,-661 2295.5,-627 2295.5,-627 2295.5,-621 2301.5,-615 2307.5,-615 2307.5,-615 2388.5,-615 2388.5,-615 2394.5,-615 2400.5,-621 2400.5,-627 2400.5,-627 2400.5,-661 2400.5,-661 2400.5,-667 2394.5,-673 2388.5,-673"/>
-<text text-anchor="middle" x="2348" y="-661.8" font-family="Helvetica,sans-Serif" font-size="9.00">Metrics</text>
-<text text-anchor="middle" x="2348" y="-651.8" font-family="Helvetica,sans-Serif" font-size="9.00">[Component]</text>
-<text text-anchor="middle" x="2348" y="-631.8" font-family="Helvetica,sans-Serif" font-size="9.00">Published, Dropped</text>
-<text text-anchor="middle" x="2348" y="-621.8" font-family="Helvetica,sans-Serif" font-size="9.00">Integrity counters</text>
+<path fill="#ddd6fe" stroke="black" d="M2409.5,-673C2409.5,-673 2328.5,-673 2328.5,-673 2322.5,-673 2316.5,-667 2316.5,-661 2316.5,-661 2316.5,-627 2316.5,-627 2316.5,-621 2322.5,-615 2328.5,-615 2328.5,-615 2409.5,-615 2409.5,-615 2415.5,-615 2421.5,-621 2421.5,-627 2421.5,-627 2421.5,-661 2421.5,-661 2421.5,-667 2415.5,-673 2409.5,-673"/>
+<text text-anchor="middle" x="2369" y="-661.8" font-family="Helvetica,sans-Serif" font-size="9.00">Metrics</text>
+<text text-anchor="middle" x="2369" y="-651.8" font-family="Helvetica,sans-Serif" font-size="9.00">[Component]</text>
+<text text-anchor="middle" x="2369" y="-631.8" font-family="Helvetica,sans-Serif" font-size="9.00">Published, Dropped</text>
+<text text-anchor="middle" x="2369" y="-621.8" font-family="Helvetica,sans-Serif" font-size="9.00">Integrity counters</text>
 </g>
 <!-- HTTP_SERVER&#45;&gt;METRICS -->
 <g id="edge41" class="edge">
 <title>HTTP_SERVER&#45;&gt;METRICS</title>
-<path fill="none" stroke="#4a5568" stroke-dasharray="5,2" d="M2348,-765.96C2348,-741.73 2348,-708.75 2348,-683.35"/>
-<polygon fill="#4a5568" stroke="#4a5568" points="2351.5,-683.33 2348,-673.33 2344.5,-683.33 2351.5,-683.33"/>
+<path fill="none" stroke="#4a5568" stroke-dasharray="5,2" d="M2369,-765.96C2369,-741.73 2369,-708.75 2369,-683.35"/>
+<polygon fill="#4a5568" stroke="#4a5568" points="2372.5,-683.33 2369,-673.33 2365.5,-683.33 2372.5,-683.33"/>
 </g>
 <!-- OTEL -->
 <g id="node30" class="node">
@@ -613,15 +613,15 @@
 <!-- OTEL&#45;&gt;PIPELINE -->
 <g id="edge42" class="edge">
 <title>OTEL&#45;&gt;PIPELINE</title>
-<path fill="none" stroke="#4a5568" stroke-dasharray="5,2" d="M1786.96,-770.75C1800.22,-747.27 1819.29,-713.51 1834.34,-686.88"/>
-<polygon fill="#4a5568" stroke="#4a5568" points="1837.4,-688.58 1839.27,-678.15 1831.31,-685.14 1837.4,-688.58"/>
-<text text-anchor="middle" x="1819" y="-736.6" font-family="Helvetica,sans-Serif" font-size="8.00">traces</text>
+<path fill="none" stroke="#4a5568" stroke-dasharray="5,2" d="M1788.24,-770.75C1802.57,-747.27 1823.18,-713.51 1839.43,-686.88"/>
+<polygon fill="#4a5568" stroke="#4a5568" points="1842.54,-688.51 1844.76,-678.15 1836.57,-684.86 1842.54,-688.51"/>
+<text text-anchor="middle" x="1822" y="-736.6" font-family="Helvetica,sans-Serif" font-size="8.00">traces</text>
 </g>
 <!-- BACKFILL&#45;&gt;PIPELINE -->
 <g id="edge37" class="edge">
 <title>BACKFILL&#45;&gt;PIPELINE</title>
-<path fill="none" stroke="#805ad5" d="M1913.77,-765.96C1903.18,-743 1888.98,-712.2 1877.56,-687.42"/>
-<polygon fill="#805ad5" stroke="#805ad5" points="1880.69,-685.86 1873.33,-678.25 1874.34,-688.79 1880.69,-685.86"/>
+<path fill="none" stroke="#805ad5" d="M1915.27,-765.96C1905.77,-743.1 1893.04,-712.47 1882.77,-687.75"/>
+<polygon fill="#805ad5" stroke="#805ad5" points="1885.89,-686.14 1878.82,-678.25 1879.42,-688.83 1885.89,-686.14"/>
 </g>
 <!-- AUTO_CONFIG -->
 <g id="node32" class="node">
@@ -653,8 +653,8 @@
 <!-- WIZARD&#45;&gt;AUTO_CONFIG -->
 <g id="edge48" class="edge">
 <title>WIZARD&#45;&gt;AUTO_CONFIG</title>
-<path fill="none" stroke="#ed8936" d="M2328.03,-1120.96C2325.91,-1113.45 2323.78,-1105.48 2322,-1098 2315.08,-1068.9 2308.78,-1035.8 2304.23,-1010.16"/>
-<polygon fill="#ed8936" stroke="#ed8936" points="2307.63,-1009.26 2302.46,-1000.01 2300.73,-1010.47 2307.63,-1009.26"/>
+<path fill="none" stroke="#ed8936" d="M2328.75,-1120.93C2326.76,-1113.41 2324.74,-1105.45 2323,-1098 2316.23,-1068.92 2309.69,-1035.96 2304.87,-1010.37"/>
+<polygon fill="#ed8936" stroke="#ed8936" points="2308.25,-1009.43 2302.97,-1000.24 2301.37,-1010.71 2308.25,-1009.43"/>
 </g>
 <!-- FIRST_RUN -->
 <g id="node34" class="node">
@@ -698,14 +698,14 @@
 <!-- CONNECTIVITY&#45;&gt;ALP_CLIENT -->
 <g id="edge51" class="edge">
 <title>CONNECTIVITY&#45;&gt;ALP_CLIENT</title>
-<path fill="none" stroke="#ed8936" stroke-dasharray="5,2" d="M1908.24,-1276.97C1899.59,-1273.73 1890.7,-1270.94 1882,-1269 1757.68,-1241.3 852.24,-1294.08 736,-1242 714.77,-1232.49 696.45,-1214.52 682.63,-1197.46"/>
-<polygon fill="#ed8936" stroke="#ed8936" points="685.11,-1194.95 676.21,-1189.19 679.58,-1199.24 685.11,-1194.95"/>
+<path fill="none" stroke="#ed8936" stroke-dasharray="5,2" d="M1908.24,-1276.97C1899.59,-1273.73 1890.7,-1270.94 1882,-1269 1825.81,-1256.48 1421.38,-1263.63 1364,-1259 1335.81,-1256.72 1329.2,-1252.2 1301,-1250 1269.7,-1247.55 764.73,-1254.65 736,-1242 714.71,-1232.62 696.38,-1214.67 682.57,-1197.58"/>
+<polygon fill="#ed8936" stroke="#ed8936" points="685.05,-1195.07 676.16,-1189.31 679.52,-1199.36 685.05,-1195.07"/>
 </g>
 <!-- CONNECTIVITY&#45;&gt;HIST_COMPOSITE -->
 <g id="edge52" class="edge">
 <title>CONNECTIVITY&#45;&gt;HIST_COMPOSITE</title>
-<path fill="none" stroke="#ed8936" stroke-dasharray="5,2" d="M1908.52,-1276.97C1899.78,-1273.72 1890.8,-1270.91 1882,-1269 1820.87,-1255.71 818.41,-1263.27 756,-1259 724.71,-1256.86 717.27,-1252.44 686,-1250 654.53,-1247.54 431.44,-1253.39 402,-1242 379.59,-1233.33 358.75,-1217.32 341.96,-1201.44"/>
-<polygon fill="#ed8936" stroke="#ed8936" points="344.14,-1198.67 334.54,-1194.18 339.24,-1203.68 344.14,-1198.67"/>
+<path fill="none" stroke="#ed8936" stroke-dasharray="5,2" d="M1908.25,-1276.95C1899.6,-1273.72 1890.71,-1270.93 1882,-1269 1850.21,-1261.95 1328.55,-1259.59 1296,-1259 1283.58,-1258.78 413.6,-1246.43 402,-1242 379.55,-1233.43 358.71,-1217.44 341.92,-1201.55"/>
+<polygon fill="#ed8936" stroke="#ed8936" points="344.09,-1198.78 334.5,-1194.28 339.2,-1203.78 344.09,-1198.78"/>
 </g>
 <!-- CRED_VALIDATE -->
 <g id="node36" class="node">
@@ -720,8 +720,8 @@
 <!-- CRED_VALIDATE&#45;&gt;HIST_IMPLS -->
 <g id="edge53" class="edge">
 <title>CRED_VALIDATE&#45;&gt;HIST_IMPLS</title>
-<path fill="none" stroke="#ed8936" stroke-dasharray="5,2" d="M1724.39,-1305.74C1589.23,-1297.59 1281.82,-1279.66 1023,-1269 871.06,-1262.74 832.99,-1263.92 681,-1259 627.88,-1257.28 239.91,-1280.24 203,-1242 141.79,-1178.58 198.51,-1068.73 237.78,-1008.86"/>
-<polygon fill="#ed8936" stroke="#ed8936" points="240.79,-1010.66 243.43,-1000.4 234.97,-1006.77 240.79,-1010.66"/>
+<path fill="none" stroke="#ed8936" stroke-dasharray="5,2" d="M1724.39,-1305.83C1589.23,-1297.83 1281.8,-1280.14 1023,-1269 977.46,-1267.04 234.7,-1274.76 203,-1242 141.71,-1178.66 198.46,-1068.78 237.76,-1008.88"/>
+<polygon fill="#ed8936" stroke="#ed8936" points="240.77,-1010.67 243.41,-1000.41 234.95,-1006.78 240.77,-1010.67"/>
 </g>
 <!-- ERROR_FMT -->
 <g id="node37" class="node">
@@ -736,8 +736,8 @@
 <!-- ERROR_FMT&#45;&gt;HTTP_SERVER -->
 <g id="edge56" class="edge">
 <title>ERROR_FMT&#45;&gt;HTTP_SERVER</title>
-<path fill="none" stroke="#ed8936" stroke-dasharray="5,2" d="M2150.05,-1276.99C2133.55,-1199.4 2105.56,-1005.26 2213,-916 2238.44,-894.86 2259.33,-926.13 2287,-908 2309.77,-893.08 2324.98,-866.53 2334.51,-843.62"/>
-<polygon fill="#ed8936" stroke="#ed8936" points="2337.87,-844.65 2338.26,-834.06 2331.35,-842.1 2337.87,-844.65"/>
+<path fill="none" stroke="#ed8936" stroke-dasharray="5,2" d="M2150.05,-1276.99C2133.55,-1199.4 2105.56,-1005.26 2213,-916 2238.44,-894.86 2258.17,-924.22 2287,-908 2313.41,-893.15 2334.08,-865.95 2348.06,-842.7"/>
+<polygon fill="#ed8936" stroke="#ed8936" points="2351.11,-844.42 2353.09,-834.01 2345.05,-840.91 2351.11,-844.42"/>
 </g>
 <!-- PROGRESS -->
 <g id="node38" class="node">
@@ -768,8 +768,8 @@
 <!-- STARTUP_SUM&#45;&gt;PIPELINE -->
 <g id="edge55" class="edge">
 <title>STARTUP_SUM&#45;&gt;PIPELINE</title>
-<path fill="none" stroke="#ed8936" stroke-dasharray="5,2" d="M2649.9,-1276.78C2615.73,-1200.42 2520.89,-1011.69 2381,-916 2342.74,-889.83 2325.83,-896.95 2280,-890 2262.07,-887.28 2133.16,-890.22 2117,-882 2051.36,-848.6 2066.86,-803.22 2013,-753 1985.38,-727.25 1951.25,-702.82 1922.06,-683.72"/>
-<polygon fill="#ed8936" stroke="#ed8936" points="1923.86,-680.72 1913.57,-678.23 1920.06,-686.6 1923.86,-680.72"/>
+<path fill="none" stroke="#ed8936" stroke-dasharray="5,2" d="M2649.9,-1276.78C2615.73,-1200.42 2520.89,-1011.69 2381,-916 2342.74,-889.83 2325.83,-896.95 2280,-890 2262.07,-887.28 2133.16,-890.22 2117,-882 2051.36,-848.6 2066.31,-803.81 2013,-753 1986.39,-727.64 1953.65,-703.18 1925.74,-683.96"/>
+<polygon fill="#ed8936" stroke="#ed8936" points="1927.48,-680.91 1917.24,-678.17 1923.53,-686.69 1927.48,-680.91"/>
 <text text-anchor="middle" x="2552.5" y="-964.1" font-family="Helvetica,sans-Serif" font-size="8.00">checks</text>
 </g>
 <!-- STARTUP_SUM&#45;&gt;CONFIG -->
@@ -799,8 +799,8 @@
 <!-- JSONL_SINK&#45;&gt;FS -->
 <g id="edge33" class="edge">
 <title>JSONL_SINK&#45;&gt;FS</title>
-<path fill="none" stroke="#c53030" d="M2888.91,-301.33C2935.62,-292.59 3001.75,-280.71 3060,-272 3128.64,-261.74 3146.52,-264.31 3215,-253 3339,-232.53 3483.51,-200.17 3556.55,-183.21"/>
-<polygon fill="#c53030" stroke="#c53030" points="3557.43,-186.6 3566.37,-180.93 3555.84,-179.79 3557.43,-186.6"/>
+<path fill="none" stroke="#c53030" d="M2888.91,-301.3C2935.62,-292.56 3001.74,-280.67 3060,-272 3129.52,-261.66 3147.65,-264.43 3217,-253 3340.23,-232.69 3483.78,-200.33 3556.52,-183.31"/>
+<polygon fill="#c53030" stroke="#c53030" points="3557.36,-186.71 3566.3,-181.02 3555.76,-179.9 3557.36,-186.71"/>
 </g>
 <!-- COMPRESS -->
 <g id="node43" class="node">
@@ -870,12 +870,12 @@
 <!-- EXPORT -->
 <g id="node46" class="node">
 <title>EXPORT</title>
-<path fill="#fecaca" stroke="black" d="M3186,-205C3186,-205 3094,-205 3094,-205 3088,-205 3082,-199 3082,-193 3082,-193 3082,-149 3082,-149 3082,-143 3088,-137 3094,-137 3094,-137 3186,-137 3186,-137 3192,-137 3198,-143 3198,-149 3198,-149 3198,-193 3198,-193 3198,-199 3192,-205 3186,-205"/>
+<path fill="#fecaca" stroke="black" d="M3187.5,-205C3187.5,-205 3092.5,-205 3092.5,-205 3086.5,-205 3080.5,-199 3080.5,-193 3080.5,-193 3080.5,-149 3080.5,-149 3080.5,-143 3086.5,-137 3092.5,-137 3092.5,-137 3187.5,-137 3187.5,-137 3193.5,-137 3199.5,-143 3199.5,-149 3199.5,-149 3199.5,-193 3199.5,-193 3199.5,-199 3193.5,-205 3187.5,-205"/>
 <text text-anchor="middle" x="3140" y="-193.8" font-family="Helvetica,sans-Serif" font-size="9.00">AnalysisExportService</text>
-<text text-anchor="middle" x="3140" y="-183.8" font-family="Helvetica,sans-Serif" font-size="9.00">[Component]</text>
-<text text-anchor="middle" x="3140" y="-163.8" font-family="Helvetica,sans-Serif" font-size="9.00">Python (Parquet)</text>
-<text text-anchor="middle" x="3140" y="-153.8" font-family="Helvetica,sans-Serif" font-size="9.00">R (CSV), Lean (ZIP)</text>
-<text text-anchor="middle" x="3140" y="-143.8" font-family="Helvetica,sans-Serif" font-size="9.00">Excel, PostgreSQL</text>
+<text text-anchor="middle" x="3140" y="-183.8" font-family="Helvetica,sans-Serif" font-size="9.00">[Multi&#45;File Module]</text>
+<text text-anchor="middle" x="3140" y="-163.8" font-family="Helvetica,sans-Serif" font-size="9.00">CSV, JSONL, Lean, SQL</text>
+<text text-anchor="middle" x="3140" y="-153.8" font-family="Helvetica,sans-Serif" font-size="9.00">Parquet, XLSX, Arrow</text>
+<text text-anchor="middle" x="3140" y="-143.8" font-family="Helvetica,sans-Serif" font-size="9.00">6 partial class files</text>
 </g>
 <!-- SCHEMA&#45;&gt;EXPORT -->
 <g id="edge34" class="edge">

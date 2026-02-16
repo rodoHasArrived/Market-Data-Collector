@@ -1,6 +1,6 @@
 // Data Flow Diagram
 // Market Data Collector v1.6.1
-// Last Updated: 2026-01-29
+// Last Updated: 2026-02-16
 //
 // This diagram shows the end-to-end data flow through the system,
 // from ingestion to storage and export.
@@ -123,7 +123,7 @@ digraph DataFlow {
     style="rounded";
     bgcolor="#c6f6d5";
 
-    EXPORT_SVC [fillcolor="#9ae6b4", label="Export Service\n[Multi-format]"];
+    EXPORT_SVC [fillcolor="#9ae6b4", label="Export Service\n[7 format handlers]"];
     QUALITY [fillcolor="#9ae6b4", label="Quality Report\n\nCompleteness\nOutlier detection\nA+ to F grading"];
 
     subgraph cluster_formats {
@@ -135,6 +135,7 @@ digraph DataFlow {
       LEAN_EXP [fillcolor="#68d391", label="QuantConnect\nLean format + ZIP"];
       EXCEL_EXP [fillcolor="#68d391", label="Excel\nXLSX multi-sheet"];
       PG_EXP [fillcolor="#68d391", label="PostgreSQL\nCSV + DDL + COPY"];
+      ARROW_EXP [fillcolor="#68d391", label="Arrow IPC\nZero-copy reads"];
     }
   }
 
@@ -212,6 +213,7 @@ digraph DataFlow {
   EXPORT_SVC -> LEAN_EXP [color="#38a169"];
   EXPORT_SVC -> EXCEL_EXP [color="#38a169"];
   EXPORT_SVC -> PG_EXP [color="#38a169"];
+  EXPORT_SVC -> ARROW_EXP [color="#38a169"];
 
   // Onboarding Flow Edges
   FIRST_RUN -> WIZARD [color="#ed8936", label="--wizard"];

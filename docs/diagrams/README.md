@@ -38,7 +38,7 @@ Shows the Market Data Collector in context with:
 ### C4 Level 2: Container Diagram
 
 Shows the major deployable units:
-- **Presentation Layer**: Web Dashboard, WPF Desktop App, legacy UWP Desktop App, CLI Interface
+- **Presentation Layer**: Web Dashboard, WPF Desktop App, CLI Interface
 - **Onboarding & Diagnostics Layer**: Configuration Wizard, Auto-Configuration, Diagnostic Services, Error Formatter
 - **Core Collector Service** (.NET 9 console with 50K bounded channel policy)
 - **F# Domain Library** (Type-safe validation, discriminated unions)
@@ -63,7 +63,7 @@ Shows data moving through the system:
 3. **Processing**: Domain collectors → F# validation → Technical indicators
 4. **Pipeline**: Bounded channel (50K policy) → Composite publisher
 5. **Storage**: WAL → JSONL (hot) → Compression → Parquet (archive) → Tiered storage
-6. **Export**: Python/Pandas, R, QuantConnect Lean, Excel, PostgreSQL
+6. **Export**: Python/Pandas, R, QuantConnect Lean, Excel, PostgreSQL, Arrow IPC
 7. **Optional Exports**: Downstream exports to Lean, Python/R, or database targets
 
 ### Provider Architecture
@@ -85,7 +85,7 @@ Details the archival-first storage pipeline:
 - **Compression Profiles**: LZ4 (real-time), ZSTD Level 3/6/19 (high-volume/warm/cold), Gzip (portable)
 - **Archive Storage (Parquet)**: Columnar format, 10-20x compression, schema versioning
 - **Tiered Storage**: Hot (SSD, 0-7d) → Warm (HDD, 7-30d) → Cold (S3/Glacier, 30d+)
-- **Export Formats**: Python/Pandas, R Statistics, QuantConnect Lean, Excel, PostgreSQL
+- **Export Formats**: Python/Pandas, R Statistics, QuantConnect Lean, Excel, PostgreSQL, Arrow IPC
 - **Quality Assessment**: Multi-dimensional scoring, outlier detection (4σ), A+ to F grading
 
 ### Event Pipeline Sequence (NEW)

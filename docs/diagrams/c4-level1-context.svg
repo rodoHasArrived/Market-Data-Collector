@@ -67,7 +67,7 @@
 <path fill="none" stroke="#4a5568" d="M560.66,-371C668.73,-371 893.67,-371 893.67,-371 893.67,-371 893.67,-313.88 893.67,-313.88"/>
 <polygon fill="#4a5568" stroke="#4a5568" points="897.17,-313.88 893.67,-303.88 890.17,-313.88 897.17,-313.88"/>
 <text text-anchor="middle" x="796.5" y="-334.68" font-family="Helvetica,sans-Serif" font-size="9.00">Configures via</text>
-<text text-anchor="middle" x="796.5" y="-324.68" font-family="Helvetica,sans-Serif" font-size="9.00">UWP/Web/CLI</text>
+<text text-anchor="middle" x="796.5" y="-324.68" font-family="Helvetica,sans-Serif" font-size="9.00">WPF/Web/CLI</text>
 </g>
 <!-- Quant -->
 <g id="node2" class="node">
