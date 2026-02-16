@@ -113,13 +113,14 @@ public sealed class FixtureMarketDataClient : IMarketDataClient
                 var price = basePrice + (decimal)(rng.NextDouble() * 2.0 - 1.0);
                 var volume = rng.Next(1, 1000);
                 var trade = new Trade(
+                    Timestamp: DateTimeOffset.UtcNow,
                     Symbol: cfg.Symbol,
                     Price: price,
                     Size: volume,
-                    Timestamp: DateTimeOffset.UtcNow,
+                    Aggressor: AggressorSide.Unknown,
                     SequenceNumber: seq++,
-                    Condition: "@ ",
-                    Exchange: "XNGS");
+                    StreamId: null,
+                    Venue: "XNGS");
 
                 var evt = MarketEvent.Trade(DateTimeOffset.UtcNow, cfg.Symbol, trade, source: "fixture");
                 GeneratedEvents.Add(evt);
@@ -143,16 +144,17 @@ public sealed class FixtureMarketDataClient : IMarketDataClient
             var askPrice = basePrice + 0.01m * rng.Next(1, 10);
 
             var quote = new BboQuotePayload(
+                Timestamp: DateTimeOffset.UtcNow,
                 Symbol: cfg.Symbol,
                 BidPrice: bidPrice,
                 BidSize: rng.Next(100, 5000),
                 AskPrice: askPrice,
                 AskSize: rng.Next(100, 5000),
-                Spread: askPrice - bidPrice,
                 MidPrice: (bidPrice + askPrice) / 2m,
-                Timestamp: DateTimeOffset.UtcNow,
+                Spread: askPrice - bidPrice,
                 SequenceNumber: seq++,
-                Exchange: "XNGS");
+                StreamId: null,
+                Venue: "XNGS");
 
             var evt = MarketEvent.BboQuote(DateTimeOffset.UtcNow, cfg.Symbol, quote, source: "fixture");
             GeneratedEvents.Add(evt);
