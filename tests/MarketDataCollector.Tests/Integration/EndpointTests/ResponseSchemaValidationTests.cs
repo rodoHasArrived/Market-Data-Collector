@@ -10,6 +10,7 @@ namespace MarketDataCollector.Tests.Integration.EndpointTests;
 /// Ensures field presence, types, and structural contracts are not accidentally broken.
 /// Part of B2 (tranche 1): endpoint integration coverage for health/status/config.
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed class ResponseSchemaValidationTests : IClassFixture<EndpointTestFixture>
 {
     private readonly HttpClient _client;

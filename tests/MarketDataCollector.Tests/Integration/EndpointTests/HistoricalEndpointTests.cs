@@ -10,6 +10,7 @@ namespace MarketDataCollector.Tests.Integration.EndpointTests;
 /// Tests query operations, symbol listing, and date range retrieval.
 /// Implements Phase 1A.4 and Phase 9B.1 from the roadmap.
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed class HistoricalEndpointTests : IClassFixture<EndpointTestFixture>
 {
     private readonly HttpClient _client;

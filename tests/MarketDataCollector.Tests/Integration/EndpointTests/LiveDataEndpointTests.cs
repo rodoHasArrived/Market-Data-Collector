@@ -10,6 +10,7 @@ namespace MarketDataCollector.Tests.Integration.EndpointTests;
 /// Integration tests for live data endpoints (/api/data/*).
 /// These endpoints expose real-time trade, quote, and order book data.
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed class LiveDataEndpointTests : IClassFixture<EndpointTestFixture>
 {
     private readonly HttpClient _client;

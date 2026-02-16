@@ -11,6 +11,7 @@ namespace MarketDataCollector.Tests;
 /// Validates that the Polly-based resilience pipelines are properly configured
 /// for all market data clients.
 /// </summary>
+[Trait("Category", "Integration")]
 public class ConnectionRetryIntegrationTests
 {
     /// <summary>

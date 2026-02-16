@@ -9,6 +9,7 @@ namespace MarketDataCollector.Tests.Integration.EndpointTests;
 /// Integration tests for status, health, and monitoring endpoints.
 /// Tests actual HTTP request/response cycles through the full middleware pipeline.
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed class StatusEndpointTests : IClassFixture<EndpointTestFixture>
 {
     private readonly HttpClient _client;
