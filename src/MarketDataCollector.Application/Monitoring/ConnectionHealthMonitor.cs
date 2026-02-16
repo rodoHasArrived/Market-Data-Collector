@@ -265,19 +265,19 @@ public sealed class ConnectionHealthMonitor : IConnectionHealthMonitor, IDisposa
     public ConnectionStatus? GetConnectionStatusByProvider(string providerName)
     {
         var matchingConnections = _connections.Values
-            .Where(state => state.ProviderName == providerName)
-            .ToList();
+            .Where(state => state.ProviderName == providerName);
 
-        if (matchingConnections.Count == 0)
+        if (!matchingConnections.Any())
             return null;
 
         // If there's only one connection, return its status
-        if (matchingConnections.Count == 1)
-            return matchingConnections[0].GetStatus();
+        if (matchingConnections.Count() == 1)
+            return matchingConnections.First().GetStatus();
 
         // For multiple connections, aggregate:
         // - IsConnected: true only if ALL are connected
         // - Use worst-case values for other metrics
+        // - Use maximum uptime to represent longest-running connection
         var statuses = matchingConnections.Select(s => s.GetStatus()).ToList();
 
         return new ConnectionStatus(
@@ -289,7 +289,7 @@ public sealed class ConnectionHealthMonitor : IConnectionHealthMonitor, IDisposa
             LastDataReceivedTime: statuses.Max(s => s.LastDataReceivedTime),
             MissedHeartbeats: statuses.Max(s => s.MissedHeartbeats),
             ReconnectCount: statuses.Sum(s => s.ReconnectCount),
-            UptimeDuration: TimeSpan.FromTicks((long)statuses.Average(s => s.UptimeDuration.Ticks)),
+            UptimeDuration: statuses.Max(s => s.UptimeDuration),  // Use max uptime instead of average
             TotalDataReceived: statuses.Sum(s => s.TotalDataReceived),
             AverageLatencyMs: statuses.Average(s => s.AverageLatencyMs),
             MinLatencyMs: statuses.Min(s => s.MinLatencyMs),
