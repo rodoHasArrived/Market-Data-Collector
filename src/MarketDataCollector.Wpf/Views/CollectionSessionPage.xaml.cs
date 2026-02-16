@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using MarketDataCollector.Wpf.Services;
+using CollectionSessionService = MarketDataCollector.Ui.Services.CollectionSessionService;
 
 namespace MarketDataCollector.Wpf.Views;
 

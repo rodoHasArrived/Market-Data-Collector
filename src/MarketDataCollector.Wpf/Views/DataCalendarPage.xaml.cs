@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using MarketDataCollector.Wpf.Services;
+using DataCalendarService = MarketDataCollector.Ui.Services.DataCalendarService;
 
 namespace MarketDataCollector.Wpf.Views;
 

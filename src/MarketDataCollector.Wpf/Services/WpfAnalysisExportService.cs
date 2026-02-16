@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using UiServices = MarketDataCollector.Ui.Services.Services;
-using ApiClientService = MarketDataCollector.Ui.Services.Services.ApiClientService;
+using UiServices = MarketDataCollector.Ui.Services;
+using ApiClientService = MarketDataCollector.Ui.Services.ApiClientService;
 
 namespace MarketDataCollector.Wpf.Services;
 

@@ -3,6 +3,7 @@ using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using MarketDataCollector.Wpf.Services;
+using ScheduleManagerService = MarketDataCollector.Ui.Services.ScheduleManagerService;
 
 namespace MarketDataCollector.Wpf.Views;
 
