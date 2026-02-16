@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using MarketDataCollector.Contracts.Domain.Enums;
 using MarketDataCollector.Contracts.Domain.Events;
 using MarketDataCollector.Contracts.Domain.Models;
@@ -13,7 +14,10 @@ public sealed record MarketEvent(
     long Sequence = 0,
     string Source = "IB",
     int SchemaVersion = 1,
-    MarketEventTier Tier = MarketEventTier.Raw
+    MarketEventTier Tier = MarketEventTier.Raw,
+    DateTimeOffset? ExchangeTimestamp = null,
+    DateTimeOffset ReceivedAtUtc = default,
+    long ReceivedAtMonotonic = 0
 )
 {
     public static MarketEvent Trade(DateTimeOffset ts, string symbol, Trade trade, long seq = 0, string source = "IB")
@@ -77,4 +81,33 @@ public sealed record MarketEvent(
 
     public static MarketEvent OpenInterest(DateTimeOffset ts, string symbol, OpenInterestUpdate oi, long seq = 0, string source = "IB")
         => new(ts, symbol, MarketEventType.OpenInterest, oi, seq == 0 ? oi.SequenceNumber : seq, source);
+
+    /// <summary>
+    /// Stamps the event with wall-clock and monotonic receive timestamps.
+    /// Call this at the earliest point when the event enters the system.
+    /// </summary>
+    public MarketEvent StampReceiveTime(DateTimeOffset? exchangeTs = null)
+        => this with
+        {
+            ReceivedAtUtc = DateTimeOffset.UtcNow,
+            ReceivedAtMonotonic = Stopwatch.GetTimestamp(),
+            ExchangeTimestamp = exchangeTs ?? ExchangeTimestamp
+        };
+
+    /// <summary>
+    /// Computes the estimated end-to-end latency in milliseconds using monotonic clock,
+    /// or falls back to wall-clock difference if monotonic data is unavailable.
+    /// </summary>
+    public double? EstimatedLatencyMs
+    {
+        get
+        {
+            if (ReceivedAtMonotonic > 0 && ExchangeTimestamp.HasValue)
+            {
+                // Wall-clock difference as best-effort (cross-machine clocks are unreliable)
+                return (ReceivedAtUtc - ExchangeTimestamp.Value).TotalMilliseconds;
+            }
+            return null;
+        }
+    }
 }
