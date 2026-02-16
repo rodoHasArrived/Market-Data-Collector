@@ -63,7 +63,7 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Restore dependencies
-        run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
+        run: dotnet restore MarketDataCollector.sln -p:EnableWindowsTargeting=true
 
       - name: Scan for vulnerable packages
         id: vuln-scan
@@ -199,14 +199,14 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Restore dependencies
-        run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
+        run: dotnet restore MarketDataCollector.sln -p:EnableWindowsTargeting=true
 
       - name: Run security analysis
         id: sast
         run: |
           dotnet build MarketDataCollector.sln \
             -c Release \
-            /p:EnableWindowsTargeting=true \
+            -p:EnableWindowsTargeting=true \
             /p:RunAnalyzersDuringBuild=true 2>&1 | tee sast-output.txt || true
 
           echo "## SAST Analysis Results" >> $GITHUB_STEP_SUMMARY
@@ -254,14 +254,14 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Restore dependencies
-        run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
+        run: dotnet restore MarketDataCollector.sln -p:EnableWindowsTargeting=true
 
       - name: Build for CodeQL
         run: |
           dotnet build MarketDataCollector.sln \
             -c Release \
             --no-restore \
-            /p:EnableWindowsTargeting=true
+            -p:EnableWindowsTargeting=true
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4

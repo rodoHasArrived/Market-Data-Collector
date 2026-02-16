@@ -42,7 +42,7 @@ jobs:
         cache-suffix: pr-lint
 
     - name: Restore dependencies
-      run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true /bl:./artifacts/lint-restore.binlog
+      run: dotnet restore MarketDataCollector.sln -p:EnableWindowsTargeting=true /bl:./artifacts/lint-restore.binlog
 
     - name: Check formatting
       run: dotnet format MarketDataCollector.sln --verify-no-changes --verbosity diagnostic --report ./artifacts/dotnet-format-report.json

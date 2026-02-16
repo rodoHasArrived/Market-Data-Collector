@@ -125,14 +125,14 @@ jobs:
           echo "date_to: ${date_to:-<empty>}"
 
       - name: Restore dependencies
-        run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
+        run: dotnet restore MarketDataCollector.sln -p:EnableWindowsTargeting=true
 
       - name: Build
         run: |
           dotnet build MarketDataCollector.sln \
             -c Release \
             --no-restore \
-            /p:EnableWindowsTargeting=true
+            -p:EnableWindowsTargeting=true
 
       - name: Fetch ticker data
         env:

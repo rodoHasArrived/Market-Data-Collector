@@ -48,14 +48,14 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Restore dependencies
-        run: dotnet restore benchmarks/MarketDataCollector.Benchmarks/MarketDataCollector.Benchmarks.csproj /p:EnableWindowsTargeting=true
+        run: dotnet restore benchmarks/MarketDataCollector.Benchmarks/MarketDataCollector.Benchmarks.csproj -p:EnableWindowsTargeting=true
 
       - name: Build benchmarks
         run: |
           dotnet build benchmarks/MarketDataCollector.Benchmarks/MarketDataCollector.Benchmarks.csproj \
             -c Release \
             --no-restore \
-            /p:EnableWindowsTargeting=true
+            -p:EnableWindowsTargeting=true
 
       - name: Run benchmarks
         run: |

@@ -108,14 +108,14 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Restore dependencies
-        run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
+        run: dotnet restore MarketDataCollector.sln -p:EnableWindowsTargeting=true
 
       - name: Build
         run: |
           dotnet build MarketDataCollector.sln \
             -c Release \
             --no-restore \
-            /p:EnableWindowsTargeting=true
+            -p:EnableWindowsTargeting=true
 
       - name: Run all unit tests
         id: tests
@@ -137,7 +137,7 @@ jobs:
             --verbosity normal \
             --collect:"XPlat Code Coverage" \
             --results-directory ./TestResults \
-            /p:EnableWindowsTargeting=true
+            -p:EnableWindowsTargeting=true
         continue-on-error: true
 
       - name: Parse test results
@@ -203,7 +203,7 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Restore dependencies
-        run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
+        run: dotnet restore MarketDataCollector.sln -p:EnableWindowsTargeting=true
 
       - name: Check for outdated packages
         id: outdated
@@ -883,7 +883,7 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Restore dependencies
-        run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
+        run: dotnet restore MarketDataCollector.sln -p:EnableWindowsTargeting=true
 
       - name: Build and measure
         id: measure
@@ -896,7 +896,7 @@ jobs:
           dotnet build MarketDataCollector.sln \
             -c Release \
             --no-restore \
-            /p:EnableWindowsTargeting=true 2>&1 | tail -5
+            -p:EnableWindowsTargeting=true 2>&1 | tail -5
           END_TIME=$(date +%s)
           BUILD_TIME=$((END_TIME - START_TIME))
           echo "build_time=$BUILD_TIME" >> $GITHUB_OUTPUT

@@ -88,7 +88,7 @@ jobs:
         mkdir -p data logs
 
     - name: Build
-      run: dotnet build MarketDataCollector.sln -c Release /p:EnableWindowsTargeting=true
+      run: dotnet build MarketDataCollector.sln -c Release -p:EnableWindowsTargeting=true
 
     - name: Run self-tests
       shell: bash

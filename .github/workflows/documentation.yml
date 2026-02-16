@@ -480,11 +480,11 @@ jobs:
       - name: Build project for metadata extraction
         run: |
           set -euo pipefail
-          dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
+          dotnet restore MarketDataCollector.sln -p:EnableWindowsTargeting=true
           dotnet build src/MarketDataCollector/MarketDataCollector.csproj \
             -c Release \
             --no-restore \
-            /p:EnableWindowsTargeting=true \
+            -p:EnableWindowsTargeting=true \
             /p:GenerateDocumentationFile=true
         continue-on-error: true
 

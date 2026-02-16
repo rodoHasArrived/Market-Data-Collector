@@ -57,7 +57,7 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Restore dependencies
-        run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
+        run: dotnet restore MarketDataCollector.sln -p:EnableWindowsTargeting=true
 
       - name: Build
         shell: bash
@@ -65,7 +65,7 @@ jobs:
           dotnet build MarketDataCollector.sln \
             -c Release \
             --no-restore \
-            /p:EnableWindowsTargeting=true
+            -p:EnableWindowsTargeting=true
 
       - name: Run C# unit tests
         shell: bash
@@ -89,7 +89,7 @@ jobs:
             --collect:"XPlat Code Coverage" \
             --logger "trx;LogFileName=test-results-fsharp-Linux.trx" \
             --results-directory ./TestResults \
-            /p:EnableWindowsTargeting=true
+            -p:EnableWindowsTargeting=true
 
       - name: Upload test results on failure
         uses: actions/upload-artifact@v4
@@ -135,7 +135,7 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Restore dependencies
-        run: dotnet restore MarketDataCollector.sln /p:EnableWindowsTargeting=true
+        run: dotnet restore MarketDataCollector.sln -p:EnableWindowsTargeting=true
 
       - name: Build
         shell: bash
@@ -145,7 +145,7 @@ jobs:
           dotnet build MarketDataCollector.sln \
             -c Release \
             --no-restore \
-            /p:EnableWindowsTargeting=true
+            -p:EnableWindowsTargeting=true
 
       - name: Run C# unit tests
         shell: bash
@@ -170,7 +170,7 @@ jobs:
             --collect:"XPlat Code Coverage" \
             --logger "trx;LogFileName=test-results-fsharp-${{ matrix.os_name }}.trx" \
             --results-directory ./TestResults \
-            /p:EnableWindowsTargeting=true
+            -p:EnableWindowsTargeting=true
 
       - name: Upload test results on failure
         uses: actions/upload-artifact@v4
