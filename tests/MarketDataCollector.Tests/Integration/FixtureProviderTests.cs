@@ -188,6 +188,7 @@ public sealed class InMemoryStorageSink : IStorageSink
 /// using fixture data, without requiring any live API connections.
 /// Implements Roadmap I1: Integration Test Harness with Fixture Providers.
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed class FixtureProviderPipelineTests : IAsyncLifetime
 {
     private InMemoryStorageSink _sink = null!;

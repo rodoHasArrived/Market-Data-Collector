@@ -15,6 +15,7 @@ namespace MarketDataCollector.Tests.Integration;
 /// verify route format, and detect endpoints returning 501 (Not Implemented).
 /// Prevents unimplemented stubs from slipping through unnoticed.
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed class EndpointStubDetectionTests : IAsyncLifetime
 {
     private StatusHttpServer? _server;
