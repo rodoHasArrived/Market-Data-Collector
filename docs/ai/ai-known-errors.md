@@ -283,3 +283,21 @@ If headings are missing, the workflow still creates an entry with safe defaults 
   - [ ] Audit tests for bare `catch {}` blocks that silently pass
 - **Status**: fixed
 - **Fixed in**: `MaintenanceEndpointTests.cs`, `WpfDataQualityServiceTests.cs`, `ConnectionServiceTests.cs` — removed tautological assertions, tightened status code checks, added real assertions
+
+### AI-20260216-github-actions-shell-powershell
+- **ID**: AI-20260216-github-actions-shell-powershell
+- **Area**: build/ci/github-actions
+- **Symptoms**: GitHub Actions workflow fails on Windows runners with PowerShell parsing error: "Missing expression after unary operator '--'". The error occurs when a multi-line `run:` step uses backslash (`\`) for line continuation without specifying the shell.
+- **Root cause**: GitHub Actions defaults to PowerShell on Windows runners. PowerShell uses backtick (`` ` ``) for line continuation, not backslash (`\`). When a workflow step uses bash-style backslash continuation without `shell: bash`, PowerShell interprets `--no-restore \` as attempting to use `--` as a unary operator, causing a parse error.
+- **Prevention checklist**:
+  - [ ] When writing multi-line `run:` steps with backslash (`\`) line continuation, always specify `shell: bash`
+  - [ ] Check reusable workflows that run on multiple platforms (ubuntu, windows, macos) for missing shell specifications
+  - [ ] Review existing steps in the same workflow file for consistency in shell specification
+  - [ ] If using PowerShell-specific syntax, use `shell: pwsh` and backtick (`` ` ``) for line continuation
+  - [ ] Validate workflow YAML syntax after changes: `python3 -c "import yaml; yaml.safe_load(open('.github/workflows/file.yml'))"`
+- **Verification commands**:
+  - `grep -r "run: |" .github/workflows/*.yml | grep -v "shell:"` (should return no multi-line bash commands without shell specification)
+  - `python3 -c "import yaml; yaml.safe_load(open('.github/workflows/reusable-dotnet-build.yml'))"`
+- **Source issue**: https://github.com/rodoHasArrived/Market-Data-Collector/actions/runs/22047221887/job/63698175553
+- **Status**: fixed
+- **Fixed in**: `.github/workflows/reusable-dotnet-build.yml` line 121 — added `shell: bash` to the Build step
