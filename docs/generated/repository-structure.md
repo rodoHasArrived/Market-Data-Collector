@@ -1,6 +1,6 @@
 # Repository Structure
 
-> Auto-generated on 2026-02-17 03:04:02 UTC
+> Auto-generated on 2026-02-17 03:26:03 UTC
 
 This document provides an overview of the Market Data Collector repository structure.
 
@@ -834,17 +834,20 @@ Market-Data-Collector/
 │   │   │   ├── AdminMaintenanceServiceBase.cs
 │   │   │   ├── AdvancedAnalyticsModels.cs
 │   │   │   ├── AdvancedAnalyticsServiceBase.cs
+│   │   │   ├── AlertService.cs
 │   │   │   ├── AnalysisExportWizardService.cs
 │   │   │   ├── ApiClientService.cs
 │   │   │   ├── ArchiveBrowserService.cs
 │   │   │   ├── ArchiveHealthService.cs
 │   │   │   ├── BackfillApiService.cs
 │   │   │   ├── BackfillCheckpointService.cs
+│   │   │   ├── BackfillProviderConfigService.cs
 │   │   │   ├── BackfillService.cs
 │   │   │   ├── BatchExportSchedulerService.cs
 │   │   │   ├── ChartingService.cs
 │   │   │   ├── CollectionSessionService.cs
 │   │   │   ├── ColorPalette.cs
+│   │   │   ├── CommandPaletteService.cs
 │   │   │   ├── ConfigService.cs
 │   │   │   ├── ConnectionServiceBase.cs
 │   │   │   ├── CredentialService.cs
@@ -869,6 +872,7 @@ Market-Data-Collector/
 │   │   │   ├── NavigationServiceBase.cs
 │   │   │   ├── NotificationService.cs
 │   │   │   ├── OAuthRefreshService.cs
+│   │   │   ├── OnboardingTourService.cs
 │   │   │   ├── OperationResult.cs
 │   │   │   ├── OrderBookVisualizationService.cs
 │   │   │   ├── PortablePackagerService.cs
@@ -1007,6 +1011,8 @@ Market-Data-Collector/
 │       │   ├── ChartingPage.xaml.cs
 │       │   ├── CollectionSessionPage.xaml
 │       │   ├── CollectionSessionPage.xaml.cs
+│       │   ├── CommandPaletteWindow.xaml
+│       │   ├── CommandPaletteWindow.xaml.cs
 │       │   ├── DashboardPage.xaml
 │       │   ├── DashboardPage.xaml.cs
 │       │   ├── DataBrowserPage.xaml
@@ -1180,6 +1186,7 @@ Market-Data-Collector/
 │   │   │   └── CircularBufferTests.cs
 │   │   ├── Services/
 │   │   │   ├── ApiClientServiceTests.cs
+│   │   │   ├── BackfillProviderConfigServiceTests.cs
 │   │   │   ├── BackfillServiceTests.cs
 │   │   │   ├── ChartingServiceTests.cs
 │   │   │   ├── FixtureDataServiceTests.cs
