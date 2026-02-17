@@ -80,14 +80,14 @@ public class AlpacaQuoteRoutingTests
         // AAPL sequences: 1, 2
         var aaplEvents = _publishedEvents
             .Where(e => e.Symbol == "AAPL")
-            .Select(e => ((BboQuotePayload)e.Payload).SequenceNumber)
+            .Select(e => ((BboQuotePayload)e.Payload!).SequenceNumber)
             .ToList();
         aaplEvents.Should().BeEquivalentTo(new[] { 1L, 2L });
 
         // MSFT sequences: 1, 2
         var msftEvents = _publishedEvents
             .Where(e => e.Symbol == "MSFT")
-            .Select(e => ((BboQuotePayload)e.Payload).SequenceNumber)
+            .Select(e => ((BboQuotePayload)e.Payload!).SequenceNumber)
             .ToList();
         msftEvents.Should().BeEquivalentTo(new[] { 1L, 2L });
     }
@@ -109,7 +109,7 @@ public class AlpacaQuoteRoutingTests
         // Assert
         _publishedEvents.Should().HaveCount(100);
         var sequences = _publishedEvents
-            .Select(e => ((BboQuotePayload)e.Payload).SequenceNumber)
+            .Select(e => ((BboQuotePayload)e.Payload!).SequenceNumber)
             .ToList();
         sequences.Should().BeInAscendingOrder();
         sequences.Last().Should().Be(100);
@@ -129,7 +129,7 @@ public class AlpacaQuoteRoutingTests
         // Assert
         var found = _quoteCollector.TryGet("AAPL", out var latestQuote);
         found.Should().BeTrue();
-        latestQuote.BidPrice.Should().Be(186.00m);
+        latestQuote!.BidPrice.Should().Be(186.00m);
         latestQuote.AskPrice.Should().Be(186.05m);
     }
 
@@ -153,7 +153,7 @@ public class AlpacaQuoteRoutingTests
 
         // Assert
         _publishedEvents.Should().HaveCount(1);
-        var payload = (BboQuotePayload)_publishedEvents[0].Payload;
+        var payload = (BboQuotePayload)_publishedEvents[0].Payload!;
         payload.Spread.Should().BeNull(); // No spread calculation for zero prices
         payload.MidPrice.Should().BeNull();
     }
@@ -186,12 +186,12 @@ public class AlpacaQuoteRoutingTests
 
         // Assert
         removed.Should().BeTrue();
-        removedQuote.SequenceNumber.Should().Be(2);
+        removedQuote!.SequenceNumber.Should().Be(2);
 
         // Add new quote - sequence should restart
         _publisher.Clear();
         _quoteCollector.OnQuote(CreateAlpacaQuote("AAPL", 187.00m, 187.05m));
-        var newPayload = (BboQuotePayload)_publishedEvents[0].Payload;
+        var newPayload = (BboQuotePayload)_publishedEvents[0].Payload!;
         newPayload.SequenceNumber.Should().Be(1);
     }
 
@@ -226,7 +226,7 @@ public class AlpacaQuoteRoutingTests
 
         // Assert
         found.Should().BeTrue();
-        quote.BidPrice.Should().Be(185.50m);
+        quote!.BidPrice.Should().Be(185.50m);
     }
 
     private static MarketQuoteUpdate CreateAlpacaQuote(string symbol, decimal bidPrice, decimal askPrice)
