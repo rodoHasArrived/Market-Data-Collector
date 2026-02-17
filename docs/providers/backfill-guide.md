@@ -1,7 +1,7 @@
 # Historical Data Backfill Guide
 
-**Last Updated:** 2026-01-30
-**Version:** 1.6.1
+**Last Updated:** 2026-02-17
+**Version:** 1.7.0
 
 This document provides a comprehensive guide for backfilling historical market data using the Market Data Collector.
 
@@ -9,16 +9,16 @@ This document provides a comprehensive guide for backfilling historical market d
 
 ## Overview
 
-Historical backfill is the process of retrieving past market data to fill gaps in your data archive. The Market Data Collector supports 9 historical data providers with automatic failover and rate limiting.
+Historical backfill is the process of retrieving past market data to fill gaps in your data archive. The Market Data Collector supports 8 core historical data providers through a composite fallback strategy, with optional IB support depending on build/runtime setup.
 
 ### Key Features
 
-- **9 Data Providers**: Alpaca, Yahoo Finance, Stooq, Tiingo, Finnhub, Alpha Vantage, Polygon, Nasdaq Data Link, IB
+- **8 Core Data Providers**: Alpaca, Yahoo Finance, Stooq, Tiingo, Finnhub, Alpha Vantage, Polygon, Nasdaq Data Link
+- **Optional Provider**: Interactive Brokers historical (when IB integration is enabled)
 - **Composite Provider**: Automatic failover across providers
 - **Rate Limiting**: Built-in throttling to respect API limits
-- **Priority Queue**: Prioritize important symbols
-- **Gap Detection**: Automatically identify missing data
-- **Quality Reports**: Data quality assessment before export
+- **Progress Reporting**: API endpoint for active backfill progress
+- **Preview Mode**: API endpoint to validate requests before execution
 
 ---
 
@@ -48,20 +48,25 @@ export FINNHUB_API_KEY="your-key"
 
 **Via CLI:**
 ```bash
-dotnet run -- --backfill AAPL,MSFT,GOOGL --from 2025-01-01 --to 2026-01-01
+dotnet run -- --backfill \
+  --backfill-provider stooq \
+  --backfill-symbols AAPL,MSFT,GOOGL \
+  --backfill-from 2025-01-01 \
+  --backfill-to 2026-01-01
 ```
 
-**Via UWP App:**
-1. Open the **Backfill** page
-2. Enter symbols (comma-separated)
-3. Select date range
-4. Click **Start Backfill**
+**Via Dashboard API/UI:**
+1. Open the dashboard **Backfill** section
+2. Select provider and symbols
+3. Optionally run preview first
+4. Start backfill and monitor progress
 
 ### 3. Monitor Progress
 
 Check backfill status via:
 - **HTTP API**: `GET /api/backfill/status`
-- **UWP App**: Backfill page progress indicators
+- **HTTP API (active run)**: `GET /api/backfill/progress`
+- **Dashboard UI**: Backfill status/progress panel
 - **Logs**: Serilog structured logging
 
 ---
@@ -112,14 +117,16 @@ The `CompositeHistoricalDataProvider` tries providers in priority order:
 
 ```csharp
 // Default priority (configurable)
-1. Tiingo       // Best for dividend-adjusted data
-2. Alpaca       // Good quality, generous limits
-3. Yahoo        // Wide coverage, no auth
-4. Finnhub      // Good fundamentals
-5. Stooq        // Fallback, global coverage
-6. Polygon      // Limited free tier
-7. AlphaVantage // Very limited free tier
-8. NasdaqDataLink // Alternative data
+1. Alpaca
+2. Yahoo
+3. Polygon
+4. Tiingo
+5. Finnhub
+6. Stooq
+7. AlphaVantage
+8. NasdaqDataLink
+
+> Actual execution order is controlled by each provider's configured `Priority` value.
 ```
 
 ### Configuring Priority
@@ -127,16 +134,18 @@ The `CompositeHistoricalDataProvider` tries providers in priority order:
 ```json
 {
   "Backfill": {
-    "Providers": [
-      { "Name": "tiingo", "Priority": 1, "Enabled": true },
-      { "Name": "alpaca", "Priority": 2, "Enabled": true },
-      { "Name": "yahoo", "Priority": 3, "Enabled": true },
-      { "Name": "finnhub", "Priority": 4, "Enabled": true },
-      { "Name": "stooq", "Priority": 5, "Enabled": true }
-    ],
-    "MaxConcurrentJobs": 3,
-    "RetryAttempts": 3,
-    "RetryDelayMs": 5000
+    "Providers": {
+      "Alpaca": { "Enabled": true, "Priority": 1 },
+      "Yahoo": { "Enabled": true, "Priority": 2 },
+      "Polygon": { "Enabled": false, "Priority": 3 },
+      "Tiingo": { "Enabled": true, "Priority": 4 },
+      "Finnhub": { "Enabled": true, "Priority": 5 },
+      "Stooq": { "Enabled": true, "Priority": 6 },
+      "AlphaVantage": { "Enabled": false, "Priority": 7 },
+      "Nasdaq": { "Enabled": false, "Priority": 8 }
+    },
+    "EnableFallback": true,
+    "ProviderCooldownSeconds": 60
   }
 }
 ```
@@ -190,15 +199,20 @@ Request 4: Tiingo → (Recovered) → Success
 Retrieve all available history for a symbol:
 
 ```bash
-dotnet run -- --backfill AAPL --from 2000-01-01 --to 2026-01-01
+dotnet run -- --backfill \
+  --backfill-symbols AAPL \
+  --backfill-from 2000-01-01 \
+  --backfill-to 2026-01-01
 ```
 
 ### Incremental Backfill
 
-Only fill gaps in existing data:
+Use your storage state and date bounds to run a targeted catch-up:
 
 ```bash
-dotnet run -- --backfill AAPL --incremental
+dotnet run -- --backfill \
+  --backfill-symbols AAPL \
+  --backfill-from 2025-01-01
 ```
 
 ### Date Range Backfill
@@ -206,7 +220,10 @@ dotnet run -- --backfill AAPL --incremental
 Specific date range:
 
 ```bash
-dotnet run -- --backfill AAPL,MSFT --from 2025-06-01 --to 2025-12-31
+dotnet run -- --backfill \
+  --backfill-symbols AAPL,MSFT \
+  --backfill-from 2025-06-01 \
+  --backfill-to 2025-12-31
 ```
 
 ### Bulk Backfill
@@ -361,7 +378,7 @@ Historical Data → Event Pipeline → WAL → JSONL → Parquet Archive
 
 ---
 
-## UWP Backfill Interface
+## Dashboard Backfill Interface
 
 ### Backfill Page Features
 
@@ -452,7 +469,7 @@ Enable detailed logging:
 
 Test with a single symbol before bulk backfill:
 ```bash
-dotnet run -- --backfill AAPL --from 2025-01-01 --dry-run
+dotnet run -- --backfill --backfill-symbols AAPL --backfill-from 2025-01-01 --dry-run
 ```
 
 ### 2. Prioritize Quality
@@ -499,31 +516,27 @@ Don't archive until quality is acceptable:
 ### CLI Commands
 
 ```bash
-# Full backfill
-dotnet run -- --backfill <symbols> --from <date> --to <date>
+# Full/range backfill
+dotnet run -- --backfill --backfill-symbols <symbols> --backfill-from <date> --backfill-to <date>
 
-# Incremental backfill
-dotnet run -- --backfill <symbols> --incremental
-
-# Gap detection
-dotnet run -- --gap-report <symbol> --from <date>
-
-# Quality report
-dotnet run -- --quality-report <symbol>
+# Provider-specific backfill
+dotnet run -- --backfill --backfill-provider <provider> --backfill-symbols <symbols>
 
 # Dry run (no writes)
-dotnet run -- --backfill <symbols> --dry-run
+dotnet run -- --backfill --backfill-symbols <symbols> --dry-run
+
+# Contextual help
+dotnet run -- --help backfill
 ```
 
 ### HTTP API
 
 ```
-POST /api/backfill/start
+GET  /api/backfill/providers
 GET  /api/backfill/status
-GET  /api/backfill/jobs/{jobId}
-POST /api/backfill/cancel/{jobId}
-GET  /api/backfill/gaps/{symbol}
-GET  /api/backfill/quality/{symbol}
+GET  /api/backfill/progress
+POST /api/backfill/run/preview
+POST /api/backfill/run
 ```
 
 ---
@@ -539,4 +552,4 @@ GET  /api/backfill/quality/{symbol}
 
 ---
 
-*Last Updated: 2026-01-30*
+*Last Updated: 2026-02-17*
