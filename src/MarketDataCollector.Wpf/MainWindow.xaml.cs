@@ -1,5 +1,7 @@
 using System;
 using System.ComponentModel;
+using System.IO;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
@@ -8,13 +10,14 @@ using MarketDataCollector.Wpf.Contracts;
 using MarketDataCollector.Wpf.Services;
 using WpfServices = MarketDataCollector.Wpf.Services;
 using MarketDataCollector.Wpf.Views;
+using MarketDataCollector.Ui.Services;
 using SysNavigation = System.Windows.Navigation;
 
 namespace MarketDataCollector.Wpf;
 
 /// <summary>
 /// Main application window containing the navigation frame.
-/// Handles global keyboard shortcuts and routes them to appropriate services.
+/// Handles global keyboard shortcuts, command palette, and window state persistence.
 /// </summary>
 public partial class MainWindow : Window
 {
@@ -24,6 +27,11 @@ public partial class MainWindow : Window
     private readonly WpfServices.NotificationService _notificationService;
     private readonly WpfServices.MessagingService _messagingService;
     private readonly WpfServices.ThemeService _themeService;
+
+    private static readonly string WindowStateFilePath = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "MarketDataCollector",
+        "window-state.json");
 
     public MainWindow(
         WpfServices.NavigationService navigationService,
@@ -47,6 +55,9 @@ public partial class MainWindow : Window
 
         // Subscribe to notifications for in-app display
         _notificationService.NotificationReceived += OnNotificationReceived;
+
+        // Restore window state from previous session
+        RestoreWindowState();
     }
 
     private void OnWindowLoaded(object sender, RoutedEventArgs e)
@@ -63,6 +74,9 @@ public partial class MainWindow : Window
 
     private void OnWindowClosing(object? sender, CancelEventArgs e)
     {
+        // Save window state before closing
+        SaveWindowState();
+
         // Unsubscribe from all events to prevent memory leaks
         _keyboardShortcutService.ShortcutInvoked -= OnShortcutInvoked;
         _notificationService.NotificationReceived -= OnNotificationReceived;
@@ -168,8 +182,77 @@ public partial class MainWindow : Window
                 _navigationService.NavigateTo("Help");
                 break;
             case "QuickCommand":
-                // Focus the search box for quick command entry
-                _messagingService.Send("QuickCommand");
+                ShowCommandPalette();
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Opens the command palette dialog (Ctrl+K).
+    /// </summary>
+    private void ShowCommandPalette()
+    {
+        var paletteService = CommandPaletteService.Instance;
+        var palette = new CommandPaletteWindow(paletteService)
+        {
+            Owner = this
+        };
+
+        // Subscribe to command execution
+        paletteService.CommandExecuted += OnPaletteCommandExecuted;
+
+        try
+        {
+            palette.ShowDialog();
+        }
+        finally
+        {
+            paletteService.CommandExecuted -= OnPaletteCommandExecuted;
+        }
+    }
+
+    private void OnPaletteCommandExecuted(object? sender, PaletteCommandEventArgs e)
+    {
+        switch (e.Category)
+        {
+            case PaletteCommandCategory.Navigation:
+                _navigationService.NavigateTo(e.ActionId);
+                break;
+
+            case PaletteCommandCategory.Action:
+                HandlePaletteAction(e.ActionId);
+                break;
+        }
+    }
+
+    private void HandlePaletteAction(string actionId)
+    {
+        switch (actionId)
+        {
+            case "StartCollector":
+                _ = StartCollectorAsync();
+                break;
+            case "StopCollector":
+                _ = StopCollectorAsync();
+                break;
+            case "RunBackfill":
+                _navigationService.NavigateTo("Backfill");
+                break;
+            case "RefreshStatus":
+                _messagingService.Send("RefreshStatus");
+                break;
+            case "AddSymbol":
+                _navigationService.NavigateTo("Symbols");
+                _messagingService.Send("AddSymbol");
+                break;
+            case "ToggleTheme":
+                _themeService.ToggleTheme();
+                break;
+            case "Save":
+                _messagingService.Send("Save");
+                break;
+            case "SearchSymbols":
+                _messagingService.Send("FocusSearch");
                 break;
         }
     }
@@ -244,4 +327,123 @@ public partial class MainWindow : Window
         // In-app notification handling can be added here
         // For now, notifications are handled by the NotificationService
     }
+
+    #region Window State Persistence
+
+    /// <summary>
+    /// Saves the current window position, size, and state to disk.
+    /// </summary>
+    private void SaveWindowState()
+    {
+        try
+        {
+            var state = new PersistedWindowState
+            {
+                Left = RestoreBounds.Left,
+                Top = RestoreBounds.Top,
+                Width = RestoreBounds.Width,
+                Height = RestoreBounds.Height,
+                IsMaximized = WindowState == WindowState.Maximized,
+                SavedAt = DateTime.UtcNow
+            };
+
+            var dir = Path.GetDirectoryName(WindowStateFilePath);
+            if (!string.IsNullOrEmpty(dir))
+            {
+                Directory.CreateDirectory(dir);
+            }
+
+            var json = JsonSerializer.Serialize(state, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(WindowStateFilePath, json);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[MainWindow] Failed to save window state: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Restores window position, size, and state from disk.
+    /// Validates that the restored position is visible on a connected monitor.
+    /// </summary>
+    private void RestoreWindowState()
+    {
+        try
+        {
+            if (!File.Exists(WindowStateFilePath)) return;
+
+            var json = File.ReadAllText(WindowStateFilePath);
+            var state = JsonSerializer.Deserialize<PersistedWindowState>(json);
+            if (state == null) return;
+
+            // Validate dimensions are reasonable
+            if (state.Width < MinWidth || state.Height < MinHeight) return;
+            if (state.Width > 10000 || state.Height > 10000) return;
+
+            // Validate position is on a visible monitor
+            if (!IsPositionOnScreen(state.Left, state.Top, state.Width, state.Height))
+            {
+                // Position is off-screen (monitor may have been disconnected)
+                // Keep default CenterScreen position but restore size
+                Width = state.Width;
+                Height = state.Height;
+            }
+            else
+            {
+                WindowStartupLocation = WindowStartupLocation.Manual;
+                Left = state.Left;
+                Top = state.Top;
+                Width = state.Width;
+                Height = state.Height;
+            }
+
+            if (state.IsMaximized)
+            {
+                WindowState = WindowState.Maximized;
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[MainWindow] Failed to restore window state: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Checks if a position is visible on the virtual screen area.
+    /// Uses WPF SystemParameters to avoid a WinForms dependency.
+    /// </summary>
+    private static bool IsPositionOnScreen(double left, double top, double width, double height)
+    {
+        // Use the virtual screen bounds (spans all monitors)
+        var virtualLeft = SystemParameters.VirtualScreenLeft;
+        var virtualTop = SystemParameters.VirtualScreenTop;
+        var virtualWidth = SystemParameters.VirtualScreenWidth;
+        var virtualHeight = SystemParameters.VirtualScreenHeight;
+
+        var virtualRect = new Rect(virtualLeft, virtualTop, virtualWidth, virtualHeight);
+        var windowRect = new Rect(left, top, width, height);
+
+        var intersection = Rect.Intersect(windowRect, virtualRect);
+
+        // At least 100x100 pixels must be visible
+        const double minVisibleSize = 100;
+        return !intersection.IsEmpty &&
+               intersection.Width >= minVisibleSize &&
+               intersection.Height >= minVisibleSize;
+    }
+
+    /// <summary>
+    /// Persisted window state for save/restore across sessions.
+    /// </summary>
+    private sealed class PersistedWindowState
+    {
+        public double Left { get; set; }
+        public double Top { get; set; }
+        public double Width { get; set; }
+        public double Height { get; set; }
+        public bool IsMaximized { get; set; }
+        public DateTime SavedAt { get; set; }
+    }
+
+    #endregion
 }

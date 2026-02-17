@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using WpfServices = MarketDataCollector.Wpf.Services;
+using MarketDataCollector.Ui.Services;
 
 using MarketDataCollector.Wpf.Services;
 namespace MarketDataCollector.Wpf.Views;
@@ -29,6 +30,7 @@ public partial class SetupWizardPage : Page
     private readonly BackendServiceManager _backendServiceManager;
     private readonly WpfServices.NotificationService _notificationService;
     private readonly WpfServices.NavigationService _navigationService;
+    private readonly SetupWizardService _setupWizardService;
     private readonly HttpClient _httpClient;
 
     public SetupWizardPage(
@@ -44,6 +46,7 @@ public partial class SetupWizardPage : Page
         _backendServiceManager = backendServiceManager;
         _notificationService = notificationService;
         _navigationService = navigationService;
+        _setupWizardService = new SetupWizardService();
         _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(8) };
     }
 
@@ -52,10 +55,46 @@ public partial class SetupWizardPage : Page
         ProviderCombo.ItemsSource = ProviderOptions;
         ConfigPathText.Text = _firstRunService.ConfigFilePath;
 
+        // Populate role-based presets
+        PresetsList.ItemsSource = _setupWizardService.GetSetupPresets();
+
         LoadExistingConfiguration();
         LoadStoredApiKeys();
 
         await EnsureBackendAvailableAsync();
+    }
+
+    private async void PresetCard_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button button || button.Tag is not string presetId) return;
+
+        var presets = _setupWizardService.GetSetupPresets();
+        var preset = presets.FirstOrDefault(p => p.Id == presetId);
+        if (preset == null) return;
+
+        PresetStatusText.Text = $"Applying \"{preset.Name}\" preset...";
+
+        // Set the recommended provider
+        var recommendedProvider = preset.RecommendedProviders.FirstOrDefault(p =>
+            ProviderOptions.Contains(p, StringComparer.OrdinalIgnoreCase))
+            ?? ProviderOptions[0];
+
+        ProviderCombo.SelectedItem = recommendedProvider;
+
+        // Apply preset configuration
+        try
+        {
+            await _setupWizardService.ApplyPresetAsync(preset, recommendedProvider);
+            PresetStatusText.Text = $"Applied \"{preset.Name}\" preset: {preset.DefaultSymbols.Length} symbols, " +
+                                    $"{(preset.SubscribeDepth ? "L2 depth" : "L1 only")}, " +
+                                    $"{(preset.EnableBackfill ? "backfill enabled" : "no backfill")}.";
+            _notificationService.NotifySuccess("Setup Preset", $"\"{preset.Name}\" preset applied successfully.");
+        }
+        catch (Exception ex)
+        {
+            PresetStatusText.Text = $"Failed to apply preset: {ex.Message}";
+            _ = _notificationService.NotifyErrorAsync("Setup Preset", $"Failed to apply preset: {ex.Message}");
+        }
     }
 
     private void LoadExistingConfiguration()
