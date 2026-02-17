@@ -259,6 +259,25 @@ public sealed class ConnectionHealthMonitor : IConnectionHealthMonitor, IDisposa
     }
 
     /// <summary>
+    /// Gets the connection status for a provider by provider name.
+    /// If multiple connections exist for the provider, returns the first connected one,
+    /// or the first one if none are connected.
+    /// </summary>
+    public ConnectionStatus? GetConnectionStatusByProvider(string providerName)
+    {
+        var providerConnections = _connections.Values
+            .Where(s => s.ProviderName == providerName)
+            .ToList();
+
+        if (providerConnections.Count == 0)
+            return null;
+
+        // Prefer connected connections
+        var connectedState = providerConnections.FirstOrDefault(s => s.IsConnected);
+        return (connectedState ?? providerConnections[0]).GetStatus();
+    }
+
+    /// <summary>
     /// Gets the average latency in milliseconds across all connections.
     /// </summary>
     public double GetAverageLatencyMs()
