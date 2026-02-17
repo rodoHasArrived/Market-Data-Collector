@@ -124,6 +124,153 @@ public static class BackfillEndpoints
         .WithName("GetBackfillProgress")
         .WithDescription("Returns progress of the currently active backfill operation, if any.")
         .Produces(200);
+
+        // Get provider metadata descriptors
+        group.MapGet(UiApiRoutes.BackfillProviderMetadata, () =>
+        {
+            var metadata = GetKnownProviderMetadata();
+            return Results.Json(metadata, jsonOptions);
+        })
+        .WithName("GetBackfillProviderMetadata")
+        .WithDescription("Returns metadata descriptors for all known backfill providers.")
+        .Produces<MarketDataCollector.Contracts.Configuration.BackfillProviderMetadataDto[]>(200);
+
+        // Get provider statuses (config + health combined, uses defaults when no config available)
+        group.MapGet(UiApiRoutes.BackfillProviderStatuses, () =>
+        {
+            var metadata = GetKnownProviderMetadata();
+            var statuses = BuildProviderStatuses(metadata, null);
+            return Results.Json(statuses, jsonOptions);
+        })
+        .WithName("GetBackfillProviderStatuses")
+        .WithDescription("Returns combined status of all backfill providers including config and health.")
+        .Produces<MarketDataCollector.Contracts.Configuration.BackfillProviderStatusDto[]>(200);
+
+        // Get fallback chain preview (enabled providers only, sorted by priority)
+        group.MapGet(UiApiRoutes.BackfillFallbackChain, () =>
+        {
+            var metadata = GetKnownProviderMetadata();
+            var statuses = BuildProviderStatuses(metadata, null);
+            var chain = statuses.Where(s => s.Options.Enabled).ToArray();
+            return Results.Json(chain, jsonOptions);
+        })
+        .WithName("GetBackfillFallbackChain")
+        .WithDescription("Returns the effective fallback chain sorted by priority (enabled providers only).")
+        .Produces<MarketDataCollector.Contracts.Configuration.BackfillProviderStatusDto[]>(200);
+
+        // Dry-run backfill plan
+        group.MapPost(UiApiRoutes.BackfillDryRunPlan, async (HttpRequest request) =>
+        {
+            var body = await request.ReadFromJsonAsync<DryRunPlanRequest>(jsonOptions);
+            if (body?.Symbols is null || body.Symbols.Length == 0)
+                return Results.BadRequest(new { error = "At least one symbol is required." });
+
+            var metadata = GetKnownProviderMetadata();
+            var statuses = BuildProviderStatuses(metadata, null);
+            var enabledChain = statuses.Where(s => s.Options.Enabled).ToArray();
+
+            var plan = BuildDryRunPlan(body.Symbols, enabledChain);
+            return Results.Json(plan, jsonOptions);
+        })
+        .WithName("PostBackfillDryRunPlan")
+        .WithDescription("Generates a dry-run backfill plan showing which providers would be selected per symbol.")
+        .Produces<MarketDataCollector.Contracts.Configuration.BackfillDryRunPlanDto>(200)
+        .Produces(400);
+
+        // Get audit log (stub — desktop persists locally, server returns empty)
+        group.MapGet(UiApiRoutes.BackfillProviderConfigAudit, () =>
+        {
+            return Results.Json(Array.Empty<MarketDataCollector.Contracts.Configuration.ProviderConfigAuditEntryDto>());
+        })
+        .WithName("GetBackfillProviderConfigAudit")
+        .WithDescription("Returns the audit trail of provider configuration changes.")
+        .Produces<MarketDataCollector.Contracts.Configuration.ProviderConfigAuditEntryDto[]>(200);
+    }
+
+    private static MarketDataCollector.Contracts.Configuration.BackfillProviderMetadataDto[] GetKnownProviderMetadata()
+    {
+        return
+        [
+            new() { ProviderId = "alpaca", DisplayName = "Alpaca", Description = "Bars, trades, and quotes via REST API.", DataTypes = ["Bars", "Trades", "Quotes"], RequiresApiKey = true, FreeTier = true, DefaultPriority = 5, DefaultRateLimitPerMinute = 200 },
+            new() { ProviderId = "polygon", DisplayName = "Polygon", Description = "Full market data including aggregates.", DataTypes = ["Bars", "Trades", "Quotes", "Aggregates"], RequiresApiKey = true, FreeTier = false, DefaultPriority = 12, DefaultRateLimitPerMinute = 5 },
+            new() { ProviderId = "tiingo", DisplayName = "Tiingo", Description = "Daily bars and end-of-day data.", DataTypes = ["Daily bars"], RequiresApiKey = true, FreeTier = true, DefaultPriority = 15, DefaultRateLimitPerHour = 500 },
+            new() { ProviderId = "finnhub", DisplayName = "Finnhub", Description = "Daily bars with international coverage.", DataTypes = ["Daily bars"], RequiresApiKey = true, FreeTier = true, DefaultPriority = 20, DefaultRateLimitPerMinute = 60 },
+            new() { ProviderId = "stooq", DisplayName = "Stooq", Description = "Free daily bar data. No API key required.", DataTypes = ["Daily bars"], RequiresApiKey = false, FreeTier = true, DefaultPriority = 25 },
+            new() { ProviderId = "yahoo", DisplayName = "Yahoo Finance", Description = "Unofficial daily bar data.", DataTypes = ["Daily bars"], RequiresApiKey = false, FreeTier = true, DefaultPriority = 30 },
+            new() { ProviderId = "alphavantage", DisplayName = "Alpha Vantage", Description = "Daily bars with strict rate limits.", DataTypes = ["Daily bars"], RequiresApiKey = true, FreeTier = true, DefaultPriority = 35, DefaultRateLimitPerMinute = 5, DefaultRateLimitPerHour = 500 },
+            new() { ProviderId = "nasdaqdatalink", DisplayName = "Nasdaq Data Link", Description = "Various market data sets.", DataTypes = ["Various"], RequiresApiKey = true, FreeTier = false, DefaultPriority = 40 },
+        ];
+    }
+
+    private static MarketDataCollector.Contracts.Configuration.BackfillProviderStatusDto[] BuildProviderStatuses(
+        MarketDataCollector.Contracts.Configuration.BackfillProviderMetadataDto[] metadata,
+        MarketDataCollector.Contracts.Configuration.BackfillProvidersConfigDto? config)
+    {
+        return metadata.Select(m =>
+        {
+            var opts = GetProviderOptionsFromConfig(config, m.ProviderId);
+            return new MarketDataCollector.Contracts.Configuration.BackfillProviderStatusDto
+            {
+                Metadata = m,
+                Options = opts ?? new MarketDataCollector.Contracts.Configuration.BackfillProviderOptionsDto
+                {
+                    Enabled = true,
+                    Priority = m.DefaultPriority,
+                    RateLimitPerMinute = m.DefaultRateLimitPerMinute,
+                    RateLimitPerHour = m.DefaultRateLimitPerHour,
+                },
+                EffectiveConfigSource = opts != null ? "user" : "default",
+            };
+        })
+        .OrderBy(s => s.Options.Enabled ? 0 : 1)
+        .ThenBy(s => s.Options.Priority ?? s.Metadata.DefaultPriority)
+        .ToArray();
+    }
+
+    private static MarketDataCollector.Contracts.Configuration.BackfillProviderOptionsDto? GetProviderOptionsFromConfig(
+        MarketDataCollector.Contracts.Configuration.BackfillProvidersConfigDto? config,
+        string providerId)
+    {
+        if (config == null) return null;
+        return providerId switch
+        {
+            "alpaca" => config.Alpaca,
+            "polygon" => config.Polygon,
+            "tiingo" => config.Tiingo,
+            "finnhub" => config.Finnhub,
+            "stooq" => config.Stooq,
+            "yahoo" => config.Yahoo,
+            "alphavantage" => config.AlphaVantage,
+            "nasdaqdatalink" => config.NasdaqDataLink,
+            _ => null,
+        };
+    }
+
+    private static MarketDataCollector.Contracts.Configuration.BackfillDryRunPlanDto BuildDryRunPlan(
+        string[] symbols,
+        MarketDataCollector.Contracts.Configuration.BackfillProviderStatusDto[] enabledChain)
+    {
+        if (enabledChain.Length == 0)
+        {
+            return new MarketDataCollector.Contracts.Configuration.BackfillDryRunPlanDto
+            {
+                ValidationErrors = ["No enabled providers available. Enable at least one provider."],
+            };
+        }
+
+        var sequence = enabledChain.Select(c => c.Metadata.ProviderId).ToArray();
+        var plans = symbols.Select(s => new MarketDataCollector.Contracts.Configuration.BackfillSymbolPlanDto
+        {
+            Symbol = s,
+            ProviderSequence = sequence,
+            SelectedProvider = sequence[0],
+            Reason = $"Highest priority enabled provider (priority {enabledChain[0].Options.Priority ?? enabledChain[0].Metadata.DefaultPriority})",
+        }).ToArray();
+
+        return new MarketDataCollector.Contracts.Configuration.BackfillDryRunPlanDto
+        {
+            Symbols = plans,
+        };
     }
 
     private static IResult? ValidateBackfillRequest(BackfillRequestDto req)

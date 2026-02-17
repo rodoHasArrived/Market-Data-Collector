@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace MarketDataCollector.Contracts.Configuration;
@@ -336,6 +337,143 @@ public class BackfillProviderOptionsDto
 
     [JsonPropertyName("rateLimitPerHour")]
     public int? RateLimitPerHour { get; set; }
+
+    /// <summary>
+    /// Extension bag for provider-specific options not covered by the common fields.
+    /// Keeps common fields typed while allowing provider-unique settings.
+    /// </summary>
+    [JsonPropertyName("extensions")]
+    public Dictionary<string, JsonElement>? Extensions { get; set; }
+}
+
+/// <summary>
+/// Provider metadata descriptor used for dynamic UI generation and runtime transparency.
+/// Drives the desktop provider settings panel without requiring custom pages per provider.
+/// </summary>
+public class BackfillProviderMetadataDto
+{
+    [JsonPropertyName("providerId")]
+    public string ProviderId { get; set; } = string.Empty;
+
+    [JsonPropertyName("displayName")]
+    public string DisplayName { get; set; } = string.Empty;
+
+    [JsonPropertyName("description")]
+    public string Description { get; set; } = string.Empty;
+
+    [JsonPropertyName("dataTypes")]
+    public string[] DataTypes { get; set; } = [];
+
+    [JsonPropertyName("requiresApiKey")]
+    public bool RequiresApiKey { get; set; }
+
+    [JsonPropertyName("hasCredentials")]
+    public bool HasCredentials { get; set; }
+
+    [JsonPropertyName("freeTier")]
+    public bool FreeTier { get; set; }
+
+    [JsonPropertyName("defaultPriority")]
+    public int DefaultPriority { get; set; }
+
+    [JsonPropertyName("defaultRateLimitPerMinute")]
+    public int? DefaultRateLimitPerMinute { get; set; }
+
+    [JsonPropertyName("defaultRateLimitPerHour")]
+    public int? DefaultRateLimitPerHour { get; set; }
+
+    [JsonPropertyName("configSource")]
+    public string ConfigSource { get; set; } = "default";
+
+    [JsonPropertyName("featureFlags")]
+    public Dictionary<string, bool>? FeatureFlags { get; set; }
+}
+
+/// <summary>
+/// Combined view of provider configuration with runtime health status for the desktop UI.
+/// </summary>
+public class BackfillProviderStatusDto
+{
+    [JsonPropertyName("metadata")]
+    public BackfillProviderMetadataDto Metadata { get; set; } = new();
+
+    [JsonPropertyName("options")]
+    public BackfillProviderOptionsDto Options { get; set; } = new();
+
+    [JsonPropertyName("healthStatus")]
+    public string HealthStatus { get; set; } = "unknown";
+
+    [JsonPropertyName("lastUsed")]
+    public DateTime? LastUsed { get; set; }
+
+    [JsonPropertyName("requestsUsedMinute")]
+    public int RequestsUsedMinute { get; set; }
+
+    [JsonPropertyName("requestsUsedHour")]
+    public int RequestsUsedHour { get; set; }
+
+    [JsonPropertyName("isThrottled")]
+    public bool IsThrottled { get; set; }
+
+    [JsonPropertyName("effectiveConfigSource")]
+    public string EffectiveConfigSource { get; set; } = "default";
+}
+
+/// <summary>
+/// Dry-run backfill plan showing which providers would be selected per symbol.
+/// </summary>
+public class BackfillDryRunPlanDto
+{
+    [JsonPropertyName("symbols")]
+    public BackfillSymbolPlanDto[] Symbols { get; set; } = [];
+
+    [JsonPropertyName("warnings")]
+    public string[] Warnings { get; set; } = [];
+
+    [JsonPropertyName("validationErrors")]
+    public string[] ValidationErrors { get; set; } = [];
+}
+
+/// <summary>
+/// Per-symbol plan entry showing the provider fallback sequence.
+/// </summary>
+public class BackfillSymbolPlanDto
+{
+    [JsonPropertyName("symbol")]
+    public string Symbol { get; set; } = string.Empty;
+
+    [JsonPropertyName("providerSequence")]
+    public string[] ProviderSequence { get; set; } = [];
+
+    [JsonPropertyName("selectedProvider")]
+    public string? SelectedProvider { get; set; }
+
+    [JsonPropertyName("reason")]
+    public string? Reason { get; set; }
+}
+
+/// <summary>
+/// Audit trail entry for provider configuration changes.
+/// </summary>
+public class ProviderConfigAuditEntryDto
+{
+    [JsonPropertyName("timestamp")]
+    public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+
+    [JsonPropertyName("providerId")]
+    public string ProviderId { get; set; } = string.Empty;
+
+    [JsonPropertyName("action")]
+    public string Action { get; set; } = string.Empty;
+
+    [JsonPropertyName("previousValue")]
+    public string? PreviousValue { get; set; }
+
+    [JsonPropertyName("newValue")]
+    public string? NewValue { get; set; }
+
+    [JsonPropertyName("source")]
+    public string Source { get; set; } = "desktop";
 }
 
 /// <summary>

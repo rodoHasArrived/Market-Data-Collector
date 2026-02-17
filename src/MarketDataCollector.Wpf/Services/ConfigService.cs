@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using MarketDataCollector.Contracts.Configuration;
+using MarketDataCollector.Ui.Services;
 
 namespace MarketDataCollector.Wpf.Services;
 
@@ -262,6 +263,7 @@ public sealed class ConfigService
 
     /// <summary>
     /// Adds or updates a single backfill provider configuration entry.
+    /// Records the change in the audit trail for operator confidence.
     /// </summary>
     /// <param name="providerId">Known provider identifier (e.g., alpaca, polygon, yahoo).</param>
     /// <param name="options">Provider options to persist.</param>
@@ -279,9 +281,56 @@ public sealed class ConfigService
         config.Backfill ??= new BackfillConfigDto();
         config.Backfill.Providers ??= new BackfillProvidersConfigDto();
 
+        // Capture previous state for audit trail
+        var previousOptions = GetProviderOptions(config.Backfill.Providers, NormalizeProviderId(providerId));
+        var previousJson = previousOptions != null
+            ? System.Text.Json.JsonSerializer.Serialize(previousOptions, _jsonOptions)
+            : null;
+        var newJson = System.Text.Json.JsonSerializer.Serialize(options, _jsonOptions);
+
         SetProviderOptions(config.Backfill.Providers, providerId, options);
 
         await SaveConfigAsync(config);
+
+        // Record audit entry
+        Ui.Services.BackfillProviderConfigService.Instance.RecordAuditEntry(
+            NormalizeProviderId(providerId),
+            "update",
+            previousJson,
+            newJson);
+    }
+
+    /// <summary>
+    /// Resets a provider's configuration back to defaults.
+    /// </summary>
+    /// <param name="providerId">Provider identifier to reset.</param>
+    public async Task ResetBackfillProviderOptionsAsync(string providerId)
+    {
+        if (string.IsNullOrWhiteSpace(providerId))
+        {
+            throw new ArgumentException("Provider id is required", nameof(providerId));
+        }
+
+        var defaultOptions = await Ui.Services.BackfillProviderConfigService.Instance
+            .GetDefaultOptionsAsync(NormalizeProviderId(providerId));
+
+        var config = await LoadConfigAsync() ?? new AppConfigDto();
+        config.Backfill ??= new BackfillConfigDto();
+        config.Backfill.Providers ??= new BackfillProvidersConfigDto();
+
+        var previousOptions = GetProviderOptions(config.Backfill.Providers, NormalizeProviderId(providerId));
+        var previousJson = previousOptions != null
+            ? System.Text.Json.JsonSerializer.Serialize(previousOptions, _jsonOptions)
+            : null;
+
+        SetProviderOptions(config.Backfill.Providers, providerId, defaultOptions);
+        await SaveConfigAsync(config);
+
+        Ui.Services.BackfillProviderConfigService.Instance.RecordAuditEntry(
+            NormalizeProviderId(providerId),
+            "reset",
+            previousJson,
+            System.Text.Json.JsonSerializer.Serialize(defaultOptions, _jsonOptions));
     }
 
     /// <summary>
